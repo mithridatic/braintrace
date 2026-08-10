@@ -36,6 +36,8 @@ except ImportError:
 
 
 _WORKER_FLAG = "--worker"
+_RESULT_SCHEMA_VERSION = 2
+_SUPPORTED_RESULT_SCHEMAS = {1, _RESULT_SCHEMA_VERSION}
 _TARGET_MISS_EXIT_CODE = 3
 _WORKER_STATUSES = {"completed", "target_reached", "target_not_reached"}
 _UNMEASURED_DEVICE_MEMORY: dict[str, object] = {
@@ -84,7 +86,7 @@ def _failure_payload(
     config: SparseBenchmarkConfig, result: SupervisedResult
 ) -> dict[str, object]:
     return {
-        "schema_version": 1,
+        "schema_version": _RESULT_SCHEMA_VERSION,
         "status": result.status,
         "config": config_to_dict(config),
         "error_output": result.stdout,
@@ -99,12 +101,14 @@ def _parse_worker_payload(output: str) -> tuple[dict[str, object], list[str]]:
             payload = json.loads(lines[index])
         except json.JSONDecodeError:
             continue
+        schema = payload.get("schema_version") if isinstance(payload, dict) else None
         required = ("status", "config", "metrics", "timings", "environment")
         valid = (
             isinstance(payload, dict)
-            and payload.get("schema_version") == 1
+            and schema in _SUPPORTED_RESULT_SCHEMAS
             and payload.get("status") in _WORKER_STATUSES
             and all(isinstance(payload.get(name), dict) for name in required[1:])
+            and (schema == 1 or isinstance(payload.get("topology"), dict))
         )
         if valid:
             return payload, [*lines[:index], *lines[index + 1 :]]

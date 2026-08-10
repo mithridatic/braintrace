@@ -30,6 +30,7 @@ requested neuron count and update budget.
 | BPTT baseline                             | 12, 14             |
 | Held-out learning evidence                | 15                 |
 | Configurable sparse scaling               | 16                 |
+| Delayed-cue temporal credit               | 17                 |
 
 ### File-by-file summary
 
@@ -51,6 +52,7 @@ requested neuron count and update budget.
 | 14 | `14-knob-vjp-method-contrast.py`    | single-step vs multi-step vs BPTT head-to-head on DMS   |
 | 15 | `15-sparse-temporal-learning.py`    | Sparse LIF learning on held-out handwritten digits      |
 | 16 | `16-configurable-sparse-benchmark.py` | Guarded synthetic sparse-CSR scaling and target timing |
+| 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
 
 ### Configurable benchmark
 
@@ -71,6 +73,11 @@ size, optimizer settings, trace decay, evaluation cadence, sparse backend,
 recurrent scaling basis, and resource limits. Each run uses a fresh worker
 process and prints one schema-versioned JSON result. The default wall-clock
 limit is 30 minutes. Progress goes to stderr.
+
+New runs emit schema 2 with
+`topology_family="legacy_translated_offsets"`, the realized self-loop count,
+and an explicit note that those loops are seed-dependent. Existing schema-1
+artifacts remain valid and the supervisor continues to parse them.
 
 Run on an accelerator, refusing to fall back to the host:
 
@@ -94,6 +101,24 @@ backend among them. The two are not comparable and neither is a total.
 
 Cross-reference: for the `fast_solve` knob (shared with D_RTRL but not
 required for pp_prop), see `examples/drtrl/11-knob-fast-solve.py`.
+
+### Temporal-credit benchmark
+
+Example 17 uses a committed 12-bundle seed manifest and seven matched arms. Its
+response window contains only a label-independent go cue. Development runs must
+pass `--allow-dirty`; sealed-test runs fail closed on a dirty source tree.
+
+    python examples/pp_prop/17-temporal-credit-benchmark.py --device cpu --horizon short --updates 2 --neurons 24 --degree 4 --allow-dirty
+
+Run the gated short-to-medium-to-long curriculum and the fixed 24-neuron
+gradient reference on an accelerator:
+
+    python examples/pp_prop/17-temporal-credit-benchmark.py --device gpu --arm all_pp_prop --curriculum --gradient-evidence --allow-dirty --json-output temporal-credit.json
+
+See `docs/specs/2026-08-10-temporal-credit-benchmark.md` for the claim boundary,
+statistical gates, sealed analysis, and release policy. Development output is
+not scientific evidence; omit `--allow-dirty` and pass `--sealed-test` only on
+the accepted clean commit.
 
 ## Tutorial
 

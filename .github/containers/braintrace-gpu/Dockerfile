@@ -1,0 +1,35 @@
+FROM python:3.14.0-slim-trixie@sha256:5af4c7f950774a1abf3fd4e8e3fc95f4d0fe684c7fdc1eb10777fc5a017371c7
+
+ARG BRAINTRACE_SOURCE_COMMIT=uncommitted
+
+LABEL org.opencontainers.image.title="BrainTrace temporal-credit GPU runtime" \
+      org.opencontainers.image.version="0.11.0-py314" \
+      org.opencontainers.image.revision="${BRAINTRACE_SOURCE_COMMIT}"
+
+ENV JAX_PLATFORMS="" \
+    XLA_PYTHON_CLIENT_PREALLOCATE=false \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN python -m pip install --no-cache-dir \
+      "numpy==2.4.6" \
+      "scikit-learn==1.9.0" \
+      "psutil==7.2.2" \
+      "hypothesis==6.165.2" \
+      "pytest==9.1.1" \
+      "brainstate==0.5.3" \
+      "brainunit==0.5.2" \
+      "brainevent[cuda12]==0.2.1" \
+      "braintools==0.3.0" \
+      "brainpy==2.8.2" \
+      "brainpy-state==0.1.0" \
+      "jax[cuda12]==0.11.0"
+
+COPY . /opt/braintrace
+
+RUN python -m pip install --no-cache-dir --no-deps "/opt/braintrace[cuda12,examples]" \
+    && python -c "import jax, sys; assert sys.version_info[:2] == (3, 14); assert jax.__version__ == '0.11.0'"
+
+WORKDIR /work
+
+CMD ["python", "examples/pp_prop/17-temporal-credit-benchmark.py", "--help"]

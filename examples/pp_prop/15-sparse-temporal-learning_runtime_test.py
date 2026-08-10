@@ -18,11 +18,12 @@ def _load():
 def test_custom_config_controls_sparse_topology_and_scale():
     example = _load()
     common = dict(seed=0, n_epochs=1, batch_size=1, n_rec=12, degree=3)
-    neuron_scaled = example._Net(example._RunConfig(**common))
-    degree_scaled = example._Net(
-        example._RunConfig(**common, recurrent_scale_basis="degree")
-    )
-    other_seed = example._Net(example._RunConfig(**(common | {"seed": 1})))
+    with example.brainstate.environ.context(dt=1.0 * example.u.ms):
+        neuron_scaled = example._Net(example._RunConfig(**common))
+        degree_scaled = example._Net(
+            example._RunConfig(**common, recurrent_scale_basis="degree")
+        )
+        other_seed = example._Net(example._RunConfig(**(common | {"seed": 1})))
     neuron_values = np.asarray(
         example.u.get_mantissa(
             neuron_scaled.cell.rec_syn.comm.weight.value["weight"]

@@ -1,0 +1,239 @@
+{
+  "bundles": [
+    {
+      "bundle_id": "split0-topology0-weight0",
+      "evaluation_encoding_seeds": [
+        404957872,
+        3631603620,
+        3194688560,
+        575489032,
+        2077102468,
+        1904045692,
+        750849854,
+        4197398880
+      ],
+      "split_seed": 4240395627,
+      "test_commitment_sha256": "ba996aa8b641eb68339898bcd8936624d69d55a3eac7fad7d4611fcbe9b73cde",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 1534222160,
+      "training_order_seed": 3244608299,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split0-topology0-weight1",
+      "evaluation_encoding_seeds": [
+        3041510999,
+        2786877943,
+        605194778,
+        157592027,
+        2486563559,
+        3588506878,
+        180333530,
+        718763783
+      ],
+      "split_seed": 4240395627,
+      "test_commitment_sha256": "ba996aa8b641eb68339898bcd8936624d69d55a3eac7fad7d4611fcbe9b73cde",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 1036907685,
+      "training_order_seed": 4171886107,
+      "weight_seed": 3635958301
+    },
+    {
+      "bundle_id": "split0-topology1-weight0",
+      "evaluation_encoding_seeds": [
+        2456545703,
+        127541456,
+        1921617661,
+        428952639,
+        1229115768,
+        3180592792,
+        665344747,
+        4000054653
+      ],
+      "split_seed": 4240395627,
+      "test_commitment_sha256": "ba996aa8b641eb68339898bcd8936624d69d55a3eac7fad7d4611fcbe9b73cde",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 4027409841,
+      "training_order_seed": 3782183945,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split0-topology1-weight1",
+      "evaluation_encoding_seeds": [
+        2427547890,
+        4002939325,
+        2609906937,
+        3715351712,
+        3491065471,
+        1420753985,
+        3257753365,
+        1866996390
+      ],
+      "split_seed": 4240395627,
+      "test_commitment_sha256": "ba996aa8b641eb68339898bcd8936624d69d55a3eac7fad7d4611fcbe9b73cde",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 596383152,
+      "training_order_seed": 3048731291,
+      "weight_seed": 3635958301
+    },
+    {
+      "bundle_id": "split1-topology0-weight0",
+      "evaluation_encoding_seeds": [
+        934559650,
+        1140825067,
+        1824151227,
+        1995080823,
+        1134669786,
+        2459822652,
+        2125909271,
+        4191566841
+      ],
+      "split_seed": 3299747792,
+      "test_commitment_sha256": "e1c91927af3740d12885746d04f5f3971ce9bdd22faa790ab4a38f5d4ed084e4",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 1230035731,
+      "training_order_seed": 2935040139,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split1-topology0-weight1",
+      "evaluation_encoding_seeds": [
+        762765604,
+        239761760,
+        1367395868,
+        1659529494,
+        3449319446,
+        1672499001,
+        1232245410,
+        504723386
+      ],
+      "split_seed": 3299747792,
+      "test_commitment_sha256": "e1c91927af3740d12885746d04f5f3971ce9bdd22faa790ab4a38f5d4ed084e4",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 3116357796,
+      "training_order_seed": 985691072,
+      "weight_seed": 3635958301
+    },
+    {
+      "bundle_id": "split1-topology1-weight0",
+      "evaluation_encoding_seeds": [
+        3388967101,
+        1812516650,
+        3395345770,
+        2252015378,
+        2559448499,
+        4109751825,
+        223898896,
+        3514688348
+      ],
+      "split_seed": 3299747792,
+      "test_commitment_sha256": "e1c91927af3740d12885746d04f5f3971ce9bdd22faa790ab4a38f5d4ed084e4",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 457999372,
+      "training_order_seed": 835247856,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split1-topology1-weight1",
+      "evaluation_encoding_seeds": [
+        794437075,
+        1039791643,
+        1745493744,
+        913009870,
+        3160793212,
+        3169866690,
+        248929367,
+        1260159291
+      ],
+      "split_seed": 3299747792,
+      "test_commitment_sha256": "e1c91927af3740d12885746d04f5f3971ce9bdd22faa790ab4a38f5d4ed084e4",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 986777488,
+      "training_order_seed": 346778636,
+      "weight_seed": 3635958301
+    },
+    {
+      "bundle_id": "split2-topology0-weight0",
+      "evaluation_encoding_seeds": [
+        434417400,
+        702120280,
+        3802590029,
+        1642021087,
+        3124960992,
+        3727862711,
+        1976498965,
+        3715437655
+      ],
+      "split_seed": 428767645,
+      "test_commitment_sha256": "15c7a99fa4d44cce791c6d5cc442eab4e2ec5ed97c6c1ff9e87b2bdc33e08f1b",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 3946786545,
+      "training_order_seed": 1067447608,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split2-topology0-weight1",
+      "evaluation_encoding_seeds": [
+        1253713152,
+        928746850,
+        1813434508,
+        1188391434,
+        1878234088,
+        1886170712,
+        1219309181,
+        571217963
+      ],
+      "split_seed": 428767645,
+      "test_commitment_sha256": "15c7a99fa4d44cce791c6d5cc442eab4e2ec5ed97c6c1ff9e87b2bdc33e08f1b",
+      "topology_seed": 475518980,
+      "training_encoding_seed": 4219972222,
+      "training_order_seed": 2680019880,
+      "weight_seed": 3635958301
+    },
+    {
+      "bundle_id": "split2-topology1-weight0",
+      "evaluation_encoding_seeds": [
+        3097818110,
+        2074116140,
+        1042143076,
+        117092324,
+        2321119712,
+        3387492112,
+        4030752654,
+        978789146
+      ],
+      "split_seed": 428767645,
+      "test_commitment_sha256": "15c7a99fa4d44cce791c6d5cc442eab4e2ec5ed97c6c1ff9e87b2bdc33e08f1b",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 1088866226,
+      "training_order_seed": 3836057864,
+      "weight_seed": 2803593026
+    },
+    {
+      "bundle_id": "split2-topology1-weight1",
+      "evaluation_encoding_seeds": [
+        969463840,
+        2029445898,
+        3313722017,
+        3680805834,
+        2274959240,
+        1213800808,
+        3550032764,
+        1849700140
+      ],
+      "split_seed": 428767645,
+      "test_commitment_sha256": "15c7a99fa4d44cce791c6d5cc442eab4e2ec5ed97c6c1ff9e87b2bdc33e08f1b",
+      "topology_seed": 1341494302,
+      "training_encoding_seed": 1387367183,
+      "training_order_seed": 2014613356,
+      "weight_seed": 3635958301
+    }
+  ],
+  "master_seed": 20260810,
+  "schema_version": 1,
+  "split_sizes": {
+    "test": 512,
+    "train": 1024,
+    "validation": 256
+  }
+}

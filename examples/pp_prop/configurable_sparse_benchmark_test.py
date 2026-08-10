@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from sparse_benchmark_config import SparseBenchmarkConfig
 from sparse_benchmark_supervisor import SupervisedResult
 
@@ -24,6 +26,17 @@ def _valid_payload(config: SparseBenchmarkConfig) -> dict[str, object]:
     }
 
 
+def _valid_schema_two_payload(config: SparseBenchmarkConfig) -> dict[str, object]:
+    payload = _valid_payload(config)
+    payload["schema_version"] = 2
+    payload["topology"] = {
+        "topology_family": "legacy_translated_offsets",
+        "realized_self_loop_count": 0,
+        "self_loops_are_seed_dependent": True,
+    }
+    return payload
+
+
 def test_worker_payload_is_separated_from_progress() -> None:
     payload = _valid_payload(SparseBenchmarkConfig())
     output = f"update=1 loss=0.5\n{json.dumps(payload)}\n"
@@ -32,6 +45,20 @@ def test_worker_payload_is_separated_from_progress() -> None:
 
     assert parsed == payload
     assert progress == ["update=1 loss=0.5"]
+
+
+def test_schema_two_requires_topology_and_schema_one_remains_valid() -> None:
+    config = SparseBenchmarkConfig()
+    schema_two = _valid_schema_two_payload(config)
+
+    assert _parse_worker_payload(json.dumps(schema_two))[0] == schema_two
+    assert (
+        _parse_worker_payload(json.dumps(_valid_payload(config)))[0]["schema_version"]
+        == 1
+    )
+    del schema_two["topology"]
+    with pytest.raises(ValueError, match="schema-versioned JSON result"):
+        _parse_worker_payload(json.dumps(schema_two))
 
 
 def test_completed_payload_adds_peak_memory() -> None:
@@ -77,9 +104,7 @@ def test_completed_payload_reports_an_unmeasured_device_as_absent() -> None:
 
 def test_missing_schema_fields_fail_closed() -> None:
     config = SparseBenchmarkConfig()
-    result = SupervisedResult(
-        0, '{"schema_version": 1}', 10, "completed", None
-    )
+    result = SupervisedResult(0, '{"schema_version": 1}', 10, "completed", None)
 
     payload = _completed_payload(config, result)
 
@@ -100,9 +125,7 @@ def test_unknown_worker_status_is_rejected() -> None:
 
 def test_memory_guard_failure_is_structured() -> None:
     config = SparseBenchmarkConfig()
-    result = SupervisedResult(
-        2, "", 512, "memory_guard", "rss_limit_exceeded"
-    )
+    result = SupervisedResult(2, "", 512, "memory_guard", "rss_limit_exceeded")
 
     payload = _failure_payload(config, result)
 

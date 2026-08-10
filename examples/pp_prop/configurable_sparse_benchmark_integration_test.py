@@ -12,10 +12,26 @@ import pytest
 
 SCRIPT = pathlib.Path(__file__).with_name("16-configurable-sparse-benchmark.py")
 _TINY_RUN = (
-    "--mode", "fixed-work", "--device", "cpu",
-    "--neurons", "12", "--degree", "3", "--steps", "3", "--final-window", "1",
-    "--updates", "1", "--max-rss-gib", "4", "--min-available-gib", "1",
-    "--max-wall-seconds", "120",
+    "--mode",
+    "fixed-work",
+    "--device",
+    "cpu",
+    "--neurons",
+    "12",
+    "--degree",
+    "3",
+    "--steps",
+    "3",
+    "--final-window",
+    "1",
+    "--updates",
+    "1",
+    "--max-rss-gib",
+    "4",
+    "--min-available-gib",
+    "1",
+    "--max-wall-seconds",
+    "120",
 )
 
 
@@ -31,8 +47,11 @@ def test_tiny_supervised_worker_emits_learning_schema():
     )
     payload = json.loads(completed.stdout)
 
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["status"] == "completed"
+    assert payload["topology"]["topology_family"] == "legacy_translated_offsets"
+    assert isinstance(payload["topology"]["realized_self_loop_count"], int)
+    assert payload["topology"]["self_loops_are_seed_dependent"] is True
     assert payload["metrics"]["recurrent_nnz"] == 36
     assert payload["metrics"]["updates_completed"] == 1
     assert payload["memory"]["peak_rss_bytes"] > 0

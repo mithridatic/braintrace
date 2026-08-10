@@ -276,9 +276,7 @@ def _timings(outcome: _Outcome) -> dict[str, object]:
     return {
         "setup_seconds": outcome.setup_seconds,
         "cold_update_seconds": (
-            outcome.state.update_seconds[0]
-            if outcome.state.update_seconds
-            else None
+            outcome.state.update_seconds[0] if outcome.state.update_seconds else None
         ),
         "warm_update_median_seconds": statistics.median(warmed) if warmed else None,
         "update_seconds": outcome.state.update_seconds,
@@ -292,7 +290,11 @@ def _status(config: SparseBenchmarkConfig, state: _RunState) -> str:
         return "target_not_reached"
     if config.mode == "fixed-work":
         return "completed"
-    return "target_reached" if state.threshold_updates is not None else "target_not_reached"
+    return (
+        "target_reached"
+        if state.threshold_updates is not None
+        else "target_not_reached"
+    )
 
 
 def _metrics(outcome: _Outcome) -> dict[str, object]:
@@ -301,8 +303,7 @@ def _metrics(outcome: _Outcome) -> dict[str, object]:
     evaluations = len(outcome.state.validation_history)
     valid_examples = outcome.runtime.data.valid_labels.size
     padded_valid = int(
-        np.ceil(valid_examples / outcome.config.batch_size)
-        * outcome.config.batch_size
+        np.ceil(valid_examples / outcome.config.batch_size) * outcome.config.batch_size
     )
     return {
         "updates_completed": outcome.state.updates,
@@ -333,6 +334,17 @@ def _metrics(outcome: _Outcome) -> dict[str, object]:
     }
 
 
+def _legacy_topology(outcome: _Outcome) -> dict[str, object]:
+    sparse = outcome.runtime.experiment.model.cell.rec_syn.comm.spar_mat
+    indices = np.asarray(sparse.indices)
+    rows = np.repeat(np.arange(outcome.config.neurons), outcome.config.degree)
+    return {
+        "topology_family": "legacy_translated_offsets",
+        "realized_self_loop_count": int(np.count_nonzero(indices == rows)),
+        "self_loops_are_seed_dependent": True,
+    }
+
+
 def run_benchmark(config: SparseBenchmarkConfig) -> dict[str, object]:
     """Run one benchmark configuration inside the current worker process.
 
@@ -352,16 +364,15 @@ def run_benchmark(config: SparseBenchmarkConfig) -> dict[str, object]:
         runtime, setup_seconds = _build_runtime(config)
         recurrent_before = _recurrent_values(runtime).copy()
         state = _run_updates(runtime, config)
-    outcome = _Outcome(
-        runtime, config, state, recurrent_before, setup_seconds, 0.0
-    )
+    outcome = _Outcome(runtime, config, state, recurrent_before, setup_seconds, 0.0)
     metrics = _metrics(outcome)
     environment = _environment()
     outcome = replace(outcome, total_seconds=time.perf_counter() - started)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": _status(config, state),
         "config": config_to_dict(config),
+        "topology": _legacy_topology(outcome),
         "metrics": metrics,
         "timings": _timings(outcome),
         "environment": environment,

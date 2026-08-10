@@ -6,8 +6,6 @@ optimize the same final-step classification loss. The multi-step learner uses
 four 10-step windows by default.
 """
 
-import pathlib
-import sys
 from typing import Dict
 
 import brainstate
@@ -15,8 +13,7 @@ import braintools
 import jax.numpy as jnp
 import brainunit as u
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+from examples.pp_prop import _shared
 
 
 class Net(brainstate.nn.Module):
