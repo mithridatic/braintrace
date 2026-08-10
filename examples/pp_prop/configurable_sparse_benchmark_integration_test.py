@@ -1,6 +1,7 @@
 """End-to-end test for the configurable sparse pp-prop benchmark."""
 
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -50,14 +51,32 @@ def test_a_requested_gpu_is_refused_rather_than_run_on_the_host():
     assert "requested device gpu" in payload["error_output"]
 
 
-def test_the_host_backend_can_be_pinned():
-    command = [sys.executable, str(SCRIPT), *_TINY_RUN, "--device", "cpu"]
-
-    completed = subprocess.run(
-        command, check=True, capture_output=True, text=True, timeout=150
+def _run_inheriting_an_absent_platform(device: str) -> subprocess.CompletedProcess:
+    environment = {**os.environ, "JAX_PLATFORMS": "cuda"}
+    command = [sys.executable, str(SCRIPT), *_TINY_RUN, "--device", device]
+    return subprocess.run(
+        command, env=environment, capture_output=True, text=True, timeout=150
     )
+
+
+def test_an_inherited_platform_decides_the_backend_without_a_pin():
+    if jax.default_backend() in {"gpu", "cuda", "rocm"}:
+        pytest.skip("this host can initialize cuda, so the request is satisfiable")
+
+    completed = _run_inheriting_an_absent_platform("auto")
+
+    assert completed.returncode != 0
+    assert json.loads(completed.stdout)["status"] == "failed"
+
+
+def test_the_host_backend_can_be_pinned_over_an_inherited_platform():
+    if jax.default_backend() in {"gpu", "cuda", "rocm"}:
+        pytest.skip("this host can initialize cuda, so the request is satisfiable")
+
+    completed = _run_inheriting_an_absent_platform("cpu")
     payload = json.loads(completed.stdout)
 
+    assert completed.returncode == 0
     assert payload["status"] == "completed"
     assert payload["environment"]["backend"] == "cpu"
     assert payload["config"]["device"] == "cpu"
