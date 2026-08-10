@@ -76,8 +76,8 @@ class SparseBenchmarkConfig:
         Optional result destination.
     """
 
-    mode: BenchmarkMode = "fixed-work"
-    neurons: int = 96
+    mode: BenchmarkMode = "validation-target"
+    neurons: int = 32768
     degree: int = 8
     batch_size: int = 32
     steps: int = 30
@@ -86,13 +86,13 @@ class SparseBenchmarkConfig:
     max_epochs: int = 5
     updates: int = 3
     eval_interval: int = 1
-    target_accuracy: float = 0.95
+    target_accuracy: float = 1.0
     learning_rate: float = 3e-3
     decay: float = 0.95
     clip_norm: float = 1.0
     sparse_backend: SparseBackend = "jax_raw"
     recurrent_scale_basis: ScaleBasis = "degree"
-    device: DeviceSelection = "auto"
+    device: DeviceSelection = "gpu"
     max_rss_gib: float = 12.0
     min_available_gib: float = 12.0
     max_wall_seconds: float = 1800.0

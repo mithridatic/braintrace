@@ -12,14 +12,18 @@ from sparse_benchmark_config import (
 )
 
 
-def test_defaults_describe_safe_fixed_work() -> None:
+def test_defaults_describe_gpu_target_search() -> None:
     config = parse_config([])
 
     assert config == SparseBenchmarkConfig()
+    assert config.mode == "validation-target"
+    assert config.neurons == 32768
     assert config.updates == 3
+    assert config.max_epochs == 5
+    assert config.target_accuracy == 1.0
     assert config.recurrent_scale_basis == "degree"
     assert config.sparse_backend == "jax_raw"
-    assert config.device == "auto"
+    assert config.device == "gpu"
 
 
 def test_all_arguments_parse() -> None:

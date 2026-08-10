@@ -23,7 +23,9 @@ def test_initial_target_is_recorded_at_zero_ticks() -> None:
 
 
 def test_threshold_latches_first_passing_checkpoint() -> None:
-    config = SparseBenchmarkConfig(steps=7, final_window=2)
+    config = SparseBenchmarkConfig(
+        steps=7, final_window=2, target_accuracy=0.95
+    )
     state = _RunState(updates=1)
 
     _record_validation(state, config, 0.8)
@@ -37,7 +39,7 @@ def test_threshold_latches_first_passing_checkpoint() -> None:
 
 
 def test_update_budget_depends_on_mode() -> None:
-    fixed = SparseBenchmarkConfig(updates=4)
+    fixed = SparseBenchmarkConfig(mode="fixed-work", updates=4)
     target = SparseBenchmarkConfig(
         mode="validation-target", batch_size=32, max_epochs=2
     )

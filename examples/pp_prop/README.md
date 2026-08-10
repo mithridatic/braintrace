@@ -54,9 +54,13 @@ requested neuron count and update budget.
 
 ### Configurable benchmark
 
-Run an isolated fixed-work measurement:
+Run the default guarded GPU target search at 32,768 neurons and 100 percent:
 
-    python examples/pp_prop/16-configurable-sparse-benchmark.py --neurons 131072 --degree 8 --updates 3
+    python examples/pp_prop/16-configurable-sparse-benchmark.py
+
+Run an explicit fixed-work measurement:
+
+    python examples/pp_prop/16-configurable-sparse-benchmark.py --mode fixed-work --neurons 131072 --degree 8 --updates 3
 
 Measure the first validation checkpoint at or above 95 percent:
 
@@ -72,9 +76,9 @@ Run on an accelerator, refusing to fall back to the host:
 
     python examples/pp_prop/16-configurable-sparse-benchmark.py --device gpu --neurons 131072 --degree 8 --updates 3
 
-`--device` takes `auto` (the default: whatever JAX binds), `cpu` (pins the host
-backend, so a GPU host can still measure the CPU arm) and `gpu` (requires an
-accelerator). A `gpu` run on a host with no accelerator plugin exits nonzero
+`--device` takes `auto` (whatever JAX binds), `cpu` (pins the host backend, so a
+GPU host can still measure the CPU arm) and `gpu` (the default, requiring an
+accelerator). A default run on a host with no accelerator plugin exits nonzero
 with `requested device gpu, bound backend is cpu` rather than reporting host
 timings under an accelerator heading. Installing the CUDA plugin is what makes
 an accelerator available; `--device gpu` only refuses to proceed without one.

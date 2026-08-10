@@ -12,6 +12,7 @@ import pytest
 
 SCRIPT = pathlib.Path(__file__).with_name("16-configurable-sparse-benchmark.py")
 _TINY_RUN = (
+    "--mode", "fixed-work", "--device", "cpu",
     "--neurons", "12", "--degree", "3", "--steps", "3", "--final-window", "1",
     "--updates", "1", "--max-rss-gib", "4", "--min-available-gib", "1",
     "--max-wall-seconds", "120",
