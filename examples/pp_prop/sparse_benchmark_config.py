@@ -8,6 +8,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal, Sequence, cast
 
+try:
+    from .sparse_benchmark_device import DEVICE_SELECTIONS, DeviceSelection
+except ImportError:
+    from sparse_benchmark_device import DEVICE_SELECTIONS, DeviceSelection
+
 
 BenchmarkMode = Literal["fixed-work", "validation-target"]
 SparseBackend = Literal["jax_raw", "default"]
@@ -55,6 +60,10 @@ class SparseBenchmarkConfig:
         Brainevent sparse backend selection.
     recurrent_scale_basis : {"degree", "neurons"}
         Denominator used for recurrent initialization scaling.
+    device : {"auto", "cpu", "gpu"}
+        Backend the worker runs on. ``"auto"`` accepts whatever JAX binds,
+        ``"cpu"`` pins the host backend, and ``"gpu"`` fails the run rather than
+        falling back to the host.
     max_rss_gib : float
         Worker process-tree RSS ceiling.
     min_available_gib : float
@@ -83,6 +92,7 @@ class SparseBenchmarkConfig:
     clip_norm: float = 1.0
     sparse_backend: SparseBackend = "jax_raw"
     recurrent_scale_basis: ScaleBasis = "degree"
+    device: DeviceSelection = "auto"
     max_rss_gib: float = 12.0
     min_available_gib: float = 12.0
     max_wall_seconds: float = 1800.0
@@ -116,6 +126,7 @@ class SparseBenchmarkConfig:
         _require_choice(
             "recurrent_scale_basis", self.recurrent_scale_basis, ("degree", "neurons")
         )
+        _require_choice("device", self.device, DEVICE_SELECTIONS)
         _require_positive_float("max_rss_gib", self.max_rss_gib)
         _require_nonnegative_float("min_available_gib", self.min_available_gib)
         _require_positive_float("max_wall_seconds", self.max_wall_seconds)
@@ -167,6 +178,9 @@ def parse_config(argv: Sequence[str] | None = None) -> SparseBenchmarkConfig:
         choices=("degree", "neurons"),
         default=defaults.recurrent_scale_basis,
     )
+    parser.add_argument(
+        "--device", choices=DEVICE_SELECTIONS, default=defaults.device
+    )
     parser.add_argument("--max-rss-gib", type=float, default=defaults.max_rss_gib)
     parser.add_argument("--min-available-gib", type=float, default=defaults.min_available_gib)
     parser.add_argument(
@@ -180,6 +194,7 @@ def parse_config(argv: Sequence[str] | None = None) -> SparseBenchmarkConfig:
     values["mode"] = cast(BenchmarkMode, values["mode"])
     values["sparse_backend"] = cast(SparseBackend, values["sparse_backend"])
     values["recurrent_scale_basis"] = cast(ScaleBasis, values["recurrent_scale_basis"])
+    values["device"] = cast(DeviceSelection, values["device"])
     return SparseBenchmarkConfig(**values)
 
 

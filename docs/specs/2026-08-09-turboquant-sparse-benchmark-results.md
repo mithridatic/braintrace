@@ -157,6 +157,13 @@ subtracted, so this is coarser than the CPU RSS figures and is reported only to
 show the arms allocate the same. The 2.5% host-RSS regression measured on CPU
 does not have a device-side counterpart worth quoting at this resolution.
 
+The benchmark has since gained `--device` and now reports the XLA allocator peak
+itself, as `memory.device_peak_bytes`. That is a different instrument from the
+one behind this table: it counts live allocation inside the process rather than
+whole-device occupancy, so it does not include the preallocated pool or any
+other tenant. The table above is left as measured and the two figures should not
+be compared without re-running both.
+
 ### Quality
 
 | Seed | Arm | Loss trajectory | Accuracy |
@@ -204,7 +211,22 @@ PYTHONPATH=<path> python turboquant_state_study.py --neurons 131072 ...
 runs on. The speed conclusion in section 3 of the spec is backend-specific and
 should be re-derived from that output before being carried to a GPU.
 
-For the GPU figures, on a host with a CUDA device and `jax[cuda12]` installed:
+The arm figures above predate `--device`; both arms were selected by
+`PYTHONPATH` and inherited whatever backend JAX bound in the container. On a
+host with a CUDA device installed, the same runs now assert the backend rather
+than inheriting it:
+
+```
+PYTHONPATH=<path> python 16-configurable-sparse-benchmark.py --device gpu \
+  --neurons 131072 --degree 8 --updates 5 --eval-interval 5 --seed 0
+```
+
+Without an accelerator that command exits 1 with `requested device gpu, bound
+backend is cpu`; `--device cpu` pins the host backend, which is how the CPU arm
+is measured on a machine that has a GPU.
+
+For the GPU probe figures, on a host with a CUDA device and `jax[cuda12]`
+installed:
 
 ```
 PYTHONPATH=<path> python turboquant_gpu_probe.py --require-gpu \

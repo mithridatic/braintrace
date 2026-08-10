@@ -22,8 +22,16 @@ import numpy as np
 
 try:
     from .sparse_benchmark_config import SparseBenchmarkConfig, config_to_dict
+    from .sparse_benchmark_device import (
+        device_memory_peak_bytes,
+        verify_device_selection,
+    )
 except ImportError:
     from sparse_benchmark_config import SparseBenchmarkConfig, config_to_dict
+    from sparse_benchmark_device import (
+        device_memory_peak_bytes,
+        verify_device_selection,
+    )
 
 
 @dataclass
@@ -203,6 +211,7 @@ def _source_fingerprint() -> str:
     for name in (
         "sparse_benchmark_worker.py",
         "sparse_benchmark_config.py",
+        "sparse_benchmark_device.py",
         "sparse_benchmark_supervisor.py",
         "configurable_sparse_benchmark.py",
         "16-configurable-sparse-benchmark.py",
@@ -244,6 +253,21 @@ def _environment() -> dict[str, object]:
         "backend": jax.default_backend(),
         "device": getattr(device, "device_kind", str(device)),
         "source_sha256": _source_fingerprint(),
+    }
+
+
+def _device_memory() -> dict[str, object]:
+    peak = device_memory_peak_bytes(jax.devices()[0])
+    if peak is None:
+        return {
+            "device_memory_scope": None,
+            "device_peak_bytes": None,
+            "device_peak_gib": None,
+        }
+    return {
+        "device_memory_scope": "jax_allocator_peak_bytes_in_use",
+        "device_peak_bytes": peak,
+        "device_peak_gib": peak / 2**30,
     }
 
 
@@ -322,6 +346,7 @@ def run_benchmark(config: SparseBenchmarkConfig) -> dict[str, object]:
     dict
         Schema-versioned benchmark result without supervisor telemetry.
     """
+    verify_device_selection(config.device, jax.devices()[0].platform)
     started = time.perf_counter()
     with brainstate.environ.context(dt=1.0 * u.ms):
         runtime, setup_seconds = _build_runtime(config)
@@ -345,5 +370,6 @@ def run_benchmark(config: SparseBenchmarkConfig) -> dict[str, object]:
             "peak_rss_bytes": None,
             "guard_status": None,
             "guard_reason": None,
+            **_device_memory(),
         },
     }

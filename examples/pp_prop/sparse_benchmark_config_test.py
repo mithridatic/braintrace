@@ -19,6 +19,7 @@ def test_defaults_describe_safe_fixed_work() -> None:
     assert config.updates == 3
     assert config.recurrent_scale_basis == "degree"
     assert config.sparse_backend == "jax_raw"
+    assert config.device == "auto"
 
 
 def test_all_arguments_parse() -> None:
@@ -30,6 +31,7 @@ def test_all_arguments_parse() -> None:
             "--eval-interval", "2", "--target-accuracy", "0.9",
             "--learning-rate", "0.001", "--decay", "0.8", "--clip-norm", "2.5",
             "--sparse-backend", "default", "--recurrent-scale-basis", "neurons",
+            "--device", "gpu",
             "--max-rss-gib", "10", "--min-available-gib", "0",
             "--max-wall-seconds", "90",
             "--require-target", "--json-output", "result.json",
@@ -41,13 +43,14 @@ def test_all_arguments_parse() -> None:
     assert config.batch_size == 24
     assert config.require_target
     assert config.max_wall_seconds == 90.0
+    assert config.device == "gpu"
     assert config.json_output == Path("result.json")
 
 
 def test_config_serializers_round_trip() -> None:
     original = SparseBenchmarkConfig(
         mode="validation-target", neurons=512, degree=4, batch_size=16,
-        sparse_backend="default", recurrent_scale_basis="neurons",
+        sparse_backend="default", recurrent_scale_basis="neurons", device="cpu",
         require_target=True, json_output=Path("metrics.json"),
     )
 
@@ -87,7 +90,17 @@ def test_invalid_numeric_config_is_rejected(change: dict[str, object], message: 
         SparseBenchmarkConfig(**values)
 
 
-@pytest.mark.parametrize("option", ["--mode", "--sparse-backend", "--recurrent-scale-basis"])
+def test_an_unknown_device_is_rejected() -> None:
+    values = config_to_dict(SparseBenchmarkConfig())
+    values["device"] = "tpu"
+
+    with pytest.raises(ValueError, match="device"):
+        SparseBenchmarkConfig(**values)
+
+
+@pytest.mark.parametrize(
+    "option", ["--mode", "--sparse-backend", "--recurrent-scale-basis", "--device"]
+)
 def test_parser_rejects_unknown_choices(option: str) -> None:
     with pytest.raises(SystemExit):
         parse_config([option, "unknown"])

@@ -14,6 +14,7 @@ try:
         config_to_dict,
         parse_config,
     )
+    from .sparse_benchmark_device import apply_device_selection
     from .sparse_benchmark_supervisor import (
         ResourceLimits,
         SupervisedResult,
@@ -26,6 +27,7 @@ except ImportError:
         config_to_dict,
         parse_config,
     )
+    from sparse_benchmark_device import apply_device_selection
     from sparse_benchmark_supervisor import (
         ResourceLimits,
         SupervisedResult,
@@ -36,6 +38,33 @@ except ImportError:
 _WORKER_FLAG = "--worker"
 _TARGET_MISS_EXIT_CODE = 3
 _WORKER_STATUSES = {"completed", "target_reached", "target_not_reached"}
+_UNMEASURED_DEVICE_MEMORY: dict[str, object] = {
+    "device_memory_scope": None,
+    "device_peak_bytes": None,
+    "device_peak_gib": None,
+}
+
+
+def _host_memory(result: SupervisedResult) -> dict[str, object]:
+    return {
+        "scope": "cpu_process_tree_rss",
+        "peak_rss_bytes": result.peak_rss_bytes,
+        "peak_rss_gib": result.peak_rss_bytes / 2**30,
+        "peak_rss_is_sampled": True,
+        "sampling_interval_seconds": 0.1,
+        "guard_status": result.status,
+        "guard_reason": result.guard_reason,
+    }
+
+
+def _worker_memory(payload: dict[str, object]) -> dict[str, object]:
+    reported = payload.get("memory")
+    if not isinstance(reported, dict):
+        return dict(_UNMEASURED_DEVICE_MEMORY)
+    return {
+        name: reported.get(name, value)
+        for name, value in _UNMEASURED_DEVICE_MEMORY.items()
+    }
 
 
 def _limits(config: SparseBenchmarkConfig) -> ResourceLimits:
@@ -59,14 +88,7 @@ def _failure_payload(
         "status": result.status,
         "config": config_to_dict(config),
         "error_output": result.stdout,
-        "memory": {
-            "scope": "cpu_process_tree_rss",
-            "peak_rss_bytes": result.peak_rss_bytes,
-            "peak_rss_is_sampled": True,
-            "sampling_interval_seconds": 0.1,
-            "guard_status": result.status,
-            "guard_reason": result.guard_reason,
-        },
+        "memory": {**_UNMEASURED_DEVICE_MEMORY, **_host_memory(result)},
     }
 
 
@@ -106,15 +128,7 @@ def _completed_payload(
         return _failure_payload(config, failed)
     for line in progress:
         print(line, file=sys.stderr)
-    payload["memory"] = {
-        "scope": "cpu_process_tree_rss",
-        "peak_rss_bytes": result.peak_rss_bytes,
-        "peak_rss_gib": result.peak_rss_bytes / 2**30,
-        "peak_rss_is_sampled": True,
-        "sampling_interval_seconds": 0.1,
-        "guard_status": result.status,
-        "guard_reason": result.guard_reason,
-    }
+    payload["memory"] = {**_worker_memory(payload), **_host_memory(result)}
     return payload
 
 
@@ -169,6 +183,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = [argument for argument in arguments if argument != _WORKER_FLAG]
     config = parse_config(arguments)
     if worker:
+        apply_device_selection(config.device)
         try:
             from .sparse_benchmark_worker import run_benchmark
         except ImportError:

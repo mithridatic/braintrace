@@ -45,6 +45,36 @@ def test_completed_payload_adds_peak_memory() -> None:
     assert payload["memory"]["peak_rss_gib"] == 1.0
 
 
+def test_completed_payload_keeps_the_worker_device_peak() -> None:
+    config = SparseBenchmarkConfig()
+    reported = _valid_payload(config)
+    reported["memory"] = {
+        "device_memory_scope": "jax_allocator_peak_bytes_in_use",
+        "device_peak_bytes": 2**30,
+        "device_peak_gib": 1.0,
+        "peak_rss_bytes": None,
+    }
+    result = SupervisedResult(0, json.dumps(reported), 2**31, "completed", None)
+
+    payload = _completed_payload(config, result)
+
+    assert payload["memory"]["device_peak_bytes"] == 2**30
+    assert payload["memory"]["device_memory_scope"] == "jax_allocator_peak_bytes_in_use"
+    assert payload["memory"]["peak_rss_bytes"] == 2**31
+
+
+def test_completed_payload_reports_an_unmeasured_device_as_absent() -> None:
+    config = SparseBenchmarkConfig()
+    result = SupervisedResult(
+        0, json.dumps(_valid_payload(config)), 2**30, "completed", None
+    )
+
+    payload = _completed_payload(config, result)
+
+    assert payload["memory"]["device_peak_bytes"] is None
+    assert payload["memory"]["device_memory_scope"] is None
+
+
 def test_missing_schema_fields_fail_closed() -> None:
     config = SparseBenchmarkConfig()
     result = SupervisedResult(
@@ -78,6 +108,7 @@ def test_memory_guard_failure_is_structured() -> None:
 
     assert payload["status"] == "memory_guard"
     assert payload["memory"]["guard_reason"] == "rss_limit_exceeded"
+    assert payload["memory"]["device_peak_bytes"] is None
 
 
 def test_require_target_returns_nonzero_for_a_miss() -> None:

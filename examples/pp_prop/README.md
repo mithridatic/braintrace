@@ -68,12 +68,25 @@ recurrent scaling basis, and resource limits. Each run uses a fresh worker
 process and prints one schema-versioned JSON result. The default wall-clock
 limit is 30 minutes. Progress goes to stderr.
 
+Run on an accelerator, refusing to fall back to the host:
+
+    python examples/pp_prop/16-configurable-sparse-benchmark.py --device gpu --neurons 131072 --degree 8 --updates 3
+
+`--device` takes `auto` (the default: whatever JAX binds), `cpu` (pins the host
+backend, so a GPU host can still measure the CPU arm) and `gpu` (requires an
+accelerator). A `gpu` run on a host with no accelerator plugin exits nonzero
+with `requested device gpu, bound backend is cpu` rather than reporting host
+timings under an accelerator heading. Installing the CUDA plugin is what makes
+an accelerator available; `--device gpu` only refuses to proceed without one.
+
 This is a synthetic fixed-degree CSR classifier benchmark with trainable dense
 input and readout projections. It is not a connectome-learning benchmark.
 Time-to-target repeatedly checks the validation split and is therefore an
 adaptive validation metric, not an unbiased held-out estimate. Reported memory
-is the highest 100 ms sampled CPU process-tree RSS; GPU allocator memory is not
-measured.
+covers both sides of the device boundary: `peak_rss_bytes` is the highest 100 ms
+sampled host process-tree RSS, and `device_peak_bytes` is the XLA allocator peak
+live allocation, which is null on backends that report no statistics, the host
+backend among them. The two are not comparable and neither is a total.
 
 Cross-reference: for the `fast_solve` knob (shared with D_RTRL but not
 required for pp_prop), see `examples/drtrl/11-knob-fast-solve.py`.
