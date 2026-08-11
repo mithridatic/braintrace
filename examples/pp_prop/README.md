@@ -31,6 +31,7 @@ requested neuron count and update budget.
 | Held-out learning evidence                | 15                 |
 | Configurable sparse scaling               | 16                 |
 | Delayed-cue temporal credit               | 17                 |
+| Topology (fixed vs evolved)               | 18                 |
 
 ### File-by-file summary
 
@@ -53,6 +54,7 @@ requested neuron count and update budget.
 | 15 | `15-sparse-temporal-learning.py`    | Sparse LIF learning on held-out handwritten digits      |
 | 16 | `16-configurable-sparse-benchmark.py` | Guarded synthetic sparse-CSR scaling and target timing |
 | 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
+| 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 
 ### Configurable benchmark
 
