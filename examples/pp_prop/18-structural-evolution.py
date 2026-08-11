@@ -428,6 +428,92 @@ class _EvolutionConfig:
 # --- Topology helpers (pure NumPy, unit-tested) ----------------------------
 
 
+def _draw_free_pairs(
+    n_rec: int,
+    count: int,
+    row_weight: Optional[np.ndarray],
+    col_weight: Optional[np.ndarray],
+    keep_rows: np.ndarray,
+    keep_cols: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Draw ``count`` distinct free off-diagonal pairs without dense matrices.
+
+    Rows are drawn in proportion to ``row_weight`` and columns to
+    ``col_weight`` (uniform when the weight is ``None``), so a candidate
+    ``(i, j)`` lands with probability proportional to
+    ``row_weight[i] * col_weight[j]`` — the same product distribution the
+    dense joint-matrix draws produced, but sampled by independent endpoint
+    draws with rejection of self-loops, pairs already among
+    ``(keep_rows, keep_cols)``, and duplicates. Memory stays O(n_rec +
+    n_edges) at any ``n_rec``.
+
+    Parameters
+    ----------
+    n_rec : int
+        Number of recurrent neurons; rows and columns both index it.
+    count : int
+        Number of new pairs to draw.
+    row_weight, col_weight : np.ndarray or None
+        Per-neuron sampling weights for the two endpoints; ``None`` means
+        uniform. Weights must be non-negative with positive total.
+    keep_rows, keep_cols : np.ndarray
+        Endpoints of the existing edges; drawn pairs never duplicate them.
+    rng : np.random.Generator
+        Host-side randomness for the draw.
+
+    Returns
+    -------
+    np.ndarray
+        int64 flat indices ``row * n_rec + col`` of the drawn pairs.
+
+    Raises
+    ------
+    ValueError
+        If fewer than ``count`` free off-diagonal positions exist, a weight
+        vector has no positive mass, or the draw fails to converge.
+    """
+    capacity = n_rec * (n_rec - 1) - keep_rows.size
+    if count > capacity:
+        raise ValueError("no free off-diagonal positions left to draw from")
+    blocked = keep_rows.astype(np.int64) * n_rec + keep_cols.astype(np.int64)
+
+    def _probabilities(weight: Optional[np.ndarray]) -> Optional[np.ndarray]:
+        if weight is None:
+            return None
+        total = weight.sum()
+        if total <= 0.0:
+            raise ValueError("sampling weights carry no positive mass")
+        return weight / total
+
+    p_row = _probabilities(row_weight)
+    p_col = _probabilities(col_weight)
+    accepted = np.empty(0, dtype=np.int64)
+    batch = max(64, 2 * count)
+    for _ in range(1000):
+        if accepted.size >= count:
+            return rng.permutation(accepted)[:count]
+        rows = (
+            rng.integers(0, n_rec, size=batch)
+            if p_row is None
+            else rng.choice(n_rec, size=batch, replace=True, p=p_row)
+        )
+        cols = (
+            rng.integers(0, n_rec, size=batch)
+            if p_col is None
+            else rng.choice(n_rec, size=batch, replace=True, p=p_col)
+        )
+        flat = rows.astype(np.int64) * n_rec + cols.astype(np.int64)
+        free = (rows != cols) & ~np.isin(flat, blocked)
+        grown = np.unique(np.concatenate([accepted, flat[free]]))
+        if grown.size == accepted.size:
+            batch = min(batch * 16, 1 << 22)
+        else:
+            batch = max(64, 2 * (count - grown.size))
+        accepted = grown
+    raise ValueError("pair draw failed to converge on free positions")
+
+
 def _sample_irregular_topology(
     n_rec: int, n_edges: int, rng: np.random.Generator
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -448,11 +534,8 @@ def _sample_irregular_topology(
         ``(rows, cols)`` int64 arrays sorted lexicographically by row then
         column, with no self-loops and no duplicate pairs.
     """
-    off_diagonal = np.flatnonzero(np.ones((n_rec, n_rec), dtype=bool).ravel())
-    off_diagonal = off_diagonal[
-        (off_diagonal // n_rec) != (off_diagonal % n_rec)
-    ]
-    flat = rng.choice(off_diagonal, size=n_edges, replace=False)
+    empty = np.empty(0, dtype=np.int64)
+    flat = _draw_free_pairs(n_rec, n_edges, None, None, empty, empty, rng)
     rows, cols = flat // n_rec, flat % n_rec
     order = np.lexsort((cols, rows))
     return rows[order].astype(np.int64), cols[order].astype(np.int64)
@@ -565,14 +648,9 @@ def _respawn_endpoints(
         ``(new_rows, new_cols)`` int64 arrays of length ``count``.
     """
     activity = np.asarray(rates, dtype=np.float64) + floor
-    joint = activity[:, None] * activity[None, :]
-    np.fill_diagonal(joint, 0.0)
-    joint[keep_rows, keep_cols] = 0.0
-    weight = joint.ravel()
-    total = weight.sum()
-    if total <= 0.0:
-        raise ValueError("no free off-diagonal positions left to respawn into")
-    flat = rng.choice(weight.size, size=count, replace=False, p=weight / total)
+    flat = _draw_free_pairs(
+        n_rec, count, activity, activity, keep_rows, keep_cols, rng
+    )
     return (flat // n_rec).astype(np.int64), (flat % n_rec).astype(np.int64)
 
 
@@ -624,14 +702,9 @@ def _gradient_endpoints(
     supply = np.zeros(n_rec, dtype=np.float64)
     np.add.at(demand, rows, grad_mass)
     np.add.at(supply, cols, grad_mass)
-    joint = (demand[:, None] + floor) * (supply[None, :] + floor)
-    np.fill_diagonal(joint, 0.0)
-    joint[rows, cols] = 0.0
-    weight = joint.ravel()
-    total = weight.sum()
-    if total <= 0.0:
-        raise ValueError("no free off-diagonal positions left to grow into")
-    flat = rng.choice(weight.size, size=count, replace=False, p=weight / total)
+    flat = _draw_free_pairs(
+        n_rec, count, demand + floor, supply + floor, rows, cols, rng
+    )
     return (flat // n_rec).astype(np.int64), (flat % n_rec).astype(np.int64)
 
 

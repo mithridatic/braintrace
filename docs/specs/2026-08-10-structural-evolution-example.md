@@ -268,3 +268,23 @@ Tests: `_remap_edge_array` re-expresses per-edge arrays on a shrunk/grown
 edge list by pair identity; an integration test proves recurrent `mu`
 values land on their original edges after a shrink rebuild, dense-group
 moments copy elementwise, and Adam counts carry.
+
+
+## v10 (2026-08-11): sparse-safe pair sampling for large n_rec
+
+The three pair samplers materialized dense `n_rec x n_rec` weight or index
+matrices: `_sample_irregular_topology` built the full off-diagonal index
+set, and `_respawn_endpoints` / `_gradient_endpoints` built the dense joint
+weight matrix. At 65536 neurons that is ~34 GB — the example could not
+start. All three now share `_draw_free_pairs`, which draws rows and columns
+independently from the endpoint weightings and rejects self-loops, existing
+edges, and duplicates. The accepted-set distribution is the same product
+distribution the dense joint draws produced (weight of `(i, j)` is
+proportional to `row_weight[i] * col_weight[j]`), but memory stays
+O(n_rec + n_edges) at any `n_rec`. Batches escalate geometrically (x16, cap
+2^22 draws) when an iteration adds nothing, so peaked weightings still
+converge.
+
+Tests: unchanged — the 14-test suite passes against the same contracts
+(valid CSR endpoints, activity-floor reachability, hot-endpoint bias,
+gradient-marginal following).
