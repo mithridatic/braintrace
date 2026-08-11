@@ -306,6 +306,7 @@ class _EvolutionConfig:
     growth_factor: float = 1.1
     shrink_fraction: float = 0.1
     grow_rule: str = "activity"
+    max_growth_events: Optional[int] = None
     carry_optimizer_state: bool = True
     task_style: str = "simple"
     cue_rate_hz: float = 200.0
@@ -403,6 +404,10 @@ class _EvolutionConfig:
             raise ValueError("growth_factor must exceed one")
         if self.grow_rule not in ("activity", "gradient"):
             raise ValueError("grow_rule must be 'activity' or 'gradient'")
+        if self.max_growth_events is not None and (
+            isinstance(self.max_growth_events, bool) or self.max_growth_events < 0
+        ):
+            raise ValueError("max_growth_events must be a non-negative int or None")
         if not 0.0 < self.shrink_fraction < 1.0:
             raise ValueError("shrink_fraction must be in (0, 1)")
 
@@ -1433,6 +1438,7 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
         names = list(_TRICK_NAMES[: config.num_tricks])
     accuracies = [[] for _ in range(config.num_tricks)]
     round_losses, round_seconds, events = [], [], []
+    growth_events = 0
     acc = _evaluate(experiment, config)
     for task, value in enumerate(acc):
         accuracies[task].append(value)
@@ -1446,7 +1452,15 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
         current = int(experiment.task_mass.shape[1])
         if evolve and not config.fixed_budget:
             new_budget = _next_budget(current, min(acc), config)
+            if (
+                new_budget > current
+                and config.max_growth_events is not None
+                and growth_events >= config.max_growth_events
+            ):
+                new_budget = current
             if new_budget != current:
+                if new_budget > current:
+                    growth_events += 1
                 events.append(
                     {
                         "round": round_index + 1,

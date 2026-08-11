@@ -225,6 +225,30 @@ def test_adaptive_budget_three_round_forced_growth_and_shrink(tmp_path):
     )
 
 
+def test_adaptive_budget_respects_max_growth_events(tmp_path):
+    example = _load()
+    config = example._EvolutionConfig(
+        n_rec=32,
+        n_edges=32,
+        n_rounds=3,
+        trials_per_round=4,
+        eval_trials_per_task=2,
+        rate_probe_trials=2,
+        max_edges=64,
+        min_edges=16,
+        target_accuracy=1.01,  # demand stays high: would grow every round
+        max_growth_events=1,
+    )
+    result = example.run(config, tmp_path / "capped.png")
+    counts = result["evolve"]["edge_counts"]
+    assert counts == [32, 35, 35, 35]
+    kinds = [event["kind"] for event in result["evolve"]["events"]]
+    assert kinds == ["grow"]
+    _assert_valid_csr(
+        example, result["evolve"]["rows"], result["evolve"]["cols"], 32
+    )
+
+
 def test_temporal_credit_smoke_round_runs(tmp_path):
     example = _load()
     config = example._EvolutionConfig(

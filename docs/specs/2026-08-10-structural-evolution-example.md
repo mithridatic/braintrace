@@ -305,3 +305,18 @@ cannot converge (genuine near-capacity).
 Tests: new regression test puts all endpoint mass on the self-loop `(0, 0)`
 (every weighted draw invalid) and asserts the fallback still returns six
 valid, distinct, unblocked pairs; the full 15-test suite passes.
+
+
+## v12 (2026-08-11): max_growth_events caps how often the budget may grow
+
+The adaptive controller is bang-bang: an unreachable `target_accuracy`
+means it grows every round until `max_edges`, so no configuration could
+express "grow a little early, then freeze and consolidate" — the shape the
+soft edge tax leaves room for. New optional `max_growth_events` (default
+None, unlimited): the evolving arm counts rounds in which the budget
+actually increased and clamps further growth once the count is reached;
+shrinks remain legal afterwards. `0` means never grow.
+
+Tests: a forced-growth run (`target_accuracy=1.01`) with
+`max_growth_events=1` grows exactly once (32 -> 35) and then holds at 35
+for the remaining rounds, emitting a single grow event.
