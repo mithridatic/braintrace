@@ -448,6 +448,11 @@ def _draw_free_pairs(
     ``(keep_rows, keep_cols)``, and duplicates. Memory stays O(n_rec +
     n_edges) at any ``n_rec``.
 
+    Weighted placement is a preference, not a constraint: if the weighted
+    draws stop finding free pairs even at the maximum batch (the high-mass
+    region is saturated with existing edges), the draw degrades to uniform
+    over the remaining free pairs instead of failing.
+
     Parameters
     ----------
     n_rec : int
@@ -490,27 +495,34 @@ def _draw_free_pairs(
     p_col = _probabilities(col_weight)
     accepted = np.empty(0, dtype=np.int64)
     batch = max(64, 2 * count)
-    for _ in range(1000):
-        if accepted.size >= count:
-            return rng.permutation(accepted)[:count]
-        rows = (
-            rng.integers(0, n_rec, size=batch)
-            if p_row is None
-            else rng.choice(n_rec, size=batch, replace=True, p=p_row)
-        )
-        cols = (
-            rng.integers(0, n_rec, size=batch)
-            if p_col is None
-            else rng.choice(n_rec, size=batch, replace=True, p=p_col)
-        )
-        flat = rows.astype(np.int64) * n_rec + cols.astype(np.int64)
-        free = (rows != cols) & ~np.isin(flat, blocked)
-        grown = np.unique(np.concatenate([accepted, flat[free]]))
-        if grown.size == accepted.size:
-            batch = min(batch * 16, 1 << 22)
-        else:
-            batch = max(64, 2 * (count - grown.size))
-        accepted = grown
+    plans = [(p_row, p_col)]
+    if p_row is not None or p_col is not None:
+        plans.append((None, None))
+    for plan_row, plan_col in plans:
+        for _ in range(1000):
+            if accepted.size >= count:
+                return rng.permutation(accepted)[:count]
+            rows = (
+                rng.integers(0, n_rec, size=batch)
+                if plan_row is None
+                else rng.choice(n_rec, size=batch, replace=True, p=plan_row)
+            )
+            cols = (
+                rng.integers(0, n_rec, size=batch)
+                if plan_col is None
+                else rng.choice(n_rec, size=batch, replace=True, p=plan_col)
+            )
+            flat = rows.astype(np.int64) * n_rec + cols.astype(np.int64)
+            free = (rows != cols) & ~np.isin(flat, blocked)
+            grown = np.unique(np.concatenate([accepted, flat[free]]))
+            if grown.size == accepted.size:
+                if batch >= 1 << 22:
+                    break
+                batch = min(batch * 16, 1 << 22)
+            else:
+                batch = max(64, 2 * (count - grown.size))
+            accepted = grown
+        batch = max(64, 2 * (count - accepted.size))
     raise ValueError("pair draw failed to converge on free positions")
 
 

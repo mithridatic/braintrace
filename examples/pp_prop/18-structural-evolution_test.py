@@ -125,6 +125,28 @@ def test_gradient_endpoints_follow_marginals_and_avoid_existing():
     assert not np.any(hot_rows == hot_cols)
 
 
+def test_draw_free_pairs_falls_back_to_uniform_when_weights_saturate():
+    example = _load()
+    n_rec = 16
+    rng = np.random.default_rng(7)
+
+    # All mass on the self-loop (0, 0): every weighted draw is invalid, so
+    # only the uniform fallback can satisfy the request.
+    row_weight = np.zeros(n_rec)
+    col_weight = np.zeros(n_rec)
+    row_weight[0] = 1.0
+    col_weight[0] = 1.0
+    flat = example._draw_free_pairs(
+        n_rec, 6, row_weight, col_weight, np.array([1]), np.array([2]), rng
+    )
+    rows, cols = divmod(flat, n_rec)
+    assert flat.size == 6
+    assert np.unique(flat).size == 6
+    assert not np.any(rows == cols)
+    assert not np.any((rows == 1) & (cols == 2))
+    assert not np.any((rows == 0) & (cols == 0))
+
+
 def test_attribution_classification_applies_sixty_percent_rule():
     example = _load()
     fetch_mass = np.asarray([7.0, 3.0, 0.0, 5.0, 1.0, 10.0])

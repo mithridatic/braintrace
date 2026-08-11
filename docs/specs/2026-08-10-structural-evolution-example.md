@@ -288,3 +288,20 @@ converge.
 Tests: unchanged — the 14-test suite passes against the same contracts
 (valid CSR endpoints, activity-floor reachability, hot-endpoint bias,
 gradient-marginal following).
+
+
+## v11 (2026-08-11): uniform fallback when weighted placement saturates
+
+A runaway-growth confirmation run (adaptive mode, growth 1.5x, target 0.98,
+gradient placement, 2048 neurons) crashed in round 15 at ~600k edges: the
+gradient marginals had concentrated on a few neurons, so nearly every
+weighted draw collided with an existing edge and `_draw_free_pairs` raised
+"failed to converge" after batch escalation exhausted itself. Weighted
+placement is a preference, not a constraint — the draw now degrades to
+uniform over the remaining free pairs once the weighted plan stops making
+progress at the maximum batch, and only raises when uniform drawing also
+cannot converge (genuine near-capacity).
+
+Tests: new regression test puts all endpoint mass on the self-loop `(0, 0)`
+(every weighted draw invalid) and asserts the fallback still returns six
+valid, distinct, unblocked pairs; the full 15-test suite passes.
