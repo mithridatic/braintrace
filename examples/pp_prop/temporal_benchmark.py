@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import math
 import pathlib
 import sys
+from collections.abc import Mapping
 from typing import Sequence, cast
 
 from sparse_benchmark_device import apply_device_selection
@@ -22,6 +24,11 @@ from temporal_benchmark_config import (
     TraceHalfLives,
 )
 from temporal_benchmark_manifest import find_bundle, load_manifest
+from temporal_benchmark_freeze_io import FreezeArtifactError, load_artifact
+from temporal_benchmark_freeze_schema import (
+    frozen_config_overrides,
+    validate_frozen_selection,
+)
 
 DEFAULT_MANIFEST = pathlib.Path(__file__).with_name("temporal_benchmark_manifest.json")
 
@@ -119,16 +126,19 @@ def _parser() -> argparse.ArgumentParser:
         default=defaults.allow_dirty,
     )
     parser.add_argument("--json-output", type=pathlib.Path)
+    parser.add_argument("--frozen-selection", type=pathlib.Path)
     return parser
 
 
-def _config(values: argparse.Namespace) -> TemporalBenchmarkConfig:
+def _config(
+    values: argparse.Namespace, overrides: Mapping[str, object] | None = None
+) -> TemporalBenchmarkConfig:
     clip_norms = GradientClipNorms(
         readout=getattr(values, "readout_clip_norm", values.clip_norm),
         feedforward=getattr(values, "feedforward_clip_norm", values.clip_norm),
         recurrent=getattr(values, "recurrent_clip_norm", values.clip_norm),
     )
-    return TemporalBenchmarkConfig(
+    config = TemporalBenchmarkConfig(
         bundle_id=values.bundle_id,
         arm=cast(ArmName, values.arm),
         horizon=cast(HorizonName, values.horizon),
@@ -166,13 +176,57 @@ def _config(values: argparse.Namespace) -> TemporalBenchmarkConfig:
         allow_dirty=values.allow_dirty,
         device=values.device,
     )
+    return dataclasses.replace(config, **dict(overrides or {}))
+
+
+def _sealed_overrides(
+    values: argparse.Namespace, environment: Mapping[str, object]
+) -> dict[str, object]:
+    """Return provenance-bound frozen overrides required by a sealed run."""
+    if not values.sealed_test:
+        return {}
+    if values.frozen_selection is None:
+        raise FreezeArtifactError("sealed execution requires a frozen selection")
+    document = load_artifact(values.frozen_selection)
+    validate_frozen_selection(document)
+    provenance = document["selection_provenance"]
+    assert isinstance(provenance, dict)
+    if provenance.get("source_commit") != environment.get("source_commit"):
+        raise FreezeArtifactError("frozen selection source commit does not match run")
+    references = provenance["input_artifacts"]
+    assert isinstance(references, dict)
+    image_digests = {
+        reference["container_image_digest"]
+        for reference in references.values()
+        if isinstance(reference, dict)
+    }
+    if image_digests != {environment.get("container_image_digest")}:
+        raise FreezeArtifactError("frozen selection container image does not match run")
+    construction = provenance["construction"]
+    assert isinstance(construction, dict)
+    overrides = frozen_config_overrides(document, values.horizon)
+    overrides.update(
+        {
+            "neurons": construction["neurons"],
+            "degree": construction["degree"],
+            "batch_size": construction["batch_size"],
+            "device": construction["device"],
+        }
+    )
+    return overrides
+
+
+def _startup_device(values: argparse.Namespace) -> str:
+    """Reject a sealed CLI device that conflicts with the GPU-only freeze."""
+    if values.sealed_test and values.device != "gpu":
+        raise FreezeArtifactError("sealed execution requires frozen device gpu")
+    return values.device
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run one paired benchmark arm and emit strict schema-versioned JSON."""
     values = _parser().parse_args(argv)
-    config = _config(values)
-    apply_device_selection(config.device)
+    apply_device_selection(_startup_device(values))
 
     import jax
 
@@ -182,9 +236,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     from temporal_benchmark_reporting import environment_fingerprint, write_result
     from temporal_benchmark_training import run_training
 
-    verify_device_selection(config.device, jax.devices()[0].platform)
     source_root = pathlib.Path(__file__).resolve().parents[2]
     environment = environment_fingerprint(source_root)
+    config = _config(values, _sealed_overrides(values, environment))
+    verify_device_selection(config.device, jax.devices()[0].platform)
     dirty = environment.get("source_dirty")
     if config.sealed_test and dirty is not False:
         raise RuntimeError(

@@ -1,6 +1,12 @@
 """Tests for Example 17 command-line configuration."""
 
-from temporal_benchmark import _config, _parser
+import pathlib
+from unittest.mock import patch
+
+import pytest
+
+from temporal_benchmark import _config, _parser, _sealed_overrides, _startup_device
+from temporal_benchmark_freeze_io import FreezeArtifactError
 
 
 def test_cli_exposes_only_half_life_trace_knobs() -> None:
@@ -118,3 +124,39 @@ def test_legacy_cli_clip_norm_applies_to_every_parameter_group() -> None:
     assert config.gradient_clip_norms.readout is None
     assert config.gradient_clip_norms.feedforward is None
     assert config.gradient_clip_norms.recurrent is None
+
+
+def test_sealed_cli_requires_frozen_selection() -> None:
+    values = _parser().parse_args(["--sealed-test"])
+    with pytest.raises(FreezeArtifactError, match="frozen selection"):
+        _sealed_overrides(values, {"source_commit": "a" * 40})
+
+
+def test_sealed_cli_rejects_device_before_backend_initialization() -> None:
+    values = _parser().parse_args(["--sealed-test", "--device", "cpu"])
+    with pytest.raises(FreezeArtifactError, match="device gpu"):
+        _startup_device(values)
+
+
+def test_sealed_cli_rejects_freeze_provenance_mismatch(tmp_path: pathlib.Path) -> None:
+    frozen = tmp_path / "freeze.json"
+    frozen.write_text("{}", encoding="utf-8")
+    values = _parser().parse_args(
+        ["--sealed-test", "--frozen-selection", str(frozen)]
+    )
+    document = {
+        "selection_provenance": {
+            "source_commit": "b" * 40,
+            "selection_source_dirty": False,
+            "construction": {
+                "device": "gpu", "neurons": 96, "degree": 8, "batch_size": 32
+            },
+            "input_artifacts": {},
+        }
+    }
+    with (
+        patch("temporal_benchmark.load_artifact", return_value=document),
+        patch("temporal_benchmark.validate_frozen_selection", return_value={}),
+    ):
+        with pytest.raises(FreezeArtifactError, match="source commit"):
+            _sealed_overrides(values, {"source_commit": "a" * 40})

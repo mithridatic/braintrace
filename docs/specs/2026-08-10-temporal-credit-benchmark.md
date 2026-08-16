@@ -49,6 +49,13 @@ The balanced split sizes are 1,024 train, 256 validation, and 512 test trials.
 Test trial specifications are stored as sealed commitments until the
 configuration, gain, optimizer, trace, and acceptance logic are frozen. The
 runner refuses test evaluation for a dirty source tree or an unsealed result.
+Every sealed run also requires the frozen development-selection artifact. The
+runner validates its schema, exact source commit, container image digest, and
+construction dimensions, then derives every selected optimization setting from
+that artifact; command-line defaults or overrides cannot silently replace a
+frozen selection. The sealed-matrix driver runs one isolated subprocess per
+arm and bundle, validates an existing raw result before reuse, and fails closed
+unless all seven arms and all twelve bundles are present.
 
 ## Paired arms
 
