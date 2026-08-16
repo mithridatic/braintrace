@@ -1,10 +1,10 @@
 ## Purpose
 
-Demonstrates that a recurrent spiking network trained by pp_prop can acquire a
-rule from demonstrations at inference time, hold it in a contextual memory
-written without changing parameters, compute with it across repeated latent
-iterations, and reports what that latent space looks like and whether iterating
-it changes the outcome.
+Tests whether a recurrent spiking network trained by pp_prop can acquire a rule
+from demonstrations at inference time, hold it in a contextual memory written
+without changing parameters, and compute with it across repeated latent
+iterations, while reporting what that latent space looks like and whether
+iterating it changes the outcome.
 
 ## ADDED Requirements
 
@@ -58,16 +58,20 @@ bijection. No rule identifier SHALL be supplied as an input at any point.
 #### Scenario: No rule leakage through inputs
 
 - **WHEN** the model input for an episode is inspected
-- **THEN** it contains only encoded symbols and phase information, and contains
-  no encoding of the bijection, the episode index, or the target
+- **THEN** it contains only encoded symbols, phase information, and D3's
+  phase-local one-hot slot address during demonstrations, and contains no
+  encoding of the bijection, the episode index, or the target
 
 ### Requirement: Contextual memory written with parameters frozen
 
 During the demonstration phase the system SHALL accumulate a contextual memory
 from demonstration-driven activity. The step function SHALL NOT write to any
 trainable parameter. Parameter updates SHALL occur only through the learning
-algorithm's own update applied to a training episode as a whole; the parameters
-that shape memory-writing are trained by that update like any others.
+algorithm's own update applied to a training episode as a whole. In the release
+default, the fixed-random memory-write projections `W_k` and `W_v` SHALL be
+excluded from the optimizer's trainable mapping. A learned-write arm MAY include
+them only when separately labelled and accompanied by a nonzero parameter-delta
+check.
 
 #### Scenario: The step function performs no parameter write
 
@@ -180,11 +184,14 @@ present but its content mismatched to the demonstrations.
 
 ### Requirement: Latent geometry report
 
-The system SHALL report, over held-out episodes, four measurements of the latent
-phase: the effective dimensionality of the latent state at each iteration, the
-step-to-step change in the latent state across iterations, the linear
-decodability of the query answer from the latent state at each iteration, and
-the linear decodability of the query answer from the contextual memory alone.
+The system SHALL report, over held-out episodes, four primary measurements of
+the latent phase: the effective dimensionality of the latent state at each
+iteration, the step-to-step change in the latent state across iterations, the
+linear decodability of the query answer from the latent state at each iteration,
+and the linear decodability of the query answer from the contextual memory
+alone. Full-rule and raw-memory-factor decodability MAY appear as clearly
+labelled secondary diagnostics and SHALL NOT be conflated with those primary
+measurements.
 
 #### Scenario: Per-iteration measurements are emitted
 

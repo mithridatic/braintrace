@@ -2,15 +2,18 @@
 
 A tutorial-linear walk through `braintrace.pp_prop` (aliases `ES_D_RTRL` /
 `IODimVjpAlgorithm`) — an online eligibility-trace gradient estimator with
-input-output dimensional complexity for spiking neural networks. Each file
-is self-contained. Read them in order (01 → 16) to follow the companion
-tutorial at `docs/tutorials/pp_prop.ipynb`.
+input-output dimensional complexity for spiking neural networks. Examples 01–16
+form the self-contained tutorial sequence; later investigations may use sibling
+support modules and co-located tests. Read 01 → 16 in order to follow the
+companion tutorial at `docs/tutorials/pp_prop.ipynb`.
 
 ## How to run
 
     python examples/pp_prop/01-basics-lif-integrator.py
 
-The fixed examples run on CPU. The digit examples require the examples extra:
+Most introductory fixed-size examples run on CPU. Device-aware Examples 16, 17,
+and 21 document their defaults below. The digit examples require the examples
+extra:
 
     pip install "braintrace[examples]"
 
@@ -32,6 +35,8 @@ requested neuron count and update budget.
 | Configurable sparse scaling               | 16                 |
 | Delayed-cue temporal credit               | 17                 |
 | Topology (fixed vs evolved)               | 18                 |
+| In-context rule induction                 | 21                 |
+| Latent workspace and contextual memory    | 21                 |
 
 ### File-by-file summary
 
@@ -56,6 +61,25 @@ requested neuron count and update budget.
 | 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
+| 21 | `21-latent-reasoning-in-context.py` | In-context bijection reasoning with factored memory and latent-depth interventions |
+
+### In-context latent reasoning
+
+Example 21 uses three sibling support modules. A full run requests a GPU by
+default and fails closed instead of silently falling back to CPU. Run it in the
+repository's CUDA-enabled environment with:
+
+    python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu
+
+For a reduced CPU iteration check that still exercises every latent depth,
+binding count, context condition, shuffled-memory arm, and reported measurement:
+
+    python examples/pp_prop/21-latent-reasoning-in-context.py --smoke --device cpu --figure latent-reasoning-smoke.png
+
+The CLI enforces the requested JAX platform but does not itself detect whether
+it is running inside Docker. See
+`docs/specs/2026-08-16-pp-prop-latent-reasoning.md` for the current production
+qualification status and claim boundary.
 
 ### Configurable benchmark
 
