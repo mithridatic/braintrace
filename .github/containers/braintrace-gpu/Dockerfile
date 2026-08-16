@@ -30,6 +30,17 @@ COPY . /opt/braintrace
 RUN python -m pip install --no-cache-dir --no-deps "/opt/braintrace[cuda12,examples]" \
     && python -c "import jax, sys; assert sys.version_info[:2] == (3, 14); assert jax.__version__ == '0.11.0'"
 
+# Persistent XLA compilation cache. Declared after the install layers so editing
+# it never invalidates the pip download cache. Bind-mount a shared host directory
+# at /cache/jax so kernels compiled by one run are reused by later runs and by
+# concurrent containers; left unmounted it is container-local, i.e. the previous
+# cold-compile-every-run behaviour.
+ENV JAX_COMPILATION_CACHE_DIR=/cache/jax \
+    JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0.5 \
+    JAX_PERSISTENT_CACHE_MIN_ENTRY_SIZE_BYTES=0
+
+RUN mkdir -p /cache/jax
+
 WORKDIR /work
 
 CMD ["python", "examples/pp_prop/17-temporal-credit-benchmark.py", "--help"]
