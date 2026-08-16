@@ -1,0 +1,2 @@
+# Scratch experiment evidence is local-only and must never enter release archives.
+prune tmp

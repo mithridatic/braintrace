@@ -197,6 +197,8 @@ cython_debug/
 /dev/
 /.VSCodeCounter/
 /temp/
+/tmp/
+/examples/pp_prop/structural_evolution*.png
 /.claude/
 /docs/changelog.md
 /braintrace/etp/JAX_INTERPRETER.md
