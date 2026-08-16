@@ -55,6 +55,7 @@ requested neuron count and update budget.
 | 16 | `16-configurable-sparse-benchmark.py` | Guarded synthetic sparse-CSR scaling and target timing |
 | 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
+| 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
 
 ### Configurable benchmark
 
