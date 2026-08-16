@@ -15,12 +15,16 @@ set -euo pipefail
 cache_dir="${BRAINTRACE_JAX_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/braintrace/jax-cache}"
 image='braintrace-gpu:0.11.0-py314'
 mounts=()
+envs=()
+workdir=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cache-dir) cache_dir="$2"; shift 2 ;;
     --image)     image="$2";     shift 2 ;;
     --mount)     mounts+=(-v "$2"); shift 2 ;;
+    --env)       envs+=(--env "$2"); shift 2 ;;
+    --workdir)   workdir=(--workdir "$2"); shift 2 ;;
     --)          shift; break ;;
     *)           break ;;
   esac
@@ -35,6 +39,8 @@ mkdir -p "$cache_dir"
 
 exec docker run --rm --gpus all \
   -v "${cache_dir}:/cache/jax" \
-  "${mounts[@]}" \
+  ${mounts[@]+"${mounts[@]}"} \
+  ${envs[@]+"${envs[@]}"} \
+  ${workdir[@]+"${workdir[@]}"} \
   "$image" \
   "$@"

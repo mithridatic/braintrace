@@ -19,6 +19,14 @@
 .PARAMETER Mount
     Extra bind mounts, each formatted as "hostPath:containerPath".
 
+.PARAMETER Env
+    Environment variables to forward, each formatted as "NAME=value". Benchmark
+    drivers require the provenance set (BRAINTRACE_IMAGE_DIGEST,
+    BRAINTRACE_SOURCE_COMMIT, ...).
+
+.PARAMETER WorkDir
+    Working directory inside the container.
+
 .PARAMETER Command
     Command and arguments to run inside the container.
 
@@ -33,6 +41,8 @@ param(
     [string]$CacheDirectory = "$env:LOCALAPPDATA\braintrace\jax-cache",
     [string]$Image = 'braintrace-gpu:0.11.0-py314',
     [string[]]$Mount = @(),
+    [string[]]$Env = @(),
+    [string]$WorkDir,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$Command
 )
@@ -59,6 +69,12 @@ $dockerArgs = @(
 )
 foreach ($bind in $Mount) {
     $dockerArgs += @('-v', $bind)
+}
+foreach ($variable in $Env) {
+    $dockerArgs += @('--env', $variable)
+}
+if ($WorkDir) {
+    $dockerArgs += @('--workdir', $WorkDir)
 }
 $dockerArgs += $Image
 $dockerArgs += $Command
