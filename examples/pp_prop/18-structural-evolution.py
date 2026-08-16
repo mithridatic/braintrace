@@ -1506,6 +1506,7 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
         "edge_counts": edge_counts,
         "events": events,
         "attribution": labels,
+        "task_mass": experiment.task_mass,
         "split": tuple(
             float(np.mean(labels == label))
             for label in range(config.num_tricks + 1)

@@ -1,7 +1,7 @@
 # Example 18 · Multi-task structural evolution under pp-prop
 
 Date: 2026-08-10
-Status: approved design, pre-implementation
+Status: implemented, development example
 
 ## Question
 

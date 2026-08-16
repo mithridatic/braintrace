@@ -334,6 +334,7 @@ def test_temporal_credit_four_trick_smoke_runs(tmp_path):
             assert values.shape == (config.n_rounds + 1,)
             assert np.all(values >= 0.0) and np.all(values <= 1.0)
         assert arm["attribution"].shape == (arm["edge_counts"][-1],)
+        assert arm["task_mass"].shape == (config.num_tricks, arm["rows"].size)
         assert len(arm["split"]) == 5
         _assert_valid_csr(example, arm["rows"], arm["cols"], config.n_rec)
     evolve_counts = result["evolve"]["edge_counts"]
