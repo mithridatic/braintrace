@@ -1,9 +1,11 @@
 ## 1. Feasibility spike (throwaway, `tmp/`, not released)
 
-- [ ] 1.1 Build a minimal episode generator and a linear oracle readout; sweep symbol count and spike encoding until supported-query accuracy is at least 0.9 at two bindings and at most 0.6 at eight bindings. Record the chosen symbol count, encoding rate, and demonstration tick budget.
-- [ ] 1.2 Run a latent population for `R` zero-input ticks across candidate membrane constants and `W_f` spectral radii; find a setting whose mean firing rate at `r = R` is at least a stated fraction of its rate at `r = 0`. Record the chosen constants.
-- [ ] 1.3 Compile a two-state model skeleton through `braintrace.compile(..., braintrace.pp_prop, ...)` and confirm no control-flow or ETP diagnostic warnings are raised, and that the memory contraction is absorbed into the hidden-to-hidden transition as designed.
-- [ ] 1.4 Write the spike's outcomes into `design.md` (D5 constants, D9 defaults) and, if the binding range moved, into the spec. Stop and report if any gate in 1.1 or 1.2 cannot be met.
+- [ ] 1.1 Build a minimal episode generator; verify the encoding is unambiguous (distinct symbols produce linearly separable spike patterns) and the supported/short split is well-formed. Sweep symbol count and encoding rate. Record the chosen symbol count, encoding rate, and demonstration tick budget.
+- [ ] 1.2 Wire a memory-equipped but *untrained* probe of the mechanism — fixed random write projections, slotted memory write, memory read at the query encoding, argmax — and confirm it degrades monotonically across the two-through-eight binding range. This tests the capacity claim with the mechanism whose capacity is claimed, not with a linear readout that has no memory in it.
+- [ ] 1.3 Run a latent population for `R` zero-input ticks across candidate membrane constants and `W_f` spectral radii; find a setting whose mean firing rate at `r = R` is at least 25 percent of its rate at `r = 0`, at the largest swept depth. Record the chosen constants.
+- [ ] 1.4 Compile a two-state model skeleton through `braintrace.compile(..., braintrace.pp_prop, ...)` and confirm no control-flow or ETP diagnostic warnings are raised, and that the memory contraction is absorbed into the hidden-to-hidden transition as designed.
+- [ ] 1.5 With the compiled model from 1.4, train briefly and check the accuracy gate: supported-query accuracy at least 0.9 at two bindings and at most 0.6 at eight. This gate needs a trained two-state model, so it cannot be checked before 1.4.
+- [ ] 1.6 Write the spike's outcomes into `design.md` (D5 constants, D9 defaults) and, if the binding range moved, into the spec and `docs/specs/`. Stop and report if any gate in 1.2, 1.3, or 1.5 cannot be met.
 
 ## 2. Task module
 
@@ -29,7 +31,7 @@
 
 ## 5. Entry point
 
-- [ ] 5.1 Implement `21-latent-reasoning-in-context.py`: CLI, seeded configuration, training per latent depth in `{0, 1, 2, 4, 8}` on a mixed binding-count distribution.
+- [ ] 5.1 Implement `21-latent-reasoning-in-context.py`: CLI, seeded configuration, and one training run per latent depth in `{0, 1, 2, 4, 8}`. All five trainings draw from a single shared mixed binding-count distribution — latent depth is the only thing that differs between them.
 - [ ] 5.2 Implement the frozen-model intervention grid over binding count, supported versus short context, and intact versus shuffled memory, with no retraining.
 - [ ] 5.3 Implement the plain-English report: per-depth accuracy, per-binding-count accuracy, the supported-versus-short contrast, the control arms, the four geometry measurements, probe split counts, and the claim-boundary paragraph.
 - [ ] 5.4 Implement the Agg PNG: accuracy versus latent depth, accuracy versus binding count under both context conditions, and the per-iteration decodability curve.

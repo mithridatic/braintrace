@@ -41,8 +41,11 @@ model, so `ControlFlowPolicy.scan_unroll_limit` never applies and neither `K`
 nor `R` is capped by it.
 
 Each episode draws a fresh bijection over the symbol set. No rule identifier
-reaches the model as input. Parameters are updated only by pp_prop's own update
-over the whole episode; the demonstration span changes memory and nothing else.
+reaches the model as input. The step function writes only to state, never to a
+parameter; parameters change only through pp_prop's update over a training
+episode as a whole. The projections that write memory are trained by that update
+like any other parameter — that credit path, spanning the full episode, is the
+thing the example exists to exercise.
 
 The contextual memory is a pair of `brainstate.HiddenState` arrays of shape
 `(n_lat, M)`. Its read is an ordinary contraction between hidden states, not an
@@ -53,8 +56,9 @@ gradient claim is made, and it is stated rather than assumed away.
 
 ## Interventions
 
-Models are trained once per latent depth `R ∈ {0, 1, 2, 4, 8}` on a mixed
-binding-count distribution, then **frozen**. Every intervention runs against
+Models are trained once per latent depth `R ∈ {0, 1, 2, 4, 8}`, all five drawing
+from a single shared mixed binding-count distribution so that depth is the only
+difference between them, then **frozen**. Every intervention runs against
 frozen models with no retraining:
 
 - **Binding count**, two through eight simultaneous bindings.

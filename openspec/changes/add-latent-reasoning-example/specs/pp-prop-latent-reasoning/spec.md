@@ -64,15 +64,25 @@ bijection. No rule identifier SHALL be supplied as an input at any point.
 ### Requirement: Contextual memory written with parameters frozen
 
 During the demonstration phase the system SHALL accumulate a contextual memory
-from demonstration-driven activity without modifying any trainable parameter.
-Parameter updates SHALL occur only through the learning algorithm's own update
-applied to the episode as a whole.
+from demonstration-driven activity. The step function SHALL NOT write to any
+trainable parameter. Parameter updates SHALL occur only through the learning
+algorithm's own update applied to a training episode as a whole; the parameters
+that shape memory-writing are trained by that update like any others.
 
-#### Scenario: Ingestion leaves parameters unchanged
+#### Scenario: The step function performs no parameter write
 
-- **WHEN** the demonstration phase of an episode is run in evaluation
-- **THEN** every trainable parameter is bitwise identical before and after, while
-  the contextual memory has changed
+- **WHEN** a single time step of any phase is executed
+- **THEN** the step writes only to state, and every trainable parameter is
+  bitwise identical before and after, while the contextual memory has changed
+  during the demonstration phase
+
+#### Scenario: Frozen evaluation changes no parameters across a whole episode
+
+- **WHEN** a complete episode is run against a frozen model during the
+  intervention grid
+- **THEN** every trainable parameter is bitwise identical before and after the
+  entire episode, and the contextual memory reflects that episode's
+  demonstrations
 
 #### Scenario: Memory content depends on demonstrations
 
