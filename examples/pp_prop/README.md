@@ -10,7 +10,9 @@ tutorial at `docs/tutorials/pp_prop.ipynb`.
 
     python examples/pp_prop/01-basics-lif-integrator.py
 
-The fixed examples run on CPU. The digit examples require the examples extra:
+Most fixed examples run on CPU. Example 20 defaults to GPU and fails closed
+when JAX cannot bind one; pass `--device cpu` for an explicit host run. The
+digit examples require the examples extra:
 
     pip install "braintrace[examples]"
 
@@ -32,6 +34,7 @@ requested neuron count and update budget.
 | Configurable sparse scaling               | 16                 |
 | Delayed-cue temporal credit               | 17                 |
 | Topology (fixed vs evolved)               | 18                 |
+| Post-training topology analysis           | 19, 20             |
 
 ### File-by-file summary
 
@@ -56,6 +59,32 @@ requested neuron count and update budget.
 | 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
+| 20 | `20-post-training-neuron-pruning.py` | Joint causal neuron/edge lesions and a coordinate-wise locally minimal network after Example 18 |
+
+### Post-training neuron-and-edge pruning
+
+Example 20 defaults to Example 18's four-task temporal-credit configuration and
+starts pruning at the first pre-rebuild checkpoint where every task meets the
+requested target. After a coarse-to-fine starting sweep, it individually tests
+retained neurons and retained-to-retained recurrent edges, accepts safe
+removals, reranks, and alternates both phases until neither can remove another
+coordinate. It then physically rebuilds the surviving feed-forward, recurrent,
+and readout arrays into a compact inference model, verifies its logits against
+the masked checkpoint, and saves a reloadable NumPy bundle. A larger sparse
+starting graph can be requested directly:
+
+    python examples/pp_prop/20-post-training-neuron-pruning.py --neurons 2048 --initial-edges 16384 --n-rounds 12 --compact-model-output compacted_network.npz
+
+The default device is GPU. `--device gpu` refuses silent CPU fallback,
+`--device cpu` deliberately pins the host, and `--device auto` accepts whatever
+JAX selects. For repeated container runs, mount a persistent directory and set
+`JAX_COMPILATION_CACHE_DIR` to that mount; setting
+`JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0` also retains short compilations.
+The fixed-point phase can be much slower than the initial sweep because every
+retained neuron and edge receives a causal ablation test in the terminal
+passes. The report separates warmed full-probe timing from compilation and
+reports persistent parameter-plus-CSR storage for the masked and compact
+models.
 
 ### Configurable benchmark
 

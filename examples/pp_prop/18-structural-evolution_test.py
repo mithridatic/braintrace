@@ -446,6 +446,46 @@ def test_smoke_run_completes_with_finite_losses_and_valid_accuracies(tmp_path):
     assert "plain English" in result["report"]
 
 
+def test_main_forwards_pre_rebuild_checkpoint_callback(monkeypatch, tmp_path):
+    example = _load()
+    seen = {}
+
+    def callback(*args):
+        return None
+
+    def fake_run(config, plot_output, *, evolve_posthoc=None, evolve_checkpoint=None):
+        seen["config"] = config
+        seen["plot_output"] = plot_output
+        seen["posthoc"] = evolve_posthoc
+        seen["checkpoint"] = evolve_checkpoint
+        return {"ok": True}
+
+    monkeypatch.setattr(example, "run", fake_run)
+    output = example.main(
+        [
+            "--smoke",
+            "--n-rounds",
+            "3",
+            "--trials-per-round",
+            "12",
+            "--neurons",
+            "64",
+            "--initial-edges",
+            "64",
+            "--plot-output",
+            str(tmp_path / "unused.png"),
+        ],
+        evolve_checkpoint=callback,
+    )
+    assert output == {"ok": True}
+    assert seen["checkpoint"] is callback
+    assert seen["posthoc"] is None
+    assert seen["config"].n_rounds == 3
+    assert seen["config"].trials_per_round == 12
+    assert seen["config"].n_rec == 64
+    assert seen["config"].n_edges == 64
+
+
 def test_optimizer_moments_survive_rebuild():
     import brainstate
     import brainunit as u
