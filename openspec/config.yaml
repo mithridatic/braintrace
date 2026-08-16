@@ -1,0 +1,58 @@
+schema: spec-driven
+
+context: |
+  braintrace: online learning for recurrent networks via Eligibility Trace
+  Propagation (ETP). Layered: ETP operators (custom JAX primitives) -> ETP
+  compiler (jaxpr analysis) -> graph executor -> algorithms (D-RTRL, pp_prop /
+  ES-D-RTRL, EProp/OSTL). Dependency direction is strictly downward.
+
+  Conventions that bind every change:
+  - Working agreement lives in AGENTS.md. Read it before proposing work.
+  - Specs go under docs/specs/YYYY-MM-DD-<topic>.md in addition to any
+    OpenSpec artifacts. That convention is load-bearing for the example gate.
+  - Tests are co-located: foo.py has foo_test.py beside it. Never a tests/
+    directory, never a test_*.py prefix. Target >90% coverage on meaningful
+    edge cases.
+  - Never drive a model with a bare Python for/while loop when it runs
+    repeatedly. Use brainstate.transform.{jit,for_loop,scan} (checkpointed_*
+    variants under backprop through long rollouts).
+  - Use brainstate.random, never jax.random directly.
+  - NumPy-doc docstrings on all public API, with doctest-compatible Examples
+    in a .. code-block:: python directive.
+  - Know whether an algorithm is exact (must match a BPTT oracle
+    element-wise) or approximate (matches only in its guaranteed regime)
+    before asserting anything about its gradients. Any assertion about a
+    learning-rule property must be measured through the finite-window oracle
+    chunked_online_param_gradients; a whole-sequence VJP returns BPTT for
+    every algorithm and passes vacuously.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
