@@ -1,6 +1,7 @@
 # Example 21 latent-reasoning architecture
 
-Status: approved design; implementation and capability measurements pending
+Status: Stage 2 implemented on the feature branch; structural validation in
+progress; capability Gates A--D pending
 
 Date: 2026-08-17
 
@@ -508,19 +509,61 @@ describe the system as in-context learning.
 
 ### Gate B: demonstrated-depth application
 
-Add controlled generated tasks in which a newly demonstrated operator must be
-applied iteratively. Training and validation use new bindings but the same
-declared depths, for example depths `{1, 2, 4, 8}`. Each evaluation depth must
-have support at that depth in its demonstrations or training curriculum.
+Use a fresh uniformly relabelled single 10-cycle `f` over the ARC colors in
+each episode. Demonstrations contain all ten one-cell bindings `c -> f(c)` in a
+random presentation order, so the input and output marginals are each exactly
+one copy of every color. The query supplies a balanced color `x`. Training and
+validation cycle mappings are unique and disjoint. The shuffled arm deranges
+the ten demonstrated outputs while retaining their exact marginal and timing;
+the generator must verify that its shuffled composed target differs from the
+intact target at every reported depth.
 
-For each nonzero trained depth, report exact accuracy at `H_0` and at the
-matching `H_r`. The architecture passes when:
+Query ingestion is the first application of `S_K`, not depth zero before an
+application:
 
-- the final demonstrated-depth checkpoint is above its chance baseline at
-  every supported depth;
-- at least two nonzero depths improve by 0.15 absolute or more over `H_0` on a
-  family whose target cannot be solved by one application; and
-- shuffled demonstrations materially reduce final-depth accuracy.
+```text
+H_0 target = f(x)
+H_r target = f ** (r + 1)(x)
+```
+
+The qualifying latent depths are exactly `{1, 2, 4, 8}`. An effort-`R`
+training update carries the target trajectory `f(x), f**2(x), ..., f**(R+1)(x)`
+and supervises every checkpoint `H_0..H_R` against its own target with uniform
+weights summing to one. Reusing the final target at every checkpoint is
+forbidden because it would train `H_0` to skip the iterative computation. The
+4,096-update schedule contains exactly 1,024 updates at each qualifying effort.
+
+The preregistered production regime is 4,096 updates, batch 64, 512 held-out
+episodes, 2,048 neurons, 16,384 recurrent edges, readout width 128, color rank
+16, memory width 32, memory decay 1.0, pp-prop trace decay 0.9, learning rate
+0.003, and gradient clipping norm 1.0. Its 262,144 training mappings plus 512
+validation mappings fit within the `9! = 362,880` unique 10-cycle catalog. Data
+must be generated and staged in deterministic fixed-shape chunks; materializing
+the complete `(4096, 19, 64, 47)` event tensor on device is not required and
+must not change schedule or random-stream identity. The exact training and
+validation seeds and fixed staging-chunk size remain pending preregistration;
+they must be frozen in the Gate B configuration before its code or qualifying
+run exists and may not be selected after inspecting results.
+
+A 10-cycle makes the shortcut boundary exact. For every qualifying `r`,
+`f**(r+1)(x) != f(x)`, so one application cannot solve the final target. The
+fixed marginal-only baseline is `1/10`; even a shortcut given `x` and `f(x)` but
+none of the remaining pairings can do no better than `1/8`. Gate B therefore
+uses `1/8` as its conservative chance boundary. For each qualifying depth,
+report exact accuracy and Wilson intervals at `H_0` and the matching `H_r`, plus
+the intact, shuffled, and no-context matching-depth results. The architecture
+passes only when:
+
+- the intact Wilson 95% lower bound at `H_r` is above `1/8` at every supported
+  depth;
+- at least two nonzero depths improve by 0.15 absolute or more over `H_0` when
+  both are scored against `f**(r+1)(x)`;
+- intact exceeds shuffled by at least 0.15 absolute at every supported depth;
+- all 512 held-out episodes satisfy the exact marginal, disjoint-mapping, and
+  no-one-step-shortcut checks; and
+- `H_0` scored against its proper one-step target `f(x)` has a Wilson 95% lower
+  bound above `1/8`, so a later-depth result is not credited to an undefined
+  initial workspace.
 
 Monotonic improvement at every tick is not required. Cherry-picking a best
 undisclosed tick is forbidden; depth selection is fixed by the task. Results
@@ -529,16 +572,57 @@ beyond the largest trained/demonstrated depth are reported under
 
 ### Gate C: pp-prop learnability ablations
 
-On the same seeds and data, compare:
+Run five arms on the byte-identical Gate A and Gate B schedules, with separate
+optimizer state and identical initialization on every shared parameter path:
 
-- full `S_K` re-read plus deep supervision;
-- read `S_K` only once;
-- terminal-only supervision; and
-- legacy reservoir (`context_memory_width=0`).
+1. full `S_K` re-read plus per-checkpoint supervision;
+2. query-only memory read plus per-checkpoint supervision;
+3. full `S_K` re-read plus terminal-only supervision;
+4. legacy reservoir (`context_memory_width=0`) with the same target schedule;
+5. full reads and supervision with `M_write` frozen at its initial all-ones
+   value and excluded from optimizer updates.
 
-The full design must win the binding and demonstrated-depth metrics. The
-finite-window gradient must change when either repeated reads or intermediate
-losses are removed. These are mechanism checks; whole-sequence gradients are
+The query-only arm performs the ordinary query read and must be byte-identical
+to the full arm through `H_0`. On every latent tick it performs no `S_K` read
+and receives zero memory-read drive, leaving only recurrent workspace ringdown.
+Repeatedly injecting a cached `m_0` is a different intervention and does not
+satisfy this arm. The terminal-only arm executes the same full forward
+trajectory but masks every loss except the declared matching terminal. The
+frozen-write arm retains the literal outer product and reports the excluded
+optimizer path; it is not allowed to remove or reinitialize the memory.
+
+Define Gate A `binding_gap` as intact accuracy minus shuffled accuracy. Define
+Gate B `depth_accuracy` as the mean intact matching-depth accuracy over
+`{1, 2, 4, 8}`. The full arm must independently pass Gates A and B and satisfy
+these three blocking pairwise margins:
+
+- versus query-only: `depth_accuracy` is at least 0.15 higher and
+  `binding_gap` is no more than 0.02 lower;
+- versus terminal-only: `depth_accuracy` is at least 0.10 higher and
+  `binding_gap` is no more than 0.02 lower;
+- versus legacy: `binding_gap` is at least 0.25 higher and `depth_accuracy` is
+  at least 0.15 higher.
+
+The frozen-write arm is characterization-only by default and cannot block Gate
+C. Report full-minus-frozen differences for both metrics. A margin of at least
+0.05 on both `binding_gap` and `depth_accuracy` is required only for a later
+explicit claim that learned `M_write` modulation is necessary or load-bearing.
+If either margin is smaller, Gate C may still pass through the three blocking
+comparisons above, but the honest conclusion is that learned write modulation
+was not shown to be needed.
+
+Add a deterministic finite-window mechanism oracle on one shared depth
+episode. It uses `chunked_online_param_gradients` with chunk size 1 strictly
+shorter than the sequence. Per-checkpoint residuals are multiplied by the
+square root of their declared loss weight so the helper's sum-of-squares loss
+implements the intended weighted objective. For full versus query-only and
+full versus terminal-only, retain global and per-parameter-group gradient
+norms, L2 difference, relative deviation, cosine, and digests. The full
+gradient must be finite and nonzero; each comparison must have relative
+deviation at least `1e-3` and absolute L2 difference greater than
+`max(1e-8, 1e-4 * full_gradient_norm)`. Removing reads must change both
+`workspace_query_projection.weight` and `memory_read_projection.weight` under
+the same thresholds. These are mechanism checks; whole-sequence gradients are
 not admissible evidence.
 
 ### Gate D: full ARC qualification
@@ -662,6 +746,25 @@ rather than triggering an unplanned width, budget, or dataset sweep.
 
 ## Measurement record
 
+### Qualifying container provenance
+
+Every qualifying container run uses the pinned GPU image, and that image must
+contain a working Git executable. The launch mounts the worktree's common Git
+directory read-only, points `GIT_DIR` at the worktree administrative directory
+inside that mount, points `GIT_WORK_TREE` at the mounted worktree, and sets
+`GIT_OPTIONAL_LOCKS=0`. It also supplies explicit expected-full-commit and
+expected-clean assertions; omitting either assertion is a qualification
+failure.
+
+The harness must obtain the live full commit and porcelain-clean status from
+Git at both process start and process end. Both observations must agree with
+the supplied assertions, and the start and end commits must agree with each
+other. Environment variables or report fields that merely assert a commit and
+clean state without this live Git agreement are metadata only and cannot
+qualify a run. Retain the resolved image digest and the exact preflight command,
+exit status, and output with the run artifact so the Git-capable image and
+mount/environment contract can be audited before expensive execution.
+
 ### Retained pre-change evidence
 
 - physical padding fix, 512 updates: presence 0.9857; pairing 0.5107;
@@ -738,6 +841,68 @@ generation, 17.150 seconds for BPTT compile plus 10,000 updates, 20.784 seconds
 for pp-prop compile plus 10,000 updates, and 12.614 seconds for the finite-window
 oracle. Peak device bytes in use were 1,297,731,328 and the peak allocator pool
 was 2,183,135,232 bytes against a 12,884,901,888-byte limit.
+
+### Stage 2 implementation record: structural evidence only
+
+Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
+commits: `5a68c10` exposes the associative key/value feature-index contract;
+`b506a6d` adds the pp-prop associative workspace and co-located model tests;
+`65fe456` integrates it into the Example 21 training, selected evaluation,
+diagnostics, report, and named outer evaluation JIT; and `186c636` adds the
+Gate A runner and its co-located tests. Width zero remains the default and
+byte-compatible legacy path. Width 32 with decay 1.0 remains an explicit
+candidate until the capability gates pass.
+
+The implementation has dedicated `context_memory`, `query_encoding`,
+`reasoning_query`, diagnostic `memory_read`, and continuous
+`workspace_carrier` states. Demonstration rows apply the gated
+`lambda * S + outer(k, v)` update through the trainable element-wise write
+modulation; query and latent rows freeze `S_K`. Query keys accumulate across
+multiple query rows. Query ingestion and each advancing zero-input latent tick
+construct a reasoning query, contract it with the same `S_K`, and feed the raw
+read through the shared memory-read projection before the shared continuous
+workspace decoder. The selected evaluator retains checkpoint workspace/read
+values and one final `S_K` snapshot rather than a time-stacked memory tensor.
+
+The co-located compiler regression requires all three associative parameter
+paths -- `memory_write_scale`, `workspace_query_projection.weight`, and
+`memory_read_projection.weight` -- to appear in the pp-prop eligibility graph
+with `all_direct` classification. It also requires `context_memory` and
+`workspace_carrier` not to collapse into one hidden group. Its learning-rule
+probe uses `chunked_online_param_gradients` with finite chunk size 1 and requires
+a finite nonzero gradient on each path; it does not substitute a whole-sequence
+gradient and is not a Gate A accuracy result. The implemented model audit has
+five hidden groups, five ETP weights, four excluded weights, four warnings, and
+zero compiler errors. The three required routes are respectively bound to the
+isolated `context_memory`, `reasoning_query`, and continuous workspace/LIF
+groups. The four expected exclusions are decoder/head routes: the
+readout-projection weight-to-weight path and the non-temporal height, width, and
+color heads; they do not include an associative route. On the five-step
+structural probe, chunk-size-one pp-prop L1 gradients are `0.1845880449` for the
+write modulation, `13.0777063370` for the workspace-query projection, and
+`10.5579442978` for the memory-read projection.
+
+The retained all-10-color `10 x 10` RFF evidence at commit `b506a6d` records,
+for the selected width-32 configuration, gate-native minimum diagonal
+`0.8072461486`, maximum off-diagonal `0.3530838788`, and margin
+`0.4541622698`, with zero-event norm `0`; the standard ARC encoding records
+`0.7478269935`, `0.3440000117`, and `0.4038269818`, respectively, also with
+zero-event norm `0`. Width 64 is comparison-only: its gate-native values are
+`0.8254998922`, `0.2295354307`, and `0.5959644318`, and its standard ARC values
+are `0.7770660520`, `0.2572668493`, and `0.5197992325`. These are structural
+Gram-matrix measurements, not learned binding evidence; width 32 remains the
+selected configuration and neither width has passed a capability gate.
+
+The evaluation integration has a named non-inline outer JIT around the
+selected-checkpoint runner. Its structural regressions require one trace across
+same-shape dynamic calls and byte-exact equality with the direct selected
+runner, including nonzero associative memory and reads, on both cold and warm
+calls. Cold/warm wall time is recorded by the focused test, but no retained
+full-scale performance artifact or Example 20 speedup claim has been accepted.
+Likewise, the new co-located tests cover the required memory, state, gating,
+selected-diagnostic, legacy, compiler, finite-window, and JIT paths, but no
+repository-wide coverage percentage is claimed here while structural
+validation remains in progress.
 
 ### Required post-change results
 
