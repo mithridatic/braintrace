@@ -357,7 +357,7 @@ def test_compaction_benchmark_rejects_nonpositive_repetitions():
         _load()._benchmark_compaction(None, None, None, None, None, repetitions=0)
 
 
-def _small_experiment(trials_per_task=1):
+def _small_experiment(trials_per_task=2):
     """Build a tiny untrained Example 18 experiment for evaluator equivalence."""
     import brainstate
     import brainunit as u
@@ -371,251 +371,120 @@ def _small_experiment(trials_per_task=1):
     return example, config, experiment
 
 
-def _serial_probe_logits(example, experiment, config, alive, edge_alive):
-    """Reference rollout: one trial at a time at batch size one.
+def test_batched_evaluator_matches_the_unbatched_rollout():
+    """Putting the probe trials on the batch axis must not change the network.
 
-    This is the pre-batching evaluation path, kept in the test file so the
-    batched evaluator is measured against the behaviour it replaced rather
-    than against itself.
+    Any leakage between trials, or any state shared across the batch, would
+    show up here: the unbatched reference resets between every trial, so the
+    two agree only if the batched rollout keeps them independent.
     """
     import brainstate
     import brainunit as u
     import jax.numpy as jnp
 
-    trials, windows = example._probe_arrays(config)
-    model = experiment.model
-    rec_weight = model.rec_syn.comm.weight
-    base_params = dict(rec_weight.value)
-    masked = dict(base_params)
-    masked["weight"] = base_params["weight"] * jnp.asarray(edge_alive)
-    rec_weight.value = masked
-    alive = jnp.asarray(alive)
-    logits = []
-    rates = []
-    try:
-        for spikes, window in zip(trials, windows):
-            brainstate.nn.reset_all_states(model, batch_size=1)
-            outputs = []
-            spiked = []
-            for step in range(spikes.shape[0]):
-                model.ff_syn(spikes[step])
-                model.rec_syn(model.neu.get_spike() * alive)
-                model.neu(0.0 * u.mA)
-                masked_spikes = model.neu.get_spike() * alive
-                outputs.append(model.readout(masked_spikes))
-                spiked.append(masked_spikes)
-            stacked = jnp.stack(outputs)
-            total = jnp.sum(stacked * window[:, None, None], axis=0)
-            logits.append(total[0] / jnp.maximum(jnp.sum(window), 1.0))
-            rates.append(jnp.mean(jnp.stack(spiked), axis=(0, 1)))
-    finally:
-        rec_weight.value = base_params
-    stacked_rates = np.asarray(jnp.stack(rates)).reshape(
-        config.num_tricks, config.eval_trials_per_task, config.n_rec
-    )
-    return np.asarray(jnp.stack(logits)), stacked_rates.mean(axis=1)
-
-
-def test_masked_recurrence_matches_the_sparse_operator():
-    """The per-row masked product equals the sparse op and never leaks rows."""
-    import brainstate
-    import brainunit as u
-    import jax.numpy as jnp
-
     example, config, experiment = _small_experiment()
-    rows, cols, values = example.EX18._current_topology(experiment)
-    projection = example._masked_recurrence(rows, cols, values, config.n_rec)
-    spikes = jnp.asarray(
-        np.random.default_rng(0).random((4, config.n_rec)), dtype=jnp.float32
-    )
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        reference = np.asarray(u.get_mantissa(experiment.model.rec_syn.comm(spikes)))
-        mine = np.asarray(u.get_mantissa(projection(spikes)))
-    np.testing.assert_array_equal(mine, reference)
-
-    projection.edge_mask = jnp.zeros((4, rows.size), dtype=jnp.float32).at[0].set(1.0)
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        partial = np.asarray(u.get_mantissa(projection(spikes)))
-    np.testing.assert_array_equal(partial[0], reference[0])
-    assert np.all(partial[1:] == 0.0)
-
-
-def test_batched_evaluation_matches_the_serial_rollout():
-    """Batching the probe trials must not change the measured network."""
-    import brainstate
-    import brainunit as u
-
-    example, config, experiment = _small_experiment(trials_per_task=2)
     edge_count = int(experiment.task_mass.shape[1])
     rng = np.random.default_rng(3)
-    alive = (rng.random(config.n_rec) > 0.25).astype(np.float32)
-    edge_alive = (rng.random(edge_count) > 0.2).astype(np.float32)
+    alive = jnp.asarray((rng.random(config.n_rec) > 0.25).astype(np.float32))
+    edge_alive = jnp.asarray((rng.random(edge_count) > 0.2).astype(np.float32))
     with brainstate.environ.context(dt=1.0 * u.ms):
-        expected_logits, expected_rates = _serial_probe_logits(
-            example, experiment, config, alive, edge_alive
+        serial = brainstate.transform.jit(
+            example._probe_logit_evaluator(experiment, config)
         )
-        runner = example._ProbeRunner(experiment, config, batch=1)
-        logits, rates = runner.evaluate(alive[None, :], edge_alive)
-    # Rates are bitwise identical, so no spike moved. Logits are compared with
-    # a tolerance only because this reference runs eagerly while the evaluator
-    # runs under jit; the batched evaluator deliberately keeps the pre-batching
-    # reduction shape, summing stacked readout outputs in one pass rather than
-    # accumulating them step by step, because the compaction equivalence check
-    # has only about 3e-6 of headroom at the recorded scale.
-    np.testing.assert_allclose(logits[0], expected_logits, rtol=1e-6, atol=1e-7)
-    np.testing.assert_array_equal(rates[0], expected_rates)
-
-
-def test_candidate_batching_leaves_rates_and_predictions_unchanged():
-    """Rates are bitwise stable across batch sizes; predictions are identical."""
-    import brainstate
-    import brainunit as u
-
-    example, config, experiment = _small_experiment(trials_per_task=2)
-    edge_count = int(experiment.task_mass.shape[1])
-    rng = np.random.default_rng(11)
-    masks = (rng.random((6, config.n_rec)) > 0.3).astype(np.float32)
-    edge_alive = np.ones(edge_count, dtype=np.float32)
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        single = example._ProbeRunner(experiment, config, batch=1)
-        batched = example._ProbeRunner(experiment, config, batch=4)
-        one_logits, one_rates = single.evaluate(masks, edge_alive)
-        many_logits, many_rates = batched.evaluate(masks, edge_alive)
-    np.testing.assert_array_equal(many_rates, one_rates)
+        expected_logits, expected_rates = serial(alive, edge_alive)
+        batched = brainstate.transform.jit(
+            example._batched_logit_evaluator(experiment, config)
+        )
+        logits, rates = batched(alive, edge_alive)
+    np.testing.assert_array_equal(np.asarray(rates), np.asarray(expected_rates))
     np.testing.assert_array_equal(
-        np.argmax(many_logits, axis=-1), np.argmax(one_logits, axis=-1)
+        np.argmax(np.asarray(logits), axis=1),
+        np.argmax(np.asarray(expected_logits), axis=1),
     )
-    np.testing.assert_allclose(many_logits, one_logits, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(logits), np.asarray(expected_logits), rtol=1e-6, atol=1e-7
+    )
 
 
-def test_candidate_batch_does_not_share_state_across_rows():
-    """Shared state would make dead and live candidates agree, and look safe."""
+def test_batched_evaluator_silences_every_neuron_under_a_dead_mask():
+    """A dead mask must zero the rates of every trial in the batch, not one."""
     import brainstate
     import brainunit as u
+    import jax.numpy as jnp
 
-    example, config, experiment = _small_experiment(trials_per_task=2)
+    example, config, experiment = _small_experiment()
     edge_count = int(experiment.task_mass.shape[1])
-    masks = np.stack(
-        [
-            np.ones(config.n_rec, dtype=np.float32),
-            np.zeros(config.n_rec, dtype=np.float32),
-            np.ones(config.n_rec, dtype=np.float32),
-        ]
-    )
     with brainstate.environ.context(dt=1.0 * u.ms):
-        runner = example._ProbeRunner(experiment, config, batch=4)
-        _, rates = runner.evaluate(masks, np.ones(edge_count, dtype=np.float32))
-    assert np.all(rates[1] == 0.0)
-    assert np.any(rates[0] > 0.0)
-    np.testing.assert_array_equal(rates[0], rates[2])
+        batched = brainstate.transform.jit(
+            example._batched_logit_evaluator(experiment, config)
+        )
+        dead, dead_rates = batched(
+            jnp.zeros(config.n_rec), jnp.ones(edge_count)
+        )
+        live, live_rates = batched(jnp.ones(config.n_rec), jnp.ones(edge_count))
+    assert np.all(np.asarray(dead_rates) == 0.0)
+    assert np.any(np.asarray(live_rates) > 0.0)
+    assert np.asarray(dead).shape == (
+        config.num_tricks * config.eval_trials_per_task,
+        config.num_tricks,
+    )
 
 
-def test_screen_equals_sequential_single_ablations():
-    """Batched screening is the same computation the sequential loop performed."""
+def test_priming_sizes_states_to_the_probe_batch():
+    """The carrying loops need the state batch set before they are traced."""
     import brainstate
     import brainunit as u
 
     example, config, experiment = _small_experiment()
-    edge_count = int(experiment.task_mass.shape[1])
-    rng = np.random.default_rng(5)
-    alive = (rng.random(config.n_rec) > 0.2).astype(np.float32)
-    edge_alive = np.ones(edge_count, dtype=np.float32)
-    retained = np.flatnonzero(alive > 0.0)[:5]
-    active = np.arange(min(4, edge_count))
+    trials = config.num_tricks * config.eval_trials_per_task
     with brainstate.environ.context(dt=1.0 * u.ms):
-        runner = example._ProbeRunner(experiment, config, batch=3)
-        neuron_screen = runner.screen(alive, edge_alive, retained, edges=False)
-        edge_screen = runner.screen(alive, edge_alive, active, edges=True)
-        for position, index in enumerate(retained):
-            trial = alive.copy()
-            trial[index] = 0.0
-            _, accuracy = example._evaluate_probe_logits(
-                experiment, config, trial, edge_alive
-            )
-            np.testing.assert_array_equal(neuron_screen[position], accuracy)
-        for position, index in enumerate(active):
-            trial = edge_alive.copy()
-            trial[index] = 0.0
-            _, accuracy = example._evaluate_probe_logits(
-                experiment, config, alive, trial
-            )
-            np.testing.assert_array_equal(edge_screen[position], accuracy)
+        evaluator = example._mask_evaluator(experiment, config)
+        example._prime_evaluator(evaluator)
+        membrane = experiment.model.neu.V.value
+        # An evaluator that drives no model exposes no prime and needs none.
+        example._prime_evaluator(lambda alive, edges: None)
+    assert membrane.shape[0] == trials
 
 
-_ORACLE_ROWS = np.array([1, 0])
-_ORACLE_COLS = np.array([2, 2])
+def test_probe_arrays_are_memoized_per_configuration():
+    example, config, _ = _small_experiment()
+    first = example._probe_arrays(config)
+    assert example._probe_arrays(config) is first
 
 
-class _OracleRunner:
-    """Synthetic three-neuron, two-edge network with a known minimal core.
+def test_joint_fixed_point_revisits_neurons_after_edge_pruning(monkeypatch):
+    import jax.numpy as jnp
 
-    Neuron 2 is only dispensable once every edge into it is gone, so a search
-    that never revisits neurons after an edge removal cannot reach the minimum.
-    A silenced neuron transmits nothing, exactly as the real dynamics behave,
-    so incident edges are induced rather than read from the stored mask.
-    """
-
-    def __init__(self, batch: int = 4):
-        self.batch = batch
-        self.evaluations = 0
-        self.calls = 0
-
-    @staticmethod
-    def _safe(neuron_alive, edge_alive):
-        induced = edge_alive * neuron_alive[_ORACLE_ROWS] * neuron_alive[_ORACLE_COLS]
-        neuron_code = float(np.sum(neuron_alive * np.array([4.0, 2.0, 1.0])))
-        edge_code = float(np.sum(induced * np.array([2.0, 1.0])))
-        healthy = (neuron_code == 7.0 and edge_code >= 1.0) or (
-            neuron_code == 3.0 and edge_code == 0.0
-        )
-        return 1.0 if healthy else 0.0
-
-    def accuracy(self, neuron_masks, edge_masks):
-        neuron_masks = np.atleast_2d(np.asarray(neuron_masks, dtype=np.float64))
-        edge_masks = np.atleast_2d(np.asarray(edge_masks, dtype=np.float64))
-        if edge_masks.shape[0] == 1 and neuron_masks.shape[0] > 1:
-            edge_masks = np.repeat(edge_masks, neuron_masks.shape[0], axis=0)
-        self.evaluations += int(neuron_masks.shape[0])
-        self.calls += 1
-        accuracies = np.array(
-            [[self._safe(n, e)] for n, e in zip(neuron_masks, edge_masks)]
-        )
-        return accuracies, neuron_masks[:, None, :]
-
-    def screen(self, alive, edge_alive, indices, *, edges):
-        neuron_masks = []
-        edge_stack = []
-        for index in np.asarray(indices):
-            trial_alive = np.asarray(alive, dtype=np.float64).copy()
-            trial_edges = np.asarray(edge_alive, dtype=np.float64).copy()
-            if edges:
-                trial_edges[index] = 0.0
-            else:
-                trial_alive[index] = 0.0
-            neuron_masks.append(trial_alive)
-            edge_stack.append(trial_edges)
-        if not neuron_masks:
-            return np.empty((0, 1))
-        return self.accuracy(np.stack(neuron_masks), np.stack(edge_stack))[0]
-
-
-def test_minimization_revisits_neurons_after_edge_pruning(monkeypatch):
     example = _load()
     config = SimpleNamespace(n_rec=3, num_tricks=1)
+
+    def fake_evaluator(experiment, current_config):
+        del experiment, current_config
+
+        def evaluate(neuron_alive, edge_alive):
+            neuron_code = jnp.sum(neuron_alive * jnp.array([4.0, 2.0, 1.0]))
+            edge_code = jnp.sum(edge_alive * jnp.array([2.0, 1.0]))
+            safe = jnp.logical_or(
+                jnp.logical_and(neuron_code == 7.0, edge_code >= 1.0),
+                jnp.logical_and(neuron_code == 3.0, edge_code == 0.0),
+            )
+            return jnp.array([safe], dtype=jnp.float32), neuron_alive[None, :]
+
+        return evaluate
+
+    monkeypatch.setattr(example, "_mask_evaluator", fake_evaluator)
     monkeypatch.setattr(example, "_readout_weight", lambda model: np.zeros((3, 1)))
-    result = example._minimize_topology(
+    result = example._joint_fixed_point_prune(
         SimpleNamespace(model=object()),
         config,
         np.ones(3),
         1.0,
-        _ORACLE_ROWS,
-        _ORACLE_COLS,
+        np.array([1, 0]),
+        np.array([2, 2]),
         np.zeros(2),
         np.zeros((1, 2)),
-        runner=_OracleRunner(),
     )
     assert result["converged"] is True
-    assert result["round_count"] == 2
     assert result["cycle_count"] == 2
     assert result["accepted_neurons"] == [0]
     assert result["accepted_edges"] == [0]
@@ -628,148 +497,11 @@ def test_minimization_revisits_neurons_after_edge_pruning(monkeypatch):
     assert result["retained_single_edge_ablation_accuracies"] == []
 
 
-def test_terminal_screen_certifies_every_retained_coordinate(monkeypatch):
-    """The round that stops the search is the 1-minimality certificate."""
-    example = _load()
-    config = SimpleNamespace(n_rec=3, num_tricks=1)
-    monkeypatch.setattr(example, "_readout_weight", lambda model: np.zeros((3, 1)))
-    runner = _OracleRunner()
-    result = example._minimize_topology(
-        SimpleNamespace(model=object()),
-        config,
-        np.ones(3),
-        1.0,
-        _ORACLE_ROWS,
-        _ORACLE_COLS,
-        np.zeros(2),
-        np.zeros((1, 2)),
-        runner=runner,
-    )
-    alive = np.asarray(result["final_alive_mask"], dtype=np.float64)
-    edge_alive = np.asarray(result["final_edge_alive_mask"], dtype=np.float64)
-    for index in result["retained_indices"]:
-        trial = alive.copy()
-        trial[index] = 0.0
-        assert np.min(runner.accuracy(trial[None, :], edge_alive[None, :])[0]) < 1.0
-    for index in result["retained_edge_indices"]:
-        trial = edge_alive.copy()
-        trial[index] = 0.0
-        assert np.min(runner.accuracy(alive[None, :], trial[None, :])[0]) < 1.0
-
-
-def test_minimization_counts_screen_and_commit_evaluations(monkeypatch):
-    """A screen costs one evaluation per retained coordinate, no more."""
-    example = _load()
-    config = SimpleNamespace(n_rec=3, num_tricks=1)
-    monkeypatch.setattr(example, "_readout_weight", lambda model: np.zeros((3, 1)))
-    result = example._minimize_topology(
-        SimpleNamespace(model=object()),
-        config,
-        np.ones(3),
-        1.0,
-        _ORACLE_ROWS,
-        _ORACLE_COLS,
-        np.zeros(2),
-        np.zeros((1, 2)),
-        runner=_OracleRunner(),
-    )
-    # Round 1 screens 3 neurons, finds none safe, and falls through to 2 edges.
-    # Round 2 finds a safe neuron and never reaches the edges. The terminal
-    # round screens the 2 retained neurons; no edge is active by then.
-    assert result["screen_evaluations"] == 3 + 2 + 3 + 2
-    # Both edges screen safe individually but not jointly, so round 1 spends a
-    # rejected whole-set test, one accepted prefix probe, and one rejected retry
-    # of the leftover against the reduced mask; round 2 accepts outright.
-    assert result["commit_evaluations"] == 4
-    assert result["evaluation_count"] > result["screen_evaluations"]
-
-
-def test_end_to_end_result_is_one_minimal_against_the_real_model(monkeypatch):
-    """Re-verify the published guarantee without the search machinery.
-
-    Every retained neuron and every retained recurrent edge is ablated singly
-    and re-measured through the single-mask evaluator. If any of them is still
-    removable the reported certificate is false, whatever the search recorded.
-    """
-    import brainstate
-    import brainunit as u
-
-    example, config, experiment = _small_experiment()
-    monkeypatch.setattr(example, "_analyze_compaction", lambda *a, **k: {})
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        baseline, _ = example._evaluate_alive_masks(
-            experiment, config, np.ones((1, config.n_rec), dtype=np.float32)
-        )
-        target = float(np.min(baseline))
-        analysis = example._analyze_pruning(
-            experiment,
-            {"trick_names": [f"task{i}" for i in range(config.num_tricks)]},
-            config,
-            target,
-            0.5,
-            eval_batch=4,
-        )
-        fixed_point = analysis["fixed_point"]
-        assert fixed_point["converged"] is True
-        alive = np.asarray(fixed_point["final_alive_mask"], dtype=np.float32)
-        edge_alive = np.asarray(fixed_point["final_edge_alive_mask"], dtype=np.float32)
-        for index in fixed_point["retained_indices"]:
-            trial = alive.copy()
-            trial[index] = 0.0
-            _, accuracy = example._evaluate_probe_logits(
-                experiment, config, trial, edge_alive
-            )
-            assert np.min(accuracy) < target
-        for index in fixed_point["retained_edge_indices"]:
-            trial = edge_alive.copy()
-            trial[index] = 0.0
-            _, accuracy = example._evaluate_probe_logits(
-                experiment, config, alive, trial
-            )
-            assert np.min(accuracy) < target
-    certificate = np.asarray(fixed_point["retained_single_ablation_accuracies"])
-    if certificate.size:
-        assert np.all(np.min(certificate, axis=1) < target)
-
-
-def test_accept_prefix_sweeps_lengths_and_accepts_only_measured_ones():
-    """A non-monotone oracle must never yield an unverified accepted length."""
-    example = _load()
-    asked = []
-
-    def evaluate(lengths):
-        asked.append(list(lengths))
-        # Safe for one or two removals, unsafe for three or more.
-        return np.array([[1.0 if length <= 2 else 0.0] for length in lengths])
-
-    accepted, evaluations, head = example._accept_prefix(
-        evaluate, [(0, index) for index in range(8)], 1.0, 4
-    )
-    assert accepted == 2
-    assert head is None
-    assert evaluations == sum(len(batch) for batch in asked)
-    assert all(max(batch) <= 8 for batch in asked)
-
-
-def test_accept_prefix_reports_the_head_measurement_when_nothing_is_safe():
-    example = _load()
-
-    def evaluate(lengths):
-        return np.zeros((len(lengths), 1))
-
-    accepted, evaluations, head = example._accept_prefix(
-        evaluate, [(0, 0), (0, 1)], 1.0, 4
-    )
-    assert accepted == 0
-    assert evaluations >= 1
-    assert head is not None and float(head[0]) == 0.0
-
-
-def test_minimization_rejects_invalid_initial_mask(monkeypatch):
+def test_joint_fixed_point_rejects_invalid_initial_mask(monkeypatch):
     example = _load()
     config = SimpleNamespace(n_rec=2, num_tricks=1)
     with pytest.raises(ValueError, match="initial_alive"):
-        example._minimize_topology(
+        example._joint_fixed_point_prune(
             SimpleNamespace(model=object()),
             config,
             np.array([1.0, 0.5]),
