@@ -426,6 +426,10 @@ def _probe_logit_evaluator(experiment: Any, config: Any):
             logits = logits / jnp.maximum(jnp.sum(window), 1.0)
             return logits[0], jnp.mean(neuron_spikes, axis=(0, 1))
 
+        # Size the states before the trial loop carries them: the search leaves
+        # the model at the probe batch, and the per-trial reset inside the body
+        # must not change the carry shape.
+        brainstate.nn.reset_all_states(model, batch_size=1)
         logits, rates = brainstate.transform.for_loop(evaluate_trial, trials, windows)
         task_rates = rates.reshape(
             config.num_tricks, config.eval_trials_per_task, config.n_rec
