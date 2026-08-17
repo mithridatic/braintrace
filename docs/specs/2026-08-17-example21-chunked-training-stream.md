@@ -1,6 +1,6 @@
 # Example 21 — chunked training stream
 
-Status: proposed
+Status: implemented in `c303207`; verified at 4096 updates
 Date: 2026-08-17
 Branch: `feat/example21-latent-reasoning`
 Follows: `docs/specs/2026-08-16-example21-zero-score-root-cause.md`
@@ -147,3 +147,54 @@ Co-located in `examples/pp_prop/21-latent-reasoning-in-context_test.py`.
   really are 0/1 indicators this is a 4× ceiling multiplier for two lines and it
   stacks with chunking rather than competing with it. Worth pricing next, but
   bundling it would make the bitwise-identity test above meaningless.
+
+## Verification
+
+`--training-updates 4096 --training-chunk-size 512 --learning-rate 1e-3`,
+full 400-task evaluation, GPU, 686 s. The same budget previously died with
+`RESOURCE_EXHAUSTED` on a 4.58 GiB allocation; chunked, peak device memory
+stayed under 3 GiB. All 8 structural and all 12 scientific gates pass.
+
+Loss continues to descend past the old ceiling, at the rate the 2048 run
+predicted:
+
+| updates | mean loss |
+| ------- | --------- |
+| 0–256 | 7.887 |
+| 256–512 | 6.484 |
+| 512–1024 | 5.724 |
+| 1024–2048 | 5.032 |
+| 2048–4096 | 4.341 |
+
+The 2048→4096 doubling bought −0.69, in line with the −0.65 trend. The
+mechanism works and the ceiling is gone.
+
+### What the extra updates actually bought
+
+| metric (intact, best effort) | 2048 | 4096 |
+| ---------------------------- | ------ | ------ |
+| shape | 0.3222 | 0.4105 |
+| pixel | 0.4035 | 0.3915 |
+
+Shape improved; pixel did not. Halving the loss again is not currently
+converting into pixel accuracy, so a further doubling of the budget is not
+obviously the next thing to buy.
+
+### The finding that supersedes the remaining backlog
+
+The `shuffled_demonstrations` control scores within ±0.01 of the intact arm at
+every effort (shape 0.3723–0.4010, pixel 0.3918–0.3969). Destroying the
+demonstration input/output pairing costs the model nothing. The
+`no_context` control does collapse (shape 0.1026–0.1456, pixel
+0.1556–0.1707), so the model is using the query grid — it is learning output
+priors conditioned on the query, not the demonstrated transformation.
+
+This reframes the backlog. Chasing the ~2,800× gradient imbalance, or more
+updates, optimises a model that is not doing in-context reasoning at all. The
+next question is why the demonstration channel carries no usable signal, and
+`shuffled_demonstrations` is already the discriminator for it.
+
+Also settled: the effort ordering at 2048 (pixel rising 0.3840 → 0.4035 across
+efforts 0→32) was noise. At 4096 pixel is flat across effort
+(0.3911, 0.3835, 0.3899, 0.3915). The earlier note not to lean on that signal
+was correct.
