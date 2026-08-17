@@ -42,12 +42,14 @@ from examples.pp_prop.latent_workspace_binding_control import (
 from examples.pp_prop.latent_workspace_model import (
     LatentWorkspaceModel,
     ModelConfig,
+    _unit_l2_cap,
     compile_pp_prop,
 )
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
     ArcPair,
     ArcTask,
+    MAX_GRID_SIZE,
     RowEventConfig,
     associative_memory_feature_indices,
     encode_query_episode,
@@ -57,11 +59,93 @@ from examples.pp_prop.latent_workspace_task import (
 PREREGISTERED_MEMORY_WIDTH = 32
 PREREGISTERED_MEMORY_DECAY = 1.0
 STRUCTURAL_COLOR_COUNT = legacy.COLOR_COUNT
+STAGE21_STABILITY_UPDATES = 256
+STAGE21_ARTIFACT_SCHEMA_VERSION = 3
+STAGE21_ADMISSION_SCHEMA_VERSION = 1
+STAGE21_CARRIER_NORM_TOLERANCE = 2e-6
+PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256 = (
+    "b8ecb04f9c481118afa46651ead411abaccc338ad387f29a1f113d455788a5c8"
+)
+PREREGISTERED_PARAMETER_COUNT = 646_940
+PREREGISTERED_TRAINING_SCHEDULE_SHA256 = (
+    "25cae0684c3a0cb1a0d0ae1a12b7db8bdf37a1f15d687cdf79362c9c6163ef9b"
+)
+PREREGISTERED_UPDATE_ZERO_DIGESTS = {
+    "update_zero_event_sha256": (
+        "25d451acf3acf89713cd1fc053568769b73bde04f4e465835b982a4b412d168f"
+    ),
+    "update_zero_target_sha256": (
+        "0e2d0ce71541888e8ca160ca5177cd3ccad900afb822ebb14cb3b469aa743031"
+    ),
+    "update_zero_mapping_sha256": (
+        "dd42d9393e148f6e39a4fa2eb35ca77cb28b81e38fc94a15bba3dc0965143175"
+    ),
+    "update_zero_query_sha256": (
+        "bad858fa344a6d7eb1cdfd5128c1ccd25cd8a6de5967a84ae93632beb336f5ee"
+    ),
+}
+PREREGISTERED_STABILITY_DIGESTS = {
+    "training_schedule_sha256": (
+        "2b5ab5dadd6e67117ee3aa52d08864e936b7f3ba9346f84125636415f02c5daa"
+    ),
+    "training_query_indices_sha256": (
+        "965feae6ae670f19b859d851cef5814f8a313e44cf743fa3803fd91cc1164a6e"
+    ),
+    "validation_schedule_sha256": (
+        "80057e092a130e2c78e8f8397b3978bc13a0ff2a5b64bb5207abe238e08feddd"
+    ),
+    "training_mapping_ids_sha256": (
+        "bd66b59e5a79fcadd21d0fc4a7166baefae5ec489acf76959530a13690239b8b"
+    ),
+    "validation_mapping_ids_sha256": (
+        "a75b3b2ab05110e21fef1ea44ae3fb701d557f45351e5a17cf89a80e80f689f3"
+    ),
+}
 _REQUIRED_DIRECT_PATHS = (
     ("memory_write_scale",),
     ("workspace_query_projection", "weight"),
     ("memory_read_projection", "weight"),
 )
+_STAGE21_OPTIMIZATION_PATHS = (
+    "memory_write_scale",
+    "workspace_query_projection/weight",
+    "memory_read_projection/weight",
+    "readout_projection/weight",
+    "color_factor_head/weight",
+)
+_STAGE21_TRACE_PATHS = _STAGE21_OPTIMIZATION_PATHS[:3]
+_STAGE21_PARAMETER_COUNTS = {
+    "memory_write_scale": 1_024,
+    "workspace_query_projection/weight": 65_536,
+    "memory_read_projection/weight": 65_536,
+    "readout_projection/weight": 262_272,
+    "color_factor_head/weight": 144_480,
+}
+_STAGE21_TRACE_FACTOR_COUNTS = {
+    "memory_write_scale": 65_536,
+    "workspace_query_projection/weight": 133_120,
+    "memory_read_projection/weight": 526_336,
+}
+_STAGE21_FINITE_ONE_UPDATE = {
+    "cross_entropies",
+    "color_logits",
+    "raw_carriers",
+    "capped_carriers",
+    "gradients",
+    "pp_prop_factors",
+    "adam_factors",
+    "parameter_updates",
+    "decoder_factors",
+}
+_STAGE21_FINITE_STABILITY = {
+    "losses",
+    "states",
+    "logits",
+    "gradients",
+    "pp_prop_factors",
+    "adam_factors",
+    "parameters",
+}
 
 
 @dataclass(frozen=True)
@@ -139,6 +223,32 @@ class BindingGateConfig(legacy.BindingControlConfig):
             color_rank=1,
             sparse_backend="jax_raw",
         )
+
+    @classmethod
+    def stage21_one_update_config(cls) -> "BindingGateConfig":
+        """Return the exact full-production schedule used for update zero.
+
+        Returns
+        -------
+        BindingGateConfig
+            Preregistered 10,000-update configuration whose update-zero batch
+            is consumed by the one-update admission.
+        """
+
+        return cls()
+
+    @classmethod
+    def stage21_stability_config(cls) -> "BindingGateConfig":
+        """Return the fixed nonqualifying 256-update stabilization run.
+
+        Returns
+        -------
+        BindingGateConfig
+            Production topology and seeds with only the update count reduced
+            to the preregistered 256-update admission budget.
+        """
+
+        return cls(training_updates=STAGE21_STABILITY_UPDATES)
 
 
 def _model_config(config: BindingGateConfig, *, batch_size: int) -> ModelConfig:
@@ -338,7 +448,7 @@ def _standard_arc_key_separation_report(
         rows=rows,
         memory_width=memory_width,
         model_seed=model_seed,
-        architecture=dataclasses.asdict(model.associative_memory_report()),
+        architecture=_architecture_report(model),
     )
 
 
@@ -368,7 +478,7 @@ def _gate_native_key_separation_report(
         rows=rows,
         memory_width=config.context_memory_width,
         model_seed=config.model_seed,
-        architecture=dataclasses.asdict(model.associative_memory_report()),
+        architecture=_architecture_report(model),
     )
 
 
@@ -601,11 +711,51 @@ def _shared_encoder_identity_matches(
     return all(left[field] == right[field] for field in shared_fields)
 
 
-def _train_pp_prop(
-    model: LatentWorkspaceModel,
-    data: BindingData,
-    config: BindingGateConfig,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+@dataclass
+class _PPPropTrainer:
+    learner: Any
+    optimizer: Any
+    compiler: dict[str, Any]
+    compile_warnings: list[str]
+    train: Any
+    parameter_counts: dict[str, int]
+    trace_factor_counts: dict[str, int]
+    parameter_keys: dict[str, Any]
+    supervision_mask: jax.Array
+
+
+def _jax_tree_stats(value: Any) -> tuple[jax.Array, jax.Array, jax.Array]:
+    leaves = tuple(jnp.asarray(leaf) for leaf in jax.tree.leaves(value))
+    if not leaves:
+        zero = jnp.asarray(0.0, dtype=jnp.float32)
+        return zero, zero, jnp.asarray(False)
+    squared = sum(
+        jnp.sum(jnp.square(leaf.astype(jnp.float32))) for leaf in leaves
+    )
+    maximum = jnp.max(
+        jnp.stack(
+            [
+                jnp.max(jnp.abs(leaf.astype(jnp.float32)), initial=0.0)
+                for leaf in leaves
+            ]
+        )
+    )
+    finite = jnp.all(
+        jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves])
+    )
+    return jnp.sqrt(squared), maximum, finite
+
+
+def _mapping_value_by_path(values: Mapping[Any, Any], label: str) -> Any:
+    matches = [value for path, value in values.items() if _path(path) == label]
+    if len(matches) != 1:
+        raise KeyError(f"expected one value for parameter path {label!r}")
+    return matches[0]
+
+
+def _make_pp_prop_trainer(
+    model: LatentWorkspaceModel, config: BindingGateConfig
+) -> _PPPropTrainer:
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always", UserWarning)
         learner = compile_pp_prop(model)
@@ -615,10 +765,27 @@ def _train_pp_prop(
     advances = jnp.ones((config.sequence_length, config.batch_size), dtype=jnp.bool_)
     mask = _deep_supervision_mask(config)
     rank = config.color_rank
+    parameter_keys = {
+        _path(path): path for path in learner.param_states.keys()
+    }
+    missing = set(_STAGE21_OPTIMIZATION_PATHS) - set(parameter_keys)
+    if missing:
+        raise RuntimeError(f"trainer is missing required parameters: {sorted(missing)}")
+    parameter_counts = {
+        label: int(
+            sum(
+                np.asarray(leaf).size
+                for leaf in jax.tree.leaves(learner.param_states[key].value)
+            )
+        )
+        for label, key in parameter_keys.items()
+        if label in _STAGE21_OPTIMIZATION_PATHS
+    }
+    model_states = tuple(model.states().values())
 
     @brainstate.transform.jit
     def train_all(events: jax.Array, targets: jax.Array) -> jax.Array:
-        def train_one(inputs: tuple[jax.Array, jax.Array]) -> jax.Array:
+        def train_one(inputs: tuple[jax.Array, jax.Array]) -> dict[str, jax.Array]:
             sequence, target = inputs
             model.reset_state()
             learner.reset_state(batch_size=config.batch_size)
@@ -637,17 +804,88 @@ def _train_pp_prop(
                 loss_output="scalar",
                 return_value=True,
             )
+            gradient_stats = tuple(
+                _jax_tree_stats(_mapping_value_by_path(gradients, label))
+                for label in _STAGE21_OPTIMIZATION_PATHS
+            )
+            trace_factors = tuple(
+                learner.get_etrace_of(parameter_keys[label])
+                for label in _STAGE21_TRACE_PATHS
+            )
+            trace_stats = tuple(
+                _jax_tree_stats(factors) for factors in trace_factors
+            )
+            compact = model.compact_readout()
+            logits = legacy._color_logits(compact, rank)
+            _, logit_maximum, logits_finite = _jax_tree_stats(logits)
             optimizer.update(brainstate.nn.clip_grad_norm(gradients, config.clip_norm))
-            return loss
+            _, state_maximum, states_finite = _jax_tree_stats(
+                tuple(state.value for state in model_states)
+            )
+            _, adam_maximum, adam_finite = _jax_tree_stats(optimizer.opt_state.value)
+            _, parameter_maximum, parameters_finite = _jax_tree_stats(
+                tuple(state.value for state in learner.param_states.values())
+            )
+            return {
+                "loss": loss,
+                "gradient_norms": jnp.stack([item[0] for item in gradient_stats]),
+                "gradient_max_abs": jnp.stack([item[1] for item in gradient_stats]),
+                "gradients_finite": jnp.all(
+                    jnp.stack([item[2] for item in gradient_stats])
+                ),
+                "trace_norms": jnp.stack([item[0] for item in trace_stats]),
+                "trace_max_abs": jnp.stack([item[1] for item in trace_stats]),
+                "traces_finite": jnp.all(
+                    jnp.stack([item[2] for item in trace_stats])
+                ),
+                "logit_max_abs": logit_maximum,
+                "logits_finite": logits_finite,
+                "state_max_abs": state_maximum,
+                "states_finite": states_finite,
+                "adam_max_abs": adam_maximum,
+                "adam_finite": adam_finite,
+                "parameter_max_abs": parameter_maximum,
+                "parameters_finite": parameters_finite,
+            }
 
         return brainstate.transform.for_loop(train_one, (events, targets))
 
+    learner.reset_state(batch_size=config.batch_size)
+    trace_factor_counts: dict[str, int] = {}
+    for label in _STAGE21_TRACE_PATHS:
+        xs, dfs = learner.get_etrace_of(parameter_keys[label])
+        trace_factor_counts[label] = int(
+            sum(np.asarray(leaf).size for leaf in jax.tree.leaves((xs, dfs)))
+        )
+    return _PPPropTrainer(
+        learner=learner,
+        optimizer=optimizer,
+        compiler=compiler,
+        compile_warnings=[str(item.message) for item in caught],
+        train=train_all,
+        parameter_counts=parameter_counts,
+        trace_factor_counts=trace_factor_counts,
+        parameter_keys={
+            label: parameter_keys[label] for label in _STAGE21_OPTIMIZATION_PATHS
+        },
+        supervision_mask=mask,
+    )
+
+
+def _train_pp_prop(
+    model: LatentWorkspaceModel,
+    data: BindingData,
+    config: BindingGateConfig,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    trainer = _make_pp_prop_trainer(model, config)
+
     before = legacy._parameter_values(model)
     start = time.perf_counter()
-    losses = train_all(
+    telemetry = trainer.train(
         jnp.asarray(data.training_events), jnp.asarray(data.training_targets)
     )
-    losses = np.asarray(jax.block_until_ready(losses), dtype=np.float64)
+    telemetry = jax.block_until_ready(telemetry)
+    losses = np.asarray(telemetry["loss"], dtype=np.float64)
     elapsed = time.perf_counter() - start
     after = legacy._parameter_values(model)
     return (
@@ -659,8 +897,10 @@ def _train_pp_prop(
                 "and every latent checkpoint"
             ),
             "supervised_depths": list(range(config.gap_steps + 1)),
-            "supervision_mask": np.asarray(mask).tolist(),
-            "supervision_weight_sum": float(np.asarray(mask).sum()),
+            "supervision_mask": np.asarray(trainer.supervision_mask).tolist(),
+            "supervision_weight_sum": float(
+                np.asarray(trainer.supervision_mask).sum()
+            ),
             "losses": losses.tolist(),
             "initial_loss": float(losses[0]),
             "final_loss": float(losses[-1]),
@@ -672,12 +912,755 @@ def _train_pp_prop(
             "required_direct_parameter_movement": _required_parameter_movement(
                 before, after
             ),
-            "compiler": compiler,
-            "compile_warnings": [str(item.message) for item in caught],
+            "finite_telemetry": {
+                "losses": bool(np.isfinite(losses).all()),
+                "states": bool(np.asarray(telemetry["states_finite"]).all()),
+                "logits": bool(np.asarray(telemetry["logits_finite"]).all()),
+                "gradients": bool(
+                    np.asarray(telemetry["gradients_finite"]).all()
+                ),
+                "pp_prop_factors": bool(
+                    np.asarray(telemetry["traces_finite"]).all()
+                ),
+                "adam_factors": bool(np.asarray(telemetry["adam_finite"]).all()),
+                "parameters": bool(
+                    np.asarray(telemetry["parameters_finite"]).all()
+                ),
+            },
+            "telemetry_max_abs": {
+                name: float(np.asarray(telemetry[field]).max(initial=0.0))
+                for name, field in {
+                    "states": "state_max_abs",
+                    "logits": "logit_max_abs",
+                    "gradients": "gradient_max_abs",
+                    "pp_prop_factors": "trace_max_abs",
+                    "adam_factors": "adam_max_abs",
+                    "parameters": "parameter_max_abs",
+                }.items()
+            },
+            "compiler": trainer.compiler,
+            "compile_warnings": trainer.compile_warnings,
         },
         after,
-        compiler,
+        trainer.compiler,
     )
+
+
+def _architecture_report(model: LatentWorkspaceModel) -> dict[str, Any]:
+    return dict(model.associative_memory_report().to_dict())
+
+
+def _make_batch_measurement(model: LatentWorkspaceModel, config: BindingGateConfig):
+    advances = jnp.ones((config.sequence_length, config.batch_size), dtype=jnp.bool_)
+
+    @brainstate.transform.jit
+    def measure(
+        events: jax.Array, targets: jax.Array
+    ) -> dict[str, jax.Array]:
+        model.reset_state()
+
+        def step(inputs: tuple[jax.Array, jax.Array]):
+            event, advance = inputs
+            compact = model.update(event, advance)
+            return (
+                compact,
+                jnp.asarray(model.workspace_carrier.value),
+                jnp.asarray(model.reasoning_query.value),
+                jnp.asarray(model.query_encoding.value),
+            )
+
+        compact, raw_carrier, reasoning_query, query_encoding = (
+            brainstate.transform.for_loop(
+            step, (events, advances)
+            )
+        )
+        compact = compact[SYMBOL_COUNT:]
+        raw_carrier = raw_carrier[SYMBOL_COUNT:]
+        reasoning_query = reasoning_query[SYMBOL_COUNT:]
+        query_encoding = query_encoding[SYMBOL_COUNT:]
+        capped_carrier = _unit_l2_cap(raw_carrier)
+        depth_count, batch_size, neuron_count = raw_carrier.shape
+        capped_flat = capped_carrier.reshape(depth_count * batch_size, neuron_count)
+        raw_flat = raw_carrier.reshape(depth_count * batch_size, neuron_count)
+        readout_preactivation = model.readout_projection(capped_flat).reshape(
+            depth_count, batch_size, config.readout_width
+        )
+        readout_post_gelu = jax.nn.gelu(readout_preactivation)
+        hidden_flat = readout_post_gelu.reshape(
+            depth_count * batch_size, config.readout_width
+        )
+        height = model.height_head(hidden_flat).reshape(depth_count, batch_size, -1)
+        width = model.width_head(hidden_flat).reshape(depth_count, batch_size, -1)
+        factors = model.color_factor_head(hidden_flat).reshape(
+            depth_count, batch_size, -1
+        )
+        factor_width = config.color_rank * MAX_GRID_SIZE
+        row_factors = factors[..., :factor_width].reshape(
+            depth_count, batch_size, config.color_rank, MAX_GRID_SIZE
+        )
+        column_factors = factors[..., factor_width : 2 * factor_width].reshape(
+            depth_count, batch_size, config.color_rank, MAX_GRID_SIZE
+        )
+        color_factors = factors[..., 2 * factor_width :].reshape(
+            depth_count, batch_size, config.color_rank, legacy.COLOR_COUNT
+        )
+        reconstructed_compact = jnp.concatenate((height, width, factors), axis=-1)
+        uncapped_hidden = jax.nn.gelu(model.readout_projection(raw_flat))
+        uncapped_compact = jnp.concatenate(
+            (
+                model.height_head(uncapped_hidden),
+                model.width_head(uncapped_hidden),
+                model.color_factor_head(uncapped_hidden),
+            ),
+            axis=-1,
+        ).reshape(compact.shape)
+        h0 = raw_carrier[0]
+        capped_reasoning = jnp.tanh(
+            query_encoding[1] + model.workspace_query_projection(_unit_l2_cap(h0))
+        )
+        uncapped_reasoning = jnp.tanh(
+            query_encoding[1] + model.workspace_query_projection(h0)
+        )
+        logits = jax.vmap(
+            lambda value: legacy._color_logits(value, config.color_rank)
+        )(compact)
+        cross_entropy = jax.vmap(
+            lambda value: braintools.metric.softmax_cross_entropy_with_integer_labels(
+                value, targets
+            ).mean()
+        )(logits)
+        return {
+            "cross_entropy": cross_entropy,
+            "logits": logits,
+            "raw_carrier": raw_carrier,
+            "capped_carrier": capped_carrier,
+            "readout_preactivation": readout_preactivation,
+            "readout_post_gelu": readout_post_gelu,
+            "row_factors": row_factors,
+            "column_factors": column_factors,
+            "color_factors": color_factors,
+            "compact_reconciliation_max_abs": jnp.max(
+                jnp.abs(reconstructed_compact - compact), axis=(1, 2)
+            ),
+            "readout_uncapped_delta_l2": jnp.linalg.vector_norm(
+                compact - uncapped_compact, axis=-1
+            ),
+            "query_capped_residual_l2": jnp.linalg.vector_norm(
+                reasoning_query[1] - capped_reasoning, axis=-1
+            ),
+            "query_uncapped_delta_l2": jnp.linalg.vector_norm(
+                reasoning_query[1] - uncapped_reasoning, axis=-1
+            ),
+        }
+
+    return measure
+
+
+def _measurement_report(values: Mapping[str, Any]) -> dict[str, Any]:
+    cross_entropy = np.asarray(values["cross_entropy"], dtype=np.float64)
+    logits = np.asarray(values["logits"])
+    raw = np.asarray(values["raw_carrier"])
+    capped = np.asarray(values["capped_carrier"])
+    raw_norms = np.linalg.norm(raw.astype(np.float64), axis=-1)
+    capped_norms = np.linalg.norm(capped.astype(np.float64), axis=-1)
+    capped_count = int(np.count_nonzero(raw_norms > 1.0))
+    sample_count = int(raw_norms.size)
+    projection_telemetry: dict[str, list[dict[str, float]]] = {}
+    for name in (
+        "readout_preactivation",
+        "readout_post_gelu",
+        "row_factors",
+        "column_factors",
+        "color_factors",
+    ):
+        array = np.asarray(values[name], dtype=np.float64)
+        projection_telemetry[name] = [
+            {
+                "rms": float(np.sqrt(np.mean(np.square(array[depth])))),
+                "max_abs": float(np.max(np.abs(array[depth]), initial=0.0)),
+                "nonzero_fraction": float(np.count_nonzero(array[depth]) / array[depth].size),
+            }
+            for depth in range(array.shape[0])
+        ]
+    reconciliation = np.asarray(
+        values["compact_reconciliation_max_abs"], dtype=np.float64
+    )
+    readout_uncapped = np.asarray(
+        values["readout_uncapped_delta_l2"], dtype=np.float64
+    )
+    query_residual = np.asarray(
+        values["query_capped_residual_l2"], dtype=np.float64
+    )
+    query_uncapped = np.asarray(
+        values["query_uncapped_delta_l2"], dtype=np.float64
+    )
+    return {
+        "cross_entropy": cross_entropy.tolist(),
+        "max_abs_color_logit": np.max(
+            np.abs(logits), axis=tuple(range(1, logits.ndim))
+        ).astype(np.float64).tolist(),
+        "carrier": {
+            "sample_count": sample_count,
+            "raw_max_l2_norm": float(raw_norms.max(initial=0.0)),
+            "capped_max_l2_norm": float(capped_norms.max(initial=0.0)),
+            "capped_count": capped_count,
+            "capped_fraction": capped_count / sample_count,
+        },
+        "finite": {
+            "cross_entropies": bool(np.isfinite(cross_entropy).all()),
+            "color_logits": bool(np.isfinite(logits).all()),
+            "raw_carriers": bool(np.isfinite(raw).all()),
+            "capped_carriers": bool(np.isfinite(capped).all()),
+            "decoder_factors": bool(
+                all(
+                    np.isfinite(np.asarray(values[name])).all()
+                    for name in projection_telemetry
+                )
+                and np.isfinite(reconciliation).all()
+            ),
+        },
+        "projection_telemetry": projection_telemetry,
+        "compact_reconciliation_max_abs": reconciliation.tolist(),
+        "consumer_witnesses": {
+            "readout_capped_residual_max_abs": float(
+                reconciliation.max(initial=0.0)
+            ),
+            "readout_uncapped_delta_min_l2": float(
+                readout_uncapped.min(initial=np.inf)
+            ),
+            "query_capped_residual_max_l2": float(
+                query_residual.max(initial=0.0)
+            ),
+            "query_uncapped_delta_min_l2": float(
+                query_uncapped.min(initial=np.inf)
+            ),
+            "sample_count": int(readout_uncapped.size + query_residual.size),
+        },
+        "prediction_histograms": [
+            np.bincount(
+                np.argmax(logits[depth], axis=-1), minlength=legacy.COLOR_COUNT
+            ).tolist()
+            for depth in range(logits.shape[0])
+        ],
+    }
+
+
+def _reports_from_vector(
+    values: Any,
+    paths: Sequence[str],
+    counts: Mapping[str, int],
+    *,
+    count_name: str,
+) -> dict[str, Any]:
+    vector = np.asarray(values, dtype=np.float64)
+    if vector.shape[-1:] != (len(paths),):
+        raise ValueError("telemetry vector does not match required paths")
+    vector = vector.reshape(-1, len(paths))[-1]
+    return {
+        path: {
+            "l2_norm": float(vector[index]),
+            count_name: int(counts[path]),
+        }
+        for index, path in enumerate(paths)
+    }
+
+
+def _parameter_delta_reports(
+    before: Mapping[str, Any], after: Mapping[str, Any]
+) -> dict[str, Any]:
+    reports: dict[str, Any] = {}
+    for path in _STAGE21_OPTIMIZATION_PATHS:
+        squared = 0.0
+        count = 0
+        for left, right in zip(
+            jax.tree.leaves(before[path]), jax.tree.leaves(after[path]), strict=True
+        ):
+            delta = np.asarray(right, dtype=np.float64) - np.asarray(
+                left, dtype=np.float64
+            )
+            squared += float(np.sum(delta * delta))
+            count += int(delta.size)
+        reports[path] = {
+            "l2_norm": math.sqrt(squared),
+            "parameter_count": count,
+        }
+    return reports
+
+
+def _initialization_report(
+    parameters: Mapping[str, Any], config: BindingGateConfig
+) -> dict[str, Any]:
+    return {
+        "fresh_model": True,
+        "model_seed": config.model_seed,
+        "parameter_sha256": legacy._array_digest(parameters),
+        "parameter_count": int(
+            sum(
+                np.asarray(leaf).size
+                for value in parameters.values()
+                for leaf in jax.tree.leaves(value)
+            )
+        ),
+    }
+
+
+def _scalar_step(value: Any, label: str) -> int:
+    array = np.asarray(value)
+    if array.shape != () or not np.issubdtype(array.dtype, np.integer):
+        raise RuntimeError(f"{label} is not one scalar integer step")
+    return int(array)
+
+
+def _adam_factor_reports(trainer: _PPPropTrainer) -> dict[str, Any]:
+    optimizer = trainer.optimizer
+    state = optimizer.opt_state.value
+    if (
+        not isinstance(state, tuple)
+        or len(state) != 2
+        or getattr(state[0], "_fields", ()) != ("count", "mu", "nu")
+        or getattr(state[1], "_fields", ()) != ("count",)
+        or not hasattr(state[0], "mu")
+        or not hasattr(state[0], "nu")
+        or not hasattr(state[0], "count")
+        or not hasattr(state[1], "count")
+    ):
+        raise RuntimeError("Adam optimizer state does not expose first/second moments")
+    adam = state[0]
+    if not isinstance(adam.mu, Mapping) or not isinstance(adam.nu, Mapping):
+        raise RuntimeError("Adam moments are not keyed by learner parameter paths")
+    learner_keys = set(trainer.learner.param_states.keys())
+    if (
+        set(adam.mu) != learner_keys
+        or set(adam.nu) != learner_keys
+    ):
+        raise RuntimeError("Adam moments do not exactly match learner parameter keys")
+    adam_step = _scalar_step(adam.count, "Adam moment count")
+    schedule_step = _scalar_step(state[1].count, "Adam schedule count")
+    optimizer_step = _scalar_step(optimizer.step_count.value, "optimizer step count")
+    reports = {}
+    for path in _STAGE21_OPTIMIZATION_PATHS:
+        learner_key = trainer.parameter_keys[path]
+        if learner_key not in adam.mu or learner_key not in adam.nu:
+            raise RuntimeError(f"Adam moments omit exact learner key for {path!r}")
+        first_value = adam.mu[learner_key]
+        second_value = adam.nu[learner_key]
+        parameter_value = trainer.learner.param_states[learner_key].value
+        parameter_structure = jax.tree.structure(parameter_value)
+        if (
+            jax.tree.structure(first_value) != parameter_structure
+            or jax.tree.structure(second_value) != parameter_structure
+        ):
+            raise RuntimeError(f"Adam moment structure differs for {path!r}")
+        first_leaves = [
+            np.asarray(jax.device_get(leaf), dtype=np.float64)
+            for leaf in jax.tree.leaves(first_value)
+        ]
+        second_leaves = [
+            np.asarray(jax.device_get(leaf), dtype=np.float64)
+            for leaf in jax.tree.leaves(second_value)
+        ]
+        first_squared = math.fsum(
+            float(np.sum(leaf * leaf)) for leaf in first_leaves
+        )
+        second_squared = math.fsum(
+            float(np.sum(leaf * leaf)) for leaf in second_leaves
+        )
+        reports[path] = {
+            "first_moment_l2_norm": math.sqrt(first_squared),
+            "second_moment_l2_norm": math.sqrt(second_squared),
+            "first_moment_count": int(sum(leaf.size for leaf in first_leaves)),
+            "second_moment_count": int(sum(leaf.size for leaf in second_leaves)),
+            "adam_step": adam_step,
+            "schedule_step": schedule_step,
+            "optimizer_step": optimizer_step,
+        }
+    return reports
+
+
+def _production_prefix_data(
+    full_data: BindingData, updates: int
+) -> BindingData:
+    return BindingData(
+        training_events=full_data.training_events[:updates],
+        training_targets=full_data.training_targets[:updates],
+        training_mapping_ids=full_data.training_mapping_ids[:updates],
+        training_query_indices=full_data.training_query_indices[:updates],
+        validation_intact=full_data.validation_intact,
+        validation_shuffled=full_data.validation_shuffled,
+        validation_no_context=full_data.validation_no_context,
+        validation_targets=full_data.validation_targets,
+        validation_mapping_ids=full_data.validation_mapping_ids,
+        validation_query_indices=full_data.validation_query_indices,
+    )
+
+
+def _encode_admission_episodes(
+    mapping_ids: np.ndarray,
+    orders: np.ndarray,
+    queries: np.ndarray,
+    *,
+    config: BindingGateConfig,
+    controls: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None]:
+    count = int(mapping_ids.size)
+    rows = config.row_config
+    intact = np.zeros(
+        (count, config.sequence_length, rows.input_width), dtype=np.float32
+    )
+    shuffled = np.zeros_like(intact) if controls else None
+    targets = np.zeros((count,), dtype=np.int32)
+    for episode_index, mapping_id in enumerate(mapping_ids):
+        input_colors, output_colors = legacy._decode_mapping(int(mapping_id))
+        order = orders[episode_index]
+        demonstrations = tuple(
+            ArcPair(
+                legacy._one_cell(input_colors[index]),
+                legacy._one_cell(output_colors[index]),
+            )
+            for index in order
+        )
+        query_index = int(queries[episode_index])
+        query = ArcPair(
+            legacy._one_cell(input_colors[query_index]),
+            legacy._one_cell(output_colors[query_index]),
+        )
+        task = ArcTask(train=demonstrations, test=(query,))
+        intact[episode_index, : rows.max_events] = encode_query_episode(
+            task, 0, rows
+        ).events
+        targets[episode_index] = output_colors[query_index]
+        if shuffled is not None:
+            rotated = tuple(
+                ArcPair(pair.input, demonstrations[(index + 1) % SYMBOL_COUNT].output)
+                for index, pair in enumerate(demonstrations)
+            )
+            shuffled[episode_index, : rows.max_events] = encode_query_episode(
+                ArcTask(train=rotated, test=(query,)), 0, rows
+            ).events
+    no_context = None
+    if shuffled is not None:
+        no_context = np.array(intact, copy=True)
+        no_context[:, :SYMBOL_COUNT] = 0.0
+    return intact, targets, shuffled, no_context
+
+
+def _build_stage21_admission_data() -> BindingData:
+    full = BindingGateConfig.stage21_one_update_config()
+    stability = BindingGateConfig.stage21_stability_config()
+    full_training_count = full.training_episode_count
+    prefix_count = stability.training_episode_count
+    all_ids = legacy._affine_mapping_ids(
+        full_training_count + full.validation_episodes, seed=full.split_seed
+    )
+    training_ids = all_ids[:prefix_count]
+    validation_ids = all_ids[
+        full_training_count : full_training_count + full.validation_episodes
+    ]
+    all_orders, all_queries = legacy._episode_choices(
+        full_training_count, full.train_episode_seed
+    )
+    training_orders = all_orders[:prefix_count]
+    training_queries = all_queries[:prefix_count]
+    train, train_targets, _, _ = _encode_admission_episodes(
+        training_ids,
+        training_orders,
+        training_queries,
+        config=stability,
+        controls=False,
+    )
+    validation_orders, validation_queries = legacy._episode_choices(
+        full.validation_episodes, full.validation_episode_seed
+    )
+    intact, validation_targets, shuffled, no_context = _encode_admission_episodes(
+        validation_ids,
+        validation_orders,
+        validation_queries,
+        config=stability,
+        controls=True,
+    )
+    assert shuffled is not None and no_context is not None
+    return BindingData(
+        training_events=legacy._readonly(
+            train.reshape(
+                stability.training_updates,
+                stability.batch_size,
+                stability.sequence_length,
+                stability.row_config.input_width,
+            ).transpose(0, 2, 1, 3)
+        ),
+        training_targets=legacy._readonly(
+            train_targets.reshape(stability.training_updates, stability.batch_size)
+        ),
+        training_mapping_ids=legacy._readonly(
+            training_ids.reshape(stability.training_updates, stability.batch_size)
+        ),
+        training_query_indices=legacy._readonly(
+            training_queries.reshape(stability.training_updates, stability.batch_size)
+        ),
+        validation_intact=legacy._readonly(intact.transpose(1, 0, 2)),
+        validation_shuffled=legacy._readonly(shuffled.transpose(1, 0, 2)),
+        validation_no_context=legacy._readonly(no_context.transpose(1, 0, 2)),
+        validation_targets=legacy._readonly(validation_targets),
+        validation_mapping_ids=legacy._readonly(validation_ids),
+        validation_query_indices=legacy._readonly(validation_queries),
+    )
+
+
+def _stability_schedule_report(data: BindingData) -> dict[str, str]:
+    return {
+        "training_schedule_sha256": legacy._digest_arrays(
+            data.training_events,
+            data.training_targets,
+            data.training_mapping_ids,
+        ),
+        "training_query_indices_sha256": legacy._digest_arrays(
+            data.training_query_indices
+        ),
+        "validation_schedule_sha256": legacy._digest_arrays(
+            data.validation_intact,
+            data.validation_targets,
+            data.validation_mapping_ids,
+        ),
+        "training_mapping_ids_sha256": legacy._digest_arrays(
+            data.training_mapping_ids.reshape(-1)
+        ),
+        "validation_mapping_ids_sha256": legacy._digest_arrays(
+            data.validation_mapping_ids
+        ),
+    }
+
+
+def _run_one_update_admission(
+    full_data: BindingData,
+    config: BindingGateConfig,
+) -> dict[str, Any]:
+    model = LatentWorkspaceModel(_model_config(config, batch_size=config.batch_size))
+    architecture = _architecture_report(model)
+    measure = _make_batch_measurement(model, config)
+    events = jnp.asarray(full_data.training_events[0])
+    targets = jnp.asarray(full_data.training_targets[0])
+    pre = _measurement_report(jax.block_until_ready(measure(events, targets)))
+    trainer = _make_pp_prop_trainer(model, config)
+    before = legacy._parameter_values(model)
+    telemetry = jax.block_until_ready(
+        trainer.train(events[None, ...], targets[None, ...])
+    )
+    after = legacy._parameter_values(model)
+    post = _measurement_report(jax.block_until_ready(measure(events, targets)))
+    gradient_reports = _reports_from_vector(
+        telemetry["gradient_norms"],
+        _STAGE21_OPTIMIZATION_PATHS,
+        trainer.parameter_counts,
+        count_name="parameter_count",
+    )
+    trace_reports = _reports_from_vector(
+        telemetry["trace_norms"],
+        _STAGE21_TRACE_PATHS,
+        trainer.trace_factor_counts,
+        count_name="factor_count",
+    )
+    report = {
+        "schema_version": STAGE21_ADMISSION_SCHEMA_VERSION,
+        "control": "example21_stage21_one_update_admission",
+        "target": "one_update",
+        "executed_updates": 1,
+        "source_training_updates": config.training_updates,
+        "batch_size": config.batch_size,
+        "configuration_scale": config.configuration_scale,
+        "learner": "pp_prop_only",
+        "optimizer": "Adam",
+        "config": {
+            **dataclasses.asdict(config),
+            "configuration_scale": config.configuration_scale,
+        },
+        "data": {
+            "training_schedule_sha256": PREREGISTERED_TRAINING_SCHEDULE_SHA256,
+            "update_zero_event_sha256": legacy._digest_arrays(
+                full_data.training_events[0]
+            ),
+            "update_zero_target_sha256": legacy._digest_arrays(
+                full_data.training_targets[0]
+            ),
+            "update_zero_mapping_sha256": legacy._digest_arrays(
+                full_data.training_mapping_ids[0]
+            ),
+            "update_zero_query_sha256": legacy._digest_arrays(
+                full_data.training_query_indices[0]
+            ),
+            "update_zero_episode_count": config.batch_size,
+            "rng_source_episode_count": config.training_episode_count,
+        },
+        "initialization": _initialization_report(before, config),
+        "architecture": architecture,
+        "depths": {
+            str(depth): {
+                "pre_cross_entropy": pre["cross_entropy"][depth],
+                "post_cross_entropy": post["cross_entropy"][depth],
+                "pre_max_abs_color_logit": pre["max_abs_color_logit"][depth],
+                "post_max_abs_color_logit": post["max_abs_color_logit"][depth],
+            }
+            for depth in range(config.gap_steps + 1)
+        },
+        "carrier": {"pre": pre["carrier"], "post": post["carrier"]},
+        "pre_measurement": {
+            "projection_telemetry": pre["projection_telemetry"],
+            "compact_reconciliation_max_abs": pre[
+                "compact_reconciliation_max_abs"
+            ],
+            "consumer_witnesses": pre["consumer_witnesses"],
+        },
+        "post_measurement": {
+            "projection_telemetry": post["projection_telemetry"],
+            "compact_reconciliation_max_abs": post[
+                "compact_reconciliation_max_abs"
+            ],
+            "consumer_witnesses": post["consumer_witnesses"],
+        },
+        "gradient_group_norms": gradient_reports,
+        "pp_prop_factor_group_norms": trace_reports,
+        "adam_factor_group_norms": _adam_factor_reports(trainer),
+        "parameter_update_group_norms": _parameter_delta_reports(before, after),
+        "finite_telemetry": {
+            **{
+                name: bool(pre["finite"][name] and post["finite"][name])
+                for name in (
+                    "cross_entropies",
+                    "color_logits",
+                    "raw_carriers",
+                    "capped_carriers",
+                    "decoder_factors",
+                )
+            },
+            "gradients": bool(np.asarray(telemetry["gradients_finite"]).all()),
+            "pp_prop_factors": bool(np.asarray(telemetry["traces_finite"]).all()),
+            "adam_factors": bool(np.asarray(telemetry["adam_finite"]).all()),
+            "parameter_updates": _numeric_tree_is_finite(
+                _parameter_delta_reports(before, after)
+            ),
+        },
+    }
+    report["qualification"] = _one_update_admission_qualification(report)
+    return report
+
+
+def _telemetry_summary(
+    telemetry: Mapping[str, Any], losses: np.ndarray
+) -> dict[str, Any]:
+    definitions = {
+        "losses": (losses, np.isfinite(losses)),
+        "states": (telemetry["state_max_abs"], telemetry["states_finite"]),
+        "logits": (telemetry["logit_max_abs"], telemetry["logits_finite"]),
+        "gradients": (
+            telemetry["gradient_max_abs"],
+            telemetry["gradients_finite"],
+        ),
+        "pp_prop_factors": (
+            telemetry["trace_max_abs"],
+            telemetry["traces_finite"],
+        ),
+        "adam_factors": (telemetry["adam_max_abs"], telemetry["adam_finite"]),
+        "parameters": (
+            telemetry["parameter_max_abs"],
+            telemetry["parameters_finite"],
+        ),
+    }
+    return {
+        name: {
+            "observed_count": int(np.asarray(values).size),
+            "max_abs": float(np.max(np.abs(np.asarray(values)), initial=0.0)),
+            "finite": bool(np.asarray(finite).all()),
+        }
+        for name, (values, finite) in definitions.items()
+    }
+
+
+def _run_stability_admission(
+    full_data: BindingData,
+    config: BindingGateConfig,
+) -> dict[str, Any]:
+    data = _production_prefix_data(full_data, STAGE21_STABILITY_UPDATES)
+    model = LatentWorkspaceModel(_model_config(config, batch_size=config.batch_size))
+    architecture = _architecture_report(model)
+    initial_parameters = legacy._parameter_values(model)
+    measure = _make_batch_measurement(model, config)
+    initial = _measurement_report(
+        jax.block_until_ready(
+            measure(
+                jnp.asarray(data.training_events[0]),
+                jnp.asarray(data.training_targets[0]),
+            )
+        )
+    )
+    trainer = _make_pp_prop_trainer(model, config)
+    telemetry = jax.block_until_ready(
+        trainer.train(
+            jnp.asarray(data.training_events), jnp.asarray(data.training_targets)
+        )
+    )
+    losses = np.asarray(telemetry["loss"], dtype=np.float64)
+    evaluation, diagnostics = _evaluate_model(model, data, config)
+    summaries = _telemetry_summary(telemetry, losses)
+    finite = {name: value["finite"] for name, value in summaries.items()}
+    report = {
+        "schema_version": STAGE21_ADMISSION_SCHEMA_VERSION,
+        "control": "example21_stage21_stability_256_admission",
+        "target": "stability_256",
+        "training_updates": config.training_updates,
+        "batch_size": config.batch_size,
+        "validation_episodes": config.validation_episodes,
+        "configuration_scale": config.configuration_scale,
+        "qualification_regime": config.qualification_regime,
+        "learner": "pp_prop_only",
+        "optimizer": "Adam",
+        "config": {
+            **dataclasses.asdict(config),
+            "configuration_scale": config.configuration_scale,
+            "qualification_regime": config.qualification_regime,
+        },
+        "data": _stability_schedule_report(data),
+        "architecture": architecture,
+        "initialization": {
+            **_initialization_report(initial_parameters, config),
+            "update_zero_event_sha256": legacy._digest_arrays(
+                data.training_events[0]
+            ),
+            "update_zero_target_sha256": legacy._digest_arrays(
+                data.training_targets[0]
+            ),
+        },
+        "losses": losses.tolist(),
+        "initial_depth_cross_entropy": {
+            str(depth): initial["cross_entropy"][depth]
+            for depth in range(config.gap_steps + 1)
+        },
+        "tail_64_mean_loss": float(losses[-64:].mean()),
+        "held_out_intact_by_depth": {
+            str(depth): {
+                "count": config.validation_episodes,
+                "prediction_histogram": evaluation["depths"][str(depth)]["intact"][
+                    "prediction_histogram"
+                ],
+                "unique_predicted_colors": int(
+                    np.count_nonzero(
+                        evaluation["depths"][str(depth)]["intact"][
+                            "prediction_histogram"
+                        ]
+                    )
+                ),
+            }
+            for depth in range(config.gap_steps + 1)
+        },
+        "finite_telemetry": finite,
+        "telemetry_summaries": summaries,
+        "evaluation_all_compact_logits_finite": evaluation[
+            "all_compact_logits_finite"
+        ],
+        "evaluation_all_state_tensors_finite": diagnostics[
+            "all_state_tensors_finite"
+        ],
+    }
+    report["qualification"] = _stability_admission_qualification(report)
+    return report
 
 
 def _evaluate_model(
@@ -1160,14 +2143,513 @@ def _source_evidence_clean(source: Mapping[str, Any]) -> bool:
         and asserted_commit.lower() == commit
         and source["commit_is_valid_40_hex"] is True
         and source["asserted_commit_matches_head"] is True
+        and source["head_command_succeeded"] is True
         and source["asserted_dirty"] is False
         and source["asserted_dirty_matches_worktree"] is True
+        and source["status_command_succeeded"] is True
         and source["verified"] is True
         and source["dirty"] is False
     )
 
 
+def _carrier_architecture_identity(architecture: Mapping[str, Any]) -> bool:
+    return bool(
+        architecture.get("carrier_stabilizer")
+        == "per_example_stopped_unit_l2_cap"
+        and float(architecture.get("carrier_radius", float("nan"))) == 1.0
+        and tuple(architecture.get("carrier_consumers", ()))
+        == ("readout_projection", "workspace_query_projection")
+    )
+
+
+def _preregistered_gpu_initialization(
+    initialization: Mapping[str, Any], *, extra_keys: Sequence[str] = ()
+) -> bool:
+    expected_keys = {
+        "fresh_model",
+        "model_seed",
+        "parameter_sha256",
+        "parameter_count",
+        *extra_keys,
+    }
+    return bool(
+        set(initialization) == expected_keys
+        and initialization["fresh_model"] is True
+        and initialization["model_seed"] == 2108
+        and initialization["parameter_sha256"]
+        == PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256
+        and initialization["parameter_count"] == PREREGISTERED_PARAMETER_COUNT
+    )
+
+
+def _exact_admission_config(
+    value: Mapping[str, Any], config: BindingGateConfig, *, include_regime: bool
+) -> bool:
+    expected: dict[str, Any] = {
+        **dataclasses.asdict(config),
+        "configuration_scale": "production_topology",
+    }
+    if include_regime:
+        expected["qualification_regime"] = "nonqualifying_abbreviated"
+    return value == expected
+
+
+def _complete_positive_norm_reports(
+    reports: Mapping[str, Any],
+    expected_counts: Mapping[str, int],
+    *,
+    count_name: str,
+) -> bool:
+    if set(reports) != set(expected_counts):
+        return False
+    for path, expected_count in expected_counts.items():
+        report = reports[path]
+        if not isinstance(report, Mapping):
+            return False
+        norm = float(report["l2_norm"])
+        count = report[count_name]
+        if (
+            not math.isfinite(norm)
+            or norm <= 0.0
+            or not _is_integer(count)
+            or int(count) != expected_count
+        ):
+            return False
+    return True
+
+
+def _complete_adam_reports(
+    reports: Mapping[str, Any], gradients: Mapping[str, Any]
+) -> bool:
+    if set(reports) != set(_STAGE21_OPTIMIZATION_PATHS):
+        return False
+    expected = {
+        "first_moment_l2_norm",
+        "second_moment_l2_norm",
+        "first_moment_count",
+        "second_moment_count",
+        "adam_step",
+        "schedule_step",
+        "optimizer_step",
+    }
+    for path in _STAGE21_OPTIMIZATION_PATHS:
+        report = reports[path]
+        if not isinstance(report, Mapping) or set(report) != expected:
+            return False
+        first = float(report["first_moment_l2_norm"])
+        second = float(report["second_moment_l2_norm"])
+        parameter_count = _STAGE21_PARAMETER_COUNTS[path]
+        if (
+            not math.isfinite(first)
+            or not math.isfinite(second)
+            or first <= 0.0
+            or second <= 0.0
+            or report["first_moment_count"] != parameter_count
+            or report["second_moment_count"] != parameter_count
+            or gradients[path]["parameter_count"] != parameter_count
+            or report["adam_step"] != 1
+            or report["schedule_step"] != 1
+            or report["optimizer_step"] != 1
+        ):
+            return False
+    return True
+
+
+def _carrier_measurement_complete(report: Mapping[str, Any]) -> bool:
+    sample_count = report["sample_count"]
+    capped_count = report["capped_count"]
+    if (
+        not _is_integer(sample_count)
+        or int(sample_count) != 2 * 64
+        or not _is_integer(capped_count)
+        or not 0 <= int(capped_count) <= int(sample_count)
+    ):
+        return False
+    fraction = float(report["capped_fraction"])
+    expected_fraction = int(capped_count) / int(sample_count)
+    return bool(
+        _numeric_tree_is_finite(report)
+        and math.isclose(fraction, expected_fraction, rel_tol=0.0, abs_tol=1e-12)
+        and float(report["raw_max_l2_norm"]) >= 0.0
+        and float(report["capped_max_l2_norm"]) >= 0.0
+    )
+
+
+def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
+    expected = {
+        "readout_preactivation",
+        "readout_post_gelu",
+        "row_factors",
+        "column_factors",
+        "color_factors",
+    }
+    telemetry = report["projection_telemetry"]
+    reconciliation = np.asarray(
+        report["compact_reconciliation_max_abs"], dtype=np.float64
+    )
+    witnesses = report["consumer_witnesses"]
+    if set(telemetry) != expected or reconciliation.shape != (2,):
+        return False
+    if not np.isfinite(reconciliation).all() or np.any(reconciliation > 1e-6):
+        return False
+    if set(witnesses) != {
+        "readout_capped_residual_max_abs",
+        "readout_uncapped_delta_min_l2",
+        "query_capped_residual_max_l2",
+        "query_uncapped_delta_min_l2",
+        "sample_count",
+    }:
+        return False
+    if (
+        witnesses["sample_count"] != 3 * 64
+        or not _numeric_tree_is_finite(witnesses)
+        or float(witnesses["readout_capped_residual_max_abs"]) > 1e-6
+        or float(witnesses["query_capped_residual_max_l2"]) > 1e-6
+        or float(witnesses["readout_uncapped_delta_min_l2"]) <= 0.0
+        or float(witnesses["query_uncapped_delta_min_l2"]) <= 0.0
+    ):
+        return False
+    for values in telemetry.values():
+        if not isinstance(values, list) or len(values) != 2:
+            return False
+        for value in values:
+            if set(value) != {"rms", "max_abs", "nonzero_fraction"}:
+                return False
+            rms = float(value["rms"])
+            maximum = float(value["max_abs"])
+            fraction = float(value["nonzero_fraction"])
+            if (
+                not all(math.isfinite(item) for item in (rms, maximum, fraction))
+                or rms <= 0.0
+                or maximum <= 0.0
+                or not 0.0 < fraction <= 1.0
+            ):
+                return False
+    return True
+
+
+def _one_update_admission_qualification(
+    report: Mapping[str, Any],
+) -> dict[str, Any]:
+    criteria = {
+        "schema_and_target": False,
+        "fixed_production_configuration": False,
+        "exact_production_rng_prefix": False,
+        "carrier_architecture_identity": False,
+        "finite_telemetry": False,
+        "post_cross_entropy_envelope": False,
+        "post_logit_envelope": False,
+        "carrier_cap_nonvacuous": False,
+        "carrier_norm_envelope": False,
+        "required_gradient_groups_nonzero": False,
+        "required_pp_prop_factors_nonzero": False,
+        "required_adam_factors_nonzero": False,
+        "required_parameter_updates_nonzero": False,
+        "decoder_carrier_signal_finite_nonzero": False,
+    }
+    try:
+        data = report["data"]
+        initialization = report["initialization"]
+        architecture = report["architecture"]
+        depths = report["depths"]
+        carrier = report["carrier"]
+        finite = report["finite_telemetry"]
+        hashes = (
+            data["update_zero_event_sha256"],
+            data["update_zero_target_sha256"],
+            data["update_zero_mapping_sha256"],
+            data["update_zero_query_sha256"],
+        )
+        depth_complete = set(depths) == {"0", "1"} and all(
+            set(depths[depth])
+            == {
+                "pre_cross_entropy",
+                "post_cross_entropy",
+                "pre_max_abs_color_logit",
+                "post_max_abs_color_logit",
+            }
+            for depth in ("0", "1")
+        )
+        carrier_complete = set(carrier) == {"pre", "post"} and all(
+            _carrier_measurement_complete(carrier[phase])
+            for phase in ("pre", "post")
+        )
+        criteria.update(
+            {
+                "schema_and_target": (
+                    report["schema_version"] == STAGE21_ADMISSION_SCHEMA_VERSION
+                    and report["control"]
+                    == "example21_stage21_one_update_admission"
+                    and report["target"] == "one_update"
+                ),
+                "fixed_production_configuration": (
+                    report["executed_updates"] == 1
+                    and report["source_training_updates"] == 10_000
+                    and report["batch_size"] == 64
+                    and report["configuration_scale"] == "production_topology"
+                    and report["learner"] == "pp_prop_only"
+                    and report["optimizer"] == "Adam"
+                    and _exact_admission_config(
+                        report["config"],
+                        BindingGateConfig.stage21_one_update_config(),
+                        include_regime=False,
+                    )
+                    and _preregistered_gpu_initialization(initialization)
+                ),
+                "exact_production_rng_prefix": (
+                    data["training_schedule_sha256"]
+                    == PREREGISTERED_TRAINING_SCHEDULE_SHA256
+                    and data["update_zero_episode_count"] == 64
+                    and data["rng_source_episode_count"] == 640_000
+                    and dict(zip(PREREGISTERED_UPDATE_ZERO_DIGESTS, hashes, strict=True))
+                    == PREREGISTERED_UPDATE_ZERO_DIGESTS
+                ),
+                "carrier_architecture_identity": _carrier_architecture_identity(
+                    architecture
+                ),
+                "finite_telemetry": (
+                    depth_complete
+                    and carrier_complete
+                    and set(finite) == _STAGE21_FINITE_ONE_UPDATE
+                    and all(value is True for value in finite.values())
+                    and _numeric_tree_is_finite(report)
+                ),
+                "post_cross_entropy_envelope": depth_complete
+                and all(
+                    float(depths[depth]["post_cross_entropy"])
+                    <= float(depths[depth]["pre_cross_entropy"]) + 1.0
+                    for depth in ("0", "1")
+                ),
+                "post_logit_envelope": depth_complete
+                and all(
+                    float(depths[depth]["post_max_abs_color_logit"]) < 10.0
+                    for depth in ("0", "1")
+                ),
+                "carrier_cap_nonvacuous": carrier_complete
+                and max(
+                    float(carrier[phase]["raw_max_l2_norm"])
+                    for phase in ("pre", "post")
+                )
+                > 1.0
+                and sum(
+                    int(carrier[phase]["capped_count"])
+                    for phase in ("pre", "post")
+                )
+                > 0,
+                "carrier_norm_envelope": carrier_complete
+                and all(
+                    float(carrier[phase]["capped_max_l2_norm"])
+                    <= 1.0 + STAGE21_CARRIER_NORM_TOLERANCE
+                    for phase in ("pre", "post")
+                ),
+                "required_gradient_groups_nonzero": (
+                    _complete_positive_norm_reports(
+                        report["gradient_group_norms"],
+                        _STAGE21_PARAMETER_COUNTS,
+                        count_name="parameter_count",
+                    )
+                ),
+                "required_pp_prop_factors_nonzero": (
+                    _complete_positive_norm_reports(
+                        report["pp_prop_factor_group_norms"],
+                        _STAGE21_TRACE_FACTOR_COUNTS,
+                        count_name="factor_count",
+                    )
+                ),
+                "required_adam_factors_nonzero": (
+                    _complete_adam_reports(
+                        report["adam_factor_group_norms"],
+                        report["gradient_group_norms"],
+                    )
+                ),
+                "required_parameter_updates_nonzero": (
+                    _complete_positive_norm_reports(
+                        report["parameter_update_group_norms"],
+                        _STAGE21_PARAMETER_COUNTS,
+                        count_name="parameter_count",
+                    )
+                ),
+                "decoder_carrier_signal_finite_nonzero": all(
+                    _decoder_measurement_complete(report[phase])
+                    for phase in ("pre_measurement", "post_measurement")
+                ),
+            }
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+    passed = bool(all(criteria.values()))
+    return {
+        "passed": passed,
+        "criteria": criteria,
+        "interpretation": (
+            "stage21_one_update_passed"
+            if passed
+            else "stage21_one_update_failed_stop_no_gate_a"
+        ),
+    }
+
+
+def _stability_admission_qualification(
+    report: Mapping[str, Any],
+) -> dict[str, Any]:
+    criteria = {
+        "schema_and_target": False,
+        "fixed_production_configuration": False,
+        "explicitly_nonqualifying": False,
+        "carrier_architecture_identity": False,
+        "schedule_digests_complete": False,
+        "complete_finite_telemetry": False,
+        "tail_64_descends_from_initial_depth_mean": False,
+        "held_out_predictions_do_not_collapse": False,
+    }
+    try:
+        losses = np.asarray(report["losses"], dtype=np.float64)
+        initial = report["initial_depth_cross_entropy"]
+        finite = report["finite_telemetry"]
+        summaries = report["telemetry_summaries"]
+        held_out = report["held_out_intact_by_depth"]
+        data = report["data"]
+        initialization = report["initialization"]
+        expected_tail = float(losses[-64:].mean()) if losses.size >= 64 else float("nan")
+        initial_mean = (
+            float(initial["0"]) + float(initial["1"])
+        ) / 2.0
+        prediction_complete = set(held_out) == {"0", "1"}
+        if prediction_complete:
+            for depth in ("0", "1"):
+                evidence = held_out[depth]
+                histogram = np.asarray(evidence["prediction_histogram"])
+                unique = int(np.count_nonzero(histogram))
+                prediction_complete = bool(
+                    prediction_complete
+                    and evidence["count"] == 512
+                    and histogram.shape == (legacy.COLOR_COUNT,)
+                    and np.issubdtype(histogram.dtype, np.integer)
+                    and np.all(histogram >= 0)
+                    and int(histogram.sum()) == 512
+                    and evidence["unique_predicted_colors"] == unique
+                    and unique >= 2
+                )
+        expected_counts = {
+            "losses": 256,
+            "states": 256,
+            "logits": 256,
+            "gradients": 256 * len(_STAGE21_OPTIMIZATION_PATHS),
+            "pp_prop_factors": 256 * len(_STAGE21_TRACE_PATHS),
+            "adam_factors": 256,
+            "parameters": 256,
+        }
+        summaries_complete = set(summaries) == set(expected_counts)
+        if summaries_complete:
+            summaries_complete = all(
+                set(summaries[name]) == {"observed_count", "max_abs", "finite"}
+                and summaries[name]["observed_count"] == expected_counts[name]
+                and math.isfinite(float(summaries[name]["max_abs"]))
+                and float(summaries[name]["max_abs"]) >= 0.0
+                and summaries[name]["finite"] is True
+                for name in expected_counts
+            )
+        if summaries_complete:
+            summaries_complete = all(
+                float(summaries[name]["max_abs"]) > 0.0
+                for name in (
+                    "gradients",
+                    "pp_prop_factors",
+                    "adam_factors",
+                    "parameters",
+                )
+            )
+        initialization_complete = bool(
+            _preregistered_gpu_initialization(
+                initialization,
+                extra_keys=(
+                    "update_zero_event_sha256",
+                    "update_zero_target_sha256",
+                ),
+            )
+            and initialization["update_zero_event_sha256"]
+            == PREREGISTERED_UPDATE_ZERO_DIGESTS["update_zero_event_sha256"]
+            and initialization["update_zero_target_sha256"]
+            == PREREGISTERED_UPDATE_ZERO_DIGESTS["update_zero_target_sha256"]
+        )
+        criteria.update(
+            {
+                "schema_and_target": (
+                    report["schema_version"] == STAGE21_ADMISSION_SCHEMA_VERSION
+                    and report["control"]
+                    == "example21_stage21_stability_256_admission"
+                    and report["target"] == "stability_256"
+                ),
+                "fixed_production_configuration": (
+                    report["training_updates"] == STAGE21_STABILITY_UPDATES
+                    and report["batch_size"] == 64
+                    and report["validation_episodes"] == 512
+                    and report["configuration_scale"] == "production_topology"
+                    and report["learner"] == "pp_prop_only"
+                    and report["optimizer"] == "Adam"
+                    and _exact_admission_config(
+                        report["config"],
+                        BindingGateConfig.stage21_stability_config(),
+                        include_regime=True,
+                    )
+                ),
+                "explicitly_nonqualifying": (
+                    report["qualification_regime"] == "nonqualifying_abbreviated"
+                ),
+                "carrier_architecture_identity": _carrier_architecture_identity(
+                    report["architecture"]
+                ),
+                "schedule_digests_complete": data
+                == PREREGISTERED_STABILITY_DIGESTS,
+                "complete_finite_telemetry": (
+                    losses.shape == (STAGE21_STABILITY_UPDATES,)
+                    and np.isfinite(losses).all()
+                    and set(finite) == _STAGE21_FINITE_STABILITY
+                    and all(value is True for value in finite.values())
+                    and summaries_complete
+                    and initialization_complete
+                    and report["evaluation_all_compact_logits_finite"] is True
+                    and report["evaluation_all_state_tensors_finite"] is True
+                    and _numeric_tree_is_finite(report)
+                ),
+                "tail_64_descends_from_initial_depth_mean": (
+                    math.isfinite(expected_tail)
+                    and math.isclose(
+                        float(report["tail_64_mean_loss"]),
+                        expected_tail,
+                        rel_tol=1e-12,
+                        abs_tol=1e-12,
+                    )
+                    and math.isclose(
+                        float(losses[0]),
+                        initial_mean,
+                        rel_tol=1e-6,
+                        abs_tol=1e-6,
+                    )
+                    and expected_tail < initial_mean
+                ),
+                "held_out_predictions_do_not_collapse": prediction_complete,
+            }
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+    passed = bool(all(criteria.values()))
+    return {
+        "passed": passed,
+        "criteria": criteria,
+        "interpretation": (
+            "stage21_stability_256_passed_nonqualifying"
+            if passed
+            else "stage21_stability_256_failed_stop_no_gate_a"
+        ),
+    }
+
+
 _QUALIFICATION_CRITERIA = (
+    "stage21_one_update_admitted",
+    "stage21_stability_256_admitted",
+    "formal_initialization_matches_admissions",
+    "formal_schedule_matches_admissions",
     "held_out_count_at_least_256",
     "intact_accuracy_at_least_0_80",
     "intact_wilson_lower_above_pairing_chance",
@@ -1212,6 +2694,10 @@ def _qualification_report(
     marginals: Mapping[str, Any],
     source_start: Mapping[str, Any],
     source_end: Mapping[str, Any],
+    one_update_admission: Mapping[str, Any],
+    stability_admission: Mapping[str, Any],
+    initialization: Mapping[str, Any],
+    data: Mapping[str, Any],
     config: BindingGateConfig,
 ) -> dict[str, Any]:
     criteria = {name: False for name in _QUALIFICATION_CRITERIA}
@@ -1263,6 +2749,23 @@ def _qualification_report(
             raw_key_feature_width=424,
         )
         criteria.update({
+            "stage21_one_update_admitted": (
+                _one_update_admission_qualification(one_update_admission)["passed"]
+                is True
+            ),
+            "stage21_stability_256_admitted": (
+                _stability_admission_qualification(stability_admission)["passed"]
+                is True
+            ),
+            "formal_initialization_matches_admissions": (
+                _preregistered_gpu_initialization(initialization)
+            ),
+            "formal_schedule_matches_admissions": (
+                data["training_schedule_sha256"]
+                == PREREGISTERED_TRAINING_SCHEDULE_SHA256
+                and data["validation_schedule_sha256"]
+                == PREREGISTERED_STABILITY_DIGESTS["validation_schedule_sha256"]
+            ),
             "held_out_count_at_least_256": (
                 int(intact["count"]) >= 256
                 and int(intact["count"]) == config.validation_episodes
@@ -1322,6 +2825,7 @@ def _qualification_report(
                 and architecture["write_component_type"] == "braintrace.element_wise"
                 and architecture["query_component_type"] == "braintrace.nn.Linear"
                 and architecture["read_component_type"] == "braintrace.nn.Linear"
+                and _carrier_architecture_identity(architecture)
                 and _architecture_digests_valid(architecture)
             ),
             "gate_native_all_colors_covered": gate_native_all_colors,
@@ -1456,26 +2960,8 @@ def _source_report() -> dict[str, Any]:
     }
 
 
-def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
-    """Train and evaluate the post-architecture pp-prop binding gate.
-
-    Parameters
-    ----------
-    config : BindingGateConfig
-        Complete deterministic Gate A configuration.
-
-    Returns
-    -------
-    dict
-        JSON-compatible artifact with training, interventions, state
-        diagnostics, compiler evidence, timing, and fail-closed qualification.
-    """
-
-    if not isinstance(config, BindingGateConfig):
-        raise TypeError("config must be a BindingGateConfig")
-    total_start = time.perf_counter()
-    source_start = _source_report()
-    environment = {
+def _environment_report() -> dict[str, Any]:
+    return {
         "python": platform.python_version(),
         "jax": jax.__version__,
         "backend": jax.default_backend(),
@@ -1490,19 +2976,171 @@ def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
         ],
         "image_digest": os.environ.get("BRAINTRACE_IMAGE_DIGEST", "").strip(),
     }
+
+
+def _formal_admission_evidence(
+    manifest_paths: Mapping[str, str | Path],
+    *,
+    source: Mapping[str, Any],
+    environment: Mapping[str, Any],
+) -> dict[str, Any]:
+    if set(manifest_paths) != {"one_update", "stability_256"}:
+        raise ValueError("formal Gate A requires both fixed admission manifests")
+    from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+
+    root = Path(__file__).resolve().parents[2]
+    evidence: dict[str, Any] = {}
+    qualifiers = {
+        "one_update": _one_update_admission_qualification,
+        "stability_256": _stability_admission_qualification,
+    }
+    for target in ("one_update", "stability_256"):
+        bundle = launcher.load_authenticated_admission(
+            manifest_paths[target],
+            target=target,
+            head=str(source["commit"]),
+            image_id=str(environment["image_digest"]),
+            repo_root=root,
+        )
+        admission = dict(bundle["admission"])
+        if qualifiers[target](admission)["passed"] is not True:
+            raise ValueError(f"authenticated {target} admission fails recomputation")
+        evidence[target] = {
+            "target": target,
+            "source_head": source["commit"],
+            "image_digest": environment["image_digest"],
+            "bundle_sha256": bundle["manifest"]["bundle_sha256"],
+            "manifest_sha256": bundle["manifest_sha256"],
+            "preflight_sha256": bundle["preflight_sha256"],
+            "result_sha256": bundle["result_sha256"],
+            "admission": admission,
+        }
+    return evidence
+
+
+def _require_authenticated_gpu_launch(
+    source: Mapping[str, Any], environment: Mapping[str, Any]
+) -> None:
+    if not _source_evidence_clean(source):
+        raise RuntimeError("launch source is not a verified clean full revision")
+    if not _gpu_environment_verified(environment):
+        raise RuntimeError("launch did not select an authenticated GPU image/device")
+
+
+def run_stage21_admission(
+    target: str,
+) -> dict[str, Any]:
+    """Execute one fixed Stage 2.1 admission target.
+
+    Parameters
+    ----------
+    target : {"one_update", "stability_256"}
+        Preregistered admission target. No topology or budget override is
+        accepted by this entry point.
+
+    Returns
+    -------
+    dict
+        Schema-3 provenance envelope containing the inner admission report and
+        its fail-closed scientific qualification.
+    """
+
+    configurations = {
+        "one_update": BindingGateConfig.stage21_one_update_config,
+        "stability_256": BindingGateConfig.stage21_stability_config,
+    }
+    if target not in configurations:
+        raise ValueError("target must be 'one_update' or 'stability_256'")
+    source_start = _source_report()
+    environment = _environment_report()
+    _require_authenticated_gpu_launch(source_start, environment)
+    config = configurations[target]()
+    data = _build_stage21_admission_data()
+    if target == "one_update":
+        admission = _run_one_update_admission(data, config)
+    else:
+        admission = _run_stability_admission(data, config)
+    environment["device_memory_after_run"] = legacy._device_memory_report()
+    source_end = _source_report()
+    return {
+        "schema_version": STAGE21_ARTIFACT_SCHEMA_VERSION,
+        "control": admission["control"],
+        "target": target,
+        "learner": "pp_prop_only",
+        "source": source_start,
+        "source_end": source_end,
+        "environment": environment,
+        "config": dict(admission["config"]),
+        "admission": admission,
+        "qualification": admission["qualification"],
+        "interpretation": admission["qualification"]["interpretation"],
+    }
+
+
+def run_binding_gate(
+    config: BindingGateConfig,
+    *,
+    admission_manifests: Mapping[str, str | Path] | None = None,
+) -> dict[str, Any]:
+    """Train and evaluate the post-architecture pp-prop binding gate.
+
+    Parameters
+    ----------
+    config : BindingGateConfig
+        Complete deterministic Gate A configuration.
+    admission_manifests : mapping, optional
+        Fixed one-update and 256-update authenticated manifest paths. They are
+        mandatory before a preregistered full Gate A run and are revalidated
+        before any Gate A data generation or training begins.
+
+    Returns
+    -------
+    dict
+        JSON-compatible artifact with training, interventions, state
+        diagnostics, compiler evidence, timing, and fail-closed qualification.
+    """
+
+    if not isinstance(config, BindingGateConfig):
+        raise TypeError("config must be a BindingGateConfig")
+    total_start = time.perf_counter()
+    source_start = _source_report()
+    environment = _environment_report()
+    authenticated_admissions: dict[str, Any] = {}
+    if config.qualification_regime == "preregistered_full":
+        _require_authenticated_gpu_launch(source_start, environment)
+        if admission_manifests is None:
+            raise ValueError(
+                "preregistered full Gate A requires authenticated Stage 2.1 manifests"
+            )
+        authenticated_admissions = _formal_admission_evidence(
+            admission_manifests,
+            source=source_start,
+            environment=environment,
+        )
     data_start = time.perf_counter()
     data = build_binding_data(config)
     data_seconds = time.perf_counter() - data_start
+    data_report = legacy._data_report(data, config)
     training_model_config = _model_config(config, batch_size=config.batch_size)
     model = LatentWorkspaceModel(training_model_config)
-    architecture = dataclasses.asdict(model.associative_memory_report())
+    architecture = _architecture_report(model)
     gate_native_separation = _gate_native_key_separation_report(model, config)
     standard_arc_separation = _standard_arc_key_separation_report(
         memory_width=config.context_memory_width,
         model_seed=config.model_seed,
     )
     initial = legacy._parameter_values(model)
-    initial_digest = legacy._array_digest(initial)
+    initialization = _initialization_report(initial, config)
+    if config.qualification_regime == "preregistered_full":
+        if not _preregistered_gpu_initialization(initialization):
+            raise RuntimeError("formal Gate initialization differs from admissions")
+        if (
+            data_report["training_schedule_sha256"]
+            != PREREGISTERED_TRAINING_SCHEDULE_SHA256
+            or data_report["validation_schedule_sha256"]
+            != PREREGISTERED_STABILITY_DIGESTS["validation_schedule_sha256"]
+        ):
+            raise RuntimeError("formal Gate schedule differs from admissions")
     training, _, compiler = _train_pp_prop(model, data, config)
     evaluation, diagnostics = _evaluate_model(model, data, config)
     marginals = _marginal_identity_report(data, config)
@@ -1520,10 +3158,18 @@ def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
         marginals=marginals,
         source_start=source_start,
         source_end=source_end,
+        one_update_admission=authenticated_admissions.get("one_update", {}).get(
+            "admission", {}
+        ),
+        stability_admission=authenticated_admissions.get("stability_256", {}).get(
+            "admission", {}
+        ),
+        initialization=initialization,
+        data=data_report,
         config=config,
     )
     result = {
-        "schema_version": 2,
+        "schema_version": STAGE21_ARTIFACT_SCHEMA_VERSION,
         "control": "example21_associative_workspace_binding_gate_a",
         "learner": "pp_prop_only",
         "source": source_start,
@@ -1539,23 +3185,15 @@ def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
             "model": dataclasses.asdict(training_model_config),
         },
         "data": {
-            **legacy._data_report(data, config),
+            **data_report,
             "generation_seconds": data_seconds,
             "marginals": marginals,
         },
-        "initialization": {
-            "parameter_sha256": initial_digest,
-            "parameter_count": int(
-                sum(
-                    np.asarray(leaf).size
-                    for value in initial.values()
-                    for leaf in jax.tree.leaves(value)
-                )
-            ),
-        },
+        "initialization": initialization,
         "architecture": architecture,
         "gate_native_key_separation": gate_native_separation,
         "standard_arc_key_separation": standard_arc_separation,
+        "stage21_admissions": authenticated_admissions,
         "training": training,
         "evaluation": evaluation,
         "diagnostics": diagnostics,
@@ -1609,6 +3247,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--sparse-backend", default=None)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument(
+        "--target",
+        choices=("one_update", "stability_256"),
+        help="run one fixed Stage 2.1 admission instead of Gate A",
+    )
+    parser.add_argument("--one-update-manifest", type=Path)
+    parser.add_argument("--stability-manifest", type=Path)
     return parser
 
 
@@ -1627,6 +3272,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     """
 
     args = _parser().parse_args(argv)
+    if args.target is not None:
+        if args.smoke or args.one_update_manifest or args.stability_manifest:
+            raise ValueError(
+                "fixed admission targets do not accept smoke or manifest options"
+            )
+        admission_defaults = {
+            "training_updates": 10_000,
+            "batch_size": 64,
+            "validation_episodes": 512,
+            "gap_steps": 1,
+            "neuron_count": 2048,
+            "recurrent_edges": 16_384,
+            "readout_width": 128,
+            "color_rank": 16,
+            "learning_rate": 3e-3,
+            "context_memory_width": PREREGISTERED_MEMORY_WIDTH,
+            "memory_decay": PREREGISTERED_MEMORY_DECAY,
+            "sparse_backend": None,
+        }
+        if any(
+            getattr(args, name) != expected
+            for name, expected in admission_defaults.items()
+        ):
+            raise ValueError("fixed admission targets reject topology and budget overrides")
+        result = run_stage21_admission(args.target)
+        destination = write_artifact(result, args.output)
+        print(destination)
+        print(json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))
+        return 0
     if args.smoke:
         config = BindingGateConfig.smoke_config()
     else:
@@ -1644,7 +3318,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             memory_decay=args.memory_decay,
             sparse_backend=args.sparse_backend,
         )
-    result = run_binding_gate(config)
+    manifests = None
+    if args.one_update_manifest is not None or args.stability_manifest is not None:
+        if args.smoke:
+            raise ValueError("smoke runs cannot consume formal admission manifests")
+        if args.one_update_manifest is None or args.stability_manifest is None:
+            raise ValueError("formal Gate A requires both admission manifests")
+        manifests = {
+            "one_update": args.one_update_manifest,
+            "stability_256": args.stability_manifest,
+        }
+        if config.qualification_regime != "preregistered_full":
+            raise ValueError(
+                "admission manifests are accepted only by preregistered full Gate A"
+            )
+    if manifests is None:
+        result = run_binding_gate(config)
+    else:
+        result = run_binding_gate(config, admission_manifests=manifests)
     destination = write_artifact(result, args.output)
     print(destination)
     print(json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import ast
+import copy
 import dataclasses
 import json
+from collections import namedtuple
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -192,10 +194,30 @@ def _passing_source() -> dict[str, object]:
         "asserted_commit": _VALID_HEAD,
         "asserted_commit_matches_head": True,
         "commit_is_valid_40_hex": True,
+        "head_command_succeeded": True,
         "verified": True,
         "dirty": False,
         "asserted_dirty": False,
         "asserted_dirty_matches_worktree": True,
+        "status_command_succeeded": True,
+    }
+
+
+def _passing_formal_initialization() -> dict[str, object]:
+    return {
+        "fresh_model": True,
+        "model_seed": 2108,
+        "parameter_sha256": gate.PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256,
+        "parameter_count": gate.PREREGISTERED_PARAMETER_COUNT,
+    }
+
+
+def _passing_formal_data() -> dict[str, object]:
+    return {
+        "training_schedule_sha256": gate.PREREGISTERED_TRAINING_SCHEDULE_SHA256,
+        "validation_schedule_sha256": gate.PREREGISTERED_STABILITY_DIGESTS[
+            "validation_schedule_sha256"
+        ],
     }
 
 
@@ -215,6 +237,243 @@ def _passing_architecture() -> dict[str, object]:
         "write_component_type": "braintrace.element_wise",
         "query_component_type": "braintrace.nn.Linear",
         "read_component_type": "braintrace.nn.Linear",
+        "carrier_stabilizer": "per_example_stopped_unit_l2_cap",
+        "carrier_radius": 1.0,
+        "carrier_consumers": [
+            "readout_projection",
+            "workspace_query_projection",
+        ],
+    }
+
+
+def _passing_projection_measurement() -> dict[str, object]:
+    return {
+        "projection_telemetry": {
+            name: [
+                {"rms": 0.1, "max_abs": 0.2, "nonzero_fraction": 1.0},
+                {"rms": 0.1, "max_abs": 0.2, "nonzero_fraction": 1.0},
+            ]
+            for name in (
+                "readout_preactivation",
+                "readout_post_gelu",
+                "row_factors",
+                "column_factors",
+                "color_factors",
+            )
+        },
+        "compact_reconciliation_max_abs": [0.0, 0.0],
+        "consumer_witnesses": {
+            "readout_capped_residual_max_abs": 0.0,
+            "readout_uncapped_delta_min_l2": 0.1,
+            "query_capped_residual_max_l2": 0.0,
+            "query_uncapped_delta_min_l2": 0.1,
+            "sample_count": 192,
+        },
+    }
+
+
+def _passing_one_update_admission() -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "control": "example21_stage21_one_update_admission",
+        "target": "one_update",
+        "executed_updates": 1,
+        "source_training_updates": 10_000,
+        "batch_size": 64,
+        "configuration_scale": "production_topology",
+        "learner": "pp_prop_only",
+        "optimizer": "Adam",
+        "config": {
+            **dataclasses.asdict(gate.BindingGateConfig.stage21_one_update_config()),
+            "configuration_scale": "production_topology",
+        },
+        "data": {
+            "training_schedule_sha256": (
+                "25cae0684c3a0cb1a0d0ae1a12b7db8bdf37a1f15d687cdf79362c9c6163ef9b"
+            ),
+            **gate.PREREGISTERED_UPDATE_ZERO_DIGESTS,
+            "update_zero_episode_count": 64,
+            "rng_source_episode_count": 640_000,
+        },
+        "architecture": _passing_architecture(),
+        "initialization": {
+            "fresh_model": True,
+            "model_seed": 2108,
+            "parameter_sha256": gate.PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256,
+            "parameter_count": gate.PREREGISTERED_PARAMETER_COUNT,
+        },
+        "depths": {
+            "0": {
+                "pre_cross_entropy": 2.3,
+                "post_cross_entropy": 2.5,
+                "pre_max_abs_color_logit": 0.8,
+                "post_max_abs_color_logit": 1.2,
+            },
+            "1": {
+                "pre_cross_entropy": 2.4,
+                "post_cross_entropy": 2.6,
+                "pre_max_abs_color_logit": 1.1,
+                "post_max_abs_color_logit": 1.4,
+            },
+        },
+        "carrier": {
+            "pre": {
+                "sample_count": 128,
+                "raw_max_l2_norm": 5.0,
+                "capped_max_l2_norm": 1.0,
+                "capped_count": 64,
+                "capped_fraction": 0.5,
+            },
+            "post": {
+                "sample_count": 128,
+                "raw_max_l2_norm": 4.0,
+                "capped_max_l2_norm": 1.0,
+                "capped_count": 64,
+                "capped_fraction": 0.5,
+            },
+        },
+        "pre_measurement": _passing_projection_measurement(),
+        "post_measurement": _passing_projection_measurement(),
+        "gradient_group_norms": {
+            "memory_write_scale": {"l2_norm": 0.1, "parameter_count": 1_024},
+            "workspace_query_projection/weight": {
+                "l2_norm": 0.2,
+                "parameter_count": 65_536,
+            },
+            "memory_read_projection/weight": {
+                "l2_norm": 0.3,
+                "parameter_count": 65_536,
+            },
+            "readout_projection/weight": {
+                "l2_norm": 0.4,
+                "parameter_count": 262_272,
+            },
+            "color_factor_head/weight": {
+                "l2_norm": 0.5,
+                "parameter_count": 144_480,
+            },
+        },
+        "pp_prop_factor_group_norms": {
+            "memory_write_scale": {"l2_norm": 0.1, "factor_count": 65_536},
+            "workspace_query_projection/weight": {
+                "l2_norm": 0.2,
+                "factor_count": 133_120,
+            },
+            "memory_read_projection/weight": {
+                "l2_norm": 0.3,
+                "factor_count": 526_336,
+            },
+        },
+        "adam_factor_group_norms": {
+            path: {
+                "first_moment_l2_norm": 0.1,
+                "second_moment_l2_norm": 0.01,
+                "first_moment_count": count,
+                "second_moment_count": count,
+                "adam_step": 1,
+                "schedule_step": 1,
+                "optimizer_step": 1,
+            }
+            for path, count in {
+                "memory_write_scale": 1_024,
+                "workspace_query_projection/weight": 65_536,
+                "memory_read_projection/weight": 65_536,
+                "readout_projection/weight": 262_272,
+                "color_factor_head/weight": 144_480,
+            }.items()
+        },
+        "parameter_update_group_norms": {
+            path: {"l2_norm": 0.1, "parameter_count": count}
+            for path, count in gate._STAGE21_PARAMETER_COUNTS.items()
+        },
+        "finite_telemetry": {
+            "cross_entropies": True,
+            "color_logits": True,
+            "raw_carriers": True,
+            "capped_carriers": True,
+            "gradients": True,
+            "pp_prop_factors": True,
+            "adam_factors": True,
+            "parameter_updates": True,
+            "decoder_factors": True,
+        },
+    }
+
+
+def _passing_stability_admission() -> dict[str, object]:
+    losses = [2.4] * 192 + [2.0] * 64
+    return {
+        "schema_version": 1,
+        "control": "example21_stage21_stability_256_admission",
+        "target": "stability_256",
+        "training_updates": 256,
+        "batch_size": 64,
+        "validation_episodes": 512,
+        "configuration_scale": "production_topology",
+        "qualification_regime": "nonqualifying_abbreviated",
+        "learner": "pp_prop_only",
+        "optimizer": "Adam",
+        "config": {
+            **dataclasses.asdict(gate.BindingGateConfig.stage21_stability_config()),
+            "configuration_scale": "production_topology",
+            "qualification_regime": "nonqualifying_abbreviated",
+        },
+        "data": dict(gate.PREREGISTERED_STABILITY_DIGESTS),
+        "architecture": _passing_architecture(),
+        "initialization": {
+            "fresh_model": True,
+            "model_seed": 2108,
+            "parameter_sha256": gate.PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256,
+            "parameter_count": gate.PREREGISTERED_PARAMETER_COUNT,
+            "update_zero_event_sha256": gate.PREREGISTERED_UPDATE_ZERO_DIGESTS[
+                "update_zero_event_sha256"
+            ],
+            "update_zero_target_sha256": gate.PREREGISTERED_UPDATE_ZERO_DIGESTS[
+                "update_zero_target_sha256"
+            ],
+        },
+        "losses": losses,
+        "initial_depth_cross_entropy": {"0": 2.3, "1": 2.5},
+        "tail_64_mean_loss": 2.0,
+        "held_out_intact_by_depth": {
+            "0": {
+                "count": 512,
+                "prediction_histogram": [256, 256, 0, 0, 0, 0, 0, 0, 0, 0],
+                "unique_predicted_colors": 2,
+            },
+            "1": {
+                "count": 512,
+                "prediction_histogram": [128, 384, 0, 0, 0, 0, 0, 0, 0, 0],
+                "unique_predicted_colors": 2,
+            },
+        },
+        "finite_telemetry": {
+            "losses": True,
+            "states": True,
+            "logits": True,
+            "gradients": True,
+            "pp_prop_factors": True,
+            "adam_factors": True,
+            "parameters": True,
+        },
+        "telemetry_summaries": {
+            name: {
+                "observed_count": count,
+                "max_abs": 1.0,
+                "finite": True,
+            }
+            for name, count in {
+                "losses": 256,
+                "states": 256,
+                "logits": 256,
+                "gradients": 256 * 5,
+                "pp_prop_factors": 256 * 3,
+                "adam_factors": 256,
+                "parameters": 256,
+            }.items()
+        },
+        "evaluation_all_compact_logits_finite": True,
+        "evaluation_all_state_tensors_finite": True,
     }
 
 
@@ -587,11 +846,15 @@ def test_required_parameter_movement_is_reported_per_direct_path() -> None:
         ("standard_shared", "standard_arc_shared_encoder_invariants_match"),
         ("source_start", "source_start_verified_clean"),
         ("source_end", "source_end_verified_clean"),
-        ("source_assertion", "source_start_verified_clean"),
-        ("source_missing_assertion", "source_start_verified_clean"),
-        ("source_missing_dirty_assertion", "source_start_verified_clean"),
-        ("head_drift", "source_head_stable"),
-        ("config", "preregistered_full_configuration"),
+            ("source_assertion", "source_start_verified_clean"),
+            ("source_missing_assertion", "source_start_verified_clean"),
+            ("source_missing_dirty_assertion", "source_start_verified_clean"),
+            ("source_head_command", "source_start_verified_clean"),
+            ("source_status_command", "source_end_verified_clean"),
+            ("head_drift", "source_head_stable"),
+            ("formal_initialization", "formal_initialization_matches_admissions"),
+            ("formal_schedule", "formal_schedule_matches_admissions"),
+            ("config", "preregistered_full_configuration"),
     ],
 )
 def test_qualification_fails_closed_for_every_required_criterion(
@@ -609,6 +872,8 @@ def test_qualification_fails_closed_for_every_required_criterion(
     marginal = {"exact_marginal_equality": True}
     source_start = _passing_source()
     source_end = _passing_source()
+    initialization = _passing_formal_initialization()
+    data = _passing_formal_data()
 
     if mutation == "validation_count":
         evaluation["intact"] = _accuracy(0.90) | {"count": 255}
@@ -737,9 +1002,17 @@ def test_qualification_fails_closed_for_every_required_criterion(
         source_start["asserted_commit"] = None
     elif mutation == "source_missing_dirty_assertion":
         source_start["asserted_dirty"] = None
+    elif mutation == "source_head_command":
+        source_start["head_command_succeeded"] = False
+    elif mutation == "source_status_command":
+        source_end["status_command_succeeded"] = False
     elif mutation == "head_drift":
         source_end["commit"] = "b" * 40
         source_end["asserted_commit"] = "b" * 40
+    elif mutation == "formal_initialization":
+        initialization["parameter_sha256"] = "0" * 64
+    elif mutation == "formal_schedule":
+        data["validation_schedule_sha256"] = "0" * 64
     elif mutation == "config":
         config = dataclasses.replace(config, training_updates=9_999)
 
@@ -755,6 +1028,10 @@ def test_qualification_fails_closed_for_every_required_criterion(
         marginals=marginal,
         source_start=source_start,
         source_end=source_end,
+        one_update_admission=_passing_one_update_admission(),
+        stability_admission=_passing_stability_admission(),
+        initialization=initialization,
+        data=data,
         config=config,
     )
 
@@ -777,6 +1054,10 @@ def test_qualification_passes_only_complete_preregistered_evidence() -> None:
         marginals={"exact_marginal_equality": True},
         source_start=_passing_source(),
         source_end=_passing_source(),
+        one_update_admission=_passing_one_update_admission(),
+        stability_admission=_passing_stability_admission(),
+        initialization=_passing_formal_initialization(),
+        data=_passing_formal_data(),
         config=gate.BindingGateConfig(),
     )
 
@@ -799,6 +1080,10 @@ def test_qualification_passes_only_complete_preregistered_evidence() -> None:
         marginals={"exact_marginal_equality": True},
         source_start=_passing_source(),
         source_end=_passing_source(),
+        one_update_admission=_passing_one_update_admission(),
+        stability_admission=_passing_stability_admission(),
+        initialization=_passing_formal_initialization(),
+        data=_passing_formal_data(),
         config=gate.BindingGateConfig.smoke_config(),
     )
     assert reduced["passed"] is False
@@ -820,6 +1105,10 @@ def test_qualification_malformed_evidence_fails_closed() -> None:
         marginals={},
         source_start={},
         source_end={},
+        one_update_admission={},
+        stability_admission={},
+        initialization={},
+        data={},
         config=gate.BindingGateConfig(),
     )
 
@@ -920,13 +1209,13 @@ def test_actual_model_pp_prop_smoke_records_routes_depths_and_state_evidence(
     config = gate.BindingGateConfig.smoke_config()
     result = gate.run_binding_gate(config)
 
-    assert result["schema_version"] == 2
+    assert result["schema_version"] == 3
     assert result["learner"] == "pp_prop_only"
     assert result["config"]["configuration_scale"] == "reduced_smoke"
     assert result["config"]["qualification_regime"] == ("nonqualifying_abbreviated")
-    assert result["environment"]["backend"] == "gpu"
-    assert any(
-        device["platform"] == "gpu" for device in result["environment"]["devices"]
+    assert result["environment"]["backend"] == "cpu"
+    assert all(
+        device["platform"] == "cpu" for device in result["environment"]["devices"]
     )
     assert result["source_end"]["commit"] == result["source"]["commit"]
     training = result["training"]
@@ -975,12 +1264,12 @@ def test_actual_model_pp_prop_smoke_records_routes_depths_and_state_evidence(
         "training_losses_complete_and_finite",
         "evaluation_complete_and_finite",
         "diagnostic_state_tensors_complete_and_finite",
-        "gpu_backend_verified",
         "architecture_matches_preregistered_components",
         "gate_native_all_colors_covered",
         "standard_arc_all_colors_covered",
     ):
         assert result["qualification"]["criteria"][criterion] is True
+    assert result["qualification"]["criteria"]["gpu_backend_verified"] is False
     assert result["interpretation"] == (
         "nonqualifying_abbreviated_no_capability_conclusion"
     )
@@ -1020,3 +1309,642 @@ def test_cli_defaults_are_production_and_smoke_is_explicit(
 
     assert gate.main(["--smoke", "--output", str(destination)]) == 0
     assert captured == [gate.BindingGateConfig.smoke_config()]
+
+
+def test_stage21_admission_configs_are_fixed_and_nonqualifying() -> None:
+    one_update = gate.BindingGateConfig.stage21_one_update_config()
+    stability = gate.BindingGateConfig.stage21_stability_config()
+
+    assert one_update.training_updates == 10_000
+    assert one_update.batch_size == 64
+    assert one_update.validation_episodes == 512
+    assert one_update.configuration_scale == "production_topology"
+    assert one_update.qualification_regime == "preregistered_full"
+
+    assert stability.training_updates == 256
+    assert stability.batch_size == 64
+    assert stability.validation_episodes == 512
+    assert stability.configuration_scale == "production_topology"
+    assert stability.context_memory_width == 32
+    assert stability.memory_decay == 1.0
+    assert stability.qualification_regime == "nonqualifying_abbreviated"
+
+
+@pytest.mark.parametrize(
+    "mutation,criterion",
+    [
+        ("schema", "schema_and_target"),
+        ("schedule", "exact_production_rng_prefix"),
+        ("rng_count", "exact_production_rng_prefix"),
+        ("architecture", "carrier_architecture_identity"),
+        ("consumer", "carrier_architecture_identity"),
+        ("pre_nan", "finite_telemetry"),
+        ("post_ce", "post_cross_entropy_envelope"),
+        ("post_logit", "post_logit_envelope"),
+        ("carrier_count", "carrier_cap_nonvacuous"),
+        ("carrier_not_engaged", "carrier_cap_nonvacuous"),
+        ("carrier_above_cap", "carrier_norm_envelope"),
+        ("gradient_zero", "required_gradient_groups_nonzero"),
+        ("gradient_count", "required_gradient_groups_nonzero"),
+        ("factor_missing", "required_pp_prop_factors_nonzero"),
+        ("factor_count", "required_pp_prop_factors_nonzero"),
+        ("adam_zero", "required_adam_factors_nonzero"),
+        ("adam_key", "required_adam_factors_nonzero"),
+        ("adam_count", "required_adam_factors_nonzero"),
+        ("adam_step", "required_adam_factors_nonzero"),
+        ("schedule_step", "required_adam_factors_nonzero"),
+        ("optimizer_step", "required_adam_factors_nonzero"),
+        ("update_zero", "required_parameter_updates_nonzero"),
+        ("update_count", "required_parameter_updates_nonzero"),
+        ("decoder_zero", "decoder_carrier_signal_finite_nonzero"),
+    ],
+)
+def test_one_update_admission_fails_closed(
+    mutation: str, criterion: str
+) -> None:
+    report = _passing_one_update_admission()
+    if mutation == "schema":
+        report["schema_version"] = 0
+    elif mutation == "schedule":
+        report["data"]["training_schedule_sha256"] = "0" * 64
+    elif mutation == "rng_count":
+        report["data"]["rng_source_episode_count"] = 64
+    elif mutation == "architecture":
+        report["architecture"]["carrier_radius"] = 2.0
+    elif mutation == "consumer":
+        report["architecture"]["carrier_consumers"] = ["readout_projection"]
+    elif mutation == "pre_nan":
+        report["depths"]["0"]["pre_cross_entropy"] = float("nan")
+    elif mutation == "post_ce":
+        report["depths"]["1"]["post_cross_entropy"] = 3.6
+    elif mutation == "post_logit":
+        report["depths"]["0"]["post_max_abs_color_logit"] = 10.0
+    elif mutation == "carrier_count":
+        report["carrier"]["pre"]["sample_count"] = 0
+    elif mutation == "carrier_not_engaged":
+        report["carrier"]["pre"]["raw_max_l2_norm"] = 1.0
+        report["carrier"]["post"]["raw_max_l2_norm"] = 1.0
+        report["carrier"]["pre"]["capped_count"] = 0
+        report["carrier"]["post"]["capped_count"] = 0
+    elif mutation == "carrier_above_cap":
+        report["carrier"]["post"]["capped_max_l2_norm"] = 1.0001
+    elif mutation == "gradient_zero":
+        report["gradient_group_norms"]["readout_projection/weight"][
+            "l2_norm"
+        ] = 0.0
+    elif mutation == "gradient_count":
+        report["gradient_group_norms"]["memory_write_scale"][
+            "parameter_count"
+        ] = 1_023
+    elif mutation == "factor_missing":
+        del report["pp_prop_factor_group_norms"]["memory_write_scale"]
+    elif mutation == "factor_count":
+        report["pp_prop_factor_group_norms"]["memory_read_projection/weight"][
+            "factor_count"
+        ] = 526_335
+    elif mutation == "adam_zero":
+        report["adam_factor_group_norms"]["color_factor_head/weight"][
+            "second_moment_l2_norm"
+        ] = 0.0
+    elif mutation == "adam_key":
+        report["adam_factor_group_norms"]["unexpected"] = (
+            report["adam_factor_group_norms"].pop("memory_write_scale")
+        )
+    elif mutation == "adam_count":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "first_moment_count"
+        ] = 1_023
+    elif mutation == "adam_step":
+        report["adam_factor_group_norms"]["memory_write_scale"]["adam_step"] = 0
+    elif mutation == "schedule_step":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "schedule_step"
+        ] = 0
+    elif mutation == "optimizer_step":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "optimizer_step"
+        ] = 0
+    elif mutation == "update_zero":
+        report["parameter_update_group_norms"]["memory_write_scale"][
+            "l2_norm"
+        ] = 0.0
+    elif mutation == "update_count":
+        report["parameter_update_group_norms"]["color_factor_head/weight"][
+            "parameter_count"
+        ] = 144_479
+    elif mutation == "decoder_zero":
+        report["post_measurement"]["projection_telemetry"]["color_factors"][0][
+            "rms"
+        ] = 0.0
+
+    qualification = gate._one_update_admission_qualification(report)
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"][criterion] is False
+    assert qualification["interpretation"] == (
+        "stage21_one_update_failed_stop_no_gate_a"
+    )
+
+
+def test_one_update_admission_accepts_complete_production_evidence() -> None:
+    qualification = gate._one_update_admission_qualification(
+        _passing_one_update_admission()
+    )
+
+    assert qualification["passed"] is True
+    assert all(qualification["criteria"].values())
+    assert qualification["interpretation"] == "stage21_one_update_passed"
+
+
+def test_one_update_carrier_norm_uses_only_fixed_float32_remeasurement_tolerance() -> None:
+    report = _passing_one_update_admission()
+    report["carrier"]["post"]["capped_max_l2_norm"] = (
+        1.0 + gate.STAGE21_CARRIER_NORM_TOLERANCE
+    )
+    assert gate._one_update_admission_qualification(report)["passed"] is True
+
+    report["carrier"]["post"]["capped_max_l2_norm"] = (
+        1.0 + gate.STAGE21_CARRIER_NORM_TOLERANCE + 1e-9
+    )
+    qualification = gate._one_update_admission_qualification(report)
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["carrier_norm_envelope"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation,criterion",
+    [
+        ("schema", "schema_and_target"),
+        ("updates", "fixed_production_configuration"),
+        ("qualifying", "explicitly_nonqualifying"),
+        ("loss_count", "complete_finite_telemetry"),
+        ("state_nonfinite", "complete_finite_telemetry"),
+        ("stale_tail", "tail_64_descends_from_initial_depth_mean"),
+        ("no_descent", "tail_64_descends_from_initial_depth_mean"),
+        ("collapsed_h0", "held_out_predictions_do_not_collapse"),
+        ("bad_histogram", "held_out_predictions_do_not_collapse"),
+        ("architecture", "carrier_architecture_identity"),
+    ],
+)
+def test_stability_256_admission_fails_closed(
+    mutation: str, criterion: str
+) -> None:
+    report = _passing_stability_admission()
+    if mutation == "schema":
+        report["schema_version"] = 0
+    elif mutation == "updates":
+        report["training_updates"] = 255
+    elif mutation == "qualifying":
+        report["qualification_regime"] = "preregistered_full"
+    elif mutation == "loss_count":
+        report["losses"].pop()
+    elif mutation == "state_nonfinite":
+        report["finite_telemetry"]["states"] = False
+    elif mutation == "stale_tail":
+        report["tail_64_mean_loss"] = 1.5
+    elif mutation == "no_descent":
+        report["losses"][-64:] = [2.5] * 64
+        report["tail_64_mean_loss"] = 2.5
+    elif mutation == "collapsed_h0":
+        report["held_out_intact_by_depth"]["0"].update(
+            prediction_histogram=[512, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            unique_predicted_colors=1,
+        )
+    elif mutation == "bad_histogram":
+        report["held_out_intact_by_depth"]["1"]["prediction_histogram"][0] = 0
+    elif mutation == "architecture":
+        report["architecture"]["carrier_stabilizer"] = "unknown"
+
+    qualification = gate._stability_admission_qualification(report)
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"][criterion] is False
+    assert qualification["interpretation"] == (
+        "stage21_stability_256_failed_stop_no_gate_a"
+    )
+
+
+def test_stability_256_accepts_descent_without_claiming_gate_a() -> None:
+    qualification = gate._stability_admission_qualification(
+        _passing_stability_admission()
+    )
+
+    assert qualification["passed"] is True
+    assert all(qualification["criteria"].values())
+    assert qualification["interpretation"] == (
+        "stage21_stability_256_passed_nonqualifying"
+    )
+
+
+def test_gate_a_qualification_requires_both_stage21_admissions() -> None:
+    architecture = _passing_architecture()
+    kwargs = dict(
+        evaluation=_passing_evaluation(),
+        diagnostics=_passing_diagnostics(),
+        compiler=_passing_compiler(),
+        training=_passing_training(),
+        environment=_passing_environment(),
+        architecture=architecture,
+        gate_native_separation=_passing_separation(architecture),
+        standard_arc_separation=_passing_separation(architecture, portable=True),
+        marginals={"exact_marginal_equality": True},
+        source_start=_passing_source(),
+        source_end=_passing_source(),
+        initialization=_passing_formal_initialization(),
+        data=_passing_formal_data(),
+        config=gate.BindingGateConfig(),
+    )
+
+    passed = gate._qualification_report(
+        **kwargs,
+        one_update_admission=_passing_one_update_admission(),
+        stability_admission=_passing_stability_admission(),
+    )
+    assert passed["passed"] is True
+    assert passed["criteria"]["stage21_one_update_admitted"] is True
+    assert passed["criteria"]["stage21_stability_256_admitted"] is True
+
+    failed = gate._qualification_report(
+        **kwargs,
+        one_update_admission={},
+        stability_admission=_passing_stability_admission(),
+    )
+    assert failed["passed"] is False
+    assert failed["criteria"]["stage21_one_update_admitted"] is False
+
+
+def test_stage21_drivers_share_the_production_transformed_train_step() -> None:
+    source = Path(gate.__file__).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    functions = {
+        node.name: node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    assert "_make_pp_prop_trainer" in functions
+    for name in (
+        "_train_pp_prop",
+        "_run_one_update_admission",
+        "_run_stability_admission",
+    ):
+        assert name in functions
+        assert not any(
+            isinstance(child, (ast.For, ast.While))
+            for child in ast.walk(functions[name])
+        )
+    assert source.count("learner.etrace_grad(") == 1
+
+
+def test_reduced_stage21_data_builder_preserves_layout_controls_and_digests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    smoke = gate.BindingGateConfig.smoke_config()
+    full = dataclasses.replace(smoke, training_updates=4)
+    stability = dataclasses.replace(smoke, training_updates=2)
+    monkeypatch.setattr(
+        gate.BindingGateConfig,
+        "stage21_one_update_config",
+        classmethod(lambda cls: full),
+    )
+    monkeypatch.setattr(
+        gate.BindingGateConfig,
+        "stage21_stability_config",
+        classmethod(lambda cls: stability),
+    )
+
+    data = gate._build_stage21_admission_data()
+
+    assert data.training_events.shape == (
+        stability.training_updates,
+        stability.sequence_length,
+        stability.batch_size,
+        stability.row_config.input_width,
+    )
+    assert data.validation_intact.shape[1] == stability.validation_episodes
+    assert np.any(data.validation_intact[: gate.SYMBOL_COUNT])
+    assert not np.any(data.validation_no_context[: gate.SYMBOL_COUNT])
+    assert np.any(data.validation_no_context[gate.SYMBOL_COUNT :])
+    assert data.training_events.flags.writeable is False
+    prefix = gate._production_prefix_data(data, 1)
+    assert prefix.training_events.shape[0] == 1
+    assert prefix.validation_intact is data.validation_intact
+    schedule = gate._stability_schedule_report(data)
+    assert set(schedule) == set(gate.PREREGISTERED_STABILITY_DIGESTS)
+    assert all(len(value) == 64 for value in schedule.values())
+
+
+def test_actual_smoke_stage21_drivers_emit_finite_nonqualifying_evidence() -> None:
+    config = gate.BindingGateConfig.smoke_config()
+    data = gate.build_binding_data(config)
+
+    one_update = gate._run_one_update_admission(data, config)
+    stability = gate._run_stability_admission(data, config)
+
+    assert one_update["control"] == "example21_stage21_one_update_admission"
+    assert one_update["executed_updates"] == 1
+    assert all(one_update["finite_telemetry"].values())
+    assert set(one_update["gradient_group_norms"]) == set(
+        gate._STAGE21_OPTIMIZATION_PATHS
+    )
+    assert set(one_update["adam_factor_group_norms"]) == set(
+        gate._STAGE21_OPTIMIZATION_PATHS
+    )
+    assert all(
+        value["adam_step"] == value["schedule_step"] == value["optimizer_step"] == 1
+        for value in one_update["adam_factor_group_norms"].values()
+    )
+    assert one_update["qualification"]["passed"] is False
+
+    assert stability["control"] == "example21_stage21_stability_256_admission"
+    assert len(stability["losses"]) == config.training_updates
+    assert all(stability["finite_telemetry"].values())
+    assert set(stability["held_out_intact_by_depth"]) == {"0", "1"}
+    assert stability["qualification"]["passed"] is False
+
+
+def test_telemetry_helpers_reject_shape_and_adam_state_drift() -> None:
+    paths = {
+        label: tuple(label.split("/")) for label in gate._STAGE21_OPTIMIZATION_PATHS
+    }
+    moment = {key: np.asarray([1.0, 2.0]) for key in paths.values()}
+    adam_state = namedtuple("ScaleByAdamState", ("count", "mu", "nu"))
+    schedule_state = namedtuple("ScaleByScheduleState", ("count",))
+    optimizer = SimpleNamespace(
+        opt_state=SimpleNamespace(
+            value=(
+                adam_state(
+                    np.asarray(1, dtype=np.int32),
+                    moment,
+                    {key: value / 10.0 for key, value in moment.items()},
+                ),
+                schedule_state(np.asarray(1, dtype=np.int32)),
+            )
+        ),
+        step_count=SimpleNamespace(value=np.asarray(1, dtype=np.int32)),
+    )
+    trainer = SimpleNamespace(
+        optimizer=optimizer,
+        learner=SimpleNamespace(
+            param_states={
+                key: SimpleNamespace(value=np.zeros((2,), dtype=np.float32))
+                for key in paths.values()
+            }
+        ),
+        parameter_keys=paths,
+    )
+
+    reports = gate._adam_factor_reports(trainer)
+
+    assert set(reports) == set(paths)
+    assert all(report["first_moment_count"] == 2 for report in reports.values())
+    assert all(report["second_moment_count"] == 2 for report in reports.values())
+    assert gate._scalar_step(np.asarray(1, dtype=np.int32), "step") == 1
+    with pytest.raises(RuntimeError, match="scalar integer"):
+        gate._scalar_step(np.asarray([1], dtype=np.int32), "step")
+    with pytest.raises(RuntimeError, match="first/second moments"):
+        gate._adam_factor_reports(
+            SimpleNamespace(optimizer=SimpleNamespace(opt_state=SimpleNamespace(value=())))
+        )
+
+    mismatched = copy.deepcopy(trainer)
+    mismatched.optimizer.opt_state.value[0].mu.pop(paths["memory_write_scale"])
+    with pytest.raises(RuntimeError, match="exactly match"):
+        gate._adam_factor_reports(mismatched)
+
+    counts = {"a": 1, "b": 2}
+    assert gate._reports_from_vector(
+        [[0.0, 0.0], [1.0, 2.0]], ("a", "b"), counts, count_name="count"
+    ) == {
+        "a": {"l2_norm": 1.0, "count": 1},
+        "b": {"l2_norm": 2.0, "count": 2},
+    }
+    with pytest.raises(ValueError, match="required paths"):
+        gate._reports_from_vector([1.0], ("a", "b"), counts, count_name="count")
+
+
+def test_formal_admission_evidence_recomputes_both_inner_qualifications(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+
+    admissions = {
+        "one_update": _passing_one_update_admission(),
+        "stability_256": _passing_stability_admission(),
+    }
+
+    def load(_path: object, *, target: str, **_kwargs: object) -> dict[str, object]:
+        return {
+            "admission": copy.deepcopy(admissions[target]),
+            "manifest": {"bundle_sha256": target + "-bundle"},
+            "manifest_sha256": target + "-manifest",
+            "preflight_sha256": target + "-preflight",
+            "result_sha256": target + "-result",
+        }
+
+    monkeypatch.setattr(launcher, "load_authenticated_admission", load)
+    evidence = gate._formal_admission_evidence(
+        {"one_update": "one.json", "stability_256": "stability.json"},
+        source=_passing_source(),
+        environment=_passing_environment(),
+    )
+
+    assert set(evidence) == {"one_update", "stability_256"}
+    assert evidence["one_update"]["admission"]["target"] == "one_update"
+    assert evidence["stability_256"]["manifest_sha256"].endswith("-manifest")
+
+    admissions["one_update"]["schema_version"] = 0
+    with pytest.raises(ValueError, match="fails recomputation"):
+        gate._formal_admission_evidence(
+            {"one_update": "one.json", "stability_256": "stability.json"},
+            source=_passing_source(),
+            environment=_passing_environment(),
+        )
+    with pytest.raises(ValueError, match="both fixed"):
+        gate._formal_admission_evidence(
+            {"one_update": "one.json"},
+            source=_passing_source(),
+            environment=_passing_environment(),
+        )
+
+
+def test_authenticated_gpu_launch_rejects_source_or_device_substitution() -> None:
+    gate._require_authenticated_gpu_launch(_passing_source(), _passing_environment())
+    dirty = _passing_source()
+    dirty["dirty"] = True
+    with pytest.raises(RuntimeError, match="verified clean"):
+        gate._require_authenticated_gpu_launch(dirty, _passing_environment())
+    cpu = _passing_environment()
+    cpu["backend"] = "cpu"
+    with pytest.raises(RuntimeError, match="GPU image/device"):
+        gate._require_authenticated_gpu_launch(_passing_source(), cpu)
+
+
+@pytest.mark.parametrize(
+    ("target", "control"),
+    [
+        ("one_update", "example21_stage21_one_update_admission"),
+        ("stability_256", "example21_stage21_stability_256_admission"),
+    ],
+)
+def test_stage21_envelope_uses_only_fixed_authenticated_target(
+    monkeypatch: pytest.MonkeyPatch, target: str, control: str
+) -> None:
+    admission = {
+        "control": control,
+        "config": {"training_updates": 1},
+        "qualification": {"passed": False, "interpretation": "diagnostic"},
+    }
+    monkeypatch.setattr(gate, "_source_report", _passing_source)
+    monkeypatch.setattr(gate, "_environment_report", _passing_environment)
+    monkeypatch.setattr(gate, "_build_stage21_admission_data", lambda: object())
+    monkeypatch.setattr(
+        gate,
+        "_run_one_update_admission",
+        lambda data, config: copy.deepcopy(admission),
+    )
+    monkeypatch.setattr(
+        gate,
+        "_run_stability_admission",
+        lambda data, config: copy.deepcopy(admission),
+    )
+    monkeypatch.setattr(gate.legacy, "_device_memory_report", lambda: {"peak": 1})
+
+    result = gate.run_stage21_admission(target)
+
+    assert result["schema_version"] == 3
+    assert result["target"] == target
+    assert result["control"] == control
+    assert result["qualification"]["passed"] is False
+    assert result["environment"]["device_memory_after_run"] == {"peak": 1}
+
+
+def test_stage21_envelope_rejects_unknown_target_before_source_access(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        gate,
+        "_source_report",
+        lambda: pytest.fail("source must not be read for an unknown target"),
+    )
+    with pytest.raises(ValueError, match="one_update.*stability_256"):
+        gate.run_stage21_admission("other")
+
+
+def test_formal_gate_invokes_authenticated_manifest_validator_before_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class ValidatedStop(RuntimeError):
+        pass
+
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(gate, "_source_report", _passing_source)
+    monkeypatch.setattr(gate, "_environment_report", _passing_environment)
+
+    def validate(
+        manifests: dict[str, str], **kwargs: object
+    ) -> dict[str, object]:
+        calls.append({"manifests": manifests, **kwargs})
+        raise ValidatedStop
+
+    monkeypatch.setattr(gate, "_formal_admission_evidence", validate)
+    monkeypatch.setattr(
+        gate,
+        "build_binding_data",
+        lambda config: pytest.fail("formal data ran before manifest authentication"),
+    )
+    manifests = {"one_update": "one.json", "stability_256": "stability.json"}
+
+    with pytest.raises(ValidatedStop):
+        gate.run_binding_gate(
+            gate.BindingGateConfig(), admission_manifests=manifests
+        )
+
+    assert calls == [
+        {
+            "manifests": manifests,
+            "source": _passing_source(),
+            "environment": _passing_environment(),
+        }
+    ]
+
+
+def test_formal_gate_rejects_missing_manifests_before_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(gate, "_source_report", _passing_source)
+    monkeypatch.setattr(gate, "_environment_report", _passing_environment)
+    monkeypatch.setattr(
+        gate,
+        "build_binding_data",
+        lambda config: pytest.fail("formal data ran without admission manifests"),
+    )
+
+    with pytest.raises(ValueError, match="authenticated Stage 2.1"):
+        gate.run_binding_gate(gate.BindingGateConfig())
+
+
+def test_admission_cli_returns_success_after_writing_failed_scientific_result(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    result = {
+        "qualification": {"passed": False, "interpretation": "stop"},
+    }
+    destination = tmp_path / "admission.json"
+    monkeypatch.setattr(gate, "run_stage21_admission", lambda target: result)
+    monkeypatch.setattr(gate, "write_artifact", lambda value, path: destination)
+
+    exit_code = gate.main(
+        ["--target", "one_update", "--output", str(destination)]
+    )
+
+    assert exit_code == 0
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        ("--training-updates", "9999"),
+        ("--batch-size", "63"),
+        ("--validation-episodes", "256"),
+        ("--gap-steps", "2"),
+        ("--neuron-count", "1024"),
+        ("--recurrent-edges", "8192"),
+        ("--readout-width", "64"),
+        ("--color-rank", "8"),
+        ("--learning-rate", "0.001"),
+        ("--context-memory-width", "16"),
+        ("--memory-decay", "0.9"),
+        ("--sparse-backend", "jax_raw"),
+    ],
+)
+def test_fixed_admission_cli_rejects_every_topology_or_budget_override(
+    monkeypatch: pytest.MonkeyPatch, option: tuple[str, str]
+) -> None:
+    monkeypatch.setattr(
+        gate,
+        "run_stage21_admission",
+        lambda target: pytest.fail("invalid fixed target reached execution"),
+    )
+    with pytest.raises(ValueError, match="fixed admission"):
+        gate.main(["--target", "one_update", *option])
+
+
+def test_smoke_and_nondefault_gate_a_reject_authenticated_manifest_claims(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        gate,
+        "run_binding_gate",
+        lambda *args, **kwargs: pytest.fail("invalid Gate A reached execution"),
+    )
+    manifests = [
+        "--one-update-manifest",
+        "one.json",
+        "--stability-manifest",
+        "stability.json",
+    ]
+    with pytest.raises(ValueError, match="formal.*manifests"):
+        gate.main(["--smoke", *manifests])
+    with pytest.raises(ValueError, match="preregistered"):
+        gate.main(["--training-updates", "9999", *manifests])
