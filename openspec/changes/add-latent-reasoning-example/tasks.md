@@ -32,15 +32,15 @@
 ## 5. Training, evaluation, and reports
 
 - [x] 5.1 Replace `21-latent-reasoning-in-context.py` with CLI/configuration, manifest loading, split checks, one-model pp-prop optimization, and shared optimizer state across 8/16/32 effort updates.
-- [ ] 5.2 Evaluate one frozen 32-step trajectory at 0/8/16/32 on byte-identical tasks, aggregate exact metrics over all queries and tasks, and retain per-query repeat-intact reproducibility evidence.
-- [ ] 5.3 Implement no-context, deranged-demonstration, truncation, and slot-ablation arms without retraining; require the slot-ablation checkpoint-0 state, candidates, and exact metrics to match before attributing later differences to the intervention.
-- [ ] 5.4 Emit a machine-readable result and plain-English report containing configuration, device, counts, provenance, exact scores, diagnostics, trajectories, controls, runtime, numerical reproducibility with literal byte identity reported separately, and claim boundary.
-- [ ] 5.5 Emit an Agg plot of exact quality versus effort, trajectory dynamics, spike/voltage behavior, and control deltas.
+- [x] 5.2 Evaluate one frozen 32-step trajectory at 0/8/16/32 on byte-identical tasks, aggregate exact metrics over all queries and tasks, and retain per-query repeat-intact reproducibility evidence.
+- [x] 5.3 Implement no-context, deranged-demonstration, truncation, and slot-ablation arms without retraining; require the slot-ablation checkpoint-0 state, candidates, and exact metrics to match before attributing later differences to the intervention.
+- [x] 5.4 Emit a machine-readable result and plain-English report containing configuration, device, counts, provenance, exact scores, diagnostics, trajectories, controls, runtime, numerical reproducibility with literal byte identity reported separately, and claim boundary.
+- [x] 5.5 Emit an Agg plot of exact quality versus effort, trajectory dynamics, spike/voltage behavior, and control deltas.
 - [x] 5.6 Add a plumbing-only `--smoke` path and co-located entry-point tests covering every effort checkpoint and control without treating fixture scores as scientific evidence.
 
 ## 6. Documentation and qualification
 
 - [x] 6.1 Update the Example 21 README catalog and axis-map rows so they describe standard ARC, one-model effort, exact scoring, and public-data requirements.
-- [ ] 6.2 Run focused tests with more than 90 percent meaningful coverage of changed production modules, then the repository's normal example gate.
-- [ ] 6.3 Run a full GPU structural qualification proving 2,048 neurons and exactly 16,384 edges; run training/evaluation qualification only when an approved non-evaluation public corpus is present and the repeat/ablation reproducibility gates pass for every evaluated query.
-- [ ] 6.4 Record exactly what was and was not empirically qualified, verify downloaded/generated artifacts are untracked, commit the completed worktree branch, and leave `main` unchanged.
+- [x] 6.2 Run focused tests with more than 90 percent meaningful coverage of changed production modules, then the repository's normal example gate.
+- [x] 6.3 Run a full GPU structural qualification proving 2,048 neurons and exactly 16,384 edges; run training/evaluation qualification only when an approved non-evaluation public corpus is present and the repeat/ablation reproducibility gates pass for every evaluated query.
+- [x] 6.4 Record exactly what was and was not empirically qualified, verify downloaded/generated artifacts are untracked, commit the completed worktree branch, and leave `main` unchanged.

@@ -344,6 +344,81 @@ There is no required accuracy threshold. A zero exact score, worsening with
 effort, saturation, silence, or a causally null memory control is a valid
 negative result when the gates above are met and the report states it plainly.
 
+## Empirical qualification on 2026-08-16
+
+The retained implementation revision is
+`5934e5cfb2623d31250f60f86d6bafa7283d10cc`, with reported Example-21 source
+digest `8ee80cca42c4df248a4e1430de5a57f4122eb9a2d506658967910294036fdda9`.
+Both retained runs used an NVIDIA GeForce RTX 3080 Ti Laptop GPU and instantiated
+2,048 LIF neurons, 16,384 recurrent sparse edges, 32 slots of 64 neurons, and
+2,130,716 scalar parameters.
+
+The structural-only artifact in `var/example21-full-structural-final-v5`
+completed in 8.609 seconds and passed the full structural gate while correctly
+remaining non-scientific. Its `result.json` SHA-256 is
+`1e750fa18d2c29bbab0c5ec9662f07a33bc43a9e9cd10217fa91816b9e937478`.
+
+The scientific artifact in `var/example21-full-scientific-final-v5` completed
+in 165.160 seconds and passed both full gates. It loaded 399 ARC-AGI-1 training
+tasks after explicitly excluding the byte-identical training/evaluation overlap,
+then evaluated all 400 evaluation tasks and 419 test queries. Training performed
+96 batch-one terminal pp-prop updates, balanced 32/32/32 across 8/16/32 effort,
+and sampled 82 unique base tasks and 83 unique task/query pairs from the
+399-task pool. All six parameter groups moved; feedforward and recurrent
+synaptic weights used eligibility routes, while the four readout/head groups
+received exact current-window reverse-mode gradients.
+
+Exact query pass@1, query pass@2, strict task pass@1, and strict task pass@2 were
+all zero at effort 0, 8, 16, and 32. Shape diagnostics were
+`0.0883/0.0907/0.0883/0.0859`, and valid-cell pixel diagnostics were
+`0.0650/0.0665/0.0660/0.0628`. The latent trajectory remained active rather
+than silent or saturated: mean firing fell from `0.243874` at checkpoint 0 to
+`0.142861` at checkpoint 32, while changed-cell fraction reached `0.869537`.
+No-context, shuffled-demonstration, and slot-ablation controls changed measured
+step-32 latent state for all 419 matched queries, but none changed exact success
+from zero. This demonstrates latent computation and causal trajectory
+sensitivity, not successful latent reasoning.
+
+The scientific rerun was launched with
+`XLA_FLAGS=--xla_gpu_deterministic_ops=true` and
+`CUBLAS_WORKSPACE_CONFIG=:4096:8`. Repeat-intact evaluation preserved exact
+spikes, compact logits, decoded candidates, and scores for all 419 queries; its
+maximum per-query RMS was `3.739e-7` for voltage and `2.655e-7` for recurrent
+current. Slot ablation matched checkpoint 0 for all queries, with corresponding
+maxima `3.562e-7` and `2.433e-7`. Literal physical-state byte identity remained
+false and is reported separately: these settings did not make the default
+recurrent sparse backend byte deterministic, so the qualified claim is only the
+declared `1e-6` bound. An earlier unprotected diagnostic run,
+`var/example21-full-scientific-final-v4`, correctly failed qualification when
+two repeat queries and one ablation checkpoint exceeded `1e-6`; the worst
+voltage/recurrent RMS values were `8.212e-4/9.066e-4`. That failure was retained
+as GPU sparse-accumulation reproducibility evidence and the tolerance was not
+relaxed.
+
+The retained scientific hashes are:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `result.json` | `1344e32e64c502d9321e196efe7d0475f141c874f1c1651950a5ae55e479eaea` |
+| `report.txt` | `a2ffea84eae782edf0615e4749a887302d400800fe743acf279b88cdc10439f4` |
+| `latent_reasoning.png` | `3116e2f07e88081bc3a436bd855a3d563c8ac3c1d2692c1b998a3ec830f2b8ce` |
+| `data_manifest.json` | `cb5340ad542d4587be8468f56524fb1e8262ad2c20c507a7a7c28419bf7d130a` |
+| `process.log` | `56c6958e5b3451d107e85dfa0a30ef2adbd287ef135b17bb048feff126949f99` |
+| `run-environment.txt` | `c34c21f2768b59c734947edcf7daf7c998e3d79836a53d15d181d91dc404bf84` |
+
+The final focused gate passed 270 tests with 93 percent aggregate branch-aware
+coverage across the four production modules (91/95/95/93 percent
+individually). The normal repository example gate passed 676 tests with five
+skips and 19 retained compiler warnings. Strict OpenSpec validation, scoped
+Ruff check and format, and `git diff --check` passed. All downloaded data and
+run artifacts are outside tracked source or ignored under `var/`; `main`
+remained at `470fd66a13e140969300acb9539cbc108a1e2891`.
+
+This was a full-scale protocol qualification, not a converged ARC training
+campaign: 96 sampled updates are insufficient to falsify the architecture, and
+the run makes no claim about the paper's private model or LOW/MEDIUM/HIGH
+iteration counts.
+
 ## Edge cases required in tests
 
 - 1×1 and 30×30 grids, unequal demonstration dimensions, color 0 and color 9;
