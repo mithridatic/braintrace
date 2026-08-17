@@ -606,6 +606,11 @@ def _joint_fixed_point_prune(
 
     record_count = n_rec + rows.size + 2
 
+    @brainstate.transform.jit(
+        static_argnames=("neurons",),
+        inline=False,
+        name="example20_joint_prune_phase",
+    )
     def run_phase(
         alive,
         edge_alive,
