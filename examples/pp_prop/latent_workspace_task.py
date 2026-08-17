@@ -1342,6 +1342,116 @@ class RowEventConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class AssociativeMemoryFeatureIndices:
+    """Matched row-event features for associative-memory keys and values.
+
+    Parameters
+    ----------
+    key_indices
+        Ordered input-side and shared row feature indices.
+    value_indices
+        Ordered output-side and shared row feature indices.
+
+    Attributes
+    ----------
+    key_indices, value_indices
+        Unique, non-negative index tuples with the same feature width.
+    """
+
+    key_indices: tuple[int, ...]
+    value_indices: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        normalized: dict[str, tuple[int, ...]] = {}
+        for name in ("key_indices", "value_indices"):
+            raw_indices = getattr(self, name)
+            if not raw_indices:
+                raise ValueError(
+                    "AssociativeMemoryFeatureIndices tuples must be non-empty"
+                )
+            if any(
+                isinstance(index, (bool, np.bool_))
+                or not isinstance(index, (int, np.integer))
+                for index in raw_indices
+            ):
+                raise ValueError(
+                    "AssociativeMemoryFeatureIndices entries must be integers"
+                )
+            indices = tuple(int(index) for index in raw_indices)
+            if any(index < 0 for index in indices):
+                raise ValueError(
+                    "AssociativeMemoryFeatureIndices entries must be non-negative"
+                )
+            if len(indices) != len(set(indices)):
+                raise ValueError(
+                    f"AssociativeMemoryFeatureIndices.{name} must be unique"
+                )
+            normalized[name] = indices
+        if len(normalized["key_indices"]) != len(normalized["value_indices"]):
+            raise ValueError(
+                "AssociativeMemoryFeatureIndices tuples must have the same width"
+            )
+        object.__setattr__(self, "key_indices", normalized["key_indices"])
+        object.__setattr__(self, "value_indices", normalized["value_indices"])
+
+
+def associative_memory_feature_indices(
+    config: RowEventConfig = RowEventConfig(),
+) -> AssociativeMemoryFeatureIndices:
+    """Return matched key/value row features for associative memory.
+
+    The key contains input-side validity, the shared normalized row scalar,
+    normalized input dimensions, row position, input dimension one-hots, input
+    mask, and input colors.  The value mirrors that contract for the output
+    side.  Event validity, phase, and demonstration identity are deliberately
+    excluded so memory content represents row bindings rather than episode
+    layout.
+
+    Parameters
+    ----------
+    config
+        Validated row-event layout whose slice boundaries define the indices.
+
+    Returns
+    -------
+    AssociativeMemoryFeatureIndices
+        Immutable matched feature-index tuples in semantic concatenation order.
+    """
+
+    def expand(feature_slice: slice) -> tuple[int, ...]:
+        return tuple(range(feature_slice.start, feature_slice.stop))
+
+    normalized_start = config.normalized_slice.start
+    key_indices = (
+        (
+            config.side_valid_slice.start,
+            normalized_start,
+            normalized_start + 1,
+            normalized_start + 2,
+        )
+        + expand(config.row_index_slice)
+        + expand(config.input_height_slice)
+        + expand(config.input_width_slice)
+        + expand(config.input_mask_slice)
+        + expand(config.input_color_slice)
+    )
+    value_indices = (
+        (
+            config.side_valid_slice.start + 1,
+            normalized_start,
+            normalized_start + 3,
+            normalized_start + 4,
+        )
+        + expand(config.row_index_slice)
+        + expand(config.output_height_slice)
+        + expand(config.output_width_slice)
+        + expand(config.output_mask_slice)
+        + expand(config.output_color_slice)
+    )
+    return AssociativeMemoryFeatureIndices(key_indices, value_indices)
+
+
+@dataclass(frozen=True, slots=True)
 class DecodedQueryContext:
     """Row-event round-trip result without a held-out target.
 

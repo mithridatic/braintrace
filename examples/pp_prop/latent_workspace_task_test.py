@@ -12,6 +12,7 @@ import pytest
 
 from examples.pp_prop import latent_workspace_task as task_module
 from examples.pp_prop.latent_workspace_task import (
+    AssociativeMemoryFeatureIndices,
     ArcGrid,
     ArcPair,
     ArcQueryEpisode,
@@ -29,6 +30,7 @@ from examples.pp_prop.latent_workspace_task import (
     arc_task_from_mapping,
     arc_task_to_mapping,
     assert_no_evaluation_leakage,
+    associative_memory_feature_indices,
     augment_training_task,
     canonical_task_fingerprint,
     decode_row_events,
@@ -648,6 +650,113 @@ def test_default_row_event_layout_is_bounded_and_nonoverlapping() -> None:
     assert slices[-1].stop == config.input_width
 
 
+def test_standard_arc_associative_memory_feature_indices_are_exact() -> None:
+    indices = associative_memory_feature_indices(RowEventConfig())
+
+    expected_key = (
+        (13, 15, 16, 17)
+        + tuple(range(20, 50))
+        + tuple(range(50, 80))
+        + tuple(range(80, 110))
+        + tuple(range(170, 200))
+        + tuple(range(230, 530))
+    )
+    expected_value = (
+        (14, 15, 18, 19)
+        + tuple(range(20, 50))
+        + tuple(range(110, 140))
+        + tuple(range(140, 170))
+        + tuple(range(200, 230))
+        + tuple(range(530, 830))
+    )
+    assert isinstance(indices, AssociativeMemoryFeatureIndices)
+    assert indices.key_indices == expected_key
+    assert indices.value_indices == expected_value
+    assert len(indices.key_indices) == len(indices.value_indices) == 424
+
+
+def test_small_binding_associative_memory_feature_indices_are_exact() -> None:
+    config = RowEventConfig(max_demonstrations=4, max_grid_size=1)
+
+    indices = associative_memory_feature_indices(config)
+
+    assert indices.key_indices == (
+        7,
+        9,
+        10,
+        11,
+        14,
+        15,
+        16,
+        19,
+        *range(21, 31),
+    )
+    assert indices.value_indices == (
+        8,
+        9,
+        12,
+        13,
+        14,
+        17,
+        18,
+        20,
+        *range(31, 41),
+    )
+    assert len(indices.key_indices) == len(indices.value_indices) == 18
+
+
+def test_associative_memory_indices_preserve_side_semantics_without_identity() -> (
+    None
+):
+    config = RowEventConfig()
+    indices = associative_memory_feature_indices(config)
+    row_indices = range(*config.row_index_slice.indices(config.input_width))
+    shared = {config.normalized_slice.start, *row_indices}
+    excluded = {
+        *range(*config.valid_slice.indices(config.input_width)),
+        *range(*config.phase_slice.indices(config.input_width)),
+        *range(*config.demonstration_slice.indices(config.input_width)),
+    }
+
+    assert set(indices.key_indices) & set(indices.value_indices) == shared
+    assert not excluded & set(indices.key_indices)
+    assert not excluded & set(indices.value_indices)
+
+    demonstration = encode_query_episode(_task(), 0, config).events[0]
+    key_indices = np.asarray(indices.key_indices)
+    value_indices = np.asarray(indices.value_indices)
+    assert demonstration[key_indices].sum() > 0.0
+    assert demonstration[value_indices].sum() > 0.0
+
+    query = encode_query_episode(_task(), 0, config).events[
+        config.max_demonstrations * config.max_grid_size
+    ]
+    assert query[key_indices].sum() > 0.0
+    assert query[value_indices].sum() == pytest.approx(
+        query[config.normalized_slice.start]
+        + query[config.row_index_slice].sum()
+    )
+
+
+@pytest.mark.parametrize(
+    ("key_indices", "value_indices", "message"),
+    [
+        ((), (), "non-empty"),
+        ((0, 0), (1, 2), "unique"),
+        ((0,), (1, 2), "same width"),
+        ((-1,), (1,), "non-negative"),
+        ((True,), (1,), "integers"),
+    ],
+)
+def test_associative_memory_feature_index_record_fails_closed(
+    key_indices: tuple[int, ...],
+    value_indices: tuple[int, ...],
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        AssociativeMemoryFeatureIndices(key_indices, value_indices)
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
@@ -864,6 +973,7 @@ def test_smoke_fixture_is_multiquery_plumbing_only_and_manifested() -> None:
         SourceManifest,
         LoadedDataset,
         RowEventConfig,
+        AssociativeMemoryFeatureIndices,
         EncodedQueryEpisode,
         GridTarget,
     ],
