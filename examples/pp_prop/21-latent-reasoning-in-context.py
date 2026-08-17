@@ -50,6 +50,7 @@ try:
     from examples.pp_prop.latent_workspace_task import (
         ArcPair,
         ArcTask,
+        associative_memory_feature_indices,
         DatasetSource,
         EncodedQueryEpisode,
         LoadedDataset,
@@ -82,6 +83,7 @@ except ModuleNotFoundError:
     from latent_workspace_task import (
         ArcPair,
         ArcTask,
+        associative_memory_feature_indices,
         DatasetSource,
         EncodedQueryEpisode,
         LoadedDataset,
@@ -98,6 +100,13 @@ except ModuleNotFoundError:
 DeviceName = Literal["cpu", "gpu"]
 CHECKPOINTS = (0, 8, 16, 32)
 TRAINING_EFFORTS = (8, 16, 32)
+EVALUATION_ARM_ORDER = (
+    "intact",
+    "repeat_intact",
+    "no_context",
+    "shuffled_demonstrations",
+    "slot_ablation",
+)
 STATE_RMS_TOLERANCE = 1e-6
 APPROVED_TRAINING_SOURCES = frozenset(
     {
@@ -137,6 +146,15 @@ def _positive_real(value: object, name: str) -> float:
     return result
 
 
+def _unit_interval(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise ValueError(f"{name} must be finite and in [0, 1]")
+    result = float(value)
+    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
+        raise ValueError(f"{name} must be finite and in [0, 1]")
+    return result
+
+
 @dataclass(frozen=True)
 class ExperimentConfig:
     """Configure data, one-model training, frozen evaluation, and artifacts.
@@ -157,6 +175,11 @@ class ExperimentConfig:
         Physical LIF population and exact directed sparse-edge count.
     readout_width, color_rank : int
         Shared readout bottleneck and CP rank of the full-grid color head.
+    context_memory_width : int
+        Associative workspace width. Zero selects the byte-compatible legacy
+        reservoir; positive values up to 128 opt into ``S_K/H_r``.
+    memory_decay : float
+        Associative memory self-decay in the closed interval ``[0, 1]``.
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
@@ -188,6 +211,8 @@ class ExperimentConfig:
     recurrent_edges: int = 16384
     readout_width: int = 128
     color_rank: int = 16
+    context_memory_width: int = 0
+    memory_decay: float = 1.0
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 32
@@ -207,6 +232,7 @@ class ExperimentConfig:
             ("recurrent_edges", 1),
             ("readout_width", 1),
             ("color_rank", 1),
+            ("context_memory_width", 0),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
             ("latent_steps", 32),
@@ -221,6 +247,8 @@ class ExperimentConfig:
             raise ValueError("device must be 'cpu' or 'gpu'")
         if self.neuron_count % 64:
             raise ValueError("neuron_count must be divisible by 64")
+        if self.context_memory_width > 128:
+            raise ValueError("context_memory_width must be at most 128")
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
             raise ValueError("recurrent_edges exceeds directed no-self capacity")
         if self.max_grid_size != 30:
@@ -240,6 +268,9 @@ class ExperimentConfig:
         )
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
+        )
+        object.__setattr__(
+            self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
         object.__setattr__(self, "output_dir", pathlib.Path(self.output_dir))
         if self.source_manifest is not None:
@@ -264,8 +295,23 @@ class ExperimentConfig:
         output_dir: pathlib.Path = pathlib.Path("var/example21-smoke"),
         device: DeviceName = "cpu",
         seed: int = 2108,
+        context_memory_width: int = 0,
+        memory_decay: float = 1.0,
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
+
+        Parameters
+        ----------
+        output_dir : pathlib.Path
+            Artifact directory for the smoke run.
+        device : {"cpu", "gpu"}
+            Requested JAX backend.
+        seed : int
+            Deterministic model, schedule, and augmentation seed.
+        context_memory_width : int
+            Optional associative workspace width; zero retains legacy mode.
+        memory_decay : float
+            Associative memory decay in ``[0, 1]``.
 
         Returns
         -------
@@ -280,6 +326,8 @@ class ExperimentConfig:
             recurrent_edges=1024,
             readout_width=32,
             color_rank=4,
+            context_memory_width=context_memory_width,
+            memory_decay=memory_decay,
             max_demonstrations=4,
             training_updates=3,
             learning_rate=5e-4,
@@ -687,16 +735,77 @@ def _prepare_training(
 def _model_config(
     config: ExperimentConfig, row_config: RowEventConfig, *, batch_size: int
 ) -> ModelConfig:
-    return ModelConfig(
-        input_width=row_config.input_width,
-        batch_size=batch_size,
-        neuron_count=config.neuron_count,
-        recurrent_edges=config.recurrent_edges,
-        max_latent_steps=config.latent_steps,
-        readout_width=config.readout_width,
-        color_rank=config.color_rank,
-        seed=config.seed,
+    arguments: dict[str, object] = {
+        "input_width": row_config.input_width,
+        "batch_size": batch_size,
+        "neuron_count": config.neuron_count,
+        "recurrent_edges": config.recurrent_edges,
+        "max_latent_steps": config.latent_steps,
+        "readout_width": config.readout_width,
+        "color_rank": config.color_rank,
+        "seed": config.seed,
+    }
+    if config.context_memory_width > 0:
+        features = associative_memory_feature_indices(row_config)
+        arguments.update(
+            {
+                "context_memory_width": config.context_memory_width,
+                "memory_decay": config.memory_decay,
+                "demonstration_phase_index": row_config.phase_slice.start,
+                "query_phase_index": row_config.phase_slice.start + 1,
+                "input_side_valid_index": row_config.side_valid_slice.start,
+                "output_side_valid_index": row_config.side_valid_slice.start + 1,
+                "memory_key_indices": features.key_indices,
+                "memory_value_indices": features.value_indices,
+            }
+        )
+    return ModelConfig(**arguments)
+
+
+def _memory_architecture_report(
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    *,
+    training_batch_size: int,
+    evaluation_batch_size: int,
+) -> dict[str, object]:
+    """Describe the selected reasoning mode and dense context-state cost."""
+    training_batch_size = _integer(
+        training_batch_size, "training_batch_size", minimum=1
     )
+    evaluation_batch_size = _integer(
+        evaluation_batch_size, "evaluation_batch_size", minimum=1
+    )
+    enabled = config.context_memory_width > 0
+    if enabled:
+        features = associative_memory_feature_indices(row_config)
+        key_width = len(features.key_indices)
+        value_width = len(features.value_indices)
+    else:
+        key_width = 0
+        value_width = 0
+    bytes_per_example = config.context_memory_width**2 * np.dtype(np.float32).itemsize
+    return {
+        "reasoning_mode": (
+            "associative_workspace" if enabled else "legacy_reservoir"
+        ),
+        "context_memory_width": config.context_memory_width,
+        "memory_decay": config.memory_decay,
+        "raw_key_feature_width": key_width,
+        "raw_value_feature_width": value_width,
+        "context_memory_bytes_per_example": bytes_per_example,
+        "context_memory_bytes_training_batch": (
+            bytes_per_example * training_batch_size
+        ),
+        "context_memory_bytes_evaluation_batch": (
+            bytes_per_example * evaluation_batch_size
+        ),
+    }
+
+
+def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
+    """Return the model-owned associative representation provenance."""
+    return asdict(model.associative_memory_report())
 
 
 def _make_model(
@@ -767,6 +876,14 @@ def _compiler_evidence(learner: Any) -> dict[str, object]:
             item["weight_path"] = path_text(record.weight_path)
         if hasattr(record, "hidden_paths"):
             item["hidden_paths"] = [path_text(path) for path in record.hidden_paths]
+        context = getattr(record, "context", None)
+        if isinstance(context, dict):
+            path_classification = context.get("path_classification")
+            if isinstance(path_classification, dict):
+                item["path_classification_by_hidden_state"] = {
+                    path_text(path): enum_text(classification)
+                    for path, classification in path_classification.items()
+                }
         diagnostics.append(item)
     warning_count = sum(item["level"] == "warning" for item in diagnostics)
     error_count = sum(item["level"] == "error" for item in diagnostics)
@@ -1104,6 +1221,17 @@ def _arm_sequences(
                     arm_encoded.query_start == encoded.query_start
                     and arm_encoded.query_stop == encoded.query_stop
                 )
+                if np.array_equal(
+                    arm_encoded.events[: arm_encoded.query_start],
+                    encoded.events[: encoded.query_start],
+                ):
+                    detail = {
+                        "available": False,
+                        "reason": (
+                            "rotation leaves demonstration associations unchanged"
+                        ),
+                        "timing_matched": bool(detail["timing_matched"]),
+                    }
         else:
             packed = _packed_events(encoded, config)
         sequences.append(packed)
@@ -1637,6 +1765,248 @@ def _checkpoint_zero_gate_summary(
     }
 
 
+def _array_sha256(value: np.ndarray) -> str:
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(str(array.shape).encode("ascii"))
+    digest.update(array.tobytes())
+    return digest.hexdigest()
+
+
+def _associative_evaluation_diagnostics(
+    enabled: bool,
+    intact: tuple[np.ndarray, np.ndarray, np.ndarray],
+    controls: dict[
+        str,
+        tuple[
+            tuple[np.ndarray, np.ndarray, np.ndarray],
+            Sequence[dict[str, object]],
+        ],
+    ],
+) -> dict[str, object]:
+    """Summarize bounded pairing-sensitive ``S_K``/read/workspace evidence."""
+    if not enabled:
+        return {
+            "available": False,
+            "complete": True,
+            "reason": "legacy_reservoir_has_no_associative_state",
+        }
+
+    def validate(
+        name: str, window: tuple[np.ndarray, np.ndarray, np.ndarray]
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        workspace, memory_read, context_memory = map(np.asarray, window)
+        if workspace.ndim != 3 or memory_read.ndim != 3:
+            raise ValueError(f"{name} workspace/read diagnostics must be rank three")
+        if workspace.shape[:2] != memory_read.shape[:2]:
+            raise ValueError(f"{name} workspace/read checkpoints must align")
+        if context_memory.ndim != 3 or context_memory.shape[0] != workspace.shape[1]:
+            raise ValueError(f"{name} context memory batch must align")
+        if context_memory.shape[1] != context_memory.shape[2]:
+            raise ValueError(f"{name} context memory must be square")
+        if memory_read.shape[2] != context_memory.shape[1]:
+            raise ValueError(f"{name} memory read width must match context memory")
+        if context_memory.shape[1] < 1:
+            raise ValueError(f"{name} associative diagnostics must have positive width")
+        for array in (workspace, memory_read, context_memory):
+            if not np.issubdtype(array.dtype, np.floating) or not np.isfinite(
+                array
+            ).all():
+                raise ValueError(f"{name} associative diagnostics must be finite")
+        return workspace, memory_read, context_memory
+
+    intact_workspace, intact_read, intact_memory = validate("intact", intact)
+    depth_count, query_count = intact_workspace.shape[:2]
+
+    def l2_by_depth(value: np.ndarray) -> list[float]:
+        norms = np.linalg.norm(value.astype(np.float64), axis=2)
+        return np.mean(norms, axis=1).tolist()
+
+    def comparison(
+        name: str,
+        window: tuple[np.ndarray, np.ndarray, np.ndarray],
+        metadata: Sequence[dict[str, object]],
+    ) -> dict[str, object]:
+        workspace, memory_read, context_memory = validate(name, window)
+        if workspace.shape != intact_workspace.shape:
+            raise ValueError(f"{name} workspace shape must match intact")
+        if memory_read.shape != intact_read.shape:
+            raise ValueError(f"{name} memory read shape must match intact")
+        if context_memory.shape != intact_memory.shape:
+            raise ValueError(f"{name} context memory shape must match intact")
+        if len(metadata) != query_count:
+            raise ValueError(f"{name} metadata must match the query count")
+        applicable = np.asarray(
+            [bool(item.get("available", True)) for item in metadata],
+            dtype=np.bool_,
+        )
+        applicable_count = int(np.count_nonzero(applicable))
+        memory_delta = context_memory.astype(np.float64) - intact_memory.astype(
+            np.float64
+        )
+        memory_l2 = np.linalg.norm(memory_delta.reshape(query_count, -1), axis=1)
+        memory_rms = np.sqrt(np.mean(memory_delta * memory_delta, axis=(1, 2)))
+        memory_changed = np.asarray(
+            [
+                not _array_bytes_equal(intact_memory[index], context_memory[index])
+                for index in range(query_count)
+            ],
+            dtype=np.bool_,
+        )
+
+        def trajectory_delta(
+            left: np.ndarray, right: np.ndarray
+        ) -> tuple[list[float], list[int], int]:
+            delta = right.astype(np.float64) - left.astype(np.float64)
+            l2 = np.linalg.norm(delta, axis=2)
+            changed = np.any(left != right, axis=2) & applicable[None, :]
+            if applicable_count:
+                mean_l2 = np.mean(l2[:, applicable], axis=1).tolist()
+            else:
+                mean_l2 = [0.0] * depth_count
+            return (
+                mean_l2,
+                np.count_nonzero(changed, axis=1).astype(int).tolist(),
+                int(np.count_nonzero(np.any(changed, axis=0))),
+            )
+
+        read_l2, read_changed, read_changed_any = trajectory_delta(
+            intact_read, memory_read
+        )
+        workspace_l2, workspace_changed, workspace_changed_any = trajectory_delta(
+            intact_workspace, workspace
+        )
+        zero_memory = np.asarray(
+            [np.count_nonzero(context_memory[index]) == 0 for index in range(query_count)]
+        )
+        context_memory_exact = _array_bytes_equal(intact_memory, context_memory)
+        memory_read_exact = _array_bytes_equal(intact_read, memory_read)
+        workspace_exact = _array_bytes_equal(intact_workspace, workspace)
+        return {
+            "applicable_query_count": applicable_count,
+            "context_memory_changed_applicable_query_count": int(
+                np.count_nonzero(memory_changed & applicable)
+            ),
+            "context_memory_l2_by_query": memory_l2.tolist(),
+            "context_memory_rms_by_query": memory_rms.tolist(),
+            "context_memory_sha256_by_query": [
+                _array_sha256(context_memory[index]) for index in range(query_count)
+            ],
+            "context_memory_zero_query_count": int(np.count_nonzero(zero_memory)),
+            "memory_read_mean_l2_by_depth": read_l2,
+            "memory_read_changed_query_count_by_depth": read_changed,
+            "memory_read_changed_at_any_depth_applicable_query_count": (
+                read_changed_any
+            ),
+            "workspace_carrier_mean_l2_by_depth": workspace_l2,
+            "workspace_carrier_changed_query_count_by_depth": workspace_changed,
+            "workspace_carrier_changed_at_any_depth_applicable_query_count": (
+                workspace_changed_any
+            ),
+            "context_memory_byte_identical_to_intact": context_memory_exact,
+            "memory_read_byte_identical_to_intact": memory_read_exact,
+            "workspace_carrier_byte_identical_to_intact": workspace_exact,
+            "byte_identical_to_intact": bool(
+                context_memory_exact and memory_read_exact and workspace_exact
+            ),
+        }
+
+    expected_controls = {
+        "repeat_intact",
+        "no_context",
+        "shuffled_demonstrations",
+        "slot_ablation",
+    }
+    if set(controls) != expected_controls:
+        raise ValueError("associative controls are incomplete")
+    control_reports = {
+        name: comparison(name, *controls[name]) for name in EVALUATION_ARM_ORDER[1:]
+    }
+    repeat_report = control_reports["repeat_intact"]
+    repeat_exact = bool(
+        repeat_report["context_memory_byte_identical_to_intact"]
+        and repeat_report["memory_read_byte_identical_to_intact"]
+    )
+    no_context_zero = (
+        control_reports["no_context"]["context_memory_zero_query_count"]
+        == query_count
+    )
+    shuffled_report = control_reports["shuffled_demonstrations"]
+    shuffled_applicable = int(shuffled_report["applicable_query_count"])
+    shuffled_pairing_sensitive = bool(
+        shuffled_applicable > 0
+        and int(
+            shuffled_report["context_memory_changed_applicable_query_count"]
+        )
+        == shuffled_applicable
+        and int(
+            shuffled_report[
+                "memory_read_changed_at_any_depth_applicable_query_count"
+            ]
+        )
+        == shuffled_applicable
+    )
+    return {
+        "available": True,
+        "complete": bool(
+            repeat_exact and no_context_zero and shuffled_pairing_sensitive
+        ),
+        "depth_count": depth_count,
+        "query_count": query_count,
+        "intact_context_memory_sha256_by_query": [
+            _array_sha256(intact_memory[index]) for index in range(query_count)
+        ],
+        "intact_context_memory_frobenius_norm_by_query": np.linalg.norm(
+            intact_memory.astype(np.float64).reshape(query_count, -1), axis=1
+        ).tolist(),
+        "intact_memory_read_mean_l2_by_depth": l2_by_depth(intact_read),
+        "intact_workspace_carrier_mean_l2_by_depth": l2_by_depth(intact_workspace),
+        "repeat_intact_exact": repeat_exact,
+        "no_context_memory_exactly_zero": no_context_zero,
+        "shuffled_pairing_sensitive_for_every_applicable_query": (
+            shuffled_pairing_sensitive
+        ),
+        "controls": control_reports,
+    }
+
+
+def _compile_evaluation_arm(
+    model: LatentWorkspaceModel,
+    selected_indices: jax.Array,
+    slots: jax.Array,
+):
+    """Compile the common device-side driver for one selected evaluation arm."""
+    selected_indices = jnp.asarray(selected_indices)
+    slots = jnp.asarray(slots)
+
+    @brainstate.transform.jit(
+        inline=False,
+        name="example21_evaluation_arm",
+    )
+    def run_arm(events, advances, gates):
+        packed = run_selected_packed_stream(
+            model,
+            events,
+            selected_indices,
+            reset=True,
+            advance_gates=advances,
+            ablation_slots=slots,
+            ablation_gates=gates,
+        )
+        return (
+            packed.compact_logits,
+            packed.spikes,
+            packed.voltage,
+            packed.feedforward_current,
+            packed.recurrent_current,
+            packed.memory_read,
+            packed.final_context_memory,
+        )
+
+    return run_arm
+
+
 def _evaluate(
     trained_model: LatentWorkspaceModel,
     data: _ExperimentData,
@@ -1672,31 +2042,41 @@ def _evaluate(
         - 1
         + np.arange(max(CHECKPOINTS) + 1, dtype=np.int32)[:, None]
     )
+    run_device_arm = _compile_evaluation_arm(
+        model,
+        jnp.asarray(selected_indices),
+        jnp.asarray(slots),
+    )
+    arm_wall_seconds: dict[str, float] = {}
 
     def run_arm(
-        events: np.ndarray, advances: np.ndarray, gates: np.ndarray
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        packed = run_selected_packed_stream(
-            model,
+        name: str,
+        events: np.ndarray,
+        advances: np.ndarray,
+        gates: np.ndarray,
+    ) -> tuple[
+        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+        tuple[np.ndarray, np.ndarray, np.ndarray],
+    ]:
+        arm_started = time.perf_counter()
+        packed = run_device_arm(
             jnp.asarray(events),
-            jnp.asarray(selected_indices),
-            reset=True,
-            advance_gates=jnp.asarray(advances),
-            ablation_slots=slots,
-            ablation_gates=jnp.asarray(gates),
+            jnp.asarray(advances),
+            jnp.asarray(gates),
         )
-        window = (
-            np.asarray(packed.compact_logits),
-            np.asarray(packed.spikes),
-            np.asarray(packed.voltage),
-            np.asarray(packed.feedforward_current),
-            np.asarray(packed.recurrent_current),
-        )
+        window = tuple(np.asarray(value) for value in packed)
+        arm_wall_seconds[name] = time.perf_counter() - arm_started
         del packed
-        return window
+        physical = window[:5]
+        associative = (physical[2], window[5], window[6])
+        return physical, associative
 
-    intact = run_arm(intact_events, intact_advances, inactive_gates)
-    repeat_intact = run_arm(intact_events, intact_advances, inactive_gates)
+    intact, intact_associative = run_arm(
+        "intact", intact_events, intact_advances, inactive_gates
+    )
+    repeat_intact, repeat_associative = run_arm(
+        "repeat_intact", intact_events, intact_advances, inactive_gates
+    )
     intact_metrics, checkpoint_queries = _score_windows(
         intact[0], records, config.color_rank
     )
@@ -1746,7 +2126,9 @@ def _evaluate(
     ]
     del repeat_intact
 
-    no_context = run_arm(no_context_events, no_context_advances, inactive_gates)
+    no_context, no_context_associative = run_arm(
+        "no_context", no_context_events, no_context_advances, inactive_gates
+    )
     no_context_result = _control_summary(
         "no_context",
         intact,
@@ -1758,7 +2140,12 @@ def _evaluate(
     )
     del no_context
 
-    shuffled = run_arm(shuffled_events, shuffled_advances, inactive_gates)
+    shuffled, shuffled_associative = run_arm(
+        "shuffled_demonstrations",
+        shuffled_events,
+        shuffled_advances,
+        inactive_gates,
+    )
     shuffled_result = _control_summary(
         "shuffled_demonstrations",
         intact,
@@ -1772,7 +2159,9 @@ def _evaluate(
 
     gates = inactive_gates.copy()
     gates[query_stops, np.arange(batch_size)] = True
-    ablated = run_arm(intact_events, intact_advances, gates)
+    ablated, ablated_associative = run_arm(
+        "slot_ablation", intact_events, intact_advances, gates
+    )
     ablation_result = _control_summary(
         f"slot_ablation_{config.ablation_slot}",
         intact,
@@ -1788,6 +2177,23 @@ def _evaluate(
     ablation_checkpoint_zero = _checkpoint_zero_gate_summary(
         intact_metrics, ablation_result, pre_intervention_match
     )
+    associative_diagnostics = _associative_evaluation_diagnostics(
+        config.context_memory_width > 0,
+        intact_associative,
+        {
+            "repeat_intact": (repeat_associative, intact_meta),
+            "no_context": (no_context_associative, no_context_meta),
+            "shuffled_demonstrations": (shuffled_associative, shuffled_meta),
+            "slot_ablation": (ablated_associative, intact_meta),
+        },
+    )
+    del (
+        intact_associative,
+        repeat_associative,
+        no_context_associative,
+        shuffled_associative,
+        ablated_associative,
+    )
     del ablated
     after = _tree_digest(parameter_snapshot(model))
     return {
@@ -1800,6 +2206,7 @@ def _evaluate(
         "checkpoint_queries": checkpoint_queries,
         "query_trajectories": trajectories,
         "aggregate_trajectory": aggregate_trajectory,
+        "associative_memory_diagnostics": associative_diagnostics,
         "determinism": {
             "same_control_capable_execution_path": True,
             "state_rms_tolerance": STATE_RMS_TOLERANCE,
@@ -1839,6 +2246,20 @@ def _evaluate(
                 "checkpoints": list(CHECKPOINTS),
                 "uses_one_continuous_intact_trajectory": True,
             },
+        },
+        "execution": {
+            "arm_order": list(EVALUATION_ARM_ORDER),
+            "selected_arm_driver": "brainstate.transform.jit",
+            "jit_name": "example21_evaluation_arm",
+            "jit_inline": False,
+            "sequential_separate_arms": True,
+            "repeat_intact_cached": False,
+            "wall_seconds_by_arm": arm_wall_seconds,
+            "cold_intact_to_warm_repeat_ratio": (
+                arm_wall_seconds["intact"] / arm_wall_seconds["repeat_intact"]
+                if arm_wall_seconds["repeat_intact"] > 0.0
+                else None
+            ),
         },
     }
 
@@ -2344,29 +2765,75 @@ def _qualification(
         if isinstance(compiler_report, dict)
         else set()
     )
-    expected_parameter_paths = {
-        "color_factor_head.weight",
+    legacy_temporal_paths = {
         "ff_syn.comm.weight",
+        "rec_syn.comm.weight",
+    }
+    plain_paths_expected = {
+        "color_factor_head.weight",
         "height_head.weight",
         "readout_projection.weight",
-        "rec_syn.comm.weight",
         "width_head.weight",
     }
+    associative_paths = {
+        "memory_write_scale",
+        "workspace_query_projection.weight",
+        "memory_read_projection.weight",
+    }
+    memory_enabled = config.context_memory_width > 0
+    routed_paths_expected = legacy_temporal_paths | (
+        associative_paths if memory_enabled else set()
+    )
+    expected_parameter_paths = routed_paths_expected | plain_paths_expected
+    route_classifications: dict[object, set[object]] = {}
+    for item in (
+        compiler_report.get("diagnostics", ())
+        if isinstance(compiler_report, dict)
+        else ()
+    ):
+        if not isinstance(item, dict) or item.get("kind") != "relation_included":
+            continue
+        classifications = item.get("path_classification_by_hidden_state")
+        if not isinstance(classifications, dict) or not classifications:
+            continue
+        route_classifications.setdefault(item.get("weight_path"), set()).update(
+            classifications.values()
+        )
+    associative_routes_direct = bool(
+        not memory_enabled
+        or all(
+            route_classifications.get(path) == {"all_direct"}
+            for path in associative_paths
+        )
+    )
+    associative_diagnostics = evaluation.get("associative_memory_diagnostics")
+    associative_diagnostics_complete = bool(
+        not memory_enabled
+        or (
+            isinstance(associative_diagnostics, dict)
+            and associative_diagnostics.get("available") is True
+            and associative_diagnostics.get("complete") is True
+            and associative_diagnostics.get("repeat_intact_exact") is True
+            and associative_diagnostics.get("no_context_memory_exactly_zero") is True
+            and associative_diagnostics.get(
+                "shuffled_pairing_sensitive_for_every_applicable_query"
+            )
+            is True
+            and int(associative_diagnostics.get("query_count", 0)) == query_count
+            and int(associative_diagnostics.get("depth_count", 0))
+            == max(CHECKPOINTS) + 1
+        )
+    )
     compiler_complete = bool(
         training.get("pp_prop_compiled") is True
         and isinstance(compiler_report, dict)
         and compiler_report.get("available") is True
         and int(compiler_counts.get("hidden_groups", 0)) >= 1
         and int(compiler_counts.get("errors", -1)) == 0
-        and routed_paths == {"ff_syn.comm.weight", "rec_syn.comm.weight"}
-        and plain_paths
-        == {
-            "color_factor_head.weight",
-            "height_head.weight",
-            "readout_projection.weight",
-            "width_head.weight",
-        }
+        and routed_paths == routed_paths_expected
+        and plain_paths == plain_paths_expected
         and routed_paths | plain_paths == expected_parameter_paths
+        and associative_routes_direct
     )
     full_scale = bool(
         model_report.get("neuron_count") == 2048
@@ -2397,6 +2864,8 @@ def _qualification(
         "physical_component_contract": component_contract,
         "actual_gpu_backend": gpu_complete,
         "pp_prop_compiler_routes": compiler_complete,
+        "associative_routes_all_direct": associative_routes_direct,
+        "associative_diagnostics_complete": associative_diagnostics_complete,
         "complete_frozen_evaluation": evaluation_complete,
         "frozen_parameters_unchanged": frozen,
         "repeat_intact_deterministic": repeatable,
@@ -2464,6 +2933,11 @@ def _qualification(
     )
     if "supervised_depths" not in training:
         depth_supervision = training.get("terminal_supervision_only") is True
+    associative_capability_status = (
+        "associative_capability_gates_pending"
+        if memory_enabled
+        else "not_applicable_legacy"
+    )
     scientific_checks = {
         "structural_qualification": structural,
         "not_smoke_or_structural_only": not config.smoke and not config.structural_only,
@@ -2482,6 +2956,7 @@ def _qualification(
         "parameters_moved": training.get("parameters_moved") is True,
         "temporal_synapses_moved": temporal_paths_moved,
         "all_parameter_groups_moved_with_finite_delta": all_parameter_changes_finite,
+        "associative_capability_gates_complete": not memory_enabled,
     }
     scientific = all(scientific_checks.values())
     structural_messages = {
@@ -2489,6 +2964,8 @@ def _qualification(
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
         "actual_gpu_backend": "actual evaluation backend is not GPU",
         "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
+        "associative_routes_all_direct": "associative pp-prop routes are not all_direct",
+        "associative_diagnostics_complete": "pairing-sensitive S_K, memory-read, or continuous-workspace diagnostics are incomplete",
         "complete_frozen_evaluation": "exact metrics, trajectories, or controls are incomplete or non-finite",
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
         "repeat_intact_deterministic": "same-run intact repeat exceeded the declared state/logit tolerance or changed exact candidates or metrics",
@@ -2506,6 +2983,7 @@ def _qualification(
         "parameters_moved": "training did not change parameter bytes",
         "temporal_synapses_moved": "feedforward and recurrent eligibility-routed synapses did not both move",
         "all_parameter_groups_moved_with_finite_delta": "not every parameter group moved with a finite delta",
+        "associative_capability_gates_complete": "associative_capability_gates_pending",
     }
     reasons_not_structural = [
         structural_messages[name]
@@ -2522,6 +3000,7 @@ def _qualification(
         "full_structural_qualification": structural,
         "full_scientific_qualification": scientific,
         "plumbing_only": data.plumbing_only,
+        "associative_capability_status": associative_capability_status,
         "structural_checks": structural_checks,
         "scientific_checks": scientific_checks,
         "reasons_not_structural": reasons_not_structural,
@@ -2638,6 +3117,7 @@ def _render_report(result: dict[str, object]) -> str:
     model = result.get("model", {})
     training = result.get("training", {})
     evaluation = result.get("evaluation", {})
+    associative_diagnostics = evaluation.get("associative_memory_diagnostics", {})
     qualification = result.get("qualification", {})
     data_summary = result.get("data_summary", {})
     software = result.get("software", {})
@@ -2702,6 +3182,22 @@ def _render_report(result: dict[str, object]) -> str:
             f"{model.get('slot_count', 'unreported')} x 64-neuron analysis slots, "
             f"{model.get('parameter_count', 'unreported')} scalar parameters."
         ),
+        (
+            "Reasoning memory: mode="
+            f"{model.get('reasoning_mode', 'unreported')}; width="
+            f"{model.get('context_memory_width', 'unreported')}; decay="
+            f"{model.get('memory_decay', 'unreported')}; raw key/value widths="
+            f"{model.get('raw_key_feature_width', 'unreported')}/"
+            f"{model.get('raw_value_feature_width', 'unreported')}; dense S bytes "
+            "per-example/training-batch/evaluation-batch="
+            f"{model.get('context_memory_bytes_per_example', 'unreported')}/"
+            f"{model.get('context_memory_bytes_training_batch', 'unreported')}/"
+            f"{model.get('context_memory_bytes_evaluation_batch', 'unreported')} bytes."
+        ),
+        (
+            "Associative memory implementation: "
+            f"{model.get('associative_memory_implementation', {})}."
+        ),
         f"Physical component types: {model.get('component_types', {})}.",
         (
             f"Data manifest SHA-256: {data_summary.get('manifest_sha256', 'unreported')}; "
@@ -2738,6 +3234,18 @@ def _render_report(result: dict[str, object]) -> str:
             f"{compiler_counts.get('warnings', 0)} "
             "warnings, "
             f"{compiler_counts.get('errors', 0)} errors. {plain_route_line}"
+        ),
+        f"Evaluation execution: {evaluation.get('execution', {})}.",
+        (
+            "Associative evaluation diagnostics: "
+            f"available={associative_diagnostics.get('available')}; "
+            f"complete={associative_diagnostics.get('complete')}; "
+            "repeat exact="
+            f"{associative_diagnostics.get('repeat_intact_exact')}; "
+            "no-context S zero="
+            f"{associative_diagnostics.get('no_context_memory_exactly_zero')}; "
+            "shuffled pairing-sensitive for every applicable query="
+            f"{associative_diagnostics.get('shuffled_pairing_sensitive_for_every_applicable_query')}."
         ),
         "",
         "Frozen exact ARC results:",
@@ -3127,6 +3635,27 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     device_report["memory_stats"] = _device_memory_stats(device)
     device_report["memory_stats_capture"] = "after training and evaluation"
     manifests = [item.manifest.to_dict() for item in data.loaded]
+    memory_architecture = _memory_architecture_report(
+        config,
+        rows,
+        training_batch_size=model.config.batch_size,
+        evaluation_batch_size=int(evaluation["query_count"]),
+    )
+    memory_implementation = _model_memory_report(model)
+    memory_contract = {
+        "mode": "reasoning_mode",
+        "memory_width": "context_memory_width",
+        "key_feature_width": "raw_key_feature_width",
+        "value_feature_width": "raw_value_feature_width",
+    }
+    for implementation_name, architecture_name in memory_contract.items():
+        if memory_implementation.get(implementation_name) != memory_architecture.get(
+            architecture_name
+        ):
+            raise ValueError(
+                "model and experiment associative-memory reports disagree on "
+                f"{implementation_name}"
+            )
     model_report = {
         "neuron_count": model.neuron_count,
         "recurrent_edge_count": model.recurrent_edge_count,
@@ -3147,6 +3676,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
             "recurrent_synapse": type(model.rec_syn.syn).__name__,
             "recurrent_output": type(model.rec_syn.out).__name__,
         },
+        **memory_architecture,
+        "associative_memory_implementation": memory_implementation,
     }
     result: dict[str, object] = {
         "schema_version": 1,
@@ -3193,6 +3724,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=2108)
     parser.add_argument("--neurons", type=int, default=2048)
     parser.add_argument("--recurrent-edges", type=int, default=16384)
+    parser.add_argument("--context-memory-width", type=int, default=0)
+    parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument("--training-updates", type=int, default=96)
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
@@ -3211,6 +3744,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             output_dir=args.output_dir,
             device=args.device,
             seed=args.seed,
+            context_memory_width=args.context_memory_width,
+            memory_decay=args.memory_decay,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,
@@ -3219,6 +3754,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         seed=args.seed,
         neuron_count=args.neurons,
         recurrent_edges=args.recurrent_edges,
+        context_memory_width=args.context_memory_width,
+        memory_decay=args.memory_decay,
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
         learning_rate=args.learning_rate,

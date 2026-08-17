@@ -9,6 +9,7 @@ import importlib.util
 import json
 import pathlib
 import sys
+import time
 import warnings
 from enum import Enum
 from types import SimpleNamespace
@@ -32,6 +33,7 @@ from examples.pp_prop.latent_workspace_model import (
     LatentWorkspaceModel,
     ModelConfig,
     run_packed_stream,
+    run_selected_packed_stream,
 )
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
@@ -385,6 +387,25 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     assert full.max_demonstrations == 10
     assert full.to_dict()["checkpoints"] == [0, 8, 16, 32]
     assert smoke.smoke is True
+    assert full.context_memory_width == 0
+    assert full.memory_decay == 1.0
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"context_memory_width": True}, "context_memory_width"),
+        ({"context_memory_width": -1}, "context_memory_width"),
+        ({"context_memory_width": 129}, "at most 128"),
+        ({"memory_decay": True}, "memory_decay"),
+        ({"memory_decay": float("nan")}, "memory_decay"),
+        ({"memory_decay": -0.01}, "memory_decay"),
+        ({"memory_decay": 1.01}, "memory_decay"),
+    ],
+)
+def test_associative_memory_config_rejects_invalid_values(example, kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        example.ExperimentConfig(structural_only=True, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -417,6 +438,8 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     assert parsed.device == "gpu"
     assert parsed.neurons == 2048
     assert parsed.recurrent_edges == 16384
+    assert parsed.context_memory_width == 0
+    assert parsed.memory_decay == 1.0
 
     smoke_args = example._parser().parse_args(
         ["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)]
@@ -433,6 +456,21 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     )
     full = example._config_from_args(full_args)
     assert full.structural_only and full.training_updates == 0
+
+    memory_args = example._parser().parse_args(
+        [
+            "--structural-only",
+            "--training-updates",
+            "0",
+            "--context-memory-width",
+            "32",
+            "--memory-decay",
+            "0.95",
+        ]
+    )
+    memory = example._config_from_args(memory_args)
+    assert memory.context_memory_width == 32
+    assert memory.memory_decay == 0.95
 
 
 def test_device_resolution_reports_backend_and_fails_closed(example, monkeypatch):
@@ -884,6 +922,75 @@ def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
         example._copy_parameters(source, mismatch)
 
 
+def test_model_configuration_wires_opt_in_associative_memory_features(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    legacy = example._model_config(
+        example.ExperimentConfig.smoke_config(), rows, batch_size=3
+    )
+    assert legacy.context_memory_width == 0
+    assert legacy.memory_key_indices == ()
+    assert legacy.memory_value_indices == ()
+    assert legacy.demonstration_phase_index is None
+    assert legacy.query_phase_index is None
+    assert legacy.input_side_valid_index is None
+    assert legacy.output_side_valid_index is None
+
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        context_memory_width=32,
+        memory_decay=0.95,
+    )
+    memory = example._model_config(config, rows, batch_size=3)
+    expected = example.associative_memory_feature_indices(rows)
+    assert memory.context_memory_width == 32
+    assert memory.memory_decay == 0.95
+    assert memory.memory_key_indices == expected.key_indices
+    assert memory.memory_value_indices == expected.value_indices
+    assert len(memory.memory_key_indices) == 424
+    assert len(memory.memory_value_indices) == 424
+    assert memory.demonstration_phase_index == rows.phase_slice.start
+    assert memory.query_phase_index == rows.phase_slice.start + 1
+    assert memory.input_side_valid_index == rows.side_valid_slice.start
+    assert memory.output_side_valid_index == rows.side_valid_slice.start + 1
+
+
+def test_memory_architecture_report_records_raw_width_and_dense_state_cost(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    legacy = example._memory_architecture_report(
+        example.ExperimentConfig(structural_only=True),
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=419,
+    )
+    assert legacy == {
+        "reasoning_mode": "legacy_reservoir",
+        "context_memory_width": 0,
+        "memory_decay": 1.0,
+        "raw_key_feature_width": 0,
+        "raw_value_feature_width": 0,
+        "context_memory_bytes_per_example": 0,
+        "context_memory_bytes_training_batch": 0,
+        "context_memory_bytes_evaluation_batch": 0,
+    }
+
+    memory = example._memory_architecture_report(
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=32,
+            memory_decay=1.0,
+        ),
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=419,
+    )
+    assert memory["reasoning_mode"] == "associative_workspace"
+    assert memory["raw_key_feature_width"] == 424
+    assert memory["raw_value_feature_width"] == 424
+    assert memory["context_memory_bytes_per_example"] == 4096
+    assert memory["context_memory_bytes_training_batch"] == 4096
+    assert memory["context_memory_bytes_evaluation_batch"] == 1_716_224
+
+
 def test_compiler_evidence_retains_warnings_and_parameter_classification(example):
     class Level(Enum):
         INFO = "info"
@@ -900,6 +1007,9 @@ def test_compiler_evidence_retains_warnings_and_parameter_classification(example
             message="included",
             weight_path=("rec_syn", "weight"),
             hidden_paths=(("neu", "V"),),
+            context={
+                "path_classification": {("neu", "V"): "all_direct"},
+            },
         ),
         SimpleNamespace(
             kind=Kind.EXCLUDED,
@@ -928,6 +1038,9 @@ def test_compiler_evidence_retains_warnings_and_parameter_classification(example
     assert evidence["excluded_weights"][0]["parameter"] == "height_head.weight"
     assert evidence["diagnostics"][1]["level"] == "warning"
     assert evidence["diagnostics"][1]["message"] == "head is non-temporal"
+    assert evidence["diagnostics"][0]["path_classification_by_hidden_state"] == {
+        "neu.V": "all_direct"
+    }
 
 
 def test_structural_training_tensors_are_empty(example):
@@ -1056,6 +1169,48 @@ def test_one_demo_shuffle_is_reported_unavailable_without_timing_change(example)
         {
             "available": False,
             "reason": "fewer than two demonstrations",
+            "timing_matched": True,
+        }
+    ]
+
+
+def test_equal_output_rotation_is_excluded_from_pairing_applicability(example):
+    output = ArcGrid(((7,),))
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), output),
+            ArcPair(ArcGrid(((2,),)), output),
+        ),
+        test=(ArcPair(ArcGrid(((1,),)), output),),
+        task_id="equal-output-rotation",
+    )
+    fixture = smoke_loaded_dataset()
+    origin = example._OriginTask("fixture", "fixture", task)
+    data = example._ExperimentData((origin,), (origin,), (fixture,), True)
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+
+    intact, _, _, _ = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="intact",
+        source_tasks=data.evaluation,
+    )
+    shuffled, _, _, metadata = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="shuffled",
+        source_tasks=data.evaluation,
+    )
+
+    np.testing.assert_array_equal(shuffled, intact)
+    assert metadata == [
+        {
+            "available": False,
+            "reason": "rotation leaves demonstration associations unchanged",
             "timing_matched": True,
         }
     ]
@@ -1501,16 +1656,22 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         [record.encoded.query_stop for record in records], dtype=np.int32
     )
     run_calls: list[dict[str, object]] = []
+    event_markers: list[float] = []
+    jit_options: list[dict[str, object]] = []
     fake_model = SimpleNamespace(config=SimpleNamespace(color_rank=4))
 
     def sequences(records, config, rows, *, arm, source_tasks):
-        events = np.zeros((time, batch, rows.input_width), dtype=np.float32)
+        marker = {"intact": 1.0, "no_context": 2.0, "shuffled": 3.0}[arm]
+        events = np.full(
+            (time, batch, rows.input_width), marker, dtype=np.float32
+        )
         advances = np.ones((time, batch), dtype=np.bool_)
         metadata = [{"available": True, "timing_matched": True} for _ in records]
         return events, advances, stops, metadata
 
     def packed(model, events, selected_indices, **kwargs):
         run_calls.append(kwargs)
+        event_markers.append(float(np.asarray(events)[0, 0, 0]))
         assert selected_indices.shape == (33, batch)
         return SimpleNamespace(
             compact_logits=np.zeros((33, batch, 340), dtype=np.float32),
@@ -1518,7 +1679,17 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
             voltage=np.zeros((33, batch, 8), dtype=np.float32),
             feedforward_current=np.zeros((33, batch, 8), dtype=np.float32),
             recurrent_current=np.zeros((33, batch, 8), dtype=np.float32),
+            memory_read=np.zeros((33, batch, 0), dtype=np.float32),
+            final_context_memory=np.zeros((batch, 0, 0), dtype=np.float32),
         )
+
+    def identity_jit(*, inline, name):
+        jit_options.append({"inline": inline, "name": name})
+
+        def decorate(function):
+            return function
+
+        return decorate
 
     metrics = {str(effort): _metric() for effort in (0, 8, 16, 32)}
     monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
@@ -1528,6 +1699,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     )
     monkeypatch.setattr(example, "_arm_sequences", sequences)
     monkeypatch.setattr(example, "run_selected_packed_stream", packed)
+    monkeypatch.setattr(example.brainstate.transform, "jit", identity_jit)
     checkpoint_queries = {
         str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in range(batch)]
         for effort in (0, 8, 16, 32)
@@ -1556,6 +1728,10 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     result = example._evaluate(SimpleNamespace(), data, config, rows, SimpleNamespace())
 
     assert len(run_calls) == 5
+    assert event_markers == [1.0, 1.0, 2.0, 3.0, 1.0]
+    assert jit_options == [
+        {"inline": False, "name": "example21_evaluation_arm"}
+    ]
     assert result["same_frozen_parameter_bytes"] is True
     assert all("ablation_slots" in call for call in run_calls)
     assert all("ablation_gates" in call for call in run_calls)
@@ -1583,6 +1759,373 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     )
     assert "repeat_intact" in result["controls"]
     assert result["controls"]["truncation"]["checkpoints"] == [0, 8, 16, 32]
+    execution = result["execution"]
+    assert execution["arm_order"] == [
+        "intact",
+        "repeat_intact",
+        "no_context",
+        "shuffled_demonstrations",
+        "slot_ablation",
+    ]
+    assert execution["selected_arm_driver"] == "brainstate.transform.jit"
+    assert execution["jit_name"] == "example21_evaluation_arm"
+    assert execution["jit_inline"] is False
+    assert execution["sequential_separate_arms"] is True
+    assert execution["repeat_intact_cached"] is False
+    assert list(execution["wall_seconds_by_arm"]) == execution["arm_order"]
+    assert all(value >= 0.0 for value in execution["wall_seconds_by_arm"].values())
+    assert result["associative_memory_diagnostics"] == {
+        "available": False,
+        "complete": True,
+        "reason": "legacy_reservoir_has_no_associative_state",
+    }
+
+
+def test_evaluation_arm_jit_traces_once_and_matches_direct_dynamic_outputs(
+    example, monkeypatch
+):
+    traces = 0
+    selected = jnp.asarray([[0, 1], [2, 3]], dtype=jnp.int32)
+    slots = jnp.asarray([0, 1], dtype=jnp.int32)
+
+    def packed(
+        model,
+        events,
+        selected_indices,
+        *,
+        reset,
+        advance_gates,
+        ablation_slots,
+        ablation_gates,
+    ):
+        nonlocal traces
+        traces += 1
+        assert reset is True
+        assert ablation_slots.shape == (2,)
+        base = jnp.take_along_axis(events[:, :, 0], selected_indices, axis=0)
+        advance = jnp.take_along_axis(advance_gates, selected_indices, axis=0)
+        gate = jnp.take_along_axis(ablation_gates, selected_indices, axis=0)
+        return SimpleNamespace(
+            compact_logits=base[..., None],
+            spikes=advance[..., None].astype(jnp.float32),
+            voltage=gate[..., None].astype(jnp.float32),
+            feedforward_current=(base + advance)[..., None],
+            recurrent_current=(base + gate)[..., None],
+            memory_read=jnp.zeros((*base.shape, 0), dtype=jnp.float32),
+            final_context_memory=jnp.zeros((base.shape[1], 0, 0), dtype=jnp.float32),
+        )
+
+    def expected(events, advances, gates):
+        base = jnp.take_along_axis(events[:, :, 0], selected, axis=0)
+        advance = jnp.take_along_axis(advances, selected, axis=0)
+        gate = jnp.take_along_axis(gates, selected, axis=0)
+        return (
+            base[..., None],
+            advance[..., None].astype(jnp.float32),
+            gate[..., None].astype(jnp.float32),
+            (base + advance)[..., None],
+            (base + gate)[..., None],
+            jnp.zeros((*base.shape, 0), dtype=jnp.float32),
+            jnp.zeros((base.shape[1], 0, 0), dtype=jnp.float32),
+        )
+
+    monkeypatch.setattr(example, "run_selected_packed_stream", packed)
+    run = example._compile_evaluation_arm(SimpleNamespace(), selected, slots)
+    advances = jnp.ones((4, 2), dtype=jnp.bool_)
+    first_events = jnp.arange(8, dtype=jnp.float32).reshape(4, 2, 1)
+    first_gates = jnp.zeros((4, 2), dtype=jnp.bool_)
+    second_events = first_events + 10.0
+    second_gates = jnp.ones((4, 2), dtype=jnp.bool_)
+
+    first = run(first_events, advances, first_gates)
+    second = run(second_events, advances, second_gates)
+    jax.block_until_ready(second)
+
+    assert traces == 1
+    for actual, reference in zip(
+        first, expected(first_events, advances, first_gates), strict=True
+    ):
+        np.testing.assert_array_equal(np.asarray(actual), np.asarray(reference))
+    for actual, reference in zip(
+        second, expected(second_events, advances, second_gates), strict=True
+    ):
+        np.testing.assert_array_equal(np.asarray(actual), np.asarray(reference))
+
+
+def test_evaluation_arm_outer_jit_matches_real_selected_stream_exactly(example):
+    config = ModelConfig(
+        input_width=6,
+        batch_size=1,
+        neuron_count=64,
+        recurrent_edges=64,
+        max_latent_steps=4,
+        readout_width=8,
+        color_rank=1,
+        seed=41,
+        sparse_backend="jax_raw",
+    )
+    model = LatentWorkspaceModel(config)
+    events = jnp.asarray(
+        [
+            [[1.0, 1.0, 0.0, 0.0, 0.0, 0.0]],
+            [[1.0, 0.0, 1.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+        ],
+        dtype=jnp.float32,
+    )
+    advances = jnp.ones((4, 1), dtype=jnp.bool_)
+    selected = jnp.asarray([[0], [1], [2], [3]], dtype=jnp.int32)
+    slots = jnp.asarray([0], dtype=jnp.int32)
+    gates = jnp.zeros((4, 1), dtype=jnp.bool_)
+
+    direct = run_selected_packed_stream(
+        model,
+        events,
+        selected,
+        reset=True,
+        advance_gates=advances,
+        ablation_slots=slots,
+        ablation_gates=gates,
+    )
+    compiled = example._compile_evaluation_arm(model, selected, slots)
+    actual = compiled(events, advances, gates)
+    jax.block_until_ready(actual)
+    expected = (
+        direct.compact_logits,
+        direct.spikes,
+        direct.voltage,
+        direct.feedforward_current,
+        direct.recurrent_current,
+        direct.memory_read,
+        direct.final_context_memory,
+    )
+
+    for compiled_value, direct_value in zip(actual, expected, strict=True):
+        np.testing.assert_array_equal(
+            np.asarray(compiled_value), np.asarray(direct_value)
+        )
+
+
+def test_evaluation_arm_outer_jit_matches_nonzero_associative_state_exactly(
+    example, monkeypatch
+):
+    rows = RowEventConfig(max_demonstrations=2, max_grid_size=1)
+    features = example.associative_memory_feature_indices(rows)
+    config = ModelConfig(
+        input_width=rows.input_width,
+        batch_size=1,
+        neuron_count=64,
+        recurrent_edges=64,
+        max_latent_steps=4,
+        readout_width=8,
+        color_rank=1,
+        context_memory_width=2,
+        memory_decay=1.0,
+        demonstration_phase_index=rows.phase_slice.start,
+        query_phase_index=rows.phase_slice.start + 1,
+        input_side_valid_index=rows.side_valid_slice.start,
+        output_side_valid_index=rows.side_valid_slice.start + 1,
+        memory_key_indices=features.key_indices,
+        memory_value_indices=features.value_indices,
+        seed=41,
+        sparse_backend="jax_raw",
+    )
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),))),
+            ArcPair(ArcGrid(((3,),)), ArcGrid(((4,),))),
+        ),
+        test=(ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),))),),
+        task_id="jit-memory",
+    )
+    encoded = encode_query_episode(task, 0, rows)
+    events = jnp.asarray(
+        np.concatenate(
+            (
+                encoded.events,
+                np.zeros((1, rows.input_width), dtype=np.float32),
+            ),
+            axis=0,
+        )[:, None, :]
+    )
+    advances = jnp.ones((events.shape[0], 1), dtype=jnp.bool_)
+    selected = jnp.arange(events.shape[0], dtype=jnp.int32)[:, None]
+    slots = jnp.asarray([0], dtype=jnp.int32)
+    gates = jnp.zeros((events.shape[0], 1), dtype=jnp.bool_)
+    model = LatentWorkspaceModel(config)
+
+    direct = run_selected_packed_stream(
+        model,
+        events,
+        selected,
+        reset=True,
+        advance_gates=advances,
+        ablation_slots=slots,
+        ablation_gates=gates,
+    )
+    original = example.run_selected_packed_stream
+    traces = 0
+
+    def counted(*args, **kwargs):
+        nonlocal traces
+        traces += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(example, "run_selected_packed_stream", counted)
+    compiled = example._compile_evaluation_arm(model, selected, slots)
+    cold_started = time.perf_counter()
+    actual = compiled(events, advances, gates)
+    jax.block_until_ready(actual)
+    cold_seconds = time.perf_counter() - cold_started
+    warm_started = time.perf_counter()
+    warm_actual = compiled(events, advances, gates)
+    jax.block_until_ready(warm_actual)
+    warm_seconds = time.perf_counter() - warm_started
+    expected = (
+        direct.compact_logits,
+        direct.spikes,
+        direct.voltage,
+        direct.feedforward_current,
+        direct.recurrent_current,
+        direct.memory_read,
+        direct.final_context_memory,
+    )
+
+    assert np.count_nonzero(np.asarray(direct.final_context_memory)) > 0
+    assert np.count_nonzero(np.asarray(direct.memory_read)) > 0
+    assert traces == 1
+    assert cold_seconds >= 1.5 * warm_seconds
+    for compiled_value, direct_value in zip(actual, expected, strict=True):
+        np.testing.assert_array_equal(
+            np.asarray(compiled_value), np.asarray(direct_value)
+        )
+    for warm_value, direct_value in zip(warm_actual, expected, strict=True):
+        np.testing.assert_array_equal(np.asarray(warm_value), np.asarray(direct_value))
+    print(
+        "example21_evaluation_arm_benchmark "
+        f"cold_seconds={cold_seconds:.9f} warm_seconds={warm_seconds:.9f} "
+        f"speedup={cold_seconds / warm_seconds:.3f} traces={traces}"
+    )
+
+
+def test_associative_diagnostics_require_per_query_shuffled_binding_evidence(example):
+    workspace = np.arange(12, dtype=np.float32).reshape(2, 2, 3)
+    memory_read = np.arange(8, dtype=np.float32).reshape(2, 2, 2)
+    context_memory = np.asarray(
+        [
+            [[1.0, 2.0], [3.0, 4.0]],
+            [[5.0, 6.0], [7.0, 8.0]],
+        ],
+        dtype=np.float32,
+    )
+    intact = (workspace, memory_read, context_memory)
+    metadata = ({"available": True}, {"available": True})
+    no_context = (
+        np.zeros_like(workspace),
+        np.zeros_like(memory_read),
+        np.zeros_like(context_memory),
+    )
+    shuffled_read = memory_read + 1.0
+    shuffled = (
+        workspace.copy(),
+        shuffled_read,
+        context_memory[:, :, ::-1].copy(),
+    )
+    controls = {
+        "repeat_intact": (tuple(array.copy() for array in intact), metadata),
+        "no_context": (no_context, metadata),
+        "shuffled_demonstrations": (shuffled, metadata),
+        "slot_ablation": (tuple(array.copy() for array in intact), metadata),
+    }
+
+    report = example._associative_evaluation_diagnostics(True, intact, controls)
+
+    assert report["complete"] is True
+    assert report["repeat_intact_exact"] is True
+    assert report["no_context_memory_exactly_zero"] is True
+    assert report["shuffled_pairing_sensitive_for_every_applicable_query"] is True
+    shuffled_report = report["controls"]["shuffled_demonstrations"]
+    assert shuffled_report["applicable_query_count"] == 2
+    assert shuffled_report["context_memory_changed_applicable_query_count"] == 2
+    assert (
+        shuffled_report[
+            "memory_read_changed_at_any_depth_applicable_query_count"
+        ]
+        == 2
+    )
+    assert len(report["intact_context_memory_sha256_by_query"]) == 2
+
+    disconnected = dict(
+        controls,
+        shuffled_demonstrations=(
+            tuple(array.copy() for array in intact),
+            metadata,
+        ),
+    )
+    failed = example._associative_evaluation_diagnostics(
+        True, intact, disconnected
+    )
+    assert failed["complete"] is False
+    assert failed["shuffled_pairing_sensitive_for_every_applicable_query"] is False
+
+
+def test_associative_diagnostics_exclude_unavailable_queries_and_validate_arrays(
+    example,
+):
+    workspace = np.zeros((2, 2, 3), dtype=np.float32)
+    memory_read = np.zeros((2, 2, 2), dtype=np.float32)
+    context_memory = np.ones((2, 2, 2), dtype=np.float32)
+    intact = (workspace, memory_read, context_memory)
+    available = ({"available": True}, {"available": False})
+    shuffled_memory = context_memory.copy()
+    shuffled_memory[0, 0, 0] = 2.0
+    shuffled_read = memory_read.copy()
+    shuffled_read[0, 0, 0] = 1.0
+    controls = {
+        "repeat_intact": (
+            tuple(array.copy() for array in intact),
+            ({"available": True}, {"available": True}),
+        ),
+        "no_context": (
+            tuple(np.zeros_like(array) for array in intact),
+            ({"available": True}, {"available": True}),
+        ),
+        "shuffled_demonstrations": (
+            (workspace.copy(), shuffled_read, shuffled_memory),
+            available,
+        ),
+        "slot_ablation": (
+            tuple(array.copy() for array in intact),
+            ({"available": True}, {"available": True}),
+        ),
+    }
+
+    report = example._associative_evaluation_diagnostics(True, intact, controls)
+    shuffled = report["controls"]["shuffled_demonstrations"]
+    assert report["complete"] is True
+    assert shuffled["applicable_query_count"] == 1
+    assert shuffled["context_memory_changed_applicable_query_count"] == 1
+    assert shuffled["memory_read_changed_at_any_depth_applicable_query_count"] == 1
+
+    legacy = example._associative_evaluation_diagnostics(False, intact, {})
+    assert legacy == {
+        "available": False,
+        "complete": True,
+        "reason": "legacy_reservoir_has_no_associative_state",
+    }
+
+    malformed = dict(controls)
+    malformed["slot_ablation"] = (
+        (
+            workspace,
+            np.full_like(memory_read, np.nan),
+            context_memory,
+        ),
+        ({"available": True}, {"available": True}),
+    )
+    with pytest.raises(ValueError, match="must be finite"):
+        example._associative_evaluation_diagnostics(True, intact, malformed)
 
 
 def test_qualification_separates_plumbing_structural_and_scientific_claims(example):
@@ -1687,6 +2230,92 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     )
     assert scientific["full_structural_qualification"] is True
     assert scientific["full_scientific_qualification"] is True
+
+    memory_paths = {
+        "memory_write_scale",
+        "workspace_query_projection.weight",
+        "memory_read_projection.weight",
+    }
+    memory_training = copy.deepcopy(training)
+    memory_training["compiler_report"]["counts"]["etrace_weights"] = 5
+    memory_training["compiler_report"]["etrace_weights"].extend(
+        {"parameter": path} for path in sorted(memory_paths)
+    )
+    memory_training["compiler_report"]["diagnostics"] = [
+        {
+            "kind": "relation_included",
+            "level": "info",
+            "weight_path": path,
+            "path_classification_by_hidden_state": {
+                "associative_state": "all_direct"
+            },
+        }
+        for path in sorted(memory_paths)
+    ]
+    memory_training["parameter_changes"].update(
+        {path: {"changed": True, "l2_delta": 1.0} for path in memory_paths}
+    )
+    memory_evaluation = copy.deepcopy(evaluation)
+    memory_evaluation["associative_memory_diagnostics"] = {
+        "available": True,
+        "complete": True,
+        "query_count": 1,
+        "depth_count": 33,
+        "repeat_intact_exact": True,
+        "no_context_memory_exactly_zero": True,
+        "shuffled_pairing_sensitive_for_every_applicable_query": True,
+    }
+    memory_qualification = example._qualification(
+        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        public_data,
+        memory_training,
+        memory_evaluation,
+        gpu,
+        model_report,
+    )
+    assert memory_qualification["full_structural_qualification"] is True
+    assert memory_qualification["full_scientific_qualification"] is False
+    assert (
+        memory_qualification["associative_capability_status"]
+        == "associative_capability_gates_pending"
+    )
+    assert "associative_capability_gates_pending" in (
+        memory_qualification["reasons_not_scientific"]
+    )
+
+    mixed_memory_training = copy.deepcopy(memory_training)
+    mixed_memory_training["compiler_report"]["diagnostics"][0][
+        "path_classification_by_hidden_state"
+    ] = {"associative_state": "mixed"}
+    mixed_memory = example._qualification(
+        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        public_data,
+        mixed_memory_training,
+        memory_evaluation,
+        gpu,
+        model_report,
+    )
+    assert mixed_memory["full_structural_qualification"] is False
+    assert mixed_memory["structural_checks"]["associative_routes_all_direct"] is False
+    assert "all_direct" in " ".join(mixed_memory["reasons_not_structural"])
+
+    incomplete_memory_evaluation = copy.deepcopy(memory_evaluation)
+    incomplete_memory_evaluation["associative_memory_diagnostics"]["complete"] = (
+        False
+    )
+    incomplete_memory = example._qualification(
+        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        public_data,
+        memory_training,
+        incomplete_memory_evaluation,
+        gpu,
+        model_report,
+    )
+    assert incomplete_memory["full_structural_qualification"] is False
+    assert (
+        incomplete_memory["structural_checks"]["associative_diagnostics_complete"]
+        is False
+    )
 
     no_compile = dict(training, pp_prop_compiled=False)
     failed = example._qualification(
@@ -1904,6 +2533,30 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
     )
     assert plot_path.read_bytes().startswith(b"\x89PNG")
 
+    memory_result = copy.deepcopy(result)
+    memory_result["model"].update(
+        {
+            "reasoning_mode": "associative_workspace",
+            "context_memory_width": 32,
+            "memory_decay": 1.0,
+            "raw_key_feature_width": 424,
+            "raw_value_feature_width": 424,
+            "context_memory_bytes_per_example": 4096,
+            "context_memory_bytes_training_batch": 4096,
+            "context_memory_bytes_evaluation_batch": 1_716_224,
+            "associative_memory_implementation": {
+                "mode": "associative_workspace",
+                "key_basis_sha256": "key-sha",
+                "value_basis_sha256": "value-sha",
+            },
+        }
+    )
+    memory_report = example._render_report(memory_result)
+    assert "associative_workspace" in memory_report
+    assert "raw key/value widths=424/424" in memory_report
+    assert "4096/4096/1716224 bytes" in memory_report
+    assert "key-sha" in memory_report
+
 
 def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_path):
     config = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
@@ -1914,7 +2567,11 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         neuron_count=128,
         recurrent_edge_count=1024,
         slot_count=2,
-        config=SimpleNamespace(compact_output_width=340, color_rank=4),
+        config=SimpleNamespace(
+            batch_size=1,
+            compact_output_width=340,
+            color_rank=4,
+        ),
         neu=SimpleNamespace(),
         ff_syn=SimpleNamespace(
             comm=SimpleNamespace(), syn=SimpleNamespace(), out=SimpleNamespace()
@@ -1949,6 +2606,16 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
     )
     monkeypatch.setattr(
         example,
+        "_model_memory_report",
+        lambda model: {
+            "mode": "legacy_reservoir",
+            "memory_width": 0,
+            "key_feature_width": 0,
+            "value_feature_width": 0,
+        },
+    )
+    monkeypatch.setattr(
+        example,
         "_qualification",
         lambda *args: {
             "full_structural_qualification": False,
@@ -1967,6 +2634,14 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
     assert set(result["artifacts"]) == {"data_manifest", "result", "report", "figure"}
     assert result["device"]["memory_stats"] == {"peak_bytes_in_use": 123456}
     assert result["device"]["memory_stats_capture"] == "after training and evaluation"
+    assert result["model"]["reasoning_mode"] == "legacy_reservoir"
+    assert result["model"]["context_memory_bytes_per_example"] == 0
+    assert result["model"]["associative_memory_implementation"] == {
+        "mode": "legacy_reservoir",
+        "memory_width": 0,
+        "key_feature_width": 0,
+        "value_feature_width": 0,
+    }
 
 
 def test_main_prints_report_and_returns_result(example, monkeypatch, capsys, tmp_path):
