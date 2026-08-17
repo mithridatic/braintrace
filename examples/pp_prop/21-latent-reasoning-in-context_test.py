@@ -991,6 +991,65 @@ def test_memory_architecture_report_records_raw_width_and_dense_state_cost(examp
     assert memory["context_memory_bytes_evaluation_batch"] == 1_716_224
 
 
+def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
+    example,
+):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    legacy_model = LatentWorkspaceModel(
+        example._model_config(
+            example.ExperimentConfig.smoke_config(), rows, batch_size=1
+        )
+    )
+    legacy = example._model_memory_report(legacy_model)
+    expected_legacy = {
+        "mode": "legacy_reservoir",
+        "memory_width": 0,
+        "key_feature_width": 0,
+        "value_feature_width": 0,
+        "key_map": None,
+        "value_map": None,
+        "rff_gamma": None,
+        "key_basis_seed": None,
+        "key_bias_seed": None,
+        "value_basis_seed": None,
+        "key_basis_sha256": None,
+        "key_bias_sha256": None,
+        "value_basis_sha256": None,
+        "write_component_type": None,
+        "query_component_type": None,
+        "read_component_type": None,
+    }
+    assert json.dumps(
+        legacy, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8") == json.dumps(
+        expected_legacy, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
+    memory_config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        context_memory_width=2,
+        memory_decay=1.0,
+    )
+    memory_model = LatentWorkspaceModel(
+        example._model_config(memory_config, rows, batch_size=1)
+    )
+    base_memory = dataclasses.asdict(memory_model.associative_memory_report())
+    memory = example._model_memory_report(memory_model)
+
+    assert {key: memory[key] for key in base_memory} == base_memory
+    assert set(memory) - set(base_memory) == {
+        "carrier_stabilizer",
+        "carrier_radius",
+        "carrier_consumers",
+    }
+    assert memory["carrier_stabilizer"] == "per_example_stopped_unit_l2_cap"
+    assert memory["carrier_radius"] == 1.0
+    assert memory["carrier_consumers"] == (
+        "readout_projection",
+        "workspace_query_projection",
+    )
+
+
 def test_compiler_evidence_retains_warnings_and_parameter_classification(example):
     class Level(Enum):
         INFO = "info"

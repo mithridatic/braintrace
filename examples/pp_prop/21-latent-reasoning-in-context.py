@@ -805,7 +805,7 @@ def _memory_architecture_report(
 
 def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
     """Return the model-owned associative representation provenance."""
-    return asdict(model.associative_memory_report())
+    return model.associative_memory_report().to_dict()
 
 
 def _make_model(
