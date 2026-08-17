@@ -1,7 +1,7 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2 and Stage 2.1 implemented; authenticated Gate A passed;
-capability Gates B--D pending
+Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B passed;
+capability Gates C--D pending
 
 Date: 2026-08-17
 
@@ -1125,7 +1125,9 @@ sidecar required by the qualifying-container provenance contract, and the
 image's OCI revision label is `uncommitted`. The live start/end source evidence
 and exact image ID make the behavioral failure useful, but they do not waive
 the preregistered sidecar. It motivated Stage 2.1; the subsequent authenticated
-run below supersedes it for the Gate A decision. Gates B--D remain unrun.
+run below supersedes it for the Gate A decision. At the time of this diagnostic,
+Gates B--D remained unrun; the authenticated Gate B result recorded below now
+supersedes that historical status.
 
 ### Authenticated Stage 2.1 Gate A result
 
@@ -1161,9 +1163,62 @@ Gate A qualification criterion passed; the recorded interpretation is
 `114.739125904998` seconds.
 
 This closes associative binding at Gate A under the declared production
-topology and pp-prop learner. It does not establish repeated demonstrated-depth
-application, depth extrapolation, ARC accuracy, or the Gate C causal mechanism
-claim; those remain gated separately.
+topology and pp-prop learner. By itself it does not establish repeated
+demonstrated-depth application, depth extrapolation, ARC accuracy, or the Gate C
+causal mechanism claim. The subsequent Gate B result below supplies the
+separate demonstrated-depth evidence; the other claims remain gated.
+
+### Authenticated Gate B demonstrated-depth result
+
+Gate B passed on the clean source commit
+`dafa64a8b4c3848241baa117affa55b632518a8e`. Live Git agreed at process start
+and end, and the authenticated GPU image digest was
+`sha256:35349cb07c49e275b15c5c563a8d75fa08b49d4b0829d86939c1c09fb1ef6d16`.
+The retained formal result is
+`var/example21-depth-gate/dafa64a8b4c3848241baa117affa55b632518a8e-formal-gate-b.json`,
+180,875 bytes, with SHA-256
+`6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766`.
+Its preflight and manifest have SHA-256 values
+`91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f`
+and `99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab`,
+respectively. The authenticated manifest records bundle SHA-256
+`be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851`
+and sets `bundle_valid`, `process_succeeded`, `artifact_schema_verified`, and
+`scientific_qualification_passed` all to `true`.
+
+The run executed all 4,096 preregistered pp-prop updates in 32 chunks, exactly
+1,024 updates at each effort. Training loss started at
+`2.3025851249694824`, ended at `1.0975582599639893`, and had final-64 mean
+`0.5023841231595725`; every retained state, logit, gradient, pp-prop trace,
+Adam state, and parameter finiteness check passed. Total wall time was
+`142.8470507660022` seconds. Proper one-step H0 accuracy was
+`511/512 = 0.998046875`, with Wilson 95% interval
+`[0.9890207218, 0.9996551422]`. The same H0 prediction was byte-identical
+across effort reports and scored `0/512` against every later matching target,
+excluding the one-step-copy shortcut.
+
+| Effort | Intact matching H_R | Wilson 95% interval | Shuffled | No context | Intact minus H0 | Intact minus shuffled |
+| --- | --- | --- | --- | --- | --- | --- |
+| `1` | `489/512 = 0.955078125` | `[0.9334960573, 0.9698822812]` | `8/512 = 0.015625` | `48/512 = 0.093750` | `0.955078125` | `0.939453125` |
+| `2` | `438/512 = 0.855468750` | `[0.8223623277, 0.8832808380]` | `30/512 = 0.058593750` | `65/512 = 0.126953125` | `0.855468750` | `0.796875000` |
+| `4` | `264/512 = 0.515625000` | `[0.4723816267, 0.5586356553]` | `45/512 = 0.087890625` | `51/512 = 0.099609375` | `0.515625000` | `0.427734375` |
+| `8` | `187/512 = 0.365234375` | `[0.3246747562, 0.4078011864]` | `55/512 = 0.107421875` | `56/512 = 0.109375000` | `0.365234375` | `0.257812500` |
+
+All four intact matching-depth Wilson lower bounds are strictly above the
+preregistered `1/8` boundary, every intact-minus-shuffled gap exceeds `0.15`,
+and all four depths improve over H0 by more than `0.15`. Neither control is
+demonstrably above chance. In particular, the effort-2 no-context point estimate
+is slightly above `1/8`, but its Wilson lower bound is only `0.1008675355`, so
+it does not satisfy the control-side evidence threshold. Every formal Gate B
+criterion passed, and the recorded interpretation is
+`gate_b_passed_demonstrated_depth_application`.
+
+This closes demonstrated-depth application through the trained effort set
+`{1, 2, 4, 8}`. Accuracy declines with depth, from `0.955078125` at effort 1
+to `0.365234375` at effort 8, so the result is evidence of learned composition
+at demonstrated depths rather than depth-invariant performance. It does not
+establish extrapolation beyond effort 8, the Gate C causal ablations, Gate D,
+or any nonzero exact ARC score; those remain pending.
 
 ### Stage 2 implementation record: structural evidence only
 
@@ -1232,10 +1287,11 @@ validation remains in progress.
 ### Required post-change results
 
 Complete: the Stage 2.1 one-update and 256-update admissions and authenticated
-Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`.
-Pending: implement and run the now-frozen Gate B demonstrated-depth contract;
-only after a Gate B pass run Gate C mechanism ablations and Gate D full ARC
-qualification. Any failed or unauthenticated gate stops this sequence.
+Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`;
+the authenticated Gate B demonstrated-depth result passed at commit
+`dafa64a8b4c3848241baa117affa55b632518a8e`. Pending: run Gate C mechanism
+ablations and, only after a Gate C pass, Gate D full ARC qualification. Any
+failed or unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
 
