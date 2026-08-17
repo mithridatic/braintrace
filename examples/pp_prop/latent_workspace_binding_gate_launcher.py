@@ -47,6 +47,23 @@ _GATE_A_BUNDLE_SHA256 = (
     "ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875"
 )
 _GATE_A_DIRECTORY = Path("var/example21-binding-gate")
+_GATE_B_SOURCE_COMMIT = "dafa64a8b4c3848241baa117affa55b632518a8e"
+_GATE_B_IMAGE_ID = (
+    "sha256:35349cb07c49e275b15c5c563a8d75fa08b49d4b0829d86939c1c09fb1ef6d16"
+)
+_GATE_B_PREFLIGHT_SHA256 = (
+    "91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f"
+)
+_GATE_B_RESULT_SHA256 = (
+    "6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766"
+)
+_GATE_B_MANIFEST_SHA256 = (
+    "99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab"
+)
+_GATE_B_BUNDLE_SHA256 = (
+    "be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851"
+)
+_GATE_B_DIRECTORY = Path("var/example21-depth-gate")
 
 
 class ProvenanceError(RuntimeError):
@@ -804,7 +821,9 @@ def _authenticated_host_cwd(source: Mapping[str, Any], repo_root: Path) -> str:
 def _validate_preflight_semantics(
     preflight: Mapping[str, Any],
     *,
-    target: Literal["one_update", "stability_256", "gate_b_init"],
+    target: Literal[
+        "one_update", "stability_256", "gate_b_init", "formal_gate_b"
+    ],
     head: str,
     image_id: str,
     expected_result: Path,
@@ -1032,7 +1051,7 @@ def _validate_preflight_semantics(
     container_result = str(
         PurePosixPath("/work") / expected_result.relative_to(repo_root).as_posix()
     )
-    if target == "gate_b_init":
+    if target in _GATE_B_TARGETS:
         gate_a_stem = f"{_GATE_A_SOURCE_COMMIT}-formal-gate-a"
         gate_a_base = PurePosixPath("/work") / _GATE_A_DIRECTORY.as_posix()
         expected_tail = [
@@ -1046,9 +1065,16 @@ def _validate_preflight_semantics(
             str(gate_a_base / f"{gate_a_stem}.json"),
             "--gate-a-manifest",
             str(gate_a_base / f"{gate_a_stem}.manifest.json"),
-            "--output",
-            container_result,
         ]
+        if target == "formal_gate_b":
+            gate_b_base = PurePosixPath("/work") / _GATE_B_DIRECTORY.as_posix()
+            expected_tail.extend(
+                [
+                    "--gate-b-init-manifest",
+                    str(gate_b_base / f"{head}-gate-b-init.manifest.json"),
+                ]
+            )
+        expected_tail.extend(["--output", container_result])
     else:
         expected_tail = [
             image_id,
@@ -1707,6 +1733,150 @@ def _load_gate_b_init_manifest(
         "preflight_sha256": preflight_reference["sha256"],
         "result_sha256": result_reference["sha256"],
         "admission": result,
+    }
+
+
+def load_authenticated_formal_gate_b(
+    manifest_path: str | Path,
+    *,
+    repo_root: str | Path,
+) -> dict[str, Any]:
+    """Validate and load the retained formal Gate B capability bundle.
+
+    Parameters
+    ----------
+    manifest_path : str or pathlib.Path
+        Exact retained formal Gate B manifest path.
+    repo_root : str or pathlib.Path
+        Worktree root containing Gate A, Gate B initialization, and formal
+        Gate B artifacts.
+
+    Returns
+    -------
+    dict
+        Strictly authenticated manifest, preflight, result, prerequisite
+        evidence, and retained content hashes for Gate C.
+    """
+
+    root = Path(repo_root).resolve()
+    path = Path(manifest_path).resolve()
+    config = LaunchConfig(
+        target="formal_gate_b",
+        repo_root=root,
+        output_dir=root / _GATE_B_DIRECTORY,
+    )
+    paths = target_paths(config, _GATE_B_SOURCE_COMMIT, "formal_gate_b")
+    if path != paths.manifest:
+        raise ProvenanceError("required formal Gate B manifest path is not fixed")
+    expected_hashes = {
+        paths.preflight: _GATE_B_PREFLIGHT_SHA256,
+        paths.result: _GATE_B_RESULT_SHA256,
+        paths.manifest: _GATE_B_MANIFEST_SHA256,
+    }
+    for artifact, expected_sha256 in expected_hashes.items():
+        if (
+            not artifact.is_file()
+            or not artifact.resolve().is_relative_to(root)
+            or sha256_file(artifact) != expected_sha256
+        ):
+            raise ProvenanceError(
+                "required formal Gate B retained bytes are missing or changed"
+            )
+
+    manifest = load_strict_json(paths.manifest)
+    if (
+        not _is_integer(manifest.get("schema_version"))
+        or int(manifest["schema_version"]) != 1
+        or manifest.get("kind") != "example21_authenticated_launch_manifest"
+        or manifest.get("target") != "formal_gate_b"
+        or manifest.get("source_head") != _GATE_B_SOURCE_COMMIT
+        or manifest.get("bundle_valid") is not True
+        or manifest.get("process_succeeded") is not True
+        or manifest.get("artifact_schema_verified") is not True
+        or manifest.get("scientific_qualification_passed") is not True
+        or manifest.get("failure") is not None
+    ):
+        raise ProvenanceError("required formal Gate B manifest is invalid")
+    preflight_reference = _validate_artifact_reference(
+        manifest.get("preflight"),
+        paths.preflight,
+        repo_root=root,
+        label="formal Gate B preflight",
+    )
+    result_reference = _validate_artifact_reference(
+        manifest.get("result"),
+        paths.result,
+        repo_root=root,
+        label="formal Gate B result",
+    )
+    bundle_sha256 = _launch_bundle_sha256(
+        "formal_gate_b",
+        _GATE_B_SOURCE_COMMIT,
+        preflight_reference["sha256"],
+        result_reference["sha256"],
+    )
+    if (
+        bundle_sha256 != _GATE_B_BUNDLE_SHA256
+        or manifest.get("bundle_sha256") != bundle_sha256
+    ):
+        raise ProvenanceError("required formal Gate B bundle digest is invalid")
+
+    gate_a = _load_gate_a_prerequisite(config)
+    gate_b_initialization = _load_gate_b_init_manifest(
+        config,
+        head=_GATE_B_SOURCE_COMMIT,
+        image_id=_GATE_B_IMAGE_ID,
+    )
+    preflight = load_strict_json(paths.preflight)
+    prerequisites = preflight.get("gate_b_prerequisites")
+    if (
+        not isinstance(prerequisites, Mapping)
+        or not _json_exact(prerequisites.get("gate_a"), gate_a)
+        or not _json_exact(
+            prerequisites.get("gate_b_initialization"), gate_b_initialization
+        )
+    ):
+        raise ProvenanceError("formal Gate B preflight prerequisites are invalid")
+    _validate_preflight_semantics(
+        preflight,
+        target="formal_gate_b",
+        head=_GATE_B_SOURCE_COMMIT,
+        image_id=_GATE_B_IMAGE_ID,
+        expected_result=paths.result,
+        repo_root=root,
+    )
+    _validate_manifest_execution(
+        manifest,
+        preflight,
+        head=_GATE_B_SOURCE_COMMIT,
+        repo_root=root,
+    )
+    result = load_strict_json(paths.result)
+    passed = _validate_target_result(
+        result,
+        target="formal_gate_b",
+        head=_GATE_B_SOURCE_COMMIT,
+        image_id=_GATE_B_IMAGE_ID,
+        admission_manifests=None,
+        repo_root=root,
+        gate_a_prerequisite=gate_a,
+        gate_b_init_bundle=gate_b_initialization,
+    )
+    if not passed:
+        raise ProvenanceError("required formal Gate B capability gate did not pass")
+    return {
+        "target": "formal_gate_b",
+        "source_head": _GATE_B_SOURCE_COMMIT,
+        "image_digest": _GATE_B_IMAGE_ID,
+        "bundle_sha256": bundle_sha256,
+        "manifest_sha256": _GATE_B_MANIFEST_SHA256,
+        "preflight_sha256": _GATE_B_PREFLIGHT_SHA256,
+        "result_sha256": _GATE_B_RESULT_SHA256,
+        "manifest": manifest,
+        "preflight": preflight,
+        "result": result,
+        "gate_a": gate_a,
+        "gate_b_initialization": gate_b_initialization,
     }
 
 

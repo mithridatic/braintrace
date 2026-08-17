@@ -1640,6 +1640,109 @@ def test_authenticated_gate_b_init_and_formal_bundle_round_trip(
     assert formal_result["prerequisites"]["gate_b_initialization"] == init_bundle
 
 
+def test_authenticated_formal_gate_b_bundle_reloads_for_gate_c(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    init_config = _depth_config(tmp_path, "gate_b_init")
+    gate_a = _install_gate_a_prerequisite(init_config, monkeypatch)
+    launcher.launch(
+        init_config,
+        command_runner=DepthFakeRunner(
+            init_config.repo_root,
+            "gate_b_init",
+            gate_a=gate_a,
+        ),
+    )
+    init_bundle = launcher._load_gate_b_init_manifest(
+        init_config,
+        head=_HEAD,
+        image_id=_IMAGE_ID,
+    )
+    formal_config = launcher.LaunchConfig(
+        target="formal_gate_b",
+        repo_root=init_config.repo_root,
+        output_dir=init_config.output_dir,
+    )
+    manifest_path = launcher.launch(
+        formal_config,
+        command_runner=DepthFakeRunner(
+            formal_config.repo_root,
+            "formal_gate_b",
+            gate_a=gate_a,
+            gate_b_init=init_bundle,
+        ),
+    )
+    paths = launcher.target_paths(formal_config, _HEAD, "formal_gate_b")
+    manifest = launcher.load_strict_json(manifest_path)
+    monkeypatch.setattr(launcher, "_GATE_B_SOURCE_COMMIT", _HEAD)
+    monkeypatch.setattr(launcher, "_GATE_B_IMAGE_ID", _IMAGE_ID)
+    monkeypatch.setattr(
+        launcher,
+        "_GATE_B_PREFLIGHT_SHA256",
+        launcher.sha256_file(paths.preflight),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_GATE_B_RESULT_SHA256",
+        launcher.sha256_file(paths.result),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_GATE_B_MANIFEST_SHA256",
+        launcher.sha256_file(paths.manifest),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_GATE_B_BUNDLE_SHA256",
+        manifest["bundle_sha256"],
+    )
+
+    bundle = launcher.load_authenticated_formal_gate_b(
+        manifest_path,
+        repo_root=formal_config.repo_root,
+    )
+
+    argv = bundle["preflight"]["planned_gate"]["argv"]
+    python_index = argv.index("python")
+    assert argv[python_index : python_index + 3] == [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_depth_gate",
+    ]
+    assert "--gate-b-init-manifest" in argv
+    assert bundle["result"]["prerequisites"]["gate_b_initialization"] == (
+        init_bundle
+    )
+    assert bundle["source_head"] == _HEAD
+    assert bundle["image_digest"] == _IMAGE_ID
+    assert bundle["preflight_sha256"] == launcher.sha256_file(paths.preflight)
+    assert bundle["result_sha256"] == launcher.sha256_file(paths.result)
+    assert bundle["manifest_sha256"] == launcher.sha256_file(paths.manifest)
+    assert bundle["bundle_sha256"] == manifest["bundle_sha256"]
+
+
+def test_formal_gate_b_retained_bundle_identity_is_pinned() -> None:
+    assert launcher._GATE_B_SOURCE_COMMIT == (
+        "dafa64a8b4c3848241baa117affa55b632518a8e"
+    )
+    assert launcher._GATE_B_IMAGE_ID == (
+        "sha256:35349cb07c49e275b15c5c563a8d75fa08b49d4b0829d86939c1c09fb1ef6d16"
+    )
+    assert launcher._GATE_B_PREFLIGHT_SHA256 == (
+        "91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f"
+    )
+    assert launcher._GATE_B_RESULT_SHA256 == (
+        "6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766"
+    )
+    assert launcher._GATE_B_MANIFEST_SHA256 == (
+        "99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab"
+    )
+    assert launcher._GATE_B_BUNDLE_SHA256 == (
+        "be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851"
+    )
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
