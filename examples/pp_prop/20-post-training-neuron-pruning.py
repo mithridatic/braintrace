@@ -16,6 +16,7 @@ describe whether removed neurons came from structurally interchangeable groups.
 """
 
 import argparse
+import contextlib
 import importlib.util
 import json
 import math
@@ -67,6 +68,9 @@ def _bind_device(requested: str) -> str:
     return backend
 
 
+_DEFAULT_EVAL_BATCH = 32
+
+
 def _normalize_task_rows(values: np.ndarray) -> np.ndarray:
     """Normalize every nonzero task row by its maximum absolute value."""
     values = np.asarray(values, dtype=np.float64)
@@ -84,8 +88,16 @@ def _contribution_scores(
     values: np.ndarray,
     task_mass: np.ndarray,
     n_rec: int,
+    *,
+    neuron_alive: Optional[np.ndarray] = None,
+    edge_alive: Optional[np.ndarray] = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Combine task-specific activity, output, recurrence, and gradient signals."""
+    """Combine task-specific activity, output, recurrence, and gradient signals.
+
+    Passing ``neuron_alive`` and ``edge_alive`` restricts the recurrence and
+    gradient signals to edges that are still live, which is what ranking a
+    partially pruned network requires. Omitting both scores the full topology.
+    """
     rates = np.asarray(rates, dtype=np.float64)
     readout_weight = np.asarray(readout_weight, dtype=np.float64)
     rows = np.asarray(rows)
@@ -125,14 +137,28 @@ def _contribution_scores(
     ):
         raise ValueError("edge endpoint is outside [0, n_rec)")
 
+    if neuron_alive is None or edge_alive is None:
+        active = np.ones(rows.size, dtype=np.float64)
+    else:
+        neuron_alive = np.asarray(neuron_alive, dtype=np.float64)
+        active = (
+            np.asarray(edge_alive, dtype=np.float64)
+            * neuron_alive[rows]
+            * neuron_alive[cols]
+        )
     direct = rates * np.abs(readout_weight.T)
-    outgoing_strength = np.zeros(n_rec, dtype=np.float64)
-    np.add.at(outgoing_strength, cols, np.abs(values))
+    outgoing_strength = np.bincount(
+        cols, weights=np.abs(values) * active, minlength=n_rec
+    )
     relay = rates * outgoing_strength[None, :]
-    incident_mass = np.zeros((n_tasks, n_rec), dtype=np.float64)
-    for task in range(n_tasks):
-        np.add.at(incident_mass[task], rows, task_mass[task])
-        np.add.at(incident_mass[task], cols, task_mass[task])
+    weighted_mass = task_mass * active[None, :]
+    incident_mass = np.stack(
+        [
+            np.bincount(rows, weights=weighted_mass[task], minlength=n_rec)
+            + np.bincount(cols, weights=weighted_mass[task], minlength=n_rec)
+            for task in range(n_tasks)
+        ]
+    )
     task_scores = (
         _normalize_task_rows(direct)
         + _normalize_task_rows(relay)
@@ -358,8 +384,32 @@ def _alignment_summary(
     }
 
 
+_PROBE_CACHE: Dict[int, tuple] = {}
+
+
 def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Build Example 18's deterministic task-major probe trials and windows."""
+    """Build Example 18's deterministic task-major probe trials and windows.
+
+    The result is memoized per configuration object, because rebuilding it
+    costs a Python loop over every probe trial and the same configuration is
+    handed to several evaluators in one run. The cache holds a reference to the
+    configuration so its identity stays valid.
+
+    Parameters
+    ----------
+    config : Any
+        Example 18 evolution configuration, or the compact-model equivalent.
+
+    Returns
+    -------
+    trials : jax.Array
+        Probe spikes of shape ``(n_trial, n_step, 1, n_in)``.
+    windows : jax.Array
+        Response windows of shape ``(n_trial, n_step)``.
+    """
+    cached = _PROBE_CACHE.get(id(config))
+    if cached is not None and cached[0] is config:
+        return cached[1]
     layout = EX18._layout(config)
     trials = []
     windows = []
@@ -371,43 +421,386 @@ def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
             spikes, _, _ = EX18._make_trial(task, EX18._probe_seed(task, index), config)
             trials.append(spikes)
             windows.append(window)
-    return jnp.stack(trials), jnp.asarray(np.stack(windows))
+    built = (jnp.stack(trials), jnp.asarray(np.stack(windows)))
+    _PROBE_CACHE[id(config)] = (config, built)
+    return built
+
+
+def _probe_batch(config: Any) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    """Return step-major probe tensors for a single batched rollout.
+
+    The probe trials are mutually independent, so they belong on the model's
+    batch axis rather than in a sequential loop over trials.
+
+    Returns
+    -------
+    spikes : jax.Array
+        Input spikes of shape ``(n_step, n_trial, n_in)``.
+    windows : jax.Array
+        Response windows of shape ``(n_step, n_trial)``.
+    window_sums : jax.Array
+        Per-trial response-window length, floored at one, shape ``(n_trial,)``.
+    """
+    trials, windows = _probe_arrays(config)
+    spikes = jnp.transpose(trials[:, :, 0, :], (1, 0, 2))
+    return spikes, windows.T, jnp.maximum(jnp.sum(windows, axis=1), 1.0)
+
+
+def _masked_recurrence(rows: np.ndarray, cols: np.ndarray, values: np.ndarray, n_rec: int):
+    """Build a drop-in recurrent ``comm`` whose edge mask may vary per batch row.
+
+    The sparse operator takes one ``(n_edges,)`` weight vector, so a batch whose
+    rows carry different edge masks cannot go through it. This gather and
+    scatter-add product equals that operator under an all-ones mask and
+    scatters strictly within a batch row.
+
+    Parameters
+    ----------
+    rows, cols : numpy.ndarray
+        Recurrent edge endpoints, aligned, of shape ``(n_edges,)``.
+    values : numpy.ndarray
+        Trained recurrent weights without units, shape ``(n_edges,)``.
+    n_rec : int
+        Recurrent neuron count.
+
+    Returns
+    -------
+    brainstate.nn.Module
+        A module with a settable ``edge_mask`` attribute that broadcasts
+        against ``(batch, n_edges)``.
+    """
+    rows_j = jnp.asarray(rows)
+    cols_j = jnp.asarray(cols)
+    values_j = jnp.asarray(values, dtype=jnp.float32)
+
+    class _MaskedRecurrence(brainstate.nn.Module):
+        """Recurrent projection carrying a per-batch-row edge mask."""
+
+        def __init__(self):
+            super().__init__()
+            self.edge_mask = jnp.ones(values_j.shape, dtype=jnp.float32)
+
+        def update(self, spikes):
+            """Map masked presynaptic spikes to postsynaptic current."""
+            contrib = spikes[..., rows_j] * values_j * self.edge_mask
+            zeros = jnp.zeros(spikes.shape[:-1] + (n_rec,), dtype=contrib.dtype)
+            return zeros.at[..., cols_j].add(contrib) * u.mA
+
+    return _MaskedRecurrence()
+
+
+def _probe_evaluator(experiment: Any, config: Any, batch: int, *, per_row_edges: bool):
+    """Build a candidate-and-trial-batched fixed-probe evaluator.
+
+    Every probe trial and every candidate mask share one model batch axis of
+    size ``batch * n_trial``, laid out candidate-major so a reshape recovers the
+    per-task rate blocks. Step outputs accumulate in a ``scan`` carry rather
+    than being stacked, which bounds rollout memory at one ``(batch, n_rec)``
+    array instead of one per time step.
+
+    Parameters
+    ----------
+    experiment : Any
+        Example 18 experiment holding the trained model.
+    config : Any
+        Example 18 evolution configuration.
+    batch : int
+        Candidate masks per call. Fixed, so exactly one program is compiled.
+    per_row_edges : bool
+        When true the edge mask varies per candidate and the recurrent
+        projection must already be a :func:`_masked_recurrence`. When false one
+        edge mask is shared by the whole batch and the native sparse operator
+        is used, which is both faster and lighter.
+
+    Returns
+    -------
+    callable
+        ``evaluate(neuron_masks, edge_mask)`` returning logits of shape
+        ``(batch, n_trial, n_tasks)`` and per-task rates of shape
+        ``(batch, n_tasks, n_rec)``.
+    """
+    if isinstance(batch, bool) or batch < 1:
+        raise ValueError("batch must be a positive integer")
+    spikes, windows, window_sums = _probe_batch(config)
+    n_step, n_trial = int(spikes.shape[0]), int(spikes.shape[1])
+    n_rec, n_tasks = config.n_rec, config.num_tricks
+    batch_rows = batch * n_trial
+    model = experiment.model
+    tiled_spikes = jnp.tile(spikes, (1, batch, 1))
+    tiled_windows = jnp.tile(windows, (1, batch))
+    tiled_sums = jnp.tile(window_sums, (batch,))[:, None]
+
+    def evaluate(neuron_masks, edge_mask):
+        """Evaluate one fixed-size batch of structural masks."""
+        rec_weight = model.rec_syn.comm.weight if not per_row_edges else None
+        alive = jnp.repeat(neuron_masks, n_trial, axis=0)
+        if per_row_edges:
+            model.rec_syn.comm.edge_mask = jnp.repeat(edge_mask, n_trial, axis=0)
+            base_params = None
+        else:
+            base_params = dict(rec_weight.value)
+            rec_weight.value = {
+                **base_params,
+                "weight": base_params["weight"] * edge_mask,
+            }
+        brainstate.nn.reset_all_states(model, batch_size=batch_rows)
+
+        def step(carry, inputs):
+            rate_sum, logit_sum = carry
+            current, window = inputs
+            model.ff_syn(current)
+            model.rec_syn(model.neu.get_spike() * alive)
+            model.neu(0.0 * u.mA)
+            masked_spikes = model.neu.get_spike() * alive
+            output = model.readout(masked_spikes) * window[:, None]
+            return (rate_sum + masked_spikes, logit_sum + output), None
+
+        initial = (
+            jnp.zeros((batch_rows, n_rec), dtype=jnp.float32),
+            jnp.zeros((batch_rows, n_tasks), dtype=jnp.float32),
+        )
+        (rate_sum, logit_sum), _ = brainstate.transform.scan(
+            step, initial, (tiled_spikes, tiled_windows)
+        )
+        if not per_row_edges:
+            rec_weight.value = base_params
+        logits = (logit_sum / tiled_sums).reshape(batch, n_trial, n_tasks)
+        rates = (rate_sum / n_step).reshape(
+            batch, n_tasks, config.eval_trials_per_task, n_rec
+        )
+        return logits, jnp.mean(rates, axis=2)
+
+    return evaluate
+
+
+def _probe_accuracy(logits: np.ndarray, config: Any) -> np.ndarray:
+    """Convert batched probe logits into per-task fixed-probe accuracy."""
+    logits = np.asarray(logits, dtype=np.float64)
+    task_ids = np.repeat(np.arange(config.num_tricks), config.eval_trials_per_task)
+    correct = np.argmax(logits, axis=-1) == task_ids
+    return correct.reshape(
+        logits.shape[0], config.num_tricks, config.eval_trials_per_task
+    ).mean(axis=2)
+
+
+class _ProbeRunner:
+    """Compiled fixed-probe evaluation over batches of structural masks.
+
+    Holds one compiled program per edge-mask mode and pads every call to a
+    fixed candidate batch, so a whole run compiles a handful of rollouts
+    instead of one per call site. Single-coordinate screens are driven from
+    index arrays so no full candidate mask stack is ever materialized.
+
+    Parameters
+    ----------
+    experiment : Any
+        Example 18 experiment holding the trained model.
+    config : Any
+        Example 18 evolution configuration.
+    batch : int, default 32
+        Candidate masks evaluated per compiled call.
+
+    Attributes
+    ----------
+    evaluations : int
+        Causal probe evaluations performed, excluding padding.
+    calls : int
+        Compiled batched calls performed.
+    """
+
+    def __init__(self, experiment: Any, config: Any, batch: int = 32):
+        if isinstance(batch, bool) or batch < 1:
+            raise ValueError("batch must be a positive integer")
+        self.experiment = experiment
+        self.config = config
+        self.batch = int(batch)
+        self.evaluations = 0
+        self.calls = 0
+        rows, cols, values = EX18._current_topology(experiment)
+        self._n_edge = int(rows.size)
+        self._projection = _masked_recurrence(rows, cols, values, config.n_rec)
+        shared = _probe_evaluator(experiment, config, self.batch, per_row_edges=False)
+        per_row = _probe_evaluator(experiment, config, self.batch, per_row_edges=True)
+        offsets = jnp.arange(self.batch)
+        model = experiment.model
+        batch_rows = self.batch * int(_probe_batch(config)[0].shape[1])
+
+        def masked_rows(base, indices):
+            tiled = jnp.repeat(base[None, :], self.batch, axis=0)
+            return tiled.at[offsets, indices].set(0.0)
+
+        def prime():
+            """Size every model state to the batch the chunk loop will carry.
+
+            The chunk loop carries model state, so the state shape must already
+            match before the loop is traced; the per-chunk reset inside the
+            rollout then reproduces that same shape.
+            """
+            brainstate.nn.reset_all_states(model, batch_size=batch_rows)
+
+        @brainstate.transform.jit
+        def run_shared(mask_chunks, edges):
+            prime()
+            return brainstate.transform.for_loop(
+                lambda chunk: shared(chunk, edges), mask_chunks
+            )
+
+        @brainstate.transform.jit
+        def run_per_row(mask_chunks, edge_chunks):
+            prime()
+            return brainstate.transform.for_loop(per_row, mask_chunks, edge_chunks)
+
+        @brainstate.transform.jit
+        def screen_neurons(alive, edges, index_chunks):
+            prime()
+            return brainstate.transform.for_loop(
+                lambda indices: shared(masked_rows(alive, indices), edges), index_chunks
+            )
+
+        @brainstate.transform.jit
+        def screen_edges(alive, edges, index_chunks):
+            prime()
+            tiled = jnp.repeat(alive[None, :], self.batch, axis=0)
+            return brainstate.transform.for_loop(
+                lambda indices: per_row(tiled, masked_rows(edges, indices)), index_chunks
+            )
+
+        self._run_shared = run_shared
+        self._run_per_row = run_per_row
+        self._screen_neurons = screen_neurons
+        self._screen_edges = screen_edges
+
+    def _chunk(self, stack: np.ndarray) -> tuple[np.ndarray, int]:
+        """Pad a stack to a whole number of fixed-size candidate chunks."""
+        count = int(stack.shape[0])
+        pad = (-count) % self.batch
+        if pad:
+            stack = np.concatenate((stack, np.repeat(stack[-1:], pad, axis=0)), axis=0)
+        tail = stack.shape[1:]
+        return stack.reshape((-1, self.batch) + tail), count
+
+    def _collect(self, logits, count: int) -> np.ndarray:
+        """Flatten chunked logits and drop the padding rows."""
+        logits = np.asarray(logits, dtype=np.float64)
+        logits = logits.reshape((-1,) + logits.shape[2:])[:count]
+        return _probe_accuracy(logits, self.config)
+
+    def evaluate(
+        self, neuron_masks: np.ndarray, edge_masks: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Evaluate aligned neuron and edge masks, one row per candidate.
+
+        Parameters
+        ----------
+        neuron_masks : numpy.ndarray
+            Binary masks of shape ``(candidates, n_rec)``.
+        edge_masks : numpy.ndarray
+            Binary masks of shape ``(candidates, n_edges)``, or one
+            ``(n_edges,)`` mask shared by every candidate.
+
+        Returns
+        -------
+        logits : numpy.ndarray
+            Shape ``(candidates, n_trial, n_tasks)``.
+        rates : numpy.ndarray
+            Shape ``(candidates, n_tasks, n_rec)``.
+        """
+        neuron_masks = np.asarray(neuron_masks, dtype=np.float32)
+        edge_masks = np.asarray(edge_masks, dtype=np.float32)
+        chunks, count = self._chunk(neuron_masks)
+        self.evaluations += count
+        self.calls += int(chunks.shape[0])
+        if edge_masks.ndim == 1:
+            logits, rates = self._run_shared(
+                jnp.asarray(chunks), jnp.asarray(edge_masks)
+            )
+        else:
+            edge_chunks, _ = self._chunk(edge_masks)
+            with self._per_row_recurrence():
+                logits, rates = self._run_per_row(
+                    jnp.asarray(chunks), jnp.asarray(edge_chunks)
+                )
+        logits = np.asarray(logits, dtype=np.float64)
+        rates = np.asarray(rates, dtype=np.float64)
+        logits = logits.reshape((-1,) + logits.shape[2:])[:count]
+        rates = rates.reshape((-1,) + rates.shape[2:])[:count]
+        return logits, rates
+
+    def accuracy(
+        self, neuron_masks: np.ndarray, edge_masks: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Evaluate masks and return per-task accuracy with per-task rates."""
+        logits, rates = self.evaluate(neuron_masks, edge_masks)
+        return _probe_accuracy(logits, self.config), rates
+
+    @contextlib.contextmanager
+    def _per_row_recurrence(self):
+        """Temporarily route the recurrence through the maskable projection."""
+        original = self.experiment.model.rec_syn.comm
+        self.experiment.model.rec_syn.comm = self._projection
+        try:
+            yield
+        finally:
+            self.experiment.model.rec_syn.comm = original
+
+    def screen(
+        self,
+        alive: np.ndarray,
+        edge_alive: np.ndarray,
+        indices: np.ndarray,
+        *,
+        edges: bool,
+    ) -> np.ndarray:
+        """Ablate each listed coordinate individually against one fixed mask.
+
+        These trials are mutually independent by construction, so batching them
+        is the same computation the sequential loop performed, and the screen
+        that finds nothing safe is exactly the terminal 1-minimality
+        certificate.
+
+        Parameters
+        ----------
+        alive, edge_alive : numpy.ndarray
+            The current accepted neuron and edge masks.
+        indices : numpy.ndarray
+            Coordinates to ablate, one per returned row.
+        edges : bool
+            Ablate recurrent edges rather than neurons.
+
+        Returns
+        -------
+        numpy.ndarray
+            Per-task accuracy of shape ``(len(indices), n_tasks)``.
+        """
+        indices = np.asarray(indices, dtype=np.int32)
+        if indices.size == 0:
+            return np.empty((0, self.config.num_tricks), dtype=np.float64)
+        chunks, count = self._chunk(indices[:, None])
+        chunks = chunks[:, :, 0]
+        self.evaluations += count
+        self.calls += int(chunks.shape[0])
+        alive_j = jnp.asarray(alive, dtype=jnp.float32)
+        edges_j = jnp.asarray(edge_alive, dtype=jnp.float32)
+        chunks_j = jnp.asarray(chunks)
+        if edges:
+            with self._per_row_recurrence():
+                logits, _ = self._screen_edges(alive_j, edges_j, chunks_j)
+        else:
+            logits, _ = self._screen_neurons(alive_j, edges_j, chunks_j)
+        return self._collect(logits, count)
 
 
 def _probe_logit_evaluator(experiment: Any, config: Any):
-    """Build a transform-compatible fixed-probe logit evaluator."""
-    trials, windows = _probe_arrays(config)
-    model = experiment.model
-    rec_weight = model.rec_syn.comm.weight
-    base_params = dict(rec_weight.value)
-    base_values = base_params["weight"]
+    """Build a single-mask fixed-probe logit evaluator.
+
+    A thin adapter over :func:`_probe_evaluator` so the compaction
+    verification and benchmark paths keep their existing interface.
+    """
+    evaluate = _probe_evaluator(experiment, config, 1, per_row_edges=False)
 
     def evaluate_mask(alive, edge_alive):
-        masked_params = dict(base_params)
-        masked_params["weight"] = base_values * edge_alive
-        rec_weight.value = masked_params
-
-        def evaluate_trial(spikes, window):
-            brainstate.nn.reset_all_states(model, batch_size=1)
-
-            def step(x):
-                model.ff_syn(x)
-                model.rec_syn(model.neu.get_spike() * alive)
-                model.neu(0.0 * u.mA)
-                masked_spikes = model.neu.get_spike() * alive
-                return model.readout(masked_spikes), masked_spikes
-
-            outputs, neuron_spikes = brainstate.transform.for_loop(step, spikes)
-            logits = jnp.sum(outputs * window[:, None, None], axis=0)
-            logits = logits / jnp.maximum(jnp.sum(window), 1.0)
-            return logits[0], jnp.mean(neuron_spikes, axis=(0, 1))
-
-        logits, rates = brainstate.transform.for_loop(evaluate_trial, trials, windows)
-        task_rates = rates.reshape(
-            config.num_tricks, config.eval_trials_per_task, config.n_rec
-        ).mean(axis=1)
-        rec_weight.value = base_params
-        return logits, task_rates
+        logits, rates = evaluate(alive[None, :], edge_alive)
+        return logits[0], rates[0]
 
     return evaluate_mask
 
@@ -454,23 +847,22 @@ def _evaluate_probe_logits(
 
     logits, _ = evaluate(jnp.asarray(neuron_alive), jnp.asarray(edge_alive))
     logits = np.asarray(logits, dtype=np.float64)
-    predictions = np.argmax(logits, axis=1)
-    task_ids = np.repeat(np.arange(config.num_tricks), config.eval_trials_per_task)
-    accuracy = (
-        (predictions == task_ids)
-        .reshape(config.num_tricks, config.eval_trials_per_task)
-        .mean(axis=1)
-    )
+    accuracy = _probe_accuracy(logits[None, :, :], config)[0]
     return logits, accuracy
 
 
 def _evaluate_alive_masks(
-    experiment: Any, config: Any, alive_masks: np.ndarray
+    experiment: Any,
+    config: Any,
+    alive_masks: np.ndarray,
+    runner: Optional["_ProbeRunner"] = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Evaluate task accuracy and spike rates for many lesion masks in one driver."""
     edge_count = int(experiment.task_mass.shape[1])
     edge_masks = np.ones((np.asarray(alive_masks).shape[0], edge_count))
-    return _evaluate_structural_masks(experiment, config, alive_masks, edge_masks)
+    return _evaluate_structural_masks(
+        experiment, config, alive_masks, edge_masks, runner
+    )
 
 
 def _evaluate_structural_masks(
@@ -478,6 +870,7 @@ def _evaluate_structural_masks(
     config: Any,
     alive_masks: np.ndarray,
     edge_masks: np.ndarray,
+    runner: Optional[_ProbeRunner] = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Evaluate aligned neuron and recurrent-edge lesion masks."""
     alive_masks = np.asarray(alive_masks, dtype=np.float32)
@@ -495,19 +888,96 @@ def _evaluate_structural_masks(
         or not np.all((edge_masks == 0.0) | (edge_masks == 1.0))
     ):
         raise ValueError("edge_masks must be binary and align with alive_masks")
-    evaluate_mask = _mask_evaluator(experiment, config)
-
-    @brainstate.transform.jit
-    def evaluate(neuron_masks, recurrent_masks):
-        return brainstate.transform.for_loop(
-            evaluate_mask, neuron_masks, recurrent_masks
+    if runner is None:
+        runner = _ProbeRunner(
+            experiment, config, min(_DEFAULT_EVAL_BATCH, int(alive_masks.shape[0]))
         )
+    shared = bool(np.all(edge_masks == edge_masks[0]))
+    return runner.accuracy(alive_masks, edge_masks[0] if shared else edge_masks)
 
-    accuracies, rates = evaluate(jnp.asarray(alive_masks), jnp.asarray(edge_masks))
-    return np.asarray(accuracies, dtype=np.float64), np.asarray(rates, dtype=np.float64)
+
+def _induced_edges(
+    neuron_alive: np.ndarray, edge_alive: np.ndarray, rows: np.ndarray, cols: np.ndarray
+) -> np.ndarray:
+    """Disable every recurrent edge incident to a removed neuron."""
+    return edge_alive * neuron_alive[rows] * neuron_alive[cols]
 
 
-def _joint_fixed_point_prune(
+def _apply_removals(
+    alive: np.ndarray,
+    edge_alive: np.ndarray,
+    coordinates,
+    rows: np.ndarray,
+    cols: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return the masks that result from removing every listed coordinate."""
+    trial_alive = alive.copy()
+    trial_edges = edge_alive.copy()
+    for kind, index in coordinates:
+        if kind:
+            trial_edges[index] = 0.0
+        else:
+            trial_alive[index] = 0.0
+    return trial_alive, _induced_edges(trial_alive, trial_edges, rows, cols)
+
+
+def _accept_prefix(safe_test, alive, edge_alive, ordered, rows, cols):
+    """Accept the largest verified-safe prefix of an ordered removal list.
+
+    The whole list is tried first, because in early rounds almost every
+    individually-safe coordinate is jointly safe and that costs one evaluation
+    for hundreds of removals. Otherwise the prefix length is binary-searched.
+    Every accepted mask is one that was measured, never one that was inferred.
+
+    Parameters
+    ----------
+    safe_test : callable
+        ``safe_test(alive, edge_alive) -> (bool, numpy.ndarray)`` deciding
+        whether a candidate mask holds every task at target.
+    alive, edge_alive : numpy.ndarray
+        The current accepted masks.
+    ordered : list of tuple
+        ``(kind, index)`` coordinates ascending by contribution score, where
+        kind zero is a neuron and kind one is a recurrent edge.
+    rows, cols : numpy.ndarray
+        Recurrent edge endpoints, used to disable incident edges.
+
+    Returns
+    -------
+    alive, edge_alive : numpy.ndarray
+        Masks after the accepted removals; unchanged when nothing was accepted.
+    accepted : int
+        Number of coordinates removed.
+    evaluations : int
+        Causal probe evaluations spent deciding the prefix.
+    """
+    total = len(ordered)
+    if total == 0:
+        return alive, edge_alive, 0, 0
+    trial_alive, trial_edges = _apply_removals(alive, edge_alive, ordered, rows, cols)
+    safe, _ = safe_test(trial_alive, trial_edges)
+    if safe:
+        return trial_alive, trial_edges, total, 1
+    evaluations = 1
+    best = None
+    low, high = 1, total - 1
+    while low <= high:
+        middle = (low + high + 1) // 2
+        trial_alive, trial_edges = _apply_removals(
+            alive, edge_alive, ordered[:middle], rows, cols
+        )
+        safe, _ = safe_test(trial_alive, trial_edges)
+        evaluations += 1
+        if safe:
+            best, low = (trial_alive, trial_edges, middle), middle + 1
+        else:
+            high = middle - 1
+    if best is None:
+        return alive, edge_alive, 0, evaluations
+    return best[0], best[1], best[2], evaluations
+
+
+def _minimize_topology(
     experiment: Any,
     config: Any,
     initial_alive: np.ndarray,
@@ -516,8 +986,49 @@ def _joint_fixed_point_prune(
     cols: np.ndarray,
     values: np.ndarray,
     task_mass: np.ndarray,
+    *,
+    eval_batch: int = 32,
+    runner: Optional[_ProbeRunner] = None,
 ) -> Dict[str, Any]:
-    """Alternate greedy neuron and edge phases to a coordinate-wise fixed point."""
+    """Screen and batch-accept to a coordinate-wise locally minimal network.
+
+    Each round ablates every retained neuron and every active recurrent edge
+    individually against the current mask, in batched compiled calls, then
+    removes the largest verified-safe prefix of the individually-safe set. The
+    round whose screen finds nothing safe both terminates the search and
+    certifies that removing any single retained coordinate lowers a task below
+    ``target``.
+
+    Because a prefix of length one is safe by construction, every non-terminal
+    round removes at least one coordinate and the search terminates without
+    assuming the safety predicate is monotone in the removal set.
+
+    Parameters
+    ----------
+    experiment : Any
+        Example 18 experiment holding the trained model.
+    config : Any
+        Example 18 evolution configuration.
+    initial_alive : numpy.ndarray
+        Binary starting neuron mask of shape ``(n_rec,)``.
+    target : float
+        Minimum per-task fixed-probe accuracy every retained mask must hold.
+    rows, cols, values : numpy.ndarray
+        Recurrent edge endpoints and trained weights, aligned.
+    task_mass : numpy.ndarray
+        Accumulated per-task gradient mass of shape ``(n_tasks, n_edges)``.
+    eval_batch : int, default 32
+        Candidate masks per compiled call.
+    runner : _ProbeRunner, optional
+        Reuse an existing compiled runner instead of building one.
+
+    Returns
+    -------
+    dict
+        The pruning record consumed by the report and figure, including the
+        final masks, the terminal certificate accuracies, and the evaluation
+        counts the run spent.
+    """
     initial_alive = np.asarray(initial_alive, dtype=np.float32)
     rows = np.asarray(rows)
     cols = np.asarray(cols)
@@ -525,6 +1036,7 @@ def _joint_fixed_point_prune(
     task_mass = np.asarray(task_mass, dtype=np.float32)
     n_rec = config.n_rec
     n_tasks = config.num_tricks
+    n_edge = int(rows.size)
     if initial_alive.shape != (n_rec,) or not np.all(
         (initial_alive == 0.0) | (initial_alive == 1.0)
     ):
@@ -533,473 +1045,166 @@ def _joint_fixed_point_prune(
         raise ValueError("target must be finite and in [0, 1]")
     if rows.shape != cols.shape or rows.shape != values.shape or rows.ndim != 1:
         raise ValueError("edge arrays must be one-dimensional and aligned")
-    if task_mass.shape != (n_tasks, rows.size):
+    if task_mass.shape != (n_tasks, n_edge):
         raise ValueError("task_mass must have shape (n_tasks, n_edges)")
 
-    evaluate_mask = _mask_evaluator(experiment, config)
-    readout_weight = jnp.asarray(_readout_weight(experiment.model), dtype=jnp.float32)
-    edge_rows = jnp.asarray(rows)
-    edge_cols = jnp.asarray(cols)
-    edge_values = jnp.asarray(values)
-    edge_task_mass = jnp.asarray(task_mass)
+    if runner is None:
+        runner = _ProbeRunner(experiment, config, eval_batch)
+    readout = _readout_weight(experiment.model)
+    alive = initial_alive.copy()
+    edge_alive = _induced_edges(alive, np.ones(n_edge, dtype=np.float32), rows, cols)
 
-    def normalize_rows(array):
-        scale = jnp.max(jnp.abs(array), axis=1, keepdims=True)
-        return array / jnp.where(scale > 0.0, scale, 1.0)
+    def safe_test(candidate_alive, candidate_edges):
+        accuracies, _ = runner.accuracy(candidate_alive[None, :], candidate_edges)
+        return bool(np.all(accuracies[0] >= target)), accuracies[0]
 
-    def induced_edges(alive, edge_alive):
-        return edge_alive * alive[edge_rows] * alive[edge_cols]
+    neuron_round = np.full(n_rec, -1, dtype=int)
+    edge_round = np.full(n_edge, -1, dtype=int)
+    neuron_accept = np.full((n_rec, n_tasks), np.nan)
+    edge_accept = np.full((n_edge, n_tasks), np.nan)
+    neuron_last = np.full((n_rec, n_tasks), np.nan)
+    edge_last = np.full((n_edge, n_tasks), np.nan)
+    neuron_per_round: list = []
+    edge_per_round: list = []
+    round_counts: list = []
+    round_accuracies: list = []
+    screen_evaluations = 0
+    commit_evaluations = 0
+    round_index = 0
+    converged = False
+    cap = n_rec + n_edge + 2
+    scores = np.zeros(n_rec)
+    task_scores = np.zeros((n_tasks, n_rec))
+    edge_scores = np.zeros(n_edge)
+    edge_task_scores = np.zeros((n_tasks, n_edge))
+    accuracy = np.zeros(n_tasks)
 
-    def current_neuron_scores(rates, alive, edge_alive):
-        edge_alive = induced_edges(alive, edge_alive)
-        outgoing = (
-            jnp.zeros(n_rec, dtype=rates.dtype)
-            .at[edge_cols]
-            .add(jnp.abs(edge_values) * edge_alive)
+    while round_index < cap:
+        current, rates = runner.accuracy(alive[None, :], edge_alive)
+        accuracy = current[0]
+        scores, task_scores, _ = _contribution_scores(
+            rates[0],
+            readout,
+            rows,
+            cols,
+            values,
+            task_mass,
+            n_rec,
+            neuron_alive=alive,
+            edge_alive=edge_alive,
         )
-        incident = jnp.zeros((n_tasks, n_rec), dtype=rates.dtype)
-        weighted_mass = edge_task_mass * edge_alive[None, :]
-        incident = incident.at[:, edge_rows].add(weighted_mass)
-        incident = incident.at[:, edge_cols].add(weighted_mass)
-        direct = rates * jnp.abs(readout_weight.T)
-        relay = rates * outgoing[None, :]
-        task_scores = (
-            normalize_rows(direct) + normalize_rows(relay) + normalize_rows(incident)
-        ) / 3.0
-        return jnp.max(task_scores, axis=0), task_scores
-
-    def current_edge_scores(rates, alive, edge_alive):
-        active = induced_edges(alive, edge_alive)
-        transmission = (
-            rates[:, edge_cols] * jnp.abs(edge_values)[None, :] * active[None, :]
+        edge_scores, edge_task_scores, _ = _edge_contribution_scores(
+            rates[0], rows, cols, values, task_mass, alive, edge_alive
         )
-        gradient = edge_task_mass * active[None, :]
-        task_scores = (normalize_rows(transmission) + normalize_rows(gradient)) / 2.0
-        return jnp.max(task_scores, axis=0), task_scores
-
-    record_count = n_rec + rows.size + 2
-
-    def run_phase(
-        alive,
-        edge_alive,
-        total_accepted,
-        removal_step,
-        removal_accuracy,
-        last_test_accuracy,
-        accepted_per_pass,
-        pass_index,
-        cycle_index,
-        *,
-        neurons,
-    ):
-        initial = (
-            jnp.asarray(1, dtype=jnp.int32),
-            alive,
-            edge_alive,
-            total_accepted,
-            removal_step,
-            removal_accuracy,
-            last_test_accuracy,
-            accepted_per_pass,
-            pass_index,
-            jnp.asarray(0, dtype=jnp.int32),
-        )
-
-        def continue_pass(carry):
-            accepted_last, alive_now, edges_now, *_, current_pass, _ = carry
-            current_coordinates = alive_now if neurons else edges_now
-            return jnp.logical_and(
-                accepted_last > 0,
-                jnp.logical_and(
-                    jnp.sum(current_coordinates) > 0,
-                    current_pass < record_count,
-                ),
+        retained = np.flatnonzero(alive > 0.0)
+        active = np.flatnonzero(edge_alive > 0.0)
+        candidates: list = []
+        if retained.size:
+            screened = runner.screen(alive, edge_alive, retained, edges=False)
+            screen_evaluations += int(retained.size)
+            neuron_last[retained] = screened
+            safe = np.all(screened >= target, axis=1)
+            candidates += [
+                (float(scores[index]), 0, int(index), screened[position])
+                for position, index in enumerate(retained)
+                if safe[position]
+            ]
+        if active.size:
+            screened = runner.screen(alive, edge_alive, active, edges=True)
+            screen_evaluations += int(active.size)
+            edge_last[active] = screened
+            safe = np.all(screened >= target, axis=1)
+            candidates += [
+                (float(edge_scores[index]), 1, int(index), screened[position])
+                for position, index in enumerate(active)
+                if safe[position]
+            ]
+        if not candidates:
+            converged = True
+            break
+        candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+        ordered = [(kind, index) for _, kind, index, _ in candidates]
+        screen_accuracy = {(kind, index): acc for _, kind, index, acc in candidates}
+        while ordered:
+            alive_next, edges_next, accepted, spent = _accept_prefix(
+                safe_test, alive, edge_alive, ordered, rows, cols
             )
-
-        def run_pass(carry):
-            (
-                _,
-                alive_now,
-                edges_now,
-                accepted_total,
-                accepted_steps,
-                accepted_accuracies,
-                tested_accuracies,
-                pass_counts,
-                current_pass,
-                phase_total,
-            ) = carry
-            _, rates = evaluate_mask(alive_now, edges_now)
-            if neurons:
-                scores, _ = current_neuron_scores(rates, alive_now, edges_now)
-                current_coordinates = alive_now
+            commit_evaluations += spent
+            if accepted:
+                break
+            ordered = ordered[1:]
+        if not ordered:
+            converged = True
+            break
+        for kind, index in ordered[:accepted]:
+            if kind:
+                edge_round[index] = round_index
+                edge_accept[index] = screen_accuracy[(kind, index)]
             else:
-                scores, _ = current_edge_scores(rates, alive_now, edges_now)
-                current_coordinates = edges_now
-            order = jnp.argsort(
-                jnp.where(current_coordinates > 0, scores, jnp.inf), stable=True
-            )
-            retained_at_start = jnp.sum(current_coordinates, dtype=jnp.int32)
-            candidate_initial = (
-                jnp.asarray(0, dtype=jnp.int32),
-                alive_now,
-                edges_now,
-                jnp.asarray(0, dtype=jnp.int32),
-                accepted_total,
-                accepted_steps,
-                accepted_accuracies,
-                tested_accuracies,
-            )
+                neuron_round[index] = round_index
+                neuron_accept[index] = screen_accuracy[(kind, index)]
+        neuron_per_round.append(sum(1 for kind, _ in ordered[:accepted] if not kind))
+        edge_per_round.append(sum(1 for kind, _ in ordered[:accepted] if kind))
+        alive, edge_alive = alive_next, edges_next
+        round_index += 1
+        removed_total = int(n_rec - np.sum(alive))
+        round_counts.append(removed_total)
+        current, _ = runner.accuracy(alive[None, :], edge_alive)
+        round_accuracies.append(current[0].tolist())
 
-            def continue_candidate(candidate_carry):
-                return candidate_carry[0] < retained_at_start
-
-            def test_candidate(candidate_carry):
-                (
-                    position,
-                    accepted_alive,
-                    accepted_edges,
-                    accepted_this_pass,
-                    candidate_total,
-                    candidate_steps,
-                    candidate_accuracies,
-                    candidate_last,
-                ) = candidate_carry
-                coordinate = order[position]
-                if neurons:
-                    trial_alive = accepted_alive.at[coordinate].set(0.0)
-                    trial_edges = induced_edges(trial_alive, accepted_edges)
-                else:
-                    trial_alive = accepted_alive
-                    trial_edges = accepted_edges.at[coordinate].set(0.0)
-                trial_accuracy, _ = evaluate_mask(trial_alive, trial_edges)
-                accepted = jnp.all(trial_accuracy >= target)
-                next_alive = jnp.where(accepted, trial_alive, accepted_alive)
-                next_edges = jnp.where(accepted, trial_edges, accepted_edges)
-                next_total = candidate_total + accepted.astype(jnp.int32)
-                candidate_steps = candidate_steps.at[coordinate].set(
-                    jnp.where(
-                        accepted,
-                        next_total - 1,
-                        candidate_steps[coordinate],
-                    )
-                )
-                candidate_accuracies = candidate_accuracies.at[coordinate].set(
-                    jnp.where(
-                        accepted,
-                        trial_accuracy,
-                        candidate_accuracies[coordinate],
-                    )
-                )
-                candidate_last = candidate_last.at[coordinate].set(trial_accuracy)
-                return (
-                    position + 1,
-                    next_alive,
-                    next_edges,
-                    accepted_this_pass + accepted.astype(jnp.int32),
-                    next_total,
-                    candidate_steps,
-                    candidate_accuracies,
-                    candidate_last,
-                )
-
-            candidate = brainstate.transform.while_loop(
-                continue_candidate, test_candidate, candidate_initial
-            )
-            (
-                _,
-                next_alive,
-                next_edges,
-                accepted_this_pass,
-                next_total,
-                next_steps,
-                next_accuracies,
-                next_last,
-            ) = candidate
-            pass_counts = pass_counts.at[current_pass].set(accepted_this_pass)
-            label = "neuron" if neurons else "edge"
-            retained = jnp.sum(next_alive if neurons else next_edges, dtype=jnp.int32)
-            jax.debug.print(
-                "[20-joint] cycle {cycle} " + label + " pass {pass_number}: "
-                "accepted {accepted}; retained {retained}",
-                cycle=cycle_index + 1,
-                pass_number=current_pass + 1,
-                accepted=accepted_this_pass,
-                retained=retained,
-                ordered=True,
-            )
-            return (
-                accepted_this_pass,
-                next_alive,
-                next_edges,
-                next_total,
-                next_steps,
-                next_accuracies,
-                next_last,
-                pass_counts,
-                current_pass + 1,
-                phase_total + accepted_this_pass,
-            )
-
-        return brainstate.transform.while_loop(continue_pass, run_pass, initial)
-
-    @brainstate.transform.jit
-    def run(alive):
-        edge_alive = alive[edge_rows] * alive[edge_cols]
-        initial = (
-            jnp.asarray(0, dtype=jnp.int32),
-            jnp.asarray(1, dtype=jnp.int32),
-            alive,
-            edge_alive,
-            jnp.asarray(0, dtype=jnp.int32),
-            jnp.asarray(0, dtype=jnp.int32),
-            jnp.full(n_rec, -1, dtype=jnp.int32),
-            jnp.full(rows.size, -1, dtype=jnp.int32),
-            jnp.full((n_rec, n_tasks), jnp.nan, dtype=jnp.float32),
-            jnp.full((rows.size, n_tasks), jnp.nan, dtype=jnp.float32),
-            jnp.full((n_rec, n_tasks), jnp.nan, dtype=jnp.float32),
-            jnp.full((rows.size, n_tasks), jnp.nan, dtype=jnp.float32),
-            jnp.zeros(record_count, dtype=jnp.int32),
-            jnp.zeros(record_count, dtype=jnp.int32),
-            jnp.asarray(0, dtype=jnp.int32),
-            jnp.asarray(0, dtype=jnp.int32),
-        )
-
-        def continue_cycle(carry):
-            cycle_index, edges_accepted_last, *_ = carry
-            return jnp.logical_and(edges_accepted_last > 0, cycle_index < record_count)
-
-        def run_cycle(carry):
-            (
-                cycle_index,
-                _,
-                alive_now,
-                edges_now,
-                neuron_total,
-                edge_total,
-                neuron_steps,
-                edge_steps,
-                neuron_accuracies,
-                edge_accuracies,
-                neuron_last,
-                edge_last,
-                neuron_counts,
-                edge_counts,
-                neuron_pass_index,
-                edge_pass_index,
-            ) = carry
-            neuron_phase = run_phase(
-                alive_now,
-                edges_now,
-                neuron_total,
-                neuron_steps,
-                neuron_accuracies,
-                neuron_last,
-                neuron_counts,
-                neuron_pass_index,
-                cycle_index,
-                neurons=True,
-            )
-            (
-                _,
-                after_neurons,
-                after_neuron_edges,
-                neuron_total,
-                neuron_steps,
-                neuron_accuracies,
-                neuron_last,
-                neuron_counts,
-                neuron_pass_index,
-                _,
-            ) = neuron_phase
-            edge_phase = run_phase(
-                after_neurons,
-                after_neuron_edges,
-                edge_total,
-                edge_steps,
-                edge_accuracies,
-                edge_last,
-                edge_counts,
-                edge_pass_index,
-                cycle_index,
-                neurons=False,
-            )
-            (
-                _,
-                final_neurons,
-                after_edges,
-                edge_total,
-                edge_steps,
-                edge_accuracies,
-                edge_last,
-                edge_counts,
-                edge_pass_index,
-                edges_this_cycle,
-            ) = edge_phase
-            return (
-                cycle_index + 1,
-                edges_this_cycle,
-                final_neurons,
-                after_edges,
-                neuron_total,
-                edge_total,
-                neuron_steps,
-                edge_steps,
-                neuron_accuracies,
-                edge_accuracies,
-                neuron_last,
-                edge_last,
-                neuron_counts,
-                edge_counts,
-                neuron_pass_index,
-                edge_pass_index,
-            )
-
-        final = brainstate.transform.while_loop(continue_cycle, run_cycle, initial)
-        (
-            cycle_count,
-            edges_accepted_last,
-            final_alive,
-            final_edge_alive,
-            neuron_total,
-            edge_total,
-            neuron_steps,
-            edge_steps,
-            neuron_accuracies,
-            edge_accuracies,
-            neuron_last,
-            edge_last,
-            neuron_counts,
-            edge_counts,
-            neuron_pass_count,
-            edge_pass_count,
-        ) = final
-        final_accuracy, final_rates = evaluate_mask(final_alive, final_edge_alive)
-        final_scores, final_task_scores = current_neuron_scores(
-            final_rates, final_alive, final_edge_alive
-        )
-        final_edge_scores, final_edge_task_scores = current_edge_scores(
-            final_rates, final_alive, final_edge_alive
-        )
-        return (
-            cycle_count,
-            edges_accepted_last,
-            final_alive,
-            final_edge_alive,
-            neuron_total,
-            edge_total,
-            neuron_steps,
-            edge_steps,
-            neuron_accuracies,
-            edge_accuracies,
-            neuron_last,
-            edge_last,
-            neuron_counts,
-            edge_counts,
-            neuron_pass_count,
-            edge_pass_count,
-            final_accuracy,
-            final_scores,
-            final_task_scores,
-            final_edge_scores,
-            final_edge_task_scores,
-        )
-
-    (
-        cycle_count,
-        edges_accepted_last,
-        final_alive,
-        final_edge_alive,
-        neuron_total,
-        edge_total,
-        neuron_step,
-        edge_step,
-        neuron_removal_accuracy,
-        edge_removal_accuracy,
-        neuron_last_test_accuracy,
-        edge_last_test_accuracy,
-        neuron_accepted_per_pass,
-        edge_accepted_per_pass,
-        neuron_pass_count,
-        edge_pass_count,
-        final_accuracy,
-        final_scores,
-        final_task_scores,
-        final_edge_scores,
-        final_edge_task_scores,
-    ) = run(jnp.asarray(initial_alive))
-    cycle_count = int(np.asarray(cycle_count))
-    neuron_pass_count = int(np.asarray(neuron_pass_count))
-    edge_pass_count = int(np.asarray(edge_pass_count))
-    final_alive = np.asarray(final_alive, dtype=np.float32)
-    final_edge_alive = np.asarray(final_edge_alive, dtype=np.float32)
-    neuron_step = np.asarray(neuron_step, dtype=int)
-    edge_step = np.asarray(edge_step, dtype=int)
-    neuron_removal_accuracy = np.asarray(neuron_removal_accuracy, dtype=np.float64)
-    edge_removal_accuracy = np.asarray(edge_removal_accuracy, dtype=np.float64)
-    retained = np.flatnonzero(final_alive > 0.0)
-    retained_edges = np.flatnonzero(final_edge_alive > 0.0)
-    accepted = np.flatnonzero(neuron_step >= 0)
-    accepted = accepted[np.argsort(neuron_step[accepted])]
-    accepted_edges = np.flatnonzero(edge_step >= 0)
-    accepted_edges = accepted_edges[np.argsort(edge_step[accepted_edges])]
-    final_scores = np.asarray(final_scores, dtype=np.float64)
-    final_task_scores = np.asarray(final_task_scores, dtype=np.float64)
-    final_edge_scores = np.asarray(final_edge_scores, dtype=np.float64)
-    final_edge_task_scores = np.asarray(final_edge_task_scores, dtype=np.float64)
-    original_live_live = final_alive[rows] * final_alive[cols]
-    original_live_live_count = int(np.sum(original_live_live))
-    active_edge_count = int(np.sum(final_edge_alive))
+    retained = np.flatnonzero(alive > 0.0)
+    retained_edges = np.flatnonzero(edge_alive > 0.0)
+    accepted_neurons = np.flatnonzero(neuron_round >= 0)
+    accepted_neurons = accepted_neurons[np.argsort(neuron_round[accepted_neurons])]
+    accepted_edges = np.flatnonzero(edge_round >= 0)
+    accepted_edges = accepted_edges[np.argsort(edge_round[accepted_edges])]
+    original_live_live = int(np.sum(alive[rows] * alive[cols]))
+    active_edge_count = int(np.sum(edge_alive))
     return {
-        "converged": bool(
-            int(np.asarray(edges_accepted_last)) == 0
-            and (retained.size == 0 or neuron_pass_count > 0)
-        ),
-        "cycle_count": cycle_count,
-        "pass_count": neuron_pass_count,
-        "neuron_pass_count": neuron_pass_count,
-        "edge_pass_count": edge_pass_count,
-        "accepted_per_pass": np.asarray(neuron_accepted_per_pass, dtype=int)[
-            :neuron_pass_count
-        ].tolist(),
-        "neuron_accepted_per_pass": np.asarray(neuron_accepted_per_pass, dtype=int)[
-            :neuron_pass_count
-        ].tolist(),
-        "edge_accepted_per_pass": np.asarray(edge_accepted_per_pass, dtype=int)[
-            :edge_pass_count
-        ].tolist(),
-        "additional_removed": int(np.asarray(neuron_total)),
-        "causally_removed_edges": int(np.asarray(edge_total)),
-        "final_alive_mask": final_alive.astype(int).tolist(),
-        "final_edge_alive_mask": final_edge_alive.astype(int).tolist(),
-        "accepted_neurons": accepted.tolist(),
+        "converged": bool(converged),
+        "cycle_count": round_index,
+        "round_count": round_index,
+        "pass_count": round_index,
+        "neuron_pass_count": round_index,
+        "edge_pass_count": round_index,
+        "accepted_per_pass": list(neuron_per_round),
+        "neuron_accepted_per_pass": list(neuron_per_round),
+        "edge_accepted_per_pass": list(edge_per_round),
+        "round_removed_counts": list(round_counts),
+        "round_accuracies": list(round_accuracies),
+        "additional_removed": int(accepted_neurons.size),
+        "causally_removed_edges": int(accepted_edges.size),
+        "evaluation_count": int(runner.evaluations),
+        "screen_evaluations": int(screen_evaluations),
+        "commit_evaluations": int(commit_evaluations),
+        "batched_call_count": int(runner.calls),
+        "eval_batch": int(runner.batch),
+        "final_alive_mask": alive.astype(int).tolist(),
+        "final_edge_alive_mask": edge_alive.astype(int).tolist(),
+        "accepted_neurons": accepted_neurons.tolist(),
         "accepted_edges": accepted_edges.tolist(),
-        "accepted_accuracies": neuron_removal_accuracy[accepted].tolist(),
-        "accepted_edge_accuracies": edge_removal_accuracy[accepted_edges].tolist(),
-        "final_accuracies": np.asarray(final_accuracy, dtype=np.float64).tolist(),
-        "final_scores": final_scores.tolist(),
-        "final_task_scores": final_task_scores.tolist(),
-        "final_owners": np.argmax(final_task_scores, axis=0).tolist(),
-        "final_edge_scores": final_edge_scores.tolist(),
-        "final_edge_task_scores": final_edge_task_scores.tolist(),
-        "final_edge_owners": np.argmax(final_edge_task_scores, axis=0).tolist(),
+        "accepted_accuracies": neuron_accept[accepted_neurons].tolist(),
+        "accepted_edge_accuracies": edge_accept[accepted_edges].tolist(),
+        "final_accuracies": np.asarray(accuracy, dtype=np.float64).tolist(),
+        "final_scores": scores.tolist(),
+        "final_task_scores": task_scores.tolist(),
+        "final_owners": np.argmax(task_scores, axis=0).tolist(),
+        "final_edge_scores": edge_scores.tolist(),
+        "final_edge_task_scores": edge_task_scores.tolist(),
+        "final_edge_owners": np.argmax(edge_task_scores, axis=0).tolist(),
         "retained_indices": retained.tolist(),
         "retained_edge_indices": retained_edges.tolist(),
-        "retained_single_ablation_accuracies": np.asarray(
-            neuron_last_test_accuracy, dtype=np.float64
-        )[retained].tolist(),
-        "retained_single_edge_ablation_accuracies": np.asarray(
-            edge_last_test_accuracy, dtype=np.float64
-        )[retained_edges].tolist(),
-        "retained_zero_score_count": int(np.sum(final_scores[retained] == 0.0)),
+        "retained_single_ablation_accuracies": neuron_last[retained].tolist(),
+        "retained_single_edge_ablation_accuracies": edge_last[retained_edges].tolist(),
+        "retained_zero_score_count": int(np.sum(scores[retained] == 0.0)),
         "retained_zero_edge_score_count": int(
-            np.sum(final_edge_scores[retained_edges] == 0.0)
+            np.sum(edge_scores[retained_edges] == 0.0)
         ),
-        "stored_edge_count": int(rows.size),
-        "incident_edge_count": int(rows.size - original_live_live_count),
-        "final_original_live_live_edge_count": original_live_live_count,
+        "stored_edge_count": n_edge,
+        "incident_edge_count": int(n_edge - original_live_live),
+        "final_original_live_live_edge_count": original_live_live,
         "causally_removed_live_live_edge_count": int(
-            original_live_live_count - active_edge_count
+            original_live_live - active_edge_count
         ),
         "final_active_edge_count": active_edge_count,
     }
@@ -1425,12 +1630,14 @@ def _analyze_pruning(
     *,
     compact_output: Optional[pathlib.Path] = None,
     benchmark_repetitions: int = 10,
+    eval_batch: int = _DEFAULT_EVAL_BATCH,
 ) -> Dict[str, Any]:
     """Run the complete contribution ranking and causal pruning analysis."""
     _select_safe_frontier(np.array([0]), np.ones((1, config.num_tricks)), target)
     coarse_counts = _coarse_removed_counts(config.n_rec, step_fraction)
+    runner = _ProbeRunner(experiment, config, eval_batch)
     baseline_accuracy, baseline_rates = _evaluate_alive_masks(
-        experiment, config, np.ones((1, config.n_rec), dtype=np.float32)
+        experiment, config, np.ones((1, config.n_rec), dtype=np.float32), runner
     )
     rows, cols, values = EX18._current_topology(experiment)
     scores, task_scores, owners = _contribution_scores(
@@ -1453,7 +1660,7 @@ def _analyze_pruning(
         coarse_checkpoint_count = 1
     else:
         coarse_accuracies, _ = _evaluate_alive_masks(
-            experiment, config, _alive_masks(order, coarse_counts)
+            experiment, config, _alive_masks(order, coarse_counts), runner
         )
         coarse_frontier = _select_safe_frontier(
             coarse_counts, coarse_accuracies, target
@@ -1462,7 +1669,7 @@ def _analyze_pruning(
         refined_count = int(refinement.size)
         if refinement.size:
             refined_accuracies, _ = _evaluate_alive_masks(
-                experiment, config, _alive_masks(order, refinement)
+                experiment, config, _alive_masks(order, refinement), runner
             )
         else:
             refined_accuracies = np.empty((0, config.num_tricks))
@@ -1480,7 +1687,7 @@ def _analyze_pruning(
     initial_alive = np.ones(config.n_rec, dtype=np.float32)
     initial_alive[order[:initial_removed]] = 0.0
     if status == "complete":
-        fixed_point = _joint_fixed_point_prune(
+        fixed_point = _minimize_topology(
             experiment,
             config,
             initial_alive,
@@ -1489,20 +1696,23 @@ def _analyze_pruning(
             cols,
             values,
             experiment.task_mass,
+            eval_batch=eval_batch,
+            runner=runner,
         )
         final_alive = np.asarray(fixed_point["final_alive_mask"], dtype=bool)
         final_owners = np.asarray(fixed_point["final_owners"], dtype=int)
-        accepted_accuracies = np.asarray(
-            fixed_point["accepted_accuracies"], dtype=np.float64
-        ).reshape((-1, config.num_tricks))
         initial_position = int(np.flatnonzero(counts == initial_removed)[0])
-        fixed_point_counts = np.arange(
-            initial_removed,
-            initial_removed + fixed_point["additional_removed"] + 1,
-            dtype=int,
+        round_accuracies = np.asarray(
+            fixed_point["round_accuracies"], dtype=np.float64
+        ).reshape((-1, config.num_tricks))
+        fixed_point_counts = np.concatenate(
+            (
+                np.array([initial_removed], dtype=int),
+                np.asarray(fixed_point["round_removed_counts"], dtype=int),
+            )
         )
         fixed_point_accuracies = np.concatenate(
-            (accuracies[initial_position : initial_position + 1], accepted_accuracies),
+            (accuracies[initial_position : initial_position + 1], round_accuracies),
             axis=0,
         )
     else:
@@ -1513,10 +1723,20 @@ def _analyze_pruning(
         fixed_point = {
             "converged": False,
             "cycle_count": 0,
+            "round_count": 0,
             "pass_count": 0,
+            "neuron_pass_count": 0,
+            "edge_pass_count": 0,
             "accepted_per_pass": [],
             "neuron_accepted_per_pass": [],
             "edge_accepted_per_pass": [],
+            "round_removed_counts": [],
+            "round_accuracies": [],
+            "evaluation_count": int(runner.evaluations),
+            "screen_evaluations": 0,
+            "commit_evaluations": 0,
+            "batched_call_count": int(runner.calls),
+            "eval_batch": int(runner.batch),
             "additional_removed": 0,
             "causally_removed_edges": 0,
             "final_alive_mask": initial_alive.astype(int).tolist(),
@@ -1872,12 +2092,15 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
         default=pathlib.Path("compacted_network.npz"),
     )
     parser.add_argument("--compact-benchmark-repetitions", type=int, default=10)
+    parser.add_argument("--eval-batch", type=int, default=_DEFAULT_EVAL_BATCH)
     parser.add_argument("--device", choices=("gpu", "cpu", "auto"), default="gpu")
     args, forwarded = parser.parse_known_args(raw)
     if not math.isfinite(args.prune_target) or not 0.0 <= args.prune_target <= 1.0:
         parser.error("--prune-target must be finite and in [0, 1]")
     if args.compact_benchmark_repetitions < 1:
         parser.error("--compact-benchmark-repetitions must be positive")
+    if args.eval_batch < 1:
+        parser.error("--eval-batch must be positive")
     _coarse_removed_counts(1, args.prune_step_fraction)
     backend = _bind_device(args.device)
     has_task_style = any(
@@ -1900,6 +2123,7 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
             args.prune_step_fraction,
             compact_output=args.compact_model_output,
             benchmark_repetitions=args.compact_benchmark_repetitions,
+            eval_batch=args.eval_batch,
         )
         analysis["checkpoint_index"] = checkpoint
         analysis["checkpoint_accuracies"] = list(accuracies)
@@ -1916,6 +2140,7 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
             args.prune_step_fraction,
             compact_output=args.compact_model_output,
             benchmark_repetitions=args.compact_benchmark_repetitions,
+            eval_batch=args.eval_batch,
         )
         analysis["checkpoint_index"] = None
         analysis["checkpoint_accuracies"] = None
