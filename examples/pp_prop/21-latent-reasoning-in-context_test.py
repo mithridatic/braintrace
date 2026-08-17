@@ -1535,6 +1535,14 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
     assert "Repeat numeric noise: queries=1; steps=33" in report
     assert "maximum RMS=" in report
     assert "per_step_query_rms" not in report
+    assert "no routes were trained in this run" in report
+    assert "plain routes are trained" not in report
+
+    result["training"]["performed"] = True
+    trained_report = example._render_report(result)
+    assert "plain routes received exact current-window gradients in this run" in (
+        trained_report
+    )
     assert plot_path.read_bytes().startswith(b"\x89PNG")
 
 

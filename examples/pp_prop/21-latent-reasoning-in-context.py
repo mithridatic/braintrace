@@ -2434,6 +2434,17 @@ def _render_report(result: dict[str, object]) -> str:
             f"{training.get('reason', 'unreported')}; updates="
             f"{training.get('optimizer_updates_by_effort', {})}."
         )
+    if training.get("performed") is True:
+        plain_route_line = (
+            "The plain routes received exact current-window gradients in this run; "
+            "they do not carry temporal eligibility."
+        )
+    else:
+        plain_route_line = (
+            "Optimization was disabled, so no routes were trained in this run; when "
+            "enabled, the plain routes receive exact current-window gradients and do "
+            "not carry temporal eligibility."
+        )
     lines = [
         "Example 21 - ARC latent reasoning with pp-prop",
         "",
@@ -2503,8 +2514,7 @@ def _render_report(result: dict[str, object]) -> str:
             f"({[item.get('parameter') for item in compiler_report.get('excluded_weights', [])]}), "
             f"{compiler_counts.get('warnings', 0)} "
             "warnings, "
-            f"{compiler_counts.get('errors', 0)} errors. The plain routes are trained; "
-            "they do not carry temporal eligibility."
+            f"{compiler_counts.get('errors', 0)} errors. {plain_route_line}"
         ),
         "",
         "Frozen exact ARC results:",
