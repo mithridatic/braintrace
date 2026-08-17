@@ -25,7 +25,7 @@ _TARGETS: tuple[LaunchTarget, ...] = (
 _IMAGE_ID_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
 _HEAD_PATTERN = re.compile(r"[0-9a-f]{40}")
 _DEFAULT_IMAGE = "braintrace-gpu:0.11.0-py314"
-_GATE_MODULE = "examples/pp_prop/latent_workspace_binding_gate.py"
+_GATE_MODULE = "examples.pp_prop.latent_workspace_binding_gate"
 
 
 class ProvenanceError(RuntimeError):
@@ -880,6 +880,7 @@ def _validate_preflight_semantics(
     expected_tail = [
         image_id,
         "python",
+        "-m",
         _GATE_MODULE,
         "--target",
         target,
@@ -1407,7 +1408,7 @@ def gate_command(
         container_environment=explicit,
         gpu=True,
     )
-    command.extend(["python", _GATE_MODULE])
+    command.extend(["python", "-m", _GATE_MODULE])
     if config.target == "formal_gate_a":
         if set(admission_manifests or {}) != {"one_update", "stability_256"}:
             raise ProvenanceError("formal Gate A requires both admission manifests")

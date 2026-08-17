@@ -499,6 +499,64 @@ def test_target_commands_are_fixed_without_topology_or_budget_knobs(
 
 
 @pytest.mark.parametrize(
+    "target", ["one_update", "stability_256", "formal_gate_a"]
+)
+def test_gate_commands_use_importable_package_module_boundary(
+    tmp_path: Path, target: str
+) -> None:
+    config = _config(tmp_path, target)
+    paths = launcher.target_paths(config, _HEAD, target)
+    admission_manifests = None
+    if target == "formal_gate_a":
+        admission_manifests = {
+            name: launcher.target_paths(config, _HEAD, name).manifest
+            for name in ("one_update", "stability_256")
+        }
+
+    command = launcher.gate_command(
+        config,
+        image_id=_IMAGE_ID,
+        head=_HEAD,
+        paths=paths,
+        git_dir_in_container="/git-common/worktrees/gate",
+        admission_manifests=admission_manifests,
+    )
+    python_index = command.index("python")
+
+    assert command[python_index : python_index + 3] == [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_binding_gate",
+    ]
+
+
+def test_authenticated_preflight_revalidates_package_module_invocation(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path, "one_update")
+    manifest = launcher.launch(
+        config, command_runner=FakeRunner(config.repo_root, "one_update")
+    )
+    preflight = launcher.load_strict_json(
+        launcher.target_paths(config, _HEAD, "one_update").preflight
+    )
+    command = preflight["planned_gate"]["argv"]
+    python_index = command.index("python")
+    assert command[python_index : python_index + 3] == [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_binding_gate",
+    ]
+    assert launcher.load_authenticated_admission(
+        manifest,
+        target="one_update",
+        head=_HEAD,
+        image_id=_IMAGE_ID,
+        repo_root=config.repo_root,
+    )["admission"]["target"] == "one_update"
+
+
+@pytest.mark.parametrize(
     "mutation",
     [
         "worktree_mount",
