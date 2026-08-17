@@ -637,14 +637,25 @@ single 10-cycles and leaves 100,224 unused; no cycle may be repeated to create
 an effectively unbounded stream. The same 512 validation episodes are used at
 all four efforts and do not consume the catalog four times.
 
-The catalog/split seed is `20260818`. Training uses episode/presentation seed
-`32021`; validation uses episode/presentation seed `92021`. The first 262,144
-positions of the seeded catalog permutation are the training mapping IDs and
-the next 512 positions are the validation mapping IDs. For global episode
-schedule index `i`, query color is `i mod 10`, making each split as balanced as
-its integer size permits without another random stream. Training effort order
-is the deterministic cycle `(1, 2, 4, 8)` repeated exactly 1,024 times; it uses
-no effort-selection RNG.
+The catalog/split seed is `20260818`. Mapping IDs use the Gate A affine
+algorithm with modulus `9!`: `brainstate.random.RandomState(20260818)` draws
+`offset` uniformly from `[0, 9!)` and `multiplier` from `[1, 9!)`; while
+`gcd(multiplier, 9!) != 1`, update
+`multiplier = multiplier % (9! - 1) + 1`; then catalog position `i` has ID
+`(offset + multiplier * i) mod 9!`. The first 262,144 positions are the training
+mapping IDs and the next 512 are the validation mapping IDs. A cycle ID is the
+standard lexicographic Lehmer rank of a permutation `(p_1, ..., p_9)` of
+`1..9`, anchored at zero: its visitation order is
+`0, p_1, ..., p_9, 0`, which defines `f` on all ten colors.
+
+Training uses episode/presentation seed `32021`; validation uses
+episode/presentation seed `92021`. For each split, one
+`brainstate.random.RandomState(seed).rand(count, 10)` score row per episode is
+converted to its demonstration order by `np.argsort(..., axis=1,
+kind="stable")`. For global episode schedule index `i`, query color is
+`i mod 10` and consumes no random draw, making each split as balanced as its
+integer size permits. Training effort order is the deterministic cycle
+`(1, 2, 4, 8)` repeated exactly 1,024 times; it uses no effort-selection RNG.
 
 The shuffled-output control tests color rotations `s = 1..9` in ascending
 order, with `g_s(c) = (f(c) + s) mod 10`, and selects the first whose ten
