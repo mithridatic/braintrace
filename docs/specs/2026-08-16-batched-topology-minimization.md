@@ -171,12 +171,15 @@ Each round:
    1-minimal and the search is done. That screen *is* the terminal
    single-ablation certificate; it is not a separate pass.
 3. **Accept.** Order the individually-safe set ascending by contribution score,
-   then index. Try removing the whole prefix at once. If every task stays at or
-   above target, accept all of it; otherwise binary-search the largest prefix
-   length whose simultaneous removal is verified safe. Then retry the leftover
+   then index, and find the largest prefix whose simultaneous removal is
+   verified safe. Because a batched evaluator costs about the same for one mask
+   as for a full batch, the prefix length is found by sweeping `eval_batch`
+   candidate lengths across the interval in one call rather than by bisecting
+   one length at a time: the interval narrows by a factor of the batch per call
+   instead of by two, and no padding row is wasted. Then retry the leftover
    against the newly reduced mask, and keep going until the safe set is drained.
    A screen costs one evaluation per retained coordinate, so it is worth several
-   cheap prefix probes to postpone the next one.
+   prefix sweeps to postpone the next one.
 4. Removing a neuron disables its incident edges in the same step, as before: a
    structural consequence, not a causal claim, requiring no separate trial.
 
@@ -188,18 +191,20 @@ coordinate is dropped. Acceptance is decided by measured probe accuracy at every
 step; contribution scores only order the prefix and never decide a removal.
 
 **Termination, without any monotonicity assumption.** A prefix of length one is
-known safe: its single coordinate was screened safe against this very mask. So
-every non-terminal round removes at least one coordinate, the retained set
-strictly shrinks, and the search terminates in at most `n_rec + n_edges` rounds.
+screened safe against the round's starting mask, so a round normally removes at
+least one coordinate and the retained set strictly shrinks. When a drained retry
+finds even its head coordinate no longer removable, that measurement replaces
+the screen's and the coordinate is dropped, which also strictly shrinks the work
+left. Either way the search terminates in at most `n_rec + n_edges` rounds.
 The existing iteration cap is retained as a backstop. The empty screen is the
 stopping condition and simultaneously the certificate.
 
 **Complexity caveat.** Delta debugging's efficiency bound assumes the safety
 predicate is monotone in the removal set, and the superseded specification
 correctly notes that accuracy under lesions is not monotone. Without
-monotonicity the binary search finds *a* safe prefix rather than provably the
-longest, which costs an extra round and nothing else. Termination and
-1-minimality are unaffected; only the speedup is empirical rather than proven.
+monotonicity the sweep finds *a* safe prefix rather than provably the longest,
+which costs an extra round and nothing else. Termination and 1-minimality are
+unaffected; only the speedup is empirical rather than proven.
 
 ## Where the compiled boundary sits
 
@@ -256,7 +261,8 @@ changes in the `neuron_pruning` mapping:
 `accepted_accuracies` needs one explicit note. It used to be the accuracy of the
 mask immediately after each single accepted removal, making a cumulative curve
 with one point per removed coordinate. It is now each coordinate's *screen*
-accuracy — its single ablation against that round's accepted mask. Same shape,
+accuracy — its single ablation against the mask as it stood at the start of the
+round in which it was accepted. Same shape,
 same units, same honest answer to "what did removing this cost", but the
 accuracy-versus-retained-count curve behind the second figure panel becomes one
 point per round rather than one per coordinate. It is coarser by design.
