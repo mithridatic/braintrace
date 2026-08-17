@@ -616,10 +616,70 @@ rather than triggering an unplanned width, budget, or dataset sweep.
 
 ### Required BPTT-control result
 
-Pending. Before Stage 2 is merged, replace this paragraph with the exact
-command/config/artifact and one of the interpretation-gate outcomes. Record
-both behavioral validation and the finite-window gradient measurement. A
-whole-sequence pp-prop VJP does not satisfy this requirement.
+Exact command, executed from the clean worktree root:
+
+```powershell
+docker compose run --rm -e BRAINTRACE_SOURCE_COMMIT=f0e170d299fa5b99de0bd6f4467a9f0eba16077f -e BRAINTRACE_SOURCE_DIRTY=0 gpu python examples/pp_prop/latent_workspace_binding_control.py --output var/example21-binding-control/f0e170d-preregistered-full.json --training-updates 10000 --batch-size 64 --validation-episodes 512 --gap-steps 1 --neuron-count 2048 --recurrent-edges 16384 --readout-width 128 --color-rank 16 --learning-rate 0.003 --gradient-chunk-size 1
+```
+
+Completed on the clean source commit
+`f0e170d299fa5b99de0bd6f4467a9f0eba16077f` with the production topology and
+the complete preregistered evidence regime: 2,048 neurons, 16,384 recurrent
+edges, readout width 128, color rank 16, four bindings, a one-tick gap, batch
+64, 10,000 identical optimizer updates per arm, 512 held-out episodes, learning
+rate 0.003, pp-prop trace decay 0.9, and finite-window chunk size 1. The run used
+640,000 unique training mappings and 512 unique validation mappings with zero
+overlap. Intact, shuffled, and no-context streams were timing matched, and the
+BPTT and pp-prop arms began from the byte-identical parameter digest
+`8ba7de55710a7ec6b75783f88fe67e66a38dcd826fd46e2a13929636a6241392`.
+
+The retained strict-JSON artifact is
+`var/example21-binding-control/f0e170d-preregistered-full.json`, SHA-256
+`d7c921ee9c23db81e0b6f7cefdd7ac47169f71243b4441ca442e43d1ac4f08fe`.
+It records `source.dirty=false`, JAX 0.11.0 on `cuda:0`, all seeds and schedule
+digests, complete loss curves, parameter movement, compiler diagnostics, and
+allocator statistics.
+
+Exact BPTT did **not** bind: intact validation was `131/512 = 0.255859`,
+shuffled was `115/512 = 0.224609`, and the pairing gap was only `0.031250`, far
+below the preregistered `0.80` intact and `0.25` gap gate. No-context accuracy
+was `48/512 = 0.093750`. Its held training probe also failed to bind
+(`0.208984` intact versus `0.210938` shuffled), so the result is not explained
+only by held-out mapping generalization. Production pp-prop likewise failed:
+intact was `114/512 = 0.222656`, shuffled was `131/512 = 0.255859`, the gap was
+`-0.033203`, and no-context was `46/512 = 0.089844`.
+
+Both optimizers were active. BPTT loss moved from `2.303612` to `1.428634`
+with a final-64 mean of `1.400210`; pp-prop moved from `2.303612` to `1.417677`
+with a final-64 mean of `1.421543`. Feed-forward, recurrent, readout, and color
+decoder parameter groups all had substantial nonzero movement. Convergence
+near `ln(4) = 1.386294`, together with chance-level pairing and roughly
+`0.09` no-context performance, is the expected fingerprint of learning the
+episode's four-value set without learning which value belongs to the query key.
+
+The learning-rule check used `chunked_online_param_gradients`, never the
+whole-sequence online helper. With sequence length 6 and chunk size 1, the BPTT
+gradient norm was `3.26644`, the pp-prop norm was `3.26623`, and total relative
+deviation was `0.00450354`. The temporally exposed feed-forward and recurrent
+groups had relative deviations `0.255812` and `0.143816`, respectively, despite
+high cosine agreement. This preserves the separate finding that pp-prop drops
+temporal credit; it is not the explanation for the BPTT arm's binding failure.
+
+The recorded interpretation is
+`legacy_architecture_necessary_bptt_also_fails_binding`. In the terminology of
+the gate above, the current reservoir lacks the required binding architecture
+even when supplied exact temporal credit, so Stage 2 proceeds with explicit
+`S_K/H_r`. BPTT remains a diagnostic oracle only; pp-prop remains the production
+learner. This one preregistered control establishes failure of the current
+reservoir on the minimal fresh-binding task at the declared topology and
+budget. It is not a theorem that every reservoir or every possible optimizer
+schedule must fail.
+
+The artifact reports 132.127 seconds total wall time: 74.041 seconds for data
+generation, 17.150 seconds for BPTT compile plus 10,000 updates, 20.784 seconds
+for pp-prop compile plus 10,000 updates, and 12.614 seconds for the finite-window
+oracle. Peak device bytes in use were 1,297,731,328 and the peak allocator pool
+was 2,183,135,232 bytes against a 12,884,901,888-byte limit.
 
 ### Required post-change results
 
@@ -639,4 +699,3 @@ Until the corresponding gates pass, this work does not claim:
 - that success at a trained depth extrapolates to a deeper unseen one; or
 - that lower training loss or nonzero pixel accuracy alone is latent
   reasoning.
-
