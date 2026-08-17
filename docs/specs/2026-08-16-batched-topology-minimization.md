@@ -103,15 +103,36 @@ co-located test rather than assumed:
    batch, and the `(batch, n_edge)` scatter intermediate never materializes.
    Only *edge* screening needs the per-row masked product.
 
-**Numerical fidelity, stated precisely.** Trial batching is bitwise identical to
-the serial rollout. Candidate batching leaves the spiking dynamics bitwise
-identical — per-task spike rates match at every batch size, so no threshold
-crossing moves — while the dense readout's reduction order changes, shifting
-logits by up to ~1e-7. The reported quantity is an argmax over logits, which is
-invariant to a perturbation that small except at an exact tie. Accuracy, and
-therefore every acceptance decision and the certificate itself, is unchanged.
-The tests assert bitwise equality on rates and exact equality on predictions,
-and a tolerance only on raw logits.
+**Numerical fidelity, stated precisely, including where it stops holding.** On
+CPU, batching is exact: trial batching reproduces the serial rollout bitwise,
+and candidate batching leaves per-task spike rates bitwise identical at every
+batch size, so no threshold crossing moves. The co-located tests assert exactly
+that.
+
+On GPU it is not exact, and the difference is larger than rounding suggests.
+Batch size changes which kernels XLA selects, and that rounding is occasionally
+enough to move a marginal membrane potential across the spike threshold. One
+flipped spike shifts a logit by about 1e-4. Measured without training on
+untrained networks at 32, 256 and 2,048 neurons, a batched masked model differs
+from its compacted rebuild by up to 1.4e-4 where the unbatched rollout differs
+by 6e-8 — while predictions and per-task accuracies stayed identical in every
+case.
+
+Two consequences, and they point in different directions:
+
+- **The physical-compaction equivalence check keeps the unbatched rollout.** It
+  compares raw logits at `rtol=1e-5` / `atol=1e-6`, which a flipped spike blows
+  straight through, and it is a published fail-closed guarantee that predates
+  this change. It runs a handful of times per analysis and is not on the hot
+  path, so there is nothing to gain by batching it and a real check to lose.
+- **The search batches, because its decisions are accuracy comparisons, not
+  logit comparisons.** Accuracy is an argmax, invariant to perturbations of this
+  size except at an exact tie. What a flipped spike can do is change which
+  coordinate the search removes next — the *path*, not the guarantee. The
+  certificate is a screen measured at the same batch as the search that produced
+  it, so 1-minimality is established under the conditions it was searched under.
+  A run at a different `--eval-batch`, or on a different device, may land on a
+  different 1-minimal mask.
 
 **Where the speedup comes from.** This is a kernel-launch-latency effect, not a
 FLOP effect: the recorded GPU run spends ~17 µs per model step on 2,048 neurons,
@@ -278,8 +299,9 @@ series behind the second figure panel, evaluated in one batched sweep.
 
 Beyond the existing coverage, which stands:
 
-- batched evaluation equals the current serial evaluator element-wise on both
-  logits and per-task rates, for the same masks on a small configuration;
+- batched evaluation equals the pre-batching serial evaluator on both logits and
+  per-task rates, for the same masks on a small configuration, with rates
+  compared bitwise (these tests run on CPU, where the equality is exact);
 - the masked gather/scatter projection equals the sparse operator under an
   all-ones mask, and scatters strictly within a batch row;
 - a candidate batch whose members are genuinely unsafe is still rejected, so
@@ -292,7 +314,8 @@ Beyond the existing coverage, which stands:
   terminal screen;
 - progressive compaction preserves logits within tolerance and fails closed on
   mismatch;
-- `--eval-batch` rejects invalid values and chunking does not change results.
+- `--eval-batch` rejects invalid values, and chunking does not change per-task
+  rates or predictions.
 
 Focused tests must exceed 90 percent statement coverage for Example 20.
 
