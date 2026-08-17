@@ -136,7 +136,7 @@ import pathlib
 import sys
 import time
 from dataclasses import dataclass, replace
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import brainstate
 import braintools
@@ -1427,8 +1427,20 @@ def _train_round(
     return float(np.mean(losses))
 
 
-def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
-    """Run one arm (evolving or control) and collect its full history."""
+def _run_arm(
+    config: _EvolutionConfig,
+    evolve: bool,
+    post_training: Optional[
+        Callable[[_Experiment, Dict[str, Any], _EvolutionConfig], None]
+    ] = None,
+    checkpoint: Optional[
+        Callable[
+            [_Experiment, List[str], _EvolutionConfig, int, Tuple[float, ...]],
+            None,
+        ]
+    ] = None,
+) -> Dict[str, Any]:
+    """Run one arm and optionally inspect its trained experiment post hoc."""
     arm = "evolve" if evolve else "control"
     experiment = _initial_experiment(config)
     topo_rng = np.random.default_rng(config.seed + 2_026)
@@ -1442,6 +1454,8 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
     acc = _evaluate(experiment, config)
     for task, value in enumerate(acc):
         accuracies[task].append(value)
+    if checkpoint is not None:
+        checkpoint(experiment, list(names), config, 0, acc)
     edge_counts = [int(experiment.task_mass.shape[1])]
     for round_index in range(config.n_rounds):
         started = time.perf_counter()
@@ -1449,6 +1463,8 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
         acc = _evaluate(experiment, config)
         for task, value in enumerate(acc):
             accuracies[task].append(value)
+        if checkpoint is not None:
+            checkpoint(experiment, list(names), config, round_index + 1, acc)
         current = int(experiment.task_mass.shape[1])
         if evolve and not config.fixed_budget:
             new_budget = _next_budget(current, min(acc), config)
@@ -1516,6 +1532,8 @@ def _run_arm(config: _EvolutionConfig, evolve: bool) -> Dict[str, Any]:
     }
     result["fetch_accuracy"] = accuracies[FETCH]
     result["roll_over_accuracy"] = accuracies[ROLL_OVER]
+    if post_training is not None:
+        post_training(experiment, result, config)
     return result
 
 
@@ -1773,11 +1791,50 @@ def _plot(
 # --- Entry point ------------------------------------------------------------------
 
 
-def run(config: _EvolutionConfig, plot_output: pathlib.Path) -> Dict[str, Any]:
-    """Run both arms, save the picture, print and return the plain-English report."""
+def run(
+    config: _EvolutionConfig,
+    plot_output: pathlib.Path,
+    *,
+    evolve_posthoc: Optional[
+        Callable[[_Experiment, Dict[str, Any], _EvolutionConfig], None]
+    ] = None,
+    evolve_checkpoint: Optional[
+        Callable[
+            [_Experiment, List[str], _EvolutionConfig, int, Tuple[float, ...]],
+            None,
+        ]
+    ] = None,
+) -> Dict[str, Any]:
+    """Run both structural-evolution arms and report their results.
+
+    Parameters
+    ----------
+    config : _EvolutionConfig
+        Training, task, and topology configuration shared by both arms.
+    plot_output : pathlib.Path
+        Destination for the structural-evolution figure.
+    evolve_posthoc : callable, optional
+        One-shot callback receiving the trained evolving experiment, its
+        assembled result mapping, and ``config``. The callback runs before the
+        control arm and may inspect or lesion the trained evolving model.
+    evolve_checkpoint : callable, optional
+        Callback after each evolving-arm evaluation and before its topology
+        rebuild. Receives the experiment, task names, configuration, checkpoint
+        index, and per-task accuracies.
+
+    Returns
+    -------
+    dict
+        Configuration, per-arm results, report, plot path, and elapsed time.
+    """
     started = time.perf_counter()
     with brainstate.environ.context(dt=1.0 * u.ms):
-        evolve = _run_arm(config, evolve=True)
+        evolve = _run_arm(
+            config,
+            evolve=True,
+            post_training=evolve_posthoc,
+            checkpoint=evolve_checkpoint,
+        )
         control = _run_arm(config, evolve=False)
     plot_path = plot_output.resolve()
     _plot(evolve, control, plot_path)
@@ -1793,8 +1850,36 @@ def run(config: _EvolutionConfig, plot_output: pathlib.Path) -> Dict[str, Any]:
     }
 
 
-def main(argv: Optional[list] = None) -> Dict[str, Any]:
-    """Parse arguments and run the structural-evolution example."""
+def main(
+    argv: Optional[list] = None,
+    *,
+    evolve_posthoc: Optional[
+        Callable[[_Experiment, Dict[str, Any], _EvolutionConfig], None]
+    ] = None,
+    evolve_checkpoint: Optional[
+        Callable[
+            [_Experiment, List[str], _EvolutionConfig, int, Tuple[float, ...]],
+            None,
+        ]
+    ] = None,
+) -> Dict[str, Any]:
+    """Parse arguments and run the structural-evolution example.
+
+    Parameters
+    ----------
+    argv : list, optional
+        Command-line arguments. Uses ``sys.argv`` when omitted.
+    evolve_posthoc : callable, optional
+        One-shot callback forwarded to :func:`run` for the trained evolving
+        arm. Ordinary Example 18 runs leave this unset.
+    evolve_checkpoint : callable, optional
+        Pre-rebuild evaluation callback forwarded to :func:`run`.
+
+    Returns
+    -------
+    dict
+        Structural-evolution run result.
+    """
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--smoke",
@@ -1817,6 +1902,32 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
         type=float,
         default=None,
         help="adaptive controller target for the weakest trick (default 0.95)",
+    )
+    parser.add_argument(
+        "--n-rounds",
+        type=int,
+        default=None,
+        help="number of training/topology rounds (default 5)",
+    )
+    parser.add_argument(
+        "--trials-per-round",
+        type=int,
+        default=None,
+        help="interleaved training trials in each round (default 800)",
+    )
+    parser.add_argument(
+        "--neurons",
+        dest="n_rec",
+        type=int,
+        default=None,
+        help="recurrent-neuron count (default 1024)",
+    )
+    parser.add_argument(
+        "--initial-edges",
+        dest="n_edges",
+        type=int,
+        default=None,
+        help="initial recurrent-edge count (default 1024)",
     )
     parser.add_argument(
         "--max-edges",
@@ -1863,6 +1974,10 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
     overrides: Dict[str, Any] = {"fixed_budget": args.fixed_budget}
     for name in (
         "target_accuracy",
+        "n_rounds",
+        "trials_per_round",
+        "n_rec",
+        "n_edges",
         "max_edges",
         "min_edges",
         "growth_factor",
@@ -1875,7 +1990,12 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
             overrides[name] = value
     if overrides.get("task_style") == _CONTEXT_STYLE and "num_tricks" not in overrides:
         overrides["num_tricks"] = 4
-    return run(replace(base, **overrides), args.plot_output)
+    return run(
+        replace(base, **overrides),
+        args.plot_output,
+        evolve_posthoc=evolve_posthoc,
+        evolve_checkpoint=evolve_checkpoint,
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,45 @@
+# GPU runtime for the pp_prop examples and benchmark drivers.
+#
+# The XLA compilation cache is the reason this file exists. The image sets
+# JAX_COMPILATION_CACHE_DIR=/cache/jax, but that path is container-local: a
+# throwaway run with nothing mounted over it discards the cache on exit and the
+# next run recompiles and re-autotunes every kernel. XLA's GPU backend selects
+# kernels by benchmarking candidate variants on the device, so a cold cache is
+# the dominant cost of a short run.
+#
+# Declaring the named volume here means every `docker compose run` gets the
+# shared cache automatically, with no wrapper and no volume flags to remember.
+#
+#   docker compose run --rm gpu python examples/pp_prop/18-structural-evolution.py
+#   docker compose run --rm gpu python examples/pp_prop/19-structural-evolution-cfsg-symmetry.py
+#
+# Concurrent `docker compose run` invocations share the one cache volume and so
+# warm each other.
+
+services:
+  gpu:
+    image: braintrace-gpu:0.11.0-py314
+    build:
+      context: .
+      dockerfile: .github/containers/braintrace-gpu/Dockerfile
+      args:
+        BRAINTRACE_SOURCE_COMMIT: ${BRAINTRACE_SOURCE_COMMIT:-uncommitted}
+    working_dir: /work
+    volumes:
+      - jax-compilation-cache:/cache/jax
+      - .:/work
+      - ./temp:/results
+    environment:
+      BRAINTRACE_IMAGE_DIGEST: ${BRAINTRACE_IMAGE_DIGEST:-}
+      BRAINTRACE_SOURCE_COMMIT: ${BRAINTRACE_SOURCE_COMMIT:-}
+      BRAINTRACE_SOURCE_DIRTY: ${BRAINTRACE_SOURCE_DIRTY:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  jax-compilation-cache:

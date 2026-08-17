@@ -12,8 +12,9 @@ companion tutorial at `docs/tutorials/pp_prop.ipynb`.
     python examples/pp_prop/01-basics-lif-integrator.py
 
 Most introductory fixed-size examples run on CPU. Device-aware Examples 16, 17,
-and 21 document their defaults below. The digit examples require the examples
-extra:
+20, and 21 document their defaults below. Example 20 defaults to GPU and fails
+closed when JAX cannot bind one; pass `--device cpu` for an explicit host run.
+The digit examples require the examples extra:
 
     pip install "braintrace[examples]"
 
@@ -35,6 +36,7 @@ requested neuron count and update budget.
 | Configurable sparse scaling               | 16                 |
 | Delayed-cue temporal credit               | 17                 |
 | Topology (fixed vs evolved)               | 18                 |
+| Post-training topology analysis           | 19, 20             |
 | In-context rule induction                 | 21                 |
 | Latent workspace and contextual memory    | 21                 |
 
@@ -61,7 +63,33 @@ requested neuron count and update budget.
 | 17 | `17-temporal-credit-benchmark.py` | Paired delayed-cue recall and recurrent-credit evidence |
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
-| 21 | `21-latent-reasoning-in-context.py` | In-context bijection reasoning with factored memory and latent-depth interventions |
+| 20 | `20-post-training-neuron-pruning.py` | Joint causal neuron/edge lesions and a coordinate-wise locally minimal network after Example 18 |
+| 21 | `21-latent-reasoning-in-context.py` | In-context ARC reasoning with recurrent spiking context and a variable-depth latent workspace |
+
+### Post-training neuron-and-edge pruning
+
+Example 20 defaults to Example 18's four-task temporal-credit configuration and
+starts pruning at the first pre-rebuild checkpoint where every task meets the
+requested target. After a coarse-to-fine starting sweep, it individually tests
+retained neurons and retained-to-retained recurrent edges, accepts safe
+removals, reranks, and alternates both phases until neither can remove another
+coordinate. It then physically rebuilds the surviving feed-forward, recurrent,
+and readout arrays into a compact inference model, verifies its logits against
+the masked checkpoint, and saves a reloadable NumPy bundle. A larger sparse
+starting graph can be requested directly:
+
+    python examples/pp_prop/20-post-training-neuron-pruning.py --neurons 2048 --initial-edges 16384 --n-rounds 12 --compact-model-output compacted_network.npz
+
+The default device is GPU. `--device gpu` refuses silent CPU fallback,
+`--device cpu` deliberately pins the host, and `--device auto` accepts whatever
+JAX selects. For repeated container runs, mount a persistent directory and set
+`JAX_COMPILATION_CACHE_DIR` to that mount; setting
+`JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0` also retains short compilations.
+The fixed-point phase can be much slower than the initial sweep because every
+retained neuron and edge receives a causal ablation test in the terminal
+passes. The report separates warmed full-probe timing from compilation and
+reports persistent parameter-plus-CSR storage for the masked and compact
+models.
 
 ### In-context latent reasoning
 
@@ -71,15 +99,15 @@ repository's CUDA-enabled environment with:
 
     python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu
 
-For a reduced CPU iteration check that still exercises every latent depth,
-binding count, context condition, shuffled-memory arm, and reported measurement:
+For a reduced CPU iteration check that exercises the data, scoring, recurrent
+reasoning levels, causal controls, and trajectory report:
 
     python examples/pp_prop/21-latent-reasoning-in-context.py --smoke --device cpu --figure latent-reasoning-smoke.png
 
 The CLI enforces the requested JAX platform but does not itself detect whether
-it is running inside Docker. See
-`docs/specs/2026-08-16-pp-prop-latent-reasoning.md` for the current production
-qualification status and claim boundary.
+it is running inside Docker. See the active OpenSpec change and
+`docs/specs/2026-08-16-pp-prop-latent-reasoning.md` for the implementation and
+qualification boundaries.
 
 ### Configurable benchmark
 

@@ -10,6 +10,46 @@ docker build --file .github/containers/braintrace-gpu/Dockerfile `
   --tag braintrace-gpu:0.11.0-py314 .
 ```
 
+## Always mount the XLA compilation cache
+
+The image sets `JAX_COMPILATION_CACHE_DIR=/cache/jax`, but that path is
+container-local: a `--rm` run with nothing mounted over it discards the cache on
+exit and the next run recompiles and re-autotunes every kernel from scratch.
+XLA's GPU backend picks kernels by benchmarking candidate variants on the device,
+so this is the dominant cost of a cold run.
+
+Prefer Compose. `docker-compose.yml` in the repository root declares the cache
+as a named volume, so the mount happens with no flags to remember:
+
+```bash
+docker compose run --rm gpu python examples/pp_prop/18-structural-evolution.py
+```
+
+Concurrent `docker compose run` invocations share the one volume and warm each
+other. Measured on a 512x512 tanh-matmul jit: 3.160 s cold, 0.019 s warm.
+
+For one-off runs outside Compose there are wrappers that supply the same mount:
+
+```powershell
+.github\containers\braintrace-gpu\run-gpu-container.ps1 `
+  -Mount "${PWD}:/work" -- python examples/pp_prop/18-structural-evolution.py
+```
+
+```bash
+.github/containers/braintrace-gpu/run-gpu-container.sh \
+  --mount "$PWD:/work" -- python examples/pp_prop/18-structural-evolution.py
+```
+
+The PowerShell wrapper requires `--` before the in-container command, otherwise
+PowerShell binds the first token to `-CacheDirectory`. The wrappers default to a
+shared host cache (`%LOCALAPPDATA%\braintrace\jax-cache` /
+`~/.cache/braintrace/jax-cache`) and accept `-Env`/`--env` and
+`-WorkDir`/`--workdir` for the provenance variables the benchmark drivers
+require.
+
+Raw `docker run` remains valid, but nothing mounts the cache for you: add
+`--volume "<hostCache>:/cache/jax"` yourself or the run compiles cold.
+
 The base is pinned to the linux/amd64 manifest for Python 3.14.0 slim-trixie.
 JAX/JAXlib are pinned to 0.11.0 and the reviewed scientific dependencies are
 exactly versioned. A benchmark run must pass the host-observed image ID through
