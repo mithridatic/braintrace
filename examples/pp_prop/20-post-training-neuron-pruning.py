@@ -794,16 +794,53 @@ class _ProbeRunner:
 
 
 def _probe_logit_evaluator(experiment: Any, config: Any):
-    """Build a single-mask fixed-probe logit evaluator.
+    """Build a one-trial-at-a-time fixed-probe logit evaluator.
 
-    A thin adapter over :func:`_probe_evaluator` so the compaction
-    verification and benchmark paths keep their existing interface.
+    Deliberately unbatched. The compaction check compares a masked wide model
+    against a narrow rebuilt one at ``rtol=1e-5`` / ``atol=1e-6``, and on GPU a
+    different batch size selects different kernels, whose rounding is enough to
+    move a marginal membrane potential across threshold. One flipped spike
+    shifts a logit by about 1e-4, far outside that tolerance. Batching the
+    trials is exact on CPU but not across GPU kernel choices, so the equivalence
+    check and its benchmark keep the original rollout; only the search, whose
+    decisions are accuracy comparisons rather than logit comparisons, batches.
     """
-    evaluate = _probe_evaluator(experiment, config, 1, per_row_edges=False)
+    trials, windows = _probe_arrays(config)
+    model = experiment.model
+    rec_weight = model.rec_syn.comm.weight
+    base_params = dict(rec_weight.value)
+    base_values = base_params["weight"]
 
     def evaluate_mask(alive, edge_alive):
-        logits, rates = evaluate(alive[None, :], edge_alive)
-        return logits[0], rates[0]
+        masked_params = dict(base_params)
+        masked_params["weight"] = base_values * edge_alive
+        rec_weight.value = masked_params
+
+        def evaluate_trial(spikes, window):
+            brainstate.nn.reset_all_states(model, batch_size=1)
+
+            def step(x):
+                model.ff_syn(x)
+                model.rec_syn(model.neu.get_spike() * alive)
+                model.neu(0.0 * u.mA)
+                masked_spikes = model.neu.get_spike() * alive
+                return model.readout(masked_spikes), masked_spikes
+
+            outputs, neuron_spikes = brainstate.transform.for_loop(step, spikes)
+            logits = jnp.sum(outputs * window[:, None, None], axis=0)
+            logits = logits / jnp.maximum(jnp.sum(window), 1.0)
+            return logits[0], jnp.mean(neuron_spikes, axis=(0, 1))
+
+        # Size the states before the trial loop carries them: the search leaves
+        # the model at its candidate batch, and the per-trial reset inside the
+        # body must not change the carry shape.
+        brainstate.nn.reset_all_states(model, batch_size=1)
+        logits, rates = brainstate.transform.for_loop(evaluate_trial, trials, windows)
+        task_rates = rates.reshape(
+            config.num_tricks, config.eval_trials_per_task, config.n_rec
+        ).mean(axis=1)
+        rec_weight.value = base_params
+        return logits, task_rates
 
     return evaluate_mask
 
@@ -1585,7 +1622,14 @@ def _analyze_compaction(
     compact_meets_target = bool(np.all(compact_accuracy >= target))
     if not (predictions_identical and logits_close and compact_meets_target):
         raise RuntimeError(
-            "physical compaction failed masked-model equivalence or target accuracy"
+            "physical compaction failed masked-model equivalence or target "
+            f"accuracy: predictions_identical={predictions_identical}, "
+            f"logits_close={logits_close} "
+            f"(max abs error "
+            f"{float(np.max(np.abs(masked_logits - compact_logits), initial=0.0)):.3e}), "
+            f"compact_meets_target={compact_meets_target} "
+            f"(masked {np.asarray(masked_accuracy).tolist()}, "
+            f"compact {np.asarray(compact_accuracy).tolist()}, target {target})"
         )
     original_storage = _inference_storage(experiment.model)
     compact_storage = _inference_storage(compact["experiment"].model)
