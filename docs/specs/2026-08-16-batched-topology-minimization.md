@@ -135,11 +135,15 @@ is over half a gigabyte. The batched rollout uses
 the primitive AGENTS.md rule 10 names for a loop with an explicit carry and
 which bounds the rollout's memory at one `(batch, n_rec)` array.
 
-**Compile once.** The evaluator is memoized per model, configuration and batch
-size, and every call is padded to that fixed batch size with copies of the
-current accepted mask whose outputs are discarded. One compiled program serves
-the baseline evaluation, the frontier sweep, every screen, every commit test and
-the compaction verification, instead of the eight that a run compiles today.
+**Compile once per mask mode, not once per call site.** The probe trials are
+memoized per configuration, and one runner holds the compiled programs for the
+whole search: a shared-edge-mask rollout, a per-row rollout, and one screen
+driver for each. Every call is padded to a fixed candidate batch with copies of
+the current accepted mask, whose outputs are discarded, so the baseline
+evaluation, the frontier sweep, every screen and every commit test reuse those
+same programs instead of compiling a fresh one at each leading mask count. The
+compaction verification and benchmark still compile their own single-mask
+programs, as they must — they run against a different, narrower model.
 
 `--eval-batch` bounds the candidate batch (default 32). Peak memory is roughly
 57 KB per model batch row, so the default is about 120 MB at the recorded

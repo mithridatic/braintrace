@@ -933,15 +933,21 @@ def _accept_prefix(safe_test, alive, edge_alive, ordered, rows, cols):
         Number of coordinates removed.
     evaluations : int
         Causal probe evaluations spent deciding the prefix.
+    head_accuracy : numpy.ndarray or None
+        Measured accuracy of removing the first coordinate alone, present only
+        when nothing was accepted. The screen called that coordinate safe and
+        this measurement did not, so the caller must record this number rather
+        than the screen's, or the reported certificate would contradict itself.
     """
     total = len(ordered)
     if total == 0:
-        return alive, edge_alive, 0, 0
+        return alive, edge_alive, 0, 0, None
     trial_alive, trial_edges = _apply_removals(alive, edge_alive, ordered, rows, cols)
-    safe, _ = safe_test(trial_alive, trial_edges)
+    safe, accuracy = safe_test(trial_alive, trial_edges)
     if safe:
-        return trial_alive, trial_edges, total, 1
+        return trial_alive, trial_edges, total, 1, None
     evaluations = 1
+    head_accuracy = accuracy if total == 1 else None
     best = None
     low, high = 1, total - 1
     while low <= high:
@@ -949,15 +955,17 @@ def _accept_prefix(safe_test, alive, edge_alive, ordered, rows, cols):
         trial_alive, trial_edges = _apply_removals(
             alive, edge_alive, ordered[:middle], rows, cols
         )
-        safe, _ = safe_test(trial_alive, trial_edges)
+        safe, accuracy = safe_test(trial_alive, trial_edges)
         evaluations += 1
         if safe:
             best, low = (trial_alive, trial_edges, middle), middle + 1
         else:
+            if middle == 1:
+                head_accuracy = accuracy
             high = middle - 1
     if best is None:
-        return alive, edge_alive, 0, evaluations
-    return best[0], best[1], best[2], evaluations
+        return alive, edge_alive, 0, evaluations, head_accuracy
+    return best[0], best[1], best[2], evaluations, None
 
 
 def _minimize_topology(
@@ -1065,6 +1073,9 @@ def _minimize_topology(
     while round_index < cap:
         current, rates = runner.accuracy(alive[None, :], edge_alive)
         accuracy = current[0]
+        if round_index:
+            round_counts.append(int(n_rec - np.sum(alive)))
+            round_accuracies.append(accuracy.tolist())
         scores, task_scores, _ = _contribution_scores(
             rates[0],
             readout,
@@ -1092,7 +1103,12 @@ def _minimize_topology(
                 for position, index in enumerate(retained)
                 if safe[position]
             ]
-        if active.size:
+        # Screen edges only once no neuron is removable. Removing a neuron
+        # disables its incident edges for free, so screening every active edge
+        # first would spend thousands of causal trials on edges that a later
+        # neuron removal deletes anyway. The terminal round still screens both,
+        # which is what makes it the certificate.
+        if active.size and not candidates:
             screened = runner.screen(alive, edge_alive, active, edges=True)
             screen_evaluations += int(active.size)
             edge_last[active] = screened
@@ -1109,12 +1125,21 @@ def _minimize_topology(
         ordered = [(kind, index) for _, kind, index, _ in candidates]
         screen_accuracy = {(kind, index): acc for _, kind, index, acc in candidates}
         while ordered:
-            alive_next, edges_next, accepted, spent = _accept_prefix(
+            alive_next, edges_next, accepted, spent, head = _accept_prefix(
                 safe_test, alive, edge_alive, ordered, rows, cols
             )
             commit_evaluations += spent
             if accepted:
                 break
+            # The screen called this coordinate safe and the commit measurement
+            # did not. Record the measurement, so a search that stops here
+            # reports a certificate every one of whose rows is sub-target.
+            kind, index = ordered[0]
+            if head is not None:
+                if kind:
+                    edge_last[index] = head
+                else:
+                    neuron_last[index] = head
             ordered = ordered[1:]
         if not ordered:
             converged = True
@@ -1130,10 +1155,6 @@ def _minimize_topology(
         edge_per_round.append(sum(1 for kind, _ in ordered[:accepted] if kind))
         alive, edge_alive = alive_next, edges_next
         round_index += 1
-        removed_total = int(n_rec - np.sum(alive))
-        round_counts.append(removed_total)
-        current, _ = runner.accuracy(alive[None, :], edge_alive)
-        round_accuracies.append(current[0].tolist())
 
     retained = np.flatnonzero(alive > 0.0)
     retained_edges = np.flatnonzero(edge_alive > 0.0)

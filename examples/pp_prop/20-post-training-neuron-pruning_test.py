@@ -667,13 +667,62 @@ def test_minimization_counts_screen_and_commit_evaluations(monkeypatch):
         np.zeros((1, 2)),
         runner=_OracleRunner(),
     )
-    # Round 1 screens 3 neurons and 2 edges, round 2 screens 3 and 1,
-    # the terminal round screens the 2 retained neurons and no edge.
-    assert result["screen_evaluations"] == 3 + 2 + 3 + 1 + 2
+    # Round 1 screens 3 neurons, finds none safe, and falls through to 2 edges.
+    # Round 2 finds a safe neuron and never reaches the edges. The terminal
+    # round screens the 2 retained neurons; no edge is active by then.
+    assert result["screen_evaluations"] == 3 + 2 + 3 + 2
     # Both edges screen safe individually but not jointly, so round 1 spends a
     # rejected whole-set test plus one prefix probe; round 2 accepts outright.
     assert result["commit_evaluations"] == 3
     assert result["evaluation_count"] > result["screen_evaluations"]
+
+
+def test_end_to_end_result_is_one_minimal_against_the_real_model(monkeypatch):
+    """Re-verify the published guarantee without the search machinery.
+
+    Every retained neuron and every retained recurrent edge is ablated singly
+    and re-measured through the single-mask evaluator. If any of them is still
+    removable the reported certificate is false, whatever the search recorded.
+    """
+    import brainstate
+    import brainunit as u
+
+    example, config, experiment = _small_experiment()
+    monkeypatch.setattr(example, "_analyze_compaction", lambda *a, **k: {})
+    with brainstate.environ.context(dt=1.0 * u.ms):
+        baseline, _ = example._evaluate_alive_masks(
+            experiment, config, np.ones((1, config.n_rec), dtype=np.float32)
+        )
+        target = float(np.min(baseline))
+        analysis = example._analyze_pruning(
+            experiment,
+            {"trick_names": [f"task{i}" for i in range(config.num_tricks)]},
+            config,
+            target,
+            0.5,
+            eval_batch=4,
+        )
+        fixed_point = analysis["fixed_point"]
+        assert fixed_point["converged"] is True
+        alive = np.asarray(fixed_point["final_alive_mask"], dtype=np.float32)
+        edge_alive = np.asarray(fixed_point["final_edge_alive_mask"], dtype=np.float32)
+        for index in fixed_point["retained_indices"]:
+            trial = alive.copy()
+            trial[index] = 0.0
+            _, accuracy = example._evaluate_probe_logits(
+                experiment, config, trial, edge_alive
+            )
+            assert np.min(accuracy) < target
+        for index in fixed_point["retained_edge_indices"]:
+            trial = edge_alive.copy()
+            trial[index] = 0.0
+            _, accuracy = example._evaluate_probe_logits(
+                experiment, config, alive, trial
+            )
+            assert np.min(accuracy) < target
+    certificate = np.asarray(fixed_point["retained_single_ablation_accuracies"])
+    if certificate.size:
+        assert np.all(np.min(certificate, axis=1) < target)
 
 
 def test_accept_prefix_only_accepts_measured_batches():
@@ -689,7 +738,7 @@ def test_accept_prefix_only_accepts_measured_batches():
         return removed <= 2, np.array([1.0])
 
     ordered = [(0, 0), (0, 1), (0, 2), (0, 3)]
-    alive, edges, accepted, evaluations = example._accept_prefix(
+    alive, edges, accepted, evaluations, head = example._accept_prefix(
         safe_test,
         np.ones(5, dtype=np.float32),
         np.ones(0, dtype=np.float32),
@@ -698,6 +747,7 @@ def test_accept_prefix_only_accepts_measured_batches():
         np.array([], dtype=int),
     )
     assert accepted == 2
+    assert head is None
     assert int(np.sum(alive == 0.0)) == 2
     assert 2 in tested and evaluations == len(tested)
     assert edges.size == 0
@@ -710,7 +760,7 @@ def test_accept_prefix_reports_nothing_when_even_one_removal_fails():
         del alive, edge_alive
         return False, np.array([0.0])
 
-    alive, edges, accepted, evaluations = example._accept_prefix(
+    alive, edges, accepted, evaluations, head = example._accept_prefix(
         safe_test,
         np.ones(3, dtype=np.float32),
         np.ones(0, dtype=np.float32),
@@ -719,6 +769,7 @@ def test_accept_prefix_reports_nothing_when_even_one_removal_fails():
         np.array([], dtype=int),
     )
     assert accepted == 0
+    assert head is not None and float(head[0]) == 0.0
     assert np.array_equal(alive, np.ones(3, dtype=np.float32))
     assert evaluations >= 1
     assert edges.size == 0
