@@ -357,101 +357,6 @@ def test_compaction_benchmark_rejects_nonpositive_repetitions():
         _load()._benchmark_compaction(None, None, None, None, None, repetitions=0)
 
 
-def _small_experiment(trials_per_task=2):
-    """Build a tiny untrained Example 18 experiment for evaluator equivalence."""
-    import brainstate
-    import brainunit as u
-
-    example = _load()
-    config = replace(
-        example.EX18._EvolutionConfig.smoke(), eval_trials_per_task=trials_per_task
-    )
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        experiment = example.EX18._initial_experiment(config)
-    return example, config, experiment
-
-
-def test_batched_evaluator_matches_the_unbatched_rollout():
-    """Putting the probe trials on the batch axis must not change the network.
-
-    Any leakage between trials, or any state shared across the batch, would
-    show up here: the unbatched reference resets between every trial, so the
-    two agree only if the batched rollout keeps them independent.
-    """
-    import brainstate
-    import brainunit as u
-    import jax.numpy as jnp
-
-    example, config, experiment = _small_experiment()
-    edge_count = int(experiment.task_mass.shape[1])
-    rng = np.random.default_rng(3)
-    alive = jnp.asarray((rng.random(config.n_rec) > 0.25).astype(np.float32))
-    edge_alive = jnp.asarray((rng.random(edge_count) > 0.2).astype(np.float32))
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        serial = brainstate.transform.jit(
-            example._probe_logit_evaluator(experiment, config)
-        )
-        expected_logits, expected_rates = serial(alive, edge_alive)
-        batched = brainstate.transform.jit(
-            example._batched_logit_evaluator(experiment, config)
-        )
-        logits, rates = batched(alive, edge_alive)
-    np.testing.assert_array_equal(np.asarray(rates), np.asarray(expected_rates))
-    np.testing.assert_array_equal(
-        np.argmax(np.asarray(logits), axis=1),
-        np.argmax(np.asarray(expected_logits), axis=1),
-    )
-    np.testing.assert_allclose(
-        np.asarray(logits), np.asarray(expected_logits), rtol=1e-6, atol=1e-7
-    )
-
-
-def test_batched_evaluator_silences_every_neuron_under_a_dead_mask():
-    """A dead mask must zero the rates of every trial in the batch, not one."""
-    import brainstate
-    import brainunit as u
-    import jax.numpy as jnp
-
-    example, config, experiment = _small_experiment()
-    edge_count = int(experiment.task_mass.shape[1])
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        batched = brainstate.transform.jit(
-            example._batched_logit_evaluator(experiment, config)
-        )
-        dead, dead_rates = batched(
-            jnp.zeros(config.n_rec), jnp.ones(edge_count)
-        )
-        live, live_rates = batched(jnp.ones(config.n_rec), jnp.ones(edge_count))
-    assert np.all(np.asarray(dead_rates) == 0.0)
-    assert np.any(np.asarray(live_rates) > 0.0)
-    assert np.asarray(dead).shape == (
-        config.num_tricks * config.eval_trials_per_task,
-        config.num_tricks,
-    )
-
-
-def test_priming_sizes_states_to_the_probe_batch():
-    """The carrying loops need the state batch set before they are traced."""
-    import brainstate
-    import brainunit as u
-
-    example, config, experiment = _small_experiment()
-    trials = config.num_tricks * config.eval_trials_per_task
-    with brainstate.environ.context(dt=1.0 * u.ms):
-        evaluator = example._mask_evaluator(experiment, config)
-        example._prime_evaluator(evaluator)
-        membrane = experiment.model.neu.V.value
-        # An evaluator that drives no model exposes no prime and needs none.
-        example._prime_evaluator(lambda alive, edges: None)
-    assert membrane.shape[0] == trials
-
-
-def test_probe_arrays_are_memoized_per_configuration():
-    example, config, _ = _small_experiment()
-    first = example._probe_arrays(config)
-    assert example._probe_arrays(config) is first
-
-
 def test_joint_fixed_point_revisits_neurons_after_edge_pruning(monkeypatch):
     import jax.numpy as jnp
 
@@ -679,3 +584,17 @@ def test_smoke_entry_point_runs_training_and_pruning(tmp_path):
     assert pruning["safe_retained"] >= 0
     assert (tmp_path / "evolution.png").exists()
     assert (tmp_path / "pruning.png").exists()
+
+
+def test_probe_arrays_are_memoized_per_configuration():
+    """Rebuilding the probe trials is a Python loop over every trial."""
+    import brainstate
+    import brainunit as u
+
+    example = _load()
+    config = replace(example.EX18._EvolutionConfig.smoke(), eval_trials_per_task=1)
+    with brainstate.environ.context(dt=1.0 * u.ms):
+        first = example._probe_arrays(config)
+        assert example._probe_arrays(config) is first
+        other = replace(config, eval_trials_per_task=2)
+        assert example._probe_arrays(other) is not first

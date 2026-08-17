@@ -364,10 +364,12 @@ _PROBE_CACHE: Dict[int, tuple] = {}
 def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Build Example 18's deterministic task-major probe trials and windows.
 
-    Memoized per configuration object, because rebuilding costs a Python loop
-    over every probe trial and several evaluators are handed the same
-    configuration in one run. The cache keeps a reference to the configuration
-    so its identity stays valid.
+    Memoized per configuration object. Rebuilding costs a Python loop over
+    every probe trial, and one analysis hands the same configuration to the
+    baseline evaluation, the coarse sweep, the refinement sweep, the fixed
+    point and the compaction benchmark. The cache holds a reference to the
+    configuration so its identity stays valid, and returns the same arrays,
+    so no measurement changes.
     """
     cached = _PROBE_CACHE.get(id(config))
     if cached is not None and cached[0] is config:
@@ -391,14 +393,15 @@ def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
 def _probe_logit_evaluator(experiment: Any, config: Any):
     """Build a one-trial-at-a-time fixed-probe logit evaluator.
 
-    Deliberately unbatched. The physical-compaction check compares this
-    evaluator's raw logits between a masked wide model and its narrow rebuild
-    at ``rtol=1e-5`` / ``atol=1e-6``. On GPU a different batch size selects
-    different kernels, and that rounding is occasionally enough to move a
-    marginal membrane potential across the spike threshold; one flipped spike
-    shifts a logit by about 1e-4, far outside that tolerance. This path runs a
-    handful of times per analysis, so there is nothing to gain by batching it
-    and a published fail-closed guarantee to lose.
+    The trials are mutually independent and could share the model's batch
+    axis, which the recurrent projection accepts natively. They deliberately
+    do not. On GPU the batch size selects different kernels, and that
+    rounding is occasionally enough to move a marginal membrane potential
+    across the spike threshold; one flipped spike shifts a logit by about
+    1e-4. That is far outside the physical-compaction check's ``rtol=1e-5``
+    / ``atol=1e-6``, and it also reorders the greedy search onto a worse
+    path. Both effects were measured; see
+    ``docs/specs/2026-08-16-probe-evaluation-findings.md``.
     """
     trials, windows = _probe_arrays(config)
     model = experiment.model
@@ -426,10 +429,6 @@ def _probe_logit_evaluator(experiment: Any, config: Any):
             logits = logits / jnp.maximum(jnp.sum(window), 1.0)
             return logits[0], jnp.mean(neuron_spikes, axis=(0, 1))
 
-        # Size the states before the trial loop carries them: the search leaves
-        # the model at the probe batch, and the per-trial reset inside the body
-        # must not change the carry shape.
-        brainstate.nn.reset_all_states(model, batch_size=1)
         logits, rates = brainstate.transform.for_loop(evaluate_trial, trials, windows)
         task_rates = rates.reshape(
             config.num_tricks, config.eval_trials_per_task, config.n_rec
@@ -440,100 +439,9 @@ def _probe_logit_evaluator(experiment: Any, config: Any):
     return evaluate_mask
 
 
-def _probe_batch(config: Any) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Return step-major probe tensors for a single batched rollout.
-
-    Returns
-    -------
-    spikes : jax.Array
-        Input spikes of shape ``(n_step, n_trial, n_in)``.
-    windows : jax.Array
-        Response windows of shape ``(n_step, n_trial)``.
-    window_sums : jax.Array
-        Per-trial response-window length, floored at one, shape ``(n_trial,)``.
-    """
-    trials, windows = _probe_arrays(config)
-    spikes = jnp.transpose(trials[:, :, 0, :], (1, 0, 2))
-    return spikes, windows.T, jnp.maximum(jnp.sum(windows, axis=1), 1.0)
-
-
-def _batched_logit_evaluator(experiment: Any, config: Any):
-    """Build a fixed-probe logit evaluator that runs every trial at once.
-
-    The probe trials are mutually independent, so they belong on the model's
-    batch axis rather than in a sequential loop: one rollout of ``n_step`` steps
-    at batch ``n_trial`` replaces ``n_trial`` rollouts of ``n_step`` steps at
-    batch one. The recurrent projection takes a leading batch axis natively, so
-    this needs no ``vmap`` and no sparse batching rule.
-
-    Spike rates accumulate in the scan carry, because stacking them would cost
-    one ``(n_trial, n_rec)`` array per step. Readout outputs are stacked and
-    reduced in one pass instead, which keeps the logit summation shape the
-    unbatched evaluator uses.
-
-    Callers must size the model's states to ``n_trial`` before entering any
-    compiled loop that carries them; :func:`_prime_probe_states` does that.
-    """
-    spikes, windows, window_sums = _probe_batch(config)
-    n_step, n_trial = int(spikes.shape[0]), int(spikes.shape[1])
-    model = experiment.model
-    rec_weight = model.rec_syn.comm.weight
-    denominator = window_sums[:, None]
-
-    def evaluate_mask(alive, edge_alive):
-        base_params = dict(rec_weight.value)
-        masked_params = dict(base_params)
-        masked_params["weight"] = base_params["weight"] * edge_alive
-        rec_weight.value = masked_params
-        brainstate.nn.reset_all_states(model, batch_size=n_trial)
-
-        def step(rate_sum, inputs):
-            current, window = inputs
-            model.ff_syn(current)
-            model.rec_syn(model.neu.get_spike() * alive)
-            model.neu(0.0 * u.mA)
-            masked_spikes = model.neu.get_spike() * alive
-            output = model.readout(masked_spikes) * window[:, None]
-            return rate_sum + masked_spikes, output
-
-        rate_sum, outputs = brainstate.transform.scan(
-            step,
-            jnp.zeros((n_trial, config.n_rec), dtype=jnp.float32),
-            (spikes, windows),
-        )
-        rec_weight.value = base_params
-        logits = jnp.sum(outputs, axis=0) / denominator
-        rates = (rate_sum / n_step).reshape(
-            config.num_tricks, config.eval_trials_per_task, config.n_rec
-        )
-        return logits, jnp.mean(rates, axis=1)
-
-    return evaluate_mask
-
-
-def _prime_probe_batch(experiment: Any, config: Any) -> None:
-    """Reset every model state to the probe-trial batch size."""
-    trials, _ = _probe_arrays(config)
-    brainstate.nn.reset_all_states(experiment.model, batch_size=int(trials.shape[0]))
-
-
-def _prime_evaluator(evaluate_mask) -> None:
-    """Size model states to the evaluator's batch before a carrying loop.
-
-    A compiled ``for_loop`` or ``while_loop`` carries model state, so the state
-    shape must already match the rollout's batch before the loop is traced; the
-    reset inside the rollout then reproduces that same shape. Evaluators that
-    do not drive a model, such as the synthetic oracles used in tests, expose
-    no ``prime`` and need none.
-    """
-    prime = getattr(evaluate_mask, "prime", None)
-    if prime is not None:
-        prime()
-
-
 def _mask_evaluator(experiment: Any, config: Any):
     """Build a transform-compatible accuracy evaluator for structural masks."""
-    evaluate_logits = _batched_logit_evaluator(experiment, config)
+    evaluate_logits = _probe_logit_evaluator(experiment, config)
     task_ids = jnp.repeat(jnp.arange(config.num_tricks), config.eval_trials_per_task)
 
     def evaluate_mask(alive, edge_alive):
@@ -545,7 +453,6 @@ def _mask_evaluator(experiment: Any, config: Any):
         ).mean(axis=1)
         return accuracies, task_rates
 
-    evaluate_mask.prime = lambda: _prime_probe_batch(experiment, config)
     return evaluate_mask
 
 
@@ -619,7 +526,6 @@ def _evaluate_structural_masks(
 
     @brainstate.transform.jit
     def evaluate(neuron_masks, recurrent_masks):
-        _prime_evaluator(evaluate_mask)
         return brainstate.transform.for_loop(
             evaluate_mask, neuron_masks, recurrent_masks
         )
@@ -866,7 +772,6 @@ def _joint_fixed_point_prune(
 
     @brainstate.transform.jit
     def run(alive):
-        _prime_evaluator(evaluate_mask)
         edge_alive = alive[edge_rows] * alive[edge_cols]
         initial = (
             jnp.asarray(0, dtype=jnp.int32),
