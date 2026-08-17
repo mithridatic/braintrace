@@ -439,7 +439,7 @@ def test_row_layout_and_packed_latent_input_are_exactly_fixed(example):
     config = example.ExperimentConfig.smoke_config()
 
     packed = example._packed_events(encoded, config)
-    advances = example._packed_advances(encoded, config)
+    advances = example._packed_advances(encoded, config, rows)
 
     assert rows.max_events == 150
     assert packed.shape == (182, rows.input_width)
@@ -449,19 +449,57 @@ def test_row_layout_and_packed_latent_input_are_exactly_fixed(example):
     assert advances[encoded.query_stop : encoded.query_stop + 32].all()
 
 
-def test_advance_schedule_matches_fixed_demo_blocks_and_freezes_unused_capacity(
-    example,
-):
-    encoded, _ = _encoded_fixture(example)
-    config = example.ExperimentConfig.smoke_config()
-    advances = example._packed_advances(encoded, config)
+def test_advance_schedule_skips_demonstration_padding_rows(example):
+    """Padding inside a demo block must not burn leak steps.
 
+    A demo block is a fixed 30 rows regardless of grid height, while the query
+    block advances only over its true height.  Advancing the whole demo block
+    spends ``30 - height`` all-zero steps of pure membrane leak per
+    demonstration, pushing the demonstrations further from the readout than the
+    data requires and making the two blocks asymmetric.
+    """
+    encoded, rows = _encoded_fixture(example)
+    config = example.ExperimentConfig.smoke_config()
+    advances = example._packed_advances(encoded, config, rows)
+
+    valid = encoded.events[:, rows.valid_slice.start] > 0.0
+    occupied = max(
+        int(valid[start:stop].sum()) for start, stop in encoded.demonstration_spans
+    )
+    assert occupied < rows.max_grid_size, "fixture must exercise padded blocks"
     for start, stop in encoded.demonstration_spans:
-        assert advances[start:stop].all()
+        assert advances[start : start + occupied].all()
+        assert not advances[start + occupied : stop].any()
     occupied_stop = encoded.demonstration_spans[-1][1]
     assert not advances[occupied_stop : encoded.query_start].any()
     assert advances[encoded.query_start : encoded.query_stop].all()
     assert not advances[encoded.query_stop + 32 :].any()
+
+
+def test_advance_schedule_never_drops_a_valid_demonstration_row(example):
+    """Every encoded demo row must still advance, in intact and deranged arms.
+
+    The demo advance width is one number shared by all blocks so that the
+    ``shuffled_demonstrations`` control keeps a byte-identical schedule.  It is
+    the per-episode maximum, and because ``_derange_task`` rotates the outputs
+    the multiset of grids is preserved, so intact and deranged agree exactly.
+    """
+    data = smoke_loaded_dataset()
+    rows = example._row_config(example.ExperimentConfig.smoke_config())
+    config = example.ExperimentConfig.smoke_config()
+    task = data.tasks[0]
+    deranged = example._derange_task(task)
+    assert deranged is not None
+
+    intact = encode_query_episode(task, 0, rows)
+    other = encode_query_episode(deranged, 0, rows)
+    intact_advances = example._packed_advances(intact, config, rows)
+    assert np.array_equal(
+        intact_advances, example._packed_advances(other, config, rows)
+    )
+    for encoded in (intact, other):
+        valid = encoded.events[:, rows.valid_slice.start] > 0.0
+        assert not (valid & ~intact_advances[: len(valid)]).any()
 
 
 def test_effort_schedule_is_balanced_reproducible_and_mixed(example):

@@ -454,14 +454,37 @@ def _packed_events(
     return result
 
 
+def _demonstration_advance_width(
+    encoded: EncodedQueryEpisode, row_config: RowEventConfig
+) -> int:
+    """Return the advancing row count shared by every demonstration block.
+
+    Demonstration blocks are a fixed ``max_grid_size`` rows wide whatever the
+    grid heights are, so advancing a whole block spends the unused rows as
+    all-zero membrane-leak steps.  This is the per-episode maximum occupied
+    height instead: it never drops an encoded row, and because
+    :func:`_derange_task` rotates the outputs it is identical for the intact and
+    deranged encodings, which keeps the ``shuffled_demonstrations`` control on a
+    byte-identical schedule.
+    """
+    valid = encoded.events[:, row_config.valid_slice.start] > 0.0
+    return max(
+        (int(valid[start:stop].sum()) for start, stop in encoded.demonstration_spans),
+        default=0,
+    )
+
+
 def _packed_advances(
-    encoded: EncodedQueryEpisode, config: ExperimentConfig
+    encoded: EncodedQueryEpisode,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
 ) -> np.ndarray:
     """Build a matched context/padding/latent state-advance schedule."""
     total = encoded.events.shape[0] + config.latent_steps
     advances = np.zeros((total,), dtype=np.bool_)
-    for start, stop in encoded.demonstration_spans:
-        advances[start:stop] = True
+    width = _demonstration_advance_width(encoded, row_config)
+    for start, _stop in encoded.demonstration_spans:
+        advances[start : start + width] = True
     advances[encoded.query_start : encoded.query_stop] = True
     advances[encoded.query_stop : encoded.query_stop + config.latent_steps] = True
     return advances
@@ -510,7 +533,7 @@ def _training_row(
     padded[: target.height, : target.width] = target.as_array()
     return {
         "events": sequence[:, None, :],
-        "advances": _packed_advances(encoded, config)[:, None],
+        "advances": _packed_advances(encoded, config, row_config)[:, None],
         "heights": target.height,
         "widths": target.width,
         "colors": padded[None],
@@ -1045,7 +1068,7 @@ def _arm_sequences(
         else:
             packed = _packed_events(encoded, config)
         sequences.append(packed)
-        advance_rows.append(_packed_advances(encoded, config))
+        advance_rows.append(_packed_advances(encoded, config, row_config))
         query_stops.append(encoded.query_stop)
         metadata.append(detail)
     stacked = np.stack(sequences, axis=1)

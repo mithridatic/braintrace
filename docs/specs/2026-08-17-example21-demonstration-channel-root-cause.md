@@ -1,6 +1,7 @@
 # Example 21 — why the demonstration channel carries no usable signal
 
-Status: root cause identified; no fix implemented (awaiting approval)
+Status: root cause identified; padding-advance fix applied, remaining
+directions not implemented
 Date: 2026-08-17
 Branch: `feat/example21-latent-reasoning`
 Follows: `docs/specs/2026-08-17-example21-chunked-training-stream.md`
@@ -73,7 +74,8 @@ separates that from the weaker reading: that the 0.93 is generic drive from ~90
 non-blank rows and the demonstration *content* is not read at all.
 
 The distinction decides which fix is worth building — under pooled statistics,
-directions 1–3 below are sensible; under generic drive, only direction 4 is.
+the span directions below are sensible; under generic drive, only the
+objective direction is.
 Settling it is one regression on machinery that already exists: predict a
 demo-output statistic from the intact final spikes with folds grouped by task,
 and compare to the null. That belongs in the next spec.
@@ -88,7 +90,7 @@ height_head.weight / width_head.weight / color_factor_head.weight
 
 All four output-side parameters are fed the final spike vector and nothing else.
 
-### A concrete amplifier: padding rows advance the state
+### A concrete amplifier: padding rows advance the state (since fixed, below)
 
 `encode_query_episode` gives every demonstration a **fixed 30-row block**
 regardless of grid height (`latent_workspace_task.py:1554`), and
@@ -129,18 +131,44 @@ assumption that a distinction absent at 512 is not created by more training on
 the same objective — the 4096 control arms are consistent with that but do not
 prove it.
 
-## Candidate directions (none implemented, none costed)
+## Fix applied: demonstration padding no longer advances the state
 
-1. **Stop advancing padding rows** — smallest change, partial gain, and it makes
-   the demo and query blocks symmetric. Changes numerics for every existing
-   artifact.
-2. **Give the substrate a state that outlives the episode** — a slow adapting
+`_packed_advances` now advances each demonstration block over
+`_demonstration_advance_width` rows instead of the full `max_grid_size`. The
+width is the per-episode maximum occupied height, shared by every block, which
+has two properties the control depends on:
+
+- **It never drops an encoded row.** Every block advances at least as far as the
+  tallest one.
+- **It is invariant under `_derange_task`.** Rotation is a bijection on the
+  outputs, so `max_i max(in_i, out_i)` and `max_i max(in_i, out_{i+1})` are both
+  `max(max in, max out)`. Intact and deranged encodings therefore produce a
+  byte-identical schedule, and `shuffled_demonstrations` stays a content-only
+  control with matched timing.
+
+Measured at 512 updates, lr 1e-3, same seed:
+
+| | before | after |
+| --- | --- | --- |
+| final-eighth mean training loss | 6.2636 | 5.7727 |
+| intact vs `no_context` decodability | 0.9296 | 0.9857 |
+| intact vs `shuffled` decodability | 0.5084 | 0.5107 |
+| its null | 0.5072 | 0.4785 |
+
+The demonstrations land harder and the model trains better for free — the loss
+gain is roughly three quarters of what a doubling of the update budget buys.
+**The pairing is still at the null.** This was the predicted outcome: removing
+~22 leak steps per demonstration shortens the span roughly 3×, and the span was
+never the whole story. The remaining directions below are unaffected.
+
+## Candidate directions (none implemented, none costed)
+1. **Give the substrate a state that outlives the episode** — a slow adapting
    variable or a long-tau synapse sized to the 300-step span, rather than asking
    a 20 ms membrane to hold it.
-3. **Shorten the span** — re-present or summarise the demonstrations adjacent to
+2. **Shorten the span** — re-present or summarise the demonstrations adjacent to
    the query, so tens of steps must be bridged rather than hundreds.
-4. **Make the objective require the pairing** — an auxiliary term the deranged
-   arm provably fails. Without this, options 1–3 enlarge the capacity to
+3. **Make the objective require the pairing** — an auxiliary term the deranged
+   arm provably fails. Without this, the other two enlarge the capacity to
    represent a pairing without giving the model any reason to.
 
 These are architecture changes, not tuning. Each wants its own spec, a stated
