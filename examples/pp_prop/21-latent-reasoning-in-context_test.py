@@ -1,655 +1,1343 @@
-"""Tests for the in-context latent-reasoning entry point."""
+"""Tests for the standard-ARC latent-reasoning entry point."""
 
 from __future__ import annotations
 
 import ast
 import importlib.util
-import inspect
 import json
 import pathlib
 import sys
+from enum import Enum
 from types import SimpleNamespace
 
 import brainstate
+import jax.numpy as jnp
 import numpy as np
 import pytest
 
-try:
-    from examples.pp_prop.latent_workspace_model import shuffled_memory_factors
-except ModuleNotFoundError:
-    from latent_workspace_model import shuffled_memory_factors
-
-
-EXAMPLE = (
-    pathlib.Path(__file__).resolve().with_name("21-latent-reasoning-in-context.py")
+from examples.pp_prop.latent_workspace_task import (
+    ArcGrid,
+    ArcPair,
+    ArcTask,
+    DatasetSource,
+    LoadedDataset,
+    RowEventConfig,
+    SourceManifest,
+    encode_query_episode,
+    smoke_loaded_dataset,
 )
 
 
-def _load():
-    name = "_pp_prop_latent_reasoning_entry"
+EXAMPLE = pathlib.Path(__file__).with_name("21-latent-reasoning-in-context.py")
+
+
+def _load_example():
+    name = "_pp_prop_arc_latent_reasoning_entry"
     spec = importlib.util.spec_from_file_location(name, EXAMPLE)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load example 21 from {EXAMPLE}")
+        raise ImportError(f"cannot load {EXAMPLE}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
 
-def _fake_train_depth(calls):
-    def train(config, depth, corpus):
-        calls.append(
-            (
-                depth,
-                tuple(corpus.binding_counts.tolist()),
-                tuple(corpus.targets.tolist()),
-            )
-        )
-        model = SimpleNamespace(depth=depth, config=SimpleNamespace(task=None))
-        return model, {
-            "depth": depth,
-            "losses": [1.0 / (depth + 1)],
-            "parameter_l2_deltas": {
-                "Wk": 0.0,
-                "Wv": 0.0,
-                "Wf": 0.01,
-                "Wo": 0.01,
-            },
-            "terminal_only_supervision": True,
-            "write_mode": "fixed_random",
-            "write_projections_updated": False,
-            "compiler": {"warnings": [], "diagnostic_counts": {}},
-            "initial_parameter_fingerprints": {
-                "Wf": "same-wf",
-                "Wk": "same-wk",
-                "Wo": "same-wo",
-                "Wv": "same-wv",
-            },
-            "canonical_prefix_fingerprint": "same-demo-query",
+@pytest.fixture(scope="module")
+def example():
+    return _load_example()
+
+
+def _encoded_fixture(example, query_index: int = 0):
+    data = smoke_loaded_dataset()
+    rows = example._row_config(example.ExperimentConfig.smoke_config())
+    return encode_query_episode(data.tasks[0], query_index, rows), rows
+
+
+def _metric(value: float = 0.0) -> dict[str, float | int]:
+    return {
+        "query_count": 1,
+        "task_count": 1,
+        "query_pass_at_1": value,
+        "query_pass_at_2": value,
+        "strict_task_pass_at_1": value,
+        "strict_task_pass_at_2": value,
+        "shape_accuracy_diagnostic": value,
+        "valid_cell_pixel_accuracy_diagnostic": value,
+    }
+
+
+def _evaluation_payload() -> dict[str, object]:
+    metrics = {str(effort): _metric(float(effort == 32)) for effort in (0, 8, 16, 32)}
+    comparison = {
+        "causally_null_at_measured_precision": False,
+        "state_byte_identical_by_step": [False] * 33,
+        "spike_hamming_by_step": [1] * 33,
+        "spike_hamming_fraction_by_step": [0.125] * 33,
+        "voltage_l2_by_step": [1.0] * 33,
+        "synaptic_current_l2_by_step": {
+            "feedforward": [1.0] * 33,
+            "recurrent": [1.0] * 33,
+        },
+        "score_deltas_control_minus_intact": {
+            "32.query_pass_at_2": 0.0,
+            "32.valid_cell_pixel_accuracy_diagnostic": 0.0,
+        },
+    }
+    control = {
+        "metrics_by_effort": metrics,
+        "trajectory_comparison": comparison,
+        "causally_null_query_count": 0,
+        "query_count": 1,
+        "applicable_query_count": 1,
+        "available_query_count": 1,
+        "unavailable_query_count": 0,
+        "timing_matched_applicable_query_count": 1,
+    }
+    trajectory = [
+        {
+            "step": step,
+            "mean_firing_rate": step / 64.0,
+            "mean_spike_count": float(step),
+            "mean_voltage_l2": float(step),
+            "mean_feedforward_current_l2": float(step),
+            "mean_recurrent_current_l2": float(step),
+            "mean_predictive_entropy": 1.0,
+            "mean_changed_cell_fraction": None if step == 0 else 0.0,
+            "converged_fraction": 0.0,
+            "near_silence_fraction": 0.0,
+            "near_saturation_fraction": 0.0,
+            "unique_state_hashes": 1,
+            "pair_sample_count": 0,
+            "pairwise_spike_hamming_fraction": None,
+            "pairwise_voltage_rms_distance": None,
+            "pairwise_feedforward_current_rms_distance": None,
+            "pairwise_recurrent_current_rms_distance": None,
         }
-
-    return train
-
-
-def _fake_evaluate(example, calls=None):
-    def evaluate(model, task, episode_cells, shuffled_flags):
-        if calls is not None:
-            calls.append(len(episode_cells))
-        batches = []
-        for episodes, shuffled in zip(episode_cells, shuffled_flags, strict=True):
-            count = len(episodes)
-            width = 4
-            depth = model.depth
-            answers = np.asarray([episode.target for episode in episodes])
-            states = np.zeros((count, depth + 1, width), dtype=np.float32)
-            states[:, :, 0] = answers[:, None]
-            states[:, :, 1] = np.arange(depth + 1, dtype=np.float32)[None, :]
-            memory_read = states[:, 0].copy()
-            values = np.zeros((count, task.slot_capacity, width), dtype=np.float32)
-            keys = np.zeros_like(values)
-            values[:, 0] = memory_read
-            keys[:, 0, 0] = 1.0
-            supported = episodes[0].condition == "supported"
-            correct = np.full(count, supported and not shuffled, dtype=bool)
-            batches.append(
-                example.EvaluationBatch(
-                    correct=correct,
-                    workspace=states,
-                    memory_read=memory_read,
-                    memory_values=values,
-                    memory_keys=keys,
-                    parameters_unchanged=True,
-                )
-            )
-        return tuple(batches)
-
-    return evaluate
-
-
-def _smoke_config(example, figure_path, seed=2108):
-    return example.ExperimentConfig.smoke(
-        seed=seed,
-        figure_path=figure_path,
-        device="cpu",
-    )
-
-
-def test_default_cli_requests_gpu_and_cpu_is_explicit(tmp_path):
-    example = _load()
-    default = example._parse_args([])
-    cpu = example._parse_args(
-        [
-            "--device",
-            "cpu",
-            "--smoke",
-            "--codebook-seed",
-            "41",
-            "--projection-seed",
-            "42",
-            "--figure",
-            str(tmp_path / "smoke.png"),
+        for step in range(33)
+    ]
+    query_steps = [
+        {
+            "step": step,
+            "candidates": [{"grid": [[0]]}],
+            "changed_cell_count": None if step == 0 else 0,
+            "changed_cell_fraction": None if step == 0 else 0.0,
+            "predictive_entropy": 1.0,
+            "top_two_logit_margin": 0.0,
+            "spike_count": 0,
+            "firing_rate": 0.0,
+            "raster_active_indices": [],
+            "voltage_mean": 0.0,
+            "voltage_std": 0.0,
+            "voltage_mean_absolute": 0.0,
+            "voltage_l2": 0.0,
+            "spike_hamming_displacement": None if step == 0 else 0,
+            "spike_hamming_fraction": None if step == 0 else 0.0,
+            "voltage_l2_displacement": None if step == 0 else 0.0,
+            "feedforward_current_mean_absolute": 0.0,
+            "feedforward_current_l2": 0.0,
+            "feedforward_current_l2_displacement": None if step == 0 else 0.0,
+            "recurrent_current_mean_absolute": 0.0,
+            "recurrent_current_l2": 0.0,
+            "recurrent_current_l2_displacement": None if step == 0 else 0.0,
+            "converged": False,
+            "near_silence": True,
+            "near_saturation": False,
+            "state_sha256": "0" * 64,
+            "score": {},
+        }
+        for step in range(33)
+    ]
+    checkpoint_queries = {
+        str(effort): [
+            {
+                "task_id": "task",
+                "query_index": 0,
+                "candidates": [{"grid": [[0]]}],
+                "score": {},
+            }
         ]
-    )
+        for effort in (0, 8, 16, 32)
+    }
+    return {
+        "query_count": 1,
+        "task_count": 1,
+        "same_frozen_parameter_bytes": True,
+        "checkpoint_queries": checkpoint_queries,
+        "query_trajectories": [
+            {"step_count": 33, "neuron_count": 2048, "steps": query_steps}
+        ],
+        "metrics_by_effort": metrics,
+        "aggregate_trajectory": trajectory,
+        "determinism": {
+            "same_control_capable_execution_path": True,
+            "repeat_intact_state_byte_identical": True,
+            "slot_ablation_checkpoint_zero_byte_identical": True,
+        },
+        "controls": {
+            "repeat_intact": dict(
+                control,
+                trajectory_comparison={
+                    **comparison,
+                    "causally_null_at_measured_precision": True,
+                    "state_byte_identical_by_step": [True] * 33,
+                    "spike_hamming_by_step": [0] * 33,
+                    "spike_hamming_fraction_by_step": [0.0] * 33,
+                    "voltage_l2_by_step": [0.0] * 33,
+                    "synaptic_current_l2_by_step": {
+                        "feedforward": [0.0] * 33,
+                        "recurrent": [0.0] * 33,
+                    },
+                },
+                causally_null_query_count=1,
+            ),
+            "no_context": control,
+            "shuffled_demonstrations": control,
+            "slot_ablation": control,
+            "truncation": {
+                "checkpoints": [0, 8, 16, 32],
+                "uses_one_continuous_intact_trajectory": True,
+            },
+        },
+    }
 
-    assert default.device == "gpu"
-    default_config = example._config_from_args(default)
-    assert default_config.batch_size == 4
-    assert default_config.codebook_seed == 313320
-    assert default_config.projection_seed == 210848
-    assert cpu.device == "cpu"
-    assert cpu.smoke is True
-    cpu_config = example._config_from_args(cpu)
-    assert cpu_config.codebook_seed == 41
-    assert cpu_config.projection_seed == 42
+
+def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_path):
+    full = example.ExperimentConfig(output_dir=tmp_path, structural_only=True)
+    smoke = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
+
+    assert (full.neuron_count, full.recurrent_edges) == (2048, 16384)
+    assert (smoke.neuron_count, smoke.recurrent_edges) == (128, 1024)
+    assert full.max_demonstrations == 10
+    assert full.to_dict()["checkpoints"] == [0, 8, 16, 32]
+    assert smoke.smoke is True
 
 
-@pytest.mark.parametrize("field", ["codebook_seed", "projection_seed"])
-@pytest.mark.parametrize("value", [True, np.bool_(False), -1, 1.5])
-def test_experiment_code_and_projection_seeds_are_nonnegative_non_boolean_integers(
-    field, value
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"neuron_count": 127}, "divisible by 64"),
+        ({"recurrent_edges": 2048 * 2048}, "no-self capacity"),
+        ({"max_grid_size": 29}, "standard ARC"),
+        ({"latent_steps": 31}, "latent_steps"),
+        ({"ablation_slot": 32}, "ablation_slot"),
+        ({"training_updates": 2}, "8, 16, and 32"),
+        ({"device": "tpu"}, "device"),
+        ({"learning_rate": float("nan")}, "learning_rate"),
+    ],
+)
+def test_config_rejects_invalid_or_scientifically_incomplete_values(
+    example, kwargs, message
 ):
-    example = _load()
-
-    with pytest.raises(ValueError, match=field):
-        example.ExperimentConfig(device="cpu", **{field: value})
+    with pytest.raises(ValueError, match=message):
+        example.ExperimentConfig(**kwargs)
 
 
-def test_measured_seeds_reach_every_task_and_model_configuration(tmp_path, monkeypatch):
-    example = _load()
-    config = example.ExperimentConfig.smoke(
-        device="cpu",
-        figure_path=tmp_path / "seeds.png",
-        codebook_seed=71,
-        projection_seed=72,
+def test_structural_config_allows_zero_updates(example):
+    config = example.ExperimentConfig(structural_only=True, training_updates=0)
+    assert config.training_updates == 0
+
+
+def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_path):
+    parsed = example._parser().parse_args([])
+    assert parsed.device == "gpu"
+    assert parsed.neurons == 2048
+    assert parsed.recurrent_edges == 16384
+
+    smoke_args = example._parser().parse_args(
+        ["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)]
     )
+    smoke = example._config_from_args(smoke_args)
+    assert smoke.smoke and smoke.device == "cpu"
 
-    assert example._model_task(config, 0).codebook_seed == 71
-    assert example._episode_task(config, 2).codebook_seed == 71
+    bad = example._parser().parse_args(["--smoke", "--neurons", "128"])
+    with pytest.raises(ValueError, match="owns its reduced"):
+        example._config_from_args(bad)
 
-    captured = {}
-    sentinel = object()
-
-    def capture_model_config(**kwargs):
-        captured.update(kwargs)
-        return sentinel
-
-    def stop_after_configuration(model_config):
-        assert model_config is sentinel
-        raise RuntimeError("configuration captured")
-
-    monkeypatch.setattr(example, "ModelConfig", capture_model_config)
-    monkeypatch.setattr(example, "LatentWorkspaceModel", stop_after_configuration)
-    with pytest.raises(RuntimeError, match="configuration captured"):
-        example._train_depth(config, 0, None)
-
-    assert captured["projection_seed"] == 72
+    full_args = example._parser().parse_args(
+        ["--structural-only", "--device", "cpu", "--training-updates", "0"]
+    )
+    full = example._config_from_args(full_args)
+    assert full.structural_only and full.training_updates == 0
 
 
-def test_gpu_request_fails_closed_when_no_gpu_is_visible(monkeypatch):
-    example = _load()
+def test_device_resolution_reports_backend_and_fails_closed(example, monkeypatch):
+    device = SimpleNamespace(platform="gpu", id=2, device_kind="test accelerator")
+    monkeypatch.setattr(example, "_devices_for", lambda platform: [device])
+    selected, report = example._resolve_device("gpu")
+    assert selected is device
+    assert report == {
+        "requested": "gpu",
+        "platform": "gpu",
+        "id": 2,
+        "kind": "test accelerator",
+        "memory_stats": {},
+    }
+
+    monkeypatch.setattr(example, "_devices_for", lambda platform: [])
+    with pytest.raises(RuntimeError, match="backend is unavailable"):
+        example._resolve_device("gpu")
 
     def unavailable(platform):
-        if platform == "gpu":
-            raise RuntimeError("backend is unavailable")
-        return [SimpleNamespace(platform="cpu", id=0)]
+        raise RuntimeError("driver missing")
 
-    monkeypatch.setattr(example, "_devices_for_platform", unavailable)
-    with pytest.raises(RuntimeError, match="GPU.*--device cpu"):
+    monkeypatch.setattr(example, "_devices_for", unavailable)
+    with pytest.raises(RuntimeError, match="driver missing"):
         example._resolve_device("gpu")
 
 
-def test_experiment_configuration_rejects_contradictions(tmp_path):
-    example = _load()
-    base = dict(
-        seed=1,
-        device="cpu",
-        depths=(0, 1),
-        binding_counts=(2, 8),
-        batch_size=2,
-        training_updates=1,
-        latent_width=4,
-        code_width=12,
-        symbol_ticks=1,
-        figure_path=tmp_path / "x.png",
-        learning_rate=1e-5,
-    )
-    with pytest.raises(ValueError, match="depth"):
-        example.ExperimentConfig(**(base | {"depths": (0, -1)}))
-    with pytest.raises(ValueError, match="binding count.*capacity"):
-        example.ExperimentConfig(**(base | {"binding_counts": (2, 9)}))
-    with pytest.raises(ValueError, match="batch_size"):
-        example.ExperimentConfig(**(base | {"batch_size": 1}))
-    with pytest.raises(ValueError, match="batch_size 8.*170459136.*67108864"):
-        example.ExperimentConfig(**(base | {"batch_size": 8, "latent_width": 32}))
-    default = example.ExperimentConfig(device="cpu")
-    assert default.coupled_jacobian_elements == 42_614_784
-    assert default.jacobian_budget_elements == 67_108_864
-
-
-def test_shared_mixed_training_corpus_is_seeded_and_depth_independent(tmp_path):
-    example = _load()
-    config = _smoke_config(example, tmp_path / "a.png", seed=77)
-
-    first = example._build_training_corpus(config)
-    second = example._build_training_corpus(config)
-
-    np.testing.assert_array_equal(first.binding_counts, second.binding_counts)
-    np.testing.assert_array_equal(first.targets, second.targets)
-    np.testing.assert_array_equal(first.rules, second.rules)
-    assert len(set(first.binding_counts.tolist())) >= 2
-
-
-def test_canonical_inputs_pad_capacity_without_changing_query(tmp_path):
-    example = _load()
-    config = _smoke_config(example, tmp_path / "a.png")
-    source_task = example.TaskConfig(
-        symbol_count=10,
-        binding_count=2,
-        slot_capacity=8,
-        latent_steps=0,
-        code_width=12,
-        spike_rate=0.25,
-        symbol_ticks=config.symbol_ticks,
-    )
-    episode = example.generate_episode(
-        source_task,
-        brainstate.random.RandomState(19),
-        condition="supported",
-    )
-    destination = example._model_task(config, depth=4)
-
-    packed = example._canonical_inputs(episode, destination)
-
-    assert packed.shape == (destination.total_steps, destination.input_width)
-    phase = packed[:, destination.phase_slice]
-    assert np.count_nonzero(phase[:, 0]) == destination.demonstration_steps
-    assert np.count_nonzero(phase[:, 1]) == destination.symbol_ticks
-    assert np.count_nonzero(phase[:, 2]) == 1
-    assert np.count_nonzero(phase[:, 3]) == 3
-    assert phase[destination.latent_slice.start, 2] == 1.0
-    np.testing.assert_array_equal(phase.sum(axis=1), 1.0)
-    np.testing.assert_array_equal(packed[destination.query_slice], episode.query_inputs)
-
-    zero_depth = example._canonical_inputs(episode, example._model_task(config, 0))
-    eight_depth = example._canonical_inputs(episode, example._model_task(config, 8))
-    np.testing.assert_array_equal(
-        zero_depth,
-        eight_depth[: zero_depth.shape[0]],
+def test_source_manifest_resolves_paths_and_exclusions(example, tmp_path):
+    manifest = tmp_path / "sources.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "ARC training",
+                        "role": "train",
+                        "version": "v1",
+                        "path": "arc/training",
+                        "license_reference": "https://example.test/license",
+                        "format": "task_json",
+                        "exclude_fingerprints": ["a" * 64],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
     )
 
+    (source,) = example._source_declarations(manifest)
 
-def test_demonstration_prefix_uses_brainstate_loop_not_python():
-    example = _load()
-    tree = ast.parse(inspect.getsource(example._run_demonstration_prefix))
+    assert source.path == str(tmp_path / "arc/training")
+    assert source.exclude_fingerprints == ("a" * 64,)
 
-    assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(tree))
-    assert any(
-        isinstance(node, ast.Call)
+
+@pytest.mark.parametrize(
+    "payload",
+    [{}, {"sources": []}, {"sources": [1]}, {"sources": [{"name": "missing"}]}],
+)
+def test_source_manifest_rejects_incomplete_declarations(example, tmp_path, payload):
+    manifest = tmp_path / "bad.json"
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError):
+        example._source_declarations(manifest)
+
+
+def test_smoke_data_is_explicitly_plumbing_only(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+
+    assert data.plumbing_only is True
+    assert data.training == data.evaluation
+    assert all(origin.role == "fixture" for origin in data.training)
+    assert data.loaded[0].manifest.plumbing_only is True
+
+
+def test_full_data_requires_manifest_and_both_roles(example, monkeypatch, tmp_path):
+    with pytest.raises(ValueError, match="source-manifest"):
+        example._load_data(example.ExperimentConfig(device="cpu"))
+
+    manifest = tmp_path / "sources.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "name": "eval",
+                        "role": "evaluation",
+                        "version": "1",
+                        "path": ".",
+                        "license_reference": "license",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    fixture = smoke_loaded_dataset()
+    evaluation_source = DatasetSource(
+        "eval", "evaluation", "1", str(tmp_path), "license"
+    )
+    evaluation_manifest = SourceManifest(
+        source=evaluation_source,
+        resolved_path=str(tmp_path),
+        files=fixture.manifest.files,
+        parsed_task_count=len(fixture.tasks),
+        valid_task_count=len(fixture.tasks),
+        rejected=(),
+        duplicate_fingerprints=(),
+        task_fingerprints=fixture.manifest.task_fingerprints,
+        plumbing_only=False,
+    )
+    monkeypatch.setattr(
+        example,
+        "load_dataset_source",
+        lambda source: LoadedDataset(fixture.tasks, evaluation_manifest),
+    )
+    monkeypatch.setattr(example, "assert_no_evaluation_leakage", lambda manifests: None)
+
+    with pytest.raises(ValueError, match="training requires"):
+        example._load_data(
+            example.ExperimentConfig(source_manifest=manifest, device="cpu")
+        )
+
+
+def test_row_layout_and_packed_latent_input_are_exactly_fixed(example):
+    encoded, rows = _encoded_fixture(example)
+    config = example.ExperimentConfig.smoke_config()
+
+    packed = example._packed_events(encoded, config)
+    advances = example._packed_advances(encoded, config)
+
+    assert rows.max_events == 150
+    assert packed.shape == (182, rows.input_width)
+    assert np.count_nonzero(packed[encoded.events.shape[0] :]) == 0
+    assert np.count_nonzero(packed[encoded.query_stop : encoded.query_stop + 32]) == 0
+    assert advances.dtype == np.bool_
+    assert advances[encoded.query_stop : encoded.query_stop + 32].all()
+
+
+def test_advance_schedule_matches_fixed_demo_blocks_and_freezes_unused_capacity(
+    example,
+):
+    encoded, _ = _encoded_fixture(example)
+    config = example.ExperimentConfig.smoke_config()
+    advances = example._packed_advances(encoded, config)
+
+    for start, stop in encoded.demonstration_spans:
+        assert advances[start:stop].all()
+    occupied_stop = encoded.demonstration_spans[-1][1]
+    assert not advances[occupied_stop : encoded.query_start].any()
+    assert advances[encoded.query_start : encoded.query_stop].all()
+    assert not advances[encoded.query_stop + 32 :].any()
+
+
+def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
+    first = example._effort_schedule(11, brainstate.random.RandomState(7))
+    second = example._effort_schedule(11, brainstate.random.RandomState(7))
+    counts = {effort: int(np.sum(first == effort)) for effort in (8, 16, 32)}
+
+    assert np.array_equal(first, second)
+    assert set(first.tolist()) == {8, 16, 32}
+    assert max(counts.values()) - min(counts.values()) <= 1
+
+
+def test_training_tensor_terminals_follow_each_sample_effort(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+
+    tensors = example._prepare_training(data, config, rows)
+
+    assert tensors.events.shape == (3, rows.max_events + 32, 1, rows.input_width)
+    assert tensors.advances.shape == (3, rows.max_events + 32, 1)
+    assert tensors.colors.shape == (3, 1, 30, 30)
+    assert np.all(np.sum(tensors.masks, axis=1) == 1.0)
+    for index, effort in enumerate(tensors.efforts):
+        terminal = int(np.flatnonzero(tensors.masks[index])[0])
+        checkpoint = terminal - int(effort)
+        assert tensors.events[index, checkpoint, 0, rows.valid_slice.start] == 1.0
+        assert (
+            np.count_nonzero(tensors.events[index, checkpoint + 1 : terminal + 1]) == 0
+        )
+        assert tensors.advances[index, checkpoint + 1 : terminal + 1].all()
+
+
+def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    model_config = example._model_config(config, rows, batch_size=3)
+    assert model_config.batch_size == 3
+    assert model_config.input_width == rows.input_width
+    assert model_config.recurrent_edges == 1024
+
+    source_state = SimpleNamespace(value={"weight": np.array([1.0, 2.0])})
+    target_state = SimpleNamespace(value={"weight": np.array([0.0, 0.0])})
+    source = SimpleNamespace(states=lambda kind: {"p": source_state})
+    target = SimpleNamespace(states=lambda kind: {"p": target_state})
+    example._copy_parameters(source, target)
+    assert np.array_equal(target_state.value["weight"], np.array([1.0, 2.0]))
+    source_state.value["weight"][0] = 9.0
+    assert target_state.value["weight"][0] == 1.0
+
+    digest = example._tree_digest({"p": target_state.value})
+    changed = example._tree_digest({"p": {"weight": np.array([1.0, 3.0])}})
+    assert digest != changed
+    changes = example._parameter_change_evidence(
+        {"p": {"weight": np.array([1.0, 2.0])}},
+        {"p": {"weight": np.array([1.0, 3.0])}},
+    )
+    assert changes["p"]["changed"] is True
+    assert changes["p"]["l2_delta"] == 1.0
+
+    mismatch = SimpleNamespace(states=lambda kind: {"other": target_state})
+    with pytest.raises(ValueError, match="parameter paths differ"):
+        example._copy_parameters(source, mismatch)
+
+
+def test_compiler_evidence_retains_warnings_and_parameter_classification(example):
+    class Level(Enum):
+        INFO = "info"
+        WARNING = "warning"
+
+    class Kind(Enum):
+        INCLUDED = "relation_included"
+        EXCLUDED = "relation_excluded_non_temporal"
+
+    diagnostics = (
+        SimpleNamespace(
+            kind=Kind.INCLUDED,
+            level=Level.INFO,
+            message="included",
+            weight_path=("rec_syn", "weight"),
+            hidden_paths=(("neu", "V"),),
+        ),
+        SimpleNamespace(
+            kind=Kind.EXCLUDED,
+            level=Level.WARNING,
+            message="head is non-temporal",
+            weight_path=("height_head", "weight"),
+        ),
+    )
+    report = SimpleNamespace(
+        diagnostics=diagnostics,
+        hidden_groups=[object()],
+        etrace_weights=[(("rec_syn", "weight"), [0])],
+        excluded_weights=[(("height_head", "weight"), "non_temporal")],
+    )
+
+    evidence = example._compiler_evidence(SimpleNamespace(report=report))
+
+    assert evidence["counts"] == {
+        "hidden_groups": 1,
+        "etrace_weights": 1,
+        "excluded_weights": 1,
+        "warnings": 1,
+        "errors": 0,
+    }
+    assert evidence["etrace_weights"][0]["parameter"] == "rec_syn.weight"
+    assert evidence["excluded_weights"][0]["parameter"] == "height_head.weight"
+    assert evidence["diagnostics"][1]["level"] == "warning"
+    assert evidence["diagnostics"][1]["message"] == "head is non-temporal"
+
+
+def test_structural_training_tensors_are_empty(example):
+    config = example.ExperimentConfig(structural_only=True, training_updates=0)
+    fixture = example._load_data(config)
+    tensors = example._prepare_training(fixture, config, example._row_config(config))
+    assert tensors.events.size == 0
+    assert tensors.task_fingerprints == ()
+
+
+def test_derangement_changes_only_demonstration_output_associations(example):
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((2,), (2,)))),
+            ArcPair(ArcGrid(((3,), (3,), (3,))), ArcGrid(((4,),))),
+        ),
+        test=(ArcPair(ArcGrid(((5,),)), ArcGrid(((6,),))),),
+        task_id="unequal",
+    )
+    changed = example._derange_task(task)
+
+    assert changed is not None
+    assert tuple(pair.input for pair in changed.train) == tuple(
+        pair.input for pair in task.train
+    )
+    assert tuple(pair.output for pair in changed.train) == tuple(
+        pair.output for pair in task.train[1:] + task.train[:1]
+    )
+    assert changed.test == task.test
+    rows = RowEventConfig(max_demonstrations=2)
+    intact = encode_query_episode(task, 0, rows)
+    shuffled = encode_query_episode(changed, 0, rows)
+    assert (intact.query_start, intact.query_stop) == (
+        shuffled.query_start,
+        shuffled.query_stop,
+    )
+
+
+def test_derangement_is_unavailable_for_one_demo(example):
+    pair = ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),)))
+    assert example._derange_task(ArcTask((pair,), (pair,), task_id="one")) is None
+
+
+def test_control_sequences_preserve_query_boundaries_and_zero_only_context(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+
+    intact, advances, stops, intact_meta = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="intact",
+        source_tasks=data.evaluation,
+    )
+    no_context, no_advances, no_stops, _ = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="no_context",
+        source_tasks=data.evaluation,
+    )
+    shuffled, shuffled_advances, shuffled_stops, shuffled_meta = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="shuffled",
+        source_tasks=data.evaluation,
+    )
+
+    assert np.array_equal(stops, no_stops)
+    assert np.array_equal(stops, shuffled_stops)
+    assert np.array_equal(advances, no_advances)
+    assert np.array_equal(advances, shuffled_advances)
+    for index, record in enumerate(records):
+        assert np.count_nonzero(no_context[: record.encoded.query_start, index]) == 0
+        assert np.array_equal(
+            no_context[record.encoded.query_start :, index],
+            intact[record.encoded.query_start :, index],
+        )
+    assert all(item["timing_matched"] for item in intact_meta + shuffled_meta)
+    assert not np.array_equal(intact, shuffled)
+
+
+def test_duplicate_task_ids_keep_distinct_strict_scoring_keys(example):
+    pair_a = ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),)))
+    pair_b = ArcPair(ArcGrid(((3,),)), ArcGrid(((4,),)))
+    task_a = ArcTask((pair_a, pair_b), (pair_a,), task_id="duplicate-name")
+    task_b = ArcTask((pair_b, pair_a), (pair_b,), task_id="duplicate-name")
+    fixture = smoke_loaded_dataset()
+    origins = (
+        example._OriginTask("same-source", "fixture", task_a),
+        example._OriginTask("same-source", "fixture", task_b),
+    )
+    data = example._ExperimentData(origins, origins, (fixture,), True)
+    config = example.ExperimentConfig.smoke_config()
+
+    records = example._evaluation_records(data, config, example._row_config(config))
+
+    assert len(records) == 2
+    assert records[0].task_key != records[1].task_key
+    assert all("duplicate-name" in record.task_key for record in records)
+
+
+def test_one_demo_shuffle_is_reported_unavailable_without_timing_change(example):
+    pair = ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),)))
+    task = ArcTask((pair,), (pair,), task_id="one-demo")
+    fixture = smoke_loaded_dataset()
+    origin = example._OriginTask("fixture", "fixture", task)
+    data = example._ExperimentData((origin,), (origin,), (fixture,), True)
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+
+    _, _, stops, metadata = example._arm_sequences(
+        records,
+        config,
+        rows,
+        arm="shuffled",
+        source_tasks=data.evaluation,
+    )
+
+    assert stops.tolist() == [records[0].encoded.query_stop]
+    assert metadata == [
+        {
+            "available": False,
+            "reason": "fewer than two demonstrations",
+            "timing_matched": True,
+        }
+    ]
+
+
+def test_gather_window_uses_each_query_terminal(example):
+    time, batch = 40, 2
+    packed = SimpleNamespace(
+        compact_logits=np.arange(time * batch * 3).reshape(time, batch, 3),
+        spikes=np.arange(time * batch * 4).reshape(time, batch, 4),
+        voltage=np.arange(time * batch * 5).reshape(time, batch, 5),
+        feedforward_current=np.arange(time * batch * 6).reshape(time, batch, 6),
+        recurrent_current=np.arange(time * batch * 7).reshape(time, batch, 7),
+    )
+    compact, spikes, voltage, feedforward, recurrent = example._gather_window(
+        packed, np.array([2, 5])
+    )
+    assert compact.shape == (33, 2, 3)
+    assert spikes[0, 0, 0] == packed.spikes[1, 0, 0]
+    assert voltage[32, 1, 0] == packed.voltage[36, 1, 0]
+    assert feedforward.shape == (33, 2, 6)
+    assert recurrent.shape == (33, 2, 7)
+
+
+def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    batch = len(records)
+    compact = np.zeros((33, batch, 340), dtype=np.float32)
+    spikes = np.zeros((33, batch, 8), dtype=np.float32)
+    voltage = np.zeros((33, batch, 8), dtype=np.float32)
+    feedforward = np.zeros_like(voltage)
+    recurrent = np.zeros_like(voltage)
+
+    metrics, details = example._score_windows(compact, records, color_rank=4)
+    reports, aggregate = example._trajectory_reports(
+        compact,
+        spikes,
+        voltage,
+        feedforward,
+        recurrent,
+        records,
+        color_rank=4,
+    )
+    control = example._control_summary(
+        "identity",
+        (compact, spikes, voltage, feedforward, recurrent),
+        (
+            compact.copy(),
+            spikes.copy(),
+            voltage.copy(),
+            feedforward.copy(),
+            recurrent.copy(),
+        ),
+        records,
+        4,
+        metrics,
+        [{"available": True, "timing_matched": True} for _ in records],
+    )
+
+    assert set(metrics) == {"0", "8", "16", "32"}
+    assert all(len(details[str(effort)]) == batch for effort in (0, 8, 16, 32))
+    assert len(reports) == batch
+    assert len(aggregate) == 33
+    assert aggregate[0]["unique_state_hashes"] == 1
+    assert control["causally_null_query_count"] == batch
+    assert control["available_query_count"] == batch
+    assert control["timing_matched_query_count"] == batch
+    assert control["trajectory_comparison"]["causally_null_at_measured_precision"]
+
+
+def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
+    example, monkeypatch
+):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))[:2]
+    compact = np.zeros((33, 2, 340), dtype=np.float32)
+    spikes = np.zeros((33, 2, 8), dtype=np.float32)
+    voltage = np.zeros((33, 2, 8), dtype=np.float32)
+    feedforward = np.zeros_like(voltage)
+    recurrent = np.zeros_like(voltage)
+    captured: dict[str, object] = {}
+
+    def score(subset_compact, subset_records, color_rank):
+        captured["scored_records"] = len(subset_records)
+        captured["scored_batch"] = subset_compact.shape[1]
+        return {str(effort): _metric() for effort in (0, 8, 16, 32)}, {}
+
+    def compare(
+        intact_spikes, intact_voltage, control_spikes, control_voltage, **kwargs
+    ):
+        captured["comparison_width"] = intact_spikes.shape[1]
+        return {"causally_null_at_measured_precision": True}
+
+    monkeypatch.setattr(example, "_score_windows", score)
+    monkeypatch.setattr(example, "compare_control_trajectories", compare)
+    metadata = [
+        {"available": False, "timing_matched": True, "reason": "one demo"},
+        {"available": True, "timing_matched": True},
+    ]
+
+    result = example._control_summary(
+        "shuffle",
+        (compact, spikes, voltage, feedforward, recurrent),
+        (
+            compact.copy(),
+            spikes.copy(),
+            voltage.copy(),
+            feedforward.copy(),
+            recurrent.copy(),
+        ),
+        records,
+        4,
+        {str(effort): _metric() for effort in (0, 8, 16, 32)},
+        metadata,
+    )
+
+    assert captured == {
+        "scored_records": 1,
+        "scored_batch": 1,
+        "comparison_width": 8,
+    }
+    assert result["query_count"] == 2
+    assert result["applicable_query_count"] == 1
+    assert result["unavailable_query_count"] == 1
+
+
+def test_all_unavailable_shuffle_renders_as_unavailable(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))[:1]
+    compact = np.zeros((33, 1, 340), dtype=np.float32)
+    state = np.zeros((33, 1, 8), dtype=np.float32)
+    window = (compact, state, state.copy(), state.copy(), state.copy())
+
+    unavailable = example._control_summary(
+        "shuffle",
+        window,
+        tuple(value.copy() for value in window),
+        records,
+        4,
+        {str(effort): _metric() for effort in (0, 8, 16, 32)},
+        [{"available": False, "timing_matched": True, "reason": "one demo"}],
+    )
+    payload = _evaluation_payload()
+    payload["controls"] = dict(payload["controls"], shuffled_demonstrations=unavailable)
+    result = {
+        "evaluation": payload,
+        "model": {},
+        "training": {},
+        "qualification": {},
+    }
+    path = tmp_path / "unavailable.png"
+
+    report = example._render_report(result)
+    example._plot(result, path)
+
+    assert unavailable["metrics_by_effort"] == {}
+    assert unavailable["trajectory_comparison"]["available"] is False
+    assert "shuffled_demonstrations: applicable=0/1, unavailable=1" in report
+    assert path.read_bytes().startswith(b"\x89PNG")
+
+
+def test_structural_path_compiles_pp_prop_before_qualification(example, monkeypatch):
+    calls: list[object] = []
+
+    class Learner:
+        def reset_state(self, *, batch_size):
+            calls.append(("learner_reset", batch_size))
+
+    class Model:
+        config = SimpleNamespace(batch_size=1)
+
+        def reset_state(self):
+            calls.append("model_reset")
+
+    monkeypatch.setattr(
+        example, "compile_pp_prop", lambda model: calls.append(model) or Learner()
+    )
+    config = example.ExperimentConfig(structural_only=True, training_updates=0)
+    empty = np.zeros((0,), dtype=np.float32)
+    tensors = example._TrainingTensors(
+        empty, empty, empty, empty, empty, empty, empty, ()
+    )
+
+    result = example._train_model(Model(), tensors, config)
+
+    assert result["pp_prop_compiled"] is True
+    assert result["performed"] is False
+    assert calls[-2:] == ["model_reset", ("learner_reset", 1)]
+
+
+def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatch):
+    updates: list[object] = []
+
+    class Learner:
+        param_states = {}
+
+        def reset_state(self, *, batch_size):
+            assert batch_size == 1
+
+        def __call__(self, event, advance):
+            assert event.shape == (1, 4)
+            assert advance.shape == (1,)
+            return jnp.zeros((1, 340), dtype=jnp.float32)
+
+        def etrace_grad(self, sequence, advance, *, step_fn, **kwargs):
+            assert kwargs["loss_output"] == "scalar"
+            objective = step_fn(sequence[0], advance[0])
+            return {}, objective
+
+    class Optimizer:
+        def __init__(self, *, lr):
+            assert lr > 0
+
+        def register_trainable_weights(self, states):
+            assert states == {}
+
+        def update(self, gradients):
+            updates.append(gradients)
+
+    class Model:
+        config = SimpleNamespace(batch_size=1, color_rank=4)
+
+        def reset_state(self):
+            return None
+
+    def host_for_loop(function, xs):
+        return jnp.stack(
+            [
+                function(tuple(value[index] for value in xs))
+                for index in range(xs[0].shape[0])
+            ]
+        )
+
+    monkeypatch.setattr(example, "compile_pp_prop", lambda model: Learner())
+    monkeypatch.setattr(example.braintools.optim, "Adam", Optimizer)
+    monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
+    monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
+    monkeypatch.setattr(
+        example, "arc_loss_per_example", lambda *args, **kwargs: jnp.ones((1,))
+    )
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
+    monkeypatch.setattr(
+        example.brainstate.nn, "clip_grad_norm", lambda value, limit: value
+    )
+    events = np.zeros((3, 1, 1, 4), dtype=np.float32)
+    advances = np.ones((3, 1, 1), dtype=np.bool_)
+    targets = np.ones((3, 1), dtype=np.int32)
+    colors = np.zeros((3, 1, 30, 30), dtype=np.int32)
+    masks = np.ones((3, 1), dtype=np.float32)
+    tensors = example._TrainingTensors(
+        events,
+        advances,
+        targets,
+        targets,
+        colors,
+        masks,
+        np.array([8, 16, 32]),
+        ("a", "b", "c"),
+        ("base-a", "base-b", "base-c"),
+        ("source", "source", "source"),
+        (0, 0, 0),
+    )
+
+    result = example._train_model(
+        Model(), tensors, example.ExperimentConfig.smoke_config()
+    )
+
+    assert len(updates) == 3
+    assert result["one_shared_model"] is True
+    assert result["one_shared_optimizer_state"] is True
+    assert result["optimizer_updates_by_effort"] == {"8": 1, "16": 1, "32": 1}
+    assert result["losses"] == [1.0, 1.0, 1.0]
+
+
+def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
+    example, monkeypatch
+):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+    batch = len(records)
+    time = rows.max_events + 32
+    stops = np.asarray(
+        [record.encoded.query_stop for record in records], dtype=np.int32
+    )
+    run_calls: list[dict[str, object]] = []
+    fake_model = SimpleNamespace(config=SimpleNamespace(color_rank=4))
+
+    def sequences(records, config, rows, *, arm, source_tasks):
+        events = np.zeros((time, batch, rows.input_width), dtype=np.float32)
+        advances = np.ones((time, batch), dtype=np.bool_)
+        metadata = [{"available": True, "timing_matched": True} for _ in records]
+        return events, advances, stops, metadata
+
+    def packed(model, events, selected_indices, **kwargs):
+        run_calls.append(kwargs)
+        assert selected_indices.shape == (33, batch)
+        return SimpleNamespace(
+            compact_logits=np.zeros((33, batch, 340), dtype=np.float32),
+            spikes=np.zeros((33, batch, 8), dtype=np.float32),
+            voltage=np.zeros((33, batch, 8), dtype=np.float32),
+            feedforward_current=np.zeros((33, batch, 8), dtype=np.float32),
+            recurrent_current=np.zeros((33, batch, 8), dtype=np.float32),
+        )
+
+    metrics = {str(effort): _metric() for effort in (0, 8, 16, 32)}
+    monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
+    monkeypatch.setattr(example, "_copy_parameters", lambda source, target: None)
+    monkeypatch.setattr(
+        example, "parameter_snapshot", lambda model: {"p": np.array([1])}
+    )
+    monkeypatch.setattr(example, "_arm_sequences", sequences)
+    monkeypatch.setattr(example, "run_selected_packed_stream", packed)
+    monkeypatch.setattr(example, "_score_windows", lambda *args: (metrics, {"0": []}))
+    monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
+    monkeypatch.setattr(
+        example,
+        "_control_summary",
+        lambda name, *args, **kwargs: {
+            "name": name,
+            "trajectory_comparison": {"causally_null_at_measured_precision": True},
+        },
+    )
+
+    result = example._evaluate(SimpleNamespace(), data, config, rows, SimpleNamespace())
+
+    assert len(run_calls) == 5
+    assert result["same_frozen_parameter_bytes"] is True
+    assert all("ablation_slots" in call for call in run_calls)
+    assert all("ablation_gates" in call for call in run_calls)
+    assert not np.any(np.asarray(run_calls[0]["ablation_gates"]))
+    assert not np.any(np.asarray(run_calls[1]["ablation_gates"]))
+    ablation = run_calls[-1]
+    gates = np.asarray(ablation["ablation_gates"])
+    assert gates.shape == (time, batch)
+    assert np.all(gates[stops, np.arange(batch)])
+    assert result["determinism"] == {
+        "same_control_capable_execution_path": True,
+        "state_tolerance": "exact byte identity",
+        "metric_absolute_tolerance": 0.0,
+        "repeat_intact_state_byte_identical": True,
+        "slot_ablation_checkpoint_zero_byte_identical": True,
+    }
+    assert "repeat_intact" in result["controls"]
+    assert result["controls"]["truncation"]["checkpoints"] == [0, 8, 16, 32]
+
+
+def test_qualification_separates_plumbing_structural_and_scientific_claims(example):
+    fixture = smoke_loaded_dataset()
+    fixture_origin = example._OriginTask("fixture", "fixture", fixture.tasks[0])
+    fixture_data = example._ExperimentData(
+        (fixture_origin,), (fixture_origin,), (fixture,), True
+    )
+    training = {
+        "performed": True,
+        "one_shared_model": True,
+        "one_shared_optimizer_state": True,
+        "terminal_supervision_only": True,
+        "pp_prop_compiled": True,
+        "compiler_report": {
+            "available": True,
+            "counts": {
+                "hidden_groups": 1,
+                "etrace_weights": 2,
+                "excluded_weights": 4,
+                "warnings": 4,
+                "errors": 0,
+            },
+            "etrace_weights": [
+                {"parameter": "ff_syn.comm.weight"},
+                {"parameter": "rec_syn.comm.weight"},
+            ],
+            "excluded_weights": [
+                {"parameter": "color_factor_head.weight"},
+                {"parameter": "height_head.weight"},
+                {"parameter": "readout_projection.weight"},
+                {"parameter": "width_head.weight"},
+            ],
+        },
+        "optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1},
+        "losses": [1.0, 0.9, 0.8],
+        "parameters_moved": True,
+        "parameter_changes": {
+            "color_factor_head.weight": {"changed": True, "l2_delta": 1.0},
+            "ff_syn.comm.weight": {"changed": True, "l2_delta": 1.0},
+            "height_head.weight": {"changed": True, "l2_delta": 1.0},
+            "readout_projection.weight": {"changed": True, "l2_delta": 1.0},
+            "rec_syn.comm.weight": {"changed": True, "l2_delta": 1.0},
+            "width_head.weight": {"changed": True, "l2_delta": 1.0},
+        },
+    }
+    evaluation = _evaluation_payload()
+    model_report = {
+        "neuron_count": 2048,
+        "recurrent_edge_count": 16384,
+        "slot_count": 32,
+        "parameter_count": 1,
+        "component_types": {
+            "neuron": "LIF",
+            "feedforward_projection_wrapper": "AlignPostProj",
+            "feedforward_projection": "Linear",
+            "feedforward_synapse": "Expon",
+            "feedforward_output": "CUBA",
+            "recurrent_projection_wrapper": "AlignPostProj",
+            "recurrent_projection": "SparseLinear",
+            "recurrent_synapse": "Expon",
+            "recurrent_output": "CUBA",
+        },
+    }
+    gpu = {"platform": "gpu", "kind": "test"}
+
+    plumbing = example._qualification(
+        example.ExperimentConfig.smoke_config(),
+        fixture_data,
+        training,
+        evaluation,
+        {"platform": "cpu", "kind": "test"},
+        dict(model_report, neuron_count=128, recurrent_edge_count=1024, slot_count=2),
+    )
+    assert plumbing["full_structural_qualification"] is False
+    assert plumbing["full_scientific_qualification"] is False
+    assert "plumbing-only" in " ".join(plumbing["reasons_not_scientific"])
+
+    train_source = SimpleNamespace(role="train", name="ARC-AGI-1 training")
+    eval_source = SimpleNamespace(role="evaluation", name="ARC-AGI-1 evaluation")
+    loaded = (
+        SimpleNamespace(
+            manifest=SimpleNamespace(source=train_source, plumbing_only=False)
+        ),
+        SimpleNamespace(
+            manifest=SimpleNamespace(source=eval_source, plumbing_only=False)
+        ),
+    )
+    public_data = example._ExperimentData(
+        (example._OriginTask("ARC-AGI-1 training", "train", fixture.tasks[0]),),
+        (example._OriginTask("ARC-AGI-1 evaluation", "evaluation", fixture.tasks[1]),),
+        loaded,
+        False,
+    )
+    scientific = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        evaluation,
+        gpu,
+        model_report,
+    )
+    assert scientific["full_structural_qualification"] is True
+    assert scientific["full_scientific_qualification"] is True
+
+    no_compile = dict(training, pp_prop_compiled=False)
+    failed = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        no_compile,
+        evaluation,
+        gpu,
+        model_report,
+    )
+    assert failed["full_structural_qualification"] is False
+    assert "compilation" in " ".join(failed["reasons_not_scientific"])
+
+    cpu = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        evaluation,
+        {"platform": "cpu", "kind": "test"},
+        model_report,
+    )
+    assert cpu["full_structural_qualification"] is False
+
+    bad_compiler = dict(
+        training,
+        compiler_report={
+            "available": True,
+            "counts": {"hidden_groups": 1, "etrace_weights": 2, "errors": 1},
+        },
+    )
+    compiler_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        bad_compiler,
+        evaluation,
+        gpu,
+        model_report,
+    )
+    assert compiler_failure["full_structural_qualification"] is False
+
+    nondeterministic = _evaluation_payload()
+    nondeterministic["determinism"] = dict(
+        nondeterministic["determinism"],
+        repeat_intact_state_byte_identical=False,
+    )
+    repeat_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        nondeterministic,
+        gpu,
+        model_report,
+    )
+    assert repeat_failure["full_structural_qualification"] is False
+    assert "repeat" in " ".join(repeat_failure["reasons_not_structural"])
+
+    missing_readout = dict(
+        training,
+        parameter_changes={
+            path: change
+            for path, change in training["parameter_changes"].items()
+            if path != "readout_projection.weight"
+        },
+    )
+    movement_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        missing_readout,
+        evaluation,
+        gpu,
+        model_report,
+    )
+    assert movement_failure["full_structural_qualification"] is True
+    assert movement_failure["full_scientific_qualification"] is False
+    assert "every parameter group" in " ".join(
+        movement_failure["reasons_not_scientific"]
+    )
+
+    wrong_components = dict(
+        model_report,
+        component_types=dict(model_report["component_types"], neuron="NotLIF"),
+    )
+    component_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        evaluation,
+        gpu,
+        wrong_components,
+    )
+    assert component_failure["full_structural_qualification"] is False
+    assert "component types" in " ".join(component_failure["reasons_not_structural"])
+
+
+def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
+    example, tmp_path
+):
+    result = {
+        "claim_boundary": example.CLAIM_BOUNDARY,
+        "configuration": {"seed": 7},
+        "device": {"platform": "cpu", "kind": "test"},
+        "model": {"neuron_count": 128, "recurrent_edge_count": 1024, "slot_count": 2},
+        "training": {"optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1}},
+        "evaluation": _evaluation_payload(),
+        "data_summary": {
+            "manifest_sha256": "abc",
+            "task_counts_by_role": {"fixture": 2},
+            "query_counts_by_role": {"fixture": 3},
+            "excluded_task_count": 0,
+            "rejected_task_count": 0,
+        },
+        "runtime_seconds": 1.25,
+        "qualification": {
+            "full_structural_qualification": False,
+            "full_scientific_qualification": False,
+            "reasons_not_scientific": ["fixture"],
+        },
+    }
+
+    report = example._render_report(result)
+    plot_path = tmp_path / "plot.png"
+    example._plot(result, plot_path)
+
+    assert "query pass@1" in report
+    assert "shuffled_demonstrations" in report
+    assert "not a reproduction" in report
+    assert "Seed: 7" in report
+    assert "Runtime: 1.250" in report
+    assert "Voltage L2" in report
+    assert plot_path.read_bytes().startswith(b"\x89PNG")
+
+
+def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_path):
+    config = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
+    fixture = smoke_loaded_dataset()
+    origin = example._OriginTask("fixture", "fixture", fixture.tasks[0])
+    data = example._ExperimentData((origin,), (origin,), (fixture,), True)
+    model = SimpleNamespace(
+        neuron_count=128,
+        recurrent_edge_count=1024,
+        slot_count=2,
+        config=SimpleNamespace(compact_output_width=340, color_rank=4),
+        neu=SimpleNamespace(),
+        ff_syn=SimpleNamespace(
+            comm=SimpleNamespace(), syn=SimpleNamespace(), out=SimpleNamespace()
+        ),
+        rec_syn=SimpleNamespace(
+            comm=SimpleNamespace(), syn=SimpleNamespace(), out=SimpleNamespace()
+        ),
+    )
+    training = {
+        "performed": True,
+        "pp_prop_compiled": True,
+        "optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1},
+    }
+    evaluation = _evaluation_payload()
+    monkeypatch.setattr(
+        example,
+        "_resolve_device",
+        lambda name: (SimpleNamespace(), {"platform": "cpu", "kind": "test", "id": 0}),
+    )
+    monkeypatch.setattr(example, "_load_data", lambda config: data)
+    monkeypatch.setattr(example, "_prepare_training", lambda *args: SimpleNamespace())
+    monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: model)
+    monkeypatch.setattr(example, "_train_model", lambda *args: training)
+    monkeypatch.setattr(example, "_evaluate", lambda *args: evaluation)
+    monkeypatch.setattr(
+        example,
+        "_device_memory_stats",
+        lambda device: {"peak_bytes_in_use": 123456},
+    )
+    monkeypatch.setattr(
+        example, "parameter_snapshot", lambda model: {"p": np.ones((3,))}
+    )
+    monkeypatch.setattr(
+        example,
+        "_qualification",
+        lambda *args: {
+            "full_structural_qualification": False,
+            "full_scientific_qualification": False,
+            "reasons_not_scientific": ["fixture"],
+        },
+    )
+    monkeypatch.setattr(example, "_plot", lambda result, path: path.write_bytes(b"png"))
+
+    result = example.run_experiment(config)
+
+    assert json.loads((tmp_path / "result.json").read_text())["schema_version"] == 1
+    assert json.loads((tmp_path / "data_manifest.json").read_text())[0]["plumbing_only"]
+    assert "Claim boundary" in (tmp_path / "report.txt").read_text()
+    assert (tmp_path / "latent_reasoning.png").read_bytes() == b"png"
+    assert set(result["artifacts"]) == {"data_manifest", "result", "report", "figure"}
+    assert result["device"]["memory_stats"] == {"peak_bytes_in_use": 123456}
+    assert result["device"]["memory_stats_capture"] == "after training and evaluation"
+
+
+def test_main_prints_report_and_returns_result(example, monkeypatch, capsys, tmp_path):
+    result = {
+        "device": {"platform": "cpu", "kind": "test"},
+        "model": {"neuron_count": 128, "recurrent_edge_count": 1024, "slot_count": 2},
+        "training": {"optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1}},
+        "evaluation": _evaluation_payload(),
+        "qualification": {
+            "full_structural_qualification": False,
+            "full_scientific_qualification": False,
+            "reasons_not_scientific": ["fixture"],
+        },
+    }
+    monkeypatch.setattr(example, "run_experiment", lambda config: result)
+
+    returned = example.main(
+        ["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)]
+    )
+
+    assert returned is result
+    assert "Example 21" in capsys.readouterr().out
+
+
+def test_repeated_model_execution_is_lowered_through_brainstate_transforms(example):
+    tree = ast.parse(EXAMPLE.read_text(encoding="utf-8"))
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    training_loops = [
+        node
+        for node in ast.walk(functions["_train_model"])
+        if isinstance(node, (ast.For, ast.While))
+    ]
+    assert training_loops == []
+    calls = [
+        node
+        for node in ast.walk(functions["_train_model"])
+        if isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "for_loop"
-        for node in ast.walk(tree)
-    )
-
-    train_tree = ast.parse(inspect.getsource(example._train_depth))
-    train_calls = [node for node in ast.walk(train_tree) if isinstance(node, ast.Call)]
-    assert any(
-        isinstance(node.func, ast.Attribute) and node.func.attr == "etrace_grad"
-        for node in train_calls
-    )
-    assert any(
-        isinstance(node.func, ast.Attribute) and node.func.attr == "for_loop"
-        for node in train_calls
-    )
-
-
-def test_depth_grid_has_one_compiled_model_call_outside_host_label_loops():
-    example = _load()
-    source = inspect.getsource(example._depth_interventions)
-
-    assert source.count("_evaluate_grid(") == 1
-    assert "_evaluate_batch(" not in source
-
-
-@pytest.mark.parametrize("occupied_count", range(2, 9))
-def test_shuffled_arm_deranges_only_occupied_slots_and_preserves_norm(
-    occupied_count,
-):
-    example = _load()
-    slot_count = 8
-    permutation = example.occupied_slot_derangement(slot_count, occupied_count)
-    values = np.arange(slot_count * 3, dtype=np.float32).reshape(1, slot_count, 3)
-    keys = values + 100.0
-
-    shuffled, unchanged_keys = shuffled_memory_factors(values, keys, permutation)
-
-    permutation = np.asarray(permutation)
-    occupied = np.arange(occupied_count)
-    unused = np.arange(occupied_count, slot_count)
-    assert np.all(permutation[:occupied_count] != occupied)
-    np.testing.assert_array_equal(permutation[occupied_count:], unused)
-    np.testing.assert_array_equal(
-        shuffled[:, occupied_count:], values[:, occupied_count:]
-    )
-    np.testing.assert_array_equal(unchanged_keys, keys)
-    assert np.linalg.norm(shuffled) == pytest.approx(np.linalg.norm(values))
-
-
-def test_complete_smoke_grid_is_reproducible_and_json_friendly(
-    tmp_path, monkeypatch, capsys
-):
-    example = _load()
-    calls = []
-    grid_calls = []
-    monkeypatch.setattr(example, "_train_depth", _fake_train_depth(calls))
-    monkeypatch.setattr(example, "_evaluate_grid", _fake_evaluate(example, grid_calls))
-    first_config = _smoke_config(example, tmp_path / "first.png", seed=91)
-    second_config = _smoke_config(example, tmp_path / "second.png", seed=91)
-
-    first = example._run_experiment(first_config)
-    second = example._run_experiment(second_config)
-
-    assert first_config.depths == (0, 1, 2, 4, 8)
-    assert first_config.binding_counts == tuple(range(2, 9))
-    assert set(first["training"]["depths"]) == {"0", "1", "2", "4", "8"}
-    assert set(first["interventions"]["depths"]) == {"0", "1", "2", "4", "8"}
-    assert len(calls) == 10
-    assert all(call[1:] == calls[0][1:] for call in calls)
-    assert grid_calls == [28] * 10
-
-    for depth in first_config.depths:
-        depth_result = first["interventions"]["depths"][str(depth)]
-        assert set(depth_result["per_binding_count"]) == {
-            str(value) for value in range(2, 9)
-        }
-        for cell in depth_result["per_binding_count"].values():
-            assert set(cell) == {"supported", "short"}
-            assert set(cell["supported"]) == {"intact", "shuffled"}
-            assert set(cell["short"]) == {"intact", "shuffled"}
-        geometry = first["geometry"]["depths"][str(depth)]
-        assert len(geometry["participation_ratio"]) == depth + 1
-        assert len(geometry["trajectory_step_norm"]) == depth + 1
-        assert len(geometry["answer_decodability"]["workspace_per_iteration"]) == (
-            depth + 1
-        )
-        assert "raw_memory_factor_decodability" in geometry
-
-    def stable(result):
-        copy = json.loads(json.dumps(result))
-        copy["figure_path"] = "<figure>"
-        copy["config"]["figure_path"] = "<figure>"
-        return copy
-
-    assert stable(first) == stable(second)
-    assert first["reproducibility"]["initial_parameters_identical_across_depths"]
-    assert first["reproducibility"]["demo_query_inputs_identical_across_depths"]
-    assert pathlib.Path(first["figure_path"]).is_file()
-    assert pathlib.Path(second["figure_path"]).is_file()
-    json.dumps(first, allow_nan=False)
-    metadata = json.loads(first["canonical_metadata_json"])
-    assert "figure_path" not in metadata["config"]
-    assert metadata["config"]["depths"] == [0, 1, 2, 4, 8]
-    assert metadata["config"]["binding_counts"] == list(range(2, 9))
-    assert metadata["config"]["symbol_count"] == 10
-    assert metadata["config"]["slot_capacity"] == 8
-    assert metadata["config"]["code_width"] == 12
-    assert metadata["config"]["spike_rate"] == 0.25
-    assert metadata["config"]["symbol_ticks"] == 4
-    assert metadata["config"]["codebook_seed"] == 313320
-    assert metadata["config"]["projection_seed"] == 210848
-    assert metadata["config"]["learning_rate"] == 1e-5
-    assert metadata["device"]["platform"] == "cpu"
-    assert first["reproducibility"]["codebook_seed"] == 313320
-    assert first["reproducibility"]["projection_seed"] == 210848
-    assert metadata["reproducibility"]["codebook_seed"] == 313320
-    assert metadata["reproducibility"]["projection_seed"] == 210848
-    assert metadata["reproducibility"]["numerical_tolerance"] == 1e-6
-
-    series = example._figure_series(first)
-    assert set(series) == {
-        "accuracy_vs_depth",
-        "accuracy_vs_binding_count",
-        "decodability_per_iteration",
-    }
-    assert len(series["accuracy_vs_depth"]["x"]) == 5
-    assert set(series["accuracy_vs_binding_count"]) >= {"supported", "short"}
-    assert set(series["decodability_per_iteration"]) >= {
-        "workspace",
-        "memory_read",
-    }
-
-    report = example._render_report(first)
-    assert "R=0" in report and "R=8" in report
-    assert "K=2" in report and "K=8" in report
-    assert "supported-short" in report
-    assert "intact-shuffled" in report
-    assert "fixed_random" in report
-    assert "primary exact_query_memory_read" in report
-    assert "secondary raw_memory_factors" in report
-    assert first["canonical_metadata_json"] in report
-    assert first["claim_boundary"] in report
-    assert capsys.readouterr().out == ""
-
-
-def test_main_prints_plain_report_and_returns_mapping(tmp_path, monkeypatch, capsys):
-    example = _load()
-    monkeypatch.setattr(example, "_train_depth", _fake_train_depth([]))
-    monkeypatch.setattr(example, "_evaluate_grid", _fake_evaluate(example))
-
-    result = example.main(
-        [
-            "--smoke",
-            "--device",
-            "cpu",
-            "--seed",
-            "123",
-            "--figure",
-            str(tmp_path / "main.png"),
-        ]
-    )
-
-    output = capsys.readouterr().out
-    assert result["config"]["seed"] == 123
-    assert result["device"]["requested"] == "cpu"
-    assert "Example 21" in output
-    assert "probe split" in output
-    assert "interface only" in output
-    assert "codebook_seed=313320" in output
-    assert "projection_seed=210848" in output
-    assert pathlib.Path(result["figure_path"]).is_file()
-
-    import matplotlib
-
-    assert str(matplotlib.get_backend()).lower() == "agg"
-
-
-def test_device_resolution_accepts_explicit_cpu(monkeypatch):
-    example = _load()
-    cpu = SimpleNamespace(platform="cpu", id=3, device_kind="test cpu")
-    monkeypatch.setattr(example, "_devices_for_platform", lambda platform: [cpu])
-
-    resolved, report = example._resolve_device("cpu")
-
-    assert resolved is cpu
-    assert report == {
-        "requested": "cpu",
-        "platform": "cpu",
-        "id": 3,
-        "kind": "test cpu",
-    }
-
-
-def test_real_tiny_cpu_training_and_frozen_evaluation(tmp_path):
-    example = _load()
-    config = example.ExperimentConfig(
-        seed=321,
-        device="cpu",
-        depths=(2,),
-        binding_counts=(2, 8),
-        batch_size=2,
-        training_updates=1,
-        latent_width=4,
-        code_width=12,
-        symbol_ticks=4,
-        figure_path=tmp_path / "real-tiny.png",
-        learning_rate=1e-5,
-    )
-    corpus = example._build_training_corpus(config)
-
-    model, training = example._train_depth(config, 2, corpus)
-
-    assert set(training) == {
-        "depth",
-        "losses",
-        "parameter_l2_deltas",
-        "terminal_only_supervision",
-        "write_mode",
-        "write_projections_updated",
-        "mixed_binding_counts",
-        "trainable_parameters",
-        "initial_parameter_fingerprints",
-        "canonical_prefix_fingerprint",
-        "compiler",
-    }
-    assert training["terminal_only_supervision"] is True
-    assert training["write_mode"] == "fixed_random"
-    assert training["write_projections_updated"] is False
-    assert np.all(np.isfinite(training["losses"]))
-    assert training["parameter_l2_deltas"]["Wk"] == 0.0
-    assert training["parameter_l2_deltas"]["Wv"] == 0.0
-    assert (
-        max(
-            training["parameter_l2_deltas"]["Wf"],
-            training["parameter_l2_deltas"]["Wo"],
-        )
-        > 0.0
-    )
-    assert set(training["trainable_parameters"]) == {"Wf", "Wc", "Wo"}
-
-    held_out = example._build_held_out_corpus(config)
-    episodes = tuple(pair.supported for pair in held_out[2])
-    task = example._model_task(config, 2)
-    intact = example._evaluate_batch(model, task, episodes, shuffled=False)
-    shuffled = example._evaluate_batch(model, task, episodes, shuffled=True)
-
-    assert intact.workspace.shape == (2, 3, 4)
-    assert shuffled.workspace.shape == (2, 3, 4)
-    assert intact.memory_read.shape == (2, 4)
-    assert intact.parameters_unchanged is True
-    assert shuffled.parameters_unchanged is True
-    assert set(np.unique(intact.workspace)).issubset({0.0, 1.0})
-    assert np.linalg.norm(shuffled.memory_values) == pytest.approx(
-        np.linalg.norm(intact.memory_values)
-    )
-
-
-def test_real_cpu_smoke_runs_every_depth_arm_and_measurement(tmp_path, capsys):
-    example = _load()
-
-    result = example.main(
-        [
-            "--smoke",
-            "--device",
-            "cpu",
-            "--seed",
-            "654",
-            "--figure",
-            str(tmp_path / "real-smoke.png"),
-        ]
-    )
-
-    assert set(result["training"]["depths"]) == {"0", "1", "2", "4", "8"}
-    assert result["interventions"]["frozen_no_retraining"] is True
-    assert all(
-        depth["all_frozen_parameter_audits_passed"]
-        for depth in result["interventions"]["depths"].values()
-    )
-    assert all(
-        set(depth["per_binding_count"]) == {str(value) for value in range(2, 9)}
-        for depth in result["interventions"]["depths"].values()
-    )
-    assert all(
-        "raw_memory_factor_decodability" in depth
-        for depth in result["geometry"]["depths"].values()
-    )
-    assert result["device"]["requested"] == "cpu"
-    assert result["device"]["platform"] == "cpu"
-    assert pathlib.Path(result["figure_path"]).is_file()
-    json.dumps(result, allow_nan=False)
-    output = capsys.readouterr().out
-    assert "R=0" in output and "R=8" in output
-    assert "K=2" in output and "K=8" in output
-    assert "primary exact_query_memory_read" in output
-    assert "secondary raw_memory_factors" in output
-
-
-def test_real_same_seed_cpu_metrics_are_reproducible(tmp_path):
-    example = _load()
-    common = dict(
-        seed=777,
-        device="cpu",
-        depths=(0,),
-        binding_counts=(2, 8),
-        batch_size=2,
-        training_updates=1,
-        latent_width=4,
-        code_width=12,
-        symbol_ticks=4,
-        learning_rate=1e-5,
-    )
-    first_config = example.ExperimentConfig(
-        **common, figure_path=tmp_path / "repro-first.png"
-    )
-    second_config = example.ExperimentConfig(
-        **common, figure_path=tmp_path / "repro-second.png"
-    )
-    cpu, device_report = example._resolve_device("cpu")
-
-    with example.jax.default_device(cpu):
-        first = example._run_experiment(first_config, device_report)
-        second = example._run_experiment(second_config, device_report)
-
-    for key in ("training", "interventions", "geometry", "reproducibility"):
-        assert first[key] == second[key]
-    assert first["canonical_metadata_json"] == second["canonical_metadata_json"]
-
-
-def test_canonical_inputs_preserve_the_latent_clock_bank() -> None:
-    from examples.pp_prop.latent_workspace_task import (
-        TaskConfig,
-        generate_episode,
-        latent_clock_code,
-    )
-
-    example = _load()
-    source = TaskConfig(latent_steps=6)
-    destination = TaskConfig(latent_steps=6)
-    episode = generate_episode(source, brainstate.random.RandomState(140))
-
-    packed = example._canonical_inputs(episode, destination)
-    clock = packed[:, destination.clock_slice]
-
-    assert not np.any(clock[: destination.latent_slice.start])
-    np.testing.assert_array_equal(
-        clock[destination.latent_slice],
-        latent_clock_code(destination.latent_steps, destination.clock_width),
-    )
-
-
-def test_canonical_inputs_reclock_when_latent_depth_changes() -> None:
-    from examples.pp_prop.latent_workspace_task import (
-        TaskConfig,
-        generate_episode,
-        latent_clock_code,
-    )
-
-    example = _load()
-    source = TaskConfig(latent_steps=8)
-    destination = TaskConfig(latent_steps=3)
-    episode = generate_episode(source, brainstate.random.RandomState(141))
-
-    packed = example._canonical_inputs(episode, destination)
-
-    np.testing.assert_array_equal(
-        packed[destination.latent_slice, destination.clock_slice],
-        latent_clock_code(3, destination.clock_width),
-    )
+    ]
+    assert calls
+    assert "run_selected_packed_stream" in EXAMPLE.read_text(encoding="utf-8")

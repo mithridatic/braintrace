@@ -37,8 +37,9 @@ requested neuron count and update budget.
 | Delayed-cue temporal credit               | 17                 |
 | Topology (fixed vs evolved)               | 18                 |
 | Post-training topology analysis           | 19, 20             |
-| In-context rule induction                 | 21                 |
-| Latent workspace and contextual memory    | 21                 |
+| Standard ARC exact-grid inference         | 21                 |
+| Same-model variable latent effort         | 21                 |
+| Latent trajectory and causal controls     | 21                 |
 
 ### File-by-file summary
 
@@ -64,7 +65,7 @@ requested neuron count and update budget.
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
 | 20 | `20-post-training-neuron-pruning.py` | Joint causal neuron/edge lesions and a coordinate-wise locally minimal network after Example 18 |
-| 21 | `21-latent-reasoning-in-context.py` | In-context ARC reasoning with recurrent spiking context and a variable-depth latent workspace |
+| 21 | `21-latent-reasoning-in-context.py` | Standard ARC grids through a pp-prop-trained recurrent LIF network at 0/8/16/32 latent steps |
 
 ### Post-training neuron-and-edge pruning
 
@@ -93,16 +94,41 @@ models.
 
 ### In-context latent reasoning
 
-Example 21 uses three sibling support modules. A full run requests a GPU by
-default and fails closed instead of silently falling back to CPU. Run it in the
-repository's CUDA-enabled environment with:
+Example 21 uses three sibling support modules and one shared model for every
+effort checkpoint. The full architecture has 2,048 LIF neurons and exactly
+16,384 recurrent sparse edges. It consumes ordinary ARC JSON tasks—multiple
+input/output demonstrations, variable grid dimensions, and every test query—and
+reports exact query and strict whole-task pass@1/pass@2. Pixel accuracy is only
+a near-miss diagnostic.
 
-    python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu
+Data remains outside Git. Supply a provenance manifest assigning public sources
+to training, tuning, or evaluation roles. The adapter supports ARC-AGI-1
+training, RE-ARC, ConceptARC, ARC-Heavy, and ARC-GEN100K when locally available;
+ARC-AGI-1 evaluation and fresh `arc-task-gen` tasks are evaluation-only. The run
+fingerprints task content and aborts on train/evaluation overlap. The private
+paper data and training recipe are unavailable and are not simulated.
 
-For a reduced CPU iteration check that exercises the data, scoring, recurrent
-reasoning levels, causal controls, and trajectory report:
+A full run requests a GPU by default and fails closed instead of silently
+falling back to CPU. Run it in the repository's CUDA-enabled environment with:
 
-    python examples/pp_prop/21-latent-reasoning-in-context.py --smoke --device cpu --figure latent-reasoning-smoke.png
+    python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest path/to/sources.json --output-dir var/example21
+
+For a reduced CPU iteration check that exercises lossless ARC encoding, exact
+scoring, all recurrent checkpoints, causal controls, and the trajectory report:
+
+    python examples/pp_prop/21-latent-reasoning-in-context.py --smoke --device cpu --output-dir var/example21-smoke
+
+The smoke fixture and reduced network prove plumbing only. They are never
+reported as ARC model quality. A scientific result requires a non-evaluation
+public training source, held-out tasks, the 2,048/16,384 model, mixed 8/16/32
+training effort, and frozen evaluation of one trajectory at 0/8/16/32. The
+report also includes provisional grid changes, entropy, spikes, voltage, state
+movement, convergence, no-context, deranged-demonstration, and 64-neuron slot
+ablation controls.
+
+The paper's public LOW/MEDIUM/HIGH labels do not disclose iteration counts, so
+8/16/32 are this example's operational recurrent-tick proxy, not a paper-tier
+mapping.
 
 The CLI enforces the requested JAX platform but does not itself detect whether
 it is running inside Docker. See the active OpenSpec change and

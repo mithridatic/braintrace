@@ -1,28 +1,27 @@
-"""21 - In-context learning through a recurrent latent workspace.
+"""21 - Standard ARC with pp-prop and recurrent latent spiking effort.
 
-This example instantiates the published system-level interface of BDH-CQ with
-an original BrainTrace mechanism: episode-local factored memory, a recurrent
-latent workspace, and terminal-only pp_prop learning. The source system's
-internal dimensions, update equations, and training recipe are unpublished;
-this is an interface experiment, not a reproduction.
-
-The release default keeps the contextual-memory write projections fixed and
-trains the remaining eligible parameters. It reports accuracy and latent
-geometry only. It makes no source-benchmark, inference-cost, or learning-rule
-gradient claim.
+This example keeps the observable contract of BDH-CQ--ordinary ARC tasks,
+exact ranked candidates, and selectable latent effort--while using the neuron,
+synapse, sparse-operator, and pp-prop stack established by Examples 18--20.
+The paper's private architecture, private data, and training recipe are not
+available.  This is a repository-native experiment, not a reproduction.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import math
+import os
 import pathlib
-import warnings
-from dataclasses import asdict, dataclass, replace
-from numbers import Integral
-from typing import Any, Dict, Literal, Optional
+import platform
+import time
+from collections import Counter
+from dataclasses import asdict, dataclass
+from numbers import Integral, Real
+from typing import Any, Literal, Sequence
 
 import brainstate
 import braintools
@@ -30,1211 +29,2466 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-import braintrace
-
 try:
-    from examples.pp_prop.latent_workspace_analysis import analyze_latent_workspace
+    from examples.pp_prop.latent_workspace_analysis import (
+        OutputLogits,
+        aggregate_arc_metrics,
+        analyze_latent_trajectory,
+        compare_control_trajectories,
+        decode_candidates,
+        score_query_candidates,
+    )
     from examples.pp_prop.latent_workspace_model import (
-        LatentWorkspaceModel,
         ModelConfig,
-        occupied_slot_derangement,
+        LatentWorkspaceModel,
+        arc_loss_per_example,
+        compile_pp_prop,
+        expand_compact_logits,
         parameter_snapshot,
+        run_selected_packed_stream,
     )
     from examples.pp_prop.latent_workspace_task import (
-        Episode,
-        MatchedEpisodes,
-        TaskConfig,
-        generate_episode,
-        generate_matched_episodes,
-        latent_clock_code,
+        ArcPair,
+        ArcTask,
+        DatasetSource,
+        EncodedQueryEpisode,
+        LoadedDataset,
+        RowEventConfig,
+        assert_no_evaluation_leakage,
+        augment_training_task,
+        canonical_task_fingerprint,
+        encode_query_episode,
+        load_dataset_source,
+        smoke_loaded_dataset,
     )
 except ModuleNotFoundError:
-    from latent_workspace_analysis import analyze_latent_workspace
+    from latent_workspace_analysis import (
+        OutputLogits,
+        aggregate_arc_metrics,
+        analyze_latent_trajectory,
+        compare_control_trajectories,
+        decode_candidates,
+        score_query_candidates,
+    )
     from latent_workspace_model import (
-        LatentWorkspaceModel,
         ModelConfig,
-        occupied_slot_derangement,
+        LatentWorkspaceModel,
+        arc_loss_per_example,
+        compile_pp_prop,
+        expand_compact_logits,
         parameter_snapshot,
+        run_selected_packed_stream,
     )
     from latent_workspace_task import (
-        Episode,
-        MatchedEpisodes,
-        TaskConfig,
-        generate_episode,
-        generate_matched_episodes,
-        latent_clock_code,
+        ArcPair,
+        ArcTask,
+        DatasetSource,
+        EncodedQueryEpisode,
+        LoadedDataset,
+        RowEventConfig,
+        assert_no_evaluation_leakage,
+        augment_training_task,
+        canonical_task_fingerprint,
+        encode_query_episode,
+        load_dataset_source,
+        smoke_loaded_dataset,
     )
 
 
 DeviceName = Literal["cpu", "gpu"]
-DEFAULT_DEPTHS = (0, 1, 2, 4, 8)
-DEFAULT_BINDING_COUNTS = tuple(range(2, 9))
-DEFAULT_COUPLED_JACOBIAN_BUDGET = 67_108_864
-COUPLED_STATE_LEAVES = 3
+CHECKPOINTS = (0, 8, 16, 32)
+TRAINING_EFFORTS = (8, 16, 32)
+APPROVED_TRAINING_SOURCES = frozenset(
+    {
+        "arc-agi-1 training",
+        "re-arc",
+        "conceptarc",
+        "arc-heavy",
+        "arc-gen100k",
+    }
+)
+APPROVED_EVALUATION_SOURCES = frozenset({"arc-agi-1 evaluation", "arc-task-gen"})
 CLAIM_BOUNDARY = (
-    "Claim boundary: this is an instantiation of the published system-level "
-    "interface only. The source system's internal update rules, dimensions, "
-    "and training recipe are unpublished, so this is not a reproduction. No "
-    "source benchmark score or inference-cost claim is made, and no property "
-    "of pp_prop's gradient estimate is asserted. The memory-write projections "
-    "are fixed_random in this release; pp_prop trains only the remaining "
-    "eligible parameters, so this is not evidence of a learned write path."
+    "Claim boundary: Example 21 instantiates the paper's public ARC task, "
+    "ranked-candidate, and variable-effort contract with BrainPy LIF neurons, "
+    "BrainTrace sparse synapses, and pp-prop. The paper's private data, model "
+    "dimensions, internal update rules, and training recipe were unavailable. "
+    "This is not a reproduction, makes no paper-score or inference-cost claim, "
+    "and asserts no agreement between pp-prop and a BPTT gradient oracle."
 )
 
 
-def _validated_nonnegative_seed(value: object, name: str) -> int:
+def _integer(value: object, name: str, *, minimum: int = 0) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be a nonnegative non-boolean integer")
+        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}")
     result = int(value)
-    if result < 0:
-        raise ValueError(f"{name} must be a nonnegative non-boolean integer")
+    if result < minimum:
+        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}")
+    return result
+
+
+def _positive_real(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise ValueError(f"{name} must be finite and positive")
+    result = float(value)
+    if not math.isfinite(result) or result <= 0.0:
+        raise ValueError(f"{name} must be finite and positive")
     return result
 
 
 @dataclass(frozen=True)
 class ExperimentConfig:
-    """Configure training, interventions, analysis, and output.
+    """Configure data, one-model training, frozen evaluation, and artifacts.
 
     Parameters
     ----------
-    seed : int
-        Seed used for data and parameter initialization.
-    codebook_seed : int
-        Seed for the fixed local BrainState symbol-code stream.
-    projection_seed : int
-        Seed for the fixed random memory-write projections.
+    source_manifest : pathlib.Path or None
+        JSON declaration of public local ARC sources. Full scientific runs
+        require at least one training and one evaluation source.
+    output_dir : pathlib.Path
+        Directory for ``result.json``, text report, plot, and resolved manifest.
     device : {"cpu", "gpu"}
-        Requested JAX platform. GPU is the fail-closed default.
-    depths : tuple of int
-        Latent-iteration depths trained and evaluated independently.
-    binding_counts : tuple of int
-        Demonstration binding counts in the frozen intervention grid.
-    batch_size : int
-        Native model batch size and episodes per intervention cell.
+        Requested fail-closed JAX backend.
+    seed : int
+        BrainState random seed for parameters, topology, scheduling, and
+        training-only augmentation.
+    neuron_count, recurrent_edges : int
+        Physical LIF population and exact directed sparse-edge count.
+    readout_width, color_rank : int
+        Shared readout bottleneck and CP rank of the full-grid color head.
+    max_demonstrations, max_grid_size : int
+        Static lossless ARC row-event capacities.
+    latent_steps : int
+        Maximum zero-input recurrent effort. Must be at least 32.
     training_updates : int
-        Number of terminal-only pp_prop updates per depth.
-    latent_width : int
-        Width of memory-factor rows and the latent workspace.
-    code_width : int
-        Width of each distributed spike code bank.
-    symbol_ticks : int
-        Ticks used for each demonstration and query symbol.
-    figure_path : pathlib.Path
-        Destination for the three-panel Agg PNG.
-    learning_rate : float
-        Adam learning rate for eligible non-write parameters.
-    symbol_count : int
-        Number of symbols in each fresh episode rule.
-    slot_capacity : int
-        Maximum simultaneous contextual bindings.
-    spike_rate : float
-        Bernoulli activation probability for each symbol-code channel. The
-        realized rate is measured from the fixed sampled codebook.
+        Number of pp-prop/Adam updates shared across effort lengths.
+    learning_rate, clip_norm : float
+        Adam rate and global gradient clipping norm.
+    ablation_slot : int
+        Deterministic 64-neuron slot used by the frozen ablation control.
+    evaluation_task_limit : int or None
+        Development-only task cap. Any cap disqualifies a full scientific run.
+    smoke : bool
+        Whether results use embedded fixtures and are plumbing-only.
+    structural_only : bool
+        Instantiate and run without optimization; never scientific evidence.
     """
 
-    seed: int = 2108
-    codebook_seed: int = 313320
-    projection_seed: int = 210848
+    source_manifest: pathlib.Path | None = None
+    output_dir: pathlib.Path = pathlib.Path("var/example21")
     device: DeviceName = "gpu"
-    depths: tuple[int, ...] = DEFAULT_DEPTHS
-    binding_counts: tuple[int, ...] = DEFAULT_BINDING_COUNTS
-    batch_size: int = 4
-    training_updates: int = 8
-    latent_width: int = 32
-    code_width: int = 24
-    symbol_ticks: int = 4
-    figure_path: pathlib.Path = pathlib.Path("latent-reasoning-in-context.png")
-    learning_rate: float = 1e-5
-    symbol_count: int = 10
-    slot_capacity: int = 8
-    spike_rate: float = 0.25
-    jacobian_budget_elements: int = DEFAULT_COUPLED_JACOBIAN_BUDGET
+    seed: int = 2108
+    neuron_count: int = 2048
+    recurrent_edges: int = 16384
+    readout_width: int = 128
+    color_rank: int = 16
+    max_demonstrations: int = 10
+    max_grid_size: int = 30
+    latent_steps: int = 32
+    training_updates: int = 96
+    learning_rate: float = 1e-4
+    clip_norm: float = 1.0
+    ablation_slot: int = 0
+    evaluation_task_limit: int | None = None
+    smoke: bool = False
+    structural_only: bool = False
 
     def __post_init__(self) -> None:
-        for name in ("codebook_seed", "projection_seed"):
+        for name, minimum in (
+            ("seed", 0),
+            ("neuron_count", 64),
+            ("recurrent_edges", 1),
+            ("readout_width", 1),
+            ("color_rank", 1),
+            ("max_demonstrations", 1),
+            ("max_grid_size", 1),
+            ("latent_steps", 32),
+            ("training_updates", 0),
+            ("ablation_slot", 0),
+        ):
             object.__setattr__(
-                self,
-                name,
-                _validated_nonnegative_seed(getattr(self, name), name),
+                self, name, _integer(getattr(self, name), name, minimum=minimum)
             )
         if self.device not in ("cpu", "gpu"):
-            raise ValueError(f"device must be 'cpu' or 'gpu', got {self.device!r}")
-        if not self.depths or any(depth < 0 for depth in self.depths):
-            raise ValueError("depths must contain nonnegative integers")
-        if len(set(self.depths)) != len(self.depths):
-            raise ValueError("depths must not contain duplicates")
-        if not self.binding_counts:
-            raise ValueError("binding_counts must not be empty")
-        for binding_count in self.binding_counts:
-            if not 1 <= binding_count <= self.slot_capacity:
-                raise ValueError(
-                    f"binding count {binding_count} exceeds memory capacity "
-                    f"{self.slot_capacity}"
-                )
-        if len(set(self.binding_counts)) != len(self.binding_counts):
-            raise ValueError("binding_counts must not contain duplicates")
-        if self.batch_size < 2:
-            raise ValueError("batch_size must be at least 2 for held-out probes")
-        if self.training_updates < 1:
-            raise ValueError("training_updates must be positive")
-        if self.latent_width < 1:
-            raise ValueError("latent_width must be positive")
-        estimated_elements = self.coupled_jacobian_elements
-        if self.jacobian_budget_elements < 1:
-            raise ValueError("jacobian_budget_elements must be positive")
-        if estimated_elements > self.jacobian_budget_elements:
-            raise ValueError(
-                f"batch_size {self.batch_size} with slot_capacity "
-                f"{self.slot_capacity} and latent_width {self.latent_width} "
-                f"estimates {estimated_elements} coupled Jacobian elements, "
-                f"exceeding the supported budget {self.jacobian_budget_elements}"
+            raise ValueError("device must be 'cpu' or 'gpu'")
+        if self.neuron_count % 64:
+            raise ValueError("neuron_count must be divisible by 64")
+        if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
+            raise ValueError("recurrent_edges exceeds directed no-self capacity")
+        if self.max_grid_size != 30:
+            raise ValueError("max_grid_size must be 30 for standard ARC")
+        if self.ablation_slot >= self.neuron_count // 64:
+            raise ValueError("ablation_slot exceeds the configured 64-neuron slots")
+        if self.evaluation_task_limit is not None:
+            object.__setattr__(
+                self,
+                "evaluation_task_limit",
+                _integer(
+                    self.evaluation_task_limit, "evaluation_task_limit", minimum=1
+                ),
             )
-        if not math.isfinite(self.learning_rate) or self.learning_rate <= 0.0:
-            raise ValueError("learning_rate must be finite and positive")
-        TaskConfig(
-            symbol_count=self.symbol_count,
-            binding_count=max(self.binding_counts),
-            slot_capacity=self.slot_capacity,
-            latent_steps=max(self.depths),
-            code_width=self.code_width,
-            spike_rate=self.spike_rate,
-            symbol_ticks=self.symbol_ticks,
-            codebook_seed=self.codebook_seed,
+        object.__setattr__(
+            self, "learning_rate", _positive_real(self.learning_rate, "learning_rate")
         )
+        object.__setattr__(
+            self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
+        )
+        object.__setattr__(self, "output_dir", pathlib.Path(self.output_dir))
+        if self.source_manifest is not None:
+            object.__setattr__(
+                self, "source_manifest", pathlib.Path(self.source_manifest)
+            )
+        if not self.structural_only and self.training_updates < len(TRAINING_EFFORTS):
+            raise ValueError(
+                "training_updates must expose one model to 8, 16, and 32 steps"
+            )
 
     @classmethod
-    def smoke(
+    def smoke_config(
         cls,
         *,
-        seed: int = 2108,
-        codebook_seed: int = 313320,
-        projection_seed: int = 210848,
-        figure_path: pathlib.Path = pathlib.Path("latent-reasoning-smoke.png"),
+        output_dir: pathlib.Path = pathlib.Path("var/example21-smoke"),
         device: DeviceName = "cpu",
-    ) -> ExperimentConfig:
-        """Return a tiny configuration retaining every depth and control arm.
-
-        Parameters
-        ----------
-        seed : int
-            Reproducibility seed.
-        codebook_seed : int
-            Seed for the fixed sampled symbol codebook.
-        projection_seed : int
-            Seed for the fixed memory-write projections.
-        figure_path : pathlib.Path
-            Destination for the smoke PNG.
-        device : {"cpu", "gpu"}
-            Explicit platform for the smoke run.
+        seed: int = 2108,
+    ) -> "ExperimentConfig":
+        """Return a reduced complete-pipeline configuration.
 
         Returns
         -------
         ExperimentConfig
-            Reduced-width, one-update configuration with the full grid.
+            A 128-neuron, 1,024-edge, three-update plumbing-only run.
         """
         return cls(
-            seed=seed,
-            codebook_seed=codebook_seed,
-            projection_seed=projection_seed,
+            output_dir=output_dir,
             device=device,
-            batch_size=2,
-            training_updates=1,
-            latent_width=4,
-            code_width=12,
-            symbol_ticks=4,
-            figure_path=figure_path,
+            seed=seed,
+            neuron_count=128,
+            recurrent_edges=1024,
+            readout_width=32,
+            color_rank=4,
+            max_demonstrations=4,
+            training_updates=3,
+            learning_rate=5e-4,
+            smoke=True,
         )
 
     def to_dict(self) -> dict[str, object]:
-        """Return a JSON-friendly configuration mapping."""
+        """Return a JSON-safe configuration mapping."""
         result = asdict(self)
-        result["depths"] = list(self.depths)
-        result["binding_counts"] = list(self.binding_counts)
-        result["figure_path"] = str(self.figure_path)
-        result["coupled_jacobian_elements"] = self.coupled_jacobian_elements
-        result["coupled_jacobian_state_leaves"] = COUPLED_STATE_LEAVES
+        result["source_manifest"] = (
+            None if self.source_manifest is None else str(self.source_manifest)
+        )
+        result["output_dir"] = str(self.output_dir)
+        result["checkpoints"] = list(CHECKPOINTS)
+        result["training_efforts"] = list(TRAINING_EFFORTS)
         return result
 
-    @property
-    def coupled_jacobian_elements(self) -> int:
-        """Return the conservative grouped-state Jacobian element estimate."""
-        grouped_width = (
-            self.batch_size * (2 * self.slot_capacity + 1) * self.latent_width
-        )
-        return (grouped_width * COUPLED_STATE_LEAVES) ** 2
+
+@dataclass(frozen=True)
+class _OriginTask:
+    source_name: str
+    role: str
+    task: ArcTask
 
 
 @dataclass(frozen=True)
-class TrainingCorpus:
-    """Hold the shared mixed-binding training episodes.
-
-    Parameters
-    ----------
-    episodes : tuple of Episode
-        Supported-context base episodes without latent ticks.
-    binding_counts : numpy.ndarray
-        Binding count used by each episode.
-    targets : numpy.ndarray
-        Terminal answer labels.
-    rules : numpy.ndarray
-        Fresh per-episode bijections retained for reproducibility audits.
-    """
-
-    episodes: tuple[Episode, ...]
-    binding_counts: np.ndarray
-    targets: np.ndarray
-    rules: np.ndarray
+class _ExperimentData:
+    training: tuple[_OriginTask, ...]
+    evaluation: tuple[_OriginTask, ...]
+    loaded: tuple[LoadedDataset, ...]
+    plumbing_only: bool
 
 
 @dataclass(frozen=True)
-class EvaluationBatch:
-    """Hold one frozen intervention cell's outputs.
-
-    Parameters
-    ----------
-    correct : numpy.ndarray
-        Per-episode terminal correctness flags.
-    workspace : numpy.ndarray
-        States ``H_0`` through ``H_R``.
-    memory_read : numpy.ndarray
-        Exact query-conditioned read of the contextual memory.
-    memory_values, memory_keys : numpy.ndarray
-        Raw factored memory rows used only for secondary analysis.
-    parameters_unchanged : bool
-        Whether the frozen-evaluation parameter audit passed.
-    """
-
-    correct: np.ndarray
-    workspace: np.ndarray
-    memory_read: np.ndarray
-    memory_values: np.ndarray
-    memory_keys: np.ndarray
-    parameters_unchanged: bool
+class _TrainingTensors:
+    events: np.ndarray
+    advances: np.ndarray
+    heights: np.ndarray
+    widths: np.ndarray
+    colors: np.ndarray
+    masks: np.ndarray
+    efforts: np.ndarray
+    task_fingerprints: tuple[str, ...]
+    base_task_fingerprints: tuple[str, ...] = ()
+    source_names: tuple[str, ...] = ()
+    query_indices: tuple[int, ...] = ()
 
 
-def _devices_for_platform(platform: DeviceName) -> list[jax.Device]:
+@dataclass(frozen=True)
+class _EvaluationRecord:
+    source_name: str
+    task_key: str
+    encoded: EncodedQueryEpisode
+
+
+def _devices_for(platform: DeviceName) -> list[jax.Device]:
     return list(jax.devices(platform))
 
 
-def _resolve_device(requested: DeviceName) -> tuple[jax.Device, dict[str, object]]:
+def _device_memory_stats(device: jax.Device) -> dict[str, int]:
     try:
-        devices = _devices_for_platform(requested)
+        return {
+            str(key): int(value)
+            for key, value in (device.memory_stats() or {}).items()
+            if isinstance(value, Integral) and not isinstance(value, (bool, np.bool_))
+        }
+    except (AttributeError, RuntimeError):
+        return {}
+
+
+def _resolve_device(platform: DeviceName) -> tuple[jax.Device, dict[str, object]]:
+    try:
+        devices = _devices_for(platform)
     except RuntimeError as error:
         devices = []
-        unavailable = error
+        detail = f": {error}"
     else:
-        unavailable = None
+        detail = ""
     if not devices:
-        if requested == "gpu":
-            detail = f" ({unavailable})" if unavailable is not None else ""
-            raise RuntimeError(
-                "GPU execution was requested but no JAX GPU is visible"
-                f"{detail}; pass --device cpu explicitly for a CPU run"
-            )
-        raise RuntimeError("CPU execution was requested but no JAX CPU is visible")
+        raise RuntimeError(
+            f"requested JAX {platform} backend is unavailable{detail}; "
+            "choose --device cpu explicitly only for a reduced run"
+        )
     device = devices[0]
     return device, {
-        "requested": requested,
+        "requested": platform,
         "platform": str(device.platform),
         "id": int(device.id),
         "kind": str(getattr(device, "device_kind", device)),
+        "memory_stats": _device_memory_stats(device),
     }
 
 
-def _model_task(config: ExperimentConfig, depth: int) -> TaskConfig:
-    if depth not in config.depths:
-        raise ValueError(f"depth {depth} is not configured in {config.depths}")
-    return TaskConfig(
-        symbol_count=config.symbol_count,
-        binding_count=config.slot_capacity,
-        slot_capacity=config.slot_capacity,
-        latent_steps=depth,
-        code_width=config.code_width,
-        spike_rate=config.spike_rate,
-        symbol_ticks=config.symbol_ticks,
-        codebook_seed=config.codebook_seed,
+def _source_declarations(path: pathlib.Path) -> tuple[DatasetSource, ...]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"cannot read source manifest {path}: {error}") from error
+    values = payload.get("sources") if isinstance(payload, dict) else None
+    if not isinstance(values, list) or not values:
+        raise ValueError("source manifest must contain a nonempty 'sources' list")
+    declarations: list[DatasetSource] = []
+    for index, value in enumerate(values):
+        if not isinstance(value, dict):
+            raise ValueError(f"sources[{index}] must be an object")
+        required = {"name", "role", "version", "path", "license_reference"}
+        missing = sorted(required - value.keys())
+        if missing:
+            raise ValueError(f"sources[{index}] is missing {missing}")
+        source_path = pathlib.Path(str(value["path"]))
+        if not source_path.is_absolute():
+            source_path = path.parent / source_path
+        declarations.append(
+            DatasetSource(
+                name=value["name"],
+                role=value["role"],
+                version=value["version"],
+                path=str(source_path),
+                license_reference=value["license_reference"],
+                format=value.get("format", "auto"),
+                exclude_fingerprints=tuple(value.get("exclude_fingerprints", ())),
+            )
+        )
+    return tuple(declarations)
+
+
+def _load_data(config: ExperimentConfig) -> _ExperimentData:
+    if config.smoke or (config.structural_only and config.source_manifest is None):
+        fixture = smoke_loaded_dataset()
+        origins = tuple(
+            _OriginTask(fixture.manifest.source.name, "fixture", task)
+            for task in fixture.tasks
+        )
+        return _ExperimentData(origins, origins, (fixture,), True)
+    if config.source_manifest is None:
+        raise ValueError("full runs require --source-manifest")
+    declarations = _source_declarations(config.source_manifest)
+    loaded = tuple(load_dataset_source(source) for source in declarations)
+    assert_no_evaluation_leakage(item.manifest for item in loaded)
+    training = tuple(
+        _OriginTask(item.manifest.source.name, item.manifest.source.role, task)
+        for item in loaded
+        if item.manifest.source.role == "train"
+        for task in item.tasks
+    )
+    evaluation = tuple(
+        _OriginTask(item.manifest.source.name, item.manifest.source.role, task)
+        for item in loaded
+        if item.manifest.source.role == "evaluation"
+        for task in item.tasks
+    )
+    if not config.structural_only and not training:
+        raise ValueError("scientific training requires at least one train-role source")
+    if not evaluation:
+        raise ValueError("evaluation requires at least one evaluation-role source")
+    return _ExperimentData(training, evaluation, loaded, False)
+
+
+def _row_config(config: ExperimentConfig) -> RowEventConfig:
+    return RowEventConfig(
+        max_demonstrations=config.max_demonstrations,
+        max_grid_size=config.max_grid_size,
     )
 
 
-def _episode_task(config: ExperimentConfig, binding_count: int) -> TaskConfig:
-    return TaskConfig(
-        symbol_count=config.symbol_count,
-        binding_count=binding_count,
-        slot_capacity=config.slot_capacity,
-        latent_steps=0,
-        code_width=config.code_width,
-        spike_rate=config.spike_rate,
-        symbol_ticks=config.symbol_ticks,
-        codebook_seed=config.codebook_seed,
-    )
-
-
-def _mixed_binding_schedule(
-    binding_counts: tuple[int, ...], total: int, rng: brainstate.random.RandomState
+def _packed_events(
+    encoded: EncodedQueryEpisode, config: ExperimentConfig
 ) -> np.ndarray:
-    if total < 2:
-        raise ValueError("mixed binding schedule requires at least two episodes")
-    values = np.asarray(binding_counts, dtype=np.int32)
-    if values.size == 1:
-        raise ValueError("mixed binding schedule requires at least two binding counts")
-    if total < values.size:
-        indices = np.rint(np.linspace(0, values.size - 1, total)).astype(np.int32)
-        schedule = values[indices]
-    else:
-        schedule = np.resize(values, total)
-    permutation = np.asarray(rng.permutation(total), dtype=np.int32)
-    return schedule[permutation]
+    total = encoded.events.shape[0] + config.latent_steps
+    result = np.zeros((total, encoded.events.shape[1]), dtype=np.float32)
+    result[: encoded.events.shape[0]] = encoded.events
+    return result
 
 
-def _build_training_corpus(config: ExperimentConfig) -> TrainingCorpus:
-    total = config.batch_size * config.training_updates
-    rng = brainstate.random.RandomState(config.seed + 10_000)
-    schedule = _mixed_binding_schedule(config.binding_counts, total, rng)
-    episodes = tuple(
-        generate_episode(
-            _episode_task(config, int(binding_count)),
-            rng,
-            condition="supported",
-        )
-        for binding_count in schedule
-    )
-    return TrainingCorpus(
-        episodes=episodes,
-        binding_counts=schedule,
-        targets=np.asarray([episode.target for episode in episodes], dtype=np.int32),
-        rules=np.stack([episode.rule for episode in episodes]),
-    )
+def _packed_advances(
+    encoded: EncodedQueryEpisode, config: ExperimentConfig
+) -> np.ndarray:
+    """Build a matched context/padding/latent state-advance schedule."""
+    total = encoded.events.shape[0] + config.latent_steps
+    advances = np.zeros((total,), dtype=np.bool_)
+    for start, stop in encoded.demonstration_spans:
+        advances[start:stop] = True
+    advances[encoded.query_start : encoded.query_stop] = True
+    advances[encoded.query_stop : encoded.query_stop + config.latent_steps] = True
+    return advances
 
 
-def _build_held_out_corpus(
+def _effort_schedule(updates: int, rng: brainstate.random.RandomState) -> np.ndarray:
+    base = np.resize(np.asarray(TRAINING_EFFORTS, dtype=np.int32), updates)
+    order = np.asarray(rng.permutation(updates), dtype=np.int32)
+    return base[order]
+
+
+def _prepare_training(
+    data: _ExperimentData,
     config: ExperimentConfig,
-) -> dict[int, tuple[MatchedEpisodes, ...]]:
-    rng = brainstate.random.RandomState(config.seed + 20_000)
-    return {
-        binding_count: tuple(
-            generate_matched_episodes(_episode_task(config, binding_count), rng)
-            for _ in range(config.batch_size)
-        )
-        for binding_count in config.binding_counts
-    }
-
-
-def _canonical_inputs(episode: Episode, destination: TaskConfig) -> np.ndarray:
-    source = episode.config
-    if source.input_width != destination.input_width:
-        raise ValueError(
-            "episode input_width does not match destination input_width: "
-            f"{source.input_width} != {destination.input_width}"
-        )
-    if source.symbol_ticks != destination.symbol_ticks:
-        raise ValueError(
-            "episode symbol_ticks does not match destination symbol_ticks: "
-            f"{source.symbol_ticks} != {destination.symbol_ticks}"
-        )
-    if source.binding_count > destination.binding_count:
-        raise ValueError(
-            f"episode binding count {source.binding_count} exceeds destination "
-            f"capacity span {destination.binding_count}"
-        )
-    packed = np.zeros(
-        (destination.total_steps, destination.input_width), dtype=np.float32
+    row_config: RowEventConfig,
+) -> _TrainingTensors:
+    if config.structural_only:
+        empty = np.zeros((0,), dtype=np.float32)
+        return _TrainingTensors(empty, empty, empty, empty, empty, empty, empty, ())
+    if not data.training:
+        raise ValueError("training data is empty")
+    rng = brainstate.random.RandomState(config.seed + 1000)
+    efforts = _effort_schedule(config.training_updates, rng)
+    task_indices = np.asarray(
+        rng.randint(0, len(data.training), size=config.training_updates), dtype=np.int32
     )
-    packed[: destination.demonstration_steps, destination.phase_slice.start] = 1.0
-    packed[: source.demonstration_steps] = episode.model_inputs[
-        : source.demonstration_steps
-    ]
-    packed[destination.query_slice] = episode.query_inputs
-    packed[destination.latent_slice, destination.phase_slice.start + 3] = 1.0
-    if destination.latent_steps:
-        packed[destination.latent_slice.start, destination.phase_slice.start + 3] = 0.0
-        packed[destination.latent_slice.start, destination.phase_slice.start + 2] = 1.0
-        packed[destination.latent_slice, destination.clock_slice] = latent_clock_code(
-            destination.latent_steps, destination.clock_width
+    event_rows: list[np.ndarray] = []
+    advance_rows: list[np.ndarray] = []
+    heights: list[int] = []
+    widths: list[int] = []
+    colors: list[np.ndarray] = []
+    masks: list[np.ndarray] = []
+    fingerprints: list[str] = []
+    base_fingerprints: list[str] = []
+    source_names: list[str] = []
+    query_indices: list[int] = []
+    for update_index, task_index in enumerate(task_indices):
+        origin = data.training[int(task_index)]
+        task = (
+            origin.task
+            if data.plumbing_only
+            else augment_training_task(origin.task, rng, role="train")
         )
-    return packed
+        query_index = int(np.asarray(rng.randint(0, len(task.test))))
+        encoded = encode_query_episode(task, query_index, row_config)
+        if encoded.target is None:
+            raise ValueError(
+                f"training task {task.task_id or encoded.task_fingerprint} lacks a target"
+            )
+        sequence = _packed_events(encoded, config)
+        mask = np.zeros((sequence.shape[0],), dtype=np.float32)
+        terminal = encoded.query_stop - 1 + int(efforts[update_index])
+        if terminal >= sequence.shape[0]:
+            raise ValueError("terminal effort exceeds packed sequence capacity")
+        mask[terminal] = 1.0
+        target = encoded.target
+        padded = np.zeros((30, 30), dtype=np.int32)
+        padded[: target.height, : target.width] = target.as_array()
+        event_rows.append(sequence[:, None, :])
+        advance_rows.append(_packed_advances(encoded, config)[:, None])
+        heights.append(target.height)
+        widths.append(target.width)
+        colors.append(padded[None])
+        masks.append(mask)
+        fingerprints.append(canonical_task_fingerprint(task))
+        base_fingerprints.append(canonical_task_fingerprint(origin.task))
+        source_names.append(origin.source_name)
+        query_indices.append(query_index)
+    return _TrainingTensors(
+        events=np.stack(event_rows),
+        advances=np.stack(advance_rows),
+        heights=np.asarray(heights, dtype=np.int32)[:, None],
+        widths=np.asarray(widths, dtype=np.int32)[:, None],
+        colors=np.stack(colors),
+        masks=np.stack(masks),
+        efforts=efforts,
+        task_fingerprints=tuple(fingerprints),
+        base_task_fingerprints=tuple(base_fingerprints),
+        source_names=tuple(source_names),
+        query_indices=tuple(query_indices),
+    )
 
 
-def _path_name(path: object) -> str:
-    if isinstance(path, tuple):
-        return ".".join(str(part) for part in path)
-    return str(path)
+def _model_config(
+    config: ExperimentConfig, row_config: RowEventConfig, *, batch_size: int
+) -> ModelConfig:
+    return ModelConfig(
+        input_width=row_config.input_width,
+        batch_size=batch_size,
+        neuron_count=config.neuron_count,
+        recurrent_edges=config.recurrent_edges,
+        max_latent_steps=config.latent_steps,
+        readout_width=config.readout_width,
+        color_rank=config.color_rank,
+        seed=config.seed,
+    )
 
 
-def _json_counts(counts: object) -> dict[str, int]:
-    if not isinstance(counts, dict):
-        return {}
-    return {str(key): int(value) for key, value in counts.items()}
+def _make_model(
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    *,
+    batch_size: int,
+    device: jax.Device,
+) -> LatentWorkspaceModel:
+    with jax.default_device(device), brainstate.random.seed_context(config.seed):
+        return LatentWorkspaceModel(
+            _model_config(config, row_config, batch_size=batch_size)
+        )
 
 
-def _array_fingerprint(value: np.ndarray) -> str:
-    array = np.ascontiguousarray(value)
+def _copy_parameters(
+    source: LatentWorkspaceModel, target: LatentWorkspaceModel
+) -> None:
+    source_states = source.states(brainstate.ParamState)
+    target_states = target.states(brainstate.ParamState)
+    if tuple(source_states.keys()) != tuple(target_states.keys()):
+        raise ValueError("training and evaluation parameter paths differ")
+    for source_state, target_state in zip(
+        source_states.values(), target_states.values(), strict=True
+    ):
+        target_state.value = jax.tree.map(jnp.array, source_state.value)
+
+
+def _tree_digest(values: dict[str, Any]) -> str:
     digest = hashlib.sha256()
-    digest.update(array.dtype.str.encode("ascii"))
-    digest.update(repr(array.shape).encode("ascii"))
-    digest.update(array.tobytes())
+    for key in sorted(values):
+        digest.update(key.encode("utf-8"))
+        for leaf in jax.tree.leaves(values[key]):
+            array = np.ascontiguousarray(np.asarray(leaf))
+            digest.update(array.dtype.str.encode("ascii"))
+            digest.update(str(array.shape).encode("ascii"))
+            digest.update(array.tobytes())
     return digest.hexdigest()
 
 
-def _parameter_fingerprints(model: LatentWorkspaceModel) -> dict[str, str]:
+def _compiler_evidence(learner: Any) -> dict[str, object]:
+    report = getattr(learner, "report", None)
+    if report is None:
+        return {
+            "available": False,
+            "counts": {},
+            "etrace_weights": [],
+            "excluded_weights": [],
+            "diagnostics": [],
+        }
+
+    def path_text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    def enum_text(value: object) -> str:
+        return str(getattr(value, "value", value))
+
+    diagnostics = []
+    for record in report.diagnostics:
+        item: dict[str, object] = {
+            "kind": enum_text(record.kind),
+            "level": enum_text(record.level),
+            "message": str(record.message),
+        }
+        if hasattr(record, "weight_path"):
+            item["weight_path"] = path_text(record.weight_path)
+        if hasattr(record, "hidden_paths"):
+            item["hidden_paths"] = [path_text(path) for path in record.hidden_paths]
+        diagnostics.append(item)
+    warning_count = sum(item["level"] == "warning" for item in diagnostics)
+    error_count = sum(item["level"] == "error" for item in diagnostics)
     return {
-        name: _array_fingerprint(value)
-        for name, value in parameter_snapshot(model).items()
+        "available": True,
+        "counts": {
+            "hidden_groups": len(report.hidden_groups),
+            "etrace_weights": len(report.etrace_weights),
+            "excluded_weights": len(report.excluded_weights),
+            "warnings": warning_count,
+            "errors": error_count,
+        },
+        "etrace_weights": [
+            {
+                "parameter": path_text(path),
+                "hidden_group_indices": [int(index) for index in groups],
+            }
+            for path, groups in report.etrace_weights
+        ],
+        "excluded_weights": [
+            {"parameter": path_text(path), "reason": str(reason)}
+            for path, reason in report.excluded_weights
+        ],
+        "diagnostics": diagnostics,
     }
 
 
-def _train_depth(
-    config: ExperimentConfig, depth: int, corpus: TrainingCorpus
-) -> tuple[LatentWorkspaceModel, dict[str, object]]:
-    task = _model_task(config, depth)
-    model = LatentWorkspaceModel(
-        ModelConfig(
-            task=task,
-            batch_size=config.batch_size,
-            latent_width=config.latent_width,
-            write_mode="fixed_random",
-            seed=config.seed,
-            projection_seed=config.projection_seed,
-        )
-    )
-    flat_inputs = np.stack(
-        [_canonical_inputs(episode, task) for episode in corpus.episodes]
-    )
-    input_batches = jnp.asarray(
-        flat_inputs.reshape(
-            config.training_updates,
-            config.batch_size,
-            task.total_steps,
-            task.input_width,
-        ).transpose(0, 2, 1, 3)
-    )
-    target_batches = jnp.asarray(
-        corpus.targets.reshape(config.training_updates, config.batch_size)
-    )
-    initial_parameter_fingerprints = _parameter_fingerprints(model)
-    canonical_prefix_fingerprint = _array_fingerprint(
-        flat_inputs[:, : task.query_slice.stop]
-    )
-    sample = jnp.zeros((config.batch_size, task.input_width), dtype=jnp.float32)
+def _parameter_change_evidence(
+    before: dict[str, Any], after: dict[str, Any]
+) -> dict[str, dict[str, object]]:
+    if before.keys() != after.keys():
+        raise ValueError("parameter paths changed during optimization")
+    result: dict[str, dict[str, object]] = {}
+    for path in before:
+        before_leaves = jax.tree.leaves(before[path])
+        after_leaves = jax.tree.leaves(after[path])
+        if len(before_leaves) != len(after_leaves):
+            raise ValueError(f"parameter structure changed during optimization: {path}")
+        squared = 0.0
+        for before_leaf, after_leaf in zip(before_leaves, after_leaves, strict=True):
+            delta = np.asarray(after_leaf, dtype=np.float64) - np.asarray(
+                before_leaf, dtype=np.float64
+            )
+            squared += float(np.sum(delta * delta))
+        before_sha = _tree_digest({path: before[path]})
+        after_sha = _tree_digest({path: after[path]})
+        result[path] = {
+            "l2_delta": math.sqrt(squared),
+            "changed": before_sha != after_sha,
+            "sha256_before": before_sha,
+            "sha256_after": after_sha,
+        }
+    return result
 
-    with warnings.catch_warnings(record=True) as compile_warnings:
-        warnings.simplefilter("always")
-        learner = braintrace.compile(
-            model,
-            model.etrace_config(),
-            sample,
-            batch_size=config.batch_size,
-            vmap=False,
-            verbose=0,
-            snap_max_jacobian_elements=config.jacobian_budget_elements,
-        )
-        jax.block_until_ready(learner(sample))
 
-    trainable = model.trainable_parameters()
-    optimizer = braintools.optim.Adam(lr=config.learning_rate)
-    optimizer.register_trainable_weights(trainable)
-    terminal_mask = jnp.zeros((task.total_steps,), dtype=jnp.float32)
-    terminal_mask = terminal_mask.at[-1].set(1.0)
-
-    def reset_runtime() -> None:
+def _train_model(
+    model: LatentWorkspaceModel,
+    tensors: _TrainingTensors,
+    config: ExperimentConfig,
+) -> dict[str, object]:
+    learner = compile_pp_prop(model)
+    compiler_report = _compiler_evidence(learner)
+    compiler = {
+        "pp_prop_compiled": True,
+        "learner_type": type(learner).__name__,
+        "event_and_advance_arguments": True,
+        "compiler_report": compiler_report,
+        "compiled_parameter_paths": [
+            ".".join(str(part) for part in path)
+            if isinstance(path, tuple)
+            else str(path)
+            for path in getattr(learner, "param_states", {}).keys()
+        ],
+    }
+    if config.structural_only:
         model.reset_state()
-        learner.reset_state()
+        learner.reset_state(batch_size=model.config.batch_size)
+        return {
+            "performed": False,
+            "reason": "structural_only",
+            "one_shared_model": True,
+            **compiler,
+            "optimizer_updates_by_effort": {
+                str(value): 0 for value in TRAINING_EFFORTS
+            },
+            "losses": [],
+        }
+    optimizer = braintools.optim.Adam(lr=config.learning_rate)
+    optimizer.register_trainable_weights(learner.param_states)
+    before_snapshot = parameter_snapshot(model)
+    before = _tree_digest(before_snapshot)
+    rank = model.config.color_rank
 
     @brainstate.transform.jit
-    def train_all(batches: jax.Array, targets: jax.Array) -> jax.Array:
-        def train_one(inputs: jax.Array, labels: jax.Array):
-            reset_runtime()
+    def train_all(events, advances, heights, widths, colors, masks):
+        def train_one(inputs):
+            sequence, advance, target_height, target_width, target_colors, mask = inputs
+            model.reset_state()
+            learner.reset_state(batch_size=model.config.batch_size)
 
-            def step_loss(step_input: jax.Array) -> jax.Array:
-                logits = learner(step_input)
-                return braintools.metric.softmax_cross_entropy_with_integer_labels(
-                    logits, labels
-                ).mean()
+            def step_loss(event, advance_gate):
+                compact = learner(event, advance_gate)
+                return jnp.mean(
+                    arc_loss_per_example(
+                        compact,
+                        target_height,
+                        target_width,
+                        target_colors,
+                        color_rank=rank,
+                    )
+                )
 
-            grads, loss = learner.etrace_grad(
-                inputs,
+            gradients, objective = learner.etrace_grad(
+                sequence,
+                advance,
                 step_fn=step_loss,
-                mask=terminal_mask,
+                mask=mask,
                 reduction="mean",
                 loss_output="scalar",
                 return_value=True,
             )
-            selected = {path: grads[path] for path in trainable}
-            optimizer.update(brainstate.nn.clip_grad_norm(selected, 1.0))
-            model.project_dale()
-            return loss
-
-        return brainstate.transform.for_loop(train_one, batches, targets)
-
-    before = parameter_snapshot(model)
-    with warnings.catch_warnings(record=True) as training_warnings:
-        warnings.simplefilter("always")
-        losses = train_all(input_batches, target_batches)
-        jax.block_until_ready(losses)
-    after = parameter_snapshot(model)
-    deltas = {
-        name: float(np.linalg.norm(after[name] - value))
-        for name, value in before.items()
-    }
-    write_changed = deltas.get("Wk", 0.0) > 0.0 or deltas.get("Wv", 0.0) > 0.0
-    if write_changed:
-        raise RuntimeError("fixed_random training changed Wk or Wv")
-    report = learner.report
-    return model, {
-        "depth": depth,
-        "losses": np.asarray(losses, dtype=float).tolist(),
-        "parameter_l2_deltas": deltas,
-        "terminal_only_supervision": True,
-        "write_mode": model.config.write_mode,
-        "write_projections_updated": write_changed,
-        "mixed_binding_counts": sorted(set(corpus.binding_counts.tolist())),
-        "trainable_parameters": sorted(_path_name(path) for path in trainable),
-        "initial_parameter_fingerprints": initial_parameter_fingerprints,
-        "canonical_prefix_fingerprint": canonical_prefix_fingerprint,
-        "compiler": {
-            "warnings": [str(item.message) for item in compile_warnings],
-            "training_warnings": [str(item.message) for item in training_warnings],
-            "diagnostic_counts": _json_counts(report.counts),
-            "recurrence_scope": model.etrace_config().recurrence_scope,
-        },
-    }
-
-
-def _evaluate_batch(
-    model: LatentWorkspaceModel,
-    task: TaskConfig,
-    episodes: tuple[Episode, ...],
-    *,
-    shuffled: bool,
-) -> EvaluationBatch:
-    return _evaluate_grid(model, task, (episodes,), (shuffled,))[0]
-
-
-def _cell_report(batch: EvaluationBatch) -> dict[str, object]:
-    return {
-        "accuracy": float(np.mean(batch.correct)),
-        "correct": int(np.sum(batch.correct)),
-        "episodes": int(batch.correct.size),
-        "parameters_unchanged": batch.parameters_unchanged,
-    }
-
-
-def _run_demonstration_prefix(
-    model: LatentWorkspaceModel, demonstration: jax.Array
-) -> jax.Array:
-    def step(one_tick: jax.Array) -> jax.Array:
-        return model.update(one_tick)
-
-    return brainstate.transform.for_loop(step, demonstration)
-
-
-def _apply_optional_memory_shuffle(
-    model: LatentWorkspaceModel,
-    permutation: jax.Array,
-    shuffled: jax.Array,
-) -> None:
-    values, keys = model.memory_factors()
-    permuted_values = jnp.take(values, permutation, axis=1)
-    selected_values = jnp.where(shuffled, permuted_values, values)
-    state = jnp.concatenate(
-        (selected_values, keys, model.workspace[:, None, :]), axis=1
-    )
-    model.grouped_state.value = state.reshape(
-        model.batch_size * model.state_rows, model.width
-    )
-
-
-def _run_query_and_latent(
-    model: LatentWorkspaceModel,
-    task: TaskConfig,
-    query_and_latent: jax.Array,
-) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
-    def step(one_tick: jax.Array) -> tuple[jax.Array, jax.Array]:
-        return model.update(one_tick), model.workspace
-
-    logits, workspace = brainstate.transform.for_loop(step, query_and_latent)
-    values, keys = model.memory_factors()
-    memory_read = model.memory_read(model.query_encoding_view)
-    latent_workspace = workspace[task.symbol_ticks - 1 :].transpose(1, 0, 2)
-    return logits[-1], latent_workspace, memory_read, values, keys
-
-
-def _evaluate_grid(
-    model: LatentWorkspaceModel,
-    task: TaskConfig,
-    episode_cells: tuple[tuple[Episode, ...], ...],
-    shuffled_flags: tuple[bool, ...],
-) -> tuple[EvaluationBatch, ...]:
-    if not episode_cells:
-        raise ValueError("evaluation grid must contain at least one cell")
-    if len(episode_cells) != len(shuffled_flags):
-        raise ValueError(
-            "evaluation cells and shuffled flags must have identical lengths"
-        )
-    sequences: list[np.ndarray] = []
-    targets: list[np.ndarray] = []
-    permutations: list[np.ndarray] = []
-    for episodes, shuffled in zip(episode_cells, shuffled_flags, strict=True):
-        if len(episodes) != model.batch_size:
-            raise ValueError(
-                f"evaluation episodes {len(episodes)} do not match model "
-                f"batch_size {model.batch_size}"
-            )
-        occupied_count = episodes[0].config.binding_count
-        if any(episode.config.binding_count != occupied_count for episode in episodes):
-            raise ValueError("all episodes in one cell must share one binding count")
-        packed = np.stack(
-            [_canonical_inputs(episode, task) for episode in episodes]
-        ).transpose(1, 0, 2)
-        sequences.append(packed)
-        targets.append(
-            np.asarray([episode.target for episode in episodes], dtype=np.int32)
-        )
-        if shuffled:
-            permutation = occupied_slot_derangement(task.slot_capacity, occupied_count)
-        else:
-            permutation = jnp.arange(task.slot_capacity, dtype=jnp.int32)
-        permutations.append(np.asarray(permutation, dtype=np.int32))
-
-    sequence_array = jnp.asarray(np.stack(sequences))
-    target_array = jnp.asarray(np.stack(targets))
-    permutation_array = jnp.asarray(np.stack(permutations))
-    shuffled_array = jnp.asarray(shuffled_flags, dtype=jnp.bool_)[:, None, None]
-    before = parameter_snapshot(model)
-
-    @brainstate.transform.jit
-    def evaluate_all(
-        cell_sequences: jax.Array,
-        cell_targets: jax.Array,
-        cell_permutations: jax.Array,
-        cell_shuffled: jax.Array,
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
-        def evaluate_one(
-            sequence: jax.Array,
-            labels: jax.Array,
-            permutation: jax.Array,
-            shuffled: jax.Array,
-        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
-            model.reset_state()
-            _run_demonstration_prefix(model, sequence[: task.demonstration_steps])
-            _apply_optional_memory_shuffle(model, permutation, shuffled)
-            logits, workspace, memory_read, values, keys = _run_query_and_latent(
-                model, task, sequence[task.demonstration_steps :]
-            )
-            return (
-                jnp.argmax(logits, axis=-1) == labels,
-                workspace,
-                memory_read,
-                values,
-                keys,
-            )
+            optimizer.update(brainstate.nn.clip_grad_norm(gradients, config.clip_norm))
+            return objective
 
         return brainstate.transform.for_loop(
-            evaluate_one,
-            cell_sequences,
-            cell_targets,
-            cell_permutations,
-            cell_shuffled,
+            train_one, (events, advances, heights, widths, colors, masks)
         )
 
-    correct, workspace, memory_read, values, keys = evaluate_all(
-        sequence_array,
-        target_array,
-        permutation_array,
-        shuffled_array,
+    losses = train_all(
+        jnp.asarray(tensors.events),
+        jnp.asarray(tensors.advances),
+        jnp.asarray(tensors.heights),
+        jnp.asarray(tensors.widths),
+        jnp.asarray(tensors.colors),
+        jnp.asarray(tensors.masks),
     )
-    jax.block_until_ready(correct)
-    after = parameter_snapshot(model)
-    unchanged = before.keys() == after.keys() and all(
-        np.array_equal(before[name], after[name]) for name in before
-    )
-    if not unchanged:
-        raise RuntimeError("frozen intervention evaluation changed a parameter")
-    arrays = tuple(
-        np.asarray(value) for value in (correct, workspace, memory_read, values, keys)
-    )
-    if arrays[1].shape[2] != task.latent_steps + 1:
-        raise RuntimeError(
-            "workspace collection did not produce H0 through HR: "
-            f"shape {arrays[1].shape}, R={task.latent_steps}"
-        )
-    return tuple(
-        EvaluationBatch(
-            correct=arrays[0][index],
-            workspace=arrays[1][index],
-            memory_read=arrays[2][index],
-            memory_values=arrays[3][index],
-            memory_keys=arrays[4][index],
-            parameters_unchanged=unchanged,
-        )
-        for index in range(len(episode_cells))
-    )
-
-
-def _depth_interventions(
-    config: ExperimentConfig,
-    depth: int,
-    model: LatentWorkspaceModel,
-    held_out: dict[int, tuple[MatchedEpisodes, ...]],
-) -> tuple[dict[str, object], dict[str, object]]:
-    """Evaluate one depth with one compiled call over the fixed-shape grid.
-
-    The host loops only construct distinct intervention cells and label outputs
-    after collection. The outer cell axis and both temporal spans are driven by
-    :mod:`brainstate.transform` loops.
-    """
-    task = _model_task(config, depth)
-    labels: list[tuple[int, str, str]] = []
-    episode_cells: list[tuple[Episode, ...]] = []
-    shuffled_flags: list[bool] = []
-    for binding_count in config.binding_counts:
-        pairs = held_out[binding_count]
-        conditions = {
-            "supported": tuple(pair.supported for pair in pairs),
-            "short": tuple(pair.short for pair in pairs),
+    after_snapshot = parameter_snapshot(model)
+    after = _tree_digest(after_snapshot)
+    counts = Counter(int(value) for value in tensors.efforts)
+    sample_records = [
+        {
+            "source": source,
+            "base_task_fingerprint": base_fingerprint,
+            "augmented_task_fingerprint": augmented_fingerprint,
+            "query_index": int(query_index),
+            "terminal_effort": int(effort),
         }
-        for condition, episodes in conditions.items():
-            for arm, shuffled in (("intact", False), ("shuffled", True)):
-                labels.append((binding_count, condition, arm))
-                episode_cells.append(episodes)
-                shuffled_flags.append(shuffled)
-    evaluated_cells = _evaluate_grid(
-        model,
-        task,
-        tuple(episode_cells),
-        tuple(shuffled_flags),
-    )
-
-    per_binding: dict[str, object] = {
-        str(binding_count): {"supported": {}, "short": {}}
-        for binding_count in config.binding_counts
-    }
-    analysis_batches: list[EvaluationBatch] = []
-    analysis_episodes: list[Episode] = []
-    totals = {
-        name: [0, 0]
-        for name in (
-            "supported_intact",
-            "short_intact",
-            "supported_shuffled",
-            "short_shuffled",
+        for source, base_fingerprint, augmented_fingerprint, query_index, effort in zip(
+            tensors.source_names,
+            tensors.base_task_fingerprints,
+            tensors.task_fingerprints,
+            tensors.query_indices,
+            tensors.efforts,
+            strict=True,
         )
-    }
-    for label, episodes, evaluated in zip(
-        labels, episode_cells, evaluated_cells, strict=True
-    ):
-        binding_count, condition, arm = label
-        per_binding[str(binding_count)][condition][arm] = _cell_report(evaluated)
-        total = totals[f"{condition}_{arm}"]
-        total[0] += int(np.sum(evaluated.correct))
-        total[1] += int(evaluated.correct.size)
-        if condition == "supported" and arm == "intact":
-            analysis_batches.append(evaluated)
-            analysis_episodes.extend(episodes)
-
-    accuracies = {name: correct / count for name, (correct, count) in totals.items()}
-    intervention = {
-        "depth": depth,
-        "overall_accuracy": accuracies["supported_intact"],
-        "per_binding_count": per_binding,
-        "supported_vs_short": {
-            "supported_intact": accuracies["supported_intact"],
-            "short_intact": accuracies["short_intact"],
-            "supported_minus_short": (
-                accuracies["supported_intact"] - accuracies["short_intact"]
-            ),
-        },
-        "intact_vs_shuffled": {
-            "supported_intact": accuracies["supported_intact"],
-            "supported_shuffled": accuracies["supported_shuffled"],
-            "intact_minus_shuffled": (
-                accuracies["supported_intact"] - accuracies["supported_shuffled"]
-            ),
-        },
-        "all_frozen_parameter_audits_passed": all(
-            cell["parameters_unchanged"]
-            for binding in per_binding.values()
-            for condition in binding.values()
-            for cell in condition.values()
-        ),
-    }
-
-    states = np.concatenate([batch.workspace for batch in analysis_batches])
-    memory_read = np.concatenate([batch.memory_read for batch in analysis_batches])
-    memory_values = np.concatenate([batch.memory_values for batch in analysis_batches])
-    memory_keys = np.concatenate([batch.memory_keys for batch in analysis_batches])
-    answers = np.asarray(
-        [episode.target for episode in analysis_episodes], dtype=np.int32
-    )
-    rules = np.stack([episode.rule for episode in analysis_episodes])
-    fit_indices = np.arange(0, answers.size, 2, dtype=np.int32)
-    score_indices = np.arange(1, answers.size, 2, dtype=np.int32)
-    geometry = analyze_latent_workspace(
-        states,
-        memory_read,
-        answers,
-        rules,
-        fit_indices,
-        score_indices,
-        memory_values=memory_values,
-        memory_keys=memory_keys,
-    )
-    return intervention, geometry
-
-
-def _figure_series(result: dict[str, object]) -> dict[str, object]:
-    config = result["config"]
-    depths = config["depths"]
-    binding_counts = config["binding_counts"]
-    interventions = result["interventions"]["depths"]
-    geometry = result["geometry"]["depths"]
-    final_depth = str(max(depths))
-    final_cells = interventions[final_depth]["per_binding_count"]
-    final_geometry = geometry[final_depth]
-    workspace_scores = final_geometry["answer_decodability"]["workspace_per_iteration"]
-    return {
-        "accuracy_vs_depth": {
-            "x": list(depths),
-            "accuracy": [
-                interventions[str(depth)]["overall_accuracy"] for depth in depths
-            ],
-        },
-        "accuracy_vs_binding_count": {
-            "x": list(binding_counts),
-            "depth": int(final_depth),
-            "supported": [
-                final_cells[str(count)]["supported"]["intact"]["accuracy"]
-                for count in binding_counts
-            ],
-            "short": [
-                final_cells[str(count)]["short"]["intact"]["accuracy"]
-                for count in binding_counts
-            ],
-        },
-        "decodability_per_iteration": {
-            "x": list(range(len(workspace_scores))),
-            "workspace": workspace_scores,
-            "memory_read": final_geometry["answer_decodability"]["memory_read"],
-        },
-    }
-
-
-def _plot_report(result: dict[str, object], path: pathlib.Path) -> pathlib.Path:
-    import matplotlib
-
-    matplotlib.use("Agg", force=True)
-    import matplotlib.pyplot as plt
-
-    series = _figure_series(result)
-    depth_series = series["accuracy_vs_depth"]
-    binding_series = series["accuracy_vs_binding_count"]
-    decodability_series = series["decodability_per_iteration"]
-
-    figure, axes = plt.subplots(1, 3, figsize=(15, 4.5))
-    axes[0].plot(depth_series["x"], depth_series["accuracy"], marker="o")
-    axes[0].set(title="Accuracy vs latent depth", xlabel="R", ylabel="accuracy")
-    axes[0].set_ylim(0.0, 1.0)
-
-    for condition in ("supported", "short"):
-        axes[1].plot(
-            binding_series["x"],
-            binding_series[condition],
-            marker="o",
-            label=condition,
-        )
-    axes[1].set(
-        title=f"Context accuracy at R={binding_series['depth']}",
-        xlabel="binding count K",
-        ylabel="accuracy",
-    )
-    axes[1].set_ylim(0.0, 1.0)
-    axes[1].legend()
-
-    axes[2].plot(
-        decodability_series["x"],
-        decodability_series["workspace"],
-        marker="o",
-        label="workspace",
-    )
-    axes[2].axhline(
-        decodability_series["memory_read"],
-        color="tab:orange",
-        linestyle="--",
-        label="memory read",
-    )
-    axes[2].set(
-        title="Answer decodability",
-        xlabel="latent iteration",
-        ylabel="held-out accuracy",
-    )
-    axes[2].set_ylim(0.0, 1.0)
-    axes[2].legend()
-    figure.tight_layout()
-    path = path.expanduser().resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(path, dpi=150)
-    plt.close(figure)
-    return path
-
-
-def _render_report(result: dict[str, object]) -> str:
-    config = result["config"]
-    lines = [
-        "Example 21 - in-context latent reasoning",
-        (
-            f"seed={config['seed']} codebook_seed={config['codebook_seed']} "
-            f"projection_seed={config['projection_seed']} "
-            f"device={result['device']['requested']} "
-            f"batch={config['batch_size']} updates={config['training_updates']} "
-            f"width={config['latent_width']} write_mode=fixed_random"
-        ),
-        f"canonical_metadata_json={result['canonical_metadata_json']}",
     ]
-    interventions = result["interventions"]["depths"]
-    geometry = result["geometry"]["depths"]
-    training = result["training"]["depths"]
-    for depth in config["depths"]:
-        entry = interventions[str(depth)]
-        training_entry = training[str(depth)]
-        lines.append(
-            f"R={depth} overall supported/intact accuracy="
-            f"{entry['overall_accuracy']:.6f}"
-        )
-        lines.append(
-            f"  terminal loss={training_entry['losses'][-1]:.6f} "
-            f"parameter_l2_deltas={training_entry['parameter_l2_deltas']}"
-        )
-        for binding_count in config["binding_counts"]:
-            cell = entry["per_binding_count"][str(binding_count)]
-            lines.append(
-                f"  K={binding_count} supported intact="
-                f"{cell['supported']['intact']['accuracy']:.6f} "
-                f"shuffled={cell['supported']['shuffled']['accuracy']:.6f}; "
-                f"short intact={cell['short']['intact']['accuracy']:.6f} "
-                f"shuffled={cell['short']['shuffled']['accuracy']:.6f}"
-            )
-        lines.append(
-            "  supported-short="
-            f"{entry['supported_vs_short']['supported_minus_short']:.6f}; "
-            "intact-shuffled="
-            f"{entry['intact_vs_shuffled']['intact_minus_shuffled']:.6f}"
-        )
-        measures = geometry[str(depth)]
-        lines.append(
-            "  geometry participation_ratio="
-            f"{measures['participation_ratio']} trajectory_step_norm="
-            f"{measures['trajectory_step_norm']}"
-        )
-        lines.append(
-            "  answer_decodability="
-            f"{measures['answer_decodability']} full_rule_decodability="
-            f"{measures['rule_decodability']}"
-        )
-        lines.append(
-            "  primary exact_query_memory_read="
-            f"{measures['answer_decodability']['memory_read']}; "
-            "secondary raw_memory_factors="
-            f"{measures['raw_memory_factor_decodability']}"
-        )
-        split = measures["probe_split"]
-        lines.append(
-            f"  probe split fit={split['fit_count']} score={split['score_count']}; "
-            f"{measures['comparison']}"
-        )
-    lines.extend(
-        (
-            f"figure={result['figure_path']}",
-            str(result["claim_boundary"]),
-        )
-    )
-    return "\n".join(lines)
-
-
-def _active_device_report(requested: DeviceName) -> dict[str, object]:
-    device = jax.devices()[0]
     return {
-        "requested": requested,
-        "platform": str(device.platform),
-        "id": int(device.id),
-        "kind": str(getattr(device, "device_kind", device)),
+        "performed": True,
+        "one_shared_model": True,
+        "one_shared_optimizer_state": True,
+        **compiler,
+        "terminal_supervision_only": True,
+        "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
+        "optimizer_updates_by_effort": {
+            str(value): int(counts[value]) for value in TRAINING_EFFORTS
+        },
+        "losses": np.asarray(losses, dtype=np.float64).tolist(),
+        "parameter_sha256_before": before,
+        "parameter_sha256_after": after,
+        "parameters_moved": before != after,
+        "parameter_changes": _parameter_change_evidence(
+            before_snapshot, after_snapshot
+        ),
+        "training_task_fingerprints": list(tensors.task_fingerprints),
+        "sampled_base_task_count": len(set(tensors.base_task_fingerprints)),
+        "sampled_base_query_count": len(
+            set(zip(tensors.base_task_fingerprints, tensors.query_indices, strict=True))
+        ),
+        "sampling_with_replacement": True,
+        "training_samples": sample_records,
     }
 
 
-def _run_experiment(
+def _origin_task_key(origin: _OriginTask) -> str:
+    fingerprint = canonical_task_fingerprint(origin.task)
+    task_name = origin.task.task_id or fingerprint[:12]
+    return f"{origin.source_name}:{task_name}:{fingerprint}"
+
+
+def _evaluation_records(
+    data: _ExperimentData,
     config: ExperimentConfig,
-    device_report: Optional[dict[str, object]] = None,
-) -> Dict[str, Any]:
-    training_corpus = _build_training_corpus(config)
-    held_out = _build_held_out_corpus(config)
-    training: dict[str, object] = {}
-    interventions: dict[str, object] = {}
-    geometry: dict[str, object] = {}
-    for depth in config.depths:
-        model, training_report = _train_depth(config, depth, training_corpus)
-        intervention_report, geometry_report = _depth_interventions(
-            config, depth, model, held_out
+    row_config: RowEventConfig,
+) -> tuple[_EvaluationRecord, ...]:
+    origins = data.evaluation
+    if config.evaluation_task_limit is not None:
+        origins = origins[: config.evaluation_task_limit]
+    records: list[_EvaluationRecord] = []
+    for task_index, origin in enumerate(origins):
+        task_key = _origin_task_key(origin)
+        for query_index in range(len(origin.task.test)):
+            encoded = encode_query_episode(
+                origin.task,
+                query_index,
+                row_config,
+                task_index=task_index,
+            )
+            if encoded.target is None:
+                raise ValueError(
+                    f"evaluation query {task_key}:{query_index} lacks target"
+                )
+            records.append(_EvaluationRecord(origin.source_name, task_key, encoded))
+    if not records:
+        raise ValueError("evaluation produced no scored queries")
+    return tuple(records)
+
+
+def _derange_task(task: ArcTask) -> ArcTask | None:
+    if len(task.train) < 2:
+        return None
+    outputs = tuple(pair.output for pair in task.train)
+    return ArcTask(
+        train=tuple(
+            ArcPair(pair.input, outputs[(index + 1) % len(outputs)])
+            for index, pair in enumerate(task.train)
+        ),
+        test=task.test,
+        task_id=task.task_id,
+    )
+
+
+def _arm_sequences(
+    records: Sequence[_EvaluationRecord],
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    *,
+    arm: Literal["intact", "no_context", "shuffled"],
+    source_tasks: Sequence[_OriginTask],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[dict[str, object]]]:
+    sequences: list[np.ndarray] = []
+    advance_rows: list[np.ndarray] = []
+    query_stops: list[int] = []
+    metadata: list[dict[str, object]] = []
+    task_lookup = {_origin_task_key(origin): origin.task for origin in source_tasks}
+    for record in records:
+        encoded = record.encoded
+        arm_encoded = encoded
+        detail: dict[str, object] = {"available": True, "timing_matched": True}
+        if arm == "no_context":
+            events = np.array(encoded.events, copy=True)
+            events[: encoded.query_start] = 0.0
+            packed = _packed_events(encoded, config)
+            packed[: encoded.events.shape[0]] = events
+        elif arm == "shuffled":
+            changed = _derange_task(task_lookup[record.task_key])
+            if changed is None:
+                packed = _packed_events(encoded, config)
+                detail = {
+                    "available": False,
+                    "reason": "fewer than two demonstrations",
+                    "timing_matched": True,
+                }
+            else:
+                arm_encoded = encode_query_episode(
+                    changed,
+                    encoded.query_index,
+                    row_config,
+                    task_index=encoded.task_index,
+                )
+                packed = _packed_events(arm_encoded, config)
+                detail["timing_matched"] = (
+                    arm_encoded.query_start == encoded.query_start
+                    and arm_encoded.query_stop == encoded.query_stop
+                )
+        else:
+            packed = _packed_events(encoded, config)
+        sequences.append(packed)
+        advance_rows.append(_packed_advances(encoded, config))
+        query_stops.append(encoded.query_stop)
+        metadata.append(detail)
+    stacked = np.stack(sequences, axis=1)
+    advances = np.stack(advance_rows, axis=1)
+    return stacked, advances, np.asarray(query_stops, dtype=np.int32), metadata
+
+
+def _gather_window(
+    packed, query_stops: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    compact = np.asarray(packed.compact_logits)
+    spikes = np.asarray(packed.spikes)
+    voltage = np.asarray(packed.voltage)
+    feedforward_current = np.asarray(packed.feedforward_current)
+    recurrent_current = np.asarray(packed.recurrent_current)
+    offsets = np.arange(0, max(CHECKPOINTS) + 1, dtype=np.int32)[:, None]
+    indices = query_stops[None, :] - 1 + offsets
+    batch = np.arange(query_stops.size, dtype=np.int32)[None, :]
+    return (
+        compact[indices, batch],
+        spikes[indices, batch],
+        voltage[indices, batch],
+        feedforward_current[indices, batch],
+        recurrent_current[indices, batch],
+    )
+
+
+def _score_windows(
+    compact: np.ndarray,
+    records: Sequence[_EvaluationRecord],
+    color_rank: int,
+) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
+    checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
+    expanded = expand_compact_logits(jnp.asarray(checkpoint_compact), color_rank)
+    height = np.asarray(expanded.height)
+    width = np.asarray(expanded.width)
+    colors = np.asarray(expanded.colors)
+    metrics: dict[str, dict[str, object]] = {}
+    query_details: dict[str, list[dict[str, object]]] = {}
+    for effort_index, effort in enumerate(CHECKPOINTS):
+        scores = []
+        details = []
+        for query_index, record in enumerate(records):
+            logits = OutputLogits(
+                height[effort_index, query_index],
+                width[effort_index, query_index],
+                colors[effort_index, query_index],
+            )
+            candidates = decode_candidates(logits)
+            target = record.encoded.target
+            assert target is not None
+            score = score_query_candidates(
+                candidates,
+                target.as_array(),
+                task_id=record.task_key,
+                query_index=record.encoded.query_index,
+            )
+            scores.append(score)
+            details.append(
+                {
+                    "task_id": record.task_key,
+                    "query_index": record.encoded.query_index,
+                    "candidates": [candidate.to_dict() for candidate in candidates],
+                    "score": score.to_dict(),
+                }
+            )
+        metrics[str(effort)] = aggregate_arc_metrics(scores)
+        query_details[str(effort)] = details
+    return metrics, query_details
+
+
+def _trajectory_reports(
+    compact: np.ndarray,
+    spikes: np.ndarray,
+    voltage: np.ndarray,
+    feedforward_current: np.ndarray,
+    recurrent_current: np.ndarray,
+    records: Sequence[_EvaluationRecord],
+    color_rank: int,
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    expanded = expand_compact_logits(jnp.asarray(compact), color_rank)
+    height = np.asarray(expanded.height)
+    width = np.asarray(expanded.width)
+    colors = np.asarray(expanded.colors)
+    reports: list[dict[str, object]] = []
+    for query_index, record in enumerate(records):
+        target = record.encoded.target
+        assert target is not None
+        report = analyze_latent_trajectory(
+            height[:, query_index],
+            width[:, query_index],
+            colors[:, query_index],
+            spikes[:, query_index],
+            voltage[:, query_index],
+            feedforward_current=feedforward_current[:, query_index],
+            recurrent_current=recurrent_current[:, query_index],
+            target=target.as_array(),
+            task_id=record.task_key,
+            query_index=record.encoded.query_index,
+            step_indices=np.arange(compact.shape[0]),
         )
-        training[str(depth)] = training_report
-        interventions[str(depth)] = intervention_report
-        geometry[str(depth)] = geometry_report
+        report["task_id"] = record.task_key
+        report["query_index"] = record.encoded.query_index
+        reports.append(report)
 
-    initial_parameter_sets = [
-        training[str(depth)]["initial_parameter_fingerprints"]
-        for depth in config.depths
-    ]
-    prefix_fingerprints = [
-        training[str(depth)]["canonical_prefix_fingerprint"] for depth in config.depths
-    ]
-    initial_parameters_identical = all(
-        value == initial_parameter_sets[0] for value in initial_parameter_sets[1:]
-    )
-    demo_query_inputs_identical = all(
-        value == prefix_fingerprints[0] for value in prefix_fingerprints[1:]
-    )
-    if not initial_parameters_identical:
-        raise RuntimeError("initial parameter fingerprints differ across depths")
-    if not demo_query_inputs_identical:
-        raise RuntimeError("demonstration/query tensors differ across depths")
+    pair_count = min(256, len(records)) if len(records) > 1 else 0
+    pair_left = np.arange(pair_count, dtype=np.int32)
+    pair_right = (pair_left * 131 + 17) % len(records) if pair_count else pair_left
+    if pair_count:
+        pair_right = np.where(
+            pair_right == pair_left, (pair_right + 1) % len(records), pair_right
+        )
 
-    result: Dict[str, Any] = {
-        "config": config.to_dict(),
-        "device": device_report or _active_device_report(config.device),
-        "training": {
-            "shared_binding_counts": training_corpus.binding_counts.tolist(),
-            "shared_targets": training_corpus.targets.tolist(),
-            "depths": training,
-        },
-        "interventions": {
-            "frozen_no_retraining": True,
-            "depths": interventions,
-        },
-        "geometry": {
-            "primary_memory_representation": "exact_query_memory_read",
-            "raw_factors_are_secondary": True,
-            "depths": geometry,
-        },
-        "reproducibility": {
-            "seed": config.seed,
-            "codebook_seed": config.codebook_seed,
-            "projection_seed": config.projection_seed,
-            "numerical_tolerance": 1e-6,
-            "same_training_corpus_for_every_depth": True,
-            "initial_parameters_identical_across_depths": (
-                initial_parameters_identical
-            ),
-            "demo_query_inputs_identical_across_depths": (demo_query_inputs_identical),
-        },
-        "claim_boundary": CLAIM_BOUNDARY,
-    }
-    metadata_config = dict(result["config"])
-    metadata_config.pop("figure_path")
-    metadata = {
-        "config": metadata_config,
-        "device": result["device"],
-        "reproducibility": {
-            "seed": result["reproducibility"]["seed"],
-            "codebook_seed": result["reproducibility"]["codebook_seed"],
-            "projection_seed": result["reproducibility"]["projection_seed"],
-            "numerical_tolerance": result["reproducibility"]["numerical_tolerance"],
-        },
-    }
-    result["canonical_metadata_json"] = json.dumps(
-        metadata,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
+    def distribution(values: np.ndarray) -> dict[str, float] | None:
+        if values.size == 0:
+            return None
+        return {
+            "minimum": float(np.min(values)),
+            "mean": float(np.mean(values)),
+            "maximum": float(np.max(values)),
+        }
+
+    aggregate: list[dict[str, object]] = []
+    for step in range(compact.shape[0]):
+        rows = [report["steps"][step] for report in reports]
+        if pair_count:
+            pair_spike = np.mean(
+                spikes[step, pair_left] != spikes[step, pair_right], axis=1
+            )
+            scale = math.sqrt(spikes.shape[2])
+            pair_voltage = (
+                np.linalg.norm(
+                    voltage[step, pair_left] - voltage[step, pair_right], axis=1
+                )
+                / scale
+            )
+            pair_feedforward = (
+                np.linalg.norm(
+                    feedforward_current[step, pair_left]
+                    - feedforward_current[step, pair_right],
+                    axis=1,
+                )
+                / scale
+            )
+            pair_recurrent = (
+                np.linalg.norm(
+                    recurrent_current[step, pair_left]
+                    - recurrent_current[step, pair_right],
+                    axis=1,
+                )
+                / scale
+            )
+        else:
+            pair_spike = np.asarray([], dtype=np.float64)
+            pair_voltage = np.asarray([], dtype=np.float64)
+            pair_feedforward = np.asarray([], dtype=np.float64)
+            pair_recurrent = np.asarray([], dtype=np.float64)
+        aggregate.append(
+            {
+                "step": step,
+                "mean_firing_rate": float(
+                    np.mean([row["firing_rate"] for row in rows])
+                ),
+                "mean_spike_count": float(
+                    np.mean([row["spike_count"] for row in rows])
+                ),
+                "mean_voltage_l2": float(np.mean([row["voltage_l2"] for row in rows])),
+                "mean_feedforward_current_l2": float(
+                    np.mean([row["feedforward_current_l2"] for row in rows])
+                ),
+                "mean_recurrent_current_l2": float(
+                    np.mean([row["recurrent_current_l2"] for row in rows])
+                ),
+                "mean_predictive_entropy": float(
+                    np.mean([row["predictive_entropy"] for row in rows])
+                ),
+                "mean_changed_cell_fraction": (
+                    None
+                    if step == 0
+                    else float(np.mean([row["changed_cell_fraction"] for row in rows]))
+                ),
+                "converged_fraction": float(
+                    np.mean([row["converged"] for row in rows])
+                ),
+                "near_silence_fraction": float(
+                    np.mean([row["near_silence"] for row in rows])
+                ),
+                "near_saturation_fraction": float(
+                    np.mean([row["near_saturation"] for row in rows])
+                ),
+                "unique_state_hashes": len({row["state_sha256"] for row in rows}),
+                "pair_sample_count": pair_count,
+                "pair_sampling": "deterministic modular query pairs",
+                "pairwise_spike_hamming_fraction": distribution(pair_spike),
+                "pairwise_voltage_rms_distance": distribution(pair_voltage),
+                "pairwise_feedforward_current_rms_distance": distribution(
+                    pair_feedforward
+                ),
+                "pairwise_recurrent_current_rms_distance": distribution(pair_recurrent),
+            }
+        )
+    return reports, aggregate
+
+
+def _control_summary(
+    name: str,
+    intact: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    control: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    records: Sequence[_EvaluationRecord],
+    color_rank: int,
+    intact_metrics: dict[str, dict[str, object]],
+    metadata: Sequence[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    if metadata is None:
+        metadata = tuple({"available": True, "timing_matched": True} for _ in records)
+    if len(metadata) != len(records):
+        raise ValueError("control metadata must match the evaluation records")
+    applicable = np.asarray(
+        [bool(item.get("available", False)) for item in metadata], dtype=np.bool_
     )
-    figure_path = _plot_report(result, config.figure_path)
-    result["figure_path"] = str(figure_path)
-    json.dumps(result, sort_keys=True, allow_nan=False)
+    applicable_indices = np.flatnonzero(applicable)
+    applicable_records = tuple(records[index] for index in applicable_indices)
+
+    def subset(window: tuple[np.ndarray, ...]) -> tuple[np.ndarray, ...]:
+        return tuple(value[:, applicable_indices] for value in window)
+
+    applicable_intact = subset(intact)
+    applicable_control = subset(control)
+    if applicable_records:
+        metrics, _ = _score_windows(
+            applicable_control[0], applicable_records, color_rank
+        )
+        if len(applicable_records) == len(records):
+            matched_intact_metrics = intact_metrics
+        else:
+            matched_intact_metrics, _ = _score_windows(
+                applicable_intact[0], applicable_records, color_rank
+            )
+    else:
+        metrics = {}
+        matched_intact_metrics = {}
+
+    if applicable_records:
+        intact_spikes = applicable_intact[1]
+        intact_voltage = applicable_intact[2]
+        control_spikes = applicable_control[1]
+        control_voltage = applicable_control[2]
+        comparison = compare_control_trajectories(
+            intact_spikes.transpose(0, 2, 1).reshape(intact_spikes.shape[0], -1),
+            intact_voltage.transpose(0, 2, 1).reshape(intact_voltage.shape[0], -1),
+            control_spikes.transpose(0, 2, 1).reshape(control_spikes.shape[0], -1),
+            control_voltage.transpose(0, 2, 1).reshape(control_voltage.shape[0], -1),
+            control_name=name,
+            intact_scores=matched_intact_metrics,
+            control_scores=metrics,
+            intact_synaptic_currents={
+                "feedforward": applicable_intact[3]
+                .transpose(0, 2, 1)
+                .reshape(applicable_intact[3].shape[0], -1),
+                "recurrent": applicable_intact[4]
+                .transpose(0, 2, 1)
+                .reshape(applicable_intact[4].shape[0], -1),
+            },
+            control_synaptic_currents={
+                "feedforward": applicable_control[3]
+                .transpose(0, 2, 1)
+                .reshape(applicable_control[3].shape[0], -1),
+                "recurrent": applicable_control[4]
+                .transpose(0, 2, 1)
+                .reshape(applicable_control[4].shape[0], -1),
+            },
+        )
+    else:
+        comparison = {
+            "control_name": name,
+            "available": False,
+            "causally_null_at_measured_precision": None,
+            "interpretation": f"{name} had no applicable evaluation queries.",
+        }
+    per_query_null = [
+        bool(
+            all(
+                np.array_equal(
+                    intact[state_index][:, index], control[state_index][:, index]
+                )
+                for state_index in range(1, 5)
+            )
+        )
+        for index in applicable_indices
+    ]
+    timing_matched_applicable = int(
+        sum(
+            bool(item.get("timing_matched", False))
+            for item, is_applicable in zip(metadata, applicable, strict=True)
+            if is_applicable
+        )
+    )
+    result: dict[str, object] = {
+        "metrics_by_effort": metrics,
+        "trajectory_comparison": comparison,
+        "causally_null_query_count": int(sum(per_query_null)),
+        "query_count": len(records),
+        "applicable_query_count": int(applicable_indices.size),
+        "available_query_count": int(applicable_indices.size),
+        "unavailable_query_count": int(len(records) - applicable_indices.size),
+        "timing_matched_applicable_query_count": timing_matched_applicable,
+        "intervention_metadata": list(metadata),
+    }
+    result["timing_matched_query_count"] = int(
+        sum(bool(item.get("timing_matched", False)) for item in metadata)
+    )
     return result
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--device", choices=("gpu", "cpu"), default="gpu")
-    parser.add_argument("--seed", type=int, default=2108)
-    parser.add_argument("--codebook-seed", type=int, default=313320)
-    parser.add_argument("--projection-seed", type=int, default=210848)
-    parser.add_argument("--depths", type=int, nargs="+")
-    parser.add_argument("--binding-counts", type=int, nargs="+")
-    parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--training-updates", type=int)
-    parser.add_argument("--latent-width", type=int)
-    parser.add_argument("--learning-rate", type=float)
-    parser.add_argument(
-        "--figure",
-        type=pathlib.Path,
-        default=pathlib.Path("latent-reasoning-in-context.png"),
+def _evaluate(
+    trained_model: LatentWorkspaceModel,
+    data: _ExperimentData,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    device: jax.Device,
+) -> dict[str, object]:
+    records = _evaluation_records(data, config, row_config)
+    batch_size = len(records)
+    model = _make_model(config, row_config, batch_size=batch_size, device=device)
+    _copy_parameters(trained_model, model)
+    before = _tree_digest(parameter_snapshot(model))
+    intact_events, intact_advances, query_stops, intact_meta = _arm_sequences(
+        records, config, row_config, arm="intact", source_tasks=data.evaluation
     )
-    parser.add_argument("--smoke", action="store_true")
-    return parser
+    no_context_events, no_context_advances, no_context_stops, no_context_meta = (
+        _arm_sequences(
+            records, config, row_config, arm="no_context", source_tasks=data.evaluation
+        )
+    )
+    shuffled_events, shuffled_advances, shuffled_stops, shuffled_meta = _arm_sequences(
+        records, config, row_config, arm="shuffled", source_tasks=data.evaluation
+    )
+    if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
+        query_stops, shuffled_stops
+    ):
+        raise ValueError("control query boundaries are not matched")
+
+    slots = np.full((batch_size,), config.ablation_slot, dtype=np.int32)
+    inactive_gates = np.zeros((intact_events.shape[0], batch_size), dtype=np.bool_)
+    selected_indices = (
+        query_stops[None, :]
+        - 1
+        + np.arange(max(CHECKPOINTS) + 1, dtype=np.int32)[:, None]
+    )
+
+    def run_arm(
+        events: np.ndarray, advances: np.ndarray, gates: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        packed = run_selected_packed_stream(
+            model,
+            jnp.asarray(events),
+            jnp.asarray(selected_indices),
+            reset=True,
+            advance_gates=jnp.asarray(advances),
+            ablation_slots=slots,
+            ablation_gates=jnp.asarray(gates),
+        )
+        window = (
+            np.asarray(packed.compact_logits),
+            np.asarray(packed.spikes),
+            np.asarray(packed.voltage),
+            np.asarray(packed.feedforward_current),
+            np.asarray(packed.recurrent_current),
+        )
+        del packed
+        return window
+
+    intact = run_arm(intact_events, intact_advances, inactive_gates)
+    repeat_intact = run_arm(intact_events, intact_advances, inactive_gates)
+    intact_metrics, checkpoint_queries = _score_windows(
+        intact[0], records, config.color_rank
+    )
+    trajectories, aggregate_trajectory = _trajectory_reports(
+        *intact, records, config.color_rank
+    )
+
+    repeat_result = _control_summary(
+        "repeat_intact",
+        intact,
+        repeat_intact,
+        records,
+        config.color_rank,
+        intact_metrics,
+        intact_meta,
+    )
+    del repeat_intact
+
+    no_context = run_arm(no_context_events, no_context_advances, inactive_gates)
+    no_context_result = _control_summary(
+        "no_context",
+        intact,
+        no_context,
+        records,
+        config.color_rank,
+        intact_metrics,
+        no_context_meta,
+    )
+    del no_context
+
+    shuffled = run_arm(shuffled_events, shuffled_advances, inactive_gates)
+    shuffled_result = _control_summary(
+        "shuffled_demonstrations",
+        intact,
+        shuffled,
+        records,
+        config.color_rank,
+        intact_metrics,
+        shuffled_meta,
+    )
+    del shuffled
+
+    gates = inactive_gates.copy()
+    gates[query_stops, np.arange(batch_size)] = True
+    ablated = run_arm(intact_events, intact_advances, gates)
+    ablation_result = _control_summary(
+        f"slot_ablation_{config.ablation_slot}",
+        intact,
+        ablated,
+        records,
+        config.color_rank,
+        intact_metrics,
+        intact_meta,
+    )
+    pre_intervention_match = bool(
+        all(np.array_equal(intact[index][0], ablated[index][0]) for index in range(5))
+    )
+    del ablated
+    after = _tree_digest(parameter_snapshot(model))
+    return {
+        "query_count": batch_size,
+        "task_count": len({record.task_key for record in records}),
+        "same_frozen_parameter_bytes": before == after,
+        "parameter_sha256_before": before,
+        "parameter_sha256_after": after,
+        "metrics_by_effort": intact_metrics,
+        "checkpoint_queries": checkpoint_queries,
+        "query_trajectories": trajectories,
+        "aggregate_trajectory": aggregate_trajectory,
+        "determinism": {
+            "same_control_capable_execution_path": True,
+            "state_tolerance": "exact byte identity",
+            "metric_absolute_tolerance": 0.0,
+            "repeat_intact_state_byte_identical": bool(
+                repeat_result["trajectory_comparison"][
+                    "causally_null_at_measured_precision"
+                ]
+            ),
+            "slot_ablation_checkpoint_zero_byte_identical": pre_intervention_match,
+        },
+        "controls": {
+            "repeat_intact": repeat_result,
+            "no_context": no_context_result,
+            "shuffled_demonstrations": shuffled_result,
+            "slot_ablation": ablation_result,
+            "truncation": {
+                "checkpoints": list(CHECKPOINTS),
+                "uses_one_continuous_intact_trajectory": True,
+            },
+        },
+    }
 
 
-def _parse_args(argv: Optional[list[str]]) -> argparse.Namespace:
-    return _build_parser().parse_args(argv)
+def _qualification(
+    config: ExperimentConfig,
+    data: _ExperimentData,
+    training: dict[str, object],
+    evaluation: dict[str, object],
+    device_report: dict[str, object],
+    model_report: dict[str, object],
+) -> dict[str, object]:
+    def finite_tree(value: object) -> bool:
+        if isinstance(value, dict):
+            return all(finite_tree(item) for item in value.values())
+        if isinstance(value, (list, tuple)):
+            return all(finite_tree(item) for item in value)
+        if isinstance(value, (bool, np.bool_)) or value is None:
+            return True
+        if isinstance(value, Real):
+            return math.isfinite(float(value))
+        return True
+
+    required_metric_names = {
+        "query_count",
+        "task_count",
+        "query_pass_at_1",
+        "query_pass_at_2",
+        "strict_task_pass_at_1",
+        "strict_task_pass_at_2",
+        "shape_accuracy_diagnostic",
+        "valid_cell_pixel_accuracy_diagnostic",
+    }
+
+    def metrics_complete(value: object) -> bool:
+        if not isinstance(value, dict) or set(value) != {
+            str(checkpoint) for checkpoint in CHECKPOINTS
+        }:
+            return False
+        return all(
+            isinstance(row, dict)
+            and required_metric_names <= row.keys()
+            and int(row["query_count"]) == expected_query_count
+            and int(row["task_count"]) == expected_task_count
+            and finite_tree(row)
+            for row in value.values()
+        )
+
+    expected_origins = data.evaluation
+    if config.evaluation_task_limit is not None:
+        expected_origins = expected_origins[: config.evaluation_task_limit]
+    expected_task_count = len(expected_origins)
+    expected_query_count = sum(len(origin.task.test) for origin in expected_origins)
+
+    required_trajectory_names = {
+        "step",
+        "mean_firing_rate",
+        "mean_spike_count",
+        "mean_voltage_l2",
+        "mean_feedforward_current_l2",
+        "mean_recurrent_current_l2",
+        "mean_predictive_entropy",
+        "mean_changed_cell_fraction",
+        "converged_fraction",
+        "near_silence_fraction",
+        "near_saturation_fraction",
+        "unique_state_hashes",
+        "pair_sample_count",
+        "pairwise_spike_hamming_fraction",
+        "pairwise_voltage_rms_distance",
+        "pairwise_feedforward_current_rms_distance",
+        "pairwise_recurrent_current_rms_distance",
+    }
+    aggregate = evaluation.get("aggregate_trajectory")
+    aggregate_complete = bool(
+        isinstance(aggregate, list)
+        and len(aggregate) == max(CHECKPOINTS) + 1
+        and all(
+            isinstance(row, dict)
+            and required_trajectory_names <= row.keys()
+            and row.get("step") == index
+            and finite_tree(row)
+            for index, row in enumerate(aggregate)
+        )
+    )
+    query_trajectories = evaluation.get("query_trajectories")
+    query_count = int(evaluation.get("query_count", 0))
+    required_query_step_names = {
+        "step",
+        "candidates",
+        "changed_cell_count",
+        "changed_cell_fraction",
+        "predictive_entropy",
+        "top_two_logit_margin",
+        "spike_count",
+        "firing_rate",
+        "raster_active_indices",
+        "voltage_mean",
+        "voltage_std",
+        "voltage_mean_absolute",
+        "voltage_l2",
+        "spike_hamming_displacement",
+        "spike_hamming_fraction",
+        "voltage_l2_displacement",
+        "feedforward_current_mean_absolute",
+        "feedforward_current_l2",
+        "feedforward_current_l2_displacement",
+        "recurrent_current_mean_absolute",
+        "recurrent_current_l2",
+        "recurrent_current_l2_displacement",
+        "converged",
+        "near_silence",
+        "near_saturation",
+        "state_sha256",
+        "score",
+    }
+
+    def query_trajectory_complete(report: object) -> bool:
+        if not isinstance(report, dict) or not isinstance(report.get("steps"), list):
+            return False
+        steps = report["steps"]
+        return bool(
+            report.get("step_count") == max(CHECKPOINTS) + 1
+            and int(report.get("neuron_count", 0))
+            == int(model_report.get("neuron_count", -1))
+            and len(steps) == max(CHECKPOINTS) + 1
+            and all(
+                isinstance(row, dict)
+                and required_query_step_names <= row.keys()
+                and row.get("step") == index
+                and isinstance(row.get("candidates"), list)
+                and bool(row["candidates"])
+                and finite_tree(row)
+                for index, row in enumerate(steps)
+            )
+            and finite_tree(report)
+        )
+
+    query_trajectories_complete = bool(
+        isinstance(query_trajectories, list)
+        and len(query_trajectories) == query_count
+        and all(query_trajectory_complete(report) for report in query_trajectories)
+    )
+    checkpoint_queries = evaluation.get("checkpoint_queries")
+    checkpoint_queries_complete = bool(
+        isinstance(checkpoint_queries, dict)
+        and set(checkpoint_queries) == {str(checkpoint) for checkpoint in CHECKPOINTS}
+        and all(
+            isinstance(rows, list)
+            and len(rows) == expected_query_count
+            and all(
+                isinstance(row, dict)
+                and {"task_id", "query_index", "candidates", "score"} <= row.keys()
+                and isinstance(row["candidates"], list)
+                and bool(row["candidates"])
+                and finite_tree(row)
+                for row in rows
+            )
+            for rows in checkpoint_queries.values()
+        )
+    )
+
+    def comparison_complete(value: object) -> bool:
+        if not isinstance(value, dict):
+            return False
+        current_distance = value.get("synaptic_current_l2_by_step")
+        score_deltas = value.get("score_deltas_control_minus_intact")
+        return bool(
+            isinstance(value.get("causally_null_at_measured_precision"), bool)
+            and len(value.get("state_byte_identical_by_step", ()))
+            == max(CHECKPOINTS) + 1
+            and len(value.get("spike_hamming_by_step", ())) == max(CHECKPOINTS) + 1
+            and len(value.get("spike_hamming_fraction_by_step", ()))
+            == max(CHECKPOINTS) + 1
+            and len(value.get("voltage_l2_by_step", ())) == max(CHECKPOINTS) + 1
+            and isinstance(current_distance, dict)
+            and set(current_distance) == {"feedforward", "recurrent"}
+            and all(
+                len(current_distance[name]) == max(CHECKPOINTS) + 1
+                for name in current_distance
+            )
+            and isinstance(score_deltas, dict)
+            and {
+                "32.query_pass_at_2",
+                "32.valid_cell_pixel_accuracy_diagnostic",
+            }
+            <= score_deltas.keys()
+            and finite_tree(value)
+        )
+
+    controls = evaluation.get("controls")
+
+    def control_complete(name: str) -> bool:
+        if not isinstance(controls, dict) or not isinstance(controls.get(name), dict):
+            return False
+        control = controls[name]
+        total = int(control.get("query_count", -1))
+        applicable = int(control.get("applicable_query_count", -1))
+        unavailable = int(control.get("unavailable_query_count", -1))
+        timing_matched = int(control.get("timing_matched_applicable_query_count", -1))
+        control_metrics = control.get("metrics_by_effort")
+        metrics_ok = (
+            bool(
+                isinstance(control_metrics, dict)
+                and set(control_metrics)
+                == {str(checkpoint) for checkpoint in CHECKPOINTS}
+                and all(
+                    isinstance(row, dict)
+                    and required_metric_names <= row.keys()
+                    and int(row["query_count"]) == applicable
+                    and 1 <= int(row["task_count"]) <= expected_task_count
+                    and finite_tree(row)
+                    for row in control_metrics.values()
+                )
+            )
+            if applicable > 0
+            else control_metrics == {}
+        )
+        comparison_ok = (
+            comparison_complete(control.get("trajectory_comparison"))
+            if applicable > 0
+            else isinstance(control.get("trajectory_comparison"), dict)
+            and control["trajectory_comparison"].get("available") is False
+        )
+        applicability_ok = (
+            applicable == expected_query_count
+            if name in ("repeat_intact", "no_context", "slot_ablation")
+            else applicable > 0
+        )
+        return bool(
+            total == query_count
+            and total == expected_query_count
+            and applicable >= 0
+            and unavailable >= 0
+            and applicable + unavailable == total
+            and timing_matched == applicable
+            and applicability_ok
+            and metrics_ok
+            and comparison_ok
+        )
+
+    required_controls_complete = all(
+        control_complete(name)
+        for name in (
+            "repeat_intact",
+            "no_context",
+            "shuffled_demonstrations",
+            "slot_ablation",
+        )
+    )
+    truncation = controls.get("truncation", {}) if isinstance(controls, dict) else {}
+    truncation_complete = bool(
+        truncation.get("checkpoints") == list(CHECKPOINTS)
+        and truncation.get("uses_one_continuous_intact_trajectory") is True
+    )
+    determinism = evaluation.get("determinism", {})
+    repeatable = bool(
+        isinstance(determinism, dict)
+        and determinism.get("same_control_capable_execution_path") is True
+        and determinism.get("repeat_intact_state_byte_identical") is True
+    )
+    ablation_matched = bool(
+        isinstance(determinism, dict)
+        and determinism.get("slot_ablation_checkpoint_zero_byte_identical") is True
+    )
+    evaluation_complete = bool(
+        query_count > 0
+        and query_count == expected_query_count
+        and int(evaluation.get("task_count", 0)) == expected_task_count
+        and metrics_complete(evaluation.get("metrics_by_effort"))
+        and aggregate_complete
+        and query_trajectories_complete
+        and checkpoint_queries_complete
+        and required_controls_complete
+        and truncation_complete
+        and finite_tree(evaluation)
+    )
+
+    compiler_report = training.get("compiler_report", {})
+    compiler_counts = (
+        compiler_report.get("counts", {}) if isinstance(compiler_report, dict) else {}
+    )
+    routed_paths = (
+        {
+            item.get("parameter")
+            for item in compiler_report.get("etrace_weights", ())
+            if isinstance(item, dict)
+        }
+        if isinstance(compiler_report, dict)
+        else set()
+    )
+    plain_paths = (
+        {
+            item.get("parameter")
+            for item in compiler_report.get("excluded_weights", ())
+            if isinstance(item, dict)
+        }
+        if isinstance(compiler_report, dict)
+        else set()
+    )
+    expected_parameter_paths = {
+        "color_factor_head.weight",
+        "ff_syn.comm.weight",
+        "height_head.weight",
+        "readout_projection.weight",
+        "rec_syn.comm.weight",
+        "width_head.weight",
+    }
+    compiler_complete = bool(
+        training.get("pp_prop_compiled") is True
+        and isinstance(compiler_report, dict)
+        and compiler_report.get("available") is True
+        and int(compiler_counts.get("hidden_groups", 0)) >= 1
+        and int(compiler_counts.get("errors", -1)) == 0
+        and routed_paths == {"ff_syn.comm.weight", "rec_syn.comm.weight"}
+        and plain_paths
+        == {
+            "color_factor_head.weight",
+            "height_head.weight",
+            "readout_projection.weight",
+            "width_head.weight",
+        }
+        and routed_paths | plain_paths == expected_parameter_paths
+    )
+    full_scale = bool(
+        model_report.get("neuron_count") == 2048
+        and model_report.get("recurrent_edge_count") == 16384
+        and model_report.get("slot_count") == 32
+        and int(model_report.get("parameter_count", 0)) > 0
+    )
+    component_types = model_report.get("component_types", {})
+    component_contract = bool(
+        isinstance(component_types, dict)
+        and component_types
+        == {
+            "neuron": "LIF",
+            "feedforward_projection_wrapper": "AlignPostProj",
+            "feedforward_projection": "Linear",
+            "feedforward_synapse": "Expon",
+            "feedforward_output": "CUBA",
+            "recurrent_projection_wrapper": "AlignPostProj",
+            "recurrent_projection": "SparseLinear",
+            "recurrent_synapse": "Expon",
+            "recurrent_output": "CUBA",
+        }
+    )
+    gpu_complete = str(device_report.get("platform", "")).casefold() == "gpu"
+    frozen = evaluation.get("same_frozen_parameter_bytes") is True
+    structural_checks = {
+        "actual_full_scale": full_scale,
+        "physical_component_contract": component_contract,
+        "actual_gpu_backend": gpu_complete,
+        "pp_prop_compiler_routes": compiler_complete,
+        "complete_frozen_evaluation": evaluation_complete,
+        "frozen_parameters_unchanged": frozen,
+        "repeat_intact_deterministic": repeatable,
+        "slot_ablation_pre_intervention_matched": ablation_matched,
+    }
+    structural = all(structural_checks.values())
+
+    training_counts = training.get("optimizer_updates_by_effort", {})
+    mixed = bool(
+        isinstance(training_counts, dict)
+        and all(
+            int(training_counts.get(str(effort), 0)) > 0 for effort in TRAINING_EFFORTS
+        )
+        and sum(int(training_counts.get(str(effort), 0)) for effort in TRAINING_EFFORTS)
+        == config.training_updates
+    )
+    losses = training.get("losses")
+    losses_complete = bool(
+        isinstance(losses, list)
+        and len(losses) == config.training_updates
+        and finite_tree(losses)
+    )
+    parameter_changes = training.get("parameter_changes")
+    temporal_paths_moved = bool(
+        isinstance(parameter_changes, dict)
+        and all(
+            isinstance(parameter_changes.get(path), dict)
+            and parameter_changes[path].get("changed") is True
+            and float(parameter_changes[path].get("l2_delta", 0.0)) > 0.0
+            and math.isfinite(float(parameter_changes[path]["l2_delta"]))
+            for path in ("ff_syn.comm.weight", "rec_syn.comm.weight")
+        )
+    )
+    all_parameter_changes_finite = bool(
+        isinstance(parameter_changes, dict)
+        and set(parameter_changes) == expected_parameter_paths
+        and all(
+            isinstance(item, dict)
+            and item.get("changed") is True
+            and float(item.get("l2_delta", 0.0)) > 0.0
+            and math.isfinite(float(item["l2_delta"]))
+            for item in parameter_changes.values()
+        )
+    )
+    sources = [item.manifest.source for item in data.loaded]
+    training_names = {
+        str(source.name).casefold() for source in sources if source.role == "train"
+    }
+    evaluation_names = {
+        str(source.name).casefold() for source in sources if source.role == "evaluation"
+    }
+    approved_sources = bool(
+        training_names
+        and evaluation_names
+        and training_names <= APPROVED_TRAINING_SOURCES
+        and evaluation_names <= APPROVED_EVALUATION_SOURCES
+    )
+    no_rejected_sources = all(
+        len(getattr(item.manifest, "rejected", ())) == 0 for item in data.loaded
+    )
+    scientific_checks = {
+        "structural_qualification": structural,
+        "not_smoke_or_structural_only": not config.smoke and not config.structural_only,
+        "complete_evaluation_split": config.evaluation_task_limit is None,
+        "approved_train_and_evaluation_sources": approved_sources,
+        "no_rejected_source_records": no_rejected_sources,
+        "not_plumbing_only": not data.plumbing_only,
+        "one_model_one_optimizer_terminal_training": bool(
+            training.get("performed") is True
+            and training.get("one_shared_model") is True
+            and training.get("one_shared_optimizer_state") is True
+            and training.get("terminal_supervision_only") is True
+        ),
+        "mixed_effort_update_schedule": mixed,
+        "finite_loss_per_update": losses_complete,
+        "parameters_moved": training.get("parameters_moved") is True,
+        "temporal_synapses_moved": temporal_paths_moved,
+        "all_parameter_groups_moved_with_finite_delta": all_parameter_changes_finite,
+    }
+    scientific = all(scientific_checks.values())
+    structural_messages = {
+        "actual_full_scale": "actual model is not the required 2048-neuron/16384-edge scale",
+        "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
+        "actual_gpu_backend": "actual evaluation backend is not GPU",
+        "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
+        "complete_frozen_evaluation": "exact metrics, trajectories, or controls are incomplete or non-finite",
+        "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
+        "repeat_intact_deterministic": "same-run intact repeat was not byte-identical",
+        "slot_ablation_pre_intervention_matched": "slot-ablation checkpoint zero did not match intact state",
+    }
+    scientific_messages = {
+        "not_smoke_or_structural_only": "smoke fixtures or disabled optimization cannot be scientific evidence",
+        "complete_evaluation_split": "evaluation_task_limit makes this a development subset",
+        "approved_train_and_evaluation_sources": "approved train/evaluation source roles were not both present",
+        "no_rejected_source_records": "source rejections were present",
+        "not_plumbing_only": "embedded fixtures are plumbing-only",
+        "one_model_one_optimizer_terminal_training": "training did not retain one shared model, optimizer state, and terminal-only objective",
+        "mixed_effort_update_schedule": "one shared model did not receive the complete 8/16/32 update schedule",
+        "finite_loss_per_update": "one finite loss was not retained for every optimizer update",
+        "parameters_moved": "training did not change parameter bytes",
+        "temporal_synapses_moved": "feedforward and recurrent eligibility-routed synapses did not both move",
+        "all_parameter_groups_moved_with_finite_delta": "not every parameter group moved with a finite delta",
+    }
+    reasons_not_structural = [
+        structural_messages[name]
+        for name, passed in structural_checks.items()
+        if not passed
+    ]
+    reasons_not_scientific = list(reasons_not_structural)
+    reasons_not_scientific.extend(
+        scientific_messages[name]
+        for name, passed in scientific_checks.items()
+        if name != "structural_qualification" and not passed
+    )
+    return {
+        "full_structural_qualification": structural,
+        "full_scientific_qualification": scientific,
+        "plumbing_only": data.plumbing_only,
+        "structural_checks": structural_checks,
+        "scientific_checks": scientific_checks,
+        "reasons_not_structural": reasons_not_structural,
+        "reasons_not_scientific": reasons_not_scientific,
+    }
 
 
-def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
-    if args.smoke:
-        config = ExperimentConfig.smoke(
-            seed=args.seed,
-            codebook_seed=args.codebook_seed,
-            projection_seed=args.projection_seed,
-            device=args.device,
-            figure_path=args.figure,
+def _parameter_count(values: dict[str, Any]) -> int:
+    return int(sum(np.asarray(leaf).size for leaf in jax.tree.leaves(values)))
+
+
+def _software_report() -> dict[str, object]:
+    distributions = (
+        "braintrace",
+        "brainstate",
+        "brainpy",
+        "braintools",
+        "jax",
+        "jaxlib",
+        "numpy",
+    )
+    versions: dict[str, str] = {}
+    for distribution in distributions:
+        try:
+            versions[distribution] = importlib.metadata.version(distribution)
+        except importlib.metadata.PackageNotFoundError:
+            versions[distribution] = "unavailable"
+    return {
+        "python": platform.python_version(),
+        "python_implementation": platform.python_implementation(),
+        "platform": platform.platform(),
+        "packages": versions,
+        "xla_python_client_preallocate": os.environ.get(
+            "XLA_PYTHON_CLIENT_PREALLOCATE"
+        ),
+    }
+
+
+def _implementation_report() -> dict[str, object]:
+    directory = pathlib.Path(__file__).resolve().parent
+    names = (
+        pathlib.Path(__file__).name,
+        "latent_workspace_task.py",
+        "latent_workspace_analysis.py",
+        "latent_workspace_model.py",
+    )
+    combined = hashlib.sha256()
+    files: dict[str, str] = {}
+    for name in names:
+        payload = (directory / name).read_bytes()
+        digest = hashlib.sha256(payload).hexdigest()
+        files[name] = digest
+        combined.update(name.encode("utf-8"))
+        combined.update(payload)
+    return {
+        "source_tree_sha256": combined.hexdigest(),
+        "file_sha256": files,
+        "source_revision": os.environ.get("EXAMPLE21_SOURCE_REVISION"),
+        "source_dirty": os.environ.get("EXAMPLE21_SOURCE_DIRTY"),
+    }
+
+
+def _data_summary(
+    data: _ExperimentData,
+    manifests: Sequence[dict[str, object]],
+    evaluation: dict[str, object],
+) -> dict[str, object]:
+    task_counts: Counter[str] = Counter()
+    query_counts: Counter[str] = Counter()
+    source_names: dict[str, list[str]] = {}
+    for item in data.loaded:
+        role = str(item.manifest.source.role)
+        task_counts[role] += len(item.tasks)
+        query_counts[role] += sum(len(task.test) for task in item.tasks)
+        source_names.setdefault(role, []).append(str(item.manifest.source.name))
+    canonical = json.dumps(
+        list(manifests), sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("ascii")
+    return {
+        "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+        "source_count": len(manifests),
+        "source_names_by_role": {
+            role: sorted(names) for role, names in source_names.items()
+        },
+        "task_counts_by_role": dict(sorted(task_counts.items())),
+        "query_counts_by_role": dict(sorted(query_counts.items())),
+        "training_task_pool_count": len(data.training),
+        "evaluated_task_count": int(evaluation["task_count"]),
+        "evaluated_query_count": int(evaluation["query_count"]),
+        "parsed_task_count": int(
+            sum(int(manifest["parsed_task_count"]) for manifest in manifests)
+        ),
+        "valid_task_count": int(
+            sum(int(manifest["valid_task_count"]) for manifest in manifests)
+        ),
+        "rejected_task_count": int(
+            sum(int(manifest["rejected_task_count"]) for manifest in manifests)
+        ),
+        "duplicate_task_count": int(
+            sum(int(manifest["duplicate_task_count"]) for manifest in manifests)
+        ),
+        "excluded_task_count": int(
+            sum(int(manifest["excluded_task_count"]) for manifest in manifests)
+        ),
+        "split_overlap_check": "passed",
+        "private_paper_data_available": False,
+        "private_training_recipe_available": False,
+    }
+
+
+def _render_report(result: dict[str, object]) -> str:
+    configuration = result.get("configuration", {})
+    device = result.get("device", {})
+    model = result.get("model", {})
+    training = result.get("training", {})
+    evaluation = result.get("evaluation", {})
+    qualification = result.get("qualification", {})
+    data_summary = result.get("data_summary", {})
+    software = result.get("software", {})
+    implementation = result.get("implementation", {})
+    compiler_report = training.get("compiler_report", {"counts": {}, "diagnostics": []})
+    compiler_counts = compiler_report.get("counts", {})
+    runtime = float(result.get("runtime_seconds", 0.0))
+    if training.get("performed") is True:
+        training_line = (
+            "Training: one parameter set and one Adam state; updates by terminal "
+            f"effort {training.get('optimizer_updates_by_effort', {})}."
         )
     else:
-        config = ExperimentConfig(
-            seed=args.seed,
-            codebook_seed=args.codebook_seed,
-            projection_seed=args.projection_seed,
-            device=args.device,
-            figure_path=args.figure,
+        training_line = (
+            "Training: optimization was not performed; reason="
+            f"{training.get('reason', 'unreported')}; updates="
+            f"{training.get('optimizer_updates_by_effort', {})}."
         )
-    changes: dict[str, object] = {}
+    lines = [
+        "Example 21 - ARC latent reasoning with pp-prop",
+        "",
+        str(result.get("claim_boundary", CLAIM_BOUNDARY)),
+        "",
+        f"Seed: {configuration.get('seed', 'unreported')}",
+        f"Runtime: {runtime:.3f} seconds",
+        (
+            f"Device: requested={device.get('requested', 'unreported')}, "
+            f"actual={device.get('platform', 'unreported')} "
+            f"({device.get('kind', 'unreported')})"
+        ),
+        (
+            f"Device memory after training/evaluation: {device.get('memory_stats', {})}; "
+            f"capture={device.get('memory_stats_capture', 'unreported')}."
+        ),
+        (
+            "Implementation: source-tree SHA-256="
+            f"{implementation.get('source_tree_sha256', 'unreported')}; "
+            f"revision={implementation.get('source_revision') or 'unreported'}; "
+            f"source_dirty={implementation.get('source_dirty') or 'unreported'}."
+        ),
+        (
+            f"Software: Python {software.get('python', 'unreported')}; packages "
+            f"{software.get('packages', {})}."
+        ),
+        f"Configuration: {configuration}",
+        "",
+        (
+            f"Physical model: {model.get('neuron_count', 'unreported')} LIF neurons, "
+            f"{model.get('recurrent_edge_count', 'unreported')} directed sparse edges, "
+            f"{model.get('slot_count', 'unreported')} x 64-neuron analysis slots, "
+            f"{model.get('parameter_count', 'unreported')} scalar parameters."
+        ),
+        f"Physical component types: {model.get('component_types', {})}.",
+        (
+            f"Data manifest SHA-256: {data_summary.get('manifest_sha256', 'unreported')}; "
+            f"sources={data_summary.get('source_names_by_role', {})}."
+        ),
+        (
+            f"Splits: tasks={data_summary.get('task_counts_by_role', {})}; "
+            f"queries={data_summary.get('query_counts_by_role', {})}; "
+            f"evaluated={data_summary.get('evaluated_task_count', 'unreported')} tasks/"
+            f"{data_summary.get('evaluated_query_count', 'unreported')} queries; "
+            f"rejected={data_summary.get('rejected_task_count', 'unreported')}; "
+            f"duplicates={data_summary.get('duplicate_task_count', 'unreported')}; "
+            f"explicit exclusions={data_summary.get('excluded_task_count', 'unreported')}."
+        ),
+        training_line,
+        (
+            f"Training exposure: {training.get('sampled_base_task_count', 'unreported')} "
+            "unique base tasks and "
+            f"{training.get('sampled_base_query_count', 'unreported')} unique base "
+            f"task/query pairs sampled with replacement={training.get('sampling_with_replacement', 'unreported')} "
+            f"from a {data_summary.get('training_task_pool_count', 'unreported')}-task pool."
+        ),
+        (
+            f"Training movement: parameter bytes changed={training.get('parameters_moved', False)}; "
+            f"per-group evidence={training.get('parameter_changes', {})}."
+        ),
+        (
+            "Compiler: eligibility-trace temporal routes="
+            f"{compiler_counts.get('etrace_weights', 0)} "
+            f"({[item.get('parameter') for item in compiler_report.get('etrace_weights', [])]}), "
+            "plain exact current-window reverse-mode routes="
+            f"{compiler_counts.get('excluded_weights', 0)} "
+            f"({[item.get('parameter') for item in compiler_report.get('excluded_weights', [])]}), "
+            f"{compiler_counts.get('warnings', 0)} "
+            "warnings, "
+            f"{compiler_counts.get('errors', 0)} errors. The plain routes are trained; "
+            "they do not carry temporal eligibility."
+        ),
+        "",
+        "Frozen exact ARC results:",
+    ]
+    for effort in CHECKPOINTS:
+        metrics = evaluation.get("metrics_by_effort", {}).get(str(effort))
+        if metrics is None:
+            lines.append(f"  effort {effort:>2}: unavailable")
+            continue
+        lines.append(
+            f"  effort {effort:>2}: query pass@1={metrics['query_pass_at_1']:.4f}, "
+            f"pass@2={metrics['query_pass_at_2']:.4f}; strict task pass@1="
+            f"{metrics['strict_task_pass_at_1']:.4f}, pass@2="
+            f"{metrics['strict_task_pass_at_2']:.4f}; shape diagnostic="
+            f"{metrics['shape_accuracy_diagnostic']:.4f}, pixel diagnostic="
+            f"{metrics['valid_cell_pixel_accuracy_diagnostic']:.4f}"
+        )
+    intact_metrics = evaluation.get("metrics_by_effort", {})
+    if "0" in intact_metrics and "32" in intact_metrics:
+        effort_zero = intact_metrics["0"]["query_pass_at_2"]
+        effort_32 = intact_metrics["32"]["query_pass_at_2"]
+        exact_count_32 = round(effort_32 * int(intact_metrics["32"]["query_count"]))
+        direction = (
+            "improved"
+            if effort_32 > effort_zero
+            else "worsened"
+            if effort_32 < effort_zero
+            else "tied"
+        )
+        lines.append(
+            f"  Empirical outcome: effort 32 {direction} effort 0 on exact pass@2 "
+            f"({effort_32:.4f} versus {effort_zero:.4f}); "
+            f"{exact_count_32} effort-32 queries were exact within the scored set."
+        )
+    lines.extend(["", "Aggregate latent trajectory:"])
+    trajectory = evaluation.get("aggregate_trajectory", [])
+    for effort in CHECKPOINTS:
+        if effort >= len(trajectory):
+            lines.append(f"  step {effort:>2}: unavailable")
+            continue
+        row = trajectory[effort]
+        lines.append(
+            f"  step {effort:>2}: firing={row.get('mean_firing_rate', math.nan):.6f}; "
+            f"Voltage L2={row.get('mean_voltage_l2', math.nan):.6f}; "
+            f"feedforward-current L2={row.get('mean_feedforward_current_l2', math.nan):.6f}; "
+            f"recurrent-current L2={row.get('mean_recurrent_current_l2', math.nan):.6f}; "
+            f"entropy={row.get('mean_predictive_entropy', math.nan):.6f}; "
+            f"changed-cell fraction={row.get('mean_changed_cell_fraction')}; "
+            f"converged/silent/saturated={row.get('converged_fraction')}/"
+            f"{row.get('near_silence_fraction')}/{row.get('near_saturation_fraction')}; "
+            f"raw-byte state hashes={row.get('unique_state_hashes')}."
+        )
+        lines.append(
+            f"           deterministic pair sample n={row.get('pair_sample_count', 0)}; "
+            f"spike-Hamming={row.get('pairwise_spike_hamming_fraction')}; "
+            f"voltage RMS={row.get('pairwise_voltage_rms_distance')}; "
+            f"feedforward/recurrent current RMS="
+            f"{row.get('pairwise_feedforward_current_rms_distance')}/"
+            f"{row.get('pairwise_recurrent_current_rms_distance')}."
+        )
+    lines.extend(
+        [
+            "  Raw-byte hash counts report collisions only; pairwise distances, not hash uniqueness, test geometry.",
+            "",
+            "Frozen controls and deterministic repeat:",
+        ]
+    )
+    controls = evaluation.get("controls", {})
     for name in (
-        "batch_size",
-        "training_updates",
-        "latent_width",
-        "learning_rate",
+        "repeat_intact",
+        "no_context",
+        "shuffled_demonstrations",
+        "slot_ablation",
     ):
-        value = getattr(args, name)
-        if value is not None:
-            changes[name] = value
-    if args.depths is not None:
-        changes["depths"] = tuple(args.depths)
-    if args.binding_counts is not None:
-        changes["binding_counts"] = tuple(args.binding_counts)
-    return replace(config, **changes)
+        control = controls.get(name)
+        if not isinstance(control, dict):
+            lines.append(f"  {name}: unavailable")
+            continue
+        applicable = int(control.get("applicable_query_count", 0))
+        unavailable = int(control.get("unavailable_query_count", 0))
+        comparison = control.get("trajectory_comparison", {})
+        lines.append(
+            f"  {name}: applicable={applicable}/{control.get('query_count', 0)}, "
+            f"unavailable={unavailable}, timing-matched="
+            f"{control.get('timing_matched_applicable_query_count', 0)}/{applicable}; "
+            f"causally_null={comparison.get('causally_null_at_measured_precision')}; "
+            f"null_queries={control.get('causally_null_query_count', 0)}/{applicable}."
+        )
+        if applicable:
+            control_metrics = control.get("metrics_by_effort", {})
+            for effort in CHECKPOINTS:
+                row = control_metrics.get(str(effort))
+                if row is None:
+                    lines.append(f"    effort {effort:>2}: unavailable")
+                    continue
+                lines.append(
+                    f"    effort {effort:>2}: pass@1={row['query_pass_at_1']:.4f}; "
+                    f"pass@2={row['query_pass_at_2']:.4f}; shape="
+                    f"{row['shape_accuracy_diagnostic']:.4f}; pixels="
+                    f"{row['valid_cell_pixel_accuracy_diagnostic']:.4f}."
+                )
+            lines.append(
+                "    state comparison: "
+                f"{comparison.get('interpretation', 'unreported')}; "
+                "aggregate score deltas control-minus-intact="
+                f"{dict((key, value) for key, value in comparison.get('score_deltas_control_minus_intact', {}).items() if '.tasks.' not in key)}."
+            )
+            current_l2 = comparison.get("synaptic_current_l2_by_step", {})
+            spike_fraction = comparison.get("spike_hamming_fraction_by_step", [])
+            voltage_l2 = comparison.get("voltage_l2_by_step", [])
+            feedforward_l2 = current_l2.get("feedforward", [])
+            recurrent_l2 = current_l2.get("recurrent", [])
+            if all(
+                len(values) > max(CHECKPOINTS)
+                for values in (
+                    spike_fraction,
+                    voltage_l2,
+                    feedforward_l2,
+                    recurrent_l2,
+                )
+            ):
+                lines.append(
+                    "    step-32 state deltas: spike-Hamming fraction="
+                    f"{spike_fraction[max(CHECKPOINTS)]:.6f}; voltage L2="
+                    f"{voltage_l2[max(CHECKPOINTS)]:.6f}; feedforward/recurrent "
+                    f"current L2={feedforward_l2[max(CHECKPOINTS)]:.6f}/"
+                    f"{recurrent_l2[max(CHECKPOINTS)]:.6f}."
+                )
+    determinism = evaluation.get("determinism", {})
+    lines.extend(
+        [
+            "",
+            (
+                "Determinism gate: repeat intact byte-identical="
+                f"{determinism.get('repeat_intact_state_byte_identical')}; "
+                "slot-ablation checkpoint 0 matched="
+                f"{determinism.get('slot_ablation_checkpoint_zero_byte_identical')}; "
+                f"state tolerance={determinism.get('state_tolerance', 'unreported')}; "
+                f"metric absolute tolerance={determinism.get('metric_absolute_tolerance', 'unreported')}."
+            ),
+        ]
+    )
+    compiler_warnings = [
+        item
+        for item in compiler_report.get("diagnostics", [])
+        if item.get("level") == "warning"
+    ]
+    if compiler_warnings:
+        lines.extend(["", "Compiler warnings (retained, not hidden):"])
+        for item in compiler_warnings:
+            lines.append(f"  - {item['message']}")
+    lines.extend(
+        [
+            "",
+            (
+                "Qualification: structural="
+                f"{qualification.get('full_structural_qualification', False)}, "
+                "scientific="
+                f"{qualification.get('full_scientific_qualification', False)}."
+            ),
+            f"Structural checks: {qualification.get('structural_checks', {})}.",
+            f"Scientific checks: {qualification.get('scientific_checks', {})}.",
+        ]
+    )
+    for reason in qualification.get("reasons_not_scientific", []):
+        lines.append(f"  - {reason}")
+    if qualification.get("full_scientific_qualification", False):
+        interpretation = (
+            "This run satisfies the declared full scientific protocol gates. It is "
+            "not evidence of converged ARC training and not an architecture falsification."
+        )
+    elif qualification.get("full_structural_qualification", False):
+        interpretation = (
+            "This run satisfies the full structural protocol gates only; it is not "
+            "scientific model-quality evidence."
+        )
+    else:
+        interpretation = (
+            "This artifact does not satisfy the full structural or scientific "
+            "qualification gates."
+        )
+    lines.extend(["", f"Interpretation boundary: {interpretation}"])
+    return "\n".join(lines) + "\n"
 
 
-def main(argv: Optional[list[str]] = None) -> Dict[str, Any]:
-    """Run the complete seeded training and frozen intervention experiment.
+def _plot(result: dict[str, object], path: pathlib.Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    metrics = result["evaluation"]["metrics_by_effort"]
+    trajectory = result["evaluation"]["aggregate_trajectory"]
+    efforts = np.asarray(CHECKPOINTS)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes[0, 0].plot(
+        efforts,
+        [metrics[str(value)]["strict_task_pass_at_1"] for value in efforts],
+        marker="o",
+        label="strict pass@1",
+    )
+    axes[0, 0].plot(
+        efforts,
+        [metrics[str(value)]["strict_task_pass_at_2"] for value in efforts],
+        marker="o",
+        label="strict pass@2",
+    )
+    axes[0, 0].set(title="Exact ARC quality", xlabel="latent steps", ylabel="rate")
+    axes[0, 0].legend()
+    steps = [row["step"] for row in trajectory]
+    changed = [
+        np.nan
+        if row["mean_changed_cell_fraction"] is None
+        else row["mean_changed_cell_fraction"]
+        for row in trajectory
+    ]
+    axes[0, 1].plot(steps, changed, color="tab:blue", label="changed cells")
+    axes[0, 1].set(
+        title="Per-step output dynamics",
+        xlabel="latent step",
+        ylabel="changed-cell fraction",
+    )
+    entropy_axis = axes[0, 1].twinx()
+    entropy_axis.plot(
+        steps,
+        [row["mean_predictive_entropy"] for row in trajectory],
+        color="tab:orange",
+        label="predictive entropy",
+    )
+    entropy_axis.set_ylabel("predictive entropy")
+    handles, labels = axes[0, 1].get_legend_handles_labels()
+    entropy_handles, entropy_labels = entropy_axis.get_legend_handles_labels()
+    axes[0, 1].legend(handles + entropy_handles, labels + entropy_labels)
+    axes[1, 0].plot(
+        steps,
+        [row["mean_firing_rate"] for row in trajectory],
+        color="tab:blue",
+        label="firing rate",
+    )
+    axes[1, 0].plot(
+        steps,
+        [row["near_saturation_fraction"] for row in trajectory],
+        color="tab:green",
+        linestyle="--",
+        label="saturated queries",
+    )
+    axes[1, 0].set(
+        title="Spike and voltage dynamics",
+        xlabel="latent step",
+        ylabel="spike-derived fraction",
+    )
+    voltage_axis = axes[1, 0].twinx()
+    voltage_axis.plot(
+        steps,
+        [row["mean_voltage_l2"] for row in trajectory],
+        color="tab:red",
+        label="voltage L2",
+    )
+    voltage_axis.set_ylabel("voltage L2")
+    handles, labels = axes[1, 0].get_legend_handles_labels()
+    voltage_handles, voltage_labels = voltage_axis.get_legend_handles_labels()
+    axes[1, 0].legend(handles + voltage_handles, labels + voltage_labels)
+    controls = result["evaluation"]["controls"]
+    names = ["no_context", "shuffled_demonstrations", "slot_ablation"]
+    exact_deltas = []
+    diagnostic_deltas = []
+    state_effects = []
+    for name in names:
+        comparison = controls.get(name, {}).get("trajectory_comparison", {})
+        score_deltas = comparison.get("score_deltas_control_minus_intact", {})
+        if "32.query_pass_at_2" not in score_deltas:
+            exact_deltas.append(np.nan)
+            diagnostic_deltas.append(np.nan)
+            state_effects.append(np.nan)
+            continue
+        exact_deltas.append(score_deltas["32.query_pass_at_2"])
+        diagnostic_deltas.append(
+            score_deltas["32.valid_cell_pixel_accuracy_diagnostic"]
+        )
+        state_effects.append(
+            comparison["spike_hamming_fraction_by_step"][max(CHECKPOINTS)]
+        )
+    positions = np.arange(len(names), dtype=np.float64)
+    width = 0.36
+    axes[1, 1].bar(
+        positions - width / 2, exact_deltas, width=width, label="pass@2 delta"
+    )
+    axes[1, 1].bar(
+        positions + width / 2,
+        diagnostic_deltas,
+        width=width,
+        label="pixel diagnostic delta",
+    )
+    axes[1, 1].axhline(0.0, color="black", linewidth=0.8)
+    axes[1, 1].set(
+        title="Control deltas at effort 32",
+        ylabel="control minus intact",
+        xticks=positions,
+        xticklabels=names,
+    )
+    axes[1, 1].tick_params(axis="x", rotation=15)
+    state_axis = axes[1, 1].twinx()
+    state_axis.plot(
+        positions,
+        state_effects,
+        color="black",
+        marker="D",
+        linestyle="none",
+        label="spike-Hamming fraction",
+    )
+    state_axis.set_ylabel("state effect at step 32")
+    handles, labels = axes[1, 1].get_legend_handles_labels()
+    state_handles, state_labels = state_axis.get_legend_handles_labels()
+    axes[1, 1].legend(handles + state_handles, labels + state_labels)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
+def run_experiment(config: ExperimentConfig) -> dict[str, object]:
+    """Run training, frozen interventions, and evidence generation.
 
     Parameters
     ----------
-    argv : list of str, optional
-        Command-line arguments excluding the program name. ``None`` reads
-        arguments from :mod:`sys.argv`.
+    config : ExperimentConfig
+        Validated experiment configuration.
 
     Returns
     -------
     dict
-        JSON-friendly configuration, training, interventions, geometry,
-        reproducibility metadata, figure path, and claim boundary.
-
-    Raises
-    ------
-    RuntimeError
-        If the requested device is unavailable. GPU requests fail closed and
-        require an explicit ``--device cpu`` fallback.
+        JSON-safe complete experiment evidence.
     """
-    args = _parse_args(argv)
-    config = _config_from_args(args)
+    started = time.perf_counter()
     device, device_report = _resolve_device(config.device)
-    with jax.default_device(device):
-        result = _run_experiment(config, device_report)
-    print(_render_report(result))
+    data = _load_data(config)
+    rows = _row_config(config)
+    training_tensors = _prepare_training(data, config, rows)
+    model = _make_model(config, rows, batch_size=1, device=device)
+    training = _train_model(model, training_tensors, config)
+    evaluation = _evaluate(model, data, config, rows, device)
+    device_report["memory_stats"] = _device_memory_stats(device)
+    device_report["memory_stats_capture"] = "after training and evaluation"
+    manifests = [item.manifest.to_dict() for item in data.loaded]
+    model_report = {
+        "neuron_count": model.neuron_count,
+        "recurrent_edge_count": model.recurrent_edge_count,
+        "slot_count": model.slot_count,
+        "neurons_per_slot": 64,
+        "input_width": rows.input_width,
+        "compact_output_width": model.config.compact_output_width,
+        "color_rank": model.config.color_rank,
+        "parameter_count": _parameter_count(parameter_snapshot(model)),
+        "component_types": {
+            "neuron": type(model.neu).__name__,
+            "feedforward_projection_wrapper": type(model.ff_syn).__name__,
+            "feedforward_projection": type(model.ff_syn.comm).__name__,
+            "feedforward_synapse": type(model.ff_syn.syn).__name__,
+            "feedforward_output": type(model.ff_syn.out).__name__,
+            "recurrent_projection_wrapper": type(model.rec_syn).__name__,
+            "recurrent_projection": type(model.rec_syn.comm).__name__,
+            "recurrent_synapse": type(model.rec_syn.syn).__name__,
+            "recurrent_output": type(model.rec_syn.out).__name__,
+        },
+    }
+    result: dict[str, object] = {
+        "schema_version": 1,
+        "claim_boundary": CLAIM_BOUNDARY,
+        "configuration": config.to_dict(),
+        "device": device_report,
+        "model": model_report,
+        "software": _software_report(),
+        "implementation": _implementation_report(),
+        "data_manifests": manifests,
+        "data_summary": _data_summary(data, manifests, evaluation),
+        "training": training,
+        "evaluation": evaluation,
+        "runtime_seconds": time.perf_counter() - started,
+    }
+    result["qualification"] = _qualification(
+        config, data, training, evaluation, device_report, model_report
+    )
+    config.output_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = config.output_dir / "data_manifest.json"
+    result_path = config.output_dir / "result.json"
+    report_path = config.output_dir / "report.txt"
+    figure_path = config.output_dir / "latent_reasoning.png"
+    result["artifacts"] = {
+        "data_manifest": str(manifest_path),
+        "result": str(result_path),
+        "report": str(report_path),
+        "figure": str(figure_path),
+    }
+    manifest_path.write_text(json.dumps(manifests, indent=2), encoding="utf-8")
+    result_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    report_path.write_text(_render_report(result), encoding="utf-8")
+    _plot(result, figure_path)
+    return result
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-manifest", type=pathlib.Path)
+    parser.add_argument(
+        "--output-dir", type=pathlib.Path, default=pathlib.Path("var/example21")
+    )
+    parser.add_argument("--device", choices=("cpu", "gpu"), default="gpu")
+    parser.add_argument("--seed", type=int, default=2108)
+    parser.add_argument("--neurons", type=int, default=2048)
+    parser.add_argument("--recurrent-edges", type=int, default=16384)
+    parser.add_argument("--training-updates", type=int, default=96)
+    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--evaluation-task-limit", type=int)
+    parser.add_argument("--ablation-slot", type=int, default=0)
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--structural-only", action="store_true")
+    return parser
+
+
+def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
+    if args.smoke:
+        if args.neurons != 2048 or args.recurrent_edges != 16384:
+            raise ValueError("--smoke owns its reduced neuron and edge scale")
+        return ExperimentConfig.smoke_config(
+            output_dir=args.output_dir,
+            device=args.device,
+            seed=args.seed,
+        )
+    return ExperimentConfig(
+        source_manifest=args.source_manifest,
+        output_dir=args.output_dir,
+        device=args.device,
+        seed=args.seed,
+        neuron_count=args.neurons,
+        recurrent_edges=args.recurrent_edges,
+        training_updates=args.training_updates,
+        learning_rate=args.learning_rate,
+        evaluation_task_limit=args.evaluation_task_limit,
+        ablation_slot=args.ablation_slot,
+        structural_only=args.structural_only,
+    )
+
+
+def main(argv: Sequence[str] | None = None) -> dict[str, object]:
+    """Run Example 21 from command-line arguments.
+
+    Parameters
+    ----------
+    argv : sequence of str or None
+        Arguments excluding the executable name. ``None`` uses ``sys.argv``.
+
+    Returns
+    -------
+    dict
+        Structured result also written under ``--output-dir``.
+    """
+    config = _config_from_args(_parser().parse_args(argv))
+    result = run_experiment(config)
+    print(_render_report(result), end="")
     return result
 
 

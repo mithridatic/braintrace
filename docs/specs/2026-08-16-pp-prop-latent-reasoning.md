@@ -1,269 +1,348 @@
-# Example 21 · In-context rule binding and iterated latent computation
+# Example 21: ARC latent reasoning with pp-prop
 
 Date: 2026-08-16
 Status: implementation specification
 
-## Question
+## Research question
 
-Can a recurrent spiking network trained by pp_prop acquire a rule from
-demonstrations at inference time, hold it in a contextual memory written without
-changing any parameter, and compute with it across repeated latent iterations —
-and does iterating that latent workspace change the result over reading the
-memory directly?
+On standard ARC-format tasks, does giving the same frozen recurrent spiking
+network more zero-input recurrent computation improve exact predicted grids,
+and what changes in its voltage, spikes, and provisional answers while it
+computes?
 
-This instantiates the system-level interface published in *BDH-CQ: In-Context
-Learning with Recurrent Latent Reasoning* (arXiv:2608.09888), Eqs (1)–(4). It is
-not a reproduction of that system. Section 3.4 states that its dimensions and
-update rules are proprietary and Section 4.1 states the same of its training
-recipe; none of that is replicated or inferred here. No ARC-AGI-1 score, no
-inference-cost figure, and no benchmark claim of any kind is made. The example
-also asserts nothing about pp_prop's gradient estimate.
+The experiment combines the observable contract of *BDH-CQ: In-Context
+Learning with Recurrent Latent Reasoning* (arXiv:2608.09888) with this
+repository's established substrate from Examples 18–20. The paper supplies the
+task format, evaluation convention, and variable latent-effort idea. BrainPy
+LIF neurons, synapses, sparse recurrence, BrainTrace operators, and pp-prop come
+from this repository. The paper's private model dimensions, update rules,
+training recipe, and private data are unavailable. This is not a reproduction,
+and it makes no claim about the paper's score or inference cost.
 
-## The interface, as instantiated
+The paper publishes qualitative LOW/MEDIUM/HIGH effort conditions but does not
+disclose their iteration counts. This repository's 8/16/32 recurrent ticks are
+an explicit operational proxy chosen for Example 21; they are not a mapping to
+the paper's undisclosed effort tiers.
 
-| Published | Here |
-| --- | --- |
-| `S_t = U_θ(S_{t-1}, D_t)` | Hebbian write `S_t = S_{t-1} + v_t k_tᵀ`, held factored as `(A, B)` over `M` slots. `k_t`, `v_t` are linear projections of the ingestion population's rate whose scaled tick contributions accumulate before the initialized aggregate code projection is read. |
-| `H_0 = E_θ(x*, S_K)` | binary subtractive-reset LIF workspace after the query span. The output-only analog pure read `P_0 = A(Bᵀq_next)` includes the final query tick but is not `H_0`. |
-| `H_{r+1} = F_θ(H_r, S_K)` | one zero-input tick of the latent population: recurrence plus the memory read |
-| `ŷ = G_θ(H_R)` | linear readout over the symbol set for `R ≥ 1`; the no-iteration control uses `G_θ(P_0)`. Every stored `H_0..H_R` remains binary workspace state. |
+## ARC contract
 
-The linear-attention special case named in Eq (1), `S_t = S_{t-1} + U_θ(D_t)`, is
-the case implemented.
+An ARC task consists of:
 
-## Inputs and execution
+- one or more `train` pairs, each with an input and output grid;
+- one or more `test` entries, each with an input grid and, for scored data, an
+  output grid;
+- rectangular grids between 1×1 and 30×30;
+- integer colors 0 through 9.
 
-One episode is a single contiguous time axis with three spans — `K`
-demonstrations, one query, then `R` zero-input latent ticks — and supervision
-applied only at the final tick. A per-tick phase vector arithmetically gates
-which sub-map is active; there is no inner `scan` and no Python loop driving the
-model, so `ControlFlowPolicy.scan_unroll_limit` never applies and neither `K`
-nor `R` is capped by it.
+Input and output dimensions may differ. Demonstrations within one task may also
+have different dimensions. Every test query is executed as a separate episode
+with the task's complete demonstration set, then re-associated with its task for
+strict scoring. The implementation must not reduce a task to a symbol, class,
+single cell, fixed shape, or one demonstration.
 
-During demonstrations only, D3's one-hot phase-local slot address selects the
-memory column being written. It is zero in query and latent phases and conveys
-demonstration position, not the episode's rule, index, or target.
+### Exact quality metrics
 
-Each episode draws a fresh bijection over the symbol set. No rule identifier
-reaches the model as input. The step function writes only to state, never to a
-parameter; parameters change only through pp_prop's update over a training
-episode as a whole. The feasibility spike did expose the memory projections to
-that update, but its parameter-delta audit measured exactly zero movement in
-`W_v`. The passing accuracy gate therefore is not evidence of a learned write
-path. The release default uses fixed random memory-write projections, trains the
-remaining model parameters with pp_prop, and states plainly in the report that
-the write path was fixed. A learned-write arm may be added only as a separately
-labelled experiment with a nonzero parameter-delta check.
+The decoder predicts a height in 1–30, a width in 1–30, and a color distribution
+for each of 30×30 positions. Candidate one uses the joint argmax. Candidate two
+changes exactly one lowest-margin decision to its runner-up among height, width,
+or a cell inside candidate one's shape; duplicates are removed.
 
-The mathematical contextual memory is a pair of factors
-`A, B ∈ ℝ^{n_lat × M}`. The implementation stores their transposed, slot-major
-logical views with shape `(batch, M, n_lat)` rather than allocating two separate
-`HiddenState` objects. Its abstract read is an ordinary contraction between
-hidden states, not an ETP operator — ETP operators mark parameter-times-input
-operations — so the compiler absorbs it into the hidden-to-hidden transition,
-where pp_prop's factorized trace handles it approximately. That approximation is
-the reason no gradient claim is made, and it is stated rather than assumed away.
+- Query pass@1: candidate one has the exact target shape and every cell matches.
+- Query pass@2: either of the first two candidates exactly matches.
+- Strict task pass@k: every test query of that ARC task passes at `k`.
+- Shape accuracy: diagnostic only.
+- Valid-cell pixel accuracy: diagnostic only and never an ARC success count.
 
-For batched execution, the two slot-major factor views and the binary spike
-workspace occupy one row-major `HiddenState` of physical shape
-`(batch * (2M + 1), n_lat)`. The
-latent voltage and pure query encoding are separate `HiddenState` objects with
-that same compiler-aligned physical shape; only their workspace row is active.
-Their logical views have shape `(batch, n_lat)`. Projection inputs preserve the
-grouped row axis as their leading native-batch axis, so BrainTrace dispatches to
-`etp_mm` without flattening rows into features or wrapping the model in `vmap`.
-The per-tick key, value, and query projections accumulate linearly. Applying a
-ReLU per tick would not preserve the intended aggregate code projection because
-`sum_t ReLU(W r_t) != ReLU(W sum_t r_t)`; the initialized aggregate projections
-are already nonnegative and row-normalized by construction.
+Wrong shape is an exact failure. Padding does not earn pixel credit. A one-cell
+error is an exact failure even when pixel accuracy is high.
 
-## Measured configuration
+## Data contract and training evidence
 
-The throwaway spike selected `C = 10` symbols encoded by 24-wide Bernoulli codes
-with activation probability `0.25` per tick and `codebook_seed = 313320`. Its
-attempt-zero codebook had realized rate `0.248958333`, 10/10 unique flattened
-symbols, augmented design rank 10, and minimum pairwise Hamming distance 29/96.
-Production uses that same fixed BrainState draw rather than an equal-weight
-surrogate. Each demonstration uses `T_d = 4` ticks with key and value presented
-in parallel. The contextual memory has `M = 8` slots, and both the recommended
-latent width and key/value projection width are `32`.
+### Approved public roles
 
-The latent population uses a `160 ms` membrane constant and recurrent spectral
-radius `0.9`. The feasibility spike's largest-depth firing-rate retention was
-`0.751055`. The corrected production subtractive-reset LIF measured
-`r0 = 0.353027`, `r8 = 0.279785`, retention `0.792531`, and achieved recurrent
-spectral radius `0.9000002`, above the required `0.25`. This retention required
-a coupled latent update: recurrent drive and the contextual-memory read remain
-active together at every latent tick.
+When locally available and accompanied by a source manifest, training may use
+the public sources named by the paper:
 
-The CLI defaults to `--device gpu` and fails closed when no GPU is visible. Full
-runs use the repository's CUDA-enabled Docker environment operationally, but the
-CLI enforces the requested JAX platform rather than detecting the container.
-The initial XLA compilation is expected to be slow, while the larger
-neuron-and-synapse sweeps benefit from GPU execution. Fast tests explicitly
-select CPU so their backend does not depend on local accelerator visibility. At
-the native default `(batch=4, M=8, n_lat=32)`, the coupled hidden group has three
-`(68, 32)` members and materializes `42,614,784` float32 Jacobian elements
-(`170,459,136` bytes). The model explicitly raises the compiler ceiling to
-`1 << 26` elements for this supported shape.
+- ARC-AGI-1 training;
+- RE-ARC;
+- ConceptARC;
+- ARC-Heavy;
+- ARC-GEN100K.
 
-## Interventions
+ARC-AGI-1 evaluation is evaluation-only. Fresh tasks from `arc-task-gen` may be
+used as a second evaluation-only source. The paper's private tasks are not
+available and must never be implied, synthesized, or relabelled as present.
 
-Models are trained once per latent depth `R ∈ {0, 1, 2, 4, 8}`, all five drawing
-from a single shared mixed binding-count distribution so that depth is the only
-difference between them, then **frozen**. Every intervention runs against
-frozen models with no retraining:
+Each source declaration includes name, role, version, local path, license or
+reference metadata, and format. The emitted manifest adds file hashes, task
+counts, rejection reasons, canonical content fingerprints, and duplicate
+counts. Derived-source licensing remains the operator's responsibility; a
+source with missing declared license/reference metadata is excluded by default.
 
-- **Binding count**, two through eight simultaneous bindings.
-- **Context support**, matched pairs whose query-span inputs and targets are
-  byte-identical and which differ only in whether the queried symbol's binding
-  appears among the demonstrations.
-- **Shuffled memory**, a column permutation of the memory factors that preserves
-  shape and magnitude, isolating the content of context from its presence.
+### Leakage boundary
 
-`R = 0` is the no-iteration control and is always reported.
+The canonical fingerprint serializes normalized train and test content, not the
+file name or source metadata. Before optimization, all fingerprints are compared
+across training, tuning, and evaluation roles. Any training/tuning overlap with
+evaluation aborts and reports both roles. ARC evaluation data is not used for
+hyperparameter selection, early stopping, prompt/template selection, threshold
+tuning, or decoder design.
 
-## Latent geometry
+The code can reserve a deterministic validation partition from training-role
+sources. Evaluation data is decoded only after model and configuration freeze.
 
-Over held-out episodes, four primary measurements:
+### Training augmentation
 
-- effective dimensionality (participation ratio) of `H_r`, per iteration;
-- step-to-step change `‖H_{r+1} − H_r‖`, per iteration — fixed point, cycle, or
-  divergence;
-- linear decodability of the query answer from `H_r`, per iteration;
-- linear decodability of the query answer from the memory read at the query
-  encoding, `A(Bᵀq)`.
+Training-only augmentation supports:
 
-Here `H_0` is the recorded binary LIF workspace after the query and `H_1`
-onward are the recorded binary LIF latent states. The separate analog memory
-read used for `R = 0` query-terminal logits is never substituted for `H_0` in
-trajectory, firing-rate, or geometry measurements.
+- a bijective permutation of colors 1–9 while retaining background color 0;
+- all eight dihedral rotations/reflections, consistently applied to every grid
+  in the task;
+- demonstration-order permutation.
 
-Participation ratio avoids a latent-width-squared covariance. Through width 16,
-it uses a complete 16-row Walsh/Rademacher design and is exact. Above width 16,
-it uses 16 fixed SplitMix64-derived Rademacher probes as a deterministic
-Hutchinson estimate with a nontrivial nullspace. The structured geometry result
-records the method, probe count, exact-width threshold, and limitation.
+Random choices use `brainstate.random`. The same color and geometric transform
+is applied to related input and output grids. The original `ArcTask` is
+immutable, and evaluation adapters never call augmentation.
 
-Probes are linear, fit on one episode set and scored on a disjoint set, with both
-counts printed. Decoding this query's answer is reported separately from decoding
-the full rule. Raw-memory-factor probes are also labelled as secondary rather
-than being substituted for the primary query-conditioned memory read. Ridge
-probes use a residual-controlled matrix-free conjugate-gradient solve with a
-dimension-scaled iteration limit capped at 2,048. Analysis is one-shot NumPy
-after the run; its storage and each solver iteration remain linear in episodes
-and latent width without a dense width-square factorization.
+### Embedded fixtures
 
-The comparison between the last two measurements is the experiment. If memory-only
-decodability matches or exceeds decodability from `H_R`, the report states plainly
-that the two-state separation added no decodable information at this scale. That
-is a result to be reported, not a failure to be suppressed.
+Tiny hand-authored ARC tasks may be committed solely for unit and smoke tests.
+Their source role is `fixture`; reports label their model-quality metrics
+`plumbing_only=true`. Fixture results cannot qualify the experiment.
 
-## Reporting contract
+## Lossless row-event representation
 
-Print, for each trained depth: accuracy overall and per binding count; the
-supported-versus-short contrast on byte-identical queries; intact-versus-shuffled
-memory accuracy; the four primary geometry measurements per iteration; the
-secondary full-rule and raw-factor diagnostics; probe split counts; and the
-claim-boundary paragraph. One Agg PNG carries accuracy versus depth, accuracy
-versus binding count under both context conditions, and the per-iteration
-decodability curve.
+Every grid is serialized as row events rather than flattened into one enormous
+dense vector. The default standard-ARC layout reserves ten 30-row
+demonstration blocks and one 30-row query block: 330 events of width 830. An
+event contains:
 
-Configuration and seed are printed such that a run is reproducible from the
-report alone.
+- a valid flag and phase (`demonstration`, `query`, or padding);
+- demonstration index and input/output side flags;
+- normalized row index, height, and width plus one-hot/bucketed equivalents;
+- a 30-cell validity mask;
+- position-specific one-hot colors for up to 30 input columns and 30 output
+  columns.
 
-## Required tests
+A demonstration row event can contain one aligned row from its input grid and
+one from its output grid. When their heights differ, side-specific row-valid
+flags distinguish the missing side. A query event contains only its input side.
+All invalid rows are exactly zero and provide zero external drive. Unused
+demonstration blocks are frozen. During a matched intervention, an occupied
+demonstration's complete fixed 30-tick block advances recurrent state even
+where one aligned row is absent; this keeps time identical when unequal-height
+outputs are deranged. The external event on those clock-only ticks remains the
+exact zero vector.
 
-Co-located, suffix style, one `*_test.py` per module. They cover: the factored
-memory read against a dense outer-product read (property test); oracle agreement
-verified independently of the generator; rule variation across episodes and no
-rule leakage through inputs; byte-identical matched queries with the short
-condition omitting and the supported condition containing the queried binding
-exactly once; phase masking activating exactly one sub-map per tick; ingestion
-leaving every parameter bitwise identical; shuffle preserving shape and
-magnitude; participation ratio on inputs of known rank; trajectory norm on a
-constructed fixed point and a constructed divergence; probe fit/score sets
-provably disjoint; the null-separation line firing on constructed data; and a
-`--smoke` entry-point run. Malformed configurations, shapes, and labels must
-raise clear `ValueError` exceptions rather than producing misleading output.
+The representation is tested by lossless round trip. Changing only a held-out
+test output must not change any model input byte. Task IDs, corpus IDs, transform
+names, and test outputs never appear in model features.
 
-No test in this example asserts agreement, or bounded deviation, between the
-online gradient estimate and a backpropagation-through-time oracle. Per the
-known-limitations rule, such an assertion would require the finite-window oracle
-path; a whole-sequence VJP returns BPTT for every algorithm and would pass
-vacuously. This example measures accuracy and geometry.
+Host-side loops may validate JSON and construct static arrays. Repeated neuron
+and synapse execution must use `brainstate.transform.for_loop` or `scan`.
 
-## Feasibility gates
+## Network architecture
 
-The throwaway spike settled the two initial sizing questions before
-implementation; the corrected production model is requalified separately below:
+### Full scientific configuration
 
-1. The task must degrade across the binding range — supported-query accuracy at
-   least 0.9 at two bindings and at most 0.6 at eight.
-2. The latent span must sustain activity — mean firing rate at `r = R` at least
-   25 percent of its rate at `r = 0`, at the largest swept depth.
+| Component | Full value |
+| --- | ---: |
+| LIF neurons | 2,048 |
+| Analysis slots | 32 |
+| Neurons per slot | 64 |
+| Sparse recurrent edges | 16,384 |
+| Mean recurrent out degree | 8 |
+| Maximum latent steps | 32 |
+| Evaluated checkpoints | 0, 8, 16, 32 |
+| Training terminal efforts | 8, 16, 32 |
+| Maximum demonstrations | 10 |
+| Fixed context events | 330 |
+| Row-event input width | 830 |
+| Maximum grid axis | 30 |
+| Colors | 10 |
 
-For the untrained fixed-write mechanism, supported-query accuracy at binding
-counts `K = 2..8` was `[0.989532, 0.622009, 0.391968, 0.280212, 0.217133,
-0.169830, 0.142273]`. The curve is monotone and clears both endpoint gates. The
-compiled model's brief CPU training check measured `0.9060` at `K = 2` and
-`0.5015` at `K = 8`, also clearing the accuracy gate. These numbers belong to
-the feasibility skeleton. The corrected production implementation is a
-subtractive-reset LIF rather than that spike skeleton and does not inherit those
-scores. The grouped row-major state and native batched ETP layout compile as the
-supported shape.
+The full model follows Example 18's construction:
 
-**Corrected-production baseline requalification — failed.** On an RTX 3080 Ti
-with `width=32`, `batch=4`, `M=8`, `R=8`, four symbol ticks, eight terminal
-pp_prop updates, and 512 fresh supported evaluation episodes per endpoint,
-`K = 2` was `0.08984375` both before and after training, failing the `0.9` gate;
-`K = 8` was `0.099609375` both before and after training, clearing the `0.6`
-upper gate. The model predicted
-class 9 for every evaluation episode and its terminal workspace saturated near
-`0.95`. `W_k` and `W_v` had exactly zero delta as required by fixed-random mode;
-`W_f` and `W_o` had L2 deltas `0.0008848` and `0.0007841`, respectively, with
-no compiler warnings. This baseline does not qualify release.
+1. A BrainTrace `Linear` input projection drives an `Expon` synapse and `CUBA`
+   current into `brainpy.state.LIF` neurons.
+2. An `AlignPostProj` recurrent path uses a BrainTrace `SparseLinear`, another
+   `Expon`/`CUBA` synapse, and exactly 16,384 nonzero directed edges.
+3. A BrainTrace projection maps the 2,048-neuron state through a configurable
+   bottleneck into separate height, width, and compact CP-factor color heads.
 
-**Corrected-production `R = 0` requalification — passed.** A single model on an
-NVIDIA GeForce RTX 3080 Ti Laptop GPU (`cuda:0`, JAX `gpu` backend), using
-Bernoulli `codebook_seed=313320`, `projection_seed=210848`, recurrent
-`seed=2108`, `width=32`, `batch=4`, and `M=8`, received eight terminal pp_prop
-updates. On 512 fresh supported held-out episodes per endpoint, `K = 2`
-accuracy was `0.994140625` both before and after training, and `K = 8` accuracy
-was `0.1640625` both before and after training. The io-factorized/coupled
-compile completed with no warning or error diagnostics. Fixed `W_k` and `W_v`
-had exactly zero delta; `W_f` also had zero delta at zero latent depth, while
-`W_o` moved by L2 delta `0.000603494`.
+The sparse topology is drawn with `brainstate.random`, excludes self-edges by
+default, is deterministic under its reported seed, and is checked after
+construction for the exact nonzero count. The report records actual counts,
+not requested counts alone.
 
-For `R = 0`, query-terminal logits decode the analog pure contextual read
-`A(Bᵀq_next)` after the final query tick. That output is not the workspace
-`H_0`: the stored workspace and all `H_0..H_R` geometry remain binary
-subtractive-reset LIF states. With the same trained parameters and one actual
-LIF latent tick, terminal `K = 2` and `K = 8` accuracies fell to `0.203125` and
-`0.103516`, respectively. Latent iteration therefore degraded this endpoint
-result, and the example does not claim that iteration helped.
+The input synaptic state holds demonstration/query context on a slower time
+scale. LIF voltage and spikes are the recurrent workspace. The report preserves
+all three representations separately. A model call never writes a parameter;
+only optimizer application after `etrace_grad` does.
 
-The accuracy result is qualified by the zero `W_v` movement described above:
-the fixed-write fallback is the recorded outcome, and neither the spike nor the
-example claims that pp_prop learned the memory write. The binding sweep remains
-two through eight.
+### Static sequence and latent rollout
 
-## Release boundary
+At episode start all model state is reset. A two-argument model call receives
+the external row event and an explicit state-advance gate. This separates
+invalid capacity padding, which freezes voltage and both exponential currents,
+from latent ticks, whose external event is exactly zero while recurrence still
+advances. The fixed context and latent schedule runs through a compiled loop.
+Checkpoint 0 is snapshotted after the last query row; the following 32 recurrent
+updates record spikes and voltage at every step.
 
-Complete when this specification, the implementation, its co-located tests, and
-the README catalog and axis-map rows are committed; focused example tests and the
-repository's normal example gate pass; and the branch is clean and pushed.
-The fresh corrected-production `R = 0` run clears both accuracy endpoints; its
-one-tick LIF diagnostic remains a disclosed degradation rather than a passing
-latent-depth claim. Focused and normal example gates still belong to the release
-qualification task. Generated plots, requalification outputs, and the Task 1
-spike are development artifacts, not release files.
+No reset occurs between checkpoints. Outputs at 8, 16, and 32 therefore lie on
+one continuous trajectory. Decoding a checkpoint does not feed its grid or
+logits back into the network.
 
-Release verification completed with `199` focused Example 21 tests passing in
-`113.94 s`. Changed production coverage was `94%` overall: task `98%`, model
-`93%`, analysis `94%`, and entry point `93%`. The repository's unmodified normal
-example gate, `python -m pytest examples/ -n auto --durations=15`, completed with
-`574` passed, `5` skipped, and `19` existing compiler/decomposition warnings in
-`147.03 s`. The root-level gate requires `examples/pp_prop` on pytest's import
-path because older co-located tests use bare sibling imports; that path is now
-declared in `pyproject.toml` so the checked command and CI command are identical.
+### Readout
+
+The output head returns:
+
+- 30 height logits for sizes 1–30;
+- 30 width logits for sizes 1–30;
+- 30×30×10 color logits.
+
+The stored compact head contains 60 shape logits plus rank-specific row,
+column, and color factors. Full color logits are expanded as a CP tensor only
+for loss or analysis. At the default rank 16 this is 1,180 compact values
+instead of a dense 9,000-value head. This is an explicit repository design
+choice and a stricter representational bottleneck than an unrestricted ARC
+color head; it is not attributed to the paper.
+
+Training loss is height cross-entropy plus width cross-entropy plus the mean
+cross-entropy over cells valid under the target shape. Output-cell padding is
+masked from the loss. The target shape is never used to form a prediction.
+
+## One-model mixed-effort pp-prop training
+
+The model is compiled through `braintrace.compile` with
+`braintrace.pp_prop(...)`; gradients come from `etrace_grad`. Training cycles or
+samples terminal effort from 8, 16, and 32 using `brainstate.random`. These are
+three compiled rollout lengths over the same model states and parameter objects,
+not three independently initialized models. One optimizer state persists across
+all updates. The report records update counts for each effort.
+
+After training and training-source validation, parameters freeze. Each held-out
+query is executed once through the full 32-step path, then the identical
+snapshots are decoded at 0, 8, 16, and 32. All effort comparisons therefore use
+the same task, event tensor, initial state, parameter bytes, decoder, and latent
+trajectory prefix.
+
+This example makes no claim that pp-prop matches BPTT. If a future change tests
+a learning-rule property, it must follow the repository's finite-window oracle
+rule rather than a vacuous whole-sequence VJP.
+
+## Latent reasoning measurements
+
+For each query and each latent step or required checkpoint, retain:
+
+- provisional candidate grid(s) and exact/diagnostic scores when a target exists;
+- number and fraction of candidate-one cells changed since the prior state;
+- mean predictive entropy and top-two logit margin;
+- spike count, firing occupancy, and a bounded raster sample;
+- voltage mean, standard deviation, and norm;
+- spike Hamming displacement and voltage L2 displacement;
+- convergence status and flags for near-silence or near-saturation.
+
+Aggregate metrics include distributions, not just means, so a universal
+attractor cannot be hidden by average accuracy. Pairwise state hashes or
+distances across distinct episodes are reported at the required checkpoints.
+
+### Frozen causal controls
+
+- **No context:** mask all demonstration events; preserve query, reset state,
+  parameters, and decoder.
+- **Shuffled demonstrations:** for tasks with at least two demonstrations,
+  derange output grids across input grids. Every grid is retained exactly once.
+- **Truncation:** decode the intact continuous trajectory at 0/8/16/32.
+- **Slot ablation:** at a recorded boundary, zero the voltage/spike slice
+  `[64s, 64(s+1))` for deterministic slot `s`, then continue with unchanged
+  parameters and input.
+
+Each control reports exact metrics and state distance from its matched intact
+episode. If a perturbation yields byte-identical latent states, it is labelled
+causally null at measured precision even if score equality alone would be
+ambiguous.
+
+## Files and public APIs
+
+- `latent_workspace_task.py`: immutable ARC types, loaders, source manifests,
+  fingerprints, leakage checks, augmentation, row-event encoding, smoke fixture.
+- `latent_workspace_analysis.py`: logits/candidate types, deterministic decoder,
+  exact metrics, trajectory metrics, control comparisons.
+- `latent_workspace_model.py`: configuration, sparse topology, LIF/synapse
+  network, compiled rollouts, snapshots/ablation, pp-prop loss plumbing.
+- `21-latent-reasoning-in-context.py`: CLI, training/evaluation orchestration,
+  controls, JSON/text report, Agg plot.
+
+Every public class/function receives a NumPy-style docstring. Tests are sibling
+`*_test.py` modules. There is no `tests/` directory and no `test_*.py` file.
+
+## CLI and outputs
+
+The entry point supports a reduced `--smoke` mode and a full mode taking source
+manifest(s), output directory, seeds, optimizer/training counts, and device. Full
+mode defaults to GPU and fails clearly when the requested backend is absent.
+
+Outputs are:
+
+- `result.json`, containing the complete structured evidence;
+- `report.txt`, a plain-language interpretation with claim boundaries;
+- `latent_reasoning.png`, using the noninteractive Agg backend;
+- `data_manifest.json`, the resolved source and split evidence.
+
+Reports, plots, checkpoints, and downloaded/generated datasets are run artifacts
+and are not committed.
+
+## Acceptance gates
+
+### Source and test gates
+
+- Strict OpenSpec validation passes.
+- Co-located focused tests pass with more than 90 percent meaningful line
+  coverage across changed production modules.
+- The repository's normal example test gate passes.
+- `ruff`/format/static checks used by the affected example pass.
+- `main` remains unchanged; work is committed on
+  `feat/example21-latent-reasoning`.
+
+### Full structural qualification
+
+A full structural run must prove from instantiated objects that it has exactly
+2,048 LIF neurons and exactly 16,384 recurrent sparse edges, that pp-prop
+compiles the event-plus-advance model, that context and latent repetitions use
+BrainState transform primitives, and that a forward 0/8/16/32 trajectory
+completes on the requested GPU.
+
+### Full scientific qualification
+
+A result may be labelled a full scientific run only when:
+
+- at least one approved non-evaluation public training source is present;
+- every training/evaluation overlap check is clean;
+- held-out evaluation targets are present and were not used for tuning;
+- one shared model received mixed 8/16/32 effort updates;
+- the same frozen trajectories were scored at 0/8/16/32;
+- every exact metric, diagnostic, trajectory measure, and causal control is
+  present;
+- no instability or missing-data condition is silently ignored.
+
+There is no required accuracy threshold. A zero exact score, worsening with
+effort, saturation, silence, or a causally null memory control is a valid
+negative result when the gates above are met and the report states it plainly.
+
+## Edge cases required in tests
+
+- 1×1 and 30×30 grids, unequal demonstration dimensions, color 0 and color 9;
+- ragged, empty, oversized, noninteger, boolean, and out-of-range cells;
+- one and multiple demonstrations; one and multiple test queries;
+- missing test outputs for inference versus required outputs for scoring;
+- renamed duplicate tasks and train/evaluation fingerprint overlap;
+- padding capacity exactly full and one demonstration beyond capacity;
+- wrong predicted height/width and a single wrong cell;
+- candidate-two duplicate and candidate-two-only exact success;
+- fixed, changing, saturated, and silent latent trajectories;
+- no-context equivalence, valid derangement, impossible one-demo derangement;
+- first and last slot ablation plus invalid slot indices;
+- deterministic topology and exact edge count at smoke and full sizes;
+- same-seed reset/evaluation reproducibility and parameter immutability.

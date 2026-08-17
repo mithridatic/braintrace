@@ -1,4 +1,4 @@
-"""Tests for Example 21 latent-workspace analysis."""
+"""Tests for Example 21 exact ARC scoring and trajectory analysis."""
 
 from __future__ import annotations
 
@@ -18,523 +18,564 @@ except ModuleNotFoundError as error:
         raise
     import latent_workspace_analysis as analysis
 
-analyze_latent_workspace = analysis.analyze_latent_workspace
-linear_probe_accuracy = analysis.linear_probe_accuracy
-memory_final_comparison = analysis.memory_final_comparison
-participation_ratio = analysis.participation_ratio
-trajectory_step_norm = analysis.trajectory_step_norm
+
+DecodedCandidate = analysis.DecodedCandidate
+OutputLogits = analysis.OutputLogits
+QueryScore = analysis.QueryScore
+aggregate_arc_metrics = analysis.aggregate_arc_metrics
+analyze_latent_trajectory = analysis.analyze_latent_trajectory
+compare_control_trajectories = analysis.compare_control_trajectories
+decode_candidates = analysis.decode_candidates
+score_query_candidates = analysis.score_query_candidates
 
 
-def _probe_fixture() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    features = np.vstack((np.eye(3), np.eye(3)))
-    answers = np.array([0, 1, 2, 0, 1, 2])
-    rules = np.array(
-        [
-            [0, 1, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-            [0, 1, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-        ]
-    )
-    return features, answers, rules
+def _logits(
+    grid: np.ndarray,
+    *,
+    second_cell: tuple[int, int, int] | None = None,
+) -> OutputLogits:
+    height = np.full(30, -20.0)
+    width = np.full(30, -20.0)
+    height[grid.shape[0] - 1] = 20.0
+    width[grid.shape[1] - 1] = 20.0
+    colors = np.full((30, 30, 10), -20.0)
+    colors[:, :, 0] = 20.0
+    for row in range(grid.shape[0]):
+        for column in range(grid.shape[1]):
+            colors[row, column, :] = -20.0
+            colors[row, column, int(grid[row, column])] = 20.0
+    if second_cell is not None:
+        row, column, color = second_cell
+        colors[row, column, color] = 19.9
+    return OutputLogits(height, width, colors)
 
 
-def _dense_probe_predictions(
-    features: np.ndarray,
-    labels: np.ndarray,
-    fit: np.ndarray,
-    score: np.ndarray,
-    class_count: int,
-    ridge: float,
-) -> np.ndarray:
-    fit_features = features[fit]
-    feature_mean = np.mean(fit_features, axis=0, keepdims=True)
-    centered_features = fit_features - feature_mean
-    targets = (
-        labels[fit][..., None] == np.arange(class_count, dtype=np.int64)
-    ).reshape(fit.size, -1)
-    target_mean = np.mean(targets, axis=0, keepdims=True)
-    centered_targets = targets - target_mean
-    gram = centered_features.T @ centered_features
-    weights = np.linalg.solve(
-        gram + ridge * np.eye(features.shape[1]),
-        centered_features.T @ centered_targets,
-    )
-    scores = (features[score] - feature_mean) @ weights + target_mean
-    target_shape = labels.shape[1:] + (class_count,)
-    return np.argmax(scores.reshape((score.size,) + target_shape), axis=-1)
-
-
-def test_participation_ratio_recovers_known_ranks_and_zero_rank() -> None:
-    states = np.zeros((4, 3, 3))
-    states[:, 1, 0] = [-3.0, -1.0, 1.0, 3.0]
-    states[:, 2, :2] = [[1.0, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]]
-
-    ratios = participation_ratio(states)
-
-    np.testing.assert_allclose(ratios, [0.0, 1.0, 2.0], atol=1e-12)
-
-
-def test_participation_ratio_matches_dense_trace_oracle_below_probe_count() -> None:
-    values = np.sin(np.arange(70, dtype=np.float64).reshape(7, 2, 5) * 0.37)
-    centered = values - np.mean(values, axis=0, keepdims=True)
-    covariance = np.einsum("eiw,eiv->iwv", centered, centered)
-    trace = np.trace(covariance, axis1=1, axis2=2)
-    expected = np.square(trace) / np.sum(np.square(covariance), axis=(1, 2))
-
-    np.testing.assert_allclose(participation_ratio(values), expected, rtol=1e-12)
-
-
-def test_participation_ratio_width_seventeen_does_not_alias_period_sixteen() -> None:
-    values = np.array([-3.0, -1.0, 1.0, 3.0])
-    states = np.zeros((4, 1, 17))
-    states[:, 0, 0] = values
-    states[:, 0, 16] = -values
-
-    probes = analysis._fixed_rademacher_probes(17)
-
-    assert not np.array_equal(probes[:, 0], probes[:, 16])
-    np.testing.assert_allclose(participation_ratio(states), [1.0], atol=1e-12)
-
-
-def test_wide_rademacher_probe_columns_do_not_repeat_every_sixteen() -> None:
-    probes = analysis._fixed_rademacher_probes(257)
-
-    assert np.unique(probes.T, axis=0).shape[0] == probes.shape[1]
-    assert not np.any(np.all(probes[:, :-16] == probes[:, 16:], axis=0))
-
-
-def test_trajectory_step_norm_handles_fixed_point_and_divergence() -> None:
-    fixed = np.ones((3, 4, 2))
-    divergent = np.array([[[0.0], [1.0], [3.0], [6.0]]] * 2)
-
-    np.testing.assert_array_equal(trajectory_step_norm(fixed), np.zeros(4))
-    np.testing.assert_allclose(trajectory_step_norm(divergent), [0.0, 1.0, 2.0, 3.0])
-
-
-def test_answer_probe_fits_and_scores_on_disjoint_repeated_examples() -> None:
-    features, answers, _ = _probe_fixture()
-
-    accuracy = linear_probe_accuracy(
-        features, answers, [0, 1, 2], [3, 4, 5], class_count=3
+def _stacked_logits(
+    grids: list[np.ndarray],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    outputs = [_logits(grid) for grid in grids]
+    return (
+        np.stack([output.height for output in outputs]),
+        np.stack([output.width for output in outputs]),
+        np.stack([output.colors for output in outputs]),
     )
 
-    assert accuracy == 1.0
+
+def test_output_logits_validate_and_freeze_all_heads() -> None:
+    logits = _logits(np.array([[3, 4], [5, 6]]))
+
+    assert np.asarray(logits.height).shape == (30,)
+    assert np.asarray(logits.width).shape == (30,)
+    assert np.asarray(logits.colors).shape == (30, 30, 10)
+    assert not np.asarray(logits.colors).flags.writeable
 
 
-def test_matrix_free_probe_predictions_match_dense_centered_ridge_oracle() -> None:
-    features = np.sin(np.arange(96, dtype=np.float64).reshape(16, 6) * 0.37)
-    labels = np.stack((np.arange(16) % 3, (np.arange(16) + 1) % 3), axis=1)
-    fit = np.arange(12)
-    score = np.arange(12, 16)
-    ridge = 0.03
-
-    actual = analysis._linear_probe_predictions(features, labels, fit, score, 3, ridge)
-    expected = _dense_probe_predictions(features, labels, fit, score, 3, ridge)
-
-    np.testing.assert_array_equal(actual, expected)
-
-
-def test_matrix_free_probe_converges_past_the_old_fixed_iteration_limit() -> None:
-    generator = np.random.default_rng(0)
-    features = generator.normal(size=(160, 80))
-    labels = np.arange(160) % 10
-    fit = np.arange(120)
-    score = np.arange(120, 160)
-
-    actual = analysis._linear_probe_predictions(features, labels, fit, score, 10, 1e-6)
-    expected = _dense_probe_predictions(features, labels, fit, score, 10, 1e-6)
-
-    np.testing.assert_array_equal(actual, expected)
-
-
-def test_matrix_free_probe_names_a_genuinely_unresolved_residual(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    ("head", "value", "message"),
+    [
+        ("height", np.zeros(29), "height logits shape"),
+        ("width", np.zeros((1, 30)), "width logits shape"),
+        ("colors", np.zeros((30, 30, 9)), "color logits shape"),
+        ("height", np.full(30, np.nan), "non-finite"),
+        ("colors", [["bad"]], "numeric array"),
+    ],
+)
+def test_output_logits_reject_malformed_heads(
+    head: str, value: object, message: str
 ) -> None:
-    generator = np.random.default_rng(1)
-    features = generator.normal(size=(40, 20))
-    labels = np.arange(40) % 3
-    monkeypatch.setattr(analysis, "_CG_MAX_ITERATIONS", 1)
+    values: dict[str, object] = {
+        "height": np.zeros(30),
+        "width": np.zeros(30),
+        "colors": np.zeros((30, 30, 10)),
+    }
+    values[head] = value
 
-    with pytest.raises(
-        ValueError,
-        match=r"features ridge probe failed to reach bounded relative residual .+ "
-        r"within 1 matrix-free iterations; maximum residual",
-    ):
-        analysis._linear_probe_predictions(
-            features, labels, np.arange(30), np.arange(30, 40), 3, 1e-6
+    with pytest.raises(ValueError, match=message):
+        OutputLogits(**values)
+
+
+def test_decoder_emits_joint_argmax_and_lowest_margin_cell_alternative() -> None:
+    first_grid = np.array([[1, 2], [3, 4]])
+    logits = _logits(first_grid, second_cell=(1, 0, 9))
+
+    candidates = decode_candidates(logits)
+
+    np.testing.assert_array_equal(candidates[0].grid, first_grid)
+    np.testing.assert_array_equal(candidates[1].grid, [[1, 2], [9, 4]])
+    assert candidates[0].changed_decision is None
+    assert candidates[1].changed_decision == "cell:1,0"
+    assert candidates[0].log_probability > candidates[1].log_probability
+    one_candidate = decode_candidates(logits, max_candidates=1)
+    assert len(one_candidate) == 1
+    np.testing.assert_array_equal(one_candidate[0].grid, candidates[0].grid)
+    assert one_candidate[0].changed_decision is None
+    json.dumps([candidate.to_dict() for candidate in candidates], allow_nan=False)
+
+
+def test_decoder_tie_order_prefers_height_then_width_then_cells() -> None:
+    grid = np.array([[7]])
+    logits = _logits(grid)
+    height = np.asarray(logits.height).copy()
+    width = np.asarray(logits.width).copy()
+    height[1] = height[0] - 0.5
+    width[1] = width[0] - 0.5
+    colors = np.asarray(logits.colors).copy()
+    colors[0, 0, 8] = colors[0, 0, 7] - 0.5
+
+    candidates = decode_candidates(OutputLogits(height, width, colors))
+
+    assert candidates[1].changed_decision == "height"
+    assert np.asarray(candidates[1].grid).shape == (2, 1)
+
+
+def test_decoder_can_select_width_runner_up() -> None:
+    logits = _logits(np.array([[4]]))
+    width = np.asarray(logits.width).copy()
+    width[1] = width[0] - 0.01
+
+    candidates = decode_candidates(OutputLogits(logits.height, width, logits.colors))
+
+    assert candidates[1].changed_decision == "width"
+    assert np.asarray(candidates[1].grid).shape == (1, 2)
+
+
+@pytest.mark.parametrize("value", [0, 3, True, 1.5])
+def test_decoder_rejects_invalid_candidate_count(value: object) -> None:
+    with pytest.raises(ValueError, match="one or two"):
+        decode_candidates(_logits(np.array([[1]])), value)  # type: ignore[arg-type]
+
+
+def test_decoder_rejects_unvalidated_container() -> None:
+    with pytest.raises(TypeError, match="OutputLogits"):
+        decode_candidates(object())  # type: ignore[arg-type]
+
+
+def test_one_wrong_cell_fails_exact_but_preserves_pixel_diagnostic() -> None:
+    target = np.arange(9, dtype=np.int8).reshape(3, 3)
+    prediction = target.copy()
+    prediction[2, 2] = 0
+
+    score = score_query_candidates(
+        [prediction], target, task_id="near-miss", query_index=0
+    )
+
+    assert not score.pass_at_1
+    assert not score.pass_at_2
+    assert score.shape_accuracy
+    assert score.valid_cell_pixel_accuracy == pytest.approx(8.0 / 9.0)
+    assert score.to_dict()["valid_cell_pixel_accuracy_diagnostic"] == pytest.approx(
+        8.0 / 9.0
+    )
+
+
+def test_wrong_shape_fails_exact_and_missing_cells_earn_no_credit() -> None:
+    target = np.array([[1, 2], [3, 4]])
+    prediction = np.array([[1, 2]])
+
+    score = score_query_candidates([prediction], target, task_id="shape", query_index=1)
+
+    assert not score.shape_accuracy
+    assert not score.pass_at_1
+    assert score.valid_cell_pixel_accuracy == 0.5
+
+
+def test_real_second_candidate_can_be_the_only_exact_success() -> None:
+    first = np.array([[1, 2], [3, 4]])
+    target = np.array([[1, 2], [9, 4]])
+    candidates = decode_candidates(_logits(first, second_cell=(1, 0, 9)))
+
+    score = score_query_candidates(candidates, target, task_id="second", query_index=0)
+
+    assert not score.pass_at_1
+    assert score.pass_at_2
+    assert score.candidate_count == 2
+
+
+def test_duplicate_second_candidate_is_removed() -> None:
+    grid = np.array([[1, 2]])
+
+    score = score_query_candidates(
+        [grid, grid.copy()], grid, task_id="dedupe", query_index=0
+    )
+
+    assert score.pass_at_1 and score.pass_at_2
+    assert score.candidate_count == 1
+
+
+@pytest.mark.parametrize(
+    ("candidates", "target", "message"),
+    [
+        ([], [[1]], "one or two"),
+        (([[1]], [[2]], [[3]]), [[1]], "one or two"),
+        ([[[True]]], [[1]], "non-boolean"),
+        ([[[10]]], [[1]], "colors"),
+        ([[[1]]], [], "target grid shape"),
+        ("grid", [[1]], "sequence"),
+    ],
+)
+def test_query_scorer_rejects_malformed_grids(
+    candidates: object, target: object, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        score_query_candidates(
+            candidates,  # type: ignore[arg-type]
+            target,
+            task_id="bad",
+            query_index=0,
         )
 
 
-def test_analysis_does_not_use_dense_width_factorizations(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def forbidden(*_: object, **__: object) -> None:
-        raise AssertionError("dense width-by-width factorization is forbidden")
+def test_strict_task_metrics_are_conjunctive_over_multiple_queries() -> None:
+    scores = [
+        QueryScore("a", 0, True, True, True, 1.0, 2),
+        QueryScore("a", 1, False, True, True, 0.75, 2),
+        QueryScore("b", 0, True, True, True, 1.0, 1),
+    ]
 
-    monkeypatch.setattr(np.linalg, "solve", forbidden)
-    monkeypatch.setattr(np.linalg, "svd", forbidden)
-    monkeypatch.setattr(np.linalg, "inv", forbidden)
-    monkeypatch.setattr(np.linalg, "pinv", forbidden)
-    monkeypatch.setattr(np.linalg, "eigh", forbidden)
-    monkeypatch.setattr(np.linalg, "eigvalsh", forbidden)
-    features = np.sin(np.arange(12 * 257, dtype=np.float64).reshape(12, 257) * 0.013)
-    labels = np.arange(12) % 3
-    states = np.stack((features, features * 0.9), axis=1)
+    report = aggregate_arc_metrics(scores)
 
-    ratios = participation_ratio(states)
-    predictions = analysis._linear_probe_predictions(
-        features, labels, np.arange(8), np.arange(8, 12), 3, 0.1
-    )
-
-    assert ratios.shape == (2,)
-    assert predictions.shape == (4,)
-
-
-def test_rule_probe_scores_mean_per_source_symbol() -> None:
-    features, _, rules = _probe_fixture()
-    corrupted = rules.copy()
-    corrupted[3, 0] = 2
-
-    accuracy = linear_probe_accuracy(
-        features, corrupted, [0, 1, 2], [3, 4, 5], class_count=3
-    )
-
-    assert accuracy == pytest.approx(8.0 / 9.0)
-
-
-def test_probe_does_not_leak_score_labels_into_fit() -> None:
-    features = np.array([[-1.0], [1.0], [-1.0], [1.0]])
-    labels = np.array([0, 1, 1, 0])
-
-    accuracy = linear_probe_accuracy(features, labels, [0, 1], [2, 3], class_count=2)
-
-    assert accuracy == 0.0
-
-
-def test_complete_analysis_separates_answer_and_rule_reports() -> None:
-    features, answers, rules = _probe_fixture()
-    states = np.stack((features, features * 2.0), axis=1)
-
-    report = analyze_latent_workspace(
-        states, features, answers, rules, [0, 1, 2], [3, 4, 5]
-    )
-
-    assert report["answer_decodability"] == {
-        "workspace_per_iteration": [1.0, 1.0],
-        "memory_read": 1.0,
-        "final_workspace": 1.0,
+    assert report["query_pass_at_1"] == pytest.approx(2.0 / 3.0)
+    assert report["strict_task_pass_at_1"] == 0.5
+    assert report["strict_task_pass_at_2"] == 1.0
+    assert report["tasks"] == {
+        "a": {"query_count": 2, "pass_at_1": False, "pass_at_2": True},
+        "b": {"query_count": 1, "pass_at_1": True, "pass_at_2": True},
     }
-    assert report["rule_decodability"] == {
-        "workspace_per_iteration": [1.0, 1.0],
-        "memory_read": 1.0,
-        "final_workspace": 1.0,
-    }
-    assert report["rule_per_symbol_decodability"] == {
-        "workspace_per_iteration": [1.0, 1.0],
-        "memory_read": 1.0,
-        "final_workspace": 1.0,
-    }
-    assert report["participation_ratio_method"] == {
-        "name": "deterministic_hutchinson",
-        "probe_count": 16,
-        "exact_through_width": 16,
-        "limitation": (
-            "Above the exact-width threshold this deterministic finite sketch "
-            "has a nontrivial nullspace."
-        ),
-    }
-    assert report["probe_split"] == {
-        "fit_count": 3,
-        "score_count": 3,
-        "fit_indices": [0, 1, 2],
-        "score_indices": [3, 4, 5],
-    }
-    assert "did not add decodable information" in report["comparison"]
+    assert report["valid_cell_pixel_accuracy_diagnostic"] == pytest.approx(2.75 / 3.0)
     json.dumps(report, allow_nan=False)
 
 
-def test_complete_analysis_reports_exact_rule_and_per_symbol_scores() -> None:
-    identity = np.arange(10)
-    features = np.vstack((np.eye(10), np.eye(10)))
-    answers = np.tile(identity, 2)
-    fit_rules = np.tile(identity, (10, 1))
-    score_rules = fit_rules.copy()
-    score_rules[:, [-2, -1]] = score_rules[:, [-1, -2]]
-    rules = np.vstack((fit_rules, score_rules))
-    states = features[:, None, :]
-
-    report = analyze_latent_workspace(
-        states,
-        features,
-        answers,
-        rules,
-        np.arange(10),
-        np.arange(10, 20),
-    )
-
-    assert report["rule_decodability"]["final_workspace"] == 0.0
-    assert report["rule_per_symbol_decodability"]["final_workspace"] == 0.8
+def test_aggregate_rejects_empty_duplicate_and_wrong_type() -> None:
+    score = QueryScore("a", 0, False, False, False, 0.0, 1)
+    with pytest.raises(ValueError, match="at least one"):
+        aggregate_arc_metrics([])
+    with pytest.raises(ValueError, match="duplicate"):
+        aggregate_arc_metrics([score, score])
+    with pytest.raises(ValueError, match="QueryScore"):
+        aggregate_arc_metrics([object()])  # type: ignore[list-item]
 
 
-def test_raw_memory_factor_probes_are_a_separate_optional_result() -> None:
-    features, answers, rules = _probe_fixture()
-    states = features[:, None, :]
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"task_id": "", "query_index": 0}, "task_id"),
+        ({"task_id": "a", "query_index": -1}, "query_index"),
+        ({"task_id": "a", "query_index": True}, "query_index"),
+    ],
+)
+def test_query_scorer_validates_identity(
+    kwargs: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        score_query_candidates([[[1]]], [[1]], **kwargs)  # type: ignore[arg-type]
 
-    report = analyze_latent_workspace(
-        states,
-        features,
-        answers,
-        rules,
-        [0, 1, 2],
-        [3, 4, 5],
-        memory_values=features[:, None, :],
-        memory_keys=np.ones((6, 1, 3)),
-    )
 
-    assert report["raw_memory_factor_decodability"] == {
-        "answer": 1.0,
-        "full_rule_exact": 1.0,
-        "rule_per_symbol": 1.0,
+def test_query_score_rejects_inconsistent_or_invalid_values() -> None:
+    with pytest.raises(ValueError, match="pass_at_2"):
+        QueryScore("a", 0, True, False, True, 1.0, 1)
+    with pytest.raises(ValueError, match="boolean"):
+        QueryScore("a", 0, 1, True, True, 1.0, 1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="pixel"):
+        QueryScore("a", 0, False, False, False, np.nan, 1)
+    with pytest.raises(ValueError, match="one or two"):
+        QueryScore("a", 0, False, False, False, 0.0, 3)
+
+
+def test_candidate_validates_grid_metadata_and_serializes() -> None:
+    candidate = DecodedCandidate([[0, 9]], "cell:0,1", -1.25)
+    assert candidate.to_dict() == {
+        "height": 1,
+        "width": 2,
+        "grid": [[0, 9]],
+        "changed_decision": "cell:0,1",
+        "log_probability": -1.25,
     }
+    with pytest.raises(ValueError, match="changed_decision"):
+        DecodedCandidate([[1]], 2)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="log_probability"):
+        DecodedCandidate([[1]], log_probability=np.inf)
+
+
+def test_fixed_trajectory_reports_zero_displacement_and_convergence() -> None:
+    grid = np.array([[3, 4]])
+    height, width, colors = _stacked_logits([grid, grid])
+    spikes = np.array([[0, 1, 0, 1], [0, 1, 0, 1]])
+    voltages = np.array([[0.1, -0.2, 0.3, -0.4]] * 2)
+
+    report = analyze_latent_trajectory(
+        height,
+        width,
+        colors,
+        spikes,
+        voltages,
+        target=grid,
+        task_id="fixed",
+        step_indices=[0, 8],
+    )
+
+    assert report["converged_steps"] == [8]
+    second = report["steps"][1]
+    assert second["changed_cell_count"] == 0
+    assert second["spike_hamming_displacement"] == 0
+    assert second["voltage_l2_displacement"] == 0.0
+    assert second["converged"]
+    assert second["score"]["pass_at_1"]
+    assert second["candidates"][0]["grid"] == [[3, 4]]
     json.dumps(report, allow_nan=False)
 
 
-def test_wide_raw_memory_factor_probe_remains_matrix_free(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def forbidden(*_: object, **__: object) -> None:
-        raise AssertionError("dense square factorization is forbidden")
+def test_trajectory_reports_separate_synaptic_currents_and_uses_them_for_convergence() -> (
+    None
+):
+    grid = np.array([[3]])
+    height, width, colors = _stacked_logits([grid, grid])
+    spikes = np.zeros((2, 2), dtype=np.int8)
+    voltages = np.zeros((2, 2), dtype=np.float32)
+    feedforward = np.array([[1.0, 0.0], [0.5, 0.0]], dtype=np.float32)
+    recurrent = np.array([[0.0, 2.0], [0.0, 2.0]], dtype=np.float32)
 
-    for name in ("solve", "svd", "inv", "pinv", "eigh", "eigvalsh"):
-        monkeypatch.setattr(np.linalg, name, forbidden)
-    generator = np.random.default_rng(17)
-    episode_count = 160
-    symbol_count = 10
-    width = 32
-    slots = 8
-    states = generator.normal(size=(episode_count, 1, width))
-    memory_read = generator.normal(size=(episode_count, width))
-    answers = np.arange(episode_count) % symbol_count
-    rules = np.stack(
-        [generator.permutation(symbol_count) for _ in range(episode_count)]
-    )
-    memory_values = generator.normal(size=(episode_count, slots, width))
-    memory_keys = generator.normal(size=(episode_count, slots, width))
-
-    report = analyze_latent_workspace(
-        states,
-        memory_read,
-        answers,
-        rules,
-        np.arange(120),
-        np.arange(120, episode_count),
-        memory_values=memory_values,
-        memory_keys=memory_keys,
+    report = analyze_latent_trajectory(
+        height,
+        width,
+        colors,
+        spikes,
+        voltages,
+        feedforward_current=feedforward,
+        recurrent_current=recurrent,
     )
 
-    assert set(report["raw_memory_factor_decodability"]) == {
-        "answer",
-        "full_rule_exact",
-        "rule_per_symbol",
+    second = report["steps"][1]
+    assert second["feedforward_current_l2"] == 0.5
+    assert second["feedforward_current_l2_displacement"] == 0.5
+    assert second["recurrent_current_l2"] == 2.0
+    assert second["recurrent_current_l2_displacement"] == 0.0
+    assert not second["converged"]
+    assert report["steps"][0]["state_sha256"] != second["state_sha256"]
+
+
+def test_trajectory_exposes_changed_cells_saturation_and_silence() -> None:
+    first = np.array([[1, 2]])
+    second = np.array([[1, 7]])
+    height, width, colors = _stacked_logits([first, second, second])
+    spikes = np.array([[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0]])
+    voltages = np.array([[0.0] * 4, [1.0] * 4, [0.0] * 4])
+
+    report = analyze_latent_trajectory(
+        height, width, colors, spikes, voltages, step_indices=[0, 1, 2]
+    )
+
+    assert report["near_silence_steps"] == [0, 2]
+    assert report["near_saturation_steps"] == [1]
+    assert report["steps"][1]["changed_cell_count"] == 1
+    assert report["steps"][1]["changed_cell_fraction"] == 0.5
+    assert report["steps"][1]["spike_hamming_fraction"] == 1.0
+    assert report["steps"][1]["voltage_l2_displacement"] == 2.0
+    assert report["steps"][1]["raster_active_indices"] == [0, 1, 2, 3]
+    assert report["firing_rate_distribution"] == {
+        "minimum": 0.0,
+        "mean": pytest.approx(1.0 / 3.0),
+        "maximum": 1.0,
     }
+
+
+def test_shape_change_counts_added_and_removed_cells() -> None:
+    height, width, colors = _stacked_logits(
+        [np.array([[1]]), np.array([[1, 0], [0, 0]])]
+    )
+    report = analyze_latent_trajectory(
+        height, width, colors, [[0], [0]], [[0.0], [0.0]]
+    )
+
+    assert report["steps"][1]["changed_cell_count"] == 3
+    assert report["steps"][1]["changed_cell_fraction"] == 0.75
+
+
+def test_voltage_tolerance_can_mark_numerically_stable_transition() -> None:
+    height, width, colors = _stacked_logits([np.array([[1]]), np.array([[1]])])
+    report = analyze_latent_trajectory(
+        height,
+        width,
+        colors,
+        [[0, 0], [0, 0]],
+        [[0.0, 0.0], [1e-7, -1e-7]],
+        convergence_atol=1e-6,
+    )
+
+    assert report["steps"][1]["converged"]
+    assert report["steps"][1]["voltage_mean_absolute"] == 1e-7
+    assert report["steps"][1]["state_sha256"] != report["steps"][0]["state_sha256"]
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("height_shape", "height logit sequence shape"),
+        ("width_steps", "width logit sequence shape"),
+        ("color_shape", "color logit sequence shape"),
+        ("empty", "at least one step"),
+        ("nonfinite", "non-finite"),
+        ("spike_steps", "spikes have"),
+        ("spike_nonbinary", "binary"),
+        ("voltage_shape", "voltages shape"),
+    ],
+)
+def test_trajectory_rejects_malformed_logits_and_states(
+    mutation: str, message: str
+) -> None:
+    height, width, colors = _stacked_logits([np.array([[1]])])
+    spikes: object = [[0, 1]]
+    voltages: object = [[0.0, 1.0]]
+    if mutation == "height_shape":
+        height = np.zeros((1, 29))
+    elif mutation == "width_steps":
+        width = np.zeros((2, 30))
+    elif mutation == "color_shape":
+        colors = np.zeros((1, 30, 30, 9))
+    elif mutation == "empty":
+        height = np.zeros((0, 30))
+        width = np.zeros((0, 30))
+        colors = np.zeros((0, 30, 30, 10))
+    elif mutation == "nonfinite":
+        height[0, 0] = np.inf
+    elif mutation == "spike_steps":
+        spikes = [[0, 1], [0, 1]]
+    elif mutation == "spike_nonbinary":
+        spikes = [[0, 2]]
+    elif mutation == "voltage_shape":
+        voltages = [[0.0]]
+
+    with pytest.raises(ValueError, match=message):
+        analyze_latent_trajectory(height, width, colors, spikes, voltages)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"step_indices": [1, 1]}, "strictly increasing"),
+        ({"step_indices": [0]}, "2 integers"),
+        ({"convergence_atol": -1.0}, "nonnegative"),
+        ({"silence_rate": 0.96, "saturation_rate": 0.95}, "smaller"),
+        ({"silence_rate": -0.1}, r"in \[0, 1\]"),
+        ({"saturation_rate": np.inf}, r"in \[0, 1\]"),
+        ({"raster_neurons": 0}, "positive"),
+    ],
+)
+def test_trajectory_rejects_invalid_options(
+    kwargs: dict[str, object], message: str
+) -> None:
+    height, width, colors = _stacked_logits([np.array([[1]]), np.array([[1]])])
+    with pytest.raises(ValueError, match=message):
+        analyze_latent_trajectory(
+            height,
+            width,
+            colors,
+            [[0], [0]],
+            [[0.0], [0.0]],
+            **kwargs,
+        )
+
+
+def test_byte_identical_control_is_stated_as_causally_null() -> None:
+    spikes = np.array([[0, 1], [1, 0]], dtype=np.int8)
+    voltages = np.array([[0.0, 1.0], [2.0, 3.0]], dtype=np.float32)
+    intact = {"query_pass_at_1": 0.5, "nested": {"pixel": 0.75}}
+    control = {"query_pass_at_1": 0.25, "nested": {"pixel": 0.5}}
+
+    report = compare_control_trajectories(
+        spikes,
+        voltages,
+        spikes.copy(),
+        voltages.copy(),
+        control_name="no-context",
+        intact_scores=intact,
+        control_scores=control,
+    )
+
+    assert report["causally_null_at_measured_precision"]
+    assert report["state_byte_identical_by_step"] == [True, True]
+    assert report["spike_hamming_by_step"] == [0, 0]
+    assert report["voltage_l2_by_step"] == [0.0, 0.0]
+    assert report["score_deltas_control_minus_intact"] == {
+        "nested.pixel": -0.25,
+        "query_pass_at_1": -0.25,
+    }
+    assert "causally null at measured precision" in report["interpretation"]
     json.dumps(report, allow_nan=False)
 
 
-@pytest.mark.parametrize(
-    ("memory", "final", "expected"),
-    [
-        (0.8, 0.8, "matched or exceeded"),
-        (0.9, 0.8, "did not add decodable information"),
-        (0.4, 0.7, "exceeded memory-only"),
-    ],
-)
-def test_memory_final_comparison_retains_both_outcomes(
-    memory: float, final: float, expected: str
-) -> None:
-    assert expected in memory_final_comparison(memory, final)
+def test_control_change_reports_state_distances_and_non_null_interpretation() -> None:
+    report = compare_control_trajectories(
+        [[0, 0], [0, 1]],
+        [[0.0, 0.0], [1.0, 1.0]],
+        [[0, 0], [1, 1]],
+        [[0.0, 0.0], [1.0, 3.0]],
+        control_name="slot-ablation",
+    )
+
+    assert not report["causally_null_at_measured_precision"]
+    assert report["state_byte_identical_by_step"] == [True, False]
+    assert report["spike_hamming_by_step"] == [0, 1]
+    assert report["spike_hamming_fraction_by_step"] == [0.0, 0.5]
+    assert report["voltage_l2_by_step"] == [0.0, 2.0]
+    assert "changed measured latent states" in report["interpretation"]
 
 
-@pytest.mark.parametrize(
-    ("states", "message"),
-    [
-        (np.ones((2, 3)), "states shape"),
-        (np.ones((0, 2, 3)), "states shape"),
-        (np.array([[[np.inf]]]), "non-finite"),
-    ],
-)
-def test_geometry_rejects_malformed_states(states: np.ndarray, message: str) -> None:
-    with pytest.raises(ValueError, match=message):
-        participation_ratio(states)
+def test_synaptic_current_change_prevents_false_causal_null() -> None:
+    zeros = np.zeros((2, 3), dtype=np.float32)
+    changed_recurrent = zeros.copy()
+    changed_recurrent[1, 0] = 2.0
+
+    report = compare_control_trajectories(
+        np.zeros((2, 3), dtype=np.int8),
+        zeros,
+        np.zeros((2, 3), dtype=np.int8),
+        zeros.copy(),
+        control_name="current-only-change",
+        intact_synaptic_currents={
+            "feedforward": zeros,
+            "recurrent": zeros,
+        },
+        control_synaptic_currents={
+            "feedforward": zeros.copy(),
+            "recurrent": changed_recurrent,
+        },
+    )
+
+    assert not report["causally_null_at_measured_precision"]
+    assert report["state_byte_identical_by_step"] == [True, False]
+    assert report["synaptic_current_l2_by_step"] == {
+        "feedforward": [0.0, 0.0],
+        "recurrent": [0.0, 2.0],
+    }
 
 
-def test_trajectory_rejects_non_finite_derived_norm() -> None:
-    limit = np.finfo(np.float64).max
-    states = np.array([[[limit], [-limit]]])
+def test_numeric_equality_with_different_dtype_is_not_byte_identity() -> None:
+    report = compare_control_trajectories(
+        np.array([[0, 1]], dtype=np.int8),
+        np.array([[0.0, 1.0]], dtype=np.float32),
+        np.array([[0, 1]], dtype=np.int64),
+        np.array([[0.0, 1.0]], dtype=np.float64),
+        control_name="dtype-control",
+    )
 
-    with pytest.raises(ValueError, match="non-finite trajectory_step_norm"):
-        trajectory_step_norm(states)
+    assert not report["causally_null_at_measured_precision"]
+    assert report["spike_hamming_by_step"] == [0]
+    assert report["voltage_l2_by_step"] == [0.0]
 
 
-def test_complete_analysis_names_mismatched_memory_shape() -> None:
-    features, answers, rules = _probe_fixture()
-    states = np.stack((features, features), axis=1)
-
-    with pytest.raises(ValueError, match=r"states \(6, 2, 3\), memory_read \(5, 3\)"):
-        analyze_latent_workspace(
-            states, features[:-1], answers, rules, [0, 1, 2], [3, 4, 5]
+def test_control_comparison_rejects_shape_name_and_unpaired_scores() -> None:
+    with pytest.raises(ValueError, match="control_name"):
+        compare_control_trajectories([[0]], [[0.0]], [[0]], [[0.0]], control_name="")
+    with pytest.raises(ValueError, match="shape must match"):
+        compare_control_trajectories(
+            [[0]], [[0.0]], [[0, 0]], [[0.0, 0.0]], control_name="bad-shape"
         )
-
-    with pytest.raises(ValueError, match=r"memory_read \(6, 2\)"):
-        analyze_latent_workspace(
-            states, features[:, :2], answers, rules, [0, 1, 2], [3, 4, 5]
+    with pytest.raises(ValueError, match="provided together"):
+        compare_control_trajectories(
+            [[0]],
+            [[0.0]],
+            [[0]],
+            [[0.0]],
+            control_name="scores",
+            intact_scores={"pass": 1.0},
         )
-
-
-def test_complete_analysis_names_mismatched_answer_and_rule_shapes() -> None:
-    features, answers, rules = _probe_fixture()
-    states = np.stack((features, features), axis=1)
-
-    with pytest.raises(ValueError, match=r"answers \(5,\), states \(6, 2, 3\)"):
-        analyze_latent_workspace(
-            states, features, answers[:-1], rules, [0, 1, 2], [3, 4, 5]
-        )
-
-    with pytest.raises(ValueError, match=r"rules \(5, 3\), states \(6, 2, 3\)"):
-        analyze_latent_workspace(
-            states, features, answers, rules[:-1], [0, 1, 2], [3, 4, 5]
-        )
-
-
-def test_complete_analysis_names_malformed_public_quantities() -> None:
-    features, answers, rules = _probe_fixture()
-    states = np.stack((features, features), axis=1)
-
-    with pytest.raises(ValueError, match="memory_read shape"):
-        analyze_latent_workspace(
-            states,
-            features[:, :, None],
-            answers,
-            rules,
-            [0, 1, 2],
-            [3, 4, 5],
-        )
-    with pytest.raises(ValueError, match="answers shape"):
-        analyze_latent_workspace(
-            states,
-            features,
-            answers.astype(np.float64),
-            rules,
-            [0, 1, 2],
-            [3, 4, 5],
-        )
-    with pytest.raises(ValueError, match="rules shape"):
-        analyze_latent_workspace(
-            states,
-            features,
-            answers,
-            rules.astype(np.float64),
-            [0, 1, 2],
-            [3, 4, 5],
-        )
-
-
-def test_raw_memory_factors_validate_pairing_shapes_and_finiteness() -> None:
-    features, answers, rules = _probe_fixture()
-    states = features[:, None, :]
-    common = (states, features, answers, rules, [0, 1, 2], [3, 4, 5])
-
-    with pytest.raises(ValueError, match="memory_keys is missing"):
-        analyze_latent_workspace(*common, memory_values=features[:, None, :])
-    with pytest.raises(ValueError, match=r"memory_values \(5, 1, 3\).+states"):
-        analyze_latent_workspace(
-            *common,
-            memory_values=features[:-1, None, :],
-            memory_keys=features[:, None, :],
-        )
-    with pytest.raises(ValueError, match="memory_keys shape .* non-finite"):
-        invalid_keys = np.ones((6, 1, 3))
-        invalid_keys[0, 0, 0] = np.inf
-        analyze_latent_workspace(
-            *common,
-            memory_values=features[:, None, :],
-            memory_keys=invalid_keys,
-        )
-
-
-def test_complete_analysis_rejects_non_permutation_rules() -> None:
-    features, answers, rules = _probe_fixture()
-    states = np.stack((features, features), axis=1)
-    rules[0] = [0, 0, 2]
-
-    with pytest.raises(ValueError, match="one permutation per episode"):
-        analyze_latent_workspace(states, features, answers, rules, [0, 1, 2], [3, 4, 5])
-
-
-@pytest.mark.parametrize(
-    ("fit", "score", "message"),
-    [
-        ([], [1], "fit_indices must not be empty"),
-        ([0], [], "score_indices must not be empty"),
-        ([0, 1], [1, 2], "must be disjoint"),
-        ([0, 0], [1], "fit_indices contains duplicate"),
-        ([0], [9], "outside episode_count"),
-        ([[0]], [1], "fit_indices shape"),
-        ([0.0], [1], "integer episode indices"),
-    ],
-)
-def test_probe_rejects_invalid_split(
-    fit: list[object], score: list[object], message: str
-) -> None:
-    features, answers, _ = _probe_fixture()
-
-    with pytest.raises(ValueError, match=message):
-        linear_probe_accuracy(features, answers, fit, score, class_count=3)
-
-
-@pytest.mark.parametrize(
-    ("labels", "class_count", "message"),
-    [
-        (np.array([0, 1, 2, 0, 1]), 3, "labels shape"),
-        (np.array([0.0, 1.0, 2.0, 0.0, 1.0, 2.0]), 3, "integer class"),
-        (np.array([0, 1, 3, 0, 1, 2]), 3, "labels classes"),
-        (np.array([0, 1, 2, 0, 1, 2]), 1, "at least 2"),
-    ],
-)
-def test_probe_rejects_malformed_labels_or_class_count(
-    labels: np.ndarray, class_count: int, message: str
-) -> None:
-    features, _, _ = _probe_fixture()
-
-    with pytest.raises(ValueError, match=message):
-        linear_probe_accuracy(
-            features, labels, [0, 1, 2], [3, 4, 5], class_count=class_count
-        )
-
-
-@pytest.mark.parametrize("ridge", [0.0, -1.0, np.inf, True, "small"])
-def test_probe_rejects_invalid_ridge(ridge: object) -> None:
-    features, answers, _ = _probe_fixture()
-
-    with pytest.raises(ValueError, match="ridge"):
-        linear_probe_accuracy(
-            features,
-            answers,
-            [0, 1, 2],
-            [3, 4, 5],
-            3,
-            ridge,  # type: ignore[arg-type]
-        )
-
-
-@pytest.mark.parametrize(
-    ("memory", "final", "quantity"),
-    [(np.nan, 0.5, "memory_accuracy"), (0.5, 1.1, "final_accuracy")],
-)
-def test_comparison_rejects_invalid_accuracy(
-    memory: float, final: float, quantity: str
-) -> None:
-    with pytest.raises(ValueError, match=quantity):
-        memory_final_comparison(memory, final)

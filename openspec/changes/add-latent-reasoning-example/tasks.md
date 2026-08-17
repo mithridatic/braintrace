@@ -1,46 +1,46 @@
-## 1. Feasibility spike (throwaway, `tmp/`, not released)
+## 1. Specification reset
 
-- [x] 1.1 Build a minimal episode generator; verify the encoding is unambiguous (distinct symbols produce linearly separable spike patterns) and the supported/short split is well-formed. Sweep symbol count and encoding rate. Record the chosen symbol count, encoding rate, and demonstration tick budget.
-- [x] 1.2 Wire a memory-equipped but *untrained* probe of the mechanism — fixed random write projections, slotted memory write, memory read at the query encoding, argmax — and confirm it degrades monotonically across the two-through-eight binding range. This tests the capacity claim with the mechanism whose capacity is claimed, not with a linear readout that has no memory in it.
-- [x] 1.3 Run a latent population for `R` zero-input ticks across candidate membrane constants and `W_f` spectral radii; find a setting whose mean firing rate at `r = R` is at least 25 percent of its rate at `r = 0`, at the largest swept depth. Record the chosen constants.
-- [x] 1.4 Compile a two-state model skeleton through `braintrace.compile(..., model.etrace_config(), ...)`, using the pp_prop `ETraceConfig`, and confirm no control-flow or ETP diagnostic warnings are raised and that the memory contraction is absorbed into the hidden-to-hidden transition as designed.
-- [x] 1.5 With the compiled model from 1.4, train briefly and check the accuracy gate: supported-query accuracy at least 0.9 at two bindings and at most 0.6 at eight. This gate needs a trained two-state model, so it cannot be checked before 1.4.
-- [x] 1.6 Write the spike's outcomes into `design.md` (D5 constants, D9 defaults) and, if the binding range moved, into the spec and `docs/specs/`. Stop and report if any gate in 1.2, 1.3, or 1.5 cannot be met.
+- [x] 1.1 Replace the symbol-lookup OpenSpec proposal, design, and capability delta with the standard-ARC, one-model variable-effort contract.
+- [x] 1.2 Replace `docs/specs/2026-08-16-pp-prop-latent-reasoning.md` before implementation, including data provenance, exact scoring, 2,048/16,384 scale, controls, and claim boundaries.
+- [x] 1.3 Run strict OpenSpec validation and resolve every structural or semantic error.
 
-## 2. Task module
+## 2. ARC data and provenance
 
-- [x] 2.1 Implement `latent_workspace_task.py`: per-episode bijection draw, demonstration pairs, held-out query, deterministic oracle, spike encoding of symbols and phase.
-- [x] 2.2 Implement the supported/short split producing matched episode pairs with byte-identical query-phase inputs and targets.
-- [x] 2.3 Implement binding-count control across the two-through-eight range, including the overflow condition when bindings exceed slot capacity.
-- [x] 2.4 Write `latent_workspace_task_test.py`: oracle agreement verified independently of the generator, rule variation across episodes, no rule leakage in inputs, byte-identical matched queries, short condition omits the queried binding, supported condition includes it exactly once, overflow raises or reports, malformed configuration raises naming the quantity, plus a hypothesis property test over symbol counts and binding counts.
+- [x] 2.1 Replace `latent_workspace_task.py` with validated `ArcGrid`, `ArcPair`, `ArcTask`, query-episode, source-manifest, canonical-fingerprint, and split-leakage APIs.
+- [x] 2.2 Support standard per-task JSON plus collection and JSONL adapters needed by configured public corpora, with source roles and rejection accounting.
+- [x] 2.3 Implement lossless fixed-shape row-event encoding for variable grids, demonstrations, and multiple test queries without target or metadata leakage.
+- [x] 2.4 Implement BrainState-random color, dihedral, and demonstration-order training augmentations that preserve task semantics and never touch evaluation data.
+- [x] 2.5 Add co-located task tests for malformed grids/tasks, round-trip encoding, multi-query identity, canonical deduplication, split leakage, provenance, augmentation consistency, padding, and target-leakage resistance.
 
-## 3. Model module
+## 3. Exact scoring and trajectory analysis
 
-- [x] 3.1 Implement `latent_workspace_model.py` phase vector and arithmetic gating over one flat time axis; assert no Python loop drives the model and no inner `scan` consumes a `ParamState`.
-- [x] 3.2 Implement the ingestion population, the key/value projections as ETP `matmul` operations, and the slotted one-hot memory write into `brainstate.HiddenState` factors.
-- [x] 3.3 Implement the latent population, its zero-input recurrence, the memory read as a hidden-state contraction, and the linear readout.
-- [x] 3.4 Implement the shuffled-memory control as a column permutation preserving shape and magnitude.
-- [x] 3.5 Write `latent_workspace_model_test.py`: factored read equals the dense outer-product read (hypothesis property test — the correctness keystone), phase mask activates exactly one sub-map per tick, ingestion leaves every `ParamState` bitwise identical, differing demonstrations produce differing memory, memory storage scales with slots not with the square of the width, shuffle preserves shape and magnitude, `R = 0` is well-formed.
+- [x] 3.1 Replace `latent_workspace_analysis.py` with output-logit validation, deterministic pass@1/pass@2 candidate decoding, and exact query and strict task metrics.
+- [x] 3.2 Add clearly labelled shape and valid-cell pixel diagnostics that cannot satisfy exact success.
+- [x] 3.3 Add per-step provisional-grid changes, entropy/margin, spike/rate, voltage, displacement, convergence, saturation, and silence summaries.
+- [x] 3.4 Add intact/control trajectory comparison including a byte-identical causally-null determination.
+- [x] 3.5 Add co-located analysis tests covering one-cell failures, wrong shapes, second-candidate success, multi-query strictness, constructed fixed/saturated/silent trajectories, malformed logits, and null controls.
 
-## 4. Analysis module
+## 4. Recurrent spiking model
 
-- [x] 4.1 Implement `latent_workspace_analysis.py`: participation ratio and step-to-step trajectory norm per latent iteration.
-- [x] 4.2 Implement linear probes with an explicit disjoint fit/score split, for the answer from each `H_r`, for the answer from the memory read at the query encoding, and separately for the full rule.
-- [x] 4.3 Implement the comparison line that states plainly when memory-only decodability matches or exceeds final-workspace decodability.
-- [x] 4.4 Write `latent_workspace_analysis_test.py`: participation ratio on inputs of known rank, trajectory norm on a constructed fixed point and a constructed divergence, probe fit/score sets provably disjoint with no leakage, answer and rule probes reported separately, null-separation line fires on constructed data, mismatched leading dimensions raise naming the shapes.
+- [x] 4.1 Replace `latent_workspace_model.py` with an Example-18-style BrainPy LIF network using BrainTrace `Linear`/`SparseLinear`, `AlignPostProj`, `Expon`, and `CUBA` components.
+- [x] 4.2 Construct a deterministic no-self-edge sparse topology with exactly 16,384 edges for the 2,048-neuron full configuration using `brainstate.random`.
+- [x] 4.3 Implement compiled context and zero-input latent rollouts with `brainstate.transform.for_loop`, exposing query-terminal state and the complete 32-step trajectory.
+- [x] 4.4 Implement the low-rank height, width, and 30×30×10 color readout plus pp-prop `ETraceConfig` and terminal loss integration.
+- [x] 4.5 Implement exact state reset/snapshot/restore and deterministic 64-neuron slot ablation without parameter mutation.
+- [x] 4.6 Add co-located model tests for physical scale, exact edge count, component types, deterministic topology, zero latent input, state/parameter separation, reset reproducibility, checkpoint semantics, and ablation bounds.
 
-## 5. Entry point
+## 5. Training, evaluation, and reports
 
-- [x] 5.1 Implement `21-latent-reasoning-in-context.py`: CLI, seeded configuration, and one training run per latent depth in `{0, 1, 2, 4, 8}`. All five trainings draw from a single shared mixed binding-count distribution — latent depth is the only thing that differs between them.
-- [x] 5.2 Implement the frozen-model intervention grid over binding count, supported versus short context, and intact versus shuffled memory, with no retraining.
-- [x] 5.3 Implement the plain-English report: per-depth accuracy, per-binding-count accuracy, the supported-versus-short contrast, the control arms, the four geometry measurements, probe split counts, and the claim-boundary paragraph.
-- [x] 5.4 Implement the Agg PNG: accuracy versus latent depth, accuracy versus binding count under both context conditions, and the per-iteration decodability curve.
-- [x] 5.5 Implement `--smoke` exercising every phase, arm, and reported measurement at reduced size.
-- [x] 5.6 Write `21-latent-reasoning-in-context_test.py`: smoke entry point returns the documented result mapping, same seed reproduces reported metrics within tolerance, every configured depth and binding count appears in the report, both control arms appear, and no test in the file asserts anything about the gradient estimate.
+- [x] 5.1 Replace `21-latent-reasoning-in-context.py` with CLI/configuration, manifest loading, split checks, one-model pp-prop optimization, and shared optimizer state across 8/16/32 effort updates.
+- [ ] 5.2 Evaluate one frozen 32-step trajectory at 0/8/16/32 on byte-identical tasks and aggregate exact metrics over all queries and tasks.
+- [ ] 5.3 Implement no-context, deranged-demonstration, truncation, and slot-ablation arms without retraining.
+- [ ] 5.4 Emit a machine-readable result and plain-English report containing configuration, device, counts, provenance, exact scores, diagnostics, trajectories, controls, runtime, and claim boundary.
+- [ ] 5.5 Emit an Agg plot of exact quality versus effort, trajectory dynamics, spike/voltage behavior, and control deltas.
+- [x] 5.6 Add a plumbing-only `--smoke` path and co-located entry-point tests covering every effort checkpoint and control without treating fixture scores as scientific evidence.
 
-## 6. Documentation and release
+## 6. Documentation and qualification
 
-- [x] 6.1 Update `docs/specs/2026-08-16-pp-prop-latent-reasoning.md` (written during planning) with the spike's measured constants and any reporting detail that moved during implementation.
-- [x] 6.2 Add the Example 21 catalog row and the two axis-map rows to `examples/pp_prop/README.md`.
-- [x] 6.3 Requalify the corrected production LIF accuracy gates, run the focused example tests and the repository's normal example gate, and record the results.
-- [x] 6.4 Confirm no scratch or spike artifact from Task 1 is tracked for release, and that the branch is clean and pushed.
+- [x] 6.1 Update the Example 21 README catalog and axis-map rows so they describe standard ARC, one-model effort, exact scoring, and public-data requirements.
+- [ ] 6.2 Run focused tests with more than 90 percent meaningful coverage of changed production modules, then the repository's normal example gate.
+- [ ] 6.3 Run a full GPU structural qualification proving 2,048 neurons and exactly 16,384 edges; run training/evaluation qualification only when an approved non-evaluation public corpus is present.
+- [ ] 6.4 Record exactly what was and was not empirically qualified, verify downloaded/generated artifacts are untracked, commit the completed worktree branch, and leave `main` unchanged.

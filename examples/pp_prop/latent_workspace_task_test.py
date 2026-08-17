@@ -1,590 +1,872 @@
-"""Tests for Example 21's latent-workspace episode task."""
+"""Tests for standard ARC data, provenance, and row-event encoding."""
 
-import hashlib
+from __future__ import annotations
+
 from dataclasses import replace
+import json
+from pathlib import Path
 
 import brainstate
 import numpy as np
 import pytest
-from hypothesis import given, settings, strategies as st
 
 from examples.pp_prop import latent_workspace_task as task_module
 from examples.pp_prop.latent_workspace_task import (
-    Episode,
-    MatchedEpisodes,
-    TaskConfig,
-    build_codebook,
-    build_episode,
-    draw_rule,
-    generate_episode,
-    generate_matched_episodes,
-    oracle_answer,
+    ArcGrid,
+    ArcPair,
+    ArcQueryEpisode,
+    ArcTask,
+    AugmentationConfig,
+    DatasetSource,
+    DecodedQueryContext,
+    EncodedQueryEpisode,
+    ExcludedTask,
+    GridTarget,
+    LoadedDataset,
+    RowEventConfig,
+    SourceManifest,
+    SplitLeakageError,
+    arc_task_from_mapping,
+    arc_task_to_mapping,
+    assert_no_evaluation_leakage,
+    augment_training_task,
+    canonical_task_fingerprint,
+    decode_row_events,
+    detect_split_leakage,
+    draw_training_augmentation,
+    encode_query_episode,
+    encode_target_grid,
+    encode_task_queries,
+    load_arc_task,
+    load_dataset_source,
+    query_episodes,
+    smoke_arc_tasks,
+    smoke_loaded_dataset,
 )
 
 
-def _rng(seed: int = 0) -> brainstate.random.RandomState:
-    return brainstate.random.RandomState(seed)
-
-
-def _valid_metadata(config: TaskConfig):
-    rule = np.roll(np.arange(config.symbol_count, dtype=np.int32), -1)
-    query = 0
-    keys = np.arange(config.binding_count, dtype=np.int32)
+def _task_payload(*, test_output: list[list[int]] | None = None) -> dict:
+    test: dict[str, object] = {"input": [[0, 1], [2, 9]]}
+    if test_output is not None:
+        test["output"] = test_output
     return {
-        "rule": rule,
-        "demonstration_keys": keys,
-        "demonstration_values": rule[keys],
-        "query_symbol": query,
-        "terminal_target": int(rule[query]),
-        "condition": "supported",
+        "train": [
+            {"input": [[1, 2, 3], [4, 5, 6]], "output": [[1, 4], [2, 5], [3, 6]]},
+            {"input": [[7, 8]], "output": [[7], [8]]},
+        ],
+        "test": [test],
     }
 
 
-def test_default_codebook_matches_measured_feasibility_fingerprint():
-    config = TaskConfig()
-    first = build_codebook(config)
-    repeated = build_codebook(config)
+def _task(*, task_id: str = "sample", target: bool = True) -> ArcTask:
+    payload = _task_payload(test_output=[[0, 2], [1, 9]] if target else None)
+    return arc_task_from_mapping(payload, task_id=task_id)
 
-    assert first.shape == (10, 4, 24)
-    assert np.array_equal(first, repeated)
-    assert hashlib.sha256(first.tobytes()).hexdigest() == (
-        "46ac5df9d15f0bf2bdf6fb72230acbddd22c423d4b1fb57947a120d90dc243c1"
+
+def _source(
+    path: Path,
+    *,
+    name: str = "ARC-AGI-1 training",
+    role: str = "train",
+    source_format: str = "auto",
+) -> DatasetSource:
+    return DatasetSource(
+        name=name,
+        role=role,
+        version="unit-test",
+        path=str(path),
+        license_reference="https://example.test/dataset",
+        format=source_format,
     )
-    assert float(first.mean()) == pytest.approx(0.24895833333333334)
-    flattened = first.reshape(config.symbol_count, -1)
-    augmented = np.column_stack((flattened, np.ones(config.symbol_count)))
-    pairwise_hamming = np.sum(flattened[:, None, :] != flattened[None, :, :], axis=-1)
-    pairwise_hamming += np.eye(config.symbol_count, dtype=np.int64) * flattened.shape[1]
-    assert np.unique(flattened, axis=0).shape[0] == config.symbol_count
-    assert np.linalg.matrix_rank(augmented) == config.symbol_count
-    assert int(pairwise_hamming.min()) == 29
 
 
-def test_default_codebook_is_attempt_zero_of_a_local_brainstate_stream():
-    config = TaskConfig()
-    expected = np.asarray(
-        brainstate.random.RandomState(config.codebook_seed).bernoulli(
-            config.spike_rate,
-            size=(config.symbol_count, config.symbol_ticks, config.code_width),
+def _write_json(path: Path, payload: object) -> None:
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _manifest(task: ArcTask, *, name: str, role: str) -> SourceManifest:
+    fingerprint = canonical_task_fingerprint(task)
+    source = DatasetSource(
+        name=name,
+        role=role,
+        version="test",
+        path="unused",
+        license_reference="test reference",
+    )
+    return SourceManifest(
+        source=source,
+        resolved_path="unused",
+        files=(),
+        parsed_task_count=1,
+        valid_task_count=1,
+        rejected=(),
+        duplicate_fingerprints=(),
+        task_fingerprints=(fingerprint,),
+    )
+
+
+def test_arc_grid_is_immutable_rectangular_and_copying() -> None:
+    source = [[0, 9], [1, 2]]
+    grid = ArcGrid(source)
+    source[0][0] = 8
+
+    assert grid.cells == ((0, 9), (1, 2))
+    assert (grid.height, grid.width) == (2, 2)
+    array = grid.as_array()
+    array[0, 0] = 7
+    assert grid.cells[0][0] == 0
+    assert grid.to_list() == [[0, 9], [1, 2]]
+    with pytest.raises(Exception):
+        grid.cells = ((1,),)
+
+
+def test_arc_grid_accepts_boundary_shapes_and_numpy_integers() -> None:
+    tiny = ArcGrid(((np.int64(9),),))
+    large = ArcGrid(np.zeros((30, 30), dtype=np.int32))
+
+    assert tiny.cells == ((9,),)
+    assert (large.height, large.width) == (30, 30)
+
+
+@pytest.mark.parametrize(
+    ("grid", "message"),
+    [
+        ([], "at least one row"),
+        ([[]], "non-empty row"),
+        ([[1], [1, 2]], "ragged"),
+        (np.zeros((1, 1, 1), dtype=np.int32), "two-dimensional"),
+        (np.zeros((31, 1), dtype=np.int32), "height"),
+        (np.zeros((1, 31), dtype=np.int32), "width"),
+        ([[True]], "integer ARC color"),
+        ([[1.0]], "integer ARC color"),
+        ([[10]], "outside 0..9"),
+        ([[-1]], "outside 0..9"),
+    ],
+)
+def test_invalid_arc_grid_fails_closed(grid: object, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        ArcGrid(grid)
+
+
+def test_arc_task_parses_unequal_dimensions_and_optional_test_output() -> None:
+    task = _task(target=False)
+
+    assert len(task.train) == 2
+    assert task.train[0].input.width == 3
+    assert task.train[0].output.height == 3
+    assert task.test[0].output is None
+    assert arc_task_to_mapping(task) == _task_payload(test_output=None)
+
+
+def test_arc_pair_coerces_grids_but_task_requires_pair_instances() -> None:
+    pair = ArcPair([[1]], [[2]])
+
+    assert isinstance(pair.input, ArcGrid)
+    assert isinstance(pair.output, ArcGrid)
+    with pytest.raises(ValueError, match="ArcPair"):
+        ArcTask(train=(pair,), test=({"input": [[1]]},))
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"train": [], "test": [{"input": [[1]]}]}, "train"),
+        ({"train": [{"input": [[1]], "output": [[1]]}], "test": []}, "test"),
+        ({"train": [1], "test": [{"input": [[1]]}]}, r"train\[0\]"),
+        ({"train": [{"output": [[1]]}], "test": [{"input": [[1]]}]}, "input"),
+        ({"train": [{"input": [[1]]}], "test": [{"input": [[1]]}]}, "output"),
+        (
+            {"train": [{"input": [[1]], "output": None}], "test": [{"input": [[1]]}]},
+            "output",
         ),
-        dtype=np.float32,
-    )
-
-    assert np.array_equal(build_codebook(config), expected)
-
-
-def test_build_codebook_does_not_consume_the_global_brainstate_stream():
-    with brainstate.random.seed_context(8712):
-        expected_before = np.asarray(brainstate.random.uniform(size=(8,)))
-        expected_after = np.asarray(brainstate.random.uniform(size=(8,)))
-    with brainstate.random.seed_context(8712):
-        actual_before = np.asarray(brainstate.random.uniform(size=(8,)))
-        build_codebook(TaskConfig())
-        actual_after = np.asarray(brainstate.random.uniform(size=(8,)))
-
-    assert np.array_equal(actual_before, expected_before)
-    assert np.array_equal(actual_after, expected_after)
+        ({"train": [{"input": [[1]], "output": [[1]]}], "test": [{}]}, "input"),
+    ],
+)
+def test_invalid_task_shape_names_the_offending_field(
+    payload: dict, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        arc_task_from_mapping(payload, task_id="bad")
 
 
-def test_codebook_seed_reproduces_bytes_and_changes_the_fingerprint():
-    base = TaskConfig(codebook_seed=41)
-
-    first = build_codebook(base)
-    repeated = build_codebook(base)
-    different = build_codebook(replace(base, codebook_seed=42))
-
-    assert first.tobytes() == repeated.tobytes()
-    assert first.tobytes() != different.tobytes()
-
-
-def test_codebook_retries_seed_plus_attempt_until_design_is_usable(monkeypatch):
-    seeds = []
-
-    class _RetryStream:
-        def __init__(self, seed):
-            seeds.append(seed)
-
-        def bernoulli(self, probability, *, size):
-            del probability
-            codebook = np.zeros(size, dtype=np.bool_)
-            if len(seeds) > 1:
-                flattened = codebook.reshape(size[0], -1)
-                flattened[np.arange(size[0]), np.arange(size[0])] = True
-            return codebook
-
-    monkeypatch.setattr(brainstate.random, "RandomState", _RetryStream)
-
-    codebook = build_codebook(TaskConfig(codebook_seed=700))
-
-    assert seeds == [700, 701]
-    assert np.linalg.matrix_rank(codebook.reshape(10, -1)) == 10
-
-
-def test_codebook_retry_exhaustion_names_seed_and_bound(monkeypatch):
-    seeds = []
-
-    class _DuplicateStream:
-        def __init__(self, seed):
-            seeds.append(seed)
-
-        def bernoulli(self, probability, *, size):
-            del probability
-            return np.zeros(size, dtype=np.bool_)
-
-    monkeypatch.setattr(brainstate.random, "RandomState", _DuplicateStream)
-    monkeypatch.setattr(task_module, "_MAX_CODEBOOK_ATTEMPTS", 3)
-
-    with pytest.raises(
-        ValueError,
-        match=r"codebook_seed 700.*3 attempts.*unique.*full-rank",
-    ):
-        build_codebook(TaskConfig(codebook_seed=700))
-
-    assert seeds == [700, 701, 702]
-
-
-def test_flat_axis_has_ordered_phases_silent_latency_and_terminal_target():
-    config = TaskConfig(binding_count=3, latent_steps=5)
-    episode = generate_episode(config, _rng(1))
-    phases = episode.model_inputs[:, config.phase_slice]
-
-    assert episode.model_inputs.shape == (21, config.input_width)
-    assert np.all(phases.sum(axis=1) == 1)
-    assert np.all(phases[:12] == (1.0, 0.0, 0.0, 0.0))
-    assert np.all(phases[12:16] == (0.0, 1.0, 0.0, 0.0))
-    assert np.all(phases[16] == (0.0, 0.0, 1.0, 0.0))
-    assert np.all(phases[17:] == (0.0, 0.0, 0.0, 1.0))
-    external = episode.model_inputs[
-        config.latent_slice, slice(0, config.slot_slice.stop)
-    ]
-    assert not np.any(external)
-    assert episode.terminal_index == 20
-    assert episode.target == episode.terminal_target
-
-
-def test_zero_latent_steps_reads_the_last_query_tick():
-    config = TaskConfig(latent_steps=0)
-    episode = generate_episode(config, _rng(2))
-
-    assert episode.latent_inputs.shape == (0, config.input_width)
-    assert episode.terminal_index == config.query_slice.stop - 1
-    assert episode.model_inputs[
-        episode.terminal_index, config.phase_slice
-    ].tolist() == [
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-    ]
-
-
-def test_oracle_agreement_is_checked_independently_of_generator():
-    episode = generate_episode(TaskConfig(), _rng(3))
-    independent_mapping = dict(enumerate(episode.rule.tolist()))
-
-    for key, value in episode.demonstration_pairs:
-        assert independent_mapping[key] == value
-    assert independent_mapping[episode.query_symbol] == episode.terminal_target
-    assert sorted(independent_mapping.values()) == list(range(10))
-
-
-def test_rules_vary_across_episodes_from_one_seed_sequence():
-    rng = _rng(4)
-    rules = {
-        tuple(generate_episode(TaskConfig(), rng).rule.tolist()) for _ in range(12)
-    }
-
-    assert len(rules) > 1
-
-
-def test_model_tensor_has_no_rule_episode_or_terminal_target_field():
-    config = TaskConfig()
-    pair = generate_matched_episodes(config, _rng(5))
-    for episode in (pair.supported, pair.short):
-        assert episode.model_inputs.shape[1] == 2 * 24 + 8 + 4 + config.clock_width
-        binary_columns = episode.model_inputs[:, : config.clock_slice.start]
-        assert set(np.unique(binary_columns)).issubset({0.0, 1.0})
-        assert not np.any(episode.query_inputs[:, config.value_slice])
-        assert not np.any(episode.query_inputs[:, config.slot_slice])
-        assert not np.any(episode.latent_inputs[:, : config.slot_slice.stop])
-        assert np.array_equal(
-            episode.query_inputs[:, config.key_slice],
-            episode.codebook[episode.query_symbol],
+def test_scored_loading_requires_every_test_target() -> None:
+    with pytest.raises(ValueError, match=r"test\[0\]\.output"):
+        arc_task_from_mapping(
+            _task_payload(test_output=None),
+            task_id="unscored",
+            require_test_outputs=True,
         )
 
 
-def test_slot_address_is_phase_local_and_identifies_only_demonstration_position():
-    config = TaskConfig(binding_count=4)
-    episode = generate_episode(config, _rng(51))
-    slots = episode.model_inputs[:, config.slot_slice]
+def test_direct_per_task_json_loader_uses_file_stem(tmp_path: Path) -> None:
+    path = tmp_path / "a1b2c3.json"
+    _write_json(path, _task_payload(test_output=[[0, 2], [1, 9]]))
 
-    for slot in range(config.binding_count):
-        span = slice(slot * config.symbol_ticks, (slot + 1) * config.symbol_ticks)
-        assert np.all(slots[span, slot] == 1.0)
-        assert np.all(slots[span].sum(axis=1) == 1.0)
-    assert not np.any(slots[config.query_slice])
-    assert not np.any(slots[config.latent_slice])
+    task = load_arc_task(path, require_test_outputs=True)
+
+    assert task.task_id == "a1b2c3"
+    assert task.test[0].output == ArcGrid(((0, 2), (1, 9)))
 
 
-def test_matched_views_share_query_target_and_differ_in_one_binding():
-    pair = generate_matched_episodes(TaskConfig(), _rng(6))
-    supported, short = pair.supported, pair.short
+def test_direct_loader_rejects_json_collection_and_bad_json(tmp_path: Path) -> None:
+    collection = tmp_path / "collection.json"
+    _write_json(collection, [_task_payload()])
+    with pytest.raises(ValueError, match="one JSON object"):
+        load_arc_task(collection)
 
-    assert supported.query_symbol == short.query_symbol
-    assert supported.terminal_target == short.terminal_target
-    assert supported.rule.tobytes() == short.rule.tobytes()
-    assert supported.query_inputs.tobytes() == short.query_inputs.tobytes()
-    assert supported.latent_inputs.tobytes() == short.latent_inputs.tobytes()
-    assert (
-        sum(
-            left != right
-            for left, right in zip(
-                supported.demonstration_pairs, short.demonstration_pairs, strict=True
-            )
-        )
-        == 1
+    broken = tmp_path / "broken.json"
+    broken.write_text("{", encoding="utf-8")
+    with pytest.raises(ValueError, match="cannot load"):
+        load_arc_task(broken)
+
+
+def test_fingerprint_ignores_identifier_but_covers_content() -> None:
+    first = _task(task_id="first")
+    renamed = replace(first, task_id="renamed")
+    changed = _task(task_id="first")
+    changed = replace(
+        changed,
+        test=(ArcPair(changed.test[0].input, ArcGrid(((0, 2), (1, 8)))),),
     )
-    assert (
-        sum(key == supported.query_symbol for key, _ in supported.demonstration_pairs)
-        == 1
+
+    assert canonical_task_fingerprint(first) == canonical_task_fingerprint(renamed)
+    assert canonical_task_fingerprint(first) != canonical_task_fingerprint(changed)
+    assert canonical_task_fingerprint(
+        first, include_test_outputs=False
+    ) == canonical_task_fingerprint(changed, include_test_outputs=False)
+
+
+def test_multiple_query_episodes_retain_shared_task_identity() -> None:
+    base = _task()
+    task = replace(
+        base,
+        test=base.test + (ArcPair(ArcGrid(((9,),)), ArcGrid(((9,),))),),
     )
-    assert (
-        supported.query_symbol,
-        supported.terminal_target,
-    ) in supported.demonstration_pairs
+
+    episodes = query_episodes(task, task_index=12)
+
+    assert [episode.query_index for episode in episodes] == [0, 1]
+    assert all(episode.task_index == 12 for episode in episodes)
+    assert episodes[0].demonstrations is episodes[1].demonstrations
+    assert episodes[0].task_fingerprint == episodes[1].task_fingerprint
+    assert episodes[1].query_input == ArcGrid(((9,),))
+
+
+@pytest.mark.parametrize("index", [-1, True, 1.5])
+def test_query_episode_task_index_must_be_non_negative_integer(index: object) -> None:
+    with pytest.raises(ValueError, match="task_index"):
+        query_episodes(_task(), task_index=index)
+
+
+def test_task_json_directory_manifest_hashes_deduplicates_and_rejects(
+    tmp_path: Path,
+) -> None:
+    payload = _task_payload(test_output=[[0, 2], [1, 9]])
+    _write_json(tmp_path / "one.json", payload)
+    _write_json(tmp_path / "renamed-copy.json", payload)
+    _write_json(tmp_path / "invalid.json", {"train": [], "test": []})
+
+    loaded = load_dataset_source(_source(tmp_path, source_format="task_json"))
+
+    assert len(loaded.tasks) == 1
+    manifest = loaded.manifest
+    assert manifest.parsed_task_count == 2
+    assert manifest.valid_task_count == 1
+    assert manifest.duplicate_task_count == 1
+    assert manifest.rejected_task_count == 1
+    assert len(manifest.files) == 3
     assert all(
-        supported.query_symbol not in binding for binding in short.demonstration_pairs
+        len(file.sha256) == 64 and file.size_bytes > 0 for file in manifest.files
+    )
+    evidence = manifest.to_dict()
+    assert evidence["source"]["role"] == "train"
+    assert evidence["private_paper_data_available"] is False
+    assert evidence["private_training_recipe_available"] is False
+
+
+def test_collection_json_supports_task_mapping_list_and_wrapper(tmp_path: Path) -> None:
+    first = _task_payload(test_output=[[0, 2], [1, 9]])
+    second = _task_payload(test_output=[[9, 2], [1, 9]])
+    _write_json(tmp_path / "mapping.json", {"alpha": first})
+    _write_json(tmp_path / "list.json", [{"id": "beta", "task": second}])
+
+    loaded = load_dataset_source(_source(tmp_path, source_format="collection_json"))
+
+    assert [task.task_id for task in loaded.tasks] == ["beta", "alpha"]
+    assert loaded.manifest.valid_task_count == 2
+
+
+def test_collection_tasks_envelope_and_auto_format(tmp_path: Path) -> None:
+    path = tmp_path / "tasks.json"
+    _write_json(
+        path,
+        {"tasks": {"named": _task_payload(test_output=[[0, 2], [1, 9]])}},
     )
 
+    loaded = load_dataset_source(_source(path, source_format="auto"))
 
-def test_same_seed_reproduces_encoded_pair_exactly():
-    first = generate_matched_episodes(TaskConfig(), _rng(7))
-    second = generate_matched_episodes(TaskConfig(), _rng(7))
-
-    for condition in ("supported", "short"):
-        left = getattr(first, condition)
-        right = getattr(second, condition)
-        assert left.model_inputs.tobytes() == right.model_inputs.tobytes()
-        assert left.rule.tobytes() == right.rule.tobytes()
+    assert loaded.tasks[0].task_id == "named"
+    assert loaded.manifest.files[0].path == "tasks.json"
 
 
-@pytest.mark.parametrize(
-    ("kwargs", "message"),
-    [
-        ({"symbol_count": 9}, "symbol_count"),
-        ({"binding_count": 0}, "binding_count"),
-        ({"slot_capacity": 0}, "slot_capacity"),
-        ({"latent_steps": -1}, "latent_steps"),
-        ({"code_width": 9}, "code_width"),
-        ({"symbol_ticks": 0}, "symbol_ticks"),
-        ({"codebook_seed": -1}, "codebook_seed"),
-        ({"spike_rate": 0.0}, "spike_rate"),
-    ],
-)
-def test_malformed_config_names_the_quantity(kwargs, message):
-    with pytest.raises(ValueError, match=message):
-        TaskConfig(**kwargs)
+def test_declared_fingerprint_exclusion_is_matched_recorded_and_removed(
+    tmp_path: Path,
+) -> None:
+    excluded_payload = _task_payload(test_output=[[0, 2], [1, 9]])
+    retained_payload = _task_payload(test_output=[[9, 2], [1, 9]])
+    path = tmp_path / "tasks.json"
+    _write_json(
+        path, {"excluded-id": excluded_payload, "retained-id": retained_payload}
+    )
+    fingerprint = canonical_task_fingerprint(
+        arc_task_from_mapping(excluded_payload, task_id="different-name")
+    )
+    source = replace(
+        _source(path, source_format="collection_json"),
+        exclude_fingerprints=(fingerprint.upper(),),
+    )
+
+    loaded = load_dataset_source(source)
+
+    assert [task.task_id for task in loaded.tasks] == ["retained-id"]
+    assert loaded.manifest.parsed_task_count == 2
+    assert loaded.manifest.valid_task_count == 1
+    assert loaded.manifest.excluded_task_count == 1
+    assert loaded.manifest.exclusions == (
+        ExcludedTask(
+            origin="tasks.json:excluded-id",
+            task_id="excluded-id",
+            fingerprint=fingerprint,
+        ),
+    )
+    evidence = loaded.manifest.to_dict()
+    assert evidence["source"]["exclude_fingerprints"] == [fingerprint]
+    assert evidence["excluded_task_count"] == 1
+    assert evidence["exclusions"][0]["task_id"] == "excluded-id"
 
 
-@pytest.mark.parametrize(
-    "field",
-    [
-        "symbol_count",
-        "binding_count",
-        "slot_capacity",
-        "latent_steps",
-        "code_width",
-        "symbol_ticks",
-        "codebook_seed",
-    ],
-)
-@pytest.mark.parametrize("value", [True, 4.0, float("nan"), float("inf")])
-def test_integer_config_fields_require_finite_non_boolean_integral_scalars(
-    field, value
-):
-    with pytest.raises(ValueError, match=field):
-        TaskConfig(**{field: value})
+def test_unmatched_fingerprint_exclusion_is_an_error(tmp_path: Path) -> None:
+    path = tmp_path / "task.json"
+    _write_json(path, _task_payload(test_output=[[0, 2], [1, 9]]))
+    source = replace(
+        _source(path, source_format="task_json"),
+        exclude_fingerprints=("0" * 64,),
+    )
+
+    with pytest.raises(ValueError, match="did not match.*0{64}"):
+        load_dataset_source(source)
 
 
-@pytest.mark.parametrize("value", [True, float("nan"), float("inf"), [0.25]])
-def test_spike_rate_requires_a_finite_non_boolean_real_scalar(value):
-    with pytest.raises(ValueError, match="spike_rate"):
-        TaskConfig(spike_rate=value)
+def test_jsonl_supports_wrappers_blank_lines_and_rejection_accounting(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "tasks.jsonl"
+    valid = {
+        "task_id": "line-task",
+        "task": _task_payload(test_output=[[0, 2], [1, 9]]),
+    }
+    invalid = {"id": "bad", "task": {"train": [], "test": []}}
+    path.write_text(
+        "\n" + json.dumps(valid) + "\n{\n" + json.dumps(invalid) + "\n",
+        encoding="utf-8",
+    )
+
+    loaded = load_dataset_source(_source(path, source_format="jsonl"))
+
+    assert loaded.tasks[0].task_id == "line-task"
+    assert loaded.manifest.rejected_task_count == 2
+    assert any("Expecting" in rejected.reason for rejected in loaded.manifest.rejected)
+    assert any("train" in rejected.reason for rejected in loaded.manifest.rejected)
 
 
-def test_binding_overflow_names_requested_count_and_capacity():
-    with pytest.raises(ValueError, match=r"binding_count 9 exceeds slot_capacity 8"):
-        TaskConfig(binding_count=9, slot_capacity=8, symbol_count=12)
+def test_source_with_no_valid_tasks_fails_with_rejection_summary(
+    tmp_path: Path,
+) -> None:
+    _write_json(tmp_path / "bad.json", {"train": [], "test": []})
 
-
-def test_short_context_capacity_constraint_names_both_quantities():
-    with pytest.raises(ValueError, match=r"symbol_count.*binding_count \+ 2"):
-        TaskConfig(symbol_count=10, binding_count=9, slot_capacity=9)
-
-
-@pytest.mark.parametrize(
-    ("change", "message"),
-    [
-        ({"rule": np.arange(9)}, "rule shape"),
-        ({"rule": np.zeros(10, dtype=int)}, "rule must be a bijection"),
-        ({"demonstration_keys": [0, 0, 1, 2]}, "demonstration_keys.*distinct"),
-        ({"demonstration_keys": [0, 1, 2, 20]}, "demonstration_keys.*symbol_count"),
-        ({"demonstration_values": [3, 2, 3, 4]}, "demonstration_values disagree"),
-        ({"terminal_target": 9}, "terminal_target disagrees"),
-        ({"query_symbol": 10}, "query_symbol.*symbol_count"),
-        ({"condition": "unknown"}, "condition"),
-    ],
-)
-def test_malformed_episode_data_names_the_quantity(change, message):
-    config = TaskConfig()
-    metadata = _valid_metadata(config)
-    metadata.update(change)
-
-    with pytest.raises(ValueError, match=message):
-        build_episode(config, **metadata)
-
-
-def test_condition_specific_malformed_data_is_rejected():
-    config = TaskConfig()
-    metadata = _valid_metadata(config)
-    metadata["condition"] = "short"
-    with pytest.raises(ValueError, match="short condition.*query_symbol"):
-        build_episode(config, **metadata)
-
-    metadata = _valid_metadata(config)
-    metadata["demonstration_keys"] = np.arange(1, 5)
-    metadata["demonstration_values"] = metadata["rule"][1:5]
-    with pytest.raises(ValueError, match="supported condition.*once"):
-        build_episode(config, **metadata)
-
-
-def test_public_oracle_and_rule_draw_validate_their_inputs():
-    with pytest.raises(ValueError, match="symbol_count"):
-        draw_rule(0, _rng())
-    with pytest.raises(ValueError, match="rule shape"):
-        oracle_answer(np.zeros((2, 2), dtype=int), 0)
-    with pytest.raises(ValueError, match="bijection"):
-        oracle_answer([0, 0], 0)
-    with pytest.raises(ValueError, match="query_symbol"):
-        oracle_answer([0, 1], 2)
-    with pytest.raises(ValueError, match="condition"):
-        generate_episode(TaskConfig(), _rng(), condition="other")
-
-
-@pytest.mark.parametrize("value", [True, 10.0, float("nan"), float("inf")])
-def test_draw_rule_symbol_count_requires_a_finite_integral_scalar(value):
-    with pytest.raises(ValueError, match="symbol_count"):
-        draw_rule(value, _rng())
-
-
-@pytest.mark.parametrize("value", [True, 0.0, float("nan"), float("inf")])
-def test_oracle_query_symbol_requires_a_finite_integral_scalar(value):
-    with pytest.raises(ValueError, match="query_symbol"):
-        oracle_answer(np.arange(10, dtype=np.int32), value)
+    with pytest.raises(ValueError, match="no valid unique tasks.*train"):
+        load_dataset_source(_source(tmp_path))
 
 
 @pytest.mark.parametrize(
     ("field", "value"),
     [
-        ("query_symbol", True),
-        ("query_symbol", 0.0),
-        ("query_symbol", float("nan")),
-        ("terminal_target", True),
-        ("terminal_target", 1.0),
-        ("terminal_target", float("inf")),
+        ("name", ""),
+        ("version", ""),
+        ("license_reference", ""),
+        ("path", ""),
+        ("role", "other"),
+        ("format", "csv"),
     ],
 )
-def test_episode_scalar_symbols_require_finite_non_boolean_integral_values(
-    field, value
-):
-    config = TaskConfig()
-    metadata = _valid_metadata(config)
-    metadata[field] = value
-
+def test_source_declaration_fails_closed(field: str, value: object) -> None:
+    arguments = {
+        "name": "source",
+        "role": "train",
+        "version": "1",
+        "path": "unused",
+        "license_reference": "reference",
+        "format": "auto",
+    }
+    arguments[field] = value
     with pytest.raises(ValueError, match=field):
-        build_episode(config, **metadata)
+        DatasetSource(**arguments)
 
 
 @pytest.mark.parametrize(
-    ("field", "values"),
+    "fingerprints",
     [
-        (
-            "rule",
-            np.array([2**32, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=np.uint64),
-        ),
-        (
-            "demonstration_keys",
-            np.array([2**40, 1, 2, 3], dtype=np.int64),
-        ),
-        (
-            "demonstration_values",
-            np.array([2**40, 2, 3, 4], dtype=np.int64),
-        ),
+        ("short",),
+        ("z" * 64,),
+        ("a" * 64, "A" * 64),
     ],
 )
-def test_episode_symbol_arrays_are_range_checked_before_int32_cast(field, values):
-    config = TaskConfig()
-    metadata = _valid_metadata(config)
-    metadata[field] = values
-
-    with pytest.raises(ValueError, match=field):
-        build_episode(config, **metadata)
-
-
-@pytest.mark.parametrize(
-    "rule",
-    [
-        np.arange(10, dtype=np.float64),
-        np.arange(10, dtype=np.int32).astype(bool),
-        np.array([2**32, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=np.uint64),
-    ],
-)
-def test_oracle_validates_raw_rule_values_before_indexing(rule):
-    with pytest.raises(ValueError, match="rule"):
-        oracle_answer(rule, 0)
-
-
-def test_invalid_condition_does_not_consume_the_random_stream():
-    config = TaskConfig()
-    rejected_rng = _rng(91)
-    control_rng = _rng(91)
-
-    with pytest.raises(ValueError, match="condition"):
-        generate_episode(config, rejected_rng, condition="other")
-
-    after_rejection = generate_matched_episodes(config, rejected_rng)
-    control = generate_matched_episodes(config, control_rng)
-    assert after_rejection.supported.rule.tobytes() == control.supported.rule.tobytes()
-    assert (
-        after_rejection.supported.model_inputs.tobytes()
-        == control.supported.model_inputs.tobytes()
-    )
-
-
-@pytest.mark.parametrize("public_class", [TaskConfig, Episode, MatchedEpisodes])
-def test_public_dataclass_docstrings_describe_attributes(public_class):
-    assert "Attributes\n----------" in public_class.__doc__
-
-
-@st.composite
-def _valid_sizes(draw):
-    symbol_count = draw(st.integers(min_value=10, max_value=20))
-    binding_count = draw(st.integers(min_value=1, max_value=min(8, symbol_count - 2)))
-    capacity = draw(st.integers(min_value=binding_count, max_value=10))
-    latent_steps = draw(st.integers(min_value=0, max_value=8))
-    return symbol_count, binding_count, capacity, latent_steps
-
-
-@given(_valid_sizes(), st.integers(min_value=0, max_value=2**31 - 1))
-@settings(max_examples=25, deadline=None)
-def test_symbol_and_binding_property(size, seed):
-    symbol_count, binding_count, capacity, latent_steps = size
-    config = TaskConfig(
-        symbol_count=symbol_count,
-        binding_count=binding_count,
-        slot_capacity=capacity,
-        latent_steps=latent_steps,
-    )
-    pair = generate_matched_episodes(config, _rng(seed))
-
-    assert pair.supported.model_inputs.shape == (config.total_steps, config.input_width)
-    assert pair.supported.query_inputs.tobytes() == pair.short.query_inputs.tobytes()
-    assert pair.supported.terminal_target == pair.short.terminal_target
-    assert (
-        sum(
-            key == pair.supported.query_symbol
-            for key, _ in pair.supported.demonstration_pairs
+def test_source_exclusion_fingerprints_are_valid_unique_sha256(
+    fingerprints: tuple[str, ...],
+) -> None:
+    with pytest.raises(ValueError, match="exclude_fingerprints"):
+        replace(
+            _source(Path("unused")),
+            exclude_fingerprints=fingerprints,
         )
-        == 1
+
+
+def test_evaluation_source_cannot_exclude_fingerprints() -> None:
+    with pytest.raises(ValueError, match="train/tuning"):
+        DatasetSource(
+            "ARC-AGI-1 evaluation",
+            "evaluation",
+            "1",
+            "unused",
+            "reference",
+            exclude_fingerprints=("a" * 64,),
+        )
+
+
+def test_eval_only_and_private_paper_sources_cannot_be_mislabelled() -> None:
+    with pytest.raises(ValueError, match="evaluation-only"):
+        DatasetSource("ARC-AGI-1 evaluation", "train", "1", "x", "ref")
+    with pytest.raises(ValueError, match="private data"):
+        DatasetSource("BDH-CQ private paper data", "train", "1", "x", "ref")
+
+
+def test_missing_or_empty_source_path_fails_clearly(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="does not exist"):
+        load_dataset_source(_source(tmp_path / "missing"))
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(ValueError, match="no supported files"):
+        load_dataset_source(_source(empty))
+
+
+def test_evaluation_source_requires_test_outputs_by_default(tmp_path: Path) -> None:
+    path = tmp_path / "eval.json"
+    _write_json(path, _task_payload(test_output=None))
+    source = _source(
+        path,
+        name="ARC-AGI-1 evaluation",
+        role="evaluation",
+        source_format="task_json",
     )
-    assert all(
-        pair.short.query_symbol not in binding
-        for binding in pair.short.demonstration_pairs
+
+    with pytest.raises(ValueError, match="no valid unique tasks.*output"):
+        load_dataset_source(source)
+    loaded = load_dataset_source(source, require_test_outputs=False)
+    assert loaded.tasks[0].test[0].output is None
+
+
+def test_split_leakage_detects_train_and_tuning_against_evaluation() -> None:
+    task = _task()
+    train = _manifest(task, name="train-a", role="train")
+    tuning = _manifest(task, name="tune-a", role="tuning")
+    evaluation = _manifest(task, name="eval-a", role="evaluation")
+    fixture = _manifest(task, name="fixture-a", role="fixture")
+
+    overlaps = detect_split_leakage((fixture, evaluation, tuning, train))
+
+    assert len(overlaps) == 1
+    assert overlaps[0].fingerprint == canonical_task_fingerprint(task)
+    assert overlaps[0].fitting_sources == ("train-a (train)", "tune-a (tuning)")
+    assert overlaps[0].evaluation_sources == ("eval-a (evaluation)",)
+    with pytest.raises(SplitLeakageError, match=r"train-a.*eval-a") as caught:
+        assert_no_evaluation_leakage((train, evaluation))
+    assert caught.value.overlaps == (
+        overlaps[0].__class__(
+            fingerprint=overlaps[0].fingerprint,
+            fitting_sources=("train-a (train)",),
+            evaluation_sources=("eval-a (evaluation)",),
+        ),
     )
-    assert pair.supported.terminal_index == config.total_steps - 1
 
 
-@st.composite
-def _valid_codebook_configs(draw):
-    symbol_count = draw(st.integers(min_value=10, max_value=20))
-    code_width = draw(st.integers(min_value=symbol_count, max_value=32))
-    return TaskConfig(
-        symbol_count=symbol_count,
-        code_width=code_width,
-        symbol_ticks=draw(st.integers(min_value=2, max_value=6)),
-        spike_rate=draw(st.sampled_from((0.15, 0.25, 0.5, 0.75, 0.85))),
-        codebook_seed=draw(st.integers(min_value=0, max_value=2**31 - 1)),
+def test_nonoverlapping_or_fixture_only_content_passes_leakage_gate() -> None:
+    first = _task()
+    second = replace(
+        first, test=(ArcPair(first.test[0].input, ArcGrid(((9, 9), (9, 9)))),)
+    )
+    assert_no_evaluation_leakage(
+        (
+            _manifest(first, name="train", role="train"),
+            _manifest(second, name="eval", role="evaluation"),
+            _manifest(first, name="fixture", role="fixture"),
+        )
     )
 
 
-@given(_valid_codebook_configs())
-@settings(max_examples=40, deadline=None)
-def test_codebook_property_is_deterministic_unique_and_augmented_full_rank(config):
-    first = build_codebook(config)
-    second = build_codebook(config)
-    flattened = first.reshape(config.symbol_count, -1)
-    augmented = np.column_stack((flattened, np.ones(config.symbol_count)))
+@pytest.mark.parametrize(
+    "claim",
+    ["private_paper_data_available", "private_training_recipe_available"],
+)
+def test_manifest_cannot_claim_unavailable_private_paper_assets(claim: str) -> None:
+    task = _task()
+    manifest = _manifest(task, name="public", role="train")
 
-    assert first.tobytes() == second.tobytes()
-    assert np.unique(flattened, axis=0).shape[0] == config.symbol_count
-    assert np.linalg.matrix_rank(augmented) == config.symbol_count
-    assert float(first.mean()) == pytest.approx(float(first.sum()) / float(first.size))
+    with pytest.raises(ValueError, match="private data.*unavailable"):
+        replace(manifest, **{claim: True})
 
 
-def test_slice_helpers_are_stable_under_nondefault_dimensions():
-    config = replace(TaskConfig(), code_width=20, symbol_count=10, slot_capacity=9)
+def test_training_augmentation_is_deterministic_relation_consistent_and_immutable() -> (
+    None
+):
+    original = smoke_arc_tasks()[0]
+    original_mapping = arc_task_to_mapping(original)
 
-    assert config.key_slice == slice(0, 20)
-    assert config.value_slice == slice(20, 40)
-    assert config.slot_slice == slice(40, 49)
-    assert config.phase_slice == slice(49, 53)
-    assert config.clock_slice == slice(53, 53 + config.clock_width)
-    assert config.input_width == 53 + config.clock_width
+    first = draw_training_augmentation(
+        original, brainstate.random.RandomState(731), role="train"
+    )
+    second = draw_training_augmentation(
+        original, brainstate.random.RandomState(731), role="train"
+    )
+
+    assert first == second
+    assert first.color_map[0] == 0
+    assert sorted(first.color_map) == list(range(10))
+    assert 0 <= first.dihedral_index < 8
+    assert sorted(first.demonstration_order) == list(range(len(original.train)))
+    assert arc_task_to_mapping(original) == original_mapping
+
+    source_pair = original.train[first.demonstration_order[0]]
+    augmented_pair = first.task.train[0]
+    expected_input = task_module._transform_grid(
+        source_pair.input,
+        np.asarray(first.color_map, dtype=np.int32),
+        first.dihedral_index,
+    )
+    expected_output = task_module._transform_grid(
+        source_pair.output,
+        np.asarray(first.color_map, dtype=np.int32),
+        first.dihedral_index,
+    )
+    assert augmented_pair == ArcPair(expected_input, expected_output)
 
 
-def test_clock_code_repeats_only_at_the_slowest_period() -> None:
-    code = task_module.latent_clock_code(8, 4)
+def test_identity_augmentation_and_convenience_api() -> None:
+    original = _task()
+    config = AugmentationConfig(False, False, False)
 
-    assert code.shape == (8, 4)
-    assert np.allclose(code[0], code[4], atol=1e-5)
-    for step in range(1, 4):
-        assert not np.allclose(code[0], code[step])
+    result = draw_training_augmentation(
+        original, brainstate.random.RandomState(22), config=config
+    )
+    convenience = augment_training_task(
+        original, brainstate.random.RandomState(22), config=config
+    )
 
-
-def test_clock_code_width_is_independent_of_latent_depth() -> None:
-    shallow = task_module.latent_clock_code(2, 6)
-    deep = task_module.latent_clock_code(64, 6)
-
-    assert shallow.shape[1] == deep.shape[1] == 6
-    assert np.allclose(deep[:2], shallow)
-
-
-def test_zero_latent_steps_yields_an_empty_clock_code() -> None:
-    assert task_module.latent_clock_code(0, 4).shape == (0, 4)
+    assert result.task == original
+    assert result.color_map == tuple(range(10))
+    assert result.dihedral_index == 0
+    assert result.demonstration_order == (0, 1)
+    assert convenience == original
+    assert convenience is not original
 
 
-@pytest.mark.parametrize("clock_width", [0, -2, 3])
-def test_invalid_clock_width_is_rejected(clock_width: int) -> None:
+@pytest.mark.parametrize("role", ["evaluation", "fixture", "tuning"])
+def test_augmentation_rejects_every_nontraining_role_without_consuming_rng(
+    role: str,
+) -> None:
+    rejected = brainstate.random.RandomState(91)
+    control = brainstate.random.RandomState(91)
+    with pytest.raises(ValueError, match="training-only"):
+        augment_training_task(_task(), rejected, role=role)
+
+    rejected_next = np.asarray(rejected.randint(1000, size=(5,)))
+    control_next = np.asarray(control.randint(1000, size=(5,)))
+    assert np.array_equal(rejected_next, control_next)
+
+
+def test_augmentation_does_not_consume_global_brainstate_stream() -> None:
+    with brainstate.random.seed_context(2026):
+        expected_before = np.asarray(brainstate.random.uniform(size=(4,)))
+        expected_after = np.asarray(brainstate.random.uniform(size=(4,)))
+    with brainstate.random.seed_context(2026):
+        actual_before = np.asarray(brainstate.random.uniform(size=(4,)))
+        augment_training_task(_task(), brainstate.random.RandomState(11))
+        actual_after = np.asarray(brainstate.random.uniform(size=(4,)))
+
+    assert np.array_equal(actual_before, expected_before)
+    assert np.array_equal(actual_after, expected_after)
+
+
+@pytest.mark.parametrize("dihedral_index", range(8))
+def test_all_dihedral_transforms_preserve_cells_and_expected_orientation(
+    dihedral_index: int,
+) -> None:
+    grid = ArcGrid(((1, 2, 3), (4, 5, 6)))
+    transformed = task_module._transform_grid(
+        grid, np.arange(10, dtype=np.int32), dihedral_index
+    )
+
+    assert sorted(transformed.as_array().ravel()) == [1, 2, 3, 4, 5, 6]
+    if dihedral_index % 2:
+        assert (transformed.height, transformed.width) == (3, 2)
+    else:
+        assert (transformed.height, transformed.width) == (2, 3)
+
+
+def test_default_row_event_layout_is_bounded_and_nonoverlapping() -> None:
+    config = RowEventConfig()
+    slices = (
+        config.valid_slice,
+        config.phase_slice,
+        config.demonstration_slice,
+        config.side_valid_slice,
+        config.normalized_slice,
+        config.row_index_slice,
+        config.input_height_slice,
+        config.input_width_slice,
+        config.output_height_slice,
+        config.output_width_slice,
+        config.input_mask_slice,
+        config.output_mask_slice,
+        config.input_color_slice,
+        config.output_color_slice,
+    )
+
+    assert config.max_events == 330
+    assert config.input_width == 830
+    assert slices[0].start == 0
+    assert all(left.stop == right.start for left, right in zip(slices, slices[1:]))
+    assert slices[-1].stop == config.input_width
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"max_demonstrations": 0}, "max_demonstrations"),
+        ({"max_demonstrations": True}, "max_demonstrations"),
+        ({"max_grid_size": 31}, "max_grid_size"),
+        ({"max_grid_size": 0}, "max_grid_size"),
+        ({"color_count": 9}, "color_count"),
+    ],
+)
+def test_invalid_row_event_configuration_fails_closed(
+    kwargs: dict, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        RowEventConfig(**kwargs)
+
+
+def test_row_event_round_trip_is_lossless_for_unequal_shapes() -> None:
+    task = smoke_arc_tasks()[0]
+
+    encoded = encode_query_episode(task, 0)
+    decoded = decode_row_events(encoded.events)
+
+    assert isinstance(encoded, EncodedQueryEpisode)
+    assert isinstance(decoded, DecodedQueryContext)
+    assert decoded.demonstrations == task.train
+    assert decoded.query_input == task.test[0].input
+    assert encoded.target == task.test[0].output
+    assert (
+        encoded.valid_event_count
+        == sum(max(pair.input.height, pair.output.height) for pair in task.train)
+        + task.test[0].input.height
+    )
+    assert encoded.query_stop - encoded.query_start == task.test[0].input.height
+    assert encoded.query_start == 10 * 30
+    assert encoded.demonstration_spans == ((0, 30), (30, 60))
+
+
+def test_multi_query_encoding_preserves_indices_and_shared_demonstrations() -> None:
+    task = smoke_arc_tasks()[0]
+
+    encoded = encode_task_queries(task, task_index=7)
+
+    assert [episode.query_index for episode in encoded] == [0, 1]
+    assert all(episode.task_index == 7 for episode in encoded)
+    for episode, query in zip(encoded, task.test, strict=True):
+        decoded = decode_row_events(episode.events)
+        assert decoded.demonstrations == task.train
+        assert decoded.query_input == query.input
+
+
+def test_held_out_target_never_changes_model_input_bytes() -> None:
+    first = _task()
+    second = replace(
+        first,
+        test=(ArcPair(first.test[0].input, ArcGrid(((9, 8), (7, 6)))),),
+    )
+
+    first_encoded = encode_query_episode(first, 0)
+    second_encoded = encode_query_episode(second, 0)
+
+    assert first_encoded.events.tobytes() == second_encoded.events.tobytes()
+    assert first_encoded.target != second_encoded.target
+    assert first_encoded.task_fingerprint != second_encoded.task_fingerprint
+    config = RowEventConfig()
+    query_rows = first_encoded.events[
+        first_encoded.query_start : first_encoded.query_stop
+    ]
+    assert not np.any(query_rows[:, config.output_mask_slice])
+    assert not np.any(query_rows[:, config.output_color_slice])
+    assert not np.any(query_rows[:, config.output_height_slice])
+    assert not np.any(query_rows[:, config.output_width_slice])
+
+
+def test_fixed_block_padding_is_all_zero_inert_and_read_only() -> None:
+    encoded = encode_query_episode(_task(), 0)
+    config = RowEventConfig()
+    valid = encoded.events[:, config.valid_slice.start] == 1.0
+
+    assert encoded.query_start == config.max_demonstrations * config.max_grid_size
+    assert encoded.query_stop > encoded.valid_event_count
+    assert np.any(~valid[: encoded.query_start])
+    assert not np.any(encoded.events[~valid])
+    assert not np.any(encoded.events[encoded.query_stop :])
+    assert encoded.events.flags.writeable is False
+    with pytest.raises(ValueError, match="read-only"):
+        encoded.events[0, 0] = 0.0
+
+
+def test_full_capacity_30x30_and_maximum_demo_count_round_trips() -> None:
+    grid = ArcGrid(np.arange(900, dtype=np.int32).reshape(30, 30) % 10)
+    pair = ArcPair(grid, grid)
+    task = ArcTask(train=(pair,) * 10, test=(pair,))
+
+    encoded = encode_query_episode(task, 0)
+
+    assert encoded.valid_event_count == 330
+    assert encoded.query_stop == encoded.events.shape[0]
+    assert decode_row_events(encoded.events).demonstrations == task.train
+
+
+def test_output_derangement_cannot_move_fixed_demo_or_query_blocks() -> None:
+    first = ArcPair(ArcGrid(((1,), (2,), (3,))), ArcGrid(((4,),)))
+    second = ArcPair(ArcGrid(((5,),)), ArcGrid(((6,), (7,), (8,))))
+    query = ArcPair(ArcGrid(((9,),)), ArcGrid(((9,),)))
+    intact = ArcTask(train=(first, second), test=(query,))
+    deranged = ArcTask(
+        train=(
+            ArcPair(first.input, second.output),
+            ArcPair(second.input, first.output),
+        ),
+        test=(query,),
+    )
+
+    intact_encoded = encode_query_episode(intact, 0)
+    deranged_encoded = encode_query_episode(deranged, 0)
+
+    assert intact_encoded.demonstration_spans == deranged_encoded.demonstration_spans
+    assert intact_encoded.query_start == deranged_encoded.query_start == 300
+    assert intact_encoded.query_stop == deranged_encoded.query_stop == 301
+    assert (
+        intact_encoded.events[300:].tobytes() == deranged_encoded.events[300:].tobytes()
+    )
+
+
+def test_encoding_rejects_demo_grid_and_query_overflow() -> None:
+    pair = ArcPair(ArcGrid(((1,),)), ArcGrid(((1,),)))
+    too_many = ArcTask(train=(pair,) * 11, test=(pair,))
+    with pytest.raises(ValueError, match="demonstrations.*capacity"):
+        encode_query_episode(too_many, 0)
+
+    task = _task()
+    with pytest.raises(ValueError, match="grid shapes.*capacity"):
+        encode_query_episode(task, 0, RowEventConfig(max_grid_size=2))
+    with pytest.raises(ValueError, match="query_index"):
+        encode_query_episode(task, 1)
+    with pytest.raises(ValueError, match="query_index"):
+        encode_query_episode(task, True)
+    with pytest.raises(ValueError, match="task_index"):
+        encode_query_episode(task, 0, task_index=True)
+    with pytest.raises(ValueError, match="task_index"):
+        encode_query_episode(task, 0, task_index=-1)
+
+
+@pytest.mark.parametrize("corruption", ["gap", "padding", "phase", "query-output"])
+def test_decoder_fails_closed_on_corrupt_features(corruption: str) -> None:
+    config = RowEventConfig()
+    encoded = encode_query_episode(_task(), 0, config)
+    events = encoded.events.copy()
+    if corruption == "gap":
+        events[1, config.valid_slice] = 0.0
+    elif corruption == "padding":
+        events[config.max_grid_size - 1, config.phase_slice.start] = 1.0
+    elif corruption == "phase":
+        events[0, config.phase_slice] = 0.0
+    else:
+        events[encoded.query_start, config.output_color_slice.start] = 1.0
+
     with pytest.raises(ValueError):
-        TaskConfig(clock_width=clock_width)
+        decode_row_events(events, config)
 
 
-def test_clock_bank_is_confined_to_the_latent_span() -> None:
-    config = TaskConfig(latent_steps=6)
-    episode = generate_episode(config, _rng(77))
-    clock = episode.model_inputs[:, config.clock_slice]
-
-    assert not np.any(clock[: config.latent_slice.start])
-    assert np.any(clock[config.latent_slice])
-    assert np.array_equal(
-        clock[config.latent_slice],
-        task_module.latent_clock_code(config.latent_steps, config.clock_width),
-    )
+def test_decoder_rejects_wrong_shape_and_nonfinite_values() -> None:
+    config = RowEventConfig()
+    with pytest.raises(ValueError, match="events shape"):
+        decode_row_events(np.zeros((1, 1), dtype=np.float32), config)
+    encoded = encode_query_episode(_task(), 0, config)
+    events = encoded.events.copy()
+    events[0, 0] = np.nan
+    with pytest.raises(ValueError, match="non-finite"):
+        decode_row_events(events, config)
 
 
-def test_latent_span_drive_differs_between_successive_ticks() -> None:
-    config = TaskConfig(latent_steps=4)
-    episode = generate_episode(config, _rng(78))
-    latent_rows = episode.model_inputs[config.latent_slice]
+def test_target_padding_records_exact_shape_mask_and_is_read_only() -> None:
+    target = encode_target_grid(ArcGrid(((9, 1, 2), (3, 4, 5))))
 
-    assert not np.allclose(latent_rows[1], latent_rows[2])
+    assert isinstance(target, GridTarget)
+    assert target.colors.shape == target.valid_mask.shape == (30, 30)
+    assert (target.height_index, target.width_index) == (1, 2)
+    assert target.colors[:2, :3].tolist() == [[9, 1, 2], [3, 4, 5]]
+    assert int(target.valid_mask.sum()) == 6
+    assert not target.colors.flags.writeable
+    assert not target.valid_mask.flags.writeable
+
+
+def test_target_padding_rejects_bad_capacity() -> None:
+    with pytest.raises(ValueError, match="max_grid_size"):
+        encode_target_grid(ArcGrid(((1,),)), max_grid_size=0)
+    with pytest.raises(ValueError, match="exceeds capacity"):
+        encode_target_grid(ArcGrid(((1, 2),)), max_grid_size=1)
+
+
+def test_smoke_fixture_is_multiquery_plumbing_only_and_manifested() -> None:
+    loaded = smoke_loaded_dataset()
+
+    assert isinstance(loaded, LoadedDataset)
+    assert loaded.tasks == smoke_arc_tasks()
+    assert loaded.manifest.source.role == "fixture"
+    assert loaded.manifest.plumbing_only is True
+    assert loaded.manifest.valid_task_count == 2
+    assert loaded.manifest.rejected_task_count == 0
+    assert all(file.size_bytes > 0 for file in loaded.manifest.files)
+    assert any(len(task.test) > 1 for task in loaded.tasks)
+
+
+@pytest.mark.parametrize(
+    "public_type",
+    [
+        ArcGrid,
+        ArcPair,
+        ArcTask,
+        ArcQueryEpisode,
+        DatasetSource,
+        SourceManifest,
+        LoadedDataset,
+        RowEventConfig,
+        EncodedQueryEpisode,
+        GridTarget,
+    ],
+)
+def test_public_data_types_have_numpy_attribute_docstrings(public_type: type) -> None:
+    assert "Attributes\n----------" in public_type.__doc__

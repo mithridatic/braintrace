@@ -1,854 +1,838 @@
-"""Tests for Example 21's latent-workspace model."""
+"""Tests for Example 21's recurrent spiking ARC workspace."""
 
 from __future__ import annotations
 
 import ast
 import inspect
+import math
 import warnings
 
+import brainpy.state as bpstate
 import brainstate
+import brainunit as u
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from hypothesis import given, settings, strategies as st
-
-import braintrace
 
 try:
     from examples.pp_prop.latent_workspace_model import (
+        COLOR_COUNT,
+        MAX_GRID_SIZE,
+        NEURONS_PER_SLOT,
+        ArcLogits,
         LatentWorkspaceModel,
         ModelConfig,
-        _surrogate_spike,
-        dale_column_signs,
-        dale_projected,
-        factored_memory_read,
-        occupied_slot_derangement,
+        ModelStateSnapshot,
+        SelectedPackedTrajectory,
+        arc_loss_components,
+        arc_loss_per_example,
+        build_sparse_topology,
+        compact_output_width,
+        compile_pp_prop,
+        expand_compact_logits,
         parameter_snapshot,
-        phase_masks,
+        run_context,
+        run_latent_trajectory,
+        run_packed_stream,
+        run_selected_packed_stream,
         run_sequence,
-        shuffled_memory_factors,
+        terminal_arc_loss,
     )
-    from examples.pp_prop.latent_workspace_task import (
-        TaskConfig,
-        build_codebook,
-        generate_episode,
-    )
-except ModuleNotFoundError:
+except ImportError:
     from latent_workspace_model import (
+        COLOR_COUNT,
+        MAX_GRID_SIZE,
+        NEURONS_PER_SLOT,
+        ArcLogits,
         LatentWorkspaceModel,
         ModelConfig,
-        _surrogate_spike,
-        dale_column_signs,
-        dale_projected,
-        factored_memory_read,
-        occupied_slot_derangement,
+        ModelStateSnapshot,
+        SelectedPackedTrajectory,
+        arc_loss_components,
+        arc_loss_per_example,
+        build_sparse_topology,
+        compact_output_width,
+        compile_pp_prop,
+        expand_compact_logits,
         parameter_snapshot,
-        phase_masks,
+        run_context,
+        run_latent_trajectory,
+        run_packed_stream,
+        run_selected_packed_stream,
         run_sequence,
-        shuffled_memory_factors,
-    )
-    from latent_workspace_task import TaskConfig, build_codebook, generate_episode
-
-
-def _task(*, bindings: int = 2, slots: int = 3, latent: int = 1) -> TaskConfig:
-    return TaskConfig(
-        symbol_count=10,
-        binding_count=bindings,
-        slot_capacity=slots,
-        latent_steps=latent,
-        code_width=12,
-        spike_rate=0.25,
-        symbol_ticks=2,
+        terminal_arc_loss,
     )
 
 
-def _model(
-    *, bindings: int = 2, slots: int = 3, latent: int = 1, width: int = 8
-) -> LatentWorkspaceModel:
-    return LatentWorkspaceModel(
-        ModelConfig(
-            task=_task(bindings=bindings, slots=slots, latent=latent),
-            latent_width=width,
-        )
-    )
+def _config(**changes: object) -> ModelConfig:
+    values: dict[str, object] = {
+        "input_width": 6,
+        "neuron_count": 64,
+        "recurrent_edges": 96,
+        "max_latent_steps": 4,
+        "readout_width": 8,
+        "color_rank": 2,
+        "seed": 41,
+    }
+    values.update(changes)
+    return ModelConfig(**values)  # type: ignore[arg-type]
 
 
-def _run_prefix(model: LatentWorkspaceModel, model_inputs: jax.Array) -> jax.Array:
-    sequence = jnp.asarray(model_inputs, dtype=jnp.float32)
-    if sequence.ndim == 2:
-        sequence = sequence[:, None, :]
-    return brainstate.transform.for_loop(model, sequence)
+@pytest.fixture(scope="module")
+def model() -> LatentWorkspaceModel:
+    return LatentWorkspaceModel(_config())
 
 
-@settings(max_examples=40, deadline=None)
-@given(
-    batch=st.integers(min_value=1, max_value=3),
-    slots=st.integers(min_value=1, max_value=4),
-    width=st.integers(min_value=1, max_value=6),
-)
-def test_factored_read_equals_dense_outer_product(
-    batch: int, slots: int, width: int
+def _tree_arrays(value: object) -> tuple[np.ndarray, ...]:
+    return tuple(np.asarray(u.get_mantissa(leaf)) for leaf in jax.tree.leaves(value))
+
+
+def _assert_parameter_snapshots_equal(
+    left: dict[str, object], right: dict[str, object]
 ) -> None:
-    size = batch * slots * width
-    values = jnp.arange(size, dtype=jnp.float32).reshape(batch, slots, width)
-    values = values / jnp.asarray(max(size, 1), dtype=jnp.float32)
-    keys = jnp.flip(values + 0.125, axis=-1)
-    query = jnp.arange(batch * width, dtype=jnp.float32).reshape(batch, width)
-    query = query / jnp.asarray(max(batch * width, 1), dtype=jnp.float32)
-
-    factored = factored_memory_read(values, keys, query)
-    dense = jnp.einsum("bmi,bmj->bij", values, keys)
-    expected = jnp.einsum("bij,bj->bi", dense, query)
-
-    np.testing.assert_allclose(factored, expected, rtol=2e-5, atol=2e-5)
+    assert left.keys() == right.keys()
+    for name, value in left.items():
+        left_arrays = _tree_arrays(value)
+        right_arrays = _tree_arrays(right[name])
+        assert len(left_arrays) == len(right_arrays)
+        for first, second in zip(left_arrays, right_arrays, strict=True):
+            np.testing.assert_array_equal(first, second, err_msg=name)
 
 
-def test_factored_read_lowers_to_exactly_two_contractions() -> None:
-    values = jnp.ones((1, 2, 3), dtype=jnp.float32)
-    keys = jnp.ones_like(values)
-    query = jnp.ones((1, 3), dtype=jnp.float32)
-
-    jaxpr = jax.make_jaxpr(factored_memory_read)(values, keys, query).jaxpr
-
-    assert [eqn.primitive.name for eqn in jaxpr.eqns].count("dot_general") == 2
+def _valid_events(time: int, width: int) -> jax.Array:
+    events = jnp.zeros((time, width), dtype=jnp.float32)
+    return events.at[:, 0].set(1.0).at[:, 1].set(1.0)
 
 
-def test_phase_masks_activate_exactly_one_submap_per_tick() -> None:
-    episode = generate_episode(
-        _task(bindings=3, slots=3, latent=2),
-        brainstate.random.RandomState(21),
-    )
+def test_full_configuration_is_2048_neurons_16384_edges_and_32_slots() -> None:
+    config = ModelConfig(input_width=830)
 
-    demo, query, latent, seed = phase_masks(
-        jnp.asarray(episode.model_inputs), episode.config
-    )
-    combined = jnp.concatenate((demo, query, latent), axis=-1)
-
-    np.testing.assert_array_equal(np.asarray(combined.sum(axis=-1)), 1.0)
-    np.testing.assert_array_equal(
-        np.argmax(np.asarray(combined), axis=-1),
-        np.concatenate((np.zeros(6), np.ones(2), np.full(2, 2))).astype(np.int64),
-    )
-    np.testing.assert_array_equal(
-        np.asarray(seed)[:, 0],
-        np.concatenate((np.zeros(8), np.ones(1), np.zeros(1))),
-    )
+    assert config.neuron_count == 2048
+    assert config.recurrent_edges == 16384
+    assert config.max_latent_steps == 32
+    assert config.slot_count == 32
+    assert config.slot_count * NEURONS_PER_SLOT == config.neuron_count
 
 
-def test_demo_step_changes_memory_without_changing_parameters() -> None:
-    model = _model()
-    episode = generate_episode(model.config.task, brainstate.random.RandomState(22))
-    before = parameter_snapshot(model)
-    memory_before = np.asarray(model.memory_factors()[0]).copy()
+def test_full_topology_has_exact_unique_no_self_edge_count() -> None:
+    topology = build_sparse_topology(2048, 16384, seed=2108)
+    flat = topology.rows.astype(np.int64) * 2048 + topology.columns
 
-    model(jnp.asarray(episode.model_inputs[0:1]))
-
-    after = parameter_snapshot(model)
-    assert before.keys() == after.keys()
-    assert all(np.array_equal(before[name], after[name]) for name in before)
-    assert not np.array_equal(memory_before, np.asarray(model.memory_factors()[0]))
+    assert topology.edge_count == 16384
+    assert np.unique(flat).size == 16384
+    assert not np.any(topology.rows == topology.columns)
+    assert topology.rows.flags.writeable is False
+    assert topology.columns.flags.writeable is False
+    assert topology.values.flags.writeable is False
 
 
-def test_different_demonstrations_produce_different_memory() -> None:
-    task = _task(bindings=3, slots=3)
-    first = generate_episode(task, brainstate.random.RandomState(23))
-    second = generate_episode(task, brainstate.random.RandomState(24))
-    model = _model(bindings=3, slots=3)
+def test_full_model_instantiates_physical_components() -> None:
+    full = LatentWorkspaceModel(ModelConfig(input_width=4))
 
-    _run_prefix(model, jnp.asarray(first.model_inputs[: task.demonstration_steps]))
-    first_values, first_keys = model.memory_factors()
-    first_memory = np.concatenate(
-        (np.asarray(first_values).ravel(), np.asarray(first_keys).ravel())
-    )
-    model.reset_state()
-    _run_prefix(model, jnp.asarray(second.model_inputs[: task.demonstration_steps]))
-    second_values, second_keys = model.memory_factors()
-    second_memory = np.concatenate(
-        (np.asarray(second_values).ravel(), np.asarray(second_keys).ravel())
-    )
-
-    assert not np.array_equal(first_memory, second_memory)
+    assert full.neuron_count == 2048
+    assert full.recurrent_edge_count == 16384
+    assert full.slot_count == 32
+    assert full.neu.varshape == (2048,)
+    assert isinstance(full.neu, bpstate.LIF)
+    assert isinstance(full.ff_syn, bpstate.AlignPostProj)
+    assert isinstance(full.ff_syn.syn, bpstate.Expon)
+    assert isinstance(full.ff_syn.out, bpstate.CUBA)
+    assert isinstance(full.rec_syn, bpstate.AlignPostProj)
+    assert isinstance(full.rec_syn.syn, bpstate.Expon)
+    assert isinstance(full.rec_syn.out, bpstate.CUBA)
 
 
-def test_memory_storage_is_linear_in_slots_and_width() -> None:
-    small = _model(slots=3, width=8)
-    more_slots = _model(slots=6, width=8)
-    wider = _model(slots=3, width=16)
+def test_model_uses_braintrace_dense_and_sparse_operators(
+    model: LatentWorkspaceModel,
+) -> None:
+    import braintrace
 
-    assert small.memory_storage_elements == 2 * 3 * 8
-    assert more_slots.memory_storage_elements == 2 * small.memory_storage_elements
-    assert wider.memory_storage_elements == 2 * small.memory_storage_elements
-    assert small.memory_storage_elements != small.config.latent_width**2
-
-
-def test_shuffle_preserves_shape_magnitude_and_keys_but_changes_pairing() -> None:
-    task = _task(bindings=3, slots=3)
-    episode = generate_episode(task, brainstate.random.RandomState(25))
-    model = _model(bindings=3, slots=3)
-    _run_prefix(model, jnp.asarray(episode.model_inputs[: task.demonstration_steps]))
-    values, keys = model.memory_factors()
-    permutation = occupied_slot_derangement(task.slot_capacity, task.binding_count)
-
-    shuffled_values, shuffled_keys = shuffled_memory_factors(values, keys, permutation)
-
-    assert shuffled_values.shape == values.shape
-    assert shuffled_keys.shape == keys.shape
-    np.testing.assert_array_equal(shuffled_keys, keys)
-    np.testing.assert_allclose(
-        jnp.linalg.norm(shuffled_values), jnp.linalg.norm(values)
-    )
-    assert not np.array_equal(shuffled_values, values)
-    query = jnp.arange(model.config.latent_width, dtype=jnp.float32)[None, :]
-    assert not np.allclose(
-        np.asarray(factored_memory_read(values, keys, query)),
-        np.asarray(factored_memory_read(shuffled_values, shuffled_keys, query)),
-    )
-
-    before_shape = model.grouped_state.value.shape
-    model.shuffle_memory(permutation)
-    assert model.grouped_state.value.shape == before_shape
-    np.testing.assert_allclose(model.memory_factors()[0], shuffled_values)
+    assert isinstance(model.ff_syn.comm, braintrace.nn.Linear)
+    assert isinstance(model.rec_syn.comm, braintrace.nn.SparseLinear)
+    assert isinstance(model.readout_projection, braintrace.nn.Linear)
+    assert isinstance(model.height_head, braintrace.nn.Linear)
+    assert isinstance(model.width_head, braintrace.nn.Linear)
+    assert isinstance(model.color_factor_head, braintrace.nn.Linear)
 
 
-def test_occupied_slot_derangement_moves_only_occupied_slots() -> None:
-    permutation = occupied_slot_derangement(slot_count=5, occupied_count=3)
+def test_topology_is_deterministic_by_seed_and_seed_sensitive() -> None:
+    first = build_sparse_topology(65, 257, seed=9)
+    repeated = build_sparse_topology(65, 257, seed=9)
+    changed = build_sparse_topology(65, 257, seed=10)
 
-    np.testing.assert_array_equal(permutation, jnp.asarray([1, 2, 0, 3, 4]))
+    np.testing.assert_array_equal(first.rows, repeated.rows)
+    np.testing.assert_array_equal(first.columns, repeated.columns)
+    np.testing.assert_array_equal(first.values, repeated.values)
+    assert not np.array_equal(first.columns, changed.columns)
+    assert not np.array_equal(first.values, changed.values)
+
+
+def test_two_neuron_topology_exercises_single_legal_offset() -> None:
+    topology = build_sparse_topology(2, 2, seed=1)
+
+    np.testing.assert_array_equal(topology.rows, np.asarray([0, 1]))
+    np.testing.assert_array_equal(topology.columns, np.asarray([1, 0]))
 
 
 @pytest.mark.parametrize(
-    "permutation",
-    (
-        jnp.asarray([0, 0, 2], dtype=jnp.int32),
-        jnp.asarray([0, 1, 3], dtype=jnp.int32),
-        jnp.asarray([0.0, 2.0, 1.0], dtype=jnp.float32),
-        jnp.asarray([0, 1, 2], dtype=jnp.int32),
-    ),
+    ("changes", "exception", "message"),
+    [
+        ({"input_width": 0}, ValueError, "input_width"),
+        ({"batch_size": True}, TypeError, "batch_size"),
+        ({"neuron_count": 65}, ValueError, "divisible"),
+        ({"neuron_count": 64, "recurrent_edges": 4033}, ValueError, "capacity"),
+        ({"max_latent_steps": 0}, ValueError, "max_latent_steps"),
+        ({"readout_width": 0}, ValueError, "readout_width"),
+        ({"color_rank": 0}, ValueError, "color_rank"),
+        ({"trace_decay": 1.0}, ValueError, "trace_decay"),
+        ({"trace_decay": math.nan}, ValueError, "trace_decay"),
+        ({"input_gain": 0.0}, ValueError, "input_gain"),
+        ({"event_valid_index": 6}, ValueError, "event_valid_index"),
+        ({"sparse_backend": 3}, TypeError, "sparse_backend"),
+        ({"seed": -1}, ValueError, "seed"),
+    ],
 )
-def test_shuffle_rejects_non_mismatching_or_malformed_permutation(
-    permutation: jax.Array,
+def test_invalid_model_configuration_fails_closed(
+    changes: dict[str, object], exception: type[Exception], message: str
 ) -> None:
-    values = jnp.ones((1, 3, 4), dtype=jnp.float32)
-    keys = jnp.ones_like(values)
-
-    with pytest.raises(ValueError, match="permutation"):
-        shuffled_memory_factors(values, keys, permutation)
+    with pytest.raises(exception, match=message):
+        _config(**changes)
 
 
-def test_zero_latent_steps_runs_and_reads_query_terminal() -> None:
-    task = _task(bindings=2, slots=3, latent=0)
-    episode = generate_episode(task, brainstate.random.RandomState(26))
-    model = _model(bindings=2, slots=3, latent=0)
+@pytest.mark.parametrize(
+    ("neuron_count", "edge_count", "message"),
+    [(1, 1, "at least 2"), (4, 13, "capacity"), (4, 0, "edge_count")],
+)
+def test_invalid_topology_request_fails_closed(
+    neuron_count: int, edge_count: int, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        build_sparse_topology(neuron_count, edge_count, seed=0)
 
-    result = run_sequence(model, jnp.asarray(episode.model_inputs))
 
-    assert result.logits.shape == (task.total_steps, 1, task.symbol_count)
-    assert result.workspace.shape == (task.total_steps, 1, model.config.latent_width)
-    assert result.memory_read.shape == (1, model.config.latent_width)
-    assert result.memory_values.shape == (
-        1,
-        task.slot_capacity,
-        model.config.latent_width,
+def test_compact_width_and_expansion_have_exact_arc_shapes() -> None:
+    rank = 2
+    compact = jnp.zeros((3, compact_output_width(rank)))
+    expanded = expand_compact_logits(compact, rank)
+
+    assert isinstance(expanded, ArcLogits)
+    assert expanded.height.shape == (3, MAX_GRID_SIZE)
+    assert expanded.width.shape == (3, MAX_GRID_SIZE)
+    assert expanded.colors.shape == (
+        3,
+        MAX_GRID_SIZE,
+        MAX_GRID_SIZE,
+        COLOR_COUNT,
     )
-    assert result.memory_keys.shape == (
-        1,
-        task.slot_capacity,
-        model.config.latent_width,
+
+
+def test_cp_expansion_matches_constructed_rank_one_product() -> None:
+    rank = 1
+    compact = jnp.zeros((1, compact_output_width(rank)))
+    row_start = 2 * MAX_GRID_SIZE
+    column_start = row_start + MAX_GRID_SIZE
+    color_start = column_start + MAX_GRID_SIZE
+    compact = compact.at[:, row_start : row_start + MAX_GRID_SIZE].set(2.0)
+    compact = compact.at[:, column_start : column_start + MAX_GRID_SIZE].set(3.0)
+    compact = compact.at[:, color_start:].set(4.0)
+
+    expanded = expand_compact_logits(compact, rank)
+
+    np.testing.assert_array_equal(expanded.colors, 24.0)
+
+
+def test_expansion_rejects_wrong_width_or_rank() -> None:
+    with pytest.raises(ValueError, match="final width"):
+        expand_compact_logits(jnp.zeros((1, 10)), 2)
+    with pytest.raises(ValueError, match="color_rank"):
+        compact_output_width(0)
+
+
+def test_uniform_terminal_loss_matches_three_cross_entropies() -> None:
+    compact = jnp.zeros((2, compact_output_width(2)))
+    colors = jnp.zeros((2, 30, 30), dtype=jnp.int32)
+    components = arc_loss_components(
+        compact,
+        jnp.asarray([1, 30]),
+        jnp.asarray([1, 30]),
+        colors,
+        color_rank=2,
     )
-    values, keys = result.memory_factors
-    expected_query_encoding = (
-        jnp.sum(
-            jnp.asarray(episode.model_inputs[task.query_slice, task.key_slice])
-            @ model.Wk.value,
-            axis=0,
-            keepdims=True,
+
+    assert float(components.height) == pytest.approx(math.log(30), rel=1e-6)
+    assert float(components.width) == pytest.approx(math.log(30), rel=1e-6)
+    assert float(components.colors) == pytest.approx(math.log(10), rel=1e-6)
+    assert float(components.total) == pytest.approx(
+        2 * math.log(30) + math.log(10), rel=1e-6
+    )
+
+
+def test_loss_is_per_example_and_ignores_padded_target_cells() -> None:
+    compact = jnp.zeros((2, compact_output_width(2)))
+    baseline = jnp.zeros((2, 30, 30), dtype=jnp.int32)
+    changed_padding = baseline.at[:, 1:, 1:].set(9)
+    heights = jnp.asarray([1, 1])
+    widths = jnp.asarray([1, 1])
+
+    first = arc_loss_per_example(compact, heights, widths, baseline, color_rank=2)
+    second = arc_loss_per_example(
+        compact, heights, widths, changed_padding, color_rank=2
+    )
+
+    assert first.shape == (2,)
+    np.testing.assert_array_equal(first, second)
+
+
+def test_terminal_loss_has_finite_gradient_through_compact_factors() -> None:
+    compact = jnp.ones((1, compact_output_width(2))) * 0.1
+    colors = jnp.zeros((1, 30, 30), dtype=jnp.int32)
+
+    gradient = jax.grad(
+        lambda value: terminal_arc_loss(
+            value,
+            jnp.asarray([2]),
+            jnp.asarray([3]),
+            colors,
+            color_rank=2,
         )
-        / task.symbol_ticks
-    )
-    np.testing.assert_allclose(result.query_encoding, expected_query_encoding)
-    np.testing.assert_array_equal(values, result.memory_values)
-    np.testing.assert_array_equal(keys, result.memory_keys)
-    expected_query_read = factored_memory_read(values, keys, result.query_encoding)
-    np.testing.assert_allclose(result.memory_read, expected_query_read)
-    assert not np.array_equal(result.query_encoding, result.workspace[-1])
-    np.testing.assert_array_equal(result.terminal_logits, result.logits[-1])
-    assert np.all(np.isfinite(np.asarray(result.logits)))
+    )(compact)
+
+    assert gradient.shape == compact.shape
+    assert np.all(np.isfinite(np.asarray(gradient)))
+    assert np.any(np.asarray(gradient) != 0.0)
 
 
-def test_memory_read_includes_final_query_tick_and_controls_r0_logits() -> None:
-    task = _task(bindings=2, slots=3, latent=0)
-    episode = generate_episode(task, brainstate.random.RandomState(2600))
-    model = LatentWorkspaceModel(ModelConfig(task=task, latent_width=16))
+@pytest.mark.parametrize(
+    ("compact", "height", "width", "colors", "message"),
+    [
+        (
+            jnp.zeros((200,)),
+            jnp.asarray([1]),
+            jnp.asarray([1]),
+            jnp.zeros((1, 30, 30)),
+            "compact_logits",
+        ),
+        (
+            jnp.zeros((1, 200)),
+            jnp.asarray([1, 2]),
+            jnp.asarray([1]),
+            jnp.zeros((1, 30, 30)),
+            "target_height",
+        ),
+        (
+            jnp.zeros((1, 200)),
+            jnp.asarray([1]),
+            jnp.asarray([1]),
+            jnp.zeros((1, 2, 2)),
+            "target_colors",
+        ),
+    ],
+)
+def test_terminal_loss_rejects_malformed_shapes(
+    compact: jax.Array,
+    height: jax.Array,
+    width: jax.Array,
+    colors: jax.Array,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        terminal_arc_loss(compact, height, width, colors, color_rank=2)
 
-    result = run_sequence(model, jnp.asarray(episode.model_inputs))
-    h0_index = task.query_slice.stop - 1
-    values, keys = result.memory_factors
-    incomplete_query = (
-        jnp.sum(
-            jnp.asarray(
-                episode.model_inputs[task.query_slice.start : h0_index, task.key_slice]
-            )
-            @ model.Wk.value,
-            axis=0,
-            keepdims=True,
+
+@pytest.mark.parametrize(
+    ("name", "value"), [("shape_weight", -1.0), ("color_weight", math.inf)]
+)
+def test_terminal_loss_rejects_invalid_weights(name: str, value: float) -> None:
+    kwargs = {name: value}
+    with pytest.raises(ValueError, match=name):
+        terminal_arc_loss(
+            jnp.zeros((1, 200)),
+            jnp.asarray([1]),
+            jnp.asarray([1]),
+            jnp.zeros((1, 30, 30), dtype=jnp.int32),
+            color_rank=2,
+            **kwargs,
         )
-        / task.symbol_ticks
-    )
-    incomplete_read = factored_memory_read(values, keys, incomplete_query)
-
-    h0 = np.asarray(result.workspace[h0_index])
-    assert np.all((h0 == 0.0) | (h0 == 1.0))
-    assert np.any(
-        (np.asarray(result.memory_read) != 0.0)
-        & (np.asarray(result.memory_read) != 1.0)
-    )
-    np.testing.assert_allclose(
-        result.terminal_logits,
-        result.memory_read @ model.Wo.value,
-        rtol=1e-5,
-        atol=1e-5,
-    )
-    assert not np.allclose(np.asarray(result.memory_read), np.asarray(incomplete_read))
 
 
-def test_memory_factors_and_query_equal_direct_aggregate_projections() -> None:
-    task = TaskConfig(
-        symbol_count=10,
-        binding_count=4,
-        slot_capacity=6,
-        latent_steps=0,
-        code_width=24,
-        spike_rate=0.25,
-        symbol_ticks=4,
-    )
-    episode = generate_episode(task, brainstate.random.RandomState(2601))
-    model = LatentWorkspaceModel(ModelConfig(task=task, latent_width=32))
+def test_all_zero_prefix_from_reset_is_exactly_inert(
+    model: LatentWorkspaceModel,
+) -> None:
+    model.reset_state()
+    before = model.snapshot_state()
 
-    result = run_sequence(model, jnp.asarray(episode.model_inputs))
-    codebook = jnp.asarray(episode.codebook)
-    aggregate_codes = jnp.mean(codebook, axis=1)
-    direct_keys = aggregate_codes @ model.Wk.value
-    direct_values = aggregate_codes @ model.Wv.value
-    occupied = task.binding_count
+    result = run_context(model, jnp.zeros((7, model.config.input_width)))
+    after = model.snapshot_state()
 
-    np.testing.assert_allclose(
-        result.memory_keys[0, :occupied],
-        direct_keys[jnp.asarray(episode.demonstration_keys)],
-        rtol=1e-5,
-        atol=1e-5,
-    )
-    np.testing.assert_allclose(
-        result.memory_values[0, :occupied],
-        direct_values[jnp.asarray(episode.demonstration_values)],
-        rtol=1e-5,
-        atol=1e-5,
-    )
-    np.testing.assert_allclose(
-        result.query_encoding,
-        direct_keys[jnp.asarray([episode.query_symbol])],
-        rtol=1e-5,
-        atol=1e-5,
-    )
-    np.testing.assert_array_equal(result.memory_keys[0, occupied:], 0.0)
-    np.testing.assert_array_equal(result.memory_values[0, occupied:], 0.0)
+    np.testing.assert_array_equal(result.spikes, 0.0)
+    np.testing.assert_array_equal(result.voltage, 0.0)
+    for (_, first), (_, second) in zip(before.entries, after.entries, strict=True):
+        for left, right in zip(_tree_arrays(first), _tree_arrays(second), strict=True):
+            np.testing.assert_array_equal(left, right)
 
 
-def test_reset_clears_all_hidden_state() -> None:
-    model = _model()
-    episode = generate_episode(model.config.task, brainstate.random.RandomState(27))
-    run_sequence(model, jnp.asarray(episode.model_inputs))
+def test_invalid_padding_freezes_nonzero_voltage_and_both_synapses(
+    model: LatentWorkspaceModel,
+) -> None:
+    run_context(model, _valid_events(4, model.config.input_width))
+    before = model.snapshot_state()
+
+    model.cell_step(
+        jnp.zeros((1, model.config.input_width)), jnp.zeros((1,), dtype=jnp.bool_)
+    )
+    after = model.snapshot_state()
+
+    for (_, first), (_, second) in zip(before.entries, after.entries, strict=True):
+        for left, right in zip(_tree_arrays(first), _tree_arrays(second), strict=True):
+            np.testing.assert_array_equal(left, right)
+
+
+def test_zero_external_latent_input_advances_post_query_state(
+    model: LatentWorkspaceModel,
+) -> None:
+    run_context(model, _valid_events(8, model.config.input_width))
+    before = np.asarray(model.voltage).copy()
+
+    trajectory = run_latent_trajectory(model, steps=2)
+
+    np.testing.assert_array_equal(trajectory.zero_inputs, 0.0)
+    assert trajectory.zero_inputs.shape == (2, 1, model.config.input_width)
+    assert not np.array_equal(before, np.asarray(trajectory.voltage[-1]))
+
+
+def test_sequence_exposes_checkpoint_zero_through_requested_effort(
+    model: LatentWorkspaceModel,
+) -> None:
+    result = run_sequence(
+        model, _valid_events(5, model.config.input_width), latent_steps=4
+    )
+
+    assert result.context.context_steps == 5
+    assert result.trajectory.compact_logits.shape == (5, 1, 200)
+    assert result.trajectory.spikes.shape == (5, 1, 64)
+    assert result.trajectory.voltage.shape == (5, 1, 64)
+    assert result.trajectory.feedforward_current.shape == (5, 1, 64)
+    assert result.trajectory.recurrent_current.shape == (5, 1, 64)
+    assert result.context.feedforward_current.shape == (1, 64)
+    assert result.context.recurrent_current.shape == (1, 64)
+    np.testing.assert_array_equal(
+        result.feedforward_current, result.trajectory.feedforward_current
+    )
+    np.testing.assert_array_equal(
+        result.recurrent_current, result.trajectory.recurrent_current
+    )
+    assert result.trajectory.expanded.colors.shape == (5, 1, 30, 30, 10)
+    assert result.trajectory.at_effort(0).height.shape == (1, 30)
+    assert result.trajectory.at_effort(4).colors.shape == (1, 30, 30, 10)
+    with pytest.raises(ValueError, match="exceeds"):
+        result.trajectory.at_effort(5)
+
+
+def test_zero_length_latent_trajectory_retains_only_checkpoint_zero(
+    model: LatentWorkspaceModel,
+) -> None:
+    run_context(model, _valid_events(2, model.config.input_width))
+
+    result = run_latent_trajectory(model, steps=0)
+
+    assert result.compact_logits.shape == (1, 1, 200)
+    assert result.spikes.shape == (1, 1, 64)
+    assert result.feedforward_current.shape == (1, 1, 64)
+    assert result.recurrent_current.shape == (1, 1, 64)
+    assert result.zero_inputs.shape == (0, 1, model.config.input_width)
+
+
+def test_context_and_latent_length_validation(model: LatentWorkspaceModel) -> None:
+    with pytest.raises(ValueError, match="at least one"):
+        run_context(model, jnp.zeros((0, model.config.input_width)))
+    with pytest.raises(ValueError, match="rank-two"):
+        other = LatentWorkspaceModel(_config(batch_size=2))
+        run_context(other, jnp.zeros((2, other.config.input_width)))
+    with pytest.raises(ValueError, match="events must have shape"):
+        run_context(model, jnp.zeros((2, 1, model.config.input_width + 1)))
+    with pytest.raises(ValueError, match="exceeds configured"):
+        run_latent_trajectory(model, steps=5)
+
+
+def test_packed_stream_records_every_tick_with_explicit_advance_gates(
+    model: LatentWorkspaceModel,
+) -> None:
+    events = jnp.zeros((6, 1, model.config.input_width))
+    events = events.at[1, :, 0].set(1.0).at[1, :, 1].set(1.0)
+    advance = jnp.asarray([[0], [1], [0], [1], [1], [1]], dtype=jnp.bool_)
+
+    result = run_packed_stream(model, events, advance_gates=advance)
+
+    assert result.compact_logits.shape == (6, 1, 200)
+    assert result.spikes.shape == (6, 1, 64)
+    assert result.voltage.shape == (6, 1, 64)
+    assert result.feedforward_current.shape == (6, 1, 64)
+    assert result.recurrent_current.shape == (6, 1, 64)
+    assert result.expanded.colors.shape == (6, 1, 30, 30, 10)
+    np.testing.assert_array_equal(result.voltage[0], 0.0)
+    np.testing.assert_array_equal(result.voltage[2], result.voltage[1])
+    np.testing.assert_array_equal(
+        result.feedforward_current[2], result.feedforward_current[1]
+    )
+    np.testing.assert_array_equal(
+        result.recurrent_current[2], result.recurrent_current[1]
+    )
+
+
+def test_synaptic_currents_are_unit_safe_numeric_arrays(
+    model: LatentWorkspaceModel,
+) -> None:
+    result = run_sequence(
+        model, _valid_events(5, model.config.input_width), latent_steps=2
+    )
+
+    assert isinstance(model.feedforward_current, jax.Array)
+    assert isinstance(model.recurrent_current, jax.Array)
+    assert result.context.feedforward_current.dtype == jnp.float32
+    assert result.context.recurrent_current.dtype == jnp.float32
+    assert np.all(np.isfinite(np.asarray(result.feedforward_current)))
+    assert np.all(np.isfinite(np.asarray(result.recurrent_current)))
+    assert np.any(np.asarray(result.context.feedforward_current) != 0.0)
+
+
+def test_equal_workspace_outputs_can_hide_synaptic_control_divergence(
+    model: LatentWorkspaceModel,
+) -> None:
+    events = jnp.zeros((1, 1, model.config.input_width), dtype=jnp.float32)
+    frozen = jnp.zeros((1, 1), dtype=jnp.bool_)
+    intact = run_packed_stream(model, events, reset=True, advance_gates=frozen)
 
     model.reset_state()
-
-    np.testing.assert_array_equal(model.grouped_state.value, 0.0)
-    np.testing.assert_array_equal(model.ingestion_state.value, 0.0)
-    np.testing.assert_array_equal(model.latent_voltage.value, 0.0)
-    np.testing.assert_array_equal(model.query_encoding.value, 0.0)
-
-
-def test_fixed_random_write_mode_is_explicit_but_uses_param_states() -> None:
-    model = _model()
-
-    assert model.config.write_mode == "fixed_random"
-    assert model.write_projections_trainable is False
-    assert isinstance(model.Wk, brainstate.ParamState)
-    assert isinstance(model.Wv, brainstate.ParamState)
-    assert {"Wk", "Wv"}.issubset(parameter_snapshot(model))
-
-
-def test_projection_seed_is_separate_from_recurrent_experiment_seed() -> None:
-    task = _task()
-    baseline = LatentWorkspaceModel(
-        ModelConfig(task=task, latent_width=8, seed=2108, projection_seed=210848)
+    model.ff_syn.syn.g.value = (
+        jnp.full((model.config.batch_size, model.config.neuron_count), 0.25) * u.mA
     )
-    new_recurrence = LatentWorkspaceModel(
-        ModelConfig(task=task, latent_width=8, seed=2109, projection_seed=210848)
-    )
-    new_projection = LatentWorkspaceModel(
-        ModelConfig(task=task, latent_width=8, seed=2108, projection_seed=210849)
-    )
+    control = run_packed_stream(model, events, reset=False, advance_gates=frozen)
 
-    for name in ("Wk", "Wv", "Wo"):
-        np.testing.assert_array_equal(
-            getattr(baseline, name).value,
-            getattr(new_recurrence, name).value,
-        )
-        assert not np.array_equal(
-            np.asarray(getattr(baseline, name).value),
-            np.asarray(getattr(new_projection, name).value),
-        )
-    np.testing.assert_array_equal(baseline.Wf.value, new_projection.Wf.value)
+    np.testing.assert_array_equal(control.compact_logits, intact.compact_logits)
+    np.testing.assert_array_equal(control.spikes, intact.spikes)
+    np.testing.assert_array_equal(control.voltage, intact.voltage)
+    np.testing.assert_array_equal(control.recurrent_current, intact.recurrent_current)
     assert not np.array_equal(
-        np.asarray(baseline.Wf.value), np.asarray(new_recurrence.Wf.value)
+        np.asarray(control.feedforward_current),
+        np.asarray(intact.feedforward_current),
     )
 
 
-def _pure_memory_supported_accuracy(binding_count: int, episodes: int = 4096) -> float:
-    task = TaskConfig(binding_count=binding_count, latent_steps=0)
-    model = LatentWorkspaceModel(ModelConfig(task=task, latent_width=32))
-    random = brainstate.random.RandomState(210_848 + binding_count)
-    rule = jnp.argsort(
-        random.uniform(size=(episodes, task.symbol_count)), axis=1
-    ).astype(jnp.int32)
-    query = random.randint(task.symbol_count, size=(episodes,)).astype(jnp.int32)
-    candidate_scores = random.uniform(size=(episodes, task.symbol_count))
-    candidate_scores = candidate_scores.at[jnp.arange(episodes), query].set(2.0)
-    other_keys = jnp.argsort(candidate_scores, axis=1)[:, : binding_count - 1]
-    keys = jnp.concatenate((query[:, None], other_keys), axis=1)
-    values = jnp.take_along_axis(rule, keys, axis=1)
-    target = jnp.take_along_axis(rule, query[:, None], axis=1)[:, 0]
+def test_packed_stream_supports_boundary_slot_control() -> None:
+    controlled = LatentWorkspaceModel(_config(batch_size=2, neuron_count=128))
+    events = jnp.zeros((4, 2, controlled.config.input_width))
+    events = events.at[0, :, 0].set(1.0).at[0, :, 1].set(1.0)
+    advance = jnp.ones((4, 2), dtype=jnp.bool_)
+    gates = jnp.zeros((4, 2), dtype=jnp.bool_)
+    gates = gates.at[1, 0].set(True).at[2, 1].set(True)
 
-    aggregate_codes = jnp.mean(jnp.asarray(build_codebook(task)), axis=1)
-    key_embeddings = aggregate_codes @ model.Wk.value
-    value_embeddings = aggregate_codes @ model.Wv.value
-    read = factored_memory_read(
-        value_embeddings[values], key_embeddings[keys], key_embeddings[query]
+    result = run_packed_stream(
+        controlled,
+        events,
+        advance_gates=advance,
+        ablation_slots=jnp.asarray([0, 1]),
+        ablation_gates=gates,
     )
-    prediction = jnp.argmax(read @ value_embeddings.T, axis=1)
-    return float(jnp.mean(prediction == target))
+
+    assert result.spikes.shape == (4, 2, 128)
+    assert np.all(np.isfinite(np.asarray(result.voltage)))
 
 
-def test_fixed_projection_pure_memory_has_expected_interference_curve() -> None:
-    k2_accuracy = _pure_memory_supported_accuracy(2)
-    k8_accuracy = _pure_memory_supported_accuracy(8)
+@pytest.mark.parametrize("controlled", [False, True])
+def test_selected_packed_scan_equals_full_gather_for_variable_terminals(
+    controlled: bool,
+) -> None:
+    selected_model = LatentWorkspaceModel(_config(batch_size=2, neuron_count=128))
+    time_steps = 9
+    events = jnp.zeros((time_steps, 2, selected_model.config.input_width))
+    events = events.at[0, :, 0].set(1.0).at[0, :, 1].set(1.0)
+    events = events.at[1, 0, 0].set(1.0).at[1, 0, 2].set(1.0)
+    events = events.at[2, 1, 0].set(1.0).at[2, 1, 3].set(1.0)
+    advances = jnp.ones((time_steps, 2), dtype=jnp.bool_)
+    indices = jnp.asarray([[1, 3], [2, 4], [5, 6], [8, 8]], dtype=jnp.int32)
+    kwargs: dict[str, object] = {"advance_gates": advances}
+    if controlled:
+        ablation_gates = jnp.zeros((time_steps, 2), dtype=jnp.bool_)
+        ablation_gates = ablation_gates.at[2, 0].set(True).at[4, 1].set(True)
+        kwargs.update(
+            ablation_slots=jnp.asarray([0, 1]),
+            ablation_gates=ablation_gates,
+        )
 
-    assert k2_accuracy >= 0.90
-    assert k8_accuracy <= 0.60
-    assert k2_accuracy > k8_accuracy
+    full = run_packed_stream(selected_model, events, **kwargs)
+    selected = run_selected_packed_stream(selected_model, events, indices, **kwargs)
+
+    assert isinstance(selected, SelectedPackedTrajectory)
+    batch = np.arange(2, dtype=np.int32)[None, :]
+    raw_indices = np.asarray(indices)
+    for name in (
+        "compact_logits",
+        "spikes",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    ):
+        expected = np.asarray(getattr(full, name))[raw_indices, batch]
+        np.testing.assert_array_equal(getattr(selected, name), expected)
+    np.testing.assert_array_equal(selected.selected_indices, indices)
+    assert selected.expanded.colors.shape == (4, 2, 30, 30, 10)
 
 
-def test_fixed_random_trainable_mapping_excludes_write_parameters() -> None:
-    model = _model()
+@pytest.mark.parametrize(
+    ("indices", "message"),
+    [
+        (jnp.zeros((2,), dtype=jnp.int32), "shape"),
+        (jnp.zeros((0, 1), dtype=jnp.int32), "at least one"),
+        (jnp.asarray([[0.0], [1.0]]), "integers"),
+        (jnp.asarray([[-1], [1]]), "lie in"),
+        (jnp.asarray([[0], [3]]), "lie in"),
+        (jnp.asarray([[1], [1]]), "strictly increasing"),
+    ],
+)
+def test_selected_packed_scan_rejects_invalid_indices(
+    model: LatentWorkspaceModel, indices: jax.Array, message: str
+) -> None:
+    events = jnp.zeros((3, 1, model.config.input_width))
+    with pytest.raises(ValueError, match=message):
+        run_selected_packed_stream(model, events, indices)
+
+
+def test_selected_packed_scan_rejects_malformed_gates(
+    model: LatentWorkspaceModel,
+) -> None:
+    events = jnp.zeros((3, 1, model.config.input_width))
+    indices = jnp.asarray([[0], [2]])
+    with pytest.raises(ValueError, match="advance_gates"):
+        run_selected_packed_stream(
+            model, events, indices, advance_gates=jnp.ones((2, 1))
+        )
+    with pytest.raises(ValueError, match="supplied together"):
+        run_selected_packed_stream(
+            model, events, indices, ablation_slots=jnp.asarray([0])
+        )
+    with pytest.raises(ValueError, match="ablation_slots"):
+        run_selected_packed_stream(
+            model,
+            events,
+            indices,
+            ablation_slots=jnp.asarray([0.0]),
+            ablation_gates=jnp.zeros((3, 1)),
+        )
+    with pytest.raises(ValueError, match="ablation_gates"):
+        run_selected_packed_stream(
+            model,
+            events,
+            indices,
+            ablation_slots=jnp.asarray([0]),
+            ablation_gates=jnp.zeros((2, 1)),
+        )
+
+
+def test_packed_stream_rejects_malformed_control_arrays(
+    model: LatentWorkspaceModel,
+) -> None:
+    events = jnp.zeros((3, 1, model.config.input_width))
+    with pytest.raises(ValueError, match="advance_gates"):
+        run_packed_stream(model, events, advance_gates=jnp.ones((2, 1)))
+    with pytest.raises(ValueError, match="supplied together"):
+        run_packed_stream(model, events, ablation_slots=jnp.asarray([0]))
+    with pytest.raises(ValueError, match="contain integers"):
+        run_packed_stream(
+            model,
+            events,
+            ablation_slots=jnp.asarray([0.0]),
+            ablation_gates=jnp.zeros((3, 1)),
+        )
+    with pytest.raises(ValueError, match="must lie"):
+        run_packed_stream(
+            model,
+            events,
+            ablation_slots=jnp.asarray([1]),
+            ablation_gates=jnp.zeros((3, 1)),
+        )
+    with pytest.raises(ValueError, match="ablation_gates"):
+        run_packed_stream(
+            model,
+            events,
+            ablation_slots=jnp.asarray([0]),
+            ablation_gates=jnp.zeros((2, 1)),
+        )
+
+
+def test_snapshot_restore_is_exact_and_does_not_alias(
+    model: LatentWorkspaceModel,
+) -> None:
+    run_context(model, _valid_events(4, model.config.input_width))
+    snapshot = model.snapshot_state()
+    expected_voltage = np.asarray(model.voltage).copy()
+    model.cell_step(jnp.zeros((1, model.config.input_width)), jnp.ones((1,), bool))
+
+    model.restore_state(snapshot)
+
+    np.testing.assert_array_equal(model.voltage, expected_voltage)
+    model.reset_state()
+    assert np.any(expected_voltage != 0.0)
+
+
+def test_restore_rejects_wrong_type_configuration_or_paths(
+    model: LatentWorkspaceModel,
+) -> None:
+    with pytest.raises(TypeError, match="ModelStateSnapshot"):
+        model.restore_state(object())  # type: ignore[arg-type]
+    snapshot = model.snapshot_state()
+    incompatible = ModelStateSnapshot(snapshot.entries, 2, snapshot.neuron_count)
+    with pytest.raises(ValueError, match="configuration"):
+        model.restore_state(incompatible)
+    wrong_paths = ModelStateSnapshot(
+        ((("unknown",), snapshot.entries[0][1]),) + snapshot.entries[1:],
+        snapshot.batch_size,
+        snapshot.neuron_count,
+    )
+    with pytest.raises(ValueError, match="paths"):
+        model.restore_state(wrong_paths)
+
+
+def test_reset_clears_hidden_state_and_preserves_parameters(
+    model: LatentWorkspaceModel,
+) -> None:
+    before_parameters = parameter_snapshot(model)
+    run_context(model, _valid_events(5, model.config.input_width))
+    assert np.any(np.asarray(model.voltage) != 0.0)
+
+    model.reset_state()
+    after_parameters = parameter_snapshot(model)
+
+    np.testing.assert_array_equal(model.voltage, 0.0)
+    np.testing.assert_array_equal(u.get_mantissa(model.ff_syn.syn.g.value), 0.0)
+    np.testing.assert_array_equal(u.get_mantissa(model.rec_syn.syn.g.value), 0.0)
+    _assert_parameter_snapshots_equal(before_parameters, after_parameters)
+    with pytest.raises(ValueError, match="batch_size"):
+        model.reset_state(batch_size=2)
+
+
+def test_complete_frozen_sequence_leaves_every_parameter_bitwise_identical(
+    model: LatentWorkspaceModel,
+) -> None:
     before = parameter_snapshot(model)
 
-    trainable = model.trainable_parameters()
-    for state in trainable.values():
-        state.value = state.value + 0.01
+    run_sequence(model, _valid_events(4, model.config.input_width), latent_steps=4)
 
-    after = parameter_snapshot(model)
-    assert {"Wf", "Wc", "Wo"} == {".".join(map(str, path)) for path in trainable}
-    np.testing.assert_array_equal(after["Wk"], before["Wk"])
-    np.testing.assert_array_equal(after["Wv"], before["Wv"])
-    assert not np.array_equal(after["Wf"], before["Wf"])
-    assert not np.array_equal(after["Wo"], before["Wo"])
+    _assert_parameter_snapshots_equal(before, parameter_snapshot(model))
 
 
-def test_learned_write_mode_includes_write_parameters() -> None:
-    config = ModelConfig(task=_task(), latent_width=8, write_mode="learned")
+def test_first_and_last_slot_ablation_zero_exact_voltage_and_derived_spikes() -> None:
+    ablation_model = LatentWorkspaceModel(_config(neuron_count=128))
+    ablation_model.neu.V.value = jnp.full((1, 128), 1.5) * u.mV
+    before_parameters = parameter_snapshot(ablation_model)
+
+    voltage, spikes = ablation_model.ablate_slot(0)
+    np.testing.assert_array_equal(voltage[:, :64], 0.0)
+    np.testing.assert_array_equal(spikes[:, :64], 0.0)
+    assert np.all(np.asarray(spikes[:, 64:]) == 1.0)
+    ablation_model.neu.V.value = jnp.full((1, 128), 1.5) * u.mV
+    voltage, spikes = ablation_model.ablate_slot(1)
+    np.testing.assert_array_equal(voltage[:, 64:], 0.0)
+    np.testing.assert_array_equal(spikes[:, 64:], 0.0)
+    _assert_parameter_snapshots_equal(
+        before_parameters, parameter_snapshot(ablation_model)
+    )
+    with pytest.raises(ValueError, match="slot_index"):
+        ablation_model.ablate_slot(2)
+
+
+def test_jitted_per_batch_slot_mask_changes_only_enabled_example() -> None:
+    ablation_model = LatentWorkspaceModel(_config(batch_size=2, neuron_count=128))
+    ablation_model.neu.V.value = jnp.full((2, 128), 1.5) * u.mV
+
+    masked = brainstate.transform.jit(ablation_model.mask_slots)(
+        jnp.asarray([0, 1]), jnp.asarray([True, False])
+    )
+
+    voltage, spikes = masked
+    np.testing.assert_array_equal(voltage[0, :64], 0.0)
+    np.testing.assert_array_equal(spikes[0, :64], 0.0)
+    assert np.all(np.asarray(voltage[0, 64:]) == 1.5)
+    assert np.all(np.asarray(voltage[1]) == 1.5)
+    with pytest.raises(ValueError, match="shape"):
+        ablation_model.mask_slots(jnp.asarray([0]), jnp.asarray([True]))
+
+
+def test_etrace_coordinate_is_explicit_pp_prop() -> None:
+    config = _config(trace_decay=0.75)
     model = LatentWorkspaceModel(config)
+    trace = model.etrace_config()
 
-    assert {"Wk", "Wv", "Wf", "Wc", "Wo"} == {
-        ".".join(map(str, path)) for path in model.trainable_parameters()
-    }
-
-
-def test_complete_frozen_episode_leaves_all_parameters_bitwise_identical() -> None:
-    model = _model()
-    episode = generate_episode(model.config.task, brainstate.random.RandomState(270))
-    before = parameter_snapshot(model)
-
-    run_sequence(model, jnp.asarray(episode.model_inputs))
-
-    after = parameter_snapshot(model)
-    assert before.keys() == after.keys()
-    assert all(np.array_equal(before[name], after[name]) for name in before)
+    assert trace.trace_factorization == "io_factorized"
+    assert trace.temporal_recursion == ("scalar_leak", "jacobian")
+    assert trace.recurrence_scope == "diagonal"
+    assert trace.decay == (0.75, 0.75)
 
 
-def test_native_batch_execution_keeps_episode_state_separate() -> None:
-    task = _task(bindings=2, slots=3, latent=2)
-    first = generate_episode(task, brainstate.random.RandomState(271))
-    second = generate_episode(task, brainstate.random.RandomState(272))
-    inputs = jnp.stack(
-        (jnp.asarray(first.model_inputs), jnp.asarray(second.model_inputs)), axis=1
-    )
-    model = LatentWorkspaceModel(
-        ModelConfig(task=task, batch_size=2, latent_width=8, seed=273)
-    )
+def test_small_pp_prop_compile_and_terminal_gradient_are_finite() -> None:
+    training_model = LatentWorkspaceModel(_config(recurrent_edges=64))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_pp_prop(training_model)
+    events = jnp.zeros((2, 1, training_model.config.input_width))
+    events = events.at[0, :, 0].set(1.0).at[0, :, 1].set(1.0)
+    advance = jnp.ones((2, 1), dtype=jnp.bool_)
+    colors = jnp.zeros((1, 30, 30), dtype=jnp.int32)
 
-    result = run_sequence(model, inputs)
-
-    assert result.workspace.shape == (task.total_steps, 2, 8)
-    assert result.memory_read.shape == (2, 8)
-    assert not np.array_equal(result.memory_values[0], result.memory_values[1])
-
-
-def test_reported_h0_through_hr_and_internal_workspace_are_binary() -> None:
-    model = _model(latent=2)
-    episode = generate_episode(model.config.task, brainstate.random.RandomState(274))
-
-    result = run_sequence(model, jnp.asarray(episode.model_inputs))
-
-    trajectory = np.asarray(result.workspace[model.config.task.query_slice.stop - 1 :])
-    internal = np.asarray(model.workspace)
-    assert np.all((trajectory == 0.0) | (trajectory == 1.0))
-    assert np.all((internal == 0.0) | (internal == 1.0))
-    np.testing.assert_allclose(
-        result.terminal_logits,
-        model.latent_voltage_view @ model.Wo.value,
-        rtol=1e-5,
-        atol=1e-5,
-    )
-    assert np.all(np.isfinite(np.asarray(model.latent_voltage.value)))
-
-
-def test_terminal_logits_decode_one_analog_carrier_at_every_depth() -> None:
-    for latent in (0, 1, 2, 4):
-        model = _model(latent=latent)
-        episode = generate_episode(
-            model.config.task, brainstate.random.RandomState(2740 + latent)
+    def step_loss(event: jax.Array, gate: jax.Array) -> jax.Array:
+        return terminal_arc_loss(
+            learner(event, gate),
+            jnp.asarray([1]),
+            jnp.asarray([1]),
+            colors,
+            color_rank=training_model.config.color_rank,
         )
 
-        result = run_sequence(model, jnp.asarray(episode.model_inputs))
+    gradients, loss = learner.etrace_grad(
+        events,
+        advance,
+        step_fn=step_loss,
+        mask=jnp.asarray([0.0, 1.0]),
+        reduction="mean",
+        loss_output="scalar",
+        return_value=True,
+    )
 
-        carrier = result.memory_read if latent == 0 else model.latent_voltage_view
-        np.testing.assert_allclose(
-            result.terminal_logits,
-            carrier @ model.Wo.value,
-            rtol=1e-5,
-            atol=1e-5,
-            err_msg=f"readout diverged from its analog carrier at R={latent}",
+    assert np.isfinite(float(loss))
+    assert gradients
+    assert all(
+        np.all(np.isfinite(np.asarray(u.get_mantissa(leaf))))
+        for value in gradients.values()
+        for leaf in jax.tree.leaves(value)
+    )
+
+
+@pytest.mark.parametrize(
+    "function",
+    [run_context, run_latent_trajectory, run_packed_stream, run_sequence],
+)
+def test_repeated_model_execution_uses_brainstate_loops_without_python_driver(
+    function: object,
+) -> None:
+    tree = ast.parse(inspect.getsource(function))
+
+    assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(tree))
+    calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
+    assert (
+        any(
+            isinstance(call.func, ast.Attribute) and call.func.attr == "for_loop"
+            for call in calls
         )
-
-
-def test_h0_is_seeded_with_the_analog_contextual_read() -> None:
-    model = _model(latent=3)
-    task = model.config.task
-    episode = generate_episode(task, brainstate.random.RandomState(2745))
-    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
-
-    brainstate.transform.for_loop(model, sequence[: task.query_slice.stop])
-    values, keys = model.memory_factors()
-    expected_h0 = factored_memory_read(values, keys, model.query_encoding_view)
-    model(sequence[task.latent_slice.start])
-
-    np.testing.assert_allclose(
-        model.latent_voltage_view, expected_h0, rtol=1e-6, atol=1e-6
-    )
-    assert np.any(
-        (np.asarray(model.latent_voltage_view) != 0.0)
-        & (np.asarray(model.latent_voltage_view) != 1.0)
+        or function is run_sequence
     )
 
 
-def test_query_terminal_read_and_seeded_h0_decode_identically() -> None:
-    model = _model(latent=2)
-    task = model.config.task
-    episode = generate_episode(task, brainstate.random.RandomState(2748))
-    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
-
-    query_logits = brainstate.transform.for_loop(
-        model, sequence[: task.query_slice.stop]
-    )[-1]
-    model(sequence[task.latent_slice.start])
-
-    np.testing.assert_allclose(
-        query_logits,
-        model.latent_voltage_view @ model.Wo.value,
-        rtol=1e-5,
-        atol=1e-5,
-    )
-
-
-def test_seeding_the_workspace_leaves_stored_bindings_untouched() -> None:
-    model = _model(latent=2)
-    task = model.config.task
-    episode = generate_episode(task, brainstate.random.RandomState(2750))
-    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
-
-    brainstate.transform.for_loop(model, sequence[: task.demonstration_steps])
-    values_before, keys_before = model.memory_factors()
-    values_before = np.asarray(values_before).copy()
-    keys_before = np.asarray(keys_before).copy()
-    brainstate.transform.for_loop(model, sequence[task.demonstration_steps :])
-    values_after, keys_after = model.memory_factors()
-
-    np.testing.assert_array_equal(values_after, values_before)
-    np.testing.assert_array_equal(keys_after, keys_before)
-
-
-def test_binary_spike_surrogate_has_finite_nonzero_training_gradient() -> None:
-    voltage_minus_threshold = jnp.asarray([-0.5, -0.1, 0.1, 0.5])
-
-    spikes = _surrogate_spike(voltage_minus_threshold)
-    gradient = jax.grad(lambda value: jnp.sum(_surrogate_spike(value)))(
-        voltage_minus_threshold
-    )
-
-    np.testing.assert_array_equal(spikes, jnp.asarray([0.0, 0.0, 1.0, 1.0]))
-    assert np.all(np.isfinite(np.asarray(gradient)))
-    assert np.all(np.asarray(gradient) > 0.0)
-
-
-def test_production_latent_dynamics_retain_activity_at_depth_eight() -> None:
-    task = _task(bindings=2, slots=3, latent=8)
-    model = LatentWorkspaceModel(
-        ModelConfig(task=task, batch_size=32, latent_width=64, seed=275)
-    )
-    random = brainstate.random.RandomState(276)
-    initial_spikes = random.bernoulli(0.35, size=(32, 64)).astype(jnp.float32)
-    initial_voltage = random.uniform(0.65, 0.95, size=(32, 64))
-    grouped = model.grouped_state.value.reshape(32, model.state_rows, 64)
-    model.grouped_state.value = (
-        grouped.at[:, -1].set(initial_spikes).reshape(32 * model.state_rows, 64)
-    )
-    voltage = model.latent_voltage.value.reshape(32, model.state_rows, 64)
-    model.latent_voltage.value = (
-        voltage.at[:, -1].set(initial_voltage).reshape(32 * model.state_rows, 64)
-    )
-    latent_tick = jnp.zeros((32, task.input_width), dtype=jnp.float32)
-    latent_tick = latent_tick.at[:, task.phase_slice.start + 3].set(1.0)
-    latent_ticks = jnp.broadcast_to(latent_tick, (8, *latent_tick.shape))
-
-    def step(one_tick: jax.Array) -> jax.Array:
-        model(one_tick)
-        return model.workspace
-
-    trajectory = brainstate.transform.for_loop(step, latent_ticks)
-    retention = float(jnp.mean(trajectory[-1]) / jnp.mean(initial_spikes))
-
-    assert retention >= 0.25
-
-
-def test_run_sequence_uses_brainstate_loop_without_python_driver() -> None:
-    source = inspect.getsource(run_sequence)
-    tree = ast.parse(source)
+def test_selected_packed_runner_uses_compiled_scan_without_python_driver() -> None:
+    tree = ast.parse(inspect.getsource(run_selected_packed_stream))
 
     assert not any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(tree))
     calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
     assert any(
-        isinstance(call.func, ast.Attribute) and call.func.attr == "for_loop"
-        for call in calls
-    )
-    assert not any(
         isinstance(call.func, ast.Attribute) and call.func.attr == "scan"
         for call in calls
     )
-
-
-def test_invalid_model_configuration_names_the_quantity() -> None:
-    with pytest.raises(ValueError, match="latent_width"):
-        ModelConfig(task=_task(), latent_width=0)
-    with pytest.raises(ValueError, match="latent_tau_ms"):
-        ModelConfig(task=_task(), latent_tau_ms=0.0)
-    with pytest.raises(ValueError, match="latent_spectral_radius"):
-        ModelConfig(task=_task(), latent_spectral_radius=-0.1)
-    with pytest.raises(ValueError, match="write_mode"):
-        ModelConfig(task=_task(), write_mode="mystery")  # type: ignore[arg-type]
-    with pytest.raises(ValueError, match="batch_size"):
-        ModelConfig(task=_task(), batch_size=True)
-    with pytest.raises(ValueError, match="latent_width"):
-        ModelConfig(task=_task(), latent_width=8.5)  # type: ignore[arg-type]
-    with pytest.raises(ValueError, match="max_jacobian_elements"):
-        ModelConfig(task=_task(), max_jacobian_elements=0)
-    with pytest.raises(ValueError, match="projection_seed"):
-        ModelConfig(task=_task(), projection_seed=True)
-    with pytest.raises(ValueError, match="projection_seed"):
-        ModelConfig(task=_task(), projection_seed=1.5)  # type: ignore[arg-type]
-
-
-def test_run_sequence_rejects_invalid_phase_or_missing_query() -> None:
-    model = _model()
-    episode = generate_episode(model.config.task, brainstate.random.RandomState(277))
-    invalid = np.asarray(episode.model_inputs).copy()
-    invalid[0, model.config.task.phase_slice.start + 1] = 1.0
-
-    with pytest.raises(ValueError, match="phase"):
-        run_sequence(model, invalid)
-    with pytest.raises(ValueError, match="query"):
-        run_sequence(
-            model,
-            jnp.asarray(episode.model_inputs[: model.config.task.demonstration_steps]),
-        )
-
-
-def test_tiny_coupled_compile_is_warning_free_and_relates_write_weights() -> None:
-    task = _task(bindings=1, slots=2, latent=0)
-    model = LatentWorkspaceModel(
-        ModelConfig(task=task, latent_width=4, batch_size=1, seed=28)
-    )
-    sample = jnp.zeros((1, task.input_width), dtype=jnp.float32)
-
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        learner = braintrace.compile(
-            model,
-            model.etrace_config(),
-            sample,
-            batch_size=1,
-            vmap=False,
-            verbose=0,
-        )
-        jax.block_until_ready(learner(sample))
-
-    assert not caught
-    assert not [
-        record
-        for record in learner.graph.diagnostics
-        if record.level
-        in (braintrace.DiagnosticLevel.WARNING, braintrace.DiagnosticLevel.ERROR)
-    ]
-    relations = {".".join(map(str, path)) for path, _ in learner.report.etrace_weights}
-    assert {"Wk", "Wv", "Wf", "Wc"}.issubset(relations)
-    memory_groups = [
-        group
-        for group in learner.graph.hidden_groups
-        if ("grouped_state",) in set(group.hidden_paths)
-    ]
-    assert len(memory_groups) == 1
-    primitives = [
-        equation.primitive.name for equation in memory_groups[0].transition_jaxpr.eqns
-    ]
-    assert primitives.count("dot_general") == 2
-
-
-def test_default_native_batch_four_coupled_budget_compiles() -> None:
-    task = TaskConfig()
-    model = LatentWorkspaceModel(
-        ModelConfig(task=task, batch_size=4, latent_width=32, seed=2108)
-    )
-    config = model.etrace_config()
-    sample = jnp.zeros((4, task.input_width), dtype=jnp.float32)
-
-    learner = braintrace.compile(
-        model,
-        config,
-        sample,
-        batch_size=4,
-        vmap=False,
-        verbose=0,
-        **model.compile_options(),
-    )
-
-    groups = [
-        group
-        for group in learner.graph.hidden_groups
-        if ("grouped_state",) in set(group.hidden_paths)
-    ]
-    assert len(groups) == 1
-    group = groups[0]
-    assert set(group.hidden_paths) == {
-        ("grouped_state",),
-        ("query_encoding",),
-        ("latent_voltage",),
-    }
-    assert group.varshape == (68, 32)
-    jacobian_elements = (int(np.prod(group.varshape)) * len(group.hidden_paths)) ** 2
-    assert jacobian_elements == 42_614_784
-    assert model.compile_options()["snap_max_jacobian_elements"] == 1 << 26
-
-
-def test_dale_signs_split_the_population_and_never_leave_one_empty() -> None:
-    signs = np.asarray(dale_column_signs(8, 0.25))
-
-    assert signs.shape == (1, 8)
-    assert set(np.unique(signs)) == {-1.0, 1.0}
-    assert int((signs < 0).sum()) == 2
-
-
-@pytest.mark.parametrize("fraction", [0.001, 0.999])
-def test_extreme_dale_fractions_still_populate_both_signs(fraction: float) -> None:
-    signs = np.asarray(dale_column_signs(4, fraction))
-
-    assert int((signs < 0).sum()) >= 1
-    assert int((signs > 0).sum()) >= 1
-
-
-@pytest.mark.parametrize("fraction", [0.0, 1.0, -0.5, 1.5])
-def test_invalid_dale_fraction_is_rejected(fraction: float) -> None:
-    with pytest.raises(ValueError):
-        dale_column_signs(8, fraction)
-    with pytest.raises(ValueError):
-        ModelConfig(task=_task(), dale_inhibitory_fraction=fraction)
-
-
-def test_dale_projection_restores_signs_and_is_idempotent() -> None:
-    signs = dale_column_signs(6, 0.5)
-    perturbed = jnp.asarray(
-        np.linspace(-2.0, 2.0, 36, dtype=np.float32).reshape(6, 6)
-    )
-
-    once = dale_projected(perturbed, signs)
-    twice = dale_projected(once, signs)
-
-    np.testing.assert_allclose(np.abs(np.asarray(once)), np.abs(np.asarray(perturbed)))
-    np.testing.assert_array_equal(np.sign(np.asarray(once)), np.broadcast_to(
-        np.asarray(signs), (6, 6)
-    ))
-    np.testing.assert_array_equal(np.asarray(once), np.asarray(twice))
-
-
-def test_recurrent_weight_is_dale_structured_at_the_requested_radius() -> None:
-    config = ModelConfig(task=_task(), latent_width=16, latent_spectral_radius=0.9)
-    model = LatentWorkspaceModel(config)
-    recurrent = np.asarray(model.Wf.value)
-
-    column_signs = np.sign(recurrent[:, (recurrent != 0.0).any(axis=0)])
-    assert np.all(np.abs(column_signs.sum(axis=0)) == (column_signs != 0).sum(axis=0))
-    assert (recurrent < 0.0).any() and (recurrent > 0.0).any()
-    radius = float(np.max(np.abs(np.linalg.eigvals(recurrent))))
-    assert radius == pytest.approx(0.9, rel=1e-4)
-
-
-def test_project_dale_recovers_the_pattern_after_an_optimizer_style_step() -> None:
-    model = _model(width=8)
-    model.Wf.value = model.Wf.value + 5.0
-
-    assert (np.asarray(model.Wf.value) > 0.0).all()
-    model.project_dale()
-
-    signs = np.asarray(model.dale_signs)
-    actual = np.sign(np.asarray(model.Wf.value))
-    np.testing.assert_array_equal(actual, np.broadcast_to(signs, actual.shape))
-
-
-def test_clock_drive_makes_successive_latent_ticks_differ() -> None:
-    task = _task(bindings=2, slots=3, latent=4)
-    model = _model(bindings=2, slots=3, latent=4, width=8)
-    model.Wc.value = jnp.asarray(
-        np.linspace(-0.5, 0.5, task.clock_width * 8, dtype=np.float32).reshape(
-            task.clock_width, 8
-        )
-    )
-    episode = generate_episode(task, brainstate.random.RandomState(91))
-
-    result = run_sequence(model, jnp.asarray(episode.model_inputs))
-    latent_logits = np.asarray(result.logits[task.latent_slice])
-
-    assert not np.allclose(latent_logits[1], latent_logits[2])
-
-
-def test_zero_clock_weight_leaves_the_clock_bank_inert() -> None:
-    task = _task(bindings=2, slots=3, latent=3)
-    episode = generate_episode(task, brainstate.random.RandomState(92))
-    inputs = np.array(episode.model_inputs)
-    silenced = np.array(inputs)
-    silenced[:, task.clock_slice] = 0.0
-
-    model = _model(bindings=2, slots=3, latent=3, width=8)
-    model.Wc.value = jnp.zeros_like(model.Wc.value)
-    with_clock = np.asarray(run_sequence(model, jnp.asarray(inputs)).logits)
-    model.reset_state()
-    without_clock = np.asarray(run_sequence(model, jnp.asarray(silenced)).logits)
-
-    np.testing.assert_allclose(with_clock, without_clock, rtol=1e-6, atol=1e-6)

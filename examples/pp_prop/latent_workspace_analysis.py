@@ -1,748 +1,1079 @@
-"""One-shot latent-geometry and linear-probe analysis for Example 21."""
+"""Exact ARC scoring and latent-trajectory evidence for Example 21."""
 
 from __future__ import annotations
 
+import hashlib
+import math
+from collections import defaultdict
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from numbers import Integral, Real
-from typing import Sequence
+from typing import Any
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 
-_HUTCHINSON_PROBE_COUNT = 16
-_CG_MIN_ITERATIONS = 64
-_CG_ITERATION_FACTOR = 2
-_CG_MAX_ITERATIONS = 2048
-_CG_RELATIVE_TOLERANCE = 1e-8
-_CG_RESIDUAL_ACCEPTANCE = 5e-8
-_SPLITMIX_INCREMENT = np.uint64(0x9E3779B97F4A7C15)
-_SPLITMIX_MULTIPLIER_1 = np.uint64(0xBF58476D1CE4E5B9)
-_SPLITMIX_MULTIPLIER_2 = np.uint64(0x94D049BB133111EB)
+FloatArray = NDArray[np.float64]
+GridArray = NDArray[np.int8]
+
+_AXIS_SIZE = 30
+_COLOR_COUNT = 10
 
 
-def _float_array(value: np.ndarray, name: str) -> np.ndarray:
+def _finite_array(
+    value: ArrayLike,
+    name: str,
+    shape: tuple[int, ...] | None = None,
+) -> FloatArray:
     try:
-        return np.asarray(value, dtype=np.float64)
+        array = np.asarray(value, dtype=np.float64)
     except (OverflowError, TypeError, ValueError) as error:
         raise ValueError(f"{name} must be a rectangular numeric array") from error
-
-
-def _latent_array(states: np.ndarray) -> np.ndarray:
-    array = _float_array(states, "states")
-    if array.ndim != 3 or any(size == 0 for size in array.shape):
-        raise ValueError(
-            "states shape must be (episodes, iterations, width) with nonempty axes; "
-            f"got {array.shape}"
-        )
+    if shape is not None and array.shape != shape:
+        raise ValueError(f"{name} shape must be {shape}; got {array.shape}")
     if not np.all(np.isfinite(array)):
-        raise ValueError(f"states shape {array.shape} contains non-finite values")
-    return array
+        raise ValueError(f"{name} contains non-finite values")
+    result = np.ascontiguousarray(array)
+    result.setflags(write=False)
+    return result
 
 
-def _feature_array(features: np.ndarray, name: str = "features") -> np.ndarray:
-    array = _float_array(features, name)
-    if array.ndim != 2 or any(size == 0 for size in array.shape):
-        raise ValueError(
-            f"{name} shape must be (episodes, width) with nonempty axes; "
-            f"got {array.shape}"
-        )
-    if not np.all(np.isfinite(array)):
-        raise ValueError(f"{name} shape {array.shape} contains non-finite values")
-    return array
-
-
-def _factor_array(
-    factors: np.ndarray,
-    name: str,
-    state_shape: tuple[int, int, int],
-) -> np.ndarray:
-    array = _float_array(factors, name)
-    episode_count, _, width = state_shape
-    if (
-        array.ndim != 3
-        or any(size == 0 for size in array.shape)
-        or array.shape[0] != episode_count
-        or array.shape[2] != width
-    ):
-        raise ValueError(
-            f"{name} shape must be (episodes, slots, width) and match states; "
-            f"got {name} {array.shape}, states {state_shape}"
-        )
-    if not np.all(np.isfinite(array)):
-        raise ValueError(f"{name} shape {array.shape} contains non-finite values")
-    return array
-
-
-def _class_count(value: int) -> int:
-    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise ValueError(f"class_count must be an integer of at least 2; got {value!r}")
-    count = int(value)
-    if count < 2:
-        raise ValueError(f"class_count must be at least 2; got {count}")
-    return count
-
-
-def _label_array(
-    labels: np.ndarray,
-    episode_count: int,
-    class_count: int,
-    name: str = "labels",
-    reference_name: str = "features",
-) -> np.ndarray:
+def _grid_array(value: ArrayLike, name: str) -> GridArray:
     try:
-        array = np.asarray(labels)
+        array = np.asarray(value)
     except (TypeError, ValueError) as error:
-        raise ValueError(f"{name} must be a rectangular integer array") from error
-    if array.ndim not in (1, 2) or array.shape[0] != episode_count:
+        raise ValueError(f"{name} must be a rectangular integer grid") from error
+    if array.ndim != 2 or any(size < 1 or size > _AXIS_SIZE for size in array.shape):
         raise ValueError(
-            f"{name} shape must be (episodes,) or (episodes, outputs) and match "
-            f"{reference_name}; got {name} {array.shape}, "
-            f"{reference_name} episodes {episode_count}"
+            f"{name} shape must be a nonempty 1..{_AXIS_SIZE} by "
+            f"1..{_AXIS_SIZE} grid; got {array.shape}"
         )
-    if array.ndim == 2 and array.shape[1] == 0:
-        raise ValueError(f"{name} shape {array.shape} has no output symbols")
     if not np.issubdtype(array.dtype, np.integer) or np.issubdtype(
         array.dtype, np.bool_
     ):
-        raise ValueError(
-            f"{name} shape {array.shape} must contain integer class indices"
-        )
-    integer_labels = array.astype(np.int64, copy=False)
-    if np.any(integer_labels < 0) or np.any(integer_labels >= class_count):
-        raise ValueError(
-            f"{name} classes must be in [0, {class_count}); got shape {array.shape}"
-        )
-    return integer_labels
-
-
-def _index_array(
-    name: str, indices: Sequence[int] | np.ndarray, episode_count: int
-) -> np.ndarray:
-    array = np.asarray(indices)
-    if array.ndim != 1:
-        raise ValueError(f"{name} shape must be one-dimensional; got {array.shape}")
-    if array.size == 0:
-        raise ValueError(f"{name} must not be empty; got shape {array.shape}")
-    if not np.issubdtype(array.dtype, np.integer) or np.issubdtype(
-        array.dtype, np.bool_
-    ):
-        raise ValueError(f"{name} must contain integer episode indices")
-    result = array.astype(np.intp, copy=False)
-    if np.any(result < 0) or np.any(result >= episode_count):
-        raise ValueError(
-            f"{name} contains an index outside episode_count {episode_count}"
-        )
-    if np.unique(result).size != result.size:
-        raise ValueError(f"{name} contains duplicate episode indices")
+        raise ValueError(f"{name} must contain non-boolean integer colors")
+    integer = array.astype(np.int64, copy=False)
+    if np.any(integer < 0) or np.any(integer >= _COLOR_COUNT):
+        raise ValueError(f"{name} colors must be in [0, {_COLOR_COUNT})")
+    result = np.ascontiguousarray(integer, dtype=np.int8)
+    result.setflags(write=False)
     return result
 
 
-def _probe_split(
-    fit_indices: Sequence[int] | np.ndarray,
-    score_indices: Sequence[int] | np.ndarray,
-    episode_count: int,
-) -> tuple[np.ndarray, np.ndarray]:
-    fit = _index_array("fit_indices", fit_indices, episode_count)
-    score = _index_array("score_indices", score_indices, episode_count)
-    overlap = np.intersect1d(fit, score)
-    if overlap.size:
-        raise ValueError(
-            "fit_indices and score_indices must be disjoint; "
-            f"overlap={overlap.tolist()}"
-        )
-    return fit, score
+def _nonnegative_integer(value: object, name: str) -> int:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
+        raise ValueError(f"{name} must be a nonnegative integer")
+    result = int(value)
+    if result < 0:
+        raise ValueError(f"{name} must be a nonnegative integer")
+    return result
 
 
-def _splitmix64(values: np.ndarray) -> np.ndarray:
-    with np.errstate(over="ignore"):
-        mixed = values + _SPLITMIX_INCREMENT
-        mixed = (mixed ^ (mixed >> np.uint64(30))) * _SPLITMIX_MULTIPLIER_1
-        mixed = (mixed ^ (mixed >> np.uint64(27))) * _SPLITMIX_MULTIPLIER_2
-    return mixed ^ (mixed >> np.uint64(31))
-
-
-def _fixed_rademacher_probes(width: int) -> np.ndarray:
-    rows = np.arange(_HUTCHINSON_PROBE_COUNT, dtype=np.uint64)[:, None]
-    columns = np.arange(width, dtype=np.uint64)[None, :]
-    if width <= _HUTCHINSON_PROBE_COUNT:
-        parity = np.bitwise_and(rows, columns)
-        for shift in (32, 16, 8, 4, 2, 1):
-            parity = np.bitwise_xor(parity, np.right_shift(parity, shift))
-        bits = np.bitwise_and(parity, 1)
-    else:
-        with np.errstate(over="ignore"):
-            keys = columns + rows * _SPLITMIX_INCREMENT
-        bits = _splitmix64(keys) >> np.uint64(63)
-    return np.where(bits == 0, 1.0, -1.0)
-
-
-def participation_ratio(states: np.ndarray) -> np.ndarray:
-    """Estimate effective dimensionality at every latent iteration.
+@dataclass(frozen=True)
+class OutputLogits:
+    """Hold one query's independently predicted ARC output factors.
 
     Parameters
     ----------
-    states : numpy.ndarray
-        Latent states with shape ``(episodes, iterations, width)``.
-
-    Returns
-    -------
-    numpy.ndarray
-        Participation ratios with shape ``(iterations,)``. The denominator is
-        a deterministic 16-probe Hutchinson estimate of ``trace(C**2)``; no
-        random state is consumed and no width-by-width covariance is formed.
-        Widths up to 16 use a complete orthogonal probe set. A state with no
-        variation across episodes has participation ratio zero. Wider states
-        use a fixed SplitMix64-derived sketch. Like every fixed finite sketch
-        below the state width, it has a nontrivial nullspace and is an estimate,
-        not a rank oracle.
+    height : array-like
+        Thirty logits for output heights 1 through 30.
+    width : array-like
+        Thirty logits for output widths 1 through 30.
+    colors : array-like
+        Color logits shaped ``(30, 30, 10)``. Target shape never masks these
+        logits during decoding.
 
     Raises
     ------
     ValueError
-        If ``states`` has the wrong shape or contains non-finite values.
+        If a head has the wrong shape or contains a non-finite value.
     """
-    array = _latent_array(states)
-    scale = np.max(np.abs(array), axis=(0, 2), keepdims=True)
-    scaled = np.divide(array, scale, out=np.zeros_like(array), where=scale > 0.0)
-    centered = scaled - np.mean(scaled, axis=0, keepdims=True)
-    probes = _fixed_rademacher_probes(array.shape[2])
-    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        trace = np.sum(np.square(centered), axis=(0, 2))
-        projected = np.einsum("eiw,pw->eip", centered, probes, optimize=True)
-        covariance_probes = np.einsum(
-            "eiw,eip->iwp", centered, projected, optimize=True
+
+    height: ArrayLike
+    width: ArrayLike
+    colors: ArrayLike
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "height", _finite_array(self.height, "height logits", (_AXIS_SIZE,))
         )
-        trace_square = np.mean(np.sum(np.square(covariance_probes), axis=1), axis=1)
-        result = np.square(
-            np.divide(
-                trace,
-                np.sqrt(trace_square),
-                out=np.zeros_like(trace),
-                where=trace_square > 0.0,
-            )
+        object.__setattr__(
+            self, "width", _finite_array(self.width, "width logits", (_AXIS_SIZE,))
         )
-    if not np.all(np.isfinite(result)):
-        raise ValueError(
-            f"states shape {array.shape} produced non-finite participation_ratio"
+        object.__setattr__(
+            self,
+            "colors",
+            _finite_array(
+                self.colors,
+                "color logits",
+                (_AXIS_SIZE, _AXIS_SIZE, _COLOR_COUNT),
+            ),
         )
-    maximum_rank = min(max(array.shape[0] - 1, 0), array.shape[2])
-    return np.clip(result, 0.0, float(maximum_rank))
 
 
-def trajectory_step_norm(states: np.ndarray) -> np.ndarray:
-    """Calculate mean episode-wise latent change at every iteration.
+@dataclass(frozen=True)
+class DecodedCandidate:
+    """Describe one deterministic candidate grid.
 
     Parameters
     ----------
-    states : numpy.ndarray
-        Latent states with shape ``(episodes, iterations, width)``.
-
-    Returns
-    -------
-    numpy.ndarray
-        Mean Euclidean step norms with shape ``(iterations,)``. Index zero is
-        defined as zero because no preceding latent state exists.
-
-    Raises
-    ------
-    ValueError
-        If ``states`` has the wrong shape or contains non-finite values.
+    grid : array-like
+        Rectangular ARC grid with colors 0 through 9.
+    changed_decision : str or None, default=None
+        Decision changed from joint argmax. Candidate one uses ``None``;
+        candidate two names ``height``, ``width``, or ``cell:r,c``.
+    log_probability : float, default=0.0
+        Sum of log probabilities for the chosen shape and valid cells.
     """
-    array = _latent_array(states)
-    result = np.zeros(array.shape[1], dtype=np.float64)
-    if array.shape[1] > 1:
-        with np.errstate(over="ignore", invalid="ignore"):
-            differences = np.diff(array, axis=1)
-            result[1:] = np.mean(np.linalg.norm(differences, axis=2), axis=0)
-    if not np.all(np.isfinite(result)):
-        raise ValueError(
-            f"states shape {array.shape} produced non-finite trajectory_step_norm"
-        )
-    return result
 
+    grid: ArrayLike
+    changed_decision: str | None = None
+    log_probability: float = 0.0
 
-def _ridge_coefficient(ridge: float) -> float:
-    if isinstance(ridge, (bool, np.bool_)) or not isinstance(ridge, Real):
-        raise ValueError(f"ridge must be a positive finite number; got {ridge!r}")
-    coefficient = float(ridge)
-    if not np.isfinite(coefficient) or coefficient <= 0.0:
-        raise ValueError(f"ridge must be positive and finite; got {coefficient}")
-    return coefficient
-
-
-def _matrix_free_ridge_weights(
-    centered_features: np.ndarray,
-    centered_targets: np.ndarray,
-    coefficient: float,
-    feature_name: str,
-) -> np.ndarray:
-    with np.errstate(over="ignore", invalid="ignore"):
-        right_hand_side = centered_features.T @ centered_targets
-    if not np.all(np.isfinite(right_hand_side)):
-        raise ValueError(f"{feature_name} produced a non-finite probe system")
-
-    weights = np.zeros_like(right_hand_side)
-    residual = right_hand_side.copy()
-    direction = residual.copy()
-    with np.errstate(over="ignore", invalid="ignore"):
-        initial_residual_square = np.sum(np.square(residual), axis=0)
-    if not np.all(np.isfinite(initial_residual_square)):
-        raise ValueError(f"{feature_name} produced a non-finite probe residual")
-    residual_square = initial_residual_square.copy()
-    threshold = np.square(_CG_RELATIVE_TOLERANCE) * np.maximum(
-        initial_residual_square, np.finfo(np.float64).tiny
-    )
-    active = residual_square > threshold
-    effective_dimension = min(centered_features.shape)
-    iteration_limit = min(
-        _CG_MAX_ITERATIONS,
-        max(_CG_MIN_ITERATIONS, _CG_ITERATION_FACTOR * effective_dimension),
-    )
-
-    for _ in range(iteration_limit):
-        if not np.any(active):
-            break
-        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-            projected = centered_features @ direction
-            action = centered_features.T @ projected + coefficient * direction
-            denominator = np.sum(direction * action, axis=0)
-        if np.any(~np.isfinite(denominator[active])) or np.any(
-            denominator[active] <= 0.0
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "grid", _grid_array(self.grid, "candidate grid"))
+        if self.changed_decision is not None and not isinstance(
+            self.changed_decision, str
         ):
-            raise ValueError(f"{feature_name} produced an invalid probe system")
-        step = np.divide(
-            residual_square,
-            denominator,
-            out=np.zeros_like(residual_square),
-            where=active,
+            raise ValueError("changed_decision must be a string or None")
+        if isinstance(self.log_probability, (bool, np.bool_)) or not isinstance(
+            self.log_probability, Real
+        ):
+            raise ValueError("log_probability must be finite")
+        value = float(self.log_probability)
+        if not math.isfinite(value):
+            raise ValueError("log_probability must be finite")
+        object.__setattr__(self, "log_probability", value)
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-safe representation of the candidate.
+
+        Returns
+        -------
+        dict
+            Candidate dimensions, cells, changed decision, and score.
+        """
+        grid = np.asarray(self.grid)
+        return {
+            "height": int(grid.shape[0]),
+            "width": int(grid.shape[1]),
+            "grid": grid.tolist(),
+            "changed_decision": self.changed_decision,
+            "log_probability": self.log_probability,
+        }
+
+
+@dataclass(frozen=True)
+class QueryScore:
+    """Hold exact and diagnostic scores for one ARC test query.
+
+    Parameters
+    ----------
+    task_id : str
+        Stable task identity used for conjunctive task scoring.
+    query_index : int
+        Zero-based query index within the task.
+    pass_at_1, pass_at_2 : bool
+        Exact shape-and-cell success under one or two candidates.
+    shape_accuracy : bool
+        Candidate-one shape diagnostic. This never satisfies exact success.
+    valid_cell_pixel_accuracy : float
+        Candidate-one overlap matches divided by target valid-cell count.
+        Missing predicted cells receive no credit.
+    candidate_count : int
+        Number of distinct candidates retained, either one or two.
+    """
+
+    task_id: str
+    query_index: int
+    pass_at_1: bool
+    pass_at_2: bool
+    shape_accuracy: bool
+    valid_cell_pixel_accuracy: float
+    candidate_count: int
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.task_id, str) or not self.task_id:
+            raise ValueError("task_id must be a nonempty string")
+        object.__setattr__(
+            self, "query_index", _nonnegative_integer(self.query_index, "query_index")
         )
-        weights += direction * step
-        residual -= action * step
-        with np.errstate(over="ignore", invalid="ignore"):
-            next_square = np.sum(np.square(residual), axis=0)
-        next_active = next_square > threshold
-        ratio = np.divide(
-            next_square,
-            residual_square,
-            out=np.zeros_like(next_square),
-            where=active & (residual_square > 0.0),
-        )
-        direction = residual + direction * ratio
-        direction[:, ~next_active] = 0.0
-        residual_square = next_square
-        active = next_active
+        for name in ("pass_at_1", "pass_at_2", "shape_accuracy"):
+            value = getattr(self, name)
+            if not isinstance(value, (bool, np.bool_)):
+                raise ValueError(f"{name} must be boolean")
+            object.__setattr__(self, name, bool(value))
+        if self.pass_at_1 and not self.pass_at_2:
+            raise ValueError("pass_at_2 cannot be false when pass_at_1 is true")
+        pixel = float(self.valid_cell_pixel_accuracy)
+        if not math.isfinite(pixel) or not 0.0 <= pixel <= 1.0:
+            raise ValueError("valid_cell_pixel_accuracy must be finite and in [0, 1]")
+        object.__setattr__(self, "valid_cell_pixel_accuracy", pixel)
+        count = _nonnegative_integer(self.candidate_count, "candidate_count")
+        if count not in (1, 2):
+            raise ValueError("candidate_count must be one or two")
+        object.__setattr__(self, "candidate_count", count)
 
-    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
-        projected = centered_features @ weights
-        checked_action = centered_features.T @ projected + coefficient * weights
-        checked_residual = right_hand_side - checked_action
-        checked_norm = np.sqrt(np.sum(np.square(checked_residual), axis=0))
-        initial_norm = np.sqrt(initial_residual_square)
-        relative_residual = np.divide(
-            checked_norm,
-            initial_norm,
-            out=np.zeros_like(checked_norm),
-            where=initial_norm > 0.0,
-        )
-    if not np.all(np.isfinite(relative_residual)):
-        raise ValueError(f"{feature_name} produced a non-finite probe residual")
-    maximum_residual = float(np.max(relative_residual, initial=0.0))
-    if maximum_residual > _CG_RESIDUAL_ACCEPTANCE:
-        raise ValueError(
-            f"{feature_name} ridge probe failed to reach bounded relative residual "
-            f"{_CG_RESIDUAL_ACCEPTANCE:.1e} within {iteration_limit} matrix-free "
-            f"iterations; maximum residual was {maximum_residual:.3e}"
-        )
-    if not np.all(np.isfinite(weights)):
-        raise ValueError(f"{feature_name} produced non-finite probe weights")
-    return weights
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-safe query-score mapping.
+
+        Returns
+        -------
+        dict
+            Exact pass indicators and explicitly labelled diagnostics.
+        """
+        return {
+            "task_id": self.task_id,
+            "query_index": self.query_index,
+            "pass_at_1": self.pass_at_1,
+            "pass_at_2": self.pass_at_2,
+            "shape_accuracy_diagnostic": self.shape_accuracy,
+            "valid_cell_pixel_accuracy_diagnostic": self.valid_cell_pixel_accuracy,
+            "candidate_count": self.candidate_count,
+        }
 
 
-def _linear_probe_predictions(
-    features: np.ndarray,
-    labels: np.ndarray,
-    fit_indices: Sequence[int] | np.ndarray,
-    score_indices: Sequence[int] | np.ndarray,
-    class_count: int,
-    ridge: float = 1e-6,
-    *,
-    feature_name: str = "features",
-    label_name: str = "labels",
-) -> np.ndarray:
-    feature_array = _feature_array(features, feature_name)
-    count = _class_count(class_count)
-    label_array = _label_array(
-        labels,
-        feature_array.shape[0],
-        count,
-        label_name,
-        feature_name,
-    )
-    fit, score = _probe_split(fit_indices, score_indices, feature_array.shape[0])
-    coefficient = _ridge_coefficient(ridge)
-    target_shape = label_array.shape[1:] + (count,)
-    target_classes = np.arange(count, dtype=np.int64)
-    targets = np.equal(label_array[fit][..., None], target_classes).astype(
-        np.float64, copy=False
-    )
-    targets = targets.reshape(fit.size, -1)
-
-    with np.errstate(over="ignore", invalid="ignore"):
-        feature_mean = np.mean(feature_array[fit], axis=0, keepdims=True)
-        target_mean = np.mean(targets, axis=0, keepdims=True)
-        centered_features = feature_array[fit] - feature_mean
-        centered_targets = targets - target_mean
-    if not np.all(np.isfinite(centered_features)):
-        raise ValueError(f"{feature_name} produced non-finite centered features")
-    weights = _matrix_free_ridge_weights(
-        centered_features, centered_targets, coefficient, feature_name
-    )
-    with np.errstate(over="ignore", invalid="ignore"):
-        scores = (feature_array[score] - feature_mean) @ weights + target_mean
-    if not np.all(np.isfinite(scores)):
-        raise ValueError(f"{feature_name} produced non-finite probe scores")
-    return np.argmax(scores.reshape((score.size,) + target_shape), axis=-1)
+def _top_two(values: FloatArray) -> tuple[int, int, float]:
+    order = np.argsort(-values, kind="stable")
+    first, second = int(order[0]), int(order[1])
+    return first, second, float(values[first] - values[second])
 
 
-def linear_probe_accuracy(
-    features: np.ndarray,
-    labels: np.ndarray,
-    fit_indices: Sequence[int] | np.ndarray,
-    score_indices: Sequence[int] | np.ndarray,
-    class_count: int,
-    ridge: float = 1e-6,
+def _log_softmax_choice(values: FloatArray, index: int) -> float:
+    maximum = float(np.max(values))
+    shifted = values - maximum
+    return float(shifted[index] - np.log(np.sum(np.exp(shifted))))
+
+
+def _candidate_log_probability(
+    logits: OutputLogits, height_index: int, width_index: int, grid: GridArray
 ) -> float:
-    """Fit a deterministic ridge classifier and score held-out episodes.
+    score = _log_softmax_choice(np.asarray(logits.height), height_index)
+    score += _log_softmax_choice(np.asarray(logits.width), width_index)
+    colors = np.asarray(logits.colors)
+    for row in range(grid.shape[0]):
+        for column in range(grid.shape[1]):
+            score += _log_softmax_choice(colors[row, column], int(grid[row, column]))
+    return score
 
-    One-dimensional labels produce ordinary answer accuracy. Two-dimensional
-    labels are decoded independently along the second axis, and the returned
-    score is mean per-symbol accuracy rather than permutation-class accuracy.
+
+def decode_candidates(
+    logits: OutputLogits,
+    max_candidates: int = 2,
+) -> tuple[DecodedCandidate, ...]:
+    """Decode joint argmax and one deterministic runner-up ARC grid.
+
+    Candidate two flips the globally smallest top-two logit margin among the
+    height, width, and candidate-one valid cells. Ties prefer height, then
+    width, then row-major cells. The changed grid is regenerated from the same
+    color logits, so a shape alternative is a genuine complete ARC candidate.
 
     Parameters
     ----------
-    features : numpy.ndarray
-        Probe inputs with shape ``(episodes, width)``.
-    labels : numpy.ndarray
-        Integer labels with shape ``(episodes,)`` or ``(episodes, outputs)``.
-    fit_indices : sequence of int
-        Unique episode indices used only to fit the probe.
-    score_indices : sequence of int
-        Unique episode indices used only to score the probe.
-    class_count : int
-        Number of target classes.
-    ridge : float, default=1e-6
-        Positive L2 coefficient applied to weights but not the intercept.
+    logits : OutputLogits
+        Validated output heads for one query and one checkpoint.
+    max_candidates : int, default=2
+        One or two candidates to retain.
 
     Returns
     -------
-    float
-        Held-out element-wise classification accuracy.
+    tuple of DecodedCandidate
+        One or two distinct candidates in rank order.
 
     Raises
     ------
     ValueError
-        If shapes, labels, classes, the ridge, or the disjoint split are invalid.
+        If ``max_candidates`` is not one or two.
+    TypeError
+        If ``logits`` is not :class:`OutputLogits`.
     """
-    feature_array = _feature_array(features)
-    count = _class_count(class_count)
-    label_array = _label_array(labels, feature_array.shape[0], count)
-    _, score = _probe_split(fit_indices, score_indices, feature_array.shape[0])
-    predictions = _linear_probe_predictions(
-        feature_array,
-        label_array,
-        fit_indices,
-        score_indices,
-        count,
-        ridge,
+    if not isinstance(logits, OutputLogits):
+        raise TypeError("logits must be an OutputLogits instance")
+    if (
+        isinstance(max_candidates, (bool, np.bool_))
+        or not isinstance(max_candidates, Integral)
+        or int(max_candidates) not in (1, 2)
+    ):
+        raise ValueError("max_candidates must be one or two")
+    height_first, height_second, height_margin = _top_two(np.asarray(logits.height))
+    width_first, width_second, width_margin = _top_two(np.asarray(logits.width))
+    height, width = height_first + 1, width_first + 1
+    color_logits = np.asarray(logits.colors)
+    first_grid = np.argmax(color_logits[:height, :width], axis=-1).astype(np.int8)
+    first = DecodedCandidate(
+        first_grid,
+        log_probability=_candidate_log_probability(
+            logits, height_first, width_first, first_grid
+        ),
     )
-    return float(np.mean(predictions == label_array[score]))
+    if int(max_candidates) == 1:
+        return (first,)
 
-
-def _accuracy_value(value: float, name: str) -> float:
-    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be a finite number in [0, 1]; got {value!r}")
-    result = float(value)
-    if not np.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise ValueError(f"{name} must be in [0, 1]; got {result}")
-    return result
-
-
-def memory_final_comparison(memory_accuracy: float, final_accuracy: float) -> str:
-    """Describe whether latent iteration improved answer decodability.
-
-    Parameters
-    ----------
-    memory_accuracy : float
-        Held-out answer decodability from the contextual-memory read.
-    final_accuracy : float
-        Held-out answer decodability from the final workspace state.
-
-    Returns
-    -------
-    str
-        A plain-English comparison that retains a null separation result.
-
-    Raises
-    ------
-    ValueError
-        If either accuracy is non-finite or outside the unit interval.
-    """
-    memory = _accuracy_value(memory_accuracy, "memory_accuracy")
-    final = _accuracy_value(final_accuracy, "final_accuracy")
-    if memory >= final:
-        return (
-            f"Memory-only answer decodability ({memory:.3f}) matched or exceeded "
-            f"final-workspace decodability ({final:.3f}); the two-state separation "
-            "did not add decodable information at this scale."
-        )
-    return (
-        f"Final-workspace answer decodability ({final:.3f}) exceeded memory-only "
-        f"decodability ({memory:.3f}) by {final - memory:.3f} on this held-out "
-        "probe split."
+    alternatives: list[tuple[float, int, str, int, int, int]] = [
+        (height_margin, 0, "height", -1, -1, height_second),
+        (width_margin, 1, "width", -1, -1, width_second),
+    ]
+    order = 2
+    for row in range(height):
+        for column in range(width):
+            _, second_color, margin = _top_two(color_logits[row, column])
+            alternatives.append((margin, order, "cell", row, column, second_color))
+            order += 1
+    _, _, kind, row, column, replacement = min(
+        alternatives, key=lambda item: (item[0], item[1])
     )
-
-
-def _probe_scores(
-    features: np.ndarray,
-    labels: np.ndarray,
-    fit_indices: np.ndarray,
-    score_indices: np.ndarray,
-    class_count: int,
-    ridge: float,
-    feature_name: str,
-    label_name: str,
-) -> tuple[float, float]:
-    predictions = _linear_probe_predictions(
-        features,
-        labels,
-        fit_indices,
-        score_indices,
-        class_count,
-        ridge,
-        feature_name=feature_name,
-        label_name=label_name,
+    second_height_index = height_first
+    second_width_index = width_first
+    changed_decision: str
+    if kind == "height":
+        second_height_index = replacement
+        changed_decision = "height"
+    elif kind == "width":
+        second_width_index = replacement
+        changed_decision = "width"
+    else:
+        changed_decision = f"cell:{row},{column}"
+    second_height, second_width = second_height_index + 1, second_width_index + 1
+    second_grid = np.argmax(
+        color_logits[:second_height, :second_width], axis=-1
+    ).astype(np.int8)
+    if kind == "cell":
+        second_grid[row, column] = replacement
+    second = DecodedCandidate(
+        second_grid,
+        changed_decision=changed_decision,
+        log_probability=_candidate_log_probability(
+            logits, second_height_index, second_width_index, second_grid
+        ),
     )
-    scored_labels = labels[score_indices]
-    per_symbol = float(np.mean(predictions == scored_labels))
-    if labels.ndim == 1:
-        return per_symbol, per_symbol
-    exact_rule = float(np.mean(np.all(predictions == scored_labels, axis=1)))
-    return per_symbol, exact_rule
+    if np.array_equal(first.grid, second.grid):
+        return (first,)
+    return first, second
 
 
-def analyze_latent_workspace(
-    states: np.ndarray,
-    memory_read: np.ndarray,
-    answers: np.ndarray,
-    rules: np.ndarray,
-    fit_indices: Sequence[int] | np.ndarray,
-    score_indices: Sequence[int] | np.ndarray,
-    ridge: float = 1e-6,
+def _distinct_candidate_grids(
+    candidates: Sequence[DecodedCandidate | ArrayLike],
+) -> tuple[GridArray, ...]:
+    if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
+        raise ValueError("candidates must be a sequence of one or two ARC grids")
+    if not 1 <= len(candidates) <= 2:
+        raise ValueError("candidates must contain one or two ARC grids")
+    grids: list[GridArray] = []
+    for index, candidate in enumerate(candidates):
+        value = candidate.grid if isinstance(candidate, DecodedCandidate) else candidate
+        grid = _grid_array(value, f"candidate {index + 1}")
+        if not any(np.array_equal(grid, prior) for prior in grids):
+            grids.append(grid)
+    return tuple(grids)
+
+
+def score_query_candidates(
+    candidates: Sequence[DecodedCandidate | ArrayLike],
+    target: ArrayLike,
     *,
-    memory_values: np.ndarray | None = None,
-    memory_keys: np.ndarray | None = None,
-) -> dict[str, object]:
-    """Produce the complete held-out latent-workspace analysis.
+    task_id: str,
+    query_index: int,
+) -> QueryScore:
+    """Score at most two candidates with exact ARC semantics.
 
     Parameters
     ----------
-    states : numpy.ndarray
-        Workspace states shaped ``(episodes, iterations, width)``.
-    memory_read : numpy.ndarray
-        Query-conditioned memory reads shaped ``(episodes, width)``.
-    answers : numpy.ndarray
-        Query-answer class indices shaped ``(episodes,)``.
-    rules : numpy.ndarray
-        Per-episode permutations shaped ``(episodes, symbol_count)``.
-    fit_indices : sequence of int
-        Episode indices reserved for fitting all probes.
-    score_indices : sequence of int
-        Disjoint episode indices reserved for scoring all probes.
-    ridge : float, default=1e-6
-        Positive ridge coefficient used by every probe.
-    memory_values : numpy.ndarray, optional
-        Raw contextual-memory value factors shaped
-        ``(episodes, slots, width)``. Must be supplied with ``memory_keys``.
-    memory_keys : numpy.ndarray, optional
-        Raw contextual-memory key factors shaped
-        ``(episodes, slots, width)``. Must be supplied with ``memory_values``.
+    candidates : sequence
+        One or two candidates, usually from :func:`decode_candidates`.
+        Duplicate candidates are removed before pass@2 is computed.
+    target : array-like
+        Held-out output grid, used only by this scorer.
+    task_id : str
+        Task identity for later strict task aggregation.
+    query_index : int
+        Zero-based query index within ``task_id``.
+
+    Returns
+    -------
+    QueryScore
+        Exact pass@1/pass@2 and candidate-one diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If the target, candidates, identity, or index is invalid.
+    """
+    grids = _distinct_candidate_grids(candidates)
+    truth = _grid_array(target, "target grid")
+
+    exact = [
+        grid.shape == truth.shape and np.array_equal(grid, truth) for grid in grids
+    ]
+    first = grids[0]
+    overlap_height = min(first.shape[0], truth.shape[0])
+    overlap_width = min(first.shape[1], truth.shape[1])
+    matching = np.sum(
+        first[:overlap_height, :overlap_width] == truth[:overlap_height, :overlap_width]
+    )
+    return QueryScore(
+        task_id=task_id,
+        query_index=query_index,
+        pass_at_1=bool(exact[0]),
+        pass_at_2=bool(any(exact)),
+        shape_accuracy=first.shape == truth.shape,
+        valid_cell_pixel_accuracy=float(matching / truth.size),
+        candidate_count=len(grids),
+    )
+
+
+def aggregate_arc_metrics(scores: Sequence[QueryScore]) -> dict[str, object]:
+    """Aggregate query scores and conjunctive strict task pass rates.
+
+    Parameters
+    ----------
+    scores : sequence of QueryScore
+        Exactly one score for every evaluated task/query pair.
 
     Returns
     -------
     dict
-        JSON-friendly geometry, answer and rule probe scores, split details,
-        and the memory-versus-final comparison sentence.
+        Query pass rates, strict task pass rates, labelled diagnostics, and
+        per-task conjunctive outcomes.
 
     Raises
     ------
     ValueError
-        If shapes, permutations, labels, or the probe split are invalid.
+        If no scores are provided, an item is not a ``QueryScore``, or a task
+        and query index occurs more than once.
     """
-    state_array = _latent_array(states)
-    memory_array = _feature_array(memory_read, "memory_read")
-    episode_count, iteration_count, width = state_array.shape
-    if memory_array.shape != (episode_count, width):
-        raise ValueError(
-            "states and memory_read shapes must share episodes and width; got "
-            f"states {state_array.shape}, memory_read {memory_array.shape}"
-        )
+    if not scores:
+        raise ValueError("scores must contain at least one query")
+    grouped: dict[str, list[QueryScore]] = defaultdict(list)
+    identities: set[tuple[str, int]] = set()
+    for score in scores:
+        if not isinstance(score, QueryScore):
+            raise ValueError("scores must contain only QueryScore instances")
+        identity = (score.task_id, score.query_index)
+        if identity in identities:
+            raise ValueError(f"duplicate task/query score {identity!r}")
+        identities.add(identity)
+        grouped[score.task_id].append(score)
 
-    rule_array = np.asarray(rules)
-    if rule_array.ndim != 2 or rule_array.shape[0] != episode_count:
-        raise ValueError(
-            "rules shape must be (episodes, symbol_count) and match states; got "
-            f"rules {rule_array.shape}, states {state_array.shape}"
-        )
-    symbol_count = _class_count(rule_array.shape[1])
-    rule_array = _label_array(
-        rule_array, episode_count, symbol_count, "rules", "states"
-    )
-    expected = np.arange(symbol_count, dtype=np.int64)
-    if np.any(np.sort(rule_array, axis=1) != expected):
-        raise ValueError(
-            f"rules shape {rule_array.shape} must contain one permutation per episode"
-        )
-
-    answer_array = np.asarray(answers)
-    if answer_array.shape != (episode_count,):
-        raise ValueError(
-            "answers shape must be (episodes,) and match states; got "
-            f"answers {answer_array.shape}, states {state_array.shape}"
-        )
-    answer_array = _label_array(
-        answer_array, episode_count, symbol_count, "answers", "states"
-    )
-    fit, score = _probe_split(fit_indices, score_indices, episode_count)
-    coefficient = _ridge_coefficient(ridge)
-
-    answer_workspace: list[float] = []
-    rule_workspace: list[float] = []
-    rule_symbol_workspace: list[float] = []
-    for iteration in range(iteration_count):
-        answer_score, _ = _probe_scores(
-            state_array[:, iteration],
-            answer_array,
-            fit,
-            score,
-            symbol_count,
-            coefficient,
-            f"states[:, {iteration}]",
-            "answers",
-        )
-        rule_symbol_score, rule_exact_score = _probe_scores(
-            state_array[:, iteration],
-            rule_array,
-            fit,
-            score,
-            symbol_count,
-            coefficient,
-            f"states[:, {iteration}]",
-            "rules",
-        )
-        answer_workspace.append(answer_score)
-        rule_workspace.append(rule_exact_score)
-        rule_symbol_workspace.append(rule_symbol_score)
-
-    answer_memory, _ = _probe_scores(
-        memory_array,
-        answer_array,
-        fit,
-        score,
-        symbol_count,
-        coefficient,
-        "memory_read",
-        "answers",
-    )
-    rule_symbol_memory, rule_memory = _probe_scores(
-        memory_array,
-        rule_array,
-        fit,
-        score,
-        symbol_count,
-        coefficient,
-        "memory_read",
-        "rules",
-    )
-
-    report: dict[str, object] = {
-        "participation_ratio": participation_ratio(state_array).tolist(),
-        "participation_ratio_method": {
-            "name": "deterministic_hutchinson",
-            "probe_count": _HUTCHINSON_PROBE_COUNT,
-            "exact_through_width": _HUTCHINSON_PROBE_COUNT,
-            "limitation": (
-                "Above the exact-width threshold this deterministic finite sketch "
-                "has a nontrivial nullspace."
-            ),
-        },
-        "trajectory_step_norm": trajectory_step_norm(state_array).tolist(),
-        "answer_decodability": {
-            "workspace_per_iteration": answer_workspace,
-            "memory_read": answer_memory,
-            "final_workspace": answer_workspace[-1],
-        },
-        "rule_decodability": {
-            "workspace_per_iteration": rule_workspace,
-            "memory_read": rule_memory,
-            "final_workspace": rule_workspace[-1],
-        },
-        "rule_per_symbol_decodability": {
-            "workspace_per_iteration": rule_symbol_workspace,
-            "memory_read": rule_symbol_memory,
-            "final_workspace": rule_symbol_workspace[-1],
-        },
-        "probe_split": {
-            "fit_count": int(fit.size),
-            "score_count": int(score.size),
-            "fit_indices": fit.tolist(),
-            "score_indices": score.tolist(),
-        },
-        "comparison": memory_final_comparison(answer_memory, answer_workspace[-1]),
+    task_results = {
+        task_id: {
+            "query_count": len(task_scores),
+            "pass_at_1": all(score.pass_at_1 for score in task_scores),
+            "pass_at_2": all(score.pass_at_2 for score in task_scores),
+        }
+        for task_id, task_scores in sorted(grouped.items())
+    }
+    query_count = len(scores)
+    task_count = len(task_results)
+    return {
+        "query_count": query_count,
+        "task_count": task_count,
+        "query_pass_at_1": float(
+            sum(score.pass_at_1 for score in scores) / query_count
+        ),
+        "query_pass_at_2": float(
+            sum(score.pass_at_2 for score in scores) / query_count
+        ),
+        "strict_task_pass_at_1": float(
+            sum(result["pass_at_1"] for result in task_results.values()) / task_count
+        ),
+        "strict_task_pass_at_2": float(
+            sum(result["pass_at_2"] for result in task_results.values()) / task_count
+        ),
+        "shape_accuracy_diagnostic": float(
+            sum(score.shape_accuracy for score in scores) / query_count
+        ),
+        "valid_cell_pixel_accuracy_diagnostic": float(
+            sum(score.valid_cell_pixel_accuracy for score in scores) / query_count
+        ),
+        "tasks": task_results,
     }
 
-    if (memory_values is None) != (memory_keys is None):
-        provided = "memory_values" if memory_values is not None else "memory_keys"
-        missing = "memory_keys" if memory_values is not None else "memory_values"
-        raise ValueError(f"{provided} was provided but {missing} is missing")
-    if memory_values is not None and memory_keys is not None:
-        value_array = _factor_array(
-            memory_values, "memory_values", tuple(state_array.shape)
+
+def _logit_sequences(
+    height: ArrayLike, width: ArrayLike, colors: ArrayLike
+) -> tuple[FloatArray, FloatArray, FloatArray]:
+    height_array = _finite_array(height, "height logit sequence")
+    width_array = _finite_array(width, "width logit sequence")
+    color_array = _finite_array(colors, "color logit sequence")
+    if height_array.ndim != 2 or height_array.shape[1:] != (_AXIS_SIZE,):
+        raise ValueError(
+            f"height logit sequence shape must be (steps, 30); got {height_array.shape}"
         )
-        key_array = _factor_array(memory_keys, "memory_keys", tuple(state_array.shape))
-        if value_array.shape != key_array.shape:
+    steps = height_array.shape[0]
+    if steps < 1:
+        raise ValueError("logit sequences must contain at least one step")
+    if width_array.shape != (steps, _AXIS_SIZE):
+        raise ValueError(
+            f"width logit sequence shape must be ({steps}, 30); got {width_array.shape}"
+        )
+    expected_colors = (steps, _AXIS_SIZE, _AXIS_SIZE, _COLOR_COUNT)
+    if color_array.shape != expected_colors:
+        raise ValueError(
+            f"color logit sequence shape must be {expected_colors}; "
+            f"got {color_array.shape}"
+        )
+    return height_array, width_array, color_array
+
+
+def _state_sequences(
+    spikes: ArrayLike, voltages: ArrayLike, expected_steps: int | None = None
+) -> tuple[NDArray[np.bool_], FloatArray]:
+    try:
+        spike_array = np.asarray(spikes)
+    except (TypeError, ValueError) as error:
+        raise ValueError("spikes must be a rectangular binary array") from error
+    if spike_array.ndim != 2 or any(size < 1 for size in spike_array.shape):
+        raise ValueError(
+            f"spikes shape must be (steps, neurons) with nonempty axes; got {spike_array.shape}"
+        )
+    if expected_steps is not None and spike_array.shape[0] != expected_steps:
+        raise ValueError(
+            f"spikes have {spike_array.shape[0]} steps; expected {expected_steps}"
+        )
+    if not (
+        np.issubdtype(spike_array.dtype, np.bool_)
+        or np.issubdtype(spike_array.dtype, np.number)
+    ):
+        raise ValueError("spikes must contain binary numeric values")
+    if not np.all(np.isfinite(spike_array)) or not np.all(
+        (spike_array == 0) | (spike_array == 1)
+    ):
+        raise ValueError("spikes must contain only finite binary values")
+    spike_result = np.ascontiguousarray(spike_array, dtype=np.bool_)
+    spike_result.setflags(write=False)
+    voltage_result = _finite_array(voltages, "voltages")
+    if voltage_result.shape != spike_result.shape:
+        raise ValueError(
+            "voltages shape must match spikes; got "
+            f"voltages {voltage_result.shape}, spikes {spike_result.shape}"
+        )
+    return spike_result, voltage_result
+
+
+def _step_indices(values: Sequence[int] | ArrayLike | None, count: int) -> list[int]:
+    if values is None:
+        return list(range(count))
+    array = np.asarray(values)
+    if (
+        array.shape != (count,)
+        or not np.issubdtype(array.dtype, np.integer)
+        or np.issubdtype(array.dtype, np.bool_)
+    ):
+        raise ValueError(f"step_indices must contain {count} integers")
+    result = [int(value) for value in array]
+    if any(value < 0 for value in result) or any(
+        right <= left for left, right in zip(result, result[1:])
+    ):
+        raise ValueError("step_indices must be nonnegative and strictly increasing")
+    return result
+
+
+def _changed_grid_cells(previous: GridArray, current: GridArray) -> tuple[int, float]:
+    height = max(previous.shape[0], current.shape[0])
+    width = max(previous.shape[1], current.shape[1])
+    previous_canvas = np.full((height, width), -1, dtype=np.int16)
+    current_canvas = np.full((height, width), -1, dtype=np.int16)
+    previous_canvas[: previous.shape[0], : previous.shape[1]] = previous
+    current_canvas[: current.shape[0], : current.shape[1]] = current
+    union = (previous_canvas >= 0) | (current_canvas >= 0)
+    changed = int(np.sum((previous_canvas != current_canvas) & union))
+    return changed, float(changed / np.sum(union))
+
+
+def _decision_uncertainty(
+    logits: OutputLogits, candidate: DecodedCandidate
+) -> tuple[float, float]:
+    decisions = [np.asarray(logits.height), np.asarray(logits.width)]
+    grid = np.asarray(candidate.grid)
+    colors = np.asarray(logits.colors)
+    decisions.extend(
+        colors[row, column]
+        for row in range(grid.shape[0])
+        for column in range(grid.shape[1])
+    )
+    entropies: list[float] = []
+    margins: list[float] = []
+    for decision in decisions:
+        maximum = float(np.max(decision))
+        probabilities = np.exp(decision - maximum)
+        probabilities /= np.sum(probabilities)
+        positive = probabilities > 0.0
+        entropies.append(
+            float(-np.sum(probabilities[positive] * np.log(probabilities[positive])))
+        )
+        margins.append(_top_two(decision)[2])
+    return float(np.mean(entropies)), float(np.mean(margins))
+
+
+def _state_hash(
+    spikes: NDArray[np.bool_], voltages: FloatArray, *additional: FloatArray
+) -> str:
+    digest = hashlib.sha256()
+    digest.update(np.ascontiguousarray(spikes).tobytes())
+    digest.update(np.ascontiguousarray(voltages).tobytes())
+    for state in additional:
+        digest.update(np.ascontiguousarray(state).tobytes())
+    return digest.hexdigest()
+
+
+def _bounded_fraction(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise ValueError(f"{name} must be finite and in [0, 1]")
+    result = float(value)
+    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
+        raise ValueError(f"{name} must be finite and in [0, 1]")
+    return result
+
+
+def analyze_latent_trajectory(
+    height_logits: ArrayLike,
+    width_logits: ArrayLike,
+    color_logits: ArrayLike,
+    spikes: ArrayLike,
+    voltages: ArrayLike,
+    *,
+    feedforward_current: ArrayLike | None = None,
+    recurrent_current: ArrayLike | None = None,
+    target: ArrayLike | None = None,
+    task_id: str = "trajectory",
+    query_index: int = 0,
+    step_indices: Sequence[int] | ArrayLike | None = None,
+    convergence_atol: float = 0.0,
+    silence_rate: float = 0.001,
+    saturation_rate: float = 0.95,
+    raster_neurons: int = 64,
+) -> dict[str, object]:
+    """Decode and measure every state in one query's latent rollout.
+
+    Parameters
+    ----------
+    height_logits, width_logits, color_logits : array-like
+        Unbatched output-head stacks shaped ``(steps, 30)``, ``(steps, 30)``,
+        and ``(steps, 30, 30, 10)``.
+    spikes, voltages : array-like
+        Matched state stacks shaped ``(steps, neurons)``. Step zero may be the
+        query-terminal state and later rows zero-input recurrent states.
+    feedforward_current, recurrent_current : array-like or None, default=None
+        Optional separate Expon-current stacks shaped ``(steps, neurons)``.
+        Supply both or neither. They participate in state hashes, displacement,
+        and convergence.
+    target : array-like or None, default=None
+        Optional held-out grid for exact provisional scoring.
+    task_id : str, default="trajectory"
+        Task identity attached to optional scores.
+    query_index : int, default=0
+        Query index attached to optional scores.
+    step_indices : sequence of int or None, default=None
+        Nonnegative, strictly increasing external checkpoint labels.
+    convergence_atol : float, default=0.0
+        Absolute voltage tolerance. Convergence also requires identical spikes
+        and an unchanged candidate-one grid.
+    silence_rate : float, default=0.001
+        Inclusive firing-rate threshold for near-silence.
+    saturation_rate : float, default=0.95
+        Inclusive firing-rate threshold for near-saturation.
+    raster_neurons : int, default=64
+        Prefix width retained as active neuron indices for a bounded raster.
+
+    Returns
+    -------
+    dict
+        JSON-safe per-step provisional outputs, exact scores when available,
+        uncertainty, activity, voltage, displacement, convergence, and flags.
+
+    Raises
+    ------
+    ValueError
+        If logits, state stacks, thresholds, indices, or target are invalid.
+    """
+    height, width, colors = _logit_sequences(height_logits, width_logits, color_logits)
+    spike_array, voltage_array = _state_sequences(
+        spikes, voltages, expected_steps=height.shape[0]
+    )
+    if (feedforward_current is None) != (recurrent_current is None):
+        raise ValueError(
+            "feedforward_current and recurrent_current must be provided together"
+        )
+    feedforward_array: FloatArray | None = None
+    recurrent_array: FloatArray | None = None
+    if feedforward_current is not None and recurrent_current is not None:
+        feedforward_array = _finite_array(
+            feedforward_current, "feedforward synaptic current"
+        )
+        recurrent_array = _finite_array(recurrent_current, "recurrent synaptic current")
+        if feedforward_array.shape != spike_array.shape:
             raise ValueError(
-                "memory_values and memory_keys shapes must match; got "
-                f"memory_values {value_array.shape}, memory_keys {key_array.shape}"
+                "feedforward synaptic current shape must match spikes; got "
+                f"{feedforward_array.shape} and {spike_array.shape}"
             )
-        raw_factors = np.concatenate(
-            (
-                value_array.reshape(episode_count, -1),
-                key_array.reshape(episode_count, -1),
+        if recurrent_array.shape != spike_array.shape:
+            raise ValueError(
+                "recurrent synaptic current shape must match spikes; got "
+                f"{recurrent_array.shape} and {spike_array.shape}"
+            )
+    labels = _step_indices(step_indices, height.shape[0])
+    if (
+        isinstance(convergence_atol, (bool, np.bool_))
+        or not isinstance(convergence_atol, Real)
+        or not math.isfinite(float(convergence_atol))
+        or float(convergence_atol) < 0.0
+    ):
+        raise ValueError("convergence_atol must be finite and nonnegative")
+    silence = _bounded_fraction(silence_rate, "silence_rate")
+    saturation = _bounded_fraction(saturation_rate, "saturation_rate")
+    if silence >= saturation:
+        raise ValueError("silence_rate must be smaller than saturation_rate")
+    raster_width = _nonnegative_integer(raster_neurons, "raster_neurons")
+    if raster_width < 1:
+        raise ValueError("raster_neurons must be positive")
+    truth = None if target is None else _grid_array(target, "target grid")
+
+    reports: list[dict[str, object]] = []
+    previous_grid: GridArray | None = None
+    previous_spikes: NDArray[np.bool_] | None = None
+    previous_voltage: FloatArray | None = None
+    previous_feedforward: FloatArray | None = None
+    previous_recurrent: FloatArray | None = None
+    for offset, step in enumerate(labels):
+        output = OutputLogits(height[offset], width[offset], colors[offset])
+        candidates = decode_candidates(output)
+        first_grid = np.asarray(candidates[0].grid)
+        entropy, margin = _decision_uncertainty(output, candidates[0])
+        spike_row = spike_array[offset]
+        voltage_row = voltage_array[offset]
+        feedforward_row = (
+            None if feedforward_array is None else feedforward_array[offset]
+        )
+        recurrent_row = None if recurrent_array is None else recurrent_array[offset]
+        rate = float(np.mean(spike_row))
+        if previous_grid is None:
+            changed_count: int | None = None
+            changed_fraction: float | None = None
+            spike_hamming: int | None = None
+            spike_hamming_fraction: float | None = None
+            voltage_displacement: float | None = None
+            feedforward_displacement: float | None = None
+            recurrent_displacement: float | None = None
+            converged = False
+        else:
+            changed_count, changed_fraction = _changed_grid_cells(
+                previous_grid, first_grid
+            )
+            spike_hamming = int(np.count_nonzero(spike_row != previous_spikes))
+            spike_hamming_fraction = float(spike_hamming / spike_row.size)
+            voltage_displacement = float(np.linalg.norm(voltage_row - previous_voltage))
+            feedforward_displacement = (
+                None
+                if feedforward_row is None or previous_feedforward is None
+                else float(np.linalg.norm(feedforward_row - previous_feedforward))
+            )
+            recurrent_displacement = (
+                None
+                if recurrent_row is None or previous_recurrent is None
+                else float(np.linalg.norm(recurrent_row - previous_recurrent))
+            )
+            converged = bool(
+                changed_count == 0
+                and spike_hamming == 0
+                and np.allclose(
+                    voltage_row,
+                    previous_voltage,
+                    rtol=0.0,
+                    atol=float(convergence_atol),
+                )
+                and (
+                    feedforward_row is None
+                    or (
+                        previous_feedforward is not None
+                        and np.allclose(
+                            feedforward_row,
+                            previous_feedforward,
+                            rtol=0.0,
+                            atol=float(convergence_atol),
+                        )
+                    )
+                )
+                and (
+                    recurrent_row is None
+                    or (
+                        previous_recurrent is not None
+                        and np.allclose(
+                            recurrent_row,
+                            previous_recurrent,
+                            rtol=0.0,
+                            atol=float(convergence_atol),
+                        )
+                    )
+                )
+            )
+        report: dict[str, object] = {
+            "step": step,
+            "candidates": [candidate.to_dict() for candidate in candidates],
+            "changed_cell_count": changed_count,
+            "changed_cell_fraction": changed_fraction,
+            "predictive_entropy": entropy,
+            "top_two_logit_margin": margin,
+            "spike_count": int(np.sum(spike_row)),
+            "firing_rate": rate,
+            "raster_active_indices": np.flatnonzero(
+                spike_row[: min(raster_width, spike_row.size)]
+            )
+            .astype(int)
+            .tolist(),
+            "voltage_mean": float(np.mean(voltage_row)),
+            "voltage_std": float(np.std(voltage_row)),
+            "voltage_mean_absolute": float(np.mean(np.abs(voltage_row))),
+            "voltage_l2": float(np.linalg.norm(voltage_row)),
+            "spike_hamming_displacement": spike_hamming,
+            "spike_hamming_fraction": spike_hamming_fraction,
+            "voltage_l2_displacement": voltage_displacement,
+            "feedforward_current_mean_absolute": (
+                None
+                if feedforward_row is None
+                else float(np.mean(np.abs(feedforward_row)))
             ),
-            axis=1,
-        )
-        raw_answer, _ = _probe_scores(
-            raw_factors,
-            answer_array,
-            fit,
-            score,
-            symbol_count,
-            coefficient,
-            "raw_memory_factors",
-            "answers",
-        )
-        raw_rule_symbol, raw_rule_exact = _probe_scores(
-            raw_factors,
-            rule_array,
-            fit,
-            score,
-            symbol_count,
-            coefficient,
-            "raw_memory_factors",
-            "rules",
-        )
-        report["raw_memory_factor_decodability"] = {
-            "answer": raw_answer,
-            "full_rule_exact": raw_rule_exact,
-            "rule_per_symbol": raw_rule_symbol,
+            "feedforward_current_l2": (
+                None
+                if feedforward_row is None
+                else float(np.linalg.norm(feedforward_row))
+            ),
+            "feedforward_current_l2_displacement": feedforward_displacement,
+            "recurrent_current_mean_absolute": (
+                None if recurrent_row is None else float(np.mean(np.abs(recurrent_row)))
+            ),
+            "recurrent_current_l2": (
+                None if recurrent_row is None else float(np.linalg.norm(recurrent_row))
+            ),
+            "recurrent_current_l2_displacement": recurrent_displacement,
+            "converged": converged,
+            "near_silence": rate <= silence,
+            "near_saturation": rate >= saturation,
+            "state_sha256": _state_hash(
+                spike_row,
+                voltage_row,
+                *(
+                    ()
+                    if feedforward_row is None or recurrent_row is None
+                    else (feedforward_row, recurrent_row)
+                ),
+            ),
         }
-    return report
+        if truth is not None:
+            report["score"] = score_query_candidates(
+                candidates,
+                truth,
+                task_id=task_id,
+                query_index=query_index,
+            ).to_dict()
+        reports.append(report)
+        previous_grid = first_grid
+        previous_spikes = spike_row
+        previous_voltage = voltage_row
+        previous_feedforward = feedforward_row
+        previous_recurrent = recurrent_row
+
+    rates = [float(report["firing_rate"]) for report in reports]
+    entropy_values = [float(report["predictive_entropy"]) for report in reports]
+    voltage_norms = [float(report["voltage_l2"]) for report in reports]
+    return {
+        "step_count": len(reports),
+        "neuron_count": int(spike_array.shape[1]),
+        "steps": reports,
+        "converged_steps": [
+            int(report["step"]) for report in reports if report["converged"]
+        ],
+        "near_silence_steps": [
+            int(report["step"]) for report in reports if report["near_silence"]
+        ],
+        "near_saturation_steps": [
+            int(report["step"]) for report in reports if report["near_saturation"]
+        ],
+        "firing_rate_distribution": {
+            "minimum": min(rates),
+            "mean": float(np.mean(rates)),
+            "maximum": max(rates),
+        },
+        "predictive_entropy_distribution": {
+            "minimum": min(entropy_values),
+            "mean": float(np.mean(entropy_values)),
+            "maximum": max(entropy_values),
+        },
+        "voltage_l2_distribution": {
+            "minimum": min(voltage_norms),
+            "mean": float(np.mean(voltage_norms)),
+            "maximum": max(voltage_norms),
+        },
+    }
+
+
+def _byte_identical(left: np.ndarray, right: np.ndarray) -> bool:
+    return (
+        left.shape == right.shape
+        and left.dtype.str == right.dtype.str
+        and np.ascontiguousarray(left).tobytes()
+        == np.ascontiguousarray(right).tobytes()
+    )
+
+
+def _flatten_numeric(value: Mapping[str, Any], prefix: str = "") -> dict[str, float]:
+    result: dict[str, float] = {}
+    for key, item in value.items():
+        path = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(item, Mapping):
+            result.update(_flatten_numeric(item, path))
+        elif isinstance(item, (bool, np.bool_)):
+            result[path] = float(bool(item))
+        elif isinstance(item, Real) and math.isfinite(float(item)):
+            result[path] = float(item)
+    return result
+
+
+def compare_control_trajectories(
+    intact_spikes: ArrayLike,
+    intact_voltages: ArrayLike,
+    control_spikes: ArrayLike,
+    control_voltages: ArrayLike,
+    *,
+    control_name: str,
+    intact_scores: Mapping[str, Any] | None = None,
+    control_scores: Mapping[str, Any] | None = None,
+    intact_synaptic_currents: Mapping[str, ArrayLike] | None = None,
+    control_synaptic_currents: Mapping[str, ArrayLike] | None = None,
+) -> dict[str, object]:
+    """Compare one frozen control with its matched intact trajectory.
+
+    Parameters
+    ----------
+    intact_spikes, intact_voltages : array-like
+        Intact state stacks shaped ``(steps, neurons)``.
+    control_spikes, control_voltages : array-like
+        Matched control stacks with the same shapes.
+    control_name : str
+        Human-readable intervention identifier.
+    intact_scores, control_scores : mapping or None, default=None
+        Optional matched metric mappings. Numeric leaves are reported as
+        ``control - intact`` deltas. Both mappings must be present together.
+    intact_synaptic_currents, control_synaptic_currents : mapping or None, default=None
+        Optional matched named current stacks shaped ``(steps, features)``.
+        Both mappings must be present together and carry identical names.
+
+    Returns
+    -------
+    dict
+        Per-step state differences, exact-byte null evidence, score deltas,
+        and a plain-language causal interpretation.
+
+    Raises
+    ------
+    ValueError
+        If names, state shapes, binary spikes, or score pairing are invalid.
+    """
+    if not isinstance(control_name, str) or not control_name:
+        raise ValueError("control_name must be a nonempty string")
+    raw_intact_spikes = np.asarray(intact_spikes)
+    raw_intact_voltages = np.asarray(intact_voltages)
+    raw_control_spikes = np.asarray(control_spikes)
+    raw_control_voltages = np.asarray(control_voltages)
+    intact_spike_array, intact_voltage_array = _state_sequences(
+        raw_intact_spikes, raw_intact_voltages
+    )
+    control_spike_array, control_voltage_array = _state_sequences(
+        raw_control_spikes, raw_control_voltages
+    )
+    if control_spike_array.shape != intact_spike_array.shape:
+        raise ValueError(
+            "control state shape must match intact state shape; got "
+            f"control {control_spike_array.shape}, intact {intact_spike_array.shape}"
+        )
+
+    byte_identical_steps = [
+        _byte_identical(raw_intact_spikes[index], raw_control_spikes[index])
+        and _byte_identical(raw_intact_voltages[index], raw_control_voltages[index])
+        for index in range(intact_spike_array.shape[0])
+    ]
+    hamming = np.count_nonzero(
+        intact_spike_array != control_spike_array, axis=1
+    ).astype(int)
+    voltage_distance = np.linalg.norm(
+        intact_voltage_array - control_voltage_array, axis=1
+    )
+    if (intact_synaptic_currents is None) != (control_synaptic_currents is None):
+        raise ValueError(
+            "intact_synaptic_currents and control_synaptic_currents must be provided together"
+        )
+    current_distances: dict[str, list[float]] = {}
+    current_byte_identity: dict[str, list[bool]] = {}
+    if intact_synaptic_currents is not None and control_synaptic_currents is not None:
+        if not intact_synaptic_currents or (
+            intact_synaptic_currents.keys() != control_synaptic_currents.keys()
+        ):
+            raise ValueError(
+                "matched synaptic current mappings must have identical nonempty names"
+            )
+        for name in sorted(intact_synaptic_currents):
+            raw_intact_current = np.asarray(intact_synaptic_currents[name])
+            raw_control_current = np.asarray(control_synaptic_currents[name])
+            intact_current = _finite_array(
+                raw_intact_current, f"intact {name} synaptic current"
+            )
+            control_current = _finite_array(
+                raw_control_current, f"control {name} synaptic current"
+            )
+            if (
+                intact_current.ndim != 2
+                or intact_current.shape[0] != intact_spike_array.shape[0]
+                or intact_current.shape[1] < 1
+                or control_current.shape != intact_current.shape
+            ):
+                raise ValueError(
+                    f"matched {name} synaptic current shapes must be "
+                    f"(steps, features); got intact {intact_current.shape}, "
+                    f"control {control_current.shape}"
+                )
+            identical = [
+                _byte_identical(raw_intact_current[index], raw_control_current[index])
+                for index in range(intact_spike_array.shape[0])
+            ]
+            current_byte_identity[name] = identical
+            current_distances[name] = np.linalg.norm(
+                intact_current - control_current, axis=1
+            ).tolist()
+            byte_identical_steps = [
+                state_identical and current_identical
+                for state_identical, current_identical in zip(
+                    byte_identical_steps, identical, strict=True
+                )
+            ]
+    causal_null = bool(all(byte_identical_steps))
+
+    if (intact_scores is None) != (control_scores is None):
+        raise ValueError("intact_scores and control_scores must be provided together")
+    score_deltas: dict[str, float] = {}
+    if intact_scores is not None and control_scores is not None:
+        intact_flat = _flatten_numeric(intact_scores)
+        control_flat = _flatten_numeric(control_scores)
+        for key in sorted(intact_flat.keys() & control_flat.keys()):
+            score_deltas[key] = control_flat[key] - intact_flat[key]
+
+    interpretation = (
+        f"{control_name} is causally null at measured precision: its spike, "
+        "voltage, and measured synaptic-current states are byte-identical to "
+        "the matched intact trajectory."
+        if causal_null
+        else f"{control_name} changed measured latent states relative to the matched intact trajectory."
+    )
+    return {
+        "control_name": control_name,
+        "causally_null_at_measured_precision": causal_null,
+        "state_byte_identical_by_step": byte_identical_steps,
+        "spike_hamming_by_step": hamming.tolist(),
+        "spike_hamming_fraction_by_step": (
+            hamming / intact_spike_array.shape[1]
+        ).tolist(),
+        "voltage_l2_by_step": voltage_distance.tolist(),
+        "synaptic_current_l2_by_step": current_distances,
+        "synaptic_current_byte_identical_by_step": current_byte_identity,
+        "score_deltas_control_minus_intact": score_deltas,
+        "interpretation": interpretation,
+    }

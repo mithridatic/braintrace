@@ -1,13 +1,29 @@
-"""Memory-equipped latent workspace model for Example 21."""
+"""Recurrent spiking ARC workspace for Example 21.
+
+The model deliberately contains only repository-native mechanisms: BrainPy
+LIF neurons, exponential current synapses, BrainTrace dense and sparse linear
+operators, and a pp-prop eligibility-trace coordinate.  ARC row events drive a
+slow feed-forward synapse.  After the query, exactly-zero event vectors leave
+the recurrent LIF population to evolve for up to 32 latent steps.
+
+The color head is a compact CP factorization.  It emits row, column, and color
+factors while the network is running and expands them to independent
+``30 x 30 x 10`` logits only at a requested checkpoint.  This avoids a dense
+``readout_width x 9000`` parameter matrix and avoids materializing 9,000 logits
+at every context row.
+"""
 
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from numbers import Integral, Real
-from typing import Literal
+from typing import Any, NamedTuple
 
+import brainpy.state as bpstate
 import brainstate
+import braintools
+import brainunit as u
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -15,1001 +31,1756 @@ from numpy.typing import NDArray
 
 import braintrace
 
-try:
-    from .latent_workspace_task import TaskConfig, build_codebook
-except ImportError:
-    from latent_workspace_task import TaskConfig, build_codebook
-
-WriteMode = Literal["fixed_random", "learned"]
-_LATENT_THRESHOLD = 1.0
+MAX_GRID_SIZE = 30
+COLOR_COUNT = 10
+NEURONS_PER_SLOT = 64
 
 
-def _validated_integral_scalar(value: object, name: str, *, minimum: int) -> int:
+def _positive_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be a non-boolean integer")
+        raise TypeError(f"{name} must be a positive non-boolean integer")
     result = int(value)
-    if result < minimum:
-        qualifier = "nonnegative" if minimum == 0 else "positive"
-        raise ValueError(f"{name} must be {qualifier}")
+    if result <= 0:
+        raise ValueError(f"{name} must be a positive non-boolean integer")
     return result
 
 
-def _validated_real_scalar(value: object, name: str) -> float:
+def _nonnegative_integer(value: object, name: str) -> int:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
+        raise TypeError(f"{name} must be a nonnegative non-boolean integer")
+    result = int(value)
+    if result < 0:
+        raise ValueError(f"{name} must be a nonnegative non-boolean integer")
+    return result
+
+
+def _positive_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be a finite non-boolean real scalar")
+        raise TypeError(f"{name} must be a finite positive real scalar")
     result = float(value)
-    if not math.isfinite(result):
-        raise ValueError(f"{name} must be a finite non-boolean real scalar")
+    if not math.isfinite(result) or result <= 0.0:
+        raise ValueError(f"{name} must be a finite positive real scalar")
     return result
-
-
-def _surrogate_spike(value: jax.Array) -> jax.Array:
-    hard = (value >= 0.0).astype(value.dtype)
-    soft = jax.nn.sigmoid(value)
-    return soft + jax.lax.stop_gradient(hard - soft)
 
 
 @dataclass(frozen=True)
 class ModelConfig:
-    """Configure the latent-workspace network.
+    """Configure the ARC recurrent spiking workspace.
 
     Parameters
     ----------
-    task : TaskConfig
-        Episode dimensions and flat input layout.
-    batch_size : int
-        Native leading batch dimension used by every model call.
-    latent_width : int
-        Width of the value rows, key rows, and latent workspace.
-    ingestion_tau_ms : float
-        Membrane constant of the distinct input-ingestion population.
-    latent_tau_ms : float
-        Membrane constant of the zero-input latent recurrence.
-    time_step_ms : float
-        Duration represented by one task tick.
-    latent_spectral_radius : float
-        Requested spectral radius for the recurrent workspace matrix.
-    latent_connectivity : float
-        Connection probability in the sparse recurrent reservoir.
-    dale_inhibitory_fraction : float
-        Fraction of presynaptic latent neurons whose outgoing recurrent column
-        is negative. A strictly nonnegative recurrence has, by
-        Perron-Frobenius, a dominant nonnegative eigenvector that repeated
-        application projects onto, which collapses the workspace across latent
-        depth. Must lie in ``(0, 1)``; at least one neuron is always
-        inhibitory, so the constraint is never silently vacuous.
-    max_jacobian_elements : int
-        Explicit safety ceiling for the intentional coupled hidden Jacobian.
-    write_mode : {"fixed_random", "learned"}
-        Whether an outer training driver should optimize ``Wk`` and ``Wv``.
-        Both remain :class:`brainstate.ParamState` objects so BrainTrace can
-        compile their ETP relations. The release default is honestly labelled
-        ``"fixed_random"`` because the feasibility spike did not establish
-        learning of the write path.
-    seed : int
-        Experiment seed for recurrent initialization through
-        ``brainstate.random``.
-    projection_seed : int
-        Fixed seed for the key, value, and readout projections. Keeping this
-        separate from ``seed`` holds the contextual-memory basis constant
-        across recurrent experiment seeds.
-    """
-
-    task: TaskConfig = field(default_factory=TaskConfig)
-    batch_size: int = 1
-    latent_width: int = 32
-    ingestion_tau_ms: float = 20.0
-    latent_tau_ms: float = 160.0
-    time_step_ms: float = 1.0
-    latent_spectral_radius: float = 0.9
-    latent_connectivity: float = 0.75
-    dale_inhibitory_fraction: float = 0.25
-    max_jacobian_elements: int = 1 << 26
-    write_mode: WriteMode = "fixed_random"
-    seed: int = 2108
-    projection_seed: int = 210848
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "batch_size",
-            _validated_integral_scalar(self.batch_size, "batch_size", minimum=1),
-        )
-        object.__setattr__(
-            self,
-            "latent_width",
-            _validated_integral_scalar(self.latent_width, "latent_width", minimum=1),
-        )
-        object.__setattr__(
-            self,
-            "seed",
-            _validated_integral_scalar(self.seed, "seed", minimum=0),
-        )
-        object.__setattr__(
-            self,
-            "projection_seed",
-            _validated_integral_scalar(
-                self.projection_seed, "projection_seed", minimum=0
-            ),
-        )
-        object.__setattr__(
-            self,
-            "max_jacobian_elements",
-            _validated_integral_scalar(
-                self.max_jacobian_elements,
-                "max_jacobian_elements",
-                minimum=1,
-            ),
-        )
-        for name in (
-            "ingestion_tau_ms",
-            "latent_tau_ms",
-            "time_step_ms",
-            "latent_spectral_radius",
-            "latent_connectivity",
-            "dale_inhibitory_fraction",
-        ):
-            object.__setattr__(
-                self, name, _validated_real_scalar(getattr(self, name), name)
-            )
-        if self.ingestion_tau_ms <= 0.0:
-            raise ValueError("ingestion_tau_ms must be finite and positive")
-        if self.latent_tau_ms <= 0.0:
-            raise ValueError("latent_tau_ms must be finite and positive")
-        if self.time_step_ms <= 0.0:
-            raise ValueError("time_step_ms must be finite and positive")
-        if self.latent_spectral_radius <= 0.0:
-            raise ValueError("latent_spectral_radius must be finite and positive")
-        if not 0.0 < self.latent_connectivity <= 1.0:
-            raise ValueError("latent_connectivity must be in (0, 1]")
-        if not 0.0 < self.dale_inhibitory_fraction < 1.0:
-            raise ValueError("dale_inhibitory_fraction must be in (0, 1)")
-        if self.write_mode not in ("fixed_random", "learned"):
-            raise ValueError(
-                "write_mode must be 'fixed_random' or 'learned', "
-                f"got {self.write_mode!r}"
-            )
-
-
-@dataclass(frozen=True)
-class SequenceResult:
-    """Hold outputs collected while executing one sequence.
-
-    Parameters
-    ----------
-    logits : jax.Array
-        Per-tick class logits shaped ``(time, batch, symbol_count)``.
-    workspace : jax.Array
-        Per-tick binary LIF workspace states shaped
-        ``(time, batch, latent_width)``. The final query state is ``H0`` and
-        latent ticks expose ``H1`` onward. The separate analog ``memory_read``
-        controls query-phase logits without replacing this recurrent state.
-    memory_read : jax.Array
-        Pure contextual read ``A @ (B.T @ q)`` computed after the query from
-        the accumulated query encoding, shaped ``(batch, latent_width)``.
-    query_encoding : jax.Array
-        Query projection accumulated without workspace feedback, shaped
-        ``(batch, latent_width)``.
-    memory_values, memory_keys : jax.Array
-        Final factor rows, each shaped ``(batch, slots, latent_width)``.
-    """
-
-    logits: jax.Array
-    workspace: jax.Array
-    memory_read: jax.Array
-    query_encoding: jax.Array
-    memory_values: jax.Array
-    memory_keys: jax.Array
-
-    @property
-    def terminal_logits(self) -> jax.Array:
-        """Return logits from the final query or latent tick."""
-        return self.logits[-1]
-
-    @property
-    def memory_factors(self) -> tuple[jax.Array, jax.Array]:
-        """Return final value and key factor rows as ``(A, B)``."""
-        return self.memory_values, self.memory_keys
-
-
-def phase_masks(
-    model_inputs: jax.Array, task: TaskConfig
-) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-    """Extract the arithmetic phase gates from a flat input axis.
-
-    The stored phase vector is one-hot over demonstration, query, latent-seed,
-    and latent channels. The returned ``latent`` mask is the union of the two
-    latent channels, so callers that only distinguish ingestion from latent
-    computation need no change; ``seed`` isolates the first latent tick.
-
-    Parameters
-    ----------
-    model_inputs : jax.Array
-        One tick or a sequence whose last dimension is ``task.input_width``.
-    task : TaskConfig
-        Input layout defining the phase-vector slice.
-
-    Returns
-    -------
-    tuple of jax.Array
-        Demonstration, query, latent, and latent-seed masks, each retaining a
-        singleton final dimension for broadcast arithmetic.
-    """
-    if model_inputs.shape[-1] != task.input_width:
-        raise ValueError(
-            "model_inputs final dimension must equal input_width "
-            f"{task.input_width}, got shape {model_inputs.shape}"
-        )
-    phases = model_inputs[..., task.phase_slice]
-    seed = phases[..., 2:3]
-    return phases[..., 0:1], phases[..., 1:2], seed + phases[..., 3:4], seed
-
-
-def factored_memory_read(
-    values: jax.Array, keys: jax.Array, query: jax.Array
-) -> jax.Array:
-    """Read an outer-product memory without materializing its dense matrix.
-
-    This computes ``A @ (B.T @ query)`` with exactly two hidden-only
-    contractions. Factor rows have shape ``(batch, slots, width)``.
-
-    Parameters
-    ----------
-    values, keys : jax.Array
-        Value and key factor rows with identical rank-three shapes.
-    query : jax.Array
-        Query vectors shaped ``(batch, width)``.
-
-    Returns
-    -------
-    jax.Array
-        Read vectors shaped ``(batch, width)``.
-    """
-    if values.ndim != 3 or keys.shape != values.shape:
-        raise ValueError(
-            "values and keys must have one identical (batch, slots, width) shape, "
-            f"got {values.shape} and {keys.shape}"
-        )
-    expected_query_shape = (values.shape[0], values.shape[2])
-    if query.shape != expected_query_shape:
-        raise ValueError(
-            "query shape must match factor batch and width "
-            f"{expected_query_shape}, got {query.shape}"
-        )
-    slot_scores = jnp.einsum("bmd,bd->bm", keys, query)
-    return jnp.einsum("bmd,bm->bd", values, slot_scores)
-
-
-def shuffled_memory_factors(
-    values: jax.Array, keys: jax.Array, permutation: jax.Array
-) -> tuple[jax.Array, jax.Array]:
-    """Permute value slots relative to unchanged key slots.
-
-    Parameters
-    ----------
-    values, keys : jax.Array
-        Memory factors shaped ``(batch, slots, width)``.
-    permutation : jax.Array
-        Permutation of ``range(slots)``.
-
-    Returns
-    -------
-    tuple of jax.Array
-        Permuted values and unchanged keys. Shapes and global magnitudes are
-        preserved while stored associations are mismatched.
-    """
-    if values.ndim != 3 or keys.shape != values.shape:
-        raise ValueError(
-            "values and keys must have one identical (batch, slots, width) shape, "
-            f"got {values.shape} and {keys.shape}"
-        )
-    raw_permutation = np.asarray(permutation)
-    if raw_permutation.shape != (values.shape[1],):
-        raise ValueError(
-            "permutation shape must be "
-            f"({values.shape[1]},), got {raw_permutation.shape}"
-        )
-    if not np.issubdtype(raw_permutation.dtype, np.integer):
-        raise ValueError("permutation must contain integer slot indices")
-    permutation_values = raw_permutation.astype(np.int64, copy=False)
-    expected = np.arange(values.shape[1], dtype=np.int64)
-    if not np.array_equal(np.sort(permutation_values), expected):
-        raise ValueError("permutation must be a bijection over all memory slots")
-    if np.array_equal(permutation_values, expected):
-        raise ValueError("permutation must mismatch at least one memory association")
-    validated = jnp.asarray(permutation_values, dtype=jnp.int32)
-    return jnp.take(values, validated, axis=1), keys
-
-
-def occupied_slot_derangement(slot_count: int, occupied_count: int) -> jax.Array:
-    """Return a cyclic derangement of occupied slots with unused slots fixed.
-
-    Parameters
-    ----------
-    slot_count : int
-        Total contextual-memory capacity.
-    occupied_count : int
-        Number of leading slots populated by demonstrations; at least two.
-
-    Returns
-    -------
-    jax.Array
-        Integer permutation shaped ``(slot_count,)``. Every occupied slot moves
-        and every unused slot retains its position.
-    """
-    slot_count = _validated_integral_scalar(slot_count, "slot_count", minimum=1)
-    occupied_count = _validated_integral_scalar(
-        occupied_count, "occupied_count", minimum=1
-    )
-    if occupied_count < 2:
-        raise ValueError("occupied_count must be at least 2 for a derangement")
-    if occupied_count > slot_count:
-        raise ValueError(
-            f"occupied_count {occupied_count} exceeds slot_count {slot_count}"
-        )
-    permutation = np.arange(slot_count, dtype=np.int32)
-    permutation[:occupied_count] = np.roll(permutation[:occupied_count], -1)
-    return jnp.asarray(permutation)
-
-
-def _normalize_rows(value: jax.Array) -> jax.Array:
-    return value / jnp.maximum(jnp.linalg.norm(value, axis=-1, keepdims=True), 1e-6)
-
-
-def dale_column_signs(width: int, inhibitory_fraction: float) -> jax.Array:
-    """Assign a fixed excitatory or inhibitory sign to each presynaptic neuron.
-
-    Dale's law constrains a neuron's outgoing synapses to share one sign, so
-    the returned signs index the presynaptic (column) axis of the recurrent
-    matrix and broadcast across postsynaptic rows.
-
-    Parameters
-    ----------
-    width : int
-        Number of latent neurons.
-    inhibitory_fraction : float
-        Requested inhibitory share, strictly between zero and one. The realized
-        count is at least one and at most ``width - 1``, so neither population
-        is ever empty.
-
-    Returns
-    -------
-    jax.Array
-        Float32 array shaped ``(1, width)`` holding ``+1`` and ``-1``. The
-        trailing neurons are the inhibitory population.
+    input_width : int
+        Width of one encoded ARC row event.
+    batch_size : int, default=1
+        Native batch dimension used by the BrainState model.
+    neuron_count : int, default=2048
+        Number of physical LIF neurons.  It must be divisible by 64 so slot
+        controls always refer to exact 64-neuron ranges.
+    recurrent_edges : int, default=16384
+        Exact number of directed non-self recurrent edges.
+    max_latent_steps : int, default=32
+        Maximum allowed zero-input recurrent steps.
+    readout_width : int, default=128
+        Shared low-rank readout bottleneck.
+    color_rank : int, default=16
+        CP rank of the spatial color-logit tensor.
+    membrane_tau_ms, feedforward_tau_ms, recurrent_tau_ms : float
+        Physical time constants for neurons and both synapses.
+    time_step_ms : float, default=1.0
+        Duration represented by one event or latent step.
+    input_gain, recurrent_gain : float
+        Initialization gains for the feed-forward and recurrent projections.
+    trace_decay : float, default=0.9
+        pp-prop eligibility-trace decay in ``[0, 1)``.
+    event_valid_index : int, default=0
+        Row-event channel whose one means a context row advances state.  Latent
+        steps use a separate advance gate, keeping their external vector
+        exactly zero.
+    seed : int, default=2108
+        Seed for all topology and parameter randomness.  Random values are
+        drawn exclusively through :mod:`brainstate.random`.
+    sparse_backend : str, optional
+        Optional ``brainevent.CSR`` execution backend.
 
     Examples
     --------
     .. code-block:: python
 
-        >>> signs = dale_column_signs(4, 0.25)
-        >>> signs.shape
-        (1, 4)
-        >>> [float(value) for value in signs[0]]
-        [1.0, 1.0, 1.0, -1.0]
+        >>> config = ModelConfig(input_width=828)
+        >>> (config.neuron_count, config.recurrent_edges, config.slot_count)
+        (2048, 16384, 32)
     """
-    width = _validated_integral_scalar(width, "width", minimum=2)
-    inhibitory_fraction = _validated_real_scalar(
-        inhibitory_fraction, "inhibitory_fraction"
-    )
-    if not 0.0 < inhibitory_fraction < 1.0:
-        raise ValueError("inhibitory_fraction must be in (0, 1)")
-    inhibitory_count = min(max(int(round(width * inhibitory_fraction)), 1), width - 1)
-    signs = np.ones((1, width), dtype=np.float32)
-    signs[0, width - inhibitory_count :] = -1.0
-    return jnp.asarray(signs)
+
+    input_width: int
+    batch_size: int = 1
+    neuron_count: int = 2048
+    recurrent_edges: int = 16384
+    max_latent_steps: int = 32
+    readout_width: int = 128
+    color_rank: int = 16
+    membrane_tau_ms: float = 20.0
+    feedforward_tau_ms: float = 40.0
+    recurrent_tau_ms: float = 10.0
+    time_step_ms: float = 1.0
+    input_gain: float = 4.0
+    recurrent_gain: float = 0.8
+    trace_decay: float = 0.9
+    event_valid_index: int = 0
+    seed: int = 2108
+    sparse_backend: str | None = None
+
+    def __post_init__(self) -> None:
+        for name in (
+            "input_width",
+            "batch_size",
+            "neuron_count",
+            "recurrent_edges",
+            "max_latent_steps",
+            "readout_width",
+            "color_rank",
+        ):
+            object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
+        object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        object.__setattr__(
+            self,
+            "event_valid_index",
+            _nonnegative_integer(self.event_valid_index, "event_valid_index"),
+        )
+        if self.event_valid_index >= self.input_width:
+            raise ValueError("event_valid_index must be smaller than input_width")
+        for name in (
+            "membrane_tau_ms",
+            "feedforward_tau_ms",
+            "recurrent_tau_ms",
+            "time_step_ms",
+            "input_gain",
+            "recurrent_gain",
+        ):
+            object.__setattr__(self, name, _positive_real(getattr(self, name), name))
+        if self.neuron_count % NEURONS_PER_SLOT:
+            raise ValueError(
+                f"neuron_count must be divisible by {NEURONS_PER_SLOT} for exact "
+                "slot ablation"
+            )
+        capacity = self.neuron_count * (self.neuron_count - 1)
+        if self.recurrent_edges > capacity:
+            raise ValueError(
+                f"recurrent_edges {self.recurrent_edges} exceeds no-self capacity "
+                f"{capacity}"
+            )
+        if isinstance(self.trace_decay, (bool, np.bool_)) or not isinstance(
+            self.trace_decay, Real
+        ):
+            raise TypeError("trace_decay must be a finite real scalar in [0, 1)")
+        trace_decay = float(self.trace_decay)
+        if not math.isfinite(trace_decay) or not 0.0 <= trace_decay < 1.0:
+            raise ValueError("trace_decay must be a finite real scalar in [0, 1)")
+        object.__setattr__(self, "trace_decay", trace_decay)
+        if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
+            raise TypeError("sparse_backend must be a string or None")
+
+    @property
+    def slot_count(self) -> int:
+        """Return the number of exact 64-neuron analysis slots."""
+        return self.neuron_count // NEURONS_PER_SLOT
+
+    @property
+    def compact_output_width(self) -> int:
+        """Return the width of the factorized ARC output vector."""
+        return compact_output_width(self.color_rank)
 
 
-def dale_projected(recurrent: jax.Array, signs: jax.Array) -> jax.Array:
-    """Restore the Dale sign pattern of a recurrent matrix.
-
-    An unconstrained optimizer step may flip an individual synapse's sign. The
-    recurrent weight stays a free-sign parameter so the ETP compiler can
-    identify it through :func:`braintrace.matmul`; the constraint is instead
-    reapplied outside the traced graph after each update. The operation is
-    idempotent.
+@dataclass(frozen=True)
+class SparseTopology:
+    """Hold one deterministic directed sparse topology.
 
     Parameters
     ----------
-    recurrent : jax.Array
-        Recurrent matrix shaped ``(width, width)``.
-    signs : jax.Array
-        Column signs shaped ``(1, width)`` from :func:`dale_column_signs`.
+    rows, columns : numpy.ndarray
+        Int32 post- and presynaptic endpoint arrays.
+    values : numpy.ndarray
+        Float32 initial edge values before physical current units are attached.
+    neuron_count : int
+        Square adjacency dimension.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> topology = build_sparse_topology(64, 128, seed=1)
+        >>> (topology.edge_count, bool((topology.rows == topology.columns).any()))
+        (128, False)
+    """
+
+    rows: NDArray[np.int32]
+    columns: NDArray[np.int32]
+    values: NDArray[np.float32]
+    neuron_count: int
+
+    @property
+    def edge_count(self) -> int:
+        """Return the exact number of stored directed edges."""
+        return int(self.values.size)
+
+
+@dataclass(frozen=True)
+class ArcLogits:
+    """Hold expanded ARC shape and cell-color logits.
+
+    Parameters
+    ----------
+    height, width : jax.Array
+        Logits whose final dimension has length 30 and indexes sizes 1--30.
+    colors : jax.Array
+        Color logits with trailing shape ``(30, 30, 10)``.
+    """
+
+    height: jax.Array
+    width: jax.Array
+    colors: jax.Array
+
+
+@dataclass(frozen=True)
+class ModelStateSnapshot:
+    """Hold an exact copy of every non-parameter model state.
+
+    Parameters
+    ----------
+    entries : tuple
+        Pairs of BrainState graph paths and copied state pytrees.
+    batch_size, neuron_count : int
+        Shape identity used to reject restoration into another configuration.
+    """
+
+    entries: tuple[tuple[tuple[Any, ...], Any], ...]
+    batch_size: int
+    neuron_count: int
+
+
+@dataclass(frozen=True)
+class ContextCheckpoint:
+    """Describe the query-terminal state before latent computation.
+
+    Parameters
+    ----------
+    compact_logits : jax.Array
+        Compact output shaped ``(batch, compact_output_width)``.
+    spikes, voltage : jax.Array
+        Query-terminal spikes and voltage shaped ``(batch, neurons)``.  Voltage
+        is stored as the numeric value in millivolts.
+    feedforward_current, recurrent_current : jax.Array
+        Separate Expon synaptic-current states shaped ``(batch, neurons)`` and
+        stored as numeric values in milliamps.
+    snapshot : ModelStateSnapshot
+        Restorable state at checkpoint zero.
+    context_steps : int
+        Number of valid ARC row events executed.
+    """
+
+    compact_logits: jax.Array
+    spikes: jax.Array
+    voltage: jax.Array
+    feedforward_current: jax.Array
+    recurrent_current: jax.Array
+    snapshot: ModelStateSnapshot
+    context_steps: int
+
+
+@dataclass(frozen=True)
+class ModelTrajectory:
+    """Hold checkpoint zero and a continuous zero-input latent trajectory.
+
+    Parameters
+    ----------
+    compact_logits : jax.Array
+        Factorized outputs shaped ``(steps + 1, batch, compact_width)``.
+    spikes, voltage : jax.Array
+        Physical trajectories shaped ``(steps + 1, batch, neurons)``.
+    feedforward_current, recurrent_current : jax.Array
+        Separate Expon current trajectories shaped
+        ``(steps + 1, batch, neurons)`` in milliamps.
+    zero_inputs : jax.Array
+        Exactly-zero external inputs used for latent updates, shaped
+        ``(steps, batch, input_width)``.
+    color_rank : int
+        Rank needed to expand compact color factors.
+    """
+
+    compact_logits: jax.Array
+    spikes: jax.Array
+    voltage: jax.Array
+    feedforward_current: jax.Array
+    recurrent_current: jax.Array
+    zero_inputs: jax.Array
+    color_rank: int
+
+    @property
+    def latent_steps(self) -> int:
+        """Return the number of recurrent updates after checkpoint zero."""
+        return int(self.compact_logits.shape[0] - 1)
+
+    @property
+    def expanded(self) -> ArcLogits:
+        """Expand every checkpoint to full ARC logits."""
+        return expand_compact_logits(self.compact_logits, self.color_rank)
+
+    def at_effort(self, effort: int) -> ArcLogits:
+        """Return expanded logits at one latent-effort checkpoint.
+
+        Parameters
+        ----------
+        effort : int
+            Number of recurrent latent updates, from zero through
+            :attr:`latent_steps`.
+
+        Returns
+        -------
+        ArcLogits
+            Batched logits at the selected checkpoint.
+        """
+        effort = _nonnegative_integer(effort, "effort")
+        if effort > self.latent_steps:
+            raise ValueError(
+                f"effort {effort} exceeds trajectory length {self.latent_steps}"
+            )
+        return expand_compact_logits(self.compact_logits[effort], self.color_rank)
+
+
+@dataclass(frozen=True)
+class PackedTrajectory:
+    """Hold outputs recorded after every tick of one fixed packed stream.
+
+    Parameters
+    ----------
+    compact_logits : jax.Array
+        Compact outputs shaped ``(time, batch, compact_width)``.
+    spikes, voltage : jax.Array
+        Physical states shaped ``(time, batch, neurons)``.
+    feedforward_current, recurrent_current : jax.Array
+        Separate Expon current states shaped ``(time, batch, neurons)`` and
+        represented numerically in milliamps.
+    color_rank : int
+        Rank needed to expand compact color factors.
+    """
+
+    compact_logits: jax.Array
+    spikes: jax.Array
+    voltage: jax.Array
+    feedforward_current: jax.Array
+    recurrent_current: jax.Array
+    color_rank: int
+
+    @property
+    def expanded(self) -> ArcLogits:
+        """Expand all packed ticks to full ARC logits."""
+        return expand_compact_logits(self.compact_logits, self.color_rank)
+
+
+@dataclass(frozen=True)
+class SelectedPackedTrajectory:
+    """Hold only requested per-example checkpoints from a packed stream.
+
+    Parameters
+    ----------
+    selected_indices : jax.Array
+        Strictly increasing stream indices shaped ``(checkpoints, batch)``.
+    compact_logits : jax.Array
+        Compact outputs shaped ``(checkpoints, batch, compact_width)``.
+    spikes, voltage : jax.Array
+        Selected physical states shaped ``(checkpoints, batch, neurons)``.
+    feedforward_current, recurrent_current : jax.Array
+        Selected Expon current states shaped
+        ``(checkpoints, batch, neurons)`` in milliamps.
+    color_rank : int
+        Rank needed to expand compact color factors.
+    """
+
+    selected_indices: jax.Array
+    compact_logits: jax.Array
+    spikes: jax.Array
+    voltage: jax.Array
+    feedforward_current: jax.Array
+    recurrent_current: jax.Array
+    color_rank: int
+
+    @property
+    def expanded(self) -> ArcLogits:
+        """Expand selected compact checkpoints to full ARC logits."""
+        return expand_compact_logits(self.compact_logits, self.color_rank)
+
+
+@dataclass(frozen=True)
+class SequenceResult:
+    """Pair a context checkpoint with its continuous latent trajectory.
+
+    Parameters
+    ----------
+    context : ContextCheckpoint
+        Query-terminal checkpoint before recurrent latent updates.
+    trajectory : ModelTrajectory
+        Checkpoint zero followed by all zero-input updates.
+    """
+
+    context: ContextCheckpoint
+    trajectory: ModelTrajectory
+
+    @property
+    def feedforward_current(self) -> jax.Array:
+        """Return checkpoint-zero-through-latent feed-forward current."""
+        return self.trajectory.feedforward_current
+
+    @property
+    def recurrent_current(self) -> jax.Array:
+        """Return checkpoint-zero-through-latent recurrent current."""
+        return self.trajectory.recurrent_current
+
+
+class ArcLossComponents(NamedTuple):
+    """Hold scalar total, height, width, and valid-cell color losses.
+
+    Parameters
+    ----------
+    total, height, width, colors : jax.Array
+        Scalar mean losses.  ``total`` contains the configured weighted sum.
+    """
+
+    total: jax.Array
+    height: jax.Array
+    width: jax.Array
+    colors: jax.Array
+
+
+def compact_output_width(color_rank: int) -> int:
+    """Return compact output width for a CP color rank.
+
+    Parameters
+    ----------
+    color_rank : int
+        Number of color-tensor factors.
+
+    Returns
+    -------
+    int
+        Two 30-way shape heads plus rank times 30 rows, 30 columns, and 10
+        colors.
+    """
+    color_rank = _positive_integer(color_rank, "color_rank")
+    return 2 * MAX_GRID_SIZE + color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
+
+
+def build_sparse_topology(
+    neuron_count: int,
+    edge_count: int,
+    *,
+    seed: int,
+    recurrent_gain: float = 0.8,
+) -> SparseTopology:
+    """Build a deterministic exact-edge, no-self sparse topology.
+
+    Each row receives either ``floor(E/N)`` or ``ceil(E/N)`` edges.  A random
+    affine permutation of the ``N - 1`` legal offsets selects distinct
+    presynaptic endpoints in that row.  Starts, multipliers, and weights are
+    sampled with :class:`brainstate.random.RandomState`; NumPy is used only for
+    static host-side indexing and validation.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Number of recurrent neurons, at least two.
+    edge_count : int
+        Exact directed edge count, no larger than ``N * (N - 1)``.
+    seed : int
+        Nonnegative BrainState random seed.
+    recurrent_gain : float, default=0.8
+        Standard-deviation gain relative to square-root mean degree.
+
+    Returns
+    -------
+    SparseTopology
+        Sorted CSR-compatible endpoints and float32 values.
+    """
+    neuron_count = _positive_integer(neuron_count, "neuron_count")
+    edge_count = _positive_integer(edge_count, "edge_count")
+    seed = _nonnegative_integer(seed, "seed")
+    recurrent_gain = _positive_real(recurrent_gain, "recurrent_gain")
+    if neuron_count < 2:
+        raise ValueError("neuron_count must be at least 2 for no-self topology")
+    capacity = neuron_count * (neuron_count - 1)
+    if edge_count > capacity:
+        raise ValueError(f"edge_count {edge_count} exceeds no-self capacity {capacity}")
+
+    random = brainstate.random.RandomState(seed)
+    modulus = neuron_count - 1
+    starts = np.asarray(
+        random.randint(0, modulus, size=(neuron_count,), dtype=jnp.int32),
+        dtype=np.int64,
+    )
+    if modulus == 1:
+        multipliers = np.ones(neuron_count, dtype=np.int64)
+    else:
+        multipliers = np.asarray(
+            random.randint(1, modulus, size=(neuron_count,), dtype=jnp.int32),
+            dtype=np.int64,
+        )
+        # Project every draw onto the finite set of units modulo N-1.  This is
+        # deterministic post-processing of BrainState randomness, not a second
+        # random source.
+        while_indices = np.flatnonzero(np.gcd(multipliers, modulus) != 1)
+        while while_indices.size:
+            multipliers[while_indices] = (
+                multipliers[while_indices] % (modulus - 1)
+            ) + 1
+            while_indices = np.flatnonzero(np.gcd(multipliers, modulus) != 1)
+
+    base_degree, remainder = divmod(edge_count, neuron_count)
+    degrees = np.full(neuron_count, base_degree, dtype=np.int64)
+    degrees[:remainder] += 1
+    maximum_degree = int(degrees.max())
+    positions = np.arange(maximum_degree, dtype=np.int64)[None, :]
+    offsets = (starts[:, None] + multipliers[:, None] * positions) % modulus + 1
+    rows_matrix = np.broadcast_to(
+        np.arange(neuron_count, dtype=np.int64)[:, None], offsets.shape
+    )
+    valid = positions < degrees[:, None]
+    rows = rows_matrix[valid]
+    columns = (rows_matrix + offsets)[valid] % neuron_count
+    order = np.lexsort((columns, rows))
+    rows = rows[order].astype(np.int32, copy=False)
+    columns = columns[order].astype(np.int32, copy=False)
+    value_scale = recurrent_gain / math.sqrt(edge_count / neuron_count)
+    values = np.asarray(random.randn(edge_count), dtype=np.float32) * value_scale
+    values = values[order].astype(np.float32, copy=False)
+
+    if rows.size != edge_count or np.any(rows == columns):
+        raise RuntimeError("sparse topology construction violated its exact contract")
+    flat = rows.astype(np.int64) * neuron_count + columns.astype(np.int64)
+    if np.unique(flat).size != edge_count:
+        raise RuntimeError("sparse topology construction produced duplicate edges")
+    for array in (rows, columns, values):
+        array.setflags(write=False)
+    return SparseTopology(rows, columns, values, neuron_count)
+
+
+def _indptr_from_rows(rows: NDArray[np.int32], neuron_count: int) -> NDArray[np.int32]:
+    indptr = np.zeros(neuron_count + 1, dtype=np.int64)
+    np.add.at(indptr, rows.astype(np.int64) + 1, 1)
+    return np.cumsum(indptr).astype(np.int32)
+
+
+def _topology_to_csr(topology: SparseTopology, backend: str | None) -> Any:
+    import brainevent
+
+    return brainevent.CSR(
+        jnp.asarray(topology.values),
+        jnp.asarray(topology.columns),
+        jnp.asarray(_indptr_from_rows(topology.rows, topology.neuron_count)),
+        shape=(topology.neuron_count, topology.neuron_count),
+        backend=backend,
+    )
+
+
+def _split_compact_logits(
+    compact: jax.Array, color_rank: int
+) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+    expected = compact_output_width(color_rank)
+    if compact.ndim < 1 or compact.shape[-1] != expected:
+        raise ValueError(
+            f"compact logits must have final width {expected}, got {compact.shape}"
+        )
+    cursor = 0
+    height = compact[..., cursor : cursor + MAX_GRID_SIZE]
+    cursor += MAX_GRID_SIZE
+    width = compact[..., cursor : cursor + MAX_GRID_SIZE]
+    cursor += MAX_GRID_SIZE
+    row_count = color_rank * MAX_GRID_SIZE
+    row = compact[..., cursor : cursor + row_count].reshape(
+        *compact.shape[:-1], color_rank, MAX_GRID_SIZE
+    )
+    cursor += row_count
+    column = compact[..., cursor : cursor + row_count].reshape(
+        *compact.shape[:-1], color_rank, MAX_GRID_SIZE
+    )
+    cursor += row_count
+    color = compact[..., cursor:].reshape(*compact.shape[:-1], color_rank, COLOR_COUNT)
+    return height, width, row, column, color
+
+
+def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
+    """Expand factorized outputs to full ARC logits.
+
+    Parameters
+    ----------
+    compact : jax.Array
+        Array with any leading dimensions and final width given by
+        :func:`compact_output_width`.
+    color_rank : int
+        CP rank encoded by ``compact``.
+
+    Returns
+    -------
+    ArcLogits
+        Height and width logits plus a color array with trailing shape
+        ``(30, 30, 10)``.
+    """
+    color_rank = _positive_integer(color_rank, "color_rank")
+    compact = jnp.asarray(compact)
+    height, width, row, column, color = _split_compact_logits(compact, color_rank)
+    color_logits = jnp.einsum(
+        "...ri,...rj,...rc->...ijc", row, column, color
+    ) / math.sqrt(color_rank)
+    return ArcLogits(height=height, width=width, colors=color_logits)
+
+
+def arc_loss_components(
+    compact_logits: jax.Array,
+    target_height: jax.Array,
+    target_width: jax.Array,
+    target_colors: jax.Array,
+    *,
+    color_rank: int,
+    shape_weight: float = 1.0,
+    color_weight: float = 1.0,
+) -> ArcLossComponents:
+    """Compute terminal ARC height, width, and valid-cell cross entropy.
+
+    Parameters
+    ----------
+    compact_logits : jax.Array
+        Batched compact model output shaped ``(batch, compact_width)``.
+    target_height, target_width : jax.Array
+        Integer sizes in 1--30, shaped ``(batch,)``.
+    target_colors : jax.Array
+        Integer padded color grid shaped ``(batch, 30, 30)``.  Only cells
+        inside each target shape contribute.
+    color_rank : int
+        CP rank of ``compact_logits``.
+    shape_weight, color_weight : float, default=1.0
+        Nonnegative component weights.
+
+    Returns
+    -------
+    ArcLossComponents
+        Scalar mean losses suitable for a terminal pp-prop step loss.
+    """
+    total, height_loss, width_loss, color_loss = _arc_loss_vectors(
+        compact_logits,
+        target_height,
+        target_width,
+        target_colors,
+        color_rank=color_rank,
+        shape_weight=shape_weight,
+        color_weight=color_weight,
+    )
+    return ArcLossComponents(
+        total.mean(), height_loss.mean(), width_loss.mean(), color_loss.mean()
+    )
+
+
+def arc_loss_per_example(
+    compact_logits: jax.Array,
+    target_height: jax.Array,
+    target_width: jax.Array,
+    target_colors: jax.Array,
+    *,
+    color_rank: int,
+    shape_weight: float = 1.0,
+    color_weight: float = 1.0,
+) -> jax.Array:
+    """Return one terminal ARC loss for each batch element.
+
+    This form lets a packed pp-prop stream multiply losses by a per-time,
+    per-example terminal gate before reducing.  Each example's cell loss is
+    normalized by its own target area, so large grids do not receive more
+    weight merely because they contain more cells.
+
+    Parameters
+    ----------
+    compact_logits : jax.Array
+        Batched compact model output shaped ``(batch, compact_width)``.
+    target_height, target_width : jax.Array
+        Integer sizes in 1--30, shaped ``(batch,)``.
+    target_colors : jax.Array
+        Integer padded colors shaped ``(batch, 30, 30)``.
+    color_rank : int
+        CP rank encoded by ``compact_logits``.
+    shape_weight, color_weight : float, default=1.0
+        Nonnegative component weights.
 
     Returns
     -------
     jax.Array
-        The matrix with magnitudes preserved and column signs restored.
+        Loss vector shaped ``(batch,)``.
     """
-    if recurrent.ndim != 2 or recurrent.shape[0] != recurrent.shape[1]:
-        raise ValueError(f"recurrent must be square, got shape {recurrent.shape}")
-    if signs.shape != (1, recurrent.shape[1]):
+    total, _, _, _ = _arc_loss_vectors(
+        compact_logits,
+        target_height,
+        target_width,
+        target_colors,
+        color_rank=color_rank,
+        shape_weight=shape_weight,
+        color_weight=color_weight,
+    )
+    return total
+
+
+def _arc_loss_vectors(
+    compact_logits: jax.Array,
+    target_height: jax.Array,
+    target_width: jax.Array,
+    target_colors: jax.Array,
+    *,
+    color_rank: int,
+    shape_weight: float,
+    color_weight: float,
+) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    compact_logits = jnp.asarray(compact_logits)
+    if compact_logits.ndim != 2:
         raise ValueError(
-            f"signs shape must be (1, {recurrent.shape[1]}), got {signs.shape}"
+            "compact_logits must have shape (batch, compact_width), got "
+            f"{compact_logits.shape}"
         )
-    return signs * jnp.abs(recurrent)
+    batch_size = compact_logits.shape[0]
+    target_height = jnp.asarray(target_height)
+    target_width = jnp.asarray(target_width)
+    target_colors = jnp.asarray(target_colors)
+    if target_height.shape != (batch_size,) or target_width.shape != (batch_size,):
+        raise ValueError("target_height and target_width must each have shape (batch,)")
+    if target_colors.shape != (batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE):
+        raise ValueError(
+            "target_colors must have shape "
+            f"({batch_size}, {MAX_GRID_SIZE}, {MAX_GRID_SIZE})"
+        )
+    shape_weight = float(shape_weight)
+    color_weight = float(color_weight)
+    if not math.isfinite(shape_weight) or shape_weight < 0.0:
+        raise ValueError("shape_weight must be finite and nonnegative")
+    if not math.isfinite(color_weight) or color_weight < 0.0:
+        raise ValueError("color_weight must be finite and nonnegative")
+
+    logits = expand_compact_logits(compact_logits, color_rank)
+    height_indices = target_height.astype(jnp.int32) - 1
+    width_indices = target_width.astype(jnp.int32) - 1
+    height_loss = -jnp.take_along_axis(
+        jax.nn.log_softmax(logits.height, axis=-1),
+        height_indices[:, None],
+        axis=-1,
+    )[:, 0]
+    width_loss = -jnp.take_along_axis(
+        jax.nn.log_softmax(logits.width, axis=-1),
+        width_indices[:, None],
+        axis=-1,
+    )[:, 0]
+    color_nll = -jnp.take_along_axis(
+        jax.nn.log_softmax(logits.colors, axis=-1),
+        target_colors.astype(jnp.int32)[..., None],
+        axis=-1,
+    )[..., 0]
+    rows = jnp.arange(MAX_GRID_SIZE)[None, :, None]
+    columns = jnp.arange(MAX_GRID_SIZE)[None, None, :]
+    valid = (rows < target_height[:, None, None]) & (
+        columns < target_width[:, None, None]
+    )
+    color_loss = jnp.sum(jnp.where(valid, color_nll, 0.0), axis=(1, 2)) / jnp.maximum(
+        jnp.sum(valid, axis=(1, 2)), 1
+    )
+    total = shape_weight * (height_loss + width_loss) + color_weight * color_loss
+    return total, height_loss, width_loss, color_loss
 
 
-def _state_path(path: tuple[object, ...]) -> str:
-    return ".".join(str(part) for part in path)
-
-
-def parameter_snapshot(model: LatentWorkspaceModel) -> dict[str, NDArray[np.generic]]:
-    """Copy every trainable parameter for a before/after mutation audit.
+def terminal_arc_loss(
+    compact_logits: jax.Array,
+    target_height: jax.Array,
+    target_width: jax.Array,
+    target_colors: jax.Array,
+    *,
+    color_rank: int,
+    shape_weight: float = 1.0,
+    color_weight: float = 1.0,
+) -> jax.Array:
+    """Return scalar terminal ARC loss for pp-prop supervision.
 
     Parameters
     ----------
-    model : LatentWorkspaceModel
-        Model whose :class:`brainstate.ParamState` leaves are copied.
+    compact_logits : jax.Array
+        Batched compact model output shaped ``(batch, compact_width)``.
+    target_height, target_width : jax.Array
+        Integer sizes in 1--30, shaped ``(batch,)``.
+    target_colors : jax.Array
+        Integer padded colors shaped ``(batch, 30, 30)``.
+    color_rank : int
+        CP rank encoded by ``compact_logits``.
+    shape_weight, color_weight : float, default=1.0
+        Nonnegative component weights.
 
     Returns
     -------
-    dict
-        Parameter-path strings mapped to independent NumPy copies.
+    jax.Array
+        Scalar weighted cross entropy.
     """
-    return {
-        _state_path(path): np.asarray(state.value).copy()
-        for path, state in model.states(brainstate.ParamState).items()
-    }
+    return arc_loss_components(
+        compact_logits,
+        target_height,
+        target_width,
+        target_colors,
+        color_rank=color_rank,
+        shape_weight=shape_weight,
+        color_weight=color_weight,
+    ).total
+
+
+def _copy_tree(value: Any) -> Any:
+    return jax.tree.map(lambda leaf: jnp.array(leaf, copy=True), value)
 
 
 class LatentWorkspaceModel(brainstate.nn.Module):
-    """Run demonstration writes, query encoding, and latent computation.
-
-    The contextual value rows, key rows, and workspace occupy one physical
-    ``HiddenState`` of shape ``(batch * (2 * slots + 1), latent_width)``.
-    Parameter projections consume that same flat grouped row axis, which keeps
-    native batched ETP dispatch and avoids a generic ``vmap`` decomposition.
+    """BrainPy LIF network with sparse recurrent ARC computation.
 
     Parameters
     ----------
     config : ModelConfig
-        Network, task, and initialization settings.
+        Physical, sparse, readout, and batching configuration.
+
+    Notes
+    -----
+    ``cell_step`` advances physical state and returns spikes.  ``update`` adds
+    the compact ARC head and is therefore the callable compiled by BrainTrace.
+    Inference context loops call ``cell_step`` and run the head only at the
+    query-terminal checkpoint.
     """
 
-    def __init__(self, config: ModelConfig = ModelConfig()) -> None:
+    def __init__(self, config: ModelConfig):
         super().__init__()
+        if not isinstance(config, ModelConfig):
+            raise TypeError("config must be a ModelConfig")
         self.config = config
-        self.batch_size = config.batch_size
-        self.slot_count = config.task.slot_capacity
-        self.width = config.latent_width
-        self.state_rows = 2 * self.slot_count + 1
-        code_width = config.task.code_width
+        self.topology = build_sparse_topology(
+            config.neuron_count,
+            config.recurrent_edges,
+            seed=config.seed,
+            recurrent_gain=config.recurrent_gain,
+        )
+        random = brainstate.random.RandomState(config.seed + 1)
 
-        code_rates = jnp.mean(
-            jnp.asarray(build_codebook(config.task), dtype=jnp.float32), axis=1
+        self.neu = bpstate.LIF(
+            config.neuron_count,
+            R=1.0 * u.ohm,
+            tau=config.membrane_tau_ms * u.ms,
+            V_th=1.0 * u.mV,
+            V_reset=0.0 * u.mV,
+            V_rest=0.0 * u.mV,
+            V_initializer=braintools.init.ZeroInit(unit=u.mV),
         )
-        projection_random = brainstate.random.RandomState(config.projection_seed)
-        scale = 1.0 / math.sqrt(code_width)
-        raw_key = projection_random.randn(code_width, self.width) * scale
-        raw_value = projection_random.randn(code_width, self.width) * scale
-        key_codes = _normalize_rows(jnp.maximum(code_rates @ raw_key, 0.0))
-        value_codes = _normalize_rows(jnp.maximum(code_rates @ raw_value, 0.0))
-        codebook_pinv = jnp.linalg.pinv(code_rates)
+        input_weights = random.randn(config.input_width, config.neuron_count)
+        input_weights = (
+            input_weights * (config.input_gain / math.sqrt(config.input_width)) * u.mA
+        )
+        recurrent_linear = braintrace.nn.SparseLinear(
+            _topology_to_csr(self.topology, config.sparse_backend), b_init=None
+        )
+        recurrent_parameters = dict(recurrent_linear.weight.value)
+        recurrent_parameters["weight"] = recurrent_parameters["weight"] * u.mA
+        recurrent_linear.weight.value = recurrent_parameters
 
-        self.Wk = brainstate.ParamState(codebook_pinv @ key_codes)
-        self.Wv = brainstate.ParamState(codebook_pinv @ value_codes)
-        recurrent_random = brainstate.random.RandomState(config.seed)
-        recurrent = recurrent_random.uniform(0.0, 1.0, size=(self.width, self.width))
-        recurrent = recurrent * recurrent_random.bernoulli(
-            config.latent_connectivity, size=(self.width, self.width)
+        self.ff_syn = bpstate.AlignPostProj(
+            comm=braintrace.nn.Linear(
+                config.input_width,
+                config.neuron_count,
+                w_init=input_weights,
+                b_init=None,
+            ),
+            syn=bpstate.Expon(
+                config.neuron_count,
+                tau=config.feedforward_tau_ms * u.ms,
+                g_initializer=braintools.init.ZeroInit(unit=u.mA),
+            ),
+            out=bpstate.CUBA(scale=1.0),
+            post=self.neu,
         )
-        self.dale_signs = dale_column_signs(
-            self.width, config.dale_inhibitory_fraction
+        self.rec_syn = bpstate.AlignPostProj(
+            comm=recurrent_linear,
+            syn=bpstate.Expon(
+                config.neuron_count,
+                tau=config.recurrent_tau_ms * u.ms,
+                g_initializer=braintools.init.ZeroInit(unit=u.mA),
+            ),
+            out=bpstate.CUBA(scale=1.0),
+            post=self.neu,
         )
-        self_leak = 0.01 * jnp.eye(self.width, dtype=jnp.float32) * self.dale_signs
-        recurrent = dale_projected(recurrent, self.dale_signs) + self_leak
-        recurrent_radius = jnp.max(jnp.abs(jnp.linalg.eigvals(recurrent)))
-        recurrent = recurrent * (config.latent_spectral_radius / recurrent_radius)
-        self.Wf = brainstate.ParamState(recurrent.astype(jnp.float32))
-        clock_scale = 1.0 / math.sqrt(config.task.clock_width)
-        self.Wc = brainstate.ParamState(
-            (
-                clock_scale
-                * projection_random.randn(config.task.clock_width, self.width)
-            ).astype(jnp.float32)
+
+        bottleneck_weights = random.randn(config.neuron_count, config.readout_width)
+        bottleneck_weights = bottleneck_weights / math.sqrt(config.neuron_count)
+        shape_weights = random.randn(config.readout_width, MAX_GRID_SIZE)
+        shape_weights = shape_weights / math.sqrt(config.readout_width)
+        factor_width = config.color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
+        factor_weights = random.randn(config.readout_width, factor_width)
+        factor_weights = factor_weights / math.sqrt(config.readout_width)
+        self.readout_projection = braintrace.nn.Linear(
+            config.neuron_count,
+            config.readout_width,
+            w_init=bottleneck_weights,
+            b_init=braintools.init.ZeroInit(),
         )
-        self.Wo = brainstate.ParamState(value_codes.T)
-        self.init_state()
+        self.height_head = braintrace.nn.Linear(
+            config.readout_width,
+            MAX_GRID_SIZE,
+            w_init=shape_weights,
+            b_init=braintools.init.ZeroInit(),
+        )
+        self.width_head = braintrace.nn.Linear(
+            config.readout_width,
+            MAX_GRID_SIZE,
+            w_init=random.randn(config.readout_width, MAX_GRID_SIZE)
+            / math.sqrt(config.readout_width),
+            b_init=braintools.init.ZeroInit(),
+        )
+        self.color_factor_head = braintrace.nn.Linear(
+            config.readout_width,
+            factor_width,
+            w_init=factor_weights,
+            b_init=braintools.init.ZeroInit(),
+        )
+        brainstate.nn.init_all_states(self, batch_size=config.batch_size)
 
     @property
-    def input_width(self) -> int:
-        """Return the complete flat input width expected by ``update``."""
-        return self.config.task.input_width
+    def neuron_count(self) -> int:
+        """Return the physical LIF population size."""
+        return self.config.neuron_count
 
     @property
-    def memory_storage_elements(self) -> int:
-        """Return contextual-memory storage excluding the workspace row."""
-        return 2 * self.slot_count * self.width
+    def recurrent_edge_count(self) -> int:
+        """Return the instantiated recurrent edge count."""
+        return self.topology.edge_count
 
     @property
-    def write_projections_trainable(self) -> bool:
-        """Return whether an outer optimizer should update ``Wk`` and ``Wv``."""
-        return self.config.write_mode == "learned"
-
-    def trainable_parameters(
-        self,
-    ) -> dict[tuple[object, ...], brainstate.ParamState]:
-        """Return the parameter mapping an outer optimizer must register.
-
-        Returns
-        -------
-        dict
-            Parameter paths mapped to states. The fixed-random release mode
-            excludes ``Wk`` and ``Wv`` while retaining their compiler-visible
-            :class:`brainstate.ParamState` representation.
-        """
-        parameters = self.states(brainstate.ParamState)
-        if self.write_projections_trainable:
-            return dict(parameters.items())
-        fixed_paths = {("Wk",), ("Wv",)}
-        return {
-            path: state for path, state in parameters.items() if path not in fixed_paths
-        }
+    def slot_count(self) -> int:
+        """Return the number of exact 64-neuron slots."""
+        return self.config.slot_count
 
     @property
-    def workspace(self) -> jax.Array:
-        """Return the logical workspace view shaped ``(batch, width)``."""
-        state = self.grouped_state.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )
-        return state[:, -1]
+    def spikes(self) -> jax.Array:
+        """Return current binary LIF spikes shaped ``(batch, neurons)``."""
+        return jnp.asarray(self.neu.get_spike())
 
     @property
-    def latent_voltage_view(self) -> jax.Array:
-        """Return the logical latent voltage shaped ``(batch, width)``.
-
-        Returns
-        -------
-        jax.Array
-            The workspace row of the flat compiler-aligned voltage state.
-        """
-        state = self.latent_voltage.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )
-        return state[:, -1]
+    def voltage(self) -> jax.Array:
+        """Return current membrane voltage numeric values in millivolts."""
+        return jnp.asarray(self.neu.V.value.to_decimal(u.mV))
 
     @property
-    def query_encoding_view(self) -> jax.Array:
-        """Return the feedback-free query encoding shaped ``(batch, width)``.
+    def feedforward_current(self) -> jax.Array:
+        """Return the feed-forward Expon state numerically in milliamps."""
+        return jnp.asarray(self.ff_syn.syn.g.value.to_decimal(u.mA))
 
-        Returns
-        -------
-        jax.Array
-            The workspace row of the flat compiler-aligned query state.
-        """
-        state = self.query_encoding.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )
-        return state[:, -1]
-
-    def init_state(self, batch_size: int | None = None, **_: object) -> None:
-        """Initialize grouped memory/workspace and distinct ingestion states.
-
-        Parameters
-        ----------
-        batch_size : int, optional
-            If supplied, it must equal the native batch size in ``config``.
-        **_ : object
-            Extra framework initialization options, accepted and ignored.
-        """
-        if batch_size is not None and batch_size != self.batch_size:
-            raise ValueError(
-                f"batch_size {batch_size} does not match configured {self.batch_size}"
-            )
-        self.grouped_state = brainstate.HiddenState(
-            jnp.zeros(
-                (self.batch_size * self.state_rows, self.width), dtype=jnp.float32
-            )
-        )
-        self.ingestion_state = brainstate.HiddenState(
-            jnp.zeros(
-                (self.batch_size * 2, self.config.task.code_width),
-                dtype=jnp.float32,
-            )
-        )
-        self.latent_voltage = brainstate.HiddenState(
-            jnp.zeros(
-                (self.batch_size * self.state_rows, self.width), dtype=jnp.float32
-            )
-        )
-        self.query_encoding = brainstate.HiddenState(
-            jnp.zeros(
-                (self.batch_size * self.state_rows, self.width), dtype=jnp.float32
-            )
-        )
+    @property
+    def recurrent_current(self) -> jax.Array:
+        """Return the recurrent Expon state numerically in milliamps."""
+        return jnp.asarray(self.rec_syn.syn.g.value.to_decimal(u.mA))
 
     def reset_state(self, batch_size: int | None = None, **_: object) -> None:
-        """Reset all inference-time state without touching a parameter.
+        """Reset every inference state without modifying any parameter.
 
         Parameters
         ----------
         batch_size : int, optional
-            If supplied, it must equal the native batch size in ``config``.
+            If supplied, it must match the configured native batch size.
         **_ : object
             Extra framework reset options, accepted and ignored.
         """
-        if batch_size is not None and batch_size != self.batch_size:
+        if batch_size is not None and batch_size != self.config.batch_size:
             raise ValueError(
-                f"batch_size {batch_size} does not match configured {self.batch_size}"
+                f"batch_size {batch_size} does not match configured "
+                f"{self.config.batch_size}"
             )
-        self.grouped_state.value = jnp.zeros_like(self.grouped_state.value)
-        self.ingestion_state.value = jnp.zeros_like(self.ingestion_state.value)
-        self.latent_voltage.value = jnp.zeros_like(self.latent_voltage.value)
-        self.query_encoding.value = jnp.zeros_like(self.query_encoding.value)
+        self.neu.reset_state(batch_size=self.config.batch_size)
+        self.ff_syn.syn.reset_state(batch_size=self.config.batch_size)
+        self.rec_syn.syn.reset_state(batch_size=self.config.batch_size)
 
-    def memory_factors(self) -> tuple[jax.Array, jax.Array]:
-        """Return logical value and key rows from the grouped hidden state.
+    def snapshot_state(self) -> ModelStateSnapshot:
+        """Copy every hidden state while excluding all parameters.
+
+        Returns
+        -------
+        ModelStateSnapshot
+            Exact restorable state keyed by BrainState graph path.
+        """
+        entries = tuple(
+            (tuple(path), _copy_tree(state.value))
+            for path, state in self.states(brainstate.HiddenState).items()
+        )
+        return ModelStateSnapshot(
+            entries=entries,
+            batch_size=self.config.batch_size,
+            neuron_count=self.config.neuron_count,
+        )
+
+    def restore_state(self, snapshot: ModelStateSnapshot) -> None:
+        """Restore a compatible hidden-state snapshot exactly.
+
+        Parameters
+        ----------
+        snapshot : ModelStateSnapshot
+            Snapshot produced by this model configuration.
+        """
+        if not isinstance(snapshot, ModelStateSnapshot):
+            raise TypeError("snapshot must be a ModelStateSnapshot")
+        if (
+            snapshot.batch_size != self.config.batch_size
+            or snapshot.neuron_count != self.config.neuron_count
+        ):
+            raise ValueError("snapshot configuration does not match this model")
+        states = self.states(brainstate.HiddenState)
+        expected_paths = tuple(tuple(path) for path in states)
+        actual_paths = tuple(path for path, _ in snapshot.entries)
+        if actual_paths != expected_paths:
+            raise ValueError("snapshot hidden-state paths do not match this model")
+        for (path, value), state in zip(snapshot.entries, states.values(), strict=True):
+            if tuple(path) not in expected_paths:
+                raise ValueError("snapshot contains an unknown state path")
+            state.value = _copy_tree(value)
+
+    def ablate_slot(self, slot_index: int) -> tuple[jax.Array, jax.Array]:
+        """Zero one exact 64-neuron voltage/spike slice without changing weights.
+
+        Parameters
+        ----------
+        slot_index : int
+            Zero-based slot index in ``[0, slot_count)``.
+        Returns
+        -------
+        tuple of jax.Array
+            Post-ablation voltage and derived spikes.  The selected 64-neuron
+            slice is exactly zero in both arrays because BrainPy LIF computes
+            spikes directly from its voltage state.
+        """
+        slot_index = _nonnegative_integer(slot_index, "slot_index")
+        if slot_index >= self.slot_count:
+            raise ValueError(f"slot_index {slot_index} outside [0, {self.slot_count})")
+        slots = jnp.full((self.config.batch_size,), slot_index, dtype=jnp.int32)
+        enabled = jnp.ones((self.config.batch_size,), dtype=jnp.bool_)
+        return self.mask_slots(slots, enabled)
+
+    def mask_slots(
+        self, slot_indices: jax.Array, enabled: jax.Array
+    ) -> tuple[jax.Array, jax.Array]:
+        """Apply a jittable per-example 64-neuron state-ablation gate.
+
+        Parameters
+        ----------
+        slot_indices : jax.Array
+            Integer slot index for each batch element, shaped ``(batch,)``.
+        enabled : jax.Array
+            Boolean gate per batch element.  False elements remain unchanged.
 
         Returns
         -------
         tuple of jax.Array
-            ``(values, keys)``, each shaped ``(batch, slots, width)``.
+            Post-mask numeric voltage and derived spikes, each shaped
+            ``(batch, neurons)``.
+
+        Notes
+        -----
+        :class:`brainpy.state.LIF` has no separate spike state:
+        ``get_spike()`` derives spikes from ``V`` on demand.  Masking ``V``
+        therefore masks the exact spike vector consumed by ``rec_syn`` on the
+        next step.  Callers that accept traced indices must validate their
+        range before entering a compiled loop; :meth:`ablate_slot` provides the
+        checked scalar interface.
         """
-        state = self.grouped_state.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )
-        return state[:, : self.slot_count], state[:, self.slot_count : -1]
-
-    def memory_read(self, query: jax.Array) -> jax.Array:
-        """Read the current contextual memory for query vectors.
-
-        Parameters
-        ----------
-        query : jax.Array
-            Query representations shaped ``(batch, latent_width)``.
-
-        Returns
-        -------
-        jax.Array
-            Memory-read vectors with the same shape as ``query``.
-        """
-        values, keys = self.memory_factors()
-        return factored_memory_read(values, keys, query)
-
-    def shuffle_memory(self, permutation: jax.Array) -> None:
-        """Apply the value-slot permutation used by the shuffled control.
-
-        Parameters
-        ----------
-        permutation : jax.Array
-            Permutation of ``range(slot_capacity)``.
-        """
-        values, keys = self.memory_factors()
-        shuffled_values, unchanged_keys = shuffled_memory_factors(
-            values, keys, permutation
-        )
-        state = jnp.concatenate(
-            (shuffled_values, unchanged_keys, self.workspace[:, None, :]), axis=1
-        )
-        self.grouped_state.value = state.reshape(
-            self.batch_size * self.state_rows, self.width
-        )
-
-    def project_dale(self) -> None:
-        """Reapply Dale's law to the recurrent weight after an update.
-
-        Call this after every optimizer step. The recurrent weight is a
-        free-sign :class:`brainstate.ParamState` so the ETP compiler can
-        identify it through :func:`braintrace.matmul`; the sign constraint is
-        therefore enforced here, outside the traced learning graph.
-        """
-        self.Wf.value = dale_projected(self.Wf.value, self.dale_signs)
+        slot_indices = jnp.asarray(slot_indices, dtype=jnp.int32)
+        enabled = jnp.asarray(enabled, dtype=jnp.bool_)
+        expected = (self.config.batch_size,)
+        if slot_indices.shape != expected or enabled.shape != expected:
+            raise ValueError(
+                f"slot_indices and enabled must each have shape {expected}"
+            )
+        neuron_slots = jnp.arange(self.config.neuron_count) // NEURONS_PER_SLOT
+        selected = neuron_slots[None, :] == slot_indices[:, None]
+        keep = ~(selected & enabled[:, None])
+        self.neu.V.value = self.neu.V.value * keep
+        return self.voltage, self.spikes
 
     def etrace_config(self) -> braintrace.ETraceConfig:
-        """Return the explicit coupled trace configuration for this model.
+        """Return the explicit IO-factorized pp-prop coordinate.
 
         Returns
         -------
         braintrace.ETraceConfig
-            IO-factorized coupled recurrence configuration.
+            Diagonal recurrent pp-prop with the configured scalar trace decay.
         """
         return braintrace.ETraceConfig(
             trace_factorization="io_factorized",
-            recurrence_scope="coupled",
-            decay=0.9,
+            recurrence_scope="diagonal",
+            decay=self.config.trace_decay,
         )
 
-    def compile_options(self) -> dict[str, int]:
-        """Return compiler options required by the supported configuration.
-
-        Returns
-        -------
-        dict of str to int
-            Maximum materialized hidden-Jacobian size. The explicit ceiling
-            admits the native batch-four, eight-slot, width-32 release model.
-        """
-        return {
-            "snap_max_jacobian_elements": self.config.max_jacobian_elements,
-        }
-
-    @staticmethod
-    def _seed_workspace(
-        voltage: jax.Array,
-        spikes: jax.Array,
-        seed_rows: jax.Array,
-        gate: jax.Array,
-    ) -> tuple[jax.Array, jax.Array]:
-        """Initialize ``H_0`` from contextual memory on the first latent tick.
-
-        This is equation (2) of the published interface: the initial workspace
-        is the query encoded against contextual memory. Both the analog carrier
-        and the spiking substrate are seeded, so the first latent tick's
-        recurrent term is driven by ``H_0`` rather than by an unrelated
-        accumulated spike state.
-
-        Two implementation properties are load-bearing. The seed is applied by
-        elementwise gating rather than an indexed update, and ``seed_rows`` is
-        derived only from hidden-state leaves. pp_prop rejects any path from an
-        ETP primitive into a hidden state that is not elementwise
-        position-preserving, so neither a scatter nor a reshape of an ETP
-        output may appear on the way into ``latent_voltage`` or
-        ``grouped_state``. Seeding on the first latent tick rather than on the
-        query tick is what allows the seed to read the *previous* query
-        encoding, which is a state leaf and by then already complete.
-
-        The seed reuses the tick's single contextual read rather than issuing a
-        second one: the first latent tick reads memory with the query encoding
-        (equation 2) and every later latent tick reads it with the workspace
-        (equation 3), so the hidden-to-hidden transition keeps exactly two
-        contractions.
+    def compact_readout(self, spikes: jax.Array | None = None) -> jax.Array:
+        """Map spikes to compact ARC shape and CP color factors.
 
         Parameters
         ----------
-        voltage, spikes : jax.Array
-            Post-update latent voltage and grouped spike state, each shaped
-            ``(batch * state_rows, width)``.
-        seed_rows : jax.Array
-            Contextual read broadcast onto the workspace row, shaped like
-            ``voltage`` and zero on every memory row.
-        gate : jax.Array
-            Seed gate shaped ``(batch * state_rows, 1)``, one on the workspace
-            row of the first latent tick and zero everywhere else.
-
-        Returns
-        -------
-        tuple of jax.Array
-            Seeded voltage and spike states with their input shapes.
-        """
-        keep = 1.0 - gate
-        seeded_spikes = _surrogate_spike(seed_rows - _LATENT_THRESHOLD)
-        return (
-            keep * voltage + gate * seed_rows,
-            keep * spikes + gate * seeded_spikes,
-        )
-
-    def _advance(self, packed: jax.Array) -> tuple[jax.Array, jax.Array]:
-        """Advance one tick and return logits plus its latent representation.
-
-        Parameters
-        ----------
-        packed : jax.Array
-            Native batched input shaped ``(batch, task.input_width)``.
-
-        Returns
-        -------
-        tuple of jax.Array
-            Current class logits and the internal binary workspace for this
-            tick. Logits decode one analog carrier at every latent depth: the
-            contextual read on query ticks, and the latent voltage thereafter.
-            The first latent tick seeds that voltage with the same read, so the
-            two spans are continuous rather than two separate readout paths.
-            The second return value remains the homogeneous recurrent LIF
-            trajectory.
-        """
-        expected = (self.batch_size, self.input_width)
-        if packed.shape != expected:
-            raise ValueError(
-                f"packed input shape must be {expected}, got {packed.shape}"
-            )
-
-        task = self.config.task
-        key_input = packed[:, task.key_slice]
-        value_input = packed[:, task.value_slice]
-        slot = packed[:, task.slot_slice]
-        demo, query, latent, seed = phase_masks(packed, task)
-
-        ingestion = self.ingestion_state.value.reshape(
-            self.batch_size, 2, task.code_width
-        )
-        ingestion_input = jnp.stack(
-            ((demo + query) * key_input, demo * value_input), axis=1
-        )
-        ingestion_decay = math.exp(
-            -self.config.time_step_ms / self.config.ingestion_tau_ms
-        )
-        ingestion_voltage = ingestion_decay * ingestion + ingestion_input
-        ingestion_spikes = _surrogate_spike(ingestion_voltage - _LATENT_THRESHOLD)
-        ingestion_next = ingestion_voltage - ingestion_spikes
-        key_rate = ingestion_spikes[:, 0]
-        value_rate = ingestion_spikes[:, 1]
-
-        zero_slots = jnp.zeros_like(slot)
-        workspace_one = jnp.ones((self.batch_size, 1), dtype=slot.dtype)
-        key_mask = jnp.concatenate(
-            (zero_slots, demo * slot, jnp.zeros_like(workspace_one)), axis=1
-        )
-        value_mask = jnp.concatenate(
-            (demo * slot, zero_slots, jnp.zeros_like(workspace_one)), axis=1
-        )
-        workspace_mask = jnp.concatenate(
-            (zero_slots, zero_slots, workspace_one), axis=1
-        )
-        active = query + latent
-        active_rows = (active[:, :, None] * workspace_mask[:, :, None]).reshape(
-            self.batch_size * self.state_rows, 1
-        )
-
-        presentation_scale = 1.0 / task.symbol_ticks
-        key_projection_input = (
-            presentation_scale * key_mask[:, :, None] * key_rate[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, task.code_width)
-        value_projection_input = (
-            presentation_scale * value_mask[:, :, None] * value_rate[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, task.code_width)
-        query_mask = jnp.concatenate(
-            (zero_slots, zero_slots, query * workspace_one), axis=1
-        )
-        query_projection_input = (
-            presentation_scale * query_mask[:, :, None] * key_rate[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, task.code_width)
-        clock_projection_input = (
-            latent[:, :, None]
-            * workspace_mask[:, :, None]
-            * packed[:, None, task.clock_slice]
-        ).reshape(self.batch_size * self.state_rows, task.clock_width)
-        key_rows = braintrace.matmul(key_projection_input, self.Wk.value)
-        value_rows = braintrace.matmul(value_projection_input, self.Wv.value)
-        query_drive = braintrace.matmul(query_projection_input, self.Wk.value)
-        clock_drive = braintrace.matmul(clock_projection_input, self.Wc.value)
-
-        previous = self.grouped_state.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )
-        values = previous[:, : self.slot_count]
-        keys = previous[:, self.slot_count : -1]
-        workspace_previous = previous[:, -1]
-        query_encoding_previous = self.query_encoding.value.reshape(
-            self.batch_size, self.state_rows, self.width
-        )[:, -1]
-        query_encoding_next = self.query_encoding.value + query_drive
-        read_vector = (query + seed) * query_encoding_previous + (
-            latent - seed
-        ) * workspace_previous
-        dynamics_read = factored_memory_read(values, keys, read_vector)
-        dynamics_read_rows = (
-            workspace_mask[:, :, None] * dynamics_read[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, self.width)
-
-        workspace_activity_rows = (
-            active[:, :, None]
-            * workspace_mask[:, :, None]
-            * workspace_previous[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, self.width)
-        recurrent_rows = braintrace.matmul(workspace_activity_rows, self.Wf.value)
-        latent_decay = math.exp(-self.config.time_step_ms / self.config.latent_tau_ms)
-        parameter_drive = recurrent_rows + query_drive + clock_drive
-        active_voltage = active_rows * self.latent_voltage.value
-        voltage_candidate = (
-            latent_decay * active_voltage + dynamics_read_rows + parameter_drive
-        )
-        spike_voltage = (
-            latent_decay * active_voltage
-            + dynamics_read_rows
-            + jax.lax.stop_gradient(parameter_drive)
-        )
-        spikes_candidate = _surrogate_spike(spike_voltage - _LATENT_THRESHOLD)
-        voltage_next = voltage_candidate - (
-            jax.lax.stop_gradient(spikes_candidate) * _LATENT_THRESHOLD
-        )
-        workspace_delta_rows = spikes_candidate - workspace_activity_rows
-        flat_next = (
-            self.grouped_state.value + key_rows + value_rows + workspace_delta_rows
-        )
-        seed_gate_rows = (seed[:, :, None] * workspace_mask[:, :, None]).reshape(
-            self.batch_size * self.state_rows, 1
-        )
-        voltage_next, flat_next = self._seed_workspace(
-            voltage_next, flat_next, dynamics_read_rows, seed_gate_rows
-        )
-        state_next = flat_next.reshape(self.batch_size, self.state_rows, self.width)
-        query_encoding_logical = query_encoding_next.reshape(
-            self.batch_size, self.state_rows, self.width
-        )[:, -1]
-        pure_query_read = factored_memory_read(values, keys, query_encoding_logical)
-        latent_carrier = voltage_next.reshape(
-            self.batch_size, self.state_rows, self.width
-        )[:, -1]
-        representation = query * pure_query_read + (1.0 - query) * latent_carrier
-        readout_input = (
-            workspace_mask[:, :, None] * representation[:, None, :]
-        ).reshape(self.batch_size * self.state_rows, self.width)
-        logit_rows = jnp.matmul(readout_input, self.Wo.value)
-
-        self.ingestion_state.value = ingestion_next.reshape(
-            self.batch_size * 2, task.code_width
-        )
-        self.grouped_state.value = flat_next
-        self.latent_voltage.value = voltage_next
-        self.query_encoding.value = query_encoding_next
-        logits = logit_rows.reshape(
-            self.batch_size, self.state_rows, task.symbol_count
-        )[:, -1]
-        return logits, state_next[:, -1]
-
-    def update(self, packed: jax.Array) -> jax.Array:
-        """Advance one arithmetically phase-gated model tick.
-
-        Parameters
-        ----------
-        packed : jax.Array
-            Native batched input shaped ``(batch, task.input_width)``.
+        spikes : jax.Array, optional
+            Spikes shaped ``(batch, neurons)``.  Current LIF spikes are used
+            when omitted.
 
         Returns
         -------
         jax.Array
-            Current class logits shaped ``(batch, symbol_count)``.
+            Compact logits shaped ``(batch, compact_output_width)``.
         """
-        logits, _ = self._advance(packed)
-        return logits
+        if spikes is None:
+            spikes = self.spikes
+        if spikes.shape != (self.config.batch_size, self.config.neuron_count):
+            raise ValueError(
+                "spikes must have shape "
+                f"({self.config.batch_size}, {self.config.neuron_count}), got "
+                f"{spikes.shape}"
+            )
+        hidden = jax.nn.gelu(self.readout_projection(spikes))
+        return jnp.concatenate(
+            (
+                self.height_head(hidden),
+                self.width_head(hidden),
+                self.color_factor_head(hidden),
+            ),
+            axis=-1,
+        )
+
+    def cell_step(
+        self, event: jax.Array, advance: jax.Array | None = None
+    ) -> jax.Array:
+        """Advance one physical row-event or zero-input latent step.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched external input shaped ``(batch, input_width)``.
+        advance : jax.Array, optional
+            Boolean state-advance gate shaped ``(batch,)``.  When omitted it
+            is read from ``event[:, event_valid_index]``.  False rows leave
+            voltage and both synaptic currents byte-identical to their prior
+            values.  Latent callers pass true while keeping ``event`` zero.
+
+        Returns
+        -------
+        jax.Array
+            Current binary spikes shaped ``(batch, neurons)``.
+        """
+        expected = (self.config.batch_size, self.config.input_width)
+        if event.shape != expected:
+            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+        if advance is None:
+            advance = event[:, self.config.event_valid_index] > 0.5
+        else:
+            advance = jnp.asarray(advance, dtype=jnp.bool_)
+        if advance.shape != (self.config.batch_size,):
+            raise ValueError(
+                f"advance must have shape ({self.config.batch_size},), got "
+                f"{advance.shape}"
+            )
+        previous_voltage = self.neu.V.value
+        previous_feedforward = self.ff_syn.syn.g.value
+        previous_recurrent = self.rec_syn.syn.g.value
+        with brainstate.environ.context(dt=self.config.time_step_ms * u.ms):
+            self.ff_syn(event)
+            self.rec_syn(self.neu.get_spike())
+            self.neu(0.0 * u.mA)
+        gate = advance[:, None]
+        self.neu.V.value = u.math.where(gate, self.neu.V.value, previous_voltage)
+        self.ff_syn.syn.g.value = u.math.where(
+            gate, self.ff_syn.syn.g.value, previous_feedforward
+        )
+        self.rec_syn.syn.g.value = u.math.where(
+            gate, self.rec_syn.syn.g.value, previous_recurrent
+        )
+        return self.spikes
+
+    def update(self, event: jax.Array, advance: jax.Array | None = None) -> jax.Array:
+        """Advance one step and return the compact BrainTrace training output.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched external input shaped ``(batch, input_width)``.
+        advance : jax.Array, optional
+            Per-example state-advance gate.  See :meth:`cell_step`.
+
+        Returns
+        -------
+        jax.Array
+            Compact ARC logits shaped ``(batch, compact_output_width)``.
+        """
+        return self.compact_readout(self.cell_step(event, advance))
 
 
-def run_sequence(
-    model: LatentWorkspaceModel, model_inputs: jax.Array
-) -> SequenceResult:
-    """Run a complete episode with one compiled BrainState loop.
+def _batched_events(model: LatentWorkspaceModel, events: jax.Array) -> jax.Array:
+    events = jnp.asarray(events, dtype=jnp.float32)
+    if events.ndim == 2:
+        if model.config.batch_size != 1:
+            raise ValueError(
+                "rank-two events are supported only when configured batch_size is 1"
+            )
+        events = events[:, None, :]
+    expected_tail = (model.config.batch_size, model.config.input_width)
+    if events.ndim != 3 or events.shape[1:] != expected_tail:
+        raise ValueError(
+            f"events must have shape (time, {expected_tail[0]}, "
+            f"{expected_tail[1]}), got {events.shape}"
+        )
+    if events.shape[0] < 1:
+        raise ValueError("context events must contain at least one valid row")
+    return events
+
+
+def run_context(
+    model: LatentWorkspaceModel,
+    events: jax.Array,
+    *,
+    reset: bool = True,
+) -> ContextCheckpoint:
+    """Execute valid ARC row events through one BrainState compiled loop.
 
     Parameters
     ----------
     model : LatentWorkspaceModel
-        Stateful model. Call ``reset_state`` before this function when starting
-        an independent episode.
-    model_inputs : jax.Array
-        Inputs shaped ``(time, input_width)`` for batch size one or
-        ``(time, batch, input_width)`` for native batched execution.
+        Model whose physical state is advanced.
+    events : jax.Array
+        Valid, padding-trimmed events shaped ``(time, input_width)`` for batch
+        one or ``(time, batch, input_width)`` generally.
+    reset : bool, default=True
+        Reset all inference state before the context loop.
+
+    Returns
+    -------
+    ContextCheckpoint
+        Query-terminal state, compact output, and exact restorable snapshot.
+    """
+    packed = _batched_events(model, events)
+    if reset:
+        model.reset_state()
+
+    advance = packed[..., model.config.event_valid_index] > 0.5
+
+    def context_step(inputs: tuple[jax.Array, jax.Array]) -> jax.Array:
+        event, gate = inputs
+        model.cell_step(event, gate)
+        return jnp.asarray(0, dtype=jnp.int8)
+
+    brainstate.transform.for_loop(context_step, (packed, advance))
+    spikes = model.spikes
+    return ContextCheckpoint(
+        compact_logits=model.compact_readout(spikes),
+        spikes=spikes,
+        voltage=model.voltage,
+        feedforward_current=model.feedforward_current,
+        recurrent_current=model.recurrent_current,
+        snapshot=model.snapshot_state(),
+        context_steps=int(packed.shape[0]),
+    )
+
+
+def run_packed_stream(
+    model: LatentWorkspaceModel,
+    events: jax.Array,
+    *,
+    reset: bool = True,
+    advance_gates: jax.Array | None = None,
+    ablation_slots: jax.Array | None = None,
+    ablation_gates: jax.Array | None = None,
+) -> PackedTrajectory:
+    """Run a fixed packed context-plus-latent stream and record every tick.
+
+    This is the integration path for batches whose valid contexts have
+    different lengths.  The caller packs each sample's valid context, zero
+    tail, and 32 additional zero rows into one static tensor, then gathers
+    checkpoint zero and later efforts using that sample's own ``query_stop``.
+    The recurrent driver is one :func:`brainstate.transform.for_loop`.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Model to reset and execute.
+    events : jax.Array
+        Fixed tensor shaped ``(time, batch, input_width)``.  Rank two is
+        accepted for native batch one.
+    reset : bool, default=True
+        Reset all inference state before execution.
+    advance_gates : jax.Array, optional
+        Boolean gates shaped ``(time, batch)``.  Omitted gates are derived from
+        the row-event valid channel, which freezes context padding.  A packed
+        stream containing zero-input latent rows must supply true gates for
+        those rows so recurrent state advances while external input stays
+        exactly zero.
+    ablation_slots : jax.Array, optional
+        One checked slot index per batch element, shaped ``(batch,)``.
+    ablation_gates : jax.Array, optional
+        Boolean pre-step ablation gates shaped ``(time, batch)``.  A gate at
+        ``query_stop`` zeros the selected voltage/spike slice after checkpoint
+        zero and before the first latent update.
+
+    Returns
+    -------
+    PackedTrajectory
+        Compact outputs, spikes, and voltage after every input tick.
+    """
+    packed = _batched_events(model, events)
+    if reset:
+        model.reset_state()
+    if advance_gates is None:
+        advance = packed[..., model.config.event_valid_index] > 0.5
+    else:
+        advance = jnp.asarray(advance_gates, dtype=jnp.bool_)
+        if advance.shape != (packed.shape[0], model.config.batch_size):
+            raise ValueError(
+                "advance_gates must have shape "
+                f"({packed.shape[0]}, {model.config.batch_size})"
+            )
+    controlled = ablation_slots is not None or ablation_gates is not None
+    if controlled:
+        if ablation_slots is None or ablation_gates is None:
+            raise ValueError(
+                "ablation_slots and ablation_gates must be supplied together"
+            )
+        raw_slots = np.asarray(ablation_slots)
+        if raw_slots.shape != (model.config.batch_size,):
+            raise ValueError(
+                f"ablation_slots must have shape ({model.config.batch_size},)"
+            )
+        if not np.issubdtype(raw_slots.dtype, np.integer):
+            raise ValueError("ablation_slots must contain integers")
+        if np.any(raw_slots < 0) or np.any(raw_slots >= model.slot_count):
+            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count})")
+        slots = jnp.asarray(raw_slots, dtype=jnp.int32)
+        gates = jnp.asarray(ablation_gates, dtype=jnp.bool_)
+        if gates.shape != (packed.shape[0], model.config.batch_size):
+            raise ValueError(
+                "ablation_gates must have shape "
+                f"({packed.shape[0]}, {model.config.batch_size})"
+            )
+
+        def controlled_step(
+            inputs: tuple[jax.Array, jax.Array, jax.Array],
+        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+            event, advance_gate, ablation_gate = inputs
+            model.mask_slots(slots, ablation_gate)
+            spikes = model.cell_step(event, advance_gate)
+            return (
+                model.compact_readout(spikes),
+                spikes,
+                model.voltage,
+                model.feedforward_current,
+                model.recurrent_current,
+            )
+
+        compact, spikes, voltage, feedforward_current, recurrent_current = (
+            brainstate.transform.for_loop(controlled_step, (packed, advance, gates))
+        )
+    else:
+
+        def packed_step(
+            inputs: tuple[jax.Array, jax.Array],
+        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+            event, gate = inputs
+            spikes = model.cell_step(event, gate)
+            return (
+                model.compact_readout(spikes),
+                spikes,
+                model.voltage,
+                model.feedforward_current,
+                model.recurrent_current,
+            )
+
+        compact, spikes, voltage, feedforward_current, recurrent_current = (
+            brainstate.transform.for_loop(packed_step, (packed, advance))
+        )
+    return PackedTrajectory(
+        compact_logits=compact,
+        spikes=spikes,
+        voltage=voltage,
+        feedforward_current=feedforward_current,
+        recurrent_current=recurrent_current,
+        color_rank=model.config.color_rank,
+    )
+
+
+def run_selected_packed_stream(
+    model: LatentWorkspaceModel,
+    events: jax.Array,
+    selected_indices: jax.Array,
+    *,
+    reset: bool = True,
+    advance_gates: jax.Array | None = None,
+    ablation_slots: jax.Array | None = None,
+    ablation_gates: jax.Array | None = None,
+) -> SelectedPackedTrajectory:
+    """Run a packed stream while retaining only selected per-example ticks.
+
+    A BrainState scan carries fixed ``(checkpoints, batch, ...)`` buffers and a
+    cursor for each batch element.  Every model step still executes in order,
+    including advance and ablation controls, but scan outputs only one byte per
+    tick instead of stacking neuron-sized states.  Evaluation memory therefore
+    scales with the number of requested checkpoints rather than packed-stream
+    length.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Model to reset and execute.
+    events : jax.Array
+        Fixed stream shaped ``(time, batch, input_width)``.  Rank two is
+        accepted for native batch one.
+    selected_indices : jax.Array
+        Integer stream indices shaped ``(checkpoints, batch)``.  Each batch
+        column must be strictly increasing and lie in ``[0, time)``.  For the
+        full experiment these are ``query_stop - 1 + arange(33)``.
+    reset : bool, default=True
+        Reset inference state before scanning.
+    advance_gates : jax.Array, optional
+        Boolean state-advance gates shaped ``(time, batch)``.  Omitted gates
+        are derived from the event-valid channel.
+    ablation_slots : jax.Array, optional
+        One integer 64-neuron slot per batch element.
+    ablation_gates : jax.Array, optional
+        Boolean pre-step ablation gates shaped ``(time, batch)``.  Both
+        ablation arguments must be supplied together.
+
+    Returns
+    -------
+    SelectedPackedTrajectory
+        Only the requested compact outputs and physical states.
+    """
+    packed = _batched_events(model, events)
+    raw_indices = np.asarray(selected_indices)
+    if raw_indices.ndim != 2 or raw_indices.shape[1] != model.config.batch_size:
+        raise ValueError(
+            f"selected_indices must have shape (checkpoints, {model.config.batch_size})"
+        )
+    if raw_indices.shape[0] < 1:
+        raise ValueError("selected_indices must contain at least one checkpoint")
+    if not np.issubdtype(raw_indices.dtype, np.integer):
+        raise ValueError("selected_indices must contain integers")
+    if np.any(raw_indices < 0) or np.any(raw_indices >= packed.shape[0]):
+        raise ValueError(f"selected_indices must lie in [0, {packed.shape[0]})")
+    if np.any(np.diff(raw_indices.astype(np.int64), axis=0) <= 0):
+        raise ValueError(
+            "selected_indices must be strictly increasing in each batch column"
+        )
+    indices = jnp.asarray(raw_indices, dtype=jnp.int32)
+    checkpoint_count = int(raw_indices.shape[0])
+    batch_size = model.config.batch_size
+
+    if advance_gates is None:
+        advance = packed[..., model.config.event_valid_index] > 0.5
+    else:
+        advance = jnp.asarray(advance_gates, dtype=jnp.bool_)
+        if advance.shape != (packed.shape[0], batch_size):
+            raise ValueError(
+                f"advance_gates must have shape ({packed.shape[0]}, {batch_size})"
+            )
+
+    controlled = ablation_slots is not None or ablation_gates is not None
+    if controlled:
+        if ablation_slots is None or ablation_gates is None:
+            raise ValueError(
+                "ablation_slots and ablation_gates must be supplied together"
+            )
+        raw_slots = np.asarray(ablation_slots)
+        if raw_slots.shape != (batch_size,):
+            raise ValueError(f"ablation_slots must have shape ({batch_size},)")
+        if not np.issubdtype(raw_slots.dtype, np.integer):
+            raise ValueError("ablation_slots must contain integers")
+        if np.any(raw_slots < 0) or np.any(raw_slots >= model.slot_count):
+            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count})")
+        slots = jnp.asarray(raw_slots, dtype=jnp.int32)
+        ablations = jnp.asarray(ablation_gates, dtype=jnp.bool_)
+        if ablations.shape != (packed.shape[0], batch_size):
+            raise ValueError(
+                f"ablation_gates must have shape ({packed.shape[0]}, {batch_size})"
+            )
+    else:
+        slots = jnp.zeros((batch_size,), dtype=jnp.int32)
+        ablations = jnp.zeros((packed.shape[0], batch_size), dtype=jnp.bool_)
+
+    if reset:
+        model.reset_state()
+    compact_buffer = jnp.zeros(
+        (checkpoint_count, batch_size, model.config.compact_output_width),
+        dtype=jnp.float32,
+    )
+    state_shape = (checkpoint_count, batch_size, model.config.neuron_count)
+    spikes_buffer = jnp.zeros(state_shape, dtype=jnp.float32)
+    voltage_buffer = jnp.zeros(state_shape, dtype=model.voltage.dtype)
+    feedforward_buffer = jnp.zeros(state_shape, dtype=model.feedforward_current.dtype)
+    recurrent_buffer = jnp.zeros(state_shape, dtype=model.recurrent_current.dtype)
+    batch_indices = jnp.arange(batch_size, dtype=jnp.int32)
+
+    initial_carry = (
+        jnp.asarray(0, dtype=jnp.int32),
+        jnp.zeros((batch_size,), dtype=jnp.int32),
+        compact_buffer,
+        spikes_buffer,
+        voltage_buffer,
+        feedforward_buffer,
+        recurrent_buffer,
+    )
+
+    def scan_step(
+        carry: tuple[
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+        ],
+        inputs: tuple[jax.Array, jax.Array, jax.Array],
+    ) -> tuple[
+        tuple[
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+        ],
+        jax.Array,
+    ]:
+        (
+            time_index,
+            cursors,
+            compact_values,
+            spike_values,
+            voltage_values,
+            feedforward_values,
+            recurrent_values,
+        ) = carry
+        event, advance_gate, ablation_gate = inputs
+        model.mask_slots(slots, ablation_gate)
+        spikes = model.cell_step(event, advance_gate)
+        compact = model.compact_readout(spikes)
+        voltage = model.voltage
+        feedforward = model.feedforward_current
+        recurrent = model.recurrent_current
+
+        safe_cursors = jnp.minimum(cursors, checkpoint_count - 1)
+        targets = indices[safe_cursors, batch_indices]
+        matched = (cursors < checkpoint_count) & (time_index == targets)
+
+        def record(buffer: jax.Array, value: jax.Array) -> jax.Array:
+            previous = buffer[safe_cursors, batch_indices]
+            selected = jnp.where(matched[:, None], value, previous)
+            return buffer.at[safe_cursors, batch_indices].set(selected)
+
+        compact_values = record(compact_values, compact)
+        spike_values = record(spike_values, spikes)
+        voltage_values = record(voltage_values, voltage)
+        feedforward_values = record(feedforward_values, feedforward)
+        recurrent_values = record(recurrent_values, recurrent)
+        next_carry = (
+            time_index + 1,
+            cursors + matched.astype(jnp.int32),
+            compact_values,
+            spike_values,
+            voltage_values,
+            feedforward_values,
+            recurrent_values,
+        )
+        return next_carry, jnp.asarray(0, dtype=jnp.int8)
+
+    final_carry, _ = brainstate.transform.scan(
+        scan_step, initial_carry, (packed, advance, ablations)
+    )
+    (
+        _,
+        _,
+        compact_buffer,
+        spikes_buffer,
+        voltage_buffer,
+        feedforward_buffer,
+        recurrent_buffer,
+    ) = final_carry
+    return SelectedPackedTrajectory(
+        selected_indices=indices,
+        compact_logits=compact_buffer,
+        spikes=spikes_buffer,
+        voltage=voltage_buffer,
+        feedforward_current=feedforward_buffer,
+        recurrent_current=recurrent_buffer,
+        color_rank=model.config.color_rank,
+    )
+
+
+def run_latent_trajectory(
+    model: LatentWorkspaceModel,
+    *,
+    steps: int | None = None,
+) -> ModelTrajectory:
+    """Continue current state through an exactly-zero compiled latent rollout.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Context-conditioned model.  This function does not reset it.
+    steps : int, optional
+        Number of recurrent updates.  The configured maximum is used when
+        omitted.
+
+    Returns
+    -------
+    ModelTrajectory
+        Checkpoint zero followed by every latent update.
+    """
+    if steps is None:
+        steps = model.config.max_latent_steps
+    else:
+        steps = _nonnegative_integer(steps, "steps")
+    if steps > model.config.max_latent_steps:
+        raise ValueError(
+            f"steps {steps} exceeds configured maximum {model.config.max_latent_steps}"
+        )
+
+    initial_spikes = model.spikes
+    initial_compact = model.compact_readout(initial_spikes)
+    initial_voltage = model.voltage
+    initial_feedforward_current = model.feedforward_current
+    initial_recurrent_current = model.recurrent_current
+    zero_inputs = jnp.zeros(
+        (steps, model.config.batch_size, model.config.input_width),
+        dtype=jnp.float32,
+    )
+
+    if steps:
+        advance = jnp.ones((steps, model.config.batch_size), dtype=jnp.bool_)
+
+        def latent_step(
+            inputs: tuple[jax.Array, jax.Array],
+        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+            event, gate = inputs
+            spikes = model.cell_step(event, gate)
+            return (
+                model.compact_readout(spikes),
+                spikes,
+                model.voltage,
+                model.feedforward_current,
+                model.recurrent_current,
+            )
+
+        compact, spikes, voltage, feedforward_current, recurrent_current = (
+            brainstate.transform.for_loop(latent_step, (zero_inputs, advance))
+        )
+    else:
+        compact = jnp.zeros(
+            (0, model.config.batch_size, model.config.compact_output_width),
+            dtype=initial_compact.dtype,
+        )
+        spikes = jnp.zeros(
+            (0, model.config.batch_size, model.config.neuron_count),
+            dtype=initial_spikes.dtype,
+        )
+        voltage = jnp.zeros(
+            (0, model.config.batch_size, model.config.neuron_count),
+            dtype=initial_voltage.dtype,
+        )
+        feedforward_current = jnp.zeros(
+            (0, model.config.batch_size, model.config.neuron_count),
+            dtype=initial_feedforward_current.dtype,
+        )
+        recurrent_current = jnp.zeros(
+            (0, model.config.batch_size, model.config.neuron_count),
+            dtype=initial_recurrent_current.dtype,
+        )
+    return ModelTrajectory(
+        compact_logits=jnp.concatenate((initial_compact[None], compact), axis=0),
+        spikes=jnp.concatenate((initial_spikes[None], spikes), axis=0),
+        voltage=jnp.concatenate((initial_voltage[None], voltage), axis=0),
+        feedforward_current=jnp.concatenate(
+            (initial_feedforward_current[None], feedforward_current), axis=0
+        ),
+        recurrent_current=jnp.concatenate(
+            (initial_recurrent_current[None], recurrent_current), axis=0
+        ),
+        zero_inputs=zero_inputs,
+        color_rank=model.config.color_rank,
+    )
+
+
+def run_sequence(
+    model: LatentWorkspaceModel,
+    events: jax.Array,
+    *,
+    latent_steps: int | None = None,
+) -> SequenceResult:
+    """Reset, execute ARC context, and collect one continuous latent path.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Model to execute.
+    events : jax.Array
+        Valid ARC row events accepted by :func:`run_context`.
+    latent_steps : int, optional
+        Recurrent effort after checkpoint zero.
 
     Returns
     -------
     SequenceResult
-        Per-tick logits and workspace states. ``R = 0`` is valid because the
-        query span still supplies the terminal tick.
+        Query-terminal checkpoint and its zero-input latent trajectory.
     """
-    raw_sequence = np.asarray(model_inputs)
-    sequence = jnp.asarray(raw_sequence, dtype=jnp.float32)
-    if sequence.ndim == 2:
-        if model.batch_size != 1:
-            raise ValueError(
-                "two-dimensional model_inputs require configured batch_size 1"
-            )
-        sequence = sequence[:, None, :]
-    expected_tail = (model.batch_size, model.input_width)
-    if sequence.ndim != 3 or sequence.shape[1:] != expected_tail:
-        raise ValueError(
-            "model_inputs shape must be (time, batch, input_width) with tail "
-            f"{expected_tail}, got {sequence.shape}"
-        )
-    phase_values = np.asarray(sequence[..., model.config.task.phase_slice])
-    if (
-        not np.all(np.isfinite(phase_values))
-        or not np.all((phase_values == 0.0) | (phase_values == 1.0))
-        or not np.all(np.sum(phase_values, axis=-1) == 1.0)
-    ):
-        raise ValueError("phase values must be finite binary one-hot vectors")
-    if not np.all(np.any(phase_values[..., 1] == 1.0, axis=0)):
-        raise ValueError("query phase must be present for every batch element")
+    context = run_context(model, events, reset=True)
+    trajectory = run_latent_trajectory(model, steps=latent_steps)
+    return SequenceResult(context=context, trajectory=trajectory)
 
-    def step(one_tick: jax.Array) -> tuple[jax.Array, jax.Array]:
-        return model._advance(one_tick)
 
-    logits, workspace = brainstate.transform.for_loop(step, sequence)
-    memory_values, memory_keys = model.memory_factors()
-    query_encoding = model.query_encoding_view
-    pure_query_read = factored_memory_read(memory_values, memory_keys, query_encoding)
-    return SequenceResult(
-        logits=logits,
-        workspace=workspace,
-        memory_read=pure_query_read,
-        query_encoding=query_encoding,
-        memory_values=memory_values,
-        memory_keys=memory_keys,
+def compile_pp_prop(
+    model: LatentWorkspaceModel,
+    *,
+    verbose: int = 0,
+) -> Any:
+    """Compile the model with its explicit pp-prop eligibility coordinate.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Model whose parameter objects are shared across all effort lengths.
+    verbose : int, default=0
+        BrainTrace compiler verbosity.
+
+    Returns
+    -------
+    object
+        BrainTrace learner exposing ``etrace_grad`` and ``etrace_evolve``.
+    """
+    sample = jnp.zeros(
+        (model.config.batch_size, model.config.input_width), dtype=jnp.float32
     )
+    sample_advance = jnp.ones((model.config.batch_size,), dtype=jnp.bool_)
+    return braintrace.compile(
+        model,
+        model.etrace_config(),
+        sample,
+        sample_advance,
+        batch_size=model.config.batch_size,
+        vmap=False,
+        verbose=verbose,
+    )
+
+
+def parameter_snapshot(model: LatentWorkspaceModel) -> dict[str, Any]:
+    """Copy every trainable parameter for immutability checks.
+
+    Parameters
+    ----------
+    model : LatentWorkspaceModel
+        Model whose parameters are copied.
+
+    Returns
+    -------
+    dict of str to object
+        Path-keyed copied parameter pytrees.  Sparse weights remain dictionaries
+        containing their value arrays.
+    """
+    return {
+        ".".join(map(str, path)): _copy_tree(state.value)
+        for path, state in model.states(brainstate.ParamState).items()
+    }
