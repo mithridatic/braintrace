@@ -545,23 +545,26 @@ def _probe_evaluator(experiment: Any, config: Any, batch: int, *, per_row_edges:
             }
         brainstate.nn.reset_all_states(model, batch_size=batch_rows)
 
-        def step(carry, inputs):
-            rate_sum, logit_sum = carry
+        def step(rate_sum, inputs):
             current, window = inputs
             model.ff_syn(current)
             model.rec_syn(model.neu.get_spike() * alive)
             model.neu(0.0 * u.mA)
             masked_spikes = model.neu.get_spike() * alive
             output = model.readout(masked_spikes) * window[:, None]
-            return (rate_sum + masked_spikes, logit_sum + output), None
+            return rate_sum + masked_spikes, output
 
-        initial = (
+        # Spike rates accumulate in the carry, because stacking them would cost
+        # one ``(batch_rows, n_rec)`` array per time step. Readout outputs are
+        # stacked and reduced afterwards: that array is small, and summing it in
+        # one reduction keeps the logits bitwise identical to the pre-batching
+        # evaluator, which the compaction equivalence check depends on.
+        rate_sum, outputs = brainstate.transform.scan(
+            step,
             jnp.zeros((batch_rows, n_rec), dtype=jnp.float32),
-            jnp.zeros((batch_rows, n_tasks), dtype=jnp.float32),
+            (tiled_spikes, tiled_windows),
         )
-        (rate_sum, logit_sum), _ = brainstate.transform.scan(
-            step, initial, (tiled_spikes, tiled_windows)
-        )
+        logit_sum = jnp.sum(outputs, axis=0)
         if not per_row_edges:
             rec_weight.value = base_params
         logits = (logit_sum / tiled_sums).reshape(batch, n_trial, n_tasks)

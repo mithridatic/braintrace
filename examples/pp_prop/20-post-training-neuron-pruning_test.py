@@ -456,6 +456,12 @@ def test_batched_evaluation_matches_the_serial_rollout():
         )
         runner = example._ProbeRunner(experiment, config, batch=1)
         logits, rates = runner.evaluate(alive[None, :], edge_alive)
+    # Rates are bitwise identical, so no spike moved. Logits are compared with
+    # a tolerance only because this reference runs eagerly while the evaluator
+    # runs under jit; the batched evaluator deliberately keeps the pre-batching
+    # reduction shape, summing stacked readout outputs in one pass rather than
+    # accumulating them step by step, because the compaction equivalence check
+    # has only about 3e-6 of headroom at the recorded scale.
     np.testing.assert_allclose(logits[0], expected_logits, rtol=1e-6, atol=1e-7)
     np.testing.assert_array_equal(rates[0], expected_rates)
 
