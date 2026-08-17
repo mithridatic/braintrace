@@ -28,8 +28,10 @@ from braintrace._testing.oracle import (
     relative_deviation,
 )
 from examples.pp_prop.latent_workspace_model import (
+    MAX_GRID_SIZE,
     LatentWorkspaceModel,
     ModelConfig,
+    run_packed_stream,
 )
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
@@ -76,6 +78,22 @@ class _PaddingTraceProbe(brainstate.nn.Module):
         advance = packed[:, _PADDING_PROBE_EVENT_WIDTH] > 0.5
         loss_gate = packed[:, _PADDING_PROBE_EVENT_WIDTH + 1 :]
         return loss_gate * (self.reservoir(event, advance) - self.target)
+
+
+class _TrainingRowTraceProbe(brainstate.nn.Module):
+    """Expose masked residuals around a tiny production reservoir."""
+
+    def __init__(self, config: ModelConfig, target: jax.Array) -> None:
+        super().__init__()
+        self.reservoir = LatentWorkspaceModel(config)
+        self.event_width = config.input_width
+        self.target = jnp.asarray(target, dtype=jnp.float32)
+
+    def update(self, packed: jax.Array) -> jax.Array:
+        event = packed[:, : self.event_width]
+        advance = packed[:, self.event_width] > 0.5
+        loss_scale = packed[:, self.event_width + 1 :]
+        return loss_scale * (self.reservoir(event, advance) - self.target)
 
 
 def _padding_trace_probe_inputs() -> tuple[jax.Array, jax.Array]:
@@ -127,6 +145,38 @@ def _encoded_fixture(example, query_index: int = 0):
     data = smoke_loaded_dataset()
     rows = example._row_config(example.ExperimentConfig.smoke_config())
     return encode_query_episode(data.tasks[0], query_index, rows), rows
+
+
+def _tiny_compaction_fixture(example):
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),))),
+            ArcPair(ArcGrid(((3,),)), ArcGrid(((4,),))),
+        ),
+        test=(ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),))),),
+        task_id="compact-trace",
+    )
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(seed=41),
+        max_demonstrations=2,
+    )
+    rows = RowEventConfig(max_demonstrations=2, max_grid_size=4)
+    encoded = encode_query_episode(task, 0, rows)
+    return task, config, rows, encoded
+
+
+def _tiny_trace_model_config(rows: RowEventConfig) -> ModelConfig:
+    return ModelConfig(
+        input_width=rows.input_width,
+        neuron_count=64,
+        recurrent_edges=64,
+        max_latent_steps=32,
+        readout_width=8,
+        color_rank=1,
+        input_gain=40.0,
+        seed=41,
+        sparse_backend="jax_raw",
+    )
 
 
 def _metric(value: float = 0.0) -> dict[str, float | int]:
@@ -626,6 +676,138 @@ def test_training_stream_compacts_learning_rule_timeline(example):
         assert advancing[:prefix_length].all()
         assert not advancing[prefix_length:].any()
         assert np.count_nonzero(events[prefix_length:]) == 0
+
+
+def test_compaction_preserves_every_semantic_checkpoint(example):
+    """Compaction changes trace timing, never the ordered physical trajectory."""
+    _task, config, rows, encoded = _tiny_compaction_fixture(example)
+    padded = example._packed_events(encoded, config)
+    padded_advances = example._packed_advances(encoded, config, rows)
+    compact, compact_advances, query_checkpoint = example._compact_training_stream(
+        encoded, config, rows
+    )
+    active_indices = np.flatnonzero(padded_advances)
+    compact_indices = np.arange(active_indices.size)
+
+    np.testing.assert_array_equal(
+        padded[active_indices], compact[: active_indices.size]
+    )
+    assert active_indices[query_checkpoint] == encoded.query_stop - 1
+    assert compact_advances[: active_indices.size].all()
+    assert not compact_advances[active_indices.size :].any()
+    np.testing.assert_array_equal(
+        np.flatnonzero(~compact_advances),
+        np.arange(active_indices.size, compact_advances.size),
+    )
+    np.testing.assert_array_equal(compact[active_indices.size :], 0.0)
+
+    model_config = _tiny_trace_model_config(rows)
+    padded_trajectory = run_packed_stream(
+        LatentWorkspaceModel(model_config),
+        jnp.asarray(padded[:, None, :]),
+        advance_gates=jnp.asarray(padded_advances[:, None]),
+    )
+    compact_trajectory = run_packed_stream(
+        LatentWorkspaceModel(model_config),
+        jnp.asarray(compact[:, None, :]),
+        advance_gates=jnp.asarray(compact_advances[:, None]),
+    )
+
+    for field in (
+        "compact_logits",
+        "spikes",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    ):
+        padded_values = np.asarray(getattr(padded_trajectory, field))[active_indices]
+        compact_values = np.asarray(getattr(compact_trajectory, field))[compact_indices]
+        np.testing.assert_array_equal(padded_values, compact_values, err_msg=field)
+
+
+def test_production_training_row_matches_explicit_compact_pp_prop_gradient(example):
+    """The emitted static row has the compact finite-window pp-prop gradient."""
+    task, config, rows, encoded = _tiny_compaction_fixture(example)
+    effort = 8
+    row = example._training_row(
+        example._OriginTask("fixture", "fixture", task),
+        config,
+        rows,
+        brainstate.random.RandomState(7),
+        effort=effort,
+        plumbing_only=True,
+    )
+
+    padded = example._packed_events(encoded, config)
+    active_indices = np.flatnonzero(
+        example._packed_advances(encoded, config, rows)
+    )
+    query_checkpoint = int(
+        np.flatnonzero(active_indices == encoded.query_stop - 1)[0]
+    )
+    reference_mask = np.zeros((active_indices.size,), dtype=np.float32)
+    reference_mask[query_checkpoint : query_checkpoint + effort + 1] = np.float32(
+        1.0 / (effort + 1)
+    )
+
+    produced_events = row["events"]
+    produced_advances = row["advances"]
+    produced_mask = row["masks"]
+    np.testing.assert_array_equal(
+        produced_events[: active_indices.size, 0], padded[active_indices]
+    )
+    np.testing.assert_array_equal(
+        produced_mask[: active_indices.size], reference_mask
+    )
+
+    def pack(events, advances, mask):
+        return jnp.concatenate(
+            (
+                jnp.asarray(events, dtype=jnp.float32),
+                jnp.asarray(advances, dtype=jnp.float32)[..., None],
+                jnp.sqrt(jnp.asarray(mask, dtype=jnp.float32))[..., None],
+            ),
+            axis=-1,
+        )
+
+    produced_inputs = pack(
+        produced_events,
+        produced_advances,
+        produced_mask[:, None],
+    )
+    reference_inputs = pack(
+        padded[active_indices, None, :],
+        np.ones((active_indices.size, 1), dtype=np.bool_),
+        reference_mask[:, None],
+    )
+
+    model_config = _tiny_trace_model_config(rows)
+    target = np.zeros((1, model_config.compact_output_width), dtype=np.float32)
+    target[0, int(row["heights"]) - 1] = 1.0
+    target[0, MAX_GRID_SIZE + int(row["widths"]) - 1] = 1.0
+
+    def factory():
+        return _TrainingRowTraceProbe(model_config, jnp.asarray(target))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        produced_gradient = chunked_online_param_gradients(
+            factory,
+            produced_inputs,
+            algo_factory=_padding_probe_pp_prop,
+            chunk_size=4,
+        )
+        reference_gradient = chunked_online_param_gradients(
+            factory,
+            reference_inputs,
+            algo_factory=_padding_probe_pp_prop,
+            chunk_size=4,
+        )
+
+    assert gradient_norm(reference_gradient) > 1e-3
+    assert relative_deviation(produced_gradient, reference_gradient) == pytest.approx(
+        0.0, abs=1e-7
+    )
 
 
 def test_training_mask_supervises_every_depth_with_unit_update_weight(example):
