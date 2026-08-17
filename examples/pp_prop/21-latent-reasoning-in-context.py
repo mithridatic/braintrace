@@ -555,6 +555,7 @@ def _train_depth(
             )
             selected = {path: grads[path] for path in trainable}
             optimizer.update(brainstate.nn.clip_grad_norm(selected, 1.0))
+            model.project_dale()
             return loss
 
         return brainstate.transform.for_loop(train_one, batches, targets)

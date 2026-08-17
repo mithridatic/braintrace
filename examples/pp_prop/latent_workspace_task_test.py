@@ -201,8 +201,9 @@ def test_model_tensor_has_no_rule_episode_or_terminal_target_field():
     config = TaskConfig()
     pair = generate_matched_episodes(config, _rng(5))
     for episode in (pair.supported, pair.short):
-        assert episode.model_inputs.shape[1] == 2 * 24 + 8 + 4
-        assert set(np.unique(episode.model_inputs)).issubset({0.0, 1.0})
+        assert episode.model_inputs.shape[1] == 2 * 24 + 8 + 4 + config.clock_width
+        binary_columns = episode.model_inputs[:, : config.clock_slice.start]
+        assert set(np.unique(binary_columns)).issubset({0.0, 1.0})
         assert not np.any(episode.query_inputs[:, config.value_slice])
         assert not np.any(episode.query_inputs[:, config.slot_slice])
         assert not np.any(episode.latent_inputs[:, : config.slot_slice.stop])
@@ -537,4 +538,53 @@ def test_slice_helpers_are_stable_under_nondefault_dimensions():
     assert config.value_slice == slice(20, 40)
     assert config.slot_slice == slice(40, 49)
     assert config.phase_slice == slice(49, 53)
-    assert config.input_width == 53
+    assert config.clock_slice == slice(53, 53 + config.clock_width)
+    assert config.input_width == 53 + config.clock_width
+
+
+def test_clock_code_repeats_only_at_the_slowest_period() -> None:
+    code = task_module.latent_clock_code(8, 4)
+
+    assert code.shape == (8, 4)
+    assert np.allclose(code[0], code[4], atol=1e-5)
+    for step in range(1, 4):
+        assert not np.allclose(code[0], code[step])
+
+
+def test_clock_code_width_is_independent_of_latent_depth() -> None:
+    shallow = task_module.latent_clock_code(2, 6)
+    deep = task_module.latent_clock_code(64, 6)
+
+    assert shallow.shape[1] == deep.shape[1] == 6
+    assert np.allclose(deep[:2], shallow)
+
+
+def test_zero_latent_steps_yields_an_empty_clock_code() -> None:
+    assert task_module.latent_clock_code(0, 4).shape == (0, 4)
+
+
+@pytest.mark.parametrize("clock_width", [0, -2, 3])
+def test_invalid_clock_width_is_rejected(clock_width: int) -> None:
+    with pytest.raises(ValueError):
+        TaskConfig(clock_width=clock_width)
+
+
+def test_clock_bank_is_confined_to_the_latent_span() -> None:
+    config = TaskConfig(latent_steps=6)
+    episode = generate_episode(config, _rng(77))
+    clock = episode.model_inputs[:, config.clock_slice]
+
+    assert not np.any(clock[: config.latent_slice.start])
+    assert np.any(clock[config.latent_slice])
+    assert np.array_equal(
+        clock[config.latent_slice],
+        task_module.latent_clock_code(config.latent_steps, config.clock_width),
+    )
+
+
+def test_latent_span_drive_differs_between_successive_ticks() -> None:
+    config = TaskConfig(latent_steps=4)
+    episode = generate_episode(config, _rng(78))
+    latent_rows = episode.model_inputs[config.latent_slice]
+
+    assert not np.allclose(latent_rows[1], latent_rows[2])

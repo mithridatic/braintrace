@@ -70,7 +70,14 @@ class ModelConfig:
     latent_spectral_radius : float
         Requested spectral radius for the recurrent workspace matrix.
     latent_connectivity : float
-        Connection probability in the positive sparse recurrent reservoir.
+        Connection probability in the sparse recurrent reservoir.
+    dale_inhibitory_fraction : float
+        Fraction of presynaptic latent neurons whose outgoing recurrent column
+        is negative. A strictly nonnegative recurrence has, by
+        Perron-Frobenius, a dominant nonnegative eigenvector that repeated
+        application projects onto, which collapses the workspace across latent
+        depth. Must lie in ``(0, 1)``; at least one neuron is always
+        inhibitory, so the constraint is never silently vacuous.
     max_jacobian_elements : int
         Explicit safety ceiling for the intentional coupled hidden Jacobian.
     write_mode : {"fixed_random", "learned"}
@@ -96,6 +103,7 @@ class ModelConfig:
     time_step_ms: float = 1.0
     latent_spectral_radius: float = 0.9
     latent_connectivity: float = 0.75
+    dale_inhibitory_fraction: float = 0.25
     max_jacobian_elements: int = 1 << 26
     write_mode: WriteMode = "fixed_random"
     seed: int = 2108
@@ -139,6 +147,7 @@ class ModelConfig:
             "time_step_ms",
             "latent_spectral_radius",
             "latent_connectivity",
+            "dale_inhibitory_fraction",
         ):
             object.__setattr__(
                 self, name, _validated_real_scalar(getattr(self, name), name)
@@ -153,6 +162,8 @@ class ModelConfig:
             raise ValueError("latent_spectral_radius must be finite and positive")
         if not 0.0 < self.latent_connectivity <= 1.0:
             raise ValueError("latent_connectivity must be in (0, 1]")
+        if not 0.0 < self.dale_inhibitory_fraction < 1.0:
+            raise ValueError("dale_inhibitory_fraction must be in (0, 1)")
         if self.write_mode not in ("fixed_random", "learned"):
             raise ValueError(
                 "write_mode must be 'fixed_random' or 'learned', "
@@ -345,6 +356,80 @@ def _normalize_rows(value: jax.Array) -> jax.Array:
     return value / jnp.maximum(jnp.linalg.norm(value, axis=-1, keepdims=True), 1e-6)
 
 
+def dale_column_signs(width: int, inhibitory_fraction: float) -> jax.Array:
+    """Assign a fixed excitatory or inhibitory sign to each presynaptic neuron.
+
+    Dale's law constrains a neuron's outgoing synapses to share one sign, so
+    the returned signs index the presynaptic (column) axis of the recurrent
+    matrix and broadcast across postsynaptic rows.
+
+    Parameters
+    ----------
+    width : int
+        Number of latent neurons.
+    inhibitory_fraction : float
+        Requested inhibitory share, strictly between zero and one. The realized
+        count is at least one and at most ``width - 1``, so neither population
+        is ever empty.
+
+    Returns
+    -------
+    jax.Array
+        Float32 array shaped ``(1, width)`` holding ``+1`` and ``-1``. The
+        trailing neurons are the inhibitory population.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> signs = dale_column_signs(4, 0.25)
+        >>> signs.shape
+        (1, 4)
+        >>> [float(value) for value in signs[0]]
+        [1.0, 1.0, 1.0, -1.0]
+    """
+    width = _validated_integral_scalar(width, "width", minimum=2)
+    inhibitory_fraction = _validated_real_scalar(
+        inhibitory_fraction, "inhibitory_fraction"
+    )
+    if not 0.0 < inhibitory_fraction < 1.0:
+        raise ValueError("inhibitory_fraction must be in (0, 1)")
+    inhibitory_count = min(max(int(round(width * inhibitory_fraction)), 1), width - 1)
+    signs = np.ones((1, width), dtype=np.float32)
+    signs[0, width - inhibitory_count :] = -1.0
+    return jnp.asarray(signs)
+
+
+def dale_projected(recurrent: jax.Array, signs: jax.Array) -> jax.Array:
+    """Restore the Dale sign pattern of a recurrent matrix.
+
+    An unconstrained optimizer step may flip an individual synapse's sign. The
+    recurrent weight stays a free-sign parameter so the ETP compiler can
+    identify it through :func:`braintrace.matmul`; the constraint is instead
+    reapplied outside the traced graph after each update. The operation is
+    idempotent.
+
+    Parameters
+    ----------
+    recurrent : jax.Array
+        Recurrent matrix shaped ``(width, width)``.
+    signs : jax.Array
+        Column signs shaped ``(1, width)`` from :func:`dale_column_signs`.
+
+    Returns
+    -------
+    jax.Array
+        The matrix with magnitudes preserved and column signs restored.
+    """
+    if recurrent.ndim != 2 or recurrent.shape[0] != recurrent.shape[1]:
+        raise ValueError(f"recurrent must be square, got shape {recurrent.shape}")
+    if signs.shape != (1, recurrent.shape[1]):
+        raise ValueError(
+            f"signs shape must be (1, {recurrent.shape[1]}), got {signs.shape}"
+        )
+    return signs * jnp.abs(recurrent)
+
+
 def _state_path(path: tuple[object, ...]) -> str:
     return ".".join(str(part) for part in path)
 
@@ -409,10 +494,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         recurrent = recurrent * recurrent_random.bernoulli(
             config.latent_connectivity, size=(self.width, self.width)
         )
-        recurrent = recurrent + 0.01 * jnp.eye(self.width, dtype=jnp.float32)
+        self.dale_signs = dale_column_signs(
+            self.width, config.dale_inhibitory_fraction
+        )
+        self_leak = 0.01 * jnp.eye(self.width, dtype=jnp.float32) * self.dale_signs
+        recurrent = dale_projected(recurrent, self.dale_signs) + self_leak
         recurrent_radius = jnp.max(jnp.abs(jnp.linalg.eigvals(recurrent)))
         recurrent = recurrent * (config.latent_spectral_radius / recurrent_radius)
         self.Wf = brainstate.ParamState(recurrent.astype(jnp.float32))
+        self.Wc = brainstate.ParamState(
+            jnp.zeros((config.task.clock_width, self.width), dtype=jnp.float32)
+        )
         self.Wo = brainstate.ParamState(value_codes.T)
         self.init_state()
 
@@ -590,6 +682,16 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.batch_size * self.state_rows, self.width
         )
 
+    def project_dale(self) -> None:
+        """Reapply Dale's law to the recurrent weight after an update.
+
+        Call this after every optimizer step. The recurrent weight is a
+        free-sign :class:`brainstate.ParamState` so the ETP compiler can
+        identify it through :func:`braintrace.matmul`; the sign constraint is
+        therefore enforced here, outside the traced learning graph.
+        """
+        self.Wf.value = dale_projected(self.Wf.value, self.dale_signs)
+
     def etrace_config(self) -> braintrace.ETraceConfig:
         """Return the explicit coupled trace configuration for this model.
 
@@ -747,9 +849,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         query_projection_input = (
             presentation_scale * query_mask[:, :, None] * key_rate[:, None, :]
         ).reshape(self.batch_size * self.state_rows, task.code_width)
+        clock_projection_input = (
+            latent[:, :, None]
+            * workspace_mask[:, :, None]
+            * packed[:, None, task.clock_slice]
+        ).reshape(self.batch_size * self.state_rows, task.clock_width)
         key_rows = braintrace.matmul(key_projection_input, self.Wk.value)
         value_rows = braintrace.matmul(value_projection_input, self.Wv.value)
         query_drive = braintrace.matmul(query_projection_input, self.Wk.value)
+        clock_drive = braintrace.matmul(clock_projection_input, self.Wc.value)
 
         previous = self.grouped_state.value.reshape(
             self.batch_size, self.state_rows, self.width
@@ -776,7 +884,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         ).reshape(self.batch_size * self.state_rows, self.width)
         recurrent_rows = braintrace.matmul(workspace_activity_rows, self.Wf.value)
         latent_decay = math.exp(-self.config.time_step_ms / self.config.latent_tau_ms)
-        parameter_drive = recurrent_rows + query_drive
+        parameter_drive = recurrent_rows + query_drive + clock_drive
         active_voltage = active_rows * self.latent_voltage.value
         voltage_candidate = (
             latent_decay * active_voltage + dynamics_read_rows + parameter_drive

@@ -523,7 +523,7 @@ def test_real_tiny_cpu_training_and_frozen_evaluation(tmp_path):
         )
         > 0.0
     )
-    assert set(training["trainable_parameters"]) == {"Wf", "Wo"}
+    assert set(training["trainable_parameters"]) == {"Wf", "Wc", "Wo"}
 
     held_out = example._build_held_out_corpus(config)
     episodes = tuple(pair.supported for pair in held_out[2])

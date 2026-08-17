@@ -22,6 +22,8 @@ try:
         _surrogate_spike,
         factored_memory_read,
         occupied_slot_derangement,
+        dale_column_signs,
+        dale_projected,
         parameter_snapshot,
         phase_masks,
         run_sequence,
@@ -39,6 +41,8 @@ except ModuleNotFoundError:
         _surrogate_spike,
         factored_memory_read,
         occupied_slot_derangement,
+        dale_column_signs,
+        dale_projected,
         parameter_snapshot,
         phase_masks,
         run_sequence,
@@ -443,7 +447,7 @@ def test_fixed_random_trainable_mapping_excludes_write_parameters() -> None:
         state.value = state.value + 0.01
 
     after = parameter_snapshot(model)
-    assert {"Wf", "Wo"} == {".".join(map(str, path)) for path in trainable}
+    assert {"Wf", "Wc", "Wo"} == {".".join(map(str, path)) for path in trainable}
     np.testing.assert_array_equal(after["Wk"], before["Wk"])
     np.testing.assert_array_equal(after["Wv"], before["Wv"])
     assert not np.array_equal(after["Wf"], before["Wf"])
@@ -454,7 +458,7 @@ def test_learned_write_mode_includes_write_parameters() -> None:
     config = ModelConfig(task=_task(), latent_width=8, write_mode="learned")
     model = LatentWorkspaceModel(config)
 
-    assert {"Wk", "Wv", "Wf", "Wo"} == {
+    assert {"Wk", "Wv", "Wf", "Wc", "Wo"} == {
         ".".join(map(str, path)) for path in model.trainable_parameters()
     }
 
@@ -705,7 +709,7 @@ def test_tiny_coupled_compile_is_warning_free_and_relates_write_weights() -> Non
         in (braintrace.DiagnosticLevel.WARNING, braintrace.DiagnosticLevel.ERROR)
     ]
     relations = {".".join(map(str, path)) for path, _ in learner.report.etrace_weights}
-    assert {"Wk", "Wv", "Wf"}.issubset(relations)
+    assert {"Wk", "Wv", "Wf", "Wc"}.issubset(relations)
     memory_groups = [
         group
         for group in learner.graph.hidden_groups
@@ -752,3 +756,98 @@ def test_default_native_batch_four_coupled_budget_compiles() -> None:
     jacobian_elements = (int(np.prod(group.varshape)) * len(group.hidden_paths)) ** 2
     assert jacobian_elements == 42_614_784
     assert model.compile_options()["snap_max_jacobian_elements"] == 1 << 26
+
+
+def test_dale_signs_split_the_population_and_never_leave_one_empty() -> None:
+    signs = np.asarray(dale_column_signs(8, 0.25))
+
+    assert signs.shape == (1, 8)
+    assert set(np.unique(signs)) == {-1.0, 1.0}
+    assert int((signs < 0).sum()) == 2
+
+
+@pytest.mark.parametrize("fraction", [0.001, 0.999])
+def test_extreme_dale_fractions_still_populate_both_signs(fraction: float) -> None:
+    signs = np.asarray(dale_column_signs(4, fraction))
+
+    assert int((signs < 0).sum()) >= 1
+    assert int((signs > 0).sum()) >= 1
+
+
+@pytest.mark.parametrize("fraction", [0.0, 1.0, -0.5, 1.5])
+def test_invalid_dale_fraction_is_rejected(fraction: float) -> None:
+    with pytest.raises(ValueError):
+        dale_column_signs(8, fraction)
+    with pytest.raises(ValueError):
+        ModelConfig(task=_task(), dale_inhibitory_fraction=fraction)
+
+
+def test_dale_projection_restores_signs_and_is_idempotent() -> None:
+    signs = dale_column_signs(6, 0.5)
+    perturbed = jnp.asarray(
+        np.linspace(-2.0, 2.0, 36, dtype=np.float32).reshape(6, 6)
+    )
+
+    once = dale_projected(perturbed, signs)
+    twice = dale_projected(once, signs)
+
+    np.testing.assert_allclose(np.abs(np.asarray(once)), np.abs(np.asarray(perturbed)))
+    np.testing.assert_array_equal(np.sign(np.asarray(once)), np.broadcast_to(
+        np.asarray(signs), (6, 6)
+    ))
+    np.testing.assert_array_equal(np.asarray(once), np.asarray(twice))
+
+
+def test_recurrent_weight_is_dale_structured_at_the_requested_radius() -> None:
+    config = ModelConfig(task=_task(), latent_width=16, latent_spectral_radius=0.9)
+    model = LatentWorkspaceModel(config)
+    recurrent = np.asarray(model.Wf.value)
+
+    column_signs = np.sign(recurrent[:, (recurrent != 0.0).any(axis=0)])
+    assert np.all(np.abs(column_signs.sum(axis=0)) == (column_signs != 0).sum(axis=0))
+    assert (recurrent < 0.0).any() and (recurrent > 0.0).any()
+    radius = float(np.max(np.abs(np.linalg.eigvals(recurrent))))
+    assert radius == pytest.approx(0.9, rel=1e-4)
+
+
+def test_project_dale_recovers_the_pattern_after_an_optimizer_style_step() -> None:
+    model = _model(width=8)
+    model.Wf.value = model.Wf.value + 5.0
+
+    assert (np.asarray(model.Wf.value) > 0.0).all()
+    model.project_dale()
+
+    signs = np.asarray(model.dale_signs)
+    actual = np.sign(np.asarray(model.Wf.value))
+    np.testing.assert_array_equal(actual, np.broadcast_to(signs, actual.shape))
+
+
+def test_clock_drive_makes_successive_latent_ticks_differ() -> None:
+    task = _task(bindings=2, slots=3, latent=4)
+    model = _model(bindings=2, slots=3, latent=4, width=8)
+    model.Wc.value = jnp.asarray(
+        np.linspace(-0.5, 0.5, task.clock_width * 8, dtype=np.float32).reshape(
+            task.clock_width, 8
+        )
+    )
+    episode = generate_episode(task, brainstate.random.RandomState(91))
+
+    result = run_sequence(model, jnp.asarray(episode.model_inputs))
+    latent_logits = np.asarray(result.logits[task.latent_slice])
+
+    assert not np.allclose(latent_logits[1], latent_logits[2])
+
+
+def test_zero_clock_weight_leaves_the_clock_bank_inert() -> None:
+    task = _task(bindings=2, slots=3, latent=3)
+    episode = generate_episode(task, brainstate.random.RandomState(92))
+    inputs = np.array(episode.model_inputs)
+    silenced = np.array(inputs)
+    silenced[:, task.clock_slice] = 0.0
+
+    model = _model(bindings=2, slots=3, latent=3, width=8)
+    with_clock = np.asarray(run_sequence(model, jnp.asarray(inputs)).logits)
+    model.reset_state()
+    without_clock = np.asarray(run_sequence(model, jnp.asarray(silenced)).logits)
+
+    np.testing.assert_allclose(with_clock, without_clock, rtol=1e-6, atol=1e-6)

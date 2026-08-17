@@ -66,6 +66,10 @@ class TaskConfig:
         realized fraction is measured from the fixed sampled codebook.
     symbol_ticks : int
         Number of ticks used to present a demonstration or query symbol.
+    clock_width : int
+        Width of the latent clock bank. Successive latent ticks carry distinct
+        external drive so the latent recurrence is not an autonomous map. Must
+        be positive and even, because the bank holds sine/cosine pairs.
     codebook_seed : int
         Nonnegative seed for the local BrainState codebook stream.
     """
@@ -77,6 +81,7 @@ class TaskConfig:
     code_width: int = 24
     spike_rate: float = 0.25
     symbol_ticks: int = 4
+    clock_width: int = 4
     codebook_seed: int = 313320
 
     def __post_init__(self) -> None:
@@ -87,6 +92,7 @@ class TaskConfig:
             "latent_steps",
             "code_width",
             "symbol_ticks",
+            "clock_width",
             "codebook_seed",
         ):
             object.__setattr__(
@@ -124,6 +130,10 @@ class TaskConfig:
             )
         if self.symbol_ticks < 1:
             raise ValueError("symbol_ticks must be positive")
+        if self.clock_width < 1:
+            raise ValueError("clock_width must be positive")
+        if self.clock_width % 2:
+            raise ValueError("clock_width must be even to hold sine/cosine pairs")
         if self.codebook_seed < 0:
             raise ValueError("codebook_seed must be nonnegative")
         if not math.isfinite(self.spike_rate) or not 0.0 < self.spike_rate < 1.0:
@@ -159,9 +169,20 @@ class TaskConfig:
         return slice(start, start + 4)
 
     @property
+    def clock_slice(self) -> slice:
+        """Return the latent-clock slice in a model input row.
+
+        The bank carries a Fourier phase code of the latent tick index. Its
+        width is independent of ``latent_steps``, so a model trained at one
+        latent depth is evaluated at another without an input-shape change.
+        """
+        start = self.phase_slice.stop
+        return slice(start, start + self.clock_width)
+
+    @property
     def input_width(self) -> int:
         """Return the complete per-tick model input width."""
-        return 2 * self.code_width + self.slot_capacity + 4
+        return 2 * self.code_width + self.slot_capacity + 4 + self.clock_width
 
     @property
     def demonstration_steps(self) -> int:
@@ -316,6 +337,55 @@ def build_codebook(config: TaskConfig) -> FloatArray:
         f"{_MAX_CODEBOOK_ATTEMPTS} attempts without producing unique symbols "
         "and a full-rank augmented design"
     )
+
+
+def latent_clock_code(latent_steps: int, clock_width: int) -> FloatArray:
+    """Build the per-latent-tick Fourier phase code.
+
+    Successive latent ticks must differ in their external drive; otherwise the
+    latent recurrence applies one identical map at every depth and converges to
+    a fixed point no matter how the recurrent weights are signed. This code
+    supplies that difference without a counter hidden state, so the hidden
+    Jacobian does not grow.
+
+    Parameters
+    ----------
+    latent_steps : int
+        Number of latent ticks in the episode. Zero yields an empty code.
+    clock_width : int
+        Positive even bank width. The leading half holds sines and the
+        trailing half cosines, at periods ``2, 4, 8, ...`` ticks.
+
+    Returns
+    -------
+    numpy.ndarray
+        Float32 array shaped ``(latent_steps, clock_width)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> code = latent_clock_code(4, 2)
+        >>> code.shape
+        (4, 2)
+        >>> bool(np.allclose(code[0], code[2]))
+        True
+        >>> bool(np.allclose(code[0], code[1]))
+        False
+    """
+    latent_steps = _validated_integral_scalar(latent_steps, "latent_steps")
+    clock_width = _validated_integral_scalar(clock_width, "clock_width")
+    if latent_steps < 0:
+        raise ValueError("latent_steps must be nonnegative")
+    if clock_width < 1:
+        raise ValueError("clock_width must be positive")
+    if clock_width % 2:
+        raise ValueError("clock_width must be even to hold sine/cosine pairs")
+    indices = np.arange(latent_steps, dtype=np.float32)[:, None]
+    periods = np.exp2(np.arange(1, clock_width // 2 + 1, dtype=np.float32))
+    angles = 2.0 * np.pi * indices / periods[None, :]
+    return np.concatenate((np.sin(angles), np.cos(angles)), axis=1).astype(np.float32)
 
 
 def draw_rule(symbol_count: int, rng: brainstate.random.RandomState) -> IntArray:
@@ -480,6 +550,9 @@ def build_episode(
     if config.latent_steps:
         inputs[config.latent_slice.start, config.phase_slice.start + 3] = 0.0
         inputs[config.latent_slice.start, config.phase_slice.start + 2] = 1.0
+        inputs[config.latent_slice, config.clock_slice] = latent_clock_code(
+            config.latent_steps, config.clock_width
+        )
     inputs.setflags(write=False)
     rule_array.setflags(write=False)
     return Episode(
