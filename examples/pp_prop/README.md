@@ -65,15 +65,13 @@ requested neuron count and update budget.
 
 Example 20 defaults to Example 18's four-task temporal-credit configuration and
 starts pruning at the first pre-rebuild checkpoint where every task meets the
-requested target. After a coarse-to-fine starting sweep, each round ablates
-every retained neuron and every active recurrent edge individually against the
-current mask, then removes the largest verified-safe prefix of whatever screened
-safe. The round whose screen finds nothing safe both stops the search and
-certifies that removing any single retained coordinate lowers a task below
-target. It then physically rebuilds the surviving feed-forward, recurrent, and
-readout arrays into a compact inference model, verifies its logits against the
-masked checkpoint, and saves a reloadable NumPy bundle. A larger sparse starting
-graph can be requested directly:
+requested target. After a coarse-to-fine starting sweep, it individually tests
+retained neurons and retained-to-retained recurrent edges, accepts safe
+removals, reranks, and alternates both phases until neither can remove another
+coordinate. It then physically rebuilds the surviving feed-forward, recurrent,
+and readout arrays into a compact inference model, verifies its logits against
+the masked checkpoint, and saves a reloadable NumPy bundle. A larger sparse
+starting graph can be requested directly:
 
     python examples/pp_prop/20-post-training-neuron-pruning.py --neurons 2048 --initial-edges 16384 --n-rounds 12 --compact-model-output compacted_network.npz
 
@@ -82,12 +80,11 @@ The default device is GPU. `--device gpu` refuses silent CPU fallback,
 JAX selects. For repeated container runs, mount a persistent directory and set
 `JAX_COMPILATION_CACHE_DIR` to that mount; setting
 `JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0` also retains short compilations.
-Probe trials and candidate masks share one model batch axis, so a screen costs
-one compiled call per `--eval-batch` candidates rather than one rollout each;
-raise `--eval-batch` for more parallelism on a larger device, lower it if
-memory is tight. The report gives the causal evaluation count alongside the
-warmed full-probe timing, and reports persistent parameter-plus-CSR storage for
-the masked and compact models.
+The fixed-point phase can be much slower than the initial sweep because every
+retained neuron and edge receives a causal ablation test in the terminal
+passes. The report separates warmed full-probe timing from compilation and
+reports persistent parameter-plus-CSR storage for the masked and compact
+models.
 
 ### Configurable benchmark
 
