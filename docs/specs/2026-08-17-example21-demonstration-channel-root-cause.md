@@ -13,13 +13,10 @@ pairing costs the model nothing.
 
 ## Root cause
 
-**The demonstrations reach the readout, but only as pooled statistics. The
-input→output *pairing* is absent from the state the readout heads see.**
-
-The model has learned "what outputs for this task tend to look like" — their
-sizes and colors, pooled over the demonstrations — and not "what operation maps
-an input to its output". That is a correct solution to the objective as posed
-and it is invariant to the control, which is why the control is free.
+**Demonstration *presence* is strongly represented in the state the readout
+heads see. The input→output *pairing* is at the null.** Whatever the model has
+learned to read from the demonstration block is invariant to which output
+accompanies which input, which is why the control is free.
 
 ### Why the control is invariant, exactly
 
@@ -67,9 +64,19 @@ to be held:
    over 2,048 neurons, 8 per neuron, gain 0.8 — too sparse and too weak to hold
    the attractor that carrying a relation 300 steps would need.
 
-A leaky integrator over a long block computes something close to a decaying
-*sum* of its inputs. A sum is order-free. That is precisely the class of
-readout the control cannot touch, and precisely what the measurements show.
+**Hypothesis, not yet measured.** A leaky integrator over a long block computes
+something close to a decaying *sum* of its inputs, and a sum is order-free — so
+the model may be reading pooled demonstration statistics (output sizes and
+colors, pooled across pairs). That would be a correct solution to the objective
+as posed and invariant to the control by construction. But nothing measured here
+separates that from the weaker reading: that the 0.93 is generic drive from ~90
+non-blank rows and the demonstration *content* is not read at all.
+
+The distinction decides which fix is worth building — under pooled statistics,
+directions 1–3 below are sensible; under generic drive, only direction 4 is.
+Settling it is one regression on machinery that already exists: predict a
+demo-output statistic from the intact final spikes with folds grouped by task,
+and compare to the null. That belongs in the next spec.
 
 The compiler agrees about what the output parameters can see:
 
