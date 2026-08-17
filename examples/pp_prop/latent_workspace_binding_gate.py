@@ -1915,7 +1915,9 @@ def _accuracy_evidence_complete(metric: Mapping[str, Any], count: int) -> bool:
             rel_tol=0.0,
             abs_tol=1e-12,
         )
-        and 0.0 <= lower <= accuracy <= upper <= 1.0
+        and 0.0 <= lower <= accuracy
+        and accuracy <= math.nextafter(upper, math.inf)
+        and upper <= 1.0
         and math.isclose(lower, expected_lower, rel_tol=0.0, abs_tol=1e-12)
         and math.isclose(upper, expected_upper, rel_tol=0.0, abs_tol=1e-12)
         and re.fullmatch(r"[0-9a-f]{64}", str(metric["prediction_sha256"]))

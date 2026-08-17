@@ -801,6 +801,25 @@ def test_required_parameter_movement_is_reported_per_direct_path() -> None:
         )
 
 
+@pytest.mark.parametrize("correct", [0, 512])
+def test_accuracy_evidence_accepts_exact_binomial_boundaries(correct: int) -> None:
+    metric = _accuracy(correct / 512)
+
+    assert gate._accuracy_evidence_complete(metric, 512) is True
+
+
+def test_accuracy_evidence_rejects_fabricated_boundary_intervals() -> None:
+    perfect = _accuracy(1.0)
+    perfect["wilson_95_upper"] = float(
+        np.nextafter(np.float64(perfect["wilson_95_upper"]), -np.inf)
+    )
+    assert gate._accuracy_evidence_complete(perfect, 512) is False
+
+    zero = _accuracy(0.0)
+    zero["wilson_95_lower"] = 0.1
+    assert gate._accuracy_evidence_complete(zero, 512) is False
+
+
 @pytest.mark.parametrize(
     ("mutation", "criterion"),
     [
