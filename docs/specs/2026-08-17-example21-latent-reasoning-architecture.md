@@ -409,6 +409,64 @@ evaluation must pass the same continuous `H` carrier.
 about making the model compatible with that approximation, not silently
 switching the production learner to BPTT.
 
+#### Chosen compiler-safe capability implementation
+
+The first Gate A candidate is explicitly opt-in at `context_memory_width=32`
+and `memory_decay=1.0`; width zero remains the default. `lambda=1` is the
+non-fading endpoint admitted by the memory equation and has self-Jacobian `I`.
+It avoids discarding early rows across the static maximum of 300 valid
+demonstration rows. Smaller decay values remain supported ablations and must not
+be confused with pp-prop's separate trace decay of 0.9.
+
+Key and value inputs use matched row-event features: the relevant side-valid
+bit, normalized row position, row-position one-hot, side-specific normalized
+height/width, side-specific height/width one-hots, mask, and position-specific
+colors. Event-valid and phase channels remain gates. Demonstration identity is
+excluded because it is absent from a query and would prevent lookup. At the
+standard ARC capacity each side has 424 raw features. Separate deterministic
+fixed bases, drawn from `brainstate.random` without consuming the legacy model's
+parameter stream, map those features to the 32-dimensional memory coordinate.
+The fixed choice is reported honestly; it is not called a learned key/value
+projection.
+
+The literal outer write is retained and receives an initially-one trainable
+per-cell modulation:
+
+```text
+W_t = outer(k_t, v_t)
+S_t = lambda * S_t-1 + w_t * (M_write elementwise W_t)
+```
+
+`M_write` is routed through `braintrace.element_wise` before the write. This
+keeps the associative outer product explicit while giving pp-prop a
+position-preserving trainable operation whose output coordinate matches `S`.
+The frozen-ones modulation is a required ablation of the learned version.
+
+This shape choice follows a measured compiler constraint rather than taste.
+Direct trainable key/value projections produce `(batch, memory_width)` while
+their first hidden target is `(batch, memory_width, memory_width)`; BrainTrace
+correctly excludes those relations as shape-changing under IO-factorized
+pp-prop. In contrast, the elementwise write modulation is classified
+`all_direct` to `S`, and `S` retains the exact `lambda * I` self-transition the
+learning rule can represent.
+
+Use an explicit `reasoning_query` hidden state for `q_r`. A trainable shared
+workspace-to-query projection maps continuous `H_r` to that state; the raw
+`S_K`/`q_r` contraction is then consumed by one trainable shared
+memory-read-to-workspace projection. The raw read, not a stopped copy, feeds the
+workspace projection and therefore its structural gradient. A stopped copy may
+populate the diagnostic `memory_read` state so differently shaped diagnostic
+states do not merge into one compiler hidden group. The compiler prototype
+classified the write modulation, workspace-query projection, and memory-read
+projection as `all_direct` with no exclusions or warnings. A finite-window
+chunk-size-one probe gave each path a nonzero pp-prop gradient. These compiler
+and finite-window properties are release tests, not one-off observations.
+
+For width 32, dense `S` storage is 4,096 bytes at Example 21's training batch
+one, 262,144 bytes for the batch-64 binding gate, and 1,716,224 bytes for a
+419-query evaluation batch. This is state storage only; compiler trace and
+temporary allocation remain separately measured.
+
 ### `examples/pp_prop/21-latent-reasoning-in-context.py`
 
 - Wire memory/workspace configuration through `_model_config`.
