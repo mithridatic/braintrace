@@ -904,33 +904,33 @@ def _apply_removals(
     return trial_alive, _induced_edges(trial_alive, trial_edges, rows, cols)
 
 
-def _accept_prefix(safe_test, alive, edge_alive, ordered, rows, cols):
+def _accept_prefix(evaluate_prefixes, ordered, target, batch):
     """Accept the largest verified-safe prefix of an ordered removal list.
 
-    The whole list is tried first, because in early rounds almost every
-    individually-safe coordinate is jointly safe and that costs one evaluation
-    for hundreds of removals. Otherwise the prefix length is binary-searched.
-    Every accepted mask is one that was measured, never one that was inferred.
+    The prefix length is found by sweeping candidate lengths in parallel rather
+    than by bisecting one at a time: a batched evaluator costs about the same
+    for one mask as for a full batch, so testing ``batch`` lengths at once
+    narrows the interval by a factor of ``batch`` per call instead of two.
+    Every accepted length is one that was measured, never one inferred from a
+    coordinate's individual screen.
 
     Parameters
     ----------
-    safe_test : callable
-        ``safe_test(alive, edge_alive) -> (bool, numpy.ndarray)`` deciding
-        whether a candidate mask holds every task at target.
-    alive, edge_alive : numpy.ndarray
-        The current accepted masks.
+    evaluate_prefixes : callable
+        ``evaluate_prefixes(lengths) -> numpy.ndarray`` of per-task accuracy,
+        one row per requested prefix length.
     ordered : list of tuple
         ``(kind, index)`` coordinates ascending by contribution score, where
         kind zero is a neuron and kind one is a recurrent edge.
-    rows, cols : numpy.ndarray
-        Recurrent edge endpoints, used to disable incident edges.
+    target : float
+        Minimum per-task accuracy a prefix must hold to be accepted.
+    batch : int
+        Prefix lengths evaluated per call.
 
     Returns
     -------
-    alive, edge_alive : numpy.ndarray
-        Masks after the accepted removals; unchanged when nothing was accepted.
     accepted : int
-        Number of coordinates removed.
+        Length of the verified-safe prefix, zero when even one removal fails.
     evaluations : int
         Causal probe evaluations spent deciding the prefix.
     head_accuracy : numpy.ndarray or None
@@ -941,31 +941,27 @@ def _accept_prefix(safe_test, alive, edge_alive, ordered, rows, cols):
     """
     total = len(ordered)
     if total == 0:
-        return alive, edge_alive, 0, 0, None
-    trial_alive, trial_edges = _apply_removals(alive, edge_alive, ordered, rows, cols)
-    safe, accuracy = safe_test(trial_alive, trial_edges)
-    if safe:
-        return trial_alive, trial_edges, total, 1, None
-    evaluations = 1
-    head_accuracy = accuracy if total == 1 else None
-    best = None
-    low, high = 1, total - 1
+        return 0, 0, None
+    low, high = 1, total
+    best = 0
+    evaluations = 0
+    head_accuracy = None
     while low <= high:
-        middle = (low + high + 1) // 2
-        trial_alive, trial_edges = _apply_removals(
-            alive, edge_alive, ordered[:middle], rows, cols
-        )
-        safe, accuracy = safe_test(trial_alive, trial_edges)
-        evaluations += 1
-        if safe:
-            best, low = (trial_alive, trial_edges, middle), middle + 1
-        else:
-            if middle == 1:
-                head_accuracy = accuracy
-            high = middle - 1
-    if best is None:
-        return alive, edge_alive, 0, evaluations, head_accuracy
-    return best[0], best[1], best[2], evaluations, None
+        span = min(int(batch), high - low + 1)
+        lengths = np.unique(np.linspace(low, high, span).round().astype(int))
+        accuracies = evaluate_prefixes(lengths)
+        evaluations += int(lengths.size)
+        safe = np.all(accuracies >= target, axis=1)
+        if lengths[0] == 1 and not safe[0]:
+            head_accuracy = accuracies[0]
+        if np.any(safe):
+            best = max(best, int(lengths[safe][-1]))
+        unsafe = lengths[~safe]
+        unsafe = unsafe[unsafe > best]
+        if unsafe.size == 0:
+            break
+        low, high = best + 1, int(unsafe[0]) - 1
+    return best, evaluations, head_accuracy
 
 
 def _minimize_topology(
@@ -1045,9 +1041,23 @@ def _minimize_topology(
     alive = initial_alive.copy()
     edge_alive = _induced_edges(alive, np.ones(n_edge, dtype=np.float32), rows, cols)
 
-    def safe_test(candidate_alive, candidate_edges):
-        accuracies, _ = runner.accuracy(candidate_alive[None, :], candidate_edges)
-        return bool(np.all(accuracies[0] >= target)), accuracies[0]
+    def prefix_evaluator(current_alive, current_edges, coordinates):
+        """Measure several prefix lengths of one removal list in a single call."""
+
+        def evaluate(lengths):
+            stack = [
+                _apply_removals(
+                    current_alive, current_edges, coordinates[:length], rows, cols
+                )
+                for length in lengths
+            ]
+            accuracies, _ = runner.accuracy(
+                np.stack([item[0] for item in stack]),
+                np.stack([item[1] for item in stack]),
+            )
+            return accuracies
+
+        return evaluate
 
     neuron_round = np.full(n_rec, -1, dtype=int)
     edge_round = np.full(n_edge, -1, dtype=int)
@@ -1131,13 +1141,18 @@ def _minimize_topology(
         taken: list = []
         remaining = ordered
         while remaining:
-            alive_next, edges_next, accepted, spent, head = _accept_prefix(
-                safe_test, alive, edge_alive, remaining, rows, cols
+            accepted, spent, head = _accept_prefix(
+                prefix_evaluator(alive, edge_alive, remaining),
+                remaining,
+                target,
+                runner.batch,
             )
             commit_evaluations += spent
             if accepted:
                 taken.extend(remaining[:accepted])
-                alive, edge_alive = alive_next, edges_next
+                alive, edge_alive = _apply_removals(
+                    alive, edge_alive, remaining[:accepted], rows, cols
+                )
                 remaining = remaining[accepted:]
                 continue
             # The screen called this coordinate safe and the commit measurement

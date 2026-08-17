@@ -726,54 +726,37 @@ def test_end_to_end_result_is_one_minimal_against_the_real_model(monkeypatch):
         assert np.all(np.min(certificate, axis=1) < target)
 
 
-def test_accept_prefix_only_accepts_measured_batches():
-    """A non-monotone oracle must never yield an unverified accepted mask."""
+def test_accept_prefix_sweeps_lengths_and_accepts_only_measured_ones():
+    """A non-monotone oracle must never yield an unverified accepted length."""
     example = _load()
-    tested = []
+    asked = []
 
-    def safe_test(alive, edge_alive):
-        del edge_alive
-        removed = int(np.sum(alive == 0.0))
-        tested.append(removed)
+    def evaluate(lengths):
+        asked.append(list(lengths))
         # Safe for one or two removals, unsafe for three or more.
-        return removed <= 2, np.array([1.0])
+        return np.array([[1.0 if length <= 2 else 0.0] for length in lengths])
 
-    ordered = [(0, 0), (0, 1), (0, 2), (0, 3)]
-    alive, edges, accepted, evaluations, head = example._accept_prefix(
-        safe_test,
-        np.ones(5, dtype=np.float32),
-        np.ones(0, dtype=np.float32),
-        ordered,
-        np.array([], dtype=int),
-        np.array([], dtype=int),
+    accepted, evaluations, head = example._accept_prefix(
+        evaluate, [(0, index) for index in range(8)], 1.0, 4
     )
     assert accepted == 2
     assert head is None
-    assert int(np.sum(alive == 0.0)) == 2
-    assert 2 in tested and evaluations == len(tested)
-    assert edges.size == 0
+    assert evaluations == sum(len(batch) for batch in asked)
+    assert all(max(batch) <= 8 for batch in asked)
 
 
-def test_accept_prefix_reports_nothing_when_even_one_removal_fails():
+def test_accept_prefix_reports_the_head_measurement_when_nothing_is_safe():
     example = _load()
 
-    def safe_test(alive, edge_alive):
-        del alive, edge_alive
-        return False, np.array([0.0])
+    def evaluate(lengths):
+        return np.zeros((len(lengths), 1))
 
-    alive, edges, accepted, evaluations, head = example._accept_prefix(
-        safe_test,
-        np.ones(3, dtype=np.float32),
-        np.ones(0, dtype=np.float32),
-        [(0, 0), (0, 1)],
-        np.array([], dtype=int),
-        np.array([], dtype=int),
+    accepted, evaluations, head = example._accept_prefix(
+        evaluate, [(0, 0), (0, 1)], 1.0, 4
     )
     assert accepted == 0
-    assert head is not None and float(head[0]) == 0.0
-    assert np.array_equal(alive, np.ones(3, dtype=np.float32))
     assert evaluations >= 1
-    assert edges.size == 0
+    assert head is not None and float(head[0]) == 0.0
 
 
 def test_minimization_rejects_invalid_initial_mask(monkeypatch):
