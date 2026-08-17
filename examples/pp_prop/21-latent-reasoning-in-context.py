@@ -501,6 +501,38 @@ def _empty_training_tensors() -> _TrainingTensors:
     return _TrainingTensors(empty, empty, empty, empty, empty, empty, empty, ())
 
 
+def _compact_training_stream(
+    encoded: EncodedQueryEpisode,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Move every semantic training advance into one static-shape prefix.
+
+    Returns the compact event tensor, its prefix-only advance schedule, and the
+    compact index of the query-terminal checkpoint.  The gathered rows retain
+    the order and physical semantics of :func:`_packed_advances`; only frozen
+    layout positions move behind the final latent tick, where no later loss can
+    consume their eligibility trace.
+    """
+    padded = _packed_events(encoded, config)
+    padded_advances = _packed_advances(encoded, config, row_config)
+    active_indices = np.flatnonzero(padded_advances)
+    query_terminal = encoded.query_stop - 1
+    compact_query = np.flatnonzero(active_indices == query_terminal)
+    if compact_query.size != 1:
+        raise ValueError("query terminal must be one semantic training advance")
+
+    compact = np.zeros_like(padded)
+    compact[: active_indices.size] = padded[active_indices]
+    advances = np.zeros_like(padded_advances)
+    advances[: active_indices.size] = True
+    query_checkpoint = int(compact_query[0])
+    latent_count = int(active_indices.size) - query_checkpoint - 1
+    if latent_count != config.latent_steps:
+        raise ValueError("compact training prefix has the wrong latent length")
+    return compact, advances, query_checkpoint
+
+
 def _training_row(
     origin: _OriginTask,
     config: ExperimentConfig,
@@ -522,18 +554,21 @@ def _training_row(
         raise ValueError(
             f"training task {task.task_id or encoded.task_fingerprint} lacks a target"
         )
-    sequence = _packed_events(encoded, config)
+    sequence, advances, query_checkpoint = _compact_training_stream(
+        encoded, config, row_config
+    )
     mask = np.zeros((sequence.shape[0],), dtype=np.float32)
-    terminal = encoded.query_stop - 1 + effort
-    if terminal >= sequence.shape[0]:
+    terminal = query_checkpoint + effort
+    if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
         raise ValueError("terminal effort exceeds packed sequence capacity")
-    mask[terminal] = 1.0
+    depth_count = effort + 1
+    mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
     target = encoded.target
     padded = np.zeros((30, 30), dtype=np.int32)
     padded[: target.height, : target.width] = target.as_array()
     return {
         "events": sequence[:, None, :],
-        "advances": _packed_advances(encoded, config, row_config)[:, None],
+        "advances": advances[:, None],
         "heights": target.height,
         "widths": target.width,
         "colors": padded[None],
@@ -872,6 +907,8 @@ def _train_model(
             "performed": False,
             "reason": "structural_only",
             "one_shared_model": True,
+            "supervised_depths": "0..effort",
+            "depth_weighting": "uniform_unit_sum_per_update",
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in TRAINING_EFFORTS
@@ -929,7 +966,7 @@ def _train_model(
             "base_task_fingerprint": base_fingerprint,
             "augmented_task_fingerprint": augmented_fingerprint,
             "query_index": int(query_index),
-            "terminal_effort": int(effort),
+            "maximum_supervised_depth": int(effort),
         }
         for source, base_fingerprint, augmented_fingerprint, query_index, effort in zip(
             schedule.source_names,
@@ -945,7 +982,9 @@ def _train_model(
         "one_shared_model": True,
         "one_shared_optimizer_state": True,
         **compiler,
-        "terminal_supervision_only": True,
+        "supervised_depths": "0..effort",
+        "depth_weighting": "uniform_unit_sum_per_update",
+        "per_update_depth_weight_sum": 1.0,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
             str(value): int(counts[value]) for value in TRAINING_EFFORTS
@@ -2418,6 +2457,13 @@ def _qualification(
     no_rejected_sources = all(
         len(getattr(item.manifest, "rejected", ())) == 0 for item in data.loaded
     )
+    depth_supervision = bool(
+        training.get("supervised_depths") == "0..effort"
+        and training.get("depth_weighting") == "uniform_unit_sum_per_update"
+        and training.get("per_update_depth_weight_sum", 1.0) == 1.0
+    )
+    if "supervised_depths" not in training:
+        depth_supervision = training.get("terminal_supervision_only") is True
     scientific_checks = {
         "structural_qualification": structural,
         "not_smoke_or_structural_only": not config.smoke and not config.structural_only,
@@ -2425,11 +2471,11 @@ def _qualification(
         "approved_train_and_evaluation_sources": approved_sources,
         "no_rejected_source_records": no_rejected_sources,
         "not_plumbing_only": not data.plumbing_only,
-        "one_model_one_optimizer_terminal_training": bool(
+        "one_model_one_optimizer_depth_supervision": bool(
             training.get("performed") is True
             and training.get("one_shared_model") is True
             and training.get("one_shared_optimizer_state") is True
-            and training.get("terminal_supervision_only") is True
+            and depth_supervision
         ),
         "mixed_effort_update_schedule": mixed,
         "finite_loss_per_update": losses_complete,
@@ -2454,7 +2500,7 @@ def _qualification(
         "approved_train_and_evaluation_sources": "approved train/evaluation source roles were not both present",
         "no_rejected_source_records": "source rejections were present",
         "not_plumbing_only": "embedded fixtures are plumbing-only",
-        "one_model_one_optimizer_terminal_training": "training did not retain one shared model, optimizer state, and terminal-only objective",
+        "one_model_one_optimizer_depth_supervision": "training did not retain one shared model, optimizer state, and normalized supervision at every depth 0..effort",
         "mixed_effort_update_schedule": "one shared model did not receive the complete 8/16/32 update schedule",
         "finite_loss_per_update": "one finite loss was not retained for every optimizer update",
         "parameters_moved": "training did not change parameter bytes",
@@ -2601,8 +2647,9 @@ def _render_report(result: dict[str, object]) -> str:
     runtime = float(result.get("runtime_seconds", 0.0))
     if training.get("performed") is True:
         training_line = (
-            "Training: one parameter set and one Adam state; updates by terminal "
-            f"effort {training.get('optimizer_updates_by_effort', {})}."
+            "Training: one parameter set and one Adam state; normalized uniform "
+            "supervision at every depth 0..R; updates by maximum depth "
+            f"{training.get('optimizer_updates_by_effort', {})}."
         )
     else:
         training_line = (
