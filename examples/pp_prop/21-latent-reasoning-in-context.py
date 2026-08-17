@@ -21,7 +21,7 @@ import time
 from collections import Counter
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
-from typing import Any, Literal, Sequence
+from typing import Any, Iterable, Iterator, Literal, Sequence
 
 import brainstate
 import braintools
@@ -163,6 +163,11 @@ class ExperimentConfig:
         Maximum zero-input recurrent effort. Must be at least 32.
     training_updates : int
         Number of pp-prop/Adam updates shared across effort lengths.
+    training_chunk_size : int
+        Number of updates staged on device at once. ``0`` stages the whole
+        schedule in one chunk, reproducing an unchunked run exactly. Any other
+        value must divide ``training_updates`` so that every chunk compiles to
+        the same scan length.
     learning_rate, clip_norm : float
         Adam rate and global gradient clipping norm.
     ablation_slot : int
@@ -187,6 +192,7 @@ class ExperimentConfig:
     max_grid_size: int = 30
     latent_steps: int = 32
     training_updates: int = 96
+    training_chunk_size: int = 0
     learning_rate: float = 1e-4
     clip_norm: float = 1.0
     ablation_slot: int = 0
@@ -205,6 +211,7 @@ class ExperimentConfig:
             ("max_grid_size", 1),
             ("latent_steps", 32),
             ("training_updates", 0),
+            ("training_chunk_size", 0),
             ("ablation_slot", 0),
         ):
             object.__setattr__(
@@ -243,6 +250,12 @@ class ExperimentConfig:
             raise ValueError(
                 "training_updates must expose one model to 8, 16, and 32 steps"
             )
+        if (
+            self.training_chunk_size
+            and self.training_updates
+            and self.training_updates % self.training_chunk_size
+        ):
+            raise ValueError("training_chunk_size must divide training_updates")
 
     @classmethod
     def smoke_config(
@@ -460,14 +473,89 @@ def _effort_schedule(updates: int, rng: brainstate.random.RandomState) -> np.nda
     return base[order]
 
 
-def _prepare_training(
+def _empty_training_tensors() -> _TrainingTensors:
+    empty = np.zeros((0,), dtype=np.float32)
+    return _TrainingTensors(empty, empty, empty, empty, empty, empty, empty, ())
+
+
+def _training_row(
+    origin: _OriginTask,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    rng: brainstate.random.RandomState,
+    *,
+    effort: int,
+    plumbing_only: bool,
+) -> dict[str, Any]:
+    """Encode one training update, consuming ``rng`` in schedule order."""
+    task = (
+        origin.task
+        if plumbing_only
+        else augment_training_task(origin.task, rng, role="train")
+    )
+    query_index = int(np.asarray(rng.randint(0, len(task.test))))
+    encoded = encode_query_episode(task, query_index, row_config)
+    if encoded.target is None:
+        raise ValueError(
+            f"training task {task.task_id or encoded.task_fingerprint} lacks a target"
+        )
+    sequence = _packed_events(encoded, config)
+    mask = np.zeros((sequence.shape[0],), dtype=np.float32)
+    terminal = encoded.query_stop - 1 + effort
+    if terminal >= sequence.shape[0]:
+        raise ValueError("terminal effort exceeds packed sequence capacity")
+    mask[terminal] = 1.0
+    target = encoded.target
+    padded = np.zeros((30, 30), dtype=np.int32)
+    padded[: target.height, : target.width] = target.as_array()
+    return {
+        "events": sequence[:, None, :],
+        "advances": _packed_advances(encoded, config)[:, None],
+        "heights": target.height,
+        "widths": target.width,
+        "colors": padded[None],
+        "masks": mask,
+        "task_fingerprints": canonical_task_fingerprint(task),
+        "base_task_fingerprints": canonical_task_fingerprint(origin.task),
+        "source_names": origin.source_name,
+        "query_indices": query_index,
+    }
+
+
+def _stacked_chunk(rows: list[dict[str, Any]], efforts: np.ndarray) -> _TrainingTensors:
+    def column(name: str) -> list[Any]:
+        return [row[name] for row in rows]
+
+    return _TrainingTensors(
+        events=np.stack(column("events")),
+        advances=np.stack(column("advances")),
+        heights=np.asarray(column("heights"), dtype=np.int32)[:, None],
+        widths=np.asarray(column("widths"), dtype=np.int32)[:, None],
+        colors=np.stack(column("colors")),
+        masks=np.stack(column("masks")),
+        efforts=efforts,
+        task_fingerprints=tuple(column("task_fingerprints")),
+        base_task_fingerprints=tuple(column("base_task_fingerprints")),
+        source_names=tuple(column("source_names")),
+        query_indices=tuple(column("query_indices")),
+    )
+
+
+def _training_chunks(
     data: _ExperimentData,
     config: ExperimentConfig,
     row_config: RowEventConfig,
-) -> _TrainingTensors:
+) -> Iterator[_TrainingTensors]:
+    """Yield the training schedule in fixed-size, device-sized chunks.
+
+    The effort and task draws stay up front at full ``training_updates`` size
+    and the per-update walk visits updates in schedule order, so the random
+    stream — and therefore every produced tensor — is independent of how the
+    schedule is chunked.
+    """
     if config.structural_only:
-        empty = np.zeros((0,), dtype=np.float32)
-        return _TrainingTensors(empty, empty, empty, empty, empty, empty, empty, ())
+        yield _empty_training_tensors()
+        return
     if not data.training:
         raise ValueError("training data is empty")
     rng = brainstate.random.RandomState(config.seed + 1000)
@@ -475,61 +563,67 @@ def _prepare_training(
     task_indices = np.asarray(
         rng.randint(0, len(data.training), size=config.training_updates), dtype=np.int32
     )
-    event_rows: list[np.ndarray] = []
-    advance_rows: list[np.ndarray] = []
-    heights: list[int] = []
-    widths: list[int] = []
-    colors: list[np.ndarray] = []
-    masks: list[np.ndarray] = []
-    fingerprints: list[str] = []
-    base_fingerprints: list[str] = []
-    source_names: list[str] = []
-    query_indices: list[int] = []
+    size = config.training_chunk_size or config.training_updates
+    rows: list[dict[str, Any]] = []
     for update_index, task_index in enumerate(task_indices):
-        origin = data.training[int(task_index)]
-        task = (
-            origin.task
-            if data.plumbing_only
-            else augment_training_task(origin.task, rng, role="train")
-        )
-        query_index = int(np.asarray(rng.randint(0, len(task.test))))
-        encoded = encode_query_episode(task, query_index, row_config)
-        if encoded.target is None:
-            raise ValueError(
-                f"training task {task.task_id or encoded.task_fingerprint} lacks a target"
+        rows.append(
+            _training_row(
+                data.training[int(task_index)],
+                config,
+                row_config,
+                rng,
+                effort=int(efforts[update_index]),
+                plumbing_only=data.plumbing_only,
             )
-        sequence = _packed_events(encoded, config)
-        mask = np.zeros((sequence.shape[0],), dtype=np.float32)
-        terminal = encoded.query_stop - 1 + int(efforts[update_index])
-        if terminal >= sequence.shape[0]:
-            raise ValueError("terminal effort exceeds packed sequence capacity")
-        mask[terminal] = 1.0
-        target = encoded.target
-        padded = np.zeros((30, 30), dtype=np.int32)
-        padded[: target.height, : target.width] = target.as_array()
-        event_rows.append(sequence[:, None, :])
-        advance_rows.append(_packed_advances(encoded, config)[:, None])
-        heights.append(target.height)
-        widths.append(target.width)
-        colors.append(padded[None])
-        masks.append(mask)
-        fingerprints.append(canonical_task_fingerprint(task))
-        base_fingerprints.append(canonical_task_fingerprint(origin.task))
-        source_names.append(origin.source_name)
-        query_indices.append(query_index)
-    return _TrainingTensors(
-        events=np.stack(event_rows),
-        advances=np.stack(advance_rows),
-        heights=np.asarray(heights, dtype=np.int32)[:, None],
-        widths=np.asarray(widths, dtype=np.int32)[:, None],
-        colors=np.stack(colors),
-        masks=np.stack(masks),
-        efforts=efforts,
-        task_fingerprints=tuple(fingerprints),
-        base_task_fingerprints=tuple(base_fingerprints),
-        source_names=tuple(source_names),
-        query_indices=tuple(query_indices),
-    )
+        )
+        if len(rows) == size:
+            start = update_index + 1 - size
+            yield _stacked_chunk(rows, efforts[start : update_index + 1])
+            rows = []
+
+
+_CHUNK_ARRAY_FIELDS = (
+    "events",
+    "advances",
+    "heights",
+    "widths",
+    "colors",
+    "masks",
+    "efforts",
+)
+_CHUNK_METADATA_FIELDS = (
+    "task_fingerprints",
+    "base_task_fingerprints",
+    "source_names",
+    "query_indices",
+)
+
+
+def _concatenated_chunks(chunks: list[_TrainingTensors]) -> _TrainingTensors:
+    arrays = {
+        name: np.concatenate([getattr(chunk, name) for chunk in chunks])
+        for name in _CHUNK_ARRAY_FIELDS
+    }
+    metadata = {
+        name: tuple(value for chunk in chunks for value in getattr(chunk, name))
+        for name in _CHUNK_METADATA_FIELDS
+    }
+    return _TrainingTensors(**arrays, **metadata)
+
+
+def _prepare_training(
+    data: _ExperimentData,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+) -> _TrainingTensors:
+    """Materialise the whole training schedule.
+
+    Retained for tests and inspection. The run path uses
+    :func:`_training_chunks` so that peak memory does not scale with
+    ``training_updates``.
+    """
+    chunks = list(_training_chunks(data, config, row_config))
+    return chunks[0] if len(chunks) == 1 else _concatenated_chunks(chunks)
 
 
 def _model_config(
@@ -670,9 +764,68 @@ def _parameter_change_evidence(
     return result
 
 
+@dataclass(frozen=True)
+class _TrainingSchedule:
+    """Per-update training metadata accumulated across chunks, in order."""
+
+    efforts: tuple[int, ...] = ()
+    task_fingerprints: tuple[str, ...] = ()
+    base_task_fingerprints: tuple[str, ...] = ()
+    source_names: tuple[str, ...] = ()
+    query_indices: tuple[int, ...] = ()
+
+    def extended(self, chunk: _TrainingTensors) -> "_TrainingSchedule":
+        return _TrainingSchedule(
+            efforts=self.efforts + tuple(int(value) for value in chunk.efforts),
+            task_fingerprints=self.task_fingerprints + tuple(chunk.task_fingerprints),
+            base_task_fingerprints=(
+                self.base_task_fingerprints + tuple(chunk.base_task_fingerprints)
+            ),
+            source_names=self.source_names + tuple(chunk.source_names),
+            query_indices=self.query_indices + tuple(chunk.query_indices),
+        )
+
+
+def _train_chunks(
+    chunks: Iterable[_TrainingTensors],
+    train_all: Any,
+) -> tuple[list[float], _TrainingSchedule]:
+    """Stage each chunk on device in turn and accumulate the whole schedule.
+
+    The per-update work stays inside the single compiled ``train_all`` scan;
+    this loop only walks a handful of data-staging steps so that peak device
+    memory tracks the chunk size rather than ``training_updates``.
+    """
+    losses: list[float] = []
+    schedule = _TrainingSchedule()
+    sequence_length: int | None = None
+    for chunk in chunks:
+        if sequence_length is None:
+            sequence_length = int(chunk.events.shape[1])
+        elif int(chunk.events.shape[1]) != sequence_length:
+            raise ValueError("training chunks disagree on packed sequence length")
+        losses.extend(
+            float(value)
+            for value in np.asarray(
+                train_all(
+                    jnp.asarray(chunk.events),
+                    jnp.asarray(chunk.advances),
+                    jnp.asarray(chunk.heights),
+                    jnp.asarray(chunk.widths),
+                    jnp.asarray(chunk.colors),
+                    jnp.asarray(chunk.masks),
+                )
+            )
+        )
+        schedule = schedule.extended(chunk)
+    if len(losses) != len(schedule.efforts):
+        raise ValueError("training losses and effort schedule disagree in length")
+    return losses, schedule
+
+
 def _train_model(
     model: LatentWorkspaceModel,
-    tensors: _TrainingTensors,
+    chunks: Iterable[_TrainingTensors],
     config: ExperimentConfig,
 ) -> dict[str, object]:
     learner = compile_pp_prop(model)
@@ -743,17 +896,10 @@ def _train_model(
             train_one, (events, advances, heights, widths, colors, masks)
         )
 
-    losses = train_all(
-        jnp.asarray(tensors.events),
-        jnp.asarray(tensors.advances),
-        jnp.asarray(tensors.heights),
-        jnp.asarray(tensors.widths),
-        jnp.asarray(tensors.colors),
-        jnp.asarray(tensors.masks),
-    )
+    losses, schedule = _train_chunks(chunks, train_all)
     after_snapshot = parameter_snapshot(model)
     after = _tree_digest(after_snapshot)
-    counts = Counter(int(value) for value in tensors.efforts)
+    counts = Counter(schedule.efforts)
     sample_records = [
         {
             "source": source,
@@ -763,11 +909,11 @@ def _train_model(
             "terminal_effort": int(effort),
         }
         for source, base_fingerprint, augmented_fingerprint, query_index, effort in zip(
-            tensors.source_names,
-            tensors.base_task_fingerprints,
-            tensors.task_fingerprints,
-            tensors.query_indices,
-            tensors.efforts,
+            schedule.source_names,
+            schedule.base_task_fingerprints,
+            schedule.task_fingerprints,
+            schedule.query_indices,
+            schedule.efforts,
             strict=True,
         )
     ]
@@ -782,16 +928,23 @@ def _train_model(
             str(value): int(counts[value]) for value in TRAINING_EFFORTS
         },
         "losses": np.asarray(losses, dtype=np.float64).tolist(),
+        "effort_schedule": list(schedule.efforts),
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
         "parameters_moved": before != after,
         "parameter_changes": _parameter_change_evidence(
             before_snapshot, after_snapshot
         ),
-        "training_task_fingerprints": list(tensors.task_fingerprints),
-        "sampled_base_task_count": len(set(tensors.base_task_fingerprints)),
+        "training_task_fingerprints": list(schedule.task_fingerprints),
+        "sampled_base_task_count": len(set(schedule.base_task_fingerprints)),
         "sampled_base_query_count": len(
-            set(zip(tensors.base_task_fingerprints, tensors.query_indices, strict=True))
+            set(
+                zip(
+                    schedule.base_task_fingerprints,
+                    schedule.query_indices,
+                    strict=True,
+                )
+            )
         ),
         "sampling_with_replacement": True,
         "training_samples": sample_records,
@@ -2898,9 +3051,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     device, device_report = _resolve_device(config.device)
     data = _load_data(config)
     rows = _row_config(config)
-    training_tensors = _prepare_training(data, config, rows)
     model = _make_model(config, rows, batch_size=1, device=device)
-    training = _train_model(model, training_tensors, config)
+    training = _train_model(model, _training_chunks(data, config, rows), config)
     evaluation = _evaluate(model, data, config, rows, device)
     device_report["memory_stats"] = _device_memory_stats(device)
     device_report["memory_stats_capture"] = "after training and evaluation"
@@ -2972,6 +3124,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--neurons", type=int, default=2048)
     parser.add_argument("--recurrent-edges", type=int, default=16384)
     parser.add_argument("--training-updates", type=int, default=96)
+    parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
@@ -2997,6 +3150,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         neuron_count=args.neurons,
         recurrent_edges=args.recurrent_edges,
         training_updates=args.training_updates,
+        training_chunk_size=args.training_chunk_size,
         learning_rate=args.learning_rate,
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,

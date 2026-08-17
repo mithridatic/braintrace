@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import dataclasses
 import importlib.util
 import json
 import pathlib
@@ -12,6 +13,7 @@ from enum import Enum
 from types import SimpleNamespace
 
 import brainstate
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -1119,7 +1121,7 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
     )
 
     result = example._train_model(
-        Model(), tensors, example.ExperimentConfig.smoke_config()
+        Model(), [tensors], example.ExperimentConfig.smoke_config()
     )
 
     assert len(updates) == 3
@@ -1645,6 +1647,11 @@ def test_repeated_model_execution_is_lowered_through_brainstate_transforms(examp
         if isinstance(node, (ast.For, ast.While))
     ]
     assert training_loops == []
+    # The chunk driver may loop over data-staging steps, but the model itself
+    # must stay inside the compiled scan: no gradient call may appear there.
+    staging = ast.dump(functions["_train_chunks"])
+    assert "etrace_grad" not in staging
+    assert "for_loop" not in staging
     calls = [
         node
         for node in ast.walk(functions["_train_model"])
@@ -1654,3 +1661,62 @@ def test_repeated_model_execution_is_lowered_through_brainstate_transforms(examp
     ]
     assert calls
     assert "run_selected_packed_stream" in EXAMPLE.read_text(encoding="utf-8")
+
+
+def test_chunk_size_must_divide_the_update_budget(example):
+    with pytest.raises(ValueError, match="training_chunk_size must divide"):
+        example.ExperimentConfig(training_updates=96, training_chunk_size=7)
+    assert (
+        example.ExperimentConfig(
+            training_updates=96, training_chunk_size=0
+        ).training_chunk_size
+        == 0
+    )
+    assert (
+        example.ExperimentConfig(
+            training_updates=96, training_chunk_size=32
+        ).training_chunk_size
+        == 32
+    )
+    example.ExperimentConfig(
+        structural_only=True, training_updates=0, training_chunk_size=32
+    )
+
+
+def test_chunking_does_not_change_the_prepared_schedule(example):
+    whole = example.ExperimentConfig.smoke_config()
+    split = dataclasses.replace(whole, training_chunk_size=1)
+    data = example._load_data(whole)
+    rows = example._row_config(whole)
+
+    reference = example._prepare_training(data, whole, rows)
+    chunked = example._prepare_training(data, split, rows)
+
+    assert len(list(example._training_chunks(data, split, rows))) == 3
+    for field in example._CHUNK_ARRAY_FIELDS:
+        assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
+    for field in example._CHUNK_METADATA_FIELDS:
+        assert getattr(reference, field) == getattr(chunked, field), field
+
+
+def test_chunked_training_reproduces_unchunked_losses_bitwise(example):
+    whole = example.ExperimentConfig.smoke_config()
+    split = dataclasses.replace(whole, training_chunk_size=1)
+    data = example._load_data(whole)
+    rows = example._row_config(whole)
+
+    def train(config):
+        model = example._make_model(
+            config, rows, batch_size=1, device=jax.devices("cpu")[0]
+        )
+        return example._train_model(
+            model, example._training_chunks(data, config, rows), config
+        )
+
+    reference = train(whole)
+    chunked = train(split)
+
+    assert chunked["losses"] == reference["losses"]
+    assert chunked["effort_schedule"] == reference["effort_schedule"]
+    assert chunked["training_samples"] == reference["training_samples"]
+    assert chunked["parameter_sha256_after"] == reference["parameter_sha256_after"]
