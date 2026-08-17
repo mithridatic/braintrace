@@ -155,6 +155,34 @@ Measured at 512 updates, lr 1e-3, same seed:
 | intact vs `shuffled` decodability | 0.5084 | 0.5107 |
 | its null | 0.5072 | 0.4785 |
 
+### Full qualification, 4096 updates, chunk 512, lr 1e-3, 400-task evaluation
+
+All 8 structural and all 12 scientific gates pass; 749 s on GPU.
+
+Training loss improves at **every** window against the pre-fix run of the same
+configuration:
+
+| updates | before | after |
+| ------- | ------ | ----- |
+| 0–256 | 7.887 | 7.619 |
+| 256–512 | 6.484 | 6.192 |
+| 512–1024 | 5.724 | 5.415 |
+| 1024–2048 | 5.032 | 4.833 |
+| 2048–4096 | 4.341 | 4.163 |
+
+Evaluation is mixed rather than uniformly better — intact best-effort pixel
+0.3915 → 0.4144, intact best-effort shape 0.4105 → 0.3842.
+
+The `no_context` control separates further than before (shape 0.057–0.086,
+pixel 0.098–0.114, against 0.103–0.146 / 0.156–0.171 pre-fix), consistent with
+the demonstrations landing harder.
+
+`shuffled_demonstrations` is unchanged in the way that matters: shape
+0.3723–0.3771, pixel 0.3951–0.4126, every effort within ±0.012 of intact. The
+finding this spec records survives the fix intact.
+
+### Summary
+
 The demonstrations land harder and the model trains better for free — the loss
 gain is roughly three quarters of what a doubling of the update budget buys.
 **The pairing is still at the null.** This was the predicted outcome: removing
