@@ -15,6 +15,7 @@ import json
 import math
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -55,6 +56,7 @@ from examples.pp_prop.latent_workspace_task import (
 
 PREREGISTERED_MEMORY_WIDTH = 32
 PREREGISTERED_MEMORY_DECAY = 1.0
+STRUCTURAL_COLOR_COUNT = legacy.COLOR_COUNT
 _REQUIRED_DIRECT_PATHS = (
     ("memory_write_scale",),
     ("workspace_query_projection", "weight"),
@@ -88,8 +90,10 @@ class BindingGateConfig(legacy.BindingControlConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        if self.batch_size < SYMBOL_COUNT:
-            raise ValueError("batch_size must be at least four for the K=4 key gate")
+        if self.batch_size < STRUCTURAL_COLOR_COUNT:
+            raise ValueError(
+                "batch_size must be at least ten for the all-color key gate"
+            )
         width = self.context_memory_width
         if isinstance(width, (bool, np.bool_)) or not isinstance(width, int):
             raise TypeError("context_memory_width must be a positive integer")
@@ -127,7 +131,7 @@ class BindingGateConfig(legacy.BindingControlConfig):
 
         return cls(
             training_updates=2,
-            batch_size=4,
+            batch_size=16,
             validation_episodes=8,
             neuron_count=64,
             recurrent_edges=64,
@@ -230,14 +234,14 @@ def _marginal_identity_report(
     }
 
 
-def _k4_query_events(rows: RowEventConfig) -> np.ndarray:
+def _catalog_query_events(rows: RowEventConfig) -> np.ndarray:
     query_index = rows.max_demonstrations * rows.max_grid_size
     episodes = tuple(
         ArcTask(
             train=(ArcPair(ArcGrid(((color,),)), ArcGrid(((color,),))),),
             test=(ArcPair(ArcGrid(((color,),)), None),),
         )
-        for color in range(SYMBOL_COUNT)
+        for color in range(STRUCTURAL_COLOR_COUNT)
     )
     return np.stack(
         [encode_query_episode(task, 0, rows).events[query_index] for task in episodes]
@@ -254,9 +258,13 @@ def _key_separation_metrics(
     model_seed: int,
     architecture: Mapping[str, Any],
 ) -> dict[str, Any]:
+    if keys.ndim != 2 or keys.shape[0] != STRUCTURAL_COLOR_COUNT:
+        raise ValueError("key separation requires one key for every catalog color")
+    if zero_keys.ndim != 2 or zero_keys.shape != keys.shape:
+        raise ValueError("zero-event keys must match the catalog key matrix")
     gram = keys @ keys.T
     diagonal = np.diag(gram)
-    off_diagonal = gram[~np.eye(SYMBOL_COUNT, dtype=bool)]
+    off_diagonal = gram[~np.eye(STRUCTURAL_COLOR_COUNT, dtype=bool)]
     diagonal_minimum = float(diagonal.min())
     off_diagonal_maximum = float(off_diagonal.max())
     margin = diagonal_minimum - off_diagonal_maximum
@@ -266,13 +274,17 @@ def _key_separation_metrics(
         "protocol": protocol,
         "row_event_input_width": rows.input_width,
         "raw_key_feature_width": len(features.key_indices),
-        "candidate_colors": list(range(SYMBOL_COUNT)),
+        "candidate_colors": list(range(STRUCTURAL_COLOR_COUNT)),
+        "color_count": STRUCTURAL_COLOR_COUNT,
+        "gram_shape": list(gram.shape),
+        "gram": gram.tolist(),
         "memory_width": memory_width,
         "model_seed": model_seed,
         "diagonal": diagonal.tolist(),
         "diagonal_minimum": diagonal_minimum,
         "off_diagonal_maximum": off_diagonal_maximum,
         "separation_margin": margin,
+        "worst_global_margin": margin,
         "required_margin": 0.25,
         "margin_passed": margin > 0.25,
         "zero_event_key_max_abs": zero_maximum,
@@ -289,11 +301,11 @@ def _standard_arc_key_separation_report(
 ) -> dict[str, Any]:
     rows = RowEventConfig()
     features = associative_memory_feature_indices(rows)
-    events = jnp.asarray(_k4_query_events(rows), dtype=jnp.float32)
+    events = jnp.asarray(_catalog_query_events(rows), dtype=jnp.float32)
     model = LatentWorkspaceModel(
         ModelConfig(
             input_width=rows.input_width,
-            batch_size=SYMBOL_COUNT,
+            batch_size=STRUCTURAL_COLOR_COUNT,
             neuron_count=64,
             recurrent_edges=96,
             max_latent_steps=1,
@@ -321,7 +333,7 @@ def _standard_arc_key_separation_report(
         keys,
         zero_keys,
         protocol=(
-            f"standard_arc_k4_query_key_gram_{len(features.key_indices)}_features"
+            f"standard_arc_k10_query_key_gram_{len(features.key_indices)}_features"
         ),
         rows=rows,
         memory_width=memory_width,
@@ -333,11 +345,11 @@ def _standard_arc_key_separation_report(
 def _gate_native_key_separation_report(
     model: LatentWorkspaceModel, config: BindingGateConfig
 ) -> dict[str, Any]:
-    if model.config.batch_size < SYMBOL_COUNT:
-        raise ValueError("binding gate batch_size must be at least four")
+    if model.config.batch_size < STRUCTURAL_COLOR_COUNT:
+        raise ValueError("binding gate batch_size must be at least ten")
     rows = config.row_config
     events = np.zeros((model.config.batch_size, rows.input_width), dtype=np.float32)
-    events[:SYMBOL_COUNT] = _k4_query_events(rows)
+    events[:STRUCTURAL_COLOR_COUNT] = _catalog_query_events(rows)
     packed = jnp.asarray(events)
 
     @brainstate.transform.jit
@@ -347,10 +359,10 @@ def _gate_native_key_separation_report(
     encoded = np.asarray(jax.block_until_ready(encode(packed)))
     zero_keys = np.asarray(jax.block_until_ready(encode(jnp.zeros_like(packed))))
     return _key_separation_metrics(
-        encoded[:SYMBOL_COUNT],
-        zero_keys,
+        encoded[:STRUCTURAL_COLOR_COUNT],
+        zero_keys[:STRUCTURAL_COLOR_COUNT],
         protocol=(
-            "gate_native_k4_query_key_gram_"
+            "gate_native_k10_query_key_gram_"
             f"{len(associative_memory_feature_indices(rows).key_indices)}_features"
         ),
         rows=rows,
@@ -386,6 +398,11 @@ def _diagnostic_report(
     no_context_memory, no_context_read, no_context_workspace = trajectories[
         "no_context"
     ]
+    all_state_tensors_finite = all(
+        bool(np.isfinite(array).all())
+        for trajectory in trajectories.values()
+        for array in trajectory
+    )
     if no_context_memory.shape != intact_memory.shape:
         raise ValueError("all memory snapshots must share one batched shape")
     memory = _paired_array_report(intact_memory, shuffled_memory)
@@ -426,21 +443,55 @@ def _diagnostic_report(
         for depth in range(intact_workspace.shape[0])
     }
     return {
+        "all_state_tensors_finite": all_state_tensors_finite,
         "memory": memory,
         "read_by_depth": read_by_depth,
         "workspace_by_depth": workspace_by_depth,
     }
 
 
+def _hidden_group_report(group: Any) -> dict[str, Any]:
+    return {
+        "index": int(getattr(group, "index")),
+        "hidden_paths": [
+            _path(path) for path in getattr(group, "hidden_paths", ())
+        ],
+    }
+
+
+def _context_memory_isolated(hidden_groups: Sequence[Mapping[str, Any]]) -> bool:
+    context_groups = [
+        group
+        for group in hidden_groups
+        if "context_memory" in group.get("hidden_paths", ())
+    ]
+    if len(context_groups) != 1:
+        return False
+    forbidden_roots = {"ff_syn", "rec_syn", "neu", "workspace_carrier"}
+    for hidden_path in context_groups[0].get("hidden_paths", ()):
+        normalized = str(hidden_path).lower()
+        root = normalized.split("/", maxsplit=1)[0]
+        if (
+            root in forbidden_roots
+            or root.startswith("workspace")
+            or "lif" in normalized
+        ):
+            return False
+    return True
+
+
 def _compiler_report(learner: Any) -> dict[str, Any]:
     report = legacy._compiler_summary(learner)
-    relations = getattr(
-        getattr(learner, "graph", None), "hidden_param_op_relations", ()
-    )
+    graph = getattr(learner, "graph", None)
+    relations = getattr(graph, "hidden_param_op_relations", ())
+    hidden_groups = [
+        _hidden_group_report(group)
+        for group in getattr(graph, "hidden_groups", ())
+    ]
     direct: dict[tuple[str, ...], bool] = {
         path: False for path in _REQUIRED_DIRECT_PATHS
     }
-    evidence: dict[str, list[dict[str, str]]] = {
+    evidence: dict[str, list[dict[str, Any]]] = {
         _path(path): [] for path in _REQUIRED_DIRECT_PATHS
     }
     for relation in relations:
@@ -453,6 +504,10 @@ def _compiler_report(learner: Any) -> dict[str, Any]:
             )
             for key, classification in classifications.items()
         ]
+        relation_groups = [
+            _hidden_group_report(group)
+            for group in getattr(relation, "hidden_groups", ())
+        ]
         for label, raw_path in trainable_paths.items():
             normalized = tuple(map(str, raw_path))
             if normalized not in direct:
@@ -462,12 +517,17 @@ def _compiler_report(learner: Any) -> dict[str, Any]:
                     {
                         "relation_key": relation_key,
                         "classification": classification,
+                        "hidden_groups": relation_groups,
                     }
                     for relation_key, classification in classification_items
                 )
             else:
                 evidence[_path(normalized)].append(
-                    {"relation_key": str(label), "classification": "missing"}
+                    {
+                        "relation_key": str(label),
+                        "classification": "missing",
+                        "hidden_groups": relation_groups,
+                    }
                 )
     direct = {
         path: bool(evidence[_path(path)])
@@ -484,6 +544,10 @@ def _compiler_report(learner: Any) -> dict[str, Any]:
             },
             "direct_path_evidence": evidence,
             "all_required_direct": bool(all(direct.values())),
+            "hidden_groups": hidden_groups,
+            "context_memory_isolated_from_workspace_lif": (
+                _context_memory_isolated(hidden_groups)
+            ),
         }
     )
     return report
@@ -678,13 +742,20 @@ def _evaluate_model(
 
     depth_reports: dict[str, dict[str, Any]] = {}
     targets = data.validation_targets
+    all_compact_logits_finite = all(
+        bool(np.isfinite(values[0]).all()) for values in raw.values()
+    )
     for depth in range(config.gap_steps + 1):
         arm_metrics = {}
         for arm in ("intact", "shuffled", "no_context"):
             compact = raw[arm][0][depth]
-            predictions = np.argmax(
-                np.asarray(legacy._color_logits(jnp.asarray(compact), rank)), axis=-1
+            color_logits = np.asarray(
+                legacy._color_logits(jnp.asarray(compact), rank)
             )
+            all_compact_logits_finite = (
+                all_compact_logits_finite and bool(np.isfinite(color_logits).all())
+            )
+            predictions = np.argmax(color_logits, axis=-1)
             arm_metrics[arm] = legacy._accuracy(predictions, targets)
         depth_reports[str(depth)] = arm_metrics
 
@@ -703,6 +774,7 @@ def _evaluate_model(
         "unconditional_color_chance": 1.0 / legacy.COLOR_COUNT,
         "reported_checkpoint": config.gap_steps,
         "supervised_depths": list(range(config.gap_steps + 1)),
+        "all_compact_logits_finite": all_compact_logits_finite,
         "depths": depth_reports,
         "cold_compile_and_three_arm_eval_seconds": elapsed,
     }
@@ -712,19 +784,437 @@ def _evaluate_model(
     return evaluation, diagnostics
 
 
+def _numeric_tree_is_finite(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return all(_numeric_tree_is_finite(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return all(_numeric_tree_is_finite(item) for item in value)
+    if isinstance(value, np.ndarray):
+        if np.issubdtype(value.dtype, np.number):
+            return bool(np.isfinite(value).all())
+        return True
+    if isinstance(value, (int, float, np.number)) and not isinstance(
+        value, (bool, np.bool_)
+    ):
+        return math.isfinite(float(value))
+    return True
+
+
+def _is_integer(value: Any) -> bool:
+    return isinstance(value, (int, np.integer)) and not isinstance(
+        value, (bool, np.bool_)
+    )
+
+
+def _training_evidence_complete(
+    training: Mapping[str, Any], config: BindingGateConfig
+) -> bool:
+    losses = np.asarray(training["losses"], dtype=np.float64)
+    if (
+        losses.ndim != 1
+        or losses.size != config.training_updates
+        or not np.isfinite(losses).all()
+    ):
+        return False
+    initial = float(training["initial_loss"])
+    final = float(training["final_loss"])
+    tail = float(training["tail_64_mean_loss"])
+    expected_tail = float(losses[-min(64, losses.size) :].mean())
+    supervision_mask = np.asarray(training["supervision_mask"], dtype=np.float32)
+    expected_mask = np.asarray(_deep_supervision_mask(config), dtype=np.float32)
+    return bool(
+        training["algorithm"] == "production_pp_prop"
+        and training["supervised_depths"]
+        == list(range(config.gap_steps + 1))
+        and supervision_mask.shape == expected_mask.shape
+        and np.isfinite(supervision_mask).all()
+        and np.array_equal(supervision_mask, expected_mask)
+        and math.isclose(
+            float(training["supervision_weight_sum"]),
+            1.0,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(initial, float(losses[0]), rel_tol=0.0, abs_tol=1e-12)
+        and math.isclose(final, float(losses[-1]), rel_tol=0.0, abs_tol=1e-12)
+        and math.isclose(tail, expected_tail, rel_tol=0.0, abs_tol=1e-12)
+        and _numeric_tree_is_finite(training)
+    )
+
+
+def _accuracy_evidence_complete(metric: Mapping[str, Any], count: int) -> bool:
+    reported_count = metric["count"]
+    correct = metric["correct"]
+    if (
+        not _is_integer(reported_count)
+        or int(reported_count) != count
+        or not _is_integer(correct)
+        or not 0 <= int(correct) <= count
+    ):
+        return False
+    accuracy = float(metric["accuracy"])
+    lower = float(metric["wilson_95_lower"])
+    upper = float(metric["wilson_95_upper"])
+    expected_lower, expected_upper = legacy._wilson_interval(int(correct), count)
+    histogram = metric["prediction_histogram"]
+    if (
+        not isinstance(histogram, (list, tuple))
+        or len(histogram) != legacy.COLOR_COUNT
+        or not all(_is_integer(item) and int(item) >= 0 for item in histogram)
+        or sum(map(int, histogram)) != count
+    ):
+        return False
+    return bool(
+        all(math.isfinite(value) for value in (accuracy, lower, upper))
+        and math.isclose(
+            accuracy,
+            int(correct) / count,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and 0.0 <= lower <= accuracy <= upper <= 1.0
+        and math.isclose(lower, expected_lower, rel_tol=0.0, abs_tol=1e-12)
+        and math.isclose(upper, expected_upper, rel_tol=0.0, abs_tol=1e-12)
+        and re.fullmatch(r"[0-9a-f]{64}", str(metric["prediction_sha256"]))
+    )
+
+
+def _evaluation_evidence_complete(
+    evaluation: Mapping[str, Any], config: BindingGateConfig
+) -> bool:
+    expected_depths = list(range(config.gap_steps + 1))
+    depth_reports = evaluation["depths"]
+    if (
+        not isinstance(depth_reports, Mapping)
+        or set(depth_reports) != {str(depth) for depth in expected_depths}
+        or evaluation["supervised_depths"] != expected_depths
+        or int(evaluation["reported_checkpoint"]) != config.gap_steps
+        or evaluation["all_compact_logits_finite"] is not True
+        or not _numeric_tree_is_finite(evaluation)
+    ):
+        return False
+    for depth in expected_depths:
+        report = depth_reports[str(depth)]
+        if not isinstance(report, Mapping) or set(report) != {
+            "intact",
+            "shuffled",
+            "no_context",
+        }:
+            return False
+        for arm in ("intact", "shuffled", "no_context"):
+            if not _accuracy_evidence_complete(
+                report[arm], config.validation_episodes
+            ):
+                return False
+    final = depth_reports[str(config.gap_steps)]
+    if any(evaluation[arm] != final[arm] for arm in final):
+        return False
+    intact_accuracy = float(final["intact"]["accuracy"])
+    shuffled_accuracy = float(final["shuffled"]["accuracy"])
+    no_context_accuracy = float(final["no_context"]["accuracy"])
+    return bool(
+        math.isclose(
+            float(evaluation["intact_minus_shuffled"]),
+            intact_accuracy - shuffled_accuracy,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(
+            float(evaluation["intact_minus_no_context"]),
+            intact_accuracy - no_context_accuracy,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(
+            float(evaluation["pairing_chance"]),
+            1.0 / SYMBOL_COUNT,
+            rel_tol=0.0,
+            abs_tol=1e-15,
+        )
+        and math.isclose(
+            float(evaluation["unconditional_color_chance"]),
+            1.0 / legacy.COLOR_COUNT,
+            rel_tol=0.0,
+            abs_tol=1e-15,
+        )
+    )
+
+
+def _paired_diagnostic_complete(report: Mapping[str, Any], count: int) -> bool:
+    applicable = report["applicable_count"]
+    different = report["different_count"]
+    if (
+        not _is_integer(applicable)
+        or int(applicable) != count
+        or not _is_integer(different)
+        or not 0 <= int(different) <= count
+    ):
+        return False
+    return bool(
+        int(different) == count
+        and report["every_pair_differs"] is True
+        and math.isfinite(float(report["mean_l2_difference"]))
+        and float(report["mean_l2_difference"]) > 0.0
+        and math.isfinite(float(report["no_context_l2_norm"]))
+    )
+
+
+def _diagnostic_evidence_complete(
+    diagnostics: Mapping[str, Any], config: BindingGateConfig
+) -> bool:
+    expected_depths = {
+        str(depth) for depth in range(config.gap_steps + 1)
+    }
+    memory = diagnostics["memory"]
+    read_by_depth = diagnostics["read_by_depth"]
+    workspace_by_depth = diagnostics["workspace_by_depth"]
+    if (
+        diagnostics["all_state_tensors_finite"] is not True
+        or not _numeric_tree_is_finite(diagnostics)
+        or set(read_by_depth) != expected_depths
+        or set(workspace_by_depth) != expected_depths
+        or int(memory["applicable_count"]) != config.validation_episodes
+        or int(memory["different_count"])
+        != int(memory["intact_shuffled_different_count"])
+        or memory["every_pair_differs"]
+        is not memory["every_intact_shuffled_pair_differs"]
+        or memory["no_context_exact_zero"] is not True
+        or not all(
+            math.isfinite(float(memory[name]))
+            for name in (
+                "intact_l2_norm",
+                "shuffled_l2_norm",
+                "no_context_l2_norm",
+            )
+        )
+    ):
+        return False
+    for depth in expected_depths:
+        if not _paired_diagnostic_complete(
+            read_by_depth[depth], config.validation_episodes
+        ) or not _paired_diagnostic_complete(
+            workspace_by_depth[depth], config.validation_episodes
+        ):
+            return False
+    return True
+
+
+def _compiler_topology_complete(compiler: Mapping[str, Any]) -> bool:
+    hidden_groups = compiler["hidden_groups"]
+    if not isinstance(hidden_groups, list) or not hidden_groups:
+        return False
+    known_groups: dict[int, tuple[str, ...]] = {}
+    for group in hidden_groups:
+        if (
+            not _is_integer(group.get("index"))
+            or not isinstance(group.get("hidden_paths"), list)
+            or not all(isinstance(path, str) and path for path in group["hidden_paths"])
+            or int(group["index"]) in known_groups
+        ):
+            return False
+        known_groups[int(group["index"])] = tuple(group["hidden_paths"])
+    evidence = compiler["direct_path_evidence"]
+    topology_is_consistent = all(
+        item.get("hidden_groups")
+        and all(
+            _is_integer(group.get("index"))
+            and isinstance(group.get("hidden_paths"), list)
+            and bool(group["hidden_paths"])
+            and known_groups.get(int(group["index"]))
+            == tuple(group["hidden_paths"])
+            for group in item["hidden_groups"]
+        )
+        for path in compiler["required_direct_paths"]
+        for item in evidence[path]
+    )
+    if not topology_is_consistent:
+        return False
+
+    def targets(path: str) -> list[set[str]]:
+        return [
+            set(item["hidden_groups"][0]["hidden_paths"])
+            for item in evidence[path]
+            if len(item["hidden_groups"]) == 1
+        ]
+
+    write_targets = targets("memory_write_scale")
+    query_targets = targets("workspace_query_projection/weight")
+    read_targets = targets("memory_read_projection/weight")
+    read_has_workspace_lif = all(
+        "context_memory" not in paths
+        and "workspace_carrier" in paths
+        and any(
+            path.split("/", maxsplit=1)[0] in {"ff_syn", "rec_syn", "neu"}
+            or "lif" in path.lower()
+            for path in paths
+        )
+        for paths in read_targets
+    )
+    return bool(
+        len(write_targets) == len(evidence["memory_write_scale"])
+        and all(paths == {"context_memory"} for paths in write_targets)
+        and len(query_targets)
+        == len(evidence["workspace_query_projection/weight"])
+        and all(paths == {"reasoning_query"} for paths in query_targets)
+        and len(read_targets) == len(evidence["memory_read_projection/weight"])
+        and read_has_workspace_lif
+    )
+
+
+def _architecture_digests_valid(architecture: Mapping[str, Any]) -> bool:
+    return all(
+        isinstance(architecture.get(name), str)
+        and bool(re.fullmatch(r"[0-9a-f]{64}", architecture[name]))
+        for name in (
+            "key_basis_sha256",
+            "key_bias_sha256",
+            "value_basis_sha256",
+        )
+    )
+
+
+def _all_color_separation_complete(
+    report: Mapping[str, Any],
+    *,
+    protocol: str,
+    row_event_input_width: int,
+    raw_key_feature_width: int,
+) -> bool:
+    gram = np.asarray(report["gram"], dtype=np.float64)
+    if (
+        report["protocol"] != protocol
+        or int(report["row_event_input_width"]) != row_event_input_width
+        or int(report["raw_key_feature_width"]) != raw_key_feature_width
+        or not _architecture_digests_valid(report["architecture"])
+        or report["candidate_colors"] != list(range(STRUCTURAL_COLOR_COUNT))
+        or int(report["color_count"]) != STRUCTURAL_COLOR_COUNT
+        or report["gram_shape"]
+        != [STRUCTURAL_COLOR_COUNT, STRUCTURAL_COLOR_COUNT]
+        or gram.shape != (STRUCTURAL_COLOR_COUNT, STRUCTURAL_COLOR_COUNT)
+        or not np.isfinite(gram).all()
+        or not np.allclose(gram, gram.T, rtol=0.0, atol=1e-12)
+    ):
+        return False
+    diagonal = np.diag(gram)
+    off_diagonal = gram[~np.eye(STRUCTURAL_COLOR_COUNT, dtype=bool)]
+    diagonal_minimum = float(diagonal.min())
+    off_diagonal_maximum = float(off_diagonal.max())
+    margin = diagonal_minimum - off_diagonal_maximum
+    return bool(
+        np.allclose(
+            np.asarray(report["diagonal"], dtype=np.float64),
+            diagonal,
+            rtol=0.0,
+            atol=1e-12,
+        )
+        and math.isclose(
+            float(report["diagonal_minimum"]),
+            diagonal_minimum,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(
+            float(report["off_diagonal_maximum"]),
+            off_diagonal_maximum,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(
+            float(report["separation_margin"]),
+            margin,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        and math.isclose(
+            float(report["worst_global_margin"]),
+            margin,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+    )
+
+
+def _gpu_environment_verified(environment: Mapping[str, Any]) -> bool:
+    devices = environment["devices"]
+    return bool(
+        environment["backend"] == "gpu"
+        and isinstance(devices, list)
+        and devices
+        and all(isinstance(device, Mapping) for device in devices)
+        and any(device.get("platform") == "gpu" for device in devices)
+        and bool(
+            re.fullmatch(
+                r"sha256:[0-9a-f]{64}", str(environment["image_digest"])
+            )
+        )
+    )
+
+
+def _source_evidence_clean(source: Mapping[str, Any]) -> bool:
+    commit = str(source["commit"])
+    asserted_commit = source["asserted_commit"]
+    return bool(
+        re.fullmatch(r"[0-9a-f]{40}", commit)
+        and isinstance(asserted_commit, str)
+        and bool(re.fullmatch(r"[0-9a-f]{40}", asserted_commit.lower()))
+        and asserted_commit.lower() == commit
+        and source["commit_is_valid_40_hex"] is True
+        and source["asserted_commit_matches_head"] is True
+        and source["asserted_dirty"] is False
+        and source["asserted_dirty_matches_worktree"] is True
+        and source["verified"] is True
+        and source["dirty"] is False
+    )
+
+
+_QUALIFICATION_CRITERIA = (
+    "held_out_count_at_least_256",
+    "intact_accuracy_at_least_0_80",
+    "intact_wilson_lower_above_pairing_chance",
+    "intact_minus_shuffled_at_least_0_25",
+    "shuffled_not_demonstrably_above_pairing_chance",
+    "exact_marginal_equality",
+    "every_intact_shuffled_memory_differs",
+    "no_context_memory_exact_zero",
+    "compiler_required_paths_all_direct",
+    "context_memory_hidden_group_isolated",
+    "required_direct_parameters_moved",
+    "training_losses_complete_and_finite",
+    "evaluation_complete_and_finite",
+    "diagnostic_state_tensors_complete_and_finite",
+    "gpu_backend_verified",
+    "architecture_matches_preregistered_components",
+    "gate_native_all_colors_covered",
+    "gate_native_key_separation_margin_passed",
+    "gate_native_zero_event_key_exact_zero",
+    "gate_native_basis_matches_training_model",
+    "standard_arc_all_colors_covered",
+    "standard_arc_key_separation_margin_passed",
+    "standard_arc_zero_event_key_exact_zero",
+    "standard_arc_shared_encoder_invariants_match",
+    "source_start_verified_clean",
+    "source_end_verified_clean",
+    "source_head_stable",
+    "preregistered_full_configuration",
+)
+
+
 def _qualification_report(
     *,
     evaluation: Mapping[str, Any],
     diagnostics: Mapping[str, Any],
     compiler: Mapping[str, Any],
     training: Mapping[str, Any],
+    environment: Mapping[str, Any],
     architecture: Mapping[str, Any],
     gate_native_separation: Mapping[str, Any],
     standard_arc_separation: Mapping[str, Any],
     marginals: Mapping[str, Any],
-    source: Mapping[str, Any],
+    source_start: Mapping[str, Any],
+    source_end: Mapping[str, Any],
     config: BindingGateConfig,
 ) -> dict[str, Any]:
+    criteria = {name: False for name in _QUALIFICATION_CRITERIA}
     try:
         intact = evaluation["intact"]
         shuffled = evaluation["shuffled"]
@@ -738,7 +1228,41 @@ def _qualification_report(
         ]
         direct_evidence = compiler["direct_path_evidence"]
         movements = training["required_direct_parameter_movement"]
-        criteria = {
+        compiler_direct = bool(
+            compiler["available"] is True
+            and not compiler_errors
+            and set(compiler["required_direct_paths"]) == required_paths
+            and required_paths.issubset(compiler["compiled_parameter_paths"])
+            and set(compiler["direct_path_status"]) == required_paths
+            and all(
+                compiler["direct_path_status"][path] is True
+                for path in required_paths
+            )
+            and set(direct_evidence) == required_paths
+            and all(
+                direct_evidence[path]
+                and all(
+                    item.get("classification") == "all_direct"
+                    for item in direct_evidence[path]
+                )
+                for path in required_paths
+            )
+            and compiler["all_required_direct"] is True
+            and _compiler_topology_complete(compiler)
+        )
+        gate_native_all_colors = _all_color_separation_complete(
+            gate_native_separation,
+            protocol="gate_native_k10_query_key_gram_18_features",
+            row_event_input_width=41,
+            raw_key_feature_width=18,
+        )
+        standard_arc_all_colors = _all_color_separation_complete(
+            standard_arc_separation,
+            protocol="standard_arc_k10_query_key_gram_424_features",
+            row_event_input_width=830,
+            raw_key_feature_width=424,
+        )
+        criteria.update({
             "held_out_count_at_least_256": (
                 int(intact["count"]) >= 256
                 and int(intact["count"]) == config.validation_episodes
@@ -761,26 +1285,10 @@ def _qualification_report(
                 and int(memory["applicable_count"]) == int(intact["count"])
             ),
             "no_context_memory_exact_zero": (memory["no_context_exact_zero"] is True),
-            "compiler_required_paths_all_direct": (
-                compiler["available"] is True
-                and not compiler_errors
-                and set(compiler["required_direct_paths"]) == required_paths
-                and required_paths.issubset(compiler["compiled_parameter_paths"])
-                and set(compiler["direct_path_status"]) == required_paths
-                and all(
-                    compiler["direct_path_status"][path] is True
-                    for path in required_paths
-                )
-                and set(direct_evidence) == required_paths
-                and all(
-                    direct_evidence[path]
-                    and all(
-                        item.get("classification") == "all_direct"
-                        for item in direct_evidence[path]
-                    )
-                    for path in required_paths
-                )
-                and compiler["all_required_direct"] is True
+            "compiler_required_paths_all_direct": compiler_direct,
+            "context_memory_hidden_group_isolated": (
+                compiler["context_memory_isolated_from_workspace_lif"] is True
+                and _context_memory_isolated(compiler["hidden_groups"])
             ),
             "required_direct_parameters_moved": (
                 set(movements) == required_paths
@@ -792,6 +1300,16 @@ def _qualification_report(
                     for path in required_paths
                 )
             ),
+            "training_losses_complete_and_finite": _training_evidence_complete(
+                training, config
+            ),
+            "evaluation_complete_and_finite": _evaluation_evidence_complete(
+                evaluation, config
+            ),
+            "diagnostic_state_tensors_complete_and_finite": (
+                _diagnostic_evidence_complete(diagnostics, config)
+            ),
+            "gpu_backend_verified": _gpu_environment_verified(environment),
             "architecture_matches_preregistered_components": (
                 architecture["mode"] == "associative_workspace"
                 and int(architecture["memory_width"]) == PREREGISTERED_MEMORY_WIDTH
@@ -804,23 +1322,18 @@ def _qualification_report(
                 and architecture["write_component_type"] == "braintrace.element_wise"
                 and architecture["query_component_type"] == "braintrace.nn.Linear"
                 and architecture["read_component_type"] == "braintrace.nn.Linear"
-                and all(
-                    isinstance(architecture[name], str)
-                    and len(architecture[name]) == 64
-                    for name in (
-                        "key_basis_sha256",
-                        "key_bias_sha256",
-                        "value_basis_sha256",
-                    )
-                )
+                and _architecture_digests_valid(architecture)
             ),
+            "gate_native_all_colors_covered": gate_native_all_colors,
             "gate_native_key_separation_margin_passed": (
-                gate_native_separation["margin_passed"] is True
+                gate_native_all_colors
+                and gate_native_separation["margin_passed"] is True
                 and int(gate_native_separation["memory_width"])
                 == config.context_memory_width
                 and int(gate_native_separation["model_seed"]) == config.model_seed
                 and float(gate_native_separation["separation_margin"])
                 > float(gate_native_separation["required_margin"])
+                and float(gate_native_separation["required_margin"]) == 0.25
             ),
             "gate_native_zero_event_key_exact_zero": (
                 gate_native_separation["zero_event_key_exact_zero"] is True
@@ -829,13 +1342,16 @@ def _qualification_report(
             "gate_native_basis_matches_training_model": (
                 gate_native_separation["architecture"] == architecture
             ),
+            "standard_arc_all_colors_covered": standard_arc_all_colors,
             "standard_arc_key_separation_margin_passed": (
-                standard_arc_separation["margin_passed"] is True
+                standard_arc_all_colors
+                and standard_arc_separation["margin_passed"] is True
                 and int(standard_arc_separation["memory_width"])
                 == config.context_memory_width
                 and int(standard_arc_separation["model_seed"]) == config.model_seed
                 and float(standard_arc_separation["separation_margin"])
                 > float(standard_arc_separation["required_margin"])
+                and float(standard_arc_separation["required_margin"]) == 0.25
             ),
             "standard_arc_zero_event_key_exact_zero": (
                 standard_arc_separation["zero_event_key_exact_zero"] is True
@@ -846,35 +1362,18 @@ def _qualification_report(
                     standard_arc_separation["architecture"], architecture
                 )
             ),
-            "source_clean": source["dirty"] is False,
-            "source_commit_available": str(source["commit"]) not in {"", "unavailable"},
+            "source_start_verified_clean": _source_evidence_clean(source_start),
+            "source_end_verified_clean": _source_evidence_clean(source_end),
+            "source_head_stable": (
+                str(source_start["commit"]) == str(source_end["commit"])
+                and bool(re.fullmatch(r"[0-9a-f]{40}", str(source_start["commit"])))
+            ),
             "preregistered_full_configuration": (
                 config.qualification_regime == "preregistered_full"
             ),
-        }
-    except (AttributeError, KeyError, TypeError, ValueError, OverflowError):
-        criteria = {
-            "held_out_count_at_least_256": False,
-            "intact_accuracy_at_least_0_80": False,
-            "intact_wilson_lower_above_pairing_chance": False,
-            "intact_minus_shuffled_at_least_0_25": False,
-            "shuffled_not_demonstrably_above_pairing_chance": False,
-            "exact_marginal_equality": False,
-            "every_intact_shuffled_memory_differs": False,
-            "no_context_memory_exact_zero": False,
-            "compiler_required_paths_all_direct": False,
-            "required_direct_parameters_moved": False,
-            "architecture_matches_preregistered_components": False,
-            "gate_native_key_separation_margin_passed": False,
-            "gate_native_zero_event_key_exact_zero": False,
-            "gate_native_basis_matches_training_model": False,
-            "standard_arc_key_separation_margin_passed": False,
-            "standard_arc_zero_event_key_exact_zero": False,
-            "standard_arc_shared_encoder_invariants_match": False,
-            "source_clean": False,
-            "source_commit_available": False,
-            "preregistered_full_configuration": False,
-        }
+        })
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError, OverflowError):
+        pass
     passed = bool(all(criteria.values()))
     if passed:
         interpretation = "gate_a_passed_associative_binding"
@@ -890,18 +1389,20 @@ def _qualification_report(
 
 
 def _source_report() -> dict[str, Any]:
-    commit = os.environ.get("BRAINTRACE_SOURCE_COMMIT", "").strip()
-    dirty_env = os.environ.get("BRAINTRACE_SOURCE_DIRTY", "").strip()
-    if not commit:
-        try:
-            commit = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-        except (OSError, subprocess.CalledProcessError):
-            commit = "unavailable"
+    asserted_commit = os.environ.get("BRAINTRACE_SOURCE_COMMIT", "").strip()
+    asserted_dirty_raw = os.environ.get("BRAINTRACE_SOURCE_DIRTY", "").strip()
+    head_command_succeeded = False
+    status_command_succeeded = False
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip().lower()
+        head_command_succeeded = True
+    except (OSError, subprocess.CalledProcessError):
+        commit = "unavailable"
     try:
         dirty = bool(
             subprocess.run(
@@ -911,12 +1412,48 @@ def _source_report() -> dict[str, Any]:
                 text=True,
             ).stdout.strip()
         )
+        status_command_succeeded = True
     except (OSError, subprocess.CalledProcessError):
-        normalized_dirty = dirty_env.lower()
-        dirty = (
-            normalized_dirty not in {"0", "false", "no"} if normalized_dirty else True
-        )
-    return {"commit": commit, "dirty": dirty}
+        dirty = True
+    commit_is_valid = bool(re.fullmatch(r"[0-9a-f]{40}", commit))
+    asserted_commit_matches = (
+        not asserted_commit or asserted_commit.lower() == commit
+    )
+    asserted_dirty: bool | None
+    normalized_dirty = asserted_dirty_raw.lower()
+    if not asserted_dirty_raw:
+        asserted_dirty = None
+        asserted_dirty_matches = True
+    elif normalized_dirty in {"1", "true", "yes"}:
+        asserted_dirty = True
+        asserted_dirty_matches = dirty is True
+    elif normalized_dirty in {"0", "false", "no"}:
+        asserted_dirty = False
+        asserted_dirty_matches = dirty is False
+    else:
+        asserted_dirty = None
+        asserted_dirty_matches = False
+    verified = bool(
+        head_command_succeeded
+        and status_command_succeeded
+        and commit_is_valid
+        and bool(asserted_commit)
+        and asserted_commit_matches
+        and asserted_dirty is not None
+        and asserted_dirty_matches
+    )
+    return {
+        "commit": commit,
+        "asserted_commit": asserted_commit or None,
+        "asserted_commit_matches_head": asserted_commit_matches,
+        "commit_is_valid_40_hex": commit_is_valid,
+        "head_command_succeeded": head_command_succeeded,
+        "dirty": dirty,
+        "asserted_dirty": asserted_dirty,
+        "asserted_dirty_matches_worktree": asserted_dirty_matches,
+        "status_command_succeeded": status_command_succeeded,
+        "verified": verified,
+    }
 
 
 def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
@@ -937,7 +1474,22 @@ def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
     if not isinstance(config, BindingGateConfig):
         raise TypeError("config must be a BindingGateConfig")
     total_start = time.perf_counter()
-    source = _source_report()
+    source_start = _source_report()
+    environment = {
+        "python": platform.python_version(),
+        "jax": jax.__version__,
+        "backend": jax.default_backend(),
+        "devices": [
+            {
+                "id": int(device.id),
+                "platform": str(device.platform),
+                "device_kind": str(device.device_kind),
+                "process_index": int(device.process_index),
+            }
+            for device in jax.devices()
+        ],
+        "image_digest": os.environ.get("BRAINTRACE_IMAGE_DIGEST", "").strip(),
+    }
     data_start = time.perf_counter()
     data = build_binding_data(config)
     data_seconds = time.perf_counter() - data_start
@@ -954,30 +1506,29 @@ def run_binding_gate(config: BindingGateConfig) -> dict[str, Any]:
     training, _, compiler = _train_pp_prop(model, data, config)
     evaluation, diagnostics = _evaluate_model(model, data, config)
     marginals = _marginal_identity_report(data, config)
+    environment["device_memory_after_run"] = legacy._device_memory_report()
+    source_end = _source_report()
     qualification = _qualification_report(
         evaluation=evaluation,
         diagnostics=diagnostics,
         compiler=compiler,
         training=training,
+        environment=environment,
         architecture=architecture,
         gate_native_separation=gate_native_separation,
         standard_arc_separation=standard_arc_separation,
         marginals=marginals,
-        source=source,
+        source_start=source_start,
+        source_end=source_end,
         config=config,
     )
     result = {
-        "schema_version": 1,
+        "schema_version": 2,
         "control": "example21_associative_workspace_binding_gate_a",
         "learner": "pp_prop_only",
-        "source": source,
-        "environment": {
-            "python": platform.python_version(),
-            "jax": jax.__version__,
-            "backend": jax.default_backend(),
-            "devices": [str(device) for device in jax.devices()],
-            "device_memory_after_run": legacy._device_memory_report(),
-        },
+        "source": source_start,
+        "source_end": source_end,
+        "environment": environment,
         "config": {
             **dataclasses.asdict(config),
             "configuration_scale": config.configuration_scale,
