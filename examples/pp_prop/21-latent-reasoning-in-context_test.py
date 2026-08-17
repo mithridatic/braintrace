@@ -9,15 +9,28 @@ import importlib.util
 import json
 import pathlib
 import sys
+import warnings
 from enum import Enum
 from types import SimpleNamespace
 
 import brainstate
+import braintrace
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 
+from braintrace._testing.oracle import (
+    assert_gradients_differ,
+    bptt_param_gradients,
+    chunked_online_param_gradients,
+    gradient_norm,
+    relative_deviation,
+)
+from examples.pp_prop.latent_workspace_model import (
+    LatentWorkspaceModel,
+    ModelConfig,
+)
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
     ArcPair,
@@ -32,6 +45,66 @@ from examples.pp_prop.latent_workspace_task import (
 
 
 EXAMPLE = pathlib.Path(__file__).with_name("21-latent-reasoning-in-context.py")
+
+
+_PADDING_PROBE_EVENT_WIDTH = 6
+
+
+class _PaddingTraceProbe(brainstate.nn.Module):
+    """Expose a terminal residual around the real Example 21 reservoir."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        config = ModelConfig(
+            input_width=_PADDING_PROBE_EVENT_WIDTH,
+            neuron_count=64,
+            recurrent_edges=64,
+            max_latent_steps=4,
+            readout_width=8,
+            color_rank=1,
+            input_gain=40.0,
+            seed=41,
+            sparse_backend="jax_raw",
+        )
+        self.reservoir = LatentWorkspaceModel(config)
+        self.target = jnp.zeros(
+            (1, config.compact_output_width), dtype=jnp.float32
+        ).at[:, 0].set(1.0)
+
+    def update(self, packed: jax.Array) -> jax.Array:
+        event = packed[:, :_PADDING_PROBE_EVENT_WIDTH]
+        advance = packed[:, _PADDING_PROBE_EVENT_WIDTH] > 0.5
+        loss_gate = packed[:, _PADDING_PROBE_EVENT_WIDTH + 1 :]
+        return loss_gate * (self.reservoir(event, advance) - self.target)
+
+
+def _padding_trace_probe_inputs() -> tuple[jax.Array, jax.Array]:
+    padded = jnp.asarray(
+        [
+            [[1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+            [[1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]],
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]],
+        ],
+        dtype=jnp.float32,
+    )
+    return padded, padded[jnp.asarray([0, 4, 5])]
+
+
+def _padding_probe_pp_prop(model: brainstate.nn.Module):
+    trace_config = braintrace.ETraceConfig(
+        trace_factorization="io_factorized",
+        recurrence_scope="diagonal",
+        decay=0.9,
+    )
+    return braintrace.pp_prop(
+        model,
+        decay_or_rank=0.9,
+        vjp_method="multi-step",
+        config=trace_config,
+    )
 
 
 def _load_example():
@@ -502,6 +575,35 @@ def test_advance_schedule_never_drops_a_valid_demonstration_row(example):
         assert not (valid & ~intact_advances[: len(valid)]).any()
 
 
+def test_padding_changes_finite_window_pp_prop_credit_not_bptt_objective():
+    """Frozen rows preserve exact dynamics but still age pp-prop's trace."""
+    padded, compact = _padding_trace_probe_inputs()
+    factory = _PaddingTraceProbe
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        padded_bptt = bptt_param_gradients(factory, padded)
+        compact_bptt = bptt_param_gradients(factory, compact)
+        padded_pp_prop = chunked_online_param_gradients(
+            factory,
+            padded,
+            algo_factory=_padding_probe_pp_prop,
+            chunk_size=1,
+        )
+        compact_pp_prop = chunked_online_param_gradients(
+            factory,
+            compact,
+            algo_factory=_padding_probe_pp_prop,
+            chunk_size=1,
+        )
+
+    assert gradient_norm(compact_bptt) > 1.0
+    assert relative_deviation(padded_bptt, compact_bptt) == pytest.approx(
+        0.0, abs=1e-7
+    )
+    assert_gradients_differ(padded_pp_prop, compact_pp_prop, min_rel=1e-4)
+
+
 def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
     first = example._effort_schedule(11, brainstate.random.RandomState(7))
     second = example._effort_schedule(11, brainstate.random.RandomState(7))
@@ -510,6 +612,39 @@ def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
     assert np.array_equal(first, second)
     assert set(first.tolist()) == {8, 16, 32}
     assert max(counts.values()) - min(counts.values()) <= 1
+
+
+def test_training_stream_compacts_learning_rule_timeline(example):
+    """No frozen layout position may age the trace before supervised depths."""
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    tensors = example._prepare_training(example._load_data(config), config, rows)
+
+    for advances, events in zip(tensors.advances, tensors.events, strict=True):
+        advancing = advances[:, 0]
+        prefix_length = int(np.count_nonzero(advancing))
+        assert advancing[:prefix_length].all()
+        assert not advancing[prefix_length:].any()
+        assert np.count_nonzero(events[prefix_length:]) == 0
+
+
+def test_training_mask_supervises_every_depth_with_unit_update_weight(example):
+    """An effort-R update weights every depth 0..R and totals one update."""
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    tensors = example._prepare_training(example._load_data(config), config, rows)
+
+    for effort, mask in zip(tensors.efforts, tensors.masks, strict=True):
+        depth_count = int(effort) + 1
+        supervised = np.flatnonzero(mask)
+        assert supervised.size == depth_count
+        np.testing.assert_array_equal(
+            supervised, np.arange(supervised[-1] - int(effort), supervised[-1] + 1)
+        )
+        np.testing.assert_allclose(
+            mask[supervised], np.full(depth_count, 1.0 / depth_count)
+        )
+        assert float(np.sum(mask)) == pytest.approx(1.0)
 
 
 def test_training_tensor_terminals_follow_each_sample_effort(example):
@@ -524,8 +659,10 @@ def test_training_tensor_terminals_follow_each_sample_effort(example):
     assert tensors.colors.shape == (3, 1, 30, 30)
     assert np.all(np.sum(tensors.masks, axis=1) == 1.0)
     for index, effort in enumerate(tensors.efforts):
-        terminal = int(np.flatnonzero(tensors.masks[index])[0])
-        checkpoint = terminal - int(effort)
+        supervised = np.flatnonzero(tensors.masks[index])
+        checkpoint = int(supervised[0])
+        terminal = int(supervised[-1])
+        assert terminal - checkpoint == int(effort)
         assert tensors.events[index, checkpoint, 0, rows.valid_slice.start] == 1.0
         assert (
             np.count_nonzero(tensors.events[index, checkpoint + 1 : terminal + 1]) == 0
