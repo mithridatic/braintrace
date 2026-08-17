@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import time
 import warnings
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
 
 import brainstate
@@ -1886,17 +1889,23 @@ def _gate_b_initialization_report(
     *,
     gate_a: Mapping[str, Any],
     source_start: Mapping[str, Any],
-    source_end: Mapping[str, Any],
+    source_end_reporter: Callable[[], Mapping[str, Any]],
     source_files: Mapping[str, Any],
     environment: Mapping[str, Any],
 ) -> dict[str, Any]:
+    if not callable(source_end_reporter):
+        raise TypeError("source_end_reporter must be callable")
+    initialization = _initialization_report(model, config)
+    source_end = source_end_reporter()
+    if not isinstance(source_end, Mapping):
+        raise TypeError("source_end_reporter must return a mapping")
     report = {
         "schema_version": GATE_B_SCHEMA_VERSION,
         "control": GATE_B_INITIALIZATION_CONTROL,
         "qualification_regime": config.qualification_regime,
         "config": asdict(config),
         "prerequisites": {"gate_a": dict(gate_a)},
-        "initialization": _initialization_report(model, config),
+        "initialization": initialization,
         "source_start": dict(source_start),
         "source_end": dict(source_end),
         "source_files": dict(source_files),
@@ -2294,3 +2303,170 @@ def run_depth_gate(
     report["qualification"] = _qualification_report(report, config=config)
     report["total_wall_seconds"] = time.perf_counter() - start
     return report
+
+
+def _source_files_report(config: DepthGateConfig) -> dict[str, str]:
+    source_directory = Path(__file__).resolve().parent
+    paths = {
+        "latent_workspace_model.py": source_directory / "latent_workspace_model.py",
+        "latent_workspace_task.py": source_directory / "latent_workspace_task.py",
+    }
+    result = {
+        name: hashlib.sha256(path.read_bytes()).hexdigest()
+        for name, path in paths.items()
+    }
+    expected = {
+        "latent_workspace_model.py": config.model_source_sha256,
+        "latent_workspace_task.py": config.task_source_sha256,
+    }
+    if config.qualification_regime == "preregistered_full" and result != expected:
+        raise RuntimeError("Gate B model or task source digest changed")
+    return result
+
+
+def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
+    """Write one deterministic, standards-compliant Gate B artifact.
+
+    Parameters
+    ----------
+    value
+        JSON-compatible top-level mapping. NaN and infinity are rejected.
+    path
+        Final artifact path.
+
+    Returns
+    -------
+    pathlib.Path
+        Final artifact path after an atomic replacement.
+    """
+
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    payload = (
+        json.dumps(
+            value,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+            separators=(",", ": "),
+        )
+        + "\n"
+    )
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(destination)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    return destination
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--target",
+        choices=("gate_b_init", "formal_gate_b"),
+        required=True,
+    )
+    parser.add_argument("--gate-a-result", type=Path, required=True)
+    parser.add_argument("--gate-a-manifest", type=Path, required=True)
+    parser.add_argument("--gate-b-init-manifest", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run one fixed authenticated Gate B target.
+
+    Parameters
+    ----------
+    argv
+        Command-line arguments excluding the executable name.
+
+    Returns
+    -------
+    int
+        Zero after a complete artifact is written. Scientific failure remains
+        encoded in the artifact for the authenticated launcher to sign.
+    """
+
+    from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+
+    args = _parser().parse_args(argv)
+    if args.target == "gate_b_init" and args.gate_b_init_manifest is not None:
+        raise ValueError("gate_b_init target rejects an initialization manifest")
+    if args.target == "formal_gate_b" and args.gate_b_init_manifest is None:
+        raise ValueError("formal_gate_b target requires an initialization manifest")
+
+    repo_root = Path(__file__).resolve().parents[2]
+    launch_config = launcher.LaunchConfig(
+        target=args.target,
+        repo_root=repo_root,
+        output_dir=args.output.resolve().parent,
+    )
+    gate_a_paths = launcher._gate_a_artifact_paths(launch_config)
+    if (
+        args.gate_a_result.resolve() != gate_a_paths.result.resolve()
+        or args.gate_a_manifest.resolve() != gate_a_paths.manifest.resolve()
+    ):
+        raise ValueError("Gate B target requires the fixed Gate A artifact paths")
+
+    source_start = gate._source_report()
+    environment = gate._environment_report()
+    gate._require_authenticated_gpu_launch(source_start, environment)
+    head = str(source_start["commit"])
+    expected_paths = launcher.target_paths(launch_config, head, args.target)
+    if args.output.resolve() != expected_paths.result.resolve():
+        raise ValueError("Gate B target requires the fixed output path")
+    if args.target == "formal_gate_b":
+        expected_init = launcher.target_paths(
+            launch_config, head, "gate_b_init"
+        ).manifest
+        if args.gate_b_init_manifest.resolve() != expected_init.resolve():
+            raise ValueError("formal_gate_b requires the fixed initialization manifest")
+
+    gate_a = launcher._load_gate_a_prerequisite(launch_config)
+    config = DepthGateConfig()
+    source_files = _source_files_report(config)
+    if args.target == "gate_b_init":
+        model = LatentWorkspaceModel(
+            _model_config(config, batch_size=config.batch_size)
+        )
+        result = _gate_b_initialization_report(
+            model,
+            config,
+            gate_a=gate_a,
+            source_start=source_start,
+            source_end_reporter=gate._source_report,
+            source_files=source_files,
+            environment=environment,
+        )
+    else:
+        initialization = launcher._load_gate_b_init_manifest(
+            launch_config,
+            head=head,
+            image_id=str(environment["image_digest"]),
+        )
+        result = run_depth_gate(
+            config,
+            prerequisites={
+                "gate_a": gate_a,
+                "gate_b_initialization": initialization,
+            },
+            source_start=source_start,
+            source_end_reporter=gate._source_report,
+            source_files=source_files,
+            environment=environment,
+        )
+    destination = write_artifact(result, args.output)
+    print(destination)
+    print(json.dumps(result["qualification"], sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -11,6 +11,7 @@ import json
 import math
 import warnings
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import brainstate
@@ -26,8 +27,9 @@ from braintrace._testing.oracle import (
     gradient_norm,
     relative_deviation,
 )
-from examples.pp_prop import latent_workspace_depth_gate as depth
 from examples.pp_prop import latent_workspace_binding_control as legacy
+from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+from examples.pp_prop import latent_workspace_depth_gate as depth
 from examples.pp_prop.latent_workspace_model import LatentWorkspaceModel
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
@@ -1859,7 +1861,9 @@ def test_train_depth_gate_host_loop_never_calls_model_or_reencodes_schedule() ->
     assert not any(isinstance(node, ast.While) for node in ast.walk(function))
 
 
-def test_gate_b_initialization_admission_recomputes_full_authenticated_report() -> None:
+def test_gate_b_initialization_admission_recomputes_full_authenticated_report(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     config = depth.DepthGateConfig()
     model = LatentWorkspaceModel(
         depth._model_config(config, batch_size=config.batch_size)
@@ -1870,17 +1874,34 @@ def test_gate_b_initialization_admission_recomputes_full_authenticated_report() 
     source_end = passing["source_end"]
     source_files = passing["source_files"]
     environment = passing["environment"]
+    lifecycle: list[str] = []
+    real_initialization_report = depth._initialization_report
+
+    def initialization_report(
+        actual_model: LatentWorkspaceModel,
+        actual_config: depth.DepthGateConfig,
+    ) -> dict[str, Any]:
+        result = real_initialization_report(actual_model, actual_config)
+        lifecycle.append("initialization_complete")
+        return result
+
+    def source_end_reporter() -> Mapping[str, Any]:
+        lifecycle.append("source_end_captured")
+        return source_end
+
+    monkeypatch.setattr(depth, "_initialization_report", initialization_report)
 
     report = depth._gate_b_initialization_report(
         model,
         config,
         gate_a=gate_a,
         source_start=source_start,
-        source_end=source_end,
+        source_end_reporter=source_end_reporter,
         source_files=source_files,
         environment=environment,
     )
 
+    assert lifecycle == ["initialization_complete", "source_end_captured"]
     assert set(report) == {
         "schema_version",
         "control",
@@ -2093,7 +2114,7 @@ def test_reduced_run_depth_gate_executes_real_pp_prop_and_assembles_strict_repor
         config,
         gate_a=passing["prerequisites"]["gate_a"],
         source_start=passing["source_start"],
-        source_end=passing["source_end"],
+        source_end_reporter=lambda: passing["source_end"],
         source_files=passing["source_files"],
         environment=passing["environment"],
     )
@@ -2708,3 +2729,358 @@ def test_gate_b_qualification_labels_abbreviated_regime_without_capability() -> 
     assert qualification["interpretation"] == (
         "nonqualifying_abbreviated_no_capability_conclusion"
     )
+
+
+def _depth_cli_host_argv(
+    target: str,
+) -> tuple[launcher.LaunchConfig, launcher.TargetPaths, list[str]]:
+    repo_root = Path(depth.__file__).resolve().parents[2]
+    config = launcher.LaunchConfig(
+        target=target,
+        repo_root=repo_root,
+        output_dir=repo_root / "var" / "example21-depth-gate",
+    )
+    head = "a" * 40
+    paths = launcher.target_paths(config, head, target)
+    gate_a = launcher._gate_a_artifact_paths(config)
+    argv = [
+        "--target",
+        target,
+        "--gate-a-result",
+        str(gate_a.result),
+        "--gate-a-manifest",
+        str(gate_a.manifest),
+    ]
+    if target == "formal_gate_b":
+        argv.extend(
+            [
+                "--gate-b-init-manifest",
+                str(launcher.target_paths(config, head, "gate_b_init").manifest),
+            ]
+        )
+    argv.extend(["--output", str(paths.result)])
+    return config, paths, argv
+
+
+def test_depth_artifact_writer_is_atomic_deterministic_and_strict(
+    tmp_path: Path,
+) -> None:
+    destination = tmp_path / "nested" / "depth.json"
+    value = {"z": 1, "a": [True, None]}
+
+    written = depth.write_artifact(value, destination)
+
+    expected = (
+        json.dumps(
+            value,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+            separators=(",", ": "),
+        )
+        + "\n"
+    )
+    assert written == destination
+    assert destination.read_text(encoding="utf-8") == expected
+    assert not destination.with_suffix(".json.tmp").exists()
+
+    invalid = tmp_path / "nonfinite.json"
+    with pytest.raises(ValueError, match="JSON|range|compliant"):
+        depth.write_artifact({"loss": math.nan}, invalid)
+    assert not invalid.exists()
+    assert not invalid.with_suffix(".json.tmp").exists()
+
+
+@pytest.mark.parametrize("target", ["gate_b_init", "formal_gate_b"])
+def test_depth_parser_accepts_exact_launcher_module_argv(target: str) -> None:
+    config, paths, _ = _depth_cli_host_argv(target)
+    command = launcher.gate_command(
+        config,
+        image_id="sha256:" + "b" * 64,
+        head="a" * 40,
+        paths=paths,
+        git_dir_in_container="/git-common/worktrees/depth",
+        admission_manifests=None,
+    )
+    python_index = command.index("python")
+    assert command[python_index : python_index + 3] == [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_depth_gate",
+    ]
+    argv = command[python_index + 3 :]
+
+    parsed = depth._parser().parse_args(argv)
+
+    assert set(vars(parsed)) == {
+        "target",
+        "gate_a_result",
+        "gate_a_manifest",
+        "gate_b_init_manifest",
+        "output",
+    }
+    assert parsed.target == target
+    assert parsed.output == Path(str(paths.container_result))
+    assert parsed.gate_b_init_manifest is None if target == "gate_b_init" else (
+        parsed.gate_b_init_manifest is not None
+    )
+
+
+def test_depth_parser_exposes_no_topology_or_budget_overrides() -> None:
+    _, _, argv = _depth_cli_host_argv("gate_b_init")
+
+    with pytest.raises(SystemExit) as error:
+        depth._parser().parse_args([*argv, "--neuron-count", "64"])
+
+    assert error.value.code == 2
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["wrong_gate_a_path", "init_with_init_manifest", "formal_without_init_manifest"],
+)
+def test_depth_cli_rejects_nonfixed_or_target_incompatible_paths(
+    mutation: str,
+) -> None:
+    target = "formal_gate_b" if mutation == "formal_without_init_manifest" else (
+        "gate_b_init"
+    )
+    _, paths, argv = _depth_cli_host_argv(target)
+    if mutation == "wrong_gate_a_path":
+        argv[argv.index("--gate-a-result") + 1] = str(paths.result)
+    elif mutation == "init_with_init_manifest":
+        argv.extend(["--gate-b-init-manifest", str(paths.manifest)])
+    else:
+        index = argv.index("--gate-b-init-manifest")
+        del argv[index : index + 2]
+
+    with pytest.raises(ValueError, match="fixed|manifest|target"):
+        depth.main(argv)
+
+
+def test_gate_b_init_cli_loads_gate_a_and_emits_full_admission(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config, paths, argv = _depth_cli_host_argv("gate_b_init")
+    passing = _passing_depth_report()
+    admission = copy.deepcopy(
+        passing["prerequisites"]["gate_b_initialization"]["admission"]
+    )
+    gate_a = copy.deepcopy(passing["prerequisites"]["gate_a"])
+    source_reports = iter([passing["source_start"], passing["source_end"]])
+    events: list[str] = []
+    captured: dict[str, Any] = {}
+    model = object()
+
+    def source_report() -> dict[str, Any]:
+        value = copy.deepcopy(next(source_reports))
+        events.append("source_start" if not events else "source_end")
+        return value
+
+    def environment_report() -> dict[str, Any]:
+        events.append("environment")
+        return copy.deepcopy(passing["environment"])
+
+    def require_launch(source: Mapping[str, Any], environment: Mapping[str, Any]) -> None:
+        events.append("gpu_authenticated")
+        assert source == passing["source_start"]
+        assert environment == passing["environment"]
+
+    def load_gate_a(actual: launcher.LaunchConfig) -> dict[str, Any]:
+        events.append("gate_a_loaded")
+        assert actual.target == "gate_b_init"
+        assert actual.repo_root == config.repo_root
+        assert actual.output_dir == config.output_dir
+        return copy.deepcopy(gate_a)
+
+    def make_model(model_config: Any) -> object:
+        del model_config
+        events.append("fresh_model")
+        return model
+
+    def initialization_report(
+        actual_model: object,
+        actual_config: depth.DepthGateConfig,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        events.append("initialization_report")
+        captured.update(model=actual_model, config=actual_config, **kwargs)
+        reporter = kwargs["source_end_reporter"]
+        assert callable(reporter)
+        assert reporter() == passing["source_end"]
+        return copy.deepcopy(admission)
+
+    def write_artifact(value: dict[str, Any], output: Path) -> Path:
+        events.append("artifact_written")
+        captured.update(value=value, output=output)
+        return output
+
+    monkeypatch.setattr(depth.gate, "_source_report", source_report)
+    monkeypatch.setattr(depth.gate, "_environment_report", environment_report)
+    monkeypatch.setattr(depth.gate, "_require_authenticated_gpu_launch", require_launch)
+    monkeypatch.setattr(launcher, "_load_gate_a_prerequisite", load_gate_a)
+    monkeypatch.setattr(depth, "LatentWorkspaceModel", make_model)
+    monkeypatch.setattr(depth, "_gate_b_initialization_report", initialization_report)
+    monkeypatch.setattr(depth, "write_artifact", write_artifact, raising=False)
+
+    assert depth.main(argv) == 0
+
+    assert events == [
+        "source_start",
+        "environment",
+        "gpu_authenticated",
+        "gate_a_loaded",
+        "fresh_model",
+        "initialization_report",
+        "source_end",
+        "artifact_written",
+    ]
+    assert captured["model"] is model
+    assert captured["config"] == depth.DepthGateConfig()
+    assert captured["gate_a"] == gate_a
+    assert captured["source_start"] == passing["source_start"]
+    assert callable(captured["source_end_reporter"])
+    assert captured["source_files"] == passing["source_files"]
+    assert captured["environment"] == passing["environment"]
+    assert captured["value"] == admission
+    assert captured["output"] == paths.result
+    stdout = capsys.readouterr().out
+    assert str(paths.result) in stdout
+    assert '"passed": true' in stdout
+
+
+def test_formal_gate_b_cli_loads_both_prerequisites_and_passes_postflight_reporter(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config, paths, argv = _depth_cli_host_argv("formal_gate_b")
+    passing = _passing_depth_report()
+    gate_a = copy.deepcopy(passing["prerequisites"]["gate_a"])
+    init_bundle = copy.deepcopy(passing["prerequisites"]["gate_b_initialization"])
+    source_reports = iter([passing["source_start"], passing["source_end"]])
+    events: list[str] = []
+    captured: dict[str, Any] = {}
+
+    def source_report() -> dict[str, Any]:
+        value = copy.deepcopy(next(source_reports))
+        events.append("source_start" if not events else "source_end")
+        return value
+
+    def environment_report() -> dict[str, Any]:
+        events.append("environment")
+        return copy.deepcopy(passing["environment"])
+
+    def require_launch(source: Mapping[str, Any], environment: Mapping[str, Any]) -> None:
+        del source, environment
+        events.append("gpu_authenticated")
+
+    def load_gate_a(actual: launcher.LaunchConfig) -> dict[str, Any]:
+        events.append("gate_a_loaded")
+        assert actual.target == "formal_gate_b"
+        return copy.deepcopy(gate_a)
+
+    def load_init(
+        actual: launcher.LaunchConfig,
+        *,
+        head: str,
+        image_id: str,
+    ) -> dict[str, Any]:
+        events.append("initialization_loaded")
+        assert actual.target == "formal_gate_b"
+        assert head == passing["source_start"]["commit"]
+        assert image_id == passing["environment"]["image_digest"]
+        return copy.deepcopy(init_bundle)
+
+    def run_gate(
+        actual_config: depth.DepthGateConfig,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        events.append("core_run")
+        captured.update(config=actual_config, **kwargs)
+        reporter = kwargs["source_end_reporter"]
+        assert callable(reporter)
+        source_end = reporter()
+        result = copy.deepcopy(passing)
+        result["prerequisites"] = copy.deepcopy(kwargs["prerequisites"])
+        result["source_start"] = copy.deepcopy(kwargs["source_start"])
+        result["source_end"] = copy.deepcopy(source_end)
+        result["qualification"] = {
+            "passed": False,
+            "criteria": {},
+            "interpretation": "gate_b_failed_stop_no_capability_conclusion",
+        }
+        return result
+
+    def write_artifact(value: dict[str, Any], output: Path) -> Path:
+        events.append("artifact_written")
+        captured.update(value=value, output=output)
+        return output
+
+    monkeypatch.setattr(depth.gate, "_source_report", source_report)
+    monkeypatch.setattr(depth.gate, "_environment_report", environment_report)
+    monkeypatch.setattr(depth.gate, "_require_authenticated_gpu_launch", require_launch)
+    monkeypatch.setattr(launcher, "_load_gate_a_prerequisite", load_gate_a)
+    monkeypatch.setattr(launcher, "_load_gate_b_init_manifest", load_init)
+    monkeypatch.setattr(depth, "run_depth_gate", run_gate)
+    monkeypatch.setattr(depth, "write_artifact", write_artifact, raising=False)
+
+    assert depth.main(argv) == 0
+
+    assert events == [
+        "source_start",
+        "environment",
+        "gpu_authenticated",
+        "gate_a_loaded",
+        "initialization_loaded",
+        "core_run",
+        "source_end",
+        "artifact_written",
+    ]
+    assert captured["config"] == depth.DepthGateConfig()
+    assert captured["prerequisites"] == {
+        "gate_a": gate_a,
+        "gate_b_initialization": init_bundle,
+    }
+    assert captured["source_start"] == passing["source_start"]
+    assert captured["source_files"] == passing["source_files"]
+    assert captured["environment"] == passing["environment"]
+    assert captured["output"] == paths.result
+    assert captured["value"]["qualification"]["passed"] is False
+    stdout = capsys.readouterr().out
+    assert str(paths.result) in stdout
+    assert '"passed": false' in stdout
+
+
+def test_depth_cli_propagates_duplicate_json_authentication_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, _, argv = _depth_cli_host_argv("gate_b_init")
+    duplicate = tmp_path / "duplicate.json"
+    duplicate.write_text('{"gate": 1, "gate": 2}\n', encoding="utf-8")
+    passing = _passing_depth_report()
+
+    monkeypatch.setattr(
+        depth.gate,
+        "_source_report",
+        lambda: copy.deepcopy(passing["source_start"]),
+    )
+    monkeypatch.setattr(
+        depth.gate,
+        "_environment_report",
+        lambda: copy.deepcopy(passing["environment"]),
+    )
+    monkeypatch.setattr(
+        depth.gate,
+        "_require_authenticated_gpu_launch",
+        lambda *args: None,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_a_prerequisite",
+        lambda config: launcher.load_strict_json(duplicate),
+    )
+
+    with pytest.raises(ValueError, match="duplicate JSON key"):
+        depth.main(argv)
