@@ -15,6 +15,8 @@ import pytest
 from examples.pp_prop import latent_workspace_binding_gate as gate
 from examples.pp_prop import latent_workspace_binding_gate_test as gate_fixtures
 from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+from examples.pp_prop import latent_workspace_depth_gate as depth
+from examples.pp_prop import latent_workspace_depth_gate_test as depth_fixtures
 
 
 _HEAD = "a" * 40
@@ -34,6 +36,13 @@ def _source() -> dict[str, object]:
         "status_command_succeeded": True,
         "verified": True,
     }
+
+
+def _source_at(commit: str) -> dict[str, object]:
+    value = _source()
+    value["commit"] = commit
+    value["asserted_commit"] = commit
+    return value
 
 
 def _strict_write(path: Path, value: object) -> None:
@@ -256,6 +265,59 @@ class FakeRunner:
         return subprocess.CompletedProcess(argv, 0, stdout=stdout, stderr="")
 
 
+class DepthFakeRunner(FakeRunner):
+    def __init__(
+        self,
+        repo: Path,
+        target: str,
+        *,
+        gate_a: dict[str, Any],
+        gate_b_init: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(repo, target)
+        self.gate_a = copy.deepcopy(gate_a)
+        self.gate_b_init = copy.deepcopy(gate_b_init)
+
+    def __call__(
+        self, command: Sequence[str], **kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        argv = list(command)
+        if argv and argv[0] == "docker" and "python" in argv:
+            self.calls.append(argv)
+            result_arg = argv[argv.index("--output") + 1]
+            destination = self.repo / Path(result_arg.removeprefix("/work/"))
+            self.sidecar_seen_before_gate = destination.with_suffix(
+                ".preflight.json"
+            ).is_file()
+            passing = depth_fixtures._passing_depth_report()
+            if self.target == "gate_b_init":
+                result = copy.deepcopy(
+                    passing["prerequisites"]["gate_b_initialization"]["admission"]
+                )
+                result["prerequisites"]["gate_a"] = copy.deepcopy(self.gate_a)
+                result["qualification"] = depth._gate_b_initialization_qualification(
+                    result,
+                    depth.DepthGateConfig(),
+                )
+            elif self.target == "formal_gate_b":
+                if self.gate_b_init is None:
+                    raise AssertionError("formal Gate B fixture requires initialization")
+                result = passing
+                result["prerequisites"] = {
+                    "gate_a": copy.deepcopy(self.gate_a),
+                    "gate_b_initialization": copy.deepcopy(self.gate_b_init),
+                }
+                result["qualification"] = depth._qualification_report(
+                    result,
+                    config=depth.DepthGateConfig(),
+                )
+            else:
+                raise AssertionError(f"unsupported depth fixture target {self.target}")
+            launcher.write_strict_json(destination, result)
+            return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+        return super().__call__(command, **kwargs)
+
+
 def _config(tmp_path: Path, target: str) -> launcher.LaunchConfig:
     repo = tmp_path / "repo with spaces"
     (repo / ".git-common" / "worktrees" / "gate").mkdir(parents=True)
@@ -264,6 +326,71 @@ def _config(tmp_path: Path, target: str) -> launcher.LaunchConfig:
         repo_root=repo,
         output_dir=repo / "var" / "example21-binding-gate",
     )
+
+
+def _depth_config(tmp_path: Path, target: str) -> launcher.LaunchConfig:
+    repo = tmp_path / "repo with spaces"
+    (repo / ".git-common" / "worktrees" / "gate").mkdir(parents=True)
+    return launcher.LaunchConfig(
+        target=target,
+        repo_root=repo,
+        output_dir=repo / "var" / "example21-depth-gate",
+    )
+
+
+def _install_gate_a_prerequisite(
+    config: launcher.LaunchConfig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> dict[str, Any]:
+    paths = launcher._gate_a_artifact_paths(config)
+    _strict_write(paths.preflight, {"retained": "authenticated Gate A preflight"})
+    result = {
+        "schema_version": 3,
+        "control": "example21_associative_workspace_binding_gate_a",
+        "learner": "pp_prop_only",
+        "source": _source_at(launcher._GATE_A_SOURCE_COMMIT),
+        "source_end": _source_at(launcher._GATE_A_SOURCE_COMMIT),
+        "qualification": {"passed": True},
+        "interpretation": "gate_a_passed_associative_binding",
+    }
+    _strict_write(paths.result, result)
+    preflight = launcher._artifact_reference(
+        paths.preflight,
+        repo_root=config.repo_root,
+    )
+    retained_result = launcher._artifact_reference(
+        paths.result,
+        repo_root=config.repo_root,
+    )
+    bundle_sha256 = launcher._launch_bundle_sha256(
+        "formal_gate_a",
+        launcher._GATE_A_SOURCE_COMMIT,
+        preflight["sha256"],
+        retained_result["sha256"],
+    )
+    manifest = {
+        "schema_version": 1,
+        "kind": "example21_authenticated_launch_manifest",
+        "target": "formal_gate_a",
+        "source_head": launcher._GATE_A_SOURCE_COMMIT,
+        "bundle_valid": True,
+        "process_succeeded": True,
+        "artifact_schema_verified": True,
+        "scientific_qualification_passed": True,
+        "failure": None,
+        "preflight": preflight,
+        "result": retained_result,
+        "bundle_sha256": bundle_sha256,
+    }
+    _strict_write(paths.manifest, manifest)
+    result_sha256 = launcher.sha256_file(paths.result)
+    manifest_sha256 = launcher.sha256_file(paths.manifest)
+    monkeypatch.setattr(launcher, "_GATE_A_RESULT_SHA256", result_sha256)
+    monkeypatch.setattr(launcher, "_GATE_A_MANIFEST_SHA256", manifest_sha256)
+    monkeypatch.setattr(launcher, "_GATE_A_BUNDLE_SHA256", bundle_sha256)
+    monkeypatch.setattr(depth, "_GATE_A_RESULT_SHA256", result_sha256)
+    monkeypatch.setattr(depth, "_GATE_A_MANIFEST_SHA256", manifest_sha256)
+    return launcher._load_gate_a_prerequisite(config)
 
 
 def _refresh_bundle_manifest(
@@ -567,6 +694,22 @@ def test_authenticated_preflight_revalidates_package_module_invocation(
         "planned_argv_pull_policy",
         "planned_argv_output",
         "source_root",
+        "planned_environment_schema",
+        "git_dir_escape",
+        "host_command_count",
+        "host_command_argv",
+        "host_head_output",
+        "host_root_output",
+        "image_record_missing",
+        "image_command_argv",
+        "image_stdout_json",
+        "image_identity",
+        "container_command_count",
+        "container_command_argv",
+        "container_version_output",
+        "planned_argv_schema",
+        "planned_mount_count",
+        "planned_mount_source",
     ],
 )
 def test_rehashed_semantic_preflight_tampering_fails_closed(
@@ -593,10 +736,125 @@ def test_rehashed_semantic_preflight_tampering_fails_closed(
         preflight["planned_gate"]["argv"][-1] = "/work/substitute.json"
     elif mutation == "source_root":
         preflight["source"]["root"] = str(config.repo_root / "substitute")
+    elif mutation == "planned_environment_schema":
+        preflight["planned_gate"]["environment"] = []
+    elif mutation == "git_dir_escape":
+        preflight["planned_gate"]["environment"]["GIT_DIR"] = "/outside/repo"
+        preflight["container_source"]["environment"]["GIT_DIR"] = "/outside/repo"
+    elif mutation == "host_command_count":
+        preflight["source"]["commands"].pop()
+    elif mutation == "host_command_argv":
+        preflight["source"]["commands"][0]["argv"].insert(0, "env")
+    elif mutation == "host_head_output":
+        record = preflight["source"]["commands"][3]
+        record["stdout"] = "c" * 40 + "\n"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+    elif mutation == "host_root_output":
+        record = preflight["source"]["commands"][0]
+        record["stdout"] = str(config.repo_root / "substitute") + "\n"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+    elif mutation == "image_record_missing":
+        preflight["image"]["inspect_command"] = None
+    elif mutation == "image_command_argv":
+        preflight["image"]["inspect_command"]["argv"].insert(0, "env")
+    elif mutation == "image_stdout_json":
+        record = preflight["image"]["inspect_command"]
+        record["stdout"] = "[]"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+    elif mutation == "image_identity":
+        record = preflight["image"]["inspect_command"]
+        inspection = json.loads(record["stdout"])
+        inspection[0]["Id"] = "sha256:" + "c" * 64
+        record["stdout"] = json.dumps(inspection)
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+    elif mutation == "container_command_count":
+        preflight["container_source"]["commands"].pop()
+    elif mutation == "container_command_argv":
+        preflight["container_source"]["commands"][0]["argv"].insert(0, "env")
+    elif mutation == "container_version_output":
+        record = preflight["container_source"]["commands"][0]
+        record["stdout"] = "not Git\n"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+        preflight["container_source"]["git_version"] = "not Git"
+    elif mutation == "planned_argv_schema":
+        preflight["planned_gate"]["argv"] = "docker run"
+    elif mutation == "planned_mount_count":
+        argv = preflight["planned_gate"]["argv"]
+        index = max(index for index, value in enumerate(argv) if value == "--mount")
+        del argv[index : index + 2]
+    elif mutation == "planned_mount_source":
+        argv = preflight["planned_gate"]["argv"]
+        index = next(
+            index
+            for index, value in enumerate(argv)
+            if isinstance(value, str) and "dst=/cache/jax" in value
+        )
+        argv[index] = "type=volume,src=bad/path,dst=/cache/jax"
     launcher.write_strict_json(paths.preflight, preflight)
     _refresh_bundle_manifest(config, "one_update")
 
-    with pytest.raises(launcher.ProvenanceError, match="preflight|planned Gate"):
+    with pytest.raises(
+        launcher.ProvenanceError,
+        match="preflight|planned Gate|retained|environment|mount|command",
+    ):
+        launcher.load_authenticated_admission(
+            paths.manifest,
+            target="one_update",
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+            repo_root=config.repo_root,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "gate_command_missing",
+        "gate_command_argv",
+        "postflight_failure",
+        "postflight_host_count",
+        "postflight_host_argv",
+        "postflight_host_head",
+        "postflight_container_missing",
+        "postflight_container_argv",
+        "postflight_container_output",
+    ],
+)
+def test_rehashed_manifest_execution_tampering_fails_closed(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    config = _config(tmp_path, "one_update")
+    launcher.launch(config, command_runner=FakeRunner(config.repo_root, "one_update"))
+    paths = launcher.target_paths(config, _HEAD, "one_update")
+    manifest = launcher.load_strict_json(paths.manifest)
+
+    if mutation == "gate_command_missing":
+        manifest["gate_command"] = None
+    elif mutation == "gate_command_argv":
+        manifest["gate_command"]["argv"].insert(0, "env")
+    elif mutation == "postflight_failure":
+        manifest["failure"] = "tampered"
+    elif mutation == "postflight_host_count":
+        manifest["postflight"]["host_commands"].pop()
+    elif mutation == "postflight_host_argv":
+        manifest["postflight"]["host_commands"][0]["argv"].insert(0, "env")
+    elif mutation == "postflight_host_head":
+        record = manifest["postflight"]["host_commands"][3]
+        record["stdout"] = "c" * 40 + "\n"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+    elif mutation == "postflight_container_missing":
+        manifest["postflight"]["container"] = None
+    elif mutation == "postflight_container_argv":
+        manifest["postflight"]["container_commands"][0]["argv"].insert(0, "env")
+    else:
+        record = manifest["postflight"]["container_commands"][0]
+        record["stdout"] = "not Git\n"
+        record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
+        manifest["postflight"]["container"]["git_version"] = "not Git"
+    launcher.write_strict_json(paths.manifest, manifest)
+
+    with pytest.raises(launcher.ProvenanceError):
         launcher.load_authenticated_admission(
             paths.manifest,
             target="one_update",
@@ -1024,3 +1282,614 @@ def test_launch_config_rejects_unsafe_scope(
         kwargs[field] = value
     with pytest.raises(ValueError):
         launcher.LaunchConfig(**kwargs)
+
+
+def test_launcher_target_extension_preserves_existing_targets() -> None:
+    assert launcher._TARGETS == (
+        "one_update",
+        "stability_256",
+        "formal_gate_a",
+        "gate_b_init",
+        "formal_gate_b",
+    )
+
+
+def test_gate_b_targets_pin_the_authenticated_gate_a_artifact_bytes() -> None:
+    config = depth.DepthGateConfig()
+
+    assert launcher._GATE_A_SOURCE_COMMIT == config.gate_a_source_commit
+    assert launcher._GATE_A_RESULT_SHA256 == config.gate_a_result_sha256
+    assert launcher._GATE_A_MANIFEST_SHA256 == config.gate_a_manifest_sha256
+    assert launcher._GATE_A_RESULT_SHA256 == (
+        "3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632"
+    )
+    assert launcher._GATE_A_MANIFEST_SHA256 == (
+        "69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf"
+    )
+    assert launcher._GATE_A_BUNDLE_SHA256 == (
+        "ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875"
+    )
+
+
+@pytest.mark.parametrize("target", ["gate_b_init", "formal_gate_b"])
+def test_gate_b_target_paths_and_module_argv_are_exact(
+    tmp_path: Path,
+    target: str,
+) -> None:
+    config = _depth_config(tmp_path, target)
+    paths = launcher.target_paths(config, _HEAD, target)
+
+    assert paths.result == (
+        config.output_dir / f"{_HEAD}-{target.replace('_', '-')}.json"
+    )
+    command = launcher.gate_command(
+        config,
+        image_id=_IMAGE_ID,
+        head=_HEAD,
+        paths=paths,
+        git_dir_in_container="/git-common/worktrees/gate",
+        admission_manifests=None,
+    )
+    python_index = command.index("python")
+    gate_a_base = (
+        "/work/var/example21-binding-gate/"
+        f"{depth.DepthGateConfig().gate_a_source_commit}-formal-gate-a"
+    )
+    expected = [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_depth_gate",
+        "--target",
+        target,
+        "--gate-a-result",
+        f"{gate_a_base}.json",
+        "--gate-a-manifest",
+        f"{gate_a_base}.manifest.json",
+    ]
+    if target == "formal_gate_b":
+        expected.extend(
+            [
+                "--gate-b-init-manifest",
+                str(
+                    launcher.target_paths(
+                        config, _HEAD, "gate_b_init"
+                    ).container_result
+                ).replace(".json", ".manifest.json"),
+            ]
+        )
+    expected.extend(["--output", str(paths.container_result)])
+
+    assert command[python_index:] == expected
+    assert "--training-updates" not in command
+    assert "--neuron-count" not in command
+    assert ("--gate-b-init-manifest" in command) is (target == "formal_gate_b")
+
+
+def test_formal_gate_b_requires_authenticated_current_init_manifest(
+    tmp_path: Path,
+) -> None:
+    config = _depth_config(tmp_path, "formal_gate_b")
+    expected = launcher.target_paths(config, _HEAD, "gate_b_init").manifest
+
+    assert expected.name == f"{_HEAD}-gate-b-init.manifest.json"
+    with pytest.raises(launcher.ProvenanceError, match="Gate B initialization"):
+        launcher._load_gate_b_init_manifest(
+            config,
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+        )
+
+
+@pytest.mark.parametrize(
+    ("target", "changing_loader"),
+    [
+        ("gate_b_init", "_load_gate_a_prerequisite"),
+        ("formal_gate_b", "_load_gate_b_init_manifest"),
+    ],
+)
+def test_gate_b_launch_reauthenticates_prerequisites_before_signing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    target: str,
+    changing_loader: str,
+) -> None:
+    config = _depth_config(tmp_path, target)
+    stable = {
+        "qualification_passed": True,
+        "result_sha256": depth.DepthGateConfig().gate_a_result_sha256,
+        "manifest_sha256": depth.DepthGateConfig().gate_a_manifest_sha256,
+        "source_commit": depth.DepthGateConfig().gate_a_source_commit,
+    }
+    calls = 0
+
+    def changed_after_gate(*args: object, **kwargs: object) -> dict[str, object]:
+        nonlocal calls
+        calls += 1
+        if calls > 1:
+            changed = copy.deepcopy(stable)
+            changed["bundle_sha256"] = "0" * 64
+            return changed
+        return copy.deepcopy(stable)
+
+    def stable_loader(*args: object, **kwargs: object) -> dict[str, object]:
+        return copy.deepcopy(stable)
+
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_a_prerequisite",
+        (
+            changed_after_gate
+            if changing_loader == "_load_gate_a_prerequisite"
+            else stable_loader
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_b_init_manifest",
+        (
+            changed_after_gate
+            if changing_loader == "_load_gate_b_init_manifest"
+            else stable_loader
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_validate_target_result",
+        lambda *args, **kwargs: True,
+    )
+
+    with pytest.raises(launcher.ProvenanceError, match="changed before signing"):
+        launcher.launch(
+            config,
+            command_runner=FakeRunner(config.repo_root, target),
+        )
+
+    assert calls == 2
+
+
+def test_formal_gate_b_recomputes_qualification_from_retained_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report = depth_fixtures._passing_depth_report()
+    retained = {
+        "passed": True,
+        "criteria": {"retained_evidence_recomputed": True},
+        "interpretation": "gate_b_passed_demonstrated_depth_application",
+    }
+    report["qualification"] = copy.deepcopy(retained)
+    original_accuracy = report["evaluation"]["efforts"]["8"]["intact"][
+        "accuracy"
+    ]
+
+    def recompute(
+        candidate: dict[str, Any],
+        *,
+        config: depth.DepthGateConfig,
+    ) -> dict[str, Any]:
+        del config
+        if (
+            candidate["evaluation"]["efforts"]["8"]["intact"]["accuracy"]
+            == original_accuracy
+        ):
+            return copy.deepcopy(retained)
+        return {
+            "passed": False,
+            "criteria": {"retained_evidence_recomputed": False},
+            "interpretation": "gate_b_failed_stop_no_capability_conclusion",
+        }
+
+    monkeypatch.setattr(depth, "_qualification_report", recompute)
+    assert launcher._validate_gate_b_scientific_result(
+        copy.deepcopy(report),
+        target="formal_gate_b",
+        head=_HEAD,
+        image_id=_IMAGE_ID,
+    ) is True
+
+    report["evaluation"]["efforts"]["8"]["intact"]["accuracy"] = 0.0
+    with pytest.raises(launcher.ProvenanceError, match="qualification"):
+        launcher._validate_gate_b_scientific_result(
+            report,
+            target="formal_gate_b",
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "missing_result",
+        "manifest_bytes",
+        "result_bytes",
+        "manifest_semantics",
+        "missing_reference",
+        "bundle_digest",
+        "result_semantics",
+    ],
+)
+def test_gate_a_prerequisite_loader_fails_closed_on_each_authenticated_layer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    config = _depth_config(tmp_path, "gate_b_init")
+    _install_gate_a_prerequisite(config, monkeypatch)
+    paths = launcher._gate_a_artifact_paths(config)
+
+    if mutation == "missing_result":
+        paths.result.unlink()
+    elif mutation == "manifest_bytes":
+        paths.manifest.write_bytes(paths.manifest.read_bytes() + b" ")
+    elif mutation == "result_bytes":
+        paths.result.write_bytes(paths.result.read_bytes() + b" ")
+    elif mutation in {
+        "manifest_semantics",
+        "missing_reference",
+        "bundle_digest",
+    }:
+        manifest = launcher.load_strict_json(paths.manifest)
+        if mutation == "manifest_semantics":
+            manifest["target"] = "substitute"
+        elif mutation == "missing_reference":
+            manifest["preflight"] = None
+        else:
+            manifest["bundle_sha256"] = "0" * 64
+        launcher.write_strict_json(paths.manifest, manifest)
+        monkeypatch.setattr(
+            launcher,
+            "_GATE_A_MANIFEST_SHA256",
+            launcher.sha256_file(paths.manifest),
+        )
+    else:
+        result = launcher.load_strict_json(paths.result)
+        result["learner"] = "bptt"
+        launcher.write_strict_json(paths.result, result)
+        result_sha256 = launcher.sha256_file(paths.result)
+        monkeypatch.setattr(launcher, "_GATE_A_RESULT_SHA256", result_sha256)
+        manifest = launcher.load_strict_json(paths.manifest)
+        manifest["result"] = launcher._artifact_reference(
+            paths.result,
+            repo_root=config.repo_root,
+        )
+        bundle_sha256 = launcher._launch_bundle_sha256(
+            "formal_gate_a",
+            launcher._GATE_A_SOURCE_COMMIT,
+            manifest["preflight"]["sha256"],
+            result_sha256,
+        )
+        manifest["bundle_sha256"] = bundle_sha256
+        launcher.write_strict_json(paths.manifest, manifest)
+        monkeypatch.setattr(launcher, "_GATE_A_BUNDLE_SHA256", bundle_sha256)
+        monkeypatch.setattr(
+            launcher,
+            "_GATE_A_MANIFEST_SHA256",
+            launcher.sha256_file(paths.manifest),
+        )
+
+    with pytest.raises(launcher.ProvenanceError):
+        launcher._load_gate_a_prerequisite(config)
+
+
+def test_authenticated_gate_b_init_and_formal_bundle_round_trip(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    init_config = _depth_config(tmp_path, "gate_b_init")
+    gate_a = _install_gate_a_prerequisite(init_config, monkeypatch)
+    init_runner = DepthFakeRunner(
+        init_config.repo_root,
+        "gate_b_init",
+        gate_a=gate_a,
+    )
+
+    init_manifest_path = launcher.launch(
+        init_config,
+        command_runner=init_runner,
+    )
+
+    assert init_runner.sidecar_seen_before_gate is True
+    init_manifest = launcher.load_strict_json(init_manifest_path)
+    assert init_manifest["bundle_valid"] is True
+    assert init_manifest["scientific_qualification_passed"] is True
+    init_bundle = launcher._load_gate_b_init_manifest(
+        init_config,
+        head=_HEAD,
+        image_id=_IMAGE_ID,
+    )
+    assert set(init_bundle) == {
+        "target",
+        "source_head",
+        "image_digest",
+        "bundle_sha256",
+        "manifest_sha256",
+        "preflight_sha256",
+        "result_sha256",
+        "admission",
+    }
+    assert init_bundle["admission"]["qualification"]["passed"] is True
+
+    formal_config = launcher.LaunchConfig(
+        target="formal_gate_b",
+        repo_root=init_config.repo_root,
+        output_dir=init_config.output_dir,
+    )
+    formal_runner = DepthFakeRunner(
+        formal_config.repo_root,
+        "formal_gate_b",
+        gate_a=gate_a,
+        gate_b_init=init_bundle,
+    )
+
+    formal_manifest_path = launcher.launch(
+        formal_config,
+        command_runner=formal_runner,
+    )
+
+    formal_manifest = launcher.load_strict_json(formal_manifest_path)
+    assert formal_runner.sidecar_seen_before_gate is True
+    assert formal_manifest["bundle_valid"] is True
+    assert formal_manifest["process_succeeded"] is True
+    assert formal_manifest["scientific_qualification_passed"] is True
+    formal_result = launcher.load_strict_json(
+        launcher.target_paths(formal_config, _HEAD).result
+    )
+    assert formal_result["prerequisites"]["gate_a"] == gate_a
+    assert formal_result["prerequisites"]["gate_b_initialization"] == init_bundle
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "manifest_admission",
+        "result_reference",
+        "bundle_digest",
+        "preflight_prerequisite",
+        "preflight_command",
+        "result_prerequisite",
+        "scientific_failure",
+    ],
+)
+def test_gate_b_init_loader_fails_closed_at_each_authenticated_layer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutation: str,
+) -> None:
+    config = _depth_config(tmp_path, "gate_b_init")
+    gate_a = _install_gate_a_prerequisite(config, monkeypatch)
+    launcher.launch(
+        config,
+        command_runner=DepthFakeRunner(
+            config.repo_root,
+            "gate_b_init",
+            gate_a=gate_a,
+        ),
+    )
+    paths = launcher.target_paths(config, _HEAD, "gate_b_init")
+
+    if mutation in {"manifest_admission", "result_reference", "bundle_digest"}:
+        manifest = launcher.load_strict_json(paths.manifest)
+        if mutation == "manifest_admission":
+            manifest["scientific_qualification_passed"] = False
+        elif mutation == "result_reference":
+            manifest["result"]["size_bytes"] = False
+        else:
+            manifest["bundle_sha256"] = "0" * 64
+        launcher.write_strict_json(paths.manifest, manifest)
+    elif mutation in {"preflight_prerequisite", "preflight_command"}:
+        preflight = launcher.load_strict_json(paths.preflight)
+        if mutation == "preflight_prerequisite":
+            preflight["gate_b_prerequisites"]["gate_a"]["bundle_sha256"] = "0" * 64
+        else:
+            command = preflight["planned_gate"]["argv"]
+            gate_a_index = command.index("--gate-a-result") + 1
+            command[gate_a_index] = "/work/substitute-gate-a.json"
+        launcher.write_strict_json(paths.preflight, preflight)
+        _refresh_bundle_manifest(config, "gate_b_init")
+    else:
+        result = launcher.load_strict_json(paths.result)
+        if mutation == "result_prerequisite":
+            result["prerequisites"]["gate_a"]["bundle_sha256"] = "0" * 64
+        else:
+            failed = {
+                "passed": False,
+                "interpretation": "gate_b_initialization_failed",
+            }
+            monkeypatch.setattr(
+                depth,
+                "_gate_b_initialization_qualification",
+                lambda candidate, config: copy.deepcopy(failed),
+            )
+            result["qualification"] = failed
+        launcher.write_strict_json(paths.result, result)
+        _refresh_bundle_manifest(config, "gate_b_init")
+
+    with pytest.raises(launcher.ProvenanceError):
+        launcher._load_gate_b_init_manifest(
+            config,
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+        )
+
+
+@pytest.mark.parametrize(
+    ("target", "initialization", "message"),
+    [
+        ("gate_b_init", {"unexpected": True}, "circular prerequisite"),
+        ("formal_gate_b", {"bundle": "changed"}, "initialization manifest"),
+    ],
+)
+def test_gate_b_result_rejects_wrong_initialization_binding_before_science(
+    tmp_path: Path,
+    target: str,
+    initialization: dict[str, Any],
+    message: str,
+) -> None:
+    gate_a = {"qualification_passed": True}
+    embedded_initialization = {"bundle": "retained"}
+    result = {
+        "prerequisites": {
+            "gate_a": gate_a,
+            "gate_b_initialization": embedded_initialization,
+        }
+    }
+
+    with pytest.raises(launcher.ProvenanceError, match=message):
+        launcher._validate_target_result(
+            result,
+            target=target,
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+            admission_manifests=None,
+            repo_root=tmp_path,
+            gate_a_prerequisite=gate_a,
+            gate_b_init_bundle=initialization,
+        )
+
+
+@pytest.mark.parametrize(
+    ("target", "explicit_output", "scientific_passed", "expected_code", "directory"),
+    [
+        ("gate_b_init", None, True, 0, "example21-depth-gate"),
+        ("formal_gate_a", None, True, 0, "example21-binding-gate"),
+        ("one_update", "custom-output", False, 3, "custom-output"),
+    ],
+)
+def test_cli_selects_scoped_defaults_and_reports_scientific_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    target: str,
+    explicit_output: str | None,
+    scientific_passed: bool,
+    expected_code: int,
+    directory: str,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    captured: list[launcher.LaunchConfig] = []
+
+    def fake_launch(config: launcher.LaunchConfig) -> Path:
+        captured.append(config)
+        destination = config.output_dir / "cli.manifest.json"
+        launcher.write_strict_json(
+            destination,
+            {"scientific_qualification_passed": scientific_passed},
+        )
+        return destination
+
+    monkeypatch.setattr(launcher, "launch", fake_launch)
+    argv = ["--target", target, "--repo-root", str(repo)]
+    if explicit_output is not None:
+        argv.extend(["--output-dir", explicit_output])
+
+    assert launcher.main(argv) == expected_code
+
+    assert len(captured) == 1
+    expected_output = (
+        repo / explicit_output
+        if explicit_output is not None
+        else repo / "var" / directory
+    )
+    assert captured[0].output_dir == expected_output
+    streams = capsys.readouterr()
+    assert "cli.manifest.json" in streams.out
+    if expected_code == 3:
+        assert "scientific admission failed" in streams.err
+    else:
+        assert streams.err == ""
+
+
+def test_cli_returns_provenance_error_without_manifest(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def fail_launch(config: launcher.LaunchConfig) -> Path:
+        del config
+        raise launcher.ProvenanceError("authenticated launch rejected")
+
+    monkeypatch.setattr(launcher, "launch", fail_launch)
+
+    assert launcher.main(
+        ["--target", "formal_gate_b", "--repo-root", str(repo)]
+    ) == 2
+    streams = capsys.readouterr()
+    assert streams.out == ""
+    assert "authenticated launch rejected" in streams.err
+
+
+def test_missing_child_result_writes_a_complete_failure_manifest(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path, "one_update")
+
+    class MissingResultRunner(FakeRunner):
+        def __call__(
+            self, command: Sequence[str], **kwargs: object
+        ) -> subprocess.CompletedProcess[str]:
+            argv = list(command)
+            if argv and argv[0] == "docker" and "python" in argv:
+                self.calls.append(argv)
+                result_arg = argv[argv.index("--output") + 1]
+                destination = self.repo / Path(result_arg.removeprefix("/work/"))
+                self.sidecar_seen_before_gate = destination.with_suffix(
+                    ".preflight.json"
+                ).is_file()
+                return subprocess.CompletedProcess(
+                    argv,
+                    0,
+                    stdout="",
+                    stderr="",
+                )
+            return super().__call__(command, **kwargs)
+
+    with pytest.raises(launcher.ProvenanceError, match="did not create"):
+        launcher.launch(
+            config,
+            command_runner=MissingResultRunner(config.repo_root, "one_update"),
+        )
+
+    manifest = launcher.load_strict_json(
+        launcher.target_paths(config, _HEAD).manifest
+    )
+    assert manifest["bundle_valid"] is False
+    assert manifest["process_succeeded"] is True
+    assert manifest["artifact_schema_verified"] is False
+    assert manifest["scientific_qualification_passed"] is False
+    assert manifest["result"] is None
+    assert manifest["gate_command"] is not None
+    assert manifest["postflight"]["clean"] is True
+    assert "did not create" in manifest["failure"]
+
+
+def test_unexpected_result_validator_error_is_manifested_and_wrapped(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config(tmp_path, "one_update")
+
+    def fail_validation(*args: object, **kwargs: object) -> bool:
+        raise RuntimeError("validator exploded")
+
+    monkeypatch.setattr(launcher, "_validate_target_result", fail_validation)
+
+    with pytest.raises(launcher.ProvenanceError, match="validator exploded") as caught:
+        launcher.launch(
+            config,
+            command_runner=FakeRunner(config.repo_root, "one_update"),
+        )
+
+    assert isinstance(caught.value.__cause__, RuntimeError)
+    manifest = launcher.load_strict_json(
+        launcher.target_paths(config, _HEAD).manifest
+    )
+    assert manifest["bundle_valid"] is False
+    assert manifest["process_succeeded"] is True
+    assert manifest["result"] is None
+    assert manifest["failure"] == "RuntimeError: validator exploded"

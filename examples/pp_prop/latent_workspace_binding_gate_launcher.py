@@ -1,4 +1,4 @@
-"""Authenticated host launcher for Example 21 admission and Gate A runs."""
+"""Authenticated host launcher for Example 21 capability-gate runs."""
 
 from __future__ import annotations
 
@@ -15,17 +15,38 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Literal, Mapping, Sequence
 
 
-LaunchTarget = Literal["one_update", "stability_256", "formal_gate_a"]
+LaunchTarget = Literal[
+    "one_update",
+    "stability_256",
+    "formal_gate_a",
+    "gate_b_init",
+    "formal_gate_b",
+]
 CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
 _TARGETS: tuple[LaunchTarget, ...] = (
     "one_update",
     "stability_256",
     "formal_gate_a",
+    "gate_b_init",
+    "formal_gate_b",
 )
+_GATE_B_TARGETS = frozenset({"gate_b_init", "formal_gate_b"})
 _IMAGE_ID_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
 _HEAD_PATTERN = re.compile(r"[0-9a-f]{40}")
 _DEFAULT_IMAGE = "braintrace-gpu:0.11.0-py314"
 _GATE_MODULE = "examples.pp_prop.latent_workspace_binding_gate"
+_DEPTH_GATE_MODULE = "examples.pp_prop.latent_workspace_depth_gate"
+_GATE_A_SOURCE_COMMIT = "4737e9172b1c6ca99347af5b2c83fc795a294a16"
+_GATE_A_RESULT_SHA256 = (
+    "3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632"
+)
+_GATE_A_MANIFEST_SHA256 = (
+    "69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf"
+)
+_GATE_A_BUNDLE_SHA256 = (
+    "ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875"
+)
+_GATE_A_DIRECTORY = Path("var/example21-binding-gate")
 
 
 class ProvenanceError(RuntimeError):
@@ -44,7 +65,7 @@ class LaunchConfig:
 
     Parameters
     ----------
-    target : {"one_update", "stability_256", "formal_gate_a"}
+    target : {"one_update", "stability_256", "formal_gate_a", "gate_b_init", "formal_gate_b"}
         Fixed preregistered target. Target selection changes only which hardcoded
         Gate entry point runs; it exposes no topology or training-budget knobs.
     repo_root : pathlib.Path
@@ -300,6 +321,22 @@ def target_paths(
         preflight=result.with_suffix(".preflight.json"),
         manifest=result.with_suffix(".manifest.json"),
         container_result=PurePosixPath("/work") / relative,
+    )
+
+
+def _container_path(config: LaunchConfig, path: Path) -> PurePosixPath:
+    relative = path.resolve().relative_to(config.repo_root).as_posix()
+    return PurePosixPath("/work") / relative
+
+
+def _gate_a_artifact_paths(config: LaunchConfig) -> TargetPaths:
+    stem = f"{_GATE_A_SOURCE_COMMIT}-formal-gate-a"
+    result = config.repo_root / _GATE_A_DIRECTORY / f"{stem}.json"
+    return TargetPaths(
+        result=result,
+        preflight=result.with_suffix(".preflight.json"),
+        manifest=result.with_suffix(".manifest.json"),
+        container_result=_container_path(config, result),
     )
 
 
@@ -562,6 +599,124 @@ def _artifact_reference(
     return reference
 
 
+def _validate_artifact_reference(
+    value: Any,
+    expected_path: Path,
+    *,
+    repo_root: Path,
+    label: str,
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ProvenanceError(f"{label} artifact reference is missing")
+    relative = expected_path.resolve().relative_to(repo_root.resolve()).as_posix()
+    if (
+        not expected_path.is_file()
+        or value.get("path") != relative
+        or value.get("repo_relative_path") != relative
+        or value.get("sha256") != sha256_file(expected_path)
+        or not _is_integer(value.get("size_bytes"))
+        or int(value["size_bytes"]) != expected_path.stat().st_size
+    ):
+        raise ProvenanceError(f"{label} artifact digest/path mismatch")
+    return dict(value)
+
+
+def _launch_bundle_sha256(
+    target: str,
+    head: str,
+    preflight_sha256: str,
+    result_sha256: str,
+) -> str:
+    return hashlib.sha256(
+        (
+            f"example21-launch-bundle-v1\0{target}\0{head}\0"
+            f"{preflight_sha256}\0{result_sha256}"
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _load_gate_a_prerequisite(config: LaunchConfig) -> dict[str, Any]:
+    paths = _gate_a_artifact_paths(config)
+    for path in (paths.manifest, paths.preflight, paths.result):
+        if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
+            raise ProvenanceError("authenticated Gate A prerequisite is missing")
+    manifest_sha256 = sha256_file(paths.manifest)
+    result_sha256 = sha256_file(paths.result)
+    if manifest_sha256 != _GATE_A_MANIFEST_SHA256:
+        raise ProvenanceError("authenticated Gate A manifest SHA-256 mismatch")
+    if result_sha256 != _GATE_A_RESULT_SHA256:
+        raise ProvenanceError("authenticated Gate A result SHA-256 mismatch")
+
+    manifest = load_strict_json(paths.manifest)
+    if (
+        not _is_integer(manifest.get("schema_version"))
+        or int(manifest["schema_version"]) != 1
+        or manifest.get("kind") != "example21_authenticated_launch_manifest"
+        or manifest.get("target") != "formal_gate_a"
+        or manifest.get("source_head") != _GATE_A_SOURCE_COMMIT
+        or manifest.get("bundle_valid") is not True
+        or manifest.get("process_succeeded") is not True
+        or manifest.get("artifact_schema_verified") is not True
+        or manifest.get("scientific_qualification_passed") is not True
+        or manifest.get("failure") is not None
+    ):
+        raise ProvenanceError("authenticated Gate A manifest is invalid")
+    preflight_reference = _validate_artifact_reference(
+        manifest.get("preflight"),
+        paths.preflight,
+        repo_root=config.repo_root,
+        label="Gate A preflight",
+    )
+    result_reference = _validate_artifact_reference(
+        manifest.get("result"),
+        paths.result,
+        repo_root=config.repo_root,
+        label="Gate A result",
+    )
+    expected_bundle = _launch_bundle_sha256(
+        "formal_gate_a",
+        _GATE_A_SOURCE_COMMIT,
+        preflight_reference["sha256"],
+        result_reference["sha256"],
+    )
+    if (
+        manifest.get("bundle_sha256") != expected_bundle
+        or expected_bundle != _GATE_A_BUNDLE_SHA256
+    ):
+        raise ProvenanceError("authenticated Gate A bundle digest is invalid")
+
+    result = load_strict_json(paths.result)
+    source = result.get("source")
+    source_end = result.get("source_end")
+    qualification = result.get("qualification")
+    if (
+        not _is_integer(result.get("schema_version"))
+        or int(result["schema_version"]) != 3
+        or result.get("control")
+        != "example21_associative_workspace_binding_gate_a"
+        or result.get("learner") != "pp_prop_only"
+        or not isinstance(source, Mapping)
+        or not _source_report_matches(source, _GATE_A_SOURCE_COMMIT)
+        or not isinstance(source_end, Mapping)
+        or not _source_report_matches(source_end, _GATE_A_SOURCE_COMMIT)
+        or not isinstance(qualification, Mapping)
+        or qualification.get("passed") is not True
+        or result.get("interpretation")
+        != "gate_a_passed_associative_binding"
+    ):
+        raise ProvenanceError("authenticated Gate A result is invalid")
+    return {
+        "qualification_passed": True,
+        "result_sha256": result_sha256,
+        "manifest_sha256": manifest_sha256,
+        "source_commit": _GATE_A_SOURCE_COMMIT,
+        "bundle_sha256": expected_bundle,
+        "preflight_sha256": preflight_reference["sha256"],
+        "result_path": paths.result.relative_to(config.repo_root).as_posix(),
+        "manifest_path": paths.manifest.relative_to(config.repo_root).as_posix(),
+    }
+
+
 def _source_report_matches(value: Mapping[str, Any], head: str) -> bool:
     return bool(
         value.get("commit") == head
@@ -649,7 +804,7 @@ def _authenticated_host_cwd(source: Mapping[str, Any], repo_root: Path) -> str:
 def _validate_preflight_semantics(
     preflight: Mapping[str, Any],
     *,
-    target: Literal["one_update", "stability_256"],
+    target: Literal["one_update", "stability_256", "gate_b_init"],
     head: str,
     image_id: str,
     expected_result: Path,
@@ -877,16 +1032,34 @@ def _validate_preflight_semantics(
     container_result = str(
         PurePosixPath("/work") / expected_result.relative_to(repo_root).as_posix()
     )
-    expected_tail = [
-        image_id,
-        "python",
-        "-m",
-        _GATE_MODULE,
-        "--target",
-        target,
-        "--output",
-        container_result,
-    ]
+    if target == "gate_b_init":
+        gate_a_stem = f"{_GATE_A_SOURCE_COMMIT}-formal-gate-a"
+        gate_a_base = PurePosixPath("/work") / _GATE_A_DIRECTORY.as_posix()
+        expected_tail = [
+            image_id,
+            "python",
+            "-m",
+            _DEPTH_GATE_MODULE,
+            "--target",
+            target,
+            "--gate-a-result",
+            str(gate_a_base / f"{gate_a_stem}.json"),
+            "--gate-a-manifest",
+            str(gate_a_base / f"{gate_a_stem}.manifest.json"),
+            "--output",
+            container_result,
+        ]
+    else:
+        expected_tail = [
+            image_id,
+            "python",
+            "-m",
+            _GATE_MODULE,
+            "--target",
+            target,
+            "--output",
+            container_result,
+        ]
     expected_argv = [
         "docker",
         "run",
@@ -1038,6 +1211,73 @@ def _validate_manifest_execution(
         raise ProvenanceError("admission container postflight disagrees with clean HEAD")
 
 
+def _validate_gate_b_scientific_result(
+    result: Mapping[str, Any],
+    *,
+    target: Literal["gate_b_init", "formal_gate_b"],
+    head: str,
+    image_id: str,
+) -> bool:
+    from examples.pp_prop import latent_workspace_depth_gate as depth
+
+    config = depth.DepthGateConfig()
+    controls = {
+        "gate_b_init": depth.GATE_B_INITIALIZATION_CONTROL,
+        "formal_gate_b": depth.GATE_B_CONTROL,
+    }
+    source_start = result.get("source_start")
+    source_end = result.get("source_end")
+    environment = result.get("environment")
+    devices = environment.get("devices") if isinstance(environment, Mapping) else None
+    source_files = result.get("source_files")
+    prerequisites = result.get("prerequisites")
+    gate_a = prerequisites.get("gate_a") if isinstance(prerequisites, Mapping) else None
+    if (
+        not _is_integer(result.get("schema_version"))
+        or int(result["schema_version"]) != depth.GATE_B_SCHEMA_VERSION
+        or result.get("control") != controls[target]
+        or result.get("qualification_regime") != "preregistered_full"
+        or not _json_exact(result.get("config"), asdict(config))
+        or not isinstance(source_start, Mapping)
+        or not _source_report_matches(source_start, head)
+        or not isinstance(source_end, Mapping)
+        or not _source_report_matches(source_end, head)
+        or not isinstance(environment, Mapping)
+        or environment.get("image_digest") != image_id
+        or environment.get("backend") != "gpu"
+        or not isinstance(devices, list)
+        or not devices
+        or not all(isinstance(device, Mapping) for device in devices)
+        or not any(device.get("platform") == "gpu" for device in devices)
+        or not _json_exact(
+            source_files,
+            {
+                "latent_workspace_model.py": config.model_source_sha256,
+                "latent_workspace_task.py": config.task_source_sha256,
+            },
+        )
+        or not isinstance(gate_a, Mapping)
+        or gate_a.get("qualification_passed") is not True
+        or gate_a.get("result_sha256") != _GATE_A_RESULT_SHA256
+        or gate_a.get("manifest_sha256") != _GATE_A_MANIFEST_SHA256
+        or gate_a.get("source_commit") != _GATE_A_SOURCE_COMMIT
+    ):
+        raise ProvenanceError(f"{target} result provenance/configuration is invalid")
+
+    qualification = result.get("qualification")
+    if not isinstance(qualification, Mapping):
+        raise ProvenanceError(f"{target} result qualification is missing")
+    qualifier = (
+        depth._gate_b_initialization_qualification
+        if target == "gate_b_init"
+        else depth._qualification_report
+    )
+    recomputed = qualifier(result, config=config)
+    if not _json_exact(qualification, recomputed):
+        raise ProvenanceError(f"{target} scientific qualification does not recompute")
+    return bool(recomputed["passed"])
+
+
 def _validate_fixed_config(result: Mapping[str, Any], target: LaunchTarget) -> None:
     config = result.get("config")
     if not isinstance(config, Mapping):
@@ -1078,7 +1318,39 @@ def _validate_target_result(
     image_id: str,
     admission_manifests: Mapping[str, Path] | None,
     repo_root: Path,
+    gate_a_prerequisite: Mapping[str, Any] | None = None,
+    gate_b_init_bundle: Mapping[str, Any] | None = None,
 ) -> bool:
+    if target in _GATE_B_TARGETS:
+        if admission_manifests is not None:
+            raise ProvenanceError("Gate B targets do not accept Gate A admissions")
+        prerequisites = result.get("prerequisites")
+        embedded_gate_a = (
+            prerequisites.get("gate_a")
+            if isinstance(prerequisites, Mapping)
+            else None
+        )
+        if gate_a_prerequisite is None or not _json_exact(
+            embedded_gate_a, gate_a_prerequisite
+        ):
+            raise ProvenanceError("Gate B result does not bind Gate A prerequisite")
+        if target == "formal_gate_b":
+            embedded_init = prerequisites.get("gate_b_initialization")
+            if gate_b_init_bundle is None or not _json_exact(
+                embedded_init, gate_b_init_bundle
+            ):
+                raise ProvenanceError(
+                    "formal Gate B result does not bind initialization manifest"
+                )
+        elif gate_b_init_bundle is not None:
+            raise ProvenanceError("Gate B initialization received a circular prerequisite")
+        return _validate_gate_b_scientific_result(
+            result,
+            target=target,
+            head=head,
+            image_id=image_id,
+        )
+
     controls = {
         "one_update": "example21_stage21_one_update_admission",
         "stability_256": "example21_stage21_stability_256_admission",
@@ -1343,6 +1615,101 @@ def load_authenticated_admission(
     }
 
 
+def _load_gate_b_init_manifest(
+    config: LaunchConfig,
+    *,
+    head: str,
+    image_id: str,
+) -> dict[str, Any]:
+    paths = target_paths(config, head, "gate_b_init")
+    for path in (paths.manifest, paths.preflight, paths.result):
+        if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
+            raise ProvenanceError("required Gate B initialization manifest is missing")
+    manifest = load_strict_json(paths.manifest)
+    if (
+        not _is_integer(manifest.get("schema_version"))
+        or int(manifest["schema_version"]) != 1
+        or manifest.get("kind") != "example21_authenticated_launch_manifest"
+        or manifest.get("target") != "gate_b_init"
+        or manifest.get("source_head") != head
+        or manifest.get("bundle_valid") is not True
+        or manifest.get("process_succeeded") is not True
+        or manifest.get("artifact_schema_verified") is not True
+        or manifest.get("scientific_qualification_passed") is not True
+        or manifest.get("failure") is not None
+    ):
+        raise ProvenanceError("required Gate B initialization manifest is invalid")
+    preflight_reference = _validate_artifact_reference(
+        manifest.get("preflight"),
+        paths.preflight,
+        repo_root=config.repo_root,
+        label="Gate B initialization preflight",
+    )
+    result_reference = _validate_artifact_reference(
+        manifest.get("result"),
+        paths.result,
+        repo_root=config.repo_root,
+        label="Gate B initialization result",
+    )
+    bundle_sha256 = _launch_bundle_sha256(
+        "gate_b_init",
+        head,
+        preflight_reference["sha256"],
+        result_reference["sha256"],
+    )
+    if manifest.get("bundle_sha256") != bundle_sha256:
+        raise ProvenanceError("required Gate B initialization bundle is invalid")
+
+    gate_a = _load_gate_a_prerequisite(config)
+    preflight = load_strict_json(paths.preflight)
+    prerequisites = preflight.get("gate_b_prerequisites")
+    if (
+        not isinstance(prerequisites, Mapping)
+        or not _json_exact(prerequisites.get("gate_a"), gate_a)
+        or prerequisites.get("gate_b_initialization") is not None
+    ):
+        raise ProvenanceError(
+            "Gate B initialization preflight prerequisite binding is invalid"
+        )
+    _validate_preflight_semantics(
+        preflight,
+        target="gate_b_init",
+        head=head,
+        image_id=image_id,
+        expected_result=paths.result,
+        repo_root=config.repo_root,
+    )
+    _validate_manifest_execution(
+        manifest,
+        preflight,
+        head=head,
+        repo_root=config.repo_root,
+    )
+    result = load_strict_json(paths.result)
+    passed = _validate_target_result(
+        result,
+        target="gate_b_init",
+        head=head,
+        image_id=image_id,
+        admission_manifests=None,
+        repo_root=config.repo_root,
+        gate_a_prerequisite=gate_a,
+        gate_b_init_bundle=None,
+    )
+    if not passed:
+        raise ProvenanceError("required Gate B initialization admission did not pass")
+    return {
+        "target": "gate_b_init",
+        "source_head": head,
+        "image_digest": image_id,
+        "bundle_sha256": bundle_sha256,
+        "manifest_sha256": sha256_file(paths.manifest),
+        "preflight_sha256": preflight_reference["sha256"],
+        "result_sha256": result_reference["sha256"],
+        "admission": result,
+    }
+
+
 def _load_admission_manifests(
     config: LaunchConfig, head: str, image_id: str
 ) -> dict[str, Path]:
@@ -1408,8 +1775,33 @@ def gate_command(
         container_environment=explicit,
         gpu=True,
     )
-    command.extend(["python", "-m", _GATE_MODULE])
-    if config.target == "formal_gate_a":
+    module = _DEPTH_GATE_MODULE if config.target in _GATE_B_TARGETS else _GATE_MODULE
+    command.extend(["python", "-m", module])
+    if config.target in _GATE_B_TARGETS:
+        if admission_manifests is not None:
+            raise ProvenanceError("Gate B targets do not accept Gate A admissions")
+        gate_a = _gate_a_artifact_paths(config)
+        command.extend(
+            [
+                "--target",
+                config.target,
+                "--gate-a-result",
+                str(gate_a.container_result),
+                "--gate-a-manifest",
+                str(_container_path(config, gate_a.manifest)),
+            ]
+        )
+        if config.target == "formal_gate_b":
+            init_manifest = target_paths(
+                config, head, "gate_b_init"
+            ).manifest
+            command.extend(
+                [
+                    "--gate-b-init-manifest",
+                    str(_container_path(config, init_manifest)),
+                ]
+            )
+    elif config.target == "formal_gate_a":
         if set(admission_manifests or {}) != {"one_update", "stability_256"}:
             raise ProvenanceError("formal Gate A requires both admission manifests")
         for target, flag in (
@@ -1482,6 +1874,8 @@ def launch(
             "commands": [_record_json(record) for record in source_start.records],
         },
     }
+    gate_a_prerequisite: dict[str, Any] | None = None
+    gate_b_init_bundle: dict[str, Any] | None = None
     try:
         image = _inspect_image(config, source_start.head, command_runner)
         relative_git_dir = source_start.git_dir.relative_to(source_start.common_git_dir)
@@ -1502,6 +1896,14 @@ def launch(
             if config.target == "formal_gate_a"
             else None
         )
+        if config.target in _GATE_B_TARGETS:
+            gate_a_prerequisite = _load_gate_a_prerequisite(config)
+        if config.target == "formal_gate_b":
+            gate_b_init_bundle = _load_gate_b_init_manifest(
+                config,
+                head=source_start.head,
+                image_id=image.image_id,
+            )
         command = gate_command(
             config,
             image_id=image.image_id,
@@ -1545,6 +1947,14 @@ def launch(
                 if admissions is not None
                 else None
             ),
+            gate_b_prerequisites=(
+                {
+                    "gate_a": gate_a_prerequisite,
+                    "gate_b_initialization": gate_b_init_bundle,
+                }
+                if config.target in _GATE_B_TARGETS
+                else None
+            ),
         )
     except BaseException as error:
         preflight["error"] = f"{type(error).__name__}: {error}"
@@ -1582,6 +1992,8 @@ def launch(
             image_id=image.image_id,
             admission_manifests=admissions,
             repo_root=config.repo_root,
+            gate_a_prerequisite=gate_a_prerequisite,
+            gate_b_init_bundle=gate_b_init_bundle,
         )
         artifact_valid = True
         result_reference = _artifact_reference(paths.result, repo_root=config.repo_root)
@@ -1622,6 +2034,22 @@ def launch(
                 raise ProvenanceError(
                     "preflight or result changed before manifest signing"
                 )
+            if config.target in _GATE_B_TARGETS:
+                reloaded_gate_a = _load_gate_a_prerequisite(config)
+                if not _json_exact(reloaded_gate_a, gate_a_prerequisite):
+                    raise ProvenanceError(
+                        "Gate A prerequisite changed before signing"
+                    )
+            if config.target == "formal_gate_b":
+                reloaded_init = _load_gate_b_init_manifest(
+                    config,
+                    head=source_start.head,
+                    image_id=image.image_id,
+                )
+                if not _json_exact(reloaded_init, gate_b_init_bundle):
+                    raise ProvenanceError(
+                        "Gate B initialization prerequisite changed before signing"
+                    )
             retained_result = load_strict_json(paths.result)
             rechecked_scientific = _validate_target_result(
                 retained_result,
@@ -1630,6 +2058,8 @@ def launch(
                 image_id=image.image_id,
                 admission_manifests=admissions,
                 repo_root=config.repo_root,
+                gate_a_prerequisite=gate_a_prerequisite,
+                gate_b_init_bundle=gate_b_init_bundle,
             )
             if rechecked_scientific is not scientific_passed:
                 raise ProvenanceError(
@@ -1669,13 +2099,12 @@ def launch(
             f"{type(failure).__name__}: {failure}" if failure is not None else None
         ),
     }
-    manifest["bundle_sha256"] = hashlib.sha256(
-        (
-            f"example21-launch-bundle-v1\0{config.target}\0{source_start.head}\0"
-            f"{preflight_reference['sha256']}\0"
-            f"{result_reference['sha256'] if result_reference else 'missing'}"
-        ).encode("utf-8")
-    ).hexdigest()
+    manifest["bundle_sha256"] = _launch_bundle_sha256(
+        config.target,
+        source_start.head,
+        preflight_reference["sha256"],
+        result_reference["sha256"] if result_reference else "missing",
+    )
     write_strict_json(paths.manifest, manifest)
     if failure is not None:
         if isinstance(failure, ProvenanceError):
@@ -1691,7 +2120,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("var/example21-binding-gate"),
+        default=None,
     )
     parser.add_argument("--image", default=_DEFAULT_IMAGE)
     return parser
@@ -1714,6 +2143,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.repo_root.resolve()
     output = args.output_dir
+    if output is None:
+        output = Path(
+            "var/example21-depth-gate"
+            if args.target in _GATE_B_TARGETS
+            else "var/example21-binding-gate"
+        )
     if not output.is_absolute():
         output = root / output
     try:
@@ -1731,7 +2166,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(manifest)
     value = load_strict_json(manifest)
     if (
-        args.target in {"one_update", "stability_256"}
+        args.target
+        in {"one_update", "stability_256", "gate_b_init", "formal_gate_b"}
         and value["scientific_qualification_passed"] is not True
     ):
         print(
