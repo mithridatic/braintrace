@@ -23,7 +23,8 @@ RUN python -m pip install --no-cache-dir \
       "braintools==0.3.0" \
       "brainpy==2.8.2" \
       "brainpy-state==0.1.0" \
-      "jax[cuda12]==0.11.0"
+      "jax[cuda12]==0.11.0" \
+      "numba==0.67.0"
 
 COPY . /opt/braintrace
 
