@@ -1,8 +1,7 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2 implemented; a provenance-incomplete Gate A diagnostic failed;
-Stage 2.1 stabilization preregistered before implementation; capability Gates
-A--D pending
+Status: Stage 2 and Stage 2.1 implemented; authenticated Gate A passed;
+capability Gates B--D pending
 
 Date: 2026-08-17
 
@@ -579,7 +578,7 @@ between intact and shuffled arms. On at least 256 held-out query instances:
 - intact exact accuracy is at least 0.80;
 - the Wilson lower bound for intact is above chance;
 - intact exceeds shuffled by at least 0.25 absolute;
-- shuffled remains compatible with its chance/marginal baseline; and
+- shuffled is not demonstrably above its chance/marginal baseline; and
 - `S_K` differs when pairings differ even though the two marginal multisets are
   identical.
 
@@ -588,66 +587,156 @@ describe the system as in-context learning.
 
 ### Gate B: demonstrated-depth application
 
-Use a fresh uniformly relabelled single 10-cycle `f` over the ARC colors in
-each episode. Demonstrations contain all ten one-cell bindings `c -> f(c)` in a
-random presentation order, so the input and output marginals are each exactly
-one copy of every color. The query supplies a balanced color `x`. Training and
-validation cycle mappings are unique and disjoint. The shuffled arm deranges
-the ten demonstrated outputs while retaining their exact marginal and timing;
-the generator must verify that its shuffled composed target differs from the
-intact target at every reported depth.
+Each episode uses one mapping `f` sampled without replacement from the finite
+catalog of single 10-cycles over the ten ARC colors. Demonstrations contain all
+ten one-cell bindings `c -> f(c)` in a random presentation order, so their input
+and output marginals are each exactly one copy of every color. Query colors `x`
+must be stratified as evenly as integer split sizes permit. The intact,
+shuffled, and no-context arms share the same episode, query, target, event
+timing, and padding. The shuffled arm applies a derangement to the ten
+demonstrated outputs while preserving their exact marginal; the no-context arm
+zeros the demonstrations while preserving their timing. Both controls are
+scored against the intact target. Before training, the generator must verify
+that every shuffled composed answer differs from the intact answer at every
+qualifying depth.
 
-Query ingestion is the first application of `S_K`, not depth zero before an
-application:
+Query ingestion is itself the first application of `S_K`; `H_0` is not a
+pre-application state. One subsequent latent tick advances the composition by
+exactly one application. Thus checkpoint targets are defined by
 
 ```text
-H_0 target = f(x)
-H_r target = f ** (r + 1)(x)
+target(H_0) = f(x)
+target(H_r) = f ** (r + 1)(x), for r >= 1.
 ```
 
-The qualifying latent depths are exactly `{1, 2, 4, 8}`. An effort-`R`
-training update carries the target trajectory `f(x), f**2(x), ..., f**(R+1)(x)`
-and supervises every checkpoint `H_0..H_R` against its own target with uniform
-weights summing to one. Reusing the final target at every checkpoint is
-forbidden because it would train `H_0` to skip the iterative computation. The
-4,096-update schedule contains exactly 1,024 updates at each qualifying effort.
+The qualifying efforts are exactly `R in {1, 2, 4, 8}`. Their supervision and
+matching-depth scores are fixed as follows:
 
-The preregistered production regime is 4,096 updates, batch 64, 512 held-out
-episodes, 2,048 neurons, 16,384 recurrent edges, readout width 128, color rank
-16, memory width 32, memory decay 1.0, pp-prop trace decay 0.9, learning rate
-0.003, and gradient clipping norm 1.0. Its 262,144 training mappings plus 512
-validation mappings fit within the `9! = 362,880` unique 10-cycle catalog. Data
-must be generated and staged in deterministic fixed-shape chunks; materializing
-the complete `(4096, 19, 64, 47)` event tensor on device is not required and
-must not change schedule or random-stream identity. The exact training and
-validation seeds and fixed staging-chunk size remain pending preregistration;
-they must be frozen in the Gate B configuration before its code or qualifying
-run exists and may not be selected after inspecting results.
+| Effort | Per-checkpoint training targets | Matching-depth score |
+| --- | --- | --- |
+| `R = 1` | `H_0=f(x)`, `H_1=f**2(x)` | `H_1` against `f**2(x)` |
+| `R = 2` | `H_0=f(x)`, ..., `H_2=f**3(x)` | `H_2` against `f**3(x)` |
+| `R = 4` | `H_0=f(x)`, ..., `H_4=f**5(x)` | `H_4` against `f**5(x)` |
+| `R = 8` | `H_0=f(x)`, ..., `H_8=f**9(x)` | `H_8` against `f**9(x)` |
 
-A 10-cycle makes the shortcut boundary exact. For every qualifying `r`,
-`f**(r+1)(x) != f(x)`, so one application cannot solve the final target. The
-fixed marginal-only baseline is `1/10`; even a shortcut given `x` and `f(x)` but
-none of the remaining pairings can do no better than `1/8`. Gate B therefore
-uses `1/8` as its conservative chance boundary. For each qualifying depth,
-report exact accuracy and Wilson intervals at `H_0` and the matching `H_r`, plus
-the intact, shuffled, and no-context matching-depth results. The architecture
-passes only when:
+Every effort-`R` update supervises all `R + 1` checkpoints with weight
+`1 / (R + 1)` each. Reusing `f**(R+1)(x)` as the target at every checkpoint is
+forbidden because it trains `H_0` to skip the declared iterative computation.
+For the same arm and held-out episode, the recorded `H_0` prediction must be
+byte-identical across requested efforts: future rollout length cannot change a
+past checkpoint.
 
-- the intact Wilson 95% lower bound at `H_r` is above `1/8` at every supported
-  depth;
-- at least two nonzero depths improve by 0.15 absolute or more over `H_0` when
-  both are scored against `f**(r+1)(x)`;
-- intact exceeds shuffled by at least 0.15 absolute at every supported depth;
-- all 512 held-out episodes satisfy the exact marginal, disjoint-mapping, and
-  no-one-step-shortcut checks; and
-- `H_0` scored against its proper one-step target `f(x)` has a Wilson 95% lower
-  bound above `1/8`, so a later-depth result is not credited to an undefined
-  initial workspace.
+The production regime is exactly 4,096 updates, batch 64, and 512 held-out
+episodes, with 2,048 neurons, 16,384 recurrent edges, readout width 128, color
+rank 16, memory width 32, memory decay 1.0, pp-prop trace decay 0.9, learning
+rate 0.003, and gradient clipping norm 1.0. The schedule contains exactly 1,024
+updates, or 65,536 training episodes, at each qualifying effort. It therefore
+uses 262,144 distinct training cycles and 512 further distinct validation
+cycles, with zero overlap. This consumes 262,656 of the `9! = 362,880` possible
+single 10-cycles and leaves 100,224 unused; no cycle may be repeated to create
+an effectively unbounded stream. The same 512 validation episodes are used at
+all four efforts and do not consume the catalog four times.
 
-Monotonic improvement at every tick is not required. Cherry-picking a best
-undisclosed tick is forbidden; depth selection is fixed by the task. Results
-beyond the largest trained/demonstrated depth are reported under
-`depth_stress_only` and cannot satisfy this gate.
+The catalog/split seed is `20260818`. Training uses episode/presentation seed
+`32021`; validation uses episode/presentation seed `92021`. The first 262,144
+positions of the seeded catalog permutation are the training mapping IDs and
+the next 512 positions are the validation mapping IDs. For global episode
+schedule index `i`, query color is `i mod 10`, making each split as balanced as
+its integer size permits without another random stream. Training effort order
+is the deterministic cycle `(1, 2, 4, 8)` repeated exactly 1,024 times; it uses
+no effort-selection RNG.
+
+The shuffled-output control tests color rotations `s = 1..9` in ascending
+order, with `g_s(c) = (f(c) + s) mod 10`, and selects the first whose ten
+rotated demonstration outputs derange all ten intact pairings and whose
+composed query answer differs from the intact answer at every effort in
+`{1, 2, 4, 8}`. Failure to find such a rotation invalidates the episode before
+training; it is not permitted to relax a depth or keep an accidental matching
+target.
+
+Data is generated and transferred in exactly 32 fixed-shape staging chunks of
+128 updates. Chunk boundaries may change only host/device staging:
+concatenating the chunks must reproduce the global episode order, effort order,
+queries, presentation permutations, events, targets, and hashes exactly. Every
+update uses one padded 19-tick shape and explicit advance/supervision masks, so
+the implementation builds one compiled training driver rather than four
+effort-specific model shapes. An effort-`R` example advances exactly through
+`H_R`; every remaining position in the fixed `T=19` suffix has
+`advance=False`, zero loss weight, and a dummy non-semantic target. That suffix
+causes no model-state evolution. Eligibility machinery may update unused
+post-terminal trace internals, but no later loss may consume them; the padded
+objective and parameter gradient must match a truncated `[:11 + R]` reference.
+The prohibition is on interleaved padding or trace aging before a semantic
+loss, not on unobserved trace state after `H_R`. The active prefix, including
+`H_0`, must be byte-identical to the compact reference. A Python host loop is
+permitted only over the 32 chunks and may only invoke that one prebuilt `T=19`
+JIT; its internal 128-update loop must use `brainstate.transform.for_loop`. No
+model, step, or eligibility-trace call may execute directly in the Python loop.
+Materializing the complete `(4096, 19, 64, 47)` event tensor on device is not
+required.
+
+The retained strict-JSON artifact has `schema_version=1` and
+`control="example21_demonstrated_depth_gate_b"`. Its prerequisite section must
+authenticate the Gate A result SHA-256
+`3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632`,
+manifest SHA-256
+`69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf`,
+and source commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`. At that prerequisite
+revision, `latent_workspace_model.py` has SHA-256
+`467022c79123b976dd5cebc8d5ae5da37d1373bc46477133003b0b263abd8216`
+and `latent_workspace_task.py` has SHA-256
+`cfaec054bd42f6dccf9fb24c5fbec0cd703fdef17ba8d3b6dd68bf78366de18b`;
+Gate B must recompute and retain both source hashes.
+
+Gate B keeps model seed `2108` and the Gate A semantic topology. Its
+`RowEventConfig(max_demonstrations=10)` necessarily increases input width from
+41 to 47, so the Gate A full parameter count and initialization SHA are not
+expected to match and must not be used as an identity check. Before training, a
+fresh Gate-B init-only GPU preflight must pin the complete Gate B configuration,
+parameter count, initialization SHA, and compiler-path report. That one Gate B
+initialization SHA must then be unchanged across efforts and evaluation arms.
+Any source, preflight, or cross-arm mismatch stops before a qualifying training
+run. Gate A is prerequisite capability evidence, not a checkpoint whose learned
+weights initialize Gate B.
+
+The 10-cycle construction fixes the relevant shortcut baselines. Its uniform
+output marginal is `1/10`. For every supported `R`, the final target differs
+from `f(x)`, and conditional on only `x` and `f(x)` each possible
+`f**(R+1)(x)` is uniform over the other eight colors. A shortcut that merely
+copies the first lookup is therefore always wrong, while a method given only
+`x` and `f(x)` has accuracy `1/8`. This does not claim that an unrestricted
+feed-forward function of the complete `S_K` is mathematically incapable of
+composition; the required matching-depth improvement is the behavioral test
+for iterative use.
+
+For every effort, retain exact counts, accuracies, prediction histograms and
+hashes, and Wilson 95% intervals for `H_0` and every supervised checkpoint in
+all three arms. `H_0` is reported twice without changing its prediction: once
+against its proper target `f(x)`, and once against that effort's matching final
+target `f**(R+1)(x)`. Gate B passes only if all of these conditions hold:
+
+- intact matching-depth `H_R` has Wilson 95% lower bound strictly above `1/8`
+  at every `R in {1, 2, 4, 8}`;
+- at least two of the four efforts have
+  `accuracy(H_R, f**(R+1)(x)) - accuracy(H_0, f**(R+1)(x)) >= 0.15`;
+- intact matching-depth accuracy minus shuffled matching-depth accuracy is at
+  least `0.15` at every effort;
+- neither shuffled nor no-context has a Wilson 95% lower bound above `1/8` at
+  any matching depth;
+- `H_0` against its proper target `f(x)` has Wilson 95% lower bound strictly
+  above `1/8`; and
+- all 512 held-out episodes pass the distinct/disjoint-cycle, exact-marginal,
+  balanced-query, timing, target-trajectory, shuffled-answer, no-copy-shortcut,
+  and cross-effort `H_0` identity checks.
+
+Any missing checkpoint, non-finite loss/logit/state/factor, all-one prediction
+collapse at a supervised depth, schedule/configuration/provenance mismatch, or
+failed condition above makes the result fail closed. Stop before Gate C, Gate
+D, or an ARC run if Gate B fails. Do not reseed, change the declared budget,
+depth set, topology, or thresholds under the same result; a changed regime
+requires a new preregistered amendment and artifact. Monotonic improvement at
+every tick is not required, and no undisclosed best tick may be selected.
+Results beyond effort 8 are `depth_stress_only` and cannot satisfy Gate B.
 
 ### Gate C: pp-prop learnability ablations
 
@@ -990,14 +1079,51 @@ normalization largely cancels that common magnitude scaling. Stage 2.1
 therefore bounds the readout's carrier input while leaving the raw state and
 pp-prop-visible diagonal structure intact.
 
-This diagnostic does not formally close Gate A. Its directory contains no
+This diagnostic did not formally close Gate A. Its directory contains no
 retained exact preflight command, stdout/stderr, exit status, or mount/environment
 sidecar required by the qualifying-container provenance contract, and the
 image's OCI revision label is `uncommitted`. The live start/end source evidence
 and exact image ID make the behavioral failure useful, but they do not waive
-the preregistered sidecar. Gates B--D remain unrun. A Stage 2.1 rerun may close
-Gate A only after both admission checks pass and exact-revision provenance is
-retained.
+the preregistered sidecar. It motivated Stage 2.1; the subsequent authenticated
+run below supersedes it for the Gate A decision. Gates B--D remain unrun.
+
+### Authenticated Stage 2.1 Gate A result
+
+Gate A passed on the clean source commit
+`4737e9172b1c6ca99347af5b2c83fc795a294a16`. The retained strict-JSON result is
+`var/example21-binding-gate/4737e9172b1c6ca99347af5b2c83fc795a294a16-formal-gate-a.json`,
+350,308 bytes, SHA-256
+`3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632`.
+Its authenticated manifest has bundle SHA-256
+`ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875`
+and records `bundle_valid=true`, `process_succeeded=true`,
+`artifact_schema_verified=true`, and
+`scientific_qualification_passed=true`. Live Git agreed at process start and
+end, and the retained image digest is
+`sha256:e9320a08de4079bd97393ba4188e05e507848cf8756c20f5cc2c2cbd4dcd31bf`.
+The configuration digest is
+`456bbe7c59b3d78db2afa9bb11751db161c34ea7bd82205124d4a76f4867697c`;
+the training and validation schedule digests are respectively
+`25cae0684c3a0cb1a0d0ae1a12b7db8bdf37a1f15d687cdf79362c9c6163ef9b`
+and `80057e092a130e2c78e8f8397b3978bc13a0ff2a5b64bb5207abe238e08feddd`.
+
+At both retained checkpoints H0 and H1, intact accuracy is
+`512/512 = 1.0` with Wilson 95% interval
+`[0.9925530243, 1.0]`; shuffled accuracy is `0/512 = 0.0` with interval
+`[0.0, 0.0074469757]`; and no-context accuracy is
+`41/512 = 0.080078125`. The intact-minus-shuffled binding gap is exactly `1.0`.
+Every held-out intact/shuffled memory pair differs, while exact input/output
+marginals and timing are preserved. Training loss moves from
+`2.30258512496948` to `6.51925624595151e-09`, with final-64 mean
+`4.74524219496418e-06`. Both Stage 2.1 admission artifacts and every formal
+Gate A qualification criterion passed; the recorded interpretation is
+`gate_a_passed_associative_binding`. Total wall time was
+`114.739125904998` seconds.
+
+This closes associative binding at Gate A under the declared production
+topology and pp-prop learner. It does not establish repeated demonstrated-depth
+application, depth extrapolation, ARC accuracy, or the Gate C causal mechanism
+claim; those remain gated separately.
 
 ### Stage 2 implementation record: structural evidence only
 
@@ -1007,8 +1133,9 @@ commits: `5a68c10` exposes the associative key/value feature-index contract;
 `65fe456` integrates it into the Example 21 training, selected evaluation,
 diagnostics, report, and named outer evaluation JIT; and `186c636` adds the
 Gate A runner and its co-located tests. Width zero remains the default and
-byte-compatible legacy path. Width 32 with decay 1.0 remains an explicit
-candidate until the capability gates pass.
+byte-compatible legacy path. Width 32 with decay 1.0 is the selected
+architecture that passed Gate A and remains fixed for Gate B; width zero is the
+legacy control.
 
 The implementation has dedicated `context_memory`, `query_encoding`,
 `reasoning_query`, diagnostic `memory_read`, and continuous
@@ -1047,8 +1174,9 @@ for the selected width-32 configuration, gate-native minimum diagonal
 zero-event norm `0`. Width 64 is comparison-only: its gate-native values are
 `0.8254998922`, `0.2295354307`, and `0.5959644318`, and its standard ARC values
 are `0.7770660520`, `0.2572668493`, and `0.5197992325`. These are structural
-Gram-matrix measurements, not learned binding evidence; width 32 remains the
-selected configuration and neither width has passed a capability gate.
+Gram-matrix measurements, not learned binding evidence. The authenticated Gate
+A result above separately supplies learned binding evidence for the selected
+width-32 configuration; width 64 remains comparison-only and unqualified.
 
 The evaluation integration has a named non-inline outer JIT around the
 selected-checkpoint runner. Its structural regressions require one trace across
@@ -1063,11 +1191,11 @@ validation remains in progress.
 
 ### Required post-change results
 
-Pending: implement and pass the Stage 2.1 one-update and 256-update admission
-checks; rerun Gate A with exact-revision image and preflight sidecar; only then
-run Gate B demonstrated-depth application, Gate C mechanism ablations, and Gate
-D full ARC qualification. A failed admission check or Gate A result stops this
-sequence.
+Complete: the Stage 2.1 one-update and 256-update admissions and authenticated
+Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`.
+Pending: implement and run the now-frozen Gate B demonstrated-depth contract;
+only after a Gate B pass run Gate C mechanism ablations and Gate D full ARC
+qualification. Any failed or unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
 
