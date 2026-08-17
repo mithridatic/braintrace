@@ -1,10 +1,7 @@
 FROM python:3.14.0-slim-trixie@sha256:5af4c7f950774a1abf3fd4e8e3fc95f4d0fe684c7fdc1eb10777fc5a017371c7
 
-ARG BRAINTRACE_SOURCE_COMMIT=uncommitted
-
 LABEL org.opencontainers.image.title="BrainTrace temporal-credit GPU runtime" \
-      org.opencontainers.image.version="0.11.0-py314" \
-      org.opencontainers.image.revision="${BRAINTRACE_SOURCE_COMMIT}"
+      org.opencontainers.image.version="0.11.0-py314"
 
 ENV JAX_PLATFORMS="" \
     XLA_PYTHON_CLIENT_PREALLOCATE=false \
@@ -27,15 +24,19 @@ RUN python -m pip install --no-cache-dir \
       "jax[cuda12]==0.11.0" \
       "numba==0.67.0"
 
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes git \
+    && rm -rf /var/lib/apt/lists/* \
+    && git --version
+
 COPY . /opt/braintrace
 
 RUN python -m pip install --no-cache-dir --no-deps "/opt/braintrace[cuda12,examples]" \
     && python -c "import jax, sys; assert sys.version_info[:2] == (3, 14); assert jax.__version__ == '0.11.0'"
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends --yes git \
-    && rm -rf /var/lib/apt/lists/* \
-    && git --version
+ARG BRAINTRACE_SOURCE_COMMIT=uncommitted
+
+LABEL org.opencontainers.image.revision="${BRAINTRACE_SOURCE_COMMIT}"
 
 # Persistent XLA compilation cache. Declared after the install layers so editing
 # it never invalidates the pip download cache. Bind-mount a shared host directory

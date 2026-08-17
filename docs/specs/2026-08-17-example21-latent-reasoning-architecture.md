@@ -827,6 +827,15 @@ inside that mount, points `GIT_WORK_TREE` at the mounted worktree, and sets
 expected-clean assertions; omitting either assertion is a qualification
 failure.
 
+The Docker recipe keeps its static image labels early, installs Git before the
+source `COPY`, and places the commit-dependent source-revision build argument
+and OCI revision label after the reusable dependency and source-install
+layers. Changing the metadata value alone must therefore not invalidate those
+earlier cache layers; ordinary source-content changes may still invalidate the
+`COPY` and source-install layers. This ordering is only a build-cache invariant:
+it does not weaken or replace the exact-label, live-Git, clean-tree, or
+retained preflight requirements for a qualifying run.
+
 The harness must obtain the live full commit and porcelain-clean status from
 Git at both process start and process end. Both observations must agree with
 the supplied assertions, and the start and end commits must agree with each
