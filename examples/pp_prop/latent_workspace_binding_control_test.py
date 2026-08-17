@@ -287,3 +287,30 @@ def test_artifact_writer_emits_strict_json(tmp_path):
 
     assert parsed == {"array": [1, 2], "finite": 1.0, "nonfinite": None}
     assert not (tmp_path / "control.json.tmp").exists()
+
+
+def test_device_memory_report_preserves_allocator_peaks(monkeypatch):
+    class Device:
+        def __str__(self) -> str:
+            return "test-device"
+
+        def memory_stats(self) -> dict[str, int]:
+            return {
+                "bytes_in_use": np.int64(7),
+                "peak_bytes_in_use": 11,
+                "bytes_limit": 101,
+            }
+
+    monkeypatch.setattr(control.jax, "devices", lambda: [Device()])
+
+    assert control._device_memory_report() == [
+        {
+            "available": True,
+            "device": "test-device",
+            "stats": {
+                "bytes_in_use": 7,
+                "bytes_limit": 101,
+                "peak_bytes_in_use": 11,
+            },
+        }
+    ]

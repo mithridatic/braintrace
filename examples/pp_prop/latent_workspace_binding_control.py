@@ -1071,6 +1071,29 @@ def _source_report() -> dict[str, Any]:
     return {"commit": commit, "dirty": dirty}
 
 
+def _device_memory_report() -> list[dict[str, Any]]:
+    reports = []
+    for device in jax.devices():
+        item: dict[str, Any] = {"device": str(device)}
+        try:
+            stats = device.memory_stats()
+        except Exception as error:  # pragma: no cover - backend-specific failure
+            item.update(
+                available=False,
+                error=f"{type(error).__name__}: {error}",
+                stats={},
+            )
+        else:
+            item["available"] = stats is not None
+            item["stats"] = (
+                {}
+                if stats is None
+                else {str(key): int(value) for key, value in sorted(stats.items())}
+            )
+        reports.append(item)
+    return reports
+
+
 def _interpretation(
     bptt: dict[str, Any], pp_prop: dict[str, Any], config: BindingControlConfig
 ) -> str:
@@ -1142,6 +1165,7 @@ def run_binding_control(config: BindingControlConfig) -> dict[str, Any]:
             "jax": jax.__version__,
             "backend": jax.default_backend(),
             "devices": [str(device) for device in jax.devices()],
+            "device_memory_after_run": _device_memory_report(),
         },
         "config": {
             **dataclasses.asdict(config),
