@@ -512,7 +512,10 @@ before and after that update. It passes only when:
 - each post-update H0 and H1 cross-entropy is no more than its corresponding
   pre-update value plus `1.0`;
 - the post-update maximum absolute color logit is below `10` at each depth;
-- every observed per-example capped-carrier norm is at most `1`; and
+- every observed per-example capped-carrier norm is at most `1 + 2e-6`; the
+  fixed `2e-6` allowance covers only backend rounding when a float32 unit-norm
+  vector is remeasured in float64 and does not change the mathematical radius;
+  and
 - the required associative, readout, and color-decoder gradient/factor group
   norms are finite and nonzero.
 
