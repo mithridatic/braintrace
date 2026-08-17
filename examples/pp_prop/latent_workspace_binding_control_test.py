@@ -176,11 +176,12 @@ def test_model_drivers_use_compiled_brainstate_loops_not_python_loops():
 
 
 def test_interpretation_is_scale_gated_and_covers_preregistered_outcomes():
-    production = control.BindingControlConfig(
+    abbreviated_production = control.BindingControlConfig(
         training_updates=1,
         batch_size=4,
         validation_episodes=4,
     )
+    production = control.BindingControlConfig()
     reduced = control.BindingControlConfig.smoke_config()
 
     def result(intact: float, gap: float) -> dict[str, object]:
@@ -194,6 +195,14 @@ def test_interpretation_is_scale_gated_and_covers_preregistered_outcomes():
     assert (
         control._interpretation(fails, fails, reduced)
         == "reduced_smoke_only_no_architecture_conclusion"
+    )
+    assert (
+        control._interpretation(fails, fails, abbreviated_production)
+        == "nonqualifying_abbreviated_no_architecture_conclusion"
+    )
+    assert (
+        control._interpretation(binds, fails, abbreviated_production)
+        == "nonqualifying_abbreviated_no_architecture_conclusion"
     )
     assert (
         control._interpretation(fails, fails, production)
@@ -210,6 +219,25 @@ def test_interpretation_is_scale_gated_and_covers_preregistered_outcomes():
     assert (
         control._interpretation(fails, binds, production)
         == "invalid_control_pp_prop_binds_while_bptt_fails"
+    )
+
+
+def test_qualification_regime_requires_every_preregistered_setting():
+    full = control.BindingControlConfig()
+
+    assert full.configuration_scale == "production_topology"
+    assert full.qualification_regime == "preregistered_full"
+    assert (
+        dataclasses.replace(full, training_updates=9999).qualification_regime
+        == "nonqualifying_abbreviated"
+    )
+    assert (
+        dataclasses.replace(full, validation_episode_seed=91022).qualification_regime
+        == "nonqualifying_abbreviated"
+    )
+    assert (
+        dataclasses.replace(full, neuron_count=1024).qualification_regime
+        == "nonqualifying_abbreviated"
     )
 
 

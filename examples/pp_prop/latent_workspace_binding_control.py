@@ -21,11 +21,15 @@ import math
 import os
 import platform
 import subprocess
+import sys
 import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
+
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import brainstate
 import braintrace
@@ -235,6 +239,27 @@ class BindingControlConfig:
             and self.trace_decay == 0.9
         )
         return "production_topology" if production else "reduced_smoke"
+
+    @property
+    def qualification_regime(self) -> str:
+        """Return whether every preregistered evidence setting is exact."""
+
+        complete = (
+            self.configuration_scale == "production_topology"
+            and self.training_updates == 10000
+            and self.batch_size == 64
+            and self.validation_episodes == 512
+            and self.gap_steps == 1
+            and self.learning_rate == 3e-3
+            and self.clip_norm == 1.0
+            and self.model_seed == 2108
+            and self.split_seed == 20260817
+            and self.train_episode_seed == 31021
+            and self.validation_episode_seed == 91021
+            and self.gradient_chunk_size == 1
+            and self.sparse_backend is None
+        )
+        return "preregistered_full" if complete else "nonqualifying_abbreviated"
 
     @classmethod
     def smoke_config(cls) -> "BindingControlConfig":
@@ -1059,6 +1084,8 @@ def _interpretation(
     pp_binds = binds(pp_prop)
     if config.configuration_scale != "production_topology":
         return "reduced_smoke_only_no_architecture_conclusion"
+    if config.qualification_regime != "preregistered_full":
+        return "nonqualifying_abbreviated_no_architecture_conclusion"
     if not bptt_binds and pp_binds:
         return "invalid_control_pp_prop_binds_while_bptt_fails"
     if not bptt_binds:
@@ -1119,6 +1146,7 @@ def run_binding_control(config: BindingControlConfig) -> dict[str, Any]:
         "config": {
             **dataclasses.asdict(config),
             "configuration_scale": config.configuration_scale,
+            "qualification_regime": config.qualification_regime,
         },
         "data": {**_data_report(data, config), "generation_seconds": data_seconds},
         "initialization": {
