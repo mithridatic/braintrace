@@ -1531,6 +1531,10 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
     assert "Seed: 7" in report
     assert "Runtime: 1.250" in report
     assert "Voltage L2" in report
+    assert "feature axis for logits; neuron axis for physical state" in report
+    assert "Repeat numeric noise: queries=1; steps=33" in report
+    assert "maximum RMS=" in report
+    assert "per_step_query_rms" not in report
     assert plot_path.read_bytes().startswith(b"\x89PNG")
 
 

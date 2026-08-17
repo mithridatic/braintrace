@@ -1518,8 +1518,8 @@ def _evaluate(
     repeat_comparison["interpretation"] = (
         "repeat_intact is reproducible within the declared tolerance; spikes, "
         "decoded candidates, and metrics are exact while logit/state/current RMS "
-        "differences have feature-axis RMS at most "
-        f"{STATE_RMS_TOLERANCE:.1e} at every checkpoint/query."
+        f"differences are at most {STATE_RMS_TOLERANCE:.1e} on the feature axis "
+        "for logits and neuron axis for physical state at every checkpoint/query."
         if repeat_reproducible
         else "repeat_intact exceeded the declared reproducibility tolerance."
     )
@@ -2639,6 +2639,32 @@ def _render_report(result: dict[str, object]) -> str:
     ablation_numeric = determinism.get(
         "slot_ablation_checkpoint_zero_numeric_evidence", {}
     )
+
+    def numeric_noise_line(label: str, evidence: object) -> str:
+        if not isinstance(evidence, dict):
+            return f"{label} numeric noise: unavailable."
+
+        def formatted_values(value: object) -> dict[str, str]:
+            if not isinstance(value, dict):
+                return {}
+            return {
+                str(name): f"{float(number):.3e}"
+                for name, number in value.items()
+                if isinstance(number, Real) and not isinstance(number, bool)
+            }
+
+        steps = evidence.get("evaluated_steps")
+        step_count = len(steps) if isinstance(steps, list) else "unreported"
+        return (
+            f"{label} numeric noise: queries={evidence.get('query_count', 'unreported')}; "
+            f"steps={step_count}; spike mismatches="
+            f"{evidence.get('spike_hamming_count', 'unreported')}; maximum RMS="
+            f"{formatted_values(evidence.get('maximum_rms'))}; maximum absolute="
+            f"{formatted_values(evidence.get('maximum_absolute'))}; dtypes="
+            f"{evidence.get('intact_dtype_by_state', 'unreported')}; within tolerance="
+            f"{evidence.get('within_declared_tolerance', 'unreported')}."
+        )
+
     lines.extend(
         [
             "",
@@ -2659,12 +2685,13 @@ def _render_report(result: dict[str, object]) -> str:
                 f"{determinism.get('slot_ablation_checkpoint_zero_decoded_candidates_exact')}; "
                 "effort-0 metrics exact="
                 f"{determinism.get('slot_ablation_checkpoint_zero_metrics_exact')}); "
-                "per-query feature-axis RMS tolerance="
+                "per-query RMS tolerance (feature axis for logits; neuron axis "
+                "for physical state)="
                 f"{determinism.get('state_rms_tolerance', 'unreported')}; "
                 f"metric absolute tolerance={determinism.get('metric_absolute_tolerance', 'unreported')}."
             ),
-            f"Repeat numeric noise: {repeat_numeric}.",
-            f"Ablation checkpoint-0 numeric noise: {ablation_numeric}.",
+            numeric_noise_line("Repeat", repeat_numeric),
+            numeric_noise_line("Ablation checkpoint-0", ablation_numeric),
         ]
     )
     compiler_warnings = [
