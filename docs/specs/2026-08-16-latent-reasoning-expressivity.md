@@ -1,6 +1,6 @@
 # Latent-reasoning expressivity: Dale recurrence and a latent clock
 
-Status: implementing
+Status: implemented; hypothesis measured and **not** supported. See "Results".
 Supersedes nothing. Extends `2026-08-16-pp-prop-latent-reasoning.md` and
 `2026-08-16-latent-readout-consistency.md`.
 
@@ -96,6 +96,75 @@ Stated before measurement, scored after.
 Participation ratio recovered with decodability flat is reported as a partial
 result, not as latent reasoning. Accuracy is not a gate: per-K cells are n=4
 and the decodability probe is n=14, so accuracy cannot resolve the difference.
+
+## Results
+
+Two sweeps at the release configuration, seed 2108, `depths = (0, 1, 2, 4, 8)`.
+
+### Cause 1 is falsified
+
+The first sweep ran before `_canonical_inputs` delivered the clock bank, so
+every training and evaluation tensor carried an all-zero clock and `Wc` had a
+parameter delta of exactly `0.0` at every depth. That accident makes it a clean
+**Lever A negative control**: Dale-structured `Wf`, autonomous map, nothing
+else changed relative to the pre-change build.
+
+| participation ratio (of 32) | R=0 | R=1 | R=2 | R=4 | R=8 |
+|---|---|---|---|---|---|
+| nonnegative `Wf` (before) | 3.82 | 3.35 | 1.42 | 0.72 | 0.69 |
+| Dale-structured `Wf` alone | 3.49 | 3.35 | 1.47 | 1.02 | 0.81 |
+
+The collapse is unchanged. **Sign was not the binding constraint, and the
+Perron-Frobenius account in "Diagnosis" cause 1 above is contradicted by this
+measurement.** Cause 1 is retained in this document as the falsified
+hypothesis it turned out to be, not as a standing explanation.
+
+The same run names the actual mechanism. `trajectory_step_norm` over the eight
+latent ticks was `1.96, 1.18, 1.96, 1.37, 0.78, 0.52, 0.36, 0.24` — monotone
+geometric decay with ratio about 0.68 in the tail. The workspace is not
+rotating into a rank-one subspace; it is **shrinking toward zero**. The
+participation ratio of a decaying signal tends to one by construction. The
+per-tick gain is `latent_decay` times the surrogate-spike slope times the
+recurrent radius, and at `latent_spectral_radius = 0.9` that product is below
+one, so the state cannot survive depth for depth to act on it.
+
+### Cause 2 holds, and the clock alone does not buy computation
+
+With the clock delivered, the recurrence is genuinely non-autonomous and the
+necessary criterion is met — participation ratio no longer collapses:
+
+| | R=0 | R=1 | R=2 | R=4 | R=8 |
+|---|---|---|---|---|---|
+| participation ratio (final tick) | 3.49 | 3.35 | 1.49 | 3.30 | 2.85 |
+| terminal accuracy | 0.429 | 0.429 | 0.250 | 0.071 | 0.179 |
+| intact - shuffled | +0.357 | +0.357 | +0.036 | 0.000 | +0.036 |
+| workspace decodability (best tick) | 0.286 | 0.286 | 0.286 | 0.286 | 0.286 |
+
+The sufficient criterion is **not** met. Decodability never exceeds 0.286
+against the 0.571 single-read baseline at any depth. Worse, the untrained
+periodic drive swamps the contextual read: memory-dependence, which the
+readout-consistency change had holding at `+0.250` through eight iterations,
+collapses to `+0.036`. The participation-ratio recovery is the clock's own
+injected variance, not evidence of computation, and it is bought at the cost
+of the causal memory signal.
+
+### The budget cannot test the learning question
+
+`Wc` deltas across the sweep were `2.7e-4`, `2.5e-4`, `4.6e-4`; `Wf` moved
+about `1e-3`. Eight Adam updates at `lr = 1e-5` do not move a weight far
+enough for "can the model learn to use depth" to have been tested at all.
+Any depth claim scored at this budget is uninformative in both directions.
+
+### Next levers, against the gain constraint rather than the sign constraint
+
+Both are configuration-only and neither touches an ETP path or the compile
+gates.
+
+1. Sweep `latent_spectral_radius` over `{0.9, 1.1, 1.4}` and read
+   `trajectory_step_norm` directly. 0.9 was chosen for stability, not for
+   information transport through a surrogate-gradient spiking nonlinearity.
+2. Raise `training_updates` and `learning_rate` together until parameter
+   deltas are large enough that the learning question is decidable.
 
 ## Non-goals
 
