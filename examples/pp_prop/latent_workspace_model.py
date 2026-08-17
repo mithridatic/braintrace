@@ -1,10 +1,13 @@
-"""Recurrent spiking ARC workspace for Example 21.
+"""Recurrent spiking and associative ARC workspace for Example 21.
 
-The model deliberately contains only repository-native mechanisms: BrainPy
-LIF neurons, exponential current synapses, BrainTrace dense and sparse linear
-operators, and a pp-prop eligibility-trace coordinate.  ARC row events drive a
-slow feed-forward synapse.  After the query, exactly-zero event vectors leave
-the recurrent LIF population to evolve for up to 32 latent steps.
+The opt-in memory architecture adds a dense fast-weight ``S_K`` with a
+diagonal-friendly self-transition and a separate continuous reasoning carrier
+``H_r``.  Demonstration rows write fixed nonlinear key/value codes, while the
+query and every exactly-zero latent tick re-read frozen ``S_K`` before driving
+the recurrent LIF workspace.  All trainable memory operations use BrainTrace
+ETP primitives and pp-prop remains the production learning rule.  A memory
+width of zero retains the original reservoir-only architecture and state and
+parameter paths.
 
 The color head is a compact CP factorization.  It emits row, column, and color
 factors while the network is running and expands them to independent
@@ -15,6 +18,7 @@ at every context row.
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
 from numbers import Integral, Real
@@ -34,6 +38,7 @@ import braintrace
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 NEURONS_PER_SLOT = 64
+MEMORY_KEY_RFF_GAMMA = 2.0
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -61,6 +66,30 @@ def _positive_real(value: object, name: str) -> float:
     if not math.isfinite(result) or result <= 0.0:
         raise ValueError(f"{name} must be a finite positive real scalar")
     return result
+
+
+def _unit_interval_real(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a finite real scalar in [0, 1]")
+    result = float(value)
+    if not math.isfinite(result) or not 0.0 <= result <= 1.0:
+        raise ValueError(f"{name} must be a finite real scalar in [0, 1]")
+    return result
+
+
+def _optional_index(value: object, name: str) -> int | None:
+    if value is None:
+        return None
+    return _nonnegative_integer(value, name)
+
+
+def _index_tuple(value: object, name: str) -> tuple[int, ...]:
+    if not isinstance(value, tuple):
+        raise TypeError(f"{name} must be a tuple of nonnegative integers")
+    indices = tuple(_nonnegative_integer(index, name) for index in value)
+    if len(set(indices)) != len(indices):
+        raise ValueError(f"{name} must not contain duplicate indices")
+    return indices
 
 
 @dataclass(frozen=True)
@@ -92,6 +121,17 @@ class ModelConfig:
         Initialization gains for the feed-forward and recurrent projections.
     trace_decay : float, default=0.9
         pp-prop eligibility-trace decay in ``[0, 1)``.
+    context_memory_width : int, default=0
+        Width of the opt-in square contextual fast-weight memory.  Zero keeps
+        the legacy reservoir architecture byte-compatible.
+    memory_decay : float, default=1.0
+        Self-decay of contextual memory on valid demonstration ticks.
+    demonstration_phase_index, query_phase_index : int, optional
+        Event channels identifying demonstration and query rows in memory mode.
+    input_side_valid_index, output_side_valid_index : int, optional
+        Event channels gating complete input/output association writes.
+    memory_key_indices, memory_value_indices : tuple of int
+        Input-event features projected by fixed deterministic key/value bases.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -126,6 +166,14 @@ class ModelConfig:
     recurrent_gain: float = 0.8
     trace_decay: float = 0.9
     event_valid_index: int = 0
+    context_memory_width: int = 0
+    memory_decay: float = 1.0
+    demonstration_phase_index: int | None = None
+    query_phase_index: int | None = None
+    input_side_valid_index: int | None = None
+    output_side_valid_index: int | None = None
+    memory_key_indices: tuple[int, ...] = ()
+    memory_value_indices: tuple[int, ...] = ()
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -141,6 +189,11 @@ class ModelConfig:
         ):
             object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        object.__setattr__(
+            self,
+            "context_memory_width",
+            _nonnegative_integer(self.context_memory_width, "context_memory_width"),
+        )
         object.__setattr__(
             self,
             "event_valid_index",
@@ -176,8 +229,76 @@ class ModelConfig:
         if not math.isfinite(trace_decay) or not 0.0 <= trace_decay < 1.0:
             raise ValueError("trace_decay must be a finite real scalar in [0, 1)")
         object.__setattr__(self, "trace_decay", trace_decay)
+        object.__setattr__(
+            self,
+            "memory_decay",
+            _unit_interval_real(self.memory_decay, "memory_decay"),
+        )
+        for name in (
+            "demonstration_phase_index",
+            "query_phase_index",
+            "input_side_valid_index",
+            "output_side_valid_index",
+        ):
+            index = _optional_index(getattr(self, name), name)
+            if index is not None and index >= self.input_width:
+                raise ValueError(f"{name} must be smaller than input_width")
+            object.__setattr__(self, name, index)
+        for name in ("memory_key_indices", "memory_value_indices"):
+            indices = _index_tuple(getattr(self, name), name)
+            if any(index >= self.input_width for index in indices):
+                raise ValueError(f"{name} entries must be smaller than input_width")
+            object.__setattr__(self, name, indices)
+        memory_fields = (
+            self.demonstration_phase_index,
+            self.query_phase_index,
+            self.input_side_valid_index,
+            self.output_side_valid_index,
+        )
+        if self.context_memory_width == 0:
+            if any(index is not None for index in memory_fields) or any(
+                (self.memory_key_indices, self.memory_value_indices)
+            ):
+                raise ValueError(
+                    "context_memory_width must be positive when memory event "
+                    "configuration is supplied"
+                )
+        else:
+            required_names = (
+                "demonstration_phase_index",
+                "query_phase_index",
+                "input_side_valid_index",
+                "output_side_valid_index",
+            )
+            for name, index in zip(required_names, memory_fields, strict=True):
+                if index is None:
+                    raise ValueError(
+                        f"{name} is required when context_memory_width is positive"
+                    )
+            if self.demonstration_phase_index == self.query_phase_index:
+                raise ValueError(
+                    "demonstration_phase_index and query_phase_index must differ"
+                )
+            if self.input_side_valid_index == self.output_side_valid_index:
+                raise ValueError(
+                    "input_side_valid_index and output_side_valid_index must differ"
+                )
+            if not self.memory_key_indices:
+                raise ValueError(
+                    "memory_key_indices is required when context_memory_width is positive"
+                )
+            if not self.memory_value_indices:
+                raise ValueError(
+                    "memory_value_indices is required when context_memory_width is positive"
+                )
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
+
+    @property
+    def memory_enabled(self) -> bool:
+        """Return whether the associative contextual-memory path is enabled."""
+
+        return self.context_memory_width > 0
 
     @property
     def slot_count(self) -> int:
@@ -188,6 +309,46 @@ class ModelConfig:
     def compact_output_width(self) -> int:
         """Return the width of the factorized ARC output vector."""
         return compact_output_width(self.color_rank)
+
+
+@dataclass(frozen=True)
+class AssociativeMemoryReport:
+    """Describe the fixed associative-memory representation and operators.
+
+    Parameters
+    ----------
+    mode : str
+        ``"legacy_reservoir"`` or ``"associative_workspace"``.
+    memory_width, key_feature_width, value_feature_width : int
+        Logical memory and raw selected row-feature widths.
+    key_map, value_map : str, optional
+        Stable names for the frozen deterministic encoders.
+    rff_gamma : float, optional
+        Random Fourier frequency scale used by the key encoder.
+    key_basis_seed, key_bias_seed, value_basis_seed : int, optional
+        Dedicated :mod:`brainstate.random` stream seeds.
+    key_basis_sha256, key_bias_sha256, value_basis_sha256 : str, optional
+        Shape-, dtype-, and byte-sensitive fixed-array digests.
+    write_component_type, query_component_type, read_component_type : str, optional
+        Stable public names of the three pp-prop-visible trainable operations.
+    """
+
+    mode: str
+    memory_width: int
+    key_feature_width: int
+    value_feature_width: int
+    key_map: str | None
+    value_map: str | None
+    rff_gamma: float | None
+    key_basis_seed: int | None
+    key_bias_seed: int | None
+    value_basis_seed: int | None
+    key_basis_sha256: str | None
+    key_bias_sha256: str | None
+    value_basis_sha256: str | None
+    write_component_type: str | None
+    query_component_type: str | None
+    read_component_type: str | None
 
 
 @dataclass(frozen=True)
@@ -359,6 +520,15 @@ class PackedTrajectory:
     feedforward_current, recurrent_current : jax.Array
         Separate Expon current states shaped ``(time, batch, neurons)`` and
         represented numerically in milliamps.
+    workspace_carrier : jax.Array
+        Continuous workspace values.  This aliases ``voltage`` in the current
+        implementation and therefore adds no duplicate storage.
+    memory_read : jax.Array
+        Associative reads shaped ``(time, batch, memory_width)``.  Legacy mode
+        has a zero-width final dimension.
+    final_context_memory : jax.Array
+        One final memory snapshot shaped ``(batch, memory_width, memory_width)``;
+        legacy mode has two zero-width trailing dimensions.
     color_rank : int
         Rank needed to expand compact color factors.
     """
@@ -368,6 +538,9 @@ class PackedTrajectory:
     voltage: jax.Array
     feedforward_current: jax.Array
     recurrent_current: jax.Array
+    workspace_carrier: jax.Array
+    memory_read: jax.Array
+    final_context_memory: jax.Array
     color_rank: int
 
     @property
@@ -391,6 +564,18 @@ class SelectedPackedTrajectory:
     feedforward_current, recurrent_current : jax.Array
         Selected Expon current states shaped
         ``(checkpoints, batch, neurons)`` in milliamps.
+    workspace_carrier : jax.Array
+        Selected continuous workspace values shaped
+        ``(checkpoints, batch, neurons)``.  The current carrier is numeric LIF
+        voltage, so this field aliases ``voltage`` instead of allocating a
+        duplicate selected buffer.  Legacy mode reports the same voltage.
+    memory_read : jax.Array
+        Selected associative reads shaped ``(checkpoints, batch, memory_width)``.
+        Legacy mode has a zero-width final dimension.
+    final_context_memory : jax.Array
+        One final memory snapshot shaped ``(batch, memory_width, memory_width)``.
+        This preserves pairing-sensitive evidence without stacking ``S`` over
+        time.  Legacy mode has two zero-width trailing dimensions.
     color_rank : int
         Rank needed to expand compact color factors.
     """
@@ -401,6 +586,9 @@ class SelectedPackedTrajectory:
     voltage: jax.Array
     feedforward_current: jax.Array
     recurrent_current: jax.Array
+    workspace_carrier: jax.Array
+    memory_read: jax.Array
+    final_context_memory: jax.Array
     color_rank: int
 
     @property
@@ -832,6 +1020,79 @@ def _copy_tree(value: Any) -> Any:
     return jax.tree.map(lambda leaf: jnp.array(leaf, copy=True), value)
 
 
+def _array_sha256(value: jax.Array) -> str:
+    array = np.ascontiguousarray(np.asarray(value))
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(np.asarray(array.shape, dtype=np.int64).tobytes())
+    digest.update(array.tobytes(order="C"))
+    return digest.hexdigest()
+
+
+def update_context_memory(
+    memory: jax.Array,
+    key: jax.Array,
+    value: jax.Array,
+    *,
+    write_gate: jax.Array,
+    decay: float,
+    write_scale: jax.Array | None = None,
+) -> jax.Array:
+    """Apply one gated diagonal-friendly associative-memory update.
+
+    Parameters
+    ----------
+    memory : jax.Array
+        Current memory shaped ``(batch, key_width, value_width)``.
+    key, value : jax.Array
+        Per-example write vectors shaped ``(batch, key_width)`` and
+        ``(batch, value_width)``.
+    write_gate : jax.Array
+        Boolean gate shaped ``(batch,)``.  False lanes remain byte-identical.
+    decay : float
+        Finite self-decay in ``[0, 1]`` for lanes whose gate is true.
+    write_scale : jax.Array, optional
+        Element-wise scale shaped ``(key_width, value_width)``.  It is applied
+        to the literal outer-product write, not to the recurrent memory term.
+
+    Returns
+    -------
+    jax.Array
+        Updated memory with the same shape and dtype as ``memory``.
+    """
+    memory = jnp.asarray(memory)
+    key = jnp.asarray(key)
+    value = jnp.asarray(value)
+    write_gate = jnp.asarray(write_gate, dtype=jnp.bool_)
+    if memory.ndim != 3:
+        raise ValueError("memory must have shape (batch, key_width, value_width)")
+    batch_size, key_width, value_width = memory.shape
+    if key.shape != (batch_size, key_width):
+        raise ValueError(
+            f"key must have shape ({batch_size}, {key_width}), got {key.shape}"
+        )
+    if value.shape != (batch_size, value_width):
+        raise ValueError(
+            f"value must have shape ({batch_size}, {value_width}), got {value.shape}"
+        )
+    if write_gate.shape != (batch_size,):
+        raise ValueError(
+            f"write_gate must have shape ({batch_size},), got {write_gate.shape}"
+        )
+    decay = _unit_interval_real(decay, "decay")
+    write = jnp.einsum("bi,bj->bij", key, value)
+    if write_scale is not None:
+        write_scale = jnp.asarray(write_scale)
+        if write_scale.shape != (key_width, value_width):
+            raise ValueError(
+                "write_scale must have shape "
+                f"({key_width}, {value_width}), got {write_scale.shape}"
+            )
+        write = write * write_scale[None, :, :]
+    candidate = decay * memory + write
+    return jnp.where(write_gate[:, None, None], candidate, memory)
+
+
 class LatentWorkspaceModel(brainstate.nn.Module):
     """BrainPy LIF network with sparse recurrent ARC computation.
 
@@ -939,6 +1200,68 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             w_init=factor_weights,
             b_init=braintools.init.ZeroInit(),
         )
+        if config.memory_enabled:
+            memory_width = config.context_memory_width
+            key_width = len(config.memory_key_indices)
+            value_width = len(config.memory_value_indices)
+            key_random = brainstate.random.RandomState(config.seed + 101)
+            key_bias_random = brainstate.random.RandomState(config.seed + 102)
+            value_random = brainstate.random.RandomState(config.seed + 103)
+            query_random = brainstate.random.RandomState(config.seed + 104)
+            read_random = brainstate.random.RandomState(config.seed + 105)
+            self._memory_key_basis = jnp.asarray(
+                key_random.randn(key_width, memory_width), dtype=jnp.float32
+            )
+            self._memory_key_bias = jnp.asarray(
+                2.0 * math.pi * key_bias_random.rand(memory_width),
+                dtype=jnp.float32,
+            )
+            self._memory_value_basis = jnp.asarray(
+                value_random.randn(value_width, memory_width)
+                / math.sqrt(value_width),
+                dtype=jnp.float32,
+            )
+            self.memory_write_scale = brainstate.ParamState(
+                jnp.ones((memory_width, memory_width), dtype=jnp.float32)
+            )
+            self.workspace_query_projection = braintrace.nn.Linear(
+                config.neuron_count,
+                memory_width,
+                w_init=(
+                    query_random.randn(config.neuron_count, memory_width)
+                    / math.sqrt(config.neuron_count)
+                ),
+                b_init=None,
+            )
+            self.memory_read_projection = braintrace.nn.Linear(
+                memory_width,
+                config.neuron_count,
+                w_init=(
+                    read_random.randn(memory_width, config.neuron_count)
+                    / math.sqrt(memory_width)
+                ),
+                b_init=None,
+            )
+            self.context_memory = brainstate.HiddenState(
+                jnp.zeros(
+                    (config.batch_size, memory_width, memory_width),
+                    dtype=jnp.float32,
+                )
+            )
+            self.query_encoding = brainstate.HiddenState(
+                jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
+            )
+            self.reasoning_query = brainstate.HiddenState(
+                jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
+            )
+            self.memory_read = brainstate.HiddenState(
+                jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
+            )
+            self.workspace_carrier = brainstate.HiddenState(
+                jnp.zeros(
+                    (config.batch_size, config.neuron_count), dtype=jnp.float32
+                )
+            )
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
 
     @property
@@ -976,6 +1299,137 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         """Return the recurrent Expon state numerically in milliamps."""
         return jnp.asarray(self.rec_syn.syn.g.value.to_decimal(u.mA))
 
+    def encode_memory_key(self, event: jax.Array) -> jax.Array:
+        """Encode input-side row features with a fixed nonlinear key map.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched row event shaped ``(batch, input_width)``.
+
+        Returns
+        -------
+        jax.Array
+            Random Fourier key code shaped ``(batch, memory_width)``.  Rows
+            without a valid input side are exactly zero.
+        """
+        if not self.config.memory_enabled:
+            raise RuntimeError("context memory is disabled")
+        event = jnp.asarray(event, dtype=jnp.float32)
+        expected = (self.config.batch_size, self.config.input_width)
+        if event.shape != expected:
+            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+        features = event[..., jnp.asarray(self.config.memory_key_indices)]
+        phase = (
+            MEMORY_KEY_RFF_GAMMA * (features @ self._memory_key_basis)
+            + self._memory_key_bias
+        )
+        scale = math.sqrt(2.0 / self.config.context_memory_width)
+        code = scale * jnp.cos(phase)
+        assert self.config.input_side_valid_index is not None
+        side_valid = event[..., self.config.input_side_valid_index] > 0.5
+        return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
+
+    def encode_memory_value(self, event: jax.Array) -> jax.Array:
+        """Encode output-side row features with a separate fixed value map.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched row event shaped ``(batch, input_width)``.
+
+        Returns
+        -------
+        jax.Array
+            Bounded value code shaped ``(batch, memory_width)``.  Rows without
+            a valid output side are exactly zero.
+        """
+        if not self.config.memory_enabled:
+            raise RuntimeError("context memory is disabled")
+        event = jnp.asarray(event, dtype=jnp.float32)
+        expected = (self.config.batch_size, self.config.input_width)
+        if event.shape != expected:
+            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+        features = event[..., jnp.asarray(self.config.memory_value_indices)]
+        code = jnp.tanh(features @ self._memory_value_basis)
+        assert self.config.output_side_valid_index is not None
+        side_valid = event[..., self.config.output_side_valid_index] > 0.5
+        return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
+
+    def read_context_memory(self, query: jax.Array | None = None) -> jax.Array:
+        """Read the frozen contextual memory with a key-space query.
+
+        Parameters
+        ----------
+        query : jax.Array, optional
+            Query shaped ``(batch, memory_width)``.  The current explicit
+            reasoning query is used when omitted.
+
+        Returns
+        -------
+        jax.Array
+            Associative read shaped ``(batch, memory_width)``.
+        """
+        if not self.config.memory_enabled:
+            raise RuntimeError("context memory is disabled")
+        if query is None:
+            query = self.reasoning_query.value
+        query = jnp.asarray(query)
+        expected = (
+            self.config.batch_size,
+            self.config.context_memory_width,
+        )
+        if query.shape != expected:
+            raise ValueError(f"query must have shape {expected}, got {query.shape}")
+        return jnp.einsum("bkv,bk->bv", self.context_memory.value, query)
+
+    def associative_memory_report(self) -> AssociativeMemoryReport:
+        """Return a stable read-only description of the memory architecture.
+
+        Returns
+        -------
+        AssociativeMemoryReport
+            Fixed widths, encoder identity, basis provenance, and trainable
+            component types.  Legacy mode reports no memory arrays or paths.
+        """
+        if not self.config.memory_enabled:
+            return AssociativeMemoryReport(
+                mode="legacy_reservoir",
+                memory_width=0,
+                key_feature_width=0,
+                value_feature_width=0,
+                key_map=None,
+                value_map=None,
+                rff_gamma=None,
+                key_basis_seed=None,
+                key_bias_seed=None,
+                value_basis_seed=None,
+                key_basis_sha256=None,
+                key_bias_sha256=None,
+                value_basis_sha256=None,
+                write_component_type=None,
+                query_component_type=None,
+                read_component_type=None,
+            )
+        return AssociativeMemoryReport(
+            mode="associative_workspace",
+            memory_width=self.config.context_memory_width,
+            key_feature_width=len(self.config.memory_key_indices),
+            value_feature_width=len(self.config.memory_value_indices),
+            key_map="fixed_rff_cosine",
+            value_map="fixed_tanh_projection",
+            rff_gamma=MEMORY_KEY_RFF_GAMMA,
+            key_basis_seed=self.config.seed + 101,
+            key_bias_seed=self.config.seed + 102,
+            value_basis_seed=self.config.seed + 103,
+            key_basis_sha256=_array_sha256(self._memory_key_basis),
+            key_bias_sha256=_array_sha256(self._memory_key_bias),
+            value_basis_sha256=_array_sha256(self._memory_value_basis),
+            write_component_type="braintrace.element_wise",
+            query_component_type="braintrace.nn.Linear",
+            read_component_type="braintrace.nn.Linear",
+        )
+
     def reset_state(self, batch_size: int | None = None, **_: object) -> None:
         """Reset every inference state without modifying any parameter.
 
@@ -994,6 +1448,22 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         self.neu.reset_state(batch_size=self.config.batch_size)
         self.ff_syn.syn.reset_state(batch_size=self.config.batch_size)
         self.rec_syn.syn.reset_state(batch_size=self.config.batch_size)
+        if self.config.memory_enabled:
+            memory_width = self.config.context_memory_width
+            self.context_memory.value = jnp.zeros(
+                (self.config.batch_size, memory_width, memory_width),
+                dtype=jnp.float32,
+            )
+            zero_query = jnp.zeros(
+                (self.config.batch_size, memory_width), dtype=jnp.float32
+            )
+            self.query_encoding.value = zero_query
+            self.reasoning_query.value = zero_query
+            self.memory_read.value = zero_query
+            self.workspace_carrier.value = jnp.zeros(
+                (self.config.batch_size, self.config.neuron_count),
+                dtype=jnp.float32,
+            )
 
     def snapshot_state(self) -> ModelStateSnapshot:
         """Copy every hidden state while excluding all parameters.
@@ -1033,9 +1503,27 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         actual_paths = tuple(path for path, _ in snapshot.entries)
         if actual_paths != expected_paths:
             raise ValueError("snapshot hidden-state paths do not match this model")
+        validated: list[tuple[Any, Any]] = []
         for (path, value), state in zip(snapshot.entries, states.values(), strict=True):
             if tuple(path) not in expected_paths:
                 raise ValueError("snapshot contains an unknown state path")
+            value_structure = jax.tree.structure(value)
+            state_structure = jax.tree.structure(state.value)
+            value_leaves = jax.tree.leaves(value)
+            state_leaves = jax.tree.leaves(state.value)
+            if value_structure != state_structure or len(value_leaves) != len(
+                state_leaves
+            ):
+                raise ValueError("snapshot hidden-state structure does not match model")
+            if any(
+                np.shape(value_leaf) != np.shape(state_leaf)
+                for value_leaf, state_leaf in zip(
+                    value_leaves, state_leaves, strict=True
+                )
+            ):
+                raise ValueError("snapshot hidden-state shape does not match model")
+            validated.append((state, value))
+        for state, value in validated:
             state.value = _copy_tree(value)
 
     def ablate_slot(self, slot_index: int) -> tuple[jax.Array, jax.Array]:
@@ -1097,6 +1585,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         selected = neuron_slots[None, :] == slot_indices[:, None]
         keep = ~(selected & enabled[:, None])
         self.neu.V.value = self.neu.V.value * keep
+        if self.config.memory_enabled:
+            self.workspace_carrier.value = self.workspace_carrier.value * keep
         return self.voltage, self.spikes
 
     def etrace_config(self) -> braintrace.ETraceConfig:
@@ -1113,29 +1603,35 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             decay=self.config.trace_decay,
         )
 
-    def compact_readout(self, spikes: jax.Array | None = None) -> jax.Array:
-        """Map spikes to compact ARC shape and CP color factors.
+    def compact_readout(self, carrier: jax.Array | None = None) -> jax.Array:
+        """Map the active workspace carrier to compact ARC output factors.
 
         Parameters
         ----------
-        spikes : jax.Array, optional
-            Spikes shaped ``(batch, neurons)``.  Current LIF spikes are used
-            when omitted.
+        carrier : jax.Array, optional
+            Workspace values shaped ``(batch, neurons)``.  When omitted,
+            memory mode uses its continuous workspace state and legacy mode
+            uses current LIF spikes.
 
         Returns
         -------
         jax.Array
             Compact logits shaped ``(batch, compact_output_width)``.
         """
-        if spikes is None:
-            spikes = self.spikes
-        if spikes.shape != (self.config.batch_size, self.config.neuron_count):
-            raise ValueError(
-                "spikes must have shape "
-                f"({self.config.batch_size}, {self.config.neuron_count}), got "
-                f"{spikes.shape}"
+        if carrier is None:
+            carrier = (
+                self.workspace_carrier.value
+                if self.config.memory_enabled
+                else self.spikes
             )
-        hidden = jax.nn.gelu(self.readout_projection(spikes))
+        carrier = jnp.asarray(carrier)
+        if carrier.shape != (self.config.batch_size, self.config.neuron_count):
+            raise ValueError(
+                "carrier must have shape "
+                f"({self.config.batch_size}, {self.config.neuron_count}), got "
+                f"{carrier.shape}"
+            )
+        hidden = jax.nn.gelu(self.readout_projection(carrier))
         return jnp.concatenate(
             (
                 self.height_head(hidden),
@@ -1165,6 +1661,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         jax.Array
             Current binary spikes shaped ``(batch, neurons)``.
         """
+        event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
@@ -1180,10 +1677,75 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         previous_voltage = self.neu.V.value
         previous_feedforward = self.ff_syn.syn.g.value
         previous_recurrent = self.rec_syn.syn.g.value
+        memory_drive = jnp.zeros(
+            (self.config.batch_size, self.config.neuron_count), dtype=jnp.float32
+        )
+        if self.config.memory_enabled:
+            previous_workspace = self.workspace_carrier.value
+            event_valid = event[:, self.config.event_valid_index] > 0.5
+            assert self.config.demonstration_phase_index is not None
+            assert self.config.query_phase_index is not None
+            assert self.config.input_side_valid_index is not None
+            assert self.config.output_side_valid_index is not None
+            demonstration = (
+                advance
+                & event_valid
+                & (event[:, self.config.demonstration_phase_index] > 0.5)
+            )
+            query = (
+                advance
+                & event_valid
+                & (event[:, self.config.query_phase_index] > 0.5)
+                & (event[:, self.config.input_side_valid_index] > 0.5)
+            )
+            input_side_valid = event[:, self.config.input_side_valid_index] > 0.5
+            output_side_valid = event[:, self.config.output_side_valid_index] > 0.5
+            write_gate = demonstration & (input_side_valid | output_side_valid)
+            key = self.encode_memory_key(event)
+            value = self.encode_memory_value(event)
+            write_scale = braintrace.element_wise(self.memory_write_scale.value)
+            self.context_memory.value = update_context_memory(
+                self.context_memory.value,
+                key,
+                value,
+                write_gate=write_gate,
+                decay=self.config.memory_decay,
+                write_scale=write_scale,
+            )
+
+            self.query_encoding.value = self.query_encoding.value + jnp.where(
+                query[:, None], key, jnp.zeros_like(key)
+            )
+            latent = advance & ~event_valid
+            projected_query = self.workspace_query_projection(previous_workspace)
+            iterative_query = jnp.tanh(
+                self.query_encoding.value + projected_query
+            )
+            next_reasoning_query = jnp.where(
+                query[:, None],
+                self.query_encoding.value,
+                jnp.where(
+                    latent[:, None],
+                    iterative_query,
+                    self.reasoning_query.value,
+                ),
+            )
+            self.reasoning_query.value = next_reasoning_query
+            reasoning_gate = query | latent
+            raw_read = self.read_context_memory(next_reasoning_query)
+            raw_read = jnp.where(
+                reasoning_gate[:, None], raw_read, jnp.zeros_like(raw_read)
+            )
+            self.memory_read.value = jnp.where(
+                reasoning_gate[:, None],
+                jax.lax.stop_gradient(raw_read),
+                self.memory_read.value,
+            )
+            memory_drive = self.memory_read_projection(raw_read)
         with brainstate.environ.context(dt=self.config.time_step_ms * u.ms):
             self.ff_syn(event)
             self.rec_syn(self.neu.get_spike())
-            self.neu(0.0 * u.mA)
+            self.neu(memory_drive * u.mA)
         gate = advance[:, None]
         self.neu.V.value = u.math.where(gate, self.neu.V.value, previous_voltage)
         self.ff_syn.syn.g.value = u.math.where(
@@ -1192,6 +1754,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         self.rec_syn.syn.g.value = u.math.where(
             gate, self.rec_syn.syn.g.value, previous_recurrent
         )
+        if self.config.memory_enabled:
+            self.workspace_carrier.value = jnp.where(
+                gate, self.voltage, previous_workspace
+            )
         return self.spikes
 
     def update(self, event: jax.Array, advance: jax.Array | None = None) -> jax.Array:
@@ -1209,7 +1775,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         jax.Array
             Compact ARC logits shaped ``(batch, compact_output_width)``.
         """
-        return self.compact_readout(self.cell_step(event, advance))
+        spikes = self.cell_step(event, advance)
+        if self.config.memory_enabled:
+            return self.compact_readout()
+        return self.compact_readout(spikes)
 
 
 def _batched_events(model: LatentWorkspaceModel, events: jax.Array) -> jax.Array:
@@ -1268,7 +1837,7 @@ def run_context(
     brainstate.transform.for_loop(context_step, (packed, advance))
     spikes = model.spikes
     return ContextCheckpoint(
-        compact_logits=model.compact_readout(spikes),
+        compact_logits=model.compact_readout(),
         spikes=spikes,
         voltage=model.voltage,
         feedforward_current=model.feedforward_current,
@@ -1359,38 +1928,70 @@ def run_packed_stream(
 
         def controlled_step(
             inputs: tuple[jax.Array, jax.Array, jax.Array],
-        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+        ) -> tuple[
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+        ]:
             event, advance_gate, ablation_gate = inputs
             model.mask_slots(slots, ablation_gate)
             spikes = model.cell_step(event, advance_gate)
+            memory_read = (
+                jnp.asarray(model.memory_read.value)
+                if model.config.memory_enabled
+                else jnp.zeros((model.config.batch_size, 0), dtype=jnp.float32)
+            )
             return (
-                model.compact_readout(spikes),
+                model.compact_readout(),
                 spikes,
                 model.voltage,
                 model.feedforward_current,
                 model.recurrent_current,
+                memory_read,
             )
 
-        compact, spikes, voltage, feedforward_current, recurrent_current = (
+        compact, spikes, voltage, feedforward_current, recurrent_current, memory_read = (
             brainstate.transform.for_loop(controlled_step, (packed, advance, gates))
         )
     else:
 
         def packed_step(
             inputs: tuple[jax.Array, jax.Array],
-        ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+        ) -> tuple[
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+            jax.Array,
+        ]:
             event, gate = inputs
             spikes = model.cell_step(event, gate)
+            memory_read = (
+                jnp.asarray(model.memory_read.value)
+                if model.config.memory_enabled
+                else jnp.zeros((model.config.batch_size, 0), dtype=jnp.float32)
+            )
             return (
-                model.compact_readout(spikes),
+                model.compact_readout(),
                 spikes,
                 model.voltage,
                 model.feedforward_current,
                 model.recurrent_current,
+                memory_read,
             )
 
-        compact, spikes, voltage, feedforward_current, recurrent_current = (
+        compact, spikes, voltage, feedforward_current, recurrent_current, memory_read = (
             brainstate.transform.for_loop(packed_step, (packed, advance))
+        )
+    if model.config.memory_enabled:
+        final_context_memory = jnp.asarray(model.context_memory.value)
+    else:
+        final_context_memory = jnp.zeros(
+            (model.config.batch_size, 0, 0), dtype=jnp.float32
         )
     return PackedTrajectory(
         compact_logits=compact,
@@ -1398,6 +1999,9 @@ def run_packed_stream(
         voltage=voltage,
         feedforward_current=feedforward_current,
         recurrent_current=recurrent_current,
+        workspace_carrier=voltage,
+        memory_read=memory_read,
+        final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
     )
 
@@ -1511,6 +2115,14 @@ def run_selected_packed_stream(
     voltage_buffer = jnp.zeros(state_shape, dtype=model.voltage.dtype)
     feedforward_buffer = jnp.zeros(state_shape, dtype=model.feedforward_current.dtype)
     recurrent_buffer = jnp.zeros(state_shape, dtype=model.recurrent_current.dtype)
+    memory_buffer = jnp.zeros(
+        (
+            checkpoint_count,
+            batch_size,
+            model.config.context_memory_width,
+        ),
+        dtype=jnp.float32,
+    )
     batch_indices = jnp.arange(batch_size, dtype=jnp.int32)
 
     initial_carry = (
@@ -1521,31 +2133,13 @@ def run_selected_packed_stream(
         voltage_buffer,
         feedforward_buffer,
         recurrent_buffer,
+        memory_buffer,
     )
 
     def scan_step(
-        carry: tuple[
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-        ],
+        carry: tuple[jax.Array, ...],
         inputs: tuple[jax.Array, jax.Array, jax.Array],
-    ) -> tuple[
-        tuple[
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-            jax.Array,
-        ],
-        jax.Array,
-    ]:
+    ) -> tuple[tuple[jax.Array, ...], jax.Array]:
         (
             time_index,
             cursors,
@@ -1554,14 +2148,19 @@ def run_selected_packed_stream(
             voltage_values,
             feedforward_values,
             recurrent_values,
+            memory_values,
         ) = carry
         event, advance_gate, ablation_gate = inputs
         model.mask_slots(slots, ablation_gate)
         spikes = model.cell_step(event, advance_gate)
-        compact = model.compact_readout(spikes)
+        compact = model.compact_readout()
         voltage = model.voltage
         feedforward = model.feedforward_current
         recurrent = model.recurrent_current
+        if model.config.memory_enabled:
+            memory_read = jnp.asarray(model.memory_read.value)
+        else:
+            memory_read = jnp.zeros((batch_size, 0), dtype=jnp.float32)
 
         safe_cursors = jnp.minimum(cursors, checkpoint_count - 1)
         targets = indices[safe_cursors, batch_indices]
@@ -1577,6 +2176,7 @@ def run_selected_packed_stream(
         voltage_values = record(voltage_values, voltage)
         feedforward_values = record(feedforward_values, feedforward)
         recurrent_values = record(recurrent_values, recurrent)
+        memory_values = record(memory_values, memory_read)
         next_carry = (
             time_index + 1,
             cursors + matched.astype(jnp.int32),
@@ -1585,6 +2185,7 @@ def run_selected_packed_stream(
             voltage_values,
             feedforward_values,
             recurrent_values,
+            memory_values,
         )
         return next_carry, jnp.asarray(0, dtype=jnp.int8)
 
@@ -1599,7 +2200,12 @@ def run_selected_packed_stream(
         voltage_buffer,
         feedforward_buffer,
         recurrent_buffer,
+        memory_buffer,
     ) = final_carry
+    if model.config.memory_enabled:
+        final_context_memory = jnp.asarray(model.context_memory.value)
+    else:
+        final_context_memory = jnp.zeros((batch_size, 0, 0), dtype=jnp.float32)
     return SelectedPackedTrajectory(
         selected_indices=indices,
         compact_logits=compact_buffer,
@@ -1607,6 +2213,9 @@ def run_selected_packed_stream(
         voltage=voltage_buffer,
         feedforward_current=feedforward_buffer,
         recurrent_current=recurrent_buffer,
+        workspace_carrier=voltage_buffer,
+        memory_read=memory_buffer,
+        final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
     )
 
@@ -1641,7 +2250,7 @@ def run_latent_trajectory(
         )
 
     initial_spikes = model.spikes
-    initial_compact = model.compact_readout(initial_spikes)
+    initial_compact = model.compact_readout()
     initial_voltage = model.voltage
     initial_feedforward_current = model.feedforward_current
     initial_recurrent_current = model.recurrent_current
@@ -1659,7 +2268,7 @@ def run_latent_trajectory(
             event, gate = inputs
             spikes = model.cell_step(event, gate)
             return (
-                model.compact_readout(spikes),
+                model.compact_readout(),
                 spikes,
                 model.voltage,
                 model.feedforward_current,

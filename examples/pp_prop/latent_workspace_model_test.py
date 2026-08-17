@@ -20,8 +20,10 @@ try:
     from examples.pp_prop.latent_workspace_model import (
         COLOR_COUNT,
         MAX_GRID_SIZE,
+        MEMORY_KEY_RFF_GAMMA,
         NEURONS_PER_SLOT,
         ArcLogits,
+        AssociativeMemoryReport,
         LatentWorkspaceModel,
         ModelConfig,
         ModelStateSnapshot,
@@ -45,8 +47,10 @@ except ImportError:
     from latent_workspace_model import (
         COLOR_COUNT,
         MAX_GRID_SIZE,
+        MEMORY_KEY_RFF_GAMMA,
         NEURONS_PER_SLOT,
         ArcLogits,
+        AssociativeMemoryReport,
         LatentWorkspaceModel,
         ModelConfig,
         ModelStateSnapshot,
@@ -64,6 +68,25 @@ except ImportError:
         run_selected_packed_stream,
         run_sequence,
         terminal_arc_loss,
+    )
+
+try:
+    from examples.pp_prop.latent_workspace_task import (
+        ArcGrid,
+        ArcPair,
+        ArcTask,
+        RowEventConfig,
+        associative_memory_feature_indices,
+        encode_query_episode,
+    )
+except ImportError:
+    from latent_workspace_task import (
+        ArcGrid,
+        ArcPair,
+        ArcTask,
+        RowEventConfig,
+        associative_memory_feature_indices,
+        encode_query_episode,
     )
 
 
@@ -109,7 +132,7 @@ def _valid_events(time: int, width: int) -> jax.Array:
 
 def _memory_config(**changes: object) -> ModelConfig:
     values: dict[str, object] = {
-        "input_width": 7,
+        "input_width": 9,
         "neuron_count": 64,
         "recurrent_edges": 96,
         "max_latent_steps": 4,
@@ -120,8 +143,10 @@ def _memory_config(**changes: object) -> ModelConfig:
         "memory_decay": 1.0,
         "demonstration_phase_index": 1,
         "query_phase_index": 2,
-        "memory_key_indices": (3, 4),
-        "memory_value_indices": (5, 6),
+        "input_side_valid_index": 3,
+        "output_side_valid_index": 4,
+        "memory_key_indices": (5, 6),
+        "memory_value_indices": (7, 8),
     }
     values.update(changes)
     return ModelConfig(**values)  # type: ignore[arg-type]
@@ -148,17 +173,73 @@ def _phase_events(
         raise ValueError(f"unknown phase {phase!r}")
     assert phase_index is not None
     events = events.at[..., phase_index].set(1.0)
+    assert config.input_side_valid_index is not None
+    events = events.at[..., config.input_side_valid_index].set(1.0)
     events = events.at[..., jnp.asarray(config.memory_key_indices)].set(keys)
     if values is not None:
         values = jnp.asarray(values, dtype=jnp.float32)
         if values.ndim == 2:
             values = values[:, None, :]
         events = events.at[..., jnp.asarray(config.memory_value_indices)].set(values)
+        if phase == "demonstration":
+            assert config.output_side_valid_index is not None
+            events = events.at[..., config.output_side_valid_index].set(1.0)
     return events
 
 
 def _state_array(state: object) -> np.ndarray:
     return np.asarray(getattr(state, "value"))
+
+
+def _production_memory_config(
+    memory_width: int, *, batch_size: int = 4, seed: int = 2108
+) -> ModelConfig:
+    rows = RowEventConfig()
+    features = associative_memory_feature_indices(rows)
+    return ModelConfig(
+        input_width=rows.input_width,
+        batch_size=batch_size,
+        neuron_count=64,
+        recurrent_edges=96,
+        max_latent_steps=4,
+        readout_width=8,
+        color_rank=2,
+        seed=seed,
+        context_memory_width=memory_width,
+        memory_decay=1.0,
+        demonstration_phase_index=rows.phase_slice.start,
+        query_phase_index=rows.phase_slice.start + 1,
+        input_side_valid_index=rows.side_valid_slice.start,
+        output_side_valid_index=rows.side_valid_slice.start + 1,
+        memory_key_indices=features.key_indices,
+        memory_value_indices=features.value_indices,
+    )
+
+
+def _production_k4_events() -> tuple[jax.Array, jax.Array]:
+    rows = RowEventConfig()
+    demonstration_events = []
+    query_events = []
+    for color in range(4):
+        task = ArcTask(
+            train=(
+                ArcPair(
+                    ArcGrid(((color,),)),
+                    ArcGrid(((color + 4,),)),
+                ),
+            ),
+            test=(ArcPair(ArcGrid(((color,),)), None),),
+            task_id=f"k4-{color}",
+        )
+        encoded = encode_query_episode(task, 0, rows)
+        demonstration_events.append(encoded.events[0])
+        query_events.append(
+            encoded.events[rows.max_demonstrations * rows.max_grid_size]
+        )
+    return (
+        jnp.asarray(np.stack(demonstration_events)),
+        jnp.asarray(np.stack(query_events)),
+    )
 
 
 def test_full_configuration_is_2048_neurons_16384_edges_and_32_slots() -> None:
@@ -260,10 +341,112 @@ def test_context_memory_is_opt_in_and_legacy_mode_is_the_default() -> None:
     config = _config()
 
     assert config.context_memory_width == 0
+    assert config.memory_decay == 1.0
     assert config.demonstration_phase_index is None
     assert config.query_phase_index is None
+    assert config.input_side_valid_index is None
+    assert config.output_side_valid_index is None
     assert config.memory_key_indices == ()
     assert config.memory_value_indices == ()
+
+
+def test_associative_memory_report_is_stable_and_legacy_safe() -> None:
+    legacy_model = LatentWorkspaceModel(_config())
+    legacy = legacy_model.associative_memory_report()
+
+    assert isinstance(legacy, AssociativeMemoryReport)
+    assert legacy.mode == "legacy_reservoir"
+    assert legacy.memory_width == 0
+    assert legacy.key_basis_sha256 is None
+    assert legacy.write_component_type is None
+
+    memory_model = LatentWorkspaceModel(_production_memory_config(32))
+    report = memory_model.associative_memory_report()
+    repeated = LatentWorkspaceModel(
+        _production_memory_config(32)
+    ).associative_memory_report()
+
+    assert report == repeated
+    assert report.mode == "associative_workspace"
+    assert report.memory_width == 32
+    assert report.key_feature_width == 424
+    assert report.value_feature_width == 424
+    assert report.key_map == "fixed_rff_cosine"
+    assert report.value_map == "fixed_tanh_projection"
+    assert report.rff_gamma == MEMORY_KEY_RFF_GAMMA == 2.0
+    assert (
+        report.key_basis_seed,
+        report.key_bias_seed,
+        report.value_basis_seed,
+    ) == (2209, 2210, 2211)
+    for digest in (
+        report.key_basis_sha256,
+        report.key_bias_sha256,
+        report.value_basis_sha256,
+    ):
+        assert digest is not None
+        assert len(digest) == 64
+    assert report.write_component_type == "braintrace.element_wise"
+    assert report.query_component_type == "braintrace.nn.Linear"
+    assert report.read_component_type == "braintrace.nn.Linear"
+
+
+def test_width32_production_k4_rff_keys_clear_preregistered_margin() -> None:
+    _, query_events = _production_k4_events()
+    memory_model = LatentWorkspaceModel(_production_memory_config(32))
+
+    keys = memory_model.encode_memory_key(query_events)
+    gram = np.asarray(keys @ keys.T)
+    expected = np.asarray(
+        [
+            [0.74782699, 0.07341479, 0.21628249, -0.18112631],
+            [0.07341479, 0.82878375, -0.04830217, 0.24480711],
+            [0.21628249, -0.04830217, 0.91903085, -0.28928122],
+            [-0.18112631, 0.24480711, -0.28928122, 0.85196108],
+        ],
+        dtype=np.float32,
+    )
+    diagonal_min = float(np.diag(gram).min())
+    off_diagonal_max = float(gram[~np.eye(4, dtype=np.bool_)].max())
+    margin = diagonal_min - off_diagonal_max
+    backend_transcendental_tolerance = 7e-4
+
+    np.testing.assert_allclose(
+        gram, expected, rtol=0.0, atol=backend_transcendental_tolerance
+    )
+    assert diagonal_min == pytest.approx(
+        0.74782699, abs=backend_transcendental_tolerance
+    )
+    assert off_diagonal_max == pytest.approx(
+        0.24480711, abs=backend_transcendental_tolerance
+    )
+    assert margin == pytest.approx(0.50301987, abs=1e-3)
+    assert margin > 0.25
+    zero_codes = memory_model.encode_memory_key(jnp.zeros_like(query_events))
+    np.testing.assert_array_equal(zero_codes, 0.0)
+
+
+def test_untrained_k4_outer_memory_read_is_pairing_sensitive() -> None:
+    demonstration_events, query_events = _production_k4_events()
+    memory_model = LatentWorkspaceModel(_production_memory_config(32))
+    demonstration_keys = memory_model.encode_memory_key(demonstration_events)
+    query_keys = memory_model.encode_memory_key(query_events)
+    values = memory_model.encode_memory_value(demonstration_events)
+    rotated_values = values[jnp.asarray([1, 2, 3, 0])]
+    intact_memory = jnp.einsum("bi,bj->ij", demonstration_keys, values)
+    shuffled_memory = jnp.einsum(
+        "bi,bj->ij", demonstration_keys, rotated_values
+    )
+    intact_reads = jnp.einsum("ik,kv->iv", query_keys, intact_memory)
+    shuffled_reads = jnp.einsum("ik,kv->iv", query_keys, shuffled_memory)
+
+    np.testing.assert_allclose(
+        demonstration_keys, query_keys, rtol=0.0, atol=0.0
+    )
+    assert not np.allclose(intact_memory, shuffled_memory)
+    assert np.all(
+        np.linalg.norm(np.asarray(intact_reads - shuffled_reads), axis=1) > 1e-3
+    )
 
 
 @pytest.mark.parametrize(
@@ -276,9 +459,11 @@ def test_context_memory_is_opt_in_and_legacy_mode_is_the_default() -> None:
         ({"memory_decay": 1.01}, ValueError, "memory_decay"),
         ({"demonstration_phase_index": None}, ValueError, "demonstration_phase_index"),
         ({"query_phase_index": None}, ValueError, "query_phase_index"),
+        ({"input_side_valid_index": None}, ValueError, "input_side_valid_index"),
+        ({"output_side_valid_index": None}, ValueError, "output_side_valid_index"),
         ({"memory_key_indices": ()}, ValueError, "memory_key_indices"),
         ({"memory_value_indices": ()}, ValueError, "memory_value_indices"),
-        ({"memory_key_indices": (3, 7)}, ValueError, "memory_key_indices"),
+        ({"memory_key_indices": (5, 9)}, ValueError, "memory_key_indices"),
     ],
 )
 def test_invalid_context_memory_configuration_fails_closed(
@@ -294,6 +479,8 @@ def test_invalid_context_memory_configuration_fails_closed(
     [
         {"demonstration_phase_index": 1},
         {"query_phase_index": 2},
+        {"input_side_valid_index": 3},
+        {"output_side_valid_index": 4},
         {"memory_key_indices": (3,)},
         {"memory_value_indices": (4,)},
     ],
@@ -354,6 +541,7 @@ def test_memory_states_reset_snapshot_and_restore_exactly() -> None:
     for name, shape in (
         ("context_memory", (1, 2, 2)),
         ("query_encoding", (1, 2)),
+        ("reasoning_query", (1, 2)),
         ("memory_read", (1, 2)),
         ("workspace_carrier", (1, 64)),
     ):
@@ -377,6 +565,7 @@ def test_memory_states_reset_snapshot_and_restore_exactly() -> None:
         for name in (
             "context_memory",
             "query_encoding",
+            "reasoning_query",
             "memory_read",
             "workspace_carrier",
         )
@@ -438,6 +627,63 @@ def test_model_writes_exact_projected_binding_then_freezes_it() -> None:
 
     np.testing.assert_array_equal(memory_model.context_memory.value, frozen_memory)
     np.testing.assert_array_equal(memory_model.query_encoding.value, frozen_query)
+
+
+def test_each_valid_unequal_side_demo_row_advances_memory_decay_once() -> None:
+    config = _memory_config(memory_decay=0.5)
+    memory_model = LatentWorkspaceModel(config)
+    memory_model.context_memory.value = jnp.ones((1, 2, 2), dtype=jnp.float32)
+    input_only = _phase_events(
+        config,
+        jnp.asarray([[1.0, -0.5]]),
+        phase="demonstration",
+    )
+    output_only = _phase_events(
+        config,
+        jnp.asarray([[0.25, 0.75]]),
+        jnp.asarray([[1.5, -1.0]]),
+        phase="demonstration",
+    )
+    assert config.input_side_valid_index is not None
+    output_only = output_only.at[..., config.input_side_valid_index].set(0.0)
+
+    memory_model.cell_step(input_only[0])
+    np.testing.assert_allclose(
+        memory_model.context_memory.value, 0.5, rtol=0.0, atol=0.0
+    )
+    memory_model.cell_step(output_only[0])
+    np.testing.assert_allclose(
+        memory_model.context_memory.value, 0.25, rtol=0.0, atol=0.0
+    )
+
+
+def test_multi_row_query_encoding_accumulates_then_freezes() -> None:
+    config = _memory_config()
+    memory_model = LatentWorkspaceModel(config)
+    queries = _phase_events(
+        config,
+        jnp.asarray([[1.0, -0.5], [0.25, 0.75]]),
+        phase="query",
+    )
+    expected = (
+        memory_model.encode_memory_key(queries[0])
+        + memory_model.encode_memory_key(queries[1])
+    )
+
+    run_context(memory_model, queries)
+
+    np.testing.assert_allclose(
+        memory_model.query_encoding.value, expected, rtol=0.0, atol=0.0
+    )
+    np.testing.assert_allclose(
+        memory_model.reasoning_query.value, expected, rtol=0.0, atol=0.0
+    )
+    frozen = _state_array(memory_model.query_encoding).copy()
+    memory_model.cell_step(
+        jnp.zeros((1, config.input_width), dtype=jnp.float32),
+        jnp.ones((1,), dtype=jnp.bool_),
+    )
+    np.testing.assert_array_equal(memory_model.query_encoding.value, frozen)
 
 
 def test_equal_marginals_with_different_pairings_change_memory_and_read() -> None:
@@ -562,27 +808,28 @@ def test_latent_query_depends_on_previous_continuous_workspace() -> None:
     np.testing.assert_array_equal(memory_model.query_encoding.value, frozen_query)
 
 
-def test_memory_read_projection_is_a_direct_pp_prop_relation_with_gradient() -> None:
+def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients() -> None:
     import braintrace
     from braintrace._testing.oracle import chunked_online_param_gradients
 
     config = _memory_config(memory_decay=0.9, input_gain=8.0)
     model = LatentWorkspaceModel(config)
     learner = compile_pp_prop(model)
+    write_path = ("memory_write_scale",)
+    query_path = ("workspace_query_projection", "weight")
     read_path = ("memory_read_projection", "weight")
-    etrace_paths = {
-        path
-        for path, _ in learner.report.etrace_weights
-    }
+    expected_paths = {write_path, query_path, read_path}
+    etrace_paths = {path for path, _ in learner.report.etrace_weights}
 
-    assert read_path in etrace_paths
-    read_relations = [
-        relation
-        for relation in learner.graph.hidden_param_op_relations
-        if read_path in relation.trainable_paths.values()
-    ]
-    assert len(read_relations) == 1
-    assert set(read_relations[0].path_classification.values()) == {"all_direct"}
+    assert expected_paths <= etrace_paths
+    for path in expected_paths:
+        relations = [
+            relation
+            for relation in learner.graph.hidden_param_op_relations
+            if path in relation.trainable_paths.values()
+        ]
+        assert len(relations) == 1
+        assert set(relations[0].path_classification.values()) == {"all_direct"}
     group_paths = [
         {".".join(map(str, path)) for path in group.hidden_paths}
         for group in learner.graph.hidden_groups
@@ -599,9 +846,16 @@ def test_memory_read_projection_is_a_direct_pp_prop_relation_with_gradient() -> 
         phase="demonstration",
     )
     query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
-    inputs = jnp.concatenate((demonstrations, query), axis=0)
+    latent = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    inputs = jnp.concatenate((demonstrations, query, latent), axis=0)
+
+    class _AlwaysAdvanceMemoryModel(LatentWorkspaceModel):
+        def update(self, event: jax.Array) -> jax.Array:
+            advance = jnp.ones((self.config.batch_size,), dtype=jnp.bool_)
+            return super().update(event, advance)
+
     gradients = chunked_online_param_gradients(
-        lambda: LatentWorkspaceModel(config),
+        lambda: _AlwaysAdvanceMemoryModel(config),
         inputs,
         algo_factory=lambda candidate: braintrace.pp_prop(
             candidate,
@@ -610,15 +864,15 @@ def test_memory_read_projection_is_a_direct_pp_prop_relation_with_gradient() -> 
         ),
         chunk_size=1,
     )
-    gradient_leaves = jax.tree.leaves(gradients[read_path])
-    gradient_norm = sum(
-        float(jnp.sum(jnp.abs(jnp.asarray(u.get_mantissa(leaf)))))
-        for leaf in gradient_leaves
-    )
-
-    assert gradient_leaves
-    assert math.isfinite(gradient_norm)
-    assert gradient_norm > 0.0
+    for path in expected_paths:
+        gradient_leaves = jax.tree.leaves(gradients[path])
+        gradient_norm = sum(
+            float(jnp.sum(jnp.abs(jnp.asarray(u.get_mantissa(leaf)))))
+            for leaf in gradient_leaves
+        )
+        assert gradient_leaves
+        assert math.isfinite(gradient_norm)
+        assert gradient_norm > 0.0
 
 
 def test_memory_mode_uses_one_shared_decoder_on_continuous_workspace() -> None:
@@ -764,6 +1018,8 @@ def test_context_memory_writes_are_isolated_per_batch_example() -> None:
     assert config.query_phase_index is not None
     demonstrations = demonstrations.at[:, 1, config.demonstration_phase_index].set(0.0)
     demonstrations = demonstrations.at[:, 1, config.query_phase_index].set(1.0)
+    assert config.output_side_valid_index is not None
+    demonstrations = demonstrations.at[:, 1, config.output_side_valid_index].set(0.0)
 
     run_context(memory_model, demonstrations)
 
@@ -1156,11 +1412,74 @@ def test_selected_packed_scan_equals_full_gather_for_variable_terminals(
         "voltage",
         "feedforward_current",
         "recurrent_current",
+        "workspace_carrier",
+        "memory_read",
     ):
         expected = np.asarray(getattr(full, name))[raw_indices, batch]
         np.testing.assert_array_equal(getattr(selected, name), expected)
     np.testing.assert_array_equal(selected.selected_indices, indices)
+    assert selected.workspace_carrier is selected.voltage
+    assert selected.memory_read.shape == (4, 2, 0)
+    assert selected.final_context_memory.shape == (2, 0, 0)
+    np.testing.assert_array_equal(
+        selected.final_context_memory, full.final_context_memory
+    )
     assert selected.expanded.colors.shape == (4, 2, 30, 30, 10)
+
+
+def test_selected_memory_diagnostics_are_bounded_and_pairing_sensitive() -> None:
+    config = _memory_config()
+    full_model = LatentWorkspaceModel(config)
+    selected_model = LatentWorkspaceModel(config)
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((demonstrations, query, latent), axis=0)
+    advances = jnp.ones((events.shape[0], 1), dtype=jnp.bool_)
+    indices = jnp.asarray([[2], [3], [4]], dtype=jnp.int32)
+
+    full = run_packed_stream(
+        full_model,
+        events,
+        advance_gates=advances,
+    )
+    selected = run_selected_packed_stream(
+        selected_model,
+        events,
+        indices,
+        advance_gates=advances,
+    )
+
+    assert selected.workspace_carrier is selected.voltage
+    assert selected.workspace_carrier.shape == (3, 1, config.neuron_count)
+    assert selected.memory_read.shape == (3, 1, config.context_memory_width)
+    assert selected.final_context_memory.shape == (
+        1,
+        config.context_memory_width,
+        config.context_memory_width,
+    )
+    raw_indices = np.asarray(indices)
+    batch = np.asarray([[0]], dtype=np.int32)
+    np.testing.assert_array_equal(
+        selected.workspace_carrier,
+        np.asarray(full.workspace_carrier)[raw_indices, batch],
+    )
+    np.testing.assert_array_equal(
+        selected.memory_read,
+        np.asarray(full.memory_read)[raw_indices, batch],
+    )
+    np.testing.assert_array_equal(
+        selected.final_context_memory, selected_model.context_memory.value
+    )
+    np.testing.assert_array_equal(
+        selected.final_context_memory, full.final_context_memory
+    )
+    assert np.any(np.asarray(selected.memory_read) != 0.0)
 
 
 @pytest.mark.parametrize(
