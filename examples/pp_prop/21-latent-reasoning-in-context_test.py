@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 import importlib.util
 import json
 import pathlib
@@ -63,6 +64,33 @@ def _metric(value: float = 0.0) -> dict[str, float | int]:
         "strict_task_pass_at_2": value,
         "shape_accuracy_diagnostic": value,
         "valid_cell_pixel_accuracy_diagnostic": value,
+    }
+
+
+def _numeric_evidence(steps: list[int]) -> dict[str, object]:
+    names = (
+        "compact_logits",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    )
+    return {
+        "evaluated_steps": steps,
+        "query_count": 1,
+        "state_byte_identical": True,
+        "compact_logits_byte_identical": True,
+        "within_declared_tolerance": True,
+        "within_tolerance_by_query": [True],
+        "within_tolerance_query_count": 1,
+        "declared_per_query_axis_rms_tolerance": 1e-6,
+        "spike_hamming_count": 0,
+        "spike_hamming_count_by_query": [0],
+        "per_step_query_rms": {name: [[0.0] for _ in steps] for name in names},
+        "per_query_maximum_rms": {name: [0.0] for name in names},
+        "maximum_rms": {name: 0.0 for name in names},
+        "intact_dtype_by_state": {name: "float32" for name in names},
+        "candidate_dtype_by_state": {name: "float32" for name in names},
+        "required_float32_dtypes": True,
     }
 
 
@@ -158,6 +186,14 @@ def _evaluation_payload() -> dict[str, object]:
         ]
         for effort in (0, 8, 16, 32)
     }
+    control["decoded_candidates_match_intact"] = True
+    control["decoded_candidates_match_intact_by_effort"] = {
+        str(effort): True for effort in (0, 8, 16, 32)
+    }
+    control["decoded_candidate_match_query_count_by_effort"] = {
+        str(effort): 1 for effort in (0, 8, 16, 32)
+    }
+    control["byte_identical_query_count"] = 0
     return {
         "query_count": 1,
         "task_count": 1,
@@ -170,12 +206,25 @@ def _evaluation_payload() -> dict[str, object]:
         "aggregate_trajectory": trajectory,
         "determinism": {
             "same_control_capable_execution_path": True,
+            "state_rms_tolerance": 1e-6,
+            "spike_tolerance": "exact identity",
+            "metric_absolute_tolerance": 0.0,
             "repeat_intact_state_byte_identical": True,
+            "repeat_intact_compact_logits_byte_identical": True,
+            "repeat_intact_within_tolerance": True,
+            "repeat_intact_metrics_exact": True,
+            "repeat_intact_decoded_candidates_exact": True,
+            "repeat_intact_numeric_evidence": _numeric_evidence(list(range(33))),
             "slot_ablation_checkpoint_zero_byte_identical": True,
+            "slot_ablation_checkpoint_zero_state_within_tolerance": True,
+            "slot_ablation_checkpoint_zero_decoded_candidates_exact": True,
+            "slot_ablation_checkpoint_zero_metrics_exact": True,
+            "slot_ablation_checkpoint_zero_within_tolerance": True,
+            "slot_ablation_checkpoint_zero_numeric_evidence": _numeric_evidence([0]),
         },
         "controls": {
             "repeat_intact": dict(
-                control,
+                copy.deepcopy(control),
                 trajectory_comparison={
                     **comparison,
                     "causally_null_at_measured_precision": True,
@@ -189,10 +238,11 @@ def _evaluation_payload() -> dict[str, object]:
                     },
                 },
                 causally_null_query_count=1,
+                byte_identical_query_count=1,
             ),
-            "no_context": control,
-            "shuffled_demonstrations": control,
-            "slot_ablation": control,
+            "no_context": copy.deepcopy(control),
+            "shuffled_demonstrations": copy.deepcopy(control),
+            "slot_ablation": copy.deepcopy(control),
             "truncation": {
                 "checkpoints": [0, 8, 16, 32],
                 "uses_one_continuous_intact_trajectory": True,
@@ -717,6 +767,7 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
     assert control["available_query_count"] == batch
     assert control["timing_matched_query_count"] == batch
     assert control["trajectory_comparison"]["causally_null_at_measured_precision"]
+    assert "checkpoint_queries" not in control
 
 
 def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
@@ -735,7 +786,11 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     def score(subset_compact, subset_records, color_rank):
         captured["scored_records"] = len(subset_records)
         captured["scored_batch"] = subset_compact.shape[1]
-        return {str(effort): _metric() for effort in (0, 8, 16, 32)}, {}
+        details = {
+            str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in subset_records]
+            for effort in (0, 8, 16, 32)
+        }
+        return {str(effort): _metric() for effort in (0, 8, 16, 32)}, details
 
     def compare(
         intact_spikes, intact_voltage, control_spikes, control_voltage, **kwargs
@@ -810,6 +865,155 @@ def test_all_unavailable_shuffle_renders_as_unavailable(example, tmp_path):
     assert unavailable["trajectory_comparison"]["available"] is False
     assert "shuffled_demonstrations: applicable=0/1, unavailable=1" in report
     assert path.read_bytes().startswith(b"\x89PNG")
+
+
+def test_state_repeat_tolerance_keeps_byte_identity_separate(example):
+    compact = np.zeros((2, 1, 3), dtype=np.float32)
+    spikes = np.zeros((2, 1, 4), dtype=np.float32)
+    voltage = np.ones((2, 1, 4), dtype=np.float32)
+    current = np.ones((2, 1, 4), dtype=np.float32)
+    intact = (compact, spikes, voltage, current, current.copy())
+    roundoff = (
+        compact.copy(),
+        spikes.copy(),
+        voltage + np.float32(5e-7),
+        current.copy(),
+        current + np.float32(5e-7),
+    )
+
+    tolerated = example._state_tolerance_summary(intact, roundoff)
+    excessive = list(roundoff)
+    excessive[2] = voltage + np.float32(2e-6)
+    rejected = example._state_tolerance_summary(intact, tuple(excessive))
+
+    assert tolerated["state_byte_identical"] is False
+    assert tolerated["within_declared_tolerance"] is True
+    assert tolerated["spike_hamming_count"] == 0
+    assert rejected["within_declared_tolerance"] is False
+
+
+def test_state_tolerance_rejects_one_bad_query_hidden_by_batch_average(example):
+    compact = np.zeros((2, 2, 3), dtype=np.float32)
+    spikes = np.zeros((2, 2, 4), dtype=np.float32)
+    voltage = np.zeros((2, 2, 4), dtype=np.float32)
+    current = np.zeros_like(voltage)
+    intact = (compact, spikes, voltage, current, current.copy())
+    candidate_voltage = voltage.copy()
+    candidate_voltage[:, 0, :] = np.float32(1.1e-6)
+    candidate = (
+        compact.copy(),
+        spikes.copy(),
+        candidate_voltage,
+        current.copy(),
+        current.copy(),
+    )
+
+    summary = example._state_tolerance_summary(intact, candidate)
+
+    assert summary["within_declared_tolerance"] is False
+    assert summary["within_tolerance_by_query"] == [False, True]
+    assert summary["within_tolerance_query_count"] == 1
+    assert summary["query_count"] == 2
+    assert summary["per_query_maximum_rms"]["voltage"][0] > 1e-6
+
+
+def test_state_tolerance_rejects_logit_drift_without_argmax_drift(example):
+    compact = np.zeros((2, 1, 3), dtype=np.float32)
+    state = np.zeros((2, 1, 4), dtype=np.float32)
+    intact = (compact, state, state.copy(), state.copy(), state.copy())
+    shifted_compact = compact + np.float32(2e-6)
+    candidate = (
+        shifted_compact,
+        state.copy(),
+        state.copy(),
+        state.copy(),
+        state.copy(),
+    )
+
+    summary = example._state_tolerance_summary(intact, candidate)
+
+    np.testing.assert_array_equal(
+        np.argmax(compact, axis=2), np.argmax(shifted_compact, axis=2)
+    )
+    assert summary["state_byte_identical"] is True
+    assert summary["compact_logits_byte_identical"] is False
+    assert summary["maximum_rms"]["compact_logits"] > 1e-6
+    assert summary["within_declared_tolerance"] is False
+
+
+def test_byte_identity_distinguishes_signed_zero_raw_bytes(example):
+    compact = np.zeros((1, 1, 2), dtype=np.float32)
+    spikes = np.zeros((1, 1, 2), dtype=np.float32)
+    positive_zero = np.zeros((1, 1, 2), dtype=np.float32)
+    negative_zero = np.full((1, 1, 2), np.float32(-0.0), dtype=np.float32)
+    intact = (
+        compact,
+        spikes,
+        positive_zero,
+        positive_zero.copy(),
+        positive_zero.copy(),
+    )
+    candidate = (
+        compact.copy(),
+        spikes.copy(),
+        negative_zero,
+        positive_zero.copy(),
+        positive_zero.copy(),
+    )
+
+    summary = example._state_tolerance_summary(intact, candidate)
+
+    assert np.array_equal(positive_zero, negative_zero)
+    assert summary["state_byte_identical"] is False
+    assert summary["state_byte_identical_by_query"] == [False]
+    assert summary["within_declared_tolerance"] is True
+    assert summary["intact_dtype_by_state"]["voltage"] == "float32"
+    assert summary["candidate_dtype_by_state"]["voltage"] == "float32"
+
+
+def test_state_tolerance_rejects_non_float32_physical_evidence(example):
+    compact = np.zeros((1, 1, 2), dtype=np.float32)
+    spikes = np.zeros((1, 1, 2), dtype=np.float32)
+    physical = np.zeros((1, 1, 2), dtype=np.float32)
+    intact = (compact, spikes, physical, physical.copy(), physical.copy())
+    candidate = (
+        compact.copy(),
+        spikes.copy(),
+        physical.astype(np.float64),
+        physical.copy(),
+        physical.copy(),
+    )
+
+    summary = example._state_tolerance_summary(intact, candidate)
+
+    assert summary["maximum_rms"]["voltage"] == 0.0
+    assert summary["required_float32_dtypes"] is False
+    assert summary["within_declared_tolerance"] is False
+
+
+@pytest.mark.parametrize(
+    ("candidate_exact", "metric_value", "failed_field"),
+    [
+        (False, 0.0, "decoded_candidates_exact"),
+        (True, 1.0, "metrics_exact"),
+    ],
+)
+def test_checkpoint_zero_gate_rejects_candidate_or_metric_mismatch(
+    example, candidate_exact, metric_value, failed_field
+):
+    intact_metrics = {"0": _metric()}
+    control = {
+        "metrics_by_effort": {"0": _metric(metric_value)},
+        "decoded_candidates_match_intact_by_effort": {"0": candidate_exact},
+    }
+
+    summary = example._checkpoint_zero_gate_summary(
+        intact_metrics, control, {"within_declared_tolerance": True}
+    )
+
+    assert summary["state_within_tolerance"] is True
+    assert summary[failed_field] is False
+    assert summary["matched"] is False
 
 
 def test_structural_path_compiles_pp_prop_before_qualification(example, monkeypatch):
@@ -965,13 +1169,27 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     )
     monkeypatch.setattr(example, "_arm_sequences", sequences)
     monkeypatch.setattr(example, "run_selected_packed_stream", packed)
-    monkeypatch.setattr(example, "_score_windows", lambda *args: (metrics, {"0": []}))
+    checkpoint_queries = {
+        str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in range(batch)]
+        for effort in (0, 8, 16, 32)
+    }
+    monkeypatch.setattr(
+        example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
+    )
     monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
     monkeypatch.setattr(
         example,
         "_control_summary",
         lambda name, *args, **kwargs: {
             "name": name,
+            "metrics_by_effort": metrics,
+            "decoded_candidates_match_intact": True,
+            "decoded_candidates_match_intact_by_effort": {
+                str(effort): True for effort in (0, 8, 16, 32)
+            },
+            "decoded_candidate_match_query_count_by_effort": {
+                str(effort): batch for effort in (0, 8, 16, 32)
+            },
             "trajectory_comparison": {"causally_null_at_measured_precision": True},
         },
     )
@@ -988,13 +1206,22 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     gates = np.asarray(ablation["ablation_gates"])
     assert gates.shape == (time, batch)
     assert np.all(gates[stops, np.arange(batch)])
-    assert result["determinism"] == {
-        "same_control_capable_execution_path": True,
-        "state_tolerance": "exact byte identity",
-        "metric_absolute_tolerance": 0.0,
-        "repeat_intact_state_byte_identical": True,
-        "slot_ablation_checkpoint_zero_byte_identical": True,
-    }
+    assert result["determinism"]["same_control_capable_execution_path"] is True
+    assert result["determinism"]["state_rms_tolerance"] == 1e-6
+    assert result["determinism"]["metric_absolute_tolerance"] == 0.0
+    assert result["determinism"]["repeat_intact_state_byte_identical"] is True
+    assert result["determinism"]["repeat_intact_compact_logits_byte_identical"] is True
+    assert result["determinism"]["repeat_intact_within_tolerance"] is True
+    assert result["determinism"]["repeat_intact_metrics_exact"] is True
+    assert result["determinism"]["slot_ablation_checkpoint_zero_byte_identical"] is True
+    assert (
+        result["determinism"]["slot_ablation_checkpoint_zero_decoded_candidates_exact"]
+        is True
+    )
+    assert result["determinism"]["slot_ablation_checkpoint_zero_metrics_exact"] is True
+    assert (
+        result["determinism"]["slot_ablation_checkpoint_zero_within_tolerance"] is True
+    )
     assert "repeat_intact" in result["controls"]
     assert result["controls"]["truncation"]["checkpoints"] == [0, 8, 16, 32]
 
@@ -1144,7 +1371,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     nondeterministic = _evaluation_payload()
     nondeterministic["determinism"] = dict(
         nondeterministic["determinism"],
-        repeat_intact_state_byte_identical=False,
+        repeat_intact_within_tolerance=False,
     )
     repeat_failure = example._qualification(
         example.ExperimentConfig(training_updates=3),
@@ -1156,6 +1383,80 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     )
     assert repeat_failure["full_structural_qualification"] is False
     assert "repeat" in " ".join(repeat_failure["reasons_not_structural"])
+
+    missing_numeric = _evaluation_payload()
+    missing_numeric["determinism"].pop("repeat_intact_numeric_evidence")
+    missing_numeric_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        missing_numeric,
+        gpu,
+        model_report,
+    )
+    assert missing_numeric_failure["full_structural_qualification"] is False
+
+    corrupted_numeric = _evaluation_payload()
+    corrupted_numeric["determinism"]["repeat_intact_numeric_evidence"]["maximum_rms"][
+        "compact_logits"
+    ] = 2e-6
+    corrupted_numeric_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        corrupted_numeric,
+        gpu,
+        model_report,
+    )
+    assert corrupted_numeric_failure["full_structural_qualification"] is False
+
+    wrong_declared_tolerance = _evaluation_payload()
+    wrong_declared_tolerance["determinism"]["metric_absolute_tolerance"] = 1e-6
+    tolerance_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        wrong_declared_tolerance,
+        gpu,
+        model_report,
+    )
+    assert tolerance_failure["full_structural_qualification"] is False
+
+    ablation_candidate_mismatch = _evaluation_payload()
+    ablation_candidate_mismatch["controls"]["slot_ablation"][
+        "decoded_candidates_match_intact_by_effort"
+    ]["0"] = False
+    ablation_candidate_mismatch["controls"]["slot_ablation"][
+        "decoded_candidate_match_query_count_by_effort"
+    ]["0"] = 0
+    candidate_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        ablation_candidate_mismatch,
+        gpu,
+        model_report,
+    )
+    assert candidate_failure["full_structural_qualification"] is False
+
+    ablation_metric_mismatch = _evaluation_payload()
+    slot_control = ablation_metric_mismatch["controls"]["slot_ablation"]
+    ablation_metric_mismatch["controls"]["slot_ablation"] = dict(
+        slot_control,
+        metrics_by_effort={
+            **slot_control["metrics_by_effort"],
+            "0": _metric(1.0),
+        },
+    )
+    metric_failure = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        training,
+        ablation_metric_mismatch,
+        gpu,
+        model_report,
+    )
+    assert metric_failure["full_structural_qualification"] is False
 
     missing_readout = dict(
         training,

@@ -248,6 +248,17 @@ Aggregate metrics include distributions, not just means, so a universal
 attractor cannot be hidden by average accuracy. Pairwise state hashes or
 distances across distinct episodes are reported at the required checkpoints.
 
+Repeated same-process, same-device evaluation is qualified per checkpoint and
+per query. Spikes, decoded candidates, exact scores, and their scoring
+diagnostics must be identical. The normative physical-state gate requires
+float32 voltage, feedforward synaptic current, and recurrent synaptic current,
+each with RMS across neurons at most `1e-6` for every checkpoint-query pair; a
+batch-wide average is not sufficient. An additional decoder-state check applies
+the same threshold across compact-logit features. This fixed threshold never
+relaxes ARC scoring. Literal byte identity is reported separately. Slot
+ablation must pass the same state, candidate, and metric checks at checkpoint 0
+before later differences can be attributed to the intervention.
+
 ### Frozen causal controls
 
 - **No context:** mask all demonstration events; preserve query, reset state,
@@ -325,6 +336,8 @@ A result may be labelled a full scientific run only when:
 - the same frozen trajectories were scored at 0/8/16/32;
 - every exact metric, diagnostic, trajectory measure, and causal control is
   present;
+- repeated intact evaluation and the slot-ablation pre-intervention checkpoint
+  pass the declared per-query reproducibility gates;
 - no instability or missing-data condition is silently ignored.
 
 There is no required accuracy threshold. A zero exact score, worsening with
@@ -345,4 +358,6 @@ negative result when the gates above are met and the report states it plainly.
 - no-context equivalence, valid derangement, impossible one-demo derangement;
 - first and last slot ablation plus invalid slot indices;
 - deterministic topology and exact edge count at smoke and full sizes;
-- same-seed reset/evaluation reproducibility and parameter immutability.
+- same-seed reset/evaluation reproducibility and parameter immutability;
+- one excessive-noise query hidden inside an otherwise stable batch, decoded
+  candidate mismatch, exact-metric mismatch, and matched ablation checkpoint.

@@ -98,6 +98,7 @@ except ModuleNotFoundError:
 DeviceName = Literal["cpu", "gpu"]
 CHECKPOINTS = (0, 8, 16, 32)
 TRAINING_EFFORTS = (8, 16, 32)
+STATE_RMS_TOLERANCE = 1e-6
 APPROVED_TRAINING_SOURCES = frozenset(
     {
         "arc-agi-1 training",
@@ -1096,6 +1097,15 @@ def _trajectory_reports(
     return reports, aggregate
 
 
+def _array_bytes_equal(left: np.ndarray, right: np.ndarray) -> bool:
+    return bool(
+        left.dtype == right.dtype
+        and left.shape == right.shape
+        and np.ascontiguousarray(left).tobytes()
+        == np.ascontiguousarray(right).tobytes()
+    )
+
+
 def _control_summary(
     name: str,
     intact: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
@@ -1121,18 +1131,42 @@ def _control_summary(
     applicable_intact = subset(intact)
     applicable_control = subset(control)
     if applicable_records:
-        metrics, _ = _score_windows(
+        metrics, control_checkpoint_queries = _score_windows(
             applicable_control[0], applicable_records, color_rank
         )
-        if len(applicable_records) == len(records):
-            matched_intact_metrics = intact_metrics
-        else:
-            matched_intact_metrics, _ = _score_windows(
-                applicable_intact[0], applicable_records, color_rank
+        matched_intact_metrics, intact_checkpoint_queries = _score_windows(
+            applicable_intact[0], applicable_records, color_rank
+        )
+        if (
+            len(applicable_records) == len(records)
+            and matched_intact_metrics != intact_metrics
+        ):
+            raise ValueError("recomputed intact control metrics are inconsistent")
+        candidate_match_count_by_effort: dict[str, int] = {}
+        candidates_match_by_effort: dict[str, bool] = {}
+        for effort in CHECKPOINTS:
+            key = str(effort)
+            intact_rows = intact_checkpoint_queries[key]
+            control_rows = control_checkpoint_queries[key]
+            if len(intact_rows) != len(control_rows):
+                raise ValueError("matched control candidate rows differ in length")
+            match_count = int(
+                sum(
+                    intact_row["candidates"] == control_row["candidates"]
+                    for intact_row, control_row in zip(
+                        intact_rows, control_rows, strict=True
+                    )
+                )
             )
+            candidate_match_count_by_effort[key] = match_count
+            candidates_match_by_effort[key] = match_count == len(intact_rows)
+        decoded_candidates_match = bool(all(candidates_match_by_effort.values()))
     else:
         metrics = {}
         matched_intact_metrics = {}
+        candidate_match_count_by_effort = {}
+        candidates_match_by_effort = {}
+        decoded_candidates_match = None
 
     if applicable_records:
         intact_spikes = applicable_intact[1]
@@ -1164,6 +1198,16 @@ def _control_summary(
                 .reshape(applicable_control[4].shape[0], -1),
             },
         )
+        comparison["state_byte_identical_by_step"] = [
+            all(
+                _array_bytes_equal(
+                    applicable_intact[state_index][step_index],
+                    applicable_control[state_index][step_index],
+                )
+                for state_index in range(1, 5)
+            )
+            for step_index in range(applicable_intact[0].shape[0])
+        ]
     else:
         comparison = {
             "control_name": name,
@@ -1174,8 +1218,9 @@ def _control_summary(
     per_query_null = [
         bool(
             all(
-                np.array_equal(
-                    intact[state_index][:, index], control[state_index][:, index]
+                _array_bytes_equal(
+                    intact[state_index][:, index],
+                    control[state_index][:, index],
                 )
                 for state_index in range(1, 5)
             )
@@ -1192,7 +1237,13 @@ def _control_summary(
     result: dict[str, object] = {
         "metrics_by_effort": metrics,
         "trajectory_comparison": comparison,
+        "decoded_candidates_match_intact": decoded_candidates_match,
+        "decoded_candidates_match_intact_by_effort": candidates_match_by_effort,
+        "decoded_candidate_match_query_count_by_effort": (
+            candidate_match_count_by_effort
+        ),
         "causally_null_query_count": int(sum(per_query_null)),
+        "byte_identical_query_count": int(sum(per_query_null)),
         "query_count": len(records),
         "applicable_query_count": int(applicable_indices.size),
         "available_query_count": int(applicable_indices.size),
@@ -1204,6 +1255,171 @@ def _control_summary(
         sum(bool(item.get("timing_matched", False)) for item in metadata)
     )
     return result
+
+
+def _state_tolerance_summary(
+    intact: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    candidate: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    *,
+    step_indices: Sequence[int] | None = None,
+) -> dict[str, object]:
+    leading_shape = intact[0].shape[:2]
+    for name, left, right in zip(
+        ("compact", "spikes", "voltage", "feedforward_current", "recurrent_current"),
+        intact,
+        candidate,
+        strict=True,
+    ):
+        if left.shape != right.shape or left.ndim != 3:
+            raise ValueError(f"matched {name} windows must have equal rank-3 shapes")
+        if left.shape[:2] != leading_shape:
+            raise ValueError(
+                f"matched {name} windows must share step and query dimensions"
+            )
+    if leading_shape[1] < 1:
+        raise ValueError("matched state windows must contain at least one query")
+    if step_indices is None:
+        indices = np.arange(intact[0].shape[0], dtype=np.int32)
+    else:
+        indices = np.asarray(step_indices, dtype=np.int32)
+        if indices.ndim != 1 or indices.size < 1:
+            raise ValueError("step_indices must be a nonempty rank-1 sequence")
+        if np.any(indices < 0) or np.any(indices >= intact[0].shape[0]):
+            raise ValueError("step_indices exceed the matched windows")
+
+    selected_spikes = intact[1][indices]
+    candidate_spikes = candidate[1][indices]
+    spike_difference = selected_spikes != candidate_spikes
+    spike_hamming_by_query = np.count_nonzero(spike_difference, axis=(0, 2)).astype(
+        np.int64
+    )
+    spike_hamming = int(np.sum(spike_hamming_by_query))
+    numeric_names = (
+        "compact_logits",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    )
+    per_step_query_rms: dict[str, list[list[float]]] = {}
+    per_query_maximum_rms: dict[str, list[float]] = {}
+    per_query_maximum_absolute: dict[str, list[float]] = {}
+    maximum_absolute: dict[str, float] = {}
+    for name, state_index in zip(numeric_names, (0, 2, 3, 4), strict=True):
+        delta = np.asarray(
+            candidate[state_index][indices], dtype=np.float64
+        ) - np.asarray(intact[state_index][indices], dtype=np.float64)
+        rms = np.sqrt(np.mean(delta * delta, axis=2))
+        query_maximum = np.max(rms, axis=0)
+        absolute_query_maximum = np.max(np.abs(delta), axis=(0, 2))
+        per_step_query_rms[name] = rms.tolist()
+        per_query_maximum_rms[name] = query_maximum.tolist()
+        per_query_maximum_absolute[name] = absolute_query_maximum.tolist()
+        maximum_absolute[name] = float(np.max(np.abs(delta)))
+    maximum_rms = {
+        name: float(max(values)) for name, values in per_query_maximum_rms.items()
+    }
+    intact_dtype_by_state = {
+        name: str(intact[state_index].dtype)
+        for name, state_index in zip(numeric_names, (0, 2, 3, 4), strict=True)
+    }
+    candidate_dtype_by_state = {
+        name: str(candidate[state_index].dtype)
+        for name, state_index in zip(numeric_names, (0, 2, 3, 4), strict=True)
+    }
+    required_float32_dtypes = bool(
+        all(value == "float32" for value in intact_dtype_by_state.values())
+        and candidate_dtype_by_state == intact_dtype_by_state
+    )
+    state_byte_identical_by_query = np.asarray(
+        [
+            all(
+                _array_bytes_equal(
+                    intact[state_index][indices, query_index],
+                    candidate[state_index][indices, query_index],
+                )
+                for state_index in range(1, 5)
+            )
+            for query_index in range(leading_shape[1])
+        ],
+        dtype=np.bool_,
+    )
+    compact_byte_identical_by_query = np.asarray(
+        [
+            _array_bytes_equal(
+                intact[0][indices, query_index],
+                candidate[0][indices, query_index],
+            )
+            for query_index in range(leading_shape[1])
+        ],
+        dtype=np.bool_,
+    )
+    within_tolerance_by_query = spike_hamming_by_query == 0
+    for values in per_query_maximum_rms.values():
+        within_tolerance_by_query &= np.asarray(values) <= STATE_RMS_TOLERANCE
+    within_tolerance_by_query &= required_float32_dtypes
+    within_tolerance_query_count = int(np.count_nonzero(within_tolerance_by_query))
+    query_count = int(leading_shape[1])
+    return {
+        "evaluated_steps": indices.astype(int).tolist(),
+        "query_count": query_count,
+        "state_byte_identical": bool(np.all(state_byte_identical_by_query)),
+        "state_byte_identical_by_query": state_byte_identical_by_query.tolist(),
+        "state_byte_identical_by_step": [
+            all(
+                _array_bytes_equal(
+                    intact[state_index][step_index],
+                    candidate[state_index][step_index],
+                )
+                for state_index in range(1, 5)
+            )
+            for step_index in indices
+        ],
+        "compact_logits_byte_identical": bool(np.all(compact_byte_identical_by_query)),
+        "compact_logits_byte_identical_by_query": (
+            compact_byte_identical_by_query.tolist()
+        ),
+        "within_declared_tolerance": within_tolerance_query_count == query_count,
+        "within_tolerance_by_query": within_tolerance_by_query.tolist(),
+        "within_tolerance_query_count": within_tolerance_query_count,
+        "declared_per_query_axis_rms_tolerance": STATE_RMS_TOLERANCE,
+        "spike_hamming_count": spike_hamming,
+        "spike_hamming_count_by_query": spike_hamming_by_query.tolist(),
+        "per_step_query_rms": per_step_query_rms,
+        "per_query_maximum_rms": per_query_maximum_rms,
+        "maximum_rms": maximum_rms,
+        "per_query_maximum_absolute": per_query_maximum_absolute,
+        "maximum_absolute": maximum_absolute,
+        "intact_dtype_by_state": intact_dtype_by_state,
+        "candidate_dtype_by_state": candidate_dtype_by_state,
+        "required_float32_dtypes": required_float32_dtypes,
+    }
+
+
+def _checkpoint_zero_gate_summary(
+    intact_metrics: dict[str, dict[str, object]],
+    control: dict[str, object],
+    numeric_summary: dict[str, object],
+) -> dict[str, bool]:
+    state_within_tolerance = numeric_summary.get("within_declared_tolerance") is True
+    candidate_matches = control.get("decoded_candidates_match_intact_by_effort")
+    decoded_candidates_exact = bool(
+        isinstance(candidate_matches, dict) and candidate_matches.get("0") is True
+    )
+    control_metrics = control.get("metrics_by_effort")
+    metrics_exact = bool(
+        isinstance(control_metrics, dict)
+        and "0" in intact_metrics
+        and "0" in control_metrics
+        and control_metrics["0"] == intact_metrics["0"]
+    )
+    return {
+        "state_within_tolerance": state_within_tolerance,
+        "decoded_candidates_exact": decoded_candidates_exact,
+        "metrics_exact": metrics_exact,
+        "matched": bool(
+            state_within_tolerance and decoded_candidates_exact and metrics_exact
+        ),
+    }
 
 
 def _evaluate(
@@ -1282,6 +1498,37 @@ def _evaluate(
         intact_metrics,
         intact_meta,
     )
+    repeat_match = _state_tolerance_summary(intact, repeat_intact)
+    repeat_metrics_exact = repeat_result["metrics_by_effort"] == intact_metrics
+    repeat_predictions_exact = bool(repeat_result["decoded_candidates_match_intact"])
+    repeat_reproducible = bool(
+        repeat_match["within_declared_tolerance"]
+        and repeat_metrics_exact
+        and repeat_predictions_exact
+    )
+    repeat_comparison = repeat_result["trajectory_comparison"]
+    repeat_comparison["state_byte_identical_all_steps"] = repeat_match[
+        "state_byte_identical"
+    ]
+    repeat_comparison["state_byte_identical_by_step"] = repeat_match[
+        "state_byte_identical_by_step"
+    ]
+    repeat_comparison["within_declared_reproducibility_tolerance"] = repeat_reproducible
+    repeat_comparison["causally_null_at_measured_precision"] = repeat_reproducible
+    repeat_comparison["interpretation"] = (
+        "repeat_intact is reproducible within the declared tolerance; spikes, "
+        "decoded candidates, and metrics are exact while logit/state/current RMS "
+        "differences have feature-axis RMS at most "
+        f"{STATE_RMS_TOLERANCE:.1e} at every checkpoint/query."
+        if repeat_reproducible
+        else "repeat_intact exceeded the declared reproducibility tolerance."
+    )
+    repeat_result["causally_null_query_count"] = repeat_match[
+        "within_tolerance_query_count"
+    ]
+    repeat_result["within_tolerance_query_count"] = repeat_match[
+        "within_tolerance_query_count"
+    ]
     del repeat_intact
 
     no_context = run_arm(no_context_events, no_context_advances, inactive_gates)
@@ -1320,8 +1567,11 @@ def _evaluate(
         intact_metrics,
         intact_meta,
     )
-    pre_intervention_match = bool(
-        all(np.array_equal(intact[index][0], ablated[index][0]) for index in range(5))
+    pre_intervention_match = _state_tolerance_summary(
+        intact, ablated, step_indices=(0,)
+    )
+    ablation_checkpoint_zero = _checkpoint_zero_gate_summary(
+        intact_metrics, ablation_result, pre_intervention_match
     )
     del ablated
     after = _tree_digest(parameter_snapshot(model))
@@ -1337,14 +1587,33 @@ def _evaluate(
         "aggregate_trajectory": aggregate_trajectory,
         "determinism": {
             "same_control_capable_execution_path": True,
-            "state_tolerance": "exact byte identity",
+            "state_rms_tolerance": STATE_RMS_TOLERANCE,
+            "spike_tolerance": "exact identity",
             "metric_absolute_tolerance": 0.0,
-            "repeat_intact_state_byte_identical": bool(
-                repeat_result["trajectory_comparison"][
-                    "causally_null_at_measured_precision"
-                ]
+            "repeat_intact_state_byte_identical": repeat_match["state_byte_identical"],
+            "repeat_intact_compact_logits_byte_identical": repeat_match[
+                "compact_logits_byte_identical"
+            ],
+            "repeat_intact_within_tolerance": repeat_match["within_declared_tolerance"],
+            "repeat_intact_metrics_exact": repeat_metrics_exact,
+            "repeat_intact_decoded_candidates_exact": repeat_predictions_exact,
+            "repeat_intact_numeric_evidence": repeat_match,
+            "slot_ablation_checkpoint_zero_byte_identical": pre_intervention_match[
+                "state_byte_identical"
+            ],
+            "slot_ablation_checkpoint_zero_state_within_tolerance": (
+                ablation_checkpoint_zero["state_within_tolerance"]
             ),
-            "slot_ablation_checkpoint_zero_byte_identical": pre_intervention_match,
+            "slot_ablation_checkpoint_zero_decoded_candidates_exact": (
+                ablation_checkpoint_zero["decoded_candidates_exact"]
+            ),
+            "slot_ablation_checkpoint_zero_metrics_exact": ablation_checkpoint_zero[
+                "metrics_exact"
+            ],
+            "slot_ablation_checkpoint_zero_within_tolerance": (
+                ablation_checkpoint_zero["matched"]
+            ),
+            "slot_ablation_checkpoint_zero_numeric_evidence": pre_intervention_match,
         },
         "controls": {
             "repeat_intact": repeat_result,
@@ -1579,6 +1848,38 @@ def _qualification(
             else isinstance(control.get("trajectory_comparison"), dict)
             and control["trajectory_comparison"].get("available") is False
         )
+        candidate_matches = control.get("decoded_candidates_match_intact_by_effort")
+        candidate_match_counts = control.get(
+            "decoded_candidate_match_query_count_by_effort"
+        )
+        decoded_candidates_match = control.get("decoded_candidates_match_intact")
+        candidate_summary_ok = (
+            bool(
+                isinstance(candidate_matches, dict)
+                and set(candidate_matches)
+                == {str(checkpoint) for checkpoint in CHECKPOINTS}
+                and all(isinstance(value, bool) for value in candidate_matches.values())
+                and isinstance(candidate_match_counts, dict)
+                and set(candidate_match_counts) == set(candidate_matches)
+                and all(
+                    isinstance(value, Integral)
+                    and not isinstance(value, bool)
+                    and 0 <= int(value) <= applicable
+                    for value in candidate_match_counts.values()
+                )
+                and all(
+                    candidate_matches[key]
+                    == (int(candidate_match_counts[key]) == applicable)
+                    for key in candidate_matches
+                )
+                and isinstance(decoded_candidates_match, bool)
+                and decoded_candidates_match == all(candidate_matches.values())
+            )
+            if applicable > 0
+            else candidate_matches == {}
+            and candidate_match_counts == {}
+            and decoded_candidates_match is None
+        )
         applicability_ok = (
             applicable == expected_query_count
             if name in ("repeat_intact", "no_context", "slot_ablation")
@@ -1594,6 +1895,7 @@ def _qualification(
             and applicability_ok
             and metrics_ok
             and comparison_ok
+            and candidate_summary_ok
         )
 
     required_controls_complete = all(
@@ -1611,14 +1913,186 @@ def _qualification(
         and truncation.get("uses_one_continuous_intact_trajectory") is True
     )
     determinism = evaluation.get("determinism", {})
+    required_numeric_states = {
+        "compact_logits",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    }
+
+    def numeric_evidence_complete(value: object, steps: Sequence[int]) -> bool:
+        if not isinstance(value, dict):
+            return False
+        maximum_rms = value.get("maximum_rms")
+        per_query_rms = value.get("per_query_maximum_rms")
+        per_step_query_rms = value.get("per_step_query_rms")
+        intact_dtypes = value.get("intact_dtype_by_state")
+        candidate_dtypes = value.get("candidate_dtype_by_state")
+        if not (
+            isinstance(maximum_rms, dict)
+            and set(maximum_rms) == required_numeric_states
+            and isinstance(per_query_rms, dict)
+            and set(per_query_rms) == required_numeric_states
+            and isinstance(per_step_query_rms, dict)
+            and set(per_step_query_rms) == required_numeric_states
+            and isinstance(intact_dtypes, dict)
+            and isinstance(candidate_dtypes, dict)
+            and intact_dtypes == {name: "float32" for name in required_numeric_states}
+            and candidate_dtypes == intact_dtypes
+            and value.get("required_float32_dtypes") is True
+        ):
+            return False
+
+        def tolerated(value: object) -> bool:
+            return bool(
+                isinstance(value, Real)
+                and not isinstance(value, bool)
+                and math.isfinite(float(value))
+                and 0.0 <= float(value) <= STATE_RMS_TOLERANCE
+            )
+
+        def count_is(name: str, expected: int) -> bool:
+            item = value.get(name)
+            return bool(
+                isinstance(item, Integral)
+                and not isinstance(item, bool)
+                and int(item) == expected
+            )
+
+        expected_steps = list(steps)
+        per_query_ok = all(
+            isinstance(values, list)
+            and len(values) == expected_query_count
+            and all(tolerated(item) for item in values)
+            for values in per_query_rms.values()
+        )
+        per_step_query_ok = all(
+            isinstance(rows, list)
+            and len(rows) == len(expected_steps)
+            and all(
+                isinstance(row, list)
+                and len(row) == expected_query_count
+                and all(tolerated(item) for item in row)
+                for row in rows
+            )
+            for rows in per_step_query_rms.values()
+        )
+        return bool(
+            value.get("evaluated_steps") == expected_steps
+            and count_is("query_count", expected_query_count)
+            and value.get("within_declared_tolerance") is True
+            and value.get("within_tolerance_by_query") == [True] * expected_query_count
+            and count_is("within_tolerance_query_count", expected_query_count)
+            and count_is("spike_hamming_count", 0)
+            and value.get("spike_hamming_count_by_query") == [0] * expected_query_count
+            and value.get("declared_per_query_axis_rms_tolerance")
+            == STATE_RMS_TOLERANCE
+            and all(tolerated(item) for item in maximum_rms.values())
+            and per_query_ok
+            and per_step_query_ok
+        )
+
+    repeat_control = (
+        controls.get("repeat_intact", {}) if isinstance(controls, dict) else {}
+    )
+    repeat_candidate_counts = (
+        repeat_control.get("decoded_candidate_match_query_count_by_effort", {})
+        if isinstance(repeat_control, dict)
+        else {}
+    )
+    repeat_candidate_flags = (
+        repeat_control.get("decoded_candidates_match_intact_by_effort", {})
+        if isinstance(repeat_control, dict)
+        else {}
+    )
+    repeat_candidates_exact = bool(
+        isinstance(repeat_candidate_counts, dict)
+        and isinstance(repeat_candidate_flags, dict)
+        and set(repeat_candidate_counts)
+        == {str(checkpoint) for checkpoint in CHECKPOINTS}
+        and set(repeat_candidate_flags) == set(repeat_candidate_counts)
+        and all(
+            isinstance(repeat_candidate_counts[key], Integral)
+            and not isinstance(repeat_candidate_counts[key], bool)
+            and int(repeat_candidate_counts[key]) == expected_query_count
+            and repeat_candidate_flags[key] is True
+            for key in repeat_candidate_counts
+        )
+        and repeat_control.get("decoded_candidates_match_intact") is True
+    )
+    repeat_metrics_exact = bool(
+        isinstance(repeat_control, dict)
+        and repeat_control.get("metrics_by_effort")
+        == evaluation.get("metrics_by_effort")
+    )
+    repeat_numeric_exact = bool(
+        isinstance(determinism, dict)
+        and determinism.get("state_rms_tolerance") == STATE_RMS_TOLERANCE
+        and determinism.get("spike_tolerance") == "exact identity"
+        and isinstance(determinism.get("metric_absolute_tolerance"), Real)
+        and not isinstance(determinism.get("metric_absolute_tolerance"), bool)
+        and float(determinism["metric_absolute_tolerance"]) == 0.0
+        and numeric_evidence_complete(
+            determinism.get("repeat_intact_numeric_evidence"),
+            range(max(CHECKPOINTS) + 1),
+        )
+    )
     repeatable = bool(
         isinstance(determinism, dict)
         and determinism.get("same_control_capable_execution_path") is True
-        and determinism.get("repeat_intact_state_byte_identical") is True
+        and determinism.get("repeat_intact_within_tolerance") is True
+        and determinism.get("repeat_intact_metrics_exact") is True
+        and determinism.get("repeat_intact_decoded_candidates_exact") is True
+        and repeat_candidates_exact
+        and repeat_metrics_exact
+        and repeat_numeric_exact
+    )
+    slot_control = (
+        controls.get("slot_ablation", {}) if isinstance(controls, dict) else {}
+    )
+    slot_candidate_counts = (
+        slot_control.get("decoded_candidate_match_query_count_by_effort", {})
+        if isinstance(slot_control, dict)
+        else {}
+    )
+    slot_candidate_flags = (
+        slot_control.get("decoded_candidates_match_intact_by_effort", {})
+        if isinstance(slot_control, dict)
+        else {}
+    )
+    slot_metrics = (
+        slot_control.get("metrics_by_effort", {})
+        if isinstance(slot_control, dict)
+        else {}
+    )
+    intact_metrics = evaluation.get("metrics_by_effort")
+    slot_checkpoint_zero_exact = bool(
+        isinstance(slot_candidate_counts, dict)
+        and isinstance(slot_candidate_flags, dict)
+        and isinstance(slot_candidate_counts.get("0"), Integral)
+        and not isinstance(slot_candidate_counts.get("0"), bool)
+        and int(slot_candidate_counts["0"]) == expected_query_count
+        and slot_candidate_flags.get("0") is True
+        and isinstance(slot_metrics, dict)
+        and isinstance(intact_metrics, dict)
+        and slot_metrics.get("0") == intact_metrics.get("0")
+    )
+    slot_numeric_exact = bool(
+        isinstance(determinism, dict)
+        and numeric_evidence_complete(
+            determinism.get("slot_ablation_checkpoint_zero_numeric_evidence"), (0,)
+        )
     )
     ablation_matched = bool(
         isinstance(determinism, dict)
-        and determinism.get("slot_ablation_checkpoint_zero_byte_identical") is True
+        and determinism.get("slot_ablation_checkpoint_zero_state_within_tolerance")
+        is True
+        and determinism.get("slot_ablation_checkpoint_zero_decoded_candidates_exact")
+        is True
+        and determinism.get("slot_ablation_checkpoint_zero_metrics_exact") is True
+        and determinism.get("slot_ablation_checkpoint_zero_within_tolerance") is True
+        and slot_checkpoint_zero_exact
+        and slot_numeric_exact
     )
     evaluation_complete = bool(
         query_count > 0
@@ -1795,8 +2269,8 @@ def _qualification(
         "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
         "complete_frozen_evaluation": "exact metrics, trajectories, or controls are incomplete or non-finite",
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
-        "repeat_intact_deterministic": "same-run intact repeat was not byte-identical",
-        "slot_ablation_pre_intervention_matched": "slot-ablation checkpoint zero did not match intact state",
+        "repeat_intact_deterministic": "same-run intact repeat exceeded the declared state/logit tolerance or changed exact candidates or metrics",
+        "slot_ablation_pre_intervention_matched": "slot-ablation checkpoint zero exceeded the declared state/logit tolerance or changed exact candidates or effort-0 metrics",
     }
     scientific_messages = {
         "not_smoke_or_structural_only": "smoke fixtures or disabled optimization cannot be scientific evidence",
@@ -2117,7 +2591,8 @@ def _render_report(result: dict[str, object]) -> str:
             f"unavailable={unavailable}, timing-matched="
             f"{control.get('timing_matched_applicable_query_count', 0)}/{applicable}; "
             f"causally_null={comparison.get('causally_null_at_measured_precision')}; "
-            f"null_queries={control.get('causally_null_query_count', 0)}/{applicable}."
+            f"null_queries={control.get('causally_null_query_count', 0)}/{applicable}; "
+            f"byte-identical queries={control.get('byte_identical_query_count', 0)}/{applicable}."
         )
         if applicable:
             control_metrics = control.get("metrics_by_effort", {})
@@ -2160,17 +2635,36 @@ def _render_report(result: dict[str, object]) -> str:
                     f"{recurrent_l2[max(CHECKPOINTS)]:.6f}."
                 )
     determinism = evaluation.get("determinism", {})
+    repeat_numeric = determinism.get("repeat_intact_numeric_evidence", {})
+    ablation_numeric = determinism.get(
+        "slot_ablation_checkpoint_zero_numeric_evidence", {}
+    )
     lines.extend(
         [
             "",
             (
                 "Determinism gate: repeat intact byte-identical="
                 f"{determinism.get('repeat_intact_state_byte_identical')}; "
+                "compact logits byte-identical="
+                f"{determinism.get('repeat_intact_compact_logits_byte_identical')}; "
+                f"within tolerance={determinism.get('repeat_intact_within_tolerance')}; "
+                f"decoded candidates exact={determinism.get('repeat_intact_decoded_candidates_exact')}; "
+                f"metrics exact={determinism.get('repeat_intact_metrics_exact')}; "
                 "slot-ablation checkpoint 0 matched="
-                f"{determinism.get('slot_ablation_checkpoint_zero_byte_identical')}; "
-                f"state tolerance={determinism.get('state_tolerance', 'unreported')}; "
+                f"{determinism.get('slot_ablation_checkpoint_zero_within_tolerance')} "
+                f"(byte-identical={determinism.get('slot_ablation_checkpoint_zero_byte_identical')}; "
+                "state/logits within tolerance="
+                f"{determinism.get('slot_ablation_checkpoint_zero_state_within_tolerance')}; "
+                "decoded candidates exact="
+                f"{determinism.get('slot_ablation_checkpoint_zero_decoded_candidates_exact')}; "
+                "effort-0 metrics exact="
+                f"{determinism.get('slot_ablation_checkpoint_zero_metrics_exact')}); "
+                "per-query feature-axis RMS tolerance="
+                f"{determinism.get('state_rms_tolerance', 'unreported')}; "
                 f"metric absolute tolerance={determinism.get('metric_absolute_tolerance', 'unreported')}."
             ),
+            f"Repeat numeric noise: {repeat_numeric}.",
+            f"Ablation checkpoint-0 numeric noise: {ablation_numeric}.",
         ]
     )
     compiler_warnings = [

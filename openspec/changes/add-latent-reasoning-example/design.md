@@ -200,6 +200,19 @@ edge count, training updates by effort, dataset manifest hashes, split counts,
 runtime, peak memory when available, and every metric/control above. Generated
 datasets, downloaded corpora, checkpoints, and reports remain outside Git.
 
+Same-process, same-device repeatability is checked separately for every retained
+checkpoint and evaluation query. Spikes, decoded candidates, exact scores, and
+diagnostics must be identical. The normative physical-state gate requires
+float32 voltage, feedforward synaptic current, and recurrent synaptic current,
+each with per-query RMS across neurons at most `1e-6` for every
+checkpoint-query pair. An additional decoder-state check applies the same
+threshold across compact-logit features so unchanged candidates cannot hide
+material logit drift. This is a fixed float32 reproducibility tolerance, not an
+ARC score tolerance. Literal byte identity remains a separate reported fact.
+The slot-ablation arm must satisfy the same state, candidate, and metric gate at
+its pre-intervention checkpoint before any post-intervention difference is
+treated as causal.
+
 ## Risks / Trade-offs
 
 - **ARC is much harder than symbol lookup.** Exact scores may remain near zero.

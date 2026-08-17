@@ -50,6 +50,12 @@ source ID, or transformation label SHALL NOT enter the model input.
 - **WHEN** an invalid unused-capacity tick and a post-query latent tick both carry the exact zero event
 - **THEN** an explicit advance gate freezes model state for the former and advances recurrence for the latter
 
+#### Scenario: Occupied fixed blocks preserve matched timing
+
+- **WHEN** an occupied 30-tick demonstration block contains an absent aligned input or output row
+- **THEN** that row supplies an exact-zero external event while the recurrent state still advances
+- **AND** only wholly unused demonstration blocks freeze state
+
 #### Scenario: Derangement duration is shape invariant
 
 - **WHEN** demonstration outputs of unequal heights are deranged across fixed demonstration blocks
@@ -243,10 +249,19 @@ runtime, exact metrics, diagnostics, controls, and trajectory summaries. It
 SHALL describe the work as an instantiation of the public task/effort contract,
 not a reproduction of proprietary internals.
 
-#### Scenario: Same run is reproducible
+#### Scenario: Same-run intact execution is reproducible
 
-- **WHEN** two runs use the same data fingerprints, configuration, seed, software, and device
-- **THEN** their deterministic evaluation predictions and reported metrics agree to the declared tolerance
+- **WHEN** the same frozen intact arm is executed twice within one process using the same data fingerprints, configuration, seed, software, and device
+- **THEN** their spikes, decoded candidates, exact scores, and diagnostics are identical at every retained checkpoint and query
+- **AND** voltage, feedforward synaptic current, and recurrent synaptic current are float32 with per-query neuron-axis RMS difference at most `1e-6` at every checkpoint-query pair
+- **AND** an additional compact-logit feature-axis RMS check uses the same threshold
+- **AND** byte identity is reported separately rather than inferred from the RMS tolerance
+
+#### Scenario: Slot ablation has a matched pre-intervention state
+
+- **WHEN** the intact and slot-ablation arms are compared at checkpoint 0 before the intervention
+- **THEN** they satisfy the same exact spike, decoded-candidate, exact-metric, and per-query state-RMS requirements as a repeated intact run
+- **AND** only post-intervention differences are interpreted as effects of the ablation
 
 #### Scenario: Full qualification requires full scale
 
