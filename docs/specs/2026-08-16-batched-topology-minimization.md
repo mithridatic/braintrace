@@ -159,23 +159,33 @@ let each rerun after the other changed; one unified set gets that for free.
 
 Each round:
 
-1. **Screen.** Ablate every retained coordinate individually against the current
-   accepted mask, in `ceil(n_retained / eval_batch)` batched evaluations. This
-   yields the set of coordinates that are *individually* safe.
-2. **Certify or continue.** If no coordinate is individually safe, the mask is
-   1-minimal and the search is done. This screen *is* the terminal
+1. **Screen.** Ablate every retained neuron individually against the current
+   accepted mask, in `ceil(n_retained / eval_batch)` batched evaluations. Fall
+   through to the active recurrent edges only when no neuron is removable.
+   Removing a neuron disables its incident edges for free, so screening every
+   active edge first would spend thousands of causal trials on edges a later
+   neuron removal deletes anyway — measured at roughly five times the total
+   evaluation count on a 512-neuron run. Because the terminal round finds no
+   removable neuron by definition, it always screens both.
+2. **Certify or continue.** If nothing is individually safe, the mask is
+   1-minimal and the search is done. That screen *is* the terminal
    single-ablation certificate; it is not a separate pass.
 3. **Accept.** Order the individually-safe set ascending by contribution score,
    then index. Try removing the whole prefix at once. If every task stays at or
    above target, accept all of it; otherwise binary-search the largest prefix
-   length whose simultaneous removal is verified safe.
+   length whose simultaneous removal is verified safe. Then retry the leftover
+   against the newly reduced mask, and keep going until the safe set is drained.
+   A screen costs one evaluation per retained coordinate, so it is worth several
+   cheap prefix probes to postpone the next one.
 4. Removing a neuron disables its incident edges in the same step, as before: a
    structural consequence, not a causal claim, requiring no separate trial.
 
 Removing a set is *not* implied by each member being individually safe —
-interactions exist, and the prefix search is what handles them. Acceptance is
-decided by measured probe accuracy at every step; contribution scores only order
-the prefix and never decide a removal.
+interactions exist, and the prefix search is what handles them. A coordinate the
+screen called safe may also fail once earlier removals have landed; that is
+measured, recorded in place of the screen's optimistic number, and the
+coordinate is dropped. Acceptance is decided by measured probe accuracy at every
+step; contribution scores only order the prefix and never decide a removal.
 
 **Termination, without any monotonicity assumption.** A prefix of length one is
 known safe: its single coordinate was screened safe against this very mask. So

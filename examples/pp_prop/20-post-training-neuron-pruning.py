@@ -1882,9 +1882,12 @@ def _format_report(analysis: Dict[str, Any]) -> str:
                     f"- Neurons accepted per round: [{pass_counts}].",
                     f"- Edges accepted per round: [{edge_pass_counts}].",
                     f"- Causal evaluations: "
-                    f"{fixed_point.get('evaluation_count', 0)} total "
-                    f"({fixed_point.get('screen_evaluations', 0)} screening, "
-                    f"{fixed_point.get('commit_evaluations', 0)} committing) in "
+                    f"{fixed_point.get('evaluation_count', 0)} across the whole "
+                    f"analysis, of which {fixed_point.get('screen_evaluations', 0)} "
+                    "screened single ablations and "
+                    f"{fixed_point.get('commit_evaluations', 0)} tested batch "
+                    "removals; the rest are the starting sweep and one "
+                    "per-round measurement. They ran in "
                     f"{fixed_point.get('batched_call_count', 0)} batched call(s) "
                     f"at --eval-batch {fixed_point.get('eval_batch', 1)}.",
                     f"- Joint locally minimal network: "
