@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from numbers import Integral, Real
 from typing import Any, NamedTuple
 
@@ -331,6 +331,15 @@ class AssociativeMemoryReport:
         Shape-, dtype-, and byte-sensitive fixed-array digests.
     write_component_type, query_component_type, read_component_type : str, optional
         Stable public names of the three pp-prop-visible trainable operations.
+
+    Attributes
+    ----------
+    carrier_stabilizer : str, optional
+        Stable identity of the memory-mode carrier stabilizer.
+    carrier_radius : float, optional
+        Fixed radius enforced at the dense carrier consumers.
+    carrier_consumers : tuple of str, optional
+        Stable names of the projections that consume stabilized carriers.
     """
 
     mode: str
@@ -349,6 +358,63 @@ class AssociativeMemoryReport:
     write_component_type: str | None
     query_component_type: str | None
     read_component_type: str | None
+
+    @property
+    def carrier_stabilizer(self) -> str | None:
+        """Return the fixed memory-mode carrier stabilizer identity.
+
+        Returns
+        -------
+        str or None
+            Stabilizer identity in memory mode; otherwise ``None``.
+        """
+        if self.mode == "associative_workspace":
+            return "per_example_stopped_unit_l2_cap"
+        return None
+
+    @property
+    def carrier_radius(self) -> float | None:
+        """Return the fixed memory-mode carrier radius.
+
+        Returns
+        -------
+        float or None
+            Unit radius in memory mode; otherwise ``None``.
+        """
+        if self.mode == "associative_workspace":
+            return 1.0
+        return None
+
+    @property
+    def carrier_consumers(self) -> tuple[str, str] | None:
+        """Return the projections that consume stabilized carriers.
+
+        Returns
+        -------
+        tuple of str or None
+            Stable projection names in memory mode; otherwise ``None``.
+        """
+        if self.mode == "associative_workspace":
+            return ("readout_projection", "workspace_query_projection")
+        return None
+
+    def to_dict(self) -> dict[str, object]:
+        """Return the serialized architecture with memory-only stabilization.
+
+        Returns
+        -------
+        dict of str to object
+            The legacy dataclass schema, extended with carrier stabilization
+            metadata only in associative-workspace mode.
+        """
+        report = asdict(self)
+        if self.mode == "associative_workspace":
+            report.update(
+                carrier_stabilizer=self.carrier_stabilizer,
+                carrier_radius=self.carrier_radius,
+                carrier_consumers=self.carrier_consumers,
+            )
+        return report
 
 
 @dataclass(frozen=True)
@@ -1093,6 +1159,20 @@ def update_context_memory(
     return jnp.where(write_gate[:, None, None], candidate, memory)
 
 
+def _unit_l2_cap(value: jax.Array) -> jax.Array:
+    """Cap each final-axis vector at unit L2 norm with a stopped divisor."""
+    value = jnp.asarray(value)
+    accumulator_dtype = jnp.promote_types(value.dtype, jnp.float32)
+    accumulator = value.astype(accumulator_dtype)
+    norm = jnp.linalg.vector_norm(
+        jax.lax.stop_gradient(accumulator), axis=-1, keepdims=True
+    )
+    denominator = jax.lax.stop_gradient(
+        jnp.maximum(jnp.asarray(1.0, dtype=norm.dtype), norm)
+    )
+    return (accumulator / denominator).astype(value.dtype)
+
+
 class LatentWorkspaceModel(brainstate.nn.Module):
     """BrainPy LIF network with sparse recurrent ARC computation.
 
@@ -1631,6 +1711,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 f"({self.config.batch_size}, {self.config.neuron_count}), got "
                 f"{carrier.shape}"
             )
+        if self.config.memory_enabled:
+            carrier = _unit_l2_cap(carrier)
         hidden = jax.nn.gelu(self.readout_projection(carrier))
         return jnp.concatenate(
             (
@@ -1717,7 +1799,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 query[:, None], key, jnp.zeros_like(key)
             )
             latent = advance & ~event_valid
-            projected_query = self.workspace_query_projection(previous_workspace)
+            projected_query = self.workspace_query_projection(
+                _unit_l2_cap(previous_workspace)
+            )
             iterative_query = jnp.tanh(
                 self.query_encoding.value + projected_query
             )

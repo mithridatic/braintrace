@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import dataclasses
 import inspect
+import json
 import math
 import warnings
 
@@ -389,6 +391,120 @@ def test_associative_memory_report_is_stable_and_legacy_safe() -> None:
     assert report.write_component_type == "braintrace.element_wise"
     assert report.query_component_type == "braintrace.nn.Linear"
     assert report.read_component_type == "braintrace.nn.Linear"
+
+
+def test_associative_memory_report_declares_fixed_carrier_stabilization() -> None:
+    legacy = LatentWorkspaceModel(_config()).associative_memory_report()
+    memory = LatentWorkspaceModel(_memory_config()).associative_memory_report()
+    serialized_legacy = dataclasses.asdict(legacy)
+    expected_legacy = {
+        "mode": "legacy_reservoir",
+        "memory_width": 0,
+        "key_feature_width": 0,
+        "value_feature_width": 0,
+        "key_map": None,
+        "value_map": None,
+        "rff_gamma": None,
+        "key_basis_seed": None,
+        "key_bias_seed": None,
+        "value_basis_seed": None,
+        "key_basis_sha256": None,
+        "key_bias_sha256": None,
+        "value_basis_sha256": None,
+        "write_component_type": None,
+        "query_component_type": None,
+        "read_component_type": None,
+    }
+
+    assert legacy.carrier_stabilizer is None
+    assert legacy.carrier_radius is None
+    assert legacy.carrier_consumers is None
+    assert memory.carrier_stabilizer == "per_example_stopped_unit_l2_cap"
+    assert memory.carrier_radius == 1.0
+    assert memory.carrier_consumers == (
+        "readout_projection",
+        "workspace_query_projection",
+    )
+    assert serialized_legacy == expected_legacy
+    assert json.dumps(
+        serialized_legacy, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8") == json.dumps(
+        expected_legacy, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    assert legacy.to_dict() == expected_legacy
+    serialized_memory = memory.to_dict()
+    assert serialized_memory["carrier_stabilizer"] == (
+        "per_example_stopped_unit_l2_cap"
+    )
+    assert serialized_memory["carrier_radius"] == 1.0
+    assert serialized_memory["carrier_consumers"] == (
+        "readout_projection",
+        "workspace_query_projection",
+    )
+    assert set(serialized_memory) == set(expected_legacy) | {
+        "carrier_stabilizer",
+        "carrier_radius",
+        "carrier_consumers",
+    }
+
+
+@pytest.mark.parametrize("dtype", [jnp.float16, jnp.float32])
+def test_unit_l2_cap_is_per_example_and_preserves_dtype(dtype: jnp.dtype) -> None:
+    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    carrier = jnp.asarray(
+        [[0.0, 0.0], [0.25, -0.5], [3.0, 4.0], [-6.0, 8.0]],
+        dtype=dtype,
+    )
+
+    capped = unit_l2_cap(carrier)
+
+    assert capped.shape == carrier.shape
+    assert capped.dtype == carrier.dtype
+    assert np.isfinite(np.asarray(capped)).all()
+    np.testing.assert_allclose(
+        capped[:2], carrier[:2], rtol=0.0, atol=0.0
+    )
+    np.testing.assert_allclose(
+        capped[2:],
+        jnp.asarray([[0.6, 0.8], [-0.6, 0.8]], dtype=dtype),
+        rtol=2e-3 if dtype == jnp.float16 else 1e-6,
+        atol=2e-3 if dtype == jnp.float16 else 1e-6,
+    )
+    norms = np.linalg.norm(np.asarray(capped, dtype=np.float32), axis=-1)
+    assert np.max(norms) <= 1.0 + (2e-3 if dtype == jnp.float16 else 1e-6)
+
+
+def test_unit_l2_cap_has_batch_block_scalar_diagonal_jacobian() -> None:
+    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    carrier = jnp.asarray([[0.3, 0.4], [3.0, 4.0]], dtype=jnp.float32)
+
+    def flattened_cap(flat_carrier: jax.Array) -> jax.Array:
+        return unit_l2_cap(flat_carrier.reshape(carrier.shape)).reshape(-1)
+
+    jacobian = jax.jacrev(flattened_cap)(carrier.reshape(-1))
+
+    np.testing.assert_allclose(
+        jacobian,
+        np.diag(np.asarray([1.0, 1.0, 0.2, 0.2], dtype=np.float32)),
+        rtol=1e-6,
+        atol=1e-7,
+    )
+
+
+def test_unit_l2_cap_accumulates_low_precision_norm_without_overflow() -> None:
+    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    carrier = jnp.full((2, 2048), 100.0, dtype=jnp.float16)
+
+    capped = unit_l2_cap(carrier)
+
+    assert capped.dtype == jnp.float16
+    assert np.isfinite(np.asarray(capped)).all()
+    np.testing.assert_allclose(
+        np.linalg.norm(np.asarray(capped, dtype=np.float32), axis=-1),
+        np.ones((2,), dtype=np.float32),
+        rtol=2e-3,
+        atol=2e-3,
+    )
 
 
 def test_width32_production_k4_rff_keys_clear_preregistered_margin() -> None:
@@ -913,6 +1029,85 @@ def test_memory_mode_uses_one_shared_decoder_on_continuous_workspace() -> None:
     )
 
 
+def test_memory_carrier_cap_is_confined_to_both_dense_consumer_sites(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    observed: list[np.ndarray] = []
+
+    def recording_cap(carrier: jax.Array) -> jax.Array:
+        observed.append(np.asarray(carrier).copy())
+        return unit_l2_cap(carrier)
+
+    monkeypatch.setattr(latent_workspace_module, "_unit_l2_cap", recording_cap)
+    config = _memory_config()
+    memory_model = LatentWorkspaceModel(config)
+    raw_workspace = jnp.linspace(
+        -8.0, 8.0, config.neuron_count, dtype=jnp.float32
+    )[None, :]
+    memory_model.workspace_carrier.value = raw_workspace
+    capped_workspace = unit_l2_cap(raw_workspace)
+
+    def compact_formula(carrier: jax.Array) -> jax.Array:
+        hidden = jax.nn.gelu(memory_model.readout_projection(carrier))
+        return jnp.concatenate(
+            (
+                memory_model.height_head(hidden),
+                memory_model.width_head(hidden),
+                memory_model.color_factor_head(hidden),
+            ),
+            axis=-1,
+        )
+
+    actual_logits = memory_model.compact_readout(raw_workspace)
+    expected_logits = compact_formula(capped_workspace)
+    uncapped_logits = compact_formula(raw_workspace)
+
+    np.testing.assert_allclose(actual_logits, expected_logits, rtol=1e-6, atol=1e-6)
+    assert not np.allclose(actual_logits, uncapped_logits)
+    np.testing.assert_array_equal(memory_model.workspace_carrier.value, raw_workspace)
+    assert len(observed) == 1
+    np.testing.assert_array_equal(observed[0], raw_workspace)
+
+    zero_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+    memory_model.query_encoding.value = jnp.zeros(
+        (1, config.context_memory_width), dtype=jnp.float32
+    )
+    expected_query = jnp.tanh(
+        memory_model.workspace_query_projection(capped_workspace)
+    )
+    uncapped_query = jnp.tanh(
+        memory_model.workspace_query_projection(raw_workspace)
+    )
+
+    memory_model.cell_step(zero_event, advance)
+
+    np.testing.assert_allclose(
+        memory_model.reasoning_query.value,
+        expected_query,
+        rtol=1e-6,
+        atol=1e-6,
+    )
+    assert not np.allclose(memory_model.reasoning_query.value, uncapped_query)
+    assert len(observed) == 2
+    np.testing.assert_array_equal(observed[1], raw_workspace)
+
+    memory_model.workspace_carrier.value = raw_workspace
+    memory_model.cell_step(zero_event, jnp.zeros((1,), dtype=jnp.bool_))
+    np.testing.assert_array_equal(memory_model.workspace_carrier.value, raw_workspace)
+    assert len(observed) == 3
+    np.testing.assert_array_equal(observed[2], raw_workspace)
+
+    legacy_model = LatentWorkspaceModel(_config())
+    legacy_model.compact_readout(raw_workspace)
+    legacy_model.cell_step(
+        jnp.zeros((1, legacy_model.config.input_width), dtype=jnp.float32),
+        jnp.zeros((1,), dtype=jnp.bool_),
+    )
+    assert len(observed) == 3
+
+
 @pytest.mark.parametrize(
     "driver",
     [
@@ -977,6 +1172,17 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
     _assert_parameter_snapshots_equal(
         parameter_snapshot(implicit_model), parameter_snapshot(explicit_model)
     )
+    implicit_report = json.dumps(
+        dataclasses.asdict(implicit_model.associative_memory_report()),
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    explicit_report = json.dumps(
+        dataclasses.asdict(explicit_model.associative_memory_report()),
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    assert implicit_report == explicit_report
     events = _valid_events(4, implicit_model.config.input_width)
 
     implicit = run_sequence(implicit_model, events, latent_steps=2)
@@ -1003,6 +1209,83 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
             _tree_arrays(left), _tree_arrays(right), strict=True
         ):
             np.testing.assert_array_equal(left_array, right_array)
+
+
+def test_zero_width_compact_readout_is_byte_identical_to_raw_legacy_formula() -> None:
+    legacy_model = LatentWorkspaceModel(_config(context_memory_width=0))
+    carrier = jnp.linspace(
+        -8.0, 8.0, legacy_model.config.neuron_count, dtype=jnp.float32
+    )[None, :]
+    hidden = jax.nn.gelu(legacy_model.readout_projection(carrier))
+    expected = jnp.concatenate(
+        (
+            legacy_model.height_head(hidden),
+            legacy_model.width_head(hidden),
+            legacy_model.color_factor_head(hidden),
+        ),
+        axis=-1,
+    )
+
+    actual = legacy_model.compact_readout(carrier)
+
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identical() -> None:
+    import braintrace
+    from braintrace._testing.oracle import chunked_online_param_gradients
+
+    implicit_config = _config(recurrent_edges=64)
+    explicit_config = _config(recurrent_edges=64, context_memory_width=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        implicit_learner = compile_pp_prop(LatentWorkspaceModel(implicit_config))
+        explicit_learner = compile_pp_prop(LatentWorkspaceModel(explicit_config))
+    implicit_report = implicit_learner.report
+    explicit_report = explicit_learner.report
+
+    assert implicit_report.counts == explicit_report.counts
+    assert implicit_report.hidden_groups == explicit_report.hidden_groups
+    assert implicit_report.etrace_weights == explicit_report.etrace_weights
+    assert implicit_report.excluded_weights == explicit_report.excluded_weights
+    assert implicit_report.dynamic_states == explicit_report.dynamic_states
+    assert implicit_report.to_str(2) == explicit_report.to_str(2)
+
+    events = _valid_events(3, implicit_config.input_width)[:, None, :]
+
+    def pp_prop_factory(
+        candidate: LatentWorkspaceModel,
+    ) -> braintrace.ETraceAlgorithm:
+        return braintrace.pp_prop(
+            candidate,
+            decay_or_rank=candidate.config.trace_decay,
+            vjp_method="multi-step",
+        )
+
+    implicit_gradients = chunked_online_param_gradients(
+        lambda: LatentWorkspaceModel(implicit_config),
+        events,
+        algo_factory=pp_prop_factory,
+        chunk_size=1,
+    )
+    explicit_gradients = chunked_online_param_gradients(
+        lambda: LatentWorkspaceModel(explicit_config),
+        events,
+        algo_factory=pp_prop_factory,
+        chunk_size=1,
+    )
+
+    assert tuple(implicit_gradients) == tuple(explicit_gradients)
+    for path in implicit_gradients:
+        implicit_arrays = _tree_arrays(implicit_gradients[path])
+        explicit_arrays = _tree_arrays(explicit_gradients[path])
+        assert len(implicit_arrays) == len(explicit_arrays), path
+        for implicit, explicit in zip(
+            implicit_arrays, explicit_arrays, strict=True
+        ):
+            assert implicit.shape == explicit.shape, path
+            assert implicit.dtype == explicit.dtype, path
+            assert implicit.tobytes() == explicit.tobytes(), path
 
 
 def test_context_memory_writes_are_isolated_per_batch_example() -> None:
