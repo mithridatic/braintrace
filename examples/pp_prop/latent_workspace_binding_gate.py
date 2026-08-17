@@ -708,7 +708,13 @@ def _shared_encoder_identity_matches(
         "query_component_type",
         "read_component_type",
     )
-    return all(left[field] == right[field] for field in shared_fields)
+    try:
+        return _json_exact(
+            {field: left[field] for field in shared_fields},
+            {field: right[field] for field in shared_fields},
+        )
+    except KeyError:
+        return False
 
 
 @dataclass
@@ -1789,21 +1795,69 @@ def _is_integer(value: Any) -> bool:
     )
 
 
+def _is_finite_real(value: Any) -> bool:
+    return isinstance(value, (int, float, np.integer, np.floating)) and not isinstance(
+        value, (bool, np.bool_)
+    ) and math.isfinite(float(value))
+
+
+def _contains_boolean(value: Any) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return True
+    if isinstance(value, Mapping):
+        return any(_contains_boolean(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_contains_boolean(item) for item in value)
+    if isinstance(value, np.ndarray):
+        return value.dtype.kind == "b" or (
+            value.dtype.kind == "O" and _contains_boolean(value.tolist())
+        )
+    return False
+
+
+def _real_array(value: Any, *, dtype: Any = np.float64) -> np.ndarray:
+    if _contains_boolean(value):
+        raise TypeError("numeric evidence cannot contain boolean values")
+    array = np.asarray(value)
+    if array.dtype.kind not in {"i", "u", "f"}:
+        raise TypeError("numeric evidence must contain non-boolean real values")
+    return array.astype(dtype, copy=False)
+
+
+def _json_exact(left: Any, right: Any) -> bool:
+    try:
+        return json.dumps(
+            left, allow_nan=False, sort_keys=True, separators=(",", ":")
+        ) == json.dumps(
+            right, allow_nan=False, sort_keys=True, separators=(",", ":")
+        )
+    except (TypeError, ValueError):
+        return False
+
+
 def _training_evidence_complete(
     training: Mapping[str, Any], config: BindingGateConfig
 ) -> bool:
-    losses = np.asarray(training["losses"], dtype=np.float64)
+    losses = _real_array(training["losses"])
     if (
         losses.ndim != 1
         or losses.size != config.training_updates
         or not np.isfinite(losses).all()
     ):
         return False
+    scalar_names = (
+        "initial_loss",
+        "final_loss",
+        "tail_64_mean_loss",
+        "supervision_weight_sum",
+    )
+    if not all(_is_finite_real(training[name]) for name in scalar_names):
+        return False
     initial = float(training["initial_loss"])
     final = float(training["final_loss"])
     tail = float(training["tail_64_mean_loss"])
     expected_tail = float(losses[-min(64, losses.size) :].mean())
-    supervision_mask = np.asarray(training["supervision_mask"], dtype=np.float32)
+    supervision_mask = _real_array(training["supervision_mask"], dtype=np.float32)
     expected_mask = np.asarray(_deep_supervision_mask(config), dtype=np.float32)
     return bool(
         training["algorithm"] == "production_pp_prop"
@@ -1838,6 +1892,11 @@ def _accuracy_evidence_complete(metric: Mapping[str, Any], count: int) -> bool:
     accuracy = float(metric["accuracy"])
     lower = float(metric["wilson_95_lower"])
     upper = float(metric["wilson_95_upper"])
+    if not all(
+        _is_finite_real(metric[name])
+        for name in ("accuracy", "wilson_95_lower", "wilson_95_upper")
+    ):
+        return False
     expected_lower, expected_upper = legacy._wilson_interval(int(correct), count)
     histogram = metric["prediction_histogram"]
     if (
@@ -1871,6 +1930,7 @@ def _evaluation_evidence_complete(
         not isinstance(depth_reports, Mapping)
         or set(depth_reports) != {str(depth) for depth in expected_depths}
         or evaluation["supervised_depths"] != expected_depths
+        or not _is_integer(evaluation["reported_checkpoint"])
         or int(evaluation["reported_checkpoint"]) != config.gap_steps
         or evaluation["all_compact_logits_finite"] is not True
         or not _numeric_tree_is_finite(evaluation)
@@ -1890,11 +1950,19 @@ def _evaluation_evidence_complete(
             ):
                 return False
     final = depth_reports[str(config.gap_steps)]
-    if any(evaluation[arm] != final[arm] for arm in final):
+    if any(not _json_exact(evaluation[arm], final[arm]) for arm in final):
         return False
     intact_accuracy = float(final["intact"]["accuracy"])
     shuffled_accuracy = float(final["shuffled"]["accuracy"])
     no_context_accuracy = float(final["no_context"]["accuracy"])
+    direct_scalars = (
+        "intact_minus_shuffled",
+        "intact_minus_no_context",
+        "pairing_chance",
+        "unconditional_color_chance",
+    )
+    if not all(_is_finite_real(evaluation[name]) for name in direct_scalars):
+        return False
     return bool(
         math.isclose(
             float(evaluation["intact_minus_shuffled"]),
@@ -1936,9 +2004,9 @@ def _paired_diagnostic_complete(report: Mapping[str, Any], count: int) -> bool:
     return bool(
         int(different) == count
         and report["every_pair_differs"] is True
-        and math.isfinite(float(report["mean_l2_difference"]))
+        and _is_finite_real(report["mean_l2_difference"])
         and float(report["mean_l2_difference"]) > 0.0
-        and math.isfinite(float(report["no_context_l2_norm"]))
+        and _is_finite_real(report["no_context_l2_norm"])
     )
 
 
@@ -1956,14 +2024,17 @@ def _diagnostic_evidence_complete(
         or not _numeric_tree_is_finite(diagnostics)
         or set(read_by_depth) != expected_depths
         or set(workspace_by_depth) != expected_depths
+        or not _is_integer(memory["applicable_count"])
         or int(memory["applicable_count"]) != config.validation_episodes
+        or not _is_integer(memory["different_count"])
+        or not _is_integer(memory["intact_shuffled_different_count"])
         or int(memory["different_count"])
         != int(memory["intact_shuffled_different_count"])
         or memory["every_pair_differs"]
         is not memory["every_intact_shuffled_pair_differs"]
         or memory["no_context_exact_zero"] is not True
         or not all(
-            math.isfinite(float(memory[name]))
+            _is_finite_real(memory[name])
             for name in (
                 "intact_l2_norm",
                 "shuffled_l2_norm",
@@ -2063,18 +2134,34 @@ def _all_color_separation_complete(
     row_event_input_width: int,
     raw_key_feature_width: int,
 ) -> bool:
-    gram = np.asarray(report["gram"], dtype=np.float64)
+    gram = _real_array(report["gram"])
+    scalar_names = (
+        "diagonal_minimum",
+        "off_diagonal_maximum",
+        "separation_margin",
+        "worst_global_margin",
+        "required_margin",
+        "zero_event_key_max_abs",
+    )
     if (
         report["protocol"] != protocol
+        or not _is_integer(report["row_event_input_width"])
         or int(report["row_event_input_width"]) != row_event_input_width
+        or not _is_integer(report["raw_key_feature_width"])
         or int(report["raw_key_feature_width"]) != raw_key_feature_width
+        or not _is_integer(report["memory_width"])
+        or not _is_integer(report["model_seed"])
         or not _architecture_digests_valid(report["architecture"])
-        or report["candidate_colors"] != list(range(STRUCTURAL_COLOR_COUNT))
+        or not _json_exact(
+            report["candidate_colors"], list(range(STRUCTURAL_COLOR_COUNT))
+        )
+        or not _is_integer(report["color_count"])
         or int(report["color_count"]) != STRUCTURAL_COLOR_COUNT
         or report["gram_shape"]
         != [STRUCTURAL_COLOR_COUNT, STRUCTURAL_COLOR_COUNT]
         or gram.shape != (STRUCTURAL_COLOR_COUNT, STRUCTURAL_COLOR_COUNT)
         or not np.isfinite(gram).all()
+        or not all(_is_finite_real(report[name]) for name in scalar_names)
         or not np.allclose(gram, gram.T, rtol=0.0, atol=1e-12)
     ):
         return False
@@ -2083,9 +2170,11 @@ def _all_color_separation_complete(
     diagonal_minimum = float(diagonal.min())
     off_diagonal_maximum = float(off_diagonal.max())
     margin = diagonal_minimum - off_diagonal_maximum
+    reported_diagonal = _real_array(report["diagonal"])
     return bool(
-        np.allclose(
-            np.asarray(report["diagonal"], dtype=np.float64),
+        reported_diagonal.shape == (STRUCTURAL_COLOR_COUNT,)
+        and np.allclose(
+            reported_diagonal,
             diagonal,
             rtol=0.0,
             atol=1e-12,
@@ -2153,10 +2242,12 @@ def _source_evidence_clean(source: Mapping[str, Any]) -> bool:
 
 
 def _carrier_architecture_identity(architecture: Mapping[str, Any]) -> bool:
+    radius = architecture.get("carrier_radius")
     return bool(
         architecture.get("carrier_stabilizer")
         == "per_example_stopped_unit_l2_cap"
-        and float(architecture.get("carrier_radius", float("nan"))) == 1.0
+        and _is_finite_real(radius)
+        and float(radius) == 1.0
         and tuple(architecture.get("carrier_consumers", ()))
         == ("readout_projection", "workspace_query_projection")
     )
@@ -2175,10 +2266,13 @@ def _preregistered_gpu_initialization(
     return bool(
         set(initialization) == expected_keys
         and initialization["fresh_model"] is True
-        and initialization["model_seed"] == 2108
+        and _is_integer(initialization["model_seed"])
+        and int(initialization["model_seed"]) == 2108
         and initialization["parameter_sha256"]
         == PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256
-        and initialization["parameter_count"] == PREREGISTERED_PARAMETER_COUNT
+        and _is_integer(initialization["parameter_count"])
+        and int(initialization["parameter_count"])
+        == PREREGISTERED_PARAMETER_COUNT
     )
 
 
@@ -2191,7 +2285,7 @@ def _exact_admission_config(
     }
     if include_regime:
         expected["qualification_regime"] = "nonqualifying_abbreviated"
-    return value == expected
+    return _json_exact(value, expected)
 
 
 def _complete_positive_norm_reports(
@@ -2206,11 +2300,11 @@ def _complete_positive_norm_reports(
         report = reports[path]
         if not isinstance(report, Mapping):
             return False
-        norm = float(report["l2_norm"])
+        norm_value = report["l2_norm"]
         count = report[count_name]
         if (
-            not math.isfinite(norm)
-            or norm <= 0.0
+            not _is_finite_real(norm_value)
+            or float(norm_value) <= 0.0
             or not _is_integer(count)
             or int(count) != expected_count
         ):
@@ -2236,20 +2330,26 @@ def _complete_adam_reports(
         report = reports[path]
         if not isinstance(report, Mapping) or set(report) != expected:
             return False
-        first = float(report["first_moment_l2_norm"])
-        second = float(report["second_moment_l2_norm"])
+        first_value = report["first_moment_l2_norm"]
+        second_value = report["second_moment_l2_norm"]
         parameter_count = _STAGE21_PARAMETER_COUNTS[path]
         if (
-            not math.isfinite(first)
-            or not math.isfinite(second)
-            or first <= 0.0
-            or second <= 0.0
-            or report["first_moment_count"] != parameter_count
-            or report["second_moment_count"] != parameter_count
-            or gradients[path]["parameter_count"] != parameter_count
-            or report["adam_step"] != 1
-            or report["schedule_step"] != 1
-            or report["optimizer_step"] != 1
+            not _is_finite_real(first_value)
+            or not _is_finite_real(second_value)
+            or float(first_value) <= 0.0
+            or float(second_value) <= 0.0
+            or not _is_integer(report["first_moment_count"])
+            or int(report["first_moment_count"]) != parameter_count
+            or not _is_integer(report["second_moment_count"])
+            or int(report["second_moment_count"]) != parameter_count
+            or not _is_integer(gradients[path]["parameter_count"])
+            or int(gradients[path]["parameter_count"]) != parameter_count
+            or not _is_integer(report["adam_step"])
+            or int(report["adam_step"]) != 1
+            or not _is_integer(report["schedule_step"])
+            or int(report["schedule_step"]) != 1
+            or not _is_integer(report["optimizer_step"])
+            or int(report["optimizer_step"]) != 1
         ):
             return False
     return True
@@ -2264,6 +2364,13 @@ def _carrier_measurement_complete(report: Mapping[str, Any]) -> bool:
         or not _is_integer(capped_count)
         or not 0 <= int(capped_count) <= int(sample_count)
     ):
+        return False
+    scalar_names = (
+        "capped_fraction",
+        "raw_max_l2_norm",
+        "capped_max_l2_norm",
+    )
+    if not all(_is_finite_real(report[name]) for name in scalar_names):
         return False
     fraction = float(report["capped_fraction"])
     expected_fraction = int(capped_count) / int(sample_count)
@@ -2284,9 +2391,7 @@ def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
         "color_factors",
     }
     telemetry = report["projection_telemetry"]
-    reconciliation = np.asarray(
-        report["compact_reconciliation_max_abs"], dtype=np.float64
-    )
+    reconciliation = _real_array(report["compact_reconciliation_max_abs"])
     witnesses = report["consumer_witnesses"]
     if set(telemetry) != expected or reconciliation.shape != (2,):
         return False
@@ -2301,8 +2406,18 @@ def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
     }:
         return False
     if (
-        witnesses["sample_count"] != 3 * 64
+        not _is_integer(witnesses["sample_count"])
+        or int(witnesses["sample_count"]) != 3 * 64
         or not _numeric_tree_is_finite(witnesses)
+        or not all(
+            _is_finite_real(witnesses[name])
+            for name in (
+                "readout_capped_residual_max_abs",
+                "readout_uncapped_delta_min_l2",
+                "query_capped_residual_max_l2",
+                "query_uncapped_delta_min_l2",
+            )
+        )
         or float(witnesses["readout_capped_residual_max_abs"]) > 1e-6
         or float(witnesses["query_capped_residual_max_l2"]) > 1e-6
         or float(witnesses["readout_uncapped_delta_min_l2"]) <= 0.0
@@ -2314,6 +2429,11 @@ def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
             return False
         for value in values:
             if set(value) != {"rms", "max_abs", "nonzero_fraction"}:
+                return False
+            if not all(
+                _is_finite_real(value[name])
+                for name in ("rms", "max_abs", "nonzero_fraction")
+            ):
                 return False
             rms = float(value["rms"])
             maximum = float(value["max_abs"])
@@ -2370,6 +2490,16 @@ def _one_update_admission_qualification(
             }
             for depth in ("0", "1")
         )
+        depth_scalars_complete = depth_complete and all(
+            _is_finite_real(depths[depth][name])
+            for depth in ("0", "1")
+            for name in (
+                "pre_cross_entropy",
+                "post_cross_entropy",
+                "pre_max_abs_color_logit",
+                "post_max_abs_color_logit",
+            )
+        )
         carrier_complete = set(carrier) == {"pre", "post"} and all(
             _carrier_measurement_complete(carrier[phase])
             for phase in ("pre", "post")
@@ -2377,15 +2507,20 @@ def _one_update_admission_qualification(
         criteria.update(
             {
                 "schema_and_target": (
-                    report["schema_version"] == STAGE21_ADMISSION_SCHEMA_VERSION
+                    _is_integer(report["schema_version"])
+                    and int(report["schema_version"])
+                    == STAGE21_ADMISSION_SCHEMA_VERSION
                     and report["control"]
                     == "example21_stage21_one_update_admission"
                     and report["target"] == "one_update"
                 ),
                 "fixed_production_configuration": (
-                    report["executed_updates"] == 1
-                    and report["source_training_updates"] == 10_000
-                    and report["batch_size"] == 64
+                    _is_integer(report["executed_updates"])
+                    and int(report["executed_updates"]) == 1
+                    and _is_integer(report["source_training_updates"])
+                    and int(report["source_training_updates"]) == 10_000
+                    and _is_integer(report["batch_size"])
+                    and int(report["batch_size"]) == 64
                     and report["configuration_scale"] == "production_topology"
                     and report["learner"] == "pp_prop_only"
                     and report["optimizer"] == "Adam"
@@ -2399,28 +2534,38 @@ def _one_update_admission_qualification(
                 "exact_production_rng_prefix": (
                     data["training_schedule_sha256"]
                     == PREREGISTERED_TRAINING_SCHEDULE_SHA256
-                    and data["update_zero_episode_count"] == 64
-                    and data["rng_source_episode_count"] == 640_000
-                    and dict(zip(PREREGISTERED_UPDATE_ZERO_DIGESTS, hashes, strict=True))
-                    == PREREGISTERED_UPDATE_ZERO_DIGESTS
+                    and _is_integer(data["update_zero_episode_count"])
+                    and int(data["update_zero_episode_count"]) == 64
+                    and _is_integer(data["rng_source_episode_count"])
+                    and int(data["rng_source_episode_count"]) == 640_000
+                    and _json_exact(
+                        dict(
+                            zip(
+                                PREREGISTERED_UPDATE_ZERO_DIGESTS,
+                                hashes,
+                                strict=True,
+                            )
+                        ),
+                        PREREGISTERED_UPDATE_ZERO_DIGESTS,
+                    )
                 ),
                 "carrier_architecture_identity": _carrier_architecture_identity(
                     architecture
                 ),
                 "finite_telemetry": (
-                    depth_complete
+                    depth_scalars_complete
                     and carrier_complete
                     and set(finite) == _STAGE21_FINITE_ONE_UPDATE
                     and all(value is True for value in finite.values())
                     and _numeric_tree_is_finite(report)
                 ),
-                "post_cross_entropy_envelope": depth_complete
+                "post_cross_entropy_envelope": depth_scalars_complete
                 and all(
                     float(depths[depth]["post_cross_entropy"])
                     <= float(depths[depth]["pre_cross_entropy"]) + 1.0
                     for depth in ("0", "1")
                 ),
-                "post_logit_envelope": depth_complete
+                "post_logit_envelope": depth_scalars_complete
                 and all(
                     float(depths[depth]["post_max_abs_color_logit"]) < 10.0
                     for depth in ("0", "1")
@@ -2503,31 +2648,44 @@ def _stability_admission_qualification(
         "held_out_predictions_do_not_collapse": False,
     }
     try:
-        losses = np.asarray(report["losses"], dtype=np.float64)
+        losses = _real_array(report["losses"])
         initial = report["initial_depth_cross_entropy"]
         finite = report["finite_telemetry"]
         summaries = report["telemetry_summaries"]
         held_out = report["held_out_intact_by_depth"]
         data = report["data"]
         initialization = report["initialization"]
+        initial_complete = (
+            isinstance(initial, Mapping)
+            and set(initial) == {"0", "1"}
+            and all(_is_finite_real(initial[depth]) for depth in ("0", "1"))
+        )
         expected_tail = float(losses[-64:].mean()) if losses.size >= 64 else float("nan")
         initial_mean = (
-            float(initial["0"]) + float(initial["1"])
-        ) / 2.0
+            (float(initial["0"]) + float(initial["1"])) / 2.0
+            if initial_complete
+            else float("nan")
+        )
         prediction_complete = set(held_out) == {"0", "1"}
         if prediction_complete:
             for depth in ("0", "1"):
                 evidence = held_out[depth]
-                histogram = np.asarray(evidence["prediction_histogram"])
+                histogram_value = evidence["prediction_histogram"]
+                if _contains_boolean(histogram_value):
+                    prediction_complete = False
+                    continue
+                histogram = np.asarray(histogram_value)
                 unique = int(np.count_nonzero(histogram))
                 prediction_complete = bool(
                     prediction_complete
-                    and evidence["count"] == 512
+                    and _is_integer(evidence["count"])
+                    and int(evidence["count"]) == 512
                     and histogram.shape == (legacy.COLOR_COUNT,)
                     and np.issubdtype(histogram.dtype, np.integer)
                     and np.all(histogram >= 0)
                     and int(histogram.sum()) == 512
-                    and evidence["unique_predicted_colors"] == unique
+                    and _is_integer(evidence["unique_predicted_colors"])
+                    and int(evidence["unique_predicted_colors"]) == unique
                     and unique >= 2
                 )
         expected_counts = {
@@ -2543,8 +2701,10 @@ def _stability_admission_qualification(
         if summaries_complete:
             summaries_complete = all(
                 set(summaries[name]) == {"observed_count", "max_abs", "finite"}
-                and summaries[name]["observed_count"] == expected_counts[name]
-                and math.isfinite(float(summaries[name]["max_abs"]))
+                and _is_integer(summaries[name]["observed_count"])
+                and int(summaries[name]["observed_count"])
+                == expected_counts[name]
+                and _is_finite_real(summaries[name]["max_abs"])
                 and float(summaries[name]["max_abs"]) >= 0.0
                 and summaries[name]["finite"] is True
                 for name in expected_counts
@@ -2575,15 +2735,21 @@ def _stability_admission_qualification(
         criteria.update(
             {
                 "schema_and_target": (
-                    report["schema_version"] == STAGE21_ADMISSION_SCHEMA_VERSION
+                    _is_integer(report["schema_version"])
+                    and int(report["schema_version"])
+                    == STAGE21_ADMISSION_SCHEMA_VERSION
                     and report["control"]
                     == "example21_stage21_stability_256_admission"
                     and report["target"] == "stability_256"
                 ),
                 "fixed_production_configuration": (
-                    report["training_updates"] == STAGE21_STABILITY_UPDATES
-                    and report["batch_size"] == 64
-                    and report["validation_episodes"] == 512
+                    _is_integer(report["training_updates"])
+                    and int(report["training_updates"])
+                    == STAGE21_STABILITY_UPDATES
+                    and _is_integer(report["batch_size"])
+                    and int(report["batch_size"]) == 64
+                    and _is_integer(report["validation_episodes"])
+                    and int(report["validation_episodes"]) == 512
                     and report["configuration_scale"] == "production_topology"
                     and report["learner"] == "pp_prop_only"
                     and report["optimizer"] == "Adam"
@@ -2599,11 +2765,13 @@ def _stability_admission_qualification(
                 "carrier_architecture_identity": _carrier_architecture_identity(
                     report["architecture"]
                 ),
-                "schedule_digests_complete": data
-                == PREREGISTERED_STABILITY_DIGESTS,
+                "schedule_digests_complete": _json_exact(
+                    data, PREREGISTERED_STABILITY_DIGESTS
+                ),
                 "complete_finite_telemetry": (
                     losses.shape == (STAGE21_STABILITY_UPDATES,)
                     and np.isfinite(losses).all()
+                    and initial_complete
                     and set(finite) == _STAGE21_FINITE_STABILITY
                     and all(value is True for value in finite.values())
                     and summaries_complete
@@ -2614,6 +2782,7 @@ def _stability_admission_qualification(
                 ),
                 "tail_64_descends_from_initial_depth_mean": (
                     math.isfinite(expected_tail)
+                    and _is_finite_real(report["tail_64_mean_loss"])
                     and math.isclose(
                         float(report["tail_64_mean_loss"]),
                         expected_tail,
@@ -2704,7 +2873,10 @@ def _qualification_report(
     try:
         intact = evaluation["intact"]
         shuffled = evaluation["shuffled"]
-        pairing_chance = float(evaluation["pairing_chance"])
+        pairing_value = evaluation["pairing_chance"]
+        pairing_chance = (
+            float(pairing_value) if _is_finite_real(pairing_value) else float("nan")
+        )
         memory = diagnostics["memory"]
         required_paths = {_path(path) for path in _REQUIRED_DIRECT_PATHS}
         compiler_errors = [
@@ -2767,22 +2939,34 @@ def _qualification_report(
                 == PREREGISTERED_STABILITY_DIGESTS["validation_schedule_sha256"]
             ),
             "held_out_count_at_least_256": (
-                int(intact["count"]) >= 256
+                _is_integer(intact["count"])
+                and int(intact["count"]) >= 256
                 and int(intact["count"]) == config.validation_episodes
             ),
-            "intact_accuracy_at_least_0_80": float(intact["accuracy"]) >= 0.80,
+            "intact_accuracy_at_least_0_80": (
+                _is_finite_real(intact["accuracy"])
+                and float(intact["accuracy"]) >= 0.80
+            ),
             "intact_wilson_lower_above_pairing_chance": (
-                float(intact["wilson_95_lower"]) > pairing_chance
+                _is_finite_real(intact["wilson_95_lower"])
+                and _is_finite_real(pairing_value)
+                and float(intact["wilson_95_lower"]) > pairing_chance
             ),
             "intact_minus_shuffled_at_least_0_25": (
-                float(evaluation["intact_minus_shuffled"]) >= 0.25
+                _is_finite_real(evaluation["intact_minus_shuffled"])
+                and float(evaluation["intact_minus_shuffled"]) >= 0.25
             ),
             "shuffled_not_demonstrably_above_pairing_chance": (
-                float(shuffled["wilson_95_lower"]) <= pairing_chance
+                _is_finite_real(shuffled["wilson_95_lower"])
+                and _is_finite_real(pairing_value)
+                and float(shuffled["wilson_95_lower"]) <= pairing_chance
             ),
             "exact_marginal_equality": marginals["exact_marginal_equality"] is True,
             "every_intact_shuffled_memory_differs": (
                 memory["every_intact_shuffled_pair_differs"] is True
+                and _is_integer(memory["intact_shuffled_different_count"])
+                and _is_integer(memory["applicable_count"])
+                and _is_integer(intact["count"])
                 and int(memory["intact_shuffled_different_count"])
                 == int(memory["applicable_count"])
                 and int(memory["applicable_count"]) == int(intact["count"])
@@ -2797,8 +2981,9 @@ def _qualification_report(
                 set(movements) == required_paths
                 and all(
                     movements[path]["changed"] is True
-                    and math.isfinite(float(movements[path]["l2_delta"]))
+                    and _is_finite_real(movements[path]["l2_delta"])
                     and float(movements[path]["l2_delta"]) > 0.0
+                    and _is_integer(movements[path]["parameter_count"])
                     and int(movements[path]["parameter_count"]) > 0
                     for path in required_paths
                 )
@@ -2815,12 +3000,18 @@ def _qualification_report(
             "gpu_backend_verified": _gpu_environment_verified(environment),
             "architecture_matches_preregistered_components": (
                 architecture["mode"] == "associative_workspace"
-                and int(architecture["memory_width"]) == PREREGISTERED_MEMORY_WIDTH
+                and _is_integer(architecture["memory_width"])
+                and int(architecture["memory_width"])
+                == PREREGISTERED_MEMORY_WIDTH
                 and architecture["key_map"] == "fixed_rff_cosine"
                 and architecture["value_map"] == "fixed_tanh_projection"
+                and _is_finite_real(architecture["rff_gamma"])
                 and float(architecture["rff_gamma"]) == 2.0
+                and _is_integer(architecture["key_basis_seed"])
                 and int(architecture["key_basis_seed"]) == config.model_seed + 101
+                and _is_integer(architecture["key_bias_seed"])
                 and int(architecture["key_bias_seed"]) == config.model_seed + 102
+                and _is_integer(architecture["value_basis_seed"])
                 and int(architecture["value_basis_seed"]) == config.model_seed + 103
                 and architecture["write_component_type"] == "braintrace.element_wise"
                 and architecture["query_component_type"] == "braintrace.nn.Linear"
@@ -2832,33 +3023,45 @@ def _qualification_report(
             "gate_native_key_separation_margin_passed": (
                 gate_native_all_colors
                 and gate_native_separation["margin_passed"] is True
+                and _is_integer(gate_native_separation["memory_width"])
                 and int(gate_native_separation["memory_width"])
                 == config.context_memory_width
+                and _is_integer(gate_native_separation["model_seed"])
                 and int(gate_native_separation["model_seed"]) == config.model_seed
+                and _is_finite_real(gate_native_separation["separation_margin"])
+                and _is_finite_real(gate_native_separation["required_margin"])
                 and float(gate_native_separation["separation_margin"])
                 > float(gate_native_separation["required_margin"])
                 and float(gate_native_separation["required_margin"]) == 0.25
             ),
             "gate_native_zero_event_key_exact_zero": (
                 gate_native_separation["zero_event_key_exact_zero"] is True
+                and _is_finite_real(gate_native_separation["zero_event_key_max_abs"])
                 and float(gate_native_separation["zero_event_key_max_abs"]) == 0.0
             ),
             "gate_native_basis_matches_training_model": (
-                gate_native_separation["architecture"] == architecture
+                _json_exact(gate_native_separation["architecture"], architecture)
             ),
             "standard_arc_all_colors_covered": standard_arc_all_colors,
             "standard_arc_key_separation_margin_passed": (
                 standard_arc_all_colors
                 and standard_arc_separation["margin_passed"] is True
+                and _is_integer(standard_arc_separation["memory_width"])
                 and int(standard_arc_separation["memory_width"])
                 == config.context_memory_width
+                and _is_integer(standard_arc_separation["model_seed"])
                 and int(standard_arc_separation["model_seed"]) == config.model_seed
+                and _is_finite_real(standard_arc_separation["separation_margin"])
+                and _is_finite_real(standard_arc_separation["required_margin"])
                 and float(standard_arc_separation["separation_margin"])
                 > float(standard_arc_separation["required_margin"])
                 and float(standard_arc_separation["required_margin"]) == 0.25
             ),
             "standard_arc_zero_event_key_exact_zero": (
                 standard_arc_separation["zero_event_key_exact_zero"] is True
+                and _is_finite_real(
+                    standard_arc_separation["zero_event_key_max_abs"]
+                )
                 and float(standard_arc_separation["zero_event_key_max_abs"]) == 0.0
             ),
             "standard_arc_shared_encoder_invariants_match": (

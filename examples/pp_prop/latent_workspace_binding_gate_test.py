@@ -817,16 +817,23 @@ def test_required_parameter_movement_is_reported_per_direct_path() -> None:
         ("compiler_relation", "compiler_required_paths_all_direct"),
         ("compiler_group", "context_memory_hidden_group_isolated"),
         ("movement", "required_direct_parameters_moved"),
+        ("movement_bool", "required_direct_parameters_moved"),
         ("loss_count", "training_losses_complete_and_finite"),
         ("loss_nan", "training_losses_complete_and_finite"),
+        ("loss_bool_array", "training_losses_complete_and_finite"),
         ("loss_summary", "training_losses_complete_and_finite"),
         ("supervision_mask", "training_losses_complete_and_finite"),
+        ("supervision_weight_bool", "training_losses_complete_and_finite"),
         ("evaluation_depth", "evaluation_complete_and_finite"),
+        ("reported_checkpoint_bool", "evaluation_complete_and_finite"),
+        ("accuracy_bool", "evaluation_complete_and_finite"),
         ("evaluation_nan", "evaluation_complete_and_finite"),
         ("evaluation_mismatch", "evaluation_complete_and_finite"),
         ("fabricated_wilson", "evaluation_complete_and_finite"),
         ("diagnostic_nan", "diagnostic_state_tensors_complete_and_finite"),
         ("diagnostic_flag", "diagnostic_state_tensors_complete_and_finite"),
+        ("diagnostic_mean_bool", "diagnostic_state_tensors_complete_and_finite"),
+        ("diagnostic_norm_bool", "diagnostic_state_tensors_complete_and_finite"),
         ("read_pairing", "diagnostic_state_tensors_complete_and_finite"),
         ("workspace_pairing", "diagnostic_state_tensors_complete_and_finite"),
         ("backend", "gpu_backend_verified"),
@@ -837,6 +844,7 @@ def test_required_parameter_movement_is_reported_per_direct_path() -> None:
         ("native_colors", "gate_native_all_colors_covered"),
         ("native_protocol", "gate_native_all_colors_covered"),
         ("native_separation", "gate_native_key_separation_margin_passed"),
+        ("native_bool_gram", "gate_native_all_colors_covered"),
         ("native_zero_key", "gate_native_zero_event_key_exact_zero"),
         ("native_basis", "gate_native_basis_matches_training_model"),
         ("standard_colors", "standard_arc_all_colors_covered"),
@@ -910,16 +918,43 @@ def test_qualification_fails_closed_for_every_required_criterion(
             "parameter_count": 1024,
             "changed": False,
         }
+    elif mutation == "movement_bool":
+        training["required_direct_parameter_movement"]["memory_write_scale"].update(
+            l2_delta=True,
+            parameter_count=True,
+        )
     elif mutation == "loss_count":
         training["losses"].pop()
     elif mutation == "loss_nan":
         training["losses"][0] = float("nan")
+    elif mutation == "loss_bool_array":
+        training["losses"] = [True] * 9_936 + [False] * 64
+        training["initial_loss"] = 1.0
+        training["final_loss"] = 0.0
+        training["tail_64_mean_loss"] = 0.0
     elif mutation == "loss_summary":
         training["final_loss"] = 0.25
     elif mutation == "supervision_mask":
         training["supervision_mask"] = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    elif mutation == "supervision_weight_bool":
+        training["supervision_weight_sum"] = True
     elif mutation == "evaluation_depth":
         del evaluation["depths"]["1"]
+    elif mutation == "reported_checkpoint_bool":
+        evaluation["reported_checkpoint"] = True
+    elif mutation == "accuracy_bool":
+        perfect = _accuracy(1.0)
+        perfect["accuracy"] = True
+        perfect["wilson_95_upper"] = True
+        evaluation["intact"] = perfect
+        for depth in evaluation["depths"].values():
+            depth["intact"] = perfect
+        evaluation["intact_minus_shuffled"] = (
+            1.0 - float(evaluation["shuffled"]["accuracy"])
+        )
+        evaluation["intact_minus_no_context"] = (
+            1.0 - float(evaluation["no_context"]["accuracy"])
+        )
     elif mutation == "evaluation_nan":
         evaluation["depths"]["0"]["intact"] = dict(
             evaluation["depths"]["0"]["intact"]
@@ -943,6 +978,10 @@ def test_qualification_fails_closed_for_every_required_criterion(
         diagnostics["read_by_depth"]["0"]["mean_l2_difference"] = float("nan")
     elif mutation == "diagnostic_flag":
         diagnostics["all_state_tensors_finite"] = False
+    elif mutation == "diagnostic_mean_bool":
+        diagnostics["read_by_depth"]["0"]["mean_l2_difference"] = True
+    elif mutation == "diagnostic_norm_bool":
+        diagnostics["memory"]["intact_l2_norm"] = True
     elif mutation == "read_pairing":
         diagnostics["read_by_depth"]["0"].update(
             different_count=0,
@@ -973,6 +1012,15 @@ def test_qualification_fails_closed_for_every_required_criterion(
         gate_native["protocol"] = "standard_arc_k10_query_key_gram_424_features"
     elif mutation == "native_separation":
         gate_native["margin_passed"] = False
+    elif mutation == "native_bool_gram":
+        gate_native.update(
+            gram=np.eye(10, dtype=bool).tolist(),
+            diagonal=[True] * 10,
+            diagonal_minimum=True,
+            off_diagonal_maximum=False,
+            separation_margin=True,
+            worst_global_margin=True,
+        )
     elif mutation == "native_zero_key":
         gate_native["zero_event_key_exact_zero"] = False
     elif mutation == "native_basis":
@@ -1334,29 +1382,52 @@ def test_stage21_admission_configs_are_fixed_and_nonqualifying() -> None:
     "mutation,criterion",
     [
         ("schema", "schema_and_target"),
+        ("schema_bool", "schema_and_target"),
+        ("executed_bool", "fixed_production_configuration"),
+        ("config_gap_bool", "fixed_production_configuration"),
+        ("config_gradient_chunk_bool", "fixed_production_configuration"),
+        ("config_memory_decay_bool", "fixed_production_configuration"),
         ("schedule", "exact_production_rng_prefix"),
         ("rng_count", "exact_production_rng_prefix"),
         ("architecture", "carrier_architecture_identity"),
+        ("carrier_radius_bool", "carrier_architecture_identity"),
         ("consumer", "carrier_architecture_identity"),
         ("pre_nan", "finite_telemetry"),
+        ("post_ce_bool", "finite_telemetry"),
         ("post_ce", "post_cross_entropy_envelope"),
+        ("post_logit_bool", "finite_telemetry"),
         ("post_logit", "post_logit_envelope"),
         ("carrier_count", "carrier_cap_nonvacuous"),
+        ("carrier_fraction_bool", "finite_telemetry"),
+        ("carrier_raw_bool", "finite_telemetry"),
+        ("carrier_capped_bool", "finite_telemetry"),
         ("carrier_not_engaged", "carrier_cap_nonvacuous"),
         ("carrier_above_cap", "carrier_norm_envelope"),
         ("gradient_zero", "required_gradient_groups_nonzero"),
+        ("gradient_norm_bool", "required_gradient_groups_nonzero"),
         ("gradient_count", "required_gradient_groups_nonzero"),
         ("factor_missing", "required_pp_prop_factors_nonzero"),
         ("factor_count", "required_pp_prop_factors_nonzero"),
         ("adam_zero", "required_adam_factors_nonzero"),
+        ("adam_first_norm_bool", "required_adam_factors_nonzero"),
+        ("adam_second_norm_bool", "required_adam_factors_nonzero"),
         ("adam_key", "required_adam_factors_nonzero"),
         ("adam_count", "required_adam_factors_nonzero"),
         ("adam_step", "required_adam_factors_nonzero"),
+        ("adam_step_bool", "required_adam_factors_nonzero"),
         ("schedule_step", "required_adam_factors_nonzero"),
+        ("schedule_step_bool", "required_adam_factors_nonzero"),
         ("optimizer_step", "required_adam_factors_nonzero"),
+        ("optimizer_step_bool", "required_adam_factors_nonzero"),
         ("update_zero", "required_parameter_updates_nonzero"),
         ("update_count", "required_parameter_updates_nonzero"),
         ("decoder_zero", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_reconciliation_bool", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_residual_bool", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_delta_bool", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_rms_bool", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_max_bool", "decoder_carrier_signal_finite_nonzero"),
+        ("decoder_fraction_bool", "decoder_carrier_signal_finite_nonzero"),
     ],
 )
 def test_one_update_admission_fails_closed(
@@ -1365,22 +1436,45 @@ def test_one_update_admission_fails_closed(
     report = _passing_one_update_admission()
     if mutation == "schema":
         report["schema_version"] = 0
+    elif mutation == "schema_bool":
+        report["schema_version"] = True
+    elif mutation == "executed_bool":
+        report["executed_updates"] = True
+    elif mutation == "config_gap_bool":
+        report["config"]["gap_steps"] = True
+    elif mutation == "config_gradient_chunk_bool":
+        report["config"]["gradient_chunk_size"] = True
+    elif mutation == "config_memory_decay_bool":
+        report["config"]["memory_decay"] = True
     elif mutation == "schedule":
         report["data"]["training_schedule_sha256"] = "0" * 64
     elif mutation == "rng_count":
         report["data"]["rng_source_episode_count"] = 64
     elif mutation == "architecture":
         report["architecture"]["carrier_radius"] = 2.0
+    elif mutation == "carrier_radius_bool":
+        report["architecture"]["carrier_radius"] = True
     elif mutation == "consumer":
         report["architecture"]["carrier_consumers"] = ["readout_projection"]
     elif mutation == "pre_nan":
         report["depths"]["0"]["pre_cross_entropy"] = float("nan")
+    elif mutation == "post_ce_bool":
+        report["depths"]["0"]["post_cross_entropy"] = True
     elif mutation == "post_ce":
         report["depths"]["1"]["post_cross_entropy"] = 3.6
     elif mutation == "post_logit":
         report["depths"]["0"]["post_max_abs_color_logit"] = 10.0
+    elif mutation == "post_logit_bool":
+        report["depths"]["0"]["post_max_abs_color_logit"] = True
     elif mutation == "carrier_count":
         report["carrier"]["pre"]["sample_count"] = 0
+    elif mutation == "carrier_fraction_bool":
+        report["carrier"]["pre"]["capped_count"] = 128
+        report["carrier"]["pre"]["capped_fraction"] = True
+    elif mutation == "carrier_raw_bool":
+        report["carrier"]["pre"]["raw_max_l2_norm"] = True
+    elif mutation == "carrier_capped_bool":
+        report["carrier"]["pre"]["capped_max_l2_norm"] = True
     elif mutation == "carrier_not_engaged":
         report["carrier"]["pre"]["raw_max_l2_norm"] = 1.0
         report["carrier"]["post"]["raw_max_l2_norm"] = 1.0
@@ -1392,6 +1486,8 @@ def test_one_update_admission_fails_closed(
         report["gradient_group_norms"]["readout_projection/weight"][
             "l2_norm"
         ] = 0.0
+    elif mutation == "gradient_norm_bool":
+        report["gradient_group_norms"]["memory_write_scale"]["l2_norm"] = True
     elif mutation == "gradient_count":
         report["gradient_group_norms"]["memory_write_scale"][
             "parameter_count"
@@ -1406,6 +1502,14 @@ def test_one_update_admission_fails_closed(
         report["adam_factor_group_norms"]["color_factor_head/weight"][
             "second_moment_l2_norm"
         ] = 0.0
+    elif mutation == "adam_first_norm_bool":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "first_moment_l2_norm"
+        ] = True
+    elif mutation == "adam_second_norm_bool":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "second_moment_l2_norm"
+        ] = True
     elif mutation == "adam_key":
         report["adam_factor_group_norms"]["unexpected"] = (
             report["adam_factor_group_norms"].pop("memory_write_scale")
@@ -1416,14 +1520,26 @@ def test_one_update_admission_fails_closed(
         ] = 1_023
     elif mutation == "adam_step":
         report["adam_factor_group_norms"]["memory_write_scale"]["adam_step"] = 0
+    elif mutation == "adam_step_bool":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "adam_step"
+        ] = True
     elif mutation == "schedule_step":
         report["adam_factor_group_norms"]["memory_write_scale"][
             "schedule_step"
         ] = 0
+    elif mutation == "schedule_step_bool":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "schedule_step"
+        ] = True
     elif mutation == "optimizer_step":
         report["adam_factor_group_norms"]["memory_write_scale"][
             "optimizer_step"
         ] = 0
+    elif mutation == "optimizer_step_bool":
+        report["adam_factor_group_norms"]["memory_write_scale"][
+            "optimizer_step"
+        ] = True
     elif mutation == "update_zero":
         report["parameter_update_group_norms"]["memory_write_scale"][
             "l2_norm"
@@ -1436,6 +1552,31 @@ def test_one_update_admission_fails_closed(
         report["post_measurement"]["projection_telemetry"]["color_factors"][0][
             "rms"
         ] = 0.0
+    elif mutation == "decoder_reconciliation_bool":
+        report["post_measurement"]["compact_reconciliation_max_abs"] = [
+            False,
+            False,
+        ]
+    elif mutation == "decoder_residual_bool":
+        report["post_measurement"]["consumer_witnesses"][
+            "readout_capped_residual_max_abs"
+        ] = False
+    elif mutation == "decoder_delta_bool":
+        report["post_measurement"]["consumer_witnesses"][
+            "readout_uncapped_delta_min_l2"
+        ] = True
+    elif mutation == "decoder_rms_bool":
+        report["post_measurement"]["projection_telemetry"]["color_factors"][0][
+            "rms"
+        ] = True
+    elif mutation == "decoder_max_bool":
+        report["post_measurement"]["projection_telemetry"]["color_factors"][0][
+            "max_abs"
+        ] = True
+    elif mutation == "decoder_fraction_bool":
+        report["post_measurement"]["projection_telemetry"]["color_factors"][0][
+            "nonzero_fraction"
+        ] = True
 
     qualification = gate._one_update_admission_qualification(report)
 
@@ -1478,6 +1619,10 @@ def test_one_update_carrier_norm_uses_only_fixed_float32_remeasurement_tolerance
         ("updates", "fixed_production_configuration"),
         ("qualifying", "explicitly_nonqualifying"),
         ("loss_count", "complete_finite_telemetry"),
+        ("loss_bool_array", "complete_finite_telemetry"),
+        ("initial_ce_bool", "complete_finite_telemetry"),
+        ("tail_bool", "tail_64_descends_from_initial_depth_mean"),
+        ("telemetry_max_bool", "complete_finite_telemetry"),
         ("state_nonfinite", "complete_finite_telemetry"),
         ("stale_tail", "tail_64_descends_from_initial_depth_mean"),
         ("no_descent", "tail_64_descends_from_initial_depth_mean"),
@@ -1498,6 +1643,18 @@ def test_stability_256_admission_fails_closed(
         report["qualification_regime"] = "preregistered_full"
     elif mutation == "loss_count":
         report["losses"].pop()
+    elif mutation == "loss_bool_array":
+        report["losses"] = [True] * 192 + [False] * 64
+        report["initial_depth_cross_entropy"] = {"0": 1.0, "1": 1.0}
+        report["tail_64_mean_loss"] = 0.0
+    elif mutation == "initial_ce_bool":
+        report["initial_depth_cross_entropy"]["0"] = True
+        report["initial_depth_cross_entropy"]["1"] = 3.8
+    elif mutation == "tail_bool":
+        report["losses"][-64:] = [1.0] * 64
+        report["tail_64_mean_loss"] = True
+    elif mutation == "telemetry_max_bool":
+        report["telemetry_summaries"]["gradients"]["max_abs"] = True
     elif mutation == "state_nonfinite":
         report["finite_telemetry"]["states"] = False
     elif mutation == "stale_tail":
