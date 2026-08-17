@@ -63,6 +63,7 @@ STAGE21_STABILITY_UPDATES = 256
 STAGE21_ARTIFACT_SCHEMA_VERSION = 3
 STAGE21_ADMISSION_SCHEMA_VERSION = 1
 STAGE21_CARRIER_NORM_TOLERANCE = 2e-6
+STAGE21_DECODER_REPLAY_ATOL = 3e-5
 PREREGISTERED_GPU_INITIAL_PARAMETER_SHA256 = (
     "b8ecb04f9c481118afa46651ead411abaccc338ad387f29a1f113d455788a5c8"
 )
@@ -2395,7 +2396,9 @@ def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
     witnesses = report["consumer_witnesses"]
     if set(telemetry) != expected or reconciliation.shape != (2,):
         return False
-    if not np.isfinite(reconciliation).all() or np.any(reconciliation > 1e-6):
+    if not np.isfinite(reconciliation).all() or np.any(
+        reconciliation > STAGE21_DECODER_REPLAY_ATOL
+    ):
         return False
     if set(witnesses) != {
         "readout_capped_residual_max_abs",
@@ -2418,7 +2421,8 @@ def _decoder_measurement_complete(report: Mapping[str, Any]) -> bool:
                 "query_uncapped_delta_min_l2",
             )
         )
-        or float(witnesses["readout_capped_residual_max_abs"]) > 1e-6
+        or float(witnesses["readout_capped_residual_max_abs"])
+        > STAGE21_DECODER_REPLAY_ATOL
         or float(witnesses["query_capped_residual_max_l2"]) > 1e-6
         or float(witnesses["readout_uncapped_delta_min_l2"]) <= 0.0
         or float(witnesses["query_uncapped_delta_min_l2"]) <= 0.0

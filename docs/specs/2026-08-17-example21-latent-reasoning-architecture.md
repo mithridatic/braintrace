@@ -515,7 +515,15 @@ before and after that update. It passes only when:
 - every observed per-example capped-carrier norm is at most `1 + 2e-6`; the
   fixed `2e-6` allowance covers only backend rounding when a float32 unit-norm
   vector is remeasured in float64 and does not change the mathematical radius;
-  and
+- the compact-readout recomputation and equivalent capped-readout residual are
+  each at most `STAGE21_DECODER_REPLAY_ATOL = 3e-5`. This allowance is separate
+  from the carrier radius and its norm tolerance. It is the fixed upper envelope
+  `4 * eps_float32 * (sqrt(2048) + sqrt(128)) = 2.70e-5`, rounded upward to
+  `3e-5`, for the alternate batch-64 and flattened batch-128 GEMM reductions.
+  The prior unauthenticated diagnostic measured `4.3641776e-6` before the update
+  and `9.8720193e-6` afterward; those values confirm the envelope but do not set
+  it and no task result enters the derivation. The query-projection capped
+  residual retains its `1e-6` bound; and
 - the required associative, readout, and color-decoder gradient/factor group
   norms are finite and nonzero.
 

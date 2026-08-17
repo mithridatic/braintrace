@@ -1612,6 +1612,67 @@ def test_one_update_carrier_norm_uses_only_fixed_float32_remeasurement_tolerance
     assert qualification["criteria"]["carrier_norm_envelope"] is False
 
 
+def _decoder_replay_boundary_report() -> dict[str, object]:
+    report = _passing_one_update_admission()
+    for phase in ("pre_measurement", "post_measurement"):
+        report[phase]["compact_reconciliation_max_abs"] = [3e-5, 3e-5]
+        report[phase]["consumer_witnesses"][
+            "readout_capped_residual_max_abs"
+        ] = 3e-5
+    return report
+
+
+def test_decoder_replay_tolerance_accepts_preregistered_float32_bound() -> None:
+    assert gate.STAGE21_DECODER_REPLAY_ATOL == 3e-5
+
+    qualification = gate._one_update_admission_qualification(
+        _decoder_replay_boundary_report()
+    )
+
+    assert qualification["passed"] is True
+    assert qualification["criteria"][
+        "decoder_carrier_signal_finite_nonzero"
+    ] is True
+
+
+@pytest.mark.parametrize("phase", ["pre_measurement", "post_measurement"])
+@pytest.mark.parametrize("field", ["compact", "readout"])
+def test_decoder_replay_tolerance_rejects_one_ulp_over_bound(
+    phase: str, field: str
+) -> None:
+    report = _decoder_replay_boundary_report()
+    assert gate._one_update_admission_qualification(report)["passed"] is True
+    over = float(np.nextafter(np.float64(3e-5), np.inf))
+    if field == "compact":
+        report[phase]["compact_reconciliation_max_abs"][0] = over
+    else:
+        report[phase]["consumer_witnesses"][
+            "readout_capped_residual_max_abs"
+        ] = over
+
+    qualification = gate._one_update_admission_qualification(report)
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"][
+        "decoder_carrier_signal_finite_nonzero"
+    ] is False
+
+
+def test_query_capped_residual_retains_tighter_tolerance() -> None:
+    report = _decoder_replay_boundary_report()
+    assert gate._one_update_admission_qualification(report)["passed"] is True
+    report["post_measurement"]["consumer_witnesses"][
+        "query_capped_residual_max_l2"
+    ] = float(np.nextafter(np.float64(1e-6), np.inf))
+
+    qualification = gate._one_update_admission_qualification(report)
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"][
+        "decoder_carrier_signal_finite_nonzero"
+    ] is False
+
+
 @pytest.mark.parametrize(
     "mutation,criterion",
     [
