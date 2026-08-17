@@ -805,23 +805,6 @@ def _probe_logit_evaluator(experiment: Any, config: Any):
     return evaluate_mask
 
 
-def _mask_evaluator(experiment: Any, config: Any):
-    """Build a transform-compatible accuracy evaluator for structural masks."""
-    evaluate_logits = _probe_logit_evaluator(experiment, config)
-    task_ids = jnp.repeat(jnp.arange(config.num_tricks), config.eval_trials_per_task)
-
-    def evaluate_mask(alive, edge_alive):
-        logits, task_rates = evaluate_logits(alive, edge_alive)
-        predictions = jnp.argmax(logits, axis=1)
-        correct = predictions == task_ids
-        accuracies = correct.reshape(
-            config.num_tricks, config.eval_trials_per_task
-        ).mean(axis=1)
-        return accuracies, task_rates
-
-    return evaluate_mask
-
-
 def _evaluate_probe_logits(
     experiment: Any,
     config: Any,
@@ -1865,9 +1848,16 @@ def _format_report(analysis: Dict[str, Any]) -> str:
             lines.extend(
                 [
                     f"- Joint fixed point converged in "
-                    f"{fixed_point.get('cycle_count', 1)} alternating cycle(s).",
-                    f"- Neuron passes accepted removals: [{pass_counts}].",
-                    f"- Edge passes accepted removals: [{edge_pass_counts}].",
+                    f"{fixed_point.get('round_count', 1)} screen-and-accept "
+                    "round(s).",
+                    f"- Neurons accepted per round: [{pass_counts}].",
+                    f"- Edges accepted per round: [{edge_pass_counts}].",
+                    f"- Causal evaluations: "
+                    f"{fixed_point.get('evaluation_count', 0)} total "
+                    f"({fixed_point.get('screen_evaluations', 0)} screening, "
+                    f"{fixed_point.get('commit_evaluations', 0)} committing) in "
+                    f"{fixed_point.get('batched_call_count', 0)} batched call(s) "
+                    f"at --eval-batch {fixed_point.get('eval_batch', 1)}.",
                     f"- Joint locally minimal network: "
                     f"{analysis['safe_retained']}/{total} neurons "
                     f"({analysis['safe_removed']} removed total); final accuracy "
