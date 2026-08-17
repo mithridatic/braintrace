@@ -293,12 +293,96 @@ no falsification of it either. Do not cite the tie as either.
 5. The gradient scale imbalance across parameter groups, roughly 2,800x with
    `color_factor_head` starved, should be addressed before a long run.
 
+## Confirmation: the fix works
+
+The predicted fix was applied as a pure configuration change, lr 1e-3 with a
+larger budget, no code modified. Full ARC-AGI-1 evaluation, 400 tasks / 419
+queries, on GPU.
+
+| run | updates | lr | shape diagnostic | pixel diagnostic |
+|---|---|---|---|---|
+| original | 96 | 1e-4 | 0.0859 | 0.0628 |
+| rerun | 2048 | 1e-3 | **0.3198** | **0.4035** |
+| uniform-random floor | | | 0.6611 | 0.1030 |
+| `copy_or_rule_shape` floor | | | 0.8687 | 0.6336 |
+
+Shape improved 3.7x and pixel accuracy 6.4x from a configuration change alone.
+Pixel accuracy is now well clear of the uniform-random floor of 0.1030, where
+the original run sat below it. This is direct confirmation that the diagnosis
+was correct: the original run was budget-starved, not capacity-starved.
+
+Exact pass@1 and pass@2 remain 0.0000, which is expected and uninformative:
+every trivial predictor in measurement 1 also scores 0.0000.
+
+The rerun is a fully qualified run, not a development run: `structural=True`
+and `scientific=True`, with all eight structural and all twelve scientific
+checks passing, despite the recovered out-of-memory warnings during training.
+Its splits are identical to v5's (400 evaluation tasks, 419 queries, 0
+rejected, 0 duplicates, 1 explicit exclusion), which independently confirms
+that the ARC-AGI-1 head used here, `3990304`, carries the same task grids as
+the manifest-pinned `aa922be`.
+
+Artifacts: `var/example21-rerun-lr1e-3-2048/` (`report.txt`, `result.json`,
+`data_manifest.json`, `latent_reasoning.png`). As with the v5 artifacts, `var/`
+is gitignored, so these are local to the machine that produced them.
+
+### Effort ordering reversed
+
+At the original lr 1e-4 the pixel diagnostic *fell* with effort
+(0.0650 / 0.0665 / 0.0660 / 0.0628 at efforts 0 / 8 / 16 / 32). At lr 1e-3 it
+*rises* monotonically:
+
+```
+effort  0: shape 0.3198, pixel 0.3840
+effort  8: shape 0.3198, pixel 0.3885
+effort 16: shape 0.3222, pixel 0.4021
+effort 32: shape 0.3007, pixel 0.4035
+```
+
+This is the first positive signal that latent depth contributes anything. The
+margin is small, roughly 0.02 in pixel accuracy across 419 queries, and shape
+accuracy does not share the trend, so it must not be over-read. It does show
+that the effort-suppression defect recorded above is rate-dependent rather than
+structural.
+
+### Budget ceiling is memory, not compute
+
+`_prepare_training` pre-materializes the full event tensor of shape
+`(updates, sequence, 1, 830)` before training. At 2048 updates the run emitted
+recovered `CUDA_ERROR_OUT_OF_MEMORY` warnings on 4 GiB allocations. Training
+compute is cheap: 2048 updates plus the full 400-task evaluation completed in
+415 seconds, on a GPU power-capped at 210 MHz against a 2100 MHz maximum.
+
+At 4096 updates the run fails outright:
+
+```
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED:
+Out of memory while trying to allocate 4.58GiB
+```
+
+**2048 updates is therefore the hard ceiling** for this design on a 12 GB
+device. Raising the budget further requires streaming or chunking the training
+tensor rather than materializing it up front. That is a code change to
+`_prepare_training` and `_train_model`, it touches a run path covered by the
+example's qualification gates, and it should be scoped and approved separately
+rather than folded into this diagnosis.
+
 ### Recommended next run
 
-Rerun at lr 1e-3 with a training budget at least two orders of magnitude larger
-than 96 updates, evaluated against the trivial floors rather than exact pass@1.
-Only after the model clears `copy_or_rule_shape` (shape 0.8687, pixel 0.6336)
-does the capacity question become meaningful and testable.
+Done for the budget that fits: lr 1e-3 at 2048 updates, reported above. The
+remaining work, in order:
+
+1. **Stream the training tensor** so the update budget is not bounded by device
+   memory. This is the blocking item; 2048 updates is not enough to clear the
+   trivial floors.
+2. **Fix the gradient scale imbalance** (roughly 2,800x, with
+   `color_factor_head` starved while producing about 900 of the roughly 902
+   values per grid). Per-group normalization or loss reweighting.
+3. **Rerun and compare against the floor table**, not exact pass@1. The bar is
+   `copy_or_rule_shape`: shape 0.8687, pixel 0.6336.
+4. Only after the model clears that bar does the original capacity question,
+   whether 2,048 neurons and 16,384 edges suffice, become meaningful and
+   testable.
 
 Constraint: do not re-run the 400-task evaluation and do not raise the training
 budget until this discriminator passes.
