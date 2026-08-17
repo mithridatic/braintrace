@@ -116,13 +116,19 @@ def test_phase_masks_activate_exactly_one_submap_per_tick() -> None:
         brainstate.random.RandomState(21),
     )
 
-    demo, query, latent = phase_masks(jnp.asarray(episode.model_inputs), episode.config)
+    demo, query, latent, seed = phase_masks(
+        jnp.asarray(episode.model_inputs), episode.config
+    )
     combined = jnp.concatenate((demo, query, latent), axis=-1)
 
     np.testing.assert_array_equal(np.asarray(combined.sum(axis=-1)), 1.0)
     np.testing.assert_array_equal(
         np.argmax(np.asarray(combined), axis=-1),
         np.concatenate((np.zeros(6), np.ones(2), np.full(2, 2))).astype(np.int64),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(seed)[:, 0],
+        np.concatenate((np.zeros(8), np.ones(1), np.zeros(1))),
     )
 
 
@@ -495,11 +501,86 @@ def test_reported_h0_through_hr_and_internal_workspace_are_binary() -> None:
     assert np.all((internal == 0.0) | (internal == 1.0))
     np.testing.assert_allclose(
         result.terminal_logits,
-        result.workspace[-1] @ model.Wo.value,
+        model.latent_voltage_view @ model.Wo.value,
         rtol=1e-5,
         atol=1e-5,
     )
     assert np.all(np.isfinite(np.asarray(model.latent_voltage.value)))
+
+
+def test_terminal_logits_decode_one_analog_carrier_at_every_depth() -> None:
+    for latent in (0, 1, 2, 4):
+        model = _model(latent=latent)
+        episode = generate_episode(
+            model.config.task, brainstate.random.RandomState(2740 + latent)
+        )
+
+        result = run_sequence(model, jnp.asarray(episode.model_inputs))
+
+        carrier = result.memory_read if latent == 0 else model.latent_voltage_view
+        np.testing.assert_allclose(
+            result.terminal_logits,
+            carrier @ model.Wo.value,
+            rtol=1e-5,
+            atol=1e-5,
+            err_msg=f"readout diverged from its analog carrier at R={latent}",
+        )
+
+
+def test_h0_is_seeded_with_the_analog_contextual_read() -> None:
+    model = _model(latent=3)
+    task = model.config.task
+    episode = generate_episode(task, brainstate.random.RandomState(2745))
+    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
+
+    brainstate.transform.for_loop(model, sequence[: task.query_slice.stop])
+    values, keys = model.memory_factors()
+    expected_h0 = factored_memory_read(values, keys, model.query_encoding_view)
+    model(sequence[task.latent_slice.start])
+
+    np.testing.assert_allclose(
+        model.latent_voltage_view, expected_h0, rtol=1e-6, atol=1e-6
+    )
+    assert np.any(
+        (np.asarray(model.latent_voltage_view) != 0.0)
+        & (np.asarray(model.latent_voltage_view) != 1.0)
+    )
+
+
+def test_query_terminal_read_and_seeded_h0_decode_identically() -> None:
+    model = _model(latent=2)
+    task = model.config.task
+    episode = generate_episode(task, brainstate.random.RandomState(2748))
+    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
+
+    query_logits = brainstate.transform.for_loop(
+        model, sequence[: task.query_slice.stop]
+    )[-1]
+    model(sequence[task.latent_slice.start])
+
+    np.testing.assert_allclose(
+        query_logits,
+        model.latent_voltage_view @ model.Wo.value,
+        rtol=1e-5,
+        atol=1e-5,
+    )
+
+
+def test_seeding_the_workspace_leaves_stored_bindings_untouched() -> None:
+    model = _model(latent=2)
+    task = model.config.task
+    episode = generate_episode(task, brainstate.random.RandomState(2750))
+    sequence = jnp.asarray(episode.model_inputs)[:, None, :]
+
+    brainstate.transform.for_loop(model, sequence[: task.demonstration_steps])
+    values_before, keys_before = model.memory_factors()
+    values_before = np.asarray(values_before).copy()
+    keys_before = np.asarray(keys_before).copy()
+    brainstate.transform.for_loop(model, sequence[task.demonstration_steps :])
+    values_after, keys_after = model.memory_factors()
+
+    np.testing.assert_array_equal(values_after, values_before)
+    np.testing.assert_array_equal(keys_after, keys_before)
 
 
 def test_binary_spike_surrogate_has_finite_nonzero_training_gradient() -> None:
@@ -532,7 +613,7 @@ def test_production_latent_dynamics_retain_activity_at_depth_eight() -> None:
         voltage.at[:, -1].set(initial_voltage).reshape(32 * model.state_rows, 64)
     )
     latent_tick = jnp.zeros((32, task.input_width), dtype=jnp.float32)
-    latent_tick = latent_tick.at[:, task.phase_slice.start + 2].set(1.0)
+    latent_tick = latent_tick.at[:, task.phase_slice.start + 3].set(1.0)
     latent_ticks = jnp.broadcast_to(latent_tick, (8, *latent_tick.shape))
 
     def step(one_tick: jax.Array) -> jax.Array:

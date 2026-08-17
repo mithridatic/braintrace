@@ -203,8 +203,13 @@ class SequenceResult:
 
 def phase_masks(
     model_inputs: jax.Array, task: TaskConfig
-) -> tuple[jax.Array, jax.Array, jax.Array]:
-    """Extract the three arithmetic phase gates from a flat input axis.
+) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    """Extract the arithmetic phase gates from a flat input axis.
+
+    The stored phase vector is one-hot over demonstration, query, latent-seed,
+    and latent channels. The returned ``latent`` mask is the union of the two
+    latent channels, so callers that only distinguish ingestion from latent
+    computation need no change; ``seed`` isolates the first latent tick.
 
     Parameters
     ----------
@@ -216,8 +221,8 @@ def phase_masks(
     Returns
     -------
     tuple of jax.Array
-        Demonstration, query, and latent masks, each retaining a singleton
-        final dimension for broadcast arithmetic.
+        Demonstration, query, latent, and latent-seed masks, each retaining a
+        singleton final dimension for broadcast arithmetic.
     """
     if model_inputs.shape[-1] != task.input_width:
         raise ValueError(
@@ -225,7 +230,8 @@ def phase_masks(
             f"{task.input_width}, got shape {model_inputs.shape}"
         )
     phases = model_inputs[..., task.phase_slice]
-    return phases[..., 0:1], phases[..., 1:2], phases[..., 2:3]
+    seed = phases[..., 2:3]
+    return phases[..., 0:1], phases[..., 1:2], seed + phases[..., 3:4], seed
 
 
 def factored_memory_read(
@@ -611,6 +617,61 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             "snap_max_jacobian_elements": self.config.max_jacobian_elements,
         }
 
+    @staticmethod
+    def _seed_workspace(
+        voltage: jax.Array,
+        spikes: jax.Array,
+        seed_rows: jax.Array,
+        gate: jax.Array,
+    ) -> tuple[jax.Array, jax.Array]:
+        """Initialize ``H_0`` from contextual memory on the first latent tick.
+
+        This is equation (2) of the published interface: the initial workspace
+        is the query encoded against contextual memory. Both the analog carrier
+        and the spiking substrate are seeded, so the first latent tick's
+        recurrent term is driven by ``H_0`` rather than by an unrelated
+        accumulated spike state.
+
+        Two implementation properties are load-bearing. The seed is applied by
+        elementwise gating rather than an indexed update, and ``seed_rows`` is
+        derived only from hidden-state leaves. pp_prop rejects any path from an
+        ETP primitive into a hidden state that is not elementwise
+        position-preserving, so neither a scatter nor a reshape of an ETP
+        output may appear on the way into ``latent_voltage`` or
+        ``grouped_state``. Seeding on the first latent tick rather than on the
+        query tick is what allows the seed to read the *previous* query
+        encoding, which is a state leaf and by then already complete.
+
+        The seed reuses the tick's single contextual read rather than issuing a
+        second one: the first latent tick reads memory with the query encoding
+        (equation 2) and every later latent tick reads it with the workspace
+        (equation 3), so the hidden-to-hidden transition keeps exactly two
+        contractions.
+
+        Parameters
+        ----------
+        voltage, spikes : jax.Array
+            Post-update latent voltage and grouped spike state, each shaped
+            ``(batch * state_rows, width)``.
+        seed_rows : jax.Array
+            Contextual read broadcast onto the workspace row, shaped like
+            ``voltage`` and zero on every memory row.
+        gate : jax.Array
+            Seed gate shaped ``(batch * state_rows, 1)``, one on the workspace
+            row of the first latent tick and zero everywhere else.
+
+        Returns
+        -------
+        tuple of jax.Array
+            Seeded voltage and spike states with their input shapes.
+        """
+        keep = 1.0 - gate
+        seeded_spikes = _surrogate_spike(seed_rows - _LATENT_THRESHOLD)
+        return (
+            keep * voltage + gate * seed_rows,
+            keep * spikes + gate * seeded_spikes,
+        )
+
     def _advance(self, packed: jax.Array) -> tuple[jax.Array, jax.Array]:
         """Advance one tick and return logits plus its latent representation.
 
@@ -623,8 +684,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         -------
         tuple of jax.Array
             Current class logits and the internal binary workspace for this
-            tick. Query logits use the analog pure-memory read, but the second
-            return value remains the homogeneous recurrent LIF trajectory.
+            tick. Logits decode one analog carrier at every latent depth: the
+            contextual read on query ticks, and the latent voltage thereafter.
+            The first latent tick seeds that voltage with the same read, so the
+            two spans are continuous rather than two separate readout paths.
+            The second return value remains the homogeneous recurrent LIF
+            trajectory.
         """
         expected = (self.batch_size, self.input_width)
         if packed.shape != expected:
@@ -636,7 +701,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         key_input = packed[:, task.key_slice]
         value_input = packed[:, task.value_slice]
         slot = packed[:, task.slot_slice]
-        demo, query, latent = phase_masks(packed, task)
+        demo, query, latent, seed = phase_masks(packed, task)
 
         ingestion = self.ingestion_state.value.reshape(
             self.batch_size, 2, task.code_width
@@ -696,7 +761,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.batch_size, self.state_rows, self.width
         )[:, -1]
         query_encoding_next = self.query_encoding.value + query_drive
-        read_vector = query * query_encoding_previous + latent * workspace_previous
+        read_vector = (query + seed) * query_encoding_previous + (
+            latent - seed
+        ) * workspace_previous
         dynamics_read = factored_memory_read(values, keys, read_vector)
         dynamics_read_rows = (
             workspace_mask[:, :, None] * dynamics_read[:, None, :]
@@ -727,12 +794,21 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         flat_next = (
             self.grouped_state.value + key_rows + value_rows + workspace_delta_rows
         )
+        seed_gate_rows = (seed[:, :, None] * workspace_mask[:, :, None]).reshape(
+            self.batch_size * self.state_rows, 1
+        )
+        voltage_next, flat_next = self._seed_workspace(
+            voltage_next, flat_next, dynamics_read_rows, seed_gate_rows
+        )
         state_next = flat_next.reshape(self.batch_size, self.state_rows, self.width)
         query_encoding_logical = query_encoding_next.reshape(
             self.batch_size, self.state_rows, self.width
         )[:, -1]
         pure_query_read = factored_memory_read(values, keys, query_encoding_logical)
-        representation = query * pure_query_read + (1.0 - query) * state_next[:, -1]
+        latent_carrier = voltage_next.reshape(
+            self.batch_size, self.state_rows, self.width
+        )[:, -1]
+        representation = query * pure_query_read + (1.0 - query) * latent_carrier
         readout_input = (
             workspace_mask[:, :, None] * representation[:, None, :]
         ).reshape(self.batch_size * self.state_rows, self.width)

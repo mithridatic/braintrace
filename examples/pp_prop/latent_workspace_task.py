@@ -147,14 +147,21 @@ class TaskConfig:
 
     @property
     def phase_slice(self) -> slice:
-        """Return the demonstration/query/latent phase slice."""
+        """Return the demonstration/query/latent-seed/latent phase slice.
+
+        The latent span is split across two one-hot channels. The first latent
+        tick uses the seed channel, which initializes ``H_0`` from contextual
+        memory; every later latent tick uses the plain latent channel. The
+        split keeps the phase vector one-hot while giving the model a
+        state-free signal for the first latent tick.
+        """
         start = 2 * self.code_width + self.slot_capacity
-        return slice(start, start + 3)
+        return slice(start, start + 4)
 
     @property
     def input_width(self) -> int:
         """Return the complete per-tick model input width."""
-        return 2 * self.code_width + self.slot_capacity + 3
+        return 2 * self.code_width + self.slot_capacity + 4
 
     @property
     def demonstration_steps(self) -> int:
@@ -469,7 +476,10 @@ def build_episode(
         inputs[span, config.phase_slice.start] = 1.0
     inputs[config.query_slice, config.key_slice] = codebook[query_symbol]
     inputs[config.query_slice, config.phase_slice.start + 1] = 1.0
-    inputs[config.latent_slice, config.phase_slice.start + 2] = 1.0
+    inputs[config.latent_slice, config.phase_slice.start + 3] = 1.0
+    if config.latent_steps:
+        inputs[config.latent_slice.start, config.phase_slice.start + 3] = 0.0
+        inputs[config.latent_slice.start, config.phase_slice.start + 2] = 1.0
     inputs.setflags(write=False)
     rule_array.setflags(write=False)
     return Episode(

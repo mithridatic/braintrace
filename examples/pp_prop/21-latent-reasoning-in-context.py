@@ -442,7 +442,10 @@ def _canonical_inputs(episode: Episode, destination: TaskConfig) -> np.ndarray:
         : source.demonstration_steps
     ]
     packed[destination.query_slice] = episode.query_inputs
-    packed[destination.latent_slice, destination.phase_slice.start + 2] = 1.0
+    packed[destination.latent_slice, destination.phase_slice.start + 3] = 1.0
+    if destination.latent_steps:
+        packed[destination.latent_slice.start, destination.phase_slice.start + 3] = 0.0
+        packed[destination.latent_slice.start, destination.phase_slice.start + 2] = 1.0
     return packed
 
 

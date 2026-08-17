@@ -264,7 +264,9 @@ def test_canonical_inputs_pad_capacity_without_changing_query(tmp_path):
     phase = packed[:, destination.phase_slice]
     assert np.count_nonzero(phase[:, 0]) == destination.demonstration_steps
     assert np.count_nonzero(phase[:, 1]) == destination.symbol_ticks
-    assert np.count_nonzero(phase[:, 2]) == 4
+    assert np.count_nonzero(phase[:, 2]) == 1
+    assert np.count_nonzero(phase[:, 3]) == 3
+    assert phase[destination.latent_slice.start, 2] == 1.0
     np.testing.assert_array_equal(phase.sum(axis=1), 1.0)
     np.testing.assert_array_equal(packed[destination.query_slice], episode.query_inputs)
 

@@ -150,9 +150,10 @@ def test_flat_axis_has_ordered_phases_silent_latency_and_terminal_target():
 
     assert episode.model_inputs.shape == (21, config.input_width)
     assert np.all(phases.sum(axis=1) == 1)
-    assert np.all(phases[:12] == (1.0, 0.0, 0.0))
-    assert np.all(phases[12:16] == (0.0, 1.0, 0.0))
-    assert np.all(phases[16:] == (0.0, 0.0, 1.0))
+    assert np.all(phases[:12] == (1.0, 0.0, 0.0, 0.0))
+    assert np.all(phases[12:16] == (0.0, 1.0, 0.0, 0.0))
+    assert np.all(phases[16] == (0.0, 0.0, 1.0, 0.0))
+    assert np.all(phases[17:] == (0.0, 0.0, 0.0, 1.0))
     external = episode.model_inputs[
         config.latent_slice, slice(0, config.slot_slice.stop)
     ]
@@ -172,6 +173,7 @@ def test_zero_latent_steps_reads_the_last_query_tick():
     ].tolist() == [
         0.0,
         1.0,
+        0.0,
         0.0,
     ]
 
@@ -199,7 +201,7 @@ def test_model_tensor_has_no_rule_episode_or_terminal_target_field():
     config = TaskConfig()
     pair = generate_matched_episodes(config, _rng(5))
     for episode in (pair.supported, pair.short):
-        assert episode.model_inputs.shape[1] == 2 * 24 + 8 + 3
+        assert episode.model_inputs.shape[1] == 2 * 24 + 8 + 4
         assert set(np.unique(episode.model_inputs)).issubset({0.0, 1.0})
         assert not np.any(episode.query_inputs[:, config.value_slice])
         assert not np.any(episode.query_inputs[:, config.slot_slice])
@@ -534,5 +536,5 @@ def test_slice_helpers_are_stable_under_nondefault_dimensions():
     assert config.key_slice == slice(0, 20)
     assert config.value_slice == slice(20, 40)
     assert config.slot_slice == slice(40, 49)
-    assert config.phase_slice == slice(49, 52)
-    assert config.input_width == 52
+    assert config.phase_slice == slice(49, 53)
+    assert config.input_width == 53
