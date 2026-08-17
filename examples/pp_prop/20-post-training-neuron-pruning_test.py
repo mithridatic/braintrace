@@ -672,8 +672,9 @@ def test_minimization_counts_screen_and_commit_evaluations(monkeypatch):
     # round screens the 2 retained neurons; no edge is active by then.
     assert result["screen_evaluations"] == 3 + 2 + 3 + 2
     # Both edges screen safe individually but not jointly, so round 1 spends a
-    # rejected whole-set test plus one prefix probe; round 2 accepts outright.
-    assert result["commit_evaluations"] == 3
+    # rejected whole-set test, one accepted prefix probe, and one rejected retry
+    # of the leftover against the reduced mask; round 2 accepts outright.
+    assert result["commit_evaluations"] == 4
     assert result["evaluation_count"] > result["screen_evaluations"]
 
 

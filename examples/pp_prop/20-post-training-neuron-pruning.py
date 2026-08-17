@@ -1124,36 +1124,44 @@ def _minimize_topology(
         candidates.sort(key=lambda item: (item[0], item[1], item[2]))
         ordered = [(kind, index) for _, kind, index, _ in candidates]
         screen_accuracy = {(kind, index): acc for _, kind, index, acc in candidates}
-        while ordered:
+        # Drain the safe set against the mask as it is actually being reduced,
+        # rather than stopping after one prefix. Re-screening costs one
+        # evaluation per retained coordinate, so it is worth several cheap
+        # prefix probes to postpone it. Every acceptance is still measured.
+        taken: list = []
+        remaining = ordered
+        while remaining:
             alive_next, edges_next, accepted, spent, head = _accept_prefix(
-                safe_test, alive, edge_alive, ordered, rows, cols
+                safe_test, alive, edge_alive, remaining, rows, cols
             )
             commit_evaluations += spent
             if accepted:
-                break
+                taken.extend(remaining[:accepted])
+                alive, edge_alive = alive_next, edges_next
+                remaining = remaining[accepted:]
+                continue
             # The screen called this coordinate safe and the commit measurement
             # did not. Record the measurement, so a search that stops here
             # reports a certificate every one of whose rows is sub-target.
-            kind, index = ordered[0]
+            kind, index = remaining[0]
             if head is not None:
                 if kind:
                     edge_last[index] = head
                 else:
                     neuron_last[index] = head
-            ordered = ordered[1:]
-        if not ordered:
+            remaining = remaining[1:]
+        if not taken:
             converged = True
             break
-        for kind, index in ordered[:accepted]:
+        for kind, index in taken:
             if kind:
                 edge_round[index] = round_index
                 edge_accept[index] = screen_accuracy[(kind, index)]
             else:
                 neuron_round[index] = round_index
                 neuron_accept[index] = screen_accuracy[(kind, index)]
-        neuron_per_round.append(sum(1 for kind, _ in ordered[:accepted] if not kind))
-        edge_per_round.append(sum(1 for kind, _ in ordered[:accepted] if kind))
-        alive, edge_alive = alive_next, edges_next
+        neuron_per_round.append(sum(1 for kind, _ in taken if not kind))
+        edge_per_round.append(sum(1 for kind, _ in taken if kind))
         round_index += 1
 
     retained = np.flatnonzero(alive > 0.0)
