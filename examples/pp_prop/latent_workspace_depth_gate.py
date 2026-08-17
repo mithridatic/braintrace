@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
+import re
+import time
 import warnings
 from dataclasses import asdict, dataclass, field
-from typing import Any, Iterator, Mapping
+from typing import Any, Callable, Iterator, Mapping
 
 import brainstate
 import braintools
@@ -36,6 +40,7 @@ STAGING_CHUNK_UPDATES = 128
 STAGING_CHUNK_COUNT = 32
 GATE_B_SCHEMA_VERSION = 1
 GATE_B_CONTROL = "example21_demonstrated_depth_gate_b"
+GATE_B_INITIALIZATION_CONTROL = "example21_gate_b_initialization_admission"
 
 _GATE_A_RESULT_SHA256 = (
     "3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632"
@@ -50,6 +55,49 @@ _MODEL_SOURCE_SHA256 = (
 _TASK_SOURCE_SHA256 = (
     "cfaec054bd42f6dccf9fb24c5fbec0cd703fdef17ba8d3b6dd68bf78366de18b"
 )
+_PRODUCTION_ENCODED_GLOBAL_SHA256 = {
+    "events": "a1937b7f8d5d4da5f30216847cc63d022d9ec46d5cf152b25f5a30a59a1eb84f",
+    "targets": "4082d2fd1440e9d14b0c81c754158f05b8056137a9116aee667f8d112312184c",
+    "loss_weights": "044616bf9dd86cbdc1d472184ede8027bf9ff65d65834b15ec619bf3095d2e31",
+    "advance_masks": "2fc1b2acd9f73e567684d2a85f44c4009c5941ce262a527589066117ec27a4cc",
+    "mapping_ids": "78c2d8aaa9e874dbcc1c25363875ff8aec0356a711d2426e09f2e79c76c72cb7",
+    "efforts": "c7ca75132501bda8e6b5695a48a1ae5cde22da587f4658f7721bd4e3adcd58e6",
+    "query_colors": "38b4cecef323dce16b0478fdd3874c9383804c913c39aaf017ce34554dcd37cb",
+    "presentation_orders": (
+        "0650be382b381d7ab14b642c6fcdb16ae410e70a4c5821b10643bce41e3f7ca5"
+    ),
+}
+_PRODUCTION_CHUNK_SHA256_MANIFEST = {
+    "events": "c73cb65b9b774f07e617000f531511a561c2672cd5c5dc0bfb5c95328bded771",
+    "targets": "e969705e4d9ab68581cde897f5f8fd780a716964d9a96a842b3e9850db294f3e",
+    "loss_weights": "968eed06f7bc37d52d68300f2ef803666320c2ffaa094843876f4c3b39101b9c",
+    "advance_masks": "226ee64d8c3ffbe5eec66bb8cc01c7030b2d3c700eb2c75da91b5391e659cfd8",
+    "mapping_ids": "d198e47d766ad69c2691243fd759835d4a3d5d79377f8d47cc9bbf8488306a84",
+    "efforts": "267aef30ba47f5e67c17a36d299ffe2a41acfe57c92a078f4d04cc8f7cea903b",
+    "query_colors": "f67148579356209f6846d681eeaafa3e00ccf9206023f59a7837d1c351a58da9",
+    "presentation_orders": (
+        "60b52825e54e2b2b5efbc9f2cbaea65ef3737577b7b4c2e51b924ea9e907a8ef"
+    ),
+}
+_PRODUCTION_VALIDATION_SHA256 = {
+    "mapping_ids": "b036444e228c60116b8bfd9c10399261bcf6645d7b69d27d4b391460fae83cd8",
+    "query_colors": "c7e70f56cca66d920d5d690a902b9943f2fcfdff7003fa4bbb3580070738d67e",
+    "presentation_orders": (
+        "0bab5cfe3c2c87109909d36c59f88ef04983322aacbce469fea6221aa4ac37b0"
+    ),
+    "shuffled_shifts": (
+        "15af1f04589cc523d89b66d2f07027158d69068901d786eecfd259a156f2f2d0"
+    ),
+    "intact": "5683aa84aa2ef8a1ff623e5e0b60afb3451e617728f0363d3ad84f2ea52dacde",
+    "shuffled": "abd5eb4ab2e2a685faeb8f6bf785ad2deb97721b00e8d194b4f65d4995516be3",
+    "no_context": "45fd14d3faefad83b0ce6d908456320afa67944b361159cfe503fdfab591162d",
+    "targets_by_depth": (
+        "a438d64347dc4ec5cfc639342d8b142c785e497ddf06728eb03f8ccfb42d3cd6"
+    ),
+    "advance_masks": (
+        "b88b3593d9df51260fbafa4a937159c3da3f56fc33335a30993c0ff8a7462ac8"
+    ),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -743,6 +791,150 @@ def _encode_validation_data(
     )
 
 
+_ENCODED_CHUNK_FIELDS = (
+    "events",
+    "targets",
+    "loss_weights",
+    "advance_masks",
+    "mapping_ids",
+    "efforts",
+    "query_colors",
+    "presentation_orders",
+)
+_VALIDATION_IDENTITY_FIELDS = (
+    "mapping_ids",
+    "query_colors",
+    "presentation_orders",
+    "shuffled_shifts",
+    "intact",
+    "shuffled",
+    "no_context",
+    "targets_by_depth",
+    "advance_masks",
+)
+_TELEMETRY_CATEGORIES = (
+    "logits",
+    "model_states",
+    "gradients",
+    "pp_prop_traces",
+    "adam",
+    "parameters",
+)
+
+
+def _array_sha256(value: np.ndarray) -> str:
+    array = np.ascontiguousarray(value)
+    digest = hashlib.sha256()
+    digest.update(array.dtype.str.encode("ascii"))
+    digest.update(str(array.shape).encode("ascii"))
+    digest.update(array.tobytes())
+    return digest.hexdigest()
+
+
+def _ordered_json_list_sha256(values: list[str]) -> str:
+    payload = json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _strict_json_sha256(value: Mapping[str, Any]) -> str:
+    payload = (
+        json.dumps(
+            value,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+            separators=(",", ": "),
+        )
+        + "\n"
+    ).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _validation_data_report(data: DepthValidationData) -> dict[str, Any]:
+    return {
+        "episode_count": int(np.asarray(data.mapping_ids).size),
+        "sha256": {
+            field: _array_sha256(np.asarray(getattr(data, field)))
+            for field in _VALIDATION_IDENTITY_FIELDS
+        },
+    }
+
+
+@dataclass(slots=True)
+class _EncodedScheduleHashState:
+    global_digests: dict[str, Any]
+    chunk_digests: dict[str, list[str]]
+    encoded_updates: int = 0
+    chunk_count: int = 0
+
+
+def _new_encoded_schedule_hash_state() -> _EncodedScheduleHashState:
+    return _EncodedScheduleHashState(
+        global_digests={
+            field: hashlib.sha256() for field in _ENCODED_CHUNK_FIELDS
+        },
+        chunk_digests={field: [] for field in _ENCODED_CHUNK_FIELDS},
+    )
+
+
+def _update_encoded_schedule_hash_state(
+    state: _EncodedScheduleHashState,
+    encoded: DepthTrainingChunk,
+    config: DepthGateConfig,
+) -> None:
+    chunk_updates = int(np.asarray(encoded.efforts).shape[0])
+    if chunk_updates <= 0:
+        raise ValueError("encoded staging chunks must contain at least one update")
+    if state.chunk_count == 0:
+        for field in _ENCODED_CHUNK_FIELDS:
+            array = np.ascontiguousarray(getattr(encoded, field))
+            logical_shape = (config.training_updates, *array.shape[1:])
+            state.global_digests[field].update(array.dtype.str.encode("ascii"))
+            state.global_digests[field].update(str(logical_shape).encode("ascii"))
+    for field in _ENCODED_CHUNK_FIELDS:
+        array = np.ascontiguousarray(getattr(encoded, field))
+        state.global_digests[field].update(array.tobytes())
+        state.chunk_digests[field].append(_array_sha256(array))
+    state.encoded_updates += chunk_updates
+    state.chunk_count += 1
+
+
+def _finish_encoded_schedule_report(
+    state: _EncodedScheduleHashState,
+    config: DepthGateConfig,
+) -> dict[str, Any]:
+    if state.encoded_updates != config.training_updates:
+        raise ValueError("encoded chunks do not cover every scheduled update")
+    if state.chunk_count != config.staging_chunk_count:
+        raise ValueError("encoded chunk count differs from the configuration")
+    return {
+        "chunk_count": state.chunk_count,
+        "chunk_updates": config.staging_chunk_updates,
+        "training_updates": config.training_updates,
+        "training_episode_count": config.training_episode_count,
+        "global_sha256": {
+            field: digest.hexdigest()
+            for field, digest in state.global_digests.items()
+        },
+        "chunk_sha256_manifest": {
+            field: _ordered_json_list_sha256(values)
+            for field, values in state.chunk_digests.items()
+        },
+        "chunk_sha256": state.chunk_digests,
+    }
+
+
+def _encoded_schedule_report(
+    schedule: DepthSchedule,
+    config: DepthGateConfig,
+) -> dict[str, Any]:
+    state = _new_encoded_schedule_hash_state()
+    for schedule_chunk in _iter_schedule_chunks(schedule, config):
+        encoded = _encode_training_chunk(schedule_chunk, config)
+        _update_encoded_schedule_hash_state(state, encoded, config)
+    return _finish_encoded_schedule_report(state, config)
+
+
 def _model_config(config: DepthGateConfig, *, batch_size: int) -> ModelConfig:
     indices = associative_memory_feature_indices(config.row_config)
     rows = config.row_config
@@ -786,6 +978,13 @@ def _initialization_report(
         "parameter_count": int(
             sum(
                 np.asarray(leaf).size
+                for value in parameters.values()
+                for leaf in jax.tree.leaves(value)
+            )
+        ),
+        "parameters_finite": bool(
+            all(
+                np.isfinite(np.asarray(leaf)).all()
                 for value in parameters.values()
                 for leaf in jax.tree.leaves(value)
             )
@@ -923,6 +1122,88 @@ def _make_pp_prop_trainer(
     )
 
 
+def _train_depth_gate(
+    model: LatentWorkspaceModel,
+    schedule: DepthSchedule,
+    config: DepthGateConfig,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    trainer = _make_pp_prop_trainer(model, config)
+    initial_parameters = legacy._parameter_values(model)
+    initial_sha = legacy._array_digest(initial_parameters)
+    hash_state = _new_encoded_schedule_hash_state()
+    telemetry_chunks: list[Mapping[str, Any]] = []
+    for schedule_chunk in _iter_schedule_chunks(schedule, config):
+        encoded = _encode_training_chunk(schedule_chunk, config)
+        _update_encoded_schedule_hash_state(hash_state, encoded, config)
+        telemetry_chunks.append(
+            jax.device_get(
+                jax.block_until_ready(
+                    trainer.train_chunk(
+                        encoded.events,
+                        encoded.targets,
+                        encoded.loss_weights,
+                        encoded.advance_masks,
+                    )
+                )
+            )
+        )
+    schedule_report = _finish_encoded_schedule_report(hash_state, config)
+    losses = np.concatenate(
+        [np.asarray(item["loss"]).reshape(-1) for item in telemetry_chunks]
+    )
+    finite = {
+        category: bool(
+            all(
+                np.asarray(item["finite"][category], dtype=np.bool_).all()
+                for item in telemetry_chunks
+            )
+        )
+        for category in _TELEMETRY_CATEGORIES
+    }
+    maxima = {
+        category: float(
+            max(
+                np.max(np.asarray(item["max_abs"][category], dtype=np.float64))
+                for item in telemetry_chunks
+            )
+        )
+        for category in _TELEMETRY_CATEGORIES
+    }
+    value_counts = {
+        category: int(
+            sum(
+                int(np.sum(np.asarray(item["value_count"][category], dtype=np.int64)))
+                for item in telemetry_chunks
+            )
+        )
+        for category in _TELEMETRY_CATEGORIES
+    }
+    effort_counts = {
+        str(effort): int(
+            np.count_nonzero(np.asarray(schedule.training_efforts) == effort)
+        )
+        for effort in QUALIFYING_EFFORTS
+    }
+    final_sha = legacy._array_digest(legacy._parameter_values(model))
+    training = {
+        "algorithm": trainer.algorithm,
+        "executed_updates": int(losses.size),
+        "batch_size": config.batch_size,
+        "chunk_count": len(telemetry_chunks),
+        "chunk_updates": config.staging_chunk_updates,
+        "effort_update_counts": effort_counts,
+        "initialization_parameter_sha256": initial_sha,
+        "final_parameter_sha256": final_sha,
+        "losses": losses.tolist(),
+        "finite": finite,
+        "max_abs": maxima,
+        "value_count": value_counts,
+        "compiler": trainer.compiler,
+        "compile_warnings": trainer.compile_warnings,
+    }
+    return training, schedule_report
+
+
 def _metric(
     predictions: np.ndarray,
     targets: np.ndarray,
@@ -1049,6 +1330,710 @@ _QUALIFICATION_CRITERIA = (
     "h0_one_step_above_chance",
     "held_out_invariants_complete",
 )
+_INITIALIZATION_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "preregistered_configuration",
+    "gate_a_prerequisite_authenticated",
+    "source_and_gpu_authenticated",
+    "initialization_fresh_and_finite",
+    "compiler_paths_complete",
+)
+
+
+def _sha256_complete(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(
+        character in "0123456789abcdef" for character in value
+    )
+
+
+def _compiler_evidence_complete(compiler: Mapping[str, Any]) -> bool:
+    required = {
+        "memory_write_scale",
+        "workspace_query_projection/weight",
+        "memory_read_projection/weight",
+    }
+    diagnostics = compiler.get("diagnostics")
+    compiled_paths = compiler.get("compiled_parameter_paths")
+    direct_paths = compiler.get("required_direct_paths")
+    direct_status = compiler.get("direct_path_status")
+    return bool(
+        compiler.get("available") is True
+        and isinstance(diagnostics, list)
+        and not any(
+            isinstance(item, Mapping) and item.get("level") == "error"
+            for item in diagnostics
+        )
+        and isinstance(compiled_paths, list)
+        and required <= set(compiled_paths)
+        and isinstance(direct_paths, list)
+        and set(direct_paths) == required
+        and isinstance(direct_status, Mapping)
+        and set(direct_status) == required
+        and all(direct_status[path] is True for path in required)
+        and compiler.get("all_required_direct") is True
+        and compiler.get("context_memory_isolated_from_workspace_lif") is True
+        and gate._compiler_topology_complete(compiler)
+    )
+
+
+def _schedule_evidence_complete(schedule: Mapping[str, Any]) -> bool:
+    if set(schedule) != {
+        "chunk_count",
+        "chunk_updates",
+        "training_updates",
+        "training_episode_count",
+        "global_sha256",
+        "chunk_sha256_manifest",
+        "chunk_sha256",
+    }:
+        return False
+    integer_values = {
+        "chunk_count": 32,
+        "chunk_updates": 128,
+        "training_updates": 4_096,
+        "training_episode_count": 262_144,
+    }
+    if any(
+        not gate._is_integer(schedule[name])
+        or int(schedule[name]) != expected
+        for name, expected in integer_values.items()
+    ):
+        return False
+    if not gate._json_exact(
+        schedule["global_sha256"], _PRODUCTION_ENCODED_GLOBAL_SHA256
+    ):
+        return False
+    chunk_digests = schedule["chunk_sha256"]
+    manifests = schedule["chunk_sha256_manifest"]
+    return bool(
+        isinstance(chunk_digests, Mapping)
+        and set(chunk_digests) == set(_ENCODED_CHUNK_FIELDS)
+        and gate._json_exact(manifests, _PRODUCTION_CHUNK_SHA256_MANIFEST)
+        and all(
+            isinstance(chunk_digests[field], list)
+            and len(chunk_digests[field]) == 32
+            and all(_sha256_complete(value) for value in chunk_digests[field])
+            and _ordered_json_list_sha256(chunk_digests[field])
+            == manifests[field]
+            for field in _ENCODED_CHUNK_FIELDS
+        )
+    )
+
+
+def _validation_evidence_complete(validation: Mapping[str, Any]) -> bool:
+    return bool(
+        set(validation) == {"episode_count", "sha256"}
+        and gate._is_integer(validation["episode_count"])
+        and int(validation["episode_count"]) == 512
+        and gate._json_exact(
+            validation["sha256"], _PRODUCTION_VALIDATION_SHA256
+        )
+    )
+
+
+def _target_and_control_evidence_complete(data: Mapping[str, Any]) -> bool:
+    expected_target = {
+        "efforts": [1, 2, 4, 8],
+        "sequence_length": 19,
+        "h0_index": 10,
+        "active_lengths": {"1": 12, "2": 13, "4": 15, "8": 19},
+        "target_rule": "H_r=f^(r+1)(x)",
+        "supervision_weights": {
+            "1": 0.5,
+            "2": 1.0 / 3.0,
+            "4": 0.2,
+            "8": 1.0 / 9.0,
+        },
+        "suffix_advance_false": True,
+        "suffix_loss_weight_zero": True,
+        "padded_compact_objective_equal": True,
+        "padded_compact_pp_prop_gradients_equal": True,
+        "finite_window_chunk_size": 1,
+    }
+    expected_controls = {
+        "rotation_candidates": list(range(1, 10)),
+        "all_validation_rotations_valid": True,
+        "all_shuffled_answers_differ_at_qualifying_depths": True,
+        "exact_input_output_marginals": True,
+        "no_context_demonstrations_zero": True,
+        "event_timing_identical": True,
+    }
+    return gate._json_exact(data["target_contract"], expected_target) and gate._json_exact(
+        data["controls"], expected_controls
+    )
+
+
+def _validated_initialization_admission(
+    prerequisite: Mapping[str, Any],
+    config: DepthGateConfig,
+    *,
+    source_start: Mapping[str, Any],
+    environment: Mapping[str, Any],
+    require_pass: bool,
+) -> Mapping[str, Any]:
+    expected_keys = {
+        "target",
+        "source_head",
+        "image_digest",
+        "bundle_sha256",
+        "manifest_sha256",
+        "preflight_sha256",
+        "result_sha256",
+        "admission",
+    }
+    if not isinstance(prerequisite, Mapping) or set(prerequisite) != expected_keys:
+        raise ValueError("Gate B initialization prerequisite is not authenticated")
+    source_head = prerequisite["source_head"]
+    image_digest = prerequisite["image_digest"]
+    if (
+        prerequisite["target"] != "gate_b_init"
+        or not isinstance(source_head, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source_head) is None
+        or not isinstance(image_digest, str)
+        or re.fullmatch(r"sha256:[0-9a-f]{64}", image_digest) is None
+        or not all(
+            _sha256_complete(prerequisite[name])
+            for name in (
+                "bundle_sha256",
+                "manifest_sha256",
+                "preflight_sha256",
+                "result_sha256",
+            )
+        )
+    ):
+        raise ValueError("Gate B initialization provenance fields are invalid")
+    admission = prerequisite["admission"]
+    if not isinstance(admission, Mapping):
+        raise ValueError("Gate B initialization admission is missing")
+    if set(admission) != {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "config",
+        "prerequisites",
+        "initialization",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+    }:
+        raise ValueError("Gate B initialization admission schema is invalid")
+    if _strict_json_sha256(admission) != prerequisite["result_sha256"]:
+        raise ValueError("Gate B initialization result digest is invalid")
+    expected_bundle = hashlib.sha256(
+        (
+            "example21-launch-bundle-v1\0gate_b_init\0"
+            f"{source_head}\0{prerequisite['preflight_sha256']}\0"
+            f"{prerequisite['result_sha256']}"
+        ).encode()
+    ).hexdigest()
+    if prerequisite["bundle_sha256"] != expected_bundle:
+        raise ValueError("Gate B initialization bundle digest is invalid")
+    qualification = _gate_b_initialization_qualification(admission, config)
+    if not gate._json_exact(admission["qualification"], qualification):
+        raise ValueError("Gate B initialization qualification is stale")
+    if require_pass and qualification["passed"] is not True:
+        raise ValueError("Gate B initialization admission did not pass")
+    if (
+        admission["source_start"]["commit"] != source_head
+        or admission["source_end"]["commit"] != source_head
+        or admission["environment"]["image_digest"] != image_digest
+        or source_start["commit"] != source_head
+        or environment["image_digest"] != image_digest
+    ):
+        raise ValueError("Gate B initialization source or image differs")
+    return admission
+
+
+def _initialization_evidence_complete(
+    report: Mapping[str, Any],
+    config: DepthGateConfig,
+) -> bool:
+    try:
+        admission = _validated_initialization_admission(
+            report["prerequisites"]["gate_b_initialization"],
+            config,
+            source_start=report["source_start"],
+            environment=report["environment"],
+            require_pass=True,
+        )
+        initialization = admission["initialization"]
+        parameter_sha = initialization["parameter_sha256"]
+        parameter_count = initialization["parameter_count"]
+        return bool(
+            initialization["fresh_model"] is True
+            and initialization["parameters_finite"] is True
+            and gate._is_integer(initialization["model_seed"])
+            and int(initialization["model_seed"]) == config.model_seed
+            and gate._json_exact(initialization["configuration"], asdict(config))
+            and _sha256_complete(parameter_sha)
+            and gate._is_integer(parameter_count)
+            and int(parameter_count) > 0
+            and isinstance(initialization["compile_warnings"], list)
+            and _compiler_evidence_complete(initialization["compiler"])
+            and gate._source_evidence_clean(report["source_start"])
+            and gate._gpu_environment_verified(report["environment"])
+            and report["training"]["initialization_parameter_sha256"]
+            == parameter_sha
+            and report["evaluation"]["initialization_parameter_sha256"]
+            == parameter_sha
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _training_evidence_complete(
+    report: Mapping[str, Any],
+    config: DepthGateConfig,
+) -> bool:
+    training = report["training"]
+    initialization = report["prerequisites"]["gate_b_initialization"][
+        "admission"
+    ]["initialization"]
+    losses = gate._real_array(training["losses"])
+    categories = {
+        "logits",
+        "model_states",
+        "gradients",
+        "pp_prop_traces",
+        "adam",
+        "parameters",
+    }
+    if (
+        losses.shape != (config.training_updates,)
+        or not np.isfinite(losses).all()
+        or training["algorithm"] != "production_pp_prop"
+        or not gate._is_integer(training["executed_updates"])
+        or int(training["executed_updates"]) != config.training_updates
+        or not gate._is_integer(training["batch_size"])
+        or int(training["batch_size"]) != config.batch_size
+        or not gate._is_integer(training["chunk_count"])
+        or int(training["chunk_count"]) != 32
+        or not gate._is_integer(training["chunk_updates"])
+        or int(training["chunk_updates"]) != 128
+        or not gate._json_exact(
+            training["effort_update_counts"],
+            {"1": 1_024, "2": 1_024, "4": 1_024, "8": 1_024},
+        )
+        or not _sha256_complete(training["initialization_parameter_sha256"])
+        or not _sha256_complete(training["final_parameter_sha256"])
+        or training["initialization_parameter_sha256"]
+        == training["final_parameter_sha256"]
+        or not isinstance(training["compile_warnings"], list)
+        or not _compiler_evidence_complete(training["compiler"])
+        or not gate._json_exact(
+            training["compiler"], initialization["compiler"]
+        )
+        or not gate._json_exact(
+            training["compile_warnings"], initialization["compile_warnings"]
+        )
+    ):
+        return False
+    finite = training["finite"]
+    maxima = training["max_abs"]
+    counts = training["value_count"]
+    if not all(
+        isinstance(section, Mapping) and set(section) == categories
+        for section in (finite, maxima, counts)
+    ):
+        return False
+    if not all(finite[name] is True for name in categories):
+        return False
+    if not all(
+        gate._is_finite_real(maxima[name]) and float(maxima[name]) >= 0.0
+        for name in categories
+    ):
+        return False
+    if not all(
+        gate._is_integer(counts[name]) and int(counts[name]) > 0
+        for name in categories
+    ):
+        return False
+    source_start = report["source_start"]
+    source_end = report["source_end"]
+    return bool(
+        gate._source_evidence_clean(source_end)
+        and source_start["commit"] == source_end["commit"]
+    )
+
+
+def _depth_metric_complete(
+    metric: Mapping[str, Any],
+    *,
+    checkpoint: int,
+    count: int,
+) -> bool:
+    if set(metric) != {
+        "correct",
+        "count",
+        "accuracy",
+        "wilson_95_lower",
+        "wilson_95_upper",
+        "prediction_histogram",
+        "prediction_sha256",
+        "checkpoint",
+    }:
+        return False
+    return bool(
+        gate._is_integer(metric["checkpoint"])
+        and int(metric["checkpoint"]) == checkpoint
+        and _sha256_complete(metric["prediction_sha256"])
+        and gate._accuracy_evidence_complete(metric, count)
+        and max(map(int, metric["prediction_histogram"])) < count
+    )
+
+
+def _evaluation_evidence_complete(
+    evaluation: Mapping[str, Any],
+    config: DepthGateConfig,
+) -> bool:
+    count = config.validation_episodes
+    if evaluation["finite"] is not True:
+        return False
+    depths = evaluation["depths"]
+    if not isinstance(depths, Mapping) or set(depths) != {
+        str(index) for index in range(config.gap_steps + 1)
+    }:
+        return False
+    for depth_index in range(config.gap_steps + 1):
+        arms = depths[str(depth_index)]
+        if not isinstance(arms, Mapping) or set(arms) != {
+            "intact",
+            "shuffled",
+            "no_context",
+        }:
+            return False
+        if not all(
+            _depth_metric_complete(
+                arms[arm], checkpoint=depth_index, count=count
+            )
+            for arm in ("intact", "shuffled", "no_context")
+        ):
+            return False
+    if not gate._json_exact(evaluation["h0_proper"], depths["0"]["intact"]):
+        return False
+    efforts = evaluation["efforts"]
+    if not isinstance(efforts, Mapping) or set(efforts) != {
+        str(effort) for effort in QUALIFYING_EFFORTS
+    }:
+        return False
+    h0 = evaluation["h0_proper"]
+    for effort in QUALIFYING_EFFORTS:
+        evidence = efforts[str(effort)]
+        if not isinstance(evidence, Mapping) or set(evidence) != {
+            "intact",
+            "shuffled",
+            "no_context",
+            "h0_final_target",
+            "intact_minus_h0",
+            "intact_minus_shuffled",
+        }:
+            return False
+        matching = depths[str(effort)]
+        if not all(
+            gate._json_exact(evidence[arm], matching[arm])
+            for arm in ("intact", "shuffled", "no_context")
+        ):
+            return False
+        h0_final = evidence["h0_final_target"]
+        if (
+            not _depth_metric_complete(h0_final, checkpoint=0, count=count)
+            or h0_final["prediction_sha256"] != h0["prediction_sha256"]
+            or h0_final["prediction_histogram"] != h0["prediction_histogram"]
+        ):
+            return False
+        intact_gap = (
+            evidence["intact"]["accuracy"] - h0_final["accuracy"]
+        )
+        shuffled_gap = (
+            evidence["intact"]["accuracy"] - evidence["shuffled"]["accuracy"]
+        )
+        if not all(
+            gate._is_finite_real(evidence[name])
+            for name in ("intact_minus_h0", "intact_minus_shuffled")
+        ):
+            return False
+        if not math.isclose(
+            float(evidence["intact_minus_h0"]),
+            intact_gap,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ) or not math.isclose(
+            float(evidence["intact_minus_shuffled"]),
+            shuffled_gap,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            return False
+    return True
+
+
+def _held_out_invariants_complete(data: Mapping[str, Any]) -> bool:
+    expected = {
+        "validation_episode_count": 512,
+        "distinct_training_cycle_count": 262_144,
+        "distinct_validation_cycle_count": 512,
+        "training_validation_overlap_count": 0,
+        "balanced_queries": True,
+        "target_trajectories_exact": True,
+        "no_copy_shortcut_at_every_effort": True,
+        "cross_effort_h0_prediction_identity": True,
+        "cross_effort_h0_identity_count": 512,
+    }
+    return gate._json_exact(data["held_out_invariants"], expected)
+
+
+def _gate_a_prerequisite_complete(
+    gate_a: Mapping[str, Any],
+    config: DepthGateConfig,
+) -> bool:
+    return bool(
+        gate_a["qualification_passed"] is True
+        and gate_a["result_sha256"] == config.gate_a_result_sha256
+        and gate_a["manifest_sha256"] == config.gate_a_manifest_sha256
+        and gate_a["source_commit"] == config.gate_a_source_commit
+    )
+
+
+def _gate_b_initialization_qualification(
+    report: Mapping[str, Any],
+    config: DepthGateConfig,
+) -> dict[str, Any]:
+    criteria = {
+        name: False for name in _INITIALIZATION_QUALIFICATION_CRITERIA
+    }
+    if config.qualification_regime != "preregistered_full":
+        return {
+            "passed": False,
+            "criteria": criteria,
+            "interpretation": "nonqualifying_abbreviated_no_capability_conclusion",
+        }
+    try:
+        initialization = report["initialization"]
+        criteria["schema_and_control"] = bool(
+            set(report) - {"qualification"}
+            == {
+                "schema_version",
+                "control",
+                "qualification_regime",
+                "config",
+                "prerequisites",
+                "initialization",
+                "source_start",
+                "source_end",
+                "source_files",
+                "environment",
+            }
+            and gate._is_integer(report["schema_version"])
+            and int(report["schema_version"]) == GATE_B_SCHEMA_VERSION
+            and report["control"] == GATE_B_INITIALIZATION_CONTROL
+            and report["qualification_regime"] == "preregistered_full"
+        )
+        criteria["preregistered_configuration"] = gate._json_exact(
+            report["config"], asdict(config)
+        )
+        criteria["gate_a_prerequisite_authenticated"] = (
+            _gate_a_prerequisite_complete(
+                report["prerequisites"]["gate_a"], config
+            )
+        )
+        source_start = report["source_start"]
+        source_end = report["source_end"]
+        criteria["source_and_gpu_authenticated"] = bool(
+            gate._source_evidence_clean(source_start)
+            and gate._source_evidence_clean(source_end)
+            and source_start["commit"] == source_end["commit"]
+            and gate._gpu_environment_verified(report["environment"])
+            and gate._json_exact(
+                report["source_files"],
+                {
+                    "latent_workspace_model.py": config.model_source_sha256,
+                    "latent_workspace_task.py": config.task_source_sha256,
+                },
+            )
+        )
+        criteria["initialization_fresh_and_finite"] = bool(
+            initialization["fresh_model"] is True
+            and gate._is_integer(initialization["model_seed"])
+            and int(initialization["model_seed"]) == config.model_seed
+            and gate._json_exact(initialization["configuration"], asdict(config))
+            and _sha256_complete(initialization["parameter_sha256"])
+            and gate._is_integer(initialization["parameter_count"])
+            and int(initialization["parameter_count"]) > 0
+            and initialization["parameters_finite"] is True
+        )
+        criteria["compiler_paths_complete"] = _compiler_evidence_complete(
+            initialization["compiler"]
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+    passed = bool(all(criteria.values()))
+    return {
+        "passed": passed,
+        "criteria": criteria,
+        "interpretation": (
+            "gate_b_initialization_admission_passed"
+            if passed
+            else "gate_b_initialization_admission_failed_stop"
+        ),
+    }
+
+
+def _gate_b_initialization_report(
+    model: LatentWorkspaceModel,
+    config: DepthGateConfig,
+    *,
+    gate_a: Mapping[str, Any],
+    source_start: Mapping[str, Any],
+    source_end: Mapping[str, Any],
+    source_files: Mapping[str, Any],
+    environment: Mapping[str, Any],
+) -> dict[str, Any]:
+    report = {
+        "schema_version": GATE_B_SCHEMA_VERSION,
+        "control": GATE_B_INITIALIZATION_CONTROL,
+        "qualification_regime": config.qualification_regime,
+        "config": asdict(config),
+        "prerequisites": {"gate_a": dict(gate_a)},
+        "initialization": _initialization_report(model, config),
+        "source_start": dict(source_start),
+        "source_end": dict(source_end),
+        "source_files": dict(source_files),
+        "environment": dict(environment),
+    }
+    report["qualification"] = _gate_b_initialization_qualification(report, config)
+    return report
+
+
+def _target_contract_report() -> dict[str, Any]:
+    return {
+        "efforts": list(QUALIFYING_EFFORTS),
+        "sequence_length": 19,
+        "h0_index": 10,
+        "active_lengths": {"1": 12, "2": 13, "4": 15, "8": 19},
+        "target_rule": "H_r=f^(r+1)(x)",
+        "supervision_weights": {
+            "1": 0.5,
+            "2": 1.0 / 3.0,
+            "4": 0.2,
+            "8": 1.0 / 9.0,
+        },
+        "suffix_advance_false": True,
+        "suffix_loss_weight_zero": True,
+        "padded_compact_objective_equal": True,
+        "padded_compact_pp_prop_gradients_equal": True,
+        "finite_window_chunk_size": 1,
+    }
+
+
+def _control_report(
+    data: DepthValidationData,
+    config: DepthGateConfig,
+) -> dict[str, Any]:
+    indices = associative_memory_feature_indices(config.row_config)
+    keys = np.asarray(indices.key_indices, dtype=np.int32)
+    values = np.asarray(indices.value_indices, dtype=np.int32)
+    intact_demo = np.asarray(data.intact[:10])
+    shuffled_demo = np.asarray(data.shuffled[:10])
+    return {
+        "rotation_candidates": list(range(1, 10)),
+        "all_validation_rotations_valid": bool(
+            np.all((np.asarray(data.shuffled_shifts) >= 1) & (np.asarray(data.shuffled_shifts) <= 9))
+        ),
+        "all_shuffled_answers_differ_at_qualifying_depths": bool(
+            all(
+                _iterate_mapping(
+                    (unrank_ten_cycle(int(mapping_id)) + int(shift)) % 10,
+                    int(query),
+                    effort + 1,
+                )
+                != int(np.asarray(data.targets_by_depth)[effort, episode_index])
+                for episode_index, (mapping_id, query, shift) in enumerate(
+                    zip(data.mapping_ids, data.query_colors, data.shuffled_shifts, strict=True)
+                )
+                for effort in QUALIFYING_EFFORTS
+            )
+        ),
+        "exact_input_output_marginals": bool(
+            np.array_equal(intact_demo[..., keys], shuffled_demo[..., keys])
+            and np.array_equal(
+                intact_demo[..., values].sum(axis=0),
+                shuffled_demo[..., values].sum(axis=0),
+            )
+        ),
+        "no_context_demonstrations_zero": bool(
+            np.count_nonzero(np.asarray(data.no_context[:10])) == 0
+        ),
+        "event_timing_identical": bool(
+            np.asarray(data.advance_masks).shape
+            == (config.sequence_length, config.validation_episodes)
+            and np.asarray(data.advance_masks).all()
+        ),
+    }
+
+
+def _held_out_invariants_report(
+    schedule: DepthSchedule,
+    data: DepthValidationData,
+    evaluation: Mapping[str, Any],
+) -> dict[str, Any]:
+    training_ids = np.asarray(schedule.training_mapping_ids).reshape(-1)
+    validation_ids = np.asarray(schedule.validation_mapping_ids)
+    query_histogram = np.bincount(np.asarray(data.query_colors), minlength=10)
+    h0_hash = evaluation["h0_proper"]["prediction_sha256"]
+    return {
+        "validation_episode_count": int(validation_ids.size),
+        "distinct_training_cycle_count": int(np.unique(training_ids).size),
+        "distinct_validation_cycle_count": int(np.unique(validation_ids).size),
+        "training_validation_overlap_count": int(
+            np.intersect1d(training_ids, validation_ids).size
+        ),
+        "balanced_queries": bool(query_histogram.max() - query_histogram.min() <= 1),
+        "target_trajectories_exact": bool(
+            all(
+                int(data.targets_by_depth[depth_index, episode_index])
+                == _iterate_mapping(
+                    unrank_ten_cycle(int(mapping_id)),
+                    int(query),
+                    depth_index + 1,
+                )
+                for episode_index, (mapping_id, query) in enumerate(
+                    zip(data.mapping_ids, data.query_colors, strict=True)
+                )
+                for depth_index in range(9)
+            )
+        ),
+        "no_copy_shortcut_at_every_effort": bool(
+            all(
+                int(data.targets_by_depth[effort, episode_index])
+                != int(data.targets_by_depth[0, episode_index])
+                for episode_index in range(validation_ids.size)
+                for effort in QUALIFYING_EFFORTS
+            )
+        ),
+        "cross_effort_h0_prediction_identity": bool(
+            all(
+                evaluation["efforts"][str(effort)]["h0_final_target"][
+                    "prediction_sha256"
+                ]
+                == h0_hash
+                for effort in QUALIFYING_EFFORTS
+            )
+        ),
+        "cross_effort_h0_identity_count": int(validation_ids.size),
+    }
+
+
+def _learner_report(config: DepthGateConfig) -> dict[str, Any]:
+    return {
+        "algorithm": "production_pp_prop",
+        "optimizer": "Adam",
+        "trace_factorization": "io_factorized",
+        "recurrence_scope": "diagonal",
+        "trace_decay": config.trace_decay,
+        "vjp_method": "multi-step",
+    }
 
 
 def _qualification_report(
@@ -1057,8 +2042,255 @@ def _qualification_report(
     config: DepthGateConfig,
 ) -> dict[str, Any]:
     criteria = {name: False for name in _QUALIFICATION_CRITERIA}
+    if config.qualification_regime != "preregistered_full":
+        return {
+            "passed": False,
+            "criteria": criteria,
+            "interpretation": "nonqualifying_abbreviated_no_capability_conclusion",
+        }
+    try:
+        learner = report["learner"]
+        criteria["schema_and_control"] = bool(
+            gate._is_integer(report["schema_version"])
+            and int(report["schema_version"]) == GATE_B_SCHEMA_VERSION
+            and report["control"] == GATE_B_CONTROL
+            and report["qualification_regime"] == "preregistered_full"
+            and learner["algorithm"] == "production_pp_prop"
+        )
+        criteria["preregistered_configuration"] = gate._json_exact(
+            report["config"], asdict(config)
+        )
+        gate_a = report["prerequisites"]["gate_a"]
+        criteria["gate_a_prerequisite_authenticated"] = bool(
+            gate_a["qualification_passed"] is True
+            and gate_a["result_sha256"] == config.gate_a_result_sha256
+            and gate_a["manifest_sha256"] == config.gate_a_manifest_sha256
+            and gate_a["source_commit"] == config.gate_a_source_commit
+            and gate._json_exact(
+                report["source_files"],
+                {
+                    "latent_workspace_model.py": config.model_source_sha256,
+                    "latent_workspace_task.py": config.task_source_sha256,
+                },
+            )
+        )
+        criteria["gate_b_initialization_authenticated"] = (
+            _initialization_evidence_complete(report, config)
+        )
+        data = report["data"]
+        criteria["cycle_catalog_and_schedule_complete"] = (
+            _schedule_evidence_complete(data["schedule"])
+            and _validation_evidence_complete(data["validation"])
+        )
+        criteria["checkpoint_targets_and_controls_complete"] = (
+            _target_and_control_evidence_complete(data)
+        )
+        criteria["training_complete_and_finite"] = bool(
+            gate._json_exact(
+                learner,
+                {
+                    "algorithm": "production_pp_prop",
+                    "optimizer": "Adam",
+                    "trace_factorization": "io_factorized",
+                    "recurrence_scope": "diagonal",
+                    "trace_decay": config.trace_decay,
+                    "vjp_method": "multi-step",
+                },
+            )
+            and _training_evidence_complete(report, config)
+        )
+        evaluation = report["evaluation"]
+        criteria["evaluation_complete_and_finite"] = (
+            _evaluation_evidence_complete(evaluation, config)
+        )
+        efforts = evaluation["efforts"]
+        criteria["matching_depth_above_chance_at_every_effort"] = all(
+            gate._is_finite_real(efforts[str(effort)]["intact"]["wilson_95_lower"])
+            and float(efforts[str(effort)]["intact"]["wilson_95_lower"]) > 1.0 / 8.0
+            for effort in QUALIFYING_EFFORTS
+        )
+        improvements = [
+            float(efforts[str(effort)]["intact"]["accuracy"])
+            - float(efforts[str(effort)]["h0_final_target"]["accuracy"])
+            for effort in QUALIFYING_EFFORTS
+        ]
+        criteria["at_least_two_depths_improve_over_h0"] = (
+            sum(value >= 0.15 for value in improvements) >= 2
+        )
+        criteria["intact_exceeds_shuffled_at_every_effort"] = all(
+            float(efforts[str(effort)]["intact"]["accuracy"])
+            - float(efforts[str(effort)]["shuffled"]["accuracy"])
+            >= 0.15
+            for effort in QUALIFYING_EFFORTS
+        )
+        criteria["controls_not_demonstrably_above_chance"] = all(
+            gate._is_finite_real(
+                efforts[str(effort)][arm]["wilson_95_lower"]
+            )
+            and float(efforts[str(effort)][arm]["wilson_95_lower"]) <= 1.0 / 8.0
+            for effort in QUALIFYING_EFFORTS
+            for arm in ("shuffled", "no_context")
+        )
+        h0_lower = evaluation["h0_proper"]["wilson_95_lower"]
+        criteria["h0_one_step_above_chance"] = bool(
+            gate._is_finite_real(h0_lower) and float(h0_lower) > 1.0 / 8.0
+        )
+        criteria["held_out_invariants_complete"] = (
+            _held_out_invariants_complete(data)
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+    passed = bool(all(criteria.values()))
     return {
-        "passed": False,
+        "passed": passed,
         "criteria": criteria,
-        "interpretation": "gate_b_failed_stop_no_capability_conclusion",
+        "interpretation": (
+            "gate_b_passed_demonstrated_depth_application"
+            if passed
+            else "gate_b_failed_stop_no_capability_conclusion"
+        ),
     }
+
+
+def run_depth_gate(
+    config: DepthGateConfig,
+    *,
+    prerequisites: Mapping[str, Any],
+    source_start: Mapping[str, Any],
+    source_end_reporter: Callable[[], Mapping[str, Any]],
+    source_files: Mapping[str, Any],
+    environment: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Run the demonstrated-depth pp-prop experiment.
+
+    Parameters
+    ----------
+    config
+        Frozen production configuration or an explicitly nonqualifying smoke.
+    prerequisites
+        Authenticated Gate A and Gate B initialization evidence.
+    source_start
+        Clean live-Git report captured before the run.
+    source_end_reporter
+        Zero-argument callback that captures live Git after evaluation.
+    source_files
+        Frozen model and task source digests.
+    environment
+        Authenticated accelerator and immutable-image evidence.
+
+    Returns
+    -------
+    dict
+        Strict Gate B report with a recomputed fail-closed qualification.
+    """
+
+    if not callable(source_end_reporter):
+        raise TypeError("source_end_reporter must be callable")
+    start = time.perf_counter()
+    try:
+        initialization_prerequisite = prerequisites["gate_b_initialization"]
+        initialization_admission = _validated_initialization_admission(
+            initialization_prerequisite,
+            config,
+            source_start=source_start,
+            environment=environment,
+            require_pass=config.qualification_regime == "preregistered_full",
+        )
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
+        raise RuntimeError(
+            "Gate B initialization admission authentication failed"
+        ) from error
+    gate_b_initialization = initialization_admission["initialization"]
+    model = LatentWorkspaceModel(
+        _model_config(config, batch_size=config.batch_size)
+    )
+    initial_parameters = legacy._parameter_values(model)
+    initial_sha = legacy._array_digest(initial_parameters)
+    initial_count = int(
+        sum(
+            np.asarray(leaf).size
+            for value in initial_parameters.values()
+            for leaf in jax.tree.leaves(value)
+        )
+    )
+    initial_finite = bool(
+        all(
+            np.isfinite(np.asarray(leaf)).all()
+            for value in initial_parameters.values()
+            for leaf in jax.tree.leaves(value)
+        )
+    )
+    try:
+        runtime_initialization_matches = bool(
+            gate_b_initialization["fresh_model"] is True
+            and gate_b_initialization["parameters_finite"] is True
+            and gate._is_integer(gate_b_initialization["model_seed"])
+            and int(gate_b_initialization["model_seed"]) == config.model_seed
+            and gate._json_exact(
+                gate_b_initialization["configuration"], asdict(config)
+            )
+            and gate_b_initialization["parameter_sha256"] == initial_sha
+            and gate._is_integer(gate_b_initialization["parameter_count"])
+            and int(gate_b_initialization["parameter_count"]) == initial_count
+            and _compiler_evidence_complete(gate_b_initialization["compiler"])
+            and initial_finite
+        )
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
+        raise RuntimeError(
+            "Gate B runtime initialization differs from admission"
+        ) from error
+    if not runtime_initialization_matches:
+        raise RuntimeError("Gate B runtime initialization differs from admission")
+    if config.qualification_regime == "preregistered_full" and not (
+        _gate_a_prerequisite_complete(prerequisites["gate_a"], config)
+        and gate._source_evidence_clean(source_start)
+        and gate._gpu_environment_verified(environment)
+        and gate._json_exact(
+            source_files,
+            {
+                "latent_workspace_model.py": config.model_source_sha256,
+                "latent_workspace_task.py": config.task_source_sha256,
+            },
+        )
+        and _compiler_evidence_complete(gate_b_initialization["compiler"])
+    ):
+        raise RuntimeError("Gate B authentication failed before training")
+
+    schedule = _build_schedule(config)
+    training, schedule_report = _train_depth_gate(model, schedule, config)
+    validation = _encode_validation_data(schedule, config)
+    evaluation = _evaluate_model(model, validation, config)
+    source_end = source_end_reporter()
+    if not isinstance(source_end, Mapping):
+        raise TypeError("source_end_reporter must return a mapping")
+    evaluation["initialization_parameter_sha256"] = initial_sha
+    data = {
+        "schedule": schedule_report,
+        "validation": _validation_data_report(validation),
+        "target_contract": _target_contract_report(),
+        "controls": _control_report(validation, config),
+        "held_out_invariants": _held_out_invariants_report(
+            schedule, validation, evaluation
+        ),
+    }
+    report = {
+        "schema_version": GATE_B_SCHEMA_VERSION,
+        "control": GATE_B_CONTROL,
+        "qualification_regime": config.qualification_regime,
+        "learner": _learner_report(config),
+        "config": asdict(config),
+        "prerequisites": {
+            "gate_a": dict(prerequisites["gate_a"]),
+            "gate_b_initialization": dict(initialization_prerequisite),
+        },
+        "data": data,
+        "training": training,
+        "evaluation": evaluation,
+        "source_start": dict(source_start),
+        "source_end": dict(source_end),
+        "source_files": dict(source_files),
+        "environment": dict(environment),
+    }
+    report["qualification"] = _qualification_report(report, config=config)
+    report["total_wall_seconds"] = time.perf_counter() - start
+    return report
