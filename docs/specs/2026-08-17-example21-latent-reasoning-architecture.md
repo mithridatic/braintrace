@@ -686,6 +686,28 @@ model, step, or eligibility-trace call may execute directly in the Python loop.
 Materializing the complete `(4096, 19, 64, 47)` event tensor on device is not
 required.
 
+The held-out split is also an exact preregistered schedule, not a set from which
+episodes may be selected after training. The retained artifact must record and
+qualification must recompute dtype-and-shape-framed SHA-256 digests for all nine
+validation fields below. These values are fixed by the generator contract above:
+
+| Validation field | SHA-256 |
+| --- | --- |
+| `mapping_ids` | `b036444e228c60116b8bfd9c10399261bcf6645d7b69d27d4b391460fae83cd8` |
+| `query_colors` | `c7e70f56cca66d920d5d690a902b9943f2fcfdff7003fa4bbb3580070738d67e` |
+| `presentation_orders` | `0bab5cfe3c2c87109909d36c59f88ef04983322aacbce469fea6221aa4ac37b0` |
+| `shuffled_shifts` | `15af1f04589cc523d89b66d2f07027158d69068901d786eecfd259a156f2f2d0` |
+| `targets_by_depth` | `a438d64347dc4ec5cfc639342d8b142c785e497ddf06728eb03f8ccfb42d3cd6` |
+| `advance_masks` | `b88b3593d9df51260fbafa4a937159c3da3f56fc33335a30993c0ff8a7462ac8` |
+| `intact` | `5683aa84aa2ef8a1ff623e5e0b60afb3451e617728f0363d3ad84f2ea52dacde` |
+| `shuffled` | `abd5eb4ab2e2a685faeb8f6bf785ad2deb97721b00e8d194b4f65d4995516be3` |
+| `no_context` | `45fd14d3faefad83b0ce6d908456320afa67944b361159cfe503fdfab591162d` |
+
+The digest framing is `dtype.str`, logical shape, then contiguous array bytes,
+in that order. A different validation ID, query, presentation order, rotation,
+event, target, or advance mask invalidates the run before any behavioral score
+is considered.
+
 The retained strict-JSON artifact has `schema_version=1` and
 `control="example21_demonstrated_depth_gate_b"`. Its prerequisite section must
 authenticate the Gate A result SHA-256
@@ -709,6 +731,13 @@ initialization SHA must then be unchanged across efforts and evaluation arms.
 Any source, preflight, or cross-arm mismatch stops before a qualifying training
 run. Gate A is prerequisite capability evidence, not a checkpoint whose learned
 weights initialize Gate B.
+
+The formal Gate B run must authenticate and retain the complete init-only
+admission result and its signed launch manifest, then recompute the admission
+qualification from the retained result before the first update and again before
+signing the formal artifact. Copying only the inner initialization dictionary is
+insufficient. Missing finite-parameter evidence, a changed stored qualification,
+or any result, preflight, manifest-file, or bundle-digest mismatch stops the run.
 
 The 10-cycle construction fixes the relevant shortcut baselines. Its uniform
 output marginal is `1/10`. For every supported `R`, the final target differs
