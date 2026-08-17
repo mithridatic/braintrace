@@ -358,8 +358,22 @@ def _alignment_summary(
     }
 
 
+_PROBE_CACHE: Dict[int, tuple] = {}
+
+
 def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
-    """Build Example 18's deterministic task-major probe trials and windows."""
+    """Build Example 18's deterministic task-major probe trials and windows.
+
+    Memoized per configuration object. Rebuilding costs a Python loop over
+    every probe trial, and one analysis hands the same configuration to the
+    baseline evaluation, the coarse sweep, the refinement sweep, the fixed
+    point and the compaction benchmark. The cache holds a reference to the
+    configuration so its identity stays valid, and returns the same arrays,
+    so no measurement changes.
+    """
+    cached = _PROBE_CACHE.get(id(config))
+    if cached is not None and cached[0] is config:
+        return cached[1]
     layout = EX18._layout(config)
     trials = []
     windows = []
@@ -371,11 +385,24 @@ def _probe_arrays(config: Any) -> tuple[jnp.ndarray, jnp.ndarray]:
             spikes, _, _ = EX18._make_trial(task, EX18._probe_seed(task, index), config)
             trials.append(spikes)
             windows.append(window)
-    return jnp.stack(trials), jnp.asarray(np.stack(windows))
+    built = (jnp.stack(trials), jnp.asarray(np.stack(windows)))
+    _PROBE_CACHE[id(config)] = (config, built)
+    return built
 
 
 def _probe_logit_evaluator(experiment: Any, config: Any):
-    """Build a transform-compatible fixed-probe logit evaluator."""
+    """Build a one-trial-at-a-time fixed-probe logit evaluator.
+
+    The trials are mutually independent and could share the model's batch
+    axis, which the recurrent projection accepts natively. They deliberately
+    do not. On GPU the batch size selects different kernels, and that
+    rounding is occasionally enough to move a marginal membrane potential
+    across the spike threshold; one flipped spike shifts a logit by about
+    1e-4. That is far outside the physical-compaction check's ``rtol=1e-5``
+    / ``atol=1e-6``, and it also reorders the greedy search onto a worse
+    path. Both effects were measured; see
+    ``docs/specs/2026-08-16-probe-evaluation-findings.md``.
+    """
     trials, windows = _probe_arrays(config)
     model = experiment.model
     rec_weight = model.rec_syn.comm.weight
@@ -579,6 +606,11 @@ def _joint_fixed_point_prune(
 
     record_count = n_rec + rows.size + 2
 
+    @brainstate.transform.jit(
+        static_argnames=("neurons",),
+        inline=False,
+        name="example20_joint_prune_phase",
+    )
     def run_phase(
         alive,
         edge_alive,
@@ -1350,7 +1382,12 @@ def _analyze_compaction(
     compact_meets_target = bool(np.all(compact_accuracy >= target))
     if not (predictions_identical and logits_close and compact_meets_target):
         raise RuntimeError(
-            "physical compaction failed masked-model equivalence or target accuracy"
+            "physical compaction failed masked-model equivalence or target "
+            f"accuracy: predictions_identical={predictions_identical}, "
+            f"logits_close={logits_close} (max abs error "
+            f"{float(np.max(np.abs(masked_logits - compact_logits), initial=0.0)):.3e}"
+            f"), compact_meets_target={compact_meets_target} "
+            f"(compact {np.asarray(compact_accuracy).tolist()}, target {target})"
         )
     original_storage = _inference_storage(experiment.model)
     compact_storage = _inference_storage(compact["experiment"].model)

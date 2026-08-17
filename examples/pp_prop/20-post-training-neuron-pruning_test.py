@@ -584,3 +584,17 @@ def test_smoke_entry_point_runs_training_and_pruning(tmp_path):
     assert pruning["safe_retained"] >= 0
     assert (tmp_path / "evolution.png").exists()
     assert (tmp_path / "pruning.png").exists()
+
+
+def test_probe_arrays_are_memoized_per_configuration():
+    """Rebuilding the probe trials is a Python loop over every trial."""
+    import brainstate
+    import brainunit as u
+
+    example = _load()
+    config = replace(example.EX18._EvolutionConfig.smoke(), eval_trials_per_task=1)
+    with brainstate.environ.context(dt=1.0 * u.ms):
+        first = example._probe_arrays(config)
+        assert example._probe_arrays(config) is first
+        other = replace(config, eval_trials_per_task=2)
+        assert example._probe_arrays(other) is not first
