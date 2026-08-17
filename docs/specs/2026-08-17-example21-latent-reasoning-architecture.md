@@ -1,7 +1,8 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2 implemented on the feature branch; structural validation in
-progress; capability Gates A--D pending
+Status: Stage 2 implemented; a provenance-incomplete Gate A diagnostic failed;
+Stage 2.1 stabilization preregistered before implementation; capability Gates
+A--D pending
 
 Date: 2026-08-17
 
@@ -468,6 +469,73 @@ one, 262,144 bytes for the batch-64 binding gate, and 1,716,224 bytes for a
 419-query evaluation batch. This is state storage only; compiler trace and
 temporary allocation remain separately measured.
 
+#### Stage 2.1: diagonal-safe carrier stabilization
+
+The failed Gate A diagnostic below causally localizes its initiating
+optimization failure to the first Adam update of the dense readout projection,
+not to a change in memory, read, spikes, or voltage. Before another Gate A run,
+memory mode caps each example's continuous workspace carrier only at the two
+places where its scale enters a dense projection. With fixed `C = 1.0`, define
+
+```text
+d(H) = stop_gradient(max(C, ||H||_2))
+H_cap = C * H / d(H)
+```
+
+where the norm and maximum are per example over the final carrier dimension.
+Use `H_cap` as the input to memory-mode `readout_projection` and
+`workspace_query_projection`. Do not replace, normalize, or stop the raw `H`
+stored in `workspace_carrier`; recurrence, snapshots, diagnostics, and state
+restoration continue to use the raw carrier. The memory read and
+`memory_read_projection` are unchanged. Because `d(H)` is stopped, the local
+Jacobian is exactly `(C / d(H)) * I`: scalar diagonal, identity below the cap,
+and therefore compatible with pp-prop's diagonal recurrence approximation.
+The cap adds no parameter and `C` is fixed rather than tuned.
+
+The cap is memory-mode-only. `context_memory_width=0` must not execute it, and
+the complete width-zero forward outputs, states, gradients, parameter paths,
+and serialized reports remain byte-exact to the pre-Stage-2.1 legacy path.
+Co-located tests must cover below-cap identity, above-cap norm, the exact
+scalar-diagonal Jacobian, unchanged raw carrier state, both capped projection
+sites, and width-zero byte identity before an implementation can be accepted.
+
+Stage 2.1 has two fail-closed admission checks before the 10,000-update Gate A
+rerun. The one-update check uses update zero of the exact production schedule
+(`training_schedule_sha256 =
+25cae0684c3a0cb1a0d0ae1a12b7db8bdf37a1f15d687cdf79362c9c6163ef9b`),
+the production topology and batch 64, the declared seeds, and exactly one
+pp-prop-plus-Adam update. Retain separate H0 and H1 measurements immediately
+before and after that update. It passes only when:
+
+- pre- and post-update H0/H1 cross-entropies, color logits, capped carriers,
+  gradients, pp-prop factors, Adam factors, and parameter updates are finite;
+- each post-update H0 and H1 cross-entropy is no more than its corresponding
+  pre-update value plus `1.0`;
+- the post-update maximum absolute color logit is below `10` at each depth;
+- every observed per-example capped-carrier norm is at most `1`; and
+- the required associative, readout, and color-decoder gradient/factor group
+  norms are finite and nonzero.
+
+The second check is a fixed 256-update smoke run with batch 64 and the complete
+production topology, memory width 32, decay 1.0, optimizer, model/data seeds,
+and held-out evaluation protocol; only `training_updates=256` is abbreviated.
+Its generated schedule digests are retained before results are inspected. It
+passes only if every retained loss, state, logit, gradient/factor, Adam state,
+and parameter tensor is finite; the final-64 mean training loss is below the
+pre-update initial mean (the arithmetic mean of the retained update-zero H0 and
+H1 cross-entropies); and intact held-out predictions contain at least two
+distinct colors at both H0 and H1. A one-color prediction histogram at either
+supervised depth is the prior collapse and fails the smoke. If either admission
+check fails, stop before the full Gate A run; do not change `C`, learning rate,
+budget, width, or data in response without a new preregistered amendment.
+
+Any Stage 2.1 smoke or Gate A rerun must use an image built with the exact clean
+source revision in its OCI revision label. Alongside each result, retain and
+hash a preflight sidecar containing the resolved image ID and revision, exact
+command, stdout/stderr, exit status, read-only common-Git mount, `GIT_DIR`,
+`GIT_WORK_TREE`, `GIT_OPTIONAL_LOCKS=0`, expected commit/clean assertions, and
+live Git agreement. No rerun can qualify from the result JSON alone.
+
 ### `examples/pp_prop/21-latent-reasoning-in-context.py`
 
 - Wire memory/workspace configuration through `_model_config`.
@@ -842,6 +910,75 @@ for pp-prop compile plus 10,000 updates, and 12.614 seconds for the finite-windo
 oracle. Peak device bytes in use were 1,297,731,328 and the peak allocator pool
 was 2,183,135,232 bytes against a 12,884,901,888-byte limit.
 
+### Retained post-architecture Gate A diagnostic
+
+The retained diagnostic artifact is
+`var/example21-binding-gate/0a33ee4-preregistered-full.json`, 290,964 bytes,
+SHA-256
+`c67512326c1d380bad93371685c8e8e4f10d49710a0605804ac8f916fa84b278`.
+It is strict finite JSON and records matching live-Git observations at process
+start and end for clean source commit
+`0a33ee44f4dfd104e473b23c26bb790b04efa129`. Its recorded GPU image ID,
+`sha256:d3f7838f5f591bb16c0109294b9ba4a799c01da63801103c3895cb82288a8d42`,
+matches the retained local image. The configuration digest independently
+recomputes to
+`456bbe7c59b3d78db2afa9bb11751db161c34ea7bd82205124d4a76f4867697c`.
+
+Independent CPU reconstruction confirms 640,000 unique training mappings, 512
+unique held-out mappings, zero overlap, exact intact/shuffled input and output
+marginals, and a different pairing on every held-out episode. Its mapping and
+schedule digests are byte-identical to the legacy control. The qualification
+schema and calculation also recompute exactly: 25 of 28 criteria are true. The
+false criteria are intact accuracy at least 0.80, intact Wilson lower bound
+above pairing chance, and intact-minus-shuffled at least 0.25.
+
+Behavior failed decisively. At both H0 and H1, intact, shuffled, and no-context
+accuracy are all `48/512 = 0.093750`, Wilson interval
+`[0.0714405, 0.1221102]`, with pairing chance `0.25` and binding gap `0.0`.
+Every arm predicts color 6 on all 512 examples. Yet intact and shuffled memory
+differ on `512/512` episodes, with mean L2 difference `2.69420`; their H0/H1
+read differences are `1.36865` and `3.47370`, and workspace differences are
+`6.70289` and `6.94864`. All three associative compiler paths are direct and
+move. The result therefore contains pairing-sensitive internal state but no
+learned use of it at the output.
+
+The retained loss sequence exposes the optimization collapse. It begins at
+`2.376590`, then jumps to `96.581032`, `1332.781616`, and `1338.512939`
+across the first updates before converging to `2.302586`, approximately
+`ln(10)`. The dense `readout_projection` moves by L2 `8.53337` over the full
+run and the color-decoder group by `3.16696`; finiteness and parameter movement
+therefore do not establish a usable readout.
+
+A separate deterministic replay of the first production batch localizes the
+initiating failure; these replay measurements are diagnostic evidence and are
+not fields in the retained Gate JSON. Before the update, H0/H1 cross-entropies
+were `2.3483` and `2.4049`, with maximum absolute color logits `0.828` and
+`1.189`. After exactly one pp-prop-plus-Adam step, they became `72.319` and
+`124.933`, with maximum absolute logits `111.82` and `199.70`, while H0
+voltage, spikes, and memory read were nearly unchanged. Restoring only
+`readout_projection.weight` to its pre-update value rescued cross-entropy to
+`2.256` and `2.396`. Restoring only the color head left `74.35` and `128.08`;
+restoring only the associative-memory parameter paths left `72.06` and
+`116.60`.
+
+The first readout update has maximum absolute delta `0.00299998` across nearly
+every coordinate and L2 `1.5353` over 262,272 parameters, near the dense
+`0.003 * sqrt(262272)` first-Adam-step limit. This intervention evidence
+causally locates the initiating blow-up at the dense readout update. Gradient
+norm clipping happens before Adam; on the first step Adam's moment
+normalization largely cancels that common magnitude scaling. Stage 2.1
+therefore bounds the readout's carrier input while leaving the raw state and
+pp-prop-visible diagonal structure intact.
+
+This diagnostic does not formally close Gate A. Its directory contains no
+retained exact preflight command, stdout/stderr, exit status, or mount/environment
+sidecar required by the qualifying-container provenance contract, and the
+image's OCI revision label is `uncommitted`. The live start/end source evidence
+and exact image ID make the behavioral failure useful, but they do not waive
+the preregistered sidecar. Gates B--D remain unrun. A Stage 2.1 rerun may close
+Gate A only after both admission checks pass and exact-revision provenance is
+retained.
+
 ### Stage 2 implementation record: structural evidence only
 
 Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
@@ -906,8 +1043,11 @@ validation remains in progress.
 
 ### Required post-change results
 
-Pending: Gate A binding, Gate B demonstrated-depth application, Gate C
-mechanism ablations, then Gate D full ARC qualification.
+Pending: implement and pass the Stage 2.1 one-update and 256-update admission
+checks; rerun Gate A with exact-revision image and preflight sidecar; only then
+run Gate B demonstrated-depth application, Gate C mechanism ablations, and Gate
+D full ARC qualification. A failed admission check or Gate A result stops this
+sequence.
 
 ## Explicit non-claims
 
