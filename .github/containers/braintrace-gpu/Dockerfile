@@ -17,6 +17,7 @@ RUN python -m pip install --no-cache-dir \
       "psutil==7.2.2" \
       "hypothesis==6.165.2" \
       "pytest==9.1.1" \
+      "pytest-cov==7.1.0" \
       "brainstate==0.5.3" \
       "brainunit==0.5.2" \
       "brainevent[cuda12]==0.2.1" \
@@ -30,6 +31,11 @@ COPY . /opt/braintrace
 
 RUN python -m pip install --no-cache-dir --no-deps "/opt/braintrace[cuda12,examples]" \
     && python -c "import jax, sys; assert sys.version_info[:2] == (3, 14); assert jax.__version__ == '0.11.0'"
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes git \
+    && rm -rf /var/lib/apt/lists/* \
+    && git --version
 
 # Persistent XLA compilation cache. Declared after the install layers so editing
 # it never invalidates the pip download cache. Bind-mount a shared host directory
