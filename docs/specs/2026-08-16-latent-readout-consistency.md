@@ -117,6 +117,17 @@ the analog carrier and the substrate start from `H_0`.
 - Training that moves. Eight updates at `lr=1e-5` left `W_f` at exactly zero
   delta.
 
+## Test environment
+
+The focused tests must run with `JAX_PLATFORMS=cpu`. On GPU, JAX evaluates
+float32 matmuls in TF32 (~1e-3 relative), and the model's zero-padded
+`(batch * state_rows, width) @ (width, symbol_count)` readout rounds differently
+from the narrow `(batch, width) @ (width, symbol_count)` the assertions
+recompute. The gap is ~1.2e-4, which exceeds the 1e-5 readout tolerances. This
+predates the change and is a property of the tolerances, not of the seeding:
+`max|voltage - memory_read|` is exactly `0.0`. Measured outcomes below are GPU
+runs; the test evidence is CPU.
+
 ## Measured outcome
 
 Default configuration, RTX 3080 Ti, `seed=2108`, `codebook_seed=313320`,
