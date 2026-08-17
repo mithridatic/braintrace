@@ -502,8 +502,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         recurrent_radius = jnp.max(jnp.abs(jnp.linalg.eigvals(recurrent)))
         recurrent = recurrent * (config.latent_spectral_radius / recurrent_radius)
         self.Wf = brainstate.ParamState(recurrent.astype(jnp.float32))
+        clock_scale = 1.0 / math.sqrt(config.task.clock_width)
         self.Wc = brainstate.ParamState(
-            jnp.zeros((config.task.clock_width, self.width), dtype=jnp.float32)
+            (
+                clock_scale
+                * projection_random.randn(config.task.clock_width, self.width)
+            ).astype(jnp.float32)
         )
         self.Wo = brainstate.ParamState(value_codes.T)
         self.init_state()

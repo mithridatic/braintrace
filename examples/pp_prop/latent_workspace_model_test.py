@@ -20,10 +20,10 @@ try:
         LatentWorkspaceModel,
         ModelConfig,
         _surrogate_spike,
-        factored_memory_read,
-        occupied_slot_derangement,
         dale_column_signs,
         dale_projected,
+        factored_memory_read,
+        occupied_slot_derangement,
         parameter_snapshot,
         phase_masks,
         run_sequence,
@@ -39,10 +39,10 @@ except ModuleNotFoundError:
         LatentWorkspaceModel,
         ModelConfig,
         _surrogate_spike,
-        factored_memory_read,
-        occupied_slot_derangement,
         dale_column_signs,
         dale_projected,
+        factored_memory_read,
+        occupied_slot_derangement,
         parameter_snapshot,
         phase_masks,
         run_sequence,
@@ -846,6 +846,7 @@ def test_zero_clock_weight_leaves_the_clock_bank_inert() -> None:
     silenced[:, task.clock_slice] = 0.0
 
     model = _model(bindings=2, slots=3, latent=3, width=8)
+    model.Wc.value = jnp.zeros_like(model.Wc.value)
     with_clock = np.asarray(run_sequence(model, jnp.asarray(inputs)).logits)
     model.reset_state()
     without_clock = np.asarray(run_sequence(model, jnp.asarray(silenced)).logits)

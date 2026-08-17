@@ -611,3 +611,45 @@ def test_real_same_seed_cpu_metrics_are_reproducible(tmp_path):
     for key in ("training", "interventions", "geometry", "reproducibility"):
         assert first[key] == second[key]
     assert first["canonical_metadata_json"] == second["canonical_metadata_json"]
+
+
+def test_canonical_inputs_preserve_the_latent_clock_bank() -> None:
+    from examples.pp_prop.latent_workspace_task import (
+        TaskConfig,
+        generate_episode,
+        latent_clock_code,
+    )
+
+    example = _load()
+    source = TaskConfig(latent_steps=6)
+    destination = TaskConfig(latent_steps=6)
+    episode = generate_episode(source, brainstate.random.RandomState(140))
+
+    packed = example._canonical_inputs(episode, destination)
+    clock = packed[:, destination.clock_slice]
+
+    assert not np.any(clock[: destination.latent_slice.start])
+    np.testing.assert_array_equal(
+        clock[destination.latent_slice],
+        latent_clock_code(destination.latent_steps, destination.clock_width),
+    )
+
+
+def test_canonical_inputs_reclock_when_latent_depth_changes() -> None:
+    from examples.pp_prop.latent_workspace_task import (
+        TaskConfig,
+        generate_episode,
+        latent_clock_code,
+    )
+
+    example = _load()
+    source = TaskConfig(latent_steps=8)
+    destination = TaskConfig(latent_steps=3)
+    episode = generate_episode(source, brainstate.random.RandomState(141))
+
+    packed = example._canonical_inputs(episode, destination)
+
+    np.testing.assert_array_equal(
+        packed[destination.latent_slice, destination.clock_slice],
+        latent_clock_code(3, destination.clock_width),
+    )

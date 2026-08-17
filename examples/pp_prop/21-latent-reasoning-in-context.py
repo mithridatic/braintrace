@@ -46,6 +46,7 @@ try:
         TaskConfig,
         generate_episode,
         generate_matched_episodes,
+        latent_clock_code,
     )
 except ModuleNotFoundError:
     from latent_workspace_analysis import analyze_latent_workspace
@@ -61,6 +62,7 @@ except ModuleNotFoundError:
         TaskConfig,
         generate_episode,
         generate_matched_episodes,
+        latent_clock_code,
     )
 
 
@@ -446,6 +448,9 @@ def _canonical_inputs(episode: Episode, destination: TaskConfig) -> np.ndarray:
     if destination.latent_steps:
         packed[destination.latent_slice.start, destination.phase_slice.start + 3] = 0.0
         packed[destination.latent_slice.start, destination.phase_slice.start + 2] = 1.0
+        packed[destination.latent_slice, destination.clock_slice] = latent_clock_code(
+            destination.latent_steps, destination.clock_width
+        )
     return packed
 
 
