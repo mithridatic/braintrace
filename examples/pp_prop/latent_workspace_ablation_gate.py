@@ -4867,16 +4867,21 @@ def _qualification_report(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--target", choices=("gate_c_init",), required=True)
+    parser.add_argument(
+        "--target",
+        choices=("gate_c_init", "formal_gate_c"),
+        required=True,
+    )
     parser.add_argument("--gate-a-result", type=Path, required=True)
     parser.add_argument("--gate-a-manifest", type=Path, required=True)
     parser.add_argument("--gate-b-manifest", type=Path, required=True)
+    parser.add_argument("--gate-c-init-manifest", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the fixed authenticated Gate C initialization target.
+    """Run a fixed authenticated Gate C target.
 
     Parameters
     ----------
@@ -4909,6 +4914,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.gate_b_manifest.resolve() != gate_b_paths.manifest.resolve():
         raise ValueError("Gate C target requires the fixed Gate B manifest path")
 
+    if args.target == "gate_c_init":
+        if args.gate_c_init_manifest is not None:
+            raise ValueError(
+                "gate_c_init does not accept a Gate C initialization manifest"
+            )
+    elif args.gate_c_init_manifest is None:
+        raise ValueError("formal_gate_c requires the fixed initialization manifest")
+
     source_start = gate_a._source_report()
     environment = gate_a._environment_report()
     gate_a._require_authenticated_gpu_launch(source_start, environment)
@@ -4916,21 +4929,51 @@ def main(argv: list[str] | None = None) -> int:
     expected_paths = launcher.target_paths(
         launch_config,
         head,
-        "gate_c_init",
+        args.target,
     )
     if args.output.resolve() != expected_paths.result.resolve():
         raise ValueError("Gate C target requires the fixed output path")
 
-    prerequisites = launcher._load_gate_c_prerequisites(launch_config)
+    if args.target == "formal_gate_c":
+        initialization_paths = launcher.target_paths(
+            launch_config,
+            head,
+            "gate_c_init",
+        )
+        if (
+            args.gate_c_init_manifest is None
+            or args.gate_c_init_manifest.resolve()
+            != initialization_paths.manifest.resolve()
+        ):
+            raise ValueError(
+                "formal_gate_c requires the fixed initialization manifest path"
+            )
+        prerequisites = launcher._load_formal_gate_c_prerequisites(
+            launch_config,
+            head=head,
+            image_id=str(environment["image_digest"]),
+        )
+    else:
+        prerequisites = launcher._load_gate_c_prerequisites(launch_config)
     source_files = _source_files_report()
-    result = run_gate_c_initialization(
-        GateCConfig(),
-        prerequisites=prerequisites,
-        source_start=source_start,
-        source_end_reporter=gate_a._source_report,
-        source_files=source_files,
-        environment=environment,
-    )
+    if args.target == "formal_gate_c":
+        result = run_gate_c(
+            GateCConfig(),
+            prerequisites=prerequisites,
+            source_start=source_start,
+            source_end_reporter=gate_a._source_report,
+            source_files=source_files,
+            environment=environment,
+        )
+    else:
+        result = run_gate_c_initialization(
+            GateCConfig(),
+            prerequisites=prerequisites,
+            source_start=source_start,
+            source_end_reporter=gate_a._source_report,
+            source_files=source_files,
+            environment=environment,
+        )
     destination = write_artifact(result, args.output)
     print(destination)
     print(json.dumps(result["qualification"], sort_keys=True))

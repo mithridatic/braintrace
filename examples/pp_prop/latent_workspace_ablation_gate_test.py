@@ -2887,6 +2887,34 @@ def _gate_c_cli_host_argv(
     return config, paths, argv
 
 
+def _formal_gate_c_cli_host_argv(
+    *,
+    head: str = "c" * 40,
+) -> tuple[launcher.LaunchConfig, Path, Path, list[str]]:
+    config, _, _ = _gate_c_cli_host_argv(head=head)
+    gate_a_paths = launcher._gate_a_artifact_paths(config)
+    gate_b_paths = launcher._formal_gate_b_artifact_paths(config)
+    initialization_manifest = (
+        config.output_dir / f"{head}-gate-c-init.manifest.json"
+    )
+    output = config.output_dir / f"{head}-formal-gate-c.json"
+    argv = [
+        "--target",
+        "formal_gate_c",
+        "--gate-a-result",
+        str(gate_a_paths.result),
+        "--gate-a-manifest",
+        str(gate_a_paths.manifest),
+        "--gate-b-manifest",
+        str(gate_b_paths.manifest),
+        "--gate-c-init-manifest",
+        str(initialization_manifest),
+        "--output",
+        str(output),
+    ]
+    return config, initialization_manifest, output, argv
+
+
 @requires_gate_c
 def test_gate_c_source_file_report_hashes_exact_live_six_file_set() -> None:
     report = gate_c._source_files_report()
@@ -2950,25 +2978,40 @@ def test_gate_c_parser_accepts_exact_launcher_module_argv() -> None:
         "gate_a_result",
         "gate_a_manifest",
         "gate_b_manifest",
+        "gate_c_init_manifest",
         "output",
     }
     assert parsed.target == "gate_c_init"
+    assert parsed.gate_c_init_manifest is None
     assert parsed.output == Path(str(paths.container_result))
 
 
 @requires_gate_c
-def test_gate_c_parser_exposes_no_formal_or_run_overrides() -> None:
+def test_gate_c_parser_exposes_no_run_overrides() -> None:
     _, _, argv = _gate_c_cli_host_argv()
-
-    with pytest.raises(SystemExit) as formal_error:
-        gate_c._parser().parse_args(
-            [*argv[:1], "formal_gate_c", *argv[2:]]
-        )
-    assert formal_error.value.code == 2
 
     with pytest.raises(SystemExit) as override_error:
         gate_c._parser().parse_args([*argv, "--training-updates", "2"])
     assert override_error.value.code == 2
+
+
+@requires_gate_c
+def test_gate_c_parser_accepts_exact_formal_launcher_argv() -> None:
+    _, initialization_manifest, output, argv = _formal_gate_c_cli_host_argv()
+
+    parsed = gate_c._parser().parse_args(argv)
+
+    assert set(vars(parsed)) == {
+        "target",
+        "gate_a_result",
+        "gate_a_manifest",
+        "gate_b_manifest",
+        "gate_c_init_manifest",
+        "output",
+    }
+    assert parsed.target == "formal_gate_c"
+    assert parsed.gate_c_init_manifest == initialization_manifest
+    assert parsed.output == output
 
 
 @pytest.mark.parametrize(
@@ -3133,6 +3176,247 @@ def test_gate_c_init_cli_authenticates_and_emits_full_admission(
     stdout = capsys.readouterr().out
     assert str(paths.result) in stdout
     assert '"passed": false' in stdout
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "wrong_gate_a_result",
+        "wrong_gate_a_manifest",
+        "wrong_gate_b_manifest",
+        "wrong_gate_c_init_manifest",
+        "wrong_output",
+        "init_with_init_manifest",
+        "formal_without_init_manifest",
+    ),
+)
+@requires_gate_c
+def test_gate_c_cli_rejects_nonfixed_or_target_incompatible_formal_paths(
+    mutation: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    if mutation == "init_with_init_manifest":
+        _, paths, argv = _gate_c_cli_host_argv()
+        argv.extend(["--gate-c-init-manifest", str(paths.manifest)])
+    else:
+        _, initialization_manifest, output, argv = _formal_gate_c_cli_host_argv()
+        if mutation == "formal_without_init_manifest":
+            index = argv.index("--gate-c-init-manifest")
+            del argv[index : index + 2]
+        else:
+            flag = {
+                "wrong_gate_a_result": "--gate-a-result",
+                "wrong_gate_a_manifest": "--gate-a-manifest",
+                "wrong_gate_b_manifest": "--gate-b-manifest",
+                "wrong_gate_c_init_manifest": "--gate-c-init-manifest",
+                "wrong_output": "--output",
+            }[mutation]
+            argv[argv.index(flag) + 1] = str(
+                output.with_name(f"wrong-{mutation}.json")
+            )
+            assert initialization_manifest.name.endswith(
+                "-gate-c-init.manifest.json"
+            )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_source_report",
+        lambda: _passing_gate_c_source(),
+    )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_environment_report",
+        lambda: _passing_gate_c_environment(),
+    )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_require_authenticated_gpu_launch",
+        lambda *args: None,
+    )
+
+    with pytest.raises(ValueError, match="fixed|manifest|target|output"):
+        gate_c.main(argv)
+
+
+@requires_gate_c
+def test_formal_gate_c_cli_authenticates_before_core_and_writes_scientific_fail(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config, initialization_manifest, output, argv = _formal_gate_c_cli_host_argv()
+    passing, _ = _passing_formal_gate_c_report()
+    prerequisites = copy.deepcopy(passing["prerequisites"])
+    source_reports = iter([passing["source_start"], passing["source_end"]])
+    events: list[str] = []
+    captured: dict[str, Any] = {}
+
+    def source_report() -> dict[str, Any]:
+        value = copy.deepcopy(next(source_reports))
+        events.append("source_start" if not events else "source_end")
+        return value
+
+    def environment_report() -> dict[str, Any]:
+        events.append("environment")
+        return copy.deepcopy(passing["environment"])
+
+    def require_launch(
+        source: Mapping[str, Any],
+        environment: Mapping[str, Any],
+    ) -> None:
+        events.append("gpu_authenticated")
+        assert source == passing["source_start"]
+        assert environment == passing["environment"]
+
+    def load_prerequisites(
+        actual: launcher.LaunchConfig,
+        *,
+        head: str,
+        image_id: str,
+    ) -> dict[str, Any]:
+        events.append("prerequisites_authenticated")
+        assert actual.target == "formal_gate_c"
+        assert actual.repo_root == config.repo_root
+        assert actual.output_dir == config.output_dir
+        assert head == passing["source_start"]["commit"]
+        assert image_id == passing["environment"]["image_digest"]
+        assert Path(argv[argv.index("--gate-c-init-manifest") + 1]) == (
+            initialization_manifest
+        )
+        return copy.deepcopy(prerequisites)
+
+    def source_files_report() -> dict[str, str]:
+        events.append("source_files")
+        return copy.deepcopy(passing["source_files"])
+
+    def run_gate(
+        actual_config: gate_c.GateCConfig,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        events.append("core_run")
+        captured.update(config=actual_config, **kwargs)
+        assert events[:4] == [
+            "source_start",
+            "environment",
+            "gpu_authenticated",
+            "prerequisites_authenticated",
+        ]
+        reporter = kwargs["source_end_reporter"]
+        assert callable(reporter)
+        result = copy.deepcopy(passing)
+        result["prerequisites"] = copy.deepcopy(kwargs["prerequisites"])
+        result["source_start"] = copy.deepcopy(kwargs["source_start"])
+        result["source_end"] = reporter()
+        result["qualification"] = {
+            "criteria": {
+                name: False for name in gate_c.QUALIFICATION_CRITERIA
+            },
+            "passed": False,
+            "interpretation": (
+                "gate_c_failed_stop_no_causal_mechanism_conclusion"
+            ),
+        }
+        return result
+
+    def write_artifact(value: dict[str, Any], destination: Path) -> Path:
+        events.append("artifact_written")
+        captured.update(value=value, output=destination)
+        return destination
+
+    monkeypatch.setattr(gate_c.gate_a, "_source_report", source_report)
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_environment_report",
+        environment_report,
+    )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_require_authenticated_gpu_launch",
+        require_launch,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_load_formal_gate_c_prerequisites",
+        load_prerequisites,
+        raising=False,
+    )
+    monkeypatch.setattr(gate_c, "_source_files_report", source_files_report)
+    monkeypatch.setattr(gate_c, "run_gate_c", run_gate)
+    monkeypatch.setattr(gate_c, "write_artifact", write_artifact)
+
+    assert gate_c.main(argv) == 0
+
+    assert events == [
+        "source_start",
+        "environment",
+        "gpu_authenticated",
+        "prerequisites_authenticated",
+        "source_files",
+        "core_run",
+        "source_end",
+        "artifact_written",
+    ]
+    assert captured["config"] == gate_c.GateCConfig()
+    assert captured["prerequisites"] == prerequisites
+    assert captured["source_start"] == passing["source_start"]
+    assert callable(captured["source_end_reporter"])
+    assert captured["source_files"] == passing["source_files"]
+    assert captured["environment"] == passing["environment"]
+    assert captured["output"] == output
+    assert captured["value"]["qualification"]["passed"] is False
+    stdout = capsys.readouterr().out
+    assert str(output) in stdout
+    assert '"passed": false' in stdout
+
+
+@requires_gate_c
+def test_formal_gate_c_cli_stops_before_core_when_prerequisite_authentication_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, _, _, argv = _formal_gate_c_cli_host_argv()
+    passing, _ = _passing_formal_gate_c_report()
+    events: list[str] = []
+
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_source_report",
+        lambda: copy.deepcopy(passing["source_start"]),
+    )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_environment_report",
+        lambda: copy.deepcopy(passing["environment"]),
+    )
+    monkeypatch.setattr(
+        gate_c.gate_a,
+        "_require_authenticated_gpu_launch",
+        lambda *args: events.append("gpu_authenticated"),
+    )
+
+    def reject_prerequisites(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        del args, kwargs
+        events.append("prerequisites_rejected")
+        raise launcher.ProvenanceError("Gate C initialization authentication failed")
+
+    monkeypatch.setattr(
+        launcher,
+        "_load_formal_gate_c_prerequisites",
+        reject_prerequisites,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "run_gate_c",
+        lambda *args, **kwargs: pytest.fail("core ran before authentication"),
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "write_artifact",
+        lambda *args, **kwargs: pytest.fail("artifact written after auth failure"),
+    )
+
+    with pytest.raises(launcher.ProvenanceError, match="authentication failed"):
+        gate_c.main(argv)
+
+    assert events == ["gpu_authenticated", "prerequisites_rejected"]
 
 
 def _minimal_formal_arm_initialization_report(
