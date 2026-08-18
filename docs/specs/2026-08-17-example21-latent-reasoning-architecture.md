@@ -1,7 +1,8 @@
 # Example 21 latent-reasoning architecture
 
 Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B and the
-Gate C initialization admission passed; behavioral Gate C and Gate D pending
+Gate C initialization admission passed; formal Gate C failed; Gate D and the
+ARC test stopped
 
 Date: 2026-08-17
 
@@ -1491,6 +1492,135 @@ The formal Gate C result must still reauthenticate this admission, reproduce
 the pinned identities before its first update, and satisfy every existing
 behavioral and mechanism criterion above.
 
+### Authenticated formal Gate C FAIL: post-run observation
+
+This section records the formal run after execution. It does not amend the
+preregistered arms, schedules, thresholds, criteria, or stop rule above.
+
+The formal Gate C child ran at clean source commit
+`59b27d7be5cc9c37845da7bb2c81ae7203935338` on immutable GPU image
+`sha256:128bca1ece0fd81e0236fa61137ffd82a9e9b54339cb583f156d64d03073bc71`.
+The retained strict-JSON identities are:
+
+| Artifact | Repository-relative path | SHA-256 |
+| --- | --- | --- |
+| preflight | `var/example21-causal-gate/59b27d7be5cc9c37845da7bb2c81ae7203935338-formal-gate-c.preflight.json` | `ac8c4f41d460ed91b05a8ea477456616c0ce9f43cadabea9c9ba04d7c35a9383` |
+| result | `var/example21-causal-gate/59b27d7be5cc9c37845da7bb2c81ae7203935338-formal-gate-c.json` | `daf05ee63edad5183d3f509c73d9e0aeb7cb8d4c06565323e0e2a58959442e17` |
+| manifest | `var/example21-causal-gate/59b27d7be5cc9c37845da7bb2c81ae7203935338-formal-gate-c.manifest.json` | `dd8a34855d4b12aa6958721a8871b829d5ad2583a4764c3a95385fba2224ee78` |
+
+The manifest's authenticated bundle SHA-256 is
+`0494b4c4258205a38cd9369980667fd62f93b55890fc9206420096d13873a3bb`.
+It records `bundle_valid=true`, `process_succeeded=true`,
+`artifact_schema_verified=true`, `failure=null`, and
+`scientific_qualification_passed=false`. The child returned zero after
+`1450.5695271` seconds because this is a completed scientific fail, not a
+launcher or process failure. Preflight and postflight both recorded the same
+clean HEAD and image.
+
+The strict qualifier recorded 11 of 14 criteria true. The true criteria are
+`blocking_behavioral_margins`, `canonical_schedules_complete`,
+`compiler_and_training_complete`, `exact_configuration`,
+`fresh_isolated_optimizers`, `frozen_write_complete`, `full_gate_a_passed`,
+`initialization_authenticated`, `prerequisites_authenticated`,
+`schema_and_control`, and `source_and_gpu_authenticated`. The three false
+criteria are exactly:
+
+- `full_gate_b_passed`;
+- `mechanism_oracle_complete`; and
+- `paired_h0_identity`.
+
+The recorded interpretation is
+`gate_c_failed_stop_no_causal_mechanism_conclusion`, and the overall
+qualification is false.
+
+The formal full arm passed Gate A. At both recorded checkpoints 0 and 1, its
+intact accuracy was `512/512 = 1.000000000`, shuffled accuracy was
+`0/512 = 0`, no-context accuracy was `59/512 = 0.115234375`, and the
+intact-minus-shuffled binding gap was `1.000000000`. Its binding diagnostic
+also recorded all `512/512` intact/shuffled final `S_K` pairs different and an
+exact-zero no-context `S_K`.
+
+The formal full arm did not reproduce the prerequisite Gate B result. Its
+proper H0 accuracy was `510/512 = 0.996093750`, with Wilson lower bound
+`0.9858705929`. Its preregistered effort metrics were:
+
+| Effort | Intact, count and accuracy | Intact Wilson lower | Shuffled, count and accuracy | No context, count and accuracy | Intact minus H0 final target | Intact minus shuffled |
+| --- | --- | --- | --- | --- | --- | --- |
+| `1` | `439/512 = 0.857421875` | `0.8244703208` | `17/512 = 0.033203125` | `56/512 = 0.109375000` | `0.857421875` | `0.824218750` |
+| `2` | `201/512 = 0.392578125` | `0.3512301417` | `48/512 = 0.093750000` | `66/512 = 0.128906250` | `0.392578125` | `0.298828125` |
+| `4` | `62/512 = 0.121093750` | `0.0956215685` | `48/512 = 0.093750000` | `53/512 = 0.103515625` | `0.121093750` | `0.027343750` |
+| `8` | `65/512 = 0.126953125` | `0.1008675355` | `52/512 = 0.101562500` | `52/512 = 0.101562500` | `0.126953125` | `0.025390625` |
+
+Efforts 4 and 8 fail both full-control requirements: their intact Wilson lower
+bounds are not strictly above `1/8`, and their intact-minus-shuffled gaps are
+below `0.15`. Exactly efforts 1 and 2 improve over their H0 final targets by
+at least `0.15`. The control-side confidence requirements pass. These facts
+explain the artifact's `full_gate_b_passed=false`, but the post-run schedule
+identity defect below prevents attributing the non-replication solely to model
+science.
+
+The two regime summaries record the same aggregate arm metrics and causal
+margins:
+
+| Arm | Binding gap | Mean intact depth accuracy | Full-minus-arm binding gap | Binding threshold | Full-minus-arm depth accuracy | Depth threshold | Recorded result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `full` | `1.000000000` | `0.37451171875` | -- | -- | -- | -- | baseline |
+| `query_only` | `1.000000000` | `0.16357421875` | `0` | `>= -0.02` | `0.21093750000` | `>= 0.15` | blocking pass |
+| `terminal_only` | `0.996093750` | `0.10156250000` | `0.003906250` | `>= -0.02` | `0.27294921875` | `>= 0.10` | blocking pass |
+| `legacy` | `0.017578125` | `0.09960937500` | `0.982421875` | `>= 0.25` | `0.27490234375` | `>= 0.15` | blocking pass |
+| `frozen_write` | `0.998046875` | `0.14501953125` | `0.001953125` | `>= 0.05` | `0.22949218750` | `>= 0.05` | nonblocking characterization fail |
+
+Thus all three blocking margin comparisons passed. Frozen-write passed its
+depth margin but not its binding margin, so its recorded interpretation is
+`learned_memory_write_modulation_not_shown_necessary`. Passing relative
+ablation margins does not override a failed absolute full control or a failed
+experimental-control identity.
+
+The finite-window mechanism oracle was incomplete because the query-only
+comparison failed one of its two required paths. For
+`workspace_query_projection/weight`, the full norm was
+`2.5744135613e-9`, the query-only norm was zero, the L2 difference was
+`2.5744135613e-9`, and relative deviation was `1.0`. The preregistered
+absolute requirement is a difference strictly greater than
+`max(1e-8, 1e-4 * full_norm) = 1e-8`, so this path failed the magnitude floor.
+The required `memory_read_projection/weight` path passed, and the terminal-only
+comparison passed, but neither result can make the oracle complete.
+
+The failed paired-H0 identity is an implementation/control defect, not an
+admissible H0 treatment difference. Full and query-only began with matching
+parameter SHA-256 values in each regime --
+`b8ecb04f9c481118afa46651ead411abaccc338ad387f29a1f113d455788a5c8`
+for Gate A and
+`aa463549a8c3c1dbc24c9f727944eada035b776df666a83139214078d0f83d6d`
+for Gate B -- but did not remain byte-identical through checkpoint 0. In both
+regimes the intact compact outputs matched while hidden-state hashes differed;
+the shuffled compact outputs and hidden-state hashes both differed; and the
+no-context outputs and states matched. The query-only memory-read policy was
+therefore applied on the ordinary query tick that produces H0 in a way that
+changed authenticated state. This violates the frozen requirement that the
+query-only intervention begin only after H0 and invalidates a causal
+interpretation of that comparison.
+
+Post-run audit also found a canonical Gate B schedule-identity defect that the
+strict qualifier did not reject. The full Gate C arm actually trained with a
+loss-weight tensor of dtype `<f4`, shape `[4096, 19]`, and SHA-256
+`84d1060278f90bed56ba6b9d76a5a918d065b19bd66fe16bdf4ae6e2bebd90e7`.
+The canonical Gate B schedule is the float64/global loss-weight identity
+`044616bf9dd86cbdc1d472184ede8027bf9ff65d65834b15ec619bf3095d2e31`.
+The Gate C artifact copied that canonical digest into
+`training.data_identity.training_global_sha256.loss_weights` while separately
+recording the different tensor it actually consumed. Consequently,
+`canonical_schedules_complete=true` did not prove exact schedule reuse. This
+is a protocol defect, and the full-control Gate B non-replication must not be
+attributed solely to scientific performance.
+
+Gate C therefore remains failed for both recorded scientific criteria and
+protocol/control validity. There is no supported causal mechanism conclusion,
+no Gate D qualification, and no new Gate D ARC score; the retained exact-ARC
+baseline remains zero. Per the preregistered stop rule, no Gate D or ARC test
+was run. Repair requires a new source revision and a fresh authenticated Gate C
+run; this result must not be reinterpreted or patched in place.
+
 ### Stage 2 implementation record: structural evidence only
 
 Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
@@ -1562,9 +1692,10 @@ Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`;
 the authenticated Gate B demonstrated-depth result passed at commit
 `dafa64a8b4c3848241baa117affa55b632518a8e`; and the initialization-only Gate C
 admission passed at commit `c2eb27b4d51c07e4b68bd29d81101bbfff0351b8`.
-Pending: implement and run the now-frozen formal Gate C mechanism ablations and,
-only after a behavioral Gate C pass, Gate D full ARC qualification. Any failed
-or unauthenticated gate stops this sequence.
+The formal Gate C mechanism ablations then ran at commit
+`59b27d7be5cc9c37845da7bb2c81ae7203935338` and failed as recorded above.
+Gate D full ARC qualification is stopped, not pending: any failed or
+unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
 
