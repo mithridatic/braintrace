@@ -24,6 +24,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from latent_workspace_rule_cells import CELL_FAMILIES
 from latent_workspace_rule_edits import EDIT_FAMILIES
 from latent_workspace_rule_parts import (
     COLOR_COUNT,
@@ -514,7 +515,7 @@ _EDIT_REDUCTIONS = frozenset(
 def _completion_edits(pairs: DemoPairs) -> Iterator[GridRule]:
     """Adapt the same-shape edit families to the completion protocol."""
 
-    for family in EDIT_FAMILIES:
+    for family in EDIT_FAMILIES + CELL_FAMILIES:
         try:
             named = list(family(pairs))
         except _SAFE_ERRORS:
