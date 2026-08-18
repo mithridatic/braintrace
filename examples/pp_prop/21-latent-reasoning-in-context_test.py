@@ -1369,9 +1369,10 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     recurrent = np.zeros_like(voltage)
     captured: dict[str, object] = {}
 
-    def score(subset_compact, subset_records, color_rank):
+    def score(subset_compact, subset_records, color_rank, subset_rules=None):
         captured["scored_records"] = len(subset_records)
         captured["scored_batch"] = subset_compact.shape[1]
+        captured["scored_rules"] = None if subset_rules is None else len(subset_rules)
         details = {
             str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in subset_records]
             for effort in (0, 8, 16, 32)
@@ -1410,6 +1411,7 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     assert captured == {
         "scored_records": 1,
         "scored_batch": 1,
+        "scored_rules": 1,
         "comparison_width": 8,
     }
     assert result["query_count"] == 2
@@ -1781,7 +1783,15 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     monkeypatch.setattr(example, "run_selected_packed_stream", packed)
     monkeypatch.setattr(example.brainstate.transform, "jit", identity_jit)
     checkpoint_queries = {
-        str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in range(batch)]
+        str(effort): [
+            {
+                "candidates": [{"grid": [[0]]}],
+                "rule_name": None,
+                "rule_solved": False,
+                "score": {"pass_at_2": False},
+            }
+            for _ in range(batch)
+        ]
         for effort in (0, 8, 16, 32)
     }
     monkeypatch.setattr(
