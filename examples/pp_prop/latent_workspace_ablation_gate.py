@@ -3055,9 +3055,10 @@ _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY = {
 
 
 def _gate_c2_array_endpoint(value: Any) -> dict[str, Any]:
-    array = np.ascontiguousarray(np.asarray(u.get_mantissa(value)))
+    array = np.asarray(u.get_mantissa(value))
     if array.ndim < 1 or array.shape[0] <= 0:
         raise ValueError("Gate C2 evidence arrays require a nonempty batch axis")
+    array = np.ascontiguousarray(array)
     flat = array.reshape(array.shape[0], -1)
     finite = np.isfinite(flat)
     per_finite = np.sum(finite, axis=1, dtype=np.int64)

@@ -10407,3 +10407,1107 @@ def test_gate_c2_controls_runner_is_read_only_and_orders_all_probes(
     assert evidence["optimizer_update_calls"] == []
     assert evidence["optimizer_update_call_count"] == 0
     assert result["qualification"]["passed"] is False
+
+
+@requires_gate_c
+def test_gate_c2_controls_writer_preserves_destination_on_stream_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    destination = tmp_path / "gate-c2-controls.json"
+    temporary = destination.with_suffix(".json.tmp")
+    previous = b"authenticated-previous-artifact\n"
+    destination.write_bytes(previous)
+
+    nonfinite = _gate_c2_controls_writer_value()
+    nonfinite["a"]["finite"] = math.nan
+    with pytest.raises(ValueError, match="JSON|range|compliant"):
+        gate_c.write_artifact(nonfinite, destination)
+    assert destination.read_bytes() == previous
+    assert not temporary.exists()
+
+    def failed_fsync(file_descriptor: int) -> None:
+        del file_descriptor
+        raise OSError("simulated fsync failure")
+
+    with monkeypatch.context() as context:
+        context.setattr(gate_c.os, "fsync", failed_fsync)
+        with pytest.raises(OSError, match="fsync"):
+            gate_c.write_artifact(_gate_c2_controls_writer_value(), destination)
+    assert destination.read_bytes() == previous
+    assert not temporary.exists()
+
+    original_replace = Path.replace
+
+    def failed_replace(path: Path, target: Path) -> Path:
+        if path == temporary:
+            raise OSError("simulated atomic replace failure")
+        return original_replace(path, target)
+
+    with monkeypatch.context() as context:
+        context.setattr(Path, "replace", failed_replace)
+        with pytest.raises(OSError, match="replace"):
+            gate_c.write_artifact(_gate_c2_controls_writer_value(), destination)
+    assert destination.read_bytes() == previous
+    assert not temporary.exists()
+
+
+@requires_gate_c
+def test_gate_c2_evidence_helpers_reject_invalid_and_colluding_records(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+) -> None:
+    with pytest.raises(ValueError, match="batch"):
+        gate_c._gate_c2_array_endpoint(np.asarray(1.0, dtype=np.float32))
+    with pytest.raises(ValueError, match="nonnegative"):
+        gate_c._gate_c2_floating_difference_record(
+            np.zeros((1, 1), dtype=np.float32),
+            np.zeros((1, 1), dtype=np.float32),
+            rms_tolerance=-1.0,
+        )
+    with pytest.raises(ValueError, match="geometry"):
+        gate_c._gate_c2_floating_difference_record(
+            np.zeros((1, 1), dtype=np.float32),
+            np.zeros((1, 2), dtype=np.float32),
+            rms_tolerance=1e-6,
+        )
+    with pytest.raises(ValueError, match="finite"):
+        gate_c._gate_c2_floating_difference_record(
+            np.asarray([[math.nan]], dtype=np.float32),
+            np.zeros((1, 1), dtype=np.float32),
+            rms_tolerance=1e-6,
+        )
+    assert not gate_c._gate_c2_endpoint_complete(
+        None,
+        expected_dtype="<f4",
+        expected_shape=(1, 1),
+    )
+
+    difference = gate_c._gate_c2_floating_difference_record(
+        np.zeros((2, 2), dtype=np.float32),
+        np.zeros((2, 2), dtype=np.float32),
+        rms_tolerance=1e-6,
+    )
+    mutations = (
+        ("per_example_sum_squared_difference", [0.0]),
+        ("per_example_compared_value_count", [1, 1]),
+        ("per_example_sum_squared_difference", [-1.0, 0.0]),
+        ("per_example_rms_difference", [1.0, 0.0]),
+        ("per_example_max_abs_difference", [-1.0, 0.0]),
+    )
+    for field, replacement in mutations:
+        malformed = copy.deepcopy(difference)
+        malformed[field] = replacement
+        assert not gate_c._gate_c2_floating_difference_record_complete(
+            malformed,
+            expected_dtype="<f4",
+            expected_shape=(2, 2),
+            rms_tolerance=1e-6,
+        )
+    assert not gate_c._gate_c2_floating_difference_record_complete(
+        difference,
+        expected_dtype="<f4",
+        expected_shape=(2, 2),
+        rms_tolerance=object(),
+    )
+
+    with pytest.raises(ValueError, match="vector"):
+        gate_c._gate_c2_prediction_endpoint(np.zeros((1, 1), dtype=np.int32))
+    with pytest.raises(ValueError, match="0..9"):
+        gate_c._gate_c2_prediction_endpoint(np.asarray([10], dtype=np.int32))
+    with pytest.raises(ValueError, match="equal vectors"):
+        gate_c._gate_c2_prediction_difference_record(
+            np.asarray([0], dtype=np.int32),
+            np.asarray([0, 1], dtype=np.int32),
+        )
+    predictions = gate_c._gate_c2_prediction_difference_record(
+        np.asarray([0, 1], dtype=np.int32),
+        np.asarray([0, 1], dtype=np.int32),
+    )
+    assert not gate_c._gate_c2_prediction_difference_record_complete(
+        None,
+        count=2,
+    )
+    malformed_predictions = copy.deepcopy(predictions)
+    malformed_predictions["per_example_hamming_count"] = [0]
+    assert not gate_c._gate_c2_prediction_difference_record_complete(
+        malformed_predictions,
+        count=2,
+    )
+
+    with pytest.raises(ValueError, match="nonempty floating"):
+        gate_c._gate_c2_zero_array_record(np.asarray([], dtype=np.float32))
+    with pytest.raises(ValueError, match="finite"):
+        gate_c._gate_c2_zero_array_record(
+            np.asarray([math.inf], dtype=np.float32)
+        )
+    zero = gate_c._gate_c2_zero_array_record(np.zeros((1, 1), dtype=np.float32))
+    zero["sum_of_squares"] = object()
+    assert not gate_c._gate_c2_zero_array_record_complete(
+        zero,
+        expected_dtype="<f4",
+        expected_shape=(1, 1),
+    )
+
+    admission, _ = passing_gate_c2_no_read_reports
+    evidence = _gate_c2_control_execution_evidence(admission)
+    assert not gate_c._gate_c2_no_update_evidence_complete(None, admission)
+    assert not gate_c._gate_c2_no_update_evidence_complete(evidence, {})
+
+
+@requires_gate_c
+def test_gate_c2_hidden_digest_capture_and_comparison_helpers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeModel:
+        config = SimpleNamespace(color_rank=1)
+
+        def __init__(self) -> None:
+            self.restored: list[Any] = []
+
+        def states(self, state_type: Any) -> dict[tuple[str, ...], Any]:
+            assert state_type is brainstate.HiddenState
+            return {
+                ("z",): SimpleNamespace(
+                    value=(
+                        np.zeros((2, 2), dtype=np.float32),
+                        np.ones((2, 1), dtype=np.float32),
+                    )
+                ),
+                ("a",): SimpleNamespace(
+                    value=np.full((2, 1), 2.0, dtype=np.float32)
+                ),
+            }
+
+        def restore_state(self, snapshot: Any) -> None:
+            self.restored.append(snapshot)
+
+    model = FakeModel()
+    first_digest = gate_c._hidden_state_sha256(model)
+    second_digest = gate_c._hidden_state_sha256(model)
+    assert first_digest == second_digest
+    assert gate_c._sha256_complete(first_digest)
+    hidden = gate_c._gate_c2_hidden_arrays(model)
+    assert tuple(hidden) == ("a#0", "z#0", "z#1")
+
+    monkeypatch.setattr(
+        gate_c.legacy,
+        "_color_logits",
+        lambda compact, color_rank: compact[:, :10] + color_rank,
+    )
+    compact = np.zeros((2, 10), dtype=np.float32)
+    compact[:, 3] = 1.0
+    capture = gate_c._gate_c2_h0_capture(
+        model,
+        lambda events, advances: jnp.asarray(compact)
+        + jnp.asarray(events).sum() * 0.0
+        + jnp.asarray(advances).sum() * 0.0,
+        "snapshot",
+        np.zeros((1, 2, 1), dtype=np.float32),
+        np.ones((1, 2), dtype=np.bool_),
+    )
+    assert model.restored == ["snapshot"]
+    assert capture["predictions"].tolist() == [3, 3]
+    comparison = gate_c._gate_c2_h0_comparison(capture, copy.deepcopy(capture))
+    assert comparison["passed"] is True
+
+    wrong = copy.deepcopy(capture)
+    wrong["hidden_paths"].pop("z#1")
+    with pytest.raises(ValueError, match="paths"):
+        gate_c._gate_c2_h0_comparison(capture, wrong)
+
+
+@requires_gate_c
+def test_gate_c2_operational_h0_report_runs_all_replay_controls_without_jit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    regime_config = config.gate_a_config
+    count = regime_config.validation_episodes
+    length = regime_config.sequence_length
+    validation = np.zeros((length, count, 1), dtype=np.float32)
+    data = legacy.BindingData(
+        training_events=np.zeros((1, length, 1, 1), dtype=np.float32),
+        training_targets=np.zeros((1, 1), dtype=np.int32),
+        training_mapping_ids=np.zeros((1, 1), dtype=np.int64),
+        training_query_indices=np.zeros((1, 1), dtype=np.int32),
+        validation_intact=validation,
+        validation_shuffled=np.array(validation, copy=True),
+        validation_no_context=np.array(validation, copy=True),
+        validation_targets=np.zeros((count,), dtype=np.int32),
+        validation_mapping_ids=np.zeros((count,), dtype=np.int64),
+        validation_query_indices=np.zeros((count,), dtype=np.int32),
+    )
+    finished: list[str] = []
+    captures: list[tuple[str, int]] = []
+
+    class FakeModel:
+        def __init__(self, role: str) -> None:
+            self.role = role
+            self.restored: list[Any] = []
+
+        def snapshot_state(self) -> str:
+            return "initial-snapshot"
+
+        def restore_state(self, snapshot: Any) -> None:
+            self.restored.append(snapshot)
+
+    def control_model(*args: Any, role: str, **kwargs: Any) -> FakeModel:
+        del args, kwargs
+        return FakeModel(role)
+
+    def capture(
+        model: FakeModel,
+        driver: Any,
+        snapshot: Any,
+        events: np.ndarray,
+        advances: np.ndarray,
+    ) -> dict[str, Any]:
+        assert driver == model.role
+        assert snapshot == "initial-snapshot"
+        assert events.shape[0] == advances.shape[0]
+        captures.append((model.role, int(events.shape[0])))
+        return {"role": model.role, "length": int(events.shape[0])}
+
+    monkeypatch.setattr(gate_c, "_gate_c2_control_model", control_model)
+    monkeypatch.setattr(gate_c.legacy, "_copy_parameters", lambda *args: None)
+    monkeypatch.setattr(
+        gate_c.legacy,
+        "_parameter_values",
+        lambda model: {"weight": np.ones((1,), dtype=np.float32)},
+    )
+    monkeypatch.setattr(gate_c, "_gate_c2_h0_driver", lambda model: model.role)
+    monkeypatch.setattr(gate_c, "_gate_c2_h0_capture", capture)
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_h0_comparison",
+        lambda left, right: {"left": left, "right": right, "passed": True},
+    )
+    monkeypatch.setattr(gate_c, "_hidden_state_sha256", lambda model: "a" * 64)
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_finish_control_model",
+        lambda role, model: finished.append(role),
+    )
+
+    report = gate_c._paired_h0_operational_equivalence_report(
+        config,
+        initialization={"initialization": {}},
+        regime="gate_a",
+        data=data,
+    )
+
+    assert report["passed"] is True
+    assert tuple(report["streams"]) == ("intact", "shuffled", "no_context")
+    assert all(stream["passed"] is True for stream in report["streams"].values())
+    assert len(captures) == 12
+    assert finished == [
+        "gate_a:paired_h0:full_reference",
+        "gate_a:paired_h0:copied_full",
+        "gate_a:paired_h0:query_only",
+    ]
+    with pytest.raises(TypeError, match="BindingData"):
+        gate_c._paired_h0_operational_equivalence_report(
+            config,
+            initialization={},
+            regime="gate_a",
+            data=object(),
+        )
+    with pytest.raises(TypeError, match="DepthValidationData"):
+        gate_c._paired_h0_operational_equivalence_report(
+            config,
+            initialization={},
+            regime="gate_b",
+            data=object(),
+        )
+
+
+def _install_gate_c2_runner_stubs(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    schedules_match: bool = True,
+) -> tuple[
+    Any,
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, str],
+    dict[str, Any],
+]:
+    config = gate_c.GateCConfig()
+    initialization = {"initialization": {}}
+    prerequisites = {
+        "gate_a": dict(_GATE_A_REFERENCE),
+        "gate_b": dict(_GATE_B_REFERENCE),
+        "gate_c_initialization": {"authenticated": True},
+    }
+    source_start = _passing_gate_c_source()
+    source_files = _current_gate_c_source_files()
+    environment = _passing_gate_c_environment()
+    schedules = {
+        "gate_a": {"schedule": "gate-a"},
+        "gate_b": {"schedule": "gate-b"},
+    }
+    expected = copy.deepcopy(schedules)
+    if not schedules_match:
+        expected["gate_b"]["schedule"] = "different"
+    monkeypatch.setattr(
+        gate_c,
+        "_validated_gate_c_initialization_admission",
+        lambda *args, **kwargs: initialization,
+    )
+    monkeypatch.setattr(gate_c, "_regenerate_gate_a_data", lambda config: object())
+    monkeypatch.setattr(gate_c, "_regenerate_gate_b_data", lambda config: object())
+    monkeypatch.setattr(
+        gate_c,
+        "_actual_schedule_identity_report",
+        lambda *args: copy.deepcopy(schedules),
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_schedule_identity_report",
+        lambda config: copy.deepcopy(expected),
+    )
+    return config, prerequisites, source_start, source_files, environment
+
+
+@requires_gate_c
+def test_gate_c2_controls_runner_rejects_invalid_contract_inputs() -> None:
+    kwargs = {
+        "prerequisites": {},
+        "source_start": {},
+        "source_end_reporter": lambda: {},
+        "source_files": {},
+        "environment": {},
+    }
+    with pytest.raises(TypeError, match="GateCConfig"):
+        gate_c.run_gate_c2_controls(None, **kwargs)
+    with pytest.raises(ValueError, match="prerequisites"):
+        gate_c.run_gate_c2_controls(gate_c.GateCConfig(), **kwargs)
+    kwargs["prerequisites"] = {
+        "gate_a": {},
+        "gate_b": {},
+        "gate_c_initialization": {},
+    }
+    kwargs["source_end_reporter"] = None
+    with pytest.raises(TypeError, match="callable"):
+        gate_c.run_gate_c2_controls(gate_c.GateCConfig(), **kwargs)
+
+
+@requires_gate_c
+def test_gate_c2_controls_runner_restores_audit_when_probe_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, prerequisites, source_start, source_files, environment = (
+        _install_gate_c2_runner_stubs(monkeypatch)
+    )
+    original_entries = (
+        gate_c._make_arm_trainer,
+        gate_a._make_pp_prop_trainer,
+        gate_b._make_pp_prop_trainer,
+        gate_c.GateCTrainer,
+        gate_a._PPPropTrainer,
+        gate_b._DepthPPPropTrainer,
+        gate_c.braintools.optim.Adam,
+    )
+
+    def failed_probe(*args: Any, **kwargs: Any) -> Any:
+        del args, kwargs
+        raise RuntimeError("simulated control probe failure")
+
+    monkeypatch.setattr(
+        gate_c,
+        "_paired_h0_operational_equivalence_report",
+        failed_probe,
+    )
+    assert gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT is None
+    with pytest.raises(RuntimeError, match="probe failure"):
+        gate_c.run_gate_c2_controls(
+            config,
+            prerequisites=prerequisites,
+            source_start=source_start,
+            source_end_reporter=lambda: source_start,
+            source_files=source_files,
+            environment=environment,
+        )
+    assert gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT is None
+    assert original_entries == (
+        gate_c._make_arm_trainer,
+        gate_a._make_pp_prop_trainer,
+        gate_b._make_pp_prop_trainer,
+        gate_c.GateCTrainer,
+        gate_a._PPPropTrainer,
+        gate_b._DepthPPPropTrainer,
+        gate_c.braintools.optim.Adam,
+    )
+
+
+@requires_gate_c
+def test_gate_c2_controls_runner_rejects_schedule_active_audit_and_source_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, prerequisites, source_start, source_files, environment = (
+        _install_gate_c2_runner_stubs(monkeypatch, schedules_match=False)
+    )
+    kwargs = {
+        "prerequisites": prerequisites,
+        "source_start": source_start,
+        "source_end_reporter": lambda: source_start,
+        "source_files": source_files,
+        "environment": environment,
+    }
+    with pytest.raises(RuntimeError, match="schedules"):
+        gate_c.run_gate_c2_controls(config, **kwargs)
+
+    config, prerequisites, source_start, source_files, environment = (
+        _install_gate_c2_runner_stubs(monkeypatch)
+    )
+    kwargs = {
+        "prerequisites": prerequisites,
+        "source_start": source_start,
+        "source_end_reporter": lambda: source_start,
+        "source_files": source_files,
+        "environment": environment,
+    }
+    monkeypatch.setattr(gate_c, "_ACTIVE_GATE_C2_CONTROLS_AUDIT", object())
+    with pytest.raises(RuntimeError, match="already active"):
+        gate_c.run_gate_c2_controls(config, **kwargs)
+    monkeypatch.setattr(gate_c, "_ACTIVE_GATE_C2_CONTROLS_AUDIT", None)
+    monkeypatch.setattr(
+        gate_c,
+        "_paired_h0_operational_equivalence_report",
+        lambda *args, **kwargs: {"passed": True},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_query_only_latent_no_read_report",
+        lambda *args, **kwargs: {"passed": True},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_mechanism_oracle",
+        lambda *args, **kwargs: {"complete": True},
+    )
+    kwargs["source_end_reporter"] = lambda: None
+    with pytest.raises(TypeError, match="mapping"):
+        gate_c.run_gate_c2_controls(config, **kwargs)
+    assert gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT is None
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "perturbations_schema",
+        "perturbation_stream_schema",
+        "perturbation_tick_digest",
+        "positive_schema",
+        "positive_replacement_schema",
+        "positive_stream_schema",
+        "positive_tick_digest",
+        "positive_stored_pass",
+    ),
+)
+@requires_gate_c
+def test_gate_c2_no_read_validator_rejects_top_level_and_family_schema_damage(
+    mutation: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    report = reports["gate_a"]
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_removed_path_influence_complete",
+        lambda *args, **kwargs: True,
+    )
+    tick_name = gate_c.GATE_C2_LATENT_TICKS["gate_a"][0]
+    perturbation = report["perturbations"]["plus_7"]
+    positive = report["full_positive_control"]
+    container: dict[str, Any]
+    key: str
+    if mutation == "perturbations_schema":
+        container, key, replacement = report, "perturbations", None
+    elif mutation == "perturbation_stream_schema":
+        container, key, replacement = perturbation["streams"], "intact", None
+    elif mutation == "perturbation_tick_digest":
+        container = perturbation["streams"]["intact"][tick_name]
+        key, replacement = "replacement_s_k_sha256", "0" * 64
+    elif mutation == "positive_schema":
+        container, key, replacement = report, "full_positive_control", None
+    elif mutation == "positive_replacement_schema":
+        container, key, replacement = positive, "plus_7", None
+    elif mutation == "positive_stream_schema":
+        container = positive["plus_7"]["streams"]
+        key, replacement = "intact", None
+    elif mutation == "positive_tick_digest":
+        container = positive["plus_7"]["streams"]["intact"][tick_name]
+        key, replacement = "replacement_s_k_sha256", "0" * 64
+    elif mutation == "positive_stored_pass":
+        container, key, replacement = positive, "passed", False
+    else:
+        raise AssertionError(f"unhandled no-read schema mutation {mutation}")
+    original = container[key]
+    container[key] = replacement
+    try:
+        assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+            report,
+            admission,
+            regime="gate_a",
+        )
+    finally:
+        container[key] = original
+
+
+@requires_gate_c
+def test_gate_c2_no_read_validator_rejects_nonmapping_and_invalid_canonical(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        reports["gate_a"],
+        None,
+        regime="gate_a",
+    )
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        None,
+        admission,
+        regime="gate_a",
+    )
+    malformed = copy.deepcopy(admission)
+    malformed["initialization"]["gate_a"]["canonical_full"][
+        "parameter_sha256"
+    ] = "0" * 64
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        reports["gate_a"],
+        malformed,
+        regime="gate_a",
+    )
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        reports["gate_a"],
+        admission,
+        regime="invalid",
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_schema",
+        "gradient_chunk",
+        "objective_schema",
+        "coordinate",
+        "source_schema",
+        "continuation_schema",
+        "global_schema",
+        "global_semantics",
+        "live_schema",
+        "removed_schema",
+        "removed_record_schema",
+        "removed_leaf_schema",
+        "numeric_exception",
+    ),
+)
+@requires_gate_c
+def test_gate_c2_removed_path_validator_rejects_structural_failures(
+    mutation: str,
+    reduced_gate_c2_removed_path_reports: dict[str, Any],
+) -> None:
+    regime = "gate_a"
+    canonical = reduced_gate_c2_removed_path_reports["initialization"][
+        "initialization"
+    ][regime]["canonical_full"]["parameter_sha256"]
+    report: Any = _gate_c2_validator_ready_removed_path_report(
+        reduced_gate_c2_removed_path_reports,
+        regime=regime,
+    )
+    objective = report["objectives"]["gate_a_h1"]
+    if mutation == "top_schema":
+        report = None
+    elif mutation == "gradient_chunk":
+        report["gradient_chunk_size"] = 0
+    elif mutation == "objective_schema":
+        report["objectives"]["gate_a_h1"] = None
+    elif mutation == "coordinate":
+        objective["checkpoint"] = 8
+    elif mutation == "source_schema":
+        objective["source_contract"] = None
+    elif mutation == "continuation_schema":
+        objective["continuation"] = None
+    elif mutation == "global_schema":
+        report["global"] = None
+    elif mutation == "global_semantics":
+        report["global"]["sha256"] = "0" * 64
+    elif mutation == "live_schema":
+        report["live_paths"] = None
+    elif mutation == "removed_schema":
+        report["removed_paths"] = None
+    elif mutation == "removed_record_schema":
+        path = gate_c.GATE_C2_REMOVED_PATHS[0]
+        report["removed_paths"][path] = None
+    elif mutation == "removed_leaf_schema":
+        path = gate_c.GATE_C2_REMOVED_PATHS[0]
+        report["removed_paths"][path]["leaves"][0] = None
+    elif mutation == "numeric_exception":
+        report["global"]["l2_norm"] = object()
+    else:
+        raise AssertionError(f"unhandled removed-path structure {mutation}")
+    assert not gate_c._gate_c2_removed_path_influence_complete(
+        report,
+        regime=regime,
+        canonical_parameter_sha256=canonical,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("source_array_contract", "continuation_contract", "gate_a_weight_contract"),
+)
+@requires_gate_c
+def test_gate_c2_removed_path_validator_cross_checks_preregistered_constants(
+    mutation: str,
+    reduced_gate_c2_removed_path_reports: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    regime = "gate_a"
+    report = _gate_c2_validator_ready_removed_path_report(
+        reduced_gate_c2_removed_path_reports,
+        regime=regime,
+    )
+    canonical = reduced_gate_c2_removed_path_reports["initialization"][
+        "initialization"
+    ][regime]["canonical_full"]["parameter_sha256"]
+    contracts = copy.deepcopy(gate_c.GATE_C2_REMOVED_PATH_OBJECTIVES)
+    expected = contracts["gate_a_h1"]
+    if mutation == "source_array_contract":
+        dtype, shape, _ = expected["source_arrays"]["events"]
+        expected["source_arrays"]["events"] = (dtype, shape, "0" * 64)
+    elif mutation == "continuation_contract":
+        expected["continuation"]["source_events_sha256"] = "0" * 64
+    elif mutation == "gate_a_weight_contract":
+        expected["continuation"]["base_checkpoint_weights"] = [1.0]
+    else:
+        raise AssertionError(f"unhandled removed-path contract {mutation}")
+    monkeypatch.setattr(gate_c, "GATE_C2_REMOVED_PATH_OBJECTIVES", contracts)
+    assert not gate_c._gate_c2_removed_path_influence_complete(
+        report,
+        regime=regime,
+        canonical_parameter_sha256=canonical,
+    )
+
+
+@requires_gate_c
+def test_gate_c2_h0_raw_evidence_rejects_malformed_paths_geometry_and_schema(
+    reduced_gate_c2_removed_path_reports: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(ValueError, match="path"):
+        gate_c._gate_c2_hidden_leaf_path_key("missing-index")
+    with pytest.raises(ValueError, match="digest"):
+        gate_c._gate_c2_raw_h0_snapshot_record(
+            SimpleNamespace(entries=()),
+            parameter_sha256="0" * 64,
+        )
+    with monkeypatch.context() as context:
+        context.setattr(gate_c, "_gate_c2_snapshot_arrays", lambda snapshot: {})
+        with pytest.raises(ValueError, match="paths"):
+            gate_c._gate_c2_raw_h0_snapshot_record(
+                object(),
+                parameter_sha256="a" * 64,
+            )
+    wrong_geometry = {
+        path: np.zeros(shape, dtype=np.float32)
+        for path, shape in gate_c._GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items()
+    }
+    first_path = next(iter(wrong_geometry))
+    wrong_geometry[first_path] = wrong_geometry[first_path].astype(np.float64)
+    with monkeypatch.context() as context:
+        context.setattr(
+            gate_c,
+            "_gate_c2_snapshot_arrays",
+            lambda snapshot: wrong_geometry,
+        )
+        with pytest.raises(ValueError, match="geometry"):
+            gate_c._gate_c2_raw_h0_snapshot_record(
+                object(),
+                parameter_sha256="a" * 64,
+            )
+
+    report = _gate_c2_validator_ready_removed_path_report(
+        reduced_gate_c2_removed_path_reports,
+        regime="gate_a",
+    )
+    canonical = reduced_gate_c2_removed_path_reports["initialization"][
+        "initialization"
+    ]["gate_a"]["canonical_full"]["parameter_sha256"]
+    boundary = report["objectives"]["gate_a_h1"]["continuation"][
+        "h0_gradient_boundary"
+    ]
+    assert not gate_c._gate_c2_raw_h0_snapshot_complete(
+        None,
+        canonical_parameter_sha256=canonical,
+    )
+    malformed_snapshot = copy.deepcopy(boundary["actual_gradient_start"])
+    malformed_snapshot["hidden_paths"][first_path] = None
+    assert not gate_c._gate_c2_raw_h0_snapshot_complete(
+        malformed_snapshot,
+        canonical_parameter_sha256=canonical,
+    )
+    assert not gate_c._gate_c2_h0_gradient_boundary_complete(
+        None,
+        canonical_parameter_sha256=canonical,
+    )
+    assert not gate_c._gate_c2_h0_gradient_boundary_complete(
+        boundary,
+        canonical_parameter_sha256="0" * 64,
+    )
+
+
+class _GateC2RaisingMapping(dict[str, Any]):
+    def __getitem__(self, key: str) -> Any:
+        raise KeyError(key)
+
+
+class _GateC2ExecutionRaisingMapping(dict[str, Any]):
+    def __getitem__(self, key: str) -> Any:
+        if key == "execution_and_update_evidence":
+            raise KeyError(key)
+        return super().__getitem__(key)
+
+
+@pytest.mark.parametrize(
+    ("criterion", "mutation"),
+    (
+        ("schema_and_control", "schema"),
+        ("exact_configuration", "configuration"),
+        ("prerequisites_authenticated", "prerequisites"),
+        ("initialization_authenticated", "initialization"),
+        ("canonical_schedules_complete", "schedule"),
+        ("no_behavioral_or_optimizer_updates", "execution"),
+        ("paired_h0_operational_equivalence", "h0"),
+        ("mechanism_oracle_complete", "oracle"),
+        ("source_and_gpu_authenticated", "source"),
+    ),
+)
+@requires_gate_c
+def test_gate_c2_controls_qualifier_fails_closed_on_internal_evidence_errors(
+    criterion: str,
+    mutation: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, no_read_reports = passing_gate_c2_no_read_reports
+    report = _passing_gate_c2_controls_report(admission, no_read_reports)
+    report = dict(report)
+    monkeypatch.setattr(
+        gate_c,
+        "_validated_gate_c_initialization_admission",
+        lambda *args, **kwargs: admission,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_no_update_evidence_complete",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_paired_h0_operational_equivalence_complete",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_query_only_latent_no_read_complete",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(gate_c, "_mechanism_oracle_complete", lambda *args: True)
+    monkeypatch.setattr(gate_c, "_source_and_gpu_complete", lambda *args: True)
+    monkeypatch.setattr(gate_c, "_source_files_complete", lambda *args: True)
+    if mutation == "schema":
+        report.pop("schema_version")
+    elif mutation == "configuration":
+        report["regimes"] = _GateC2RaisingMapping(report["regimes"])
+    elif mutation == "prerequisites":
+        report["prerequisites"] = _GateC2RaisingMapping(report["prerequisites"])
+    elif mutation == "initialization":
+        monkeypatch.setattr(
+            gate_c,
+            "_validated_gate_c_initialization_admission",
+            lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("invalid")),
+        )
+    elif mutation == "schedule":
+        report["regimes"] = _GateC2RaisingMapping(report["regimes"])
+    elif mutation == "execution":
+        report["environment"] = _GateC2ExecutionRaisingMapping(
+            report["environment"]
+        )
+    elif mutation == "h0":
+        regimes = dict(report["regimes"])
+        gate_a_regime = dict(regimes["gate_a"])
+        gate_a_regime.pop("paired_h0_operational_equivalence")
+        regimes["gate_a"] = gate_a_regime
+        report["regimes"] = regimes
+    elif mutation == "oracle":
+        report.pop("mechanism_oracle")
+    elif mutation == "source":
+        report.pop("source_start")
+    else:
+        raise AssertionError(f"unhandled qualifier error mutation {mutation}")
+    qualification = gate_c._gate_c2_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+    assert qualification["criteria"][criterion] is False
+    assert qualification["passed"] is False
+    assert qualification["interpretation"] == (
+        "gate_c2_pretraining_controls_failed_stop"
+    )
+
+
+@requires_gate_c
+def test_gate_c2_controls_qualifier_rejects_nonmapping_inputs() -> None:
+    qualification = gate_c._gate_c2_controls_qualification(
+        None,
+        config=gate_c.GateCConfig(),
+    )
+    assert qualification == {
+        "criteria": {name: False for name in _GATE_C2_CONTROLS_CRITERIA},
+        "passed": False,
+        "interpretation": "gate_c2_pretraining_controls_failed_stop",
+    }
+
+
+@requires_gate_c
+def test_gate_c2_controls_main_runs_fixed_host_lifecycle(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    head = "c" * 40
+    source = _passing_gate_c_source()
+    source["commit"] = head
+    environment = _passing_gate_c_environment()
+    repo_root = Path(gate_c.__file__).resolve().parents[2]
+    config = launcher.LaunchConfig(
+        target="gate_c2_controls",
+        repo_root=repo_root,
+        output_dir=repo_root / "var" / "example21-causal-gate",
+    )
+    gate_a_paths = launcher._gate_a_artifact_paths(config)
+    gate_b_paths = launcher._formal_gate_b_artifact_paths(config)
+    initialization = launcher.target_paths(config, head, "gate_c_init")
+    output = launcher.target_paths(config, head, "gate_c2_controls")
+    argv = [
+        "--target",
+        "gate_c2_controls",
+        "--gate-a-result",
+        str(gate_a_paths.result),
+        "--gate-a-manifest",
+        str(gate_a_paths.manifest),
+        "--gate-b-manifest",
+        str(gate_b_paths.manifest),
+        "--gate-c-init-manifest",
+        str(initialization.manifest),
+        "--output",
+        str(output.result),
+    ]
+    prerequisites = {"authenticated": True}
+    result = {
+        "qualification": {
+            "passed": False,
+            "interpretation": "gate_c2_pretraining_controls_failed_stop",
+        }
+    }
+    events: list[str] = []
+    monkeypatch.setattr(gate_a, "_source_report", lambda: copy.deepcopy(source))
+    monkeypatch.setattr(
+        gate_a,
+        "_environment_report",
+        lambda: copy.deepcopy(environment),
+    )
+    monkeypatch.setattr(
+        gate_a,
+        "_require_authenticated_gpu_launch",
+        lambda *args: events.append("gpu"),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_c2_controls_prerequisites",
+        lambda *args, **kwargs: prerequisites,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "_load_formal_gate_c_prerequisites",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("formal loader must not run")
+        ),
+    )
+    monkeypatch.setattr(gate_c, "_source_files_report", lambda: {"source": "hash"})
+
+    def run_controls(actual_config: Any, **kwargs: Any) -> dict[str, Any]:
+        assert actual_config == gate_c.GateCConfig()
+        assert kwargs["prerequisites"] is prerequisites
+        assert kwargs["source_start"] == source
+        assert kwargs["environment"] == environment
+        assert kwargs["source_files"] == {"source": "hash"}
+        events.append("run")
+        return result
+
+    monkeypatch.setattr(gate_c, "run_gate_c2_controls", run_controls)
+    monkeypatch.setattr(
+        gate_c,
+        "write_artifact",
+        lambda value, path: Path(path),
+    )
+
+    assert gate_c.main(argv) == 0
+    assert events == ["gpu", "run"]
+    output_lines = capsys.readouterr().out.splitlines()
+    assert output_lines[0] == str(output.result)
+    assert json.loads(output_lines[1]) == result["qualification"]
+
+
+@pytest.mark.parametrize("regime", _REGIMES)
+@requires_gate_c
+def test_gate_c2_operational_h0_restores_independent_live_state_leaves(
+    regime: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    data = (
+        gate_c._regenerate_gate_a_data(config)
+        if regime == "gate_a"
+        else gate_c._regenerate_gate_b_data(config)
+    )
+    models: dict[str, LatentWorkspaceModel] = {}
+    source_snapshot: dict[str, Any] = {}
+    captured: list[tuple[str, dict[str, np.ndarray]]] = []
+    original_snapshot_state = LatentWorkspaceModel.snapshot_state
+
+    def recording_snapshot(model: LatentWorkspaceModel) -> Any:
+        snapshot = original_snapshot_state(model)
+        source_snapshot.setdefault("value", snapshot)
+        return snapshot
+
+    def control_model(
+        actual_config: Any,
+        initialization: Mapping[str, Any],
+        *,
+        policy: str,
+        batch_size: int,
+        role: str,
+        **kwargs: Any,
+    ) -> LatentWorkspaceModel:
+        del initialization, kwargs
+        arm = "query_only" if policy == "query_only" else "full"
+        model = gate_c._new_model_for_arm(
+            actual_config,
+            regime,
+            arm,
+            batch_size=batch_size,
+        )
+        models[role] = model
+        return model
+
+    def live_arrays(model: LatentWorkspaceModel) -> dict[str, np.ndarray]:
+        return {
+            f"{gate_a._path(path)}#{index}": np.asarray(
+                u.get_mantissa(jax.device_get(leaf))
+            )
+            for path, state in model.states(brainstate.HiddenState).items()
+            for index, leaf in enumerate(jax.tree.leaves(state.value))
+        }
+
+    def snapshot_arrays(snapshot: Any) -> dict[str, np.ndarray]:
+        return {
+            f"{gate_a._path(path)}#{index}": np.asarray(
+                u.get_mantissa(jax.device_get(leaf))
+            )
+            for path, value in snapshot.entries
+            for index, leaf in enumerate(jax.tree.leaves(value))
+        }
+
+    def capture(
+        model: LatentWorkspaceModel,
+        driver: str,
+        snapshot: Any,
+        events: np.ndarray,
+        advances: np.ndarray,
+    ) -> dict[str, Any]:
+        del events, advances
+        model.restore_state(snapshot)
+        current = live_arrays(model)
+        source = snapshot_arrays(snapshot)
+        assert tuple(current) == tuple(source)
+        for path in current:
+            np.testing.assert_array_equal(current[path], source[path])
+            assert current[path] is not source[path]
+            assert not np.shares_memory(current[path], source[path])
+            for _, earlier in captured:
+                assert current[path] is not earlier[path]
+                assert not np.shares_memory(current[path], earlier[path])
+        captured.append((driver, current))
+        return {"role": driver}
+
+    monkeypatch.setattr(LatentWorkspaceModel, "snapshot_state", recording_snapshot)
+    monkeypatch.setattr(gate_c, "_gate_c2_control_model", control_model)
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_h0_driver",
+        lambda model: next(role for role, value in models.items() if value is model),
+    )
+    monkeypatch.setattr(gate_c, "_gate_c2_h0_capture", capture)
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_h0_comparison",
+        lambda left, right: {"left": left, "right": right, "passed": True},
+    )
+    monkeypatch.setattr(gate_c, "_hidden_state_sha256", lambda model: "a" * 64)
+    monkeypatch.setattr(gate_c, "_gate_c2_finish_control_model", lambda *args: None)
+
+    report = gate_c._paired_h0_operational_equivalence_report(
+        config,
+        initialization={"initialization": {}},
+        regime=regime,
+        data=data,
+    )
+
+    assert report["passed"] is True
+    assert len(captured) == 12
+    assert source_snapshot
+    immutable_source = {
+        path: np.array(value, copy=True)
+        for path, value in snapshot_arrays(source_snapshot["value"]).items()
+    }
+    other_before = {
+        role: {
+            path: np.array(value, copy=True)
+            for path, value in live_arrays(model).items()
+        }
+        for role, model in models.items()
+    }
+    mutated_role = f"{regime}:paired_h0:copied_full"
+    mutated = models[mutated_role]
+    first_state = next(iter(mutated.states(brainstate.HiddenState).values()))
+    first_state.value = jax.tree.map(
+        lambda leaf: leaf + jnp.ones_like(leaf),
+        first_state.value,
+    )
+    assert any(
+        not np.array_equal(live_arrays(mutated)[path], value)
+        for path, value in other_before[mutated_role].items()
+    )
+    for role, model in models.items():
+        if role == mutated_role:
+            continue
+        for path, value in other_before[role].items():
+            np.testing.assert_array_equal(live_arrays(model)[path], value)
+    for path, value in immutable_source.items():
+        np.testing.assert_array_equal(snapshot_arrays(source_snapshot["value"])[path], value)
