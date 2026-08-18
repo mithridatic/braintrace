@@ -13,11 +13,13 @@ import json
 import math
 import re
 import weakref
+from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import brainunit as u
 import brainstate
 import jax
 import jax.numpy as jnp
@@ -2951,6 +2953,202 @@ def test_gate_c_artifact_writer_is_atomic_deterministic_and_strict(
         gate_c.write_artifact({"loss": math.nan}, invalid)
     assert not invalid.exists()
     assert not invalid.with_suffix(".json.tmp").exists()
+
+
+def _gate_c2_controls_writer_value() -> dict[str, Any]:
+    return {
+        "schema_version": gate_c.GATE_C2_CONTROLS_SCHEMA_VERSION,
+        "control": gate_c.GATE_C2_CONTROLS_CONTROL,
+        "qualification_regime": "preregistered_full_pretraining_control",
+        "a": {"finite": 1.25, "flags": [True, False, None]},
+        "z": 7,
+    }
+
+
+@requires_gate_c
+def test_gate_c2_controls_writer_streams_exact_compact_strict_json(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    value = _gate_c2_controls_writer_value()
+    expected = (
+        "".join(
+            json.JSONEncoder(
+                allow_nan=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).iterencode(value)
+        ).encode("utf-8")
+        + b"\n"
+    )
+
+    def forbidden_dumps(*args: Any, **kwargs: Any) -> str:
+        del args, kwargs
+        raise AssertionError("Gate C2 controls must stream JSON chunks")
+
+    monkeypatch.setattr(gate_c.json, "dumps", forbidden_dumps)
+    destination = tmp_path / "gate-c2-controls.json"
+
+    written = gate_c.write_artifact(value, destination)
+
+    payload = destination.read_bytes()
+    assert written == destination
+    assert payload == expected
+    assert payload.endswith(b"\n")
+    assert b"\n" not in payload[:-1]
+    assert json.loads(payload) == value
+    assert not destination.with_suffix(".json.tmp").exists()
+
+
+@requires_gate_c
+def test_gate_c2_controls_writer_enforces_exact_size_including_newline(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES == 201_326_592
+    value = _gate_c2_controls_writer_value()
+    compact = "".join(
+        json.JSONEncoder(
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).iterencode(value)
+    ).encode("utf-8")
+
+    exact = tmp_path / "exact.json"
+    monkeypatch.setattr(
+        gate_c,
+        "GATE_C2_CONTROLS_MAX_JSON_BYTES",
+        len(compact) + 1,
+    )
+    gate_c.write_artifact(value, exact)
+    assert exact.stat().st_size == len(compact) + 1
+
+    oversized = tmp_path / "oversized.json"
+    previous = b"authenticated-previous-artifact\n"
+    oversized.write_bytes(previous)
+    monkeypatch.setattr(
+        gate_c,
+        "GATE_C2_CONTROLS_MAX_JSON_BYTES",
+        len(compact),
+    )
+
+    with pytest.raises(ValueError, match="JSON|size|limit|bytes|MiB"):
+        gate_c.write_artifact(value, oversized)
+
+    assert oversized.read_bytes() == previous
+    assert not oversized.with_suffix(".json.tmp").exists()
+
+
+@pytest.mark.parametrize(
+    "control",
+    (
+        "example21_gate_c_initialization_admission",
+        "example21_pp_prop_learnability_gate_c",
+        "example21_pp_prop_learnability_gate_c2",
+    ),
+)
+@requires_gate_c
+def test_non_control_gate_c_writer_retains_v1_indented_bytes(
+    control: str,
+    tmp_path: Path,
+) -> None:
+    value = {"schema_version": 1, "control": control, "z": 1, "a": [True]}
+    destination = tmp_path / f"{control}.json"
+    expected = (
+        json.dumps(
+            value,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+            separators=(",", ": "),
+        )
+        + "\n"
+    ).encode("utf-8")
+
+    gate_c.write_artifact(value, destination)
+
+    assert destination.read_bytes() == expected
+
+
+@requires_gate_c
+def test_large_gate_c2_controls_streamed_payload_stays_below_cap(
+    tmp_path: Path,
+) -> None:
+    read_hex = "00" * (512 * 32 * np.dtype(np.float32).itemsize)
+    memory_hex = "00" * (512 * 32 * 32 * np.dtype(np.float32).itemsize)
+    read_record = {
+        "dtype": "<f4",
+        "shape": [512, 32],
+        "data_hex": read_hex,
+        "sha256": "0" * 64,
+        "finite_count": 512 * 32,
+        "nonfinite_count": 0,
+    }
+    memory_record = {
+        "dtype": "<f4",
+        "shape": [512, 32, 32],
+        "data_hex": memory_hex,
+        "sha256": "1" * 64,
+        "finite_count": 512 * 32 * 32,
+        "nonfinite_count": 0,
+    }
+    ticks = {
+        f"H{index}": {
+            "selected_read": read_record,
+            "selected_drive": read_record,
+        }
+        for index in range(1, 9)
+    }
+    value = {
+        "schema_version": gate_c.GATE_C2_CONTROLS_SCHEMA_VERSION,
+        "control": gate_c.GATE_C2_CONTROLS_CONTROL,
+        "regimes": {
+            "gate_b": {
+                "query_only_latent_no_read": {
+                    "streams": {
+                        name: ticks
+                        for name in ("intact", "shuffled", "no_context")
+                    },
+                    "perturbations": {
+                        name: {"replacement": memory_record}
+                        for name in ("plus_7", "minus_7")
+                    },
+                }
+            }
+        },
+    }
+    destination = tmp_path / "large-streamed-controls.json"
+
+    gate_c.write_artifact(value, destination)
+
+    assert 10 * 1024 * 1024 < destination.stat().st_size
+    assert destination.stat().st_size < gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES
+    assert json.loads(destination.read_bytes()) == value
+
+
+@requires_gate_c
+def test_complete_gate_c2_controls_fixture_streams_below_cap_and_roundtrips(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    tmp_path: Path,
+) -> None:
+    admission, no_read_reports = passing_gate_c2_no_read_reports
+    report = _passing_gate_c2_controls_report(admission, no_read_reports)
+    destination = tmp_path / "complete-gate-c2-controls.json"
+
+    written = gate_c.write_artifact(report, destination)
+
+    payload = destination.read_bytes()
+    assert written == destination
+    assert payload.endswith(b"\n")
+    assert b"\n" not in payload[:-1]
+    assert len(payload) < gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES
+    decoded = json.loads(payload)
+    assert gate_a._json_exact(decoded, report)
+    assert not destination.with_suffix(".json.tmp").exists()
 
 
 @requires_gate_c
@@ -7144,6 +7342,52 @@ def test_gate_c2_controls_audit_records_all_direct_forbidden_boundaries(
     assert evidence["complete"] is False
 
 
+@pytest.mark.parametrize("fail_at", range(1, 9))
+@requires_gate_c
+def test_gate_c2_controls_audit_rolls_back_partial_enter_installation(
+    fail_at: int,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    original_adam = gate_c.braintools.optim.Adam
+    boundary_locations = (
+        (gate_c, "_make_arm_trainer"),
+        (gate_a, "_make_pp_prop_trainer"),
+        (gate_b, "_make_pp_prop_trainer"),
+        (gate_c, "GateCTrainer"),
+        (gate_a, "_PPPropTrainer"),
+        (gate_b, "_DepthPPPropTrainer"),
+        (gate_c.braintools.optim, "Adam"),
+        (original_adam, "update"),
+    )
+    boundaries = tuple(
+        (owner, name, inspect.getattr_static(owner, name))
+        for owner, name in boundary_locations
+    )
+    audit = gate_c._GateC2ControlsAudit(admission)
+    real_replace = audit._replace
+    replace_calls = 0
+
+    def fail_after_install(owner: Any, name: str, replacement: Any) -> None:
+        nonlocal replace_calls
+        replace_calls += 1
+        real_replace(owner, name, replacement)
+        if replace_calls == fail_at:
+            raise RuntimeError("injected late audit install failure")
+
+    monkeypatch.setattr(audit, "_replace", fail_after_install)
+    try:
+        with pytest.raises(RuntimeError, match="late audit install failure"):
+            audit.__enter__()
+
+        assert replace_calls == fail_at
+        assert audit._restorations == []
+        for owner, name, original in boundaries:
+            assert inspect.getattr_static(owner, name) is original
+    finally:
+        audit.__exit__(None, None, None)
+
+
 @requires_gate_c
 def test_gate_c2_floating_difference_records_are_raw_and_recomputed() -> None:
     left = np.zeros((512, 4), dtype=np.float32)
@@ -7978,6 +8222,29 @@ def _reduced_gate_c2_gate_a_no_read_inputs() -> tuple[Any, Any, dict[str, Any]]:
     return config, data, initialization
 
 
+def _reduced_gate_c2_gate_b_no_read_inputs() -> tuple[Any, Any, dict[str, Any]]:
+    config = _reduced_gate_c_config()
+    data = gate_c._regenerate_gate_b_data(config)
+    model = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=config.gate_b_config.validation_episodes,
+    )
+    initialization = {
+        "initialization": {
+            "gate_b": {
+                "canonical_full": {
+                    "parameter_sha256": legacy._array_digest(
+                        legacy._parameter_values(model)
+                    )
+                }
+            }
+        }
+    }
+    return config, data, initialization
+
+
 @requires_gate_c
 def test_reduced_no_read_report_derives_cached_read_sentinels_from_execution(
     monkeypatch: pytest.MonkeyPatch,
@@ -8072,6 +8339,341 @@ def test_reduced_no_read_report_uses_distinct_pre_post_boundary_captures(
         "nul_joined_gate_c2_non_s_k_state_v1",
         "authenticated_gate_c_parameter_array_digest_v1",
     }
+
+
+@requires_gate_c
+def test_gate_b_no_read_report_has_exact_bounded_driver_workload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, data, initialization = _reduced_gate_c2_gate_b_no_read_inputs()
+    latent_lengths: dict[str, list[int]] = {"query_only": [], "full": []}
+    prefix_lengths: dict[str, list[int]] = {"query_only": [], "full": []}
+    boundary_calls = 0
+    real_latent_driver = gate_c._gate_c2_latent_driver
+    real_prefix_driver = gate_c._gate_c2_h0_driver
+    real_boundary_snapshot = gate_c._gate_c2_boundary_snapshot
+
+    def recording_latent_driver(model: LatentWorkspaceModel) -> Any:
+        driver, paths = real_latent_driver(model)
+        policy = model.memory_read_policy
+
+        def recorded(events: Any, advances: Any) -> Any:
+            latent_lengths[policy].append(int(events.shape[0]))
+            return driver(events, advances)
+
+        return recorded, paths
+
+    def recording_prefix_driver(model: LatentWorkspaceModel) -> Any:
+        driver = real_prefix_driver(model)
+        policy = model.memory_read_policy
+
+        def recorded(events: Any, advances: Any) -> Any:
+            prefix_lengths[policy].append(int(events.shape[0]))
+            return driver(events, advances)
+
+        return recorded
+
+    def recording_boundary_snapshot(*args: Any, **kwargs: Any) -> Any:
+        nonlocal boundary_calls
+        boundary_calls += 1
+        return real_boundary_snapshot(*args, **kwargs)
+
+    monkeypatch.setattr(gate_c, "_gate_c2_latent_driver", recording_latent_driver)
+    monkeypatch.setattr(gate_c, "_gate_c2_h0_driver", recording_prefix_driver)
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_boundary_snapshot",
+        recording_boundary_snapshot,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_removed_path_finite_window_influence",
+        lambda *args, **kwargs: {"complete": True},
+    )
+
+    gate_c._query_only_latent_no_read_report(
+        config,
+        initialization=initialization,
+        regime="gate_b",
+        data=data,
+    )
+
+    h0_length = config.gate_b_config.sequence_length - config.gate_b_config.gap_steps
+    workload = {
+        "query": Counter(latent_lengths["query_only"]),
+        "full": Counter(latent_lengths["full"]),
+        "prefix_query": Counter(prefix_lengths["query_only"]),
+        "prefix_full": Counter(prefix_lengths["full"]),
+        "query_call_count": len(latent_lengths["query_only"]),
+        "full_call_count": len(latent_lengths["full"]),
+        "prefix_call_count": sum(map(len, prefix_lengths.values())),
+        "total_call_count": sum(map(len, latent_lengths.values()))
+        + sum(map(len, prefix_lengths.values())),
+        "boundary_rerun_count": boundary_calls,
+    }
+    assert workload == {
+        "query": Counter({1: 54, 2: 6, 3: 6, 4: 6, 5: 6, 6: 6, 7: 6, 8: 9}),
+        "full": Counter({1: 48, 8: 3}),
+        "prefix_query": Counter({h0_length: 3}),
+        "prefix_full": Counter({h0_length: 3}),
+        "query_call_count": 99,
+        "full_call_count": 51,
+        "prefix_call_count": 6,
+        "total_call_count": 156,
+        "boundary_rerun_count": 0,
+    }
+
+
+@requires_gate_c
+def test_gate_c2_host_boundaries_are_exact_independent_and_replayable() -> None:
+    host_boundary_snapshots = gate_c._gate_c2_host_boundary_snapshots
+    config, data, _ = _reduced_gate_c2_gate_b_no_read_inputs()
+    validation = data[1]
+    count = config.gate_b_config.validation_episodes
+    h0_end = config.gate_b_config.sequence_length - config.gate_b_config.gap_steps
+    events = np.asarray(validation.intact)[h0_end:]
+    advances = np.asarray(validation.advance_masks)[h0_end:]
+    model = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "query_only",
+        batch_size=count,
+    )
+    h0_snapshot = gate_c._gate_c2_stop_gradient_snapshot(model.snapshot_state())
+    driver, hidden_paths = gate_c._gate_c2_latent_driver(model)
+    baseline = gate_c._gate_c2_latent_capture(
+        model,
+        driver,
+        hidden_paths,
+        h0_snapshot,
+        events,
+        advances,
+    )
+    source_hidden = {
+        path: np.array(value, copy=True, order="C")
+        for path, value in baseline["hidden_paths"].items()
+    }
+
+    boundaries = host_boundary_snapshots(
+        h0_snapshot,
+        baseline["hidden_paths"],
+    )
+
+    assert isinstance(boundaries, tuple)
+    assert len(boundaries) == 8
+    assert all(type(boundary) is type(h0_snapshot) for boundary in boundaries)
+    h0_entry_paths = tuple(path for path, _ in h0_snapshot.entries)
+    assert all(
+        tuple(path for path, _ in boundary.entries) == h0_entry_paths
+        for boundary in boundaries
+    )
+
+    def direct_arrays(snapshot: Any) -> dict[str, np.ndarray]:
+        result: dict[str, np.ndarray] = {}
+        for path, value in snapshot.entries:
+            name = gate_a._path(path)
+            for index, leaf in enumerate(jax.tree.leaves(value)):
+                mantissa = u.get_mantissa(leaf)
+                assert isinstance(mantissa, np.ndarray)
+                assert mantissa.flags.c_contiguous
+                result[f"{name}#{index}"] = mantissa
+        return result
+
+    def value_structures(snapshot: Any) -> dict[str, Any]:
+        return {
+            gate_a._path(path): jax.tree.structure(value)
+            for path, value in snapshot.entries
+        }
+
+    def value_units(snapshot: Any) -> dict[str, Any]:
+        return {
+            gate_a._path(path): u.get_unit(value)
+            for path, value in snapshot.entries
+        }
+
+    def framed_digest(values: Mapping[str, np.ndarray]) -> str:
+        endpoints = {
+            path: gate_c._gate_c2_array_endpoint(value)
+            for path, value in values.items()
+        }
+        return gate_c._gate_c2_cached_boundary_tree_sha256(endpoints)
+
+    h0_arrays = gate_c._gate_c2_snapshot_arrays(h0_snapshot)
+    actual_arrays = [direct_arrays(boundary) for boundary in boundaries]
+    expected_arrays = [
+        h0_arrays,
+        *(
+            {
+                path: source_hidden[path][tick_index]
+                for path in sorted(source_hidden)
+            }
+            for tick_index in range(7)
+        ),
+    ]
+    expected_structures = value_structures(h0_snapshot)
+    expected_units = value_units(h0_snapshot)
+    for boundary, actual, expected in zip(
+        boundaries,
+        actual_arrays,
+        expected_arrays,
+        strict=True,
+    ):
+        assert value_structures(boundary) == expected_structures
+        assert value_units(boundary) == expected_units
+        assert tuple(actual) == tuple(expected)
+        assert legacy._array_digest(actual) == legacy._array_digest(expected)
+        assert framed_digest(actual) == framed_digest(expected)
+        for path in actual:
+            assert actual[path].dtype == expected[path].dtype
+            assert actual[path].shape == expected[path].shape
+            assert actual[path].tobytes() == np.ascontiguousarray(
+                expected[path]
+            ).tobytes()
+            assert not np.shares_memory(actual[path], expected[path])
+
+    for left_index, left in enumerate(actual_arrays):
+        for right in actual_arrays[left_index + 1 :]:
+            for path in left:
+                assert not np.shares_memory(left[path], right[path])
+
+    missing_path = dict(baseline["hidden_paths"])
+    missing_path.pop(next(iter(missing_path)))
+    with pytest.raises(ValueError, match="path"):
+        host_boundary_snapshots(h0_snapshot, missing_path)
+    wrong_length = dict(baseline["hidden_paths"])
+    length_path = next(iter(wrong_length))
+    wrong_length[length_path] = wrong_length[length_path][:-1]
+    with pytest.raises(ValueError, match="leading|length|tick"):
+        host_boundary_snapshots(h0_snapshot, wrong_length)
+    wrong_shape = dict(baseline["hidden_paths"])
+    shape_path = next(iter(wrong_shape))
+    wrong_shape[shape_path] = wrong_shape[shape_path][:, :-1]
+    with pytest.raises(ValueError, match="shape|geometry"):
+        host_boundary_snapshots(h0_snapshot, wrong_shape)
+
+    def slice_capture(capture: Mapping[str, Any], start: int) -> dict[str, Any]:
+        return {
+            "compact": capture["compact"][start:],
+            "selected_read": capture["selected_read"][start:],
+            "selected_drive": capture["selected_drive"][start:],
+            "hidden_paths": {
+                path: value[start:]
+                for path, value in capture["hidden_paths"].items()
+            },
+            "predictions": capture["predictions"][start:],
+        }
+
+    replays = (
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[0],
+            events,
+            advances,
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[1],
+            events[1:],
+            advances[1:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[2],
+            events[2:],
+            advances[2:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[3],
+            events[3:],
+            advances[3:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[4],
+            events[4:],
+            advances[4:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[5],
+            events[5:],
+            advances[5:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[6],
+            events[6:],
+            advances[6:],
+        ),
+        gate_c._gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            boundaries[7],
+            events[7:],
+            advances[7:],
+        ),
+    )
+    tick_names = gate_c.GATE_C2_LATENT_TICKS["gate_b"]
+    expected_replays = tuple(
+        slice_capture(baseline, boundary_index)
+        for boundary_index in range(len(boundaries))
+    )
+    for boundary_index, (expected, replay) in enumerate(
+        zip(expected_replays, replays, strict=True)
+    ):
+        comparison = gate_c._gate_c2_suffix_comparison(
+            expected,
+            replay,
+            tick_names=tick_names[boundary_index:],
+            include_context_memory=True,
+        )
+        assert comparison["passed"] is True
+        np.testing.assert_array_equal(
+            replay["predictions"],
+            expected["predictions"],
+        )
+        for tick_index in range(expected["selected_read"].shape[0]):
+            for path in ("selected_read", "selected_drive"):
+                difference = gate_c._gate_c2_floating_difference_record(
+                    expected[path][tick_index],
+                    replay[path][tick_index],
+                    rms_tolerance=1e-6,
+                )
+                assert difference["max_per_example_rms_difference"] <= 1e-6
+                assert difference["within_tolerance"] is True
+
+    boundary_digests = [legacy._array_digest(value) for value in actual_arrays]
+    source_digest = legacy._array_digest(source_hidden)
+    mutation = actual_arrays[2]["context_memory#0"]
+    mutation.flat[0] = np.nextafter(mutation.flat[0], np.float32(np.inf))
+    mutated_digests = [
+        legacy._array_digest(direct_arrays(boundary)) for boundary in boundaries
+    ]
+    assert mutated_digests[2] != boundary_digests[2]
+    assert mutated_digests[:2] == boundary_digests[:2]
+    assert mutated_digests[3:] == boundary_digests[3:]
+    assert legacy._array_digest(baseline["hidden_paths"]) == source_digest
+    for path in source_hidden:
+        np.testing.assert_array_equal(
+            baseline["hidden_paths"][path],
+            source_hidden[path],
+        )
 
 
 def _passing_gate_c2_operational_h0(

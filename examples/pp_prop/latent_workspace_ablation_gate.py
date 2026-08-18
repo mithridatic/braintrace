@@ -10,6 +10,7 @@ import json
 import math
 import os
 import re
+import sys
 import time
 import warnings
 from dataclasses import dataclass, field
@@ -93,6 +94,7 @@ GATE_C2_CONTROLS_CONTROL = "example21_gate_c2_pretraining_control_admission"
 GATE_C2_CONTROLS_QUALIFICATION_REGIME = (
     "preregistered_gate_c2_pretraining_controls"
 )
+GATE_C2_CONTROLS_MAX_JSON_BYTES = 201_326_592
 GATE_C2_CONTROLS_TOP_LEVEL_KEYS = (
     "schema_version",
     "control",
@@ -2075,21 +2077,49 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
-    payload = (
-        json.dumps(
-            value,
-            allow_nan=False,
-            indent=2,
-            sort_keys=True,
-            separators=(",", ": "),
-        )
-        + "\n"
-    )
     try:
-        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
+        if value.get("control") == GATE_C2_CONTROLS_CONTROL:
+            encoder = json.JSONEncoder(
+                allow_nan=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            byte_count = 0
+            with temporary.open("wb") as stream:
+                for chunk in encoder.iterencode(value):
+                    encoded = chunk.encode("utf-8")
+                    if (
+                        byte_count + len(encoded) + 1
+                        > GATE_C2_CONTROLS_MAX_JSON_BYTES
+                    ):
+                        raise ValueError(
+                            "Gate C2 controls JSON exceeds the 192 MiB size limit"
+                        )
+                    stream.write(encoded)
+                    byte_count += len(encoded)
+                stream.write(b"\n")
+                byte_count += 1
+                if byte_count > GATE_C2_CONTROLS_MAX_JSON_BYTES:
+                    raise ValueError(
+                        "Gate C2 controls JSON exceeds the 192 MiB size limit"
+                    )
+                stream.flush()
+                os.fsync(stream.fileno())
+        else:
+            payload = (
+                json.dumps(
+                    value,
+                    allow_nan=False,
+                    indent=2,
+                    sort_keys=True,
+                    separators=(",", ": "),
+                )
+                + "\n"
+            )
+            with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+                stream.write(payload)
+                stream.flush()
+                os.fsync(stream.fileno())
         temporary.replace(destination)
     except BaseException:
         temporary.unlink(missing_ok=True)
@@ -3627,10 +3657,23 @@ class _GateC2ControlsAudit:
         self._restorations.append((owner, name, original))
         setattr(owner, name, replacement)
 
+    def _restore(self) -> None:
+        while self._restorations:
+            owner, name, original = self._restorations.pop()
+            setattr(owner, name, original)
+
     def __enter__(self) -> _GateC2ControlsAudit:
+        try:
+            return self._install()
+        except BaseException:
+            self._restore()
+            raise
+
+    def _install(self) -> _GateC2ControlsAudit:
+        local_module = sys.modules[__name__]
         factory_entries = (
             (
-                globals(),
+                local_module,
                 "_make_arm_trainer",
                 "examples.pp_prop.latent_workspace_ablation_gate._make_arm_trainer",
             ),
@@ -3646,7 +3689,7 @@ class _GateC2ControlsAudit:
             ),
         )
         for owner, name, label in factory_entries:
-            original = owner[name] if isinstance(owner, dict) else getattr(owner, name)
+            original = getattr(owner, name)
 
             def blocked_factory(
                 *args: Any,
@@ -3660,15 +3703,11 @@ class _GateC2ControlsAudit:
                     "Gate C2 pretraining controls forbid trainer construction"
                 )
 
-            if isinstance(owner, dict):
-                self._restorations.append((owner, name, original))
-                owner[name] = blocked_factory
-            else:
-                self._replace(owner, name, blocked_factory)
+            self._replace(owner, name, blocked_factory)
 
         trainer_classes = (
             (
-                globals(),
+                local_module,
                 "GateCTrainer",
                 "train_chunk",
                 (
@@ -3696,9 +3735,7 @@ class _GateC2ControlsAudit:
             ),
         )
         for owner, name, callable_name, label in trainer_classes:
-            original_class = (
-                owner[name] if isinstance(owner, dict) else getattr(owner, name)
-            )
+            original_class = getattr(owner, name)
 
             def audited_constructor(
                 *args: Any,
@@ -3719,45 +3756,42 @@ class _GateC2ControlsAudit:
                 setattr(instance, _callable_name, blocked_step)
                 return instance
 
-            if isinstance(owner, dict):
-                self._restorations.append((owner, name, original_class))
-                owner[name] = audited_constructor
-            else:
-                self._replace(owner, name, audited_constructor)
+            self._replace(owner, name, audited_constructor)
 
-        original_adam = braintools.optim.Adam
+        try:
+            original_adam = braintools.optim.Adam
 
-        def blocked_adam(*args: Any, **kwargs: Any) -> Any:
-            del args, kwargs
-            self.optimizer_constructor_calls.append(
-                "braintools.optim.Adam.__init__"
-            )
-            raise RuntimeError(
-                "Gate C2 pretraining controls forbid Adam construction"
-            )
-
-        self._replace(braintools.optim, "Adam", blocked_adam)
-        original_update = getattr(original_adam, "update", None)
-        if original_update is not None:
-
-            def blocked_update(instance: Any, *args: Any, **kwargs: Any) -> Any:
-                del instance, args, kwargs
-                self.optimizer_update_calls.append("braintools.optim.Adam.update")
+            def blocked_adam(*args: Any, **kwargs: Any) -> Any:
+                del args, kwargs
+                self.optimizer_constructor_calls.append(
+                    "braintools.optim.Adam.__init__"
+                )
                 raise RuntimeError(
-                    "Gate C2 pretraining controls forbid optimizer updates"
+                    "Gate C2 pretraining controls forbid Adam construction"
                 )
 
-            self._replace(original_adam, "update", blocked_update)
-        return self
+            self._replace(braintools.optim, "Adam", blocked_adam)
+            original_update = getattr(original_adam, "update", None)
+            if original_update is not None:
+
+                def blocked_update(instance: Any, *args: Any, **kwargs: Any) -> Any:
+                    del instance, args, kwargs
+                    self.optimizer_update_calls.append(
+                        "braintools.optim.Adam.update"
+                    )
+                    raise RuntimeError(
+                        "Gate C2 pretraining controls forbid optimizer updates"
+                    )
+
+                self._replace(original_adam, "update", blocked_update)
+            return self
+        except BaseException:
+            self._restore()
+            raise
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
         del exc_type, exc, traceback
-        while self._restorations:
-            owner, name, original = self._restorations.pop()
-            if isinstance(owner, dict):
-                owner[name] = original
-            else:
-                setattr(owner, name, original)
+        self._restore()
 
     def register(
         self,
@@ -5178,6 +5212,74 @@ def _gate_c2_latent_capture(
     }
 
 
+def _gate_c2_host_boundary_snapshots(
+    h0_snapshot: Any,
+    hidden_paths: Mapping[str, Any],
+) -> tuple[Any, ...]:
+    """Copy every pre-tick latent boundary into independent host storage."""
+
+    h0_arrays = _gate_c2_snapshot_arrays(h0_snapshot)
+    if set(hidden_paths) != set(h0_arrays):
+        raise ValueError("Gate C2 host boundary hidden path set differs")
+    tick_count: int | None = None
+    stacked: dict[str, np.ndarray] = {}
+    for path, expected in h0_arrays.items():
+        value = np.asarray(hidden_paths[path])
+        if value.ndim < 1:
+            raise ValueError("Gate C2 host boundary leading tick axis is missing")
+        if tick_count is None:
+            tick_count = int(value.shape[0])
+        elif int(value.shape[0]) != tick_count:
+            raise ValueError("Gate C2 host boundary tick lengths differ")
+        if value.shape[1:] != expected.shape or value.dtype != expected.dtype:
+            raise ValueError("Gate C2 host boundary hidden geometry differs")
+        stacked[path] = value
+    if tick_count is None or tick_count < 1:
+        raise ValueError("Gate C2 host boundary tick length is empty")
+
+    boundaries: list[Any] = []
+    for boundary_index in range(tick_count):
+        entries: list[tuple[Any, Any]] = []
+        for path, template in h0_snapshot.entries:
+            name = gate_a._path(path)
+            leaves: list[np.ndarray] = []
+            for leaf_index, _ in enumerate(jax.tree.leaves(template)):
+                leaf_path = f"{name}#{leaf_index}"
+                source = (
+                    h0_arrays[leaf_path]
+                    if boundary_index == 0
+                    else stacked[leaf_path][boundary_index - 1]
+                )
+                leaves.append(np.array(source, copy=True, order="C"))
+            value = jax.tree_util.tree_unflatten(
+                jax.tree_util.tree_structure(template),
+                leaves,
+            )
+            entries.append((path, value))
+        boundaries.append(
+            dataclasses.replace(h0_snapshot, entries=tuple(entries))
+        )
+    return tuple(boundaries)
+
+
+def _gate_c2_latent_capture_slice(
+    capture: Mapping[str, Any],
+    start: int,
+    stop: int | None = None,
+) -> dict[str, Any]:
+    index = slice(start, stop)
+    return {
+        "compact": capture["compact"][index],
+        "selected_read": capture["selected_read"][index],
+        "selected_drive": capture["selected_drive"][index],
+        "hidden_paths": {
+            path: value[index]
+            for path, value in capture["hidden_paths"].items()
+        },
+        "predictions": capture["predictions"][index],
+    }
+
+
 def _gate_c2_continuation_comparison(
     left: Mapping[str, Any],
     right: Mapping[str, Any],
@@ -5549,6 +5651,35 @@ def _query_only_latent_no_read_report(
             )
         )
         full_h0 = _gate_c2_stop_gradient_snapshot(full_model.snapshot_state())
+        query_complete_baseline = _gate_c2_latent_capture(
+            query_model,
+            query_driver,
+            query_hidden_paths,
+            query_h0,
+            latent_events,
+            latent_advances,
+        )
+        full_complete_baseline = _gate_c2_latent_capture(
+            full_model,
+            full_driver,
+            full_hidden_paths,
+            full_h0,
+            latent_events,
+            latent_advances,
+        )
+        query_boundaries = _gate_c2_host_boundary_snapshots(
+            query_h0,
+            query_complete_baseline["hidden_paths"],
+        )
+        full_boundaries = _gate_c2_host_boundary_snapshots(
+            full_h0,
+            full_complete_baseline["hidden_paths"],
+        )
+        if (
+            len(query_boundaries) != len(tick_names)
+            or len(full_boundaries) != len(tick_names)
+        ):
+            raise ValueError("Gate C2 host boundary tick count differs")
         selected_ticks: dict[str, Any] = {}
         query_ticks_by_replacement = {
             name: {} for name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
@@ -5560,51 +5691,37 @@ def _query_only_latent_no_read_report(
             suffix_events = latent_events[tick_index:]
             suffix_advances = latent_advances[tick_index:]
             suffix_ticks = tick_names[tick_index:]
-            query_boundary = _gate_c2_boundary_snapshot(
-                query_model,
-                query_driver,
-                query_h0,
-                latent_events,
-                latent_advances,
-                tick_index=tick_index,
+            tick_events = latent_events[tick_index : tick_index + 1]
+            tick_advances = latent_advances[tick_index : tick_index + 1]
+            query_boundary = query_boundaries[tick_index]
+            full_boundary = full_boundaries[tick_index]
+            query_suffix_baseline = _gate_c2_latent_capture_slice(
+                query_complete_baseline,
+                tick_index,
             )
-            full_boundary = _gate_c2_boundary_snapshot(
-                full_model,
-                full_driver,
-                full_h0,
-                latent_events,
-                latent_advances,
-                tick_index=tick_index,
+            query_tick_baseline = _gate_c2_latent_capture_slice(
+                query_complete_baseline,
+                tick_index,
+                tick_index + 1,
             )
-            query_baseline = _gate_c2_latent_capture(
-                query_model,
-                query_driver,
-                query_hidden_paths,
-                query_boundary,
-                suffix_events,
-                suffix_advances,
-            )
-            full_baseline = _gate_c2_latent_capture(
-                full_model,
-                full_driver,
-                full_hidden_paths,
-                full_boundary,
-                suffix_events,
-                suffix_advances,
+            full_tick_baseline = _gate_c2_latent_capture_slice(
+                full_complete_baseline,
+                tick_index,
+                tick_index + 1,
             )
             cached_probe = cached_read_probe(
                 boundary=query_boundary,
                 suffix_events=suffix_events,
                 suffix_advances=suffix_advances,
-                baseline=query_baseline,
+                baseline=query_suffix_baseline,
                 suffix_ticks=suffix_ticks,
             )
             selected_ticks[tick] = {
                 "selected_read": _gate_c2_zero_array_record(
-                    query_baseline["selected_read"][0]
+                    query_tick_baseline["selected_read"][0]
                 ),
                 "selected_drive": _gate_c2_zero_array_record(
-                    query_baseline["selected_drive"][0]
+                    query_tick_baseline["selected_drive"][0]
                 ),
                 "cached_read_probe": cached_probe,
                 "cached_h0_read_reused": bool(not cached_probe["passed"]),
@@ -5618,9 +5735,9 @@ def _query_only_latent_no_read_report(
                     driver=query_driver,
                     hidden_paths=query_hidden_paths,
                     boundary=query_boundary,
-                    suffix_events=suffix_events,
-                    suffix_advances=suffix_advances,
-                    baseline=query_baseline,
+                    suffix_events=tick_events,
+                    suffix_advances=tick_advances,
+                    baseline=query_tick_baseline,
                     fill=fill,
                     positive=False,
                 )
@@ -5629,9 +5746,9 @@ def _query_only_latent_no_read_report(
                     driver=full_driver,
                     hidden_paths=full_hidden_paths,
                     boundary=full_boundary,
-                    suffix_events=suffix_events,
-                    suffix_advances=suffix_advances,
-                    baseline=full_baseline,
+                    suffix_events=tick_events,
+                    suffix_advances=tick_advances,
+                    baseline=full_tick_baseline,
                     fill=fill,
                     positive=True,
                 )
