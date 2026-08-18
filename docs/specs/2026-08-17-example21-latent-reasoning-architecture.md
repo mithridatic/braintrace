@@ -2637,6 +2637,17 @@ decision: Gate B independently fails same-full H0 replay and raw no-read
 tolerances, and the unchanged mechanism oracle independently fails its
 workspace-query absolute floor.
 
+The narrow post-run implementation correction is that JSON object member order
+is non-semantic. The compact writer deliberately sorts object keys, so every
+validator must require the exact expected key set and validate each value by
+its named key; no validator may use `tuple(mapping)` or another insertion-order
+comparison as an object-schema condition. Ordered JSON arrays and other
+sequence values retain their exact order requirements. Strict parsing must
+continue to reject duplicate object keys. This correction does not
+retroactively qualify the failed `555c8ee35bc349a618b3d1434240ed4f385ca564`
+artifact, change any frozen threshold, permit a rerun of that admission, or
+unlock formal Gate C2, Gate D, or ARC.
+
 The pretraining admission did not pass, so no `formal_gate_c2` target or ten-
 model training run was enabled or executed. Gate D and ARC remain stopped. No
 new ARC test ran, the retained exact-ARC score remains `0`, and this result
