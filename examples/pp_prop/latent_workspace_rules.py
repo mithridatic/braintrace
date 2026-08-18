@@ -644,6 +644,77 @@ def rule_cost(name: str) -> int:
     return cost + _COMPLETION_COST.get(completion.partition(":")[0], 1)
 
 
+_FIT_MEMO: dict[bytes, tuple[GridRule, ...]] = {}
+
+
+def _demonstration_key(pairs: DemoPairs) -> bytes:
+    """Return a content key identifying one demonstration set exactly."""
+
+    parts: list[bytes] = []
+    for source, target in pairs:
+        parts.append(bytes(source.shape) + source.astype(np.int32).tobytes())
+        parts.append(bytes(target.shape) + target.astype(np.int32).tobytes())
+    return b"|".join(parts)
+
+
+def fit_verified_rules_cached(demonstrations: DemoPairs) -> tuple[GridRule, ...]:
+    """Fit verified rules, reusing the result for an identical demonstration set.
+
+    The composition search is a pure function of the demonstrations, so the same
+    task's several queries -- and the several evaluation arms that share a
+    demonstration set -- need it computed once. This memoizes on grid content,
+    never on task identity or arm name, so two arms with different
+    demonstrations still fit independently.
+
+    Parameters
+    ----------
+    demonstrations
+        Ordered ``(input, output)`` grid pairs.
+
+    Returns
+    -------
+    tuple of GridRule
+        The same value :func:`fit_verified_rules` would return.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> pairs = [(np.array([[1, 2]]), np.array([[2, 1]]))]
+        >>> fit_verified_rules_cached(pairs) == fit_verified_rules_cached(pairs)
+        True
+    """
+
+    pairs = [
+        (np.asarray(source, np.int32), np.asarray(target, np.int32))
+        for source, target in demonstrations
+    ]
+    key = _demonstration_key(pairs)
+    cached = _FIT_MEMO.get(key)
+    if cached is None:
+        cached = fit_verified_rules(pairs)
+        _FIT_MEMO[key] = cached
+    return cached
+
+
+def clear_rule_cache() -> None:
+    """Drop every memoized fit.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> clear_rule_cache()
+    """
+
+    _FIT_MEMO.clear()
+
+
 def verified_rule_candidates(
     demonstrations: DemoPairs, query_input: IntArray
 ) -> tuple[tuple[str, IntArray], ...]:
@@ -678,7 +749,7 @@ def verified_rule_candidates(
     cheapest: dict[bytes, int] = {}
     first: dict[bytes, tuple[str, IntArray]] = {}
     order: list[bytes] = []
-    for rule in fit_verified_rules(demonstrations):
+    for rule in fit_verified_rules_cached(demonstrations):
         proposed = _call(rule.apply, source)
         if not is_valid_grid(proposed):
             continue

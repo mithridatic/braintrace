@@ -10,6 +10,7 @@ available.  This is a repository-native experiment, not a reproduction.
 from __future__ import annotations
 
 import argparse
+import collections
 import hashlib
 import importlib.metadata
 import json
@@ -21,7 +22,7 @@ import time
 from collections import Counter
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
-from typing import Any, Iterable, Iterator, Literal, Sequence
+from typing import Any, Iterable, Iterator, Literal, Mapping, Sequence
 
 import brainstate
 import braintools
@@ -37,6 +38,11 @@ try:
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
+    )
+    from examples.pp_prop.latent_workspace_rules import (
+        clear_rule_cache,
+        rule_cost,
+        verified_rule_candidates,
     )
     from examples.pp_prop.latent_workspace_model import (
         ModelConfig,
@@ -70,6 +76,11 @@ except ModuleNotFoundError:
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
+    )
+    from latent_workspace_rules import (
+        clear_rule_cache,
+        rule_cost,
+        verified_rule_candidates,
     )
     from latent_workspace_model import (
         ModelConfig,
@@ -1189,6 +1200,64 @@ def _derange_task(task: ArcTask) -> ArcTask | None:
     )
 
 
+#: Arms whose demonstrations reach the rule channel unchanged. ``no_context``
+#: is deliberately absent: it blanks the demonstrations, so no rule can be
+#: admitted and the control keeps its causal meaning. ``slot_ablation`` ablates
+#: neural slots, not demonstrations, so the rule channel is unaffected by it by
+#: construction -- the per-channel attribution in the report is what separates
+#: the ablation's effect on the network from the channel that ignores it.
+RULE_ARM_DEMONSTRATIONS = ("intact", "shuffled")
+
+
+def _rule_proposals(
+    records: Sequence[_EvaluationRecord],
+    source_tasks: Sequence[_OriginTask],
+    *,
+    arm: Literal["intact", "no_context", "shuffled"],
+) -> tuple[tuple[str, np.ndarray] | None, ...]:
+    """Propose one demonstration-verified candidate per query for one arm.
+
+    The channel is fed the demonstrations *that arm actually has*, never the
+    original task's. Without this the proposals would be arm-invariant and every
+    control would report the same solves as ``intact`` -- the exact signature
+    this experiment treats as evidence of a non-causal result.
+
+    Parameters
+    ----------
+    records
+        Evaluation records in scoring order.
+    source_tasks
+        Origin tasks the records were encoded from.
+    arm
+        Evaluation arm whose demonstrations should be fitted.
+
+    Returns
+    -------
+    tuple
+        One ``(rule_name, grid)`` proposal or ``None`` per record, aligned with
+        ``records``.
+    """
+
+    if arm == "no_context":
+        return tuple(None for _ in records)
+    lookup = {_origin_task_key(origin): origin.task for origin in source_tasks}
+    proposals: list[tuple[str, np.ndarray] | None] = []
+    for record in records:
+        task = lookup[record.task_key]
+        if arm == "shuffled":
+            task = _derange_task(task)
+        if task is None:
+            proposals.append(None)
+            continue
+        demonstrations = [
+            (pair.input.as_array(), pair.output.as_array()) for pair in task.train
+        ]
+        query = task.test[record.encoded.query_index].input.as_array()
+        found = verified_rule_candidates(demonstrations, query)
+        proposals.append(found[0] if found else None)
+    return tuple(proposals)
+
+
 def _arm_sequences(
     records: Sequence[_EvaluationRecord],
     config: ExperimentConfig,
@@ -1278,12 +1347,17 @@ def _score_windows(
     compact: np.ndarray,
     records: Sequence[_EvaluationRecord],
     color_rank: int,
+    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
     expanded = expand_compact_logits(jnp.asarray(checkpoint_compact), color_rank)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
+    if rule_proposals is None:
+        rule_proposals = tuple(None for _ in records)
+    if len(rule_proposals) != len(records):
+        raise ValueError("rule proposals must match the evaluation records")
     metrics: dict[str, dict[str, object]] = {}
     query_details: dict[str, list[dict[str, object]]] = {}
     for effort_index, effort in enumerate(CHECKPOINTS):
@@ -1298,8 +1372,13 @@ def _score_windows(
             candidates = decode_candidates(logits)
             target = record.encoded.target
             assert target is not None
+            proposal = rule_proposals[query_index]
+            if proposal is None:
+                submitted: list[object] = list(candidates)
+            else:
+                submitted = [proposal[1], candidates[0].grid]
             score = score_query_candidates(
-                candidates,
+                submitted,
                 target.as_array(),
                 task_id=record.task_key,
                 query_index=record.encoded.query_index,
@@ -1310,6 +1389,12 @@ def _score_windows(
                     "task_id": record.task_key,
                     "query_index": record.encoded.query_index,
                     "candidates": [candidate.to_dict() for candidate in candidates],
+                    "rule_name": None if proposal is None else proposal[0],
+                    "rule_solved": bool(
+                        proposal is not None
+                        and proposal[1].shape == target.as_array().shape
+                        and np.array_equal(proposal[1], target.as_array())
+                    ),
                     "score": score.to_dict(),
                 }
             )
@@ -1468,7 +1553,13 @@ def _control_summary(
     color_rank: int,
     intact_metrics: dict[str, dict[str, object]],
     metadata: Sequence[dict[str, object]] | None = None,
+    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> dict[str, object]:
+    if rule_proposals is None:
+        rule_proposals = tuple(None for _ in records)
+    if intact_rule_proposals is None:
+        intact_rule_proposals = tuple(None for _ in records)
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
     if len(metadata) != len(records):
@@ -1485,11 +1576,23 @@ def _control_summary(
     applicable_intact = subset(intact)
     applicable_control = subset(control)
     if applicable_records:
+        applicable_control_rules = tuple(
+            rule_proposals[index] for index in applicable_indices
+        )
+        applicable_intact_rules = tuple(
+            intact_rule_proposals[index] for index in applicable_indices
+        )
         metrics, control_checkpoint_queries = _score_windows(
-            applicable_control[0], applicable_records, color_rank
+            applicable_control[0],
+            applicable_records,
+            color_rank,
+            applicable_control_rules,
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
-            applicable_intact[0], applicable_records, color_rank
+            applicable_intact[0],
+            applicable_records,
+            color_rank,
+            applicable_intact_rules,
         )
         if (
             len(applicable_records) == len(records)
@@ -2041,6 +2144,10 @@ def _evaluate(
     shuffled_events, shuffled_advances, shuffled_stops, shuffled_meta = _arm_sequences(
         records, config, row_config, arm="shuffled", source_tasks=data.evaluation
     )
+    clear_rule_cache()
+    intact_rules = _rule_proposals(records, data.evaluation, arm="intact")
+    shuffled_rules = _rule_proposals(records, data.evaluation, arm="shuffled")
+    no_context_rules = _rule_proposals(records, data.evaluation, arm="no_context")
     if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
         query_stops, shuffled_stops
     ):
@@ -2089,8 +2196,9 @@ def _evaluate(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
     intact_metrics, checkpoint_queries = _score_windows(
-        intact[0], records, config.color_rank
+        intact[0], records, config.color_rank, intact_rules
     )
+    channel_attribution = _channel_attribution(checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
         *intact, records, config.color_rank
     )
@@ -2103,6 +2211,8 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         intact_meta,
+        intact_rules,
+        intact_rules,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     repeat_metrics_exact = repeat_result["metrics_by_effort"] == intact_metrics
@@ -2148,6 +2258,8 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         no_context_meta,
+        no_context_rules,
+        intact_rules,
     )
     del no_context
 
@@ -2165,6 +2277,8 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         shuffled_meta,
+        shuffled_rules,
+        intact_rules,
     )
     del shuffled
 
@@ -2181,6 +2295,8 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         intact_meta,
+        intact_rules,
+        intact_rules,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
@@ -2214,6 +2330,7 @@ def _evaluate(
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
         "metrics_by_effort": intact_metrics,
+        "channel_attribution": channel_attribution,
         "checkpoint_queries": checkpoint_queries,
         "query_trajectories": trajectories,
         "aggregate_trajectory": aggregate_trajectory,
@@ -3122,6 +3239,50 @@ def _data_summary(
     }
 
 
+def _channel_attribution(
+    checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
+) -> dict[str, dict[str, object]]:
+    """Split exact solves between the rule channel and the spiking model.
+
+    A solve is credited to the rule channel when the admitted rule's grid is
+    itself exact. Every other exact solve came from a decoded model candidate.
+    ``admitted_not_exact`` is reported separately because an admitted-but-wrong
+    rule consumes candidate slot one, which is the channel's only way to cost
+    the run a point.
+
+    Parameters
+    ----------
+    checkpoint_queries
+        Per-effort query records as written to ``result.json``.
+
+    Returns
+    -------
+    dict
+        One summary per effort, keyed by the effort as a string.
+    """
+
+    summary: dict[str, dict[str, object]] = {}
+    for effort, details in checkpoint_queries.items():
+        admitted = sum(1 for item in details if item.get("rule_name") is not None)
+        rule_exact = sum(1 for item in details if item.get("rule_solved"))
+        pass_at_2 = sum(1 for item in details if item["score"]["pass_at_2"])
+        families = collections.Counter(
+            str(item["rule_name"]).split("|")[-1].split(":")[0]
+            for item in details
+            if item.get("rule_solved")
+        )
+        summary[effort] = {
+            "query_count": len(details),
+            "rules_admitted": admitted,
+            "rules_admitted_not_exact": admitted - rule_exact,
+            "exact_by_rule_channel": rule_exact,
+            "exact_by_model_candidates": pass_at_2 - rule_exact,
+            "exact_total": pass_at_2,
+            "solving_completions": dict(families.most_common()),
+        }
+    return summary
+
+
 def _render_report(result: dict[str, object]) -> str:
     configuration = result.get("configuration", {})
     device = result.get("device", {})
@@ -3273,6 +3434,19 @@ def _render_report(result: dict[str, object]) -> str:
             f"{metrics['strict_task_pass_at_2']:.4f}; shape diagnostic="
             f"{metrics['shape_accuracy_diagnostic']:.4f}, pixel diagnostic="
             f"{metrics['valid_cell_pixel_accuracy_diagnostic']:.4f}"
+        )
+    attribution = evaluation.get("channel_attribution", {})
+    for effort in CHECKPOINTS:
+        split = attribution.get(str(effort))
+        if split is None:
+            continue
+        lines.append(
+            f"  effort {effort:>2} channels: exact by rule channel="
+            f"{split['exact_by_rule_channel']}, by model candidates="
+            f"{split['exact_by_model_candidates']}; rules admitted="
+            f"{split['rules_admitted']} of {split['query_count']} queries "
+            f"({split['rules_admitted_not_exact']} admitted but not exact); "
+            f"solving completions={split['solving_completions']}"
         )
     intact_metrics = evaluation.get("metrics_by_effort", {})
     if "0" in intact_metrics and "32" in intact_metrics:
