@@ -81,6 +81,23 @@ QUALIFICATION_CRITERIA = (
     "source_and_gpu_authenticated",
 )
 
+GATE_C_INITIALIZATION_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "preregistered_regimes",
+    "gate_a_prerequisite_authenticated",
+    "gate_b_prerequisite_authenticated",
+    "source_and_gpu_authenticated",
+    "source_files_exact",
+    "canonical_full_initializations_exact",
+    "legacy_initializations_complete",
+    "shared_paths_byte_identical",
+    "arm_initialization_refs_exact",
+    "optimizer_paths_exact",
+    "fresh_optimizer_states_zero_and_finite",
+    "compiler_topologies_complete",
+    "no_behavioral_updates",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class GateCArmSpec:
@@ -640,6 +657,301 @@ def _make_arm_trainer(
     )
 
 
+def _optimizer_initial_state_report(
+    trainer: GateCTrainer,
+    *,
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    """Report one fresh arm optimizer before any update."""
+
+    _regime_spec(regime)
+    _arm_spec(arm)
+    if not isinstance(trainer, GateCTrainer):
+        raise TypeError("trainer must be a GateCTrainer")
+    leaves = [
+        np.ascontiguousarray(np.asarray(leaf))
+        for leaf in jax.tree.leaves(trainer.optimizer.opt_state.value)
+    ]
+    if not leaves:
+        raise RuntimeError("optimizer state has no array leaves")
+    if any(
+        np.issubdtype(array.dtype, np.bool_)
+        or not np.issubdtype(array.dtype, np.number)
+        for array in leaves
+    ):
+        raise TypeError("optimizer state leaves must be numeric")
+    finite = all(np.isfinite(array).all() for array in leaves)
+    all_zero = all(np.count_nonzero(array) == 0 for array in leaves)
+    fields: list[bytes] = [
+        b"example21-gate-c-optimizer-state-v1",
+        regime.encode("utf-8"),
+        arm.encode("utf-8"),
+        *(
+            path.encode("utf-8")
+            for path in sorted(trainer.optimizer_parameter_paths)
+        ),
+    ]
+    for index, array in enumerate(leaves):
+        fields.extend(
+            (
+                str(index).encode("ascii"),
+                array.dtype.str.encode("ascii"),
+                ",".join(map(str, array.shape)).encode("ascii"),
+                array.tobytes(),
+            )
+        )
+    return {
+        "included": list(trainer.optimizer_parameter_paths),
+        "excluded": list(trainer.excluded_optimizer_paths),
+        "fresh_state_finite": bool(finite),
+        "fresh_state_all_zero": bool(all_zero),
+        "state_leaf_count": len(leaves),
+        "value_count": int(sum(array.size for array in leaves)),
+        "state_sha256": hashlib.sha256(b"\0".join(fields)).hexdigest(),
+        "executed_updates": int(
+            np.asarray(trainer.optimizer.step_count.value).item()
+        ),
+    }
+
+
+def _initialization_topology_report(
+    model: LatentWorkspaceModel,
+    trainer: GateCTrainer,
+    *,
+    regime: str,
+    tree: str,
+) -> dict[str, Any]:
+    """Bind one fresh model tree to its pp-prop compiler evidence."""
+
+    _regime_spec(regime)
+    if tree not in ("canonical_full", "legacy"):
+        raise ValueError("initialization tree must be canonical_full or legacy")
+    if not isinstance(model, LatentWorkspaceModel):
+        raise TypeError("model must be a LatentWorkspaceModel")
+    if not isinstance(trainer, GateCTrainer):
+        raise TypeError("trainer must be a GateCTrainer")
+    values = legacy._parameter_values(model)
+    leaves = [
+        np.asarray(leaf)
+        for value in values.values()
+        for leaf in jax.tree.leaves(value)
+    ]
+    expected_paths = (
+        FULL_PARAMETER_PATHS if tree == "canonical_full" else SHARED_PARAMETER_PATHS
+    )
+    if tuple(sorted(values)) != expected_paths:
+        raise ValueError("initialization parameter paths differ from the tree")
+    return {
+        "fresh_model": True,
+        "model_seed": model.config.seed,
+        "memory_read_policy": model.memory_read_policy,
+        "model_config": dataclasses.asdict(model.config),
+        "parameter_paths": list(expected_paths),
+        "parameter_count": int(sum(array.size for array in leaves)),
+        "parameter_sha256": legacy._array_digest(values),
+        "parameters_finite": bool(
+            leaves and all(np.isfinite(array).all() for array in leaves)
+        ),
+        "compiler": trainer.compiler,
+    }
+
+
+def _normalized_prerequisites(
+    prerequisites: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Copy the two prerequisite references after a structural check."""
+
+    if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
+        "gate_a",
+        "gate_b",
+    }:
+        raise ValueError("Gate C initialization requires Gate A and Gate B")
+    if not all(isinstance(prerequisites[name], Mapping) for name in prerequisites):
+        raise TypeError("Gate C prerequisite references must be mappings")
+    return {
+        name: dict(prerequisites[name]) for name in ("gate_a", "gate_b")
+    }
+
+
+def _gate_c_initialization_qualification(
+    report: Mapping[str, Any],
+    *,
+    config: GateCConfig,
+) -> dict[str, Any]:
+    """Return the fail-closed initialization qualification boundary.
+
+    The authenticated positive recomputation lands in the next provenance
+    slice. Until then, neither a production-shaped nor an abbreviated report
+    can admit behavioral training.
+    """
+
+    del report, config
+    criteria = {
+        name: False for name in GATE_C_INITIALIZATION_QUALIFICATION_CRITERIA
+    }
+    return {
+        "criteria": criteria,
+        "passed": False,
+        "interpretation": "gate_c_initialization_admission_failed_stop",
+    }
+
+
+def run_gate_c_initialization(
+    config: GateCConfig,
+    *,
+    prerequisites: Mapping[str, Any],
+    source_start: Mapping[str, Any],
+    source_end_reporter: Any,
+    source_files: Mapping[str, str],
+    environment: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build and inspect all Gate C initial states without behavior.
+
+    Parameters
+    ----------
+    config
+        Fixed paired Gate C configuration.
+    prerequisites
+        Launcher-authenticated compact Gate A and Gate B references.
+    source_start
+        Live clean-source evidence captured before construction.
+    source_end_reporter
+        Zero-argument callback that captures live source evidence after every
+        topology and optimizer report is complete.
+    source_files
+        Exact six-file scientific source digest mapping.
+    environment
+        Authenticated GPU image and device evidence.
+
+    Returns
+    -------
+    dict
+        Strict initialization-only artifact payload.
+    """
+
+    if not isinstance(config, GateCConfig):
+        raise TypeError("config must be a GateCConfig")
+    if not callable(source_end_reporter):
+        raise TypeError("source_end_reporter must be callable")
+    normalized_prerequisites = _normalized_prerequisites(prerequisites)
+    initialization: dict[str, Any] = {}
+    regime_reports = {
+        regime: {
+            "spec": dataclasses.asdict(REGIME_SPECS[regime]),
+            "config": dataclasses.asdict(
+                config.gate_a_config
+                if regime == "gate_a"
+                else config.gate_b_config
+            ),
+        }
+        for regime in REGIME_ORDER
+    }
+
+    for regime in REGIME_ORDER:
+        regime_config = (
+            config.gate_a_config if regime == "gate_a" else config.gate_b_config
+        )
+        models = {
+            arm: _new_model_for_arm(
+                config,
+                regime,
+                arm,
+                batch_size=regime_config.batch_size,
+            )
+            for arm in ARM_ORDER
+        }
+        _copy_shared_initialization(models["full"], models["legacy"])
+        trainers = {
+            arm: _make_arm_trainer(models[arm], config, regime, arm)
+            for arm in ARM_ORDER
+        }
+        canonical = _initialization_topology_report(
+            models["full"],
+            trainers["full"],
+            regime=regime,
+            tree="canonical_full",
+        )
+        legacy_report = _initialization_topology_report(
+            models["legacy"],
+            trainers["legacy"],
+            regime=regime,
+            tree="legacy",
+        )
+        canonical_values = legacy._parameter_values(models["full"])
+        legacy_values = legacy._parameter_values(models["legacy"])
+        canonical_shared = {
+            path: canonical_values[path] for path in SHARED_PARAMETER_PATHS
+        }
+        legacy_shared = {
+            path: legacy_values[path] for path in SHARED_PARAMETER_PATHS
+        }
+        canonical_path_sha256 = {
+            path: _shared_path_sha256(path, canonical_shared[path])
+            for path in SHARED_PARAMETER_PATHS
+        }
+        legacy_path_sha256 = {
+            path: _shared_path_sha256(path, legacy_shared[path])
+            for path in SHARED_PARAMETER_PATHS
+        }
+        canonical_shared_sha256 = _shared_global_sha256(canonical_shared)
+        legacy_shared_sha256 = _shared_global_sha256(legacy_shared)
+        arm_refs = {
+            arm: {
+                "tree": "legacy" if arm == "legacy" else "canonical_full",
+                "parameter_sha256": legacy._array_digest(
+                    legacy._parameter_values(models[arm])
+                ),
+            }
+            for arm in ARM_ORDER
+        }
+        optimizer_paths = {
+            arm: _optimizer_initial_state_report(
+                trainers[arm], regime=regime, arm=arm
+            )
+            for arm in ARM_ORDER
+        }
+        initialization[regime] = {
+            "canonical_full": canonical,
+            "legacy": legacy_report,
+            "shared_paths": {
+                "paths": list(SHARED_PARAMETER_PATHS),
+                "framing": {
+                    "path": "example21-gate-c-shared-path-v1",
+                    "global": "example21-gate-c-shared-global-v1",
+                },
+                "canonical_path_sha256": canonical_path_sha256,
+                "legacy_path_sha256": legacy_path_sha256,
+                "canonical_sha256": canonical_shared_sha256,
+                "legacy_sha256": legacy_shared_sha256,
+                "all_equal": bool(
+                    canonical_path_sha256 == legacy_path_sha256
+                    and canonical_shared_sha256 == legacy_shared_sha256
+                ),
+            },
+            "arm_initialization_refs": arm_refs,
+            "optimizer_paths": optimizer_paths,
+        }
+
+    source_end = source_end_reporter()
+    report: dict[str, Any] = {
+        "schema_version": GATE_C_SCHEMA_VERSION,
+        "control": GATE_C_INITIALIZATION_CONTROL,
+        "qualification_regime": config.qualification_regime,
+        "prerequisites": normalized_prerequisites,
+        "regimes": regime_reports,
+        "initialization": initialization,
+        "source_start": dict(source_start),
+        "source_end": dict(source_end),
+        "source_files": dict(source_files),
+        "environment": dict(environment),
+    }
+    report["qualification"] = _gate_c_initialization_qualification(
+        report, config=config
+    )
+    return report
+
+
 def _evaluate_arm(
     trained_model: LatentWorkspaceModel,
     data: legacy.BindingData | gate_b.DepthValidationData,
@@ -921,6 +1233,43 @@ def _numeric_gradient_leaves(value: Any) -> list[np.ndarray]:
     if not leaves:
         raise ValueError("gradient tree has no leaves")
     return leaves
+
+
+def _shared_path_sha256(path: str, value: Any) -> str:
+    """Hash one shared initialization subtree with Gate C framing."""
+
+    if not isinstance(path, str) or not path:
+        raise TypeError("shared parameter path must be a nonempty string")
+    fields: list[bytes] = [
+        b"example21-gate-c-shared-path-v1",
+        path.encode("utf-8"),
+    ]
+    for index, array in enumerate(_numeric_gradient_leaves(value)):
+        fields.extend(
+            (
+                str(index).encode("ascii"),
+                array.dtype.str.encode("ascii"),
+                ",".join(map(str, array.shape)).encode("ascii"),
+                array.tobytes(),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _shared_global_sha256(values: Mapping[str, Any]) -> str:
+    """Hash all shared initialization paths in canonical name order."""
+
+    if not isinstance(values, Mapping) or not values:
+        raise TypeError("shared values must be a nonempty mapping")
+    fields: list[bytes] = [b"example21-gate-c-shared-global-v1"]
+    for path in sorted(values):
+        fields.extend(
+            (
+                path.encode("utf-8"),
+                _shared_path_sha256(path, values[path]).encode("ascii"),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
 
 
 def _gradient_path_sha256(path: str, value: Any) -> str:

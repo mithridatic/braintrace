@@ -42,6 +42,22 @@ requires_gate_c = pytest.mark.skipif(
 
 _ARMS = ("full", "query_only", "terminal_only", "legacy", "frozen_write")
 _REGIMES = ("gate_a", "gate_b")
+_INITIALIZATION_CRITERIA = (
+    "schema_and_control",
+    "preregistered_regimes",
+    "gate_a_prerequisite_authenticated",
+    "gate_b_prerequisite_authenticated",
+    "source_and_gpu_authenticated",
+    "source_files_exact",
+    "canonical_full_initializations_exact",
+    "legacy_initializations_complete",
+    "shared_paths_byte_identical",
+    "arm_initialization_refs_exact",
+    "optimizer_paths_exact",
+    "fresh_optimizer_states_zero_and_finite",
+    "compiler_topologies_complete",
+    "no_behavioral_updates",
+)
 _SHARED_PATHS = (
     "color_factor_head/weight",
     "ff_syn/comm/weight",
@@ -161,6 +177,61 @@ def _manual_global_digest(gradients: Mapping[str, Any]) -> str:
     return hashlib.sha256(b"\0".join(fields)).hexdigest()
 
 
+def _manual_shared_path_digest(path: str, value: Any) -> str:
+    fields = [
+        b"example21-gate-c-shared-path-v1",
+        path.encode("utf-8"),
+    ]
+    for index, leaf in enumerate(jax.tree.leaves(value)):
+        array = np.ascontiguousarray(np.asarray(leaf))
+        fields.extend(
+            (
+                str(index).encode("ascii"),
+                array.dtype.str.encode("ascii"),
+                ",".join(map(str, array.shape)).encode("ascii"),
+                array.tobytes(),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _manual_shared_global_digest(values: Mapping[str, Any]) -> str:
+    fields = [b"example21-gate-c-shared-global-v1"]
+    for path in sorted(values):
+        fields.extend(
+            (
+                path.encode("utf-8"),
+                _manual_shared_path_digest(path, values[path]).encode("ascii"),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _manual_optimizer_state_digest(
+    trainer: Any,
+    *,
+    regime: str,
+    arm: str,
+) -> str:
+    fields = [
+        b"example21-gate-c-optimizer-state-v1",
+        regime.encode("utf-8"),
+        arm.encode("utf-8"),
+        *(path.encode("utf-8") for path in sorted(trainer.optimizer_parameter_paths)),
+    ]
+    for index, leaf in enumerate(jax.tree.leaves(trainer.optimizer.opt_state.value)):
+        array = np.ascontiguousarray(np.asarray(leaf))
+        fields.extend(
+            (
+                str(index).encode("ascii"),
+                array.dtype.str.encode("ascii"),
+                ",".join(map(str, array.shape)).encode("ascii"),
+                array.tobytes(),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
 def _reduced_gate_c_config() -> Any:
     return gate_c.GateCConfig(
         gate_a_config=gate_a.BindingGateConfig.smoke_config(),
@@ -272,6 +343,14 @@ class TestGateCContracts:
             "_regenerate_gate_a_data",
             "_regenerate_gate_b_data",
             "_evaluate_arm",
+            "GATE_C_INITIALIZATION_QUALIFICATION_CRITERIA",
+            "_shared_path_sha256",
+            "_shared_global_sha256",
+            "_optimizer_initial_state_report",
+            "_initialization_topology_report",
+            "_normalized_prerequisites",
+            "_gate_c_initialization_qualification",
+            "run_gate_c_initialization",
         }
 
         assert not (required - set(vars(gate_c)))
@@ -283,6 +362,9 @@ class TestGateCContracts:
         assert gate_c.GATE_C_CONTROL == "example21_pp_prop_learnability_gate_c"
         assert gate_c.ARM_ORDER == _ARMS
         assert gate_c.REGIME_ORDER == _REGIMES
+        assert gate_c.GATE_C_INITIALIZATION_QUALIFICATION_CRITERIA == (
+            _INITIALIZATION_CRITERIA
+        )
 
     def test_arm_specs_are_exact_and_frozen(self) -> None:
         assert tuple(gate_c.ARM_SPECS) == _ARMS
@@ -1292,3 +1374,421 @@ def test_gradient_evidence_rejects_empty_nonnumeric_and_shape_drift() -> None:
             np.zeros((2,), dtype=np.float32),
             np.zeros((3,), dtype=np.float32),
         )
+
+
+@requires_gate_c
+def test_shared_parameter_digest_framing_is_exact_and_order_independent() -> None:
+    values = {
+        "alpha/path": {
+            "z": np.asarray([1.5, -2.0], dtype=np.float32),
+            "a": np.asarray([[3.0]], dtype=np.float16),
+        },
+        "beta": (np.asarray(0.25, dtype=np.float32),),
+    }
+
+    assert gate_c._shared_path_sha256(
+        "alpha/path", values["alpha/path"]
+    ) == "c0c0b4c8132ed2f5a742712350397b6f9986c453b122dc7c0e81fdf4651e88ea"
+    assert gate_c._shared_path_sha256(
+        "beta", values["beta"]
+    ) == "fd457b69655788bb537a79c5cca2ad9942681e5300a19d90126ab431730c5247"
+    expected = "a01cb823743564571f5bc82e44eeb9adb14b61f710915a4ab9cc5bc8e1867cf6"
+    assert gate_c._shared_global_sha256(values) == expected
+    assert gate_c._shared_global_sha256(dict(reversed(values.items()))) == expected
+    assert gate_c._shared_global_sha256(values) == _manual_shared_global_digest(
+        values
+    )
+
+
+@requires_gate_c
+def test_shared_parameter_digest_rejects_invalid_paths_and_leaves() -> None:
+    for invalid in (
+        (),
+        np.asarray([True]),
+        np.asarray([math.nan], dtype=np.float32),
+        np.asarray([math.inf], dtype=np.float32),
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            gate_c._shared_path_sha256("path", invalid)
+    for invalid_path in ("", None):
+        with pytest.raises(TypeError, match="nonempty string"):
+            gate_c._shared_path_sha256(
+                invalid_path,
+                np.asarray([1.0], dtype=np.float32),
+            )
+    for invalid_values in ({}, []):
+        with pytest.raises(TypeError, match="nonempty mapping"):
+            gate_c._shared_global_sha256(invalid_values)
+
+
+@pytest.fixture(scope="module")
+def reduced_gate_c_initialization_subject() -> dict[str, Any]:
+    config = _reduced_gate_c_config()
+    model = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=config.gate_b_config.batch_size,
+    )
+    trainer = gate_c._make_arm_trainer(model, config, "gate_b", "full")
+    return {"config": config, "model": model, "trainer": trainer}
+
+
+@requires_gate_c
+def test_optimizer_initial_state_report_is_fresh_zero_finite_and_exactly_framed(
+    reduced_gate_c_initialization_subject: dict[str, Any],
+) -> None:
+    trainer = reduced_gate_c_initialization_subject["trainer"]
+
+    report = gate_c._optimizer_initial_state_report(
+        trainer,
+        regime="gate_b",
+        arm="full",
+    )
+
+    leaves = jax.tree.leaves(trainer.optimizer.opt_state.value)
+    assert set(report) == {
+        "included",
+        "excluded",
+        "fresh_state_finite",
+        "fresh_state_all_zero",
+        "state_leaf_count",
+        "value_count",
+        "state_sha256",
+        "executed_updates",
+    }
+    assert report["included"] == list(trainer.optimizer_parameter_paths)
+    assert report["excluded"] == []
+    assert report["fresh_state_finite"] is True
+    assert report["fresh_state_all_zero"] is True
+    assert report["state_leaf_count"] == len(leaves)
+    assert report["value_count"] == sum(np.asarray(leaf).size for leaf in leaves)
+    assert report["state_sha256"] == _manual_optimizer_state_digest(
+        trainer,
+        regime="gate_b",
+        arm="full",
+    )
+    assert report["executed_updates"] == 0
+
+
+@requires_gate_c
+def test_initialization_topology_report_binds_model_tree_and_compiler(
+    reduced_gate_c_initialization_subject: dict[str, Any],
+) -> None:
+    model = reduced_gate_c_initialization_subject["model"]
+    trainer = reduced_gate_c_initialization_subject["trainer"]
+
+    report = gate_c._initialization_topology_report(
+        model,
+        trainer,
+        regime="gate_b",
+        tree="canonical_full",
+    )
+
+    parameter_values = legacy._parameter_values(model)
+    assert set(report) == {
+        "fresh_model",
+        "model_seed",
+        "memory_read_policy",
+        "model_config",
+        "parameter_paths",
+        "parameter_count",
+        "parameter_sha256",
+        "parameters_finite",
+        "compiler",
+    }
+    assert report["fresh_model"] is True
+    assert report["model_seed"] == model.config.seed
+    assert report["memory_read_policy"] == "full"
+    assert report["model_config"] == dataclasses.asdict(model.config)
+    assert report["parameter_paths"] == list(_FULL_PATHS)
+    assert report["parameter_count"] == sum(
+        np.asarray(leaf).size
+        for value in parameter_values.values()
+        for leaf in jax.tree.leaves(value)
+    )
+    assert report["parameter_sha256"] == _parameter_digest(model)
+    assert report["parameters_finite"] is True
+    assert report["compiler"] == trainer.compiler
+
+
+@requires_gate_c
+def test_reduced_gate_c_initialization_is_isolated_and_has_no_behavioral_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    prerequisites = {
+        "gate_a": {"target": "formal_gate_a", "authenticated": True},
+        "gate_b": {"target": "formal_gate_b", "authenticated": True},
+    }
+    source_start = {"head": "a" * 40, "clean": True}
+    source_end = {"head": "a" * 40, "clean": True, "phase": "end"}
+    source_files = {
+        path: hashlib.sha256(path.encode("utf-8")).hexdigest()
+        for path in (
+            "examples/pp_prop/latent_workspace_model.py",
+            "examples/pp_prop/latent_workspace_task.py",
+            "examples/pp_prop/latent_workspace_binding_control.py",
+            "examples/pp_prop/latent_workspace_binding_gate.py",
+            "examples/pp_prop/latent_workspace_depth_gate.py",
+            "examples/pp_prop/latent_workspace_ablation_gate.py",
+        )
+    }
+    environment = {
+        "gpu_authenticated": True,
+        "image_digest": "sha256:" + "b" * 64,
+    }
+    events: list[tuple[Any, ...]] = []
+    models: dict[tuple[str, str], LatentWorkspaceModel] = {}
+    trainers: dict[tuple[str, str], Any] = {}
+    trainer_parameter_sha: dict[tuple[str, str], str] = {}
+    topology_reports: dict[tuple[str, str], Mapping[str, Any]] = {}
+    optimizer_reports: dict[tuple[str, str], Mapping[str, Any]] = {}
+    real_new_model = gate_c._new_model_for_arm
+    real_copy_shared = gate_c._copy_shared_initialization
+    real_make_trainer = gate_c._make_arm_trainer
+    real_topology_report = gate_c._initialization_topology_report
+    real_optimizer_report = gate_c._optimizer_initial_state_report
+
+    def normalize(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        supplied = args[0] if args else kwargs["prerequisites"]
+        assert supplied == prerequisites
+        events.append(("normalize",))
+        return {
+            "gate_a": dict(prerequisites["gate_a"]),
+            "gate_b": dict(prerequisites["gate_b"]),
+        }
+
+    def new_model(
+        runner_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        batch_size: int,
+    ) -> LatentWorkspaceModel:
+        events.append(("model", regime, arm))
+        model = real_new_model(
+            runner_config,
+            regime,
+            arm,
+            batch_size=batch_size,
+        )
+        assert (regime, arm) not in models
+        models[(regime, arm)] = model
+        return model
+
+    def copy_shared(
+        canonical: LatentWorkspaceModel,
+        legacy_model: LatentWorkspaceModel,
+    ) -> dict[str, Any]:
+        regime = next(
+            name
+            for (name, arm), model in models.items()
+            if arm == "legacy" and model is legacy_model
+        )
+        events.append(("copy_shared", regime))
+        return real_copy_shared(canonical, legacy_model)
+
+    def no_behavior(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("initialization admission must not execute behavior")
+
+    def make_trainer(
+        model: LatentWorkspaceModel,
+        runner_config: Any,
+        regime: str,
+        arm: str,
+    ) -> Any:
+        events.append(("trainer", regime, arm))
+        trainer = real_make_trainer(model, runner_config, regime, arm)
+        trainer.train_chunk = no_behavior
+        trainers[(regime, arm)] = trainer
+        trainer_parameter_sha[(regime, arm)] = _parameter_digest(model)
+        return trainer
+
+    def topology_report(
+        model: LatentWorkspaceModel,
+        trainer: Any,
+        *,
+        regime: str,
+        tree: str,
+    ) -> dict[str, Any]:
+        events.append(("topology", regime, tree))
+        result = real_topology_report(
+            model,
+            trainer,
+            regime=regime,
+            tree=tree,
+        )
+        topology_reports[(regime, tree)] = result
+        return result
+
+    def optimizer_report(
+        trainer: Any,
+        *,
+        regime: str,
+        arm: str,
+    ) -> dict[str, Any]:
+        events.append(("optimizer", regime, arm))
+        result = real_optimizer_report(trainer, regime=regime, arm=arm)
+        optimizer_reports[(regime, arm)] = result
+        return result
+
+    def source_end_reporter() -> dict[str, Any]:
+        events.append(("source_end",))
+        return dict(source_end)
+
+    monkeypatch.setattr(gate_c, "_normalized_prerequisites", normalize)
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", new_model)
+    monkeypatch.setattr(gate_c, "_copy_shared_initialization", copy_shared)
+    monkeypatch.setattr(gate_c, "_make_arm_trainer", make_trainer)
+    monkeypatch.setattr(
+        gate_c,
+        "_initialization_topology_report",
+        topology_report,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_optimizer_initial_state_report",
+        optimizer_report,
+    )
+    monkeypatch.setattr(gate_c, "_regenerate_gate_a_data", no_behavior)
+    monkeypatch.setattr(gate_c, "_regenerate_gate_b_data", no_behavior)
+    monkeypatch.setattr(gate_c, "_evaluate_arm", no_behavior)
+
+    report = gate_c.run_gate_c_initialization(
+        config,
+        prerequisites=prerequisites,
+        source_start=source_start,
+        source_end_reporter=source_end_reporter,
+        source_files=source_files,
+        environment=environment,
+    )
+
+    assert set(report) == {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "prerequisites",
+        "regimes",
+        "initialization",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+    }
+    assert report["schema_version"] == 1
+    assert report["control"] == "example21_gate_c_initialization_admission"
+    assert report["qualification_regime"] == "nonqualifying_abbreviated"
+    assert report["prerequisites"] == prerequisites
+    assert report["source_start"] == source_start
+    assert report["source_end"] == source_end
+    assert report["source_files"] == source_files
+    assert report["environment"] == environment
+    assert report["regimes"] == {
+        regime: {
+            "spec": dataclasses.asdict(gate_c.REGIME_SPECS[regime]),
+            "config": dataclasses.asdict(
+                config.gate_a_config
+                if regime == "gate_a"
+                else config.gate_b_config
+            ),
+        }
+        for regime in _REGIMES
+    }
+    assert report["qualification"] == {
+        "criteria": {name: False for name in _INITIALIZATION_CRITERIA},
+        "passed": False,
+        "interpretation": "gate_c_initialization_admission_failed_stop",
+    }
+
+    assert events[0] == ("normalize",)
+    assert events[-1] == ("source_end",)
+    assert sum(event[0] == "model" for event in events) == 10
+    assert sum(event[0] == "trainer" for event in events) == 10
+    assert sum(event[0] == "copy_shared" for event in events) == 2
+    assert sum(event[0] == "topology" for event in events) == 4
+    assert sum(event[0] == "optimizer" for event in events) == 10
+    assert len(models) == len(trainers) == len(trainer_parameter_sha) == 10
+    assert len({id(model) for model in models.values()}) == 10
+    assert len({id(trainer) for trainer in trainers.values()}) == 10
+    assert len({id(trainer.learner) for trainer in trainers.values()}) == 10
+    assert len({id(trainer.optimizer) for trainer in trainers.values()}) == 10
+    assert {
+        (
+            regime,
+            "legacy" if model.config.context_memory_width == 0 else "canonical_full",
+        )
+        for (regime, _), model in models.items()
+    } == {
+        ("gate_a", "canonical_full"),
+        ("gate_a", "legacy"),
+        ("gate_b", "canonical_full"),
+        ("gate_b", "legacy"),
+    }
+
+    for regime in _REGIMES:
+        initialization = report["initialization"][regime]
+        assert set(initialization) == {
+            "canonical_full",
+            "legacy",
+            "shared_paths",
+            "arm_initialization_refs",
+            "optimizer_paths",
+        }
+        assert initialization["canonical_full"] == topology_reports[
+            (regime, "canonical_full")
+        ]
+        assert initialization["legacy"] == topology_reports[(regime, "legacy")]
+        shared = initialization["shared_paths"]
+        assert set(shared) == {
+            "paths",
+            "framing",
+            "canonical_path_sha256",
+            "legacy_path_sha256",
+            "canonical_sha256",
+            "legacy_sha256",
+            "all_equal",
+        }
+        assert shared["paths"] == list(_SHARED_PATHS)
+        assert shared["framing"] == {
+            "path": "example21-gate-c-shared-path-v1",
+            "global": "example21-gate-c-shared-global-v1",
+        }
+        canonical_values = legacy._parameter_values(models[(regime, "full")])
+        legacy_values = legacy._parameter_values(models[(regime, "legacy")])
+        expected_canonical_paths = {
+            path: gate_c._shared_path_sha256(path, canonical_values[path])
+            for path in _SHARED_PATHS
+        }
+        expected_legacy_paths = {
+            path: gate_c._shared_path_sha256(path, legacy_values[path])
+            for path in _SHARED_PATHS
+        }
+        assert shared["canonical_path_sha256"] == expected_canonical_paths
+        assert shared["legacy_path_sha256"] == expected_legacy_paths
+        assert shared["canonical_sha256"] == gate_c._shared_global_sha256(
+            {path: canonical_values[path] for path in _SHARED_PATHS}
+        )
+        assert shared["legacy_sha256"] == gate_c._shared_global_sha256(
+            {path: legacy_values[path] for path in _SHARED_PATHS}
+        )
+        assert shared["canonical_sha256"] == shared["legacy_sha256"]
+        assert shared["all_equal"] is True
+
+        refs = initialization["arm_initialization_refs"]
+        optimizer_paths = initialization["optimizer_paths"]
+        assert set(refs) == set(optimizer_paths) == set(_ARMS)
+        for arm in _ARMS:
+            tree = "legacy" if arm == "legacy" else "canonical_full"
+            assert refs[arm] == {
+                "tree": tree,
+                "parameter_sha256": trainer_parameter_sha[(regime, arm)],
+            }
+            assert optimizer_paths[arm] == optimizer_reports[(regime, arm)]
+            assert optimizer_paths[arm]["executed_updates"] == 0
+            assert optimizer_paths[arm]["fresh_state_finite"] is True
+            assert optimizer_paths[arm]["fresh_state_all_zero"] is True
+            assert _parameter_digest(models[(regime, arm)]) == (
+                trainer_parameter_sha[(regime, arm)]
+            )
