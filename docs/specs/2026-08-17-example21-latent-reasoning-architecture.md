@@ -1,8 +1,9 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B and the
-Gate C initialization admission passed; formal Gate C failed; Gate C2 is
-preregistered but not run; Gate D and the ARC test remain stopped
+Status: Stage 2, Stage 2.1, and Gate C2 controls implemented; authenticated
+Gates A and B and the fresh same-HEAD `gate_c_init` admission passed; formal
+Gate C and the authenticated Gate C2 controls failed; formal Gate C2, Gate D,
+and the ARC test remain stopped
 
 Date: 2026-08-17
 
@@ -2522,6 +2523,125 @@ GPU failure records the Gate C2 failing interpretation and stops. Until Gate C2
 passes, Gate D remains stopped, no new ARC test is run, and the retained
 exact-ARC baseline remains zero.
 
+### Post-run authenticated Gate C2 controls result: FAIL
+
+This is a post-run result record. It does not change the preregistered Gate C2
+contract above. The `gate_c2_controls` admission ran at clean source HEAD
+`555c8ee35bc349a618b3d1434240ed4f385ca564` on immutable GPU image
+`sha256:54c96a66cd849673f61239f7d2cb8861f488f42ceda711dc2546ea074c08e3a0`.
+The image's OCI revision was the same full source HEAD.
+
+The authenticated controls bundle is:
+
+| File | Repository-relative path | Bytes | SHA-256 |
+|---|---|---:|---|
+| result | `var/example21-causal-gate/555c8ee35bc349a618b3d1434240ed4f385ca564-gate-c2-controls.json` | 77,270,720 | `6a3ed8b9ed73792fe68d5f7a958e82850600ca581c9d71ac0b7c19aa30d36938` |
+| preflight | `var/example21-causal-gate/555c8ee35bc349a618b3d1434240ed4f385ca564-gate-c2-controls.preflight.json` | 76,065 | `914eb6c5c9b4cbafd61c7446c7846efc5d7ac1ee617b2b8ab7a499b9057f19db` |
+| manifest | `var/example21-causal-gate/555c8ee35bc349a618b3d1434240ed4f385ca564-gate-c2-controls.manifest.json` | 17,364 | `facb15f21c55bfe951b9448969151c12aa26a62053e0505533e8341a9f9b91e8` |
+
+The authenticated bundle SHA-256 is
+`f27d895eb42f129af3071458d563cbd738210ab00202918998544a56d1029972`.
+The result is `73.691101` MiB, below the exact 192 MiB limit. It records
+`311.55114891100675` seconds of internal work; the retained child-command wall
+time is `335.5185390999977` seconds. The child returned zero after writing the
+complete negative result. The manifest has `bundle_valid=true`,
+`process_succeeded=true`, `artifact_schema_verified=true`,
+`scientific_qualification_passed=false`, and `failure=null`. This is therefore
+an authenticated scientific failure, not a crashed or unauthenticated run.
+
+The fresh same-HEAD, same-image `gate_c_init` prerequisite passed. Its result,
+preflight, manifest, and bundle SHA-256 values are, respectively:
+
+```text
+6bdad647ffb1bbbe7a58d246659f94cfb2e022bc9d6839e10cc786ab020c47de
+17d66c160671b95e1c4cb189075f6aa72b6e4693998eaad37572a5080848ca42
+e4688e991fd7164923a65427d18796cebc2f0b95b816dbecafce2e11b59d3c3e
+c2ae5640fe4c3323040c576a0471c4ef1c8c643f4353b27844065d4603f013cc
+```
+
+The controls qualifier recomputed seven of nine criteria as true:
+
+| Criterion | Recomputed result |
+|---|---|
+| `schema_and_control` | true |
+| `exact_configuration` | true |
+| `prerequisites_authenticated` | true |
+| `initialization_authenticated` | true |
+| `canonical_schedules_complete` | true |
+| `no_behavioral_or_optimizer_updates` | true |
+| `paired_h0_operational_equivalence` | **false** |
+| `mechanism_oracle_complete` | **false** |
+| `source_and_gpu_authenticated` | true |
+
+The recomputed interpretation is exactly
+`gate_c2_pretraining_controls_failed_stop`. Gate A passed its paired-H0 and
+no-read controls. Gate B failed the shuffled same-full H0 replay: its maximum
+per-example RMS difference was `1.5919210544258758e-6`, above the `1e-6`
+limit. The aggregate RMS was `7.035363579363599e-8`, the maximum absolute
+difference was `5.816575139760971e-6`, exactly one of 512 examples exceeded
+the limit (example 505), and prediction Hamming distance remained zero. This is
+a same-full operational-reproducibility miss, not evidence of a query-only
+treatment effect.
+
+The Gate B no-read failures were sparse but still exceeded the frozen
+per-example tolerance. All 48 selected-read and selected-drive records were
+exact zero, 18 of 24 cached-read probes passed, 39 of 48 `+11`/`-11` sentinel
+probes passed, 18 of 24 query-only `-7` probes passed, and 17 of 24 query-only
+`+7` probes passed. The six failed cached-read starts were intact H2, H3, H4,
+H5, and H8, plus shuffled H8. Decoded predictions remained unchanged in the
+cached-read probes and the query-only `+7` and `-7` probes. This statement does
+not cover the full-policy positive controls. Both full-policy positive controls
+were live at all 24 stream/tick locations for each sign. The opposite-sign
+residual pattern and the independent same-full miss are consistent with
+numerical replay instability; they do not establish cached-read or `S_K`
+influence. The frozen operational criterion still fails.
+
+The removed-path finite-window evidence itself passed in both regimes. For
+both Gate A and Gate B, all 65,536 values on each of
+`memory_read_projection/weight` and
+`workspace_query_projection/weight` were finite and exact zero. All three live
+witness paths -- `color_factor_head/weight`,
+`readout_projection/weight`, and `rec_syn/comm/weight` -- were finite and
+nonzero. The global gradient norms were `7.630332531466312e-5` for Gate A and
+`2.0280032487405228e-5` for Gate B. Thus the stopped-H0 query-only test
+successfully proves the removed paths dead while retaining live control paths;
+it does not prove that the corresponding full-policy gradient meets the
+separate mechanism floor.
+
+The mechanism oracle failed that unchanged floor. The query-only global
+comparison passed with relative deviation `0.08202308213429639` and L2
+difference `1.994311067736179e-6`. Its required
+`memory_read_projection/weight` path also passed, with relative deviation
+`0.9906690906447477` and L2 difference `2.3476146125229822e-8`. The required
+`workspace_query_projection/weight` path had relative deviation `1.0`, but its
+L2 difference was only `2.574413770975678e-9`, below the strict `1e-8` floor.
+The terminal-only global comparison also passed, with relative deviation
+`7.57758473168369`. The failed workspace-query floor therefore independently
+makes `mechanism_oracle_complete=false`.
+
+The no-update audit was complete: trainer-factory calls, training-step calls,
+optimizer constructors, optimizer instances, and optimizer updates were all
+zero. It registered 18 distinct model roles. Every role retained
+`before_parameter_sha256 == after_parameter_sha256 ==
+expected_parameter_sha256`. No behavioral training occurred.
+
+Post-run validation also found a serialization-order defect. The compact JSON
+writer sorts object keys, while the no-read validator compares insertion order
+through `tuple(mapping)`. The reloaded stream order is `intact`, `no_context`,
+`shuffled`, but the validator expects `intact`, `shuffled`, `no_context`; the
+reloaded perturbation order is `minus_7`, `plus_7`, but the validator expects
+`plus_7`, `minus_7`. Both reloaded no-read validators therefore return false
+before their numeric checks, including the otherwise passing raw Gate A
+record. This is an implementation defect, but it does not change the stop
+decision: Gate B independently fails same-full H0 replay and raw no-read
+tolerances, and the unchanged mechanism oracle independently fails its
+workspace-query absolute floor.
+
+The pretraining admission did not pass, so no `formal_gate_c2` target or ten-
+model training run was enabled or executed. Gate D and ARC remain stopped. No
+new ARC test ran, the retained exact-ARC score remains `0`, and this result
+supports no causal-mechanism conclusion.
+
 ### Stage 2 implementation record: structural evidence only
 
 Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
@@ -2595,10 +2715,12 @@ the authenticated Gate B demonstrated-depth result passed at commit
 admission passed at commit `c2eb27b4d51c07e4b68bd29d81101bbfff0351b8`.
 The formal Gate C mechanism ablations then ran at commit
 `59b27d7be5cc9c37845da7bb2c81ae7203935338` and failed as recorded above.
-The post-failure Gate C2 protocol and its required `gate_c2_controls`
-pretraining admission are now preregistered but have not been implemented or
-run. Gate D full ARC qualification remains stopped: any failed or
-unauthenticated gate stops this sequence.
+The post-failure Gate C2 controls implementation and a fresh `gate_c_init`
+admission were completed at
+`555c8ee35bc349a618b3d1434240ed4f385ca564`. The fresh initialization passed,
+but the authenticated `gate_c2_controls` run failed as recorded above. No
+`formal_gate_c2` target, ten-model training run, Gate D qualification, or new
+ARC test was run. The retained exact-ARC score remains zero.
 
 ## Explicit non-claims
 
