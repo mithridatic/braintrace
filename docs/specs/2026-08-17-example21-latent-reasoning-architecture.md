@@ -2206,6 +2206,18 @@ H8 with chunk size one, but only H8 is selected into this removed-path
 objective. It does not reuse the terminal-only unit weight and does not start at
 H7.
 
+The finite-window helper must lower its repeated chunk execution through one
+`brainstate.transform.scan` (or an equivalent BrainState state-carrying loop),
+not a bare Python `for` or `while` loop. Each scan iteration evaluates exactly
+one chunk and adds that chunk's parameter gradient to an explicit fixed-shape
+carry while BrainState carries the hidden and eligibility-trace states. This is
+still the finite-window `chunked_online_param_gradients` path: combining the
+whole suffix into one multi-step VJP is forbidden because that would erase the
+chunk-boundary trace test. This compiled scan and its post-initialization
+callback are an explicit Gate C2 mode of the helper used by only these two
+removed-path objectives. The retained Gate C v1 execution path and the helper's
+legacy default mode remain unchanged.
+
 Both objective records retain raw inputs rather than only coordinate labels.
 Every array digest below is the project framing
 `SHA256(ASCII(dtype.str) || ASCII(str(shape)) || contiguous_C_bytes)`.
@@ -2213,8 +2225,8 @@ Every array digest below is the project framing
 `canonical_loss_weights`, `h0_prefix`, and `schedule_cross_bound`.
 `continuation` has exactly `source_indices`, `source_events`, `batched_events`,
 `advances`, `targets`, `selection_mask`, `base_checkpoint_weights`,
-`effective_loss_weights`, `packed_inputs`, `materialized_h0_state_sha256`,
-`gradient_start_state_sha256`, `source_slice_exact`, and `passed`. An event or
+`effective_loss_weights`, `packed_inputs`, `h0_gradient_boundary`,
+`source_slice_exact`, and `passed`. An event or
 packed-input record has exactly
 `dtype`, `shape`, and `sha256`; an exact-zero event record additionally has
 `fill_value=0.0`. Advance, target, mask, and weight records have exactly
@@ -2346,16 +2358,70 @@ At the selected checkpoint the oracle wrapper emits
 `sqrt(base_checkpoint_weight) * sqrt(raw_cross_entropy)`; at every unselected
 checkpoint it emits exact zero. The helper's sum of squares is therefore exactly
 the retained `weighted_cross_entropy`.
-`materialized_h0_state_sha256` uses the same complete eight-path hidden-state
-framing frozen above, with the leading batch extent changed from 512 to one,
-and is computed immediately after the query-only model runs the pinned
-`h0_prefix`, before applying stop-gradient. The qualifier repeats
-that batch-one prefix from the authenticated initialization and requires its
-digest to equal both `materialized_h0_state_sha256` and the separately retained
-`gradient_start_state_sha256`. It does not require byte equality with the
-separately compiled batch-512
-operational-H0 probe. `source_slice_exact`, `schedule_cross_bound`, and every
-enclosing `passed` value are recomputed rather than trusted.
+`h0_gradient_boundary` has exactly `capture_point`, `capture_count`,
+`materialized_prefix`, `actual_gradient_start`,
+`canonical_parameter_sha256`, `all_hidden_leaves_equal`, and `passed`.
+`capture_point` is exactly
+`after_init_etrace_state_before_first_gradient_chunk`, and `capture_count=1`.
+The finite-window helper invokes one audited callback at that point: after
+`brainstate.nn.init_all_states`, graph compilation, and eligibility-trace
+initialization, but before its first gradient chunk. The callback restores the
+stopped H0 snapshot and captures the actual live state immediately. A later
+restore, a digest inferred after gradients, or an `init_state`/`reset_state`
+method that is not exercised at this boundary cannot supply this evidence.
+
+`materialized_prefix` and `actual_gradient_start` each have exactly
+`hidden_paths`, `hidden_state_tree_sha256`, and `parameter_sha256`.
+`hidden_paths` has these exact batch-one leaf names, dtypes, and shapes:
+
+```text
+context_memory#0     <f4 [1, 32, 32]
+ff_syn/post/V#0      <f4 [1, 2048]
+ff_syn/syn/g#0       <f4 [1, 2048]
+memory_read#0        <f4 [1, 32]
+query_encoding#0     <f4 [1, 32]
+reasoning_query#0    <f4 [1, 32]
+rec_syn/syn/g#0      <f4 [1, 2048]
+workspace_carrier#0  <f4 [1, 2048]
+```
+
+Every leaf value has exactly `dtype`, `shape`, `data_hex`, `sha256`,
+`finite_count`, and `nonfinite_count`. `data_hex` is the lowercase hexadecimal
+encoding of the leaf's contiguous C-order mantissa bytes and has exactly twice
+the byte length implied by its dtype and shape. The qualifier decodes those
+bytes, reconstructs the array, and recomputes `sha256` with the project
+dtype-and-shape framing. Both count fields must be strict integers. The
+qualifier recomputes them from the decoded bytes, requires their sum to equal
+the shape product, requires `finite_count` to equal that product, and requires
+`nonfinite_count=0`.
+
+The two tree digests use the existing
+`example21-gate-c-hidden-state-v1` framing. For each retained key, the qualifier
+splits at the final `#`, parses the suffix as a nonnegative decimal leaf index,
+and sorts by `(base_path, leaf_index)`. It then appends the UTF-8 base path,
+ASCII leaf index, ASCII dtype, ASCII comma-joined shape, and decoded contiguous
+bytes as separate NUL-delimited fields. Hashing the literal `path#0` key as the
+path field, accepting a nondecimal suffix, or omitting the separate leaf-index
+field fails closed. This makes both tree digests independently recomputable
+from the retained artifact.
+
+The producer captures `materialized_prefix` directly after the authenticated
+query-only model executes the pinned batch-one H0 prefix and before
+stop-gradient. It captures `actual_gradient_start` only through the audited
+callback above. Both snapshot parameter digests and
+`canonical_parameter_sha256` must equal the regime's authenticated
+`gate_c_init.initialization.<regime>.canonical_full.parameter_sha256`.
+`all_hidden_leaves_equal` is recomputed from exact path, dtype, shape, byte,
+leaf-digest, and tree-digest equality between the two retained snapshots.
+`passed` is the conjunction of the exact capture point/count, canonical
+parameter equality, complete finite snapshot schemas, and exact hidden-leaf
+equality. The authenticated producer and pinned raw H0 prefix are the replay
+boundary; host requalification does not regenerate GPU parameters from a seed
+or silently substitute a CPU initialization. The separately compiled batch-512
+operational-H0 probe remains an independent control and is not required to be
+byte-identical to this batch-one evidence. `source_slice_exact`,
+`schedule_cross_bound`, and every enclosing `passed` value are recomputed rather
+than trusted.
 
 For each objective, `global` has exactly `tree_paths`, `leaf_count`,
 `value_count`, `l2_norm`, `sha256`, `finite`, and `nonzero`; it must cover the
@@ -2367,7 +2433,10 @@ not a nonzero witness. Each live-path value has exactly `tree_paths`,
 `leaf_count`, `leaves`, `value_count`, `l2_norm`, `sha256`, `finite`, and
 `nonzero`; each must be finite and strictly nonzero. Its leaf records use the
 same exact index, dtype, shape, count, finiteness, zero-count, and digest schema
-as the removed paths. This makes a zero removed-path result non-vacuous.
+as the removed paths. The qualifier must also sum every live leaf's
+`zero_count`, require that sum to be strictly less than the retained total
+`value_count`, and reject a claimed positive aggregate whose leaf inventory is
+all zero. This makes a zero removed-path result non-vacuous.
 
 `removed_paths` has exactly `memory_read_projection/weight` and
 `workspace_query_projection/weight`. Each value has exactly `tree_paths`,
