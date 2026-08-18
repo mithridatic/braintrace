@@ -1968,7 +1968,8 @@ nonexecution.
 `streams` has exactly `intact`, `shuffled`, and `no_context`. In the Gate A
 regime each stream has exactly tick `H1`; in Gate B each has exactly ticks `H1`
 through `H8`. Every tick record has exactly `selected_read`, `selected_drive`,
-and `cached_h0_read_reused`, with the last value required to be false.
+`cached_read_probe`, and `cached_h0_read_reused`, with the last value required
+to be false.
 
 `selected_read` and `selected_drive` are raw zero-array records with exact keys
 `dtype`, `shape`, `sha256`, `value_count`, `finite_count`, `nonfinite_count`,
@@ -1978,9 +1979,105 @@ must be `<f4 [512, 32]`; the selected projection drive must be
 the recorded geometry, applies the project's dtype-and-shape-framed digest,
 and requires its digest to equal `sha256`. It also requires `finite_count` and
 `zero_count` to equal the shape product, `nonfinite_count=0`, and both numeric
-aggregates to be exact zero. Thus a boolean alone cannot certify the no-read
-condition, and the ordinary-query `m_0` may not be cached or reused on a latent
-tick.
+aggregates to be exact zero.
+
+`cached_read_probe` has exactly `source_cached_memory_read`, `plus_11`,
+`minus_11`, and `passed`. `source_cached_memory_read` is captured from the
+query-only model's `memory_read#0` state immediately before the named latent
+tick: at H1 this is the state after the ordinary-query H0 boundary, and at each
+later Gate B tick it is the state after the preceding latent tick. It uses the
+floating endpoint schema above and must have dtype `<f4`, shape `[512, 32]`,
+`value_count=16384`, and no nonfinite values. It is a retained source record,
+not an asserted zero array.
+
+`plus_11` and `minus_11` each have exactly `replacement`, `boundary`,
+`selected_read`, `selected_drive`, `continuation`, and `passed`. Their
+`replacement` records have exactly `fill_value`, `dtype`, `shape`, and
+`sha256`. The two replacement tensors are respectively all `+11.0` and all
+`-11.0`, with dtype `<f4`, shape `[512, 32]`, and project-framed digests:
+
+```text
++11.0  156517ec70f2d721974202ac8581ca7f15594db382051fafbac40fb9057c81bc
+-11.0  b5725644875e21d4fce1fe5116695c12d18af3d9b8f243cbdd6878c3404201f6
+```
+
+The qualifier independently reconstructs both arrays and recomputes each
+digest as
+`SHA256(ASCII(dtype.str) || ASCII(str(shape)) || contiguous_C_bytes)`. The
+source digest must differ from each replacement digest; an intervention that
+does not change the cached-read bytes is inadmissible.
+
+Each replacement's `boundary` has exactly `before_replacement`,
+`after_replacement`, `changed_paths`, `unchanged_paths`,
+`parameters_equal`, `only_memory_read_replaced`, and `passed`.
+`before_replacement` and `after_replacement` each have exactly `hidden_paths`,
+`hidden_state_tree_sha256`, and `parameter_tree_sha256`. `hidden_paths` has all
+eight frozen H0 paths and geometries above, and every value uses the floating
+endpoint schema above. `before_replacement.hidden_paths.memory_read#0` must
+equal `source_cached_memory_read`; the corresponding `after_replacement`
+endpoint must equal the pinned replacement. `changed_paths` is exactly
+`["memory_read#0"]`; `unchanged_paths` is the sorted other seven H0 paths.
+Every unchanged before/after endpoint digest must be equal, and both parameter
+tree digests must be equal to each other and to the authenticated canonical
+parameter digest for the regime.
+
+Each boundary tree digest is independently recomputed by starting a field list
+with `UTF8("example21-gate-c2-cached-read-boundary-state-v1")`, then appending,
+for every sorted complete hidden path, its UTF-8 path, ASCII leaf index, ASCII
+`numpy.dtype.str`, ASCII comma-joined logical shape, and the endpoint's
+lowercase ASCII `sha256`, and hashing the fields joined by one NUL byte. The
+endpoint `sha256` is computed at evidence generation directly from that
+snapshot's actual array using the project-framed dtype, shape, and contiguous
+C-order bytes; it is then retained in `hidden_paths`. The tree qualifier
+recomputes only from those retained endpoint records and may not assume absent
+raw tree bytes. The before and after hidden-state tree digests must differ
+because the source and replacement `memory_read#0` endpoint digests differ.
+Production must capture two distinct immutable tree snapshots on opposite
+sides of the replacement and retain their separate endpoint and tree digests.
+Comparing one post-replacement tree with itself, aliasing the two snapshot
+objects, or populating both evidence sides from one capture is a failure even
+if an embedded equality boolean is true.
+
+The qualifier recomputes `parameters_equal` as exact equality of the two
+complete parameter-tree digests plus equality to the authenticated canonical
+parameter digest. It recomputes `only_memory_read_replaced` from the exact
+one-element `changed_paths`, the exact seven-element `unchanged_paths`, the
+different source/replacement `memory_read#0` endpoint digests, equality of all
+seven other endpoint records, and `parameters_equal`. The two fields must equal
+those recomputed predicates. `boundary.passed` must equal their conjunction;
+none of these embedded booleans is authoritative.
+
+The replacement branch's `selected_read` and `selected_drive` use the raw
+zero-array schema and must remain exact zero. `continuation` has exactly
+`ticks` and `passed`. For Gate A H1, `ticks` has exactly `H1`; for a Gate B
+probe started at Hn, it has every tick from Hn through H8 in order. Each
+continuation tick has exactly `compact`, `hidden_paths`, `predictions`, and
+`passed`, comparing an unmodified query-only continuation with the replacement
+continuation from independent copies of the same captured before-boundary
+state. `compact`, all eight frozen hidden paths, and `predictions` reuse the
+independently recomputable comparison schemas above: every floating comparison
+must independently be finite and within `1e-6`, every discrete comparison must
+have Hamming distance zero, and decoded predictions must be exact.
+
+Each continuation tick's `passed` must equal the conjunction of its recomputed
+compact, hidden-path, and prediction predicates. `continuation.passed` must
+equal the conjunction over its exact required tick set. Each sentinel's
+`passed` must equal the conjunction of its reconstructed replacement,
+`boundary.passed`, exact-zero selected read, exact-zero selected drive, and
+`continuation.passed`; `cached_read_probe.passed` must equal the conjunction of
+the `plus_11` and `minus_11` sentinel predicates. Any disagreement fails
+closed.
+
+The qualifier does not trust `cached_h0_read_reused`. It derives that value as
+false only when both fixed replacements have valid, distinct before/after
+boundaries, exact-zero selected read and drive, and passing numeric and decoded-
+prediction comparisons at every retained continuation tick. Otherwise the
+tick, stream, regime, and admission fail closed. This probe is required for
+Gate A H1 and Gate B H1 through H8 in every one of `intact`, `shuffled`, and
+`no_context`; a boolean alone cannot certify nonreuse. The passing conclusion
+is narrowly that the declared `memory_read#0` state captured before each named
+tick does not influence these query-only continuations. It does not establish
+the absence or nonreuse of any unprobed cache path elsewhere in the model.
 
 `perturbations` has exactly `plus_7` and `minus_7`. Each has exact keys
 `replacement`, `streams`, and `passed`. The replacements are respectively the
@@ -2003,6 +2100,29 @@ equal the pinned replacement digest and differ from the actual source digest.
 results must recompute true before the continuation. The sole changed boundary
 value is `context_memory#0`, or `S_K`; the parameter tree and every other state
 path remain byte-identical.
+
+For every `+7` and `-7` tick probe, the `left_*` fields come only from one
+immutable source-boundary snapshot captured immediately before the S_K
+replacement. The `right_*` fields come only from a second immutable snapshot
+captured after replacing `context_memory#0` and before executing the
+continuation. The source snapshot's actual `context_memory#0` array produces
+`source_s_k_sha256`; the post-replacement snapshot's actual array produces
+`replacement_s_k_sha256`. The seven non-S_K state paths populate the left and
+right sides of `non_s_k_state`, and the complete parameter tree populates the
+left and right sides of `parameters`. Thus `source_replacement_differ` together
+with exact seven-state and complete-parameter equality recomputes the predicate
+that only `context_memory#0` changed at this boundary.
+
+The two complete boundary snapshots must be distinct, non-aliased captures on
+opposite sides of the replacement. Comparing the source tree with itself, the
+post-replacement tree with itself, deriving both left/right records from one
+capture, or mutating a shared object after the first capture is an immediate
+failure. `source_replacement_differ`, every `tree_equal`, every `values_equal`,
+and the tick's `passed` must equal their recomputed predicates. Each
+perturbation's `passed` must equal the conjunction over its exact required
+streams and ticks, and `query_only_latent_no_read.passed` must include both
+perturbation predicates together with all other required child predicates;
+embedded pass/equality booleans are never authoritative.
 
 `non_s_k_state.paths` is exactly this sorted seven-leaf list:
 
