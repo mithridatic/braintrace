@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import hashlib
+import json
 import math
+import os
 import re
 import warnings
 from dataclasses import dataclass, field
@@ -1458,6 +1461,57 @@ def _validated_gate_c_initialization_admission(
     return admission
 
 
+def _source_files_report() -> dict[str, str]:
+    """Hash the exact six scientific source files for Gate C."""
+
+    repo_root = Path(__file__).resolve().parents[2]
+    return {
+        path: hashlib.sha256((repo_root / path).read_bytes()).hexdigest()
+        for path in _GATE_C_SOURCE_FILES
+    }
+
+
+def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
+    """Write one deterministic, strict Gate C artifact atomically.
+
+    Parameters
+    ----------
+    value
+        JSON-compatible top-level mapping. NaN and infinity are rejected.
+    path
+        Final artifact path.
+
+    Returns
+    -------
+    pathlib.Path
+        Final artifact path after atomic replacement.
+    """
+
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    payload = (
+        json.dumps(
+            value,
+            allow_nan=False,
+            indent=2,
+            sort_keys=True,
+            separators=(",", ": "),
+        )
+        + "\n"
+    )
+    try:
+        with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(destination)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+    return destination
+
+
 def run_gate_c_initialization(
     config: GateCConfig,
     *,
@@ -2089,3 +2143,79 @@ def _qualification_report(
             else "gate_c_failed_stop_no_causal_mechanism_conclusion"
         ),
     }
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--target", choices=("gate_c_init",), required=True)
+    parser.add_argument("--gate-a-result", type=Path, required=True)
+    parser.add_argument("--gate-a-manifest", type=Path, required=True)
+    parser.add_argument("--gate-b-manifest", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the fixed authenticated Gate C initialization target.
+
+    Parameters
+    ----------
+    argv
+        Command-line arguments excluding the executable name.
+
+    Returns
+    -------
+    int
+        Zero after a complete artifact is written. Scientific failure remains
+        encoded in the artifact for the authenticated launcher to sign.
+    """
+
+    from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+
+    args = _parser().parse_args(argv)
+    repo_root = Path(__file__).resolve().parents[2]
+    launch_config = launcher.LaunchConfig(
+        target=args.target,
+        repo_root=repo_root,
+        output_dir=args.output.resolve().parent,
+    )
+    gate_a_paths = launcher._gate_a_artifact_paths(launch_config)
+    gate_b_paths = launcher._formal_gate_b_artifact_paths(launch_config)
+    if (
+        args.gate_a_result.resolve() != gate_a_paths.result.resolve()
+        or args.gate_a_manifest.resolve() != gate_a_paths.manifest.resolve()
+    ):
+        raise ValueError("Gate C target requires the fixed Gate A artifact paths")
+    if args.gate_b_manifest.resolve() != gate_b_paths.manifest.resolve():
+        raise ValueError("Gate C target requires the fixed Gate B manifest path")
+
+    source_start = gate_a._source_report()
+    environment = gate_a._environment_report()
+    gate_a._require_authenticated_gpu_launch(source_start, environment)
+    head = str(source_start["commit"])
+    expected_paths = launcher.target_paths(
+        launch_config,
+        head,
+        "gate_c_init",
+    )
+    if args.output.resolve() != expected_paths.result.resolve():
+        raise ValueError("Gate C target requires the fixed output path")
+
+    prerequisites = launcher._load_gate_c_prerequisites(launch_config)
+    source_files = _source_files_report()
+    result = run_gate_c_initialization(
+        GateCConfig(),
+        prerequisites=prerequisites,
+        source_start=source_start,
+        source_end_reporter=gate_a._source_report,
+        source_files=source_files,
+        environment=environment,
+    )
+    destination = write_artifact(result, args.output)
+    print(destination)
+    print(json.dumps(result["qualification"], sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
