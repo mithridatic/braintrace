@@ -211,6 +211,78 @@ def _state_array(state: object) -> np.ndarray:
     return np.asarray(getattr(state, "value"))
 
 
+def _snapshot_entry_map(
+    snapshot: ModelStateSnapshot,
+) -> dict[tuple[object, ...], object]:
+    return {path: value for path, value in snapshot.entries}
+
+
+def _max_per_example_rms(left: object, right: object) -> float:
+    left_array = np.asarray(u.get_mantissa(left), dtype=np.float64)
+    right_array = np.asarray(u.get_mantissa(right), dtype=np.float64)
+    assert left_array.shape == right_array.shape
+    assert left_array.size > 0
+    assert np.all(np.isfinite(left_array))
+    assert np.all(np.isfinite(right_array))
+    difference = right_array - left_array
+    if difference.ndim == 0:
+        per_example = np.abs(difference).reshape(1)
+    else:
+        flattened = difference.reshape(difference.shape[0], -1)
+        per_example = np.sqrt(np.mean(np.square(flattened), axis=1))
+    assert np.all(np.isfinite(per_example))
+    return float(np.max(per_example))
+
+
+def _assert_max_per_example_rms(
+    left: object,
+    right: object,
+    *,
+    limit: float,
+    label: object,
+) -> None:
+    observed = _max_per_example_rms(left, right)
+    assert observed <= limit, f"{label}: max per-example RMS {observed} > {limit}"
+
+
+def _assert_non_context_snapshot_close(
+    left: ModelStateSnapshot,
+    right: ModelStateSnapshot,
+    *,
+    limit: float,
+) -> None:
+    assert left.batch_size == right.batch_size
+    assert left.neuron_count == right.neuron_count
+    left_entries = _snapshot_entry_map(left)
+    right_entries = _snapshot_entry_map(right)
+    assert left_entries.keys() == right_entries.keys()
+    for path, left_value in left_entries.items():
+        if path == ("context_memory",):
+            continue
+        left_arrays = _tree_arrays(left_value)
+        right_arrays = _tree_arrays(right_entries[path])
+        assert len(left_arrays) == len(right_arrays)
+        for left_array, right_array in zip(left_arrays, right_arrays, strict=True):
+            _assert_max_per_example_rms(
+                left_array,
+                right_array,
+                limit=limit,
+                label=path,
+            )
+
+
+def _decoded_argmax_prediction(
+    compact: jax.Array,
+    color_rank: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    expanded = expand_compact_logits(compact, color_rank)
+    return (
+        np.argmax(np.asarray(expanded.height), axis=-1) + 1,
+        np.argmax(np.asarray(expanded.width), axis=-1) + 1,
+        np.argmax(np.asarray(expanded.colors), axis=-1),
+    )
+
+
 def _production_memory_config(
     memory_width: int, *, batch_size: int = 4, seed: int = 2108
 ) -> ModelConfig:
@@ -821,6 +893,301 @@ def test_query_only_matches_h0_then_removes_latent_memory_read_and_drive() -> No
         np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.parametrize("fill_value", [7.0, -7.0], ids=["plus_7", "minus_7"])
+def test_query_only_latent_read_drive_and_memory_perturbation_contract(
+    fill_value: float,
+) -> None:
+    config = _memory_config(memory_decay=1.0, input_gain=8.0)
+    full = LatentWorkspaceModel(config, memory_read_policy="full")
+    query_only = LatentWorkspaceModel(config, memory_read_policy="query_only")
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    context = jnp.concatenate((demonstrations, query), axis=0)
+
+    full_h0 = run_context(full, context)
+    query_only_h0 = run_context(query_only, context)
+
+    for name in (
+        "compact_logits",
+        "spikes",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    ):
+        np.testing.assert_array_equal(
+            getattr(full_h0, name), getattr(query_only_h0, name)
+        )
+    _assert_state_snapshots_equal(full_h0.snapshot, query_only_h0.snapshot)
+    h0_read = _state_array(query_only.memory_read).copy()
+    assert np.any(h0_read != 0.0)
+
+    zero_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+    query_only_h0_snapshot = query_only.snapshot_state()
+    full_h0_snapshot = full.snapshot_state()
+    query_only_parameters = parameter_snapshot(query_only)
+    full_parameters = parameter_snapshot(full)
+    before_physical = (
+        np.asarray(query_only.voltage).copy(),
+        np.asarray(query_only.feedforward_current).copy(),
+        np.asarray(query_only.recurrent_current).copy(),
+    )
+
+    @brainstate.transform.jit
+    def query_only_latent_step(
+        event: jax.Array, gate: jax.Array
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        compact = query_only.update(event, gate)
+        selected_read = jnp.asarray(query_only.memory_read.value)
+        selected_drive = query_only.memory_read_projection(selected_read)
+        return compact, selected_read, selected_drive
+
+    @brainstate.transform.jit
+    def full_latent_step(
+        event: jax.Array, gate: jax.Array
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        compact = full.update(event, gate)
+        selected_read = jnp.asarray(full.memory_read.value)
+        selected_drive = full.memory_read_projection(selected_read)
+        return compact, selected_read, selected_drive
+
+    baseline_query_output, baseline_query_read, baseline_query_drive = (
+        jax.block_until_ready(query_only_latent_step(zero_event, advance))
+    )
+    baseline_query_snapshot = query_only.snapshot_state()
+    baseline_query_prediction = _decoded_argmax_prediction(
+        baseline_query_output, config.color_rank
+    )
+    baseline_physical = (
+        np.asarray(query_only.voltage).copy(),
+        np.asarray(query_only.feedforward_current).copy(),
+        np.asarray(query_only.recurrent_current).copy(),
+    )
+
+    baseline_full_output, baseline_full_read, baseline_full_drive = (
+        jax.block_until_ready(full_latent_step(zero_event, advance))
+    )
+    assert np.any(np.asarray(baseline_full_read) != 0.0)
+    assert np.any(np.asarray(baseline_full_drive) != 0.0)
+    np.testing.assert_array_equal(baseline_query_read, 0.0)
+    np.testing.assert_array_equal(baseline_query_drive, 0.0)
+    assert not np.array_equal(np.asarray(baseline_query_read), h0_read)
+    assert any(
+        not np.array_equal(before, after)
+        for before, after in zip(before_physical, baseline_physical, strict=True)
+    )
+
+    query_only.restore_state(query_only_h0_snapshot)
+    source_memory = np.asarray(query_only.context_memory.value).copy()
+    query_only.context_memory.value = jnp.full_like(
+        query_only.context_memory.value, fill_value
+    )
+    assert not np.array_equal(
+        np.asarray(query_only.context_memory.value), source_memory
+    )
+    _assert_non_context_snapshot_close(
+        query_only_h0_snapshot,
+        query_only.snapshot_state(),
+        limit=0.0,
+    )
+    output, selected_read, selected_drive = jax.block_until_ready(
+        query_only_latent_step(zero_event, advance)
+    )
+
+    np.testing.assert_array_equal(selected_read, 0.0)
+    np.testing.assert_array_equal(selected_drive, 0.0)
+    assert not np.array_equal(np.asarray(selected_read), h0_read)
+    _assert_max_per_example_rms(
+        baseline_query_output,
+        output,
+        limit=1e-6,
+        label="compact logits",
+    )
+    _assert_non_context_snapshot_close(
+        baseline_query_snapshot,
+        query_only.snapshot_state(),
+        limit=1e-6,
+    )
+    actual_prediction = _decoded_argmax_prediction(output, config.color_rank)
+    for expected, actual in zip(
+        baseline_query_prediction, actual_prediction, strict=True
+    ):
+        np.testing.assert_array_equal(actual, expected)
+    _assert_parameter_snapshots_equal(
+        query_only_parameters, parameter_snapshot(query_only)
+    )
+
+    full.restore_state(full_h0_snapshot)
+    full.context_memory.value = jnp.full_like(full.context_memory.value, fill_value)
+    full_output, full_read, full_drive = jax.block_until_ready(
+        full_latent_step(zero_event, advance)
+    )
+    assert np.all(np.isfinite(np.asarray(full_output)))
+    read_difference = np.max(
+        np.abs(np.asarray(full_read) - np.asarray(baseline_full_read))
+    )
+    drive_difference = np.max(
+        np.abs(np.asarray(full_drive) - np.asarray(baseline_full_drive))
+    )
+    assert read_difference > 0.0 or drive_difference > 0.0
+    _assert_parameter_snapshots_equal(full_parameters, parameter_snapshot(full))
+
+
+def test_max_per_example_rms_rejects_a_concentrated_outlier() -> None:
+    limit = 1e-6
+    baseline = np.zeros((2, 100), dtype=np.float64)
+    inside_boundary = baseline.copy()
+    inside_boundary[0, 0] = 0.999 * limit * math.sqrt(100.0)
+    _assert_max_per_example_rms(
+        baseline,
+        inside_boundary,
+        limit=limit,
+        label="inside boundary",
+    )
+
+    concentrated_outlier = baseline.copy()
+    concentrated_outlier[0, 0] = 1.001 * limit * math.sqrt(100.0)
+    global_rms = float(
+        np.sqrt(np.mean(np.square(concentrated_outlier - baseline)))
+    )
+    assert global_rms < limit
+    assert _max_per_example_rms(baseline, concentrated_outlier) > limit
+    with pytest.raises(AssertionError, match="max per-example RMS"):
+        _assert_max_per_example_rms(
+            baseline,
+            concentrated_outlier,
+            limit=limit,
+            label="concentrated outlier",
+        )
+
+
+@pytest.mark.parametrize(
+    "cached_read_fill", [11.0, -11.0], ids=["plus_11", "minus_11"]
+)
+def test_query_only_latent_step_discards_perturbed_nonzero_cached_h0_read(
+    cached_read_fill: float,
+) -> None:
+    config = _memory_config(memory_decay=1.0, input_gain=8.0)
+    query_only = LatentWorkspaceModel(config, memory_read_policy="query_only")
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    context = jnp.concatenate((demonstrations, query), axis=0)
+
+    query_only_h0 = run_context(query_only, context)
+    h0_cached_read = _state_array(query_only.memory_read).copy()
+    assert np.any(h0_cached_read != 0.0)
+
+    query_only_h0_snapshot = query_only_h0.snapshot
+    query_only_parameters = parameter_snapshot(query_only)
+    zero_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+    cached_read_sentinel = np.float32(cached_read_fill)
+
+    @brainstate.transform.jit
+    def query_only_latent_step(
+        event: jax.Array, gate: jax.Array
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+        compact = query_only.update(event, gate)
+        selected_read = jnp.asarray(query_only.memory_read.value)
+        selected_drive = query_only.memory_read_projection(selected_read)
+        return compact, selected_read, selected_drive
+
+    query_only.restore_state(query_only_h0_snapshot)
+    baseline_output, baseline_read, baseline_drive = jax.block_until_ready(
+        query_only_latent_step(zero_event, advance)
+    )
+    baseline_snapshot = query_only.snapshot_state()
+    baseline_prediction = _decoded_argmax_prediction(
+        baseline_output, config.color_rank
+    )
+    np.testing.assert_array_equal(baseline_read, 0.0)
+    np.testing.assert_array_equal(baseline_drive, 0.0)
+
+    query_only.restore_state(query_only_h0_snapshot)
+    source_context = np.asarray(query_only.context_memory.value).copy()
+    before_replacement = query_only.snapshot_state()
+    query_only.memory_read.value = jnp.full_like(
+        query_only.memory_read.value, cached_read_sentinel
+    )
+    after_replacement = query_only.snapshot_state()
+    np.testing.assert_array_equal(query_only.context_memory.value, source_context)
+    np.testing.assert_array_equal(
+        np.asarray(query_only.memory_read.value), cached_read_sentinel
+    )
+    assert not np.array_equal(
+        np.asarray(query_only.memory_read.value), h0_cached_read
+    )
+    before_entries = _snapshot_entry_map(before_replacement)
+    after_entries = _snapshot_entry_map(after_replacement)
+    assert before_entries.keys() == after_entries.keys()
+    changed_paths = []
+    for path, before_value in before_entries.items():
+        before_arrays = _tree_arrays(before_value)
+        after_arrays = _tree_arrays(after_entries[path])
+        assert len(before_arrays) == len(after_arrays)
+        if any(
+            not np.array_equal(before_array, after_array)
+            for before_array, after_array in zip(
+                before_arrays, after_arrays, strict=True
+            )
+        ):
+            changed_paths.append(path)
+    assert changed_paths == [("memory_read",)]
+    _assert_parameter_snapshots_equal(
+        query_only_parameters, parameter_snapshot(query_only)
+    )
+
+    output, selected_read, selected_drive = jax.block_until_ready(
+        query_only_latent_step(zero_event, advance)
+    )
+    perturbed_snapshot = query_only.snapshot_state()
+    np.testing.assert_array_equal(selected_read, 0.0)
+    np.testing.assert_array_equal(selected_drive, 0.0)
+    assert not np.array_equal(np.asarray(selected_read), h0_cached_read)
+    assert not np.array_equal(
+        np.asarray(selected_read),
+        np.full_like(h0_cached_read, cached_read_sentinel),
+    )
+    _assert_max_per_example_rms(
+        baseline_output,
+        output,
+        limit=1e-6,
+        label="compact logits",
+    )
+    _assert_non_context_snapshot_close(
+        baseline_snapshot,
+        perturbed_snapshot,
+        limit=1e-6,
+    )
+    baseline_context = _snapshot_entry_map(baseline_snapshot)[("context_memory",)]
+    perturbed_context = _snapshot_entry_map(perturbed_snapshot)[("context_memory",)]
+    for expected, actual in zip(
+        _tree_arrays(baseline_context),
+        _tree_arrays(perturbed_context),
+        strict=True,
+    ):
+        np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(actual, source_context)
+    actual_prediction = _decoded_argmax_prediction(output, config.color_rank)
+    for expected, actual in zip(
+        baseline_prediction, actual_prediction, strict=True
+    ):
+        np.testing.assert_array_equal(actual, expected)
+    _assert_parameter_snapshots_equal(
+        query_only_parameters, parameter_snapshot(query_only)
+    )
+
+
 def test_memory_states_reset_snapshot_and_restore_exactly() -> None:
     memory_model = LatentWorkspaceModel(_memory_config())
     for name, shape in (
@@ -1166,6 +1533,118 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients(
             assert gradient_norm == 0.0
         else:
             assert gradient_norm > 0.0, path
+
+
+def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control() -> None:
+    import braintrace
+    from braintrace._testing.oracle import chunked_online_param_gradients
+    from examples.pp_prop import latent_workspace_binding_control as legacy
+
+    config = _memory_config(memory_decay=1.0, input_gain=8.0)
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    h0_prefix = jnp.concatenate((demonstrations, query), axis=0)
+
+    class _MaterializedLatentObjective(LatentWorkspaceModel):
+        def __init__(self, memory_read_policy: str):
+            super().__init__(
+                config,
+                memory_read_policy=memory_read_policy,  # type: ignore[arg-type]
+            )
+            run_context(self, h0_prefix)
+            self._materialized_h0_snapshot = self.snapshot_state()
+
+        @brainstate.nn.call_order(9)
+        def init_state(self, *, batch_size: int | None = None, **_: object) -> None:
+            if batch_size is not None and batch_size != self.config.batch_size:
+                raise ValueError("batch size differs from the materialized objective")
+            snapshot = getattr(self, "_materialized_h0_snapshot", None)
+            if snapshot is not None:
+                self.restore_state(snapshot)
+
+        def update(self, packed: jax.Array) -> jax.Array:
+            width = self.config.input_width
+            if packed.shape != (self.config.batch_size, width + 3):
+                raise ValueError("packed latent objective has the wrong shape")
+            event = packed[:, :width]
+            advance = packed[:, width] > 0.5
+            target = packed[:, width + 1].astype(jnp.int32)
+            weight = packed[:, width + 2]
+            raw_loss = legacy._classification_loss(
+                super().update(event, advance),
+                target,
+                self.config.color_rank,
+            )
+            weighted = jnp.sqrt(weight) * jnp.sqrt(jnp.maximum(raw_loss, 0.0))
+            return jnp.where(weight == 0.0, jnp.zeros_like(weight), weighted)
+
+    packed = np.zeros((1, 1, config.input_width + 3), dtype=np.float32)
+    packed[0, 0, config.input_width] = 1.0
+    packed[0, 0, config.input_width + 1] = 8.0
+    packed[0, 0, config.input_width + 2] = np.float32(0.5)
+    inputs = jnp.asarray(packed)
+    assert float(np.asarray(inputs[0, 0, -1])) == 0.5
+
+    def algorithm_factory(
+        candidate: brainstate.nn.Module,
+    ) -> braintrace.ETraceAlgorithm:
+        assert isinstance(candidate, LatentWorkspaceModel)
+        return braintrace.pp_prop(
+            candidate,
+            decay_or_rank=candidate.config.trace_decay,
+            vjp_method="multi-step",
+        )
+
+    query_only_gradients = chunked_online_param_gradients(
+        lambda: _MaterializedLatentObjective("query_only"),
+        inputs,
+        algo_factory=algorithm_factory,
+        chunk_size=1,
+    )
+    full_gradients = chunked_online_param_gradients(
+        lambda: _MaterializedLatentObjective("full"),
+        inputs,
+        algo_factory=algorithm_factory,
+        chunk_size=1,
+    )
+
+    def gradient_l2(value: object) -> float:
+        squared = 0.0
+        for leaf in jax.tree.leaves(value):
+            array = np.asarray(u.get_mantissa(leaf))
+            assert np.all(np.isfinite(array))
+            squared += float(np.sum(array.astype(np.float64) ** 2))
+        return math.sqrt(squared)
+
+    removed_paths = (
+        ("memory_read_projection", "weight"),
+        ("workspace_query_projection", "weight"),
+    )
+    live_paths = (
+        ("color_factor_head", "weight"),
+        ("readout_projection", "weight"),
+        ("rec_syn", "comm", "weight"),
+    )
+    assert tuple(query_only_gradients) == tuple(full_gradients)
+    for path in removed_paths:
+        query_leaves = jax.tree.leaves(query_only_gradients[path])
+        assert query_leaves
+        for leaf in query_leaves:
+            array = np.asarray(u.get_mantissa(leaf))
+            np.testing.assert_array_equal(array, np.zeros_like(array))
+        assert gradient_l2(query_only_gradients[path]) == 0.0
+        assert gradient_l2(full_gradients[path]) > 0.0
+
+    for path in live_paths:
+        assert gradient_l2(query_only_gradients[path]) > 0.0
+
+    assert gradient_l2(query_only_gradients) > 0.0
+    assert gradient_l2(full_gradients) > 0.0
 
 
 def test_memory_mode_uses_one_shared_decoder_on_continuous_workspace() -> None:
