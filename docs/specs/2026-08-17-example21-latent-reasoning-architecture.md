@@ -780,8 +780,57 @@ Results beyond effort 8 are `depth_stress_only` and cannot satisfy Gate B.
 
 ### Gate C: pp-prop learnability ablations
 
-Run five arms on the byte-identical Gate A and Gate B schedules, with separate
-optimizer state and identical initialization on every shared parameter path:
+Gate C is one paired causal experiment over two separate canonical regimes.
+Gate A and Gate B are not byte-identical to each other: Gate A has a six-tick,
+width-41 event stream, while Gate B has a 19-tick, width-47 event stream. Each
+of the five interventions below is trained once from scratch in each regime,
+for exactly ten fresh pp-prop trainings. Within a regime, every arm uses
+byte-identical mapping IDs, presentation order, queries, encoded events,
+targets, advance masks, and held-out intact/shuffled/no-context examples. No
+trained checkpoint or optimizer state is carried between arms or regimes.
+
+The canonical Gate A regime is exactly 10,000 updates at batch 64 and 512
+held-out episodes, with model seed `2108`, split seed `20260817`, training
+episode seed `31021`, and validation episode seed `91021`. Its training and
+validation schedule SHA-256 values are respectively
+`25cae0684c3a0cb1a0d0ae1a12b7db8bdf37a1f15d687cdf79362c9c6163ef9b`
+and `80057e092a130e2c78e8f8397b3978bc13a0ff2a5b64bb5207abe238e08feddd`;
+its flattened training and validation mapping-ID SHA-256 values are
+`fbd48ad9a8d3ecb0dd0812abbbda35953def52862785ce048e17b2eb9fdd3499`
+and `a75b3b2ab05110e21fef1ea44ae3fb701d557f45351e5a17cf89a80e80f689f3`.
+The canonical Gate B regime is exactly the 4,096-update, batch-64, 512-held-out,
+32-by-128-chunk regime above, with catalog seed `20260818`, training episode
+seed `32021`, validation episode seed `92021`, and deterministic effort order
+`(1, 2, 4, 8)` repeated 1,024 times. Its eight global training-field hashes are:
+
+| Gate B training field | SHA-256 |
+| --- | --- |
+| `events` | `a1937b7f8d5d4da5f30216847cc63d022d9ec46d5cf152b25f5a30a59a1eb84f` |
+| `targets` | `4082d2fd1440e9d14b0c81c754158f05b8056137a9116aee667f8d112312184c` |
+| `loss_weights` | `044616bf9dd86cbdc1d472184ede8027bf9ff65d65834b15ec619bf3095d2e31` |
+| `advance_masks` | `2fc1b2acd9f73e567684d2a85f44c4009c5941ce262a527589066117ec27a4cc` |
+| `mapping_ids` | `78c2d8aaa9e874dbcc1c25363875ff8aec0356a711d2426e09f2e79c76c72cb7` |
+| `efforts` | `c7ca75132501bda8e6b5695a48a1ae5cde22da587f4658f7721bd4e3adcd58e6` |
+| `query_colors` | `38b4cecef323dce16b0478fdd3874c9383804c913c39aaf017ce34554dcd37cb` |
+| `presentation_orders` | `0650be382b381d7ab14b642c6fcdb16ae410e70a4c5821b10643bce41e3f7ca5` |
+
+All ten trainings use production pp-prop, 2,048 neurons, 16,384 recurrent
+edges, readout width 128, color rank 16, input gain 4.0, recurrent gain 0.8,
+trace decay 0.9, learning rate 0.003, clipping norm 1.0, and no BPTT update.
+Memory arms use width 32 and decay 1.0; only the declared legacy arm changes
+memory width to zero. No arm changes a budget, topology, optimizer, or data seed
+in response to an observed result.
+
+Every Gate B arm must also reproduce all nine validation hashes frozen in the
+Gate B table above. The canonical data schedule excludes only the declared
+terminal-only loss intervention: that arm retains identical targets and timing
+but reports a separate dtype-and-shape-framed digest of its effective loss
+weights. Arm execution order is fixed as `full`, `query_only`, `terminal_only`,
+`legacy`, and `frozen_write` for Gate A, followed by the same order for Gate B.
+Each arm resets the model RNG to `2108` and creates a new zero-valued Adam state.
+Arm order therefore cannot select or perturb initialization.
+
+The five fixed interventions are:
 
 1. full `S_K` re-read plus per-checkpoint supervision;
 2. query-only memory read plus per-checkpoint supervision;
@@ -791,47 +840,216 @@ optimizer state and identical initialization on every shared parameter path:
    value and excluded from optimizer updates.
 
 The query-only arm performs the ordinary query read and must be byte-identical
-to the full arm through `H_0`. On every latent tick it performs no `S_K` read
-and receives zero memory-read drive, leaving only recurrent workspace ringdown.
-Repeatedly injecting a cached `m_0` is a different intervention and does not
-satisfy this arm. The terminal-only arm executes the same full forward
-trajectory but masks every loss except the declared matching terminal. The
-frozen-write arm retains the literal outer product and reports the excluded
+to the full arm through `H_0` when both are evaluated from the same parameter
+and state snapshot. Independently trained arms are not required to remain equal
+after their parameters diverge. On every latent tick the query-only arm performs
+no `S_K` read and receives zero memory-read drive, leaving only recurrent
+workspace ringdown. Repeatedly injecting a cached `m_0` is a different
+intervention and does not satisfy this arm. The terminal-only arm executes the
+same full forward trajectory. In Gate A its effective loss weights are zero
+except for weight `1.0` at `H_1`; in a Gate B effort-`R` update they are zero
+except for weight `1.0` at `H_R`. Thus every arm retains total supervision weight
+one: terminal-only does not silently reduce the effective learning rate by
+keeping the full arm's `1 / (R + 1)` terminal weight. Full, query-only, legacy,
+and frozen-write retain Gate A weights `0.5` at each of `H_0,H_1` and Gate B
+weights `1 / (R + 1)` at every `H_0..H_R`.
+
+The frozen-write arm retains the literal outer product and reports the excluded
 optimizer path; it is not allowed to remove or reinitialize the memory.
+`memory_write_scale` must be all ones before and after both trainings and absent
+from optimizer updates, while remaining visible to the compiler and eligibility
+report. The frozen-write arm must produce complete finite evidence even though
+its behavioral margin is characterization-only.
 
-Define Gate A `binding_gap` as intact accuracy minus shuffled accuracy. Define
-Gate B `depth_accuracy` as the mean intact matching-depth accuracy over
-`{1, 2, 4, 8}`. The full arm must independently pass Gates A and B and satisfy
-these three blocking pairwise margins:
+Before any behavioral run, one authenticated `gate_c_init` admission at the
+same source revision and image as the formal run fixes initialization. Its
+strict result has `schema_version=1`,
+`control="example21_gate_c_initialization_admission"`, and path
+`var/example21-causal-gate/<head>-gate-c-init.json`, with companion
+`.preflight.json` and `.manifest.json` files. Its only passing interpretation is
+`gate_c_initialization_admission_passed`; failure records
+`gate_c_initialization_admission_failed_stop` and stops before training.
+Its exact top-level fields are `schema_version`, `control`,
+`qualification_regime`, `prerequisites`, `regimes`, `initialization`,
+`source_start`, `source_end`, `source_files`, `environment`, and
+`qualification`, with `qualification_regime="preregistered_full"`.
+Its exact prerequisite keys are `gate_a` and `gate_b`.
+`initialization` has exact regime keys `gate_a` and `gate_b`; each regime has
+exact keys `canonical_full`, `legacy`, `shared_paths`,
+`arm_initialization_refs`, and `optimizer_paths`. The exact
+`arm_initialization_refs` keys are the five arm names; `full`, `query_only`,
+`terminal_only`, and `frozen_write` all reference one canonical full-tree
+digest rather than four independently sampled initializations.
+The admission may instantiate, copy, compile, and inspect the four distinct
+full/legacy regime topologies, but it performs no optimizer update and computes
+no held-out behavioral metric.
 
-- versus query-only: `depth_accuracy` is at least 0.15 higher and
-  `binding_gap` is no more than 0.02 lower;
-- versus terminal-only: `depth_accuracy` is at least 0.10 higher and
-  `binding_gap` is no more than 0.02 lower;
-- versus legacy: `binding_gap` is at least 0.25 higher and `depth_accuracy` is
-  at least 0.15 higher.
+For Gate A, the complete full/query-only/terminal-only/frozen-write parameter
+tree has 646,940 values and initial SHA-256
+`b8ecb04f9c481118afa46651ead411abaccc338ad387f29a1f113d455788a5c8`.
+For Gate B it has 659,228 values and initial SHA-256
+`aa463549a8c3c1dbc24c9f727944eada035b776df666a83139214078d0f83d6d`.
+These whole-tree identities are scoped within a regime; Gate A and Gate B are
+not required to share an initialization SHA because their input widths differ.
+Seed equality alone is not identity evidence.
+
+The width-zero legacy tree has exactly the following six same-shaped shared
+parameter paths:
+
+- `color_factor_head/weight`;
+- `ff_syn/comm/weight`;
+- `height_head/weight`;
+- `readout_projection/weight`;
+- `rec_syn/comm/weight`; and
+- `width_head/weight`.
+
+The full tree's only additional paths are `memory_read_projection/weight`,
+`memory_write_scale`, and `workspace_query_projection/weight`. For each regime,
+the admission copies rather than merely reseeds the six shared values into the
+legacy model, requires byte equality path by path, and retains a sorted
+path/dtype/shape/bytes digest of their intersection. It separately pins the
+complete legacy parameter SHA, compiler paths, optimizer path set, and finite
+zero-valued Adam state. The legacy parameter counts are fixed now: 514,844 for
+Gate A and 527,132 for Gate B. Their exact initial SHAs and the two shared-path
+intersection digests are fixed by the authenticated `gate_c_init` run on the
+qualifying GPU image before any behavioral training; CPU-derived hashes are not
+admissible substitutes. The formal result must authenticate the complete init
+result and manifest and reproduce every initial and shared-path digest before
+the first update. Each formal legacy training arm starts from those copied
+canonical shared-path values, not from a separately sampled width-zero tree.
+
+Define Gate A `binding_gap` as terminal `H_1` intact accuracy minus terminal
+`H_1` shuffled accuracy. Define Gate B `depth_accuracy` as the arithmetic mean
+of intact matching-depth accuracy over `{1, 2, 4, 8}`. Historical Gate A and
+Gate B learned weights are prerequisites, not warm starts or substitutes for
+the contemporaneous full controls. The newly trained full arm must independently
+pass Gates A and B at the Gate C revision and satisfy these exact blocking
+inequalities, where `G` is `binding_gap` and `D` is `depth_accuracy`:
+
+- `D_full - D_query_only >= 0.15` and
+  `G_full - G_query_only >= -0.02`;
+- `D_full - D_terminal_only >= 0.10` and
+  `G_full - G_terminal_only >= -0.02`; and
+- `G_full - G_legacy >= 0.25` and `D_full - D_legacy >= 0.15`.
 
 The frozen-write arm is characterization-only by default and cannot block Gate
-C. Report full-minus-frozen differences for both metrics. A margin of at least
-0.05 on both `binding_gap` and `depth_accuracy` is required only for a later
-explicit claim that learned `M_write` modulation is necessary or load-bearing.
-If either margin is smaller, Gate C may still pass through the three blocking
-comparisons above, but the honest conclusion is that learned write modulation
-was not shown to be needed.
+C through a behavioral margin. Report `G_full - G_frozen_write` and
+`D_full - D_frozen_write`. A margin of at least `0.05` on both metrics is
+required only for the separate interpretation
+`learned_memory_write_modulation_necessary`. If either margin is smaller, Gate C
+may still pass through the three blocking comparisons above, but the retained
+characterization is `learned_memory_write_modulation_not_shown_necessary`.
 
-Add a deterministic finite-window mechanism oracle on one shared depth
-episode. It uses `chunked_online_param_gradients` with chunk size 1 strictly
-shorter than the sequence. Per-checkpoint residuals are multiplied by the
-square root of their declared loss weight so the helper's sum-of-squares loss
-implements the intended weighted objective. For full versus query-only and
-full versus terminal-only, retain global and per-parameter-group gradient
-norms, L2 difference, relative deviation, cosine, and digests. The full
-gradient must be finite and nonzero; each comparison must have relative
-deviation at least `1e-3` and absolute L2 difference greater than
+The deterministic finite-window mechanism oracle uses Gate B validation episode
+index zero, intact arm, effort `R=8`, batch one, and the fresh authenticated Gate
+B full initialization. Its literals are mapping ID `232423`, mapping array
+`[6, 7, 5, 2, 0, 4, 8, 9, 1, 3]`, query color `4`, presentation order
+`[6, 2, 5, 3, 8, 7, 4, 9, 0, 1]`, shuffled shift `1`, and targets
+`[0, 6, 8, 1, 7, 9, 3, 2, 5]` for `H_0..H_8`. All 19 advance values are true.
+The float32 `(19, 47)` intact event sequence has dtype-and-shape-framed SHA-256
+`36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec`.
+Any mismatch stops before the oracle is evaluated.
+
+The oracle uses `chunked_online_param_gradients` with chunk size 1, strictly
+shorter than the sequence. At a supervised checkpoint its wrapper emits
+`sqrt(weight) * sqrt(classification_cross_entropy)` and emits exact zero at an
+unsupervised checkpoint, so the helper's sum-of-squares loss is exactly the
+declared weighted cross-entropy objective. Full, query-only, and terminal-only
+start from the same parameter/state snapshot. For full versus query-only and
+full versus terminal-only, retain global and per-parameter-path gradient norms,
+L2 difference, relative deviation, cosine, and digests. Globally and for every
+retained path, define relative deviation in the fixed orientation
+`||g_arm - g_full||_2 / ||g_full||_2` and cosine as
+`<g_arm, g_full> / (||g_arm||_2 * ||g_full||_2)`. Each record includes
+`relative_deviation_defined` and `cosine_defined`. Relative deviation is JSON
+null exactly when the full norm is zero; cosine is JSON null exactly when either
+norm is zero. No sentinel number, NaN, or infinity is permitted. The full and
+compared-arm norms must be finite and nonzero globally for both comparisons;
+otherwise the oracle fails. Each global comparison must have relative deviation
+at least `1e-3` and absolute L2 difference greater than
 `max(1e-8, 1e-4 * full_gradient_norm)`. Removing reads must change both
-`workspace_query_projection.weight` and `memory_read_projection.weight` under
-the same thresholds. These are mechanism checks; whole-sequence gradients are
-not admissible evidence.
+`workspace_query_projection/weight` and `memory_read_projection/weight` under
+the same thresholds, with finite nonzero full and query-only norms on both
+paths. An unrelated path with a zero norm is retained with the null/defined
+encoding above but does not by itself fail the oracle. These are mechanism
+checks; whole-sequence gradients are not admissible evidence.
+
+Gradient digests use one canonical framing. Parameter paths are sorted by their
+slash-separated names. For each path, flatten its gradient subtree in JAX tree
+order and hash the UTF-8 prefix `example21-gate-c-gradient-path-v1`, a NUL byte,
+the UTF-8 parameter path, then for every leaf its zero-based decimal leaf index,
+`numpy.dtype.str`, comma-separated logical shape, and contiguous C-order bytes,
+with one NUL byte between fields. The global digest hashes the UTF-8 prefix
+`example21-gate-c-gradient-global-v1`, then each sorted parameter path and its
+lowercase hexadecimal per-path digest with NUL separators. Norms, differences,
+and cosines flatten the same leaves and accumulate products in NumPy float64.
+Missing paths, booleans in numeric fields, non-finite values, or a different
+tree order fail the oracle.
+
+The formal artifact has target `formal_gate_c`, `schema_version=1`,
+`control="example21_pp_prop_learnability_gate_c"`, and path
+`var/example21-causal-gate/<head>-formal-gate-c.json`, again with companion
+preflight and manifest files. Its passing interpretation is exactly
+`gate_c_passed_pp_prop_learnability_mechanism`; any blocking failure records
+`gate_c_failed_stop_no_causal_mechanism_conclusion`. The result has exact arm
+keys `full`, `query_only`, `terminal_only`, `legacy`, and `frozen_write`, each
+with exact regime keys `gate_a` and `gate_b`. It retains and qualification
+recomputes configuration, schedules, initialization, optimizer and compiler
+paths, finite training telemetry, parameter movement, raw held-out counts,
+prediction histograms and hashes, derived metrics and margins, and the mechanism
+oracle. Embedded qualification booleans are never trusted.
+Its exact top-level fields are `schema_version`, `control`,
+`qualification_regime`, `learner`, `prerequisites`, `regimes`, `arms`,
+`mechanism_oracle`, `source_start`, `source_end`, `source_files`, `environment`,
+`qualification`, and `total_wall_seconds`, with
+`qualification_regime="preregistered_full"` and `learner="pp_prop_only"`.
+Its exact prerequisite keys are `gate_a`, `gate_b`, and
+`gate_c_initialization`.
+
+For both Gate C targets, `source_files` has exactly these six repository-relative
+path keys, each mapped to its recomputed lowercase SHA-256 at the qualifying
+source revision:
+
+- `examples/pp_prop/latent_workspace_model.py`;
+- `examples/pp_prop/latent_workspace_task.py`;
+- `examples/pp_prop/latent_workspace_binding_control.py`;
+- `examples/pp_prop/latent_workspace_binding_gate.py`;
+- `examples/pp_prop/latent_workspace_depth_gate.py`; and
+- `examples/pp_prop/latent_workspace_ablation_gate.py`.
+
+The launcher is bound by the clean source HEAD, immutable image revision, fixed
+argv, and authenticated preflight/postflight manifest rather than added as a
+seventh scientific `source_files` key.
+
+Both Gate C targets require one clean source revision, an immutable GPU image
+whose OCI revision label is that exact commit, live Git agreement at process
+start and end, the read-only common-Git mount, exact fixed argv with no topology,
+seed, budget, or threshold knobs, and strict JSON that rejects duplicate keys,
+NaN, and infinity. `formal_gate_c` must use the same source and image as its
+authenticated `gate_c_init` prerequisite and must reauthenticate all prerequisite
+files before training and before manifest signing.
+
+Gate C also authenticates, rather than merely cites, the retained Gate A bundle:
+source `4737e9172b1c6ca99347af5b2c83fc795a294a16`, result
+`3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632`,
+preflight `d1d54406d0972d52ac10cddec7e6d1ed38c55481d51e21989e444fe7c3f03d08`,
+manifest `69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf`,
+and bundle `ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875`.
+It likewise authenticates the retained Gate B bundle: source
+`dafa64a8b4c3848241baa117affa55b632518a8e`, result
+`6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766`,
+preflight `91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f`,
+manifest `99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab`,
+and bundle `be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851`.
+Gate B authentication must recursively validate its init result
+`edd058a66287e766b05c9bd1c6df31f4eed354a2e9a3e9028254935cdb744278`,
+preflight `544e400f4b157dc1446216245ae0bddd38c6c93d3e59c6900890757ebe971c26`,
+manifest `15070dbd9caf99c4e60690f78d1c6c3fec78ed700d385db00bff2c9aaa07bd49`,
+and bundle `f16943967f04b858d614b2b821e38e7a5b198dfaa8357f5a1f1878abe73df828`.
+The strict loaders recompute both scientific qualifications, artifact references,
+bundle formulas, exact commands, and postflight evidence; pass flags alone are
+not prerequisite evidence. A prerequisite, schema, schedule, initialization,
+finite-evidence, oracle, or blocking-margin failure stops before Gate D.
 
 ### Gate D: full ARC qualification
 
@@ -1289,9 +1507,9 @@ validation remains in progress.
 Complete: the Stage 2.1 one-update and 256-update admissions and authenticated
 Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`;
 the authenticated Gate B demonstrated-depth result passed at commit
-`dafa64a8b4c3848241baa117affa55b632518a8e`. Pending: run Gate C mechanism
-ablations and, only after a Gate C pass, Gate D full ARC qualification. Any
-failed or unauthenticated gate stops this sequence.
+`dafa64a8b4c3848241baa117affa55b632518a8e`. Pending: implement and run the
+now-frozen Gate C mechanism ablations and, only after a Gate C pass, Gate D full
+ARC qualification. Any failed or unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
 
