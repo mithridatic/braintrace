@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import hashlib
 import importlib
+import inspect
 import math
 from collections.abc import Mapping
 from typing import Any
 
+import brainstate
 import jax
+import jax.numpy as jnp
 import numpy as np
 import pytest
 
+from examples.pp_prop import latent_workspace_binding_control as legacy
 from examples.pp_prop import latent_workspace_binding_gate as gate_a
 from examples.pp_prop import latent_workspace_depth_gate as gate_b
+from examples.pp_prop.latent_workspace_model import LatentWorkspaceModel
 
 
 _MODULE_NAME = "examples.pp_prop.latent_workspace_ablation_gate"
@@ -155,6 +161,85 @@ def _manual_global_digest(gradients: Mapping[str, Any]) -> str:
     return hashlib.sha256(b"\0".join(fields)).hexdigest()
 
 
+def _reduced_gate_c_config() -> Any:
+    return gate_c.GateCConfig(
+        gate_a_config=gate_a.BindingGateConfig.smoke_config(),
+        gate_b_config=gate_b.DepthGateConfig(
+            training_updates=1,
+            batch_size=2,
+            validation_episodes=4,
+            neuron_count=64,
+            recurrent_edges=64,
+            readout_width=8,
+            color_rank=1,
+            staging_chunk_updates=1,
+        ),
+    )
+
+
+def _parameter_states(model: LatentWorkspaceModel) -> dict[str, Any]:
+    return {
+        gate_a._path(path): state
+        for path, state in model.states(brainstate.ParamState).items()
+    }
+
+
+def _parameter_digest(model: LatentWorkspaceModel) -> str:
+    return legacy._array_digest(legacy._parameter_values(model))
+
+
+def _assert_parameter_values_equal(
+    left: LatentWorkspaceModel,
+    right: LatentWorkspaceModel,
+    paths: tuple[str, ...],
+) -> None:
+    left_values = legacy._parameter_values(left)
+    right_values = legacy._parameter_values(right)
+    for path in paths:
+        assert jax.tree.structure(left_values[path]) == jax.tree.structure(
+            right_values[path]
+        )
+        for left_leaf, right_leaf in zip(
+            jax.tree.leaves(left_values[path]),
+            jax.tree.leaves(right_values[path]),
+            strict=True,
+        ):
+            np.testing.assert_array_equal(left_leaf, right_leaf, err_msg=path)
+
+
+def _assert_dataclass_arrays_equal(left: Any, right: Any) -> None:
+    assert type(left) is type(right)
+    assert dataclasses.is_dataclass(left)
+    for field in dataclasses.fields(left):
+        left_value = getattr(left, field.name)
+        right_value = getattr(right, field.name)
+        if isinstance(left_value, np.ndarray):
+            np.testing.assert_array_equal(left_value, right_value, err_msg=field.name)
+        else:
+            assert left_value == right_value
+
+
+def _tree_is_zero(value: Any) -> bool:
+    leaves = jax.tree.leaves(value)
+    return bool(leaves) and all(
+        np.count_nonzero(np.asarray(leaf)) == 0 for leaf in leaves
+    )
+
+
+def _telemetry_is_finite(telemetry: Mapping[str, Any]) -> bool:
+    return bool(
+        np.isfinite(np.asarray(telemetry["loss"])).all()
+        and all(
+            bool(np.asarray(values).all())
+            for values in telemetry["finite"].values()
+        )
+        and all(
+            bool(np.isfinite(np.asarray(values)).all())
+            for values in telemetry["max_abs"].values()
+        )
+    )
+
+
 @requires_gate_c
 class TestGateCContracts:
     def test_api_and_fixed_artifact_literals(self) -> None:
@@ -180,6 +265,13 @@ class TestGateCContracts:
             "_gradient_comparison",
             "_oracle_contract",
             "_qualification_report",
+            "GateCTrainer",
+            "_new_model_for_arm",
+            "_copy_shared_initialization",
+            "_make_arm_trainer",
+            "_regenerate_gate_a_data",
+            "_regenerate_gate_b_data",
+            "_evaluate_arm",
         }
 
         assert not (required - set(vars(gate_c)))
@@ -625,3 +717,578 @@ class TestGateCContracts:
         assert zero_arm["relative_deviation_defined"] is True
         assert zero_arm["cosine"] is None
         assert zero_arm["cosine_defined"] is False
+
+    def test_arm_model_factory_preserves_paired_initialization_and_topology(
+        self,
+    ) -> None:
+        config = _reduced_gate_c_config()
+        models = {
+            arm: gate_c._new_model_for_arm(
+                config,
+                "gate_b",
+                arm,
+                batch_size=config.gate_b_config.batch_size,
+            )
+            for arm in _ARMS
+        }
+
+        assert all(isinstance(model, LatentWorkspaceModel) for model in models.values())
+        assert models["query_only"].memory_read_policy == "query_only"
+        for arm in ("full", "terminal_only", "legacy", "frozen_write"):
+            assert models[arm].memory_read_policy == "full"
+        for arm in ("query_only", "terminal_only", "frozen_write"):
+            assert _parameter_digest(models[arm]) == _parameter_digest(models["full"])
+            _assert_parameter_values_equal(models["full"], models[arm], _FULL_PATHS)
+        assert tuple(sorted(_parameter_states(models["legacy"]))) == _SHARED_PATHS
+        assert tuple(sorted(_parameter_states(models["full"]))) == _FULL_PATHS
+        for left_index, left in enumerate(_ARMS):
+            for right in _ARMS[left_index + 1 :]:
+                shared = set(_parameter_states(models[left])) & set(
+                    _parameter_states(models[right])
+                )
+                assert all(
+                    _parameter_states(models[left])[path]
+                    is not _parameter_states(models[right])[path]
+                    for path in shared
+                )
+        np.testing.assert_array_equal(
+            np.asarray(_parameter_states(models["frozen_write"])["memory_write_scale"].value),
+            1.0,
+        )
+
+    def test_shared_initialization_is_copied_into_legacy_without_mutating_full(
+        self,
+    ) -> None:
+        config = _reduced_gate_c_config()
+        full = gate_c._new_model_for_arm(
+            config,
+            "gate_b",
+            "full",
+            batch_size=config.gate_b_config.batch_size,
+        )
+        legacy_model = gate_c._new_model_for_arm(
+            config,
+            "gate_b",
+            "legacy",
+            batch_size=config.gate_b_config.batch_size,
+        )
+        legacy_readout = _parameter_states(legacy_model)["readout_projection/weight"]
+        legacy_readout.value = jax.tree.map(jnp.zeros_like, legacy_readout.value)
+        canonical_sha = _parameter_digest(full)
+
+        evidence = gate_c._copy_shared_initialization(full, legacy_model)
+
+        assert canonical_sha == _parameter_digest(full)
+        _assert_parameter_values_equal(full, legacy_model, _SHARED_PATHS)
+        assert tuple(evidence["paths"]) == _SHARED_PATHS
+        assert evidence["all_equal"] is True
+        assert isinstance(evidence["sha256"], str)
+        assert len(evidence["sha256"]) == 64
+        assert set(evidence["sha256"]) <= set("0123456789abcdef")
+        assert not (set(_MEMORY_PATHS) & set(_parameter_states(legacy_model)))
+
+    def test_data_regeneration_matches_each_canonical_generator_exactly(self) -> None:
+        config = _reduced_gate_c_config()
+
+        gate_a_first = gate_c._regenerate_gate_a_data(config)
+        gate_a_second = gate_c._regenerate_gate_a_data(config)
+        _assert_dataclass_arrays_equal(gate_a_first, gate_a_second)
+        _assert_dataclass_arrays_equal(
+            gate_a_first,
+            legacy.build_binding_data(config.gate_a_config),
+        )
+        assert not np.intersect1d(
+            gate_a_first.training_mapping_ids,
+            gate_a_first.validation_mapping_ids,
+        ).size
+
+        schedule, validation = gate_c._regenerate_gate_b_data(config)
+        repeated_schedule, repeated_validation = gate_c._regenerate_gate_b_data(config)
+        _assert_dataclass_arrays_equal(schedule, repeated_schedule)
+        _assert_dataclass_arrays_equal(validation, repeated_validation)
+        expected_schedule = gate_b._build_schedule(config.gate_b_config)
+        expected_validation = gate_b._encode_validation_data(
+            expected_schedule,
+            config.gate_b_config,
+        )
+        _assert_dataclass_arrays_equal(schedule, expected_schedule)
+        _assert_dataclass_arrays_equal(validation, expected_validation)
+        assert not np.intersect1d(
+            schedule.training_mapping_ids,
+            schedule.validation_mapping_ids,
+        ).size
+
+    def test_arm_training_driver_is_one_jit_with_internal_for_loop(self) -> None:
+        source = inspect.getsource(gate_c._make_arm_trainer)
+        function = ast.parse(source).body[0]
+        assert isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef))
+        nested = {
+            node.name: node
+            for node in ast.walk(function)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        train_chunk = nested["train_chunk"]
+
+        assert len(train_chunk.decorator_list) == 1
+        assert ast.unparse(train_chunk.decorator_list[0]) == "brainstate.transform.jit"
+        assert not any(
+            isinstance(node, (ast.For, ast.While)) for node in ast.walk(train_chunk)
+        )
+        for_loop_calls = [
+            node
+            for node in ast.walk(train_chunk)
+            if isinstance(node, ast.Call)
+            and ast.unparse(node.func) == "brainstate.transform.for_loop"
+        ]
+        assert len(for_loop_calls) == 1
+
+
+@pytest.fixture(scope="module")
+def reduced_gate_b_arm_run() -> dict[str, Any]:
+    config = _reduced_gate_c_config()
+    schedule, validation = gate_c._regenerate_gate_b_data(config)
+    schedule_chunk = next(
+        gate_b._iter_schedule_chunks(schedule, config.gate_b_config)
+    )
+    chunk = gate_b._encode_training_chunk(schedule_chunk, config.gate_b_config)
+    models = {
+        arm: gate_c._new_model_for_arm(
+            config,
+            "gate_b",
+            arm,
+            batch_size=config.gate_b_config.batch_size,
+        )
+        for arm in _ARMS
+    }
+    shared_copy = gate_c._copy_shared_initialization(models["full"], models["legacy"])
+    trainers = {
+        arm: gate_c._make_arm_trainer(models[arm], config, "gate_b", arm)
+        for arm in _ARMS
+    }
+    initial_sha = {arm: _parameter_digest(model) for arm, model in models.items()}
+    initial_adam_zero = {
+        arm: _tree_is_zero(trainer.optimizer.opt_state.value)
+        for arm, trainer in trainers.items()
+    }
+    frozen_write_before = np.array(
+        _parameter_states(models["frozen_write"])["memory_write_scale"].value,
+        copy=True,
+    )
+    telemetry: dict[str, Mapping[str, Any]] = {}
+    evaluation: dict[str, Mapping[str, Any]] = {}
+    for arm in _ARMS:
+        weights = gate_c._loss_weights("gate_b", arm, efforts=chunk.efforts)
+        telemetry[arm] = jax.device_get(
+            jax.block_until_ready(
+                trainers[arm].train_chunk(
+                    chunk.events,
+                    chunk.targets,
+                    weights,
+                    chunk.advance_masks,
+                )
+            )
+        )
+        evaluation[arm] = gate_c._evaluate_arm(
+            models[arm],
+            validation,
+            config,
+            "gate_b",
+            arm,
+        )
+    return {
+        "config": config,
+        "models": models,
+        "trainers": trainers,
+        "shared_copy": shared_copy,
+        "initial_sha": initial_sha,
+        "initial_adam_zero": initial_adam_zero,
+        "final_sha": {arm: _parameter_digest(model) for arm, model in models.items()},
+        "frozen_write_before": frozen_write_before,
+        "frozen_write_after": np.asarray(
+            _parameter_states(models["frozen_write"])["memory_write_scale"].value
+        ),
+        "telemetry": telemetry,
+        "evaluation": evaluation,
+    }
+
+
+@pytest.fixture(scope="module")
+def reduced_gate_a_full_legacy_run() -> dict[str, Any]:
+    config = _reduced_gate_c_config()
+    data = gate_c._regenerate_gate_a_data(config)
+    arms = ("full", "legacy")
+    models = {
+        arm: gate_c._new_model_for_arm(
+            config,
+            "gate_a",
+            arm,
+            batch_size=config.gate_a_config.batch_size,
+        )
+        for arm in arms
+    }
+    gate_c._copy_shared_initialization(models["full"], models["legacy"])
+    trainers = {
+        arm: gate_c._make_arm_trainer(models[arm], config, "gate_a", arm)
+        for arm in arms
+    }
+    advances = np.ones(data.training_events.shape[:3], dtype=np.bool_)
+    telemetry: dict[str, Mapping[str, Any]] = {}
+    evaluation: dict[str, Mapping[str, Any]] = {}
+    initial_sha = {arm: _parameter_digest(model) for arm, model in models.items()}
+    for arm in arms:
+        weights = gate_c._loss_weights(
+            "gate_a", arm, efforts=np.asarray([1], dtype=np.int32)
+        )
+        telemetry[arm] = jax.device_get(
+            jax.block_until_ready(
+                trainers[arm].train_chunk(
+                    data.training_events,
+                    data.training_targets,
+                    weights,
+                    advances,
+                )
+            )
+        )
+        evaluation[arm] = gate_c._evaluate_arm(
+            models[arm],
+            data,
+            config,
+            "gate_a",
+            arm,
+        )
+    return {
+        "models": models,
+        "trainers": trainers,
+        "initial_sha": initial_sha,
+        "final_sha": {arm: _parameter_digest(model) for arm, model in models.items()},
+        "telemetry": telemetry,
+        "evaluation": evaluation,
+    }
+
+
+@requires_gate_c
+def test_reduced_gate_b_runs_all_five_real_pp_prop_arms(
+    reduced_gate_b_arm_run: dict[str, Any],
+) -> None:
+    run = reduced_gate_b_arm_run
+    trainers = run["trainers"]
+    models = run["models"]
+    assert run["shared_copy"]["all_equal"] is True
+    assert len({id(trainer) for trainer in trainers.values()}) == len(_ARMS)
+    assert len({id(trainer.learner) for trainer in trainers.values()}) == len(_ARMS)
+    assert len({id(trainer.optimizer) for trainer in trainers.values()}) == len(_ARMS)
+    assert all(run["initial_adam_zero"].values())
+
+    for arm in _ARMS:
+        trainer = trainers[arm]
+        available = tuple(sorted(_parameter_states(models[arm])))
+        expected_optimizer_paths = gate_c._optimizer_parameter_paths(available, arm)
+        assert trainer.algorithm == "production_pp_prop"
+        assert tuple(trainer.optimizer_parameter_paths) == expected_optimizer_paths
+        assert tuple(trainer.excluded_optimizer_paths) == gate_c.ARM_SPECS[
+            arm
+        ].optimizer_excluded_paths
+        assert trainer.compiler["available"] is True
+        assert _telemetry_is_finite(run["telemetry"][arm])
+        assert run["initial_sha"][arm] != run["final_sha"][arm]
+        evaluation = run["evaluation"][arm]
+        assert evaluation["finite"] is True
+        assert set(evaluation["efforts"]) == {"1", "2", "4", "8"}
+
+    np.testing.assert_array_equal(run["frozen_write_before"], 1.0)
+    np.testing.assert_array_equal(
+        run["frozen_write_after"], run["frozen_write_before"]
+    )
+    assert "memory_write_scale" not in trainers[
+        "frozen_write"
+    ].optimizer_parameter_paths
+    assert "memory_write_scale" in trainers[
+        "frozen_write"
+    ].compiler["compiled_parameter_paths"]
+
+
+@requires_gate_c
+def test_frozen_write_first_update_changes_only_the_excluded_parameter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    base = _reduced_gate_c_config()
+    config = dataclasses.replace(
+        base,
+        gate_b_config=dataclasses.replace(
+            base.gate_b_config,
+            clip_norm=1e-6,
+        ),
+    )
+    schedule, _ = gate_c._regenerate_gate_b_data(config)
+    chunk = gate_b._encode_training_chunk(
+        next(gate_b._iter_schedule_chunks(schedule, config.gate_b_config)),
+        config.gate_b_config,
+    )
+    full = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=config.gate_b_config.batch_size,
+    )
+    frozen = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "frozen_write",
+        batch_size=config.gate_b_config.batch_size,
+    )
+    _assert_parameter_values_equal(full, frozen, _FULL_PATHS)
+    clipped_path_sets: list[tuple[str, ...]] = []
+    real_clip_grad_norm = brainstate.nn.clip_grad_norm
+
+    def record_clip_paths(gradients: Mapping[Any, Any], max_norm: float) -> Any:
+        clipped_path_sets.append(
+            tuple(sorted(gate_a._path(path) for path in gradients))
+        )
+        return real_clip_grad_norm(gradients, max_norm)
+
+    monkeypatch.setattr(brainstate.nn, "clip_grad_norm", record_clip_paths)
+    full_trainer = gate_c._make_arm_trainer(full, config, "gate_b", "full")
+    frozen_trainer = gate_c._make_arm_trainer(
+        frozen,
+        config,
+        "gate_b",
+        "frozen_write",
+    )
+    weights = gate_c._loss_weights("gate_b", "full", efforts=chunk.efforts)
+
+    jax.block_until_ready(
+        full_trainer.train_chunk(
+            chunk.events,
+            chunk.targets,
+            weights,
+            chunk.advance_masks,
+        )
+    )
+    jax.block_until_ready(
+        frozen_trainer.train_chunk(
+            chunk.events,
+            chunk.targets,
+            weights,
+            chunk.advance_masks,
+        )
+    )
+
+    retained_paths = tuple(
+        path for path in _FULL_PATHS if path != "memory_write_scale"
+    )
+    assert clipped_path_sets == [_FULL_PATHS, _FULL_PATHS]
+    _assert_parameter_values_equal(full, frozen, retained_paths)
+    assert not np.array_equal(
+        np.asarray(_parameter_states(full)["memory_write_scale"].value),
+        np.asarray(_parameter_states(frozen)["memory_write_scale"].value),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(_parameter_states(frozen)["memory_write_scale"].value),
+        1.0,
+    )
+
+
+@requires_gate_c
+def test_reduced_gate_a_runs_real_full_and_legacy_pp_prop_arms(
+    reduced_gate_a_full_legacy_run: dict[str, Any],
+) -> None:
+    run = reduced_gate_a_full_legacy_run
+    for arm in ("full", "legacy"):
+        assert run["trainers"][arm].algorithm == "production_pp_prop"
+        assert _telemetry_is_finite(run["telemetry"][arm])
+        assert run["initial_sha"][arm] != run["final_sha"][arm]
+        evaluation = run["evaluation"][arm]
+        assert evaluation["all_compact_logits_finite"] is True
+        assert set(evaluation["depths"]) == {"0", "1"}
+
+
+@requires_gate_c
+def test_core_contract_inputs_fail_closed_before_execution() -> None:
+    with pytest.raises(TypeError, match="gate_a_config"):
+        gate_c.GateCConfig(gate_a_config=object())
+    with pytest.raises(TypeError, match="gate_b_config"):
+        gate_c.GateCConfig(gate_b_config=object())
+    for field, invalid, error in (
+        ("oracle_validation_index", True, TypeError),
+        ("oracle_effort", 1.5, TypeError),
+        ("oracle_effort", -1, ValueError),
+        ("gradient_chunk_size", 0, ValueError),
+    ):
+        with pytest.raises(error):
+            gate_c.GateCConfig(**{field: invalid})
+
+    for invalid in ("unknown", None):
+        with pytest.raises(ValueError, match="unknown Gate C arm"):
+            gate_c._loss_weights(
+                "gate_a",
+                invalid,
+                efforts=np.asarray([1], dtype=np.int32),
+            )
+        with pytest.raises(ValueError, match="unknown Gate C regime"):
+            gate_c._loss_weights(
+                invalid,
+                "full",
+                efforts=np.asarray([1], dtype=np.int32),
+            )
+    for efforts, error in (
+        (np.asarray(1, dtype=np.int32), ValueError),
+        (np.asarray([True]), ValueError),
+        (np.asarray([1.0], dtype=np.float32), TypeError),
+        (np.asarray([], dtype=np.int32), ValueError),
+        (np.asarray([3], dtype=np.int32), ValueError),
+    ):
+        with pytest.raises(error):
+            gate_c._loss_weights("gate_b", "full", efforts=efforts)
+
+    for helper in (
+        gate_c._regenerate_gate_a_data,
+        gate_c._regenerate_gate_b_data,
+        gate_c._schedule_identity_report,
+        gate_c._oracle_contract,
+    ):
+        with pytest.raises(TypeError, match="GateCConfig"):
+            helper(object())
+    with pytest.raises(RuntimeError, match="no array leaves"):
+        gate_c._tree_telemetry(())
+    with pytest.raises(TypeError, match="LatentWorkspaceModel"):
+        gate_c._make_arm_trainer(
+            object(),
+            gate_c.GateCConfig(),
+            "gate_a",
+            "full",
+        )
+
+    out_of_range_gate_a = {
+        "depths": {
+            "1": {
+                "intact": {"accuracy": 1.1},
+                "shuffled": {"accuracy": 0.0},
+            }
+        }
+    }
+    valid_gate_b = {
+        "efforts": {
+            str(effort): {"intact": {"accuracy": 0.5}}
+            for effort in (1, 2, 4, 8)
+        }
+    }
+    with pytest.raises(ValueError, match=r"\[0, 1\]"):
+        gate_c._metric_summary(out_of_range_gate_a, valid_gate_b)
+    with pytest.raises(ValueError, match="exactly the five"):
+        gate_c._blocking_margin_report({})
+    qualification = gate_c._qualification_report({}, config=object())
+    assert qualification["passed"] is False
+    assert not any(qualification["criteria"].values())
+
+
+@requires_gate_c
+def test_shared_initialization_rejects_type_topology_and_geometry_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    full = gate_c._new_model_for_arm(config, "gate_b", "full", batch_size=2)
+    legacy_model = gate_c._new_model_for_arm(
+        config, "gate_b", "legacy", batch_size=2
+    )
+    with pytest.raises(TypeError, match="workspace models"):
+        gate_c._copy_shared_initialization(object(), legacy_model)
+    with pytest.raises(ValueError, match="exactly the shared paths"):
+        gate_c._copy_shared_initialization(full, full)
+
+    real_states = gate_c._parameter_states_by_path
+
+    def missing_canonical_path(model: LatentWorkspaceModel) -> dict[str, Any]:
+        states = real_states(model)
+        if model is full:
+            states.pop(_SHARED_PATHS[0])
+        return states
+
+    with monkeypatch.context() as context:
+        context.setattr(
+            gate_c,
+            "_parameter_states_by_path",
+            missing_canonical_path,
+        )
+        with pytest.raises(ValueError, match="canonical model is missing"):
+            gate_c._copy_shared_initialization(full, legacy_model)
+
+    structure_drift = gate_c._new_model_for_arm(
+        config, "gate_b", "legacy", batch_size=2
+    )
+    structure_state = _parameter_states(structure_drift)[
+        "readout_projection/weight"
+    ]
+    structure_state.value = (structure_state.value,)
+    with pytest.raises(ValueError, match="structure differs"):
+        gate_c._copy_shared_initialization(full, structure_drift)
+
+    geometry_drift = gate_c._new_model_for_arm(
+        config, "gate_b", "legacy", batch_size=2
+    )
+    geometry_state = _parameter_states(geometry_drift)["readout_projection/weight"]
+    geometry_state.value = jax.tree.map(
+        lambda leaf: jnp.zeros(
+            (np.asarray(leaf).size + 1,),
+            dtype=np.asarray(leaf).dtype,
+        ),
+        geometry_state.value,
+    )
+    with pytest.raises(ValueError, match="geometry differs"):
+        gate_c._copy_shared_initialization(full, geometry_drift)
+
+
+@requires_gate_c
+def test_evaluation_rejects_cross_regime_data_before_model_execution() -> None:
+    config = _reduced_gate_c_config()
+    gate_a_data = gate_c._regenerate_gate_a_data(config)
+    _, gate_b_data = gate_c._regenerate_gate_b_data(config)
+    gate_a_model = gate_c._new_model_for_arm(
+        config,
+        "gate_a",
+        "full",
+        batch_size=config.gate_a_config.batch_size,
+    )
+    gate_b_model = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=config.gate_b_config.batch_size,
+    )
+
+    with pytest.raises(TypeError, match="Gate A evaluation requires BindingData"):
+        gate_c._evaluate_arm(
+            gate_a_model,
+            gate_b_data,
+            config,
+            "gate_a",
+            "full",
+        )
+    with pytest.raises(TypeError, match="Gate B evaluation requires DepthValidationData"):
+        gate_c._evaluate_arm(
+            gate_b_model,
+            gate_a_data,
+            config,
+            "gate_b",
+            "full",
+        )
+
+
+@requires_gate_c
+def test_gradient_evidence_rejects_empty_nonnumeric_and_shape_drift() -> None:
+    for invalid in ((), {"value": "not numeric"}):
+        with pytest.raises((TypeError, ValueError)):
+            gate_c._gradient_path_sha256("path", invalid)
+    for invalid_path in ("", None):
+        with pytest.raises(TypeError, match="nonempty string"):
+            gate_c._gradient_path_sha256(
+                invalid_path,
+                np.asarray([1.0], dtype=np.float32),
+            )
+    for invalid_gradients in ({}, []):
+        with pytest.raises(TypeError, match="nonempty mapping"):
+            gate_c._gradient_global_sha256(invalid_gradients)
+    with pytest.raises(ValueError, match="same shape"):
+        gate_c._gradient_comparison(
+            np.zeros((2,), dtype=np.float32),
+            np.zeros((3,), dtype=np.float32),
+        )

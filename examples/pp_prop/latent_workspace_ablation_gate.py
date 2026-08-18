@@ -5,17 +5,26 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import math
+import warnings
 from dataclasses import dataclass, field
 from decimal import Decimal
 from numbers import Real
 from typing import Any, Mapping
 
+import brainstate
+import braintools
 import jax
+import jax.numpy as jnp
 import numpy as np
 
+from examples.pp_prop import latent_workspace_binding_control as legacy
 from examples.pp_prop import latent_workspace_binding_gate as gate_a
 from examples.pp_prop import latent_workspace_depth_gate as gate_b
-from examples.pp_prop.latent_workspace_model import ModelConfig
+from examples.pp_prop.latent_workspace_model import (
+    LatentWorkspaceModel,
+    ModelConfig,
+    compile_pp_prop,
+)
 
 
 GATE_C_SCHEMA_VERSION = 1
@@ -329,6 +338,452 @@ def _optimizer_parameter_paths(
             "memory_write_scale is required by the frozen-write intervention"
         )
     return tuple(path for path in paths if path not in spec.optimizer_excluded_paths)
+
+
+def _new_model_for_arm(
+    config: GateCConfig,
+    regime: str,
+    arm: str,
+    *,
+    batch_size: int,
+) -> LatentWorkspaceModel:
+    """Construct one fresh, statically intervened Gate C model."""
+
+    arm_spec = _arm_spec(arm)
+    model_config = _model_config_for_arm(
+        config,
+        regime,
+        arm,
+        batch_size=batch_size,
+    )
+    policy = "query_only" if arm_spec.memory_mode == "query_only" else "full"
+    return LatentWorkspaceModel(model_config, memory_read_policy=policy)
+
+
+def _parameter_states_by_path(
+    model: LatentWorkspaceModel,
+) -> dict[str, brainstate.ParamState]:
+    return {
+        gate_a._path(path): state
+        for path, state in model.states(brainstate.ParamState).items()
+    }
+
+
+def _copy_shared_initialization(
+    canonical: LatentWorkspaceModel,
+    legacy_model: LatentWorkspaceModel,
+) -> dict[str, Any]:
+    """Copy and verify the six same-shaped initialization paths."""
+
+    if not isinstance(canonical, LatentWorkspaceModel) or not isinstance(
+        legacy_model, LatentWorkspaceModel
+    ):
+        raise TypeError("shared initialization subjects must be workspace models")
+    canonical_states = _parameter_states_by_path(canonical)
+    legacy_states = _parameter_states_by_path(legacy_model)
+    if not set(SHARED_PARAMETER_PATHS).issubset(canonical_states):
+        raise ValueError("canonical model is missing a shared parameter path")
+    if tuple(sorted(legacy_states)) != SHARED_PARAMETER_PATHS:
+        raise ValueError("legacy model must contain exactly the shared paths")
+    for path in SHARED_PARAMETER_PATHS:
+        source = canonical_states[path].value
+        target = legacy_states[path].value
+        if jax.tree.structure(source) != jax.tree.structure(target):
+            raise ValueError(f"shared parameter structure differs: {path}")
+        for source_leaf, target_leaf in zip(
+            jax.tree.leaves(source),
+            jax.tree.leaves(target),
+            strict=True,
+        ):
+            if source_leaf.shape != target_leaf.shape or source_leaf.dtype != target_leaf.dtype:
+                raise ValueError(f"shared parameter geometry differs: {path}")
+        legacy_states[path].value = jax.tree.map(
+            lambda leaf: jnp.array(leaf, copy=True), source
+        )
+
+    canonical_values = legacy._parameter_values(canonical)
+    copied_values = legacy._parameter_values(legacy_model)
+    all_equal = all(
+        jax.tree.structure(canonical_values[path])
+        == jax.tree.structure(copied_values[path])
+        and all(
+            np.array_equal(np.asarray(left), np.asarray(right))
+            for left, right in zip(
+                jax.tree.leaves(canonical_values[path]),
+                jax.tree.leaves(copied_values[path]),
+                strict=True,
+            )
+        )
+        for path in SHARED_PARAMETER_PATHS
+    )
+    shared_values = {path: copied_values[path] for path in SHARED_PARAMETER_PATHS}
+    return {
+        "paths": list(SHARED_PARAMETER_PATHS),
+        "all_equal": bool(all_equal),
+        "sha256": legacy._array_digest(shared_values),
+    }
+
+
+def _regenerate_gate_a_data(config: GateCConfig) -> legacy.BindingData:
+    """Regenerate the canonical Gate A schedule from its frozen config."""
+
+    if not isinstance(config, GateCConfig):
+        raise TypeError("config must be a GateCConfig")
+    return legacy.build_binding_data(config.gate_a_config)
+
+
+def _regenerate_gate_b_data(
+    config: GateCConfig,
+) -> tuple[gate_b.DepthSchedule, gate_b.DepthValidationData]:
+    """Regenerate the canonical Gate B schedule and held-out controls."""
+
+    if not isinstance(config, GateCConfig):
+        raise TypeError("config must be a GateCConfig")
+    schedule = gate_b._build_schedule(config.gate_b_config)
+    return schedule, gate_b._encode_validation_data(schedule, config.gate_b_config)
+
+
+@dataclass(slots=True)
+class GateCTrainer:
+    """Hold one isolated production pp-prop arm trainer.
+
+    Parameters
+    ----------
+    learner
+        Compiled pp-prop sequence learner.
+    optimizer
+        Fresh Adam optimizer registered only on the arm's update paths.
+    compiler, compile_warnings
+        Retained compiler topology and warning evidence.
+    train_chunk
+        One JIT-compiled chunk driver with an internal BrainState loop.
+    algorithm
+        Stable learning-rule identifier.
+    optimizer_parameter_paths, excluded_optimizer_paths
+        Exact updated and deliberately frozen parameter paths.
+    """
+
+    learner: Any
+    optimizer: Any
+    compiler: dict[str, Any]
+    compile_warnings: list[str]
+    train_chunk: Any
+    algorithm: str
+    optimizer_parameter_paths: tuple[str, ...]
+    excluded_optimizer_paths: tuple[str, ...]
+
+
+def _tree_telemetry(value: Any) -> tuple[jax.Array, jax.Array, jax.Array]:
+    leaves = tuple(jnp.asarray(leaf) for leaf in jax.tree.leaves(value))
+    if not leaves:
+        raise RuntimeError("telemetry subject has no array leaves")
+    finite = jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
+    maximum = jnp.max(
+        jnp.stack(
+            [
+                jnp.max(jnp.abs(leaf.astype(jnp.float32)), initial=0.0)
+                for leaf in leaves
+            ]
+        )
+    )
+    count = jnp.asarray(sum(leaf.size for leaf in leaves), dtype=jnp.int32)
+    return finite, maximum, count
+
+
+def _make_arm_trainer(
+    model: LatentWorkspaceModel,
+    config: GateCConfig,
+    regime: str,
+    arm: str,
+) -> GateCTrainer:
+    """Compile one fresh pp-prop trainer for a fixed Gate C arm."""
+
+    if not isinstance(model, LatentWorkspaceModel):
+        raise TypeError("model must be a LatentWorkspaceModel")
+    _regime_spec(regime)
+    arm_spec = _arm_spec(arm)
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", UserWarning)
+        learner = compile_pp_prop(model)
+    compiler = gate_a._compiler_report(learner)
+    parameter_keys = {
+        gate_a._path(path): path for path in learner.param_states.keys()
+    }
+    available_paths = tuple(sorted(parameter_keys))
+    optimizer_parameter_paths = _optimizer_parameter_paths(available_paths, arm)
+    optimizer_keys = tuple(parameter_keys[path] for path in optimizer_parameter_paths)
+    optimizer_states = {
+        key: learner.param_states[key] for key in optimizer_keys
+    }
+    optimizer = braintools.optim.Adam(lr=regime_config.learning_rate)
+    optimizer.register_trainable_weights(optimizer_states)
+    trace_labels = tuple(
+        path
+        for path in (
+            "ff_syn/comm/weight",
+            "rec_syn/comm/weight",
+            "memory_write_scale",
+            "workspace_query_projection/weight",
+            "memory_read_projection/weight",
+        )
+        if path in parameter_keys
+    )
+    if not trace_labels:
+        raise RuntimeError("trainer has no pp-prop trace parameter")
+    model_states = tuple(
+        state
+        for state in model.states().values()
+        if not isinstance(state, brainstate.ParamState)
+    )
+    rank = regime_config.color_rank
+    batch_size = model.config.batch_size
+
+    @brainstate.transform.jit
+    def train_chunk(
+        events: jax.Array,
+        targets: jax.Array,
+        loss_weights: jax.Array,
+        advance_masks: jax.Array,
+    ) -> dict[str, jax.Array]:
+        if targets.ndim == 2:
+            target_sequences = jnp.broadcast_to(
+                targets[:, None, :], events.shape[:3]
+            )
+        elif targets.ndim == 3:
+            target_sequences = targets
+        else:
+            raise ValueError("targets must have shape (updates,batch) or (updates,time,batch)")
+        if loss_weights.ndim == 1:
+            weight_sequences = jnp.broadcast_to(
+                loss_weights[None, :], events.shape[:2]
+            )
+        elif loss_weights.ndim == 2:
+            weight_sequences = loss_weights
+        else:
+            raise ValueError("loss weights must have shape (time,) or (updates,time)")
+
+        def train_one(
+            inputs: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+        ) -> dict[str, jax.Array]:
+            sequence, target_sequence, weights, advances = inputs
+            model.reset_state()
+            learner.reset_state(batch_size=batch_size)
+
+            def step_loss(
+                event: jax.Array,
+                advance: jax.Array,
+                target: jax.Array,
+            ) -> jax.Array:
+                return legacy._classification_loss(
+                    learner(event, advance), target, rank
+                )
+
+            gradients, loss = learner.etrace_grad(
+                sequence,
+                advances,
+                target_sequence,
+                step_fn=step_loss,
+                mask=weights.astype(jnp.float32),
+                reduction="mean",
+                loss_output="scalar",
+                return_value=True,
+            )
+            compact = model.compact_readout()
+            trace_factors = tuple(
+                learner.get_etrace_of(parameter_keys[label])
+                for label in trace_labels
+            )
+            clipped_gradients = brainstate.nn.clip_grad_norm(
+                gradients, regime_config.clip_norm
+            )
+            optimizer.update(
+                {key: clipped_gradients[key] for key in optimizer_keys}
+            )
+            measurements = {
+                "logits": _tree_telemetry(legacy._color_logits(compact, rank)),
+                "model_states": _tree_telemetry(
+                    tuple(state.value for state in model_states)
+                ),
+                "gradients": _tree_telemetry(gradients),
+                "pp_prop_traces": _tree_telemetry(trace_factors),
+                "adam": _tree_telemetry(optimizer.opt_state.value),
+                "parameters": _tree_telemetry(
+                    tuple(state.value for state in learner.param_states.values())
+                ),
+            }
+            return {
+                "loss": loss,
+                "finite": {key: value[0] for key, value in measurements.items()},
+                "max_abs": {key: value[1] for key, value in measurements.items()},
+                "value_count": {
+                    key: value[2] for key, value in measurements.items()
+                },
+            }
+
+        return brainstate.transform.for_loop(
+            train_one,
+            (events, target_sequences, weight_sequences, advance_masks),
+        )
+
+    return GateCTrainer(
+        learner=learner,
+        optimizer=optimizer,
+        compiler=compiler,
+        compile_warnings=[str(item.message) for item in caught],
+        train_chunk=train_chunk,
+        algorithm="production_pp_prop",
+        optimizer_parameter_paths=optimizer_parameter_paths,
+        excluded_optimizer_paths=arm_spec.optimizer_excluded_paths,
+    )
+
+
+def _evaluate_arm(
+    trained_model: LatentWorkspaceModel,
+    data: legacy.BindingData | gate_b.DepthValidationData,
+    config: GateCConfig,
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    """Evaluate one trained arm on its three canonical held-out streams."""
+
+    _regime_spec(regime)
+    _arm_spec(arm)
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    validation_episodes = regime_config.validation_episodes
+    model = _new_model_for_arm(
+        config,
+        regime,
+        arm,
+        batch_size=validation_episodes,
+    )
+    legacy._copy_parameters(trained_model, model)
+    if regime == "gate_a":
+        if not isinstance(data, legacy.BindingData):
+            raise TypeError("Gate A evaluation requires BindingData")
+        event_streams = {
+            "intact": data.validation_intact,
+            "shuffled": data.validation_shuffled,
+            "no_context": data.validation_no_context,
+        }
+        advances = jnp.ones(
+            (regime_config.sequence_length, validation_episodes), dtype=jnp.bool_
+        )
+        targets_by_depth = np.broadcast_to(
+            np.asarray(data.validation_targets)[None, :],
+            (regime_config.gap_steps + 1, validation_episodes),
+        )
+    else:
+        if not isinstance(data, gate_b.DepthValidationData):
+            raise TypeError("Gate B evaluation requires DepthValidationData")
+        event_streams = {
+            "intact": data.intact,
+            "shuffled": data.shuffled,
+            "no_context": data.no_context,
+        }
+        advances = jnp.asarray(data.advance_masks)
+        targets_by_depth = np.asarray(data.targets_by_depth)
+    model_states = tuple(model.states().values())
+    checkpoint_start = regime_config.sequence_length - regime_config.gap_steps - 1
+
+    @brainstate.transform.jit
+    def evaluate_stream(events: jax.Array) -> tuple[jax.Array, jax.Array]:
+        model.reset_state()
+
+        def step(inputs: tuple[jax.Array, jax.Array]) -> tuple[jax.Array, jax.Array]:
+            event, advance = inputs
+            compact = model.update(event, advance)
+            state_finite = jnp.all(
+                jnp.stack(
+                    [
+                        jnp.all(jnp.isfinite(jnp.asarray(leaf)))
+                        for state in model_states
+                        for leaf in jax.tree.leaves(state.value)
+                    ]
+                )
+            )
+            return compact, state_finite
+
+        compact, state_finite = brainstate.transform.for_loop(
+            step, (events, advances)
+        )
+        return compact[checkpoint_start:], state_finite
+
+    raw: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    for name, events in event_streams.items():
+        values = jax.block_until_ready(evaluate_stream(jnp.asarray(events)))
+        raw[name] = tuple(np.asarray(value) for value in values)  # type: ignore[assignment]
+    finite = all(
+        bool(np.isfinite(value).all())
+        for values in raw.values()
+        for value in values
+    ) and all(bool(values[1].all()) for values in raw.values())
+    predictions: dict[str, list[np.ndarray]] = {
+        name: [] for name in event_streams
+    }
+    depth_reports: dict[str, dict[str, Any]] = {}
+    for depth in range(regime_config.gap_steps + 1):
+        depth_metrics: dict[str, Any] = {}
+        for name in event_streams:
+            color_logits = np.asarray(
+                legacy._color_logits(jnp.asarray(raw[name][0][depth]), regime_config.color_rank)
+            )
+            finite = finite and bool(np.isfinite(color_logits).all())
+            prediction = np.argmax(color_logits, axis=-1)
+            predictions[name].append(prediction)
+            depth_metrics[name] = {
+                **legacy._accuracy(prediction, targets_by_depth[depth]),
+                "checkpoint": depth,
+            }
+        depth_reports[str(depth)] = depth_metrics
+
+    if regime == "gate_a":
+        final = depth_reports[str(regime_config.gap_steps)]
+        return {
+            "finite": finite,
+            "all_compact_logits_finite": finite,
+            "all_state_tensors_finite": bool(
+                all(values[1].all() for values in raw.values())
+            ),
+            "depths": depth_reports,
+            "intact": final["intact"],
+            "shuffled": final["shuffled"],
+            "no_context": final["no_context"],
+            "intact_minus_shuffled": (
+                final["intact"]["accuracy"] - final["shuffled"]["accuracy"]
+            ),
+        }
+
+    h0_predictions = predictions["intact"][0]
+    efforts: dict[str, dict[str, Any]] = {}
+    for effort in gate_b.QUALIFYING_EFFORTS:
+        intact = depth_reports[str(effort)]["intact"]
+        shuffled = depth_reports[str(effort)]["shuffled"]
+        no_context = depth_reports[str(effort)]["no_context"]
+        h0_final = {
+            **legacy._accuracy(h0_predictions, targets_by_depth[effort]),
+            "checkpoint": 0,
+        }
+        efforts[str(effort)] = {
+            "intact": intact,
+            "shuffled": shuffled,
+            "no_context": no_context,
+            "h0_final_target": h0_final,
+            "intact_minus_h0": intact["accuracy"] - h0_final["accuracy"],
+            "intact_minus_shuffled": (
+                intact["accuracy"] - shuffled["accuracy"]
+            ),
+        }
+    return {
+        "finite": finite,
+        "h0_proper": depth_reports["0"]["intact"],
+        "depths": depth_reports,
+        "efforts": efforts,
+    }
 
 
 def _schedule_identity_report(config: GateCConfig) -> dict[str, Any]:
