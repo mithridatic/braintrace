@@ -3496,7 +3496,7 @@ def _gate_c2_no_update_evidence_complete(
         or factories != constructors
         or len(factories) != len(set(factories))
         or not isinstance(roles, Mapping)
-        or list(roles) != expected_role_names
+        or set(roles) != set(expected_role_names)
     ):
         return False
     for role_name in factories:
@@ -4808,7 +4808,7 @@ def _gate_c2_raw_h0_snapshot_complete(
     hidden_paths = value["hidden_paths"]
     if (
         not isinstance(hidden_paths, Mapping)
-        or tuple(hidden_paths) != tuple(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
+        or set(hidden_paths) != set(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
         or value["parameter_sha256"] != canonical_parameter_sha256
     ):
         return False
@@ -5920,7 +5920,7 @@ def _gate_c2_continuation_record_complete(
         if include_context_memory or path != "context_memory#0"
     )
     hidden = value["hidden_paths"]
-    if not isinstance(hidden, Mapping) or tuple(hidden) != expected_hidden:
+    if not isinstance(hidden, Mapping) or set(hidden) != set(expected_hidden):
         return False
     hidden_within = True
     for path in expected_hidden:
@@ -6017,8 +6017,8 @@ def _gate_c2_cached_boundary_complete(
         or set(after) != side_keys
         or not isinstance(before["hidden_paths"], Mapping)
         or not isinstance(after["hidden_paths"], Mapping)
-        or tuple(before["hidden_paths"]) != tuple(_GATE_C2_HIDDEN_GEOMETRY)
-        or tuple(after["hidden_paths"]) != tuple(_GATE_C2_HIDDEN_GEOMETRY)
+        or set(before["hidden_paths"]) != set(_GATE_C2_HIDDEN_GEOMETRY)
+        or set(after["hidden_paths"]) != set(_GATE_C2_HIDDEN_GEOMETRY)
     ):
         return False
     for path, shape in _GATE_C2_HIDDEN_GEOMETRY.items():
@@ -6137,17 +6137,17 @@ def _gate_c2_cached_read_probe_complete(
             or not isinstance(continuation, Mapping)
             or set(continuation) != {"ticks", "passed"}
             or not isinstance(continuation["ticks"], Mapping)
-            or tuple(continuation["ticks"]) != expected_suffix
+            or set(continuation["ticks"]) != set(expected_suffix)
         ):
             return False
         comparisons_pass = all(
             _gate_c2_continuation_record_complete(
-                comparison,
+                continuation["ticks"][tick],
                 count=512,
                 include_context_memory=True,
                 require_pass=True,
             )
-            for comparison in continuation["ticks"].values()
+            for tick in expected_suffix
         )
         sentinel_pass = bool(
             comparisons_pass
@@ -6659,7 +6659,10 @@ def _gate_c2_removed_path_influence_complete(
         ):
             return False
         live = value["live_paths"]
-        if not isinstance(live, Mapping) or tuple(live) != GATE_C2_LIVE_PATHS:
+        if (
+            not isinstance(live, Mapping)
+            or set(live) != set(GATE_C2_LIVE_PATHS)
+        ):
             return False
         if not all(
             _gate_c2_live_gradient_record_complete(live[path], path=path)
@@ -6667,7 +6670,10 @@ def _gate_c2_removed_path_influence_complete(
         ):
             return False
         removed = value["removed_paths"]
-        if not isinstance(removed, Mapping) or tuple(removed) != GATE_C2_REMOVED_PATHS:
+        if (
+            not isinstance(removed, Mapping)
+            or set(removed) != set(GATE_C2_REMOVED_PATHS)
+        ):
             return False
         removed_geometry = {
             "memory_read_projection/weight": (32, 2_048),
@@ -6771,14 +6777,16 @@ def _gate_c2_query_only_latent_no_read_complete(
         ticks = GATE_C2_LATENT_TICKS[regime]
         stream_names = ("intact", "shuffled", "no_context")
         streams = value["streams"]
-        if not isinstance(streams, Mapping) or tuple(streams) != stream_names:
+        if not isinstance(streams, Mapping) or set(streams) != set(stream_names):
             return False
         parameter_sha256s: set[str] = set()
         selected_passes = []
-        for stream in streams.values():
-            if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+        for stream_name in stream_names:
+            stream = streams[stream_name]
+            if not isinstance(stream, Mapping) or set(stream) != set(ticks):
                 return False
-            for tick_name, tick in stream.items():
+            for tick_name in ticks:
+                tick = stream[tick_name]
                 if (
                     not isinstance(tick, Mapping)
                     or set(tick)
@@ -6917,11 +6925,12 @@ def _gate_c2_query_only_latent_no_read_complete(
         perturbations = value["perturbations"]
         if (
             not isinstance(perturbations, Mapping)
-            or tuple(perturbations) != tuple(GATE_C2_CONTEXT_MEMORY_REPLACEMENTS)
+            or set(perturbations) != set(GATE_C2_CONTEXT_MEMORY_REPLACEMENTS)
         ):
             return False
         perturbation_passes = []
-        for name, replacement_value in perturbations.items():
+        for name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS:
+            replacement_value = perturbations[name]
             spec = GATE_C2_CONTEXT_MEMORY_REPLACEMENTS[name]
             if (
                 not isinstance(replacement_value, Mapping)
@@ -6931,14 +6940,16 @@ def _gate_c2_query_only_latent_no_read_complete(
                     spec=spec,
                 )
                 or not isinstance(replacement_value["streams"], Mapping)
-                or tuple(replacement_value["streams"]) != stream_names
+                or set(replacement_value["streams"]) != set(stream_names)
             ):
                 return False
             tick_passes = []
-            for stream in replacement_value["streams"].values():
-                if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+            for stream_name in stream_names:
+                stream = replacement_value["streams"][stream_name]
+                if not isinstance(stream, Mapping) or set(stream) != set(ticks):
                     return False
-                for tick in stream.values():
+                for tick_name in ticks:
+                    tick = stream[tick_name]
                     if tick.get("replacement_s_k_sha256") != spec["sha256"]:
                         return False
                     tick_passes.append(
@@ -6970,15 +6981,17 @@ def _gate_c2_query_only_latent_no_read_complete(
                     spec=spec,
                 )
                 or not isinstance(replacement_value["streams"], Mapping)
-                or tuple(replacement_value["streams"]) != stream_names
+                or set(replacement_value["streams"]) != set(stream_names)
             ):
                 return False
             tick_passes = []
             nonzero = False
-            for stream in replacement_value["streams"].values():
-                if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+            for stream_name in stream_names:
+                stream = replacement_value["streams"][stream_name]
+                if not isinstance(stream, Mapping) or set(stream) != set(ticks):
                     return False
-                for tick in stream.values():
+                for tick_name in ticks:
+                    tick = stream[tick_name]
                     if tick.get("replacement_s_k_sha256") != spec["sha256"]:
                         return False
                     tick_passes.append(
@@ -9325,7 +9338,7 @@ def _gate_c2_controls_qualification(
         criteria["exact_configuration"] = bool(
             config == GateCConfig()
             and isinstance(regimes, Mapping)
-            and tuple(regimes) == REGIME_ORDER
+            and set(regimes) == set(REGIME_ORDER)
             and all(
                 isinstance(regimes[regime], Mapping)
                 and set(regimes[regime])

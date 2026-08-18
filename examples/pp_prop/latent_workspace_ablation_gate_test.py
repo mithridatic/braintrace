@@ -7206,6 +7206,31 @@ def test_gate_c2_control_update_evidence_recomputes_zero_calls_and_parameters(
     )
 
 
+@requires_gate_c
+def test_gate_c2_no_update_evidence_accepts_reordered_exact_role_mapping() -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    evidence = _gate_c2_control_execution_evidence(admission)
+    roles = evidence["materialized_roles"]
+    reordered_roles = dict(reversed(tuple(roles.items())))
+    assert reordered_roles == roles
+    assert list(reordered_roles) != list(roles)
+    evidence["materialized_roles"] = reordered_roles
+
+    missing = dict(evidence)
+    missing_roles = dict(reordered_roles)
+    missing_roles.pop(next(iter(missing_roles)))
+    missing["materialized_roles"] = missing_roles
+    assert not gate_c._gate_c2_no_update_evidence_complete(missing, admission)
+
+    extra = dict(evidence)
+    extra_roles = dict(reordered_roles)
+    extra_roles["unexpected"] = next(iter(reordered_roles.values()))
+    extra["materialized_roles"] = extra_roles
+    assert not gate_c._gate_c2_no_update_evidence_complete(extra, admission)
+
+    assert gate_c._gate_c2_no_update_evidence_complete(evidence, admission)
+
+
 @pytest.mark.parametrize(
     "mutation",
     (
@@ -7813,6 +7838,48 @@ def passing_gate_c2_no_read_reports() -> tuple[
     }
 
 
+def _gate_c2_strict_canonical_json_roundtrip(value: Any) -> Any:
+    def reject_nonfinite_constant(token: str) -> Any:
+        raise ValueError(f"nonfinite JSON constant {token}")
+
+    payload = json.dumps(
+        value,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return json.loads(
+        payload,
+        parse_constant=reject_nonfinite_constant,
+        strict=True,
+    )
+
+
+def _patch_gate_c2_fixture_removed_path_validator(
+    monkeypatch: pytest.MonkeyPatch,
+    admission: Mapping[str, Any],
+) -> None:
+    def removed_complete(
+        value: Any,
+        *,
+        regime: str,
+        canonical_parameter_sha256: str,
+    ) -> bool:
+        canonical = admission["initialization"][regime]["canonical_full"][
+            "parameter_sha256"
+        ]
+        return bool(
+            value == {"fixture_regime": regime, "complete": True}
+            and canonical_parameter_sha256 == canonical
+        )
+
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_removed_path_influence_complete",
+        removed_complete,
+    )
+
+
 @pytest.mark.parametrize("regime", _REGIMES)
 @requires_gate_c
 def test_gate_c2_no_read_validator_accepts_complete_independent_raw_evidence(
@@ -7867,6 +7934,119 @@ def test_gate_c2_no_read_validator_accepts_complete_independent_raw_evidence(
         is not boundary["after_replacement"]
         for boundary in cached_boundaries
     )
+
+
+@pytest.mark.parametrize("regime", _REGIMES)
+@requires_gate_c
+def test_gate_c2_no_read_validator_accepts_canonical_json_mapping_order(
+    regime: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
+    report = reports[regime]
+    assert gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+    )
+
+    decoded_admission = _gate_c2_strict_canonical_json_roundtrip(admission)
+    decoded_report = _gate_c2_strict_canonical_json_roundtrip(report)
+    assert tuple(decoded_report["streams"]) == (
+        "intact",
+        "no_context",
+        "shuffled",
+    )
+    assert gate_c._gate_c2_query_only_latent_no_read_complete(
+        decoded_report,
+        decoded_admission,
+        regime=regime,
+    )
+
+
+@pytest.mark.parametrize("regime", _REGIMES)
+@pytest.mark.parametrize("mutation", ("missing_key", "extra_key"))
+@requires_gate_c
+def test_gate_c2_no_read_validator_keeps_exact_mapping_schemas(
+    regime: str,
+    mutation: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
+    report = dict(reports[regime])
+    assert gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+    )
+
+    if mutation == "missing_key":
+        report.pop("passed")
+    else:
+        report["unexpected"] = None
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+    )
+
+
+@pytest.mark.parametrize("regime", _REGIMES)
+@pytest.mark.parametrize(
+    "sequence_path",
+    ("cached_unchanged_paths", "non_s_k_paths"),
+)
+@requires_gate_c
+def test_gate_c2_no_read_validator_keeps_semantic_sequence_order_strict(
+    regime: str,
+    sequence_path: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
+    report = reports[regime]
+    assert gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+    )
+    first_tick = gate_c.GATE_C2_LATENT_TICKS[regime][0]
+    if sequence_path == "cached_unchanged_paths":
+        container = report["streams"]["intact"][first_tick][
+            "cached_read_probe"
+        ]["plus_11"]["boundary"]
+        field = "unchanged_paths"
+    else:
+        container = report["perturbations"]["plus_7"]["streams"][
+            "intact"
+        ][first_tick]["non_s_k_state"]
+        field = "paths"
+    original = container[field]
+    reversed_order = list(reversed(original))
+    assert reversed_order != original
+    container[field] = reversed_order
+    try:
+        assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+            report,
+            admission,
+            regime=regime,
+        )
+    finally:
+        container[field] = original
 
 
 @pytest.mark.parametrize("regime", _REGIMES)
@@ -9980,6 +10160,94 @@ def test_gate_c2_controls_qualifier_recomputes_all_nine_true_from_raw_evidence(
         config=gate_c.GateCConfig(),
     ) == qualification
     assert report["qualification"]["passed"] is False
+
+
+@requires_gate_c
+def test_gate_c2_controls_qualifier_accepts_reordered_exact_regime_mapping(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, no_read_reports = passing_gate_c2_no_read_reports
+    report = _passing_gate_c2_controls_report(admission, no_read_reports)
+
+    def no_read_complete(
+        value: Any,
+        got_admission: Any,
+        *,
+        regime: str,
+    ) -> bool:
+        return bool(
+            value is no_read_reports[regime]
+            and got_admission is not None
+        )
+
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_query_only_latent_no_read_complete",
+        no_read_complete,
+    )
+    raw_qualification = gate_c._gate_c2_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+    assert raw_qualification["passed"] is True
+
+    regimes = report["regimes"]
+    reordered_regimes = dict(reversed(tuple(regimes.items())))
+    assert reordered_regimes == regimes
+    assert list(reordered_regimes) != list(regimes)
+    report["regimes"] = reordered_regimes
+    reordered_qualification = gate_c._gate_c2_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+
+    for mutation in ("missing", "extra"):
+        malformed = dict(report)
+        malformed_regimes = dict(reordered_regimes)
+        if mutation == "missing":
+            malformed_regimes.pop("gate_a")
+        else:
+            malformed_regimes["unexpected"] = reordered_regimes["gate_a"]
+        malformed["regimes"] = malformed_regimes
+        qualification = gate_c._gate_c2_controls_qualification(
+            malformed,
+            config=gate_c.GateCConfig(),
+        )
+        assert qualification["criteria"]["exact_configuration"] is False
+        assert qualification["passed"] is False
+
+    assert reordered_qualification == raw_qualification
+    assert reordered_qualification["passed"] is True
+
+
+@requires_gate_c
+def test_gate_c2_controls_qualification_survives_canonical_json_roundtrip(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, no_read_reports = passing_gate_c2_no_read_reports
+    _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
+    report = _passing_gate_c2_controls_report(admission, no_read_reports)
+    raw_qualification = gate_c._gate_c2_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+    assert raw_qualification["passed"] is True
+
+    decoded = _gate_c2_strict_canonical_json_roundtrip(report)
+    decoded_qualification = gate_c._gate_c2_controls_qualification(
+        decoded,
+        config=gate_c.GateCConfig(),
+    )
+    assert decoded_qualification == raw_qualification
+    assert decoded_qualification["passed"] is True
 
 
 @pytest.mark.parametrize(
