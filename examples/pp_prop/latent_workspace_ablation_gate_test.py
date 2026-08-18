@@ -5,13 +5,17 @@ from __future__ import annotations
 import ast
 import copy
 import dataclasses
+import gc
 import hashlib
 import importlib
 import inspect
 import json
 import math
+import re
+import weakref
 from collections.abc import Mapping
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import brainstate
@@ -743,6 +747,7 @@ class TestGateCContracts:
             "_model_config_for_arm",
             "_optimizer_parameter_paths",
             "_schedule_identity_report",
+            "_actual_schedule_identity_report",
             "_metric_summary",
             "_blocking_margin_report",
             "_gradient_path_sha256",
@@ -770,6 +775,13 @@ class TestGateCContracts:
             "write_artifact",
             "_parser",
             "main",
+            "_run_gate_c_arm",
+            "_formal_arm_initialization_report",
+            "_arm_initialization_reproduced",
+            "_paired_h0_identity_report",
+            "_mechanism_oracle",
+            "chunked_online_param_gradients",
+            "run_gate_c",
         }
 
         assert not (required - set(vars(gate_c)))
@@ -1007,6 +1019,52 @@ class TestGateCContracts:
             == _GATE_A_SCHEDULE_SHA256["validation_schedule_sha256"]
         )
 
+    def test_actual_schedule_identity_is_derived_from_generated_reduced_data(
+        self,
+    ) -> None:
+        config = _reduced_gate_c_config()
+        gate_a_data = gate_c._regenerate_gate_a_data(config)
+        gate_b_schedule, gate_b_validation = gate_c._regenerate_gate_b_data(config)
+        gate_b_training = gate_b._encoded_schedule_report(
+            gate_b_schedule,
+            config.gate_b_config,
+        )
+        expected = {
+            "gate_a": {
+                "training_schedule_sha256": legacy._digest_arrays(
+                    gate_a_data.training_events,
+                    gate_a_data.training_targets,
+                    gate_a_data.training_mapping_ids,
+                ),
+                "validation_schedule_sha256": legacy._digest_arrays(
+                    gate_a_data.validation_intact,
+                    gate_a_data.validation_targets,
+                    gate_a_data.validation_mapping_ids,
+                ),
+                "training_mapping_ids_sha256": legacy._digest_arrays(
+                    gate_a_data.training_mapping_ids.reshape(-1)
+                ),
+                "validation_mapping_ids_sha256": legacy._digest_arrays(
+                    gate_a_data.validation_mapping_ids
+                ),
+            },
+            "gate_b": {
+                "training_global_sha256": gate_b_training["global_sha256"],
+                "validation_sha256": gate_b._validation_data_report(
+                    gate_b_validation
+                )["sha256"],
+            },
+        }
+
+        report = gate_c._actual_schedule_identity_report(
+            config,
+            gate_a_data,
+            (gate_b_schedule, gate_b_validation),
+        )
+
+        assert report == expected
+        assert report != gate_c._schedule_identity_report(config)
+
     def test_metric_summary_uses_terminal_gate_a_and_mean_matching_gate_b(self) -> None:
         gate_a_evaluation = {
             "depths": {
@@ -1068,6 +1126,28 @@ class TestGateCContracts:
         assert report["blocking_passed"] is True
         assert report["frozen_write"]["blocking"] is False
         assert report["frozen_write"]["write_modulation_necessary"] is True
+        assert report["frozen_write"]["interpretation"] == (
+            "learned_memory_write_modulation_necessary"
+        )
+
+    def test_frozen_write_interpretation_is_not_shown_if_either_margin_fails(
+        self,
+    ) -> None:
+        metrics = {
+            "full": {"binding_gap": 0.80, "depth_accuracy": 0.60},
+            "query_only": {"binding_gap": 0.82, "depth_accuracy": 0.45},
+            "terminal_only": {"binding_gap": 0.82, "depth_accuracy": 0.50},
+            "legacy": {"binding_gap": 0.55, "depth_accuracy": 0.45},
+            "frozen_write": {"binding_gap": 0.75, "depth_accuracy": 0.551},
+        }
+
+        report = gate_c._blocking_margin_report(metrics)
+
+        assert report["blocking_passed"] is True
+        assert report["frozen_write"]["write_modulation_necessary"] is False
+        assert report["frozen_write"]["interpretation"] == (
+            "learned_memory_write_modulation_not_shown_necessary"
+        )
 
     @pytest.mark.parametrize(
         ("arm", "field", "direction"),
@@ -1458,6 +1538,8 @@ def reduced_gate_a_full_legacy_run() -> dict[str, Any]:
             arm,
         )
     return {
+        "config": config,
+        "data": data,
         "models": models,
         "trainers": trainers,
         "initial_sha": initial_sha,
@@ -1601,6 +1683,39 @@ def test_reduced_gate_a_runs_real_full_and_legacy_pp_prop_arms(
         evaluation = run["evaluation"][arm]
         assert evaluation["all_compact_logits_finite"] is True
         assert set(evaluation["depths"]) == {"0", "1"}
+
+
+@requires_gate_c
+def test_reduced_gate_a_full_retains_binding_state_evidence(
+    reduced_gate_a_full_legacy_run: dict[str, Any],
+) -> None:
+    run = reduced_gate_a_full_legacy_run
+    evidence = run["evaluation"]["full"]["binding_state"]
+
+    assert set(evidence) == {
+        "applicable_count",
+        "intact_shuffled_different_count",
+        "every_intact_shuffled_pair_differs",
+        "no_context_exact_zero",
+        "intact_sha256",
+        "shuffled_sha256",
+        "no_context_sha256",
+        "all_finite",
+    }
+    assert evidence["applicable_count"] == (
+        run["config"].gate_a_config.validation_episodes
+    )
+    assert 0 <= evidence["intact_shuffled_different_count"] <= evidence[
+        "applicable_count"
+    ]
+    assert evidence["every_intact_shuffled_pair_differs"] is (
+        evidence["intact_shuffled_different_count"]
+        == evidence["applicable_count"]
+    )
+    assert evidence["no_context_exact_zero"] is True
+    assert evidence["all_finite"] is True
+    for name in ("intact_sha256", "shuffled_sha256", "no_context_sha256"):
+        assert re.fullmatch(r"[0-9a-f]{64}", evidence[name])
 
 
 @requires_gate_c
@@ -3018,3 +3133,3064 @@ def test_gate_c_init_cli_authenticates_and_emits_full_admission(
     stdout = capsys.readouterr().out
     assert str(paths.result) in stdout
     assert '"passed": false' in stdout
+
+
+def _minimal_formal_arm_initialization_report(
+    admission: Mapping[str, Any],
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    reference = admission["initialization"][regime][
+        "arm_initialization_refs"
+    ][arm]
+    paths = _SHARED_PATHS if arm == "legacy" else _FULL_PATHS
+    topology = admission["initialization"][regime][reference["tree"]]
+    return {
+        "initialization": {
+            "tree": reference["tree"],
+            "parameter_sha256": reference["parameter_sha256"],
+            "parameter_count": topology["parameter_count"],
+            "parameter_paths": list(paths),
+            "shared_paths": copy.deepcopy(
+                admission["initialization"][regime]["shared_paths"]
+            ),
+        },
+        "optimizer": _passing_optimizer_initialization(regime, arm),
+        "compiler": copy.deepcopy(topology["compiler"]),
+    }
+
+
+def _minimal_formal_arm_report(
+    admission: Mapping[str, Any],
+    regime: str,
+    arm: str,
+    *,
+    initialization_report: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    metrics = {
+        "full": {"binding_gap": 0.7, "depth_accuracy": 0.8},
+        "query_only": {"binding_gap": 0.7, "depth_accuracy": 0.6},
+        "terminal_only": {"binding_gap": 0.7, "depth_accuracy": 0.65},
+        "legacy": {"binding_gap": 0.4, "depth_accuracy": 0.6},
+        "frozen_write": {"binding_gap": 0.65, "depth_accuracy": 0.75},
+    }
+    initial = (
+        _minimal_formal_arm_initialization_report(admission, regime, arm)
+        if initialization_report is None
+        else copy.deepcopy(dict(initialization_report))
+    )
+    arm_metrics = metrics[arm]
+    if regime == "gate_a":
+        evaluation = {
+            "finite": True,
+            "depths": {
+                "1": {
+                    "intact": {
+                        "accuracy": arm_metrics["binding_gap"] + 0.1,
+                    },
+                    "shuffled": {"accuracy": 0.1},
+                }
+            },
+        }
+    else:
+        evaluation = {
+            "finite": True,
+            "efforts": {
+                str(effort): {
+                    "intact": {
+                        "accuracy": arm_metrics["depth_accuracy"],
+                    }
+                }
+                for effort in gate_b.QUALIFYING_EFFORTS
+            },
+        }
+    return {
+        **initial,
+        "training": {
+            "algorithm": "production_pp_prop",
+            "executed_updates": 1,
+            "finite": True,
+        },
+        "parameter_movement": {
+            "parameter_count": 1,
+            "l2_delta": 1.0,
+        },
+        "evaluation": evaluation,
+        "metrics": {},
+    }
+
+
+def _formal_accuracy_metric(
+    correct: int,
+    *,
+    checkpoint: int,
+    identity: str,
+) -> dict[str, Any]:
+    count = 512
+    lower, upper = legacy._wilson_interval(correct, count)
+    return {
+        "correct": correct,
+        "count": count,
+        "accuracy": correct / count,
+        "wilson_95_lower": lower,
+        "wilson_95_upper": upper,
+        "prediction_histogram": [52, 52, *([51] * 8)],
+        "prediction_sha256": hashlib.sha256(identity.encode()).hexdigest(),
+        "checkpoint": checkpoint,
+    }
+
+
+def _formal_paired_diagnostic(
+    *,
+    identity: str,
+    different: int,
+) -> dict[str, Any]:
+    left_sha256 = hashlib.sha256(f"{identity}:left".encode()).hexdigest()
+    return {
+        "applicable_count": 512,
+        "different_count": different,
+        "every_pair_differs": different == 512,
+        "mean_l2_difference": 1.0 if different else 0.0,
+        "left_sha256": left_sha256,
+        "right_sha256": (
+            hashlib.sha256(f"{identity}:right".encode()).hexdigest()
+            if different
+            else left_sha256
+        ),
+        "no_context_l2_norm": 0.0,
+    }
+
+
+def _formal_binding_diagnostic(arm: str) -> dict[str, Any]:
+    different = 0 if arm == "legacy" else 512
+    memory = _formal_paired_diagnostic(
+        identity=f"{arm}:memory",
+        different=different,
+    )
+    memory.update(
+        {
+            "intact_shuffled_different_count": different,
+            "every_intact_shuffled_pair_differs": different == 512,
+            "no_context_exact_zero": True,
+            "no_context_sha256": hashlib.sha256(
+                f"{arm}:memory:no-context".encode()
+            ).hexdigest(),
+            "intact_l2_norm": 1.0 if arm != "legacy" else 0.0,
+            "shuffled_l2_norm": 1.0 if arm != "legacy" else 0.0,
+            "no_context_l2_norm": 0.0,
+            "storage_contract": (
+                "one final S_K snapshot per arm; S_K is not stacked"
+            ),
+        }
+    )
+    read_by_depth = {
+        str(depth): _formal_paired_diagnostic(
+            identity=f"{arm}:read:{depth}",
+            different=(0 if arm == "query_only" and depth == 1 else different),
+        )
+        for depth in range(2)
+    }
+    return {
+        "all_state_tensors_finite": True,
+        "memory": memory,
+        "read_by_depth": read_by_depth,
+        "workspace_by_depth": {
+            str(depth): _formal_paired_diagnostic(
+                identity=f"{arm}:workspace:{depth}",
+                different=different,
+            )
+            for depth in range(2)
+        },
+    }
+
+
+def _formal_gate_a_evaluation(arm: str, intact_correct: int) -> dict[str, Any]:
+    depths: dict[str, Any] = {}
+    for depth in range(2):
+        depth_intact = 300 if depth == 0 else intact_correct
+        depths[str(depth)] = {
+            stream: _formal_accuracy_metric(
+                depth_intact if stream == "intact" else 50,
+                checkpoint=depth,
+                identity=f"{arm}:gate-a:{depth}:{stream}",
+            )
+            for stream in ("intact", "shuffled", "no_context")
+        }
+    diagnostic = _formal_binding_diagnostic(arm)
+    memory = diagnostic["memory"]
+    binding_state = {
+        "applicable_count": memory["applicable_count"],
+        "intact_shuffled_different_count": memory[
+            "intact_shuffled_different_count"
+        ],
+        "every_intact_shuffled_pair_differs": memory[
+            "every_intact_shuffled_pair_differs"
+        ],
+        "no_context_exact_zero": memory["no_context_exact_zero"],
+        "intact_sha256": memory["left_sha256"],
+        "shuffled_sha256": memory["right_sha256"],
+        "no_context_sha256": memory["no_context_sha256"],
+        "all_finite": diagnostic["all_state_tensors_finite"],
+    }
+    final = depths["1"]
+    return {
+        "finite": True,
+        "all_compact_logits_finite": True,
+        "all_state_tensors_finite": True,
+        "depths": depths,
+        "intact": copy.deepcopy(final["intact"]),
+        "shuffled": copy.deepcopy(final["shuffled"]),
+        "no_context": copy.deepcopy(final["no_context"]),
+        "intact_minus_shuffled": (
+            final["intact"]["accuracy"] - final["shuffled"]["accuracy"]
+        ),
+        "binding_state": binding_state,
+        "binding_diagnostic": diagnostic,
+    }
+
+
+def _formal_gate_b_evaluation(arm: str, matching_correct: int) -> dict[str, Any]:
+    depths: dict[str, Any] = {}
+    h0_identity = f"{arm}:gate-b:h0:intact"
+    for depth in range(9):
+        depths[str(depth)] = {
+            stream: _formal_accuracy_metric(
+                (205 if depth == 0 else matching_correct)
+                if stream == "intact"
+                else 50,
+                checkpoint=depth,
+                identity=(
+                    h0_identity
+                    if depth == 0 and stream == "intact"
+                    else f"{arm}:gate-b:{depth}:{stream}"
+                ),
+            )
+            for stream in ("intact", "shuffled", "no_context")
+        }
+    efforts: dict[str, Any] = {}
+    for effort in gate_b.QUALIFYING_EFFORTS:
+        matching = depths[str(effort)]
+        h0_final = _formal_accuracy_metric(
+            205,
+            checkpoint=0,
+            identity=h0_identity,
+        )
+        efforts[str(effort)] = {
+            "intact": copy.deepcopy(matching["intact"]),
+            "shuffled": copy.deepcopy(matching["shuffled"]),
+            "no_context": copy.deepcopy(matching["no_context"]),
+            "h0_final_target": h0_final,
+            "intact_minus_h0": (
+                matching["intact"]["accuracy"] - h0_final["accuracy"]
+            ),
+            "intact_minus_shuffled": (
+                matching["intact"]["accuracy"]
+                - matching["shuffled"]["accuracy"]
+            ),
+        }
+    return {
+        "finite": True,
+        "h0_proper": copy.deepcopy(depths["0"]["intact"]),
+        "depths": depths,
+        "efforts": efforts,
+    }
+
+
+def _formal_parameter_movement(
+    parameter_count: int,
+    paths: tuple[str, ...],
+    *,
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    path_counts = {
+        "color_factor_head/weight": 144_480,
+        "ff_syn/comm/weight": 83_968 if regime == "gate_a" else 96_256,
+        "height_head/weight": 3_870,
+        "memory_read_projection/weight": 65_536,
+        "memory_write_scale": 1_024,
+        "readout_projection/weight": 262_272,
+        "rec_syn/comm/weight": 16_384,
+        "width_head/weight": 3_870,
+        "workspace_query_projection/weight": 65_536,
+    }
+    assert sum(path_counts[path] for path in paths) == parameter_count
+    path_reports: dict[str, Any] = {}
+    squared = 0.0
+    for path in paths:
+        zero_movement = (
+            path in {"height_head/weight", "width_head/weight"}
+            or (arm == "frozen_write" and path == "memory_write_scale")
+            or (
+                arm == "query_only"
+                and path == "workspace_query_projection/weight"
+            )
+        )
+        l2_delta = 0.0 if zero_movement else 1.0
+        squared += l2_delta * l2_delta
+        path_reports[path] = {
+            "l2_delta": l2_delta,
+            "parameter_count": path_counts[path],
+        }
+    return {
+        "l2_delta": math.sqrt(squared),
+        "parameter_count": parameter_count,
+        "paths": path_reports,
+    }
+
+
+def _formal_training_report(
+    config: Any,
+    admission: Mapping[str, Any],
+    regime: str,
+    arm: str,
+    execution_index: int,
+    data_identity: Mapping[str, Any],
+) -> dict[str, Any]:
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    reference = admission["initialization"][regime][
+        "arm_initialization_refs"
+    ][arm]
+    if regime == "gate_a":
+        weights = gate_c._loss_weights(
+            regime,
+            arm,
+            efforts=np.ones((1,), dtype=np.int32),
+        )
+        chunk_count = 1
+    else:
+        efforts = np.resize(
+            np.asarray(gate_b.QUALIFYING_EFFORTS, dtype=np.int32),
+            regime_config.training_updates,
+        )
+        weights = gate_c._loss_weights(regime, arm, efforts=efforts)
+        chunk_count = regime_config.staging_chunk_count
+    losses = [0.5] * regime_config.training_updates
+    categories = (
+        "logits",
+        "model_states",
+        "gradients",
+        "pp_prop_traces",
+        "adam",
+        "parameters",
+    )
+    return {
+        "algorithm": "production_pp_prop",
+        "execution_index": execution_index,
+        "intervention": dataclasses.asdict(gate_c.ARM_SPECS[arm]),
+        "data_identity": copy.deepcopy(data_identity),
+        "executed_updates": regime_config.training_updates,
+        "batch_size": regime_config.batch_size,
+        "chunk_count": chunk_count,
+        "cold_compile_and_train_seconds": 1.0,
+        "initial_parameter_sha256": reference["parameter_sha256"],
+        "final_parameter_sha256": hashlib.sha256(
+            f"{regime}:{arm}:final".encode()
+        ).hexdigest(),
+        "optimizer_final_step": regime_config.training_updates,
+        "loss_weights": {
+            "dtype": weights.dtype.str,
+            "shape": list(weights.shape),
+            "sha256": legacy._digest_arrays(weights),
+        },
+        "compile_warnings": [],
+        "losses": losses,
+        "initial_loss": losses[0],
+        "final_loss": losses[-1],
+        "tail_64_mean_loss": 0.5,
+        "finite": {name: True for name in categories},
+        "max_abs": {name: 1.0 for name in categories},
+        "value_count": {name: 1 for name in categories},
+        "frozen_write": {
+            "applicable": arm == "frozen_write",
+            "all_ones_before": arm != "legacy",
+            "all_ones_after": arm == "frozen_write",
+            "excluded_from_optimizer": arm == "frozen_write",
+        },
+    }
+
+
+def _formal_mechanism_oracle() -> dict[str, Any]:
+    full_gradients = {
+        path: np.asarray([index + 1.0], dtype=np.float32)
+        for index, path in enumerate(_FULL_PATHS)
+    }
+    comparisons: dict[str, Any] = {}
+    for arm in ("query_only", "terminal_only"):
+        required_paths = (
+            [
+                "memory_read_projection/weight",
+                "workspace_query_projection/weight",
+            ]
+            if arm == "query_only"
+            else []
+        )
+        arm_gradients = {
+            path: (
+                np.zeros_like(full_gradients[path])
+                if path in required_paths
+                else full_gradients[path]
+                * np.float32(0.8 if arm == "query_only" else 0.7)
+            )
+            for path in _FULL_PATHS
+        }
+        paths: dict[str, Any] = {}
+        for path in _FULL_PATHS:
+            paths[path] = {
+                **gate_c._gradient_comparison(
+                    full_gradients[path],
+                    arm_gradients[path],
+                ),
+                "full_sha256": gate_c._gradient_path_sha256(
+                    path,
+                    full_gradients[path],
+                ),
+                "arm_sha256": gate_c._gradient_path_sha256(
+                    path,
+                    arm_gradients[path],
+                ),
+            }
+        comparisons[arm] = {
+            "global": {
+                **gate_c._gradient_comparison(full_gradients, arm_gradients),
+                "full_sha256": gate_c._gradient_global_sha256(
+                    full_gradients
+                ),
+                "arm_sha256": gate_c._gradient_global_sha256(arm_gradients),
+            },
+            "paths": paths,
+            "required_paths": required_paths,
+            "required_paths_passed": True,
+            "passed": True,
+        }
+    return {
+        "contract": gate_c._oracle_contract(gate_c.GateCConfig()),
+        "objective": {
+            "wrapper": "sqrt_weight_times_sqrt_cross_entropy",
+            "unsupervised_output_exact_zero": True,
+        },
+        "gradient_chunk_size": 1,
+        "comparisons": comparisons,
+        "complete": True,
+    }
+
+
+def _formal_paired_h0_identity(
+    admission: Mapping[str, Any],
+    regime: str,
+) -> dict[str, Any]:
+    parameter_sha256 = admission["initialization"][regime]["canonical_full"][
+        "parameter_sha256"
+    ]
+    return {
+        "checkpoint": 0,
+        "initialization_parameter_sha256": {
+            "full": parameter_sha256,
+            "query_only": parameter_sha256,
+        },
+        "streams": {
+            stream: {
+                "full_compact_sha256": hashlib.sha256(
+                    f"{regime}:{stream}:compact".encode()
+                ).hexdigest(),
+                "query_only_compact_sha256": hashlib.sha256(
+                    f"{regime}:{stream}:compact".encode()
+                ).hexdigest(),
+                "full_state_sha256": hashlib.sha256(
+                    f"{regime}:{stream}:state".encode()
+                ).hexdigest(),
+                "query_only_state_sha256": hashlib.sha256(
+                    f"{regime}:{stream}:state".encode()
+                ).hexdigest(),
+                "compact_byte_identical": True,
+                "state_byte_identical": True,
+            }
+            for stream in ("intact", "shuffled", "no_context")
+        },
+        "passed": True,
+    }
+
+
+def _passing_formal_gate_c_report() -> tuple[dict[str, Any], Any]:
+    admission, config = _passing_gate_c_initialization_report()
+    schedule = {
+        "gate_a": copy.deepcopy(_GATE_A_SCHEDULE_SHA256),
+        "gate_b": {
+            "training_global_sha256": copy.deepcopy(_GATE_B_TRAINING_SHA256),
+            "validation_sha256": copy.deepcopy(_GATE_B_VALIDATION_SHA256),
+        },
+    }
+    gate_a_correct = {
+        "full": 460,
+        "query_only": 450,
+        "terminal_only": 450,
+        "legacy": 306,
+        "frozen_write": 409,
+    }
+    gate_b_correct = {
+        "full": 410,
+        "query_only": 307,
+        "terminal_only": 333,
+        "legacy": 307,
+        "frozen_write": 358,
+    }
+    arms: dict[str, dict[str, Any]] = {arm: {} for arm in _ARMS}
+    for regime_index, regime in enumerate(_REGIMES):
+        for arm_index, arm in enumerate(_ARMS):
+            initialization = _minimal_formal_arm_initialization_report(
+                admission,
+                regime,
+                arm,
+            )
+            reference = admission["initialization"][regime][
+                "arm_initialization_refs"
+            ][arm]
+            topology = admission["initialization"][regime][reference["tree"]]
+            paths = _SHARED_PATHS if arm == "legacy" else _FULL_PATHS
+            evaluation = (
+                _formal_gate_a_evaluation(arm, gate_a_correct[arm])
+                if regime == "gate_a"
+                else _formal_gate_b_evaluation(arm, gate_b_correct[arm])
+            )
+            arms[arm][regime] = {
+                **initialization,
+                "training": _formal_training_report(
+                    config,
+                    admission,
+                    regime,
+                    arm,
+                    regime_index * len(_ARMS) + arm_index,
+                    schedule[regime],
+                ),
+                "parameter_movement": _formal_parameter_movement(
+                    topology["parameter_count"],
+                    paths,
+                    regime=regime,
+                    arm=arm,
+                ),
+                "evaluation": evaluation,
+                "metrics": {},
+            }
+    metrics = {
+        arm: gate_c._metric_summary(
+            arms[arm]["gate_a"]["evaluation"],
+            arms[arm]["gate_b"]["evaluation"],
+        )
+        for arm in _ARMS
+    }
+    for arm in _ARMS:
+        for regime in _REGIMES:
+            arms[arm][regime]["metrics"] = copy.deepcopy(metrics[arm])
+    margins = gate_c._blocking_margin_report(metrics)
+    source_start = copy.deepcopy(admission["source_start"])
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "control": "example21_pp_prop_learnability_gate_c",
+        "qualification_regime": "preregistered_full",
+        "learner": "pp_prop_only",
+        "prerequisites": {
+            "gate_a": copy.deepcopy(_GATE_A_REFERENCE),
+            "gate_b": copy.deepcopy(_GATE_B_REFERENCE),
+            "gate_c_initialization": _gate_c_initialization_wrapper(admission),
+        },
+        "regimes": {
+            regime: {
+                "spec": dataclasses.asdict(gate_c.REGIME_SPECS[regime]),
+                "config": dataclasses.asdict(
+                    config.gate_a_config
+                    if regime == "gate_a"
+                    else config.gate_b_config
+                ),
+                "schedule": copy.deepcopy(schedule[regime]),
+                "metrics": copy.deepcopy(metrics),
+                "margins": copy.deepcopy(margins),
+                "paired_h0_identity": _formal_paired_h0_identity(
+                    admission,
+                    regime,
+                ),
+            }
+            for regime in _REGIMES
+        },
+        "arms": arms,
+        "mechanism_oracle": _formal_mechanism_oracle(),
+        "source_start": source_start,
+        "source_end": copy.deepcopy(source_start),
+        "source_files": copy.deepcopy(admission["source_files"]),
+        "environment": copy.deepcopy(admission["environment"]),
+        "total_wall_seconds": 1.0,
+    }
+    report["qualification"] = {
+        "criteria": {name: True for name in gate_c.QUALIFICATION_CRITERIA},
+        "passed": True,
+        "interpretation": "gate_c_passed_pp_prop_learnability_mechanism",
+    }
+    return report, config
+
+
+def _mutate_formal_gate_c_report(
+    report: dict[str, Any],
+    criterion: str,
+) -> None:
+    if criterion == "schema_and_control":
+        report["control"] = "wrong-control"
+    elif criterion == "exact_configuration":
+        report["arms"]["query_only"]["gate_a"]["training"][
+            "intervention"
+        ]["memory_mode"] = "full"
+    elif criterion == "prerequisites_authenticated":
+        report["prerequisites"]["gate_a"]["result_sha256"] = "0" * 64
+    elif criterion == "initialization_authenticated":
+        report["arms"]["full"]["gate_a"]["initialization"][
+            "parameter_sha256"
+        ] = "0" * 64
+    elif criterion == "canonical_schedules_complete":
+        report["arms"]["full"]["gate_b"]["training"]["data_identity"][
+            "training_global_sha256"
+        ]["events"] = "0" * 64
+    elif criterion == "fresh_isolated_optimizers":
+        report["arms"]["full"]["gate_b"]["optimizer"][
+            "fresh_state_all_zero"
+        ] = False
+    elif criterion == "compiler_and_training_complete":
+        report["arms"]["query_only"]["gate_a"]["training"]["finite"][
+            "gradients"
+        ] = False
+    elif criterion == "full_gate_a_passed":
+        report["arms"]["full"]["gate_a"]["evaluation"][
+            "binding_diagnostic"
+        ]["read_by_depth"].pop("1")
+    elif criterion == "full_gate_b_passed":
+        evaluation = report["arms"]["full"]["gate_b"]["evaluation"]
+        h0 = _formal_accuracy_metric(
+            50,
+            checkpoint=0,
+            identity="full:gate-b:h0:intact",
+        )
+        evaluation["depths"]["0"]["intact"] = copy.deepcopy(h0)
+        evaluation["h0_proper"] = copy.deepcopy(h0)
+        for effort in gate_b.QUALIFYING_EFFORTS:
+            evidence = evaluation["efforts"][str(effort)]
+            evidence["h0_final_target"] = copy.deepcopy(h0)
+            evidence["intact_minus_h0"] = (
+                evidence["intact"]["accuracy"] - h0["accuracy"]
+            )
+    elif criterion == "blocking_behavioral_margins":
+        report["regimes"]["gate_a"]["margins"]["query_only"][
+            "passed"
+        ] = False
+    elif criterion == "paired_h0_identity":
+        report["regimes"]["gate_b"]["paired_h0_identity"]["streams"][
+            "intact"
+        ]["query_only_state_sha256"] = "0" * 64
+    elif criterion == "frozen_write_complete":
+        report["arms"]["frozen_write"]["gate_a"]["training"][
+            "frozen_write"
+        ]["all_ones_after"] = False
+    elif criterion == "mechanism_oracle_complete":
+        report["mechanism_oracle"]["comparisons"]["query_only"]["global"][
+            "full_norm"
+        ] += 1.0
+    elif criterion == "source_and_gpu_authenticated":
+        report["source_end"]["dirty"] = True
+    else:
+        raise AssertionError(f"unhandled Gate C criterion {criterion}")
+
+
+@pytest.fixture(scope="module")
+def passing_formal_gate_c_report() -> tuple[dict[str, Any], Any]:
+    return _passing_formal_gate_c_report()
+
+
+@requires_gate_c
+def test_complete_formal_gate_c_report_recomputes_all_fourteen_criteria(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    report, config = passing_formal_gate_c_report
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert set(report) == {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "learner",
+        "prerequisites",
+        "regimes",
+        "arms",
+        "mechanism_oracle",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+        "total_wall_seconds",
+    }
+    assert set(report["prerequisites"]) == {
+        "gate_a",
+        "gate_b",
+        "gate_c_initialization",
+    }
+    assert all(
+        set(report["arms"][arm][regime])
+        == {
+            "initialization",
+            "optimizer",
+            "compiler",
+            "training",
+            "parameter_movement",
+            "evaluation",
+            "metrics",
+        }
+        for arm in _ARMS
+        for regime in _REGIMES
+    )
+    assert all(
+        set(report["regimes"][regime])
+        == {
+            "spec",
+            "config",
+            "schedule",
+            "metrics",
+            "margins",
+            "paired_h0_identity",
+        }
+        for regime in _REGIMES
+    )
+    full_gate_a = report["arms"]["full"]["gate_a"]["evaluation"]
+    assert set(full_gate_a) == {
+        "finite",
+        "all_compact_logits_finite",
+        "all_state_tensors_finite",
+        "depths",
+        "intact",
+        "shuffled",
+        "no_context",
+        "intact_minus_shuffled",
+        "binding_state",
+        "binding_diagnostic",
+    }
+    assert gate_a._diagnostic_evidence_complete(
+        full_gate_a["binding_diagnostic"],
+        config.gate_a_config,
+    )
+    oracle = report["mechanism_oracle"]
+    assert oracle["contract"] == gate_c._oracle_contract(config)
+    query_paths = oracle["comparisons"]["query_only"]["paths"]
+    terminal_paths = oracle["comparisons"]["terminal_only"]["paths"]
+    assert {
+        path: evidence["full_sha256"]
+        for path, evidence in query_paths.items()
+    } == {
+        path: evidence["full_sha256"]
+        for path, evidence in terminal_paths.items()
+    }
+    for comparison in oracle["comparisons"].values():
+        path_evidence = comparison["paths"]
+        global_evidence = comparison["global"]
+        expected_full_norm = math.sqrt(
+            math.fsum(item["full_norm"] ** 2 for item in path_evidence.values())
+        )
+        expected_arm_norm = math.sqrt(
+            math.fsum(item["arm_norm"] ** 2 for item in path_evidence.values())
+        )
+        expected_difference = math.sqrt(
+            math.fsum(
+                item["l2_difference"] ** 2 for item in path_evidence.values()
+            )
+        )
+        expected_dot = math.fsum(
+            0.0
+            if item["cosine"] is None
+            else item["cosine"] * item["full_norm"] * item["arm_norm"]
+            for item in path_evidence.values()
+        )
+        expected_cosine = expected_dot / (expected_full_norm * expected_arm_norm)
+        assert math.isclose(
+            global_evidence["full_norm"], expected_full_norm, abs_tol=1e-12
+        )
+        assert math.isclose(
+            global_evidence["arm_norm"], expected_arm_norm, abs_tol=1e-12
+        )
+        assert math.isclose(
+            global_evidence["l2_difference"],
+            expected_difference,
+            abs_tol=1e-12,
+        )
+        assert math.isclose(
+            global_evidence["cosine"], expected_cosine, abs_tol=1e-12
+        )
+        for side in ("full", "arm"):
+            fields = [b"example21-gate-c-gradient-global-v1"]
+            for path in sorted(path_evidence):
+                fields.extend(
+                    (
+                        path.encode(),
+                        path_evidence[path][f"{side}_sha256"].encode(),
+                    )
+                )
+            assert global_evidence[f"{side}_sha256"] == hashlib.sha256(
+                b"\0".join(fields)
+            ).hexdigest()
+    assert recomputed == report["qualification"]
+    assert recomputed["passed"] is True
+    assert all(recomputed["criteria"].values())
+    assert recomputed["interpretation"] == (
+        "gate_c_passed_pp_prop_learnability_mechanism"
+    )
+
+
+@pytest.mark.parametrize("criterion", tuple(gate_c.QUALIFICATION_CRITERIA))
+@requires_gate_c
+def test_each_formal_gate_c_criterion_fails_on_its_owned_evidence_mutation(
+    criterion: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    baseline = gate_c._qualification_report(passing, config=config)
+    assert baseline["passed"] is True
+    assert all(baseline["criteria"].values())
+    report = copy.deepcopy(passing)
+    _mutate_formal_gate_c_report(report, criterion)
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"][criterion] is False
+    assert recomputed["passed"] is False
+    assert recomputed["interpretation"] == (
+        "gate_c_failed_stop_no_causal_mechanism_conclusion"
+    )
+    assert recomputed != report["qualification"]
+
+
+@pytest.mark.parametrize("mutation", ("global_norm", "global_digest"))
+@requires_gate_c
+def test_mechanism_oracle_rejects_colluding_pass_flags_with_inconsistent_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    comparison = report["mechanism_oracle"]["comparisons"]["terminal_only"]
+    if mutation == "global_norm":
+        comparison["global"]["l2_difference"] += 1.0
+    else:
+        comparison["global"]["full_sha256"] = "0" * 64
+    assert comparison["passed"] is True
+    assert report["mechanism_oracle"]["complete"] is True
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"]["mechanism_oracle_complete"] is False
+    assert recomputed["passed"] is False
+
+
+@requires_gate_c
+def test_mechanism_oracle_rejects_impossible_zero_arm_norm_geometry(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    oracle = report["mechanism_oracle"]
+    record = oracle["comparisons"]["query_only"]["paths"][
+        "memory_read_projection/weight"
+    ]
+    assert record["full_norm"] > 0.0
+    assert record["arm_norm"] == 0.0
+    record["l2_difference"] = record["full_norm"] * 1e-3
+    record["relative_deviation"] = 1e-3
+    record["cosine"] = None
+    record["cosine_defined"] = False
+    assert oracle["comparisons"]["query_only"]["passed"] is True
+    assert oracle["complete"] is True
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"]["mechanism_oracle_complete"] is False
+    assert recomputed["passed"] is False
+
+
+@requires_gate_c
+def test_query_only_h1_read_must_remain_exactly_zero(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    read = report["arms"]["query_only"]["gate_a"]["evaluation"][
+        "binding_diagnostic"
+    ]["read_by_depth"]["1"]
+    assert read["different_count"] == 0
+    assert read["every_pair_differs"] is False
+    assert read["mean_l2_difference"] == 0.0
+    assert read["left_sha256"] == read["right_sha256"]
+    read["different_count"] = 512
+    read["every_pair_differs"] = True
+    read["mean_l2_difference"] = 1.0
+    read["right_sha256"] = "0" * 64
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"]["compiler_and_training_complete"] is False
+    assert recomputed["passed"] is False
+
+
+@requires_gate_c
+def test_full_gate_a_requires_every_final_memory_pair_to_differ(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    evaluation = report["arms"]["full"]["gate_a"]["evaluation"]
+    memory = evaluation["binding_diagnostic"]["memory"]
+    memory["different_count"] = 0
+    memory["intact_shuffled_different_count"] = 0
+    memory["every_pair_differs"] = False
+    memory["every_intact_shuffled_pair_differs"] = False
+    memory["mean_l2_difference"] = 0.0
+    memory["right_sha256"] = memory["left_sha256"]
+    binding_state = evaluation["binding_state"]
+    binding_state["intact_shuffled_different_count"] = 0
+    binding_state["every_intact_shuffled_pair_differs"] = False
+    binding_state["shuffled_sha256"] = binding_state["intact_sha256"]
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"]["full_gate_a_passed"] is False
+    assert recomputed["passed"] is False
+
+
+@pytest.mark.parametrize(
+    ("regime", "arm", "path"),
+    (
+        ("gate_a", "full", "height_head/weight"),
+        ("gate_b", "query_only", "workspace_query_projection/weight"),
+    ),
+)
+@requires_gate_c
+def test_formal_training_rejects_nonzero_causally_dead_parameter_movement(
+    regime: str,
+    arm: str,
+    path: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    movement = report["arms"][arm][regime]["parameter_movement"]
+    assert movement["paths"][path]["l2_delta"] == 0.0
+    movement["paths"][path]["l2_delta"] = 1.0
+    movement["l2_delta"] = math.hypot(movement["l2_delta"], 1.0)
+    squared = math.fsum(
+        evidence["l2_delta"] ** 2 for evidence in movement["paths"].values()
+    )
+    assert math.isclose(movement["l2_delta"], math.sqrt(squared), abs_tol=1e-12)
+
+    recomputed = gate_c._qualification_report(report, config=config)
+
+    assert recomputed["criteria"]["compiler_and_training_complete"] is False
+    assert recomputed["passed"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "arm_schema",
+        "training_schema",
+        "loss_count",
+        "loss_type",
+        "telemetry_schema",
+        "telemetry_nonfinite",
+        "telemetry_negative_max",
+        "telemetry_bool_count",
+        "algorithm",
+        "executed_updates",
+        "batch_size",
+        "chunk_count",
+        "training_time",
+        "initial_digest",
+        "final_digest",
+        "loss_weight_digest",
+        "compile_warning_type",
+        "initial_loss",
+        "final_loss",
+        "tail_loss",
+        "frozen_schema",
+        "frozen_bool_type",
+        "frozen_applicable",
+        "frozen_excluded",
+        "full_before_not_one",
+        "legacy_before_one",
+        "frozen_after_not_one",
+        "compiler_mismatch",
+    ),
+)
+@requires_gate_c
+def test_training_report_fails_closed_on_malformed_retained_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    admission = passing["prerequisites"]["gate_c_initialization"]["admission"]
+    arm = (
+        "legacy"
+        if mutation == "legacy_before_one"
+        else "frozen_write"
+        if mutation in {"frozen_excluded", "frozen_after_not_one"}
+        else "full"
+    )
+    arm_report = copy.deepcopy(passing["arms"][arm]["gate_a"])
+    assert gate_c._training_report_complete(
+        arm_report,
+        admission,
+        config,
+        regime="gate_a",
+        arm=arm,
+    )
+    training = arm_report["training"]
+    if mutation == "arm_schema":
+        arm_report["unexpected"] = None
+    elif mutation == "training_schema":
+        training.pop("algorithm")
+    elif mutation == "loss_count":
+        training["losses"].pop()
+    elif mutation == "loss_type":
+        training["losses"][0] = True
+    elif mutation == "telemetry_schema":
+        training["finite"].pop("logits")
+    elif mutation == "telemetry_nonfinite":
+        training["finite"]["model_states"] = False
+    elif mutation == "telemetry_negative_max":
+        training["max_abs"]["pp_prop_traces"] = -1.0
+    elif mutation == "telemetry_bool_count":
+        training["value_count"]["adam"] = True
+    elif mutation == "algorithm":
+        training["algorithm"] = "bptt"
+    elif mutation == "executed_updates":
+        training["executed_updates"] = True
+    elif mutation == "batch_size":
+        training["batch_size"] += 1
+    elif mutation == "chunk_count":
+        training["chunk_count"] = False
+    elif mutation == "training_time":
+        training["cold_compile_and_train_seconds"] = -1.0
+    elif mutation == "initial_digest":
+        training["initial_parameter_sha256"] = "0" * 64
+    elif mutation == "final_digest":
+        training["final_parameter_sha256"] = training[
+            "initial_parameter_sha256"
+        ]
+    elif mutation == "loss_weight_digest":
+        training["loss_weights"]["sha256"] = "0" * 64
+    elif mutation == "compile_warning_type":
+        training["compile_warnings"] = [False]
+    elif mutation == "initial_loss":
+        training["initial_loss"] += 1.0
+    elif mutation == "final_loss":
+        training["final_loss"] += 1.0
+    elif mutation == "tail_loss":
+        training["tail_64_mean_loss"] += 1.0
+    elif mutation == "frozen_schema":
+        training["frozen_write"].pop("applicable")
+    elif mutation == "frozen_bool_type":
+        training["frozen_write"]["all_ones_before"] = 1
+    elif mutation == "frozen_applicable":
+        training["frozen_write"]["applicable"] = True
+    elif mutation == "frozen_excluded":
+        training["frozen_write"]["excluded_from_optimizer"] = False
+    elif mutation == "full_before_not_one":
+        training["frozen_write"]["all_ones_before"] = False
+    elif mutation == "legacy_before_one":
+        training["frozen_write"]["all_ones_before"] = True
+    elif mutation == "frozen_after_not_one":
+        training["frozen_write"]["all_ones_after"] = False
+    elif mutation == "compiler_mismatch":
+        arm_report["compiler"]["all_required_direct"] = False
+    else:
+        raise AssertionError(f"unhandled training mutation {mutation}")
+
+    assert not gate_c._training_report_complete(
+        arm_report,
+        admission,
+        config,
+        regime="gate_a",
+        arm=arm,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_schema",
+        "path_schema",
+        "path_record_schema",
+        "negative_delta",
+        "wrong_path_count",
+        "nonzero_dead_path",
+        "wrong_total_norm",
+        "wrong_total_count",
+    ),
+)
+@requires_gate_c
+def test_parameter_movement_validator_rejects_malformed_or_dead_paths(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, _ = passing_formal_gate_c_report
+    movement = copy.deepcopy(
+        passing["arms"]["full"]["gate_a"]["parameter_movement"]
+    )
+    assert gate_c._parameter_movement_complete(
+        movement,
+        regime="gate_a",
+        arm="full",
+    )
+    path = "color_factor_head/weight"
+    if mutation == "top_schema":
+        movement["unexpected"] = None
+    elif mutation == "path_schema":
+        movement["paths"].pop(path)
+    elif mutation == "path_record_schema":
+        movement["paths"][path]["unexpected"] = None
+    elif mutation == "negative_delta":
+        movement["paths"][path]["l2_delta"] = -1.0
+    elif mutation == "wrong_path_count":
+        movement["paths"][path]["parameter_count"] += 1
+    elif mutation == "nonzero_dead_path":
+        movement["paths"]["height_head/weight"]["l2_delta"] = 1.0
+        movement["l2_delta"] = math.hypot(movement["l2_delta"], 1.0)
+    elif mutation == "wrong_total_norm":
+        movement["l2_delta"] += 1.0
+    elif mutation == "wrong_total_count":
+        movement["parameter_count"] += 1
+    else:
+        raise AssertionError(f"unhandled movement mutation {mutation}")
+
+    assert not gate_c._parameter_movement_complete(
+        movement,
+        regime="gate_a",
+        arm="full",
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_schema",
+        "finite",
+        "depth_schema",
+        "stream_schema",
+        "metric_schema",
+        "metric_checkpoint_type",
+        "metric_digest",
+        "h0_mismatch",
+        "effort_set",
+        "effort_schema",
+        "effort_depth_mismatch",
+        "h0_final_digest",
+        "h0_final_histogram",
+        "h0_gap",
+        "shuffled_gap",
+    ),
+)
+@requires_gate_c
+def test_gate_b_evaluation_validator_rejects_malformed_or_stale_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    evaluation = copy.deepcopy(
+        passing["arms"]["full"]["gate_b"]["evaluation"]
+    )
+    assert gate_c._gate_b_evaluation_complete(
+        evaluation,
+        config,
+        require_no_collapse=True,
+    )
+    if mutation == "top_schema":
+        evaluation["unexpected"] = None
+    elif mutation == "finite":
+        evaluation["finite"] = False
+    elif mutation == "depth_schema":
+        evaluation["depths"].pop("8")
+    elif mutation == "stream_schema":
+        evaluation["depths"]["0"].pop("no_context")
+    elif mutation == "metric_schema":
+        evaluation["depths"]["1"]["intact"].pop("checkpoint")
+    elif mutation == "metric_checkpoint_type":
+        evaluation["depths"]["1"]["intact"]["checkpoint"] = True
+    elif mutation == "metric_digest":
+        evaluation["depths"]["1"]["intact"]["prediction_sha256"] = "bad"
+    elif mutation == "h0_mismatch":
+        evaluation["h0_proper"]["prediction_sha256"] = "0" * 64
+    elif mutation == "effort_set":
+        evaluation["efforts"].pop("8")
+    elif mutation == "effort_schema":
+        evaluation["efforts"]["1"].pop("intact_minus_h0")
+    elif mutation == "effort_depth_mismatch":
+        evaluation["efforts"]["2"]["intact"]["prediction_sha256"] = "0" * 64
+    elif mutation == "h0_final_digest":
+        evaluation["efforts"]["4"]["h0_final_target"][
+            "prediction_sha256"
+        ] = "0" * 64
+    elif mutation == "h0_final_histogram":
+        evaluation["efforts"]["4"]["h0_final_target"][
+            "prediction_histogram"
+        ][0] += 1
+        evaluation["efforts"]["4"]["h0_final_target"][
+            "prediction_histogram"
+        ][1] -= 1
+    elif mutation == "h0_gap":
+        evaluation["efforts"]["8"]["intact_minus_h0"] += 0.1
+    elif mutation == "shuffled_gap":
+        evaluation["efforts"]["8"]["intact_minus_shuffled"] += 0.1
+    else:
+        raise AssertionError(f"unhandled Gate B evaluation mutation {mutation}")
+
+    assert not gate_c._gate_b_evaluation_complete(
+        evaluation,
+        config,
+        require_no_collapse=True,
+    )
+
+
+@requires_gate_c
+def test_gate_b_collapse_guard_applies_only_to_the_full_success_control(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    evaluation = copy.deepcopy(
+        passing["arms"]["legacy"]["gate_b"]["evaluation"]
+    )
+    collapsed = [config.gate_b_config.validation_episodes, *([0] * 9)]
+    for depth in evaluation["depths"].values():
+        for metric in depth.values():
+            metric["prediction_histogram"] = collapsed.copy()
+    evaluation["h0_proper"] = copy.deepcopy(evaluation["depths"]["0"]["intact"])
+    for effort in gate_b.QUALIFYING_EFFORTS:
+        evidence = evaluation["efforts"][str(effort)]
+        for stream in ("intact", "shuffled", "no_context"):
+            evidence[stream] = copy.deepcopy(
+                evaluation["depths"][str(effort)][stream]
+            )
+        evidence["h0_final_target"]["prediction_histogram"] = collapsed.copy()
+
+    assert gate_c._gate_b_evaluation_complete(
+        evaluation,
+        config,
+        require_no_collapse=False,
+    )
+    assert not gate_c._gate_b_evaluation_complete(
+        evaluation,
+        config,
+        require_no_collapse=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "schema",
+        "numeric_type",
+        "negative_norm",
+        "triangle",
+        "defined_flag",
+        "digest",
+        "relative_type",
+        "relative_value",
+        "cosine_type",
+        "cosine_value",
+        "zero_full_relative",
+        "zero_arm_cosine",
+    ),
+)
+@requires_gate_c
+def test_gradient_record_validator_rejects_type_confusion_and_impossible_geometry(
+    mutation: str,
+) -> None:
+    record = copy.deepcopy(
+        _formal_mechanism_oracle()["comparisons"]["terminal_only"]["paths"][
+            "color_factor_head/weight"
+        ]
+    )
+    assert gate_c._gradient_record_complete(record)
+    if mutation == "schema":
+        record["unexpected"] = None
+    elif mutation == "numeric_type":
+        record["full_norm"] = True
+    elif mutation == "negative_norm":
+        record["l2_difference"] = -1.0
+    elif mutation == "triangle":
+        record["l2_difference"] = record["full_norm"] + record["arm_norm"] + 1.0
+    elif mutation == "defined_flag":
+        record["relative_deviation_defined"] = False
+    elif mutation == "digest":
+        record["arm_sha256"] = "bad"
+    elif mutation == "relative_type":
+        record["relative_deviation"] = True
+    elif mutation == "relative_value":
+        record["relative_deviation"] += 0.1
+    elif mutation == "cosine_type":
+        record["cosine"] = True
+    elif mutation == "cosine_value":
+        record["cosine"] = -1.0
+    elif mutation == "zero_full_relative":
+        record.update(
+            {
+                "full_norm": 0.0,
+                "arm_norm": 1.0,
+                "l2_difference": 1.0,
+                "relative_deviation": 0.0,
+                "relative_deviation_defined": False,
+                "cosine": None,
+                "cosine_defined": False,
+            }
+        )
+    elif mutation == "zero_arm_cosine":
+        record.update(
+            {
+                "full_norm": 1.0,
+                "arm_norm": 0.0,
+                "l2_difference": 1.0,
+                "relative_deviation": 1.0,
+                "relative_deviation_defined": True,
+                "cosine": 0.0,
+                "cosine_defined": False,
+            }
+        )
+    else:
+        raise AssertionError(f"unhandled gradient mutation {mutation}")
+
+    assert not gate_c._gradient_record_complete(record)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_schema",
+        "contract",
+        "objective",
+        "chunk_type",
+        "comparison_set",
+        "comparison_schema",
+        "path_set",
+        "path_record",
+        "global_record",
+        "required_paths",
+        "stored_pass",
+        "cross_full_snapshot",
+        "complete_flag",
+    ),
+)
+@requires_gate_c
+def test_mechanism_oracle_validator_rejects_malformed_or_colluding_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    _, config = passing_formal_gate_c_report
+    oracle = _formal_mechanism_oracle()
+    assert gate_c._mechanism_oracle_complete(oracle, config)
+    query = oracle["comparisons"]["query_only"]
+    terminal = oracle["comparisons"]["terminal_only"]
+    path = "color_factor_head/weight"
+    if mutation == "top_schema":
+        oracle["unexpected"] = None
+    elif mutation == "contract":
+        oracle["contract"]["events_sha256"] = "0" * 64
+    elif mutation == "objective":
+        oracle["objective"]["unsupervised_output_exact_zero"] = False
+    elif mutation == "chunk_type":
+        oracle["gradient_chunk_size"] = True
+    elif mutation == "comparison_set":
+        oracle["comparisons"].pop("terminal_only")
+    elif mutation == "comparison_schema":
+        query["unexpected"] = None
+    elif mutation == "path_set":
+        query["paths"].pop(path)
+    elif mutation == "path_record":
+        query["paths"][path]["unexpected"] = None
+    elif mutation == "global_record":
+        query["global"]["l2_difference"] = -1.0
+    elif mutation == "required_paths":
+        query["required_paths"] = []
+    elif mutation == "stored_pass":
+        query["required_paths_passed"] = False
+    elif mutation == "cross_full_snapshot":
+        terminal["paths"][path]["full_sha256"] = "0" * 64
+        terminal["global"]["full_sha256"] = gate_c._gradient_digest_from_records(
+            terminal["paths"],
+            side="full",
+        )
+    elif mutation == "complete_flag":
+        oracle["complete"] = False
+    else:
+        raise AssertionError(f"unhandled oracle mutation {mutation}")
+
+    assert not gate_c._mechanism_oracle_complete(oracle, config)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_schema",
+        "finite_flag",
+        "depth_schema",
+        "stream_schema",
+        "metric_schema",
+        "final_stream_mismatch",
+        "gap",
+        "diagnostic_schema",
+        "memory_schema",
+        "memory_pair_count",
+        "diagnostic_depth_schema",
+        "binding_state",
+    ),
+)
+@requires_gate_c
+def test_gate_a_evaluation_validator_rejects_malformed_binding_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    evaluation = copy.deepcopy(
+        passing["arms"]["full"]["gate_a"]["evaluation"]
+    )
+    assert gate_c._gate_a_evaluation_complete(evaluation, config)
+    if mutation == "top_schema":
+        evaluation["unexpected"] = None
+    elif mutation == "finite_flag":
+        evaluation["all_state_tensors_finite"] = False
+    elif mutation == "depth_schema":
+        evaluation["depths"].pop("1")
+    elif mutation == "stream_schema":
+        evaluation["depths"]["0"].pop("no_context")
+    elif mutation == "metric_schema":
+        evaluation["depths"]["0"]["intact"].pop("checkpoint")
+    elif mutation == "final_stream_mismatch":
+        evaluation["intact"]["prediction_sha256"] = "0" * 64
+    elif mutation == "gap":
+        evaluation["intact_minus_shuffled"] += 0.1
+    elif mutation == "diagnostic_schema":
+        evaluation["binding_diagnostic"]["unexpected"] = None
+    elif mutation == "memory_schema":
+        evaluation["binding_diagnostic"]["memory"].pop("storage_contract")
+    elif mutation == "memory_pair_count":
+        evaluation["binding_diagnostic"]["memory"]["applicable_count"] = True
+    elif mutation == "diagnostic_depth_schema":
+        evaluation["binding_diagnostic"]["read_by_depth"].pop("0")
+    elif mutation == "binding_state":
+        evaluation["binding_state"]["all_finite"] = False
+    else:
+        raise AssertionError(f"unhandled Gate A evaluation mutation {mutation}")
+
+    assert not gate_c._gate_a_evaluation_complete(evaluation, config)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "schema",
+        "zero_with_positive_mean",
+        "zero_with_distinct_hashes",
+        "different_with_zero_mean",
+        "different_with_equal_hashes",
+        "different_count_out_of_range",
+        "negative_no_context_norm",
+    ),
+)
+@requires_gate_c
+def test_paired_diagnostic_validator_rejects_incoherent_count_norm_and_hashes(
+    mutation: str,
+) -> None:
+    record = copy.deepcopy(
+        _formal_paired_diagnostic(identity="coverage:legacy", different=0)
+    )
+    assert gate_c._paired_diagnostic_record_complete(record, count=512)
+    if mutation == "schema":
+        record["unexpected"] = None
+    elif mutation == "zero_with_positive_mean":
+        record["mean_l2_difference"] = 1.0
+    elif mutation == "zero_with_distinct_hashes":
+        record["right_sha256"] = "0" * 64
+    elif mutation == "different_with_zero_mean":
+        record["different_count"] = 1
+        record["mean_l2_difference"] = 0.0
+        record["right_sha256"] = "0" * 64
+    elif mutation == "different_with_equal_hashes":
+        record["different_count"] = 1
+        record["mean_l2_difference"] = 1.0
+    elif mutation == "different_count_out_of_range":
+        record["different_count"] = 513
+    elif mutation == "negative_no_context_norm":
+        record["no_context_l2_norm"] = -1.0
+    else:
+        raise AssertionError(f"unhandled paired diagnostic mutation {mutation}")
+
+    assert not gate_c._paired_diagnostic_record_complete(record, count=512)
+
+
+@pytest.mark.parametrize("arm_norm", (0.0, 1.0))
+@requires_gate_c
+def test_gradient_record_accepts_well_defined_zero_full_norm_geometry(
+    arm_norm: float,
+) -> None:
+    digest = hashlib.sha256(f"zero-full:{arm_norm}".encode()).hexdigest()
+    record = {
+        "full_norm": 0.0,
+        "arm_norm": arm_norm,
+        "l2_difference": arm_norm,
+        "relative_deviation": None,
+        "relative_deviation_defined": False,
+        "cosine": None,
+        "cosine_defined": False,
+        "full_sha256": digest,
+        "arm_sha256": digest,
+    }
+
+    assert gate_c._gradient_record_complete(record)
+
+
+@requires_gate_c
+def test_legacy_intervention_requires_all_memory_and_read_paths_exact_zero(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    evaluation = copy.deepcopy(
+        passing["arms"]["legacy"]["gate_a"]["evaluation"]
+    )
+    assert gate_c._gate_a_evaluation_complete(evaluation, config)
+    assert gate_c._gate_a_intervention_diagnostic_complete(
+        evaluation,
+        arm="legacy",
+    )
+    evaluation["binding_diagnostic"]["memory"]["intact_l2_norm"] = 1.0
+
+    assert not gate_c._gate_a_intervention_diagnostic_complete(
+        evaluation,
+        arm="legacy",
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "nonqualifying_config",
+        "qualification_regime",
+        "regime_schema",
+        "regime_spec",
+        "arm_regime_schema",
+        "arm_report_schema",
+        "execution_index_type",
+        "intervention",
+    ),
+)
+@requires_gate_c
+def test_formal_configuration_validator_rejects_stale_or_type_confused_identity(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    candidate_config = config
+    if mutation == "nonqualifying_config":
+        candidate_config = dataclasses.replace(config, oracle_effort=4)
+    elif mutation == "qualification_regime":
+        report["qualification_regime"] = "nonqualifying_abbreviated"
+    elif mutation == "regime_schema":
+        report["regimes"]["gate_a"]["unexpected"] = None
+    elif mutation == "regime_spec":
+        report["regimes"]["gate_a"]["spec"]["training_updates"] += 1
+    elif mutation == "arm_regime_schema":
+        report["arms"]["full"].pop("gate_b")
+    elif mutation == "arm_report_schema":
+        report["arms"]["full"]["gate_a"]["unexpected"] = None
+    elif mutation == "execution_index_type":
+        report["arms"]["full"]["gate_a"]["training"]["execution_index"] = True
+    elif mutation == "intervention":
+        report["arms"]["full"]["gate_a"]["training"]["intervention"][
+            "memory_mode"
+        ] = "none"
+    else:
+        raise AssertionError(f"unhandled formal configuration mutation {mutation}")
+
+    assert not gate_c._exact_formal_configuration_complete(
+        report,
+        candidate_config,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "initialization_report_type",
+        "initialization_schema",
+        "initialization_count_type",
+        "schedule",
+        "data_identity",
+        "loss_weights",
+        "paired_schema",
+        "paired_checkpoint_type",
+        "paired_initialization",
+        "paired_stream_schema",
+        "paired_digest",
+        "paired_boolean",
+        "paired_pass",
+    ),
+)
+@requires_gate_c
+def test_formal_identity_validators_reject_malformed_or_stale_evidence(
+    mutation: str,
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    report = copy.deepcopy(passing)
+    admission = report["prerequisites"]["gate_c_initialization"]["admission"]
+    arm_report: Any = report["arms"]["full"]["gate_a"]
+    if mutation == "initialization_report_type":
+        assert not gate_c._formal_initialization_complete(
+            [],
+            admission,
+            regime="gate_a",
+            arm="full",
+        )
+        return
+    if mutation == "initialization_schema":
+        arm_report["initialization"]["unexpected"] = None
+        assert not gate_c._formal_initialization_complete(
+            arm_report,
+            admission,
+            regime="gate_a",
+            arm="full",
+        )
+        return
+    if mutation == "initialization_count_type":
+        arm_report["initialization"]["parameter_count"] = True
+        assert not gate_c._formal_initialization_complete(
+            arm_report,
+            admission,
+            regime="gate_a",
+            arm="full",
+        )
+        return
+    if mutation == "schedule":
+        report["regimes"]["gate_a"]["schedule"]["events"] = "0" * 64
+        assert not gate_c._canonical_schedules_complete(report, config)
+        return
+    if mutation == "data_identity":
+        report["arms"]["full"]["gate_a"]["training"]["data_identity"][
+            "events"
+        ] = "0" * 64
+        assert not gate_c._canonical_schedules_complete(report, config)
+        return
+    if mutation == "loss_weights":
+        report["arms"]["full"]["gate_a"]["training"]["loss_weights"][
+            "sha256"
+        ] = "0" * 64
+        assert not gate_c._canonical_schedules_complete(report, config)
+        return
+    paired = report["regimes"]["gate_a"]["paired_h0_identity"]
+    if mutation == "paired_schema":
+        paired["unexpected"] = None
+    elif mutation == "paired_checkpoint_type":
+        paired["checkpoint"] = True
+    elif mutation == "paired_initialization":
+        paired["initialization_parameter_sha256"]["full"] = "0" * 64
+    elif mutation == "paired_stream_schema":
+        paired["streams"]["intact"]["unexpected"] = None
+    elif mutation == "paired_digest":
+        paired["streams"]["intact"]["full_compact_sha256"] = "bad"
+    elif mutation == "paired_boolean":
+        paired["streams"]["intact"]["compact_byte_identical"] = 1
+    elif mutation == "paired_pass":
+        paired["passed"] = False
+    else:
+        raise AssertionError(f"unhandled formal identity mutation {mutation}")
+    assert not gate_c._paired_h0_identity_complete(
+        paired,
+        admission,
+        regime="gate_a",
+    )
+
+
+@requires_gate_c
+def test_full_gate_b_and_behavioral_margins_reject_incomplete_duplicate_evidence(
+    passing_formal_gate_c_report: tuple[dict[str, Any], Any],
+) -> None:
+    passing, config = passing_formal_gate_c_report
+    malformed_full = copy.deepcopy(passing)
+    malformed_full["arms"]["full"]["gate_b"]["evaluation"]["unexpected"] = None
+    assert not gate_c._full_gate_b_complete(malformed_full, config)
+
+    stale_metrics = copy.deepcopy(passing)
+    stale_metrics["arms"]["legacy"]["gate_a"]["metrics"]["binding_gap"] += 0.1
+    assert not gate_c._behavioral_margins_complete(stale_metrics, config)
+
+
+@requires_gate_c
+def test_arm_initialization_reproduction_binds_authenticated_evidence() -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    report = _minimal_formal_arm_initialization_report(
+        admission,
+        "gate_b",
+        "frozen_write",
+    )
+
+    assert gate_c._arm_initialization_reproduced(
+        report,
+        admission,
+        "gate_b",
+        "frozen_write",
+    ) is True
+
+    colluding = copy.deepcopy(report)
+    colluding["initialization"]["parameter_sha256"] = "e" * 64
+    colluding["optimizer"]["state_sha256"] = "e" * 64
+    assert gate_c._arm_initialization_reproduced(
+        colluding,
+        admission,
+        "gate_b",
+        "frozen_write",
+    ) is False
+
+
+@requires_gate_c
+def test_formal_arm_initialization_builder_raises_before_training_on_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    config = _reduced_gate_c_config()
+    model = gate_c._new_model_for_arm(
+        config,
+        "gate_a",
+        "full",
+        batch_size=config.gate_a_config.batch_size,
+    )
+    trainer = gate_c._make_arm_trainer(
+        model,
+        config,
+        "gate_a",
+        "full",
+    )
+    checker_calls = 0
+
+    def reject_reproduction(*args: Any, **kwargs: Any) -> bool:
+        nonlocal checker_calls
+        checker_calls += 1
+        return False
+
+    monkeypatch.setattr(
+        gate_c,
+        "_arm_initialization_reproduced",
+        reject_reproduction,
+        raising=False,
+    )
+
+    with pytest.raises(RuntimeError, match="initialization|reproduc"):
+        gate_c._formal_arm_initialization_report(
+            model,
+            trainer,
+            admission,
+            "gate_a",
+            "full",
+        )
+    assert checker_calls == 1
+
+
+@requires_gate_c
+def test_formal_runner_authenticates_initialization_before_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report, _ = _passing_gate_c_initialization_report()
+    prerequisites = {
+        "gate_a": dict(_GATE_A_REFERENCE),
+        "gate_b": dict(_GATE_B_REFERENCE),
+        "gate_c_initialization": _gate_c_initialization_wrapper(report),
+    }
+    model_calls = 0
+
+    def reject_initialization(*args: Any, **kwargs: Any) -> Any:
+        del args, kwargs
+        raise ValueError("Gate C initialization is not authenticated")
+
+    def forbidden_model(*args: Any, **kwargs: Any) -> Any:
+        nonlocal model_calls
+        model_calls += 1
+        raise AssertionError("model constructed before initialization auth")
+
+    monkeypatch.setattr(
+        gate_c,
+        "_validated_gate_c_initialization_admission",
+        reject_initialization,
+    )
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", forbidden_model)
+
+    with pytest.raises(ValueError, match="initialization.*authenticated"):
+        gate_c.run_gate_c(
+            _reduced_gate_c_config(),
+            prerequisites=prerequisites,
+            source_start=_passing_gate_c_source(),
+            source_end_reporter=_passing_gate_c_source,
+            source_files=_current_gate_c_source_files(),
+            environment=_passing_gate_c_environment(),
+        )
+    assert model_calls == 0
+
+
+@requires_gate_c
+def test_formal_runner_executes_ten_fresh_isolated_arms_in_fixed_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    wrapper = _gate_c_initialization_wrapper(admission)
+    prerequisites = {
+        "gate_a": dict(_GATE_A_REFERENCE),
+        "gate_b": dict(_GATE_B_REFERENCE),
+        "gate_c_initialization": wrapper,
+    }
+    config = _reduced_gate_c_config()
+    source_start = _passing_gate_c_source()
+    source_end = copy.deepcopy(source_start)
+    environment = _passing_gate_c_environment()
+    source_files = _current_gate_c_source_files()
+    gate_a_data = object()
+    gate_b_data = (object(), object())
+    schedule_reports = {
+        "gate_a": {
+            "training_schedule_sha256": "a" * 64,
+            "validation_schedule_sha256": "b" * 64,
+            "training_mapping_ids_sha256": "c" * 64,
+            "validation_mapping_ids_sha256": "d" * 64,
+        },
+        "gate_b": {
+            "training_global_sha256": {
+                name: "e" * 64
+                for name in (
+                    "events",
+                    "targets",
+                    "loss_weights",
+                    "advance_masks",
+                    "mapping_ids",
+                    "efforts",
+                    "query_colors",
+                    "presentation_orders",
+                )
+            },
+            "validation_sha256": {
+                name: "f" * 64
+                for name in (
+                    "mapping_ids",
+                    "query_colors",
+                    "presentation_orders",
+                    "shuffled_shifts",
+                    "intact",
+                    "shuffled",
+                    "no_context",
+                    "targets_by_depth",
+                    "advance_masks",
+                )
+            },
+        },
+    }
+    paired_h0_reports = {
+        regime: {
+            "checkpoint": 0,
+            "initialization_parameter_sha256": {
+                "full": admission["initialization"][regime][
+                    "canonical_full"
+                ]["parameter_sha256"],
+                "query_only": admission["initialization"][regime][
+                    "canonical_full"
+                ]["parameter_sha256"],
+            },
+            "streams": {
+                stream: {
+                    "full_compact_sha256": "1" * 64,
+                    "query_only_compact_sha256": "1" * 64,
+                    "full_state_sha256": "2" * 64,
+                    "query_only_state_sha256": "2" * 64,
+                    "compact_byte_identical": True,
+                    "state_byte_identical": True,
+                }
+                for stream in ("intact", "shuffled", "no_context")
+            },
+            "passed": True,
+        }
+        for regime in _REGIMES
+    }
+    events: list[tuple[Any, ...]] = []
+    models: dict[tuple[str, str], Any] = {}
+    trainers: dict[tuple[str, str], Any] = {}
+    initialization_reports: dict[tuple[str, str], dict[str, Any]] = {}
+    run_calls: list[tuple[str, str, object, object, object]] = []
+
+    def validate_initialization(
+        prerequisite: Mapping[str, Any],
+        actual_config: Any,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        events.append(("initialization_authenticated",))
+        assert prerequisite is wrapper
+        assert actual_config is config
+        assert kwargs == {
+            "source_start": source_start,
+            "environment": environment,
+            "source_files": source_files,
+            "require_pass": True,
+        }
+        return admission
+
+    def regenerate_gate_a(actual_config: Any) -> object:
+        assert actual_config is config
+        events.append(("data", "gate_a"))
+        return gate_a_data
+
+    def regenerate_gate_b(actual_config: Any) -> tuple[object, object]:
+        assert actual_config is config
+        events.append(("data", "gate_b"))
+        return gate_b_data
+
+    def new_model(
+        actual_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        batch_size: int,
+    ) -> Any:
+        assert actual_config is config
+        assert batch_size > 0
+        model = SimpleNamespace(regime=regime, arm=arm, instance=object())
+        models[(regime, arm)] = model
+        events.append(("model", regime, arm))
+        return model
+
+    def copy_shared(canonical: Any, legacy_model: Any) -> dict[str, Any]:
+        assert canonical is models[(canonical.regime, "full")]
+        assert legacy_model is models[(canonical.regime, "legacy")]
+        events.append(("shared_copy", canonical.regime))
+        return {"all_equal": True}
+
+    def make_trainer(
+        model: Any,
+        actual_config: Any,
+        regime: str,
+        arm: str,
+    ) -> Any:
+        assert actual_config is config
+        assert model is models[(regime, arm)]
+        trainer = SimpleNamespace(
+            optimizer=object(),
+            regime=regime,
+            arm=arm,
+            instance=object(),
+        )
+        trainers[(regime, arm)] = trainer
+        events.append(("trainer", regime, arm))
+        return trainer
+
+    def formal_initialization_report(
+        model: Any,
+        trainer: Any,
+        actual_admission: Mapping[str, Any],
+        regime: str,
+        arm: str,
+    ) -> dict[str, Any]:
+        assert model is models[(regime, arm)]
+        assert trainer is trainers[(regime, arm)]
+        assert actual_admission is admission
+        report = _minimal_formal_arm_initialization_report(
+            admission,
+            regime,
+            arm,
+        )
+        initialization_reports[(regime, arm)] = report
+        events.append(("arm_initialization", regime, arm))
+        return report
+
+    def run_arm(
+        model: Any,
+        trainer: Any,
+        data: Any,
+        actual_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        initialization_report: Mapping[str, Any],
+        execution_index: int,
+        data_identity: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        assert actual_config is config
+        assert model is models[(regime, arm)]
+        assert trainer is trainers[(regime, arm)]
+        assert initialization_report == initialization_reports[(regime, arm)]
+        expected_data = gate_a_data if regime == "gate_a" else gate_b_data
+        assert data is expected_data
+        expected_index = _REGIMES.index(regime) * len(_ARMS) + _ARMS.index(arm)
+        assert execution_index == expected_index
+        assert data_identity == schedule_reports[regime]
+        events.append(("run", regime, arm))
+        run_calls.append(
+            (
+                regime,
+                arm,
+                model.instance,
+                trainer.instance,
+                trainer.optimizer,
+            )
+        )
+        report = _minimal_formal_arm_report(
+            admission,
+            regime,
+            arm,
+            initialization_report=initialization_report,
+        )
+        report["training"].update(
+            {
+                "execution_index": execution_index,
+                "intervention": dataclasses.asdict(gate_c.ARM_SPECS[arm]),
+                "data_identity": copy.deepcopy(data_identity),
+            }
+        )
+        return report
+
+    def actual_schedule_identity(
+        actual_config: Any,
+        actual_gate_a_data: Any,
+        actual_gate_b_data: Any,
+    ) -> dict[str, Any]:
+        assert actual_config is config
+        assert actual_gate_a_data is gate_a_data
+        assert actual_gate_b_data is gate_b_data
+        events.append(("actual_schedule_identity",))
+        return copy.deepcopy(schedule_reports)
+
+    def paired_h0_identity(
+        actual_config: Any,
+        *,
+        initialization: Mapping[str, Any],
+        regime: str,
+        data: Any,
+    ) -> dict[str, Any]:
+        assert actual_config is config
+        assert initialization is admission
+        assert data is (gate_a_data if regime == "gate_a" else gate_b_data)
+        events.append(("paired_h0_identity", regime))
+        return copy.deepcopy(paired_h0_reports[regime])
+
+    def mechanism_oracle(
+        actual_config: Any,
+        *,
+        initialization: Mapping[str, Any],
+        gate_b_data: Any,
+    ) -> dict[str, Any]:
+        assert actual_config is config
+        assert initialization is admission
+        assert gate_b_data is gate_b_data_value
+        events.append(("mechanism_oracle",))
+        return {"complete": False, "gradient_chunk_size": 1}
+
+    gate_b_data_value = gate_b_data
+
+    def source_end_reporter() -> dict[str, Any]:
+        events.append(("source_end",))
+        return source_end
+
+    def qualification(
+        formal_report: Mapping[str, Any],
+        *,
+        config: Any,
+    ) -> dict[str, Any]:
+        assert config is not None
+        assert formal_report["source_end"] == source_end
+        assert isinstance(formal_report["total_wall_seconds"], float)
+        assert math.isfinite(formal_report["total_wall_seconds"])
+        assert formal_report["total_wall_seconds"] >= 0.0
+        for regime in _REGIMES:
+            assert formal_report["regimes"][regime][
+                "paired_h0_identity"
+            ] == paired_h0_reports[regime]
+        for execution_index, (regime, arm) in enumerate(
+            (pair for pair in ((r, a) for r in _REGIMES for a in _ARMS))
+        ):
+            training = formal_report["arms"][arm][regime]["training"]
+            assert training["execution_index"] == execution_index
+            assert training["intervention"] == dataclasses.asdict(
+                gate_c.ARM_SPECS[arm]
+            )
+            assert training["data_identity"] == schedule_reports[regime]
+        events.append(("qualification",))
+        return {
+            "criteria": {
+                name: False for name in gate_c.QUALIFICATION_CRITERIA
+            },
+            "passed": False,
+            "interpretation": "gate_c_failed_stop_no_causal_mechanism_conclusion",
+        }
+
+    monkeypatch.setattr(
+        gate_c,
+        "_validated_gate_c_initialization_admission",
+        validate_initialization,
+    )
+    monkeypatch.setattr(gate_c, "_regenerate_gate_a_data", regenerate_gate_a)
+    monkeypatch.setattr(gate_c, "_regenerate_gate_b_data", regenerate_gate_b)
+    monkeypatch.setattr(
+        gate_c,
+        "_schedule_identity_report",
+        lambda actual_config: (_ for _ in ()).throw(
+            AssertionError("constants-only schedule reporter is inadmissible")
+        ),
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_actual_schedule_identity_report",
+        actual_schedule_identity,
+        raising=False,
+    )
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", new_model)
+    monkeypatch.setattr(gate_c, "_copy_shared_initialization", copy_shared)
+    monkeypatch.setattr(gate_c, "_make_arm_trainer", make_trainer)
+    monkeypatch.setattr(
+        gate_c,
+        "_formal_arm_initialization_report",
+        formal_initialization_report,
+        raising=False,
+    )
+    monkeypatch.setattr(gate_c, "_run_gate_c_arm", run_arm, raising=False)
+    monkeypatch.setattr(
+        gate_c,
+        "_mechanism_oracle",
+        mechanism_oracle,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_paired_h0_identity_report",
+        paired_h0_identity,
+        raising=False,
+    )
+    monkeypatch.setattr(gate_c, "_qualification_report", qualification)
+
+    result = gate_c.run_gate_c(
+        config,
+        prerequisites=prerequisites,
+        source_start=source_start,
+        source_end_reporter=source_end_reporter,
+        source_files=source_files,
+        environment=environment,
+    )
+
+    expected_order = [
+        (regime, arm) for regime in _REGIMES for arm in _ARMS
+    ]
+    assert [(regime, arm) for regime, arm, *_ in run_calls] == expected_order
+    assert len({model_id for *_, model_id, _, _ in run_calls}) == 10
+    assert len({trainer_id for *_, trainer_id, _ in run_calls}) == 10
+    assert len({optimizer_id for *_, optimizer_id in run_calls}) == 10
+    first_run = min(
+        events.index(("run", regime, arm))
+        for regime, arm in expected_order
+    )
+    assert all(
+        events.index(("arm_initialization", regime, arm)) < first_run
+        for regime, arm in expected_order
+    )
+    for regime in _REGIMES:
+        copy_position = events.index(("shared_copy", regime))
+        first_regime_run = min(
+            events.index(("run", regime, arm)) for arm in _ARMS
+        )
+        assert (
+            events.index(("model", regime, "legacy"))
+            < copy_position
+            < first_regime_run
+        )
+    assert events[0] == ("initialization_authenticated",)
+    assert events.index(("actual_schedule_identity",)) < first_run
+    assert all(
+        events.index(("paired_h0_identity", regime))
+        < events.index(("source_end",))
+        for regime in _REGIMES
+    )
+    assert events.index(("mechanism_oracle",)) < events.index(("source_end",))
+    assert events[-1] == ("qualification",)
+    assert set(result) == {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "learner",
+        "prerequisites",
+        "regimes",
+        "arms",
+        "mechanism_oracle",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+        "total_wall_seconds",
+    }
+    assert result["schema_version"] == 1
+    assert result["control"] == "example21_pp_prop_learnability_gate_c"
+    assert result["learner"] == "pp_prop_only"
+    assert set(result["arms"]) == set(_ARMS)
+    assert all(set(result["arms"][arm]) == set(_REGIMES) for arm in _ARMS)
+    assert all(
+        set(result["arms"][arm][regime])
+        == {
+            "initialization",
+            "optimizer",
+            "compiler",
+            "training",
+            "parameter_movement",
+            "evaluation",
+            "metrics",
+        }
+        for arm in _ARMS
+        for regime in _REGIMES
+    )
+    for regime in _REGIMES:
+        assert result["regimes"][regime]["schedule"] == schedule_reports[regime]
+        assert result["regimes"][regime]["paired_h0_identity"] == (
+            paired_h0_reports[regime]
+        )
+    assert result["source_end"] == source_end
+    assert result["qualification"]["passed"] is False
+    assert isinstance(result["total_wall_seconds"], float)
+    assert math.isfinite(result["total_wall_seconds"])
+    assert result["total_wall_seconds"] >= 0.0
+
+
+@requires_gate_c
+def test_formal_runner_audits_then_rebuilds_each_arm_with_bounded_live_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, _ = _passing_gate_c_initialization_report()
+    wrapper = _gate_c_initialization_wrapper(admission)
+    config = _reduced_gate_c_config()
+    gate_a_data = object()
+    gate_b_data = (object(), object())
+    schedule_reports = {
+        "gate_a": {name: "a" * 64 for name in _GATE_A_SCHEDULE_SHA256},
+        "gate_b": {
+            "training_global_sha256": {
+                name: "b" * 64 for name in _GATE_B_TRAINING_SHA256
+            },
+            "validation_sha256": {
+                name: "c" * 64 for name in _GATE_B_VALIDATION_SHA256
+            },
+        },
+    }
+    expected_order = [
+        (regime, arm) for regime in _REGIMES for arm in _ARMS
+    ]
+
+    class TrackedModel:
+        __slots__ = ("regime", "arm", "__weakref__")
+
+        def __init__(self, regime: str, arm: str) -> None:
+            self.regime = regime
+            self.arm = arm
+
+    class TrackedTrainer:
+        __slots__ = ("regime", "arm", "optimizer", "__weakref__")
+
+        def __init__(self, regime: str, arm: str) -> None:
+            self.regime = regime
+            self.arm = arm
+            self.optimizer = object()
+
+    model_refs: list[weakref.ReferenceType[Any]] = []
+    trainer_refs: list[weakref.ReferenceType[Any]] = []
+    max_live_models = 0
+    max_live_trainers = 0
+    initialization_calls = {pair: 0 for pair in expected_order}
+    audit_model_ids: dict[tuple[str, str], int] = {}
+    audit_trainer_ids: dict[tuple[str, str], int] = {}
+    audit_reports: dict[tuple[str, str], dict[str, Any]] = {}
+    latest_model_ids: dict[tuple[str, str], int] = {}
+    latest_trainer_ids: dict[tuple[str, str], int] = {}
+    run_order: list[tuple[str, str]] = []
+    reproduced_before_update: list[bool] = []
+
+    def alive(refs: list[weakref.ReferenceType[Any]]) -> int:
+        gc.collect()
+        return sum(reference() is not None for reference in refs)
+
+    def new_model(
+        actual_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        batch_size: int,
+    ) -> TrackedModel:
+        nonlocal max_live_models
+        assert actual_config is config
+        assert batch_size > 0
+        model = TrackedModel(regime, arm)
+        model_refs.append(weakref.ref(model))
+        max_live_models = max(max_live_models, alive(model_refs))
+        return model
+
+    def make_trainer(
+        model: TrackedModel,
+        actual_config: Any,
+        regime: str,
+        arm: str,
+    ) -> TrackedTrainer:
+        nonlocal max_live_trainers
+        assert actual_config is config
+        assert (model.regime, model.arm) == (regime, arm)
+        trainer = TrackedTrainer(regime, arm)
+        trainer_refs.append(weakref.ref(trainer))
+        max_live_trainers = max(max_live_trainers, alive(trainer_refs))
+        return trainer
+
+    def initialization_report(
+        model: TrackedModel,
+        trainer: TrackedTrainer,
+        actual_admission: Mapping[str, Any],
+        regime: str,
+        arm: str,
+    ) -> dict[str, Any]:
+        pair = (regime, arm)
+        assert actual_admission is admission
+        assert (model.regime, model.arm) == pair
+        assert (trainer.regime, trainer.arm) == pair
+        initialization_calls[pair] += 1
+        report = _minimal_formal_arm_initialization_report(
+            admission,
+            regime,
+            arm,
+        )
+        if initialization_calls[pair] == 1:
+            audit_model_ids[pair] = id(model)
+            audit_trainer_ids[pair] = id(trainer)
+            audit_reports[pair] = copy.deepcopy(report)
+        else:
+            assert initialization_calls[pair] == 2
+            assert id(model) != audit_model_ids[pair]
+            assert id(trainer) != audit_trainer_ids[pair]
+            assert report == audit_reports[pair]
+        latest_model_ids[pair] = id(model)
+        latest_trainer_ids[pair] = id(trainer)
+        return report
+
+    def run_arm(
+        model: TrackedModel,
+        trainer: TrackedTrainer,
+        data: Any,
+        actual_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        initialization_report: Mapping[str, Any],
+        execution_index: int,
+        data_identity: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        pair = (regime, arm)
+        assert actual_config is config
+        assert execution_index == expected_order.index(pair)
+        assert data_identity == schedule_reports[regime]
+        assert data is (gate_a_data if regime == "gate_a" else gate_b_data)
+        assert all(initialization_calls[item] >= 1 for item in expected_order)
+        reproduced_before_update.append(
+            initialization_calls[pair] == 2
+            and id(model) == latest_model_ids[pair]
+            and id(trainer) == latest_trainer_ids[pair]
+            and initialization_report == audit_reports[pair]
+        )
+        run_order.append(pair)
+        report = _minimal_formal_arm_report(
+            admission,
+            regime,
+            arm,
+            initialization_report=initialization_report,
+        )
+        report["training"].update(
+            {
+                "execution_index": execution_index,
+                "intervention": dataclasses.asdict(gate_c.ARM_SPECS[arm]),
+                "data_identity": copy.deepcopy(data_identity),
+            }
+        )
+        return report
+
+    monkeypatch.setattr(
+        gate_c,
+        "_validated_gate_c_initialization_admission",
+        lambda *args, **kwargs: admission,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_normalized_prerequisites",
+        lambda value: copy.deepcopy(value),
+    )
+    monkeypatch.setattr(gate_c, "_regenerate_gate_a_data", lambda value: gate_a_data)
+    monkeypatch.setattr(gate_c, "_regenerate_gate_b_data", lambda value: gate_b_data)
+    monkeypatch.setattr(
+        gate_c,
+        "_actual_schedule_identity_report",
+        lambda *args: copy.deepcopy(schedule_reports),
+    )
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", new_model)
+    monkeypatch.setattr(
+        gate_c,
+        "_copy_shared_initialization",
+        lambda canonical, legacy_model: {"all_equal": True},
+    )
+    monkeypatch.setattr(gate_c, "_make_arm_trainer", make_trainer)
+    monkeypatch.setattr(
+        gate_c,
+        "_formal_arm_initialization_report",
+        initialization_report,
+    )
+    monkeypatch.setattr(gate_c, "_run_gate_c_arm", run_arm)
+    monkeypatch.setattr(
+        gate_c,
+        "_mechanism_oracle",
+        lambda *args, **kwargs: {"complete": False},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_paired_h0_identity_report",
+        lambda *args, regime, **kwargs: _formal_paired_h0_identity(
+            admission,
+            regime,
+        ),
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_qualification_report",
+        lambda *args, **kwargs: {
+            "criteria": {name: False for name in gate_c.QUALIFICATION_CRITERIA},
+            "passed": False,
+            "interpretation": "gate_c_failed_stop_no_causal_mechanism_conclusion",
+        },
+    )
+
+    gate_c.run_gate_c(
+        config,
+        prerequisites={
+            "gate_a": dict(_GATE_A_REFERENCE),
+            "gate_b": dict(_GATE_B_REFERENCE),
+            "gate_c_initialization": wrapper,
+        },
+        source_start=_passing_gate_c_source(),
+        source_end_reporter=_passing_gate_c_source,
+        source_files=_current_gate_c_source_files(),
+        environment=_passing_gate_c_environment(),
+    )
+
+    assert run_order == expected_order
+    assert all(initialization_calls[pair] == 2 for pair in expected_order)
+    assert all(reproduced_before_update)
+    assert max_live_models <= 2
+    assert max_live_trainers <= 1
+
+
+def _reduced_formal_arm_initialization_report(
+    model: LatentWorkspaceModel,
+    trainer: Any,
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    values = legacy._parameter_values(model)
+    tree = "legacy" if arm == "legacy" else "canonical_full"
+    return {
+        "initialization": {
+            "tree": tree,
+            "parameter_sha256": legacy._array_digest(values),
+            "parameter_count": sum(
+                np.asarray(leaf).size
+                for value in values.values()
+                for leaf in jax.tree.leaves(value)
+            ),
+            "parameter_paths": sorted(values),
+            "shared_paths": {
+                "paths": list(_SHARED_PATHS),
+                "all_equal": True,
+            },
+        },
+        "optimizer": gate_c._optimizer_initial_state_report(
+            trainer,
+            regime=regime,
+            arm=arm,
+        ),
+        "compiler": copy.deepcopy(trainer.compiler),
+    }
+
+
+@pytest.fixture(scope="module")
+def reduced_formal_terminal_and_frozen_reports() -> dict[str, Any]:
+    config = _reduced_gate_c_config()
+    gate_a_data = gate_c._regenerate_gate_a_data(config)
+    gate_b_data = gate_c._regenerate_gate_b_data(config)
+    data_by_regime = {
+        "gate_a": gate_a_data,
+        "gate_b": gate_b_data,
+    }
+    expected_weights: dict[tuple[str, str], np.ndarray] = {}
+    reports: dict[str, dict[str, Any]] = {
+        arm: {} for arm in ("terminal_only", "frozen_write")
+    }
+    frozen_values: dict[str, dict[str, np.ndarray]] = {}
+
+    for regime in _REGIMES:
+        regime_config = (
+            config.gate_a_config
+            if regime == "gate_a"
+            else config.gate_b_config
+        )
+        for arm in ("terminal_only", "frozen_write"):
+            model = gate_c._new_model_for_arm(
+                config,
+                regime,
+                arm,
+                batch_size=regime_config.batch_size,
+            )
+            trainer = gate_c._make_arm_trainer(
+                model,
+                config,
+                regime,
+                arm,
+            )
+            initialization = _reduced_formal_arm_initialization_report(
+                model,
+                trainer,
+                regime,
+                arm,
+            )
+            if regime == "gate_a":
+                weights = gate_c._loss_weights(
+                    regime,
+                    arm,
+                    efforts=np.ones(
+                        (regime_config.training_updates,),
+                        dtype=np.int32,
+                    ),
+                )
+            else:
+                schedule = gate_b_data[0]
+                weights = np.concatenate(
+                    [
+                        gate_c._loss_weights(
+                            regime,
+                            arm,
+                            efforts=np.asarray(
+                                gate_b._encode_training_chunk(
+                                    schedule_chunk,
+                                    config.gate_b_config,
+                                ).efforts
+                            ),
+                        )
+                        for schedule_chunk in gate_b._iter_schedule_chunks(
+                            schedule,
+                            config.gate_b_config,
+                        )
+                    ],
+                    axis=0,
+                )
+            expected_weights[(regime, arm)] = np.asarray(weights)
+            before_write = np.array(
+                _parameter_states(model)["memory_write_scale"].value,
+                copy=True,
+            )
+            reports[arm][regime] = gate_c._run_gate_c_arm(
+                model,
+                trainer,
+                data_by_regime[regime],
+                config,
+                regime,
+                arm,
+                initialization_report=initialization,
+            )
+            frozen_values[f"{regime}:{arm}"] = {
+                "before": before_write,
+                "after": np.asarray(
+                    _parameter_states(model)["memory_write_scale"].value
+                ),
+            }
+    return {
+        "config": config,
+        "reports": reports,
+        "weights": expected_weights,
+        "frozen_values": frozen_values,
+    }
+
+
+@requires_gate_c
+def test_reduced_formal_arms_retain_exact_updates_losses_and_masks(
+    reduced_formal_terminal_and_frozen_reports: dict[str, Any],
+) -> None:
+    run = reduced_formal_terminal_and_frozen_reports
+    config = run["config"]
+    for arm in ("terminal_only", "frozen_write"):
+        for regime in _REGIMES:
+            report = run["reports"][arm][regime]
+            training = report["training"]
+            regime_config = (
+                config.gate_a_config
+                if regime == "gate_a"
+                else config.gate_b_config
+            )
+            weights = run["weights"][(regime, arm)]
+            assert training["algorithm"] == "production_pp_prop"
+            assert training["executed_updates"] == regime_config.training_updates
+            assert training["optimizer_final_step"] == regime_config.training_updates
+            assert len(training["losses"]) == regime_config.training_updates
+            assert np.isfinite(np.asarray(training["losses"])).all()
+            assert training["initial_parameter_sha256"] == report[
+                "initialization"
+            ]["parameter_sha256"]
+            assert training["final_parameter_sha256"] != training[
+                "initial_parameter_sha256"
+            ]
+            assert training["loss_weights"] == {
+                "dtype": weights.dtype.str,
+                "shape": list(weights.shape),
+                "sha256": legacy._digest_arrays(weights),
+            }
+            assert set(training["finite"]) == {
+                "logits",
+                "model_states",
+                "gradients",
+                "pp_prop_traces",
+                "adam",
+                "parameters",
+            }
+            assert all(training["finite"].values())
+            assert all(
+                math.isfinite(value) and value >= 0.0
+                for value in training["max_abs"].values()
+            )
+            assert all(value > 0 for value in training["value_count"].values())
+            assert report["parameter_movement"]["l2_delta"] > 0.0
+            assert report["evaluation"]["finite"] is True
+
+            if arm == "terminal_only":
+                if regime == "gate_a":
+                    np.testing.assert_array_equal(
+                        np.flatnonzero(weights),
+                        [weights.shape[0] - 1],
+                    )
+                else:
+                    assert weights.ndim == 2
+                    assert all(np.count_nonzero(row) == 1 for row in weights)
+                np.testing.assert_allclose(weights.sum(axis=-1), 1.0)
+            elif regime == "gate_a":
+                np.testing.assert_allclose(weights[-2:], [0.5, 0.5])
+                assert np.count_nonzero(weights) == 2
+            else:
+                np.testing.assert_allclose(weights.sum(axis=-1), 1.0)
+
+
+@requires_gate_c
+def test_reduced_formal_frozen_write_retains_literal_write_and_zero_movement(
+    reduced_formal_terminal_and_frozen_reports: dict[str, Any],
+) -> None:
+    run = reduced_formal_terminal_and_frozen_reports
+    for regime in _REGIMES:
+        report = run["reports"]["frozen_write"][regime]
+        evidence = report["training"]["frozen_write"]
+        values = run["frozen_values"][f"{regime}:frozen_write"]
+        assert evidence == {
+            "applicable": True,
+            "all_ones_before": True,
+            "all_ones_after": True,
+            "excluded_from_optimizer": True,
+        }
+        np.testing.assert_array_equal(values["before"], 1.0)
+        np.testing.assert_array_equal(values["after"], values["before"])
+        assert report["parameter_movement"]["paths"][
+            "memory_write_scale"
+        ] == {
+            "l2_delta": 0.0,
+            "parameter_count": values["before"].size,
+        }
+
+
+@requires_gate_c
+def test_reduced_formal_paired_evaluations_derive_finite_metrics(
+    reduced_formal_terminal_and_frozen_reports: dict[str, Any],
+) -> None:
+    reports = reduced_formal_terminal_and_frozen_reports["reports"]
+    for arm in ("terminal_only", "frozen_write"):
+        metrics = gate_c._metric_summary(
+            reports[arm]["gate_a"]["evaluation"],
+            reports[arm]["gate_b"]["evaluation"],
+        )
+        assert set(metrics) == {"binding_gap", "depth_accuracy"}
+        assert all(math.isfinite(value) for value in metrics.values())
+        assert -1.0 <= metrics["binding_gap"] <= 1.0
+        assert 0.0 <= metrics["depth_accuracy"] <= 1.0
+
+
+@pytest.fixture(scope="module")
+def reduced_finite_window_oracle_inputs() -> dict[str, Any]:
+    config = _reduced_gate_c_config()
+    production_gate_b_config = gate_b.DepthGateConfig()
+    schedule = gate_b._build_schedule(production_gate_b_config)
+    validation = gate_b._encode_validation_data(
+        schedule,
+        production_gate_b_config,
+    )
+    full = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=1,
+    )
+    initial_values = legacy._parameter_values(full)
+    initial_sha256 = legacy._array_digest(initial_values)
+    initialization = {
+        "initialization": {
+            "gate_b": {
+                "canonical_full": {
+                    "parameter_sha256": initial_sha256,
+                    "parameter_count": sum(
+                        np.asarray(leaf).size
+                        for value in initial_values.values()
+                        for leaf in jax.tree.leaves(value)
+                    ),
+                    "parameter_paths": list(_FULL_PATHS),
+                },
+                "arm_initialization_refs": {
+                    arm: {
+                        "tree": "canonical_full",
+                        "parameter_sha256": initial_sha256,
+                    }
+                    for arm in ("full", "query_only", "terminal_only")
+                },
+            }
+        }
+    }
+    return {
+        "config": config,
+        "initialization": initialization,
+        "data": (schedule, validation),
+    }
+
+
+def _assert_oracle_numeric_record(record: Mapping[str, Any]) -> None:
+    assert set(record) == {
+        "full_norm",
+        "arm_norm",
+        "l2_difference",
+        "relative_deviation",
+        "relative_deviation_defined",
+        "cosine",
+        "cosine_defined",
+        "full_sha256",
+        "arm_sha256",
+    }
+    for name in ("full_norm", "arm_norm", "l2_difference"):
+        assert not isinstance(record[name], (bool, np.bool_))
+        assert math.isfinite(record[name])
+        assert record[name] >= 0.0
+    assert record["relative_deviation_defined"] is (
+        record["relative_deviation"] is not None
+    )
+    assert record["cosine_defined"] is (record["cosine"] is not None)
+    for name in ("relative_deviation", "cosine"):
+        if record[name] is not None:
+            assert not isinstance(record[name], (bool, np.bool_))
+            assert math.isfinite(record[name])
+    assert re.fullmatch(r"[0-9a-f]{64}", record["full_sha256"])
+    assert re.fullmatch(r"[0-9a-f]{64}", record["arm_sha256"])
+
+
+def _oracle_threshold_passed(record: Mapping[str, Any]) -> bool:
+    return bool(
+        record["full_norm"] > 0.0
+        and record["relative_deviation_defined"] is True
+        and record["relative_deviation"] >= 1e-3
+        and record["l2_difference"]
+        > max(1e-8, 1e-4 * record["full_norm"])
+    )
+
+
+@requires_gate_c
+def test_reduced_oracle_executes_real_finite_window_pp_prop_and_thresholds(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from braintrace._testing.oracle import (
+        chunked_online_param_gradients as real_chunked_gradients,
+    )
+
+    calls: list[int] = []
+
+    def recording_chunked_gradients(*args: Any, **kwargs: Any) -> Any:
+        calls.append(kwargs["chunk_size"])
+        return real_chunked_gradients(*args, **kwargs)
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        recording_chunked_gradients,
+        raising=False,
+    )
+    report = gate_c._mechanism_oracle(
+        reduced_finite_window_oracle_inputs["config"],
+        initialization=reduced_finite_window_oracle_inputs[
+            "initialization"
+        ],
+        gate_b_data=reduced_finite_window_oracle_inputs["data"],
+    )
+
+    assert calls == [1, 1, 1]
+    assert set(report) == {
+        "contract",
+        "objective",
+        "gradient_chunk_size",
+        "comparisons",
+        "complete",
+    }
+    assert report["contract"] == gate_c._oracle_contract(
+        reduced_finite_window_oracle_inputs["config"]
+    )
+    assert report["objective"] == {
+        "wrapper": "sqrt_weight_times_sqrt_cross_entropy",
+        "unsupervised_output_exact_zero": True,
+    }
+    assert report["gradient_chunk_size"] == 1
+    assert set(report["comparisons"]) == {
+        "query_only",
+        "terminal_only",
+    }
+    comparison_passes: list[bool] = []
+    for arm, comparison in report["comparisons"].items():
+        assert set(comparison) == {
+            "global",
+            "paths",
+            "required_paths",
+            "required_paths_passed",
+            "passed",
+        }
+        _assert_oracle_numeric_record(comparison["global"])
+        assert set(comparison["paths"]) == set(_FULL_PATHS)
+        for path_record in comparison["paths"].values():
+            _assert_oracle_numeric_record(path_record)
+        required = (
+            [
+                "memory_read_projection/weight",
+                "workspace_query_projection/weight",
+            ]
+            if arm == "query_only"
+            else []
+        )
+        assert comparison["required_paths"] == required
+        expected_required = all(
+            _oracle_threshold_passed(comparison["paths"][path])
+            for path in required
+        )
+        assert comparison["required_paths_passed"] is expected_required
+        expected_pass = bool(
+            _oracle_threshold_passed(comparison["global"])
+            and expected_required
+        )
+        assert comparison["passed"] is expected_pass
+        comparison_passes.append(expected_pass)
+    assert report["complete"] is all(comparison_passes)
+
+
+@requires_gate_c
+def test_oracle_rejects_event_digest_mismatch_before_gradients(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    schedule, validation = reduced_finite_window_oracle_inputs["data"]
+    tampered_events = np.array(validation.intact, copy=True)
+    tampered_events[0, 0, 0] = np.nextafter(
+        tampered_events[0, 0, 0],
+        np.float32(np.inf),
+    )
+    tampered = dataclasses.replace(validation, intact=tampered_events)
+    calls = 0
+
+    def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("gradient execution preceded oracle authentication")
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        forbidden_gradients,
+        raising=False,
+    )
+
+    with pytest.raises(ValueError, match="event|digest|oracle"):
+        gate_c._mechanism_oracle(
+            reduced_finite_window_oracle_inputs["config"],
+            initialization=reduced_finite_window_oracle_inputs[
+                "initialization"
+            ],
+            gate_b_data=(schedule, tampered),
+        )
+    assert calls == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("oracle_validation_index", 1),
+        ("oracle_effort", 4),
+        ("gradient_chunk_size", 2),
+    ),
+)
+@requires_gate_c
+def test_oracle_rejects_nonpreregistered_coordinates_before_gradients(
+    field: str,
+    value: int,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = dataclasses.replace(
+        reduced_finite_window_oracle_inputs["config"],
+        **{field: value},
+    )
+    calls = 0
+
+    def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("nonpreregistered oracle reached gradient execution")
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        forbidden_gradients,
+    )
+
+    with pytest.raises(ValueError, match="oracle|preregister|coordinate|config"):
+        gate_c._mechanism_oracle(
+            config,
+            initialization=reduced_finite_window_oracle_inputs[
+                "initialization"
+            ],
+            gate_b_data=reduced_finite_window_oracle_inputs["data"],
+        )
+    assert calls == 0
+
+
+@pytest.mark.parametrize("mutation", ("wrong_geometry", "path_collision"))
+@requires_gate_c
+def test_oracle_rejects_gradient_geometry_and_normalization_collisions(
+    mutation: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    wrong = {
+        path: np.zeros((1,), dtype=np.float32) for path in _FULL_PATHS
+    }
+    if mutation == "path_collision":
+        wrong[("memory_read_projection", "weight")] = np.ones(
+            (1,),
+            dtype=np.float32,
+        )
+    calls = 0
+
+    def fake_gradients(*args: Any, **kwargs: Any) -> dict[Any, Any]:
+        nonlocal calls
+        calls += 1
+        return copy.deepcopy(wrong)
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        fake_gradients,
+    )
+
+    with pytest.raises(ValueError, match="gradient|geometry|shape|collision|path"):
+        gate_c._mechanism_oracle(
+            reduced_finite_window_oracle_inputs["config"],
+            initialization=reduced_finite_window_oracle_inputs[
+                "initialization"
+            ],
+            gate_b_data=reduced_finite_window_oracle_inputs["data"],
+        )
+    assert 1 <= calls <= 3
+
+
+@requires_gate_c
+def test_oracle_rejects_validation_metadata_disagreeing_with_schedule(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    schedule, validation = reduced_finite_window_oracle_inputs["data"]
+    mapping_ids = np.array(validation.mapping_ids, copy=True)
+    mapping_ids[0] = mapping_ids[0] + 1
+    tampered = dataclasses.replace(validation, mapping_ids=mapping_ids)
+    calls = 0
+
+    def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("metadata mismatch reached gradient execution")
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        forbidden_gradients,
+    )
+
+    with pytest.raises(ValueError, match="metadata|schedule|oracle|mapping"):
+        gate_c._mechanism_oracle(
+            reduced_finite_window_oracle_inputs["config"],
+            initialization=reduced_finite_window_oracle_inputs[
+                "initialization"
+            ],
+            gate_b_data=(schedule, tampered),
+        )
+    assert calls == 0
+
+
+@requires_gate_c
+def test_oracle_rejects_fresh_hidden_state_snapshot_mismatch_before_gradients(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_init_all_states = brainstate.nn.init_all_states
+    tampered_initializations = 0
+    gradient_calls = 0
+
+    def tampering_init_all_states(model: Any, *args: Any, **kwargs: Any) -> Any:
+        nonlocal tampered_initializations
+        result = real_init_all_states(model, *args, **kwargs)
+        if (
+            isinstance(model, LatentWorkspaceModel)
+            and model.config.batch_size == 1
+            and model.memory_read_policy == "query_only"
+        ):
+            tampered_initializations += 1
+            model.context_memory.value = jnp.ones_like(
+                model.context_memory.value
+            )
+        return result
+
+    def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
+        nonlocal gradient_calls
+        gradient_calls += 1
+        raise AssertionError("state mismatch reached gradient execution")
+
+    monkeypatch.setattr(
+        brainstate.nn,
+        "init_all_states",
+        tampering_init_all_states,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        forbidden_gradients,
+    )
+
+    with pytest.raises(ValueError, match="state|snapshot|initialization|oracle"):
+        gate_c._mechanism_oracle(
+            reduced_finite_window_oracle_inputs["config"],
+            initialization=reduced_finite_window_oracle_inputs[
+                "initialization"
+            ],
+            gate_b_data=reduced_finite_window_oracle_inputs["data"],
+        )
+    assert tampered_initializations >= 1
+    assert gradient_calls == 0
