@@ -3,9 +3,12 @@
 Status: Stage 2, Stage 2.1, and Gate C2 controls implemented; authenticated
 Gates A and B and the fresh same-HEAD `gate_c_init` admission passed; formal
 Gate C and the authenticated Gate C2 controls failed; formal Gate C2, Gate D,
-and the ARC test remain stopped
+and the ARC test remain stopped. Gate C3 controls are preregistered below but
+are not implemented or run
 
 Date: 2026-08-17
+
+Amendment date: 2026-08-18
 
 Branch: `feat/example21-latent-reasoning`
 
@@ -2652,6 +2655,301 @@ The pretraining admission did not pass, so no `formal_gate_c2` target or ten-
 model training run was enabled or executed. Gate D and ARC remain stopped. No
 new ARC test ran, the retained exact-ARC score remains `0`, and this result
 supports no causal-mechanism conclusion.
+
+### Gate C3: deterministic replay and terminal-H8 mechanism amendment
+
+This is a new adaptive preregistration written after the authenticated Gate C2
+controls result was observed. It does not edit, rerun, supersede, or
+reinterpret either failed Gate C result. In particular, the retained Gate C2
+bundle, its seven-of-nine outcome, its two failed criteria, and its stop
+decision remain immutable. Gate C3 repairs two independently diagnosed control
+defects: the launcher did not bind the deterministic GPU environment used by
+the successful replay diagnostic, and the all-depth mechanism objective
+diluted the workspace-query path because `H_0` cannot depend on that path and
+earlier depths can cancel later contributions. Gate C3 changes no architecture,
+parameter count, initialization algorithm, data split, episode, model seed,
+training seed, optimizer, arm, training budget, behavioral threshold, H0
+tolerance, no-read threshold, removed-path rule, or mechanism threshold.
+
+Gate C3 has two new identities. The pretraining admission has launcher and
+child target `gate_c3_controls`, result path
+`var/example21-causal-gate/<head>-gate-c3-controls.json` with matching
+`.preflight.json` and `.manifest.json` sidecars, `schema_version=1`,
+`control="example21_gate_c3_pretraining_control_admission"`,
+`qualification_regime="preregistered_gate_c3_pretraining_controls"`, and
+`learner="pp_prop_only"`. Its passing and failing interpretations are exactly
+`gate_c3_pretraining_controls_passed` and
+`gate_c3_pretraining_controls_failed_stop`; invalid evidence instead uses
+`gate_c3_pretraining_controls_invalid_stop`. The later formal experiment has
+launcher and child target `formal_gate_c3`, result path
+`var/example21-causal-gate/<head>-formal-gate-c3.json` with matching sidecars,
+`schema_version=3`,
+`control="example21_pp_prop_learnability_gate_c3"`,
+`qualification_regime="preregistered_gate_c3_full"`, and
+`learner="pp_prop_only"`. Its passing and failing interpretations are exactly
+`gate_c3_passed_pp_prop_learnability_mechanism` and
+`gate_c3_failed_stop_no_causal_mechanism_conclusion`.
+
+Each controls or formal bundle must run at its own exact clean source HEAD in a
+newly built immutable GPU image whose OCI revision is that exact HEAD. Before
+either target, a fresh schema-1 `gate_c_init` must pass at that same HEAD and
+image; no earlier initialization admission is reusable. The historical
+`gate_c_init` target, fixed argv, schema, and identity remain unchanged. It only
+materializes and authenticates initial parameter trees, compiler topology, and
+zero optimizer
+state; it does not authenticate model hidden-state bytes. It is not required
+to execute H0 evidence or use the C3 deterministic environment. The controls
+admission and formal target must authenticate that result, preflight, manifest,
+bundle formula, source HEAD, and image before work and again before signing.
+Every audited C3 model role must receive an exact copy of the authenticated
+canonical parameters. The C3 controls independently materialize fresh hidden
+states, require exact geometry and byte equality across the paired roles before
+execution, and retain those runtime snapshot digests in the C3 artifact. All
+model random values must be produced through `brainstate.random`; direct
+`jax.random` use is not admissible. The controls admission performs no training,
+optimizer construction, optimizer update, parameter mutation, or warm start.
+If enabled after controls pass, all ten formal arms start from the newly
+authenticated canonical parameters and fresh zero-valued Adam states, never
+from a Gate C or Gate C2 trained state.
+
+#### Authenticated deterministic execution
+
+The launcher must set these exact environment-variable values before starting
+Python in the container:
+
+```text
+XLA_FLAGS=--xla_gpu_deterministic_ops=true
+CUBLAS_WORKSPACE_CONFIG=:4096:8
+```
+
+The fixed launcher command and preflight retain both names and exact values.
+Docker applies them before the child Python process starts, so they are active
+before JAX or BrainState imports. The result independently records the two live
+values, and the manifest authenticates and revalidates both the preflight and
+result records before signing. A missing value, a different value, or an
+additional token appended to `XLA_FLAGS` fails authentication.
+`gate_c3_controls` and `formal_gate_c3` use the same values; CPU, dense, or
+`jax_raw` fallback is not admissible. No tolerance miss, gradient miss, output
+value, or other observed result may trigger another compilation, replay, seed,
+episode, stream, or batch selection.
+
+In this controls-only stage, the two variables apply only to the
+`gate_c3_controls` container. The historical `gate_c_init` target and every
+legacy target retain their exact prior environment contract. The C3 result
+retains the C2 controls top-level key set exactly:
+
+```text
+schema_version, control, qualification_regime, learner, prerequisites,
+regimes, mechanism_oracle, source_start, source_end, source_files,
+environment, qualification, total_wall_seconds
+```
+
+`prerequisites` has exactly `gate_a`, `gate_b`, and
+`gate_c_initialization`. `environment` has exactly the six C2 keys `backend`,
+`devices`, `image_digest`, `jax`, `python`, and
+`execution_and_update_evidence`, plus `deterministic_environment`. That last
+mapping has exactly these values:
+
+```json
+{
+  "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+  "XLA_FLAGS": "--xla_gpu_deterministic_ops=true"
+}
+```
+
+#### Gate C3 operational and no-read controls
+
+Gate C3 retains the complete Gate C2 operational-H0 record schemas, fixed
+`canonical_production_sparse` backend, fixed boundary, hidden paths, endpoint
+geometries, comparison roles, and `rms_tolerance=1e-6`. It retains all 512
+examples for every Gate B H0 control and every `intact`, `shuffled`, and
+`no_context` stream; subsampling an example, stream, hidden leaf, or comparison
+is forbidden. Every compact output and hidden leaf must be finite, must have
+the exact frozen dtype and shape, and must independently satisfy maximum
+per-example RMS difference `<= 1e-6`. Decoded predictions must have exact zero
+Hamming distance. Endpoint byte digests are retained for audit, but byte
+identity after GPU execution is explicitly not a qualification requirement:
+the deterministic diagnostic still exhibited numerical differences on the
+order of `1e-8`. The tolerance is not rescaled from that observation.
+
+The same-full replay, copied-full separate-compilation replay, and copied-full
+versus query-only comparison all remain required. Query-only intervention still
+begins only after the common ordinary-query H0 boundary. Gate A controls remain
+part of the admission under their unchanged C2 contract. Every Gate C2
+query-only no-read control, selected read/drive check, cached-read probe,
+`+11`/`-11` sentinel, `+7`/`-7` query perturbation, full-policy positive
+control, local boundary restore, driver-call bound, and exact threshold remains
+blocking without modification. The stopped-H0 finite-window removed-path test
+also remains unchanged: both removed projection paths must be finite exact-zero
+trees, and all three frozen live witness paths must remain finite and nonzero.
+
+#### Gate C3 terminal-H8 mechanism oracle
+
+The new blocking oracle fixes one objective before observing a Gate C3 result.
+It uses the canonical Gate B validation episode index zero, intact stream,
+effort `R=8`, batch one, mapping ID `232423`, and float32 event digest
+`36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec`.
+It uses the authenticated fresh full initialization, checkpoint target `H_8`
+at sequence index `18`, and a float32 length-19 loss-weight vector whose values
+are exact zero except index 18, which is exactly `1.0`. Its total loss weight is
+exactly `1.0`. Both the source vector and the tensor consumed by the gradient
+helper's loss-weight column `packed_inputs[:, 0, -1]` must independently equal
+this exact report and must be byte-identical to each other:
+
+```json
+{
+  "dtype": "<f4",
+  "shape": [19],
+  "sha256": "07fecad3bfcbd816df57ab71c500db391cbf3b581a99376678d0e5f9da8e6693"
+}
+```
+
+The digest uses the existing Gate C raw-array framing: dtype string, Python
+shape string, and contiguous C-order bytes. The complete consumed targets are
+int32 shape `[19]`, values
+`[0,0,0,0,0,0,0,0,0,0,0,6,8,1,7,9,3,2,5]`, SHA-256
+`c4af41cac4f5eb682df15e7d6cf92b0c134b943fae1abfe99b0bfc4c2ddb27e0`.
+Advances are float32 shape `[19]`, all `1.0`, SHA-256
+`d69cc2400af318c684ba7c8ba0d66204f25264b3bcbba9d8d96d999bdefc4a07`.
+The packed float32 shape `[19,1,50]` helper argument has SHA-256
+`ef1c75296133458d90de3d5d9c204890127f83238148bd11bc2736bae6a205e1`.
+Any episode, mapping, event, target, index, dtype, shape, weight, or digest
+mismatch stops before gradient evaluation.
+
+The only blocking arm comparison is the matched `full_read_h8` versus
+`query_only_h8` policy pair. Both arms start from deep copies of the same
+authenticated parameters and the same freshly materialized, pre-execution
+state snapshot. `query_only_h8` shares the full
+ordinary-query H0 execution and then removes latent reads from H1 through H8.
+Both use `chunked_online_param_gradients` with `chunk_size=1`; a whole-sequence
+VJP is inadmissible. The C3 call sets `compiled_scan=True`, so the 19 repeated
+finite-window steps run inside the helper's BrainState scan rather than a bare
+Python model loop. This opt-in preserves the chunk-one pp-prop boundary while
+leaving legacy callers unchanged. Each wrapper emits exact zero at indices 0
+through 17 and emits `sqrt(classification_cross_entropy)` at index 18, so the
+helper's sum-of-squares loss is exactly the terminal-H8 cross-entropy with unit
+weight. The earlier terminal-H8 norm was measured through the legacy host-loop
+mode and motivates this fixed objective, but it does not predict or qualify the
+C3 compiled-scan result.
+
+Run exactly two technical replays. Each replay materializes fresh model and
+state copies, separately constructs each model and policy driver, and
+independently invokes the `compiled_scan=True` path under the authenticated
+environment above. Compiler-cache reuse is allowed and is not evidence. Retain
+canonical per-path and global
+gradient digests, norms, L2 differences, relative deviations, cosines, finite
+counts, dtype, shape, and leaf order using the existing Gate C digest framing.
+Before execution, both replays must have byte-exact authenticated parameter and
+hidden-state snapshot digests and exact episode, event, decoded-target, and
+policy identities. Post-execution gradient-byte equality across separately
+constructed and invoked sparse GPU paths is explicitly not required; retain
+both hashes and raw records even when same-arm hashes differ. Each of the two
+full-versus-query-only comparisons must independently pass every unchanged
+blocking threshold:
+
+```text
+relative_deviation >= 1e-3
+L2 difference > max(1e-8, 1e-4 * full_gradient_norm)
+```
+
+The global gradient and each of
+`memory_read_projection/weight` and
+`workspace_query_projection/weight` must have a finite nonzero full-arm norm
+and independently pass both inequalities in each replay. The query-only norm
+may be exact zero, with null cosine under the existing defined/null rules. A
+pass in one replay cannot compensate for a failure in the other, and averaging
+the replays is forbidden.
+
+The old Gate C2 all-depth finite-window oracle remains only in its immutable
+authenticated C2 bundle and in the post-run record above. It is not copied into
+the C3 result, is not a C3 prerequisite or field, and is not executed again.
+Its all-depth workspace-query result may not qualify or disqualify Gate C3, and
+it may not be substituted for the terminal-H8 oracle. This change is an
+explicit adaptive follow-up based on the diagnosed objective geometry, not a
+retroactive change to either earlier gate.
+
+The no-update audit has exactly 20 materialized model roles: the exact 12 Gate
+C2 roles whose names do not contain `mechanism_oracle`, plus these eight C3
+roles:
+
+```text
+gate_b:mechanism_oracle:terminal_h8:replay_1:full_read_h8:reference
+gate_b:mechanism_oracle:terminal_h8:replay_1:full_read_h8:finite_window
+gate_b:mechanism_oracle:terminal_h8:replay_1:query_only_h8:reference
+gate_b:mechanism_oracle:terminal_h8:replay_1:query_only_h8:finite_window
+gate_b:mechanism_oracle:terminal_h8:replay_2:full_read_h8:reference
+gate_b:mechanism_oracle:terminal_h8:replay_2:full_read_h8:finite_window
+gate_b:mechanism_oracle:terminal_h8:replay_2:query_only_h8:reference
+gate_b:mechanism_oracle:terminal_h8:replay_2:query_only_h8:finite_window
+```
+
+Every role is constructed exactly once, starts from the expected canonical
+parameter digest, finishes with that same digest, and creates no trainer or
+optimizer. The ordered model-factory call array uses the existing C2 role order
+with its six old mechanism-oracle roles removed, followed by the eight roles in
+the order shown above. Missing, duplicate, extra, or reordered audit call
+records fail.
+
+#### Qualification and stop semantics
+
+The Gate C3 controls admission has exactly these 11 qualification criteria:
+
+1. `schema_and_control`;
+2. `exact_configuration`;
+3. `prerequisites_authenticated`;
+4. `initialization_authenticated`;
+5. `deterministic_environment_authenticated`;
+6. `canonical_schedules_complete`;
+7. `no_behavioral_or_optimizer_updates`;
+8. `paired_h0_operational_equivalence`;
+9. `no_read_and_removed_path_complete`;
+10. `mechanism_oracle_complete`; and
+11. `source_and_gpu_authenticated`.
+
+Its `qualification` object has exactly `valid`, `passed`, `criteria`,
+`failures`, and `interpretation`. Embedded booleans are never trusted. The
+qualifier recomputes all 11 criteria from retained evidence. Gradient arrays
+are not serialized; their authenticated producer summaries retain exact
+geometry, finite counts, hashes, norms, differences, cosines, and algebraic
+cross-checks under the existing Gate C trust boundary. `valid` is true only
+when the complete artifact has strict valid schema, finite evidence,
+authenticated provenance, and a successful serialized reload; it can remain
+true when a scientifically complete run fails one or more controls. `passed`
+is true exactly when `valid` is true and all 11 recomputed criteria are true.
+`failures` is the lexicographically sorted list of every recomputed false
+criterion and is empty exactly on pass. `interpretation` is the invalid-stop
+value when `valid=false`; otherwise it is selected from `passed`. An invalid or
+incomplete artifact cannot be called a scientific pass or failure and cannot
+admit formal training.
+
+The compact result writer may sort JSON object keys. Before signing, the
+producer must reload the exact serialized bytes with the strict duplicate-key,
+NaN, and infinity rejection path and rerun complete qualification on that
+reloaded object. JSON mapping order is non-semantic: validators require exact
+key sets and resolve values by key, never by insertion order or
+`tuple(mapping)`. Arrays and all other semantic sequences retain their frozen
+order. Missing or extra mapping keys, duplicate keys, reordered semantic
+arrays, reload disagreement, or a qualification object inconsistent with the
+recomputation fails validation.
+
+The `formal_gate_c3` target is deliberately absent from this controls-only
+implementation stage. A passing controls artifact admits implementation of the
+formal stage; it does not admit training from a different source identity.
+Adding the formal target changes source HEAD and image, so that later source
+must generate a fresh `gate_c_init` and must repeat the unchanged C3 controls
+once at its own exact HEAD and image before constructing any model trainer.
+This staged repetition is provenance reauthentication, not an outcome-triggered
+retry: the first controls artifact remains immutable, its result cannot select
+seeds, episodes, thresholds, or code paths, and a failed first controls result
+stops without formal implementation. The later formal target then runs the ten
+fresh C2-contract trainings with the C3 deterministic environment,
+terminal-H8 blocking oracle, and same-HEAD `gate_c3_controls` prerequisite.
+Formal Gate C3 otherwise retains the Gate C2 arms, regimes, configuration,
+consumed training weights, behavioral margins, frozen-write characterization,
+source authentication, and stop rules. A formal failure stops Gate D and ARC.
+Until a complete formal Gate C3 bundle passes, no Gate D qualification or new
+ARC test may run, the retained exact-ARC score remains `0`, and no causal
+latent-reasoning conclusion is supported.
 
 ### Stage 2 implementation record: structural evidence only
 
