@@ -144,6 +144,69 @@ freedom, from parameter-free geometry through per-colour and per-cell-context
 tables, with the input-ignoring constant completion charged a degenerate cost so
 it neither corroborates nor outranks a rule that depends on the input.
 
+### Stage 1 integrated result
+
+`var/example21-rules-final/`, 2,048 updates at lr 1e-3, `context_memory_width=32`,
+balanced colour loss, RTX 3080 Ti via the Docker image, **629.6 s** against a
+900 s budget.
+
+| arm | strict pass@1 | strict pass@2 | shape | pixel |
+|---|---|---|---|---|
+| **intact** | **0.0650** (26/400) | **0.0675** (27/400) | 0.348 | 0.383 |
+| repeat_intact | 0.0644 | 0.0668 | 0.348 | 0.383 |
+| no_context | **0.0000** | **0.0000** | 0.222 | 0.210 |
+| shuffled_demonstrations | 0.0024 | 0.0048 | 0.303 | 0.332 |
+| slot_ablation | 0.0644 | 0.0668 | 0.348 | 0.383 |
+
+Three things this establishes that no prior run did.
+
+**Non-zero pass@1.** Every run before this one scored exact `pass@1 = 0.0000`.
+Gate D's stated bar in `2026-08-17-example21-latent-reasoning-architecture.md`
+is one exact held-out solution with `pass@1 > 0`; the intact arm now clears it by
+26 tasks. Gate D itself is not claimed — it requires the causal-mechanism gates
+that remain stopped — but its numeric bar is met.
+
+**The score is demonstration-causal.** Blanking the demonstrations takes the
+score to exactly zero. The prior 1/419 survived `shuffled_demonstrations` and
+`slot_ablation` and was lost only to `no_context`, which is why it was read as
+non-causal.
+
+**The score depends on the demonstration *pairing*, not merely on their
+presence.** Deranging the demonstration outputs destroys 25 of 27 solves. This is
+the property the presence/pairing dissociation recorded in
+`2026-08-17-example21-demonstration-channel-root-cause.md` never achieved through
+the network, where pairing sat at 0.5107 against a 0.5072 null.
+
+Channel attribution at effort 0: **27 exact by the rule channel, 1 by a model
+candidate**, with 27 of 419 queries admitting a rule and **none admitted that was
+not exact**. The channel has still never cost a candidate slot.
+
+The two arms are fed different demonstrations by construction: `no_context` gets
+none, so no rule can be admitted; `shuffled_demonstrations` is fitted on the
+deranged pairs from `_derange_task`. `slot_ablation` ablates neural slots rather
+than demonstrations, so the rule channel is unaffected by it, and the attribution
+is what separates the ablation's effect on the network from the channel that
+ignores it.
+
+### Where the remaining recall is not
+
+Classifying the changed cells of the 258 unsolved same-shape tasks gives a flat
+distribution with no dominant sub-category. The largest bucket -- 45 tasks
+recolouring within existing object bounding boxes, no new colours -- was attacked
+directly with three new object properties and a per-object colour-substitution
+fitting mode. It solved **zero** additional tasks and cost 28 s, and was removed.
+Those tasks need relational reasoning about what distinguishes one object from
+another, which a property-keyed table cannot express.
+
+Instrumenting the cell-rule family gives the same verdict from the other side:
+the ordered 3x3 colour key fits the demonstrations on 21 evaluation tasks and
+applies to none, because the median query has 98% of its keys unseen. Coarsening
+to occupancy bitmasks drops that to 2% and raises conflicts by roughly the same
+factor. The two effects trade.
+
+**The rule channel is at its practical ceiling near 26/400.** Further recall has
+to come from a different mechanism, which is what Stages 2 and 3 are for.
+
 ### Stage 2 — a decoder that can express ARC outputs
 
 Opt-in behind a config flag; the `context_memory_width=0` legacy path stays
