@@ -1765,6 +1765,12 @@ materialized role, and requires `complete=true`. Any unregistered construction,
 trainer/optimizer instance, call-log entry, missing role, or parameter change
 makes `no_behavioral_or_optimizer_updates=false`.
 
+Audit installation is transactional. If replacing any trainer, training-step,
+Adam-constructor, or Adam-update boundary raises, the context manager restores
+every boundary it replaced earlier in that entry attempt, empties its internal
+restoration stack, and re-raises. A partially installed no-update audit may not
+remain active after a failed `__enter__`.
+
 `qualification` has exactly `criteria`, `passed`, and `interpretation`.
 `criteria` has these exact nine keys:
 
@@ -2189,6 +2195,42 @@ perturbation probe reaches a live contextual path without requiring every
 individual query vector to respond. The continuation and nested prediction
 records are retained, but the positive control does not preregister that a
 decoded class must change.
+
+Gate C2 control execution is bounded without weakening that evidence. For each
+regime and stream, the producer runs one complete query-only latent baseline
+and one complete full-policy latent baseline, and captures independent,
+host-resident boundary snapshots for H0 through the last pre-H8 state from
+those rollouts. These snapshots must not share mutable leaf storage. Restoring
+and replaying each boundary against its baseline slice is a required reduced
+structural test, not an additional production call. In production, every copied
+boundary must instead be byte- and digest-identical to the corresponding
+pre-tick state returned by the one baseline rollout. Changing one captured
+boundary must leave every other boundary byte-unchanged. The producer may not
+rerun an H0-to-Hn prefix merely to obtain a boundary it already captured.
+
+The two cached-read sentinels still execute every required suffix from their
+named Hn through H8 because those continuation records cover the full suffix.
+Each query-only or full-policy `S_K` replacement executes only its named tick,
+because its retained continuation record covers only that tick. For the exact
+Gate B geometry across all three streams this gives 99 query-only latent calls
+(three streams times the sum of one length-eight baseline, 16 cached-read
+suffixes, and 16 one-tick `S_K` interventions), 51 full-policy latent calls
+(three streams times the sum of one length-eight baseline and 16 one-tick
+interventions), and six H0-prefix calls, for 156 model-driver calls total within
+the Gate B `query_only_latent_no_read` subreport. Paired-H0, removed-path,
+mechanism-oracle, Gate A, and other Gate C2 drivers are outside this counter.
+Any additional call inside this named Gate B subreport fails the bounded-
+workload test.
+
+Only a `gate_c2_controls` result uses compact streamed JSON. Its writer uses a
+strict `json.JSONEncoder` with `allow_nan=false`, `sort_keys=true`, and compact
+separators, emits UTF-8 chunks directly to the temporary file, appends one
+newline, flushes and fsyncs, then atomically replaces the final path. The exact
+maximum encoded size is 201,326,592 bytes (192 MiB), including the final
+newline. Crossing that limit deletes the temporary file and fails before
+replacement. Gate C v1, Gate C initialization, and formal Gate C retain their
+existing indented byte format. The compact result must strict-parse to the same
+JSON value that the qualifier recomputes; formatting never changes evidence.
 
 `removed_path_finite_window_influence` has exact keys `gradient_chunk_size`,
 `start_state`, `objectives`, `global`, `live_paths`, `removed_paths`, and
