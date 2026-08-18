@@ -26,6 +26,7 @@ import numpy as np
 
 from latent_workspace_rule_cells import CELL_FAMILIES
 from latent_workspace_rule_edits import EDIT_FAMILIES
+from latent_workspace_rule_shapes import SHAPE_FAMILIES
 from latent_workspace_rule_parts import (
     COLOR_COUNT,
     DIHEDRAL_NAMES,
@@ -515,7 +516,7 @@ _EDIT_REDUCTIONS = frozenset(
 def _completion_edits(pairs: DemoPairs) -> Iterator[GridRule]:
     """Adapt the same-shape edit families to the completion protocol."""
 
-    for family in EDIT_FAMILIES + CELL_FAMILIES:
+    for family in EDIT_FAMILIES + CELL_FAMILIES + SHAPE_FAMILIES:
         try:
             named = list(family(pairs))
         except _SAFE_ERRORS:
@@ -607,7 +608,48 @@ def _safe_iter(
 #: another proposal nor outranks one that does depend on the input.
 _DEGENERATE_COST = 20
 
-_COMPLETION_COST: dict[str, int] = {"const": _DEGENERATE_COST, "cm": 2}
+#: Completion cost by prefix, ordered by fitted degrees of freedom. A
+#: parameter-free geometry commits to everything in advance; a fitted table has
+#: one free choice per observed key and can therefore explain a small
+#: demonstration set without capturing its rule. Preferring the cheaper
+#: explanation is minimum-description-length, not a heuristic tie-break.
+_COMPLETION_COST: dict[str, int] = {
+    # Parameter-free: the rule is fully determined before seeing any output.
+    "d": 1,
+    "up": 1,
+    "down": 1,
+    "tile": 1,
+    "frac": 1,
+    "per": 1,
+    "perp": 1,
+    "sym": 1,
+    "symp": 1,
+    "grav": 1,
+    "move": 1,
+    "overlay": 1,
+    "pext": 1,
+    "pscale": 1,
+    "trim": 1,
+    # One or two fitted choices.
+    "pcomb": 2,
+    "pad": 2,
+    "fill": 2,
+    "panel_freq": 2,
+    "project": 2,
+    "count": 2,
+    "palette": 2,
+    # A fitted table with one entry per observed colour or object class.
+    "cm": 3,
+    "objcol": 3,
+    "objrank": 3,
+    "uniform": 3,
+    "rank": 4,
+    # A fitted table with one entry per distinct cell context: the most free
+    # parameters of any family here.
+    "cell": 5,
+    # Ignores the input entirely.
+    "const": _DEGENERATE_COST,
+}
 
 
 def rule_cost(name: str) -> int:
@@ -641,7 +683,7 @@ def rule_cost(name: str) -> int:
 
     reduction, _, completion = name.partition("|")
     cost = 0 if reduction == "id" else 2
-    return cost + _COMPLETION_COST.get(completion.partition(":")[0], 1)
+    return cost + _COMPLETION_COST.get(completion.partition(":")[0], 3)
 
 
 _FIT_MEMO: dict[bytes, tuple[GridRule, ...]] = {}

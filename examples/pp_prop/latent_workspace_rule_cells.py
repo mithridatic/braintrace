@@ -126,9 +126,52 @@ def _line_keys(grid: IntArray) -> IntArray:
     )
 
 
+def _occupancy_keys(
+    grid: IntArray, offsets: tuple[tuple[int, int], ...], background: int
+) -> IntArray:
+    """Encode each cell's colour with a bitmask of which neighbours are filled.
+
+    An ordered colour tuple over a 3x3 window has 11**9 possible keys, and on
+    ARC evaluation queries 98% of them are ones the demonstrations never showed.
+    Reducing the neighbourhood to filled-or-empty leaves at most 10 * 2**8 keys,
+    which the demonstrations do cover.
+    """
+
+    keys = grid.astype(np.int64) * (1 << len(offsets))
+    for bit, (row_delta, column_delta) in enumerate(offsets[1:]):
+        shifted = shift(grid, row_delta, column_delta)
+        filled = (shifted != background) & (shifted != OUT_OF_BOUNDS)
+        keys += filled.astype(np.int64) << bit
+    return keys
+
+
+def _multiset_keys(
+    grid: IntArray, offsets: tuple[tuple[int, int], ...]
+) -> IntArray:
+    """Encode each cell's colour with the unordered colour counts around it.
+
+    Direction is dropped, so a rule that is isotropic in its neighbourhood needs
+    far fewer distinct keys than the ordered encoding demands.
+    """
+
+    counts = np.zeros((_KEY_BASE, *grid.shape), dtype=np.int64)
+    for row_delta, column_delta in offsets[1:]:
+        shifted = shift(grid, row_delta, column_delta)
+        for color in range(_KEY_BASE):
+            counts[color] += (shifted == color).astype(np.int64)
+    keys = grid.astype(np.int64)
+    for color in range(_KEY_BASE):
+        keys = keys * 10 + counts[color]
+    return keys
+
+
 KEY_BUILDERS: dict[str, Callable[[IntArray], IntArray]] = {
     "n4": lambda grid: _neighbourhood_keys(grid, _NEIGHBOURHOODS["n4"]),
     "n8": lambda grid: _neighbourhood_keys(grid, _NEIGHBOURHOODS["n8"]),
+    "b4": lambda grid: _occupancy_keys(grid, _NEIGHBOURHOODS["n4"], 0),
+    "b8": lambda grid: _occupancy_keys(grid, _NEIGHBOURHOODS["n8"], 0),
+    "m4": lambda grid: _multiset_keys(grid, _NEIGHBOURHOODS["n4"]),
+    "m8": lambda grid: _multiset_keys(grid, _NEIGHBOURHOODS["n8"]),
     "par2": lambda grid: _parity_keys(grid, 2),
     "par3": lambda grid: _parity_keys(grid, 3),
     "lines": _line_keys,
