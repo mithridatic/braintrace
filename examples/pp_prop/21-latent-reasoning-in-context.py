@@ -193,6 +193,9 @@ class ExperimentConfig:
         the same scan length.
     learning_rate, clip_norm : float
         Adam rate and global gradient clipping norm.
+    balanced_color_loss : bool
+        Whether each target color contributes equal total valid-cell weight.
+        The default retains the legacy uniform valid-cell objective.
     ablation_slot : int
         Deterministic 64-neuron slot used by the frozen ablation control.
     evaluation_task_limit : int or None
@@ -220,6 +223,7 @@ class ExperimentConfig:
     training_chunk_size: int = 0
     learning_rate: float = 1e-4
     clip_norm: float = 1.0
+    balanced_color_loss: bool = False
     ablation_slot: int = 0
     evaluation_task_limit: int | None = None
     smoke: bool = False
@@ -297,6 +301,7 @@ class ExperimentConfig:
         seed: int = 2108,
         context_memory_width: int = 0,
         memory_decay: float = 1.0,
+        balanced_color_loss: bool = False,
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
 
@@ -312,6 +317,8 @@ class ExperimentConfig:
             Optional associative workspace width; zero retains legacy mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
+        balanced_color_loss : bool
+            Whether to balance valid-cell color loss by present target class.
 
         Returns
         -------
@@ -328,6 +335,7 @@ class ExperimentConfig:
             color_rank=4,
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
+            balanced_color_loss=balanced_color_loss,
             max_demonstrations=4,
             training_updates=3,
             learning_rate=5e-4,
@@ -1026,6 +1034,7 @@ def _train_model(
             "one_shared_model": True,
             "supervised_depths": "0..effort",
             "depth_weighting": "uniform_unit_sum_per_update",
+            "balanced_color_loss": config.balanced_color_loss,
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in TRAINING_EFFORTS
@@ -1054,6 +1063,7 @@ def _train_model(
                         target_width,
                         target_colors,
                         color_rank=rank,
+                        class_balanced_colors=config.balanced_color_loss,
                     )
                 )
 
@@ -1102,6 +1112,7 @@ def _train_model(
         "supervised_depths": "0..effort",
         "depth_weighting": "uniform_unit_sum_per_update",
         "per_update_depth_weight_sum": 1.0,
+        "balanced_color_loss": config.balanced_color_loss,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
             str(value): int(counts[value]) for value in TRAINING_EFFORTS
@@ -3729,6 +3740,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-updates", type=int, default=96)
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
     parser.add_argument("--smoke", action="store_true")
@@ -3746,6 +3758,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             seed=args.seed,
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
+            balanced_color_loss=args.balanced_color_loss,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,
@@ -3759,6 +3772,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
         learning_rate=args.learning_rate,
+        balanced_color_loss=args.balanced_color_loss,
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,

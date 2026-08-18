@@ -2079,6 +2079,59 @@ def test_uniform_terminal_loss_matches_three_cross_entropies() -> None:
     )
 
 
+def _uniform_spatial_color_logits(color_logits: jax.Array) -> jax.Array:
+    rank = 1
+    compact = jnp.zeros((1, compact_output_width(rank)))
+    row_start = 2 * MAX_GRID_SIZE
+    column_start = row_start + MAX_GRID_SIZE
+    color_start = column_start + MAX_GRID_SIZE
+    compact = compact.at[:, row_start:column_start].set(1.0)
+    compact = compact.at[:, column_start:color_start].set(1.0)
+    return compact.at[:, color_start:].set(color_logits)
+
+
+def test_class_balancing_is_opt_in_and_matches_legacy_for_one_color() -> None:
+    compact = _uniform_spatial_color_logits(jnp.arange(COLOR_COUNT) / 3.0)
+    colors = jnp.zeros((1, MAX_GRID_SIZE, MAX_GRID_SIZE), dtype=jnp.int32)
+    colors = colors.at[:, :2, :3].set(4)
+    arguments = (compact, jnp.asarray([2]), jnp.asarray([3]), colors)
+
+    default = arc_loss_components(*arguments, color_rank=1)
+    explicit_legacy = arc_loss_components(
+        *arguments, color_rank=1, class_balanced_colors=False
+    )
+    balanced = arc_loss_components(
+        *arguments, color_rank=1, class_balanced_colors=True
+    )
+
+    np.testing.assert_allclose(default, explicit_legacy, rtol=0.0, atol=0.0)
+    np.testing.assert_allclose(balanced, explicit_legacy, rtol=1e-6, atol=1e-6)
+
+
+def test_class_balancing_gives_rare_color_equal_total_weight() -> None:
+    logits = jnp.asarray([3.0, -3.0] + [-3.0] * (COLOR_COUNT - 2))
+    compact = _uniform_spatial_color_logits(logits)
+    colors = jnp.zeros((1, MAX_GRID_SIZE, MAX_GRID_SIZE), dtype=jnp.int32)
+    colors = colors.at[0, 1, 1].set(1)
+    arguments = (compact, jnp.asarray([2]), jnp.asarray([2]), colors)
+
+    legacy = arc_loss_components(
+        *arguments, color_rank=1, class_balanced_colors=False
+    )
+    balanced = arc_loss_components(
+        *arguments, color_rank=1, class_balanced_colors=True
+    )
+    nll = -jax.nn.log_softmax(logits)
+
+    assert float(legacy.colors) == pytest.approx(
+        float(0.75 * nll[0] + 0.25 * nll[1]), rel=1e-6
+    )
+    assert float(balanced.colors) == pytest.approx(
+        float(0.5 * nll[0] + 0.5 * nll[1]), rel=1e-6
+    )
+    assert float(balanced.colors) > float(legacy.colors)
+
+
 def test_loss_is_per_example_and_ignores_padded_target_cells() -> None:
     compact = jnp.zeros((2, compact_output_width(2)))
     baseline = jnp.zeros((2, 30, 30), dtype=jnp.int32)

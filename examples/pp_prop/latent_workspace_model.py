@@ -894,6 +894,7 @@ def arc_loss_components(
     color_rank: int,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
+    class_balanced_colors: bool = False,
 ) -> ArcLossComponents:
     """Compute terminal ARC height, width, and valid-cell cross entropy.
 
@@ -910,6 +911,10 @@ def arc_loss_components(
         CP rank of ``compact_logits``.
     shape_weight, color_weight : float, default=1.0
         Nonnegative component weights.
+    class_balanced_colors : bool, default=False
+        If true, each color present inside a target's valid shape contributes
+        equal total color-loss weight.  Otherwise, every valid cell receives
+        equal weight.
 
     Returns
     -------
@@ -924,6 +929,7 @@ def arc_loss_components(
         color_rank=color_rank,
         shape_weight=shape_weight,
         color_weight=color_weight,
+        class_balanced_colors=class_balanced_colors,
     )
     return ArcLossComponents(
         total.mean(), height_loss.mean(), width_loss.mean(), color_loss.mean()
@@ -939,13 +945,16 @@ def arc_loss_per_example(
     color_rank: int,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
+    class_balanced_colors: bool = False,
 ) -> jax.Array:
     """Return one terminal ARC loss for each batch element.
 
     This form lets a packed pp-prop stream multiply losses by a per-time,
     per-example terminal gate before reducing.  Each example's cell loss is
-    normalized by its own target area, so large grids do not receive more
-    weight merely because they contain more cells.
+    normalized within its own target.  By default, normalization is by valid
+    target area so large grids do not receive more weight merely because they
+    contain more cells.  Optional class balancing instead gives every color
+    present in a target equal total weight.
 
     Parameters
     ----------
@@ -959,6 +968,9 @@ def arc_loss_per_example(
         CP rank encoded by ``compact_logits``.
     shape_weight, color_weight : float, default=1.0
         Nonnegative component weights.
+    class_balanced_colors : bool, default=False
+        If true, average the valid-cell losses within each present color, then
+        average those color losses.  If false, average all valid cells.
 
     Returns
     -------
@@ -973,6 +985,7 @@ def arc_loss_per_example(
         color_rank=color_rank,
         shape_weight=shape_weight,
         color_weight=color_weight,
+        class_balanced_colors=class_balanced_colors,
     )
     return total
 
@@ -986,6 +999,7 @@ def _arc_loss_vectors(
     color_rank: int,
     shape_weight: float,
     color_weight: float,
+    class_balanced_colors: bool,
 ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     compact_logits = jnp.asarray(compact_logits)
     if compact_logits.ndim != 2:
@@ -1034,9 +1048,27 @@ def _arc_loss_vectors(
     valid = (rows < target_height[:, None, None]) & (
         columns < target_width[:, None, None]
     )
-    color_loss = jnp.sum(jnp.where(valid, color_nll, 0.0), axis=(1, 2)) / jnp.maximum(
-        jnp.sum(valid, axis=(1, 2)), 1
-    )
+    if class_balanced_colors:
+        valid_colors = jax.nn.one_hot(
+            target_colors.astype(jnp.int32), COLOR_COUNT, dtype=color_nll.dtype
+        ) * valid[..., None]
+        class_counts = jnp.sum(valid_colors, axis=(1, 2))
+        target_class_counts = jnp.sum(
+            valid_colors * class_counts[:, None, None, :], axis=-1
+        )
+        present_class_count = jnp.sum(class_counts > 0, axis=-1)
+        cell_weights = jnp.where(
+            valid,
+            1.0
+            / jnp.maximum(target_class_counts, 1.0)
+            / jnp.maximum(present_class_count[:, None, None], 1),
+            0.0,
+        )
+        color_loss = jnp.sum(color_nll * cell_weights, axis=(1, 2))
+    else:
+        color_loss = jnp.sum(
+            jnp.where(valid, color_nll, 0.0), axis=(1, 2)
+        ) / jnp.maximum(jnp.sum(valid, axis=(1, 2)), 1)
     total = shape_weight * (height_loss + width_loss) + color_weight * color_loss
     return total, height_loss, width_loss, color_loss
 
@@ -1050,6 +1082,7 @@ def terminal_arc_loss(
     color_rank: int,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
+    class_balanced_colors: bool = False,
 ) -> jax.Array:
     """Return scalar terminal ARC loss for pp-prop supervision.
 
@@ -1065,6 +1098,10 @@ def terminal_arc_loss(
         CP rank encoded by ``compact_logits``.
     shape_weight, color_weight : float, default=1.0
         Nonnegative component weights.
+    class_balanced_colors : bool, default=False
+        If true, each color present inside a target's valid shape contributes
+        equal total color-loss weight.  If false, valid cells are weighted
+        uniformly.
 
     Returns
     -------
@@ -1079,6 +1116,7 @@ def terminal_arc_loss(
         color_rank=color_rank,
         shape_weight=shape_weight,
         color_weight=color_weight,
+        class_balanced_colors=class_balanced_colors,
     ).total
 
 

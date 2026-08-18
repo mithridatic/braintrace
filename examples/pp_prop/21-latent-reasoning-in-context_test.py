@@ -389,6 +389,8 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     assert smoke.smoke is True
     assert full.context_memory_width == 0
     assert full.memory_decay == 1.0
+    assert full.balanced_color_loss is False
+    assert full.to_dict()["balanced_color_loss"] is False
 
 
 @pytest.mark.parametrize(
@@ -440,12 +442,21 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     assert parsed.recurrent_edges == 16384
     assert parsed.context_memory_width == 0
     assert parsed.memory_decay == 1.0
+    assert parsed.balanced_color_loss is False
 
     smoke_args = example._parser().parse_args(
-        ["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)]
+        [
+            "--smoke",
+            "--device",
+            "cpu",
+            "--output-dir",
+            str(tmp_path),
+            "--balanced-color-loss",
+        ]
     )
     smoke = example._config_from_args(smoke_args)
     assert smoke.smoke and smoke.device == "cpu"
+    assert smoke.balanced_color_loss is True
 
     bad = example._parser().parse_args(["--smoke", "--neurons", "128"])
     with pytest.raises(ValueError, match="owns its reduced"):
@@ -466,11 +477,13 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
             "32",
             "--memory-decay",
             "0.95",
+            "--balanced-color-loss",
         ]
     )
     memory = example._config_from_args(memory_args)
     assert memory.context_memory_width == 32
     assert memory.memory_decay == 0.95
+    assert memory.balanced_color_loss is True
 
 
 def test_device_resolution_reports_backend_and_fails_closed(example, monkeypatch):
@@ -1620,6 +1633,7 @@ def test_structural_path_compiles_pp_prop_before_qualification(example, monkeypa
 
 def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatch):
     updates: list[object] = []
+    color_loss_kwargs: list[dict[str, object]] = []
 
     class Learner:
         param_states = {}
@@ -1665,9 +1679,11 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
     monkeypatch.setattr(example.braintools.optim, "Adam", Optimizer)
     monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
     monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
-    monkeypatch.setattr(
-        example, "arc_loss_per_example", lambda *args, **kwargs: jnp.ones((1,))
-    )
+    def color_loss(*args, **kwargs):
+        color_loss_kwargs.append(kwargs)
+        return jnp.ones((1,))
+
+    monkeypatch.setattr(example, "arc_loss_per_example", color_loss)
     monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
     monkeypatch.setattr(
         example.brainstate.nn, "clip_grad_norm", lambda value, limit: value
@@ -1691,15 +1707,20 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
         (0, 0, 0),
     )
 
-    result = example._train_model(
-        Model(), [tensors], example.ExperimentConfig.smoke_config()
-    )
+    config = example.ExperimentConfig.smoke_config(balanced_color_loss=True)
+    result = example._train_model(Model(), [tensors], config)
 
     assert len(updates) == 3
     assert result["one_shared_model"] is True
     assert result["one_shared_optimizer_state"] is True
     assert result["optimizer_updates_by_effort"] == {"8": 1, "16": 1, "32": 1}
     assert result["losses"] == [1.0, 1.0, 1.0]
+    assert result["balanced_color_loss"] is True
+    assert [kwargs["class_balanced_colors"] for kwargs in color_loss_kwargs] == [
+        True,
+        True,
+        True,
+    ]
 
 
 def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
