@@ -2827,10 +2827,11 @@ finite-window steps run inside the helper's BrainState scan rather than a bare
 Python model loop. This opt-in preserves the chunk-one pp-prop boundary while
 leaving legacy callers unchanged. Each wrapper emits exact zero at indices 0
 through 17 and emits `sqrt(classification_cross_entropy)` at index 18, so the
-helper's sum-of-squares loss is exactly the terminal-H8 cross-entropy with unit
-weight. The earlier terminal-H8 norm was measured through the legacy host-loop
-mode and motivates this fixed objective, but it does not predict or qualify the
-C3 compiled-scan result.
+helper's sum-of-squares loss represents the terminal-H8 cross-entropy with unit
+weight by construction; byte equality between the floating square and the raw
+cross-entropy is not claimed. The earlier terminal-H8 norm was measured through
+the legacy host-loop mode and motivates this fixed objective, but it does not
+predict or qualify the C3 compiled-scan result.
 
 Run exactly two technical replays. Each replay materializes fresh model and
 state copies, separately constructs each model and policy driver, and
@@ -2885,10 +2886,10 @@ gate_b:mechanism_oracle:terminal_h8:replay_2:query_only_h8:finite_window
 
 Every role is constructed exactly once, starts from the expected canonical
 parameter digest, finishes with that same digest, and creates no trainer or
-optimizer. The ordered model-factory call array uses the existing C2 role order
-with its six old mechanism-oracle roles removed, followed by the eight roles in
-the order shown above. Missing, duplicate, extra, or reordered audit call
-records fail.
+optimizer. The retained model-factory and model-constructor call arrays are the
+20 exact role names in lexicographic order, matching the existing C2 audit
+serialization rule. Missing, duplicate, extra, or reordered audit call records
+fail.
 
 #### Qualification and stop semantics
 
@@ -2921,6 +2922,13 @@ criterion and is empty exactly on pass. `interpretation` is the invalid-stop
 value when `valid=false`; otherwise it is selected from `passed`. An invalid or
 incomplete artifact cannot be called a scientific pass or failure and cannot
 admit formal training.
+
+`valid=false` whenever schema/control, exact configuration, prerequisite,
+initialization, deterministic-environment, schedule, no-update audit, or
+source/GPU authentication is incomplete or false. A structurally complete and
+authenticated H0, no-read, removed-path, or mechanism record that misses its
+frozen scientific threshold remains `valid=true`, `passed=false`, and uses the
+scientific failed-stop interpretation.
 
 The compact result writer may sort JSON object keys. Before signing, the
 producer must reload the exact serialized bytes with the strict duplicate-key,
