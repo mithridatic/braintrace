@@ -1,8 +1,8 @@
 # Example 21 latent-reasoning architecture
 
 Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B and the
-Gate C initialization admission passed; formal Gate C failed; Gate D and the
-ARC test stopped
+Gate C initialization admission passed; formal Gate C failed; Gate C2 is
+preregistered but not run; Gate D and the ARC test remain stopped
 
 Date: 2026-08-17
 
@@ -1621,6 +1621,676 @@ baseline remains zero. Per the preregistered stop rule, no Gate D or ARC test
 was run. Repair requires a new source revision and a fresh authenticated Gate C
 run; this result must not be reinterpreted or patched in place.
 
+### Gate C2: post-failure protocol amendment
+
+This amendment is preregistered after observing the authenticated Gate C v1
+failure above. It does not modify, supersede, upgrade, or reinterpret that
+result. Gate C v1 at source
+`59b27d7be5cc9c37845da7bb2c81ae7203935338`, its schema-1 artifact, its three
+failed criteria, and its stop decision remain retained exactly as recorded.
+Gate C2 is a new paired causal experiment with ten fresh trainings. It retains
+the five arms, two regimes, architecture, seeds, budgets, data, behavioral
+thresholds, and mechanism-oracle thresholds frozen above; it changes only the
+two protocol defects identified after Gate C v1.
+
+The exact Gate C2 result identity is:
+
+- launcher and child target `formal_gate_c2`;
+- result path
+  `var/example21-causal-gate/<head>-formal-gate-c2.json`, with matching
+  `.preflight.json` and `.manifest.json` files;
+- `schema_version=2`;
+- `control="example21_pp_prop_learnability_gate_c2"`;
+- `qualification_regime="preregistered_gate_c2_full"`;
+- `learner="pp_prop_only"`;
+- passing interpretation
+  `gate_c2_passed_pp_prop_learnability_mechanism`; and
+- failing interpretation
+  `gate_c2_failed_stop_no_causal_mechanism_conclusion`.
+
+Gate C2 retains the formal Gate C top-level field set exactly:
+`schema_version`, `control`, `qualification_regime`, `learner`,
+`prerequisites`, `regimes`, `arms`, `mechanism_oracle`, `source_start`,
+`source_end`, `source_files`, `environment`, `qualification`, and
+`total_wall_seconds`. Its exact prerequisite keys are `gate_a`, `gate_b`,
+`gate_c_initialization`, and `gate_c2_controls`. The existing `gate_c_init`
+target remains a schema-1 initialization admission, but the old artifact is not
+reusable: a new admission must be generated at the exact clean Gate C2 source
+HEAD and immutable image. The `gate_c2_controls` admission and
+`formal_gate_c2` must use and reauthenticate that same HEAD/image admission
+before their work and again before manifest signing. All ten Gate C2 arms start
+from its authenticated identities with fresh zero-valued Adam state; no Gate C
+v1 trained parameter or optimizer state is a warm start.
+
+Gate C2 has these exact 15 qualification criteria:
+
+1. `schema_and_control`;
+2. `exact_configuration`;
+3. `prerequisites_authenticated`;
+4. `initialization_authenticated`;
+5. `canonical_schedules_complete`;
+6. `consumed_gate_b_loss_weights_exact`;
+7. `fresh_isolated_optimizers`;
+8. `compiler_and_training_complete`;
+9. `full_gate_a_passed`;
+10. `full_gate_b_passed`;
+11. `blocking_behavioral_margins`;
+12. `paired_h0_operational_equivalence`;
+13. `frozen_write_complete`;
+14. `mechanism_oracle_complete`; and
+15. `source_and_gpu_authenticated`.
+
+Embedded criterion booleans are not trusted. A schema-2 Gate C2 qualifier must
+recompute all 15 from retained raw evidence. Gate C v1 keeps its original
+schema, control, field names, 14-criterion qualifier, and recomputation path;
+the implementation must add separate Gate C2 constants and validation rather
+than changing the meaning of a v1 artifact.
+
+#### Gate C2 pretraining control admission
+
+Gate C2 adds a separate authenticated admission that must pass before any of
+the ten formal trainings begin. Its exact target is `gate_c2_controls`; its
+result path is
+`var/example21-causal-gate/<head>-gate-c2-controls.json`, with matching
+`.preflight.json` and `.manifest.json` sidecars. Its exact identity is
+`schema_version=1`,
+`control="example21_gate_c2_pretraining_control_admission"`,
+`qualification_regime="preregistered_gate_c2_pretraining_controls"`, and
+`learner="pp_prop_only"`. Its exact top-level result keys are
+`schema_version`, `control`, `qualification_regime`, `learner`,
+`prerequisites`, `regimes`, `mechanism_oracle`, `source_start`, `source_end`,
+`source_files`, `environment`, `qualification`, and `total_wall_seconds`.
+`prerequisites` has exactly `gate_a`, `gate_b`, and
+`gate_c_initialization`; the last is the newly authenticated schema-1
+`gate_c_init` bundle from the same clean source HEAD and immutable image.
+
+Each of `regimes.gate_a` and `regimes.gate_b` has exactly `spec`, `config`,
+`schedule_identity`, `paired_h0_operational_equivalence`, and
+`query_only_latent_no_read`. The admission's `mechanism_oracle` is the unchanged
+fresh-initialization finite-window oracle frozen below. The admission performs
+no behavioral training or optimizer update: it must not call an arm training
+step, it must not materialize an Adam optimizer, and no model parameter is
+changed. A read-only inference, state probe, or finite-window gradient probe is
+not a behavioral or optimizer update.
+
+The controls result retains raw no-update evidence at
+`environment.execution_and_update_evidence`. For this target `environment` has
+exactly `backend`, `devices`, `image_digest`, `jax`, `python`, and
+`execution_and_update_evidence`. The evidence object has exactly
+`instrumented_training_entry_points`, `trainer_factory_calls`,
+`trainer_factory_call_count`, `training_step_calls`,
+`training_step_call_count`, `optimizer_constructor_calls`,
+`optimizer_instance_count`, `optimizer_update_calls`,
+`optimizer_update_call_count`, `model_factory_calls`,
+`model_constructor_calls`, `materialized_roles`, and `complete`.
+`instrumented_training_entry_points` is this exact sorted list of audit labels:
+
+```text
+braintools.optim.Adam.__init__
+braintools.optim.Adam.update
+examples.pp_prop.latent_workspace_ablation_gate.GateCTrainer.train_chunk
+examples.pp_prop.latent_workspace_ablation_gate._make_arm_trainer
+examples.pp_prop.latent_workspace_binding_gate._PPPropTrainer.train
+examples.pp_prop.latent_workspace_binding_gate._make_pp_prop_trainer
+examples.pp_prop.latent_workspace_depth_gate._DepthPPPropTrainer.train_chunk
+examples.pp_prop.latent_workspace_depth_gate._make_pp_prop_trainer
+```
+
+The two dataclass-callable labels name the compiled `train`/`train_chunk`
+objects returned by their corresponding factories; the audit wrapper records
+invocation at that boundary even though the callable is stored as a field.
+
+`trainer_factory_calls`, `training_step_calls`, `optimizer_constructor_calls`,
+and `optimizer_update_calls` are raw invocation arrays and must all be empty;
+their four integer counts must therefore all be zero. In particular,
+`optimizer_instance_count=0`: this admission creates no Adam optimizer, so an
+invented step-zero optimizer report cannot substitute for the stronger zero-
+instance evidence. The finite-window pp-prop algorithm state is a gradient
+probe, not an Adam optimizer and not a behavioral update.
+
+Every model construction must pass through one audited controls-model factory.
+`model_factory_calls` and `model_constructor_calls` are the ordered semantic
+role-name arrays, must be byte-exact to each other, contain no duplicate, and
+must equal the sorted exact keys of `materialized_roles`. Each role value has
+exactly `regime`, `probe`, `policy`, `initialization_tree`,
+`expected_parameter_sha256`, `before_parameter_sha256`,
+`after_parameter_sha256`, and `parameters_equal`. The before digest is recorded
+immediately after construction, and `initialization_tree` must be
+`canonical_full`. The after digest is recorded after every probe using that
+role, and both must equal the expected complete-tree digest authenticated by the
+new `gate_c_init` admission, using the authenticated complete parameter-tree
+framing frozen under the perturbation evidence below. The qualifier recomputes
+every complete parameter digest, requires exact before/after equality for every
+materialized role, and requires `complete=true`. Any unregistered construction,
+trainer/optimizer instance, call-log entry, missing role, or parameter change
+makes `no_behavioral_or_optimizer_updates=false`.
+
+`qualification` has exactly `criteria`, `passed`, and `interpretation`.
+`criteria` has these exact nine keys:
+
+1. `schema_and_control`;
+2. `exact_configuration`;
+3. `prerequisites_authenticated`;
+4. `initialization_authenticated`;
+5. `canonical_schedules_complete`;
+6. `no_behavioral_or_optimizer_updates`;
+7. `paired_h0_operational_equivalence`;
+8. `mechanism_oracle_complete`; and
+9. `source_and_gpu_authenticated`.
+
+All nine are independently recomputed from raw evidence. Passing requires all
+nine and records `gate_c2_pretraining_controls_passed`; otherwise the admission
+records `gate_c2_pretraining_controls_failed_stop` and stops before all ten
+trainings. Its authenticated loader returns exactly `target`, `source_head`,
+`image_digest`, `bundle_sha256`, `manifest_sha256`, `preflight_sha256`,
+`result_sha256`, and `admission`. The bundle digest is exactly
+`SHA256(UTF8("example21-launch-bundle-v1\0" + target + "\0" + head +
+"\0" + preflight_sha256 + "\0" + result_sha256))`. The preflight, result,
+and manifest are rehashed after validation to reject a pre-signing or loading
+TOCTOU change.
+
+`formal_gate_c2.prerequisites.gate_c2_controls` is that exact authenticated
+eight-key wrapper. Before update one, the formal result must copy the admission's
+two `schedule_identity`, `paired_h0_operational_equivalence`, and
+`query_only_latent_no_read` records and its `mechanism_oracle` record exactly.
+The schema-2 qualifier compares each copied JSON value with the authenticated
+admission using exact canonical JSON equality; a digest-only reference or an
+embedded pass boolean is insufficient. It repeats source, image, file, and
+three-sidecar authentication immediately before manifest signing.
+
+#### Gate C2 consumed Gate B loss weights
+
+For the four nonterminal-supervision Gate B arms -- `full`, `query_only`,
+`legacy`, and `frozen_write` -- each canonical encoded chunk's
+`encoded.loss_weights` is the exact host array passed as the `loss_weights`
+argument to `trainer.train_chunk`. Gate C2 may not regenerate those values
+through Gate C's `_loss_weights` helper, change their dtype, renormalize them,
+or pass a different array at that API boundary. Concatenating the exact
+arguments in fixed execution order must produce this report:
+
+```json
+{
+  "dtype": "<f8",
+  "shape": [4096, 19],
+  "sha256": "044616bf9dd86cbdc1d472184ede8027bf9ff65d65834b15ec619bf3095d2e31"
+}
+```
+
+This remains the existing `training.loss_weights` raw-evidence location. Its
+digest frames the concatenated array's `numpy.dtype.str`, logical shape, and
+contiguous C-order bytes exactly as the canonical Gate B global digest does.
+The report must be computed from the same arrays passed to the trainer, not
+from a separately regenerated expected array. The independent
+`consumed_gate_b_loss_weights_exact` criterion compares each of the four
+nonterminal-arm reports directly with the pinned literal above. It may not
+derive its expected value from the helper that produced the consumed value.
+
+The `terminal_only` arm remains the sole declared loss intervention. For each
+encoded chunk it constructs `zeros_like(encoded.loss_weights)` and sets weight
+`1.0` only at `H_R` for that update, retaining the canonical float64 dtype and
+shape. Its separately pinned concatenated report is:
+
+```json
+{
+  "dtype": "<f8",
+  "shape": [4096, 19],
+  "sha256": "f381a6b856be26071898fc7427ee1f098bbb333b3305dc3f833c5e80750e1970"
+}
+```
+
+Gate A supervision is unchanged. The canonical schedule report continues to
+carry Gate B's global loss-weight digest, including for `terminal_only`, because
+that report identifies the common encoded schedule; `training.loss_weights`
+identifies the exact effective tensor actually supplied to each arm. Criterion
+`consumed_gate_b_loss_weights_exact` validates all five Gate B arm reports: the
+four nonterminal reports must equal the `044616...` float64 report and the
+terminal-only report must equal the independently pinned `f381a6...` float64
+report. The criterion fails if any arm is missing, if either full digest literal
+does not match, or if any dtype, shape, or byte-framed digest differs.
+
+#### Gate C2 operational H0 equivalence
+
+A read-only diagnostic on the pinned production image showed why Gate C v1's
+byte-identity result cannot isolate the query-only policy. In the reduced
+production-topology GPU probe, replaying one full model with the same compiled
+driver from the same restored snapshot produced a maximum hidden-state
+difference of `1.192e-7`. Two copied full models with separate JITs produced a
+maximum difference of `2.384e-7` on the intact and shuffled streams. The
+full/query-only comparison was within that same numerical scale, and every
+compact output was byte-identical. These diagnostic observations are rationale
+for the amended protocol, not Gate C2 qualification evidence. They do not
+change the Gate C v1 decision: its frozen byte-identity criterion failed, so its
+recorded result remains failed.
+
+Gate C2 makes GPU byte equality after execution an explicit non-claim. It uses
+the project's pre-existing numerical reproducibility bound rather than a
+threshold fitted to the Gate C observations: maximum per-example RMS difference
+must be at most `1e-6` for the compact output and every hidden-state leaf. All
+values must be finite. The compared hidden-state path set, tree and leaf order,
+dtype, and logical shape must match exactly, and decoded predictions must be
+exactly equal.
+
+In each Gate C2 regime the old `paired_h0_identity` regime field is replaced by
+`paired_h0_operational_equivalence`. Its exact top-level keys are `backend`,
+`checkpoint`, `intervention_boundary`, `rms_tolerance`,
+`initialization_parameter_sha256`, `streams`, and `passed`. The fixed values are
+`backend="canonical_production_sparse"`, `checkpoint=0`,
+`intervention_boundary="after_ordinary_query_h0_before_first_latent_tick_h1"`,
+and `rms_tolerance=1e-6`. A dense or `jax_raw` substitute is not admissible.
+
+`initialization_parameter_sha256` has exact keys `full_reference`,
+`full_replay`, `copied_full`, and `query_only`. Every value must equal the
+authenticated canonical parameter digest for that regime. The exact stream
+keys remain `intact`, `shuffled`, and `no_context`. Each stream record has exact
+keys `initial_state_sha256`, `comparisons`, and `passed`.
+`initial_state_sha256` has the same four role keys as the parameter record. The
+four models or replays receive independently materialized deep copies of one
+canonical initialized hidden-state snapshot; the copies must not share mutable
+state, and all four initial snapshot digests must be byte-identical before the
+first event.
+
+`comparisons` has exact keys `same_full_replay`,
+`copied_full_separate_jit`, and `copied_full_vs_query`. The first runs one full
+model and one compiled production driver twice from separate exact snapshot
+copies. The second runs two copied full models through separately constructed
+and compiled production drivers. The third runs a copied full model and the
+query-only model through separately constructed and compiled production
+drivers. Each comparison record has exact keys `compact`, `hidden_paths`,
+`predictions`, and `passed`.
+
+`compact` and every value in `hidden_paths` use one exact floating
+difference-record schema: `left`, `right`,
+`per_example_sum_squared_difference`, `per_example_compared_value_count`,
+`per_example_rms_difference`, `per_example_max_abs_difference`,
+`sum_squared_difference`, `rms_difference`,
+`max_per_example_rms_difference`, `max_abs_difference`, `within_tolerance`.
+Each `left` and `right` endpoint has exactly `dtype`, `shape`, `sha256`,
+`value_count`, `per_example_finite_count`,
+`per_example_nonfinite_count`, `finite_count`, and `nonfinite_count`; left and
+right geometry is retained separately and must agree. The endpoint digest uses
+the project's dtype-and-shape-framed contiguous C-order bytes. Every
+per-example vector has length 512. The qualifier recomputes endpoint totals,
+`sum_squared_difference`, both RMS aggregates, both maxima, and the tolerance
+decision in NumPy float64 from those vectors. It requires all nonfinite counts
+to be zero and all counts to agree with the endpoint shapes. A nonfinite
+difference is an immediate failure rather than a JSON coercion.
+
+The compact endpoint geometry is exactly dtype `<f4`, shape `[512, 1180]`.
+`hidden_paths` has exactly these sorted key, dtype, and shape entries:
+
+```text
+context_memory#0       <f4 [512, 32, 32]
+ff_syn/post/V#0        <f4 [512, 2048]
+ff_syn/syn/g#0         <f4 [512, 2048]
+memory_read#0          <f4 [512, 32]
+query_encoding#0       <f4 [512, 32]
+reasoning_query#0      <f4 [512, 32]
+rec_syn/syn/g#0        <f4 [512, 2048]
+workspace_carrier#0    <f4 [512, 2048]
+```
+
+A missing, additional, renamed, or reordered leaf, or any dtype or shape
+change, fails closed. The batch leading axis defines examples. For each example,
+RMS is `sqrt(sum_squared_difference / compared_value_count)` and the required
+bound is independently `<= 1e-6` for every one of the three comparisons,
+without scaling it by an observed control residual.
+
+Any compared bool or integer array uses the exact discrete difference-record
+schema `left`, `right`, `per_example_hamming_count`, `hamming_count`, and
+`exact_equal`. Its endpoint schema is the same separate dtype, shape, digest,
+and count schema above, and it qualifies only at Hamming distance zero.
+`predictions` has exactly `left`, `right`, `per_example_hamming_count`,
+`hamming_count`, and `equal`. Each prediction endpoint has exactly `dtype`,
+`shape`, `sha256`, `histogram`, and `count`; predictions are explicitly cast to
+dtype `<i4` with shape `[512]`, and `histogram` is the ten-count vector for
+decoded colors 0 through 9. The qualifier requires each histogram to sum to
+512, recomputes `hamming_count` from the 512-entry zero-or-one vector, and
+derives `equal` from Hamming distance zero plus equal endpoint digests and
+histograms. It does not trust the embedded equality value.
+
+All three comparisons must independently satisfy the `1e-6` bound for the
+compact output and every hidden leaf and must have exact decoded-prediction
+equality. The qualifier recomputes each comparison and the enclosing `passed`;
+embedded booleans are not trusted.
+
+This equivalence evidence is operational rather than a required source-code
+shape. Gate C2 does not require one graph, require `lax.cond`, forbid the
+existing pre-einsum mask, or claim that dead-branch arithmetic is physically
+unexecuted. BrainTrace's default `ControlFlowPolicy(cond="convert")` may
+if-convert an ETP-relevant conditional so that both branch bodies execute and a
+selection discards the dead value. Leaving such a conditional opaque instead
+would make weights inside it error or be excluded. Gate C2 therefore qualifies
+the selected values and their causal influence, not physical instruction
+nonexecution.
+
+`query_only_latent_no_read` has exact keys `streams`, `perturbations`,
+`full_positive_control`, `removed_path_finite_window_influence`, and `passed`.
+`streams` has exactly `intact`, `shuffled`, and `no_context`. In the Gate A
+regime each stream has exactly tick `H1`; in Gate B each has exactly ticks `H1`
+through `H8`. Every tick record has exactly `selected_read`, `selected_drive`,
+and `cached_h0_read_reused`, with the last value required to be false.
+
+`selected_read` and `selected_drive` are raw zero-array records with exact keys
+`dtype`, `shape`, `sha256`, `value_count`, `finite_count`, `nonfinite_count`,
+`zero_count`, `sum_of_squares`, `max_abs`, and `exact_zero`. The selected read
+must be `<f4 [512, 32]`; the selected projection drive must be
+`<f4 [512, 2048]`. The qualifier independently constructs an all-zero array of
+the recorded geometry, applies the project's dtype-and-shape-framed digest,
+and requires its digest to equal `sha256`. It also requires `finite_count` and
+`zero_count` to equal the shape product, `nonfinite_count=0`, and both numeric
+aggregates to be exact zero. Thus a boolean alone cannot certify the no-read
+condition, and the ordinary-query `m_0` may not be cached or reused on a latent
+tick.
+
+`perturbations` has exactly `plus_7` and `minus_7`. Each has exact keys
+`replacement`, `streams`, and `passed`. The replacements are respectively the
+all-`+7.0` and all-`-7.0` tensors with dtype `<f4` and shape
+`[512, 32, 32]`; their dtype-and-shape-framed digests are respectively
+`b7b1338c1b2b0124633638a1823ec4e7a4ba8be321eb7306153c0ca8db8c696e`
+and `815cda0e5c57f2387a6c645d372de7ed2df8e9b9be232aeaef6534da35194572`.
+`replacement` has exactly `fill_value`, `dtype`, `shape`, and `sha256`. These
+are the only preregistered perturbation tensors; there is no universal claim
+over arbitrary finite `S_K` values.
+
+Each perturbation repeats the exact regime stream and tick keys above. A tick
+record has exactly `source_s_k_sha256`, `replacement_s_k_sha256`,
+`source_replacement_differ`, `non_s_k_state`, `parameters`, `selected_read`,
+`selected_drive`, `continuation`, and `passed`. `replacement_s_k_sha256` must
+equal the pinned replacement digest and differ from the actual source digest.
+`non_s_k_state` and `parameters` each have exactly `paths`, `framing`,
+`left_tree_sha256`, `right_tree_sha256`, `left_value_sha256`,
+`right_value_sha256`, `tree_equal`, and `values_equal`; both exact equality
+results must recompute true before the continuation. The sole changed boundary
+value is `context_memory#0`, or `S_K`; the parameter tree and every other state
+path remain byte-identical.
+
+`non_s_k_state.paths` is exactly this sorted seven-leaf list:
+
+```text
+ff_syn/post/V#0
+ff_syn/syn/g#0
+memory_read#0
+query_encoding#0
+reasoning_query#0
+rec_syn/syn/g#0
+workspace_carrier#0
+```
+
+Every entry is leaf index zero and has the `<f4` dtype and batch-512 shape
+frozen in the H0 table above. `framing` is exactly
+`nul_joined_gate_c2_non_s_k_state_v1`. For each side the qualifier constructs a
+tree-geometry field list beginning with
+`UTF8("example21-gate-c2-non-s-k-tree-v1")`, then, for every sorted path,
+appends UTF-8 path, ASCII leaf index, ASCII `numpy.dtype.str`, and ASCII
+comma-joined logical shape. `tree_sha256` is SHA-256 of those fields joined by a
+single NUL byte. The value field list instead begins with
+`UTF8("example21-gate-c2-non-s-k-state-v1")` and appends the same four fields
+plus the leaf's contiguous C-order bytes before the next path; `value_sha256` is
+the SHA-256 of that NUL-joined list. Missing, additional, reordered, or aliased
+paths and any leaf, dtype, shape, or byte difference therefore fail closed.
+
+`parameters.paths` is exactly the authenticated sorted canonical-full tree:
+`color_factor_head/weight`, `ff_syn/comm/weight`, `height_head/weight`,
+`memory_read_projection/weight`, `memory_write_scale`,
+`readout_projection/weight`, `rec_syn/comm/weight`, `width_head/weight`, and
+`workspace_query_projection/weight`. `framing` is exactly
+`authenticated_gate_c_parameter_array_digest_v1`. Its tree digest uses the
+same sorted path/leaf-index/dtype/shape geometry framing with domain
+`example21-gate-c2-parameter-tree-v1`. Its value digest is exactly the existing
+authenticated Gate C parameter framing: initialize SHA-256, then for every
+sorted complete parameter path update it, without separators, with UTF-8 path
+and each leaf's ASCII `numpy.dtype.str`, ASCII Python tuple shape, and contiguous
+C-order bytes. Both left and right value digests must equal the corresponding
+`gate_c_init.initialization.<regime>.canonical_full.parameter_sha256`,
+not merely each other. A subset-tree digest cannot pass either record.
+
+The perturbed tick's `selected_read` and `selected_drive` use the raw zero-array
+schema and must still be exact zero. `continuation` has exactly `compact`,
+`hidden_paths`, `predictions`, and `passed` and reuses the independently
+recomputable comparison schemas above between the unperturbed and perturbed
+query-only continuations. Its hidden set is the frozen H0 set above excluding
+the deliberately replaced `context_memory#0`. Every retained float comparison
+must independently meet `1e-6`, every discrete comparison must have Hamming
+distance zero, and decoded predictions must remain exact. Both `+7` and `-7`
+probes must pass every required stream and latent tick.
+
+`full_positive_control` has exactly `plus_7`, `minus_7`, and `passed`. Each
+replacement value has exactly `replacement`, `streams`, and `passed`, and its
+stream and tick keys match the query-only probe. A full-policy tick has exactly
+`source_s_k_sha256`, `replacement_s_k_sha256`, `source_replacement_differ`,
+`non_s_k_state`, `parameters`, `selected_read_difference`,
+`selected_drive_difference`, `continuation`, and `passed`.
+`selected_read_difference` and `selected_drive_difference` use the floating
+difference-record schema above; the other records reuse the exact perturbation
+schemas. All selected-value records must be finite. For each replacement and
+each regime, at least one retained stream/tick must have
+`max_abs_difference > 0` in its selected read or drive; this proves that the
+perturbation probe reaches a live contextual path without requiring every
+individual query vector to respond. The continuation and nested prediction
+records are retained, but the positive control does not preregister that a
+decoded class must change.
+
+`removed_path_finite_window_influence` has exact keys `gradient_chunk_size`,
+`start_state`, `objectives`, `global`, `live_paths`, `removed_paths`, and
+`complete`. It uses `gradient_chunk_size=1` and
+`start_state="materialized_h0_stop_gradient"`, so the common ordinary-query H0
+contribution is not mistaken for a removed latent-read contribution. The Gate A
+record's `objectives` has only `gate_a_h1`: intact canonical Gate A validation,
+episode index zero, batch one, checkpoint H1, and the frozen classification
+cross-entropy. The Gate B record's `objectives` has only
+`gate_b_index0_r8_h8`: the already pinned intact validation episode index zero,
+batch one, effort R8, checkpoint H8, and the frozen query-only canonical
+weighting. The H0 prefix is executed once and materialized; it is outside the
+gradient window. Gate A then executes one H1 tick. Gate B executes H1 through
+H8 with chunk size one, but only H8 is selected into this removed-path
+objective. It does not reuse the terminal-only unit weight and does not start at
+H7.
+
+Both objective records retain raw inputs rather than only coordinate labels.
+Every array digest below is the project framing
+`SHA256(ASCII(dtype.str) || ASCII(str(shape)) || contiguous_C_bytes)`.
+`source_contract` has exactly `metadata`, `events`, `advances`, `targets`,
+`canonical_loss_weights`, `h0_prefix`, and `schedule_cross_bound`.
+`continuation` has exactly `source_indices`, `source_events`, `batched_events`,
+`advances`, `targets`, `selection_mask`, `base_checkpoint_weights`,
+`effective_loss_weights`, `packed_inputs`, `materialized_h0_state_sha256`,
+`gradient_start_state_sha256`, `source_slice_exact`, and `passed`. An event or
+packed-input record has exactly
+`dtype`, `shape`, and `sha256`; an exact-zero event record additionally has
+`fill_value=0.0`. Advance, target, mask, and weight records have exactly
+`dtype`, `shape`, `sha256`, and `values`. `h0_prefix` additionally has
+`source_indices`. The qualifier regenerates the canonical schedule from the
+authenticated regime configuration, extracts the named episode, and compares
+every dtype, shape, value, and byte-framed digest before gradients run.
+
+`gate_a_h1` has exactly `regime`, `stream`, `validation_episode_index`,
+`batch_size`, `checkpoint`, `source_contract`, `continuation`,
+`raw_cross_entropy`, `base_checkpoint_weight`, `weighted_cross_entropy`, and
+`passed`, with fixed coordinates `gate_a`, `intact`, zero, one, and `H1`.
+Its `source_contract.metadata` is exactly:
+
+```json
+{
+  "mapping_id": 850050,
+  "input_colors": [2, 5, 7, 8],
+  "output_colors": [6, 5, 3, 8],
+  "presentation_order_indices": [0, 2, 1, 3],
+  "query_index": 3,
+  "query_color": 8,
+  "target": 8,
+  "demonstration_indices": [0, 1, 2, 3],
+  "h0_index": 4,
+  "h1_index": 5
+}
+```
+
+The Gate A source arrays and H0 prefix are pinned as follows:
+
+```text
+events                  <f4 [6, 41]  213fa1ede3635169cba47db69ad36cfab86e759e6f7e35e02e2d07687f71d36b
+advances                |b1 [6]      42817343a401805d2af9b07c45738f71274aab865d20efb8fb1980e1ed7dc450
+targets                 <i4 [1]      88c7413927e162658f4518fd4a62598fe8b0ea6e2ba5fa334940fdfc49ac845a
+canonical_loss_weights  <f4 [6]      a13746d7d9b7bc9b071cfccfc55a0e8c54ad8454f4bcbf808f5235334c5a6c45
+h0_prefix indices 0:5   <f4 [5, 41]  401cb20096483b305ef7e4383f03377b354fe167aaeffbd06df03f8251b021b2
+```
+
+The literal advances are six `true` values, the target values are `[8]`, and
+the canonical source weights are `[0, 0, 0, 0, 0.5, 0.5]`. The source contract
+uses `h0_prefix.source_indices=[0, 1, 2, 3, 4]`. It
+must also match Gate A's pinned validation-schedule digest
+`80057e092a130e2c78e8f8397b3978bc13a0ff2a5b64bb5207abe238e08feddd`
+and validation-mapping-ID digest
+`a75b3b2ab05110e21fef1ea44ae3fb701d557f45351e5a17cf89a80e80f689f3`.
+
+Gate A continuation `source_indices=[5]`. Its exact-zero `source_events` is
+`<f4 [1, 41]` with digest
+`e9c01c22b9b1bfa0f9bc74cde1820fab5ad99037f581e27df1625db565d6c239`;
+`batched_events` is `<f4 [1, 1, 41]` with digest
+`7e0242875d49aef8e5b0c716cd7993f29895e26cf1dcc67cb2f198c1c351f5df`.
+`advances` is `|b1 [1]`, values `[true]`, digest
+`265e6b573637524100e6222332a3c4a92ba0cba78532eae2701915ac823cc05c`;
+`targets` is `<i4 [1]`, values `[8]`, digest
+`88c7413927e162658f4518fd4a62598fe8b0ea6e2ba5fa334940fdfc49ac845a`;
+and `selection_mask` is the same `|b1 [1]` `[true]` record. Both
+`base_checkpoint_weights` and `effective_loss_weights` are `<f4 [1]`, values
+`[0.5]`, digest
+`355fb8c16f46b517379b869a44896dcc28ef8344457510a7fb6533a0ce7ed8d9`.
+The exact packed event/float-advance/float-target/float-weight input is
+`<f4 [1, 1, 44]` with digest
+`aee2f5f2f2a672f091c4d02e24ade55262e8ebe50ddd32317c4ead5f8e5b84c5`.
+
+`gate_b_index0_r8_h8` has exactly `regime`, `stream`,
+`validation_episode_index`, `batch_size`, `effort`, `checkpoint`,
+`source_contract`, `continuation`, `raw_cross_entropy`,
+`base_checkpoint_weight`, `weighted_cross_entropy`, and `passed`, with fixed
+coordinates `gate_b`, `intact`, zero, one, eight, and `H8`. Its source metadata
+is exactly:
+
+```json
+{
+  "mapping_id": 232423,
+  "mapping": [6, 7, 5, 2, 0, 4, 8, 9, 1, 3],
+  "query_color": 4,
+  "presentation_order": [6, 2, 5, 3, 8, 7, 4, 9, 0, 1],
+  "shuffled_shift": 1,
+  "h0_through_h8_targets": [0, 6, 8, 1, 7, 9, 3, 2, 5]
+}
+```
+
+The source arrays are:
+
+```text
+events                  <f4 [19, 47] 36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec
+advances                |b1 [19]     c45890e2f9f99fa66ffa09db8f685dc4d138c5f0e1ca0346a044f2dbbf1290a9
+targets                 <i4 [19]     c4af41cac4f5eb682df15e7d6cf92b0c134b943fae1abfe99b0bfc4c2ddb27e0
+canonical_loss_weights  <f8 [19]     205496cf3f437986dc5b65bec81d423848179306a7ce9e1a391dcc22c7340197
+h0_prefix indices 0:11  <f4 [11, 47] a445ffd2a62e56808e15b6205cb7825fef7ed9a63a78b74d3942d89d7b6409a8
+```
+
+The literal source advances are 19 `true` values. Source targets are ten
+demonstration zeros followed by `[0, 6, 8, 1, 7, 9, 3, 2, 5]`. Canonical R8
+weights are ten zeros followed by nine float64 `1/9` values.
+`h0_prefix.source_indices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`. The source
+contract must also match every pinned Gate B validation-field digest in the
+Gate B schedule section above, including `mapping_ids`, `query_colors`,
+`presentation_orders`, `targets_by_depth`, `advance_masks`, and `intact`.
+
+Gate B continuation `source_indices=[11, 12, 13, 14, 15, 16, 17, 18]`. Its
+exact-zero `source_events` is `<f4 [8, 47]` with digest
+`87460e7b0e6ea0b632c89c84afa56b7c85c759bc8828b02e275fe4ac3a6be57a`;
+`batched_events` is `<f4 [8, 1, 47]` with digest
+`3d2da82783d3194730d1a4671d06df1254ef298fbe2260ee5e7c86474e111a32`.
+`advances` is `|b1 [8]`, eight `true` values, digest
+`8a707039840658f227e7fe98005429cf19641eb26bf528a80e5f08512099d6ad`;
+`targets` is `<i4 [8]`, values `[6, 8, 1, 7, 9, 3, 2, 5]`, digest
+`be444afd7597cbf6dd40160bf9f1341387db6bd7c7a5ac521e44ab76fa06b590`;
+and `selection_mask` is `|b1 [8]`, values
+`[false, false, false, false, false, false, false, true]`, digest
+`d47a78c1c74031880ca53a15b96001d509253ea84d3d0b05bf24bbdd2f0846c0`.
+`base_checkpoint_weights` is `<f4 [8]`, eight float32 `1/9` values, digest
+`8888babf4975234431878a07158aff6fe97254086106dc5d25d4207ff509ac45`;
+`effective_loss_weights` is `<f4 [8]`, seven zeros followed by float32 `1/9`,
+digest `b15eb5519fa66d2d01c020c1c3f5f93a62a6b015bcfa7e1c171e71770a729b61`.
+The exact packed input is `<f4 [8, 1, 50]` with digest
+`5061ac4deaaf0e6bc153f0766aac8ba630d9d29c7a235a0998fc8121072eb910`.
+
+For each objective, `base_checkpoint_weight` is the selected scalar array
+record (`<f4 [1] [0.5]` with Gate A digest `355fb8...`, and
+`<f4 [1] [float32(1/9)]` with Gate B digest
+`c587060a4599f096433183ee7bc88de3234021291f1815e332950b80025d93b7`).
+`raw_cross_entropy` and `weighted_cross_entropy` each have exactly `dtype`,
+`shape`, `value`, `sha256`, `finite`, and `nonzero`, with dtype `<f4` and shape
+`[1]`; the latter must recompute as the raw cross-entropy multiplied by the base
+checkpoint weight. Both must be finite and strictly nonzero.
+At the selected checkpoint the oracle wrapper emits
+`sqrt(base_checkpoint_weight) * sqrt(raw_cross_entropy)`; at every unselected
+checkpoint it emits exact zero. The helper's sum of squares is therefore exactly
+the retained `weighted_cross_entropy`.
+`materialized_h0_state_sha256` uses the same complete eight-path hidden-state
+framing frozen above, with the leading batch extent changed from 512 to one,
+and is computed immediately after the query-only model runs the pinned
+`h0_prefix`, before applying stop-gradient. The qualifier repeats
+that batch-one prefix from the authenticated initialization and requires its
+digest to equal both `materialized_h0_state_sha256` and the separately retained
+`gradient_start_state_sha256`. It does not require byte equality with the
+separately compiled batch-512
+operational-H0 probe. `source_slice_exact`, `schedule_cross_bound`, and every
+enclosing `passed` value are recomputed rather than trusted.
+
+For each objective, `global` has exactly `tree_paths`, `leaf_count`,
+`value_count`, `l2_norm`, `sha256`, `finite`, and `nonzero`; it must cover the
+exact authenticated query-only parameter tree and be finite and strictly
+nonzero. `live_paths` has exactly `color_factor_head/weight`,
+`readout_projection/weight`, and `rec_syn/comm/weight`. The external event on
+the latent-only objective is exact zero, so `ff_syn/comm/weight` is deliberately
+not a nonzero witness. Each live-path value has exactly `tree_paths`,
+`leaf_count`, `leaves`, `value_count`, `l2_norm`, `sha256`, `finite`, and
+`nonzero`; each must be finite and strictly nonzero. Its leaf records use the
+same exact index, dtype, shape, count, finiteness, zero-count, and digest schema
+as the removed paths. This makes a zero removed-path result non-vacuous.
+
+`removed_paths` has exactly `memory_read_projection/weight` and
+`workspace_query_projection/weight`. Each value has exactly `tree_paths`,
+`leaf_count`, `leaves`, `value_count`, `l2_norm`, `sha256`, `exact_zero`, and
+`finite`. Each `leaves` entry has exactly `index`, `dtype`, `shape`,
+`value_count`, `finite_count`, `nonfinite_count`, `zero_count`, and `sha256`.
+`memory_read_projection/weight` is the one-leaf tree at index zero with dtype
+`<f4`, shape `[32, 2048]`, and 65,536 values;
+`workspace_query_projection/weight` is the one-leaf tree at index zero with
+dtype `<f4`, shape `[2048, 32]`, and 65,536 values. The qualifier independently
+constructs these exact all-zero leaves and recomputes the leaf and formal
+gradient-path digests from the frozen tree/path framing. It requires every
+value finite and exact zero, both counts exact, `l2_norm=0`, and the reported
+digest equal to the reconstructed zero digest. These selected-zero,
+two-perturbation, positive-control, no-cache, and non-vacuous finite-window
+results jointly define causal no-read semantics even when BrainTrace
+if-conversion executes discarded arithmetic.
+
+#### Unchanged Gate C2 mechanism oracle and stop rule
+
+Gate C2 retains the exact finite-window oracle contract and comparison paths
+above. Globally and for each required path, the thresholds remain:
+
+```text
+relative_deviation >= 1e-3
+L2 difference > max(1e-8, 1e-4 * full_gradient_norm)
+```
+
+The inequality remains strict. In particular, the Gate C v1 observed
+`workspace_query_projection/weight` difference `2.5744135613e-9` remains below
+the unchanged `1e-8` floor and remains a failure; it does not justify lowering
+the threshold for Gate C2. Any future threshold revision requires an
+independently justified and preregistered protocol with a new target, control,
+schema version, artifact path, and interpretation before its result is
+observed. It cannot be applied to Gate C v1 or Gate C2 in place.
+
+Gate C2 passes only if all 15 criteria recompute true in one authenticated
+bundle. Any schema, prerequisite, initialization, consumed-weight, pretraining
+control, H0 operational-equivalence, training, behavioral, oracle, source, or
+GPU failure records the Gate C2 failing interpretation and stops. Until Gate C2
+passes, Gate D remains stopped, no new ARC test is run, and the retained
+exact-ARC baseline remains zero.
+
 ### Stage 2 implementation record: structural evidence only
 
 Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
@@ -1694,7 +2364,9 @@ the authenticated Gate B demonstrated-depth result passed at commit
 admission passed at commit `c2eb27b4d51c07e4b68bd29d81101bbfff0351b8`.
 The formal Gate C mechanism ablations then ran at commit
 `59b27d7be5cc9c37845da7bb2c81ae7203935338` and failed as recorded above.
-Gate D full ARC qualification is stopped, not pending: any failed or
+The post-failure Gate C2 protocol and its required `gate_c2_controls`
+pretraining admission are now preregistered but have not been implemented or
+run. Gate D full ARC qualification remains stopped: any failed or
 unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
