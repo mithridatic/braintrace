@@ -127,6 +127,24 @@ def _assert_parameter_snapshots_equal(
             np.testing.assert_array_equal(first, second, err_msg=name)
 
 
+def _assert_state_snapshots_equal(
+    left: ModelStateSnapshot, right: ModelStateSnapshot
+) -> None:
+    assert left.batch_size == right.batch_size
+    assert left.neuron_count == right.neuron_count
+    assert tuple(path for path, _ in left.entries) == tuple(
+        path for path, _ in right.entries
+    )
+    for (path, left_value), (_, right_value) in zip(
+        left.entries, right.entries, strict=True
+    ):
+        left_arrays = _tree_arrays(left_value)
+        right_arrays = _tree_arrays(right_value)
+        assert len(left_arrays) == len(right_arrays)
+        for first, second in zip(left_arrays, right_arrays, strict=True):
+            np.testing.assert_array_equal(first, second, err_msg=str(path))
+
+
 def _valid_events(time: int, width: int) -> jax.Array:
     events = jnp.zeros((time, width), dtype=jnp.float32)
     return events.at[:, 0].set(1.0).at[:, 1].set(1.0)
@@ -652,6 +670,157 @@ def test_fast_weight_self_jacobian_is_exactly_decay_times_identity() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("policy", "exception"),
+    [(None, TypeError), (1, TypeError), ("cached", ValueError)],
+)
+def test_memory_read_policy_rejects_invalid_constructor_values(
+    policy: object, exception: type[Exception]
+) -> None:
+    with pytest.raises(exception, match="memory_read_policy"):
+        LatentWorkspaceModel(_memory_config(), memory_read_policy=policy)  # type: ignore[arg-type]
+
+
+def test_memory_read_policy_is_constructor_only_and_config_neutral() -> None:
+    config = _memory_config()
+    serialized_config = dataclasses.asdict(config)
+    implicit_full = LatentWorkspaceModel(config)
+    explicit_full = LatentWorkspaceModel(config, memory_read_policy="full")
+    query_only = LatentWorkspaceModel(config, memory_read_policy="query_only")
+
+    assert "memory_read_policy" not in serialized_config
+    assert dataclasses.asdict(config) == serialized_config
+    assert implicit_full.memory_read_policy == "full"
+    assert explicit_full.memory_read_policy == "full"
+    assert query_only.memory_read_policy == "query_only"
+    with pytest.raises(AttributeError):
+        query_only.memory_read_policy = "full"  # type: ignore[misc]
+
+    expected_parameters = parameter_snapshot(implicit_full)
+    _assert_parameter_snapshots_equal(
+        expected_parameters, parameter_snapshot(explicit_full)
+    )
+    _assert_parameter_snapshots_equal(
+        expected_parameters, parameter_snapshot(query_only)
+    )
+    _assert_state_snapshots_equal(
+        implicit_full.snapshot_state(), explicit_full.snapshot_state()
+    )
+    _assert_state_snapshots_equal(
+        implicit_full.snapshot_state(), query_only.snapshot_state()
+    )
+
+
+def test_implicit_and_explicit_full_memory_policy_are_byte_identical() -> None:
+    config = _memory_config(memory_decay=1.0)
+    implicit = LatentWorkspaceModel(config)
+    explicit = LatentWorkspaceModel(config, memory_read_policy="full")
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    context = jnp.concatenate((demonstrations, query), axis=0)
+
+    implicit_result = run_sequence(implicit, context, latent_steps=2)
+    explicit_result = run_sequence(explicit, context, latent_steps=2)
+
+    for name in (
+        "compact_logits",
+        "spikes",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+        "zero_inputs",
+    ):
+        np.testing.assert_array_equal(
+            getattr(implicit_result.trajectory, name),
+            getattr(explicit_result.trajectory, name),
+        )
+    _assert_state_snapshots_equal(
+        implicit.snapshot_state(), explicit.snapshot_state()
+    )
+
+
+def test_query_only_matches_h0_then_removes_latent_memory_read_and_drive() -> None:
+    config = _memory_config(memory_decay=1.0, input_gain=8.0)
+    full = LatentWorkspaceModel(config, memory_read_policy="full")
+    query_only = LatentWorkspaceModel(config, memory_read_policy="query_only")
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    context = jnp.concatenate((demonstrations, query), axis=0)
+
+    full_h0 = run_context(full, context)
+    query_only_h0 = run_context(query_only, context)
+
+    for name in (
+        "compact_logits",
+        "spikes",
+        "voltage",
+        "feedforward_current",
+        "recurrent_current",
+    ):
+        np.testing.assert_array_equal(
+            getattr(full_h0, name), getattr(query_only_h0, name)
+        )
+    _assert_state_snapshots_equal(full_h0.snapshot, query_only_h0.snapshot)
+    assert np.any(_state_array(query_only.memory_read) != 0.0)
+
+    zero_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+    query_only_snapshot = query_only.snapshot_state()
+    before_physical = (
+        np.asarray(query_only.voltage).copy(),
+        np.asarray(query_only.feedforward_current).copy(),
+        np.asarray(query_only.recurrent_current).copy(),
+    )
+    full.cell_step(zero_event, advance)
+    query_only.cell_step(zero_event, advance)
+    baseline_physical = (
+        np.asarray(query_only.voltage).copy(),
+        np.asarray(query_only.feedforward_current).copy(),
+        np.asarray(query_only.recurrent_current).copy(),
+    )
+    baseline_reasoning = _state_array(query_only.reasoning_query).copy()
+    baseline_workspace = _state_array(query_only.workspace_carrier).copy()
+
+    assert np.any(_state_array(full.memory_read) != 0.0)
+    np.testing.assert_array_equal(_state_array(query_only.memory_read), 0.0)
+    assert any(
+        not np.array_equal(before, after)
+        for before, after in zip(before_physical, baseline_physical, strict=True)
+    )
+
+    query_only.restore_state(query_only_snapshot)
+    query_only.context_memory.value = query_only.context_memory.value + 7.0
+    query_only.cell_step(zero_event, advance)
+
+    np.testing.assert_array_equal(_state_array(query_only.memory_read), 0.0)
+    np.testing.assert_array_equal(
+        _state_array(query_only.reasoning_query), baseline_reasoning
+    )
+    np.testing.assert_array_equal(
+        _state_array(query_only.workspace_carrier), baseline_workspace
+    )
+    for expected, actual in zip(
+        baseline_physical,
+        (
+            np.asarray(query_only.voltage),
+            np.asarray(query_only.feedforward_current),
+            np.asarray(query_only.recurrent_current),
+        ),
+        strict=True,
+    ):
+        np.testing.assert_array_equal(actual, expected)
+
+
 def test_memory_states_reset_snapshot_and_restore_exactly() -> None:
     memory_model = LatentWorkspaceModel(_memory_config())
     for name, shape in (
@@ -924,12 +1093,15 @@ def test_latent_query_depends_on_previous_continuous_workspace() -> None:
     np.testing.assert_array_equal(memory_model.query_encoding.value, frozen_query)
 
 
-def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients() -> None:
+@pytest.mark.parametrize("memory_read_policy", ["full", "query_only"])
+def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients(
+    memory_read_policy: str,
+) -> None:
     import braintrace
     from braintrace._testing.oracle import chunked_online_param_gradients
 
     config = _memory_config(memory_decay=0.9, input_gain=8.0)
-    model = LatentWorkspaceModel(config)
+    model = LatentWorkspaceModel(config, memory_read_policy=memory_read_policy)
     learner = compile_pp_prop(model)
     write_path = ("memory_write_scale",)
     query_path = ("workspace_query_projection", "weight")
@@ -971,7 +1143,9 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients() -> N
             return super().update(event, advance)
 
     gradients = chunked_online_param_gradients(
-        lambda: _AlwaysAdvanceMemoryModel(config),
+        lambda: _AlwaysAdvanceMemoryModel(
+            config, memory_read_policy=memory_read_policy
+        ),
         inputs,
         algo_factory=lambda candidate: braintrace.pp_prop(
             candidate,
@@ -988,7 +1162,10 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients() -> N
         )
         assert gradient_leaves
         assert math.isfinite(gradient_norm)
-        assert gradient_norm > 0.0
+        if memory_read_policy == "query_only" and path == query_path:
+            assert gradient_norm == 0.0
+        else:
+            assert gradient_norm > 0.0, path
 
 
 def test_memory_mode_uses_one_shared_decoder_on_continuous_workspace() -> None:
@@ -1168,10 +1345,19 @@ def test_memory_mode_drivers_use_the_implicit_workspace_decoder(
 
 def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
     implicit_model = LatentWorkspaceModel(_config())
-    explicit_model = LatentWorkspaceModel(_config(context_memory_width=0))
-    _assert_parameter_snapshots_equal(
-        parameter_snapshot(implicit_model), parameter_snapshot(explicit_model)
+    explicit_model = LatentWorkspaceModel(
+        _config(context_memory_width=0), memory_read_policy="full"
     )
+    query_only_model = LatentWorkspaceModel(
+        _config(context_memory_width=0), memory_read_policy="query_only"
+    )
+    for candidate in (explicit_model, query_only_model):
+        _assert_parameter_snapshots_equal(
+            parameter_snapshot(implicit_model), parameter_snapshot(candidate)
+        )
+        _assert_state_snapshots_equal(
+            implicit_model.snapshot_state(), candidate.snapshot_state()
+        )
     implicit_report = json.dumps(
         dataclasses.asdict(implicit_model.associative_memory_report()),
         sort_keys=True,
@@ -1187,6 +1373,7 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
 
     implicit = run_sequence(implicit_model, events, latent_steps=2)
     explicit = run_sequence(explicit_model, events, latent_steps=2)
+    query_only = run_sequence(query_only_model, events, latent_steps=2)
 
     for name in (
         "compact_logits",
@@ -1199,6 +1386,10 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
         np.testing.assert_array_equal(
             getattr(implicit.trajectory, name), getattr(explicit.trajectory, name)
         )
+        np.testing.assert_array_equal(
+            getattr(implicit.trajectory, name),
+            getattr(query_only.trajectory, name),
+        )
     implicit_entries = implicit_model.snapshot_state().entries
     explicit_entries = explicit_model.snapshot_state().entries
     assert tuple(path for path, _ in implicit_entries) == tuple(
@@ -1209,6 +1400,9 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
             _tree_arrays(left), _tree_arrays(right), strict=True
         ):
             np.testing.assert_array_equal(left_array, right_array)
+    _assert_state_snapshots_equal(
+        implicit_model.snapshot_state(), query_only_model.snapshot_state()
+    )
 
 
 def test_zero_width_compact_readout_is_byte_identical_to_raw_legacy_formula() -> None:
@@ -1240,16 +1434,20 @@ def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identica
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         implicit_learner = compile_pp_prop(LatentWorkspaceModel(implicit_config))
-        explicit_learner = compile_pp_prop(LatentWorkspaceModel(explicit_config))
+        explicit_learner = compile_pp_prop(
+            LatentWorkspaceModel(explicit_config, memory_read_policy="full")
+        )
+        query_only_learner = compile_pp_prop(
+            LatentWorkspaceModel(explicit_config, memory_read_policy="query_only")
+        )
     implicit_report = implicit_learner.report
-    explicit_report = explicit_learner.report
-
-    assert implicit_report.counts == explicit_report.counts
-    assert implicit_report.hidden_groups == explicit_report.hidden_groups
-    assert implicit_report.etrace_weights == explicit_report.etrace_weights
-    assert implicit_report.excluded_weights == explicit_report.excluded_weights
-    assert implicit_report.dynamic_states == explicit_report.dynamic_states
-    assert implicit_report.to_str(2) == explicit_report.to_str(2)
+    for candidate_report in (explicit_learner.report, query_only_learner.report):
+        assert implicit_report.counts == candidate_report.counts
+        assert implicit_report.hidden_groups == candidate_report.hidden_groups
+        assert implicit_report.etrace_weights == candidate_report.etrace_weights
+        assert implicit_report.excluded_weights == candidate_report.excluded_weights
+        assert implicit_report.dynamic_states == candidate_report.dynamic_states
+        assert implicit_report.to_str(2) == candidate_report.to_str(2)
 
     events = _valid_events(3, implicit_config.input_width)[:, None, :]
 
@@ -1269,23 +1467,34 @@ def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identica
         chunk_size=1,
     )
     explicit_gradients = chunked_online_param_gradients(
-        lambda: LatentWorkspaceModel(explicit_config),
+        lambda: LatentWorkspaceModel(
+            explicit_config, memory_read_policy="full"
+        ),
+        events,
+        algo_factory=pp_prop_factory,
+        chunk_size=1,
+    )
+    query_only_gradients = chunked_online_param_gradients(
+        lambda: LatentWorkspaceModel(
+            explicit_config, memory_read_policy="query_only"
+        ),
         events,
         algo_factory=pp_prop_factory,
         chunk_size=1,
     )
 
-    assert tuple(implicit_gradients) == tuple(explicit_gradients)
-    for path in implicit_gradients:
-        implicit_arrays = _tree_arrays(implicit_gradients[path])
-        explicit_arrays = _tree_arrays(explicit_gradients[path])
-        assert len(implicit_arrays) == len(explicit_arrays), path
-        for implicit, explicit in zip(
-            implicit_arrays, explicit_arrays, strict=True
-        ):
-            assert implicit.shape == explicit.shape, path
-            assert implicit.dtype == explicit.dtype, path
-            assert implicit.tobytes() == explicit.tobytes(), path
+    for candidate_gradients in (explicit_gradients, query_only_gradients):
+        assert tuple(implicit_gradients) == tuple(candidate_gradients)
+        for path in implicit_gradients:
+            implicit_arrays = _tree_arrays(implicit_gradients[path])
+            candidate_arrays = _tree_arrays(candidate_gradients[path])
+            assert len(implicit_arrays) == len(candidate_arrays), path
+            for implicit, candidate in zip(
+                implicit_arrays, candidate_arrays, strict=True
+            ):
+                assert implicit.shape == candidate.shape, path
+                assert implicit.dtype == candidate.dtype, path
+                assert implicit.tobytes() == candidate.tobytes(), path
 
 
 def test_context_memory_writes_are_isolated_per_batch_example() -> None:

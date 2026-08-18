@@ -2,12 +2,12 @@
 
 The opt-in memory architecture adds a dense fast-weight ``S_K`` with a
 diagonal-friendly self-transition and a separate continuous reasoning carrier
-``H_r``.  Demonstration rows write fixed nonlinear key/value codes, while the
-query and every exactly-zero latent tick re-read frozen ``S_K`` before driving
-the recurrent LIF workspace.  All trainable memory operations use BrainTrace
-ETP primitives and pp-prop remains the production learning rule.  A memory
-width of zero retains the original reservoir-only architecture and state and
-parameter paths.
+``H_r``.  Demonstration rows write fixed nonlinear key/value codes.  The full
+read policy re-reads frozen ``S_K`` at the query and every exactly-zero latent
+tick; the query-only intervention reads it only at the ordinary query.  All
+trainable memory operations use BrainTrace ETP primitives and pp-prop remains
+the production learning rule.  A memory width of zero retains the original
+reservoir-only architecture and state and parameter paths.
 
 The color head is a compact CP factorization.  It emits row, column, and color
 factors while the network is running and expands them to independent
@@ -22,7 +22,7 @@ import hashlib
 import math
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
-from typing import Any, NamedTuple
+from typing import Any, Literal, NamedTuple
 
 import brainpy.state as bpstate
 import brainstate
@@ -1180,6 +1180,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
     ----------
     config : ModelConfig
         Physical, sparse, readout, and batching configuration.
+    memory_read_policy : {"full", "query_only"}, default="full"
+        Static constructor policy for contextual-memory reads.  ``full``
+        re-reads memory on query and latent ticks.  ``query_only`` preserves
+        the ordinary query read but supplies an exactly zero memory read and
+        drive on latent ticks.  Width-zero legacy mode is unaffected.
 
     Notes
     -----
@@ -1189,11 +1194,21 @@ class LatentWorkspaceModel(brainstate.nn.Module):
     query-terminal checkpoint.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(
+        self,
+        config: ModelConfig,
+        *,
+        memory_read_policy: Literal["full", "query_only"] = "full",
+    ):
         super().__init__()
         if not isinstance(config, ModelConfig):
             raise TypeError("config must be a ModelConfig")
+        if not isinstance(memory_read_policy, str):
+            raise TypeError("memory_read_policy must be 'full' or 'query_only'")
+        if memory_read_policy not in ("full", "query_only"):
+            raise ValueError("memory_read_policy must be 'full' or 'query_only'")
         self.config = config
+        self._memory_read_policy = memory_read_policy
         self.topology = build_sparse_topology(
             config.neuron_count,
             config.recurrent_edges,
@@ -1343,6 +1358,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 )
             )
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
+
+    @property
+    def memory_read_policy(self) -> Literal["full", "query_only"]:
+        """Return the immutable contextual-memory read intervention.
+
+        Returns
+        -------
+        {"full", "query_only"}
+            Static policy selected when the model was constructed.
+        """
+        return self._memory_read_policy
 
     @property
     def neuron_count(self) -> int:
@@ -1816,10 +1842,21 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
             self.reasoning_query.value = next_reasoning_query
             reasoning_gate = query | latent
-            raw_read = self.read_context_memory(next_reasoning_query)
-            raw_read = jnp.where(
-                reasoning_gate[:, None], raw_read, jnp.zeros_like(raw_read)
-            )
+            if self.memory_read_policy == "full":
+                raw_read = self.read_context_memory(next_reasoning_query)
+                raw_read = jnp.where(
+                    reasoning_gate[:, None], raw_read, jnp.zeros_like(raw_read)
+                )
+            else:
+                query_read = jnp.where(
+                    query[:, None],
+                    next_reasoning_query,
+                    jnp.zeros_like(next_reasoning_query),
+                )
+                raw_read = self.read_context_memory(query_read)
+                raw_read = jnp.where(
+                    query[:, None], raw_read, jnp.zeros_like(raw_read)
+                )
             self.memory_read.value = jnp.where(
                 reasoning_gate[:, None],
                 jax.lax.stop_gradient(raw_read),
