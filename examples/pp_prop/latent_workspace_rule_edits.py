@@ -62,6 +62,19 @@ def _object_key(grid: IntArray, mask: IntArray, property_name: str) -> object:
     if property_name == "color":
         values = np.unique(grid[mask])
         return int(values[0]) if values.size == 1 else None
+    if property_name == "border":
+        return bool(
+            mask[0].any() or mask[-1].any() or mask[:, 0].any() or mask[:, -1].any()
+        )
+    if property_name == "symmetric":
+        patch = crop_to_mask(mask.astype(np.int8), mask)
+        return (
+            bool(np.array_equal(patch, patch[::-1])),
+            bool(np.array_equal(patch, patch[:, ::-1])),
+        )
+    if property_name == "size_and_color":
+        values = np.unique(grid[mask])
+        return (int(mask.sum()), int(values[0]) if values.size == 1 else -1)
     if property_name == "holes":
         patch = crop_to_mask(mask.astype(np.int8), mask)
         inverted = 1 - patch
@@ -135,7 +148,16 @@ def family_object_recolor(pairs: DemoPairs) -> Iterator[NamedRule]:
 
     background = background_color(pairs)
     for variant in range(len(CONNECTIVITY)):
-        for property_name in ("size", "bbox", "shape", "color", "holes"):
+        for property_name in (
+            "size",
+            "bbox",
+            "shape",
+            "color",
+            "holes",
+            "border",
+            "symmetric",
+            "size_and_color",
+        ):
             table = _fit_object_table(pairs, background, variant, property_name)
             if not table:
                 continue

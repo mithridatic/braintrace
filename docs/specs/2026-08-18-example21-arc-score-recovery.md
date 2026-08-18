@@ -120,9 +120,29 @@ This replaces the single margin flip, which
 `2026-08-18-example21-positive-arc-score.md` already names as unable to repair a
 multi-cell error.
 
-**Gate 1:** exact pass@2 from the rule channel alone over all 400 tasks. That
-number is the floor everything else is judged against. The report attributes each
-solve to its channel.
+**Gate 1 result.** Measured on all 400 ARC-AGI-1 evaluation tasks, CPU only:
+
+| channel state | strict pass@2 | queries admitting a rule | wall time |
+|---|---|---|---|
+| dihedral, colour map, tiling, scale, crop, panel, symmetry | 7/400 (1.75%) | 7/419 | 4 s |
+| + reduction/completion composition search | 18/400 (4.50%) | 18/419 | 205 s |
+| + object, panel-combine, gravity, border, enclosure families | 22/400 (5.50%) | 22/419 | 77 s |
+| + same-shape cell rules (local rule, rays, connect, translate) | 25/400 (6.25%) | 26/419 | 110 s |
+
+Two properties held at every step. **Precision is total**: every query that
+admitted a rule was solved by it, so the channel has never yet cost a candidate
+slot. **Recall is the only lever**: the channel proposes nothing on 393 of 419
+queries.
+
+The run-time drop from 205 s to 77 s came from restricting the periodic and
+symmetric repair families to colours present in every source and absent from
+every target -- a repair erases exactly one colour, so any colour surviving into
+the target cannot be the hole marker.
+
+Candidate ranking is minimum-description-length: cost tracks fitted degrees of
+freedom, from parameter-free geometry through per-colour and per-cell-context
+tables, with the input-ignoring constant completion charged a degenerate cost so
+it neither corroborates nor outranks a rule that depends on the input.
 
 ### Stage 2 — a decoder that can express ARC outputs
 
