@@ -969,10 +969,13 @@ otherwise the oracle fails. Each global comparison must have relative deviation
 at least `1e-3` and absolute L2 difference greater than
 `max(1e-8, 1e-4 * full_gradient_norm)`. Removing reads must change both
 `workspace_query_projection/weight` and `memory_read_projection/weight` under
-the same thresholds, with finite nonzero full and query-only norms on both
-paths. An unrelated path with a zero norm is retained with the null/defined
-encoding above but does not by itself fail the oracle. These are mechanism
-checks; whole-sequence gradients are not admissible evidence.
+the same thresholds, with finite nonzero full norms on both paths. Their
+query-only norms may be exact zero because removing latent reads makes those
+operations causally dead after `H_0`; relative deviation remains defined by the
+nonzero full denominator and cosine is JSON null under the rule above. An
+unrelated path with a zero norm is likewise retained with the null/defined
+encoding and does not by itself fail the oracle. These are mechanism checks;
+whole-sequence gradients are not admissible evidence.
 
 Gradient digests use one canonical framing. Parameter paths are sorted by their
 slash-separated names. For each path, flatten its gradient subtree in JAX tree
