@@ -1,7 +1,7 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B passed;
-capability Gates C--D pending
+Status: Stage 2 and Stage 2.1 implemented; authenticated Gates A and B and the
+Gate C initialization admission passed; behavioral Gate C and Gate D pending
 
 Date: 2026-08-17
 
@@ -910,13 +910,20 @@ legacy model, requires byte equality path by path, and retains a sorted
 path/dtype/shape/bytes digest of their intersection. It separately pins the
 complete legacy parameter SHA, compiler paths, optimizer path set, and finite
 zero-valued Adam state. The legacy parameter counts are fixed now: 514,844 for
-Gate A and 527,132 for Gate B. Their exact initial SHAs and the two shared-path
-intersection digests are fixed by the authenticated `gate_c_init` run on the
-qualifying GPU image before any behavioral training; CPU-derived hashes are not
-admissible substitutes. The formal result must authenticate the complete init
-result and manifest and reproduce every initial and shared-path digest before
-the first update. Each formal legacy training arm starts from those copied
-canonical shared-path values, not from a separately sampled width-zero tree.
+Gate A and 527,132 for Gate B. The authenticated `gate_c_init` admission on the
+qualifying GPU image fixed the Gate A legacy whole-tree SHA-256 as
+`8ba7de55710a7ec6b75783f88fe67e66a38dcd826fd46e2a13929636a6241392`
+and its shared-path intersection SHA-256 as
+`3222375e87d72bc2fa69713cb818af49835333dcb524f61bdd403bab7d2043b3`.
+It fixed the Gate B legacy whole-tree SHA-256 as
+`4d1bca77eafed499753457ac9afe359c14361623fa604ea0eec011982d2687d2`
+and its shared-path intersection SHA-256 as
+`ed5260e609cdc499a58a3ec11a121aecaef2159b7db6a2683c547153d1c0dbf8`.
+CPU-derived hashes are not admissible substitutes. The formal result must
+authenticate the complete init result and manifest and reproduce every initial
+and shared-path digest before the first update. Each formal legacy training arm
+starts from those copied canonical shared-path values, not from a separately
+sampled width-zero tree.
 
 Define Gate A `binding_gap` as terminal `H_1` intact accuracy minus terminal
 `H_1` shuffled accuracy. Define Gate B `depth_accuracy` as the arithmetic mean
@@ -1441,6 +1448,49 @@ at demonstrated depths rather than depth-invariant performance. It does not
 establish extrapolation beyond effort 8, the Gate C causal ablations, Gate D,
 or any nonzero exact ARC score; those remain pending.
 
+### Authenticated Gate C initialization admission
+
+The initialization-only Gate C admission passed at clean source commit
+`c2eb27b4d51c07e4b68bd29d81101bbfff0351b8` on immutable GPU image
+`sha256:e8d0d3208742281dfda9ea1a3e73ddc8e96c402fc478297b29c2876f9af7d521`.
+The retained strict-JSON result is
+`var/example21-causal-gate/c2eb27b4d51c07e4b68bd29d81101bbfff0351b8-gate-c-init.json`,
+SHA-256
+`54553ace9f5c1e2450da2f2f567107d6002625d8e7b91626b16324be270292a0`.
+Its preflight SHA-256 is
+`c0adca3b874ecf963b411923f8ff690a5ebfaa424dd9add8f68d24c108b62fb9`;
+its manifest SHA-256 is
+`669da34c5e41831cd4b6491c5d01e2c3df6b752be7e707eca8050fc3d75dbed9`;
+and its authenticated bundle SHA-256 is
+`a472b88f653d48bccacdef7173e7464a4dcd3d8e1d9f69a604b3cc3890e98c55`.
+The manifest records `17.65792469999724` seconds for the child command
+(`17.658` seconds rounded); the complete launcher invocation took `30.394`
+seconds.
+
+The admission fixed these GPU-scoped initialization identities before formal
+training:
+
+| Regime | Canonical full count and SHA-256 | Legacy count and SHA-256 | Shared-path SHA-256 |
+| --- | --- | --- | --- |
+| Gate A | `646940`, `b8ecb04f9c481118afa46651ead411abaccc338ad387f29a1f113d455788a5c8` | `514844`, `8ba7de55710a7ec6b75783f88fe67e66a38dcd826fd46e2a13929636a6241392` | `3222375e87d72bc2fa69713cb818af49835333dcb524f61bdd403bab7d2043b3` |
+| Gate B | `659228`, `aa463549a8c3c1dbc24c9f727944eada035b776df666a83139214078d0f83d6d` | `527132`, `4d1bca77eafed499753457ac9afe359c14361623fa604ea0eec011982d2687d2` | `ed5260e609cdc499a58a3ec11a121aecaef2159b7db6a2683c547153d1c0dbf8` |
+
+All ten arm-specific optimizer admissions -- five arms in each regime -- have
+finite, all-zero fresh Adam state and `executed_updates=0`; their included and
+excluded parameter paths match the declared interventions. All 14 frozen
+initialization criteria passed, including authenticated Gate A/B prerequisites,
+exact source and compiler topology, copied canonical-to-legacy shared bytes,
+arm initialization references, optimizer isolation, and zero behavioral
+updates.
+
+This result establishes only an authenticated, reproducible starting point for
+the ten formal trainings. It contains no behavioral training, held-out metric,
+causal margin, or finite-window mechanism-oracle evidence and therefore does
+not pass behavioral Gate C or support a latent-reasoning mechanism conclusion.
+The formal Gate C result must still reauthenticate this admission, reproduce
+the pinned identities before its first update, and satisfy every existing
+behavioral and mechanism criterion above.
+
 ### Stage 2 implementation record: structural evidence only
 
 Stage 2 is implemented on `feat/example21-latent-reasoning` in four bounded
@@ -1510,9 +1560,11 @@ validation remains in progress.
 Complete: the Stage 2.1 one-update and 256-update admissions and authenticated
 Gate A result passed at commit `4737e9172b1c6ca99347af5b2c83fc795a294a16`;
 the authenticated Gate B demonstrated-depth result passed at commit
-`dafa64a8b4c3848241baa117affa55b632518a8e`. Pending: implement and run the
-now-frozen Gate C mechanism ablations and, only after a Gate C pass, Gate D full
-ARC qualification. Any failed or unauthenticated gate stops this sequence.
+`dafa64a8b4c3848241baa117affa55b632518a8e`; and the initialization-only Gate C
+admission passed at commit `c2eb27b4d51c07e4b68bd29d81101bbfff0351b8`.
+Pending: implement and run the now-frozen formal Gate C mechanism ablations and,
+only after a behavioral Gate C pass, Gate D full ARC qualification. Any failed
+or unauthenticated gate stops this sequence.
 
 ## Explicit non-claims
 
