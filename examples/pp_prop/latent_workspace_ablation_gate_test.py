@@ -11779,3 +11779,992 @@ def test_gate_c2_operational_h0_restores_independent_live_state_leaves(
             np.testing.assert_array_equal(live_arrays(model)[path], value)
     for path, value in immutable_source.items():
         np.testing.assert_array_equal(snapshot_arrays(source_snapshot["value"])[path], value)
+
+
+_GATE_C3_CONTROLS_CRITERIA = (
+    "schema_and_control",
+    "exact_configuration",
+    "prerequisites_authenticated",
+    "initialization_authenticated",
+    "deterministic_environment_authenticated",
+    "canonical_schedules_complete",
+    "no_behavioral_or_optimizer_updates",
+    "paired_h0_operational_equivalence",
+    "no_read_and_removed_path_complete",
+    "mechanism_oracle_complete",
+    "source_and_gpu_authenticated",
+)
+_GATE_C3_DETERMINISTIC_ENVIRONMENT = {
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "XLA_FLAGS": "--xla_gpu_deterministic_ops=true",
+}
+_GATE_C3_TERMINAL_ROLES = {
+    (
+        f"gate_b:mechanism_oracle:terminal_h8:replay_{replay}:"
+        f"{policy}:{stage}"
+    ): (
+        "gate_b",
+        (
+            f"mechanism_oracle:terminal_h8:replay_{replay}:"
+            f"{policy}:{stage}"
+        ),
+        "full" if policy == "full_read_h8" else "query_only",
+    )
+    for replay in (1, 2)
+    for policy in ("full_read_h8", "query_only_h8")
+    for stage in ("reference", "finite_window")
+}
+_GATE_C3_CONTROL_MODEL_ROLES = dict(
+    sorted(
+        {
+            **{
+                role: contract
+                for role, contract in _GATE_C2_CONTROL_MODEL_ROLES.items()
+                if "mechanism_oracle" not in role
+            },
+            **_GATE_C3_TERMINAL_ROLES,
+        }.items()
+    )
+)
+_GATE_C3_TERMINAL_WEIGHTS = np.asarray(
+    [0.0] * 18 + [1.0],
+    dtype=np.float32,
+)
+_GATE_C3_TERMINAL_TARGETS = np.asarray(
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 1, 7, 9, 3, 2, 5],
+    dtype=np.int32,
+)
+_GATE_C3_TERMINAL_ADVANCES = np.ones((19,), dtype=np.float32)
+
+
+@requires_gate_c
+def test_gate_c3_controls_constants_are_a_bounded_c2_amendment() -> None:
+    assert gate_c.GATE_C3_CONTROLS_SCHEMA_VERSION == 1
+    assert gate_c.GATE_C3_CONTROLS_CONTROL == (
+        "example21_gate_c3_pretraining_control_admission"
+    )
+    assert gate_c.GATE_C3_CONTROLS_QUALIFICATION_REGIME == (
+        "preregistered_gate_c3_pretraining_controls"
+    )
+    assert gate_c.GATE_C3_CONTROLS_PASSING_INTERPRETATION == (
+        "gate_c3_pretraining_controls_passed"
+    )
+    assert gate_c.GATE_C3_CONTROLS_FAILING_INTERPRETATION == (
+        "gate_c3_pretraining_controls_failed_stop"
+    )
+    assert gate_c.GATE_C3_CONTROLS_INVALID_INTERPRETATION == (
+        "gate_c3_pretraining_controls_invalid_stop"
+    )
+    assert gate_c.GATE_C3_CONTROLS_QUALIFICATION_CRITERIA == (
+        _GATE_C3_CONTROLS_CRITERIA
+    )
+    assert gate_c.GATE_C3_DETERMINISTIC_ENVIRONMENT == (
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    assert gate_c.GATE_C3_CONTROLS_TOP_LEVEL_KEYS == (
+        gate_c.GATE_C2_CONTROLS_TOP_LEVEL_KEYS
+    )
+
+    roles = gate_c.GATE_C3_CONTROLS_MODEL_ROLES
+    assert len(roles) == 20
+    assert list(roles) == list(_GATE_C3_CONTROL_MODEL_ROLES)
+    assert {
+        role: (value["regime"], value["probe"], value["policy"])
+        for role, value in roles.items()
+    } == _GATE_C3_CONTROL_MODEL_ROLES
+    assert [
+        role for role in roles if "mechanism_oracle" not in role
+    ] == [
+        role
+        for role in gate_c.GATE_C2_CONTROLS_MODEL_ROLES
+        if "mechanism_oracle" not in role
+    ]
+    assert [role for role in roles if "terminal_h8" in role] == sorted(
+        _GATE_C3_TERMINAL_ROLES
+    )
+
+    objective = gate_c.GATE_C3_TERMINAL_H8_OBJECTIVE
+    assert objective == {
+        "regime": "gate_b",
+        "validation_episode_index": 0,
+        "stream": "intact",
+        "effort": 8,
+        "batch_size": 1,
+        "mapping_id": 232_423,
+        "events_sha256": (
+            "36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec"
+        ),
+        "checkpoint": "H_8",
+        "sequence_index": 18,
+        "gradient_chunk_size": 1,
+        "compiled_scan": True,
+        "technical_replays": 2,
+        "required_paths": [
+            "memory_read_projection/weight",
+            "workspace_query_projection/weight",
+        ],
+        "relative_deviation_minimum": 1e-3,
+        "l2_difference_absolute_floor": 1e-8,
+        "l2_difference_relative_floor": 1e-4,
+    }
+
+
+@pytest.mark.parametrize(
+    "environment",
+    (
+        {},
+        {"XLA_FLAGS": "--xla_gpu_deterministic_ops=true"},
+        {
+            **_GATE_C3_DETERMINISTIC_ENVIRONMENT,
+            "XLA_FLAGS": "--xla_gpu_deterministic_ops=true --extra",
+        },
+        {
+            **_GATE_C3_DETERMINISTIC_ENVIRONMENT,
+            "unexpected": "value",
+        },
+    ),
+)
+@requires_gate_c
+def test_gate_c3_deterministic_environment_requires_exact_names_and_values(
+    environment: Mapping[str, str],
+) -> None:
+    assert gate_c._gate_c3_deterministic_environment_complete(
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    assert not gate_c._gate_c3_deterministic_environment_complete(environment)
+
+
+@requires_gate_c
+def test_gate_c3_terminal_h8_inputs_are_exact_and_packed_once() -> None:
+    config = gate_c.GateCConfig()
+    data = gate_c._regenerate_gate_b_data(config)
+    inputs = gate_c._gate_c3_terminal_h8_inputs(config, gate_b_data=data)
+
+    assert set(inputs) == {
+        "events",
+        "targets",
+        "advances",
+        "loss_weights",
+        "packed_inputs",
+    }
+    events = np.asarray(inputs["events"])
+    targets = np.asarray(inputs["targets"])
+    advances = np.asarray(inputs["advances"])
+    weights = np.asarray(inputs["loss_weights"])
+    packed = np.asarray(inputs["packed_inputs"])
+    assert gate_c._gate_c2_raw_array_record(events) == {
+        "dtype": "<f4",
+        "shape": [19, 47],
+        "sha256": (
+            "36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec"
+        ),
+    }
+    np.testing.assert_array_equal(targets, _GATE_C3_TERMINAL_TARGETS)
+    np.testing.assert_array_equal(advances, _GATE_C3_TERMINAL_ADVANCES)
+    np.testing.assert_array_equal(weights, _GATE_C3_TERMINAL_WEIGHTS)
+    assert gate_c._gate_c2_raw_array_record(targets) == {
+        "dtype": "<i4",
+        "shape": [19],
+        "sha256": (
+            "c4af41cac4f5eb682df15e7d6cf92b0c134b943fae1abfe99b0bfc4c2ddb27e0"
+        ),
+    }
+    assert gate_c._gate_c2_raw_array_record(advances) == {
+        "dtype": "<f4",
+        "shape": [19],
+        "sha256": (
+            "d69cc2400af318c684ba7c8ba0d66204f25264b3bcbba9d8d96d999bdefc4a07"
+        ),
+    }
+    assert gate_c._gate_c2_raw_array_record(weights) == {
+        "dtype": "<f4",
+        "shape": [19],
+        "sha256": (
+            "07fecad3bfcbd816df57ab71c500db391cbf3b581a99376678d0e5f9da8e6693"
+        ),
+    }
+    assert gate_c._gate_c2_raw_array_record(packed) == {
+        "dtype": "<f4",
+        "shape": [19, 1, 50],
+        "sha256": (
+            "ef1c75296133458d90de3d5d9c204890127f83238148bd11bc2736bae6a205e1"
+        ),
+    }
+    np.testing.assert_array_equal(packed[:, 0, 47], advances)
+    np.testing.assert_array_equal(packed[:, 0, 48], targets.astype(np.float32))
+    np.testing.assert_array_equal(packed[:, 0, 49], weights)
+    assert weights.sum(dtype=np.float32) == np.float32(1.0)
+
+
+def _fake_gate_c3_terminal_h8_report(
+    run: Mapping[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    producer_mode: str = "valid",
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    calls: list[dict[str, Any]] = []
+
+    def fake_gradients(
+        model_factory: Any,
+        packed_inputs: Any,
+        **kwargs: Any,
+    ) -> Any:
+        if producer_mode == "no_factory":
+            return {}
+        model = model_factory()
+        parameters = legacy._parameter_values(model)
+        calls.append(
+            {
+                "model_id": id(model),
+                "policy": model.memory_read_policy,
+                "packed": np.asarray(packed_inputs),
+                **kwargs,
+            }
+        )
+        fill = 1.0 if model.memory_read_policy == "full" else 0.0
+        gradients = {
+            path: jax.tree.map(
+                lambda leaf: jnp.full_like(u.get_mantissa(leaf), fill),
+                value,
+            )
+            for path, value in parameters.items()
+        }
+        if producer_mode == "valid":
+            return gradients
+        if producer_mode == "non_mapping":
+            return []
+        first_path = gate_c.FULL_PARAMETER_PATHS[0]
+        if producer_mode == "wrong_paths":
+            gradients.pop(first_path)
+        elif producer_mode == "wrong_tree":
+            gradients[first_path] = {"unexpected": gradients[first_path]}
+        elif producer_mode == "wrong_geometry":
+            gradients[first_path] = jax.tree.map(
+                lambda leaf: jnp.reshape(leaf, (-1,)),
+                gradients[first_path],
+            )
+        else:
+            raise AssertionError(f"unknown fake producer mode {producer_mode!r}")
+        return gradients
+
+    monkeypatch.setattr(
+        gate_c,
+        "chunked_online_param_gradients",
+        fake_gradients,
+    )
+    report = gate_c._gate_c3_terminal_h8_mechanism_oracle(
+        run["config"],
+        initialization=run["initialization"],
+        gate_b_data=run["data"],
+    )
+    return report, calls
+
+
+@requires_gate_c
+def test_gate_c3_terminal_h8_oracle_runs_two_compiled_matched_replays(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = reduced_finite_window_oracle_inputs
+    report, calls = _fake_gate_c3_terminal_h8_report(run, monkeypatch)
+
+    assert len(calls) == 4
+    assert len({call["model_id"] for call in calls}) == 4
+    assert [call["policy"] for call in calls] == [
+        "full",
+        "query_only",
+        "full",
+        "query_only",
+    ]
+    for call in calls:
+        assert call["chunk_size"] == 1
+        assert call["compiled_scan"] is True
+        np.testing.assert_array_equal(
+            call["packed"][:, 0, -1],
+            _GATE_C3_TERMINAL_WEIGHTS,
+        )
+
+    assert report["contract"] == gate_c.GATE_C3_TERMINAL_H8_OBJECTIVE
+    assert report["objective"]["compiled_scan"] is True
+    assert report["objective"]["gradient_chunk_size"] == 1
+    assert len(report["replays"]) == 2
+    for replay_index, replay in enumerate(report["replays"], start=1):
+        assert replay["replay"] == replay_index
+        identity = replay["pre_execution_identity"]
+        expected_roles = sorted(
+            role
+            for role in _GATE_C3_TERMINAL_ROLES
+            if f"replay_{replay_index}:" in role
+        )
+        assert list(identity["parameter_sha256"]) == expected_roles
+        assert list(identity["hidden_state_sha256"]) == expected_roles
+        assert len(set(identity["parameter_sha256"].values())) == 1
+        assert len(set(identity["hidden_state_sha256"].values())) == 1
+        assert identity["parameters_byte_identical"] is True
+        assert identity["hidden_states_byte_identical"] is True
+        comparison = replay["comparison"]
+        assert comparison["required_paths"] == (
+            gate_c.GATE_C3_TERMINAL_H8_OBJECTIVE["required_paths"]
+        )
+        assert comparison["required_paths_passed"] is True
+        assert comparison["passed"] is True
+    assert report["complete"] is True
+    assert gate_c._gate_c3_terminal_h8_mechanism_oracle_complete(
+        report,
+        run["config"],
+    )
+
+    reordered = copy.deepcopy(report)
+    for replay in reordered["replays"]:
+        identity = replay["pre_execution_identity"]
+        for name in ("parameter_sha256", "hidden_state_sha256"):
+            identity[name] = dict(reversed(list(identity[name].items())))
+    assert gate_c._gate_c3_terminal_h8_mechanism_oracle_complete(
+        reordered,
+        run["config"],
+    )
+
+    colluding = copy.deepcopy(report)
+    colluding["replays"][0]["comparison"]["global"][
+        "relative_deviation"
+    ] = 0.0
+    assert not gate_c._gate_c3_terminal_h8_mechanism_oracle_complete(
+        colluding,
+        run["config"],
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("config_type", "coordinates", "data_type", "metadata", "payload"),
+)
+@requires_gate_c
+def test_gate_c3_terminal_h8_inputs_reject_noncanonical_contracts(
+    mutation: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+) -> None:
+    run = reduced_finite_window_oracle_inputs
+    config: Any = run["config"]
+    data: Any = run["data"]
+    error: type[Exception] = ValueError
+    if mutation == "config_type":
+        config = object()
+        error = TypeError
+    elif mutation == "coordinates":
+        config = dataclasses.replace(config, oracle_effort=4)
+    elif mutation == "data_type":
+        data = (data[0], object())
+        error = TypeError
+    elif mutation == "metadata":
+        schedule, validation = data
+        mapping_ids = np.array(validation.mapping_ids, copy=True)
+        mapping_ids[0] += 1
+        data = (
+            schedule,
+            dataclasses.replace(validation, mapping_ids=mapping_ids),
+        )
+    else:
+        schedule, validation = data
+        events = np.array(validation.intact, copy=True)
+        events[0, 0, 0] = np.nextafter(
+            events[0, 0, 0],
+            np.float32(np.inf),
+        )
+        data = (schedule, dataclasses.replace(validation, intact=events))
+
+    with pytest.raises(error):
+        gate_c._gate_c3_terminal_h8_inputs(config, gate_b_data=data)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_level",
+        "numeric",
+        "geometry_schema",
+        "leaf_container",
+        "cardinality",
+        "leaf_record",
+    ),
+)
+@requires_gate_c
+def test_gate_c3_gradient_record_rejects_malformed_geometry(
+    mutation: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+) -> None:
+    config = reduced_finite_window_oracle_inputs["config"]
+    path = "color_factor_head/weight"
+    expected = gate_c._gate_c3_expected_gradient_geometry(config)[path]
+    full = tuple(np.ones(shape, dtype=np.float32) for _, shape in expected)
+    arm = tuple(np.zeros(shape, dtype=np.float32) for _, shape in expected)
+    record = gate_c._gate_c3_gradient_record(path, full, arm)
+    assert gate_c._gate_c3_gradient_record_complete(
+        record,
+        path=path,
+        expected_geometry=expected,
+    )
+
+    malformed = copy.deepcopy(record)
+    if mutation == "top_level":
+        malformed["unexpected"] = None
+    elif mutation == "numeric":
+        malformed["full_sha256"] = "not-a-digest"
+    elif mutation == "geometry_schema":
+        malformed["geometry"]["path"] = "wrong/path"
+    elif mutation == "leaf_container":
+        malformed["geometry"]["full_leaves"] = {}
+    elif mutation == "cardinality":
+        malformed["geometry"]["leaf_count"] += 1
+    else:
+        malformed["geometry"]["full_leaves"][0]["finite_count"] -= 1
+
+    assert not gate_c._gate_c3_gradient_record_complete(
+        malformed,
+        path=path,
+        expected_geometry=expected,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "top_level",
+        "objective_schema",
+        "objective_semantics",
+        "arrays_schema",
+        "array_digest",
+        "replay_count",
+        "replay_schema",
+        "replay_index",
+    ),
+)
+@requires_gate_c
+def test_gate_c3_terminal_h8_status_rejects_structural_mutations(
+    mutation: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = reduced_finite_window_oracle_inputs
+    report, _ = _fake_gate_c3_terminal_h8_report(run, monkeypatch)
+    assert gate_c._gate_c3_terminal_h8_mechanism_oracle_status(
+        report,
+        run["config"],
+    ) == (True, True)
+    malformed = copy.deepcopy(report)
+    if mutation == "top_level":
+        malformed["unexpected"] = None
+    elif mutation == "objective_schema":
+        malformed["objective"]["unexpected"] = None
+    elif mutation == "objective_semantics":
+        malformed["objective"]["compiled_scan"] = False
+    elif mutation == "arrays_schema":
+        malformed["objective"]["arrays"]["unexpected"] = None
+    elif mutation == "array_digest":
+        malformed["objective"]["arrays"]["events"]["sha256"] = "0" * 64
+    elif mutation == "replay_count":
+        malformed["replays"].pop()
+    elif mutation == "replay_schema":
+        malformed["replays"][0]["unexpected"] = None
+    else:
+        malformed["replays"][0]["replay"] = 2
+
+    assert gate_c._gate_c3_terminal_h8_mechanism_oracle_status(
+        malformed,
+        run["config"],
+    ) == (False, False)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("valid", "missing_canonical", "missing_role", "changed_role"),
+)
+@requires_gate_c
+def test_gate_c3_terminal_h8_status_authenticates_terminal_audit_roles(
+    mutation: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = reduced_finite_window_oracle_inputs
+    report, _ = _fake_gate_c3_terminal_h8_report(run, monkeypatch)
+    canonical = run["initialization"]["initialization"]["gate_b"][
+        "canonical_full"
+    ]["parameter_sha256"]
+    audit = {
+        "materialized_roles": {
+            role: {
+                "expected_parameter_sha256": canonical,
+                "before_parameter_sha256": canonical,
+                "after_parameter_sha256": canonical,
+                "parameters_equal": True,
+            }
+            for role in sorted(_GATE_C3_TERMINAL_ROLES)
+        }
+    }
+    supplied_canonical: str | None = canonical
+    expected = (True, True)
+    first_role = next(iter(audit["materialized_roles"]))
+    if mutation == "missing_canonical":
+        supplied_canonical = None
+        expected = (False, False)
+    elif mutation == "missing_role":
+        audit["materialized_roles"].pop(first_role)
+        expected = (False, False)
+    elif mutation == "changed_role":
+        audit["materialized_roles"][first_role]["after_parameter_sha256"] = (
+            "0" * 64
+        )
+        audit["materialized_roles"][first_role]["parameters_equal"] = False
+        expected = (False, False)
+
+    assert gate_c._gate_c3_terminal_h8_mechanism_oracle_status(
+        report,
+        run["config"],
+        canonical_parameter_sha256=supplied_canonical,
+        audit_evidence=audit,
+    ) == expected
+
+
+@pytest.mark.parametrize(
+    ("producer_mode", "error", "match"),
+    (
+        ("no_factory", RuntimeError, "materialize"),
+        ("non_mapping", TypeError, "path mapping"),
+        ("wrong_paths", ValueError, "paths differ"),
+        ("wrong_tree", ValueError, "tree differs"),
+        ("wrong_geometry", ValueError, "geometry differs"),
+    ),
+)
+@requires_gate_c
+def test_gate_c3_terminal_h8_oracle_rejects_bad_gradient_producers(
+    producer_mode: str,
+    error: type[Exception],
+    match: str,
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(error, match=match):
+        _fake_gate_c3_terminal_h8_report(
+            reduced_finite_window_oracle_inputs,
+            monkeypatch,
+            producer_mode=producer_mode,
+        )
+
+
+def _passing_gate_c3_controls_report(
+    admission: Mapping[str, Any],
+    no_read_reports: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    report = _passing_gate_c2_controls_report(admission, no_read_reports)
+    report["control"] = "example21_gate_c3_pretraining_control_admission"
+    report["qualification_regime"] = (
+        "preregistered_gate_c3_pretraining_controls"
+    )
+    report["environment"]["deterministic_environment"] = copy.deepcopy(
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    report["mechanism_oracle"] = {"terminal_h8_fixture": True}
+    report["qualification"] = {
+        "valid": False,
+        "passed": False,
+        "criteria": {
+            name: False for name in _GATE_C3_CONTROLS_CRITERIA
+        },
+        "failures": list(_GATE_C3_CONTROLS_CRITERIA),
+        "interpretation": "colluding-embedded-value-is-not-trusted",
+    }
+    return report
+
+
+def _patch_gate_c3_passing_validators(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_query_only_latent_no_read_complete",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c3_terminal_h8_mechanism_oracle_complete",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c3_terminal_h8_mechanism_oracle_status",
+        lambda *args, **kwargs: (True, True),
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_no_update_evidence_complete",
+        lambda *args, **kwargs: True,
+    )
+
+
+@requires_gate_c
+def test_gate_c3_controls_writer_streams_and_strictly_roundtrips(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    value = {
+        "schema_version": gate_c.GATE_C3_CONTROLS_SCHEMA_VERSION,
+        "control": gate_c.GATE_C3_CONTROLS_CONTROL,
+        "semantic_sequence": ["intact", "shuffled", "no_context"],
+        "mapping": {"z": 1, "a": 2},
+    }
+
+    def forbidden_dumps(*args: Any, **kwargs: Any) -> str:
+        del args, kwargs
+        raise AssertionError("Gate C3 controls must stream JSON chunks")
+
+    monkeypatch.setattr(gate_c.json, "dumps", forbidden_dumps)
+    destination = tmp_path / "gate-c3-controls.json"
+    gate_c.write_artifact(value, destination)
+
+    payload = destination.read_bytes()
+    assert payload.endswith(b"\n")
+    assert b"\n" not in payload[:-1]
+    assert payload.index(b'"a"') < payload.index(b'"z"')
+    assert launcher.load_strict_json(destination) == value
+    assert launcher.load_strict_json(destination)["semantic_sequence"] == [
+        "intact",
+        "shuffled",
+        "no_context",
+    ]
+    assert not destination.with_suffix(".json.tmp").exists()
+
+
+@pytest.mark.parametrize("mutation", ("selected_read", "state_equality"))
+@requires_gate_c
+def test_gate_c3_no_read_coherent_miss_is_valid_but_collusion_is_invalid(
+    mutation: str,
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    regime = "gate_a"
+    report = copy.deepcopy(reports[regime])
+
+    def removed_complete(
+        value: Any,
+        *,
+        regime: str,
+        canonical_parameter_sha256: str,
+        require_pass: bool = True,
+    ) -> bool:
+        del require_pass
+        canonical = admission["initialization"][regime]["canonical_full"][
+            "parameter_sha256"
+        ]
+        return bool(
+            value == {"fixture_regime": regime, "complete": True}
+            and canonical_parameter_sha256 == canonical
+        )
+
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_removed_path_influence_complete",
+        removed_complete,
+    )
+    first_tick = gate_c.GATE_C2_LATENT_TICKS[regime][0]
+    if mutation == "selected_read":
+        selected = gate_c._gate_c2_zero_array_record(
+            np.ones((512, 32), dtype=np.float32)
+        )
+        report["streams"]["intact"][first_tick]["selected_read"] = selected
+        malformed = selected
+        malformed_field = "exact_zero"
+    else:
+        replacement = report["perturbations"]["plus_7"]
+        tick = replacement["streams"]["intact"][first_tick]
+        equality = tick["non_s_k_state"]
+        equality["right_tree_sha256"] = "1" * 64
+        equality["right_value_sha256"] = "2" * 64
+        equality["tree_equal"] = False
+        equality["values_equal"] = False
+        tick["passed"] = False
+        replacement["passed"] = False
+        malformed = equality
+        malformed_field = "tree_equal"
+    report["passed"] = False
+
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+        require_pass=True,
+    )
+    assert gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+        require_pass=False,
+    )
+
+    malformed[malformed_field] = True
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+        require_pass=False,
+    )
+
+
+@requires_gate_c
+def test_gate_c3_no_read_structure_rejects_noncanonical_nested_parameter(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, reports = passing_gate_c2_no_read_reports
+    regime = "gate_a"
+    report = copy.deepcopy(reports[regime])
+
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c2_removed_path_influence_complete",
+        lambda value, **kwargs: value
+        == {"fixture_regime": regime, "complete": True},
+    )
+    first_tick = gate_c.GATE_C2_LATENT_TICKS[regime][0]
+    replacement = report["perturbations"]["plus_7"]
+    tick = replacement["streams"]["intact"][first_tick]
+    parameters = tick["parameters"]
+    parameters["right_value_sha256"] = "3" * 64
+    parameters["values_equal"] = False
+    tick["passed"] = False
+    replacement["passed"] = False
+    report["passed"] = False
+
+    assert not gate_c._gate_c2_query_only_latent_no_read_complete(
+        report,
+        admission,
+        regime=regime,
+        require_pass=False,
+    )
+
+
+@requires_gate_c
+def test_gate_c3_removed_gradient_coherent_miss_is_structurally_valid(
+    reduced_gate_c2_removed_path_reports: dict[str, Any],
+) -> None:
+    fixture = reduced_gate_c2_removed_path_reports
+    regime = "gate_a"
+    report = copy.deepcopy(fixture["reports"][regime])
+    canonical = fixture["initialization"]["initialization"][regime][
+        "canonical_full"
+    ]["parameter_sha256"]
+    path = gate_c.GATE_C2_REMOVED_PATHS[0]
+    record = report["removed_paths"][path]
+    leaf = record["leaves"][0]
+    leaf["zero_count"] = int(leaf["value_count"]) - 1
+    leaf["sha256"] = "1" * 64
+    record["l2_norm"] = 1e-9
+    record["sha256"] = "2" * 64
+    record["exact_zero"] = False
+    report["complete"] = False
+
+    assert not gate_c._gate_c2_removed_path_influence_complete(
+        report,
+        regime=regime,
+        canonical_parameter_sha256=canonical,
+        require_pass=True,
+    )
+    assert gate_c._gate_c2_removed_path_influence_complete(
+        report,
+        regime=regime,
+        canonical_parameter_sha256=canonical,
+        require_pass=False,
+    )
+
+    record["exact_zero"] = True
+    assert not gate_c._gate_c2_removed_path_influence_complete(
+        report,
+        regime=regime,
+        canonical_parameter_sha256=canonical,
+        require_pass=False,
+    )
+
+
+@requires_gate_c
+def test_gate_c3_qualification_recomputes_valid_pass_failures_and_roundtrip(
+    passing_gate_c2_no_read_reports: tuple[
+        dict[str, Any],
+        dict[str, dict[str, Any]],
+    ],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    admission, no_read_reports = passing_gate_c2_no_read_reports
+    report = _passing_gate_c3_controls_report(admission, no_read_reports)
+    _patch_gate_c3_passing_validators(monkeypatch)
+    qualification = gate_c._gate_c3_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+    assert qualification == {
+        "valid": True,
+        "passed": True,
+        "criteria": {
+            name: True for name in _GATE_C3_CONTROLS_CRITERIA
+        },
+        "failures": [],
+        "interpretation": "gate_c3_pretraining_controls_passed",
+    }
+    assert report["qualification"]["passed"] is False
+    decoded = _gate_c2_strict_canonical_json_roundtrip(report)
+    assert gate_c._gate_c3_controls_qualification(
+        decoded,
+        config=gate_c.GateCConfig(),
+    ) == qualification
+    assert gate_c._gate_c3_controls_qualification_report(
+        decoded,
+        config=gate_c.GateCConfig(),
+    ) == qualification
+
+    h0 = report["regimes"]["gate_b"][
+        "paired_h0_operational_equivalence"
+    ]
+    comparison = h0["streams"]["shuffled"]["comparisons"][
+        "same_full_replay"
+    ]
+    left = np.zeros((512, 1_180), dtype=np.float32)
+    right = left.copy()
+    right[0] = np.nextafter(np.float32(1e-6), np.float32(np.inf))
+    comparison["compact"] = gate_c._gate_c2_floating_difference_record(
+        left,
+        right,
+        rms_tolerance=1e-6,
+    )
+    comparison["passed"] = False
+    h0["streams"]["shuffled"]["passed"] = False
+    h0["passed"] = False
+    scientific_failure = gate_c._gate_c3_controls_qualification(
+        report,
+        config=gate_c.GateCConfig(),
+    )
+    assert scientific_failure["valid"] is True
+    assert scientific_failure["passed"] is False
+    assert scientific_failure["failures"] == [
+        "paired_h0_operational_equivalence"
+    ]
+    assert scientific_failure["interpretation"] == (
+        "gate_c3_pretraining_controls_failed_stop"
+    )
+
+    invalid = copy.deepcopy(report)
+    invalid.pop("source_end")
+    invalid_qualification = gate_c._gate_c3_controls_qualification(
+        invalid,
+        config=gate_c.GateCConfig(),
+    )
+    assert invalid_qualification["valid"] is False
+    assert invalid_qualification["passed"] is False
+    assert invalid_qualification["failures"] == sorted(
+        name
+        for name, passed in invalid_qualification["criteria"].items()
+        if not passed
+    )
+    assert invalid_qualification["interpretation"] == (
+        "gate_c3_pretraining_controls_invalid_stop"
+    )
+
+
+@requires_gate_c
+def test_gate_c3_child_parser_accepts_controls_but_not_formal_target() -> None:
+    output = Path("gate-c3-controls.json")
+    common = [
+        "--gate-a-result",
+        "gate-a.json",
+        "--gate-a-manifest",
+        "gate-a.manifest.json",
+        "--gate-b-manifest",
+        "gate-b.manifest.json",
+        "--gate-c-init-manifest",
+        "gate-c-init.manifest.json",
+        "--output",
+        str(output),
+    ]
+    parsed = gate_c._parser().parse_args(
+        ["--target", "gate_c3_controls", *common]
+    )
+    assert parsed.target == "gate_c3_controls"
+    assert parsed.output == output
+    with pytest.raises(SystemExit):
+        gate_c._parser().parse_args(["--target", "formal_gate_c3", *common])
+
+
+@requires_gate_c
+def test_gate_c3_controls_runner_never_updates_or_constructs_an_optimizer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, prerequisites, source_start, source_files, environment = (
+        _install_gate_c2_runner_stubs(monkeypatch)
+    )
+    environment["deterministic_environment"] = copy.deepcopy(
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+
+    monkeypatch.setattr(
+        gate_c,
+        "_paired_h0_operational_equivalence_report",
+        lambda *args, regime, **kwargs: {"probe": f"h0:{regime}"},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_query_only_latent_no_read_report",
+        lambda *args, regime, **kwargs: {"probe": f"no-read:{regime}"},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c3_terminal_h8_mechanism_oracle",
+        lambda *args, **kwargs: {"probe": "terminal-h8"},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_gate_c3_controls_qualification_report",
+        lambda *args, **kwargs: {
+            "valid": False,
+            "passed": False,
+            "criteria": {
+                name: False for name in _GATE_C3_CONTROLS_CRITERIA
+            },
+            "failures": list(_GATE_C3_CONTROLS_CRITERIA),
+            "interpretation": "gate_c3_pretraining_controls_invalid_stop",
+        },
+    )
+    forbidden_calls: list[str] = []
+
+    def forbidden(*args: Any, **kwargs: Any) -> Any:
+        del args, kwargs
+        forbidden_calls.append("called")
+        raise AssertionError("C3 controls reached training or optimizer code")
+
+    monkeypatch.setattr(gate_c, "_make_arm_trainer", forbidden)
+    monkeypatch.setattr(gate_a, "_make_pp_prop_trainer", forbidden)
+    monkeypatch.setattr(gate_b, "_make_pp_prop_trainer", forbidden)
+
+    result = gate_c.run_gate_c3_controls(
+        config,
+        prerequisites=prerequisites,
+        source_start=source_start,
+        source_end_reporter=lambda: copy.deepcopy(source_start),
+        source_files=source_files,
+        environment=environment,
+    )
+    assert forbidden_calls == []
+    assert result["environment"]["deterministic_environment"] == (
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    evidence = result["environment"]["execution_and_update_evidence"]
+    for calls, count in (
+        ("trainer_factory_calls", "trainer_factory_call_count"),
+        ("training_step_calls", "training_step_call_count"),
+        ("optimizer_constructor_calls", "optimizer_instance_count"),
+        ("optimizer_update_calls", "optimizer_update_call_count"),
+    ):
+        assert evidence[calls] == []
+        assert evidence[count] == 0

@@ -24,6 +24,7 @@ LaunchTarget = Literal[
     "gate_c_init",
     "formal_gate_c",
     "gate_c2_controls",
+    "gate_c3_controls",
 ]
 CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
 _TARGETS: tuple[LaunchTarget, ...] = (
@@ -35,10 +36,13 @@ _TARGETS: tuple[LaunchTarget, ...] = (
     "gate_c_init",
     "formal_gate_c",
     "gate_c2_controls",
+    "gate_c3_controls",
 )
 _GATE_B_TARGETS = frozenset({"gate_b_init", "formal_gate_b"})
 _GATE_C_V1_TARGETS = frozenset({"gate_c_init", "formal_gate_c"})
-_GATE_C_TARGETS = frozenset({*_GATE_C_V1_TARGETS, "gate_c2_controls"})
+_GATE_C_TARGETS = frozenset(
+    {*_GATE_C_V1_TARGETS, "gate_c2_controls", "gate_c3_controls"}
+)
 _IMAGE_ID_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
 _HEAD_PATTERN = re.compile(r"[0-9a-f]{40}")
 _DEFAULT_IMAGE = "braintrace-gpu:0.11.0-py314"
@@ -82,6 +86,23 @@ _GATE_B_BUNDLE_SHA256 = (
 )
 _GATE_B_DIRECTORY = Path("var/example21-depth-gate")
 _GATE_C_DIRECTORY = Path("var/example21-causal-gate")
+_GATE_C3_DETERMINISTIC_ENVIRONMENT = {
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "XLA_FLAGS": "--xla_gpu_deterministic_ops=true",
+}
+_GATE_C3_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "exact_configuration",
+    "prerequisites_authenticated",
+    "initialization_authenticated",
+    "deterministic_environment_authenticated",
+    "canonical_schedules_complete",
+    "no_behavioral_or_optimizer_updates",
+    "paired_h0_operational_equivalence",
+    "no_read_and_removed_path_complete",
+    "mechanism_oracle_complete",
+    "source_and_gpu_authenticated",
+)
 
 
 class ProvenanceError(RuntimeError):
@@ -100,7 +121,7 @@ class LaunchConfig:
 
     Parameters
     ----------
-    target : {"one_update", "stability_256", "formal_gate_a", "gate_b_init", "formal_gate_b", "gate_c_init", "formal_gate_c", "gate_c2_controls"}
+    target : {"one_update", "stability_256", "formal_gate_a", "gate_b_init", "formal_gate_b", "gate_c_init", "formal_gate_c", "gate_c2_controls", "gate_c3_controls"}
         Fixed preregistered target. Target selection changes only which hardcoded
         Gate entry point runs; it exposes no topology or training-budget knobs.
     repo_root : pathlib.Path
@@ -535,8 +556,14 @@ def _inspect_image(
     return ImageIdentity(config.image, image_id, revision, record)
 
 
-def _container_environment(head: str, image_id: str, git_dir: str) -> dict[str, str]:
-    return {
+def _container_environment(
+    head: str,
+    image_id: str,
+    git_dir: str,
+    *,
+    target: LaunchTarget | None = None,
+) -> dict[str, str]:
+    environment = {
         "BRAINTRACE_SOURCE_COMMIT": head,
         "BRAINTRACE_SOURCE_DIRTY": "0",
         "BRAINTRACE_IMAGE_DIGEST": image_id,
@@ -547,6 +574,9 @@ def _container_environment(head: str, image_id: str, git_dir: str) -> dict[str, 
         "GIT_CONFIG_KEY_0": "safe.directory",
         "GIT_CONFIG_VALUE_0": "/work",
     }
+    if target == "gate_c3_controls":
+        environment.update(_GATE_C3_DETERMINISTIC_ENVIRONMENT)
+    return environment
 
 
 def _docker_base(
@@ -592,7 +622,12 @@ def _container_source_snapshot(
     git_dir_in_container: str,
     runner: CommandRunner,
 ) -> tuple[dict[str, Any], tuple[CommandRecord, ...]]:
-    explicit = _container_environment(source.head, image.image_id, git_dir_in_container)
+    explicit = _container_environment(
+        source.head,
+        image.image_id,
+        git_dir_in_container,
+        target=config.target,
+    )
     base = _docker_base(
         config,
         image_id=image.image_id,
@@ -854,14 +889,7 @@ def _authenticated_host_cwd(source: Mapping[str, Any], repo_root: Path) -> str:
 def _validate_preflight_semantics(
     preflight: Mapping[str, Any],
     *,
-    target: Literal[
-        "one_update",
-        "stability_256",
-        "gate_b_init",
-        "formal_gate_b",
-        "gate_c_init",
-        "formal_gate_c",
-    ],
+    target: LaunchTarget,
     head: str,
     image_id: str,
     expected_result: Path,
@@ -928,7 +956,12 @@ def _validate_preflight_semantics(
         or ".." in git_path.parts
     ):
         raise ProvenanceError("preflight GIT_DIR is outside the read-only Git mount")
-    expected_environment = _container_environment(head, image_id, git_dir)
+    expected_environment = _container_environment(
+        head,
+        image_id,
+        git_dir,
+        target=target,
+    )
     if (
         dict(planned_environment) != expected_environment
         or dict(container_environment) != expected_environment
@@ -1132,7 +1165,11 @@ def _validate_preflight_semantics(
             "--gate-b-manifest",
             str(gate_b_base / gate_b_stem),
         ]
-        if target in {"formal_gate_c", "gate_c2_controls"}:
+        if target in {
+            "formal_gate_c",
+            "gate_c2_controls",
+            "gate_c3_controls",
+        }:
             gate_c_base = PurePosixPath("/work") / _GATE_C_DIRECTORY.as_posix()
             expected_tail.extend(
                 [
@@ -1507,18 +1544,18 @@ def _validate_gate_c_scientific_result(
     return bool(recomputed["passed"])
 
 
-def _validate_gate_c2_controls_scientific_result(
+def _validate_gate_c_controls_result_shape(
     result: Mapping[str, Any],
     *,
+    target: Literal["gate_c2_controls", "gate_c3_controls"],
     head: str,
     image_id: str,
     prerequisites: Mapping[str, Any],
-) -> bool:
-    """Recompute the Gate C2 pretraining-control admission."""
-
-    from examples.pp_prop import latent_workspace_ablation_gate as gate_c
-
-    config = gate_c.GateCConfig()
+    schema_version: int,
+    control: str,
+    qualification_regime: str,
+    deterministic_environment: Mapping[str, str] | None,
+) -> None:
     expected_result_keys = {
         "schema_version",
         "control",
@@ -1554,6 +1591,8 @@ def _validate_gate_c2_controls_scientific_result(
         "python",
         "execution_and_update_evidence",
     }
+    if deterministic_environment is not None:
+        expected_environment_keys.add("deterministic_environment")
     expected_execution_keys = {
         "instrumented_training_entry_points",
         "trainer_factory_calls",
@@ -1580,6 +1619,18 @@ def _validate_gate_c2_controls_scientific_result(
         environment.get("execution_and_update_evidence")
         if isinstance(environment, Mapping)
         else None
+    )
+    retained_deterministic_environment = (
+        environment.get("deterministic_environment")
+        if isinstance(environment, Mapping)
+        else None
+    )
+    deterministic_environment_valid = (
+        retained_deterministic_environment is None
+        if deterministic_environment is None
+        else isinstance(retained_deterministic_environment, Mapping)
+        and dict(retained_deterministic_environment)
+        == dict(deterministic_environment)
     )
     regime_shape_valid = (
         isinstance(regimes, Mapping)
@@ -1627,10 +1678,9 @@ def _validate_gate_c2_controls_scientific_result(
         or not isinstance(prerequisites, Mapping)
         or set(prerequisites) != expected_prerequisite_names
         or not _is_integer(result.get("schema_version"))
-        or int(result["schema_version"]) != gate_c.GATE_C2_CONTROLS_SCHEMA_VERSION
-        or result.get("control") != gate_c.GATE_C2_CONTROLS_CONTROL
-        or result.get("qualification_regime")
-        != "preregistered_gate_c2_pretraining_controls"
+        or int(result["schema_version"]) != schema_version
+        or result.get("control") != control
+        or result.get("qualification_regime") != qualification_regime
         or result.get("learner") != "pp_prop_only"
         or not _json_exact(result.get("prerequisites"), prerequisites)
         or not regime_shape_valid
@@ -1648,6 +1698,7 @@ def _validate_gate_c2_controls_scientific_result(
         )
         or not isinstance(environment, Mapping)
         or set(environment) != expected_environment_keys
+        or not deterministic_environment_valid
         or environment.get("image_digest") != image_id
         or environment.get("backend") != "gpu"
         or not isinstance(devices, list)
@@ -1659,8 +1710,33 @@ def _validate_gate_c2_controls_scientific_result(
         or float(result["total_wall_seconds"]) < 0.0
     ):
         raise ProvenanceError(
-            "gate_c2_controls result provenance/configuration is invalid"
+            f"{target} result provenance/configuration is invalid"
         )
+
+
+def _validate_gate_c2_controls_scientific_result(
+    result: Mapping[str, Any],
+    *,
+    head: str,
+    image_id: str,
+    prerequisites: Mapping[str, Any],
+) -> bool:
+    """Recompute the Gate C2 pretraining-control admission."""
+
+    from examples.pp_prop import latent_workspace_ablation_gate as gate_c
+
+    config = gate_c.GateCConfig()
+    _validate_gate_c_controls_result_shape(
+        result,
+        target="gate_c2_controls",
+        head=head,
+        image_id=image_id,
+        prerequisites=prerequisites,
+        schema_version=gate_c.GATE_C2_CONTROLS_SCHEMA_VERSION,
+        control=gate_c.GATE_C2_CONTROLS_CONTROL,
+        qualification_regime="preregistered_gate_c2_pretraining_controls",
+        deterministic_environment=None,
+    )
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping):
         raise ProvenanceError("gate_c2_controls result qualification is missing")
@@ -1670,6 +1746,88 @@ def _validate_gate_c2_controls_scientific_result(
             "gate_c2_controls scientific qualification does not recompute"
         )
     return bool(recomputed["passed"])
+
+
+def _validate_gate_c3_controls_scientific_result(
+    result: Mapping[str, Any],
+    *,
+    head: str,
+    image_id: str,
+    prerequisites: Mapping[str, Any],
+) -> bool:
+    """Recompute the Gate C3 pretraining-control admission."""
+
+    from examples.pp_prop import latent_workspace_ablation_gate as gate_c
+
+    config = gate_c.GateCConfig()
+    _validate_gate_c_controls_result_shape(
+        result,
+        target="gate_c3_controls",
+        head=head,
+        image_id=image_id,
+        prerequisites=prerequisites,
+        schema_version=gate_c.GATE_C3_CONTROLS_SCHEMA_VERSION,
+        control=gate_c.GATE_C3_CONTROLS_CONTROL,
+        qualification_regime="preregistered_gate_c3_pretraining_controls",
+        deterministic_environment=_GATE_C3_DETERMINISTIC_ENVIRONMENT,
+    )
+    qualification = result.get("qualification")
+    expected_qualification_keys = {
+        "valid",
+        "passed",
+        "criteria",
+        "failures",
+        "interpretation",
+    }
+    if not isinstance(qualification, Mapping) or set(
+        qualification
+    ) != expected_qualification_keys:
+        raise ProvenanceError(
+            "gate_c3_controls result qualification is missing or invalid"
+        )
+    recomputed = gate_c._gate_c3_controls_qualification(result, config=config)
+    if not isinstance(recomputed, Mapping) or not _json_exact(
+        qualification, recomputed
+    ):
+        raise ProvenanceError(
+            "gate_c3_controls scientific qualification does not recompute"
+        )
+    criteria = recomputed.get("criteria")
+    failures = recomputed.get("failures")
+    valid = recomputed.get("valid")
+    passed = recomputed.get("passed")
+    expected_failures = (
+        sorted(name for name, value in criteria.items() if value is False)
+        if isinstance(criteria, Mapping)
+        else None
+    )
+    expected_interpretation = (
+        "gate_c3_pretraining_controls_invalid_stop"
+        if valid is False
+        else (
+            "gate_c3_pretraining_controls_passed"
+            if passed is True
+            else "gate_c3_pretraining_controls_failed_stop"
+        )
+    )
+    if (
+        set(recomputed) != expected_qualification_keys
+        or not isinstance(valid, bool)
+        or not isinstance(passed, bool)
+        or not isinstance(criteria, Mapping)
+        or set(criteria) != set(_GATE_C3_QUALIFICATION_CRITERIA)
+        or not all(isinstance(value, bool) for value in criteria.values())
+        or not isinstance(failures, list)
+        or failures != expected_failures
+        or recomputed.get("interpretation") != expected_interpretation
+        or passed is not (valid and all(criteria.values()))
+    ):
+        raise ProvenanceError(
+            "gate_c3_controls scientific qualification is invalid"
+        )
+    if valid is not True:
+        raise ProvenanceError("gate_c3_controls result qualification is invalid")
+    return passed
 
 
 def _validate_fixed_config(result: Mapping[str, Any], target: LaunchTarget) -> None:
@@ -1726,6 +1884,13 @@ def _validate_target_result(
             raise ProvenanceError("Gate C prerequisites are invalid")
         if target == "gate_c2_controls":
             return _validate_gate_c2_controls_scientific_result(
+                result,
+                head=head,
+                image_id=image_id,
+                prerequisites=gate_c_prerequisites,
+            )
+        if target == "gate_c3_controls":
+            return _validate_gate_c3_controls_scientific_result(
                 result,
                 head=head,
                 image_id=image_id,
@@ -2337,7 +2502,11 @@ def _load_gate_c_init_manifest(
 ) -> dict[str, Any]:
     """Authenticate the current-HEAD Gate C initialization bundle."""
 
-    if config.target not in {"formal_gate_c", "gate_c2_controls"}:
+    if config.target not in {
+        "formal_gate_c",
+        "gate_c2_controls",
+        "gate_c3_controls",
+    }:
         raise ProvenanceError("Gate C initialization is only a formal prerequisite")
     if not isinstance(base_prerequisites, Mapping) or set(base_prerequisites) != {
         "gate_a",
@@ -2498,17 +2667,16 @@ def _load_formal_gate_c_prerequisites(
     }
 
 
-def _load_gate_c2_controls_prerequisites(
+def _load_gate_c_controls_prerequisites(
     config: LaunchConfig,
     *,
+    target: Literal["gate_c2_controls", "gate_c3_controls"],
     head: str,
     image_id: str,
 ) -> dict[str, Any]:
-    """Authenticate the exact inputs for the Gate C2 control admission."""
-
-    if config.target != "gate_c2_controls":
+    if config.target != target:
         raise ProvenanceError(
-            "Gate C2 control prerequisites require gate_c2_controls"
+            f"{target} prerequisites require target {target}"
         )
     base = _load_gate_c_prerequisites(config)
     initialization = _load_gate_c_init_manifest(
@@ -2522,6 +2690,38 @@ def _load_gate_c2_controls_prerequisites(
         "gate_b": base["gate_b"],
         "gate_c_initialization": initialization,
     }
+
+
+def _load_gate_c2_controls_prerequisites(
+    config: LaunchConfig,
+    *,
+    head: str,
+    image_id: str,
+) -> dict[str, Any]:
+    """Authenticate the exact inputs for the Gate C2 control admission."""
+
+    return _load_gate_c_controls_prerequisites(
+        config,
+        target="gate_c2_controls",
+        head=head,
+        image_id=image_id,
+    )
+
+
+def _load_gate_c3_controls_prerequisites(
+    config: LaunchConfig,
+    *,
+    head: str,
+    image_id: str,
+) -> dict[str, Any]:
+    """Authenticate the exact inputs for the Gate C3 control admission."""
+
+    return _load_gate_c_controls_prerequisites(
+        config,
+        target="gate_c3_controls",
+        head=head,
+        image_id=image_id,
+    )
 
 
 def _load_gate_c2_controls_manifest(
@@ -2726,7 +2926,12 @@ def gate_command(
         Shell-free Docker argv.
     """
 
-    explicit = _container_environment(head, image_id, git_dir_in_container)
+    explicit = _container_environment(
+        head,
+        image_id,
+        git_dir_in_container,
+        target=config.target,
+    )
     command = _docker_base(
         config,
         image_id=image_id,
@@ -2784,7 +2989,11 @@ def gate_command(
                 str(_container_path(config, gate_b.manifest)),
             ]
         )
-        if config.target in {"formal_gate_c", "gate_c2_controls"}:
+        if config.target in {
+            "formal_gate_c",
+            "gate_c2_controls",
+            "gate_c3_controls",
+        }:
             init_manifest = target_paths(config, head, "gate_c_init").manifest
             command.extend(
                 [
@@ -2910,6 +3119,12 @@ def launch(
                 head=source_start.head,
                 image_id=image.image_id,
             )
+        elif config.target == "gate_c3_controls":
+            gate_c_prerequisites = _load_gate_c3_controls_prerequisites(
+                config,
+                head=source_start.head,
+                image_id=image.image_id,
+            )
         command = gate_command(
             config,
             image_id=image.image_id,
@@ -2942,7 +3157,10 @@ def launch(
             planned_gate={
                 "argv": command,
                 "environment": _container_environment(
-                    source_start.head, image.image_id, git_dir_in_container
+                    source_start.head,
+                    image.image_id,
+                    git_dir_in_container,
+                    target=config.target,
                 ),
             },
             admission_manifests=(
@@ -3095,6 +3313,13 @@ def launch(
                     image_id=image.image_id,
                 )
                 gate_c_names = ("gate_a", "gate_b", "gate_c_initialization")
+            elif config.target == "gate_c3_controls":
+                reloaded_gate_c = _load_gate_c3_controls_prerequisites(
+                    config,
+                    head=source_start.head,
+                    image_id=image.image_id,
+                )
+                gate_c_names = ("gate_a", "gate_b", "gate_c_initialization")
             else:
                 reloaded_gate_c = None
                 gate_c_names = ()
@@ -3220,6 +3445,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "gate_c_init",
             "formal_gate_c",
             "gate_c2_controls",
+            "gate_c3_controls",
         }
         and value["scientific_qualification_passed"] is not True
     ):

@@ -41,6 +41,23 @@ _GATE_C_SOURCE_FILES = (
     "examples/pp_prop/latent_workspace_depth_gate.py",
     "examples/pp_prop/latent_workspace_ablation_gate.py",
 )
+_GATE_C3_DETERMINISTIC_ENVIRONMENT = {
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "XLA_FLAGS": "--xla_gpu_deterministic_ops=true",
+}
+_GATE_C3_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "exact_configuration",
+    "prerequisites_authenticated",
+    "initialization_authenticated",
+    "deterministic_environment_authenticated",
+    "canonical_schedules_complete",
+    "no_behavioral_or_optimizer_updates",
+    "paired_h0_operational_equivalence",
+    "no_read_and_removed_path_complete",
+    "mechanism_oracle_complete",
+    "source_and_gpu_authenticated",
+)
 
 
 def _source() -> dict[str, object]:
@@ -70,6 +87,17 @@ def _strict_write(path: Path, value: object) -> None:
     path.write_text(
         json.dumps(value, allow_nan=False, sort_keys=True), encoding="utf-8"
     )
+
+
+def _docker_environment(argv: Sequence[str]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for index, token in enumerate(argv):
+        if token != "--env":
+            continue
+        name, value = argv[index + 1].split("=", 1)
+        assert name not in values
+        values[name] = value
+    return values
 
 
 def _result(target: str, manifests: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -578,6 +606,92 @@ def _gate_c2_controls_result(
         "qualification": qualification,
         "total_wall_seconds": 1.0,
     }
+
+
+def _gate_c3_controls_prerequisites() -> dict[str, Any]:
+    return _gate_c_formal_prerequisites()
+
+
+def _gate_c3_controls_qualification(
+    candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    mechanism_oracle = candidate.get("mechanism_oracle")
+    sentinel = (
+        mechanism_oracle.get("sentinel")
+        if isinstance(mechanism_oracle, Mapping)
+        else None
+    )
+    valid = sentinel != "invalid"
+    criteria = {name: True for name in _GATE_C3_QUALIFICATION_CRITERIA}
+    criteria["mechanism_oracle_complete"] = sentinel == "intact"
+    passed = valid and all(criteria.values())
+    failures = sorted(name for name, value in criteria.items() if not value)
+    if not valid:
+        interpretation = "gate_c3_pretraining_controls_invalid_stop"
+    elif passed:
+        interpretation = "gate_c3_pretraining_controls_passed"
+    else:
+        interpretation = "gate_c3_pretraining_controls_failed_stop"
+    return {
+        "valid": valid,
+        "passed": passed,
+        "criteria": criteria,
+        "failures": failures,
+        "interpretation": interpretation,
+    }
+
+
+def _gate_c3_controls_result(
+    prerequisites: Mapping[str, Any],
+    *,
+    sentinel: str = "intact",
+) -> dict[str, Any]:
+    result = _gate_c2_controls_result(
+        prerequisites,
+        passed=sentinel == "intact",
+        sentinel=sentinel,
+    )
+    result["control"] = "example21_gate_c3_pretraining_control_admission"
+    result["qualification_regime"] = (
+        "preregistered_gate_c3_pretraining_controls"
+    )
+    result["environment"]["deterministic_environment"] = copy.deepcopy(
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    result["qualification"] = _gate_c3_controls_qualification(result)
+    return result
+
+
+def _install_gate_c3_science_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeGateCConfig:
+        def __eq__(self, other: object) -> bool:
+            return isinstance(other, FakeGateCConfig)
+
+    def recompute(
+        candidate: Mapping[str, Any],
+        *args: Any,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        del args
+        assert kwargs == {"config": FakeGateCConfig()}
+        return _gate_c3_controls_qualification(candidate)
+
+    fake_gate_c = types.ModuleType(
+        "examples.pp_prop.latent_workspace_ablation_gate"
+    )
+    fake_gate_c.GATE_C3_CONTROLS_SCHEMA_VERSION = 1
+    fake_gate_c.GATE_C3_CONTROLS_CONTROL = (
+        "example21_gate_c3_pretraining_control_admission"
+    )
+    fake_gate_c.GateCConfig = FakeGateCConfig
+    fake_gate_c._gate_c3_controls_qualification = recompute
+    monkeypatch.setitem(
+        sys.modules,
+        "examples.pp_prop.latent_workspace_ablation_gate",
+        fake_gate_c,
+    )
 
 
 def _formal_gate_c_result(
@@ -1637,7 +1751,10 @@ def test_formal_gate_c2_stays_unrunnable_until_controls_pass(
         "gate_c_init",
         "formal_gate_c",
     }
-    assert set(launcher._TARGETS) - existing_targets == {"gate_c2_controls"}
+    assert set(launcher._TARGETS) - existing_targets == {
+        "gate_c2_controls",
+        "gate_c3_controls",
+    }
     assert "formal_gate_c2" not in launcher._TARGETS
 
     repo = tmp_path / "repo"
@@ -1668,6 +1785,52 @@ def test_formal_gate_c2_stays_unrunnable_until_controls_pass(
     with pytest.raises(SystemExit) as caught:
         launcher.main(
             ["--target", "formal_gate_c2", "--repo-root", str(repo)]
+        )
+    assert caught.value.code == 2
+    assert launch_called is False
+
+
+def test_gate_c3_controls_is_appended_while_formal_target_stays_absent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    existing_targets = (
+        "one_update",
+        "stability_256",
+        "formal_gate_a",
+        "gate_b_init",
+        "formal_gate_b",
+        "gate_c_init",
+        "formal_gate_c",
+        "gate_c2_controls",
+    )
+    assert launcher._TARGETS[:-1] == existing_targets
+    assert launcher._TARGETS[-1] == "gate_c3_controls"
+    assert launcher._TARGETS.count("gate_c3_controls") == 1
+    assert "gate_c3_controls" in launcher._GATE_C_TARGETS
+    assert "formal_gate_c3" not in launcher._TARGETS
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    controls = launcher.LaunchConfig(
+        target="gate_c3_controls",
+        repo_root=repo,
+        output_dir=repo / "var" / "example21-causal-gate",
+    )
+    with pytest.raises(ValueError, match="unknown target"):
+        launcher.target_paths(controls, _HEAD, "formal_gate_c3")
+
+    launch_called = False
+
+    def unexpected_launch(config: launcher.LaunchConfig) -> Path:
+        nonlocal launch_called
+        launch_called = True
+        raise AssertionError(f"unexpected launch for {config.target}")
+
+    monkeypatch.setattr(launcher, "launch", unexpected_launch)
+    with pytest.raises(SystemExit) as caught:
+        launcher.main(
+            ["--target", "formal_gate_c3", "--repo-root", str(repo)]
         )
     assert caught.value.code == 2
     assert launch_called is False
@@ -1850,6 +2013,114 @@ def test_gate_c2_controls_path_and_module_argv_bind_fresh_initialization(
     }.isdisjoint(command)
 
 
+def test_gate_c3_controls_paths_child_argv_and_environment_are_exact(
+    tmp_path: Path,
+) -> None:
+    config = _gate_c_config(tmp_path, "gate_c3_controls")
+    paths = launcher.target_paths(config, _HEAD)
+
+    assert paths.result == config.output_dir / f"{_HEAD}-gate-c3-controls.json"
+    assert paths.preflight == (
+        config.output_dir / f"{_HEAD}-gate-c3-controls.preflight.json"
+    )
+    assert paths.manifest == (
+        config.output_dir / f"{_HEAD}-gate-c3-controls.manifest.json"
+    )
+    assert str(paths.container_result) == (
+        "/work/var/example21-causal-gate/"
+        f"{_HEAD}-gate-c3-controls.json"
+    )
+    command = launcher.gate_command(
+        config,
+        image_id=_IMAGE_ID,
+        head=_HEAD,
+        paths=paths,
+        git_dir_in_container="/git-common/worktrees/gate",
+        admission_manifests=None,
+    )
+    python_index = command.index("python")
+    gate_a_base = (
+        "/work/var/example21-binding-gate/"
+        f"{launcher._GATE_A_SOURCE_COMMIT}-formal-gate-a"
+    )
+    gate_b_manifest = (
+        "/work/var/example21-depth-gate/"
+        f"{launcher._GATE_B_SOURCE_COMMIT}-formal-gate-b.manifest.json"
+    )
+    init_manifest = (
+        "/work/var/example21-causal-gate/"
+        f"{_HEAD}-gate-c-init.manifest.json"
+    )
+    assert command[python_index:] == [
+        "python",
+        "-m",
+        "examples.pp_prop.latent_workspace_ablation_gate",
+        "--target",
+        "gate_c3_controls",
+        "--gate-a-result",
+        f"{gate_a_base}.json",
+        "--gate-a-manifest",
+        f"{gate_a_base}.manifest.json",
+        "--gate-b-manifest",
+        gate_b_manifest,
+        "--gate-c-init-manifest",
+        init_manifest,
+        "--output",
+        str(paths.container_result),
+    ]
+    assert {
+        "--training-updates",
+        "--batch-size",
+        "--neuron-count",
+        "--memory-width",
+        "--seed",
+        "--threshold",
+    }.isdisjoint(command)
+
+    expected_environment = {
+        "BRAINTRACE_SOURCE_COMMIT": _HEAD,
+        "BRAINTRACE_SOURCE_DIRTY": "0",
+        "BRAINTRACE_IMAGE_DIGEST": _IMAGE_ID,
+        "GIT_DIR": "/git-common/worktrees/gate",
+        "GIT_WORK_TREE": "/work",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "safe.directory",
+        "GIT_CONFIG_VALUE_0": "/work",
+        **_GATE_C3_DETERMINISTIC_ENVIRONMENT,
+    }
+    assert _docker_environment(command) == expected_environment
+
+
+@pytest.mark.parametrize("target", ["gate_c_init", "gate_c2_controls"])
+def test_gate_c3_environment_does_not_change_earlier_gate_c_targets(
+    tmp_path: Path,
+    target: str,
+) -> None:
+    config = _gate_c_config(tmp_path, target)
+    paths = launcher.target_paths(config, _HEAD)
+    command = launcher.gate_command(
+        config,
+        image_id=_IMAGE_ID,
+        head=_HEAD,
+        paths=paths,
+        git_dir_in_container="/git-common/worktrees/gate",
+        admission_manifests=None,
+    )
+
+    assert _docker_environment(command) == {
+        "BRAINTRACE_SOURCE_COMMIT": _HEAD,
+        "BRAINTRACE_SOURCE_DIRTY": "0",
+        "BRAINTRACE_IMAGE_DIGEST": _IMAGE_ID,
+        "GIT_DIR": "/git-common/worktrees/gate",
+        "GIT_WORK_TREE": "/work",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "safe.directory",
+        "GIT_CONFIG_VALUE_0": "/work",
+    }
+
+
 def test_gate_c2_controls_output_directory_is_fixed(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -1911,6 +2182,57 @@ def test_gate_c2_controls_prerequisites_require_fresh_same_head_initialization(
     assert initialization["source_head"] == _HEAD
     assert initialization["image_digest"] == _IMAGE_ID
     assert calls == [("gate_c2_controls", _HEAD, _IMAGE_ID)]
+
+
+def test_gate_c3_controls_prerequisites_require_fresh_same_head_initialization(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _gate_c_config(tmp_path, "gate_c3_controls")
+    base = _gate_c_prerequisites()
+    initialization = copy.deepcopy(
+        _gate_c3_controls_prerequisites()["gate_c_initialization"]
+    )
+    calls: list[tuple[str, str, str]] = []
+
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_c_prerequisites",
+        lambda candidate: copy.deepcopy(base),
+    )
+
+    def load_initialization(
+        candidate: launcher.LaunchConfig,
+        *,
+        head: str,
+        image_id: str,
+        base_prerequisites: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        assert candidate is config
+        assert base_prerequisites == base
+        calls.append((candidate.target, head, image_id))
+        return copy.deepcopy(initialization)
+
+    monkeypatch.setattr(
+        launcher,
+        "_load_gate_c_init_manifest",
+        load_initialization,
+    )
+
+    prerequisites = launcher._load_gate_c3_controls_prerequisites(
+        config,
+        head=_HEAD,
+        image_id=_IMAGE_ID,
+    )
+
+    assert prerequisites == {
+        "gate_a": base["gate_a"],
+        "gate_b": base["gate_b"],
+        "gate_c_initialization": initialization,
+    }
+    assert initialization["source_head"] == _HEAD
+    assert initialization["image_digest"] == _IMAGE_ID
+    assert calls == [("gate_c3_controls", _HEAD, _IMAGE_ID)]
 
 
 def test_gate_c2_controls_recomputes_scientific_pass_and_failure(
@@ -1985,6 +2307,112 @@ def test_gate_c2_controls_recomputes_scientific_pass_and_failure(
     extra["unregistered"] = True
     with pytest.raises(launcher.ProvenanceError, match="configuration|provenance"):
         launcher._validate_target_result(extra, **validation_kwargs)
+
+
+def test_gate_c3_controls_strict_reload_recomputes_tristate_qualification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prerequisites = _gate_c3_controls_prerequisites()
+    _install_gate_c3_science_module(monkeypatch)
+    result_path = tmp_path / "gate-c3-controls.json"
+    validation_kwargs = {
+        "target": "gate_c3_controls",
+        "head": _HEAD,
+        "image_id": _IMAGE_ID,
+        "admission_manifests": None,
+        "repo_root": tmp_path,
+        "gate_c_prerequisites": prerequisites,
+    }
+
+    passing = _gate_c3_controls_result(prerequisites)
+    _strict_write(result_path, passing)
+    reloaded = launcher.load_strict_json(result_path)
+    assert set(reloaded) == set(_gate_c2_controls_result(prerequisites))
+    assert set(reloaded["environment"]) == {
+        "backend",
+        "devices",
+        "image_digest",
+        "jax",
+        "python",
+        "execution_and_update_evidence",
+        "deterministic_environment",
+    }
+    assert reloaded["environment"]["deterministic_environment"] == (
+        _GATE_C3_DETERMINISTIC_ENVIRONMENT
+    )
+    assert tuple(reloaded["qualification"]) != (
+        "valid",
+        "passed",
+        "criteria",
+        "failures",
+        "interpretation",
+    )
+    assert set(reloaded["qualification"]) == {
+        "valid",
+        "passed",
+        "criteria",
+        "failures",
+        "interpretation",
+    }
+    assert set(reloaded["qualification"]["criteria"]) == set(
+        _GATE_C3_QUALIFICATION_CRITERIA
+    )
+    assert launcher._validate_target_result(
+        reloaded,
+        **validation_kwargs,
+    ) is True
+
+    failed = _gate_c3_controls_result(prerequisites, sentinel="changed")
+    assert failed["qualification"]["valid"] is True
+    assert failed["qualification"]["passed"] is False
+    assert failed["qualification"]["failures"] == [
+        "mechanism_oracle_complete"
+    ]
+    assert launcher._validate_target_result(
+        failed,
+        **validation_kwargs,
+    ) is False
+
+    invalid = _gate_c3_controls_result(prerequisites, sentinel="invalid")
+    assert invalid["qualification"]["valid"] is False
+    with pytest.raises(launcher.ProvenanceError, match="invalid"):
+        launcher._validate_target_result(invalid, **validation_kwargs)
+
+    stale = copy.deepcopy(passing)
+    stale["qualification"]["passed"] = False
+    with pytest.raises(launcher.ProvenanceError, match="qualification"):
+        launcher._validate_target_result(stale, **validation_kwargs)
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("CUBLAS_WORKSPACE_CONFIG", ":16:8"),
+        ("XLA_FLAGS", "--xla_gpu_deterministic_ops=true --extra"),
+    ],
+)
+def test_gate_c3_controls_rejects_changed_deterministic_result_environment(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    name: str,
+    value: str,
+) -> None:
+    prerequisites = _gate_c3_controls_prerequisites()
+    _install_gate_c3_science_module(monkeypatch)
+    result = _gate_c3_controls_result(prerequisites)
+    result["environment"]["deterministic_environment"][name] = value
+
+    with pytest.raises(launcher.ProvenanceError, match="environment|configuration"):
+        launcher._validate_target_result(
+            result,
+            target="gate_c3_controls",
+            head=_HEAD,
+            image_id=_IMAGE_ID,
+            admission_manifests=None,
+            repo_root=tmp_path,
+            gate_c_prerequisites=prerequisites,
+        )
 
 
 def test_gate_c_prerequisite_loader_compacts_both_authenticated_bundles(
@@ -2490,16 +2918,25 @@ def test_gate_c2_controls_reauthenticates_prerequisites_before_signing(
     assert changed_prerequisite in manifest["failure"]
 
 
-def test_gate_c2_controls_scientific_failure_is_signed(
+@pytest.mark.parametrize(
+    "target",
+    ["gate_c2_controls", "gate_c3_controls"],
+)
+def test_gate_c_controls_scientific_failure_is_signed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    target: str,
 ) -> None:
-    config = _gate_c_config(tmp_path, "gate_c2_controls")
-    prerequisites = _gate_c2_controls_prerequisites()
+    config = _gate_c_config(tmp_path, target)
+    prerequisites = (
+        _gate_c2_controls_prerequisites()
+        if target == "gate_c2_controls"
+        else _gate_c3_controls_prerequisites()
+    )
 
     monkeypatch.setattr(
         launcher,
-        "_load_gate_c2_controls_prerequisites",
+        f"_load_{target}_prerequisites",
         lambda *args, **kwargs: copy.deepcopy(prerequisites),
         raising=False,
     )
@@ -2511,18 +2948,26 @@ def test_gate_c2_controls_scientific_failure_is_signed(
 
     manifest_path = launcher.launch(
         config,
-        command_runner=GateCInitFakeRunner(
-            config.repo_root,
-            "gate_c2_controls",
-        ),
+        command_runner=GateCInitFakeRunner(config.repo_root, target),
     )
 
     manifest = launcher.load_strict_json(manifest_path)
+    paths = launcher.target_paths(config, _HEAD)
     assert manifest["bundle_valid"] is True
     assert manifest["process_succeeded"] is True
     assert manifest["artifact_schema_verified"] is True
     assert manifest["scientific_qualification_passed"] is False
     assert manifest["failure"] is None
+    assert manifest["preflight"]["sha256"] == launcher.sha256_file(
+        paths.preflight
+    )
+    assert manifest["result"]["sha256"] == launcher.sha256_file(paths.result)
+    assert manifest["bundle_sha256"] == launcher._launch_bundle_sha256(
+        target,
+        _HEAD,
+        manifest["preflight"]["sha256"],
+        manifest["result"]["sha256"],
+    )
 
 
 def test_gate_c2_controls_loader_returns_exact_authenticated_wrapper(
@@ -3286,6 +3731,7 @@ def test_gate_b_result_rejects_wrong_initialization_binding_before_science(
         ("one_update", "custom-output", False, 3, "custom-output"),
         ("formal_gate_c", None, False, 3, "example21-causal-gate"),
         ("gate_c2_controls", None, False, 3, "example21-causal-gate"),
+        ("gate_c3_controls", None, False, 3, "example21-causal-gate"),
     ],
 )
 def test_cli_selects_scoped_defaults_and_reports_scientific_failure(
@@ -3333,7 +3779,10 @@ def test_cli_selects_scoped_defaults_and_reports_scientific_failure(
         assert streams.err == ""
 
 
-@pytest.mark.parametrize("target", ["formal_gate_b", "gate_c2_controls"])
+@pytest.mark.parametrize(
+    "target",
+    ["formal_gate_b", "gate_c2_controls", "gate_c3_controls"],
+)
 def test_cli_returns_provenance_error_without_manifest(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
