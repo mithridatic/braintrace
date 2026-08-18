@@ -1,10 +1,10 @@
 # Example 21 latent-reasoning architecture
 
-Status: Stage 2, Stage 2.1, and Gate C2 controls implemented; authenticated
-Gates A and B and the fresh same-HEAD `gate_c_init` admission passed; formal
-Gate C and the authenticated Gate C2 controls failed; formal Gate C2, Gate D,
-and the ARC test remain stopped. Gate C3 controls are preregistered below but
-are not implemented or run
+Status: Stage 2, Stage 2.1, Gate C2 controls, and Gate C3 controls implemented;
+authenticated Gates A and B and the fresh same-HEAD `gate_c_init` admissions
+passed; formal Gate C and the authenticated Gate C2 controls failed; the
+one-shot Gate C3 controls execution stopped on invalid evidence; formal Gate
+C2, formal Gate C3, Gate D, and the ARC test remain stopped.
 
 Date: 2026-08-17
 
@@ -2958,6 +2958,123 @@ source authentication, and stop rules. A formal failure stops Gate D and ARC.
 Until a complete formal Gate C3 bundle passes, no Gate D qualification or new
 ARC test may run, the retained exact-ARC score remains `0`, and no causal
 latent-reasoning conclusion is supported.
+
+### Post-run Gate C3 controls result: INVALID STOP
+
+This section records the one-shot Gate C3 controls run after execution. It does
+not amend the preregistered Gate C3 target, inputs, thresholds, criteria, or
+stop rule above. The target ran once at clean source HEAD
+`098ce7b48cfccec14ec097ee7d7a27c8b8013268` on immutable GPU image
+`sha256:cc9d71fc9f5d4cfb34b9b722b56487ba06f6c9edaf17454f7254e4eade886c6c`.
+The preflight authenticated that clean HEAD, image, NVIDIA GPU, and exact
+deterministic environment. Strict result validation failed before a postflight
+record could be produced.
+
+The fresh same-HEAD, same-image `gate_c_init` prerequisite passed. Its retained
+files are:
+
+| File | Repository-relative path | Bytes | SHA-256 |
+|---|---|---:|---|
+| result | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c-init.json` | 46,892 | `9139758637ae34546b00953c5ce5822fd67fe241ed8ee97afa4186b9f4e91190` |
+| preflight | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c-init.preflight.json` | 20,776 | `17e40235cef2c5e9c0b5b7b790ebd73805d608d497392f31d70d828d1717ff44` |
+| manifest | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c-init.manifest.json` | 16,272 | `ab1540d1768565a0935ee33be00093b4fc1c66f397699cc854847091f489eab1` |
+
+The initialization manifest records bundle SHA-256
+`137149d7db3e489d1308a057bef84d6eb71c30882a7299b7f96047b57886429a`,
+`bundle_valid=true`, `process_succeeded=true`,
+`artifact_schema_verified=true`, `scientific_qualification_passed=true`, and
+`failure=null`. All 14 initialization criteria passed.
+
+The retained Gate C3 files are:
+
+| File | Repository-relative path | Bytes | SHA-256 |
+|---|---|---:|---|
+| result | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c3-controls.json` | 77,233,504 | `a343152d56bb88fe89a724644c6d2d1f819c086251dd81f66c87cbfceba53bf3` |
+| preflight | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c3-controls.preflight.json` | 77,122 | `a8f7382219da9542c8b1f0114f82893aacd07459d0c72187baf7b243f9beda82` |
+| manifest | `var/example21-causal-gate/098ce7b48cfccec14ec097ee7d7a27c8b8013268-gate-c3-controls.manifest.json` | 121,953 | `f8d8c6a877ff396f7a108f1d92bb403c8cf25bb43da6e27e9bff4b2b2f761126` |
+
+The result records `289.5122400960099` seconds of internal work, and the child
+command completed after `313.7368548999948` seconds. The child wrote its result
+and returned zero. Strict post-run validation rejected that result, so the
+outer launcher returned exit `2` on its only invocation. The manifest records
+bundle SHA-256
+`96b48a4581306a181f4870b219149476d136b660b0c0908f3d1c212126e628be`,
+`bundle_valid=false`, `process_succeeded=true`,
+`artifact_schema_verified=false`, `scientific_qualification_passed=false`, and
+failure `ProvenanceError: gate_c3_controls result qualification is invalid`.
+This is an evidence-invalid stop, not a valid scientific pass or failure.
+
+The result's qualification object contains 10 true criteria out of 11. The
+only false criterion is `no_read_and_removed_path_complete`; the exact failure
+list contains only that name. The ten true criteria are
+`canonical_schedules_complete`, `deterministic_environment_authenticated`,
+`exact_configuration`, `initialization_authenticated`,
+`mechanism_oracle_complete`, `no_behavioral_or_optimizer_updates`,
+`paired_h0_operational_equivalence`, `prerequisites_authenticated`,
+`schema_and_control`, and `source_and_gpu_authenticated`. The recorded
+qualification is `valid=false`, `passed=false`, with interpretation
+`gate_c3_pretraining_controls_invalid_stop`.
+
+The invalidity is a prediction-geometry defect in every no-read continuation
+record. Each stored endpoint has shape `[30]` and count 30, but the contract
+requires one decoded prediction for each of the 512 examples: shape `[512]`
+and count 512. The latent driver returns time-stacked compact output with shape
+`[time, batch, compact_width]`. Passing that tensor directly to the legacy
+color-logit helper makes the helper treat time as its batch axis, index the
+actual batch axis as though it were a grid axis, and leave the 30-column grid
+axis in the decoded result. Tick selection therefore stores `[30]` instead of
+`[512]`. The H0 driver returns only its final `[batch, compact_width]` output
+and is not affected.
+
+The raw H0 evidence passed both regimes under the frozen `1e-6` per-example RMS
+limit. The worst Gate A value was `7.549499604734884e-7`, from the shuffled
+copied-full compact comparison. The worst Gate B value was
+`1.4509560419951642e-7`, from the intact same-full compact comparison. All
+decoded H0 prediction comparisons were exact.
+
+Before strict prediction-geometry validation, the raw Gate A no-read records
+passed: cached-read probes were 3 of 3, and each query-only `-7` and `+7`
+perturbation was 3 of 3. The raw Gate B records did not meet every frozen
+numeric threshold. Cached-read probes passed 16 of 24, with worst per-example
+RMS difference `1.5572326761760954e-6`. Query-only `-7` and `+7` perturbations
+each passed 22 of 24, and each had worst per-example RMS difference
+`1.4959570247382467e-6`. Both Gate B full-policy positive controls were live at
+all 24 locations for each sign. The removed-path finite-window records passed
+in both regimes: both removed associative paths were finite and exact zero,
+while every required live witness was finite and nonzero. These raw values are
+retained observations; the prediction-geometry defect prevents them from
+forming a valid Gate C3 scientific result.
+
+The terminal-H8 mechanism oracle was structurally complete and passed in both
+technical replays. Its exact blocking measurements are:
+
+| Replay | Comparison | Full norm | Query-only norm | L2 difference | Relative deviation |
+|---:|---|---:|---:|---:|---:|
+| 1 | global | `1.8628601698663811e-4` | `1.825749262090093e-4` | `1.112995588569283e-5` | `0.05974659862146904` |
+| 1 | `memory_read_projection/weight` | `2.2216889163295107e-7` | `1.5272859064725485e-8` | `2.0699003559916424e-7` | `0.9316787515919912` |
+| 1 | `workspace_query_projection/weight` | `3.6725077629074774e-8` | `0` | `3.6725077629074774e-8` | `1.0` |
+| 2 | global | `1.8628602547133852e-4` | `1.8257491808577845e-4` | `1.1129948180829316e-5` | `0.05974655453981834` |
+| 2 | `memory_read_projection/weight` | `2.221689041386833e-7` | `1.527285846697848e-8` | `2.069900486218622e-7` | `0.9316787577646506` |
+| 2 | `workspace_query_projection/weight` | `3.6725079115708024e-8` | `0` | `3.6725079115708024e-8` | `1.0` |
+
+The no-update audit was complete. It retained all 20 exact model roles with
+unchanged parameter digests and recorded zero trainer factories, training
+steps, optimizer constructors, optimizer instances, and optimizer updates. No
+behavioral or optimizer update occurred.
+
+The narrow post-run implementation correction is test-first and affects only
+future evidence production. Add a sibling regression for a time-stacked
+`[time, batch, compact_width]` capture, flatten its time and batch axes before
+calling the legacy color-logit helper, and reshape the decoded predictions back
+to `[time, batch]`. Existing tick selection can then retain the required
+`[batch]` vector. This correction changes no model, training rule, schedule,
+threshold, or retained measurement. It cannot rewrite or retroactively
+requalify this invalid artifact, and the one-shot admission may not be rerun.
+
+The invalid controls result stops the program at Gate C3. No formal Gate C3
+target or training, Gate D qualification, or ARC test was run. The retained
+exact-ARC score remains `0`, and no latent-reasoning or causal-mechanism claim
+is supported.
 
 ### Stage 2 implementation record: structural evidence only
 
