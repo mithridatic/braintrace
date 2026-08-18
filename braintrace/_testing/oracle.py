@@ -143,6 +143,10 @@ def chunked_online_param_gradients(
     *,
     algo_factory: Callable[[brainstate.nn.Module], braintrace.ETraceAlgorithm],
     chunk_size: int,
+    compiled_scan: bool = False,
+    after_init: Callable[
+        [brainstate.nn.Module, braintrace.ETraceAlgorithm], None
+    ] | None = None,
 ):
     """Total sequence gradient accumulated over multi-step chunks.
 
@@ -165,18 +169,70 @@ def chunked_online_param_gradients(
         Builds the online algorithm; must accept ``MultiStepData``.
     chunk_size : int
         Steps per chunk; the last chunk may be shorter.
+    compiled_scan : bool, optional
+        If ``False`` (default), preserve the legacy host-loop execution. If
+        ``True``, run all full-size chunks in one
+        :func:`brainstate.transform.scan` and run at most one shorter final
+        chunk directly.
+    after_init : Callable, optional
+        Host callback invoked exactly once with ``(model, algorithm)`` after
+        ``init_all_states``, graph compilation, and the explicit eligibility
+        trace initialization, but before parameter discovery or any chunk
+        gradient. It may restore and synchronously capture same-shape model
+        state for an authenticated gradient-start boundary.
 
     Returns
     -------
     dict
         Path-keyed total gradients for every ``ParamState``.
+
+    Notes
+    -----
+    The compiled scan preserves the finite-window learning-rule semantics, but
+    XLA may reassociate floating-point accumulation. Use numerical comparison,
+    not byte identity, when comparing it with the legacy path.
     """
     model = model_factory()
     brainstate.nn.init_all_states(model, batch_size=1)
     algo = algo_factory(model)
     algo.compile_graph(inputs[0])
     algo.init_etrace_state()
+    if after_init is not None:
+        after_init(model, algo)
     params = model.states(brainstate.ParamState)
+
+    if compiled_scan:
+        grad_chunk = brainstate.transform.grad(
+            lambda seq: (algo(braintrace.MultiStepData(seq)) ** 2).sum(),
+            params,
+        )
+        n_windows, tail_size = divmod(inputs.shape[0], chunk_size)
+        total = jax.tree.map(
+            jnp.zeros_like,
+            {key: state.value for key, state in params.items()},
+        )
+
+        if n_windows:
+            full_end = n_windows * chunk_size
+            windows = inputs[:full_end].reshape(
+                (n_windows, chunk_size) + tuple(inputs.shape[1:])
+            )
+
+            def accumulate(carry, chunk):
+                gradient = grad_chunk(chunk)
+                return jax.tree.map(lambda a, b: a + b, carry, gradient), None
+
+            total, _ = brainstate.transform.scan(accumulate, total, windows)
+
+        if tail_size:
+            tail = inputs[n_windows * chunk_size:]
+            tail_gradient = grad_chunk(tail)
+            total = jax.tree.map(
+                lambda a, b: a + b,
+                total,
+                tail_gradient,
+            )
+        return total
 
     total = None
     # test-support chunk loop (few iterations), not a model step driver

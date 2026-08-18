@@ -18,6 +18,8 @@ the headline exact-correctness proof (multi-step D_RTRL == BPTT), and the
 single-step naive recipe asserted as directionally aligned with BPTT (the
 former F-SINGLESTEP finding)."""
 
+import inspect
+
 import brainevent
 import brainstate
 import jax
@@ -30,6 +32,7 @@ from braintrace._testing.oracle import (
     assert_direction_aligned,
     assert_param_gradients_close,
     bptt_param_gradients,
+    chunked_online_param_gradients,
     finite_difference_param_gradients,
     online_param_gradients,
     online_param_gradients_singlestep_naive,
@@ -105,6 +108,188 @@ def test_online_multistep_gradients_shapes():
     assert grads[('w',)].shape == (4, 4)
     for v in grads.values():
         assert bool(jnp.all(jnp.isfinite(v)))
+
+
+class _ScaleModel(brainstate.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.weight = brainstate.ParamState(jnp.asarray(2.0))
+
+
+class _CountingAlgorithm:
+    def __init__(self, model):
+        self.model = model
+        self.python_calls = 0
+
+    def compile_graph(self, inputs):
+        del inputs
+
+    def init_etrace_state(self):
+        pass
+
+    def __call__(self, inputs):
+        self.python_calls += 1
+        return inputs.data * self.model.weight.value
+
+
+def _counting_algorithm_factory(created):
+    def factory(model):
+        algorithm = _CountingAlgorithm(model)
+        created.append(algorithm)
+        return algorithm
+
+    return factory
+
+
+class TestChunkedOnlineParamGradientsCompiledScan:
+    """Compiled finite-window oracle controls and compatibility witnesses."""
+
+    def test_compiled_scan_is_opt_in_and_false_preserves_the_legacy_default(self):
+        """Keep the existing host-loop behavior as the explicit default."""
+        parameters = inspect.signature(chunked_online_param_gradients).parameters
+        assert "compiled_scan" in parameters
+        assert parameters["compiled_scan"].default is False
+
+        inputs = jnp.arange(1.0, 7.0).reshape(6, 1)
+        implicit = chunked_online_param_gradients(
+            _ScaleModel,
+            inputs,
+            algo_factory=_counting_algorithm_factory([]),
+            chunk_size=2,
+        )
+        explicit = chunked_online_param_gradients(
+            _ScaleModel,
+            inputs,
+            algo_factory=_counting_algorithm_factory([]),
+            chunk_size=2,
+            compiled_scan=False,
+        )
+        np.testing.assert_array_equal(
+            np.asarray(implicit[("weight",)]),
+            np.asarray(explicit[("weight",)]),
+        )
+
+    def test_after_init_restores_the_actual_first_gradient_state(self):
+        """Run the callback after initialization and before the first gradient."""
+        from braintrace._testing.oracle_models import nonzero_init_rnn
+
+        inputs = jnp.zeros((3, 2), dtype=jnp.float32)
+        restored = nonzero_init_rnn(n_rec=2, h0=0.0, seed=7)
+        native = nonzero_init_rnn(n_rec=2, h0=0.4, seed=7)
+        captured = []
+
+        def restore_and_capture(model, algorithm):
+            assert algorithm.is_compiled
+            hidden = model.states(brainstate.HiddenState)[("h",)]
+            np.testing.assert_array_equal(np.asarray(hidden.value), 0.0)
+            hidden.value = jnp.full_like(hidden.value, 0.4)
+            captured.append(np.asarray(hidden.value).copy())
+
+        got = chunked_online_param_gradients(
+            restored.factory,
+            inputs,
+            algo_factory=lambda model: braintrace.D_RTRL(
+                model, vjp_method="multi-step"
+            ),
+            chunk_size=1,
+            compiled_scan=True,
+            after_init=restore_and_capture,
+        )
+        expected = chunked_online_param_gradients(
+            native.factory,
+            inputs,
+            algo_factory=lambda model: braintrace.D_RTRL(
+                model, vjp_method="multi-step"
+            ),
+            chunk_size=1,
+            compiled_scan=True,
+        )
+
+        assert len(captured) == 1
+        np.testing.assert_array_equal(
+            captured[0], np.full_like(captured[0], np.float32(0.4))
+        )
+        assert float(jnp.max(jnp.abs(got[("w",)]))) > 1e-3
+        assert_param_gradients_close(got, expected, atol=1e-6, rtol=1e-6)
+
+    def test_opt_in_uses_one_scan_and_traces_the_chunk_body_once(self, monkeypatch):
+        """Lower all equal-size chunks through one stateful scan trace."""
+        real_scan = brainstate.transform.scan
+        scan_calls = []
+
+        def recording_scan(*args, **kwargs):
+            scan_calls.append(None)
+            return real_scan(*args, **kwargs)
+
+        monkeypatch.setattr(brainstate.transform, "scan", recording_scan)
+        created = []
+        gradients = chunked_online_param_gradients(
+            _ScaleModel,
+            jnp.ones((6, 1), dtype=jnp.float32),
+            algo_factory=_counting_algorithm_factory(created),
+            chunk_size=2,
+            compiled_scan=True,
+        )
+
+        assert len(scan_calls) == 1
+        assert len(created) == 1
+        assert created[0].python_calls == 1
+        np.testing.assert_allclose(
+            np.asarray(gradients[("weight",)]), 24.0, atol=0.0, rtol=0.0
+        )
+
+    def test_ragged_tail_runs_once_after_the_full_window_scan(self):
+        """Keep the legacy shorter final window without adding a host loop."""
+        inputs = jnp.arange(1.0, 6.0).reshape(5, 1)
+        created = []
+        compiled = chunked_online_param_gradients(
+            _ScaleModel,
+            inputs,
+            algo_factory=_counting_algorithm_factory(created),
+            chunk_size=2,
+            compiled_scan=True,
+        )
+        legacy = chunked_online_param_gradients(
+            _ScaleModel,
+            inputs,
+            algo_factory=_counting_algorithm_factory([]),
+            chunk_size=2,
+        )
+
+        assert len(created) == 1
+        assert created[0].python_calls == 2
+        np.testing.assert_allclose(
+            np.asarray(compiled[("weight",)]), 220.0, atol=0.0, rtol=0.0
+        )
+        np.testing.assert_array_equal(
+            np.asarray(compiled[("weight",)]),
+            np.asarray(legacy[("weight",)]),
+        )
+
+    def test_seeded_uoro_random_state_is_continuous_across_the_scan(self):
+        """Carry seeded random state through the compiled window scan."""
+        from braintrace._testing.oracle_models import nonzero_init_rnn
+
+        spec = nonzero_init_rnn(n_rec=2, h0=0.4, seed=11)
+        inputs = jnp.asarray([[0.1, -0.2], [0.3, 0.05], [-0.1, 0.4]], dtype=jnp.float32)
+
+        def run(*, compiled_scan):
+            with brainstate.random.seed_context(917):
+                return chunked_online_param_gradients(
+                    spec.factory,
+                    inputs,
+                    algo_factory=lambda model: braintrace.UORO(
+                        model, vjp_method="multi-step"
+                    ),
+                    chunk_size=1,
+                    compiled_scan=compiled_scan,
+                )
+
+        legacy = run(compiled_scan=False)
+        compiled = run(compiled_scan=True)
+        assert bool(jnp.all(jnp.isfinite(compiled[("w",)])))
+        assert float(jnp.max(jnp.abs(compiled[("w",)]))) > 1e-6
+        assert_param_gradients_close(compiled, legacy, atol=1e-6, rtol=1e-6)
 
 
 # --- Task 5: comparison assertion helper -------------------------------------
