@@ -5345,9 +5345,10 @@ def _gate_c2_latent_capture(
         driver(jnp.asarray(events), jnp.asarray(advances))
     )
     compact_array = np.ascontiguousarray(np.asarray(jax.device_get(compact)))
+    flat_compact = compact_array.reshape((-1, compact_array.shape[-1]))
     color_logits = np.asarray(
-        legacy._color_logits(jnp.asarray(compact_array), model.config.color_rank)
-    )
+        legacy._color_logits(jnp.asarray(flat_compact), model.config.color_rank)
+    ).reshape((*compact_array.shape[:-1], -1))
     predictions = np.argmax(color_logits, axis=-1).astype(np.int32, copy=False)
     return {
         "compact": compact_array,

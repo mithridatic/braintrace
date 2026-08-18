@@ -30,7 +30,10 @@ from examples.pp_prop import latent_workspace_binding_control as legacy
 from examples.pp_prop import latent_workspace_binding_gate as gate_a
 from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
 from examples.pp_prop import latent_workspace_depth_gate as gate_b
-from examples.pp_prop.latent_workspace_model import LatentWorkspaceModel
+from examples.pp_prop.latent_workspace_model import (
+    LatentWorkspaceModel,
+    compact_output_width,
+)
 
 
 _MODULE_NAME = "examples.pp_prop.latent_workspace_ablation_gate"
@@ -8601,6 +8604,97 @@ def test_gate_b_no_read_report_has_exact_bounded_driver_workload(
         "prefix_call_count": 6,
         "total_call_count": 156,
         "boundary_rerun_count": 0,
+    }
+
+
+@requires_gate_c
+def test_gate_c2_latent_capture_decodes_each_stacked_tick_over_the_batch() -> None:
+    tick_count = 2
+    batch_size = 3
+    color_rank = 1
+    compact = np.zeros(
+        (tick_count, batch_size, compact_output_width(color_rank)),
+        dtype=np.float32,
+    )
+    row_offset = 60
+    column_offset = 90
+    color_offset = 120
+    compact[..., row_offset] = 1.0
+    compact[..., column_offset] = 1.0
+    expected_classes = np.asarray(((1, 4, 7), (9, 3, 5)), dtype=np.int32)
+    tick_indices, batch_indices = np.indices((tick_count, batch_size))
+    compact[
+        tick_indices,
+        batch_indices,
+        color_offset + expected_classes,
+    ] = 2.0
+
+    expected_predictions = np.stack(
+        (
+            np.argmax(
+                np.asarray(legacy._color_logits(jnp.asarray(compact[0]), color_rank)),
+                axis=-1,
+            ),
+            np.argmax(
+                np.asarray(legacy._color_logits(jnp.asarray(compact[1]), color_rank)),
+                axis=-1,
+            ),
+        )
+    ).astype(np.int32, copy=False)
+    snapshot = object()
+    restored: list[Any] = []
+    model: Any = SimpleNamespace(
+        config=SimpleNamespace(color_rank=color_rank),
+        restore_state=restored.append,
+    )
+
+    def stacked_driver(events: Any, advances: Any) -> Any:
+        assert events.shape == (tick_count, batch_size, 1)
+        assert advances.shape == (tick_count, batch_size)
+        return (
+            jnp.asarray(compact),
+            jnp.zeros((tick_count, batch_size, 1), dtype=jnp.float32),
+            jnp.zeros((tick_count, batch_size, 2), dtype=jnp.float32),
+            (jnp.zeros((tick_count, batch_size, 2), dtype=jnp.float32),),
+        )
+
+    capture = gate_c._gate_c2_latent_capture(
+        model,
+        stacked_driver,
+        ("hidden#0",),
+        snapshot,
+        np.zeros((tick_count, batch_size, 1), dtype=np.float32),
+        np.ones((tick_count, batch_size), dtype=np.float32),
+    )
+    continuation = gate_c._gate_c2_continuation_comparison(
+        capture,
+        capture,
+        tick_index=1,
+        exclude_context_memory=False,
+    )
+    predictions = continuation["predictions"]
+
+    assert restored == [snapshot]
+    assert {
+        "capture_shape": list(capture["predictions"].shape),
+        "tick_0_matches": np.array_equal(
+            capture["predictions"][0], expected_predictions[0]
+        ),
+        "tick_1_matches": np.array_equal(
+            capture["predictions"][1], expected_predictions[1]
+        ),
+        "left_shape": predictions["left"]["shape"],
+        "left_count": predictions["left"]["count"],
+        "right_count": predictions["right"]["count"],
+        "hamming_length": len(predictions["per_example_hamming_count"]),
+    } == {
+        "capture_shape": [tick_count, batch_size],
+        "tick_0_matches": True,
+        "tick_1_matches": True,
+        "left_shape": [batch_size],
+        "left_count": batch_size,
+        "right_count": batch_size,
+        "hamming_length": batch_size,
     }
 
 
