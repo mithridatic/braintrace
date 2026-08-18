@@ -22,6 +22,7 @@ LaunchTarget = Literal[
     "gate_b_init",
     "formal_gate_b",
     "gate_c_init",
+    "formal_gate_c",
 ]
 CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
 _TARGETS: tuple[LaunchTarget, ...] = (
@@ -31,9 +32,10 @@ _TARGETS: tuple[LaunchTarget, ...] = (
     "gate_b_init",
     "formal_gate_b",
     "gate_c_init",
+    "formal_gate_c",
 )
 _GATE_B_TARGETS = frozenset({"gate_b_init", "formal_gate_b"})
-_GATE_C_TARGETS = frozenset({"gate_c_init"})
+_GATE_C_TARGETS = frozenset({"gate_c_init", "formal_gate_c"})
 _IMAGE_ID_PATTERN = re.compile(r"sha256:[0-9a-f]{64}")
 _HEAD_PATTERN = re.compile(r"[0-9a-f]{40}")
 _DEFAULT_IMAGE = "braintrace-gpu:0.11.0-py314"
@@ -95,7 +97,7 @@ class LaunchConfig:
 
     Parameters
     ----------
-    target : {"one_update", "stability_256", "formal_gate_a", "gate_b_init", "formal_gate_b", "gate_c_init"}
+    target : {"one_update", "stability_256", "formal_gate_a", "gate_b_init", "formal_gate_b", "gate_c_init", "formal_gate_c"}
         Fixed preregistered target. Target selection changes only which hardcoded
         Gate entry point runs; it exposes no topology or training-budget knobs.
     repo_root : pathlib.Path
@@ -855,6 +857,7 @@ def _validate_preflight_semantics(
         "gate_b_init",
         "formal_gate_b",
         "gate_c_init",
+        "formal_gate_c",
     ],
     head: str,
     image_id: str,
@@ -1125,9 +1128,16 @@ def _validate_preflight_semantics(
             str(gate_a_base / f"{gate_a_stem}.manifest.json"),
             "--gate-b-manifest",
             str(gate_b_base / gate_b_stem),
-            "--output",
-            container_result,
         ]
+        if target == "formal_gate_c":
+            gate_c_base = PurePosixPath("/work") / _GATE_C_DIRECTORY.as_posix()
+            expected_tail.extend(
+                [
+                    "--gate-c-init-manifest",
+                    str(gate_c_base / f"{head}-gate-c-init.manifest.json"),
+                ]
+            )
+        expected_tail.extend(["--output", container_result])
     else:
         expected_tail = [
             image_id,
@@ -1360,34 +1370,106 @@ def _validate_gate_b_scientific_result(
 def _validate_gate_c_scientific_result(
     result: Mapping[str, Any],
     *,
-    target: Literal["gate_c_init"],
+    target: Literal["gate_c_init", "formal_gate_c"],
     head: str,
     image_id: str,
     prerequisites: Mapping[str, Any],
 ) -> bool:
-    """Recompute the fixed Gate C initialization qualification live."""
+    """Recompute a fixed Gate C qualification from retained raw evidence."""
 
     from examples.pp_prop import latent_workspace_ablation_gate as gate_c
 
-    if target != "gate_c_init":
+    if target not in _GATE_C_TARGETS:
         raise ProvenanceError("unsupported Gate C launch target")
     config = gate_c.GateCConfig()
+    formal = target == "formal_gate_c"
     source_start = result.get("source_start")
     source_end = result.get("source_end")
     environment = result.get("environment")
     devices = environment.get("devices") if isinstance(environment, Mapping) else None
     regimes = result.get("regimes")
     source_files = result.get("source_files")
+    arms = result.get("arms")
+    formal_arm_names = {
+        "full",
+        "query_only",
+        "terminal_only",
+        "legacy",
+        "frozen_write",
+    }
+    expected_result_keys = (
+        {
+            "schema_version",
+            "control",
+            "qualification_regime",
+            "learner",
+            "prerequisites",
+            "regimes",
+            "arms",
+            "mechanism_oracle",
+            "source_start",
+            "source_end",
+            "source_files",
+            "environment",
+            "total_wall_seconds",
+            "qualification",
+        }
+        if formal
+        else {
+            "schema_version",
+            "control",
+            "qualification_regime",
+            "prerequisites",
+            "regimes",
+            "initialization",
+            "source_start",
+            "source_end",
+            "source_files",
+            "environment",
+            "qualification",
+        }
+    )
+    expected_prerequisite_names = (
+        {"gate_a", "gate_b", "gate_c_initialization"}
+        if formal
+        else {"gate_a", "gate_b"}
+    )
+    if formal and isinstance(regimes, Mapping):
+        target_shape_valid = (
+            isinstance(arms, Mapping)
+            and set(arms) == formal_arm_names
+            and all(
+                isinstance(arms[name], Mapping)
+                and set(arms[name]) == {"gate_a", "gate_b"}
+                and all(
+                    isinstance(arms[name][regime], Mapping)
+                    for regime in ("gate_a", "gate_b")
+                )
+                for name in formal_arm_names
+            )
+            and isinstance(result.get("mechanism_oracle"), Mapping)
+            and result.get("learner") == "pp_prop_only"
+            and _is_finite_real(result.get("total_wall_seconds"))
+            and float(result["total_wall_seconds"]) >= 0.0
+        )
+    else:
+        target_shape_valid = not formal and isinstance(
+            result.get("initialization"), Mapping
+    )
     if (
-        not _is_integer(result.get("schema_version"))
+        set(result) != expected_result_keys
+        or not isinstance(prerequisites, Mapping)
+        or set(prerequisites) != expected_prerequisite_names
+        or not _is_integer(result.get("schema_version"))
         or int(result["schema_version"]) != gate_c.GATE_C_SCHEMA_VERSION
-        or result.get("control") != gate_c.GATE_C_INITIALIZATION_CONTROL
+        or result.get("control")
+        != (gate_c.GATE_C_CONTROL if formal else gate_c.GATE_C_INITIALIZATION_CONTROL)
         or result.get("qualification_regime") != "preregistered_full"
         or not _json_exact(result.get("prerequisites"), prerequisites)
         or not isinstance(regimes, Mapping)
         or set(regimes) != {"gate_a", "gate_b"}
         or not all(isinstance(regimes[name], Mapping) for name in regimes)
-        or not isinstance(result.get("initialization"), Mapping)
+        or not target_shape_valid
         or not isinstance(source_start, Mapping)
         or not _source_report_matches(source_start, head)
         or not isinstance(source_end, Mapping)
@@ -1407,17 +1489,18 @@ def _validate_gate_c_scientific_result(
         or not all(isinstance(device, Mapping) for device in devices)
         or not any(device.get("platform") == "gpu" for device in devices)
     ):
-        raise ProvenanceError(
-            "gate_c_init result provenance/configuration is invalid"
-        )
+        raise ProvenanceError(f"{target} result provenance/configuration is invalid")
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping):
-        raise ProvenanceError("gate_c_init result qualification is missing")
-    recomputed = gate_c._gate_c_initialization_qualification(result, config=config)
+        raise ProvenanceError(f"{target} result qualification is missing")
+    qualifier = (
+        gate_c._qualification_report
+        if formal
+        else gate_c._gate_c_initialization_qualification
+    )
+    recomputed = qualifier(result, config=config)
     if not _json_exact(qualification, recomputed):
-        raise ProvenanceError(
-            "gate_c_init scientific qualification does not recompute"
-        )
+        raise ProvenanceError(f"{target} scientific qualification does not recompute")
     return bool(recomputed["passed"])
 
 
@@ -1472,10 +1555,10 @@ def _validate_target_result(
             or gate_b_init_bundle is not None
             or gate_c_prerequisites is None
         ):
-            raise ProvenanceError("Gate C initialization prerequisites are invalid")
+            raise ProvenanceError("Gate C prerequisites are invalid")
         return _validate_gate_c_scientific_result(
             result,
-            target="gate_c_init",
+            target=target,
             head=head,
             image_id=image_id,
             prerequisites=gate_c_prerequisites,
@@ -2070,6 +2153,176 @@ def _load_gate_c_prerequisites(config: LaunchConfig) -> dict[str, dict[str, Any]
     return references
 
 
+def _load_gate_c_init_manifest(
+    config: LaunchConfig,
+    *,
+    head: str,
+    image_id: str,
+    base_prerequisites: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Authenticate the current-HEAD Gate C initialization bundle."""
+
+    if config.target != "formal_gate_c":
+        raise ProvenanceError("Gate C initialization is only a formal prerequisite")
+    if not isinstance(base_prerequisites, Mapping) or set(base_prerequisites) != {
+        "gate_a",
+        "gate_b",
+    }:
+        raise ProvenanceError("Gate C initialization base prerequisites are invalid")
+    paths = target_paths(config, head, "gate_c_init")
+    for path in (paths.manifest, paths.preflight, paths.result):
+        if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
+            raise ProvenanceError("required Gate C initialization bundle is incomplete")
+
+    manifest_sha256 = sha256_file(paths.manifest)
+    manifest = load_strict_json(paths.manifest)
+    if (
+        set(manifest)
+        != {
+            "schema_version",
+            "kind",
+            "target",
+            "source_head",
+            "bundle_valid",
+            "process_succeeded",
+            "artifact_schema_verified",
+            "scientific_qualification_passed",
+            "preflight",
+            "result",
+            "gate_command",
+            "postflight",
+            "failure",
+            "bundle_sha256",
+        }
+        or not _is_integer(manifest.get("schema_version"))
+        or int(manifest["schema_version"]) != 1
+        or manifest.get("kind") != "example21_authenticated_launch_manifest"
+        or manifest.get("target") != "gate_c_init"
+        or manifest.get("source_head") != head
+        or manifest.get("bundle_valid") is not True
+        or manifest.get("process_succeeded") is not True
+        or manifest.get("artifact_schema_verified") is not True
+        or manifest.get("scientific_qualification_passed") is not True
+        or manifest.get("failure") is not None
+    ):
+        raise ProvenanceError("required Gate C initialization manifest is invalid")
+    preflight_reference = _validate_artifact_reference(
+        manifest.get("preflight"),
+        paths.preflight,
+        repo_root=config.repo_root,
+        label="Gate C initialization preflight",
+    )
+    result_reference = _validate_artifact_reference(
+        manifest.get("result"),
+        paths.result,
+        repo_root=config.repo_root,
+        label="Gate C initialization result",
+    )
+    bundle_sha256 = _launch_bundle_sha256(
+        "gate_c_init",
+        head,
+        preflight_reference["sha256"],
+        result_reference["sha256"],
+    )
+    if manifest.get("bundle_sha256") != bundle_sha256:
+        raise ProvenanceError("required Gate C initialization bundle digest is invalid")
+
+    preflight = load_strict_json(paths.preflight)
+    if (
+        set(preflight)
+        != {
+            "schema_version",
+            "kind",
+            "target",
+            "passed",
+            "source",
+            "image",
+            "mounts",
+            "container_source",
+            "planned_gate",
+            "admission_manifests",
+            "gate_b_prerequisites",
+            "gate_c_prerequisites",
+        }
+        or preflight.get("admission_manifests") is not None
+        or preflight.get("gate_b_prerequisites") is not None
+        or not _json_exact(
+            preflight.get("gate_c_prerequisites"), base_prerequisites
+        )
+    ):
+        raise ProvenanceError(
+            "Gate C initialization preflight prerequisite binding is invalid"
+        )
+    _validate_preflight_semantics(
+        preflight,
+        target="gate_c_init",
+        head=head,
+        image_id=image_id,
+        expected_result=paths.result,
+        repo_root=config.repo_root,
+    )
+    _validate_manifest_execution(
+        manifest,
+        preflight,
+        head=head,
+        repo_root=config.repo_root,
+    )
+    result = load_strict_json(paths.result)
+    passed = _validate_target_result(
+        result,
+        target="gate_c_init",
+        head=head,
+        image_id=image_id,
+        admission_manifests=None,
+        repo_root=config.repo_root,
+        gate_c_prerequisites=base_prerequisites,
+    )
+    if not passed:
+        raise ProvenanceError("required Gate C initialization admission did not pass")
+    if (
+        sha256_file(paths.manifest) != manifest_sha256
+        or sha256_file(paths.preflight) != preflight_reference["sha256"]
+        or sha256_file(paths.result) != result_reference["sha256"]
+    ):
+        raise ProvenanceError(
+            "Gate C initialization bundle changed during authentication"
+        )
+    return {
+        "target": "gate_c_init",
+        "source_head": head,
+        "image_digest": image_id,
+        "bundle_sha256": bundle_sha256,
+        "manifest_sha256": manifest_sha256,
+        "preflight_sha256": preflight_reference["sha256"],
+        "result_sha256": result_reference["sha256"],
+        "admission": result,
+    }
+
+
+def _load_formal_gate_c_prerequisites(
+    config: LaunchConfig,
+    *,
+    head: str,
+    image_id: str,
+) -> dict[str, Any]:
+    """Authenticate the exact three prerequisites for formal Gate C."""
+
+    if config.target != "formal_gate_c":
+        raise ProvenanceError("formal Gate C prerequisites require formal_gate_c")
+    base = _load_gate_c_prerequisites(config)
+    initialization = _load_gate_c_init_manifest(
+        config,
+        head=head,
+        image_id=image_id,
+        base_prerequisites=base,
+    )
+    return {
+        "gate_a": base["gate_a"],
+        "gate_b": base["gate_b"],
+        "gate_c_initialization": initialization,
+    }
+
+
 def _load_admission_manifests(
     config: LaunchConfig, head: str, image_id: str
 ) -> dict[str, Path]:
@@ -2183,6 +2436,14 @@ def gate_command(
                 str(_container_path(config, gate_b.manifest)),
             ]
         )
+        if config.target == "formal_gate_c":
+            init_manifest = target_paths(config, head, "gate_c_init").manifest
+            command.extend(
+                [
+                    "--gate-c-init-manifest",
+                    str(_container_path(config, init_manifest)),
+                ]
+            )
     elif config.target == "formal_gate_a":
         if set(admission_manifests or {}) != {"one_update", "stability_256"}:
             raise ProvenanceError("formal Gate A requires both admission manifests")
@@ -2258,7 +2519,7 @@ def launch(
     }
     gate_a_prerequisite: dict[str, Any] | None = None
     gate_b_init_bundle: dict[str, Any] | None = None
-    gate_c_prerequisites: dict[str, dict[str, Any]] | None = None
+    gate_c_prerequisites: dict[str, Any] | None = None
     try:
         image = _inspect_image(config, source_start.head, command_runner)
         relative_git_dir = source_start.git_dir.relative_to(source_start.common_git_dir)
@@ -2287,8 +2548,14 @@ def launch(
                 head=source_start.head,
                 image_id=image.image_id,
             )
-        if config.target in _GATE_C_TARGETS:
+        if config.target == "gate_c_init":
             gate_c_prerequisites = _load_gate_c_prerequisites(config)
+        elif config.target == "formal_gate_c":
+            gate_c_prerequisites = _load_formal_gate_c_prerequisites(
+                config,
+                head=source_start.head,
+                image_id=image.image_id,
+            )
         command = gate_command(
             config,
             image_id=image.image_id,
@@ -2441,16 +2708,6 @@ def launch(
                     raise ProvenanceError(
                         "Gate B initialization prerequisite changed before signing"
                     )
-            if config.target in _GATE_C_TARGETS:
-                reloaded_gate_c = _load_gate_c_prerequisites(config)
-                for name in ("gate_a", "gate_b"):
-                    if not _json_exact(
-                        reloaded_gate_c.get(name),
-                        (gate_c_prerequisites or {}).get(name),
-                    ):
-                        raise ProvenanceError(
-                            f"{name} prerequisite changed before signing"
-                        )
             retained_result = load_strict_json(paths.result)
             rechecked_scientific = _validate_target_result(
                 retained_result,
@@ -2467,6 +2724,29 @@ def launch(
                 raise ProvenanceError(
                     "scientific qualification changed before manifest signing"
                 )
+            if config.target == "gate_c_init":
+                reloaded_gate_c = _load_gate_c_prerequisites(config)
+                gate_c_names = ("gate_a", "gate_b")
+            elif config.target == "formal_gate_c":
+                reloaded_gate_c = _load_formal_gate_c_prerequisites(
+                    config,
+                    head=source_start.head,
+                    image_id=image.image_id,
+                )
+                gate_c_names = ("gate_a", "gate_b", "gate_c_initialization")
+            else:
+                reloaded_gate_c = None
+                gate_c_names = ()
+            for name in gate_c_names:
+                if reloaded_gate_c is None:
+                    raise ProvenanceError("Gate C prerequisites were not reloaded")
+                if not _json_exact(
+                    reloaded_gate_c.get(name),
+                    (gate_c_prerequisites or {}).get(name),
+                ):
+                    raise ProvenanceError(
+                        f"{name} prerequisite changed before signing"
+                    )
         except BaseException as error:
             failure = error
 
@@ -2539,7 +2819,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     Returns
     -------
     int
-        Zero when provenance and artifact validation succeed; two otherwise.
+        Zero for a valid passing bundle, two for a provenance failure, and three
+        for a valid bundle that fails its scientific admission.
     """
 
     args = _parser().parse_args(argv)
@@ -2576,6 +2857,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "gate_b_init",
             "formal_gate_b",
             "gate_c_init",
+            "formal_gate_c",
         }
         and value["scientific_qualification_passed"] is not True
     ):
