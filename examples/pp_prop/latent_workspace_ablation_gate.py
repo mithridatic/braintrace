@@ -42,6 +42,374 @@ GATE_C_SCHEMA_VERSION = 1
 GATE_C_INITIALIZATION_CONTROL = "example21_gate_c_initialization_admission"
 GATE_C_CONTROL = "example21_pp_prop_learnability_gate_c"
 
+# Gate C v1 is retained above without reinterpretation.  Every Gate C2 identity
+# has a distinct name so loading a schema-1 formal artifact cannot silently use
+# the amended protocol.
+GATE_C2_SCHEMA_VERSION = 2
+GATE_C2_CONTROL = "example21_pp_prop_learnability_gate_c2"
+GATE_C2_QUALIFICATION_REGIME = "preregistered_gate_c2_full"
+GATE_C2_PASSING_INTERPRETATION = (
+    "gate_c2_passed_pp_prop_learnability_mechanism"
+)
+GATE_C2_FAILING_INTERPRETATION = (
+    "gate_c2_failed_stop_no_causal_mechanism_conclusion"
+)
+GATE_C2_TOP_LEVEL_KEYS = (
+    "schema_version",
+    "control",
+    "qualification_regime",
+    "learner",
+    "prerequisites",
+    "regimes",
+    "arms",
+    "mechanism_oracle",
+    "source_start",
+    "source_end",
+    "source_files",
+    "environment",
+    "qualification",
+    "total_wall_seconds",
+)
+GATE_C2_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "exact_configuration",
+    "prerequisites_authenticated",
+    "initialization_authenticated",
+    "canonical_schedules_complete",
+    "consumed_gate_b_loss_weights_exact",
+    "fresh_isolated_optimizers",
+    "compiler_and_training_complete",
+    "full_gate_a_passed",
+    "full_gate_b_passed",
+    "blocking_behavioral_margins",
+    "paired_h0_operational_equivalence",
+    "frozen_write_complete",
+    "mechanism_oracle_complete",
+    "source_and_gpu_authenticated",
+)
+
+GATE_C2_CONTROLS_SCHEMA_VERSION = 1
+GATE_C2_CONTROLS_CONTROL = "example21_gate_c2_pretraining_control_admission"
+GATE_C2_CONTROLS_QUALIFICATION_REGIME = (
+    "preregistered_gate_c2_pretraining_controls"
+)
+GATE_C2_CONTROLS_TOP_LEVEL_KEYS = (
+    "schema_version",
+    "control",
+    "qualification_regime",
+    "learner",
+    "prerequisites",
+    "regimes",
+    "mechanism_oracle",
+    "source_start",
+    "source_end",
+    "source_files",
+    "environment",
+    "qualification",
+    "total_wall_seconds",
+)
+GATE_C2_CONTROLS_QUALIFICATION_CRITERIA = (
+    "schema_and_control",
+    "exact_configuration",
+    "prerequisites_authenticated",
+    "initialization_authenticated",
+    "canonical_schedules_complete",
+    "no_behavioral_or_optimizer_updates",
+    "paired_h0_operational_equivalence",
+    "mechanism_oracle_complete",
+    "source_and_gpu_authenticated",
+)
+GATE_C2_CONTROLS_AUDIT_LABELS = (
+    "braintools.optim.Adam.__init__",
+    "braintools.optim.Adam.update",
+    "examples.pp_prop.latent_workspace_ablation_gate.GateCTrainer.train_chunk",
+    "examples.pp_prop.latent_workspace_ablation_gate._make_arm_trainer",
+    "examples.pp_prop.latent_workspace_binding_gate._PPPropTrainer.train",
+    "examples.pp_prop.latent_workspace_binding_gate._make_pp_prop_trainer",
+    "examples.pp_prop.latent_workspace_depth_gate._DepthPPPropTrainer.train_chunk",
+    "examples.pp_prop.latent_workspace_depth_gate._make_pp_prop_trainer",
+)
+GATE_C2_CONTROLS_MODEL_ROLES = {
+    "gate_a:paired_h0:copied_full": {
+        "regime": "gate_a",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "full",
+    },
+    "gate_a:paired_h0:full_reference": {
+        "regime": "gate_a",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "full",
+    },
+    "gate_a:paired_h0:query_only": {
+        "regime": "gate_a",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "query_only",
+    },
+    "gate_a:query_only_latent_no_read:full_positive_control": {
+        "regime": "gate_a",
+        "probe": "full_positive_control",
+        "policy": "full",
+    },
+    "gate_a:query_only_latent_no_read:query_only": {
+        "regime": "gate_a",
+        "probe": "query_only_latent_no_read",
+        "policy": "query_only",
+    },
+    "gate_a:removed_path_finite_window:gate_a_h1": {
+        "regime": "gate_a",
+        "probe": "removed_path_finite_window_influence",
+        "policy": "query_only",
+    },
+    "gate_b:mechanism_oracle:full:finite_window": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:full:finite_window",
+        "policy": "full",
+    },
+    "gate_b:mechanism_oracle:full:reference": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:full:reference",
+        "policy": "full",
+    },
+    "gate_b:mechanism_oracle:query_only:finite_window": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:query_only:finite_window",
+        "policy": "query_only",
+    },
+    "gate_b:mechanism_oracle:query_only:reference": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:query_only:reference",
+        "policy": "query_only",
+    },
+    "gate_b:mechanism_oracle:terminal_only:finite_window": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:terminal_only:finite_window",
+        "policy": "full",
+    },
+    "gate_b:mechanism_oracle:terminal_only:reference": {
+        "regime": "gate_b",
+        "probe": "mechanism_oracle:terminal_only:reference",
+        "policy": "full",
+    },
+    "gate_b:paired_h0:copied_full": {
+        "regime": "gate_b",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "full",
+    },
+    "gate_b:paired_h0:full_reference": {
+        "regime": "gate_b",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "full",
+    },
+    "gate_b:paired_h0:query_only": {
+        "regime": "gate_b",
+        "probe": "paired_h0_operational_equivalence",
+        "policy": "query_only",
+    },
+    "gate_b:query_only_latent_no_read:full_positive_control": {
+        "regime": "gate_b",
+        "probe": "full_positive_control",
+        "policy": "full",
+    },
+    "gate_b:query_only_latent_no_read:query_only": {
+        "regime": "gate_b",
+        "probe": "query_only_latent_no_read",
+        "policy": "query_only",
+    },
+    "gate_b:removed_path_finite_window:gate_b_index0_r8_h8": {
+        "regime": "gate_b",
+        "probe": "removed_path_finite_window_influence",
+        "policy": "query_only",
+    },
+}
+
+GATE_C2_REMOVED_PATH_GRADIENT_CHUNK_SIZE = 1
+GATE_C2_REMOVED_PATH_START_STATE = "materialized_h0_stop_gradient"
+GATE_C2_REMOVED_PATHS = (
+    "memory_read_projection/weight",
+    "workspace_query_projection/weight",
+)
+GATE_C2_LIVE_PATHS = (
+    "color_factor_head/weight",
+    "readout_projection/weight",
+    "rec_syn/comm/weight",
+)
+GATE_C2_LATENT_TICKS = {
+    "gate_a": ("H1",),
+    "gate_b": ("H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"),
+}
+GATE_C2_CONTEXT_MEMORY_REPLACEMENTS = {
+    "plus_7": {
+        "fill_value": 7.0,
+        "dtype": "<f4",
+        "shape": [512, 32, 32],
+        "sha256": "b7b1338c1b2b0124633638a1823ec4e7a4ba8be321eb7306153c0ca8db8c696e",
+    },
+    "minus_7": {
+        "fill_value": -7.0,
+        "dtype": "<f4",
+        "shape": [512, 32, 32],
+        "sha256": "815cda0e5c57f2387a6c645d372de7ed2df8e9b9be232aeaef6534da35194572",
+    },
+}
+GATE_C2_CACHED_READ_REPLACEMENTS = {
+    "plus_11": {
+        "fill_value": 11.0,
+        "dtype": "<f4",
+        "shape": [512, 32],
+        "sha256": "156517ec70f2d721974202ac8581ca7f15594db382051fafbac40fb9057c81bc",
+    },
+    "minus_11": {
+        "fill_value": -11.0,
+        "dtype": "<f4",
+        "shape": [512, 32],
+        "sha256": "b5725644875e21d4fce1fe5116695c12d18af3d9b8f243cbdd6878c3404201f6",
+    },
+}
+GATE_C2_REMOVED_PATH_OBJECTIVES = {
+    "gate_a_h1": {
+        "regime": "gate_a",
+        "stream": "intact",
+        "validation_episode_index": 0,
+        "batch_size": 1,
+        "checkpoint": "H1",
+        "source_metadata": {
+            "mapping_id": 850050,
+            "input_colors": [2, 5, 7, 8],
+            "output_colors": [6, 5, 3, 8],
+            "presentation_order_indices": [0, 2, 1, 3],
+            "query_index": 3,
+            "query_color": 8,
+            "target": 8,
+            "demonstration_indices": [0, 1, 2, 3],
+            "h0_index": 4,
+            "h1_index": 5,
+        },
+        "schedule_sha256": {
+            "validation_schedule_sha256": (
+                "80057e092a130e2c78e8f8397b3978bc13a0ff2a5b64bb5207abe238e08feddd"
+            ),
+            "validation_mapping_ids_sha256": (
+                "a75b3b2ab05110e21fef1ea44ae3fb701d557f45351e5a17cf89a80e80f689f3"
+            ),
+        },
+        "source_arrays": {
+            "events": (
+                "<f4",
+                [6, 41],
+                "213fa1ede3635169cba47db69ad36cfab86e759e6f7e35e02e2d07687f71d36b",
+            ),
+            "advances": (
+                "|b1",
+                [6],
+                "42817343a401805d2af9b07c45738f71274aab865d20efb8fb1980e1ed7dc450",
+            ),
+            "targets": (
+                "<i4",
+                [1],
+                "88c7413927e162658f4518fd4a62598fe8b0ea6e2ba5fa334940fdfc49ac845a",
+            ),
+            "canonical_loss_weights": (
+                "<f4",
+                [6],
+                "a13746d7d9b7bc9b071cfccfc55a0e8c54ad8454f4bcbf808f5235334c5a6c45",
+            ),
+            "h0_prefix": (
+                "<f4",
+                [5, 41],
+                "401cb20096483b305ef7e4383f03377b354fe167aaeffbd06df03f8251b021b2",
+            ),
+        },
+        "continuation": {
+            "source_indices": [5],
+            "source_events_sha256": (
+                "e9c01c22b9b1bfa0f9bc74cde1820fab5ad99037f581e27df1625db565d6c239"
+            ),
+            "batched_events_sha256": (
+                "7e0242875d49aef8e5b0c716cd7993f29895e26cf1dcc67cb2f198c1c351f5df"
+            ),
+            "selection_mask_values": [True],
+            "base_checkpoint_weights": [0.5],
+            "effective_loss_weights": [0.5],
+            "packed_inputs_sha256": (
+                "aee2f5f2f2a672f091c4d02e24ade55262e8ebe50ddd32317c4ead5f8e5b84c5"
+            ),
+        },
+    },
+    "gate_b_index0_r8_h8": {
+        "regime": "gate_b",
+        "stream": "intact",
+        "validation_episode_index": 0,
+        "batch_size": 1,
+        "effort": 8,
+        "checkpoint": "H8",
+        "source_metadata": {
+            "mapping_id": 232423,
+            "mapping": [6, 7, 5, 2, 0, 4, 8, 9, 1, 3],
+            "query_color": 4,
+            "presentation_order": [6, 2, 5, 3, 8, 7, 4, 9, 0, 1],
+            "shuffled_shift": 1,
+            "h0_through_h8_targets": [0, 6, 8, 1, 7, 9, 3, 2, 5],
+        },
+        "schedule_sha256": {
+            "mapping_ids": "b036444e228c60116b8bfd9c10399261bcf6645d7b69d27d4b391460fae83cd8",
+            "query_colors": "c7e70f56cca66d920d5d690a902b9943f2fcfdff7003fa4bbb3580070738d67e",
+            "presentation_orders": "0bab5cfe3c2c87109909d36c59f88ef04983322aacbce469fea6221aa4ac37b0",
+            "shuffled_shifts": "15af1f04589cc523d89b66d2f07027158d69068901d786eecfd259a156f2f2d0",
+            "intact": "5683aa84aa2ef8a1ff623e5e0b60afb3451e617728f0363d3ad84f2ea52dacde",
+            "shuffled": "abd5eb4ab2e2a685faeb8f6bf785ad2deb97721b00e8d194b4f65d4995516be3",
+            "no_context": "45fd14d3faefad83b0ce6d908456320afa67944b361159cfe503fdfab591162d",
+            "targets_by_depth": "a438d64347dc4ec5cfc639342d8b142c785e497ddf06728eb03f8ccfb42d3cd6",
+            "advance_masks": "b88b3593d9df51260fbafa4a937159c3da3f56fc33335a30993c0ff8a7462ac8",
+        },
+        "source_arrays": {
+            "events": (
+                "<f4",
+                [19, 47],
+                "36838c2ecd8d00e3b470bf5dc85538539fdc8afac7ce724c6451f0d72a5612ec",
+            ),
+            "advances": (
+                "|b1",
+                [19],
+                "c45890e2f9f99fa66ffa09db8f685dc4d138c5f0e1ca0346a044f2dbbf1290a9",
+            ),
+            "targets": (
+                "<i4",
+                [19],
+                "c4af41cac4f5eb682df15e7d6cf92b0c134b943fae1abfe99b0bfc4c2ddb27e0",
+            ),
+            "canonical_loss_weights": (
+                "<f8",
+                [19],
+                "205496cf3f437986dc5b65bec81d423848179306a7ce9e1a391dcc22c7340197",
+            ),
+            "h0_prefix": (
+                "<f4",
+                [11, 47],
+                "a445ffd2a62e56808e15b6205cb7825fef7ed9a63a78b74d3942d89d7b6409a8",
+            ),
+        },
+        "continuation": {
+            "source_indices": [11, 12, 13, 14, 15, 16, 17, 18],
+            "source_events_sha256": (
+                "87460e7b0e6ea0b632c89c84afa56b7c85c759bc8828b02e275fe4ac3a6be57a"
+            ),
+            "batched_events_sha256": (
+                "3d2da82783d3194730d1a4671d06df1254ef298fbe2260ee5e7c86474e111a32"
+            ),
+            "selection_mask_values": [False] * 7 + [True],
+            "base_checkpoint_weight_sha256": (
+                "c587060a4599f096433183ee7bc88de3234021291f1815e332950b80025d93b7"
+            ),
+            "effective_loss_weights_sha256": (
+                "b15eb5519fa66d2d01c020c1c3f5f93a62a6b015bcfa7e1c171e71770a729b61"
+            ),
+            "packed_inputs_sha256": (
+                "5061ac4deaaf0e6bc153f0766aac8ba630d9d29c7a235a0998fc8121072eb910"
+            ),
+        },
+    },
+}
+
 _GATE_C_SOURCE_FILES = (
     "examples/pp_prop/latent_workspace_model.py",
     "examples/pp_prop/latent_workspace_task.py",
@@ -360,6 +728,65 @@ def _loss_weights(
         else:
             weights[row, 10 : 11 + effort] = np.float32(1.0 / (effort + 1))
     return weights
+
+
+_GATE_C2_NONTERMINAL_WEIGHT_REPORT = {
+    "dtype": "<f8",
+    "shape": [4_096, 19],
+    "sha256": "044616bf9dd86cbdc1d472184ede8027bf9ff65d65834b15ec619bf3095d2e31",
+}
+_GATE_C2_TERMINAL_WEIGHT_REPORT = {
+    "dtype": "<f8",
+    "shape": [4_096, 19],
+    "sha256": "f381a6b856be26071898fc7427ee1f098bbb333b3305dc3f833c5e80750e1970",
+}
+
+
+def _gate_c2_gate_b_loss_weights(
+    encoded_loss_weights: np.ndarray,
+    *,
+    arm: str,
+    efforts: np.ndarray,
+) -> np.ndarray:
+    """Return the exact Gate C2 tensor supplied at the trainer boundary."""
+
+    _arm_spec(arm)
+    weights = np.asarray(encoded_loss_weights)
+    effort_values = np.asarray(efforts)
+    if weights.ndim != 2 or weights.shape[1] != REGIME_SPECS["gate_b"].sequence_length:
+        raise ValueError("encoded_loss_weights must have shape (updates, 19)")
+    if weights.dtype != np.dtype(np.float64):
+        raise TypeError("Gate C2 Gate B loss weights must be canonical float64")
+    if effort_values.shape != (weights.shape[0],):
+        raise ValueError("efforts must match the Gate B update count")
+    if effort_values.dtype == np.bool_ or not np.issubdtype(
+        effort_values.dtype, np.integer
+    ):
+        raise TypeError("efforts must contain integers")
+    if not np.isin(effort_values, gate_b.QUALIFYING_EFFORTS).all():
+        raise ValueError("Gate B efforts must lie in {1, 2, 4, 8}")
+    if arm != "terminal_only":
+        return encoded_loss_weights
+    terminal = np.zeros_like(weights)
+    rows = np.arange(weights.shape[0], dtype=np.intp)
+    terminal[rows, 10 + effort_values.astype(np.intp, copy=False)] = 1.0
+    return terminal
+
+
+def _gate_c2_consumed_gate_b_loss_weights_complete(value: Any) -> bool:
+    """Validate all five independently pinned Gate C2 weight reports."""
+
+    if not isinstance(value, Mapping) or set(value) != set(ARM_ORDER):
+        return False
+    for arm in ARM_ORDER:
+        expected = (
+            _GATE_C2_TERMINAL_WEIGHT_REPORT
+            if arm == "terminal_only"
+            else _GATE_C2_NONTERMINAL_WEIGHT_REPORT
+        )
+        if not gate_a._json_exact(value[arm], expected):
+            return False
+    return True
 
 
 def _model_config_for_arm(
@@ -2558,6 +2985,3934 @@ def _hidden_state_sha256(model: LatentWorkspaceModel) -> str:
     return hashlib.sha256(b"\0".join(fields)).hexdigest()
 
 
+_GATE_C2_FLOAT_DIFFERENCE_KEYS = {
+    "left",
+    "right",
+    "per_example_sum_squared_difference",
+    "per_example_compared_value_count",
+    "per_example_rms_difference",
+    "per_example_max_abs_difference",
+    "sum_squared_difference",
+    "rms_difference",
+    "max_per_example_rms_difference",
+    "max_abs_difference",
+    "within_tolerance",
+}
+_GATE_C2_ENDPOINT_KEYS = {
+    "dtype",
+    "shape",
+    "sha256",
+    "value_count",
+    "per_example_finite_count",
+    "per_example_nonfinite_count",
+    "finite_count",
+    "nonfinite_count",
+}
+_GATE_C2_HIDDEN_GEOMETRY = {
+    "context_memory#0": (512, 32, 32),
+    "ff_syn/post/V#0": (512, 2_048),
+    "ff_syn/syn/g#0": (512, 2_048),
+    "memory_read#0": (512, 32),
+    "query_encoding#0": (512, 32),
+    "reasoning_query#0": (512, 32),
+    "rec_syn/syn/g#0": (512, 2_048),
+    "workspace_carrier#0": (512, 2_048),
+}
+_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY = {
+    path: (1, *shape[1:])
+    for path, shape in _GATE_C2_HIDDEN_GEOMETRY.items()
+}
+
+
+def _gate_c2_array_endpoint(value: Any) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(u.get_mantissa(value)))
+    if array.ndim < 1 or array.shape[0] <= 0:
+        raise ValueError("Gate C2 evidence arrays require a nonempty batch axis")
+    flat = array.reshape(array.shape[0], -1)
+    finite = np.isfinite(flat)
+    per_finite = np.sum(finite, axis=1, dtype=np.int64)
+    per_nonfinite = flat.shape[1] - per_finite
+    return {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": legacy._digest_arrays(array),
+        "value_count": int(array.size),
+        "per_example_finite_count": per_finite.tolist(),
+        "per_example_nonfinite_count": per_nonfinite.tolist(),
+        "finite_count": int(per_finite.sum()),
+        "nonfinite_count": int(per_nonfinite.sum()),
+    }
+
+
+def _gate_c2_floating_difference_record(
+    left: Any,
+    right: Any,
+    *,
+    rms_tolerance: float,
+) -> dict[str, Any]:
+    """Build independently recomputable per-example floating evidence."""
+
+    tolerance = _finite_real(rms_tolerance, "Gate C2 RMS tolerance")
+    if tolerance < 0.0:
+        raise ValueError("rms_tolerance must be nonnegative")
+    left_array = np.ascontiguousarray(np.asarray(u.get_mantissa(left)))
+    right_array = np.ascontiguousarray(np.asarray(u.get_mantissa(right)))
+    if (
+        left_array.shape != right_array.shape
+        or left_array.dtype != right_array.dtype
+        or left_array.ndim < 1
+        or not np.issubdtype(left_array.dtype, np.floating)
+    ):
+        raise ValueError("Gate C2 floating endpoints need equal floating geometry")
+    if not np.isfinite(left_array).all() or not np.isfinite(right_array).all():
+        raise ValueError("Gate C2 floating endpoints must be finite")
+    difference = left_array.astype(np.float64) - right_array.astype(np.float64)
+    flat = difference.reshape(difference.shape[0], -1)
+    squared = np.square(flat)
+    per_sum = np.sum(squared, axis=1, dtype=np.float64)
+    per_count = np.full(flat.shape[0], flat.shape[1], dtype=np.int64)
+    per_rms = np.sqrt(per_sum / per_count)
+    per_max = np.max(np.abs(flat), axis=1)
+    total_sum = float(np.sum(per_sum, dtype=np.float64))
+    rms = math.sqrt(total_sum / int(per_count.sum()))
+    maximum_rms = float(np.max(per_rms))
+    maximum_abs = float(np.max(per_max))
+    return {
+        "left": _gate_c2_array_endpoint(left_array),
+        "right": _gate_c2_array_endpoint(right_array),
+        "per_example_sum_squared_difference": per_sum.tolist(),
+        "per_example_compared_value_count": per_count.tolist(),
+        "per_example_rms_difference": per_rms.tolist(),
+        "per_example_max_abs_difference": per_max.tolist(),
+        "sum_squared_difference": total_sum,
+        "rms_difference": rms,
+        "max_per_example_rms_difference": maximum_rms,
+        "max_abs_difference": maximum_abs,
+        "within_tolerance": bool(maximum_rms <= tolerance),
+    }
+
+
+def _gate_c2_endpoint_complete(
+    value: Any,
+    *,
+    expected_dtype: str,
+    expected_shape: tuple[int, ...],
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != _GATE_C2_ENDPOINT_KEYS:
+        return False
+    batch = expected_shape[0]
+    per_count = math.prod(expected_shape[1:])
+    finite = value["per_example_finite_count"]
+    nonfinite = value["per_example_nonfinite_count"]
+    return bool(
+        value["dtype"] == expected_dtype
+        and value["shape"] == list(expected_shape)
+        and _sha256_complete(value["sha256"])
+        and _strict_integer(value["value_count"])
+        and int(value["value_count"]) == math.prod(expected_shape)
+        and isinstance(finite, list)
+        and len(finite) == batch
+        and all(
+            _strict_integer(item) and int(item) == per_count for item in finite
+        )
+        and isinstance(nonfinite, list)
+        and len(nonfinite) == batch
+        and all(_strict_integer(item) and int(item) == 0 for item in nonfinite)
+        and _strict_integer(value["finite_count"])
+        and int(value["finite_count"]) == math.prod(expected_shape)
+        and _strict_integer(value["nonfinite_count"])
+        and int(value["nonfinite_count"]) == 0
+    )
+
+
+def _gate_c2_floating_difference_record_complete(
+    value: Any,
+    *,
+    expected_dtype: str,
+    expected_shape: tuple[int, ...],
+    rms_tolerance: float,
+    require_within: bool = True,
+) -> bool:
+    """Recompute every retained floating-difference aggregate."""
+
+    try:
+        tolerance = _finite_real(rms_tolerance, "Gate C2 RMS tolerance")
+        if (
+            tolerance < 0.0
+            or not isinstance(value, Mapping)
+            or set(value) != _GATE_C2_FLOAT_DIFFERENCE_KEYS
+            or not _gate_c2_endpoint_complete(
+                value["left"],
+                expected_dtype=expected_dtype,
+                expected_shape=expected_shape,
+            )
+            or not _gate_c2_endpoint_complete(
+                value["right"],
+                expected_dtype=expected_dtype,
+                expected_shape=expected_shape,
+            )
+        ):
+            return False
+        batch = expected_shape[0]
+        compared_count = math.prod(expected_shape[1:])
+        per_sum = value["per_example_sum_squared_difference"]
+        per_counts = value["per_example_compared_value_count"]
+        per_rms = value["per_example_rms_difference"]
+        per_max = value["per_example_max_abs_difference"]
+        if not all(
+            isinstance(section, list) and len(section) == batch
+            for section in (per_sum, per_counts, per_rms, per_max)
+        ):
+            return False
+        if not all(
+            _strict_integer(item) and int(item) == compared_count
+            for item in per_counts
+        ):
+            return False
+        sums = [
+            _finite_real(item, "per-example squared difference")
+            for item in per_sum
+        ]
+        rms_values = [
+            _finite_real(item, "per-example RMS difference")
+            for item in per_rms
+        ]
+        maxima = [
+            _finite_real(item, "per-example maximum difference")
+            for item in per_max
+        ]
+        if any(item < 0.0 for item in (*sums, *rms_values, *maxima)):
+            return False
+        if any(
+            not math.isclose(
+                actual,
+                math.sqrt(squared / compared_count),
+                rel_tol=1e-12,
+                abs_tol=1e-15,
+            )
+            for squared, actual in zip(sums, rms_values, strict=True)
+        ):
+            return False
+        if any(maximum + 1e-15 < rms for maximum, rms in zip(maxima, rms_values)):
+            return False
+        total_sum = math.fsum(sums)
+        total_rms = math.sqrt(total_sum / (batch * compared_count))
+        maximum_rms = max(rms_values)
+        maximum_abs = max(maxima)
+        if not all(
+            math.isclose(
+                _finite_real(value[field], field),
+                expected,
+                rel_tol=1e-12,
+                abs_tol=1e-15,
+            )
+            for field, expected in (
+                ("sum_squared_difference", total_sum),
+                ("rms_difference", total_rms),
+                ("max_per_example_rms_difference", maximum_rms),
+                ("max_abs_difference", maximum_abs),
+            )
+        ):
+            return False
+        expected_within = maximum_rms <= tolerance
+        return bool(
+            isinstance(value["within_tolerance"], bool)
+            and value["within_tolerance"] is expected_within
+            and (expected_within or not require_within)
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_prediction_endpoint(value: np.ndarray) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(value, dtype=np.int32))
+    if array.ndim != 1 or array.shape[0] <= 0:
+        raise ValueError("Gate C2 predictions must be one nonempty vector")
+    if not np.logical_and(array >= 0, array < 10).all():
+        raise ValueError("Gate C2 predictions must lie in 0..9")
+    return {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": legacy._digest_arrays(array),
+        "histogram": np.bincount(array, minlength=10).tolist(),
+        "count": int(array.size),
+    }
+
+
+def _gate_c2_prediction_difference_record(
+    left: Any,
+    right: Any,
+) -> dict[str, Any]:
+    """Build exact decoded-prediction equality evidence."""
+
+    left_array = np.ascontiguousarray(np.asarray(left, dtype=np.int32))
+    right_array = np.ascontiguousarray(np.asarray(right, dtype=np.int32))
+    if left_array.shape != right_array.shape or left_array.ndim != 1:
+        raise ValueError("Gate C2 prediction endpoints need equal vectors")
+    hamming = np.not_equal(left_array, right_array).astype(np.int64)
+    count = int(hamming.sum())
+    return {
+        "left": _gate_c2_prediction_endpoint(left_array),
+        "right": _gate_c2_prediction_endpoint(right_array),
+        "per_example_hamming_count": hamming.tolist(),
+        "hamming_count": count,
+        "equal": bool(count == 0),
+    }
+
+
+def _gate_c2_prediction_difference_record_complete(
+    value: Any,
+    *,
+    count: int,
+    require_equal: bool = True,
+) -> bool:
+    """Validate decoded predictions and recompute Hamming equality."""
+
+    endpoint_keys = {"dtype", "shape", "sha256", "histogram", "count"}
+    if (
+        not _strict_integer(count)
+        or int(count) <= 0
+        or not isinstance(value, Mapping)
+        or set(value)
+        != {
+            "left",
+            "right",
+            "per_example_hamming_count",
+            "hamming_count",
+            "equal",
+        }
+    ):
+        return False
+    expected_count = int(count)
+    endpoints = []
+    for side in ("left", "right"):
+        endpoint = value[side]
+        if (
+            not isinstance(endpoint, Mapping)
+            or set(endpoint) != endpoint_keys
+            or endpoint["dtype"] != "<i4"
+            or endpoint["shape"] != [expected_count]
+            or not _sha256_complete(endpoint["sha256"])
+            or not _strict_integer(endpoint["count"])
+            or int(endpoint["count"]) != expected_count
+            or not isinstance(endpoint["histogram"], list)
+            or len(endpoint["histogram"]) != 10
+            or not all(
+                _strict_integer(item) and int(item) >= 0
+                for item in endpoint["histogram"]
+            )
+            or sum(int(item) for item in endpoint["histogram"])
+            != expected_count
+        ):
+            return False
+        endpoints.append(endpoint)
+    per_example = value["per_example_hamming_count"]
+    if (
+        not isinstance(per_example, list)
+        or len(per_example) != expected_count
+        or not all(_strict_integer(item) and int(item) in (0, 1) for item in per_example)
+        or not _strict_integer(value["hamming_count"])
+    ):
+        return False
+    hamming_count = sum(int(item) for item in per_example)
+    expected_equal = bool(
+        hamming_count == 0
+        and endpoints[0]["sha256"] == endpoints[1]["sha256"]
+        and endpoints[0]["histogram"] == endpoints[1]["histogram"]
+    )
+    return bool(
+        int(value["hamming_count"]) == hamming_count
+        and isinstance(value["equal"], bool)
+        and value["equal"] is expected_equal
+        and (expected_equal or not require_equal)
+    )
+
+
+def _gate_c2_zero_array_record(value: Any) -> dict[str, Any]:
+    """Retain raw geometry and reconstructable digest for one zero array."""
+
+    array = np.ascontiguousarray(np.asarray(u.get_mantissa(value)))
+    if array.size == 0 or not np.issubdtype(array.dtype, np.floating):
+        raise ValueError("Gate C2 selected arrays must be nonempty floating arrays")
+    finite = np.isfinite(array)
+    zero = np.equal(array, 0.0)
+    if finite.all():
+        squared = float(np.sum(np.square(array.astype(np.float64))))
+        maximum = float(np.max(np.abs(array.astype(np.float64))))
+    else:
+        raise ValueError("Gate C2 selected arrays must be finite")
+    exact_zero = bool(zero.all())
+    return {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": legacy._digest_arrays(array),
+        "value_count": int(array.size),
+        "finite_count": int(finite.sum()),
+        "nonfinite_count": int(array.size - finite.sum()),
+        "zero_count": int(zero.sum()),
+        "sum_of_squares": squared,
+        "max_abs": maximum,
+        "exact_zero": exact_zero,
+    }
+
+
+def _gate_c2_zero_array_record_complete(
+    value: Any,
+    *,
+    expected_dtype: str,
+    expected_shape: tuple[int, ...],
+) -> bool:
+    """Reconstruct the sole admissible exact-zero array and its digest."""
+
+    keys = {
+        "dtype",
+        "shape",
+        "sha256",
+        "value_count",
+        "finite_count",
+        "nonfinite_count",
+        "zero_count",
+        "sum_of_squares",
+        "max_abs",
+        "exact_zero",
+    }
+    if not isinstance(value, Mapping) or set(value) != keys:
+        return False
+    try:
+        count = math.prod(expected_shape)
+        zero = np.zeros(expected_shape, dtype=np.dtype(expected_dtype))
+        return bool(
+            value["dtype"] == expected_dtype
+            and value["shape"] == list(expected_shape)
+            and value["sha256"] == legacy._digest_arrays(zero)
+            and _strict_integer(value["value_count"])
+            and int(value["value_count"]) == count
+            and _strict_integer(value["finite_count"])
+            and int(value["finite_count"]) == count
+            and _strict_integer(value["nonfinite_count"])
+            and int(value["nonfinite_count"]) == 0
+            and _strict_integer(value["zero_count"])
+            and int(value["zero_count"]) == count
+            and _finite_real(value["sum_of_squares"], "zero sum") == 0.0
+            and _finite_real(value["max_abs"], "zero maximum") == 0.0
+            and value["exact_zero"] is True
+        )
+    except (TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_no_update_evidence_complete(
+    value: Any,
+    initialization: Mapping[str, Any],
+) -> bool:
+    """Recompute the zero-training and parameter-identity control evidence."""
+
+    keys = {
+        "instrumented_training_entry_points",
+        "trainer_factory_calls",
+        "trainer_factory_call_count",
+        "training_step_calls",
+        "training_step_call_count",
+        "optimizer_constructor_calls",
+        "optimizer_instance_count",
+        "optimizer_update_calls",
+        "optimizer_update_call_count",
+        "model_factory_calls",
+        "model_constructor_calls",
+        "materialized_roles",
+        "complete",
+    }
+    role_keys = {
+        "regime",
+        "probe",
+        "policy",
+        "initialization_tree",
+        "expected_parameter_sha256",
+        "before_parameter_sha256",
+        "after_parameter_sha256",
+        "parameters_equal",
+    }
+    if not isinstance(value, Mapping) or set(value) != keys:
+        return False
+    if value["instrumented_training_entry_points"] != list(
+        GATE_C2_CONTROLS_AUDIT_LABELS
+    ):
+        return False
+    for calls, count_name in (
+        ("trainer_factory_calls", "trainer_factory_call_count"),
+        ("training_step_calls", "training_step_call_count"),
+        ("optimizer_update_calls", "optimizer_update_call_count"),
+    ):
+        if (
+            value[calls] != []
+            or not _strict_integer(value[count_name])
+            or int(value[count_name]) != 0
+        ):
+            return False
+    if (
+        value["optimizer_constructor_calls"] != []
+        or not _strict_integer(value["optimizer_instance_count"])
+        or int(value["optimizer_instance_count"]) != 0
+    ):
+        return False
+    factories = value["model_factory_calls"]
+    constructors = value["model_constructor_calls"]
+    roles = value["materialized_roles"]
+    expected_role_names = list(GATE_C2_CONTROLS_MODEL_ROLES)
+    if (
+        not isinstance(factories, list)
+        or factories != expected_role_names
+        or factories != constructors
+        or len(factories) != len(set(factories))
+        or not isinstance(roles, Mapping)
+        or list(roles) != expected_role_names
+    ):
+        return False
+    for role_name in factories:
+        role = roles[role_name]
+        expected_role = GATE_C2_CONTROLS_MODEL_ROLES[role_name]
+        if (
+            not isinstance(role_name, str)
+            or not role_name
+            or not isinstance(role, Mapping)
+            or set(role) != role_keys
+            or role["regime"] != expected_role["regime"]
+            or role["probe"] != expected_role["probe"]
+            or role["policy"] != expected_role["policy"]
+            or role["initialization_tree"] != "canonical_full"
+        ):
+            return False
+        try:
+            expected = initialization["initialization"][role["regime"]][
+                "canonical_full"
+            ]["parameter_sha256"]
+        except (KeyError, TypeError):
+            return False
+        if not (
+            _sha256_complete(expected)
+            and role["expected_parameter_sha256"] == expected
+            and role["before_parameter_sha256"] == expected
+            and role["after_parameter_sha256"] == expected
+            and role["parameters_equal"] is True
+        ):
+            return False
+    return value["complete"] is True
+
+
+def _gate_c2_paired_h0_operational_equivalence_complete(
+    value: Any,
+    initialization: Mapping[str, Any],
+    *,
+    regime: str,
+) -> bool:
+    """Validate all same-replay, full/full, and full/query H0 controls."""
+
+    try:
+        _regime_spec(regime)
+        expected_keys = {
+            "backend",
+            "checkpoint",
+            "intervention_boundary",
+            "rms_tolerance",
+            "initialization_parameter_sha256",
+            "streams",
+            "passed",
+        }
+        if not isinstance(value, Mapping) or set(value) != expected_keys:
+            return False
+        if (
+            value["backend"] != "canonical_production_sparse"
+            or not _strict_integer(value["checkpoint"])
+            or int(value["checkpoint"]) != 0
+            or value["intervention_boundary"]
+            != "after_ordinary_query_h0_before_first_latent_tick_h1"
+            or _finite_real(value["rms_tolerance"], "H0 tolerance") != 1e-6
+        ):
+            return False
+        roles = {"full_reference", "full_replay", "copied_full", "query_only"}
+        canonical = initialization["initialization"][regime]["canonical_full"][
+            "parameter_sha256"
+        ]
+        parameter_sha = value["initialization_parameter_sha256"]
+        if (
+            not isinstance(parameter_sha, Mapping)
+            or set(parameter_sha) != roles
+            or not _sha256_complete(canonical)
+            or any(digest != canonical for digest in parameter_sha.values())
+        ):
+            return False
+        streams = value["streams"]
+        if not isinstance(streams, Mapping) or set(streams) != {
+            "intact",
+            "shuffled",
+            "no_context",
+        }:
+            return False
+        comparison_names = {
+            "same_full_replay",
+            "copied_full_separate_jit",
+            "copied_full_vs_query",
+        }
+        comparison_keys = {"compact", "hidden_paths", "predictions", "passed"}
+        for stream in streams.values():
+            if not isinstance(stream, Mapping) or set(stream) != {
+                "initial_state_sha256",
+                "comparisons",
+                "passed",
+            }:
+                return False
+            initial_sha = stream["initial_state_sha256"]
+            if (
+                not isinstance(initial_sha, Mapping)
+                or set(initial_sha) != roles
+                or not all(_sha256_complete(item) for item in initial_sha.values())
+                or len(set(initial_sha.values())) != 1
+            ):
+                return False
+            comparisons = stream["comparisons"]
+            if not isinstance(comparisons, Mapping) or set(comparisons) != comparison_names:
+                return False
+            for comparison in comparisons.values():
+                if (
+                    not isinstance(comparison, Mapping)
+                    or set(comparison) != comparison_keys
+                    or not _gate_c2_floating_difference_record_complete(
+                        comparison["compact"],
+                        expected_dtype="<f4",
+                        expected_shape=(512, 1_180),
+                        rms_tolerance=1e-6,
+                    )
+                    or not isinstance(comparison["hidden_paths"], Mapping)
+                    or set(comparison["hidden_paths"])
+                    != set(_GATE_C2_HIDDEN_GEOMETRY)
+                    or any(
+                        not _gate_c2_floating_difference_record_complete(
+                            comparison["hidden_paths"][path],
+                            expected_dtype="<f4",
+                            expected_shape=shape,
+                            rms_tolerance=1e-6,
+                        )
+                        for path, shape in _GATE_C2_HIDDEN_GEOMETRY.items()
+                    )
+                    or not _gate_c2_prediction_difference_record_complete(
+                        comparison["predictions"],
+                        count=512,
+                    )
+                    or comparison["passed"] is not True
+                ):
+                    return False
+            if stream["passed"] is not True:
+                return False
+        return value["passed"] is True
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+class _GateC2ControlsAudit:
+    """Collect model identity and prove that no training boundary was entered."""
+
+    def __init__(self, initialization: Mapping[str, Any]) -> None:
+        self.initialization = initialization
+        self.model_factory_calls: list[str] = []
+        self.model_constructor_calls: list[str] = []
+        self.materialized_roles: dict[str, dict[str, Any]] = {}
+        self.trainer_factory_calls: list[str] = []
+        self.training_step_calls: list[str] = []
+        self.optimizer_constructor_calls: list[str] = []
+        self.optimizer_update_calls: list[str] = []
+        self._restorations: list[tuple[Any, str, Any]] = []
+
+    def _replace(self, owner: Any, name: str, replacement: Any) -> None:
+        original = getattr(owner, name)
+        self._restorations.append((owner, name, original))
+        setattr(owner, name, replacement)
+
+    def __enter__(self) -> _GateC2ControlsAudit:
+        factory_entries = (
+            (
+                globals(),
+                "_make_arm_trainer",
+                "examples.pp_prop.latent_workspace_ablation_gate._make_arm_trainer",
+            ),
+            (
+                gate_a,
+                "_make_pp_prop_trainer",
+                "examples.pp_prop.latent_workspace_binding_gate._make_pp_prop_trainer",
+            ),
+            (
+                gate_b,
+                "_make_pp_prop_trainer",
+                "examples.pp_prop.latent_workspace_depth_gate._make_pp_prop_trainer",
+            ),
+        )
+        for owner, name, label in factory_entries:
+            original = owner[name] if isinstance(owner, dict) else getattr(owner, name)
+
+            def blocked_factory(
+                *args: Any,
+                _label: str = label,
+                _original: Any = original,
+                **kwargs: Any,
+            ) -> Any:
+                del args, kwargs, _original
+                self.trainer_factory_calls.append(_label)
+                raise RuntimeError(
+                    "Gate C2 pretraining controls forbid trainer construction"
+                )
+
+            if isinstance(owner, dict):
+                self._restorations.append((owner, name, original))
+                owner[name] = blocked_factory
+            else:
+                self._replace(owner, name, blocked_factory)
+
+        trainer_classes = (
+            (
+                globals(),
+                "GateCTrainer",
+                "train_chunk",
+                (
+                    "examples.pp_prop.latent_workspace_ablation_gate."
+                    "GateCTrainer.train_chunk"
+                ),
+            ),
+            (
+                gate_a,
+                "_PPPropTrainer",
+                "train",
+                (
+                    "examples.pp_prop.latent_workspace_binding_gate."
+                    "_PPPropTrainer.train"
+                ),
+            ),
+            (
+                gate_b,
+                "_DepthPPPropTrainer",
+                "train_chunk",
+                (
+                    "examples.pp_prop.latent_workspace_depth_gate."
+                    "_DepthPPPropTrainer.train_chunk"
+                ),
+            ),
+        )
+        for owner, name, callable_name, label in trainer_classes:
+            original_class = (
+                owner[name] if isinstance(owner, dict) else getattr(owner, name)
+            )
+
+            def audited_constructor(
+                *args: Any,
+                _class: Any = original_class,
+                _callable_name: str = callable_name,
+                _label: str = label,
+                **kwargs: Any,
+            ) -> Any:
+                instance = _class(*args, **kwargs)
+
+                def blocked_step(*step_args: Any, **step_kwargs: Any) -> Any:
+                    del step_args, step_kwargs
+                    self.training_step_calls.append(_label)
+                    raise RuntimeError(
+                        "Gate C2 pretraining controls forbid training steps"
+                    )
+
+                setattr(instance, _callable_name, blocked_step)
+                return instance
+
+            if isinstance(owner, dict):
+                self._restorations.append((owner, name, original_class))
+                owner[name] = audited_constructor
+            else:
+                self._replace(owner, name, audited_constructor)
+
+        original_adam = braintools.optim.Adam
+
+        def blocked_adam(*args: Any, **kwargs: Any) -> Any:
+            del args, kwargs
+            self.optimizer_constructor_calls.append(
+                "braintools.optim.Adam.__init__"
+            )
+            raise RuntimeError(
+                "Gate C2 pretraining controls forbid Adam construction"
+            )
+
+        self._replace(braintools.optim, "Adam", blocked_adam)
+        original_update = getattr(original_adam, "update", None)
+        if original_update is not None:
+
+            def blocked_update(instance: Any, *args: Any, **kwargs: Any) -> Any:
+                del instance, args, kwargs
+                self.optimizer_update_calls.append("braintools.optim.Adam.update")
+                raise RuntimeError(
+                    "Gate C2 pretraining controls forbid optimizer updates"
+                )
+
+            self._replace(original_adam, "update", blocked_update)
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
+        del exc_type, exc, traceback
+        while self._restorations:
+            owner, name, original = self._restorations.pop()
+            if isinstance(owner, dict):
+                owner[name] = original
+            else:
+                setattr(owner, name, original)
+
+    def register(
+        self,
+        role: str,
+        model: LatentWorkspaceModel,
+        *,
+        regime: str,
+        probe: str,
+        policy: str,
+    ) -> None:
+        if role in self.materialized_roles:
+            raise RuntimeError(f"duplicate Gate C2 control model role {role!r}")
+        expected = self.initialization["initialization"][regime][
+            "canonical_full"
+        ]["parameter_sha256"]
+        before = legacy._array_digest(legacy._parameter_values(model))
+        if before != expected:
+            raise ValueError("Gate C2 control model did not reproduce initialization")
+        self.model_factory_calls.append(role)
+        self.model_constructor_calls.append(role)
+        self.materialized_roles[role] = {
+            "regime": regime,
+            "probe": probe,
+            "policy": policy,
+            "initialization_tree": "canonical_full",
+            "expected_parameter_sha256": expected,
+            "before_parameter_sha256": before,
+            "after_parameter_sha256": None,
+            "parameters_equal": False,
+        }
+
+    def finish(self, role: str, model: LatentWorkspaceModel) -> None:
+        record = self.materialized_roles[role]
+        after = legacy._array_digest(legacy._parameter_values(model))
+        record["after_parameter_sha256"] = after
+        record["parameters_equal"] = bool(
+            after
+            == record["before_parameter_sha256"]
+            == record["expected_parameter_sha256"]
+        )
+
+    def report(self) -> dict[str, Any]:
+        roles = dict(sorted(self.materialized_roles.items()))
+        finished = bool(
+            list(roles) == list(GATE_C2_CONTROLS_MODEL_ROLES)
+            and all(
+                role["parameters_equal"] is True
+                and _sha256_complete(role["after_parameter_sha256"])
+                for role in roles.values()
+            )
+        )
+        no_calls = not any(
+            (
+                self.trainer_factory_calls,
+                self.training_step_calls,
+                self.optimizer_constructor_calls,
+                self.optimizer_update_calls,
+            )
+        )
+        return {
+            "instrumented_training_entry_points": list(
+                GATE_C2_CONTROLS_AUDIT_LABELS
+            ),
+            "trainer_factory_calls": list(self.trainer_factory_calls),
+            "trainer_factory_call_count": len(self.trainer_factory_calls),
+            "training_step_calls": list(self.training_step_calls),
+            "training_step_call_count": len(self.training_step_calls),
+            "optimizer_constructor_calls": list(
+                self.optimizer_constructor_calls
+            ),
+            "optimizer_instance_count": len(self.optimizer_constructor_calls),
+            "optimizer_update_calls": list(self.optimizer_update_calls),
+            "optimizer_update_call_count": len(self.optimizer_update_calls),
+            "model_factory_calls": sorted(self.model_factory_calls),
+            "model_constructor_calls": sorted(self.model_constructor_calls),
+            "materialized_roles": roles,
+            "complete": bool(finished and no_calls),
+        }
+
+
+_ACTIVE_GATE_C2_CONTROLS_AUDIT: _GateC2ControlsAudit | None = None
+
+
+def _gate_c2_control_model(
+    config: GateCConfig,
+    initialization: Mapping[str, Any],
+    *,
+    regime: str,
+    policy: str,
+    batch_size: int,
+    role: str,
+    probe: str,
+    arm: str | None = None,
+    constructor: Any = None,
+) -> LatentWorkspaceModel:
+    selected_arm = arm or ("query_only" if policy == "query_only" else "full")
+    if constructor is None:
+        model = _new_model_for_arm(
+            config,
+            regime,
+            selected_arm,
+            batch_size=batch_size,
+        )
+    else:
+        model_config = _model_config_for_arm(
+            config,
+            regime,
+            selected_arm,
+            batch_size=batch_size,
+        )
+        model = constructor(model_config, policy)
+        if not isinstance(model, LatentWorkspaceModel):
+            raise TypeError("Gate C2 control constructor must return a model")
+    expected = initialization["initialization"][regime]["canonical_full"][
+        "parameter_sha256"
+    ]
+    actual = legacy._array_digest(legacy._parameter_values(model))
+    if actual != expected:
+        raise ValueError("Gate C2 control model initialization differs")
+    if _ACTIVE_GATE_C2_CONTROLS_AUDIT is not None:
+        _ACTIVE_GATE_C2_CONTROLS_AUDIT.register(
+            role,
+            model,
+            regime=regime,
+            probe=probe,
+            policy=policy,
+        )
+    return model
+
+
+def _gate_c2_finish_control_model(
+    role: str,
+    model: LatentWorkspaceModel,
+) -> None:
+    if _ACTIVE_GATE_C2_CONTROLS_AUDIT is not None:
+        _ACTIVE_GATE_C2_CONTROLS_AUDIT.finish(role, model)
+
+
+def _gate_c2_hidden_arrays(model: LatentWorkspaceModel) -> dict[str, np.ndarray]:
+    values: dict[str, np.ndarray] = {}
+    states = sorted(
+        model.states(brainstate.HiddenState).items(),
+        key=lambda item: gate_a._path(item[0]),
+    )
+    for path, state in states:
+        name = gate_a._path(path)
+        for index, leaf in enumerate(jax.tree.leaves(state.value)):
+            values[f"{name}#{index}"] = np.ascontiguousarray(
+                np.asarray(u.get_mantissa(jax.device_get(leaf)))
+            )
+    return values
+
+
+def _gate_c2_h0_driver(model: LatentWorkspaceModel) -> Any:
+    @brainstate.transform.jit
+    def run_h0(events: jax.Array, advances: jax.Array) -> jax.Array:
+        def step(inputs: tuple[jax.Array, jax.Array]) -> jax.Array:
+            event, advance = inputs
+            return model.update(event, advance)
+
+        compact = brainstate.transform.for_loop(step, (events, advances))
+        return compact[-1]
+
+    return run_h0
+
+
+def _gate_c2_h0_capture(
+    model: LatentWorkspaceModel,
+    driver: Any,
+    snapshot: Any,
+    events: np.ndarray,
+    advances: np.ndarray,
+) -> dict[str, Any]:
+    model.restore_state(snapshot)
+    compact = np.ascontiguousarray(
+        np.asarray(
+            jax.device_get(
+                jax.block_until_ready(
+                    driver(jnp.asarray(events), jnp.asarray(advances))
+                )
+            )
+        )
+    )
+    color_logits = np.asarray(
+        legacy._color_logits(jnp.asarray(compact), model.config.color_rank)
+    )
+    predictions = np.argmax(color_logits, axis=-1).astype(np.int32, copy=False)
+    return {
+        "compact": compact,
+        "hidden_paths": _gate_c2_hidden_arrays(model),
+        "predictions": np.ascontiguousarray(predictions),
+    }
+
+
+def _gate_c2_h0_comparison(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+) -> dict[str, Any]:
+    compact = _gate_c2_floating_difference_record(
+        left["compact"],
+        right["compact"],
+        rms_tolerance=1e-6,
+    )
+    left_hidden = left["hidden_paths"]
+    right_hidden = right["hidden_paths"]
+    if set(left_hidden) != set(right_hidden):
+        raise ValueError("Gate C2 H0 hidden-state paths differ")
+    hidden = {
+        path: _gate_c2_floating_difference_record(
+            left_hidden[path],
+            right_hidden[path],
+            rms_tolerance=1e-6,
+        )
+        for path in sorted(left_hidden)
+    }
+    predictions = _gate_c2_prediction_difference_record(
+        left["predictions"],
+        right["predictions"],
+    )
+    passed = bool(
+        compact["within_tolerance"] is True
+        and all(record["within_tolerance"] is True for record in hidden.values())
+        and predictions["equal"] is True
+    )
+    return {
+        "compact": compact,
+        "hidden_paths": hidden,
+        "predictions": predictions,
+        "passed": passed,
+    }
+
+
+def _paired_h0_operational_equivalence_report(
+    config: GateCConfig,
+    *,
+    initialization: Mapping[str, Any],
+    regime: str,
+    data: Any,
+) -> dict[str, Any]:
+    """Measure H0 replay, full/full, and full/query numerical controls."""
+
+    _regime_spec(regime)
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    count = regime_config.validation_episodes
+    if regime == "gate_a":
+        if not isinstance(data, legacy.BindingData):
+            raise TypeError("Gate A H0 controls require BindingData")
+        streams = {
+            "intact": np.asarray(data.validation_intact),
+            "shuffled": np.asarray(data.validation_shuffled),
+            "no_context": np.asarray(data.validation_no_context),
+        }
+        advances = np.ones(
+            (regime_config.sequence_length, count),
+            dtype=np.bool_,
+        )
+    else:
+        if (
+            not isinstance(data, tuple)
+            or len(data) != 2
+            or not isinstance(data[1], gate_b.DepthValidationData)
+        ):
+            raise TypeError("Gate B H0 controls require DepthValidationData")
+        validation = data[1]
+        streams = {
+            "intact": np.asarray(validation.intact),
+            "shuffled": np.asarray(validation.shuffled),
+            "no_context": np.asarray(validation.no_context),
+        }
+        advances = np.asarray(validation.advance_masks)
+    checkpoint_index = regime_config.sequence_length - regime_config.gap_steps - 1
+    roles = {
+        "full_reference": f"{regime}:paired_h0:full_reference",
+        "copied_full": f"{regime}:paired_h0:copied_full",
+        "query_only": f"{regime}:paired_h0:query_only",
+    }
+    models = {
+        key: _gate_c2_control_model(
+            config,
+            initialization,
+            regime=regime,
+            policy="query_only" if key == "query_only" else "full",
+            batch_size=count,
+            role=role,
+            probe="paired_h0_operational_equivalence",
+        )
+        for key, role in roles.items()
+    }
+    legacy._copy_parameters(models["full_reference"], models["copied_full"])
+    legacy._copy_parameters(models["full_reference"], models["query_only"])
+    initial_snapshot = models["full_reference"].snapshot_state()
+    for model in (models["copied_full"], models["query_only"]):
+        model.restore_state(initial_snapshot)
+    drivers = {name: _gate_c2_h0_driver(model) for name, model in models.items()}
+    parameter_sha = {
+        "full_reference": legacy._array_digest(
+            legacy._parameter_values(models["full_reference"])
+        ),
+        "full_replay": legacy._array_digest(
+            legacy._parameter_values(models["full_reference"])
+        ),
+        "copied_full": legacy._array_digest(
+            legacy._parameter_values(models["copied_full"])
+        ),
+        "query_only": legacy._array_digest(
+            legacy._parameter_values(models["query_only"])
+        ),
+    }
+    stream_reports: dict[str, Any] = {}
+    prefix_advances = advances[: checkpoint_index + 1]
+    for stream_name, values in streams.items():
+        prefix = values[: checkpoint_index + 1]
+        for model in models.values():
+            model.restore_state(initial_snapshot)
+        initial_state_sha = {
+            "full_reference": _hidden_state_sha256(models["full_reference"]),
+            "full_replay": _hidden_state_sha256(models["full_reference"]),
+            "copied_full": _hidden_state_sha256(models["copied_full"]),
+            "query_only": _hidden_state_sha256(models["query_only"]),
+        }
+        first = _gate_c2_h0_capture(
+            models["full_reference"],
+            drivers["full_reference"],
+            initial_snapshot,
+            prefix,
+            prefix_advances,
+        )
+        replay = _gate_c2_h0_capture(
+            models["full_reference"],
+            drivers["full_reference"],
+            initial_snapshot,
+            prefix,
+            prefix_advances,
+        )
+        copied = _gate_c2_h0_capture(
+            models["copied_full"],
+            drivers["copied_full"],
+            initial_snapshot,
+            prefix,
+            prefix_advances,
+        )
+        query = _gate_c2_h0_capture(
+            models["query_only"],
+            drivers["query_only"],
+            initial_snapshot,
+            prefix,
+            prefix_advances,
+        )
+        comparisons = {
+            "same_full_replay": _gate_c2_h0_comparison(first, replay),
+            "copied_full_separate_jit": _gate_c2_h0_comparison(first, copied),
+            "copied_full_vs_query": _gate_c2_h0_comparison(first, query),
+        }
+        stream_reports[stream_name] = {
+            "initial_state_sha256": initial_state_sha,
+            "comparisons": comparisons,
+            "passed": all(item["passed"] is True for item in comparisons.values()),
+        }
+    for key, role in roles.items():
+        _gate_c2_finish_control_model(role, models[key])
+    return {
+        "backend": "canonical_production_sparse",
+        "checkpoint": 0,
+        "intervention_boundary": (
+            "after_ordinary_query_h0_before_first_latent_tick_h1"
+        ),
+        "rms_tolerance": 1e-6,
+        "initialization_parameter_sha256": parameter_sha,
+        "streams": stream_reports,
+        "passed": all(item["passed"] is True for item in stream_reports.values()),
+    }
+
+
+def _gate_c2_raw_array_record(
+    value: Any,
+    *,
+    include_values: bool = False,
+    fill_value: float | None = None,
+) -> dict[str, Any]:
+    array = np.ascontiguousarray(np.asarray(u.get_mantissa(value)))
+    report: dict[str, Any] = {
+        "dtype": array.dtype.str,
+        "shape": list(array.shape),
+        "sha256": legacy._digest_arrays(array),
+    }
+    if include_values:
+        report["values"] = array.tolist()
+    if fill_value is not None:
+        report["fill_value"] = float(fill_value)
+    return report
+
+
+def _gate_c2_gradient_path_record(
+    path: str,
+    value: Any,
+    *,
+    require_zero: bool,
+) -> dict[str, Any]:
+    leaves = _numeric_gradient_leaves(value)
+    leaf_reports = []
+    squared = 0.0
+    value_count = 0
+    zero_count = 0
+    for index, array in enumerate(leaves):
+        numeric = array.astype(np.float64)
+        count = int(array.size)
+        zeros = int(np.count_nonzero(array == 0))
+        squared += float(np.sum(np.square(numeric)))
+        value_count += count
+        zero_count += zeros
+        leaf_reports.append(
+            {
+                "index": index,
+                "dtype": array.dtype.str,
+                "shape": list(array.shape),
+                "value_count": count,
+                "finite_count": count,
+                "nonfinite_count": 0,
+                "zero_count": zeros,
+                "sha256": legacy._digest_arrays(array),
+            }
+        )
+    norm = math.sqrt(squared)
+    report = {
+        "tree_paths": [path],
+        "leaf_count": len(leaves),
+        "leaves": leaf_reports,
+        "value_count": value_count,
+        "l2_norm": norm,
+        "sha256": _gradient_path_sha256(path, value),
+        "finite": True,
+        ("exact_zero" if require_zero else "nonzero"): (
+            bool(zero_count == value_count and norm == 0.0)
+            if require_zero
+            else bool(norm > 0.0)
+        ),
+    }
+    return report
+
+
+def _gate_c2_global_gradient_record(
+    gradients: Mapping[str, Any],
+) -> dict[str, Any]:
+    leaves = [
+        array
+        for path in sorted(gradients)
+        for array in _numeric_gradient_leaves(gradients[path])
+    ]
+    squared = math.fsum(
+        float(np.sum(np.square(array.astype(np.float64)))) for array in leaves
+    )
+    count = sum(int(array.size) for array in leaves)
+    return {
+        "tree_paths": sorted(gradients),
+        "leaf_count": len(leaves),
+        "value_count": count,
+        "l2_norm": math.sqrt(squared),
+        "sha256": _gradient_global_sha256(gradients),
+        "finite": True,
+        "nonzero": bool(squared > 0.0),
+    }
+
+
+def _gate_c2_stop_gradient_snapshot(snapshot: Any) -> Any:
+    return dataclasses.replace(
+        snapshot,
+        entries=tuple(
+            (
+                path,
+                jax.tree.map(
+                    lambda leaf: jax.lax.stop_gradient(leaf),
+                    value,
+                ),
+            )
+            for path, value in snapshot.entries
+        ),
+    )
+
+
+def _gate_c2_removed_path_finite_window_influence(
+    config: GateCConfig,
+    *,
+    initialization: Mapping[str, Any],
+    regime: str,
+    data: Any,
+) -> dict[str, Any]:
+    """Measure removed latent-read paths from a materialized H0 boundary."""
+
+    _regime_spec(regime)
+    try:
+        canonical_parameter_sha256 = initialization["initialization"][regime][
+            "canonical_full"
+        ]["parameter_sha256"]
+    except (KeyError, TypeError) as error:
+        raise ValueError("Gate C2 removed-path initialization is incomplete") from error
+    if (
+        not _sha256_complete(canonical_parameter_sha256)
+        or canonical_parameter_sha256 == "0" * 64
+    ):
+        raise ValueError("Gate C2 removed-path canonical parameters are invalid")
+    if regime == "gate_a":
+        if not isinstance(data, legacy.BindingData):
+            raise TypeError("Gate A removed-path objective requires BindingData")
+        pinned = GATE_C2_REMOVED_PATH_OBJECTIVES["gate_a_h1"]
+        mapping_id = int(pinned["source_metadata"]["mapping_id"])
+        encoded, encoded_targets, _, _, encoded_queries = (
+            legacy._encode_mapping_episodes(
+                np.asarray([mapping_id], dtype=np.int64),
+                seed=config.gate_a_config.validation_episode_seed,
+                config=config.gate_a_config,
+                controls=True,
+            )
+        )
+        source_events = np.ascontiguousarray(encoded[0])
+        source_advances = np.ones(source_events.shape[0], dtype=np.bool_)
+        target = int(np.asarray(encoded_targets[0]).item())
+        source_targets = np.asarray([target], dtype=np.int32)
+        canonical_weights = np.zeros(source_events.shape[0], dtype=np.float32)
+        canonical_weights[-2:] = np.float32(0.5)
+        h0_end = source_events.shape[0] - config.gate_a_config.gap_steps
+        continuation_events = source_events[h0_end:]
+        continuation_advances = source_advances[h0_end:]
+        continuation_targets = np.full(
+            continuation_events.shape[0], target, dtype=np.int32
+        )
+        selection = np.zeros(continuation_events.shape[0], dtype=np.bool_)
+        selection[-1] = True
+        base_weight = np.float32(0.5)
+        objective_name = "gate_a_h1"
+        coordinates = {
+            "regime": "gate_a",
+            "stream": "intact",
+            "validation_episode_index": 0,
+            "batch_size": 1,
+            "checkpoint": "H1",
+        }
+        schedule_cross_bound = dict(pinned["schedule_sha256"])
+        input_colors, output_colors = legacy._decode_mapping(mapping_id)
+        presentation_orders, query_indices = legacy._episode_choices(
+            1,
+            config.gate_a_config.validation_episode_seed,
+        )
+        query_index = int(np.asarray(encoded_queries[0]).item())
+        if query_index != int(query_indices[0]) or target != output_colors[query_index]:
+            raise ValueError("Gate A query metadata differs from its schedule")
+        source_metadata = {
+            "mapping_id": mapping_id,
+            "input_colors": list(input_colors),
+            "output_colors": list(output_colors),
+            "presentation_order_indices": presentation_orders[0].tolist(),
+            "query_index": query_index,
+            "query_color": int(input_colors[query_index]),
+            "target": target,
+            "demonstration_indices": list(range(len(input_colors))),
+            "h0_index": h0_end - 1,
+            "h1_index": h0_end,
+        }
+        if not gate_a._json_exact(source_metadata, pinned["source_metadata"]):
+            raise ValueError("Gate A objective metadata differs from its pin")
+    else:
+        if (
+            not isinstance(data, tuple)
+            or len(data) != 2
+            or not isinstance(data[0], gate_b.DepthSchedule)
+            or not isinstance(data[1], gate_b.DepthValidationData)
+        ):
+            raise TypeError("Gate B removed-path objective requires canonical data")
+        schedule, validation = data
+        source_events = np.ascontiguousarray(validation.intact[:, 0, :])
+        source_advances = np.ascontiguousarray(validation.advance_masks[:, 0])
+        source_targets = np.zeros(source_events.shape[0], dtype=np.int32)
+        source_targets[10:] = np.asarray(validation.targets_by_depth[:, 0])
+        effort = 8
+        canonical_weights = np.asarray(
+            gate_b._checkpoint_contract(
+                gate_b.unrank_ten_cycle(
+                    int(np.asarray(schedule.validation_mapping_ids[0]).item())
+                ),
+                int(np.asarray(schedule.validation_query_colors[0]).item()),
+                effort,
+            ).loss_weights
+        )
+        h0_end = 11
+        continuation_events = source_events[h0_end:]
+        continuation_advances = source_advances[h0_end:]
+        continuation_targets = source_targets[h0_end:]
+        selection = np.zeros(continuation_events.shape[0], dtype=np.bool_)
+        selection[-1] = True
+        base_weight = np.float32(1.0 / 9.0)
+        objective_name = "gate_b_index0_r8_h8"
+        coordinates = {
+            "regime": "gate_b",
+            "stream": "intact",
+            "validation_episode_index": 0,
+            "batch_size": 1,
+            "effort": 8,
+            "checkpoint": "H8",
+        }
+        schedule_cross_bound = dict(
+            gate_b._validation_data_report(validation)["sha256"]
+        )
+        source_metadata = {
+            "mapping_id": int(np.asarray(schedule.validation_mapping_ids[0]).item()),
+            "mapping": gate_b.unrank_ten_cycle(
+                int(np.asarray(schedule.validation_mapping_ids[0]).item())
+            ).tolist(),
+            "query_color": int(np.asarray(schedule.validation_query_colors[0]).item()),
+            "presentation_order": np.asarray(
+                schedule.validation_presentation_orders[0]
+            ).tolist(),
+            "shuffled_shift": int(np.asarray(validation.shuffled_shifts[0]).item()),
+            "h0_through_h8_targets": np.asarray(
+                validation.targets_by_depth[:, 0]
+            ).tolist(),
+        }
+    prefix_events = source_events[:h0_end]
+    prefix_advances = source_advances[:h0_end]
+    effective_weights = np.where(selection, base_weight, np.float32(0.0)).astype(
+        np.float32
+    )
+    packed = np.concatenate(
+        (
+            continuation_events[:, None, :],
+            continuation_advances[:, None, None].astype(np.float32),
+            continuation_targets[:, None, None].astype(np.float32),
+            effective_weights[:, None, None],
+        ),
+        axis=-1,
+    ).astype(np.float32, copy=False)
+    created_models: list[LatentWorkspaceModel] = []
+    snapshots: list[Any] = []
+    materialized_prefixes: list[dict[str, Any]] = []
+    actual_gradient_starts: list[dict[str, Any]] = []
+    gradient_boundary_capture_count = 0
+    role = f"{regime}:removed_path_finite_window:{objective_name}"
+
+    class _MaterializedObjective(LatentWorkspaceModel):
+        def __init__(self, model_config: ModelConfig) -> None:
+            self._gate_c2_h0_snapshot = None
+            super().__init__(model_config, memory_read_policy="query_only")
+
+        def reset_state(self, batch_size: int | None = None, **kwargs: object) -> None:
+            super().reset_state(batch_size=batch_size, **kwargs)
+            if self._gate_c2_h0_snapshot is not None:
+                self.restore_state(self._gate_c2_h0_snapshot)
+
+        def update(self, packed_input: jax.Array) -> jax.Array:
+            event = packed_input[:, : self.config.input_width]
+            advance = packed_input[:, self.config.input_width] > 0.5
+            targets = packed_input[:, self.config.input_width + 1].astype(jnp.int32)
+            weights = packed_input[:, self.config.input_width + 2]
+            compact = LatentWorkspaceModel.update(self, event, advance)
+            loss = legacy._classification_loss(
+                compact,
+                targets,
+                self.config.color_rank,
+            )
+            wrapped = jnp.sqrt(weights) * jnp.sqrt(jnp.maximum(loss, 0.0))
+            return jnp.where(weights == 0.0, jnp.zeros_like(wrapped), wrapped)
+
+    def model_factory() -> _MaterializedObjective:
+        def construct(
+            model_config: ModelConfig,
+            policy: str,
+        ) -> _MaterializedObjective:
+            if policy != "query_only":
+                raise ValueError("removed-path objective requires query-only policy")
+            return _MaterializedObjective(model_config)
+
+        model = _gate_c2_control_model(
+            config,
+            initialization,
+            regime=regime,
+            policy="query_only",
+            batch_size=1,
+            role=role,
+            probe="removed_path_finite_window_influence",
+            arm="query_only",
+            constructor=construct,
+        )
+        if not isinstance(model, _MaterializedObjective):
+            raise TypeError("Gate C2 objective factory returned the wrong model")
+
+        @brainstate.transform.jit
+        def materialize(events: jax.Array, advances: jax.Array) -> jax.Array:
+            def step(inputs: tuple[jax.Array, jax.Array]) -> jax.Array:
+                event, advance = inputs
+                return LatentWorkspaceModel.update(model, event, advance)
+
+            return brainstate.transform.for_loop(step, (events, advances))
+
+        model.reset_state()
+        jax.block_until_ready(
+            materialize(jnp.asarray(prefix_events[:, None, :]), jnp.asarray(prefix_advances[:, None]))
+        )
+        live_snapshot = model.snapshot_state()
+        materialized_prefixes.append(
+            _gate_c2_raw_h0_snapshot_record(
+                live_snapshot,
+                parameter_sha256=legacy._array_digest(
+                    legacy._parameter_values(model)
+                ),
+            )
+        )
+        snapshot = _gate_c2_stop_gradient_snapshot(live_snapshot)
+        model._gate_c2_h0_snapshot = snapshot
+        snapshots.append(snapshot)
+        created_models.append(model)
+        return model
+
+    def algorithm_factory(model: brainstate.nn.Module) -> braintrace.ETraceAlgorithm:
+        return braintrace.pp_prop(
+            model,
+            decay_or_rank=model.config.trace_decay,
+            vjp_method="multi-step",
+        )
+
+    def capture_actual_gradient_start(
+        model: brainstate.nn.Module,
+        _algorithm: braintrace.ETraceAlgorithm,
+    ) -> None:
+        nonlocal gradient_boundary_capture_count
+        if (
+            not isinstance(model, _MaterializedObjective)
+            or not snapshots
+            or model is not created_models[-1]
+        ):
+            raise TypeError("Gate C2 gradient-boundary callback model differs")
+        model.restore_state(snapshots[-1])
+        actual_gradient_starts.append(
+            _gate_c2_raw_h0_snapshot_record(
+                model.snapshot_state(),
+                parameter_sha256=legacy._array_digest(
+                    legacy._parameter_values(model)
+                ),
+            )
+        )
+        gradient_boundary_capture_count += 1
+
+    raw_gradients = chunked_online_param_gradients(
+        model_factory,
+        jnp.asarray(packed),
+        algo_factory=algorithm_factory,
+        chunk_size=GATE_C2_REMOVED_PATH_GRADIENT_CHUNK_SIZE,
+        compiled_scan=True,
+        after_init=capture_actual_gradient_start,
+    )
+    if (
+        gradient_boundary_capture_count != 1
+        or len(materialized_prefixes) != 1
+        or len(actual_gradient_starts) != 1
+    ):
+        raise RuntimeError("Gate C2 gradient boundary was not captured exactly once")
+    if not isinstance(raw_gradients, Mapping):
+        raise TypeError("Gate C2 removed-path gradients must be a mapping")
+    gradients = {
+        key if isinstance(key, str) else gate_a._path(key): value
+        for key, value in raw_gradients.items()
+    }
+    if tuple(sorted(gradients)) != FULL_PARAMETER_PATHS:
+        raise ValueError("Gate C2 removed-path gradient paths differ")
+    model = created_models[-1]
+    snapshot = snapshots[-1]
+    model.restore_state(snapshot)
+    materialized_prefix = materialized_prefixes[-1]
+    actual_gradient_start = actual_gradient_starts[-1]
+    all_hidden_leaves_equal = bool(
+        gate_a._json_exact(
+            materialized_prefix["hidden_paths"],
+            actual_gradient_start["hidden_paths"],
+        )
+        and materialized_prefix["hidden_state_tree_sha256"]
+        == actual_gradient_start["hidden_state_tree_sha256"]
+    )
+    canonical_parameters_equal = bool(
+        materialized_prefix["parameter_sha256"]
+        == actual_gradient_start["parameter_sha256"]
+        == canonical_parameter_sha256
+    )
+    h0_gradient_boundary = {
+        "capture_point": "after_init_etrace_state_before_first_gradient_chunk",
+        "capture_count": gradient_boundary_capture_count,
+        "materialized_prefix": materialized_prefix,
+        "actual_gradient_start": actual_gradient_start,
+        "canonical_parameter_sha256": canonical_parameter_sha256,
+        "all_hidden_leaves_equal": all_hidden_leaves_equal,
+        "passed": bool(all_hidden_leaves_equal and canonical_parameters_equal),
+    }
+
+    @brainstate.transform.jit
+    def measure(events: jax.Array, advances: jax.Array) -> jax.Array:
+        def step(inputs: tuple[jax.Array, jax.Array]) -> jax.Array:
+            return LatentWorkspaceModel.update(model, *inputs)
+
+        return brainstate.transform.for_loop(step, (events, advances))
+
+    compact = jax.block_until_ready(
+        measure(
+            jnp.asarray(continuation_events[:, None, :]),
+            jnp.asarray(continuation_advances[:, None]),
+        )
+    )
+    raw_loss = np.asarray(
+        legacy._classification_loss(
+            compact[-1],
+            jnp.asarray([continuation_targets[-1]], dtype=jnp.int32),
+            model.config.color_rank,
+        ),
+        dtype=np.float32,
+    ).reshape(1)
+    weighted_loss = (raw_loss * base_weight).astype(np.float32)
+    global_record = _gate_c2_global_gradient_record(gradients)
+    live_records = {
+        path: _gate_c2_gradient_path_record(
+            path,
+            gradients[path],
+            require_zero=False,
+        )
+        for path in GATE_C2_LIVE_PATHS
+    }
+    removed_records = {
+        path: _gate_c2_gradient_path_record(
+            path,
+            gradients[path],
+            require_zero=True,
+        )
+        for path in GATE_C2_REMOVED_PATHS
+    }
+    if _ACTIVE_GATE_C2_CONTROLS_AUDIT is not None:
+        _ACTIVE_GATE_C2_CONTROLS_AUDIT.finish(role, model)
+    objective = {
+        **coordinates,
+        "source_contract": {
+            "metadata": source_metadata,
+            "events": _gate_c2_raw_array_record(source_events),
+            "advances": _gate_c2_raw_array_record(
+                source_advances,
+                include_values=True,
+            ),
+            "targets": _gate_c2_raw_array_record(
+                source_targets,
+                include_values=True,
+            ),
+            "canonical_loss_weights": _gate_c2_raw_array_record(
+                canonical_weights,
+                include_values=True,
+            ),
+            "h0_prefix": {
+                **_gate_c2_raw_array_record(prefix_events),
+                "source_indices": list(range(h0_end)),
+            },
+            "schedule_cross_bound": schedule_cross_bound,
+        },
+        "continuation": {
+            "source_indices": list(range(h0_end, source_events.shape[0])),
+            "source_events": _gate_c2_raw_array_record(
+                continuation_events,
+                fill_value=0.0,
+            ),
+            "batched_events": _gate_c2_raw_array_record(
+                continuation_events[:, None, :],
+                fill_value=0.0,
+            ),
+            "advances": _gate_c2_raw_array_record(
+                continuation_advances,
+                include_values=True,
+            ),
+            "targets": _gate_c2_raw_array_record(
+                continuation_targets,
+                include_values=True,
+            ),
+            "selection_mask": _gate_c2_raw_array_record(
+                selection,
+                include_values=True,
+            ),
+            "base_checkpoint_weights": _gate_c2_raw_array_record(
+                np.full(selection.shape, base_weight, dtype=np.float32),
+                include_values=True,
+            ),
+            "effective_loss_weights": _gate_c2_raw_array_record(
+                effective_weights,
+                include_values=True,
+            ),
+            "packed_inputs": _gate_c2_raw_array_record(packed),
+            "h0_gradient_boundary": h0_gradient_boundary,
+            "source_slice_exact": True,
+            "passed": h0_gradient_boundary["passed"],
+        },
+        "raw_cross_entropy": {
+            **_gate_c2_raw_array_record(raw_loss),
+            "value": float(raw_loss[0]),
+            "finite": bool(np.isfinite(raw_loss).all()),
+            "nonzero": bool(raw_loss[0] > 0.0),
+        },
+        "base_checkpoint_weight": _gate_c2_raw_array_record(
+            np.asarray([base_weight], dtype=np.float32),
+            include_values=True,
+        ),
+        "weighted_cross_entropy": {
+            **_gate_c2_raw_array_record(weighted_loss),
+            "value": float(weighted_loss[0]),
+            "finite": bool(np.isfinite(weighted_loss).all()),
+            "nonzero": bool(weighted_loss[0] > 0.0),
+        },
+        "passed": bool(raw_loss[0] > 0.0 and weighted_loss[0] > 0.0),
+    }
+    complete = bool(
+        objective["passed"]
+        and h0_gradient_boundary["passed"]
+        and global_record["nonzero"]
+        and all(record["nonzero"] for record in live_records.values())
+        and all(record["exact_zero"] for record in removed_records.values())
+    )
+    return {
+        "gradient_chunk_size": GATE_C2_REMOVED_PATH_GRADIENT_CHUNK_SIZE,
+        "start_state": GATE_C2_REMOVED_PATH_START_STATE,
+        "objectives": {objective_name: objective},
+        "global": global_record,
+        "live_paths": live_records,
+        "removed_paths": removed_records,
+        "complete": complete,
+    }
+
+
+def _gate_c2_snapshot_arrays(snapshot: Any) -> dict[str, np.ndarray]:
+    result: dict[str, np.ndarray] = {}
+    for path, value in snapshot.entries:
+        name = gate_a._path(path)
+        for index, leaf in enumerate(jax.tree.leaves(value)):
+            result[f"{name}#{index}"] = np.array(
+                u.get_mantissa(jax.device_get(leaf)),
+                copy=True,
+                order="C",
+            )
+    return result
+
+
+def _gate_c2_hidden_leaf_path_key(path: str) -> tuple[str, int]:
+    base_path, separator, leaf_index = path.rpartition("#")
+    if (
+        separator != "#"
+        or not base_path
+        or not leaf_index
+        or not leaf_index.isdecimal()
+    ):
+        raise ValueError("Gate C2 hidden leaf path is malformed")
+    return base_path, int(leaf_index)
+
+
+def _gate_c2_raw_h0_tree_sha256(
+    hidden_paths: Mapping[str, Mapping[str, Any]],
+) -> str:
+    fields: list[bytes] = [b"example21-gate-c-hidden-state-v1"]
+    for path in sorted(hidden_paths, key=_gate_c2_hidden_leaf_path_key):
+        base_path, leaf_index = _gate_c2_hidden_leaf_path_key(path)
+        leaf = hidden_paths[path]
+        fields.extend(
+            (
+                base_path.encode("utf-8"),
+                str(leaf_index).encode("ascii"),
+                str(leaf["dtype"]).encode("ascii"),
+                ",".join(map(str, leaf["shape"])).encode("ascii"),
+                bytes.fromhex(str(leaf["data_hex"])),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _gate_c2_raw_h0_snapshot_record(
+    snapshot: Any,
+    *,
+    parameter_sha256: str,
+) -> dict[str, Any]:
+    if not _sha256_complete(parameter_sha256) or parameter_sha256 == "0" * 64:
+        raise ValueError("Gate C2 H0 snapshot parameter digest is invalid")
+    arrays = _gate_c2_snapshot_arrays(snapshot)
+    if tuple(arrays) != tuple(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY):
+        raise ValueError("Gate C2 H0 snapshot hidden paths differ")
+    hidden_paths: dict[str, dict[str, Any]] = {}
+    for path, expected_shape in _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items():
+        array = np.ascontiguousarray(arrays[path])
+        if array.dtype.str != "<f4" or array.shape != expected_shape:
+            raise ValueError("Gate C2 H0 snapshot hidden geometry differs")
+        finite = np.isfinite(array)
+        hidden_paths[path] = {
+            "dtype": array.dtype.str,
+            "shape": list(array.shape),
+            "data_hex": array.tobytes(order="C").hex(),
+            "sha256": legacy._digest_arrays(array),
+            "finite_count": int(finite.sum()),
+            "nonfinite_count": int((~finite).sum()),
+        }
+    return {
+        "hidden_paths": hidden_paths,
+        "hidden_state_tree_sha256": _gate_c2_raw_h0_tree_sha256(hidden_paths),
+        "parameter_sha256": parameter_sha256,
+    }
+
+
+def _gate_c2_raw_h0_snapshot_complete(
+    value: Any,
+    *,
+    canonical_parameter_sha256: str,
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "hidden_paths",
+        "hidden_state_tree_sha256",
+        "parameter_sha256",
+    }:
+        return False
+    hidden_paths = value["hidden_paths"]
+    if (
+        not isinstance(hidden_paths, Mapping)
+        or tuple(hidden_paths) != tuple(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
+        or value["parameter_sha256"] != canonical_parameter_sha256
+    ):
+        return False
+    try:
+        for path, expected_shape in _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items():
+            leaf = hidden_paths[path]
+            if not isinstance(leaf, Mapping) or set(leaf) != {
+                "dtype",
+                "shape",
+                "data_hex",
+                "sha256",
+                "finite_count",
+                "nonfinite_count",
+            }:
+                return False
+            value_count = math.prod(expected_shape)
+            data_hex = leaf["data_hex"]
+            if (
+                leaf["dtype"] != "<f4"
+                or leaf["shape"] != list(expected_shape)
+                or not isinstance(data_hex, str)
+                or re.fullmatch(r"[0-9a-f]+", data_hex) is None
+                or len(data_hex) != value_count * np.dtype("<f4").itemsize * 2
+                or not _strict_integer(leaf["finite_count"])
+                or not _strict_integer(leaf["nonfinite_count"])
+            ):
+                return False
+            raw = bytes.fromhex(data_hex)
+            array = np.frombuffer(raw, dtype=np.dtype("<f4")).reshape(
+                expected_shape
+            )
+            finite_count = int(np.isfinite(array).sum())
+            nonfinite_count = value_count - finite_count
+            if (
+                leaf["sha256"] != legacy._digest_arrays(array)
+                or int(leaf["finite_count"]) != finite_count
+                or int(leaf["nonfinite_count"]) != nonfinite_count
+                or finite_count != value_count
+                or nonfinite_count != 0
+            ):
+                return False
+        return bool(
+            _sha256_complete(value["hidden_state_tree_sha256"])
+            and value["hidden_state_tree_sha256"]
+            == _gate_c2_raw_h0_tree_sha256(hidden_paths)
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_h0_gradient_boundary_complete(
+    value: Any,
+    *,
+    canonical_parameter_sha256: str,
+) -> bool:
+    if (
+        not _sha256_complete(canonical_parameter_sha256)
+        or canonical_parameter_sha256 == "0" * 64
+        or not isinstance(value, Mapping)
+        or set(value)
+        != {
+            "capture_point",
+            "capture_count",
+            "materialized_prefix",
+            "actual_gradient_start",
+            "canonical_parameter_sha256",
+            "all_hidden_leaves_equal",
+            "passed",
+        }
+    ):
+        return False
+    materialized = value["materialized_prefix"]
+    actual = value["actual_gradient_start"]
+    snapshots_complete = bool(
+        _gate_c2_raw_h0_snapshot_complete(
+            materialized,
+            canonical_parameter_sha256=canonical_parameter_sha256,
+        )
+        and _gate_c2_raw_h0_snapshot_complete(
+            actual,
+            canonical_parameter_sha256=canonical_parameter_sha256,
+        )
+    )
+    hidden_equal = bool(
+        snapshots_complete
+        and gate_a._json_exact(
+            materialized["hidden_paths"],
+            actual["hidden_paths"],
+        )
+        and materialized["hidden_state_tree_sha256"]
+        == actual["hidden_state_tree_sha256"]
+    )
+    recomputed = bool(
+        value["capture_point"]
+        == "after_init_etrace_state_before_first_gradient_chunk"
+        and _strict_integer(value["capture_count"])
+        and int(value["capture_count"]) == 1
+        and value["canonical_parameter_sha256"]
+        == canonical_parameter_sha256
+        and hidden_equal
+    )
+    return bool(
+        isinstance(value["all_hidden_leaves_equal"], bool)
+        and value["all_hidden_leaves_equal"] is hidden_equal
+        and isinstance(value["passed"], bool)
+        and value["passed"] is recomputed
+        and recomputed
+    )
+
+
+def _gate_c2_parameter_arrays(
+    model: LatentWorkspaceModel,
+) -> dict[str, Any]:
+    return {
+        path: jax.tree.map(
+            lambda leaf: np.array(
+                u.get_mantissa(jax.device_get(leaf)),
+                copy=True,
+                order="C",
+            ),
+            value,
+        )
+        for path, value in legacy._parameter_values(model).items()
+    }
+
+
+def _gate_c2_cached_boundary_tree_sha256(
+    hidden_paths: Mapping[str, Mapping[str, Any]],
+) -> str:
+    fields: list[bytes] = [
+        b"example21-gate-c2-cached-read-boundary-state-v1"
+    ]
+    for path in sorted(hidden_paths):
+        endpoint = hidden_paths[path]
+        fields.extend(
+            (
+                path.encode("utf-8"),
+                b"0",
+                str(endpoint["dtype"]).encode("ascii"),
+                ",".join(map(str, endpoint["shape"])).encode("ascii"),
+                str(endpoint["sha256"]).encode("ascii"),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _gate_c2_boundary_snapshot(
+    model: LatentWorkspaceModel,
+    driver: Any,
+    h0_snapshot: Any,
+    events: np.ndarray,
+    advances: np.ndarray,
+    *,
+    tick_index: int,
+) -> Any:
+    model.restore_state(h0_snapshot)
+    if tick_index:
+        jax.block_until_ready(
+            driver(
+                jnp.asarray(events[:tick_index]),
+                jnp.asarray(advances[:tick_index]),
+            )
+        )
+    return _gate_c2_stop_gradient_snapshot(model.snapshot_state())
+
+
+def _gate_c2_cache_boundary_report(
+    before_snapshot: Any,
+    after_snapshot: Any,
+    *,
+    before_parameters: Mapping[str, Any],
+    after_parameters: Mapping[str, Any],
+    canonical_parameter_sha256: str,
+) -> dict[str, Any]:
+    before_arrays = _gate_c2_snapshot_arrays(before_snapshot)
+    after_arrays = _gate_c2_snapshot_arrays(after_snapshot)
+    before_hidden = {
+        path: _gate_c2_array_endpoint(value)
+        for path, value in before_arrays.items()
+    }
+    after_hidden = {
+        path: _gate_c2_array_endpoint(value)
+        for path, value in after_arrays.items()
+    }
+    changed = [
+        path
+        for path in sorted(before_hidden)
+        if before_hidden[path]["sha256"] != after_hidden[path]["sha256"]
+    ]
+    unchanged = [
+        path
+        for path in sorted(before_hidden)
+        if before_hidden[path]["sha256"] == after_hidden[path]["sha256"]
+    ]
+    before_parameter_sha256 = legacy._array_digest(before_parameters)
+    after_parameter_sha256 = legacy._array_digest(after_parameters)
+    parameters_equal = bool(
+        _sha256_complete(canonical_parameter_sha256)
+        and before_parameter_sha256 == canonical_parameter_sha256
+        and after_parameter_sha256 == canonical_parameter_sha256
+    )
+    only_memory_read = bool(
+        set(before_hidden) == set(after_hidden)
+        and changed == ["memory_read#0"]
+        and unchanged
+        == sorted(set(before_hidden) - {"memory_read#0"})
+        and parameters_equal
+    )
+    before = {
+        "hidden_paths": before_hidden,
+        "hidden_state_tree_sha256": _gate_c2_cached_boundary_tree_sha256(
+            before_hidden
+        ),
+        "parameter_tree_sha256": before_parameter_sha256,
+    }
+    after = {
+        "hidden_paths": after_hidden,
+        "hidden_state_tree_sha256": _gate_c2_cached_boundary_tree_sha256(
+            after_hidden
+        ),
+        "parameter_tree_sha256": after_parameter_sha256,
+    }
+    passed = bool(
+        parameters_equal
+        and only_memory_read
+        and before["hidden_state_tree_sha256"]
+        != after["hidden_state_tree_sha256"]
+    )
+    return {
+        "before_replacement": before,
+        "after_replacement": after,
+        "changed_paths": changed,
+        "unchanged_paths": unchanged,
+        "parameters_equal": parameters_equal,
+        "only_memory_read_replaced": only_memory_read,
+        "passed": passed,
+    }
+
+
+def _gate_c2_suffix_comparison(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+    *,
+    tick_names: tuple[str, ...],
+    include_context_memory: bool,
+) -> dict[str, Any]:
+    ticks = {
+        tick: _gate_c2_continuation_comparison(
+            left,
+            right,
+            tick_index=index,
+            exclude_context_memory=not include_context_memory,
+        )
+        for index, tick in enumerate(tick_names)
+    }
+    return {
+        "ticks": ticks,
+        "passed": all(item["passed"] is True for item in ticks.values()),
+    }
+
+
+def _gate_c2_tree_geometry_sha256(
+    values: Mapping[str, Any],
+    *,
+    domain: str,
+) -> str:
+    fields = [domain.encode("utf-8")]
+    for path in sorted(values):
+        for index, leaf in enumerate(jax.tree.leaves(values[path])):
+            array = np.ascontiguousarray(np.asarray(u.get_mantissa(leaf)))
+            fields.extend(
+                (
+                    path.encode("utf-8"),
+                    str(index).encode("ascii"),
+                    array.dtype.str.encode("ascii"),
+                    ",".join(map(str, array.shape)).encode("ascii"),
+                )
+            )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _gate_c2_tree_value_sha256(
+    values: Mapping[str, Any],
+    *,
+    domain: str,
+) -> str:
+    fields = [domain.encode("utf-8")]
+    for path in sorted(values):
+        for index, leaf in enumerate(jax.tree.leaves(values[path])):
+            array = np.ascontiguousarray(np.asarray(u.get_mantissa(leaf)))
+            fields.extend(
+                (
+                    path.encode("utf-8"),
+                    str(index).encode("ascii"),
+                    array.dtype.str.encode("ascii"),
+                    ",".join(map(str, array.shape)).encode("ascii"),
+                    array.tobytes(),
+                )
+            )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _gate_c2_tree_equality_record(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+    *,
+    framing: str,
+    parameter_values: bool,
+) -> dict[str, Any]:
+    paths = sorted(left)
+    if paths != sorted(right):
+        raise ValueError("Gate C2 equality path sets differ")
+    tree_domain = (
+        "example21-gate-c2-parameter-tree-v1"
+        if parameter_values
+        else "example21-gate-c2-non-s-k-tree-v1"
+    )
+    value_domain = "example21-gate-c2-non-s-k-state-v1"
+    left_tree = _gate_c2_tree_geometry_sha256(left, domain=tree_domain)
+    right_tree = _gate_c2_tree_geometry_sha256(right, domain=tree_domain)
+    if parameter_values:
+        left_value = legacy._array_digest(left)
+        right_value = legacy._array_digest(right)
+    else:
+        left_value = _gate_c2_tree_value_sha256(left, domain=value_domain)
+        right_value = _gate_c2_tree_value_sha256(right, domain=value_domain)
+    return {
+        "paths": paths,
+        "framing": framing,
+        "left_tree_sha256": left_tree,
+        "right_tree_sha256": right_tree,
+        "left_value_sha256": left_value,
+        "right_value_sha256": right_value,
+        "tree_equal": bool(left_tree == right_tree),
+        "values_equal": bool(left_value == right_value),
+    }
+
+
+def _gate_c2_latent_driver(model: LatentWorkspaceModel) -> Any:
+    hidden_states = sorted(
+        model.states(brainstate.HiddenState).items(),
+        key=lambda item: gate_a._path(item[0]),
+    )
+
+    @brainstate.transform.jit
+    def run_latent(events: jax.Array, advances: jax.Array) -> Any:
+        def step(inputs: tuple[jax.Array, jax.Array]) -> Any:
+            event, advance = inputs
+            compact = model.update(event, advance)
+            read = model.memory_read.value
+            drive = model.memory_read_projection(read)
+            hidden = tuple(
+                u.get_mantissa(leaf)
+                for _, state in hidden_states
+                for leaf in jax.tree.leaves(state.value)
+            )
+            return compact, read, drive, hidden
+
+        return brainstate.transform.for_loop(step, (events, advances))
+
+    paths = tuple(
+        f"{gate_a._path(path)}#{index}"
+        for path, state in hidden_states
+        for index, _ in enumerate(jax.tree.leaves(state.value))
+    )
+    return run_latent, paths
+
+
+def _gate_c2_latent_capture(
+    model: LatentWorkspaceModel,
+    driver: Any,
+    hidden_paths: tuple[str, ...],
+    snapshot: Any,
+    events: np.ndarray,
+    advances: np.ndarray,
+    *,
+    replacement: float | None = None,
+) -> dict[str, Any]:
+    model.restore_state(snapshot)
+    if replacement is not None:
+        model.context_memory.value = jnp.full_like(
+            model.context_memory.value,
+            np.float32(replacement),
+        )
+    compact, read, drive, hidden = jax.block_until_ready(
+        driver(jnp.asarray(events), jnp.asarray(advances))
+    )
+    compact_array = np.ascontiguousarray(np.asarray(jax.device_get(compact)))
+    color_logits = np.asarray(
+        legacy._color_logits(jnp.asarray(compact_array), model.config.color_rank)
+    )
+    predictions = np.argmax(color_logits, axis=-1).astype(np.int32, copy=False)
+    return {
+        "compact": compact_array,
+        "selected_read": np.ascontiguousarray(np.asarray(jax.device_get(read))),
+        "selected_drive": np.ascontiguousarray(np.asarray(jax.device_get(drive))),
+        "hidden_paths": {
+            path: np.ascontiguousarray(np.asarray(jax.device_get(value)))
+            for path, value in zip(hidden_paths, hidden, strict=True)
+        },
+        "predictions": np.ascontiguousarray(predictions),
+    }
+
+
+def _gate_c2_continuation_comparison(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+    *,
+    tick_index: int,
+    exclude_context_memory: bool,
+) -> dict[str, Any]:
+    compact = _gate_c2_floating_difference_record(
+        left["compact"][tick_index],
+        right["compact"][tick_index],
+        rms_tolerance=1e-6,
+    )
+    paths = sorted(left["hidden_paths"])
+    if exclude_context_memory:
+        paths = [path for path in paths if path != "context_memory#0"]
+    hidden = {
+        path: _gate_c2_floating_difference_record(
+            left["hidden_paths"][path][tick_index],
+            right["hidden_paths"][path][tick_index],
+            rms_tolerance=1e-6,
+        )
+        for path in paths
+    }
+    predictions = _gate_c2_prediction_difference_record(
+        left["predictions"][tick_index],
+        right["predictions"][tick_index],
+    )
+    passed = bool(
+        compact["within_tolerance"]
+        and all(record["within_tolerance"] for record in hidden.values())
+        and predictions["equal"]
+    )
+    return {
+        "compact": compact,
+        "hidden_paths": hidden,
+        "predictions": predictions,
+        "passed": passed,
+    }
+
+
+def _gate_c2_no_read_stream_data(
+    config: GateCConfig,
+    regime: str,
+    data: Any,
+) -> tuple[dict[str, np.ndarray], np.ndarray, int]:
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    if regime == "gate_a":
+        if not isinstance(data, legacy.BindingData):
+            raise TypeError("Gate A no-read probe requires BindingData")
+        streams = {
+            "intact": np.asarray(data.validation_intact),
+            "shuffled": np.asarray(data.validation_shuffled),
+            "no_context": np.asarray(data.validation_no_context),
+        }
+        advances = np.ones(
+            (regime_config.sequence_length, regime_config.validation_episodes),
+            dtype=np.bool_,
+        )
+    else:
+        if (
+            not isinstance(data, tuple)
+            or len(data) != 2
+            or not isinstance(data[1], gate_b.DepthValidationData)
+        ):
+            raise TypeError("Gate B no-read probe requires DepthValidationData")
+        validation = data[1]
+        streams = {
+            "intact": np.asarray(validation.intact),
+            "shuffled": np.asarray(validation.shuffled),
+            "no_context": np.asarray(validation.no_context),
+        }
+        advances = np.asarray(validation.advance_masks)
+    h0_end = regime_config.sequence_length - regime_config.gap_steps
+    return streams, advances, h0_end
+
+
+def _query_only_latent_no_read_report(
+    config: GateCConfig,
+    *,
+    initialization: Mapping[str, Any],
+    regime: str,
+    data: Any,
+) -> dict[str, Any]:
+    """Probe selected zero reads, cached reads, and context replacements."""
+
+    _regime_spec(regime)
+    streams, advances, h0_end = _gate_c2_no_read_stream_data(
+        config,
+        regime,
+        data,
+    )
+    count = next(iter(streams.values())).shape[1]
+    canonical_parameter_sha256 = initialization["initialization"][regime][
+        "canonical_full"
+    ]["parameter_sha256"]
+    roles = {
+        "query_only": f"{regime}:query_only_latent_no_read:query_only",
+        "full": f"{regime}:query_only_latent_no_read:full_positive_control",
+    }
+    query_model = _gate_c2_control_model(
+        config,
+        initialization,
+        regime=regime,
+        policy="query_only",
+        batch_size=count,
+        role=roles["query_only"],
+        probe="query_only_latent_no_read",
+    )
+    full_model = _gate_c2_control_model(
+        config,
+        initialization,
+        regime=regime,
+        policy="full",
+        batch_size=count,
+        role=roles["full"],
+        probe="full_positive_control",
+    )
+    legacy._copy_parameters(query_model, full_model)
+    initial_snapshot = _gate_c2_stop_gradient_snapshot(query_model.snapshot_state())
+    full_model.restore_state(initial_snapshot)
+    prefix_drivers = {
+        "query_only": _gate_c2_h0_driver(query_model),
+        "full": _gate_c2_h0_driver(full_model),
+    }
+    query_driver, query_hidden_paths = _gate_c2_latent_driver(query_model)
+    full_driver, full_hidden_paths = _gate_c2_latent_driver(full_model)
+    if query_hidden_paths != full_hidden_paths:
+        raise ValueError("Gate C2 no-read hidden-state paths differ")
+    tick_names = GATE_C2_LATENT_TICKS[regime]
+    selected_streams: dict[str, Any] = {}
+    perturbation_streams = {
+        replacement: {} for replacement in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+    }
+    positive_streams = {
+        replacement: {} for replacement in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+    }
+    positive_nonzero = {
+        replacement: False for replacement in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+    }
+    replacement_reports = {
+        name: {
+            "fill_value": float(spec["fill_value"]),
+            **_gate_c2_raw_array_record(
+                np.full(
+                    (count, 32, 32),
+                    float(spec["fill_value"]),
+                    dtype=np.float32,
+                )
+            ),
+        }
+        for name, spec in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS.items()
+    }
+
+    def cached_read_probe(
+        *,
+        boundary: Any,
+        suffix_events: np.ndarray,
+        suffix_advances: np.ndarray,
+        baseline: Mapping[str, Any],
+        suffix_ticks: tuple[str, ...],
+    ) -> dict[str, Any]:
+        before_arrays = _gate_c2_snapshot_arrays(boundary)
+        source = _gate_c2_array_endpoint(before_arrays["memory_read#0"])
+        sentinels: dict[str, Any] = {}
+        for name, spec in GATE_C2_CACHED_READ_REPLACEMENTS.items():
+            query_model.restore_state(boundary)
+            before_parameters = _gate_c2_parameter_arrays(query_model)
+            replacement = np.full_like(
+                before_arrays["memory_read#0"],
+                float(spec["fill_value"]),
+            )
+            query_model.memory_read.value = jnp.asarray(replacement)
+            after_boundary = _gate_c2_stop_gradient_snapshot(
+                query_model.snapshot_state()
+            )
+            after_parameters = _gate_c2_parameter_arrays(query_model)
+            perturbed = _gate_c2_latent_capture(
+                query_model,
+                query_driver,
+                query_hidden_paths,
+                after_boundary,
+                suffix_events,
+                suffix_advances,
+            )
+            selected_read = _gate_c2_zero_array_record(
+                perturbed["selected_read"][0]
+            )
+            selected_drive = _gate_c2_zero_array_record(
+                perturbed["selected_drive"][0]
+            )
+            continuation = _gate_c2_suffix_comparison(
+                baseline,
+                perturbed,
+                tick_names=suffix_ticks,
+                include_context_memory=True,
+            )
+            boundary_report = _gate_c2_cache_boundary_report(
+                boundary,
+                after_boundary,
+                before_parameters=before_parameters,
+                after_parameters=after_parameters,
+                canonical_parameter_sha256=canonical_parameter_sha256,
+            )
+            replacement_report = {
+                "fill_value": float(spec["fill_value"]),
+                **_gate_c2_raw_array_record(replacement),
+            }
+            passed = bool(
+                source["sha256"] != replacement_report["sha256"]
+                and boundary_report["passed"]
+                and selected_read["exact_zero"]
+                and selected_drive["exact_zero"]
+                and continuation["passed"]
+            )
+            sentinels[name] = {
+                "replacement": replacement_report,
+                "boundary": boundary_report,
+                "selected_read": selected_read,
+                "selected_drive": selected_drive,
+                "continuation": continuation,
+                "passed": passed,
+            }
+        probe_passed = all(
+            sentinels[name]["passed"] is True
+            for name in GATE_C2_CACHED_READ_REPLACEMENTS
+        )
+        return {
+            "source_cached_memory_read": source,
+            **sentinels,
+            "passed": probe_passed,
+        }
+
+    def context_intervention(
+        *,
+        model: LatentWorkspaceModel,
+        driver: Any,
+        hidden_paths: tuple[str, ...],
+        boundary: Any,
+        suffix_events: np.ndarray,
+        suffix_advances: np.ndarray,
+        baseline: Mapping[str, Any],
+        fill: float,
+        positive: bool,
+    ) -> dict[str, Any]:
+        model.restore_state(boundary)
+        before_arrays = _gate_c2_snapshot_arrays(boundary)
+        before_parameters = _gate_c2_parameter_arrays(model)
+        source_memory = before_arrays["context_memory#0"]
+        replacement = np.full_like(source_memory, fill)
+        model.context_memory.value = jnp.asarray(replacement)
+        after_boundary = _gate_c2_stop_gradient_snapshot(model.snapshot_state())
+        after_arrays = _gate_c2_snapshot_arrays(after_boundary)
+        after_parameters = _gate_c2_parameter_arrays(model)
+        before_non_memory = {
+            path: value
+            for path, value in before_arrays.items()
+            if path != "context_memory#0"
+        }
+        after_non_memory = {
+            path: value
+            for path, value in after_arrays.items()
+            if path != "context_memory#0"
+        }
+        non_s_k_state = _gate_c2_tree_equality_record(
+            before_non_memory,
+            after_non_memory,
+            framing="nul_joined_gate_c2_non_s_k_state_v1",
+            parameter_values=False,
+        )
+        parameters = _gate_c2_tree_equality_record(
+            before_parameters,
+            after_parameters,
+            framing="authenticated_gate_c_parameter_array_digest_v1",
+            parameter_values=True,
+        )
+        perturbed = _gate_c2_latent_capture(
+            model,
+            driver,
+            hidden_paths,
+            after_boundary,
+            suffix_events,
+            suffix_advances,
+        )
+        continuation = _gate_c2_continuation_comparison(
+            baseline,
+            perturbed,
+            tick_index=0,
+            exclude_context_memory=True,
+        )
+        shared = {
+            "source_s_k_sha256": legacy._digest_arrays(source_memory),
+            "replacement_s_k_sha256": legacy._digest_arrays(replacement),
+            "source_replacement_differ": bool(
+                not np.array_equal(source_memory, replacement)
+            ),
+            "non_s_k_state": non_s_k_state,
+            "parameters": parameters,
+        }
+        boundary_passed = bool(
+            shared["source_replacement_differ"]
+            and non_s_k_state["tree_equal"]
+            and non_s_k_state["values_equal"]
+            and parameters["tree_equal"]
+            and parameters["values_equal"]
+        )
+        if not positive:
+            selected_read = _gate_c2_zero_array_record(
+                perturbed["selected_read"][0]
+            )
+            selected_drive = _gate_c2_zero_array_record(
+                perturbed["selected_drive"][0]
+            )
+            return {
+                **shared,
+                "selected_read": selected_read,
+                "selected_drive": selected_drive,
+                "continuation": continuation,
+                "passed": bool(
+                    boundary_passed
+                    and selected_read["exact_zero"]
+                    and selected_drive["exact_zero"]
+                    and continuation["passed"]
+                ),
+            }
+        read_difference = _gate_c2_floating_difference_record(
+            baseline["selected_read"][0],
+            perturbed["selected_read"][0],
+            rms_tolerance=1e-6,
+        )
+        drive_difference = _gate_c2_floating_difference_record(
+            baseline["selected_drive"][0],
+            perturbed["selected_drive"][0],
+            rms_tolerance=1e-6,
+        )
+        return {
+            **shared,
+            "selected_read_difference": read_difference,
+            "selected_drive_difference": drive_difference,
+            "continuation": continuation,
+            "passed": bool(
+                boundary_passed
+                and read_difference["left"]["nonfinite_count"] == 0
+                and read_difference["right"]["nonfinite_count"] == 0
+                and drive_difference["left"]["nonfinite_count"] == 0
+                and drive_difference["right"]["nonfinite_count"] == 0
+            ),
+        }
+
+    for stream_name, events in streams.items():
+        prefix_events = events[:h0_end]
+        prefix_advances = advances[:h0_end]
+        latent_events = events[h0_end:]
+        latent_advances = advances[h0_end:]
+        query_model.restore_state(initial_snapshot)
+        jax.block_until_ready(
+            prefix_drivers["query_only"](
+                jnp.asarray(prefix_events),
+                jnp.asarray(prefix_advances),
+            )
+        )
+        query_h0 = _gate_c2_stop_gradient_snapshot(query_model.snapshot_state())
+        full_model.restore_state(initial_snapshot)
+        jax.block_until_ready(
+            prefix_drivers["full"](
+                jnp.asarray(prefix_events),
+                jnp.asarray(prefix_advances),
+            )
+        )
+        full_h0 = _gate_c2_stop_gradient_snapshot(full_model.snapshot_state())
+        selected_ticks: dict[str, Any] = {}
+        query_ticks_by_replacement = {
+            name: {} for name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+        }
+        full_ticks_by_replacement = {
+            name: {} for name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+        }
+        for tick_index, tick in enumerate(tick_names):
+            suffix_events = latent_events[tick_index:]
+            suffix_advances = latent_advances[tick_index:]
+            suffix_ticks = tick_names[tick_index:]
+            query_boundary = _gate_c2_boundary_snapshot(
+                query_model,
+                query_driver,
+                query_h0,
+                latent_events,
+                latent_advances,
+                tick_index=tick_index,
+            )
+            full_boundary = _gate_c2_boundary_snapshot(
+                full_model,
+                full_driver,
+                full_h0,
+                latent_events,
+                latent_advances,
+                tick_index=tick_index,
+            )
+            query_baseline = _gate_c2_latent_capture(
+                query_model,
+                query_driver,
+                query_hidden_paths,
+                query_boundary,
+                suffix_events,
+                suffix_advances,
+            )
+            full_baseline = _gate_c2_latent_capture(
+                full_model,
+                full_driver,
+                full_hidden_paths,
+                full_boundary,
+                suffix_events,
+                suffix_advances,
+            )
+            cached_probe = cached_read_probe(
+                boundary=query_boundary,
+                suffix_events=suffix_events,
+                suffix_advances=suffix_advances,
+                baseline=query_baseline,
+                suffix_ticks=suffix_ticks,
+            )
+            selected_ticks[tick] = {
+                "selected_read": _gate_c2_zero_array_record(
+                    query_baseline["selected_read"][0]
+                ),
+                "selected_drive": _gate_c2_zero_array_record(
+                    query_baseline["selected_drive"][0]
+                ),
+                "cached_read_probe": cached_probe,
+                "cached_h0_read_reused": bool(not cached_probe["passed"]),
+            }
+            for replacement_name, replacement_spec in (
+                GATE_C2_CONTEXT_MEMORY_REPLACEMENTS.items()
+            ):
+                fill = float(replacement_spec["fill_value"])
+                query_tick = context_intervention(
+                    model=query_model,
+                    driver=query_driver,
+                    hidden_paths=query_hidden_paths,
+                    boundary=query_boundary,
+                    suffix_events=suffix_events,
+                    suffix_advances=suffix_advances,
+                    baseline=query_baseline,
+                    fill=fill,
+                    positive=False,
+                )
+                full_tick = context_intervention(
+                    model=full_model,
+                    driver=full_driver,
+                    hidden_paths=full_hidden_paths,
+                    boundary=full_boundary,
+                    suffix_events=suffix_events,
+                    suffix_advances=suffix_advances,
+                    baseline=full_baseline,
+                    fill=fill,
+                    positive=True,
+                )
+                query_ticks_by_replacement[replacement_name][tick] = query_tick
+                full_ticks_by_replacement[replacement_name][tick] = full_tick
+                positive_nonzero[replacement_name] = bool(
+                    positive_nonzero[replacement_name]
+                    or full_tick["selected_read_difference"][
+                        "max_abs_difference"
+                    ]
+                    > 0.0
+                    or full_tick["selected_drive_difference"][
+                        "max_abs_difference"
+                    ]
+                    > 0.0
+                )
+        selected_streams[stream_name] = selected_ticks
+        for replacement_name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS:
+            perturbation_streams[replacement_name][stream_name] = (
+                query_ticks_by_replacement[replacement_name]
+            )
+            positive_streams[replacement_name][stream_name] = (
+                full_ticks_by_replacement[replacement_name]
+            )
+
+    perturbations = {
+        replacement: {
+            "replacement": replacement_reports[replacement],
+            "streams": perturbation_streams[replacement],
+            "passed": all(
+                tick["passed"] is True
+                for stream in perturbation_streams[replacement].values()
+                for tick in stream.values()
+            ),
+        }
+        for replacement in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+    }
+    positive = {
+        replacement: {
+            "replacement": replacement_reports[replacement],
+            "streams": positive_streams[replacement],
+            "passed": bool(
+                positive_nonzero[replacement]
+                and all(
+                    tick["passed"] is True
+                    for stream in positive_streams[replacement].values()
+                    for tick in stream.values()
+                )
+            ),
+        }
+        for replacement in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
+    }
+    full_positive_control = {
+        **positive,
+        "passed": all(item["passed"] is True for item in positive.values()),
+    }
+    influence = _gate_c2_removed_path_finite_window_influence(
+        config,
+        initialization=initialization,
+        regime=regime,
+        data=data,
+    )
+    _gate_c2_finish_control_model(roles["query_only"], query_model)
+    _gate_c2_finish_control_model(roles["full"], full_model)
+    streams_passed = all(
+        tick["selected_read"]["exact_zero"] is True
+        and tick["selected_drive"]["exact_zero"] is True
+        and tick["cached_read_probe"]["passed"] is True
+        and tick["cached_h0_read_reused"] is False
+        for stream in selected_streams.values()
+        for tick in stream.values()
+    )
+    return {
+        "streams": selected_streams,
+        "perturbations": perturbations,
+        "full_positive_control": full_positive_control,
+        "removed_path_finite_window_influence": influence,
+        "passed": bool(
+            streams_passed
+            and all(item["passed"] is True for item in perturbations.values())
+            and full_positive_control["passed"] is True
+            and influence["complete"] is True
+        ),
+    }
+
+
+def _gate_c2_equality_record_complete(
+    value: Any,
+    *,
+    expected_paths: tuple[str, ...],
+    framing: str,
+) -> bool:
+    keys = {
+        "paths",
+        "framing",
+        "left_tree_sha256",
+        "right_tree_sha256",
+        "left_value_sha256",
+        "right_value_sha256",
+        "tree_equal",
+        "values_equal",
+    }
+    if (
+        not isinstance(value, Mapping)
+        or set(value) != keys
+        or value["paths"] != list(expected_paths)
+        or value["framing"] != framing
+    ):
+        return False
+    hashes = tuple(
+        value[name]
+        for name in (
+            "left_tree_sha256",
+            "right_tree_sha256",
+            "left_value_sha256",
+            "right_value_sha256",
+        )
+    )
+    if not all(_sha256_complete(item) for item in hashes):
+        return False
+    tree_equal = hashes[0] == hashes[1]
+    values_equal = hashes[2] == hashes[3]
+    return bool(
+        isinstance(value["tree_equal"], bool)
+        and value["tree_equal"] is tree_equal
+        and isinstance(value["values_equal"], bool)
+        and value["values_equal"] is values_equal
+        and tree_equal
+        and values_equal
+    )
+
+
+def _gate_c2_difference_endpoints_coherent(value: Mapping[str, Any]) -> bool:
+    maximum = _finite_real(value["max_abs_difference"], "maximum difference")
+    same_digest = value["left"]["sha256"] == value["right"]["sha256"]
+    return bool((maximum == 0.0) is same_digest)
+
+
+def _gate_c2_continuation_record_complete(
+    value: Any,
+    *,
+    count: int,
+    include_context_memory: bool,
+    require_pass: bool,
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "compact",
+        "hidden_paths",
+        "predictions",
+        "passed",
+    }:
+        return False
+    compact = value["compact"]
+    if (
+        not _gate_c2_floating_difference_record_complete(
+            compact,
+            expected_dtype="<f4",
+            expected_shape=(count, 1_180),
+            rms_tolerance=1e-6,
+            require_within=False,
+        )
+        or not _gate_c2_difference_endpoints_coherent(compact)
+    ):
+        return False
+    expected_hidden = tuple(
+        path
+        for path in _GATE_C2_HIDDEN_GEOMETRY
+        if include_context_memory or path != "context_memory#0"
+    )
+    hidden = value["hidden_paths"]
+    if not isinstance(hidden, Mapping) or tuple(hidden) != expected_hidden:
+        return False
+    hidden_within = True
+    for path in expected_hidden:
+        shape = (count, *_GATE_C2_HIDDEN_GEOMETRY[path][1:])
+        record = hidden[path]
+        if (
+            not _gate_c2_floating_difference_record_complete(
+                record,
+                expected_dtype="<f4",
+                expected_shape=shape,
+                rms_tolerance=1e-6,
+                require_within=False,
+            )
+            or not _gate_c2_difference_endpoints_coherent(record)
+        ):
+            return False
+        hidden_within = bool(hidden_within and record["within_tolerance"])
+    predictions = value["predictions"]
+    if not _gate_c2_prediction_difference_record_complete(
+        predictions,
+        count=count,
+        require_equal=False,
+    ):
+        return False
+    recomputed_pass = bool(
+        compact["within_tolerance"]
+        and hidden_within
+        and predictions["equal"]
+    )
+    return bool(
+        isinstance(value["passed"], bool)
+        and value["passed"] is recomputed_pass
+        and (recomputed_pass or not require_pass)
+    )
+
+
+def _gate_c2_replacement_record_complete(
+    value: Any,
+    *,
+    spec: Mapping[str, Any],
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "fill_value",
+        "dtype",
+        "shape",
+        "sha256",
+    }:
+        return False
+    try:
+        expected = np.full(
+            tuple(int(item) for item in spec["shape"]),
+            float(spec["fill_value"]),
+            dtype=np.dtype(str(spec["dtype"])),
+        )
+        return bool(
+            value["fill_value"] == float(spec["fill_value"])
+            and value["dtype"] == expected.dtype.str
+            and value["shape"] == list(expected.shape)
+            and value["sha256"] == legacy._digest_arrays(expected)
+            and value["sha256"] == spec["sha256"]
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_cached_boundary_complete(
+    value: Any,
+    *,
+    source: Mapping[str, Any],
+    replacement: Mapping[str, Any],
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "before_replacement",
+        "after_replacement",
+        "changed_paths",
+        "unchanged_paths",
+        "parameters_equal",
+        "only_memory_read_replaced",
+        "passed",
+    }:
+        return False
+    before = value["before_replacement"]
+    after = value["after_replacement"]
+    side_keys = {
+        "hidden_paths",
+        "hidden_state_tree_sha256",
+        "parameter_tree_sha256",
+    }
+    if (
+        not isinstance(before, Mapping)
+        or not isinstance(after, Mapping)
+        or before is after
+        or set(before) != side_keys
+        or set(after) != side_keys
+        or not isinstance(before["hidden_paths"], Mapping)
+        or not isinstance(after["hidden_paths"], Mapping)
+        or tuple(before["hidden_paths"]) != tuple(_GATE_C2_HIDDEN_GEOMETRY)
+        or tuple(after["hidden_paths"]) != tuple(_GATE_C2_HIDDEN_GEOMETRY)
+    ):
+        return False
+    for path, shape in _GATE_C2_HIDDEN_GEOMETRY.items():
+        if not _gate_c2_endpoint_complete(
+            before["hidden_paths"][path],
+            expected_dtype="<f4",
+            expected_shape=shape,
+        ) or not _gate_c2_endpoint_complete(
+            after["hidden_paths"][path],
+            expected_dtype="<f4",
+            expected_shape=shape,
+        ):
+            return False
+    before_memory = before["hidden_paths"]["memory_read#0"]
+    after_memory = after["hidden_paths"]["memory_read#0"]
+    if (
+        not gate_a._json_exact(before_memory, source)
+        or source["sha256"] == replacement["sha256"]
+        or after_memory["dtype"] != replacement["dtype"]
+        or after_memory["shape"] != replacement["shape"]
+        or after_memory["sha256"] != replacement["sha256"]
+    ):
+        return False
+    unchanged = sorted(set(_GATE_C2_HIDDEN_GEOMETRY) - {"memory_read#0"})
+    if any(
+        not gate_a._json_exact(
+            before["hidden_paths"][path],
+            after["hidden_paths"][path],
+        )
+        for path in unchanged
+    ):
+        return False
+    before_tree = _gate_c2_cached_boundary_tree_sha256(before["hidden_paths"])
+    after_tree = _gate_c2_cached_boundary_tree_sha256(after["hidden_paths"])
+    parameters_equal = bool(
+        _sha256_complete(before["parameter_tree_sha256"])
+        and before["parameter_tree_sha256"]
+        == after["parameter_tree_sha256"]
+    )
+    only_memory_read = bool(
+        after_memory["sha256"] != before_memory["sha256"]
+        and parameters_equal
+    )
+    passed = bool(
+        only_memory_read
+        and before_tree != after_tree
+        and value["changed_paths"] == ["memory_read#0"]
+        and value["unchanged_paths"] == unchanged
+    )
+    return bool(
+        before["hidden_state_tree_sha256"] == before_tree
+        and after["hidden_state_tree_sha256"] == after_tree
+        and isinstance(value["parameters_equal"], bool)
+        and value["parameters_equal"] is parameters_equal
+        and isinstance(value["only_memory_read_replaced"], bool)
+        and value["only_memory_read_replaced"] is only_memory_read
+        and isinstance(value["passed"], bool)
+        and value["passed"] is passed
+        and passed
+    )
+
+
+def _gate_c2_cached_read_probe_complete(
+    value: Any,
+    *,
+    regime: str,
+    start_tick: str,
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "source_cached_memory_read",
+        "plus_11",
+        "minus_11",
+        "passed",
+    }:
+        return False
+    source = value["source_cached_memory_read"]
+    if not _gate_c2_endpoint_complete(
+        source,
+        expected_dtype="<f4",
+        expected_shape=(512, 32),
+    ):
+        return False
+    ticks = GATE_C2_LATENT_TICKS[regime]
+    expected_suffix = ticks[ticks.index(start_tick) :]
+    sentinel_passes = []
+    for name, spec in GATE_C2_CACHED_READ_REPLACEMENTS.items():
+        sentinel = value[name]
+        if not isinstance(sentinel, Mapping) or set(sentinel) != {
+            "replacement",
+            "boundary",
+            "selected_read",
+            "selected_drive",
+            "continuation",
+            "passed",
+        }:
+            return False
+        replacement = sentinel["replacement"]
+        continuation = sentinel["continuation"]
+        if (
+            not _gate_c2_replacement_record_complete(replacement, spec=spec)
+            or not _gate_c2_cached_boundary_complete(
+                sentinel["boundary"],
+                source=source,
+                replacement=replacement,
+            )
+            or not _gate_c2_zero_array_record_complete(
+                sentinel["selected_read"],
+                expected_dtype="<f4",
+                expected_shape=(512, 32),
+            )
+            or not _gate_c2_zero_array_record_complete(
+                sentinel["selected_drive"],
+                expected_dtype="<f4",
+                expected_shape=(512, 2_048),
+            )
+            or not isinstance(continuation, Mapping)
+            or set(continuation) != {"ticks", "passed"}
+            or not isinstance(continuation["ticks"], Mapping)
+            or tuple(continuation["ticks"]) != expected_suffix
+        ):
+            return False
+        comparisons_pass = all(
+            _gate_c2_continuation_record_complete(
+                comparison,
+                count=512,
+                include_context_memory=True,
+                require_pass=True,
+            )
+            for comparison in continuation["ticks"].values()
+        )
+        sentinel_pass = bool(
+            comparisons_pass
+            and continuation["passed"] is comparisons_pass
+            and sentinel["boundary"]["passed"] is True
+            and sentinel["selected_read"]["exact_zero"] is True
+            and sentinel["selected_drive"]["exact_zero"] is True
+        )
+        if not isinstance(sentinel["passed"], bool) or sentinel["passed"] is not sentinel_pass:
+            return False
+        sentinel_passes.append(sentinel_pass)
+    probe_pass = all(sentinel_passes)
+    return bool(
+        isinstance(value["passed"], bool)
+        and value["passed"] is probe_pass
+        and probe_pass
+    )
+
+
+def _gate_c2_raw_array_record_complete(
+    value: Any,
+    expected: np.ndarray,
+    *,
+    include_values: bool = False,
+    fill_value: float | None = None,
+    extra_keys: tuple[str, ...] = (),
+) -> bool:
+    array = np.ascontiguousarray(np.asarray(expected))
+    keys = {"dtype", "shape", "sha256", *extra_keys}
+    if include_values:
+        keys.add("values")
+    if fill_value is not None:
+        keys.add("fill_value")
+    if not isinstance(value, Mapping) or set(value) != keys:
+        return False
+    try:
+        return bool(
+            value["dtype"] == array.dtype.str
+            and value["shape"] == list(array.shape)
+            and value["sha256"] == legacy._digest_arrays(array)
+            and (
+                not include_values
+                or gate_a._json_exact(value["values"], array.tolist())
+            )
+            and (
+                fill_value is None
+                or _finite_real(value["fill_value"], "array fill")
+                == float(fill_value)
+            )
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_removed_path_expected_arrays(regime: str) -> dict[str, np.ndarray]:
+    if regime == "gate_a":
+        config = gate_a.BindingGateConfig()
+        metadata = GATE_C2_REMOVED_PATH_OBJECTIVES["gate_a_h1"][
+            "source_metadata"
+        ]
+        events, targets, _, _, _ = legacy._encode_mapping_episodes(
+            np.asarray([metadata["mapping_id"]], dtype=np.int64),
+            seed=config.validation_episode_seed,
+            config=config,
+            controls=True,
+        )
+        source_events = np.ascontiguousarray(events[0])
+        source_targets = np.ascontiguousarray(
+            np.asarray([targets[0]], dtype=np.int32)
+        )
+        source_advances = np.ones((6,), dtype=np.bool_)
+        canonical_weights = np.asarray(
+            [0.0, 0.0, 0.0, 0.0, 0.5, 0.5],
+            dtype=np.float32,
+        )
+        h0_end = 5
+        continuation_targets = np.asarray([8], dtype=np.int32)
+        base_weight = np.float32(0.5)
+    else:
+        config = gate_b.DepthGateConfig()
+        metadata = GATE_C2_REMOVED_PATH_OBJECTIVES[
+            "gate_b_index0_r8_h8"
+        ]["source_metadata"]
+        mapping = np.asarray(metadata["mapping"], dtype=np.int32)
+        encoded = gate_b._encode_cycle_episode(
+            mapping,
+            int(metadata["query_color"]),
+            np.asarray(metadata["presentation_order"], dtype=np.int32),
+            config.row_config,
+        )
+        source_events = np.zeros(
+            (config.sequence_length, config.row_config.input_width),
+            dtype=np.float32,
+        )
+        source_events[: encoded.shape[0]] = encoded
+        source_advances = np.ones((config.sequence_length,), dtype=np.bool_)
+        source_targets = np.zeros((config.sequence_length,), dtype=np.int32)
+        source_targets[10:] = np.asarray(
+            metadata["h0_through_h8_targets"],
+            dtype=np.int32,
+        )
+        canonical_weights = np.ascontiguousarray(
+            np.asarray(
+                gate_b._checkpoint_contract(
+                    mapping,
+                    int(metadata["query_color"]),
+                    8,
+                ).loss_weights
+            )
+        )
+        h0_end = 11
+        continuation_targets = source_targets[h0_end:]
+        base_weight = np.float32(1.0 / 9.0)
+    continuation_events = np.ascontiguousarray(source_events[h0_end:])
+    continuation_advances = np.ascontiguousarray(source_advances[h0_end:])
+    selection = np.zeros((continuation_events.shape[0],), dtype=np.bool_)
+    selection[-1] = True
+    base_weights = np.full(selection.shape, base_weight, dtype=np.float32)
+    effective_weights = np.where(
+        selection,
+        base_weight,
+        np.float32(0.0),
+    ).astype(np.float32)
+    packed = np.concatenate(
+        (
+            continuation_events[:, None, :],
+            continuation_advances[:, None, None].astype(np.float32),
+            continuation_targets[:, None, None].astype(np.float32),
+            effective_weights[:, None, None],
+        ),
+        axis=-1,
+    ).astype(np.float32, copy=False)
+    return {
+        "events": source_events,
+        "advances": source_advances,
+        "targets": source_targets,
+        "canonical_loss_weights": canonical_weights,
+        "h0_prefix": np.ascontiguousarray(source_events[:h0_end]),
+        "continuation_events": continuation_events,
+        "batched_events": np.ascontiguousarray(continuation_events[:, None, :]),
+        "continuation_advances": continuation_advances,
+        "continuation_targets": np.ascontiguousarray(continuation_targets),
+        "selection_mask": selection,
+        "base_checkpoint_weights": base_weights,
+        "effective_loss_weights": effective_weights,
+        "packed_inputs": np.ascontiguousarray(packed),
+        "base_checkpoint_weight": np.asarray([base_weight], dtype=np.float32),
+    }
+
+
+def _gate_c2_loss_record_complete(value: Any) -> tuple[bool, np.float32]:
+    if not isinstance(value, Mapping) or set(value) != {
+        "dtype",
+        "shape",
+        "sha256",
+        "value",
+        "finite",
+        "nonzero",
+    }:
+        return False, np.float32(0.0)
+    try:
+        retained = np.float32(_finite_real(value["value"], "retained loss"))
+        array = np.asarray([retained], dtype=np.float32)
+        nonzero = bool(retained > np.float32(0.0))
+        complete = bool(
+            value["dtype"] == "<f4"
+            and value["shape"] == [1]
+            and value["sha256"] == legacy._digest_arrays(array)
+            and float(retained) == float(value["value"])
+            and value["finite"] is True
+            and isinstance(value["nonzero"], bool)
+            and value["nonzero"] is nonzero
+            and nonzero
+        )
+        return complete, retained
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False, np.float32(0.0)
+
+
+def _gate_c2_live_gradient_record_complete(value: Any, *, path: str) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "tree_paths",
+        "leaf_count",
+        "leaves",
+        "value_count",
+        "l2_norm",
+        "sha256",
+        "finite",
+        "nonzero",
+    }:
+        return False
+    leaves = value["leaves"]
+    if (
+        value["tree_paths"] != [path]
+        or not isinstance(leaves, list)
+        or not leaves
+        or not _strict_integer(value["leaf_count"])
+        or int(value["leaf_count"]) != len(leaves)
+        or not _strict_integer(value["value_count"])
+        or int(value["value_count"]) <= 0
+        or not _sha256_complete(value["sha256"])
+        or value["sha256"] == "0" * 64
+        or value["finite"] is not True
+        or value["nonzero"] is not True
+        or _finite_real(value["l2_norm"], "live gradient norm") <= 0.0
+    ):
+        return False
+    count = 0
+    zero_count = 0
+    for index, leaf in enumerate(leaves):
+        if not isinstance(leaf, Mapping) or set(leaf) != {
+            "index",
+            "dtype",
+            "shape",
+            "value_count",
+            "finite_count",
+            "nonfinite_count",
+            "zero_count",
+            "sha256",
+        }:
+            return False
+        leaf_count = leaf["value_count"]
+        if (
+            not _strict_integer(leaf["index"])
+            or int(leaf["index"]) != index
+            or leaf["dtype"] != "<f4"
+            or not isinstance(leaf["shape"], list)
+            or not leaf["shape"]
+            or not all(_strict_integer(item) and int(item) > 0 for item in leaf["shape"])
+            or not _strict_integer(leaf_count)
+            or int(leaf_count) != math.prod(int(item) for item in leaf["shape"])
+            or not _strict_integer(leaf["finite_count"])
+            or int(leaf["finite_count"]) != int(leaf_count)
+            or not _strict_integer(leaf["nonfinite_count"])
+            or int(leaf["nonfinite_count"]) != 0
+            or not _strict_integer(leaf["zero_count"])
+            or not 0 <= int(leaf["zero_count"]) <= int(leaf_count)
+            or not _sha256_complete(leaf["sha256"])
+        ):
+            return False
+        count += int(leaf_count)
+        zero_count += int(leaf["zero_count"])
+    return bool(
+        count == int(value["value_count"])
+        and zero_count < int(value["value_count"])
+    )
+
+
+def _gate_c2_removed_path_influence_complete(
+    value: Any,
+    *,
+    regime: str,
+    canonical_parameter_sha256: str,
+) -> bool:
+    try:
+        _regime_spec(regime)
+        if not isinstance(value, Mapping) or set(value) != {
+            "gradient_chunk_size",
+            "start_state",
+            "objectives",
+            "global",
+            "live_paths",
+            "removed_paths",
+            "complete",
+        }:
+            return False
+        objective_name = (
+            "gate_a_h1" if regime == "gate_a" else "gate_b_index0_r8_h8"
+        )
+        expected = GATE_C2_REMOVED_PATH_OBJECTIVES[objective_name]
+        arrays = _gate_c2_removed_path_expected_arrays(regime)
+        if (
+            not _strict_integer(value["gradient_chunk_size"])
+            or int(value["gradient_chunk_size"])
+            != GATE_C2_REMOVED_PATH_GRADIENT_CHUNK_SIZE
+            or value["start_state"] != GATE_C2_REMOVED_PATH_START_STATE
+            or not isinstance(value["objectives"], Mapping)
+            or set(value["objectives"]) != {objective_name}
+        ):
+            return False
+        objective = value["objectives"][objective_name]
+        coordinate_keys = {
+            "regime",
+            "stream",
+            "validation_episode_index",
+            "batch_size",
+            "checkpoint",
+        }
+        if regime == "gate_b":
+            coordinate_keys.add("effort")
+        if not isinstance(objective, Mapping) or set(objective) != coordinate_keys | {
+            "source_contract",
+            "continuation",
+            "raw_cross_entropy",
+            "base_checkpoint_weight",
+            "weighted_cross_entropy",
+            "passed",
+        }:
+            return False
+        if any(objective[name] != expected[name] for name in coordinate_keys):
+            return False
+        source = objective["source_contract"]
+        if not isinstance(source, Mapping) or set(source) != {
+            "metadata",
+            "events",
+            "advances",
+            "targets",
+            "canonical_loss_weights",
+            "h0_prefix",
+            "schedule_cross_bound",
+        }:
+            return False
+        if (
+            not gate_a._json_exact(source["metadata"], expected["source_metadata"])
+            or not gate_a._json_exact(
+                source["schedule_cross_bound"],
+                expected["schedule_sha256"],
+            )
+            or not _gate_c2_raw_array_record_complete(
+                source["events"], arrays["events"]
+            )
+            or not _gate_c2_raw_array_record_complete(
+                source["advances"],
+                arrays["advances"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                source["targets"],
+                arrays["targets"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                source["canonical_loss_weights"],
+                arrays["canonical_loss_weights"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                source["h0_prefix"],
+                arrays["h0_prefix"],
+                extra_keys=("source_indices",),
+            )
+            or source["h0_prefix"]["source_indices"]
+            != list(range(arrays["h0_prefix"].shape[0]))
+        ):
+            return False
+        for name, array_name in (
+            ("events", "events"),
+            ("advances", "advances"),
+            ("targets", "targets"),
+            ("canonical_loss_weights", "canonical_loss_weights"),
+            ("h0_prefix", "h0_prefix"),
+        ):
+            dtype, shape, digest = expected["source_arrays"][name]
+            array = arrays[array_name]
+            if (
+                array.dtype.str != dtype
+                or list(array.shape) != shape
+                or legacy._digest_arrays(array) != digest
+            ):
+                return False
+        continuation = objective["continuation"]
+        if not isinstance(continuation, Mapping) or set(continuation) != {
+            "source_indices",
+            "source_events",
+            "batched_events",
+            "advances",
+            "targets",
+            "selection_mask",
+            "base_checkpoint_weights",
+            "effective_loss_weights",
+            "packed_inputs",
+            "h0_gradient_boundary",
+            "source_slice_exact",
+            "passed",
+        }:
+            return False
+        expected_indices = expected["continuation"]["source_indices"]
+        if (
+            continuation["source_indices"] != expected_indices
+            or not _gate_c2_raw_array_record_complete(
+                continuation["source_events"],
+                arrays["continuation_events"],
+                fill_value=0.0,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["batched_events"],
+                arrays["batched_events"],
+                fill_value=0.0,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["advances"],
+                arrays["continuation_advances"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["targets"],
+                arrays["continuation_targets"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["selection_mask"],
+                arrays["selection_mask"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["base_checkpoint_weights"],
+                arrays["base_checkpoint_weights"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["effective_loss_weights"],
+                arrays["effective_loss_weights"],
+                include_values=True,
+            )
+            or not _gate_c2_raw_array_record_complete(
+                continuation["packed_inputs"],
+                arrays["packed_inputs"],
+            )
+        ):
+            return False
+        expected_continuation = expected["continuation"]
+        if (
+            continuation["source_events"]["sha256"]
+            != expected_continuation["source_events_sha256"]
+            or continuation["batched_events"]["sha256"]
+            != expected_continuation["batched_events_sha256"]
+            or continuation["selection_mask"]["values"]
+            != expected_continuation["selection_mask_values"]
+            or continuation["packed_inputs"]["sha256"]
+            != expected_continuation["packed_inputs_sha256"]
+        ):
+            return False
+        if regime == "gate_a":
+            if (
+                continuation["base_checkpoint_weights"]["values"]
+                != expected_continuation["base_checkpoint_weights"]
+                or continuation["effective_loss_weights"]["values"]
+                != expected_continuation["effective_loss_weights"]
+            ):
+                return False
+        elif (
+            objective["base_checkpoint_weight"]["sha256"]
+            != expected_continuation["base_checkpoint_weight_sha256"]
+            or continuation["effective_loss_weights"]["sha256"]
+            != expected_continuation["effective_loss_weights_sha256"]
+        ):
+            return False
+        if (
+            not _gate_c2_h0_gradient_boundary_complete(
+                continuation["h0_gradient_boundary"],
+                canonical_parameter_sha256=canonical_parameter_sha256,
+            )
+            or continuation["source_slice_exact"] is not True
+            or continuation["passed"] is not True
+        ):
+            return False
+        raw_complete, raw_loss = _gate_c2_loss_record_complete(
+            objective["raw_cross_entropy"]
+        )
+        weighted_complete, weighted_loss = _gate_c2_loss_record_complete(
+            objective["weighted_cross_entropy"]
+        )
+        if (
+            not raw_complete
+            or not weighted_complete
+            or not _gate_c2_raw_array_record_complete(
+                objective["base_checkpoint_weight"],
+                arrays["base_checkpoint_weight"],
+                include_values=True,
+            )
+        ):
+            return False
+        recomputed_weighted = np.float32(
+            raw_loss * arrays["base_checkpoint_weight"][0]
+        )
+        objective_pass = bool(
+            raw_loss > np.float32(0.0)
+            and weighted_loss > np.float32(0.0)
+            and weighted_loss == recomputed_weighted
+        )
+        if (
+            not isinstance(objective["passed"], bool)
+            or objective["passed"] is not objective_pass
+            or not objective_pass
+        ):
+            return False
+        global_record = value["global"]
+        if not isinstance(global_record, Mapping) or set(global_record) != {
+            "tree_paths",
+            "leaf_count",
+            "value_count",
+            "l2_norm",
+            "sha256",
+            "finite",
+            "nonzero",
+        }:
+            return False
+        if (
+            global_record["tree_paths"] != list(FULL_PARAMETER_PATHS)
+            or not _strict_integer(global_record["leaf_count"])
+            or int(global_record["leaf_count"]) <= 0
+            or not _strict_integer(global_record["value_count"])
+            or int(global_record["value_count"]) <= 0
+            or _finite_real(global_record["l2_norm"], "global gradient norm") <= 0.0
+            or not _sha256_complete(global_record["sha256"])
+            or global_record["sha256"] == "0" * 64
+            or global_record["finite"] is not True
+            or global_record["nonzero"] is not True
+        ):
+            return False
+        live = value["live_paths"]
+        if not isinstance(live, Mapping) or tuple(live) != GATE_C2_LIVE_PATHS:
+            return False
+        if not all(
+            _gate_c2_live_gradient_record_complete(live[path], path=path)
+            for path in GATE_C2_LIVE_PATHS
+        ):
+            return False
+        removed = value["removed_paths"]
+        if not isinstance(removed, Mapping) or tuple(removed) != GATE_C2_REMOVED_PATHS:
+            return False
+        removed_geometry = {
+            "memory_read_projection/weight": (32, 2_048),
+            "workspace_query_projection/weight": (2_048, 32),
+        }
+        for path, shape in removed_geometry.items():
+            record = removed[path]
+            zero = np.zeros(shape, dtype=np.float32)
+            expected_count = int(zero.size)
+            if (
+                not isinstance(record, Mapping)
+                or set(record)
+                != {
+                    "tree_paths",
+                    "leaf_count",
+                    "leaves",
+                    "value_count",
+                    "l2_norm",
+                    "sha256",
+                    "finite",
+                    "exact_zero",
+                }
+                or record["tree_paths"] != [path]
+                or record["leaf_count"] != 1
+                or record["value_count"] != expected_count
+                or record["l2_norm"] != 0.0
+                or record["sha256"] != _gradient_path_sha256(path, zero)
+                or record["finite"] is not True
+                or record["exact_zero"] is not True
+                or not isinstance(record["leaves"], list)
+                or len(record["leaves"]) != 1
+            ):
+                return False
+            leaf = record["leaves"][0]
+            if (
+                not isinstance(leaf, Mapping)
+                or set(leaf)
+                != {
+                    "index",
+                    "dtype",
+                    "shape",
+                    "value_count",
+                    "finite_count",
+                    "nonfinite_count",
+                    "zero_count",
+                    "sha256",
+                }
+                or leaf["index"] != 0
+                or leaf["dtype"] != "<f4"
+                or leaf["shape"] != list(shape)
+                or leaf["value_count"] != expected_count
+                or leaf["finite_count"] != expected_count
+                or leaf["nonfinite_count"] != 0
+                or leaf["zero_count"] != expected_count
+                or leaf["sha256"] != legacy._digest_arrays(zero)
+            ):
+                return False
+        recomputed_complete = bool(
+            objective_pass
+            and global_record["nonzero"]
+            and all(live[path]["nonzero"] for path in GATE_C2_LIVE_PATHS)
+            and all(removed[path]["exact_zero"] for path in GATE_C2_REMOVED_PATHS)
+        )
+        return bool(
+            isinstance(value["complete"], bool)
+            and value["complete"] is recomputed_complete
+            and recomputed_complete
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _gate_c2_query_only_latent_no_read_complete(
+    value: Any,
+    admission: Any,
+    *,
+    regime: str,
+) -> bool:
+    """Validate every retained no-read intervention and nested aggregate."""
+
+    try:
+        _regime_spec(regime)
+        if not isinstance(admission, Mapping):
+            return False
+        canonical_parameter_sha256 = admission["initialization"][regime][
+            "canonical_full"
+        ]["parameter_sha256"]
+        if (
+            not _sha256_complete(canonical_parameter_sha256)
+            or canonical_parameter_sha256 == "0" * 64
+        ):
+            return False
+        if not isinstance(value, Mapping) or set(value) != {
+            "streams",
+            "perturbations",
+            "full_positive_control",
+            "removed_path_finite_window_influence",
+            "passed",
+        }:
+            return False
+        ticks = GATE_C2_LATENT_TICKS[regime]
+        stream_names = ("intact", "shuffled", "no_context")
+        streams = value["streams"]
+        if not isinstance(streams, Mapping) or tuple(streams) != stream_names:
+            return False
+        parameter_sha256s: set[str] = set()
+        selected_passes = []
+        for stream in streams.values():
+            if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+                return False
+            for tick_name, tick in stream.items():
+                if (
+                    not isinstance(tick, Mapping)
+                    or set(tick)
+                    != {
+                        "selected_read",
+                        "selected_drive",
+                        "cached_read_probe",
+                        "cached_h0_read_reused",
+                    }
+                    or not _gate_c2_zero_array_record_complete(
+                        tick["selected_read"],
+                        expected_dtype="<f4",
+                        expected_shape=(512, 32),
+                    )
+                    or not _gate_c2_zero_array_record_complete(
+                        tick["selected_drive"],
+                        expected_dtype="<f4",
+                        expected_shape=(512, 2_048),
+                    )
+                    or not _gate_c2_cached_read_probe_complete(
+                        tick["cached_read_probe"],
+                        regime=regime,
+                        start_tick=tick_name,
+                    )
+                ):
+                    return False
+                probe = tick["cached_read_probe"]
+                expected_reused = bool(not probe["passed"])
+                if (
+                    not isinstance(tick["cached_h0_read_reused"], bool)
+                    or tick["cached_h0_read_reused"] is not expected_reused
+                    or expected_reused
+                ):
+                    return False
+                for name in GATE_C2_CACHED_READ_REPLACEMENTS:
+                    boundary = probe[name]["boundary"]
+                    parameter_sha256s.update(
+                        (
+                            boundary["before_replacement"][
+                                "parameter_tree_sha256"
+                            ],
+                            boundary["after_replacement"][
+                                "parameter_tree_sha256"
+                            ],
+                        )
+                    )
+                selected_passes.append(True)
+
+        non_s_k_paths = tuple(
+            path
+            for path in _GATE_C2_HIDDEN_GEOMETRY
+            if path != "context_memory#0"
+        )
+
+        def intervention_tick_complete(tick: Any, *, positive: bool) -> bool:
+            common_keys = {
+                "source_s_k_sha256",
+                "replacement_s_k_sha256",
+                "source_replacement_differ",
+                "non_s_k_state",
+                "parameters",
+                "continuation",
+                "passed",
+            }
+            selected_keys = (
+                {"selected_read_difference", "selected_drive_difference"}
+                if positive
+                else {"selected_read", "selected_drive"}
+            )
+            if (
+                not isinstance(tick, Mapping)
+                or set(tick) != common_keys | selected_keys
+                or not _sha256_complete(tick["source_s_k_sha256"])
+                or tick["source_s_k_sha256"]
+                == tick["replacement_s_k_sha256"]
+                or tick["source_replacement_differ"] is not True
+                or not _gate_c2_equality_record_complete(
+                    tick["non_s_k_state"],
+                    expected_paths=non_s_k_paths,
+                    framing="nul_joined_gate_c2_non_s_k_state_v1",
+                )
+                or not _gate_c2_equality_record_complete(
+                    tick["parameters"],
+                    expected_paths=FULL_PARAMETER_PATHS,
+                    framing="authenticated_gate_c_parameter_array_digest_v1",
+                )
+                or not _gate_c2_continuation_record_complete(
+                    tick["continuation"],
+                    count=512,
+                    include_context_memory=False,
+                    require_pass=not positive,
+                )
+            ):
+                return False
+            parameter_sha256s.update(
+                (
+                    tick["parameters"]["left_value_sha256"],
+                    tick["parameters"]["right_value_sha256"],
+                )
+            )
+            if positive:
+                selected_valid = all(
+                    _gate_c2_floating_difference_record_complete(
+                        tick[field],
+                        expected_dtype="<f4",
+                        expected_shape=shape,
+                        rms_tolerance=1e-6,
+                        require_within=False,
+                    )
+                    and _gate_c2_difference_endpoints_coherent(tick[field])
+                    for field, shape in (
+                        ("selected_read_difference", (512, 32)),
+                        ("selected_drive_difference", (512, 2_048)),
+                    )
+                )
+            else:
+                selected_valid = bool(
+                    _gate_c2_zero_array_record_complete(
+                        tick["selected_read"],
+                        expected_dtype="<f4",
+                        expected_shape=(512, 32),
+                    )
+                    and _gate_c2_zero_array_record_complete(
+                        tick["selected_drive"],
+                        expected_dtype="<f4",
+                        expected_shape=(512, 2_048),
+                    )
+                )
+            recomputed_pass = bool(selected_valid)
+            return bool(
+                isinstance(tick["passed"], bool)
+                and tick["passed"] is recomputed_pass
+                and recomputed_pass
+            )
+
+        perturbations = value["perturbations"]
+        if (
+            not isinstance(perturbations, Mapping)
+            or tuple(perturbations) != tuple(GATE_C2_CONTEXT_MEMORY_REPLACEMENTS)
+        ):
+            return False
+        perturbation_passes = []
+        for name, replacement_value in perturbations.items():
+            spec = GATE_C2_CONTEXT_MEMORY_REPLACEMENTS[name]
+            if (
+                not isinstance(replacement_value, Mapping)
+                or set(replacement_value) != {"replacement", "streams", "passed"}
+                or not _gate_c2_replacement_record_complete(
+                    replacement_value["replacement"],
+                    spec=spec,
+                )
+                or not isinstance(replacement_value["streams"], Mapping)
+                or tuple(replacement_value["streams"]) != stream_names
+            ):
+                return False
+            tick_passes = []
+            for stream in replacement_value["streams"].values():
+                if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+                    return False
+                for tick in stream.values():
+                    if tick.get("replacement_s_k_sha256") != spec["sha256"]:
+                        return False
+                    tick_passes.append(
+                        intervention_tick_complete(tick, positive=False)
+                    )
+            replacement_pass = all(tick_passes)
+            if (
+                not isinstance(replacement_value["passed"], bool)
+                or replacement_value["passed"] is not replacement_pass
+                or not replacement_pass
+            ):
+                return False
+            perturbation_passes.append(replacement_pass)
+
+        positive = value["full_positive_control"]
+        if not isinstance(positive, Mapping) or set(positive) != {
+            *GATE_C2_CONTEXT_MEMORY_REPLACEMENTS,
+            "passed",
+        }:
+            return False
+        positive_passes = []
+        for name, spec in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS.items():
+            replacement_value = positive[name]
+            if (
+                not isinstance(replacement_value, Mapping)
+                or set(replacement_value) != {"replacement", "streams", "passed"}
+                or not _gate_c2_replacement_record_complete(
+                    replacement_value["replacement"],
+                    spec=spec,
+                )
+                or not isinstance(replacement_value["streams"], Mapping)
+                or tuple(replacement_value["streams"]) != stream_names
+            ):
+                return False
+            tick_passes = []
+            nonzero = False
+            for stream in replacement_value["streams"].values():
+                if not isinstance(stream, Mapping) or tuple(stream) != ticks:
+                    return False
+                for tick in stream.values():
+                    if tick.get("replacement_s_k_sha256") != spec["sha256"]:
+                        return False
+                    tick_passes.append(
+                        intervention_tick_complete(tick, positive=True)
+                    )
+                    nonzero = bool(
+                        nonzero
+                        or tick["selected_read_difference"][
+                            "max_abs_difference"
+                        ]
+                        > 0.0
+                        or tick["selected_drive_difference"][
+                            "max_abs_difference"
+                        ]
+                        > 0.0
+                    )
+            replacement_pass = bool(nonzero and all(tick_passes))
+            if (
+                not isinstance(replacement_value["passed"], bool)
+                or replacement_value["passed"] is not replacement_pass
+                or not replacement_pass
+            ):
+                return False
+            positive_passes.append(replacement_pass)
+        positive_pass = all(positive_passes)
+        if (
+            not isinstance(positive["passed"], bool)
+            or positive["passed"] is not positive_pass
+            or not positive_pass
+        ):
+            return False
+        removed_pass = _gate_c2_removed_path_influence_complete(
+            value["removed_path_finite_window_influence"],
+            regime=regime,
+            canonical_parameter_sha256=canonical_parameter_sha256,
+        )
+        recomputed = bool(
+            all(selected_passes)
+            and all(perturbation_passes)
+            and positive_pass
+            and removed_pass
+            and parameter_sha256s == {canonical_parameter_sha256}
+        )
+        return bool(
+            isinstance(value["passed"], bool)
+            and value["passed"] is recomputed
+            and recomputed
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
 def _paired_h0_identity_report(
     config: GateCConfig,
     *,
@@ -2958,17 +7313,38 @@ def _mechanism_oracle(
 
     expected_sha256 = canonical["parameter_sha256"]
     expected_count = canonical["parameter_count"]
+    oracle_models: dict[str, _OracleObjective] = {}
 
-    def model_factory(arm: str) -> Any:
+    def model_factory(arm: str, stage: str) -> Any:
+        if stage not in ("reference", "finite_window"):
+            raise ValueError("Gate C2 oracle model stage is invalid")
+
         def factory() -> _OracleObjective:
-            model_config = _model_config_for_arm(
-                config,
-                "gate_b",
-                arm,
-                batch_size=1,
-            )
             policy = "query_only" if arm == "query_only" else "full"
-            model = _OracleObjective(model_config, memory_read_policy=policy)
+            role = f"gate_b:mechanism_oracle:{arm}:{stage}"
+
+            def construct(
+                model_config: ModelConfig,
+                actual_policy: str,
+            ) -> _OracleObjective:
+                return _OracleObjective(
+                    model_config,
+                    memory_read_policy=actual_policy,
+                )
+
+            model = _gate_c2_control_model(
+                config,
+                initialization,
+                regime="gate_b",
+                policy=policy,
+                batch_size=1,
+                role=role,
+                probe=f"mechanism_oracle:{arm}:{stage}",
+                arm=arm,
+                constructor=construct,
+            )
+            if not isinstance(model, _OracleObjective):
+                raise TypeError("Gate C2 oracle factory returned the wrong model")
             values = legacy._parameter_values(model)
             count = sum(
                 np.asarray(u.get_mantissa(leaf)).size
@@ -2981,6 +7357,9 @@ def _mechanism_oracle(
                 or legacy._array_digest(values) != expected_sha256
             ):
                 raise ValueError("Gate C oracle did not reproduce initialization")
+            if role in oracle_models:
+                raise RuntimeError(f"duplicate Gate C2 oracle role {role!r}")
+            oracle_models[role] = model
             return model
 
         return factory
@@ -3007,7 +7386,7 @@ def _mechanism_oracle(
         )
 
     reference_models = {
-        arm: model_factory(arm)()
+        arm: model_factory(arm, "reference")()
         for arm in ("full", "query_only", "terminal_only")
     }
     for model in reference_models.values():
@@ -3058,19 +7437,19 @@ def _mechanism_oracle(
 
     raw_gradients = {
         "full": chunked_online_param_gradients(
-            model_factory("full"),
+            model_factory("full", "finite_window"),
             packed_inputs(full_weights),
             algo_factory=algorithm_factory,
             chunk_size=config.gradient_chunk_size,
         ),
         "query_only": chunked_online_param_gradients(
-            model_factory("query_only"),
+            model_factory("query_only", "finite_window"),
             packed_inputs(full_weights),
             algo_factory=algorithm_factory,
             chunk_size=config.gradient_chunk_size,
         ),
         "terminal_only": chunked_online_param_gradients(
-            model_factory("terminal_only"),
+            model_factory("terminal_only", "finite_window"),
             packed_inputs(terminal_weights),
             algo_factory=algorithm_factory,
             chunk_size=config.gradient_chunk_size,
@@ -3161,6 +7540,8 @@ def _mechanism_oracle(
             "required_paths_passed": bool(required_paths_passed),
             "passed": bool(global_passed and required_paths_passed),
         }
+    for role, model in oracle_models.items():
+        _gate_c2_finish_control_model(role, model)
     return {
         "contract": contract,
         "objective": {
@@ -3173,6 +7554,131 @@ def _mechanism_oracle(
             comparison["passed"] is True for comparison in comparisons.values()
         ),
     }
+
+
+def run_gate_c2_controls(
+    config: GateCConfig,
+    *,
+    prerequisites: Mapping[str, Any],
+    source_start: Mapping[str, Any],
+    source_end_reporter: Any,
+    source_files: Mapping[str, str],
+    environment: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Run the authenticated Gate C2 probes without training or Adam."""
+
+    if not isinstance(config, GateCConfig):
+        raise TypeError("config must be a GateCConfig")
+    if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
+        "gate_a",
+        "gate_b",
+        "gate_c_initialization",
+    }:
+        raise ValueError("Gate C2 controls require exact authenticated prerequisites")
+    if not callable(source_end_reporter):
+        raise TypeError("source_end_reporter must be callable")
+    start = time.perf_counter()
+    initialization = _validated_gate_c_initialization_admission(
+        prerequisites["gate_c_initialization"],
+        config,
+        source_start=source_start,
+        environment=environment,
+        source_files=source_files,
+        require_pass=True,
+    )
+    normalized = _normalized_prerequisites(
+        {
+            "gate_a": prerequisites["gate_a"],
+            "gate_b": prerequisites["gate_b"],
+        }
+    )
+    gate_a_data = _regenerate_gate_a_data(config)
+    gate_b_data = _regenerate_gate_b_data(config)
+    schedules = _actual_schedule_identity_report(
+        config,
+        gate_a_data,
+        gate_b_data,
+    )
+    if (
+        config == GateCConfig()
+        and not gate_a._json_exact(schedules, _schedule_identity_report(config))
+    ):
+        raise RuntimeError("generated Gate C2 schedules differ from preregistration")
+    audit = _GateC2ControlsAudit(initialization)
+    global _ACTIVE_GATE_C2_CONTROLS_AUDIT
+    previous_audit = _ACTIVE_GATE_C2_CONTROLS_AUDIT
+    if previous_audit is not None:
+        raise RuntimeError("a Gate C2 controls audit is already active")
+    try:
+        _ACTIVE_GATE_C2_CONTROLS_AUDIT = audit
+        with audit:
+            regime_reports: dict[str, Any] = {}
+            for regime in REGIME_ORDER:
+                regime_data = gate_a_data if regime == "gate_a" else gate_b_data
+                h0 = _paired_h0_operational_equivalence_report(
+                    config,
+                    initialization=initialization,
+                    regime=regime,
+                    data=regime_data,
+                )
+                no_read = _query_only_latent_no_read_report(
+                    config,
+                    initialization=initialization,
+                    regime=regime,
+                    data=regime_data,
+                )
+                regime_config = (
+                    config.gate_a_config
+                    if regime == "gate_a"
+                    else config.gate_b_config
+                )
+                regime_reports[regime] = {
+                    "spec": dataclasses.asdict(REGIME_SPECS[regime]),
+                    "config": dataclasses.asdict(regime_config),
+                    "schedule_identity": dict(schedules[regime]),
+                    "paired_h0_operational_equivalence": h0,
+                    "query_only_latent_no_read": no_read,
+                }
+                gc.collect()
+            mechanism_oracle = _mechanism_oracle(
+                config,
+                initialization=initialization,
+                gate_b_data=gate_b_data,
+            )
+    finally:
+        _ACTIVE_GATE_C2_CONTROLS_AUDIT = previous_audit
+    execution_evidence = audit.report()
+    source_end = source_end_reporter()
+    if not isinstance(source_end, Mapping):
+        raise TypeError("source_end_reporter must return a mapping")
+    controls_environment = {
+        **dict(environment),
+        "execution_and_update_evidence": execution_evidence,
+    }
+    report: dict[str, Any] = {
+        "schema_version": GATE_C2_CONTROLS_SCHEMA_VERSION,
+        "control": GATE_C2_CONTROLS_CONTROL,
+        "qualification_regime": GATE_C2_CONTROLS_QUALIFICATION_REGIME,
+        "learner": "pp_prop_only",
+        "prerequisites": {
+            **normalized,
+            "gate_c_initialization": dict(
+                prerequisites["gate_c_initialization"]
+            ),
+        },
+        "regimes": regime_reports,
+        "mechanism_oracle": mechanism_oracle,
+        "source_start": dict(source_start),
+        "source_end": dict(source_end),
+        "source_files": dict(source_files),
+        "environment": controls_environment,
+        "total_wall_seconds": time.perf_counter() - start,
+    }
+    report["qualification"] = _gate_c2_controls_qualification_report(
+        report,
+        config=config,
+    )
+    return report
 
 
 def run_gate_c(
@@ -4640,6 +9146,263 @@ def _mechanism_oracle_complete(
     return value["complete"] is complete and complete
 
 
+def _gate_c2_controls_base_environment(value: Any) -> dict[str, Any]:
+    expected = {
+        "backend",
+        "devices",
+        "image_digest",
+        "jax",
+        "python",
+        "execution_and_update_evidence",
+    }
+    if not isinstance(value, Mapping) or set(value) != expected:
+        raise ValueError("Gate C2 controls environment schema differs")
+    return {
+        name: value[name]
+        for name in ("backend", "devices", "image_digest", "jax", "python")
+    }
+
+
+def _gate_c2_controls_qualification(
+    report: Mapping[str, Any],
+    *,
+    config: GateCConfig,
+) -> dict[str, Any]:
+    """Recompute the Gate C2 pretraining-control admission."""
+
+    criteria = {
+        name: False for name in GATE_C2_CONTROLS_QUALIFICATION_CRITERIA
+    }
+    if not isinstance(report, Mapping) or not isinstance(config, GateCConfig):
+        return {
+            "criteria": criteria,
+            "passed": False,
+            "interpretation": "gate_c2_pretraining_controls_failed_stop",
+        }
+    base_keys = set(GATE_C2_CONTROLS_TOP_LEVEL_KEYS) - {"qualification"}
+    try:
+        qualification_shape = "qualification" not in report or bool(
+            isinstance(report["qualification"], Mapping)
+            and set(report["qualification"])
+            == {"criteria", "passed", "interpretation"}
+        )
+        criteria["schema_and_control"] = bool(
+            set(report) in (base_keys, set(GATE_C2_CONTROLS_TOP_LEVEL_KEYS))
+            and qualification_shape
+            and _strict_integer(report["schema_version"])
+            and int(report["schema_version"])
+            == GATE_C2_CONTROLS_SCHEMA_VERSION
+            and report["control"] == GATE_C2_CONTROLS_CONTROL
+            and report["qualification_regime"]
+            == GATE_C2_CONTROLS_QUALIFICATION_REGIME
+            and report["learner"] == "pp_prop_only"
+            and _finite_real(report["total_wall_seconds"], "total wall time")
+            >= 0.0
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+
+    try:
+        regimes = report["regimes"]
+        criteria["exact_configuration"] = bool(
+            config == GateCConfig()
+            and isinstance(regimes, Mapping)
+            and tuple(regimes) == REGIME_ORDER
+            and all(
+                isinstance(regimes[regime], Mapping)
+                and set(regimes[regime])
+                == {
+                    "spec",
+                    "config",
+                    "schedule_identity",
+                    "paired_h0_operational_equivalence",
+                    "query_only_latent_no_read",
+                }
+                and gate_a._json_exact(
+                    regimes[regime]["spec"],
+                    dataclasses.asdict(REGIME_SPECS[regime]),
+                )
+                and gate_a._json_exact(
+                    regimes[regime]["config"],
+                    dataclasses.asdict(
+                        config.gate_a_config
+                        if regime == "gate_a"
+                        else config.gate_b_config
+                    ),
+                )
+                for regime in REGIME_ORDER
+            )
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+
+    prerequisites: Any = report.get("prerequisites")
+    try:
+        criteria["prerequisites_authenticated"] = bool(
+            isinstance(prerequisites, Mapping)
+            and set(prerequisites)
+            == {"gate_a", "gate_b", "gate_c_initialization"}
+            and gate_a._json_exact(
+                _normalized_prerequisites(
+                    {
+                        "gate_a": prerequisites["gate_a"],
+                        "gate_b": prerequisites["gate_b"],
+                    }
+                ),
+                {"gate_a": _GATE_A_REFERENCE, "gate_b": _GATE_B_REFERENCE},
+            )
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+
+    admission: Mapping[str, Any] | None = None
+    try:
+        base_environment = _gate_c2_controls_base_environment(
+            report["environment"]
+        )
+        admission = _validated_gate_c_initialization_admission(
+            prerequisites["gate_c_initialization"],
+            config,
+            source_start=report["source_start"],
+            environment=base_environment,
+            source_files=report["source_files"],
+            require_pass=True,
+        )
+        criteria["initialization_authenticated"] = True
+    except (KeyError, TypeError, ValueError, OverflowError, OSError):
+        admission = None
+
+    try:
+        schedules = _schedule_identity_report(config)
+        criteria["canonical_schedules_complete"] = all(
+            gate_a._json_exact(
+                report["regimes"][regime]["schedule_identity"],
+                schedules[regime],
+            )
+            for regime in REGIME_ORDER
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+
+    if admission is not None:
+        try:
+            criteria["no_behavioral_or_optimizer_updates"] = (
+                _gate_c2_no_update_evidence_complete(
+                    report["environment"]["execution_and_update_evidence"],
+                    admission,
+                )
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            pass
+        try:
+            criteria["paired_h0_operational_equivalence"] = all(
+                _gate_c2_paired_h0_operational_equivalence_complete(
+                    report["regimes"][regime][
+                        "paired_h0_operational_equivalence"
+                    ],
+                    admission,
+                    regime=regime,
+                )
+                and _gate_c2_query_only_latent_no_read_complete(
+                    report["regimes"][regime]["query_only_latent_no_read"],
+                    admission,
+                    regime=regime,
+                )
+                for regime in REGIME_ORDER
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            pass
+
+    try:
+        criteria["mechanism_oracle_complete"] = _mechanism_oracle_complete(
+            report["mechanism_oracle"],
+            config,
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        pass
+
+    if admission is not None:
+        try:
+            base_report = {
+                **dict(report),
+                "environment": _gate_c2_controls_base_environment(
+                    report["environment"]
+                ),
+            }
+            criteria["source_and_gpu_authenticated"] = bool(
+                _source_and_gpu_complete(base_report)
+                and _source_files_complete(report["source_files"])
+                and gate_a._json_exact(
+                    report["source_files"], admission["source_files"]
+                )
+                and report["source_start"]["commit"]
+                == admission["source_start"]["commit"]
+                and report["environment"]["image_digest"]
+                == admission["environment"]["image_digest"]
+            )
+        except (KeyError, TypeError, ValueError, OverflowError, OSError):
+            pass
+
+    passed = bool(criteria and all(criteria.values()))
+    return {
+        "criteria": criteria,
+        "passed": passed,
+        "interpretation": (
+            "gate_c2_pretraining_controls_passed"
+            if passed
+            else "gate_c2_pretraining_controls_failed_stop"
+        ),
+    }
+
+
+def _gate_c2_controls_qualification_report(
+    report: Mapping[str, Any],
+    *,
+    config: GateCConfig,
+) -> dict[str, Any]:
+    """Compatibility name used by the in-process controls runner."""
+
+    return _gate_c2_controls_qualification(report, config=config)
+
+
+def _gate_c2_qualification_report(
+    report: Mapping[str, Any],
+    *,
+    config: GateCConfig,
+) -> dict[str, Any]:
+    """Fail-closed schema-2 qualifier for the staged formal target."""
+
+    criteria = {name: False for name in GATE_C2_QUALIFICATION_CRITERIA}
+    if isinstance(report, Mapping) and isinstance(config, GateCConfig):
+        base_keys = set(GATE_C2_TOP_LEVEL_KEYS) - {"qualification"}
+        try:
+            criteria["schema_and_control"] = bool(
+                set(report) in (base_keys, set(GATE_C2_TOP_LEVEL_KEYS))
+                and _strict_integer(report["schema_version"])
+                and int(report["schema_version"]) == GATE_C2_SCHEMA_VERSION
+                and report["control"] == GATE_C2_CONTROL
+                and report["qualification_regime"]
+                == GATE_C2_QUALIFICATION_REGIME
+                and report["learner"] == "pp_prop_only"
+                and _finite_real(
+                    report["total_wall_seconds"], "total wall time"
+                )
+                >= 0.0
+            )
+        except (KeyError, TypeError, ValueError, OverflowError):
+            pass
+    passed = bool(criteria and all(criteria.values()))
+    return {
+        "criteria": criteria,
+        "passed": passed,
+        "interpretation": (
+            GATE_C2_PASSING_INTERPRETATION
+            if passed
+            else GATE_C2_FAILING_INTERPRETATION
+        ),
+    }
+
+
 def _qualification_report(
     report: Mapping[str, Any],
     *,
@@ -4869,7 +9632,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--target",
-        choices=("gate_c_init", "formal_gate_c"),
+        choices=("gate_c_init", "formal_gate_c", "gate_c2_controls"),
         required=True,
     )
     parser.add_argument("--gate-a-result", type=Path, required=True)
@@ -4920,7 +9683,9 @@ def main(argv: list[str] | None = None) -> int:
                 "gate_c_init does not accept a Gate C initialization manifest"
             )
     elif args.gate_c_init_manifest is None:
-        raise ValueError("formal_gate_c requires the fixed initialization manifest")
+        raise ValueError(
+            f"{args.target} requires the fixed initialization manifest"
+        )
 
     source_start = gate_a._source_report()
     environment = gate_a._environment_report()
@@ -4934,7 +9699,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.output.resolve() != expected_paths.result.resolve():
         raise ValueError("Gate C target requires the fixed output path")
 
-    if args.target == "formal_gate_c":
+    if args.target in {"formal_gate_c", "gate_c2_controls"}:
         initialization_paths = launcher.target_paths(
             launch_config,
             head,
@@ -4946,18 +9711,34 @@ def main(argv: list[str] | None = None) -> int:
             != initialization_paths.manifest.resolve()
         ):
             raise ValueError(
-                "formal_gate_c requires the fixed initialization manifest path"
+                f"{args.target} requires the fixed initialization manifest path"
             )
-        prerequisites = launcher._load_formal_gate_c_prerequisites(
-            launch_config,
-            head=head,
-            image_id=str(environment["image_digest"]),
-        )
+        if args.target == "formal_gate_c":
+            prerequisites = launcher._load_formal_gate_c_prerequisites(
+                launch_config,
+                head=head,
+                image_id=str(environment["image_digest"]),
+            )
+        else:
+            prerequisites = launcher._load_gate_c2_controls_prerequisites(
+                launch_config,
+                head=head,
+                image_id=str(environment["image_digest"]),
+            )
     else:
         prerequisites = launcher._load_gate_c_prerequisites(launch_config)
     source_files = _source_files_report()
     if args.target == "formal_gate_c":
         result = run_gate_c(
+            GateCConfig(),
+            prerequisites=prerequisites,
+            source_start=source_start,
+            source_end_reporter=gate_a._source_report,
+            source_files=source_files,
+            environment=environment,
+        )
+    elif args.target == "gate_c2_controls":
+        result = run_gate_c2_controls(
             GateCConfig(),
             prerequisites=prerequisites,
             source_start=source_start,
