@@ -5,10 +5,12 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import math
+import re
 import warnings
 from dataclasses import dataclass, field
 from decimal import Decimal
 from numbers import Real
+from pathlib import Path
 from typing import Any, Mapping
 
 import brainstate
@@ -30,6 +32,47 @@ from examples.pp_prop.latent_workspace_model import (
 GATE_C_SCHEMA_VERSION = 1
 GATE_C_INITIALIZATION_CONTROL = "example21_gate_c_initialization_admission"
 GATE_C_CONTROL = "example21_pp_prop_learnability_gate_c"
+
+_GATE_C_SOURCE_FILES = (
+    "examples/pp_prop/latent_workspace_model.py",
+    "examples/pp_prop/latent_workspace_task.py",
+    "examples/pp_prop/latent_workspace_binding_control.py",
+    "examples/pp_prop/latent_workspace_binding_gate.py",
+    "examples/pp_prop/latent_workspace_depth_gate.py",
+    "examples/pp_prop/latent_workspace_ablation_gate.py",
+)
+_GATE_A_REFERENCE = {
+    "qualification_passed": True,
+    "result_sha256": "3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632",
+    "manifest_sha256": "69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf",
+    "source_commit": "4737e9172b1c6ca99347af5b2c83fc795a294a16",
+    "bundle_sha256": "ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875",
+    "preflight_sha256": "d1d54406d0972d52ac10cddec7e6d1ed38c55481d51e21989e444fe7c3f03d08",
+    "result_path": (
+        "var/example21-binding-gate/"
+        "4737e9172b1c6ca99347af5b2c83fc795a294a16-formal-gate-a.json"
+    ),
+    "manifest_path": (
+        "var/example21-binding-gate/"
+        "4737e9172b1c6ca99347af5b2c83fc795a294a16-formal-gate-a.manifest.json"
+    ),
+}
+_GATE_B_REFERENCE = {
+    "qualification_passed": True,
+    "result_sha256": "6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766",
+    "manifest_sha256": "99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab",
+    "source_commit": "dafa64a8b4c3848241baa117affa55b632518a8e",
+    "bundle_sha256": "be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851",
+    "preflight_sha256": "91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f",
+    "result_path": (
+        "var/example21-depth-gate/"
+        "dafa64a8b4c3848241baa117affa55b632518a8e-formal-gate-b.json"
+    ),
+    "manifest_path": (
+        "var/example21-depth-gate/"
+        "dafa64a8b4c3848241baa117affa55b632518a8e-formal-gate-b.manifest.json"
+    ),
+}
 
 ARM_ORDER = ("full", "query_only", "terminal_only", "legacy", "frozen_write")
 REGIME_ORDER = ("gate_a", "gate_b")
@@ -742,6 +785,15 @@ def _initialization_topology_report(
     )
     if tuple(sorted(values)) != expected_paths:
         raise ValueError("initialization parameter paths differ from the tree")
+    model_states = _parameter_states_by_path(model)
+    learner_states = {
+        gate_a._path(path): state
+        for path, state in trainer.learner.param_states.items()
+    }
+    if tuple(sorted(learner_states)) != expected_paths or any(
+        learner_states[path] is not model_states[path] for path in expected_paths
+    ):
+        raise ValueError("trainer must be compiled from the same model")
     return {
         "fresh_model": True,
         "model_seed": model.config.seed,
@@ -760,7 +812,7 @@ def _initialization_topology_report(
 def _normalized_prerequisites(
     prerequisites: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Copy the two prerequisite references after a structural check."""
+    """Validate and copy the two frozen authenticated prerequisite refs."""
 
     if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
         "gate_a",
@@ -769,9 +821,400 @@ def _normalized_prerequisites(
         raise ValueError("Gate C initialization requires Gate A and Gate B")
     if not all(isinstance(prerequisites[name], Mapping) for name in prerequisites):
         raise TypeError("Gate C prerequisite references must be mappings")
+    expected = {"gate_a": _GATE_A_REFERENCE, "gate_b": _GATE_B_REFERENCE}
+    for name in ("gate_a", "gate_b"):
+        if not gate_a._json_exact(prerequisites[name], expected[name]):
+            raise ValueError(f"Gate C {name} prerequisite is not authenticated")
     return {
         name: dict(prerequisites[name]) for name in ("gate_a", "gate_b")
     }
+
+
+def _sha256_complete(value: Any) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _strict_integer(value: Any) -> bool:
+    return isinstance(value, (int, np.integer)) and not isinstance(
+        value, (bool, np.bool_)
+    )
+
+
+def _source_files_complete(source_files: Any) -> bool:
+    if not isinstance(source_files, Mapping) or set(source_files) != set(
+        _GATE_C_SOURCE_FILES
+    ):
+        return False
+    repo_root = Path(__file__).resolve().parents[2]
+    expected = {
+        path: hashlib.sha256((repo_root / path).read_bytes()).hexdigest()
+        for path in _GATE_C_SOURCE_FILES
+    }
+    return gate_a._json_exact(source_files, expected)
+
+
+def _source_and_gpu_complete(report: Mapping[str, Any]) -> bool:
+    start = report["source_start"]
+    end = report["source_end"]
+    environment = report["environment"]
+    source_keys = {
+        "asserted_commit",
+        "asserted_commit_matches_head",
+        "asserted_dirty",
+        "asserted_dirty_matches_worktree",
+        "commit",
+        "commit_is_valid_40_hex",
+        "dirty",
+        "head_command_succeeded",
+        "status_command_succeeded",
+        "verified",
+    }
+    environment_keys = {"backend", "devices", "image_digest", "jax", "python"}
+    if (
+        not isinstance(start, Mapping)
+        or not isinstance(end, Mapping)
+        or set(start) != source_keys
+        or set(end) != source_keys
+        or not isinstance(environment, Mapping)
+        or set(environment) != environment_keys
+        or not isinstance(environment["jax"], str)
+        or not environment["jax"]
+        or not isinstance(environment["python"], str)
+        or not environment["python"]
+        or not isinstance(environment["devices"], list)
+        or not environment["devices"]
+    ):
+        return False
+    device_keys = {"device_kind", "id", "platform", "process_index"}
+    for device in environment["devices"]:
+        if (
+            not isinstance(device, Mapping)
+            or set(device) != device_keys
+            or not isinstance(device["device_kind"], str)
+            or not device["device_kind"]
+            or not isinstance(device["platform"], str)
+            or device["platform"] != "gpu"
+            or not _strict_integer(device["id"])
+            or not _strict_integer(device["process_index"])
+        ):
+            return False
+    return bool(
+        gate_a._source_evidence_clean(start)
+        and gate_a._source_evidence_clean(end)
+        and start.get("commit") == end.get("commit")
+        and gate_a._gpu_environment_verified(environment)
+    )
+
+
+def _compiler_common_complete(
+    compiler: Any,
+    *,
+    expected_paths: tuple[str, ...],
+) -> bool:
+    if not isinstance(compiler, Mapping):
+        return False
+    diagnostics = compiler.get("diagnostics")
+    diagnostic_keys = {"kind", "level", "message"}
+    diagnostics_complete = isinstance(diagnostics, list) and all(
+        isinstance(item, Mapping)
+        and set(item) in (diagnostic_keys, diagnostic_keys | {"weight_path"})
+        and all(isinstance(item[key], str) for key in diagnostic_keys)
+        and (
+            "weight_path" not in item
+            or isinstance(item["weight_path"], str)
+        )
+        and item["level"].lower() != "error"
+        for item in diagnostics
+    )
+    return bool(
+        compiler.get("available") is True
+        and diagnostics_complete
+        and compiler.get("compiled_parameter_paths") == list(expected_paths)
+    )
+
+
+def _full_compiler_complete(compiler: Any) -> bool:
+    try:
+        return bool(
+            _compiler_common_complete(
+                compiler, expected_paths=FULL_PARAMETER_PATHS
+            )
+            and gate_b._compiler_evidence_complete(compiler)
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _legacy_compiler_complete(compiler: Any) -> bool:
+    required = {
+        "memory_write_scale",
+        "workspace_query_projection/weight",
+        "memory_read_projection/weight",
+    }
+    try:
+        hidden_groups = compiler["hidden_groups"]
+        groups_complete = bool(hidden_groups) and all(
+            isinstance(group, Mapping)
+            and set(group) == {"index", "hidden_paths"}
+            and _strict_integer(group["index"])
+            and isinstance(group["hidden_paths"], list)
+            and bool(group["hidden_paths"])
+            and all(isinstance(path, str) and path for path in group["hidden_paths"])
+            and not {
+                "context_memory",
+                "reasoning_query",
+                "memory_read",
+            }.intersection(group["hidden_paths"])
+            for group in hidden_groups
+        )
+        return bool(
+            _compiler_common_complete(
+                compiler, expected_paths=SHARED_PARAMETER_PATHS
+            )
+            and set(compiler["required_direct_paths"]) == required
+            and set(compiler["direct_path_status"]) == required
+            and set(compiler["direct_path_evidence"]) == required
+            and all(compiler["direct_path_status"][path] is False for path in required)
+            and all(compiler["direct_path_evidence"][path] == [] for path in required)
+            and compiler["all_required_direct"] is False
+            and compiler["context_memory_isolated_from_workspace_lif"] is False
+            and isinstance(hidden_groups, list)
+            and groups_complete
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def _regimes_complete(report: Mapping[str, Any], config: GateCConfig) -> bool:
+    expected = {
+        regime: {
+            "spec": dataclasses.asdict(REGIME_SPECS[regime]),
+            "config": dataclasses.asdict(
+                config.gate_a_config
+                if regime == "gate_a"
+                else config.gate_b_config
+            ),
+        }
+        for regime in REGIME_ORDER
+    }
+    return bool(
+        config.qualification_regime == "preregistered_full"
+        and report.get("qualification_regime") == "preregistered_full"
+        and gate_a._json_exact(report.get("regimes"), expected)
+    )
+
+
+def _topology_report_complete(
+    topology: Any,
+    *,
+    config: GateCConfig,
+    regime: str,
+    tree: str,
+) -> bool:
+    if not isinstance(topology, Mapping) or set(topology) != {
+        "fresh_model",
+        "model_seed",
+        "memory_read_policy",
+        "model_config",
+        "parameter_paths",
+        "parameter_count",
+        "parameter_sha256",
+        "parameters_finite",
+        "compiler",
+    }:
+        return False
+    spec = REGIME_SPECS[regime]
+    arm = "legacy" if tree == "legacy" else "full"
+    regime_config = (
+        config.gate_a_config if regime == "gate_a" else config.gate_b_config
+    )
+    expected_model = dataclasses.asdict(
+        _model_config_for_arm(
+            config,
+            regime,
+            arm,
+            batch_size=regime_config.batch_size,
+        )
+    )
+    expected_paths = SHARED_PARAMETER_PATHS if tree == "legacy" else FULL_PARAMETER_PATHS
+    expected_count = (
+        spec.legacy_parameter_count if tree == "legacy" else spec.full_parameter_count
+    )
+    sha = topology["parameter_sha256"]
+    sha_valid = _sha256_complete(sha) and (
+        tree == "legacy" or sha == spec.full_parameter_sha256
+    )
+    return bool(
+        topology["fresh_model"] is True
+        and _strict_integer(topology["model_seed"])
+        and int(topology["model_seed"]) == 2108
+        and topology["memory_read_policy"] == "full"
+        and gate_a._json_exact(topology["model_config"], expected_model)
+        and topology["parameter_paths"] == list(expected_paths)
+        and _strict_integer(topology["parameter_count"])
+        and int(topology["parameter_count"]) == expected_count
+        and sha_valid
+        and topology["parameters_finite"] is True
+    )
+
+
+def _shared_digest_from_path_digests(path_digests: Mapping[str, str]) -> str:
+    fields: list[bytes] = [b"example21-gate-c-shared-global-v1"]
+    for path in sorted(path_digests):
+        fields.extend(
+            (path.encode("utf-8"), path_digests[path].encode("ascii"))
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _shared_report_complete(shared: Any) -> bool:
+    if not isinstance(shared, Mapping) or set(shared) != {
+        "paths",
+        "framing",
+        "canonical_path_sha256",
+        "legacy_path_sha256",
+        "canonical_sha256",
+        "legacy_sha256",
+        "all_equal",
+    }:
+        return False
+    expected_framing = {
+        "path": "example21-gate-c-shared-path-v1",
+        "global": "example21-gate-c-shared-global-v1",
+    }
+    canonical = shared["canonical_path_sha256"]
+    legacy_paths = shared["legacy_path_sha256"]
+    if not (
+        shared["paths"] == list(SHARED_PARAMETER_PATHS)
+        and gate_a._json_exact(shared["framing"], expected_framing)
+        and isinstance(canonical, Mapping)
+        and isinstance(legacy_paths, Mapping)
+        and set(canonical) == set(legacy_paths) == set(SHARED_PARAMETER_PATHS)
+        and all(_sha256_complete(canonical[path]) for path in SHARED_PARAMETER_PATHS)
+        and gate_a._json_exact(canonical, legacy_paths)
+    ):
+        return False
+    expected_global = _shared_digest_from_path_digests(canonical)
+    return bool(
+        shared["canonical_sha256"] == expected_global
+        and shared["legacy_sha256"] == expected_global
+        and shared["all_equal"] is True
+    )
+
+
+def _arm_refs_complete(initialization: Mapping[str, Any]) -> bool:
+    refs = initialization["arm_initialization_refs"]
+    if not isinstance(refs, Mapping) or set(refs) != set(ARM_ORDER):
+        return False
+    canonical_sha = initialization["canonical_full"]["parameter_sha256"]
+    legacy_sha = initialization["legacy"]["parameter_sha256"]
+    for arm in ARM_ORDER:
+        expected = {
+            "tree": "legacy" if arm == "legacy" else "canonical_full",
+            "parameter_sha256": legacy_sha if arm == "legacy" else canonical_sha,
+        }
+        if not gate_a._json_exact(refs[arm], expected):
+            return False
+    return True
+
+
+def _optimizer_report_complete(
+    value: Any,
+    *,
+    arm: str,
+    expected_paths: tuple[str, ...],
+) -> bool:
+    if not isinstance(value, Mapping) or set(value) != {
+        "included",
+        "excluded",
+        "fresh_state_finite",
+        "fresh_state_all_zero",
+        "state_leaf_count",
+        "value_count",
+        "state_sha256",
+        "executed_updates",
+    }:
+        return False
+    return bool(
+        value["included"] == list(_optimizer_parameter_paths(expected_paths, arm))
+        and value["excluded"] == list(ARM_SPECS[arm].optimizer_excluded_paths)
+        and _strict_integer(value["state_leaf_count"])
+        and int(value["state_leaf_count"]) > 0
+        and _strict_integer(value["value_count"])
+        and int(value["value_count"]) > 0
+        and _sha256_complete(value["state_sha256"])
+    )
+
+
+def _optimizer_paths_complete(initialization: Mapping[str, Any]) -> bool:
+    reports = initialization["optimizer_paths"]
+    if not isinstance(reports, Mapping) or set(reports) != set(ARM_ORDER):
+        return False
+    return all(
+        _optimizer_report_complete(
+            reports[arm],
+            arm=arm,
+            expected_paths=(
+                SHARED_PARAMETER_PATHS if arm == "legacy" else FULL_PARAMETER_PATHS
+            ),
+        )
+        for arm in ARM_ORDER
+    )
+
+
+def _optimizer_states_complete(initialization: Mapping[str, Any]) -> bool:
+    return all(
+        initialization["optimizer_paths"][arm]["fresh_state_finite"] is True
+        and initialization["optimizer_paths"][arm]["fresh_state_all_zero"] is True
+        for arm in ARM_ORDER
+    )
+
+
+def _no_behavioral_updates(report: Mapping[str, Any]) -> bool:
+    allowed = {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "prerequisites",
+        "regimes",
+        "initialization",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+    }
+    expected_initialization_keys = {
+        "canonical_full",
+        "legacy",
+        "shared_paths",
+        "arm_initialization_refs",
+        "optimizer_paths",
+    }
+    return bool(
+        set(report).issubset(allowed)
+        and isinstance(report.get("initialization"), Mapping)
+        and set(report["initialization"]) == set(REGIME_ORDER)
+        and all(
+            isinstance(report["initialization"][regime], Mapping)
+            and set(report["initialization"][regime])
+            == expected_initialization_keys
+            for regime in REGIME_ORDER
+        )
+        and all(
+            report["initialization"][regime]["optimizer_paths"][arm][
+                "executed_updates"
+            ]
+            == 0
+            and _strict_integer(
+                report["initialization"][regime]["optimizer_paths"][arm][
+                    "executed_updates"
+                ]
+            )
+            for regime in REGIME_ORDER
+            for arm in ARM_ORDER
+        )
+    )
 
 
 def _gate_c_initialization_qualification(
@@ -779,22 +1222,240 @@ def _gate_c_initialization_qualification(
     *,
     config: GateCConfig,
 ) -> dict[str, Any]:
-    """Return the fail-closed initialization qualification boundary.
+    """Recompute every Gate C initialization admission criterion."""
 
-    The authenticated positive recomputation lands in the next provenance
-    slice. Until then, neither a production-shaped nor an abbreviated report
-    can admit behavioral training.
-    """
-
-    del report, config
     criteria = {
         name: False for name in GATE_C_INITIALIZATION_QUALIFICATION_CRITERIA
     }
+    if not isinstance(report, Mapping) or not isinstance(config, GateCConfig):
+        return {
+            "criteria": criteria,
+            "passed": False,
+            "interpretation": "gate_c_initialization_admission_failed_stop",
+        }
+    if config.qualification_regime != "preregistered_full":
+        return {
+            "criteria": criteria,
+            "passed": False,
+            "interpretation": "gate_c_initialization_admission_failed_stop",
+        }
+    try:
+        base_keys = {
+            "schema_version",
+            "control",
+            "qualification_regime",
+            "prerequisites",
+            "regimes",
+            "initialization",
+            "source_start",
+            "source_end",
+            "source_files",
+            "environment",
+        }
+        criteria["schema_and_control"] = bool(
+            set(report) in (base_keys, base_keys | {"qualification"})
+            and _strict_integer(report["schema_version"])
+            and int(report["schema_version"]) == GATE_C_SCHEMA_VERSION
+            and report["control"] == GATE_C_INITIALIZATION_CONTROL
+        )
+        criteria["preregistered_regimes"] = _regimes_complete(report, config)
+        prerequisites = report["prerequisites"]
+        exact_prerequisites = isinstance(prerequisites, Mapping) and set(
+            prerequisites
+        ) == {"gate_a", "gate_b"}
+        criteria["gate_a_prerequisite_authenticated"] = bool(
+            exact_prerequisites
+            and "gate_a" in prerequisites
+            and gate_a._json_exact(prerequisites["gate_a"], _GATE_A_REFERENCE)
+        )
+        criteria["gate_b_prerequisite_authenticated"] = bool(
+            exact_prerequisites
+            and "gate_b" in prerequisites
+            and gate_a._json_exact(prerequisites["gate_b"], _GATE_B_REFERENCE)
+        )
+        criteria["source_and_gpu_authenticated"] = _source_and_gpu_complete(report)
+        criteria["source_files_exact"] = _source_files_complete(
+            report["source_files"]
+        )
+        initialization = report["initialization"]
+        exact_regimes = isinstance(initialization, Mapping) and set(
+            initialization
+        ) == set(REGIME_ORDER) and all(
+            isinstance(initialization[regime], Mapping)
+            and set(initialization[regime])
+            == {
+                "canonical_full",
+                "legacy",
+                "shared_paths",
+                "arm_initialization_refs",
+                "optimizer_paths",
+            }
+            for regime in REGIME_ORDER
+        )
+        criteria["schema_and_control"] = bool(
+            criteria["schema_and_control"] and exact_regimes
+        )
+        if exact_regimes:
+            criteria["canonical_full_initializations_exact"] = all(
+                _topology_report_complete(
+                    initialization[regime]["canonical_full"],
+                    config=config,
+                    regime=regime,
+                    tree="canonical_full",
+                )
+                for regime in REGIME_ORDER
+            )
+            criteria["legacy_initializations_complete"] = all(
+                _topology_report_complete(
+                    initialization[regime]["legacy"],
+                    config=config,
+                    regime=regime,
+                    tree="legacy",
+                )
+                for regime in REGIME_ORDER
+            )
+            criteria["shared_paths_byte_identical"] = all(
+                _shared_report_complete(initialization[regime]["shared_paths"])
+                for regime in REGIME_ORDER
+            )
+            criteria["arm_initialization_refs_exact"] = all(
+                _arm_refs_complete(initialization[regime])
+                for regime in REGIME_ORDER
+            )
+            criteria["optimizer_paths_exact"] = all(
+                _optimizer_paths_complete(initialization[regime])
+                for regime in REGIME_ORDER
+            )
+            criteria["fresh_optimizer_states_zero_and_finite"] = all(
+                _optimizer_states_complete(initialization[regime])
+                for regime in REGIME_ORDER
+            )
+            criteria["compiler_topologies_complete"] = all(
+                _full_compiler_complete(
+                    initialization[regime]["canonical_full"]["compiler"]
+                )
+                and _legacy_compiler_complete(
+                    initialization[regime]["legacy"]["compiler"]
+                )
+                for regime in REGIME_ORDER
+            )
+            criteria["no_behavioral_updates"] = _no_behavioral_updates(report)
+    except (KeyError, TypeError, ValueError, OverflowError, OSError):
+        pass
+    passed = bool(criteria and all(criteria.values()))
     return {
         "criteria": criteria,
-        "passed": False,
-        "interpretation": "gate_c_initialization_admission_failed_stop",
+        "passed": passed,
+        "interpretation": (
+            "gate_c_initialization_admission_passed"
+            if passed
+            else "gate_c_initialization_admission_failed_stop"
+        ),
     }
+
+
+def _validated_gate_c_initialization_admission(
+    prerequisite: Mapping[str, Any],
+    config: GateCConfig,
+    *,
+    source_start: Mapping[str, Any],
+    environment: Mapping[str, Any],
+    source_files: Mapping[str, str],
+    require_pass: bool,
+) -> Mapping[str, Any]:
+    """Validate the complete authenticated Gate C initialization wrapper."""
+
+    expected_keys = {
+        "target",
+        "source_head",
+        "image_digest",
+        "bundle_sha256",
+        "manifest_sha256",
+        "preflight_sha256",
+        "result_sha256",
+        "admission",
+    }
+    if not isinstance(prerequisite, Mapping) or set(prerequisite) != expected_keys:
+        raise ValueError("Gate C initialization prerequisite is not authenticated")
+    source_head = prerequisite["source_head"]
+    image_digest = prerequisite["image_digest"]
+    if (
+        prerequisite["target"] != "gate_c_init"
+        or not isinstance(source_head, str)
+        or re.fullmatch(r"[0-9a-f]{40}", source_head) is None
+        or not isinstance(image_digest, str)
+        or re.fullmatch(r"sha256:[0-9a-f]{64}", image_digest) is None
+        or not all(
+            _sha256_complete(prerequisite[name])
+            for name in (
+                "bundle_sha256",
+                "manifest_sha256",
+                "preflight_sha256",
+                "result_sha256",
+            )
+        )
+    ):
+        raise ValueError("Gate C initialization provenance fields are invalid")
+    admission = prerequisite["admission"]
+    if not isinstance(admission, Mapping):
+        raise ValueError("Gate C initialization admission is missing")
+    admission_keys = {
+        "schema_version",
+        "control",
+        "qualification_regime",
+        "prerequisites",
+        "regimes",
+        "initialization",
+        "source_start",
+        "source_end",
+        "source_files",
+        "environment",
+        "qualification",
+    }
+    if set(admission) != admission_keys:
+        raise ValueError("Gate C initialization admission schema is invalid")
+    if gate_b._strict_json_sha256(admission) != prerequisite["result_sha256"]:
+        raise ValueError("Gate C initialization result digest is invalid")
+    expected_bundle = hashlib.sha256(
+        (
+            "example21-launch-bundle-v1\0gate_c_init\0"
+            f"{source_head}\0{prerequisite['preflight_sha256']}\0"
+            f"{prerequisite['result_sha256']}"
+        ).encode("utf-8")
+    ).hexdigest()
+    if prerequisite["bundle_sha256"] != expected_bundle:
+        raise ValueError("Gate C initialization bundle digest is invalid")
+    qualification = _gate_c_initialization_qualification(admission, config=config)
+    if not gate_a._json_exact(admission.get("qualification"), qualification):
+        raise ValueError("Gate C initialization qualification is stale")
+    if require_pass and qualification["passed"] is not True:
+        raise ValueError("Gate C initialization admission did not pass")
+    try:
+        source_matches = bool(
+            admission["source_start"]["commit"] == source_head
+            and admission["source_end"]["commit"] == source_head
+            and admission["environment"]["image_digest"] == image_digest
+            and source_start["commit"] == source_head
+            and environment["image_digest"] == image_digest
+        )
+    except (KeyError, TypeError):
+        source_matches = False
+    if not source_matches:
+        raise ValueError("Gate C initialization source or image differs")
+    if not _source_and_gpu_complete(
+        {
+            "source_start": source_start,
+            "source_end": source_start,
+            "environment": environment,
+        }
+    ):
+        raise ValueError("Gate C formal source or GPU evidence is invalid")
+    if not (
+        gate_a._json_exact(admission.get("source_files"), source_files)
+        and _source_files_complete(source_files)
+    ):
+        raise ValueError("Gate C initialization source files differ")
+    return admission
 
 
 def run_gate_c_initialization(
@@ -835,6 +1496,33 @@ def run_gate_c_initialization(
     if not callable(source_end_reporter):
         raise TypeError("source_end_reporter must be callable")
     normalized_prerequisites = _normalized_prerequisites(prerequisites)
+    source_keys = {
+        "asserted_commit",
+        "asserted_commit_matches_head",
+        "asserted_dirty",
+        "asserted_dirty_matches_worktree",
+        "commit",
+        "commit_is_valid_40_hex",
+        "dirty",
+        "head_command_succeeded",
+        "status_command_succeeded",
+        "verified",
+    }
+    authenticate_inputs = bool(
+        config.qualification_regime == "preregistered_full"
+        or (isinstance(source_start, Mapping) and set(source_start) == source_keys)
+    )
+    if authenticate_inputs:
+        if not isinstance(source_start, Mapping) or not gate_a._source_evidence_clean(
+            source_start
+        ):
+            raise RuntimeError("Gate C initialization source is not authenticated")
+        if not isinstance(environment, Mapping) or not gate_a._gpu_environment_verified(
+            environment
+        ):
+            raise RuntimeError("Gate C initialization GPU is not authenticated")
+        if not _source_files_complete(source_files):
+            raise RuntimeError("Gate C initialization source files are not exact")
     initialization: dict[str, Any] = {}
     regime_reports = {
         regime: {
@@ -934,6 +1622,8 @@ def run_gate_c_initialization(
         }
 
     source_end = source_end_reporter()
+    if not isinstance(source_end, Mapping):
+        raise TypeError("source_end_reporter must return a mapping")
     report: dict[str, Any] = {
         "schema_version": GATE_C_SCHEMA_VERSION,
         "control": GATE_C_INITIALIZATION_CONTROL,

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import ast
+import copy
 import dataclasses
 import hashlib
 import importlib
 import inspect
 import math
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import brainstate
@@ -58,6 +60,46 @@ _INITIALIZATION_CRITERIA = (
     "compiler_topologies_complete",
     "no_behavioral_updates",
 )
+_GATE_C_SOURCE_FILES = (
+    "examples/pp_prop/latent_workspace_model.py",
+    "examples/pp_prop/latent_workspace_task.py",
+    "examples/pp_prop/latent_workspace_binding_control.py",
+    "examples/pp_prop/latent_workspace_binding_gate.py",
+    "examples/pp_prop/latent_workspace_depth_gate.py",
+    "examples/pp_prop/latent_workspace_ablation_gate.py",
+)
+_GATE_A_REFERENCE = {
+    "qualification_passed": True,
+    "result_sha256": "3a585e739715b31757082b50fe57b98ca50107891f7c79edaa7e5e54c90ad632",
+    "manifest_sha256": "69d690daa5023f5b3ce22b0e65ea09a1a6706687d792e998651422f6d6ea15cf",
+    "source_commit": "4737e9172b1c6ca99347af5b2c83fc795a294a16",
+    "bundle_sha256": "ba850a205c4691d573facef7b8e90cabd4824905c73fcd4f6add29293cd95875",
+    "preflight_sha256": "d1d54406d0972d52ac10cddec7e6d1ed38c55481d51e21989e444fe7c3f03d08",
+    "result_path": (
+        "var/example21-binding-gate/"
+        "4737e9172b1c6ca99347af5b2c83fc795a294a16-formal-gate-a.json"
+    ),
+    "manifest_path": (
+        "var/example21-binding-gate/"
+        "4737e9172b1c6ca99347af5b2c83fc795a294a16-formal-gate-a.manifest.json"
+    ),
+}
+_GATE_B_REFERENCE = {
+    "qualification_passed": True,
+    "result_sha256": "6456537ea108cea8892d00c8a71c1f647217e074b525bc9ed01b64aef9001766",
+    "manifest_sha256": "99c42985e203413eb0600a5dabe321188776eff8058500dc86f4a1618b413eab",
+    "source_commit": "dafa64a8b4c3848241baa117affa55b632518a8e",
+    "bundle_sha256": "be07e8c92d8deaa94508f34dcee45f5feb09740cb2804778d6280a2fa3c64851",
+    "preflight_sha256": "91e86d92670cd33d3f4206ff3d5096e3721104996a9506223a9e34c082dd052f",
+    "result_path": (
+        "var/example21-depth-gate/"
+        "dafa64a8b4c3848241baa117affa55b632518a8e-formal-gate-b.json"
+    ),
+    "manifest_path": (
+        "var/example21-depth-gate/"
+        "dafa64a8b4c3848241baa117affa55b632518a8e-formal-gate-b.manifest.json"
+    ),
+}
 _SHARED_PATHS = (
     "color_factor_head/weight",
     "ff_syn/comm/weight",
@@ -232,6 +274,376 @@ def _manual_optimizer_state_digest(
     return hashlib.sha256(b"\0".join(fields)).hexdigest()
 
 
+def _passing_gate_c_source() -> dict[str, Any]:
+    head = "c" * 40
+    return {
+        "asserted_commit": head,
+        "asserted_commit_matches_head": True,
+        "asserted_dirty": False,
+        "asserted_dirty_matches_worktree": True,
+        "commit": head,
+        "commit_is_valid_40_hex": True,
+        "dirty": False,
+        "head_command_succeeded": True,
+        "status_command_succeeded": True,
+        "verified": True,
+    }
+
+
+def _passing_gate_c_environment() -> dict[str, Any]:
+    return {
+        "backend": "gpu",
+        "devices": [
+            {
+                "device_kind": "synthetic qualifying GPU",
+                "id": 0,
+                "platform": "gpu",
+                "process_index": 0,
+            }
+        ],
+        "image_digest": "sha256:" + "d" * 64,
+        "jax": "0.7.2",
+        "python": "3.14.6",
+    }
+
+
+def _current_gate_c_source_files() -> dict[str, str]:
+    repo_root = Path(gate_c.__file__).resolve().parents[2]
+    return {
+        relative: hashlib.sha256((repo_root / relative).read_bytes()).hexdigest()
+        for relative in _GATE_C_SOURCE_FILES
+    }
+
+
+def _passing_gate_c_compiler(*, legacy_tree: bool) -> dict[str, Any]:
+    required = [
+        "memory_write_scale",
+        "workspace_query_projection/weight",
+        "memory_read_projection/weight",
+    ]
+    if legacy_tree:
+        return {
+            "available": True,
+            "diagnostics": [],
+            "compiled_parameter_paths": list(_SHARED_PATHS),
+            "required_direct_paths": required,
+            "direct_path_status": {path: False for path in required},
+            "direct_path_evidence": {path: [] for path in required},
+            "hidden_groups": [
+                {
+                    "index": 0,
+                    "hidden_paths": [
+                        "ff_syn/post/V",
+                        "ff_syn/syn/g",
+                        "rec_syn/syn/g",
+                    ],
+                }
+            ],
+            "all_required_direct": False,
+            "context_memory_isolated_from_workspace_lif": False,
+        }
+    hidden_groups = [
+        {
+            "index": 0,
+            "hidden_paths": [
+                "ff_syn/post/V",
+                "ff_syn/syn/g",
+                "rec_syn/syn/g",
+                "workspace_carrier",
+            ],
+        },
+        {"index": 1, "hidden_paths": ["context_memory"]},
+        {"index": 2, "hidden_paths": ["query_encoding"]},
+        {"index": 3, "hidden_paths": ["reasoning_query"]},
+        {"index": 4, "hidden_paths": ["memory_read"]},
+    ]
+    return {
+        "available": True,
+        "diagnostics": [],
+        "compiled_parameter_paths": list(_FULL_PATHS),
+        "required_direct_paths": required,
+        "direct_path_status": {path: True for path in required},
+        "direct_path_evidence": {
+            "memory_write_scale": [
+                {
+                    "relation_key": "('context_memory',)",
+                    "classification": "all_direct",
+                    "hidden_groups": [hidden_groups[1]],
+                }
+            ],
+            "workspace_query_projection/weight": [
+                {
+                    "relation_key": "('reasoning_query',)",
+                    "classification": "all_direct",
+                    "hidden_groups": [hidden_groups[3]],
+                }
+            ],
+            "memory_read_projection/weight": [
+                {
+                    "relation_key": "('ff_syn', 'post', 'V')",
+                    "classification": "all_direct",
+                    "hidden_groups": [hidden_groups[0]],
+                },
+                {
+                    "relation_key": "('workspace_carrier',)",
+                    "classification": "all_direct",
+                    "hidden_groups": [hidden_groups[0]],
+                },
+            ],
+        },
+        "hidden_groups": hidden_groups,
+        "all_required_direct": True,
+        "context_memory_isolated_from_workspace_lif": True,
+    }
+
+
+def _shared_digest_from_path_digests(path_digests: Mapping[str, str]) -> str:
+    fields = [b"example21-gate-c-shared-global-v1"]
+    for path in sorted(path_digests):
+        fields.extend(
+            (
+                path.encode("utf-8"),
+                path_digests[path].encode("ascii"),
+            )
+        )
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _synthetic_optimizer_state_sha(
+    *,
+    regime: str,
+    arm: str,
+    included: tuple[str, ...],
+) -> str:
+    value = np.asarray(0, dtype=np.int32)
+    fields = [
+        b"example21-gate-c-optimizer-state-v1",
+        regime.encode("utf-8"),
+        arm.encode("utf-8"),
+        *(path.encode("utf-8") for path in sorted(included)),
+        b"0",
+        value.dtype.str.encode("ascii"),
+        b"",
+        value.tobytes(),
+    ]
+    return hashlib.sha256(b"\0".join(fields)).hexdigest()
+
+
+def _passing_optimizer_initialization(
+    regime: str,
+    arm: str,
+) -> dict[str, Any]:
+    available = _SHARED_PATHS if arm == "legacy" else _FULL_PATHS
+    included = gate_c._optimizer_parameter_paths(available, arm)
+    excluded = gate_c.ARM_SPECS[arm].optimizer_excluded_paths
+    return {
+        "included": list(included),
+        "excluded": list(excluded),
+        "fresh_state_finite": True,
+        "fresh_state_all_zero": True,
+        "state_leaf_count": 1,
+        "value_count": 1,
+        "state_sha256": _synthetic_optimizer_state_sha(
+            regime=regime,
+            arm=arm,
+            included=included,
+        ),
+        "executed_updates": 0,
+    }
+
+
+def _passing_gate_c_initialization_base(
+    config: Any | None = None,
+) -> tuple[dict[str, Any], Any]:
+    if config is None:
+        config = gate_c.GateCConfig()
+    initialization: dict[str, Any] = {}
+    regimes: dict[str, Any] = {}
+    for regime in _REGIMES:
+        regime_config = (
+            config.gate_a_config if regime == "gate_a" else config.gate_b_config
+        )
+        spec = gate_c.REGIME_SPECS[regime]
+        full_model_config = gate_c._model_config_for_arm(
+            config,
+            regime,
+            "full",
+            batch_size=regime_config.batch_size,
+        )
+        legacy_model_config = gate_c._model_config_for_arm(
+            config,
+            regime,
+            "legacy",
+            batch_size=regime_config.batch_size,
+        )
+        legacy_sha = hashlib.sha256(f"{regime}-legacy-gpu".encode()).hexdigest()
+        canonical = {
+            "fresh_model": True,
+            "model_seed": 2108,
+            "memory_read_policy": "full",
+            "model_config": dataclasses.asdict(full_model_config),
+            "parameter_paths": list(_FULL_PATHS),
+            "parameter_count": spec.full_parameter_count,
+            "parameter_sha256": spec.full_parameter_sha256,
+            "parameters_finite": True,
+            "compiler": _passing_gate_c_compiler(legacy_tree=False),
+        }
+        legacy_topology = {
+            "fresh_model": True,
+            "model_seed": 2108,
+            "memory_read_policy": "full",
+            "model_config": dataclasses.asdict(legacy_model_config),
+            "parameter_paths": list(_SHARED_PATHS),
+            "parameter_count": spec.legacy_parameter_count,
+            "parameter_sha256": legacy_sha,
+            "parameters_finite": True,
+            "compiler": _passing_gate_c_compiler(legacy_tree=True),
+        }
+        shared_values = {
+            path: np.asarray(
+                [list(_REGIMES).index(regime), index],
+                dtype=np.float32,
+            )
+            for index, path in enumerate(_SHARED_PATHS)
+        }
+        path_digests = {
+            path: _manual_shared_path_digest(path, value)
+            for path, value in shared_values.items()
+        }
+        shared_sha = _shared_digest_from_path_digests(path_digests)
+        initialization[regime] = {
+            "canonical_full": canonical,
+            "legacy": legacy_topology,
+            "shared_paths": {
+                "paths": list(_SHARED_PATHS),
+                "framing": {
+                    "path": "example21-gate-c-shared-path-v1",
+                    "global": "example21-gate-c-shared-global-v1",
+                },
+                "canonical_path_sha256": dict(path_digests),
+                "legacy_path_sha256": dict(path_digests),
+                "canonical_sha256": shared_sha,
+                "legacy_sha256": shared_sha,
+                "all_equal": True,
+            },
+            "arm_initialization_refs": {
+                arm: {
+                    "tree": "legacy" if arm == "legacy" else "canonical_full",
+                    "parameter_sha256": (
+                        legacy_sha if arm == "legacy" else spec.full_parameter_sha256
+                    ),
+                }
+                for arm in _ARMS
+            },
+            "optimizer_paths": {
+                arm: _passing_optimizer_initialization(regime, arm)
+                for arm in _ARMS
+            },
+        }
+        regimes[regime] = {
+            "spec": dataclasses.asdict(spec),
+            "config": dataclasses.asdict(regime_config),
+        }
+    source_start = _passing_gate_c_source()
+    report = {
+        "schema_version": 1,
+        "control": "example21_gate_c_initialization_admission",
+        "qualification_regime": config.qualification_regime,
+        "prerequisites": {
+            "gate_a": dict(_GATE_A_REFERENCE),
+            "gate_b": dict(_GATE_B_REFERENCE),
+        },
+        "regimes": regimes,
+        "initialization": initialization,
+        "source_start": source_start,
+        "source_end": dict(source_start),
+        "source_files": _current_gate_c_source_files(),
+        "environment": _passing_gate_c_environment(),
+    }
+    return report, config
+
+
+def _passing_gate_c_initialization_report(
+    config: Any | None = None,
+) -> tuple[dict[str, Any], Any]:
+    report, config = _passing_gate_c_initialization_base(config)
+    report["qualification"] = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+    return report, config
+
+
+def _gate_c_initialization_wrapper(report: Mapping[str, Any]) -> dict[str, Any]:
+    source_head = str(report["source_start"]["commit"])
+    preflight_sha256 = hashlib.sha256(b"gate-c-preflight").hexdigest()
+    result_sha256 = gate_b._strict_json_sha256(report)
+    bundle_sha256 = hashlib.sha256(
+        (
+            "example21-launch-bundle-v1\0gate_c_init\0"
+            f"{source_head}\0{preflight_sha256}\0{result_sha256}"
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "target": "gate_c_init",
+        "source_head": source_head,
+        "image_digest": report["environment"]["image_digest"],
+        "bundle_sha256": bundle_sha256,
+        "manifest_sha256": hashlib.sha256(b"gate-c-manifest").hexdigest(),
+        "preflight_sha256": preflight_sha256,
+        "result_sha256": result_sha256,
+        "admission": copy.deepcopy(report),
+    }
+
+
+def _mutate_gate_c_initialization_report(
+    report: dict[str, Any],
+    criterion: str,
+) -> None:
+    if criterion == "schema_and_control":
+        report["control"] = "wrong_control"
+    elif criterion == "preregistered_regimes":
+        report["regimes"]["gate_a"]["spec"]["training_updates"] -= 1
+    elif criterion == "gate_a_prerequisite_authenticated":
+        report["prerequisites"]["gate_a"]["result_sha256"] = "0" * 64
+    elif criterion == "gate_b_prerequisite_authenticated":
+        report["prerequisites"]["gate_b"]["result_sha256"] = "0" * 64
+    elif criterion == "source_and_gpu_authenticated":
+        report["source_end"]["dirty"] = True
+    elif criterion == "source_files_exact":
+        report["source_files"].pop(_GATE_C_SOURCE_FILES[0])
+    elif criterion == "canonical_full_initializations_exact":
+        report["initialization"]["gate_a"]["canonical_full"][
+            "parameter_count"
+        ] += 1
+    elif criterion == "legacy_initializations_complete":
+        report["initialization"]["gate_b"]["legacy"]["parameter_count"] += 1
+    elif criterion == "shared_paths_byte_identical":
+        report["initialization"]["gate_a"]["shared_paths"]["all_equal"] = False
+    elif criterion == "arm_initialization_refs_exact":
+        report["initialization"]["gate_b"]["arm_initialization_refs"][
+            "query_only"
+        ]["parameter_sha256"] = "0" * 64
+    elif criterion == "optimizer_paths_exact":
+        report["initialization"]["gate_a"]["optimizer_paths"]["frozen_write"][
+            "included"
+        ].append("memory_write_scale")
+    elif criterion == "fresh_optimizer_states_zero_and_finite":
+        report["initialization"]["gate_b"]["optimizer_paths"]["full"][
+            "fresh_state_all_zero"
+        ] = False
+    elif criterion == "compiler_topologies_complete":
+        report["initialization"]["gate_a"]["canonical_full"]["compiler"][
+            "all_required_direct"
+        ] = False
+    elif criterion == "no_behavioral_updates":
+        report["initialization"]["gate_b"]["optimizer_paths"]["legacy"][
+            "executed_updates"
+        ] = 1
+    else:
+        raise AssertionError(f"unhandled criterion {criterion}")
+
+
 def _reduced_gate_c_config() -> Any:
     return gate_c.GateCConfig(
         gate_a_config=gate_a.BindingGateConfig.smoke_config(),
@@ -350,6 +762,7 @@ class TestGateCContracts:
             "_initialization_topology_report",
             "_normalized_prerequisites",
             "_gate_c_initialization_qualification",
+            "_validated_gate_c_initialization_admission",
             "run_gate_c_initialization",
         }
 
@@ -1513,6 +1926,28 @@ def test_initialization_topology_report_binds_model_tree_and_compiler(
 
 
 @requires_gate_c
+def test_initialization_topology_rejects_trainer_from_another_model(
+    reduced_gate_c_initialization_subject: dict[str, Any],
+) -> None:
+    config = reduced_gate_c_initialization_subject["config"]
+    trainer = reduced_gate_c_initialization_subject["trainer"]
+    different_model = gate_c._new_model_for_arm(
+        config,
+        "gate_b",
+        "full",
+        batch_size=config.gate_b_config.batch_size,
+    )
+
+    with pytest.raises(ValueError, match="same model"):
+        gate_c._initialization_topology_report(
+            different_model,
+            trainer,
+            regime="gate_b",
+            tree="canonical_full",
+        )
+
+
+@requires_gate_c
 def test_reduced_gate_c_initialization_is_isolated_and_has_no_behavioral_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1792,3 +2227,512 @@ def test_reduced_gate_c_initialization_is_isolated_and_has_no_behavioral_run(
             assert _parameter_digest(models[(regime, arm)]) == (
                 trainer_parameter_sha[(regime, arm)]
             )
+
+
+@requires_gate_c
+def test_normalized_prerequisites_require_exact_frozen_compact_references() -> None:
+    prerequisites = {
+        "gate_a": dict(_GATE_A_REFERENCE),
+        "gate_b": dict(_GATE_B_REFERENCE),
+    }
+
+    normalized = gate_c._normalized_prerequisites(prerequisites)
+
+    assert normalized == prerequisites
+    assert normalized is not prerequisites
+    assert normalized["gate_a"] is not prerequisites["gate_a"]
+    assert normalized["gate_b"] is not prerequisites["gate_b"]
+    for gate_name in ("gate_a", "gate_b"):
+        for field in prerequisites[gate_name]:
+            mutated = copy.deepcopy(prerequisites)
+            if field == "qualification_passed":
+                mutated[gate_name][field] = 1
+            elif field == "source_commit":
+                mutated[gate_name][field] = "0" * 40
+            elif field.endswith("_path"):
+                mutated[gate_name][field] = "wrong/path.json"
+            else:
+                mutated[gate_name][field] = "0" * 64
+            with pytest.raises((TypeError, ValueError)):
+                gate_c._normalized_prerequisites(mutated)
+    for malformed in (
+        {"gate_a": dict(_GATE_A_REFERENCE)},
+        {
+            "gate_a": dict(_GATE_A_REFERENCE),
+            "gate_b": dict(_GATE_B_REFERENCE),
+            "extra": {},
+        },
+        {"gate_a": [], "gate_b": dict(_GATE_B_REFERENCE)},
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            gate_c._normalized_prerequisites(malformed)
+
+
+@requires_gate_c
+def test_full_synthetic_gate_c_initialization_genuinely_passes() -> None:
+    report, config = _passing_gate_c_initialization_report()
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert report["qualification"] == qualification
+    assert qualification == {
+        "criteria": {name: True for name in _INITIALIZATION_CRITERIA},
+        "passed": True,
+        "interpretation": "gate_c_initialization_admission_passed",
+    }
+
+
+@pytest.mark.parametrize("criterion", _INITIALIZATION_CRITERIA)
+@requires_gate_c
+def test_each_initialization_criterion_fails_on_one_field_mutation(
+    criterion: str,
+) -> None:
+    report, config = _passing_gate_c_initialization_report()
+    _mutate_gate_c_initialization_report(report, criterion)
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"][criterion] is False
+    assert {
+        name for name, passed in qualification["criteria"].items() if not passed
+    } == {criterion}
+    assert qualification["interpretation"] == (
+        "gate_c_initialization_admission_failed_stop"
+    )
+
+
+@requires_gate_c
+def test_initialization_qualification_rejects_extra_prerequisite() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    report["prerequisites"]["untrusted_extra"] = {
+        "qualification_passed": True,
+    }
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["gate_a_prerequisite_authenticated"] is False
+    assert qualification["criteria"]["gate_b_prerequisite_authenticated"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "source_extra_key",
+        "environment_extra_key",
+        "device_extra_key",
+        "device_boolean_id",
+        "device_boolean_process_index",
+        "empty_jax_version",
+    ),
+)
+@requires_gate_c
+def test_source_and_gpu_evidence_rejects_schema_and_boolean_confusion(
+    mutation: str,
+) -> None:
+    report, config = _passing_gate_c_initialization_report()
+    if mutation == "source_extra_key":
+        report["source_start"]["untrusted"] = True
+    elif mutation == "environment_extra_key":
+        report["environment"]["untrusted"] = True
+    elif mutation == "device_extra_key":
+        report["environment"]["devices"][0]["untrusted"] = True
+    elif mutation == "device_boolean_id":
+        report["environment"]["devices"][0]["id"] = True
+    elif mutation == "device_boolean_process_index":
+        report["environment"]["devices"][0]["process_index"] = False
+    else:
+        report["environment"]["jax"] = ""
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["source_and_gpu_authenticated"] is False
+
+
+@requires_gate_c
+def test_legacy_compiler_rejects_fabricated_context_memory_group() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    report["initialization"]["gate_a"]["legacy"]["compiler"][
+        "hidden_groups"
+    ].append({"index": 1, "hidden_paths": ["context_memory"]})
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["compiler_topologies_complete"] is False
+    assert qualification["criteria"]["legacy_initializations_complete"] is True
+
+
+@pytest.mark.parametrize(
+    "diagnostic",
+    (
+        "warning",
+        {"kind": "compile", "level": "warning"},
+        {
+            "kind": "compile",
+            "level": "warning",
+            "message": "synthetic",
+            "extra": True,
+        },
+        {"kind": "compile", "level": 1, "message": "synthetic"},
+        {
+            "kind": "compile",
+            "level": "warning",
+            "message": "synthetic",
+            "weight_path": 1,
+        },
+    ),
+)
+@requires_gate_c
+def test_compiler_diagnostics_require_exact_string_mapping(
+    diagnostic: Any,
+) -> None:
+    report, config = _passing_gate_c_initialization_report()
+    report["initialization"]["gate_a"]["canonical_full"]["compiler"][
+        "diagnostics"
+    ] = [diagnostic]
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["compiler_topologies_complete"] is False
+    assert qualification["criteria"]["canonical_full_initializations_exact"] is True
+
+
+@requires_gate_c
+def test_nested_behavioral_evidence_invalidates_initialization_schema() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    report["initialization"]["gate_a"]["behavioral_metrics"] = {
+        "accuracy": 1.0
+    }
+
+    qualification = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+
+    assert qualification["passed"] is False
+    assert qualification["criteria"]["no_behavioral_updates"] is False
+
+
+@requires_gate_c
+def test_authenticated_initialization_wrapper_recomputes_hashes_and_qualification() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    wrapper = _gate_c_initialization_wrapper(report)
+
+    admission = gate_c._validated_gate_c_initialization_admission(
+        wrapper,
+        config,
+        source_start=report["source_start"],
+        environment=report["environment"],
+        source_files=report["source_files"],
+        require_pass=True,
+    )
+
+    assert admission == report
+    assert set(wrapper) == {
+        "target",
+        "source_head",
+        "image_digest",
+        "bundle_sha256",
+        "manifest_sha256",
+        "preflight_sha256",
+        "result_sha256",
+        "admission",
+    }
+    assert wrapper["result_sha256"] == gate_b._strict_json_sha256(report)
+    assert wrapper["bundle_sha256"] == hashlib.sha256(
+        (
+            "example21-launch-bundle-v1\0gate_c_init\0"
+            f"{wrapper['source_head']}\0{wrapper['preflight_sha256']}\0"
+            f"{wrapper['result_sha256']}"
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+@requires_gate_c
+def test_authenticated_initialization_wrapper_rejects_tampering_and_staleness() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    wrapper = _gate_c_initialization_wrapper(report)
+    call_kwargs = {
+        "source_start": report["source_start"],
+        "environment": report["environment"],
+        "source_files": report["source_files"],
+        "require_pass": True,
+    }
+
+    extra = copy.deepcopy(wrapper)
+    extra["extra"] = True
+    with pytest.raises(ValueError, match="authenticated"):
+        gate_c._validated_gate_c_initialization_admission(
+            extra,
+            config,
+            **call_kwargs,
+        )
+
+    stale_result = copy.deepcopy(wrapper)
+    stale_result["admission"]["control"] = "tampered"
+    with pytest.raises(ValueError, match="result digest"):
+        gate_c._validated_gate_c_initialization_admission(
+            stale_result,
+            config,
+            **call_kwargs,
+        )
+
+    stale_bundle = copy.deepcopy(wrapper)
+    stale_bundle["bundle_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="bundle digest"):
+        gate_c._validated_gate_c_initialization_admission(
+            stale_bundle,
+            config,
+            **call_kwargs,
+        )
+
+    stale_qualification_report = copy.deepcopy(report)
+    stale_qualification_report["qualification"]["passed"] = False
+    stale_qualification = _gate_c_initialization_wrapper(
+        stale_qualification_report
+    )
+    with pytest.raises(ValueError, match="qualification is stale"):
+        gate_c._validated_gate_c_initialization_admission(
+            stale_qualification,
+            config,
+            **call_kwargs,
+        )
+
+    wrong_head = copy.deepcopy(wrapper)
+    wrong_head["source_head"] = "e" * 40
+    wrong_head["bundle_sha256"] = hashlib.sha256(
+        (
+            "example21-launch-bundle-v1\0gate_c_init\0"
+            f"{wrong_head['source_head']}\0{wrong_head['preflight_sha256']}\0"
+            f"{wrong_head['result_sha256']}"
+        ).encode("utf-8")
+    ).hexdigest()
+    with pytest.raises(ValueError, match="source or image"):
+        gate_c._validated_gate_c_initialization_admission(
+            wrong_head,
+            config,
+            **call_kwargs,
+        )
+
+    wrong_image = copy.deepcopy(wrapper)
+    wrong_image["image_digest"] = "sha256:" + "e" * 64
+    with pytest.raises(ValueError, match="source or image"):
+        gate_c._validated_gate_c_initialization_admission(
+            wrong_image,
+            config,
+            **call_kwargs,
+        )
+
+    wrong_source_files = dict(report["source_files"])
+    wrong_source_files[_GATE_C_SOURCE_FILES[0]] = "0" * 64
+    with pytest.raises(ValueError, match="source files"):
+        gate_c._validated_gate_c_initialization_admission(
+            wrapper,
+            config,
+            source_start=report["source_start"],
+            environment=report["environment"],
+            source_files=wrong_source_files,
+            require_pass=True,
+        )
+
+    dirty_formal_source = copy.deepcopy(report["source_start"])
+    dirty_formal_source["dirty"] = True
+    with pytest.raises(ValueError):
+        gate_c._validated_gate_c_initialization_admission(
+            wrapper,
+            config,
+            source_start=dirty_formal_source,
+            environment=report["environment"],
+            source_files=report["source_files"],
+            require_pass=True,
+        )
+
+    cpu_formal_environment = copy.deepcopy(report["environment"])
+    cpu_formal_environment["backend"] = "cpu"
+    with pytest.raises(ValueError):
+        gate_c._validated_gate_c_initialization_admission(
+            wrapper,
+            config,
+            source_start=report["source_start"],
+            environment=cpu_formal_environment,
+            source_files=report["source_files"],
+            require_pass=True,
+        )
+
+
+@requires_gate_c
+def test_authenticated_initialization_wrapper_require_pass_is_strict() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    _mutate_gate_c_initialization_report(
+        report,
+        "canonical_full_initializations_exact",
+    )
+    report["qualification"] = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+    wrapper = _gate_c_initialization_wrapper(report)
+    kwargs = {
+        "source_start": report["source_start"],
+        "environment": report["environment"],
+        "source_files": report["source_files"],
+    }
+
+    assert gate_c._validated_gate_c_initialization_admission(
+        wrapper,
+        config,
+        require_pass=False,
+        **kwargs,
+    ) == report
+    with pytest.raises(ValueError, match="did not pass"):
+        gate_c._validated_gate_c_initialization_admission(
+            wrapper,
+            config,
+            require_pass=True,
+            **kwargs,
+        )
+
+
+@requires_gate_c
+def test_wrapper_require_pass_false_does_not_relax_inner_schema() -> None:
+    report, config = _passing_gate_c_initialization_report()
+    report["untrusted_extra"] = True
+    report["qualification"] = gate_c._gate_c_initialization_qualification(
+        report,
+        config=config,
+    )
+    wrapper = _gate_c_initialization_wrapper(report)
+
+    with pytest.raises(ValueError, match="schema"):
+        gate_c._validated_gate_c_initialization_admission(
+            wrapper,
+            config,
+            source_start=report["source_start"],
+            environment=report["environment"],
+            source_files=report["source_files"],
+            require_pass=False,
+        )
+
+
+@requires_gate_c
+def test_initialization_authentication_precedes_model_construction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    valid_prerequisites = {
+        "gate_a": dict(_GATE_A_REFERENCE),
+        "gate_b": dict(_GATE_B_REFERENCE),
+    }
+    source = _passing_gate_c_source()
+    environment = _passing_gate_c_environment()
+    model_calls = 0
+
+    def forbidden_model(*args: Any, **kwargs: Any) -> Any:
+        nonlocal model_calls
+        model_calls += 1
+        raise AssertionError("model construction preceded authentication")
+
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", forbidden_model)
+    invalid_prerequisites = copy.deepcopy(valid_prerequisites)
+    invalid_prerequisites["gate_b"]["result_sha256"] = "0" * 64
+    with pytest.raises(ValueError):
+        gate_c.run_gate_c_initialization(
+            config,
+            prerequisites=invalid_prerequisites,
+            source_start=source,
+            source_end_reporter=lambda: source,
+            source_files=_current_gate_c_source_files(),
+            environment=environment,
+        )
+    assert model_calls == 0
+
+    invalid_source = dict(source)
+    invalid_source["dirty"] = True
+    with pytest.raises(RuntimeError, match="source"):
+        gate_c.run_gate_c_initialization(
+            config,
+            prerequisites=valid_prerequisites,
+            source_start=invalid_source,
+            source_end_reporter=lambda: source,
+            source_files=_current_gate_c_source_files(),
+            environment=environment,
+        )
+    assert model_calls == 0
+
+
+@requires_gate_c
+def test_initialization_rejects_nonmapping_source_end(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _reduced_gate_c_config()
+    values = {
+        path: np.asarray([index], dtype=np.float32)
+        for index, path in enumerate(_FULL_PATHS)
+    }
+
+    def fake_model(
+        runner_config: Any,
+        regime: str,
+        arm: str,
+        *,
+        batch_size: int,
+    ) -> dict[str, Any]:
+        del runner_config, batch_size
+        return {"regime": regime, "arm": arm}
+
+    def parameter_values(model: Mapping[str, str]) -> dict[str, Any]:
+        paths = _SHARED_PATHS if model["arm"] == "legacy" else _FULL_PATHS
+        return {path: values[path] for path in paths}
+
+    monkeypatch.setattr(gate_c, "_new_model_for_arm", fake_model)
+    monkeypatch.setattr(gate_c, "_copy_shared_initialization", lambda *args: {})
+    monkeypatch.setattr(gate_c, "_make_arm_trainer", lambda *args: object())
+    monkeypatch.setattr(
+        gate_c,
+        "_initialization_topology_report",
+        lambda *args, **kwargs: {},
+    )
+    monkeypatch.setattr(
+        gate_c,
+        "_optimizer_initial_state_report",
+        lambda trainer, *, regime, arm: _passing_optimizer_initialization(
+            regime,
+            arm,
+        ),
+    )
+    monkeypatch.setattr(gate_c.legacy, "_parameter_values", parameter_values)
+
+    with pytest.raises(TypeError, match="source_end.*mapping"):
+        gate_c.run_gate_c_initialization(
+            config,
+            prerequisites={
+                "gate_a": dict(_GATE_A_REFERENCE),
+                "gate_b": dict(_GATE_B_REFERENCE),
+            },
+            source_start=_passing_gate_c_source(),
+            source_end_reporter=lambda: [],
+            source_files=_current_gate_c_source_files(),
+            environment=_passing_gate_c_environment(),
+        )
