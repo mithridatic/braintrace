@@ -284,3 +284,55 @@ Per-query numbers must come from each record's own `score` block. The stored
 ranking, so re-deriving accuracy from them attributes the rule channel's solves
 to the network and reports zero exact matches for a run that had twenty-seven.
 The attribution script was corrected after making exactly that error.
+
+---
+
+## 12. Edge growth: participation rose, the binding-limited metric did not
+
+`var/example21-stage2-edges65536`, identical to §11 except 65,536 recurrent
+edges instead of 16,384 -- 32 per neuron against 8, a 4x increase and still 12x
+below FlyWire's ~391.
+
+| | 16,384 edges | 65,536 edges |
+|---|---|---|
+| recurrent parameter share | 0.44% | **1.73%** |
+| recurrent drive share (step 0) | 15.26% | **18.36%** |
+| peak device memory | 4.64 GiB (38.7%) | 4.64 GiB (38.7%) |
+| pixel accuracy | 0.6415 | 0.6427 |
+| shape accuracy | 0.7494 | 0.7494 |
+| **model shape on resize queries** | **23/128 = 0.1797** | **23/128 = 0.1797** |
+| exact pass@1 | 0.0650 | 0.0650 |
+
+Participation moved in the intended direction on both measures. The
+binding-limited metric did not move *at all* -- not approximately, but the same
+23 of 128 queries.
+
+This is the cleanest available evidence that the shape ceiling is architectural
+rather than a capacity limit, and it corroborates from a new direction what
+`var/example21-binding-control` recorded as
+`legacy_architecture_necessary_bptt_also_fails_binding`. Quadrupling the
+connectome changes what the network *can* represent and changes nothing about
+whether it *pairs demonstrations*. Recovery spec §3 already listed "more neurons
+or synapses" as ruled out; this measures it under the new decoder rather than
+inferring it.
+
+Memory headroom is not the constraint either: peak device memory was unchanged
+at 38.7% of the limit, well inside the 85% budget, so the 4x was not paid for.
+
+### What this implies for the next change
+
+Two levers remain for the shape criterion, and only one of them is on-objective:
+
+1. Feed demonstration-derived candidate shapes to the gate as deterministic
+   features -- the original §4. It would very likely clear 0.85, and it is
+   *more* hardcoded, not less.
+2. Give the decoder access to a mechanism that actually stores the
+   demonstration pairing. `--decoder-reads-memory` is the first step: the shape
+   gate adds a projection of the retrieved `S_K` read, so the decision draws on
+   the associative memory rather than on the reservoir having preserved the
+   pairing. Landed and tested; not yet measured on the full corpus.
+
+The pre-registered measurement for (2) is the same cell that refused to move
+under edge growth: **model shape accuracy on the 128 resize queries, currently
+0.1797**. Anything above it is binding contributing something the recurrent
+carrier alone did not supply.
