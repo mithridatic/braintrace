@@ -463,7 +463,7 @@ def test_refinement_splitters_fail_closed_on_shape_and_dtype(
         function(logits)
 
 
-def test_row_refinement_loss_supervises_shape_and_only_the_selected_valid_row() -> None:
+def test_nonterminal_loss_supervises_only_the_selected_valid_color_row() -> None:
     logits = jnp.zeros((2, 360), dtype=jnp.float32)
     height_classes = jnp.asarray([1, 0], dtype=jnp.int32)
     width_classes = jnp.asarray([2, 2], dtype=jnp.int32)
@@ -479,10 +479,9 @@ def test_row_refinement_loss_supervises_shape_and_only_the_selected_valid_row() 
         row_indices,
     )
 
-    expected_shape = 2.0 * np.log(30.0)
     np.testing.assert_allclose(
         loss,
-        jnp.asarray([expected_shape + np.log(10.0), expected_shape]),
+        jnp.asarray([np.log(10.0), 0.0]),
         rtol=1e-6,
     )
 
@@ -515,11 +514,11 @@ def test_row_refinement_loss_ignores_padded_columns_and_unselected_rows() -> Non
 
 
 def test_row_refinement_loss_is_jittable_and_differentiable() -> None:
-    target_height = jnp.asarray([2], dtype=jnp.int32)
+    target_height = jnp.asarray([29], dtype=jnp.int32)
     target_width = jnp.asarray([1], dtype=jnp.int32)
     target_colors = jnp.zeros((1, 30, 30), dtype=jnp.int32)
-    target_colors = target_colors.at[0, 2, :2].set(jnp.asarray([3, 7]))
-    row_index = jnp.asarray([2], dtype=jnp.int32)
+    target_colors = target_colors.at[0, 29, :2].set(jnp.asarray([3, 7]))
+    row_index = jnp.asarray([29], dtype=jnp.int32)
 
     def summed_loss(logits: jax.Array) -> jax.Array:
         return row_refinement_loss_per_example(
@@ -542,7 +541,7 @@ def test_row_refinement_loss_is_jittable_and_differentiable() -> None:
     assert not np.any(color_gradient[:, 2:])
 
 
-def test_invalid_target_row_has_zero_color_gradient_but_keeps_shape_gradient() -> None:
+def test_nonterminal_invalid_row_has_zero_shape_and_color_gradient() -> None:
     target_colors = jnp.full((1, 30, 30), 5, dtype=jnp.int32)
 
     def summed_loss(logits: jax.Array) -> jax.Array:
@@ -556,8 +555,41 @@ def test_invalid_target_row_has_zero_color_gradient_but_keeps_shape_gradient() -
 
     gradient = jax.grad(summed_loss)(jnp.zeros((1, 360), dtype=jnp.float32))
 
-    assert np.any(np.asarray(gradient[:, :60]))
+    assert not np.any(np.asarray(gradient[:, :60]))
     assert not np.any(np.asarray(gradient[:, 60:]))
+
+
+def test_shape_gradient_occurs_only_at_completed_sweep_row() -> None:
+    logits = jnp.zeros((2, 360), dtype=jnp.float32)
+
+    def summed_loss(values: jax.Array) -> jax.Array:
+        return row_refinement_loss_per_example(
+            values,
+            jnp.asarray([0, 0], dtype=jnp.int32),
+            jnp.asarray([0, 0], dtype=jnp.int32),
+            jnp.zeros((2, 30, 30), dtype=jnp.int32),
+            jnp.asarray([0, 29], dtype=jnp.int32),
+        ).sum()
+
+    gradient = np.asarray(jax.grad(summed_loss)(logits))
+
+    assert not np.any(gradient[0, :60])
+    assert np.any(gradient[1, :60])
+
+
+def test_complete_sweep_balances_shape_once_and_each_valid_color_row() -> None:
+    target_height = 2
+    target_width = 0
+    losses = row_refinement_loss_per_example(
+        jnp.zeros((30, 360), dtype=jnp.float32),
+        jnp.full((30,), target_height, dtype=jnp.int32),
+        jnp.full((30,), target_width, dtype=jnp.int32),
+        jnp.zeros((30, 30, 30), dtype=jnp.int32),
+        jnp.arange(30, dtype=jnp.int32),
+    )
+
+    expected = (2.0 * np.log(30.0) + (target_height + 1) * np.log(10.0)) / 30.0
+    np.testing.assert_allclose(np.mean(np.asarray(losses)), expected, rtol=1e-6)
 
 
 @pytest.mark.parametrize(

@@ -609,11 +609,13 @@ def row_refinement_loss_per_example(
 ) -> jax.Array:
     """Return deep-supervision loss for each selected answer-row tick.
 
-    Both 30-way shape axes are supervised on every tick. Color cross entropy
-    is averaged only over valid columns of the selected row. A row beyond the
-    target height contributes zero color loss while retaining both shape
-    losses. Height and width targets are zero-based class indices: class zero
-    represents a size of one and class 29 represents a size of 30.
+    Both 30-way shape axes are supervised once at the completed-sweep row 29.
+    Color cross entropy is averaged over valid columns of every selected valid
+    row. A nonterminal row beyond the target height contributes no loss. This
+    prevents 30 repeated shape terms from overwhelming the one color term seen
+    by each row during a sweep. Height and width targets are zero-based class
+    indices: class zero represents a size of one and class 29 represents a
+    size of 30.
 
     Parameters
     ----------
@@ -689,7 +691,9 @@ def row_refinement_loss_per_example(
     valid_colors = valid_row[:, None] & valid_columns
     color_loss = jnp.sum(jnp.where(valid_colors, color_nll, 0.0), axis=-1)
     color_loss /= jnp.maximum(jnp.sum(valid_colors, axis=-1), 1)
-    return height_loss + width_loss + color_loss
+    completed_sweep = row_indices == (MAX_GRID_SIZE - 1)
+    shape_loss = jnp.where(completed_sweep, height_loss + width_loss, 0.0)
+    return shape_loss + color_loss
 
 
 def refinement_output_logits(
