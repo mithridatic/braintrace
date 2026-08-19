@@ -2997,6 +2997,47 @@ def test_row_refinement_uses_compact_training_and_explicit_checkpoint_outputs() 
     )
 
 
+def test_selected_row_refinement_checkpoints_equal_full_trajectory_gather() -> None:
+    config = _row_refinement_config()
+    rows, encoded_events = _row_refinement_episode()
+    valid = encoded_events[:, rows.valid_slice.start] > 0.5
+    context = encoded_events[valid]
+    latent = jnp.zeros((30, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((context, latent), axis=0)[:, None, :]
+    advances = jnp.ones(events.shape[:2], dtype=jnp.bool_)
+    selected_indices = jnp.asarray(
+        [[context.shape[0] - 1], [context.shape[0] + 14], [context.shape[0] + 29]],
+        dtype=jnp.int32,
+    )
+
+    full = run_packed_stream(
+        LatentWorkspaceModel(config), events, advance_gates=advances
+    )
+    selected = run_selected_packed_stream(
+        LatentWorkspaceModel(config),
+        events,
+        selected_indices,
+        advance_gates=advances,
+    )
+
+    np.testing.assert_array_equal(
+        selected.compact_logits,
+        np.take_along_axis(
+            np.asarray(full.compact_logits),
+            np.asarray(selected_indices)[:, :, None],
+            axis=0,
+        ),
+    )
+    np.testing.assert_array_equal(
+        selected.expanded.colors,
+        np.take_along_axis(
+            np.asarray(full.expanded.colors),
+            np.asarray(selected_indices)[:, :, None, None, None],
+            axis=0,
+        ),
+    )
+
+
 def test_row_refinement_heads_are_direct_etraces_without_accumulator_groups() -> None:
     model = LatentWorkspaceModel(_row_refinement_config(recurrent_edges=32))
     with warnings.catch_warnings():
