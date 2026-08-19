@@ -39,23 +39,27 @@ try:
         score_query_candidates,
     )
     from examples.pp_prop.latent_workspace_model import (
-        ModelConfig,
         LatentWorkspaceModel,
+        ModelConfig,
         arc_loss_per_example,
         compile_pp_prop,
-        expand_compact_logits,
+        expand_decoder_logits,
         parameter_snapshot,
         run_selected_packed_stream,
+    )
+    from examples.pp_prop.latent_workspace_refinement import (
+        RowRefinementLayout,
+        row_refinement_loss_per_example,
     )
     from examples.pp_prop.latent_workspace_task import (
         ArcPair,
         ArcTask,
-        associative_memory_feature_indices,
         DatasetSource,
         EncodedQueryEpisode,
         LoadedDataset,
         RowEventConfig,
         assert_no_evaluation_leakage,
+        associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
@@ -74,23 +78,27 @@ except ModuleNotFoundError:
         score_query_candidates,
     )
     from latent_workspace_model import (
-        ModelConfig,
         LatentWorkspaceModel,
+        ModelConfig,
         arc_loss_per_example,
         compile_pp_prop,
-        expand_compact_logits,
+        expand_decoder_logits,
         parameter_snapshot,
         run_selected_packed_stream,
+    )
+    from latent_workspace_refinement import (
+        RowRefinementLayout,
+        row_refinement_loss_per_example,
     )
     from latent_workspace_task import (
         ArcPair,
         ArcTask,
-        associative_memory_feature_indices,
         DatasetSource,
         EncodedQueryEpisode,
         LoadedDataset,
         RowEventConfig,
         assert_no_evaluation_leakage,
+        associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
@@ -103,8 +111,9 @@ except ModuleNotFoundError:
 
 DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only"]
-CHECKPOINTS = (0, 8, 16, 32)
-TRAINING_EFFORTS = (8, 16, 32)
+DecoderMode = Literal["legacy_cp", "row_refinement"]
+CHECKPOINTS = (0, 30, 60)
+TRAINING_EFFORTS = (30, 60)
 EVALUATION_ARM_ORDER = (
     "intact",
     "repeat_intact",
@@ -188,7 +197,8 @@ class ExperimentConfig:
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
-        Maximum zero-input recurrent effort. Must be at least 32.
+        Maximum zero-input recurrent effort. Must be at least 60 so evaluation
+        contains two complete 30-row answer sweeps.
     training_updates : int
         Number of pp-prop/Adam updates shared across effort lengths.
     training_chunk_size : int
@@ -200,7 +210,10 @@ class ExperimentConfig:
         Adam rate and global gradient clipping norm.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
-        The default retains the legacy uniform valid-cell objective.
+        This option is valid only with the explicit legacy CP decoder.
+    decoder_mode : {"legacy_cp", "row_refinement"}
+        Explicit output representation. Production and CLI defaults use learned
+        row-wise refinement; legacy CP remains available only when named.
     ablation_slot : int
         Deterministic 64-neuron slot used by the frozen ablation control.
     evaluation_task_limit : int or None
@@ -218,15 +231,15 @@ class ExperimentConfig:
     output_dir: pathlib.Path = pathlib.Path("var/example21")
     device: DeviceName = "gpu"
     seed: int = 2108
-    neuron_count: int = 2048
-    recurrent_edges: int = 16384
+    neuron_count: int = 4096
+    recurrent_edges: int = 1_048_576
     readout_width: int = 128
     color_rank: int = 16
-    context_memory_width: int = 0
+    context_memory_width: int = 32
     memory_decay: float = 1.0
     max_demonstrations: int = 10
     max_grid_size: int = 30
-    latent_steps: int = 32
+    latent_steps: int = 60
     training_updates: int = 96
     training_chunk_size: int = 0
     learning_rate: float = 1e-4
@@ -237,6 +250,7 @@ class ExperimentConfig:
     smoke: bool = False
     structural_only: bool = False
     primary_candidate_mode: PrimaryCandidateMode = "model_only"
+    decoder_mode: DecoderMode = "row_refinement"
 
     def __post_init__(self) -> None:
         for name, minimum in (
@@ -248,7 +262,7 @@ class ExperimentConfig:
             ("context_memory_width", 0),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
-            ("latent_steps", 32),
+            ("latent_steps", 60),
             ("training_updates", 0),
             ("training_chunk_size", 0),
             ("ablation_slot", 0),
@@ -260,6 +274,16 @@ class ExperimentConfig:
             raise ValueError("device must be 'cpu' or 'gpu'")
         if self.primary_candidate_mode != "model_only":
             raise ValueError("primary_candidate_mode must be 'model_only'")
+        if self.decoder_mode not in ("legacy_cp", "row_refinement"):
+            raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+        if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
+            raise ValueError(
+                "decoder_mode='row_refinement' requires positive context_memory_width"
+            )
+        if self.decoder_mode == "row_refinement" and self.balanced_color_loss:
+            raise ValueError(
+                "balanced_color_loss is supported only by decoder_mode='legacy_cp'"
+            )
         if self.neuron_count % 64:
             raise ValueError("neuron_count must be divisible by 64")
         if self.context_memory_width > 128:
@@ -294,7 +318,7 @@ class ExperimentConfig:
             )
         if not self.structural_only and self.training_updates < len(TRAINING_EFFORTS):
             raise ValueError(
-                "training_updates must expose one model to 8, 16, and 32 steps"
+                "training_updates must expose one model to 30 and 60 steps"
             )
         if (
             self.training_chunk_size
@@ -310,9 +334,10 @@ class ExperimentConfig:
         output_dir: pathlib.Path = pathlib.Path("var/example21-smoke"),
         device: DeviceName = "cpu",
         seed: int = 2108,
-        context_memory_width: int = 0,
+        context_memory_width: int | None = None,
         memory_decay: float = 1.0,
         balanced_color_loss: bool = False,
+        decoder_mode: DecoderMode = "row_refinement",
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
 
@@ -324,18 +349,23 @@ class ExperimentConfig:
             Requested JAX backend.
         seed : int
             Deterministic model, schedule, and augmentation seed.
-        context_memory_width : int
-            Optional associative workspace width; zero retains legacy mode.
+        context_memory_width : int, optional
+            Associative workspace width. Defaults to 2 for row refinement and
+            zero for explicitly selected legacy CP mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
+        decoder_mode : {"legacy_cp", "row_refinement"}
+            Explicit decoder selected by the bounded smoke run.
 
         Returns
         -------
         ExperimentConfig
             A 128-neuron, 1,024-edge, three-update plumbing-only run.
         """
+        if context_memory_width is None:
+            context_memory_width = 2 if decoder_mode == "row_refinement" else 0
         return cls(
             output_dir=output_dir,
             device=device,
@@ -347,7 +377,9 @@ class ExperimentConfig:
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
             balanced_color_loss=balanced_color_loss,
+            decoder_mode=decoder_mode,
             max_demonstrations=4,
+            latent_steps=60,
             training_updates=3,
             learning_rate=5e-4,
             smoke=True,
@@ -642,16 +674,19 @@ def _training_row(
     terminal = query_checkpoint + effort
     if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
         raise ValueError("terminal effort exceeds packed sequence capacity")
-    depth_count = effort + 1
-    mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
+    if config.decoder_mode == "row_refinement":
+        mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
+    else:
+        depth_count = effort + 1
+        mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
     target = encoded.target
     padded = np.zeros((30, 30), dtype=np.int32)
     padded[: target.height, : target.width] = target.as_array()
     return {
         "events": sequence[:, None, :],
         "advances": advances[:, None],
-        "heights": target.height,
-        "widths": target.width,
+        "heights": target.height - 1,
+        "widths": target.width - 1,
         "colors": padded[None],
         "masks": mask,
         "task_fingerprints": canonical_task_fingerprint(task),
@@ -765,6 +800,29 @@ def _prepare_training(
     return chunks[0] if len(chunks) == 1 else _concatenated_chunks(chunks)
 
 
+def _row_refinement_layout(row_config: RowEventConfig) -> RowRefinementLayout:
+    """Map the ARC row-event schema into the learned feedback layout."""
+
+    return RowRefinementLayout(
+        input_width=row_config.input_width,
+        event_valid_index=row_config.valid_slice.start,
+        demonstration_phase_index=row_config.phase_slice.start,
+        query_phase_index=row_config.phase_slice.start + 1,
+        input_side_valid_index=row_config.side_valid_slice.start,
+        output_side_valid_index=row_config.side_valid_slice.start + 1,
+        normalized_start=row_config.normalized_slice.start,
+        row_index_start=row_config.row_index_slice.start,
+        input_height_start=row_config.input_height_slice.start,
+        input_width_start=row_config.input_width_slice.start,
+        output_height_start=row_config.output_height_slice.start,
+        output_width_start=row_config.output_width_slice.start,
+        input_mask_start=row_config.input_mask_slice.start,
+        output_mask_start=row_config.output_mask_slice.start,
+        input_color_start=row_config.input_color_slice.start,
+        output_color_start=row_config.output_color_slice.start,
+    )
+
+
 def _model_config(
     config: ExperimentConfig, row_config: RowEventConfig, *, batch_size: int
 ) -> ModelConfig:
@@ -777,7 +835,12 @@ def _model_config(
         "readout_width": config.readout_width,
         "color_rank": config.color_rank,
         "seed": config.seed,
+        "event_valid_index": row_config.valid_slice.start,
+        "decoder_mode": config.decoder_mode,
+        "refinement_steps": config.latent_steps,
     }
+    if config.decoder_mode == "row_refinement":
+        arguments["refinement_layout"] = _row_refinement_layout(row_config)
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
         arguments.update(
@@ -1051,6 +1114,11 @@ def _train_model(
             for path in getattr(learner, "param_states", {}).keys()
         ],
     }
+    supervised_depths = (
+        "latent_row_ticks_1..effort"
+        if config.decoder_mode == "row_refinement"
+        else "0..effort"
+    )
     if config.structural_only:
         model.reset_state()
         learner.reset_state(batch_size=model.config.batch_size)
@@ -1058,7 +1126,7 @@ def _train_model(
             "performed": False,
             "reason": "structural_only",
             "one_shared_model": True,
-            "supervised_depths": "0..effort",
+            "supervised_depths": supervised_depths,
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
             **compiler,
@@ -1082,11 +1150,25 @@ def _train_model(
 
             def step_loss(event, advance_gate):
                 compact = learner(event, advance_gate)
+                if config.decoder_mode == "row_refinement":
+                    current_rows = jnp.mod(
+                        jnp.asarray(model.reasoning_index.value, dtype=jnp.int32) - 1,
+                        30,
+                    )
+                    return jnp.mean(
+                        row_refinement_loss_per_example(
+                            compact,
+                            target_height,
+                            target_width,
+                            target_colors,
+                            current_rows,
+                        )
+                    )
                 return jnp.mean(
                     arc_loss_per_example(
                         compact,
-                        target_height,
-                        target_width,
+                        target_height + 1,
+                        target_width + 1,
                         target_colors,
                         color_rank=rank,
                         class_balanced_colors=config.balanced_color_loss,
@@ -1136,7 +1218,7 @@ def _train_model(
         "one_shared_model": True,
         "one_shared_optimizer_state": True,
         **compiler,
-        "supervised_depths": "0..effort",
+        "supervised_depths": supervised_depths,
         "depth_weighting": "uniform_unit_sum_per_update",
         "per_update_depth_weight_sum": 1.0,
         "balanced_color_loss": config.balanced_color_loss,
@@ -1306,11 +1388,14 @@ def _score_windows(
     compact: np.ndarray,
     records: Sequence[_EvaluationRecord],
     color_rank: int,
+    decoder_mode: DecoderMode,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score only model-decoded candidates at every frozen checkpoint."""
 
     checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
-    expanded = expand_compact_logits(jnp.asarray(checkpoint_compact), color_rank)
+    expanded = expand_decoder_logits(
+        jnp.asarray(checkpoint_compact), color_rank, decoder_mode
+    )
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
@@ -1337,6 +1422,10 @@ def _score_windows(
                     )
                 payload["provenance"] = "model"
                 candidate_payloads.append(payload)
+            if len(candidate_payloads) != 2:
+                raise ValueError(
+                    "primary scoring requires exactly two model candidates"
+                )
             target = record.encoded.target
             assert target is not None
             score = score_query_candidates(
@@ -1368,8 +1457,9 @@ def _trajectory_reports(
     recurrent_current: np.ndarray,
     records: Sequence[_EvaluationRecord],
     color_rank: int,
+    decoder_mode: DecoderMode,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-    expanded = expand_compact_logits(jnp.asarray(compact), color_rank)
+    expanded = expand_decoder_logits(jnp.asarray(compact), color_rank, decoder_mode)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
@@ -1508,6 +1598,7 @@ def _control_summary(
     control: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
     records: Sequence[_EvaluationRecord],
     color_rank: int,
+    decoder_mode: DecoderMode,
     intact_metrics: dict[str, dict[str, object]],
     metadata: Sequence[dict[str, object]] | None = None,
 ) -> dict[str, object]:
@@ -1531,11 +1622,13 @@ def _control_summary(
             applicable_control[0],
             applicable_records,
             color_rank,
+            decoder_mode,
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
             applicable_intact[0],
             applicable_records,
             color_rank,
+            decoder_mode,
         )
         if (
             len(applicable_records) == len(records)
@@ -2134,11 +2227,11 @@ def _evaluate(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
     intact_metrics, checkpoint_queries = _score_windows(
-        intact[0], records, config.color_rank
+        intact[0], records, config.color_rank, config.decoder_mode
     )
     channel_attribution = _channel_attribution(checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
-        *intact, records, config.color_rank
+        *intact, records, config.color_rank, config.decoder_mode
     )
 
     repeat_result = _control_summary(
@@ -2147,6 +2240,7 @@ def _evaluate(
         repeat_intact,
         records,
         config.color_rank,
+        config.decoder_mode,
         intact_metrics,
         intact_meta,
     )
@@ -2192,6 +2286,7 @@ def _evaluate(
         no_context,
         records,
         config.color_rank,
+        config.decoder_mode,
         intact_metrics,
         no_context_meta,
     )
@@ -2209,6 +2304,7 @@ def _evaluate(
         shuffled,
         records,
         config.color_rank,
+        config.decoder_mode,
         intact_metrics,
         shuffled_meta,
     )
@@ -2225,6 +2321,7 @@ def _evaluate(
         ablated,
         records,
         config.color_rank,
+        config.decoder_mode,
         intact_metrics,
         intact_meta,
     )
@@ -2515,8 +2612,8 @@ def _qualification(
             )
             and isinstance(score_deltas, dict)
             and {
-                "32.query_pass_at_2",
-                "32.valid_cell_pixel_accuracy_diagnostic",
+                "60.query_pass_at_2",
+                "60.valid_cell_pixel_accuracy_diagnostic",
             }
             <= score_deltas.keys()
             and finite_tree(value)
@@ -2842,6 +2939,10 @@ def _qualification(
         "ff_syn.comm.weight",
         "rec_syn.comm.weight",
     }
+    row_refinement_paths = {
+        "answer_row_head.weight",
+        "answer_shape_head.weight",
+    }
     plain_paths_expected = {
         "color_factor_head.weight",
         "height_head.weight",
@@ -2854,8 +2955,10 @@ def _qualification(
         "memory_read_projection.weight",
     }
     memory_enabled = config.context_memory_width > 0
-    routed_paths_expected = legacy_temporal_paths | (
-        associative_paths if memory_enabled else set()
+    routed_paths_expected = (
+        legacy_temporal_paths
+        | (associative_paths if memory_enabled else set())
+        | (row_refinement_paths if config.decoder_mode == "row_refinement" else set())
     )
     expected_parameter_paths = routed_paths_expected | plain_paths_expected
     route_classifications: dict[object, set[object]] = {}
@@ -2909,9 +3012,9 @@ def _qualification(
         and associative_routes_direct
     )
     full_scale = bool(
-        model_report.get("neuron_count") == 2048
-        and model_report.get("recurrent_edge_count") == 16384
-        and model_report.get("slot_count") == 32
+        model_report.get("neuron_count") == 4096
+        and model_report.get("recurrent_edge_count") == 1_048_576
+        and model_report.get("slot_count") == 64
         and int(model_report.get("parameter_count", 0)) > 0
     )
     component_types = model_report.get("component_types", {})
@@ -2999,8 +3102,13 @@ def _qualification(
     no_rejected_sources = all(
         len(getattr(item.manifest, "rejected", ())) == 0 for item in data.loaded
     )
+    expected_supervision = (
+        "latent_row_ticks_1..effort"
+        if config.decoder_mode == "row_refinement"
+        else "0..effort"
+    )
     depth_supervision = bool(
-        training.get("supervised_depths") == "0..effort"
+        training.get("supervised_depths") == expected_supervision
         and training.get("depth_weighting") == "uniform_unit_sum_per_update"
         and training.get("per_update_depth_weight_sum", 1.0) == 1.0
     )
@@ -3033,7 +3141,7 @@ def _qualification(
     }
     scientific = all(scientific_checks.values())
     structural_messages = {
-        "actual_full_scale": "actual model is not the required 2048-neuron/16384-edge scale",
+        "actual_full_scale": "actual model is not the required 4096-neuron/1048576-edge scale",
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
         "actual_gpu_backend": "actual evaluation backend is not GPU",
         "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
@@ -3050,8 +3158,8 @@ def _qualification(
         "approved_train_and_evaluation_sources": "approved train/evaluation source roles were not both present",
         "no_rejected_source_records": "source rejections were present",
         "not_plumbing_only": "embedded fixtures are plumbing-only",
-        "one_model_one_optimizer_depth_supervision": "training did not retain one shared model, optimizer state, and normalized supervision at every depth 0..effort",
-        "mixed_effort_update_schedule": "one shared model did not receive the complete 8/16/32 update schedule",
+        "one_model_one_optimizer_depth_supervision": "training did not retain one shared model, optimizer state, and normalized decoder-appropriate depth supervision",
+        "mixed_effort_update_schedule": "one shared model did not receive the complete 30/60 sweep schedule",
         "finite_loss_per_update": "one finite loss was not retained for every optimizer update",
         "parameters_moved": "training did not change parameter bytes",
         "temporal_synapses_moved": "feedforward and recurrent eligibility-routed synapses did not both move",
@@ -3238,7 +3346,8 @@ def _render_report(result: dict[str, object]) -> str:
     if training.get("performed") is True:
         training_line = (
             "Training: one parameter set and one Adam state; normalized uniform "
-            "supervision at every depth 0..R; updates by maximum depth "
+            f"{training.get('supervised_depths', 'unreported')} supervision; "
+            "updates by complete 30-row sweep depth "
             f"{training.get('optimizer_updates_by_effort', {})}."
         )
     else:
@@ -3386,21 +3495,21 @@ def _render_report(result: dict[str, object]) -> str:
             f"{split['submitted_model_candidate_count']}."
         )
     intact_metrics = evaluation.get("metrics_by_effort", {})
-    if "0" in intact_metrics and "32" in intact_metrics:
+    if "0" in intact_metrics and "60" in intact_metrics:
         effort_zero = intact_metrics["0"]["query_pass_at_2"]
-        effort_32 = intact_metrics["32"]["query_pass_at_2"]
-        exact_count_32 = round(effort_32 * int(intact_metrics["32"]["query_count"]))
+        effort_60 = intact_metrics["60"]["query_pass_at_2"]
+        exact_count_60 = round(effort_60 * int(intact_metrics["60"]["query_count"]))
         direction = (
             "improved"
-            if effort_32 > effort_zero
+            if effort_60 > effort_zero
             else "worsened"
-            if effort_32 < effort_zero
+            if effort_60 < effort_zero
             else "tied"
         )
         lines.append(
-            f"  Empirical outcome: effort 32 {direction} effort 0 on exact pass@2 "
-            f"({effort_32:.4f} versus {effort_zero:.4f}); "
-            f"{exact_count_32} effort-32 queries were exact within the scored set."
+            f"  Empirical outcome: effort 60 {direction} effort 0 on exact pass@2 "
+            f"({effort_60:.4f} versus {effort_zero:.4f}); "
+            f"{exact_count_60} effort-60 queries were exact within the scored set."
         )
     lines.extend(["", "Aggregate latent trajectory:"])
     trajectory = evaluation.get("aggregate_trajectory", [])
@@ -3491,7 +3600,7 @@ def _render_report(result: dict[str, object]) -> str:
                 )
             ):
                 lines.append(
-                    "    step-32 state deltas: spike-Hamming fraction="
+                    "    step-60 state deltas: spike-Hamming fraction="
                     f"{spike_fraction[max(CHECKPOINTS)]:.6f}; voltage L2="
                     f"{voltage_l2[max(CHECKPOINTS)]:.6f}; feedforward/recurrent "
                     f"current L2={feedforward_l2[max(CHECKPOINTS)]:.6f}/"
@@ -3685,14 +3794,14 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     for name in names:
         comparison = controls.get(name, {}).get("trajectory_comparison", {})
         score_deltas = comparison.get("score_deltas_control_minus_intact", {})
-        if "32.query_pass_at_2" not in score_deltas:
+        if "60.query_pass_at_2" not in score_deltas:
             exact_deltas.append(np.nan)
             diagnostic_deltas.append(np.nan)
             state_effects.append(np.nan)
             continue
-        exact_deltas.append(score_deltas["32.query_pass_at_2"])
+        exact_deltas.append(score_deltas["60.query_pass_at_2"])
         diagnostic_deltas.append(
-            score_deltas["32.valid_cell_pixel_accuracy_diagnostic"]
+            score_deltas["60.valid_cell_pixel_accuracy_diagnostic"]
         )
         state_effects.append(
             comparison["spike_hamming_fraction_by_step"][max(CHECKPOINTS)]
@@ -3710,7 +3819,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     )
     axes[1, 1].axhline(0.0, color="black", linewidth=0.8)
     axes[1, 1].set(
-        title="Control deltas at effort 32",
+        title="Control deltas at effort 60",
         ylabel="control minus intact",
         xticks=positions,
         xticklabels=names,
@@ -3725,7 +3834,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
         linestyle="none",
         label="spike-Hamming fraction",
     )
-    state_axis.set_ylabel("state effect at step 32")
+    state_axis.set_ylabel("state effect at step 60")
     handles, labels = axes[1, 1].get_legend_handles_labels()
     state_handles, state_labels = state_axis.get_legend_handles_labels()
     axes[1, 1].legend(handles + state_handles, labels + state_labels)
@@ -3784,6 +3893,10 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "slot_count": model.slot_count,
         "neurons_per_slot": 64,
         "input_width": rows.input_width,
+        "decoder_mode": model.config.decoder_mode,
+        "refinement_steps": model.config.refinement_steps,
+        "training_output_width": model.config.training_output_width,
+        "checkpoint_output_width": model.config.checkpoint_output_width,
         "compact_output_width": model.config.compact_output_width,
         "color_rank": model.config.color_rank,
         "parameter_count": _parameter_count(parameter_snapshot(model)),
@@ -3844,14 +3957,19 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--device", choices=("cpu", "gpu"), default="gpu")
     parser.add_argument("--seed", type=int, default=2108)
-    parser.add_argument("--neurons", type=int, default=2048)
-    parser.add_argument("--recurrent-edges", type=int, default=16384)
-    parser.add_argument("--context-memory-width", type=int, default=0)
+    parser.add_argument("--neurons", type=int, default=4096)
+    parser.add_argument("--recurrent-edges", type=int, default=1_048_576)
+    parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument("--training-updates", type=int, default=96)
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--balanced-color-loss", action="store_true")
+    parser.add_argument(
+        "--decoder-mode",
+        choices=("legacy_cp", "row_refinement"),
+        default="row_refinement",
+    )
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
     parser.add_argument("--smoke", action="store_true")
@@ -3861,7 +3979,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
     if args.smoke:
-        if args.neurons != 2048 or args.recurrent_edges != 16384:
+        if args.neurons != 4096 or args.recurrent_edges != 1_048_576:
             raise ValueError("--smoke owns its reduced neuron and edge scale")
         return ExperimentConfig.smoke_config(
             output_dir=args.output_dir,
@@ -3870,6 +3988,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
             balanced_color_loss=args.balanced_color_loss,
+            decoder_mode=args.decoder_mode,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,
@@ -3884,6 +4003,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_chunk_size=args.training_chunk_size,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
+        decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,

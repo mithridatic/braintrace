@@ -15,12 +15,12 @@ from enum import Enum
 from types import SimpleNamespace
 
 import brainstate
-import braintrace
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 
+import braintrace
 from braintrace._testing.oracle import (
     assert_gradients_differ,
     bptt_param_gradients,
@@ -35,6 +35,7 @@ from examples.pp_prop.latent_workspace_model import (
     run_packed_stream,
     run_selected_packed_stream,
 )
+from examples.pp_prop.latent_workspace_refinement import RowRefinementLayout
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
     ArcPair,
@@ -49,8 +50,10 @@ from examples.pp_prop.latent_workspace_task import (
     smoke_loaded_dataset,
 )
 
-
 EXAMPLE = pathlib.Path(__file__).with_name("21-latent-reasoning-in-context.py")
+TEST_CHECKPOINTS = (0, 30, 60)
+TEST_TRAINING_EFFORTS = (30, 60)
+TEST_DEPTH_COUNT = 61
 
 
 _PADDING_PROBE_EVENT_WIDTH = 6
@@ -163,7 +166,7 @@ def _tiny_compaction_fixture(example):
         task_id="compact-trace",
     )
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(seed=41),
+        example.ExperimentConfig.smoke_config(seed=41, decoder_mode="legacy_cp"),
         max_demonstrations=2,
     )
     rows = RowEventConfig(max_demonstrations=2, max_grid_size=4)
@@ -226,20 +229,20 @@ def _numeric_evidence(steps: list[int]) -> dict[str, object]:
 
 
 def _evaluation_payload() -> dict[str, object]:
-    metrics = {str(effort): _metric(float(effort == 32)) for effort in (0, 8, 16, 32)}
+    metrics = {str(effort): _metric(float(effort == 60)) for effort in TEST_CHECKPOINTS}
     comparison = {
         "causally_null_at_measured_precision": False,
-        "state_byte_identical_by_step": [False] * 33,
-        "spike_hamming_by_step": [1] * 33,
-        "spike_hamming_fraction_by_step": [0.125] * 33,
-        "voltage_l2_by_step": [1.0] * 33,
+        "state_byte_identical_by_step": [False] * TEST_DEPTH_COUNT,
+        "spike_hamming_by_step": [1] * TEST_DEPTH_COUNT,
+        "spike_hamming_fraction_by_step": [0.125] * TEST_DEPTH_COUNT,
+        "voltage_l2_by_step": [1.0] * TEST_DEPTH_COUNT,
         "synaptic_current_l2_by_step": {
-            "feedforward": [1.0] * 33,
-            "recurrent": [1.0] * 33,
+            "feedforward": [1.0] * TEST_DEPTH_COUNT,
+            "recurrent": [1.0] * TEST_DEPTH_COUNT,
         },
         "score_deltas_control_minus_intact": {
-            "32.query_pass_at_2": 0.0,
-            "32.valid_cell_pixel_accuracy_diagnostic": 0.0,
+            "60.query_pass_at_2": 0.0,
+            "60.valid_cell_pixel_accuracy_diagnostic": 0.0,
         },
     }
     control = {
@@ -272,7 +275,7 @@ def _evaluation_payload() -> dict[str, object]:
             "pairwise_feedforward_current_rms_distance": None,
             "pairwise_recurrent_current_rms_distance": None,
         }
-        for step in range(33)
+        for step in range(TEST_DEPTH_COUNT)
     ]
     query_steps = [
         {
@@ -304,7 +307,7 @@ def _evaluation_payload() -> dict[str, object]:
             "state_sha256": "0" * 64,
             "score": {},
         }
-        for step in range(33)
+        for step in range(TEST_DEPTH_COUNT)
     ]
     checkpoint_queries = {
         str(effort): [
@@ -312,18 +315,21 @@ def _evaluation_payload() -> dict[str, object]:
                 "task_id": "task",
                 "query_index": 0,
                 "primary_candidate_mode": "model_only",
-                "candidates": [{"grid": [[0]], "provenance": "model"}],
+                "candidates": [
+                    {"grid": [[0]], "provenance": "model"},
+                    {"grid": [[1]], "provenance": "model"},
+                ],
                 "score": {},
             }
         ]
-        for effort in (0, 8, 16, 32)
+        for effort in TEST_CHECKPOINTS
     }
     control["decoded_candidates_match_intact"] = True
     control["decoded_candidates_match_intact_by_effort"] = {
-        str(effort): True for effort in (0, 8, 16, 32)
+        str(effort): True for effort in TEST_CHECKPOINTS
     }
     control["decoded_candidate_match_query_count_by_effort"] = {
-        str(effort): 1 for effort in (0, 8, 16, 32)
+        str(effort): 1 for effort in TEST_CHECKPOINTS
     }
     control["byte_identical_query_count"] = 0
     return {
@@ -333,7 +339,11 @@ def _evaluation_payload() -> dict[str, object]:
         "same_frozen_parameter_bytes": True,
         "checkpoint_queries": checkpoint_queries,
         "query_trajectories": [
-            {"step_count": 33, "neuron_count": 2048, "steps": query_steps}
+            {
+                "step_count": TEST_DEPTH_COUNT,
+                "neuron_count": 4096,
+                "steps": query_steps,
+            }
         ],
         "metrics_by_effort": metrics,
         "aggregate_trajectory": trajectory,
@@ -347,7 +357,9 @@ def _evaluation_payload() -> dict[str, object]:
             "repeat_intact_within_tolerance": True,
             "repeat_intact_metrics_exact": True,
             "repeat_intact_decoded_candidates_exact": True,
-            "repeat_intact_numeric_evidence": _numeric_evidence(list(range(33))),
+            "repeat_intact_numeric_evidence": _numeric_evidence(
+                list(range(TEST_DEPTH_COUNT))
+            ),
             "slot_ablation_checkpoint_zero_byte_identical": True,
             "slot_ablation_checkpoint_zero_state_within_tolerance": True,
             "slot_ablation_checkpoint_zero_decoded_candidates_exact": True,
@@ -361,13 +373,13 @@ def _evaluation_payload() -> dict[str, object]:
                 trajectory_comparison={
                     **comparison,
                     "causally_null_at_measured_precision": True,
-                    "state_byte_identical_by_step": [True] * 33,
-                    "spike_hamming_by_step": [0] * 33,
-                    "spike_hamming_fraction_by_step": [0.0] * 33,
-                    "voltage_l2_by_step": [0.0] * 33,
+                    "state_byte_identical_by_step": [True] * TEST_DEPTH_COUNT,
+                    "spike_hamming_by_step": [0] * TEST_DEPTH_COUNT,
+                    "spike_hamming_fraction_by_step": [0.0] * TEST_DEPTH_COUNT,
+                    "voltage_l2_by_step": [0.0] * TEST_DEPTH_COUNT,
                     "synaptic_current_l2_by_step": {
-                        "feedforward": [0.0] * 33,
-                        "recurrent": [0.0] * 33,
+                        "feedforward": [0.0] * TEST_DEPTH_COUNT,
+                        "recurrent": [0.0] * TEST_DEPTH_COUNT,
                     },
                 },
                 causally_null_query_count=1,
@@ -377,7 +389,7 @@ def _evaluation_payload() -> dict[str, object]:
             "shuffled_demonstrations": copy.deepcopy(control),
             "slot_ablation": copy.deepcopy(control),
             "truncation": {
-                "checkpoints": [0, 8, 16, 32],
+                "checkpoints": list(TEST_CHECKPOINTS),
                 "uses_one_continuous_intact_trajectory": True,
             },
         },
@@ -388,12 +400,16 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     full = example.ExperimentConfig(output_dir=tmp_path, structural_only=True)
     smoke = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
 
-    assert (full.neuron_count, full.recurrent_edges) == (2048, 16384)
+    assert (full.neuron_count, full.recurrent_edges) == (4096, 1_048_576)
     assert (smoke.neuron_count, smoke.recurrent_edges) == (128, 1024)
     assert full.max_demonstrations == 10
-    assert full.to_dict()["checkpoints"] == [0, 8, 16, 32]
+    assert full.to_dict()["checkpoints"] == [0, 30, 60]
     assert smoke.smoke is True
-    assert full.context_memory_width == 0
+    assert full.context_memory_width == 32
+    assert smoke.context_memory_width == 2
+    assert full.decoder_mode == "row_refinement"
+    assert smoke.decoder_mode == "row_refinement"
+    assert full.latent_steps == smoke.latent_steps == 60
     assert full.memory_decay == 1.0
     assert full.balanced_color_loss is False
     assert full.to_dict()["balanced_color_loss"] is False
@@ -420,11 +436,12 @@ def test_associative_memory_config_rejects_invalid_values(example, kwargs, messa
     ("kwargs", "message"),
     [
         ({"neuron_count": 127}, "divisible by 64"),
-        ({"recurrent_edges": 2048 * 2048}, "no-self capacity"),
+        ({"recurrent_edges": 4096 * 4096}, "no-self capacity"),
         ({"max_grid_size": 29}, "standard ARC"),
-        ({"latent_steps": 31}, "latent_steps"),
-        ({"ablation_slot": 32}, "ablation_slot"),
-        ({"training_updates": 2}, "8, 16, and 32"),
+        ({"latent_steps": 59}, "latent_steps"),
+        ({"ablation_slot": 64}, "ablation_slot"),
+        ({"training_updates": 1}, "30 and 60"),
+        ({"decoder_mode": "width_inferred"}, "decoder_mode"),
         ({"device": "tpu"}, "device"),
         ({"learning_rate": float("nan")}, "learning_rate"),
     ],
@@ -441,12 +458,29 @@ def test_structural_config_allows_zero_updates(example):
     assert config.training_updates == 0
 
 
+def test_row_refinement_requires_continuous_workspace_memory(example):
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            decoder_mode="row_refinement",
+        )
+
+    legacy = example.ExperimentConfig(
+        structural_only=True,
+        context_memory_width=0,
+        decoder_mode="legacy_cp",
+    )
+    assert legacy.context_memory_width == 0
+
+
 def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_path):
     parsed = example._parser().parse_args([])
     assert parsed.device == "gpu"
-    assert parsed.neurons == 2048
-    assert parsed.recurrent_edges == 16384
-    assert parsed.context_memory_width == 0
+    assert parsed.neurons == 4096
+    assert parsed.recurrent_edges == 1_048_576
+    assert parsed.context_memory_width == 32
+    assert parsed.decoder_mode == "row_refinement"
     assert parsed.memory_decay == 1.0
     assert parsed.balanced_color_loss is False
 
@@ -457,11 +491,14 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
             "cpu",
             "--output-dir",
             str(tmp_path),
+            "--decoder-mode",
+            "legacy_cp",
             "--balanced-color-loss",
         ]
     )
     smoke = example._config_from_args(smoke_args)
     assert smoke.smoke and smoke.device == "cpu"
+    assert smoke.decoder_mode == "legacy_cp"
     assert smoke.balanced_color_loss is True
 
     bad = example._parser().parse_args(["--smoke", "--neurons", "128"])
@@ -483,6 +520,8 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
             "32",
             "--memory-decay",
             "0.95",
+            "--decoder-mode",
+            "legacy_cp",
             "--balanced-color-loss",
         ]
     )
@@ -622,11 +661,16 @@ def test_row_layout_and_packed_latent_input_are_exactly_fixed(example):
     advances = example._packed_advances(encoded, config, rows)
 
     assert rows.max_events == 150
-    assert packed.shape == (182, rows.input_width)
+    assert packed.shape == (rows.max_events + config.latent_steps, rows.input_width)
     assert np.count_nonzero(packed[encoded.events.shape[0] :]) == 0
-    assert np.count_nonzero(packed[encoded.query_stop : encoded.query_stop + 32]) == 0
+    assert (
+        np.count_nonzero(
+            packed[encoded.query_stop : encoded.query_stop + config.latent_steps]
+        )
+        == 0
+    )
     assert advances.dtype == np.bool_
-    assert advances[encoded.query_stop : encoded.query_stop + 32].all()
+    assert advances[encoded.query_stop : encoded.query_stop + config.latent_steps].all()
 
 
 def test_advance_schedule_skips_demonstration_padding_rows(example):
@@ -653,7 +697,7 @@ def test_advance_schedule_skips_demonstration_padding_rows(example):
     occupied_stop = encoded.demonstration_spans[-1][1]
     assert not advances[occupied_stop : encoded.query_start].any()
     assert advances[encoded.query_start : encoded.query_stop].all()
-    assert not advances[encoded.query_stop + 32 :].any()
+    assert not advances[encoded.query_stop + config.latent_steps :].any()
 
 
 def test_advance_schedule_never_drops_a_valid_demonstration_row(example):
@@ -712,10 +756,10 @@ def test_padding_changes_finite_window_pp_prop_credit_not_bptt_objective():
 def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
     first = example._effort_schedule(11, brainstate.random.RandomState(7))
     second = example._effort_schedule(11, brainstate.random.RandomState(7))
-    counts = {effort: int(np.sum(first == effort)) for effort in (8, 16, 32)}
+    counts = {effort: int(np.sum(first == effort)) for effort in (30, 60)}
 
     assert np.array_equal(first, second)
-    assert set(first.tolist()) == {8, 16, 32}
+    assert set(first.tolist()) == {30, 60}
     assert max(counts.values()) - min(counts.values()) <= 1
 
 
@@ -770,8 +814,8 @@ def test_training_row_uses_one_held_out_demonstration_as_the_query(example):
     )
     np.testing.assert_array_equal(produced["events"][:, 0], expected_events)
     np.testing.assert_array_equal(produced["advances"][:, 0], expected_advances)
-    assert int(produced["heights"]) == task.train[held_out_index].output.height
-    assert int(produced["widths"]) == task.train[held_out_index].output.width
+    assert int(produced["heights"]) == task.train[held_out_index].output.height - 1
+    assert int(produced["widths"]) == task.train[held_out_index].output.width - 1
     np.testing.assert_array_equal(
         produced["colors"][0, :1, :1],
         task.train[held_out_index].output.as_array(),
@@ -937,8 +981,8 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
 
     model_config = _tiny_trace_model_config(rows)
     target = np.zeros((1, model_config.compact_output_width), dtype=np.float32)
-    target[0, int(row["heights"]) - 1] = 1.0
-    target[0, MAX_GRID_SIZE + int(row["widths"]) - 1] = 1.0
+    target[0, int(row["heights"])] = 1.0
+    target[0, MAX_GRID_SIZE + int(row["widths"])] = 1.0
 
     def factory():
         return _TrainingRowTraceProbe(model_config, jnp.asarray(target))
@@ -964,22 +1008,24 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
     )
 
 
-def test_training_mask_supervises_every_depth_with_unit_update_weight(example):
-    """An effort-R update weights every depth 0..R and totals one update."""
+def test_training_mask_supervises_only_latent_row_ticks_with_unit_weight(example):
+    """An effort-R update weights only its R generated row ticks."""
     config = example.ExperimentConfig.smoke_config()
     rows = example._row_config(config)
     tensors = example._prepare_training(example._load_data(config), config, rows)
 
     for effort, mask in zip(tensors.efforts, tensors.masks, strict=True):
-        depth_count = int(effort) + 1
         supervised = np.flatnonzero(mask)
-        assert supervised.size == depth_count
+        assert supervised.size == int(effort)
         np.testing.assert_array_equal(
-            supervised, np.arange(supervised[-1] - int(effort), supervised[-1] + 1)
+            supervised,
+            np.arange(supervised[-1] - int(effort) + 1, supervised[-1] + 1),
         )
         np.testing.assert_allclose(
-            mask[supervised], np.full(depth_count, 1.0 / depth_count)
+            mask[supervised], np.full(int(effort), 1.0 / int(effort))
         )
+        assert config.latent_steps == 60
+        assert not mask[supervised[0] - 1]
         assert float(np.sum(mask)) == pytest.approx(1.0)
 
 
@@ -990,20 +1036,24 @@ def test_training_tensor_terminals_follow_each_sample_effort(example):
 
     tensors = example._prepare_training(data, config, rows)
 
-    assert tensors.events.shape == (3, rows.max_events + 32, 1, rows.input_width)
-    assert tensors.advances.shape == (3, rows.max_events + 32, 1)
+    assert tensors.events.shape == (3, rows.max_events + 60, 1, rows.input_width)
+    assert tensors.advances.shape == (3, rows.max_events + 60, 1)
     assert tensors.colors.shape == (3, 1, 30, 30)
+    assert np.all((0 <= tensors.heights) & (tensors.heights < 30))
+    assert np.all((0 <= tensors.widths) & (tensors.widths < 30))
     assert np.all(np.sum(tensors.masks, axis=1) == 1.0)
     for index, effort in enumerate(tensors.efforts):
         supervised = np.flatnonzero(tensors.masks[index])
-        checkpoint = int(supervised[0])
+        first_row_tick = int(supervised[0])
         terminal = int(supervised[-1])
-        assert terminal - checkpoint == int(effort)
-        assert tensors.events[index, checkpoint, 0, rows.valid_slice.start] == 1.0
+        assert terminal - first_row_tick + 1 == int(effort)
         assert (
-            np.count_nonzero(tensors.events[index, checkpoint + 1 : terminal + 1]) == 0
+            tensors.events[index, first_row_tick - 1, 0, rows.valid_slice.start] == 1.0
         )
-        assert tensors.advances[index, checkpoint + 1 : terminal + 1].all()
+        assert (
+            np.count_nonzero(tensors.events[index, first_row_tick : terminal + 1]) == 0
+        )
+        assert tensors.advances[index, first_row_tick : terminal + 1].all()
 
 
 def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
@@ -1013,6 +1063,12 @@ def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
     assert model_config.batch_size == 3
     assert model_config.input_width == rows.input_width
     assert model_config.recurrent_edges == 1024
+    assert model_config.decoder_mode == "row_refinement"
+    assert model_config.refinement_steps == 60
+    assert isinstance(model_config.refinement_layout, RowRefinementLayout)
+    assert model_config.refinement_layout.input_width == rows.input_width
+    assert model_config.training_output_width == 360
+    assert model_config.checkpoint_output_width == 9060
 
     source_state = SimpleNamespace(value={"weight": np.array([1.0, 2.0])})
     target_state = SimpleNamespace(value={"weight": np.array([0.0, 0.0])})
@@ -1038,10 +1094,23 @@ def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
         example._copy_parameters(source, mismatch)
 
 
+def test_model_configuration_keeps_legacy_decoder_dispatch_explicit(example):
+    config = example.ExperimentConfig.smoke_config(decoder_mode="legacy_cp")
+    rows = example._row_config(config)
+
+    model_config = example._model_config(config, rows, batch_size=1)
+
+    assert model_config.decoder_mode == "legacy_cp"
+    assert model_config.refinement_layout is None
+    assert model_config.training_output_width == model_config.compact_output_width
+
+
 def test_model_configuration_wires_opt_in_associative_memory_features(example):
     rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
     legacy = example._model_config(
-        example.ExperimentConfig.smoke_config(), rows, batch_size=3
+        example.ExperimentConfig.smoke_config(decoder_mode="legacy_cp"),
+        rows,
+        batch_size=3,
     )
     assert legacy.context_memory_width == 0
     assert legacy.memory_key_indices == ()
@@ -1073,7 +1142,11 @@ def test_model_configuration_wires_opt_in_associative_memory_features(example):
 def test_memory_architecture_report_records_raw_width_and_dense_state_cost(example):
     rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
     legacy = example._memory_architecture_report(
-        example.ExperimentConfig(structural_only=True),
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            decoder_mode="legacy_cp",
+        ),
         rows,
         training_batch_size=1,
         evaluation_batch_size=419,
@@ -1113,7 +1186,9 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
     rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
     legacy_model = LatentWorkspaceModel(
         example._model_config(
-            example.ExperimentConfig.smoke_config(), rows, batch_size=1
+            example.ExperimentConfig.smoke_config(decoder_mode="legacy_cp"),
+            rows,
+            batch_size=1,
         )
     )
     legacy = example._model_memory_report(legacy_model)
@@ -1392,7 +1467,7 @@ def test_equal_output_rotation_is_excluded_from_pairing_applicability(example):
 
 
 def test_gather_window_uses_each_query_terminal(example):
-    time, batch = 40, 2
+    time, batch = 70, 2
     packed = SimpleNamespace(
         compact_logits=np.arange(time * batch * 3).reshape(time, batch, 3),
         spikes=np.arange(time * batch * 4).reshape(time, batch, 4),
@@ -1403,25 +1478,33 @@ def test_gather_window_uses_each_query_terminal(example):
     compact, spikes, voltage, feedforward, recurrent = example._gather_window(
         packed, np.array([2, 5])
     )
-    assert compact.shape == (33, 2, 3)
+    assert compact.shape == (TEST_DEPTH_COUNT, 2, 3)
     assert spikes[0, 0, 0] == packed.spikes[1, 0, 0]
-    assert voltage[32, 1, 0] == packed.voltage[36, 1, 0]
-    assert feedforward.shape == (33, 2, 6)
-    assert recurrent.shape == (33, 2, 7)
+    assert voltage[60, 1, 0] == packed.voltage[64, 1, 0]
+    assert feedforward.shape == (TEST_DEPTH_COUNT, 2, 6)
+    assert recurrent.shape == (TEST_DEPTH_COUNT, 2, 7)
 
 
-def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(example):
+@pytest.mark.parametrize(
+    ("decoder_mode", "output_width"),
+    [("legacy_cp", 340), ("row_refinement", 9060)],
+)
+def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(
+    example, decoder_mode, output_width
+):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))
     batch = len(records)
-    compact = np.zeros((33, batch, 340), dtype=np.float32)
-    spikes = np.zeros((33, batch, 8), dtype=np.float32)
-    voltage = np.zeros((33, batch, 8), dtype=np.float32)
+    compact = np.zeros((TEST_DEPTH_COUNT, batch, output_width), dtype=np.float32)
+    spikes = np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32)
+    voltage = np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32)
     feedforward = np.zeros_like(voltage)
     recurrent = np.zeros_like(voltage)
 
-    metrics, details = example._score_windows(compact, records, color_rank=4)
+    metrics, details = example._score_windows(
+        compact, records, color_rank=4, decoder_mode=decoder_mode
+    )
     reports, aggregate = example._trajectory_reports(
         compact,
         spikes,
@@ -1430,6 +1513,7 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
         recurrent,
         records,
         color_rank=4,
+        decoder_mode=decoder_mode,
     )
     control = example._control_summary(
         "identity",
@@ -1443,12 +1527,13 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
         ),
         records,
         4,
+        decoder_mode,
         metrics,
         [{"available": True, "timing_matched": True} for _ in records],
     )
 
-    assert set(metrics) == {"0", "8", "16", "32"}
-    assert all(len(details[str(effort)]) == batch for effort in (0, 8, 16, 32))
+    assert set(metrics) == {"0", "30", "60"}
+    assert all(len(details[str(effort)]) == batch for effort in TEST_CHECKPOINTS)
     assert all(
         candidate["provenance"] == "model"
         for rows_at_effort in details.values()
@@ -1456,12 +1541,17 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
         for candidate in row["candidates"]
     )
     assert all(
+        len(row["candidates"]) == 2
+        for rows_at_effort in details.values()
+        for row in rows_at_effort
+    )
+    assert all(
         row["primary_candidate_mode"] == "model_only"
         for rows_at_effort in details.values()
         for row in rows_at_effort
     )
     assert len(reports) == batch
-    assert len(aggregate) == 33
+    assert len(aggregate) == TEST_DEPTH_COUNT
     assert aggregate[0]["unique_state_hashes"] == 1
     assert control["causally_null_query_count"] == batch
     assert control["available_query_count"] == batch
@@ -1474,7 +1564,7 @@ def test_scoring_rejects_non_model_candidate_provenance(example, monkeypatch):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))
-    compact = np.zeros((33, len(records), 340), dtype=np.float32)
+    compact = np.zeros((TEST_DEPTH_COUNT, len(records), 340), dtype=np.float32)
 
     class Candidate:
         grid = np.zeros((1, 1), dtype=np.int32)
@@ -1485,7 +1575,7 @@ def test_scoring_rejects_non_model_candidate_provenance(example, monkeypatch):
     monkeypatch.setattr(example, "decode_candidates", lambda logits: [Candidate()])
 
     with pytest.raises(ValueError, match="non-model candidate provenance"):
-        example._score_windows(compact, records, color_rank=4)
+        example._score_windows(compact, records, color_rank=4, decoder_mode="legacy_cp")
 
 
 def test_primary_evaluation_has_no_rule_proposal_path(example):
@@ -1509,22 +1599,22 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))[:2]
-    compact = np.zeros((33, 2, 340), dtype=np.float32)
-    spikes = np.zeros((33, 2, 8), dtype=np.float32)
-    voltage = np.zeros((33, 2, 8), dtype=np.float32)
+    compact = np.zeros((TEST_DEPTH_COUNT, 2, 340), dtype=np.float32)
+    spikes = np.zeros((TEST_DEPTH_COUNT, 2, 8), dtype=np.float32)
+    voltage = np.zeros((TEST_DEPTH_COUNT, 2, 8), dtype=np.float32)
     feedforward = np.zeros_like(voltage)
     recurrent = np.zeros_like(voltage)
     captured: dict[str, object] = {}
 
-    def score(subset_compact, subset_records, color_rank, subset_rules=None):
+    def score(subset_compact, subset_records, color_rank, decoder_mode):
         captured["scored_records"] = len(subset_records)
         captured["scored_batch"] = subset_compact.shape[1]
-        captured["scored_rules"] = None if subset_rules is None else len(subset_rules)
+        captured["decoder_mode"] = decoder_mode
         details = {
             str(effort): [{"candidates": [{"grid": [[0]]}]} for _ in subset_records]
-            for effort in (0, 8, 16, 32)
+            for effort in TEST_CHECKPOINTS
         }
-        return {str(effort): _metric() for effort in (0, 8, 16, 32)}, details
+        return {str(effort): _metric() for effort in TEST_CHECKPOINTS}, details
 
     def compare(
         intact_spikes, intact_voltage, control_spikes, control_voltage, **kwargs
@@ -1551,14 +1641,15 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
         ),
         records,
         4,
-        {str(effort): _metric() for effort in (0, 8, 16, 32)},
+        "legacy_cp",
+        {str(effort): _metric() for effort in TEST_CHECKPOINTS},
         metadata,
     )
 
     assert captured == {
         "scored_records": 1,
         "scored_batch": 1,
-        "scored_rules": None,
+        "decoder_mode": "legacy_cp",
         "comparison_width": 8,
     }
     assert result["query_count"] == 2
@@ -1570,8 +1661,8 @@ def test_all_unavailable_shuffle_renders_as_unavailable(example, tmp_path):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))[:1]
-    compact = np.zeros((33, 1, 340), dtype=np.float32)
-    state = np.zeros((33, 1, 8), dtype=np.float32)
+    compact = np.zeros((TEST_DEPTH_COUNT, 1, 340), dtype=np.float32)
+    state = np.zeros((TEST_DEPTH_COUNT, 1, 8), dtype=np.float32)
     window = (compact, state, state.copy(), state.copy(), state.copy())
 
     unavailable = example._control_summary(
@@ -1580,7 +1671,8 @@ def test_all_unavailable_shuffle_renders_as_unavailable(example, tmp_path):
         tuple(value.copy() for value in window),
         records,
         4,
-        {str(effort): _metric() for effort in (0, 8, 16, 32)},
+        "legacy_cp",
+        {str(effort): _metric() for effort in TEST_CHECKPOINTS},
         [{"available": False, "timing_matched": True, "reason": "one demo"}],
     )
     payload = _evaluation_payload()
@@ -1780,9 +1872,16 @@ def test_structural_path_compiles_pp_prop_before_qualification(example, monkeypa
     assert calls[-2:] == ["model_reset", ("learner_reset", 1)]
 
 
-def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatch):
+@pytest.mark.parametrize(
+    ("decoder_mode", "output_width"),
+    [("row_refinement", 360), ("legacy_cp", 340)],
+)
+def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
+    example, monkeypatch, decoder_mode, output_width
+):
     updates: list[object] = []
-    color_loss_kwargs: list[dict[str, object]] = []
+    row_loss_calls: list[tuple[object, ...]] = []
+    legacy_loss_calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
 
     class Learner:
         param_states = {}
@@ -1793,7 +1892,7 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
         def __call__(self, event, advance):
             assert event.shape == (1, 4)
             assert advance.shape == (1,)
-            return jnp.zeros((1, 340), dtype=jnp.float32)
+            return jnp.zeros((1, output_width), dtype=jnp.float32)
 
         def etrace_grad(self, sequence, advance, *, step_fn, **kwargs):
             assert kwargs["loss_output"] == "scalar"
@@ -1811,7 +1910,12 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
             updates.append(gradients)
 
     class Model:
-        config = SimpleNamespace(batch_size=1, color_rank=4)
+        config = SimpleNamespace(
+            batch_size=1,
+            color_rank=4,
+            decoder_mode=decoder_mode,
+        )
+        reasoning_index = SimpleNamespace(value=jnp.asarray([1], dtype=jnp.int32))
 
         def reset_state(self):
             return None
@@ -1829,48 +1933,70 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
     monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
     monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
 
-    def color_loss(*args, **kwargs):
-        color_loss_kwargs.append(kwargs)
+    def row_loss(*args):
+        row_loss_calls.append(args)
         return jnp.ones((1,))
 
-    monkeypatch.setattr(example, "arc_loss_per_example", color_loss)
+    def legacy_loss(*args, **kwargs):
+        legacy_loss_calls.append((args, kwargs))
+        return jnp.ones((1,))
+
+    monkeypatch.setattr(example, "row_refinement_loss_per_example", row_loss)
+    monkeypatch.setattr(example, "arc_loss_per_example", legacy_loss)
     monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
     monkeypatch.setattr(
         example.brainstate.nn, "clip_grad_norm", lambda value, limit: value
     )
-    events = np.zeros((3, 1, 1, 4), dtype=np.float32)
-    advances = np.ones((3, 1, 1), dtype=np.bool_)
-    targets = np.ones((3, 1), dtype=np.int32)
-    colors = np.zeros((3, 1, 30, 30), dtype=np.int32)
-    masks = np.ones((3, 1), dtype=np.float32)
+    events = np.zeros((2, 1, 1, 4), dtype=np.float32)
+    advances = np.ones((2, 1, 1), dtype=np.bool_)
+    heights = np.asarray([[0], [1]], dtype=np.int32)
+    widths = np.asarray([[1], [2]], dtype=np.int32)
+    colors = np.zeros((2, 1, 30, 30), dtype=np.int32)
+    masks = np.ones((2, 1), dtype=np.float32)
     tensors = example._TrainingTensors(
         events,
         advances,
-        targets,
-        targets,
+        heights,
+        widths,
         colors,
         masks,
-        np.array([8, 16, 32]),
-        ("a", "b", "c"),
-        ("base-a", "base-b", "base-c"),
-        ("source", "source", "source"),
-        (0, 0, 0),
+        np.array([30, 60]),
+        ("a", "b"),
+        ("base-a", "base-b"),
+        ("source", "source"),
+        (0, 0),
     )
 
-    config = example.ExperimentConfig.smoke_config(balanced_color_loss=True)
+    config = example.ExperimentConfig.smoke_config(
+        decoder_mode=decoder_mode,
+        balanced_color_loss=decoder_mode == "legacy_cp",
+    )
     result = example._train_model(Model(), [tensors], config)
 
-    assert len(updates) == 3
+    assert len(updates) == 2
     assert result["one_shared_model"] is True
     assert result["one_shared_optimizer_state"] is True
-    assert result["optimizer_updates_by_effort"] == {"8": 1, "16": 1, "32": 1}
-    assert result["losses"] == [1.0, 1.0, 1.0]
-    assert result["balanced_color_loss"] is True
-    assert [kwargs["class_balanced_colors"] for kwargs in color_loss_kwargs] == [
-        True,
-        True,
-        True,
-    ]
+    assert result["optimizer_updates_by_effort"] == {"30": 1, "60": 1}
+    assert result["losses"] == [1.0, 1.0]
+    if decoder_mode == "row_refinement":
+        assert result["supervised_depths"] == "latent_row_ticks_1..effort"
+        assert len(row_loss_calls) == 2
+        assert not legacy_loss_calls
+        assert all(np.asarray(call[0]).shape == (1, 360) for call in row_loss_calls)
+        assert all(np.asarray(call[1]).min() >= 0 for call in row_loss_calls)
+        assert all(np.asarray(call[2]).min() >= 0 for call in row_loss_calls)
+        assert all(np.asarray(call[4]).tolist() == [0] for call in row_loss_calls)
+    else:
+        assert result["supervised_depths"] == "0..effort"
+        assert not row_loss_calls
+        assert len(legacy_loss_calls) == 2
+        assert all(
+            call[1]["class_balanced_colors"] is True for call in legacy_loss_calls
+        )
+        assert [np.asarray(call[0][1]).tolist() for call in legacy_loss_calls] == [
+            [1],
+            [2],
+        ]
 
 
 def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
@@ -1881,14 +2007,16 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     rows = example._row_config(config)
     records = example._evaluation_records(data, config, rows)
     batch = len(records)
-    time = rows.max_events + 32
+    time = rows.max_events + config.latent_steps
     stops = np.asarray(
         [record.encoded.query_stop for record in records], dtype=np.int32
     )
     run_calls: list[dict[str, object]] = []
     event_markers: list[float] = []
     jit_options: list[dict[str, object]] = []
-    fake_model = SimpleNamespace(config=SimpleNamespace(color_rank=4))
+    fake_model = SimpleNamespace(
+        config=SimpleNamespace(color_rank=4, decoder_mode="row_refinement")
+    )
 
     def sequences(records, config, rows, *, arm, source_tasks):
         marker = {"intact": 1.0, "no_context": 2.0, "shuffled": 3.0}[arm]
@@ -1900,15 +2028,17 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     def packed(model, events, selected_indices, **kwargs):
         run_calls.append(kwargs)
         event_markers.append(float(np.asarray(events)[0, 0, 0]))
-        assert selected_indices.shape == (33, batch)
+        assert selected_indices.shape == (TEST_DEPTH_COUNT, batch)
         return SimpleNamespace(
-            compact_logits=np.zeros((33, batch, 340), dtype=np.float32),
-            spikes=np.zeros((33, batch, 8), dtype=np.float32),
-            voltage=np.zeros((33, batch, 8), dtype=np.float32),
-            feedforward_current=np.zeros((33, batch, 8), dtype=np.float32),
-            recurrent_current=np.zeros((33, batch, 8), dtype=np.float32),
-            memory_read=np.zeros((33, batch, 0), dtype=np.float32),
-            final_context_memory=np.zeros((batch, 0, 0), dtype=np.float32),
+            compact_logits=np.zeros((TEST_DEPTH_COUNT, batch, 9060), dtype=np.float32),
+            spikes=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            voltage=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            feedforward_current=np.zeros(
+                (TEST_DEPTH_COUNT, batch, 8), dtype=np.float32
+            ),
+            recurrent_current=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            memory_read=np.zeros((TEST_DEPTH_COUNT, batch, 2), dtype=np.float32),
+            final_context_memory=np.zeros((batch, 2, 2), dtype=np.float32),
         )
 
     def identity_jit(*, inline, name):
@@ -1919,7 +2049,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
 
         return decorate
 
-    metrics = {str(effort): _metric() for effort in (0, 8, 16, 32)}
+    metrics = {str(effort): _metric() for effort in TEST_CHECKPOINTS}
     monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
     monkeypatch.setattr(example, "_copy_parameters", lambda source, target: None)
     monkeypatch.setattr(
@@ -1931,12 +2061,15 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     checkpoint_queries = {
         str(effort): [
             {
-                "candidates": [{"grid": [[0]], "provenance": "model"}],
+                "candidates": [
+                    {"grid": [[0]], "provenance": "model"},
+                    {"grid": [[1]], "provenance": "model"},
+                ],
                 "score": {"pass_at_2": False},
             }
             for _ in range(batch)
         ]
-        for effort in (0, 8, 16, 32)
+        for effort in TEST_CHECKPOINTS
     }
     monkeypatch.setattr(
         example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
@@ -1950,10 +2083,10 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
             "metrics_by_effort": metrics,
             "decoded_candidates_match_intact": True,
             "decoded_candidates_match_intact_by_effort": {
-                str(effort): True for effort in (0, 8, 16, 32)
+                str(effort): True for effort in TEST_CHECKPOINTS
             },
             "decoded_candidate_match_query_count_by_effort": {
-                str(effort): batch for effort in (0, 8, 16, 32)
+                str(effort): batch for effort in TEST_CHECKPOINTS
             },
             "trajectory_comparison": {"causally_null_at_measured_precision": True},
         },
@@ -1991,7 +2124,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         result["determinism"]["slot_ablation_checkpoint_zero_within_tolerance"] is True
     )
     assert "repeat_intact" in result["controls"]
-    assert result["controls"]["truncation"]["checkpoints"] == [0, 8, 16, 32]
+    assert result["controls"]["truncation"]["checkpoints"] == [0, 30, 60]
     execution = result["execution"]
     assert execution["arm_order"] == [
         "intact",
@@ -2007,11 +2140,10 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     assert execution["repeat_intact_cached"] is False
     assert list(execution["wall_seconds_by_arm"]) == execution["arm_order"]
     assert all(value >= 0.0 for value in execution["wall_seconds_by_arm"].values())
-    assert result["associative_memory_diagnostics"] == {
-        "available": False,
-        "complete": True,
-        "reason": "legacy_reservoir_has_no_associative_state",
-    }
+    memory_diagnostics = result["associative_memory_diagnostics"]
+    assert memory_diagnostics["available"] is True
+    assert memory_diagnostics["depth_count"] == TEST_DEPTH_COUNT
+    assert memory_diagnostics["query_count"] == batch
 
 
 def test_evaluation_arm_jit_traces_once_and_matches_direct_dynamic_outputs(
@@ -2388,7 +2520,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
                 {"parameter": "width_head.weight"},
             ],
         },
-        "optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1},
+        "optimizer_updates_by_effort": {"30": 2, "60": 1},
         "losses": [1.0, 0.9, 0.8],
         "parameters_moved": True,
         "parameter_changes": {
@@ -2402,9 +2534,9 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     }
     evaluation = _evaluation_payload()
     model_report = {
-        "neuron_count": 2048,
-        "recurrent_edge_count": 16384,
-        "slot_count": 32,
+        "neuron_count": 4096,
+        "recurrent_edge_count": 1_048_576,
+        "slot_count": 64,
         "parameter_count": 1,
         "component_types": {
             "neuron": "LIF",
@@ -2419,9 +2551,18 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         },
     }
     gpu = {"platform": "gpu", "kind": "test"}
+    legacy_config = example.ExperimentConfig(
+        training_updates=3,
+        context_memory_width=0,
+        decoder_mode="legacy_cp",
+    )
+    legacy_memory_config = dataclasses.replace(
+        legacy_config,
+        context_memory_width=32,
+    )
 
     plumbing = example._qualification(
-        example.ExperimentConfig.smoke_config(),
+        example.ExperimentConfig.smoke_config(decoder_mode="legacy_cp"),
         fixture_data,
         training,
         evaluation,
@@ -2449,7 +2590,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         False,
     )
     scientific = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         evaluation,
@@ -2486,13 +2627,13 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         "available": True,
         "complete": True,
         "query_count": 1,
-        "depth_count": 33,
+        "depth_count": TEST_DEPTH_COUNT,
         "repeat_intact_exact": True,
         "no_context_memory_exactly_zero": True,
         "shuffled_pairing_sensitive_for_every_applicable_query": True,
     }
     memory_qualification = example._qualification(
-        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        legacy_memory_config,
         public_data,
         memory_training,
         memory_evaluation,
@@ -2515,7 +2656,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         "path_classification_by_hidden_state"
     ] = {"associative_state": "mixed"}
     mixed_memory = example._qualification(
-        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        legacy_memory_config,
         public_data,
         mixed_memory_training,
         memory_evaluation,
@@ -2529,7 +2670,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     incomplete_memory_evaluation = copy.deepcopy(memory_evaluation)
     incomplete_memory_evaluation["associative_memory_diagnostics"]["complete"] = False
     incomplete_memory = example._qualification(
-        example.ExperimentConfig(training_updates=3, context_memory_width=32),
+        legacy_memory_config,
         public_data,
         memory_training,
         incomplete_memory_evaluation,
@@ -2544,7 +2685,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
 
     no_compile = dict(training, pp_prop_compiled=False)
     failed = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         no_compile,
         evaluation,
@@ -2555,7 +2696,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     assert "compilation" in " ".join(failed["reasons_not_scientific"])
 
     cpu = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         evaluation,
@@ -2572,7 +2713,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         },
     )
     compiler_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         bad_compiler,
         evaluation,
@@ -2587,7 +2728,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         repeat_intact_within_tolerance=False,
     )
     repeat_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         nondeterministic,
@@ -2600,7 +2741,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     missing_numeric = _evaluation_payload()
     missing_numeric["determinism"].pop("repeat_intact_numeric_evidence")
     missing_numeric_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         missing_numeric,
@@ -2614,7 +2755,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         "compact_logits"
     ] = 2e-6
     corrupted_numeric_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         corrupted_numeric,
@@ -2626,7 +2767,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     wrong_declared_tolerance = _evaluation_payload()
     wrong_declared_tolerance["determinism"]["metric_absolute_tolerance"] = 1e-6
     tolerance_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         wrong_declared_tolerance,
@@ -2643,7 +2784,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         "decoded_candidate_match_query_count_by_effort"
     ]["0"] = 0
     candidate_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         ablation_candidate_mismatch,
@@ -2662,7 +2803,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         },
     )
     metric_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         ablation_metric_mismatch,
@@ -2680,7 +2821,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         },
     )
     movement_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         missing_readout,
         evaluation,
@@ -2698,7 +2839,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         component_types=dict(model_report["component_types"], neuron="NotLIF"),
     )
     component_failure = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        legacy_config,
         public_data,
         training,
         evaluation,
@@ -2717,7 +2858,7 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
         "configuration": {"seed": 7},
         "device": {"platform": "cpu", "kind": "test"},
         "model": {"neuron_count": 128, "recurrent_edge_count": 1024, "slot_count": 2},
-        "training": {"optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1}},
+        "training": {"optimizer_updates_by_effort": {"30": 1, "60": 1}},
         "evaluation": _evaluation_payload(),
         "data_summary": {
             "manifest_sha256": "abc",
@@ -2745,7 +2886,9 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
     assert "Runtime: 1.250" in report
     assert "Voltage L2" in report
     assert "feature axis for logits; neuron axis for physical state" in report
-    assert "Repeat numeric noise: queries=1; steps=33" in report
+    assert "Repeat numeric noise: queries=1; steps=61" in report
+    assert "step-60 state deltas" in report
+    assert "step-32 state deltas" not in report
     assert "maximum RMS=" in report
     assert "per_step_query_rms" not in report
     assert "no routes were trained in this run" in report
@@ -2784,7 +2927,10 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
 
 
 def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_path):
-    config = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
+    config = example.ExperimentConfig.smoke_config(
+        output_dir=tmp_path,
+        decoder_mode="legacy_cp",
+    )
     fixture = smoke_loaded_dataset()
     origin = example._OriginTask("fixture", "fixture", fixture.tasks[0])
     data = example._ExperimentData((origin,), (origin,), (fixture,), True)
@@ -2794,6 +2940,10 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         slot_count=2,
         config=SimpleNamespace(
             batch_size=1,
+            decoder_mode="legacy_cp",
+            refinement_steps=60,
+            training_output_width=340,
+            checkpoint_output_width=340,
             compact_output_width=340,
             color_rank=4,
         ),
@@ -2808,7 +2958,7 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
     training = {
         "performed": True,
         "pp_prop_compiled": True,
-        "optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1},
+        "optimizer_updates_by_effort": {"30": 1, "60": 1},
     }
     evaluation = _evaluation_payload()
     monkeypatch.setattr(
@@ -2873,7 +3023,7 @@ def test_main_prints_report_and_returns_result(example, monkeypatch, capsys, tmp
     result = {
         "device": {"platform": "cpu", "kind": "test"},
         "model": {"neuron_count": 128, "recurrent_edge_count": 1024, "slot_count": 2},
-        "training": {"optimizer_updates_by_effort": {"8": 1, "16": 1, "32": 1}},
+        "training": {"optimizer_updates_by_effort": {"30": 1, "60": 1}},
         "evaluation": _evaluation_payload(),
         "qualification": {
             "full_structural_qualification": False,
