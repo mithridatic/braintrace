@@ -1,6 +1,6 @@
 # Example 21 — per-tick online adaptation
 
-Status: control arm measured and found mis-tuned; comparison incomplete
+Status: three arms measured; accumulating-arm rate sweep outstanding
 Date: 2026-08-19
 Branch: `feat/example21-row-refinement`
 Mechanism: `2026-08-19-online-update-driver.md`.
@@ -166,3 +166,56 @@ This was found by looking at the per-task helped/hurt split rather than the
 aggregate, which is the same discipline that resolved the near-miss tail in the
 earlier results document: an aggregate that moves in the expected direction can
 still be hiding the opposite mechanism.
+
+## 8. The three arms at full width
+
+86 tasks scored of 100 offered; the rest carry fewer than three demonstrations.
+Each arm adapts only on a task's own leave-one-out folds and never reads an
+official query target.
+
+| arm | shape | pixel | exact pass@2 | shape helped / hurt | fold loss | seconds |
+|---|---|---|---:|---:|---|---:|
+| control, accumulated 3e-3 | 0.616 -> 0.546 | 0.514 -> 0.520 | 1 -> 1 | 14 / 20 | 0.468 -> 0.211 | 825 |
+| online, per tick 5e-5 | 0.616 -> **0.663** | 0.514 -> **0.551** | 1 -> 2 | 15 / 11 | 0.464 -> 0.250 | 1,820 |
+| scratch, per tick 5e-5 | 0.151 -> 0.372 | 0.355 -> 0.493 | 0 -> 1 | **21 / 2** | 0.811 -> 0.374 | 1,879 |
+
+### 8.1 Lower fold loss, worse answers
+
+The control reaches the lowest fold loss of the three, 0.211, and gives the
+worst held-out result: it is the only arm that *reduces* shape accuracy, and it
+destroys the frozen model's one exact `pass@1`. It overfits 40 large steps into
+a handful of repeated folds.
+
+Per-tick updates at 5e-5 end at a **higher** fold loss, 0.250, and generalize
+better on every axis. Many small steps are implicitly regularized where 40 large
+ones are not. Fold loss is therefore not a usable model-selection signal for
+this adaptation stage, which is worth stating because it is the quantity the
+adaptation reports.
+
+### 8.2 Adaptation without any pretraining
+
+The scratch arm starts from a fresh initialization. No pretrained parameters
+exist anywhere in it, and its only data is each task's own demonstrations.
+
+It moves shape 0.151 -> 0.372 and pixel 0.355 -> 0.493, and it has the cleanest
+per-task profile of any arm: shape improves on 21 tasks and degrades on 2,
+against the control's 14 and 20. It reaches one exact answer, matching the
+pretrained control.
+
+**This meets the third outcome in §3, at the resolution floor.** One exact
+answer of 86 is the same single task that §3 says is not a result, so the exact
+number establishes nothing on its own. What is established is that per-task
+online adaptation learns a large amount from demonstrations alone: a 0.22 shape
+gain and a 0.14 pixel gain from random initialization, on tasks it has never
+seen, with no offline stage of any kind.
+
+It remains below the pretrained online arm on every axis, so a shared prior
+still helps. The open question is no longer whether the prior must be acquired
+offline, but whether it can be acquired across a single online pass over tasks.
+
+### 8.3 Still unresolved
+
+§7's fairness problem is not fixed by these numbers. The control ran at one
+inherited rate and is visibly mis-tuned. The rate sweep for the accumulating arm
+decides whether the per-tick schedule is the lever, or whether only the
+effective step size ever mattered. No schedule claim is made until it lands.
