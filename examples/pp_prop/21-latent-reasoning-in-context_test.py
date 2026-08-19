@@ -453,6 +453,15 @@ def test_config_rejects_invalid_or_scientifically_incomplete_values(
         example.ExperimentConfig(**kwargs)
 
 
+def test_config_fails_closed_above_1024_recurrent_edges_per_neuron(example):
+    with pytest.raises(RuntimeError, match="recurrent edge budget"):
+        example.ExperimentConfig(
+            structural_only=True,
+            neuron_count=2048,
+            recurrent_edges=2_097_153,
+        )
+
+
 def test_structural_config_allows_zero_updates(example):
     config = example.ExperimentConfig(structural_only=True, training_updates=0)
     assert config.training_updates == 0
@@ -554,6 +563,214 @@ def test_device_resolution_reports_backend_and_fails_closed(example, monkeypatch
     monkeypatch.setattr(example, "_devices_for", unavailable)
     with pytest.raises(RuntimeError, match="driver missing"):
         example._resolve_device("gpu")
+
+
+def test_nvidia_smi_sampler_and_monitor_record_current_process_peak(
+    example, monkeypatch
+):
+    calls: list[list[str]] = []
+    responses = iter(
+        (
+            SimpleNamespace(returncode=0, stdout="2048, 24576\n", stderr=""),
+            SimpleNamespace(returncode=0, stdout="41, 1024\n7, 512\n", stderr=""),
+        )
+    )
+
+    def run(command, **kwargs):
+        calls.append(command)
+        assert kwargs == {
+            "capture_output": True,
+            "check": False,
+            "text": True,
+            "timeout": 5.0,
+        }
+        return next(responses)
+
+    monkeypatch.setattr(example.subprocess, "run", run)
+    sample = example._sample_nvidia_smi(device_index=2, process_id=41)
+
+    assert sample == {
+        "physical_device_bytes": 24_576 * 1024 * 1024,
+        "current_device_bytes": 2048 * 1024 * 1024,
+        "current_process_bytes": 1024 * 1024 * 1024,
+        "error": None,
+    }
+    assert all("--id=2" in command for command in calls)
+
+    monitor = example._NvidiaSmiGpuMonitor(device_index=2, process_id=41)
+    monitor._record(sample)
+    monitor._record(
+        {
+            "physical_device_bytes": 24_576 * 1024 * 1024,
+            "current_device_bytes": 3072 * 1024 * 1024,
+            "current_process_bytes": 1536 * 1024 * 1024,
+            "error": None,
+        }
+    )
+    report = monitor.report()
+    assert report["sample_count"] == 2
+    assert report["physical_device_bytes"] == 24_576 * 1024 * 1024
+    assert report["peak_device_bytes"] == 3072 * 1024 * 1024
+    assert report["peak_process_bytes"] == 1536 * 1024 * 1024
+    assert report["errors"] == []
+
+
+def test_nvidia_smi_wddm_na_process_uses_conservative_device_wide_peak(
+    example, monkeypatch
+):
+    responses = iter(
+        (
+            SimpleNamespace(returncode=0, stdout="4096, 24576\n", stderr=""),
+            SimpleNamespace(returncode=0, stdout="41, [N/A]\n", stderr=""),
+        )
+    )
+    monkeypatch.setattr(
+        example.subprocess,
+        "run",
+        lambda *args, **kwargs: next(responses),
+    )
+
+    sample = example._sample_nvidia_smi(device_index=0, process_id=41)
+    assert sample["current_process_bytes"] is None
+    assert sample["current_device_bytes"] == 4096 * 1024 * 1024
+    assert sample["error"] is None
+
+    monitor = example._NvidiaSmiGpuMonitor(device_index=0, process_id=41)
+    monitor._record(sample)
+    report = monitor.report()
+    assert report["peak_process_bytes"] is None
+    assert report["peak_device_bytes"] == 4096 * 1024 * 1024
+    assert report["evidence_complete"] is True
+
+
+@pytest.mark.parametrize(
+    ("config", "memory_stats", "monitor", "status", "full_safe"),
+    [
+        (
+            None,
+            {"peak_bytes_in_use": 20, "bytes_limit": 80},
+            {
+                "physical_device_bytes": 100,
+                "peak_device_bytes": 30,
+                "peak_process_bytes": 20,
+            },
+            "safe",
+            True,
+        ),
+        (
+            None,
+            {"peak_bytes_in_use": 20},
+            {
+                "physical_device_bytes": 100,
+                "peak_device_bytes": 30,
+                "peak_process_bytes": 20,
+            },
+            "insufficient_evidence",
+            False,
+        ),
+        (
+            None,
+            {"peak_bytes_in_use": 20, "bytes_limit": 80},
+            {
+                "physical_device_bytes": 100,
+                "peak_device_bytes": 86,
+                "peak_process_bytes": 20,
+            },
+            "unsafe",
+            False,
+        ),
+        (
+            "smoke",
+            {"peak_bytes_in_use": 20, "bytes_limit": 80},
+            {
+                "physical_device_bytes": 100,
+                "peak_device_bytes": 30,
+                "peak_process_bytes": None,
+            },
+            "smoke_within_limits",
+            False,
+        ),
+        (
+            None,
+            {"peak_bytes_in_use": 20, "bytes_limit": 80},
+            {"physical_device_bytes": 100, "peak_process_bytes": 20},
+            "insufficient_evidence",
+            False,
+        ),
+    ],
+)
+def test_gpu_runtime_report_normalizes_complete_missing_and_over_limit_evidence(
+    example, config, memory_stats, monitor, status, full_safe
+):
+    selected = (
+        example.ExperimentConfig.smoke_config(device="gpu")
+        if config == "smoke"
+        else example.ExperimentConfig(structural_only=True)
+    )
+    report = example._gpu_runtime_safety_report(
+        selected,
+        {"XLA_PYTHON_CLIENT_MEM_FRACTION": "0.80"},
+        memory_stats,
+        monitor,
+    )
+
+    assert report["applicable"] is True
+    assert report["status"] == status
+    assert report["full_qualification_safe"] is full_safe
+
+
+def test_gpu_environment_gate_precedes_device_resolution_and_monitoring(
+    example, monkeypatch
+):
+    config = example.ExperimentConfig.smoke_config(device="gpu")
+    order: list[str] = []
+
+    class StopAfterOrdering(RuntimeError):
+        pass
+
+    class Monitor:
+        def start(self):
+            order.append("monitor-start")
+
+        def stop(self):
+            order.append("monitor-stop")
+            return {
+                "physical_device_bytes": None,
+                "peak_process_bytes": None,
+            }
+
+    def require(environment):
+        assert environment is example.os.environ
+        order.append("environment-gate")
+        return SimpleNamespace(to_dict=lambda: {"safe": True})
+
+    def resolve(name):
+        order.append("resolve-device")
+        return SimpleNamespace(id=0), {"platform": "gpu", "id": 0}
+
+    def load(_config):
+        order.append("load-data")
+        raise StopAfterOrdering
+
+    monkeypatch.setattr(
+        example, "require_pre_device_gpu_environment", require, raising=False
+    )
+    monkeypatch.setattr(example, "_resolve_device", resolve)
+    monkeypatch.setattr(
+        example, "_make_gpu_monitor", lambda device: Monitor(), raising=False
+    )
+    monkeypatch.setattr(example, "_load_data", load)
+
+    with pytest.raises(StopAfterOrdering):
+        example.run_experiment(config)
+
+    assert order == [
+        "environment-gate",
+        "resolve-device",
+        "monitor-start",
+        "load-data",
+        "monitor-stop",
+    ]
 
 
 def test_source_manifest_resolves_paths_and_exclusions(example, tmp_path):
@@ -2550,7 +2767,15 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
             "recurrent_output": "CUBA",
         },
     }
-    gpu = {"platform": "gpu", "kind": "test"}
+    gpu = {
+        "platform": "gpu",
+        "kind": "test",
+        "gpu_runtime_safety": {
+            "applicable": True,
+            "status": "safe",
+            "full_qualification_safe": True,
+        },
+    }
     legacy_config = example.ExperimentConfig(
         training_updates=3,
         context_memory_width=0,
@@ -2599,6 +2824,38 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     )
     assert scientific["full_structural_qualification"] is True
     assert scientific["full_scientific_qualification"] is True
+
+    missing_gpu_safety = example._qualification(
+        legacy_config,
+        public_data,
+        training,
+        evaluation,
+        {"platform": "gpu", "kind": "test"},
+        model_report,
+    )
+    assert missing_gpu_safety["structural_checks"]["gpu_runtime_resource_safe"] is False
+    assert missing_gpu_safety["full_structural_qualification"] is False
+
+    over_limit_gpu_safety = example._qualification(
+        legacy_config,
+        public_data,
+        training,
+        evaluation,
+        {
+            "platform": "gpu",
+            "kind": "test",
+            "gpu_runtime_safety": {
+                "applicable": True,
+                "status": "unsafe",
+                "full_qualification_safe": False,
+            },
+        },
+        model_report,
+    )
+    assert (
+        over_limit_gpu_safety["structural_checks"]["gpu_runtime_resource_safe"] is False
+    )
+    assert over_limit_gpu_safety["full_structural_qualification"] is False
 
     memory_paths = {
         "memory_write_scale",
@@ -3020,6 +3277,13 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
     evaluation = _evaluation_payload()
     monkeypatch.setattr(
         example,
+        "require_pre_device_gpu_environment",
+        lambda environment: pytest.fail(
+            "CPU runs must not apply the GPU environment gate"
+        ),
+    )
+    monkeypatch.setattr(
+        example,
         "_resolve_device",
         lambda name: (SimpleNamespace(), {"platform": "cpu", "kind": "test", "id": 0}),
     )
@@ -3066,6 +3330,20 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
     assert set(result["artifacts"]) == {"data_manifest", "result", "report", "figure"}
     assert result["device"]["memory_stats"] == {"peak_bytes_in_use": 123456}
     assert result["device"]["memory_stats_capture"] == "after training and evaluation"
+    assert result["device"]["pre_device_gpu_environment"] == {
+        "applicable": False,
+        "status": "not_applicable_cpu",
+    }
+    assert result["device"]["gpu_runtime_safety"] == {
+        "applicable": False,
+        "status": "not_applicable_cpu",
+        "full_qualification_safe": False,
+    }
+    assert result["software"]["xla_python_client_mem_fraction"] is None
+    assert result["software"]["pre_device_gpu_environment"] == {
+        "applicable": False,
+        "status": "not_applicable_cpu",
+    }
     assert result["model"]["reasoning_mode"] == "legacy_reservoir"
     assert result["model"]["context_memory_bytes_per_example"] == 0
     assert result["model"]["associative_memory_implementation"] == {

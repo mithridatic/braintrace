@@ -17,6 +17,8 @@ import math
 import os
 import pathlib
 import platform
+import subprocess
+import threading
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass
@@ -50,6 +52,11 @@ try:
     from examples.pp_prop.latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
+    )
+    from examples.pp_prop.latent_workspace_resource_safety import (
+        assess_gpu_runtime_safety,
+        require_pre_device_gpu_environment,
+        require_recurrent_edge_budget,
     )
     from examples.pp_prop.latent_workspace_task import (
         ArcPair,
@@ -89,6 +96,11 @@ except ModuleNotFoundError:
     from latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
+    )
+    from latent_workspace_resource_safety import (
+        assess_gpu_runtime_safety,
+        require_pre_device_gpu_environment,
+        require_recurrent_edge_budget,
     )
     from latent_workspace_task import (
         ArcPair,
@@ -290,6 +302,7 @@ class ExperimentConfig:
             raise ValueError("context_memory_width must be at most 128")
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
             raise ValueError("recurrent_edges exceeds directed no-self capacity")
+        require_recurrent_edge_budget(self.neuron_count, self.recurrent_edges)
         if self.max_grid_size != 30:
             raise ValueError("max_grid_size must be 30 for standard ARC")
         if self.ablation_slot >= self.neuron_count // 64:
@@ -394,6 +407,10 @@ class ExperimentConfig:
         result["output_dir"] = str(self.output_dir)
         result["checkpoints"] = list(CHECKPOINTS)
         result["training_efforts"] = list(TRAINING_EFFORTS)
+        result["recurrent_edge_budget"] = require_recurrent_edge_budget(
+            self.neuron_count,
+            self.recurrent_edges,
+        ).to_dict()
         return result
 
 
@@ -447,6 +464,275 @@ def _device_memory_stats(device: jax.Device) -> dict[str, int]:
         }
     except (AttributeError, RuntimeError):
         return {}
+
+
+def _nvidia_smi(
+    arguments: Sequence[str],
+) -> tuple[tuple[str, ...], str | None]:
+    """Run one bounded ``nvidia-smi`` query without invoking a shell."""
+
+    command = ["nvidia-smi", *arguments]
+    try:
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=5.0,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return (), f"{type(error).__name__}: {error}"
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or f"exit status {completed.returncode}"
+        return (), detail
+    return tuple(
+        line.strip() for line in completed.stdout.splitlines() if line.strip()
+    ), None
+
+
+def _mib_bytes(value: str) -> int:
+    """Parse one integral MiB value from ``nvidia-smi`` output."""
+
+    stripped = value.strip()
+    if not stripped.isdigit():
+        raise ValueError("nvidia-smi memory value must be an integer MiB count")
+    return int(stripped) * 1024 * 1024
+
+
+def _sample_nvidia_smi(
+    *,
+    device_index: int,
+    process_id: int,
+) -> dict[str, object]:
+    """Sample physical capacity and current-process use for one NVIDIA GPU."""
+
+    device_argument = f"--id={int(device_index)}"
+    device_rows, device_error = _nvidia_smi(
+        (
+            device_argument,
+            "--query-gpu=memory.used,memory.total",
+            "--format=csv,noheader,nounits",
+        )
+    )
+    process_rows, process_error = _nvidia_smi(
+        (
+            device_argument,
+            "--query-compute-apps=pid,used_gpu_memory",
+            "--format=csv,noheader,nounits",
+        )
+    )
+    errors = [error for error in (device_error, process_error) if error]
+    physical_bytes: int | None = None
+    current_device_bytes: int | None = None
+    current_process_bytes: int | None = None
+    try:
+        if len(device_rows) != 1:
+            raise ValueError("nvidia-smi returned no unique device memory row")
+        device_fields = tuple(field.strip() for field in device_rows[0].split(","))
+        if len(device_fields) != 2:
+            raise ValueError("nvidia-smi returned malformed device memory evidence")
+        current_device_bytes = _mib_bytes(device_fields[0])
+        physical_bytes = _mib_bytes(device_fields[1])
+        matching_bytes = 0
+        process_observed = False
+        process_unavailable = False
+        for row in process_rows:
+            fields = tuple(field.strip() for field in row.split(","))
+            if len(fields) != 2 or not fields[0].isdigit():
+                raise ValueError("nvidia-smi returned malformed process evidence")
+            if int(fields[0]) == int(process_id):
+                if fields[1].casefold() in {"n/a", "[n/a]"}:
+                    process_unavailable = True
+                else:
+                    matching_bytes += _mib_bytes(fields[1])
+                    process_observed = True
+        if process_observed:
+            current_process_bytes = matching_bytes
+        elif process_unavailable:
+            current_process_bytes = None
+        else:
+            current_process_bytes = 0
+    except ValueError as error:
+        errors.append(str(error))
+    return {
+        "physical_device_bytes": physical_bytes,
+        "current_device_bytes": current_device_bytes,
+        "current_process_bytes": current_process_bytes,
+        "error": "; ".join(errors) if errors else None,
+    }
+
+
+class _NvidiaSmiGpuMonitor:
+    """Sample current-process NVIDIA memory on a background monitoring thread."""
+
+    def __init__(
+        self,
+        *,
+        device_index: int,
+        process_id: int | None = None,
+        interval_seconds: float = 0.25,
+    ) -> None:
+        self.device_index = int(device_index)
+        self.process_id = os.getpid() if process_id is None else int(process_id)
+        self.interval_seconds = float(interval_seconds)
+        self._stop_event = threading.Event()
+        self._lock = threading.Lock()
+        self._thread: threading.Thread | None = None
+        self._physical_device_bytes: int | None = None
+        self._peak_device_bytes: int | None = None
+        self._peak_process_bytes: int | None = None
+        self._sample_count = 0
+        self._errors: list[str] = []
+
+    def _record(self, sample: Mapping[str, object]) -> None:
+        """Merge one sampler result into the peak report."""
+
+        physical = sample.get("physical_device_bytes")
+        current_device = sample.get("current_device_bytes")
+        current = sample.get("current_process_bytes")
+        error = sample.get("error")
+        with self._lock:
+            self._sample_count += 1
+            if isinstance(physical, Integral) and not isinstance(physical, bool):
+                physical_value = int(physical)
+                if self._physical_device_bytes is None:
+                    self._physical_device_bytes = physical_value
+                elif self._physical_device_bytes != physical_value:
+                    message = "nvidia-smi physical capacity changed during the run"
+                    if message not in self._errors:
+                        self._errors.append(message)
+            if (
+                isinstance(current_device, Integral)
+                and not isinstance(current_device, bool)
+                and int(current_device) > 0
+            ):
+                device_value = int(current_device)
+                self._peak_device_bytes = max(
+                    self._peak_device_bytes or device_value,
+                    device_value,
+                )
+            if (
+                isinstance(current, Integral)
+                and not isinstance(current, bool)
+                and int(current) > 0
+            ):
+                current_value = int(current)
+                self._peak_process_bytes = max(
+                    self._peak_process_bytes or current_value,
+                    current_value,
+                )
+            if isinstance(error, str) and error and error not in self._errors:
+                self._errors.append(error)
+
+    def _sample_once(self) -> None:
+        self._record(
+            _sample_nvidia_smi(
+                device_index=self.device_index,
+                process_id=self.process_id,
+            )
+        )
+
+    def _monitor(self) -> None:
+        while not self._stop_event.wait(self.interval_seconds):
+            self._sample_once()
+
+    def start(self) -> None:
+        """Take an initial sample and start periodic background sampling."""
+
+        if self._thread is not None:
+            raise RuntimeError("GPU monitor is already started")
+        self._sample_once()
+        self._thread = threading.Thread(
+            target=self._monitor,
+            name="example21-nvidia-smi-monitor",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def stop(self) -> dict[str, object]:
+        """Stop monitoring, take a final sample, and return peak evidence."""
+
+        thread = self._thread
+        if thread is None:
+            raise RuntimeError("GPU monitor was not started")
+        self._stop_event.set()
+        thread.join(timeout=5.0)
+        if thread.is_alive():
+            with self._lock:
+                self._errors.append("nvidia-smi monitor thread did not stop")
+        self._sample_once()
+        self._thread = None
+        return self.report()
+
+    def report(self) -> dict[str, object]:
+        """Return the accumulated JSON-safe monitor evidence."""
+
+        with self._lock:
+            return {
+                "sampler": "nvidia-smi",
+                "device_index": self.device_index,
+                "process_id": self.process_id,
+                "sample_count": self._sample_count,
+                "physical_device_bytes": self._physical_device_bytes,
+                "peak_device_bytes": self._peak_device_bytes,
+                "peak_process_bytes": self._peak_process_bytes,
+                "evidence_complete": bool(
+                    self._physical_device_bytes is not None
+                    and self._peak_device_bytes is not None
+                    and not self._errors
+                ),
+                "errors": list(self._errors),
+            }
+
+
+def _make_gpu_monitor(device: jax.Device) -> _NvidiaSmiGpuMonitor:
+    """Construct the runtime monitor for a resolved JAX GPU device."""
+
+    return _NvidiaSmiGpuMonitor(device_index=int(device.id))
+
+
+def _gpu_runtime_safety_report(
+    config: ExperimentConfig,
+    environment: Mapping[str, str],
+    memory_stats: Mapping[str, object],
+    monitor_report: Mapping[str, object],
+) -> dict[str, object]:
+    """Normalize JAX allocator and NVIDIA process evidence through policy."""
+
+    device_peak = monitor_report.get("peak_device_bytes")
+    process_peak = monitor_report.get("peak_process_bytes")
+    sampled_peaks = [
+        int(value)
+        for value in (device_peak, process_peak)
+        if isinstance(value, Integral)
+        and not isinstance(value, bool)
+        and int(value) > 0
+    ]
+    conservative_peak = max(sampled_peaks) if sampled_peaks else None
+    if not (
+        isinstance(device_peak, Integral)
+        and not isinstance(device_peak, bool)
+        and int(device_peak) > 0
+    ):
+        conservative_peak = None
+    monitor_errors = monitor_report.get("errors", ())
+    if isinstance(monitor_errors, (list, tuple)) and monitor_errors:
+        conservative_peak = None
+    assessment = assess_gpu_runtime_safety(
+        run_scope="smoke" if config.smoke else "full",
+        environment=environment,
+        allocator_peak_bytes=memory_stats.get("peak_bytes_in_use"),
+        allocator_limit_bytes=memory_stats.get("bytes_limit"),
+        physical_device_bytes=monitor_report.get("physical_device_bytes"),
+        process_peak_bytes=conservative_peak,
+    )
+    return {
+        "applicable": True,
+        **assessment.to_dict(),
+        "nvidia_smi_peak_device_bytes": device_peak,
+        "nvidia_smi_peak_process_bytes": process_peak,
+        "nvidia_smi_conservative_peak_bytes": conservative_peak,
+    }
 
 
 def _resolve_device(platform: DeviceName) -> tuple[jax.Device, dict[str, object]]:
@@ -3045,11 +3331,18 @@ def _qualification(
         }
     )
     gpu_complete = str(device_report.get("platform", "")).casefold() == "gpu"
+    gpu_runtime_report = device_report.get("gpu_runtime_safety", {})
+    gpu_runtime_resource_safe = bool(
+        gpu_complete
+        and isinstance(gpu_runtime_report, dict)
+        and gpu_runtime_report.get("full_qualification_safe") is True
+    )
     frozen = evaluation.get("same_frozen_parameter_bytes") is True
     structural_checks = {
         "actual_full_scale": full_scale,
         "physical_component_contract": component_contract,
         "actual_gpu_backend": gpu_complete,
+        "gpu_runtime_resource_safe": gpu_runtime_resource_safe,
         "pp_prop_compiler_routes": compiler_complete,
         "associative_routes_all_direct": associative_routes_direct,
         "row_routes_all_direct": row_routes_direct,
@@ -3158,6 +3451,7 @@ def _qualification(
         "actual_full_scale": "actual model is not the required 4096-neuron/1048576-edge scale",
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
         "actual_gpu_backend": "actual evaluation backend is not GPU",
+        "gpu_runtime_resource_safe": "full GPU runtime resource-safety evidence is missing, incomplete, or over policy limits",
         "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
         "associative_routes_all_direct": "associative pp-prop routes are not all_direct",
         "row_routes_all_direct": "row and shape pp-prop routes are not all_direct",
@@ -3208,7 +3502,10 @@ def _parameter_count(values: dict[str, Any]) -> int:
     return int(sum(np.asarray(leaf).size for leaf in jax.tree.leaves(values)))
 
 
-def _software_report() -> dict[str, object]:
+def _software_report(
+    pre_device_gpu_environment: Mapping[str, object],
+    environment: Mapping[str, str],
+) -> dict[str, object]:
     distributions = (
         "braintrace",
         "brainstate",
@@ -3229,9 +3526,13 @@ def _software_report() -> dict[str, object]:
         "python_implementation": platform.python_implementation(),
         "platform": platform.platform(),
         "packages": versions,
-        "xla_python_client_preallocate": os.environ.get(
+        "xla_python_client_preallocate": environment.get(
             "XLA_PYTHON_CLIENT_PREALLOCATE"
         ),
+        "xla_python_client_mem_fraction": environment.get(
+            "XLA_PYTHON_CLIENT_MEM_FRACTION"
+        ),
+        "pre_device_gpu_environment": dict(pre_device_gpu_environment),
     }
 
 
@@ -3242,6 +3543,7 @@ def _implementation_report() -> dict[str, object]:
         "latent_workspace_task.py",
         "latent_workspace_analysis.py",
         "latent_workspace_model.py",
+        "latent_workspace_resource_safety.py",
     )
     combined = hashlib.sha256()
     files: dict[str, str] = {}
@@ -3872,14 +4174,55 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         JSON-safe complete experiment evidence.
     """
     started = time.perf_counter()
+    environment_snapshot = dict(os.environ)
+    if config.device == "gpu":
+        pre_device_assessment = require_pre_device_gpu_environment(os.environ)
+        pre_device_report: dict[str, object] = {
+            "applicable": True,
+            **pre_device_assessment.to_dict(),
+        }
+    else:
+        pre_device_report = {
+            "applicable": False,
+            "status": "not_applicable_cpu",
+        }
     device, device_report = _resolve_device(config.device)
-    data = _load_data(config)
-    rows = _row_config(config)
-    model = _make_model(config, rows, batch_size=1, device=device)
-    training = _train_model(model, _training_chunks(data, config, rows), config)
-    evaluation = _evaluate(model, data, config, rows, device)
-    device_report["memory_stats"] = _device_memory_stats(device)
+    monitor = _make_gpu_monitor(device) if config.device == "gpu" else None
+    if monitor is not None:
+        monitor.start()
+    try:
+        data = _load_data(config)
+        rows = _row_config(config)
+        model = _make_model(config, rows, batch_size=1, device=device)
+        training = _train_model(model, _training_chunks(data, config, rows), config)
+        evaluation = _evaluate(model, data, config, rows, device)
+    finally:
+        monitor_report = monitor.stop() if monitor is not None else None
+    memory_stats = _device_memory_stats(device)
+    device_report["memory_stats"] = memory_stats
     device_report["memory_stats_capture"] = "after training and evaluation"
+    device_report["pre_device_gpu_environment"] = pre_device_report
+    if monitor_report is None:
+        device_report["gpu_monitor"] = {
+            "applicable": False,
+            "status": "not_applicable_cpu",
+        }
+        device_report["gpu_runtime_safety"] = {
+            "applicable": False,
+            "status": "not_applicable_cpu",
+            "full_qualification_safe": False,
+        }
+    else:
+        device_report["gpu_monitor"] = {
+            "applicable": True,
+            **monitor_report,
+        }
+        device_report["gpu_runtime_safety"] = _gpu_runtime_safety_report(
+            config,
+            environment_snapshot,
+            memory_stats,
+            monitor_report,
+        )
     manifests = [item.manifest.to_dict() for item in data.loaded]
     memory_architecture = _memory_architecture_report(
         config,
@@ -3935,7 +4278,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "configuration": config.to_dict(),
         "device": device_report,
         "model": model_report,
-        "software": _software_report(),
+        "software": _software_report(pre_device_report, environment_snapshot),
         "implementation": _implementation_report(),
         "data_manifests": manifests,
         "data_summary": _data_summary(data, manifests, evaluation),
