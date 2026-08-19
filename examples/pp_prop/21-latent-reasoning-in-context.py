@@ -32,6 +32,7 @@ import jax.numpy as jnp
 import numpy as np
 
 try:
+    from examples.pp_prop.latent_workspace_adaptation import snapshot_parameters
     from examples.pp_prop.latent_workspace_analysis import (
         OutputLogits,
         aggregate_arc_metrics,
@@ -41,6 +42,10 @@ try:
         decode_candidates,
         score_query_candidates,
         select_checkpoint_candidates,
+    )
+    from examples.pp_prop.latent_workspace_arc_adaptation import (
+        build_arc_target_free_task_bank,
+        compile_arc_task_local_adaptation_runner,
     )
     from examples.pp_prop.latent_workspace_model import (
         LatentWorkspaceModel,
@@ -78,6 +83,7 @@ try:
         smoke_loaded_dataset,
     )
 except ModuleNotFoundError:
+    from latent_workspace_adaptation import snapshot_parameters
     from latent_workspace_analysis import (
         OutputLogits,
         aggregate_arc_metrics,
@@ -87,6 +93,10 @@ except ModuleNotFoundError:
         decode_candidates,
         score_query_candidates,
         select_checkpoint_candidates,
+    )
+    from latent_workspace_arc_adaptation import (
+        build_arc_target_free_task_bank,
+        compile_arc_task_local_adaptation_runner,
     )
     from latent_workspace_model import (
         LatentWorkspaceModel,
@@ -413,6 +423,11 @@ class ExperimentConfig:
         result["output_dir"] = str(self.output_dir)
         result["checkpoints"] = list(CHECKPOINTS)
         result["training_efforts"] = list(TRAINING_EFFORTS)
+        result["primary_evaluation_mode"] = (
+            "compiled_task_local_pp_prop_leave_one_out"
+            if self.decoder_mode == "row_refinement" and not self.structural_only
+            else "frozen_no_adaptation"
+        )
         result["recurrent_edge_budget"] = require_recurrent_edge_budget(
             self.neuron_count,
             self.recurrent_edges,
@@ -1549,14 +1564,21 @@ def _origin_task_key(origin: _OriginTask, task_index: int) -> str:
     return f"{origin.source_name}:{task_index:04d}:{task_name}:{fingerprint}"
 
 
+def _selected_evaluation_origins(
+    data: _ExperimentData, config: ExperimentConfig
+) -> tuple[_OriginTask, ...]:
+    origins = data.evaluation
+    if config.evaluation_task_limit is not None:
+        origins = origins[: config.evaluation_task_limit]
+    return origins
+
+
 def _evaluation_records(
     data: _ExperimentData,
     config: ExperimentConfig,
     row_config: RowEventConfig,
 ) -> tuple[_EvaluationRecord, ...]:
-    origins = data.evaluation
-    if config.evaluation_task_limit is not None:
-        origins = origins[: config.evaluation_task_limit]
+    origins = _selected_evaluation_origins(data, config)
     records: list[_EvaluationRecord] = []
     for task_index, origin in enumerate(origins):
         task_key = _origin_task_key(origin, task_index)
@@ -1688,6 +1710,44 @@ def _score_windows(
     """Score only model-decoded candidates at every frozen checkpoint."""
 
     checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
+    return _score_checkpoint_logits(
+        checkpoint_compact, records, color_rank, decoder_mode
+    )
+
+
+def _score_checkpoint_logits(
+    checkpoint_compact: np.ndarray,
+    records: Sequence[_EvaluationRecord],
+    color_rank: int,
+    decoder_mode: DecoderMode,
+) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
+    """Score model logits supplied only at semantic checkpoints 0, 30, and 60.
+
+    Parameters
+    ----------
+    checkpoint_compact
+        Model logits shaped ``(3, queries, output_width)`` in ``CHECKPOINTS``
+        order. No intermediate trajectory is required.
+    records
+        Ordered official-query metadata and out-of-band targets.
+    color_rank
+        Legacy CP decoder rank. Ignored by explicit row-refinement logits.
+    decoder_mode
+        Explicit decoder representation.
+
+    Returns
+    -------
+    tuple
+        Strict metrics and per-query candidate/score records by checkpoint.
+    """
+
+    checkpoint_compact = np.asarray(checkpoint_compact)
+    if checkpoint_compact.ndim != 3:
+        raise ValueError("checkpoint_compact must have checkpoint, query, width axes")
+    if checkpoint_compact.shape[0] != len(CHECKPOINTS):
+        raise ValueError("checkpoint_compact must contain exactly checkpoints 0/30/60")
+    if checkpoint_compact.shape[1] != len(records):
+        raise ValueError("checkpoint query count must match evaluation records")
     expanded = expand_decoder_logits(
         jnp.asarray(checkpoint_compact), color_rank, decoder_mode
     )
@@ -2514,6 +2574,126 @@ def _expected_queries_by_task(data: _ExperimentData) -> dict[str, int]:
     return expected
 
 
+def _task_local_adaptation_evaluation(
+    trained_model: LatentWorkspaceModel,
+    data: _ExperimentData,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    device: jax.Device,
+    records: Sequence[_EvaluationRecord],
+) -> tuple[
+    dict[str, dict[str, object]],
+    dict[str, list[dict[str, object]]],
+    dict[str, object],
+]:
+    """Adapt one isolated model per ARC task and score target-free checkpoints.
+
+    Parameters
+    ----------
+    trained_model
+        Shared post-pretraining batch-one model.
+    data, config, row_config, device
+        Resolved experiment inputs and execution device.
+    records
+        Ordered official-query metadata. Targets remain here and are joined
+        only after the compiled runner returns model logits.
+
+    Returns
+    -------
+    tuple
+        Metrics, per-query scoring records, and JSON-safe adaptation evidence.
+    """
+
+    origins = _selected_evaluation_origins(data, config)
+    bank = build_arc_target_free_task_bank(
+        tuple(_without_official_test_targets(origin.task) for origin in origins),
+        row_config,
+        latent_steps=config.latent_steps,
+    )
+    model = _make_model(config, row_config, batch_size=1, device=device)
+    _copy_parameters(trained_model, model)
+    base_parameters = snapshot_parameters(model)
+    before = _tree_digest(parameter_snapshot(model))
+    learner = compile_pp_prop(model)
+    optimizer = braintools.optim.Adam(lr=config.learning_rate)
+    optimizer.register_trainable_weights(learner.param_states)
+    runner = compile_arc_task_local_adaptation_runner(
+        model,
+        learner,
+        optimizer,
+        base_parameters=base_parameters,
+        row_config=row_config,
+        latent_steps=config.latent_steps,
+        clip_norm=config.clip_norm,
+    )
+    started = time.perf_counter()
+    result = runner(bank)
+    wall_seconds = time.perf_counter() - started
+    after = _tree_digest(parameter_snapshot(model))
+    valid = np.asarray(result.query_valid, dtype=np.bool_)
+    recorded = np.asarray(result.checkpoint_recorded, dtype=np.bool_)
+    expected_recorded = np.broadcast_to(valid[..., None], recorded.shape)
+    if not np.array_equal(recorded, expected_recorded):
+        raise ValueError("task-local adaptation checkpoint validity is inconsistent")
+    task_ordinals = np.broadcast_to(
+        np.asarray(bank.task_ordinals)[:, None], valid.shape
+    )[valid]
+    query_ordinals = np.asarray(bank.query_ordinals)[valid]
+    expected_ordinals = np.asarray(
+        [(record.encoded.task_index, record.encoded.query_index) for record in records],
+        dtype=np.int32,
+    )
+    actual_ordinals = np.stack((task_ordinals, query_ordinals), axis=-1)
+    if not np.array_equal(actual_ordinals, expected_ordinals):
+        raise ValueError("adapted task/query order does not match evaluation records")
+    flattened = np.asarray(result.checkpoint_outputs)[valid]
+    if flattened.shape[0] != len(records):
+        raise ValueError("adapted query order does not match evaluation records")
+    checkpoint_logits = np.transpose(flattened, (1, 0, 2))
+    metrics, checkpoint_queries = _score_checkpoint_logits(
+        checkpoint_logits,
+        records,
+        config.color_rank,
+        config.decoder_mode,
+    )
+    fold_applied = np.asarray(result.fold_applied, dtype=np.bool_)
+    fold_losses = np.asarray(result.fold_losses, dtype=np.float64)
+    fold_count = int(np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid)))
+    applied_fold_count = int(np.count_nonzero(fold_applied))
+    evidence = {
+        "performed": True,
+        "mode": "compiled_task_local_pp_prop_leave_one_out",
+        "target_free_query_bank": True,
+        "target_free_official_query_bank": True,
+        "task_count": int(valid.shape[0]),
+        "query_count": int(np.count_nonzero(valid)),
+        "fold_capacity": int(fold_applied.shape[1]),
+        "fold_count": fold_count,
+        "applied_fold_count": applied_fold_count,
+        "fold_applied": fold_applied.tolist(),
+        "fold_losses": fold_losses.tolist(),
+        "bank_bytes": bank.projected_bytes,
+        "semantic_checkpoints": list(CHECKPOINTS),
+        "checkpoint_output_shape": list(result.checkpoint_outputs.shape),
+        "all_valid_checkpoints_recorded": bool(
+            np.array_equal(recorded, expected_recorded)
+        ),
+        "base_parameter_sha256": before,
+        "restored_parameter_sha256": after,
+        "base_parameters_restored": before == after,
+        "optimizer_step_count_after_cleanup": int(optimizer.step_count.value),
+        "compiler": _compiler_evidence(learner),
+        "wall_seconds": wall_seconds,
+    }
+    if (
+        before != after
+        or int(optimizer.step_count.value) != 0
+        or applied_fold_count != fold_count
+    ):
+        raise ValueError("task-local adaptation did not restore shared state")
+    return metrics, checkpoint_queries, evidence
+
+
 def _model_only_completion_report(
     submission_rows: Sequence[Mapping[str, object]],
     submission_metrics: Mapping[str, object],
@@ -2576,6 +2756,34 @@ def _evaluate(
     device: jax.Device,
 ) -> dict[str, object]:
     records = _evaluation_records(data, config, row_config)
+    adaptation_enabled = (
+        config.decoder_mode == "row_refinement" and not config.structural_only
+    )
+    if adaptation_enabled:
+        primary_metrics, primary_checkpoint_queries, adaptation_evidence = (
+            _task_local_adaptation_evaluation(
+                trained_model,
+                data,
+                config,
+                row_config,
+                device,
+                records,
+            )
+        )
+    else:
+        primary_metrics = None
+        primary_checkpoint_queries = None
+        adaptation_evidence = {
+            "performed": False,
+            "mode": "disabled",
+            "reason": (
+                "structural_only"
+                if config.structural_only
+                else "decoder_mode_is_not_row_refinement"
+            ),
+            "target_free_query_bank": True,
+            "target_free_official_query_bank": True,
+        }
     batch_size = len(records)
     model = _make_model(config, row_config, batch_size=batch_size, device=device)
     _copy_parameters(trained_model, model)
@@ -2638,16 +2846,19 @@ def _evaluate(
     repeat_intact, repeat_associative = run_arm(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
-    intact_metrics, checkpoint_queries = _score_windows(
+    frozen_metrics, frozen_checkpoint_queries = _score_windows(
         intact[0], records, config.color_rank, config.decoder_mode
     )
+    if primary_metrics is None or primary_checkpoint_queries is None:
+        primary_metrics = frozen_metrics
+        primary_checkpoint_queries = frozen_checkpoint_queries
     completion_report = _model_only_completion_report(
-        checkpoint_queries[str(SUBMISSION_CHECKPOINT)],
-        intact_metrics[str(SUBMISSION_CHECKPOINT)],
+        primary_checkpoint_queries[str(SUBMISSION_CHECKPOINT)],
+        primary_metrics[str(SUBMISSION_CHECKPOINT)],
         data,
         config,
     )
-    channel_attribution = _channel_attribution(checkpoint_queries)
+    channel_attribution = _channel_attribution(primary_checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
         *intact, records, config.color_rank, config.decoder_mode
     )
@@ -2659,11 +2870,11 @@ def _evaluate(
         records,
         config.color_rank,
         config.decoder_mode,
-        intact_metrics,
+        frozen_metrics,
         intact_meta,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
-    repeat_metrics_exact = repeat_result["metrics_by_effort"] == intact_metrics
+    repeat_metrics_exact = repeat_result["metrics_by_effort"] == frozen_metrics
     repeat_predictions_exact = bool(repeat_result["decoded_candidates_match_intact"])
     repeat_reproducible = bool(
         repeat_match["within_declared_tolerance"]
@@ -2705,7 +2916,7 @@ def _evaluate(
         records,
         config.color_rank,
         config.decoder_mode,
-        intact_metrics,
+        frozen_metrics,
         no_context_meta,
     )
     del no_context
@@ -2723,7 +2934,7 @@ def _evaluate(
         records,
         config.color_rank,
         config.decoder_mode,
-        intact_metrics,
+        frozen_metrics,
         shuffled_meta,
     )
     del shuffled
@@ -2740,14 +2951,14 @@ def _evaluate(
         records,
         config.color_rank,
         config.decoder_mode,
-        intact_metrics,
+        frozen_metrics,
         intact_meta,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
     )
     ablation_checkpoint_zero = _checkpoint_zero_gate_summary(
-        intact_metrics, ablation_result, pre_intervention_match
+        frozen_metrics, ablation_result, pre_intervention_match
     )
     associative_diagnostics = _associative_evaluation_diagnostics(
         config.context_memory_width > 0,
@@ -2768,14 +2979,19 @@ def _evaluate(
     )
     del ablated
     after = _tree_digest(parameter_snapshot(model))
-    return {
+    result = {
         "query_count": batch_size,
         "task_count": len({record.task_key for record in records}),
         "same_frozen_parameter_bytes": before == after,
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
         "primary_candidate_mode": config.primary_candidate_mode,
-        "metrics_by_effort": intact_metrics,
+        "primary_evaluation_mode": (
+            adaptation_evidence["mode"]
+            if adaptation_evidence["performed"]
+            else "frozen_no_adaptation"
+        ),
+        "metrics_by_effort": primary_metrics,
         "submission_policy": {
             "name": SUBMISSION_POLICY,
             "submission_checkpoint": SUBMISSION_CHECKPOINT,
@@ -2787,7 +3003,15 @@ def _evaluate(
         },
         "model_only_completion": completion_report,
         "channel_attribution": channel_attribution,
-        "checkpoint_queries": checkpoint_queries,
+        "checkpoint_queries": primary_checkpoint_queries,
+        "task_local_adaptation": adaptation_evidence,
+        "physical_diagnostic_role": "frozen_no_adaptation_diagnostic",
+        "frozen_no_adaptation": {
+            "role": "diagnostic_control_not_primary_submission",
+            "trajectory_role": "frozen_no_adaptation_diagnostic",
+            "metrics_by_effort": frozen_metrics,
+            "checkpoint_queries": frozen_checkpoint_queries,
+        },
         "query_trajectories": trajectories,
         "aggregate_trajectory": aggregate_trajectory,
         "associative_memory_diagnostics": associative_diagnostics,
@@ -2846,6 +3070,16 @@ def _evaluate(
             ),
         },
     }
+    frozen_diagnostic = result["frozen_no_adaptation"]
+    frozen_diagnostic["query_trajectories"] = result["query_trajectories"]
+    frozen_diagnostic["aggregate_trajectory"] = result["aggregate_trajectory"]
+    frozen_diagnostic["associative_memory_diagnostics"] = result[
+        "associative_memory_diagnostics"
+    ]
+    frozen_diagnostic["determinism"] = result["determinism"]
+    frozen_diagnostic["controls"] = result["controls"]
+    frozen_diagnostic["execution"] = result["execution"]
+    return result
 
 
 def _qualification(
@@ -3353,10 +3587,15 @@ def _qualification(
         )
         and repeat_control.get("decoded_candidates_match_intact") is True
     )
+    frozen_no_adaptation = evaluation.get("frozen_no_adaptation", {})
+    frozen_metrics = (
+        frozen_no_adaptation.get("metrics_by_effort")
+        if isinstance(frozen_no_adaptation, dict)
+        else None
+    )
     repeat_metrics_exact = bool(
         isinstance(repeat_control, dict)
-        and repeat_control.get("metrics_by_effort")
-        == evaluation.get("metrics_by_effort")
+        and repeat_control.get("metrics_by_effort") == frozen_metrics
     )
     repeat_numeric_exact = bool(
         isinstance(determinism, dict)
@@ -3398,7 +3637,6 @@ def _qualification(
         if isinstance(slot_control, dict)
         else {}
     )
-    intact_metrics = evaluation.get("metrics_by_effort")
     slot_checkpoint_zero_exact = bool(
         isinstance(slot_candidate_counts, dict)
         and isinstance(slot_candidate_flags, dict)
@@ -3407,8 +3645,8 @@ def _qualification(
         and int(slot_candidate_counts["0"]) == expected_query_count
         and slot_candidate_flags.get("0") is True
         and isinstance(slot_metrics, dict)
-        and isinstance(intact_metrics, dict)
-        and slot_metrics.get("0") == intact_metrics.get("0")
+        and isinstance(frozen_metrics, dict)
+        and slot_metrics.get("0") == frozen_metrics.get("0")
     )
     slot_numeric_exact = bool(
         isinstance(determinism, dict)
@@ -3427,19 +3665,60 @@ def _qualification(
         and slot_checkpoint_zero_exact
         and slot_numeric_exact
     )
-    evaluation_complete = bool(
+    adaptation = evaluation.get("task_local_adaptation")
+    adaptation_expected = bool(
+        config.decoder_mode == "row_refinement" and not config.structural_only
+    )
+    if adaptation_expected:
+        adaptation_complete = bool(
+            isinstance(adaptation, dict)
+            and adaptation.get("performed") is True
+            and adaptation.get("mode") == "compiled_task_local_pp_prop_leave_one_out"
+            and adaptation.get("target_free_query_bank") is True
+            and int(adaptation.get("task_count", -1)) == expected_task_count
+            and int(adaptation.get("query_count", -1)) == expected_query_count
+            and int(adaptation.get("applied_fold_count", 0)) > 0
+            and adaptation.get("fold_count") == adaptation.get("applied_fold_count")
+            and adaptation.get("semantic_checkpoints") == list(CHECKPOINTS)
+            and adaptation.get("all_valid_checkpoints_recorded") is True
+            and adaptation.get("base_parameters_restored") is True
+            and adaptation.get("base_parameter_sha256")
+            == adaptation.get("restored_parameter_sha256")
+            and int(adaptation.get("optimizer_step_count_after_cleanup", -1)) == 0
+            and finite_tree(adaptation)
+        )
+    else:
+        adaptation_complete = bool(
+            isinstance(adaptation, dict) and adaptation.get("performed") is False
+        )
+    frozen_no_adaptation_complete = bool(
+        isinstance(frozen_no_adaptation, dict)
+        and frozen_no_adaptation.get("role")
+        == "diagnostic_control_not_primary_submission"
+        and metrics_complete(frozen_no_adaptation.get("metrics_by_effort"))
+        and isinstance(frozen_no_adaptation.get("checkpoint_queries"), dict)
+    )
+    primary_evaluation_complete = bool(
         evaluation.get("primary_candidate_mode") == "model_only"
         and query_count > 0
         and query_count == expected_query_count
         and int(evaluation.get("task_count", 0)) == expected_task_count
         and metrics_complete(evaluation.get("metrics_by_effort"))
-        and aggregate_complete
-        and query_trajectories_complete
         and checkpoint_queries_complete
         and submission_policy_complete
         and completion_complete
+        and adaptation_complete
+    )
+    frozen_diagnostics_complete = bool(
+        aggregate_complete
+        and query_trajectories_complete
         and required_controls_complete
         and truncation_complete
+        and frozen_no_adaptation_complete
+    )
+    evaluation_complete = bool(
+        primary_evaluation_complete
+        and frozen_diagnostics_complete
         and finite_tree(evaluation)
     )
 
@@ -3591,6 +3870,8 @@ def _qualification(
         "associative_routes_all_direct": associative_routes_direct,
         "row_routes_all_direct": row_routes_direct,
         "associative_diagnostics_complete": associative_diagnostics_complete,
+        "complete_primary_evaluation": primary_evaluation_complete,
+        "complete_frozen_diagnostics": frozen_diagnostics_complete,
         "complete_frozen_evaluation": evaluation_complete,
         "frozen_parameters_unchanged": frozen,
         "repeat_intact_deterministic": repeatable,
@@ -3706,6 +3987,8 @@ def _qualification(
         "associative_routes_all_direct": "associative pp-prop routes are not all_direct",
         "row_routes_all_direct": "row and shape pp-prop routes are not all_direct",
         "associative_diagnostics_complete": "pairing-sensitive S_K, memory-read, or continuous-workspace diagnostics are incomplete",
+        "complete_primary_evaluation": "adapted primary metrics, candidates, or task-local evidence are incomplete",
+        "complete_frozen_diagnostics": "frozen no-adaptation trajectories or controls are incomplete",
         "complete_frozen_evaluation": "exact metrics, trajectories, or controls are incomplete or non-finite",
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
         "repeat_intact_deterministic": "same-run intact repeat exceeded the declared state/logit tolerance or changed exact candidates or metrics",
@@ -3916,7 +4199,12 @@ def _render_report(result: dict[str, object]) -> str:
     model = result.get("model", {})
     training = result.get("training", {})
     evaluation = result.get("evaluation", {})
-    associative_diagnostics = evaluation.get("associative_memory_diagnostics", {})
+    task_local_adaptation = evaluation.get("task_local_adaptation", {})
+    frozen_no_adaptation = evaluation.get("frozen_no_adaptation", {})
+    associative_diagnostics = frozen_no_adaptation.get(
+        "associative_memory_diagnostics",
+        evaluation.get("associative_memory_diagnostics", {}),
+    )
     qualification = result.get("qualification", {})
     data_summary = result.get("data_summary", {})
     software = result.get("software", {})
@@ -4038,6 +4326,24 @@ def _render_report(result: dict[str, object]) -> str:
         ),
         f"Evaluation execution: {evaluation.get('execution', {})}.",
         (
+            "Task-local adaptation: performed="
+            f"{task_local_adaptation.get('performed')}; mode="
+            f"{task_local_adaptation.get('mode')}; folds applied="
+            f"{task_local_adaptation.get('applied_fold_count', 0)}/"
+            f"{task_local_adaptation.get('fold_count', 0)}; queries="
+            f"{task_local_adaptation.get('query_count', 0)}; bank bytes="
+            f"{task_local_adaptation.get('bank_bytes', 'unreported')}; "
+            "target-free query bank="
+            f"{task_local_adaptation.get('target_free_query_bank')}; restored="
+            f"{task_local_adaptation.get('base_parameters_restored')}."
+        ),
+        (
+            "Frozen no-adaptation diagnostic: diagnostic control, not primary "
+            "submission; role="
+            f"{frozen_no_adaptation.get('role', 'unreported')}; metrics="
+            f"{frozen_no_adaptation.get('metrics_by_effort', {})}."
+        ),
+        (
             "Associative evaluation diagnostics: "
             f"available={associative_diagnostics.get('available')}; "
             f"complete={associative_diagnostics.get('complete')}; "
@@ -4049,7 +4355,7 @@ def _render_report(result: dict[str, object]) -> str:
             f"{associative_diagnostics.get('shuffled_pairing_sensitive_for_every_applicable_query')}."
         ),
         "",
-        "Frozen exact ARC results:",
+        "Primary exact ARC results:",
     ]
     for effort in CHECKPOINTS:
         metrics = evaluation.get("metrics_by_effort", {}).get(str(effort))
@@ -4105,8 +4411,10 @@ def _render_report(result: dict[str, object]) -> str:
             f"({effort_60:.4f} versus {effort_zero:.4f}); "
             f"{exact_count_60} effort-60 queries were exact within the scored set."
         )
-    lines.extend(["", "Aggregate latent trajectory:"])
-    trajectory = evaluation.get("aggregate_trajectory", [])
+    lines.extend(["", "Frozen no-adaptation aggregate latent trajectory:"])
+    trajectory = frozen_no_adaptation.get(
+        "aggregate_trajectory", evaluation.get("aggregate_trajectory", [])
+    )
     for effort in CHECKPOINTS:
         if effort >= len(trajectory):
             lines.append(f"  step {effort:>2}: unavailable")
@@ -4317,7 +4625,10 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     import matplotlib.pyplot as plt
 
     metrics = result["evaluation"]["metrics_by_effort"]
-    trajectory = result["evaluation"]["aggregate_trajectory"]
+    frozen_diagnostic = result["evaluation"].get("frozen_no_adaptation", {})
+    trajectory = frozen_diagnostic.get(
+        "aggregate_trajectory", result["evaluation"]["aggregate_trajectory"]
+    )
     efforts = np.asarray(CHECKPOINTS)
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     axes[0, 0].plot(
@@ -4343,7 +4654,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     ]
     axes[0, 1].plot(steps, changed, color="tab:blue", label="changed cells")
     axes[0, 1].set(
-        title="Per-step output dynamics",
+        title="Frozen no-adaptation output dynamics",
         xlabel="latent step",
         ylabel="changed-cell fraction",
     )

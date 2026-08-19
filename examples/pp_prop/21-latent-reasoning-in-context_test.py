@@ -397,6 +397,17 @@ def _evaluation_payload() -> dict[str, object]:
             }
         ],
         "metrics_by_effort": metrics,
+        "task_local_adaptation": {
+            "performed": False,
+            "mode": "disabled",
+            "reason": "decoder_mode_is_not_row_refinement",
+            "target_free_query_bank": True,
+        },
+        "frozen_no_adaptation": {
+            "role": "diagnostic_control_not_primary_submission",
+            "metrics_by_effort": copy.deepcopy(metrics),
+            "checkpoint_queries": copy.deepcopy(checkpoint_queries),
+        },
         "aggregate_trajectory": trajectory,
         "determinism": {
             "same_control_capable_execution_path": True,
@@ -2467,6 +2478,9 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         return decorate
 
     metrics = {str(effort): _metric() for effort in TEST_CHECKPOINTS}
+    adapted_metrics = {
+        str(effort): _metric(float(effort == 60)) for effort in TEST_CHECKPOINTS
+    }
     monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
     monkeypatch.setattr(example, "_copy_parameters", lambda source, target: None)
     monkeypatch.setattr(
@@ -2488,6 +2502,21 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         ]
         for effort in TEST_CHECKPOINTS
     }
+    adapted_checkpoint_queries = copy.deepcopy(checkpoint_queries)
+    adaptation_evidence = {
+        "performed": True,
+        "mode": "compiled_task_local_pp_prop_leave_one_out",
+        "target_free_query_bank": True,
+    }
+    monkeypatch.setattr(
+        example,
+        "_task_local_adaptation_evaluation",
+        lambda *args: (
+            adapted_metrics,
+            adapted_checkpoint_queries,
+            adaptation_evidence,
+        ),
+    )
     monkeypatch.setattr(
         example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
     )
@@ -2516,6 +2545,26 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     assert jit_options == [{"inline": False, "name": "example21_evaluation_arm"}]
     assert result["same_frozen_parameter_bytes"] is True
     assert result["primary_candidate_mode"] == "model_only"
+    assert result["metrics_by_effort"] is adapted_metrics
+    assert result["checkpoint_queries"] is adapted_checkpoint_queries
+    assert result["task_local_adaptation"] is adaptation_evidence
+    assert result["frozen_no_adaptation"]["role"] == (
+        "diagnostic_control_not_primary_submission"
+    )
+    assert result["frozen_no_adaptation"]["metrics_by_effort"] is metrics
+    assert result["frozen_no_adaptation"]["checkpoint_queries"] is checkpoint_queries
+    assert result["frozen_no_adaptation"]["trajectory_role"] == (
+        "frozen_no_adaptation_diagnostic"
+    )
+    assert (
+        result["frozen_no_adaptation"]["aggregate_trajectory"]
+        is result["aggregate_trajectory"]
+    )
+    assert (
+        result["frozen_no_adaptation"]["query_trajectories"]
+        is result["query_trajectories"]
+    )
+    assert result["physical_diagnostic_role"] == ("frozen_no_adaptation_diagnostic")
     assert all("ablation_slots" in call for call in run_calls)
     assert all("ablation_gates" in call for call in run_calls)
     assert not np.any(np.asarray(run_calls[0]["ablation_gates"]))
@@ -3159,6 +3208,10 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     assert row_qualification["structural_checks"]["pp_prop_compiler_routes"] is True
     assert row_qualification["structural_checks"]["row_routes_all_direct"] is True
     assert (
+        row_qualification["structural_checks"]["complete_primary_evaluation"] is False
+    )
+    assert row_qualification["structural_checks"]["complete_frozen_diagnostics"] is True
+    assert (
         row_qualification["scientific_checks"][
             "all_active_parameter_groups_moved_with_finite_delta"
         ]
@@ -3662,3 +3715,202 @@ def test_chunked_training_reproduces_unchunked_losses_bitwise(example):
     assert chunked["effort_schedule"] == reference["effort_schedule"]
     assert chunked["training_samples"] == reference["training_samples"]
     assert chunked["parameter_sha256_after"] == reference["parameter_sha256_after"]
+
+
+def test_adapted_checkpoint_tensor_scoring_preserves_frozen_window_semantics(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    compact = np.zeros((TEST_DEPTH_COUNT, len(records), 9060), dtype=np.float32)
+    compact[0, :, 60 + 1] = 3.0
+    compact[30, :, 60 + 2] = 4.0
+    compact[60, :, 60 + 3] = 5.0
+
+    frozen = example._score_windows(
+        compact,
+        records,
+        color_rank=config.color_rank,
+        decoder_mode="row_refinement",
+    )
+    adapted = example._score_checkpoint_logits(
+        compact[np.asarray(TEST_CHECKPOINTS)],
+        records,
+        color_rank=config.color_rank,
+        decoder_mode="row_refinement",
+    )
+
+    assert adapted == frozen
+
+
+def test_task_local_entry_uses_post_pretraining_snapshot_and_target_free_bank(
+    example, monkeypatch
+):
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((2,),))),
+            ArcPair(ArcGrid(((3,),)), ArcGrid(((4,),))),
+        ),
+        test=(ArcPair(ArcGrid(((5,),)), ArcGrid(((6,),))),),
+        task_id="entry-adaptation",
+    )
+    changed_task = dataclasses.replace(
+        task,
+        test=(ArcPair(task.test[0].input, ArcGrid(((9,),))),),
+    )
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    trained_model = SimpleNamespace(pretraining_marker=73)
+    real_builder = example.build_arc_target_free_task_bank
+    call_order: list[str] = []
+    banks = []
+    scored_logits = []
+
+    class FakeOptimizer:
+        def __init__(self, *, lr):
+            self.lr = lr
+            self.step_count = SimpleNamespace(value=np.int32(0))
+
+        def register_trainable_weights(self, states):
+            assert states == {"learned": "paths"}
+
+    def make_model(*args, **kwargs):
+        return SimpleNamespace(pretraining_marker=None)
+
+    def copy_parameters(source, target):
+        call_order.append("copy_pretrained_parameters")
+        target.pretraining_marker = source.pretraining_marker
+
+    def snapshot_parameters(model):
+        call_order.append("snapshot_adaptation_base")
+        assert model.pretraining_marker == 73
+        return "post-pretraining-snapshot"
+
+    def parameter_snapshot(model):
+        return {"marker": np.asarray([model.pretraining_marker], dtype=np.int32)}
+
+    def build_bank(tasks, row_config, *, latent_steps):
+        bank = real_builder(tasks, row_config, latent_steps=latent_steps)
+        banks.append(bank)
+        return bank
+
+    def compile_runner(model, learner, optimizer, **kwargs):
+        assert kwargs["base_parameters"] == "post-pretraining-snapshot"
+
+        def run(bank):
+            task_count, query_count = bank.query_valid.shape
+            outputs = np.zeros((task_count, query_count, 3, 9060), dtype=np.float32)
+            outputs[..., 0] = np.arange(3, dtype=np.float32)
+            return SimpleNamespace(
+                fold_losses=np.ones(
+                    bank.fold_inputs.fold_valid.shape, dtype=np.float32
+                ),
+                fold_applied=np.asarray(bank.fold_inputs.fold_valid),
+                checkpoint_outputs=outputs,
+                checkpoint_recorded=np.broadcast_to(
+                    np.asarray(bank.query_valid)[..., None],
+                    (task_count, query_count, 3),
+                ),
+                query_valid=np.asarray(bank.query_valid),
+            )
+
+        return run
+
+    def score(checkpoint_logits, records, color_rank, decoder_mode):
+        scored_logits.append(np.asarray(checkpoint_logits).copy())
+        assert decoder_mode == "row_refinement"
+        metrics = {str(step): _metric() for step in TEST_CHECKPOINTS}
+        details = {str(step): [] for step in TEST_CHECKPOINTS}
+        return metrics, details
+
+    monkeypatch.setattr(example, "_make_model", make_model)
+    monkeypatch.setattr(example, "_copy_parameters", copy_parameters)
+    monkeypatch.setattr(example, "snapshot_parameters", snapshot_parameters)
+    monkeypatch.setattr(example, "parameter_snapshot", parameter_snapshot)
+    monkeypatch.setattr(
+        example,
+        "compile_pp_prop",
+        lambda model: SimpleNamespace(param_states={"learned": "paths"}, report=None),
+    )
+    monkeypatch.setattr(example.braintools.optim, "Adam", FakeOptimizer)
+    monkeypatch.setattr(example, "build_arc_target_free_task_bank", build_bank)
+    monkeypatch.setattr(
+        example, "compile_arc_task_local_adaptation_runner", compile_runner
+    )
+    monkeypatch.setattr(example, "_score_checkpoint_logits", score)
+
+    evidences = []
+    for current_task in (task, changed_task):
+        origin = example._OriginTask("fixture", "evaluation", current_task)
+        data = example._ExperimentData((), (origin,), (), True)
+        records = example._evaluation_records(data, config, rows)
+        _metrics, _details, evidence = example._task_local_adaptation_evaluation(
+            trained_model,
+            data,
+            config,
+            rows,
+            SimpleNamespace(),
+            records,
+        )
+        evidences.append(evidence)
+
+    assert call_order == [
+        "copy_pretrained_parameters",
+        "snapshot_adaptation_base",
+        "copy_pretrained_parameters",
+        "snapshot_adaptation_base",
+    ]
+    assert len(scored_logits) == 2
+    assert scored_logits[0].shape == (3, 1, 9060)
+    assert np.array_equal(scored_logits[0], scored_logits[1])
+    for left, right in zip(
+        jax.tree.leaves(banks[0]), jax.tree.leaves(banks[1]), strict=True
+    ):
+        np.testing.assert_array_equal(left, right)
+    assert not any("target" in field for field in banks[0]._fields)
+    assert not any("output" in field for field in banks[0]._fields)
+    for evidence in evidences:
+        assert evidence["performed"] is True
+        assert evidence["mode"] == "compiled_task_local_pp_prop_leave_one_out"
+        assert evidence["target_free_query_bank"] is True
+        assert evidence["fold_count"] == 2
+        assert evidence["applied_fold_count"] == 2
+        assert evidence["query_count"] == 1
+        assert evidence["bank_bytes"] == banks[0].projected_bytes
+        assert (
+            evidence["base_parameter_sha256"] == evidence["restored_parameter_sha256"]
+        )
+        assert evidence["base_parameters_restored"] is True
+
+
+def test_report_labels_adapted_primary_and_frozen_no_adaptation_separately(example):
+    evaluation = _evaluation_payload()
+    evaluation["task_local_adaptation"] = {
+        "performed": True,
+        "mode": "compiled_task_local_pp_prop_leave_one_out",
+        "fold_count": 2,
+        "applied_fold_count": 2,
+        "query_count": 1,
+        "bank_bytes": 4096,
+        "base_parameter_sha256": "abc",
+        "restored_parameter_sha256": "abc",
+        "base_parameters_restored": True,
+    }
+    evaluation["frozen_no_adaptation"] = {
+        "role": "diagnostic_control_not_primary_submission",
+        "metrics_by_effort": copy.deepcopy(evaluation["metrics_by_effort"]),
+    }
+    result = {
+        "evaluation": evaluation,
+        "model": {},
+        "training": {},
+        "qualification": {},
+    }
+
+    report = example._render_report(result)
+
+    assert "Task-local adaptation:" in report
+    assert "folds applied=2/2" in report
+    assert "target-free query bank" in report
+    assert "Frozen no-adaptation diagnostic:" in report
+    assert "diagnostic control, not primary submission" in report
+    assert "Frozen no-adaptation aggregate latent trajectory:" in report
