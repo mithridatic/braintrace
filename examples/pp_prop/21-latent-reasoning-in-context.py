@@ -44,6 +44,8 @@ try:
         select_checkpoint_candidates,
     )
     from examples.pp_prop.latent_workspace_arc_adaptation import (
+        ArcTargetFreeTaskBank,
+        ArcTaskBankAdaptationResult,
         build_arc_target_free_task_bank,
         compile_arc_task_local_adaptation_runner,
     )
@@ -95,6 +97,8 @@ except ModuleNotFoundError:
         select_checkpoint_candidates,
     )
     from latent_workspace_arc_adaptation import (
+        ArcTargetFreeTaskBank,
+        ArcTaskBankAdaptationResult,
         build_arc_target_free_task_bank,
         compile_arc_task_local_adaptation_runner,
     )
@@ -278,6 +282,7 @@ class ExperimentConfig:
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
+    adaptation_task_group: int = 0
     parameter_checkpoint: pathlib.Path | None = None
     evaluation_task_limit: int | None = None
     smoke: bool = False
@@ -301,6 +306,7 @@ class ExperimentConfig:
             ("training_batch_size", 1),
             ("training_bank_size", 0),
             ("adaptation_epochs", 1),
+            ("adaptation_task_group", 0),
             ("ablation_slot", 0),
         ):
             object.__setattr__(
@@ -2784,6 +2790,45 @@ def _expected_queries_by_task(data: _ExperimentData) -> dict[str, int]:
     return expected
 
 
+def _bank_task_slice(
+    bank: ArcTargetFreeTaskBank, start: int, stop: int
+) -> ArcTargetFreeTaskBank:
+    """Return the sub-bank holding one contiguous group of tasks.
+
+    Every bank leaf carries a leading task axis and padding widths are global to
+    the bank, so a slice keeps every trailing shape and the compiled runner is
+    reused across groups without recompiling.
+    """
+    return jax.tree.map(lambda leaf: leaf[start:stop], bank)
+
+
+def _run_adaptation_in_task_groups(
+    runner: Any, bank: ArcTargetFreeTaskBank, group_size: int
+) -> ArcTaskBankAdaptationResult:
+    """Adapt and infer one bounded group of tasks at a time.
+
+    A single compiled call spanning all 400 tasks dispatched more GPU work than
+    the local WDDM device tolerates: a complete run died with
+    ``CUDA_ERROR_UNKNOWN`` at the first host synchronisation after the whole-bank
+    call. The runner restores parameters and optimizer state per task, so
+    grouping tasks is arithmetically identical and bounds each dispatch.
+    """
+    task_count = int(np.asarray(bank.query_valid).shape[0])
+    if group_size <= 0 or group_size >= task_count:
+        return runner(bank)
+    groups = []
+    for start in range(0, task_count, group_size):
+        stop = min(start + group_size, task_count)
+        result = runner(_bank_task_slice(bank, start, stop))
+        groups.append(jax.tree.map(np.asarray, result))
+    return ArcTaskBankAdaptationResult(
+        *(
+            np.concatenate([getattr(group, name) for group in groups])
+            for name in ArcTaskBankAdaptationResult._fields
+        )
+    )
+
+
 def _task_local_adaptation_evaluation(
     trained_model: LatentWorkspaceModel,
     data: _ExperimentData,
@@ -2839,7 +2884,9 @@ def _task_local_adaptation_evaluation(
         epochs=config.adaptation_epochs,
     )
     started = time.perf_counter()
-    result = runner(bank)
+    result = _run_adaptation_in_task_groups(
+        runner, bank, config.adaptation_task_group
+    )
     wall_seconds = time.perf_counter() - started
     after = _tree_digest(parameter_snapshot(model))
     valid = np.asarray(result.query_valid, dtype=np.bool_)
@@ -2879,6 +2926,7 @@ def _task_local_adaptation_evaluation(
         "mode": "compiled_task_local_pp_prop_leave_one_out",
         "learning_rate": float(adaptation_rate),
         "epochs": int(config.adaptation_epochs),
+        "task_group_size": int(config.adaptation_task_group),
         "target_free_query_bank": True,
         "target_free_official_query_bank": True,
         "task_count": int(valid.shape[0]),
@@ -5163,6 +5211,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--parameter-checkpoint", type=pathlib.Path)
+    parser.add_argument("--adaptation-task-group", type=int, default=0)
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
         "--decoder-mode",
@@ -5205,6 +5254,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
         parameter_checkpoint=args.parameter_checkpoint,
+        adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,

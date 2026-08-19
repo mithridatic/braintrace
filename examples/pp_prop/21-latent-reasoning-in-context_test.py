@@ -3695,6 +3695,78 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
+def _adaptation_bank_fixture(example, tasks=4):
+    from examples.pp_prop.latent_workspace_arc_adaptation import (
+        build_arc_target_free_task_bank,
+    )
+
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    data = example._load_data(config)
+    pool = [example._without_official_test_targets(item.task) for item in data.training]
+    while len(pool) < tasks:
+        pool = pool + pool
+    return build_arc_target_free_task_bank(tuple(pool[:tasks]), rows), rows
+
+
+def test_a_task_slice_keeps_every_trailing_bank_shape(example):
+    bank, _ = _adaptation_bank_fixture(example, tasks=4)
+
+    sliced = example._bank_task_slice(bank, 1, 3)
+
+    for whole, part in zip(jax.tree.leaves(bank), jax.tree.leaves(sliced), strict=True):
+        assert np.shape(part)[0] == 2
+        assert np.shape(part)[1:] == np.shape(whole)[1:]
+        np.testing.assert_array_equal(np.asarray(part), np.asarray(whole)[1:3])
+
+
+def test_task_groups_reproduce_the_whole_bank_result(example):
+    bank, _ = _adaptation_bank_fixture(example, tasks=4)
+    calls: list[int] = []
+
+    def runner(sub_bank):
+        count = int(np.asarray(sub_bank.query_valid).shape[0])
+        calls.append(count)
+        ordinals = jnp.asarray(sub_bank.task_ordinals, dtype=jnp.float32)
+        return example.ArcTaskBankAdaptationResult(
+            fold_losses=jnp.broadcast_to(ordinals[:, None], (count, 2)),
+            fold_applied=jnp.ones((count, 2), dtype=jnp.bool_),
+            checkpoint_outputs=jnp.broadcast_to(
+                ordinals[:, None, None, None], (count, 1, 3, 4)
+            ),
+            checkpoint_recorded=jnp.ones((count, 1, 3), dtype=jnp.bool_),
+            query_valid=jnp.asarray(sub_bank.query_valid),
+        )
+
+    whole = runner(bank)
+    calls.clear()
+    grouped = example._run_adaptation_in_task_groups(runner, bank, 2)
+
+    assert calls == [2, 2]
+    for left, right in zip(
+        jax.tree.leaves(whole), jax.tree.leaves(grouped), strict=True
+    ):
+        np.testing.assert_array_equal(np.asarray(left), np.asarray(right))
+
+
+def test_a_group_covering_the_bank_makes_one_call(example):
+    bank, _ = _adaptation_bank_fixture(example, tasks=3)
+    calls: list[int] = []
+
+    def runner(sub_bank):
+        calls.append(int(np.asarray(sub_bank.query_valid).shape[0]))
+        return "whole"
+
+    assert example._run_adaptation_in_task_groups(runner, bank, 0) == "whole"
+    assert example._run_adaptation_in_task_groups(runner, bank, 99) == "whole"
+    assert calls == [3, 3]
+
+
+def test_a_negative_task_group_is_rejected(example):
+    with pytest.raises(ValueError, match="adaptation_task_group"):
+        example.ExperimentConfig(adaptation_task_group=-1)
+
+
 def test_a_parameter_checkpoint_round_trips_every_leaf(example, tmp_path):
     config = example.ExperimentConfig.smoke_config()
     rows = example._row_config(config)
