@@ -207,6 +207,7 @@ class ModelConfig:
     seed: int = 2108
     sparse_backend: str | None = None
     decoder_mode: str = LEGACY_DECODER_MODE
+    decoder_reads_memory: bool = False
     copy_prior_logit: float = 2.0
     shape_prior_logit: float = 2.0
     query_row_index_start: int | None = None
@@ -236,6 +237,11 @@ class ModelConfig:
             if not math.isfinite(float(value)):
                 raise ValueError(f"{name} must be a finite real scalar")
             object.__setattr__(self, name, float(value))
+        if not isinstance(self.decoder_mode, str):
+            raise TypeError("decoder_mode must be a string")
+        object.__setattr__(
+            self, "decoder_reads_memory", bool(self.decoder_reads_memory)
+        )
         self._validate_edit_rule_layout()
         object.__setattr__(
             self,
@@ -375,6 +381,16 @@ class ModelConfig:
         return compact_output_width(self.color_rank, self.decoder_mode)
 
     @property
+    def decoder_memory_enabled(self) -> bool:
+        """Return whether the decoder reads the associative memory directly.
+
+        Choosing a size map requires knowing what the demonstrations did, which
+        the recurrent carrier has never been shown to retain.  This routes the
+        already-retrieved ``S_K`` read to the shape gate instead.
+        """
+        return self.edit_rule_enabled and self.decoder_reads_memory
+
+    @property
     def edit_rule_enabled(self) -> bool:
         """Return whether the query-referencing edit-rule decoder is active."""
 
@@ -419,6 +435,12 @@ class ModelConfig:
             "query_phase_index": self.query_phase_index,
             "input_side_valid_index": self.input_side_valid_index,
         }
+        if self.decoder_reads_memory and self.decoder_mode != EDIT_RULE_DECODER_MODE:
+            raise ValueError("decoder_reads_memory requires decoder_mode='edit_rule'")
+        if self.decoder_reads_memory and not self.context_memory_width:
+            raise ValueError(
+                "decoder_reads_memory requires a positive context_memory_width"
+            )
         if self.decoder_mode != EDIT_RULE_DECODER_MODE:
             return
         missing = sorted(name for name, value in required.items() if value is None)
@@ -1617,6 +1639,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         self.color_explicit_head = dense(
             cells * COLOR_COUNT, jnp.zeros((cells * COLOR_COUNT,), dtype=jnp.float32)
         )
+        if config.decoder_memory_enabled:
+            memory_width = config.context_memory_width
+            self.memory_shape_head = braintrace.nn.Linear(
+                memory_width,
+                2 * SHAPE_SLOT_COUNT,
+                w_init=random.randn(memory_width, 2 * SHAPE_SLOT_COUNT)
+                / math.sqrt(memory_width),
+                b_init=None,
+            )
         self.query_grid = brainstate.ShortTermState(
             jnp.zeros(
                 (config.batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, COLOR_COUNT),
@@ -2014,9 +2045,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 f"({self.config.batch_size}, {self.config.neuron_count}), got "
                 f"{carrier.shape}"
             )
-        return self.readout_from_carrier(carrier)
+        return self.readout_from_carrier(carrier, self.decoder_memory_read())
 
-    def readout_from_carrier(self, carrier: jax.Array) -> jax.Array:
+    def decoder_memory_read(self) -> jax.Array | None:
+        """Return the live associative-memory read the decoder consumes."""
+        if not self.config.decoder_memory_enabled:
+            return None
+        return jnp.asarray(self.memory_read.value)
+
+    def readout_from_carrier(
+        self, carrier: jax.Array, memory: jax.Array | None = None
+    ) -> jax.Array:
         """Map any leading-axis stack of workspace carriers to compact factors.
 
         Identical arithmetic to :meth:`compact_readout` without its single-tick
@@ -2045,7 +2084,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             carrier = _unit_l2_cap(carrier)
         hidden = jax.nn.gelu(self.readout_projection(carrier))
         if self.config.edit_rule_enabled:
-            return self._edit_rule_logits(hidden)
+            return self._edit_rule_logits(hidden, memory)
         return jnp.concatenate(
             (
                 self.height_head(hidden),
@@ -2067,7 +2106,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
         )
 
-    def _edit_rule_logits(self, hidden: jax.Array) -> jax.Array:
+    def _edit_rule_logits(
+        self, hidden: jax.Array, memory: jax.Array | None = None
+    ) -> jax.Array:
         """Emit already-final ARC logits from the decoder heads.
 
         The shape heads *select* among deterministic size maps keyed to the
@@ -2078,6 +2119,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         leading = hidden.shape[:-1]
         grid, input_height, input_width = self._captured_query(leading)
         gates = self.shape_rule_head(hidden)
+        if self.config.decoder_memory_enabled:
+            if memory is None:
+                raise ValueError(
+                    "decoder_reads_memory needs the associative-memory read"
+                )
+            # Additive, so the query-side rule preferences survive and the
+            # memory only shifts which size map wins.
+            gates = gates + self.memory_shape_head(jnp.asarray(memory))
         absolute = self.shape_absolute_head(hidden)
         height = shape_axis_logits(
             gates[..., :SHAPE_SLOT_COUNT],
@@ -2725,9 +2774,14 @@ def run_selected_packed_stream(
     # neurons)`` carrier the per-tick call saw, so the result is bitwise
     # identical, and the decoder's per-cell intermediates never scale with the
     # retained checkpoint count.
-    compact_buffer = brainstate.transform.for_loop(
-        model.readout_from_carrier, carrier_buffer
-    )
+    if model.config.decoder_memory_enabled:
+        compact_buffer = brainstate.transform.for_loop(
+            model.readout_from_carrier, carrier_buffer, memory_buffer
+        )
+    else:
+        compact_buffer = brainstate.transform.for_loop(
+            model.readout_from_carrier, carrier_buffer
+        )
     if model.config.memory_enabled:
         final_context_memory = jnp.asarray(model.context_memory.value)
     else:

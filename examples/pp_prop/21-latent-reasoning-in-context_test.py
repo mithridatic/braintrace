@@ -2878,6 +2878,14 @@ def test_cli_decoder_mode_reaches_both_config_paths(example, tmp_path):
     assert smoke.decoder_mode == "edit_rule"
     assert full.decoder_mode == "edit_rule"
 
+    reads_memory = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--device", "cpu", "--training-updates", "0",
+             "--decoder-mode", "edit_rule", "--decoder-reads-memory"]
+        )
+    )
+    assert reads_memory.decoder_reads_memory is True
+
 
 def test_model_config_supplies_the_query_slices_the_capture_needs(example):
     row_config = example.RowEventConfig()

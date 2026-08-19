@@ -3004,3 +3004,82 @@ def test_selected_path_matches_the_full_path_for_the_edit_rule_decoder() -> None
     np.testing.assert_array_equal(
         decoded[:2, :3], np.asarray(((5, 0, 7), (0, 3, 3)), dtype=np.int32)
     )
+
+
+def _memory_decoder_config(**changes: object) -> ModelConfig:
+    row = RowEventConfig()
+    features = associative_memory_feature_indices(row)
+    values: dict[str, object] = {
+        "context_memory_width": 8,
+        "memory_decay": 1.0,
+        "decoder_reads_memory": True,
+        "demonstration_phase_index": row.phase_slice.start,
+        "output_side_valid_index": row.side_valid_slice.start + 1,
+        "memory_key_indices": features.key_indices,
+        "memory_value_indices": features.value_indices,
+    }
+    values.update(changes)
+    return _edit_rule_config(**values)
+
+
+def test_decoder_memory_read_requires_the_associative_memory() -> None:
+    with pytest.raises(ValueError, match="context_memory_width"):
+        _edit_rule_config(decoder_reads_memory=True)
+
+
+def test_decoder_memory_read_requires_the_edit_rule_decoder() -> None:
+    row = RowEventConfig()
+    with pytest.raises(ValueError, match="edit_rule"):
+        ModelConfig(
+            input_width=row.input_width,
+            neuron_count=64,
+            recurrent_edges=96,
+            decoder_reads_memory=True,
+        )
+
+
+def test_decoder_memory_read_changes_the_shape_gate_and_nothing_else() -> None:
+    """The memory only shifts which size map wins; colour is untouched.
+
+    Selecting a non-identity size map is the one decision that needs the
+    demonstrations, so that is the only place the retrieved read is applied.
+    """
+    config = _memory_decoder_config()
+    model = LatentWorkspaceModel(config)
+    encoded = _edit_rule_episode(((5, 0, 7), (0, 3, 3)))
+
+    run_packed_stream(model, _batched_events(encoded))
+    carrier = model.workspace_carrier.value
+    read = model.decoder_memory_read()
+    with_memory = model.readout_from_carrier(carrier, read)
+    without_memory = model.readout_from_carrier(carrier, jnp.zeros_like(read))
+
+    assert read is not None and read.shape == (1, config.context_memory_width)
+    shape_width = 2 * 30
+    assert not np.array_equal(
+        np.asarray(with_memory)[:, :shape_width],
+        np.asarray(without_memory)[:, :shape_width],
+    )
+    np.testing.assert_array_equal(
+        np.asarray(with_memory)[:, shape_width:],
+        np.asarray(without_memory)[:, shape_width:],
+    )
+
+
+def test_decoder_memory_read_survives_the_selected_evaluation_path() -> None:
+    config = _memory_decoder_config()
+    full_model = LatentWorkspaceModel(config)
+    selected_model = LatentWorkspaceModel(config)
+    encoded = _edit_rule_episode(((5, 0, 7), (0, 3, 3)))
+    events = _batched_events(encoded)
+    steps = events.shape[0]
+    indices = jnp.asarray([[steps - 2], [steps - 1]], dtype=jnp.int32)
+
+    full = run_packed_stream(full_model, events)
+    selected = run_selected_packed_stream(selected_model, events, indices)
+
+    np.testing.assert_array_equal(
+        selected.compact_logits,
+        np.asarray(full.compact_logits)[np.asarray(indices), np.asarray([[0]])],
+    )
+    assert np.any(np.asarray(selected.memory_read) != 0.0)

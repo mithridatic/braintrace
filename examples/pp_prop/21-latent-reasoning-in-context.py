@@ -236,6 +236,7 @@ class ExperimentConfig:
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     decoder_mode: str = "legacy_cp"
+    decoder_reads_memory: bool = False
     ablation_slot: int = 0
     evaluation_task_limit: int | None = None
     smoke: bool = False
@@ -315,6 +316,7 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         balanced_color_loss: bool = False,
         decoder_mode: str = "legacy_cp",
+        decoder_reads_memory: bool = False,
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
 
@@ -350,6 +352,7 @@ class ExperimentConfig:
             memory_decay=memory_decay,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
+            decoder_reads_memory=decoder_reads_memory,
             max_demonstrations=4,
             training_updates=3,
             learning_rate=5e-4,
@@ -767,8 +770,10 @@ def _model_config(
         "color_rank": config.color_rank,
         "seed": config.seed,
         "decoder_mode": config.decoder_mode,
+        "decoder_reads_memory": config.decoder_reads_memory,
     }
     if config.decoder_mode == "edit_rule":
+        arguments["decoder_reads_memory"] = config.decoder_reads_memory
         arguments.update(
             {
                 "query_phase_index": row_config.phase_slice.start + 1,
@@ -1062,6 +1067,7 @@ def _train_model(
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
         "decoder_mode": config.decoder_mode,
+        "decoder_reads_memory": config.decoder_reads_memory,
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in TRAINING_EFFORTS
@@ -1143,6 +1149,7 @@ def _train_model(
         "per_update_depth_weight_sum": 1.0,
         "balanced_color_loss": config.balanced_color_loss,
         "decoder_mode": config.decoder_mode,
+        "decoder_reads_memory": config.decoder_reads_memory,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
             str(value): int(counts[value]) for value in TRAINING_EFFORTS
@@ -3964,6 +3971,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--decoder-mode", choices=("legacy_cp", "edit_rule"), default="legacy_cp"
     )
+    parser.add_argument("--decoder-reads-memory", action="store_true")
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
     parser.add_argument("--smoke", action="store_true")
@@ -3983,6 +3991,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             memory_decay=args.memory_decay,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
+            decoder_reads_memory=args.decoder_reads_memory,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,
@@ -3998,6 +4007,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
+        decoder_reads_memory=args.decoder_reads_memory,
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,
