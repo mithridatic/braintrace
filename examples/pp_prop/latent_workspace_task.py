@@ -10,12 +10,12 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 import hashlib
-import json
 import os
 from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
 import brainstate
+import msgspec
 import numpy as np
 from numpy.typing import NDArray
 
@@ -385,8 +385,8 @@ def load_arc_task(
 
     task_path = Path(path)
     try:
-        payload = json.loads(task_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        payload = msgspec.json.decode(task_path.read_bytes())
+    except (OSError, msgspec.DecodeError) as error:
         raise ValueError(f"cannot load ARC task {task_path}: {error}") from error
     if not isinstance(payload, Mapping):
         raise ValueError(f"ARC task file {task_path} must contain one JSON object")
@@ -415,12 +415,10 @@ def canonical_task_fingerprint(
         Lowercase SHA-256 hexadecimal digest.
     """
 
-    canonical = json.dumps(
+    canonical = msgspec.json.encode(
         arc_task_to_mapping(task, include_test_outputs=include_test_outputs),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=True,
-    ).encode("ascii")
+        order="sorted",
+    )
     return hashlib.sha256(canonical).hexdigest()
 
 
@@ -879,8 +877,8 @@ def _file_entries(
             if not line.strip():
                 continue
             try:
-                payload = json.loads(line)
-            except json.JSONDecodeError as error:
+                payload = msgspec.json.decode(line)
+            except msgspec.DecodeError as error:
                 origin = f"{path.name}:line {line_index}"
                 entries.append((f"{path.stem}:{line_index}", error, origin))
                 continue
@@ -889,8 +887,8 @@ def _file_entries(
             entries.append((task_id, task_payload, origin))
         return entries
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        payload = msgspec.json.decode(path.read_bytes())
+    except (OSError, msgspec.DecodeError) as error:
         raise ValueError(str(error)) from error
     if effective == "task_json":
         return [(path.stem, payload, f"{path.name}:{path.stem}")]
@@ -2034,9 +2032,7 @@ def smoke_loaded_dataset() -> LoadedDataset:
             path=f"{task.task_id}.json",
             sha256=fingerprint,
             size_bytes=len(
-                json.dumps(arc_task_to_mapping(task), separators=(",", ":")).encode(
-                    "utf-8"
-                )
+                msgspec.json.encode(arc_task_to_mapping(task))
             ),
         )
         for task, fingerprint in zip(tasks, fingerprints, strict=True)

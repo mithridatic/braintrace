@@ -9,6 +9,7 @@ import importlib.util
 import json
 import pathlib
 import sys
+import threading
 import time
 import warnings
 from enum import Enum
@@ -1314,9 +1315,10 @@ def test_training_tensor_terminals_follow_each_sample_effort(example):
     rows = example._row_config(config)
 
     tensors = example._prepare_training(data, config, rows)
+    horizon = example._training_sequence_length(data, config)
 
-    assert tensors.events.shape == (3, rows.max_events + 60, 1, rows.input_width)
-    assert tensors.advances.shape == (3, rows.max_events + 60, 1)
+    assert tensors.events.shape == (3, horizon, 1, rows.input_width)
+    assert tensors.advances.shape == (3, horizon, 1)
     assert tensors.colors.shape == (3, 1, 30, 30)
     assert np.all((0 <= tensors.heights) & (tensors.heights < 30))
     assert np.all((0 <= tensors.widths) & (tensors.widths < 30))
@@ -3695,6 +3697,248 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
+def test_training_sequence_length_covers_every_enabled_orientation(example):
+    """The dataset bound covers every fold before static compilation."""
+
+    def grid(height, width, color):
+        return ArcGrid(tuple(tuple(color for _ in range(width)) for _ in range(height)))
+
+    task = ArcTask(
+        train=(
+            ArcPair(grid(1, 7, 1), grid(2, 6, 2)),
+            ArcPair(grid(3, 5, 3), grid(1, 4, 4)),
+            ArcPair(grid(2, 8, 5), grid(3, 7, 6)),
+        ),
+        test=(ArcPair(grid(1, 1, 7), None),),
+        task_id="rectangular-horizon",
+    )
+    origin = example._OriginTask("ARC-AGI-1 training", "train", task)
+    data = example._ExperimentData((origin,), (origin,), (), False)
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), max_demonstrations=10
+    )
+    rows = example._row_config(config)
+
+    def transpose_grid(value):
+        return ArcGrid(tuple(zip(*value.cells)))
+
+    def transpose_task(value):
+        def pair(item):
+            return ArcPair(
+                transpose_grid(item.input),
+                None if item.output is None else transpose_grid(item.output),
+            )
+
+        return ArcTask(
+            tuple(pair(item) for item in value.train),
+            tuple(pair(item) for item in value.test),
+            task_id=value.task_id,
+        )
+
+    required = []
+    for oriented in (task, transpose_task(task)):
+        for episode in leave_one_demonstration_out_episodes(oriented):
+            encoded = encode_arc_query_episode(episode, rows)
+            required.append(
+                int(np.count_nonzero(example._packed_advances(encoded, config, rows)))
+            )
+
+    horizon = example._training_sequence_length(data, config)
+
+    assert horizon == max(required)
+    assert (
+        horizon
+        < (config.max_demonstrations + 1) * config.max_grid_size + config.latent_steps
+    )
+    assert horizon < 390
+
+
+def test_compact_training_horizon_preserves_the_complete_semantic_prefix(example):
+    """Short static rows discard only the guaranteed all-zero suffix."""
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), max_demonstrations=10
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    horizon = example._training_sequence_length(data, config)
+    origin = data.training[0]
+
+    legacy = example._training_row(
+        origin,
+        config,
+        rows,
+        brainstate.random.RandomState(17),
+        effort=60,
+        plumbing_only=data.plumbing_only,
+    )
+    compact = example._training_row(
+        origin,
+        config,
+        rows,
+        brainstate.random.RandomState(17),
+        effort=60,
+        plumbing_only=data.plumbing_only,
+        sequence_length=horizon,
+    )
+
+    assert compact["events"].shape[0] == horizon < legacy["events"].shape[0]
+    np.testing.assert_array_equal(compact["events"], legacy["events"][:horizon])
+    np.testing.assert_array_equal(compact["advances"], legacy["advances"][:horizon])
+    np.testing.assert_array_equal(compact["masks"], legacy["masks"][:horizon])
+    assert not np.any(legacy["advances"][horizon:])
+    assert not np.any(legacy["events"][horizon:])
+    assert not np.any(legacy["masks"][horizon:])
+
+    chunks = list(example._training_chunks(data, config, rows))
+    assert chunks[0].events.shape[1] == horizon
+
+
+def test_compact_horizon_reproduces_legacy_cpu_training_numerically(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), training_chunk_size=1
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    compact_length = example._training_sequence_length(data, config)
+    legacy_length = rows.max_events + config.latent_steps
+
+    def train(sequence_length):
+        monkeypatch.setattr(
+            example,
+            "_training_sequence_length",
+            lambda _data, _config: sequence_length,
+        )
+        model = example._make_model(
+            config, rows, batch_size=1, device=jax.devices("cpu")[0]
+        )
+        report = example._train_model(
+            model, example._training_chunks(data, config, rows), config
+        )
+        return report, example.parameter_snapshot(model)
+
+    legacy, legacy_parameters = train(legacy_length)
+    compact, compact_parameters = train(compact_length)
+
+    np.testing.assert_allclose(
+        compact["losses"], legacy["losses"], rtol=1e-6, atol=1e-6
+    )
+    assert compact["effort_schedule"] == legacy["effort_schedule"]
+    assert compact["training_samples"] == legacy["training_samples"]
+    for compact_leaf, legacy_leaf in zip(
+        jax.tree.leaves(compact_parameters),
+        jax.tree.leaves(legacy_parameters),
+        strict=True,
+    ):
+        np.testing.assert_allclose(
+            np.asarray(compact_leaf),
+            np.asarray(legacy_leaf),
+            rtol=1e-6,
+            atol=1e-6,
+        )
+
+
+def test_training_chunk_prefetch_is_ordered_and_at_most_one_ahead(example):
+    produced: list[int] = []
+
+    def source():
+        for value in range(4):
+            produced.append(value)
+            yield value
+
+    chunks = example._prefetched_training_chunks(source())
+    assert next(chunks) == 0
+    deadline = time.monotonic() + 1.0
+    while len(produced) < 2 and time.monotonic() < deadline:
+        time.sleep(0.001)
+    time.sleep(0.02)
+    assert produced == [0, 1]
+
+    assert next(chunks) == 1
+    deadline = time.monotonic() + 1.0
+    while len(produced) < 3 and time.monotonic() < deadline:
+        time.sleep(0.001)
+    time.sleep(0.02)
+    assert produced == [0, 1, 2]
+    assert list(chunks) == [2, 3]
+
+
+def test_training_chunk_prefetch_propagates_the_producer_exception(example):
+    def source():
+        yield "ready"
+        raise RuntimeError("episode encoding failed")
+
+    chunks = example._prefetched_training_chunks(source())
+    assert next(chunks) == "ready"
+    with pytest.raises(RuntimeError, match="episode encoding failed"):
+        next(chunks)
+
+
+def test_training_workers_preserve_rows_and_metadata(example):
+    serial = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        training_workers=1,
+        training_chunk_size=1,
+    )
+    parallel = dataclasses.replace(serial, training_workers=4)
+    data = example._load_data(serial)
+    rows = example._row_config(serial)
+
+    serial_chunks = list(example._training_chunks(data, serial, rows))
+    parallel_chunks = list(example._training_chunks(data, parallel, rows))
+    assert len(serial_chunks) == len(parallel_chunks)
+    for left, right in zip(serial_chunks, parallel_chunks, strict=True):
+        for field in example._CHUNK_ARRAY_FIELDS:
+            np.testing.assert_array_equal(getattr(left, field), getattr(right, field))
+        for field in example._CHUNK_METADATA_FIELDS:
+            assert getattr(left, field) == getattr(right, field), field
+
+
+def test_training_workers_restore_ordinal_order_and_bound_inflight(example, monkeypatch):
+    active = 0
+    peak = 0
+
+    def materialize(job):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        time.sleep(0.002 * (4 - job.ordinal % 4))
+        active -= 1
+        return job.ordinal
+
+    monkeypatch.setattr(example, "_materialize_training_row", materialize)
+    jobs = [type("Job", (), {"ordinal": index})() for index in range(12)]
+
+    assert list(example._ordered_training_rows(jobs, 3)) == list(range(12))
+    assert peak <= 6
+
+
+def test_training_workers_propagate_failure_and_join(example, monkeypatch):
+    started = threading.Event()
+    finished = threading.Event()
+
+    def materialize(job):
+        started.set()
+        if job.ordinal == 1:
+            raise RuntimeError("row worker failed")
+        time.sleep(0.01)
+        finished.set()
+        return job.ordinal
+
+    monkeypatch.setattr(example, "_materialize_training_row", materialize)
+    jobs = [type("Job", (), {"ordinal": index})() for index in range(8)]
+    with pytest.raises(RuntimeError, match="row worker failed"):
+        list(example._ordered_training_rows(jobs, 2))
+    assert started.is_set()
+    assert finished.is_set()
+    assert not [
+        thread
+        for thread in threading.enumerate()
+        if thread.name.startswith("example21-training-row")
+    ]
+
+
 def _adaptation_bank_fixture(example, tasks=4):
     from examples.pp_prop.latent_workspace_arc_adaptation import (
         build_arc_target_free_task_bank,
@@ -3806,9 +4050,7 @@ def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):
     path = tmp_path / "parameters.npz"
     path.write_bytes(b"")
-    restored = example.ExperimentConfig(
-        training_updates=0, parameter_checkpoint=path
-    )
+    restored = example.ExperimentConfig(training_updates=0, parameter_checkpoint=path)
     assert restored.training_updates == 0
     assert restored.to_dict()["parameter_checkpoint"] == str(path)
 
@@ -3972,7 +4214,9 @@ def test_banked_schedules_are_reproducible_and_chunk_independent(example):
     chunked = example._prepare_training(data, split, rows)
 
     for field in example._CHUNK_ARRAY_FIELDS:
-        assert np.array_equal(getattr(reference, field), getattr(repeated, field)), field
+        assert np.array_equal(getattr(reference, field), getattr(repeated, field)), (
+            field
+        )
         assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
     for field in example._CHUNK_METADATA_FIELDS:
         assert getattr(reference, field) == getattr(chunked, field), field

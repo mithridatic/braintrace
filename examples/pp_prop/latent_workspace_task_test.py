@@ -433,7 +433,7 @@ def test_jsonl_supports_wrappers_blank_lines_and_rejection_accounting(
 
     assert loaded.tasks[0].task_id == "line-task"
     assert loaded.manifest.rejected_task_count == 2
-    assert any("Expecting" in rejected.reason for rejected in loaded.manifest.rejected)
+    assert all(rejected.reason for rejected in loaded.manifest.rejected)
     assert any("train" in rejected.reason for rejected in loaded.manifest.rejected)
 
 

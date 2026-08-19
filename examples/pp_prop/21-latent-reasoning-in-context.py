@@ -10,13 +10,14 @@ available.  This is a repository-native experiment, not a reproduction.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import hashlib
 import importlib.metadata
-import json
 import math
 import os
 import pathlib
 import platform
+import queue
 import subprocess
 import threading
 import time
@@ -29,6 +30,7 @@ import brainstate
 import braintools
 import jax
 import jax.numpy as jnp
+import msgspec
 import numpy as np
 
 try:
@@ -276,6 +278,7 @@ class ExperimentConfig:
     training_chunk_size: int = 0
     training_batch_size: int = 1
     training_bank_size: int = 0
+    training_workers: int = 4
     learning_rate: float = 1e-4
     adaptation_learning_rate: float = 0.0
     adaptation_epochs: int = 1
@@ -305,6 +308,7 @@ class ExperimentConfig:
             ("training_chunk_size", 0),
             ("training_batch_size", 1),
             ("training_bank_size", 0),
+            ("training_workers", 1),
             ("adaptation_epochs", 1),
             ("adaptation_task_group", 0),
             ("ablation_slot", 0),
@@ -364,8 +368,7 @@ class ExperimentConfig:
                 self, "parameter_checkpoint", pathlib.Path(self.parameter_checkpoint)
             )
         restored = (
-            self.parameter_checkpoint is not None
-            and self.parameter_checkpoint.exists()
+            self.parameter_checkpoint is not None and self.parameter_checkpoint.exists()
         )
         if (
             not self.structural_only
@@ -381,13 +384,18 @@ class ExperimentConfig:
             and self.training_updates % self.training_chunk_size
         ):
             raise ValueError("training_chunk_size must divide training_updates")
-        if self.training_bank_size and self.training_bank_size < self.training_batch_size:
+        if (
+            self.training_bank_size
+            and self.training_bank_size < self.training_batch_size
+        ):
             raise ValueError("training_bank_size must cover one training batch")
         if self.adaptation_learning_rate:
             object.__setattr__(
                 self,
                 "adaptation_learning_rate",
-                _positive_real(self.adaptation_learning_rate, "adaptation_learning_rate"),
+                _positive_real(
+                    self.adaptation_learning_rate, "adaptation_learning_rate"
+                ),
             )
 
     @classmethod
@@ -820,8 +828,8 @@ def _resolve_device(platform: DeviceName) -> tuple[jax.Device, dict[str, object]
 
 def _source_declarations(path: pathlib.Path) -> tuple[DatasetSource, ...]:
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        payload = msgspec.json.decode(path.read_bytes())
+    except (OSError, msgspec.DecodeError) as error:
         raise ValueError(f"cannot read source manifest {path}: {error}") from error
     values = payload.get("sources") if isinstance(payload, dict) else None
     if not isinstance(values, list) or not values:
@@ -946,10 +954,60 @@ def _empty_training_tensors() -> _TrainingTensors:
     return _TrainingTensors(empty, empty, empty, empty, empty, empty, empty, ())
 
 
+def _training_sequence_length(data: _ExperimentData, config: ExperimentConfig) -> int:
+    """Return the smallest safe static training horizon for admitted data.
+
+    Parameters
+    ----------
+    data
+        Admitted training and evaluation data.
+    config
+        Resolved experiment configuration.
+
+    Returns
+    -------
+    int
+        Maximum semantic advance count over every fold and orientation.
+    """
+    if not data.training:
+        raise ValueError("training data is empty")
+    maximum = 0
+    for origin in data.training:
+        demonstrations = origin.task.train
+        if not demonstrations:
+            raise ValueError("training task has no demonstrations")
+        orientations = (False,) if data.plumbing_only else (False, True)
+        for transposed in orientations:
+            for held_out_index, held_out in enumerate(demonstrations):
+
+                def extent(grid: Any) -> int:
+                    return int(grid.width if transposed else grid.height)
+
+                context_width = max(
+                    (
+                        max(extent(pair.input), extent(pair.output))
+                        for index, pair in enumerate(demonstrations)
+                        if index != held_out_index and pair.output is not None
+                    ),
+                    default=0,
+                )
+                maximum = max(
+                    maximum,
+                    (len(demonstrations) - 1) * context_width
+                    + extent(held_out.input)
+                    + config.latent_steps,
+                )
+    if maximum <= config.latent_steps:
+        raise ValueError("training horizon contains no observed query rows")
+    return maximum
+
+
 def _compact_training_stream(
     encoded: EncodedQueryEpisode,
     config: ExperimentConfig,
     row_config: RowEventConfig,
+    *,
+    sequence_length: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Move every semantic training advance into one static-shape prefix.
 
@@ -967,9 +1025,23 @@ def _compact_training_stream(
     if compact_query.size != 1:
         raise ValueError("query terminal must be one semantic training advance")
 
-    compact = np.zeros_like(padded)
+    required_length = int(active_indices.size)
+    if sequence_length is None:
+        sequence_length = int(padded.shape[0])
+    elif (
+        isinstance(sequence_length, (bool, np.bool_))
+        or not isinstance(sequence_length, Integral)
+        or int(sequence_length) < required_length
+    ):
+        raise ValueError(
+            "training sequence length is shorter than the semantic advance prefix"
+        )
+    sequence_length = int(sequence_length)
+    if sequence_length > int(padded.shape[0]):
+        raise ValueError("training sequence length exceeds packed event capacity")
+    compact = np.zeros((sequence_length, padded.shape[1]), dtype=padded.dtype)
     compact[: active_indices.size] = padded[active_indices]
-    advances = np.zeros_like(padded_advances)
+    advances = np.zeros((sequence_length,), dtype=padded_advances.dtype)
     advances[: active_indices.size] = True
     query_checkpoint = int(compact_query[0])
     latent_count = int(active_indices.size) - query_checkpoint - 1
@@ -996,6 +1068,7 @@ def _training_row(
     *,
     effort: int,
     plumbing_only: bool,
+    sequence_length: int | None = None,
 ) -> dict[str, Any]:
     """Encode one augmented leave-one-demonstration-out training update."""
 
@@ -1014,7 +1087,7 @@ def _training_row(
             f"{held_out_index} lacks a target"
         )
     sequence, advances, query_checkpoint = _compact_training_stream(
-        encoded, config, row_config
+        encoded, config, row_config, sequence_length=sequence_length
     )
     mask = np.zeros((sequence.shape[0],), dtype=np.float32)
     terminal = query_checkpoint + effort
@@ -1098,6 +1171,8 @@ def _training_bank(
     config: ExperimentConfig,
     row_config: RowEventConfig,
     rng: brainstate.random.RandomState,
+    *,
+    sequence_length: int | None = None,
 ) -> dict[int, list[dict[str, Any]]]:
     """Encode a reusable episode bank, one list per supervised effort.
 
@@ -1117,6 +1192,7 @@ def _training_bank(
                 rng,
                 effort=int(effort),
                 plumbing_only=data.plumbing_only,
+                sequence_length=sequence_length,
             )
             for index in rng.randint(
                 0, len(data.training), size=config.training_bank_size
@@ -1135,6 +1211,7 @@ def _banked_training_row(
     *,
     effort: int,
     plumbing_only: bool,
+    sequence_length: int | None = None,
 ) -> dict[str, Any]:
     """Draw one episode from the bank, or encode a fresh one when it is empty."""
     if not bank:
@@ -1145,9 +1222,97 @@ def _banked_training_row(
             rng,
             effort=effort,
             plumbing_only=plumbing_only,
+            sequence_length=sequence_length,
         )
     episodes = bank[int(effort)]
     return episodes[int(np.asarray(rng.randint(0, len(episodes))))]
+
+
+@dataclass(frozen=True)
+class _TrainingRowJob:
+    """Immutable work descriptor for one independently encoded episode."""
+
+    ordinal: int
+    origin: _OriginTask
+    config: ExperimentConfig
+    row_config: RowEventConfig
+    seed: int
+    effort: int
+    plumbing_only: bool
+    sequence_length: int
+
+
+def _materialize_training_row(job: _TrainingRowJob) -> dict[str, Any]:
+    """Encode one row from a worker-local deterministic random stream."""
+
+    return _training_row(
+        job.origin,
+        job.config,
+        job.row_config,
+        brainstate.random.RandomState(job.seed),
+        effort=job.effort,
+        plumbing_only=job.plumbing_only,
+        sequence_length=job.sequence_length,
+    )
+
+
+def _ordered_training_rows(
+    jobs: Iterable[_TrainingRowJob], workers: int
+) -> Iterator[dict[str, Any]]:
+    """Materialize rows concurrently while yielding their ordinal order.
+
+    Parameters
+    ----------
+    jobs
+        Immutable, already-seeded episode descriptors in schedule order.
+    workers
+        Number of CPU workers.  One selects the serial oracle.
+
+    Yields
+    ------
+    dict
+        Encoded rows in the same order as ``jobs`` regardless of completion
+        timing.
+
+    Raises
+    ------
+    BaseException
+        The original worker exception, after pending work is cancelled and
+        the executor is joined.
+    """
+
+    if workers == 1:
+        for job in jobs:
+            yield _materialize_training_row(job)
+        return
+    executor = concurrent.futures.ThreadPoolExecutor(
+        max_workers=workers, thread_name_prefix="example21-training-row"
+    )
+    pending: dict[int, concurrent.futures.Future[dict[str, Any]]] = {}
+    source = iter(jobs)
+    next_ordinal = 0
+
+    def fill() -> None:
+        while len(pending) < 2 * workers:
+            try:
+                job = next(source)
+            except StopIteration:
+                return
+            pending[job.ordinal] = executor.submit(_materialize_training_row, job)
+
+    try:
+        fill()
+        while pending:
+            future = pending.pop(next_ordinal)
+            yield future.result()
+            next_ordinal += 1
+            fill()
+    except BaseException:
+        for future in pending.values():
+            future.cancel()
+        raise
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
 
 
 def _training_chunks(
@@ -1174,31 +1339,151 @@ def _training_chunks(
         rng.randint(0, len(data.training), size=config.training_updates * batch),
         dtype=np.int32,
     )
-    bank = _training_bank(data, config, row_config, rng)
+    sequence_length = _training_sequence_length(data, config)
+    bank = _training_bank(
+        data,
+        config,
+        row_config,
+        rng,
+        sequence_length=sequence_length,
+    )
     size = config.training_chunk_size or config.training_updates
     rows: list[dict[str, Any]] = []
     for update_index, effort in enumerate(efforts):
         picks = task_indices[update_index * batch : (update_index + 1) * batch]
-        rows.append(
-            _merge_training_rows(
-                [
-                    _banked_training_row(
-                        bank,
-                        data.training[int(task_index)],
-                        config,
-                        row_config,
-                        rng,
-                        effort=int(effort),
-                        plumbing_only=data.plumbing_only,
-                    )
-                    for task_index in picks
-                ]
+        if bank:
+            episode_rows = [
+                _banked_training_row(
+                    bank,
+                    data.training[int(task_index)],
+                    config,
+                    row_config,
+                    rng,
+                    effort=int(effort),
+                    plumbing_only=data.plumbing_only,
+                    sequence_length=sequence_length,
+                )
+                for task_index in picks
+            ]
+        else:
+            seeds = np.asarray(
+                rng.randint(0, np.iinfo(np.int32).max, size=batch), dtype=np.int64
             )
-        )
+            jobs = [
+                _TrainingRowJob(
+                    ordinal=slot,
+                    origin=data.training[int(task_index)],
+                    config=config,
+                    row_config=row_config,
+                    seed=int(seed),
+                    effort=int(effort),
+                    plumbing_only=data.plumbing_only,
+                    sequence_length=sequence_length,
+                )
+                for slot, (task_index, seed) in enumerate(zip(picks, seeds, strict=True))
+            ]
+            episode_rows = list(_ordered_training_rows(jobs, config.training_workers))
+        rows.append(_merge_training_rows(episode_rows))
         if len(rows) == size:
             start = update_index + 1 - size
-            yield _stacked_chunk(rows, efforts[start : update_index + 1])
+            chunk = _stacked_chunk(rows, efforts[start : update_index + 1])
             rows = []
+            yield chunk
+
+
+@dataclass(frozen=True)
+class _ProducerFailure:
+    """Exception and traceback captured by the training producer."""
+
+    error: BaseException
+    traceback: Any
+
+
+_PREFETCH_COMPLETE = object()
+
+
+def _prefetched_training_chunks(chunks: Iterable[Any]) -> Iterator[Any]:
+    """Yield items from a one-ahead asynchronous CPU producer.
+
+    The producer may advance the source exactly once beyond the item currently
+    consumed. Producer failures retain their traceback, and early consumer exit
+    stops and joins the worker.
+
+    Parameters
+    ----------
+    chunks
+        Ordered items to prepare.
+
+    Yields
+    ------
+    Any
+        Items in unchanged source order.
+    """
+    source = iter(chunks)
+    pending: queue.Queue[object] = queue.Queue(maxsize=1)
+    advance_permit = threading.Semaphore(1)
+    stopped = threading.Event()
+
+    def await_permit() -> bool:
+        while not stopped.is_set():
+            if advance_permit.acquire(timeout=0.05):
+                return True
+        return False
+
+    def publish(item: object) -> bool:
+        while not stopped.is_set():
+            try:
+                pending.put(item, timeout=0.05)
+                return True
+            except queue.Full:
+                continue
+        return False
+
+    def produce() -> None:
+        failure: _ProducerFailure | None = None
+        completed = False
+        try:
+            while await_permit():
+                try:
+                    item = next(source)
+                except StopIteration:
+                    completed = True
+                    break
+                if not publish(item):
+                    return
+        except BaseException as error:
+            failure = _ProducerFailure(error, error.__traceback__)
+        finally:
+            close = getattr(source, "close", None)
+            if close is not None:
+                try:
+                    close()
+                except BaseException as error:
+                    if failure is None:
+                        failure = _ProducerFailure(error, error.__traceback__)
+            if failure is not None:
+                publish(failure)
+            elif completed:
+                publish(_PREFETCH_COMPLETE)
+
+    worker = threading.Thread(
+        target=produce,
+        name="example21-training-chunk-producer",
+        daemon=True,
+    )
+    worker.start()
+    try:
+        while True:
+            item = pending.get()
+            advance_permit.release()
+            if item is _PREFETCH_COMPLETE:
+                return
+            if isinstance(item, _ProducerFailure):
+                raise item.error.with_traceback(item.traceback)
+            yield item
+    finally:
+        stopped.set()
+        worker.join()
 
 
 _CHUNK_ARRAY_FIELDS = (
@@ -1482,6 +1767,7 @@ def _parameter_change_evidence(
 class _TrainingSchedule:
     """Per-update training metadata accumulated across chunks, in order."""
 
+    training_sequence_length: int | None = None
     efforts: tuple[int, ...] = ()
     task_fingerprints: tuple[str, ...] = ()
     base_task_fingerprints: tuple[str, ...] = ()
@@ -1489,7 +1775,14 @@ class _TrainingSchedule:
     held_out_demonstration_indices: tuple[int, ...] = ()
 
     def extended(self, chunk: _TrainingTensors) -> "_TrainingSchedule":
+        sequence_length = int(chunk.events.shape[1])
+        if (
+            self.training_sequence_length is not None
+            and self.training_sequence_length != sequence_length
+        ):
+            raise ValueError("training chunks disagree on packed sequence length")
         return _TrainingSchedule(
+            training_sequence_length=sequence_length,
             efforts=self.efforts + tuple(int(value) for value in chunk.efforts),
             task_fingerprints=self.task_fingerprints + tuple(chunk.task_fingerprints),
             base_task_fingerprints=(
@@ -1540,9 +1833,7 @@ def _train_chunks(
     return losses, schedule
 
 
-def _write_parameter_checkpoint(
-    model: LatentWorkspaceModel, path: pathlib.Path
-) -> str:
+def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
     """Write trainable parameter leaves and return the file digest.
 
     Pretraining is the expensive stage and every evaluation question — a
@@ -1558,9 +1849,7 @@ def _write_parameter_checkpoint(
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _read_parameter_checkpoint(
-    model: LatentWorkspaceModel, path: pathlib.Path
-) -> str:
+def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
     """Restore parameter leaves written by :func:`_write_parameter_checkpoint`.
 
     A checkpoint from a different neuron count, edge count, or decoder mode has
@@ -1607,9 +1896,7 @@ def _restored_training_report(
     }
 
 
-def _per_episode_efforts(
-    efforts: tuple[int, ...], batch_size: int
-) -> tuple[int, ...]:
+def _per_episode_efforts(efforts: tuple[int, ...], batch_size: int) -> tuple[int, ...]:
     """Expand one supervised depth per update into one per batched episode."""
     return tuple(int(effort) for effort in efforts for _ in range(batch_size))
 
@@ -1714,7 +2001,7 @@ def _train_model(
             train_one, (events, advances, heights, widths, colors, masks)
         )
 
-    losses, schedule = _train_chunks(chunks, train_all)
+    losses, schedule = _train_chunks(_prefetched_training_chunks(chunks), train_all)
     after_snapshot = parameter_snapshot(model)
     after = _tree_digest(after_snapshot)
     counts = Counter(schedule.efforts)
@@ -1744,6 +2031,13 @@ def _train_model(
         "supervised_depths": supervised_depths,
         "depth_weighting": "uniform_unit_sum_per_update",
         "per_update_depth_weight_sum": 1.0,
+        "training_sequence_length": schedule.training_sequence_length,
+        "training_chunk_prefetch": {
+            "enabled": True,
+            "max_buffered_chunks": 1,
+        },
+        "training_workers": config.training_workers,
+        "training_row_max_inflight": 2 * config.training_workers,
         "balanced_color_loss": config.balanced_color_loss,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
@@ -2884,9 +3178,7 @@ def _task_local_adaptation_evaluation(
         epochs=config.adaptation_epochs,
     )
     started = time.perf_counter()
-    result = _run_adaptation_in_task_groups(
-        runner, bank, config.adaptation_task_group
-    )
+    result = _run_adaptation_in_task_groups(runner, bank, config.adaptation_task_group)
     wall_seconds = time.perf_counter() - started
     after = _tree_digest(parameter_snapshot(model))
     valid = np.asarray(result.query_valid, dtype=np.bool_)
@@ -2917,9 +3209,10 @@ def _task_local_adaptation_evaluation(
     )
     fold_applied = np.asarray(result.fold_applied, dtype=np.bool_)
     fold_losses = np.asarray(result.fold_losses, dtype=np.float64)
-    fold_count = int(
-        np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid))
-    ) * config.adaptation_epochs
+    fold_count = (
+        int(np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid)))
+        * config.adaptation_epochs
+    )
     applied_fold_count = int(np.count_nonzero(fold_applied))
     evidence = {
         "performed": True,
@@ -4377,9 +4670,7 @@ def _data_summary(
         task_counts[role] += len(item.tasks)
         query_counts[role] += sum(len(task.test) for task in item.tasks)
         source_names.setdefault(role, []).append(str(item.manifest.source.name))
-    canonical = json.dumps(
-        list(manifests), sort_keys=True, separators=(",", ":"), ensure_ascii=True
-    ).encode("ascii")
+    canonical = msgspec.json.encode(list(manifests), order="sorted")
     return {
         "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
         "source_count": len(manifests),
@@ -5184,8 +5475,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "report": str(report_path),
         "figure": str(figure_path),
     }
-    manifest_path.write_text(json.dumps(manifests, indent=2), encoding="utf-8")
-    result_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    manifest_path.write_bytes(msgspec.json.encode(manifests))
+    result_path.write_bytes(msgspec.json.encode(result))
     report_path.write_text(_render_report(result), encoding="utf-8")
     _plot(result, figure_path)
     return result
@@ -5207,6 +5498,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--training-batch-size", type=int, default=1)
     parser.add_argument("--training-bank-size", type=int, default=0)
+    parser.add_argument("--training-workers", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
@@ -5251,6 +5543,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_chunk_size=args.training_chunk_size,
         training_batch_size=args.training_batch_size,
         training_bank_size=args.training_bank_size,
+        training_workers=args.training_workers,
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
         parameter_checkpoint=args.parameter_checkpoint,
