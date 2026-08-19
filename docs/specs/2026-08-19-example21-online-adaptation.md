@@ -1,6 +1,6 @@
 # Example 21 — per-tick online adaptation
 
-Status: three arms measured; accumulating-arm rate sweep outstanding
+Status: complete; schedule reported neutral at matched tuning
 Date: 2026-08-19
 Branch: `feat/example21-row-refinement`
 Mechanism: `2026-08-19-online-update-driver.md`.
@@ -219,3 +219,47 @@ offline, but whether it can be acquired across a single online pass over tasks.
 inherited rate and is visibly mis-tuned. The rate sweep for the accumulating arm
 decides whether the per-tick schedule is the lever, or whether only the
 effective step size ever mattered. No schedule claim is made until it lands.
+
+## 9. Matched comparison: the schedule is close to neutral
+
+The accumulating arm got the rate sweep §7 said it was owed. Its best measured
+rate is 1e-3; 3e-3 was too high and 3e-4 and below stop buying anything. Rerun
+at full width against the same 86 tasks:
+
+| arm | shape | pixel | exact pass@2 | shape helped / hurt | fold loss | seconds |
+|---|---|---|---:|---:|---|---:|
+| accumulated 3e-3 | 0.616 -> 0.546 | 0.514 -> 0.520 | 1 | 14 / 20 | 0.468 -> 0.211 | 825 |
+| accumulated 1e-3, tuned | 0.616 -> 0.628 | 0.514 -> 0.544 | 1 | 15 / 14 | 0.468 -> 0.241 | 804 |
+| per tick 5e-5 | 0.616 -> 0.663 | 0.514 -> 0.551 | 2 | 15 / 11 | 0.464 -> 0.250 | 1,820 |
+
+**Most of the apparent advantage was tuning, not schedule.** Against a tuned
+accumulating arm the per-tick gap narrows to 0.035 shape and 0.007 pixel. At 86
+tasks 0.035 shape is three tasks, and the exact difference is one. Neither
+separates.
+
+This is §3's second outcome and it is reported as such: **the update schedule is
+close to neutral for ARC task-local adaptation at this scale, and no improvement
+is claimed for it.** It costs 2.3x the wall clock, so on this evidence there is
+no reason to prefer it here.
+
+Sections 5 and 8 compared per-tick at a swept rate against accumulation at an
+inherited one, and their shape numbers should be read only through this section.
+
+### 9.1 What does survive
+
+Fold loss is anti-correlated with held-out quality across all three pretrained
+arms — final loss 0.211, 0.241, 0.250 orders exactly opposite to shape accuracy
+0.546, 0.628, 0.663. The adaptation stage reports fold loss, and it must not be
+used to select a configuration.
+
+The driver itself stands on its own: `etrace_online` makes a regime expressible
+that the library could not express, and the accompanying tests pin its contract.
+That is worth having independently of whether it wins on this task.
+
+### 9.2 The result that matters is §8.2
+
+The scratch arm carries no pretrained parameters and still improves shape on 21
+tasks against 2, from demonstrations alone. That is much larger and much cleaner
+than any schedule effect measured here, and it is the direction worth pursuing:
+whether the prior the pretrained arms enjoy can be acquired across a single
+online pass over tasks rather than an offline stage.
