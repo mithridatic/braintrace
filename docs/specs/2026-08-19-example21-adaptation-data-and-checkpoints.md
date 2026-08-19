@@ -63,6 +63,23 @@ augmentation adds distinct folds rather than repeats, so the two compose. The
 report records, per task, the number of original folds, the number of augmented
 folds, and the transform identity of each.
 
+### 2.3 The episode bank does not scale to longer pretraining
+
+One encoded episode occupies `(330 + 60) x 830` float32, or 1.29 MB, so a bank of
+4,000 episodes per supervised effort holds 10.4 GB of host memory — measured at
+14.76 GiB of a 23.47 GiB container during the first complete run. Raising the
+bank to keep episodes distinct across a 300,000-episode run would need roughly
+31 GB and cannot fit.
+
+The bank exists only because episode encoding is synchronous with training. The
+measured duty cycle is about two thirds GPU-busy and one third host-busy
+stacking the next chunk, so overlapping the two recovers that third *and*
+removes the need to retain episodes at all. The replacement is a prefetch of the
+next chunk on a worker thread while the current chunk trains; the encoders are
+NumPy-bound and release the interpreter lock. Until that lands, bank size is
+capped by host memory and episodes are reused, which is recorded in the report
+rather than hidden.
+
 ## 3. Protocol
 
 Unchanged. Augmentation reads demonstrations only. The official query target is

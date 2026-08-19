@@ -278,6 +278,7 @@ class ExperimentConfig:
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
+    parameter_checkpoint: pathlib.Path | None = None
     evaluation_task_limit: int | None = None
     smoke: bool = False
     structural_only: bool = False
@@ -352,7 +353,19 @@ class ExperimentConfig:
             object.__setattr__(
                 self, "source_manifest", pathlib.Path(self.source_manifest)
             )
-        if not self.structural_only and self.training_updates < len(TRAINING_EFFORTS):
+        if self.parameter_checkpoint is not None:
+            object.__setattr__(
+                self, "parameter_checkpoint", pathlib.Path(self.parameter_checkpoint)
+            )
+        restored = (
+            self.parameter_checkpoint is not None
+            and self.parameter_checkpoint.exists()
+        )
+        if (
+            not self.structural_only
+            and not restored
+            and self.training_updates < len(TRAINING_EFFORTS)
+        ):
             raise ValueError(
                 "training_updates must expose one model to 30 and 60 steps"
             )
@@ -436,6 +449,11 @@ class ExperimentConfig:
             None if self.source_manifest is None else str(self.source_manifest)
         )
         result["output_dir"] = str(self.output_dir)
+        result["parameter_checkpoint"] = (
+            None
+            if self.parameter_checkpoint is None
+            else str(self.parameter_checkpoint)
+        )
         result["checkpoints"] = list(CHECKPOINTS)
         result["training_efforts"] = list(TRAINING_EFFORTS)
         result["primary_evaluation_mode"] = (
@@ -1514,6 +1532,73 @@ def _train_chunks(
     if len(losses) != len(schedule.efforts):
         raise ValueError("training losses and effort schedule disagree in length")
     return losses, schedule
+
+
+def _write_parameter_checkpoint(
+    model: LatentWorkspaceModel, path: pathlib.Path
+) -> str:
+    """Write trainable parameter leaves and return the file digest.
+
+    Pretraining is the expensive stage and every evaluation question — a
+    different adaptation budget, a candidate rule, an ablation — otherwise costs
+    a full repeat. Leaves are stored in deterministic tree order so a model of
+    the same shape restores them exactly.
+    """
+    states = model.states(brainstate.ParamState)
+    leaves = jax.tree.leaves({key: state.value for key, state in states.items()})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        np.savez(handle, *[np.asarray(leaf) for leaf in leaves])
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _read_parameter_checkpoint(
+    model: LatentWorkspaceModel, path: pathlib.Path
+) -> str:
+    """Restore parameter leaves written by :func:`_write_parameter_checkpoint`.
+
+    A checkpoint from a different neuron count, edge count, or decoder mode has
+    a different parameter tree and fails closed here rather than being reshaped.
+    """
+    states = model.states(brainstate.ParamState)
+    leaves, structure = jax.tree.flatten(
+        {key: state.value for key, state in states.items()}
+    )
+    stored = np.load(path)
+    names = [f"arr_{index}" for index in range(len(leaves))]
+    if set(stored.files) != set(names):
+        raise ValueError("parameter checkpoint does not match the model tree")
+    restored = [jnp.asarray(stored[name]) for name in names]
+    for target, value in zip(leaves, restored, strict=True):
+        if np.shape(target) != np.shape(value):
+            raise ValueError("parameter checkpoint does not match the model shapes")
+    for key, value in jax.tree.unflatten(structure, restored).items():
+        states[key].value = value
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _restored_training_report(
+    model: LatentWorkspaceModel, config: ExperimentConfig, digest: str
+) -> dict[str, object]:
+    """Describe a run that restored parameters instead of optimizing them."""
+    return {
+        "performed": False,
+        "reason": "restored_parameter_checkpoint",
+        "parameter_checkpoint": str(config.parameter_checkpoint),
+        "parameter_checkpoint_sha256": digest,
+        "one_shared_model": True,
+        "supervised_depths": (
+            "latent_row_ticks_1..effort"
+            if config.decoder_mode == "row_refinement"
+            else "0..effort"
+        ),
+        "depth_weighting": "uniform_unit_sum_per_update",
+        "balanced_color_loss": config.balanced_color_loss,
+        "optimizer_updates_by_effort": {str(value): 0 for value in TRAINING_EFFORTS},
+        "losses": [],
+        "parameter_sha256_before": _tree_digest(parameter_snapshot(model)),
+        "parameter_sha256_after": _tree_digest(parameter_snapshot(model)),
+    }
 
 
 def _per_episode_efforts(
@@ -4923,16 +5008,29 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         data = _load_data(config)
         rows = _row_config(config)
         model = _make_model(config, rows, batch_size=1, device=device)
-        fitted = (
-            model
-            if config.training_batch_size == 1
-            else _make_model(
-                config, rows, batch_size=config.training_batch_size, device=device
+        checkpoint = config.parameter_checkpoint
+        if checkpoint is not None and checkpoint.exists():
+            training = _restored_training_report(
+                model, config, _read_parameter_checkpoint(model, checkpoint)
             )
-        )
-        training = _train_model(fitted, _training_chunks(data, config, rows), config)
-        if fitted is not model:
-            _copy_parameters(fitted, model)
+        else:
+            fitted = (
+                model
+                if config.training_batch_size == 1
+                else _make_model(
+                    config, rows, batch_size=config.training_batch_size, device=device
+                )
+            )
+            training = _train_model(
+                fitted, _training_chunks(data, config, rows), config
+            )
+            if fitted is not model:
+                _copy_parameters(fitted, model)
+            if checkpoint is not None:
+                training["parameter_checkpoint"] = str(checkpoint)
+                training["parameter_checkpoint_sha256"] = _write_parameter_checkpoint(
+                    model, checkpoint
+                )
         evaluation = _evaluate(model, data, config, rows, device)
     finally:
         monitor_report = monitor.stop() if monitor is not None else None
@@ -5064,6 +5162,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
+    parser.add_argument("--parameter-checkpoint", type=pathlib.Path)
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
         "--decoder-mode",
@@ -5105,6 +5204,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_bank_size=args.training_bank_size,
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
+        parameter_checkpoint=args.parameter_checkpoint,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,

@@ -3695,6 +3695,76 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
+def test_a_parameter_checkpoint_round_trips_every_leaf(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    source = example._make_model(config, rows, batch_size=1, device=device)
+    target = example._make_model(config, rows, batch_size=1, device=device)
+    for state in target.states(example.brainstate.ParamState).values():
+        state.value = jax.tree.map(lambda leaf: leaf + 1.0, state.value)
+    path = tmp_path / "parameters.npz"
+
+    written = example._write_parameter_checkpoint(source, path)
+    restored = example._read_parameter_checkpoint(target, path)
+
+    assert written == restored
+    for left, right in zip(
+        jax.tree.leaves(example.parameter_snapshot(source)),
+        jax.tree.leaves(example.parameter_snapshot(target)),
+        strict=True,
+    ):
+        np.testing.assert_array_equal(np.asarray(left), np.asarray(right))
+
+
+def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    wider = dataclasses.replace(config, neuron_count=config.neuron_count * 2)
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    narrow = example._make_model(config, rows, batch_size=1, device=device)
+    broad = example._make_model(wider, rows, batch_size=1, device=device)
+    path = tmp_path / "parameters.npz"
+    example._write_parameter_checkpoint(narrow, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._read_parameter_checkpoint(broad, path)
+
+
+def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):
+    path = tmp_path / "parameters.npz"
+    path.write_bytes(b"")
+    restored = example.ExperimentConfig(
+        training_updates=0, parameter_checkpoint=path
+    )
+    assert restored.training_updates == 0
+    assert restored.to_dict()["parameter_checkpoint"] == str(path)
+
+    with pytest.raises(ValueError, match="training_updates"):
+        example.ExperimentConfig(
+            training_updates=0, parameter_checkpoint=tmp_path / "absent.npz"
+        )
+
+
+def test_a_restored_report_records_no_optimizer_update(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "parameters.npz"
+    digest = example._write_parameter_checkpoint(model, path)
+    restored = dataclasses.replace(config, parameter_checkpoint=path)
+
+    report = example._restored_training_report(model, restored, digest)
+
+    assert report["performed"] is False
+    assert report["reason"] == "restored_parameter_checkpoint"
+    assert report["parameter_checkpoint_sha256"] == digest
+    assert report["losses"] == []
+    assert set(report["optimizer_updates_by_effort"].values()) == {0}
+    assert report["parameter_sha256_before"] == report["parameter_sha256_after"]
+
+
 def test_single_episode_batches_reproduce_the_unbatched_schedule(example):
     reference = example.ExperimentConfig.smoke_config()
     explicit = dataclasses.replace(reference, training_batch_size=1)
