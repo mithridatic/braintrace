@@ -66,14 +66,19 @@ violation, not a shortcut.
 
 Recorded before the first complete 400-task run reports its number.
 
-**Adaptation budget is the leading suspect for a zero.** Every nonzero exact
-answer measured so far came from roughly 40 adaptation steps over batches of
-four folds. The complete run uses `adaptation_epochs = 6`, which is about 18 to
-24 single-fold steps per task, chosen for wall clock rather than for measured
-score. The sweep covered 40, 120, and 300 steps and found them flat; it never
-probed below 40, so the downward slope is unmeasured. A zero from this run is
-therefore first evidence about the adaptation budget and not evidence that the
-approach fails.
+**Adaptation budget was the leading suspect for a zero, and the shipped run
+cleared it.** Every nonzero exact answer measured beforehand came from roughly 40
+adaptation steps over batches of four folds. The sweep covered 40, 120, and 300
+steps and found them flat, but never probed below 40, so the downward slope was
+unmeasured and a small budget was the pre-registered suspect.
+
+The first attempt, which died on a device fault before scoring, was configured
+with `adaptation_epochs = 6`. The reported run used `adaptation_epochs = 10` and
+realized 13,630 fold updates over 1,363 distinct folds across 400 tasks — about
+34 single-fold steps per task, inside the flat region the sweep measured.
+Adaptation budget is therefore **not** the explanation for the score that run
+reported; this paragraph is retained in full so the revision is visible rather
+than silently corrected.
 
 **Scale selection disclosure.** The 1,024-neuron / 262,144-edge scale was
 selected on measured wall clock plus held-out training-split shape accuracy.

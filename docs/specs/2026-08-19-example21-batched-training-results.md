@@ -249,6 +249,15 @@ pixel accuracy to convert, which §5.3 shows it currently is not.
 
 ## 6. What the evidence says to do next
 
+**Plainly: this work did not increase the exact-answer count.** The retained
+neural baseline was one exact answer and this run reports one, so milestone M0 is
+not cleared. What it produced is the first complete strict model-only run in which
+shape accuracy is non-degenerate — 0.0000 to 0.6014 over 419 official queries —
+a matched frozen control at 0.0000 proving task-local adaptation is causally
+responsible, and four levers eliminated by measurement rather than argument
+(adaptation budget, candidate construction, augmented adaptation folds, and
+neuron/edge scale).
+
 1. Pretraining is the binding constraint on exact score, and its curve has not
    converged. More episodes, not more neurons, is the next lever — the loss was
    still descending at 96,000 episodes. Every other lever measured this session
