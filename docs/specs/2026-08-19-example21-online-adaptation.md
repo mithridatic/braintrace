@@ -1,6 +1,6 @@
 # Example 21 — per-tick online adaptation
 
-Status: rate sweep measured; 100-task arms running
+Status: control arm measured and found mis-tuned; comparison incomplete
 Date: 2026-08-19
 Branch: `feat/example21-row-refinement`
 Mechanism: `2026-08-19-online-update-driver.md`.
@@ -130,3 +130,39 @@ An intermediate reading claimed the probe was host-bound, on eight consecutive
 instead shows the compiled adaptation saturating the device at 96-100% and
 148 W, with the zeros falling in the host gaps between stages. The claim was an
 artifact of when the samples were taken, and is withdrawn.
+
+## 7. The control arm is mis-tuned, and the comparison is not yet fair
+
+At full probe width the control arm makes shape accuracy **worse**:
+
+| arm | shape | pixel | exact pass@1 | exact pass@2 |
+|---|---|---|---:|---:|
+| frozen | 0.6163 | 0.5140 | 0.0116 | 0.0116 |
+| control, accumulated at 3e-3 | 0.5465 | 0.5204 | 0.0000 | 0.0116 |
+
+86 tasks scored of 100 offered; the rest carry fewer than three
+demonstrations. Adaptation helped shape on 14 tasks and hurt it on 20, and it
+destroyed the one exact `pass@1` the frozen model had.
+
+That is a mis-tuned optimizer, not a property of accumulation. The rate 3e-3 is
+inherited from the retained production configuration, which runs a different
+fold schedule — capacity 70 over 10 epochs — rather than this probe's 40 updates
+at batch 4.
+
+**So the sweep in §5 is not a fair comparison and must not be reported as one.**
+It swept the online rate over three values and left the accumulating arm at one
+inherited value. "Online at its best measured rate beats accumulation at an
+untuned rate" is not the claim this specification set out to test, and the
+degradation above is evidence the control's rate is genuinely wrong rather than
+merely unoptimized.
+
+The comparison is therefore incomplete until the accumulating arm gets the same
+treatment: a rate sweep on the same tasks, with its best measured rate carried
+into the full-width comparison. Until that runs, §5's shape result stands only
+as evidence that per-tick updates *can* improve shape where one particular
+accumulating configuration degrades it — not that the schedule is the cause.
+
+This was found by looking at the per-task helped/hurt split rather than the
+aggregate, which is the same discipline that resolved the near-miss tail in the
+earlier results document: an aggregate that moves in the expected direction can
+still be hiding the opposite mechanism.
