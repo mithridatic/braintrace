@@ -24,7 +24,7 @@ import time
 from collections import Counter
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
-from typing import Any, Iterable, Iterator, Literal, Mapping, Sequence
+from typing import Any, Callable, Iterable, Iterator, Literal, Mapping, Sequence
 
 import brainstate
 import braintools
@@ -287,6 +287,9 @@ class ExperimentConfig:
     ablation_slot: int = 0
     adaptation_task_group: int = 0
     parameter_checkpoint: pathlib.Path | None = None
+    initial_checkpoint: pathlib.Path | None = None
+    checkpoint_every: int = 0
+    training_holdout_tasks: int = 0
     evaluation_task_limit: int | None = None
     smoke: bool = False
     structural_only: bool = False
@@ -311,6 +314,8 @@ class ExperimentConfig:
             ("training_workers", 1),
             ("adaptation_epochs", 1),
             ("adaptation_task_group", 0),
+            ("checkpoint_every", 0),
+            ("training_holdout_tasks", 0),
             ("ablation_slot", 0),
         ):
             object.__setattr__(
@@ -367,6 +372,12 @@ class ExperimentConfig:
             object.__setattr__(
                 self, "parameter_checkpoint", pathlib.Path(self.parameter_checkpoint)
             )
+        if self.initial_checkpoint is not None:
+            object.__setattr__(
+                self, "initial_checkpoint", pathlib.Path(self.initial_checkpoint)
+            )
+        if self.checkpoint_every and self.parameter_checkpoint is None:
+            raise ValueError("checkpoint_every requires parameter_checkpoint")
         restored = (
             self.parameter_checkpoint is not None and self.parameter_checkpoint.exists()
         )
@@ -467,6 +478,9 @@ class ExperimentConfig:
             None
             if self.parameter_checkpoint is None
             else str(self.parameter_checkpoint)
+        )
+        result["initial_checkpoint"] = (
+            None if self.initial_checkpoint is None else str(self.initial_checkpoint)
         )
         result["checkpoints"] = list(CHECKPOINTS)
         result["training_efforts"] = list(TRAINING_EFFORTS)
@@ -1315,6 +1329,23 @@ def _ordered_training_rows(
         executor.shutdown(wait=True, cancel_futures=True)
 
 
+def _training_pool(
+    data: _ExperimentData, config: ExperimentConfig
+) -> Sequence[Any]:
+    """Return the tasks admitted to optimization, less any reserved holdout.
+
+    Reserving the tail of the training split gives an episode-scaling curve a
+    measurement surface that pretraining never saw, so checkpoints can be
+    compared without spending — or selecting on — the ARC evaluation split.
+    """
+    if not data.training:
+        raise ValueError("training data is empty")
+    reserved = config.training_holdout_tasks
+    if reserved >= len(data.training):
+        raise ValueError("training_holdout_tasks leaves no task to train on")
+    return data.training[: len(data.training) - reserved] if reserved else data.training
+
+
 def _training_chunks(
     data: _ExperimentData,
     config: ExperimentConfig,
@@ -1330,13 +1361,12 @@ def _training_chunks(
     if config.structural_only:
         yield _empty_training_tensors()
         return
-    if not data.training:
-        raise ValueError("training data is empty")
+    pool = _training_pool(data, config)
     rng = brainstate.random.RandomState(config.seed + 1000)
     efforts = _effort_schedule(config.training_updates, rng)
     batch = config.training_batch_size
     task_indices = np.asarray(
-        rng.randint(0, len(data.training), size=config.training_updates * batch),
+        rng.randint(0, len(pool), size=config.training_updates * batch),
         dtype=np.int32,
     )
     sequence_length = _training_sequence_length(data, config)
@@ -1355,7 +1385,7 @@ def _training_chunks(
             episode_rows = [
                 _banked_training_row(
                     bank,
-                    data.training[int(task_index)],
+                    pool[int(task_index)],
                     config,
                     row_config,
                     rng,
@@ -1372,7 +1402,7 @@ def _training_chunks(
             jobs = [
                 _TrainingRowJob(
                     ordinal=slot,
-                    origin=data.training[int(task_index)],
+                    origin=pool[int(task_index)],
                     config=config,
                     row_config=row_config,
                     seed=int(seed),
@@ -1799,6 +1829,7 @@ class _TrainingSchedule:
 def _train_chunks(
     chunks: Iterable[_TrainingTensors],
     train_all: Any,
+    on_chunk: Callable[[int], None] | None = None,
 ) -> tuple[list[float], _TrainingSchedule]:
     """Stage each chunk on device in turn and accumulate the whole schedule.
 
@@ -1809,7 +1840,7 @@ def _train_chunks(
     losses: list[float] = []
     schedule = _TrainingSchedule()
     sequence_length: int | None = None
-    for chunk in chunks:
+    for index, chunk in enumerate(chunks):
         if sequence_length is None:
             sequence_length = int(chunk.events.shape[1])
         elif int(chunk.events.shape[1]) != sequence_length:
@@ -1828,6 +1859,8 @@ def _train_chunks(
             )
         )
         schedule = schedule.extended(chunk)
+        if on_chunk is not None:
+            on_chunk(index)
     if len(losses) != len(schedule.efforts):
         raise ValueError("training losses and effort schedule disagree in length")
     return losses, schedule
@@ -1844,8 +1877,10 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
     states = model.states(brainstate.ParamState)
     leaves = jax.tree.leaves({key: state.value for key, state in states.items()})
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("wb") as handle:
+    staged = path.with_name(path.name + ".partial")
+    with staged.open("wb") as handle:
         np.savez(handle, *[np.asarray(leaf) for leaf in leaves])
+    os.replace(staged, path)
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
@@ -1870,6 +1905,42 @@ def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) 
     for key, value in jax.tree.unflatten(structure, restored).items():
         states[key].value = value
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _restore_initial_parameters(
+    model: LatentWorkspaceModel, config: ExperimentConfig
+) -> str | None:
+    """Seed a training segment from a previous segment's parameters.
+
+    Returns the restored file's digest, or ``None`` when the run starts from a
+    fresh initialization. The restore fails closed on a parameter tree from a
+    different neuron count, edge count, or decoder mode.
+    """
+    initial = config.initial_checkpoint
+    if initial is None or not initial.exists():
+        return None
+    return _read_parameter_checkpoint(model, initial)
+
+
+def _checkpoint_writer(
+    model: LatentWorkspaceModel, config: ExperimentConfig
+) -> Callable[[int], None] | None:
+    """Return a per-chunk callback that periodically persists parameters.
+
+    A device fault during a multi-hour segment then costs at most one interval
+    of training rather than the whole segment. ``None`` reproduces the single
+    write after training.
+    """
+    every = config.checkpoint_every
+    path = config.parameter_checkpoint
+    if not every or path is None:
+        return None
+
+    def write(index: int) -> None:
+        if (index + 1) % every == 0:
+            _write_parameter_checkpoint(model, path)
+
+    return write
 
 
 def _restored_training_report(
@@ -1905,6 +1976,7 @@ def _train_model(
     model: LatentWorkspaceModel,
     chunks: Iterable[_TrainingTensors],
     config: ExperimentConfig,
+    on_chunk: Callable[[int], None] | None = None,
 ) -> dict[str, object]:
     learner = compile_pp_prop(model)
     compiler_report = _compiler_evidence(learner)
@@ -2001,7 +2073,9 @@ def _train_model(
             train_one, (events, advances, heights, widths, colors, masks)
         )
 
-    losses, schedule = _train_chunks(_prefetched_training_chunks(chunks), train_all)
+    losses, schedule = _train_chunks(
+        _prefetched_training_chunks(chunks), train_all, on_chunk
+    )
     after_snapshot = parameter_snapshot(model)
     after = _tree_digest(after_snapshot)
     counts = Counter(schedule.efforts)
@@ -2037,6 +2111,8 @@ def _train_model(
             "max_buffered_chunks": 1,
         },
         "training_workers": config.training_workers,
+        "checkpoint_every_chunks": config.checkpoint_every,
+        "training_holdout_tasks": config.training_holdout_tasks,
         "training_row_max_inflight": 2 * config.training_workers,
         "balanced_color_loss": config.balanced_color_loss,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
@@ -5360,9 +5436,16 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                     config, rows, batch_size=config.training_batch_size, device=device
                 )
             )
+            initial_digest = _restore_initial_parameters(fitted, config)
             training = _train_model(
-                fitted, _training_chunks(data, config, rows), config
+                fitted,
+                _training_chunks(data, config, rows),
+                config,
+                _checkpoint_writer(fitted, config),
             )
+            if initial_digest is not None:
+                training["initial_checkpoint"] = str(config.initial_checkpoint)
+                training["initial_checkpoint_sha256"] = initial_digest
             if fitted is not model:
                 _copy_parameters(fitted, model)
             if checkpoint is not None:
@@ -5503,6 +5586,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--parameter-checkpoint", type=pathlib.Path)
+    parser.add_argument("--initial-checkpoint", type=pathlib.Path)
+    parser.add_argument("--checkpoint-every", type=int, default=0)
+    parser.add_argument("--training-holdout-tasks", type=int, default=0)
     parser.add_argument("--adaptation-task-group", type=int, default=0)
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
@@ -5547,6 +5633,9 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
         parameter_checkpoint=args.parameter_checkpoint,
+        initial_checkpoint=args.initial_checkpoint,
+        checkpoint_every=args.checkpoint_every,
+        training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,

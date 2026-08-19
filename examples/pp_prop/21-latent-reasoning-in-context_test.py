@@ -4079,6 +4079,229 @@ def test_a_restored_report_records_no_optimizer_update(example, tmp_path):
     assert report["parameter_sha256_before"] == report["parameter_sha256_after"]
 
 
+def test_restore_then_continue_optimizes_from_the_restored_parameters(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    data = example._load_data(config)
+    device = jax.devices("cpu")[0]
+    seed_model = example._make_model(config, rows, batch_size=1, device=device)
+    for state in seed_model.states(example.brainstate.ParamState).values():
+        state.value = jax.tree.map(lambda leaf: leaf * 0.5, state.value)
+    path = tmp_path / "segment.npz"
+    digest = example._write_parameter_checkpoint(seed_model, path)
+    seeded = example._tree_digest(example.parameter_snapshot(seed_model))
+
+    chained = dataclasses.replace(config, initial_checkpoint=path)
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    assert example._restore_initial_parameters(model, chained) == digest
+    assert example._tree_digest(example.parameter_snapshot(model)) == seeded
+
+    report = example._train_model(
+        model, example._training_chunks(data, chained, rows), chained
+    )
+
+    assert report["performed"] is True
+    assert report["parameter_sha256_before"] == seeded
+    assert report["parameters_moved"] is True
+
+
+def test_a_training_holdout_reserves_the_tail_of_the_split(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    reserved = dataclasses.replace(config, training_holdout_tasks=1)
+
+    whole = example._training_pool(data, config)
+    trimmed = example._training_pool(data, reserved)
+
+    assert len(trimmed) == len(whole) - 1
+    assert list(trimmed) == list(whole)[:-1]
+
+
+def test_no_holdout_admits_every_training_task(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+
+    assert example._training_pool(data, config) is data.training
+
+
+def test_a_holdout_that_consumes_the_split_is_rejected(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    empty = dataclasses.replace(
+        config, training_holdout_tasks=len(data.training)
+    )
+
+    with pytest.raises(ValueError, match="training_holdout_tasks"):
+        example._training_pool(data, empty)
+
+
+def test_a_reserved_task_never_enters_the_training_schedule(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), training_updates=6
+    )
+    data = example._load_data(config)
+    reserved = dataclasses.replace(config, training_holdout_tasks=1)
+    withheld = example.canonical_task_fingerprint(
+        example._without_official_test_targets(list(data.training)[-1].task)
+    )
+
+    chunks = list(example._training_chunks(data, reserved, example._row_config(config)))
+    sampled = {
+        fingerprint
+        for chunk in chunks
+        for fingerprint in chunk.base_task_fingerprints
+    }
+
+    assert withheld not in sampled
+
+
+def test_an_initial_checkpoint_seeds_a_further_training_segment(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    source = example._make_model(config, rows, batch_size=1, device=device)
+    target = example._make_model(config, rows, batch_size=1, device=device)
+    for state in target.states(example.brainstate.ParamState).values():
+        state.value = jax.tree.map(lambda leaf: leaf + 1.0, state.value)
+    path = tmp_path / "segment.npz"
+    written = example._write_parameter_checkpoint(source, path)
+    chained = dataclasses.replace(config, initial_checkpoint=path)
+
+    digest = example._restore_initial_parameters(target, chained)
+
+    assert digest == written
+    for left, right in zip(
+        jax.tree.leaves(example.parameter_snapshot(source)),
+        jax.tree.leaves(example.parameter_snapshot(target)),
+        strict=True,
+    ):
+        np.testing.assert_array_equal(np.asarray(left), np.asarray(right))
+
+
+def test_an_absent_initial_checkpoint_leaves_the_initialization_alone(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    before = example._tree_digest(example.parameter_snapshot(model))
+    absent = dataclasses.replace(config, initial_checkpoint=tmp_path / "absent.npz")
+
+    assert example._restore_initial_parameters(model, absent) is None
+    assert example._tree_digest(example.parameter_snapshot(model)) == before
+
+
+def test_an_initial_checkpoint_from_another_scale_is_rejected(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    narrow = example._make_model(config, rows, batch_size=1, device=device)
+    wider = dataclasses.replace(config, neuron_count=config.neuron_count * 2)
+    broad = example._make_model(wider, rows, batch_size=1, device=device)
+    path = tmp_path / "segment.npz"
+    example._write_parameter_checkpoint(narrow, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._restore_initial_parameters(
+            broad, dataclasses.replace(wider, initial_checkpoint=path)
+        )
+
+
+def test_periodic_checkpoints_land_on_the_configured_chunk_boundary(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "periodic.npz"
+    periodic = dataclasses.replace(
+        config, parameter_checkpoint=path, checkpoint_every=2
+    )
+
+    write = example._checkpoint_writer(model, periodic)
+    write(0)
+    assert not path.exists()
+    write(1)
+    assert path.exists()
+
+    restored = example._make_model(config, rows, batch_size=1, device=device)
+    example._read_parameter_checkpoint(restored, path)
+
+
+def test_no_periodic_writer_exists_without_an_interval(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    model = example._make_model(config, rows, batch_size=1, device=jax.devices("cpu")[0])
+    single = dataclasses.replace(
+        config, parameter_checkpoint=tmp_path / "once.npz", checkpoint_every=0
+    )
+
+    assert example._checkpoint_writer(model, single) is None
+
+
+def test_a_checkpoint_interval_without_a_destination_is_rejected(example):
+    with pytest.raises(ValueError, match="checkpoint_every requires"):
+        example.ExperimentConfig(checkpoint_every=1)
+
+
+def test_a_failed_checkpoint_write_leaves_the_previous_file_intact(
+    example, tmp_path, monkeypatch
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "segment.npz"
+    example._write_parameter_checkpoint(model, path)
+    survivor = path.read_bytes()
+
+    def explode(*_args, **_kwargs):
+        raise OSError("device full")
+
+    monkeypatch.setattr(example.np, "savez", explode)
+    with pytest.raises(OSError):
+        example._write_parameter_checkpoint(model, path)
+
+    assert path.read_bytes() == survivor
+
+
+def test_the_configuration_reports_its_initial_checkpoint(example, tmp_path):
+    path = tmp_path / "segment.npz"
+    config = example.ExperimentConfig.smoke_config()
+
+    assert config.to_dict()["initial_checkpoint"] is None
+    chained = dataclasses.replace(config, initial_checkpoint=path)
+    assert chained.to_dict()["initial_checkpoint"] == str(path)
+
+
+def test_every_chunk_reaches_the_periodic_checkpoint_callback(example):
+    seen = []
+    chunks = [
+        example._TrainingTensors(
+            events=np.zeros((1, 4, 1, 2), dtype=np.float32),
+            advances=np.zeros((1, 4, 1), dtype=np.bool_),
+            heights=np.zeros((1, 1), dtype=np.int32),
+            widths=np.zeros((1, 1), dtype=np.int32),
+            colors=np.zeros((1, 1, 30, 30), dtype=np.int32),
+            masks=np.zeros((1, 4), dtype=np.float32),
+            efforts=np.asarray([30], dtype=np.int32),
+            task_fingerprints=("a",),
+            base_task_fingerprints=("a",),
+            source_names=("train",),
+            held_out_demonstration_indices=(0,),
+        )
+        for _ in range(3)
+    ]
+
+    example._train_chunks(chunks, lambda *_args: np.zeros((1,)), seen.append)
+
+    assert seen == [0, 1, 2]
+
+
 def test_single_episode_batches_reproduce_the_unbatched_schedule(example):
     reference = example.ExperimentConfig.smoke_config()
     explicit = dataclasses.replace(reference, training_batch_size=1)
