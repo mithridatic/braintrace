@@ -35,10 +35,40 @@ from numpy.typing import NDArray
 
 import braintrace
 
+try:
+    from examples.pp_prop.latent_workspace_decoder import (
+        COLOR_COMPONENT_COUNT,
+        SHAPE_SLOT_COUNT,
+        color_cell_logits,
+        decode_side_length,
+        decoder_output_width,
+        shape_axis_logits,
+        split_decoder_logits,
+    )
+except ModuleNotFoundError:
+    from latent_workspace_decoder import (
+        COLOR_COMPONENT_COUNT,
+        SHAPE_SLOT_COUNT,
+        color_cell_logits,
+        decode_side_length,
+        decoder_output_width,
+        shape_axis_logits,
+        split_decoder_logits,
+    )
+
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 NEURONS_PER_SLOT = 64
 MEMORY_KEY_RFF_GAMMA = 2.0
+LEGACY_DECODER_MODE = "legacy_cp"
+EDIT_RULE_DECODER_MODE = "edit_rule"
+DECODER_MODES = (LEGACY_DECODER_MODE, EDIT_RULE_DECODER_MODE)
+
+
+def _validate_decoder_mode(value: object) -> str:
+    if value not in DECODER_MODES:
+        raise ValueError(f"decoder_mode must be one of {DECODER_MODES}, got {value!r}")
+    return str(value)
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -176,6 +206,13 @@ class ModelConfig:
     memory_value_indices: tuple[int, ...] = ()
     seed: int = 2108
     sparse_backend: str | None = None
+    decoder_mode: str = LEGACY_DECODER_MODE
+    copy_prior_logit: float = 2.0
+    shape_prior_logit: float = 2.0
+    query_row_index_start: int | None = None
+    query_input_height_start: int | None = None
+    query_input_width_start: int | None = None
+    query_input_color_start: int | None = None
 
     def __post_init__(self) -> None:
         for name in (
@@ -189,6 +226,17 @@ class ModelConfig:
         ):
             object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        object.__setattr__(
+            self, "decoder_mode", _validate_decoder_mode(self.decoder_mode)
+        )
+        for name in ("copy_prior_logit", "shape_prior_logit"):
+            value = getattr(self, name)
+            if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+                raise TypeError(f"{name} must be a finite real scalar")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be a finite real scalar")
+            object.__setattr__(self, name, float(value))
+        self._validate_edit_rule_layout()
         object.__setattr__(
             self,
             "context_memory_width",
@@ -256,7 +304,23 @@ class ModelConfig:
             self.output_side_valid_index,
         )
         if self.context_memory_width == 0:
-            if any(index is not None for index in memory_fields) or any(
+            # The edit-rule decoder reads the query phase and side-validity
+            # flags to capture the query grid, so supplying them without the
+            # associative memory is meaningful there and only there.
+            decoder_owned = (
+                {"query_phase_index", "input_side_valid_index"}
+                if self.edit_rule_enabled
+                else set()
+            )
+            unowned = (
+                self.demonstration_phase_index,
+                None if "query_phase_index" in decoder_owned else self.query_phase_index,
+                None
+                if "input_side_valid_index" in decoder_owned
+                else self.input_side_valid_index,
+                self.output_side_valid_index,
+            )
+            if any(index is not None for index in unowned) or any(
                 (self.memory_key_indices, self.memory_value_indices)
             ):
                 raise ValueError(
@@ -308,7 +372,68 @@ class ModelConfig:
     @property
     def compact_output_width(self) -> int:
         """Return the width of the factorized ARC output vector."""
-        return compact_output_width(self.color_rank)
+        return compact_output_width(self.color_rank, self.decoder_mode)
+
+    @property
+    def edit_rule_enabled(self) -> bool:
+        """Return whether the query-referencing edit-rule decoder is active."""
+
+        return self.decoder_mode == EDIT_RULE_DECODER_MODE
+
+    @property
+    def query_feature_starts(self) -> tuple[int, int, int, int]:
+        """Return the row-event slice starts the query capture reads.
+
+        Returns
+        -------
+        tuple of int
+            ``(row_index, input_height, input_width, input_color)`` starts.
+
+        Raises
+        ------
+        ValueError
+            If the edit-rule decoder is not enabled.
+        """
+        if not self.edit_rule_enabled:
+            raise ValueError("query_feature_starts requires decoder_mode='edit_rule'")
+        return (
+            int(self.query_row_index_start),  # type: ignore[arg-type]
+            int(self.query_input_height_start),  # type: ignore[arg-type]
+            int(self.query_input_width_start),  # type: ignore[arg-type]
+            int(self.query_input_color_start),  # type: ignore[arg-type]
+        )
+
+    def _validate_edit_rule_layout(self) -> None:
+        """Require every row-event index the edit-rule capture depends on.
+
+        The decoder reconstructs the query grid from the model's own input
+        stream, so it cannot run without knowing where the phase, side-validity
+        and colour features sit.  Failing here is far cheaper than silently
+        decoding against an all-zero query.
+        """
+        required = {
+            "query_row_index_start": self.query_row_index_start,
+            "query_input_height_start": self.query_input_height_start,
+            "query_input_width_start": self.query_input_width_start,
+            "query_input_color_start": self.query_input_color_start,
+            "query_phase_index": self.query_phase_index,
+            "input_side_valid_index": self.input_side_valid_index,
+        }
+        if self.decoder_mode != EDIT_RULE_DECODER_MODE:
+            return
+        missing = sorted(name for name, value in required.items() if value is None)
+        if missing:
+            raise ValueError(
+                "decoder_mode='edit_rule' requires " + ", ".join(missing)
+            )
+        for name, value in required.items():
+            index = _nonnegative_integer(value, name)
+            object.__setattr__(self, name, index)
+        color_stop = self.query_input_color_start + MAX_GRID_SIZE * COLOR_COUNT
+        if color_stop > self.input_width:
+            raise ValueError(
+                "query_input_color_start leaves no room for a 30x10 colour block"
+            )
 
 
 @dataclass(frozen=True)
@@ -540,6 +665,7 @@ class ModelTrajectory:
     recurrent_current: jax.Array
     zero_inputs: jax.Array
     color_rank: int
+    decoder_mode: str = LEGACY_DECODER_MODE
 
     @property
     def latent_steps(self) -> int:
@@ -549,7 +675,9 @@ class ModelTrajectory:
     @property
     def expanded(self) -> ArcLogits:
         """Expand every checkpoint to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_compact_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
     def at_effort(self, effort: int) -> ArcLogits:
         """Return expanded logits at one latent-effort checkpoint.
@@ -570,7 +698,9 @@ class ModelTrajectory:
             raise ValueError(
                 f"effort {effort} exceeds trajectory length {self.latent_steps}"
             )
-        return expand_compact_logits(self.compact_logits[effort], self.color_rank)
+        return expand_compact_logits(
+            self.compact_logits[effort], self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -608,11 +738,14 @@ class PackedTrajectory:
     memory_read: jax.Array
     final_context_memory: jax.Array
     color_rank: int
+    decoder_mode: str = LEGACY_DECODER_MODE
 
     @property
     def expanded(self) -> ArcLogits:
         """Expand all packed ticks to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_compact_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -656,11 +789,14 @@ class SelectedPackedTrajectory:
     memory_read: jax.Array
     final_context_memory: jax.Array
     color_rank: int
+    decoder_mode: str = LEGACY_DECODER_MODE
 
     @property
     def expanded(self) -> ArcLogits:
         """Expand selected compact checkpoints to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_compact_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -704,21 +840,29 @@ class ArcLossComponents(NamedTuple):
     colors: jax.Array
 
 
-def compact_output_width(color_rank: int) -> int:
+def compact_output_width(
+    color_rank: int, decoder_mode: str = LEGACY_DECODER_MODE
+) -> int:
     """Return compact output width for a CP color rank.
 
     Parameters
     ----------
     color_rank : int
-        Number of color-tensor factors.
+        Number of color-tensor factors.  Ignored by the edit-rule decoder,
+        which emits already-final logits.
+    decoder_mode : {"legacy_cp", "edit_rule"}, default="legacy_cp"
+        Output parameterisation.
 
     Returns
     -------
     int
         Two 30-way shape heads plus rank times 30 rows, 30 columns, and 10
-        colors.
+        colors, or the final ``30 | 30 | 30*30*10`` edit-rule width.
     """
+    _validate_decoder_mode(decoder_mode)
     color_rank = _positive_integer(color_rank, "color_rank")
+    if decoder_mode == EDIT_RULE_DECODER_MODE:
+        return decoder_output_width()
     return 2 * MAX_GRID_SIZE + color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
 
 
@@ -859,7 +1003,11 @@ def _split_compact_logits(
     return height, width, row, column, color
 
 
-def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
+def expand_compact_logits(
+    compact: jax.Array,
+    color_rank: int,
+    decoder_mode: str = LEGACY_DECODER_MODE,
+) -> ArcLogits:
     """Expand factorized outputs to full ARC logits.
 
     Parameters
@@ -869,6 +1017,9 @@ def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
         :func:`compact_output_width`.
     color_rank : int
         CP rank encoded by ``compact``.
+    decoder_mode : {"legacy_cp", "edit_rule"}, default="legacy_cp"
+        Output parameterisation.  The edit-rule decoder emits already-final
+        logits, so expansion is a split rather than a tensor contraction.
 
     Returns
     -------
@@ -876,6 +1027,10 @@ def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
         Height and width logits plus a color array with trailing shape
         ``(30, 30, 10)``.
     """
+    _validate_decoder_mode(decoder_mode)
+    if decoder_mode == EDIT_RULE_DECODER_MODE:
+        height, width, colors = split_decoder_logits(compact)
+        return ArcLogits(height=height, width=width, colors=colors)
     color_rank = _positive_integer(color_rank, "color_rank")
     compact = jnp.asarray(compact)
     height, width, row, column, color = _split_compact_logits(compact, color_rank)
@@ -892,6 +1047,7 @@ def arc_loss_components(
     target_colors: jax.Array,
     *,
     color_rank: int,
+    decoder_mode: str = LEGACY_DECODER_MODE,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
     class_balanced_colors: bool = False,
@@ -927,6 +1083,7 @@ def arc_loss_components(
         target_width,
         target_colors,
         color_rank=color_rank,
+        decoder_mode=decoder_mode,
         shape_weight=shape_weight,
         color_weight=color_weight,
         class_balanced_colors=class_balanced_colors,
@@ -943,6 +1100,7 @@ def arc_loss_per_example(
     target_colors: jax.Array,
     *,
     color_rank: int,
+    decoder_mode: str = LEGACY_DECODER_MODE,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
     class_balanced_colors: bool = False,
@@ -983,6 +1141,7 @@ def arc_loss_per_example(
         target_width,
         target_colors,
         color_rank=color_rank,
+        decoder_mode=decoder_mode,
         shape_weight=shape_weight,
         color_weight=color_weight,
         class_balanced_colors=class_balanced_colors,
@@ -997,6 +1156,7 @@ def _arc_loss_vectors(
     target_colors: jax.Array,
     *,
     color_rank: int,
+    decoder_mode: str,
     shape_weight: float,
     color_weight: float,
     class_balanced_colors: bool,
@@ -1025,7 +1185,7 @@ def _arc_loss_vectors(
     if not math.isfinite(color_weight) or color_weight < 0.0:
         raise ValueError("color_weight must be finite and nonnegative")
 
-    logits = expand_compact_logits(compact_logits, color_rank)
+    logits = expand_compact_logits(compact_logits, color_rank, decoder_mode)
     height_indices = target_height.astype(jnp.int32) - 1
     width_indices = target_width.astype(jnp.int32) - 1
     height_loss = -jnp.take_along_axis(
@@ -1080,6 +1240,7 @@ def terminal_arc_loss(
     target_colors: jax.Array,
     *,
     color_rank: int,
+    decoder_mode: str = LEGACY_DECODER_MODE,
     shape_weight: float = 1.0,
     color_weight: float = 1.0,
     class_balanced_colors: bool = False,
@@ -1114,6 +1275,7 @@ def terminal_arc_loss(
         target_width,
         target_colors,
         color_rank=color_rank,
+        decoder_mode=decoder_mode,
         shape_weight=shape_weight,
         color_weight=color_weight,
         class_balanced_colors=class_balanced_colors,
@@ -1395,7 +1557,66 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     (config.batch_size, config.neuron_count), dtype=jnp.float32
                 )
             )
+        if config.edit_rule_enabled:
+            self._build_edit_rule_decoder(config)
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
+
+    def _build_edit_rule_decoder(self, config: ModelConfig) -> None:
+        """Construct the query-referencing decoder heads and capture buffers.
+
+        Every draw here happens strictly after the legacy heads and, when
+        present, the associative-memory block, so enabling the decoder cannot
+        perturb a single legacy weight.  The buffers are
+        ``brainstate.ShortTermState``: the compiler leaves them out of every
+        hidden group, which the Stage 2 prerequisite probe verified.
+        """
+        width = config.readout_width
+        cells = MAX_GRID_SIZE * MAX_GRID_SIZE
+        random = brainstate.random.RandomState(config.seed + 201)
+
+        def dense(outputs: int, bias: jax.Array) -> Any:
+            return braintrace.nn.Linear(
+                width,
+                outputs,
+                w_init=random.randn(width, outputs) / math.sqrt(width),
+                b_init=bias,
+            )
+
+        shape_bias = np.zeros((2 * SHAPE_SLOT_COUNT,), dtype=np.float32)
+        # Slot zero is the identity size map, so the head starts out predicting
+        # "the output is the same size as the input" on both axes.
+        shape_bias[0] = config.shape_prior_logit
+        shape_bias[SHAPE_SLOT_COUNT] = config.shape_prior_logit
+        copy_bias = np.zeros((cells, COLOR_COMPONENT_COUNT), dtype=np.float32)
+        # Component zero copies the aligned query cell, so the decoder starts
+        # from "reproduce the input" rather than from noise.
+        copy_bias[:, 0] = config.copy_prior_logit
+
+        self.shape_rule_head = dense(2 * SHAPE_SLOT_COUNT, jnp.asarray(shape_bias))
+        self.shape_absolute_head = dense(
+            2 * MAX_GRID_SIZE, jnp.zeros((2 * MAX_GRID_SIZE,), dtype=jnp.float32)
+        )
+        self.copy_gate_head = dense(
+            cells * COLOR_COMPONENT_COUNT, jnp.asarray(copy_bias.reshape(-1))
+        )
+        self.color_palette_head = dense(
+            COLOR_COUNT, jnp.zeros((COLOR_COUNT,), dtype=jnp.float32)
+        )
+        self.color_explicit_head = dense(
+            cells * COLOR_COUNT, jnp.zeros((cells * COLOR_COUNT,), dtype=jnp.float32)
+        )
+        self.query_grid = brainstate.ShortTermState(
+            jnp.zeros(
+                (config.batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, COLOR_COUNT),
+                dtype=jnp.float32,
+            )
+        )
+        self.query_input_height = brainstate.ShortTermState(
+            jnp.zeros((config.batch_size, MAX_GRID_SIZE), dtype=jnp.float32)
+        )
+        self.query_input_width = brainstate.ShortTermState(
+            jnp.zeros((config.batch_size, MAX_GRID_SIZE), dtype=jnp.float32)
+        )
 
     @property
     def memory_read_policy(self) -> Literal["full", "query_only"]:
@@ -1592,6 +1813,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         self.neu.reset_state(batch_size=self.config.batch_size)
         self.ff_syn.syn.reset_state(batch_size=self.config.batch_size)
         self.rec_syn.syn.reset_state(batch_size=self.config.batch_size)
+        if self.config.edit_rule_enabled:
+            self.query_grid.value = jnp.zeros_like(self.query_grid.value)
+            self.query_input_height.value = jnp.zeros_like(
+                self.query_input_height.value
+            )
+            self.query_input_width.value = jnp.zeros_like(self.query_input_width.value)
         if self.config.memory_enabled:
             memory_width = self.config.context_memory_width
             self.context_memory.value = jnp.zeros(
@@ -1775,9 +2002,38 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 f"({self.config.batch_size}, {self.config.neuron_count}), got "
                 f"{carrier.shape}"
             )
+        return self.readout_from_carrier(carrier)
+
+    def readout_from_carrier(self, carrier: jax.Array) -> jax.Array:
+        """Map any leading-axis stack of workspace carriers to compact factors.
+
+        Identical arithmetic to :meth:`compact_readout` without its single-tick
+        batch-shape check, so a whole ``(checkpoints, batch, neurons)`` buffer
+        recorded during a scan can be decoded once after it.  The readout stack
+        is a chain of dense maps over the trailing axis, so applying it to a
+        rank-three carrier is elementwise-identical to applying it per tick.
+
+        Parameters
+        ----------
+        carrier : jax.Array
+            Workspace values shaped ``(..., neurons)``.
+
+        Returns
+        -------
+        jax.Array
+            Compact logits shaped ``(..., compact_output_width)``.
+        """
+        carrier = jnp.asarray(carrier)
+        if carrier.shape[-1] != self.config.neuron_count:
+            raise ValueError(
+                "carrier must have trailing axis "
+                f"{self.config.neuron_count}, got {carrier.shape}"
+            )
         if self.config.memory_enabled:
             carrier = _unit_l2_cap(carrier)
         hidden = jax.nn.gelu(self.readout_projection(carrier))
+        if self.config.edit_rule_enabled:
+            return self._edit_rule_logits(hidden)
         return jnp.concatenate(
             (
                 self.height_head(hidden),
@@ -1786,6 +2042,101 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             ),
             axis=-1,
         )
+
+    def _captured_query(self, leading: tuple[int, ...]) -> tuple[jax.Array, ...]:
+        """Broadcast the captured query buffers to the readout's leading axes."""
+        extra = (1,) * (len(leading) - 1)
+        return tuple(
+            state.value.reshape(extra + state.value.shape)
+            for state in (
+                self.query_grid,
+                self.query_input_height,
+                self.query_input_width,
+            )
+        )
+
+    def _edit_rule_logits(self, hidden: jax.Array) -> jax.Array:
+        """Emit already-final ARC logits from the decoder heads.
+
+        The shape heads *select* among deterministic size maps keyed to the
+        captured input sides, and each colour cell mixes copying the aligned
+        query cell against emitting a colour, so the output references the
+        query input instead of being generated from scratch.
+        """
+        leading = hidden.shape[:-1]
+        grid, input_height, input_width = self._captured_query(leading)
+        gates = self.shape_rule_head(hidden)
+        absolute = self.shape_absolute_head(hidden)
+        height = shape_axis_logits(
+            gates[..., :SHAPE_SLOT_COUNT],
+            absolute[..., :MAX_GRID_SIZE],
+            input_height,
+            input_width,
+            predict_height=True,
+        )
+        width = shape_axis_logits(
+            gates[..., SHAPE_SLOT_COUNT:],
+            absolute[..., MAX_GRID_SIZE:],
+            input_height,
+            input_width,
+            predict_height=False,
+        )
+        colors = color_cell_logits(
+            self.copy_gate_head(hidden).reshape(
+                *leading, MAX_GRID_SIZE, MAX_GRID_SIZE, COLOR_COMPONENT_COUNT
+            ),
+            self.color_palette_head(hidden),
+            self.color_explicit_head(hidden).reshape(
+                *leading, MAX_GRID_SIZE, MAX_GRID_SIZE, COLOR_COUNT
+            ),
+            grid,
+            (decode_side_length(height), decode_side_length(width)),
+            (
+                jnp.argmax(input_height, axis=-1) + 1,
+                jnp.argmax(input_width, axis=-1) + 1,
+            ),
+        )
+        return jnp.concatenate(
+            (height, width, colors.reshape(*leading, -1)), axis=-1
+        )
+
+    def _capture_query_row(self, event: jax.Array, advance: jax.Array) -> None:
+        """Record one query-input row into the decoder's query buffers.
+
+        Only rows that are valid, advancing, in the query phase and on the
+        input side contribute.  Latent ticks carry no valid event, so the
+        buffers are written exactly once per row and never change afterwards.
+        That write-once property is what lets the evaluation path decode every
+        retained checkpoint against one captured grid.
+        """
+        assert self.config.query_phase_index is not None
+        assert self.config.input_side_valid_index is not None
+        row_start, height_start, width_start, color_start = (
+            self.config.query_feature_starts
+        )
+        gate = (
+            advance
+            & (event[:, self.config.event_valid_index] > 0.5)
+            & (event[:, self.config.query_phase_index] > 0.5)
+            & (event[:, self.config.input_side_valid_index] > 0.5)
+        )
+        row = event[:, row_start : row_start + MAX_GRID_SIZE]
+        colors = event[
+            :, color_start : color_start + MAX_GRID_SIZE * COLOR_COUNT
+        ].reshape(-1, MAX_GRID_SIZE, COLOR_COUNT)
+        contribution = row[:, :, None, None] * colors[:, None, :, :]
+        self.query_grid.value = self.query_grid.value + jnp.where(
+            gate[:, None, None, None], contribution, 0.0
+        )
+        for state, start in (
+            (self.query_input_height, height_start),
+            (self.query_input_width, width_start),
+        ):
+            state.value = jnp.where(
+                gate[:, None],
+                event[:, start : start + MAX_GRID_SIZE],
+                state.value,
+            )
 
     def cell_step(
         self, event: jax.Array, advance: jax.Array | None = None
@@ -1820,6 +2171,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 f"advance must have shape ({self.config.batch_size},), got "
                 f"{advance.shape}"
             )
+        if self.config.edit_rule_enabled:
+            self._capture_query_row(event, advance)
         previous_voltage = self.neu.V.value
         previous_feedforward = self.ff_syn.syn.g.value
         previous_recurrent = self.rec_syn.syn.g.value
@@ -2162,6 +2515,7 @@ def run_packed_stream(
         memory_read=memory_read,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 
@@ -2265,10 +2619,6 @@ def run_selected_packed_stream(
 
     if reset:
         model.reset_state()
-    compact_buffer = jnp.zeros(
-        (checkpoint_count, batch_size, model.config.compact_output_width),
-        dtype=jnp.float32,
-    )
     state_shape = (checkpoint_count, batch_size, model.config.neuron_count)
     spikes_buffer = jnp.zeros(state_shape, dtype=jnp.float32)
     voltage_buffer = jnp.zeros(state_shape, dtype=model.voltage.dtype)
@@ -2287,7 +2637,6 @@ def run_selected_packed_stream(
     initial_carry = (
         jnp.asarray(0, dtype=jnp.int32),
         jnp.zeros((batch_size,), dtype=jnp.int32),
-        compact_buffer,
         spikes_buffer,
         voltage_buffer,
         feedforward_buffer,
@@ -2302,7 +2651,6 @@ def run_selected_packed_stream(
         (
             time_index,
             cursors,
-            compact_values,
             spike_values,
             voltage_values,
             feedforward_values,
@@ -2312,7 +2660,6 @@ def run_selected_packed_stream(
         event, advance_gate, ablation_gate = inputs
         model.mask_slots(slots, ablation_gate)
         spikes = model.cell_step(event, advance_gate)
-        compact = model.compact_readout()
         voltage = model.voltage
         feedforward = model.feedforward_current
         recurrent = model.recurrent_current
@@ -2330,7 +2677,6 @@ def run_selected_packed_stream(
             selected = jnp.where(matched[:, None], value, previous)
             return buffer.at[safe_cursors, batch_indices].set(selected)
 
-        compact_values = record(compact_values, compact)
         spike_values = record(spike_values, spikes)
         voltage_values = record(voltage_values, voltage)
         feedforward_values = record(feedforward_values, feedforward)
@@ -2339,7 +2685,6 @@ def run_selected_packed_stream(
         next_carry = (
             time_index + 1,
             cursors + matched.astype(jnp.int32),
-            compact_values,
             spike_values,
             voltage_values,
             feedforward_values,
@@ -2354,13 +2699,23 @@ def run_selected_packed_stream(
     (
         _,
         _,
-        compact_buffer,
         spikes_buffer,
         voltage_buffer,
         feedforward_buffer,
         recurrent_buffer,
         memory_buffer,
     ) = final_carry
+    # The readout is a pure map of the carrier, so decoding the recorded
+    # checkpoints once costs one tick's arithmetic per kept tick instead of one
+    # per executed tick, and keeps the decoder width out of the scan carry.
+    carrier_buffer = voltage_buffer if model.config.memory_enabled else spikes_buffer
+    # One checkpoint at a time: the body then sees exactly the ``(batch,
+    # neurons)`` carrier the per-tick call saw, so the result is bitwise
+    # identical, and the decoder's per-cell intermediates never scale with the
+    # retained checkpoint count.
+    compact_buffer = brainstate.transform.for_loop(
+        model.readout_from_carrier, carrier_buffer
+    )
     if model.config.memory_enabled:
         final_context_memory = jnp.asarray(model.context_memory.value)
     else:
@@ -2376,6 +2731,7 @@ def run_selected_packed_stream(
         memory_read=memory_buffer,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 
@@ -2470,6 +2826,7 @@ def run_latent_trajectory(
         ),
         zero_inputs=zero_inputs,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 

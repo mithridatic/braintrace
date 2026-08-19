@@ -2504,6 +2504,65 @@ def test_selected_memory_diagnostics_are_bounded_and_pairing_sensitive() -> None
         selected.final_context_memory, full.final_context_memory
     )
     assert np.any(np.asarray(selected.memory_read) != 0.0)
+    # The selected path decodes the recorded carrier once after the scan while
+    # the full path decodes at every tick.  In memory mode the carrier is the
+    # voltage buffer: assert that identity directly, because it is what makes
+    # the post-scan readout the same function and not merely a close one.
+    np.testing.assert_array_equal(
+        full_model.workspace_carrier.value, full_model.voltage
+    )
+    # Decoding one checkpoint at a time keeps the readout at the same rank the
+    # per-tick path used, so the agreement is bitwise.
+    np.testing.assert_array_equal(
+        selected.compact_logits,
+        np.asarray(full.compact_logits)[raw_indices, batch],
+    )
+    assert np.any(np.asarray(selected.compact_logits) != 0.0)
+
+
+@pytest.mark.parametrize("memory", [False, True])
+def test_stacked_carrier_readout_equals_per_tick_readout(memory: bool) -> None:
+    config = _memory_config() if memory else _config(batch_size=2, neuron_count=128)
+    model = LatentWorkspaceModel(config)
+    batch = config.batch_size
+    carriers = brainstate.random.RandomState(7).randn(
+        4, batch, config.neuron_count
+    )
+    carriers = jnp.asarray(carriers, dtype=jnp.float32)
+
+    stacked = model.readout_from_carrier(carriers)
+    per_tick = jnp.stack(
+        [model.compact_readout(carriers[index]) for index in range(4)]
+    )
+
+    assert stacked.shape == (4, batch, config.compact_output_width)
+    # Same arithmetic, one rank apart.  At these deliberately tiny test widths
+    # XLA picks a different dot kernel for rank three than for rank two, so the
+    # agreement is float32 rounding rather than bitwise; the production widths
+    # are covered bitwise by the test below.
+    np.testing.assert_allclose(stacked, per_tick, rtol=0.0, atol=1e-5)
+
+
+def test_stacked_carrier_readout_is_bitwise_at_production_readout_width() -> None:
+    config = _config(batch_size=2, neuron_count=128, readout_width=128, color_rank=16)
+    model = LatentWorkspaceModel(config)
+    carriers = jnp.asarray(
+        brainstate.random.RandomState(7).randn(4, 2, config.neuron_count),
+        dtype=jnp.float32,
+    )
+
+    stacked = model.readout_from_carrier(carriers)
+    per_tick = jnp.stack(
+        [model.compact_readout(carriers[index]) for index in range(4)]
+    )
+
+    np.testing.assert_array_equal(stacked, per_tick)
+
+
+def test_stacked_carrier_readout_rejects_a_wrong_trailing_axis() -> None:
+    model = LatentWorkspaceModel(_config(neuron_count=128))
+    with pytest.raises(ValueError, match="trailing axis"):
+        model.readout_from_carrier(jnp.zeros((4, 1, 127), dtype=jnp.float32))
 
 
 @pytest.mark.parametrize(
@@ -2763,3 +2822,149 @@ def test_selected_packed_runner_uses_compiled_scan_without_python_driver() -> No
         isinstance(call.func, ast.Attribute) and call.func.attr == "scan"
         for call in calls
     )
+
+
+def _edit_rule_config(**changes: object) -> ModelConfig:
+    """Build an edit-rule config against the real row-event layout."""
+    row = RowEventConfig()
+    values: dict[str, object] = {
+        "input_width": row.input_width,
+        "batch_size": 1,
+        "neuron_count": 64,
+        "recurrent_edges": 96,
+        "max_latent_steps": 4,
+        "readout_width": 8,
+        "color_rank": 2,
+        "seed": 41,
+        "decoder_mode": "edit_rule",
+        "query_phase_index": row.phase_slice.start + 1,
+        "input_side_valid_index": row.side_valid_slice.start,
+        "query_row_index_start": row.row_index_slice.start,
+        "query_input_height_start": row.input_height_slice.start,
+        "query_input_width_start": row.input_width_slice.start,
+        "query_input_color_start": row.input_color_slice.start,
+    }
+    values.update(changes)
+    return ModelConfig(**values)  # type: ignore[arg-type]
+
+
+def _edit_rule_episode(query: tuple[tuple[int, ...], ...]) -> object:
+    task = ArcTask(
+        train=(ArcPair(ArcGrid(((1, 2), (3, 4))), ArcGrid(((4, 3), (2, 1)))),),
+        test=(ArcPair(ArcGrid(query), None),),
+        task_id="edit-rule",
+    )
+    return encode_query_episode(task, 0)
+
+
+def _batched_events(encoded: object) -> jax.Array:
+    return jnp.asarray(encoded.events, dtype=jnp.float32)[:, None, :]
+
+
+def test_edit_rule_model_emits_the_final_arc_output_width() -> None:
+    model = LatentWorkspaceModel(_edit_rule_config())
+
+    compact = model.compact_readout()
+
+    assert model.config.compact_output_width == 9060
+    assert compact.shape == (1, 9060)
+
+
+def test_edit_rule_capture_reconstructs_the_query_grid_and_sides() -> None:
+    query = ((5, 0, 7), (0, 3, 3))
+    encoded = _edit_rule_episode(query)
+    model = LatentWorkspaceModel(_edit_rule_config())
+
+    run_packed_stream(model, _batched_events(encoded))
+
+    grid = np.asarray(model.query_grid.value)[0]
+    np.testing.assert_array_equal(
+        np.argmax(grid[:2, :3], axis=-1), np.asarray(query, dtype=np.int32)
+    )
+    # Every captured cell is a genuine one-hot, and nothing outside the query
+    # grid was ever written.
+    np.testing.assert_array_equal(grid[:2, :3].sum(axis=-1), np.ones((2, 3)))
+    assert grid[2:].sum() == 0.0
+    assert grid[:, 3:].sum() == 0.0
+    assert int(np.argmax(np.asarray(model.query_input_height.value)[0])) + 1 == 2
+    assert int(np.argmax(np.asarray(model.query_input_width.value)[0])) + 1 == 3
+
+
+def test_edit_rule_query_capture_is_write_once_across_latent_ticks() -> None:
+    """No tick after the query rows may disturb the captured query.
+
+    The evaluation path decodes every retained checkpoint against one live
+    capture buffer, while training decodes at the contemporaneous tick.  If a
+    latent tick could rewrite the buffer the two would silently disagree.
+    """
+    encoded = _edit_rule_episode(((5, 0, 7), (0, 3, 3)))
+    events = _batched_events(encoded)
+    model = LatentWorkspaceModel(_edit_rule_config())
+
+    run_packed_stream(model, events[: encoded.query_stop])
+    after_query = np.asarray(model.query_grid.value).copy()
+    height_after_query = np.asarray(model.query_input_height.value).copy()
+    run_packed_stream(model, events, reset=True)
+    after_stream = np.asarray(model.query_grid.value)
+
+    np.testing.assert_array_equal(after_query, after_stream)
+    np.testing.assert_array_equal(
+        height_after_query, np.asarray(model.query_input_height.value)
+    )
+
+
+def test_edit_rule_priors_reproduce_the_query_input_before_training() -> None:
+    """The untrained decoder starts from "copy the input", not from noise.
+
+    This is the property the legacy decoder could not have at any setting: its
+    output never referenced the query at all.
+    """
+    query = ((5, 0, 7), (0, 3, 3))
+    encoded = _edit_rule_episode(query)
+    model = LatentWorkspaceModel(
+        _edit_rule_config(copy_prior_logit=10.0, shape_prior_logit=10.0)
+    )
+
+    trajectory = run_packed_stream(model, _batched_events(encoded))
+    logits = trajectory.expanded
+
+    final = -1
+    assert int(np.argmax(np.asarray(logits.height)[final, 0])) + 1 == 2
+    assert int(np.argmax(np.asarray(logits.width)[final, 0])) + 1 == 3
+    decoded = np.argmax(np.asarray(logits.colors)[final, 0], axis=-1)
+    np.testing.assert_array_equal(decoded[:2, :3], np.asarray(query, dtype=np.int32))
+
+
+def test_edit_rule_decoder_heads_stay_off_the_eligibility_path() -> None:
+    model = LatentWorkspaceModel(_edit_rule_config())
+
+    learner = compile_pp_prop(model)
+
+    excluded = {".".join(map(str, path)) for path, _ in learner.report.excluded_weights}
+    etrace = {".".join(map(str, path)) for path, _ in learner.report.etrace_weights}
+    heads = {
+        "shape_rule_head.weight",
+        "shape_absolute_head.weight",
+        "copy_gate_head.weight",
+        "color_palette_head.weight",
+        "color_explicit_head.weight",
+    }
+    assert heads <= excluded
+    assert not (heads & etrace)
+
+
+def test_edit_rule_loss_consumes_final_logits_without_a_cp_rank() -> None:
+    model = LatentWorkspaceModel(_edit_rule_config())
+    compact = model.compact_readout()
+
+    loss = arc_loss_per_example(
+        compact,
+        jnp.asarray([2], dtype=jnp.int32),
+        jnp.asarray([3], dtype=jnp.int32),
+        jnp.zeros((1, 30, 30), dtype=jnp.int32),
+        color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
+    )
+
+    assert loss.shape == (1,)
+    assert np.isfinite(np.asarray(loss)).all()
