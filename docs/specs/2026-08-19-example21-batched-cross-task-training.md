@@ -30,17 +30,27 @@ regime, not the architecture:
    |---:|---:|---:|---:|---:|
    | 160 | 20 | 8 | 0.1875 | 0.5902 |
    | 9,600 | 600 | 16 | 0.4375 | 0.6716 |
+   | 96,000 | 6,000 | 16 | 0.5938 | 0.6905 |
 
    at `learning_rate = 3e-3`, with training loss still descending
-   (0.902 → 0.718 over the run). Sweep 2 also overtakes sweep 1 on pixel
-   accuracy once trained (0.6095 → 0.6716), reversing the degradation the
-   untrained runs showed and confirming that refinement helps a model that
-   has learned anything at all.
+   (0.902 → 0.468 over the longest run). Sweep 2 also overtakes sweep 1 on
+   both shape (0.5312 → 0.5938) and pixel accuracy once trained, reversing the
+   degradation the untrained runs showed and confirming that refinement helps a
+   model that has learned anything at all.
+4. **Per-task adaptation is what produces exact answers.** Cloning the
+   pretrained parameters per held-out training task and adapting on that task's
+   own folds — never its scored target — moved 16 held-out tasks from shape
+   accuracy 0.4667 and exact `pass@2` 0.0 to shape accuracy 0.7333 and exact
+   `pass@2` 0.0667. Sweeping the adaptation budget over 40, 120, and 300 steps
+   and the rate over 1e-3, 3e-3, and 1e-2 left exact `pass@2` at 0.0667
+   throughout, so beyond roughly 40 steps the pretrained model, not the
+   adaptation budget, is the binding constraint.
 
 Measured cost on the local RTX 3080 Ti, batch 1, through the production
 pipeline: 0.075 s per update at 512 neurons / 65,536 edges and 0.21 s per
 update at 4,096 neurons / 1,048,576 edges, at 0.61 GiB peak device memory.
 Wall clock is not the constraint; episodes seen per unit time is.
+
 
 ## 2. Iteration protocol
 
@@ -51,6 +61,28 @@ evaluation split is read only by the frozen scorer after training, as
 `2026-08-18-example21-row-wise-binding-refinement.md` §2 requires. Using
 `--evaluation-task-limit` output as an iteration signal is a protocol
 violation, not a shortcut.
+
+## 2a. Pre-registered interpretation and disclosure
+
+Recorded before the first complete 400-task run reports its number.
+
+**Adaptation budget is the leading suspect for a zero.** Every nonzero exact
+answer measured so far came from roughly 40 adaptation steps over batches of
+four folds. The complete run uses `adaptation_epochs = 6`, which is about 18 to
+24 single-fold steps per task, chosen for wall clock rather than for measured
+score. The sweep covered 40, 120, and 300 steps and found them flat; it never
+probed below 40, so the downward slope is unmeasured. A zero from this run is
+therefore first evidence about the adaptation budget and not evidence that the
+approach fails.
+
+**Scale selection disclosure.** The 1,024-neuron / 262,144-edge scale was
+selected on measured wall clock plus held-out training-split shape accuracy.
+Two development-subset probes with `--evaluation-task-limit 3` and `4` were run
+first to measure cost, and their evaluation-split shape diagnostics (0.667 and
+0.75) were observed before the scale was fixed. No evaluation target entered
+training, candidate construction, or the scorer, and the same choice follows
+from the training-split evidence alone, but the observation is disclosed rather
+than omitted.
 
 ## 3. Change
 
