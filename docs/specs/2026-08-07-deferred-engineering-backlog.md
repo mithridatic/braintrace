@@ -151,3 +151,23 @@ every module owning a public symbol. Two packages remain outside it:
 `braintrace._compiler` (~54 `no-untyped-def` errors) and `braintrace._legacy`
 (~39). Neither exports public API, which is why they were left; bringing them in
 is mechanical but not free.
+
+## E-10 — one Example 21 chunk-equality test only passes without a GPU
+
+`test_chunked_training_reproduces_unchunked_losses_bitwise` asserts that a
+chunked training schedule reproduces the unchunked one down to the parameter
+digest. It builds its models with `jax.devices("cpu")[0]`, but `_train_model`
+compiles under the default device, so on a machine with a visible GPU the
+training itself runs on the GPU. There, the chunked and unchunked programs are
+different XLA executables whose reductions differ in the last bits: losses,
+effort schedule, and sample records still match exactly, only
+`parameter_sha256_after` diverges.
+
+Confirmed pre-existing: the test fails identically at `959dc47`, before the
+batched-training work, when run inside the GPU container, and the full affected
+suite is green on CPU (229 passed) and green with the GPU except this one test
+(162 passed, 1 failed).
+
+The fix is to make the test's device intent authoritative — wrap the training
+call in `jax.default_device(cpu)` — rather than to relax the assertion, since
+bitwise chunk equality is the property worth holding.
