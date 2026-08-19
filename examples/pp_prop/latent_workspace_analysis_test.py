@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 
 import numpy as np
@@ -22,11 +23,14 @@ except ModuleNotFoundError as error:
 DecodedCandidate = analysis.DecodedCandidate
 OutputLogits = analysis.OutputLogits
 QueryScore = analysis.QueryScore
+SelectedModelCandidate = analysis.SelectedModelCandidate
 aggregate_arc_metrics = analysis.aggregate_arc_metrics
 analyze_latent_trajectory = analysis.analyze_latent_trajectory
+assess_model_only_completion = analysis.assess_model_only_completion
 compare_control_trajectories = analysis.compare_control_trajectories
 decode_candidates = analysis.decode_candidates
 score_query_candidates = analysis.score_query_candidates
+select_checkpoint_candidates = analysis.select_checkpoint_candidates
 
 
 def _logits(
@@ -59,6 +63,43 @@ def _stacked_logits(
         np.stack([output.width for output in outputs]),
         np.stack([output.colors for output in outputs]),
     )
+
+
+def _model_only_completion_fixture(
+    solved_task_count: int,
+) -> tuple[list[dict[str, object]], dict[str, int]]:
+    expected_queries = {
+        f"task-{task_index:03d}": 2 if task_index == 0 else 1
+        for task_index in range(400)
+    }
+    latest = _logits(np.array([[4]]), second_cell=(0, 0, 7))
+    selected = select_checkpoint_candidates(
+        {30: latest, 60: latest}, latest_checkpoint=60
+    )
+    candidates = [candidate.to_dict() for candidate in selected]
+    records: list[dict[str, object]] = []
+    for task_index, (task_id, query_count) in enumerate(expected_queries.items()):
+        exact = task_index < solved_task_count
+        for query_index in range(query_count):
+            score = QueryScore(
+                task_id=task_id,
+                query_index=query_index,
+                pass_at_1=False,
+                pass_at_2=exact,
+                shape_accuracy=False,
+                valid_cell_pixel_accuracy=0.0,
+                candidate_count=2,
+            )
+            records.append(
+                {
+                    "task_id": task_id,
+                    "query_index": query_index,
+                    "primary_candidate_mode": "model_only",
+                    "candidates": copy.deepcopy(candidates),
+                    "score": score.to_dict(),
+                }
+            )
+    return records, expected_queries
 
 
 def test_output_logits_validate_and_freeze_all_heads() -> None:
@@ -110,6 +151,158 @@ def test_decoder_emits_joint_argmax_and_lowest_margin_cell_alternative() -> None
     np.testing.assert_array_equal(one_candidate[0].grid, candidates[0].grid)
     assert one_candidate[0].changed_decision is None
     json.dumps([candidate.to_dict() for candidate in candidates], allow_nan=False)
+
+
+def test_checkpoint_selection_uses_latest_then_newest_distinct_completed_sweep() -> (
+    None
+):
+    checkpoint_30 = _logits(np.array([[3]]))
+    checkpoint_60 = _logits(np.array([[6]]))
+    checkpoint_90 = _logits(np.array([[9]]))
+
+    selected = select_checkpoint_candidates(
+        {
+            0: _logits(np.array([[1]])),
+            30: checkpoint_30,
+            60: checkpoint_60,
+            90: checkpoint_90,
+        },
+        latest_checkpoint=90,
+    )
+
+    np.testing.assert_array_equal(selected[0].candidate.grid, [[9]])
+    np.testing.assert_array_equal(selected[1].candidate.grid, [[6]])
+    assert selected[0].source_checkpoint == 90
+    assert selected[0].selection_role == "latest_sweep_joint_argmax"
+    assert selected[1].source_checkpoint == 60
+    assert selected[1].selection_role == "earlier_sweep_joint_argmax"
+    assert selected[1].candidate.changed_decision is None
+    assert selected[0].to_dict()["provenance"] == "model"
+    json.dumps([candidate.to_dict() for candidate in selected], allow_nan=False)
+
+
+def test_checkpoint_selection_skips_equal_newer_sweeps_for_an_older_distinct_one() -> (
+    None
+):
+    latest = _logits(np.array([[9]]))
+
+    selected = select_checkpoint_candidates(
+        {30: _logits(np.array([[3]])), 60: latest, 90: latest},
+        latest_checkpoint=90,
+    )
+
+    np.testing.assert_array_equal(selected[1].candidate.grid, [[3]])
+    assert selected[1].source_checkpoint == 30
+    assert selected[1].selection_role == "earlier_sweep_joint_argmax"
+
+
+def test_checkpoint_selection_falls_back_to_latest_logit_runner_up() -> None:
+    latest = _logits(np.array([[4]]), second_cell=(0, 0, 7))
+    expected = decode_candidates(latest)[1]
+
+    selected = select_checkpoint_candidates(
+        {0: _logits(np.array([[2]])), 30: latest, 60: latest},
+        latest_checkpoint=60,
+    )
+
+    np.testing.assert_array_equal(selected[0].candidate.grid, [[4]])
+    np.testing.assert_array_equal(selected[1].candidate.grid, expected.grid)
+    assert selected[1].source_checkpoint == 60
+    assert selected[1].selection_role == "latest_sweep_logit_runner_up"
+    assert not np.array_equal(selected[0].candidate.grid, selected[1].candidate.grid)
+
+
+@pytest.mark.parametrize(
+    ("checkpoints", "latest", "sweep_size", "message"),
+    [
+        ([(30, _logits(np.array([[1]])))], 30, 30, "mapping"),
+        ({30: _logits(np.array([[1]]))}, True, 30, "latest_checkpoint"),
+        ({30: _logits(np.array([[1]]))}, 0, 30, "completed sweep"),
+        ({30: _logits(np.array([[1]]))}, 30, 0, "sweep_size"),
+        ({30: _logits(np.array([[1]]))}, 30, True, "sweep_size"),
+        ({30: _logits(np.array([[1]]))}, 60, 30, "latest checkpoint is absent"),
+        (
+            {
+                30: _logits(np.array([[1]])),
+                45: _logits(np.array([[2]])),
+                60: _logits(np.array([[3]])),
+            },
+            60,
+            30,
+            "completed sweep",
+        ),
+        (
+            {30: _logits(np.array([[1]])), 90: _logits(np.array([[2]]))},
+            30,
+            30,
+            "after latest",
+        ),
+        ({30: np.zeros(4)}, 30, 30, "OutputLogits"),
+    ],
+)
+def test_checkpoint_selection_rejects_malformed_history(
+    checkpoints: object, latest: object, sweep_size: object, message: str
+) -> None:
+    with pytest.raises((TypeError, ValueError), match=message):
+        select_checkpoint_candidates(
+            checkpoints,  # type: ignore[arg-type]
+            latest_checkpoint=latest,  # type: ignore[arg-type]
+            sweep_size=sweep_size,  # type: ignore[arg-type]
+        )
+
+
+def test_checkpoint_selection_fails_closed_without_a_distinct_latest_runner_up(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    latest = _logits(np.array([[4]]))
+    first = decode_candidates(latest, max_candidates=1)[0]
+    monkeypatch.setattr(
+        analysis, "decode_candidates", lambda logits, max_candidates=2: (first,)
+    )
+
+    with pytest.raises(ValueError, match="distinct runner-up"):
+        select_checkpoint_candidates({60: latest}, latest_checkpoint=60)
+
+
+@pytest.mark.parametrize(
+    ("candidate", "checkpoint", "role", "message"),
+    [
+        (object(), 30, "latest_sweep_joint_argmax", "DecodedCandidate"),
+        (
+            decode_candidates(_logits(np.array([[1]])), max_candidates=1)[0],
+            0,
+            "latest_sweep_joint_argmax",
+            "positive",
+        ),
+        (
+            decode_candidates(_logits(np.array([[1]])), max_candidates=1)[0],
+            30,
+            "rule",
+            "selection_role",
+        ),
+        (
+            decode_candidates(_logits(np.array([[1]])), max_candidates=1)[0],
+            30,
+            "latest_sweep_logit_runner_up",
+            "changed decision",
+        ),
+        (
+            decode_candidates(_logits(np.array([[1]]), second_cell=(0, 0, 2)))[1],
+            30,
+            "earlier_sweep_joint_argmax",
+            "cannot name a changed decision",
+        ),
+    ],
+)
+def test_selected_model_candidate_rejects_invalid_metadata(
+    candidate: object, checkpoint: int, role: str, message: str
+) -> None:
+    with pytest.raises((TypeError, ValueError), match=message):
+        SelectedModelCandidate(
+            candidate,  # type: ignore[arg-type]
+            checkpoint,
+            role,  # type: ignore[arg-type]
+        )
 
 
 def test_decoder_tie_order_prefers_height_then_width_then_cells() -> None:
@@ -243,6 +436,104 @@ def test_strict_task_metrics_are_conjunctive_over_multiple_queries() -> None:
     }
     assert report["valid_cell_pixel_accuracy_diagnostic"] == pytest.approx(2.75 / 3.0)
     json.dumps(report, allow_nan=False)
+
+
+def test_model_only_completion_gate_passes_at_exactly_160_of_400_tasks() -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+
+    report = assess_model_only_completion(records, expected_queries)
+
+    assert report["primary_candidate_mode"] == "model_only"
+    assert report["required_task_count"] == 400
+    assert report["evaluated_task_count"] == 400
+    assert report["evaluated_query_count"] == 401
+    assert report["required_exact_task_count"] == 160
+    assert report["exact_task_count"] == 160
+    assert report["strict_task_pass_at_2"] == 0.4
+    assert report["passed"] is True
+    assert report["tasks"]["task-000"] == {"query_count": 2, "pass_at_2": True}
+    json.dumps(report, allow_nan=False)
+
+
+def test_model_only_completion_gate_fails_at_159_of_400_tasks() -> None:
+    records, expected_queries = _model_only_completion_fixture(159)
+
+    report = assess_model_only_completion(records, expected_queries)
+
+    assert report["exact_task_count"] == 159
+    assert report["strict_task_pass_at_2"] == 159 / 400
+    assert report["passed"] is False
+
+
+def test_model_only_completion_requires_every_official_query_to_pass_at_two() -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+    second_query = next(
+        record
+        for record in records
+        if record["task_id"] == "task-000" and record["query_index"] == 1
+    )
+    second_query["score"]["pass_at_2"] = False
+
+    report = assess_model_only_completion(records, expected_queries)
+
+    assert report["tasks"]["task-000"]["pass_at_2"] is False
+    assert report["exact_task_count"] == 159
+    assert report["passed"] is False
+
+
+def test_model_only_completion_requires_exactly_400_expected_tasks() -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+    expected_queries.pop("task-399")
+
+    with pytest.raises(ValueError, match="exactly 400"):
+        assess_model_only_completion(records, expected_queries)
+
+
+@pytest.mark.parametrize(
+    ("case", "message"),
+    [
+        ("missing_query", "missing official query"),
+        ("duplicate_query", "duplicate task/query"),
+        ("non_model", "model provenance"),
+        ("one_candidate", "exactly two candidates"),
+        ("duplicate_candidates", "distinct"),
+        ("invalid_role", "selection_role"),
+        ("invalid_source", "earlier candidate checkpoint"),
+        ("wrong_mode", "primary_candidate_mode"),
+        ("score_identity", "score identity"),
+        ("score_candidate_count", "candidate_count"),
+    ],
+)
+def test_model_only_completion_rejects_incomplete_or_invalid_records(
+    case: str, message: str
+) -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+    first = records[0]
+    if case == "missing_query":
+        records.pop()
+    elif case == "duplicate_query":
+        records.append(copy.deepcopy(first))
+    elif case == "non_model":
+        first["candidates"][0]["provenance"] = "verified_rule"
+    elif case == "one_candidate":
+        first["candidates"] = first["candidates"][:1]
+    elif case == "duplicate_candidates":
+        first["candidates"][1]["grid"] = copy.deepcopy(first["candidates"][0]["grid"])
+    elif case == "invalid_role":
+        first["candidates"][0]["selection_role"] = "earlier_sweep_joint_argmax"
+    elif case == "invalid_source":
+        first["candidates"][1]["selection_role"] = "earlier_sweep_joint_argmax"
+        first["candidates"][1]["changed_decision"] = None
+        first["candidates"][1]["source_checkpoint"] = 60
+    elif case == "wrong_mode":
+        first["primary_candidate_mode"] = "verified_rules"
+    elif case == "score_identity":
+        first["score"]["task_id"] = "another-task"
+    elif case == "score_candidate_count":
+        first["score"]["candidate_count"] = 1
+
+    with pytest.raises(ValueError, match=message):
+        assess_model_only_completion(records, expected_queries)
 
 
 def test_aggregate_rejects_empty_duplicate_and_wrong_type() -> None:

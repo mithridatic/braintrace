@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from numbers import Integral, Real
-from typing import Any
+from typing import Any, Literal, cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -19,6 +19,8 @@ GridArray = NDArray[np.int8]
 
 _AXIS_SIZE = 30
 _COLOR_COUNT = 10
+_MODEL_ONLY_REQUIRED_TASK_COUNT = 400
+_MODEL_ONLY_REQUIRED_EXACT_TASK_COUNT = 160
 
 
 def _finite_array(
@@ -161,6 +163,77 @@ class DecodedCandidate:
             "grid": grid.tolist(),
             "changed_decision": self.changed_decision,
             "log_probability": self.log_probability,
+        }
+
+
+SelectionRole = Literal[
+    "latest_sweep_joint_argmax",
+    "earlier_sweep_joint_argmax",
+    "latest_sweep_logit_runner_up",
+]
+
+
+@dataclass(frozen=True)
+class SelectedModelCandidate:
+    """Attach target-free neural-checkpoint provenance to one ARC candidate.
+
+    Parameters
+    ----------
+    candidate : DecodedCandidate
+        Candidate decoded exclusively from model logits.
+    source_checkpoint : int
+        Positive completed-sweep checkpoint that supplied the candidate.
+    selection_role : {"latest_sweep_joint_argmax", \
+            "earlier_sweep_joint_argmax", "latest_sweep_logit_runner_up"}
+        Deterministic role occupied by the candidate in the two-slot policy.
+
+    Raises
+    ------
+    TypeError
+        If ``candidate`` is not a :class:`DecodedCandidate`.
+    ValueError
+        If the checkpoint or selection role is invalid, or the candidate's
+        changed-decision metadata conflicts with the role.
+    """
+
+    candidate: DecodedCandidate
+    source_checkpoint: int
+    selection_role: SelectionRole
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.candidate, DecodedCandidate):
+            raise TypeError("candidate must be a DecodedCandidate")
+        checkpoint = _nonnegative_integer(self.source_checkpoint, "source_checkpoint")
+        if checkpoint == 0:
+            raise ValueError("source_checkpoint must be positive")
+        object.__setattr__(self, "source_checkpoint", checkpoint)
+        valid_roles = {
+            "latest_sweep_joint_argmax",
+            "earlier_sweep_joint_argmax",
+            "latest_sweep_logit_runner_up",
+        }
+        if self.selection_role not in valid_roles:
+            raise ValueError("selection_role is invalid")
+        is_runner_up = self.selection_role == "latest_sweep_logit_runner_up"
+        if is_runner_up and self.candidate.changed_decision is None:
+            raise ValueError("runner-up candidate must name its changed decision")
+        if not is_runner_up and self.candidate.changed_decision is not None:
+            raise ValueError("joint-argmax candidate cannot name a changed decision")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return candidate cells and model-only selection provenance.
+
+        Returns
+        -------
+        dict
+            JSON-safe candidate data, source checkpoint, and selection role.
+        """
+
+        return {
+            **self.candidate.to_dict(),
+            "provenance": "model",
+            "source_checkpoint": self.source_checkpoint,
+            "selection_role": self.selection_role,
         }
 
 
@@ -352,6 +425,101 @@ def decode_candidates(
     return first, second
 
 
+def select_checkpoint_candidates(
+    logits_by_checkpoint: Mapping[int, OutputLogits],
+    *,
+    latest_checkpoint: int,
+    sweep_size: int = _AXIS_SIZE,
+) -> tuple[SelectedModelCandidate, SelectedModelCandidate]:
+    """Select two target-free neural candidates across refinement checkpoints.
+
+    Candidate one is the joint argmax at ``latest_checkpoint``. Candidate two
+    is the joint argmax from the newest earlier completed sweep whose grid is
+    distinct from candidate one. If no earlier sweep supplies a distinct grid,
+    candidate two is the deterministic logit runner-up at the latest sweep.
+
+    Checkpoint zero may be supplied as a pre-refinement diagnostic but is never
+    eligible for submission. Selection depends only on validated
+    :class:`OutputLogits` and checkpoint order; targets and rule outputs are not
+    accepted by this API.
+
+    Parameters
+    ----------
+    logits_by_checkpoint : mapping of int to OutputLogits
+        Model logits keyed by checkpoint. Positive checkpoints must be complete
+        sweeps no later than ``latest_checkpoint``.
+    latest_checkpoint : int
+        Positive completed sweep used for candidate one and fallback decoding.
+    sweep_size : int, default=30
+        Positive number of row ticks in one complete refinement sweep.
+
+    Returns
+    -------
+    tuple of SelectedModelCandidate
+        Exactly two distinct model candidates in submission order.
+
+    Raises
+    ------
+    TypeError
+        If the checkpoint collection is not a mapping or a value is not
+        :class:`OutputLogits`.
+    ValueError
+        If checkpoint metadata is malformed, the latest checkpoint is absent,
+        or the latest logits cannot supply a distinct fallback runner-up.
+    """
+
+    if not isinstance(logits_by_checkpoint, Mapping):
+        raise TypeError("logits_by_checkpoint must be a mapping")
+    latest = _nonnegative_integer(latest_checkpoint, "latest_checkpoint")
+    sweep = _nonnegative_integer(sweep_size, "sweep_size")
+    if sweep == 0:
+        raise ValueError("sweep_size must be positive")
+    if latest == 0 or latest % sweep:
+        raise ValueError("latest_checkpoint must identify a completed sweep")
+
+    validated: dict[int, OutputLogits] = {}
+    for raw_checkpoint, logits in logits_by_checkpoint.items():
+        checkpoint = _nonnegative_integer(raw_checkpoint, "checkpoint")
+        if checkpoint > latest:
+            raise ValueError("checkpoint history contains a checkpoint after latest")
+        if checkpoint and checkpoint % sweep:
+            raise ValueError("positive checkpoints must identify completed sweeps")
+        if not isinstance(logits, OutputLogits):
+            raise TypeError("checkpoint values must be OutputLogits")
+        validated[checkpoint] = logits
+    if latest not in validated:
+        raise ValueError("latest checkpoint is absent from checkpoint history")
+
+    latest_logits = validated[latest]
+    latest_argmax = decode_candidates(latest_logits, max_candidates=1)[0]
+    first = SelectedModelCandidate(
+        latest_argmax,
+        source_checkpoint=latest,
+        selection_role="latest_sweep_joint_argmax",
+    )
+    for checkpoint in sorted(
+        (value for value in validated if 0 < value < latest), reverse=True
+    ):
+        earlier = decode_candidates(validated[checkpoint], max_candidates=1)[0]
+        if not np.array_equal(earlier.grid, latest_argmax.grid):
+            return first, SelectedModelCandidate(
+                earlier,
+                source_checkpoint=checkpoint,
+                selection_role="earlier_sweep_joint_argmax",
+            )
+
+    latest_candidates = decode_candidates(latest_logits, max_candidates=2)
+    if len(latest_candidates) != 2 or np.array_equal(
+        latest_argmax.grid, latest_candidates[1].grid
+    ):
+        raise ValueError("latest logits did not produce a distinct runner-up")
+    return first, SelectedModelCandidate(
+        latest_candidates[1],
+        source_checkpoint=latest,
+        selection_role="latest_sweep_logit_runner_up",
+    )
+
+
 def _distinct_candidate_grids(
     candidates: Sequence[DecodedCandidate | ArrayLike],
 ) -> tuple[GridArray, ...]:
@@ -486,6 +654,207 @@ def aggregate_arc_metrics(scores: Sequence[QueryScore]) -> dict[str, object]:
         "valid_cell_pixel_accuracy_diagnostic": float(
             sum(score.valid_cell_pixel_accuracy for score in scores) / query_count
         ),
+        "tasks": task_results,
+    }
+
+
+def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCandidate:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a candidate provenance mapping")
+    required = {
+        "height",
+        "width",
+        "grid",
+        "changed_decision",
+        "log_probability",
+        "provenance",
+        "source_checkpoint",
+        "selection_role",
+    }
+    missing = sorted(required - value.keys())
+    if missing:
+        raise ValueError(f"{name} is missing provenance fields {missing}")
+    if value["provenance"] != "model":
+        raise ValueError(f"{name} must carry model provenance")
+    grid = _grid_array(value["grid"], f"{name} grid")
+    height = _nonnegative_integer(value["height"], f"{name} height")
+    width = _nonnegative_integer(value["width"], f"{name} width")
+    if (height, width) != grid.shape:
+        raise ValueError(f"{name} declared shape does not match its grid")
+    decoded = DecodedCandidate(
+        grid,
+        changed_decision=value["changed_decision"],  # type: ignore[arg-type]
+        log_probability=value["log_probability"],  # type: ignore[arg-type]
+    )
+    role = value["selection_role"]
+    if not isinstance(role, str):
+        raise ValueError(f"{name} selection_role is invalid")
+    return SelectedModelCandidate(
+        decoded,
+        source_checkpoint=value["source_checkpoint"],  # type: ignore[arg-type]
+        selection_role=cast(SelectionRole, role),
+    )
+
+
+def _query_score_from_record(value: object, name: str) -> QueryScore:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} score must be a mapping")
+    required = {
+        "task_id",
+        "query_index",
+        "pass_at_1",
+        "pass_at_2",
+        "shape_accuracy_diagnostic",
+        "valid_cell_pixel_accuracy_diagnostic",
+        "candidate_count",
+    }
+    missing = sorted(required - value.keys())
+    if missing:
+        raise ValueError(f"{name} score is missing fields {missing}")
+    return QueryScore(
+        task_id=value["task_id"],  # type: ignore[arg-type]
+        query_index=value["query_index"],  # type: ignore[arg-type]
+        pass_at_1=value["pass_at_1"],  # type: ignore[arg-type]
+        pass_at_2=value["pass_at_2"],  # type: ignore[arg-type]
+        shape_accuracy=value["shape_accuracy_diagnostic"],  # type: ignore[arg-type]
+        valid_cell_pixel_accuracy=value[  # type: ignore[arg-type]
+            "valid_cell_pixel_accuracy_diagnostic"
+        ],
+        candidate_count=value["candidate_count"],  # type: ignore[arg-type]
+    )
+
+
+def assess_model_only_completion(
+    query_records: Sequence[Mapping[str, object]],
+    expected_queries_by_task: Mapping[str, int],
+) -> dict[str, object]:
+    """Assess the strict 160-of-400 model-only ARC completion gate.
+
+    A task is exact only when every official query for that task has exact
+    ``pass_at_2`` scorer evidence. The expected-query manifest fixes the full
+    evaluation population and makes missing, duplicate, or unexpected queries
+    fail closed. Candidate records must contain exactly two distinct neural
+    candidates produced by the checkpoint-selection policy.
+
+    Parameters
+    ----------
+    query_records : sequence of mappings
+        Retained per-query records containing model-only candidate provenance
+        and a JSON-safe :meth:`QueryScore.to_dict` score.
+    expected_queries_by_task : mapping of str to int
+        Official query count for each of exactly 400 evaluated ARC tasks.
+
+    Returns
+    -------
+    dict
+        JSON-safe task outcomes, exact task count, strict pass@2 rate, fixed
+        target thresholds, and completion status.
+
+    Raises
+    ------
+    ValueError
+        If the task/query manifest or any score/candidate record is incomplete,
+        duplicated, inconsistent, non-model, or invalid.
+    """
+
+    if not isinstance(expected_queries_by_task, Mapping):
+        raise ValueError("expected_queries_by_task must be a mapping")
+    if len(expected_queries_by_task) != _MODEL_ONLY_REQUIRED_TASK_COUNT:
+        raise ValueError("completion requires exactly 400 expected ARC tasks")
+    expected: dict[str, int] = {}
+    for task_id, raw_count in expected_queries_by_task.items():
+        if not isinstance(task_id, str) or not task_id:
+            raise ValueError("expected task ids must be nonempty strings")
+        count = _nonnegative_integer(raw_count, f"query count for {task_id}")
+        if count == 0:
+            raise ValueError("every expected task must have an official query")
+        expected[task_id] = count
+    if not isinstance(query_records, Sequence) or isinstance(
+        query_records, (str, bytes)
+    ):
+        raise ValueError("query_records must be a sequence")
+
+    expected_identities = {
+        (task_id, query_index)
+        for task_id, count in expected.items()
+        for query_index in range(count)
+    }
+    identities: set[tuple[str, int]] = set()
+    scores_by_task: dict[str, list[QueryScore]] = defaultdict(list)
+    for record_index, record in enumerate(query_records):
+        name = f"query_records[{record_index}]"
+        if not isinstance(record, Mapping):
+            raise ValueError(f"{name} must be a mapping")
+        if record.get("primary_candidate_mode") != "model_only":
+            raise ValueError(f"{name} primary_candidate_mode must be model_only")
+        task_id = record.get("task_id")
+        if not isinstance(task_id, str) or task_id not in expected:
+            raise ValueError(f"{name} has an unexpected task_id")
+        query_index = _nonnegative_integer(record.get("query_index"), "query_index")
+        identity = (task_id, query_index)
+        if identity not in expected_identities:
+            raise ValueError(f"{name} has an unexpected official query")
+        if identity in identities:
+            raise ValueError(f"duplicate task/query record {identity!r}")
+        identities.add(identity)
+
+        candidate_values = record.get("candidates")
+        if not isinstance(candidate_values, Sequence) or isinstance(
+            candidate_values, (str, bytes)
+        ):
+            raise ValueError(f"{name} candidates must be a sequence")
+        if len(candidate_values) != 2:
+            raise ValueError(f"{name} must contain exactly two candidates")
+        first = _selected_candidate_from_record(candidate_values[0], "candidate 1")
+        second = _selected_candidate_from_record(candidate_values[1], "candidate 2")
+        latest = first.source_checkpoint
+        if first.selection_role != "latest_sweep_joint_argmax":
+            raise ValueError("candidate 1 selection_role must identify latest argmax")
+        if latest % _AXIS_SIZE:
+            raise ValueError("candidate 1 source checkpoint must be a completed sweep")
+        if second.selection_role == "earlier_sweep_joint_argmax":
+            if not 0 < second.source_checkpoint < latest:
+                raise ValueError("earlier candidate checkpoint must precede latest")
+            if second.source_checkpoint % _AXIS_SIZE:
+                raise ValueError(
+                    "earlier candidate checkpoint must be a completed sweep"
+                )
+        elif second.selection_role == "latest_sweep_logit_runner_up":
+            if second.source_checkpoint != latest:
+                raise ValueError("runner-up checkpoint must equal latest checkpoint")
+        else:
+            raise ValueError("candidate 2 selection_role is invalid")
+        if np.array_equal(first.candidate.grid, second.candidate.grid):
+            raise ValueError("model-only candidates must be distinct")
+
+        score = _query_score_from_record(record.get("score"), name)
+        if (score.task_id, score.query_index) != identity:
+            raise ValueError(f"{name} score identity does not match its record")
+        if score.candidate_count != 2:
+            raise ValueError(f"{name} score candidate_count must be two")
+        scores_by_task[task_id].append(score)
+
+    missing = expected_identities - identities
+    if missing:
+        raise ValueError(f"missing official query records: {len(missing)}")
+    task_results = {
+        task_id: {
+            "query_count": expected[task_id],
+            "pass_at_2": all(score.pass_at_2 for score in scores_by_task[task_id]),
+        }
+        for task_id in sorted(expected)
+    }
+    exact_task_count = sum(result["pass_at_2"] for result in task_results.values())
+    strict_pass_at_2 = exact_task_count / _MODEL_ONLY_REQUIRED_TASK_COUNT
+    return {
+        "primary_candidate_mode": "model_only",
+        "required_task_count": _MODEL_ONLY_REQUIRED_TASK_COUNT,
+        "evaluated_task_count": len(task_results),
+        "evaluated_query_count": len(identities),
+        "required_exact_task_count": _MODEL_ONLY_REQUIRED_EXACT_TASK_COUNT,
+        "exact_task_count": exact_task_count,
+        "strict_task_pass_at_2": strict_pass_at_2,
+        "passed": exact_task_count >= _MODEL_ONLY_REQUIRED_EXACT_TASK_COUNT,
         "tasks": task_results,
     }
 
