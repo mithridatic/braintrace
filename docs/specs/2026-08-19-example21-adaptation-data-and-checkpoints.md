@@ -103,3 +103,13 @@ the scorer after inference. Candidate provenance stays model-only.
 Held-out training-split exact `pass@2` under augmented adaptation must exceed
 the 0.0667 measured without it, at the same pretrained checkpoint, before the
 option is used in a reported ARC run.
+
+**Measured 2026-08-19: the gate is not met.** Over 28 held-out training tasks at
+a matched checkpoint, seven augmented variants per task moved pixel accuracy
+0.5534 → 0.6006 but exact `pass@2` 0.0357 → 0.0000; a 15-task run agreed on
+direction. Augmentation therefore stays off in reported runs. Section 2.2 remains
+specified rather than implemented, and the production design still needs a
+variant axis in `ArcAdaptationFoldInputs` so that every adaptation context stays
+under one consistent transform — mixing transformed and untransformed
+demonstrations in one context would present two contradictory rules. Full result
+in `2026-08-19-example21-batched-training-results.md` §5.6.

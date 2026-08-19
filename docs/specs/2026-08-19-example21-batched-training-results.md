@@ -222,11 +222,39 @@ across two artifacts is a reporting weakness introduced by checkpoint restore an
 should be fixed by carrying the checkpoint's recorded training evidence forward
 into the restored run's report.
 
+## 5.6 Augmented adaptation folds: gate not met
+
+Adaptation is fold-starved, so a task's own folds were augmented with seven
+semantics-preserving transformed copies — the same colour permutation and
+dihedral family the training path already uses, applied consistently to every
+demonstration of a variant, reading no scored target. Matched checkpoint, matched
+tasks, 40 adaptation steps at 3e-3, 28 held-out **training** tasks:
+
+| arm | shape | pixel | exact pass@2 |
+|---|---:|---:|---:|
+| frozen, no adaptation | 0.5357 | 0.5447 | 0.0000 |
+| adapted, no augmentation | 0.5714 | 0.5534 | 0.0357 |
+| adapted, 7 augmentations | 0.5357 | 0.6006 | 0.0000 |
+
+Augmentation buys a real pixel-accuracy gain, +0.047, the largest single-change
+pixel gain measured in this session. It does not buy exact answers: 0 of 28
+against 1 of 28. At that sample size 1 versus 0 is indistinguishable, but the
+gate in `2026-08-19-example21-adaptation-data-and-checkpoints.md` §5 requires
+exceeding the baseline exact score, and it does not. **The option stays off in
+reported runs.** A 15-task run of the same comparison agreed on direction (pixel
+0.5108 → 0.5409, exact 1 of 15 → 0 of 15).
+
+The pixel gain is worth revisiting once the model is close enough to exact for
+pixel accuracy to convert, which §5.3 shows it currently is not.
+
 ## 6. What the evidence says to do next
 
 1. Pretraining is the binding constraint on exact score, and its curve has not
    converged. More episodes, not more neurons, is the next lever — the loss was
-   still descending at 96,000 episodes.
+   still descending at 96,000 episodes. Every other lever measured this session
+   either failed its gate (augmented adaptation folds, §5.6), was worth under one
+   exact answer (candidate construction, §5.3), or was already saturated
+   (adaptation budget, §3).
 2. The episode bank cannot grow far enough to feed a much longer run. Prefetching
    the next chunk on a worker thread removes the bank entirely and recovers the
    third of wall clock currently spent host-side.
