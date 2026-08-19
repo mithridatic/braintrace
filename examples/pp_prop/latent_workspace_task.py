@@ -462,6 +462,62 @@ def query_episodes(
     )
 
 
+def leave_one_demonstration_out_episodes(
+    task: ArcTask, *, task_index: int = 0
+) -> tuple[ArcQueryEpisode, ...]:
+    """Construct supervised episodes by holding out each demonstration.
+
+    Each episode retains the parent task fingerprint and original held-out
+    index.  The held-out input becomes the query, its output remains in the
+    out-of-band ``target`` field, and all other demonstrations remain in their
+    original order.
+
+    Parameters
+    ----------
+    task
+        Parent ARC task with at least two demonstrations.
+    task_index
+        Stable collection index used by strict task aggregation.
+
+    Returns
+    -------
+    tuple of ArcQueryEpisode
+        One supervised episode per demonstration.
+
+    Raises
+    ------
+    ValueError
+        If ``task_index`` is invalid or the task has fewer than two
+        demonstrations.
+    """
+
+    if isinstance(task_index, bool) or not isinstance(task_index, (int, np.integer)):
+        raise ValueError("task_index must be a non-negative integer")
+    task_index = int(task_index)
+    if task_index < 0:
+        raise ValueError("task_index must be a non-negative integer")
+    if len(task.train) < 2:
+        raise ValueError(
+            "leave-one-demonstration-out episodes require at least two demonstrations"
+        )
+
+    fingerprint = canonical_task_fingerprint(task)
+    return tuple(
+        ArcQueryEpisode(
+            task_index=task_index,
+            query_index=held_out_index,
+            task_id=task.task_id,
+            task_fingerprint=fingerprint,
+            demonstrations=(
+                task.train[:held_out_index] + task.train[held_out_index + 1 :]
+            ),
+            query_input=held_out.input,
+            target=held_out.output,
+        )
+        for held_out_index, held_out in enumerate(task.train)
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class DatasetSource:
     """Declaration of one locally available ARC corpus.
@@ -1705,6 +1761,58 @@ def encode_query_episode(
         task_id=task.task_id,
         task_fingerprint=canonical_task_fingerprint(task),
         target=query.output,
+    )
+
+
+def encode_arc_query_episode(
+    episode: ArcQueryEpisode,
+    config: RowEventConfig = RowEventConfig(),
+) -> EncodedQueryEpisode:
+    """Encode a prepared ARC query episode as target-free row events.
+
+    The demonstration context and query input are encoded exactly as supplied.
+    The optional target remains out-of-band and cannot affect the returned
+    event bytes.  Parent identity metadata is copied from ``episode`` instead
+    of being recomputed from its reduced context, which is important for
+    leave-one-demonstration-out training episodes.
+
+    Parameters
+    ----------
+    episode
+        Prepared query episode, including ordinary evaluation queries or
+        leave-one-demonstration-out training queries.
+    config
+        Static demonstration, grid, and feature capacities.
+
+    Returns
+    -------
+    EncodedQueryEpisode
+        Fixed demonstration/query blocks with the original parent metadata and
+        optional target kept outside model input.
+    """
+
+    sanitized_task = ArcTask(
+        train=episode.demonstrations,
+        test=(ArcPair(episode.query_input, None),),
+        task_id=episode.task_id,
+    )
+    encoded = encode_query_episode(
+        sanitized_task,
+        0,
+        config,
+        task_index=episode.task_index,
+    )
+    return EncodedQueryEpisode(
+        events=encoded.events,
+        valid_event_count=encoded.valid_event_count,
+        query_start=encoded.query_start,
+        query_stop=encoded.query_stop,
+        demonstration_spans=encoded.demonstration_spans,
+        task_index=episode.task_index,
+        query_index=episode.query_index,
+        task_id=episode.task_id,
+        task_fingerprint=episode.task_fingerprint,
+        target=episode.target,
     )
 
 

@@ -36,11 +36,13 @@ from examples.pp_prop.latent_workspace_task import (
     decode_row_events,
     detect_split_leakage,
     draw_training_augmentation,
+    encode_arc_query_episode,
     encode_query_episode,
     encode_target_grid,
     encode_task_queries,
     load_arc_task,
     load_dataset_source,
+    leave_one_demonstration_out_episodes,
     query_episodes,
     smoke_arc_tasks,
     smoke_loaded_dataset,
@@ -254,10 +256,64 @@ def test_multiple_query_episodes_retain_shared_task_identity() -> None:
     assert episodes[1].query_input == ArcGrid(((9,),))
 
 
+def test_loo_episodes_preserve_parent_identity_and_order() -> None:
+    base = _task()
+    third = ArcPair(ArcGrid(((3, 0),)), ArcGrid(((0,), (3,))))
+    task = replace(base, train=base.train + (third,))
+
+    episodes = leave_one_demonstration_out_episodes(task, task_index=7)
+
+    assert [episode.query_index for episode in episodes] == [0, 1, 2]
+    assert all(episode.task_index == 7 for episode in episodes)
+    assert all(episode.task_id == task.task_id for episode in episodes)
+    assert all(
+        episode.task_fingerprint == canonical_task_fingerprint(task)
+        for episode in episodes
+    )
+    assert [episode.query_input for episode in episodes] == [
+        pair.input for pair in task.train
+    ]
+    assert [episode.target for episode in episodes] == [
+        pair.output for pair in task.train
+    ]
+    assert episodes[0].demonstrations == task.train[1:]
+    assert episodes[1].demonstrations == (task.train[0], task.train[2])
+    assert episodes[2].demonstrations == task.train[:2]
+
+
+def test_leave_one_demonstration_out_target_is_not_in_model_context() -> None:
+    task = _task()
+
+    episodes = leave_one_demonstration_out_episodes(task)
+
+    for held_out_index, episode in enumerate(episodes):
+        held_out = task.train[held_out_index]
+        assert episode.query_input is held_out.input
+        assert episode.target is held_out.output
+        assert held_out not in episode.demonstrations
+        assert len(episode.demonstrations) == len(task.train) - 1
+
+
+def test_leave_one_demonstration_out_requires_context_demonstration() -> None:
+    base = _task()
+    task = replace(base, train=base.train[:1])
+
+    with pytest.raises(ValueError, match="at least two demonstrations"):
+        leave_one_demonstration_out_episodes(task)
+
+
 @pytest.mark.parametrize("index", [-1, True, 1.5])
 def test_query_episode_task_index_must_be_non_negative_integer(index: object) -> None:
     with pytest.raises(ValueError, match="task_index"):
         query_episodes(_task(), task_index=index)
+
+
+@pytest.mark.parametrize("index", [-1, True, 1.5])
+def test_leave_one_demonstration_out_task_index_must_be_non_negative_integer(
+    index: object,
+) -> None:
+    with pytest.raises(ValueError, match="task_index"):
+        leave_one_demonstration_out_episodes(_task(), task_index=index)
 
 
 def test_task_json_directory_manifest_hashes_deduplicates_and_rejects(
@@ -705,9 +761,7 @@ def test_small_binding_associative_memory_feature_indices_are_exact() -> None:
     assert len(indices.key_indices) == len(indices.value_indices) == 18
 
 
-def test_associative_memory_indices_preserve_side_semantics_without_identity() -> (
-    None
-):
+def test_associative_memory_indices_preserve_side_semantics_without_identity() -> None:
     config = RowEventConfig()
     indices = associative_memory_feature_indices(config)
     row_indices = range(*config.row_index_slice.indices(config.input_width))
@@ -733,8 +787,7 @@ def test_associative_memory_indices_preserve_side_semantics_without_identity() -
     ]
     assert query[key_indices].sum() > 0.0
     assert query[value_indices].sum() == pytest.approx(
-        query[config.normalized_slice.start]
-        + query[config.row_index_slice].sum()
+        query[config.normalized_slice.start] + query[config.row_index_slice].sum()
     )
 
 
@@ -829,6 +882,44 @@ def test_held_out_target_never_changes_model_input_bytes() -> None:
     assert not np.any(query_rows[:, config.output_color_slice])
     assert not np.any(query_rows[:, config.output_height_slice])
     assert not np.any(query_rows[:, config.output_width_slice])
+
+
+def test_arc_query_episode_encoding_round_trips_context_and_parent_metadata() -> None:
+    episode = leave_one_demonstration_out_episodes(_task(), task_index=7)[1]
+
+    encoded = encode_arc_query_episode(episode)
+    decoded = decode_row_events(encoded.events)
+
+    assert decoded.demonstrations == episode.demonstrations
+    assert decoded.query_input == episode.query_input
+    assert encoded.task_index == episode.task_index
+    assert encoded.query_index == episode.query_index
+    assert encoded.task_id == episode.task_id
+    assert encoded.task_fingerprint == episode.task_fingerprint
+    assert encoded.target == episode.target
+
+
+def test_arc_query_episode_target_never_changes_model_input_bytes() -> None:
+    episode = leave_one_demonstration_out_episodes(_task())[0]
+    changed = replace(episode, target=ArcGrid(((9, 8), (7, 6))))
+
+    encoded = encode_arc_query_episode(episode)
+    changed_encoded = encode_arc_query_episode(changed)
+
+    assert encoded.events.tobytes() == changed_encoded.events.tobytes()
+    assert encoded.target != changed_encoded.target
+
+
+def test_arc_query_episode_encoding_does_not_require_official_query_label() -> None:
+    episode = query_episodes(_task(target=False), task_index=3)[0]
+
+    encoded = encode_arc_query_episode(episode)
+    decoded = decode_row_events(encoded.events)
+
+    assert decoded.demonstrations == episode.demonstrations
+    assert decoded.query_input == episode.query_input
+    assert encoded.target is None
+    assert encoded.task_index == 3
 
 
 def test_fixed_block_padding_is_all_zero_inert_and_read_only() -> None:
