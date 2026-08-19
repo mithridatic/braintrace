@@ -201,6 +201,33 @@ def _metric(value: float = 0.0) -> dict[str, float | int]:
     }
 
 
+def _checkpoint_candidate_payloads(effort: int) -> list[dict[str, object]]:
+    if effort == 0:
+        roles = (
+            "diagnostic_checkpoint_joint_argmax",
+            "diagnostic_checkpoint_logit_runner_up",
+        )
+    else:
+        roles = (
+            "latest_sweep_joint_argmax",
+            "latest_sweep_logit_runner_up",
+        )
+    return [
+        {
+            "rank": rank,
+            "height": 1,
+            "width": 1,
+            "grid": [[rank - 1]],
+            "changed_decision": None if rank == 1 else "cell:0,0",
+            "log_probability": -float(rank),
+            "provenance": "model",
+            "source_checkpoint": effort,
+            "selection_role": roles[rank - 1],
+        }
+        for rank in (1, 2)
+    ]
+
+
 def _numeric_evidence(steps: list[int]) -> dict[str, object]:
     names = (
         "compact_logits",
@@ -315,10 +342,10 @@ def _evaluation_payload() -> dict[str, object]:
                 "task_id": "task",
                 "query_index": 0,
                 "primary_candidate_mode": "model_only",
-                "candidates": [
-                    {"grid": [[0]], "provenance": "model"},
-                    {"grid": [[1]], "provenance": "model"},
-                ],
+                "submission_role": (
+                    "primary_submission" if effort == 60 else "diagnostic_only"
+                ),
+                "candidates": _checkpoint_candidate_payloads(effort),
                 "score": {},
             }
         ]
@@ -337,6 +364,30 @@ def _evaluation_payload() -> dict[str, object]:
         "query_count": 1,
         "task_count": 1,
         "same_frozen_parameter_bytes": True,
+        "submission_policy": {
+            "name": "latest_sweep_plus_newest_distinct_earlier",
+            "submission_checkpoint": 60,
+            "completed_sweep_checkpoints": [30, 60],
+            "candidate_budget": 2,
+            "fallback": "latest_sweep_deterministic_logit_runner_up",
+            "target_free_selection": True,
+            "rule_channel_enabled": False,
+        },
+        "model_only_completion": {
+            "primary_candidate_mode": "model_only",
+            "eligible_for_completion": False,
+            "eligibility_reason": "completion requires a complete 400-task run",
+            "submission_checkpoint": 60,
+            "submission_policy": "latest_sweep_plus_newest_distinct_earlier",
+            "required_task_count": 400,
+            "evaluated_task_count": 1,
+            "evaluated_query_count": 1,
+            "required_exact_task_count": 160,
+            "exact_task_count": 1,
+            "strict_task_pass_at_2": 1.0,
+            "passed": False,
+            "tasks": {"task": {"query_count": 1, "pass_at_2": True}},
+        },
         "checkpoint_queries": checkpoint_queries,
         "query_trajectories": [
             {
@@ -1777,6 +1828,155 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(
     assert "checkpoint_queries" not in control
 
 
+def test_primary_scoring_uses_latest_and_distinct_earlier_neural_checkpoints(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    compact = np.zeros((TEST_DEPTH_COUNT, len(records), 9060), dtype=np.float32)
+    compact[30, :, 0] = 20.0
+    compact[30, :, 30] = 20.0
+    compact[30, :, 60 + 3] = 20.0
+    compact[60, :, 0] = 20.0
+    compact[60, :, 30] = 20.0
+    compact[60, :, 60 + 6] = 20.0
+
+    _metrics, details = example._score_windows(
+        compact, records, color_rank=4, decoder_mode="row_refinement"
+    )
+
+    final = details["60"][0]
+    assert final["submission_role"] == "primary_submission"
+    assert final["candidates"][0]["grid"] == [[6]]
+    assert final["candidates"][0]["source_checkpoint"] == 60
+    assert final["candidates"][0]["selection_role"] == ("latest_sweep_joint_argmax")
+    assert final["candidates"][1]["grid"] == [[3]]
+    assert final["candidates"][1]["source_checkpoint"] == 30
+    assert final["candidates"][1]["selection_role"] == ("earlier_sweep_joint_argmax")
+    assert details["0"][0]["submission_role"] == "diagnostic_only"
+
+
+def test_primary_candidate_bytes_do_not_depend_on_official_targets(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    changed_records = tuple(
+        dataclasses.replace(
+            record,
+            encoded=dataclasses.replace(record.encoded, target=ArcGrid(((9,),))),
+        )
+        for record in records
+    )
+    compact = np.zeros((TEST_DEPTH_COUNT, len(records), 9060), dtype=np.float32)
+
+    _left_metrics, left = example._score_windows(
+        compact, records, color_rank=4, decoder_mode="row_refinement"
+    )
+    _right_metrics, right = example._score_windows(
+        compact, changed_records, color_rank=4, decoder_mode="row_refinement"
+    )
+
+    assert json.dumps(left["60"][0]["candidates"], sort_keys=True).encode() == (
+        json.dumps(right["60"][0]["candidates"], sort_keys=True).encode()
+    )
+
+
+def test_evaluation_identity_and_encoded_record_ignore_official_targets(example):
+    fixture = smoke_loaded_dataset()
+    original = fixture.tasks[0]
+    changed = dataclasses.replace(
+        original,
+        test=tuple(
+            dataclasses.replace(pair, output=ArcGrid(((9,),))) for pair in original.test
+        ),
+    )
+    original_origin = example._OriginTask("evaluation", "evaluation", original)
+    changed_origin = example._OriginTask("evaluation", "evaluation", changed)
+    original_data = example._ExperimentData((), (original_origin,), (), True)
+    changed_data = example._ExperimentData((), (changed_origin,), (), True)
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+
+    original_record = example._evaluation_records(original_data, config, rows)[0]
+    changed_record = example._evaluation_records(changed_data, config, rows)[0]
+
+    assert original_record.task_key == changed_record.task_key
+    np.testing.assert_array_equal(
+        original_record.encoded.events, changed_record.encoded.events
+    )
+    assert original_record.encoded.query_stop == changed_record.encoded.query_stop
+    assert original_record.encoded.target != changed_record.encoded.target
+
+
+def test_completion_report_uses_all_400_expected_task_identities(example, monkeypatch):
+    fixture = smoke_loaded_dataset()
+    evaluation = tuple(
+        example._OriginTask(
+            "ARC-AGI-1 evaluation",
+            "evaluation",
+            dataclasses.replace(fixture.tasks[0], task_id=f"task-{index:03d}"),
+        )
+        for index in range(400)
+    )
+    data = example._ExperimentData((), evaluation, (), False)
+    captured = {}
+
+    def assess(rows, expected):
+        captured["rows"] = rows
+        captured["expected"] = expected
+        return {
+            "primary_candidate_mode": "model_only",
+            "required_task_count": 400,
+            "evaluated_task_count": 400,
+            "evaluated_query_count": 400,
+            "required_exact_task_count": 160,
+            "exact_task_count": 160,
+            "strict_task_pass_at_2": 0.4,
+            "passed": True,
+            "tasks": {},
+        }
+
+    monkeypatch.setattr(example, "assess_model_only_completion", assess)
+    rows = [{"sentinel": True}]
+
+    report = example._model_only_completion_report(
+        rows, {"tasks": {}}, data, example.ExperimentConfig()
+    )
+
+    assert report["eligible_for_completion"] is True
+    assert report["passed"] is True
+    assert captured["rows"] is rows
+    assert len(captured["expected"]) == 400
+    assert set(captured["expected"].values()) == {len(fixture.tasks[0].test)}
+
+
+def test_capped_and_smoke_completion_reports_cannot_pass(example, monkeypatch):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    monkeypatch.setattr(
+        example,
+        "assess_model_only_completion",
+        lambda *args: pytest.fail("incomplete evaluations must not call the full gate"),
+    )
+
+    report = example._model_only_completion_report(
+        [],
+        {
+            "query_count": 1,
+            "task_count": 1,
+            "strict_task_pass_at_2": 1.0,
+            "tasks": {"fixture": {"query_count": 1, "pass_at_2": True}},
+        },
+        data,
+        config,
+    )
+
+    assert report["eligible_for_completion"] is False
+    assert report["passed"] is False
+    assert report["exact_task_count"] == 1
+    assert report["required_task_count"] == 400
+    assert "complete 400-task" in report["eligibility_reason"]
+
+
 def test_scoring_rejects_non_model_candidate_provenance(example, monkeypatch):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
@@ -2278,10 +2478,10 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     checkpoint_queries = {
         str(effort): [
             {
-                "candidates": [
-                    {"grid": [[0]], "provenance": "model"},
-                    {"grid": [[1]], "provenance": "model"},
-                ],
+                "submission_role": (
+                    "primary_submission" if effort == 60 else "diagnostic_only"
+                ),
+                "candidates": _checkpoint_candidate_payloads(effort),
                 "score": {"pass_at_2": False},
             }
             for _ in range(batch)

@@ -36,9 +36,11 @@ try:
         OutputLogits,
         aggregate_arc_metrics,
         analyze_latent_trajectory,
+        assess_model_only_completion,
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
+        select_checkpoint_candidates,
     )
     from examples.pp_prop.latent_workspace_model import (
         LatentWorkspaceModel,
@@ -80,9 +82,11 @@ except ModuleNotFoundError:
         OutputLogits,
         aggregate_arc_metrics,
         analyze_latent_trajectory,
+        assess_model_only_completion,
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
+        select_checkpoint_candidates,
     )
     from latent_workspace_model import (
         LatentWorkspaceModel,
@@ -126,6 +130,8 @@ PrimaryCandidateMode = Literal["model_only"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
+SUBMISSION_CHECKPOINT = 60
+SUBMISSION_POLICY = "latest_sweep_plus_newest_distinct_earlier"
 EVALUATION_ARM_ORDER = (
     "intact",
     "repeat_intact",
@@ -1537,10 +1543,10 @@ def _train_model(
     }
 
 
-def _origin_task_key(origin: _OriginTask) -> str:
-    fingerprint = canonical_task_fingerprint(origin.task)
+def _origin_task_key(origin: _OriginTask, task_index: int) -> str:
+    fingerprint = canonical_task_fingerprint(origin.task, include_test_outputs=False)
     task_name = origin.task.task_id or fingerprint[:12]
-    return f"{origin.source_name}:{task_name}:{fingerprint}"
+    return f"{origin.source_name}:{task_index:04d}:{task_name}:{fingerprint}"
 
 
 def _evaluation_records(
@@ -1553,7 +1559,7 @@ def _evaluation_records(
         origins = origins[: config.evaluation_task_limit]
     records: list[_EvaluationRecord] = []
     for task_index, origin in enumerate(origins):
-        task_key = _origin_task_key(origin)
+        task_key = _origin_task_key(origin, task_index)
         for query_index in range(len(origin.task.test)):
             encoded = encode_query_episode(
                 origin.task,
@@ -1597,7 +1603,10 @@ def _arm_sequences(
     advance_rows: list[np.ndarray] = []
     query_stops: list[int] = []
     metadata: list[dict[str, object]] = []
-    task_lookup = {_origin_task_key(origin): origin.task for origin in source_tasks}
+    task_lookup = {
+        _origin_task_key(origin, task_index): origin.task
+        for task_index, origin in enumerate(source_tasks)
+    }
     for record in records:
         encoded = record.encoded
         arm_encoded = encoded
@@ -1685,33 +1694,81 @@ def _score_windows(
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
-    metrics: dict[str, dict[str, object]] = {}
-    query_details: dict[str, list[dict[str, object]]] = {}
-    for effort_index, effort in enumerate(CHECKPOINTS):
-        scores = []
-        details = []
-        for query_index, record in enumerate(records):
-            logits = OutputLogits(
+    logits_by_checkpoint: dict[int, list[OutputLogits]] = {
+        effort: [
+            OutputLogits(
                 height[effort_index, query_index],
                 width[effort_index, query_index],
                 colors[effort_index, query_index],
             )
-            candidates = decode_candidates(logits)
-            candidate_payloads: list[dict[str, object]] = []
-            for candidate in candidates:
-                payload = dict(candidate.to_dict())
-                provenance = payload.get("provenance", "model")
-                if provenance != "model":
-                    raise ValueError(
-                        "primary scoring rejected non-model candidate provenance "
-                        f"{provenance!r}"
+            for query_index in range(len(records))
+        ]
+        for effort_index, effort in enumerate(CHECKPOINTS)
+    }
+    selected_by_checkpoint: dict[
+        int, list[tuple[list[Any], list[dict[str, object]]]]
+    ] = {effort: [] for effort in CHECKPOINTS}
+    for effort in CHECKPOINTS:
+        for query_index in range(len(records)):
+            logits = logits_by_checkpoint[effort][query_index]
+            if effort == 0:
+                decoded = list(decode_candidates(logits))
+                candidate_payloads = []
+                diagnostic_roles = (
+                    "diagnostic_checkpoint_joint_argmax",
+                    "diagnostic_checkpoint_logit_runner_up",
+                )
+                for rank, (candidate, role) in enumerate(
+                    zip(decoded, diagnostic_roles, strict=True), start=1
+                ):
+                    payload = dict(candidate.to_dict())
+                    provenance = payload.get("provenance", "model")
+                    if provenance != "model":
+                        raise ValueError(
+                            "primary scoring rejected non-model candidate provenance "
+                            f"{provenance!r}"
+                        )
+                    payload.update(
+                        {
+                            "rank": rank,
+                            "provenance": "model",
+                            "source_checkpoint": 0,
+                            "selection_role": role,
+                        }
                     )
-                payload["provenance"] = "model"
-                candidate_payloads.append(payload)
+                    candidate_payloads.append(payload)
+            else:
+                selected = select_checkpoint_candidates(
+                    {
+                        checkpoint: logits_by_checkpoint[checkpoint][query_index]
+                        for checkpoint in CHECKPOINTS
+                        if 0 < checkpoint <= effort
+                    },
+                    latest_checkpoint=effort,
+                )
+                decoded = [item.candidate for item in selected]
+                candidate_payloads = []
+                for rank, candidate in enumerate(selected, start=1):
+                    payload = candidate.to_dict()
+                    if payload.get("provenance") != "model":
+                        raise ValueError(
+                            "primary scoring rejected non-model candidate provenance"
+                        )
+                    payload["rank"] = rank
+                    candidate_payloads.append(payload)
             if len(candidate_payloads) != 2:
                 raise ValueError(
                     "primary scoring requires exactly two model candidates"
                 )
+            selected_by_checkpoint[effort].append((decoded, candidate_payloads))
+
+    metrics: dict[str, dict[str, object]] = {}
+    query_details: dict[str, list[dict[str, object]]] = {}
+    for effort in CHECKPOINTS:
+        scores = []
+        details = []
+        for query_index, record in enumerate(records):
+            candidates, candidate_payloads = selected_by_checkpoint[effort][query_index]
             target = record.encoded.target
             assert target is not None
             score = score_query_candidates(
@@ -1726,6 +1783,11 @@ def _score_windows(
                     "task_id": record.task_key,
                     "query_index": record.encoded.query_index,
                     "primary_candidate_mode": "model_only",
+                    "submission_role": (
+                        "primary_submission"
+                        if effort == SUBMISSION_CHECKPOINT
+                        else "diagnostic_only"
+                    ),
                     "candidates": candidate_payloads,
                     "score": score.to_dict(),
                 }
@@ -2442,6 +2504,70 @@ def _compile_evaluation_arm(
     return run_arm
 
 
+def _expected_queries_by_task(data: _ExperimentData) -> dict[str, int]:
+    expected = {
+        _origin_task_key(origin, task_index): len(origin.task.test)
+        for task_index, origin in enumerate(data.evaluation)
+    }
+    if len(expected) != len(data.evaluation):
+        raise ValueError("target-free evaluation task identities must be unique")
+    return expected
+
+
+def _model_only_completion_report(
+    submission_rows: Sequence[Mapping[str, object]],
+    submission_metrics: Mapping[str, object],
+    data: _ExperimentData,
+    config: ExperimentConfig,
+) -> dict[str, object]:
+    expected = _expected_queries_by_task(data)
+    eligible = bool(
+        not config.smoke
+        and not config.structural_only
+        and not data.plumbing_only
+        and config.evaluation_task_limit is None
+        and config.decoder_mode == "row_refinement"
+        and len(expected) == 400
+    )
+    if eligible:
+        report = dict(assess_model_only_completion(submission_rows, expected))
+        report.update(
+            {
+                "eligible_for_completion": True,
+                "eligibility_reason": None,
+                "submission_checkpoint": SUBMISSION_CHECKPOINT,
+                "submission_policy": SUBMISSION_POLICY,
+            }
+        )
+        return report
+
+    task_values = submission_metrics.get("tasks", {})
+    tasks = task_values if isinstance(task_values, Mapping) else {}
+    exact_task_count = sum(
+        1
+        for value in tasks.values()
+        if isinstance(value, Mapping) and value.get("pass_at_2") is True
+    )
+    observed_rate = submission_metrics.get("strict_task_pass_at_2", 0.0)
+    return {
+        "primary_candidate_mode": "model_only",
+        "eligible_for_completion": False,
+        "eligibility_reason": (
+            "completion requires a complete 400-task non-smoke row-refinement run"
+        ),
+        "submission_checkpoint": SUBMISSION_CHECKPOINT,
+        "submission_policy": SUBMISSION_POLICY,
+        "required_task_count": 400,
+        "evaluated_task_count": int(submission_metrics.get("task_count", 0)),
+        "evaluated_query_count": int(submission_metrics.get("query_count", 0)),
+        "required_exact_task_count": 160,
+        "exact_task_count": exact_task_count,
+        "strict_task_pass_at_2": float(observed_rate),
+        "passed": False,
+        "tasks": dict(tasks),
+    }
+
+
 def _evaluate(
     trained_model: LatentWorkspaceModel,
     data: _ExperimentData,
@@ -2514,6 +2640,12 @@ def _evaluate(
     )
     intact_metrics, checkpoint_queries = _score_windows(
         intact[0], records, config.color_rank, config.decoder_mode
+    )
+    completion_report = _model_only_completion_report(
+        checkpoint_queries[str(SUBMISSION_CHECKPOINT)],
+        intact_metrics[str(SUBMISSION_CHECKPOINT)],
+        data,
+        config,
     )
     channel_attribution = _channel_attribution(checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
@@ -2644,6 +2776,16 @@ def _evaluate(
         "parameter_sha256_after": after,
         "primary_candidate_mode": config.primary_candidate_mode,
         "metrics_by_effort": intact_metrics,
+        "submission_policy": {
+            "name": SUBMISSION_POLICY,
+            "submission_checkpoint": SUBMISSION_CHECKPOINT,
+            "completed_sweep_checkpoints": list(TRAINING_EFFORTS),
+            "candidate_budget": 2,
+            "fallback": "latest_sweep_deterministic_logit_runner_up",
+            "target_free_selection": True,
+            "rule_channel_enabled": False,
+        },
+        "model_only_completion": completion_report,
         "channel_attribution": channel_attribution,
         "checkpoint_queries": checkpoint_queries,
         "query_trajectories": trajectories,
@@ -2846,6 +2988,55 @@ def _qualification(
         and all(query_trajectory_complete(report) for report in query_trajectories)
     )
     checkpoint_queries = evaluation.get("checkpoint_queries")
+
+    def candidate_provenance_complete(effort: int, row: Mapping[str, object]) -> bool:
+        candidates = row.get("candidates")
+        if not isinstance(candidates, list) or len(candidates) != 2:
+            return False
+        if not all(
+            isinstance(candidate, dict)
+            and candidate.get("provenance") == "model"
+            and candidate.get("rank") == rank
+            for rank, candidate in enumerate(candidates, start=1)
+        ):
+            return False
+        first, second = candidates
+        if effort == 0:
+            return bool(
+                row.get("submission_role") == "diagnostic_only"
+                and first.get("source_checkpoint") == 0
+                and second.get("source_checkpoint") == 0
+                and first.get("selection_role") == "diagnostic_checkpoint_joint_argmax"
+                and second.get("selection_role")
+                == "diagnostic_checkpoint_logit_runner_up"
+            )
+        if row.get("submission_role") != (
+            "primary_submission"
+            if effort == SUBMISSION_CHECKPOINT
+            else "diagnostic_only"
+        ):
+            return False
+        if (
+            first.get("source_checkpoint") != effort
+            or first.get("selection_role") != "latest_sweep_joint_argmax"
+        ):
+            return False
+        second_checkpoint = second.get("source_checkpoint")
+        second_role = second.get("selection_role")
+        return bool(
+            (
+                second_role == "earlier_sweep_joint_argmax"
+                and isinstance(second_checkpoint, Integral)
+                and not isinstance(second_checkpoint, bool)
+                and 0 < int(second_checkpoint) < effort
+                and int(second_checkpoint) % 30 == 0
+            )
+            or (
+                second_role == "latest_sweep_logit_runner_up"
+                and second_checkpoint == effort
+            )
+        )
+
     checkpoint_queries_complete = bool(
         isinstance(checkpoint_queries, dict)
         and set(checkpoint_queries) == {str(checkpoint) for checkpoint in CHECKPOINTS}
@@ -2863,19 +3054,70 @@ def _qualification(
                 }
                 <= row.keys()
                 and row["primary_candidate_mode"] == "model_only"
-                and isinstance(row["candidates"], list)
-                and bool(row["candidates"])
-                and all(
-                    isinstance(candidate, dict)
-                    and candidate.get("provenance") == "model"
-                    for candidate in row["candidates"]
-                )
+                and candidate_provenance_complete(checkpoint, row)
                 and finite_tree(row)
                 for row in rows
             )
-            for rows in checkpoint_queries.values()
+            for checkpoint, rows in (
+                (checkpoint, checkpoint_queries[str(checkpoint)])
+                for checkpoint in CHECKPOINTS
+            )
         )
     )
+    submission_policy = evaluation.get("submission_policy")
+    submission_policy_complete = bool(
+        isinstance(submission_policy, dict)
+        and submission_policy.get("name") == SUBMISSION_POLICY
+        and submission_policy.get("submission_checkpoint") == SUBMISSION_CHECKPOINT
+        and submission_policy.get("completed_sweep_checkpoints")
+        == list(TRAINING_EFFORTS)
+        and submission_policy.get("candidate_budget") == 2
+        and submission_policy.get("fallback")
+        == "latest_sweep_deterministic_logit_runner_up"
+        and submission_policy.get("target_free_selection") is True
+        and submission_policy.get("rule_channel_enabled") is False
+    )
+    completion = evaluation.get("model_only_completion")
+    completion_expected_eligible = bool(
+        not config.smoke
+        and not config.structural_only
+        and not data.plumbing_only
+        and config.evaluation_task_limit is None
+        and config.decoder_mode == "row_refinement"
+        and len(data.evaluation) == 400
+    )
+    completion_complete = bool(
+        isinstance(completion, dict)
+        and completion.get("primary_candidate_mode") == "model_only"
+        and completion.get("eligible_for_completion") is completion_expected_eligible
+        and completion.get("submission_checkpoint") == SUBMISSION_CHECKPOINT
+        and completion.get("submission_policy") == SUBMISSION_POLICY
+        and completion.get("required_task_count") == 400
+        and completion.get("evaluated_task_count") == expected_task_count
+        and completion.get("evaluated_query_count") == expected_query_count
+        and completion.get("required_exact_task_count") == 160
+        and isinstance(completion.get("exact_task_count"), Integral)
+        and not isinstance(completion.get("exact_task_count"), bool)
+        and isinstance(completion.get("passed"), bool)
+        and (completion.get("passed") is False or completion_expected_eligible)
+        and finite_tree(completion)
+    )
+    if completion_complete and isinstance(completion, dict):
+        exact_task_count = int(completion["exact_task_count"])
+        if completion_expected_eligible:
+            completion_tasks = completion.get("tasks")
+            completion_complete = bool(
+                isinstance(completion_tasks, dict)
+                and len(completion_tasks) == 400
+                and completion.get("strict_task_pass_at_2") == exact_task_count / 400
+                and completion.get("passed") == (exact_task_count >= 160)
+            )
+        else:
+            completion_complete = bool(
+                completion.get("passed") is False
+                and isinstance(completion.get("eligibility_reason"), str)
+                and bool(completion["eligibility_reason"])
+            )
 
     def comparison_complete(value: object) -> bool:
         if not isinstance(value, dict):
@@ -3194,6 +3436,8 @@ def _qualification(
         and aggregate_complete
         and query_trajectories_complete
         and checkpoint_queries_complete
+        and submission_policy_complete
+        and completion_complete
         and required_controls_complete
         and truncation_complete
         and finite_tree(evaluation)
@@ -3447,6 +3691,12 @@ def _qualification(
         "associative_capability_gates_complete": not memory_enabled,
     }
     scientific = all(scientific_checks.values())
+    score_gate_passed = bool(
+        completion_complete
+        and isinstance(completion, dict)
+        and completion.get("passed") is True
+    )
+    approved_completion_target = bool(scientific and score_gate_passed)
     structural_messages = {
         "actual_full_scale": "actual model is not the required 4096-neuron/1048576-edge scale",
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
@@ -3489,6 +3739,9 @@ def _qualification(
     return {
         "full_structural_qualification": structural,
         "full_scientific_qualification": scientific,
+        "model_only_score_gate_passed": score_gate_passed,
+        "approved_completion_target_passed": approved_completion_target,
+        "model_only_completion": completion,
         "plumbing_only": data.plumbing_only,
         "associative_capability_status": associative_capability_status,
         "structural_checks": structural_checks,
@@ -3627,6 +3880,13 @@ def _channel_attribution(
 
     summary: dict[str, dict[str, object]] = {}
     for effort, details in checkpoint_queries.items():
+        channel_roles = {item.get("submission_role") for item in details}
+        if len(channel_roles) != 1 or channel_roles - {
+            "diagnostic_only",
+            "primary_submission",
+        }:
+            raise ValueError("primary attribution found invalid submission roles")
+        channel_role = next(iter(channel_roles))
         candidates = [
             candidate
             for item in details
@@ -3638,8 +3898,12 @@ def _channel_attribution(
         pass_at_2 = sum(1 for item in details if item["score"]["pass_at_2"])
         summary[effort] = {
             "primary_candidate_mode": "model_only",
+            "submission_role": channel_role,
             "query_count": len(details),
-            "submitted_model_candidate_count": len(candidates),
+            "model_candidate_count": len(candidates),
+            "submitted_model_candidate_count": (
+                len(candidates) if channel_role == "primary_submission" else 0
+            ),
             "exact_by_model_candidates": pass_at_2,
             "exact_total": pass_at_2,
         }
@@ -3792,8 +4056,9 @@ def _render_report(result: dict[str, object]) -> str:
         if metrics is None:
             lines.append(f"  effort {effort:>2}: unavailable")
             continue
+        role = "primary submission" if effort == SUBMISSION_CHECKPOINT else "diagnostic"
         lines.append(
-            f"  effort {effort:>2}: query pass@1={metrics['query_pass_at_1']:.4f}, "
+            f"  effort {effort:>2} ({role}): query pass@1={metrics['query_pass_at_1']:.4f}, "
             f"pass@2={metrics['query_pass_at_2']:.4f}; strict task pass@1="
             f"{metrics['strict_task_pass_at_1']:.4f}, pass@2="
             f"{metrics['strict_task_pass_at_2']:.4f}; shape diagnostic="
@@ -3806,11 +4071,23 @@ def _render_report(result: dict[str, object]) -> str:
         if split is None:
             continue
         lines.append(
-            f"  effort {effort:>2} primary channel: model_only; exact="
+            f"  effort {effort:>2} {split.get('submission_role', 'unreported')} "
+            "channel: model_only; exact="
             f"{split['exact_by_model_candidates']} of {split['query_count']} queries; "
-            "submitted model candidates="
-            f"{split['submitted_model_candidate_count']}."
+            f"model candidates={split.get('model_candidate_count', 'unreported')}; "
+            f"submitted={split['submitted_model_candidate_count']}."
         )
+    completion = evaluation.get("model_only_completion", {})
+    lines.append(
+        "  Model-only 40% completion gate: eligible="
+        f"{completion.get('eligible_for_completion')}; exact tasks="
+        f"{completion.get('exact_task_count', 'unreported')}/"
+        f"{completion.get('required_task_count', 400)}; required="
+        f"{completion.get('required_exact_task_count', 160)}; strict task pass@2="
+        f"{completion.get('strict_task_pass_at_2', 'unreported')}; passed="
+        f"{completion.get('passed')}; reason="
+        f"{completion.get('eligibility_reason') or 'eligible full evaluation'}."
+    )
     intact_metrics = evaluation.get("metrics_by_effort", {})
     if "0" in intact_metrics and "60" in intact_metrics:
         effort_zero = intact_metrics["0"]["query_pass_at_2"]
@@ -3999,7 +4276,9 @@ def _render_report(result: dict[str, object]) -> str:
                 "Qualification: structural="
                 f"{qualification.get('full_structural_qualification', False)}, "
                 "scientific="
-                f"{qualification.get('full_scientific_qualification', False)}."
+                f"{qualification.get('full_scientific_qualification', False)}, "
+                "approved 40% completion="
+                f"{qualification.get('approved_completion_target_passed', False)}."
             ),
             f"Structural checks: {qualification.get('structural_checks', {})}.",
             f"Scientific checks: {qualification.get('scientific_checks', {})}.",
@@ -4007,10 +4286,15 @@ def _render_report(result: dict[str, object]) -> str:
     )
     for reason in qualification.get("reasons_not_scientific", []):
         lines.append(f"  - {reason}")
-    if qualification.get("full_scientific_qualification", False):
+    if qualification.get("approved_completion_target_passed", False):
+        interpretation = (
+            "This run satisfies the declared scientific protocol and the strict "
+            "model-only 160-of-400 ARC completion target."
+        )
+    elif qualification.get("full_scientific_qualification", False):
         interpretation = (
             "This run satisfies the declared full scientific protocol gates. It is "
-            "not evidence of converged ARC training and not an architecture falsification."
+            "not evidence that the strict model-only 160-of-400 target was reached."
         )
     elif qualification.get("full_structural_qualification", False):
         interpretation = (
