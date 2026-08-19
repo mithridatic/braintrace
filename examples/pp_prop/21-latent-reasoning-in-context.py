@@ -235,6 +235,7 @@ class ExperimentConfig:
     learning_rate: float = 1e-4
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
+    decoder_mode: str = "legacy_cp"
     ablation_slot: int = 0
     evaluation_task_limit: int | None = None
     smoke: bool = False
@@ -313,6 +314,7 @@ class ExperimentConfig:
         context_memory_width: int = 0,
         memory_decay: float = 1.0,
         balanced_color_loss: bool = False,
+        decoder_mode: str = "legacy_cp",
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
 
@@ -347,6 +349,7 @@ class ExperimentConfig:
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
             balanced_color_loss=balanced_color_loss,
+            decoder_mode=decoder_mode,
             max_demonstrations=4,
             training_updates=3,
             learning_rate=5e-4,
@@ -763,7 +766,19 @@ def _model_config(
         "readout_width": config.readout_width,
         "color_rank": config.color_rank,
         "seed": config.seed,
+        "decoder_mode": config.decoder_mode,
     }
+    if config.decoder_mode == "edit_rule":
+        arguments.update(
+            {
+                "query_phase_index": row_config.phase_slice.start + 1,
+                "input_side_valid_index": row_config.side_valid_slice.start,
+                "query_row_index_start": row_config.row_index_slice.start,
+                "query_input_height_start": row_config.input_height_slice.start,
+                "query_input_width_start": row_config.input_width_slice.start,
+                "query_input_color_start": row_config.input_color_slice.start,
+            }
+        )
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
         arguments.update(
@@ -1046,6 +1061,7 @@ def _train_model(
             "supervised_depths": "0..effort",
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
+        "decoder_mode": config.decoder_mode,
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in TRAINING_EFFORTS
@@ -1057,6 +1073,7 @@ def _train_model(
     before_snapshot = parameter_snapshot(model)
     before = _tree_digest(before_snapshot)
     rank = model.config.color_rank
+    decoder_mode = model.config.decoder_mode
 
     @brainstate.transform.jit
     def train_all(events, advances, heights, widths, colors, masks):
@@ -1074,6 +1091,7 @@ def _train_model(
                         target_width,
                         target_colors,
                         color_rank=rank,
+                        decoder_mode=decoder_mode,
                         class_balanced_colors=config.balanced_color_loss,
                     )
                 )
@@ -1124,6 +1142,7 @@ def _train_model(
         "depth_weighting": "uniform_unit_sum_per_update",
         "per_update_depth_weight_sum": 1.0,
         "balanced_color_loss": config.balanced_color_loss,
+        "decoder_mode": config.decoder_mode,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
             str(value): int(counts[value]) for value in TRAINING_EFFORTS
@@ -1348,9 +1367,13 @@ def _score_windows(
     records: Sequence[_EvaluationRecord],
     color_rank: int,
     rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    *,
+    decoder_mode: str = "legacy_cp",
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
-    expanded = expand_compact_logits(jnp.asarray(checkpoint_compact), color_rank)
+    expanded = expand_compact_logits(
+        jnp.asarray(checkpoint_compact), color_rank, decoder_mode
+    )
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
@@ -1411,8 +1434,10 @@ def _trajectory_reports(
     recurrent_current: np.ndarray,
     records: Sequence[_EvaluationRecord],
     color_rank: int,
+    *,
+    decoder_mode: str = "legacy_cp",
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-    expanded = expand_compact_logits(jnp.asarray(compact), color_rank)
+    expanded = expand_compact_logits(jnp.asarray(compact), color_rank, decoder_mode)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
@@ -1555,6 +1580,8 @@ def _control_summary(
     metadata: Sequence[dict[str, object]] | None = None,
     rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
     intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    *,
+    decoder_mode: str = "legacy_cp",
 ) -> dict[str, object]:
     if rule_proposals is None:
         rule_proposals = tuple(None for _ in records)
@@ -1587,12 +1614,14 @@ def _control_summary(
             applicable_records,
             color_rank,
             applicable_control_rules,
+            decoder_mode=decoder_mode,
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
             applicable_intact[0],
             applicable_records,
             color_rank,
             applicable_intact_rules,
+            decoder_mode=decoder_mode,
         )
         if (
             len(applicable_records) == len(records)
@@ -2196,11 +2225,15 @@ def _evaluate(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
     intact_metrics, checkpoint_queries = _score_windows(
-        intact[0], records, config.color_rank, intact_rules
+        intact[0],
+        records,
+        config.color_rank,
+        intact_rules,
+        decoder_mode=config.decoder_mode,
     )
     channel_attribution = _channel_attribution(checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
-        *intact, records, config.color_rank
+        *intact, records, config.color_rank, decoder_mode=config.decoder_mode
     )
 
     repeat_result = _control_summary(
@@ -2213,6 +2246,7 @@ def _evaluate(
         intact_meta,
         intact_rules,
         intact_rules,
+        decoder_mode=config.decoder_mode,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     repeat_metrics_exact = repeat_result["metrics_by_effort"] == intact_metrics
@@ -2260,6 +2294,7 @@ def _evaluate(
         no_context_meta,
         no_context_rules,
         intact_rules,
+        decoder_mode=config.decoder_mode,
     )
     del no_context
 
@@ -2279,6 +2314,7 @@ def _evaluate(
         shuffled_meta,
         shuffled_rules,
         intact_rules,
+        decoder_mode=config.decoder_mode,
     )
     del shuffled
 
@@ -2297,6 +2333,7 @@ def _evaluate(
         intact_meta,
         intact_rules,
         intact_rules,
+        decoder_mode=config.decoder_mode,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
@@ -2897,12 +2934,21 @@ def _qualification(
         "ff_syn.comm.weight",
         "rec_syn.comm.weight",
     }
-    plain_paths_expected = {
-        "color_factor_head.weight",
-        "height_head.weight",
-        "readout_projection.weight",
-        "width_head.weight",
-    }
+    plain_paths_expected = {"readout_projection.weight"} | (
+        {
+            "shape_rule_head.weight",
+            "shape_absolute_head.weight",
+            "copy_gate_head.weight",
+            "color_palette_head.weight",
+            "color_explicit_head.weight",
+        }
+        if config.decoder_mode == "edit_rule"
+        else {
+            "color_factor_head.weight",
+            "height_head.weight",
+            "width_head.weight",
+        }
+    )
     associative_paths = {
         "memory_write_scale",
         "workspace_query_projection.weight",
@@ -3915,6 +3961,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--balanced-color-loss", action="store_true")
+    parser.add_argument(
+        "--decoder-mode", choices=("legacy_cp", "edit_rule"), default="legacy_cp"
+    )
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
     parser.add_argument("--smoke", action="store_true")
@@ -3933,6 +3982,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
             balanced_color_loss=args.balanced_color_loss,
+            decoder_mode=args.decoder_mode,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,

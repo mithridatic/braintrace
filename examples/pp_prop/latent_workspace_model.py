@@ -1465,36 +1465,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
 
         bottleneck_weights = random.randn(config.neuron_count, config.readout_width)
         bottleneck_weights = bottleneck_weights / math.sqrt(config.neuron_count)
-        shape_weights = random.randn(config.readout_width, MAX_GRID_SIZE)
-        shape_weights = shape_weights / math.sqrt(config.readout_width)
-        factor_width = config.color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
-        factor_weights = random.randn(config.readout_width, factor_width)
-        factor_weights = factor_weights / math.sqrt(config.readout_width)
         self.readout_projection = braintrace.nn.Linear(
             config.neuron_count,
             config.readout_width,
             w_init=bottleneck_weights,
             b_init=braintools.init.ZeroInit(),
         )
-        self.height_head = braintrace.nn.Linear(
-            config.readout_width,
-            MAX_GRID_SIZE,
-            w_init=shape_weights,
-            b_init=braintools.init.ZeroInit(),
-        )
-        self.width_head = braintrace.nn.Linear(
-            config.readout_width,
-            MAX_GRID_SIZE,
-            w_init=random.randn(config.readout_width, MAX_GRID_SIZE)
-            / math.sqrt(config.readout_width),
-            b_init=braintools.init.ZeroInit(),
-        )
-        self.color_factor_head = braintrace.nn.Linear(
-            config.readout_width,
-            factor_width,
-            w_init=factor_weights,
-            b_init=braintools.init.ZeroInit(),
-        )
+        if not config.edit_rule_enabled:
+            self._build_legacy_cp_heads(config, random)
         if config.memory_enabled:
             memory_width = config.context_memory_width
             key_width = len(config.memory_key_indices)
@@ -1560,6 +1538,40 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if config.edit_rule_enabled:
             self._build_edit_rule_decoder(config)
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
+
+    def _build_legacy_cp_heads(
+        self, config: ModelConfig, random: Any
+    ) -> None:
+        """Construct the rank-``color_rank`` CP output heads.
+
+        Skipped entirely by the edit-rule decoder, which replaces them: leaving
+        them in place would add parameters that receive no gradient and would
+        make "every parameter group moved" report a false negative.
+        """
+        shape_weights = random.randn(config.readout_width, MAX_GRID_SIZE)
+        shape_weights = shape_weights / math.sqrt(config.readout_width)
+        factor_width = config.color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
+        factor_weights = random.randn(config.readout_width, factor_width)
+        factor_weights = factor_weights / math.sqrt(config.readout_width)
+        self.height_head = braintrace.nn.Linear(
+            config.readout_width,
+            MAX_GRID_SIZE,
+            w_init=shape_weights,
+            b_init=braintools.init.ZeroInit(),
+        )
+        self.width_head = braintrace.nn.Linear(
+            config.readout_width,
+            MAX_GRID_SIZE,
+            w_init=random.randn(config.readout_width, MAX_GRID_SIZE)
+            / math.sqrt(config.readout_width),
+            b_init=braintools.init.ZeroInit(),
+        )
+        self.color_factor_head = braintrace.nn.Linear(
+            config.readout_width,
+            factor_width,
+            w_init=factor_weights,
+            b_init=braintools.init.ZeroInit(),
+        )
 
     def _build_edit_rule_decoder(self, config: ModelConfig) -> None:
         """Construct the query-referencing decoder heads and capture buffers.
