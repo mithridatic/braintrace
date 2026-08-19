@@ -1369,7 +1369,14 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     recurrent = np.zeros_like(voltage)
     captured: dict[str, object] = {}
 
-    def score(subset_compact, subset_records, color_rank, subset_rules=None):
+    def score(
+        subset_compact,
+        subset_records,
+        color_rank,
+        subset_rules=None,
+        *,
+        decoder_mode="legacy_cp",
+    ):
         captured["scored_records"] = len(subset_records)
         captured["scored_batch"] = subset_compact.shape[1]
         captured["scored_rules"] = None if subset_rules is None else len(subset_rules)
@@ -1664,7 +1671,7 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
             updates.append(gradients)
 
     class Model:
-        config = SimpleNamespace(batch_size=1, color_rank=4)
+        config = SimpleNamespace(batch_size=1, color_rank=4, decoder_mode="legacy_cp")
 
         def reset_state(self):
             return None
@@ -1740,7 +1747,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     run_calls: list[dict[str, object]] = []
     event_markers: list[float] = []
     jit_options: list[dict[str, object]] = []
-    fake_model = SimpleNamespace(config=SimpleNamespace(color_rank=4))
+    fake_model = SimpleNamespace(config=SimpleNamespace(color_rank=4, decoder_mode="legacy_cp"))
 
     def sequences(records, config, rows, *, arm, source_tasks):
         marker = {"intact": 1.0, "no_context": 2.0, "shuffled": 3.0}[arm]
@@ -1795,9 +1802,11 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         for effort in (0, 8, 16, 32)
     }
     monkeypatch.setattr(
-        example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
+        example, "_score_windows", lambda *args, **kwargs: (metrics, checkpoint_queries)
     )
-    monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
+    monkeypatch.setattr(
+        example, "_trajectory_reports", lambda *args, **kwargs: ([], [])
+    )
     monkeypatch.setattr(
         example,
         "_control_summary",

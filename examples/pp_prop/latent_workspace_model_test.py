@@ -2968,3 +2968,39 @@ def test_edit_rule_loss_consumes_final_logits_without_a_cp_rank() -> None:
 
     assert loss.shape == (1,)
     assert np.isfinite(np.asarray(loss)).all()
+
+
+def test_selected_path_matches_the_full_path_for_the_edit_rule_decoder() -> None:
+    """The evaluation path decodes inside a transform body; prove it agrees.
+
+    ``run_selected_packed_stream`` reads the captured query from a State inside
+    a ``brainstate.transform`` body.  If that body saw a zeroed or wrongly
+    broadcast buffer, every checkpoint would decode against an empty query and
+    the failure would surface as poor metrics rather than as an error.
+    """
+    encoded = _edit_rule_episode(((5, 0, 7), (0, 3, 3)))
+    events = _batched_events(encoded)
+    config = _edit_rule_config(copy_prior_logit=10.0, shape_prior_logit=10.0)
+    full_model = LatentWorkspaceModel(config)
+    selected_model = LatentWorkspaceModel(config)
+    steps = events.shape[0]
+    indices = jnp.asarray(
+        [[steps - 3], [steps - 2], [steps - 1]], dtype=jnp.int32
+    )
+
+    full = run_packed_stream(full_model, events)
+    selected = run_selected_packed_stream(selected_model, events, indices)
+
+    raw_indices = np.asarray(indices)
+    batch = np.asarray([[0]], dtype=np.int32)
+    np.testing.assert_array_equal(
+        selected.compact_logits,
+        np.asarray(full.compact_logits)[raw_indices, batch],
+    )
+    # Without this the equality above could hold vacuously on two empty
+    # captures decoding to the same thing.
+    assert np.asarray(selected_model.query_grid.value).sum() > 0.0
+    decoded = np.argmax(np.asarray(selected.expanded.colors)[-1, 0], axis=-1)
+    np.testing.assert_array_equal(
+        decoded[:2, :3], np.asarray(((5, 0, 7), (0, 3, 3)), dtype=np.int32)
+    )
