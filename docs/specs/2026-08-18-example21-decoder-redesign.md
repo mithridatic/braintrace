@@ -136,3 +136,82 @@ Stage 2 raises the *diagnostics*. It does not by itself add exact solves: exact
 match needs per-task induction, which is Stage 3. The value of Stage 2 is that it
 makes the model stop losing to a predictor that uses no neurons, and it is the
 prerequisite for Stage 3 having anything worth adapting.
+
+---
+
+## 10. Implementation record
+
+Branch: `feat/example21-stage2-decoder`, cut from `feat/example21-latent-reasoning`
+because a second agent was working the same worktree concurrently.
+
+### §7 prerequisite gate — executed, passed
+
+`docs/diagnostics/example21_etp_decoder_probe.py` builds the decoder's
+ETP-visible shape and compiles it with the production `compile_pp_prop`. All
+seven assertions hold: every new head in `excluded_weights`, none in
+`etrace_weights`, `hidden_groups` identical to legacy at 5, hidden-state paths
+identical, and the `ShortTermState` query buffer forms no hidden state. The
+fallback of threading the query grid through `etrace_grad` is therefore *not*
+required, and the "training stream unchanged" property is retained.
+
+`test_edit_rule_decoder_heads_stay_off_the_eligibility_path` re-asserts the same
+classification on the real model rather than the probe's stand-in.
+
+### §6 correction — bitwise, but not the way §6 assumed
+
+§6 asked for byte equality against the per-tick path. Applying the readout to
+the whole `(checkpoints, batch, neurons)` buffer at once does **not** give it:
+XLA selects a different dot kernel for rank three than for rank two, which at
+the tests' deliberately small widths (`readout_width=8`) diverges by up to
+9.5e-7, and at production widths happens to agree. Rank, not arithmetic, is the
+variable.
+
+The landed form decodes one checkpoint at a time through
+`brainstate.transform.for_loop`, so the readout sees exactly the `(batch,
+neurons)` carrier the per-tick call saw. `compact_logits` are then bitwise
+identical, and the decoder's per-cell intermediates never scale with the
+retained checkpoint count — which matters at the 9060 width, where decoding 33
+checkpoints at once would have materialised multi-gigabyte mixture components.
+
+The memory-mode test additionally asserts `workspace_carrier.value == voltage`
+directly. That is the substantive claim: the recorded carrier *is* the carrier
+the per-tick readout consumed, rather than merely producing a close answer.
+
+### Query capture is write-once, and that is load-bearing
+
+The evaluation path decodes every retained checkpoint against one live capture
+buffer while training decodes at the contemporaneous tick. Those agree only if
+no tick after the query rows can disturb the capture. `_capture_query_row`
+therefore accumulates only on rows that are valid, advancing, query-phase and
+input-side; latent ticks carry no valid event and so cannot write.
+`test_edit_rule_query_capture_is_write_once_across_latent_ticks` runs the stream
+truncated at `query_stop` and in full and asserts the buffers are identical.
+
+### Deviations from §3
+
+- The legacy CP heads are **not constructed** when `decoder_mode='edit_rule'`.
+  They receive no gradient there, and leaving them present made the run report
+  `all_parameter_groups_moved_with_finite_delta = False` — a false negative
+  caused entirely by dead parameters. A smoke run returns that check and
+  `pp_prop_compiler_routes` to true once they are gone. The legacy draw order is
+  untouched, so legacy models remain byte-identical.
+- The decoder is ~1.63 M parameters, not the ~1 M §8 assumed: `color_explicit_head`
+  alone is `128 x 9000`. Raising explicit-colour capacity was the point of D3, so
+  the cap is reported rather than met. Stage 3's 400x replication needs to be
+  re-costed against 1.63 M before it is attempted.
+- Shape rules are twelve rational scale factors — `1, 2, 3, 4, 1/2, 1/3` — each
+  offered reading its own axis and the other axis, rather than twelve
+  hand-enumerated maps. A factor that does not divide evenly contributes no mass
+  and the remaining slots decide, so the head never asserts a size the rule
+  cannot produce.
+
+### What the tests establish before any training
+
+- `test_edit_rule_priors_reproduce_the_query_input_before_training`: an
+  *untrained* edit-rule model decodes a `2 x 3` query input back exactly, with
+  the correct non-square shape. The legacy decoder could not do this at any
+  setting, because its output never referenced the query. That is D1 and D2
+  demonstrated end to end rather than argued.
+- `test_shared_gate_still_produces_a_non_square_shape`: one shared gate vector
+  drives both axes and still yields `9 x 4`. The `h == w` collapse is structurally
+  impossible for the rule slots, not merely discouraged.
