@@ -270,13 +270,14 @@ neuron/edge scale).
 3. Adaptation is fold-starved. Semantics-preserving augmentation of a task's own
    folds multiplies the adaptation set without adding any hand-written rule.
 
-4. Candidate 2 never proposes a different output shape. On the six-task
-   validation subset, both wrong-shape queries had a candidate 2 with the same
-   shape as candidate 1, so the second submission slot cannot rescue the
-   dominant failure mode. Deriving candidate 2's shape from the runner-up of the
-   learned shape logits stays model-only and costs nothing, but it only pays off
-   once the color path is close enough for a shape fix to produce an exact grid —
-   the measured miss sizes are 11 or more cells even when the shape is right.
+4. **Withdrawn.** This item read "candidate 2 never proposes a different
+   output shape", generalized from the six-task validation subset. §5.3
+   refutes it at scale: on the complete split candidate 2 proposes a different
+   shape on 70 of the 167 wrong-shape queries, 42%. The lever it proposed —
+   deriving candidate 2's shape from the shape logits' runner-up — is therefore
+   already present in the reported run and is not an available gain. §5.3's
+   cell-by-cell resolution of the near-miss tail is the governing measurement
+   for candidate construction.
 
 Items 2 and 3 are specified in
 `2026-08-19-example21-adaptation-data-and-checkpoints.md`.
