@@ -116,7 +116,96 @@ evaluation bounds each dispatch, and pretrained parameters are now written to a
 checkpoint so a fault in the evaluation stage no longer destroys the training
 stage.
 
-_Result of the re-run is recorded here once it completes._
+### 5.1 The complete run
+
+Re-run from the pretrained checkpoint with task-grouped dispatch: 400 evaluation
+tasks, 419 official queries, complete split, `primary_candidate_mode` model-only,
+rule channel off, no evaluation target reachable before the scorer. Total runtime
+3,761.9 s, of which task-local adaptation is 3,350.1 s.
+
+| effort | query pass@1 | query pass@2 | strict task pass@1 | strict task pass@2 | shape | pixel |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 (diagnostic) | 0.0024 | 0.0024 | 0.0025 | 0.0025 | 0.0453 | 0.2277 |
+| 30 (diagnostic) | 0.0000 | 0.0024 | 0.0000 | 0.0000 | 0.5227 | 0.4734 |
+| **60 (submitted)** | 0.0000 | **0.0024** | 0.0000 | **0.0025** | **0.6014** | **0.4902** |
+
+**Strict model-only task `pass@2` is 1 of 400.** The solved task is `7039b2d7`,
+a 3 by 3 output, decoded from the model's own refined logits as candidate 2
+(`latest_sweep_logit_runner_up`, provenance `model`). Candidate 1 is exact on no
+query at any effort, so `pass@1` is zero.
+
+This does not clear milestone M0. The retained integrated run's neural candidate
+also contributed one exact answer, so the count ties rather than exceeds it. What
+changed is everything upstream of exactness: shape accuracy 0.0000 → 0.6014 and
+valid-cell pixel accuracy 0.1019-class → 0.4902 on the complete split. Effort 60
+and effort 0 each solve one task, but not the same one (`7039b2d7` versus
+`642d658d`), so more computation redistributed rather than accumulated exact
+answers.
+
+### 5.2 Adaptation is causally responsible for the score
+
+Same checkpoint, same split, same scorer, adaptation the only difference:
+
+| | shape | pixel | strict task pass@2 |
+|---|---:|---:|---:|
+| frozen, no adaptation | 0.0310 | 0.2235 | 0.0000 |
+| task-local pp-prop adaptation | 0.6014 | 0.4902 | 0.0025 |
+
+13,630 fold updates were applied — 1,363 distinct leave-one-out folds replayed
+over 10 epochs, fold capacity 70, learning rate 3e-3, task group 20. Parameters
+were restored to the shared checkpoint after every task and the run verified
+that restoration.
+
+### 5.3 Where the 419 queries actually land
+
+Mismatched valid cells for candidate 1 at the submitted effort:
+
+| distance from target | queries | share |
+|---|---:|---:|
+| exact | 0 | 0.0% |
+| 1–3 cells | 11 | 2.6% |
+| 4–10 cells | 42 | 10.0% |
+| 11–30 cells | 67 | 16.0% |
+| 31+ cells | 132 | 31.5% |
+| wrong shape | 167 | 39.9% |
+
+Two things follow that the aggregate pixel number hides. Wrong shape is the
+single largest bucket at 40%, and shape is only 60 logits — the cheapest place to
+buy accuracy. And 11 queries sit within three cells of exact, with 42 more within
+ten; candidate 2 currently flips exactly one decision, so a candidate that
+repairs the k lowest-margin cells jointly, still purely from model logits, is
+addressable score rather than speculation.
+
+The earlier six-task observation that candidate 2 never varies the output shape
+does not hold at scale: candidate 2 proposes a different shape on 70 of the 167
+wrong-shape queries, 42%.
+
+### 5.4 Resource and participation evidence
+
+- Realized 1,024 neurons, 262,144 recurrent edges, 256 per neuron, 25.0% of the
+  1,024-per-neuron policy cap, no violations.
+- Peak device memory 3.69 GiB against the 13.74 GiB fail-closed allocator limit,
+  27%. Host-side `nvidia-smi` sampling peaked near 5.5 GiB of 16,384 MiB, 34%.
+- The run's own `nvidia-smi` cross-check could not be collected inside the
+  container (`process_peak_bytes_missing`, exit status 3 and 17, "no unique device
+  memory row"), so `gpu_runtime_resource_safe` reports **insufficient evidence**
+  rather than safe. The allocator evidence is `safe`; the second, independent
+  measurement is missing. This is a WDDM/container limitation, not a breach.
+- Recurrent-current L2 is 2,285.7 against feed-forward 3,375.3, so recurrent
+  edges carry 40% of the workspace drive. The runs this replaces measured 43
+  against 285, about 13%.
+
+### 5.5 What this artifact cannot claim
+
+`pp_prop_compiler_routes` is false and the reported temporal route count is zero
+**because this run restored a checkpoint and performed no optimizer update**. The
+pp-prop route evidence — seven eligibility-trace temporal routes including both
+learned row and shape heads — lives in the pretraining artifact under
+`var/example21-pretrain-1024`, not here. Structural and scientific qualification
+therefore remain false for this artifact, as does the 40% completion gate. Split
+across two artifacts is a reporting weakness introduced by checkpoint restore and
+should be fixed by carrying the checkpoint's recorded training evidence forward
+into the restored run's report.
 
 ## 6. What the evidence says to do next
 
