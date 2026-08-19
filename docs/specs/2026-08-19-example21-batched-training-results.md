@@ -180,6 +180,21 @@ The earlier six-task observation that candidate 2 never varies the output shape
 does not hold at scale: candidate 2 proposes a different shape on 70 of the 167
 wrong-shape queries, 42%.
 
+**A follow-up measurement kills the candidate-construction lever.** Resolving the
+near-miss tail by exact distance gives 3 queries one cell off, 5 two cells off,
+and 3 three cells off. For the three one-cell misses candidate 2 does change
+exactly one cell, and only one of the three becomes exact — the single solve of
+the whole run. Logit margin therefore identifies the wrong cell roughly one time
+in three. Four of the five two-cell misses receive a candidate 2 that changes a
+single cell and so cannot be exact at all; a two-cell repair would have to pick
+both wrong cells, at an implied success rate near one in nine.
+
+The tail is thin and the ranking that would exploit it is weakly informative, so
+better candidate construction is worth well under one additional exact answer.
+The lever is model accuracy — pretraining episodes and adaptation data — not
+decoding. This is the opposite of what the bucketed distribution alone suggests,
+which is why the tail was resolved cell by cell before acting on it.
+
 ### 5.4 Resource and participation evidence
 
 - Realized 1,024 neurons, 262,144 recurrent edges, 256 per neuron, 25.0% of the
