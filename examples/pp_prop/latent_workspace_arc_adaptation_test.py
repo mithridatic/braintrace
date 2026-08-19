@@ -634,6 +634,82 @@ def test_runner_rejects_a_non_positive_epoch_count(epochs) -> None:
         )
 
 
+def _schedule_runner(model, learner, optimizer, rows, base, schedule):
+    return compile_arc_task_local_adaptation_runner(
+        model,
+        learner,
+        optimizer,
+        base_parameters=base,
+        row_config=rows,
+        latent_steps=60,
+        clip_norm=1.0,
+        update_schedule=schedule,
+    )
+
+
+def _schedule_bank(rows):
+    task = ArcTask(
+        train=(_pair(1, 2), _pair(3, 4), _pair(5, 6)),
+        test=(ArcPair(ArcGrid(((7,),)), ArcGrid(((8,),))),),
+        task_id="schedule-runner",
+    )
+    return build_arc_target_free_task_bank((task,), rows)
+
+
+@pytest.mark.parametrize("schedule", ("per_episode", "per_tick"))
+def test_both_update_schedules_adapt_and_restore(schedule) -> None:
+    rows = RowEventConfig(max_demonstrations=3)
+    bank = _schedule_bank(rows)
+    model = _tiny_row_model(rows)
+    learner = compile_pp_prop(model)
+    optimizer = braintools.optim.Adam(lr=0.01)
+    optimizer.register_trainable_weights(learner.param_states)
+    base = snapshot_parameters(model)
+
+    result = _schedule_runner(model, learner, optimizer, rows, base, schedule)(bank)
+
+    assert np.all(np.isfinite(np.asarray(result.fold_losses)))
+    _assert_parameter_snapshots_equal(snapshot_parameters(model), base)
+    assert int(optimizer.step_count.value) == 0
+
+
+def test_the_two_schedules_reach_different_parameters() -> None:
+    """Otherwise the option would be a formatting choice, not a schedule."""
+    rows = RowEventConfig(max_demonstrations=3)
+    bank = _schedule_bank(rows)
+    reached = {}
+    for schedule in ("per_episode", "per_tick"):
+        model = _tiny_row_model(rows)
+        learner = compile_pp_prop(model)
+        optimizer = braintools.optim.Adam(lr=0.01)
+        optimizer.register_trainable_weights(learner.param_states)
+        base = snapshot_parameters(model)
+        runner = _schedule_runner(model, learner, optimizer, rows, base, schedule)
+        reached[schedule] = np.asarray(runner(bank).fold_losses)
+
+    assert not np.allclose(reached["per_episode"], reached["per_tick"])
+
+
+@pytest.mark.parametrize("schedule", ("", "per_step", "online", None))
+def test_the_runner_rejects_an_unknown_update_schedule(schedule) -> None:
+    rows = RowEventConfig(max_demonstrations=3)
+    model = _tiny_row_model(rows)
+    learner = compile_pp_prop(model)
+    optimizer = braintools.optim.Adam(lr=0.01)
+    optimizer.register_trainable_weights(learner.param_states)
+    with pytest.raises(ValueError, match="update_schedule"):
+        compile_arc_task_local_adaptation_runner(
+            model,
+            learner,
+            optimizer,
+            base_parameters=snapshot_parameters(model),
+            row_config=rows,
+            latent_steps=60,
+            clip_norm=1.0,
+            update_schedule=schedule,
+        )
+
+
 def test_arc_runner_source_uses_compiled_loops_without_python_model_loop() -> None:
     import ast
     import inspect

@@ -778,6 +778,8 @@ def _validate_arc_runner_configuration(
         raise ValueError("row-refinement checkpoint output width must be 9060")
     if not hasattr(learner, "etrace_grad") or not hasattr(learner, "reset_state"):
         raise TypeError("learner must expose etrace_grad and reset_state")
+    if not hasattr(learner, "etrace_online"):
+        raise TypeError("learner must expose etrace_online")
     if type(optimizer).__name__ != "Adam":
         raise ValueError("ARC task-local adaptation requires a plain Adam optimizer")
     if float(getattr(optimizer, "weight_decay", 0.0)) != 0.0:
@@ -801,6 +803,7 @@ def compile_arc_task_local_adaptation_runner(
     latent_steps: int = 60,
     clip_norm: float = 1.0,
     epochs: int = 1,
+    update_schedule: str = "per_episode",
 ) -> Any:
     """Compile target-free ARC leave-one-out adaptation and query inference.
 
@@ -835,6 +838,12 @@ def compile_arc_task_local_adaptation_runner(
         Positive finite gradient clipping norm.
     epochs
         Positive number of passes over each task's fold schedule.
+    update_schedule
+        ``"per_episode"`` accumulates one gradient per fold and takes one
+        optimizer step, which is the retained behaviour. ``"per_tick"`` applies
+        the eligibility-trace term as an update at every supervised tick, so a
+        fold of 60 supervised ticks becomes 60 updates and the model changes
+        within the fold.
 
     Returns
     -------
@@ -846,6 +855,8 @@ def compile_arc_task_local_adaptation_runner(
     if isinstance(epochs, bool) or not isinstance(epochs, Integral) or int(epochs) < 1:
         raise ValueError("epochs must be a positive integer")
     epochs = int(epochs)
+    if update_schedule not in ("per_episode", "per_tick"):
+        raise ValueError("update_schedule must be 'per_episode' or 'per_tick'")
     _validate_arc_runner_configuration(
         model,
         learner,
@@ -978,18 +989,38 @@ def compile_arc_task_local_adaptation_runner(
                         )
                     )
 
-                gradients, objective = learner.etrace_grad(
-                    events,
-                    advances,
-                    step_fn=step_loss,
-                    mask=loss_mask,
-                    reduction="mean",
-                    loss_output="scalar",
-                    return_value=True,
-                )
-                optimizer.update(
-                    brainstate.nn.clip_grad_norm(gradients, float(clip_norm))
-                )
+                if update_schedule == "per_tick":
+                    # The loss mask carries 1/effort weights, which belong to
+                    # etrace_grad's mean reduction rather than being a per-step
+                    # scale. Carried into a per-step update they would shrink
+                    # every one of them by the number of supervised ticks, so
+                    # the online schedule supervises the same ticks at weight
+                    # one and reduces the reported objective afterwards.
+                    per_tick_losses = learner.etrace_online(
+                        events,
+                        advances,
+                        step_fn=step_loss,
+                        optimizer=optimizer,
+                        mask=jnp.where(loss_mask > 0, 1.0, 0.0),
+                        transform=lambda tree: brainstate.nn.clip_grad_norm(
+                            tree, float(clip_norm)
+                        ),
+                        return_value=True,
+                    )
+                    objective = jnp.sum(per_tick_losses * loss_mask)
+                else:
+                    gradients, objective = learner.etrace_grad(
+                        events,
+                        advances,
+                        step_fn=step_loss,
+                        mask=loss_mask,
+                        reduction="mean",
+                        loss_output="scalar",
+                        return_value=True,
+                    )
+                    optimizer.update(
+                        brainstate.nn.clip_grad_norm(gradients, float(clip_norm))
+                    )
                 jax.tree.map(
                     lambda binding: gate_parameter(binding, apply_update),
                     gated_parameters,
