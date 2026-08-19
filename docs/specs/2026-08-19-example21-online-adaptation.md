@@ -1,6 +1,6 @@
 # Example 21 — per-tick online adaptation
 
-Status: complete; schedule reported neutral at matched tuning
+Status: complete; online no-pretraining configuration is now the default
 Date: 2026-08-19
 Branch: `feat/example21-row-refinement`
 Mechanism: `2026-08-19-online-update-driver.md`.
@@ -263,3 +263,60 @@ tasks against 2, from demonstrations alone. That is much larger and much cleaner
 than any schedule effect measured here, and it is the direction worth pursuing:
 whether the prior the pretrained arms enjoy can be acquired across a single
 online pass over tasks rather than an offline stage.
+
+## 10. Acquiring the prior online, in one pass
+
+`var/qual/stream_probe.py` streams the 299 non-holdout training tasks once. For
+each task it answers first, using only what earlier tasks taught, then learns
+from that task's own demonstrations into the shared parameters. No epochs, no
+replay, no restore between tasks. Answering before learning is the prequential
+protocol, so every score is made on parameters that have not seen that task.
+
+258 tasks carried enough demonstrations. 8 episodes per task at 1e-3, batch 4 —
+2,392 optimizer updates in total.
+
+Prequential shape accuracy by block of 50: 0.180, 0.140, 0.160, 0.200, 0.260,
+0.125. **Flat.** The apparent rise at block five does not survive block six.
+
+| arm | prior | frozen shape | adapted shape | pixel | exact | shape helped / hurt |
+|---|---|---:|---:|---|---:|---:|
+| random initialization | none | 0.151 | 0.372 | 0.355 -> 0.493 | 1 | 21 / 2 |
+| single online pass | 2,392 updates | 0.174 | **0.488** | 0.370 -> **0.519** | 1 | **29 / 2** |
+| ~48,000-episode checkpoint | offline | 0.616 | 0.663 | 0.514 -> 0.551 | 2 | 15 / 11 |
+
+**The stream does not replace pretraining at this compute.** Its prior alone
+scores 0.174, barely above the 0.151 of an untrained model, against 0.616 for
+the offline checkpoint. 2,392 updates is not 48,000 episodes and this is as much
+a compute gap as a regime result.
+
+**It is not worthless either.** Streamed prior plus task-local adaptation
+reaches 0.488 against random initialization's 0.372, and it has the cleanest
+per-task profile measured anywhere in this document: shape improves on 29 tasks
+and degrades on 2. Whatever the stream accumulates makes the later per-task
+adaptation work better even though it barely improves the frozen model.
+
+### 10.1 What became the default
+
+Among configurations that use no pretraining, the single online pass followed by
+per-tick task-local adaptation is the best measured, so the entry point now
+defaults to task-local online adaptation at 5e-5 with the `per_tick` schedule,
+two epochs, and task groups of 20.
+
+The honest caveats travel with it. The per-tick margin over a tuned per-episode
+arm is within noise at 86 tasks and costs 2.3x the wall clock. The 5e-5 rate was
+swept on this probe's fold schedule — 40 episodes at batch 4 — and the
+production path uses a different one, so it should be re-swept if the fold
+capacity or epoch count changes.
+
+### 10.2 A caveat on every pretrained number in this document
+
+The checkpoint every "pretrained" arm starts from is `var/qual/curve/seg1.npz`,
+written by the periodic checkpoint mechanism at 09:23:32 from an
+episode-scaling run that was stopped by decision at 09:25. That segment never
+completed and wrote no report, so its exact update count is not recoverable;
+from elapsed time and the 500-update checkpoint interval it holds roughly 3,000
+updates at batch 16, about 48,000 episodes, against the 96,000-episode reference.
+
+Every arm starts from the identical file, so the comparisons stand. The absolute
+frozen baseline of 0.616 belongs to a half-trained prior and should not be read
+as the reference model's.
