@@ -2842,3 +2842,47 @@ def test_chunked_training_reproduces_unchunked_losses_bitwise(example):
     assert chunked["effort_schedule"] == reference["effort_schedule"]
     assert chunked["training_samples"] == reference["training_samples"]
     assert chunked["parameter_sha256_after"] == reference["parameter_sha256_after"]
+
+
+def test_cli_decoder_mode_reaches_both_config_paths(example, tmp_path):
+    """--decoder-mode must survive the smoke branch *and* the full branch.
+
+    Supplying it to only one of them fails silently: the run completes, reports
+    a legacy decoder, and the metrics look like an unchanged model rather than
+    like a broken flag.
+    """
+    assert example._parser().parse_args([]).decoder_mode == "legacy_cp"
+
+    smoke = example._config_from_args(
+        example._parser().parse_args(
+            ["--smoke", "--device", "cpu", "--output-dir", str(tmp_path),
+             "--decoder-mode", "edit_rule"]
+        )
+    )
+    full = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--device", "cpu", "--training-updates", "0",
+             "--decoder-mode", "edit_rule"]
+        )
+    )
+
+    assert smoke.decoder_mode == "edit_rule"
+    assert full.decoder_mode == "edit_rule"
+
+
+def test_model_config_supplies_the_query_slices_the_capture_needs(example):
+    row_config = example.RowEventConfig()
+    config = example.ExperimentConfig(
+        output_dir="unused", device="cpu", decoder_mode="edit_rule"
+    )
+
+    model_config = example._model_config(config, row_config, batch_size=1)
+
+    assert model_config.edit_rule_enabled
+    assert model_config.compact_output_width == 9060
+    assert model_config.query_feature_starts == (
+        row_config.row_index_slice.start,
+        row_config.input_height_slice.start,
+        row_config.input_width_slice.start,
+        row_config.input_color_slice.start,
+    )

@@ -3997,6 +3997,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_chunk_size=args.training_chunk_size,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
+        decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,
