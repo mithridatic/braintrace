@@ -29,6 +29,7 @@ try:
         LatentWorkspaceModel,
         ModelConfig,
         ModelStateSnapshot,
+        RowRefinementLayout,
         SelectedPackedTrajectory,
         arc_loss_components,
         arc_loss_per_example,
@@ -56,6 +57,7 @@ except ImportError:
         LatentWorkspaceModel,
         ModelConfig,
         ModelStateSnapshot,
+        RowRefinementLayout,
         SelectedPackedTrajectory,
         arc_loss_components,
         arc_loss_per_example,
@@ -308,6 +310,73 @@ def _production_memory_config(
     )
 
 
+def _row_refinement_layout(
+    rows: RowEventConfig | None = None,
+) -> RowRefinementLayout:
+    if rows is None:
+        rows = RowEventConfig()
+    return RowRefinementLayout(
+        input_width=rows.input_width,
+        event_valid_index=rows.valid_slice.start,
+        demonstration_phase_index=rows.phase_slice.start,
+        query_phase_index=rows.phase_slice.start + 1,
+        input_side_valid_index=rows.side_valid_slice.start,
+        output_side_valid_index=rows.side_valid_slice.start + 1,
+        normalized_start=rows.normalized_slice.start,
+        row_index_start=rows.row_index_slice.start,
+        input_height_start=rows.input_height_slice.start,
+        input_width_start=rows.input_width_slice.start,
+        output_height_start=rows.output_height_slice.start,
+        output_width_start=rows.output_width_slice.start,
+        input_mask_start=rows.input_mask_slice.start,
+        output_mask_start=rows.output_mask_slice.start,
+        input_color_start=rows.input_color_slice.start,
+        output_color_start=rows.output_color_slice.start,
+    )
+
+
+def _row_refinement_config(**changes: object) -> ModelConfig:
+    rows = RowEventConfig()
+    features = associative_memory_feature_indices(rows)
+    values: dict[str, object] = {
+        "input_width": rows.input_width,
+        "batch_size": 1,
+        "neuron_count": 64,
+        "recurrent_edges": 64,
+        "max_latent_steps": 30,
+        "readout_width": 8,
+        "color_rank": 2,
+        "seed": 2171,
+        "context_memory_width": 2,
+        "memory_decay": 1.0,
+        "demonstration_phase_index": rows.phase_slice.start,
+        "query_phase_index": rows.phase_slice.start + 1,
+        "input_side_valid_index": rows.side_valid_slice.start,
+        "output_side_valid_index": rows.side_valid_slice.start + 1,
+        "memory_key_indices": features.key_indices,
+        "memory_value_indices": features.value_indices,
+        "decoder_mode": "row_refinement",
+        "refinement_steps": 30,
+        "refinement_layout": _row_refinement_layout(rows),
+    }
+    values.update(changes)
+    return ModelConfig(**values)  # type: ignore[arg-type]
+
+
+def _row_refinement_episode() -> tuple[RowEventConfig, jax.Array]:
+    rows = RowEventConfig()
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1, 2),)), ArcGrid(((2, 1),))),
+            ArcPair(ArcGrid(((3,), (4,))), ArcGrid(((4,), (3,)))),
+        ),
+        test=(ArcPair(ArcGrid(((5, 6), (7, 8))), None),),
+        task_id="row-refinement-contract",
+    )
+    encoded = encode_query_episode(task, 0, rows)
+    return rows, jnp.asarray(encoded.events)
+
+
 def _production_k4_events() -> tuple[jax.Array, jax.Array]:
     rows = RowEventConfig()
     demonstration_events = []
@@ -516,11 +585,11 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
         "workspace_query_projection",
     )
     assert serialized_legacy == expected_legacy
-    assert json.dumps(
-        serialized_legacy, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8") == json.dumps(
-        expected_legacy, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
     assert legacy.to_dict() == expected_legacy
     serialized_memory = memory.to_dict()
     assert serialized_memory["carrier_stabilizer"] == (
@@ -551,9 +620,7 @@ def test_unit_l2_cap_is_per_example_and_preserves_dtype(dtype: jnp.dtype) -> Non
     assert capped.shape == carrier.shape
     assert capped.dtype == carrier.dtype
     assert np.isfinite(np.asarray(capped)).all()
-    np.testing.assert_allclose(
-        capped[:2], carrier[:2], rtol=0.0, atol=0.0
-    )
+    np.testing.assert_allclose(capped[:2], carrier[:2], rtol=0.0, atol=0.0)
     np.testing.assert_allclose(
         capped[2:],
         jnp.asarray([[0.6, 0.8], [-0.6, 0.8]], dtype=dtype),
@@ -640,15 +707,11 @@ def test_untrained_k4_outer_memory_read_is_pairing_sensitive() -> None:
     values = memory_model.encode_memory_value(demonstration_events)
     rotated_values = values[jnp.asarray([1, 2, 3, 0])]
     intact_memory = jnp.einsum("bi,bj->ij", demonstration_keys, values)
-    shuffled_memory = jnp.einsum(
-        "bi,bj->ij", demonstration_keys, rotated_values
-    )
+    shuffled_memory = jnp.einsum("bi,bj->ij", demonstration_keys, rotated_values)
     intact_reads = jnp.einsum("ik,kv->iv", query_keys, intact_memory)
     shuffled_reads = jnp.einsum("ik,kv->iv", query_keys, shuffled_memory)
 
-    np.testing.assert_allclose(
-        demonstration_keys, query_keys, rtol=0.0, atol=0.0
-    )
+    np.testing.assert_allclose(demonstration_keys, query_keys, rtol=0.0, atol=0.0)
     assert not np.allclose(intact_memory, shuffled_memory)
     assert np.all(
         np.linalg.norm(np.asarray(intact_reads - shuffled_reads), axis=1) > 1e-3
@@ -811,9 +874,7 @@ def test_implicit_and_explicit_full_memory_policy_are_byte_identical() -> None:
             getattr(implicit_result.trajectory, name),
             getattr(explicit_result.trajectory, name),
         )
-    _assert_state_snapshots_equal(
-        implicit.snapshot_state(), explicit.snapshot_state()
-    )
+    _assert_state_snapshots_equal(implicit.snapshot_state(), explicit.snapshot_state())
 
 
 def test_query_only_matches_h0_then_removes_latent_memory_read_and_drive() -> None:
@@ -1052,9 +1113,7 @@ def test_max_per_example_rms_rejects_a_concentrated_outlier() -> None:
 
     concentrated_outlier = baseline.copy()
     concentrated_outlier[0, 0] = 1.001 * limit * math.sqrt(100.0)
-    global_rms = float(
-        np.sqrt(np.mean(np.square(concentrated_outlier - baseline)))
-    )
+    global_rms = float(np.sqrt(np.mean(np.square(concentrated_outlier - baseline))))
     assert global_rms < limit
     assert _max_per_example_rms(baseline, concentrated_outlier) > limit
     with pytest.raises(AssertionError, match="max per-example RMS"):
@@ -1066,9 +1125,7 @@ def test_max_per_example_rms_rejects_a_concentrated_outlier() -> None:
         )
 
 
-@pytest.mark.parametrize(
-    "cached_read_fill", [11.0, -11.0], ids=["plus_11", "minus_11"]
-)
+@pytest.mark.parametrize("cached_read_fill", [11.0, -11.0], ids=["plus_11", "minus_11"])
 def test_query_only_latent_step_discards_perturbed_nonzero_cached_h0_read(
     cached_read_fill: float,
 ) -> None:
@@ -1107,9 +1164,7 @@ def test_query_only_latent_step_discards_perturbed_nonzero_cached_h0_read(
         query_only_latent_step(zero_event, advance)
     )
     baseline_snapshot = query_only.snapshot_state()
-    baseline_prediction = _decoded_argmax_prediction(
-        baseline_output, config.color_rank
-    )
+    baseline_prediction = _decoded_argmax_prediction(baseline_output, config.color_rank)
     np.testing.assert_array_equal(baseline_read, 0.0)
     np.testing.assert_array_equal(baseline_drive, 0.0)
 
@@ -1124,9 +1179,7 @@ def test_query_only_latent_step_discards_perturbed_nonzero_cached_h0_read(
     np.testing.assert_array_equal(
         np.asarray(query_only.memory_read.value), cached_read_sentinel
     )
-    assert not np.array_equal(
-        np.asarray(query_only.memory_read.value), h0_cached_read
-    )
+    assert not np.array_equal(np.asarray(query_only.memory_read.value), h0_cached_read)
     before_entries = _snapshot_entry_map(before_replacement)
     after_entries = _snapshot_entry_map(after_replacement)
     assert before_entries.keys() == after_entries.keys()
@@ -1179,9 +1232,7 @@ def test_query_only_latent_step_discards_perturbed_nonzero_cached_h0_read(
         np.testing.assert_array_equal(actual, expected)
         np.testing.assert_array_equal(actual, source_context)
     actual_prediction = _decoded_argmax_prediction(output, config.color_rank)
-    for expected, actual in zip(
-        baseline_prediction, actual_prediction, strict=True
-    ):
+    for expected, actual in zip(baseline_prediction, actual_prediction, strict=True):
         np.testing.assert_array_equal(actual, expected)
     _assert_parameter_snapshots_equal(
         query_only_parameters, parameter_snapshot(query_only)
@@ -1317,10 +1368,9 @@ def test_multi_row_query_encoding_accumulates_then_freezes() -> None:
         jnp.asarray([[1.0, -0.5], [0.25, 0.75]]),
         phase="query",
     )
-    expected = (
-        memory_model.encode_memory_key(queries[0])
-        + memory_model.encode_memory_key(queries[1])
-    )
+    expected = memory_model.encode_memory_key(
+        queries[0]
+    ) + memory_model.encode_memory_key(queries[1])
 
     run_context(memory_model, queries)
 
@@ -1445,9 +1495,9 @@ def test_latent_query_depends_on_previous_continuous_workspace() -> None:
     baseline_read = _state_array(memory_model.memory_read).copy()
 
     memory_model.restore_state(before_second_tick)
-    perturbation = jnp.linspace(
-        -1.0, 1.0, config.neuron_count, dtype=jnp.float32
-    )[None, :]
+    perturbation = jnp.linspace(-1.0, 1.0, config.neuron_count, dtype=jnp.float32)[
+        None, :
+    ]
     memory_model.workspace_carrier.value = (
         memory_model.workspace_carrier.value + perturbation
     )
@@ -1490,8 +1540,7 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients(
         for group in learner.graph.hidden_groups
     ]
     assert not any(
-        {"context_memory", "workspace_carrier"}.issubset(paths)
-        for paths in group_paths
+        {"context_memory", "workspace_carrier"}.issubset(paths) for paths in group_paths
     )
 
     demonstrations = _phase_events(
@@ -1535,7 +1584,9 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients(
             assert gradient_norm > 0.0, path
 
 
-def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control() -> None:
+def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control() -> (
+    None
+):
     import braintrace
     from braintrace._testing.oracle import chunked_online_param_gradients
     from examples.pp_prop import latent_workspace_binding_control as legacy
@@ -1698,9 +1749,9 @@ def test_memory_carrier_cap_is_confined_to_both_dense_consumer_sites(
     monkeypatch.setattr(latent_workspace_module, "_unit_l2_cap", recording_cap)
     config = _memory_config()
     memory_model = LatentWorkspaceModel(config)
-    raw_workspace = jnp.linspace(
-        -8.0, 8.0, config.neuron_count, dtype=jnp.float32
-    )[None, :]
+    raw_workspace = jnp.linspace(-8.0, 8.0, config.neuron_count, dtype=jnp.float32)[
+        None, :
+    ]
     memory_model.workspace_carrier.value = raw_workspace
     capped_workspace = unit_l2_cap(raw_workspace)
 
@@ -1730,12 +1781,8 @@ def test_memory_carrier_cap_is_confined_to_both_dense_consumer_sites(
     memory_model.query_encoding.value = jnp.zeros(
         (1, config.context_memory_width), dtype=jnp.float32
     )
-    expected_query = jnp.tanh(
-        memory_model.workspace_query_projection(capped_workspace)
-    )
-    uncapped_query = jnp.tanh(
-        memory_model.workspace_query_projection(raw_workspace)
-    )
+    expected_query = jnp.tanh(memory_model.workspace_query_projection(capped_workspace))
+    uncapped_query = jnp.tanh(memory_model.workspace_query_projection(raw_workspace))
 
     memory_model.cell_step(zero_event, advance)
 
@@ -1904,7 +1951,9 @@ def test_zero_width_compact_readout_is_byte_identical_to_raw_legacy_formula() ->
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identical() -> None:
+def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identical() -> (
+    None
+):
     import braintrace
     from braintrace._testing.oracle import chunked_online_param_gradients
 
@@ -1946,17 +1995,13 @@ def test_zero_width_compiler_paths_and_finite_window_gradients_are_byte_identica
         chunk_size=1,
     )
     explicit_gradients = chunked_online_param_gradients(
-        lambda: LatentWorkspaceModel(
-            explicit_config, memory_read_policy="full"
-        ),
+        lambda: LatentWorkspaceModel(explicit_config, memory_read_policy="full"),
         events,
         algo_factory=pp_prop_factory,
         chunk_size=1,
     )
     query_only_gradients = chunked_online_param_gradients(
-        lambda: LatentWorkspaceModel(
-            explicit_config, memory_read_policy="query_only"
-        ),
+        lambda: LatentWorkspaceModel(explicit_config, memory_read_policy="query_only"),
         events,
         algo_factory=pp_prop_factory,
         chunk_size=1,
@@ -2100,9 +2145,7 @@ def test_class_balancing_is_opt_in_and_matches_legacy_for_one_color() -> None:
     explicit_legacy = arc_loss_components(
         *arguments, color_rank=1, class_balanced_colors=False
     )
-    balanced = arc_loss_components(
-        *arguments, color_rank=1, class_balanced_colors=True
-    )
+    balanced = arc_loss_components(*arguments, color_rank=1, class_balanced_colors=True)
 
     np.testing.assert_allclose(default, explicit_legacy, rtol=0.0, atol=0.0)
     np.testing.assert_allclose(balanced, explicit_legacy, rtol=1e-6, atol=1e-6)
@@ -2115,12 +2158,8 @@ def test_class_balancing_gives_rare_color_equal_total_weight() -> None:
     colors = colors.at[0, 1, 1].set(1)
     arguments = (compact, jnp.asarray([2]), jnp.asarray([2]), colors)
 
-    legacy = arc_loss_components(
-        *arguments, color_rank=1, class_balanced_colors=False
-    )
-    balanced = arc_loss_components(
-        *arguments, color_rank=1, class_balanced_colors=True
-    )
+    legacy = arc_loss_components(*arguments, color_rank=1, class_balanced_colors=False)
+    balanced = arc_loss_components(*arguments, color_rank=1, class_balanced_colors=True)
     nll = -jax.nn.log_softmax(logits)
 
     assert float(legacy.colors) == pytest.approx(
@@ -2763,3 +2802,247 @@ def test_selected_packed_runner_uses_compiled_scan_without_python_driver() -> No
         isinstance(call.func, ast.Attribute) and call.func.attr == "scan"
         for call in calls
     )
+
+
+def test_row_refinement_is_opt_in_and_legacy_output_contract_is_unchanged() -> None:
+    legacy = _config()
+    refinement = _row_refinement_config(max_latent_steps=60, refinement_steps=60)
+
+    assert legacy.decoder_mode == "legacy_cp"
+    assert legacy.row_refinement_enabled is False
+    assert legacy.compact_output_width == compact_output_width(legacy.color_rank) == 200
+    assert legacy.training_output_width == 200
+    assert legacy.checkpoint_output_width == 200
+    assert not hasattr(LatentWorkspaceModel(legacy), "answer_row_head")
+
+    assert refinement.decoder_mode == "row_refinement"
+    assert refinement.row_refinement_enabled is True
+    assert refinement.refinement_steps == 60
+    assert refinement.compact_output_width == 200
+    assert refinement.training_output_width == 360
+    assert refinement.checkpoint_output_width == 9060
+
+
+def test_row_refinement_configuration_requires_layout_and_complete_sweeps() -> None:
+    rows = RowEventConfig()
+    with pytest.raises(ValueError, match="refinement_layout"):
+        ModelConfig(
+            input_width=rows.input_width,
+            decoder_mode="row_refinement",
+            refinement_steps=30,
+        )
+
+    for steps, maximum, message in (
+        (0, 30, "refinement_steps"),
+        (31, 60, "multiple of 30"),
+        (60, 30, "max_latent_steps"),
+    ):
+        with pytest.raises((TypeError, ValueError), match=message):
+            _row_refinement_config(
+                refinement_steps=steps,
+                max_latent_steps=maximum,
+            )
+
+
+def test_model_configuration_enforces_1024_edges_per_neuron_policy_cap() -> None:
+    neuron_count = 1088
+    with pytest.raises(ValueError, match="1024 edges per neuron policy cap"):
+        ModelConfig(
+            input_width=1,
+            neuron_count=neuron_count,
+            recurrent_edges=1024 * neuron_count + 1,
+        )
+
+
+def test_row_refinement_model_instantiates_direct_heads_and_typed_answer_state() -> (
+    None
+):
+    import braintrace
+
+    model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
+
+    assert isinstance(model.answer_row_head, braintrace.nn.Linear)
+    assert isinstance(model.answer_shape_head, braintrace.nn.Linear)
+    assert isinstance(model.answer_row, brainstate.HiddenState)
+    assert isinstance(model.answer_shape, brainstate.HiddenState)
+    assert isinstance(model.query_grid, brainstate.ShortTermState)
+    assert isinstance(model.query_shape, brainstate.ShortTermState)
+    assert isinstance(model.answer_grid, brainstate.ShortTermState)
+    assert isinstance(model.reasoning_index, brainstate.ShortTermState)
+    assert model.answer_row.value.shape == (2, 300)
+    assert model.answer_shape.value.shape == (2, 60)
+    assert model.query_grid.value.shape == (2, 30, 30, 10)
+    assert model.query_shape.value.shape == (2, 60)
+    assert model.answer_grid.value.shape == (2, 30, 30, 10)
+    assert model.reasoning_index.value.shape == (2,)
+
+
+def test_run_context_captures_target_free_query_grid_and_shape() -> None:
+    _, events = _row_refinement_episode()
+    model = LatentWorkspaceModel(_row_refinement_config())
+
+    run_context(model, events)
+
+    expected_grid = np.zeros((1, 30, 30, 10), dtype=np.float32)
+    expected_grid[0, 0, 0, 5] = 1.0
+    expected_grid[0, 0, 1, 6] = 1.0
+    expected_grid[0, 1, 0, 7] = 1.0
+    expected_grid[0, 1, 1, 8] = 1.0
+    expected_shape = np.zeros((1, 60), dtype=np.float32)
+    expected_shape[0, 1] = 1.0
+    expected_shape[0, 30 + 1] = 1.0
+    np.testing.assert_array_equal(model.query_grid.value, expected_grid)
+    np.testing.assert_array_equal(model.query_shape.value, expected_shape)
+    np.testing.assert_array_equal(model.answer_grid.value, 0.0)
+    np.testing.assert_array_equal(model.reasoning_index.value, 0)
+
+
+def test_one_latent_tick_replaces_only_row_zero_and_advances_index() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config())
+    model.answer_grid.value = jnp.full((1, 30, 30, 10), 7.0, dtype=jnp.float32)
+    model.neu.V.value = jnp.full((1, model.neuron_count), 1.5) * u.mV
+    zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+
+    model.cell_step(zero_event, jnp.ones((1,), dtype=jnp.bool_))
+
+    updated = np.asarray(model.answer_grid.value)
+    assert not np.array_equal(updated[:, 0], np.full((1, 30, 10), 7.0))
+    np.testing.assert_array_equal(updated[:, 1:], 7.0)
+    np.testing.assert_array_equal(model.answer_row.value, updated[:, 0].reshape(1, 300))
+    np.testing.assert_array_equal(model.reasoning_index.value, 1)
+
+
+def test_compiled_thirty_tick_refinement_sweep_wraps_reasoning_index() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config())
+    zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+
+    def latent_step(_: jax.Array) -> jax.Array:
+        model.cell_step(zero_event, advance)
+        return model.reasoning_index.value
+
+    indices = brainstate.transform.for_loop(latent_step, jnp.arange(30))
+
+    assert indices.shape == (30, 1)
+    np.testing.assert_array_equal(indices[-1], 0)
+    np.testing.assert_array_equal(model.reasoning_index.value, 0)
+    assert np.count_nonzero(np.asarray(model.answer_grid.value)) > 0
+
+
+def test_refinement_reset_snapshot_and_restore_include_short_term_accumulators() -> (
+    None
+):
+    model = LatentWorkspaceModel(_row_refinement_config())
+    model.answer_row.value = jnp.arange(300, dtype=jnp.float32)[None]
+    model.answer_shape.value = jnp.arange(60, dtype=jnp.float32)[None]
+    model.query_grid.value = model.query_grid.value.at[0, 2, 3, 4].set(1.0)
+    model.query_shape.value = model.query_shape.value.at[0, 7].set(1.0)
+    model.answer_grid.value = model.answer_grid.value.at[0, 5, 6, 7].set(2.0)
+    model.reasoning_index.value = jnp.asarray([11], dtype=jnp.int32)
+    snapshot = model.snapshot_state()
+    snapshot_paths = {path for path, _ in snapshot.entries}
+    expected_paths = {
+        ("answer_row",),
+        ("answer_shape",),
+        ("query_grid",),
+        ("query_shape",),
+        ("answer_grid",),
+        ("reasoning_index",),
+    }
+
+    assert expected_paths <= snapshot_paths
+    model.reset_state()
+    for state in (
+        model.answer_row,
+        model.answer_shape,
+        model.query_grid,
+        model.query_shape,
+        model.answer_grid,
+        model.reasoning_index,
+    ):
+        np.testing.assert_array_equal(state.value, 0)
+    model.restore_state(snapshot)
+    _assert_state_snapshots_equal(snapshot, model.snapshot_state())
+
+
+def test_advance_false_preserves_every_refinement_and_physical_state_exactly() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config())
+    _, events = _row_refinement_episode()
+    run_context(model, events)
+    before = model.snapshot_state()
+    event = events[-1][None]
+
+    model.cell_step(event, jnp.zeros((1,), dtype=jnp.bool_))
+
+    _assert_state_snapshots_equal(before, model.snapshot_state())
+
+
+def test_row_refinement_uses_compact_training_and_explicit_checkpoint_outputs() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config())
+    zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+
+    training_output = model.update(
+        zero_event,
+        jnp.ones((1,), dtype=jnp.bool_),
+    )
+    checkpoint_output = model.compact_readout()
+
+    assert training_output.shape == (1, 360)
+    assert checkpoint_output.shape == (1, 9060)
+    np.testing.assert_array_equal(training_output[:, :60], model.answer_shape.value)
+    np.testing.assert_array_equal(training_output[:, 60:], model.answer_row.value)
+    np.testing.assert_array_equal(checkpoint_output[:, :60], model.answer_shape.value)
+    np.testing.assert_array_equal(
+        checkpoint_output[:, 60:], model.answer_grid.value.reshape(1, 9000)
+    )
+
+
+def test_row_refinement_heads_are_direct_etraces_without_accumulator_groups() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config(recurrent_edges=32))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_pp_prop(model)
+    expected_paths = {
+        ("answer_row_head", "weight"),
+        ("answer_shape_head", "weight"),
+    }
+    etrace_paths = {path for path, _ in learner.report.etrace_weights}
+
+    assert expected_paths <= etrace_paths
+    for path in expected_paths:
+        relations = [
+            relation
+            for relation in learner.graph.hidden_param_op_relations
+            if path in relation.trainable_paths.values()
+        ]
+        assert len(relations) == 1
+        assert set(relations[0].path_classification.values()) == {"all_direct"}
+    grouped_paths = {
+        tuple(path)
+        for group in learner.graph.hidden_groups
+        for path in group.hidden_paths
+    }
+    assert {("answer_row",), ("answer_shape",)} <= grouped_paths
+    for accumulator in ("query_grid", "query_shape", "answer_grid", "reasoning_index"):
+        assert not any(path and path[0] == accumulator for path in grouped_paths)
+
+
+def test_feedback_uses_prior_answer_row_without_writing_context_memory() -> None:
+    model = LatentWorkspaceModel(_row_refinement_config(input_gain=12.0))
+    _, events = _row_refinement_episode()
+    run_context(model, events)
+    before_tick = model.snapshot_state()
+    frozen_memory = np.asarray(model.context_memory.value).copy()
+    zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+
+    model.cell_step(zero_event, advance)
+    baseline_current = np.asarray(model.feedforward_current).copy()
+    np.testing.assert_array_equal(model.context_memory.value, frozen_memory)
+
+    model.restore_state(before_tick)
+    model.answer_row.value = jnp.linspace(-20.0, 20.0, 300)[None]
+    model.cell_step(zero_event, advance)
+
+    np.testing.assert_array_equal(model.context_memory.value, frozen_memory)
+    assert not np.allclose(model.feedforward_current, baseline_current)

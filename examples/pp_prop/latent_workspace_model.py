@@ -35,6 +35,37 @@ from numpy.typing import NDArray
 
 import braintrace
 
+try:
+    from examples.pp_prop.latent_workspace_refinement import (
+        RowRefinementLayout,
+        build_refinement_feedback_event,
+        capture_query_rows,
+        next_reasoning_index,
+        refinement_output_logits,
+        refinement_training_logits,
+        scatter_answer_rows,
+        split_refinement_output_logits,
+    )
+    from examples.pp_prop.latent_workspace_resource_safety import (
+        DEFAULT_MAX_EDGES_PER_NEURON,
+        assess_recurrent_edge_budget,
+    )
+except ImportError:
+    from latent_workspace_refinement import (
+        RowRefinementLayout,
+        build_refinement_feedback_event,
+        capture_query_rows,
+        next_reasoning_index,
+        refinement_output_logits,
+        refinement_training_logits,
+        scatter_answer_rows,
+        split_refinement_output_logits,
+    )
+    from latent_workspace_resource_safety import (
+        DEFAULT_MAX_EDGES_PER_NEURON,
+        assess_recurrent_edge_budget,
+    )
+
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 NEURONS_PER_SLOT = 64
@@ -132,6 +163,14 @@ class ModelConfig:
         Event channels gating complete input/output association writes.
     memory_key_indices, memory_value_indices : tuple of int
         Input-event features projected by fixed deterministic key/value bases.
+    decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
+        Output architecture. Row refinement captures the query and constructs
+        an explicit answer with one learned recurrent row per latent tick.
+    refinement_steps : int, default=30
+        Number of latent row ticks used by the opt-in decoder. It must be a
+        positive multiple of 30 and no larger than ``max_latent_steps``.
+    refinement_layout : RowRefinementLayout, optional
+        Complete row-event layout required by ``row_refinement`` mode.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -174,6 +213,9 @@ class ModelConfig:
     output_side_valid_index: int | None = None
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
+    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
+    refinement_steps: int = MAX_GRID_SIZE
+    refinement_layout: RowRefinementLayout | None = None
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -186,6 +228,7 @@ class ModelConfig:
             "max_latent_steps",
             "readout_width",
             "color_rank",
+            "refinement_steps",
         ):
             object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
@@ -215,11 +258,21 @@ class ModelConfig:
                 f"neuron_count must be divisible by {NEURONS_PER_SLOT} for exact "
                 "slot ablation"
             )
-        capacity = self.neuron_count * (self.neuron_count - 1)
-        if self.recurrent_edges > capacity:
+        edge_budget = assess_recurrent_edge_budget(
+            self.neuron_count,
+            self.recurrent_edges,
+            max_edges_per_neuron=DEFAULT_MAX_EDGES_PER_NEURON,
+        )
+        if self.recurrent_edges > edge_budget.no_self_edge_cap:
             raise ValueError(
                 f"recurrent_edges {self.recurrent_edges} exceeds no-self capacity "
-                f"{capacity}"
+                f"{edge_budget.no_self_edge_cap}"
+            )
+        if self.recurrent_edges > edge_budget.policy_edge_cap:
+            raise ValueError(
+                f"recurrent_edges {self.recurrent_edges} exceeds "
+                f"{DEFAULT_MAX_EDGES_PER_NEURON} edges per neuron policy cap "
+                f"{edge_budget.policy_edge_cap}"
             )
         if isinstance(self.trace_decay, (bool, np.bool_)) or not isinstance(
             self.trace_decay, Real
@@ -293,12 +346,68 @@ class ModelConfig:
                 )
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
+        if not isinstance(self.decoder_mode, str):
+            raise TypeError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+        if self.decoder_mode not in ("legacy_cp", "row_refinement"):
+            raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+        if self.decoder_mode == "legacy_cp":
+            if self.refinement_layout is not None:
+                raise ValueError(
+                    "refinement_layout is valid only when decoder_mode is "
+                    "'row_refinement'"
+                )
+        else:
+            if not isinstance(self.refinement_layout, RowRefinementLayout):
+                raise ValueError(
+                    "refinement_layout is required when decoder_mode is "
+                    "'row_refinement'"
+                )
+            if self.refinement_layout.input_width != self.input_width:
+                raise ValueError("refinement_layout input_width must match input_width")
+            if self.refinement_layout.event_valid_index != self.event_valid_index:
+                raise ValueError(
+                    "refinement_layout event_valid_index must match event_valid_index"
+                )
+            if self.refinement_steps % MAX_GRID_SIZE:
+                raise ValueError("refinement_steps must be a multiple of 30")
+            if self.refinement_steps > self.max_latent_steps:
+                raise ValueError("refinement_steps must not exceed max_latent_steps")
+            if self.memory_enabled:
+                matched_indices = (
+                    (
+                        self.demonstration_phase_index,
+                        self.refinement_layout.demonstration_phase_index,
+                    ),
+                    (
+                        self.query_phase_index,
+                        self.refinement_layout.query_phase_index,
+                    ),
+                    (
+                        self.input_side_valid_index,
+                        self.refinement_layout.input_side_valid_index,
+                    ),
+                    (
+                        self.output_side_valid_index,
+                        self.refinement_layout.output_side_valid_index,
+                    ),
+                )
+                if any(left != right for left, right in matched_indices):
+                    raise ValueError(
+                        "refinement_layout phase and side indices must match "
+                        "context-memory indices"
+                    )
 
     @property
     def memory_enabled(self) -> bool:
         """Return whether the associative contextual-memory path is enabled."""
 
         return self.context_memory_width > 0
+
+    @property
+    def row_refinement_enabled(self) -> bool:
+        """Return whether learned row-wise answer refinement is enabled."""
+
+        return self.decoder_mode == "row_refinement"
 
     @property
     def slot_count(self) -> int:
@@ -309,6 +418,18 @@ class ModelConfig:
     def compact_output_width(self) -> int:
         """Return the width of the factorized ARC output vector."""
         return compact_output_width(self.color_rank)
+
+    @property
+    def training_output_width(self) -> int:
+        """Return per-tick BrainTrace training-output width."""
+
+        return 360 if self.row_refinement_enabled else self.compact_output_width
+
+    @property
+    def checkpoint_output_width(self) -> int:
+        """Return the width retained at inference checkpoints."""
+
+        return 9060 if self.row_refinement_enabled else self.compact_output_width
 
 
 @dataclass(frozen=True)
@@ -531,6 +652,8 @@ class ModelTrajectory:
         ``(steps, batch, input_width)``.
     color_rank : int
         Rank needed to expand compact color factors.
+    decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
+        Representation stored in ``compact_logits``.
     """
 
     compact_logits: jax.Array
@@ -540,6 +663,7 @@ class ModelTrajectory:
     recurrent_current: jax.Array
     zero_inputs: jax.Array
     color_rank: int
+    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
 
     @property
     def latent_steps(self) -> int:
@@ -549,7 +673,9 @@ class ModelTrajectory:
     @property
     def expanded(self) -> ArcLogits:
         """Expand every checkpoint to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_decoder_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
     def at_effort(self, effort: int) -> ArcLogits:
         """Return expanded logits at one latent-effort checkpoint.
@@ -570,7 +696,9 @@ class ModelTrajectory:
             raise ValueError(
                 f"effort {effort} exceeds trajectory length {self.latent_steps}"
             )
-        return expand_compact_logits(self.compact_logits[effort], self.color_rank)
+        return expand_decoder_logits(
+            self.compact_logits[effort], self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -597,6 +725,8 @@ class PackedTrajectory:
         legacy mode has two zero-width trailing dimensions.
     color_rank : int
         Rank needed to expand compact color factors.
+    decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
+        Representation stored in ``compact_logits``.
     """
 
     compact_logits: jax.Array
@@ -608,11 +738,14 @@ class PackedTrajectory:
     memory_read: jax.Array
     final_context_memory: jax.Array
     color_rank: int
+    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
 
     @property
     def expanded(self) -> ArcLogits:
         """Expand all packed ticks to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_decoder_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -644,6 +777,8 @@ class SelectedPackedTrajectory:
         time.  Legacy mode has two zero-width trailing dimensions.
     color_rank : int
         Rank needed to expand compact color factors.
+    decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
+        Representation stored in ``compact_logits``.
     """
 
     selected_indices: jax.Array
@@ -656,11 +791,14 @@ class SelectedPackedTrajectory:
     memory_read: jax.Array
     final_context_memory: jax.Array
     color_rank: int
+    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
 
     @property
     def expanded(self) -> ArcLogits:
         """Expand selected compact checkpoints to full ARC logits."""
-        return expand_compact_logits(self.compact_logits, self.color_rank)
+        return expand_decoder_logits(
+            self.compact_logits, self.color_rank, self.decoder_mode
+        )
 
 
 @dataclass(frozen=True)
@@ -885,6 +1023,36 @@ def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
     return ArcLogits(height=height, width=width, colors=color_logits)
 
 
+def expand_decoder_logits(
+    logits: jax.Array,
+    color_rank: int,
+    decoder_mode: Literal["legacy_cp", "row_refinement"],
+) -> ArcLogits:
+    """Expand checkpoint logits from either supported decoder.
+
+    Parameters
+    ----------
+    logits : jax.Array
+        Decoder output with arbitrary leading dimensions.
+    color_rank : int
+        CP rank used by the legacy decoder.
+    decoder_mode : {"legacy_cp", "row_refinement"}
+        Static decoder representation encoded by ``logits``.
+
+    Returns
+    -------
+    ArcLogits
+        Explicit height, width, and color logits.
+    """
+
+    if decoder_mode == "legacy_cp":
+        return expand_compact_logits(logits, color_rank)
+    if decoder_mode != "row_refinement":
+        raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+    height, width, colors = split_refinement_output_logits(logits)
+    return ArcLogits(height=height, width=width, colors=colors)
+
+
 def arc_loss_components(
     compact_logits: jax.Array,
     target_height: jax.Array,
@@ -1049,9 +1217,12 @@ def _arc_loss_vectors(
         columns < target_width[:, None, None]
     )
     if class_balanced_colors:
-        valid_colors = jax.nn.one_hot(
-            target_colors.astype(jnp.int32), COLOR_COUNT, dtype=color_nll.dtype
-        ) * valid[..., None]
+        valid_colors = (
+            jax.nn.one_hot(
+                target_colors.astype(jnp.int32), COLOR_COUNT, dtype=color_nll.dtype
+            )
+            * valid[..., None]
+        )
         class_counts = jnp.sum(valid_colors, axis=(1, 2))
         target_class_counts = jnp.sum(
             valid_colors * class_counts[:, None, None, :], axis=-1
@@ -1350,8 +1521,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 dtype=jnp.float32,
             )
             self._memory_value_basis = jnp.asarray(
-                value_random.randn(value_width, memory_width)
-                / math.sqrt(value_width),
+                value_random.randn(value_width, memory_width) / math.sqrt(value_width),
                 dtype=jnp.float32,
             )
             self.memory_write_scale = brainstate.ParamState(
@@ -1391,9 +1561,61 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
             )
             self.workspace_carrier = brainstate.HiddenState(
+                jnp.zeros((config.batch_size, config.neuron_count), dtype=jnp.float32)
+            )
+        if config.row_refinement_enabled:
+            row_weights = random.randn(config.neuron_count, MAX_GRID_SIZE * COLOR_COUNT)
+            row_weights = row_weights / math.sqrt(config.neuron_count)
+            shape_weights = random.randn(config.neuron_count, 2 * MAX_GRID_SIZE)
+            shape_weights = shape_weights / math.sqrt(config.neuron_count)
+            self.answer_row_head = braintrace.nn.Linear(
+                config.neuron_count,
+                MAX_GRID_SIZE * COLOR_COUNT,
+                w_init=row_weights,
+                b_init=None,
+            )
+            self.answer_shape_head = braintrace.nn.Linear(
+                config.neuron_count,
+                2 * MAX_GRID_SIZE,
+                w_init=shape_weights,
+                b_init=None,
+            )
+            self.answer_row = brainstate.HiddenState(
                 jnp.zeros(
-                    (config.batch_size, config.neuron_count), dtype=jnp.float32
+                    (config.batch_size, MAX_GRID_SIZE * COLOR_COUNT),
+                    dtype=jnp.float32,
                 )
+            )
+            self.answer_shape = brainstate.HiddenState(
+                jnp.zeros((config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32)
+            )
+            self.query_grid = brainstate.ShortTermState(
+                jnp.zeros(
+                    (
+                        config.batch_size,
+                        MAX_GRID_SIZE,
+                        MAX_GRID_SIZE,
+                        COLOR_COUNT,
+                    ),
+                    dtype=jnp.float32,
+                )
+            )
+            self.query_shape = brainstate.ShortTermState(
+                jnp.zeros((config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32)
+            )
+            self.answer_grid = brainstate.ShortTermState(
+                jnp.zeros(
+                    (
+                        config.batch_size,
+                        MAX_GRID_SIZE,
+                        MAX_GRID_SIZE,
+                        COLOR_COUNT,
+                    ),
+                    dtype=jnp.float32,
+                )
+            )
+            self.reasoning_index = brainstate.ShortTermState(
+                jnp.zeros((config.batch_size,), dtype=jnp.int32)
             )
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
 
@@ -1608,9 +1830,61 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 (self.config.batch_size, self.config.neuron_count),
                 dtype=jnp.float32,
             )
+        if self.config.row_refinement_enabled:
+            self.answer_row.value = jnp.zeros(
+                (self.config.batch_size, MAX_GRID_SIZE * COLOR_COUNT),
+                dtype=jnp.float32,
+            )
+            self.answer_shape.value = jnp.zeros(
+                (self.config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32
+            )
+            self.query_grid.value = jnp.zeros(
+                (
+                    self.config.batch_size,
+                    MAX_GRID_SIZE,
+                    MAX_GRID_SIZE,
+                    COLOR_COUNT,
+                ),
+                dtype=jnp.float32,
+            )
+            self.query_shape.value = jnp.zeros(
+                (self.config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32
+            )
+            self.answer_grid.value = jnp.zeros(
+                (
+                    self.config.batch_size,
+                    MAX_GRID_SIZE,
+                    MAX_GRID_SIZE,
+                    COLOR_COUNT,
+                ),
+                dtype=jnp.float32,
+            )
+            self.reasoning_index.value = jnp.zeros(
+                (self.config.batch_size,), dtype=jnp.int32
+            )
+
+    def _snapshot_state_items(self) -> tuple[tuple[tuple[Any, ...], Any], ...]:
+        """Return every state required for exact inference restoration."""
+
+        items = tuple(
+            (tuple(path), state)
+            for path, state in self.states(brainstate.HiddenState).items()
+        )
+        if not self.config.row_refinement_enabled:
+            return items
+        refinement_items = (
+            (("query_grid",), self.query_grid),
+            (("query_shape",), self.query_shape),
+            (("answer_grid",), self.answer_grid),
+            (("reasoning_index",), self.reasoning_index),
+        )
+        hidden_paths = {path for path, _ in items}
+        return items + tuple(
+            item for item in refinement_items if item[0] not in hidden_paths
+        )
 
     def snapshot_state(self) -> ModelStateSnapshot:
-        """Copy every hidden state while excluding all parameters.
+        """Copy every inference state while excluding all parameters.
 
         Returns
         -------
@@ -1619,7 +1893,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         """
         entries = tuple(
             (tuple(path), _copy_tree(state.value))
-            for path, state in self.states(brainstate.HiddenState).items()
+            for path, state in self._snapshot_state_items()
         )
         return ModelStateSnapshot(
             entries=entries,
@@ -1642,13 +1916,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             or snapshot.neuron_count != self.config.neuron_count
         ):
             raise ValueError("snapshot configuration does not match this model")
-        states = self.states(brainstate.HiddenState)
-        expected_paths = tuple(tuple(path) for path in states)
+        state_items = self._snapshot_state_items()
+        expected_paths = tuple(path for path, _ in state_items)
         actual_paths = tuple(path for path, _ in snapshot.entries)
         if actual_paths != expected_paths:
-            raise ValueError("snapshot hidden-state paths do not match this model")
+            raise ValueError("snapshot state paths do not match this model")
         validated: list[tuple[Any, Any]] = []
-        for (path, value), state in zip(snapshot.entries, states.values(), strict=True):
+        for (path, value), (_, state) in zip(
+            snapshot.entries, state_items, strict=True
+        ):
             if tuple(path) not in expected_paths:
                 raise ValueError("snapshot contains an unknown state path")
             value_structure = jax.tree.structure(value)
@@ -1658,14 +1934,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             if value_structure != state_structure or len(value_leaves) != len(
                 state_leaves
             ):
-                raise ValueError("snapshot hidden-state structure does not match model")
+                raise ValueError("snapshot state structure does not match model")
             if any(
                 np.shape(value_leaf) != np.shape(state_leaf)
                 for value_leaf, state_leaf in zip(
                     value_leaves, state_leaves, strict=True
                 )
             ):
-                raise ValueError("snapshot hidden-state shape does not match model")
+                raise ValueError("snapshot state shape does not match model")
             validated.append((state, value))
         for state, value in validated:
             state.value = _copy_tree(value)
@@ -1748,7 +2024,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         )
 
     def compact_readout(self, carrier: jax.Array | None = None) -> jax.Array:
-        """Map the active workspace carrier to compact ARC output factors.
+        """Return checkpoint logits for the configured decoder.
 
         Parameters
         ----------
@@ -1760,8 +2036,13 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         Returns
         -------
         jax.Array
-            Compact logits shaped ``(batch, compact_output_width)``.
+            Legacy compact factors or explicit row-refinement logits shaped
+            ``(batch, checkpoint_output_width)``.
         """
+        if self.config.row_refinement_enabled:
+            return refinement_output_logits(
+                self.answer_shape.value, self.answer_grid.value
+            )
         if carrier is None:
             carrier = (
                 self.workspace_carrier.value
@@ -1786,6 +2067,27 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             ),
             axis=-1,
         )
+
+    def training_readout(self, carrier: jax.Array | None = None) -> jax.Array:
+        """Return the bounded per-tick output consumed by BrainTrace.
+
+        Parameters
+        ----------
+        carrier : jax.Array, optional
+            Legacy workspace carrier. Row-refinement mode reads its current
+            shape and row states directly.
+
+        Returns
+        -------
+        jax.Array
+            Per-tick logits shaped ``(batch, training_output_width)``.
+        """
+
+        if self.config.row_refinement_enabled:
+            return refinement_training_logits(
+                self.answer_shape.value, self.answer_row.value
+            )
+        return self.compact_readout(carrier)
 
     def cell_step(
         self, event: jax.Array, advance: jax.Array | None = None
@@ -1820,6 +2122,35 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 f"advance must have shape ({self.config.batch_size},), got "
                 f"{advance.shape}"
             )
+        refinement_latent = jnp.zeros((self.config.batch_size,), dtype=jnp.bool_)
+        refinement_rows = jnp.zeros((self.config.batch_size,), dtype=jnp.int32)
+        if self.config.row_refinement_enabled:
+            assert self.config.refinement_layout is not None
+            refinement_rows = jnp.asarray(self.reasoning_index.value)
+            self.query_grid.value, self.query_shape.value = capture_query_rows(
+                self.query_grid.value,
+                self.query_shape.value,
+                event,
+                advance,
+                self.config.refinement_layout,
+            )
+            refinement_latent = advance & ~(
+                event[:, self.config.refinement_layout.event_valid_index] > 0.5
+            )
+            feedback_grid = scatter_answer_rows(
+                self.answer_grid.value,
+                self.answer_row.value,
+                refinement_rows,
+            )
+            feedback_event = build_refinement_feedback_event(
+                self.query_grid.value,
+                self.query_shape.value,
+                feedback_grid,
+                self.answer_shape.value,
+                refinement_rows,
+                self.config.refinement_layout,
+            )
+            event = jnp.where(refinement_latent[:, None], feedback_event, event)
         previous_voltage = self.neu.V.value
         previous_feedforward = self.ff_syn.syn.g.value
         previous_recurrent = self.rec_syn.syn.g.value
@@ -1866,9 +2197,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             projected_query = self.workspace_query_projection(
                 _unit_l2_cap(previous_workspace)
             )
-            iterative_query = jnp.tanh(
-                self.query_encoding.value + projected_query
-            )
+            iterative_query = jnp.tanh(self.query_encoding.value + projected_query)
             next_reasoning_query = jnp.where(
                 query[:, None],
                 self.query_encoding.value,
@@ -1892,9 +2221,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     jnp.zeros_like(next_reasoning_query),
                 )
                 raw_read = self.read_context_memory(query_read)
-                raw_read = jnp.where(
-                    query[:, None], raw_read, jnp.zeros_like(raw_read)
-                )
+                raw_read = jnp.where(query[:, None], raw_read, jnp.zeros_like(raw_read))
             self.memory_read.value = jnp.where(
                 reasoning_gate[:, None],
                 jax.lax.stop_gradient(raw_read),
@@ -1917,10 +2244,38 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.workspace_carrier.value = jnp.where(
                 gate, self.voltage, previous_workspace
             )
+        if self.config.row_refinement_enabled:
+            carrier = (
+                self.workspace_carrier.value
+                if self.config.memory_enabled
+                else self.spikes
+            )
+            carrier = _unit_l2_cap(carrier)
+            next_row = self.answer_row_head(carrier)
+            next_shape = self.answer_shape_head(carrier)
+            refinement_gate = refinement_latent[:, None]
+            self.answer_row.value = jnp.where(
+                refinement_gate, next_row, self.answer_row.value
+            )
+            self.answer_shape.value = jnp.where(
+                refinement_gate, next_shape, self.answer_shape.value
+            )
+            scattered = scatter_answer_rows(
+                self.answer_grid.value, next_row, refinement_rows
+            )
+            self.answer_grid.value = jnp.where(
+                refinement_latent[:, None, None, None],
+                scattered,
+                self.answer_grid.value,
+            )
+            next_rows = next_reasoning_index(refinement_rows)
+            self.reasoning_index.value = jnp.where(
+                refinement_latent, next_rows, refinement_rows
+            )
         return self.spikes
 
     def update(self, event: jax.Array, advance: jax.Array | None = None) -> jax.Array:
-        """Advance one step and return the compact BrainTrace training output.
+        """Advance one step and return the bounded BrainTrace training output.
 
         Parameters
         ----------
@@ -1932,12 +2287,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         Returns
         -------
         jax.Array
-            Compact ARC logits shaped ``(batch, compact_output_width)``.
+            Logits shaped ``(batch, training_output_width)``.
         """
         spikes = self.cell_step(event, advance)
         if self.config.memory_enabled:
-            return self.compact_readout()
-        return self.compact_readout(spikes)
+            return self.training_readout()
+        return self.training_readout(spikes)
 
 
 def _batched_events(model: LatentWorkspaceModel, events: jax.Array) -> jax.Array:
@@ -2112,9 +2467,14 @@ def run_packed_stream(
                 memory_read,
             )
 
-        compact, spikes, voltage, feedforward_current, recurrent_current, memory_read = (
-            brainstate.transform.for_loop(controlled_step, (packed, advance, gates))
-        )
+        (
+            compact,
+            spikes,
+            voltage,
+            feedforward_current,
+            recurrent_current,
+            memory_read,
+        ) = brainstate.transform.for_loop(controlled_step, (packed, advance, gates))
     else:
 
         def packed_step(
@@ -2143,9 +2503,14 @@ def run_packed_stream(
                 memory_read,
             )
 
-        compact, spikes, voltage, feedforward_current, recurrent_current, memory_read = (
-            brainstate.transform.for_loop(packed_step, (packed, advance))
-        )
+        (
+            compact,
+            spikes,
+            voltage,
+            feedforward_current,
+            recurrent_current,
+            memory_read,
+        ) = brainstate.transform.for_loop(packed_step, (packed, advance))
     if model.config.memory_enabled:
         final_context_memory = jnp.asarray(model.context_memory.value)
     else:
@@ -2162,6 +2527,7 @@ def run_packed_stream(
         memory_read=memory_read,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 
@@ -2266,7 +2632,7 @@ def run_selected_packed_stream(
     if reset:
         model.reset_state()
     compact_buffer = jnp.zeros(
-        (checkpoint_count, batch_size, model.config.compact_output_width),
+        (checkpoint_count, batch_size, model.config.checkpoint_output_width),
         dtype=jnp.float32,
     )
     state_shape = (checkpoint_count, batch_size, model.config.neuron_count)
@@ -2312,7 +2678,6 @@ def run_selected_packed_stream(
         event, advance_gate, ablation_gate = inputs
         model.mask_slots(slots, ablation_gate)
         spikes = model.cell_step(event, advance_gate)
-        compact = model.compact_readout()
         voltage = model.voltage
         feedforward = model.feedforward_current
         recurrent = model.recurrent_current
@@ -2330,7 +2695,12 @@ def run_selected_packed_stream(
             selected = jnp.where(matched[:, None], value, previous)
             return buffer.at[safe_cursors, batch_indices].set(selected)
 
-        compact_values = record(compact_values, compact)
+        def record_checkpoint(buffer: jax.Array) -> jax.Array:
+            return record(buffer, model.compact_readout())
+
+        compact_values = jax.lax.cond(
+            jnp.any(matched), record_checkpoint, lambda buffer: buffer, compact_values
+        )
         spike_values = record(spike_values, spikes)
         voltage_values = record(voltage_values, voltage)
         feedforward_values = record(feedforward_values, feedforward)
@@ -2376,6 +2746,7 @@ def run_selected_packed_stream(
         memory_read=memory_buffer,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 
@@ -2470,6 +2841,7 @@ def run_latent_trajectory(
         ),
         zero_inputs=zero_inputs,
         color_rank=model.config.color_rank,
+        decoder_mode=model.config.decoder_mode,
     )
 
 

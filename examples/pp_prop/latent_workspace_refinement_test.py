@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -12,8 +14,11 @@ from latent_workspace_refinement import (
     capture_query_rows,
     next_reasoning_index,
     refinement_output_logits,
+    row_refinement_loss_per_example,
     refinement_training_logits,
     scatter_answer_rows,
+    split_refinement_output_logits,
+    split_refinement_training_logits,
 )
 from latent_workspace_task import RowEventConfig
 
@@ -408,3 +413,178 @@ def test_refinement_output_rejects_incompatible_shapes(
 ) -> None:
     with pytest.raises(ValueError, match=message):
         refinement_output_logits(jnp.zeros(shape_shape), jnp.zeros(grid_shape))
+
+
+def test_split_refinement_output_recovers_height_width_and_color_logits() -> None:
+    explicit = jnp.arange(2 * 9060, dtype=jnp.float32).reshape(2, 9060)
+
+    height, width, colors = split_refinement_output_logits(explicit)
+
+    assert height.shape == (2, 30)
+    assert width.shape == (2, 30)
+    assert colors.shape == (2, 30, 30, 10)
+    np.testing.assert_array_equal(height, explicit[:, :30])
+    np.testing.assert_array_equal(width, explicit[:, 30:60])
+    np.testing.assert_array_equal(colors.reshape(2, 9000), explicit[:, 60:])
+
+
+def test_split_refinement_training_recovers_shape_and_current_row_logits() -> None:
+    compact = jnp.arange(3 * 360, dtype=jnp.float32).reshape(3, 360)
+
+    shape, row = split_refinement_training_logits(compact)
+
+    assert shape.shape == (3, 60)
+    assert row.shape == (3, 300)
+    np.testing.assert_array_equal(shape, compact[:, :60])
+    np.testing.assert_array_equal(row, compact[:, 60:])
+
+
+@pytest.mark.parametrize(
+    ("function", "logits", "message"),
+    [
+        (split_refinement_output_logits, jnp.zeros((2, 9059)), "9060"),
+        (split_refinement_training_logits, jnp.zeros((2, 359)), "360"),
+        (
+            split_refinement_output_logits,
+            jnp.zeros((9060,), dtype=jnp.int32),
+            "floating-point",
+        ),
+        (
+            split_refinement_training_logits,
+            jnp.zeros((360,), dtype=jnp.bool_),
+            "floating-point",
+        ),
+    ],
+)
+def test_refinement_splitters_fail_closed_on_shape_and_dtype(
+    function: Callable[[jax.Array], object], logits: jax.Array, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        function(logits)
+
+
+def test_row_refinement_loss_supervises_shape_and_only_the_selected_valid_row() -> None:
+    logits = jnp.zeros((2, 360), dtype=jnp.float32)
+    height_classes = jnp.asarray([1, 0], dtype=jnp.int32)
+    width_classes = jnp.asarray([2, 2], dtype=jnp.int32)
+    target_colors = jnp.zeros((2, 30, 30), dtype=jnp.int32)
+    target_colors = target_colors.at[0, 1, :3].set(jnp.asarray([2, 4, 6]))
+    row_indices = jnp.asarray([1, 1], dtype=jnp.int32)
+
+    loss = row_refinement_loss_per_example(
+        logits,
+        height_classes,
+        width_classes,
+        target_colors,
+        row_indices,
+    )
+
+    expected_shape = 2.0 * np.log(30.0)
+    np.testing.assert_allclose(
+        loss,
+        jnp.asarray([expected_shape + np.log(10.0), expected_shape]),
+        rtol=1e-6,
+    )
+
+
+def test_row_refinement_loss_ignores_padded_columns_and_unselected_rows() -> None:
+    logits = jnp.linspace(-1.0, 1.0, 360, dtype=jnp.float32)[None]
+    height_classes = jnp.asarray([3], dtype=jnp.int32)
+    width_classes = jnp.asarray([1], dtype=jnp.int32)
+    row_indices = jnp.asarray([2], dtype=jnp.int32)
+    baseline = jnp.zeros((1, 30, 30), dtype=jnp.int32)
+    changed_padding = baseline.at[:, :, 2:].set(9)
+    changed_padding = changed_padding.at[:, 0, :2].set(8)
+
+    baseline_loss = row_refinement_loss_per_example(
+        logits,
+        height_classes,
+        width_classes,
+        baseline,
+        row_indices,
+    )
+    changed_loss = row_refinement_loss_per_example(
+        logits,
+        height_classes,
+        width_classes,
+        changed_padding,
+        row_indices,
+    )
+
+    np.testing.assert_array_equal(changed_loss, baseline_loss)
+
+
+def test_row_refinement_loss_is_jittable_and_differentiable() -> None:
+    target_height = jnp.asarray([2], dtype=jnp.int32)
+    target_width = jnp.asarray([1], dtype=jnp.int32)
+    target_colors = jnp.zeros((1, 30, 30), dtype=jnp.int32)
+    target_colors = target_colors.at[0, 2, :2].set(jnp.asarray([3, 7]))
+    row_index = jnp.asarray([2], dtype=jnp.int32)
+
+    def summed_loss(logits: jax.Array) -> jax.Array:
+        return row_refinement_loss_per_example(
+            logits,
+            target_height,
+            target_width,
+            target_colors,
+            row_index,
+        ).sum()
+
+    logits = jnp.zeros((1, 360), dtype=jnp.float32)
+    eager_loss, eager_gradient = jax.value_and_grad(summed_loss)(logits)
+    compiled_loss, compiled_gradient = jax.jit(jax.value_and_grad(summed_loss))(logits)
+
+    np.testing.assert_allclose(compiled_loss, eager_loss, rtol=1e-6)
+    np.testing.assert_allclose(compiled_gradient, eager_gradient, rtol=1e-6)
+    assert np.any(np.asarray(eager_gradient[:, :60]))
+    color_gradient = np.asarray(eager_gradient[:, 60:].reshape(1, 30, 10))
+    assert np.any(color_gradient[:, :2])
+    assert not np.any(color_gradient[:, 2:])
+
+
+def test_invalid_target_row_has_zero_color_gradient_but_keeps_shape_gradient() -> None:
+    target_colors = jnp.full((1, 30, 30), 5, dtype=jnp.int32)
+
+    def summed_loss(logits: jax.Array) -> jax.Array:
+        return row_refinement_loss_per_example(
+            logits,
+            jnp.asarray([0], dtype=jnp.int32),
+            jnp.asarray([4], dtype=jnp.int32),
+            target_colors,
+            jnp.asarray([1], dtype=jnp.int32),
+        ).sum()
+
+    gradient = jax.grad(summed_loss)(jnp.zeros((1, 360), dtype=jnp.float32))
+
+    assert np.any(np.asarray(gradient[:, :60]))
+    assert not np.any(np.asarray(gradient[:, 60:]))
+
+
+@pytest.mark.parametrize(
+    ("updates", "message"),
+    [
+        ({"logits": jnp.zeros((2, 359))}, "360"),
+        ({"logits": jnp.zeros((2, 360), dtype=jnp.int32)}, "floating-point"),
+        ({"target_height": jnp.zeros((2, 1), dtype=jnp.int32)}, "target_height"),
+        ({"target_width": jnp.zeros((1,), dtype=jnp.int32)}, "target_width"),
+        ({"target_colors": jnp.zeros((2, 29, 30), dtype=jnp.int32)}, "target_colors"),
+        ({"row_indices": jnp.zeros((2, 1), dtype=jnp.int32)}, "row_indices"),
+        ({"target_height": jnp.zeros((2,), dtype=jnp.float32)}, "integer"),
+        ({"target_colors": jnp.zeros((2, 30, 30), dtype=jnp.float32)}, "integer"),
+        ({"row_indices": jnp.zeros((2,), dtype=jnp.float32)}, "integer"),
+    ],
+)
+def test_row_refinement_loss_fails_closed_on_shape_and_dtype(
+    updates: dict[str, jax.Array], message: str
+) -> None:
+    arguments = {
+        "logits": jnp.zeros((2, 360), dtype=jnp.float32),
+        "target_height": jnp.zeros((2,), dtype=jnp.int32),
+        "target_width": jnp.zeros((2,), dtype=jnp.int32),
+        "target_colors": jnp.zeros((2, 30, 30), dtype=jnp.int32),
+        "row_indices": jnp.zeros((2,), dtype=jnp.int32),
+    }
+    arguments.update(updates)
+
+    with pytest.raises(ValueError, match=message):
+        row_refinement_loss_per_example(**arguments)

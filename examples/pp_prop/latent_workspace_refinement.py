@@ -517,6 +517,181 @@ def refinement_training_logits(
     return jnp.concatenate((answer_shape, answer_row), axis=-1)
 
 
+def _floating_logits(logits: jax.Array, name: str, width: int) -> jax.Array:
+    values = jnp.asarray(logits)
+    if values.ndim < 1 or values.shape[-1] != width:
+        raise ValueError(f"{name} must have trailing shape ({width},)")
+    if not jnp.issubdtype(values.dtype, jnp.floating):
+        raise ValueError(f"{name} must have a floating-point dtype")
+    return values
+
+
+def split_refinement_training_logits(
+    training_logits: jax.Array,
+) -> tuple[jax.Array, jax.Array]:
+    """Split compact per-tick logits into shape and current-row logits.
+
+    Parameters
+    ----------
+    training_logits
+        Floating-point logits with any leading axes and trailing width 360.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Shape logits with trailing width 60 and row logits with trailing width
+        300. The shape logits contain height first and width second.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> from latent_workspace_refinement import split_refinement_training_logits
+        >>> shape, row = split_refinement_training_logits(jnp.zeros((2, 360)))
+        >>> shape.shape, row.shape
+        ((2, 60), (2, 300))
+    """
+
+    values = _floating_logits(training_logits, "training_logits", 360)
+    return values[..., :60], values[..., 60:]
+
+
+def split_refinement_output_logits(
+    output_logits: jax.Array,
+) -> tuple[jax.Array, jax.Array, jax.Array]:
+    """Split explicit checkpoint logits into height, width, and colors.
+
+    Parameters
+    ----------
+    output_logits
+        Floating-point logits with any leading axes and trailing width 9060.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Height and width logits with trailing width 30, followed by color
+        logits with trailing shape ``(30, 30, 10)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> from latent_workspace_refinement import split_refinement_output_logits
+        >>> height, width, colors = split_refinement_output_logits(
+        ...     jnp.zeros((2, 9060))
+        ... )
+        >>> height.shape, width.shape, colors.shape
+        ((2, 30), (2, 30), (2, 30, 30, 10))
+    """
+
+    values = _floating_logits(output_logits, "output_logits", 9060)
+    colors = values[..., 60:].reshape(*values.shape[:-1], 30, 30, 10)
+    return values[..., :30], values[..., 30:60], colors
+
+
+def _integer_target(value: jax.Array, name: str, shape: tuple[int, ...]) -> jax.Array:
+    values = jnp.asarray(value)
+    if values.shape != shape:
+        raise ValueError(f"{name} must have shape {shape}")
+    if not jnp.issubdtype(values.dtype, jnp.integer):
+        raise ValueError(f"{name} must have an integer dtype")
+    return values
+
+
+def row_refinement_loss_per_example(
+    logits: jax.Array,
+    target_height: jax.Array,
+    target_width: jax.Array,
+    target_colors: jax.Array,
+    row_indices: jax.Array,
+) -> jax.Array:
+    """Return deep-supervision loss for each selected answer-row tick.
+
+    Both 30-way shape axes are supervised on every tick. Color cross entropy
+    is averaged only over valid columns of the selected row. A row beyond the
+    target height contributes zero color loss while retaining both shape
+    losses. Height and width targets are zero-based class indices: class zero
+    represents a size of one and class 29 represents a size of 30.
+
+    Parameters
+    ----------
+    logits
+        Floating-point compact logits shaped ``(batch, 360)``.
+    target_height, target_width
+        Zero-based integer shape classes shaped ``(batch,)``.
+    target_colors
+        Integer padded color grids shaped ``(batch, 30, 30)``.
+    row_indices
+        Integer current answer-row indices shaped ``(batch,)``.
+
+    Returns
+    -------
+    jax.Array
+        Per-example loss vector shaped ``(batch,)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> from latent_workspace_refinement import row_refinement_loss_per_example
+        >>> loss = row_refinement_loss_per_example(
+        ...     jnp.zeros((1, 360)),
+        ...     jnp.asarray([1]),
+        ...     jnp.asarray([2]),
+        ...     jnp.zeros((1, 30, 30), dtype=jnp.int32),
+        ...     jnp.asarray([0]),
+        ... )
+        >>> loss.shape
+        (1,)
+    """
+
+    logits = _floating_logits(logits, "logits", 360)
+    if logits.ndim != 2:
+        raise ValueError("logits must have shape (batch, 360)")
+    batch_size = logits.shape[0]
+    vector_shape = (batch_size,)
+    target_height = _integer_target(target_height, "target_height", vector_shape)
+    target_width = _integer_target(target_width, "target_width", vector_shape)
+    target_colors = _integer_target(
+        target_colors,
+        "target_colors",
+        (batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE),
+    )
+    row_indices = _integer_target(row_indices, "row_indices", vector_shape)
+
+    shape_logits, row_logits = split_refinement_training_logits(logits)
+    height_logits = shape_logits[:, :MAX_GRID_SIZE]
+    width_logits = shape_logits[:, MAX_GRID_SIZE:]
+    height_loss = -jnp.take_along_axis(
+        jax.nn.log_softmax(height_logits, axis=-1),
+        target_height[:, None],
+        axis=-1,
+    )[:, 0]
+    width_loss = -jnp.take_along_axis(
+        jax.nn.log_softmax(width_logits, axis=-1),
+        target_width[:, None],
+        axis=-1,
+    )[:, 0]
+
+    row_selector = jax.nn.one_hot(row_indices, MAX_GRID_SIZE, dtype=target_colors.dtype)
+    selected_targets = jnp.sum(target_colors * row_selector[:, :, None], axis=1)
+    color_logits = row_logits.reshape(batch_size, MAX_GRID_SIZE, COLOR_COUNT)
+    color_nll = -jnp.take_along_axis(
+        jax.nn.log_softmax(color_logits, axis=-1),
+        selected_targets[..., None],
+        axis=-1,
+    )[..., 0]
+    valid_row = row_indices <= target_height
+    valid_columns = jnp.arange(MAX_GRID_SIZE)[None, :] <= target_width[:, None]
+    valid_colors = valid_row[:, None] & valid_columns
+    color_loss = jnp.sum(jnp.where(valid_colors, color_nll, 0.0), axis=-1)
+    color_loss /= jnp.maximum(jnp.sum(valid_colors, axis=-1), 1)
+    return height_loss + width_loss + color_loss
+
+
 def refinement_output_logits(
     answer_shape: jax.Array, answer_grid: jax.Array
 ) -> jax.Array:
