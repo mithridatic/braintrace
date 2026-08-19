@@ -1,6 +1,6 @@
 # Example 21 — per-tick online adaptation
 
-Status: pre-registered; sweep running
+Status: rate sweep measured; 100-task arms running
 Date: 2026-08-19
 Branch: `feat/example21-row-refinement`
 Mechanism: `2026-08-19-online-update-driver.md`.
@@ -80,3 +80,53 @@ result, and will not be reported as one.
 The driver adds an expressible regime. Nothing about it guarantees a better
 score, and §3's second and fourth outcomes are both live. No ARC-score claim is
 made until the arms are measured.
+
+## 5. Learning-rate sweep
+
+23 held-out training tasks, one pretrained checkpoint (96,000 episodes,
+1,024 neurons, 262,144 edges), 40 adaptation updates at adaptation batch 4.
+Frozen accuracy is identical across every row because every arm starts from the
+same parameters.
+
+| schedule | rate | shape | pixel | exact pass@2 | seconds |
+|---|---:|---|---|---:|---:|
+| accumulated | 3e-3 | 0.5217 -> 0.5217 | 0.4809 -> 0.5253 | 0.0435 | 224 |
+| per tick | 5e-5 | 0.5217 -> **0.6957** | 0.4809 -> 0.5365 | 0.0435 | 449 |
+| per tick | 2e-4 | 0.5217 -> 0.5652 | 0.4809 -> 0.5461 | 0.0435 | 485 |
+| per tick | 1e-3 | 0.5217 -> 0.4783 | 0.4809 -> 0.5171 | 0.0435 | 463 |
+
+**Shape separates the schedules; exact does not resolve at this width.** The
+accumulating path does not move shape accuracy at all over 40 updates. Per-tick
+updates at 5e-5 move it by 0.174 on the same folds, from the same parameters,
+with the same loss. That matters because wrong shape is the largest failure
+bucket on the complete split, 40% of 419 queries, and shape is only 60 logits.
+
+Every arm scores exactly one exact answer of 23, which is the resolution floor
+this sweep was never able to see past. Nothing about exactness is claimed from
+it; that is what the 100-task arms in §2 are for.
+
+The rate ordering is monotone over the range measured — 5e-5 beats 2e-4 beats
+1e-3 — so 5e-5 is a boundary rather than an interior optimum, and a lower rate
+may be better still. It is carried into the full arms as the best *measured*
+value, not as a tuned one.
+
+Per-tick adaptation costs roughly twice the wall clock, which is the honest
+price of 2,400 optimizer updates per task against 40.
+
+## 6. Cost, and one correction
+
+Building the jitted runner, the optimizer, and the compiled learner inside the
+per-task loop made every task rebuild its program. Hoisting them out, and
+restoring a snapshot of untouched Adam state between tasks so each still starts
+clean, took the probe from 19.5 to 13.3 seconds per task.
+
+The remaining 11.2 seconds per task is real work rather than overhead: 40
+episodes of 180 ticks is 7,200 sequential recurrent steps with a pp-prop
+gradient at each, and the online arm applies 2,400 Adam updates over 1.8 million
+parameters.
+
+An intermediate reading claimed the probe was host-bound, on eight consecutive
+`nvidia-smi` samples reading 0% utilization. Sampling across a whole task
+instead shows the compiled adaptation saturating the device at 96-100% and
+148 W, with the zeros falling in the host gaps between stages. The claim was an
+artifact of when the samples were taken, and is withdrawn.
