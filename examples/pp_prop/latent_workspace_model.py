@@ -2248,7 +2248,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             carrier = (
                 self.workspace_carrier.value
                 if self.config.memory_enabled
-                else self.spikes
+                else self.voltage
             )
             carrier = _unit_l2_cap(carrier)
             next_row = self.answer_row_head(carrier)

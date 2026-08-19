@@ -3068,6 +3068,47 @@ def test_row_refinement_heads_are_direct_etraces_without_accumulator_groups() ->
         assert not any(path and path[0] == accumulator for path in grouped_paths)
 
 
+def test_memory_free_row_refinement_compiles_from_continuous_voltage() -> None:
+    rows = RowEventConfig()
+    config = ModelConfig(
+        input_width=rows.input_width,
+        batch_size=1,
+        neuron_count=64,
+        recurrent_edges=32,
+        max_latent_steps=30,
+        readout_width=8,
+        color_rank=2,
+        seed=2173,
+        event_valid_index=rows.valid_slice.start,
+        decoder_mode="row_refinement",
+        refinement_steps=30,
+        refinement_layout=_row_refinement_layout(rows),
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_pp_prop(LatentWorkspaceModel(config))
+
+    etrace_paths = {path for path, _ in learner.report.etrace_weights}
+    assert {
+        ("answer_row_head", "weight"),
+        ("answer_shape_head", "weight"),
+    } <= etrace_paths
+
+    low_voltage = LatentWorkspaceModel(config)
+    high_voltage = LatentWorkspaceModel(config)
+    low_voltage.neu.V.value = jnp.full((1, 64), 0.5, dtype=jnp.float32) * u.mV
+    high_voltage.neu.V.value = jnp.full((1, 64), 1.5, dtype=jnp.float32) * u.mV
+    event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+
+    low_voltage.cell_step(event, advance)
+    high_voltage.cell_step(event, advance)
+
+    np.testing.assert_array_equal(low_voltage.spikes, high_voltage.spikes)
+    assert not np.allclose(low_voltage.answer_row.value, high_voltage.answer_row.value)
+
+
 def test_feedback_uses_prior_answer_row_without_writing_context_memory() -> None:
     model = LatentWorkspaceModel(_row_refinement_config(input_gain=12.0))
     _, events = _row_refinement_episode()
