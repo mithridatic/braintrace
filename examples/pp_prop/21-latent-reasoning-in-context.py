@@ -143,6 +143,7 @@ except ModuleNotFoundError:
 
 DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only"]
+AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -248,6 +249,25 @@ class ExperimentConfig:
     decoder_mode : {"legacy_cp", "row_refinement"}
         Explicit output representation. Production and CLI defaults use learned
         row-wise refinement; legacy CP remains available only when named.
+    adaptation_learning_rate : float
+        Task-local online adaptation rate. Adaptation is what produces the
+        score: starting from a fresh initialization with no pretraining at all,
+        it moves held-out shape accuracy 0.151 to 0.372 and pixel accuracy
+        0.355 to 0.493 over 86 tasks, improving shape on 21 tasks and degrading
+        it on 2. Zero falls back to ``learning_rate``, which is a pretraining
+        rate and far too small for this stage.
+    adaptation_update_schedule : {"per_episode", "per_tick"}
+        Whether a fold accumulates one gradient and takes one optimizer step,
+        or applies the eligibility-trace term as an update at every supervised
+        tick. ``per_tick`` is the online schedule and the default: it led on
+        shape, pixel, exact answers, and per-task helped-versus-hurt, and
+        trailed on none. The margin over a tuned ``per_episode`` arm is within
+        noise at 86 tasks and it costs about 2.3x the wall clock, so the
+        cheaper schedule remains selectable.
+    adaptation_task_group : int
+        Number of tasks per compiled adaptation dispatch. Dispatching all 400
+        as one program killed the CUDA context on this WDDM device after 64
+        minutes; groups of 20 ran the identical arithmetic to completion.
     ablation_slot : int
         Deterministic 64-neuron slot used by the frozen ablation control.
     evaluation_task_limit : int or None
@@ -280,13 +300,14 @@ class ExperimentConfig:
     training_bank_size: int = 0
     training_workers: int = 4
     learning_rate: float = 1e-4
-    adaptation_learning_rate: float = 0.0
-    adaptation_epochs: int = 1
+    adaptation_learning_rate: float = 5e-5
+    adaptation_epochs: int = 2
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
-    adaptation_task_group: int = 0
+    adaptation_task_group: int = 20
     parameter_checkpoint: pathlib.Path | None = None
+    adaptation_update_schedule: AdaptationSchedule = "per_tick"
     initial_checkpoint: pathlib.Path | None = None
     checkpoint_every: int = 0
     training_holdout_tasks: int = 0
@@ -325,6 +346,10 @@ class ExperimentConfig:
             raise ValueError("device must be 'cpu' or 'gpu'")
         if self.primary_candidate_mode != "model_only":
             raise ValueError("primary_candidate_mode must be 'model_only'")
+        if self.adaptation_update_schedule not in ("per_episode", "per_tick"):
+            raise ValueError(
+                "adaptation_update_schedule must be 'per_episode' or 'per_tick'"
+            )
         if self.decoder_mode not in ("legacy_cp", "row_refinement"):
             raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
@@ -3252,6 +3277,7 @@ def _task_local_adaptation_evaluation(
         latent_steps=config.latent_steps,
         clip_norm=config.clip_norm,
         epochs=config.adaptation_epochs,
+        update_schedule=config.adaptation_update_schedule,
     )
     started = time.perf_counter()
     result = _run_adaptation_in_task_groups(runner, bank, config.adaptation_task_group)
@@ -5583,13 +5609,18 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-bank-size", type=int, default=0)
     parser.add_argument("--training-workers", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
-    parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
-    parser.add_argument("--adaptation-epochs", type=int, default=1)
+    parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
+    parser.add_argument("--adaptation-epochs", type=int, default=2)
+    parser.add_argument(
+        "--adaptation-update-schedule",
+        choices=("per_episode", "per_tick"),
+        default="per_tick",
+    )
     parser.add_argument("--parameter-checkpoint", type=pathlib.Path)
     parser.add_argument("--initial-checkpoint", type=pathlib.Path)
     parser.add_argument("--checkpoint-every", type=int, default=0)
     parser.add_argument("--training-holdout-tasks", type=int, default=0)
-    parser.add_argument("--adaptation-task-group", type=int, default=0)
+    parser.add_argument("--adaptation-task-group", type=int, default=20)
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
         "--decoder-mode",
@@ -5632,6 +5663,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_workers=args.training_workers,
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
+        adaptation_update_schedule=args.adaptation_update_schedule,
         parameter_checkpoint=args.parameter_checkpoint,
         initial_checkpoint=args.initial_checkpoint,
         checkpoint_every=args.checkpoint_every,

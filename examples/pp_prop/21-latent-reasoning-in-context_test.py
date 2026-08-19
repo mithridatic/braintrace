@@ -4558,16 +4558,19 @@ def test_task_local_entry_uses_post_pretraining_snapshot_and_target_free_bank(
 
     def compile_runner(model, learner, optimizer, **kwargs):
         assert kwargs["base_parameters"] == "post-pretraining-snapshot"
+        # The real runner repeats each task's fold schedule `epochs` times, so
+        # the fake must too: the caller counts applied folds against
+        # valid-folds-times-epochs and would otherwise see a phantom shortfall.
+        epochs = int(kwargs.get("epochs", 1))
 
         def run(bank):
             task_count, query_count = bank.query_valid.shape
             outputs = np.zeros((task_count, query_count, 3, 9060), dtype=np.float32)
             outputs[..., 0] = np.arange(3, dtype=np.float32)
+            applied = np.tile(np.asarray(bank.fold_inputs.fold_valid), (1, epochs))
             return SimpleNamespace(
-                fold_losses=np.ones(
-                    bank.fold_inputs.fold_valid.shape, dtype=np.float32
-                ),
-                fold_applied=np.asarray(bank.fold_inputs.fold_valid),
+                fold_losses=np.ones(applied.shape, dtype=np.float32),
+                fold_applied=applied,
                 checkpoint_outputs=outputs,
                 checkpoint_recorded=np.broadcast_to(
                     np.asarray(bank.query_valid)[..., None],
@@ -4635,8 +4638,11 @@ def test_task_local_entry_uses_post_pretraining_snapshot_and_target_free_bank(
         assert evidence["performed"] is True
         assert evidence["mode"] == "compiled_task_local_pp_prop_leave_one_out"
         assert evidence["target_free_query_bank"] is True
-        assert evidence["fold_count"] == 2
-        assert evidence["applied_fold_count"] == 2
+        # Two leave-one-out folds, replayed once per configured epoch. Pinning
+        # the product rather than the constant keeps this honest if the default
+        # epoch count moves again.
+        assert evidence["fold_count"] == 2 * config.adaptation_epochs
+        assert evidence["applied_fold_count"] == 2 * config.adaptation_epochs
         assert evidence["query_count"] == 1
         assert evidence["bank_bytes"] == banks[0].projected_bytes
         assert (
