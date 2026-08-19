@@ -270,7 +270,11 @@ class ExperimentConfig:
     latent_steps: int = 60
     training_updates: int = 96
     training_chunk_size: int = 0
+    training_batch_size: int = 1
+    training_bank_size: int = 0
     learning_rate: float = 1e-4
+    adaptation_learning_rate: float = 0.0
+    adaptation_epochs: int = 1
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
@@ -293,6 +297,9 @@ class ExperimentConfig:
             ("latent_steps", 60),
             ("training_updates", 0),
             ("training_chunk_size", 0),
+            ("training_batch_size", 1),
+            ("training_bank_size", 0),
+            ("adaptation_epochs", 1),
             ("ablation_slot", 0),
         ):
             object.__setattr__(
@@ -355,6 +362,14 @@ class ExperimentConfig:
             and self.training_updates % self.training_chunk_size
         ):
             raise ValueError("training_chunk_size must divide training_updates")
+        if self.training_bank_size and self.training_bank_size < self.training_batch_size:
+            raise ValueError("training_bank_size must cover one training batch")
+        if self.adaptation_learning_rate:
+            object.__setattr__(
+                self,
+                "adaptation_learning_rate",
+                _positive_real(self.adaptation_learning_rate, "adaptation_learning_rate"),
+            )
 
     @classmethod
     def smoke_config(
@@ -1003,23 +1018,112 @@ def _training_row(
     }
 
 
+def _merge_training_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Combine independent episodes into one batched optimizer update.
+
+    Episodes carry different demonstration counts, so their latent windows sit
+    at different physical ticks. The batched tick mask therefore selects every
+    tick on which at least one episode is latent, and the step function weights
+    each episode by its own advance gate. A single-episode batch reproduces the
+    unbatched tensors exactly.
+    """
+    masks = np.stack([row["masks"] for row in rows])
+    active = np.any(masks > 0.0, axis=0)
+    mask = np.zeros_like(rows[0]["masks"])
+    mask[active] = np.float32(1.0 / np.count_nonzero(active))
+    return {
+        "events": np.concatenate([row["events"] for row in rows], axis=1),
+        "advances": np.concatenate([row["advances"] for row in rows], axis=1),
+        "colors": np.concatenate([row["colors"] for row in rows], axis=0),
+        "heights": np.asarray([row["heights"] for row in rows], dtype=np.int32),
+        "widths": np.asarray([row["widths"] for row in rows], dtype=np.int32),
+        "masks": mask,
+        "task_fingerprints": tuple(row["task_fingerprints"] for row in rows),
+        "base_task_fingerprints": tuple(row["base_task_fingerprints"] for row in rows),
+        "source_names": tuple(row["source_names"] for row in rows),
+        "held_out_demonstration_indices": tuple(
+            row["held_out_demonstration_index"] for row in rows
+        ),
+    }
+
+
 def _stacked_chunk(rows: list[dict[str, Any]], efforts: np.ndarray) -> _TrainingTensors:
     def column(name: str) -> list[Any]:
         return [row[name] for row in rows]
 
+    def flattened(name: str) -> tuple[Any, ...]:
+        return tuple(value for row in rows for value in row[name])
+
     return _TrainingTensors(
         events=np.stack(column("events")),
         advances=np.stack(column("advances")),
-        heights=np.asarray(column("heights"), dtype=np.int32)[:, None],
-        widths=np.asarray(column("widths"), dtype=np.int32)[:, None],
+        heights=np.stack(column("heights")),
+        widths=np.stack(column("widths")),
         colors=np.stack(column("colors")),
         masks=np.stack(column("masks")),
         efforts=efforts,
-        task_fingerprints=tuple(column("task_fingerprints")),
-        base_task_fingerprints=tuple(column("base_task_fingerprints")),
-        source_names=tuple(column("source_names")),
-        held_out_demonstration_indices=tuple(column("held_out_demonstration_index")),
+        task_fingerprints=flattened("task_fingerprints"),
+        base_task_fingerprints=flattened("base_task_fingerprints"),
+        source_names=flattened("source_names"),
+        held_out_demonstration_indices=flattened("held_out_demonstration_indices"),
     )
+
+
+def _training_bank(
+    data: _ExperimentData,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    rng: brainstate.random.RandomState,
+) -> dict[int, list[dict[str, Any]]]:
+    """Encode a reusable episode bank, one list per supervised effort.
+
+    Encoding one fresh fold per episode slot dominates wall clock once updates
+    are batched. A bank of ``training_bank_size`` episodes per effort is encoded
+    once and drawn from with replacement instead. Size zero keeps the original
+    behaviour of encoding every episode slot independently.
+    """
+    if not config.training_bank_size:
+        return {}
+    return {
+        int(effort): [
+            _training_row(
+                data.training[int(index)],
+                config,
+                row_config,
+                rng,
+                effort=int(effort),
+                plumbing_only=data.plumbing_only,
+            )
+            for index in rng.randint(
+                0, len(data.training), size=config.training_bank_size
+            )
+        ]
+        for effort in TRAINING_EFFORTS
+    }
+
+
+def _banked_training_row(
+    bank: dict[int, list[dict[str, Any]]],
+    origin: _OriginTask,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+    rng: brainstate.random.RandomState,
+    *,
+    effort: int,
+    plumbing_only: bool,
+) -> dict[str, Any]:
+    """Draw one episode from the bank, or encode a fresh one when it is empty."""
+    if not bank:
+        return _training_row(
+            origin,
+            config,
+            row_config,
+            rng,
+            effort=effort,
+            plumbing_only=plumbing_only,
+        )
+    episodes = bank[int(effort)]
+    return episodes[int(np.asarray(rng.randint(0, len(episodes))))]
 
 
 def _training_chunks(
@@ -1041,20 +1145,30 @@ def _training_chunks(
         raise ValueError("training data is empty")
     rng = brainstate.random.RandomState(config.seed + 1000)
     efforts = _effort_schedule(config.training_updates, rng)
+    batch = config.training_batch_size
     task_indices = np.asarray(
-        rng.randint(0, len(data.training), size=config.training_updates), dtype=np.int32
+        rng.randint(0, len(data.training), size=config.training_updates * batch),
+        dtype=np.int32,
     )
+    bank = _training_bank(data, config, row_config, rng)
     size = config.training_chunk_size or config.training_updates
     rows: list[dict[str, Any]] = []
-    for update_index, task_index in enumerate(task_indices):
+    for update_index, effort in enumerate(efforts):
+        picks = task_indices[update_index * batch : (update_index + 1) * batch]
         rows.append(
-            _training_row(
-                data.training[int(task_index)],
-                config,
-                row_config,
-                rng,
-                effort=int(efforts[update_index]),
-                plumbing_only=data.plumbing_only,
+            _merge_training_rows(
+                [
+                    _banked_training_row(
+                        bank,
+                        data.training[int(task_index)],
+                        config,
+                        row_config,
+                        rng,
+                        effort=int(effort),
+                        plumbing_only=data.plumbing_only,
+                    )
+                    for task_index in picks
+                ]
             )
         )
         if len(rows) == size:
@@ -1402,6 +1516,13 @@ def _train_chunks(
     return losses, schedule
 
 
+def _per_episode_efforts(
+    efforts: tuple[int, ...], batch_size: int
+) -> tuple[int, ...]:
+    """Expand one supervised depth per update into one per batched episode."""
+    return tuple(int(effort) for effort in efforts for _ in range(batch_size))
+
+
 def _train_model(
     model: LatentWorkspaceModel,
     chunks: Iterable[_TrainingTensors],
@@ -1462,17 +1583,18 @@ def _train_model(
                         jnp.asarray(model.reasoning_index.value, dtype=jnp.int32) - 1,
                         30,
                     )
-                    return jnp.mean(
-                        row_refinement_loss_per_example(
-                            compact,
-                            target_height,
-                            target_width,
-                            target_colors,
-                            current_rows,
-                        )
+                    losses = row_refinement_loss_per_example(
+                        compact,
+                        target_height,
+                        target_width,
+                        target_colors,
+                        current_rows,
                     )
-                return jnp.mean(
-                    arc_loss_per_example(
+                    supervised = advance_gate & ~(
+                        event[:, model.config.event_valid_index] > 0.5
+                    )
+                else:
+                    losses = arc_loss_per_example(
                         compact,
                         target_height + 1,
                         target_width + 1,
@@ -1480,6 +1602,9 @@ def _train_model(
                         color_rank=rank,
                         class_balanced_colors=config.balanced_color_loss,
                     )
+                    supervised = advance_gate
+                return jnp.sum(jnp.where(supervised, losses, 0.0)) / jnp.maximum(
+                    jnp.sum(supervised), 1
                 )
 
             gradients, objective = learner.etrace_grad(
@@ -1516,7 +1641,7 @@ def _train_model(
             schedule.base_task_fingerprints,
             schedule.task_fingerprints,
             schedule.held_out_demonstration_indices,
-            schedule.efforts,
+            _per_episode_efforts(schedule.efforts, config.training_batch_size),
             strict=True,
         )
     ]
@@ -2615,7 +2740,8 @@ def _task_local_adaptation_evaluation(
     base_parameters = snapshot_parameters(model)
     before = _tree_digest(parameter_snapshot(model))
     learner = compile_pp_prop(model)
-    optimizer = braintools.optim.Adam(lr=config.learning_rate)
+    adaptation_rate = config.adaptation_learning_rate or config.learning_rate
+    optimizer = braintools.optim.Adam(lr=adaptation_rate)
     optimizer.register_trainable_weights(learner.param_states)
     runner = compile_arc_task_local_adaptation_runner(
         model,
@@ -2625,6 +2751,7 @@ def _task_local_adaptation_evaluation(
         row_config=row_config,
         latent_steps=config.latent_steps,
         clip_norm=config.clip_norm,
+        epochs=config.adaptation_epochs,
     )
     started = time.perf_counter()
     result = runner(bank)
@@ -2658,17 +2785,24 @@ def _task_local_adaptation_evaluation(
     )
     fold_applied = np.asarray(result.fold_applied, dtype=np.bool_)
     fold_losses = np.asarray(result.fold_losses, dtype=np.float64)
-    fold_count = int(np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid)))
+    fold_count = int(
+        np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid))
+    ) * config.adaptation_epochs
     applied_fold_count = int(np.count_nonzero(fold_applied))
     evidence = {
         "performed": True,
         "mode": "compiled_task_local_pp_prop_leave_one_out",
+        "learning_rate": float(adaptation_rate),
+        "epochs": int(config.adaptation_epochs),
         "target_free_query_bank": True,
         "target_free_official_query_bank": True,
         "task_count": int(valid.shape[0]),
         "query_count": int(np.count_nonzero(valid)),
         "fold_capacity": int(fold_applied.shape[1]),
         "fold_count": fold_count,
+        "distinct_fold_count": int(
+            np.count_nonzero(np.asarray(bank.fold_inputs.fold_valid))
+        ),
         "applied_fold_count": applied_fold_count,
         "fold_applied": fold_applied.tolist(),
         "fold_losses": fold_losses.tolist(),
@@ -4789,7 +4923,16 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         data = _load_data(config)
         rows = _row_config(config)
         model = _make_model(config, rows, batch_size=1, device=device)
-        training = _train_model(model, _training_chunks(data, config, rows), config)
+        fitted = (
+            model
+            if config.training_batch_size == 1
+            else _make_model(
+                config, rows, batch_size=config.training_batch_size, device=device
+            )
+        )
+        training = _train_model(fitted, _training_chunks(data, config, rows), config)
+        if fitted is not model:
+            _copy_parameters(fitted, model)
         evaluation = _evaluate(model, data, config, rows, device)
     finally:
         monitor_report = monitor.stop() if monitor is not None else None
@@ -4822,7 +4965,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     memory_architecture = _memory_architecture_report(
         config,
         rows,
-        training_batch_size=model.config.batch_size,
+        training_batch_size=config.training_batch_size,
         evaluation_batch_size=int(evaluation["query_count"]),
     )
     memory_implementation = _model_memory_report(model)
@@ -4916,7 +5059,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument("--training-updates", type=int, default=96)
     parser.add_argument("--training-chunk-size", type=int, default=0)
+    parser.add_argument("--training-batch-size", type=int, default=1)
+    parser.add_argument("--training-bank-size", type=int, default=0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--adaptation-learning-rate", type=float, default=0.0)
+    parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
         "--decoder-mode",
@@ -4954,6 +5101,10 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         memory_decay=args.memory_decay,
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
+        training_batch_size=args.training_batch_size,
+        training_bank_size=args.training_bank_size,
+        adaptation_learning_rate=args.adaptation_learning_rate,
+        adaptation_epochs=args.adaptation_epochs,
         learning_rate=args.learning_rate,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,

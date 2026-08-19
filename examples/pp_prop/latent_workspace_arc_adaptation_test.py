@@ -573,6 +573,67 @@ def test_real_compiled_arc_runner_adapts_and_restores_target_free_tasks() -> Non
     assert int(optimizer.step_count.value) == 0
 
 
+def test_repeated_epochs_replay_each_fold_schedule_in_order() -> None:
+    rows = RowEventConfig(max_demonstrations=3)
+    task = ArcTask(
+        train=(_pair(1, 2), _pair(3, 4), _pair(5, 6)),
+        test=(ArcPair(ArcGrid(((7,),)), ArcGrid(((8,),))),),
+        task_id="epoch-runner",
+    )
+    short = ArcTask(
+        train=(_pair(1, 4), _pair(2, 5)),
+        test=(ArcPair(ArcGrid(((3,),)), ArcGrid(((6,),))),),
+        task_id="epoch-short",
+    )
+    bank = build_arc_target_free_task_bank((short, task), rows)
+    model = _tiny_row_model(rows)
+    learner = compile_pp_prop(model)
+    optimizer = braintools.optim.Adam(lr=0.01)
+    optimizer.register_trainable_weights(learner.param_states)
+    base = snapshot_parameters(model)
+    runner = compile_arc_task_local_adaptation_runner(
+        model,
+        learner,
+        optimizer,
+        base_parameters=base,
+        row_config=rows,
+        latent_steps=60,
+        clip_norm=1.0,
+        epochs=2,
+    )
+
+    result = runner(bank)
+
+    assert result.fold_losses.shape == (2, 6)
+    np.testing.assert_array_equal(
+        result.fold_applied,
+        [[True, True, False, True, True, False], [True] * 6],
+    )
+    assert np.all(np.isfinite(np.asarray(result.fold_losses)))
+    _assert_parameter_snapshots_equal(snapshot_parameters(model), base)
+    assert int(optimizer.step_count.value) == 0
+
+
+@pytest.mark.parametrize("epochs", (0, -1, 1.5, True))
+def test_runner_rejects_a_non_positive_epoch_count(epochs) -> None:
+    rows = RowEventConfig(max_demonstrations=3)
+    model = _tiny_row_model(rows)
+    learner = compile_pp_prop(model)
+    optimizer = braintools.optim.Adam(lr=0.01)
+    optimizer.register_trainable_weights(learner.param_states)
+    with pytest.raises(ValueError, match="epochs"):
+        compile_arc_task_local_adaptation_runner(
+            model,
+            learner,
+            optimizer,
+            base_parameters=snapshot_parameters(model),
+            row_config=rows,
+            latent_steps=60,
+            clip_norm=1.0,
+            epochs=epochs,
+        )
+
+
 def test_arc_runner_source_uses_compiled_loops_without_python_model_loop() -> None:
     import ast
     import inspect

@@ -2342,6 +2342,7 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
             batch_size=1,
             color_rank=4,
             decoder_mode=decoder_mode,
+            event_valid_index=0,
         )
         reasoning_index = SimpleNamespace(value=jnp.asarray([1], dtype=jnp.int32))
 
@@ -3692,6 +3693,159 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
     for field in example._CHUNK_METADATA_FIELDS:
         assert getattr(reference, field) == getattr(chunked, field), field
+
+
+def test_single_episode_batches_reproduce_the_unbatched_schedule(example):
+    reference = example.ExperimentConfig.smoke_config()
+    explicit = dataclasses.replace(reference, training_batch_size=1)
+    data = example._load_data(reference)
+    rows = example._row_config(reference)
+
+    first = example._prepare_training(data, reference, rows)
+    second = example._prepare_training(data, explicit, rows)
+
+    for field in example._CHUNK_ARRAY_FIELDS:
+        assert np.array_equal(getattr(first, field), getattr(second, field)), field
+    for field in example._CHUNK_METADATA_FIELDS:
+        assert getattr(first, field) == getattr(second, field), field
+
+
+def test_batched_updates_carry_one_episode_per_batch_slot(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), training_batch_size=3
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+
+    tensors = example._prepare_training(data, config, rows)
+
+    updates = config.training_updates
+    assert tensors.events.shape[0] == updates
+    assert tensors.events.shape[2] == 3
+    assert tensors.advances.shape[1:] == (tensors.events.shape[1], 3)
+    assert tensors.heights.shape == (updates, 3)
+    assert tensors.widths.shape == (updates, 3)
+    assert tensors.colors.shape == (updates, 3, 30, 30)
+    assert tensors.masks.shape == (updates, tensors.events.shape[1])
+    assert len(tensors.task_fingerprints) == updates * 3
+    assert len(tensors.held_out_demonstration_indices) == updates * 3
+
+
+def test_batched_tick_mask_selects_every_latent_tick_of_the_batch(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), training_batch_size=2
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    rng = example.brainstate.random.RandomState(config.seed)
+    first = example._training_row(
+        data.training[0], config, rows, rng, effort=30, plumbing_only=data.plumbing_only
+    )
+    second = example._training_row(
+        data.training[-1],
+        config,
+        rows,
+        rng,
+        effort=30,
+        plumbing_only=data.plumbing_only,
+    )
+
+    merged = example._merge_training_rows([first, second])
+
+    union = (first["masks"] > 0.0) | (second["masks"] > 0.0)
+    assert np.array_equal(merged["masks"] > 0.0, union)
+    assert np.isclose(float(merged["masks"].sum()), 1.0)
+    assert merged["events"].shape[1] == 2
+    assert np.array_equal(merged["events"][:, :1], first["events"])
+    assert np.array_equal(merged["events"][:, 1:], second["events"])
+
+
+def test_merging_one_episode_leaves_its_tensors_unchanged(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    rng = example.brainstate.random.RandomState(config.seed)
+    row = example._training_row(
+        data.training[0], config, rows, rng, effort=60, plumbing_only=data.plumbing_only
+    )
+
+    merged = example._merge_training_rows([row])
+
+    assert np.array_equal(merged["events"], row["events"])
+    assert np.array_equal(merged["advances"], row["advances"])
+    assert np.array_equal(merged["masks"], row["masks"])
+    assert np.array_equal(merged["colors"], row["colors"])
+
+
+def test_episode_bank_reuses_encoded_folds_for_every_effort(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), training_bank_size=2
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    rng = example.brainstate.random.RandomState(config.seed)
+
+    bank = example._training_bank(data, config, rows, rng)
+
+    assert set(bank) == {int(effort) for effort in example.TRAINING_EFFORTS}
+    assert all(len(episodes) == 2 for episodes in bank.values())
+    for effort, episodes in bank.items():
+        for episode in episodes:
+            assert np.isclose(float(episode["masks"].sum()), 1.0)
+            assert int(np.count_nonzero(episode["masks"])) == effort
+
+
+def test_an_empty_bank_encodes_each_episode_slot_directly(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    rng = example.brainstate.random.RandomState(config.seed)
+
+    assert example._training_bank(data, config, rows, rng) == {}
+
+    fresh = example._banked_training_row(
+        {},
+        data.training[0],
+        config,
+        rows,
+        rng,
+        effort=30,
+        plumbing_only=data.plumbing_only,
+    )
+    assert int(np.count_nonzero(fresh["masks"])) == 30
+
+
+def test_banked_schedules_are_reproducible_and_chunk_independent(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        training_batch_size=2,
+        training_bank_size=4,
+    )
+    split = dataclasses.replace(config, training_chunk_size=1)
+    data = example._load_data(config)
+    rows = example._row_config(config)
+
+    reference = example._prepare_training(data, config, rows)
+    repeated = example._prepare_training(data, config, rows)
+    chunked = example._prepare_training(data, split, rows)
+
+    for field in example._CHUNK_ARRAY_FIELDS:
+        assert np.array_equal(getattr(reference, field), getattr(repeated, field)), field
+        assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
+    for field in example._CHUNK_METADATA_FIELDS:
+        assert getattr(reference, field) == getattr(chunked, field), field
+
+
+def test_batched_training_expands_one_effort_per_episode(example):
+    assert example._per_episode_efforts((30, 60), 1) == (30, 60)
+    assert example._per_episode_efforts((30, 60), 3) == (30, 30, 30, 60, 60, 60)
+
+
+def test_a_bank_smaller_than_one_batch_is_rejected(example):
+    with pytest.raises(ValueError, match="training_bank_size"):
+        example.ExperimentConfig(training_batch_size=8, training_bank_size=4)
+    with pytest.raises(ValueError, match="training_batch_size"):
+        example.ExperimentConfig(training_batch_size=0)
 
 
 def test_chunked_training_reproduces_unchunked_losses_bitwise(example):

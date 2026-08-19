@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from numbers import Real
+from numbers import Integral, Real
 from typing import Any
 from typing import NamedTuple
 
@@ -800,6 +800,7 @@ def compile_arc_task_local_adaptation_runner(
     row_config: RowEventConfig,
     latent_steps: int = 60,
     clip_norm: float = 1.0,
+    epochs: int = 1,
 ) -> Any:
     """Compile target-free ARC leave-one-out adaptation and query inference.
 
@@ -809,6 +810,12 @@ def compile_arc_task_local_adaptation_runner(
     updates only for valid folds, and records only semantic checkpoints 0, 30,
     and 60 for official target-free queries. Parameters, optimizer state,
     model dynamics, and eligibility traces are restored on every exit.
+
+    A task's fold schedule repeats ``epochs`` times in its original order.
+    One pass supplies at most one update per demonstration, which measurement
+    showed is too few to move an exact answer; repeating the schedule keeps the
+    adaptation data unchanged while giving the optimizer a useful number of
+    steps. Fold losses and applied flags are reported for every repeated fold.
 
     Parameters
     ----------
@@ -826,6 +833,8 @@ def compile_arc_task_local_adaptation_runner(
         Fixed refinement depth. The current protocol requires exactly 60.
     clip_norm
         Positive finite gradient clipping norm.
+    epochs
+        Positive number of passes over each task's fold schedule.
 
     Returns
     -------
@@ -834,6 +843,9 @@ def compile_arc_task_local_adaptation_runner(
         :class:`ArcTaskBankAdaptationResult`.
     """
 
+    if isinstance(epochs, bool) or not isinstance(epochs, Integral) or int(epochs) < 1:
+        raise ValueError("epochs must be a positive integer")
+    epochs = int(epochs)
     _validate_arc_runner_configuration(
         model,
         learner,
@@ -1005,8 +1017,8 @@ def compile_arc_task_local_adaptation_runner(
             fold_losses, fold_applied = brainstate.transform.for_loop(
                 adapt_one,
                 (
-                    task_folds.held_out_demonstration_index,
-                    task_folds.fold_valid,
+                    jnp.tile(task_folds.held_out_demonstration_index, epochs),
+                    jnp.tile(task_folds.fold_valid, epochs),
                 ),
             )
 
