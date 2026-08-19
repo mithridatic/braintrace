@@ -445,6 +445,200 @@ class SequenceDriverMixin:
 
         return (total, value, aux) if has_aux else (total, value)
 
+    # -- the online driver ---------------------------------------------------
+
+    def etrace_online(
+        self,
+        *sequences: Any,
+        step_fn: Callable,
+        optimizer: Any,
+        mask: Any = None,
+        chunk_size: Optional[int] = None,
+        weights: Any = None,
+        transform: Optional[Callable] = None,
+        has_aux: bool = False,
+        return_value: bool = False,
+    ) -> Any:
+        r"""Apply an online update at every step of a sequence.
+
+        The learning rule these algorithms implement is a sum of per-step terms,
+
+        .. math::
+
+            \nabla_{\boldsymbol{\theta}} \mathcal{L}
+            = \sum_{t' \in \mathcal{T}}
+              \frac{\partial \mathcal{L}^{t'}}{\partial \mathbf{h}^{t'}}
+              \circ \boldsymbol{\epsilon}^{t'},
+
+        and every term is complete at its own timestep -- no term refers to a
+        later step. :meth:`etrace_grad` computes those terms and adds them into
+        an accumulator, applying one update once the sequence ends; this method
+        computes the same terms and hands each one to ``optimizer`` as it is
+        produced. Step ``t + 1`` therefore runs under parameters that step ``t``
+        already moved, which is the regime an eligibility-trace algorithm exists
+        for and which no accumulate-then-update path can express.
+
+        Parameters
+        ----------
+        *sequences
+            As in :meth:`etrace_grad`.
+        step_fn : callable
+            As in :meth:`etrace_grad`. Keyword-only and required.
+        optimizer : braintools.optim.Optimizer
+            Optimizer holding the trainable weights, already registered against
+            them. Called once per updating step, inside the compiled loop.
+        mask : array, optional
+            ``(T,)`` per-step weights; ``None`` means all-ones. **Gates the
+            update as well as the loss**, unlike :meth:`etrace_grad` where it
+            gates the loss alone -- see the note below. Values need not be
+            binary, and a nonzero weight scales that step's gradient exactly as
+            it does there.
+        chunk_size : int, optional
+            As in :meth:`etrace_grad`, and here it is the update-frequency
+            knob: ``k`` steps produce one gradient and one update. A window
+            updates when any step in it carries nonzero weight.
+        weights : dict, optional
+            The :class:`brainstate.ParamState` to differentiate. Defaults to
+            the learner's own ``param_states``. Must be the weights
+            ``optimizer`` was registered against.
+        transform : callable, optional
+            Applied to the gradient pytree before the optimizer sees it, e.g.
+            ``lambda g: brainstate.nn.clip_grad_norm(g, 1.0)``. An online run
+            applies hundreds of updates per sequence rather than one, so
+            clipping is rarely optional, and the loop is compiled -- a caller
+            cannot reach inside it.
+        has_aux : bool, optional
+            Whether ``step_fn`` returns ``(loss, aux)``.
+        return_value : bool, optional
+            Whether to return the per-step losses.
+
+        Returns
+        -------
+        None, losses, aux, or a tuple
+            ``None`` by default; the raw pre-mask losses ``(T,)`` when
+            ``return_value=True``; ``aux`` when ``has_aux=True``; both, as
+            ``(losses, aux)``, when both are set.
+
+        Raises
+        ------
+        TypeError
+            If ``step_fn`` or ``optimizer`` is not given, or as in
+            :meth:`etrace_grad` for *chunk_size* and wrapped sequences.
+        ValueError
+            As in :meth:`etrace_grad`.
+
+        Notes
+        -----
+        **A zero-weight step performs no update at all.** In
+        :meth:`etrace_grad` a zero weight only zeroes that step's contribution
+        to a sum, which is a true no-op. Here it would not be: a stateful
+        optimizer given an identically zero gradient still decays its moment
+        estimates and still takes a step from surviving momentum. On a sequence
+        whose supervised window is a fraction of its length, that momentum
+        bleed would outweigh the learning signal. So a zero-weight step drives
+        the model and advances the eligibility trace exactly as it does in
+        :meth:`etrace_grad`, and leaves the parameters and the optimizer state
+        untouched.
+
+        There is no ``reduction``. It divides an accumulated gradient by the
+        total mask weight, and there is no accumulator here to divide. Losses
+        come back unreduced.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import brainstate
+            >>> import braintools
+            >>> import braintrace
+            >>> learner = braintrace.compile(model, braintrace.pp_prop, inputs[0])
+            >>> opt = braintools.optim.Adam(1e-3)
+            >>> opt.register_trainable_weights(learner.param_states)
+            >>>
+            >>> def step_loss(inp, tar):
+            ...     out = learner(inp)
+            ...     return braintools.metric.squared_error(out, tar).mean()
+            >>>
+            >>> losses = learner.etrace_online(
+            ...     inputs, targets,
+            ...     step_fn=step_loss,
+            ...     optimizer=opt,
+            ...     transform=lambda g: brainstate.nn.clip_grad_norm(g, 1.0),
+            ...     return_value=True,
+            ... )
+        """
+        if optimizer is None:
+            raise TypeError(
+                'etrace_online needs an optimizer: it applies the update '
+                'itself, once per step, inside the compiled loop. Register it '
+                'against the same weights first, e.g. '
+                'opt.register_trainable_weights(learner.param_states).'
+            )
+
+        chunk_size = _check_chunk_size(chunk_size)
+        length = _sequence_length(sequences)
+        self._seq_check_window(chunk_size, length, for_grad=True)
+        mask = _check_mask(mask, length)
+
+        if weights is None:
+            weights = self._seq_param_states
+
+        windowed = chunk_size is not None
+        if chunk_size is not None:  # narrows the int; see ``etrace_grad``
+            n_steps = length // chunk_size
+            xs = (_to_windows(sequences, n_steps, chunk_size),
+                  mask.reshape(n_steps, chunk_size))
+        else:
+            xs = (sequences, mask)
+
+        def objective(slices: Any, weight: Any) -> Any:
+            result = step_fn(*slices)
+            if has_aux:
+                loss, aux = result
+            else:
+                loss, aux = result, None
+            if windowed:
+                if jnp.shape(loss) != (chunk_size,):
+                    raise ValueError(
+                        f'with chunk_size={chunk_size}, step_fn must return a '
+                        f'({chunk_size},) vector of per-step losses, got shape '
+                        f'{jnp.shape(loss)}. A window-level objective is spread '
+                        f'over the window explicitly, e.g. '
+                        f'jnp.broadcast_to(value / {chunk_size}, ({chunk_size},)).'
+                    )
+            elif jnp.ndim(loss) != 0:
+                raise ValueError(
+                    f'with chunk_size=None, step_fn must return a scalar loss, '
+                    f'got shape {jnp.shape(loss)}. Reduce over the batch and '
+                    f'feature axes inside step_fn.'
+                )
+            return jnp.sum(weight * loss), (loss, aux)
+
+        grad_fn = brainstate.transform.grad(objective, weights, has_aux=True)
+
+        def body(carry: Any, xs_t: Any) -> Any:
+            slices, weight = xs_t
+            grads, (loss, aux) = grad_fn(slices, weight)
+            if transform is not None:
+                grads = transform(grads)
+            # A zero-weight step must not reach the optimizer at all; see the
+            # Notes. `cond` keeps both the parameters and the optimizer state
+            # untouched on the skipped branch.
+            brainstate.transform.cond(
+                jnp.any(weight != 0),
+                lambda g: optimizer.update(g),
+                lambda g: None,
+                grads,
+            )
+            return carry, (loss, aux)
+
+        _, (losses, aux) = brainstate.transform.scan(body, None, xs)
+
+        if not return_value:
+            return aux if has_aux else None
+        losses = losses.reshape((length,))
+        return (losses, aux) if has_aux else losses
+
     # -- the evolution driver -----------------------------------------------
 
     def etrace_evolve(

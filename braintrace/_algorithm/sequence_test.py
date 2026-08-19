@@ -34,6 +34,7 @@ Two claims get the sharpest treatment, because getting them wrong is silent:
 import inspect
 
 import brainstate
+import braintools
 import brainunit as u
 import jax
 import jax.numpy as jnp
@@ -1478,3 +1479,282 @@ class TestRobustness:
         assert np.isfinite(float(loss))
         for v in _arrays(grads).values():
             assert np.all(np.isfinite(v))
+
+
+# ---------------------------------------------------------------------------
+# The online driver
+# ---------------------------------------------------------------------------
+
+def _optimizer_for(learner, lr=1e-2):
+    opt = braintools.optim.Adam(lr=lr)
+    opt.register_trainable_weights(learner.param_states)
+    return opt
+
+
+def _sgd_for(learner, lr=1e-2):
+    """Plain SGD, for properties Adam's normalization hides."""
+    opt = braintools.optim.SGD(lr=lr)
+    opt.register_trainable_weights(learner.param_states)
+    return opt
+
+
+def _params(learner):
+    """Parameter values as a plain tree, for comparing two runs."""
+    return {k: v.value for k, v in learner.param_states.items()}
+
+
+def _hand_written_online(learner, xs, ys, mask=None, lr=1e-2):
+    """The block ``etrace_online`` replaces: per-step grad, per-step update.
+
+    Written out here rather than imported so the driver is held to an
+    independent construction, matching :class:`TestEquivalenceToTheStatusQuo`.
+    """
+    weights = learner.param_states
+    opt = _optimizer_for(learner, lr)
+    mask = jnp.ones((xs.shape[0],)) if mask is None else mask
+
+    def objective(inp, tar, weight):
+        return weight * _sq_error(learner(inp), tar)
+
+    def body(carry, triple):
+        inp, tar, weight = triple
+        g, loss = brainstate.transform.grad(
+            objective, weights, return_value=True)(inp, tar, weight)
+        brainstate.transform.cond(
+            weight != 0, lambda gg: opt.update(gg), lambda gg: None, g)
+        return carry, loss
+
+    _, losses = brainstate.transform.scan(body, None, (xs, ys, mask))
+    return losses
+
+
+class TestTheOnlineDriver:
+    """``etrace_online`` applies the per-step term as a per-step update."""
+
+    def test_it_reproduces_a_hand_written_per_step_update_loop(self):
+        xs, ys = _inputs(), _targets()
+        ref = _learner()
+        expected_losses = _hand_written_online(ref, xs, ys)
+
+        got = _learner()
+        opt = _optimizer_for(got)
+        losses = got.etrace_online(
+            xs, ys, step_fn=_plain_step(got), optimizer=opt, return_value=True)
+
+        _assert_trees_equal(_params(got), _params(ref), msg='online parameters')
+        np.testing.assert_allclose(np.asarray(losses),
+                                   np.asarray(expected_losses))
+
+    def test_one_step_online_equals_accumulate_then_update(self):
+        """At ``T == 1`` there is nothing to accumulate, so the paths coincide."""
+        xs, ys = _inputs(t=1), _targets(t=1)
+
+        batched = _learner()
+        opt_b = _optimizer_for(batched)
+        grads = batched.etrace_grad(
+            xs, ys, step_fn=_plain_step(batched), reduction='sum')
+        opt_b.update(grads)
+
+        online = _learner()
+        opt_o = _optimizer_for(online)
+        online.etrace_online(xs, ys, step_fn=_plain_step(online), optimizer=opt_o)
+
+        _assert_trees_equal(_params(online), _params(batched), rtol=1e-6,
+                            msg='T == 1 online vs accumulate-then-update')
+
+    def test_a_multi_step_run_is_not_accumulate_then_update(self):
+        """The online path is a mechanism, not a formatting choice."""
+        xs, ys = _inputs(), _targets()
+
+        batched = _learner()
+        opt_b = _optimizer_for(batched)
+        opt_b.update(batched.etrace_grad(
+            xs, ys, step_fn=_plain_step(batched), reduction='sum'))
+
+        online = _learner()
+        opt_o = _optimizer_for(online)
+        online.etrace_online(xs, ys, step_fn=_plain_step(online), optimizer=opt_o)
+
+        assert _max_abs_diff(_params(online), _params(batched)) > 1e-4
+
+    def test_a_zero_prefix_performs_no_update_and_still_drives_the_trace(self):
+        """Spec test 3, and the negative control on optimizer state.
+
+        A zero-weight step must leave the parameters *and* the optimizer's
+        moment estimates alone. If Adam saw the zero gradient, its state would
+        differ by the time the supervised steps ran, and the two runs would
+        part company.
+        """
+        xs, ys = _inputs(), _targets()
+        prefix = 2
+        mask = jnp.asarray([0.0] * prefix + [1.0] * (T - prefix))
+
+        masked = _learner()
+        opt_m = _optimizer_for(masked)
+        masked.etrace_online(xs, ys, step_fn=_plain_step(masked),
+                             optimizer=opt_m, mask=mask)
+
+        evolved = _learner()
+        opt_e = _optimizer_for(evolved)
+        evolved.etrace_evolve(xs[:prefix], step_fn=lambda inp: evolved(inp))
+        evolved.etrace_online(xs[prefix:], ys[prefix:],
+                              step_fn=_plain_step(evolved), optimizer=opt_e)
+
+        _assert_trees_equal(_params(masked), _params(evolved), rtol=1e-6,
+                            msg='zero prefix vs evolve-then-online')
+
+    def test_an_all_zero_mask_never_touches_the_parameters(self):
+        xs, ys = _inputs(), _targets()
+        learner = _learner()
+        before = jax.tree.map(jnp.asarray, _params(learner))
+        opt = _optimizer_for(learner)
+
+        losses = learner.etrace_online(
+            xs, ys, step_fn=_plain_step(learner), optimizer=opt,
+            mask=jnp.zeros((T,)), return_value=True)
+
+        _assert_trees_equal(_params(learner), before, msg='all-zero mask')
+        assert np.all(np.isfinite(np.asarray(losses)))
+
+    def test_a_nonzero_weight_scales_the_applied_gradient(self):
+        """A weight of four moves four times as far.
+
+        Measured under SGD. Adam normalizes by its own second moment and is
+        very nearly invariant to a constant gradient scale, so it cannot see
+        this property at all -- which is exactly why it is the wrong instrument
+        here.
+        """
+        xs, ys = _inputs(t=1), _targets(t=1)
+        start = _params(_learner())
+
+        def move(weight):
+            learner = _learner()
+            learner.etrace_online(
+                xs, ys, step_fn=_plain_step(learner),
+                optimizer=_sgd_for(learner), mask=jnp.asarray([weight]))
+            return jax.tree.map(lambda a, b: b - a, start, _params(learner))
+
+        _assert_trees_equal(
+            move(4.0), jax.tree.map(lambda v: v * 4.0, move(1.0)),
+            rtol=1e-5, atol=1e-7, msg='weight 4 vs 4 x weight 1')
+
+    def test_the_transform_reaches_the_optimizer(self):
+        """A transform that zeroes the gradient must stop the run moving.
+
+        Zeroing rather than scaling: Adam divides by its own second moment, so
+        a halved gradient produces a step that differs only through epsilon.
+        A gradient that is identically zero produces an identically zero step
+        under every optimizer here, which is unambiguous.
+        """
+        xs, ys = _inputs(), _targets()
+        start = _params(_learner())
+
+        zeroed = _learner()
+        zeroed.etrace_online(
+            xs, ys, step_fn=_plain_step(zeroed),
+            optimizer=_optimizer_for(zeroed),
+            transform=lambda g: jax.tree.map(jnp.zeros_like, g))
+
+        plain = _learner()
+        plain.etrace_online(xs, ys, step_fn=_plain_step(plain),
+                            optimizer=_optimizer_for(plain))
+
+        _assert_trees_equal(_params(zeroed), start, msg='zeroed transform')
+        assert _max_abs_diff(_params(plain), start) > 1e-4
+
+    def test_a_scaling_transform_scales_the_step_under_sgd(self):
+        """The transform is a gradient transform, not merely an on/off switch.
+
+        Measured over a single step. Over more than one the claim would be
+        false, and interestingly so: a doubled step at ``t`` leaves the model
+        somewhere else at ``t + 1``, so the gradient it meets there is not the
+        doubled one. That compounding is the online path's whole content, and
+        :meth:`test_a_multi_step_run_is_not_accumulate_then_update` is where it
+        belongs. Linearity is only well posed before the second step exists.
+        """
+        xs, ys = _inputs(t=1), _targets(t=1)
+        start = _params(_learner())
+
+        def move(factor):
+            learner = _learner()
+            learner.etrace_online(
+                xs, ys, step_fn=_plain_step(learner),
+                optimizer=_sgd_for(learner),
+                transform=lambda g: jax.tree.map(lambda v: v * factor, g))
+            return jax.tree.map(lambda a, b: b - a, start, _params(learner))
+
+        _assert_trees_equal(move(2.0), jax.tree.map(lambda v: v * 2.0, move(1.0)),
+                            rtol=1e-5, atol=1e-7,
+                            msg='transform x2 vs 2 x transform x1')
+
+    def test_a_scaled_step_compounds_rather_than_scaling_the_whole_run(self):
+        """Online updates compound: the run is not linear in the step size."""
+        xs, ys = _inputs(), _targets()
+        start = _params(_learner())
+
+        def move(factor):
+            learner = _learner()
+            learner.etrace_online(
+                xs, ys, step_fn=_plain_step(learner),
+                optimizer=_sgd_for(learner),
+                transform=lambda g: jax.tree.map(lambda v: v * factor, g))
+            return jax.tree.map(lambda a, b: b - a, start, _params(learner))
+
+        doubled = move(2.0)
+        linear = jax.tree.map(lambda v: v * 2.0, move(1.0))
+
+        assert _max_abs_diff(doubled, linear) > 1e-6
+
+    def test_window_mode_applies_one_update_per_window(self):
+        """``T // k`` updates, matched by a hand-built window loop."""
+        xs, ys = _inputs(), _targets()
+        method = 'multi-step'
+
+        got = _learner(vjp_method=method)
+        got.etrace_online(xs, ys, step_fn=_window_step(got, K),
+                          optimizer=_optimizer_for(got), chunk_size=K)
+
+        ref = _learner(vjp_method=method)
+        opt = _optimizer_for(ref)
+        weights = ref.param_states
+
+        def objective(x_win, y_win, weight):
+            return jnp.sum(weight * _window_step(ref, K)(x_win, y_win))
+
+        def body(carry, triple):
+            x_win, y_win, weight = triple
+            g = brainstate.transform.grad(objective, weights)(x_win, y_win, weight)
+            opt.update(g)
+            return carry, None
+
+        windows = (xs.reshape(T // K, K, *xs.shape[1:]),
+                   ys.reshape(T // K, K, *ys.shape[1:]),
+                   jnp.ones((T // K, K)))
+        brainstate.transform.scan(body, None, windows)
+
+        _assert_trees_equal(_params(got), _params(ref), rtol=1e-6,
+                            msg='windowed online vs hand-built window loop')
+
+    def test_an_absent_optimizer_is_refused(self):
+        xs, ys = _inputs(), _targets()
+        learner = _learner()
+        with pytest.raises(TypeError, match='needs an optimizer'):
+            learner.etrace_online(xs, ys, step_fn=_plain_step(learner),
+                                  optimizer=None)
+
+    def test_it_validates_its_arguments_like_etrace_grad(self):
+        xs, ys = _inputs(), _targets()
+        learner = _learner()
+        opt = _optimizer_for(learner)
+        step = _plain_step(learner)
+
+        with pytest.raises(ValueError, match='at least one sequence'):
+            learner.etrace_online(step_fn=step, optimizer=opt)
+        with pytest.raises(ValueError, match='leading length'):
+            learner.etrace_online(xs, ys[:-1], step_fn=step, optimizer=opt)
+        with pytest.raises(ValueError, match='mask'):
+            learner.etrace_online(xs, ys, step_fn=step, optimizer=opt,
+                                  mask=jnp.ones((T + 1,)))
+        with pytest.raises(TypeError, match='chunk_size'):
+            learner.etrace_online(xs, ys, step_fn=step, optimizer=opt,
+                                  chunk_size=2.0)
