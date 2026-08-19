@@ -2651,6 +2651,63 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         in (memory_qualification["reasons_not_scientific"])
     )
 
+    row_training = copy.deepcopy(memory_training)
+    row_training["compiler_report"]["etrace_weights"].extend(
+        (
+            {"parameter": "answer_row_head.weight"},
+            {"parameter": "answer_shape_head.weight"},
+        )
+    )
+    row_training["compiler_report"]["excluded_weights"] = []
+    row_training["compiler_report"]["diagnostics"].extend(
+        (
+            {
+                "kind": "relation_included",
+                "level": "info",
+                "weight_path": "answer_row_head.weight",
+                "path_classification_by_hidden_state": {"answer_row": "all_direct"},
+            },
+            {
+                "kind": "relation_included",
+                "level": "info",
+                "weight_path": "answer_shape_head.weight",
+                "path_classification_by_hidden_state": {"answer_shape": "all_direct"},
+            },
+        )
+    )
+    for path in (
+        "color_factor_head.weight",
+        "height_head.weight",
+        "readout_projection.weight",
+        "width_head.weight",
+    ):
+        row_training["parameter_changes"][path] = {
+            "changed": False,
+            "l2_delta": 0.0,
+        }
+    row_training["parameter_changes"].update(
+        {
+            "answer_row_head.weight": {"changed": True, "l2_delta": 1.0},
+            "answer_shape_head.weight": {"changed": True, "l2_delta": 1.0},
+        }
+    )
+    row_qualification = example._qualification(
+        example.ExperimentConfig(training_updates=3),
+        public_data,
+        row_training,
+        memory_evaluation,
+        gpu,
+        model_report,
+    )
+    assert row_qualification["structural_checks"]["pp_prop_compiler_routes"] is True
+    assert row_qualification["structural_checks"]["row_routes_all_direct"] is True
+    assert (
+        row_qualification["scientific_checks"][
+            "all_active_parameter_groups_moved_with_finite_delta"
+        ]
+        is True
+    )
+
     mixed_memory_training = copy.deepcopy(memory_training)
     mixed_memory_training["compiler_report"]["diagnostics"][0][
         "path_classification_by_hidden_state"
@@ -2830,7 +2887,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     )
     assert movement_failure["full_structural_qualification"] is True
     assert movement_failure["full_scientific_qualification"] is False
-    assert "every parameter group" in " ".join(
+    assert "every active parameter group" in " ".join(
         movement_failure["reasons_not_scientific"]
     )
 

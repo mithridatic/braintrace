@@ -2943,12 +2943,15 @@ def _qualification(
         "answer_row_head.weight",
         "answer_shape_head.weight",
     }
-    plain_paths_expected = {
+    legacy_plain_paths = {
         "color_factor_head.weight",
         "height_head.weight",
         "readout_projection.weight",
         "width_head.weight",
     }
+    plain_paths_expected = (
+        legacy_plain_paths if config.decoder_mode == "legacy_cp" else set()
+    )
     associative_paths = {
         "memory_write_scale",
         "workspace_query_projection.weight",
@@ -2982,6 +2985,13 @@ def _qualification(
             for path in associative_paths
         )
     )
+    row_routes_direct = bool(
+        config.decoder_mode != "row_refinement"
+        or all(
+            route_classifications.get(path) == {"all_direct"}
+            for path in row_refinement_paths
+        )
+    )
     associative_diagnostics = evaluation.get("associative_memory_diagnostics")
     associative_diagnostics_complete = bool(
         not memory_enabled
@@ -3010,6 +3020,7 @@ def _qualification(
         and plain_paths == plain_paths_expected
         and routed_paths | plain_paths == expected_parameter_paths
         and associative_routes_direct
+        and row_routes_direct
     )
     full_scale = bool(
         model_report.get("neuron_count") == 4096
@@ -3041,6 +3052,7 @@ def _qualification(
         "actual_gpu_backend": gpu_complete,
         "pp_prop_compiler_routes": compiler_complete,
         "associative_routes_all_direct": associative_routes_direct,
+        "row_routes_all_direct": row_routes_direct,
         "associative_diagnostics_complete": associative_diagnostics_complete,
         "complete_frozen_evaluation": evaluation_complete,
         "frozen_parameters_unchanged": frozen,
@@ -3075,15 +3087,15 @@ def _qualification(
             for path in ("ff_syn.comm.weight", "rec_syn.comm.weight")
         )
     )
-    all_parameter_changes_finite = bool(
+    all_active_parameter_changes_finite = bool(
         isinstance(parameter_changes, dict)
-        and set(parameter_changes) == expected_parameter_paths
+        and expected_parameter_paths <= set(parameter_changes)
         and all(
-            isinstance(item, dict)
-            and item.get("changed") is True
-            and float(item.get("l2_delta", 0.0)) > 0.0
-            and math.isfinite(float(item["l2_delta"]))
-            for item in parameter_changes.values()
+            isinstance(parameter_changes.get(path), dict)
+            and parameter_changes[path].get("changed") is True
+            and float(parameter_changes[path].get("l2_delta", 0.0)) > 0.0
+            and math.isfinite(float(parameter_changes[path]["l2_delta"]))
+            for path in expected_parameter_paths
         )
     )
     sources = [item.manifest.source for item in data.loaded]
@@ -3136,7 +3148,9 @@ def _qualification(
         "finite_loss_per_update": losses_complete,
         "parameters_moved": training.get("parameters_moved") is True,
         "temporal_synapses_moved": temporal_paths_moved,
-        "all_parameter_groups_moved_with_finite_delta": all_parameter_changes_finite,
+        "all_active_parameter_groups_moved_with_finite_delta": (
+            all_active_parameter_changes_finite
+        ),
         "associative_capability_gates_complete": not memory_enabled,
     }
     scientific = all(scientific_checks.values())
@@ -3146,6 +3160,7 @@ def _qualification(
         "actual_gpu_backend": "actual evaluation backend is not GPU",
         "pp_prop_compiler_routes": "pp-prop compilation or feedforward/recurrent eligibility routing evidence is incomplete",
         "associative_routes_all_direct": "associative pp-prop routes are not all_direct",
+        "row_routes_all_direct": "row and shape pp-prop routes are not all_direct",
         "associative_diagnostics_complete": "pairing-sensitive S_K, memory-read, or continuous-workspace diagnostics are incomplete",
         "complete_frozen_evaluation": "exact metrics, trajectories, or controls are incomplete or non-finite",
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
@@ -3163,7 +3178,7 @@ def _qualification(
         "finite_loss_per_update": "one finite loss was not retained for every optimizer update",
         "parameters_moved": "training did not change parameter bytes",
         "temporal_synapses_moved": "feedforward and recurrent eligibility-routed synapses did not both move",
-        "all_parameter_groups_moved_with_finite_delta": "not every parameter group moved with a finite delta",
+        "all_active_parameter_groups_moved_with_finite_delta": "not every active parameter group moved with a finite delta",
         "associative_capability_gates_complete": "associative_capability_gates_pending",
     }
     reasons_not_structural = [
