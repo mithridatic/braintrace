@@ -215,3 +215,72 @@ truncated at `query_stop` and in full and asserts the buffers are identical.
 - `test_shared_gate_still_produces_a_non_square_shape`: one shared gate vector
   drives both axes and still yields `9 x 4`. The `h == w` collapse is structurally
   impossible for the rule slots, not merely discouraged.
+
+---
+
+## 11. Gate 2 result
+
+`var/example21-stage2-editrule`, 2,048 updates at lr 1e-3,
+`context_memory_width=32`, balanced colour loss, 2,048 neurons / 16,384 edges,
+RTX 3080 Ti. Peak device memory 4.64 GiB of 12.00 GiB (38.7%).
+
+| §8 criterion | required | measured | verdict |
+|---|---|---|---|
+| shape accuracy | >= 0.85 | 0.7494 (0.3532) | **fail** |
+| pixel accuracy | >= 0.6336 | **0.6415** (0.3812) | **pass** |
+| `shape_square_fraction` falls | < 0.792 | **0.5776** | **pass** |
+| queries at pixel >= 0.95 | > 0 | **28** (0) | **pass** |
+
+Baselines in parentheses are `var/example21-rules-final`. Three of four criteria
+are met. The model beats the no-neuron `copy_or_rule_shape` predictor on pixel
+accuracy for the first time in this example's history, and the 0/419 wall at
+pixel 0.95 is gone.
+
+**Exact `pass@1` is unchanged at 0.0650, all 27 solves from the rule channel and
+0 from the network.** §9 predicted exactly this: Stage 2 raises the diagnostics
+and is a prerequisite for Stage 3, not a source of exact solves. The rule
+channel's share of solves is unchanged at 100%; what changed is that the
+network is no longer losing to a predictor that uses no neurons.
+
+### Attribution, and why the shape criterion failed
+
+`docs/diagnostics/example21_shape_attribution.py`, splitting every metric by
+channel and by whether the target keeps its input's shape:
+
+| channel | class | n | shape | pixel | >= 0.95 | exact |
+|---|---|---|---|---|---|---|
+| model | same-shape | 264 | 1.0000 | 0.7836 | 27 | 0 |
+| model | resize | 128 | 0.1797 | 0.2729 | 1 | 0 |
+| rule | same-shape | 13 | 1.0000 | 1.0000 | 13 | 13 |
+| rule | resize | 14 | 1.0000 | 1.0000 | 14 | 14 |
+
+66% of evaluation queries keep their input's shape, and the decoder gets *all*
+of them right from the identity prior — no demonstration reading required. The
+34% that resize are where rule selection is actually tested, and there the gate
+reaches 0.1797. That is well above a uniform 30-way guess (~0.033) and
+infinitely above a pure same-shape bias (0.0), so the gate is genuinely
+selecting non-identity rules some of the time; it is also nowhere near enough
+to carry the aggregate to 0.85.
+
+This is the demonstration-binding wall, arriving exactly where
+`2026-08-17-example21-demonstration-channel-root-cause.md` says it should.
+Choosing *which* size map applies requires reading the demonstration pairs, and
+pairing has never been represented above chance (0.5107 against a 0.5072 null),
+with a BPTT oracle failing it too. §4 of this spec routed around that by feeding
+demonstration-derived candidate shapes in as deterministic features; the landed
+head instead reads the query input's own sides, which is less hardcoded and more
+neural but leaves the binding requirement in place rather than bypassing it.
+
+The aggregate shape number therefore decomposes cleanly:
+`0.66 * 1.00 + 0.34 * 0.18 = 0.73`, and no amount of decoder capacity moves it.
+Only two things can: supplying demo-derived candidate shapes as features (the
+original §4, more hardcoded), or making the substrate able to bind
+demonstrations (more neural). The second is the one the objective asks for.
+
+### Measurement note
+
+Per-query numbers must come from each record's own `score` block. The stored
+`candidates` grids are not the submitted artifact when the rule channel wins the
+ranking, so re-deriving accuracy from them attributes the rule channel's solves
+to the network and reports zero exact matches for a run that had twenty-seven.
+The attribution script was corrected after making exactly that error.
