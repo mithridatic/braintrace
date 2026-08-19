@@ -85,11 +85,17 @@ Measured through the production pipeline:
 | 512n / 65,536e | 1 | 0.075 | 0.52 GiB |
 | 512n / 65,536e | 16 | 0.135 | 2.09 GiB |
 | 4,096n / 1,048,576e | 1 | 0.210 | 0.61 GiB |
-| 1,024n / 262,144e | 16 | ~0.55 | 2.35 GiB |
+| 1,024n / 262,144e | 16 | 0.319 | 4.04 GiB |
+
+The last row is the reported configuration, measured over a complete
+6,000-update pretraining run: 2,167.6 s total, of which roughly 1,912 s is
+training and 180 s is bank encoding.
 
 Device memory is never the constraint: the largest configuration measured used
-2.35 GiB against the 13.7 GiB fail-closed limit, 17% of physical VRAM against an
-85% ceiling. Host memory is the real constraint, and the episode bank is the
+4.04 GiB against the 13.7 GiB fail-closed limit, 25% of physical VRAM against an
+85% ceiling. Peak scales with `training_chunk_size`, not with model size.
+
+Host memory is the real constraint, and the episode bank is the
 reason — 1.29 MB per encoded episode means a 4,000-episode-per-effort bank holds
 10.4 GB, measured at 14.76 GiB of a 23.47 GiB container.
 
