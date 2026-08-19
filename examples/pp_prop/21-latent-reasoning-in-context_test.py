@@ -43,7 +43,9 @@ from examples.pp_prop.latent_workspace_task import (
     LoadedDataset,
     RowEventConfig,
     SourceManifest,
+    encode_arc_query_episode,
     encode_query_episode,
+    leave_one_demonstration_out_episodes,
     smoke_loaded_dataset,
 )
 
@@ -71,9 +73,11 @@ class _PaddingTraceProbe(brainstate.nn.Module):
             sparse_backend="jax_raw",
         )
         self.reservoir = LatentWorkspaceModel(config)
-        self.target = jnp.zeros(
-            (1, config.compact_output_width), dtype=jnp.float32
-        ).at[:, 0].set(1.0)
+        self.target = (
+            jnp.zeros((1, config.compact_output_width), dtype=jnp.float32)
+            .at[:, 0]
+            .set(1.0)
+        )
 
     def update(self, packed: jax.Array) -> jax.Array:
         event = packed[:, :_PADDING_PROBE_EVENT_WIDTH]
@@ -307,7 +311,8 @@ def _evaluation_payload() -> dict[str, object]:
             {
                 "task_id": "task",
                 "query_index": 0,
-                "candidates": [{"grid": [[0]]}],
+                "primary_candidate_mode": "model_only",
+                "candidates": [{"grid": [[0]], "provenance": "model"}],
                 "score": {},
             }
         ]
@@ -322,6 +327,7 @@ def _evaluation_payload() -> dict[str, object]:
     }
     control["byte_identical_query_count"] = 0
     return {
+        "primary_candidate_mode": "model_only",
         "query_count": 1,
         "task_count": 1,
         "same_frozen_parameter_bytes": True,
@@ -699,9 +705,7 @@ def test_padding_changes_finite_window_pp_prop_credit_not_bptt_objective():
         )
 
     assert gradient_norm(compact_bptt) > 1.0
-    assert relative_deviation(padded_bptt, compact_bptt) == pytest.approx(
-        0.0, abs=1e-7
-    )
+    assert relative_deviation(padded_bptt, compact_bptt) == pytest.approx(0.0, abs=1e-7)
     assert_gradients_differ(padded_pp_prop, compact_pp_prop, min_rel=1e-4)
 
 
@@ -727,6 +731,107 @@ def test_training_stream_compacts_learning_rule_timeline(example):
         assert advancing[:prefix_length].all()
         assert not advancing[prefix_length:].any()
         assert np.count_nonzero(events[prefix_length:]) == 0
+
+
+def test_training_row_uses_one_held_out_demonstration_as_the_query(example):
+    task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((4,),))),
+            ArcPair(ArcGrid(((2,),)), ArcGrid(((5,),))),
+            ArcPair(ArcGrid(((3,),)), ArcGrid(((6,),))),
+        ),
+        test=(ArcPair(ArcGrid(((9,),)), ArcGrid(((8,),))),),
+        task_id="loo-row",
+    )
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(seed=41),
+        max_demonstrations=3,
+    )
+    rows = RowEventConfig(max_demonstrations=3, max_grid_size=4)
+
+    produced = example._training_row(
+        example._OriginTask("fixture", "fixture", task),
+        config,
+        rows,
+        brainstate.random.RandomState(7),
+        effort=8,
+        plumbing_only=True,
+    )
+
+    held_out_index = produced["held_out_demonstration_index"]
+    episode = leave_one_demonstration_out_episodes(task)[held_out_index]
+    assert episode.query_input == task.train[held_out_index].input
+    assert episode.demonstrations == (
+        task.train[:held_out_index] + task.train[held_out_index + 1 :]
+    )
+    encoded = encode_arc_query_episode(episode, rows)
+    expected_events, expected_advances, _checkpoint = example._compact_training_stream(
+        encoded, config, rows
+    )
+    np.testing.assert_array_equal(produced["events"][:, 0], expected_events)
+    np.testing.assert_array_equal(produced["advances"][:, 0], expected_advances)
+    assert int(produced["heights"]) == task.train[held_out_index].output.height
+    assert int(produced["widths"]) == task.train[held_out_index].output.width
+    np.testing.assert_array_equal(
+        produced["colors"][0, :1, :1],
+        task.train[held_out_index].output.as_array(),
+    )
+
+
+def test_training_row_is_byte_identical_when_official_test_outputs_change(example):
+    train = (
+        ArcPair(ArcGrid(((1, 0),)), ArcGrid(((2, 0),))),
+        ArcPair(ArcGrid(((3, 0),)), ArcGrid(((4, 0),))),
+        ArcPair(ArcGrid(((5, 0),)), ArcGrid(((6, 0),))),
+    )
+    official_input = ArcGrid(((7, 0),))
+    with_output = ArcTask(
+        train=train,
+        test=(ArcPair(official_input, ArcGrid(((8, 0),))),),
+        task_id="no-official-target-leakage",
+    )
+    without_output = ArcTask(
+        train=train,
+        test=(ArcPair(official_input, None),),
+        task_id="no-official-target-leakage",
+    )
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(seed=43),
+        max_demonstrations=3,
+    )
+    rows = RowEventConfig(max_demonstrations=3, max_grid_size=4)
+
+    def produce(task):
+        return example._training_row(
+            example._OriginTask("arc-agi-1 training", "train", task),
+            config,
+            rows,
+            brainstate.random.RandomState(97),
+            effort=16,
+            plumbing_only=False,
+        )
+
+    left = produce(with_output)
+    right = produce(without_output)
+    assert left.keys() == right.keys()
+    for name in left:
+        left_value = left[name]
+        right_value = right[name]
+        if isinstance(left_value, np.ndarray):
+            assert left_value.dtype == right_value.dtype, name
+            assert left_value.shape == right_value.shape, name
+            assert left_value.tobytes() == right_value.tobytes(), name
+        else:
+            assert left_value == right_value, name
+
+
+def test_primary_candidate_mode_is_fail_closed_to_model_only(example):
+    config = example.ExperimentConfig.smoke_config()
+    assert config.primary_candidate_mode == "model_only"
+    assert config.to_dict()["primary_candidate_mode"] == "model_only"
+
+    with pytest.raises(ValueError, match="primary_candidate_mode must be 'model_only'"):
+        dataclasses.replace(config, primary_candidate_mode="verified_rules")
 
 
 def test_compaction_preserves_every_semantic_checkpoint(example):
@@ -778,7 +883,7 @@ def test_compaction_preserves_every_semantic_checkpoint(example):
 
 def test_production_training_row_matches_explicit_compact_pp_prop_gradient(example):
     """The emitted static row has the compact finite-window pp-prop gradient."""
-    task, config, rows, encoded = _tiny_compaction_fixture(example)
+    task, config, rows, _official_encoded = _tiny_compaction_fixture(example)
     effort = 8
     row = example._training_row(
         example._OriginTask("fixture", "fixture", task),
@@ -788,14 +893,14 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
         effort=effort,
         plumbing_only=True,
     )
+    encoded = encode_arc_query_episode(
+        leave_one_demonstration_out_episodes(task)[row["held_out_demonstration_index"]],
+        rows,
+    )
 
     padded = example._packed_events(encoded, config)
-    active_indices = np.flatnonzero(
-        example._packed_advances(encoded, config, rows)
-    )
-    query_checkpoint = int(
-        np.flatnonzero(active_indices == encoded.query_stop - 1)[0]
-    )
+    active_indices = np.flatnonzero(example._packed_advances(encoded, config, rows))
+    query_checkpoint = int(np.flatnonzero(active_indices == encoded.query_stop - 1)[0])
     reference_mask = np.zeros((active_indices.size,), dtype=np.float32)
     reference_mask[query_checkpoint : query_checkpoint + effort + 1] = np.float32(
         1.0 / (effort + 1)
@@ -807,9 +912,7 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
     np.testing.assert_array_equal(
         produced_events[: active_indices.size, 0], padded[active_indices]
     )
-    np.testing.assert_array_equal(
-        produced_mask[: active_indices.size], reference_mask
-    )
+    np.testing.assert_array_equal(produced_mask[: active_indices.size], reference_mask)
 
     def pack(events, advances, mask):
         return jnp.concatenate(
@@ -1032,11 +1135,11 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "query_component_type": None,
         "read_component_type": None,
     }
-    assert json.dumps(
-        legacy, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8") == json.dumps(
-        expected_legacy, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    assert json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
 
     memory_config = dataclasses.replace(
         example.ExperimentConfig.smoke_config(),
@@ -1346,6 +1449,17 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
 
     assert set(metrics) == {"0", "8", "16", "32"}
     assert all(len(details[str(effort)]) == batch for effort in (0, 8, 16, 32))
+    assert all(
+        candidate["provenance"] == "model"
+        for rows_at_effort in details.values()
+        for row in rows_at_effort
+        for candidate in row["candidates"]
+    )
+    assert all(
+        row["primary_candidate_mode"] == "model_only"
+        for rows_at_effort in details.values()
+        for row in rows_at_effort
+    )
     assert len(reports) == batch
     assert len(aggregate) == 33
     assert aggregate[0]["unique_state_hashes"] == 1
@@ -1354,6 +1468,39 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(examp
     assert control["timing_matched_query_count"] == batch
     assert control["trajectory_comparison"]["causally_null_at_measured_precision"]
     assert "checkpoint_queries" not in control
+
+
+def test_scoring_rejects_non_model_candidate_provenance(example, monkeypatch):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    compact = np.zeros((33, len(records), 340), dtype=np.float32)
+
+    class Candidate:
+        grid = np.zeros((1, 1), dtype=np.int32)
+
+        def to_dict(self):
+            return {"grid": [[0]], "provenance": "verified_rule"}
+
+    monkeypatch.setattr(example, "decode_candidates", lambda logits: [Candidate()])
+
+    with pytest.raises(ValueError, match="non-model candidate provenance"):
+        example._score_windows(compact, records, color_rank=4)
+
+
+def test_primary_evaluation_has_no_rule_proposal_path(example):
+    evaluate_source = ast.get_source_segment(
+        EXAMPLE.read_text(encoding="utf-8"),
+        next(
+            node
+            for node in ast.parse(EXAMPLE.read_text(encoding="utf-8")).body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == "_evaluate"
+        ),
+    )
+    assert evaluate_source is not None
+    assert "_rule_proposals" not in evaluate_source
+    assert "verified_rule_candidates" not in evaluate_source
 
 
 def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
@@ -1411,7 +1558,7 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     assert captured == {
         "scored_records": 1,
         "scored_batch": 1,
-        "scored_rules": 1,
+        "scored_rules": None,
         "comparison_width": 8,
     }
     assert result["query_count"] == 2
@@ -1681,6 +1828,7 @@ def test_training_uses_one_learner_optimizer_and_all_efforts(example, monkeypatc
     monkeypatch.setattr(example.braintools.optim, "Adam", Optimizer)
     monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
     monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
+
     def color_loss(*args, **kwargs):
         color_loss_kwargs.append(kwargs)
         return jnp.ones((1,))
@@ -1744,9 +1892,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
 
     def sequences(records, config, rows, *, arm, source_tasks):
         marker = {"intact": 1.0, "no_context": 2.0, "shuffled": 3.0}[arm]
-        events = np.full(
-            (time, batch, rows.input_width), marker, dtype=np.float32
-        )
+        events = np.full((time, batch, rows.input_width), marker, dtype=np.float32)
         advances = np.ones((time, batch), dtype=np.bool_)
         metadata = [{"available": True, "timing_matched": True} for _ in records]
         return events, advances, stops, metadata
@@ -1785,9 +1931,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     checkpoint_queries = {
         str(effort): [
             {
-                "candidates": [{"grid": [[0]]}],
-                "rule_name": None,
-                "rule_solved": False,
+                "candidates": [{"grid": [[0]], "provenance": "model"}],
                 "score": {"pass_at_2": False},
             }
             for _ in range(batch)
@@ -1819,10 +1963,9 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
 
     assert len(run_calls) == 5
     assert event_markers == [1.0, 1.0, 2.0, 3.0, 1.0]
-    assert jit_options == [
-        {"inline": False, "name": "example21_evaluation_arm"}
-    ]
+    assert jit_options == [{"inline": False, "name": "example21_evaluation_arm"}]
     assert result["same_frozen_parameter_bytes"] is True
+    assert result["primary_candidate_mode"] == "model_only"
     assert all("ablation_slots" in call for call in run_calls)
     assert all("ablation_gates" in call for call in run_calls)
     assert not np.any(np.asarray(run_calls[0]["ablation_gates"]))
@@ -2139,10 +2282,7 @@ def test_associative_diagnostics_require_per_query_shuffled_binding_evidence(exa
     assert shuffled_report["applicable_query_count"] == 2
     assert shuffled_report["context_memory_changed_applicable_query_count"] == 2
     assert (
-        shuffled_report[
-            "memory_read_changed_at_any_depth_applicable_query_count"
-        ]
-        == 2
+        shuffled_report["memory_read_changed_at_any_depth_applicable_query_count"] == 2
     )
     assert len(report["intact_context_memory_sha256_by_query"]) == 2
 
@@ -2153,9 +2293,7 @@ def test_associative_diagnostics_require_per_query_shuffled_binding_evidence(exa
             metadata,
         ),
     )
-    failed = example._associative_evaluation_diagnostics(
-        True, intact, disconnected
-    )
+    failed = example._associative_evaluation_diagnostics(True, intact, disconnected)
     assert failed["complete"] is False
     assert failed["shuffled_pairing_sensitive_for_every_applicable_query"] is False
 
@@ -2336,9 +2474,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
             "kind": "relation_included",
             "level": "info",
             "weight_path": path,
-            "path_classification_by_hidden_state": {
-                "associative_state": "all_direct"
-            },
+            "path_classification_by_hidden_state": {"associative_state": "all_direct"},
         }
         for path in sorted(memory_paths)
     ]
@@ -2369,8 +2505,9 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         memory_qualification["associative_capability_status"]
         == "associative_capability_gates_pending"
     )
-    assert "associative_capability_gates_pending" in (
-        memory_qualification["reasons_not_scientific"]
+    assert (
+        "associative_capability_gates_pending"
+        in (memory_qualification["reasons_not_scientific"])
     )
 
     mixed_memory_training = copy.deepcopy(memory_training)
@@ -2390,9 +2527,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     assert "all_direct" in " ".join(mixed_memory["reasons_not_structural"])
 
     incomplete_memory_evaluation = copy.deepcopy(memory_evaluation)
-    incomplete_memory_evaluation["associative_memory_diagnostics"]["complete"] = (
-        False
-    )
+    incomplete_memory_evaluation["associative_memory_diagnostics"]["complete"] = False
     incomplete_memory = example._qualification(
         example.ExperimentConfig(training_updates=3, context_memory_width=32),
         public_data,

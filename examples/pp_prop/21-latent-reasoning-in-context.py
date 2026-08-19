@@ -10,7 +10,6 @@ available.  This is a repository-native experiment, not a reproduction.
 from __future__ import annotations
 
 import argparse
-import collections
 import hashlib
 import importlib.metadata
 import json
@@ -39,11 +38,6 @@ try:
         decode_candidates,
         score_query_candidates,
     )
-    from examples.pp_prop.latent_workspace_rules import (
-        clear_rule_cache,
-        rule_cost,
-        verified_rule_candidates,
-    )
     from examples.pp_prop.latent_workspace_model import (
         ModelConfig,
         LatentWorkspaceModel,
@@ -64,7 +58,9 @@ try:
         assert_no_evaluation_leakage,
         augment_training_task,
         canonical_task_fingerprint,
+        encode_arc_query_episode,
         encode_query_episode,
+        leave_one_demonstration_out_episodes,
         load_dataset_source,
         smoke_loaded_dataset,
     )
@@ -76,11 +72,6 @@ except ModuleNotFoundError:
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
-    )
-    from latent_workspace_rules import (
-        clear_rule_cache,
-        rule_cost,
-        verified_rule_candidates,
     )
     from latent_workspace_model import (
         ModelConfig,
@@ -102,13 +93,16 @@ except ModuleNotFoundError:
         assert_no_evaluation_leakage,
         augment_training_task,
         canonical_task_fingerprint,
+        encode_arc_query_episode,
         encode_query_episode,
+        leave_one_demonstration_out_episodes,
         load_dataset_source,
         smoke_loaded_dataset,
     )
 
 
 DeviceName = Literal["cpu", "gpu"]
+PrimaryCandidateMode = Literal["model_only"]
 CHECKPOINTS = (0, 8, 16, 32)
 TRAINING_EFFORTS = (8, 16, 32)
 EVALUATION_ARM_ORDER = (
@@ -215,6 +209,9 @@ class ExperimentConfig:
         Whether results use embedded fixtures and are plumbing-only.
     structural_only : bool
         Instantiate and run without optimization; never scientific evidence.
+    primary_candidate_mode : {"model_only"}
+        Fail-closed primary ARC scoring mode. Only candidates decoded from the
+        model may occupy submitted pass@2 slots.
     """
 
     source_manifest: pathlib.Path | None = None
@@ -239,6 +236,7 @@ class ExperimentConfig:
     evaluation_task_limit: int | None = None
     smoke: bool = False
     structural_only: bool = False
+    primary_candidate_mode: PrimaryCandidateMode = "model_only"
 
     def __post_init__(self) -> None:
         for name, minimum in (
@@ -260,6 +258,8 @@ class ExperimentConfig:
             )
         if self.device not in ("cpu", "gpu"):
             raise ValueError("device must be 'cpu' or 'gpu'")
+        if self.primary_candidate_mode != "model_only":
+            raise ValueError("primary_candidate_mode must be 'model_only'")
         if self.neuron_count % 64:
             raise ValueError("neuron_count must be divisible by 64")
         if self.context_memory_width > 128:
@@ -392,7 +392,7 @@ class _TrainingTensors:
     task_fingerprints: tuple[str, ...]
     base_task_fingerprints: tuple[str, ...] = ()
     source_names: tuple[str, ...] = ()
-    query_indices: tuple[int, ...] = ()
+    held_out_demonstration_indices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -600,6 +600,16 @@ def _compact_training_stream(
     return compact, advances, query_checkpoint
 
 
+def _without_official_test_targets(task: ArcTask) -> ArcTask:
+    """Return a task whose official queries cannot leak labels into training."""
+
+    return ArcTask(
+        train=task.train,
+        test=tuple(ArcPair(pair.input, None) for pair in task.test),
+        task_id=task.task_id,
+    )
+
+
 def _training_row(
     origin: _OriginTask,
     config: ExperimentConfig,
@@ -609,17 +619,21 @@ def _training_row(
     effort: int,
     plumbing_only: bool,
 ) -> dict[str, Any]:
-    """Encode one training update, consuming ``rng`` in schedule order."""
+    """Encode one augmented leave-one-demonstration-out training update."""
+
+    base_task = _without_official_test_targets(origin.task)
     task = (
-        origin.task
+        base_task
         if plumbing_only
-        else augment_training_task(origin.task, rng, role="train")
+        else augment_training_task(base_task, rng, role="train")
     )
-    query_index = int(np.asarray(rng.randint(0, len(task.test))))
-    encoded = encode_query_episode(task, query_index, row_config)
+    episodes = leave_one_demonstration_out_episodes(task)
+    held_out_index = int(np.asarray(rng.randint(0, len(episodes))))
+    encoded = encode_arc_query_episode(episodes[held_out_index], row_config)
     if encoded.target is None:
         raise ValueError(
-            f"training task {task.task_id or encoded.task_fingerprint} lacks a target"
+            f"training fold {task.task_id or encoded.task_fingerprint}:"
+            f"{held_out_index} lacks a target"
         )
     sequence, advances, query_checkpoint = _compact_training_stream(
         encoded, config, row_config
@@ -641,9 +655,9 @@ def _training_row(
         "colors": padded[None],
         "masks": mask,
         "task_fingerprints": canonical_task_fingerprint(task),
-        "base_task_fingerprints": canonical_task_fingerprint(origin.task),
+        "base_task_fingerprints": canonical_task_fingerprint(base_task),
         "source_names": origin.source_name,
-        "query_indices": query_index,
+        "held_out_demonstration_index": held_out_index,
     }
 
 
@@ -662,7 +676,7 @@ def _stacked_chunk(rows: list[dict[str, Any]], efforts: np.ndarray) -> _Training
         task_fingerprints=tuple(column("task_fingerprints")),
         base_task_fingerprints=tuple(column("base_task_fingerprints")),
         source_names=tuple(column("source_names")),
-        query_indices=tuple(column("query_indices")),
+        held_out_demonstration_indices=tuple(column("held_out_demonstration_index")),
     )
 
 
@@ -720,7 +734,7 @@ _CHUNK_METADATA_FIELDS = (
     "task_fingerprints",
     "base_task_fingerprints",
     "source_names",
-    "query_indices",
+    "held_out_demonstration_indices",
 )
 
 
@@ -805,9 +819,7 @@ def _memory_architecture_report(
         value_width = 0
     bytes_per_example = config.context_memory_width**2 * np.dtype(np.float32).itemsize
     return {
-        "reasoning_mode": (
-            "associative_workspace" if enabled else "legacy_reservoir"
-        ),
+        "reasoning_mode": ("associative_workspace" if enabled else "legacy_reservoir"),
         "context_memory_width": config.context_memory_width,
         "memory_decay": config.memory_decay,
         "raw_key_feature_width": key_width,
@@ -966,7 +978,7 @@ class _TrainingSchedule:
     task_fingerprints: tuple[str, ...] = ()
     base_task_fingerprints: tuple[str, ...] = ()
     source_names: tuple[str, ...] = ()
-    query_indices: tuple[int, ...] = ()
+    held_out_demonstration_indices: tuple[int, ...] = ()
 
     def extended(self, chunk: _TrainingTensors) -> "_TrainingSchedule":
         return _TrainingSchedule(
@@ -976,7 +988,10 @@ class _TrainingSchedule:
                 self.base_task_fingerprints + tuple(chunk.base_task_fingerprints)
             ),
             source_names=self.source_names + tuple(chunk.source_names),
-            query_indices=self.query_indices + tuple(chunk.query_indices),
+            held_out_demonstration_indices=(
+                self.held_out_demonstration_indices
+                + tuple(chunk.held_out_demonstration_indices)
+            ),
         )
 
 
@@ -1103,14 +1118,15 @@ def _train_model(
             "source": source,
             "base_task_fingerprint": base_fingerprint,
             "augmented_task_fingerprint": augmented_fingerprint,
-            "query_index": int(query_index),
+            "episode_kind": "leave_one_demonstration_out",
+            "held_out_demonstration_index": int(held_out_index),
             "maximum_supervised_depth": int(effort),
         }
-        for source, base_fingerprint, augmented_fingerprint, query_index, effort in zip(
+        for source, base_fingerprint, augmented_fingerprint, held_out_index, effort in zip(
             schedule.source_names,
             schedule.base_task_fingerprints,
             schedule.task_fingerprints,
-            schedule.query_indices,
+            schedule.held_out_demonstration_indices,
             schedule.efforts,
             strict=True,
         )
@@ -1137,12 +1153,13 @@ def _train_model(
             before_snapshot, after_snapshot
         ),
         "training_task_fingerprints": list(schedule.task_fingerprints),
+        "training_episode_kind": "leave_one_demonstration_out",
         "sampled_base_task_count": len(set(schedule.base_task_fingerprints)),
-        "sampled_base_query_count": len(
+        "sampled_base_fold_count": len(
             set(
                 zip(
                     schedule.base_task_fingerprints,
-                    schedule.query_indices,
+                    schedule.held_out_demonstration_indices,
                     strict=True,
                 )
             )
@@ -1198,64 +1215,6 @@ def _derange_task(task: ArcTask) -> ArcTask | None:
         test=task.test,
         task_id=task.task_id,
     )
-
-
-#: Arms whose demonstrations reach the rule channel unchanged. ``no_context``
-#: is deliberately absent: it blanks the demonstrations, so no rule can be
-#: admitted and the control keeps its causal meaning. ``slot_ablation`` ablates
-#: neural slots, not demonstrations, so the rule channel is unaffected by it by
-#: construction -- the per-channel attribution in the report is what separates
-#: the ablation's effect on the network from the channel that ignores it.
-RULE_ARM_DEMONSTRATIONS = ("intact", "shuffled")
-
-
-def _rule_proposals(
-    records: Sequence[_EvaluationRecord],
-    source_tasks: Sequence[_OriginTask],
-    *,
-    arm: Literal["intact", "no_context", "shuffled"],
-) -> tuple[tuple[str, np.ndarray] | None, ...]:
-    """Propose one demonstration-verified candidate per query for one arm.
-
-    The channel is fed the demonstrations *that arm actually has*, never the
-    original task's. Without this the proposals would be arm-invariant and every
-    control would report the same solves as ``intact`` -- the exact signature
-    this experiment treats as evidence of a non-causal result.
-
-    Parameters
-    ----------
-    records
-        Evaluation records in scoring order.
-    source_tasks
-        Origin tasks the records were encoded from.
-    arm
-        Evaluation arm whose demonstrations should be fitted.
-
-    Returns
-    -------
-    tuple
-        One ``(rule_name, grid)`` proposal or ``None`` per record, aligned with
-        ``records``.
-    """
-
-    if arm == "no_context":
-        return tuple(None for _ in records)
-    lookup = {_origin_task_key(origin): origin.task for origin in source_tasks}
-    proposals: list[tuple[str, np.ndarray] | None] = []
-    for record in records:
-        task = lookup[record.task_key]
-        if arm == "shuffled":
-            task = _derange_task(task)
-        if task is None:
-            proposals.append(None)
-            continue
-        demonstrations = [
-            (pair.input.as_array(), pair.output.as_array()) for pair in task.train
-        ]
-        query = task.test[record.encoded.query_index].input.as_array()
-        found = verified_rule_candidates(demonstrations, query)
-        proposals.append(found[0] if found else None)
-    return tuple(proposals)
 
 
 def _arm_sequences(
@@ -1347,17 +1306,14 @@ def _score_windows(
     compact: np.ndarray,
     records: Sequence[_EvaluationRecord],
     color_rank: int,
-    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
+    """Score only model-decoded candidates at every frozen checkpoint."""
+
     checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
     expanded = expand_compact_logits(jnp.asarray(checkpoint_compact), color_rank)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
-    if rule_proposals is None:
-        rule_proposals = tuple(None for _ in records)
-    if len(rule_proposals) != len(records):
-        raise ValueError("rule proposals must match the evaluation records")
     metrics: dict[str, dict[str, object]] = {}
     query_details: dict[str, list[dict[str, object]]] = {}
     for effort_index, effort in enumerate(CHECKPOINTS):
@@ -1370,15 +1326,21 @@ def _score_windows(
                 colors[effort_index, query_index],
             )
             candidates = decode_candidates(logits)
+            candidate_payloads: list[dict[str, object]] = []
+            for candidate in candidates:
+                payload = dict(candidate.to_dict())
+                provenance = payload.get("provenance", "model")
+                if provenance != "model":
+                    raise ValueError(
+                        "primary scoring rejected non-model candidate provenance "
+                        f"{provenance!r}"
+                    )
+                payload["provenance"] = "model"
+                candidate_payloads.append(payload)
             target = record.encoded.target
             assert target is not None
-            proposal = rule_proposals[query_index]
-            if proposal is None:
-                submitted: list[object] = list(candidates)
-            else:
-                submitted = [proposal[1], candidates[0].grid]
             score = score_query_candidates(
-                submitted,
+                [candidate.grid for candidate in candidates],
                 target.as_array(),
                 task_id=record.task_key,
                 query_index=record.encoded.query_index,
@@ -1388,13 +1350,8 @@ def _score_windows(
                 {
                     "task_id": record.task_key,
                     "query_index": record.encoded.query_index,
-                    "candidates": [candidate.to_dict() for candidate in candidates],
-                    "rule_name": None if proposal is None else proposal[0],
-                    "rule_solved": bool(
-                        proposal is not None
-                        and proposal[1].shape == target.as_array().shape
-                        and np.array_equal(proposal[1], target.as_array())
-                    ),
+                    "primary_candidate_mode": "model_only",
+                    "candidates": candidate_payloads,
                     "score": score.to_dict(),
                 }
             )
@@ -1553,13 +1510,7 @@ def _control_summary(
     color_rank: int,
     intact_metrics: dict[str, dict[str, object]],
     metadata: Sequence[dict[str, object]] | None = None,
-    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
-    intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> dict[str, object]:
-    if rule_proposals is None:
-        rule_proposals = tuple(None for _ in records)
-    if intact_rule_proposals is None:
-        intact_rule_proposals = tuple(None for _ in records)
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
     if len(metadata) != len(records):
@@ -1576,23 +1527,15 @@ def _control_summary(
     applicable_intact = subset(intact)
     applicable_control = subset(control)
     if applicable_records:
-        applicable_control_rules = tuple(
-            rule_proposals[index] for index in applicable_indices
-        )
-        applicable_intact_rules = tuple(
-            intact_rule_proposals[index] for index in applicable_indices
-        )
         metrics, control_checkpoint_queries = _score_windows(
             applicable_control[0],
             applicable_records,
             color_rank,
-            applicable_control_rules,
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
             applicable_intact[0],
             applicable_records,
             color_rank,
-            applicable_intact_rules,
         )
         if (
             len(applicable_records) == len(records)
@@ -1924,9 +1867,10 @@ def _associative_evaluation_diagnostics(
         if context_memory.shape[1] < 1:
             raise ValueError(f"{name} associative diagnostics must have positive width")
         for array in (workspace, memory_read, context_memory):
-            if not np.issubdtype(array.dtype, np.floating) or not np.isfinite(
-                array
-            ).all():
+            if (
+                not np.issubdtype(array.dtype, np.floating)
+                or not np.isfinite(array).all()
+            ):
                 raise ValueError(f"{name} associative diagnostics must be finite")
         return workspace, memory_read, context_memory
 
@@ -1992,7 +1936,10 @@ def _associative_evaluation_diagnostics(
             intact_workspace, workspace
         )
         zero_memory = np.asarray(
-            [np.count_nonzero(context_memory[index]) == 0 for index in range(query_count)]
+            [
+                np.count_nonzero(context_memory[index]) == 0
+                for index in range(query_count)
+            ]
         )
         context_memory_exact = _array_bytes_equal(intact_memory, context_memory)
         memory_read_exact = _array_bytes_equal(intact_read, memory_read)
@@ -2043,21 +1990,16 @@ def _associative_evaluation_diagnostics(
         and repeat_report["memory_read_byte_identical_to_intact"]
     )
     no_context_zero = (
-        control_reports["no_context"]["context_memory_zero_query_count"]
-        == query_count
+        control_reports["no_context"]["context_memory_zero_query_count"] == query_count
     )
     shuffled_report = control_reports["shuffled_demonstrations"]
     shuffled_applicable = int(shuffled_report["applicable_query_count"])
     shuffled_pairing_sensitive = bool(
         shuffled_applicable > 0
-        and int(
-            shuffled_report["context_memory_changed_applicable_query_count"]
-        )
+        and int(shuffled_report["context_memory_changed_applicable_query_count"])
         == shuffled_applicable
         and int(
-            shuffled_report[
-                "memory_read_changed_at_any_depth_applicable_query_count"
-            ]
+            shuffled_report["memory_read_changed_at_any_depth_applicable_query_count"]
         )
         == shuffled_applicable
     )
@@ -2144,10 +2086,6 @@ def _evaluate(
     shuffled_events, shuffled_advances, shuffled_stops, shuffled_meta = _arm_sequences(
         records, config, row_config, arm="shuffled", source_tasks=data.evaluation
     )
-    clear_rule_cache()
-    intact_rules = _rule_proposals(records, data.evaluation, arm="intact")
-    shuffled_rules = _rule_proposals(records, data.evaluation, arm="shuffled")
-    no_context_rules = _rule_proposals(records, data.evaluation, arm="no_context")
     if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
         query_stops, shuffled_stops
     ):
@@ -2196,7 +2134,7 @@ def _evaluate(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
     intact_metrics, checkpoint_queries = _score_windows(
-        intact[0], records, config.color_rank, intact_rules
+        intact[0], records, config.color_rank
     )
     channel_attribution = _channel_attribution(checkpoint_queries)
     trajectories, aggregate_trajectory = _trajectory_reports(
@@ -2211,8 +2149,6 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         intact_meta,
-        intact_rules,
-        intact_rules,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     repeat_metrics_exact = repeat_result["metrics_by_effort"] == intact_metrics
@@ -2258,8 +2194,6 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         no_context_meta,
-        no_context_rules,
-        intact_rules,
     )
     del no_context
 
@@ -2277,8 +2211,6 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         shuffled_meta,
-        shuffled_rules,
-        intact_rules,
     )
     del shuffled
 
@@ -2295,8 +2227,6 @@ def _evaluate(
         config.color_rank,
         intact_metrics,
         intact_meta,
-        intact_rules,
-        intact_rules,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
@@ -2329,6 +2259,7 @@ def _evaluate(
         "same_frozen_parameter_bytes": before == after,
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
+        "primary_candidate_mode": config.primary_candidate_mode,
         "metrics_by_effort": intact_metrics,
         "channel_attribution": channel_attribution,
         "checkpoint_queries": checkpoint_queries,
@@ -2540,9 +2471,22 @@ def _qualification(
             and len(rows) == expected_query_count
             and all(
                 isinstance(row, dict)
-                and {"task_id", "query_index", "candidates", "score"} <= row.keys()
+                and {
+                    "task_id",
+                    "query_index",
+                    "primary_candidate_mode",
+                    "candidates",
+                    "score",
+                }
+                <= row.keys()
+                and row["primary_candidate_mode"] == "model_only"
                 and isinstance(row["candidates"], list)
                 and bool(row["candidates"])
+                and all(
+                    isinstance(candidate, dict)
+                    and candidate.get("provenance") == "model"
+                    for candidate in row["candidates"]
+                )
                 and finite_tree(row)
                 for row in rows
             )
@@ -2859,7 +2803,8 @@ def _qualification(
         and slot_numeric_exact
     )
     evaluation_complete = bool(
-        query_count > 0
+        evaluation.get("primary_candidate_mode") == "model_only"
+        and query_count > 0
         and query_count == expected_query_count
         and int(evaluation.get("task_count", 0)) == expected_task_count
         and metrics_complete(evaluation.get("metrics_by_effort"))
@@ -3242,13 +3187,7 @@ def _data_summary(
 def _channel_attribution(
     checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
 ) -> dict[str, dict[str, object]]:
-    """Split exact solves between the rule channel and the spiking model.
-
-    A solve is credited to the rule channel when the admitted rule's grid is
-    itself exact. Every other exact solve came from a decoded model candidate.
-    ``admitted_not_exact`` is reported separately because an admitted-but-wrong
-    rule consumes candidate slot one, which is the channel's only way to cost
-    the run a point.
+    """Summarize the fail-closed model-only primary candidate channel.
 
     Parameters
     ----------
@@ -3263,22 +3202,21 @@ def _channel_attribution(
 
     summary: dict[str, dict[str, object]] = {}
     for effort, details in checkpoint_queries.items():
-        admitted = sum(1 for item in details if item.get("rule_name") is not None)
-        rule_exact = sum(1 for item in details if item.get("rule_solved"))
-        pass_at_2 = sum(1 for item in details if item["score"]["pass_at_2"])
-        families = collections.Counter(
-            str(item["rule_name"]).split("|")[-1].split(":")[0]
+        candidates = [
+            candidate
             for item in details
-            if item.get("rule_solved")
-        )
+            for candidate in item.get("candidates", ())
+            if isinstance(candidate, Mapping)
+        ]
+        if any(candidate.get("provenance") != "model" for candidate in candidates):
+            raise ValueError("primary attribution found non-model candidate provenance")
+        pass_at_2 = sum(1 for item in details if item["score"]["pass_at_2"])
         summary[effort] = {
+            "primary_candidate_mode": "model_only",
             "query_count": len(details),
-            "rules_admitted": admitted,
-            "rules_admitted_not_exact": admitted - rule_exact,
-            "exact_by_rule_channel": rule_exact,
-            "exact_by_model_candidates": pass_at_2 - rule_exact,
+            "submitted_model_candidate_count": len(candidates),
+            "exact_by_model_candidates": pass_at_2,
             "exact_total": pass_at_2,
-            "solving_completions": dict(families.most_common()),
         }
     return summary
 
@@ -3388,8 +3326,9 @@ def _render_report(result: dict[str, object]) -> str:
         (
             f"Training exposure: {training.get('sampled_base_task_count', 'unreported')} "
             "unique base tasks and "
-            f"{training.get('sampled_base_query_count', 'unreported')} unique base "
-            f"task/query pairs sampled with replacement={training.get('sampling_with_replacement', 'unreported')} "
+            f"{training.get('sampled_base_fold_count', 'unreported')} unique "
+            "leave-one-demonstration-out folds sampled with replacement="
+            f"{training.get('sampling_with_replacement', 'unreported')} "
             f"from a {data_summary.get('training_task_pool_count', 'unreported')}-task pool."
         ),
         (
@@ -3441,12 +3380,10 @@ def _render_report(result: dict[str, object]) -> str:
         if split is None:
             continue
         lines.append(
-            f"  effort {effort:>2} channels: exact by rule channel="
-            f"{split['exact_by_rule_channel']}, by model candidates="
-            f"{split['exact_by_model_candidates']}; rules admitted="
-            f"{split['rules_admitted']} of {split['query_count']} queries "
-            f"({split['rules_admitted_not_exact']} admitted but not exact); "
-            f"solving completions={split['solving_completions']}"
+            f"  effort {effort:>2} primary channel: model_only; exact="
+            f"{split['exact_by_model_candidates']} of {split['query_count']} queries; "
+            "submitted model candidates="
+            f"{split['submitted_model_candidate_count']}."
         )
     intact_metrics = evaluation.get("metrics_by_effort", {})
     if "0" in intact_metrics and "32" in intact_metrics:
