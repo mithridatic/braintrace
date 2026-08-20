@@ -360,6 +360,27 @@ the container on CPU. Before the fix the four new tests failed as designed:
 `test_refinement_heads_stay_compiled_all_direct_with_shape_conditioning` passed
 before and after; it is a regression guard, not a reproduction.
 
+D-GH added three more tests to `latent_workspace_refinement_test.py`. Their red
+phase was verified against the pre-fix module restored from `HEAD` into a
+mounted overlay, because the fix and the tests were written in the same pass:
+
+- `test_sweep_colour_weight_does_not_scale_with_the_output_height` — 3·ln10
+  against 30·ln10 before, equal after;
+- `test_row_colour_loss_is_scaled_by_the_reciprocal_output_height` — 2.303
+  against 13.816 before;
+- `test_complete_sweep_balances_shape_once_and_each_valid_color_row`, an
+  existing test whose golden value encoded the defect, updated with its reason.
+
+`row_refinement_loss_per_example` has three other callers — the entry point,
+`latent_workspace_arc_adaptation.py:983` and
+`latent_workspace_binding_qualification.py:363,403` — and D-GH rescales its
+colour term by up to 30×, so those suites were run too:
+`147 passed` for the entry point and `237 passed` for
+`latent_workspace_binding_qualification_test.py`,
+`latent_workspace_arc_adaptation_test.py` and
+`latent_workspace_binding_gate_test.py`. No caller had a golden value that the
+rescale broke.
+
 ### 8.2 Learning-rate sweep, pre-fix code, probe surface
 
 1024n / 1024e / b32 / u260 / l150, seed 2108, 84 held-out ARC training tasks /
@@ -554,9 +575,11 @@ in §8.5 is therefore not needed on this evidence.
 Pixel accuracy is unmoved (0.4652 → 0.4669) and still 0.31 below the lookup
 table. **D-GH is a real but small effect. It does not close the §8.4 gap.**
 
-These two arms are seed-matched in the sense that matters — D-GH changes no
-`random.randn` draw, only a loss scale — so unlike the §8.3 comparison, these
-differences are attributable.
+These two arms share an identical draw sequence: D-GH changes no `random.randn`
+call, only a loss scale. So unlike the §8.3 comparison, these differences are
+attributable to the change. They did not run under identical machine conditions
+— 2.9 versus 4.7 minutes at the same configuration — which does not affect the
+0.044 shape delta but is worth knowing before reading anything smaller.
 
 ### 8.7 Task-local adaptation
 
@@ -601,7 +624,60 @@ the full ARC-AGI-1 evaluation, which is the higher-priority run. It is not
 reported, and the §8.2 question it was meant to settle therefore remains open.
 It is the first thing to run next.
 
-### 8.8 Arms run and arms dropped
+### 8.8 Full ARC-AGI-1 evaluation — the headline result
+
+`var/eval-gh-lr1e-3-u260-l150`: the configuration §6 selected — 1024n / 1024e /
+b32 / u260 / l150, `lr = 1e-3`, seed 2108, D-SB + D-GH, no adaptation — against
+`/datasets/arc/example21-sources.json`, 400 tasks / 419 queries. Compared with
+`var/rowcond-1024n-1024e-b32-u260-l150`, the run this investigation started
+from.
+
+| metric | rowcond (start) | this run | trivial floor |
+|---|---|---|---|
+| **exact pass@1** | **0 / 419** | **0 / 419** | — |
+| **exact pass@2** | **0 / 419** | **0 / 419** | — |
+| shape diagnostic | 0.3604 | **0.5704** | `copy_input` 0.6611, `copy_or_rule_shape` 0.8687 |
+| pixel diagnostic | 0.3806 | **0.4138** | `copy_input` 0.6032 |
+| non-black grids | 170 / 419 | **348 / 419** | — |
+| distinct predicted shapes | 90 | **133** | — |
+| predicted colour-0 share | 0.834 | **0.6412** | true marginal 0.531 |
+| predicted shape == input shape | 0.535 | 0.6348 | true 0.661 |
+| shape correct on ≤9-cell subset | 3 / 26 | **7 / 26** | — |
+| exact under oracle shape | 1 / 419 | 1 / 419 | — |
+| closest shape-correct query | 3 wrong of 16 | **2 wrong of 4** (`be03b35f` q0) | — |
+| `answer_row_head` ΔL2 | 2.059 | 9.550 | — |
+| travel budget | 0.96 σ (`starved: true`) | 9.78 σ (`starved: false`) | — |
+| runtime | — | 5.3 min | ~4.5 min reference |
+
+**The exact score did not move. It is 0/419, exactly as it was.** That is the
+answer to the question this task asked, and no other number in this table
+changes it.
+
+What did move is substantial and consistent with §8.2 and §8.6: shape accuracy
+rose 0.21 to within 0.09 of the `copy_input` floor it was 0.30 below; the
+colour distribution moved two thirds of the way from the collapsed 0.834 to the
+true 0.531 marginal; non-black grids went from 41% to 83% of queries; and the
+closest query is now 2 wrong cells of 4 rather than 3 of 16. Pixel accuracy rose
+only 0.033 and remains 0.19 below `copy_input` and, by the §8.4 measurement,
+about 0.36 below a 110-parameter lookup table.
+
+The single oracle-shape-exact query changed identity, from `e872b94a`
+(true output `[[0],[0],[0]]`, satisfiable by the all-black collapse) to
+`7039b2d7` q0, whose true output is a 3 × 5 grid of colour 1 that the model
+writes correctly in its top-left corner but sizes as 16 × 16. The earlier one
+was a degenerate artefact of predicting black everywhere; this one is not.
+
+**Comparison caveats.** The two runs are **not seed-matched**: D-SB widens the
+answer heads from 1354 to 1414 inputs, changing every `random.randn` draw after
+them, and the learning rate differs by 10×. The gross movements above are far
+too large to be reseeding noise; nothing small in this table should be
+attributed to any single change. Separately, this run overlapped
+`probe-gh-lr1e-3-u780` on the same 12 GB GPU for roughly twelve seconds before
+that arm was killed (§8.7.1); its 5.3-minute runtime is in line with the
+~4.5-minute reference for this operating point, so the overlap does not appear
+to have distorted it.
+
+### 8.9 Arms run and arms dropped
 
 Every arm executed against the probe surface, so nothing is silently narrowed.
 
@@ -625,3 +701,51 @@ gradient scale that norm clipping changes); `balanced_color_loss` (§2.5, and
 D-GH is the better-evidenced loss defect); `neuron_count` and `recurrent_edges`
 (§8.4 shows the failure is that an expressible 110-parameter solution is not
 found, which more capacity does not address).
+
+## 9. Conclusion, and what to do next
+
+**Exact pass@1 on ARC-AGI-1 is 0/419. It did not move.** Three defects were
+found and fixed and the model improved substantially on every diagnostic short
+of exactness, but it did not produce a single exactly correct answer.
+
+What the three fixes are worth, stated separately:
+
+- **D-PT (travel starvation)** — real and large for the shape path. Raising the
+  budget from 0.96 σ to 9.8 σ took shape accuracy from 0.3604 to 0.5704. Its
+  effect on colour content is unresolved; the arm that would settle it
+  (§8.7.1) was killed for GPU contention.
+- **D-SB (answer-shape blindness)** — a real expressivity gap, repaired, with
+  **no measurable effect** (§8.3). Kept because it is correct and cheap, not
+  because it helped.
+- **D-GH (height-weighted colour gradient)** — real, small, and the only change
+  that produced exactly correct colour content on a query (§8.6).
+
+**The finding that should drive the next attempt is §8.4.** An 11 × 10 lookup
+table with 110 parameters, which the row head can represent exactly through its
+colour block, beats the trained model by 0.31 pixel accuracy on held-out tasks
+and scores an oracle-shape exact answer. The model is not short of capacity,
+supervision, or (for the shape path) travel. It is failing to find a solution
+sitting inside its own hypothesis class.
+
+Ranked next steps:
+
+1. **Run `probe-gh-lr1e-3-u780`** (§8.7.1, ~9 minutes). It is the clean test of
+   whether the colour path is still travel-bound, and everything below assumes
+   the answer.
+2. **Decompose `answer_row_head`'s weight delta by input block** — carrier
+   (1024) versus row one-hot (30) versus colour (300) versus shape (60). If the
+   carrier absorbs the travel while the colour block stays near its
+   initialisation, the head is solving through a 1024-dimensional random
+   projection instead of the direct copy path, and the fix is to rebalance the
+   blocks. This needs weights rather than the scalar `l2_delta`, so it costs one
+   short arm with `--parameter-checkpoint`.
+3. **If (2) confirms carrier dominance**, the candidate repairs are to scale the
+   carrier block down relative to the colour block (its L2 grows as `√n` while
+   the one-hot blocks are fixed, so the imbalance worsens with model size), or
+   to initialise the colour block at the identity map. The second is a
+   legitimate inductive bias but requires reporting the **untrained** score
+   alongside the trained one, or the result is unattributable.
+4. **Task-local adaptation** helps consistently (§8.7) and is worth a full
+   evaluation run once the base model clears the lookup table, but it is a
+   multiplier on the base model and the base model is the binding constraint —
+   which is what the earlier investigation also concluded.
