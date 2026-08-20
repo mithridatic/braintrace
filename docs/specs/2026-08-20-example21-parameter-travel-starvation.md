@@ -1156,11 +1156,12 @@ Replaces §9's ranked list, which assumed travel and carrier-starvation.
    1024-neuron recurrent substrate. Note this treats the *u780 degradation*, not
    the baseline deficit: §10.5 shows the model 0.136 below the table on trained
    tasks, which more tasks would not obviously fix.
-5. **Explain the baseline deficit**, which is now the central open question and
-   which this spec does not answer. The model trails a 110-parameter lookup table
-   on seen and unseen tasks alike at an operating point where it is neither
-   travel-starved nor overfitting. Worth isolating before spending on anything
-   above it.
 4. **Do not spend more on update count or learning rate.** §8.2 and §10.4
    bracket the useful range: below `lr·U ≈ 0.26` the head cannot travel, above it
    the model overfits, and the window between them is narrow.
+
+**Ahead of all four: explain the baseline deficit.** It is the central open
+question and this spec does not answer it. At u260 the model trails a
+110-parameter lookup table by 0.136 on tasks it trained on and 0.125 on tasks it
+did not, at an operating point where it is neither travel-starved nor
+overfitting. Every item above is worth less until that is isolated.
