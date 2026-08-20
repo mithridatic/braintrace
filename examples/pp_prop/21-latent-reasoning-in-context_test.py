@@ -562,6 +562,22 @@ def test_progress_evidence_reports_stage_chunk_elapsed_and_eta(example):
     }
 
 
+def test_lean_390_tick_evaluation_gathers_only_scoring_checkpoints(example):
+    lean = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        latent_steps=390,
+        training_updates=13,
+    )
+    diagnostic = dataclasses.replace(lean, evaluation_controls=True)
+
+    np.testing.assert_array_equal(
+        example._evaluation_offsets(lean), np.arange(0, 391, 30)
+    )
+    np.testing.assert_array_equal(
+        example._evaluation_offsets(diagnostic), np.arange(0, 391)
+    )
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [

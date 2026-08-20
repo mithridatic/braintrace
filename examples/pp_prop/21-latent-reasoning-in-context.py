@@ -2404,7 +2404,12 @@ def _score_windows(
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score only model-decoded candidates at every frozen checkpoint."""
 
-    checkpoint_compact = compact[np.asarray(checkpoints, dtype=np.int32)]
+    checkpoint_indices = np.asarray(checkpoints, dtype=np.int32)
+    checkpoint_compact = (
+        compact
+        if compact.shape[0] == len(checkpoints)
+        else compact[checkpoint_indices]
+    )
     return _score_checkpoint_logits(
         checkpoint_compact,
         records,
@@ -2569,7 +2574,14 @@ def _trajectory_reports(
     records: Sequence[_EvaluationRecord],
     color_rank: int,
     decoder_mode: DecoderMode,
+    step_indices: Sequence[int] | None = None,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    if step_indices is None:
+        steps = np.arange(compact.shape[0], dtype=np.int32)
+    else:
+        steps = np.asarray(step_indices, dtype=np.int32)
+        if steps.shape != (compact.shape[0],):
+            raise ValueError("step_indices must match the gathered trajectory")
     expanded = expand_decoder_logits(jnp.asarray(compact), color_rank, decoder_mode)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
@@ -2589,7 +2601,7 @@ def _trajectory_reports(
             target=target.as_array(),
             task_id=record.task_key,
             query_index=record.encoded.query_index,
-            step_indices=np.arange(compact.shape[0]),
+            step_indices=steps,
         )
         report["task_id"] = record.task_key
         report["query_index"] = record.encoded.query_index
@@ -2613,31 +2625,33 @@ def _trajectory_reports(
         }
 
     aggregate: list[dict[str, object]] = []
-    for step in range(compact.shape[0]):
-        rows = [report["steps"][step] for report in reports]
+    for step_index, semantic_step in enumerate(steps):
+        rows = [report["steps"][step_index] for report in reports]
         if pair_count:
             pair_spike = np.mean(
-                spikes[step, pair_left] != spikes[step, pair_right], axis=1
+                spikes[step_index, pair_left] != spikes[step_index, pair_right], axis=1
             )
             scale = math.sqrt(spikes.shape[2])
             pair_voltage = (
                 np.linalg.norm(
-                    voltage[step, pair_left] - voltage[step, pair_right], axis=1
+                    voltage[step_index, pair_left]
+                    - voltage[step_index, pair_right],
+                    axis=1,
                 )
                 / scale
             )
             pair_feedforward = (
                 np.linalg.norm(
-                    feedforward_current[step, pair_left]
-                    - feedforward_current[step, pair_right],
+                    feedforward_current[step_index, pair_left]
+                    - feedforward_current[step_index, pair_right],
                     axis=1,
                 )
                 / scale
             )
             pair_recurrent = (
                 np.linalg.norm(
-                    recurrent_current[step, pair_left]
-                    - recurrent_current[step, pair_right],
+                    recurrent_current[step_index, pair_left]
+                    - recurrent_current[step_index, pair_right],
                     axis=1,
                 )
                 / scale
@@ -2649,7 +2663,7 @@ def _trajectory_reports(
             pair_recurrent = np.asarray([], dtype=np.float64)
         aggregate.append(
             {
-                "step": step,
+                "step": int(semantic_step),
                 "mean_firing_rate": float(
                     np.mean([row["firing_rate"] for row in rows])
                 ),
@@ -2668,7 +2682,7 @@ def _trajectory_reports(
                 ),
                 "mean_changed_cell_fraction": (
                     None
-                    if step == 0
+                    if step_index == 0
                     else float(np.mean([row["changed_cell_fraction"] for row in rows]))
                 ),
                 "converged_fraction": float(
@@ -3504,6 +3518,13 @@ def _model_only_completion_report(
     }
 
 
+def _evaluation_offsets(config: ExperimentConfig) -> np.ndarray:
+    """Return sparse primary checkpoints or dense diagnostic trajectory steps."""
+    if config.evaluation_controls:
+        return np.arange(config.latent_steps + 1, dtype=np.int32)
+    return np.asarray(config.checkpoints, dtype=np.int32)
+
+
 def _evaluate(
     trained_model: LatentWorkspaceModel,
     data: _ExperimentData,
@@ -3589,11 +3610,8 @@ def _evaluate(
 
     slots = np.full((batch_size,), config.ablation_slot, dtype=np.int32)
     inactive_gates = np.zeros((intact_events.shape[0], batch_size), dtype=np.bool_)
-    selected_indices = (
-        query_stops[None, :]
-        - 1
-        + np.arange(max(checkpoints) + 1, dtype=np.int32)[:, None]
-    )
+    evaluation_offsets = _evaluation_offsets(config)
+    selected_indices = query_stops[None, :] - 1 + evaluation_offsets[:, None]
     run_device_arm = _compile_evaluation_arm(
         model,
         jnp.asarray(selected_indices),
@@ -3640,8 +3658,17 @@ def _evaluate(
         config,
     )
     channel_attribution = _channel_attribution(primary_checkpoint_queries)
+    trajectory_steps = (
+        evaluation_offsets
+        if intact[0].shape[0] == evaluation_offsets.size
+        else None
+    )
     trajectories, aggregate_trajectory = _trajectory_reports(
-        *intact, records, config.color_rank, config.decoder_mode
+        *intact,
+        records,
+        config.color_rank,
+        config.decoder_mode,
+        trajectory_steps,
     )
 
     if not config.evaluation_controls:
@@ -3673,6 +3700,8 @@ def _evaluate(
                 "sequential_separate_arms": False,
                 "repeat_intact_cached": False,
                 "wall_seconds_by_arm": arm_wall_seconds,
+                "gathered_steps": evaluation_offsets.tolist(),
+                "gathered_step_count": int(evaluation_offsets.size),
             },
         }
         return {
@@ -3958,6 +3987,17 @@ def _qualification(
     checkpoints = config.checkpoints
     training_efforts = config.training_efforts
     submission_checkpoint = config.submission_checkpoint
+    execution_evidence = evaluation.get("execution", {})
+    reported_steps = (
+        execution_evidence.get("gathered_steps")
+        if isinstance(execution_evidence, Mapping)
+        else None
+    )
+    expected_trajectory_steps = (
+        tuple(int(value) for value in reported_steps)
+        if isinstance(reported_steps, list) and reported_steps
+        else tuple(range(submission_checkpoint + 1))
+    )
 
     def finite_tree(value: object) -> bool:
         if isinstance(value, dict):
@@ -4023,13 +4063,15 @@ def _qualification(
     aggregate = evaluation.get("aggregate_trajectory")
     aggregate_complete = bool(
         isinstance(aggregate, list)
-        and len(aggregate) == max(checkpoints) + 1
+        and len(aggregate) == len(expected_trajectory_steps)
         and all(
             isinstance(row, dict)
             and required_trajectory_names <= row.keys()
-            and row.get("step") == index
+            and row.get("step") == expected_step
             and finite_tree(row)
-            for index, row in enumerate(aggregate)
+            for expected_step, row in zip(
+                expected_trajectory_steps, aggregate, strict=True
+            )
         )
     )
     query_trajectories = evaluation.get("query_trajectories")
@@ -4069,18 +4111,20 @@ def _qualification(
             return False
         steps = report["steps"]
         return bool(
-            report.get("step_count") == max(checkpoints) + 1
+            report.get("step_count") == len(expected_trajectory_steps)
             and int(report.get("neuron_count", 0))
             == int(model_report.get("neuron_count", -1))
-            and len(steps) == max(checkpoints) + 1
+            and len(steps) == len(expected_trajectory_steps)
             and all(
                 isinstance(row, dict)
                 and required_query_step_names <= row.keys()
-                and row.get("step") == index
+                and row.get("step") == expected_step
                 and isinstance(row.get("candidates"), list)
                 and bool(row["candidates"])
                 and finite_tree(row)
-                for index, row in enumerate(steps)
+                for expected_step, row in zip(
+                    expected_trajectory_steps, steps, strict=True
+                )
             )
             and finite_tree(report)
         )
@@ -5325,11 +5369,16 @@ def _render_report(result: dict[str, object]) -> str:
     trajectory = frozen_no_adaptation.get(
         "aggregate_trajectory", evaluation.get("aggregate_trajectory", [])
     )
+    trajectory_by_step = {
+        int(row["step"]): row
+        for row in trajectory
+        if isinstance(row, Mapping) and isinstance(row.get("step"), Integral)
+    }
     for effort in checkpoints:
-        if effort >= len(trajectory):
+        if effort not in trajectory_by_step:
             lines.append(f"  step {effort:>2}: unavailable")
             continue
-        row = trajectory[effort]
+        row = trajectory_by_step[effort]
         lines.append(
             f"  step {effort:>2}: firing={row.get('mean_firing_rate', math.nan):.6f}; "
             f"Voltage L2={row.get('mean_voltage_l2', math.nan):.6f}; "
