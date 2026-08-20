@@ -7,7 +7,7 @@ That title names the two hypotheses this investigation started from; measurement
 demoted both. Travel starvation (D-PT) is confirmed for the shape path and
 unresolved for the colour path; shape blindness (D-SB) is a real expressivity
 gap whose repair changed nothing measurable. The load-bearing results are §8.4 --
-a 110-parameter lookup table the head can express exactly beats it by 0.31 pixel
+a 110-parameter lookup table the head can express exactly beats it by 0.13 pixel
 accuracy -- and §8.6, the colour-loss height normalisation (D-GH) that produced
 the first exactly-correct colour content in this investigation.
 
@@ -416,7 +416,7 @@ the last 26 updates, 0.9934, is worse than every other arm's *first* 26.
 count and head displacement all respond strongly and monotonically to the travel
 budget, which is what D-PT predicts. Pixel accuracy barely moves: across a 100×
 range of learning rate it goes 0.4370 → 0.4734, a swing of 0.036, while a
-trivial table beats it by 0.31 (§8.4).
+trivial table beats it by 0.13 (§8.4).
 
 The honest arithmetic on the colour path is that travel is **not yet
 comfortable** there, contrary to a first reading of the sigma column. At
@@ -474,23 +474,33 @@ and evaluating it on the 84 held-out tasks' test queries:
 |---|---|---|---|
 | colour marginal | — | 1.4748 | — |
 | `copy_input` (overlap only) | 0.6026 | — | 0/91 |
-| **11 × 10 conditional table** | **0.7734** | **1.0029** | **1/91** |
+| **11 × 10 conditional table** | **0.6243** | **1.0029** | **1/91** |
 | **trained model, best arm** | **0.4652** | — | **0/91** |
 
 The fitted table is the identity on all ten colours and maps out-of-range to
 colour 0. It is a lookup table with 110 free parameters and it uses no neurons,
 no recurrence and no demonstrations.
 
+**Weighting.** Pixel accuracy here is **query-weighted** — the mean over queries
+of each query's own cell accuracy — because that is how the harness aggregates
+`valid_cell_pixel_accuracy_diagnostic` (`latent_workspace_analysis.py:654`,
+`sum(...) / query_count`). An earlier revision of this spec quoted the table at
+**0.7734**, which is the *cell-weighted* figure (total matched cells over total
+cells) and is not comparable to any model number in this document. The
+cell-weighted figure is larger because the table does relatively better on the
+large grids that dominate a cell-weighted mean. Every table figure here is
+query-weighted; the correction roughly halves the reported gap and does not
+change its direction.
+
 **The exact column is under an oracle shape for every row, including the
-model's**, because the table predicts no shape at all; the pixel column follows
-the harness's own `valid_cell` convention (matches over the true grid's cells).
+model's**, because the table predicts no shape at all.
 Compared like for like, the table scores one exact answer the model does not:
 `d10ecb37` q0, whose 2 × 2 output is the top-left corner of a 4 × 8 input, so
 the identity map reproduces it cell for cell. That is not a shape result — it is
 a colour-content result, and the model's colour content does not reach it on any
 query.
 
-The model is 0.31 below a solution its own architecture can express. That is the
+The model is 0.13 below a solution its own architecture can express. That is the
 defect that pins the exact score at zero, and neither travel starvation (D-PT)
 nor shape blindness (D-SB) explains it — the head has the input, has the
 representational form, and is not visibly starved for the shape path where the
@@ -585,7 +595,7 @@ did **not** materialise: shape accuracy on the ≤9-cell subset is 5/18 both wit
 and without it, and aggregate shape improved. The whole-loss-scaling alternative
 in §8.5 is therefore not needed on this evidence.
 
-Pixel accuracy is unmoved (0.4652 → 0.4669) and still 0.31 below the lookup
+Pixel accuracy is unmoved (0.4652 → 0.4669) and still 0.16 below the lookup
 table. **D-GH is a real but small effect. It does not close the §8.4 gap.**
 
 These two arms share an identical draw sequence: D-GH changes no `random.randn`
@@ -670,7 +680,7 @@ colour distribution moved two thirds of the way from the collapsed 0.834 to the
 true 0.531 marginal; non-black grids went from 41% to 83% of queries; and the
 closest query is now 2 wrong cells of 4 rather than 3 of 16. Pixel accuracy rose
 only 0.033 and remains 0.19 below `copy_input` and, by the §8.4 measurement,
-about 0.36 below a 110-parameter lookup table.
+about 0.16 below a 110-parameter lookup table.
 
 The single oracle-shape-exact query changed identity, from `e872b94a`
 (true output `[[0],[0],[0]]`, satisfiable by the all-black collapse) to
@@ -748,7 +758,7 @@ end-to-end figure.
 
 **The finding that should drive the next attempt is §8.4.** An 11 × 10 lookup
 table with 110 parameters, which the row head can represent exactly through its
-colour block, beats the trained model by 0.31 pixel accuracy on held-out tasks
+colour block, beats the trained model by 0.13 pixel accuracy on held-out tasks
 and scores an oracle-shape exact answer. The model is not short of capacity,
 supervision, or (for the shape path) travel. It is failing to find a solution
 sitting inside its own hypothesis class.
@@ -951,14 +961,22 @@ performance fell. The correct reading is the one neither branch anticipated:
 
 > Training preferentially loads the copy path when given more travel, and the
 > resulting predictor still does not approach the lookup table. Travel is a lever
-> on the **mechanism** without being the cap on **performance**. The cap is
-> generalisation.
+> on the **mechanism** without being the cap on **performance**.
 
 This reframes §8.4. The model is not failing to find the lookup table because it
 cannot reach it — given more budget it moves toward it and gets worse anyway. It
 has roughly 424,000 parameters in the row head alone plus a 1024-neuron recurrent
 substrate, fits 315 training tasks better with every update, and transfers worse.
-The 110-parameter table wins because it cannot overfit.
+
+**What extra budget costs is generalisation; what it does not do is explain the
+baseline deficit.** §10.5 measures the u260 model 0.136 below the table on the
+very tasks it trained on, so overfitting is what the *u780 arm* demonstrates, not
+why the table beats the model in the first place. Two distinct statements, both
+supported:
+
+- Beyond u260, more budget buys memorisation and costs transfer (§10.7).
+- At u260, the model is already well below a 110-parameter table on seen and
+  unseen tasks alike (§10.5), and this spec does not explain why.
 
 ### 10.5 How much of the gap does the carrier explain?
 
@@ -967,13 +985,26 @@ much of the §8.4 gap it accounts for. On the probe surface:
 
 | quantity | pixel accuracy |
 |---|---|
-| 11 × 10 lookup table | 0.7734 |
+| 11 × 10 lookup table | 0.6243 |
 | best model checkpoint (u260, effort 30) | 0.4996 |
 | submitted model checkpoint (u260, effort 150) | 0.4659 |
 
-**Carrier drift across sweeps costs 0.034 of a 0.274 gap — about 12%.** It is a
-real defect with a real diagnostic cost, and it is not the explanation for the
-lookup-table gap. The remaining 0.24 is the generalisation gap of §10.4.
+**Carrier drift across sweeps costs 0.034 of a 0.125 gap — about 27%.** It is a
+real defect with a real diagnostic cost, and it is not the whole explanation.
+
+**Nor is generalisation the rest of it.** §10.7 evaluates the u260 model on the
+324 test queries of the tasks it trained on and gets pixel 0.4905 at its best
+checkpoint, against 0.4996 on held-out tasks — no pixel advantage at all on tasks
+it has seen. The lookup table fitted and evaluated on that same training surface
+scores 0.6266 query-weighted. So the model is **0.136 below the table even on
+tasks whose demonstrations were in its training stream**, essentially the same
+deficit it shows on held-out tasks.
+
+That sharpens §8.4 rather than dissolving it. What extra training budget buys is
+**memorisation** — the same-task-minus-held-out shape gap widens from +0.072 at
+u260 to +0.172 at u780 (§10.7) — but the baseline deficit against the table at
+u260 is not a generalisation gap. The predictor is worse than a 110-parameter
+table everywhere, on seen and unseen tasks alike.
 
 ### 10.6 Answers to the two open questions
 
@@ -993,6 +1024,11 @@ Both answers are confirmed in the same metric by §10.7: tripling the budget
 makes the model **better on tasks it trained on** (shape 0.6759 → 0.6883) and
 **worse on tasks it did not** (shape 0.6044 → 0.5165), which is task-level
 memorisation.
+
+A third thing follows that neither question asked about: at the u260 operating
+point the model is **0.136 below the lookup table on the tasks it trained on**
+(§10.5), so its baseline deficit is not a transfer failure either. That deficit
+is the open question this investigation hands forward.
 
 **Neither answer moves exact pass@1 on ARC-AGI-1. It is 0/419 on the full
 evaluation and 0/91 on every held-out probe arm.** §10.8 records the one place
@@ -1114,11 +1150,17 @@ Replaces §9's ranked list, which assumed travel and carrier-starvation.
    0.014 shape, costs nothing, and changes exact by nothing. Selecting the
    checkpoint on the probe surface is legitimate; selecting it on evaluation is
    not.
-3. **More training tasks or augmentation**, the standard answer to a
-   generalisation gap, now the best-evidenced item on this list: §10.7 measures
-   the model getting better on tasks it trained on and worse on tasks it did not,
-   at the same time. 315 tasks is very few for a 424,000-parameter head plus a
-   1024-neuron recurrent substrate.
+3. **More training tasks or augmentation** addresses what §10.7 measures — the
+   model getting better on tasks it trained on and worse on tasks it did not, at
+   the same time. 315 tasks is very few for a 424,000-parameter head plus a
+   1024-neuron recurrent substrate. Note this treats the *u780 degradation*, not
+   the baseline deficit: §10.5 shows the model 0.136 below the table on trained
+   tasks, which more tasks would not obviously fix.
+5. **Explain the baseline deficit**, which is now the central open question and
+   which this spec does not answer. The model trails a 110-parameter lookup table
+   on seen and unseen tasks alike at an operating point where it is neither
+   travel-starved nor overfitting. Worth isolating before spending on anything
+   above it.
 4. **Do not spend more on update count or learning rate.** §8.2 and §10.4
    bracket the useful range: below `lr·U ≈ 0.26` the head cannot travel, above it
    the model overfits, and the window between them is narrow.
