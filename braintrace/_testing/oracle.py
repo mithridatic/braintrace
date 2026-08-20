@@ -170,8 +170,9 @@ def chunked_online_param_gradients(
     chunk_size : int
         Steps per chunk; the last chunk may be shorter.
     compiled_scan : bool, optional
-        If ``False`` (default), preserve the legacy host-loop execution. If
-        ``True``, run all full-size chunks in one
+        If ``False`` (default), preserve the legacy host-loop execution while
+        reusing one per-chunk gradient transform. If ``True``, run all
+        full-size chunks in one
         :func:`brainstate.transform.scan` and run at most one shorter final
         chunk directly.
     after_init : Callable, optional
@@ -234,14 +235,22 @@ def chunked_online_param_gradients(
             )
         return total
 
+    # Build the legacy per-chunk transform once.  Calling ``grad`` for every
+    # chunk creates a distinct transformed function and makes JAX retrace the
+    # algorithm body even when all chunks have the same shape.  Reusing this
+    # callable preserves the host-loop ordering and stateful accumulation while
+    # allowing JAX to cache one trace for the full-size chunks (and one more for
+    # a shorter tail, when present).
+    grad_chunk = brainstate.transform.grad(
+        lambda seq: (algo(braintrace.MultiStepData(seq)) ** 2).sum(),
+        params,
+    )
+
     total = None
     # test-support chunk loop (few iterations), not a model step driver
     for start in range(0, inputs.shape[0], chunk_size):
         chunk = inputs[start:start + chunk_size]
-        g = brainstate.transform.grad(
-            lambda seq: (algo(braintrace.MultiStepData(seq)) ** 2).sum(),
-            params,
-        )(chunk)
+        g = grad_chunk(chunk)
         total = g if total is None else jax.tree.map(
             lambda a, b: a + b, total, g)
     return total

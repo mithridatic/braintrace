@@ -14,12 +14,12 @@ from typing import Any, Mapping, Sequence
 
 import pytest
 
+from examples import pp_prop
 from examples.pp_prop import latent_workspace_binding_gate as gate
-from examples.pp_prop import latent_workspace_binding_gate_test as gate_fixtures
 from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
+from examples.pp_prop import latent_workspace_binding_gate_test as gate_fixtures
 from examples.pp_prop import latent_workspace_depth_gate as depth
 from examples.pp_prop import latent_workspace_depth_gate_test as depth_fixtures
-
 
 _HEAD = "a" * 40
 _IMAGE_ID = "sha256:" + "b" * 64
@@ -687,11 +687,52 @@ def _install_gate_c3_science_module(
     )
     fake_gate_c.GateCConfig = FakeGateCConfig
     fake_gate_c._gate_c3_controls_qualification = recompute
+    _install_gate_c_module(monkeypatch, fake_gate_c)
+
+
+def _install_gate_c_module(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_gate_c: types.ModuleType,
+) -> None:
+    """Install a fake Gate C module through every import resolution path."""
+
     monkeypatch.setitem(
         sys.modules,
         "examples.pp_prop.latent_workspace_ablation_gate",
         fake_gate_c,
     )
+    monkeypatch.setattr(
+        pp_prop,
+        "latent_workspace_ablation_gate",
+        fake_gate_c,
+        raising=False,
+    )
+
+
+def test_gate_c_fake_module_replaces_preloaded_package_attribute(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    preloaded = types.ModuleType("examples.pp_prop.latent_workspace_ablation_gate")
+    monkeypatch.setitem(
+        sys.modules,
+        "examples.pp_prop.latent_workspace_ablation_gate",
+        preloaded,
+    )
+    monkeypatch.setattr(
+        pp_prop,
+        "latent_workspace_ablation_gate",
+        preloaded,
+        raising=False,
+    )
+
+    fake_gate_c = types.ModuleType("examples.pp_prop.latent_workspace_ablation_gate")
+    _install_gate_c_module(monkeypatch, fake_gate_c)
+
+    assert sys.modules["examples.pp_prop.latent_workspace_ablation_gate"] is fake_gate_c
+    assert pp_prop.latent_workspace_ablation_gate is fake_gate_c
+    from examples.pp_prop import latent_workspace_ablation_gate as imported_gate_c
+
+    assert imported_gate_c is fake_gate_c
 
 
 def _formal_gate_c_result(
@@ -2268,11 +2309,7 @@ def test_gate_c2_controls_recomputes_scientific_pass_and_failure(
     )
     fake_gate_c.GateCConfig = FakeGateCConfig
     fake_gate_c._gate_c2_controls_qualification = recompute
-    monkeypatch.setitem(
-        sys.modules,
-        "examples.pp_prop.latent_workspace_ablation_gate",
-        fake_gate_c,
-    )
+    _install_gate_c_module(monkeypatch, fake_gate_c)
 
     validation_kwargs = {
         "target": "gate_c2_controls",
@@ -2573,11 +2610,7 @@ def test_gate_c_init_recomputes_scientific_qualification(
     )
     fake_gate_c.GateCConfig = FakeGateCConfig
     fake_gate_c._gate_c_initialization_qualification = recompute
-    monkeypatch.setitem(
-        sys.modules,
-        "examples.pp_prop.latent_workspace_ablation_gate",
-        fake_gate_c,
-    )
+    _install_gate_c_module(monkeypatch, fake_gate_c)
 
     assert (
         launcher._validate_gate_c_scientific_result(
@@ -2639,11 +2672,7 @@ def test_formal_gate_c_recomputes_pass_failure_and_rejects_stale_qualification(
     )
     fake_gate_c.GateCConfig = FakeGateCConfig
     fake_gate_c._qualification_report = recompute
-    monkeypatch.setitem(
-        sys.modules,
-        "examples.pp_prop.latent_workspace_ablation_gate",
-        fake_gate_c,
-    )
+    _install_gate_c_module(monkeypatch, fake_gate_c)
 
     assert launcher._validate_gate_c_scientific_result(
         copy.deepcopy(passing),

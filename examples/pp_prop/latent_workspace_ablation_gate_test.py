@@ -6355,6 +6355,48 @@ def reduced_finite_window_oracle_inputs() -> dict[str, Any]:
     }
 
 
+@pytest.fixture(scope="module")
+def reduced_mechanism_oracle_result(
+    reduced_finite_window_oracle_inputs: dict[str, Any],
+) -> dict[str, Any]:
+    """Run the reduced Gate C mechanism oracle once for its consumers."""
+    from braintrace._testing.oracle import (
+        chunked_online_param_gradients as real_chunked_gradients,
+    )
+
+    calls: list[int] = []
+
+    def recording_chunked_gradients(*args: Any, **kwargs: Any) -> Any:
+        calls.append(kwargs["chunk_size"])
+        return real_chunked_gradients(*args, **kwargs)
+
+    initialization = reduced_finite_window_oracle_inputs["initialization"]
+    audit = gate_c._GateC2ControlsAudit(initialization)
+    previous_audit = gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT
+    try:
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(
+                gate_c,
+                "chunked_online_param_gradients",
+                recording_chunked_gradients,
+                raising=False,
+            )
+            gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT = audit
+            with audit:
+                report = gate_c._mechanism_oracle(
+                    reduced_finite_window_oracle_inputs["config"],
+                    initialization=initialization,
+                    gate_b_data=reduced_finite_window_oracle_inputs["data"],
+                )
+    finally:
+        gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT = previous_audit
+    return {
+        "report": report,
+        "calls": calls,
+        "audit": audit.report(),
+    }
+
+
 def _assert_oracle_numeric_record(record: Mapping[str, Any]) -> None:
     assert set(record) == {
         "full_norm",
@@ -6394,35 +6436,14 @@ def _oracle_threshold_passed(record: Mapping[str, Any]) -> bool:
 
 
 @requires_gate_c
+@pytest.mark.xdist_group("example21-gate-c-mechanism-oracle")
 def test_reduced_oracle_executes_real_finite_window_pp_prop_and_thresholds(
     reduced_finite_window_oracle_inputs: dict[str, Any],
-    monkeypatch: pytest.MonkeyPatch,
+    reduced_mechanism_oracle_result: dict[str, Any],
 ) -> None:
-    from braintrace._testing.oracle import (
-        chunked_online_param_gradients as real_chunked_gradients,
-    )
+    report = reduced_mechanism_oracle_result["report"]
 
-    calls: list[int] = []
-
-    def recording_chunked_gradients(*args: Any, **kwargs: Any) -> Any:
-        calls.append(kwargs["chunk_size"])
-        return real_chunked_gradients(*args, **kwargs)
-
-    monkeypatch.setattr(
-        gate_c,
-        "chunked_online_param_gradients",
-        recording_chunked_gradients,
-        raising=False,
-    )
-    report = gate_c._mechanism_oracle(
-        reduced_finite_window_oracle_inputs["config"],
-        initialization=reduced_finite_window_oracle_inputs[
-            "initialization"
-        ],
-        gate_b_data=reduced_finite_window_oracle_inputs["data"],
-    )
-
-    assert calls == [1, 1, 1]
+    assert reduced_mechanism_oracle_result["calls"] == [1, 1, 1]
     assert set(report) == {
         "contract",
         "objective",
@@ -6479,24 +6500,13 @@ def test_reduced_oracle_executes_real_finite_window_pp_prop_and_thresholds(
 
 
 @requires_gate_c
+@pytest.mark.xdist_group("example21-gate-c-mechanism-oracle")
 def test_reduced_mechanism_oracle_audits_every_model_construction(
     reduced_finite_window_oracle_inputs: dict[str, Any],
+    reduced_mechanism_oracle_result: dict[str, Any],
 ) -> None:
     initialization = reduced_finite_window_oracle_inputs["initialization"]
-    audit = gate_c._GateC2ControlsAudit(initialization)
-    previous = gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT
-    try:
-        gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT = audit
-        with audit:
-            gate_c._mechanism_oracle(
-                reduced_finite_window_oracle_inputs["config"],
-                initialization=initialization,
-                gate_b_data=reduced_finite_window_oracle_inputs["data"],
-            )
-    finally:
-        gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT = previous
-
-    evidence = audit.report()
+    evidence = reduced_mechanism_oracle_result["audit"]
     expected_roles = [
         role
         for role in _GATE_C2_CONTROL_MODEL_ROLES

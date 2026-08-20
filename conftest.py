@@ -82,6 +82,32 @@ def _make_malloc_trim():
 _malloc_trim = _make_malloc_trim()
 
 
+_XDIST_GROUP_BY_FIXTURE = {
+    "reduced_gate_run": "depth-reduced-run",
+    "reduced_gate_a_full_legacy_run": "gate-a-arms",
+    "reduced_gate_b_arm_run": "gate-b-arms",
+    "reduced_gate_c_initialization_subject": "initialization",
+    "passing_formal_gate_c_report": "formal-arms",
+    "reduced_formal_terminal_and_frozen_reports": "formal-arms",
+    "reduced_finite_window_oracle_inputs": "mechanism-oracle",
+    "passing_gate_c2_no_read_reports": "removed-path-reports",
+    "reduced_gate_c2_removed_path_reports": "removed-path-reports",
+}
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Keep consumers of expensive stateful Example 21 fixtures together."""
+
+    for item in items:
+        groups = {
+            group
+            for fixture, group in _XDIST_GROUP_BY_FIXTURE.items()
+            if fixture in item.fixturenames
+        }
+        for group in sorted(groups):
+            item.add_marker(pytest.mark.xdist_group(name=group))
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_teardown(item):
     if _JAX_CACHE_CLEAR_EVERY <= 0:

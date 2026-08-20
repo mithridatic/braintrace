@@ -1336,6 +1336,105 @@ def test_training_chunk_encoding_matches_row_events_and_checkpoint_contracts() -
         assert np.array_equal(encoded.loss_weights[0], contract.loss_weights)
 
 
+def test_batched_cycle_decoder_matches_scalar_unrank_at_catalog_boundaries() -> None:
+    mapping_ids = np.asarray(
+        [[0, 1, 9, 10], [12_345, math.factorial(9) - 2, math.factorial(9) - 1, 42]],
+        dtype=np.int64,
+    )
+
+    decoded = depth._decode_ten_cycle_batch(mapping_ids)
+    expected = np.asarray(
+        [
+            depth.unrank_ten_cycle(int(mapping_id))
+            for mapping_id in mapping_ids.reshape(-1)
+        ],
+        dtype=np.int32,
+    ).reshape(mapping_ids.shape + (10,))
+
+    assert decoded.dtype == np.int32
+    assert decoded.shape == (2, 4, 10)
+    assert decoded.tobytes() == expected.tobytes()
+
+
+@pytest.mark.parametrize(
+    "mapping_id",
+    [0, 1, 9, 10, 12_345, math.factorial(9) - 1],
+)
+def test_batched_cycle_encoder_matches_scalar_for_all_queries_and_orders(
+    mapping_id: int,
+) -> None:
+    config = _reduced_depth_config()
+    mapping_ids = np.full((30,), mapping_id, dtype=np.int64)
+    queries = np.tile(np.arange(10, dtype=np.int32), 3)
+    base_orders = (
+        np.arange(10, dtype=np.int32),
+        np.arange(9, -1, -1, dtype=np.int32),
+        np.roll(np.arange(10, dtype=np.int32), 3),
+    )
+    orders = np.asarray(
+        [order for order in base_orders for _ in range(10)],
+    )
+    mappings = depth._decode_ten_cycle_batch(mapping_ids)
+
+    batched = depth._encode_cycle_batch(
+        mappings,
+        queries,
+        orders,
+        config.row_config,
+    )
+    expected = np.stack(
+        [
+            depth._encode_cycle_episode(
+                mappings[index],
+                int(queries[index]),
+                orders[index],
+                config.row_config,
+            )
+            for index in range(mapping_ids.size)
+        ],
+        axis=1,
+    )
+
+    assert batched.shape == (11, mapping_ids.size, config.row_config.input_width)
+    assert batched.dtype == np.float32
+    assert batched.tobytes() == expected.tobytes()
+
+
+@pytest.mark.parametrize("effort", [1, 2, 4, 8])
+def test_batched_checkpoint_tensors_match_scalar_for_all_efforts(
+    effort: int,
+) -> None:
+    config = _reduced_depth_config()
+    ranks = np.asarray([0, 1, 12_345, math.factorial(9) - 1], dtype=np.int64)
+    mapping_ids = np.repeat(ranks, 10).reshape(4, 10)
+    queries = np.tile(np.arange(10, dtype=np.int32), (4, 1))
+    efforts = np.full((4,), effort, dtype=np.int32)
+    mappings = depth._decode_ten_cycle_batch(mapping_ids)
+
+    targets, weights, advances = depth._checkpoint_tensors_batch(
+        mappings,
+        queries,
+        efforts,
+        sequence_length=config.sequence_length,
+    )
+    for update_index, effort_value in enumerate(efforts):
+        for batch_index in range(10):
+            contract = depth._checkpoint_contract(
+                mappings[update_index, batch_index],
+                int(queries[update_index, batch_index]),
+                int(effort_value),
+            )
+            assert np.array_equal(
+                targets[update_index, :, batch_index],
+                contract.targets,
+            )
+            assert np.array_equal(
+                advances[update_index, :, batch_index],
+                contract.advance_mask,
+            )
+        assert np.array_equal(weights[update_index], contract.loss_weights)
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -1386,36 +1485,27 @@ def test_training_encoder_rejects_wrong_row_count(
     chunk = next(depth._iter_schedule_chunks(depth._build_schedule(config), config))
     monkeypatch.setattr(
         depth,
-        "_encode_cycle_episode",
-        lambda *args: np.zeros((10, config.row_config.input_width), dtype=np.float32),
+        "_encode_cycle_batch",
+        lambda *args: np.zeros(
+            (10, config.batch_size, config.row_config.input_width),
+            dtype=np.float32,
+        ),
     )
 
     with pytest.raises(ValueError, match="exactly 11 rows"):
         depth._encode_training_chunk(chunk, config)
 
 
-def test_training_encoder_rejects_mixed_effort_masks_within_update(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_training_encoder_rejects_undeclared_batch_effort() -> None:
     config = _reduced_depth_config()
     chunk = next(depth._iter_schedule_chunks(depth._build_schedule(config), config))
-    real_contract = depth._checkpoint_contract
-    calls = 0
+    malformed = dataclasses.replace(
+        chunk,
+        training_efforts=np.asarray([3], dtype=np.int32),
+    )
 
-    def inconsistent_contract(*args: Any, **kwargs: Any) -> depth.CheckpointContract:
-        nonlocal calls
-        calls += 1
-        contract = real_contract(*args, **kwargs)
-        if calls == 1:
-            return contract
-        weights = np.asarray(contract.loss_weights).copy()
-        weights[10] += 0.25
-        return dataclasses.replace(contract, loss_weights=weights)
-
-    monkeypatch.setattr(depth, "_checkpoint_contract", inconsistent_contract)
-
-    with pytest.raises(ValueError, match="share one effort mask"):
-        depth._encode_training_chunk(chunk, config)
+    with pytest.raises(ValueError, match="effort"):
+        depth._encode_training_chunk(malformed, config)
 
 
 def test_validation_encoding_contains_exact_intact_and_control_episodes() -> None:
@@ -2917,6 +3007,11 @@ def test_gate_b_init_cli_loads_gate_a_and_emits_full_admission(
         return output
 
     monkeypatch.setattr(depth.gate, "_source_report", source_report)
+    monkeypatch.setattr(
+        depth,
+        "_source_files_report",
+        lambda actual_config: copy.deepcopy(passing["source_files"]),
+    )
     monkeypatch.setattr(depth.gate, "_environment_report", environment_report)
     monkeypatch.setattr(depth.gate, "_require_authenticated_gpu_launch", require_launch)
     monkeypatch.setattr(launcher, "_load_gate_a_prerequisite", load_gate_a)
@@ -3018,6 +3113,11 @@ def test_formal_gate_b_cli_loads_both_prerequisites_and_passes_postflight_report
         return output
 
     monkeypatch.setattr(depth.gate, "_source_report", source_report)
+    monkeypatch.setattr(
+        depth,
+        "_source_files_report",
+        lambda actual_config: copy.deepcopy(passing["source_files"]),
+    )
     monkeypatch.setattr(depth.gate, "_environment_report", environment_report)
     monkeypatch.setattr(depth.gate, "_require_authenticated_gpu_launch", require_launch)
     monkeypatch.setattr(launcher, "_load_gate_a_prerequisite", load_gate_a)

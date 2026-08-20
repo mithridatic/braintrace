@@ -546,6 +546,41 @@ def unrank_ten_cycle(mapping_id: int) -> np.ndarray:
     return mapping
 
 
+def _decode_ten_cycle_batch(mapping_ids: np.ndarray) -> np.ndarray:
+    """Decode a batch of anchored ten-cycle catalog ranks with NumPy."""
+
+    ranks_array = np.asarray(mapping_ids)
+    if not np.issubdtype(ranks_array.dtype, np.integer):
+        raise ValueError("mapping IDs must be integer catalog ranks")
+    if np.any(ranks_array < 0) or np.any(ranks_array >= TEN_CYCLE_CATALOG_SIZE):
+        raise ValueError("mapping ID is outside the 10-cycle catalog")
+
+    original_shape = ranks_array.shape
+    flat_ranks = ranks_array.astype(np.int64, copy=True).reshape(-1)
+    episode_count = flat_ranks.size
+    remaining = np.broadcast_to(
+        np.arange(1, 10, dtype=np.int32),
+        (episode_count, 9),
+    ).copy()
+    order = np.empty((episode_count, 10), dtype=np.int32)
+    order[:, 0] = 0
+    for position, width in enumerate(range(9, 0, -1), start=1):
+        divisor = math.factorial(width - 1)
+        indices, flat_ranks = divmod(flat_ranks, divisor)
+        order[:, position] = np.take_along_axis(
+            remaining,
+            indices[:, None],
+            axis=1,
+        )[:, 0]
+        keep = np.arange(width)[None, :] != indices[:, None]
+        remaining = remaining[keep].reshape(episode_count, width - 1)
+
+    mappings = np.empty((episode_count, 10), dtype=np.int32)
+    row_indices = np.arange(episode_count)[:, None]
+    mappings[row_indices, order] = np.roll(order, -1, axis=1)
+    return mappings.reshape((*original_shape, 10))
+
+
 def rank_ten_cycle(mapping: np.ndarray) -> int:
     """Return the lexicographic catalog rank of one anchored 10-cycle.
 
@@ -672,6 +707,228 @@ def _encode_cycle_episode(
     return np.asarray(encode_query_episode(task, 0, row_config).events)
 
 
+def _encode_cycle_batch(
+    mappings: np.ndarray,
+    query_colors: np.ndarray,
+    presentation_orders: np.ndarray,
+    row_config: RowEventConfig,
+) -> np.ndarray:
+    """Encode one-cell cycle episodes as one time-major NumPy batch.
+
+    Parameters
+    ----------
+    mappings
+        Successor mappings with shape ``(episodes, 10)``.
+    query_colors
+        Query colors with shape ``(episodes,)``.
+    presentation_orders
+        Demonstration source-color permutations with shape ``(episodes, 10)``.
+    row_config
+        Gate B's one-cell row-event layout.
+
+    Returns
+    -------
+    numpy.ndarray
+        Writable ``float32`` events with shape
+        ``(11, episodes, row_config.input_width)``.
+    """
+
+    mappings_array = np.asarray(mappings)
+    queries = np.asarray(query_colors)
+    orders = np.asarray(presentation_orders)
+    if mappings_array.ndim != 2 or mappings_array.shape[1] != 10:
+        raise ValueError("batched mappings must have shape (episodes, 10)")
+    episode_count = mappings_array.shape[0]
+    if queries.shape != (episode_count,):
+        raise ValueError("batched query colors must have shape (episodes,)")
+    if orders.shape != (episode_count, 10):
+        raise ValueError(
+            "batched presentation orders must have shape (episodes, 10)"
+        )
+    if not np.issubdtype(mappings_array.dtype, np.integer):
+        raise ValueError("batched mappings must be integer arrays")
+    if not np.issubdtype(queries.dtype, np.integer):
+        raise ValueError("batched query colors must be integer arrays")
+    if not np.issubdtype(orders.dtype, np.integer):
+        raise ValueError("batched presentation orders must be integer arrays")
+    if (
+        row_config.max_demonstrations != 10
+        or row_config.max_grid_size != 1
+        or row_config.color_count != 10
+    ):
+        raise ValueError("batched Gate B encoding requires the one-cell layout")
+    if np.any(mappings_array < 0) or np.any(mappings_array >= 10):
+        raise ValueError("batched mappings must contain ARC colors")
+    if np.any(queries < 0) or np.any(queries >= 10):
+        raise ValueError("batched query colors must contain ARC colors")
+    if np.any(orders < 0) or np.any(orders >= 10):
+        raise ValueError("batched presentation orders must contain ARC colors")
+
+    events = np.zeros(
+        (11, episode_count, row_config.input_width),
+        dtype=np.float32,
+    )
+    valid_index = row_config.valid_slice.start
+    phase_start = row_config.phase_slice.start
+    demonstration_start = row_config.demonstration_slice.start
+    normalized_start = row_config.normalized_slice.start
+    row_index_start = row_config.row_index_slice.start
+    input_side_start = row_config.side_valid_slice.start
+    output_side_start = input_side_start + 1
+    input_height_start = row_config.input_height_slice.start
+    input_width_start = row_config.input_width_slice.start
+    output_height_start = row_config.output_height_slice.start
+    output_width_start = row_config.output_width_slice.start
+    input_mask_start = row_config.input_mask_slice.start
+    output_mask_start = row_config.output_mask_slice.start
+    input_color_start = row_config.input_color_slice.start
+    output_color_start = row_config.output_color_slice.start
+
+    events[:10, :, valid_index] = 1.0
+    events[:10, :, phase_start] = 1.0
+    events[10, :, valid_index] = 1.0
+    events[10, :, phase_start + 1] = 1.0
+    events[:, :, normalized_start] = 1.0
+    events[:, :, row_index_start] = 1.0
+    events[:10, :, demonstration_start : demonstration_start + 10] = np.eye(
+        10,
+        dtype=np.float32,
+    )[:, None, :]
+
+    for side_start, normal_offset, height_start, width_start, mask_start in (
+        (
+            input_side_start,
+            1,
+            input_height_start,
+            input_width_start,
+            input_mask_start,
+        ),
+        (
+            output_side_start,
+            3,
+            output_height_start,
+            output_width_start,
+            output_mask_start,
+        ),
+    ):
+        events[:10, :, side_start] = 1.0
+        events[:10, :, normalized_start + normal_offset] = 1.0
+        events[:10, :, normalized_start + normal_offset + 1] = 1.0
+        events[:10, :, height_start] = 1.0
+        events[:10, :, width_start] = 1.0
+        events[:10, :, mask_start] = 1.0
+    events[10, :, input_side_start] = 1.0
+    events[10, :, normalized_start + 1] = 1.0
+    events[10, :, normalized_start + 2] = 1.0
+    events[10, :, input_height_start] = 1.0
+    events[10, :, input_width_start] = 1.0
+    events[10, :, input_mask_start] = 1.0
+
+    episode_indices = np.arange(episode_count)
+    for demonstration_index in range(10):
+        source_colors = orders[:, demonstration_index]
+        output_colors = np.take_along_axis(
+            mappings_array,
+            source_colors[:, None],
+            axis=1,
+        )[:, 0]
+        events[
+            demonstration_index,
+            episode_indices,
+            input_color_start + source_colors,
+        ] = 1.0
+        events[
+            demonstration_index,
+            episode_indices,
+            output_color_start + output_colors,
+        ] = 1.0
+    events[10, episode_indices, input_color_start + queries] = 1.0
+    return events
+
+
+def _cycle_targets_batch(
+    mappings: np.ndarray,
+    query_colors: np.ndarray,
+    depth_count: int,
+) -> np.ndarray:
+    """Return successive cycle answers for a batch of query colors."""
+
+    mappings_array = np.asarray(mappings)
+    queries = np.asarray(query_colors)
+    if mappings_array.ndim != 2 or mappings_array.shape[1] != 10:
+        raise ValueError("batched mappings must have shape (episodes, 10)")
+    if queries.shape != (mappings_array.shape[0],):
+        raise ValueError("batched query colors must have shape (episodes,)")
+    if isinstance(depth_count, bool) or not isinstance(depth_count, (int, np.integer)):
+        raise ValueError("depth_count must be an integer")  # noqa: TRY004
+    depth_count = int(depth_count)
+    if depth_count < 1:
+        raise ValueError("depth_count must be positive")
+    values = queries.astype(np.int32, copy=True)
+    targets = np.empty((depth_count, mappings_array.shape[0]), dtype=np.int32)
+    for depth_index in range(depth_count):
+        values = np.take_along_axis(
+            mappings_array,
+            values[:, None],
+            axis=1,
+        )[:, 0]
+        targets[depth_index] = values
+    return targets
+
+
+def _checkpoint_tensors_batch(
+    mappings: np.ndarray,
+    query_colors: np.ndarray,
+    efforts: np.ndarray,
+    *,
+    sequence_length: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Build Gate B targets, loss weights, and advance masks in one batch."""
+
+    mappings_array = np.asarray(mappings)
+    queries = np.asarray(query_colors)
+    effort_array = np.asarray(efforts)
+    if mappings_array.ndim != 3 or mappings_array.shape[2] != 10:
+        raise ValueError("batched mappings must have shape (updates, batch, 10)")
+    updates, batch_size, _ = mappings_array.shape
+    if queries.shape != (updates, batch_size):
+        raise ValueError("batched query colors must match mappings")
+    if effort_array.shape != (updates,):
+        raise ValueError("batched efforts must have shape (updates,)")
+    if not np.issubdtype(effort_array.dtype, np.integer):
+        raise ValueError("batched efforts must be integer values")
+    if np.any(~np.isin(effort_array, QUALIFYING_EFFORTS)):
+        raise ValueError("effort must be one of 1, 2, 4, or 8")
+    if sequence_length < 11 or sequence_length - 11 not in (8,):
+        raise ValueError("Gate B checkpoint tensors require a 19-row sequence")
+
+    flat_mappings = mappings_array.reshape(-1, 10)
+    flat_queries = queries.reshape(-1)
+    depth_count = sequence_length - 10
+    flat_targets = _cycle_targets_batch(flat_mappings, flat_queries, depth_count)
+    all_targets = flat_targets.reshape(depth_count, updates, batch_size).transpose(
+        1,
+        0,
+        2,
+    )
+    depth_indices = np.arange(depth_count)[None, :, None]
+    active_depths = depth_indices <= effort_array[:, None, None]
+    targets = np.zeros(
+        (updates, sequence_length, batch_size),
+        dtype=np.int32,
+    )
+    targets[:, 10:] = np.where(active_depths, all_targets, 0)
+
+    weights = np.zeros((updates, sequence_length), dtype=np.float64)
+    weights[:, 10:] = active_depths[:, :, 0] / (effort_array[:, None] + 1.0)
+
+    advances = np.arange(sequence_length)[None, :, None] < (
+        11 + effort_array[:, None, None]
+    )
+    advances = np.broadcast_to(advances, (updates, sequence_length, batch_size)).copy()
+    return targets, weights, advances
+
+
 def _encode_training_chunk(
     schedule_chunk: DepthScheduleChunk,
     config: DepthGateConfig,
@@ -692,41 +949,43 @@ def _encode_training_chunk(
     if presentation_orders.shape != (update_count, batch_size, 10):
         raise ValueError("training presentation orders have the wrong shape")
 
+    flat_mapping_ids = mapping_ids.reshape(-1)
+    flat_query_colors = query_colors.reshape(-1)
+    flat_presentation_orders = presentation_orders.reshape(-1, 10)
+    mappings = _decode_ten_cycle_batch(flat_mapping_ids)
+    encoded = _encode_cycle_batch(
+        mappings,
+        flat_query_colors,
+        flat_presentation_orders,
+        config.row_config,
+    )
+    if encoded.shape != (
+        11,
+        update_count * batch_size,
+        config.row_config.input_width,
+    ):
+        raise ValueError("encoded Gate B episode must contain exactly 11 rows")
     events = np.zeros(
-        (update_count, config.sequence_length, batch_size, config.row_config.input_width),
+        (
+            update_count,
+            config.sequence_length,
+            batch_size,
+            config.row_config.input_width,
+        ),
         dtype=np.float32,
     )
-    targets = np.zeros(
-        (update_count, config.sequence_length, batch_size), dtype=np.int32
+    events[:, :11] = encoded.reshape(
+        11,
+        update_count,
+        batch_size,
+        config.row_config.input_width,
+    ).transpose(1, 0, 2, 3)
+    targets, weights, advances = _checkpoint_tensors_batch(
+        mappings.reshape(update_count, batch_size, 10),
+        query_colors,
+        efforts,
+        sequence_length=config.sequence_length,
     )
-    weights = np.zeros((update_count, config.sequence_length), dtype=np.float64)
-    advances = np.zeros(
-        (update_count, config.sequence_length, batch_size), dtype=np.bool_
-    )
-    for update_index in range(update_count):
-        effort = int(efforts[update_index])
-        reference_weights: np.ndarray | None = None
-        for batch_index in range(batch_size):
-            mapping = unrank_ten_cycle(int(mapping_ids[update_index, batch_index]))
-            query = int(query_colors[update_index, batch_index])
-            encoded = _encode_cycle_episode(
-                mapping,
-                query,
-                presentation_orders[update_index, batch_index],
-                config.row_config,
-            )
-            if encoded.shape != (11, config.row_config.input_width):
-                raise ValueError("encoded Gate B episode must contain exactly 11 rows")
-            events[update_index, :11, batch_index] = encoded
-            contract = _checkpoint_contract(mapping, query, effort)
-            targets[update_index, :, batch_index] = contract.targets
-            advances[update_index, :, batch_index] = contract.advance_mask
-            if reference_weights is None:
-                reference_weights = np.asarray(contract.loss_weights)
-            elif not np.array_equal(reference_weights, contract.loss_weights):
-                raise ValueError("all examples in an update must share one effort mask")
-        assert reference_weights is not None
-        weights[update_index] = reference_weights
     return DepthTrainingChunk(
         events=_readonly(events),
         targets=_readonly(targets),
@@ -757,29 +1016,37 @@ def _encode_validation_data(
     no_context = np.zeros(shape, dtype=np.float32)
     targets = np.zeros((config.gap_steps + 1, count), dtype=np.int32)
     shifts = np.zeros((count,), dtype=np.int32)
+    mappings = _decode_ten_cycle_batch(mapping_ids)
+    shuffled_mappings = np.empty_like(mappings)
     for episode_index in range(count):
-        mapping = unrank_ten_cycle(int(mapping_ids[episode_index]))
+        mapping = mappings[episode_index]
         query = int(query_colors[episode_index])
-        order = presentation_orders[episode_index]
         shift, shuffled_mapping = _select_shuffled_rotation(mapping, query)
-        intact[:11, episode_index] = _encode_cycle_episode(
-            mapping, query, order, config.row_config
-        )
-        shuffled[:11, episode_index] = _encode_cycle_episode(
-            shuffled_mapping, query, order, config.row_config
-        )
-        no_context[10, episode_index] = intact[10, episode_index]
+        shuffled_mappings[episode_index] = shuffled_mapping
         shifts[episode_index] = shift
-        for depth_index in range(config.gap_steps + 1):
-            targets[depth_index, episode_index] = _iterate_mapping(
-                mapping, query, depth_index + 1
-            )
-        if any(
-            _iterate_mapping(shuffled_mapping, query, effort + 1)
-            == targets[effort, episode_index]
-            for effort in QUALIFYING_EFFORTS
-        ):
-            raise ValueError("shuffled control retains an intact qualifying answer")
+        for effort in QUALIFYING_EFFORTS:
+            shuffled_answer = _iterate_mapping(shuffled_mapping, query, effort + 1)
+            intact_answer = _iterate_mapping(mapping, query, effort + 1)
+            if shuffled_answer == intact_answer:
+                raise ValueError("shuffled control retains an intact qualifying answer")
+    intact[:11] = _encode_cycle_batch(
+        mappings,
+        query_colors,
+        presentation_orders,
+        config.row_config,
+    )
+    shuffled[:11] = _encode_cycle_batch(
+        shuffled_mappings,
+        query_colors,
+        presentation_orders,
+        config.row_config,
+    )
+    no_context[10] = intact[10]
+    targets[:, :] = _cycle_targets_batch(
+        mappings,
+        query_colors,
+        config.gap_steps + 1,
+    )
     advances = np.ones((config.sequence_length, count), dtype=np.bool_)
     return DepthValidationData(
         intact=_readonly(intact),

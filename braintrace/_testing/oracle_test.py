@@ -169,6 +169,50 @@ class TestChunkedOnlineParamGradientsCompiledScan:
             np.asarray(explicit[("weight",)]),
         )
 
+    def test_legacy_reuses_chunk_transform_and_preserves_callback_state(
+        self, monkeypatch
+    ):
+        """Trace each uniform chunk shape once and keep callback ordering."""
+        real_grad = brainstate.transform.grad
+        grad_constructions = []
+
+        def recording_grad(*args, **kwargs):
+            grad_constructions.append(None)
+            return real_grad(*args, **kwargs)
+
+        monkeypatch.setattr(brainstate.transform, "grad", recording_grad)
+
+        for length, expected_traces, expected_gradient in (
+            (6, 1, 546.0),
+            (5, 2, 330.0),
+        ):
+            created = []
+            callback_calls = []
+
+            def after_init(model, algorithm, calls=callback_calls):
+                calls.append((model, algorithm))
+                model.weight.value = jnp.asarray(3.0)
+
+            gradients = chunked_online_param_gradients(
+                _ScaleModel,
+                jnp.arange(1.0, length + 1).reshape(length, 1),
+                algo_factory=_counting_algorithm_factory(created),
+                chunk_size=2,
+                after_init=after_init,
+            )
+
+            assert len(grad_constructions) == 1
+            grad_constructions.clear()
+            assert len(callback_calls) == 1
+            assert len(created) == 1
+            assert created[0].python_calls == expected_traces
+            np.testing.assert_allclose(
+                np.asarray(gradients[("weight",)]),
+                expected_gradient,
+                atol=0.0,
+                rtol=0.0,
+            )
+
     def test_after_init_restores_the_actual_first_gradient_state(self):
         """Run the callback after initialization and before the first gradient."""
         from braintrace._testing.oracle_models import nonzero_init_rnn
