@@ -24,13 +24,17 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 
 SourceRole: TypeAlias = Literal["train", "tuning", "evaluation", "fixture"]
-SourceFormat: TypeAlias = Literal["auto", "task_json", "collection_json", "jsonl"]
+SourceFormat: TypeAlias = Literal[
+    "auto", "task_json", "collection_json", "jsonl", "indexed_json"
+]
 FloatArray: TypeAlias = NDArray[np.float32]
 IntArray: TypeAlias = NDArray[np.int32]
 BoolArray: TypeAlias = NDArray[np.bool_]
 
 _SOURCE_ROLES = frozenset(("train", "tuning", "evaluation", "fixture"))
-_SOURCE_FORMATS = frozenset(("auto", "task_json", "collection_json", "jsonl"))
+_SOURCE_FORMATS = frozenset(
+    ("auto", "task_json", "collection_json", "jsonl", "indexed_json")
+)
 _EVALUATION_ONLY_SOURCES = frozenset(("arc-agi-1 evaluation", "arc-task-gen"))
 
 
@@ -533,7 +537,8 @@ class DatasetSource:
     license_reference
         Non-empty license URL/name or authoritative dataset reference.
     format
-        ``task_json``, ``collection_json``, ``jsonl``, or automatic detection.
+        ``task_json``, ``collection_json``, ``jsonl``, ``indexed_json``, or
+        automatic detection.
     exclude_fingerprints
         Explicit task fingerprints to omit from a training/tuning source. Each
         declaration must match and is recorded in the resolved manifest.
@@ -790,6 +795,159 @@ class LoadedDataset:
     manifest: SourceManifest
 
 
+_DATASET_INDEX_SCHEMA_VERSION = 1
+
+
+def _index_source_declaration(source: DatasetSource) -> dict[str, object]:
+    return {
+        "name": source.name,
+        "role": source.role,
+        "version": source.version,
+        "license_reference": source.license_reference,
+        "exclude_fingerprints": list(source.exclude_fingerprints),
+    }
+
+
+def write_dataset_index(dataset: LoadedDataset, path: str | os.PathLike[str]) -> None:
+    """Write one integrity-protected, prevalidated dataset index.
+
+    Parameters
+    ----------
+    dataset
+        Already validated and deduplicated tasks with their source manifest.
+    path
+        Destination JSON index path.
+
+    Raises
+    ------
+    ValueError
+        If the task and manifest counts disagree.
+    """
+
+    if len(dataset.tasks) != dataset.manifest.valid_task_count:
+        raise ValueError("dataset tasks disagree with manifest valid_task_count")
+    if len(dataset.tasks) != len(dataset.manifest.task_fingerprints):
+        raise ValueError("dataset tasks disagree with manifest task_fingerprints")
+    payload = {
+        "schema_version": _DATASET_INDEX_SCHEMA_VERSION,
+        "source": _index_source_declaration(dataset.manifest.source),
+        "manifest": dataset.manifest.to_dict(),
+        "tasks": [
+            {
+                "task_id": task.task_id,
+                "task": arc_task_to_mapping(task),
+            }
+            for task in dataset.tasks
+        ],
+    }
+    canonical = msgspec.json.encode(payload, order="sorted")
+    envelope = {
+        "schema_version": _DATASET_INDEX_SCHEMA_VERSION,
+        "payload_sha256": hashlib.sha256(canonical).hexdigest(),
+        "payload": payload,
+    }
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(msgspec.json.encode(envelope, order="sorted"))
+
+
+def _load_dataset_index(
+    source: DatasetSource,
+    *,
+    root: Path,
+    require_test_outputs: bool,
+) -> LoadedDataset:
+    try:
+        envelope = msgspec.json.decode(root.read_bytes())
+    except (OSError, msgspec.DecodeError) as error:
+        raise ValueError(f"invalid dataset index: {error}") from error
+    if not isinstance(envelope, Mapping):
+        raise ValueError("dataset index envelope must be a JSON object")
+    if envelope.get("schema_version") != _DATASET_INDEX_SCHEMA_VERSION:
+        raise ValueError("unsupported dataset index schema_version")
+    payload = envelope.get("payload")
+    if not isinstance(payload, Mapping):
+        raise ValueError("dataset index payload must be a JSON object")
+    canonical = msgspec.json.encode(payload, order="sorted")
+    if envelope.get("payload_sha256") != hashlib.sha256(canonical).hexdigest():
+        raise ValueError("dataset index integrity digest does not match its payload")
+    if payload.get("schema_version") != _DATASET_INDEX_SCHEMA_VERSION:
+        raise ValueError("unsupported dataset index payload schema_version")
+    declaration = payload.get("source")
+    if not isinstance(declaration, Mapping):
+        raise ValueError("dataset index source declaration is missing")
+    if dict(declaration) != _index_source_declaration(source):
+        raise ValueError("dataset index source declaration does not match DatasetSource")
+    manifest_payload = payload.get("manifest")
+    task_payloads = payload.get("tasks")
+    if not isinstance(manifest_payload, Mapping) or not isinstance(
+        task_payloads, Sequence
+    ):
+        raise ValueError("dataset index manifest or tasks are malformed")
+
+    try:
+        tasks = tuple(
+            arc_task_from_mapping(
+                item["task"],
+                task_id=item.get("task_id"),
+                require_test_outputs=require_test_outputs,
+            )
+            for item in task_payloads
+            if isinstance(item, Mapping)
+        )
+        files = tuple(
+            SourceFileHash(
+                path=str(item["path"]),
+                sha256=str(item["sha256"]),
+                size_bytes=int(item["size_bytes"]),
+            )
+            for item in manifest_payload["files"]
+        )
+        rejected = tuple(
+            RejectedTask(origin=str(item["origin"]), reason=str(item["reason"]))
+            for item in manifest_payload["rejected"]
+        )
+        exclusions = tuple(
+            ExcludedTask(
+                origin=str(item["origin"]),
+                task_id=str(item["task_id"]),
+                fingerprint=str(item["fingerprint"]),
+            )
+            for item in manifest_payload["exclusions"]
+        )
+        manifest = SourceManifest(
+            source=source,
+            resolved_path=str(root),
+            files=files,
+            parsed_task_count=int(manifest_payload["parsed_task_count"]),
+            valid_task_count=int(manifest_payload["valid_task_count"]),
+            rejected=rejected,
+            duplicate_fingerprints=tuple(
+                str(item) for item in manifest_payload["duplicate_fingerprints"]
+            ),
+            task_fingerprints=tuple(
+                str(item) for item in manifest_payload["task_fingerprints"]
+            ),
+            exclusions=exclusions,
+            plumbing_only=bool(manifest_payload["plumbing_only"]),
+            private_paper_data_available=bool(
+                manifest_payload["private_paper_data_available"]
+            ),
+            private_training_recipe_available=bool(
+                manifest_payload["private_training_recipe_available"]
+            ),
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"dataset index content is malformed: {error}") from error
+    if len(tasks) != len(task_payloads):
+        raise ValueError("dataset index contains a non-object task entry")
+    if len(tasks) != manifest.valid_task_count:
+        raise ValueError("dataset index tasks disagree with valid_task_count")
+    if len(tasks) != len(manifest.task_fingerprints):
+        raise ValueError("dataset index tasks disagree with task_fingerprints")
+    return LoadedDataset(tasks=tasks, manifest=manifest)
+
+
 def _source_files(root: Path, source_format: SourceFormat) -> tuple[Path, ...]:
     if root.is_file():
         files = (root,)
@@ -924,9 +1082,15 @@ def load_dataset_source(
     """
 
     root = Path(source.path).expanduser().resolve()
-    files = _source_files(root, source.format)
     if require_test_outputs is None:
         require_test_outputs = source.role in {"evaluation", "fixture"}
+    if source.format == "indexed_json":
+        return _load_dataset_index(
+            source,
+            root=root,
+            require_test_outputs=require_test_outputs,
+        )
+    files = _source_files(root, source.format)
 
     file_hashes = tuple(_hash_file(path, root=root) for path in files)
     parsed: list[tuple[ArcTask, str]] = []

@@ -46,6 +46,7 @@ from examples.pp_prop.latent_workspace_task import (
     query_episodes,
     smoke_arc_tasks,
     smoke_loaded_dataset,
+    write_dataset_index,
 )
 
 
@@ -340,6 +341,64 @@ def test_task_json_directory_manifest_hashes_deduplicates_and_rejects(
     assert evidence["source"]["role"] == "train"
     assert evidence["private_paper_data_available"] is False
     assert evidence["private_training_recipe_available"] is False
+
+
+def test_indexed_dataset_round_trip_avoids_raw_source_work(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    payload = _task_payload(test_output=[[0, 2], [1, 9]])
+    _write_json(raw / "one.json", payload)
+    _write_json(raw / "copy.json", payload)
+    _write_json(raw / "invalid.json", {"train": [], "test": []})
+    loaded = load_dataset_source(_source(raw, source_format="task_json"))
+    index = tmp_path / "training.index.json"
+    write_dataset_index(loaded, index)
+    indexed_source = replace(
+        loaded.manifest.source,
+        path=str(index),
+        format="indexed_json",
+    )
+
+    def unexpected(*args: object, **kwargs: object) -> None:
+        raise AssertionError("indexed loading must not scan, hash, or fingerprint raw tasks")
+
+    monkeypatch.setattr(task_module, "_source_files", unexpected)
+    monkeypatch.setattr(task_module, "_hash_file", unexpected)
+    monkeypatch.setattr(task_module, "canonical_task_fingerprint", unexpected)
+
+    restored = load_dataset_source(indexed_source)
+
+    assert restored.tasks == loaded.tasks
+    assert restored.manifest.files == loaded.manifest.files
+    assert restored.manifest.parsed_task_count == loaded.manifest.parsed_task_count
+    assert restored.manifest.rejected == loaded.manifest.rejected
+    assert restored.manifest.duplicate_fingerprints == (
+        loaded.manifest.duplicate_fingerprints
+    )
+    assert restored.manifest.task_fingerprints == loaded.manifest.task_fingerprints
+    assert restored.manifest.resolved_path == str(index.resolve())
+
+
+def test_indexed_dataset_rejects_tampered_payload(tmp_path: Path) -> None:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    _write_json(raw / "one.json", _task_payload(test_output=[[0, 2], [1, 9]]))
+    loaded = load_dataset_source(_source(raw, source_format="task_json"))
+    index = tmp_path / "training.index.json"
+    write_dataset_index(loaded, index)
+    envelope = json.loads(index.read_text(encoding="utf-8"))
+    envelope["payload"]["tasks"][0]["task_id"] = "tampered"
+    _write_json(index, envelope)
+    indexed_source = replace(
+        loaded.manifest.source,
+        path=str(index),
+        format="indexed_json",
+    )
+
+    with pytest.raises(ValueError, match="integrity digest"):
+        load_dataset_source(indexed_source)
 
 
 def test_collection_json_supports_task_mapping_list_and_wrapper(tmp_path: Path) -> None:

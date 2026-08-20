@@ -101,20 +101,30 @@ input/output demonstrations, variable grid dimensions, and every test query—an
 reports exact query and strict whole-task pass@1/pass@2. Pixel accuracy is only
 a near-miss diagnostic.
 
-Data remains outside Git. Supply a provenance manifest assigning public sources
-to training, tuning, or evaluation roles. The adapter supports ARC-AGI-1
+Data remains outside Git, but the tracked Example 21 image bakes the pinned
+ARC-AGI-1 checkout and its prevalidated indexes into one reusable runtime.
+The adapter supports ARC-AGI-1
 training, RE-ARC, ConceptARC, ARC-Heavy, and ARC-GEN100K when locally available;
 ARC-AGI-1 evaluation and fresh `arc-task-gen` tasks are evaluation-only. The run
 fingerprints task content and aborts on train/evaluation overlap. The private
 paper data and training recipe are unavailable and are not simulated.
 
 A full run requests a GPU by default and fails closed instead of silently
-falling back to CPU. From the repository root, build the tracked image and run
-the shared-model experiment with the mounted checkout taking import precedence:
+falling back to CPU. Build the generic dependency layer, then the reusable
+Example 21 image using the ARC checkout as a named BuildKit context:
 
     $commit = git rev-parse HEAD
+    $arcRoot = "C:\tmp\braintrace-example21-data\arc-agi-1"
+    $arcCommit = git -C $arcRoot rev-parse HEAD
     docker build --file .github/containers/braintrace-gpu/Dockerfile --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --tag braintrace-gpu:0.11.0-py314-msgspec .
-    docker run --rm --gpus all --volume "${PWD}:/work" --workdir /work --env PYTHONPATH=/work braintrace-gpu:0.11.0-py314-msgspec python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest var/example21-arc-v1.0.2-sources.json --output-dir var/example21-shared-1024n-1024e-b32-u13-l300 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 300 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
+    docker build --file .github/containers/braintrace-example21/Dockerfile --build-context "arc_data=$arcRoot" --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --build-arg ARC_AGI_1_COMMIT=$arcCommit --tag braintrace-gpu:0.11.0-py314-msgspec-arc .
+
+Every Example 21 configuration uses that final image. It opens one
+integrity-checked index per split instead of enumerating, reopening, hashing,
+and fingerprinting all 800 raw task files at runtime. Mount only persistent
+outputs and the compilation cache:
+
+    docker run --rm --gpus all --volume "${PWD}/var:/work/var" --volume "${PWD}/var/jax-cache:/cache/jax" braintrace-gpu:0.11.0-py314-msgspec-arc python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest /datasets/arc/example21-sources.json --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 390 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
 
 This command performs no pretraining, task-local adaptation, or evaluation
 control arms. Progress is written to stderr; the final result remains on stdout.
