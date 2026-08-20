@@ -1,6 +1,6 @@
 # Example 21 — answer-head row blindness and carrier scale collapse
 
-Status: in progress
+Status: implemented; verified at 1024n on ARC-AGI-1 evaluation
 Date: 2026-08-20
 Branch: `worktree-agent-aeedc790fc9afce6a`
 
@@ -280,3 +280,62 @@ two-value shape distribution. **It is not expected to produce a nonzero exact AR
 score at the 260-update operating point**, and this spec does not claim it will.
 The reported result will be the collapse metrics, plus the exact score whatever
 it is.
+
+## 7. Verification — full ARC-AGI-1 evaluation, RTX 3080 Ti
+
+`1024n / 1024e / b32 / u260 / l150`, 400 tasks / 419 queries, against the
+matching pre-fix run `var/example21-shared-1024n-1024e-b32-u260-l150`.
+
+| metric | pre-fix | post-fix |
+|---|---|---|
+| **non-black grids** | **0 / 419** | **170 / 419** |
+| **distinct predicted shapes** | **2** | **90** |
+| top predicted shapes | (10,10)×341, (10,3)×78 | (3,3)×49, (30,30)×42, (10,10)×41, (15,15)×28 |
+| predicted colour mix | colour 0 at 1.000 | colour 0 at 0.834, all ten colours used |
+| mean predictive entropy | 2.1844 | 1.6474 |
+| shape diagnostic | 0.0907 | 0.3604 |
+| pixel diagnostic | 0.2624 | 0.3806 |
+| **exact pass@1 / pass@2** | **0 / 419** | **0 / 419** |
+| `row_routes_all_direct` | True | True |
+| `answer_row_head` L2 delta | 7.389 | 2.059 |
+
+The collapse is broken: the decoder now emits varied shapes whose top four track
+the real evaluation distribution ((10,10), (3,3), (15,15), (30,30) are the true
+modes) and uses all ten colours. The 0.0907 shape diagnostic was an artifact of
+guessing 10×10 constantly; 0.3604 is a real measurement.
+
+**The exact score did not move. It is 0/419, the same as before.** Three things
+this run says plainly:
+
+1. **The fix is structural, not sufficient.** 249 of 419 grids are still
+   all-black and the predicted colour mix is still 83.4% colour 0 against a true
+   ARC marginal of 53.1%. The background class still dominates the objective.
+2. **The remaining defect is the loss, and it needs a training-regime change
+   beyond this commit.** `balanced_color_loss` is still rejected for
+   `decoder_mode="row_refinement"`
+   (`21-latent-reasoning-in-context.py:412-414`) and
+   `row_refinement_loss_per_example` has no class weighting. Enabling it is not a
+   drop-in: the weighting constant interacts with `clip_norm` and the learning
+   rate and would need tuning across a sweep this task did not have budget for.
+   It is not shipped here rather than shipped unverified.
+3. **Both diagnostics remain below trivial floors.** Shape 0.3604 against
+   `copy_or_rule_shape` at 0.8687, pixel 0.3806 against `copy_input` at 0.6032
+   (floors from `2026-08-18-example21-arc-score-recovery.md`). The model still
+   loses to predictors that use no neurons.
+
+The smaller `answer_row_head` L2 delta (2.059 against 7.389) is expected, not a
+regression: the pre-fix head had to travel its whole budget just to climb from
+logits of std 0.030 to an O(1) margin, whereas D-SC now supplies that scale at
+initialisation, so movement goes into shaping instead. Corroboration: the
+pre-fix runs needed 1040 updates to reach entropy 1.689, and this run reaches
+1.647 in 260.
+
+### Comparison caveat
+
+The two runs are **not seed-matched**. `random.randn(head_width, ...)` with
+`head_width = neuron_count + 330` consumes a different number of draws than
+`random.randn(neuron_count, ...)`, so every parameter drawn after the answer
+heads differs even at the same seed, and the mounted worktree makes the entry
+point hash different sources. The gross symptoms compared above (0 → 170
+non-black grids, 2 → 90 distinct shapes) are far too large to be seed noise. No
+small numeric difference in this table should be attributed to the fix.
