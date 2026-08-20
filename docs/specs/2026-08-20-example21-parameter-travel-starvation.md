@@ -989,16 +989,98 @@ lookup-table gap. The remaining 0.24 is the generalisation gap of §10.4.
    stealing the copy path's travel; it is supplying capacity that the model uses
    to overfit.
 
-**Neither answer moves exact pass@1. It is 0/419 on the full evaluation and
-0/91 on every probe arm.**
+Both answers are confirmed in the same metric by §10.7: tripling the budget
+makes the model **better on tasks it trained on** (shape 0.6759 → 0.6883) and
+**worse on tasks it did not** (shape 0.6044 → 0.5165), which is task-level
+memorisation.
 
-### 10.7 Revised next steps
+**Neither answer moves exact pass@1 on ARC-AGI-1. It is 0/419 on the full
+evaluation and 0/91 on every held-out probe arm.** §10.8 records the one place
+an exact answer did appear — 1/324 on ARC *training-split* tasks whose
+demonstrations were in the training stream — which is a demonstration that the
+machinery can emit an exact answer, not a score.
+
+### 10.7 Confirming the diagnosis — same-task versus held-out
+
+§10.4 inferred overfitting by comparing a training *loss* to a held-out
+*accuracy*, which are different quantities. This measures both in the same
+metric.
+
+Each trained checkpoint was restored with `--parameter-checkpoint` (the entry
+point takes the restore branch when the file exists, so no training re-runs) and
+evaluated against a manifest whose `evaluation` role points at the **315 tasks
+the model trained on**, with the 84 holdout tasks demoted to the unused `train`
+role. 0.7–0.8 minutes per arm.
+
+**Naming.** This is *same-task, unseen-query*, not "train-seen". Training
+episodes are leave-one-demonstration-out over those tasks' **demonstrations**;
+the tasks' test queries were never in the loss. The genuinely train-seen signal
+is the training loss already reported in §10.4.
+
+| model | surface | queries | shape | pixel | exact pass@1 |
+|---|---|---|---|---|---|
+| u260 | held-out (84 tasks) | 91 | 0.6044 | 0.4659 | 0/91 |
+| u260 | same-task (315 tasks) | 324 | 0.6759 | 0.4587 | 0/324 |
+| u780 | held-out (84 tasks) | 91 | **0.5165** | **0.4438** | 0/91 |
+| u780 | same-task (315 tasks) | 324 | **0.6883** | **0.4778** | **1/324** |
+
+Read down each surface — that is the like-for-like comparison, since the two
+surfaces differ in size and difficulty and cannot be subtracted from each other
+at a fixed budget:
+
+- **On tasks the model trained on, tripling the budget makes it better**: shape
+  0.6759 → 0.6883, pixel 0.4587 → 0.4778.
+- **On tasks it did not, the same change makes it worse**: shape 0.6044 →
+  0.5165, pixel 0.4659 → 0.4438.
+
+This is the first branch of the reading pre-registered before the run: better on
+same-task while worse on held-out means **task-level memorisation**, and
+"overfitting" is the right word for §10.4. The competing explanation — that
+D-GH's colour reweighting skews the shape:colour balance and more updates push
+harder on a skewed objective — predicts short-output shape collapsing fastest,
+since those are the examples whose colour term D-GH multiplies by up to 30. The
+opposite happened: shape correct on the ≤9-cell subset went **up** at u780, 5/18
+→ 8/18, while aggregate shape fell. D-GH imbalance is not what degraded u780.
+
+### 10.8 The machinery can produce an exact answer
+
+`trainseen-u780` scores **1/324 exact pass@1**, the first nonzero exact score
+recorded anywhere in this investigation. The exactly-correct queries:
+
+| effort | task | true output | model output |
+|---|---|---|---|
+| 0 | `b9b7f026` q0 | `[[7]]` | `[[7]]`, shape (1,1) |
+| 30 | `27a28665` q1 | `[[1]]` | `[[1]]`, shape (1,1) |
+| 60–150 | `27a28665` q2 | `[[2]]` | `[[2]]`, shape (1,1) |
+
+`27a28665` q2 takes a 3 × 3 input `[[2,0,2],[0,2,0],[2,0,2]]` and must emit the
+single cell `[[2]]`. The model predicts shape (1,1) and colour 2, and holds that
+answer across every sweep from effort 60 to 150. These are real end-to-end
+answers: shape head and colour head both correct, decoded through the normal
+path, scored by the harness's own exact criterion.
+
+**This is not a score and must not be quoted as one.**
+
+1. It is on **ARC training-split tasks whose demonstrations were in the training
+   stream**. The model had seen those tasks, just not these queries.
+2. It is precisely the memorisation §10.8 measures: u260 scores 0/324 on the same
+   surface. The extra budget bought an exact answer *only where the model has
+   seen the task*, while costing accuracy everywhere else.
+3. **Exact pass@1 on the ARC-AGI-1 evaluation split is 0/419 and did not move.**
+
+What it does establish is narrower and still worth having: the decoder, the shape
+head, the colour head and the scoring path can jointly produce an exactly correct
+ARC answer. Before this, no configuration had ever emitted one, and it was open
+whether some structural defect made exactness unreachable end to end. It is not.
+The barrier is generalisation.
+
+### 10.9 Revised next steps
 
 Replaces §9's ranked list, which assumed travel and carrier-starvation.
 
-1. **Regularise or shrink the carrier path**, since §10.4 identifies
-   generalisation as the cap and §10.2 and §10.3 both identify the carrier as
-   the capacity supplying it. The cheapest decisive test is an arm that scales
+1. **Regularise or shrink the carrier path**, since §10.4 and §10.7 identify
+   generalisation as the cap and §10.2 and §10.3 identify the carrier as the
+   capacity supplying it. The cheapest decisive test is an arm that scales
    the carrier block of the head input down by a constant, or drops it entirely,
    leaving `[row one-hot, query colours, input shape]` — a ~390-input head that
    cannot memorise a task. If a carrier-free head beats the full one on held-out
@@ -1009,7 +1091,10 @@ Replaces §9's ranked list, which assumed travel and carrier-starvation.
    checkpoint on the probe surface is legitimate; selecting it on evaluation is
    not.
 3. **More training tasks or augmentation**, the standard answer to a
-   generalisation gap. 315 tasks is very few for a 424,000-parameter head.
+   generalisation gap, now the best-evidenced item on this list: §10.7 measures
+   the model getting better on tasks it trained on and worse on tasks it did not,
+   at the same time. 315 tasks is very few for a 424,000-parameter head plus a
+   1024-neuron recurrent substrate.
 4. **Do not spend more on update count or learning rate.** §8.2 and §10.4
    bracket the useful range: below `lr·U ≈ 0.26` the head cannot travel, above it
    the model overfits, and the window between them is narrow.
