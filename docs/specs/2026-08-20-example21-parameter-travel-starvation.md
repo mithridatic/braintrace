@@ -492,6 +492,15 @@ large grids that dominate a cell-weighted mean. Every table figure here is
 query-weighted; the correction roughly halves the reported gap and does not
 change its direction.
 
+The `copy_input` floors quoted throughout §8 were re-derived under the same
+explicit rule and are **not** affected: query-weighted `copy_input` on the
+evaluation split is 0.6032, reproducing the figure published in
+`2026-08-18-example21-arc-score-recovery.md` exactly, against 0.7569
+cell-weighted. Shape accuracy is a per-query boolean, so `copy_or_rule_shape`
+cannot differ by weighting. Query-weighted, the table (0.6243) only just beats
+plain copy (0.6026 on the probe surface) — which is as it should be, since the
+table is copy plus a padding-to-black rule.
+
 **The exact column is under an oracle shape for every row, including the
 model's**, because the table predicts no shape at all.
 Compared like for like, the table scores one exact answer the model does not:
