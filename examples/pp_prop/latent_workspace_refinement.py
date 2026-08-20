@@ -617,6 +617,17 @@ def row_refinement_loss_per_example(
     indices: class zero represents a size of one and class 29 represents a
     size of 30.
 
+    The color term is then scaled by ``30 / (target_height + 1)`` so that every
+    example contributes the same total color weight over a completed sweep. The
+    zeroing above is per row, while the caller's per-tick reduction divides by
+    the number of *supervised ticks*, which does not depend on row validity --
+    so without this scale a 30-row target would supply ten times the color
+    gradient of a 3-row target from inside the same batch mean. That is a
+    relative reweighting between examples rather than a global scale, so Adam's
+    scale invariance does not remove it, and it falls hardest on the small
+    outputs that are the only combinatorially reachable exact targets. Width
+    needs no such treatment: the column average already normalises it.
+
     Parameters
     ----------
     logits
@@ -691,6 +702,8 @@ def row_refinement_loss_per_example(
     valid_colors = valid_row[:, None] & valid_columns
     color_loss = jnp.sum(jnp.where(valid_colors, color_nll, 0.0), axis=-1)
     color_loss /= jnp.maximum(jnp.sum(valid_colors, axis=-1), 1)
+    sweep_rows = target_height.astype(jnp.float32) + 1.0
+    color_loss = color_loss * (MAX_GRID_SIZE / sweep_rows)
     completed_sweep = row_indices == (MAX_GRID_SIZE - 1)
     shape_loss = jnp.where(completed_sweep, height_loss + width_loss, 0.0)
     return shape_loss + color_loss

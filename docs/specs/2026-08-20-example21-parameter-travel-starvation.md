@@ -360,21 +360,133 @@ disqualification (`1e-4` and `1e-3`); the two larger rates are disqualified for
 shape collapse, and `1e-2` additionally fails to descend — its mean loss over
 the last 26 updates, 0.9934, is worse than every other arm's *first* 26.
 
-**Travel starvation was real, and it was not the whole story.** Shape, non-black
+**Travel starvation was real, and it is not the whole story.** Shape, non-black
 count and head displacement all respond strongly and monotonically to the travel
-budget, which is what D-PT predicts. Pixel accuracy does not: across a 100×
-range of learning rate it moves 0.4370 → 0.4734, a swing of 0.036, against a
-`copy_input` floor of **0.6026** on this same surface (recomputed here; the same
-method reproduces the harness's published 0.6032 on the evaluation split
-exactly). At `lr = 1e-3` the head has ~10× the travel it needs to write an O(1)
-copy map into a colour block that is present in its input and row-aligned with
-the loss, and it still does not learn to copy.
+budget, which is what D-PT predicts. Pixel accuracy barely moves: across a 100×
+range of learning rate it goes 0.4370 → 0.4734, a swing of 0.036, while a
+trivial table beats it by 0.31 (§8.4).
 
-So D-PT is confirmed as *a* binding constraint — and it was binding hard on
-shape — but it is **not** the constraint on colour content. Something else keeps
-the row head below a predictor that uses no neurons, and this spec does not
-identify it.
+The honest arithmetic on the colour path is that travel is **not yet
+comfortable** there, contrary to a first reading of the sigma column. At
+`lr = 1e-3 × 260` the displacement bound is 0.26; against the `√10` scaling of
+the colour one-hot that buys a logit contribution of about `0.26 × √10 = 0.82`,
+while the carrier alone contributes a logit standard deviation of about
+`√(1024/1414) = 0.85` at initialisation and grows during training. So the copy
+path has roughly *one* unit of the travel it needs to compete with the carrier,
+not ten. D-PT is therefore neither confirmed nor falsified for colour content by
+this sweep, and §8.5 tests it directly by tripling the update count at the same
+step size — the one thing `lr = 3e-3` could not separate, since it reached a
+comparable bound only by taking steps large enough to collapse shape.
 
-### 8.3 Post-fix runs
+### 8.3 D-SB (shape conditioning) — negative result
+
+Same operating point, same seed, pre-fix versus post-fix code, probe surface:
+
+| metric | pre-fix (n+330) | post-fix (n+390) |
+|---|---|---|
+| shape | 0.5824 | 0.5604 |
+| pixel | 0.4628 | 0.4652 |
+| non-black | 62/91 | 61/91 |
+| `answer_row_head` ΔL2 | 8.883 | 9.102 |
+| mean loss, last 26 | 0.5033 | 0.5014 |
+| exact | 0/91 | 0/91 |
+
+**Conditioning the answer heads on the query's grid shape changed nothing
+measurable.** The expressivity gap in §2.4 is real — the identity shape rule
+genuinely was not representable before, and is now — but making it
+representable did not make the optimizer find it. The two runs are **not
+seed-matched**: `random.randn(head_width, ...)` draws `head_width * out`
+values, so widening the head from 1354 to 1414 shifts every parameter drawn
+afterwards. Differences of this size (0.02 in shape, 0.002 in pixel) are within
+what that reseeding can produce and **none of them should be attributed to the
+fix in either direction**. What can be said is that the fix did not produce the
+step change in shape accuracy §7 anticipated.
+
+The change is kept: it is correct, it costs 60 head inputs, and it removes a
+representability gap that would otherwise confound any later attempt to fix the
+shape path. It is reported as a negative result, not a win.
+
+### 8.4 What the row head could do and does not — the binding finding
+
+The row head's colour block is indexed `column * 10 + colour`
+(`latent_workspace_task.py:1817-1818`) and its output logits reshape as
+`(30, 10)` on the same index (`latent_workspace_refinement.py:683`). So a
+per-cell colour map `out[r][c] = f(in[r][c])` is a block-diagonal weight in the
+colour block — **exactly representable by the head as it stands.**
+
+Fitting that map as an 11 × 10 conditional table (ten input colours plus an
+out-of-range class) on the demonstration pairs of the 315 probe-training tasks
+and evaluating it on the 84 held-out tasks' test queries:
+
+| predictor | pixel accuracy | mean NLL (nats) | exact under oracle shape |
+|---|---|---|---|
+| colour marginal | — | 1.4748 | — |
+| `copy_input` (overlap only) | 0.6026 | — | 0/91 |
+| **11 × 10 conditional table** | **0.7734** | **1.0029** | **1/91** |
+| **trained model, best arm** | **0.4652** | — | **0/91** |
+
+The fitted table is the identity on all ten colours and maps out-of-range to
+colour 0. It is a lookup table with 110 free parameters and it uses no neurons,
+no recurrence and no demonstrations.
+
+**The exact column is under an oracle shape for every row, including the
+model's**, because the table predicts no shape at all; the pixel column follows
+the harness's own `valid_cell` convention (matches over the true grid's cells).
+Compared like for like, the table scores one exact answer the model does not:
+`d10ecb37` q0, whose 2 × 2 output is the top-left corner of a 4 × 8 input, so
+the identity map reproduces it cell for cell. That is not a shape result — it is
+a colour-content result, and the model's colour content does not reach it on any
+query.
+
+The model is 0.31 below a solution its own architecture can express. That is the
+defect that pins the exact score at zero, and neither travel starvation (D-PT)
+nor shape blindness (D-SB) explains it — the head has the input, has the
+representational form, and is not visibly starved for the shape path where the
+same travel produced large movement.
+
+### 8.5 D-GH — colour gradient is reweighted by output height
+
+Found while asking why the head does not find the table.
+
+`row_refinement_loss_per_example` zeroes the colour term for any row beyond the
+target height (`latent_workspace_refinement.py:689-693`):
+
+```python
+valid_row = row_indices <= target_height
+valid_colors = valid_row[:, None] & valid_columns
+color_loss = jnp.sum(jnp.where(valid_colors, color_nll, 0.0), axis=-1)
+color_loss /= jnp.maximum(jnp.sum(valid_colors, axis=-1), 1)
+```
+
+and the per-tick batch reduction divides by the number of **supervised ticks**,
+which does not depend on row validity
+(`21-latent-reasoning-in-context.py:2160-2165`):
+
+```python
+return jnp.sum(jnp.where(supervised, losses, 0.0)) / jnp.maximum(
+    jnp.sum(supervised), 1
+)
+```
+
+Over one 30-row sweep an example with a 30-row target contributes a colour term
+on 30 ticks and an example with a 3-row target on 3. The colour term is already
+averaged over valid *columns*, so width is normalised and height is not:
+**every example's colour gradient is weighted by its output height, up to 10×
+between the extremes, inside the batch mean.** This is a relative reweighting
+between examples, not a global scale, so Adam's scale invariance does not remove
+it — it changes the direction of the summed gradient.
+
+It bites precisely where exactness is reachable. The only combinatorially
+reachable exact targets are the small outputs, and those are the examples
+weighted down. On the probe surface the four tiny-output queries the best arm
+gets shape-correct sit at 2, 3, 6 and 7 wrong cells of 9 — pixel 0.78, 0.67,
+0.33, 0.22 against an aggregate of 0.4652, so small grids are not outperforming
+despite having fewer cells to get right.
+
+**Fix.** Scale the colour term by `MAX_GRID_SIZE / (target_height + 1)` so that
+each example contributes the same total colour weight over a completed sweep,
+independent of its output height. The shape term is untouched.
+
+### 8.6 Post-fix runs
 
 Filled in below as they complete.
