@@ -3218,7 +3218,7 @@ def test_refinement_head_input_separates_the_row_being_written() -> None:
     row_changed = np.asarray(build_head_input(carrier, other_row, layout))
     colour_changed = np.asarray(build_head_input(carrier, other_colours, layout))
 
-    assert baseline.shape == (1, 64 + MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT)
+    assert baseline.shape == (1, latent_workspace_module.refinement_head_width(64))
     assert not np.array_equal(baseline, row_changed)
     assert not np.array_equal(baseline, colour_changed)
 
@@ -3246,6 +3246,81 @@ def test_refinement_head_carrier_is_scaled_to_unit_root_mean_square() -> None:
 
 def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> None:
     """Widening the head input must not drop it from the compiled model.
+
+    ``color_factor_head``, ``height_head``, ``width_head`` and
+    ``readout_projection`` already fall out of the compiled model and train with
+    an exactly zero gradient. A head whose input the compiler cannot trace would
+    fail the same way while still looking correct.
+    """
+    model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {"answer_row_head.weight", "answer_shape_head.weight"} <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+
+    assert classifications["answer_row_head.weight"] == {"all_direct"}
+    assert classifications["answer_shape_head.weight"] == {"all_direct"}
+
+
+def test_refinement_head_input_separates_the_query_grid_shape() -> None:
+    """Two ticks differing only in the query grid shape must reach the head.
+
+    The shape loss fires on one tick of a 30-row sweep, the completed sweep at
+    row 29 (``latent_workspace_refinement.py:694``). At that tick the query
+    colour block the head receives holds the query's *row 29*, which is padding
+    for every query shorter than 30 rows. The query's input height and width
+    one-hots are written into the same event but are not read by the head, so
+    ``output_shape == input_shape`` -- true for 66.1% of ARC-AGI-1 evaluation
+    queries and a 30x30 identity block once the one-hots are present -- is not
+    representable by a bias-free linear head at all.
+    """
+    build_head_input = getattr(latent_workspace_module, "_refinement_head_input")
+    layout = _row_refinement_layout()
+    carrier = jnp.asarray(np.linspace(-1.0, 1.0, 64, dtype=np.float32)[None, :])
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    other_height = event.at[:, layout.input_height_start + 9].set(1.0)
+    other_width = event.at[:, layout.input_width_start + 4].set(1.0)
+
+    baseline = np.asarray(build_head_input(carrier, event, layout))
+    height_changed = np.asarray(build_head_input(carrier, other_height, layout))
+    width_changed = np.asarray(build_head_input(carrier, other_width, layout))
+
+    assert not np.array_equal(baseline, height_changed)
+    assert not np.array_equal(baseline, width_changed)
+    assert not np.array_equal(height_changed, width_changed)
+
+
+def test_refinement_head_width_counts_the_query_shape_blocks() -> None:
+    """The head input carries the row code and both query dimension one-hots."""
+    head_width = getattr(latent_workspace_module, "refinement_head_width")
+    blocks = MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT + 2 * MAX_GRID_SIZE
+
+    assert head_width(1024) == 1024 + blocks
+    assert head_width(64) == 64 + blocks
+
+
+def test_refinement_heads_stay_compiled_all_direct_with_shape_conditioning() -> None:
+    """Widening the head input again must not drop it from the compiled model.
 
     ``color_factor_head``, ``height_head``, ``width_head`` and
     ``readout_projection`` already fall out of the compiled model and train with

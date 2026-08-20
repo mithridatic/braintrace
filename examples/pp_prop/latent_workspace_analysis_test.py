@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 
 import numpy as np
 import pytest
@@ -870,3 +871,39 @@ def test_control_comparison_rejects_shape_name_and_unpaired_scores() -> None:
             control_name="scores",
             intact_scores={"pass": 1.0},
         )
+
+
+def test_adam_parameter_travel_budget_flags_a_starved_operating_point() -> None:
+    """The shipped operating point cannot move a head weight one sigma.
+
+    Adam's per-coordinate displacement per step is bounded by the learning rate,
+    because ``|m_hat / sqrt(v_hat)| <= 1``, so over ``U`` updates no weight can
+    travel further than ``learning_rate * U``. At ``1e-4`` and 260 updates that
+    is 0.026 against an answer-head initialisation sigma of ``1/sqrt(1414)``, so
+    the trained head is a perturbed random initialisation and the decoder can
+    only emit the dataset prior. Seven ARC-AGI-1 runs were executed at this
+    operating point before anything surfaced the arithmetic.
+    """
+    budget = analysis.adam_parameter_travel_budget(1e-4, 260, 1414)
+
+    assert budget["head_width"] == 1414
+    assert budget["displacement_bound"] == pytest.approx(0.026)
+    assert budget["initialization_sigma"] == pytest.approx(1.0 / math.sqrt(1414))
+    assert budget["sigmas_of_travel"] == pytest.approx(0.026 * math.sqrt(1414))
+    assert budget["sigmas_of_travel"] < 1.0
+    assert budget["starved"] is True
+
+    raised = analysis.adam_parameter_travel_budget(3e-3, 260, 1414)
+
+    assert raised["sigmas_of_travel"] > 25.0
+    assert raised["starved"] is False
+
+
+def test_adam_parameter_travel_budget_rejects_nonpositive_inputs() -> None:
+    """A travel budget is undefined without a rate, updates, and a width."""
+    with pytest.raises(ValueError):
+        analysis.adam_parameter_travel_budget(0.0, 260, 1414)
+    with pytest.raises(ValueError):
+        analysis.adam_parameter_travel_budget(1e-4, 0, 1414)
+    with pytest.raises(ValueError):
+        analysis.adam_parameter_travel_budget(1e-4, 260, 0)
