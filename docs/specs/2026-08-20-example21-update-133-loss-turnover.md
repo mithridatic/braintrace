@@ -107,6 +107,16 @@ Changing the seed alone moves the argmin and collapses the cross-run
 correlation from 0.9986 to 0.114. Changing the architecture or the learning
 rate does neither. That is the causal test.
 
+`--seed 7777` changes the batch order, the effort order, **and** the parameter
+initialisation together, so on its own it does not isolate which of the three
+matters. The A-vs-C pair closes that confound: their
+`training.parameter_sha256_before` values differ
+(`a7fca2b7c8ecd79f...` vs `687cd9133f7aedf0...`), so those two runs start from
+different initial parameters, yet their residual correlation is **0.9983**.
+Initialisation varies and the residual structure does not move; the batch and
+effort sequence varies and it collapses. The cause is the seed-fixed data
+stream.
+
 ### 5. The claimed post-133 rise does not exist
 
 20-update block means:
@@ -136,8 +146,10 @@ near 130. It is not a phase: `_effort_schedule` (line 1114) builds
 `np.resize(efforts, updates)` and then applies `rng.permutation(updates)`, so
 the two efforts are *interleaved*, not blocked. Observed
 `effort_schedule[130:140] = [60,60,30,60,30,60,60,60,60,30]`. Additionally,
-mean loss by effort is 2.433 (effort 30) vs 2.404 (effort 60) --
-statistically indistinguishable, so effort does not even shift the loss scale.
+mean loss by effort is 2.433 +/- 0.034 (effort 30, n=130) vs 2.404 +/- 0.036
+(effort 60, n=130); the difference is 0.028 against a standard error of 0.050,
+t = 0.57. Effort does not shift the loss scale, which is what the `1.0/effort`
+mask is there to guarantee.
 
 **A normalization / denominator that moves with update index.** Both
 normalizations are per-update constants. The per-tick reduction divides by the
@@ -181,20 +193,25 @@ stream, not of optimization.
 change cannot leave an optimization landmark at the same integer index, and the
 seed ablation moves the index without touching the optimizer at all.
 
-## Supporting detail: effort co-determines the argmin
+## Supporting detail: an identical batch sequence with a different argmin
 
 `example21-shared-2048n-2048e-b32-u260-l150` shares `seed`, `training_updates`,
 and `training_batch_size` with the l60 runs and has a **byte-identical**
-8320-element fingerprint sequence, yet its argmin is 251, not 133. Its
-`training_efforts` is `(30, 60, 90, 120, 150)` rather than `(30, 60)`, so the
-per-update effort differs even though the per-update batch does not. So
+8320-element `training_task_fingerprints` sequence, yet its argmin is 251, not
+133.
+
+This comparison is **confounded three ways** and isolates nothing on its own:
+`latent_steps` 150 vs 60 (hence `training_efforts` `(30,60,90,120,150)` vs
+`(30,60)`), `learning_rate` 1e-4 vs 1e-3, and `training_chunk_size` 1 vs 5. It
+is recorded only as consistency evidence for the general form
 
 ```
 loss[i] = f(batch_i, effort_i, model_state_i)
 ```
 
-with `batch_i` and `effort_i` both fixed by the seed and independent of every
-hyperparameter under study.
+where `batch_i` and `effort_i` are both fixed by the seed and independent of
+every hyperparameter under study. The causal proof is the seed ablation in
+section 4, not this comparison.
 
 ## Real failure or accounting artifact?
 
@@ -206,8 +223,10 @@ per-update variance is essentially all data; (c) the seed ablation, which moves
 the argmin to 179 and drops the correlation to 0.114 while holding the
 optimizer fixed; (d) block means that are flat, not rising, after 133.
 
-There is a **separate and much smaller real effect**: a mild late rise in the
-*smoothed* trend.
+### There is no second, smaller "real" rise either
+
+A smoothed (21-point moving average) version of the series appears to bottom
+out and then climb:
 
 | run | smoothed argmin | smoothed min | smoothed last |
 |---|---|---|---|
@@ -216,18 +235,54 @@ There is a **separate and much smaller real effect**: a mild late rise in the
 | C 4096e | 154 | 2.192 | 2.303 |
 | seed 7777 | 232 | 2.158 | 2.448 |
 
-That rise is roughly +5% against the +27% improvement from 3.02 to 2.20, and
-its location varies with both learning rate (154 vs 200) and seed (154 vs 232).
-It is ordinary late-training drift on a plateau. **It does not rescue the
-133 observation** -- it is a different, non-shared index and an order of
-magnitude smaller than the trough-versus-noise gap that produced the original
-table.
+**This is the same selection bias one level up and must not be reported as an
+effect.** `smoothed_min` is the *selected* minimum of a still-noisy series, so
+`smoothed_last > smoothed_min` is guaranteed by construction in every run
+whether or not any trend exists -- exactly the reasoning that produced the
+original index-133 table.
+
+Two tests dispose of it.
+
+**Block means against their own standard error.** With residual sigma 0.346, a
+20-update block mean has SE = 0.346/sqrt(20) = 0.077, so a difference of two
+blocks has SE 0.109:
+
+| run | lowest 20-block from update 60 | last block | gap | gap / SE |
+|---|---|---|---|---|
+| A lr1e-3 | 2.201 | 2.366 | 0.165 | **1.51** |
+| B lr3e-3 | 3.012 | 3.063 | 0.052 | **0.30** |
+| C 4096e | 2.199 | 2.348 | 0.149 | **1.36** |
+| seed 7777 | 2.183 | 2.335 | 0.152 | **1.45** |
+
+No run reaches 2 sigma, and these are *selected* minima, so even 1.5 sigma
+overstates the case.
+
+**Ordinary least squares on the post-warmup segment.** Fitting a line to
+updates 60-259 -- no minimum selected, no smoothing -- the slope is
+**negative in all four runs**:
+
+| run | slope / update | SE | t | implied drift over 200 updates |
+|---|---|---|---|---|
+| A lr1e-3 | -0.00041 | 0.00046 | -0.89 | -0.081 |
+| B lr3e-3 | -0.00162 | 0.00069 | -2.33 | -0.323 |
+| C 4096e | -0.00040 | 0.00046 | -0.88 | -0.081 |
+| seed 7777 | -0.00032 | 0.00044 | -0.74 | -0.065 |
+
+The loss is flat-to-still-slightly-falling after update 60. It is not rising at
+all. The apparent late climb is entirely an artifact of measuring from a
+selected trough.
+
+**Conclusion: artifact, full stop.** Training falls from ~3.02 to a ~2.30
+plateau by update 60, and every subsequent movement -- including the index-133
+trough and the apparent recovery from it -- is within batch noise. There is no
+second effect to chase.
 
 ## Recommendation
 
-**No fix.** The loss computation and both normalizations are correct. The
-turnover is a property of reading a noisy per-batch training loss as if it were
-a trend, not a defect in Example 21.
+**No fix.** The loss computation and both normalizations are correct, effort is
+correctly neutralised by the `1.0/effort` mask, and there is no real
+degradation anywhere in the run. The turnover is a property of reading a noisy
+per-batch training loss as if it were a trend, not a defect in Example 21.
 
 ### Optional follow-up (proposed, not implemented)
 
