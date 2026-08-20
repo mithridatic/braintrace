@@ -628,14 +628,12 @@ Two caveats that must not be dropped when quoting these numbers:
 At 71.7 s for 20 tasks, a full 400-task adaptation pass extrapolates to roughly
 24 minutes on top of training and evaluation.
 
-### 8.7.1 Deferred arm
+### 8.7.1 Update-count arm — is the colour path still travel-bound?
 
 `probe-gh-lr1e-3-u780` — 3× the updates at the same step size, the clean test of
-whether travel is still binding on the colour path (§8.2). It was started and
-**killed about one minute in** because it would have shared the 12 GB GPU with
-the full ARC-AGI-1 evaluation, which is the higher-priority run. It is not
-reported, and the §8.2 question it was meant to settle therefore remains open.
-It is the first thing to run next.
+whether travel still binds the colour path (§8.2). It was started once and killed
+about a minute in because it would have shared the 12 GB GPU with the full
+ARC-AGI-1 evaluation; it was re-run afterwards. Results in §8.10.
 
 ### 8.8 Full ARC-AGI-1 evaluation — the headline result
 
@@ -770,3 +768,103 @@ Ranked next steps:
    evaluation run once the base model clears the lookup table, but it is a
    multiplier on the base model and the base model is the binding constraint —
    which is what the earlier investigation also concluded.
+
+## 10. Follow-up: is the colour path travel-bound, or carrier-bound?
+
+Two questions were left open by §8: whether the colour path is still limited by
+parameter travel (§8.7.1), and whether the 1024-dimensional carrier is absorbing
+travel that should reach the copy path (§9 step 2). This section answers both.
+
+### 10.1 Pre-registered reading of the block decomposition
+
+Fixed before the trained weights were inspected.
+
+`answer_row_head.weight` is `(1414, 300)`; its input rows partition as carrier
+`0:1024`, row one-hot `1024:1054`, query colours `1054:1354`, input height
+`1354:1384`, input width `1384:1414`. Every head-input coordinate has unit
+expected square — the carrier is scaled to unit RMS, and each one-hot block puts
+one coordinate at `sqrt(arity)`, so its expected square is also one. A block's
+**squared Frobenius norm is therefore proportional to the logit variance it
+contributes**, and shares are comparable across blocks.
+
+At initialisation `W ~ N(0, 1/1414)`, so nominal variance shares are fixed by
+block width alone: carrier **72.4%**, query colours **21.2%**, shape one-hots
+4.2%, row one-hot 2.1%.
+
+Those nominal shares **understate** the imbalance. The colour block only carries
+a one-hot on columns within the input width (`latent_workspace_task.py:1817`
+enumerates `grid.cells[row_index]`), and `input_row_valid` zeroes the block
+entirely for rows past the input height. For a typical 10-wide ARC query the
+colour block supplies about 100 units of input energy rather than 300, putting
+the effective split nearer carrier 84% / colour 8%. The tables below report
+nominal shares; scale the colour column by roughly `mean input width / 30` for
+the effective one.
+
+How this is to be read, decided in advance:
+
+- **Colour-block variance share rises materially above 21.2%** ⇒ training is
+  moving toward the copy path, travel is the limiting factor, and `u780` should
+  extend the trend.
+- **Colour share flat or falling while the carrier block absorbs the travel** ⇒
+  the head is solving through a random projection rather than the direct copy
+  path, no amount of travel redirects it, and the next fix is architectural.
+  The imbalance grows as `n / (n + 390)`, so it would be ~91% carrier at the
+  4096-neuron default scale.
+
+The comparison of `u260` against `u780` on this one number is the experiment.
+
+### 10.2 The carrier drives the answer, and drives it the wrong way
+
+This is measurable without any weights, from `eval-gh-lr1e-3-u260-l150`.
+
+The answer heads read `[carrier, row one-hot, query colours of that row]`. At a
+fixed row index the last two blocks are **identical in every refinement sweep**:
+`build_refinement_feedback_event` sources them from `query_grid` and
+`query_shape`, which are only updated by `capture_query_rows` under a gate
+requiring `event[:, event_valid_index] > 0.5`
+(`latent_workspace_refinement.py:295-301`), and refinement feedback events hold
+that channel at zero by construction
+(`latent_workspace_refinement.py:339-342`). So **the carrier is the only head
+input that changes between sweeps**, and every change in the decoded answer
+across the effort axis is attributable to it.
+
+Measured against the sweep-1 answer (effort 30), on all 419 evaluation queries:
+
+| effort | sweeps | queries whose predicted shape changed | cells changed |
+|---|---|---|---|
+| 30 | 1 | 0 / 419 | 0.0000 |
+| 60 | 2 | 66 / 419 | 0.0921 |
+| 90 | 3 | 99 / 419 | 0.1402 |
+| 120 | 4 | 109 / 419 | 0.1699 |
+| 150 | 5 | 121 / 419 | **0.1873** |
+
+**The carrier rewrites 18.7% of the answer's cells and changes 29% of predicted
+shapes** between the first sweep and the last. It is not a weak side input.
+
+And it makes the answer worse. Diagnostics along the same axis:
+
+| effort | shape | pixel |
+|---|---|---|
+| 30 | 0.5656 | **0.4520** |
+| 60 | **0.5847** | 0.4457 |
+| 90 | 0.5752 | 0.4304 |
+| 120 | 0.5752 | 0.4197 |
+| 150 (submitted) | 0.5704 | 0.4138 |
+
+Pixel accuracy peaks at the **first** sweep and decays monotonically; shape peaks
+at the second. The submission checkpoint is 150. This reproduces, and
+strengthens, the interior-peak effect reported independently for the
+row-blindness fix (shape and pixel peaking at 60) — post-D-GH the pixel peak has
+moved earlier still, to 30.
+
+Two consequences:
+
+1. **The submitted checkpoint is not the model's best checkpoint.** Submitting
+   effort 60 instead of 150 would report shape 0.5847 and pixel 0.4457 rather
+   than 0.5704 and 0.4138 — a pixel gain of 0.032, comparable to what D-PT and
+   D-GH bought together. **It changes exact pass@1 by nothing: exact is 0.0 at
+   every effort in every arm measured.** This is a diagnostic-reporting defect,
+   not a path to a score.
+2. **Extra latent refinement is actively harmful here**, and the only thing that
+   varies across it is the carrier. That is independent evidence for carrier
+   dominance, arrived at without touching a weight.
