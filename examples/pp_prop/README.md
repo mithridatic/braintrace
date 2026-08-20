@@ -142,9 +142,9 @@ image identity first:
       python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py `
       --device gpu `
       --source-manifest /datasets/arc/example21-sources.json `
-      --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 `
+      --output-dir /work/var/example21-shared-1024n-1024e-b32-u130-l390 `
       --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 `
-      --latent-steps 390 --training-updates 13 --training-batch-size 32 `
+      --latent-steps 390 --training-updates 130 --training-batch-size 32 `
       --training-chunk-size 5
 
 The selected execution chunk is 5; the original chunk-1 command is retained
