@@ -216,22 +216,61 @@ logits. `_unit_l2_cap` itself is left untouched at its other two call sites
 (`:2060` legacy compact readout, `:2198` `workspace_query_projection`), which are
 not part of this defect.
 
+### 4.3 Measured effect of the fix (untrained, 1024 neurons, 4 real ARC tasks)
+
+| quantity | before | after |
+|---|---|---|
+| answer_row logit std | 0.0302 | 0.8676 |
+| across-row logit std | 0.0018 | 0.2118 |
+| **row-varying share of logit std** | **0.060** | **0.244** |
+| colour softmax entropy (nats) | 2.3022 | 1.9992 |
+| row-to-row logit cosine | 0.9947 | 0.9325 |
+| distinct decoded rows per sweep | 5, 5, 8, 12 | 29, 30, 30, 30 |
+
+The honest row-conditioning figure is the **relative** one: the row-varying
+share of the logit standard deviation rises 0.060 → 0.244, a factor of 4. The
+118× rise in the absolute across-row figure is that 4× multiplied by the D-SC
+scale repair and must not be quoted as the row-conditioning result.
+
+What changed qualitatively is not captured by any ratio: before the fix the row
+index was recoverable from the head input at chance, so no amount of training
+could make the head row-selective; after it the row code is linearly present by
+construction.
+
+Note that at *initialisation* both versions emit ~0.9 non-zero cells. The
+all-black grid is a **trained** phenomenon, so every unit test below shows only
+that the head can now express row-varying output — not that training stops
+collapsing. Only a trained run speaks to that.
+
 ## 5. Tests (co-located, suffix style)
 
 `examples/pp_prop/latent_workspace_model_test.py`:
 
-1. **`test_row_refinement_answer_rows_are_conditioned_on_the_refinement_row`** —
-   run one 30-tick refinement sweep on an untrained model and assert the mean
-   pairwise cosine between the 30 `answer_row` logit vectors is below a
-   threshold. Reproduces D-RB: currently 0.995.
-2. **`test_row_refinement_head_carrier_has_unit_rms_scale`** — assert the head
-   input's per-coordinate RMS is O(1), not `1/√n`. Reproduces D-SC: currently
-   0.03125 at n=1024.
-3. **`test_row_refinement_heads_remain_all_direct_after_row_conditioning`** —
+1. **`test_refinement_sweep_writes_a_distinct_pattern_for_each_row`** — run one
+   30-tick sweep on an untrained model against a production-shaped 10×10 query
+   and assert at least 25 of the 30 decoded rows are distinct. Reproduces D-RB:
+   17 before the fix, 30 after.
+
+   The metric matters. Mean pairwise cosine between row logit vectors was the
+   first choice and is **scale-broken**: a shared per-query component inflates
+   it in proportion to `neuron_count`, so it reads 0.988 at 64 neurons but 0.995
+   at 1024, and a threshold tuned on the fixture passes a production
+   configuration that still fails. The 2×2 fixture used elsewhere in the file is
+   also too weak — it reads 0.88 where real ARC queries read 0.95–0.99 — so the
+   test carries its own full-size synthetic episode.
+2. **`test_refinement_head_input_separates_the_row_being_written`** — assert
+   `_refinement_head_input` responds to the row-position one-hot and to the
+   query colours of the row being written. Exact, deterministic, no threshold.
+3. **`test_refinement_head_carrier_is_scaled_to_unit_root_mean_square`** —
+   assert the head carrier's per-coordinate RMS is 1, not `1/√n`. Reproduces
+   D-SC: 0.03125 at n=1024.
+4. **`test_refinement_heads_stay_compiled_all_direct_with_row_conditioning`** —
    assert `answer_row_head.weight` and `answer_shape_head.weight` are still in
    `compile_pp_prop(model).param_states` and still classify `all_direct`.
    Guards the trap that a widened head input silently drops out of the compiled
-   model and trains with a zero gradient.
+   model and trains with a zero gradient, the way `color_factor_head`,
+   `height_head`, `width_head` and `readout_projection` already do. This test
+   passes before and after — it is a regression guard, not a reproduction.
 
 ## 6. Expected outcome — stated in advance
 
