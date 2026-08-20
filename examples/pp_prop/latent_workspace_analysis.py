@@ -1446,3 +1446,79 @@ def compare_control_trajectories(
         "score_deltas_control_minus_intact": score_deltas,
         "interpretation": interpretation,
     }
+
+
+def adam_parameter_travel_budget(
+    learning_rate: float, updates: int, head_width: int
+) -> dict[str, object]:
+    """Return how far Adam can move an answer-head weight, in initialisation sigmas.
+
+    Adam's per-coordinate step is ``lr * m_hat / (sqrt(v_hat) + eps)`` and
+    ``|m_hat / sqrt(v_hat)| <= 1`` under a consistent gradient sign, so over
+    ``updates`` steps no weight can travel further than ``learning_rate *
+    updates`` regardless of the gradient magnitude. The answer heads are
+    bias-free and initialised at ``1/sqrt(head_width)``, so that bound divided by
+    the initialisation sigma is the number of sigmas of travel the whole
+    optimization budget can buy. Below one sigma the trained head is a
+    perturbation of its random initialisation and can only express the dataset
+    prior, whatever the loss or the architecture say.
+
+    This is reported rather than enforced. Seven full ARC-AGI-1 runs were
+    executed at ``learning_rate=1e-4`` and 260 updates -- 0.96 sigmas -- before
+    anything surfaced the arithmetic.
+
+    Parameters
+    ----------
+    learning_rate : float
+        Optimizer learning rate. Must be positive and finite.
+    updates : int
+        Number of optimizer updates. Must be positive.
+    head_width : int
+        Input width of the answer heads, which sets their initialisation sigma.
+        Must be positive.
+
+    Returns
+    -------
+    dict
+        ``head_width``, ``displacement_bound``, ``initialization_sigma``,
+        ``sigmas_of_travel`` and a boolean ``starved``.
+
+    Raises
+    ------
+    ValueError
+        If any argument is nonpositive or not finite.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> from latent_workspace_analysis import adam_parameter_travel_budget
+        >>> budget = adam_parameter_travel_budget(1e-4, 260, 1414)
+        >>> round(budget["sigmas_of_travel"], 3)
+        0.978
+        >>> budget["starved"]
+        True
+
+        >>> adam_parameter_travel_budget(1e-3, 260, 1414)["starved"]
+        False
+    """
+
+    rate = float(learning_rate)
+    if not math.isfinite(rate) or rate <= 0.0:
+        raise ValueError("learning_rate must be a positive finite float")
+    step_count = _nonnegative_integer(updates, "updates")
+    if step_count == 0:
+        raise ValueError("updates must be positive")
+    width = _nonnegative_integer(head_width, "head_width")
+    if width == 0:
+        raise ValueError("head_width must be positive")
+    bound = rate * step_count
+    sigma = 1.0 / math.sqrt(width)
+    sigmas = bound / sigma
+    return {
+        "head_width": width,
+        "displacement_bound": bound,
+        "initialization_sigma": sigma,
+        "sigmas_of_travel": sigmas,
+        "starved": bool(sigmas < 1.0),
+    }

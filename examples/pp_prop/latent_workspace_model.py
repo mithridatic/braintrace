@@ -1419,16 +1419,31 @@ def _refinement_head_input(
     both already present in the refinement feedback event, but reach the heads
     only after the membrane has integrated them away.
 
-    Both appended blocks are scaled to unit root-mean-square on their occupied
+    The query's own grid dimensions are appended for the same reason. The shape
+    head is supervised on one tick of a 30-row sweep, the completed sweep at row
+    29, and the colour block is written gated by ``input_row_valid``, which is
+    exactly zero beyond the input height -- so at that tick the colour block is
+    identically zero for every query shorter than 30 rows and the row one-hot is
+    the same for every query. Without the dimension one-hots the carrier is the
+    only query-varying signal the shape head sees where it is supervised, and
+    ``output_shape == input_shape`` -- true for 66.1% of ARC-AGI-1 evaluation
+    queries -- is not representable. With them it is a 30x30 identity block.
+
+    Every appended block is scaled to unit root-mean-square on its occupied
     coordinates -- exactly ``sqrt(30)`` for a 30-way one-hot and ``sqrt(10)``
     for a per-column colour one-hot -- so no block dominates the head input by
     an accident of encoding sparsity.
     """
     carrier = jnp.asarray(carrier, dtype=jnp.float32)
     event = jnp.asarray(event, dtype=jnp.float32)
-    row_position = event[:, layout.row_index_slice] * math.sqrt(MAX_GRID_SIZE)
+    row_scale = math.sqrt(MAX_GRID_SIZE)
+    row_position = event[:, layout.row_index_slice] * row_scale
     row_colors = event[:, layout.input_color_slice] * math.sqrt(COLOR_COUNT)
-    return jnp.concatenate((carrier, row_position, row_colors), axis=-1)
+    input_height = event[:, layout.input_height_slice] * row_scale
+    input_width = event[:, layout.input_width_slice] * row_scale
+    return jnp.concatenate(
+        (carrier, row_position, row_colors, input_height, input_width), axis=-1
+    )
 
 
 def refinement_head_width(neuron_count: int) -> int:
@@ -1442,7 +1457,8 @@ def refinement_head_width(neuron_count: int) -> int:
     Returns
     -------
     int
-        ``neuron_count`` plus the row-position one-hot and the row colour block.
+        ``neuron_count`` plus the row-position one-hot, the row colour block,
+        and the query input height and width one-hots.
 
     Examples
     --------
@@ -1450,9 +1466,14 @@ def refinement_head_width(neuron_count: int) -> int:
 
         >>> from latent_workspace_model import refinement_head_width
         >>> refinement_head_width(1024)
-        1354
+        1414
     """
-    return int(neuron_count) + MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT
+    return (
+        int(neuron_count)
+        + MAX_GRID_SIZE
+        + MAX_GRID_SIZE * COLOR_COUNT
+        + 2 * MAX_GRID_SIZE
+    )
 
 
 class LatentWorkspaceModel(brainstate.nn.Module):

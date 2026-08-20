@@ -479,9 +479,11 @@ def test_nonterminal_loss_supervises_only_the_selected_valid_color_row() -> None
         row_indices,
     )
 
+    # Height class 1 is a two-row target, so its colour term carries the whole
+    # sweep's weight over two rows: 30 / 2 = 15 times one row's cross entropy.
     np.testing.assert_allclose(
         loss,
-        jnp.asarray([np.log(10.0), 0.0]),
+        jnp.asarray([15.0 * np.log(10.0), 0.0]),
         rtol=1e-6,
     )
 
@@ -588,7 +590,9 @@ def test_complete_sweep_balances_shape_once_and_each_valid_color_row() -> None:
         jnp.arange(30, dtype=jnp.int32),
     )
 
-    expected = (2.0 * np.log(30.0) + (target_height + 1) * np.log(10.0)) / 30.0
+    # The colour term is scaled by 30 / (target_height + 1), so a completed
+    # sweep charges the same total colour weight whatever the output height.
+    expected = (2.0 * np.log(30.0) + 30.0 * np.log(10.0)) / 30.0
     np.testing.assert_allclose(np.mean(np.asarray(losses)), expected, rtol=1e-6)
 
 
@@ -620,3 +624,53 @@ def test_row_refinement_loss_fails_closed_on_shape_and_dtype(
 
     with pytest.raises(ValueError, match=message):
         row_refinement_loss_per_example(**arguments)
+
+
+def _sweep_colour_weight(target_height: int) -> float:
+    """Return the colour loss a whole 30-row sweep charges one example."""
+    losses = np.asarray(
+        row_refinement_loss_per_example(
+            jnp.zeros((30, 360), dtype=jnp.float32),
+            jnp.full((30,), target_height, dtype=jnp.int32),
+            jnp.zeros((30,), dtype=jnp.int32),
+            jnp.zeros((30, 30, 30), dtype=jnp.int32),
+            jnp.arange(30, dtype=jnp.int32),
+        )
+    )
+    # The completed sweep at row 29 also carries the two shape terms.
+    return float(losses.sum() - 2.0 * np.log(30.0))
+
+
+def test_sweep_colour_weight_does_not_scale_with_the_output_height() -> None:
+    """A 3-row target must not receive a tenth of a 30-row target's colour signal.
+
+    The colour term is zeroed for every row past the target height while the
+    per-tick batch reduction divides by the count of *supervised* ticks, which
+    does not depend on row validity. Over a sweep that weights each example's
+    colour gradient by its output height -- up to 10x between a 3-row and a
+    30-row target, inside the batch mean. That is a relative reweighting between
+    examples, not a global scale, so Adam does not remove it, and it falls
+    hardest on the small outputs that are the only combinatorially reachable
+    exact targets.
+    """
+    short_sweep = _sweep_colour_weight(2)
+    tall_sweep = _sweep_colour_weight(29)
+
+    np.testing.assert_allclose(short_sweep, tall_sweep, rtol=1e-6)
+
+
+def test_row_colour_loss_is_scaled_by_the_reciprocal_output_height() -> None:
+    """One supervised row carries the whole sweep's colour weight over its rows."""
+    target_height = 4
+    loss = np.asarray(
+        row_refinement_loss_per_example(
+            jnp.zeros((1, 360), dtype=jnp.float32),
+            jnp.asarray([target_height], dtype=jnp.int32),
+            jnp.zeros((1,), dtype=jnp.int32),
+            jnp.zeros((1, 30, 30), dtype=jnp.int32),
+            jnp.zeros((1,), dtype=jnp.int32),
+        )
+    )
+
+    expected = np.log(10.0) * 30.0 / (target_height + 1)
+    np.testing.assert_allclose(loss, [expected], rtol=1e-6)

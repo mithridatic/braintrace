@@ -39,6 +39,7 @@ try:
     from examples.pp_prop.latent_workspace_adaptation import snapshot_parameters
     from examples.pp_prop.latent_workspace_analysis import (
         OutputLogits,
+        adam_parameter_travel_budget,
         aggregate_arc_metrics,
         analyze_latent_trajectory,
         assess_model_only_completion,
@@ -60,6 +61,7 @@ try:
         compile_pp_prop,
         expand_decoder_logits,
         parameter_snapshot,
+        refinement_head_width,
         run_selected_packed_stream,
     )
     from examples.pp_prop.latent_workspace_refinement import (
@@ -93,6 +95,7 @@ except ModuleNotFoundError:
     from latent_workspace_adaptation import snapshot_parameters
     from latent_workspace_analysis import (
         OutputLogits,
+        adam_parameter_travel_budget,
         aggregate_arc_metrics,
         analyze_latent_trajectory,
         assess_model_only_completion,
@@ -114,6 +117,7 @@ except ModuleNotFoundError:
         compile_pp_prop,
         expand_decoder_logits,
         parameter_snapshot,
+        refinement_head_width,
         run_selected_packed_stream,
     )
     from latent_workspace_refinement import (
@@ -2063,6 +2067,25 @@ def _compiler_evidence(learner: Any) -> dict[str, object]:
     }
 
 
+def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
+    """Return how far the configured budget can move an answer-head weight.
+
+    Adam cannot displace a coordinate further than ``learning_rate * updates``,
+    so an operating point below one answer-head initialisation sigma trains a
+    head that stays a perturbation of its random initialisation whatever the
+    loss says. Recording the width the sigma was taken against lets a later
+    reader redo the arithmetic without knowing which head revision ran.
+    """
+    width = (
+        refinement_head_width(config.neuron_count)
+        if config.decoder_mode == "row_refinement"
+        else config.readout_width
+    )
+    return adam_parameter_travel_budget(
+        config.learning_rate, config.training_updates, width
+    )
+
+
 def _parameter_change_evidence(
     before: dict[str, Any], after: dict[str, Any]
 ) -> dict[str, dict[str, object]]:
@@ -2447,6 +2470,7 @@ def _train_model(
         "training_row_max_inflight": 2 * config.training_workers,
         "runtime_profile": None if profile is None else profile.to_dict(),
         "balanced_color_loss": config.balanced_color_loss,
+        "parameter_travel_budget": _parameter_travel_budget(config),
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
             str(value): int(counts[value]) for value in config.training_efforts
