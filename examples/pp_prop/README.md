@@ -124,7 +124,7 @@ integrity-checked index per split instead of enumerating, reopening, hashing,
 and fingerprinting all 800 raw task files at runtime. Mount only persistent
 outputs and the compilation cache:
 
-    docker run --rm --gpus all --volume "${PWD}/var:/work/var" --volume "${PWD}/var/jax-cache:/cache/jax" braintrace-gpu:0.11.0-py314-msgspec-arc python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest /datasets/arc/example21-sources.json --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 390 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
+    docker run --rm --gpus all --env XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 --volume "${PWD}/var:/work/var" --volume "${PWD}/var/jax-cache:/cache/jax" braintrace-gpu:0.11.0-py314-msgspec-arc python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest /datasets/arc/example21-sources.json --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 390 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
 
 This command performs no pretraining, task-local adaptation, or evaluation
 control arms. Progress is written to stderr; the final result remains on stdout.
