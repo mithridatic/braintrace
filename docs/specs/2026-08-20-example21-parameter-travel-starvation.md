@@ -710,15 +710,23 @@ of exactness, but it did not produce a single exactly correct answer.
 
 What the three fixes are worth, stated separately:
 
-- **D-PT (travel starvation)** — real and large for the shape path. Raising the
-  budget from 0.96 σ to 9.8 σ took shape accuracy from 0.3604 to 0.5704. Its
-  effect on colour content is unresolved; the arm that would settle it
-  (§8.7.1) was killed for GPU contention.
+- **D-PT (travel starvation)** — real and the largest single contributor, on the
+  shape path. Isolated on the probe surface at fixed code and seed, raising the
+  budget from 0.96 σ to 9.8 σ moved shape accuracy **0.4945 → 0.5824, +0.088**
+  (§8.2). Its effect on colour content is unresolved; the arm that would settle
+  it (§8.7.1) was killed for GPU contention.
 - **D-SB (answer-shape blindness)** — a real expressivity gap, repaired, with
   **no measurable effect** (§8.3). Kept because it is correct and cheap, not
   because it helped.
 - **D-GH (height-weighted colour gradient)** — real, small, and the only change
-  that produced exactly correct colour content on a query (§8.6).
+  that produced exactly correct colour content on a query. Isolated with an
+  identical draw sequence, shape **0.5604 → 0.6044, +0.044** (§8.6).
+
+**The +0.21 shape gain on evaluation is not attributable to any one of these.**
+The isolated probe deltas sum to roughly +0.13; the rest is the probe-versus-
+evaluation surface difference and the reseeding that D-SB's head widening
+forces. Quote 0.3604 → 0.5704 only as the combined, non-seed-matched
+end-to-end figure.
 
 **The finding that should drive the next attempt is §8.4.** An 11 × 10 lookup
 table with 110 parameters, which the row head can represent exactly through its
