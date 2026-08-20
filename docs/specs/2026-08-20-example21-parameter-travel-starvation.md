@@ -381,6 +381,19 @@ colour term by up to 30×, so those suites were run too:
 `latent_workspace_binding_gate_test.py`. No caller had a golden value that the
 rescale broke.
 
+Doctests on the three changed modules pass, including the
+`refinement_head_width(1024) -> 1414` example and the new
+`adam_parameter_travel_budget` example block: `5 passed` for
+`latent_workspace_analysis.py` and `latent_workspace_refinement.py` under
+`--doctest-modules`, and `TestResults(failed=0, attempted=6)` for
+`latent_workspace_model.py`.
+
+**Not verified: the whole `examples/pp_prop` directory in one run.** It was
+started and killed at 23 minutes without reporting. Every caller of the three
+changed symbols is covered by the four suites above, so the marginal coverage
+lost is small — but "all tests pass" is not a claim this spec makes. The four
+suites named above are what was actually run and seen green.
+
 ### 8.2 Learning-rate sweep, pre-fix code, probe surface
 
 1024n / 1024e / b32 / u260 / l150, seed 2108, 84 held-out ARC training tasks /
