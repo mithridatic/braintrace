@@ -3159,29 +3159,20 @@ def _row_refinement_full_size_episode() -> jax.Array:
     return jnp.asarray(encode_query_episode(task, 0, rows).events)
 
 
-def _sweep_answer_rows(model: LatentWorkspaceModel) -> np.ndarray:
-    """Return the 30 answer-row logit vectors of one refinement sweep."""
+def _swept_answer_grid(model: LatentWorkspaceModel) -> np.ndarray:
+    """Return the decoded answer grid after one full 30-row refinement sweep."""
     zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
     advance = jnp.ones((1,), dtype=jnp.bool_)
 
     def latent_step(_: jax.Array) -> jax.Array:
         model.cell_step(zero_event, advance)
-        return model.answer_row.value[0]
+        return model.reasoning_index.value
 
-    return np.asarray(
-        brainstate.transform.for_loop(latent_step, jnp.arange(MAX_GRID_SIZE)),
-        dtype=np.float64,
-    )
+    brainstate.transform.for_loop(latent_step, jnp.arange(MAX_GRID_SIZE))
+    return np.asarray(model.answer_grid.value)[0].argmax(axis=-1)
 
 
-def _mean_pairwise_cosine(matrix: np.ndarray) -> float:
-    centred = matrix - matrix.mean(axis=1, keepdims=True)
-    norms = np.linalg.norm(centred, axis=1)
-    cosine = centred @ centred.T / np.outer(norms, norms)
-    return float(cosine[np.triu_indices(matrix.shape[0], k=1)].mean())
-
-
-def test_refinement_answer_rows_are_not_one_replicated_vector() -> None:
+def test_refinement_sweep_writes_a_distinct_pattern_for_each_row() -> None:
     """A refinement sweep must write 30 rows, not one row 30 times.
 
     The answer heads read the LIF membrane potential, a slow integrator whose
@@ -3189,15 +3180,21 @@ def test_refinement_answer_rows_are_not_one_replicated_vector() -> None:
     emits a per-query constant replicated across the sweep. Training then sees
     30 mutually inconsistent row targets through one input and can only
     converge to the row-independent colour marginal, whose argmax is colour
-    zero in every cell.
+    zero in every cell -- the all-black grid every evaluation run reports.
+
+    Distinct decoded row patterns is the scale-robust form of this check. The
+    mean pairwise cosine between row logit vectors is not: a shared per-query
+    component inflates it in proportion to ``neuron_count``, so a threshold
+    tuned at 64 neurons says nothing at 1024.
     """
     model = LatentWorkspaceModel(_row_refinement_config())
     run_context(model, _row_refinement_full_size_episode())
 
-    rows = _sweep_answer_rows(model)
+    decoded = _swept_answer_grid(model)
 
-    assert rows.shape == (MAX_GRID_SIZE, MAX_GRID_SIZE * COLOR_COUNT)
-    assert _mean_pairwise_cosine(rows) < 0.9
+    assert decoded.shape == (MAX_GRID_SIZE, MAX_GRID_SIZE)
+    distinct = {tuple(row.tolist()) for row in decoded}
+    assert len(distinct) >= 25
 
 
 def test_refinement_head_input_separates_the_row_being_written() -> None:
