@@ -1074,7 +1074,31 @@ ARC answer. Before this, no configuration had ever emitted one, and it was open
 whether some structural defect made exactness unreachable end to end. It is not.
 The barrier is generalisation.
 
-### 10.9 Revised next steps
+### 10.9 Follow-up arms run
+
+No code changed in this phase; every arm ran on the commit that produced §8's
+full evaluation, so all four are directly comparable to it and to each other.
+**Nothing was dropped or truncated.**
+
+| arm | purpose | runtime | outcome |
+|---|---|---|---|
+| `probe-gh-u260-ckpt` | reference budget, weights dumped | 4.2 min | complete; also a determinism check |
+| `probe-gh-u780-ckpt` | 3× travel at the same step size | 13.0 min | complete (§10.4) |
+| `trainseen-u260` | same-task surface, checkpoint restored | 0.7 min | complete (§10.7) |
+| `trainseen-u780` | same-task surface, checkpoint restored | 0.8 min | complete (§10.7, §10.8) |
+
+**Determinism.** `probe-gh-u260-ckpt` repeats `probe-gh-lr1e-3-u260` with only a
+checkpoint write added. Shape reproduces exactly (0.6044); pixel differs by
+0.0010 (0.4659 against 0.4669) and `answer_row_head` ΔL2 by 0.001. **Treat ~0.001
+in pixel as the arm-to-arm noise floor** — every difference this spec attributes
+to a change is at least an order of magnitude larger.
+
+**The `trainseen-*` arms performed no training**: the entry point takes its
+restore branch when `--parameter-checkpoint` names an existing file, so their
+0.7-minute runtimes are evaluation only. Any `learning_rate × updates` figure
+printed for them describes the checkpoint they restored, not travel they spent.
+
+### 10.10 Revised next steps
 
 Replaces §9's ranked list, which assumed travel and carrier-starvation.
 
