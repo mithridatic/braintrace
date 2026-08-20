@@ -127,7 +127,9 @@ class GroupDescent(NamedTuple):
     **body**-scoped (one substep) while its ``hidden_invars``/
     ``hidden_outvars`` are re-scoped to the **outer** scan carry vars;
     ``body_hidden_invars`` preserves the body-scope carry invars (substep-
-    entry hidden values), matching ``transition_jaxpr.invars``.
+    entry hidden values). On JAX 0.11+, open transition jaxprs expose their
+    external values in the same unified input list, so callers use
+    ``transition_jaxpr_constvars`` to recover that logical prefix.
     """
 
     scan: ScanDescentInfo

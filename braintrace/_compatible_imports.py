@@ -23,6 +23,7 @@ __all__ = [
     'ClosedJaxpr',
     'Literal',
     'new_var',
+    'open_jaxpr_constvars',
     'new_jaxpr_eqn',
     'stop_gradient_p',
     'is_jit_primitive',
@@ -34,7 +35,7 @@ __all__ = [
     'wrap_init',
 ]
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 from brainstate._compatible_import import Primitive, Var, JaxprEqn, Jaxpr, ClosedJaxpr, Literal, wrap_init
 
@@ -67,6 +68,51 @@ def new_var(suffix: Any, aval: Any) -> Var:
         return Var(suffix, aval)
     else:
         return Var(aval)
+
+
+def open_jaxpr_constvars(
+    jaxpr: Jaxpr,
+    runtime_invars: Sequence[Var],
+) -> list[Var]:
+    """Return external inputs in an open transition jaxpr.
+
+    JAX versions before 0.11 expose the leading external inputs as
+    ``jaxpr.constvars``. JAX 0.11 represents an open jaxpr constructed without
+    attached constant values as one unified ``invars`` sequence instead. The
+    compiler's transition jaxprs use the former logical layout, so recover the
+    external prefix when the known runtime inputs form the suffix.
+
+    Parameters
+    ----------
+    jaxpr : Jaxpr
+        The open or closed jaxpr whose external inputs should be recovered.
+    runtime_invars : sequence of Var
+        The known runtime input variables at the end of the logical jaxpr
+        input list, such as hidden-state inputs or the ``y`` primitive output.
+
+    Returns
+    -------
+    list of Var
+        External input variables in evaluation order. An empty list is
+        returned when ``runtime_invars`` is not the suffix of the jaxpr input
+        list.
+    """
+    runtime_invars = list(runtime_invars)
+    input_vars = list(jaxpr.invars)
+    if runtime_invars:
+        if len(input_vars) < len(runtime_invars):
+            return []
+        if input_vars[-len(runtime_invars):] != runtime_invars:
+            return []
+    elif input_vars:
+        return []
+
+    constvars = list(jaxpr.constvars)
+    if constvars:
+        return constvars
+    if not runtime_invars:
+        return input_vars
+    return input_vars[:-len(runtime_invars)]
 
 
 def is_jit_primitive(eqn: JaxprEqn) -> bool:

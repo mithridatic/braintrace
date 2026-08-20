@@ -63,6 +63,7 @@ from braintrace._compatible_imports import (
     is_scan_primitive,
     is_while_primitive,
     is_cond_primitive,
+    open_jaxpr_constvars,
     scan_num_consts_carry,
 )
 from braintrace._op import is_etp_primitive, is_etp_enable_gradient_primitive
@@ -1791,7 +1792,8 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                     for outvar in hidden_outvars
                 ],
                 transition_jaxpr=jaxpr,
-                transition_jaxpr_constvars=list(jaxpr.constvars),
+                transition_jaxpr_constvars=open_jaxpr_constvars(
+                    jaxpr, hidden_invars),
                 is_diagonal_recurrence=not self.include_recurrent_mixing,
             )
             group = self._attach_snap_pattern(group)
@@ -1859,7 +1861,8 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 hidden_paths=[self.outvar_to_hidden_path[outvar]],
                 hidden_states=[self.path_to_state[self.outvar_to_hidden_path[outvar]]],
                 transition_jaxpr=zero_jaxpr,
-                transition_jaxpr_constvars=list(zero_jaxpr.constvars),
+                transition_jaxpr_constvars=open_jaxpr_constvars(
+                    zero_jaxpr, [invar]),
                 # A zero-recurrence transition (``D^t = 0``) is trivially diagonal;
                 # keep the flag mode-derived for uniformity (this fallback only
                 # fires in the default mode in practice).

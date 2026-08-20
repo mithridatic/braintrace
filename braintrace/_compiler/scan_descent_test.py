@@ -13,7 +13,11 @@ import pytest
 
 import braintrace
 from braintrace import ControlFlowPolicy
-from braintrace._compatible_imports import is_scan_primitive, scan_num_consts_carry
+from braintrace._compatible_imports import (
+    is_scan_primitive,
+    open_jaxpr_constvars,
+    scan_num_consts_carry,
+)
 from braintrace._compiler.module_info import extract_module_info
 from braintrace._compiler.scan_descent import (
     _descent_blockers,
@@ -219,8 +223,11 @@ class TestAnalyzeAndRewriteScan:
         # outer-facing hidden vars are the scan carry vars, known to minfo
         assert g.hidden_outvars[0] in minfo.outvar_to_hidden_path
         assert g.hidden_invars[0] in minfo.invar_to_hidden_path
-        # body-scoped transition: one substep, invars == descent.body_hidden_invars
-        assert list(g.transition_jaxpr.invars) == list(g.descent.body_hidden_invars)
+        # Body-scoped transition: one substep, with external inputs preceding
+        # the descent body's hidden-state runtime inputs.
+        assert open_jaxpr_constvars(
+            g.transition_jaxpr, g.descent.body_hidden_invars
+        ) == list(g.transition_jaxpr_constvars)
 
         assert len(bundle.relations) == 1
         r = bundle.relations[0]
@@ -231,7 +238,9 @@ class TestAnalyzeAndRewriteScan:
         m = bundle.info.stacked_var_map
         assert r.x_var in m and r.y_var in m
         for j in r.y_to_hidden_group_jaxprs:
-            assert all(v in m for v in j.constvars)
+            assert all(
+                v in m for v in open_jaxpr_constvars(j, [r.y_var])
+            )
         assert all(v in m for v in g.descent.body_hidden_invars)
         assert all(v in m for v in g.transition_jaxpr_constvars)
         # stacked avals carry the substep axis

@@ -47,6 +47,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from braintrace import compile_etrace_graph
+from braintrace._compatible_imports import open_jaxpr_constvars
 from braintrace._testing.scenario_catalog import (
     ElemwiseOnlyRNN,
     PartialPathRNN,
@@ -67,8 +68,11 @@ def _transition_callable(rel, group, const_vals):
     The returned callable takes ``y_val`` and returns the *concatenated*
     hidden state value for the matching group.
     """
-    consts = [const_vals[v] for v in rel.y_to_hidden_group_jaxprs[0].constvars]
     jaxpr = rel.y_to_hidden_group_jaxprs[0]
+    consts = [
+        const_vals[v]
+        for v in open_jaxpr_constvars(jaxpr, [rel.y_var])
+    ]
 
     def f(y_val):
         out = jax.core.eval_jaxpr(jaxpr, consts, y_val)

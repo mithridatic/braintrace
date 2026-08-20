@@ -63,6 +63,7 @@ from braintrace._compatible_imports import (
     is_scan_primitive,
     is_while_primitive,
     is_cond_primitive,
+    open_jaxpr_constvars,
 )
 from braintrace._op import (
     get_trainable_invars,
@@ -248,7 +249,10 @@ class HiddenParamOpRelation(NamedTuple):
         """
         vals_of_hidden_groups = []
         for jaxpr, group in zip(self.y_to_hidden_group_jaxprs, self.hidden_groups):
-            consts = [const_vals[var] for var in jaxpr.constvars]
+            consts = [
+                const_vals[var]
+                for var in open_jaxpr_constvars(jaxpr, [self.y_var])
+            ]
             # ``list[Array]`` before concatenation, a single ``Array`` after.
             hidden_vals: Any = jax.core.eval_jaxpr(jaxpr, consts, y_val)
             if concat_hidden_vals:

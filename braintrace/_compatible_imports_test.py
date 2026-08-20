@@ -19,8 +19,11 @@ import jax.numpy as jnp
 from jax import jit, make_jaxpr, lax
 
 from braintrace._compatible_imports import (
+    Jaxpr,
+    new_var,
     is_jit_primitive, is_scan_primitive, is_while_primitive,
-    is_cond_primitive, scan_num_consts_carry, scan_params_add_ys,
+    is_cond_primitive, open_jaxpr_constvars, scan_num_consts_carry,
+    scan_params_add_ys,
 )
 
 
@@ -51,6 +54,46 @@ class TestScanConstsCarry:
         # the shim an eqn-like object whose params carry the legacy keys.
         fake = types.SimpleNamespace(params={'num_consts': 3, 'num_carry': 2})
         assert scan_num_consts_carry(fake) == (3, 2)
+
+
+class TestOpenJaxprConstvars:
+    """Recover logical external inputs across JAX jaxpr representations."""
+
+    def test_recovers_unattached_constvar_prefix(self):
+        traced = make_jaxpr(lambda x: x + 1.0)(jnp.array(1.0))
+        hidden = traced.jaxpr.invars[0]
+        external = new_var('external', hidden.aval)
+        open_jaxpr = Jaxpr(
+            constvars=[external],
+            invars=[hidden],
+            outvars=[hidden],
+            eqns=[],
+            debug_info=traced.jaxpr.debug_info,
+        )
+
+        assert open_jaxpr_constvars(open_jaxpr, [hidden]) == [external]
+
+    def test_keeps_attached_constant_vars(self):
+        scale = jnp.array(2.0)
+        closed = make_jaxpr(lambda x: x * scale)(jnp.array(3.0))
+
+        assert open_jaxpr_constvars(closed.jaxpr, closed.jaxpr.invars) == list(
+            closed.jaxpr.constvars
+        )
+
+    def test_rejects_non_suffix_runtime_invars(self):
+        traced = make_jaxpr(lambda x: x + 1.0)(jnp.array(1.0))
+        hidden = traced.jaxpr.invars[0]
+        external = new_var('external', hidden.aval)
+        open_jaxpr = Jaxpr(
+            constvars=[external],
+            invars=[hidden],
+            outvars=[hidden],
+            eqns=[],
+            debug_info=traced.jaxpr.debug_info,
+        )
+
+        assert open_jaxpr_constvars(open_jaxpr, [external]) == []
 
 
 class TestScanAddYs:
