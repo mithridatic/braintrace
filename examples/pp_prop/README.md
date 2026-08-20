@@ -109,9 +109,15 @@ fingerprints task content and aborts on train/evaluation overlap. The private
 paper data and training recipe are unavailable and are not simulated.
 
 A full run requests a GPU by default and fails closed instead of silently
-falling back to CPU. Run it in the repository's CUDA-enabled environment with:
+falling back to CPU. From the repository root, build the tracked image and run
+the shared-model experiment with the mounted checkout taking import precedence:
 
-    python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest path/to/sources.json --output-dir var/example21
+    $commit = git rev-parse HEAD
+    docker build --file .github/containers/braintrace-gpu/Dockerfile --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --tag braintrace-gpu:0.11.0-py314-msgspec .
+    docker run --rm --gpus all --volume "${PWD}:/work" --workdir /work --env PYTHONPATH=/work braintrace-gpu:0.11.0-py314-msgspec python examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest var/example21-arc-v1.0.2-sources.json --output-dir var/example21-shared-1024n-1024e-b32-u13-l300 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 300 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
+
+This command performs no pretraining, task-local adaptation, or evaluation
+control arms. Progress is written to stderr; the final result remains on stdout.
 
 For a reduced CPU iteration check that exercises lossless ARC encoding, exact
 scoring, all recurrent checkpoints, causal controls, and the trajectory report:

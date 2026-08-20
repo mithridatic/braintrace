@@ -19,6 +19,7 @@ import pathlib
 import platform
 import queue
 import subprocess
+import sys
 import threading
 import time
 from collections import Counter
@@ -145,6 +146,7 @@ DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
+CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
 SUBMISSION_CHECKPOINT = 60
@@ -177,6 +179,45 @@ CLAIM_BOUNDARY = (
 )
 
 
+def _progress_evidence(
+    *,
+    stage: str,
+    completed: int,
+    total: int,
+    started_at: float,
+    now: float | None = None,
+) -> dict[str, object]:
+    """Return one machine-readable progress observation."""
+    observed_at = time.perf_counter() if now is None else now
+    elapsed = max(0.0, observed_at - started_at)
+    eta = None
+    if 0 < completed < total:
+        eta = elapsed * (total - completed) / completed
+    return {
+        "stage": stage,
+        "completed": completed,
+        "total": total,
+        "elapsed_seconds": elapsed,
+        "eta_seconds": eta,
+    }
+
+
+def _emit_progress(
+    stage: str, completed: int, total: int, started_at: float
+) -> None:
+    evidence = _progress_evidence(
+        stage=stage,
+        completed=completed,
+        total=total,
+        started_at=started_at,
+    )
+    print(
+        f"[example21-progress] {msgspec.json.encode(evidence).decode()}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+
 def _integer(value: object, name: str, *, minimum: int = 0) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
         raise ValueError(f"{name} must be a non-boolean integer >= {minimum}")
@@ -202,6 +243,13 @@ def _unit_interval(value: object, name: str) -> float:
     if not math.isfinite(result) or not 0.0 <= result <= 1.0:
         raise ValueError(f"{name} must be finite and in [0, 1]")
     return result
+
+
+def _checkpoint_schedule(latent_steps: int) -> tuple[int, ...]:
+    """Return complete 30-tick checkpoints through the configured horizon."""
+    if latent_steps % CHECKPOINT_INTERVAL:
+        raise ValueError("latent_steps must be divisible by 30")
+    return tuple(range(0, latent_steps + 1, CHECKPOINT_INTERVAL))
 
 
 @dataclass(frozen=True)
@@ -250,12 +298,16 @@ class ExperimentConfig:
         Explicit output representation. Production and CLI defaults use learned
         row-wise refinement; legacy CP remains available only when named.
     adaptation_learning_rate : float
-        Task-local online adaptation rate. Adaptation is what produces the
-        score: starting from a fresh initialization with no pretraining at all,
-        it moves held-out shape accuracy 0.151 to 0.372 and pixel accuracy
-        0.355 to 0.493 over 86 tasks, improving shape on 21 tasks and degrading
-        it on 2. Zero falls back to ``learning_rate``, which is a pretraining
-        rate and far too small for this stage.
+        Learning rate for the optional task-local adaptation diagnostic. It is
+        ignored by the default shared-model evaluation.
+    adaptation_epochs : int
+        Number of epochs for the optional task-local adaptation diagnostic.
+    task_local_adaptation : bool
+        Enable the optional leave-one-demonstration-out adaptation diagnostic.
+        The default keeps one trained parameter set frozen for evaluation.
+    evaluation_controls : bool
+        Enable the optional repeat, no-context, shuffled-demonstration, and
+        slot-ablation evaluation arms. The default runs only the intact arm.
     adaptation_update_schedule : {"per_episode", "per_tick"}
         Whether a fold accumulates one gradient and takes one optimizer step,
         or applies the eligibility-trace term as an update at every supervised
@@ -265,9 +317,8 @@ class ExperimentConfig:
         noise at 86 tasks and it costs about 2.3x the wall clock, so the
         cheaper schedule remains selectable.
     adaptation_task_group : int
-        Number of tasks per compiled adaptation dispatch. Dispatching all 400
-        as one program killed the CUDA context on this WDDM device after 64
-        minutes; groups of 20 ran the identical arithmetic to completion.
+        Number of tasks per compiled adaptation dispatch when the optional
+        diagnostic is enabled.
     ablation_slot : int
         Deterministic 64-neuron slot used by the frozen ablation control.
     evaluation_task_limit : int or None
@@ -302,6 +353,8 @@ class ExperimentConfig:
     learning_rate: float = 1e-4
     adaptation_learning_rate: float = 5e-5
     adaptation_epochs: int = 2
+    task_local_adaptation: bool = False
+    evaluation_controls: bool = False
     clip_norm: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
@@ -369,6 +422,7 @@ class ExperimentConfig:
         require_recurrent_edge_budget(self.neuron_count, self.recurrent_edges)
         if self.max_grid_size != 30:
             raise ValueError("max_grid_size must be 30 for standard ARC")
+        _checkpoint_schedule(self.latent_steps)
         if self.ablation_slot >= self.neuron_count // 64:
             raise ValueError("ablation_slot exceeds the configured 64-neuron slots")
         if self.evaluation_task_limit is not None:
@@ -409,10 +463,11 @@ class ExperimentConfig:
         if (
             not self.structural_only
             and not restored
-            and self.training_updates < len(TRAINING_EFFORTS)
+            and self.training_updates < len(self.training_efforts)
         ):
             raise ValueError(
-                "training_updates must expose one model to 30 and 60 steps"
+                "training_updates must cover every configured training effort "
+                "(30 and 60 for the default horizon)"
             )
         if (
             self.training_chunk_size
@@ -433,6 +488,21 @@ class ExperimentConfig:
                     self.adaptation_learning_rate, "adaptation_learning_rate"
                 ),
             )
+
+    @property
+    def checkpoints(self) -> tuple[int, ...]:
+        """Scored recurrent checkpoints from zero through ``latent_steps``."""
+        return _checkpoint_schedule(self.latent_steps)
+
+    @property
+    def training_efforts(self) -> tuple[int, ...]:
+        """Positive recurrent depths distributed across optimizer updates."""
+        return self.checkpoints[1:]
+
+    @property
+    def submission_checkpoint(self) -> int:
+        """Primary model-only checkpoint at the configured latent horizon."""
+        return self.checkpoints[-1]
 
     @classmethod
     def smoke_config(
@@ -507,12 +577,17 @@ class ExperimentConfig:
         result["initial_checkpoint"] = (
             None if self.initial_checkpoint is None else str(self.initial_checkpoint)
         )
-        result["checkpoints"] = list(CHECKPOINTS)
-        result["training_efforts"] = list(TRAINING_EFFORTS)
+        result["checkpoints"] = list(self.checkpoints)
+        result["training_efforts"] = list(self.training_efforts)
+        result["submission_checkpoint"] = self.submission_checkpoint
         result["primary_evaluation_mode"] = (
             "compiled_task_local_pp_prop_leave_one_out"
-            if self.decoder_mode == "row_refinement" and not self.structural_only
-            else "frozen_no_adaptation"
+            if (
+                self.task_local_adaptation
+                and self.decoder_mode == "row_refinement"
+                and not self.structural_only
+            )
+            else "shared_model_frozen"
         )
         result["recurrent_edge_budget"] = require_recurrent_edge_budget(
             self.neuron_count,
@@ -982,8 +1057,12 @@ def _packed_advances(
     return advances
 
 
-def _effort_schedule(updates: int, rng: brainstate.random.RandomState) -> np.ndarray:
-    base = np.resize(np.asarray(TRAINING_EFFORTS, dtype=np.int32), updates)
+def _effort_schedule(
+    updates: int,
+    rng: brainstate.random.RandomState,
+    efforts: Sequence[int] = TRAINING_EFFORTS,
+) -> np.ndarray:
+    base = np.resize(np.asarray(efforts, dtype=np.int32), updates)
     order = np.asarray(rng.permutation(updates), dtype=np.int32)
     return base[order]
 
@@ -1237,7 +1316,7 @@ def _training_bank(
                 0, len(data.training), size=config.training_bank_size
             )
         ]
-        for effort in TRAINING_EFFORTS
+        for effort in config.training_efforts
     }
 
 
@@ -1360,8 +1439,8 @@ def _training_pool(
     """Return the tasks admitted to optimization, less any reserved holdout.
 
     Reserving the tail of the training split gives an episode-scaling curve a
-    measurement surface that pretraining never saw, so checkpoints can be
-    compared without spending — or selecting on — the ARC evaluation split.
+    measurement surface that the shared training stream never saw, so checkpoints
+    can be compared without spending — or selecting on — the ARC evaluation split.
     """
     if not data.training:
         raise ValueError("training data is empty")
@@ -1388,7 +1467,7 @@ def _training_chunks(
         return
     pool = _training_pool(data, config)
     rng = brainstate.random.RandomState(config.seed + 1000)
-    efforts = _effort_schedule(config.training_updates, rng)
+    efforts = _effort_schedule(config.training_updates, rng, config.training_efforts)
     batch = config.training_batch_size
     task_indices = np.asarray(
         rng.randint(0, len(pool), size=config.training_updates * batch),
@@ -1894,10 +1973,9 @@ def _train_chunks(
 def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
     """Write trainable parameter leaves and return the file digest.
 
-    Pretraining is the expensive stage and every evaluation question — a
-    different adaptation budget, a candidate rule, an ablation — otherwise costs
-    a full repeat. Leaves are stored in deterministic tree order so a model of
-    the same shape restores them exactly.
+    The shared training stage is expensive and optional diagnostic variants can
+    reuse its parameters. Leaves are stored in deterministic tree order so a
+    model of the same shape restores them exactly.
     """
     states = model.states(brainstate.ParamState)
     leaves = jax.tree.leaves({key: state.value for key, state in states.items()})
@@ -1985,7 +2063,9 @@ def _restored_training_report(
         ),
         "depth_weighting": "uniform_unit_sum_per_update",
         "balanced_color_loss": config.balanced_color_loss,
-        "optimizer_updates_by_effort": {str(value): 0 for value in TRAINING_EFFORTS},
+        "optimizer_updates_by_effort": {
+            str(value): 0 for value in config.training_efforts
+        },
         "losses": [],
         "parameter_sha256_before": _tree_digest(parameter_snapshot(model)),
         "parameter_sha256_after": _tree_digest(parameter_snapshot(model)),
@@ -2034,7 +2114,7 @@ def _train_model(
             "balanced_color_loss": config.balanced_color_loss,
             **compiler,
             "optimizer_updates_by_effort": {
-                str(value): 0 for value in TRAINING_EFFORTS
+                str(value): 0 for value in config.training_efforts
             },
             "losses": [],
         }
@@ -2142,7 +2222,7 @@ def _train_model(
         "balanced_color_loss": config.balanced_color_loss,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
-            str(value): int(counts[value]) for value in TRAINING_EFFORTS
+            str(value): int(counts[value]) for value in config.training_efforts
         },
         "losses": np.asarray(losses, dtype=np.float64).tolist(),
         "effort_schedule": list(schedule.efforts),
@@ -2293,14 +2373,16 @@ def _arm_sequences(
 
 
 def _gather_window(
-    packed, query_stops: np.ndarray
+    packed,
+    query_stops: np.ndarray,
+    checkpoints: Sequence[int] = CHECKPOINTS,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     compact = np.asarray(packed.compact_logits)
     spikes = np.asarray(packed.spikes)
     voltage = np.asarray(packed.voltage)
     feedforward_current = np.asarray(packed.feedforward_current)
     recurrent_current = np.asarray(packed.recurrent_current)
-    offsets = np.arange(0, max(CHECKPOINTS) + 1, dtype=np.int32)[:, None]
+    offsets = np.arange(0, max(checkpoints) + 1, dtype=np.int32)[:, None]
     indices = query_stops[None, :] - 1 + offsets
     batch = np.arange(query_stops.size, dtype=np.int32)[None, :]
     return (
@@ -2317,12 +2399,19 @@ def _score_windows(
     records: Sequence[_EvaluationRecord],
     color_rank: int,
     decoder_mode: DecoderMode,
+    checkpoints: Sequence[int] = CHECKPOINTS,
+    submission_checkpoint: int = SUBMISSION_CHECKPOINT,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score only model-decoded candidates at every frozen checkpoint."""
 
-    checkpoint_compact = compact[np.asarray(CHECKPOINTS, dtype=np.int32)]
+    checkpoint_compact = compact[np.asarray(checkpoints, dtype=np.int32)]
     return _score_checkpoint_logits(
-        checkpoint_compact, records, color_rank, decoder_mode
+        checkpoint_compact,
+        records,
+        color_rank,
+        decoder_mode,
+        checkpoints,
+        submission_checkpoint,
     )
 
 
@@ -2331,14 +2420,16 @@ def _score_checkpoint_logits(
     records: Sequence[_EvaluationRecord],
     color_rank: int,
     decoder_mode: DecoderMode,
+    checkpoints: Sequence[int] = CHECKPOINTS,
+    submission_checkpoint: int = SUBMISSION_CHECKPOINT,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
-    """Score model logits supplied only at semantic checkpoints 0, 30, and 60.
+    """Score model logits supplied at the configured semantic checkpoints.
 
     Parameters
     ----------
     checkpoint_compact
-        Model logits shaped ``(3, queries, output_width)`` in ``CHECKPOINTS``
-        order. No intermediate trajectory is required.
+        Model logits in ``checkpoints`` order. No intermediate trajectory is
+        required.
     records
         Ordered official-query metadata and out-of-band targets.
     color_rank
@@ -2355,8 +2446,9 @@ def _score_checkpoint_logits(
     checkpoint_compact = np.asarray(checkpoint_compact)
     if checkpoint_compact.ndim != 3:
         raise ValueError("checkpoint_compact must have checkpoint, query, width axes")
-    if checkpoint_compact.shape[0] != len(CHECKPOINTS):
-        raise ValueError("checkpoint_compact must contain exactly checkpoints 0/30/60")
+    checkpoints = tuple(int(value) for value in checkpoints)
+    if checkpoint_compact.shape[0] != len(checkpoints):
+        raise ValueError("checkpoint_compact must match the checkpoint schedule")
     if checkpoint_compact.shape[1] != len(records):
         raise ValueError("checkpoint query count must match evaluation records")
     expanded = expand_decoder_logits(
@@ -2374,12 +2466,12 @@ def _score_checkpoint_logits(
             )
             for query_index in range(len(records))
         ]
-        for effort_index, effort in enumerate(CHECKPOINTS)
+        for effort_index, effort in enumerate(checkpoints)
     }
     selected_by_checkpoint: dict[
         int, list[tuple[list[Any], list[dict[str, object]]]]
-    ] = {effort: [] for effort in CHECKPOINTS}
-    for effort in CHECKPOINTS:
+    ] = {effort: [] for effort in checkpoints}
+    for effort in checkpoints:
         for query_index in range(len(records)):
             logits = logits_by_checkpoint[effort][query_index]
             if effort == 0:
@@ -2412,7 +2504,7 @@ def _score_checkpoint_logits(
                 selected = select_checkpoint_candidates(
                     {
                         checkpoint: logits_by_checkpoint[checkpoint][query_index]
-                        for checkpoint in CHECKPOINTS
+                        for checkpoint in checkpoints
                         if 0 < checkpoint <= effort
                     },
                     latest_checkpoint=effort,
@@ -2435,7 +2527,7 @@ def _score_checkpoint_logits(
 
     metrics: dict[str, dict[str, object]] = {}
     query_details: dict[str, list[dict[str, object]]] = {}
-    for effort in CHECKPOINTS:
+    for effort in checkpoints:
         scores = []
         details = []
         for query_index, record in enumerate(records):
@@ -2456,7 +2548,7 @@ def _score_checkpoint_logits(
                     "primary_candidate_mode": "model_only",
                     "submission_role": (
                         "primary_submission"
-                        if effort == SUBMISSION_CHECKPOINT
+                        if effort == submission_checkpoint
                         else "diagnostic_only"
                     ),
                     "candidates": candidate_payloads,
@@ -2620,6 +2712,8 @@ def _control_summary(
     decoder_mode: DecoderMode,
     intact_metrics: dict[str, dict[str, object]],
     metadata: Sequence[dict[str, object]] | None = None,
+    checkpoints: Sequence[int] = CHECKPOINTS,
+    submission_checkpoint: int = SUBMISSION_CHECKPOINT,
 ) -> dict[str, object]:
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
@@ -2656,7 +2750,7 @@ def _control_summary(
             raise ValueError("recomputed intact control metrics are inconsistent")
         candidate_match_count_by_effort: dict[str, int] = {}
         candidates_match_by_effort: dict[str, bool] = {}
-        for effort in CHECKPOINTS:
+        for effort in checkpoints:
             key = str(effort)
             intact_rows = intact_checkpoint_queries[key]
             control_rows = control_checkpoint_queries[key]
@@ -3241,7 +3335,7 @@ def _task_local_adaptation_evaluation(
     Parameters
     ----------
     trained_model
-        Shared post-pretraining batch-one model.
+        Shared post-training batch-one model.
     data, config, row_config, device
         Resolved experiment inputs and execution device.
     records
@@ -3335,7 +3429,7 @@ def _task_local_adaptation_evaluation(
         "fold_applied": fold_applied.tolist(),
         "fold_losses": fold_losses.tolist(),
         "bank_bytes": bank.projected_bytes,
-        "semantic_checkpoints": list(CHECKPOINTS),
+        "semantic_checkpoints": list(config.checkpoints),
         "checkpoint_output_shape": list(result.checkpoint_outputs.shape),
         "all_valid_checkpoints_recorded": bool(
             np.array_equal(recorded, expected_recorded)
@@ -3377,7 +3471,7 @@ def _model_only_completion_report(
             {
                 "eligible_for_completion": True,
                 "eligibility_reason": None,
-                "submission_checkpoint": SUBMISSION_CHECKPOINT,
+                "submission_checkpoint": config.submission_checkpoint,
                 "submission_policy": SUBMISSION_POLICY,
             }
         )
@@ -3397,7 +3491,7 @@ def _model_only_completion_report(
         "eligibility_reason": (
             "completion requires a complete 400-task non-smoke row-refinement run"
         ),
-        "submission_checkpoint": SUBMISSION_CHECKPOINT,
+        "submission_checkpoint": config.submission_checkpoint,
         "submission_policy": SUBMISSION_POLICY,
         "required_task_count": 400,
         "evaluated_task_count": int(submission_metrics.get("task_count", 0)),
@@ -3417,9 +3511,14 @@ def _evaluate(
     row_config: RowEventConfig,
     device: jax.Device,
 ) -> dict[str, object]:
+    checkpoints = config.checkpoints
+    training_efforts = config.training_efforts
+    submission_checkpoint = config.submission_checkpoint
     records = _evaluation_records(data, config, row_config)
     adaptation_enabled = (
-        config.decoder_mode == "row_refinement" and not config.structural_only
+        config.task_local_adaptation
+        and config.decoder_mode == "row_refinement"
+        and not config.structural_only
     )
     if adaptation_enabled:
         primary_metrics, primary_checkpoint_queries, adaptation_evidence = (
@@ -3441,6 +3540,8 @@ def _evaluate(
             "reason": (
                 "structural_only"
                 if config.structural_only
+                else "disabled_by_configuration"
+                if not config.task_local_adaptation
                 else "decoder_mode_is_not_row_refinement"
             ),
             "target_free_query_bank": True,
@@ -3453,25 +3554,45 @@ def _evaluate(
     intact_events, intact_advances, query_stops, intact_meta = _arm_sequences(
         records, config, row_config, arm="intact", source_tasks=data.evaluation
     )
-    no_context_events, no_context_advances, no_context_stops, no_context_meta = (
-        _arm_sequences(
-            records, config, row_config, arm="no_context", source_tasks=data.evaluation
+    if config.evaluation_controls:
+        no_context_events, no_context_advances, no_context_stops, no_context_meta = (
+            _arm_sequences(
+                records,
+                config,
+                row_config,
+                arm="no_context",
+                source_tasks=data.evaluation,
+            )
         )
-    )
-    shuffled_events, shuffled_advances, shuffled_stops, shuffled_meta = _arm_sequences(
-        records, config, row_config, arm="shuffled", source_tasks=data.evaluation
-    )
-    if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
-        query_stops, shuffled_stops
-    ):
-        raise ValueError("control query boundaries are not matched")
+        shuffled_events, shuffled_advances, shuffled_stops, shuffled_meta = (
+            _arm_sequences(
+                records,
+                config,
+                row_config,
+                arm="shuffled",
+                source_tasks=data.evaluation,
+            )
+        )
+        if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
+            query_stops, shuffled_stops
+        ):
+            raise ValueError("control query boundaries are not matched")
+    else:
+        no_context_events = np.empty((0,), dtype=np.float32)
+        no_context_advances = np.empty((0,), dtype=np.bool_)
+        no_context_stops = query_stops
+        no_context_meta = []
+        shuffled_events = np.empty((0,), dtype=np.float32)
+        shuffled_advances = np.empty((0,), dtype=np.bool_)
+        shuffled_stops = query_stops
+        shuffled_meta = []
 
     slots = np.full((batch_size,), config.ablation_slot, dtype=np.int32)
     inactive_gates = np.zeros((intact_events.shape[0], batch_size), dtype=np.bool_)
     selected_indices = (
         query_stops[None, :]
         - 1
-        + np.arange(max(CHECKPOINTS) + 1, dtype=np.int32)[:, None]
+        + np.arange(max(checkpoints) + 1, dtype=np.int32)[:, None]
     )
     run_device_arm = _compile_evaluation_arm(
         model,
@@ -3505,18 +3626,16 @@ def _evaluate(
     intact, intact_associative = run_arm(
         "intact", intact_events, intact_advances, inactive_gates
     )
-    repeat_intact, repeat_associative = run_arm(
-        "repeat_intact", intact_events, intact_advances, inactive_gates
-    )
     frozen_metrics, frozen_checkpoint_queries = _score_windows(
-        intact[0], records, config.color_rank, config.decoder_mode
+        intact[0], records, config.color_rank, config.decoder_mode,
+        checkpoints, submission_checkpoint,
     )
     if primary_metrics is None or primary_checkpoint_queries is None:
         primary_metrics = frozen_metrics
         primary_checkpoint_queries = frozen_checkpoint_queries
     completion_report = _model_only_completion_report(
-        primary_checkpoint_queries[str(SUBMISSION_CHECKPOINT)],
-        primary_metrics[str(SUBMISSION_CHECKPOINT)],
+        primary_checkpoint_queries[str(submission_checkpoint)],
+        primary_metrics[str(submission_checkpoint)],
         data,
         config,
     )
@@ -3525,6 +3644,82 @@ def _evaluate(
         *intact, records, config.color_rank, config.decoder_mode
     )
 
+    if not config.evaluation_controls:
+        after = _tree_digest(parameter_snapshot(model))
+        frozen_diagnostic = {
+            "role": "primary_shared_model",
+            "trajectory_role": "primary_shared_model",
+            "metrics_by_effort": frozen_metrics,
+            "checkpoint_queries": frozen_checkpoint_queries,
+            "query_trajectories": trajectories,
+            "aggregate_trajectory": aggregate_trajectory,
+            "associative_memory_diagnostics": {
+                "available": False,
+                "complete": True,
+                "reason": "evaluation_controls_disabled",
+            },
+            "determinism": {
+                "enabled": False,
+                "reason": "evaluation_controls_disabled",
+            },
+            "controls": {
+                "enabled": False,
+                "reason": "disabled_by_configuration",
+            },
+            "execution": {
+                "arm_order": ["intact"],
+                "selected_arm_driver": "brainstate.transform.jit",
+                "jit_name": "example21_evaluation_arm",
+                "sequential_separate_arms": False,
+                "repeat_intact_cached": False,
+                "wall_seconds_by_arm": arm_wall_seconds,
+            },
+        }
+        return {
+            "query_count": batch_size,
+            "task_count": len({record.task_key for record in records}),
+            "same_frozen_parameter_bytes": before == after,
+            "parameter_sha256_before": before,
+            "parameter_sha256_after": after,
+            "primary_candidate_mode": config.primary_candidate_mode,
+            "primary_evaluation_mode": "shared_model_frozen",
+            "metrics_by_effort": primary_metrics,
+            "submission_policy": {
+                "name": SUBMISSION_POLICY,
+                "submission_checkpoint": config.submission_checkpoint,
+                "completed_sweep_checkpoints": list(training_efforts),
+                "candidate_budget": 2,
+                "fallback": "latest_sweep_deterministic_logit_runner_up",
+                "target_free_selection": True,
+                "rule_channel_enabled": False,
+            },
+            "model_only_completion": completion_report,
+            "channel_attribution": channel_attribution,
+            "checkpoint_queries": primary_checkpoint_queries,
+            "task_local_adaptation": adaptation_evidence,
+            "physical_diagnostic_role": "primary_shared_model",
+            "frozen_no_adaptation": frozen_diagnostic,
+            "query_trajectories": trajectories,
+            "aggregate_trajectory": aggregate_trajectory,
+            "associative_memory_diagnostics": frozen_diagnostic[
+                "associative_memory_diagnostics"
+            ],
+            "determinism": frozen_diagnostic["determinism"],
+            "controls": {
+                "enabled": False,
+                "reason": "disabled_by_configuration",
+                "truncation": {
+                    "enabled": False,
+                    "checkpoints": list(checkpoints),
+                    "uses_one_continuous_intact_trajectory": True,
+                },
+            },
+            "execution": frozen_diagnostic["execution"],
+        }
+
+    repeat_intact, repeat_associative = run_arm(
+        "repeat_intact", intact_events, intact_advances, inactive_gates
+    )
     repeat_result = _control_summary(
         "repeat_intact",
         intact,
@@ -3534,6 +3729,8 @@ def _evaluate(
         config.decoder_mode,
         frozen_metrics,
         intact_meta,
+        checkpoints,
+        submission_checkpoint,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     repeat_metrics_exact = repeat_result["metrics_by_effort"] == frozen_metrics
@@ -3580,6 +3777,8 @@ def _evaluate(
         config.decoder_mode,
         frozen_metrics,
         no_context_meta,
+        checkpoints,
+        submission_checkpoint,
     )
     del no_context
 
@@ -3598,6 +3797,8 @@ def _evaluate(
         config.decoder_mode,
         frozen_metrics,
         shuffled_meta,
+        checkpoints,
+        submission_checkpoint,
     )
     del shuffled
 
@@ -3615,6 +3816,8 @@ def _evaluate(
         config.decoder_mode,
         frozen_metrics,
         intact_meta,
+        checkpoints,
+        submission_checkpoint,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
@@ -3656,8 +3859,8 @@ def _evaluate(
         "metrics_by_effort": primary_metrics,
         "submission_policy": {
             "name": SUBMISSION_POLICY,
-            "submission_checkpoint": SUBMISSION_CHECKPOINT,
-            "completed_sweep_checkpoints": list(TRAINING_EFFORTS),
+            "submission_checkpoint": submission_checkpoint,
+            "completed_sweep_checkpoints": list(training_efforts),
             "candidate_budget": 2,
             "fallback": "latest_sweep_deterministic_logit_runner_up",
             "target_free_selection": True,
@@ -3713,7 +3916,7 @@ def _evaluate(
             "shuffled_demonstrations": shuffled_result,
             "slot_ablation": ablation_result,
             "truncation": {
-                "checkpoints": list(CHECKPOINTS),
+                "checkpoints": list(checkpoints),
                 "uses_one_continuous_intact_trajectory": True,
             },
         },
@@ -3752,6 +3955,10 @@ def _qualification(
     device_report: dict[str, object],
     model_report: dict[str, object],
 ) -> dict[str, object]:
+    checkpoints = config.checkpoints
+    training_efforts = config.training_efforts
+    submission_checkpoint = config.submission_checkpoint
+
     def finite_tree(value: object) -> bool:
         if isinstance(value, dict):
             return all(finite_tree(item) for item in value.values())
@@ -3776,7 +3983,7 @@ def _qualification(
 
     def metrics_complete(value: object) -> bool:
         if not isinstance(value, dict) or set(value) != {
-            str(checkpoint) for checkpoint in CHECKPOINTS
+            str(checkpoint) for checkpoint in checkpoints
         }:
             return False
         return all(
@@ -3816,7 +4023,7 @@ def _qualification(
     aggregate = evaluation.get("aggregate_trajectory")
     aggregate_complete = bool(
         isinstance(aggregate, list)
-        and len(aggregate) == max(CHECKPOINTS) + 1
+        and len(aggregate) == max(checkpoints) + 1
         and all(
             isinstance(row, dict)
             and required_trajectory_names <= row.keys()
@@ -3862,10 +4069,10 @@ def _qualification(
             return False
         steps = report["steps"]
         return bool(
-            report.get("step_count") == max(CHECKPOINTS) + 1
+            report.get("step_count") == max(checkpoints) + 1
             and int(report.get("neuron_count", 0))
             == int(model_report.get("neuron_count", -1))
-            and len(steps) == max(CHECKPOINTS) + 1
+            and len(steps) == max(checkpoints) + 1
             and all(
                 isinstance(row, dict)
                 and required_query_step_names <= row.keys()
@@ -3908,7 +4115,7 @@ def _qualification(
             )
         if row.get("submission_role") != (
             "primary_submission"
-            if effort == SUBMISSION_CHECKPOINT
+            if effort == submission_checkpoint
             else "diagnostic_only"
         ):
             return False
@@ -3935,7 +4142,7 @@ def _qualification(
 
     checkpoint_queries_complete = bool(
         isinstance(checkpoint_queries, dict)
-        and set(checkpoint_queries) == {str(checkpoint) for checkpoint in CHECKPOINTS}
+        and set(checkpoint_queries) == {str(checkpoint) for checkpoint in checkpoints}
         and all(
             isinstance(rows, list)
             and len(rows) == expected_query_count
@@ -3956,7 +4163,7 @@ def _qualification(
             )
             for checkpoint, rows in (
                 (checkpoint, checkpoint_queries[str(checkpoint)])
-                for checkpoint in CHECKPOINTS
+                for checkpoint in checkpoints
             )
         )
     )
@@ -3964,9 +4171,9 @@ def _qualification(
     submission_policy_complete = bool(
         isinstance(submission_policy, dict)
         and submission_policy.get("name") == SUBMISSION_POLICY
-        and submission_policy.get("submission_checkpoint") == SUBMISSION_CHECKPOINT
+        and submission_policy.get("submission_checkpoint") == submission_checkpoint
         and submission_policy.get("completed_sweep_checkpoints")
-        == list(TRAINING_EFFORTS)
+        == list(training_efforts)
         and submission_policy.get("candidate_budget") == 2
         and submission_policy.get("fallback")
         == "latest_sweep_deterministic_logit_runner_up"
@@ -3986,7 +4193,7 @@ def _qualification(
         isinstance(completion, dict)
         and completion.get("primary_candidate_mode") == "model_only"
         and completion.get("eligible_for_completion") is completion_expected_eligible
-        and completion.get("submission_checkpoint") == SUBMISSION_CHECKPOINT
+        and completion.get("submission_checkpoint") == submission_checkpoint
         and completion.get("submission_policy") == SUBMISSION_POLICY
         and completion.get("required_task_count") == 400
         and completion.get("evaluated_task_count") == expected_task_count
@@ -4023,27 +4230,31 @@ def _qualification(
         return bool(
             isinstance(value.get("causally_null_at_measured_precision"), bool)
             and len(value.get("state_byte_identical_by_step", ()))
-            == max(CHECKPOINTS) + 1
-            and len(value.get("spike_hamming_by_step", ())) == max(CHECKPOINTS) + 1
+            == max(checkpoints) + 1
+            and len(value.get("spike_hamming_by_step", ())) == max(checkpoints) + 1
             and len(value.get("spike_hamming_fraction_by_step", ()))
-            == max(CHECKPOINTS) + 1
-            and len(value.get("voltage_l2_by_step", ())) == max(CHECKPOINTS) + 1
+            == max(checkpoints) + 1
+            and len(value.get("voltage_l2_by_step", ())) == max(checkpoints) + 1
             and isinstance(current_distance, dict)
             and set(current_distance) == {"feedforward", "recurrent"}
             and all(
-                len(current_distance[name]) == max(CHECKPOINTS) + 1
+                len(current_distance[name]) == max(checkpoints) + 1
                 for name in current_distance
             )
             and isinstance(score_deltas, dict)
             and {
-                "60.query_pass_at_2",
-                "60.valid_cell_pixel_accuracy_diagnostic",
+                f"{submission_checkpoint}.query_pass_at_2",
+                f"{submission_checkpoint}.valid_cell_pixel_accuracy_diagnostic",
             }
             <= score_deltas.keys()
             and finite_tree(value)
         )
 
     controls = evaluation.get("controls")
+    controls_required = bool(
+        config.evaluation_controls
+        or (isinstance(controls, dict) and controls.get("enabled") is not False)
+    )
 
     def control_complete(name: str) -> bool:
         if not isinstance(controls, dict) or not isinstance(controls.get(name), dict):
@@ -4058,7 +4269,7 @@ def _qualification(
             bool(
                 isinstance(control_metrics, dict)
                 and set(control_metrics)
-                == {str(checkpoint) for checkpoint in CHECKPOINTS}
+                == {str(checkpoint) for checkpoint in checkpoints}
                 and all(
                     isinstance(row, dict)
                     and required_metric_names <= row.keys()
@@ -4086,7 +4297,7 @@ def _qualification(
             bool(
                 isinstance(candidate_matches, dict)
                 and set(candidate_matches)
-                == {str(checkpoint) for checkpoint in CHECKPOINTS}
+                == {str(checkpoint) for checkpoint in checkpoints}
                 and all(isinstance(value, bool) for value in candidate_matches.values())
                 and isinstance(candidate_match_counts, dict)
                 and set(candidate_match_counts) == set(candidate_matches)
@@ -4127,19 +4338,27 @@ def _qualification(
             and candidate_summary_ok
         )
 
-    required_controls_complete = all(
-        control_complete(name)
-        for name in (
-            "repeat_intact",
-            "no_context",
-            "shuffled_demonstrations",
-            "slot_ablation",
+    required_controls_complete = (
+        all(
+            control_complete(name)
+            for name in (
+                "repeat_intact",
+                "no_context",
+                "shuffled_demonstrations",
+                "slot_ablation",
+            )
         )
+        if controls_required
+        else isinstance(controls, dict) and controls.get("enabled") is False
     )
     truncation = controls.get("truncation", {}) if isinstance(controls, dict) else {}
-    truncation_complete = bool(
-        truncation.get("checkpoints") == list(CHECKPOINTS)
-        and truncation.get("uses_one_continuous_intact_trajectory") is True
+    truncation_complete = (
+        bool(
+            truncation.get("checkpoints") == list(checkpoints)
+            and truncation.get("uses_one_continuous_intact_trajectory") is True
+        )
+        if controls_required
+        else isinstance(truncation, dict) and truncation.get("enabled") is False
     )
     determinism = evaluation.get("determinism", {})
     required_numeric_states = {
@@ -4238,7 +4457,7 @@ def _qualification(
         isinstance(repeat_candidate_counts, dict)
         and isinstance(repeat_candidate_flags, dict)
         and set(repeat_candidate_counts)
-        == {str(checkpoint) for checkpoint in CHECKPOINTS}
+        == {str(checkpoint) for checkpoint in checkpoints}
         and set(repeat_candidate_flags) == set(repeat_candidate_counts)
         and all(
             isinstance(repeat_candidate_counts[key], Integral)
@@ -4268,18 +4487,22 @@ def _qualification(
         and float(determinism["metric_absolute_tolerance"]) == 0.0
         and numeric_evidence_complete(
             determinism.get("repeat_intact_numeric_evidence"),
-            range(max(CHECKPOINTS) + 1),
+            range(max(checkpoints) + 1),
         )
     )
-    repeatable = bool(
-        isinstance(determinism, dict)
-        and determinism.get("same_control_capable_execution_path") is True
-        and determinism.get("repeat_intact_within_tolerance") is True
-        and determinism.get("repeat_intact_metrics_exact") is True
-        and determinism.get("repeat_intact_decoded_candidates_exact") is True
-        and repeat_candidates_exact
-        and repeat_metrics_exact
-        and repeat_numeric_exact
+    repeatable = (
+        bool(
+            isinstance(determinism, dict)
+            and determinism.get("same_control_capable_execution_path") is True
+            and determinism.get("repeat_intact_within_tolerance") is True
+            and determinism.get("repeat_intact_metrics_exact") is True
+            and determinism.get("repeat_intact_decoded_candidates_exact") is True
+            and repeat_candidates_exact
+            and repeat_metrics_exact
+            and repeat_numeric_exact
+        )
+        if controls_required
+        else True
     )
     slot_control = (
         controls.get("slot_ablation", {}) if isinstance(controls, dict) else {}
@@ -4316,20 +4539,32 @@ def _qualification(
             determinism.get("slot_ablation_checkpoint_zero_numeric_evidence"), (0,)
         )
     )
-    ablation_matched = bool(
-        isinstance(determinism, dict)
-        and determinism.get("slot_ablation_checkpoint_zero_state_within_tolerance")
-        is True
-        and determinism.get("slot_ablation_checkpoint_zero_decoded_candidates_exact")
-        is True
-        and determinism.get("slot_ablation_checkpoint_zero_metrics_exact") is True
-        and determinism.get("slot_ablation_checkpoint_zero_within_tolerance") is True
-        and slot_checkpoint_zero_exact
-        and slot_numeric_exact
+    ablation_matched = (
+        bool(
+            isinstance(determinism, dict)
+            and determinism.get(
+                "slot_ablation_checkpoint_zero_state_within_tolerance"
+            )
+            is True
+            and determinism.get(
+                "slot_ablation_checkpoint_zero_decoded_candidates_exact"
+            )
+            is True
+            and determinism.get("slot_ablation_checkpoint_zero_metrics_exact")
+            is True
+            and determinism.get("slot_ablation_checkpoint_zero_within_tolerance")
+            is True
+            and slot_checkpoint_zero_exact
+            and slot_numeric_exact
+        )
+        if controls_required
+        else True
     )
     adaptation = evaluation.get("task_local_adaptation")
     adaptation_expected = bool(
-        config.decoder_mode == "row_refinement" and not config.structural_only
+        config.task_local_adaptation
+        and config.decoder_mode == "row_refinement"
+        and not config.structural_only
     )
     if adaptation_expected:
         adaptation_complete = bool(
@@ -4341,7 +4576,7 @@ def _qualification(
             and int(adaptation.get("query_count", -1)) == expected_query_count
             and int(adaptation.get("applied_fold_count", 0)) > 0
             and adaptation.get("fold_count") == adaptation.get("applied_fold_count")
-            and adaptation.get("semantic_checkpoints") == list(CHECKPOINTS)
+            and adaptation.get("semantic_checkpoints") == list(checkpoints)
             and adaptation.get("all_valid_checkpoints_recorded") is True
             and adaptation.get("base_parameters_restored") is True
             and adaptation.get("base_parameter_sha256")
@@ -4356,7 +4591,7 @@ def _qualification(
     frozen_no_adaptation_complete = bool(
         isinstance(frozen_no_adaptation, dict)
         and frozen_no_adaptation.get("role")
-        == "diagnostic_control_not_primary_submission"
+        in {"diagnostic_control_not_primary_submission", "primary_shared_model"}
         and metrics_complete(frozen_no_adaptation.get("metrics_by_effort"))
         and isinstance(frozen_no_adaptation.get("checkpoint_queries"), dict)
     )
@@ -4466,6 +4701,7 @@ def _qualification(
     associative_diagnostics = evaluation.get("associative_memory_diagnostics")
     associative_diagnostics_complete = bool(
         not memory_enabled
+        or not controls_required
         or (
             isinstance(associative_diagnostics, dict)
             and associative_diagnostics.get("available") is True
@@ -4478,7 +4714,7 @@ def _qualification(
             is True
             and int(associative_diagnostics.get("query_count", 0)) == query_count
             and int(associative_diagnostics.get("depth_count", 0))
-            == max(CHECKPOINTS) + 1
+            == max(checkpoints) + 1
         )
     )
     compiler_complete = bool(
@@ -4545,9 +4781,9 @@ def _qualification(
     mixed = bool(
         isinstance(training_counts, dict)
         and all(
-            int(training_counts.get(str(effort), 0)) > 0 for effort in TRAINING_EFFORTS
+            int(training_counts.get(str(effort), 0)) > 0 for effort in training_efforts
         )
-        and sum(int(training_counts.get(str(effort), 0)) for effort in TRAINING_EFFORTS)
+        and sum(int(training_counts.get(str(effort), 0)) for effort in training_efforts)
         == config.training_updates
     )
     losses = training.get("losses")
@@ -4855,6 +5091,10 @@ def _channel_attribution(
 
 def _render_report(result: dict[str, object]) -> str:
     configuration = result.get("configuration", {})
+    checkpoints = tuple(configuration.get("checkpoints", CHECKPOINTS))
+    submission_checkpoint = int(
+        configuration.get("submission_checkpoint", checkpoints[-1])
+    )
     device = result.get("device", {})
     model = result.get("model", {})
     training = result.get("training", {})
@@ -4872,6 +5112,13 @@ def _render_report(result: dict[str, object]) -> str:
     compiler_report = training.get("compiler_report", {"counts": {}, "diagnostics": []})
     compiler_counts = compiler_report.get("counts", {})
     runtime = float(result.get("runtime_seconds", 0.0))
+    frozen_role = frozen_no_adaptation.get("role", "unreported")
+    frozen_label = (
+        "Frozen shared-model evaluation: primary submission; role="
+        if frozen_role == "primary_shared_model"
+        else "Frozen no-adaptation diagnostic: diagnostic control, not primary "
+        "submission; role="
+    )
     if training.get("performed") is True:
         training_line = (
             "Training: one parameter set and one Adam state; normalized uniform "
@@ -4998,9 +5245,8 @@ def _render_report(result: dict[str, object]) -> str:
             f"{task_local_adaptation.get('base_parameters_restored')}."
         ),
         (
-            "Frozen no-adaptation diagnostic: diagnostic control, not primary "
-            "submission; role="
-            f"{frozen_no_adaptation.get('role', 'unreported')}; metrics="
+            frozen_label
+            + f"{frozen_no_adaptation.get('role', 'unreported')}; metrics="
             f"{frozen_no_adaptation.get('metrics_by_effort', {})}."
         ),
         (
@@ -5017,12 +5263,12 @@ def _render_report(result: dict[str, object]) -> str:
         "",
         "Primary exact ARC results:",
     ]
-    for effort in CHECKPOINTS:
+    for effort in checkpoints:
         metrics = evaluation.get("metrics_by_effort", {}).get(str(effort))
         if metrics is None:
             lines.append(f"  effort {effort:>2}: unavailable")
             continue
-        role = "primary submission" if effort == SUBMISSION_CHECKPOINT else "diagnostic"
+        role = "primary submission" if effort == submission_checkpoint else "diagnostic"
         lines.append(
             f"  effort {effort:>2} ({role}): query pass@1={metrics['query_pass_at_1']:.4f}, "
             f"pass@2={metrics['query_pass_at_2']:.4f}; strict task pass@1="
@@ -5032,7 +5278,7 @@ def _render_report(result: dict[str, object]) -> str:
             f"{metrics['valid_cell_pixel_accuracy_diagnostic']:.4f}"
         )
     attribution = evaluation.get("channel_attribution", {})
-    for effort in CHECKPOINTS:
+    for effort in checkpoints:
         split = attribution.get(str(effort))
         if split is None:
             continue
@@ -5055,27 +5301,31 @@ def _render_report(result: dict[str, object]) -> str:
         f"{completion.get('eligibility_reason') or 'eligible full evaluation'}."
     )
     intact_metrics = evaluation.get("metrics_by_effort", {})
-    if "0" in intact_metrics and "60" in intact_metrics:
+    submission_key = str(submission_checkpoint)
+    if "0" in intact_metrics and submission_key in intact_metrics:
         effort_zero = intact_metrics["0"]["query_pass_at_2"]
-        effort_60 = intact_metrics["60"]["query_pass_at_2"]
-        exact_count_60 = round(effort_60 * int(intact_metrics["60"]["query_count"]))
+        effort_final = intact_metrics[submission_key]["query_pass_at_2"]
+        exact_count_final = round(
+            effort_final * int(intact_metrics[submission_key]["query_count"])
+        )
         direction = (
             "improved"
-            if effort_60 > effort_zero
+            if effort_final > effort_zero
             else "worsened"
-            if effort_60 < effort_zero
+            if effort_final < effort_zero
             else "tied"
         )
         lines.append(
-            f"  Empirical outcome: effort 60 {direction} effort 0 on exact pass@2 "
-            f"({effort_60:.4f} versus {effort_zero:.4f}); "
-            f"{exact_count_60} effort-60 queries were exact within the scored set."
+            f"  Empirical outcome: effort {submission_checkpoint} {direction} effort 0 "
+            f"on exact pass@2 ({effort_final:.4f} versus {effort_zero:.4f}); "
+            f"{exact_count_final} effort-{submission_checkpoint} queries were exact "
+            "within the scored set."
         )
     lines.extend(["", "Frozen no-adaptation aggregate latent trajectory:"])
     trajectory = frozen_no_adaptation.get(
         "aggregate_trajectory", evaluation.get("aggregate_trajectory", [])
     )
-    for effort in CHECKPOINTS:
+    for effort in checkpoints:
         if effort >= len(trajectory):
             lines.append(f"  step {effort:>2}: unavailable")
             continue
@@ -5130,7 +5380,7 @@ def _render_report(result: dict[str, object]) -> str:
         )
         if applicable:
             control_metrics = control.get("metrics_by_effort", {})
-            for effort in CHECKPOINTS:
+            for effort in checkpoints:
                 row = control_metrics.get(str(effort))
                 if row is None:
                     lines.append(f"    effort {effort:>2}: unavailable")
@@ -5153,7 +5403,7 @@ def _render_report(result: dict[str, object]) -> str:
             feedforward_l2 = current_l2.get("feedforward", [])
             recurrent_l2 = current_l2.get("recurrent", [])
             if all(
-                len(values) > max(CHECKPOINTS)
+                len(values) > submission_checkpoint
                 for values in (
                     spike_fraction,
                     voltage_l2,
@@ -5162,11 +5412,12 @@ def _render_report(result: dict[str, object]) -> str:
                 )
             ):
                 lines.append(
-                    "    step-60 state deltas: spike-Hamming fraction="
-                    f"{spike_fraction[max(CHECKPOINTS)]:.6f}; voltage L2="
-                    f"{voltage_l2[max(CHECKPOINTS)]:.6f}; feedforward/recurrent "
-                    f"current L2={feedforward_l2[max(CHECKPOINTS)]:.6f}/"
-                    f"{recurrent_l2[max(CHECKPOINTS)]:.6f}."
+                    f"    step-{submission_checkpoint} state deltas: "
+                    f"spike-Hamming fraction={spike_fraction[submission_checkpoint]:.6f}; "
+                    f"voltage L2={voltage_l2[submission_checkpoint]:.6f}; "
+                    "feedforward/recurrent current L2="
+                    f"{feedforward_l2[submission_checkpoint]:.6f}/"
+                    f"{recurrent_l2[submission_checkpoint]:.6f}."
                 )
     determinism = evaluation.get("determinism", {})
     repeat_numeric = determinism.get("repeat_intact_numeric_evidence", {})
@@ -5284,12 +5535,17 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    configuration = result.get("configuration", {})
+    checkpoints = tuple(configuration.get("checkpoints", CHECKPOINTS))
+    submission_checkpoint = int(
+        configuration.get("submission_checkpoint", checkpoints[-1])
+    )
     metrics = result["evaluation"]["metrics_by_effort"]
     frozen_diagnostic = result["evaluation"].get("frozen_no_adaptation", {})
     trajectory = frozen_diagnostic.get(
         "aggregate_trajectory", result["evaluation"]["aggregate_trajectory"]
     )
-    efforts = np.asarray(CHECKPOINTS)
+    efforts = np.asarray(checkpoints)
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
     axes[0, 0].plot(
         efforts,
@@ -5366,17 +5622,19 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     for name in names:
         comparison = controls.get(name, {}).get("trajectory_comparison", {})
         score_deltas = comparison.get("score_deltas_control_minus_intact", {})
-        if "60.query_pass_at_2" not in score_deltas:
+        exact_key = f"{submission_checkpoint}.query_pass_at_2"
+        pixel_key = (
+            f"{submission_checkpoint}.valid_cell_pixel_accuracy_diagnostic"
+        )
+        if exact_key not in score_deltas:
             exact_deltas.append(np.nan)
             diagnostic_deltas.append(np.nan)
             state_effects.append(np.nan)
             continue
-        exact_deltas.append(score_deltas["60.query_pass_at_2"])
-        diagnostic_deltas.append(
-            score_deltas["60.valid_cell_pixel_accuracy_diagnostic"]
-        )
+        exact_deltas.append(score_deltas[exact_key])
+        diagnostic_deltas.append(score_deltas[pixel_key])
         state_effects.append(
-            comparison["spike_hamming_fraction_by_step"][max(CHECKPOINTS)]
+            comparison["spike_hamming_fraction_by_step"][submission_checkpoint]
         )
     positions = np.arange(len(names), dtype=np.float64)
     width = 0.36
@@ -5391,7 +5649,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     )
     axes[1, 1].axhline(0.0, color="black", linewidth=0.8)
     axes[1, 1].set(
-        title="Control deltas at effort 60",
+        title=f"Control deltas at effort {submission_checkpoint}",
         ylabel="control minus intact",
         xticks=positions,
         xticklabels=names,
@@ -5406,7 +5664,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
         linestyle="none",
         label="spike-Hamming fraction",
     )
-    state_axis.set_ylabel("state effect at step 60")
+    state_axis.set_ylabel(f"state effect at step {submission_checkpoint}")
     handles, labels = axes[1, 1].get_legend_handles_labels()
     state_handles, state_labels = state_axis.get_legend_handles_labels()
     axes[1, 1].legend(handles + state_handles, labels + state_labels)
@@ -5429,6 +5687,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         JSON-safe complete experiment evidence.
     """
     started = time.perf_counter()
+    _emit_progress("run", 0, 1, started)
     environment_snapshot = dict(os.environ)
     if config.device == "gpu":
         pre_device_assessment = require_pre_device_gpu_environment(os.environ)
@@ -5446,14 +5705,23 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     if monitor is not None:
         monitor.start()
     try:
+        data_started = time.perf_counter()
+        _emit_progress("data", 0, 1, data_started)
         data = _load_data(config)
+        _emit_progress("data", 1, 1, data_started)
         rows = _row_config(config)
+        model_started = time.perf_counter()
+        _emit_progress("model", 0, 1, model_started)
         model = _make_model(config, rows, batch_size=1, device=device)
+        _emit_progress("model", 1, 1, model_started)
         checkpoint = config.parameter_checkpoint
+        training_started = time.perf_counter()
         if checkpoint is not None and checkpoint.exists():
+            _emit_progress("training", 0, 1, training_started)
             training = _restored_training_report(
                 model, config, _read_parameter_checkpoint(model, checkpoint)
             )
+            _emit_progress("training", 1, 1, training_started)
         else:
             fitted = (
                 model
@@ -5463,11 +5731,21 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 )
             )
             initial_digest = _restore_initial_parameters(fitted, config)
+            chunk_size = config.training_chunk_size or max(config.training_updates, 1)
+            total_chunks = max(1, math.ceil(config.training_updates / chunk_size))
+            _emit_progress("training", 0, total_chunks, training_started)
+            checkpoint_callback = _checkpoint_writer(fitted, config)
+
+            def on_chunk(index: int) -> None:
+                if checkpoint_callback is not None:
+                    checkpoint_callback(index)
+                _emit_progress("training", index + 1, total_chunks, training_started)
+
             training = _train_model(
                 fitted,
                 _training_chunks(data, config, rows),
                 config,
-                _checkpoint_writer(fitted, config),
+                on_chunk,
             )
             if initial_digest is not None:
                 training["initial_checkpoint"] = str(config.initial_checkpoint)
@@ -5479,7 +5757,10 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 training["parameter_checkpoint_sha256"] = _write_parameter_checkpoint(
                     model, checkpoint
                 )
+        evaluation_started = time.perf_counter()
+        _emit_progress("evaluation", 0, 1, evaluation_started)
         evaluation = _evaluate(model, data, config, rows, device)
+        _emit_progress("evaluation", 1, 1, evaluation_started)
     finally:
         monitor_report = monitor.stop() if monitor is not None else None
     memory_stats = _device_memory_stats(device)
@@ -5584,10 +5865,14 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "report": str(report_path),
         "figure": str(figure_path),
     }
+    artifacts_started = time.perf_counter()
+    _emit_progress("artifacts", 0, 1, artifacts_started)
     manifest_path.write_bytes(msgspec.json.encode(manifests))
     result_path.write_bytes(msgspec.json.encode(result))
     report_path.write_text(_render_report(result), encoding="utf-8")
     _plot(result, figure_path)
+    _emit_progress("artifacts", 1, 1, artifacts_started)
+    _emit_progress("run", 1, 1, started)
     return result
 
 
@@ -5603,6 +5888,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--recurrent-edges", type=int, default=1_048_576)
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
+    parser.add_argument("--max-demonstrations", type=int, default=10)
+    parser.add_argument("--latent-steps", type=int, default=60)
     parser.add_argument("--training-updates", type=int, default=96)
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--training-batch-size", type=int, default=1)
@@ -5611,6 +5898,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=2)
+    parser.add_argument("--task-local-adaptation", action="store_true")
+    parser.add_argument("--evaluation-controls", action="store_true")
     parser.add_argument(
         "--adaptation-update-schedule",
         choices=("per_episode", "per_tick"),
@@ -5656,6 +5945,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         recurrent_edges=args.recurrent_edges,
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
+        max_demonstrations=args.max_demonstrations,
+        latent_steps=args.latent_steps,
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
         training_batch_size=args.training_batch_size,
@@ -5663,6 +5954,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_workers=args.training_workers,
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
+        task_local_adaptation=args.task_local_adaptation,
+        evaluation_controls=args.evaluation_controls,
         adaptation_update_schedule=args.adaptation_update_schedule,
         parameter_checkpoint=args.parameter_checkpoint,
         initial_checkpoint=args.initial_checkpoint,

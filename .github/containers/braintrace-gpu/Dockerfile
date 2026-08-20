@@ -15,6 +15,7 @@ RUN python -m pip install --no-cache-dir \
       "hypothesis==6.165.2" \
       "pytest==9.1.1" \
       "pytest-cov==7.1.0" \
+      "msgspec==0.21.1" \
       "brainstate==0.5.3" \
       "brainunit==0.5.2" \
       "brainevent[cuda12]==0.2.1" \

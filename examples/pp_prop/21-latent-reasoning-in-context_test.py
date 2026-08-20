@@ -6,6 +6,7 @@ import ast
 import copy
 import dataclasses
 import importlib.util
+import inspect
 import json
 import pathlib
 import sys
@@ -476,6 +477,89 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     assert full.memory_decay == 1.0
     assert full.balanced_color_loss is False
     assert full.to_dict()["balanced_color_loss"] is False
+
+
+def test_smoke_config_defaults_to_one_shared_frozen_evaluation(example):
+    config = example.ExperimentConfig.smoke_config()
+
+    assert config.task_local_adaptation is False
+    assert config.evaluation_controls is False
+    assert config.to_dict()["primary_evaluation_mode"] == "shared_model_frozen"
+
+
+def test_cli_can_select_the_single_shared_gpu_run(example):
+    args = example._parser().parse_args(
+        [
+            "--device",
+            "gpu",
+            "--neurons",
+            "1024",
+            "--recurrent-edges",
+            "1024",
+            "--max-demonstrations",
+            "10",
+            "--latent-steps",
+            "300",
+            "--training-updates",
+            "13",
+            "--training-batch-size",
+            "32",
+        ]
+    )
+    config = example._config_from_args(args)
+
+    assert (config.neuron_count, config.recurrent_edges) == (1024, 1024)
+    assert (config.max_demonstrations, config.max_grid_size) == (10, 30)
+    assert (config.latent_steps, config.training_updates) == (300, 13)
+    assert config.training_batch_size == 32
+    assert config.task_local_adaptation is False
+    assert config.evaluation_controls is False
+
+
+def test_latent_steps_300_extends_scoring_and_training_through_300(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        latent_steps=300,
+        training_updates=10,
+    )
+
+    assert config.checkpoints == tuple(range(0, 301, 30))
+    assert config.training_efforts == tuple(range(30, 301, 30))
+    assert config.submission_checkpoint == 300
+    assert config.to_dict()["checkpoints"] == list(range(0, 301, 30))
+    assert config.to_dict()["training_efforts"] == list(range(30, 301, 30))
+    assert config.to_dict()["submission_checkpoint"] == 300
+    score_parameters = inspect.signature(example._score_windows).parameters
+    assert "checkpoints" in score_parameters
+    assert "submission_checkpoint" in score_parameters
+    evaluate_tree = ast.parse(inspect.getsource(example._evaluate))
+    score_calls = [
+        node
+        for node in ast.walk(evaluate_tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "_score_windows"
+    ]
+    assert score_calls
+    assert all(len(call.args) >= 6 for call in score_calls)
+
+
+def test_progress_evidence_reports_stage_chunk_elapsed_and_eta(example):
+    evidence = example._progress_evidence(
+        stage="training",
+        completed=3,
+        total=12,
+        started_at=100.0,
+        now=112.0,
+    )
+
+    assert evidence == {
+        "stage": "training",
+        "completed": 3,
+        "total": 12,
+        "elapsed_seconds": 12.0,
+        "eta_seconds": 36.0,
+    }
 
 
 @pytest.mark.parametrize(
@@ -2430,10 +2514,100 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
         ]
 
 
-def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
+def test_default_evaluation_runs_only_intact_without_adaptation_or_repeat(
     example, monkeypatch
 ):
     config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+    batch = len(records)
+    time_steps = rows.max_events + config.latent_steps
+    run_markers: list[float] = []
+    fake_model = SimpleNamespace(
+        config=SimpleNamespace(color_rank=4, decoder_mode="row_refinement")
+    )
+
+    def sequences(records, config, rows, *, arm, source_tasks):
+        assert arm == "intact"
+        events = np.ones(
+            (time_steps, batch, rows.input_width), dtype=np.float32
+        )
+        advances = np.ones((time_steps, batch), dtype=np.bool_)
+        stops = np.asarray(
+            [record.encoded.query_stop for record in records], dtype=np.int32
+        )
+        metadata = [{"available": True, "timing_matched": True} for _ in records]
+        return events, advances, stops, metadata
+
+    def packed(model, events, selected_indices, **kwargs):
+        run_markers.append(float(np.asarray(events)[0, 0, 0]))
+        return SimpleNamespace(
+            compact_logits=np.zeros((TEST_DEPTH_COUNT, batch, 9060), dtype=np.float32),
+            spikes=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            voltage=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            feedforward_current=np.zeros(
+                (TEST_DEPTH_COUNT, batch, 8), dtype=np.float32
+            ),
+            recurrent_current=np.zeros(
+                (TEST_DEPTH_COUNT, batch, 8), dtype=np.float32
+            ),
+            memory_read=np.zeros((TEST_DEPTH_COUNT, batch, 2), dtype=np.float32),
+            final_context_memory=np.zeros((batch, 2, 2), dtype=np.float32),
+        )
+
+    metrics = {str(effort): _metric() for effort in TEST_CHECKPOINTS}
+    checkpoint_queries = {
+        str(effort): [
+            {
+                "submission_role": (
+                    "primary_submission" if effort == 60 else "diagnostic_only"
+                ),
+                "candidates": _checkpoint_candidate_payloads(effort),
+                "score": {"pass_at_2": False},
+            }
+            for _ in range(batch)
+        ]
+        for effort in TEST_CHECKPOINTS
+    }
+    monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
+    monkeypatch.setattr(example, "_copy_parameters", lambda source, target: None)
+    monkeypatch.setattr(
+        example, "parameter_snapshot", lambda model: {"p": np.array([1])}
+    )
+    monkeypatch.setattr(example, "_arm_sequences", sequences)
+    monkeypatch.setattr(example, "run_selected_packed_stream", packed)
+    monkeypatch.setattr(
+        example.brainstate.transform,
+        "jit",
+        lambda **kwargs: lambda function: function,
+    )
+    monkeypatch.setattr(
+        example,
+        "_task_local_adaptation_evaluation",
+        lambda *args: pytest.fail("default evaluation invoked task-local adaptation"),
+    )
+    monkeypatch.setattr(
+        example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
+    )
+    monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
+
+    result = example._evaluate(SimpleNamespace(), data, config, rows, SimpleNamespace())
+
+    assert run_markers == [1.0]
+    assert result["task_local_adaptation"]["performed"] is False
+    assert result["execution"]["arm_order"] == ["intact"]
+    assert "repeat_intact" not in result["execution"]["wall_seconds_by_arm"]
+
+
+def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        task_local_adaptation=True,
+        evaluation_controls=True,
+    )
     data = example._load_data(config)
     rows = example._row_config(config)
     records = example._evaluation_records(data, config, rows)
@@ -3211,7 +3385,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     assert row_qualification["structural_checks"]["pp_prop_compiler_routes"] is True
     assert row_qualification["structural_checks"]["row_routes_all_direct"] is True
     assert (
-        row_qualification["structural_checks"]["complete_primary_evaluation"] is False
+        row_qualification["structural_checks"]["complete_primary_evaluation"] is True
     )
     assert row_qualification["structural_checks"]["complete_frozen_diagnostics"] is True
     assert (
