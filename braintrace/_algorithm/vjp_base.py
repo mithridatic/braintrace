@@ -582,6 +582,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 reason = prove_position_preserving(
                     transition,
                     group.varshape,
+                    hidden_invars=[relation.y_var],
                 )
                 if reason is not None:
                     raise NotSupportedError(

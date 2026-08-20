@@ -1130,3 +1130,17 @@ class TestGradientsAreUnchangedByTheGuards:
         leaves = jax.tree.leaves(grads)
         assert leaves
         assert all(bool(jnp.all(jnp.isfinite(u.get_mantissa(v)))) for v in leaves)
+
+
+def test_pp_prop_accepts_standard_tanh_rnn_with_open_y_to_hidden_jaxpr():
+    """The position proof must seed only the runtime hidden output variable."""
+    from braintrace._testing import oracle_models as om
+
+    spec = om.tanh_rnn(n_in=3, n_rec=4, seed=0)
+    model = spec.factory()
+    brainstate.nn.init_all_states(model, batch_size=1)
+    learner = braintrace.pp_prop(model, decay_or_rank=0.9)
+
+    learner.compile_graph(spec.make_inputs(2, 3, seed=1)[0])
+
+    assert learner.is_compiled

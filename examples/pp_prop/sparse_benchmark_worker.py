@@ -66,6 +66,9 @@ class _Outcome:
 
 def _load_learning_example() -> Any:
     path = pathlib.Path(__file__).with_name("15-sparse-temporal-learning.py")
+    repo_root = path.parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
     spec = importlib.util.spec_from_file_location("_sparse_learning_example", path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Cannot load sparse learning example from {path}")

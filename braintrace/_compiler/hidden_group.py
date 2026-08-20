@@ -1649,6 +1649,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
         pattern = build_snap_pattern(
             group.transition_jaxpr, group.varshape, self.sparse_n,
             num_state=group.num_state,
+            hidden_invars=group.hidden_invars,
             max_jacobian_elements=self.snap_max_jacobian_elements,
         )
         if pattern.conservative:
