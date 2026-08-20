@@ -292,7 +292,7 @@ matching pre-fix run `var/example21-shared-1024n-1024e-b32-u260-l150`.
 | **distinct predicted shapes** | **2** | **90** |
 | top predicted shapes | (10,10)×341, (10,3)×78 | (3,3)×49, (30,30)×42, (10,10)×41, (15,15)×28 |
 | predicted colour mix | colour 0 at 1.000 | colour 0 at 0.834, all ten colours used |
-| mean predictive entropy | 2.1844 | 1.6474 |
+| mean predictive entropy | 2.1844 | 1.6474 (not like-for-like, see below) |
 | shape diagnostic | 0.0907 | 0.3604 |
 | pixel diagnostic | 0.2624 | 0.3806 |
 | **exact pass@1 / pass@2** | **0 / 419** | **0 / 419** |
@@ -323,12 +323,26 @@ this run says plainly:
    (floors from `2026-08-18-example21-arc-score-recovery.md`). The model still
    loses to predictors that use no neurons.
 
-The smaller `answer_row_head` L2 delta (2.059 against 7.389) is expected, not a
-regression: the pre-fix head had to travel its whole budget just to climb from
-logits of std 0.030 to an O(1) margin, whereas D-SC now supplies that scale at
-initialisation, so movement goes into shaping instead. Corroboration: the
-pre-fix runs needed 1040 updates to reach entropy 1.689, and this run reaches
-1.647 in 260.
+**The entropy figure is not a like-for-like comparison and is not evidence of
+conditional information.** `_decision_uncertainty` averages the two 30-way shape
+decisions together with one 10-way decision per cell. Pre-fix every grid was
+10×10, so 2 shape decisions were averaged against 100 colour decisions. Post-fix
+the grids range from 3×3 (9 colour decisions, shape dominates the average) to
+30×30 (900, colour dominates), so the decision composition changed along with
+the model. The 2.1844 → 1.6474 drop therefore cannot be compared against the
+1.6617 marginal. The composition-independent claims are the colour mix
+(1.000 → 0.834 on colour 0, all ten colours used) and the shape distribution
+(top four now matching the true evaluation modes).
+
+The smaller `answer_row_head` L2 delta (2.059 against 7.389) is **most likely**
+not a regression: the pre-fix head had to travel its whole budget just to climb
+from logits of std 0.030 to an O(1) margin, whereas D-SC now supplies that scale
+at initialisation, so movement should go into shaping instead. Suggestive
+corroboration is that the pre-fix runs needed 1040 updates to reach entropy
+1.689 while this run reaches 1.647 in 260. **This explanation is unverified** —
+it was not measured, and the runs are not seed-matched. What is established is
+that the head moves by 2.059, far from zero, and that `row_routes_all_direct`
+is True, which is what needed proving.
 
 ### Comparison caveat
 
