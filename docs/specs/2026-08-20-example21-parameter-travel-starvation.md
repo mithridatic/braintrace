@@ -715,6 +715,12 @@ found, which more capacity does not address).
 
 ## 9. Conclusion, and what to do next
 
+**Superseded in part by §10.** The follow-up runs showed the colour path is
+not travel-bound but generalisation-bound: tripling the update budget lowers
+the training loss and lowers held-out accuracy. Read §9 as the state of the
+investigation at the end of §8, and §10.6 for the corrected conclusion.
+
+
 **Exact pass@1 on ARC-AGI-1 is 0/419. It did not move.** Three defects were
 found and fixed and the model improved substantially on every diagnostic short
 of exactness, but it did not produce a single exactly correct answer.
@@ -725,7 +731,8 @@ What the three fixes are worth, stated separately:
   shape path. Isolated on the probe surface at fixed code and seed, raising the
   budget from 0.96 σ to 9.8 σ moved shape accuracy **0.4945 → 0.5824, +0.088**
   (§8.2). Its effect on colour content is unresolved; the arm that would settle
-  it (§8.7.1) was killed for GPU contention.
+  it was killed once for GPU contention and re-run in §10.4, which found the
+  colour path is not travel-bound.
 - **D-SB (answer-shape blindness)** — a real expressivity gap, repaired, with
   **no measurable effect** (§8.3). Kept because it is correct and cheap, not
   because it helped.
@@ -746,28 +753,24 @@ and scores an oracle-shape exact answer. The model is not short of capacity,
 supervision, or (for the shape path) travel. It is failing to find a solution
 sitting inside its own hypothesis class.
 
-Ranked next steps:
+Ranked next steps at the time this section was written — **all of these were
+subsequently run, and both leading hypotheses were wrong. See §10, which
+supersedes this list.**
 
-1. **Run `probe-gh-lr1e-3-u780`** (§8.7.1, ~9 minutes). It is the clean test of
-   whether the colour path is still travel-bound, and everything below assumes
-   the answer.
-2. **Decompose `answer_row_head`'s weight delta by input block** — carrier
-   (1024) versus row one-hot (30) versus colour (300) versus shape (60). If the
-   carrier absorbs the travel while the colour block stays near its
-   initialisation, the head is solving through a 1024-dimensional random
-   projection instead of the direct copy path, and the fix is to rebalance the
-   blocks. This needs weights rather than the scalar `l2_delta`, so it costs one
-   short arm with `--parameter-checkpoint`.
-3. **If (2) confirms carrier dominance**, the candidate repairs are to scale the
-   carrier block down relative to the colour block (its L2 grows as `√n` while
-   the one-hot blocks are fixed, so the imbalance worsens with model size), or
-   to initialise the colour block at the identity map. The second is a
-   legitimate inductive bias but requires reporting the **untrained** score
-   alongside the trained one, or the result is unattributable.
+1. Run `probe-gh-lr1e-3-u780` to test whether the colour path is still
+   travel-bound. *Done: it is not — more travel overfits (§10.4).*
+2. Decompose the row head's weight by input block, expecting the carrier to
+   have absorbed the travel. *Done: it had not — the colour block gains share
+   and absolute norm faster than the carrier at every budget (§10.3).*
+3. If (2) confirmed carrier dominance, rebalance the block scales or
+   identity-initialise the colour block. *Superseded: the carrier is not
+   starving the copy path, though it does supply the capacity the model
+   overfits with, so a carrier-shrinking arm survives for a different reason
+   (§10.7).*
 4. **Task-local adaptation** helps consistently (§8.7) and is worth a full
    evaluation run once the base model clears the lookup table, but it is a
    multiplier on the base model and the base model is the binding constraint —
-   which is what the earlier investigation also concluded.
+   which is what the earlier investigation also concluded. *Unchanged.*
 
 ## 10. Follow-up: is the colour path travel-bound, or carrier-bound?
 
@@ -868,3 +871,145 @@ Two consequences:
 2. **Extra latent refinement is actively harmful here**, and the only thing that
    varies across it is the carrier. That is independent evidence for carrier
    dominance, arrived at without touching a weight.
+
+### 10.3 The block decomposition — training does load the copy path
+
+`answer_row_head.weight` is `(1414, 300)`; `answer_shape_head.weight` is
+`(1414, 60)`. Init shares are the analytic `width / 1414`; init block norms are
+`sqrt(width · outputs / 1414)`, the expectation for i.i.d. `N(0, 1/1414)`. For
+the colour block that baseline concentrates to about ±0.1% of its share, so the
+movements below are far outside draw noise.
+
+**`answer_row_head`**
+
+| block | width | init var% | u260 var% | u780 var% | ‖W₀‖ | ‖W‖ u260 | ‖W‖ u780 |
+|---|---|---|---|---|---|---|---|
+| carrier | 1024 | 72.42% | 67.34% | **61.47%** | 14.740 | 15.532 (+5.4%) | 16.133 (+9.5%) |
+| row one-hot | 30 | 2.12% | 1.83% | 1.82% | 2.523 | 2.561 (+1.5%) | 2.774 (+10.0%) |
+| **query colours** | 300 | 21.22% | 26.17% | **30.33%** | 7.978 | 9.682 (**+21.4%**) | 11.332 (**+42.0%**) |
+| input height | 30 | 2.12% | 2.39% | 3.23% | 2.523 | 2.923 (+15.9%) | 3.699 (+46.6%) |
+| input width | 30 | 2.12% | 2.27% | 3.15% | 2.523 | 2.853 (+13.1%) | 3.652 (+44.8%) |
+
+**`answer_shape_head`**
+
+| block | width | init var% | u260 var% | u780 var% | ‖W₀‖ | ‖W‖ u260 | ‖W‖ u780 |
+|---|---|---|---|---|---|---|---|
+| carrier | 1024 | 72.42% | 58.83% | **44.12%** | 6.592 | 8.344 (+26.6%) | 9.769 (+48.2%) |
+| row one-hot | 30 | 2.12% | 1.35% | 1.95% | 1.128 | 1.263 (+12.0%) | 2.051 (+81.8%) |
+| **query colours** | 300 | 21.22% | 29.48% | **33.58%** | 3.568 | 5.906 (**+65.5%**) | 8.523 (**+138.9%**) |
+| input height | 30 | 2.12% | 5.39% | **10.25%** | 1.128 | 2.526 (+123.9%) | 4.710 (+317.4%) |
+| input width | 30 | 2.12% | 4.95% | **10.10%** | 1.128 | 2.420 (+114.5%) | 4.674 (+314.3%) |
+
+**Training moves toward the copy path, monotonically in the update budget.** The
+colour block's share of the row head rises 21.22% → 26.17% → 30.33% while the
+carrier's falls 72.42% → 67.34% → 61.47%. This is not an artefact of the carrier
+shrinking: the colour block grows *more in absolute norm* (+21.4%, +42.0%) than
+the carrier (+5.4%, +9.5%) despite being 3.4× smaller.
+
+The shape head is more striking still: its input height and width blocks — the
+ones D-SB added — are the largest movers in the entire table, +318% and +314% at
+u780, taking their combined share from 4.2% to 20.4%. **Training reaches for the
+query's input shape as hard as it reaches for anything.** That makes the D-SB
+negative in §8.3 more interesting, not less: the head was given an input it
+demonstrably wants, uses it heavily, and gains no accuracy from it. That is an
+open question this spec does not resolve.
+
+Per-block **ΔW** was not measured. The plan was to reconstruct W₀ from the
+recorded seed, but the guard comparing the rebuilt tree against the run's
+`parameter_sha256_before` refused the match, and neither routing construction
+through `_make_model`'s `brainstate.random.seed_context` nor fixing a module
+identity clash closed it. **The cause of that divergence is unresolved.** The
+analytic init baseline above is used instead; it needs no reconstruction and is
+exact in expectation.
+
+### 10.4 The colour path is not travel-bound — it is generalisation-bound
+
+`probe-gh-u260-ckpt` against `probe-gh-u780-ckpt`: identical code, seed,
+learning rate and surface, differing only in the update budget (travel 9.78 σ
+against 29.33 σ). Loss values are comparable — same D-GH scale, same arms.
+
+| | u260 | u780 |
+|---|---|---|
+| travel budget | 9.78 σ | 29.33 σ |
+| **training loss, last 26 updates** | 1.9436 | **1.8258** (better) |
+| colour-block share, row head | 26.17% | **30.33%** (more copy path) |
+| **held-out shape** | **0.6044** | **0.5165** (worse) |
+| **held-out pixel, effort 150** | **0.4659** | **0.4438** (worse) |
+| held-out pixel, best effort (30) | 0.4996 | 0.4833 (worse) |
+| exact pass@1 | 0/91 | 0/91 |
+| runtime | 4.2 min | 13.0 min |
+
+**Tripling the travel lowers the training loss, loads the copy path further, and
+makes held-out accuracy worse on every diagnostic.** That is overfitting, and it
+answers §8.7.1: the colour path is **not** travel-bound. More travel is not the
+missing ingredient; it is actively harmful past the u260 operating point.
+
+**The pre-registered dichotomy in §10.1 was too simple and its first branch must
+not be claimed.** It said a rising colour share implies travel is limiting and
+u780 should extend the trend. The colour share did rise, u780 did extend it, and
+performance fell. The correct reading is the one neither branch anticipated:
+
+> Training preferentially loads the copy path when given more travel, and the
+> resulting predictor still does not approach the lookup table. Travel is a lever
+> on the **mechanism** without being the cap on **performance**. The cap is
+> generalisation.
+
+This reframes §8.4. The model is not failing to find the lookup table because it
+cannot reach it — given more budget it moves toward it and gets worse anyway. It
+has roughly 424,000 parameters in the row head alone plus a 1024-neuron recurrent
+substrate, fits 315 training tasks better with every update, and transfers worse.
+The 110-parameter table wins because it cannot overfit.
+
+### 10.5 How much of the gap does the carrier explain?
+
+Both §10.2 and §10.4 implicate the carrier, so it is worth stating plainly how
+much of the §8.4 gap it accounts for. On the probe surface:
+
+| quantity | pixel accuracy |
+|---|---|
+| 11 × 10 lookup table | 0.7734 |
+| best model checkpoint (u260, effort 30) | 0.4996 |
+| submitted model checkpoint (u260, effort 150) | 0.4659 |
+
+**Carrier drift across sweeps costs 0.034 of a 0.274 gap — about 12%.** It is a
+real defect with a real diagnostic cost, and it is not the explanation for the
+lookup-table gap. The remaining 0.24 is the generalisation gap of §10.4.
+
+### 10.6 Answers to the two open questions
+
+1. **Is the colour path still travel-bound after D-GH?** **No.** Tripling the
+   update budget at the same step size lowers training loss and lowers held-out
+   accuracy (§10.4). Travel was the binding constraint at the shipped 0.96 σ
+   operating point and it is no longer binding at 9.78 σ.
+2. **Is the carrier absorbing travel that should go to the copy path?** **No —
+   the opposite.** The colour block gains share and absolute norm faster than the
+   carrier at every budget (§10.3). But the carrier still holds 61–67% of the row
+   head's logit variance, still rewrites 18.7% of the answer's cells across
+   sweeps, and still drives accuracy down as it does so (§10.2). It is not
+   stealing the copy path's travel; it is supplying capacity that the model uses
+   to overfit.
+
+**Neither answer moves exact pass@1. It is 0/419 on the full evaluation and
+0/91 on every probe arm.**
+
+### 10.7 Revised next steps
+
+Replaces §9's ranked list, which assumed travel and carrier-starvation.
+
+1. **Regularise or shrink the carrier path**, since §10.4 identifies
+   generalisation as the cap and §10.2 and §10.3 both identify the carrier as
+   the capacity supplying it. The cheapest decisive test is an arm that scales
+   the carrier block of the head input down by a constant, or drops it entirely,
+   leaving `[row one-hot, query colours, input shape]` — a ~390-input head that
+   cannot memorise a task. If a carrier-free head beats the full one on held-out
+   pixel, the carrier is a net liability at this data scale and the architecture
+   should change. This is one short probe arm.
+2. **Report the best checkpoint, not effort 150** (§10.2). Worth 0.03 pixel and
+   0.014 shape, costs nothing, and changes exact by nothing. Selecting the
+   checkpoint on the probe surface is legitimate; selecting it on evaluation is
+   not.
+3. **More training tasks or augmentation**, the standard answer to a
+   generalisation gap. 315 tasks is very few for a 424,000-parameter head.
+4. **Do not spend more on update count or learning rate.** §8.2 and §10.4
+   bracket the useful range: below `lr·U ≈ 0.26` the head cannot travel, above it
+   the model overfits, and the window between them is narrow.
