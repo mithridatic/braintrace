@@ -3128,3 +3128,158 @@ def test_feedback_uses_prior_answer_row_without_writing_context_memory() -> None
 
     np.testing.assert_array_equal(model.context_memory.value, frozen_memory)
     assert not np.allclose(model.feedforward_current, baseline_current)
+
+
+def _synthetic_grid(side: int, offset: int) -> ArcGrid:
+    return ArcGrid(
+        tuple(
+            tuple((r * side + c + offset) % 9 + 1 for c in range(side))
+            for r in range(side)
+        )
+    )
+
+
+def _row_refinement_full_size_episode() -> jax.Array:
+    """Return a production-shaped 10x10 query episode.
+
+    The 2x2 fixture used elsewhere in this file drives the membrane far less
+    hard than a real ARC query and understates the defect (sweep cosine 0.88
+    against 0.95-0.99 on real evaluation tasks). Row blindness is a property of
+    the saturated integrator, so it must be reproduced at production grid size.
+    """
+    rows = RowEventConfig()
+    task = ArcTask(
+        train=tuple(
+            ArcPair(_synthetic_grid(10, i), _synthetic_grid(10, i + 3))
+            for i in range(2)
+        ),
+        test=(ArcPair(_synthetic_grid(10, 7), None),),
+        task_id="row-refinement-full-size",
+    )
+    return jnp.asarray(encode_query_episode(task, 0, rows).events)
+
+
+def _sweep_answer_rows(model: LatentWorkspaceModel) -> np.ndarray:
+    """Return the 30 answer-row logit vectors of one refinement sweep."""
+    zero_event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+    advance = jnp.ones((1,), dtype=jnp.bool_)
+
+    def latent_step(_: jax.Array) -> jax.Array:
+        model.cell_step(zero_event, advance)
+        return model.answer_row.value[0]
+
+    return np.asarray(
+        brainstate.transform.for_loop(latent_step, jnp.arange(MAX_GRID_SIZE)),
+        dtype=np.float64,
+    )
+
+
+def _mean_pairwise_cosine(matrix: np.ndarray) -> float:
+    centred = matrix - matrix.mean(axis=1, keepdims=True)
+    norms = np.linalg.norm(centred, axis=1)
+    cosine = centred @ centred.T / np.outer(norms, norms)
+    return float(cosine[np.triu_indices(matrix.shape[0], k=1)].mean())
+
+
+def test_refinement_answer_rows_are_not_one_replicated_vector() -> None:
+    """A refinement sweep must write 30 rows, not one row 30 times.
+
+    The answer heads read the LIF membrane potential, a slow integrator whose
+    state is ~99% identical between consecutive refinement rows, so the head
+    emits a per-query constant replicated across the sweep. Training then sees
+    30 mutually inconsistent row targets through one input and can only
+    converge to the row-independent colour marginal, whose argmax is colour
+    zero in every cell.
+    """
+    model = LatentWorkspaceModel(_row_refinement_config())
+    run_context(model, _row_refinement_full_size_episode())
+
+    rows = _sweep_answer_rows(model)
+
+    assert rows.shape == (MAX_GRID_SIZE, MAX_GRID_SIZE * COLOR_COUNT)
+    assert _mean_pairwise_cosine(rows) < 0.9
+
+
+def test_refinement_head_input_separates_the_row_being_written() -> None:
+    """Two ticks differing only in row index must reach the head differently.
+
+    The head is a bias-free linear map, so anything absent from its input is
+    unreachable by any amount of training. The row index and the query colours
+    of the row being written are both present in the refinement feedback event
+    but currently enter only through ``ff_syn``.
+    """
+    build_head_input = getattr(latent_workspace_module, "_refinement_head_input")
+    layout = _row_refinement_layout()
+    carrier = jnp.asarray(
+        np.linspace(-1.0, 1.0, 64, dtype=np.float32)[None, :]
+    )
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    other_row = event.at[:, layout.row_index_start + 7].set(1.0)
+    other_colours = event.at[:, layout.input_color_start + 3].set(1.0)
+
+    baseline = np.asarray(build_head_input(carrier, event, layout))
+    row_changed = np.asarray(build_head_input(carrier, other_row, layout))
+    colour_changed = np.asarray(build_head_input(carrier, other_colours, layout))
+
+    assert baseline.shape == (1, 64 + MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT)
+    assert not np.array_equal(baseline, row_changed)
+    assert not np.array_equal(baseline, colour_changed)
+
+
+def test_refinement_head_carrier_is_scaled_to_unit_root_mean_square() -> None:
+    """The head carrier must be O(1) per coordinate, not O(1/sqrt(n)).
+
+    ``_unit_l2_cap`` normalises to unit *total* L2 across all neurons, so each
+    coordinate carries 1/sqrt(n). Against bias-free heads initialised at
+    1/sqrt(n) that yields initialisation logits of standard deviation 1/sqrt(n)
+    -- 0.031 at 1024 neurons -- and a colour softmax within 0.0004 nats of
+    uniform, so the optimizer spends its whole budget merely reaching O(1).
+    """
+    scale_carrier = getattr(latent_workspace_module, "_unit_rms_carrier")
+    neuron_count = 1024
+    carrier = jnp.asarray(
+        np.linspace(-40.0, 40.0, neuron_count, dtype=np.float32)[None, :]
+    )
+
+    scaled = np.asarray(scale_carrier(carrier), dtype=np.float64)
+
+    assert scaled.shape == (1, neuron_count)
+    np.testing.assert_allclose(np.sqrt((scaled**2).mean()), 1.0, rtol=1e-5)
+
+
+def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> None:
+    """Widening the head input must not drop it from the compiled model.
+
+    ``color_factor_head``, ``height_head``, ``width_head`` and
+    ``readout_projection`` already fall out of the compiled model and train with
+    an exactly zero gradient. A head whose input the compiler cannot trace would
+    fail the same way while still looking correct.
+    """
+    model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {"answer_row_head.weight", "answer_shape_head.weight"} <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+
+    assert classifications["answer_row_head.weight"] == {"all_direct"}
+    assert classifications["answer_shape_head.weight"] == {"all_direct"}

@@ -1382,6 +1382,79 @@ def _unit_l2_cap(value: jax.Array) -> jax.Array:
     return (accumulator / denominator).astype(value.dtype)
 
 
+def _unit_rms_carrier(value: jax.Array) -> jax.Array:
+    """Cap each final-axis vector at unit root-mean-square with a stopped divisor.
+
+    ``_unit_l2_cap`` normalises to unit *total* L2 across ``n`` coordinates, so
+    every coordinate carries ``1/sqrt(n)``.  Feeding that to a bias-free head
+    initialised at ``1/sqrt(n)`` yields initialisation logits of standard
+    deviation ``1/sqrt(n)`` -- 0.031 at 1024 neurons -- and a softmax
+    indistinguishable from uniform.  Capping the root-mean-square instead keeps
+    each coordinate at O(1) and the resulting logits at O(1).
+    """
+    value = jnp.asarray(value)
+    accumulator_dtype = jnp.promote_types(value.dtype, jnp.float32)
+    accumulator = value.astype(accumulator_dtype)
+    mean_square = jnp.mean(
+        jax.lax.stop_gradient(accumulator) ** 2, axis=-1, keepdims=True
+    )
+    root_mean_square = jnp.sqrt(mean_square)
+    denominator = jax.lax.stop_gradient(
+        jnp.maximum(jnp.asarray(1.0, dtype=root_mean_square.dtype), root_mean_square)
+    )
+    return (accumulator / denominator).astype(value.dtype)
+
+
+def _refinement_head_input(
+    carrier: jax.Array, event: jax.Array, layout: RowRefinementLayout
+) -> jax.Array:
+    """Concatenate the workspace carrier with the row being written.
+
+    The answer heads are bias-free linear maps, so anything absent from this
+    vector is unreachable by any amount of training.  The membrane carrier
+    identifies the task but not the refinement row: across one 30-row sweep its
+    row-to-row cosine is 0.99 and a linear probe recovers the row index at
+    0.058 against 0.033 chance, while recovering query identity at 1.000.  The
+    row-position one-hot and the query colours of the row being transcribed are
+    both already present in the refinement feedback event, but reach the heads
+    only after the membrane has integrated them away.
+
+    Both appended blocks are scaled to unit root-mean-square on their occupied
+    coordinates -- exactly ``sqrt(30)`` for a 30-way one-hot and ``sqrt(10)``
+    for a per-column colour one-hot -- so no block dominates the head input by
+    an accident of encoding sparsity.
+    """
+    carrier = jnp.asarray(carrier, dtype=jnp.float32)
+    event = jnp.asarray(event, dtype=jnp.float32)
+    row_position = event[:, layout.row_index_slice] * math.sqrt(MAX_GRID_SIZE)
+    row_colors = event[:, layout.input_color_slice] * math.sqrt(COLOR_COUNT)
+    return jnp.concatenate((carrier, row_position, row_colors), axis=-1)
+
+
+def refinement_head_width(neuron_count: int) -> int:
+    """Return the answer-head input width for a row-conditioned decoder.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Physical LIF population size supplying the workspace carrier.
+
+    Returns
+    -------
+    int
+        ``neuron_count`` plus the row-position one-hot and the row colour block.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> from latent_workspace_model import refinement_head_width
+        >>> refinement_head_width(1024)
+        1354
+    """
+    return int(neuron_count) + MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT
+
+
 class LatentWorkspaceModel(brainstate.nn.Module):
     """BrainPy LIF network with sparse recurrent ARC computation.
 
@@ -1564,18 +1637,19 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 jnp.zeros((config.batch_size, config.neuron_count), dtype=jnp.float32)
             )
         if config.row_refinement_enabled:
-            row_weights = random.randn(config.neuron_count, MAX_GRID_SIZE * COLOR_COUNT)
-            row_weights = row_weights / math.sqrt(config.neuron_count)
-            shape_weights = random.randn(config.neuron_count, 2 * MAX_GRID_SIZE)
-            shape_weights = shape_weights / math.sqrt(config.neuron_count)
+            head_width = refinement_head_width(config.neuron_count)
+            row_weights = random.randn(head_width, MAX_GRID_SIZE * COLOR_COUNT)
+            row_weights = row_weights / math.sqrt(head_width)
+            shape_weights = random.randn(head_width, 2 * MAX_GRID_SIZE)
+            shape_weights = shape_weights / math.sqrt(head_width)
             self.answer_row_head = braintrace.nn.Linear(
-                config.neuron_count,
+                head_width,
                 MAX_GRID_SIZE * COLOR_COUNT,
                 w_init=row_weights,
                 b_init=None,
             )
             self.answer_shape_head = braintrace.nn.Linear(
-                config.neuron_count,
+                head_width,
                 2 * MAX_GRID_SIZE,
                 w_init=shape_weights,
                 b_init=None,
@@ -2245,14 +2319,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 gate, self.voltage, previous_workspace
             )
         if self.config.row_refinement_enabled:
+            assert self.config.refinement_layout is not None
             carrier = (
                 self.workspace_carrier.value
                 if self.config.memory_enabled
                 else self.voltage
             )
-            carrier = _unit_l2_cap(carrier)
-            next_row = self.answer_row_head(carrier)
-            next_shape = self.answer_shape_head(carrier)
+            head_input = _refinement_head_input(
+                _unit_rms_carrier(carrier), event, self.config.refinement_layout
+            )
+            next_row = self.answer_row_head(head_input)
+            next_shape = self.answer_shape_head(head_input)
             refinement_gate = refinement_latent[:, None]
             self.answer_row.value = jnp.where(
                 refinement_gate, next_row, self.answer_row.value
