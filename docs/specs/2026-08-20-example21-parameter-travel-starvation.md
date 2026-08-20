@@ -1,6 +1,16 @@
-# Example 21 — parameter-travel starvation and answer-shape blindness
+# Example 21 — why the row head does not learn a rule it can express
 
-Status: draft (diagnosis complete, implementation in progress)
+Status: implemented; three defects fixed, exact score reported honestly in §8
+
+Originally filed as "parameter-travel starvation and answer-shape blindness".
+That title names the two hypotheses this investigation started from; measurement
+demoted both. Travel starvation (D-PT) is confirmed for the shape path and
+unresolved for the colour path; shape blindness (D-SB) is a real expressivity
+gap whose repair changed nothing measurable. The load-bearing results are §8.4 --
+a 110-parameter lookup table the head can express exactly beats it by 0.31 pixel
+accuracy -- and §8.6, the colour-loss height normalisation (D-GH) that produced
+the first exactly-correct colour content in this investigation.
+
 Date: 2026-08-20
 Branch: `worktree-agent-ace1b26e7a1ca359f`
 
@@ -86,11 +96,13 @@ head init σ       = 1/√head_width
 travel bound / σ  = 0.956
 ```
 
-**No weight in either answer head can move even one initialisation sigma.** The
-trained head is a small perturbation of its random initialisation, so the
-decoder's output is dominated by the random prior plus whatever dataset-constant
-tilt survives averaging — which is exactly the colour marginal reported in
-§2.2 of the row-blindness spec.
+**No single weight in either answer head can move even one initialisation
+sigma.** The bound is per coordinate and it is loose, not tight — the whole
+matrix does not travel at the bound — so the honest reading is that the trained
+head remains in the regime where its random initialisation still dominates its
+output, and the decoder emits the random prior plus whatever dataset-constant
+tilt survives averaging. That is exactly the colour marginal reported in §2.2 of
+the row-blindness spec.
 
 Measured Frobenius deltas corroborate the bound independently
 (`training.parameter_changes` in the same artifact). Both heads are bias-free
@@ -101,6 +113,12 @@ with `w ~ N(0, 1/head_width)`, so the initialisation Frobenius norm of a
 |---|---|---|---|---|
 | `answer_row_head.weight` | 1354 × 300 | √300 = 17.32 | 2.0588 | **0.119** |
 | `answer_shape_head.weight` | 1354 × 60 | √60 = 7.746 | 1.8790 | **0.243** |
+
+These are aggregate, and they are well below the per-coordinate bound: if every
+coordinate travelled at 0.956 σ the relative figure would be near 1.0, not 0.12
+and 0.24. The bound rules out large travel; the measurement shows actual travel
+is an order of magnitude smaller still. Both point the same way, and neither
+says the head did not move at all.
 
 The training loss confirms the run is not converged: mean loss falls 0.890
 (first 26 updates) → 0.614 (last 26) and is still descending noisily at the last
@@ -487,6 +505,123 @@ despite having fewer cells to get right.
 each example contributes the same total colour weight over a completed sweep,
 independent of its output height. The shape term is untouched.
 
-### 8.6 Post-fix runs
+**The alternative that was considered and not taken** is scaling the *whole*
+per-example loss by `30 / (target_height + 1)`. The difference matters: the
+shipped fix takes an example's per-sweep total from
+`2·ln30 + (h+1)·c` to `2·ln30 + 30·c`, so it also shifts the shape-to-colour
+balance — for a 3-row target the colour term grows 10× against an unchanged
+shape term, weakening shape supervision exactly on the short outputs where the
+reachable exact targets live. Scaling the whole loss would preserve that balance
+while still equalising examples. The colour-only form is shipped because the
+measured defect is specifically that *colour* supervision is height-weighted
+while *shape* supervision already fires exactly once per sweep for every example
+regardless of height, so the shape term was never the asymmetric one. §8.6
+reports shape accuracy on the ≤9-cell subset specifically, which is where this
+choice would show up if it is wrong.
 
-Filled in below as they complete.
+Loss values are **not comparable across this change**: the colour term is
+rescaled by up to 30×, so a `probe-gh-*` arm's reported loss cannot be put in
+the same column as a `probe-fix-*` arm's.
+
+### 8.6 D-GH (colour-loss height normalisation) — the first movement
+
+`lr = 1e-3`, u260, l150, probe surface. Both arms carry D-SB; they differ only
+in the colour-loss scaling. Loss values are omitted because the rescale makes
+them incomparable (§8.5).
+
+| metric | without D-GH | with D-GH |
+|---|---|---|
+| shape (harness, candidate one) | 0.5604 | **0.6044** |
+| pixel | 0.4652 | 0.4669 |
+| non-black | 61/91 | 66/91 |
+| predicted shape == input shape | 0.6264 | 0.6484 |
+| shape correct on ≤9-cell subset | 5/18 | 5/18 |
+| **exact under oracle shape** | **0/91** | **1/91** |
+| exact pass@1 | 0/91 | 0/91 |
+
+Shape accuracy rises 0.044 and, for the first time in this investigation, **the
+model produces colour content that is exactly right on a query**: `d9fac9be` q0,
+whose true output is the 1 × 1 grid `[[4]]`, is written as colour 4 in the
+model's top-left cell. It is not counted as exact because the shape head emits
+`(5, 4)`. Under an oracle shape the model now matches the 11 × 10 lookup table's
+1/91 (§8.4) instead of trailing it.
+
+The advisor-flagged risk that D-GH weakens shape supervision on short outputs
+did **not** materialise: shape accuracy on the ≤9-cell subset is 5/18 both with
+and without it, and aggregate shape improved. The whole-loss-scaling alternative
+in §8.5 is therefore not needed on this evidence.
+
+Pixel accuracy is unmoved (0.4652 → 0.4669) and still 0.31 below the lookup
+table. **D-GH is a real but small effect. It does not close the §8.4 gap.**
+
+These two arms are seed-matched in the sense that matters — D-GH changes no
+`random.randn` draw, only a loss scale — so unlike the §8.3 comparison, these
+differences are attributable.
+
+### 8.7 Task-local adaptation
+
+`probe-gh-l60-adapt20`: `lr = 1e-3`, u260, **`latent_steps = 60`**, D-SB + D-GH,
+20 probe-holdout tasks / 21 queries. Adaptation is leave-one-demonstration-out
+on each task's own demonstrations — it never sees a test output
+(`latent_workspace_arc_adaptation.py:930-1010`).
+
+| arm | shape | pixel | exact pass@1 | exact pass@2 |
+|---|---|---|---|---|
+| frozen, same run | 0.7619 | 0.5333 | 0/21 | 0/21 |
+| **adapted** | **0.8095** | **0.5608** | **0/21** | **0/21** |
+
+132 folds applied, 71.7 wall seconds, base parameters verifiably restored
+afterwards (`base_parameter_sha256 == restored_parameter_sha256`).
+
+**Adaptation helps consistently and does not produce an exact answer.** It lifts
+shape by 0.048 and pixel by 0.028 over the frozen baseline *of the same run*,
+which is the only valid comparison here.
+
+Two caveats that must not be dropped when quoting these numbers:
+
+1. **This is 21 queries, not 91.** The frozen figures here (0.7619 / 0.5333) are
+   far above the 91-query probe figures (0.6044 / 0.4669) purely because these
+   20 tasks are an easier subset. Nothing in this table may be compared against
+   any other table in this spec.
+2. **This is a different model.** `compile_arc_task_local_adaptation_runner`
+   rejects any `latent_steps != 60`
+   (`latent_workspace_arc_adaptation.py:763`), so an adaptation run gets two
+   refinement sweeps where the selected configuration gets five. Adaptation and
+   the selected `l150` operating point cannot be combined.
+
+At 71.7 s for 20 tasks, a full 400-task adaptation pass extrapolates to roughly
+24 minutes on top of training and evaluation.
+
+### 8.7.1 Deferred arm
+
+`probe-gh-lr1e-3-u780` — 3× the updates at the same step size, the clean test of
+whether travel is still binding on the colour path (§8.2). It was started and
+**killed about one minute in** because it would have shared the 12 GB GPU with
+the full ARC-AGI-1 evaluation, which is the higher-priority run. It is not
+reported, and the §8.2 question it was meant to settle therefore remains open.
+It is the first thing to run next.
+
+### 8.8 Arms run and arms dropped
+
+Every arm executed against the probe surface, so nothing is silently narrowed.
+
+| arm | outcome |
+|---|---|
+| `probe-lr{1e-4,1e-3,3e-3,1e-2}-u260` | complete, §8.2 |
+| `probe-fix-lr{3e-4,1e-3,3e-3}-u260` | complete, §8.3 |
+| `probe-fix-adapt20` | **dropped, 3.8 min wasted.** `compile_arc_task_local_adaptation_runner` rejects any `latent_steps != 60` (`latent_workspace_arc_adaptation.py:763`), and the arm inherited `--latent-steps 150`. Re-run as `probe-gh-l60-adapt20`. |
+| `probe-gh-lr1e-3-u260` | tests D-GH at the selected rate |
+| `probe-gh-l60-adapt20` | task-local adaptation, 20 tasks, timing + signal |
+| `probe-gh-lr1e-3-u780` | 3× the updates at the same step size — separates travel from step size on the colour path, which `lr = 3e-3` conflated |
+
+**Adaptation cannot be combined with the selected configuration.** Task-local
+adaptation requires exactly 60 latent steps, so an adaptation run is a different
+model from the `l150` arms, with its own frozen baseline. The only valid
+comparison for it is adapted versus the `frozen_no_adaptation` block **inside
+the same run**, never against an `l150` arm.
+
+Not swept, with reasons: `clip_norm` (§2.5, Adam is invariant to the global
+gradient scale that norm clipping changes); `balanced_color_loss` (§2.5, and
+D-GH is the better-evidenced loss defect); `neuron_count` and `recurrent_edges`
+(§8.4 shows the failure is that an expressible 110-parameter solution is not
+found, which more capacity does not address).
