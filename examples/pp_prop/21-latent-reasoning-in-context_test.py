@@ -607,6 +607,7 @@ def test_associative_memory_config_rejects_invalid_values(example, kwargs, messa
         ({"decoder_mode": "width_inferred"}, "decoder_mode"),
         ({"device": "tpu"}, "device"),
         ({"learning_rate": float("nan")}, "learning_rate"),
+        ({"sparse_backend": "invalid"}, "sparse_backend"),
     ],
 )
 def test_config_rejects_invalid_or_scientifically_incomplete_values(
@@ -655,6 +656,8 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     assert parsed.decoder_mode == "row_refinement"
     assert parsed.memory_decay == 1.0
     assert parsed.balanced_color_loss is False
+    assert parsed.profile is False
+    assert parsed.sparse_backend == "default"
 
     smoke_args = example._parser().parse_args(
         [
@@ -666,12 +669,17 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
             "--decoder-mode",
             "legacy_cp",
             "--balanced-color-loss",
+            "--profile",
+            "--sparse-backend",
+            "jax_raw",
         ]
     )
     smoke = example._config_from_args(smoke_args)
     assert smoke.smoke and smoke.device == "cpu"
     assert smoke.decoder_mode == "legacy_cp"
     assert smoke.balanced_color_loss is True
+    assert smoke.runtime_profile is True
+    assert smoke.sparse_backend == "jax_raw"
 
     bad = example._parser().parse_args(["--smoke", "--neurons", "128"])
     with pytest.raises(ValueError, match="owns its reduced"):
@@ -4065,6 +4073,82 @@ def test_training_chunk_prefetch_propagates_the_producer_exception(example):
         next(chunks)
 
 
+def test_profiled_chunk_execution_reports_pipeline_timing(example):
+    profile = example._TrainingProfile()
+    chunk = example._TrainingTensors(
+        events=np.zeros((1, 2, 1, 2), dtype=np.float32),
+        advances=np.zeros((1, 2, 1), dtype=np.bool_),
+        heights=np.zeros((1, 1), dtype=np.int32),
+        widths=np.zeros((1, 1), dtype=np.int32),
+        colors=np.zeros((1, 1, 30, 30), dtype=np.int32),
+        masks=np.zeros((1, 2), dtype=np.float32),
+        efforts=np.asarray([30], dtype=np.int32),
+        task_fingerprints=("task",),
+        base_task_fingerprints=("base",),
+        source_names=("source",),
+        held_out_demonstration_indices=(0,),
+    )
+
+    losses, schedule = example._train_chunks(
+        example._prefetched_training_chunks([chunk], profile),
+        lambda *_args: np.asarray([3.0], dtype=np.float32),
+        profile=profile,
+    )
+
+    assert losses == [3.0]
+    assert schedule.efforts == (30,)
+    report = profile.to_dict()
+    assert report["chunk_count"] == 1
+    assert report["producer_encoding_seconds"] >= 0.0
+    assert report["consumer_wait_seconds"] >= 0.0
+    assert report["host_to_device_staging_seconds"] >= 0.0
+    assert report["first_call_compilation_seconds"] >= 0.0
+    assert report["first_call_device_compute_seconds"] >= 0.0
+    assert report["host_result_copy_seconds"] >= 0.0
+
+
+def test_training_episode_workers_restore_order_and_join_on_failure(
+    example, monkeypatch
+):
+    started = threading.Event()
+    finished = threading.Event()
+
+    def materialize(job):
+        started.set()
+        if job.ordinal == 1:
+            raise RuntimeError("episode worker failed")
+        time.sleep(0.01)
+        finished.set()
+        return job.ordinal
+
+    monkeypatch.setattr(example, "_materialize_training_episode", materialize)
+    jobs = [type("Job", (), {"ordinal": index})() for index in range(8)]
+    with pytest.raises(RuntimeError, match="episode worker failed"):
+        list(example._ordered_training_episodes(jobs, 2))
+    assert started.is_set()
+    assert finished.is_set()
+    assert not [
+        thread
+        for thread in threading.enumerate()
+        if thread.name.startswith("example21-training-row")
+    ]
+
+
+def test_cached_base_training_task_is_target_free_and_identity_stable(example):
+    config = example.ExperimentConfig.smoke_config()
+    origin = example._load_data(config).training[0]
+    example._cached_base_training_task.cache_clear()
+
+    first, first_fingerprint = example._cached_base_training_task(origin.task)
+    second, second_fingerprint = example._cached_base_training_task(origin.task)
+
+    assert first is second
+    assert first_fingerprint == second_fingerprint
+    assert all(pair.output is not None for pair in first.train)
+    assert all(pair.output is None for pair in first.test)
+    assert example._cached_base_training_task.cache_info().hits == 1
+
+
 def test_training_workers_preserve_rows_and_metadata(example):
     serial = dataclasses.replace(
         example.ExperimentConfig.smoke_config(),
@@ -4083,6 +4167,55 @@ def test_training_workers_preserve_rows_and_metadata(example):
             np.testing.assert_array_equal(getattr(left, field), getattr(right, field))
         for field in example._CHUNK_METADATA_FIELDS:
             assert getattr(left, field) == getattr(right, field), field
+
+
+def test_batched_training_chunks_match_scalar_oracle_and_losses(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        training_updates=10,
+        training_batch_size=2,
+        training_chunk_size=5,
+        training_workers=2,
+    )
+    loaded = example._load_data(config)
+    data = dataclasses.replace(loaded, plumbing_only=False)
+    rows = example._row_config(config)
+
+    optimized = list(example._training_chunks(data, config, rows))
+    monkeypatch.setattr(
+        example,
+        "_encode_arc_query_episodes_batched",
+        lambda episodes, row_config: tuple(
+            example.encode_arc_query_episode(episode, row_config)
+            for episode in episodes
+        ),
+    )
+    oracle = list(example._training_chunks(data, config, rows))
+
+    assert len(optimized) == len(oracle) == 2
+    for left, right in zip(optimized, oracle, strict=True):
+        for field in example._CHUNK_ARRAY_FIELDS:
+            np.testing.assert_array_equal(getattr(left, field), getattr(right, field))
+        for field in example._CHUNK_METADATA_FIELDS:
+            assert getattr(left, field) == getattr(right, field), field
+
+    def fake_train(
+        events, advances, heights, widths, colors, masks
+    ) -> np.ndarray:
+        arrays = (events, advances, heights, widths, colors, masks)
+        return np.asarray(
+            [
+                sum(float(np.asarray(array[index]).sum()) for array in arrays)
+                for index in range(int(np.asarray(events).shape[0]))
+            ],
+            dtype=np.float32,
+        )
+
+    optimized_report = example._train_chunks(optimized, fake_train)[0]
+    oracle_report = example._train_chunks(oracle, fake_train)[0]
+    np.testing.assert_allclose(optimized_report, oracle_report, rtol=0.0, atol=1e-6)
 
 
 def test_training_workers_restore_ordinal_order_and_bound_inflight(example, monkeypatch):

@@ -113,19 +113,46 @@ A full run requests a GPU by default and fails closed instead of silently
 falling back to CPU. Build the generic dependency layer, then the reusable
 Example 21 image using the ARC checkout as a named BuildKit context:
 
-    $commit = git rev-parse HEAD
+    $commit = (git rev-parse HEAD).Trim()
     $arcRoot = "C:\tmp\braintrace-example21-data\arc-agi-1"
-    $arcCommit = git -C $arcRoot rev-parse HEAD
+    $arcCommit = (git -C $arcRoot rev-parse HEAD).Trim()
     docker build --file .github/containers/braintrace-gpu/Dockerfile --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --tag braintrace-gpu:0.11.0-py314-msgspec .
     docker build --file .github/containers/braintrace-example21/Dockerfile --build-context "arc_data=$arcRoot" --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --build-arg ARC_AGI_1_COMMIT=$arcCommit --tag braintrace-gpu:0.11.0-py314-msgspec-arc .
 
 Every Example 21 configuration uses that final image. It opens one
 integrity-checked index per split instead of enumerating, reopening, hashing,
 and fingerprinting all 800 raw task files at runtime. Mount only persistent
-outputs and the compilation cache:
+outputs and the compilation cache. Record the source, data, and exact local
+image identity first:
 
-    docker run --rm --gpus all --env XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 --volume "${PWD}/var:/work/var" --volume "${PWD}/var/jax-cache:/cache/jax" braintrace-gpu:0.11.0-py314-msgspec-arc python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest /datasets/arc/example21-sources.json --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 --latent-steps 390 --training-updates 13 --training-batch-size 32 --training-chunk-size 1
+    $sourceDirty = if (git status --porcelain) { "1" } else { "0" }
+    $imageId = (docker image inspect braintrace-gpu:0.11.0-py314-msgspec-arc --format '{{.Id}}').Trim()
+    New-Item -ItemType Directory -Force var, var/jax-cache | Out-Null
+    docker run --rm --gpus all `
+      --env XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 `
+      --env JAX_COMPILATION_CACHE_DIR=/cache/jax `
+      --env JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0 `
+      --env EXAMPLE21_SOURCE_REVISION=$commit `
+      --env EXAMPLE21_SOURCE_DIRTY=$sourceDirty `
+      --env EXAMPLE21_ARC_REVISION=$arcCommit `
+      --env EXAMPLE21_IMAGE_DIGEST=$imageId `
+      --volume "${PWD}/var:/work/var" `
+      --volume "${PWD}/var/jax-cache:/cache/jax" `
+      braintrace-gpu:0.11.0-py314-msgspec-arc `
+      python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py `
+      --device gpu `
+      --source-manifest /datasets/arc/example21-sources.json `
+      --output-dir /work/var/example21-shared-1024n-1024e-b32-u13-l390 `
+      --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 `
+      --latent-steps 390 --training-updates 13 --training-batch-size 32 `
+      --training-chunk-size 5
 
+The selected execution chunk is 5; the original chunk-1 command is retained
+in `docs/specs/2026-08-20-example21-docker-throughput.md` as the baseline.
+Keep `training_bank_size=0`. The persistent `/cache/jax` mount keeps compiled
+XLA artifacts between containers. For throughput, perform one warm-up run,
+then three ordinary (unprofiled) warm runs and report the median of the result
+JSON `runtime_seconds`; profiling is diagnostic and adds synchronization.
 This command performs no pretraining, task-local adaptation, or evaluation
 control arms. Progress is written to stderr; the final result remains on stdout.
 

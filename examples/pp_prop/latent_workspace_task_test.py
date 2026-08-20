@@ -969,6 +969,95 @@ def test_arc_query_episode_target_never_changes_model_input_bytes() -> None:
     assert encoded.target != changed_encoded.target
 
 
+@pytest.mark.parametrize("dihedral_index", range(8))
+def test_batched_training_encoder_matches_scalar_for_orientations_and_colors(
+    dihedral_index: int,
+) -> None:
+    base = _task()
+
+    def transform(grid: ArcGrid) -> ArcGrid:
+        return task_module._transform_grid(
+            grid, np.arange(10, dtype=np.int32), dihedral_index
+        )
+
+    oriented = ArcTask(
+        train=tuple(
+            ArcPair(transform(pair.input), transform(pair.output))
+            for pair in base.train
+        ),
+        test=(ArcPair(transform(base.test[0].input), transform(base.test[0].output)),),
+        task_id=f"orientation-{dihedral_index}",
+    )
+    episodes = leave_one_demonstration_out_episodes(oriented)
+    scalar = tuple(encode_arc_query_episode(episode) for episode in episodes)
+    batched = task_module._encode_arc_query_episodes_batched(episodes)
+
+    for expected, actual in zip(scalar, batched, strict=True):
+        assert actual.events.dtype == expected.events.dtype == np.float32
+        assert actual.events.tobytes() == expected.events.tobytes()
+        assert actual.events.flags.writeable is False
+        assert actual.valid_event_count == expected.valid_event_count
+        assert actual.query_start == expected.query_start
+        assert actual.query_stop == expected.query_stop
+        assert actual.demonstration_spans == expected.demonstration_spans
+        assert actual.task_index == expected.task_index
+        assert actual.query_index == expected.query_index
+        assert actual.task_fingerprint == expected.task_fingerprint
+        assert actual.target == expected.target
+
+
+def test_batched_training_encoder_matches_scalar_at_full_arc_capacity() -> None:
+    grid = ArcGrid(np.arange(900, dtype=np.int32).reshape(30, 30) % 10)
+    pair = ArcPair(grid, grid)
+    task = ArcTask(train=(pair,) * 10, test=(pair,))
+    episodes = query_episodes(task)
+
+    scalar = tuple(encode_arc_query_episode(episode) for episode in episodes)
+    batched = task_module._encode_arc_query_episodes_batched(episodes)
+
+    assert len(batched) == 1
+    assert batched[0].events.tobytes() == scalar[0].events.tobytes()
+    assert batched[0].valid_event_count == scalar[0].valid_event_count == 330
+    assert batched[0].query_stop == scalar[0].query_stop == 330
+
+
+def test_batched_training_encoder_matches_scalar_at_minimum_capacity() -> None:
+    pair = ArcPair(ArcGrid(((8,),)), ArcGrid(((3,),)))
+    task = ArcTask(train=(pair,), test=(pair,))
+    config = RowEventConfig(max_demonstrations=1, max_grid_size=1)
+    episode = query_episodes(task)[0]
+
+    scalar = encode_arc_query_episode(episode, config)
+    batched = task_module._encode_arc_query_episodes_batched((episode,), config)
+
+    assert batched[0].events.tobytes() == scalar.events.tobytes()
+    assert batched[0].valid_event_count == scalar.valid_event_count == 2
+    assert batched[0].query_stop == scalar.query_stop == 2
+
+
+def test_batched_training_encoder_preserves_target_free_metadata_and_rejects_bad_rows() -> None:
+    episode = query_episodes(_task(target=False), task_index=3)[0]
+    encoded = task_module._encode_arc_query_episodes_batched((episode,))[0]
+
+    assert encoded.target is None
+    assert encoded.task_index == episode.task_index == 3
+    assert encoded.query_index == episode.query_index
+    assert encoded.task_fingerprint == episode.task_fingerprint
+
+    with pytest.raises(ValueError, match="task_index"):
+        task_module._encode_arc_query_episodes_batched((replace(episode, task_index=-1),))
+    with pytest.raises(ValueError, match="grid shapes.*capacity"):
+        task_module._encode_arc_query_episodes_batched(
+            (episode,), RowEventConfig(max_grid_size=1)
+        )
+    missing_output = replace(
+        episode,
+        demonstrations=(ArcPair(episode.demonstrations[0].input, None),),
+    )
+    with pytest.raises(ValueError, match="demonstration output"):
+        task_module._encode_arc_query_episodes_batched((missing_output,))
+
+
 def test_arc_query_episode_encoding_does_not_require_official_query_label() -> None:
     episode = query_episodes(_task(target=False), task_index=3)[0]
 

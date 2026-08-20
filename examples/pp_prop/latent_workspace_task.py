@@ -1978,6 +1978,272 @@ def encode_arc_query_episode(
     )
 
 
+def _encode_side_batch(
+    events: FloatArray,
+    grids: Sequence[ArcGrid | None],
+    heights: NDArray[np.int32],
+    widths: NDArray[np.int32],
+    position_bases: NDArray[np.int32],
+    *,
+    is_output: bool,
+    config: RowEventConfig,
+) -> None:
+    """Write one input or output side into a batch of row events."""
+
+    batch_size = len(grids)
+    values = np.zeros(
+        (batch_size, config.max_grid_size, config.max_grid_size), dtype=np.int32
+    )
+    for batch_index, grid in enumerate(grids):
+        if grid is not None:
+            values[batch_index, : grid.height, : grid.width] = grid.as_array()
+
+    rows = np.arange(config.max_grid_size, dtype=np.int32)
+    active_rows = rows[None, :] < heights[:, None]
+    batch_indices, row_indices = np.nonzero(active_rows)
+    positions = position_bases[batch_indices] + row_indices
+    side_offset = 1 if is_output else 0
+    event_normal_offset = 3 if is_output else 1
+    event_height_slice = (
+        config.output_height_slice if is_output else config.input_height_slice
+    )
+    event_width_slice = (
+        config.output_width_slice if is_output else config.input_width_slice
+    )
+    event_mask_slice = (
+        config.output_mask_slice if is_output else config.input_mask_slice
+    )
+    event_color_slice = (
+        config.output_color_slice if is_output else config.input_color_slice
+    )
+    events[batch_indices, positions, config.side_valid_slice.start + side_offset] = 1.0
+    events[
+        batch_indices,
+        positions,
+        config.normalized_slice.start + event_normal_offset,
+    ] = heights[batch_indices] / config.max_grid_size
+    events[
+        batch_indices,
+        positions,
+        config.normalized_slice.start + event_normal_offset + 1,
+    ] = widths[batch_indices] / config.max_grid_size
+    events[
+        batch_indices,
+        positions,
+        event_height_slice.start + heights[batch_indices] - 1,
+    ] = 1.0
+    events[
+        batch_indices,
+        positions,
+        event_width_slice.start + widths[batch_indices] - 1,
+    ] = 1.0
+
+    columns = np.arange(config.max_grid_size, dtype=np.int32)
+    row_batch, row_indices_for_mask = np.nonzero(active_rows)
+    row_positions = position_bases[row_batch] + row_indices_for_mask
+    events[
+        row_batch[:, None],
+        row_positions[:, None],
+        event_mask_slice.start + columns[None, :],
+    ] = columns[None, :] < widths[row_batch, None]
+    active_cells = active_rows[:, :, None] & (
+        columns[None, None, :] < widths[:, None, None]
+    )
+    cell_batch, cell_rows, cell_columns = np.nonzero(active_cells)
+    cell_positions = position_bases[cell_batch] + cell_rows
+    colors = values[cell_batch, cell_rows, cell_columns]
+    events[
+        cell_batch,
+        cell_positions,
+        event_color_slice.start + cell_columns * config.color_count + colors,
+    ] = 1.0
+
+
+def _encode_arc_query_episodes_batched(
+    episodes: Sequence[ArcQueryEpisode],
+    config: RowEventConfig = RowEventConfig(),
+) -> tuple[EncodedQueryEpisode, ...]:
+    """Encode training episodes with one direct batched NumPy construction.
+
+    The scalar :func:`encode_arc_query_episode` remains the reference path. This
+    private producer is used only by the training stream; it writes the same
+    fixed blocks and feature offsets into a batch tensor before wrapping each
+    row in the immutable public representation.
+
+    Parameters
+    ----------
+    episodes
+        Ordered target-free episodes to encode.
+    config
+        Static demonstration, grid, and feature capacities.
+
+    Returns
+    -------
+    tuple of EncodedQueryEpisode
+        Encoded episodes in exactly the supplied order.
+
+    Raises
+    ------
+    ValueError
+        If any episode violates the same capacity contract as the scalar
+        encoder.
+    """
+
+    ordered = tuple(episodes)
+    if not ordered:
+        return ()
+    batch_size = len(ordered)
+    for episode in ordered:
+        if (
+            isinstance(episode.task_index, bool)
+            or not isinstance(episode.task_index, (int, np.integer))
+            or episode.task_index < 0
+        ):
+            raise ValueError("task_index must be a non-negative integer")
+        if len(episode.demonstrations) > config.max_demonstrations:
+            raise ValueError(
+                f"task has {len(episode.demonstrations)} demonstrations, exceeds "
+                f"capacity {config.max_demonstrations}"
+            )
+        all_grids = [episode.query_input]
+        for pair in episode.demonstrations:
+            if pair.output is None:
+                raise ValueError("encoded demonstration output is required")
+            all_grids.extend((pair.input, pair.output))
+        oversized = [
+            f"{grid.height}x{grid.width}"
+            for grid in all_grids
+            if grid.height > config.max_grid_size or grid.width > config.max_grid_size
+        ]
+        if oversized:
+            raise ValueError(
+                f"grid shapes {oversized} exceed row-event capacity "
+                f"{config.max_grid_size}"
+            )
+
+    events = np.zeros(
+        (batch_size, config.max_events, config.input_width), dtype=np.float32
+    )
+    row_indices = np.arange(config.max_grid_size, dtype=np.int32)
+    demonstration_lengths = np.zeros(
+        (batch_size, config.max_demonstrations), dtype=np.int32
+    )
+    for demonstration_index in range(config.max_demonstrations):
+        input_grids: list[ArcGrid | None] = []
+        output_grids: list[ArcGrid | None] = []
+        input_heights = np.zeros((batch_size,), dtype=np.int32)
+        input_widths = np.zeros((batch_size,), dtype=np.int32)
+        output_heights = np.zeros((batch_size,), dtype=np.int32)
+        output_widths = np.zeros((batch_size,), dtype=np.int32)
+        for batch_index, episode in enumerate(ordered):
+            if demonstration_index < len(episode.demonstrations):
+                pair = episode.demonstrations[demonstration_index]
+                assert pair.output is not None
+                input_grids.append(pair.input)
+                output_grids.append(pair.output)
+                input_heights[batch_index] = pair.input.height
+                input_widths[batch_index] = pair.input.width
+                output_heights[batch_index] = pair.output.height
+                output_widths[batch_index] = pair.output.width
+            else:
+                input_grids.append(None)
+                output_grids.append(None)
+        lengths = np.maximum(input_heights, output_heights)
+        demonstration_lengths[:, demonstration_index] = lengths
+        valid_rows = row_indices[None, :] < lengths[:, None]
+        batch_indices, rows = np.nonzero(valid_rows)
+        positions = demonstration_index * config.max_grid_size + rows
+        events[batch_indices, positions, config.valid_slice.start] = 1.0
+        events[batch_indices, positions, config.phase_slice.start] = 1.0
+        events[
+            batch_indices,
+            positions,
+            config.demonstration_slice.start + demonstration_index,
+        ] = 1.0
+        events[
+            batch_indices,
+            positions,
+            config.normalized_slice.start,
+        ] = (rows + 1) / config.max_grid_size
+        events[
+            batch_indices,
+            positions,
+            config.row_index_slice.start + rows,
+        ] = 1.0
+        position_bases = np.full(
+            (batch_size,), demonstration_index * config.max_grid_size, dtype=np.int32
+        )
+        _encode_side_batch(
+            events,
+            input_grids,
+            input_heights,
+            input_widths,
+            position_bases,
+            is_output=False,
+            config=config,
+        )
+        _encode_side_batch(
+            events,
+            output_grids,
+            output_heights,
+            output_widths,
+            position_bases,
+            is_output=True,
+            config=config,
+        )
+
+    query_heights = np.asarray(
+        [episode.query_input.height for episode in ordered], dtype=np.int32
+    )
+    query_widths = np.asarray(
+        [episode.query_input.width for episode in ordered], dtype=np.int32
+    )
+    query_start = config.max_demonstrations * config.max_grid_size
+    query_valid = row_indices[None, :] < query_heights[:, None]
+    batch_indices, rows = np.nonzero(query_valid)
+    positions = query_start + rows
+    events[batch_indices, positions, config.valid_slice.start] = 1.0
+    events[batch_indices, positions, config.phase_slice.start + 1] = 1.0
+    events[batch_indices, positions, config.normalized_slice.start] = (
+        rows + 1
+    ) / config.max_grid_size
+    events[batch_indices, positions, config.row_index_slice.start + rows] = 1.0
+    _encode_side_batch(
+        events,
+        [episode.query_input for episode in ordered],
+        query_heights,
+        query_widths,
+        np.full((batch_size,), query_start, dtype=np.int32),
+        is_output=False,
+        config=config,
+    )
+
+    valid_event_counts = np.sum(demonstration_lengths, axis=1) + query_heights
+    result: list[EncodedQueryEpisode] = []
+    for batch_index, episode in enumerate(ordered):
+        result.append(
+            EncodedQueryEpisode(
+                events=events[batch_index],
+                valid_event_count=int(valid_event_counts[batch_index]),
+                query_start=query_start,
+                query_stop=query_start + int(query_heights[batch_index]),
+                demonstration_spans=tuple(
+                    (
+                        demonstration_index * config.max_grid_size,
+                        (demonstration_index + 1) * config.max_grid_size,
+                    )
+                    for demonstration_index in range(len(episode.demonstrations))
+                ),
+                task_index=int(episode.task_index),
+                query_index=int(episode.query_index),
+                task_id=episode.task_id,
+                task_fingerprint=episode.task_fingerprint,
+                target=episode.target,
+            )
+        )
+    return tuple(result)
+
+
 def encode_task_queries(
     task: ArcTask,
     config: RowEventConfig = RowEventConfig(),

@@ -24,6 +24,7 @@ import threading
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from numbers import Integral, Real
 from typing import Any, Callable, Iterable, Iterator, Literal, Mapping, Sequence
 
@@ -82,6 +83,7 @@ try:
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
+        _encode_arc_query_episodes_batched,
         encode_query_episode,
         leave_one_demonstration_out_episodes,
         load_dataset_source,
@@ -135,6 +137,7 @@ except ModuleNotFoundError:
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
+        _encode_arc_query_episodes_batched,
         encode_query_episode,
         leave_one_demonstration_out_episodes,
         load_dataset_source,
@@ -146,6 +149,7 @@ DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
+SparseBackend = Literal["default", "jax_raw"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -289,6 +293,9 @@ class ExperimentConfig:
         schedule in one chunk, reproducing an unchunked run exactly. Any other
         value must divide ``training_updates`` so that every chunk compiles to
         the same scan length.
+    runtime_profile : bool
+        Emit diagnostic phase and pipeline timing. Profiling synchronizes
+        device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
         Adam rate and global gradient clipping norm.
     balanced_color_loss : bool
@@ -297,6 +304,9 @@ class ExperimentConfig:
     decoder_mode : {"legacy_cp", "row_refinement"}
         Explicit output representation. Production and CLI defaults use learned
         row-wise refinement; legacy CP remains available only when named.
+    sparse_backend : {"default", "jax_raw"}
+        CSR execution backend. ``"default"`` preserves the brainevent default;
+        ``"jax_raw"`` is an explicit benchmarkable backend selection.
     adaptation_learning_rate : float
         Learning rate for the optional task-local adaptation diagnostic. It is
         ignored by the default shared-model evaluation.
@@ -350,6 +360,7 @@ class ExperimentConfig:
     training_batch_size: int = 1
     training_bank_size: int = 0
     training_workers: int = 4
+    runtime_profile: bool = False
     learning_rate: float = 1e-4
     adaptation_learning_rate: float = 5e-5
     adaptation_epochs: int = 2
@@ -369,6 +380,7 @@ class ExperimentConfig:
     structural_only: bool = False
     primary_candidate_mode: PrimaryCandidateMode = "model_only"
     decoder_mode: DecoderMode = "row_refinement"
+    sparse_backend: SparseBackend = "default"
 
     def __post_init__(self) -> None:
         for name, minimum in (
@@ -405,6 +417,8 @@ class ExperimentConfig:
             )
         if self.decoder_mode not in ("legacy_cp", "row_refinement"):
             raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+        if self.sparse_backend not in ("default", "jax_raw"):
+            raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
@@ -515,6 +529,8 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
+        runtime_profile: bool = False,
+        sparse_backend: SparseBackend = "default",
     ) -> "ExperimentConfig":
         """Return a reduced complete-pipeline configuration.
 
@@ -535,6 +551,10 @@ class ExperimentConfig:
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
             Explicit decoder selected by the bounded smoke run.
+        runtime_profile : bool
+            Emit diagnostic phase and pipeline timing.
+        sparse_backend : {"default", "jax_raw"}
+            CSR execution backend.
 
         Returns
         -------
@@ -555,6 +575,8 @@ class ExperimentConfig:
             memory_decay=memory_decay,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
+            runtime_profile=runtime_profile,
+            sparse_backend=sparse_backend,
             max_demonstrations=4,
             latent_steps=60,
             training_updates=3,
@@ -624,6 +646,34 @@ class _TrainingTensors:
     base_task_fingerprints: tuple[str, ...] = ()
     source_names: tuple[str, ...] = ()
     held_out_demonstration_indices: tuple[int, ...] = ()
+
+
+@dataclass
+class _TrainingProfile:
+    """Diagnostic timing accumulated at the producer/consumer boundary."""
+
+    chunk_count: int = 0
+    producer_encoding_seconds: float = 0.0
+    consumer_wait_seconds: float = 0.0
+    host_to_device_staging_seconds: float = 0.0
+    first_call_compilation_seconds: float = 0.0
+    first_call_device_compute_seconds: float = 0.0
+    steady_state_device_compute_seconds: float = 0.0
+    host_result_copy_seconds: float = 0.0
+
+    def to_dict(self) -> dict[str, object]:
+        """Return JSON-safe timing evidence."""
+
+        return {
+            "chunk_count": self.chunk_count,
+            "producer_encoding_seconds": self.producer_encoding_seconds,
+            "consumer_wait_seconds": self.consumer_wait_seconds,
+            "host_to_device_staging_seconds": self.host_to_device_staging_seconds,
+            "first_call_compilation_seconds": self.first_call_compilation_seconds,
+            "first_call_device_compute_seconds": self.first_call_device_compute_seconds,
+            "steady_state_device_compute_seconds": self.steady_state_device_compute_seconds,
+            "host_result_copy_seconds": self.host_result_copy_seconds,
+        }
 
 
 @dataclass(frozen=True)
@@ -1178,6 +1228,14 @@ def _without_official_test_targets(task: ArcTask) -> ArcTask:
     )
 
 
+@lru_cache(maxsize=4096)
+def _cached_base_training_task(task: ArcTask) -> tuple[ArcTask, str]:
+    """Return the target-free task and stable fingerprint for one source task."""
+
+    base_task = _without_official_test_targets(task)
+    return base_task, canonical_task_fingerprint(base_task)
+
+
 def _training_row(
     origin: _OriginTask,
     config: ExperimentConfig,
@@ -1190,7 +1248,7 @@ def _training_row(
 ) -> dict[str, Any]:
     """Encode one augmented leave-one-demonstration-out training update."""
 
-    base_task = _without_official_test_targets(origin.task)
+    base_task, base_fingerprint = _cached_base_training_task(origin.task)
     task = (
         base_task
         if plumbing_only
@@ -1227,9 +1285,54 @@ def _training_row(
         "colors": padded[None],
         "masks": mask,
         "task_fingerprints": canonical_task_fingerprint(task),
-        "base_task_fingerprints": canonical_task_fingerprint(base_task),
+        "base_task_fingerprints": base_fingerprint,
         "source_names": origin.source_name,
         "held_out_demonstration_index": held_out_index,
+    }
+
+
+def _training_row_from_encoded(
+    descriptor: Mapping[str, Any],
+    encoded: EncodedQueryEpisode,
+    config: ExperimentConfig,
+    row_config: RowEventConfig,
+) -> dict[str, Any]:
+    """Build one training row from a pre-encoded batched episode."""
+
+    sequence, advances, query_checkpoint = _compact_training_stream(
+        encoded,
+        config,
+        row_config,
+        sequence_length=int(descriptor["sequence_length"]),
+    )
+    effort = int(descriptor["effort"])
+    mask = np.zeros((sequence.shape[0],), dtype=np.float32)
+    terminal = query_checkpoint + effort
+    if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
+        raise ValueError("terminal effort exceeds packed sequence capacity")
+    if config.decoder_mode == "row_refinement":
+        mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
+    else:
+        depth_count = effort + 1
+        mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
+    target = encoded.target
+    if target is None:
+        raise ValueError("batched training episode lacks a target")
+    padded = np.zeros((30, 30), dtype=np.int32)
+    padded[: target.height, : target.width] = target.as_array()
+    return {
+        "events": sequence[:, None, :],
+        "advances": advances[:, None],
+        "heights": target.height - 1,
+        "widths": target.width - 1,
+        "colors": padded[None],
+        "masks": mask,
+        "task_fingerprints": descriptor["task_fingerprint"],
+        "base_task_fingerprints": descriptor["base_task_fingerprint"],
+        "source_names": descriptor["source_name"],
+        "held_out_demonstration_index": int(
+            descriptor["held_out_demonstration_index"]
+        ),
     }
 
 
@@ -1374,6 +1477,31 @@ def _materialize_training_row(job: _TrainingRowJob) -> dict[str, Any]:
     )
 
 
+def _materialize_training_episode(job: _TrainingRowJob) -> dict[str, Any]:
+    """Prepare one deterministic episode descriptor for batched encoding."""
+
+    base_task, base_fingerprint = _cached_base_training_task(job.origin.task)
+    rng = brainstate.random.RandomState(job.seed)
+    task = (
+        base_task
+        if job.plumbing_only
+        else augment_training_task(base_task, rng, role="train")
+    )
+    episodes = leave_one_demonstration_out_episodes(task)
+    held_out_index = int(np.asarray(rng.randint(0, len(episodes))))
+    return {
+        "episode": episodes[held_out_index],
+        "task_fingerprint": canonical_task_fingerprint(task),
+        "base_task_fingerprint": base_fingerprint,
+        "source_name": job.origin.source_name,
+        "held_out_demonstration_index": held_out_index,
+        "effort": job.effort,
+        "config": job.config,
+        "row_config": job.row_config,
+        "sequence_length": job.sequence_length,
+    }
+
+
 def _ordered_training_rows(
     jobs: Iterable[_TrainingRowJob], workers: int
 ) -> Iterator[dict[str, Any]]:
@@ -1417,6 +1545,45 @@ def _ordered_training_rows(
             except StopIteration:
                 return
             pending[job.ordinal] = executor.submit(_materialize_training_row, job)
+
+    try:
+        fill()
+        while pending:
+            future = pending.pop(next_ordinal)
+            yield future.result()
+            next_ordinal += 1
+            fill()
+    except BaseException:
+        for future in pending.values():
+            future.cancel()
+        raise
+    finally:
+        executor.shutdown(wait=True, cancel_futures=True)
+
+
+def _ordered_training_episodes(
+    jobs: Iterable[_TrainingRowJob], workers: int
+) -> Iterator[dict[str, Any]]:
+    """Materialize deterministic episode descriptors in ordinal order."""
+
+    if workers == 1:
+        for job in jobs:
+            yield _materialize_training_episode(job)
+        return
+    executor = concurrent.futures.ThreadPoolExecutor(
+        max_workers=workers, thread_name_prefix="example21-training-row"
+    )
+    pending: dict[int, concurrent.futures.Future[dict[str, Any]]] = {}
+    source = iter(jobs)
+    next_ordinal = 0
+
+    def fill() -> None:
+        while len(pending) < 2 * workers:
+            try:
+                job = next(source)
+            except StopIteration:
+                return
+            pending[job.ordinal] = executor.submit(_materialize_training_episode, job)
 
     try:
         fill()
@@ -1482,6 +1649,7 @@ def _training_chunks(
         sequence_length=sequence_length,
     )
     size = config.training_chunk_size or config.training_updates
+
     rows: list[dict[str, Any]] = []
     for update_index, effort in enumerate(efforts):
         picks = task_indices[update_index * batch : (update_index + 1) * batch]
@@ -1516,7 +1684,16 @@ def _training_chunks(
                 )
                 for slot, (task_index, seed) in enumerate(zip(picks, seeds, strict=True))
             ]
-            episode_rows = list(_ordered_training_rows(jobs, config.training_workers))
+            descriptors = list(
+                _ordered_training_episodes(jobs, config.training_workers)
+            )
+            encoded_episodes = _encode_arc_query_episodes_batched(
+                tuple(descriptor["episode"] for descriptor in descriptors), row_config
+            )
+            episode_rows = [
+                _training_row_from_encoded(descriptor, encoded, config, row_config)
+                for descriptor, encoded in zip(descriptors, encoded_episodes, strict=True)
+            ]
         rows.append(_merge_training_rows(episode_rows))
         if len(rows) == size:
             start = update_index + 1 - size
@@ -1536,7 +1713,9 @@ class _ProducerFailure:
 _PREFETCH_COMPLETE = object()
 
 
-def _prefetched_training_chunks(chunks: Iterable[Any]) -> Iterator[Any]:
+def _prefetched_training_chunks(
+    chunks: Iterable[Any], profile: _TrainingProfile | None = None
+) -> Iterator[Any]:
     """Yield items from a one-ahead asynchronous CPU producer.
 
     The producer may advance the source exactly once beyond the item currently
@@ -1547,6 +1726,9 @@ def _prefetched_training_chunks(chunks: Iterable[Any]) -> Iterator[Any]:
     ----------
     chunks
         Ordered items to prepare.
+    profile
+        Optional diagnostic accumulator. When provided, producer construction
+        and consumer queue wait are timed without changing item order.
 
     Yields
     ------
@@ -1578,11 +1760,17 @@ def _prefetched_training_chunks(chunks: Iterable[Any]) -> Iterator[Any]:
         completed = False
         try:
             while await_permit():
+                encoding_started = time.perf_counter()
                 try:
                     item = next(source)
                 except StopIteration:
                     completed = True
                     break
+                finally:
+                    if profile is not None:
+                        profile.producer_encoding_seconds += (
+                            time.perf_counter() - encoding_started
+                        )
                 if not publish(item):
                     return
         except BaseException as error:
@@ -1608,7 +1796,10 @@ def _prefetched_training_chunks(chunks: Iterable[Any]) -> Iterator[Any]:
     worker.start()
     try:
         while True:
+            wait_started = time.perf_counter()
             item = pending.get()
+            if profile is not None:
+                profile.consumer_wait_seconds += time.perf_counter() - wait_started
             advance_permit.release()
             if item is _PREFETCH_COMPLETE:
                 return
@@ -1702,6 +1893,9 @@ def _model_config(
         "event_valid_index": row_config.valid_slice.start,
         "decoder_mode": config.decoder_mode,
         "refinement_steps": config.latent_steps,
+        "sparse_backend": (
+            None if config.sparse_backend == "default" else config.sparse_backend
+        ),
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
@@ -1934,6 +2128,7 @@ def _train_chunks(
     chunks: Iterable[_TrainingTensors],
     train_all: Any,
     on_chunk: Callable[[int], None] | None = None,
+    profile: _TrainingProfile | None = None,
 ) -> tuple[list[float], _TrainingSchedule]:
     """Stage each chunk on device in turn and accumulate the whole schedule.
 
@@ -1949,19 +2144,47 @@ def _train_chunks(
             sequence_length = int(chunk.events.shape[1])
         elif int(chunk.events.shape[1]) != sequence_length:
             raise ValueError("training chunks disagree on packed sequence length")
-        losses.extend(
-            float(value)
-            for value in np.asarray(
-                train_all(
-                    jnp.asarray(chunk.events),
-                    jnp.asarray(chunk.advances),
-                    jnp.asarray(chunk.heights),
-                    jnp.asarray(chunk.widths),
-                    jnp.asarray(chunk.colors),
-                    jnp.asarray(chunk.masks),
-                )
+        if profile is None:
+            output = train_all(
+                jnp.asarray(chunk.events),
+                jnp.asarray(chunk.advances),
+                jnp.asarray(chunk.heights),
+                jnp.asarray(chunk.widths),
+                jnp.asarray(chunk.colors),
+                jnp.asarray(chunk.masks),
             )
-        )
+            values = np.asarray(output)
+        else:
+            staging_started = time.perf_counter()
+            staged = (
+                jnp.asarray(chunk.events),
+                jnp.asarray(chunk.advances),
+                jnp.asarray(chunk.heights),
+                jnp.asarray(chunk.widths),
+                jnp.asarray(chunk.colors),
+                jnp.asarray(chunk.masks),
+            )
+            profile.host_to_device_staging_seconds += (
+                time.perf_counter() - staging_started
+            )
+            call_started = time.perf_counter()
+            output = train_all(*staged)
+            call_seconds = time.perf_counter() - call_started
+            if index == 0:
+                profile.first_call_compilation_seconds = call_seconds
+            compute_started = time.perf_counter()
+            jax.block_until_ready(output)
+            compute_seconds = time.perf_counter() - compute_started
+            if index == 0:
+                profile.first_call_device_compute_seconds = compute_seconds
+            else:
+                profile.steady_state_device_compute_seconds += compute_seconds
+            copy_started = time.perf_counter()
+            values = np.asarray(output)
+            profile.host_result_copy_seconds += time.perf_counter() - copy_started
+        losses.extend(float(value) for value in values)
+        if profile is not None:
+            profile.chunk_count += 1
         schedule = schedule.extended(chunk)
         if on_chunk is not None:
             on_chunk(index)
@@ -2082,6 +2305,7 @@ def _train_model(
     chunks: Iterable[_TrainingTensors],
     config: ExperimentConfig,
     on_chunk: Callable[[int], None] | None = None,
+    profile: _TrainingProfile | None = None,
 ) -> dict[str, object]:
     learner = compile_pp_prop(model)
     compiler_report = _compiler_evidence(learner)
@@ -2117,6 +2341,7 @@ def _train_model(
                 str(value): 0 for value in config.training_efforts
             },
             "losses": [],
+            "runtime_profile": None if profile is None else profile.to_dict(),
         }
     optimizer = braintools.optim.Adam(lr=config.learning_rate)
     optimizer.register_trainable_weights(learner.param_states)
@@ -2179,7 +2404,7 @@ def _train_model(
         )
 
     losses, schedule = _train_chunks(
-        _prefetched_training_chunks(chunks), train_all, on_chunk
+        _prefetched_training_chunks(chunks, profile), train_all, on_chunk, profile
     )
     after_snapshot = parameter_snapshot(model)
     after = _tree_digest(after_snapshot)
@@ -2216,9 +2441,11 @@ def _train_model(
             "max_buffered_chunks": 1,
         },
         "training_workers": config.training_workers,
+        "training_encoder": "bounded_batched_numpy_with_scalar_oracle",
         "checkpoint_every_chunks": config.checkpoint_every,
         "training_holdout_tasks": config.training_holdout_tasks,
         "training_row_max_inflight": 2 * config.training_workers,
+        "runtime_profile": None if profile is None else profile.to_dict(),
         "balanced_color_loss": config.balanced_color_loss,
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
@@ -5011,6 +5238,14 @@ def _software_report(
             "XLA_PYTHON_CLIENT_MEM_FRACTION"
         ),
         "pre_device_gpu_environment": dict(pre_device_gpu_environment),
+        "provenance": {
+            "image_digest": environment.get("EXAMPLE21_IMAGE_DIGEST")
+            or environment.get("BRAINTRACE_IMAGE_DIGEST"),
+            "source_revision": environment.get("EXAMPLE21_SOURCE_REVISION"),
+            "source_dirty": environment.get("EXAMPLE21_SOURCE_DIRTY"),
+            "arc_revision": environment.get("EXAMPLE21_ARC_REVISION")
+            or environment.get("ARC_AGI_1_COMMIT"),
+        },
     }
 
 
@@ -5036,6 +5271,10 @@ def _implementation_report() -> dict[str, object]:
         "file_sha256": files,
         "source_revision": os.environ.get("EXAMPLE21_SOURCE_REVISION"),
         "source_dirty": os.environ.get("EXAMPLE21_SOURCE_DIRTY"),
+        "image_digest": os.environ.get("EXAMPLE21_IMAGE_DIGEST")
+        or os.environ.get("BRAINTRACE_IMAGE_DIGEST"),
+        "arc_revision": os.environ.get("EXAMPLE21_ARC_REVISION")
+        or os.environ.get("ARC_AGI_1_COMMIT"),
     }
 
 
@@ -5194,6 +5433,7 @@ def _render_report(result: dict[str, object]) -> str:
         "",
         f"Seed: {configuration.get('seed', 'unreported')}",
         f"Runtime: {runtime:.3f} seconds",
+        f"Runtime profile: {result.get('runtime_profile', 'disabled')}.",
         (
             f"Device: requested={device.get('requested', 'unreported')}, "
             f"actual={device.get('platform', 'unreported')} "
@@ -5736,6 +5976,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         JSON-safe complete experiment evidence.
     """
     started = time.perf_counter()
+    phase_seconds: dict[str, float] = {}
+    training_profile = _TrainingProfile() if config.runtime_profile else None
     _emit_progress("run", 0, 1, started)
     environment_snapshot = dict(os.environ)
     if config.device == "gpu":
@@ -5758,11 +6000,13 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         _emit_progress("data", 0, 1, data_started)
         data = _load_data(config)
         _emit_progress("data", 1, 1, data_started)
+        phase_seconds["data"] = time.perf_counter() - data_started
         rows = _row_config(config)
         model_started = time.perf_counter()
         _emit_progress("model", 0, 1, model_started)
         model = _make_model(config, rows, batch_size=1, device=device)
         _emit_progress("model", 1, 1, model_started)
+        phase_seconds["model"] = time.perf_counter() - model_started
         checkpoint = config.parameter_checkpoint
         training_started = time.perf_counter()
         if checkpoint is not None and checkpoint.exists():
@@ -5795,6 +6039,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 _training_chunks(data, config, rows),
                 config,
                 on_chunk,
+                training_profile,
             )
             if initial_digest is not None:
                 training["initial_checkpoint"] = str(config.initial_checkpoint)
@@ -5806,10 +6051,12 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 training["parameter_checkpoint_sha256"] = _write_parameter_checkpoint(
                     model, checkpoint
                 )
+        phase_seconds["training"] = time.perf_counter() - training_started
         evaluation_started = time.perf_counter()
         _emit_progress("evaluation", 0, 1, evaluation_started)
         evaluation = _evaluate(model, data, config, rows, device)
         _emit_progress("evaluation", 1, 1, evaluation_started)
+        phase_seconds["evaluation"] = time.perf_counter() - evaluation_started
     finally:
         monitor_report = monitor.stop() if monitor is not None else None
     memory_stats = _device_memory_stats(device)
@@ -5862,6 +6109,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     model_report = {
         "neuron_count": model.neuron_count,
         "recurrent_edge_count": model.recurrent_edge_count,
+        "sparse_backend": config.sparse_backend,
         "slot_count": model.slot_count,
         "neurons_per_slot": 64,
         "input_width": rows.input_width,
@@ -5900,6 +6148,18 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "evaluation": evaluation,
         "runtime_seconds": time.perf_counter() - started,
     }
+    if config.runtime_profile:
+        result["runtime_profile"] = {
+            "enabled": True,
+            "phase_seconds": phase_seconds,
+            "training": (
+                {} if training_profile is None else training_profile.to_dict()
+            ),
+            "synchronization": {
+                "diagnostic_device_barriers": True,
+                "final_throughput_measurement": "run without --profile",
+            },
+        }
     result["qualification"] = _qualification(
         config, data, training, evaluation, device_report, model_report
     )
@@ -5921,6 +6181,11 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     report_path.write_text(_render_report(result), encoding="utf-8")
     _plot(result, figure_path)
     _emit_progress("artifacts", 1, 1, artifacts_started)
+    if config.runtime_profile:
+        phase_seconds["artifacts"] = time.perf_counter() - artifacts_started
+        result["runtime_profile"]["phase_seconds"] = phase_seconds
+        report_path.write_text(_render_report(result), encoding="utf-8")
+        result_path.write_bytes(msgspec.json.encode(result))
     _emit_progress("run", 1, 1, started)
     return result
 
@@ -5944,6 +6209,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-batch-size", type=int, default=1)
     parser.add_argument("--training-bank-size", type=int, default=0)
     parser.add_argument("--training-workers", type=int, default=4)
+    parser.add_argument("--profile", action="store_true")
+    parser.add_argument(
+        "--sparse-backend", choices=("default", "jax_raw"), default="default"
+    )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=2)
@@ -5984,6 +6253,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             memory_decay=args.memory_decay,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
+            runtime_profile=args.profile,
+            sparse_backend=args.sparse_backend,
         )
     return ExperimentConfig(
         source_manifest=args.source_manifest,
@@ -6001,6 +6272,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_batch_size=args.training_batch_size,
         training_bank_size=args.training_bank_size,
         training_workers=args.training_workers,
+        runtime_profile=args.profile,
+        sparse_backend=args.sparse_backend,
         adaptation_learning_rate=args.adaptation_learning_rate,
         adaptation_epochs=args.adaptation_epochs,
         task_local_adaptation=args.task_local_adaptation,
