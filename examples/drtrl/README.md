@@ -39,5 +39,5 @@ See `docs/tutorials/drtrl.ipynb`.
 ## Tests
 
 ```bash
-pytest examples/drtrl/tests -v
+pytest examples/drtrl -v
 ```

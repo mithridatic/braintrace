@@ -604,7 +604,7 @@ class TestComputeLearningSignalHook:
         algo = ConcreteVjpAlgorithm(
             _make_gru(),
             config=braintrace.ETraceConfig(learning_signal='random_feedback'),
-            random_feedback_key=jax.random.PRNGKey(0),
+            random_feedback_key=brainstate.random.RandomState(0).value,
         )
         with pytest.raises(RuntimeError, match='silently fall back to symmetric'):
             algo._compute_learning_signal([jnp.ones((2, 3))], args=())

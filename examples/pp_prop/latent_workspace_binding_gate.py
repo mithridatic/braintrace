@@ -270,6 +270,7 @@ def _model_config(config: BindingGateConfig, *, batch_size: int) -> ModelConfig:
         event_valid_index=rows.valid_slice.start,
         context_memory_width=config.context_memory_width,
         memory_decay=config.memory_decay,
+        memory_coding="frozen",
         demonstration_phase_index=rows.phase_slice.start,
         query_phase_index=rows.phase_slice.start + 1,
         input_side_valid_index=rows.side_valid_slice.start,

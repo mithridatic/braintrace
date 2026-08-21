@@ -368,11 +368,11 @@ def _grouped_tanh_rnn_factory(G=2, K=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = jax.random.PRNGKey
+                k = lambda seed: brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed), (G, K, K)))
+                    0.1 * brainstate.random.normal(size=(G, K, K), key=k(seed)))
                 self.win = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed + 1), (n_in, G * K)))
+                    0.1 * brainstate.random.normal(size=(n_in, G * K), key=k(seed + 1)))
                 self.h = brainstate.HiddenState(jnp.zeros((1, G * K)))
 
             def update(self, x):
@@ -411,13 +411,13 @@ class TestGroupedOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = jax.random.PRNGKey
+                    k = lambda seed: brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(0), (G, K, K)))
+                        0.1 * brainstate.random.normal(size=(G, K, K), key=k(0)))
                     self.b = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(1), (G, K)))
+                        0.1 * brainstate.random.normal(size=(G, K), key=k(1)))
                     self.win = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(2), (n_in, G * K)))
+                        0.1 * brainstate.random.normal(size=(n_in, G * K), key=k(2)))
                     self.h = brainstate.HiddenState(jnp.zeros((1, G * K)))
 
                 def update(self, x):
@@ -444,11 +444,11 @@ class TestGroupedOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = jax.random.PRNGKey
+                    k = lambda seed: brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(0), (G, K, K)))
+                        0.1 * brainstate.random.normal(size=(G, K, K), key=k(0)))
                     self.win = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(1), (n_in, G * K)))
+                        0.1 * brainstate.random.normal(size=(n_in, G * K), key=k(1)))
                     self.h = brainstate.HiddenState(jnp.zeros((1, G * K)))
 
                 def update(self, x):

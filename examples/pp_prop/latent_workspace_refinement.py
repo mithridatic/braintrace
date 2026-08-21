@@ -428,6 +428,50 @@ def build_refinement_feedback_event(
     return event
 
 
+def build_latent_row_decode_event(
+    query_grid: jax.Array,
+    query_shape: jax.Array,
+    row_indices: jax.Array,
+    layout: RowRefinementLayout,
+) -> jax.Array:
+    """Build a decoder-only row event without predicted-answer feedback.
+
+    Parameters
+    ----------
+    query_grid, query_shape
+        Frozen target-free query state.
+    row_indices
+        Explicit decoder row indices shaped ``(batch,)``.
+    layout
+        Validated row-event layout.
+
+    Returns
+    -------
+    jax.Array
+        Query and row-index features with every output/feedback feature zero.
+    """
+
+    zero_grid = jnp.zeros_like(query_grid)
+    zero_shape = jnp.zeros_like(query_shape)
+    event = build_refinement_feedback_event(
+        query_grid,
+        query_shape,
+        zero_grid,
+        zero_shape,
+        row_indices,
+        layout,
+    )
+    event = event.at[:, layout.output_side_valid_index].set(0.0)
+    event = event.at[:, layout.normalized_start + 3 : layout.normalized_start + 5].set(
+        0.0
+    )
+    event = event.at[:, layout.output_height_slice].set(0.0)
+    event = event.at[:, layout.output_width_slice].set(0.0)
+    event = event.at[:, layout.output_mask_slice].set(0.0)
+    event = event.at[:, layout.output_color_slice].set(0.0)
+    return event
+
+
 def scatter_answer_rows(
     answer_grid: jax.Array, row_logits: jax.Array, row_indices: jax.Array
 ) -> jax.Array:

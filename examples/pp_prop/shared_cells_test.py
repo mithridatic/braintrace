@@ -11,7 +11,7 @@ import brainunit as u
 def _load_shared():
     spec = importlib.util.spec_from_file_location(
         "_pp_prop_shared",
-        pathlib.Path(__file__).resolve().parents[1] / "_shared.py",
+        pathlib.Path(__file__).resolve().parent / "_shared.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

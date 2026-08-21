@@ -21,6 +21,7 @@ from __future__ import annotations
 import math
 from typing import NamedTuple
 
+import brainstate
 import jax
 import jax.numpy as jnp
 
@@ -126,7 +127,7 @@ def build_spec(
 
         >>> import jax
         >>> from braintrace._quant import build_spec
-        >>> spec = build_spec(jax.random.PRNGKey(0), 256, bits=4)
+        >>> spec = build_spec(brainstate.random.RandomState(0).value, 256, bits=4)
         >>> spec.bits, spec.block
         (4, 64)
     """
@@ -135,7 +136,7 @@ def build_spec(
     stage_one = bits - 1 if use_qjl else bits
     if not 1 <= stage_one <= 4:
         raise ValueError(f'stage-one width {stage_one} is outside 1..4 bits')
-    polar_key, qjl_key = jax.random.split(key)
+    polar_key, qjl_key = brainstate.random.RandomState(key).split_key(2)
     return TurboQuantSpec(
         bits=bits,
         block=block,
@@ -171,8 +172,8 @@ def encode(values: jax.Array, spec: TurboQuantSpec) -> TurboQuantCode:
 
         >>> import jax
         >>> from braintrace._quant import build_spec, encode, decode
-        >>> spec = build_spec(jax.random.PRNGKey(0), 128, bits=4)
-        >>> x = jax.random.normal(jax.random.PRNGKey(1), (4, 128))
+        >>> spec = build_spec(brainstate.random.RandomState(0).value, 128, bits=4)
+        >>> x = brainstate.random.normal(size=(4, 128), key=brainstate.random.RandomState(1).value)
         >>> code = encode(x, spec)
         >>> code.indices.shape
         (4, 128)
@@ -250,8 +251,8 @@ def relative_distortion(values: jax.Array, spec: TurboQuantSpec) -> jax.Array:
 
         >>> import jax
         >>> from braintrace._quant import build_spec, relative_distortion
-        >>> spec = build_spec(jax.random.PRNGKey(0), 4096, bits=4)
-        >>> x = jax.random.normal(jax.random.PRNGKey(1), (2, 4096))
+        >>> spec = build_spec(brainstate.random.RandomState(0).value, 4096, bits=4)
+        >>> x = brainstate.random.normal(size=(2, 4096), key=brainstate.random.RandomState(1).value)
         >>> bool((relative_distortion(x, spec) < 0.25).all())
         True
     """

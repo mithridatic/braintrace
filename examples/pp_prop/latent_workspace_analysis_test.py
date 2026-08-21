@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import itertools
 import json
 import math
 
@@ -136,6 +137,20 @@ def test_output_logits_reject_malformed_heads(
         OutputLogits(**values)
 
 
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ([[1], [2, 3]], "rectangular integer grid"),
+        (np.asarray([[True]]), "non-boolean integer"),
+        (np.asarray([[-1]]), "colors"),
+        (np.asarray([[10]]), "colors"),
+    ],
+)
+def test_decoded_candidate_rejects_invalid_grids(value: object, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        DecodedCandidate(value)
+
+
 def test_decoder_emits_joint_argmax_and_lowest_margin_cell_alternative() -> None:
     first_grid = np.array([[1, 2], [3, 4]])
     logits = _logits(first_grid, second_cell=(1, 0, 9))
@@ -154,7 +169,23 @@ def test_decoder_emits_joint_argmax_and_lowest_margin_cell_alternative() -> None
     json.dumps([candidate.to_dict() for candidate in candidates], allow_nan=False)
 
 
-def test_checkpoint_selection_uses_latest_then_newest_distinct_completed_sweep() -> (
+def test_factorized_log_probability_scores_every_included_cell() -> None:
+    grid = np.array([[1, 2], [3, 4]])
+    logits = _logits(grid)
+    score = analysis._candidate_log_probability(logits, 1, 1, grid)
+    expected = (
+        analysis._log_softmax_choice(logits.height, 1)
+        + analysis._log_softmax_choice(logits.width, 1)
+        + sum(
+            analysis._log_softmax_choice(logits.colors[row, column], int(grid[row, column]))
+            for row in range(2)
+            for column in range(2)
+        )
+    )
+    assert score == pytest.approx(expected)
+
+
+def test_checkpoint_selection_uses_only_latest_completed_sweep() -> (
     None
 ):
     checkpoint_30 = _logits(np.array([[3]]))
@@ -172,17 +203,19 @@ def test_checkpoint_selection_uses_latest_then_newest_distinct_completed_sweep()
     )
 
     np.testing.assert_array_equal(selected[0].candidate.grid, [[9]])
-    np.testing.assert_array_equal(selected[1].candidate.grid, [[6]])
+    np.testing.assert_array_equal(
+        selected[1].candidate.grid, decode_candidates(checkpoint_90)[1].grid
+    )
     assert selected[0].source_checkpoint == 90
     assert selected[0].selection_role == "latest_sweep_joint_argmax"
-    assert selected[1].source_checkpoint == 60
-    assert selected[1].selection_role == "earlier_sweep_joint_argmax"
-    assert selected[1].candidate.changed_decision is None
+    assert selected[1].source_checkpoint == 90
+    assert selected[1].selection_role == "latest_sweep_logit_runner_up"
+    assert selected[1].candidate.changed_decision is not None
     assert selected[0].to_dict()["provenance"] == "model"
     json.dumps([candidate.to_dict() for candidate in selected], allow_nan=False)
 
 
-def test_checkpoint_selection_skips_equal_newer_sweeps_for_an_older_distinct_one() -> (
+def test_checkpoint_selection_never_promotes_an_earlier_distinct_grid() -> (
     None
 ):
     latest = _logits(np.array([[9]]))
@@ -192,9 +225,9 @@ def test_checkpoint_selection_skips_equal_newer_sweeps_for_an_older_distinct_one
         latest_checkpoint=90,
     )
 
-    np.testing.assert_array_equal(selected[1].candidate.grid, [[3]])
-    assert selected[1].source_checkpoint == 30
-    assert selected[1].selection_role == "earlier_sweep_joint_argmax"
+    np.testing.assert_array_equal(selected[1].candidate.grid, decode_candidates(latest)[1].grid)
+    assert selected[1].source_checkpoint == 90
+    assert selected[1].selection_role == "latest_sweep_logit_runner_up"
 
 
 def test_checkpoint_selection_falls_back_to_latest_logit_runner_up() -> None:
@@ -306,7 +339,7 @@ def test_selected_model_candidate_rejects_invalid_metadata(
         )
 
 
-def test_decoder_tie_order_prefers_height_then_width_then_cells() -> None:
+def test_decoder_tie_order_prefers_shape_then_row_major_cells() -> None:
     grid = np.array([[7]])
     logits = _logits(grid)
     height = np.asarray(logits.height).copy()
@@ -318,8 +351,8 @@ def test_decoder_tie_order_prefers_height_then_width_then_cells() -> None:
 
     candidates = decode_candidates(OutputLogits(height, width, colors))
 
-    assert candidates[1].changed_decision == "height"
-    assert np.asarray(candidates[1].grid).shape == (2, 1)
+    assert candidates[1].changed_decision == "shape"
+    assert np.asarray(candidates[1].grid).shape == (1, 2)
 
 
 def test_decoder_can_select_width_runner_up() -> None:
@@ -329,7 +362,7 @@ def test_decoder_can_select_width_runner_up() -> None:
 
     candidates = decode_candidates(OutputLogits(logits.height, width, logits.colors))
 
-    assert candidates[1].changed_decision == "width"
+    assert candidates[1].changed_decision == "shape"
     assert np.asarray(candidates[1].grid).shape == (1, 2)
 
 
@@ -342,6 +375,90 @@ def test_decoder_rejects_invalid_candidate_count(value: object) -> None:
 def test_decoder_rejects_unvalidated_container() -> None:
     with pytest.raises(TypeError, match="OutputLogits"):
         decode_candidates(object())  # type: ignore[arg-type]
+
+
+def test_decode_candidates_ranks_shapes_by_complete_factorized_probability() -> None:
+    height = np.full((30,), -100.0)
+    width = np.full((30,), -100.0)
+    height[:2] = (0.0, 2.0)
+    width[:2] = (0.0, 2.0)
+    colors = np.full((30, 30, 10), -100.0)
+    colors[0, 0, 0] = 100.0
+    colors[0, 1] = 0.0
+    colors[1, 0] = 0.0
+    colors[1, 1] = 0.0
+
+    first, second = decode_candidates(OutputLogits(height, width, colors))
+
+    assert first.grid.shape == (1, 1)
+    assert second.grid.shape == (1, 2)
+    assert first.log_probability > second.log_probability
+    assert second.changed_decision == "shape"
+
+
+def test_decode_candidates_global_top_two_prefers_shape_on_exact_tie() -> None:
+    height = np.full((30,), -100.0)
+    width = np.full((30,), -100.0)
+    height[0] = 0.0
+    width[:2] = (0.0, 0.0)
+    colors = np.full((30, 30, 10), -100.0)
+    colors[0, 0, 0] = 0.0
+    colors[0, 0, 1] = -math.log(10.0)
+    colors[0, 1, 0] = 0.0
+
+    first, second = decode_candidates(OutputLogits(height, width, colors))
+
+    assert first.grid.shape == (1, 1)
+    assert second.grid.shape == (1, 2)
+    assert second.changed_decision == "shape"
+
+
+def test_decode_candidates_matches_exhaustive_tiny_factorized_distributions() -> None:
+    """Global top two must equal explicit enumeration, not a local heuristic."""
+    for seed in range(20):
+        rng = np.random.default_rng(seed)
+        height = np.full((30,), -1.0e9)
+        width = np.full((30,), -1.0e9)
+        height[:2] = rng.normal(size=2)
+        width[:2] = rng.normal(size=2)
+        colors = np.full((30, 30, 10), -1.0e9)
+        colors[:2, :2, :2] = rng.normal(size=(2, 2, 2))
+
+        decoded = decode_candidates(OutputLogits(height, width, colors))
+
+        def log_softmax(values: np.ndarray) -> np.ndarray:
+            maximum = float(np.max(values))
+            return values - (maximum + math.log(float(np.exp(values - maximum).sum())))
+
+        height_logp = log_softmax(height)
+        width_logp = log_softmax(width)
+        color_logp = np.apply_along_axis(log_softmax, -1, colors)
+        enumerated: list[tuple[float, int, int, tuple[int, ...]]] = []
+        for height_value in (1, 2):
+            for width_value in (1, 2):
+                cell_count = height_value * width_value
+                for flat_colors in itertools.product((0, 1), repeat=cell_count):
+                    grid = np.asarray(flat_colors).reshape(height_value, width_value)
+                    score = float(
+                        height_logp[height_value - 1]
+                        + width_logp[width_value - 1]
+                        + sum(
+                            color_logp[row, column, int(grid[row, column])]
+                            for row in range(height_value)
+                            for column in range(width_value)
+                        )
+                    )
+                    enumerated.append(
+                        (score, height_value, width_value, tuple(flat_colors))
+                    )
+        expected = sorted(enumerated, key=lambda item: item[0], reverse=True)[:2]
+        for candidate, (_, height_value, width_value, flat_colors) in zip(
+            decoded, expected, strict=True
+        ):
+            assert candidate.grid.shape == (height_value, width_value)
+            np.testing.assert_array_equal(
+                candidate.grid, np.asarray(flat_colors).reshape(height_value, width_value)
+            )
 
 
 def test_one_wrong_cell_fails_exact_but_preserves_pixel_diagnostic() -> None:
@@ -487,6 +604,46 @@ def test_model_only_completion_requires_exactly_400_expected_tasks() -> None:
     expected_queries.pop("task-399")
 
     with pytest.raises(ValueError, match="exactly 400"):
+        assess_model_only_completion(records, expected_queries)
+
+
+@pytest.mark.parametrize(
+    ("expected", "records", "message"),
+    [
+        (None, [], "mapping"),
+        ({"": 1}, [], "nonempty"),
+        ({"task": 0}, [], "official query"),
+        ({"task": 1}, "not records", "sequence"),
+    ],
+)
+def test_model_only_completion_rejects_malformed_manifest(
+    expected: object, records: object, message: str
+) -> None:
+    if expected is not None and len(expected) < 400:  # type: ignore[arg-type]
+        expected = {
+            **expected,  # type: ignore[misc]
+            **{f"task-{index:03d}": 1 for index in range(400 - len(expected))},  # type: ignore[arg-type]
+        }
+    with pytest.raises(ValueError, match=message):
+        assess_model_only_completion(records, expected)  # type: ignore[arg-type]
+
+
+def test_model_only_completion_rejects_malformed_candidate_provenance() -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+    candidate = records[0]["candidates"][0]
+    candidate.pop("height")
+    with pytest.raises(ValueError, match="missing provenance"):
+        assess_model_only_completion(records, expected_queries)
+
+    records, expected_queries = _model_only_completion_fixture(160)
+    candidate = records[0]["candidates"][0]
+    candidate["width"] = 2
+    with pytest.raises(ValueError, match="declared shape"):
+        assess_model_only_completion(records, expected_queries)
+
+    records, expected_queries = _model_only_completion_fixture(160)
+    records[0]["score"] = None
+    with pytest.raises(ValueError, match="score must be a mapping"):
         assess_model_only_completion(records, expected_queries)
 
 
@@ -738,6 +895,65 @@ def test_trajectory_rejects_malformed_logits_and_states(
 
     with pytest.raises(ValueError, match=message):
         analyze_latent_trajectory(height, width, colors, spikes, voltages)
+
+
+def test_trajectory_rejects_partial_currents_and_mismatched_current_shapes() -> None:
+    height, width, colors = _stacked_logits([np.array([[1]])])
+    spikes = np.zeros((1, 2), dtype=np.int8)
+    voltages = np.zeros((1, 2), dtype=np.float32)
+    with pytest.raises(ValueError, match="provided together"):
+        analyze_latent_trajectory(
+            height,
+            width,
+            colors,
+            spikes,
+            voltages,
+            feedforward_current=np.zeros((1, 2)),
+        )
+    with pytest.raises(ValueError, match="feedforward synaptic current shape"):
+        analyze_latent_trajectory(
+            height,
+            width,
+            colors,
+            spikes,
+            voltages,
+            feedforward_current=np.zeros((1, 3)),
+            recurrent_current=np.zeros((1, 2)),
+        )
+
+
+def test_control_comparison_rejects_unmatched_or_empty_current_mappings() -> None:
+    states = np.zeros((1, 2), dtype=np.float32)
+    spikes = np.zeros((1, 2), dtype=np.int8)
+    with pytest.raises(ValueError, match="provided together"):
+        compare_control_trajectories(
+            spikes,
+            states,
+            spikes,
+            states,
+            control_name="partial",
+            intact_synaptic_currents={"feedforward": states},
+        )
+    with pytest.raises(ValueError, match="identical nonempty"):
+        compare_control_trajectories(
+            spikes,
+            states,
+            spikes,
+            states,
+            control_name="empty",
+            intact_synaptic_currents={},
+            control_synaptic_currents={},
+        )
+    with pytest.raises(ValueError, match="identical nonempty"):
+        compare_control_trajectories(
+            spikes,
+            states,
+            spikes,
+            states,
+            control_name="different-names",
+            intact_synaptic_currents={"feedforward": states},
+            control_synaptic_currents={"recurrent": states},
+        )
 
 
 @pytest.mark.parametrize(

@@ -36,8 +36,10 @@ from numpy.typing import NDArray
 import braintrace
 
 try:
+    from examples.pp_prop.latent_workspace_protocol import StepGates
     from examples.pp_prop.latent_workspace_refinement import (
         RowRefinementLayout,
+        build_latent_row_decode_event,
         build_refinement_feedback_event,
         capture_query_rows,
         next_reasoning_index,
@@ -51,8 +53,10 @@ try:
         assess_recurrent_edge_budget,
     )
 except ImportError:
+    from latent_workspace_protocol import StepGates
     from latent_workspace_refinement import (
         RowRefinementLayout,
+        build_latent_row_decode_event,
         build_refinement_feedback_event,
         capture_query_rows,
         next_reasoning_index,
@@ -72,10 +76,14 @@ NEURONS_PER_SLOT = 64
 MEMORY_KEY_RFF_GAMMA = 2.0
 
 #: Storage-coding trainability levels, in increasing order of what learns.
-MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write")
+MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write", "learned_update")
 
 #: Codings whose *retrieval* key projection is a trainable ETP layer.
-LEARNED_RETRIEVAL_KEY_CODINGS = ("learned_keys", "learned_write")
+LEARNED_RETRIEVAL_KEY_CODINGS = (
+    "learned_keys",
+    "learned_write",
+    "learned_update",
+)
 
 #: Eligibility-trace engines the model can compile under.
 TRACE_ENGINES = ("pp_prop", "d_rtrl")
@@ -100,6 +108,7 @@ _MEMORY_KEY_MAP_NAMES = {
     "frozen": "fixed_rff_cosine",
     "learned_keys": "learned_rff_cosine_retrieval_path",
     "learned_write": "learned_rff_cosine_write_and_retrieval",
+    "learned_update": "learned_rff_cosine_shared_retrieval",
 }
 
 
@@ -223,10 +232,10 @@ class ModelConfig:
         Eligibility-trace engine the model compiles under. ``"pp_prop"``
         (default) keeps the IO-factorized ES-D-RTRL coordinate with the
         configured ``trace_decay``. ``"d_rtrl"`` selects the per-parameter
-        exact-trace coordinate (diagonal recurrence scope, true hidden
-        Jacobian, no decay knob) — much heavier in memory, but it carries the
-        write projections' pairing gradient exactly where pp-prop's rank-1
-        collapse loses it (spec ``2026-08-21-etp-outer-write-drtrl-trace.md``).
+        trace factorization with per-parameter traces and diagonal hidden
+        recurrence (true diagonal hidden Jacobian, no decay knob). It is much
+        heavier in memory. Exactness is claimed only for parameter groups and
+        finite-window regimes verified element-wise against an oracle.
     decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
         Output architecture. Row refinement captures the query and constructs
         an explicit answer with one learned recurrent row per latent tick.
@@ -331,9 +340,15 @@ class ModelConfig:
     output_side_valid_index: int | None = None
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
-    memory_coding: Literal["frozen", "learned_keys", "learned_write"] = "frozen"
+    memory_coding: Literal[
+        "frozen", "learned_keys", "learned_write", "learned_update"
+    ] = "frozen"
+    memory_update_indices: tuple[int, ...] = ()
+    memory_update_feature_order: tuple[str, ...] = ()
     trace_engine: Literal["pp_prop", "d_rtrl"] = "pp_prop"
-    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
+    decoder_mode: Literal[
+        "legacy_cp", "row_refinement", "latent_row_decode"
+    ] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
     copy_residual_gain: float = 0.0
@@ -481,7 +496,11 @@ class ModelConfig:
             if index is not None and index >= self.input_width:
                 raise ValueError(f"{name} must be smaller than input_width")
             object.__setattr__(self, name, index)
-        for name in ("memory_key_indices", "memory_value_indices"):
+        for name in (
+            "memory_key_indices",
+            "memory_value_indices",
+            "memory_update_indices",
+        ):
             indices = _index_tuple(getattr(self, name), name)
             if any(index >= self.input_width for index in indices):
                 raise ValueError(f"{name} entries must be smaller than input_width")
@@ -530,16 +549,56 @@ class ModelConfig:
                 )
         if not isinstance(self.memory_coding, str):
             raise TypeError(
-                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+                "memory_coding must be 'frozen', 'learned_keys', "
+                "'learned_write' or 'learned_update'"
             )
         if self.memory_coding not in MEMORY_CODINGS:
             raise ValueError(
-                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+                "memory_coding must be 'frozen', 'learned_keys', "
+                "'learned_write' or 'learned_update'"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError(
                 "memory_coding requires a positive context_memory_width"
             )
+        if self.memory_coding == "learned_update":
+            indices = self.memory_update_indices
+            if not indices:
+                indices = tuple(
+                    dict.fromkeys(
+                        (
+                            self.input_side_valid_index,
+                            self.output_side_valid_index,
+                            *self.memory_key_indices,
+                            *self.memory_value_indices,
+                        )
+                    )
+                )
+                indices = tuple(index for index in indices if index is not None)
+                object.__setattr__(self, "memory_update_indices", indices)
+            excluded = {self.event_valid_index, self.demonstration_phase_index, self.query_phase_index}
+            if any(index in excluded for index in self.memory_update_indices):
+                raise ValueError(
+                    "memory_update_indices must exclude event-valid and phase indicators"
+                )
+            required_side_indices = {
+                self.input_side_valid_index,
+                self.output_side_valid_index,
+            }
+            if not required_side_indices <= set(self.memory_update_indices):
+                raise ValueError("memory_update_indices must include both side-valid bits")
+            order = self.memory_update_feature_order
+            if not order:
+                order = tuple(f"event[{index}]" for index in self.memory_update_indices)
+                object.__setattr__(self, "memory_update_feature_order", order)
+            if (
+                not isinstance(order, tuple)
+                or len(order) != len(self.memory_update_indices)
+                or any(not isinstance(name, str) or not name for name in order)
+            ):
+                raise ValueError(
+                    "memory_update_feature_order must name every update feature"
+                )
         if not isinstance(self.trace_engine, str):
             raise TypeError("trace_engine must be 'pp_prop' or 'd_rtrl'")
         if self.trace_engine not in TRACE_ENGINES:
@@ -568,20 +627,30 @@ class ModelConfig:
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
         if not isinstance(self.decoder_mode, str):
-            raise TypeError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
-        if self.decoder_mode not in ("legacy_cp", "row_refinement"):
-            raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+            raise TypeError(
+                "decoder_mode must be 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'"
+            )
+        if self.decoder_mode not in (
+            "legacy_cp",
+            "row_refinement",
+            "latent_row_decode",
+        ):
+            raise ValueError(
+                "decoder_mode must be 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'"
+            )
         if self.decoder_mode == "legacy_cp":
             if self.refinement_layout is not None:
                 raise ValueError(
                     "refinement_layout is valid only when decoder_mode is "
-                    "'row_refinement'"
+                    "a row decoder"
                 )
         else:
             if not isinstance(self.refinement_layout, RowRefinementLayout):
                 raise ValueError(
                     "refinement_layout is required when decoder_mode is "
-                    "'row_refinement'"
+                    "a row decoder"
                 )
             if self.refinement_layout.input_width != self.input_width:
                 raise ValueError("refinement_layout input_width must match input_width")
@@ -617,6 +686,14 @@ class ModelConfig:
                         "refinement_layout phase and side indices must match "
                         "context-memory indices"
                     )
+            if (
+                self.decoder_mode == "latent_row_decode"
+                and self.refinement_mixer == "attention_residual"
+            ):
+                raise ValueError(
+                    "refinement_mixer='attention_residual' bypasses the "
+                    "latent-binding test under latent_row_decode"
+                )
 
     @property
     def memory_enabled(self) -> bool:
@@ -628,7 +705,7 @@ class ModelConfig:
     def row_refinement_enabled(self) -> bool:
         """Return whether learned row-wise answer refinement is enabled."""
 
-        return self.decoder_mode == "row_refinement"
+        return self.decoder_mode in ("row_refinement", "latent_row_decode")
 
     @property
     def refinement_sweeps(self) -> int:
@@ -706,6 +783,11 @@ class AssociativeMemoryReport:
     write_component_type: str | None
     query_component_type: str | None
     read_component_type: str | None
+    update_feature_width: int | None = None
+    update_feature_order: tuple[str, ...] | None = None
+    update_projection_sha256: str | None = None
+    update_projection_seed: int | None = None
+    update_routing: str | None = None
 
     @property
     def carrier_stabilizer(self) -> str | None:
@@ -734,7 +816,7 @@ class AssociativeMemoryReport:
         return None
 
     @property
-    def carrier_consumers(self) -> tuple[str, str] | None:
+    def carrier_consumers(self) -> tuple[str, ...] | None:
         """Return the projections that consume stabilized carriers.
 
         Returns
@@ -743,7 +825,31 @@ class AssociativeMemoryReport:
             Stable projection names in memory mode; otherwise ``None``.
         """
         if self.mode == "associative_workspace":
-            return ("readout_projection", "workspace_query_projection")
+            if self.update_routing is None:
+                return ("readout_projection", "workspace_query_projection")
+            return (
+                "answer_row_head",
+                "answer_shape_head",
+                "workspace_query_projection",
+            )
+        return None
+
+    @property
+    def carrier_normalization_by_consumer(self) -> dict[str, str] | None:
+        """Return live carrier normalization conventions by consumer.
+
+        Returns
+        -------
+        dict of str to str or None
+            Consumer-specific normalization names in memory mode; otherwise
+            ``None``.
+        """
+        if self.mode == "associative_workspace" and self.update_routing is not None:
+            return {
+                "answer_row_head": "per_example_unit_rms",
+                "answer_shape_head": "per_example_unit_rms",
+                "workspace_query_projection": "per_example_stopped_unit_l2_cap",
+            }
         return None
 
     def to_dict(self) -> dict[str, object]:
@@ -756,12 +862,25 @@ class AssociativeMemoryReport:
             metadata only in associative-workspace mode.
         """
         report = asdict(self)
+        if self.update_routing is None:
+            for name in (
+                "update_feature_width",
+                "update_feature_order",
+                "update_projection_sha256",
+                "update_projection_seed",
+                "update_routing",
+            ):
+                report.pop(name)
         if self.mode == "associative_workspace":
             report.update(
                 carrier_stabilizer=self.carrier_stabilizer,
                 carrier_radius=self.carrier_radius,
                 carrier_consumers=self.carrier_consumers,
             )
+            if self.carrier_normalization_by_consumer is not None:
+                report["carrier_normalization_by_consumer"] = (
+                    self.carrier_normalization_by_consumer
+                )
         return report
 
 
@@ -893,7 +1012,9 @@ class ModelTrajectory:
     recurrent_current: jax.Array
     zero_inputs: jax.Array
     color_rank: int
-    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
+    decoder_mode: Literal[
+        "legacy_cp", "row_refinement", "latent_row_decode"
+    ] = "legacy_cp"
 
     @property
     def latent_steps(self) -> int:
@@ -968,7 +1089,9 @@ class PackedTrajectory:
     memory_read: jax.Array
     final_context_memory: jax.Array
     color_rank: int
-    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
+    decoder_mode: Literal[
+        "legacy_cp", "row_refinement", "latent_row_decode"
+    ] = "legacy_cp"
 
     @property
     def expanded(self) -> ArcLogits:
@@ -1001,6 +1124,10 @@ class SelectedPackedTrajectory:
     memory_read : jax.Array
         Selected associative reads shaped ``(checkpoints, batch, memory_width)``.
         Legacy mode has a zero-width final dimension.
+    context_memory : jax.Array
+        Selected associative states shaped
+        ``(checkpoints, batch, memory_width, memory_width)``. Legacy mode has
+        two zero-width trailing dimensions.
     final_context_memory : jax.Array
         One final memory snapshot shaped ``(batch, memory_width, memory_width)``.
         This preserves pairing-sensitive evidence without stacking ``S`` over
@@ -1019,9 +1146,12 @@ class SelectedPackedTrajectory:
     recurrent_current: jax.Array
     workspace_carrier: jax.Array
     memory_read: jax.Array
+    context_memory: jax.Array
     final_context_memory: jax.Array
     color_rank: int
-    decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
+    decoder_mode: Literal[
+        "legacy_cp", "row_refinement", "latent_row_decode"
+    ] = "legacy_cp"
 
     @property
     def expanded(self) -> ArcLogits:
@@ -1400,7 +1530,7 @@ def expand_compact_logits(compact: jax.Array, color_rank: int) -> ArcLogits:
 def expand_decoder_logits(
     logits: jax.Array,
     color_rank: int,
-    decoder_mode: Literal["legacy_cp", "row_refinement"],
+    decoder_mode: Literal["legacy_cp", "row_refinement", "latent_row_decode"],
 ) -> ArcLogits:
     """Expand checkpoint logits from either supported decoder.
 
@@ -1421,8 +1551,11 @@ def expand_decoder_logits(
 
     if decoder_mode == "legacy_cp":
         return expand_compact_logits(logits, color_rank)
-    if decoder_mode != "row_refinement":
-        raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+    if decoder_mode not in ("row_refinement", "latent_row_decode"):
+        raise ValueError(
+            "decoder_mode must be 'legacy_cp', 'row_refinement' or "
+            "'latent_row_decode'"
+        )
     height, width, colors = split_refinement_output_logits(logits)
     return ArcLogits(height=height, width=width, colors=colors)
 
@@ -1979,7 +2112,7 @@ def refinement_parameter_paths(config: Any) -> tuple[str, ...]:
     tuple of str
         Sorted parameter paths. Legacy CP has no refinement paths.
     """
-    if config.decoder_mode != "row_refinement":
+    if config.decoder_mode not in ("row_refinement", "latent_row_decode"):
         return ()
     if config.refinement_mixer == "carrier_gate":
         paths = (
@@ -2192,7 +2325,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 dtype=jnp.float32,
             )
             self.memory_write_scale = brainstate.ParamState(
-                jnp.ones((memory_width, memory_width), dtype=jnp.float32)
+                jnp.ones(
+                    (
+                        (memory_width * memory_width,)
+                        if config.memory_coding == "learned_update"
+                        else (memory_width, memory_width)
+                    ),
+                    dtype=jnp.float32,
+                )
             )
             if config.memory_coding in LEARNED_RETRIEVAL_KEY_CODINGS:
                 self.memory_key_projection = braintrace.nn.Linear(
@@ -2214,6 +2354,19 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 self.write_value_weight = brainstate.ParamState(
                     self._memory_value_basis
                 )
+            if config.memory_coding == "learned_update":
+                update_random = brainstate.random.RandomState(config.seed + 106)
+                update_width = len(config.memory_update_indices)
+                update_weights = (
+                    update_random.randn(update_width, memory_width * memory_width)
+                    / math.sqrt(memory_width)
+                )
+                self.memory_update_projection = braintrace.nn.Linear(
+                    update_width,
+                    memory_width * memory_width,
+                    w_init=update_weights,
+                    b_init=None,
+                )
             self.workspace_query_projection = braintrace.nn.Linear(
                 config.neuron_count,
                 memory_width,
@@ -2234,7 +2387,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
             self.context_memory = brainstate.HiddenState(
                 jnp.zeros(
-                    (config.batch_size, memory_width, memory_width),
+                    (
+                        (config.batch_size, memory_width * memory_width)
+                        if config.memory_coding == "learned_update"
+                        else (config.batch_size, memory_width, memory_width)
+                    ),
                     dtype=jnp.float32,
                 )
             )
@@ -2690,6 +2847,39 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         )
         return write * both_sides_valid[:, None, None]
 
+    def encode_memory_update(self, event: jax.Array) -> jax.Array:
+        """Project protocol-v2 demonstration features into a memory update.
+
+        Parameters
+        ----------
+        event
+            Native batched row event shaped ``(batch, input_width)``.
+
+        Returns
+        -------
+        jax.Array
+            Soft-capped update shaped ``(batch, memory_width ** 2)``. Keeping
+            the trace state flat preserves direct position correspondence;
+            retrieval reshapes it to the logical square memory.
+
+        Raises
+        ------
+        RuntimeError
+            If ``memory_coding`` is not ``"learned_update"``.
+        """
+
+        if self.config.memory_coding != "learned_update":
+            raise RuntimeError(
+                "encode_memory_update requires memory_coding='learned_update'"
+            )
+        event = jnp.asarray(event, dtype=jnp.float32)
+        expected = (self.config.batch_size, self.config.input_width)
+        if event.shape != expected:
+            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+        features = event[..., jnp.asarray(self.config.memory_update_indices)]
+        projected = self.memory_update_projection(features)
+        return softcap(projected, self.config.memory_value_softcap_beta)
+
     def read_context_memory(self, query: jax.Array | None = None) -> jax.Array:
         """Read the frozen contextual memory with a key-space query.
 
@@ -2715,7 +2905,28 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         )
         if query.shape != expected:
             raise ValueError(f"query must have shape {expected}, got {query.shape}")
-        return jnp.einsum("bkv,bk->bv", self.context_memory.value, query)
+        memory = self.context_memory.value
+        if self.config.memory_coding == "learned_update":
+            width = self.config.context_memory_width
+            memory = memory.reshape(self.config.batch_size, width, width)
+        return jnp.einsum("bkv,bk->bv", memory, query)
+
+    def logical_context_memory(self) -> jax.Array:
+        """Return associative memory with its public square shape.
+
+        Returns
+        -------
+        jax.Array
+            Memory shaped ``(batch, memory_width, memory_width)``.
+        """
+
+        if not self.config.memory_enabled:
+            return jnp.zeros((self.config.batch_size, 0, 0), dtype=jnp.float32)
+        memory = jnp.asarray(self.context_memory.value)
+        if self.config.memory_coding == "learned_update":
+            width = self.config.context_memory_width
+            return memory.reshape(self.config.batch_size, width, width)
+        return memory
 
     def associative_memory_report(self) -> AssociativeMemoryReport:
         """Return a stable read-only description of the memory architecture.
@@ -2745,6 +2956,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 query_component_type=None,
                 read_component_type=None,
             )
+        update_projection_sha256 = None
+        if self.config.memory_coding == "learned_update":
+            update_projection_sha256 = _array_sha256(
+                self.memory_update_projection.weight.value
+            )
         return AssociativeMemoryReport(
             mode="associative_workspace",
             memory_width=self.config.context_memory_width,
@@ -2753,7 +2969,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             key_map=_MEMORY_KEY_MAP_NAMES[self.config.memory_coding],
             value_map=(
                 "learned_tanh_projection"
-                if self.config.memory_coding == "learned_write"
+                if self.config.memory_coding in ("learned_write", "learned_update")
                 else "fixed_tanh_projection"
             ),
             rff_gamma=MEMORY_KEY_RFF_GAMMA,
@@ -2766,10 +2982,35 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             write_component_type=(
                 "braintrace.outer_write"
                 if self.config.memory_coding == "learned_write"
-                else "braintrace.element_wise"
+                else (
+                    "braintrace.nn.Linear"
+                    if self.config.memory_coding == "learned_update"
+                    else "braintrace.element_wise"
+                )
             ),
             query_component_type="braintrace.nn.Linear",
             read_component_type="braintrace.nn.Linear",
+            update_feature_width=(
+                len(self.config.memory_update_indices)
+                if self.config.memory_coding == "learned_update"
+                else None
+            ),
+            update_feature_order=(
+                self.config.memory_update_feature_order
+                if self.config.memory_coding == "learned_update"
+                else None
+            ),
+            update_projection_sha256=update_projection_sha256,
+            update_projection_seed=(
+                self.config.seed + 106
+                if self.config.memory_coding == "learned_update"
+                else None
+            ),
+            update_routing=(
+                "memory_update_projection->context_memory;shared_retrieval_key"
+                if self.config.memory_coding == "learned_update"
+                else None
+            ),
         )
 
     def reset_state(self, batch_size: int | None = None, **_: object) -> None:
@@ -2793,7 +3034,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if self.config.memory_enabled:
             memory_width = self.config.context_memory_width
             self.context_memory.value = jnp.zeros(
-                (self.config.batch_size, memory_width, memory_width),
+                (
+                    (self.config.batch_size, memory_width * memory_width)
+                    if self.config.memory_coding == "learned_update"
+                    else (self.config.batch_size, memory_width, memory_width)
+                ),
                 dtype=jnp.float32,
             )
             zero_query = jnp.zeros(
@@ -3026,9 +3271,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         -------
         braintrace.ETraceConfig
             Diagonal recurrent pp-prop with the configured scalar trace decay
-            under ``trace_engine="pp_prop"``; the per-parameter exact-trace
-            (D-RTRL) coordinate under ``trace_engine="d_rtrl"``, which has no
-            decay knob because the trace follows the true recurrence.
+            under ``trace_engine="pp_prop"``; the per-parameter trace
+            factorization with diagonal hidden recurrence under
+            ``trace_engine="d_rtrl"``, which has no decay knob because its
+            trace follows that diagonal recurrence.
         """
         if self.config.trace_engine == "d_rtrl":
             return braintrace.ETraceConfig(
@@ -3231,7 +3477,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         )
 
     def cell_step(
-        self, event: jax.Array, advance: jax.Array | None = None
+        self, event: jax.Array, advance: jax.Array | StepGates | None = None
     ) -> jax.Array:
         """Advance one physical row-event or zero-input latent step.
 
@@ -3254,10 +3500,28 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
-        if advance is None:
+        protocol_gates = advance if isinstance(advance, StepGates) else None
+        if protocol_gates is not None:
+            advance = jnp.asarray(protocol_gates.advance_physics, dtype=jnp.bool_)
+            latent_gate = jnp.asarray(protocol_gates.latent_update, dtype=jnp.bool_)
+            decode_gate = jnp.asarray(protocol_gates.decode_row, dtype=jnp.bool_)
+            recurrent_enabled = jnp.asarray(
+                protocol_gates.recurrent_enabled, dtype=jnp.bool_
+            )
+        elif advance is None:
             advance = event[:, self.config.event_valid_index] > 0.5
+            latent_gate = advance & ~(
+                event[:, self.config.event_valid_index] > 0.5
+            )
+            decode_gate = jnp.zeros_like(advance)
+            recurrent_enabled = advance
         else:
             advance = jnp.asarray(advance, dtype=jnp.bool_)
+            latent_gate = advance & ~(
+                event[:, self.config.event_valid_index] > 0.5
+            )
+            decode_gate = jnp.zeros_like(advance)
+            recurrent_enabled = advance
         if advance.shape != (self.config.batch_size,):
             raise ValueError(
                 f"advance must have shape ({self.config.batch_size},), got "
@@ -3275,23 +3539,31 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 advance,
                 self.config.refinement_layout,
             )
-            refinement_latent = advance & ~(
-                event[:, self.config.refinement_layout.event_valid_index] > 0.5
-            )
-            feedback_grid = scatter_answer_rows(
-                self.answer_grid.value,
-                self.answer_row.value,
-                refinement_rows,
-            )
-            feedback_event = build_refinement_feedback_event(
-                self.query_grid.value,
-                self.query_shape.value,
-                feedback_grid,
-                self.answer_shape.value,
-                refinement_rows,
-                self.config.refinement_layout,
-            )
-            event = jnp.where(refinement_latent[:, None], feedback_event, event)
+            if self.config.decoder_mode == "latent_row_decode":
+                refinement_latent = decode_gate
+                decoder_event = build_latent_row_decode_event(
+                    self.query_grid.value,
+                    self.query_shape.value,
+                    refinement_rows,
+                    self.config.refinement_layout,
+                )
+                event = jnp.where(refinement_latent[:, None], decoder_event, event)
+            else:
+                refinement_latent = latent_gate
+                feedback_grid = scatter_answer_rows(
+                    self.answer_grid.value,
+                    self.answer_row.value,
+                    refinement_rows,
+                )
+                feedback_event = build_refinement_feedback_event(
+                    self.query_grid.value,
+                    self.query_shape.value,
+                    feedback_grid,
+                    self.answer_shape.value,
+                    refinement_rows,
+                    self.config.refinement_layout,
+                )
+                event = jnp.where(refinement_latent[:, None], feedback_event, event)
         previous_voltage = self.neu.V.value
         previous_feedforward = self.ff_syn.syn.g.value
         previous_recurrent = self.rec_syn.syn.g.value
@@ -3322,7 +3594,19 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             key = self.encode_memory_key(event)
             value = self.encode_memory_value(event)
             write_scale = braintrace.element_wise(self.memory_write_scale.value)
-            if self.config.memory_coding == "learned_write":
+            if self.config.memory_coding == "learned_update":
+                learned_update = self.encode_memory_update(event)
+                scaled_update = learned_update * write_scale[None, :]
+                candidate_memory = (
+                    self.config.memory_decay * self.context_memory.value
+                    + scaled_update
+                )
+                self.context_memory.value = jnp.where(
+                    write_gate[:, None],
+                    candidate_memory,
+                    self.context_memory.value,
+                )
+            elif self.config.memory_coding == "learned_write":
                 self.context_memory.value = apply_context_memory_write(
                     self.context_memory.value,
                     self.encode_memory_write(event) * write_scale[None, :, :],
@@ -3347,7 +3631,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.query_encoding.value = self.query_encoding.value + jnp.where(
                 query[:, None], key, jnp.zeros_like(key)
             )
-            latent = advance & ~event_valid
+            latent = latent_gate
             projected_query = self.workspace_query_projection(
                 _unit_l2_cap(previous_workspace)
             )
@@ -3387,7 +3671,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             memory_drive = self.memory_read_projection(raw_read)
         with brainstate.environ.context(dt=self.config.time_step_ms * u.ms):
             self.ff_syn(event)
-            self.rec_syn(self.neu.get_spike())
+            recurrent_spikes = jnp.where(
+                recurrent_enabled[:, None],
+                self.neu.get_spike(),
+                jnp.zeros_like(self.neu.get_spike()),
+            )
+            self.rec_syn(recurrent_spikes)
+            self.rec_syn.syn.g.value = u.math.where(
+                recurrent_enabled[:, None],
+                self.rec_syn.syn.g.value,
+                u.math.zeros_like(self.rec_syn.syn.g.value),
+            )
             self.neu(memory_drive * u.mA)
         gate = advance[:, None]
         self.neu.V.value = u.math.where(gate, self.neu.V.value, previous_voltage)
@@ -3395,7 +3689,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             gate, self.ff_syn.syn.g.value, previous_feedforward
         )
         self.rec_syn.syn.g.value = u.math.where(
-            gate, self.rec_syn.syn.g.value, previous_recurrent
+            gate,
+            self.rec_syn.syn.g.value,
+            previous_recurrent,
         )
         if self.config.memory_enabled:
             self.workspace_carrier.value = jnp.where(
@@ -3474,7 +3770,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
         return self.spikes
 
-    def update(self, event: jax.Array, advance: jax.Array | None = None) -> jax.Array:
+    def update(
+        self, event: jax.Array, advance: jax.Array | StepGates | None = None
+    ) -> jax.Array:
         """Advance one step and return the bounded BrainTrace training output.
 
         Parameters
@@ -3712,7 +4010,7 @@ def run_packed_stream(
             memory_read,
         ) = brainstate.transform.for_loop(packed_step, (packed, advance))
     if model.config.memory_enabled:
-        final_context_memory = jnp.asarray(model.context_memory.value)
+        final_context_memory = model.logical_context_memory()
     else:
         final_context_memory = jnp.zeros(
             (model.config.batch_size, 0, 0), dtype=jnp.float32
@@ -3737,7 +4035,7 @@ def run_selected_packed_stream(
     selected_indices: jax.Array,
     *,
     reset: bool = True,
-    advance_gates: jax.Array | None = None,
+    advance_gates: jax.Array | StepGates | None = None,
     ablation_slots: jax.Array | None = None,
     ablation_gates: jax.Array | None = None,
 ) -> SelectedPackedTrajectory:
@@ -3797,14 +4095,36 @@ def run_selected_packed_stream(
     checkpoint_count = int(raw_indices.shape[0])
     batch_size = model.config.batch_size
 
-    if advance_gates is None:
+    explicit_phase_gates = isinstance(advance_gates, StepGates)
+    if explicit_phase_gates:
+        assert isinstance(advance_gates, StepGates)
+        phase_gates = advance_gates
+        if phase_gates.advance_physics.shape != (packed.shape[0], batch_size):
+            raise ValueError(
+                "StepGates must have shape "
+                f"({packed.shape[0]}, {batch_size})"
+            )
+        advance = phase_gates.advance_physics
+        latent_updates = phase_gates.latent_update
+        decoder_rows = phase_gates.decode_row
+        answer_feedback = phase_gates.answer_feedback
+        recurrent_enabled = phase_gates.recurrent_enabled
+    elif advance_gates is None:
         advance = packed[..., model.config.event_valid_index] > 0.5
+        latent_updates = jnp.zeros_like(advance)
+        decoder_rows = jnp.zeros_like(advance)
+        answer_feedback = jnp.zeros_like(advance)
+        recurrent_enabled = advance
     else:
         advance = jnp.asarray(advance_gates, dtype=jnp.bool_)
         if advance.shape != (packed.shape[0], batch_size):
             raise ValueError(
                 f"advance_gates must have shape ({packed.shape[0]}, {batch_size})"
             )
+        latent_updates = jnp.zeros_like(advance)
+        decoder_rows = jnp.zeros_like(advance)
+        answer_feedback = jnp.zeros_like(advance)
+        recurrent_enabled = advance
 
     controlled = ablation_slots is not None or ablation_gates is not None
     if controlled:
@@ -3848,6 +4168,15 @@ def run_selected_packed_stream(
         ),
         dtype=jnp.float32,
     )
+    context_memory_buffer = jnp.zeros(
+        (
+            checkpoint_count,
+            batch_size,
+            model.config.context_memory_width,
+            model.config.context_memory_width,
+        ),
+        dtype=jnp.float32,
+    )
     batch_indices = jnp.arange(batch_size, dtype=jnp.int32)
 
     initial_carry = (
@@ -3859,11 +4188,12 @@ def run_selected_packed_stream(
         feedforward_buffer,
         recurrent_buffer,
         memory_buffer,
+        context_memory_buffer,
     )
 
     def scan_step(
         carry: tuple[jax.Array, ...],
-        inputs: tuple[jax.Array, jax.Array, jax.Array],
+        inputs: tuple[jax.Array, ...],
     ) -> tuple[tuple[jax.Array, ...], jax.Array]:
         (
             time_index,
@@ -3874,17 +4204,41 @@ def run_selected_packed_stream(
             feedforward_values,
             recurrent_values,
             memory_values,
+            context_memory_values,
         ) = carry
-        event, advance_gate, ablation_gate = inputs
+        (
+            event,
+            advance_gate,
+            latent_gate,
+            decoder_gate,
+            feedback_gate,
+            recurrent_gate,
+            ablation_gate,
+        ) = inputs
         model.mask_slots(slots, ablation_gate)
-        spikes = model.cell_step(event, advance_gate)
+        if explicit_phase_gates:
+            step_gates = StepGates.tree_unflatten(
+                None,
+                (
+                    advance_gate,
+                    latent_gate,
+                    decoder_gate,
+                    feedback_gate,
+                    recurrent_gate,
+                ),
+            )
+            spikes = model.cell_step(event, step_gates)
+        else:
+            spikes = model.cell_step(event, advance_gate)
         voltage = model.voltage
         feedforward = model.feedforward_current
         recurrent = model.recurrent_current
         if model.config.memory_enabled:
             memory_read = jnp.asarray(model.memory_read.value)
+            context_memory = model.logical_context_memory()
         else:
             memory_read = jnp.zeros((batch_size, 0), dtype=jnp.float32)
+            context_memory = jnp.zeros((batch_size, 0, 0), dtype=jnp.float32)
 
         safe_cursors = jnp.minimum(cursors, checkpoint_count - 1)
         targets = indices[safe_cursors, batch_indices]
@@ -3892,7 +4246,8 @@ def run_selected_packed_stream(
 
         def record(buffer: jax.Array, value: jax.Array) -> jax.Array:
             previous = buffer[safe_cursors, batch_indices]
-            selected = jnp.where(matched[:, None], value, previous)
+            mask = jnp.reshape(matched, (batch_size,) + (1,) * (value.ndim - 1))
+            selected = jnp.where(mask, value, previous)
             return buffer.at[safe_cursors, batch_indices].set(selected)
 
         def record_checkpoint(buffer: jax.Array) -> jax.Array:
@@ -3906,6 +4261,7 @@ def run_selected_packed_stream(
         feedforward_values = record(feedforward_values, feedforward)
         recurrent_values = record(recurrent_values, recurrent)
         memory_values = record(memory_values, memory_read)
+        context_memory_values = record(context_memory_values, context_memory)
         next_carry = (
             time_index + 1,
             cursors + matched.astype(jnp.int32),
@@ -3915,11 +4271,22 @@ def run_selected_packed_stream(
             feedforward_values,
             recurrent_values,
             memory_values,
+            context_memory_values,
         )
         return next_carry, jnp.asarray(0, dtype=jnp.int8)
 
     final_carry, _ = brainstate.transform.scan(
-        scan_step, initial_carry, (packed, advance, ablations)
+        scan_step,
+        initial_carry,
+        (
+            packed,
+            advance,
+            latent_updates,
+            decoder_rows,
+            answer_feedback,
+            recurrent_enabled,
+            ablations,
+        ),
     )
     (
         _,
@@ -3930,9 +4297,10 @@ def run_selected_packed_stream(
         feedforward_buffer,
         recurrent_buffer,
         memory_buffer,
+        context_memory_buffer,
     ) = final_carry
     if model.config.memory_enabled:
-        final_context_memory = jnp.asarray(model.context_memory.value)
+        final_context_memory = model.logical_context_memory()
     else:
         final_context_memory = jnp.zeros((batch_size, 0, 0), dtype=jnp.float32)
     return SelectedPackedTrajectory(
@@ -3944,6 +4312,7 @@ def run_selected_packed_stream(
         recurrent_current=recurrent_buffer,
         workspace_carrier=voltage_buffer,
         memory_read=memory_buffer,
+        context_memory=context_memory_buffer,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
         decoder_mode=model.config.decoder_mode,
@@ -4072,16 +4441,12 @@ def run_sequence(
     return SequenceResult(context=context, trajectory=trajectory)
 
 
-def compile_pp_prop(
+def compile_etrace(
     model: LatentWorkspaceModel,
     *,
     verbose: int = 0,
 ) -> Any:
-    """Compile the model with its configured eligibility coordinate.
-
-    The name is historical: the engine is selected by
-    ``model.config.trace_engine`` (``"pp_prop"`` or ``"d_rtrl"``), and the
-    coordinate comes from :meth:`LatentWorkspaceModel.etrace_config`.
+    """Compile the model with its configured eligibility-trace coordinate.
 
     Parameters
     ----------
@@ -4099,15 +4464,48 @@ def compile_pp_prop(
         (model.config.batch_size, model.config.input_width), dtype=jnp.float32
     )
     sample_advance = jnp.ones((model.config.batch_size,), dtype=jnp.bool_)
+    sample_control: jax.Array | StepGates = sample_advance
+    if model.config.decoder_mode == "latent_row_decode":
+        zeros = jnp.zeros_like(sample_advance)
+        sample_control = StepGates(
+            advance_physics=sample_advance,
+            latent_update=sample_advance,
+            decode_row=zeros,
+            answer_feedback=zeros,
+            recurrent_enabled=sample_advance,
+        )
     return braintrace.compile(
         model,
         model.etrace_config(),
         sample,
-        sample_advance,
+        sample_control,
         batch_size=model.config.batch_size,
         vmap=False,
         verbose=verbose,
     )
+
+
+def compile_pp_prop(
+    model: LatentWorkspaceModel,
+    *,
+    verbose: int = 0,
+) -> Any:
+    """Call :func:`compile_etrace` through the historical API name.
+
+    Parameters
+    ----------
+    model
+        Model whose configured trace engine is compiled.
+    verbose
+        BrainTrace compiler verbosity.
+
+    Returns
+    -------
+    object
+        BrainTrace learner returned by :func:`compile_etrace`.
+    """
+
+    return compile_etrace(model, verbose=verbose)
 
 
 def parameter_snapshot(model: LatentWorkspaceModel) -> dict[str, Any]:

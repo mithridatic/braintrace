@@ -13,7 +13,6 @@ from typing import Any, Literal, cast
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-
 FloatArray = NDArray[np.float64]
 GridArray = NDArray[np.int8]
 
@@ -335,12 +334,12 @@ def decode_candidates(
     logits: OutputLogits,
     max_candidates: int = 2,
 ) -> tuple[DecodedCandidate, ...]:
-    """Decode joint argmax and one deterministic runner-up ARC grid.
+    """Decode the exact global top two under the factorized distribution.
 
-    Candidate two flips the globally smallest top-two logit margin among the
-    height, width, and candidate-one valid cells. Ties prefer height, then
-    width, then row-major cells. The changed grid is regenerated from the same
-    color logits, so a shape alternative is a genuine complete ARC candidate.
+    All 900 shapes are ranked by their complete shape and included-cell log
+    probability. Candidate two is the better of the second-ranked shape and a
+    single second-color substitution within the best shape. Exact ties prefer
+    the shape candidate, then lower shape, row-major cell, and lower color.
 
     Parameters
     ----------
@@ -369,56 +368,73 @@ def decode_candidates(
         or int(max_candidates) not in (1, 2)
     ):
         raise ValueError("max_candidates must be one or two")
-    height_first, height_second, height_margin = _top_two(np.asarray(logits.height))
-    width_first, width_second, width_margin = _top_two(np.asarray(logits.width))
-    height, width = height_first + 1, width_first + 1
+    height_log_probability = np.array(
+        [_log_softmax_choice(np.asarray(logits.height), index) for index in range(30)]
+    )
+    width_log_probability = np.array(
+        [_log_softmax_choice(np.asarray(logits.width), index) for index in range(30)]
+    )
     color_logits = np.asarray(logits.colors)
+    best_colors = np.argmax(color_logits, axis=-1).astype(np.int8)
+    color_maximum = np.max(color_logits, axis=-1, keepdims=True)
+    color_shifted = color_logits - color_maximum
+    color_log_probabilities = color_shifted - np.log(
+        np.sum(np.exp(color_shifted), axis=-1, keepdims=True)
+    )
+    best_cell_scores = np.take_along_axis(
+        color_log_probabilities, best_colors[..., None], axis=-1
+    )[..., 0]
+    prefix = np.pad(best_cell_scores, ((1, 0), (1, 0))).cumsum(0).cumsum(1)
+    shapes = [
+        (
+            float(
+                height_log_probability[height - 1]
+                + width_log_probability[width - 1]
+                + prefix[height, width]
+            ),
+            height,
+            width,
+        )
+        for height in range(1, _AXIS_SIZE + 1)
+        for width in range(1, _AXIS_SIZE + 1)
+    ]
+    shapes.sort(key=lambda item: (-item[0], item[1], item[2]))
+    best_shape_score, height, width = shapes[0]
     first_grid = np.argmax(color_logits[:height, :width], axis=-1).astype(np.int8)
     first = DecodedCandidate(
         first_grid,
-        log_probability=_candidate_log_probability(
-            logits, height_first, width_first, first_grid
-        ),
+        log_probability=best_shape_score,
     )
     if int(max_candidates) == 1:
         return (first,)
 
-    alternatives: list[tuple[float, int, str, int, int, int]] = [
-        (height_margin, 0, "height", -1, -1, height_second),
-        (width_margin, 1, "width", -1, -1, width_second),
-    ]
-    order = 2
+    second_shape_score, second_height, second_width = shapes[1]
+    second_shape_grid = best_colors[:second_height, :second_width].copy()
+    cell_alternatives: list[tuple[float, int, int, int]] = []
     for row in range(height):
         for column in range(width):
-            _, second_color, margin = _top_two(color_logits[row, column])
-            alternatives.append((margin, order, "cell", row, column, second_color))
-            order += 1
-    _, _, kind, row, column, replacement = min(
-        alternatives, key=lambda item: (item[0], item[1])
+            color_order = np.argsort(-color_logits[row, column], kind="stable")
+            best_color, second_color = int(color_order[0]), int(color_order[1])
+            score = best_shape_score - float(
+                color_log_probabilities[row, column, best_color]
+            ) + float(color_log_probabilities[row, column, second_color])
+            cell_alternatives.append((score, row, column, second_color))
+    cell_score, row, column, replacement = max(
+        cell_alternatives, key=lambda item: (item[0], -item[1], -item[2], -item[3])
     )
-    second_height_index = height_first
-    second_width_index = width_first
-    changed_decision: str
-    if kind == "height":
-        second_height_index = replacement
-        changed_decision = "height"
-    elif kind == "width":
-        second_width_index = replacement
-        changed_decision = "width"
+    if second_shape_score >= cell_score:
+        second_grid = second_shape_grid
+        changed_decision = "shape"
+        second_score = second_shape_score
     else:
-        changed_decision = f"cell:{row},{column}"
-    second_height, second_width = second_height_index + 1, second_width_index + 1
-    second_grid = np.argmax(
-        color_logits[:second_height, :second_width], axis=-1
-    ).astype(np.int8)
-    if kind == "cell":
+        second_grid = first_grid.copy()
         second_grid[row, column] = replacement
+        changed_decision = f"cell:{row},{column}"
+        second_score = cell_score
     second = DecodedCandidate(
         second_grid,
         changed_decision=changed_decision,
-        log_probability=_candidate_log_probability(
-            logits, second_height_index, second_width_index, second_grid
-        ),
+        log_probability=second_score,
     )
     if np.array_equal(first.grid, second.grid):
         return (first,)
@@ -431,12 +447,11 @@ def select_checkpoint_candidates(
     latest_checkpoint: int,
     sweep_size: int = _AXIS_SIZE,
 ) -> tuple[SelectedModelCandidate, SelectedModelCandidate]:
-    """Select two target-free neural candidates across refinement checkpoints.
+    """Select the exact factorized top two at the latest completed checkpoint.
 
-    Candidate one is the joint argmax at ``latest_checkpoint``. Candidate two
-    is the joint argmax from the newest earlier completed sweep whose grid is
-    distinct from candidate one. If no earlier sweep supplies a distinct grid,
-    candidate two is the deterministic logit runner-up at the latest sweep.
+    Earlier checkpoints remain diagnostics and can never supply a submitted
+    candidate. Both returned candidates therefore have ``latest_checkpoint``
+    provenance.
 
     Checkpoint zero may be supplied as a pre-refinement diagnostic but is never
     eligible for submission. Selection depends only on validated
@@ -491,24 +506,13 @@ def select_checkpoint_candidates(
         raise ValueError("latest checkpoint is absent from checkpoint history")
 
     latest_logits = validated[latest]
-    latest_argmax = decode_candidates(latest_logits, max_candidates=1)[0]
+    latest_candidates = decode_candidates(latest_logits, max_candidates=2)
+    latest_argmax = latest_candidates[0]
     first = SelectedModelCandidate(
         latest_argmax,
         source_checkpoint=latest,
         selection_role="latest_sweep_joint_argmax",
     )
-    for checkpoint in sorted(
-        (value for value in validated if 0 < value < latest), reverse=True
-    ):
-        earlier = decode_candidates(validated[checkpoint], max_candidates=1)[0]
-        if not np.array_equal(earlier.grid, latest_argmax.grid):
-            return first, SelectedModelCandidate(
-                earlier,
-                source_checkpoint=checkpoint,
-                selection_role="earlier_sweep_joint_argmax",
-            )
-
-    latest_candidates = decode_candidates(latest_logits, max_candidates=2)
     if len(latest_candidates) != 2 or np.array_equal(
         latest_argmax.grid, latest_candidates[1].grid
     ):

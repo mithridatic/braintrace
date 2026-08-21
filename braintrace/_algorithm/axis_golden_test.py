@@ -15,7 +15,7 @@
 
 """P2 regression guard: the axis refactor must not move any preset's gradients.
 
-The golden values in ``data/p2_golden.npz`` were captured from commit
+The golden values in ``_testdata/p2_golden.npz`` were captured from commit
 ``156d058`` — the tree *before* the P2 axis decomposition — and are compared
 against the live code here. See
 ``docs/specs/2026-07-25-p2-axis-decomposition.md`` § Test plan.
@@ -43,13 +43,14 @@ complete corruption of the small leaf pass under the threshold.
 
 Regenerate after a *deliberate* numerical change with::
 
-    python -m braintrace._algorithm.tests.axis_golden_test
+    python -m braintrace._algorithm.axis_golden_test
 """
 
 from __future__ import annotations
 
 import os
 
+import brainstate
 import jax
 import numpy as np
 import pytest
@@ -66,7 +67,7 @@ from braintrace._testing.oracle import (
 )
 from braintrace._testing import oracle_models
 
-GOLDEN_PATH = os.path.join(os.path.dirname(__file__), 'data', 'p2_golden.npz')
+GOLDEN_PATH = os.path.join(os.path.dirname(__file__), '_testdata', 'p2_golden.npz')
 
 T = 8
 
@@ -86,7 +87,7 @@ PRESETS = {
     'eprop_kappa': lambda m: braintrace.EProp(
         m, kappa_filter_decay=0.9, vjp_method='multi-step'),
     'eprop_random': lambda m: braintrace.EProp(
-        m, feedback='random', random_feedback_key=jax.random.PRNGKey(7),
+        m, feedback='random', random_feedback_key=brainstate.random.RandomState(7).value,
         vjp_method='multi-step'),
     'pp_prop': lambda m: braintrace.pp_prop(
         m, decay_or_rank=0.9, vjp_method='multi-step'),
@@ -207,7 +208,7 @@ def _load_golden() -> dict:
     if not os.path.exists(GOLDEN_PATH):
         raise AssertionError(
             f'missing golden reference {GOLDEN_PATH}; regenerate with '
-            '`python -m braintrace._algorithm.tests.axis_golden_test`')
+            '`python -m braintrace._algorithm.axis_golden_test`')
     with np.load(GOLDEN_PATH) as data:
         return {k: np.asarray(data[k]) for k in data.files}
 
@@ -280,7 +281,7 @@ def test_matches_golden(model_name, case_name):
               if k.startswith(prefix)}
     assert golden, (
         f'no golden entries for {prefix}; regenerate with '
-        '`python -m braintrace._algorithm.tests.axis_golden_test`')
+        '`python -m braintrace._algorithm.axis_golden_test`')
     deviations = _leaf_deviations(compute_case(model_name, case_name), golden)
     # 1e-6 sits two orders above float32 round-off on these trees (~1e-8) and
     # two-to-five orders below the deviations the presets show from each other

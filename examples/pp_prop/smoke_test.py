@@ -5,7 +5,7 @@ import pathlib
 
 import pytest
 
-EXAMPLES_DIR = pathlib.Path(__file__).resolve().parents[1]
+EXAMPLES_DIR = pathlib.Path(__file__).resolve().parent
 
 EXAMPLE_FILES = [
     "01-basics-lif-integrator.py",

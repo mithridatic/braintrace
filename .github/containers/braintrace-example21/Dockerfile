@@ -30,6 +30,6 @@ RUN python /opt/braintrace/examples/pp_prop/build_arc_dataset_index.py \
 
 ENV EXAMPLE21_SOURCE_MANIFEST=/datasets/arc/example21-sources.json
 
-WORKDIR /work
+WORKDIR /opt/braintrace
 
-CMD ["python", "/opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py", "--help"]
+CMD ["python", "/opt/braintrace/examples/pp_prop/21-arc-agi-latent-reasoning.py", "--help"]

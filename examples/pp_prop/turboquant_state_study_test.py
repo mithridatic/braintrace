@@ -2,6 +2,7 @@
 
 import json
 
+import brainstate
 import jax
 import jax.numpy as jnp
 import pytest
@@ -69,18 +70,18 @@ def test_rotation_is_neutral_on_gaussian_initialised_weights(tensors):
 
 
 def test_rotation_helps_a_heavy_tailed_vector():
-    key = jax.random.PRNGKey(11)
-    magnitude, sign = jax.random.split(key)
-    heavy = jnp.exp(jax.random.normal(magnitude, (8, 2048)) * 3.0) * jnp.sign(
-        jax.random.normal(sign, (8, 2048))
+    key = brainstate.random.RandomState(11).value
+    magnitude, sign = brainstate.random.RandomState(key).split_key(2)
+    heavy = jnp.exp(brainstate.random.normal(size=(8, 2048), key=magnitude) * 3.0) * jnp.sign(
+        brainstate.random.normal(size=(8, 2048), key=sign)
     )
     tensor = study.StateTensor('heavy_tailed', heavy)
     assert _error_at(tensor, 1) / _error_at(tensor, 256) > 1.5
 
 
 def test_rotation_does_not_help_a_concentrated_vector():
-    key = jax.random.PRNGKey(12)
-    concentrated = jnp.ones((8, 2048)) + jax.random.normal(key, (8, 2048)) * 0.01
+    key = brainstate.random.RandomState(12).value
+    concentrated = jnp.ones((8, 2048)) + brainstate.random.normal(size=(8, 2048), key=key) * 0.01
     tensor = study.StateTensor('concentrated', concentrated)
     assert _error_at(tensor, 1) < _error_at(tensor, 256)
 

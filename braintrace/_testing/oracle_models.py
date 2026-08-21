@@ -92,10 +92,10 @@ def tanh_rnn(n_in: int = 3, n_rec: int = 4, seed: int = 0) -> ModelSpec:
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(seed), (n_rec, n_rec))
+                    0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=brainstate.random.RandomState(seed).value)
                 )
                 self.win = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(seed + 1), (n_in, n_rec))
+                    0.1 * brainstate.random.normal(size=(n_in, n_rec), key=brainstate.random.RandomState(seed + 1).value)
                 )
                 self.h = brainstate.HiddenState(jnp.zeros((1, n_rec)))
 
@@ -128,7 +128,7 @@ def leaky_linear(n_in: int = 3, n_rec: int = 4, leak: float = 0.9, seed: int = 0
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(seed), (n_in, n_rec))
+                    0.1 * brainstate.random.normal(size=(n_in, n_rec), key=brainstate.random.RandomState(seed).value)
                 )
                 self.h = brainstate.HiddenState(jnp.zeros((1, n_rec)))
 
@@ -155,11 +155,11 @@ def stacked_tanh_rnn(n_in: int = 3, n_rec: int = 4, seed: int = 0) -> ModelSpec:
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = jax.random.PRNGKey
-                self.w1 = brainstate.ParamState(0.1 * jax.random.normal(k(seed), (n_rec, n_rec)))
-                self.w2 = brainstate.ParamState(0.1 * jax.random.normal(k(seed + 1), (n_rec, n_rec)))
-                self.win = brainstate.ParamState(0.1 * jax.random.normal(k(seed + 2), (n_in, n_rec)))
-                self.wmid = brainstate.ParamState(0.1 * jax.random.normal(k(seed + 3), (n_rec, n_rec)))
+                k = lambda seed: brainstate.random.RandomState(seed).value
+                self.w1 = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed)))
+                self.w2 = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed + 1)))
+                self.win = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_in, n_rec), key=k(seed + 2)))
+                self.wmid = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed + 3)))
                 self.h1 = brainstate.HiddenState(jnp.zeros((1, n_rec)))
                 self.h2 = brainstate.HiddenState(jnp.zeros((1, n_rec)))
 
@@ -195,7 +195,7 @@ def two_state_rnn(n_in: int = 3, n_rec: int = 3, seed: int = 0) -> ModelSpec:
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(seed), (n_in, n_rec))
+                    0.1 * brainstate.random.normal(size=(n_in, n_rec), key=brainstate.random.RandomState(seed).value)
                 )
                 self.v = brainstate.HiddenState(jnp.zeros((1, n_rec)))
                 self.a = brainstate.HiddenState(jnp.zeros((1, n_rec)))
@@ -224,10 +224,10 @@ def batched_tanh_rnn(n_in: int = 3, n_rec: int = 4, batch: int = 4, seed: int = 
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.5 * jax.random.normal(jax.random.PRNGKey(seed), (n_rec, n_rec))
+                    0.5 * brainstate.random.normal(size=(n_rec, n_rec), key=brainstate.random.RandomState(seed).value)
                 )
                 self.win = brainstate.ParamState(
-                    0.5 * jax.random.normal(jax.random.PRNGKey(seed + 1), (n_in, n_rec))
+                    0.5 * brainstate.random.normal(size=(n_in, n_rec), key=brainstate.random.RandomState(seed + 1).value)
                 )
                 self.h = brainstate.HiddenState(jnp.zeros((batch, n_rec)))
 
@@ -1303,11 +1303,7 @@ def outer_write_memory_inputs(seed, steps=6, batch=1):
     jax.Array
         The input sequence.
     """
-    return jax.random.normal(
-        jax.random.PRNGKey(seed),
-        (steps, batch, OuterWriteMemoryNet.IN_WIDTH),
-        dtype=jnp.float32,
-    )
+    return brainstate.random.normal(size=(steps, batch, OuterWriteMemoryNet.IN_WIDTH), key=brainstate.random.RandomState(seed).value, dtype=jnp.float32)
 
 
 def pairing_permuted(inputs):

@@ -35,7 +35,7 @@ def _net():
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.1 * jax.random.normal(jax.random.PRNGKey(0), (3, 3))
+                0.1 * brainstate.random.normal(size=(3, 3), key=brainstate.random.RandomState(0).value)
             )
             self.h = brainstate.HiddenState(jnp.zeros((1, 3)))
 

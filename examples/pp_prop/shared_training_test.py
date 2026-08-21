@@ -12,8 +12,8 @@ import jax.numpy as jnp
 import braintrace
 
 
-SHARED = pathlib.Path(__file__).resolve().parents[1] / "_shared.py"
-CONTRAST = pathlib.Path(__file__).resolve().parents[1] / "14-knob-vjp-method-contrast.py"
+SHARED = pathlib.Path(__file__).resolve().parent / "_shared.py"
+CONTRAST = pathlib.Path(__file__).resolve().parent / "14-knob-vjp-method-contrast.py"
 
 
 def _load(path, name):

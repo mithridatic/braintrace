@@ -6,7 +6,7 @@ import numpy as np
 
 
 def _load_shared():
-    root = pathlib.Path(__file__).resolve().parents[1]
+    root = pathlib.Path(__file__).resolve().parent
     spec = importlib.util.spec_from_file_location("_drtrl_shared", root / "_shared.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

@@ -11,7 +11,7 @@ import pytest
 import braintrace
 
 
-EXAMPLE = pathlib.Path(__file__).resolve().parents[1] / "09-operator-sparse.py"
+EXAMPLE = pathlib.Path(__file__).resolve().parent / "09-operator-sparse.py"
 
 
 def _load_example():

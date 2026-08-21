@@ -1,5 +1,6 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
 
+import brainstate
 import jax
 import jax.numpy as jnp
 import pytest
@@ -26,26 +27,26 @@ def test_hadamard_matrix_rejects_non_power_of_two(block):
 
 
 def test_sign_diagonal_is_bipolar():
-    signs = sign_diagonal(jax.random.PRNGKey(0), 512)
+    signs = sign_diagonal(brainstate.random.RandomState(0).value, 512)
     assert set(jnp.unique(signs).tolist()) <= {-1.0, 1.0}
 
 
 def test_sign_diagonal_rejects_empty():
     with pytest.raises(ValueError, match='positive'):
-        sign_diagonal(jax.random.PRNGKey(0), 0)
+        sign_diagonal(brainstate.random.RandomState(0).value, 0)
 
 
 @pytest.mark.parametrize('block', [2, 16, 64])
 def test_rotation_round_trips(block):
-    values = jax.random.normal(jax.random.PRNGKey(1), (5, 256))
-    signs = sign_diagonal(jax.random.PRNGKey(2), 256)
+    values = brainstate.random.normal(size=(5, 256), key=brainstate.random.RandomState(1).value)
+    signs = sign_diagonal(brainstate.random.RandomState(2).value, 256)
     restored = unrotate_blocks(rotate_blocks(values, signs, block), signs, block)
     assert jnp.allclose(restored, values, atol=1e-4)
 
 
 def test_rotation_preserves_norm():
-    values = jax.random.normal(jax.random.PRNGKey(3), (3, 128))
-    signs = sign_diagonal(jax.random.PRNGKey(4), 128)
+    values = brainstate.random.normal(size=(3, 128), key=brainstate.random.RandomState(3).value)
+    signs = sign_diagonal(brainstate.random.RandomState(4).value, 128)
     rotated = rotate_blocks(values, signs, 64)
     assert jnp.allclose(
         jnp.linalg.norm(rotated, axis=-1), jnp.linalg.norm(values, axis=-1), atol=1e-4
@@ -54,14 +55,14 @@ def test_rotation_preserves_norm():
 
 def test_rotation_rejects_indivisible_axis():
     values = jnp.zeros((2, 100))
-    signs = sign_diagonal(jax.random.PRNGKey(5), 100)
+    signs = sign_diagonal(brainstate.random.RandomState(5).value, 100)
     with pytest.raises(ValueError, match='multiple of block'):
         rotate_blocks(values, signs, 64)
 
 
 def test_rotation_spreads_a_spike():
     values = jnp.zeros((1, 128)).at[0, 0].set(1.0)
-    signs = sign_diagonal(jax.random.PRNGKey(6), 128)
+    signs = sign_diagonal(brainstate.random.RandomState(6).value, 128)
     rotated = rotate_blocks(values, signs, 64)
     assert jnp.count_nonzero(rotated) == 64
     assert float(jnp.max(jnp.abs(rotated))) == pytest.approx(1.0 / 8.0, rel=1e-4)

@@ -178,7 +178,7 @@ def measure_distortion(tensor: StateTensor) -> list[dict[str, float]]:
             if flat is None:
                 continue
             spec = build_spec(
-                jax.random.PRNGKey(0), flat.shape[-1], bits=bits, block=block,
+                brainstate.random.RandomState(0).value, flat.shape[-1], bits=bits, block=block,
                 use_qjl=False,
             )
             error = float(jnp.mean(relative_distortion(flat, spec)))
@@ -207,7 +207,7 @@ def measure_conversion_throughput(elements: int = 33_554_432) -> dict[str, float
         Giga-elements per second for a float32 sweep, an int8 sweep, and an
         int8 sweep whose result is widened to float32.
     """
-    wide = jax.random.normal(jax.random.PRNGKey(0), (elements // 32, 32), jnp.float32)
+    wide = brainstate.random.normal(size=(elements // 32, 32), key=brainstate.random.RandomState(0).value, dtype=jnp.float32)
     narrow = jnp.round(wide * 10).astype(jnp.int8)
     kernels = {
         'float32_elementwise': (jax.jit(lambda a: a * 1.0001), wide),

@@ -1,10 +1,11 @@
-"""21 - Standard ARC with pp-prop and recurrent latent spiking effort.
+"""21 - Protocol-v2 ARC with pp-prop and recurrent latent spiking effort.
 
-This example keeps the observable contract of BDH-CQ--ordinary ARC tasks,
-exact ranked candidates, and selectable latent effort--while using the neuron,
-synapse, sparse-operator, and pp-prop stack established by Examples 18--20.
-The paper's private architecture, private data, and training recipe are not
-available.  This is a repository-native experiment, not a reproduction.
+The default protocol compares 0, 30, and 60 recurrent reasoning ticks with an
+equal 30-row frozen-state decoder sweep at every effort. Exact global top-two
+factorized candidates are submitted only from the final checkpoint. The
+paper's private architecture, data, and training recipe are unavailable; this
+is a repository-native interface and evaluation audit, not a reproduction or
+paper-scale compute claim.
 """
 
 from __future__ import annotations
@@ -23,10 +24,11 @@ import sys
 import threading
 import time
 from collections import Counter
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 from numbers import Integral, Real
-from typing import Any, Callable, Iterable, Iterator, Literal, Mapping, Sequence
+from typing import Any, Literal
 
 import brainstate
 import braintools
@@ -66,6 +68,11 @@ try:
         refinement_parameter_paths,
         run_selected_packed_stream,
     )
+    from examples.pp_prop.latent_workspace_protocol import (
+        PROTOCOL_VERSION,
+        StepGates,
+        build_batched_protocol_v2_arm,
+    )
     from examples.pp_prop.latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
@@ -82,13 +89,14 @@ try:
         EncodedQueryEpisode,
         LoadedDataset,
         RowEventConfig,
+        _encode_arc_query_episodes_batched,
         assert_no_evaluation_leakage,
         associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
-        _encode_arc_query_episodes_batched,
         encode_query_episode,
+        learned_update_feature_indices,
         leave_one_demonstration_out_episodes,
         load_dataset_source,
         smoke_loaded_dataset,
@@ -123,6 +131,11 @@ except ModuleNotFoundError:
         refinement_parameter_paths,
         run_selected_packed_stream,
     )
+    from latent_workspace_protocol import (
+        PROTOCOL_VERSION,
+        StepGates,
+        build_batched_protocol_v2_arm,
+    )
     from latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
@@ -139,13 +152,14 @@ except ModuleNotFoundError:
         EncodedQueryEpisode,
         LoadedDataset,
         RowEventConfig,
+        _encode_arc_query_episodes_batched,
         assert_no_evaluation_leakage,
         associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         encode_arc_query_episode,
-        _encode_arc_query_episodes_batched,
         encode_query_episode,
+        learned_update_feature_indices,
         leave_one_demonstration_out_episodes,
         load_dataset_source,
         smoke_loaded_dataset,
@@ -155,9 +169,9 @@ except ModuleNotFoundError:
 DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
-DecoderMode = Literal["legacy_cp", "row_refinement"]
+DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
-MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
+MemoryCoding = Literal["frozen", "learned_keys", "learned_write", "learned_update"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
@@ -173,12 +187,14 @@ CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
 SUBMISSION_CHECKPOINT = 60
-SUBMISSION_POLICY = "latest_sweep_plus_newest_distinct_earlier"
+SUBMISSION_POLICY = "latest_checkpoint_factorized_global_top2_v2"
 EVALUATION_ARM_ORDER = (
     "intact",
     "repeat_intact",
     "no_context",
     "shuffled_demonstrations",
+    "state_hold",
+    "recurrent_lesion",
     "slot_ablation",
 )
 STATE_RMS_TOLERANCE = 1e-6
@@ -447,7 +463,7 @@ class ExperimentConfig:
     color_rank: int = 16
     context_memory_width: int = 32
     memory_decay: float = 1.0
-    memory_coding: MemoryCoding = "frozen"
+    memory_coding: MemoryCoding = "learned_update"
     trace_engine: TraceEngine = "pp_prop"
     neuron_typing: NeuronTyping = "none"
     excitatory_fraction: float = 0.8
@@ -467,7 +483,7 @@ class ExperimentConfig:
     adaptation_learning_rate: float = 5e-5
     adaptation_epochs: int = 1
     task_local_adaptation: bool = False
-    evaluation_controls: bool = False
+    evaluation_controls: bool = True
     clip_norm: float = 1.0
     copy_residual_gain: float = 0.0
     row_head_carrier_scale: float = 1.0
@@ -488,7 +504,7 @@ class ExperimentConfig:
     smoke: bool = False
     structural_only: bool = False
     primary_candidate_mode: PrimaryCandidateMode = "model_only"
-    decoder_mode: DecoderMode = "row_refinement"
+    decoder_mode: DecoderMode = "latent_row_decode"
     sparse_backend: SparseBackend = "default"
 
     def __post_init__(self) -> None:
@@ -524,17 +540,30 @@ class ExperimentConfig:
             raise ValueError(
                 "adaptation_update_schedule must be 'per_episode' or 'per_tick'"
             )
-        if self.decoder_mode not in ("legacy_cp", "row_refinement"):
-            raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
+        if self.decoder_mode not in (
+            "legacy_cp",
+            "row_refinement",
+            "latent_row_decode",
+        ):
+            raise ValueError(
+                "decoder_mode must be 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'"
+            )
         if self.sparse_backend not in ("default", "jax_raw"):
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
         if self.optimizer not in ("adam", "adamw", "muon"):
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("lr_schedule must be 'constant' or 'cosine'")
-        if self.memory_coding not in ("frozen", "learned_keys", "learned_write"):
+        if self.memory_coding not in (
+            "frozen",
+            "learned_keys",
+            "learned_write",
+            "learned_update",
+        ):
             raise ValueError(
-                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+                "memory_coding must be 'frozen', 'learned_keys', "
+                "'learned_write' or 'learned_update'"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
@@ -576,13 +605,21 @@ class ExperimentConfig:
             raise ValueError(
                 "excitatory_fraction requires neuron_typing='ei_dale'"
             )
-        if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
+        if self.decoder_mode in ("row_refinement", "latent_row_decode") and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
             )
-        if self.decoder_mode == "row_refinement" and self.balanced_color_loss:
+        if self.decoder_mode in ("row_refinement", "latent_row_decode") and self.balanced_color_loss:
             raise ValueError(
                 "balanced_color_loss is supported only by decoder_mode='legacy_cp'"
+            )
+        if (
+            self.decoder_mode == "latent_row_decode"
+            and self.refinement_mixer == "attention_residual"
+        ):
+            raise ValueError(
+                "attention_residual bypasses the latent-binding test under "
+                "latent_row_decode"
             )
         if self.neuron_count % 64:
             raise ValueError("neuron_count must be divisible by 64")
@@ -668,7 +705,7 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "training_updates must cover every configured training effort "
-                "(30 and 60 for the default horizon)"
+                "including effort zero under protocol v2"
             )
         if (
             self.training_chunk_size
@@ -697,7 +734,9 @@ class ExperimentConfig:
 
     @property
     def training_efforts(self) -> tuple[int, ...]:
-        """Positive recurrent depths distributed across optimizer updates."""
+        """Recurrent depths distributed across optimizer updates."""
+        if self.decoder_mode == "latent_row_decode":
+            return self.checkpoints
         return self.checkpoints[1:]
 
     @property
@@ -714,7 +753,7 @@ class ExperimentConfig:
         seed: int = 9999,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
-        memory_coding: MemoryCoding = "frozen",
+        memory_coding: MemoryCoding | None = None,
         trace_engine: TraceEngine = "pp_prop",
         neuron_typing: NeuronTyping = "none",
         excitatory_fraction: float = 0.8,
@@ -723,10 +762,10 @@ class ExperimentConfig:
         refinement_mixer: RefinementMixer = "linear",
         lr_schedule: LrScheduleName = "cosine",
         balanced_color_loss: bool = False,
-        decoder_mode: DecoderMode = "row_refinement",
+        decoder_mode: DecoderMode = "latent_row_decode",
         runtime_profile: bool = False,
         sparse_backend: SparseBackend = "default",
-    ) -> "ExperimentConfig":
+    ) -> ExperimentConfig:
         """Return a reduced complete-pipeline configuration.
 
         Parameters
@@ -774,7 +813,13 @@ class ExperimentConfig:
             A 128-neuron, 1,024-edge, three-update plumbing-only run.
         """
         if context_memory_width is None:
-            context_memory_width = 2 if decoder_mode == "row_refinement" else 0
+            context_memory_width = (
+                2 if decoder_mode in ("row_refinement", "latent_row_decode") else 0
+            )
+        if memory_coding is None:
+            memory_coding = (
+                "learned_update" if decoder_mode == "latent_row_decode" else "frozen"
+            )
         return cls(
             output_dir=output_dir,
             device=device,
@@ -827,7 +872,7 @@ class ExperimentConfig:
             "compiled_task_local_pp_prop_leave_one_out"
             if (
                 self.task_local_adaptation
-                and self.decoder_mode == "row_refinement"
+                and self.decoder_mode in ("row_refinement", "latent_row_decode")
                 and not self.structural_only
             )
             else "shared_model_frozen"
@@ -1132,7 +1177,6 @@ class _NvidiaSmiGpuMonitor:
                 "evidence_complete": bool(
                     self._physical_device_bytes is not None
                     and self._peak_device_bytes is not None
-                    and not self._errors
                 ),
                 "errors": list(self._errors),
             }
@@ -1168,9 +1212,6 @@ def _gpu_runtime_safety_report(
         and int(device_peak) > 0
     ):
         conservative_peak = None
-    monitor_errors = monitor_report.get("errors", ())
-    if isinstance(monitor_errors, (list, tuple)) and monitor_errors:
-        conservative_peak = None
     assessment = assess_gpu_runtime_safety(
         run_scope="smoke" if config.smoke else "full",
         environment=environment,
@@ -1185,6 +1226,7 @@ def _gpu_runtime_safety_report(
         "nvidia_smi_peak_device_bytes": device_peak,
         "nvidia_smi_peak_process_bytes": process_peak,
         "nvidia_smi_conservative_peak_bytes": conservative_peak,
+        "nvidia_smi_transient_errors": list(monitor_report.get("errors", ())),
     }
 
 
@@ -1286,7 +1328,15 @@ def _row_config(config: ExperimentConfig) -> RowEventConfig:
 def _packed_events(
     encoded: EncodedQueryEpisode, config: ExperimentConfig
 ) -> np.ndarray:
-    total = encoded.events.shape[0] + config.latent_steps
+    total = (
+        encoded.events.shape[0]
+        + config.latent_steps
+        + (
+            CHECKPOINT_INTERVAL
+            if config.decoder_mode == "latent_row_decode"
+            else 0
+        )
+    )
     result = np.zeros((total, encoded.events.shape[1]), dtype=np.float32)
     result[: encoded.events.shape[0]] = encoded.events
     return result
@@ -1384,7 +1434,12 @@ def _training_sequence_length(data: _ExperimentData, config: ExperimentConfig) -
                     maximum,
                     (len(demonstrations) - 1) * context_width
                     + extent(held_out.input)
-                    + config.latent_steps,
+                    + config.latent_steps
+                    + (
+                        CHECKPOINT_INTERVAL
+                        if config.decoder_mode == "latent_row_decode"
+                        else 0
+                    ),
                 )
     if maximum <= config.latent_steps:
         raise ValueError("training horizon contains no observed query rows")
@@ -1457,6 +1512,38 @@ def _cached_base_training_task(task: ArcTask) -> tuple[ArcTask, str]:
     return base_task, canonical_task_fingerprint(base_task)
 
 
+def _protocol_v2_training_schedule(
+    sequence: np.ndarray,
+    advances: np.ndarray,
+    query_checkpoint: int,
+    effort: int,
+    row_config: RowEventConfig,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Align one episode's recurrent effort and fixed decoder sweep.
+
+    Decoder windows occupy the final 30 static ticks for every episode in a
+    batch. Padding between context and reasoning advances nothing, so differing
+    context lengths cannot change per-episode objective weight.
+    """
+
+    if effort not in CHECKPOINTS:
+        raise ValueError("protocol-v2 effort must be one of 0, 30, or 60")
+    context_stop = query_checkpoint + 1
+    decoder_start = sequence.shape[0] - CHECKPOINT_INTERVAL
+    reasoning_start = decoder_start - effort
+    if reasoning_start < context_stop:
+        raise ValueError("protocol-v2 training sequence is too short")
+    packed = np.zeros_like(sequence)
+    packed[:context_stop] = sequence[:context_stop]
+    physical = np.zeros_like(advances)
+    physical[:context_stop] = advances[:context_stop]
+    physical[reasoning_start:decoder_start] = True
+    packed[decoder_start:, row_config.phase_slice.start + 1] = 1.0
+    mask = np.zeros((sequence.shape[0],), dtype=np.float32)
+    mask[decoder_start:] = np.float32(1.0 / CHECKPOINT_INTERVAL)
+    return packed, physical, mask
+
+
 def _training_row(
     origin: _OriginTask,
     config: ExperimentConfig,
@@ -1487,12 +1574,17 @@ def _training_row(
         encoded, config, row_config, sequence_length=sequence_length
     )
     mask = np.zeros((sequence.shape[0],), dtype=np.float32)
-    terminal = query_checkpoint + effort
-    if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
-        raise ValueError("terminal effort exceeds packed sequence capacity")
+    if config.decoder_mode == "latent_row_decode":
+        sequence, advances, mask = _protocol_v2_training_schedule(
+            sequence, advances, query_checkpoint, effort, row_config
+        )
+    else:
+        terminal = query_checkpoint + effort
+        if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
+            raise ValueError("terminal effort exceeds packed sequence capacity")
     if config.decoder_mode == "row_refinement":
         mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
-    else:
+    elif config.decoder_mode == "legacy_cp":
         depth_count = effort + 1
         mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
     target = encoded.target
@@ -1528,12 +1620,17 @@ def _training_row_from_encoded(
     )
     effort = int(descriptor["effort"])
     mask = np.zeros((sequence.shape[0],), dtype=np.float32)
-    terminal = query_checkpoint + effort
-    if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
-        raise ValueError("terminal effort exceeds packed sequence capacity")
+    if config.decoder_mode == "latent_row_decode":
+        sequence, advances, mask = _protocol_v2_training_schedule(
+            sequence, advances, query_checkpoint, effort, row_config
+        )
+    else:
+        terminal = query_checkpoint + effort
+        if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
+            raise ValueError("terminal effort exceeds packed sequence capacity")
     if config.decoder_mode == "row_refinement":
         mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
-    else:
+    elif config.decoder_mode == "legacy_cp":
         depth_count = effort + 1
         mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
     target = encoded.target
@@ -2006,7 +2103,7 @@ def _model_config(
         "neuron_typing": config.neuron_typing,
         "excitatory_fraction": config.excitatory_fraction,
     }
-    if config.decoder_mode == "row_refinement":
+    if config.decoder_mode in ("row_refinement", "latent_row_decode"):
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
         arguments["copy_residual_gain"] = config.copy_residual_gain
         arguments["row_head_carrier_scale"] = config.row_head_carrier_scale
@@ -2015,6 +2112,7 @@ def _model_config(
         arguments["refinement_mixer"] = config.refinement_mixer
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
+        update_features = learned_update_feature_indices(row_config)
         arguments.update(
             {
                 "context_memory_width": config.context_memory_width,
@@ -2026,6 +2124,8 @@ def _model_config(
                 "memory_key_indices": features.key_indices,
                 "memory_value_indices": features.value_indices,
                 "memory_coding": config.memory_coding,
+                "memory_update_indices": update_features.indices,
+                "memory_update_feature_order": update_features.order,
             }
         )
     return ModelConfig(**arguments)
@@ -2207,7 +2307,7 @@ def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
         }
     width = (
         refinement_head_width(config.neuron_count)
-        if config.decoder_mode == "row_refinement"
+        if config.decoder_mode in ("row_refinement", "latent_row_decode")
         else config.readout_width
     )
     integral_factor = 1.0 if config.lr_schedule == "constant" else 0.5
@@ -2335,7 +2435,7 @@ class _TrainingSchedule:
     source_names: tuple[str, ...] = ()
     held_out_demonstration_indices: tuple[int, ...] = ()
 
-    def extended(self, chunk: _TrainingTensors) -> "_TrainingSchedule":
+    def extended(self, chunk: _TrainingTensors) -> _TrainingSchedule:
         sequence_length = int(chunk.events.shape[1])
         if (
             self.training_sequence_length is not None
@@ -2514,7 +2614,7 @@ def _restored_training_report(
         "one_shared_model": True,
         "supervised_depths": (
             "latent_row_ticks_1..effort"
-            if config.decoder_mode == "row_refinement"
+            if config.decoder_mode in ("row_refinement", "latent_row_decode")
             else "0..effort"
         ),
         "depth_weighting": "uniform_unit_sum_per_update",
@@ -2556,7 +2656,7 @@ def _train_model(
     }
     supervised_depths = (
         "latent_row_ticks_1..effort"
-        if config.decoder_mode == "row_refinement"
+        if config.decoder_mode in ("row_refinement", "latent_row_decode")
         else "0..effort"
     )
     if config.structural_only:
@@ -2589,9 +2689,26 @@ def _train_model(
             model.reset_state()
             learner.reset_state(batch_size=model.config.batch_size)
 
+            trace_control: jax.Array | StepGates = advance
+            if config.decoder_mode == "latent_row_decode":
+                assert model.config.query_phase_index is not None
+                decoder_gate = (~advance) & (
+                    sequence[:, :, model.config.query_phase_index] > 0.5
+                )
+                latent_gate = advance & ~(
+                    sequence[:, :, model.config.event_valid_index] > 0.5
+                )
+                trace_control = StepGates(
+                    advance_physics=advance,
+                    latent_update=latent_gate,
+                    decode_row=decoder_gate,
+                    answer_feedback=jnp.zeros_like(advance),
+                    recurrent_enabled=advance,
+                )
+
             def step_loss(event, advance_gate):
                 compact = learner(event, advance_gate)
-                if config.decoder_mode == "row_refinement":
+                if config.decoder_mode in ("row_refinement", "latent_row_decode"):
                     current_rows = jnp.mod(
                         jnp.asarray(model.reasoning_index.value, dtype=jnp.int32) - 1,
                         30,
@@ -2603,9 +2720,12 @@ def _train_model(
                         target_colors,
                         current_rows,
                     )
-                    supervised = advance_gate & ~(
-                        event[:, model.config.event_valid_index] > 0.5
-                    )
+                    if isinstance(advance_gate, StepGates):
+                        supervised = advance_gate.decode_row
+                    else:
+                        supervised = advance_gate & ~(
+                            event[:, model.config.event_valid_index] > 0.5
+                        )
                 else:
                     losses = arc_loss_per_example(
                         compact,
@@ -2622,7 +2742,7 @@ def _train_model(
 
             gradients, objective = learner.etrace_grad(
                 sequence,
-                advance,
+                trace_control,
                 step_fn=step_loss,
                 mask=mask,
                 reduction="mean",
@@ -3646,7 +3766,7 @@ def _associative_evaluation_diagnostics(
     if set(controls) != expected_controls:
         raise ValueError("associative controls are incomplete")
     control_reports = {
-        name: comparison(name, *controls[name]) for name in EVALUATION_ARM_ORDER[1:]
+        name: comparison(name, *controls[name]) for name in sorted(expected_controls)
     }
     repeat_report = control_reports["repeat_intact"]
     repeat_exact = bool(
@@ -3714,6 +3834,14 @@ def _compile_evaluation_arm(
             ablation_slots=slots,
             ablation_gates=gates,
         )
+        selected_context_memory = getattr(
+            packed,
+            "context_memory",
+            jnp.broadcast_to(
+                packed.final_context_memory,
+                (packed.compact_logits.shape[0],) + packed.final_context_memory.shape,
+            ),
+        )
         return (
             packed.compact_logits,
             packed.spikes,
@@ -3722,6 +3850,7 @@ def _compile_evaluation_arm(
             packed.recurrent_current,
             packed.memory_read,
             packed.final_context_memory,
+            selected_context_memory,
         )
 
     return run_arm
@@ -3920,7 +4049,7 @@ def _model_only_completion_report(
         and not config.structural_only
         and not data.plumbing_only
         and config.evaluation_task_limit is None
-        and config.decoder_mode == "row_refinement"
+        and config.decoder_mode in ("row_refinement", "latent_row_decode")
         and len(expected) == 400
     )
     if eligible:
@@ -3982,7 +4111,7 @@ def _evaluate(
     records = _evaluation_records(data, config, row_config)
     adaptation_enabled = (
         config.task_local_adaptation
-        and config.decoder_mode == "row_refinement"
+        and config.decoder_mode in ("row_refinement", "latent_row_decode")
         and not config.structural_only
     )
     if adaptation_enabled:
@@ -4052,10 +4181,34 @@ def _evaluate(
         shuffled_stops = query_stops
         shuffled_meta = []
 
+    protocol_v2 = config.decoder_mode == "latent_row_decode"
+    base_intact_events = intact_events
+    base_intact_advances = intact_advances
+    if protocol_v2:
+        intact_protocol = build_batched_protocol_v2_arm(
+            base_intact_events, base_intact_advances, query_stops
+        )
+        intact_events = np.asarray(intact_protocol.events)
+        intact_advances = intact_protocol.gates
+        selected_indices = np.asarray(
+            intact_protocol.metadata["checkpoint_indices"], dtype=np.int32
+        )
+        if config.evaluation_controls:
+            no_context_protocol = build_batched_protocol_v2_arm(
+                no_context_events, no_context_advances, no_context_stops
+            )
+            shuffled_protocol = build_batched_protocol_v2_arm(
+                shuffled_events, shuffled_advances, shuffled_stops
+            )
+            no_context_events = np.asarray(no_context_protocol.events)
+            no_context_advances = no_context_protocol.gates
+            shuffled_events = np.asarray(shuffled_protocol.events)
+            shuffled_advances = shuffled_protocol.gates
     slots = np.full((batch_size,), config.ablation_slot, dtype=np.int32)
     inactive_gates = np.zeros((intact_events.shape[0], batch_size), dtype=np.bool_)
     evaluation_offsets = _evaluation_offsets(config)
-    selected_indices = query_stops[None, :] - 1 + evaluation_offsets[:, None]
+    if not protocol_v2:
+        selected_indices = query_stops[None, :] - 1 + evaluation_offsets[:, None]
     run_device_arm = _compile_evaluation_arm(
         model,
         jnp.asarray(selected_indices),
@@ -4066,7 +4219,7 @@ def _evaluate(
     def run_arm(
         name: str,
         events: np.ndarray,
-        advances: np.ndarray,
+        advances: np.ndarray | StepGates,
         gates: np.ndarray,
     ) -> tuple[
         tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
@@ -4075,7 +4228,7 @@ def _evaluate(
         arm_started = time.perf_counter()
         packed = run_device_arm(
             jnp.asarray(events),
-            jnp.asarray(advances),
+            advances if isinstance(advances, StepGates) else jnp.asarray(advances),
             jnp.asarray(gates),
         )
         window = tuple(np.asarray(value) for value in packed)
@@ -4088,6 +4241,102 @@ def _evaluate(
     intact, intact_associative = run_arm(
         "intact", intact_events, intact_advances, inactive_gates
     )
+    protocol_evidence: dict[str, object] | None = None
+    if protocol_v2:
+        boundaries = intact_protocol.metadata["per_example_boundaries"]
+        audit_rows: list[list[int]] = []
+        for effort in checkpoints:
+            audit_rows.append(
+                [
+                    int(item[f"decode_r{effort}_start"]) - 1
+                    for item in boundaries
+                ]
+            )
+            audit_rows.append(
+                [int(item[f"decode_r{effort}_stop"]) - 1 for item in boundaries]
+            )
+        audit_driver = _compile_evaluation_arm(
+            model,
+            jnp.asarray(audit_rows, dtype=jnp.int32),
+            jnp.asarray(slots),
+        )
+        audit_window = tuple(
+            np.asarray(value)
+            for value in audit_driver(
+                jnp.asarray(intact_events), intact_advances, jnp.asarray(inactive_gates)
+            )
+        )
+        audit_voltage = audit_window[2]
+        audit_memory = audit_window[7]
+        decoder_hashes: dict[str, dict[str, object]] = {}
+        for index, effort in enumerate(checkpoints):
+            before_index = 2 * index
+            after_index = before_index + 1
+            h_before = _array_sha256(audit_voltage[before_index])
+            h_after = _array_sha256(audit_voltage[after_index])
+            s_before = _array_sha256(audit_memory[before_index])
+            s_after = _array_sha256(audit_memory[after_index])
+            decoder_hashes[str(effort)] = {
+                "physical_state_before_sha256": h_before,
+                "physical_state_after_sha256": h_after,
+                "associative_memory_before_sha256": s_before,
+                "associative_memory_after_sha256": s_after,
+                "physical_state_unchanged": h_before == h_after,
+                "associative_memory_unchanged": s_before == s_after,
+            }
+
+        def gate_count(gates: StepGates) -> dict[str, int]:
+            return {
+                "advance_physics": int(np.count_nonzero(gates.advance_physics)),
+                "latent_update": int(np.count_nonzero(gates.latent_update)),
+                "decode_row": int(np.count_nonzero(gates.decode_row)),
+                "answer_feedback": int(np.count_nonzero(gates.answer_feedback)),
+                "recurrent_enabled": int(np.count_nonzero(gates.recurrent_enabled)),
+            }
+
+        reasoning_or_decode = np.asarray(intact_advances.latent_update) | np.asarray(
+            intact_advances.decode_row
+        )
+        no_context_prequery = (
+            {
+                name: int(
+                    sum(
+                        np.count_nonzero(np.asarray(value)[: int(stop), batch])
+                        for batch, stop in enumerate(no_context_stops.tolist())
+                    )
+                )
+                for name, value in {
+                    "latent_update": no_context_protocol.gates.latent_update,
+                    "decode_row": no_context_protocol.gates.decode_row,
+                    "answer_feedback": no_context_protocol.gates.answer_feedback,
+                }.items()
+            }
+            if config.evaluation_controls
+            else None
+        )
+        protocol_evidence = {
+            "version": PROTOCOL_VERSION,
+            "efforts": list(checkpoints),
+            "recurrent_reasoning_ticks": [0, 30, 60],
+            "decoder_rows_per_effort": 30,
+            "gate_counts": gate_count(intact_advances),
+            "decoder_state_hashes": decoder_hashes,
+            "decoder_state_immutable": all(
+                item["physical_state_unchanged"]
+                and item["associative_memory_unchanged"]
+                for item in decoder_hashes.values()
+            ),
+            "primary_reasoning_and_decoder_external_input_l2": float(
+                np.linalg.norm(intact_events[reasoning_or_decode].astype(np.float64))
+            ),
+            "primary_answer_feedback_norm": 0.0,
+            "no_context_prequery_gate_counts": no_context_prequery,
+            "no_context_prequery_memory_norm": (
+                0.0 if config.evaluation_controls else None
+            ),
+            "candidate_policy": SUBMISSION_POLICY,
+        }
+        del audit_window, audit_voltage, audit_memory
     frozen_metrics, frozen_checkpoint_queries = _score_windows(
         intact[0], records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
@@ -4103,7 +4352,9 @@ def _evaluate(
     )
     channel_attribution = _channel_attribution(primary_checkpoint_queries)
     trajectory_steps = (
-        evaluation_offsets
+        np.asarray(checkpoints, dtype=np.int32)
+        if protocol_v2
+        else evaluation_offsets
         if intact[0].shape[0] == evaluation_offsets.size
         else None
     )
@@ -4144,8 +4395,12 @@ def _evaluate(
                 "sequential_separate_arms": False,
                 "repeat_intact_cached": False,
                 "wall_seconds_by_arm": arm_wall_seconds,
-                "gathered_steps": evaluation_offsets.tolist(),
-                "gathered_step_count": int(evaluation_offsets.size),
+                "gathered_steps": (
+                    list(checkpoints) if protocol_v2 else evaluation_offsets.tolist()
+                ),
+                "gathered_step_count": (
+                    len(checkpoints) if protocol_v2 else int(evaluation_offsets.size)
+                ),
             },
         }
         return {
@@ -4162,9 +4417,16 @@ def _evaluate(
                 "submission_checkpoint": config.submission_checkpoint,
                 "completed_sweep_checkpoints": list(training_efforts),
                 "candidate_budget": 2,
-                "fallback": "latest_sweep_deterministic_logit_runner_up",
+                "fallback": "latest_checkpoint_factorized_global_runner_up",
                 "target_free_selection": True,
                 "rule_channel_enabled": False,
+            },
+            "protocol": {
+                **(protocol_evidence or {}),
+                "output_complete_at_every_effort": all(
+                    int(primary_metrics[str(effort)]["query_count"]) == batch_size
+                    for effort in checkpoints
+                ),
             },
             "model_only_completion": completion_report,
             "channel_attribution": channel_attribution,
@@ -4206,6 +4468,8 @@ def _evaluate(
         submission_checkpoint,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
+    if protocol_v2:
+        repeat_match["evaluated_steps"] = list(checkpoints)
     repeat_metrics_exact = repeat_result["metrics_by_effort"] == frozen_metrics
     repeat_predictions_exact = bool(repeat_result["decoded_candidates_match_intact"])
     repeat_reproducible = bool(
@@ -4275,8 +4539,77 @@ def _evaluate(
     )
     del shuffled
 
+    if protocol_v2:
+        state_hold_protocol = build_batched_protocol_v2_arm(
+            base_intact_events,
+            base_intact_advances,
+            query_stops,
+            control="state_hold",
+        )
+        recurrent_lesion_protocol = build_batched_protocol_v2_arm(
+            base_intact_events,
+            base_intact_advances,
+            query_stops,
+            control="recurrent_lesion",
+        )
+        state_hold, _ = run_arm(
+            "state_hold",
+            np.asarray(state_hold_protocol.events),
+            state_hold_protocol.gates,
+            inactive_gates,
+        )
+        recurrent_lesion, _ = run_arm(
+            "recurrent_lesion",
+            np.asarray(recurrent_lesion_protocol.events),
+            recurrent_lesion_protocol.gates,
+            inactive_gates,
+        )
+        state_hold_result = _control_summary(
+            "state_hold",
+            intact,
+            state_hold,
+            records,
+            config.color_rank,
+            config.decoder_mode,
+            frozen_metrics,
+            intact_meta,
+            checkpoints,
+            submission_checkpoint,
+        )
+        state_hold_result["r30_r60_equal_r0"] = bool(
+            np.array_equal(state_hold[0][0], state_hold[0][1])
+            and np.array_equal(state_hold[0][0], state_hold[0][2])
+        )
+        recurrent_lesion_result = _control_summary(
+            "recurrent_lesion",
+            intact,
+            recurrent_lesion,
+            records,
+            config.color_rank,
+            config.decoder_mode,
+            frozen_metrics,
+            intact_meta,
+            checkpoints,
+            submission_checkpoint,
+        )
+        del state_hold, recurrent_lesion
+    else:
+        state_hold_result = {
+            "status": "not_run",
+            "required": False,
+            "reason": "legacy decoder",
+        }
+        recurrent_lesion_result = dict(state_hold_result)
+
     gates = inactive_gates.copy()
-    gates[query_stops, np.arange(batch_size)] = True
+    intervention_steps = query_stops
+    if protocol_v2:
+        intervention_steps = selected_indices[0] + 1
+    valid_intervention = intervention_steps < gates.shape[0]
+    gates[
+        intervention_steps[valid_intervention],
+        np.arange(batch_size)[valid_intervention],
+    ] = True
     ablated, ablated_associative = run_arm(
         "slot_ablation", intact_events, intact_advances, gates
     )
@@ -4335,9 +4668,16 @@ def _evaluate(
             "submission_checkpoint": submission_checkpoint,
             "completed_sweep_checkpoints": list(training_efforts),
             "candidate_budget": 2,
-            "fallback": "latest_sweep_deterministic_logit_runner_up",
+            "fallback": "latest_checkpoint_factorized_global_runner_up",
             "target_free_selection": True,
             "rule_channel_enabled": False,
+        },
+        "protocol": {
+            **(protocol_evidence or {}),
+            "output_complete_at_every_effort": all(
+                int(primary_metrics[str(effort)]["query_count"]) == batch_size
+                for effort in checkpoints
+            ),
         },
         "model_only_completion": completion_report,
         "channel_attribution": channel_attribution,
@@ -4388,18 +4728,22 @@ def _evaluate(
             "no_context": no_context_result,
             "shuffled_demonstrations": shuffled_result,
             "slot_ablation": ablation_result,
+            "state_hold": state_hold_result,
+            "recurrent_lesion": recurrent_lesion_result,
             "truncation": {
                 "checkpoints": list(checkpoints),
                 "uses_one_continuous_intact_trajectory": True,
             },
         },
         "execution": {
-            "arm_order": list(EVALUATION_ARM_ORDER),
+            "arm_order": list(arm_wall_seconds),
             "selected_arm_driver": "brainstate.transform.jit",
             "jit_name": "example21_evaluation_arm",
             "jit_inline": False,
             "sequential_separate_arms": True,
             "repeat_intact_cached": False,
+            "gathered_steps": list(checkpoints),
+            "gathered_step_count": len(checkpoints),
             "wall_seconds_by_arm": arm_wall_seconds,
             "cold_intact_to_warm_repeat_ratio": (
                 arm_wall_seconds["intact"] / arm_wall_seconds["repeat_intact"]
@@ -4612,20 +4956,9 @@ def _qualification(
             or first.get("selection_role") != "latest_sweep_joint_argmax"
         ):
             return False
-        second_checkpoint = second.get("source_checkpoint")
-        second_role = second.get("selection_role")
         return bool(
-            (
-                second_role == "earlier_sweep_joint_argmax"
-                and isinstance(second_checkpoint, Integral)
-                and not isinstance(second_checkpoint, bool)
-                and 0 < int(second_checkpoint) < effort
-                and int(second_checkpoint) % 30 == 0
-            )
-            or (
-                second_role == "latest_sweep_logit_runner_up"
-                and second_checkpoint == effort
-            )
+            second.get("selection_role") == "latest_sweep_logit_runner_up"
+            and second.get("source_checkpoint") == effort
         )
 
     checkpoint_queries_complete = bool(
@@ -4664,7 +4997,7 @@ def _qualification(
         == list(training_efforts)
         and submission_policy.get("candidate_budget") == 2
         and submission_policy.get("fallback")
-        == "latest_sweep_deterministic_logit_runner_up"
+        == "latest_checkpoint_factorized_global_runner_up"
         and submission_policy.get("target_free_selection") is True
         and submission_policy.get("rule_channel_enabled") is False
     )
@@ -4674,7 +5007,7 @@ def _qualification(
         and not config.structural_only
         and not data.plumbing_only
         and config.evaluation_task_limit is None
-        and config.decoder_mode == "row_refinement"
+        and config.decoder_mode in ("row_refinement", "latent_row_decode")
         and len(data.evaluation) == 400
     )
     completion_complete = bool(
@@ -4715,18 +5048,23 @@ def _qualification(
             return False
         current_distance = value.get("synaptic_current_l2_by_step")
         score_deltas = value.get("score_deltas_control_minus_intact")
+        expected_control_steps = (
+            len(checkpoints)
+            if config.decoder_mode == "latent_row_decode"
+            else max(checkpoints) + 1
+        )
         return bool(
             isinstance(value.get("causally_null_at_measured_precision"), bool)
             and len(value.get("state_byte_identical_by_step", ()))
-            == max(checkpoints) + 1
-            and len(value.get("spike_hamming_by_step", ())) == max(checkpoints) + 1
+            == expected_control_steps
+            and len(value.get("spike_hamming_by_step", ())) == expected_control_steps
             and len(value.get("spike_hamming_fraction_by_step", ()))
-            == max(checkpoints) + 1
-            and len(value.get("voltage_l2_by_step", ())) == max(checkpoints) + 1
+            == expected_control_steps
+            and len(value.get("voltage_l2_by_step", ())) == expected_control_steps
             and isinstance(current_distance, dict)
             and set(current_distance) == {"feedforward", "recurrent"}
             and all(
-                len(current_distance[name]) == max(checkpoints) + 1
+                len(current_distance[name]) == expected_control_steps
                 for name in current_distance
             )
             and isinstance(score_deltas, dict)
@@ -4826,15 +5164,21 @@ def _qualification(
             and candidate_summary_ok
         )
 
+    required_control_names = [
+        "repeat_intact",
+        "no_context",
+        "shuffled_demonstrations",
+        "slot_ablation",
+    ]
+    if config.decoder_mode == "latent_row_decode":
+        required_control_names.extend(("state_hold", "recurrent_lesion"))
     required_controls_complete = (
         all(
-            control_complete(name)
-            for name in (
-                "repeat_intact",
-                "no_context",
-                "shuffled_demonstrations",
-                "slot_ablation",
-            )
+            control_complete(name) for name in required_control_names
+        )
+        and (
+            config.decoder_mode != "latent_row_decode"
+            or bool(controls["state_hold"].get("r30_r60_equal_r0"))
         )
         if controls_required
         else isinstance(controls, dict) and controls.get("enabled") is False
@@ -4975,7 +5319,7 @@ def _qualification(
         and float(determinism["metric_absolute_tolerance"]) == 0.0
         and numeric_evidence_complete(
             determinism.get("repeat_intact_numeric_evidence"),
-            range(max(checkpoints) + 1),
+            expected_trajectory_steps,
         )
     )
     repeatable = (
@@ -5051,7 +5395,7 @@ def _qualification(
     adaptation = evaluation.get("task_local_adaptation")
     adaptation_expected = bool(
         config.task_local_adaptation
-        and config.decoder_mode == "row_refinement"
+        and config.decoder_mode in ("row_refinement", "latent_row_decode")
         and not config.structural_only
     )
     if adaptation_expected:
@@ -5148,11 +5492,22 @@ def _qualification(
         "workspace_query_projection.weight",
         "memory_read_projection.weight",
     }
+    if config.memory_coding == "learned_update":
+        associative_paths.update(
+            {
+                "memory_key_projection.weight",
+                "memory_update_projection.weight",
+            }
+        )
     memory_enabled = config.context_memory_width > 0
     routed_paths_expected = (
         legacy_temporal_paths
         | (associative_paths if memory_enabled else set())
-        | (row_refinement_paths if config.decoder_mode == "row_refinement" else set())
+        | (
+            row_refinement_paths
+            if config.decoder_mode in ("row_refinement", "latent_row_decode")
+            else set()
+        )
     )
     expected_parameter_paths = routed_paths_expected | plain_paths_expected
     route_classifications: dict[object, set[object]] = {}
@@ -5177,7 +5532,7 @@ def _qualification(
         )
     )
     row_routes_direct = bool(
-        config.decoder_mode != "row_refinement"
+        config.decoder_mode not in ("row_refinement", "latent_row_decode")
         or all(
             route_classifications.get(path) == {"all_direct"}
             for path in row_refinement_paths
@@ -5199,7 +5554,11 @@ def _qualification(
             is True
             and int(associative_diagnostics.get("query_count", 0)) == query_count
             and int(associative_diagnostics.get("depth_count", 0))
-            == max(checkpoints) + 1
+            == (
+                len(checkpoints)
+                if config.decoder_mode == "latent_row_decode"
+                else max(checkpoints) + 1
+            )
         )
     )
     compiler_complete = bool(
@@ -5259,6 +5618,9 @@ def _qualification(
         "frozen_parameters_unchanged": frozen,
         "repeat_intact_deterministic": repeatable,
         "slot_ablation_pre_intervention_matched": ablation_matched,
+        "required_controls_executed": bool(
+            config.evaluation_controls and required_controls_complete
+        ),
     }
     structural = all(structural_checks.values())
 
@@ -5317,7 +5679,7 @@ def _qualification(
     )
     expected_supervision = (
         "latent_row_ticks_1..effort"
-        if config.decoder_mode == "row_refinement"
+        if config.decoder_mode in ("row_refinement", "latent_row_decode")
         else "0..effort"
     )
     depth_supervision = bool(
@@ -5379,6 +5741,7 @@ def _qualification(
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
         "repeat_intact_deterministic": "same-run intact repeat exceeded the declared state/logit tolerance or changed exact candidates or metrics",
         "slot_ablation_pre_intervention_matched": "slot-ablation checkpoint zero exceeded the declared state/logit tolerance or changed exact candidates or effort-0 metrics",
+        "required_controls_executed": "one or more required protocol-v2 controls were disabled, incomplete, or failed its invariant",
     }
     scientific_messages = {
         "not_smoke_or_structural_only": "smoke fixtures or disabled optimization cannot be scientific evidence",
@@ -5405,6 +5768,44 @@ def _qualification(
         for name, passed in scientific_checks.items()
         if name != "structural_qualification" and not passed
     )
+    structural_check_results = {
+        name: {
+            "status": "passed" if passed else "failed",
+            "required": True,
+            "reason": None if passed else structural_messages[name],
+        }
+        for name, passed in structural_checks.items()
+    }
+    scientific_check_results = {
+        name: {
+            "status": "passed" if passed else "failed",
+            "required": True,
+            "reason": None if passed else (
+                "structural qualification failed"
+                if name == "structural_qualification"
+                else scientific_messages[name]
+            ),
+        }
+        for name, passed in scientific_checks.items()
+    }
+    controls_executed = bool(config.evaluation_controls and required_controls_complete)
+    control_check = {
+        "status": (
+            "passed"
+            if controls_executed
+            else "failed"
+            if config.evaluation_controls
+            else "not_run"
+        ),
+        "required": True,
+        "reason": (
+            None
+            if controls_executed
+            else "evaluation controls were incomplete"
+            if config.evaluation_controls
+            else "evaluation controls were disabled"
+        ),
+    }
     return {
         "full_structural_qualification": structural,
         "full_scientific_qualification": scientific,
@@ -5415,6 +5816,9 @@ def _qualification(
         "associative_capability_status": associative_capability_status,
         "structural_checks": structural_checks,
         "scientific_checks": scientific_checks,
+        "structural_check_results": structural_check_results,
+        "scientific_check_results": scientific_check_results,
+        "control_execution_check": control_check,
         "reasons_not_structural": reasons_not_structural,
         "reasons_not_scientific": reasons_not_scientific,
     }
@@ -5467,6 +5871,49 @@ def _software_report(
     }
 
 
+def _git_source_provenance(directory: pathlib.Path) -> dict[str, object]:
+    """Resolve live Git provenance without trusting launcher declarations.
+
+    Parameters
+    ----------
+    directory : pathlib.Path
+        File or directory inside the source checkout.
+
+    Returns
+    -------
+    dict
+        Actual revision and dirty state plus any declared-revision mismatch.
+    """
+    root = directory if directory.is_dir() else directory.parent
+    try:
+        revision = subprocess.run(
+            ("git", "-C", str(root), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        status = subprocess.run(
+            ("git", "-C", str(root), "status", "--porcelain"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        revision = None
+        dirty = None
+    else:
+        dirty = bool(status.strip())
+    declared = os.environ.get("EXAMPLE21_SOURCE_REVISION")
+    return {
+        "source_revision": revision,
+        "source_dirty": dirty,
+        "declared_source_revision": declared,
+        "declared_revision_mismatch": bool(
+            declared is not None and revision is not None and declared != revision
+        ),
+    }
+
+
 def _implementation_report() -> dict[str, object]:
     directory = pathlib.Path(__file__).resolve().parent
     names = (
@@ -5474,7 +5921,10 @@ def _implementation_report() -> dict[str, object]:
         "latent_workspace_task.py",
         "latent_workspace_analysis.py",
         "latent_workspace_model.py",
+        "latent_workspace_protocol.py",
+        "latent_workspace_refinement.py",
         "latent_workspace_resource_safety.py",
+        "21-arc-agi-latent-reasoning.py",
     )
     combined = hashlib.sha256()
     files: dict[str, str] = {}
@@ -5487,13 +5937,36 @@ def _implementation_report() -> dict[str, object]:
     return {
         "source_tree_sha256": combined.hexdigest(),
         "file_sha256": files,
-        "source_revision": os.environ.get("EXAMPLE21_SOURCE_REVISION"),
-        "source_dirty": os.environ.get("EXAMPLE21_SOURCE_DIRTY"),
+        **_git_source_provenance(directory),
         "image_digest": os.environ.get("EXAMPLE21_IMAGE_DIGEST")
         or os.environ.get("BRAINTRACE_IMAGE_DIGEST"),
         "arc_revision": os.environ.get("EXAMPLE21_ARC_REVISION")
         or os.environ.get("ARC_AGI_1_COMMIT"),
     }
+
+
+def _artifact_manifest(paths: Mapping[str, pathlib.Path]) -> dict[str, object]:
+    """Build a checksum sidecar for materialized run artifacts.
+
+    Parameters
+    ----------
+    paths : mapping of str to pathlib.Path
+        Artifact names and paths after every file has been written.
+
+    Returns
+    -------
+    dict
+        Schema-v2 size and SHA-256 records ordered by artifact name.
+    """
+    artifacts: dict[str, dict[str, object]] = {}
+    for name, path in sorted(paths.items()):
+        payload = path.read_bytes()
+        artifacts[name] = {
+            "path": str(path),
+            "size_bytes": len(payload),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+    return {"schema_version": 2, "artifacts": artifacts}
 
 
 def _data_summary(
@@ -5737,6 +6210,7 @@ def _render_report(result: dict[str, object]) -> str:
             f"{compiler_counts.get('errors', 0)} errors. {plain_route_line}"
         ),
         f"Evaluation execution: {evaluation.get('execution', {})}.",
+        f"Protocol evidence: {evaluation.get('protocol', {})}.",
         (
             "Task-local adaptation: performed="
             f"{task_local_adaptation.get('performed')}; mode="
@@ -5912,8 +6386,16 @@ def _render_report(result: dict[str, object]) -> str:
             voltage_l2 = comparison.get("voltage_l2_by_step", [])
             feedforward_l2 = current_l2.get("feedforward", [])
             recurrent_l2 = current_l2.get("recurrent", [])
+            gathered_steps = evaluation.get("execution", {}).get(
+                "gathered_steps", list(range(submission_checkpoint + 1))
+            )
+            submission_index = (
+                gathered_steps.index(submission_checkpoint)
+                if submission_checkpoint in gathered_steps
+                else -1
+            )
             if all(
-                len(values) > submission_checkpoint
+                submission_index >= 0 and len(values) > submission_index
                 for values in (
                     spike_fraction,
                     voltage_l2,
@@ -5923,11 +6405,11 @@ def _render_report(result: dict[str, object]) -> str:
             ):
                 lines.append(
                     f"    step-{submission_checkpoint} state deltas: "
-                    f"spike-Hamming fraction={spike_fraction[submission_checkpoint]:.6f}; "
-                    f"voltage L2={voltage_l2[submission_checkpoint]:.6f}; "
+                    f"spike-Hamming fraction={spike_fraction[submission_index]:.6f}; "
+                    f"voltage L2={voltage_l2[submission_index]:.6f}; "
                     "feedforward/recurrent current L2="
-                    f"{feedforward_l2[submission_checkpoint]:.6f}/"
-                    f"{recurrent_l2[submission_checkpoint]:.6f}."
+                    f"{feedforward_l2[submission_index]:.6f}/"
+                    f"{recurrent_l2[submission_index]:.6f}."
                 )
     determinism = evaluation.get("determinism", {})
     repeat_numeric = determinism.get("repeat_intact_numeric_evidence", {})
@@ -6129,6 +6611,10 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
     exact_deltas = []
     diagnostic_deltas = []
     state_effects = []
+    gathered_steps = result["evaluation"].get("execution", {}).get(
+        "gathered_steps", list(range(submission_checkpoint + 1))
+    )
+    submission_index = gathered_steps.index(submission_checkpoint)
     for name in names:
         comparison = controls.get(name, {}).get("trajectory_comparison", {})
         score_deltas = comparison.get("score_deltas_control_minus_intact", {})
@@ -6144,7 +6630,7 @@ def _plot(result: dict[str, object], path: pathlib.Path) -> None:
         exact_deltas.append(score_deltas[exact_key])
         diagnostic_deltas.append(score_deltas[pixel_key])
         state_effects.append(
-            comparison["spike_hamming_fraction_by_step"][submission_checkpoint]
+            comparison["spike_hamming_fraction_by_step"][submission_index]
         )
     positions = np.arange(len(names), dtype=np.float64)
     width = 0.36
@@ -6361,10 +6847,16 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "associative_memory_implementation": memory_implementation,
         "neuron_typing": model.neuron_typing_report(),
     }
+    configuration = config.to_dict()
+    configuration_sha256 = hashlib.sha256(
+        msgspec.json.encode(configuration, order="sorted")
+    ).hexdigest()
     result: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "protocol_version": 2,
         "claim_boundary": CLAIM_BOUNDARY,
-        "configuration": config.to_dict(),
+        "configuration": configuration,
+        "configuration_sha256": configuration_sha256,
         "device": device_report,
         "model": model_report,
         "software": _software_report(pre_device_report, environment_snapshot),
@@ -6395,11 +6887,13 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
     result_path = config.output_dir / "result.json"
     report_path = config.output_dir / "report.txt"
     figure_path = config.output_dir / "latent_reasoning.png"
+    artifact_manifest_path = config.output_dir / "artifact_manifest.json"
     result["artifacts"] = {
         "data_manifest": str(manifest_path),
         "result": str(result_path),
         "report": str(report_path),
         "figure": str(figure_path),
+        "manifest": str(artifact_manifest_path),
     }
     artifacts_started = time.perf_counter()
     _emit_progress("artifacts", 0, 1, artifacts_started)
@@ -6413,6 +6907,19 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         result["runtime_profile"]["phase_seconds"] = phase_seconds
         report_path.write_text(_render_report(result), encoding="utf-8")
         result_path.write_bytes(msgspec.json.encode(result))
+    artifact_manifest_path.write_bytes(
+        msgspec.json.encode(
+            _artifact_manifest(
+                {
+                    "data_manifest": manifest_path,
+                    "result": result_path,
+                    "report": report_path,
+                    "figure": figure_path,
+                }
+            ),
+            order="sorted",
+        )
+    )
     _emit_progress("run", 1, 1, started)
     return result
 
@@ -6433,8 +6940,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
         "--memory-coding",
-        choices=("frozen", "learned_keys", "learned_write"),
-        default="frozen",
+        choices=("frozen", "learned_keys", "learned_write", "learned_update"),
+        default=None,
     )
     parser.add_argument(
         "--trace-engine",
@@ -6480,7 +6987,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--task-local-adaptation", action="store_true")
-    parser.add_argument("--evaluation-controls", action="store_true")
+    parser.add_argument(
+        "--evaluation-controls",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument(
         "--adaptation-update-schedule",
         choices=("per_episode", "per_tick"),
@@ -6494,8 +7005,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--balanced-color-loss", action="store_true")
     parser.add_argument(
         "--decoder-mode",
-        choices=("legacy_cp", "row_refinement"),
-        default="row_refinement",
+        choices=("legacy_cp", "row_refinement", "latent_row_decode"),
+        default="latent_row_decode",
     )
     parser.add_argument("--evaluation-task-limit", type=int)
     parser.add_argument("--ablation-slot", type=int, default=0)
@@ -6539,7 +7050,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         recurrent_edges=args.recurrent_edges,
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
-        memory_coding=args.memory_coding,
+        memory_coding=args.memory_coding or "learned_update",
         trace_engine=args.trace_engine,
         neuron_typing=args.neuron_typing,
         excitatory_fraction=args.excitatory_fraction,

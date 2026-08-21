@@ -8,6 +8,14 @@
 # 'pre-commit run --all'
 
 repos:
+- repo: local
+  hooks:
+  - id: repository-conventions
+    name: repository conventions
+    entry: python -m pytest repo_conventions_test.py -q
+    language: system
+    pass_filenames: false
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
   hooks:

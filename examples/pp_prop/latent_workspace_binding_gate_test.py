@@ -1339,7 +1339,7 @@ def test_actual_model_pp_prop_smoke_records_routes_depths_and_state_evidence(
         "gate_native_all_colors_covered",
         "standard_arc_all_colors_covered",
     ):
-        assert result["qualification"]["criteria"][criterion] is True
+        assert result["qualification"]["criteria"][criterion] is True, criterion
     assert result["qualification"]["criteria"]["gpu_backend_verified"] is False
     assert result["interpretation"] == (
         "nonqualifying_abbreviated_no_capability_conclusion"

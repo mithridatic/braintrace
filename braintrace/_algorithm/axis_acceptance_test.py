@@ -212,7 +212,7 @@ class TestRecurrenceScope:
         ``recurrence_scope`` is a public axis, asking for ``'coupled'`` and
         getting ``'diagonal'`` inside the scan is a trap.
         """
-        from braintrace._algorithm.tests.scan_descent_support_test import (
+        from braintrace._algorithm.scan_descent_support_test import (
             DESCEND, make_snn_scan_net,
         )
         # loops must exceed the policy's unroll limit or nothing descends and
@@ -250,7 +250,7 @@ class TestLearningSignal:
 
     def test_random_feedback_matches_the_eprop_preset(self):
         """The lift must not have changed what ``EProp(feedback='random')`` does."""
-        key = jax.random.PRNGKey(7)
+        key = brainstate.random.RandomState(7).value
         lifted = _grads('tanh_rnn', _d_rtrl(
             ETraceConfig(learning_signal='random_feedback'),
             random_feedback_key=key))
@@ -271,7 +271,7 @@ class TestLearningSignal:
         config = ETraceConfig(trace_factorization='io_factorized', decay=0.9,
                               learning_signal='random_feedback')
         projected = _grads('tanh_rnn', _pp_prop(
-            config=config, random_feedback_key=jax.random.PRNGKey(7)))
+            config=config, random_feedback_key=brainstate.random.RandomState(7).value))
         assert all(np.all(np.isfinite(v)) for v in projected.values())
         assert_gradients_differ(
             _grads('tanh_rnn', _pp_prop()), projected, min_rel=1e-6)
@@ -357,7 +357,7 @@ class TestDecaySplit:
         recurrence_scope='diagonal', learning_signal='symmetric',
         trace_filter='kappa', kappa=0.9)),
     (lambda m: braintrace.EProp(
-        m, feedback='random', random_feedback_key=jax.random.PRNGKey(0)), dict(
+        m, feedback='random', random_feedback_key=brainstate.random.RandomState(0).value), dict(
         trace_factorization='per_param', learning_signal='random_feedback',
         trace_filter='none')),
     (lambda m: braintrace.pp_prop(m, decay_or_rank=0.9), dict(

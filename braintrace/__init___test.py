@@ -127,7 +127,7 @@ def test_dynamic_weight_assignment_raises_not_supported():
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.1 * jax.random.normal(jax.random.PRNGKey(0), (4, 4)))
+                0.1 * brainstate.random.normal(size=(4, 4), key=brainstate.random.RandomState(0).value))
             self.h = brainstate.HiddenState(jnp.zeros((1, 4)))
 
         def update(self, x):
@@ -162,7 +162,7 @@ def test_weight_used_inside_scan_raises_not_implemented():
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.1 * jax.random.normal(jax.random.PRNGKey(0), (4, 4)))
+                0.1 * brainstate.random.normal(size=(4, 4), key=brainstate.random.RandomState(0).value))
             self.h = brainstate.HiddenState(jnp.zeros((1, 4)))
 
         def update(self, x):

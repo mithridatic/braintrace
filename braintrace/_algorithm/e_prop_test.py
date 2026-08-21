@@ -29,7 +29,7 @@ def _lsnn_like():
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.1 * jax.random.normal(jax.random.PRNGKey(0), (3, 3))
+                0.1 * brainstate.random.normal(size=(3, 3), key=brainstate.random.RandomState(0).value)
             )
             self.h = brainstate.HiddenState(jnp.zeros((1, 3)))
 
@@ -149,7 +149,7 @@ class TestEPropRandomFeedback(unittest.TestCase):
             return grads[next(iter(grads))]
 
         g_sym = compute('symmetric')
-        g_rnd = compute('random', random_feedback_key=jax.random.PRNGKey(123))
+        g_rnd = compute('random', random_feedback_key=brainstate.random.RandomState(123).value)
         assert not jnp.allclose(g_sym, g_rnd, atol=1e-4)
 
 
@@ -377,7 +377,7 @@ def _toy_net():
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.1 * jax.random.normal(jax.random.PRNGKey(0), (3, 3))
+                0.1 * brainstate.random.normal(size=(3, 3), key=brainstate.random.RandomState(0).value)
             )
             self.v = FakeLIF(jnp.zeros((1, 3)), leak=0.9)
 

@@ -79,6 +79,25 @@ the learning rule; nothing else in the snippet changes.
 
 The official documentation is hosted on Read the Docs: [https://brainx.chaobrain.com/braintrace](https://brainx.chaobrain.com/braintrace)
 
+### Example 21 ARC protocol v2
+
+Example 21 evaluates one shared recurrent spiking model at 0, 30, and 60
+recurrent reasoning ticks. Every checkpoint uses the same fixed 30-row decoder
+sweep, and decoder rows cannot mutate physical state or associative memory.
+The default controls repeat the intact arm, remove context, shuffle
+demonstration bindings, hold recurrent state, lesion recurrent synapses, and
+apply the legacy slot ablation. Only the latest completed checkpoint supplies
+the factorized global top-two ARC candidates; exact grid matching remains the
+score, while shape and pixel measures are diagnostics.
+
+The source default is 4,096 neurons and 4,194,304 recurrent edges. A run with
+`--recurrent-edges 4096` is reduced-scale evidence and must report
+`actual_full_scale=false`. The implementation targets the public interface of
+arXiv 2608.09888; it does not claim access to private architecture, data,
+training details, paper-scale compute, or an exact internal reproduction. See
+the [evidence index](docs/evidence/example21.md) for schema and provenance
+semantics.
+
 ## Citation
 
 If you use this package in your research, please cite:

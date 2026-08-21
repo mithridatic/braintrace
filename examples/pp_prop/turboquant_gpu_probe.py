@@ -32,6 +32,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Sequence
 
+import brainstate
 import jax
 import jax.numpy as jnp
 
@@ -125,7 +126,7 @@ def measure_conversion_throughput(elements: int = 2**26) -> dict[str, float]:
     dict
         Throughput for float32, int8 without widening, and int8 widened.
     """
-    floats = jax.random.normal(jax.random.PRNGKey(0), (elements,), jnp.float32)
+    floats = brainstate.random.normal(size=(elements,), key=brainstate.random.RandomState(0).value, dtype=jnp.float32)
     narrow = (floats * 20.0).astype(jnp.int8)
     milliseconds = paired_bench({
         'float32_elementwise': (jax.jit(lambda x: x * 1.0001), (floats,)),
@@ -189,9 +190,9 @@ def measure_contraction(shapes: ProbeShapes = ProbeShapes()) -> dict[str, float]
         Timings for the einsum and unrolled forms at float32, int8 and packed
         4-bit stored width.
     """
-    jacobian_key, trace_key = jax.random.split(jax.random.PRNGKey(1))
-    jacobian = jax.random.normal(jacobian_key, shapes.jacobian, jnp.float32)
-    trace = jax.random.normal(trace_key, shapes.trace, jnp.float32)
+    jacobian_key, trace_key = brainstate.random.RandomState(brainstate.random.RandomState(1).value).split_key(2)
+    jacobian = brainstate.random.normal(size=shapes.jacobian, key=jacobian_key, dtype=jnp.float32)
+    trace = brainstate.random.normal(size=shapes.trace, key=trace_key, dtype=jnp.float32)
     scale = jnp.float32(jnp.max(jnp.abs(jacobian)) / 127.0)
     narrow = (jacobian / scale).astype(jnp.int8)
     codebook = lloydmax_codebook(4, jnp.std(jacobian.reshape(-1)))
@@ -230,12 +231,12 @@ def measure_edge_buffers(shapes: ProbeShapes = ProbeShapes()) -> dict[str, float
     dict
         Timings for the batch reduction and the gather at both stored widths.
     """
-    edge_key, index_key, source_key = jax.random.split(jax.random.PRNGKey(2), 3)
-    edges = jax.random.normal(edge_key, (shapes.nnz, shapes.batch), jnp.float32)
+    edge_key, index_key, source_key = brainstate.random.RandomState(brainstate.random.RandomState(2).value).split_key(3)
+    edges = brainstate.random.normal(size=(shapes.nnz, shapes.batch), key=edge_key, dtype=jnp.float32)
     edge_scale = jnp.float32(jnp.max(jnp.abs(edges)) / 127.0)
     narrow_edges = (edges / edge_scale).astype(jnp.int8)
-    indices = jax.random.randint(index_key, (shapes.nnz,), 0, shapes.neurons)
-    source = jax.random.normal(source_key, (shapes.neurons, shapes.batch), jnp.float32)
+    indices = brainstate.random.randint(0, shapes.neurons, size=(shapes.nnz,), key=index_key)
+    source = brainstate.random.normal(size=(shapes.neurons, shapes.batch), key=source_key, dtype=jnp.float32)
     source_scale = jnp.float32(jnp.max(jnp.abs(source)) / 127.0)
     narrow_source = (source / source_scale).astype(jnp.int8)
     reduction = paired_bench({

@@ -53,7 +53,7 @@ class TestKappaFilter(unittest.TestCase):
 
 class TestFixedRandomFeedback(unittest.TestCase):
     def test_shape_and_frozen(self):
-        key = jax.random.PRNGKey(0)
+        key = brainstate.random.RandomState(0).value
         fb = FixedRandomFeedback(n_target=10, n_layer=200, key=key, init_scale=0.1)
         assert fb.B.shape == (10, 200)
         grad_fn = jax.grad(lambda y_target: (fb.project(y_target) ** 2).sum())
@@ -62,7 +62,7 @@ class TestFixedRandomFeedback(unittest.TestCase):
         assert g.shape == y.shape
 
     def test_project_shapes(self):
-        fb = FixedRandomFeedback(n_target=4, n_layer=7, key=jax.random.PRNGKey(1))
+        fb = FixedRandomFeedback(n_target=4, n_layer=7, key=brainstate.random.RandomState(1).value)
         y_target = jnp.ones((3, 4))  # batched
         proj = fb.project(y_target)
         assert proj.shape == (3, 7)

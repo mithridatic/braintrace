@@ -12120,6 +12120,7 @@ def _fake_gate_c3_terminal_h8_report(
         calls.append(
             {
                 "model_id": id(model),
+                "_model_ref": model,
                 "policy": model.memory_read_policy,
                 "packed": np.asarray(packed_inputs),
                 **kwargs,

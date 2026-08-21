@@ -2,6 +2,7 @@
 
 import json
 
+import brainstate
 import jax
 import jax.numpy as jnp
 import pytest
@@ -38,25 +39,25 @@ def test_conversion_throughput_reports_three_widths():
 
 
 def test_unrolled_contraction_matches_einsum():
-    jacobian_key, trace_key = jax.random.split(jax.random.PRNGKey(7))
-    jacobian = jax.random.normal(jacobian_key, (2, 32, 3, 3))
-    trace = jax.random.normal(trace_key, (2, 32, 3))
+    jacobian_key, trace_key = brainstate.random.RandomState(brainstate.random.RandomState(7).value).split_key(2)
+    jacobian = brainstate.random.normal(size=(2, 32, 3, 3), key=jacobian_key)
+    trace = brainstate.random.normal(size=(2, 32, 3), key=trace_key)
     expected = jnp.einsum('...ij,...j->...i', jacobian, trace)
     assert jnp.allclose(probe.contract_unrolled(jacobian, trace), expected, atol=1e-5)
 
 
 @pytest.mark.parametrize('num_state', [1, 2, 4])
 def test_unrolled_contraction_matches_einsum_for_other_state_counts(num_state):
-    key = jax.random.PRNGKey(num_state)
-    jacobian_key, trace_key = jax.random.split(key)
-    jacobian = jax.random.normal(jacobian_key, (3, 8, num_state, num_state))
-    trace = jax.random.normal(trace_key, (3, 8, num_state))
+    key = brainstate.random.RandomState(num_state).value
+    jacobian_key, trace_key = brainstate.random.RandomState(key).split_key(2)
+    jacobian = brainstate.random.normal(size=(3, 8, num_state, num_state), key=jacobian_key)
+    trace = brainstate.random.normal(size=(3, 8, num_state), key=trace_key)
     expected = jnp.einsum('...ij,...j->...i', jacobian, trace)
     assert jnp.allclose(probe.contract_unrolled(jacobian, trace), expected, atol=1e-5)
 
 
 def test_nibble_round_trip_recovers_the_codebook_approximation():
-    values = jax.random.normal(jax.random.PRNGKey(3), (4, 64))
+    values = brainstate.random.normal(size=(4, 64), key=brainstate.random.RandomState(3).value)
     codebook = probe.lloydmax_codebook(4, jnp.std(values.reshape(-1)))
     packed = probe._pack_nibbles(values, codebook)
     restored = probe._unpack_nibbles(packed, codebook, values.shape)

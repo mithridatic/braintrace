@@ -789,10 +789,10 @@ class TestContractHiddenJacobian:
     @pytest.mark.parametrize('varshape', [(1,), (4,), (3, 7), (2, 5, 3)])
     @pytest.mark.parametrize('num_state', [1, 2, 3, 5])
     def test_matches_einsum(self, varshape, num_state):
-        key = jax.random.PRNGKey(0)
-        jac_key, trace_key = jax.random.split(key)
-        jac = jax.random.normal(jac_key, (*varshape, num_state, num_state))
-        trace = jax.random.normal(trace_key, (*varshape, num_state))
+        key = brainstate.random.RandomState(0).value
+        jac_key, trace_key = brainstate.random.RandomState(key).split_key(2)
+        jac = brainstate.random.normal(size=(*varshape, num_state, num_state), key=jac_key)
+        trace = brainstate.random.normal(size=(*varshape, num_state), key=trace_key)
         npt.assert_allclose(
             _contract_hidden_jacobian(jac, trace),
             jnp.einsum('...ij,...j->...i', jac, trace),
@@ -801,12 +801,12 @@ class TestContractHiddenJacobian:
         )
 
     def test_identity_jacobian_returns_the_trace(self):
-        trace = jax.random.normal(jax.random.PRNGKey(1), (6, 3))
+        trace = brainstate.random.normal(size=(6, 3), key=brainstate.random.RandomState(1).value)
         jac = jnp.broadcast_to(jnp.eye(3), (6, 3, 3))
         npt.assert_allclose(_contract_hidden_jacobian(jac, trace), trace, atol=1e-6)
 
     def test_zero_jacobian_kills_the_trace(self):
-        trace = jax.random.normal(jax.random.PRNGKey(2), (6, 3))
+        trace = brainstate.random.normal(size=(6, 3), key=brainstate.random.RandomState(2).value)
         jac = jnp.zeros((6, 3, 3))
         npt.assert_allclose(_contract_hidden_jacobian(jac, trace), 0.0, atol=1e-7)
 
@@ -816,8 +816,8 @@ class TestContractHiddenJacobian:
         npt.assert_allclose(_contract_hidden_jacobian(jac, trace), [[5.0, 0.0]])
 
     def test_is_jit_compatible(self):
-        jac = jax.random.normal(jax.random.PRNGKey(3), (4, 2, 2))
-        trace = jax.random.normal(jax.random.PRNGKey(4), (4, 2))
+        jac = brainstate.random.normal(size=(4, 2, 2), key=brainstate.random.RandomState(3).value)
+        trace = brainstate.random.normal(size=(4, 2), key=brainstate.random.RandomState(4).value)
         npt.assert_allclose(
             jax.jit(_contract_hidden_jacobian)(jac, trace),
             _contract_hidden_jacobian(jac, trace),

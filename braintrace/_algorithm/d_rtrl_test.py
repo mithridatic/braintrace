@@ -679,9 +679,9 @@ def _rnn_mm(seed=0, n=4, bias=False, weight_fn=None, bias_fn=None):
     class Net(brainstate.nn.Module):
         def __init__(self):
             super().__init__()
-            k1, k2 = jax.random.split(jax.random.PRNGKey(seed))
-            self.w = brainstate.ParamState(0.3 * jax.random.normal(k1, (n, n)))
-            self.b = brainstate.ParamState(0.1 * jax.random.normal(k2, (n,))) if bias else None
+            k1, k2 = brainstate.random.RandomState(brainstate.random.RandomState(seed).value).split_key(2)
+            self.w = brainstate.ParamState(0.3 * brainstate.random.normal(size=(n, n), key=k1))
+            self.b = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n,), key=k2)) if bias else None
             self.h = brainstate.HiddenState(jnp.zeros((1, n)))
 
         def update(self, x):
@@ -704,7 +704,7 @@ def _rnn_mv(seed=0, n=4, weight_fn=None):
         def __init__(self):
             super().__init__()
             self.w = brainstate.ParamState(
-                0.3 * jax.random.normal(jax.random.PRNGKey(seed), (n, n))
+                0.3 * brainstate.random.normal(size=(n, n), key=brainstate.random.RandomState(seed).value)
             )
             self.h = brainstate.HiddenState(jnp.zeros((n,)))
 
@@ -726,7 +726,7 @@ def _rnn_elemwise(seed=0, n=4, weight_fn=None):
         def __init__(self):
             super().__init__()
             self.alpha = brainstate.ParamState(
-                0.5 * jax.random.normal(jax.random.PRNGKey(seed), (n,))
+                0.5 * brainstate.random.normal(size=(n,), key=brainstate.random.RandomState(seed).value)
             )
             self.h = brainstate.HiddenState(jnp.zeros((1, n)))
 

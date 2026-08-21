@@ -1613,6 +1613,68 @@ class AssociativeMemoryFeatureIndices:
         object.__setattr__(self, "value_indices", normalized["value_indices"])
 
 
+@dataclass(frozen=True, slots=True)
+class LearnedUpdateFeatureIndices:
+    """Ordered protocol-v2 demonstration features for ``U_theta``.
+
+    Parameters
+    ----------
+    indices
+        Event indices excluding event-valid and phase channels.
+    order
+        Stable semantic name for every index.
+    """
+
+    indices: tuple[int, ...]
+    order: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.indices or len(self.indices) != len(self.order):
+            raise ValueError("learned-update indices and order must be nonempty and aligned")
+        if len(set(self.indices)) != len(self.indices):
+            raise ValueError("learned-update indices must be unique")
+
+
+def learned_update_feature_indices(
+    config: RowEventConfig = RowEventConfig(),
+) -> LearnedUpdateFeatureIndices:
+    """Return the protocol-v2 feature order for the learned memory update.
+
+    Parameters
+    ----------
+    config
+        Row-event layout defining the semantic feature blocks.
+
+    Returns
+    -------
+    LearnedUpdateFeatureIndices
+        Demonstration identity, side validity, row position, both shapes and
+        masks, then both color blocks. Event-valid and phase are excluded.
+    """
+
+    blocks = (
+        ("demonstration_identity", config.demonstration_slice),
+        ("side_valid", config.side_valid_slice),
+        ("row_position_scalar", slice(config.normalized_slice.start, config.normalized_slice.start + 1)),
+        ("row_position", config.row_index_slice),
+        ("input_height", config.input_height_slice),
+        ("input_width", config.input_width_slice),
+        ("output_height", config.output_height_slice),
+        ("output_width", config.output_width_slice),
+        ("input_mask", config.input_mask_slice),
+        ("output_mask", config.output_mask_slice),
+        ("input_color", config.input_color_slice),
+        ("output_color", config.output_color_slice),
+    )
+    indices: list[int] = []
+    order: list[str] = []
+    for name, feature_slice in blocks:
+        for offset, index in enumerate(range(feature_slice.start, feature_slice.stop)):
+            indices.append(index)
+            order.append(f"{name}[{offset}]")
+    return LearnedUpdateFeatureIndices(tuple(indices), tuple(order))
+
+
 def associative_memory_feature_indices(
     config: RowEventConfig = RowEventConfig(),
 ) -> AssociativeMemoryFeatureIndices:

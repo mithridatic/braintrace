@@ -5,7 +5,7 @@ import pathlib
 
 import pytest
 
-EXAMPLES_DIR = pathlib.Path(__file__).resolve().parents[1]
+EXAMPLES_DIR = pathlib.Path(__file__).resolve().parent
 
 
 def _load(fname: str):

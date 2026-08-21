@@ -17,6 +17,11 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
+from examples.pp_prop.latent_workspace_protocol import (
+    StepGates,
+    build_batched_protocol_v2_arm,
+)
+
 try:
     from examples.pp_prop import latent_workspace_model as latent_workspace_module
     from examples.pp_prop.latent_workspace_model import (
@@ -35,6 +40,7 @@ try:
         arc_loss_per_example,
         build_sparse_topology,
         compact_output_width,
+        compile_etrace,
         compile_pp_prop,
         expand_compact_logits,
         parameter_snapshot,
@@ -63,6 +69,7 @@ except ImportError:
         arc_loss_per_example,
         build_sparse_topology,
         compact_output_width,
+        compile_etrace,
         compile_pp_prop,
         expand_compact_logits,
         parameter_snapshot,
@@ -174,6 +181,76 @@ def _memory_config(**changes: object) -> ModelConfig:
     return ModelConfig(**values)  # type: ignore[arg-type]
 
 
+def test_protocol_v2_decoder_validates_and_rejects_attention_bypass() -> None:
+    config = _row_refinement_config(decoder_mode="latent_row_decode")
+
+    assert config.decoder_mode == "latent_row_decode"
+    assert config.row_refinement_enabled
+    with pytest.raises(ValueError, match="bypasses the latent-binding"):
+        dataclasses.replace(config, refinement_mixer="attention_residual")
+
+
+def test_latent_row_decoder_preserves_physical_and_memory_state() -> None:
+    model = LatentWorkspaceModel(
+        _row_refinement_config(decoder_mode="latent_row_decode")
+    )
+    _, events = _row_refinement_episode()
+    run_context(model, events)
+    voltage = np.asarray(u.get_mantissa(model.neu.V.value)).copy()
+    feedforward = np.asarray(u.get_mantissa(model.ff_syn.syn.g.value)).copy()
+    recurrent = np.asarray(u.get_mantissa(model.rec_syn.syn.g.value)).copy()
+    memory = np.asarray(model.context_memory.value).copy()
+    gates = StepGates(
+        advance_physics=jnp.zeros((1,), dtype=jnp.bool_),
+        latent_update=jnp.zeros((1,), dtype=jnp.bool_),
+        decode_row=jnp.ones((1,), dtype=jnp.bool_),
+        answer_feedback=jnp.zeros((1,), dtype=jnp.bool_),
+        recurrent_enabled=jnp.zeros((1,), dtype=jnp.bool_),
+    )
+
+    model.cell_step(jnp.zeros((1, model.config.input_width)), gates)
+
+    np.testing.assert_array_equal(u.get_mantissa(model.neu.V.value), voltage)
+    np.testing.assert_array_equal(u.get_mantissa(model.ff_syn.syn.g.value), feedforward)
+    np.testing.assert_array_equal(u.get_mantissa(model.rec_syn.syn.g.value), recurrent)
+    np.testing.assert_array_equal(model.context_memory.value, memory)
+    np.testing.assert_array_equal(model.reasoning_index.value, 1)
+
+
+def test_protocol_v2_stream_runs_all_three_complete_decoder_checkpoints() -> None:
+    model = LatentWorkspaceModel(
+        _row_refinement_config(decoder_mode="latent_row_decode")
+    )
+    rows, events = _row_refinement_episode()
+    valid = np.asarray(events[:, rows.valid_slice.start] > 0.5)
+    query_stop = int(np.flatnonzero(valid)[-1]) + 1
+    arm = build_batched_protocol_v2_arm(
+        np.asarray(events)[:, None, :],
+        valid[:, None],
+        np.asarray([query_stop], dtype=np.int32),
+    )
+    checkpoints = np.asarray(arm.metadata["checkpoint_indices"], dtype=np.int32)
+
+    trajectory = run_selected_packed_stream(
+        model,
+        arm.events,
+        checkpoints,
+        advance_gates=arm.gates,
+    )
+
+    assert trajectory.compact_logits.shape == (3, 1, 9060)
+    assert checkpoints[:, 0].tolist() == [query_stop + 29, query_stop + 89, query_stop + 149]
+
+
+def test_compile_pp_prop_is_the_compatibility_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
+    sentinel = object()
+    monkeypatch.setattr(latent_workspace_module.braintrace, "compile", lambda *a, **k: sentinel)
+    model = LatentWorkspaceModel(_config())
+
+    assert compile_etrace(model) is sentinel
+    assert compile_pp_prop(model) is sentinel
+
+
 def _phase_events(
     config: ModelConfig,
     keys: jax.Array,
@@ -210,7 +287,7 @@ def _phase_events(
 
 
 def _state_array(state: object) -> np.ndarray:
-    return np.asarray(getattr(state, "value"))
+    return np.asarray(state.value)
 
 
 def _snapshot_entry_map(
@@ -555,7 +632,7 @@ def test_associative_memory_report_is_stable_and_legacy_safe() -> None:
 def test_associative_memory_report_declares_fixed_carrier_stabilization() -> None:
     legacy = LatentWorkspaceModel(_config()).associative_memory_report()
     memory = LatentWorkspaceModel(_memory_config()).associative_memory_report()
-    serialized_legacy = dataclasses.asdict(legacy)
+    serialized_legacy = legacy.to_dict()
     expected_legacy = {
         "mode": "legacy_reservoir",
         "memory_width": 0,
@@ -578,12 +655,14 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     assert legacy.carrier_stabilizer is None
     assert legacy.carrier_radius is None
     assert legacy.carrier_consumers is None
+    assert legacy.carrier_normalization_by_consumer is None
     assert memory.carrier_stabilizer == "per_example_stopped_unit_l2_cap"
     assert memory.carrier_radius == 1.0
     assert memory.carrier_consumers == (
         "readout_projection",
         "workspace_query_projection",
     )
+    assert memory.carrier_normalization_by_consumer is None
     assert serialized_legacy == expected_legacy
     assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
@@ -609,7 +688,7 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
 
 @pytest.mark.parametrize("dtype", [jnp.float16, jnp.float32])
 def test_unit_l2_cap_is_per_example_and_preserves_dtype(dtype: jnp.dtype) -> None:
-    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    unit_l2_cap = latent_workspace_module._unit_l2_cap
     carrier = jnp.asarray(
         [[0.0, 0.0], [0.25, -0.5], [3.0, 4.0], [-6.0, 8.0]],
         dtype=dtype,
@@ -632,7 +711,7 @@ def test_unit_l2_cap_is_per_example_and_preserves_dtype(dtype: jnp.dtype) -> Non
 
 
 def test_unit_l2_cap_has_batch_block_scalar_diagonal_jacobian() -> None:
-    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    unit_l2_cap = latent_workspace_module._unit_l2_cap
     carrier = jnp.asarray([[0.3, 0.4], [3.0, 4.0]], dtype=jnp.float32)
 
     def flattened_cap(flat_carrier: jax.Array) -> jax.Array:
@@ -649,7 +728,7 @@ def test_unit_l2_cap_has_batch_block_scalar_diagonal_jacobian() -> None:
 
 
 def test_unit_l2_cap_accumulates_low_precision_norm_without_overflow() -> None:
-    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    unit_l2_cap = latent_workspace_module._unit_l2_cap
     carrier = jnp.full((2, 2048), 100.0, dtype=jnp.float16)
 
     capped = unit_l2_cap(carrier)
@@ -762,7 +841,7 @@ def test_legacy_mode_rejects_partial_memory_configuration(
 
 
 def test_fast_weight_update_matches_decay_outer_product_and_batch_gate() -> None:
-    update_context_memory = getattr(latent_workspace_module, "update_context_memory")
+    update_context_memory = latent_workspace_module.update_context_memory
     memory = jnp.asarray(
         [
             [[1.0, 2.0], [3.0, 4.0]],
@@ -785,7 +864,7 @@ def test_fast_weight_update_matches_decay_outer_product_and_batch_gate() -> None
 
 
 def test_fast_weight_self_jacobian_is_exactly_decay_times_identity() -> None:
-    update_context_memory = getattr(latent_workspace_module, "update_context_memory")
+    update_context_memory = latent_workspace_module.update_context_memory
     decay = 0.625
     key = jnp.asarray([[0.25, -0.5]], dtype=jnp.float32)
     value = jnp.asarray([[2.0, 3.0]], dtype=jnp.float32)
@@ -1739,7 +1818,7 @@ def test_memory_mode_uses_one_shared_decoder_on_continuous_workspace() -> None:
 def test_memory_carrier_cap_is_confined_to_both_dense_consumer_sites(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    unit_l2_cap = getattr(latent_workspace_module, "_unit_l2_cap")
+    unit_l2_cap = latent_workspace_module._unit_l2_cap
     observed: list[np.ndarray] = []
 
     def recording_cap(carrier: jax.Array) -> jax.Array:
@@ -3205,7 +3284,7 @@ def test_refinement_head_input_separates_the_row_being_written() -> None:
     of the row being written are both present in the refinement feedback event
     but currently enter only through ``ff_syn``.
     """
-    build_head_input = getattr(latent_workspace_module, "_refinement_head_input")
+    build_head_input = latent_workspace_module._refinement_head_input
     layout = _row_refinement_layout()
     carrier = jnp.asarray(
         np.linspace(-1.0, 1.0, 64, dtype=np.float32)[None, :]
@@ -3232,7 +3311,7 @@ def test_refinement_head_carrier_is_scaled_to_unit_root_mean_square() -> None:
     -- 0.031 at 1024 neurons -- and a colour softmax within 0.0004 nats of
     uniform, so the optimizer spends its whole budget merely reaching O(1).
     """
-    scale_carrier = getattr(latent_workspace_module, "_unit_rms_carrier")
+    scale_carrier = latent_workspace_module._unit_rms_carrier
     neuron_count = 1024
     carrier = jnp.asarray(
         np.linspace(-40.0, 40.0, neuron_count, dtype=np.float32)[None, :]
@@ -3349,7 +3428,7 @@ def test_copy_residual_raises_the_query_colour_logit_by_the_gain() -> None:
     input's height, which ``input_row_valid`` zeroes — must be bit-unchanged,
     so the learned head keeps sole custody of out-of-range cells.
     """
-    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    apply_residual = latent_workspace_module._copy_residual_logits
     layout = _row_refinement_layout()
     row_logits = jnp.asarray(
         np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
@@ -3368,7 +3447,7 @@ def test_copy_residual_raises_the_query_colour_logit_by_the_gain() -> None:
 
 def test_copy_residual_gain_zero_reproduces_the_bare_head() -> None:
     """``gain = 0`` must be bit-exact backward compatibility."""
-    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    apply_residual = latent_workspace_module._copy_residual_logits
     layout = _row_refinement_layout()
     row_logits = jnp.asarray(
         np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
@@ -3771,7 +3850,7 @@ def test_refinement_head_input_separates_the_query_grid_shape() -> None:
     queries and a 30x30 identity block once the one-hots are present -- is not
     representable by a bias-free linear head at all.
     """
-    build_head_input = getattr(latent_workspace_module, "_refinement_head_input")
+    build_head_input = latent_workspace_module._refinement_head_input
     layout = _row_refinement_layout()
     carrier = jnp.asarray(np.linspace(-1.0, 1.0, 64, dtype=np.float32)[None, :])
     event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
@@ -3789,7 +3868,7 @@ def test_refinement_head_input_separates_the_query_grid_shape() -> None:
 
 def test_refinement_head_width_counts_the_query_shape_blocks() -> None:
     """The head input carries the row code and both query dimension one-hots."""
-    head_width = getattr(latent_workspace_module, "refinement_head_width")
+    head_width = latent_workspace_module.refinement_head_width
     blocks = MAX_GRID_SIZE + MAX_GRID_SIZE * COLOR_COUNT + 2 * MAX_GRID_SIZE
 
     assert head_width(1024) == 1024 + blocks
@@ -3840,6 +3919,65 @@ def test_memory_coding_defaults_to_frozen_and_validates() -> None:
         _memory_config(memory_coding="learned_keys_values")
     with pytest.raises(ValueError, match="memory_coding"):
         _config(memory_coding="learned_keys")
+
+
+def test_learned_update_writes_nonzero_distinct_one_sided_rows() -> None:
+    config = _memory_config(memory_coding="learned_update")
+    model = LatentWorkspaceModel(config)
+    input_only = _phase_events(
+        config, jnp.asarray([[1.0, -0.5]]), phase="demonstration"
+    )[0]
+    output_only = jnp.zeros_like(input_only)
+    output_only = output_only.at[:, config.event_valid_index].set(1.0)
+    assert config.demonstration_phase_index is not None
+    assert config.output_side_valid_index is not None
+    output_only = output_only.at[:, config.demonstration_phase_index].set(1.0)
+    output_only = output_only.at[:, config.output_side_valid_index].set(1.0)
+    output_only = output_only.at[:, jnp.asarray(config.memory_value_indices)].set(
+        jnp.asarray([[0.25, 0.75]])
+    )
+
+    input_write = np.asarray(model.encode_memory_update(input_only))
+    output_write = np.asarray(model.encode_memory_update(output_only))
+    assert np.linalg.norm(input_write) > 0.0
+    assert np.linalg.norm(output_write) > 0.0
+    assert not np.array_equal(input_write, output_write)
+
+    model.cell_step(input_only, jnp.ones((1,), dtype=jnp.bool_))
+    input_memory = np.asarray(model.context_memory.value).copy()
+    assert np.linalg.norm(input_memory) > 0.0
+    model.reset_state()
+    model.cell_step(output_only, jnp.ones((1,), dtype=jnp.bool_))
+    output_memory = np.asarray(model.context_memory.value)
+    assert np.linalg.norm(output_memory) > 0.0
+    assert not np.array_equal(input_memory, output_memory)
+
+
+def test_learned_update_reports_feature_order_projection_hash_and_routing() -> None:
+    config = _memory_config(memory_coding="learned_update")
+    report = LatentWorkspaceModel(config).associative_memory_report()
+
+    assert report.update_feature_width == len(config.memory_update_indices)
+    assert report.update_feature_order == config.memory_update_feature_order
+    assert report.update_projection_seed == config.seed + 106
+    assert len(report.update_projection_sha256 or "") == 64
+    assert report.update_routing == (
+        "memory_update_projection->context_memory;shared_retrieval_key"
+    )
+
+
+def test_learned_update_projection_is_trace_compiled() -> None:
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            decoder_mode="latent_row_decode", memory_coding="learned_update"
+        )
+    )
+
+    learner = compile_etrace(model)
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert ("memory_update_projection", "weight") in paths
+    assert ("memory_key_projection", "weight") in paths
 
 
 def test_learned_memory_coding_matches_frozen_codes_at_initialization() -> None:

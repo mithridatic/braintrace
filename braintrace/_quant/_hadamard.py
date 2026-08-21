@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import functools
 
+import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -83,13 +84,13 @@ def sign_diagonal(key: jax.Array, size: int) -> jax.Array:
 
         >>> import jax
         >>> from braintrace._quant import sign_diagonal
-        >>> signs = sign_diagonal(jax.random.PRNGKey(0), 8)
+        >>> signs = sign_diagonal(brainstate.random.RandomState(0).value, 8)
         >>> signs.shape
         (8,)
     """
     if size <= 0:
         raise ValueError(f'size must be positive, got {size}')
-    return jnp.where(jax.random.bernoulli(key, 0.5, (size,)), 1.0, -1.0).astype(
+    return jnp.where(brainstate.random.bernoulli(0.5, size=(size,), key=key), 1.0, -1.0).astype(
         jnp.float32
     )
 
@@ -126,8 +127,8 @@ def rotate_blocks(values: jax.Array, signs: jax.Array, block: int) -> jax.Array:
 
         >>> import jax, jax.numpy as jnp
         >>> from braintrace._quant import rotate_blocks, unrotate_blocks, sign_diagonal
-        >>> x = jax.random.normal(jax.random.PRNGKey(1), (4, 16))
-        >>> s = sign_diagonal(jax.random.PRNGKey(2), 16)
+        >>> x = brainstate.random.normal(size=(4, 16), key=brainstate.random.RandomState(1).value)
+        >>> s = sign_diagonal(brainstate.random.RandomState(2).value, 16)
         >>> bool(jnp.allclose(unrotate_blocks(rotate_blocks(x, s, 8), s, 8), x, atol=1e-5))
         True
     """

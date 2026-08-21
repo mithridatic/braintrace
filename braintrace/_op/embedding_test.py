@@ -302,7 +302,7 @@ def _leaky_embedding_factory(V=5, D=4, leak=0.9, seed=0):
             def __init__(self):
                 super().__init__()
                 self.table = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(seed), (V, D)))
+                    0.1 * brainstate.random.normal(size=(V, D), key=brainstate.random.RandomState(seed).value))
                 self.h = brainstate.HiddenState(jnp.zeros((1, D)))
 
             def update(self, token):
@@ -323,11 +323,11 @@ def _tanh_embedding_rnn_factory(V=5, D=4, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = jax.random.PRNGKey
+                k = lambda seed: brainstate.random.RandomState(seed).value
                 self.table = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed), (V, D)))
+                    0.1 * brainstate.random.normal(size=(V, D), key=k(seed)))
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed + 1), (D, D)))
+                    0.1 * brainstate.random.normal(size=(D, D), key=k(seed + 1)))
                 self.h = brainstate.HiddenState(jnp.zeros((1, D)))
 
             def update(self, token):

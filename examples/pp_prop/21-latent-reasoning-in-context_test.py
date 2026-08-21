@@ -505,19 +505,20 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     assert smoke.smoke is True
     assert full.context_memory_width == 32
     assert smoke.context_memory_width == 2
-    assert full.decoder_mode == "row_refinement"
-    assert smoke.decoder_mode == "row_refinement"
+    assert full.decoder_mode == "latent_row_decode"
+    assert smoke.decoder_mode == "latent_row_decode"
+    assert full.memory_coding == smoke.memory_coding == "learned_update"
     assert full.latent_steps == smoke.latent_steps == 60
     assert full.memory_decay == 1.0
     assert full.balanced_color_loss is False
     assert full.to_dict()["balanced_color_loss"] is False
 
 
-def test_smoke_config_defaults_to_one_shared_frozen_evaluation(example):
+def test_smoke_config_defaults_to_protocol_v2_controls(example):
     config = example.ExperimentConfig.smoke_config()
 
     assert config.task_local_adaptation is False
-    assert config.evaluation_controls is False
+    assert config.evaluation_controls is True
     assert config.to_dict()["primary_evaluation_mode"] == "shared_model_frozen"
 
 
@@ -547,21 +548,62 @@ def test_cli_can_select_the_single_shared_gpu_run(example):
     assert (config.latent_steps, config.training_updates) == (300, 13)
     assert config.training_batch_size == 32
     assert config.task_local_adaptation is False
+    assert config.evaluation_controls is True
+
+
+def test_cli_can_explicitly_disable_protocol_v2_controls(example):
+    args = example._parser().parse_args(["--no-evaluation-controls"])
+
+    config = example._config_from_args(args)
+
     assert config.evaluation_controls is False
+
+
+def test_git_provenance_reports_declared_revision_mismatch(
+    example, monkeypatch, tmp_path
+):
+    calls = iter(("actual-revision\n", " M changed.py\n"))
+
+    def run(*_args, **_kwargs):
+        return SimpleNamespace(stdout=next(calls))
+
+    monkeypatch.setattr(example.subprocess, "run", run)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_REVISION", "declared-revision")
+
+    report = example._git_source_provenance(tmp_path)
+
+    assert report["source_revision"] == "actual-revision"
+    assert report["source_dirty"] is True
+    assert report["declared_revision_mismatch"] is True
+
+
+def test_artifact_manifest_hashes_materialized_files(example, tmp_path):
+    first = tmp_path / "first.bin"
+    second = tmp_path / "second.bin"
+    first.write_bytes(b"abc")
+    second.write_bytes(b"defg")
+
+    report = example._artifact_manifest({"second": second, "first": first})
+
+    assert list(report["artifacts"]) == ["first", "second"]
+    assert report["artifacts"]["first"]["size_bytes"] == 3
+    assert report["artifacts"]["first"]["sha256"] == (
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    )
 
 
 def test_latent_steps_300_extends_scoring_and_training_through_300(example):
     config = dataclasses.replace(
         example.ExperimentConfig.smoke_config(),
         latent_steps=300,
-        training_updates=10,
+        training_updates=11,
     )
 
     assert config.checkpoints == tuple(range(0, 301, 30))
-    assert config.training_efforts == tuple(range(30, 301, 30))
+    assert config.training_efforts == tuple(range(0, 301, 30))
     assert config.submission_checkpoint == 300
     assert config.to_dict()["checkpoints"] == list(range(0, 301, 30))
-    assert config.to_dict()["training_efforts"] == list(range(30, 301, 30))
+    assert config.to_dict()["training_efforts"] == list(range(0, 301, 30))
     assert config.to_dict()["submission_checkpoint"] == 300
     score_parameters = inspect.signature(example._score_windows).parameters
     assert "checkpoints" in score_parameters
@@ -600,7 +642,8 @@ def test_lean_390_tick_evaluation_gathers_only_scoring_checkpoints(example):
     lean = dataclasses.replace(
         example.ExperimentConfig.smoke_config(),
         latent_steps=390,
-        training_updates=13,
+        training_updates=14,
+        evaluation_controls=False,
     )
     diagnostic = dataclasses.replace(lean, evaluation_controls=True)
 
@@ -868,7 +911,7 @@ def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
         ({"max_grid_size": 29}, "standard ARC"),
         ({"latent_steps": 59}, "latent_steps"),
         ({"ablation_slot": 64}, "ablation_slot"),
-        ({"training_updates": 1}, "30 and 60"),
+        ({"training_updates": 1}, "effort zero"),
         ({"decoder_mode": "width_inferred"}, "decoder_mode"),
         ({"device": "tpu"}, "device"),
         ({"learning_rate": float("nan")}, "learning_rate"),
@@ -907,6 +950,7 @@ def test_row_refinement_requires_continuous_workspace_memory(example):
     legacy = example.ExperimentConfig(
         structural_only=True,
         context_memory_width=0,
+        memory_coding="frozen",
         decoder_mode="legacy_cp",
     )
     assert legacy.context_memory_width == 0
@@ -918,7 +962,7 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     assert parsed.neurons == 4096
     assert parsed.recurrent_edges == 4_194_304
     assert parsed.context_memory_width == 32
-    assert parsed.decoder_mode == "row_refinement"
+    assert parsed.decoder_mode == "latent_row_decode"
     assert parsed.memory_decay == 1.0
     assert parsed.balanced_color_loss is False
     assert parsed.profile is False
@@ -1077,6 +1121,38 @@ def test_nvidia_smi_wddm_na_process_uses_conservative_device_wide_peak(
     assert report["peak_process_bytes"] is None
     assert report["peak_device_bytes"] == 4096 * 1024 * 1024
     assert report["evidence_complete"] is True
+
+
+def test_gpu_monitor_retains_later_valid_bound_after_transient_error(example) -> None:
+    monitor = example._NvidiaSmiGpuMonitor(device_index=0, process_id=41)
+    monitor._record(
+        {
+            "physical_device_bytes": None,
+            "current_device_bytes": None,
+            "current_process_bytes": None,
+            "error": "temporary nvidia-smi timeout",
+        }
+    )
+    monitor._record(
+        {
+            "physical_device_bytes": 100,
+            "current_device_bytes": 30,
+            "current_process_bytes": 20,
+            "error": None,
+        }
+    )
+
+    report = monitor.report()
+    assert report["peak_device_bytes"] == 30
+    assert report["evidence_complete"] is True
+    assert report["errors"] == ["temporary nvidia-smi timeout"]
+    safety = example._gpu_runtime_safety_report(
+        example.ExperimentConfig(structural_only=True),
+        {"XLA_PYTHON_CLIENT_MEM_FRACTION": "0.80"},
+        {"peak_bytes_in_use": 20, "bytes_limit": 80},
+        report,
+    )
+    assert safety["full_qualification_safe"] is True
 
 
 @pytest.mark.parametrize(
@@ -1308,7 +1384,7 @@ def test_full_data_requires_manifest_and_both_roles(example, monkeypatch, tmp_pa
 
 def test_row_layout_and_packed_latent_input_are_exactly_fixed(example):
     encoded, rows = _encoded_fixture(example)
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
 
     packed = example._packed_events(encoded, config)
     advances = example._packed_advances(encoded, config, rows)
@@ -1418,7 +1494,7 @@ def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
 
 def test_training_stream_compacts_learning_rule_timeline(example):
     """No frozen layout position may age the trace before supervised depths."""
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
     rows = example._row_config(config)
     tensors = _materialize_training(example, example._load_data(config), config, rows)
 
@@ -1441,7 +1517,7 @@ def test_training_row_uses_one_held_out_demonstration_as_the_query(example):
         task_id="loo-row",
     )
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(seed=41),
+        example.ExperimentConfig.smoke_config(seed=41, decoder_mode="row_refinement"),
         max_demonstrations=3,
     )
     rows = RowEventConfig(max_demonstrations=3, max_grid_size=4)
@@ -1493,7 +1569,7 @@ def test_training_row_is_byte_identical_when_official_test_outputs_change(exampl
         task_id="no-official-target-leakage",
     )
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(seed=43),
+        example.ExperimentConfig.smoke_config(seed=43, decoder_mode="row_refinement"),
         max_demonstrations=3,
     )
     rows = RowEventConfig(max_demonstrations=3, max_grid_size=4)
@@ -1663,7 +1739,7 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
 
 def test_training_mask_supervises_only_latent_row_ticks_with_unit_weight(example):
     """An effort-R update weights only its R generated row ticks."""
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
     rows = example._row_config(config)
     tensors = _materialize_training(example, example._load_data(config), config, rows)
 
@@ -1682,8 +1758,28 @@ def test_training_mask_supervises_only_latent_row_ticks_with_unit_weight(example
         assert float(np.sum(mask)) == pytest.approx(1.0)
 
 
+def test_protocol_v2_training_uniformly_supervises_complete_decoder_sweeps(example):
+    config = example.ExperimentConfig.smoke_config(
+        decoder_mode="latent_row_decode",
+        memory_coding="learned_update",
+    )
+    rows = example._row_config(config)
+    tensors = _materialize_training(example, example._load_data(config), config, rows)
+
+    assert sorted(tensors.efforts.tolist()) == [0, 30, 60]
+    for mask, events, advances in zip(
+        tensors.masks, tensors.events, tensors.advances, strict=True
+    ):
+        supervised = np.flatnonzero(mask)
+        assert supervised.size == 30
+        np.testing.assert_allclose(mask[supervised], np.full(30, 1.0 / 30.0))
+        assert not advances[supervised].any()
+        assert np.all(events[supervised, :, rows.phase_slice.start + 1] == 1.0)
+        assert float(mask.sum()) == pytest.approx(1.0)
+
+
 def test_training_tensor_terminals_follow_each_sample_effort(example):
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
     data = example._load_data(config)
     rows = example._row_config(config)
 
@@ -1711,7 +1807,7 @@ def test_training_tensor_terminals_follow_each_sample_effort(example):
 
 
 def test_model_configuration_parameter_copy_and_digest_are_explicit(example):
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
     rows = example._row_config(config)
     model_config = example._model_config(config, rows, batch_size=3)
     assert model_config.batch_size == 3
@@ -1775,7 +1871,7 @@ def test_model_configuration_wires_opt_in_associative_memory_features(example):
     assert legacy.output_side_valid_index is None
 
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(),
+        example.ExperimentConfig.smoke_config(decoder_mode="row_refinement"),
         context_memory_width=32,
         memory_decay=0.95,
     )
@@ -1799,6 +1895,7 @@ def test_memory_architecture_report_records_raw_width_and_dense_state_cost(examp
         example.ExperimentConfig(
             structural_only=True,
             context_memory_width=0,
+            memory_coding="frozen",
             decoder_mode="legacy_cp",
         ),
         rows,
@@ -1886,13 +1983,20 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "carrier_stabilizer",
         "carrier_radius",
         "carrier_consumers",
+        "carrier_normalization_by_consumer",
     }
     assert memory["carrier_stabilizer"] == "per_example_stopped_unit_l2_cap"
     assert memory["carrier_radius"] == 1.0
     assert memory["carrier_consumers"] == (
-        "readout_projection",
+        "answer_row_head",
+        "answer_shape_head",
         "workspace_query_projection",
     )
+    assert memory["carrier_normalization_by_consumer"] == {
+        "answer_row_head": "per_example_unit_rms",
+        "answer_shape_head": "per_example_unit_rms",
+        "workspace_query_projection": "per_example_stopped_unit_l2_cap",
+    }
 
 
 def test_compiler_evidence_retains_warnings_and_parameter_classification(example):
@@ -2197,7 +2301,7 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(
     assert "checkpoint_queries" not in control
 
 
-def test_primary_scoring_uses_latest_and_distinct_earlier_neural_checkpoints(example):
+def test_primary_scoring_uses_latest_checkpoint_global_top_two(example):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))
@@ -2218,9 +2322,11 @@ def test_primary_scoring_uses_latest_and_distinct_earlier_neural_checkpoints(exa
     assert final["candidates"][0]["grid"] == [[6]]
     assert final["candidates"][0]["source_checkpoint"] == 60
     assert final["candidates"][0]["selection_role"] == ("latest_sweep_joint_argmax")
-    assert final["candidates"][1]["grid"] == [[3]]
-    assert final["candidates"][1]["source_checkpoint"] == 30
-    assert final["candidates"][1]["selection_role"] == ("earlier_sweep_joint_argmax")
+    assert final["candidates"][1]["grid"] == [[0]]
+    assert final["candidates"][1]["source_checkpoint"] == 60
+    assert final["candidates"][1]["selection_role"] == (
+        "latest_sweep_logit_runner_up"
+    )
     assert details["0"][0]["submission_role"] == "diagnostic_only"
 
 
@@ -2797,7 +2903,10 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
 def test_default_evaluation_runs_only_intact_without_adaptation_or_repeat(
     example, monkeypatch
 ):
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(
+        decoder_mode="row_refinement"
+    )
+    config = dataclasses.replace(config, evaluation_controls=False)
     data = example._load_data(config)
     rows = example._row_config(config)
     records = example._evaluation_records(data, config, rows)
@@ -2884,7 +2993,7 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
     example, monkeypatch
 ):
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(),
+        example.ExperimentConfig.smoke_config(decoder_mode="row_refinement"),
         task_local_adaptation=True,
         evaluation_controls=True,
     )
@@ -3115,6 +3224,7 @@ def test_evaluation_arm_jit_traces_once_and_matches_direct_dynamic_outputs(
             (base + gate)[..., None],
             jnp.zeros((*base.shape, 0), dtype=jnp.float32),
             jnp.zeros((base.shape[1], 0, 0), dtype=jnp.float32),
+            jnp.zeros((*base.shape, 0, 0), dtype=jnp.float32),
         )
 
     monkeypatch.setattr(example, "run_selected_packed_stream", packed)
@@ -3187,6 +3297,7 @@ def test_evaluation_arm_outer_jit_matches_real_selected_stream_exactly(example):
         direct.recurrent_current,
         direct.memory_read,
         direct.final_context_memory,
+        direct.context_memory,
     )
 
     for compiled_value, direct_value in zip(actual, expected, strict=True):
@@ -3278,6 +3389,7 @@ def test_evaluation_arm_outer_jit_matches_nonzero_associative_state_exactly(
         direct.recurrent_current,
         direct.memory_read,
         direct.final_context_memory,
+        direct.context_memory,
     )
 
     assert np.count_nonzero(np.asarray(direct.final_context_memory)) > 0
@@ -3485,6 +3597,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     legacy_config = example.ExperimentConfig(
         training_updates=3,
         context_memory_width=0,
+        memory_coding="frozen",
         decoder_mode="legacy_cp",
     )
     legacy_memory_config = dataclasses.replace(
@@ -3528,8 +3641,9 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         gpu,
         model_report,
     )
-    assert scientific["full_structural_qualification"] is True
-    assert scientific["full_scientific_qualification"] is True
+    assert scientific["full_structural_qualification"] is False
+    assert scientific["full_scientific_qualification"] is False
+    assert scientific["reasons_not_structural"]
 
     missing_gpu_safety = example._qualification(
         legacy_config,
@@ -3603,7 +3717,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         gpu,
         model_report,
     )
-    assert memory_qualification["full_structural_qualification"] is True
+    assert memory_qualification["full_structural_qualification"] is False
     assert memory_qualification["full_scientific_qualification"] is False
     assert (
         memory_qualification["associative_capability_status"]
@@ -3655,7 +3769,11 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         }
     )
     row_qualification = example._qualification(
-        example.ExperimentConfig(training_updates=3),
+        dataclasses.replace(
+            legacy_memory_config,
+            training_updates=3,
+            decoder_mode="row_refinement",
+        ),
         public_data,
         row_training,
         memory_evaluation,
@@ -3665,7 +3783,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     assert row_qualification["structural_checks"]["pp_prop_compiler_routes"] is True
     assert row_qualification["structural_checks"]["row_routes_all_direct"] is True
     assert (
-        row_qualification["structural_checks"]["complete_primary_evaluation"] is True
+        row_qualification["structural_checks"]["complete_primary_evaluation"] is False
     )
     assert row_qualification["structural_checks"]["complete_frozen_diagnostics"] is True
     assert (
@@ -3711,7 +3829,12 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
             "l2_delta": 0.0,
         }
     gated_qualification = example._qualification(
-        example.ExperimentConfig(training_updates=3, row_head_carrier_gate=True),
+        dataclasses.replace(
+            legacy_memory_config,
+            training_updates=3,
+            decoder_mode="row_refinement",
+            row_head_carrier_gate=True,
+        ),
         public_data,
         gated_training,
         memory_evaluation,
@@ -3900,7 +4023,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         gpu,
         model_report,
     )
-    assert movement_failure["full_structural_qualification"] is True
+    assert movement_failure["full_structural_qualification"] is False
     assert movement_failure["full_scientific_qualification"] is False
     assert "every active parameter group" in " ".join(
         movement_failure["reasons_not_scientific"]
@@ -4081,11 +4204,25 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
 
     result = example.run_experiment(config)
 
-    assert json.loads((tmp_path / "result.json").read_text())["schema_version"] == 1
+    assert json.loads((tmp_path / "result.json").read_text())["schema_version"] == 2
+    artifact_manifest = json.loads((tmp_path / "artifact_manifest.json").read_text())
+    assert artifact_manifest["schema_version"] == 2
+    assert set(artifact_manifest["artifacts"]) == {
+        "data_manifest",
+        "result",
+        "report",
+        "figure",
+    }
     assert json.loads((tmp_path / "data_manifest.json").read_text())[0]["plumbing_only"]
     assert "Claim boundary" in (tmp_path / "report.txt").read_text()
     assert (tmp_path / "latent_reasoning.png").read_bytes() == b"png"
-    assert set(result["artifacts"]) == {"data_manifest", "result", "report", "figure"}
+    assert set(result["artifacts"]) == {
+        "data_manifest",
+        "result",
+        "report",
+        "figure",
+        "manifest",
+    }
     assert result["device"]["memory_stats"] == {"peak_bytes_in_use": 123456}
     assert result["device"]["memory_stats_capture"] == "after training and evaluation"
     assert result["device"]["pre_device_gpu_environment"] == {
@@ -4247,7 +4384,7 @@ def test_training_sequence_length_covers_every_enabled_orientation(example):
 
     horizon = example._training_sequence_length(data, config)
 
-    assert horizon == max(required)
+    assert horizon == max(required) + 30
     assert (
         horizon
         < (config.max_demonstrations + 1) * config.max_grid_size + config.latent_steps
@@ -4258,7 +4395,8 @@ def test_training_sequence_length_covers_every_enabled_orientation(example):
 def test_compact_training_horizon_preserves_the_complete_semantic_prefix(example):
     """Short static rows discard only the guaranteed all-zero suffix."""
     config = dataclasses.replace(
-        example.ExperimentConfig.smoke_config(), max_demonstrations=10
+        example.ExperimentConfig.smoke_config(decoder_mode="row_refinement"),
+        max_demonstrations=10,
     )
     data = example._load_data(config)
     rows = example._row_config(config)
@@ -4977,16 +5115,16 @@ def test_episode_bank_reuses_encoded_folds_for_every_effort(example):
 
     bank = example._training_bank(data, config, rows, rng)
 
-    assert set(bank) == {int(effort) for effort in example.TRAINING_EFFORTS}
+    assert set(bank) == {int(effort) for effort in config.training_efforts}
     assert all(len(episodes) == 2 for episodes in bank.values())
     for effort, episodes in bank.items():
         for episode in episodes:
             assert np.isclose(float(episode["masks"].sum()), 1.0)
-            assert int(np.count_nonzero(episode["masks"])) == effort
+            assert int(np.count_nonzero(episode["masks"])) == 30
 
 
 def test_an_empty_bank_encodes_each_episode_slot_directly(example):
-    config = example.ExperimentConfig.smoke_config()
+    config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
     data = example._load_data(config)
     rows = example._row_config(config)
     rng = example.brainstate.random.RandomState(config.seed)
@@ -5166,7 +5304,7 @@ def test_task_local_entry_uses_post_pretraining_snapshot_and_target_free_bank(
 
     def score(checkpoint_logits, records, color_rank, decoder_mode):
         scored_logits.append(np.asarray(checkpoint_logits).copy())
-        assert decoder_mode == "row_refinement"
+        assert decoder_mode == "latent_row_decode"
         metrics = {str(step): _metric() for step in TEST_CHECKPOINTS}
         details = {str(step): [] for step in TEST_CHECKPOINTS}
         return metrics, details
@@ -5289,7 +5427,7 @@ def test_report_names_the_resolved_shared_training_optimizer(example):
 def test_memory_coding_flag_wires_into_model_config(example):
     rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
     default_args = example._parser().parse_args([])
-    assert default_args.memory_coding == "frozen"
+    assert default_args.memory_coding is None
     args = example._parser().parse_args(["--memory-coding", "learned_keys"])
     config = example._config_from_args(args)
     assert config.memory_coding == "learned_keys"
@@ -5297,7 +5435,7 @@ def test_memory_coding_flag_wires_into_model_config(example):
     assert model_config.memory_coding == "learned_keys"
     default_config = example._config_from_args(example._parser().parse_args([]))
     default_model = example._model_config(default_config, rows, batch_size=2)
-    assert default_model.memory_coding == "frozen"
+    assert default_model.memory_coding == "learned_update"
     smoke_args = example._parser().parse_args(
         ["--smoke", "--memory-coding", "learned_keys"]
     )

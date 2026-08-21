@@ -285,11 +285,11 @@ def _per_head_rnn_factory(H=2, E=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = jax.random.PRNGKey
+                k = lambda seed: brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed), (H, E, E)))
+                    0.1 * brainstate.random.normal(size=(H, E, E), key=k(seed)))
                 self.win = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed + 1), (n_in, H * E)))
+                    0.1 * brainstate.random.normal(size=(n_in, H * E), key=k(seed + 1)))
                 self.h = brainstate.HiddenState(jnp.zeros((1, H, E)))
 
             def update(self, x):
@@ -338,11 +338,11 @@ class TestEinsumOracle:
                 class Net(brainstate.nn.Module):
                     def __init__(self):
                         super().__init__()
-                        k = jax.random.PRNGKey
+                        k = lambda seed: brainstate.random.RandomState(seed).value
                         self.w = brainstate.ParamState(
-                            0.1 * jax.random.normal(k(seed), (n_rec, n_rec)))
+                            0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed)))
                         self.win = brainstate.ParamState(
-                            0.1 * jax.random.normal(k(seed + 1), (n_in, n_rec)))
+                            0.1 * brainstate.random.normal(size=(n_in, n_rec), key=k(seed + 1)))
                         self.h = brainstate.HiddenState(jnp.zeros((1, n_rec)))
 
                     def update(self, x):
@@ -387,11 +387,11 @@ def _shared_axis_rnn_factory(T2=2, N=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = jax.random.PRNGKey
+                k = lambda seed: brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed), (N, N)))
+                    0.1 * brainstate.random.normal(size=(N, N), key=k(seed)))
                 self.win = brainstate.ParamState(
-                    0.1 * jax.random.normal(k(seed + 1), (n_in, T2 * N)))
+                    0.1 * brainstate.random.normal(size=(n_in, T2 * N), key=k(seed + 1)))
                 self.h = brainstate.HiddenState(jnp.zeros((1, T2, N)))
 
             def update(self, x):
@@ -435,11 +435,11 @@ class TestSharedAxisOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = jax.random.PRNGKey
+                    k = lambda seed: brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(0), (N, N)))
+                        0.1 * brainstate.random.normal(size=(N, N), key=k(0)))
                     self.win = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(1), (n_in, T2 * N)))
+                        0.1 * brainstate.random.normal(size=(n_in, T2 * N), key=k(1)))
                     self.h = brainstate.HiddenState(jnp.zeros((1, T2, N)))
 
                 def update(self, x):
@@ -473,11 +473,11 @@ class TestSharedAxisOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = jax.random.PRNGKey
+                    k = lambda seed: brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(0), (N, N)))
+                        0.1 * brainstate.random.normal(size=(N, N), key=k(0)))
                     self.win = brainstate.ParamState(
-                        0.1 * jax.random.normal(k(1), (n_in, N)))
+                        0.1 * brainstate.random.normal(size=(n_in, N), key=k(1)))
                     self.h = brainstate.HiddenState(jnp.zeros((1, N)))
 
                 def update(self, x):

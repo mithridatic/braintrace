@@ -121,6 +121,7 @@ markers = [
     "xfail_known: pins a known finding (F-xx) documented in dev/superpowers/findings",
 ]
 addopts = "-m 'not diagnostic'"
+python_files = ["*_test.py"]
 pythonpath = ["examples/pp_prop"]
 
 

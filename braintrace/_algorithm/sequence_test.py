@@ -632,7 +632,7 @@ class _VmapNet(brainstate.nn.Module):
         with brainstate.random.seed_context(seed):
             self.cell = braintrace.nn.ValinaRNNCell(n_in, n_rec, activation='tanh')
         self.wout = brainstate.ParamState(
-            0.1 * jax.random.normal(jax.random.PRNGKey(seed + 1), (n_rec, n_rec)))
+            0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=brainstate.random.RandomState(seed + 1).value))
 
     def update(self, x):
         return self.cell(x) @ self.wout.value
@@ -989,13 +989,13 @@ class TestTheReturnSurface:
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(0), (N_REC, N_REC)))
+                    0.1 * brainstate.random.normal(size=(N_REC, N_REC), key=brainstate.random.RandomState(0).value))
                 self.head_a = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(1), (N_REC, N_REC)))
+                    0.1 * brainstate.random.normal(size=(N_REC, N_REC), key=brainstate.random.RandomState(1).value))
                 self.head_b = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(2), (N_REC, N_REC)))
+                    0.1 * brainstate.random.normal(size=(N_REC, N_REC), key=brainstate.random.RandomState(2).value))
                 self.win = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(3), (N_IN, N_REC)))
+                    0.1 * brainstate.random.normal(size=(N_IN, N_REC), key=brainstate.random.RandomState(3).value))
                 self.h = brainstate.HiddenState(jnp.zeros((1, N_REC)))
 
             def update(self, x):

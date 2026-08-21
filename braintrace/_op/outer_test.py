@@ -24,6 +24,7 @@ approximation left in the trace is pp-prop's own rank-1 collapse.
 from collections import namedtuple
 
 import brainunit as u
+import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -58,14 +59,14 @@ _SCALE = 0.25
 
 def _operands(seed=0):
     """Return ``(x_key, x_value, weights)`` with reproducible values."""
-    keys = jax.random.split(jax.random.PRNGKey(seed), 4)
+    keys = brainstate.random.RandomState(brainstate.random.RandomState(seed).value).split_key(4)
     return (
-        jax.random.normal(keys[0], (_BATCH, _KEY_IN)),
-        jax.random.normal(keys[1], (_BATCH, _VALUE_IN)),
+        brainstate.random.normal(size=(_BATCH, _KEY_IN), key=keys[0]),
+        brainstate.random.normal(size=(_BATCH, _VALUE_IN), key=keys[1]),
         {
-            'key_weight': jax.random.normal(keys[2], (_KEY_IN, _KEY_OUT)),
-            'key_bias': jax.random.normal(keys[3], (_KEY_OUT,)),
-            'value_weight': jax.random.normal(keys[0], (_VALUE_IN, _VALUE_OUT)),
+            'key_weight': brainstate.random.normal(size=(_KEY_IN, _KEY_OUT), key=keys[2]),
+            'key_bias': brainstate.random.normal(size=(_KEY_OUT,), key=keys[3]),
+            'value_weight': brainstate.random.normal(size=(_VALUE_IN, _VALUE_OUT), key=keys[0]),
         },
     )
 
@@ -215,8 +216,7 @@ class TestPPRules:
         """
         x_key, x_value, weights = _operands(seed=1)
         x_packed = jnp.concatenate([x_key, x_value], axis=-1)
-        hidden_dim = jax.random.normal(
-            jax.random.PRNGKey(7), (_BATCH, _KEY_OUT, _VALUE_OUT))
+        hidden_dim = brainstate.random.normal(size=(_BATCH, _KEY_OUT, _VALUE_OUT), key=brainstate.random.RandomState(7).value)
 
         assert_factored_rules_match_vjp(
             factor_rule=get_pp_df_factors(etp_outer_write_p),
@@ -266,14 +266,12 @@ def _weight_var_dict():
 
 def _drtrl_trace(seed, batched):
     """A random position-retaining trace dict, with or without a batch axis."""
-    keys = jax.random.split(jax.random.PRNGKey(seed), 3)
+    keys = brainstate.random.RandomState(brainstate.random.RandomState(seed).value).split_key(3)
     lead = (_BATCH,) if batched else ()
     return {
-        'key_weight': jax.random.normal(
-            keys[0], (*lead, _KEY_IN, _KEY_OUT, _VALUE_OUT)),
-        'key_bias': jax.random.normal(keys[1], (*lead, _KEY_OUT, _VALUE_OUT)),
-        'value_weight': jax.random.normal(
-            keys[2], (*lead, _VALUE_IN, _KEY_OUT, _VALUE_OUT)),
+        'key_weight': brainstate.random.normal(size=(*lead, _KEY_IN, _KEY_OUT, _VALUE_OUT), key=keys[0]),
+        'key_bias': brainstate.random.normal(size=(*lead, _KEY_OUT, _VALUE_OUT), key=keys[1]),
+        'value_weight': brainstate.random.normal(size=(*lead, _VALUE_IN, _KEY_OUT, _VALUE_OUT), key=keys[2]),
     }
 
 
@@ -316,8 +314,8 @@ class TestDRTRLRules:
         """
         x_key, x_value, weights = _operands(seed=4)
         x_slice = jnp.concatenate([x_key[0], x_value[0]])
-        df = jax.random.normal(jax.random.PRNGKey(8), (_KEY_OUT, _VALUE_OUT))
-        dg = jax.random.normal(jax.random.PRNGKey(9), (_KEY_OUT, _VALUE_OUT))
+        df = brainstate.random.normal(size=(_KEY_OUT, _VALUE_OUT), key=brainstate.random.RandomState(8).value)
+        dg = brainstate.random.normal(size=(_KEY_OUT, _VALUE_OUT), key=brainstate.random.RandomState(9).value)
 
         instant = get_instant_drtrl_rule(etp_outer_write_p)(
             x_slice, df, weights, **_params())
@@ -348,8 +346,7 @@ class TestDRTRLRules:
     def test_dt_to_t_scales_traces_along_their_position_axes(self):
         """Both executor contexts: batched trace update, batch-stripped solve."""
         rule = ETP_RULES_DT_TO_T[etp_outer_write_p]
-        hidden = jax.random.normal(
-            jax.random.PRNGKey(10), (_BATCH, _KEY_OUT, _VALUE_OUT))
+        hidden = brainstate.random.normal(size=(_BATCH, _KEY_OUT, _VALUE_OUT), key=brainstate.random.RandomState(10).value)
 
         batched = rule(hidden, _drtrl_trace(seed=6, batched=True), **_params())
         trace = _drtrl_trace(seed=6, batched=True)

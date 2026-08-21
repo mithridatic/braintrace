@@ -143,7 +143,7 @@ _EXACT_ON_RATE = {
         m, feedback='symmetric', kappa_filter_decay=0.5, vjp_method='multi-step'),
     'EProp_random': lambda m: braintrace.EProp(
         m, feedback='random', kappa_filter_decay=0.0,
-        random_feedback_key=jax.random.PRNGKey(7), vjp_method='multi-step'),
+        random_feedback_key=brainstate.random.RandomState(7).value, vjp_method='multi-step'),
 }
 
 
@@ -284,7 +284,7 @@ def _train_loss_trajectory(algo, n_steps=12, lr=0.05):
 @pytest.mark.parametrize('algo_factory', [
     lambda m: braintrace.pp_prop(m, decay_or_rank=1),
     lambda m: braintrace.EProp(
-        m, feedback='random', random_feedback_key=jax.random.PRNGKey(7)),
+        m, feedback='random', random_feedback_key=brainstate.random.RandomState(7).value),
 ], ids=['pp_prop_rank1', 'EProp_random'])
 def test_approximate_algorithm_descends_loss(algo_factory):
     """C-level backstop: the approximate gradient is a usable descent direction —
@@ -294,7 +294,7 @@ def test_approximate_algorithm_descends_loss(algo_factory):
             def __init__(self):
                 super().__init__()
                 self.w = brainstate.ParamState(
-                    0.1 * jax.random.normal(jax.random.PRNGKey(0), (3, 3)))
+                    0.1 * brainstate.random.normal(size=(3, 3), key=brainstate.random.RandomState(0).value))
                 self.v = brainstate.HiddenState(jnp.zeros((1, 3)))
 
             def update(self, x):

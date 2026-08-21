@@ -94,104 +94,39 @@ models.
 
 ### In-context latent reasoning
 
-Example 21 uses three sibling support modules and one shared model for every
-effort checkpoint. The full architecture has 2,048 LIF neurons and exactly
-4,194,304 recurrent sparse edges. It consumes ordinary ARC JSON tasks—multiple
-input/output demonstrations, variable grid dimensions, and every test query—and
-reports exact query and strict whole-task pass@1/pass@2. Pixel accuracy is only
-a near-miss diagnostic.
+Example 21 protocol v2 uses one shared 4,096-neuron recurrent spiking model
+with a source default of 4,194,304 recurrent edges. It ingests ordinary ARC
+demonstrations, freezes the query state, and evaluates 0, 30, and 60 recurrent
+reasoning ticks. Every effort receives the same 30-row decoder sweep; decoder
+rows preserve physical state and associative memory and never feed answer rows
+back into the model.
 
-Data remains outside Git, but the tracked Example 21 image bakes the pinned
-ARC-AGI-1 checkout and its prevalidated indexes into one reusable runtime.
-The adapter supports ARC-AGI-1
-training, RE-ARC, ConceptARC, ARC-Heavy, and ARC-GEN100K when locally available;
-ARC-AGI-1 evaluation and fresh `arc-task-gen` tasks are evaluation-only. The run
-fingerprints task content and aborts on train/evaluation overlap. The private
-paper data and training recipe are unavailable and are not simulated.
+`latent_row_decode`, `learned_update`, and evaluation controls are the defaults.
+The controls include matched no-context and shuffled-binding arms, state hold,
+recurrent lesion, deterministic repeat, and the legacy slot ablation. Only the
+latest checkpoint supplies the exact factorized global top-two candidates.
+Exact ARC grid match is the endpoint; shape and pixel scores are diagnostics.
 
-A full run requests a GPU by default and fails closed instead of silently
-falling back to CPU. Build the generic dependency layer, then the reusable
-Example 21 image using the ARC checkout as a named BuildKit context:
+Run the reduced CPU plumbing check with:
 
-    $commit = (git rev-parse HEAD).Trim()
-    $arcRoot = "C:\tmp\braintrace-example21-data\arc-agi-1"
-    $arcCommit = (git -C $arcRoot rev-parse HEAD).Trim()
-    docker build --file .github/containers/braintrace-gpu/Dockerfile --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --tag braintrace-gpu:0.11.0-py314-msgspec .
-    docker build --file .github/containers/braintrace-example21/Dockerfile --build-context "arc_data=$arcRoot" --build-arg BRAINTRACE_SOURCE_COMMIT=$commit --build-arg ARC_AGI_1_COMMIT=$arcCommit --tag braintrace-gpu:0.11.0-py314-msgspec-arc .
+    python examples/pp_prop/21-arc-agi-latent-reasoning.py --smoke --device cpu --output-dir var/example21-smoke
 
-Every Example 21 configuration uses that final image. It opens one
-integrity-checked index per split instead of enumerating, reopening, hashing,
-and fingerprinting all 800 raw task files at runtime. Mount only persistent
-outputs and the compilation cache. Record the source, data, and exact local
-image identity first:
+The tracked image installs the source at `/opt/braintrace`; its default help
+command and all documented in-image source paths use that root. The
+preregistered reduced-edge evidence command is:
 
-    $sourceDirty = if (git status --porcelain) { "1" } else { "0" }
-    $imageId = (docker image inspect braintrace-gpu:0.11.0-py314-msgspec-arc --format '{{.Id}}').Trim()
-    New-Item -ItemType Directory -Force var, var/jax-cache | Out-Null
-    docker run --rm --gpus all `
-      --env XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 `
-      --env JAX_COMPILATION_CACHE_DIR=/cache/jax `
-      --env JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0 `
-      --env EXAMPLE21_SOURCE_REVISION=$commit `
-      --env EXAMPLE21_SOURCE_DIRTY=$sourceDirty `
-      --env EXAMPLE21_ARC_REVISION=$arcCommit `
-      --env EXAMPLE21_IMAGE_DIGEST=$imageId `
-      --volume "${PWD}/var:/work/var" `
-      --volume "${PWD}/var/jax-cache:/cache/jax" `
-      braintrace-gpu:0.11.0-py314-msgspec-arc `
-      python /work/examples/pp_prop/21-latent-reasoning-in-context.py `
-      --device gpu `
-      --source-manifest /datasets/arc/example21-sources.json `
-      --output-dir /work/var/example21-shared-4096n-4194304e-b32-u260 `
-      --training-chunk-size 5
+    python /opt/braintrace/examples/pp_prop/21-arc-agi-latent-reasoning.py --recurrent-edges 4096
 
-The command runs the configuration defaults: 4096 neurons, 4,194,304 recurrent
-edges (1,024 per neuron, at the policy cap), training batch 32, 260 shared optimizer updates on the cosine
-learning-rate schedule at base rate 1e-3, 8 training workers, and seed 9999.
-Only the execution chunk size is passed explicitly (5 divides 260); the
-default of 0 would compile the whole update schedule as one program.
+That command is intentionally nonqualifying for `actual_full_scale`. Reports
+use schema 2, retain disabled checks as `not_run`, capture live source/config/
+image/resource provenance, and write an artifact checksum sidecar. Historical
+schema-1 bundles remain immutable replay evidence.
 
-Two newer flags are not shown above: `--memory-coding`
-(`frozen`/`learned_keys`/`learned_write`) selects storage-coding
-trainability, and `--trace-engine` (`pp_prop` default, `d_rtrl`) selects the
-eligibility-trace engine — `d_rtrl` compiles the per-parameter exact trace,
-which carries the memory write's pairing gradient exactly at a much higher
-memory cost (see `docs/specs/2026-08-21-etp-outer-write-drtrl-trace.md`).
-Note the command above runs the source copy **baked into the image**; when
-iterating on a checkout newer than the image, mount the worktree and add
-`--env PYTHONPATH=/workspace` (plus a worktree `--source-manifest`) or the
-run silently uses stale code.
-
-The selected execution chunk is 5; the original chunk-1 command is retained
-in `docs/specs/2026-08-20-example21-docker-throughput.md` as the baseline.
-Keep `training_bank_size=0`. The persistent `/cache/jax` mount keeps compiled
-XLA artifacts between containers. For throughput, perform one warm-up run,
-then three ordinary (unprofiled) warm runs and report the median of the result
-JSON `runtime_seconds`; profiling is diagnostic and adds synchronization.
-This command performs no pretraining, task-local adaptation, or evaluation
-control arms. Progress is written to stderr; the final result remains on stdout.
-
-For a reduced CPU iteration check that exercises lossless ARC encoding, exact
-scoring, all recurrent checkpoints, causal controls, and the trajectory report:
-
-    python examples/pp_prop/21-latent-reasoning-in-context.py --smoke --device cpu --output-dir var/example21-smoke
-
-The smoke fixture and reduced network prove plumbing only. They are never
-reported as ARC model quality. A scientific result requires a non-evaluation
-public training source, held-out tasks, the 4,096/4,194,304 model, mixed 8/16/32
-training effort, and frozen evaluation of one trajectory at 0/8/16/32. The
-report also includes provisional grid changes, entropy, spikes, voltage, state
-movement, convergence, no-context, deranged-demonstration, and 64-neuron slot
-ablation controls.
-
-The paper's public LOW/MEDIUM/HIGH labels do not disclose iteration counts, so
-8/16/32 are this example's operational recurrent-tick proxy, not a paper-tier
-mapping.
-
-The CLI enforces the requested JAX platform but does not itself detect whether
-it is running inside Docker. See the active OpenSpec change and
-`docs/specs/2026-08-16-pp-prop-latent-reasoning.md` for the implementation and
-qualification boundaries.
+The example targets the public interface described by arXiv 2608.09888. The
+paper does not disclose enough private architecture, data, training details,
+or compute accounting to claim an exact internal reproduction or paper-scale
+cost equivalence. See `docs/evidence/example21.md` and
+`docs/specs/2026-08-21-example21-protocol-v2-remediation.md`.
 
 ### Configurable benchmark
 

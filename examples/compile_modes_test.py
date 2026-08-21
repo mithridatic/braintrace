@@ -20,7 +20,7 @@ import pytest
 
 import braintrace
 
-EXAMPLES_DIR = pathlib.Path(__file__).resolve().parents[1]
+EXAMPLES_DIR = pathlib.Path(__file__).resolve().parent
 for p in (EXAMPLES_DIR, EXAMPLES_DIR / "pp_prop"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
