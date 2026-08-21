@@ -459,3 +459,24 @@ earned-access semantics, 300 gate parameters instead of 1. Verified:
 gate-on model at init is bit-identical across recurrent gains; forcing the
 gate weights to 3.0 makes the row answer carrier-bound; event head,
 carrier head, and gate all compile `all_direct`.
+
+### 9.3 Results — gated arm (cr2g, s2108, 3m20s)
+
+| metric | carrier-free (cr2cs0) | gated (cr2g) | full carrier (b64 ref) |
+|---|---|---|---|
+| pixel | 0.5454 | 0.5443 | 0.4613 |
+| shape | 0.4893 | 0.5489 | — |
+| copy@oracle | 0.9178 | 0.8893 | 0.6879 |
+| rule@oracle | 0.0248 | 0.0484 | 0.1250 |
+| exact pass@1 | 1 (`bbb1b8b6` q1) | 1 (`bbb1b8b6` q1) | 0 |
+
+The gate holds the carrier-free pixel level (−0.001, within noise) while
+**doubling rule-cell accuracy** (0.0248 → 0.0484) and improving shape
+(+0.06); copy gives back only 0.03 of its 0.23 gain. Displacement did not
+return: training opened the gate part-way and bought rules with it, not
+copy unlearning. The §9 falsification clause does not trigger. Rule
+accuracy remains well below the full-carrier 0.125, so the gate is
+conservative at this budget — more updates or a per-column gate driven by
+the colour block (candidate B proper) are the natural next dials. The
+gated head is the recommended base configuration going forward:
+`--copy-residual-gain 2.0 --row-head-carrier-gate`.
