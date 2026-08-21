@@ -302,6 +302,11 @@ class ExperimentConfig:
         device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
         Adam rate and global gradient clipping norm.
+    copy_residual_gain : float
+        Fixed identity-residual logit magnitude added to the answer row
+        head's output at the query's own colour for every occupied column,
+        so training learns deviations from copy instead of the copy map
+        itself. Zero (the default) keeps the bare head bit-exactly.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
         This option is valid only with the explicit legacy CP decoder.
@@ -371,6 +376,7 @@ class ExperimentConfig:
     task_local_adaptation: bool = False
     evaluation_controls: bool = False
     clip_norm: float = 1.0
+    copy_residual_gain: float = 0.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
     adaptation_task_group: int = 20
@@ -457,6 +463,12 @@ class ExperimentConfig:
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
         )
+        gain = float(self.copy_residual_gain)
+        if not math.isfinite(gain) or gain < 0.0:
+            raise ValueError(
+                "copy_residual_gain must be a finite nonnegative real scalar"
+            )
+        object.__setattr__(self, "copy_residual_gain", gain)
         object.__setattr__(
             self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
@@ -1903,6 +1915,7 @@ def _model_config(
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
+        arguments["copy_residual_gain"] = config.copy_residual_gain
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
         arguments.update(
@@ -6238,6 +6251,7 @@ def _parser() -> argparse.ArgumentParser:
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
     )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--copy-residual-gain", type=float, default=0.0)
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=2)
     parser.add_argument("--task-local-adaptation", action="store_true")
@@ -6309,6 +6323,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
+        copy_residual_gain=args.copy_residual_gain,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,

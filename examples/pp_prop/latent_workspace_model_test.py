@@ -3282,6 +3282,94 @@ def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> No
     assert classifications["answer_shape_head.weight"] == {"all_direct"}
 
 
+def test_copy_residual_raises_the_query_colour_logit_by_the_gain() -> None:
+    """The residual must add exactly ``gain`` at each occupied colour logit.
+
+    The colour block is indexed ``column * 10 + colour``
+    (``latent_workspace_task.py``) and the row logits reshape ``(30, 10)`` on
+    the same index, so the identity map is a direct vector addition. Every
+    coordinate the query does not occupy — including the whole block beyond the
+    input's height, which ``input_row_valid`` zeroes — must be bit-unchanged,
+    so the learned head keeps sole custody of out-of-range cells.
+    """
+    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    layout = _row_refinement_layout()
+    row_logits = jnp.asarray(
+        np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
+    )
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    event = event.at[:, layout.input_color_start + 0 * COLOR_COUNT + 3].set(1.0)
+    event = event.at[:, layout.input_color_start + 7 * COLOR_COUNT + 9].set(1.0)
+
+    boosted = np.asarray(apply_residual(row_logits, event, layout, 2.0))
+
+    expected = np.asarray(row_logits).copy()
+    expected[0, 0 * COLOR_COUNT + 3] += 2.0
+    expected[0, 7 * COLOR_COUNT + 9] += 2.0
+    np.testing.assert_array_equal(boosted, expected)
+
+
+def test_copy_residual_gain_zero_reproduces_the_bare_head() -> None:
+    """``gain = 0`` must be bit-exact backward compatibility."""
+    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    layout = _row_refinement_layout()
+    row_logits = jnp.asarray(
+        np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
+    )
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    event = event.at[:, layout.input_color_start + 5].set(1.0)
+
+    unchanged = np.asarray(apply_residual(row_logits, event, layout, 0.0))
+
+    np.testing.assert_array_equal(unchanged, np.asarray(row_logits))
+
+
+def test_model_config_rejects_a_negative_copy_residual_gain() -> None:
+    """The gain is a logit magnitude; a negative copy prior is a config error."""
+    with pytest.raises(ValueError, match="copy_residual_gain"):
+        _row_refinement_config(copy_residual_gain=-1.0)
+
+
+def test_refinement_heads_stay_compiled_all_direct_with_copy_residual() -> None:
+    """The residual must not disturb ETP tracking of either answer head.
+
+    The residual is a constant-scaled slice of the event added after the
+    tracked ``answer_row_head`` op. If the addition confused the compiler the
+    head would silently drop from ``param_states`` and train with a zero
+    gradient while still looking correct.
+    """
+    model = LatentWorkspaceModel(
+        _row_refinement_config(batch_size=2, copy_residual_gain=2.0)
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {"answer_row_head.weight", "answer_shape_head.weight"} <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+
+    assert classifications["answer_row_head.weight"] == {"all_direct"}
+    assert classifications["answer_shape_head.weight"] == {"all_direct"}
+
+
 def test_refinement_head_input_separates_the_query_grid_shape() -> None:
     """Two ticks differing only in the query grid shape must reach the head.
 

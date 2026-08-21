@@ -99,6 +99,15 @@ def _positive_real(value: object, name: str) -> float:
     return result
 
 
+def _nonnegative_real(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a finite nonnegative real scalar")
+    result = float(value)
+    if not math.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a finite nonnegative real scalar")
+    return result
+
+
 def _unit_interval_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
         raise TypeError(f"{name} must be a finite real scalar in [0, 1]")
@@ -171,6 +180,11 @@ class ModelConfig:
         positive multiple of 30 and no larger than ``max_latent_steps``.
     refinement_layout : RowRefinementLayout, optional
         Complete row-event layout required by ``row_refinement`` mode.
+    copy_residual_gain : float, default=0.0
+        Fixed logit magnitude added to the answer row head's output at the
+        query's own colour for every occupied column — an identity residual
+        that lets training learn deviations from copy instead of the copy map
+        itself.  Zero keeps the bare head bit-exactly.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -216,6 +230,7 @@ class ModelConfig:
     decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
+    copy_residual_gain: float = 0.0
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -286,6 +301,11 @@ class ModelConfig:
             self,
             "memory_decay",
             _unit_interval_real(self.memory_decay, "memory_decay"),
+        )
+        object.__setattr__(
+            self,
+            "copy_residual_gain",
+            _nonnegative_real(self.copy_residual_gain, "copy_residual_gain"),
         )
         for name in (
             "demonstration_phase_index",
@@ -1446,6 +1466,36 @@ def _refinement_head_input(
     )
 
 
+def _copy_residual_logits(
+    row_logits: jax.Array,
+    event: jax.Array,
+    layout: RowRefinementLayout,
+    gain: float,
+) -> jax.Array:
+    """Add a fixed identity residual from the query's colours to the row logits.
+
+    The colour block of the refinement event is indexed
+    ``column * COLOR_COUNT + colour`` and the row logits reshape
+    ``(MAX_GRID_SIZE, COLOR_COUNT)`` on the same index, so adding the raw
+    one-hot block scaled by ``gain`` raises the logit of exactly the query's
+    colour at each occupied column.  Coordinates the query does not occupy --
+    including every column at or beyond the input's width and, through
+    ``input_row_valid`` gating, every row beyond the input's height -- receive
+    exactly zero, so the learned head keeps sole custody of rule deviations
+    and out-of-range cells.
+
+    This is the identity-mapping residual of Kimi's Attention Residuals
+    (arXiv:2603.15031) applied to the decode path: the direct route is
+    preserved architecturally and training learns modulations of it, instead
+    of spending its whole travel budget building the 110-parameter copy map
+    that the lookup-table baseline owns by construction.
+    """
+    if gain == 0.0:
+        return row_logits
+    residual = event[:, layout.input_color_slice].astype(row_logits.dtype)
+    return row_logits + jnp.asarray(gain, dtype=row_logits.dtype) * residual
+
+
 def refinement_head_width(neuron_count: int) -> int:
     """Return the answer-head input width for a row-conditioned decoder.
 
@@ -2349,7 +2399,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             head_input = _refinement_head_input(
                 _unit_rms_carrier(carrier), event, self.config.refinement_layout
             )
-            next_row = self.answer_row_head(head_input)
+            next_row = _copy_residual_logits(
+                self.answer_row_head(head_input),
+                event,
+                self.config.refinement_layout,
+                self.config.copy_residual_gain,
+            )
             next_shape = self.answer_shape_head(head_input)
             refinement_gate = refinement_latent[:, None]
             self.answer_row.value = jnp.where(
