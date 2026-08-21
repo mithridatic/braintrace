@@ -1855,25 +1855,6 @@ def test_equal_output_rotation_is_excluded_from_pairing_applicability(example):
     ]
 
 
-def test_gather_window_uses_each_query_terminal(example):
-    time, batch = 70, 2
-    packed = SimpleNamespace(
-        compact_logits=np.arange(time * batch * 3).reshape(time, batch, 3),
-        spikes=np.arange(time * batch * 4).reshape(time, batch, 4),
-        voltage=np.arange(time * batch * 5).reshape(time, batch, 5),
-        feedforward_current=np.arange(time * batch * 6).reshape(time, batch, 6),
-        recurrent_current=np.arange(time * batch * 7).reshape(time, batch, 7),
-    )
-    compact, spikes, voltage, feedforward, recurrent = example._gather_window(
-        packed, np.array([2, 5])
-    )
-    assert compact.shape == (TEST_DEPTH_COUNT, 2, 3)
-    assert spikes[0, 0, 0] == packed.spikes[1, 0, 0]
-    assert voltage[60, 1, 0] == packed.voltage[64, 1, 0]
-    assert feedforward.shape == (TEST_DEPTH_COUNT, 2, 6)
-    assert recurrent.shape == (TEST_DEPTH_COUNT, 2, 7)
-
-
 @pytest.mark.parametrize(
     ("decoder_mode", "output_width"),
     [("legacy_cp", 340), ("row_refinement", 9060)],

@@ -2550,28 +2550,6 @@ def _arm_sequences(
     return stacked, advances, np.asarray(query_stops, dtype=np.int32), metadata
 
 
-def _gather_window(
-    packed,
-    query_stops: np.ndarray,
-    checkpoints: Sequence[int] = CHECKPOINTS,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    compact = np.asarray(packed.compact_logits)
-    spikes = np.asarray(packed.spikes)
-    voltage = np.asarray(packed.voltage)
-    feedforward_current = np.asarray(packed.feedforward_current)
-    recurrent_current = np.asarray(packed.recurrent_current)
-    offsets = np.arange(0, max(checkpoints) + 1, dtype=np.int32)[:, None]
-    indices = query_stops[None, :] - 1 + offsets
-    batch = np.arange(query_stops.size, dtype=np.int32)[None, :]
-    return (
-        compact[indices, batch],
-        spikes[indices, batch],
-        voltage[indices, batch],
-        feedforward_current[indices, batch],
-        recurrent_current[indices, batch],
-    )
-
-
 def _score_windows(
     compact: np.ndarray,
     records: Sequence[_EvaluationRecord],
