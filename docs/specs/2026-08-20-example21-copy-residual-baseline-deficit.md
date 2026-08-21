@@ -372,3 +372,32 @@ Ship configuration for further work on this branch:
 `--copy-residual-gain 2.0 --row-head-carrier-scale 0.0` with the shape head
 untouched. Remaining §7 items: the gated-carrier row head (rules are the
 next 0.19 of headroom) and task-local adaptation on the carrier-free base.
+
+## 9. Design proposal — gated carrier access for the row head (NOT YET APPROVED)
+
+Rules are the remaining 0.19 of headroom, and the carrier-free row head
+forfeits them by construction. The design goal, per Attention Residuals: the
+copy path preserved architecturally, carrier access *earned*, not default.
+
+Proposed minimal mechanism (candidate A — split head with a zero-initialised
+carrier branch):
+
+1. Split the row head into `answer_row_event_head` (event blocks only) and
+   `answer_row_carrier_head` (carrier block only); both bias-free Linear so
+   ETP tracking is unchanged.  At the split, event-head weights are
+   initialised from the trained carrier-free head's event columns.
+2. The carrier branch enters as
+   `next_row = event_head(events) + residual + tanh(g) * carrier_head(carrier)`
+   with `g` a learned scalar initialised at 0 — the model *starts* at the
+   §8 carrier-free optimum and training must buy carrier access through `g`.
+3. Falsification: if training simply reopens the gate and walks copy back
+   down (§6.1 displacement returning through `tanh(g)`), the scalar gate is
+   insufficient and a per-column gate driven by the colour block (candidate
+   B) or depth-wise softmax over per-sweep carriers (candidate C, the full
+   AttnRes form) is next.
+
+Open risks to resolve before implementation: whether a learned scalar
+multiplying a tracked Linear output keeps both heads `all_direct` in the
+ETP compiler, and whether the gate needs a slower learning rate than the
+heads to prevent early displacement. Awaiting J's approval per the working
+agreement before any code.
