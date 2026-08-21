@@ -1,6 +1,6 @@
 # ETP outer-product write primitive (`etp_outer_write`)
 
-Status: spec, awaiting approval; no implementation
+Status: approved 2026-08-21 ("execute the spec"); implementation in progress
 Date: 2026-08-20
 Branch: `investigate/ex21-learned-memory-keys` (continues the learned-memory-coding line)
 Depends on: `2026-08-20-example21-learned-memory-coding.md` (structural finding)
@@ -251,13 +251,71 @@ the delta-rule write `S_t = (I − β k kᵀ)S_{t−1} + β k vᵀ` (targets
 superposition interference directly, keeps a single S), ahead of
 multi-trace or slotted designs.
 
+## Implementation deviations (recorded 2026-08-21, before writing code)
+
+Three facts found while grounding the design in the actual code changed it.
+They are deviations from the text above, not refinements of it.
+
+**(a) A new algorithm-layer hook is required; registry recognition is *not*
+automatic.** The IO-dim algorithm exposes exactly three per-primitive hooks:
+`init_pp` (trace shape), `xy_to_dw` (solve-time contraction) and
+`pp_x_repr` (x-trace representation at step time). None of them can inject a
+per-step factor that depends on the weights, and the required factor
+`φ'_k(p^t)_i · v^t_j` is `(i,j)`-indexed so it cannot ride the x-side either.
+`_contract_hidden_jacobian` forces the trace to carry the group's
+`(*varshape, n_state)` layout, so contracting `j` away early is also
+unavailable (it would only be valid where the hidden Jacobian happens to be
+uniform over `j`, which is not a property a rule may assume).
+
+v1 therefore adds a fourth hook, symmetric with `pp_x_repr`:
+
+```
+ETP_RULES_PP_DF_FACTORS[p] = fn(x, weights, **eqn_params) -> {name: y-shaped array}
+```
+
+invoked at trace-update time on the **raw current-step** `x` and the current
+weight values, returning one multiplier per trace name; the injected
+`D_f^t` is multiplied by it before smoothing. Consequences inside
+`io_dim_vjp.py`: the pp df trace becomes a **dict of y-shaped arrays** for
+primitives that register the hook (`jax.tree.map` makes the array case
+byte-identical, so no branch is needed on the solve path), and
+`_update_IO_dim_etrace_scan_fn` gains `weight_vals` — already threaded to
+`_make_etrace_stepper` on both the fused-scan and single-step paths, where
+this algorithm had so far declared it unused. Blast radius is bounded:
+`ETP_RULES_INIT_PP` has exactly one consumer in the package.
+
+**(b) Two factor arrays, not three.** `b_k`'s postsynaptic factor is
+identical to `W_k`'s (`c·φ'_k(p^t) ⊗ v^t`); only their x-side factors differ
+(`x_k` vs. the constant 1). The trace dict is therefore keyed by *factor
+group* — `{'key', 'value'}` — and `xy_to_dw` maps `'key' → {key_weight,
+key_bias}`, `'value' → {value_weight}`. Cost is ≈ 2 × 131 KB per state, not 3.
+
+**(c) The "registry single-x assumption" risk resolves by packing.** The
+user-facing op passes `x = concat([x_key, x_value], axis=-1)` and the rules
+split it at a static `key_features` param. This is exact rather than a
+workaround: the x-trace low-pass filter is linear and elementwise, so
+filtering the concatenation equals concatenating the filtered halves, and
+the solve path needs *both* filtered inputs anyway — which a single
+registered x-invar could not have supplied.
+
+Unchanged by these deviations: the position prover stays uninvolved (it
+checks only the operands *reachable from* `y`, so the side-validity mask and
+`memory_write_scale` broadcasts in the tail are never classified), and
+D-RTRL remains out of scope — `init_drtrl` / `dt_to_t` raise
+`NotSupportedError` rather than silently mis-tracing.
+
 ## Scope and sequencing
 
-1. Layer 1: primitive + rules + op tests + oracle (pp-prop only).
-2. Layer 2/3: compiler recognition should be automatic via the registry;
-   verify, add the relation test.
-3. Example 21 wiring behind `learned_write` + integration tests.
-4. Smoke + pilots + results recorded here.
+1. Layer 1: `pp_df_factors` registry hook, primitive + rules + op tests +
+   oracle (pp-prop only).
+2. Layer 4: dict-valued pp df traces and factor injection in `io_dim_vjp`;
+   both `fast_solve` and legacy-vmap solve paths exercised.
+3. Layer 2/3: verify compiler recognition, add the relation test.
+4. The finite-window pairing-discrimination test — written **before** the
+   Example 21 wiring, since it is the test that validates why the machinery
+   exists.
+5. Example 21 wiring behind `learned_write` + integration tests.
+6. Smoke + pilots + results recorded here.
 
 Out of scope for v1: D-RTRL weight-shaped traces (55 MB/state), SnAp,
 fast-path kernels, tied write/query encoders, arbitrary nonlinearities,
