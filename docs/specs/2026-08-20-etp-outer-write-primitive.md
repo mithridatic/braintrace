@@ -388,3 +388,97 @@ mutant.
 Both designs are one-step exact (with no history the filter has averaged
 nothing), so the op-level oracle alone would *not* have caught the difference —
 only the finite-window panel does, as AGENTS.md's rule predicts.
+
+### Suites and smoke (2026-08-21, all measured)
+
+`braintrace/` 3,098 passed (27:05); `examples/pp_prop/` 2,415 passed (18:47);
+both CPU-only containers, zero failures. Smoke
+(`--smoke --device cpu --memory-coding learned_write`): 15.4 s, exit 0.
+
+Smoke parameter movement — the structural headline:
+
+| parameter | l2_delta | note |
+|---|---:|---|
+| `write_value_weight` | 0.1023 | **had no gradient path at all before this primitive** |
+| `write_key_weight` | 0.0236 | |
+| `write_key_bias` | 0.0054 | |
+| `memory_write_scale` | 0.0270 | the elemwise relation was not displaced |
+
+### GPU pilots (2026-08-21) — 100 evaluation tasks
+
+Seed 2108, 4096 neurons / 4096 edges, width 32, batch 32, 260 updates, chunk 5,
+lr 1e-3, `--evaluation-controls`, `row_refinement`. All three arms re-run on
+this commit (the earlier table's frozen arm was a reused width-sweep artifact
+from a different commit and is *not* comparable). Non-scientific by
+construction: task cap.
+
+| arm | shape e30 | shape e60 | pixel e30 | pixel e60 | wall |
+|---|---:|---:|---:|---:|---:|
+| frozen | 0.5096 | 0.5096 | 0.3807 | 0.3608 | 296 s |
+| learned_keys | 0.5288 | 0.5385 | 0.3845 | 0.3703 | 357 s |
+| learned_write | **0.5673** | **0.5481** | **0.3925** | 0.3688 | 349 s |
+
+Control-minus-intact deltas (shape, effort 60). `repeat_intact` is **exactly
+0.0** in every arm, so the nondeterminism band is zero and one query is 0.0096:
+
+| control | frozen | learned_keys | learned_write |
+|---|---:|---:|---:|
+| no_context | −0.2115 | −0.3077 | −0.2308 |
+| shuffled_demonstrations | +0.0192 | 0.0000 | +0.0096 |
+| slot_ablation | 0.0000 | −0.0096 | 0.0000 |
+
+Trainability and attribution:
+
+| quantity | learned_keys | learned_write |
+|---|---:|---:|
+| `memory_key_projection` l2_delta | 2.0490 | 2.2324 |
+| `write_key_weight` l2_delta | n/a | 1.7979 |
+| `write_value_weight` l2_delta | n/a | 1.9282 |
+| write↔retrieval key cosine | n/a | 0.99992 |
+| write↔retrieval key relative l2 | n/a | 0.0124 |
+
+### Verdict
+
+**The mechanism works; the readout did not move.**
+
+What the primitive was built to do, it does: the write projections train hard
+(l2_delta ≈ 1.8–1.9, comparable to the retrieval projection's 2.2), the
+relation is `all_direct` into `context_memory`, and the value coding is
+trainable for the first time in this program.
+
+Intact accuracy improves monotonically across the trainability ladder —
+frozen 0.5096 → learned_keys 0.5288 → learned_write 0.5673 at effort 30 (six
+queries out of 104, on a deterministic run) — so a learnable write is not
+inert.
+
+But the **primary readout is unmoved**. The shuffled-demonstrations deviation
+is +0.0096 in `learned_write` versus +0.0192 in `frozen`: it did not grow, and
+its *sign is wrong* in every arm — shuffling the demonstrations very slightly
+*helps*. That is the signature of a model not using pairing at all, not of a
+model whose pairing was damaged.
+
+Two candidate explanations are now **ruled out** rather than merely unlikely:
+
+- *The gradient does not carry pairing.* Refuted at the rule level by the
+  alignment panel above: the finite-window pp-prop gradient through this
+  primitive tracks BPTT at cosine 0.87–0.98 and separates pairing-permuted
+  sequences. (Measured on a 2×2 toy memory, so it establishes the *rule* is
+  sound, not that the ARC task's pairing signal survives at width 32.)
+- *The read drifted out of the code the memory was written in* — the untying
+  risk that motivated `memory_coding_divergence`. Refuted directly: after 260
+  updates the write and retrieval key encoders are still at cosine 0.99992,
+  relative l2 0.0124. They co-adapt rather than diverge.
+
+Per the decision rule this is therefore *not* yet "the binder is not the
+coding": what remains untested is whether the ARC model **at pilot scale** has
+a usable pairing gradient, as opposed to the toy. The next step the rule
+prescribes is the exact-path disambiguation on a small ARC config
+(finite-window BPTT via `chunked_online_param_gradients`, and/or the deferred
+D-RTRL weight-shaped trace at ≈55 MB/state, affordable at diagnostic scale).
+If that also shows no usable pairing gradient, the conclusion becomes "the
+binder is not the coding" and the next spec targets the memory *format*, with
+the delta-rule write `S_t = (I − β k kᵀ)S_{t−1} + β k vᵀ` as the cheapest
+suspect.
+
+Artifacts: `var/example21-owpilot-{frozen,learned_keys,learned_write}-t100/`,
+smoke at `var/example21-smoke-learnedwrite/` (uncommitted by var policy).
