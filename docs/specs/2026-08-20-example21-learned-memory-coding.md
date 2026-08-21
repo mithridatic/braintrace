@@ -26,7 +26,7 @@ slots and orthogonalizes rows that should co-address, and no elementwise gain
 can rotate the code. **Does making the key (and value) encoders trainable
 improve ARC binding?**
 
-## Design
+## Design (revised during implementation — see "Structural finding")
 
 New `ModelConfig.memory_coding` field (and matching `ExperimentConfig` field
 + `--memory-coding` CLI flag), literal values:
@@ -34,8 +34,42 @@ New `ModelConfig.memory_coding` field (and matching `ExperimentConfig` field
 | value | key map | value map |
 |---|---|---|
 | `"frozen"` (default) | fixed RFF cosine (today, bit-exact) | fixed tanh projection (today) |
-| `"learned_keys"` | trainable ETP `Linear` + cosine | fixed tanh projection |
-| `"learned_keys_values"` | trainable ETP `Linear` + cosine | trainable ETP `Linear` + tanh |
+| `"learned_keys"` | trainable ETP `Linear` + cosine, trained via retrieval path | fixed tanh projection |
+
+### Structural finding: pp-prop cannot differentiate the memory write
+
+The original three-arm design (`learned_keys_values` as arm C) is
+**structurally impossible under pp-prop**. The algorithm requires a
+position-preserving (elementwise) path from every ETP primitive's output to
+each hidden state it feeds; the outer-product write
+`einsum("bi,bj->bij", key, value)` into `context_memory` mixes positions, so
+`compile_pp_prop` raises `NotSupportedError` for any trainable operator
+upstream of the write. Consequences:
+
+- **Keys** have a second, elementwise path to hidden state — the query
+  encoding / read side — so the key projection *can* train, but only through
+  retrieval. The write-side key is wrapped in `stop_gradient` (forward values
+  unchanged; the written code still co-adapts because write and query share
+  the same weights). The gradient is approximate: it ignores the dependence
+  of the stored memory on the key parameters.
+- **Values** reach hidden state *only* through the mixing write. There is no
+  gradient path at all; `learned_keys_values` is removed rather than shipped
+  as a silently-untrained arm. Training the value coding requires a new ETP
+  outer-product primitive with its own trace rule (Layer 1–3 work) — recorded
+  as follow-up, not attempted here.
+
+### Compiler change (braintrace Layer 2)
+
+`_forward_reachable_hidden_vars` in `braintrace/_compiler/hid_param_op.py`
+expanded through `stop_gradient`, so the zero-gradient write path still
+connected the key projection to `context_memory` and pp-prop rejected the
+tail. `stop_gradient` is now a barrier in that reachability walk (both the
+direct-group discovery and the full collection), consistent with the
+hidden-group tracer which already treated it as one. A hidden state
+reachable only through `stop_gradient` receives exactly zero gradient, so
+excluding it changes no gradient value — it only stops algorithms from
+rejecting paths that carry nothing. Covered by
+`hid_param_op_test.py::TestStopGradientBarrier`.
 
 Initialization is **function-identical to frozen at step 0**:
 
@@ -75,18 +109,22 @@ worktree with its own tag.
 |---|---|
 | A baseline | `frozen` (reuse existing width-sweep w32 pilot artifact where comparable) |
 | B | `learned_keys` |
-| C | `learned_keys_values` |
+
+(Arm C `learned_keys_values` removed — structurally untrainable under
+pp-prop; see "Structural finding".)
 
 Primary readouts are the pairing-sensitive controls (shuffled-demonstrations
 deviation, slot ablation), then shape/pixel. Hypothesis: learned coding
 improves binding specifically (shuffled-demonstrations arm degrades more
 relative to intact than in frozen), with shape/pixel following.
 
-- B/C > A on pairing-sensitive metrics → coding confirmed as the binder;
-  next step is scaling the learned-coding run.
-- B/C ≈ A with key weights verifiably moving → coding refuted at this
-  scale; the deficit hypothesis moves to interference mechanisms the
-  encoder cannot fix (e.g. single-trace superposition itself).
+- B > A on pairing-sensitive metrics → coding confirmed as the binder;
+  next steps are scaling the learned-keys run and the outer-product ETP
+  primitive that would unlock value learning.
+- B ≈ A with key weights verifiably moving → retrieval-path key learning is
+  insufficient at this scale; remaining hypotheses are the write-path
+  gradient (needs the outer-product primitive) or interference mechanisms
+  the encoder cannot fix.
 - Key weights do NOT move (digest unchanged) → compiler/plumbing failure,
   not evidence; fix before interpreting.
 
@@ -99,20 +137,23 @@ Fallback arm (only if B stalls with weights moving): learned linear key map
 
 ## Tests (co-located, `latent_workspace_model_test.py` / entry-point tests)
 
-1. `memory_coding` validation: default `"frozen"`; rejects unknown strings;
-   rejects non-str.
-2. Frozen arm bit-exactness: model with `memory_coding="frozen"` produces
-   byte-identical key/value codes to pre-change behavior (guarded by the
-   existing chunked-vs-unchunked bitwise digest test staying green).
-3. Init equivalence: at initialization, `learned_keys` /
-   `learned_keys_values` produce key/value codes allclose (fp32-tight) to
-   frozen for random events, including zero-masking of invalid sides.
-4. Trainability: a short pp-prop training loop on a tiny config moves the
-   key `Linear` weights in `learned_keys` (and value weights in
-   `learned_keys_values`) while `frozen` has no such parameters; compiler
-   diagnostics report no rejected/moved required parameters.
-5. Report: `associative_memory_report()` names the learned maps and keeps
-   basis hashes.
+1. `memory_coding` validation: default `"frozen"`; rejects unknown strings,
+   the removed `"learned_keys_values"`, non-str, and learned coding without
+   memory. (`test_memory_coding_defaults_to_frozen_and_validates`)
+2. Init equivalence: `learned_keys` key codes allclose (fp32-tight) to
+   frozen, value codes byte-identical, invalid-side rows exactly zero.
+   (`test_learned_memory_coding_matches_frozen_codes_at_initialization`)
+3. Report: learned arm names `learned_rff_cosine_retrieval_path`, keeps
+   basis hashes. (`test_learned_memory_coding_report_names_components...`)
+4. Trainability: pp-prop compiles; the key path is an etrace weight,
+   `all_direct`, its relation excludes `context_memory` and includes
+   `query_encoding`; finite-window pp-prop gradient is nonzero; frozen arm
+   has no such path. (`test_learned_key_coding_trains_through_retrieval...`)
+5. Compiler barrier: `stop_gradient` severs relation reachability.
+   (`hid_param_op_test.py::TestStopGradientBarrier`)
+6. Entry point: `--memory-coding` default/choices, ExperimentConfig →
+   ModelConfig wiring incl. smoke path.
+   (`test_memory_coding_flag_wires_into_model_config`)
 
 ## Execution plan
 
