@@ -1,6 +1,6 @@
 # Example 21 — binding-gate load sweep (SYMBOL_COUNT at fixed width)
 
-Status: approved by J 2026-08-20 ("Do 3 K values for your sweep"); in progress
+Status: measured; no knee found — binding is load-invariant through K=8
 Date: 2026-08-20
 Branch: `investigate/ex21-context-width-sweep`
 
@@ -72,6 +72,44 @@ demand. Sequence length grows 6 → 10.
   contingency to attribute it to coding (knee immobile) vs capacity (knee
   moves).
 
-## Results
+## Results (2026-08-20 evening; both new runs measured)
 
-(to be recorded)
+All at width 32, 1024 held-out episodes, gate defaults +
+`--validation-episodes 1024`, commit `e565872`.
+
+| K | chance | intact accuracy [Wilson 95%] | shuffled | no-context | wall |
+|---:|---:|---|---|---|---:|
+| 4 | 0.250 | 1.0000 [0.9963, 1.0] | 0.0000 [0, 0.0037] | 0.1025 | 133 s |
+| 6 | 0.167 | 0.9912 [0.9834, 0.9954] | 0.0029 [0.0010, 0.0086] | 0.1055 | 156 s |
+| 8 | 0.125 | 1.0000 [0.9963, 1.0] | 0.0000 [0, 0.0037] | 0.1084 | 202 s |
+
+### Verdict
+
+**No knee within the reachable curriculum.** Intact accuracy is perfect at
+K=4 and K=8 and 0.9912 at K=6 (9/1024 errors); the K=6 dip is
+non-monotonic — heavier load at K=8 returns to exactly 1.000 — so it reads
+as per-run training variation, not a capacity onset. The derangement control
+collapses to ≈0 and no-context sits below chance at every K. The width-512
+contingency was not triggered: with no load-dependent trend there is no knee
+whose mobility width could attribute.
+
+Combined with the width sweep (`2026-08-20-example21-context-width-sweep.md`):
+the associative memory binds perfectly at every pair count the 10-color
+curriculum can express, at its narrowest preregistered width. Neither width
+nor pair-count load explains the ARC-regime binding deficit. The remaining
+suspects are the ARC encoding regime itself — hundreds of heterogeneous
+outer-product writes through *fixed random Fourier keys*, versus ≤8 clean
+one-cell writes here — which keeps recommendation #7 (learn `U_θ`) as the
+lead experiment.
+
+Diagnostics note: `evaluation_complete_and_finite` is false at K=4 and K=8
+but true at K=6 — the known GPU repeat-intact nondeterminism (±0.002) seen
+throughout the width sweep, orthogonal to the accuracy readouts above.
+
+### Artifacts
+
+- `var/binding-gate-width-sweep/gate-k{6,8}-w32.json` (this worktree);
+  K=4 row is the width-sweep artifact `gate-w32.json`.
+- All three artifacts are `nonqualifying_abbreviated` by construction
+  (shared off-preregistration validation count; K≠4 additionally
+  disqualified by the new symbol-count regime guard).
