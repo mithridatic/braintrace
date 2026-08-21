@@ -190,6 +190,16 @@ class ModelConfig:
         input only.  Zero starves the row head of the task-identifying
         carrier so training cannot displace the copy path with
         task-conditional fits.
+    row_head_carrier_gate : bool, default=False
+        Replace the single answer row head with an event-only head plus a
+        carrier head whose contribution is multiplied elementwise by
+        ``tanh(w)``, where ``w`` is a zero-initialised trainable per-logit
+        gate vector (a bias-free 1×300 linear fed with ones, so the gate is
+        ETP-tracked and matches the hidden group's width, which the
+        eligibility-trace VJP requires).  At initialisation the
+        row answer is exactly carrier-free; training must buy carrier access
+        through the gate.  Incompatible with a non-default
+        ``row_head_carrier_scale``.
     shape_head_carrier_scale : float, default=1.0
         Constant multiplier on the carrier block of the answer shape head's
         input only.  Zero makes the shape answer a pure function of the row
@@ -242,6 +252,7 @@ class ModelConfig:
     refinement_layout: RowRefinementLayout | None = None
     copy_residual_gain: float = 0.0
     row_head_carrier_scale: float = 1.0
+    row_head_carrier_gate: bool = False
     shape_head_carrier_scale: float = 1.0
     seed: int = 2108
     sparse_backend: str | None = None
@@ -324,6 +335,11 @@ class ModelConfig:
             "row_head_carrier_scale",
             _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
         )
+        if self.row_head_carrier_gate and self.row_head_carrier_scale != 1.0:
+            raise ValueError(
+                "row_head_carrier_gate replaces row_head_carrier_scale; "
+                "leave the scale at its default of 1.0"
+            )
         object.__setattr__(
             self,
             "shape_head_carrier_scale",
@@ -1755,12 +1771,39 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             row_weights = row_weights / math.sqrt(head_width)
             shape_weights = random.randn(head_width, 2 * MAX_GRID_SIZE)
             shape_weights = shape_weights / math.sqrt(head_width)
-            self.answer_row_head = braintrace.nn.Linear(
-                head_width,
-                MAX_GRID_SIZE * COLOR_COUNT,
-                w_init=row_weights,
-                b_init=None,
-            )
+            if config.row_head_carrier_gate:
+                event_width = head_width - config.neuron_count
+                event_weights = random.randn(
+                    event_width, MAX_GRID_SIZE * COLOR_COUNT
+                ) / math.sqrt(event_width)
+                carrier_weights = random.randn(
+                    config.neuron_count, MAX_GRID_SIZE * COLOR_COUNT
+                ) / math.sqrt(config.neuron_count)
+                self.answer_row_event_head = braintrace.nn.Linear(
+                    event_width,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=event_weights,
+                    b_init=None,
+                )
+                self.answer_row_carrier_head = braintrace.nn.Linear(
+                    config.neuron_count,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=carrier_weights,
+                    b_init=None,
+                )
+                self.row_carrier_gate_head = braintrace.nn.Linear(
+                    1,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=jnp.zeros((1, MAX_GRID_SIZE * COLOR_COUNT)),
+                    b_init=None,
+                )
+            else:
+                self.answer_row_head = braintrace.nn.Linear(
+                    head_width,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=row_weights,
+                    b_init=None,
+                )
             self.answer_shape_head = braintrace.nn.Linear(
                 head_width,
                 2 * MAX_GRID_SIZE,
@@ -2276,6 +2319,33 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
         return self.compact_readout(carrier)
 
+    def _row_head_logits(
+        self, unit_carrier: jax.Array, event: jax.Array, head_input: jax.Array
+    ) -> jax.Array:
+        """Row logits before the copy residual, under scale or gate access.
+
+        Without the gate this is the single row head over the (optionally
+        carrier-scaled) concatenated input.  With the gate, the event-only
+        head fires on the event blocks of ``head_input`` and the carrier
+        head's contribution is multiplied by ``tanh`` of the gate weight,
+        which is zero at initialisation — the §9.1 carrier-free start.
+        """
+        assert self.config.refinement_layout is not None
+        if not self.config.row_head_carrier_gate:
+            row_head_input = _carrier_scaled_head_input(
+                unit_carrier,
+                event,
+                self.config.refinement_layout,
+                self.config.row_head_carrier_scale,
+                head_input,
+            )
+            return self.answer_row_head(row_head_input)
+        event_blocks = head_input[:, self.config.neuron_count :]
+        gate_input = jnp.ones((head_input.shape[0], 1), dtype=head_input.dtype)
+        gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
+        carrier_logits = self.answer_row_carrier_head(unit_carrier)
+        return self.answer_row_event_head(event_blocks) + gate * carrier_logits
+
     def cell_step(
         self, event: jax.Array, advance: jax.Array | None = None
     ) -> jax.Array:
@@ -2442,13 +2512,6 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             head_input = _refinement_head_input(
                 unit_carrier, event, self.config.refinement_layout
             )
-            row_head_input = _carrier_scaled_head_input(
-                unit_carrier,
-                event,
-                self.config.refinement_layout,
-                self.config.row_head_carrier_scale,
-                head_input,
-            )
             shape_head_input = _carrier_scaled_head_input(
                 unit_carrier,
                 event,
@@ -2457,7 +2520,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 head_input,
             )
             next_row = _copy_residual_logits(
-                self.answer_row_head(row_head_input),
+                self._row_head_logits(unit_carrier, event, head_input),
                 event,
                 self.config.refinement_layout,
                 self.config.copy_residual_gain,

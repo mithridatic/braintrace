@@ -3389,6 +3389,98 @@ def test_shape_head_carrier_scale_zero_makes_the_shape_answer_carrier_free() -> 
     np.testing.assert_array_equal(shapes[0], shapes[1])
 
 
+def test_model_config_rejects_the_gate_with_a_carrier_scale() -> None:
+    """The gate replaces the scale mechanism; combining them is an error."""
+    with pytest.raises(ValueError, match="row_head_carrier_gate"):
+        _row_refinement_config(
+            row_head_carrier_gate=True, row_head_carrier_scale=0.5
+        )
+
+
+def _gated_swept_grid(recurrent_gain: float, gate_shift: float) -> np.ndarray:
+    """Run one gated episode, optionally forcing the gate weight open."""
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_carrier_gate=True,
+            copy_residual_gain=2.0,
+            recurrent_gain=recurrent_gain,
+        )
+    )
+    if gate_shift:
+        for path, state in model.states(brainstate.ParamState).items():
+            if "row_carrier_gate_head" in ".".join(map(str, path)):
+                state.value = jax.tree.map(lambda a: a + gate_shift, state.value)
+    run_context(model, _row_refinement_full_size_episode())
+    return _swept_answer_grid(model)
+
+
+def test_row_head_carrier_gate_starts_exactly_carrier_free() -> None:
+    """At the zero-initialised gate the row answer must ignore the carrier.
+
+    Two models differing only in recurrent gain develop different membrane
+    trajectories; with ``tanh(0) == 0`` the carrier head contributes nothing,
+    so the swept answer grids must agree bit for bit.
+    """
+    np.testing.assert_array_equal(
+        _gated_swept_grid(0.8, 0.0), _gated_swept_grid(1.6, 0.0)
+    )
+
+
+def test_row_head_carrier_gate_opens_a_carrier_path() -> None:
+    """Forcing the gate weight open must make the row answer carrier-bound.
+
+    With the gate weight shifted to 3.0 (``tanh`` ≈ 0.995) the carrier head's
+    random projection reaches the logits, so the two recurrent gains must no
+    longer produce identical grids — the gate is a real dial, not a dead end.
+    """
+    assert not np.array_equal(
+        _gated_swept_grid(0.8, 3.0), _gated_swept_grid(1.6, 3.0)
+    )
+
+
+def test_gated_row_heads_stay_compiled_all_direct() -> None:
+    """Event head, carrier head, and gate must all remain trainable.
+
+    §9.1: a parameter trains only as a trainable invar of an ETP primitive.
+    If the gate multiply confused the compiler, any of the three would drop
+    from ``param_states`` and silently freeze.
+    """
+    model = LatentWorkspaceModel(
+        _row_refinement_config(batch_size=2, row_head_carrier_gate=True)
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {
+        "answer_row_event_head.weight",
+        "answer_row_carrier_head.weight",
+        "row_carrier_gate_head.weight",
+        "answer_shape_head.weight",
+    } <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+    assert classifications["answer_row_event_head.weight"] == {"all_direct"}
+    assert classifications["answer_row_carrier_head.weight"] == {"all_direct"}
+    assert classifications["row_carrier_gate_head.weight"] == {"all_direct"}
+
+
 def test_refinement_heads_stay_compiled_all_direct_with_copy_residual() -> None:
     """The residual must not disturb ETP tracking of either answer head.
 

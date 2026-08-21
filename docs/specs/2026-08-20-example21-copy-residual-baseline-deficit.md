@@ -446,3 +446,16 @@ error while leaving the saturated copy path alone (copy@oracle 0.9046).
 Cumulative over the day: baseline 0.3835 → carrier-free 0.5454 →
 adapted 0.5861, with the reported adapted pixel within 0.017 of the
 0.6032 copy-floor reference and shape no longer the dominant deficit.
+
+### 9.2 Implementation amendment — per-logit gate vector
+
+The eligibility-trace VJP (`io_dim_vjp.py`) rejects an ETP head whose
+output width differs from the hidden group it feeds (1 vs 300), so the
+scalar gate is illegal as designed. Implemented instead as the minimal
+legal member of the approved family: `Linear(1, 300)` zero-initialised,
+`tanh` applied elementwise — a **per-logit gate vector** (the candidate-B
+direction §9 names as first fallback). Same carrier-free start, same
+earned-access semantics, 300 gate parameters instead of 1. Verified:
+gate-on model at init is bit-identical across recurrent gains; forcing the
+gate weights to 3.0 makes the row answer carrier-bound; event head,
+carrier head, and gate all compile `all_direct`.
