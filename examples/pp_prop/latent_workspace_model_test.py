@@ -3718,3 +3718,148 @@ def test_learned_key_coding_trains_through_retrieval_path_only() -> None:
     assert gradient_leaves
     assert math.isfinite(gradient_norm)
     assert gradient_norm > 0.0
+
+
+def test_learned_write_coding_validates_and_requires_memory() -> None:
+    assert _memory_config(memory_coding="learned_write").memory_coding == (
+        "learned_write"
+    )
+    with pytest.raises(ValueError, match="learned_write"):
+        _memory_config(memory_coding="learned_writes")
+    with pytest.raises(ValueError, match="context_memory_width must be positive"):
+        _memory_config(memory_coding="learned_write", context_memory_width=0)
+
+
+def test_learned_write_reproduces_the_frozen_memory_at_initialization() -> None:
+    """The fused write starts from the same bases, so step 0 must agree.
+
+    This is what makes a later divergence attributable to *learning* rather
+    than to a different write being computed.
+    """
+    frozen_config = _memory_config(memory_decay=0.9, input_gain=8.0)
+    learned_config = _memory_config(
+        memory_decay=0.9, input_gain=8.0, memory_coding="learned_write"
+    )
+    events = _phase_events(
+        frozen_config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+
+    def _memory_after(config: ModelConfig) -> jax.Array:
+        model = LatentWorkspaceModel(config)
+        for event in events:
+            model.update(event)
+        return jnp.asarray(model.context_memory.value)
+
+    np.testing.assert_allclose(
+        _memory_after(learned_config), _memory_after(frozen_config),
+        rtol=1e-5, atol=1e-6,
+    )
+
+
+def test_learned_write_report_names_the_fused_component() -> None:
+    report = LatentWorkspaceModel(
+        _memory_config(memory_coding="learned_write")
+    ).associative_memory_report()
+    assert report.key_map == "learned_rff_cosine_write_and_retrieval"
+    assert report.value_map == "learned_tanh_projection"
+    assert report.write_component_type == "braintrace.outer_write"
+    # Provenance still hashes the frozen bases the write was initialized from.
+    frozen = LatentWorkspaceModel(_memory_config()).associative_memory_report()
+    assert report.key_basis_sha256 == frozen.key_basis_sha256
+    assert report.value_basis_sha256 == frozen.value_basis_sha256
+
+
+def test_encode_memory_write_rejects_other_codings() -> None:
+    model = LatentWorkspaceModel(_memory_config(memory_coding="learned_keys"))
+    event = _phase_events(
+        model.config, jnp.asarray([[1.0, 0.0]]), jnp.asarray([[0.5, 0.5]]),
+        phase="demonstration",
+    )[0]
+    with pytest.raises(RuntimeError, match="learned_write"):
+        model.encode_memory_write(event)
+
+
+def test_learned_write_zeroes_rows_missing_a_side() -> None:
+    """A one-sided row must contribute nothing, exactly as the frozen path's
+    zeroed key or value annihilates the outer product."""
+    config = _memory_config(memory_coding="learned_write")
+    model = LatentWorkspaceModel(config)
+    event = _phase_events(
+        config, jnp.asarray([[1.0, 0.0]]), phase="demonstration"
+    )[0]
+    assert config.output_side_valid_index is not None
+    one_sided = event.at[:, config.output_side_valid_index].set(0.0)
+    assert jnp.all(model.encode_memory_write(one_sided) == 0.0)
+
+
+def test_learned_write_trains_the_write_projections_through_the_memory() -> None:
+    """The point of the whole primitive: gradient now reaches ``context_memory``.
+
+    Under ``learned_keys`` the key projection's relation deliberately excludes
+    the memory (the write was stop-gradient detached and unfused). Here the
+    write projections must own a relation that *includes* it, and a
+    finite-window pp-prop gradient must be finite and nonzero for all three.
+    """
+    import braintrace
+    from braintrace._testing.oracle import chunked_online_param_gradients
+
+    config = _memory_config(
+        memory_decay=0.9, input_gain=8.0, memory_coding="learned_write"
+    )
+    model = LatentWorkspaceModel(config)
+    learner = compile_pp_prop(model)
+    write_paths = {
+        ("write_key_weight",), ("write_key_bias",), ("write_value_weight",),
+    }
+    etrace_paths = {path for path, _ in learner.report.etrace_weights}
+    assert write_paths <= etrace_paths
+
+    relations = [
+        relation
+        for relation in learner.graph.hidden_param_op_relations
+        if write_paths & set(relation.trainable_paths.values())
+    ]
+    assert len(relations) == 1
+    assert set(relations[0].path_classification.values()) == {"all_direct"}
+    relation_hidden_paths = {
+        path for group in relations[0].hidden_groups for path in group.hidden_paths
+    }
+    assert ("context_memory",) in relation_hidden_paths
+
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    inputs = jnp.concatenate((demonstrations, query, latent), axis=0)
+
+    class _AlwaysAdvanceWriteModel(LatentWorkspaceModel):
+        def update(self, event: jax.Array) -> jax.Array:
+            advance = jnp.ones((self.config.batch_size,), dtype=jnp.bool_)
+            return super().update(event, advance)
+
+    gradients = chunked_online_param_gradients(
+        lambda: _AlwaysAdvanceWriteModel(config),
+        inputs,
+        algo_factory=lambda candidate: braintrace.pp_prop(
+            candidate,
+            decay_or_rank=candidate.config.trace_decay,
+            vjp_method="multi-step",
+        ),
+        chunk_size=1,
+    )
+    for path in sorted(write_paths):
+        leaves = jax.tree.leaves(gradients[path])
+        assert leaves, path
+        norm = sum(
+            float(jnp.sum(jnp.abs(jnp.asarray(u.get_mantissa(leaf)))))
+            for leaf in leaves
+        )
+        assert math.isfinite(norm), path
+        assert norm > 0.0, path

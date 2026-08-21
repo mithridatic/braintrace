@@ -5004,3 +5004,17 @@ def test_memory_coding_flag_wires_into_model_config(example):
     assert smoke_config.memory_coding == "learned_keys"
     with pytest.raises(SystemExit):
         example._parser().parse_args(["--memory-coding", "bogus"])
+
+
+def test_learned_write_coding_flag_wires_into_model_config(example):
+    """The fused-write arm reaches the model config through the same path."""
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    args = example._parser().parse_args(["--memory-coding", "learned_write"])
+    config = example._config_from_args(args)
+    assert config.memory_coding == "learned_write"
+    model_config = example._model_config(config, rows, batch_size=2)
+    assert model_config.memory_coding == "learned_write"
+    smoke_config = example._config_from_args(
+        example._parser().parse_args(["--smoke", "--memory-coding", "learned_write"])
+    )
+    assert smoke_config.memory_coding == "learned_write"

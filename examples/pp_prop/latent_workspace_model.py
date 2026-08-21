@@ -71,6 +71,19 @@ COLOR_COUNT = 10
 NEURONS_PER_SLOT = 64
 MEMORY_KEY_RFF_GAMMA = 2.0
 
+#: Storage-coding trainability levels, in increasing order of what learns.
+MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write")
+
+#: Codings whose *retrieval* key projection is a trainable ETP layer.
+LEARNED_RETRIEVAL_KEY_CODINGS = ("learned_keys", "learned_write")
+
+#: Reported key-map name per coding; provenance hashes stay on the frozen bases.
+_MEMORY_KEY_MAP_NAMES = {
+    "frozen": "fixed_rff_cosine",
+    "learned_keys": "learned_rff_cosine_retrieval_path",
+    "learned_write": "learned_rff_cosine_write_and_retrieval",
+}
+
 
 def _positive_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
@@ -172,7 +185,7 @@ class ModelConfig:
         Event channels gating complete input/output association writes.
     memory_key_indices, memory_value_indices : tuple of int
         Input-event features projected by fixed deterministic key/value bases.
-    memory_coding : {"frozen", "learned_keys"}
+    memory_coding : {"frozen", "learned_keys", "learned_write"}
         Storage-coding trainability. ``"frozen"`` (default) keeps the fixed
         random Fourier key map and fixed tanh value map bit-exactly.
         ``"learned_keys"`` replaces the key projection with a trainable ETP
@@ -180,9 +193,14 @@ class ModelConfig:
         ``"frozen"`` at initialization. The learned key trains through the
         retrieval path only (query encoding and read); the write-side key is
         gradient-detached because pp-prop's position-preserving requirement
-        excludes gradients through the outer-product memory write. The value
-        map stays fixed for the same structural reason: values reach hidden
-        state only through that write.
+        excludes gradients through the *unfused* outer-product memory write,
+        and the value map stays fixed for the same structural reason.
+        ``"learned_write"`` additionally routes the write through
+        ``braintrace.outer_write``, a fused ETP primitive that owns both
+        projections, so *what gets stored* carries gradient too; it keeps the
+        ``"learned_keys"`` retrieval path, and its write-side projections are
+        separate parameters initialized from the same frozen bases (a single
+        parameter cannot be owned by two ETP primitives).
     decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
         Output architecture. Row refinement captures the query and constructs
         an explicit answer with one learned recurrent row per latent tick.
@@ -258,7 +276,7 @@ class ModelConfig:
     output_side_valid_index: int | None = None
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
-    memory_coding: Literal["frozen", "learned_keys"] = "frozen"
+    memory_coding: Literal["frozen", "learned_keys", "learned_write"] = "frozen"
     decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
@@ -417,9 +435,13 @@ class ModelConfig:
                     "memory_value_indices is required when context_memory_width is positive"
                 )
         if not isinstance(self.memory_coding, str):
-            raise TypeError("memory_coding must be 'frozen' or 'learned_keys'")
-        if self.memory_coding not in ("frozen", "learned_keys"):
-            raise ValueError("memory_coding must be 'frozen' or 'learned_keys'")
+            raise TypeError(
+                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+            )
+        if self.memory_coding not in MEMORY_CODINGS:
+            raise ValueError(
+                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+            )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError(
                 "memory_coding requires a positive context_memory_width"
@@ -1444,6 +1466,43 @@ def update_context_memory(
                 f"({key_width}, {value_width}), got {write_scale.shape}"
             )
         write = write * write_scale[None, :, :]
+    return apply_context_memory_write(
+        memory, write, write_gate=write_gate, decay=decay
+    )
+
+
+def apply_context_memory_write(
+    memory: jax.Array,
+    write: jax.Array,
+    *,
+    write_gate: jax.Array,
+    decay: float,
+) -> jax.Array:
+    """Commit an already-scaled write matrix into the gated decaying memory.
+
+    Separated from :func:`update_context_memory` so that a write produced by the
+    fused ``braintrace.outer_write`` primitive -- which forms the outer product
+    *inside* an ETP primitive rather than here -- commits through exactly the
+    same recurrence, leaving one place where the gate and the decay are decided.
+
+    Parameters
+    ----------
+    memory : jax.Array
+        Current memory shaped ``(batch, key_width, value_width)``.
+    write : jax.Array
+        Write matrix shaped like ``memory``, already carrying any write scale
+        and side-validity masking.
+    write_gate : jax.Array
+        Boolean gate shaped ``(batch,)``.  False lanes remain byte-identical.
+    decay : float
+        Finite self-decay in ``[0, 1]`` for lanes whose gate is true.
+
+    Returns
+    -------
+    jax.Array
+        Updated memory with the same shape and dtype as ``memory``.
+    """
+    decay = _unit_interval_real(decay, "decay")
     candidate = decay * memory + write
     return jnp.where(write_gate[:, None, None], candidate, memory)
 
@@ -1749,12 +1808,25 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.memory_write_scale = brainstate.ParamState(
                 jnp.ones((memory_width, memory_width), dtype=jnp.float32)
             )
-            if config.memory_coding == "learned_keys":
+            if config.memory_coding in LEARNED_RETRIEVAL_KEY_CODINGS:
                 self.memory_key_projection = braintrace.nn.Linear(
                     key_width,
                     memory_width,
                     w_init=MEMORY_KEY_RFF_GAMMA * self._memory_key_basis,
                     b_init=self._memory_key_bias,
+                )
+            if config.memory_coding == "learned_write":
+                # Write-side projections owned by the fused `outer_write`
+                # primitive. They are *separate* parameters from the retrieval
+                # projection above -- the compiler rejects a parameter shared
+                # between two ETP primitives -- but start from the same frozen
+                # bases, so step 0 is function-identical to `"frozen"`.
+                self.write_key_weight = brainstate.ParamState(
+                    MEMORY_KEY_RFF_GAMMA * self._memory_key_basis
+                )
+                self.write_key_bias = brainstate.ParamState(self._memory_key_bias)
+                self.write_value_weight = brainstate.ParamState(
+                    self._memory_value_basis
                 )
             self.workspace_query_projection = braintrace.nn.Linear(
                 config.neuron_count,
@@ -1943,7 +2015,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
         features = event[..., jnp.asarray(self.config.memory_key_indices)]
-        if self.config.memory_coding == "learned_keys":
+        if self.config.memory_coding in LEARNED_RETRIEVAL_KEY_CODINGS:
             phase = self.memory_key_projection(features)
         else:
             phase = (
@@ -1981,6 +2053,60 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         assert self.config.output_side_valid_index is not None
         side_valid = event[..., self.config.output_side_valid_index] > 0.5
         return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
+
+    def encode_memory_write(self, event: jax.Array) -> jax.Array:
+        """Encode one row event directly into its rank-one write matrix.
+
+        The fused counterpart of :meth:`encode_memory_key` followed by
+        :meth:`encode_memory_value` and an outer product. Forming the product
+        inside ``braintrace.outer_write`` is what lets the write projections
+        carry eligibility-trace gradient at all: an outer product assembled
+        outside an ETP primitive mixes hidden positions, which pp-prop rejects.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched row event shaped ``(batch, input_width)``.
+
+        Returns
+        -------
+        jax.Array
+            Write matrix shaped ``(batch, memory_width, memory_width)``. Rows
+            missing either side are exactly zero, matching the frozen path
+            where a zeroed key or value annihilates the product.
+
+        Raises
+        ------
+        RuntimeError
+            If context memory is disabled, or the coding is not
+            ``"learned_write"``.
+        """
+        if not self.config.memory_enabled:
+            raise RuntimeError("context memory is disabled")
+        if self.config.memory_coding != "learned_write":
+            raise RuntimeError(
+                "encode_memory_write requires memory_coding='learned_write'; "
+                f"got {self.config.memory_coding!r}"
+            )
+        event = jnp.asarray(event, dtype=jnp.float32)
+        expected = (self.config.batch_size, self.config.input_width)
+        if event.shape != expected:
+            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+        write = braintrace.outer_write(
+            event[..., jnp.asarray(self.config.memory_key_indices)],
+            event[..., jnp.asarray(self.config.memory_value_indices)],
+            key_weight=self.write_key_weight.value,
+            key_bias=self.write_key_bias.value,
+            value_weight=self.write_value_weight.value,
+            key_scale=math.sqrt(2.0 / self.config.context_memory_width),
+        )
+        assert self.config.input_side_valid_index is not None
+        assert self.config.output_side_valid_index is not None
+        both_sides_valid = (
+            (event[..., self.config.input_side_valid_index] > 0.5)
+            & (event[..., self.config.output_side_valid_index] > 0.5)
+        )
+        return write * both_sides_valid[:, None, None]
 
     def read_context_memory(self, query: jax.Array | None = None) -> jax.Array:
         """Read the frozen contextual memory with a key-space query.
@@ -2042,12 +2168,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             memory_width=self.config.context_memory_width,
             key_feature_width=len(self.config.memory_key_indices),
             value_feature_width=len(self.config.memory_value_indices),
-            key_map=(
-                "learned_rff_cosine_retrieval_path"
-                if self.config.memory_coding == "learned_keys"
-                else "fixed_rff_cosine"
+            key_map=_MEMORY_KEY_MAP_NAMES[self.config.memory_coding],
+            value_map=(
+                "learned_tanh_projection"
+                if self.config.memory_coding == "learned_write"
+                else "fixed_tanh_projection"
             ),
-            value_map="fixed_tanh_projection",
             rff_gamma=MEMORY_KEY_RFF_GAMMA,
             key_basis_seed=self.config.seed + 101,
             key_bias_seed=self.config.seed + 102,
@@ -2055,7 +2181,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             key_basis_sha256=_array_sha256(self._memory_key_basis),
             key_bias_sha256=_array_sha256(self._memory_key_bias),
             value_basis_sha256=_array_sha256(self._memory_value_basis),
-            write_component_type="braintrace.element_wise",
+            write_component_type=(
+                "braintrace.outer_write"
+                if self.config.memory_coding == "learned_write"
+                else "braintrace.element_wise"
+            ),
             query_component_type="braintrace.nn.Linear",
             read_component_type="braintrace.nn.Linear",
         )
@@ -2471,20 +2601,28 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             write_gate = demonstration & (input_side_valid | output_side_valid)
             key = self.encode_memory_key(event)
             value = self.encode_memory_value(event)
-            write_key = key
-            if self.config.memory_coding == "learned_keys":
-                # pp-prop cannot factor gradients through the outer-product
-                # write; the learned key trains via the retrieval path only.
-                write_key = jax.lax.stop_gradient(key)
             write_scale = braintrace.element_wise(self.memory_write_scale.value)
-            self.context_memory.value = update_context_memory(
-                self.context_memory.value,
-                write_key,
-                value,
-                write_gate=write_gate,
-                decay=self.config.memory_decay,
-                write_scale=write_scale,
-            )
+            if self.config.memory_coding == "learned_write":
+                self.context_memory.value = apply_context_memory_write(
+                    self.context_memory.value,
+                    self.encode_memory_write(event) * write_scale[None, :, :],
+                    write_gate=write_gate,
+                    decay=self.config.memory_decay,
+                )
+            else:
+                write_key = key
+                if self.config.memory_coding == "learned_keys":
+                    # The unfused outer product is outside the differentiable
+                    # path under pp-prop; the learned key trains via retrieval.
+                    write_key = jax.lax.stop_gradient(key)
+                self.context_memory.value = update_context_memory(
+                    self.context_memory.value,
+                    write_key,
+                    value,
+                    write_gate=write_gate,
+                    decay=self.config.memory_decay,
+                    write_scale=write_scale,
+                )
 
             self.query_encoding.value = self.query_encoding.value + jnp.where(
                 query[:, None], key, jnp.zeros_like(key)

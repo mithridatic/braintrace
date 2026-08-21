@@ -154,7 +154,7 @@ PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 SparseBackend = Literal["default", "jax_raw"]
-MemoryCoding = Literal["frozen", "learned_keys"]
+MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -286,11 +286,14 @@ class ExperimentConfig:
         reservoir; positive values up to 512 opt into ``S_K/H_r``.
     memory_decay : float
         Associative memory self-decay in the closed interval ``[0, 1]``.
-    memory_coding : {"frozen", "learned_keys"}
+    memory_coding : {"frozen", "learned_keys", "learned_write"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
         makes the key projection a trainable ETP linear layer that learns
-        through the retrieval path (the write-side key is gradient-detached).
+        through the retrieval path (the write-side key is gradient-detached);
+        ``"learned_write"`` additionally routes the write itself through the
+        fused ``braintrace.outer_write`` primitive, so the stored key and value
+        codings carry gradient too.
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
@@ -453,8 +456,10 @@ class ExperimentConfig:
             raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
         if self.sparse_backend not in ("default", "jax_raw"):
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
-        if self.memory_coding not in ("frozen", "learned_keys"):
-            raise ValueError("memory_coding must be 'frozen' or 'learned_keys'")
+        if self.memory_coding not in ("frozen", "learned_keys", "learned_write"):
+            raise ValueError(
+                "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
+            )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
@@ -595,7 +600,7 @@ class ExperimentConfig:
             zero for explicitly selected legacy CP mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
-        memory_coding : {"frozen", "learned_keys"}
+        memory_coding : {"frozen", "learned_keys", "learned_write"}
             Storage-coding trainability forwarded to the model.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
@@ -6140,7 +6145,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
-        "--memory-coding", choices=("frozen", "learned_keys"), default="frozen"
+        "--memory-coding",
+        choices=("frozen", "learned_keys", "learned_write"),
+        default="frozen",
     )
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
