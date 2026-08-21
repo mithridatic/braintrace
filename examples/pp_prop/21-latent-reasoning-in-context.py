@@ -34,6 +34,7 @@ import jax
 import jax.numpy as jnp
 import msgspec
 import numpy as np
+import optax
 
 try:
     from examples.pp_prop.latent_workspace_adaptation import snapshot_parameters
@@ -155,6 +156,7 @@ AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
+OptimizerName = Literal["adam", "adamw", "muon"]
 
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 CHECKPOINT_INTERVAL = 30
@@ -256,6 +258,15 @@ def _unit_interval(value: object, name: str) -> float:
     return result
 
 
+def _nonnegative_real(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise ValueError(f"{name} must be finite and nonnegative")
+    result = float(value)
+    if not math.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be finite and nonnegative")
+    return result
+
+
 def _checkpoint_schedule(latent_steps: int) -> tuple[int, ...]:
     """Return complete 30-tick checkpoints through the configured horizon."""
     if latent_steps % CHECKPOINT_INTERVAL:
@@ -307,7 +318,7 @@ class ExperimentConfig:
         Maximum zero-input recurrent effort. Must be at least 60 so evaluation
         contains two complete 30-row answer sweeps.
     training_updates : int
-        Number of pp-prop/Adam updates shared across effort lengths.
+        Number of pp-prop optimizer updates shared across effort lengths.
     training_chunk_size : int
         Number of updates staged on device at once. ``0`` stages the whole
         schedule in one chunk, reproducing an unchunked run exactly. Any other
@@ -317,7 +328,13 @@ class ExperimentConfig:
         Emit diagnostic phase and pipeline timing. Profiling synchronizes
         device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
-        Adam rate and global gradient clipping norm.
+        Optimizer rate and global gradient clipping norm.
+    optimizer : {"adam", "adamw", "muon"}
+        Shared-training optimizer. Muon applies to rank-two leaves and uses
+        its built-in AdamW fallback for other leaves.
+    weight_decay : float or None
+        Decoupled weight decay for AdamW and Muon. ``None`` resolves to zero
+        for Adam and 0.01 for AdamW and Muon.
     copy_residual_gain : float
         Fixed identity-residual logit magnitude added to the answer row
         head's output at the query's own colour for every occupied column,
@@ -403,6 +420,8 @@ class ExperimentConfig:
     training_workers: int = 4
     runtime_profile: bool = False
     learning_rate: float = 1e-4
+    optimizer: OptimizerName = "adam"
+    weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
     adaptation_epochs: int = 2
     task_local_adaptation: bool = False
@@ -464,6 +483,8 @@ class ExperimentConfig:
             raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
         if self.sparse_backend not in ("default", "jax_raw"):
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
+        if self.optimizer not in ("adam", "adamw", "muon"):
+            raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
         if self.memory_coding not in ("frozen", "learned_keys", "learned_write"):
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
@@ -503,6 +524,10 @@ class ExperimentConfig:
         object.__setattr__(
             self, "learning_rate", _positive_real(self.learning_rate, "learning_rate")
         )
+        decay = 0.0 if self.optimizer == "adam" else 0.01
+        if self.weight_decay is not None:
+            decay = _nonnegative_real(self.weight_decay, "weight_decay")
+        object.__setattr__(self, "weight_decay", decay)
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
         )
@@ -591,6 +616,8 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
         trace_engine: TraceEngine = "pp_prop",
+        optimizer: OptimizerName = "adam",
+        weight_decay: float | None = None,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -615,6 +642,10 @@ class ExperimentConfig:
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
             Eligibility-trace engine forwarded to the model.
+        optimizer : {"adam", "adamw", "muon"}
+            Shared-training optimizer.
+        weight_decay : float or None
+            Explicit optimizer weight decay, or the optimizer-specific default.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -643,6 +674,8 @@ class ExperimentConfig:
             memory_decay=memory_decay,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
+            optimizer=optimizer,
+            weight_decay=weight_decay,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -2039,6 +2072,12 @@ def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
     loss says. Recording the width the sigma was taken against lets a later
     reader redo the arithmetic without knowing which head revision ran.
     """
+    if config.optimizer != "adam":
+        return {
+            "applicable": False,
+            "optimizer": config.optimizer,
+            "reason": "the Adam coordinate-displacement bound does not apply",
+        }
     width = (
         refinement_head_width(config.neuron_count)
         if config.decoder_mode == "row_refinement"
@@ -2047,6 +2086,50 @@ def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
     return adam_parameter_travel_budget(
         config.learning_rate, config.training_updates, width
     )
+
+
+def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
+    """Return the resolved shared-training optimizer policy."""
+    policy: dict[str, object] = {
+        "name": config.optimizer,
+        "learning_rate": config.learning_rate,
+        "weight_decay": config.weight_decay,
+    }
+    if config.optimizer == "muon":
+        policy.update(
+            {
+                "matrix_optimizer": "muon",
+                "matrix_rank": 2,
+                "nonmatrix_optimizer": "adamw",
+                "muon_ns_steps": 5,
+                "muon_momentum_beta": 0.95,
+            }
+        )
+    return policy
+
+
+def _make_training_optimizer(
+    config: ExperimentConfig, param_states: Mapping[object, brainstate.ParamState]
+) -> braintools.optim.Optimizer:
+    """Construct and register the configured shared-training optimizer."""
+    if config.optimizer == "adam":
+        optimizer = braintools.optim.Adam(lr=config.learning_rate)
+    elif config.optimizer == "adamw":
+        optimizer = braintools.optim.AdamW(
+            lr=config.learning_rate, weight_decay=config.weight_decay
+        )
+    else:
+        transformation = optax.contrib.muon(
+            learning_rate=config.learning_rate,
+            weight_decay=config.weight_decay,
+            adam_learning_rate=config.learning_rate,
+            adam_weight_decay=config.weight_decay,
+        )
+        optimizer = braintools.optim.OptaxOptimizer(
+            tx=transformation, lr=config.learning_rate
+        )
+    optimizer.register_trainable_weights(param_states)
+    return optimizer
 
 
 def _parameter_change_evidence(
@@ -2322,6 +2405,7 @@ def _train_model(
             "supervised_depths": supervised_depths,
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
+            "optimizer": _optimizer_policy(config),
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in config.training_efforts
@@ -2329,8 +2413,7 @@ def _train_model(
             "losses": [],
             "runtime_profile": None if profile is None else profile.to_dict(),
         }
-    optimizer = braintools.optim.Adam(lr=config.learning_rate)
-    optimizer.register_trainable_weights(learner.param_states)
+    optimizer = _make_training_optimizer(config, learner.param_states)
     before_snapshot = parameter_snapshot(model)
     before = _tree_digest(before_snapshot)
     rank = model.config.color_rank
@@ -2433,6 +2516,7 @@ def _train_model(
         "training_row_max_inflight": 2 * config.training_workers,
         "runtime_profile": None if profile is None else profile.to_dict(),
         "balanced_color_loss": config.balanced_color_loss,
+        "optimizer": _optimizer_policy(config),
         "parameter_travel_budget": _parameter_travel_budget(config),
         "loss_weights": {"height": 1.0, "width": 1.0, "valid_cell_color": 1.0},
         "optimizer_updates_by_effort": {
@@ -5181,6 +5265,7 @@ def _software_report(
         "brainstate",
         "brainpy",
         "braintools",
+        "optax",
         "jax",
         "jaxlib",
         "numpy",
@@ -5368,8 +5453,10 @@ def _render_report(result: dict[str, object]) -> str:
         "submission; role="
     )
     if training.get("performed") is True:
+        optimizer_name = str(training.get("optimizer", {}).get("name", "unreported"))
         training_line = (
-            "Training: one parameter set and one Adam state; normalized uniform "
+            "Training: one parameter set and one "
+            f"{optimizer_name.capitalize()} state; normalized uniform "
             f"{training.get('supervised_depths', 'unreported')} supervision; "
             "updates by complete 30-row sweep depth "
             f"{training.get('optimizer_updates_by_effort', {})}."
@@ -6189,6 +6276,10 @@ def _parser() -> argparse.ArgumentParser:
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
     )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument(
+        "--optimizer", choices=("adam", "adamw", "muon"), default="adam"
+    )
+    parser.add_argument("--weight-decay", type=float)
     parser.add_argument("--copy-residual-gain", type=float, default=0.0)
     parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
@@ -6232,6 +6323,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             memory_decay=args.memory_decay,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
+            optimizer=args.optimizer,
+            weight_decay=args.weight_decay,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6268,6 +6361,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
+        optimizer=args.optimizer,
+        weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,
         row_head_carrier_scale=args.row_head_carrier_scale,
         row_head_carrier_gate=args.row_head_carrier_gate,

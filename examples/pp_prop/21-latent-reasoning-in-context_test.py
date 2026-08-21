@@ -634,6 +634,78 @@ def test_associative_memory_config_accepts_width_512(example):
     assert config.context_memory_width == 512
 
 
+def test_optimizer_defaults_preserve_adam_and_resolve_decoupled_decay(example):
+    adam = example.ExperimentConfig(structural_only=True)
+    adamw = example.ExperimentConfig(structural_only=True, optimizer="adamw")
+    muon = example.ExperimentConfig(structural_only=True, optimizer="muon")
+
+    assert (adam.optimizer, adam.weight_decay) == ("adam", 0.0)
+    assert (adamw.optimizer, adamw.weight_decay) == ("adamw", 0.01)
+    assert (muon.optimizer, muon.weight_decay) == ("muon", 0.01)
+    assert adam.to_dict()["optimizer"] == "adam"
+    assert muon.to_dict()["weight_decay"] == 0.01
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"optimizer": "sgd"}, "optimizer"),
+        ({"weight_decay": True}, "weight_decay"),
+        ({"weight_decay": -1e-3}, "weight_decay"),
+        ({"weight_decay": float("inf")}, "weight_decay"),
+    ],
+)
+def test_optimizer_config_rejects_invalid_values(example, kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        example.ExperimentConfig(structural_only=True, **kwargs)
+
+
+def test_optimizer_cli_round_trips_resolved_policy(example):
+    args = example._parser().parse_args(
+        ["--structural-only", "--optimizer", "muon", "--weight-decay", "0.02"]
+    )
+    config = example._config_from_args(args)
+
+    assert config.optimizer == "muon"
+    assert config.weight_decay == 0.02
+
+
+@pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
+def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
+    example, name
+):
+    config = example.ExperimentConfig.smoke_config(
+        optimizer=name,
+        weight_decay=0.01 if name != "adam" else 0.0,
+    )
+    states = {
+        ("matrix",): brainstate.ParamState(jnp.asarray([[1.0, -0.5], [0.2, 0.7]])),
+        ("vector",): brainstate.ParamState(jnp.asarray([0.4, -0.3])),
+    }
+    optimizer = example._make_training_optimizer(config, states)
+    before = {path: np.asarray(state.value).copy() for path, state in states.items()}
+    gradients = {
+        ("matrix",): jnp.asarray([[0.3, -0.2], [0.1, 0.4]]),
+        ("vector",): jnp.asarray([0.2, -0.1]),
+    }
+
+    @brainstate.transform.jit
+    def update():
+        optimizer.update(gradients)
+
+    update()
+
+    for path, state in states.items():
+        after = np.asarray(state.value)
+        assert np.all(np.isfinite(after))
+        assert not np.array_equal(after, before[path])
+    assert int(optimizer.step_count.value) == 1
+    policy = example._optimizer_policy(config)
+    if name == "muon":
+        assert policy["matrix_optimizer"] == "muon"
+        assert policy["nonmatrix_optimizer"] == "adamw"
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [
@@ -4983,6 +5055,24 @@ def test_report_labels_adapted_primary_and_frozen_no_adaptation_separately(examp
     assert "Frozen no-adaptation diagnostic:" in report
     assert "diagnostic control, not primary submission" in report
     assert "Frozen no-adaptation aggregate latent trajectory:" in report
+
+
+def test_report_names_the_resolved_shared_training_optimizer(example):
+    result = {
+        "evaluation": _evaluation_payload(),
+        "model": {},
+        "training": {
+            "performed": True,
+            "optimizer": {"name": "muon"},
+            "optimizer_updates_by_effort": {"30": 1, "60": 1},
+        },
+        "qualification": {},
+    }
+
+    report = example._render_report(result)
+
+    assert "one Muon state" in report
+    assert "one Adam state" not in report
 
 
 def test_memory_coding_flag_wires_into_model_config(example):
