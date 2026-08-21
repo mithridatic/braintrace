@@ -5018,3 +5018,25 @@ def test_learned_write_coding_flag_wires_into_model_config(example):
         example._parser().parse_args(["--smoke", "--memory-coding", "learned_write"])
     )
     assert smoke_config.memory_coding == "learned_write"
+
+
+def test_trace_engine_cli_threads_into_both_config_layers(example):
+    parsed = example._parser().parse_args([])
+    assert parsed.trace_engine == "pp_prop"
+
+    args = example._parser().parse_args(["--trace-engine", "d_rtrl"])
+    config = example._config_from_args(args)
+    assert config.trace_engine == "d_rtrl"
+    assert config.to_dict()["trace_engine"] == "d_rtrl"
+
+    with pytest.raises(ValueError, match="trace_engine"):
+        dataclasses.replace(config, trace_engine="rtrl")
+
+    smoke_args = example._parser().parse_args(
+        ["--smoke", "--trace-engine", "d_rtrl"])
+    smoke = example._config_from_args(smoke_args)
+    assert smoke.trace_engine == "d_rtrl"
+
+    rows = example._row_config(smoke)
+    model_config = example._model_config(smoke, rows, batch_size=1)
+    assert model_config.trace_engine == "d_rtrl"

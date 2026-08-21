@@ -155,6 +155,8 @@ AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
+
+TraceEngine = Literal["pp_prop", "d_rtrl"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -294,6 +296,11 @@ class ExperimentConfig:
         ``"learned_write"`` additionally routes the write itself through the
         fused ``braintrace.outer_write`` primitive, so the stored key and value
         codings carry gradient too.
+    trace_engine : {"pp_prop", "d_rtrl"}
+        Eligibility-trace engine. ``"pp_prop"`` keeps the IO-factorized
+        coordinate; ``"d_rtrl"`` compiles the per-parameter exact-trace
+        coordinate, which carries the memory write's pairing gradient exactly
+        at a much higher memory cost.
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
@@ -385,6 +392,7 @@ class ExperimentConfig:
     context_memory_width: int = 32
     memory_decay: float = 1.0
     memory_coding: MemoryCoding = "frozen"
+    trace_engine: TraceEngine = "pp_prop"
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
@@ -462,6 +470,8 @@ class ExperimentConfig:
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
+        if self.trace_engine not in ("pp_prop", "d_rtrl"):
+            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
@@ -580,6 +590,7 @@ class ExperimentConfig:
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
+        trace_engine: TraceEngine = "pp_prop",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -602,6 +613,8 @@ class ExperimentConfig:
             Associative memory decay in ``[0, 1]``.
         memory_coding : {"frozen", "learned_keys", "learned_write"}
             Storage-coding trainability forwarded to the model.
+        trace_engine : {"pp_prop", "d_rtrl"}
+            Eligibility-trace engine forwarded to the model.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -629,6 +642,7 @@ class ExperimentConfig:
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
             memory_coding=memory_coding,
+            trace_engine=trace_engine,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -1835,6 +1849,7 @@ def _model_config(
         "sparse_backend": (
             None if config.sparse_backend == "default" else config.sparse_backend
         ),
+        "trace_engine": config.trace_engine,
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
@@ -6157,6 +6172,11 @@ def _parser() -> argparse.ArgumentParser:
         choices=("frozen", "learned_keys", "learned_write"),
         default="frozen",
     )
+    parser.add_argument(
+        "--trace-engine",
+        choices=("pp_prop", "d_rtrl"),
+        default="pp_prop",
+    )
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
     parser.add_argument("--training-updates", type=int, default=96)
@@ -6211,6 +6231,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
             memory_coding=args.memory_coding,
+            trace_engine=args.trace_engine,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6226,6 +6247,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
         memory_coding=args.memory_coding,
+        trace_engine=args.trace_engine,
         max_demonstrations=args.max_demonstrations,
         latent_steps=args.latent_steps,
         training_updates=args.training_updates,

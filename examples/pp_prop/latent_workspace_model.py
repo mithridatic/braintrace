@@ -77,6 +77,9 @@ MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write")
 #: Codings whose *retrieval* key projection is a trainable ETP layer.
 LEARNED_RETRIEVAL_KEY_CODINGS = ("learned_keys", "learned_write")
 
+#: Eligibility-trace engines the model can compile under.
+TRACE_ENGINES = ("pp_prop", "d_rtrl")
+
 #: Reported key-map name per coding; provenance hashes stay on the frozen bases.
 _MEMORY_KEY_MAP_NAMES = {
     "frozen": "fixed_rff_cosine",
@@ -201,6 +204,14 @@ class ModelConfig:
         ``"learned_keys"`` retrieval path, and its write-side projections are
         separate parameters initialized from the same frozen bases (a single
         parameter cannot be owned by two ETP primitives).
+    trace_engine : {"pp_prop", "d_rtrl"}, default="pp_prop"
+        Eligibility-trace engine the model compiles under. ``"pp_prop"``
+        (default) keeps the IO-factorized ES-D-RTRL coordinate with the
+        configured ``trace_decay``. ``"d_rtrl"`` selects the per-parameter
+        exact-trace coordinate (diagonal recurrence scope, true hidden
+        Jacobian, no decay knob) — much heavier in memory, but it carries the
+        write projections' pairing gradient exactly where pp-prop's rank-1
+        collapse loses it (spec ``2026-08-21-etp-outer-write-drtrl-trace.md``).
     decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
         Output architecture. Row refinement captures the query and constructs
         an explicit answer with one learned recurrent row per latent tick.
@@ -277,6 +288,7 @@ class ModelConfig:
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
     memory_coding: Literal["frozen", "learned_keys", "learned_write"] = "frozen"
+    trace_engine: Literal["pp_prop", "d_rtrl"] = "pp_prop"
     decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
@@ -446,6 +458,10 @@ class ModelConfig:
             raise ValueError(
                 "memory_coding requires a positive context_memory_width"
             )
+        if not isinstance(self.trace_engine, str):
+            raise TypeError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+        if self.trace_engine not in TRACE_ENGINES:
+            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
         if not isinstance(self.decoder_mode, str):
@@ -2463,13 +2479,21 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         return self.voltage, self.spikes
 
     def etrace_config(self) -> braintrace.ETraceConfig:
-        """Return the explicit IO-factorized pp-prop coordinate.
+        """Return the configured eligibility-trace coordinate.
 
         Returns
         -------
         braintrace.ETraceConfig
-            Diagonal recurrent pp-prop with the configured scalar trace decay.
+            Diagonal recurrent pp-prop with the configured scalar trace decay
+            under ``trace_engine="pp_prop"``; the per-parameter exact-trace
+            (D-RTRL) coordinate under ``trace_engine="d_rtrl"``, which has no
+            decay knob because the trace follows the true recurrence.
         """
+        if self.config.trace_engine == "d_rtrl":
+            return braintrace.ETraceConfig(
+                trace_factorization="per_param",
+                recurrence_scope="diagonal",
+            )
         return braintrace.ETraceConfig(
             trace_factorization="io_factorized",
             recurrence_scope="diagonal",
@@ -3386,7 +3410,11 @@ def compile_pp_prop(
     *,
     verbose: int = 0,
 ) -> Any:
-    """Compile the model with its explicit pp-prop eligibility coordinate.
+    """Compile the model with its configured eligibility coordinate.
+
+    The name is historical: the engine is selected by
+    ``model.config.trace_engine`` (``"pp_prop"`` or ``"d_rtrl"``), and the
+    coordinate comes from :meth:`LatentWorkspaceModel.etrace_config`.
 
     Parameters
     ----------

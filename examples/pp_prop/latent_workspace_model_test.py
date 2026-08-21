@@ -3905,3 +3905,61 @@ def test_memory_coding_divergence_starts_at_zero_and_tracks_drift() -> None:
     assert drifted["write_retrieval_key_cosine"] == pytest.approx(1.0, abs=1e-5)
     assert drifted["write_key_row_norm_mean"] == pytest.approx(
         2.0 * at_init["write_key_row_norm_mean"], rel=1e-5)
+
+
+def test_trace_engine_defaults_to_pp_prop_and_validates() -> None:
+    assert _config().trace_engine == "pp_prop"
+    with pytest.raises(TypeError, match="trace_engine"):
+        _config(trace_engine=7)
+    with pytest.raises(ValueError, match="trace_engine"):
+        _config(trace_engine="rtrl")
+
+
+def test_etrace_coordinate_for_d_rtrl_engine_is_per_param() -> None:
+    """The exact-trace arm: per-parameter traces, diagonal scope, true
+    hidden Jacobian, no decay knob (the trace follows the recurrence)."""
+    model = LatentWorkspaceModel(_config(trace_engine="d_rtrl"))
+    trace = model.etrace_config()
+
+    assert trace.trace_factorization == "per_param"
+    assert trace.recurrence_scope == "diagonal"
+
+
+def test_small_d_rtrl_compile_and_terminal_gradient_are_finite() -> None:
+    """Mirror of the pp-prop compile gate under the exact-trace engine."""
+    training_model = LatentWorkspaceModel(
+        _config(recurrent_edges=64, trace_engine="d_rtrl"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_pp_prop(training_model)
+    events = jnp.zeros((2, 1, training_model.config.input_width))
+    events = events.at[0, :, 0].set(1.0).at[0, :, 1].set(1.0)
+    advance = jnp.ones((2, 1), dtype=jnp.bool_)
+    colors = jnp.zeros((1, 30, 30), dtype=jnp.int32)
+
+    def step_loss(event: jax.Array, gate: jax.Array) -> jax.Array:
+        return terminal_arc_loss(
+            learner(event, gate),
+            jnp.asarray([1]),
+            jnp.asarray([1]),
+            colors,
+            color_rank=training_model.config.color_rank,
+        )
+
+    gradients, loss = learner.etrace_grad(
+        events,
+        advance,
+        step_fn=step_loss,
+        mask=jnp.asarray([0.0, 1.0]),
+        reduction="mean",
+        loss_output="scalar",
+        return_value=True,
+    )
+
+    assert np.isfinite(float(loss))
+    assert gradients
+    assert all(
+        np.all(np.isfinite(np.asarray(u.get_mantissa(leaf))))
+        for value in gradients.values()
+        for leaf in jax.tree.leaves(value)
+    )

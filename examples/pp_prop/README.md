@@ -147,6 +147,17 @@ image identity first:
       --latent-steps 390 --training-updates 130 --training-batch-size 32 `
       --training-chunk-size 5
 
+Two newer flags are not shown above: `--memory-coding`
+(`frozen`/`learned_keys`/`learned_write`) selects storage-coding
+trainability, and `--trace-engine` (`pp_prop` default, `d_rtrl`) selects the
+eligibility-trace engine — `d_rtrl` compiles the per-parameter exact trace,
+which carries the memory write's pairing gradient exactly at a much higher
+memory cost (see `docs/specs/2026-08-21-etp-outer-write-drtrl-trace.md`).
+Note the command above runs the source copy **baked into the image**; when
+iterating on a checkout newer than the image, mount the worktree and add
+`--env PYTHONPATH=/workspace` (plus a worktree `--source-manifest`) or the
+run silently uses stale code.
+
 The selected execution chunk is 5; the original chunk-1 command is retained
 in `docs/specs/2026-08-20-example21-docker-throughput.md` as the baseline.
 Keep `training_bank_size=0`. The persistent `/cache/jax` mount keeps compiled
