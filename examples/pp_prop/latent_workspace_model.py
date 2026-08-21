@@ -187,9 +187,14 @@ class ModelConfig:
         itself.  Zero keeps the bare head bit-exactly.
     row_head_carrier_scale : float, default=1.0
         Constant multiplier on the carrier block of the answer row head's
-        input only; the shape head always reads the unit-RMS carrier.  Zero
-        starves the row head of the task-identifying carrier so training
-        cannot displace the copy path with task-conditional fits.
+        input only.  Zero starves the row head of the task-identifying
+        carrier so training cannot displace the copy path with
+        task-conditional fits.
+    shape_head_carrier_scale : float, default=1.0
+        Constant multiplier on the carrier block of the answer shape head's
+        input only.  Zero makes the shape answer a pure function of the row
+        events, testing whether the shape head suffers the same carrier
+        displacement as the row head.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -237,6 +242,7 @@ class ModelConfig:
     refinement_layout: RowRefinementLayout | None = None
     copy_residual_gain: float = 0.0
     row_head_carrier_scale: float = 1.0
+    shape_head_carrier_scale: float = 1.0
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -317,6 +323,13 @@ class ModelConfig:
             self,
             "row_head_carrier_scale",
             _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
+        )
+        object.__setattr__(
+            self,
+            "shape_head_carrier_scale",
+            _nonnegative_real(
+                self.shape_head_carrier_scale, "shape_head_carrier_scale"
+            ),
         )
         for name in (
             "demonstration_phase_index",
@@ -1477,6 +1490,24 @@ def _refinement_head_input(
     )
 
 
+def _carrier_scaled_head_input(
+    unit_carrier: jax.Array,
+    event: jax.Array,
+    layout: RowRefinementLayout,
+    scale: float,
+    unscaled: jax.Array,
+) -> jax.Array:
+    """Return the head input with the carrier block multiplied by ``scale``.
+
+    ``scale == 1.0`` returns ``unscaled`` untouched so the default path stays
+    bit-exact; any other value rebuilds the concatenation from the scaled
+    carrier, leaving the event-derived blocks untouched.
+    """
+    if scale == 1.0:
+        return unscaled
+    return _refinement_head_input(unit_carrier * scale, event, layout)
+
+
 def _copy_residual_logits(
     row_logits: jax.Array,
     event: jax.Array,
@@ -2411,21 +2442,27 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             head_input = _refinement_head_input(
                 unit_carrier, event, self.config.refinement_layout
             )
-            if self.config.row_head_carrier_scale == 1.0:
-                row_head_input = head_input
-            else:
-                row_head_input = _refinement_head_input(
-                    unit_carrier * self.config.row_head_carrier_scale,
-                    event,
-                    self.config.refinement_layout,
-                )
+            row_head_input = _carrier_scaled_head_input(
+                unit_carrier,
+                event,
+                self.config.refinement_layout,
+                self.config.row_head_carrier_scale,
+                head_input,
+            )
+            shape_head_input = _carrier_scaled_head_input(
+                unit_carrier,
+                event,
+                self.config.refinement_layout,
+                self.config.shape_head_carrier_scale,
+                head_input,
+            )
             next_row = _copy_residual_logits(
                 self.answer_row_head(row_head_input),
                 event,
                 self.config.refinement_layout,
                 self.config.copy_residual_gain,
             )
-            next_shape = self.answer_shape_head(head_input)
+            next_shape = self.answer_shape_head(shape_head_input)
             refinement_gate = refinement_latent[:, None]
             self.answer_row.value = jnp.where(
                 refinement_gate, next_row, self.answer_row.value

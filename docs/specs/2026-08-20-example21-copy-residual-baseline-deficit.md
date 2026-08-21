@@ -295,3 +295,43 @@ The baseline deficit had two stacked causes:
    configuration, and re-run task-local adaptation on top of the carrier-free
    base: adaptation was consistently positive and is a multiplier on a base
    model that is no longer below its own copy floor.
+
+## 8. Follow-up round (2026-08-20, same branch)
+
+Executing §7 items 2 and 3 (J: "Execute the next steps on this branch").
+
+### 8.1 Shape-head carrier scale
+
+`ModelConfig.shape_head_carrier_scale` (default 1.0) mirrors
+`row_head_carrier_scale` on the answer shape head's input: the carrier block
+of `_refinement_head_input` is multiplied by the scale, the event-derived
+blocks (row one-hot, colour block, dimension one-hots) are untouched, and
+scale 1.0 returns the shared head input object bit-exactly. Exposed as
+`--shape-head-carrier-scale`. Tests mirror the row-head pair: a negative
+value is a config error, and at scale 0 two models that differ only in
+`recurrent_gain` must produce bit-identical final shape logits.
+
+Interpretation guard: unlike the row head, the shape head *needs* the
+carrier wherever `output_shape != input_shape` (33.9% of evaluation
+queries) — the dimension one-hots only make the identity shape expressible.
+So scale 0 measures the displacement/expressiveness trade on shape exactly
+as §6.2 did on rows: if shape accuracy *rises* at scale 0, displacement
+dominates; if it falls, the carrier is earning its keep on shape.
+
+### 8.2 Pre-registered runs
+
+All at 4096n/4096e/b32/u260/l60/lr1e-3, gain 2.0:
+
+| run | row scale | shape scale | seed | question |
+|---|---|---|---|---|
+| cr2cs0 s31337 | 0 | 1 | 31337 | replicate §6.2 |
+| cr2cs0 s7777  | 0 | 1 | 7777  | replicate §6.2 |
+| cr2cs0ss0 s2108 | 0 | 0 | 2108 | shape-head displacement |
+
+Expectations: replication holds if pixel ≈ 0.54 ± seed noise (baseline seed
+spread was ±0.016) on both seeds. Shape arm: shape accuracy vs 0.4893
+decides the §8.1 question; pixel may move either way.
+
+### 8.3 Results
+
+(pending)
