@@ -168,6 +168,7 @@ FULL_SCALE_RECURRENT_EDGES = 16_384
 
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 RefinementMixer = Literal["linear", "carrier_gate", "attention_residual"]
+NeuronTyping = Literal["none", "ei_dale"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -321,6 +322,14 @@ class ExperimentConfig:
         coordinate; ``"d_rtrl"`` compiles the per-parameter exact-trace
         coordinate, which carries the memory write's pairing gradient exactly
         at a much higher memory cost.
+    neuron_typing : {"none", "ei_dale"}
+        Recurrent neuron-type structure. ``"none"`` keeps the untyped legacy
+        substrate bit-exactly. ``"ei_dale"`` assigns a seeded binary E/I
+        split and enforces Dale's law on recurrent weight signs at
+        initialization and by projection after every optimizer step.
+    excitatory_fraction : float
+        Fraction of excitatory neurons under ``ei_dale``; rejected with
+        ``neuron_typing="none"`` unless left at its 0.8 default.
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
@@ -440,6 +449,8 @@ class ExperimentConfig:
     memory_decay: float = 1.0
     memory_coding: MemoryCoding = "frozen"
     trace_engine: TraceEngine = "pp_prop"
+    neuron_typing: NeuronTyping = "none"
+    excitatory_fraction: float = 0.8
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
@@ -548,6 +559,23 @@ class ExperimentConfig:
                 object.__setattr__(self, "refinement_mixer", "carrier_gate")
         if self.refinement_mixer == "carrier_gate":
             object.__setattr__(self, "row_head_carrier_gate", True)
+        if self.neuron_typing not in ("none", "ei_dale"):
+            raise ValueError("neuron_typing must be 'none' or 'ei_dale'")
+        if self.neuron_typing == "ei_dale" and self.task_local_adaptation:
+            raise ValueError(
+                "neuron_typing='ei_dale' does not support task_local_adaptation "
+                "yet: the adaptation path takes optimizer steps without the "
+                "Dale sign projection"
+            )
+        object.__setattr__(
+            self,
+            "excitatory_fraction",
+            _unit_interval(self.excitatory_fraction, "excitatory_fraction"),
+        )
+        if self.neuron_typing == "none" and self.excitatory_fraction != 0.8:
+            raise ValueError(
+                "excitatory_fraction requires neuron_typing='ei_dale'"
+            )
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
@@ -688,6 +716,8 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
         trace_engine: TraceEngine = "pp_prop",
+        neuron_typing: NeuronTyping = "none",
+        excitatory_fraction: float = 0.8,
         optimizer: OptimizerName = "muon",
         weight_decay: float | None = None,
         refinement_mixer: RefinementMixer = "linear",
@@ -716,6 +746,10 @@ class ExperimentConfig:
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
             Eligibility-trace engine forwarded to the model.
+        neuron_typing : {"none", "ei_dale"}
+            Recurrent neuron-type structure forwarded to the model.
+        excitatory_fraction : float
+            Excitatory fraction under ``ei_dale``.
         optimizer : {"adam", "adamw", "muon"}
             Shared-training optimizer.
         weight_decay : float or None
@@ -753,6 +787,8 @@ class ExperimentConfig:
             memory_decay=memory_decay,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
+            neuron_typing=neuron_typing,
+            excitatory_fraction=excitatory_fraction,
             optimizer=optimizer,
             weight_decay=weight_decay,
             refinement_mixer=refinement_mixer,
@@ -1967,6 +2003,8 @@ def _model_config(
         "trace_engine": config.trace_engine,
         "memory_value_softcap_beta": config.memory_value_softcap_beta,
         "reasoning_query_softcap_beta": config.reasoning_query_softcap_beta,
+        "neuron_typing": config.neuron_typing,
+        "excitatory_fraction": config.excitatory_fraction,
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
@@ -2592,6 +2630,10 @@ def _train_model(
                 return_value=True,
             )
             optimizer.update(brainstate.nn.clip_grad_norm(gradients, config.clip_norm))
+            # Dale's law is a hard constraint, not a preference: re-project
+            # the recurrent signs after every optimizer step (no-op under
+            # neuron_typing="none").
+            model.project_recurrent_dale_weights()
             return objective
 
         return brainstate.transform.for_loop(
@@ -5656,6 +5698,7 @@ def _render_report(result: dict[str, object]) -> str:
             f"{model.get('associative_memory_implementation', {})}."
         ),
         f"Physical component types: {model.get('component_types', {})}.",
+        f"Neuron typing: {model.get('neuron_typing', {})}.",
         (
             f"Data manifest SHA-256: {data_summary.get('manifest_sha256', 'unreported')}; "
             f"sources={data_summary.get('source_names_by_role', {})}."
@@ -6316,6 +6359,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         },
         **memory_architecture,
         "associative_memory_implementation": memory_implementation,
+        "neuron_typing": model.neuron_typing_report(),
     }
     result: dict[str, object] = {
         "schema_version": 1,
@@ -6397,6 +6441,12 @@ def _parser() -> argparse.ArgumentParser:
         choices=("pp_prop", "d_rtrl"),
         default="pp_prop",
     )
+    parser.add_argument(
+        "--neuron-typing",
+        choices=("none", "ei_dale"),
+        default="none",
+    )
+    parser.add_argument("--excitatory-fraction", type=float, default=0.8)
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
     parser.add_argument("--training-updates", type=int, default=260)
@@ -6469,6 +6519,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             memory_decay=args.memory_decay,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
+            neuron_typing=args.neuron_typing,
+            excitatory_fraction=args.excitatory_fraction,
             optimizer=args.optimizer,
             weight_decay=args.weight_decay,
             refinement_mixer=args.refinement_mixer,
@@ -6489,6 +6541,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         memory_decay=args.memory_decay,
         memory_coding=args.memory_coding,
         trace_engine=args.trace_engine,
+        neuron_typing=args.neuron_typing,
+        excitatory_fraction=args.excitatory_fraction,
         max_demonstrations=args.max_demonstrations,
         latent_steps=args.latent_steps,
         training_updates=args.training_updates,
