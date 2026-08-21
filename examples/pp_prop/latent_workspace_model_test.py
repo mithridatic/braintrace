@@ -3816,6 +3816,10 @@ def test_learned_write_trains_the_write_projections_through_the_memory() -> None
     }
     etrace_paths = {path for path, _ in learner.report.etrace_weights}
     assert write_paths <= etrace_paths
+    # Two trainable ETP primitives now sit on the write path: the fused coding
+    # and the elementwise write scale. Adding the first must not displace the
+    # second, or the write scale silently stops learning.
+    assert ("memory_write_scale",) in etrace_paths
 
     relations = [
         relation
@@ -3863,3 +3867,41 @@ def test_learned_write_trains_the_write_projections_through_the_memory() -> None
         )
         assert math.isfinite(norm), path
         assert norm > 0.0, path
+
+
+def test_memory_coding_divergence_is_empty_without_a_learned_write() -> None:
+    for coding in ("frozen", "learned_keys"):
+        model = LatentWorkspaceModel(_memory_config(memory_coding=coding))
+        assert model.memory_coding_divergence() == {}
+
+
+def test_memory_coding_divergence_starts_at_zero_and_tracks_drift() -> None:
+    """Attribution for a pinned-at-zero pairing result.
+
+    ``learned_write`` gives the write and the retrieval paths *separate* key
+    encoders, initialized identically and then trained independently. If they
+    drift apart the memory is written in one code and queried in another, and
+    retrieval degrades for reasons that have nothing to do with binding. This
+    diagnostic is what separates that failure from a genuine null, so it must
+    read zero at initialization and grow when the write encoder moves.
+    """
+    model = LatentWorkspaceModel(_memory_config(memory_coding="learned_write"))
+    at_init = model.memory_coding_divergence()
+    assert set(at_init) == {
+        "write_retrieval_key_cosine",
+        "write_retrieval_key_relative_l2",
+        "write_retrieval_key_bias_relative_l2",
+        "write_key_row_norm_mean",
+    }
+    assert at_init["write_retrieval_key_cosine"] == pytest.approx(1.0, abs=1e-6)
+    assert at_init["write_retrieval_key_relative_l2"] == pytest.approx(0.0, abs=1e-6)
+    assert at_init["write_retrieval_key_bias_relative_l2"] == pytest.approx(
+        0.0, abs=1e-6)
+    assert at_init["write_key_row_norm_mean"] > 0.0
+
+    model.write_key_weight.value = model.write_key_weight.value * 2.0
+    drifted = model.memory_coding_divergence()
+    assert drifted["write_retrieval_key_relative_l2"] == pytest.approx(1.0, abs=1e-5)
+    assert drifted["write_retrieval_key_cosine"] == pytest.approx(1.0, abs=1e-5)
+    assert drifted["write_key_row_norm_mean"] == pytest.approx(
+        2.0 * at_init["write_key_row_norm_mean"], rel=1e-5)

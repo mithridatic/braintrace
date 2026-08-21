@@ -2054,6 +2054,65 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         side_valid = event[..., self.config.output_side_valid_index] > 0.5
         return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
 
+    def memory_coding_divergence(self) -> dict[str, float]:
+        """Report how far the write key encoder has drifted from the retrieval one.
+
+        Under ``"learned_write"`` the memory is written in
+        ``write_key_weight`` space and queried in ``memory_key_projection``
+        space. The two start identical and then train independently, so they
+        can drift apart far enough that retrieval degrades for reasons
+        unrelated to binding. Without this measurement a pinned-at-zero pairing
+        result is unattributable: a broken read and an absent binder look the
+        same downstream, and a gradient check cannot separate them because the
+        gradient is fine — it is the forward retrieval that decayed.
+
+        ``write_key_row_norm_mean`` covers the companion risk: the folded-gamma
+        initialization pins the key scale only at step 0, and an unnormalized
+        key whose norm grows lets large-scale components dominate the read.
+
+        Returns
+        -------
+        dict
+            Cosine and relative-L2 divergence of the two key projections, the
+            relative-L2 divergence of their phase offsets, and the mean L2 norm
+            of the write projection's rows. Empty for every coding other than
+            ``"learned_write"``, which has only one key encoder.
+        """
+        if self.config.memory_coding != "learned_write":
+            return {}
+        write_weight = jnp.asarray(self.write_key_weight.value).reshape(-1)
+        retrieval_weight = jnp.asarray(
+            self.memory_key_projection.weight.value["weight"]
+        ).reshape(-1)
+        write_bias = jnp.asarray(self.write_key_bias.value).reshape(-1)
+        retrieval_bias = jnp.asarray(
+            self.memory_key_projection.weight.value["bias"]
+        ).reshape(-1)
+        return {
+            "write_retrieval_key_cosine": float(
+                write_weight
+                @ retrieval_weight
+                / (
+                    jnp.linalg.norm(write_weight)
+                    * jnp.linalg.norm(retrieval_weight)
+                )
+            ),
+            "write_retrieval_key_relative_l2": float(
+                jnp.linalg.norm(write_weight - retrieval_weight)
+                / jnp.linalg.norm(retrieval_weight)
+            ),
+            "write_retrieval_key_bias_relative_l2": float(
+                jnp.linalg.norm(write_bias - retrieval_bias)
+                / jnp.linalg.norm(retrieval_bias)
+            ),
+            "write_key_row_norm_mean": float(
+                jnp.mean(
+                    jnp.linalg.norm(
+                        jnp.asarray(self.write_key_weight.value), axis=0)
+                )
+            ),
+        }
+
     def encode_memory_write(self, event: jax.Array) -> jax.Array:
         """Encode one row event directly into its rank-one write matrix.
 

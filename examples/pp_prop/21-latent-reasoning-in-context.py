@@ -1900,8 +1900,16 @@ def _memory_architecture_report(
 
 
 def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
-    """Return the model-owned associative representation provenance."""
-    return model.associative_memory_report().to_dict()
+    """Return the model-owned associative representation provenance.
+
+    Under ``memory_coding="learned_write"`` this also carries the write-versus-
+    retrieval key divergence, without which a pinned-at-zero pairing readout
+    cannot be told apart from a read that simply drifted out of the code the
+    memory was written in.
+    """
+    report = model.associative_memory_report().to_dict()
+    report.update(model.memory_coding_divergence())
+    return report
 
 
 def _make_model(
