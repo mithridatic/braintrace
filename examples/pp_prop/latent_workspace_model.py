@@ -99,6 +99,15 @@ def _positive_real(value: object, name: str) -> float:
     return result
 
 
+def _nonnegative_real(value: object, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a finite nonnegative real scalar")
+    result = float(value)
+    if not math.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a finite nonnegative real scalar")
+    return result
+
+
 def _unit_interval_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
         raise TypeError(f"{name} must be a finite real scalar in [0, 1]")
@@ -171,6 +180,31 @@ class ModelConfig:
         positive multiple of 30 and no larger than ``max_latent_steps``.
     refinement_layout : RowRefinementLayout, optional
         Complete row-event layout required by ``row_refinement`` mode.
+    copy_residual_gain : float, default=0.0
+        Fixed logit magnitude added to the answer row head's output at the
+        query's own colour for every occupied column — an identity residual
+        that lets training learn deviations from copy instead of the copy map
+        itself.  Zero keeps the bare head bit-exactly.
+    row_head_carrier_scale : float, default=1.0
+        Constant multiplier on the carrier block of the answer row head's
+        input only.  Zero starves the row head of the task-identifying
+        carrier so training cannot displace the copy path with
+        task-conditional fits.
+    row_head_carrier_gate : bool, default=False
+        Replace the single answer row head with an event-only head plus a
+        carrier head whose contribution is multiplied elementwise by
+        ``tanh(w)``, where ``w`` is a zero-initialised trainable per-logit
+        gate vector (a bias-free 1×300 linear fed with ones, so the gate is
+        ETP-tracked and matches the hidden group's width, which the
+        eligibility-trace VJP requires).  At initialisation the
+        row answer is exactly carrier-free; training must buy carrier access
+        through the gate.  Incompatible with a non-default
+        ``row_head_carrier_scale``.
+    shape_head_carrier_scale : float, default=1.0
+        Constant multiplier on the carrier block of the answer shape head's
+        input only.  Zero makes the shape answer a pure function of the row
+        events, testing whether the shape head suffers the same carrier
+        displacement as the row head.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -216,6 +250,10 @@ class ModelConfig:
     decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
+    copy_residual_gain: float = 0.0
+    row_head_carrier_scale: float = 1.0
+    row_head_carrier_gate: bool = False
+    shape_head_carrier_scale: float = 1.0
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -286,6 +324,28 @@ class ModelConfig:
             self,
             "memory_decay",
             _unit_interval_real(self.memory_decay, "memory_decay"),
+        )
+        object.__setattr__(
+            self,
+            "copy_residual_gain",
+            _nonnegative_real(self.copy_residual_gain, "copy_residual_gain"),
+        )
+        object.__setattr__(
+            self,
+            "row_head_carrier_scale",
+            _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
+        )
+        if self.row_head_carrier_gate and self.row_head_carrier_scale != 1.0:
+            raise ValueError(
+                "row_head_carrier_gate replaces row_head_carrier_scale; "
+                "leave the scale at its default of 1.0"
+            )
+        object.__setattr__(
+            self,
+            "shape_head_carrier_scale",
+            _nonnegative_real(
+                self.shape_head_carrier_scale, "shape_head_carrier_scale"
+            ),
         )
         for name in (
             "demonstration_phase_index",
@@ -1446,6 +1506,54 @@ def _refinement_head_input(
     )
 
 
+def _carrier_scaled_head_input(
+    unit_carrier: jax.Array,
+    event: jax.Array,
+    layout: RowRefinementLayout,
+    scale: float,
+    unscaled: jax.Array,
+) -> jax.Array:
+    """Return the head input with the carrier block multiplied by ``scale``.
+
+    ``scale == 1.0`` returns ``unscaled`` untouched so the default path stays
+    bit-exact; any other value rebuilds the concatenation from the scaled
+    carrier, leaving the event-derived blocks untouched.
+    """
+    if scale == 1.0:
+        return unscaled
+    return _refinement_head_input(unit_carrier * scale, event, layout)
+
+
+def _copy_residual_logits(
+    row_logits: jax.Array,
+    event: jax.Array,
+    layout: RowRefinementLayout,
+    gain: float,
+) -> jax.Array:
+    """Add a fixed identity residual from the query's colours to the row logits.
+
+    The colour block of the refinement event is indexed
+    ``column * COLOR_COUNT + colour`` and the row logits reshape
+    ``(MAX_GRID_SIZE, COLOR_COUNT)`` on the same index, so adding the raw
+    one-hot block scaled by ``gain`` raises the logit of exactly the query's
+    colour at each occupied column.  Coordinates the query does not occupy --
+    including every column at or beyond the input's width and, through
+    ``input_row_valid`` gating, every row beyond the input's height -- receive
+    exactly zero, so the learned head keeps sole custody of rule deviations
+    and out-of-range cells.
+
+    This is the identity-mapping residual of Kimi's Attention Residuals
+    (arXiv:2603.15031) applied to the decode path: the direct route is
+    preserved architecturally and training learns modulations of it, instead
+    of spending its whole travel budget building the 110-parameter copy map
+    that the lookup-table baseline owns by construction.
+    """
+    if gain == 0.0:
+        return row_logits
+    residual = event[:, layout.input_color_slice].astype(row_logits.dtype)
+    return row_logits + jnp.asarray(gain, dtype=row_logits.dtype) * residual
+
+
 def refinement_head_width(neuron_count: int) -> int:
     """Return the answer-head input width for a row-conditioned decoder.
 
@@ -1663,12 +1771,39 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             row_weights = row_weights / math.sqrt(head_width)
             shape_weights = random.randn(head_width, 2 * MAX_GRID_SIZE)
             shape_weights = shape_weights / math.sqrt(head_width)
-            self.answer_row_head = braintrace.nn.Linear(
-                head_width,
-                MAX_GRID_SIZE * COLOR_COUNT,
-                w_init=row_weights,
-                b_init=None,
-            )
+            if config.row_head_carrier_gate:
+                event_width = head_width - config.neuron_count
+                event_weights = random.randn(
+                    event_width, MAX_GRID_SIZE * COLOR_COUNT
+                ) / math.sqrt(event_width)
+                carrier_weights = random.randn(
+                    config.neuron_count, MAX_GRID_SIZE * COLOR_COUNT
+                ) / math.sqrt(config.neuron_count)
+                self.answer_row_event_head = braintrace.nn.Linear(
+                    event_width,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=event_weights,
+                    b_init=None,
+                )
+                self.answer_row_carrier_head = braintrace.nn.Linear(
+                    config.neuron_count,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=carrier_weights,
+                    b_init=None,
+                )
+                self.row_carrier_gate_head = braintrace.nn.Linear(
+                    1,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=jnp.zeros((1, MAX_GRID_SIZE * COLOR_COUNT)),
+                    b_init=None,
+                )
+            else:
+                self.answer_row_head = braintrace.nn.Linear(
+                    head_width,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=row_weights,
+                    b_init=None,
+                )
             self.answer_shape_head = braintrace.nn.Linear(
                 head_width,
                 2 * MAX_GRID_SIZE,
@@ -2184,6 +2319,33 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
         return self.compact_readout(carrier)
 
+    def _row_head_logits(
+        self, unit_carrier: jax.Array, event: jax.Array, head_input: jax.Array
+    ) -> jax.Array:
+        """Row logits before the copy residual, under scale or gate access.
+
+        Without the gate this is the single row head over the (optionally
+        carrier-scaled) concatenated input.  With the gate, the event-only
+        head fires on the event blocks of ``head_input`` and the carrier
+        head's contribution is multiplied by ``tanh`` of the gate weight,
+        which is zero at initialisation — the §9.1 carrier-free start.
+        """
+        assert self.config.refinement_layout is not None
+        if not self.config.row_head_carrier_gate:
+            row_head_input = _carrier_scaled_head_input(
+                unit_carrier,
+                event,
+                self.config.refinement_layout,
+                self.config.row_head_carrier_scale,
+                head_input,
+            )
+            return self.answer_row_head(row_head_input)
+        event_blocks = head_input[:, self.config.neuron_count :]
+        gate_input = jnp.ones((head_input.shape[0], 1), dtype=head_input.dtype)
+        gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
+        carrier_logits = self.answer_row_carrier_head(unit_carrier)
+        return self.answer_row_event_head(event_blocks) + gate * carrier_logits
+
     def cell_step(
         self, event: jax.Array, advance: jax.Array | None = None
     ) -> jax.Array:
@@ -2346,11 +2508,24 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 if self.config.memory_enabled
                 else self.voltage
             )
+            unit_carrier = _unit_rms_carrier(carrier)
             head_input = _refinement_head_input(
-                _unit_rms_carrier(carrier), event, self.config.refinement_layout
+                unit_carrier, event, self.config.refinement_layout
             )
-            next_row = self.answer_row_head(head_input)
-            next_shape = self.answer_shape_head(head_input)
+            shape_head_input = _carrier_scaled_head_input(
+                unit_carrier,
+                event,
+                self.config.refinement_layout,
+                self.config.shape_head_carrier_scale,
+                head_input,
+            )
+            next_row = _copy_residual_logits(
+                self._row_head_logits(unit_carrier, event, head_input),
+                event,
+                self.config.refinement_layout,
+                self.config.copy_residual_gain,
+            )
+            next_shape = self.answer_shape_head(shape_head_input)
             refinement_gate = refinement_latent[:, None]
             self.answer_row.value = jnp.where(
                 refinement_gate, next_row, self.answer_row.value

@@ -302,6 +302,25 @@ class ExperimentConfig:
         device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
         Adam rate and global gradient clipping norm.
+    copy_residual_gain : float
+        Fixed identity-residual logit magnitude added to the answer row
+        head's output at the query's own colour for every occupied column,
+        so training learns deviations from copy instead of the copy map
+        itself. Zero (the default) keeps the bare head bit-exactly.
+    row_head_carrier_scale : float
+        Constant multiplier on the carrier block of the answer row head's
+        input only. Zero starves the row head of the task-identifying
+        carrier so training cannot displace the copy path.
+    row_head_carrier_gate : bool
+        Replace the row head with an event-only head plus a carrier head
+        gated by a zero-initialised trainable ``tanh`` scalar, so the row
+        answer starts carrier-free and training must buy carrier access.
+        Incompatible with a non-default ``row_head_carrier_scale``.
+    shape_head_carrier_scale : float
+        Constant multiplier on the carrier block of the answer shape head's
+        input only. Zero makes the shape answer a pure function of the row
+        events, testing whether the shape head suffers the same carrier
+        displacement as the row head.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
         This option is valid only with the explicit legacy CP decoder.
@@ -371,6 +390,10 @@ class ExperimentConfig:
     task_local_adaptation: bool = False
     evaluation_controls: bool = False
     clip_norm: float = 1.0
+    copy_residual_gain: float = 0.0
+    row_head_carrier_scale: float = 1.0
+    row_head_carrier_gate: bool = False
+    shape_head_carrier_scale: float = 1.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
     adaptation_task_group: int = 20
@@ -457,6 +480,15 @@ class ExperimentConfig:
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
         )
+        for name in (
+            "copy_residual_gain",
+            "row_head_carrier_scale",
+            "shape_head_carrier_scale",
+        ):
+            value = float(getattr(self, name))
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be a finite nonnegative real scalar")
+            object.__setattr__(self, name, value)
         object.__setattr__(
             self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
@@ -1786,6 +1818,10 @@ def _model_config(
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
+        arguments["copy_residual_gain"] = config.copy_residual_gain
+        arguments["row_head_carrier_scale"] = config.row_head_carrier_scale
+        arguments["row_head_carrier_gate"] = config.row_head_carrier_gate
+        arguments["shape_head_carrier_scale"] = config.shape_head_carrier_scale
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
         arguments.update(
@@ -6099,6 +6135,10 @@ def _parser() -> argparse.ArgumentParser:
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
     )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--copy-residual-gain", type=float, default=0.0)
+    parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
+    parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
+    parser.add_argument("--row-head-carrier-gate", action="store_true")
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=2)
     parser.add_argument("--task-local-adaptation", action="store_true")
@@ -6170,6 +6210,10 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
+        copy_residual_gain=args.copy_residual_gain,
+        row_head_carrier_scale=args.row_head_carrier_scale,
+        row_head_carrier_gate=args.row_head_carrier_gate,
+        shape_head_carrier_scale=args.shape_head_carrier_scale,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,

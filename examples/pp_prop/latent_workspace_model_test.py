@@ -3282,6 +3282,245 @@ def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> No
     assert classifications["answer_shape_head.weight"] == {"all_direct"}
 
 
+def test_copy_residual_raises_the_query_colour_logit_by_the_gain() -> None:
+    """The residual must add exactly ``gain`` at each occupied colour logit.
+
+    The colour block is indexed ``column * 10 + colour``
+    (``latent_workspace_task.py``) and the row logits reshape ``(30, 10)`` on
+    the same index, so the identity map is a direct vector addition. Every
+    coordinate the query does not occupy — including the whole block beyond the
+    input's height, which ``input_row_valid`` zeroes — must be bit-unchanged,
+    so the learned head keeps sole custody of out-of-range cells.
+    """
+    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    layout = _row_refinement_layout()
+    row_logits = jnp.asarray(
+        np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
+    )
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    event = event.at[:, layout.input_color_start + 0 * COLOR_COUNT + 3].set(1.0)
+    event = event.at[:, layout.input_color_start + 7 * COLOR_COUNT + 9].set(1.0)
+
+    boosted = np.asarray(apply_residual(row_logits, event, layout, 2.0))
+
+    expected = np.asarray(row_logits).copy()
+    expected[0, 0 * COLOR_COUNT + 3] += 2.0
+    expected[0, 7 * COLOR_COUNT + 9] += 2.0
+    np.testing.assert_array_equal(boosted, expected)
+
+
+def test_copy_residual_gain_zero_reproduces_the_bare_head() -> None:
+    """``gain = 0`` must be bit-exact backward compatibility."""
+    apply_residual = getattr(latent_workspace_module, "_copy_residual_logits")
+    layout = _row_refinement_layout()
+    row_logits = jnp.asarray(
+        np.linspace(-1.0, 1.0, MAX_GRID_SIZE * COLOR_COUNT, dtype=np.float32)[None, :]
+    )
+    event = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    event = event.at[:, layout.input_color_start + 5].set(1.0)
+
+    unchanged = np.asarray(apply_residual(row_logits, event, layout, 0.0))
+
+    np.testing.assert_array_equal(unchanged, np.asarray(row_logits))
+
+
+def test_model_config_rejects_a_negative_copy_residual_gain() -> None:
+    """The gain is a logit magnitude; a negative copy prior is a config error."""
+    with pytest.raises(ValueError, match="copy_residual_gain"):
+        _row_refinement_config(copy_residual_gain=-1.0)
+
+
+def test_model_config_rejects_a_negative_row_head_carrier_scale() -> None:
+    """The carrier scale is a magnitude; a sign flip is a config error."""
+    with pytest.raises(ValueError, match="row_head_carrier_scale"):
+        _row_refinement_config(row_head_carrier_scale=-0.5)
+
+
+def test_row_head_carrier_scale_zero_makes_the_row_answer_carrier_free() -> None:
+    """At scale zero the decoded rows must not depend on the membrane carrier.
+
+    Two models with the same seed but different recurrent gains develop
+    different membrane trajectories on the same episode. With the row head's
+    carrier block scaled to zero the row logits read only the event blocks,
+    which are identical across the two runs, so the scattered answer grids
+    must agree bit for bit while the shape head (which keeps its carrier)
+    remains free to differ.
+    """
+    grids = []
+    for recurrent_gain in (0.8, 1.6):
+        model = LatentWorkspaceModel(
+            _row_refinement_config(
+                row_head_carrier_scale=0.0,
+                copy_residual_gain=2.0,
+                recurrent_gain=recurrent_gain,
+            )
+        )
+        run_context(model, _row_refinement_full_size_episode())
+        grids.append(_swept_answer_grid(model))
+    np.testing.assert_array_equal(grids[0], grids[1])
+
+
+def test_model_config_rejects_a_negative_shape_head_carrier_scale() -> None:
+    """The shape carrier scale is a magnitude; a sign flip is a config error."""
+    with pytest.raises(ValueError, match="shape_head_carrier_scale"):
+        _row_refinement_config(shape_head_carrier_scale=-0.5)
+
+
+def test_shape_head_carrier_scale_zero_makes_the_shape_answer_carrier_free() -> None:
+    """At scale zero the decoded shape must not depend on the membrane carrier.
+
+    Two models with the same seed but different recurrent gains develop
+    different membrane trajectories on the same episode. With the shape head's
+    carrier block scaled to zero the shape logits read only the event blocks,
+    which are identical across the two runs, so the final shape logits must
+    agree bit for bit while the row head (which keeps its carrier) remains
+    free to differ.
+    """
+    shapes = []
+    for recurrent_gain in (0.8, 1.6):
+        model = LatentWorkspaceModel(
+            _row_refinement_config(
+                shape_head_carrier_scale=0.0,
+                recurrent_gain=recurrent_gain,
+            )
+        )
+        run_context(model, _row_refinement_full_size_episode())
+        shapes.append(np.asarray(model.answer_shape.value))
+    np.testing.assert_array_equal(shapes[0], shapes[1])
+
+
+def test_model_config_rejects_the_gate_with_a_carrier_scale() -> None:
+    """The gate replaces the scale mechanism; combining them is an error."""
+    with pytest.raises(ValueError, match="row_head_carrier_gate"):
+        _row_refinement_config(
+            row_head_carrier_gate=True, row_head_carrier_scale=0.5
+        )
+
+
+def _gated_swept_grid(recurrent_gain: float, gate_shift: float) -> np.ndarray:
+    """Run one gated episode, optionally forcing the gate weight open."""
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_carrier_gate=True,
+            copy_residual_gain=2.0,
+            recurrent_gain=recurrent_gain,
+        )
+    )
+    if gate_shift:
+        for path, state in model.states(brainstate.ParamState).items():
+            if "row_carrier_gate_head" in ".".join(map(str, path)):
+                state.value = jax.tree.map(lambda a: a + gate_shift, state.value)
+    run_context(model, _row_refinement_full_size_episode())
+    return _swept_answer_grid(model)
+
+
+def test_row_head_carrier_gate_starts_exactly_carrier_free() -> None:
+    """At the zero-initialised gate the row answer must ignore the carrier.
+
+    Two models differing only in recurrent gain develop different membrane
+    trajectories; with ``tanh(0) == 0`` the carrier head contributes nothing,
+    so the swept answer grids must agree bit for bit.
+    """
+    np.testing.assert_array_equal(
+        _gated_swept_grid(0.8, 0.0), _gated_swept_grid(1.6, 0.0)
+    )
+
+
+def test_row_head_carrier_gate_opens_a_carrier_path() -> None:
+    """Forcing the gate weight open must make the row answer carrier-bound.
+
+    With the gate weight shifted to 3.0 (``tanh`` ≈ 0.995) the carrier head's
+    random projection reaches the logits, so the two recurrent gains must no
+    longer produce identical grids — the gate is a real dial, not a dead end.
+    """
+    assert not np.array_equal(
+        _gated_swept_grid(0.8, 3.0), _gated_swept_grid(1.6, 3.0)
+    )
+
+
+def test_gated_row_heads_stay_compiled_all_direct() -> None:
+    """Event head, carrier head, and gate must all remain trainable.
+
+    §9.1: a parameter trains only as a trainable invar of an ETP primitive.
+    If the gate multiply confused the compiler, any of the three would drop
+    from ``param_states`` and silently freeze.
+    """
+    model = LatentWorkspaceModel(
+        _row_refinement_config(batch_size=2, row_head_carrier_gate=True)
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {
+        "answer_row_event_head.weight",
+        "answer_row_carrier_head.weight",
+        "row_carrier_gate_head.weight",
+        "answer_shape_head.weight",
+    } <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+    assert classifications["answer_row_event_head.weight"] == {"all_direct"}
+    assert classifications["answer_row_carrier_head.weight"] == {"all_direct"}
+    assert classifications["row_carrier_gate_head.weight"] == {"all_direct"}
+
+
+def test_refinement_heads_stay_compiled_all_direct_with_copy_residual() -> None:
+    """The residual must not disturb ETP tracking of either answer head.
+
+    The residual is a constant-scaled slice of the event added after the
+    tracked ``answer_row_head`` op. If the addition confused the compiler the
+    head would silently drop from ``param_states`` and train with a zero
+    gradient while still looking correct.
+    """
+    model = LatentWorkspaceModel(
+        _row_refinement_config(batch_size=2, copy_residual_gain=2.0)
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        if isinstance(path, (tuple, list)):
+            return ".".join(str(part) for part in path)
+        return str(path)
+
+    compiled = {text(key) for key in learner.param_states}
+    assert {"answer_row_head.weight", "answer_shape_head.weight"} <= compiled
+
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        by_hidden_state = context.get("path_classification")
+        if not isinstance(by_hidden_state, dict):
+            continue
+        classifications[text(getattr(record, "weight_path", ""))] = {
+            str(getattr(value, "value", value)) for value in by_hidden_state.values()
+        }
+
+    assert classifications["answer_row_head.weight"] == {"all_direct"}
+    assert classifications["answer_shape_head.weight"] == {"all_direct"}
+
+
 def test_refinement_head_input_separates_the_query_grid_shape() -> None:
     """Two ticks differing only in the query grid shape must reach the head.
 
