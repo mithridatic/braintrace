@@ -63,6 +63,7 @@ try:
         expand_decoder_logits,
         parameter_snapshot,
         refinement_head_width,
+        refinement_parameter_paths,
         run_selected_packed_stream,
     )
     from examples.pp_prop.latent_workspace_refinement import (
@@ -119,6 +120,7 @@ except ModuleNotFoundError:
         expand_decoder_logits,
         parameter_snapshot,
         refinement_head_width,
+        refinement_parameter_paths,
         run_selected_packed_stream,
     )
     from latent_workspace_refinement import (
@@ -159,6 +161,7 @@ MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 TraceEngine = Literal["pp_prop", "d_rtrl"]
+RefinementMixer = Literal["linear", "carrier_gate", "attention_residual"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -345,8 +348,9 @@ class ExperimentConfig:
         input only. Zero starves the row head of the task-identifying
         carrier so training cannot displace the copy path.
     row_head_carrier_gate : bool
-        Replace the row head with an event-only head plus a carrier head
-        gated by a zero-initialised trainable ``tanh`` scalar, so the row
+        Compatibility spelling for ``refinement_mixer="carrier_gate"``.
+        The carrier ablation uses an event-only head plus a carrier head
+        gated by a zero-initialised trainable 300-coordinate ``tanh`` vector, so the row
         answer starts carrier-free and training must buy carrier access.
         Incompatible with a non-default ``row_head_carrier_scale``.
     shape_head_carrier_scale : float
@@ -354,6 +358,10 @@ class ExperimentConfig:
         input only. Zero makes the shape answer a pure function of the row
         events, testing whether the shape head suffers the same carrier
         displacement as the row head.
+    refinement_mixer : {"linear", "carrier_gate", "attention_residual"}
+        Explicit refinement proposal mixer. Only ``"attention_residual"``
+        implements the paper's learned source-axis softmax; the other choices
+        are retained ablations.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
         This option is valid only with the explicit legacy CP decoder.
@@ -431,6 +439,7 @@ class ExperimentConfig:
     row_head_carrier_scale: float = 1.0
     row_head_carrier_gate: bool = False
     shape_head_carrier_scale: float = 1.0
+    refinement_mixer: RefinementMixer = "linear"
     balanced_color_loss: bool = False
     ablation_slot: int = 0
     adaptation_task_group: int = 20
@@ -493,6 +502,25 @@ class ExperimentConfig:
             raise ValueError("memory_coding requires a positive context_memory_width")
         if self.trace_engine not in ("pp_prop", "d_rtrl"):
             raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+        if self.refinement_mixer not in (
+            "linear",
+            "carrier_gate",
+            "attention_residual",
+        ):
+            raise ValueError(
+                "refinement_mixer must be 'linear', 'carrier_gate' or "
+                "'attention_residual'"
+            )
+        if self.row_head_carrier_gate:
+            if self.refinement_mixer == "attention_residual":
+                raise ValueError(
+                    "--row-head-carrier-gate conflicts with "
+                    "--refinement-mixer attention_residual"
+                )
+            if self.refinement_mixer == "linear":
+                object.__setattr__(self, "refinement_mixer", "carrier_gate")
+        if self.refinement_mixer == "carrier_gate":
+            object.__setattr__(self, "row_head_carrier_gate", True)
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
@@ -540,6 +568,15 @@ class ExperimentConfig:
             if not math.isfinite(value) or value < 0.0:
                 raise ValueError(f"{name} must be a finite nonnegative real scalar")
             object.__setattr__(self, name, value)
+        if self.refinement_mixer == "attention_residual" and (
+            self.copy_residual_gain != 0.0
+            or self.row_head_carrier_scale != 1.0
+            or self.shape_head_carrier_scale != 1.0
+        ):
+            raise ValueError(
+                "refinement_mixer='attention_residual' cannot be combined with "
+                "copy_residual_gain or non-default row/shape carrier scales"
+            )
         object.__setattr__(
             self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
@@ -618,6 +655,7 @@ class ExperimentConfig:
         trace_engine: TraceEngine = "pp_prop",
         optimizer: OptimizerName = "muon",
         weight_decay: float | None = None,
+        refinement_mixer: RefinementMixer = "linear",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -646,6 +684,8 @@ class ExperimentConfig:
             Shared-training optimizer.
         weight_decay : float or None
             Explicit optimizer weight decay, or the optimizer-specific default.
+        refinement_mixer : {"linear", "carrier_gate", "attention_residual"}
+            Row-refinement proposal mixer.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -676,6 +716,7 @@ class ExperimentConfig:
             trace_engine=trace_engine,
             optimizer=optimizer,
             weight_decay=weight_decay,
+            refinement_mixer=refinement_mixer,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -1890,6 +1931,7 @@ def _model_config(
         arguments["row_head_carrier_scale"] = config.row_head_carrier_scale
         arguments["row_head_carrier_gate"] = config.row_head_carrier_gate
         arguments["shape_head_carrier_scale"] = config.shape_head_carrier_scale
+        arguments["refinement_mixer"] = config.refinement_mixer
     if config.context_memory_width > 0:
         features = associative_memory_feature_indices(row_config)
         arguments.update(
@@ -4965,10 +5007,7 @@ def _qualification(
         "ff_syn.comm.weight",
         "rec_syn.comm.weight",
     }
-    row_refinement_paths = {
-        "answer_row_head.weight",
-        "answer_shape_head.weight",
-    }
+    row_refinement_paths = set(refinement_parameter_paths(config))
     legacy_plain_paths = {
         "color_factor_head.weight",
         "height_head.weight",
@@ -6167,6 +6206,9 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "input_width": rows.input_width,
         "decoder_mode": model.config.decoder_mode,
         "refinement_steps": model.config.refinement_steps,
+        "refinement_mixer": getattr(
+            model.config, "refinement_mixer", config.refinement_mixer
+        ),
         "training_output_width": model.config.training_output_width,
         "checkpoint_output_width": model.config.checkpoint_output_width,
         "compact_output_width": model.config.compact_output_width,
@@ -6284,6 +6326,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--row-head-carrier-gate", action="store_true")
+    parser.add_argument(
+        "--refinement-mixer",
+        choices=("linear", "carrier_gate", "attention_residual"),
+        default="linear",
+    )
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=2)
     parser.add_argument("--task-local-adaptation", action="store_true")
@@ -6325,6 +6372,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             trace_engine=args.trace_engine,
             optimizer=args.optimizer,
             weight_decay=args.weight_decay,
+            refinement_mixer=args.refinement_mixer,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6367,6 +6415,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         row_head_carrier_scale=args.row_head_carrier_scale,
         row_head_carrier_gate=args.row_head_carrier_gate,
         shape_head_carrier_scale=args.shape_head_carrier_scale,
+        refinement_mixer=args.refinement_mixer,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,

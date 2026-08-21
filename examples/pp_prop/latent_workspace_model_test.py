@@ -3426,6 +3426,187 @@ def test_row_head_carrier_gate_starts_exactly_carrier_free() -> None:
     )
 
 
+def test_gated_heads_are_literal_slices_of_same_seed_linear_initialization() -> None:
+    """The gate ablation must not change the event/carrier initialization scale."""
+    linear = LatentWorkspaceModel(_row_refinement_config())
+    gated = LatentWorkspaceModel(
+        _row_refinement_config(row_head_carrier_gate=True)
+    )
+
+    combined = np.asarray(linear.answer_row_head.weight.value["weight"])
+    carrier = np.asarray(gated.answer_row_carrier_head.weight.value["weight"])
+    event = np.asarray(gated.answer_row_event_head.weight.value["weight"])
+    split = linear.config.neuron_count
+
+    np.testing.assert_array_equal(carrier, combined[:split])
+    np.testing.assert_array_equal(event, combined[split:])
+
+
+def test_zero_gate_matches_carrier_free_linear_head_exactly() -> None:
+    linear = LatentWorkspaceModel(_row_refinement_config())
+    gated = LatentWorkspaceModel(
+        _row_refinement_config(refinement_mixer="carrier_gate")
+    )
+    layout = _row_refinement_layout()
+    carrier = jnp.zeros((1, linear.config.neuron_count), dtype=jnp.float32)
+    event = jnp.linspace(0.0, 1.0, layout.input_width, dtype=jnp.float32)[None]
+    head_input = latent_workspace_module._refinement_head_input(
+        carrier, event, layout
+    )
+
+    expected = linear.answer_row_head(head_input)
+    actual = gated._row_head_logits(carrier, event, head_input)
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_refinement_routing_manifest_tracks_each_architecture() -> None:
+    manifest = latent_workspace_module.refinement_parameter_paths
+
+    assert set(manifest(_row_refinement_config())) == {
+        "answer_row_head.weight",
+        "answer_shape_head.weight",
+    }
+    assert set(
+        manifest(_row_refinement_config(refinement_mixer="carrier_gate"))
+    ) == {
+        "answer_row_event_head.weight",
+        "answer_row_carrier_head.weight",
+        "row_carrier_gate_head.weight",
+        "answer_shape_head.weight",
+    }
+    assert set(
+        manifest(_row_refinement_config(refinement_mixer="attention_residual"))
+    ) == {
+        "answer_row_proposal_head.weight",
+        "answer_shape_proposal_head.weight",
+        "row_attention_residual.query",
+        "shape_attention_residual.query",
+    }
+
+
+def test_attention_residual_configuration_rejects_conflicting_legacy_ablations() -> None:
+    for conflict in (
+        {"row_head_carrier_gate": True},
+        {"copy_residual_gain": 1.0},
+        {"row_head_carrier_scale": 0.0},
+        {"shape_head_carrier_scale": 0.0},
+    ):
+        with pytest.raises(ValueError, match="attention_residual"):
+            _row_refinement_config(
+                refinement_mixer="attention_residual", **conflict
+            )
+
+
+def test_attention_residual_refinement_uses_uniform_sources_and_tracks_history() -> None:
+    config = _row_refinement_config(
+        max_latent_steps=60,
+        refinement_steps=60,
+        refinement_mixer="attention_residual",
+    )
+    model = LatentWorkspaceModel(config)
+    model.query_grid.value = model.query_grid.value.at[0, 0, 0, 3].set(1.0)
+    model.query_shape.value = model.query_shape.value.at[0, 4].set(1.0)
+    zero_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+
+    model.cell_step(zero_event, jnp.ones((1,), dtype=jnp.bool_))
+
+    balance = latent_workspace_module._rms_balanced_identity_source
+    row_identity = model.query_grid.value[:, 0].reshape(1, -1)
+    expected_row = (
+        balance(row_identity, model.row_proposal.value) + model.row_proposal.value
+    ) / 2.0
+    expected_shape = (
+        balance(model.query_shape.value, model.shape_proposal.value)
+        + model.shape_proposal.value
+    ) / 2.0
+    np.testing.assert_allclose(model.answer_row.value, expected_row, atol=2e-6)
+    np.testing.assert_allclose(model.answer_shape.value, expected_shape, atol=2e-6)
+    np.testing.assert_array_equal(
+        model.row_proposal_history.value[0, 0, 0], model.row_proposal.value[0]
+    )
+    np.testing.assert_array_equal(model.reasoning_sweep.value, 0)
+
+    def latent_step(_: jax.Array) -> jax.Array:
+        model.cell_step(zero_event, jnp.ones((1,), dtype=jnp.bool_))
+        return model.reasoning_sweep.value
+
+    brainstate.transform.for_loop(latent_step, jnp.arange(29))
+    np.testing.assert_array_equal(model.reasoning_index.value, 0)
+    np.testing.assert_array_equal(model.reasoning_sweep.value, 1)
+    assert np.count_nonzero(np.asarray(model.row_proposal_history.value[:, 0])) > 0
+    np.testing.assert_array_equal(
+        model.shape_proposal_history.value[:, 0], model.shape_proposal.value
+    )
+
+
+def test_attention_residual_refinement_snapshot_reset_and_restore() -> None:
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            max_latent_steps=60,
+            refinement_steps=60,
+            refinement_mixer="attention_residual",
+        )
+    )
+    model.row_proposal.value = jnp.ones_like(model.row_proposal.value)
+    model.shape_proposal.value = jnp.ones_like(model.shape_proposal.value) * 2
+    model.row_proposal_history.value = model.row_proposal_history.value.at[
+        0, 0, 3, 4
+    ].set(5.0)
+    model.shape_proposal_history.value = model.shape_proposal_history.value.at[
+        0, 0, 7
+    ].set(6.0)
+    model.reasoning_sweep.value = jnp.asarray([1], dtype=jnp.int32)
+    snapshot = model.snapshot_state()
+    paths = {path for path, _ in snapshot.entries}
+
+    assert {
+        ("row_proposal",),
+        ("shape_proposal",),
+        ("row_proposal_history",),
+        ("shape_proposal_history",),
+        ("reasoning_sweep",),
+    } <= paths
+    model.reset_state()
+    np.testing.assert_array_equal(model.row_proposal.value, 0.0)
+    np.testing.assert_array_equal(model.shape_proposal.value, 0.0)
+    np.testing.assert_array_equal(model.row_proposal_history.value, 0.0)
+    np.testing.assert_array_equal(model.shape_proposal_history.value, 0.0)
+    np.testing.assert_array_equal(model.reasoning_sweep.value, 0)
+    model.restore_state(snapshot)
+    _assert_state_snapshots_equal(snapshot, model.snapshot_state())
+
+
+def test_attention_residual_proposal_and_query_paths_compile_all_direct() -> None:
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            batch_size=2,
+            max_latent_steps=60,
+            refinement_steps=60,
+            refinement_mixer="attention_residual",
+        )
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        learner = compile_pp_prop(model)
+
+    def text(path: object) -> str:
+        return ".".join(map(str, path)) if isinstance(path, (tuple, list)) else str(path)
+
+    expected = set(latent_workspace_module.refinement_parameter_paths(model.config))
+    assert expected <= {text(path) for path in learner.param_states}
+    classifications: dict[str, set[str]] = {}
+    for record in learner.report.diagnostics:
+        context = getattr(record, "context", None)
+        if not isinstance(context, dict):
+            continue
+        values = context.get("path_classification")
+        if isinstance(values, dict):
+            classifications[text(getattr(record, "weight_path", ""))] = {
+                str(getattr(value, "value", value)) for value in values.values()
+            }
+    assert all(classifications[path] == {"all_direct"} for path in expected)
+
+
 def test_row_head_carrier_gate_opens_a_carrier_path() -> None:
     """Forcing the gate weight open must make the row answer carrier-bound.
 

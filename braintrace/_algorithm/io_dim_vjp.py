@@ -556,7 +556,7 @@ def _update_IO_dim_etrace_scan_fn(
             # them at the low-pass-filtered ``x`` instead, which destroys the
             # within-step correlation between the primitive's operands.
             #
-            new_df = dfs[df_key]
+            new_df: Any = dfs[df_key]
             if factors_fn is not None:
                 factors = factors_fn(
                     xs[etrace_x_key(relation.x_var)],

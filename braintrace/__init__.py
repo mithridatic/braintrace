@@ -138,6 +138,7 @@ from ._op import (
     sparse_matmul,
     lora_matmul,
     outer_write,
+    attention_residual,
     register_primitive,
 )
 from ._grad_exponential import GradExpon
@@ -207,6 +208,7 @@ __all__ = [
     'sparse_matmul',
     'lora_matmul',
     'outer_write',
+    'attention_residual',
 
     # ETP primitive class & rule registration
     'ETPPrimitive',

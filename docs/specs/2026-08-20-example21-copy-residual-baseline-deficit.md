@@ -388,15 +388,15 @@ carrier branch):
    initialised from the trained carrier-free head's event columns.
 2. The carrier branch enters as
    `next_row = event_head(events) + residual + tanh(g) * carrier_head(carrier)`
-   with `g` a learned scalar initialised at 0 — the model *starts* at the
+   with `g` a learned 300-coordinate logit gate initialised at 0 — the model *starts* at the
    §8 carrier-free optimum and training must buy carrier access through `g`.
 3. Falsification: if training simply reopens the gate and walks copy back
-   down (§6.1 displacement returning through `tanh(g)`), the scalar gate is
+   down (§6.1 displacement returning through `tanh(g)`), the coordinatewise gate is
    insufficient and a per-column gate driven by the colour block (candidate
    B) or depth-wise softmax over per-sweep carriers (candidate C, the full
    AttnRes form) is next.
 
-Open risks to resolve before implementation: whether a learned scalar
+Open risks to resolve before implementation: whether a learned logit-vector gate
 multiplying a tracked Linear output keeps both heads `all_direct` in the
 ETP compiler, and whether the gate needs a slower learning rate than the
 heads to prevent early displacement. Awaiting J's approval per the working
@@ -409,13 +409,14 @@ parameters only as trainable invars of ETP primitives, so a bare scalar
 `ParamState` multiplied into the graph would silently never train.
 Resolution, staying inside the approved semantics:
 
-- The gate is a zero-initialised bias-free `braintrace.nn.Linear(1, 1)` fed
-  with ones, so `gate = tanh(w)` is an ETP-tracked trainable scalar. Its
+- The gate is a zero-initialised bias-free `braintrace.nn.Linear(1, 300)` fed
+  with ones, so `gate = tanh(w)` is an ETP-tracked trainable vector with one
+  coordinate per row logit. Its
   path to the `answer_row` hidden state (tanh → mul → add) traverses no
   other ETP primitive, so it classifies `all_direct`; the carrier head's
   output enters the mul as a sibling input, not a chain link.
-- The carrier head is **random-initialised** (same `1/sqrt(width)` scheme as
-  the event head), not zero-initialised: at `gate = 0` the carrier
+- The carrier and event heads are literal slices of one same-seed combined
+  matrix scaled by the complete input width. At `gate = 0` the carrier
   contribution is exactly zero (the §8 carrier-free start), while the
   gate's own gradient — proportional to the carrier head's output — is
   nonzero, avoiding the frozen-at-zero saddle of a doubly-zero start.

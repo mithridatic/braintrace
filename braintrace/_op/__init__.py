@@ -29,6 +29,7 @@ module. The submodule layout is:
 * :mod:`.sparse` — ``etp_sp_mm_p``, ``etp_sp_mv_p``, :func:`sparse_matmul`
 * :mod:`.lora` — ``etp_lora_mm_p``, ``etp_lora_mv_p``, :func:`lora_matmul`
 * :mod:`.outer` — ``etp_outer_write_p``, :func:`outer_write`
+* :mod:`.attention` — ``etp_attention_residual_p``, :func:`attention_residual`
 
 The public surface mirrors the legacy module: every name previously
 exported from ``braintrace._op`` is also available here.
@@ -74,6 +75,7 @@ from ._registries import (
     register_batched_counterpart,
 )
 from .conv import conv, etp_conv_p
+from .attention import attention_residual, etp_attention_residual_p
 from .dense import etp_mm_p, etp_mv_p, matmul
 from .einsum import einsum, etp_einsum_p
 from .elemwise import element_wise, etp_elemwise_p
@@ -139,6 +141,7 @@ __all__ = [
     'etp_lora_mm_p',
     'etp_lora_mv_p',
     'etp_outer_write_p',
+    'etp_attention_residual_p',
 
     # user API
     'matmul',
@@ -150,4 +153,5 @@ __all__ = [
     'sparse_matmul',
     'lora_matmul',
     'outer_write',
+    'attention_residual',
 ]

@@ -3522,6 +3522,54 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
         is True
     )
 
+    gated_paths = {
+        "answer_row_event_head.weight",
+        "answer_row_carrier_head.weight",
+        "row_carrier_gate_head.weight",
+        "answer_shape_head.weight",
+    }
+    gated_training = copy.deepcopy(memory_training)
+    gated_training["compiler_report"]["etrace_weights"].extend(
+        {"parameter": path} for path in sorted(gated_paths)
+    )
+    gated_training["compiler_report"]["excluded_weights"] = []
+    gated_training["compiler_report"]["diagnostics"].extend(
+        {
+            "kind": "relation_included",
+            "level": "info",
+            "weight_path": path,
+            "path_classification_by_hidden_state": {
+                "answer_row" if "row" in path else "answer_shape": "all_direct"
+            },
+        }
+        for path in sorted(gated_paths)
+    )
+    gated_training["parameter_changes"].update(
+        {path: {"changed": True, "l2_delta": 1.0} for path in gated_paths}
+    )
+    for path in (
+        "color_factor_head.weight",
+        "height_head.weight",
+        "readout_projection.weight",
+        "width_head.weight",
+    ):
+        gated_training["parameter_changes"][path] = {
+            "changed": False,
+            "l2_delta": 0.0,
+        }
+    gated_qualification = example._qualification(
+        example.ExperimentConfig(training_updates=3, row_head_carrier_gate=True),
+        public_data,
+        gated_training,
+        memory_evaluation,
+        gpu,
+        model_report,
+    )
+    assert (
+        gated_qualification["structural_checks"]["pp_prop_compiler_routes"] is True
+    )
+    assert gated_qualification["structural_checks"]["row_routes_all_direct"] is True
+
     mixed_memory_training = copy.deepcopy(memory_training)
     mixed_memory_training["compiler_report"]["diagnostics"][0][
         "path_classification_by_hidden_state"

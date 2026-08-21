@@ -80,6 +80,10 @@ LEARNED_RETRIEVAL_KEY_CODINGS = ("learned_keys", "learned_write")
 #: Eligibility-trace engines the model can compile under.
 TRACE_ENGINES = ("pp_prop", "d_rtrl")
 
+#: Row-refinement proposal mixers. Only ``attention_residual`` implements the
+#: paper mechanism; the other two are retained benchmark ablations.
+REFINEMENT_MIXERS = ("linear", "carrier_gate", "attention_residual")
+
 #: Reported key-map name per coding; provenance hashes stay on the frozen bases.
 _MEMORY_KEY_MAP_NAMES = {
     "frozen": "fixed_rff_cosine",
@@ -231,6 +235,7 @@ class ModelConfig:
         carrier so training cannot displace the copy path with
         task-conditional fits.
     row_head_carrier_gate : bool, default=False
+        Compatibility spelling for ``refinement_mixer="carrier_gate"``.
         Replace the single answer row head with an event-only head plus a
         carrier head whose contribution is multiplied elementwise by
         ``tanh(w)``, where ``w`` is a zero-initialised trainable per-logit
@@ -245,6 +250,11 @@ class ModelConfig:
         input only.  Zero makes the shape answer a pure function of the row
         events, testing whether the shape head suffers the same carrier
         displacement as the row head.
+    refinement_mixer : {"linear", "carrier_gate", "attention_residual"}
+        Refinement proposal mixer. ``"linear"`` preserves the direct heads,
+        ``"carrier_gate"`` selects the retained carrier-gating ablation, and
+        ``"attention_residual"`` applies learned source-axis attention across
+        completed refinement sweeps.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -296,6 +306,9 @@ class ModelConfig:
     row_head_carrier_scale: float = 1.0
     row_head_carrier_gate: bool = False
     shape_head_carrier_scale: float = 1.0
+    refinement_mixer: Literal[
+        "linear", "carrier_gate", "attention_residual"
+    ] = "linear"
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -382,6 +395,27 @@ class ModelConfig:
                 "row_head_carrier_gate replaces row_head_carrier_scale; "
                 "leave the scale at its default of 1.0"
             )
+        if not isinstance(self.refinement_mixer, str):
+            raise TypeError(
+                "refinement_mixer must be 'linear', 'carrier_gate' or "
+                "'attention_residual'"
+            )
+        if self.refinement_mixer not in REFINEMENT_MIXERS:
+            raise ValueError(
+                "refinement_mixer must be 'linear', 'carrier_gate' or "
+                "'attention_residual'"
+            )
+        if self.row_head_carrier_gate:
+            if self.refinement_mixer == "attention_residual":
+                raise ValueError(
+                    "row_head_carrier_gate conflicts with "
+                    "refinement_mixer='attention_residual'; run the carrier "
+                    "ablation separately"
+                )
+            if self.refinement_mixer == "linear":
+                object.__setattr__(self, "refinement_mixer", "carrier_gate")
+        if self.refinement_mixer == "carrier_gate":
+            object.__setattr__(self, "row_head_carrier_gate", True)
         object.__setattr__(
             self,
             "shape_head_carrier_scale",
@@ -389,6 +423,16 @@ class ModelConfig:
                 self.shape_head_carrier_scale, "shape_head_carrier_scale"
             ),
         )
+        if self.refinement_mixer == "attention_residual" and (
+            self.copy_residual_gain != 0.0
+            or self.row_head_carrier_scale != 1.0
+            or self.shape_head_carrier_scale != 1.0
+        ):
+            raise ValueError(
+                "refinement_mixer='attention_residual' cannot be combined with "
+                "copy_residual_gain or non-default row/shape carrier scales; "
+                "run those legacy ablations separately"
+            )
         for name in (
             "demonstration_phase_index",
             "query_phase_index",
@@ -526,6 +570,12 @@ class ModelConfig:
         """Return whether learned row-wise answer refinement is enabled."""
 
         return self.decoder_mode == "row_refinement"
+
+    @property
+    def refinement_sweeps(self) -> int:
+        """Return the number of complete 30-row refinement sweeps."""
+
+        return self.refinement_steps // MAX_GRID_SIZE
 
     @property
     def slot_count(self) -> int:
@@ -1637,16 +1687,74 @@ def _copy_residual_logits(
     exactly zero, so the learned head keeps sole custody of rule deviations
     and out-of-range cells.
 
-    This is the identity-mapping residual of Kimi's Attention Residuals
-    (arXiv:2603.15031) applied to the decode path: the direct route is
-    preserved architecturally and training learns modulations of it, instead
-    of spending its whole travel budget building the 110-parameter copy map
-    that the lookup-table baseline owns by construction.
+    This fixed additive copy bias is retained as an ablation. It is not the
+    learned source-axis softmax defined by Attention Residuals.
     """
     if gain == 0.0:
         return row_logits
     residual = event[:, layout.input_color_slice].astype(row_logits.dtype)
     return row_logits + jnp.asarray(gain, dtype=row_logits.dtype) * residual
+
+
+def _rms_balanced_identity_source(
+    identity: jax.Array, proposal: jax.Array
+) -> jax.Array:
+    """Scale an identity source to the proposal RMS with a stopped multiplier."""
+    identity = jnp.asarray(identity, dtype=proposal.dtype)
+    accumulator_dtype = jnp.promote_types(proposal.dtype, jnp.float32)
+    identity_rms = jnp.sqrt(
+        jnp.mean(jnp.square(identity.astype(accumulator_dtype)), axis=-1, keepdims=True)
+    )
+    proposal_rms = jnp.sqrt(
+        jnp.mean(
+            jnp.square(jax.lax.stop_gradient(proposal).astype(accumulator_dtype)),
+            axis=-1,
+            keepdims=True,
+        )
+    )
+    epsilon = jnp.asarray(jnp.finfo(accumulator_dtype).eps, dtype=accumulator_dtype)
+    multiplier = jnp.where(
+        identity_rms > epsilon,
+        proposal_rms / jnp.maximum(identity_rms, epsilon),
+        jnp.asarray(1.0, dtype=accumulator_dtype),
+    )
+    return identity * jax.lax.stop_gradient(multiplier).astype(identity.dtype)
+
+
+def refinement_parameter_paths(config: Any) -> tuple[str, ...]:
+    """Return architecture-aware required refinement parameter paths.
+
+    Parameters
+    ----------
+    config : object
+        Architecture descriptor exposing ``decoder_mode`` and
+        ``refinement_mixer``. Both ``ModelConfig`` and the Example 21
+        experiment configuration satisfy this contract.
+
+    Returns
+    -------
+    tuple of str
+        Sorted parameter paths. Legacy CP has no refinement paths.
+    """
+    if config.decoder_mode != "row_refinement":
+        return ()
+    if config.refinement_mixer == "carrier_gate":
+        paths = (
+            "answer_row_event_head.weight",
+            "answer_row_carrier_head.weight",
+            "row_carrier_gate_head.weight",
+            "answer_shape_head.weight",
+        )
+    elif config.refinement_mixer == "attention_residual":
+        paths = (
+            "answer_row_proposal_head.weight",
+            "answer_shape_proposal_head.weight",
+            "row_attention_residual.query",
+            "shape_attention_residual.query",
+        )
+    else:
+        paths = ("answer_row_head.weight", "answer_shape_head.weight")
+    return tuple(sorted(paths))
 
 
 def refinement_head_width(neuron_count: int) -> int:
@@ -1886,24 +1994,18 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             row_weights = row_weights / math.sqrt(head_width)
             shape_weights = random.randn(head_width, 2 * MAX_GRID_SIZE)
             shape_weights = shape_weights / math.sqrt(head_width)
-            if config.row_head_carrier_gate:
+            if config.refinement_mixer == "carrier_gate":
                 event_width = head_width - config.neuron_count
-                event_weights = random.randn(
-                    event_width, MAX_GRID_SIZE * COLOR_COUNT
-                ) / math.sqrt(event_width)
-                carrier_weights = random.randn(
-                    config.neuron_count, MAX_GRID_SIZE * COLOR_COUNT
-                ) / math.sqrt(config.neuron_count)
                 self.answer_row_event_head = braintrace.nn.Linear(
                     event_width,
                     MAX_GRID_SIZE * COLOR_COUNT,
-                    w_init=event_weights,
+                    w_init=row_weights[config.neuron_count :],
                     b_init=None,
                 )
                 self.answer_row_carrier_head = braintrace.nn.Linear(
                     config.neuron_count,
                     MAX_GRID_SIZE * COLOR_COUNT,
-                    w_init=carrier_weights,
+                    w_init=row_weights[: config.neuron_count],
                     b_init=None,
                 )
                 self.row_carrier_gate_head = braintrace.nn.Linear(
@@ -1912,6 +2014,27 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     w_init=jnp.zeros((1, MAX_GRID_SIZE * COLOR_COUNT)),
                     b_init=None,
                 )
+            elif config.refinement_mixer == "attention_residual":
+                self.answer_row_proposal_head = braintrace.nn.Linear(
+                    head_width,
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    w_init=row_weights,
+                    b_init=None,
+                )
+                self.answer_shape_proposal_head = braintrace.nn.Linear(
+                    head_width,
+                    2 * MAX_GRID_SIZE,
+                    w_init=shape_weights,
+                    b_init=None,
+                )
+                self.row_attention_residual = braintrace.nn.AttentionResidual(
+                    MAX_GRID_SIZE * COLOR_COUNT,
+                    query_count=config.refinement_sweeps,
+                )
+                self.shape_attention_residual = braintrace.nn.AttentionResidual(
+                    2 * MAX_GRID_SIZE,
+                    query_count=config.refinement_sweeps,
+                )
             else:
                 self.answer_row_head = braintrace.nn.Linear(
                     head_width,
@@ -1919,12 +2042,13 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     w_init=row_weights,
                     b_init=None,
                 )
-            self.answer_shape_head = braintrace.nn.Linear(
-                head_width,
-                2 * MAX_GRID_SIZE,
-                w_init=shape_weights,
-                b_init=None,
-            )
+            if config.refinement_mixer != "attention_residual":
+                self.answer_shape_head = braintrace.nn.Linear(
+                    head_width,
+                    2 * MAX_GRID_SIZE,
+                    w_init=shape_weights,
+                    b_init=None,
+                )
             self.answer_row = brainstate.HiddenState(
                 jnp.zeros(
                     (config.batch_size, MAX_GRID_SIZE * COLOR_COUNT),
@@ -1962,6 +2086,42 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.reasoning_index = brainstate.ShortTermState(
                 jnp.zeros((config.batch_size,), dtype=jnp.int32)
             )
+            if config.refinement_mixer == "attention_residual":
+                self.row_proposal = brainstate.HiddenState(
+                    jnp.zeros(
+                        (config.batch_size, MAX_GRID_SIZE * COLOR_COUNT),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.shape_proposal = brainstate.HiddenState(
+                    jnp.zeros(
+                        (config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32
+                    )
+                )
+                self.row_proposal_history = brainstate.ShortTermState(
+                    jnp.zeros(
+                        (
+                            config.batch_size,
+                            config.refinement_sweeps,
+                            MAX_GRID_SIZE,
+                            MAX_GRID_SIZE * COLOR_COUNT,
+                        ),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.shape_proposal_history = brainstate.ShortTermState(
+                    jnp.zeros(
+                        (
+                            config.batch_size,
+                            config.refinement_sweeps,
+                            2 * MAX_GRID_SIZE,
+                        ),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.reasoning_sweep = brainstate.ShortTermState(
+                    jnp.zeros((config.batch_size,), dtype=jnp.int32)
+                )
         brainstate.nn.init_all_states(self, batch_size=config.batch_size)
 
     @property
@@ -2331,6 +2491,34 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.reasoning_index.value = jnp.zeros(
                 (self.config.batch_size,), dtype=jnp.int32
             )
+            if self.config.refinement_mixer == "attention_residual":
+                self.row_proposal.value = jnp.zeros(
+                    (self.config.batch_size, MAX_GRID_SIZE * COLOR_COUNT),
+                    dtype=jnp.float32,
+                )
+                self.shape_proposal.value = jnp.zeros(
+                    (self.config.batch_size, 2 * MAX_GRID_SIZE), dtype=jnp.float32
+                )
+                self.row_proposal_history.value = jnp.zeros(
+                    (
+                        self.config.batch_size,
+                        self.config.refinement_sweeps,
+                        MAX_GRID_SIZE,
+                        MAX_GRID_SIZE * COLOR_COUNT,
+                    ),
+                    dtype=jnp.float32,
+                )
+                self.shape_proposal_history.value = jnp.zeros(
+                    (
+                        self.config.batch_size,
+                        self.config.refinement_sweeps,
+                        2 * MAX_GRID_SIZE,
+                    ),
+                    dtype=jnp.float32,
+                )
+                self.reasoning_sweep.value = jnp.zeros(
+                    (self.config.batch_size,), dtype=jnp.int32
+                )
 
     def _snapshot_state_items(self) -> tuple[tuple[tuple[Any, ...], Any], ...]:
         """Return every state required for exact inference restoration."""
@@ -2347,6 +2535,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             (("answer_grid",), self.answer_grid),
             (("reasoning_index",), self.reasoning_index),
         )
+        if self.config.refinement_mixer == "attention_residual":
+            refinement_items += (
+                (("row_proposal_history",), self.row_proposal_history),
+                (("shape_proposal_history",), self.shape_proposal_history),
+                (("reasoning_sweep",), self.reasoning_sweep),
+            )
         hidden_paths = {path for path, _ in items}
         return items + tuple(
             item for item in refinement_items if item[0] not in hidden_paths
@@ -2578,7 +2772,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         which is zero at initialisation — the §9.1 carrier-free start.
         """
         assert self.config.refinement_layout is not None
-        if not self.config.row_head_carrier_gate:
+        if self.config.refinement_mixer == "linear":
             row_head_input = _carrier_scaled_head_input(
                 unit_carrier,
                 event,
@@ -2587,11 +2781,107 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 head_input,
             )
             return self.answer_row_head(row_head_input)
+        if self.config.refinement_mixer == "attention_residual":
+            return self.answer_row_proposal_head(head_input)
         event_blocks = head_input[:, self.config.neuron_count :]
         gate_input = jnp.ones((head_input.shape[0], 1), dtype=head_input.dtype)
         gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
         carrier_logits = self.answer_row_carrier_head(unit_carrier)
         return self.answer_row_event_head(event_blocks) + gate * carrier_logits
+
+    def _shape_head_logits(self, head_input: jax.Array) -> jax.Array:
+        """Return the current shape proposal under the configured mixer."""
+        if self.config.refinement_mixer == "attention_residual":
+            return self.answer_shape_proposal_head(head_input)
+        return self.answer_shape_head(head_input)
+
+    def _attention_refinement_outputs(
+        self,
+        row_proposal: jax.Array,
+        shape_proposal: jax.Array,
+        refinement_rows: jax.Array,
+    ) -> tuple[jax.Array, jax.Array]:
+        """Mix query identity, completed sweeps, and current proposals."""
+        batch_indices = jnp.arange(self.config.batch_size)
+        sweeps = jnp.asarray(self.reasoning_sweep.value)
+        row_identity = self.query_grid.value[
+            batch_indices, refinement_rows
+        ].reshape(self.config.batch_size, -1)
+        row_identity = _rms_balanced_identity_source(row_identity, row_proposal)
+        shape_identity = _rms_balanced_identity_source(
+            self.query_shape.value, shape_proposal
+        )
+        row_history = jax.vmap(
+            lambda history, row: history[:, row, :]
+        )(jax.lax.stop_gradient(self.row_proposal_history.value), refinement_rows)
+        shape_history = jax.lax.stop_gradient(self.shape_proposal_history.value)
+        row_sources = jnp.concatenate(
+            (row_identity[:, None, :], row_history, row_proposal[:, None, :]),
+            axis=1,
+        )
+        shape_sources = jnp.concatenate(
+            (
+                shape_identity[:, None, :],
+                shape_history,
+                shape_proposal[:, None, :],
+            ),
+            axis=1,
+        )
+        history_valid = (
+            jnp.arange(self.config.refinement_sweeps)[None, :] < sweeps[:, None]
+        )
+        source_mask = jnp.concatenate(
+            (
+                jnp.ones((self.config.batch_size, 1), dtype=jnp.bool_),
+                history_valid,
+                jnp.ones((self.config.batch_size, 1), dtype=jnp.bool_),
+            ),
+            axis=1,
+        )
+        return (
+            self.row_attention_residual(
+                row_sources, source_mask=source_mask, query_index=sweeps
+            ),
+            self.shape_attention_residual(
+                shape_sources, source_mask=source_mask, query_index=sweeps
+            ),
+        )
+
+    def _cache_attention_proposals(
+        self,
+        row_proposal: jax.Array,
+        shape_proposal: jax.Array,
+        refinement_rows: jax.Array,
+        refinement_latent: jax.Array,
+    ) -> None:
+        """Store current proposals and advance the completed-sweep index."""
+        sweeps = jnp.asarray(self.reasoning_sweep.value)
+        updated_rows = jax.vmap(
+            lambda history, sweep, row, value: history.at[sweep, row].set(value)
+        )(
+            self.row_proposal_history.value,
+            sweeps,
+            refinement_rows,
+            row_proposal,
+        )
+        self.row_proposal_history.value = jnp.where(
+            refinement_latent[:, None, None, None],
+            updated_rows,
+            self.row_proposal_history.value,
+        )
+        sweep_complete = refinement_latent & (refinement_rows == MAX_GRID_SIZE - 1)
+        updated_shapes = jax.vmap(
+            lambda history, sweep, value: history.at[sweep].set(value)
+        )(self.shape_proposal_history.value, sweeps, shape_proposal)
+        self.shape_proposal_history.value = jnp.where(
+            sweep_complete[:, None, None],
+            updated_shapes,
+            self.shape_proposal_history.value,
+        )
+        next_sweep = jnp.minimum(sweeps + 1, self.config.refinement_sweeps - 1)
+        self.reasoning_sweep.value = jnp.where(
+            sweep_complete, next_sweep, sweeps
+        )
 
     def cell_step(
         self, event: jax.Array, advance: jax.Array | None = None
@@ -2779,14 +3069,41 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 self.config.shape_head_carrier_scale,
                 head_input,
             )
-            next_row = _copy_residual_logits(
+            row_proposal = _copy_residual_logits(
                 self._row_head_logits(unit_carrier, event, head_input),
                 event,
                 self.config.refinement_layout,
                 self.config.copy_residual_gain,
             )
-            next_shape = self.answer_shape_head(shape_head_input)
+            shape_proposal = self._shape_head_logits(shape_head_input)
             refinement_gate = refinement_latent[:, None]
+            if self.config.refinement_mixer == "attention_residual":
+                self.row_proposal.value = jnp.where(
+                    refinement_gate, row_proposal, self.row_proposal.value
+                )
+                self.shape_proposal.value = jnp.where(
+                    refinement_gate, shape_proposal, self.shape_proposal.value
+                )
+                mixed_row, mixed_shape = self._attention_refinement_outputs(
+                    self.row_proposal.value,
+                    self.shape_proposal.value,
+                    refinement_rows,
+                )
+                next_row = jnp.where(
+                    refinement_gate, mixed_row, self.answer_row.value
+                )
+                next_shape = jnp.where(
+                    refinement_gate, mixed_shape, self.answer_shape.value
+                )
+                self._cache_attention_proposals(
+                    self.row_proposal.value,
+                    self.shape_proposal.value,
+                    refinement_rows,
+                    refinement_latent,
+                )
+            else:
+                next_row = row_proposal
+                next_shape = shape_proposal
             self.answer_row.value = jnp.where(
                 refinement_gate, next_row, self.answer_row.value
             )
