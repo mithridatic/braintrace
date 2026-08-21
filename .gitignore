@@ -221,5 +221,8 @@ docs/_static/js/brainx-footer.js
 # docs/specs/2026-08-07-e08-prune-unreferenced-static-assets.md.
 /docs/_static/*.pptx
 /docs/_static/*.pdf
+# Locally downloaded review PDFs
+/docs/Review Report*.pdf
+/docs/s41467-026-68453-w.pdf
 /.agents/
 /.worktrees/
