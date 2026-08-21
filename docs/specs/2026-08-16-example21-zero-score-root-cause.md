@@ -347,7 +347,7 @@ structural.
 
 ### Budget ceiling is memory, not compute
 
-`_prepare_training` pre-materializes the full event tensor of shape
+The former whole-run materializer pre-materialized the full event tensor of shape
 `(updates, sequence, 1, 830)` before training. At 2048 updates the run emitted
 recovered `CUDA_ERROR_OUT_OF_MEMORY` warnings on 4 GiB allocations. Training
 compute is cheap: 2048 updates plus the full 400-task evaluation completed in
@@ -362,8 +362,8 @@ Out of memory while trying to allocate 4.58GiB
 
 **2048 updates is therefore the hard ceiling** for this design on a 12 GB
 device. Raising the budget further requires streaming or chunking the training
-tensor rather than materializing it up front. That is a code change to
-`_prepare_training` and `_train_model`, it touches a run path covered by the
+tensor rather than materializing it up front. That required a code change to
+the training preparation and `_train_model`, it touched a run path covered by the
 example's qualification gates, and it should be scoped and approved separately
 rather than folded into this diagnosis.
 

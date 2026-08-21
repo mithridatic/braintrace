@@ -190,6 +190,40 @@ def _tiny_trace_model_config(rows: RowEventConfig) -> ModelConfig:
     )
 
 
+_TRAINING_ARRAY_FIELDS = (
+    "events",
+    "advances",
+    "heights",
+    "widths",
+    "colors",
+    "masks",
+    "efforts",
+)
+_TRAINING_METADATA_FIELDS = (
+    "task_fingerprints",
+    "base_task_fingerprints",
+    "source_names",
+    "held_out_demonstration_indices",
+)
+
+
+def _materialize_training(example, data, config, rows):
+    """Assemble streamed chunks for tests that inspect a full schedule."""
+    chunks = list(example._training_chunks(data, config, rows))
+    assert chunks
+    if len(chunks) == 1:
+        return chunks[0]
+    arrays = {
+        name: np.concatenate([getattr(chunk, name) for chunk in chunks])
+        for name in _TRAINING_ARRAY_FIELDS
+    }
+    metadata = {
+        name: tuple(value for chunk in chunks for value in getattr(chunk, name))
+        for name in _TRAINING_METADATA_FIELDS
+    }
+    return example._TrainingTensors(**arrays, **metadata)
+
+
 def _metric(value: float = 0.0) -> dict[str, float | int]:
     return {
         "query_count": 1,
@@ -1155,7 +1189,7 @@ def test_training_stream_compacts_learning_rule_timeline(example):
     """No frozen layout position may age the trace before supervised depths."""
     config = example.ExperimentConfig.smoke_config()
     rows = example._row_config(config)
-    tensors = example._prepare_training(example._load_data(config), config, rows)
+    tensors = _materialize_training(example, example._load_data(config), config, rows)
 
     for advances, events in zip(tensors.advances, tensors.events, strict=True):
         advancing = advances[:, 0]
@@ -1400,7 +1434,7 @@ def test_training_mask_supervises_only_latent_row_ticks_with_unit_weight(example
     """An effort-R update weights only its R generated row ticks."""
     config = example.ExperimentConfig.smoke_config()
     rows = example._row_config(config)
-    tensors = example._prepare_training(example._load_data(config), config, rows)
+    tensors = _materialize_training(example, example._load_data(config), config, rows)
 
     for effort, mask in zip(tensors.efforts, tensors.masks, strict=True):
         supervised = np.flatnonzero(mask)
@@ -1422,7 +1456,7 @@ def test_training_tensor_terminals_follow_each_sample_effort(example):
     data = example._load_data(config)
     rows = example._row_config(config)
 
-    tensors = example._prepare_training(data, config, rows)
+    tensors = _materialize_training(example, data, config, rows)
     horizon = example._training_sequence_length(data, config)
 
     assert tensors.events.shape == (3, horizon, 1, rows.input_width)
@@ -1685,7 +1719,9 @@ def test_compiler_evidence_retains_warnings_and_parameter_classification(example
 def test_structural_training_tensors_are_empty(example):
     config = example.ExperimentConfig(structural_only=True, training_updates=0)
     fixture = example._load_data(config)
-    tensors = example._prepare_training(fixture, config, example._row_config(config))
+    tensors = _materialize_training(
+        example, fixture, config, example._row_config(config)
+    )
     assert tensors.events.size == 0
     assert tensors.task_fingerprints == ()
 
@@ -3723,7 +3759,6 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         lambda name: (SimpleNamespace(), {"platform": "cpu", "kind": "test", "id": 0}),
     )
     monkeypatch.setattr(example, "_load_data", lambda config: data)
-    monkeypatch.setattr(example, "_prepare_training", lambda *args: SimpleNamespace())
     monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: model)
     monkeypatch.setattr(example, "_train_model", lambda *args: training)
     monkeypatch.setattr(example, "_evaluate", lambda *args: evaluation)
@@ -3866,13 +3901,13 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
     data = example._load_data(whole)
     rows = example._row_config(whole)
 
-    reference = example._prepare_training(data, whole, rows)
-    chunked = example._prepare_training(data, split, rows)
+    reference = _materialize_training(example, data, whole, rows)
+    chunked = _materialize_training(example, data, split, rows)
 
     assert len(list(example._training_chunks(data, split, rows))) == 3
-    for field in example._CHUNK_ARRAY_FIELDS:
+    for field in _TRAINING_ARRAY_FIELDS:
         assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
-    for field in example._CHUNK_METADATA_FIELDS:
+    for field in _TRAINING_METADATA_FIELDS:
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
@@ -4144,9 +4179,9 @@ def test_training_workers_preserve_rows_and_metadata(example):
     parallel_chunks = list(example._training_chunks(data, parallel, rows))
     assert len(serial_chunks) == len(parallel_chunks)
     for left, right in zip(serial_chunks, parallel_chunks, strict=True):
-        for field in example._CHUNK_ARRAY_FIELDS:
+        for field in _TRAINING_ARRAY_FIELDS:
             np.testing.assert_array_equal(getattr(left, field), getattr(right, field))
-        for field in example._CHUNK_METADATA_FIELDS:
+        for field in _TRAINING_METADATA_FIELDS:
             assert getattr(left, field) == getattr(right, field), field
 
 
@@ -4177,9 +4212,9 @@ def test_batched_training_chunks_match_scalar_oracle_and_losses(
 
     assert len(optimized) == len(oracle) == 2
     for left, right in zip(optimized, oracle, strict=True):
-        for field in example._CHUNK_ARRAY_FIELDS:
+        for field in _TRAINING_ARRAY_FIELDS:
             np.testing.assert_array_equal(getattr(left, field), getattr(right, field))
-        for field in example._CHUNK_METADATA_FIELDS:
+        for field in _TRAINING_METADATA_FIELDS:
             assert getattr(left, field) == getattr(right, field), field
 
     def fake_train(
@@ -4568,12 +4603,12 @@ def test_single_episode_batches_reproduce_the_unbatched_schedule(example):
     data = example._load_data(reference)
     rows = example._row_config(reference)
 
-    first = example._prepare_training(data, reference, rows)
-    second = example._prepare_training(data, explicit, rows)
+    first = _materialize_training(example, data, reference, rows)
+    second = _materialize_training(example, data, explicit, rows)
 
-    for field in example._CHUNK_ARRAY_FIELDS:
+    for field in _TRAINING_ARRAY_FIELDS:
         assert np.array_equal(getattr(first, field), getattr(second, field)), field
-    for field in example._CHUNK_METADATA_FIELDS:
+    for field in _TRAINING_METADATA_FIELDS:
         assert getattr(first, field) == getattr(second, field), field
 
 
@@ -4584,7 +4619,7 @@ def test_batched_updates_carry_one_episode_per_batch_slot(example):
     data = example._load_data(config)
     rows = example._row_config(config)
 
-    tensors = example._prepare_training(data, config, rows)
+    tensors = _materialize_training(example, data, config, rows)
 
     updates = config.training_updates
     assert tensors.events.shape[0] == updates
@@ -4692,16 +4727,16 @@ def test_banked_schedules_are_reproducible_and_chunk_independent(example):
     data = example._load_data(config)
     rows = example._row_config(config)
 
-    reference = example._prepare_training(data, config, rows)
-    repeated = example._prepare_training(data, config, rows)
-    chunked = example._prepare_training(data, split, rows)
+    reference = _materialize_training(example, data, config, rows)
+    repeated = _materialize_training(example, data, config, rows)
+    chunked = _materialize_training(example, data, split, rows)
 
-    for field in example._CHUNK_ARRAY_FIELDS:
+    for field in _TRAINING_ARRAY_FIELDS:
         assert np.array_equal(getattr(reference, field), getattr(repeated, field)), (
             field
         )
         assert np.array_equal(getattr(reference, field), getattr(chunked, field)), field
-    for field in example._CHUNK_METADATA_FIELDS:
+    for field in _TRAINING_METADATA_FIELDS:
         assert getattr(reference, field) == getattr(chunked, field), field
 
 

@@ -7,7 +7,7 @@ Follows: `docs/specs/2026-08-16-example21-zero-score-root-cause.md`
 
 ## Problem
 
-`_prepare_training` materialises every update of the run as one dense array
+The former whole-run materializer materialised every update of the run as one dense array
 before a single optimizer step is taken:
 
 ```
@@ -62,16 +62,15 @@ Add `ExperimentConfig.training_chunk_size: int = 0`.
 
 ### 2. Preparation
 
-Split `_prepare_training` into:
+Split the former whole-run materializer into:
 
 - `_training_row(...)` — builds one update's rows. Body lifted verbatim from
   the current per-update loop.
 - `_training_chunks(data, config, row_config)` — a generator yielding
   `_TrainingTensors` of `training_chunk_size` updates each.
-- `_prepare_training(...)` — retained, now the concatenation of every chunk.
-  Signature and return value unchanged, so the existing tests that call it keep
-  their meaning. It is no longer on the run path; keeping it on the run path
-  would rebuild all 4096 updates on the host and save nothing.
+- a streaming production path that passes chunks directly to `_train_model`.
+  Tests that need a full schedule assemble it locally from that same stream;
+  production does not retain a whole-run materializer.
 
 `run_experiment` passes `_training_chunks(...)` — the generator itself — to
 `_train_model`, whose second parameter becomes an *iterable of*
@@ -131,8 +130,8 @@ Co-located in `examples/pp_prop/21-latent-reasoning-in-context_test.py`.
    captured as a Python int at trace time would freeze bias correction from
    chunk 2 on and this catches it), and the per-update `reset_state` is
    unaffected.
-2. **Metadata concatenates in order** — chunked and unchunked
-   `_prepare_training` agree on every array and every metadata tuple.
+2. **Metadata concatenates in order** — test-local chunk assembly agrees on
+   every array and every metadata tuple.
 3. **Config validation** — a chunk size that does not divide `training_updates`
    raises; `0` is accepted and means one chunk.
 4. **AST guard, extended** — `_train_model` stays loop-free; the new

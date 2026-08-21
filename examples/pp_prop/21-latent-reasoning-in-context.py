@@ -1742,50 +1742,6 @@ def _prefetched_training_chunks(
         worker.join()
 
 
-_CHUNK_ARRAY_FIELDS = (
-    "events",
-    "advances",
-    "heights",
-    "widths",
-    "colors",
-    "masks",
-    "efforts",
-)
-_CHUNK_METADATA_FIELDS = (
-    "task_fingerprints",
-    "base_task_fingerprints",
-    "source_names",
-    "held_out_demonstration_indices",
-)
-
-
-def _concatenated_chunks(chunks: list[_TrainingTensors]) -> _TrainingTensors:
-    arrays = {
-        name: np.concatenate([getattr(chunk, name) for chunk in chunks])
-        for name in _CHUNK_ARRAY_FIELDS
-    }
-    metadata = {
-        name: tuple(value for chunk in chunks for value in getattr(chunk, name))
-        for name in _CHUNK_METADATA_FIELDS
-    }
-    return _TrainingTensors(**arrays, **metadata)
-
-
-def _prepare_training(
-    data: _ExperimentData,
-    config: ExperimentConfig,
-    row_config: RowEventConfig,
-) -> _TrainingTensors:
-    """Materialise the whole training schedule.
-
-    Retained for tests and inspection. The run path uses
-    :func:`_training_chunks` so that peak memory does not scale with
-    ``training_updates``.
-    """
-    chunks = list(_training_chunks(data, config, row_config))
-    return chunks[0] if len(chunks) == 1 else _concatenated_chunks(chunks)
-
-
 def _row_refinement_layout(row_config: RowEventConfig) -> RowRefinementLayout:
     """Map the ARC row-event schema into the learned feedback layout."""
 

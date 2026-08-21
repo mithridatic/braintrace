@@ -35,7 +35,7 @@ Consequences, verified against the code:
 - `OutputLogits`, `decode_candidates`, `score_query_candidates`,
   `_candidate_log_probability` and `analyze_latent_trajectory` all consume
   `(30)/(30)/(30,30,10)`: **no changes required**.
-- `_training_row`, `_TrainingTensors`, `_CHUNK_ARRAY_FIELDS`, `_stacked_chunk`,
+- `_training_row`, `_TrainingTensors`, the chunk tensor fields, `_stacked_chunk`,
   `_training_chunks` and `train_all`'s signature are **unchanged**, so
   `test_chunked_training_reproduces_unchunked_losses_bitwise` and the
   full-size-draws-up-front constraint hold by construction.
