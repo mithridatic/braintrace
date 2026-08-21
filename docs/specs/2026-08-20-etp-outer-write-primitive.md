@@ -21,8 +21,23 @@ the implemented system and BDH-CQ's learned ingestion operator `U_θ`:
 
 This spec defines the Layer 1–3 feature that closes the gap: a fused ETP
 primitive whose output is the write matrix itself, owning the key/value
-projections as trainable invars, with per-primitive trace rules that are
-exact in the same per-primitive sense as `etp_mm`'s.
+projections as trainable invars, with per-primitive trace rules derived
+below.
+
+Regime caveat (honesty about the evidence): BDH-CQ closes this gap with
+*offline* pretraining of a large `U_θ` on an ARC-style mixture — no
+parameters update at inference; in-context adaptation flows through `S`
+only. This program learns the write *online per task* through eligibility
+traces, a regime the paper does not speak to. A null result here therefore
+would not contradict BDH-CQ; the elimination-chain logic is structural, not
+evidential.
+
+References: BrainScale — Wang et al., *Model-agnostic linear-memory online
+learning in spiking neural networks*, Nat. Commun. (2026),
+s41467-026-68453-w (published version of bioRxiv 2024.09.24.614728v2;
+source of the D-RTRL and `ε ≈ ε_f ⊗ ε_x` factorizations this spec builds
+on). BDH-CQ — arXiv 2608.09888. Delta-rule / TTT write formulations —
+arXiv 2603.15031 §6.1.
 
 ## Why the existing machinery rejects the write (precise statement)
 
@@ -53,6 +68,7 @@ elementwise (decay, gate, scale, add).
 | A. Gradient-enabled outer op (an `etp_elemwise`-style broadcast op), projections stay separate `etp_mm`s | y=(B,K,V) | Rejected: violates the non-parametric-tail invariant (weight→weight→hidden); would require relaxing a load-bearing compiler invariant. |
 | B. **Fused primitive owning the projections** (`etp_outer_write`) | y=(B,K,V) | **Recommended.** One weights→y arrow; closed-form rules; zero changes to the position prover — y is hidden-shaped and its tail is elementwise. |
 | C. Extend the position framework with "factored broadcast tails" (teach the prover that broadcast duplication is not mixing, and teach pp-prop to contract the duplicated axis) | — | Deferred: touches the prover, the executor contraction, and every algorithm's tail check; strictly more general but far larger blast radius. Reconsider if a second broadcast-tail use case appears. |
+| D. TTT-style write-as-gradient-step (`W_t = W_{t−1} − η∇ℓ(W_{t−1}; x_t)`, arXiv 2603.15031 §6.1) — learn the write objective, never differentiate the Hebbian outer product | — | Rejected for this spec: replaces the S_K architecture rather than making it trainable, so it cannot answer the U_θ question; noted as an alternative memory design if the decision rule's null branch fires. |
 
 ## Primitive definition (option B)
 
@@ -104,10 +120,17 @@ Notation: `p = x_k @ W_k + b_k` (pre-activation, (B,K)),
   - ∂/∂W_k[a,i]: `c · x_k[b,a] · φ'_k(p)_i · Σ_j hidden_dim[b,i,j]·v_j`
   - ∂/∂b_k[i]:   `c · φ'_k(p)_i · Σ_j hidden_dim[b,i,j]·v_j`
   - ∂/∂W_v[a,j]: `c · x_v[b,a] · φ'_v(·)_j · Σ_i hidden_dim[b,i,j]·k_i`
-- **`init_pp`**: output-shaped trace `ε_f ∈ R^{B×K×V×n_state}` — the direct
-  generalization of `_mm_init_pp` (y-shaped, one slice per hidden state).
-  Memory at Example 21 scale: 32·32·32·n_state·4 B ≈ 131 KB per state —
-  negligible.
+- **`init_pp` — per-weight traces, NOT one shared trace.** For `etp_mm` a
+  single y-shaped `ε_f` suffices because there is one weight–x pair and the
+  forward is linear in x. Here the three trainable invars carry three
+  *different* instantaneous postsynaptic factors:
+  `D_f^{W_k} = D_f^{b_k} = c·φ'_k(p^t) ⊗ v^t` and
+  `D_f^{W_v} = c·k^t ⊗ φ'_v(q^t)`. Each gets its own y-shaped filtered
+  trace `ε_f ∈ R^{B×K×V×n_state}` with the factor injected **per step**
+  (matching the published scheme's per-step `diag(D_f^t)` injection), plus
+  two x-side traces (filtered `x_k`, filtered `x_v`; `b_k`'s x-factor is
+  the filtered constant 1). Memory at Example 21 scale: ≈ 3 × 131 KB per
+  state — still negligible.
 - **`dt_to_t`** (pp/D-RTRL trace propagation): the hidden→y chain factor.
   The hidden group containing `S` is (B,K,V)-shaped and its transition is
   elementwise, so the executor's `hidden_dim` arrives (B,K,V)-aligned;
@@ -125,13 +148,36 @@ Notation: `p = x_k @ W_k + b_k` (pre-activation, (B,K)),
   generic VJP path first, kernels only if profiling shows need.
 - **snap rules**: `snap_anchor=False` v1 (no SnAp support claimed).
 
-### Approximation class
+### Approximation class — and why the `_mm_xy_to_dw` pattern must NOT be reused
 
-With φ inside the primitive and `xy_to_dw` exact, the only approximation is
-pp-prop's own `ε ≈ ε_f ⊗ ε_x` factorization — the same class as every other
-pp-prop primitive. Per AGENTS.md, gradient assertions about this rule are
-learning-rule properties: they MUST be measured through the finite-window
-oracle (`chunked_online_param_gradients`), never the whole-sequence VJP.
+The obvious implementation — defer everything to a solve-time VJP over the
+fused forward, as `_mm_xy_to_dw` does — is **wrong for this primitive**.
+The solve path (`io_dim_vjp.py:628–652`) evaluates `xy_to_dw` at the
+**α-smoothed x trace**. For `etp_mm` that is exact in the factorized sense
+because `y = xW` is linear in x. Here the forward is nonlinear in x, so a
+deferred VJP would recompute `φ'_k(p(x̄_k))` and `φ_v(x̄_v W_v)` from
+*smoothed* inputs, introducing (i) a Jensen-gap error through cos/tanh that
+no existing primitive has, and (ii) — decisive for this experiment —
+destruction of the within-timestep `k_t ↔ v_t` pairing correlation, because
+`x_k` and `x_v` are filtered separately. Since the experiment's primary
+readout is pairing sensitivity, that error mode could manufacture a false
+null.
+
+Therefore the rules inject the full per-step, per-weight y-shaped `D_f^t`
+factors into the traces at trace-update time (see `init_pp` above), and the
+solve-time combine contracts the filtered per-weight `ε_f` with the
+filtered x-side factor **without re-deriving φ'/v from smoothed x**. The
+residual approximation is then pp-prop's `ε ≈ ε_f ⊗ ε_x` factorization
+itself — with one honest caveat: BrainScale justifies that rank-1 collapse
+by sign-consistent pre/post quantities (spikes, conductances ≥ 0), and this
+primitive's factors are sign-alternating by construction (`φ'_k = −sin`,
+signed tanh values, real latents). The factorization is thus *outside its
+empirically validated envelope* here, which the validation plan measures
+directly rather than assumes away.
+
+Per AGENTS.md, gradient assertions about these rules are learning-rule
+properties: they MUST be measured through the finite-window oracle
+(`chunked_online_param_gradients`), never the whole-sequence VJP.
 
 ## Weight sharing with the query path (design decision)
 
@@ -142,9 +188,10 @@ which the compiler rejects by design.
 
 **v1 unties them**: `write_key_projection` (inside the primitive) and the
 existing retrieval-path `memory_key_projection` are separate ParamStates,
-both initialized from the same frozen basis. BDH-CQ does not require tied
-ingestion/query encoders, and untying is what makes the experiment cleanly
-answer "does a learnable write help" independent of retrieval. Tying
+both initialized from the same frozen basis. BDH-CQ's public description is
+agnostic to tying (everything below its Eq. 1 is proprietary), and untying
+is what makes the experiment cleanly answer "does a learnable write help"
+independent of retrieval. Tying
 (a two-output primitive emitting `y_write` and `k` for the query side) is
 recorded as follow-up, contingent on v1 showing signal.
 
@@ -170,6 +217,11 @@ New `memory_coding="learned_write"`:
 2. **Oracle**: finite-window `chunked_online_param_gradients` vs BPTT on a
    small S-carrying model, per the AGENTS.md finite-window rule; also the
    op-rule oracle harness (`op_rule_oracle.py`) which existing ops use.
+   Additionally, cosine-similarity-vs-BPTT (BrainScale's own metric) on a
+   *pairing-order-sensitive* sequence pair — two sequences differing only
+   in demonstration pairing whose BPTT gradients differ — asserting the
+   pp-prop gradient distinguishes them too. This is the direct test that
+   the factorization did not erase the pairing signal.
 3. **Compiler**: relation discovered with `all_direct` classification into
    the (B,K,V) hidden group; no position-prover involvement (tail is
    elementwise); mixed-ownership rejection still fires if a test shares the
@@ -187,9 +239,17 @@ Decision rule: `learned_write` moving the shuffled-demonstrations deviation
 away from 0 (in either direction, beyond the repeat-intact nondeterminism
 band) is the first evidence the model *can* use pairing; improvement on
 intact shape/pixel then decides scale-up. If the deviation stays pinned at
-0 even with the write differentiable, the binder is not the coding — the
-remaining suspect is single-trace superposition itself, and the next spec
-targets the memory *format* (e.g. multi-trace or slotted S), not `U_θ`.
+0, the result is NOT immediately interpretable — the pp-prop factorization
+is outside its sign-consistency envelope here (see Approximation class), so
+a pinned null must first be disambiguated on a small config by an exact
+path: finite-window BPTT via `chunked_online_param_gradients`, and/or the
+deferred D-RTRL weight-shaped trace (its ≈55 MB/state cost is affordable at
+diagnostic scale). Only if the exact path *also* shows no usable pairing
+gradient does the conclusion become "the binder is not the coding," and the
+next spec targets the memory *format* — where the cheapest next suspect is
+the delta-rule write `S_t = (I − β k kᵀ)S_{t−1} + β k vᵀ` (targets
+superposition interference directly, keeps a single S), ahead of
+multi-trace or slotted designs.
 
 ## Scope and sequencing
 
@@ -213,6 +273,12 @@ fast-path kernels, tied write/query encoders, arbitrary nonlinearities,
 - **Trace correctness under gating**: the write is gated per-example;
   gate=False steps must contribute exactly zero to the trace (covered by
   the oracle on a gated sequence).
+- **Key-scale drift**: the folded-γ init pins the key scale only at step 0;
+  once `key_weight` trains, nothing constrains it (attention-residual
+  ablations show unnormalized keys let large-scale components dominate).
+  v1 monitors per-step key-norm statistics in the associative diagnostics;
+  an RMSNorm-style guard on `k` is the prepared mitigation, off by default
+  because it changes frozen-init equivalence.
 - **Null result**: pinned-at-zero pairing even with a differentiable write
   is a real possibility; the decision rule above makes that outcome
   informative rather than wasted.
