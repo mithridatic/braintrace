@@ -548,7 +548,11 @@ def test_config_preregisters_production_pp_prop_memory_gate() -> None:
     with pytest.raises(ValueError, match="context_memory_width"):
         dataclasses.replace(config, context_memory_width=0)
     with pytest.raises(ValueError, match="context_memory_width"):
-        dataclasses.replace(config, context_memory_width=129)
+        dataclasses.replace(config, context_memory_width=513)
+    assert (
+        dataclasses.replace(config, context_memory_width=512).context_memory_width
+        == 512
+    )
     with pytest.raises(ValueError, match="memory_decay"):
         dataclasses.replace(config, memory_decay=-0.1)
     with pytest.raises(ValueError, match="memory_decay"):
