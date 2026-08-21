@@ -142,10 +142,14 @@ image identity first:
       python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py `
       --device gpu `
       --source-manifest /datasets/arc/example21-sources.json `
-      --output-dir /work/var/example21-shared-1024n-1024e-b32-u130-l390 `
-      --neurons 1024 --recurrent-edges 1024 --max-demonstrations 10 `
-      --latent-steps 390 --training-updates 130 --training-batch-size 32 `
+      --output-dir /work/var/example21-shared-4096n-16384e-b32-u260 `
       --training-chunk-size 5
+
+The command runs the configuration defaults: 4096 neurons, 16,384 recurrent
+edges, training batch 32, 260 shared optimizer updates on the cosine
+learning-rate schedule at base rate 1e-3, 8 training workers, and seed 9999.
+Only the execution chunk size is passed explicitly (5 divides 260); the
+default of 0 would compile the whole update schedule as one program.
 
 Two newer flags are not shown above: `--memory-coding`
 (`frozen`/`learned_keys`/`learned_write`) selects storage-coding

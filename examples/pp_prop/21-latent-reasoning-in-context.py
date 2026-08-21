@@ -160,6 +160,10 @@ OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
 
+FULL_SCALE_NEURON_COUNT = 4096
+
+FULL_SCALE_RECURRENT_EDGES = 16_384
+
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
@@ -411,9 +415,9 @@ class ExperimentConfig:
     source_manifest: pathlib.Path | None = None
     output_dir: pathlib.Path = pathlib.Path("var/example21")
     device: DeviceName = "gpu"
-    seed: int = 2108
-    neuron_count: int = 4096
-    recurrent_edges: int = 1_048_576
+    seed: int = 9999
+    neuron_count: int = FULL_SCALE_NEURON_COUNT
+    recurrent_edges: int = FULL_SCALE_RECURRENT_EDGES
     readout_width: int = 128
     color_rank: int = 16
     context_memory_width: int = 32
@@ -423,18 +427,18 @@ class ExperimentConfig:
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
-    training_updates: int = 96
+    training_updates: int = 260
     training_chunk_size: int = 0
-    training_batch_size: int = 1
+    training_batch_size: int = 32
     training_bank_size: int = 0
-    training_workers: int = 4
+    training_workers: int = 8
     runtime_profile: bool = False
     learning_rate: float = 1e-3
     lr_schedule: LrScheduleName = "cosine"
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
-    adaptation_epochs: int = 2
+    adaptation_epochs: int = 1
     task_local_adaptation: bool = False
     evaluation_controls: bool = False
     clip_norm: float = 1.0
@@ -630,7 +634,7 @@ class ExperimentConfig:
         *,
         output_dir: pathlib.Path = pathlib.Path("var/example21-smoke"),
         device: DeviceName = "cpu",
-        seed: int = 2108,
+        seed: int = 9999,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
@@ -707,6 +711,7 @@ class ExperimentConfig:
             max_demonstrations=4,
             latent_steps=60,
             training_updates=3,
+            training_batch_size=1,
             learning_rate=5e-4,
             smoke=True,
         )
@@ -5115,8 +5120,8 @@ def _qualification(
         and row_routes_direct
     )
     full_scale = bool(
-        model_report.get("neuron_count") == 4096
-        and model_report.get("recurrent_edge_count") == 1_048_576
+        model_report.get("neuron_count") == FULL_SCALE_NEURON_COUNT
+        and model_report.get("recurrent_edge_count") == FULL_SCALE_RECURRENT_EDGES
         and model_report.get("slot_count") == 64
         and int(model_report.get("parameter_count", 0)) > 0
     )
@@ -5262,7 +5267,10 @@ def _qualification(
     )
     approved_completion_target = bool(scientific and score_gate_passed)
     structural_messages = {
-        "actual_full_scale": "actual model is not the required 4096-neuron/1048576-edge scale",
+        "actual_full_scale": (
+            f"actual model is not the required {FULL_SCALE_NEURON_COUNT}-neuron/"
+            f"{FULL_SCALE_RECURRENT_EDGES}-edge scale"
+        ),
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
         "actual_gpu_backend": "actual evaluation backend is not GPU",
         "gpu_runtime_resource_safe": "full GPU runtime resource-safety evidence is missing, incomplete, or over policy limits",
@@ -6314,9 +6322,11 @@ def _parser() -> argparse.ArgumentParser:
         "--output-dir", type=pathlib.Path, default=pathlib.Path("var/example21")
     )
     parser.add_argument("--device", choices=("cpu", "gpu"), default="gpu")
-    parser.add_argument("--seed", type=int, default=2108)
+    parser.add_argument("--seed", type=int, default=9999)
     parser.add_argument("--neurons", type=int, default=4096)
-    parser.add_argument("--recurrent-edges", type=int, default=1_048_576)
+    parser.add_argument(
+        "--recurrent-edges", type=int, default=FULL_SCALE_RECURRENT_EDGES
+    )
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
@@ -6331,11 +6341,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
-    parser.add_argument("--training-updates", type=int, default=96)
+    parser.add_argument("--training-updates", type=int, default=260)
     parser.add_argument("--training-chunk-size", type=int, default=0)
-    parser.add_argument("--training-batch-size", type=int, default=1)
+    parser.add_argument("--training-batch-size", type=int, default=32)
     parser.add_argument("--training-bank-size", type=int, default=0)
-    parser.add_argument("--training-workers", type=int, default=4)
+    parser.add_argument("--training-workers", type=int, default=8)
     parser.add_argument("--profile", action="store_true")
     parser.add_argument(
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
@@ -6353,7 +6363,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--row-head-carrier-gate", action="store_true")
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
-    parser.add_argument("--adaptation-epochs", type=int, default=2)
+    parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--task-local-adaptation", action="store_true")
     parser.add_argument("--evaluation-controls", action="store_true")
     parser.add_argument(
@@ -6381,7 +6391,10 @@ def _parser() -> argparse.ArgumentParser:
 
 def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
     if args.smoke:
-        if args.neurons != 4096 or args.recurrent_edges != 1_048_576:
+        if (
+            args.neurons != FULL_SCALE_NEURON_COUNT
+            or args.recurrent_edges != FULL_SCALE_RECURRENT_EDGES
+        ):
             raise ValueError("--smoke owns its reduced neuron and edge scale")
         return ExperimentConfig.smoke_config(
             output_dir=args.output_dir,
