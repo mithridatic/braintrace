@@ -2144,31 +2144,33 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         factor_width = config.color_rank * (2 * MAX_GRID_SIZE + COLOR_COUNT)
         factor_weights = random.randn(config.readout_width, factor_width)
         factor_weights = factor_weights / math.sqrt(config.readout_width)
-        self.readout_projection = braintrace.nn.Linear(
-            config.neuron_count,
-            config.readout_width,
-            w_init=bottleneck_weights,
-            b_init=braintools.init.ZeroInit(),
-        )
-        self.height_head = braintrace.nn.Linear(
-            config.readout_width,
-            MAX_GRID_SIZE,
-            w_init=shape_weights,
-            b_init=braintools.init.ZeroInit(),
-        )
-        self.width_head = braintrace.nn.Linear(
-            config.readout_width,
-            MAX_GRID_SIZE,
-            w_init=random.randn(config.readout_width, MAX_GRID_SIZE)
-            / math.sqrt(config.readout_width),
-            b_init=braintools.init.ZeroInit(),
-        )
-        self.color_factor_head = braintrace.nn.Linear(
-            config.readout_width,
-            factor_width,
-            w_init=factor_weights,
-            b_init=braintools.init.ZeroInit(),
-        )
+        width_weights = random.randn(config.readout_width, MAX_GRID_SIZE)
+        width_weights = width_weights / math.sqrt(config.readout_width)
+        if not config.row_refinement_enabled:
+            self.readout_projection = braintrace.nn.Linear(
+                config.neuron_count,
+                config.readout_width,
+                w_init=bottleneck_weights,
+                b_init=braintools.init.ZeroInit(),
+            )
+            self.height_head = braintrace.nn.Linear(
+                config.readout_width,
+                MAX_GRID_SIZE,
+                w_init=shape_weights,
+                b_init=braintools.init.ZeroInit(),
+            )
+            self.width_head = braintrace.nn.Linear(
+                config.readout_width,
+                MAX_GRID_SIZE,
+                w_init=width_weights,
+                b_init=braintools.init.ZeroInit(),
+            )
+            self.color_factor_head = braintrace.nn.Linear(
+                config.readout_width,
+                factor_width,
+                w_init=factor_weights,
+                b_init=braintools.init.ZeroInit(),
+            )
         if config.memory_enabled:
             memory_width = config.context_memory_width
             key_width = len(config.memory_key_indices)

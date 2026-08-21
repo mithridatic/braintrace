@@ -157,12 +157,15 @@ prior-versus-conditional ratio.
 
 ### 2.5 What is explicitly not a defect
 
-`color_factor_head`, `height_head`, `width_head` and `readout_projection` report
-L2 delta 0.0 and emit "state not found in the compiled model" warnings. This is
-by design: `21-latent-reasoning-in-context.py:4696-4703` whitelists them as
-`legacy_plain_paths` and the active `decoder_mode="row_refinement"` never calls
-them. Verified: the ETP compiler classifies both live heads as
-`all_direct` and includes them in `param_states`.
+In the run recorded here, `color_factor_head`, `height_head`, `width_head` and
+`readout_projection` reported L2 delta 0.0 and emitted "state not found in the
+compiled model" warnings. They were whitelisted as `legacy_plain_paths`, and
+the active `decoder_mode="row_refinement"` never called them. The later active
+decoder ownership fix in
+`2026-08-21-example21-active-decoder-state-ownership.md` removes these inactive
+modules from row-refinement models, so current runs no longer emit those
+warnings. The ETP compiler still classifies both live heads as `all_direct` and
+includes them in `param_states`.
 
 ```
 === compiled param_states ===

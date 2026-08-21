@@ -3247,16 +3247,11 @@ def test_refinement_head_carrier_is_scaled_to_unit_root_mean_square() -> None:
 def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> None:
     """Widening the head input must not drop it from the compiled model.
 
-    ``color_factor_head``, ``height_head``, ``width_head`` and
-    ``readout_projection`` already fall out of the compiled model and train with
-    an exactly zero gradient. A head whose input the compiler cannot trace would
-    fail the same way while still looking correct.
+    A head whose input the compiler cannot trace would silently stop training
+    while still looking correct at the model boundary.
     """
     model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        learner = compile_pp_prop(model)
+    learner = compile_pp_prop(model)
 
     def text(path: object) -> str:
         if isinstance(path, (tuple, list)):
@@ -3280,6 +3275,68 @@ def test_refinement_heads_stay_compiled_all_direct_with_row_conditioning() -> No
 
     assert classifications["answer_row_head.weight"] == {"all_direct"}
     assert classifications["answer_shape_head.weight"] == {"all_direct"}
+
+
+def test_row_refinement_owns_only_active_decoder_states() -> None:
+    """Inactive legacy heads must not appear as compiler state mismatches."""
+    model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        learner = compile_pp_prop(model)
+
+    mismatch_messages = [
+        str(item.message)
+        for item in caught
+        if "not found in the compiled model" in str(item.message)
+    ]
+    assert mismatch_messages == []
+
+    parameters = set(parameter_snapshot(model))
+    legacy_prefixes = {
+        "readout_projection.",
+        "height_head.",
+        "width_head.",
+        "color_factor_head.",
+    }
+    assert not any(
+        path.startswith(prefix)
+        for path in parameters
+        for prefix in legacy_prefixes
+    )
+
+    diagnostics = [
+        record
+        for record in learner.report.diagnostics
+        if str(getattr(getattr(record, "kind", None), "value", ""))
+        == "state_mismatch"
+    ]
+    assert diagnostics == []
+
+
+def test_legacy_decoder_retains_its_active_states() -> None:
+    """Conditional ownership must preserve the legacy decoder parameter tree."""
+    model = LatentWorkspaceModel(_config(batch_size=2))
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        learner = compile_pp_prop(model)
+
+    assert not any(
+        "not found in the compiled model" in str(item.message) for item in caught
+    )
+    parameters = set(parameter_snapshot(model))
+    assert {
+        "readout_projection.weight",
+        "height_head.weight",
+        "width_head.weight",
+        "color_factor_head.weight",
+    } <= parameters
+    assert not any(
+        str(getattr(getattr(record, "kind", None), "value", ""))
+        == "state_mismatch"
+        for record in learner.report.diagnostics
+    )
 
 
 def test_copy_residual_raises_the_query_colour_logit_by_the_gain() -> None:
@@ -3742,16 +3799,11 @@ def test_refinement_head_width_counts_the_query_shape_blocks() -> None:
 def test_refinement_heads_stay_compiled_all_direct_with_shape_conditioning() -> None:
     """Widening the head input again must not drop it from the compiled model.
 
-    ``color_factor_head``, ``height_head``, ``width_head`` and
-    ``readout_projection`` already fall out of the compiled model and train with
-    an exactly zero gradient. A head whose input the compiler cannot trace would
-    fail the same way while still looking correct.
+    A head whose input the compiler cannot trace would silently stop training
+    while still looking correct at the model boundary.
     """
     model = LatentWorkspaceModel(_row_refinement_config(batch_size=2))
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        learner = compile_pp_prop(model)
+    learner = compile_pp_prop(model)
 
     def text(path: object) -> str:
         if isinstance(path, (tuple, list)):
