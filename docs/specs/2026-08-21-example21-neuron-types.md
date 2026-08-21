@@ -1,7 +1,7 @@
 # Example 21 — Neuron types for the latent workspace (staged design)
 
 Date: 2026-08-21
-Status: Piece 1 (survey + design) — awaiting Stage A implementation
+Status: Pieces 1-4 complete — Stage A landed and measured at smoke scale; Stage B gated on a GPU-scale A/B run
 Branch: `feat/ex21-neuron-types`
 
 ## 1. Problem
@@ -242,6 +242,95 @@ Landed on `feat/ex21-neuron-types`:
   the experiment surface (parser, smoke_config, `_model_config`, projection
   ordering in the training source).
 
-## 8. Measured results
+## 8. Measured results (Piece 3, CPU smoke scale)
 
-To be filled by Piece 3/4.
+Setup: full Example 21 pipeline on the embedded smoke fixtures, Docker image
+`braintrace-gpu:0.11.0-py314-msgspec-arc`, `JAX_PLATFORMS=cpu`, 256 neurons,
+4,096 recurrent edges, readout 32, color rank 4, context memory width 2,
+row-refinement decoder, Muon at lr 5e-4, batch 1. Spike statistics measured
+on the trained checkpoint under a deterministic drive (30 valid-bit context
+ticks + 30 zero-input latent ticks). Arms share one process, so the second
+arm reuses JAX compile caches — per-arm wall clocks are not comparable to
+each other.
+
+### Run 1 — 12 updates, seed 2108
+
+| metric | none | ei_dale |
+|---|---|---|
+| run_experiment wall clock | 14.1 s | 5.5 s (warm cache) |
+| loss first → last | 2.515 → 2.265 | 2.496 → 2.263 |
+| all losses finite | yes | yes |
+| mean spike rate (trained) | 0.0511 | 0.0689 |
+| E / I mean rate | — | 0.0731 / 0.0523 |
+| silent-neuron fraction | 0.508 | 0.402 |
+| context / latent mean rate | 0.0147 / 0.0875 | 0.0169 / 0.1210 |
+| recurrent weights clamped at 0 after training | 0.0 % | 0.37 % |
+| E/I counts (realized fraction) | — | 205 / 51 (0.8008) |
+| init sign flips | — | 2,066 of 4,096 (50.4 %) |
+| post-training Dale violations | — | 0 |
+
+Reading: at this scale the two arms train indistinguishably — the loss
+trajectories track each other update-for-update (differences < 1 %), both
+finite, no rate blow-up in either arm. Dale typing raises the mean firing
+rate slightly and recruits more neurons (silent fraction 0.40 vs 0.51),
+excitatory cells fire ~1.4x the inhibitory rate, and the projection clamps
+only 0.37 % of edges to zero after 12 Muon updates — no pile-up pathology.
+The constraint holds exactly (0 violations) with the projection inside the
+compiled update loop.
+
+### Run 2 — 48 updates, seed 2109
+
+| metric | none | ei_dale |
+|---|---|---|
+| run_experiment wall clock | 22.0 s | 7.7 s (warm cache) |
+| loss first → last | 2.677 → 2.283 | 2.666 → 2.295 |
+| mean loss over 48 updates | 2.619 | 2.608 |
+| all losses finite | yes | yes |
+| mean spike rate (trained) | 0.0553 | 0.0689 |
+| E / I mean rate | — | 0.0696 / 0.0660 |
+| silent-neuron fraction | 0.469 | 0.375 |
+| latent mean rate | 0.0906 | 0.1156 |
+| recurrent weights clamped at 0 after training | 0.0 % | 1.07 % |
+| post-training Dale violations | — | 0 |
+
+Reading: replicates Run 1 at a different seed and 4x the updates. Loss
+trajectories again match within noise (mean 2.608 vs 2.619, ei_dale a hair
+lower; last-update 2.295 vs 2.283, ei_dale a hair higher — no signal either
+way). The clamped-at-zero mass grew from 0.37 % (12 updates) to 1.07 %
+(48 updates) — roughly linear in updates at this scale. Not a pathology yet,
+but the §6 question stands: on a 96-update production run expect a few
+percent of edges pinned at zero; if a GPU-scale run shows this mass keeping
+climbing, the ``weight_fn`` reparameterisation (§3 Stage A alternatives) is
+the escape hatch. Dynamics stayed stable in every arm (all rates bounded,
+all quantities finite).
+
+## 9. Recommendation (Piece 4)
+
+- **Stage A is safe to keep**: `"none"` is pinned bit-exact by golden-digest
+  tests, `ei_dale` trains at parity with the untyped substrate at smoke
+  scale, the constraint holds exactly, and the projection's cost is one
+  elementwise `where` per update.
+- **No evidence yet that E/I structure helps** — but smoke scale (3 fixture
+  tasks, 12–48 updates, 256 neurons) cannot show a capacity or
+  generalization effect; it can only show plumbing and stability, which it
+  did. The two secondary effects worth carrying forward: Dale typing
+  *recruits more of the population* (silent fraction consistently ~0.09–0.10
+  lower) and runs at a slightly higher, still-bounded firing rate.
+- **Gate Stage B on a production-scale measurement**: one 4096-neuron GPU
+  run, `none` vs `ei_dale`, 96 updates, identical seeds — decision metrics:
+  evaluation exact/pixel scores, clamped-edge fraction over updates, E/I
+  rate trajectory. Blocked today (GPU reserved by the concurrent optimizer
+  work); no GPU numbers are claimed here.
+- **Stage C stays paper-only** until Stage B shows type statistics moving a
+  production metric. The schema vocabulary mapping in §2.2 is ready when it
+  does.
+
+### Environment note (bit us during Piece 3)
+
+The Docker images bake a *stale* braintrace tree at `/opt/braintrace`
+(including `examples/pp_prop/*`), and it is importable as the `examples`
+package. `pytest` from `/work` shadows it via rootdir insertion, but any
+script-mode `python /path/script.py` that imports
+`examples.pp_prop.latent_workspace_model` silently gets the stale copy
+unless `/work` is prepended to `sys.path`. Symptom seen: `TypeError:
+ModelConfig.__init__() got an unexpected keyword argument 'trace_engine'`.
