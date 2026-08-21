@@ -332,6 +332,43 @@ Expectations: replication holds if pixel ≈ 0.54 ± seed noise (baseline seed
 spread was ±0.016) on both seeds. Shape arm: shape accuracy vs 0.4893
 decides the §8.1 question; pixel may move either way.
 
-### 8.3 Results
+### 8.3 Results (measured 2026-08-20, revision fd3b91f)
 
-(pending)
+Harness-replica query-weighted pixel at effort 60, decomposed as §1:
+
+| arm | seed | pixel | oracle-shape pixel | shape | copy@oracle | rule@oracle | exact |
+|---|---|---|---|---|---|---|---|
+| baseline (§5)         | mean/3 | 0.3936 | — | — | — | — | 0 |
+| residual only (cr2)   | 31337 | 0.4507 | — | 0.578 | — | — | 0 |
+| residual only (cr2)   | 7777  | 0.4157 | — | 0.563 | — | — | 0 |
+| carrier-free (cr2cs0) | 2108  | 0.5454 | 0.6031 | 0.4893 | 0.9178 | 0.0248 | **1** |
+| carrier-free (cr2cs0) | 31337 | 0.4644 | 0.5857 | 0.4749 | 0.8603 | 0.0394 | **1** |
+| carrier-free (cr2cs0) | 7777  | 0.4758 | 0.5916 | 0.4678 | 0.8301 | 0.0411 | **1** |
+| + shape scale 0 (ss0) | 2108  | 0.3781 | 0.5814 | 0.2983 | 0.8508 | 0.0353 | **1** |
+
+**Replication: confirmed.** Carrier-free beats its seed-matched
+residual-only arm on all three seeds (+0.10, +0.014, +0.060) and its
+baseline by +0.07 to +0.16; mean 0.4952 vs baseline 0.3936. Copy@oracle is
+0.83–0.92 everywhere (baseline was 0.57–0.69). Most decisively, **all three
+seeds produce the same exact answer** — `bbb1b8b6` q1 at both effort 30 and
+60 — so the evaluation-split exact solve is mechanism-driven, not a seed
+lottery. Magnitude varies with the shape head (s2108's 0.4893 shape is why
+its pixel leads); copy is not fully saturated on the new seeds, so the
+carrier still leaks into the row path indirectly through which rows the
+sweep visits, or the head initialisation matters — a residual open edge.
+
+**Shape-head displacement: refuted.** Starving the shape head of the
+carrier collapses shape accuracy 0.4893 → 0.2983 and pixel 0.5454 → 0.3781
+on the matched seed, while the (unchanged) row path holds copy@oracle at
+0.85. Unlike the row head, the shape head's carrier is earning its keep:
+`output_shape != input_shape` queries genuinely need task information the
+event blocks cannot carry. The §8.1 interpretation guard resolves to
+"expressiveness dominates" — shape improvements must come from a better
+carrier or shape-specific supervision, not from carrier removal.
+
+### 8.4 Standing recommendation
+
+Ship configuration for further work on this branch:
+`--copy-residual-gain 2.0 --row-head-carrier-scale 0.0` with the shape head
+untouched. Remaining §7 items: the gated-carrier row head (rules are the
+next 0.19 of headroom) and task-local adaptation on the carrier-free base.
