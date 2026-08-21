@@ -4340,6 +4340,16 @@ def test_chunk_size_must_divide_the_update_budget(example):
     )
 
 
+def test_automatic_chunk_size_is_bounded_and_keeps_the_schedule_complete(example):
+    full = example.ExperimentConfig(training_updates=260, training_chunk_size=0)
+    smoke = example.ExperimentConfig(training_updates=13, training_chunk_size=0)
+
+    assert example._resolved_training_chunk_size(full) == 5
+    assert example._resolved_training_chunk_size(smoke) == 1
+    assert full.training_updates % example._resolved_training_chunk_size(full) == 0
+    assert smoke.training_updates % example._resolved_training_chunk_size(smoke) == 0
+
+
 def test_chunking_does_not_change_the_prepared_schedule(example):
     whole = example.ExperimentConfig.smoke_config()
     split = dataclasses.replace(whole, training_chunk_size=1)

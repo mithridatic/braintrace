@@ -180,6 +180,8 @@ FULL_SCALE_NEURON_COUNT = 4096
 
 FULL_SCALE_RECURRENT_EDGES = 4_194_304
 
+AUTO_TRAINING_CHUNK_LIMIT = 5
+
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 RefinementMixer = Literal["linear", "carrier_gate", "attention_residual"]
 NeuronTyping = Literal["none", "ei_dale"]
@@ -354,10 +356,12 @@ class ExperimentConfig:
     training_updates : int
         Number of pp-prop optimizer updates shared across effort lengths.
     training_chunk_size : int
-        Number of updates staged on device at once. ``0`` stages the whole
-        schedule in one chunk, reproducing an unchunked run exactly. Any other
-        value must divide ``training_updates`` so that every chunk compiles to
-        the same scan length.
+        Number of updates staged on device at once. ``0`` selects the largest
+        divisor of ``training_updates`` no greater than
+        ``AUTO_TRAINING_CHUNK_LIMIT`` so the default run remains complete while
+        bounding device staging. Any other value must divide
+        ``training_updates`` so that every chunk compiles to the same scan
+        length.
     runtime_profile : bool
         Emit diagnostic phase and pipeline timing. Profiling synchronizes
         device work for attribution and is therefore not a throughput mode.
@@ -1867,6 +1871,32 @@ def _training_pool(
     return data.training[: len(data.training) - reserved] if reserved else data.training
 
 
+def _resolved_training_chunk_size(config: ExperimentConfig) -> int:
+    """Resolve the device staging size without dropping a partial schedule.
+
+    Parameters
+    ----------
+    config
+        Experiment configuration whose explicit chunk size may be zero for
+        automatic bounded staging.
+
+    Returns
+    -------
+    int
+        A positive divisor of ``training_updates``. Zero-update structural
+        runs return one because they still emit an empty training chunk.
+    """
+    updates = int(config.training_updates)
+    if updates <= 0:
+        return 1
+    if config.training_chunk_size:
+        return int(config.training_chunk_size)
+    for candidate in range(min(AUTO_TRAINING_CHUNK_LIMIT, updates), 0, -1):
+        if updates % candidate == 0:
+            return candidate
+    return 1
+
+
 def _training_chunks(
     data: _ExperimentData,
     config: ExperimentConfig,
@@ -1898,7 +1928,7 @@ def _training_chunks(
         rng,
         sequence_length=sequence_length,
     )
-    size = config.training_chunk_size or config.training_updates
+    size = _resolved_training_chunk_size(config)
 
     rows: list[dict[str, Any]] = []
     for update_index, effort in enumerate(efforts):
@@ -6736,7 +6766,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 )
             )
             initial_digest = _restore_initial_parameters(fitted, config)
-            chunk_size = config.training_chunk_size or max(config.training_updates, 1)
+            chunk_size = _resolved_training_chunk_size(config)
             total_chunks = max(1, math.ceil(config.training_updates / chunk_size))
             _emit_progress("training", 0, total_chunks, training_started)
             checkpoint_callback = _checkpoint_writer(fitted, config)
