@@ -617,7 +617,7 @@ def test_lean_390_tick_evaluation_gathers_only_scoring_checkpoints(example):
     [
         ({"context_memory_width": True}, "context_memory_width"),
         ({"context_memory_width": -1}, "context_memory_width"),
-        ({"context_memory_width": 129}, "at most 128"),
+        ({"context_memory_width": 513}, "at most 512"),
         ({"memory_decay": True}, "memory_decay"),
         ({"memory_decay": float("nan")}, "memory_decay"),
         ({"memory_decay": -0.01}, "memory_decay"),
@@ -627,6 +627,11 @@ def test_lean_390_tick_evaluation_gathers_only_scoring_checkpoints(example):
 def test_associative_memory_config_rejects_invalid_values(example, kwargs, message):
     with pytest.raises(ValueError, match=message):
         example.ExperimentConfig(structural_only=True, **kwargs)
+
+
+def test_associative_memory_config_accepts_width_512(example):
+    config = example.ExperimentConfig(structural_only=True, context_memory_width=512)
+    assert config.context_memory_width == 512
 
 
 @pytest.mark.parametrize(

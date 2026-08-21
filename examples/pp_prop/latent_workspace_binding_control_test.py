@@ -314,3 +314,39 @@ def test_device_memory_report_preserves_allocator_peaks(monkeypatch):
             },
         }
     ]
+
+
+def test_symbol_count_environment_defaults_and_validates():
+    assert control._symbol_count_from_environment({}) == 4
+    assert (
+        control._symbol_count_from_environment(
+            {"BRAINTRACE_BINDING_SYMBOL_COUNT": "  "}
+        )
+        == 4
+    )
+    assert (
+        control._symbol_count_from_environment(
+            {"BRAINTRACE_BINDING_SYMBOL_COUNT": "6"}
+        )
+        == 6
+    )
+    assert (
+        control._symbol_count_from_environment(
+            {"BRAINTRACE_BINDING_SYMBOL_COUNT": " 10 "}
+        )
+        == 10
+    )
+    for bad in ("1", "11", "0", "-4", "4.5", "four", "0x6"):
+        with pytest.raises(ValueError, match="BRAINTRACE_BINDING_SYMBOL_COUNT"):
+            control._symbol_count_from_environment(
+                {"BRAINTRACE_BINDING_SYMBOL_COUNT": bad}
+            )
+
+
+def test_symbol_count_off_default_disqualifies_preregistration(monkeypatch):
+    config = control.BindingControlConfig()
+    assert config.qualification_regime == "preregistered_full"
+
+    monkeypatch.setattr(control, "SYMBOL_COUNT", 6)
+    assert config.symbol_count == 6
+    assert config.qualification_regime == "nonqualifying_abbreviated"

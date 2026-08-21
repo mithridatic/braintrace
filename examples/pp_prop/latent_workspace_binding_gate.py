@@ -182,8 +182,8 @@ class BindingGateConfig(legacy.BindingControlConfig):
         width = self.context_memory_width
         if isinstance(width, (bool, np.bool_)) or not isinstance(width, int):
             raise TypeError("context_memory_width must be a positive integer")
-        if width <= 0 or width > 128:
-            raise ValueError("context_memory_width must be in [1, 128]")
+        if width <= 0 or width > 512:
+            raise ValueError("context_memory_width must be in [1, 512]")
         object.__setattr__(self, "context_memory_width", int(width))
         decay = self.memory_decay
         if isinstance(decay, (bool, np.bool_)) or not isinstance(decay, (int, float)):

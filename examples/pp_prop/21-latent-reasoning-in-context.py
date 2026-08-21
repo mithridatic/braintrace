@@ -282,7 +282,7 @@ class ExperimentConfig:
         Shared readout bottleneck and CP rank of the full-grid color head.
     context_memory_width : int
         Associative workspace width. Zero selects the byte-compatible legacy
-        reservoir; positive values up to 128 opt into ``S_K/H_r``.
+        reservoir; positive values up to 512 opt into ``S_K/H_r``.
     memory_decay : float
         Associative memory self-decay in the closed interval ``[0, 1]``.
     max_demonstrations, max_grid_size : int
@@ -433,8 +433,8 @@ class ExperimentConfig:
             )
         if self.neuron_count % 64:
             raise ValueError("neuron_count must be divisible by 64")
-        if self.context_memory_width > 128:
-            raise ValueError("context_memory_width must be at most 128")
+        if self.context_memory_width > 512:
+            raise ValueError("context_memory_width must be at most 512")
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
             raise ValueError("recurrent_edges exceeds directed no-self capacity")
         require_recurrent_edge_budget(self.neuron_count, self.recurrent_edges)

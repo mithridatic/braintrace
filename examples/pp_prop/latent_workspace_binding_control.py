@@ -26,7 +26,7 @@ import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -61,7 +61,55 @@ from examples.pp_prop.latent_workspace_task import (
 
 
 COLOR_COUNT = 10
-SYMBOL_COUNT = 4
+_SYMBOL_COUNT_VARIABLE = "BRAINTRACE_BINDING_SYMBOL_COUNT"
+_PREREGISTERED_SYMBOL_COUNT = 4
+
+
+def _symbol_count_from_environment(environ: Mapping[str, str]) -> int:
+    """Resolve the binding-curriculum pair count from the environment.
+
+    Parameters
+    ----------
+    environ : Mapping[str, str]
+        Environment mapping, normally ``os.environ``.
+
+    Returns
+    -------
+    int
+        The preregistered default 4 when ``BRAINTRACE_BINDING_SYMBOL_COUNT``
+        is unset or blank, otherwise its validated integer value.
+
+    Raises
+    ------
+    ValueError
+        If the variable is set to anything other than an integer in
+        ``[2, COLOR_COUNT]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> _symbol_count_from_environment({})
+        4
+        >>>
+        >>> _symbol_count_from_environment({"BRAINTRACE_BINDING_SYMBOL_COUNT": "6"})
+        6
+    """
+
+    raw = environ.get(_SYMBOL_COUNT_VARIABLE, "").strip()
+    if not raw:
+        return _PREREGISTERED_SYMBOL_COUNT
+    message = f"{_SYMBOL_COUNT_VARIABLE} must be an integer in [2, {COLOR_COUNT}]"
+    try:
+        value = int(raw, 10)
+    except ValueError as error:
+        raise ValueError(message) from error
+    if not 2 <= value <= COLOR_COUNT:
+        raise ValueError(message)
+    return value
+
+
+SYMBOL_COUNT = _symbol_count_from_environment(os.environ)
 _INPUT_SETS = tuple(itertools.combinations(range(COLOR_COUNT), SYMBOL_COUNT))
 _OUTPUT_ASSIGNMENTS = tuple(itertools.permutations(range(COLOR_COUNT), SYMBOL_COUNT))
 _MAPPING_COUNT = len(_INPUT_SETS) * len(_OUTPUT_ASSIGNMENTS)
@@ -188,7 +236,9 @@ class BindingControlConfig:
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
             raise ValueError("recurrent_edges exceeds the no-self-edge capacity")
         if self.training_episode_count + self.validation_episodes > _MAPPING_COUNT:
-            raise ValueError("requested episodes exceed the unique K=4 mapping catalog")
+            raise ValueError(
+                f"requested episodes exceed the unique K={SYMBOL_COUNT} mapping catalog"
+            )
         if self.validation_episodes > self.training_episode_count:
             raise ValueError(
                 "validation_episodes cannot exceed the fixed training-probe pool"
@@ -200,7 +250,11 @@ class BindingControlConfig:
 
     @property
     def symbol_count(self) -> int:
-        """Return the fixed number of one-cell binding symbols."""
+        """Return the configured number of one-cell binding symbols.
+
+        The preregistered value is 4; ``BRAINTRACE_BINDING_SYMBOL_COUNT``
+        selects a nonqualifying load ablation in ``[2, COLOR_COUNT]``.
+        """
 
         return SYMBOL_COUNT
 
@@ -215,7 +269,7 @@ class BindingControlConfig:
 
     @property
     def sequence_length(self) -> int:
-        """Return four demonstrations, one query, and the latent gap."""
+        """Return the demonstrations, one query, and the latent gap."""
 
         return SYMBOL_COUNT + 1 + self.gap_steps
 
@@ -246,6 +300,7 @@ class BindingControlConfig:
 
         complete = (
             self.configuration_scale == "production_topology"
+            and self.symbol_count == _PREREGISTERED_SYMBOL_COUNT
             and self.training_updates == 10000
             and self.batch_size == 64
             and self.validation_episodes == 512
@@ -1003,6 +1058,7 @@ def _data_report(data: BindingData, config: BindingControlConfig) -> dict[str, A
     validation_ids = data.validation_mapping_ids
     target_histogram = np.bincount(data.validation_targets, minlength=COLOR_COUNT)
     return {
+        "symbol_count": SYMBOL_COUNT,
         "mapping_catalog_size": _MAPPING_COUNT,
         "mapping_split": "seeded affine permutation; disjoint contiguous ranges",
         "training_episode_count": int(train_ids.size),
