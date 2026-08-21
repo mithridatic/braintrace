@@ -255,6 +255,14 @@ class ModelConfig:
         ``"carrier_gate"`` selects the retained carrier-gating ablation, and
         ``"attention_residual"`` applies learned source-axis attention across
         completed refinement sweeps.
+    memory_value_softcap_beta : float, default=1.0
+        Softcap magnitude of the memory value coding,
+        ``softcap(x, beta) = beta * tanh(x / beta)``, bounding the stored
+        value code to ``(-beta, beta)``.  The default 1.0 reproduces the
+        legacy ``tanh`` value map bit-exactly.
+    reasoning_query_softcap_beta : float, default=1.0
+        Softcap magnitude of the iterative reasoning query on latent steps.
+        The default 1.0 reproduces the legacy ``tanh`` cap bit-exactly.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -309,6 +317,8 @@ class ModelConfig:
     refinement_mixer: Literal[
         "linear", "carrier_gate", "attention_residual"
     ] = "linear"
+    memory_value_softcap_beta: float = 1.0
+    reasoning_query_softcap_beta: float = 1.0
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -344,6 +354,8 @@ class ModelConfig:
             "time_step_ms",
             "input_gain",
             "recurrent_gain",
+            "memory_value_softcap_beta",
+            "reasoning_query_softcap_beta",
         ):
             object.__setattr__(self, name, _positive_real(getattr(self, name), name))
         if self.neuron_count % NEURONS_PER_SLOT:
@@ -1573,6 +1585,43 @@ def apply_context_memory_write(
     return jnp.where(write_gate[:, None, None], candidate, memory)
 
 
+def softcap(value: jax.Array, beta: float) -> jax.Array:
+    """Smoothly cap ``value`` to ``(-beta, beta)`` with unit slope at zero.
+
+    Computes ``beta * tanh(value / beta)`` (the softcap of SiTU-GLU Eq. 12,
+    used here without the GLU structure). ``beta = 1.0`` reproduces
+    ``tanh(value)`` bit-exactly because division and multiplication by one
+    are exact float operations, so the legacy hard caps stay recoverable.
+
+    Parameters
+    ----------
+    value : jax.Array
+        Pre-activation to cap.
+    beta : float
+        Positive finite cap magnitude.
+
+    Returns
+    -------
+    jax.Array
+        The capped activation, bounded in magnitude by ``beta`` (the
+        mathematical bound is the open interval ``(-beta, beta)``; float
+        rounding can reach the endpoints for very large inputs).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> from examples.pp_prop.latent_workspace_model import softcap
+        >>> softcap(jnp.asarray(0.5), 1.0) == jnp.tanh(jnp.asarray(0.5))
+        Array(True, dtype=bool)
+        >>>
+        >>> float(softcap(jnp.asarray(6.0), 4.0)) < 4.0
+        True
+    """
+    return beta * jnp.tanh(value / beta)
+
+
 def _unit_l2_cap(value: jax.Array) -> jax.Array:
     """Cap each final-axis vector at unit L2 norm with a stopped divisor."""
     value = jnp.asarray(value)
@@ -2215,8 +2264,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         Returns
         -------
         jax.Array
-            Bounded value code shaped ``(batch, memory_width)``.  Rows without
-            a valid output side are exactly zero.
+            Value code shaped ``(batch, memory_width)``, softcap-bounded to
+            ``(-memory_value_softcap_beta, memory_value_softcap_beta)``.
+            Rows without a valid output side are exactly zero.
         """
         if not self.config.memory_enabled:
             raise RuntimeError("context memory is disabled")
@@ -2225,7 +2275,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
         features = event[..., jnp.asarray(self.config.memory_value_indices)]
-        code = jnp.tanh(features @ self._memory_value_basis)
+        code = softcap(
+            features @ self._memory_value_basis,
+            self.config.memory_value_softcap_beta,
+        )
         assert self.config.output_side_valid_index is not None
         side_valid = event[..., self.config.output_side_valid_index] > 0.5
         return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
@@ -3004,7 +3057,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             projected_query = self.workspace_query_projection(
                 _unit_l2_cap(previous_workspace)
             )
-            iterative_query = jnp.tanh(self.query_encoding.value + projected_query)
+            iterative_query = softcap(
+                self.query_encoding.value + projected_query,
+                self.config.reasoning_query_softcap_beta,
+            )
             next_reasoning_query = jnp.where(
                 query[:, None],
                 self.query_encoding.value,

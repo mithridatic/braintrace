@@ -44,6 +44,7 @@ from examples.pp_prop.latent_workspace_model import (
     ModelConfig,
     _unit_l2_cap,
     compile_pp_prop,
+    softcap,
 )
 from examples.pp_prop.latent_workspace_task import (
     ArcGrid,
@@ -1022,11 +1023,13 @@ def _make_batch_measurement(model: LatentWorkspaceModel, config: BindingGateConf
             axis=-1,
         ).reshape(compact.shape)
         h0 = raw_carrier[0]
-        capped_reasoning = jnp.tanh(
-            query_encoding[1] + model.workspace_query_projection(_unit_l2_cap(h0))
+        capped_reasoning = softcap(
+            query_encoding[1] + model.workspace_query_projection(_unit_l2_cap(h0)),
+            model.config.reasoning_query_softcap_beta,
         )
-        uncapped_reasoning = jnp.tanh(
-            query_encoding[1] + model.workspace_query_projection(h0)
+        uncapped_reasoning = softcap(
+            query_encoding[1] + model.workspace_query_projection(h0),
+            model.config.reasoning_query_softcap_beta,
         )
         logits = jax.vmap(
             lambda value: legacy._color_logits(value, config.color_rank)

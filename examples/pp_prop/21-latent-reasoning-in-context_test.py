@@ -498,7 +498,7 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     full = example.ExperimentConfig(output_dir=tmp_path, structural_only=True)
     smoke = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
 
-    assert (full.neuron_count, full.recurrent_edges) == (4096, 1_048_576)
+    assert (full.neuron_count, full.recurrent_edges) == (4096, 16_384)
     assert (smoke.neuron_count, smoke.recurrent_edges) == (128, 1024)
     assert full.max_demonstrations == 10
     assert full.to_dict()["checkpoints"] == [0, 30, 60]
@@ -678,6 +678,152 @@ def test_optimizer_cli_round_trips_resolved_policy(example):
     assert config.weight_decay == 0.02
 
 
+def test_adam_rejects_explicit_nonzero_weight_decay(example):
+    with pytest.raises(ValueError, match="weight_decay"):
+        example.ExperimentConfig(
+            structural_only=True, optimizer="adam", weight_decay=0.01
+        )
+    with pytest.raises(ValueError, match="weight_decay"):
+        example._config_from_args(
+            example._parser().parse_args(
+                ["--structural-only", "--optimizer", "adam", "--weight-decay", "0.01"]
+            )
+        )
+    explicit_zero = example.ExperimentConfig(
+        structural_only=True, optimizer="adam", weight_decay=0.0
+    )
+    assert explicit_zero.weight_decay == 0.0
+
+
+@pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
+def test_zero_gradient_update_applies_decoupled_weight_decay(example, name):
+    config = example.ExperimentConfig.smoke_config(optimizer=name)
+    states = {
+        ("matrix",): brainstate.ParamState(jnp.asarray([[1.0, -0.5], [0.2, 0.7]])),
+        ("vector",): brainstate.ParamState(jnp.asarray([0.4, -0.3])),
+    }
+    optimizer = example._make_training_optimizer(config, states)
+    before = {path: np.asarray(state.value).copy() for path, state in states.items()}
+    gradients = {path: jnp.zeros_like(state.value) for path, state in states.items()}
+
+    @brainstate.transform.jit
+    def update():
+        optimizer.update(gradients)
+
+    update()
+
+    shrink = 1.0 - config.learning_rate * config.weight_decay
+    assert (shrink == 1.0) == (name == "adam")
+    for path, state in states.items():
+        np.testing.assert_allclose(
+            np.asarray(state.value), before[path] * shrink, rtol=1e-6
+        )
+
+
+def test_experiment_defaults_pin_training_regime(example):
+    config = example.ExperimentConfig(structural_only=True)
+    parsed = example._parser().parse_args([])
+    smoke = example.ExperimentConfig.smoke_config()
+
+    assert config.seed == parsed.seed == 9999
+    assert config.recurrent_edges == parsed.recurrent_edges == 16_384
+    assert config.training_updates == parsed.training_updates == 260
+    assert config.training_batch_size == parsed.training_batch_size == 32
+    assert config.training_workers == parsed.training_workers == 8
+    assert config.adaptation_epochs == parsed.adaptation_epochs == 1
+    assert smoke.training_batch_size == 1
+
+
+def test_lr_schedule_defaults_to_cosine_at_raised_base_rate(example):
+    default = example.ExperimentConfig(structural_only=True)
+    smoke = example.ExperimentConfig.smoke_config()
+    cli = example._config_from_args(
+        example._parser().parse_args(["--structural-only"])
+    )
+
+    assert (default.lr_schedule, default.learning_rate) == ("cosine", 1e-3)
+    assert (cli.lr_schedule, cli.learning_rate) == ("cosine", 1e-3)
+    assert smoke.lr_schedule == "cosine"
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
+    assert constant.lr_schedule == "constant"
+    with pytest.raises(ValueError, match="lr_schedule"):
+        example.ExperimentConfig(structural_only=True, lr_schedule="linear")
+
+
+def test_cosine_training_schedule_decays_base_rate_to_zero(example):
+    config = example.ExperimentConfig(structural_only=True)
+    schedule = example._training_learning_rate(config)
+    horizon = config.training_updates
+
+    assert float(schedule(0)) == pytest.approx(config.learning_rate)
+    assert float(schedule(horizon // 2)) == pytest.approx(
+        config.learning_rate / 2.0, rel=1e-6
+    )
+    assert float(schedule(horizon)) == pytest.approx(0.0, abs=1e-9)
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
+    assert example._training_learning_rate(constant) == constant.learning_rate
+
+
+def test_lr_schedule_round_trips_policy_dict_and_cli(example):
+    cosine = example.ExperimentConfig(structural_only=True)
+    constant = example._config_from_args(
+        example._parser().parse_args(["--structural-only", "--lr-schedule", "constant"])
+    )
+
+    assert example._optimizer_policy(cosine)["lr_schedule"] == "cosine"
+    assert example._optimizer_policy(constant)["lr_schedule"] == "constant"
+    assert cosine.to_dict()["lr_schedule"] == "cosine"
+    assert constant.to_dict()["lr_schedule"] == "constant"
+    assert constant.learning_rate == 1e-3
+
+
+def test_parameter_travel_budget_halves_under_cosine_schedule(example):
+    constant = example.ExperimentConfig(
+        structural_only=True, optimizer="adam", lr_schedule="constant"
+    )
+    cosine = example.ExperimentConfig(structural_only=True, optimizer="adam")
+
+    flat = example._parameter_travel_budget(constant)
+    halved = example._parameter_travel_budget(cosine)
+
+    assert flat["schedule_integral_factor"] == 1.0
+    assert halved["schedule_integral_factor"] == 0.5
+    assert halved["displacement_bound"] == pytest.approx(
+        0.5 * flat["displacement_bound"]
+    )
+
+
+def test_softcap_betas_default_and_plumb_into_model_config(example):
+    config = example.ExperimentConfig(structural_only=True)
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    model_config = example._model_config(config, rows, batch_size=1)
+    cli = example._config_from_args(
+        example._parser().parse_args(
+            [
+                "--structural-only",
+                "--memory-value-softcap-beta",
+                "1.0",
+                "--reasoning-query-softcap-beta",
+                "2.5",
+            ]
+        )
+    )
+
+    assert config.memory_value_softcap_beta == 4.0
+    assert config.reasoning_query_softcap_beta == 25.0
+    assert model_config.memory_value_softcap_beta == 4.0
+    assert model_config.reasoning_query_softcap_beta == 25.0
+    assert cli.memory_value_softcap_beta == 1.0
+    assert cli.reasoning_query_softcap_beta == 2.5
+    assert config.to_dict()["memory_value_softcap_beta"] == 4.0
+    with pytest.raises(ValueError, match="memory_value_softcap_beta"):
+        example.ExperimentConfig(structural_only=True, memory_value_softcap_beta=0.0)
+    with pytest.raises(ValueError, match="reasoning_query_softcap_beta"):
+        example.ExperimentConfig(
+            structural_only=True, reasoning_query_softcap_beta=-1.0
+        )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
@@ -770,7 +916,7 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     parsed = example._parser().parse_args([])
     assert parsed.device == "gpu"
     assert parsed.neurons == 4096
-    assert parsed.recurrent_edges == 1_048_576
+    assert parsed.recurrent_edges == 16_384
     assert parsed.context_memory_width == 32
     assert parsed.decoder_mode == "row_refinement"
     assert parsed.memory_decay == 1.0
@@ -2570,7 +2716,11 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
         )
 
     monkeypatch.setattr(example, "compile_pp_prop", lambda model: Learner())
-    monkeypatch.setattr(example.braintools.optim, "Adam", Optimizer)
+    monkeypatch.setattr(
+        example.braintools.optim,
+        "OptaxOptimizer",
+        lambda *, tx, lr: Optimizer(lr=lr),
+    )
     monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
     monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
 
@@ -3305,7 +3455,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     evaluation = _evaluation_payload()
     model_report = {
         "neuron_count": 4096,
-        "recurrent_edge_count": 1_048_576,
+        "recurrent_edge_count": 16_384,
         "slot_count": 64,
         "parameter_count": 1,
         "component_types": {

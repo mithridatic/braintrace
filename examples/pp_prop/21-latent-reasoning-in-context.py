@@ -160,6 +160,12 @@ SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
+LrScheduleName = Literal["constant", "cosine"]
+
+FULL_SCALE_NEURON_COUNT = 4096
+
+FULL_SCALE_RECURRENT_EDGES = 16_384
+
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 RefinementMixer = Literal["linear", "carrier_gate", "attention_residual"]
 CHECKPOINT_INTERVAL = 30
@@ -331,13 +337,21 @@ class ExperimentConfig:
         Emit diagnostic phase and pipeline timing. Profiling synchronizes
         device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
-        Optimizer rate and global gradient clipping norm.
+        Base optimizer rate and global gradient clipping norm.
+    lr_schedule : {"constant", "cosine"}
+        Shared-training learning-rate schedule. ``"constant"`` holds the base
+        rate for every update; ``"cosine"`` decays it from the base rate to
+        zero over ``training_updates`` optimizer updates (optax cosine decay
+        with ``alpha=0``, no warmup). The per-tick adaptation path keeps its
+        own constant ``adaptation_learning_rate`` either way.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
     weight_decay : float or None
         Decoupled weight decay for AdamW and Muon. ``None`` resolves to zero
-        for Adam, 0.01 for AdamW, and 0.1 for Muon.
+        for Adam, 0.01 for AdamW, and 0.1 for Muon. Plain Adam applies no
+        decay, so a nonzero explicit value with ``optimizer='adam'`` is
+        rejected rather than silently ignored.
     copy_residual_gain : float
         Fixed identity-residual logit magnitude added to the answer row
         head's output at the query's own colour for every occupied column,
@@ -362,6 +376,14 @@ class ExperimentConfig:
         Explicit refinement proposal mixer. Only ``"attention_residual"``
         implements the paper's learned source-axis softmax; the other choices
         are retained ablations.
+    memory_value_softcap_beta : float
+        Softcap magnitude ``beta`` of the memory value coding,
+        ``softcap(x, beta) = beta * tanh(x / beta)``, bounding the stored
+        value code to ``(-beta, beta)``. ``1.0`` reproduces the legacy
+        ``tanh`` value map bit-exactly.
+    reasoning_query_softcap_beta : float
+        Softcap magnitude of the iterative reasoning query on latent steps.
+        ``1.0`` reproduces the legacy ``tanh`` cap bit-exactly.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
         This option is valid only with the explicit legacy CP decoder.
@@ -409,9 +431,9 @@ class ExperimentConfig:
     source_manifest: pathlib.Path | None = None
     output_dir: pathlib.Path = pathlib.Path("var/example21")
     device: DeviceName = "gpu"
-    seed: int = 2108
-    neuron_count: int = 4096
-    recurrent_edges: int = 1_048_576
+    seed: int = 9999
+    neuron_count: int = FULL_SCALE_NEURON_COUNT
+    recurrent_edges: int = FULL_SCALE_RECURRENT_EDGES
     readout_width: int = 128
     color_rank: int = 16
     context_memory_width: int = 32
@@ -421,17 +443,18 @@ class ExperimentConfig:
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
-    training_updates: int = 96
+    training_updates: int = 260
     training_chunk_size: int = 0
-    training_batch_size: int = 1
+    training_batch_size: int = 32
     training_bank_size: int = 0
-    training_workers: int = 4
+    training_workers: int = 8
     runtime_profile: bool = False
-    learning_rate: float = 1e-4
+    learning_rate: float = 1e-3
+    lr_schedule: LrScheduleName = "cosine"
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
-    adaptation_epochs: int = 2
+    adaptation_epochs: int = 1
     task_local_adaptation: bool = False
     evaluation_controls: bool = False
     clip_norm: float = 1.0
@@ -440,6 +463,8 @@ class ExperimentConfig:
     row_head_carrier_gate: bool = False
     shape_head_carrier_scale: float = 1.0
     refinement_mixer: RefinementMixer = "linear"
+    memory_value_softcap_beta: float = 4.0
+    reasoning_query_softcap_beta: float = 25.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
     adaptation_task_group: int = 20
@@ -494,6 +519,8 @@ class ExperimentConfig:
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
         if self.optimizer not in ("adam", "adamw", "muon"):
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
+        if self.lr_schedule not in ("constant", "cosine"):
+            raise ValueError("lr_schedule must be 'constant' or 'cosine'")
         if self.memory_coding not in ("frozen", "learned_keys", "learned_write"):
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
@@ -555,6 +582,12 @@ class ExperimentConfig:
         decay = {"adam": 0.0, "adamw": 0.01, "muon": 0.1}[self.optimizer]
         if self.weight_decay is not None:
             decay = _nonnegative_real(self.weight_decay, "weight_decay")
+        if self.optimizer == "adam" and decay:
+            raise ValueError(
+                "weight_decay must be zero for optimizer='adam': plain Adam "
+                "applies no decoupled decay, so a nonzero value would be "
+                "reported in the optimizer policy but never applied"
+            )
         object.__setattr__(self, "weight_decay", decay)
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
@@ -577,6 +610,8 @@ class ExperimentConfig:
                 "refinement_mixer='attention_residual' cannot be combined with "
                 "copy_residual_gain or non-default row/shape carrier scales"
             )
+        for name in ("memory_value_softcap_beta", "reasoning_query_softcap_beta"):
+            object.__setattr__(self, name, _positive_real(getattr(self, name), name))
         object.__setattr__(
             self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
@@ -648,7 +683,7 @@ class ExperimentConfig:
         *,
         output_dir: pathlib.Path = pathlib.Path("var/example21-smoke"),
         device: DeviceName = "cpu",
-        seed: int = 2108,
+        seed: int = 9999,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
@@ -656,6 +691,7 @@ class ExperimentConfig:
         optimizer: OptimizerName = "muon",
         weight_decay: float | None = None,
         refinement_mixer: RefinementMixer = "linear",
+        lr_schedule: LrScheduleName = "cosine",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -684,8 +720,11 @@ class ExperimentConfig:
             Shared-training optimizer.
         weight_decay : float or None
             Explicit optimizer weight decay, or the optimizer-specific default.
+            Nonzero values are rejected for plain Adam, which applies no decay.
         refinement_mixer : {"linear", "carrier_gate", "attention_residual"}
             Row-refinement proposal mixer.
+        lr_schedule : {"constant", "cosine"}
+            Shared-training learning-rate schedule forwarded unchanged.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -717,6 +756,7 @@ class ExperimentConfig:
             optimizer=optimizer,
             weight_decay=weight_decay,
             refinement_mixer=refinement_mixer,
+            lr_schedule=lr_schedule,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -724,6 +764,7 @@ class ExperimentConfig:
             max_demonstrations=4,
             latent_steps=60,
             training_updates=3,
+            training_batch_size=1,
             learning_rate=5e-4,
             smoke=True,
         )
@@ -1924,6 +1965,8 @@ def _model_config(
             None if config.sparse_backend == "default" else config.sparse_backend
         ),
         "trace_engine": config.trace_engine,
+        "memory_value_softcap_beta": config.memory_value_softcap_beta,
+        "reasoning_query_softcap_beta": config.reasoning_query_softcap_beta,
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
@@ -2108,11 +2151,15 @@ def _compiler_evidence(learner: Any) -> dict[str, object]:
 def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
     """Return how far the configured budget can move an answer-head weight.
 
-    Adam cannot displace a coordinate further than ``learning_rate * updates``,
-    so an operating point below one answer-head initialisation sigma trains a
-    head that stays a perturbation of its random initialisation whatever the
-    loss says. Recording the width the sigma was taken against lets a later
-    reader redo the arithmetic without knowing which head revision ran.
+    Adam cannot displace a coordinate further than the summed per-update
+    rates, so an operating point below one answer-head initialisation sigma
+    trains a head that stays a perturbation of its random initialisation
+    whatever the loss says. Under a flat schedule that sum is
+    ``learning_rate * updates``; under cosine decay to zero the schedule
+    integral is half the flat value, so the base rate is multiplied by the
+    schedule integral factor (0.5) before the bound is applied. Recording the
+    width the sigma was taken against lets a later reader redo the arithmetic
+    without knowing which head revision ran.
     """
     if config.optimizer != "adam":
         return {
@@ -2125,9 +2172,13 @@ def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
         if config.decoder_mode == "row_refinement"
         else config.readout_width
     )
-    return adam_parameter_travel_budget(
-        config.learning_rate, config.training_updates, width
+    integral_factor = 1.0 if config.lr_schedule == "constant" else 0.5
+    budget = adam_parameter_travel_budget(
+        config.learning_rate * integral_factor, config.training_updates, width
     )
+    budget["lr_schedule"] = config.lr_schedule
+    budget["schedule_integral_factor"] = integral_factor
+    return budget
 
 
 def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
@@ -2135,6 +2186,7 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
     policy: dict[str, object] = {
         "name": config.optimizer,
         "learning_rate": config.learning_rate,
+        "lr_schedule": config.lr_schedule,
         "weight_decay": config.weight_decay,
     }
     if config.optimizer == "muon":
@@ -2150,26 +2202,58 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
     return policy
 
 
+def _training_learning_rate(config: ExperimentConfig) -> float | optax.Schedule:
+    """Return the shared-training rate, flat or as a cosine decay schedule.
+
+    Parameters
+    ----------
+    config : ExperimentConfig
+        Resolved experiment configuration.
+
+    Returns
+    -------
+    float or optax.Schedule
+        The flat base rate for ``lr_schedule="constant"``, otherwise an optax
+        cosine decay schedule from the base rate to zero (``alpha=0``) over
+        ``training_updates`` optimizer updates.
+    """
+    if config.lr_schedule == "constant":
+        return config.learning_rate
+    return optax.cosine_decay_schedule(
+        init_value=config.learning_rate,
+        decay_steps=max(int(config.training_updates), 1),
+    )
+
+
 def _make_training_optimizer(
     config: ExperimentConfig, param_states: Mapping[object, brainstate.ParamState]
 ) -> braintools.optim.Optimizer:
-    """Construct and register the configured shared-training optimizer."""
+    """Construct and register the configured shared-training optimizer.
+
+    All three optimizers are built as optax transformations so the
+    shared-training learning-rate schedule threads through identically;
+    ``braintools.optim.Adam``/``AdamW`` accept only flat rates or braintools
+    schedulers, so the adam and adamw branches use the equivalent
+    ``optax.adam``/``optax.adamw`` (same moments, same decoupled decay
+    placement for AdamW) wrapped in ``braintools.optim.OptaxOptimizer``.
+    """
+    rate = _training_learning_rate(config)
     if config.optimizer == "adam":
-        optimizer = braintools.optim.Adam(lr=config.learning_rate)
+        transformation = optax.adam(learning_rate=rate)
     elif config.optimizer == "adamw":
-        optimizer = braintools.optim.AdamW(
-            lr=config.learning_rate, weight_decay=config.weight_decay
+        transformation = optax.adamw(
+            learning_rate=rate, weight_decay=config.weight_decay
         )
     else:
         transformation = optax.contrib.muon(
-            learning_rate=config.learning_rate,
+            learning_rate=rate,
             weight_decay=config.weight_decay,
-            adam_learning_rate=config.learning_rate,
+            adam_learning_rate=rate,
             adam_weight_decay=config.weight_decay,
         )
-        optimizer = braintools.optim.OptaxOptimizer(
-            tx=transformation, lr=config.learning_rate
-        )
+    optimizer = braintools.optim.OptaxOptimizer(
+        tx=transformation, lr=config.learning_rate
+    )
     optimizer.register_trainable_weights(param_states)
     return optimizer
 
@@ -5089,8 +5173,8 @@ def _qualification(
         and row_routes_direct
     )
     full_scale = bool(
-        model_report.get("neuron_count") == 4096
-        and model_report.get("recurrent_edge_count") == 1_048_576
+        model_report.get("neuron_count") == FULL_SCALE_NEURON_COUNT
+        and model_report.get("recurrent_edge_count") == FULL_SCALE_RECURRENT_EDGES
         and model_report.get("slot_count") == 64
         and int(model_report.get("parameter_count", 0)) > 0
     )
@@ -5236,7 +5320,10 @@ def _qualification(
     )
     approved_completion_target = bool(scientific and score_gate_passed)
     structural_messages = {
-        "actual_full_scale": "actual model is not the required 4096-neuron/1048576-edge scale",
+        "actual_full_scale": (
+            f"actual model is not the required {FULL_SCALE_NEURON_COUNT}-neuron/"
+            f"{FULL_SCALE_RECURRENT_EDGES}-edge scale"
+        ),
         "physical_component_contract": "actual neuron, projection, synapse, or current-output component types do not match the declared substrate",
         "actual_gpu_backend": "actual evaluation backend is not GPU",
         "gpu_runtime_resource_safe": "full GPU runtime resource-safety evidence is missing, incomplete, or over policy limits",
@@ -6209,6 +6296,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "refinement_mixer": getattr(
             model.config, "refinement_mixer", config.refinement_mixer
         ),
+        "memory_value_softcap_beta": config.memory_value_softcap_beta,
+        "reasoning_query_softcap_beta": config.reasoning_query_softcap_beta,
         "training_output_width": model.config.training_output_width,
         "checkpoint_output_width": model.config.checkpoint_output_width,
         "compact_output_width": model.config.compact_output_width,
@@ -6291,9 +6380,11 @@ def _parser() -> argparse.ArgumentParser:
         "--output-dir", type=pathlib.Path, default=pathlib.Path("var/example21")
     )
     parser.add_argument("--device", choices=("cpu", "gpu"), default="gpu")
-    parser.add_argument("--seed", type=int, default=2108)
+    parser.add_argument("--seed", type=int, default=9999)
     parser.add_argument("--neurons", type=int, default=4096)
-    parser.add_argument("--recurrent-edges", type=int, default=1_048_576)
+    parser.add_argument(
+        "--recurrent-edges", type=int, default=FULL_SCALE_RECURRENT_EDGES
+    )
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
@@ -6308,16 +6399,19 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
-    parser.add_argument("--training-updates", type=int, default=96)
+    parser.add_argument("--training-updates", type=int, default=260)
     parser.add_argument("--training-chunk-size", type=int, default=0)
-    parser.add_argument("--training-batch-size", type=int, default=1)
+    parser.add_argument("--training-batch-size", type=int, default=32)
     parser.add_argument("--training-bank-size", type=int, default=0)
-    parser.add_argument("--training-workers", type=int, default=4)
+    parser.add_argument("--training-workers", type=int, default=8)
     parser.add_argument("--profile", action="store_true")
     parser.add_argument(
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
     )
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument(
+        "--lr-schedule", choices=("constant", "cosine"), default="cosine"
+    )
     parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
@@ -6325,6 +6419,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--copy-residual-gain", type=float, default=0.0)
     parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
+    parser.add_argument("--memory-value-softcap-beta", type=float, default=4.0)
+    parser.add_argument("--reasoning-query-softcap-beta", type=float, default=25.0)
     parser.add_argument("--row-head-carrier-gate", action="store_true")
     parser.add_argument(
         "--refinement-mixer",
@@ -6332,7 +6428,7 @@ def _parser() -> argparse.ArgumentParser:
         default="linear",
     )
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
-    parser.add_argument("--adaptation-epochs", type=int, default=2)
+    parser.add_argument("--adaptation-epochs", type=int, default=1)
     parser.add_argument("--task-local-adaptation", action="store_true")
     parser.add_argument("--evaluation-controls", action="store_true")
     parser.add_argument(
@@ -6360,7 +6456,10 @@ def _parser() -> argparse.ArgumentParser:
 
 def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
     if args.smoke:
-        if args.neurons != 4096 or args.recurrent_edges != 1_048_576:
+        if (
+            args.neurons != FULL_SCALE_NEURON_COUNT
+            or args.recurrent_edges != FULL_SCALE_RECURRENT_EDGES
+        ):
             raise ValueError("--smoke owns its reduced neuron and edge scale")
         return ExperimentConfig.smoke_config(
             output_dir=args.output_dir,
@@ -6373,6 +6472,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             optimizer=args.optimizer,
             weight_decay=args.weight_decay,
             refinement_mixer=args.refinement_mixer,
+            lr_schedule=args.lr_schedule,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6409,6 +6509,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
+        lr_schedule=args.lr_schedule,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,
@@ -6416,6 +6517,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         row_head_carrier_gate=args.row_head_carrier_gate,
         shape_head_carrier_scale=args.shape_head_carrier_scale,
         refinement_mixer=args.refinement_mixer,
+        memory_value_softcap_beta=args.memory_value_softcap_beta,
+        reasoning_query_softcap_beta=args.reasoning_query_softcap_beta,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,

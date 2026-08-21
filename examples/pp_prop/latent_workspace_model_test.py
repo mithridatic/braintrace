@@ -4144,3 +4144,44 @@ def test_small_d_rtrl_compile_and_terminal_gradient_are_finite() -> None:
         for value in gradients.values()
         for leaf in jax.tree.leaves(value)
     )
+
+
+def test_softcap_beta_one_reproduces_tanh_bitwise():
+    values = jnp.asarray(
+        [-50.0, -4.0, -1.0, -0.25, 0.0, 0.25, 1.0, 4.0, 50.0], dtype=jnp.float32
+    )
+
+    capped = latent_workspace_module.softcap(values, 1.0)
+
+    assert np.array_equal(np.asarray(capped), np.asarray(jnp.tanh(values)))
+
+
+def test_softcap_matches_scaled_tanh_and_stays_bounded():
+    values = jnp.linspace(-100.0, 100.0, 201, dtype=jnp.float32)
+
+    capped = np.asarray(latent_workspace_module.softcap(values, 4.0))
+
+    assert np.all(np.abs(capped) <= 4.0)
+    moderate = np.abs(np.asarray(values)) <= 8.0
+    assert np.all(np.abs(capped[moderate]) < 4.0)
+    np.testing.assert_allclose(
+        capped, 4.0 * np.tanh(np.asarray(values) / 4.0), rtol=1e-6
+    )
+    small = jnp.asarray([1e-3, -1e-3], dtype=jnp.float32)
+    np.testing.assert_allclose(
+        np.asarray(latent_workspace_module.softcap(small, 25.0)),
+        np.asarray(small),
+        rtol=1e-4,
+    )
+
+
+@pytest.mark.parametrize(
+    "name", ["memory_value_softcap_beta", "reasoning_query_softcap_beta"]
+)
+def test_model_config_softcap_betas_default_legacy_and_validate(name):
+    config = ModelConfig(input_width=8)
+    assert getattr(config, name) == 1.0
+
+    for bad in (0.0, -1.0, float("inf"), float("nan")):
+        with pytest.raises(ValueError, match=name):
+            ModelConfig(input_width=8, **{name: bad})
