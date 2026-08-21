@@ -334,7 +334,9 @@ class ExperimentConfig:
         its built-in AdamW fallback for other leaves.
     weight_decay : float or None
         Decoupled weight decay for AdamW and Muon. ``None`` resolves to zero
-        for Adam, 0.01 for AdamW, and 0.1 for Muon.
+        for Adam, 0.01 for AdamW, and 0.1 for Muon. Plain Adam applies no
+        decay, so a nonzero explicit value with ``optimizer='adam'`` is
+        rejected rather than silently ignored.
     copy_residual_gain : float
         Fixed identity-residual logit magnitude added to the answer row
         head's output at the query's own colour for every occupied column,
@@ -527,6 +529,12 @@ class ExperimentConfig:
         decay = {"adam": 0.0, "adamw": 0.01, "muon": 0.1}[self.optimizer]
         if self.weight_decay is not None:
             decay = _nonnegative_real(self.weight_decay, "weight_decay")
+        if self.optimizer == "adam" and decay:
+            raise ValueError(
+                "weight_decay must be zero for optimizer='adam': plain Adam "
+                "applies no decoupled decay, so a nonzero value would be "
+                "reported in the optimizer policy but never applied"
+            )
         object.__setattr__(self, "weight_decay", decay)
         object.__setattr__(
             self, "clip_norm", _positive_real(self.clip_norm, "clip_norm")
@@ -646,6 +654,7 @@ class ExperimentConfig:
             Shared-training optimizer.
         weight_decay : float or None
             Explicit optimizer weight decay, or the optimizer-specific default.
+            Nonzero values are rejected for plain Adam, which applies no decay.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}

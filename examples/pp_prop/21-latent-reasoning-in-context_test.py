@@ -678,6 +678,48 @@ def test_optimizer_cli_round_trips_resolved_policy(example):
     assert config.weight_decay == 0.02
 
 
+def test_adam_rejects_explicit_nonzero_weight_decay(example):
+    with pytest.raises(ValueError, match="weight_decay"):
+        example.ExperimentConfig(
+            structural_only=True, optimizer="adam", weight_decay=0.01
+        )
+    with pytest.raises(ValueError, match="weight_decay"):
+        example._config_from_args(
+            example._parser().parse_args(
+                ["--structural-only", "--optimizer", "adam", "--weight-decay", "0.01"]
+            )
+        )
+    explicit_zero = example.ExperimentConfig(
+        structural_only=True, optimizer="adam", weight_decay=0.0
+    )
+    assert explicit_zero.weight_decay == 0.0
+
+
+@pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
+def test_zero_gradient_update_applies_decoupled_weight_decay(example, name):
+    config = example.ExperimentConfig.smoke_config(optimizer=name)
+    states = {
+        ("matrix",): brainstate.ParamState(jnp.asarray([[1.0, -0.5], [0.2, 0.7]])),
+        ("vector",): brainstate.ParamState(jnp.asarray([0.4, -0.3])),
+    }
+    optimizer = example._make_training_optimizer(config, states)
+    before = {path: np.asarray(state.value).copy() for path, state in states.items()}
+    gradients = {path: jnp.zeros_like(state.value) for path, state in states.items()}
+
+    @brainstate.transform.jit
+    def update():
+        optimizer.update(gradients)
+
+    update()
+
+    shrink = 1.0 - config.learning_rate * config.weight_decay
+    assert (shrink == 1.0) == (name == "adam")
+    for path, state in states.items():
+        np.testing.assert_allclose(
+            np.asarray(state.value), before[path] * shrink, rtol=1e-6
+        )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
