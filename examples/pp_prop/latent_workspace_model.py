@@ -173,10 +173,10 @@ class ModelConfig:
         Width of one encoded ARC row event.
     batch_size : int, default=1
         Native batch dimension used by the BrainState model.
-    neuron_count : int, default=2048
+    neuron_count : int, default=4096
         Number of physical LIF neurons.  It must be divisible by 64 so slot
         controls always refer to exact 64-neuron ranges.
-    recurrent_edges : int, default=16384
+    recurrent_edges : int, default=4194304
         Exact number of directed non-self recurrent edges.
     max_latent_steps : int, default=32
         Maximum allowed zero-input recurrent steps.
@@ -303,13 +303,13 @@ class ModelConfig:
 
         >>> config = ModelConfig(input_width=828)
         >>> (config.neuron_count, config.recurrent_edges, config.slot_count)
-        (2048, 16384, 32)
+        (4096, 4194304, 64)
     """
 
     input_width: int
     batch_size: int = 1
-    neuron_count: int = 2048
-    recurrent_edges: int = 16384
+    neuron_count: int = 4096
+    recurrent_edges: int = 4194304
     max_latent_steps: int = 32
     readout_width: int = 128
     color_rank: int = 16

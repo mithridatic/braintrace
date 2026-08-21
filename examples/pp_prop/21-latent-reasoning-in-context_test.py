@@ -498,7 +498,7 @@ def test_full_and_smoke_configs_preserve_declared_physical_scales(example, tmp_p
     full = example.ExperimentConfig(output_dir=tmp_path, structural_only=True)
     smoke = example.ExperimentConfig.smoke_config(output_dir=tmp_path)
 
-    assert (full.neuron_count, full.recurrent_edges) == (4096, 16_384)
+    assert (full.neuron_count, full.recurrent_edges) == (4096, 4_194_304)
     assert (smoke.neuron_count, smoke.recurrent_edges) == (128, 1024)
     assert full.max_demonstrations == 10
     assert full.to_dict()["checkpoints"] == [0, 30, 60]
@@ -726,7 +726,7 @@ def test_experiment_defaults_pin_training_regime(example):
     smoke = example.ExperimentConfig.smoke_config()
 
     assert config.seed == parsed.seed == 9999
-    assert config.recurrent_edges == parsed.recurrent_edges == 16_384
+    assert config.recurrent_edges == parsed.recurrent_edges == 4_194_304
     assert config.training_updates == parsed.training_updates == 260
     assert config.training_batch_size == parsed.training_batch_size == 32
     assert config.training_workers == parsed.training_workers == 8
@@ -916,7 +916,7 @@ def test_cli_defaults_fail_closed_to_full_gpu_and_smoke_owns_scale(example, tmp_
     parsed = example._parser().parse_args([])
     assert parsed.device == "gpu"
     assert parsed.neurons == 4096
-    assert parsed.recurrent_edges == 16_384
+    assert parsed.recurrent_edges == 4_194_304
     assert parsed.context_memory_width == 32
     assert parsed.decoder_mode == "row_refinement"
     assert parsed.memory_decay == 1.0
@@ -2707,6 +2707,9 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
         def reset_state(self):
             return None
 
+        def project_recurrent_dale_weights(self):
+            return None
+
     def host_for_loop(function, xs):
         return jnp.stack(
             [
@@ -3455,7 +3458,7 @@ def test_qualification_separates_plumbing_structural_and_scientific_claims(examp
     evaluation = _evaluation_payload()
     model_report = {
         "neuron_count": 4096,
-        "recurrent_edge_count": 16_384,
+        "recurrent_edge_count": 4_194_304,
         "slot_count": 64,
         "parameter_count": 1,
         "component_types": {
@@ -4007,6 +4010,7 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         neuron_count=128,
         recurrent_edge_count=1024,
         slot_count=2,
+        neuron_typing_report=lambda: {"mode": "none"},
         config=SimpleNamespace(
             batch_size=1,
             decoder_mode="legacy_cp",

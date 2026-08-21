@@ -96,7 +96,7 @@ models.
 
 Example 21 uses three sibling support modules and one shared model for every
 effort checkpoint. The full architecture has 2,048 LIF neurons and exactly
-16,384 recurrent sparse edges. It consumes ordinary ARC JSON tasks—multiple
+4,194,304 recurrent sparse edges. It consumes ordinary ARC JSON tasks—multiple
 input/output demonstrations, variable grid dimensions, and every test query—and
 reports exact query and strict whole-task pass@1/pass@2. Pixel accuracy is only
 a near-miss diagnostic.
@@ -139,14 +139,14 @@ image identity first:
       --volume "${PWD}/var:/work/var" `
       --volume "${PWD}/var/jax-cache:/cache/jax" `
       braintrace-gpu:0.11.0-py314-msgspec-arc `
-      python /opt/braintrace/examples/pp_prop/21-latent-reasoning-in-context.py `
+      python /work/examples/pp_prop/21-latent-reasoning-in-context.py `
       --device gpu `
       --source-manifest /datasets/arc/example21-sources.json `
-      --output-dir /work/var/example21-shared-4096n-16384e-b32-u260 `
+      --output-dir /work/var/example21-shared-4096n-4194304e-b32-u260 `
       --training-chunk-size 5
 
-The command runs the configuration defaults: 4096 neurons, 16,384 recurrent
-edges, training batch 32, 260 shared optimizer updates on the cosine
+The command runs the configuration defaults: 4096 neurons, 4,194,304 recurrent
+edges (1,024 per neuron, at the policy cap), training batch 32, 260 shared optimizer updates on the cosine
 learning-rate schedule at base rate 1e-3, 8 training workers, and seed 9999.
 Only the execution chunk size is passed explicitly (5 divides 260); the
 default of 0 would compile the whole update schedule as one program.
@@ -178,7 +178,7 @@ scoring, all recurrent checkpoints, causal controls, and the trajectory report:
 
 The smoke fixture and reduced network prove plumbing only. They are never
 reported as ARC model quality. A scientific result requires a non-evaluation
-public training source, held-out tasks, the 2,048/16,384 model, mixed 8/16/32
+public training source, held-out tasks, the 4,096/4,194,304 model, mixed 8/16/32
 training effort, and frozen evaluation of one trajectory at 0/8/16/32. The
 report also includes provisional grid changes, entropy, spikes, voltage, state
 movement, convergence, no-context, deranged-demonstration, and 64-neuron slot

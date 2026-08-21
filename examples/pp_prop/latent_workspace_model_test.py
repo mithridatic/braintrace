@@ -403,22 +403,22 @@ def _production_k4_events() -> tuple[jax.Array, jax.Array]:
     )
 
 
-def test_full_configuration_is_2048_neurons_16384_edges_and_32_slots() -> None:
+def test_full_configuration_is_4096_neurons_4194304_edges_and_64_slots() -> None:
     config = ModelConfig(input_width=830)
 
-    assert config.neuron_count == 2048
-    assert config.recurrent_edges == 16384
+    assert config.neuron_count == 4096
+    assert config.recurrent_edges == 4194304
     assert config.max_latent_steps == 32
-    assert config.slot_count == 32
+    assert config.slot_count == 64
     assert config.slot_count * NEURONS_PER_SLOT == config.neuron_count
 
 
 def test_full_topology_has_exact_unique_no_self_edge_count() -> None:
-    topology = build_sparse_topology(2048, 16384, seed=2108)
-    flat = topology.rows.astype(np.int64) * 2048 + topology.columns
+    topology = build_sparse_topology(4096, 4194304, seed=2108)
+    flat = topology.rows.astype(np.int64) * 4096 + topology.columns
 
-    assert topology.edge_count == 16384
-    assert np.unique(flat).size == 16384
+    assert topology.edge_count == 4194304
+    assert np.unique(flat).size == 4194304
     assert not np.any(topology.rows == topology.columns)
     assert topology.rows.flags.writeable is False
     assert topology.columns.flags.writeable is False
@@ -428,10 +428,10 @@ def test_full_topology_has_exact_unique_no_self_edge_count() -> None:
 def test_full_model_instantiates_physical_components() -> None:
     full = LatentWorkspaceModel(ModelConfig(input_width=4))
 
-    assert full.neuron_count == 2048
-    assert full.recurrent_edge_count == 16384
-    assert full.slot_count == 32
-    assert full.neu.varshape == (2048,)
+    assert full.neuron_count == 4096
+    assert full.recurrent_edge_count == 4194304
+    assert full.slot_count == 64
+    assert full.neu.varshape == (4096,)
     assert isinstance(full.neu, bpstate.LIF)
     assert isinstance(full.ff_syn, bpstate.AlignPostProj)
     assert isinstance(full.ff_syn.syn, bpstate.Expon)

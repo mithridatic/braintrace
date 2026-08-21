@@ -164,7 +164,7 @@ LrScheduleName = Literal["constant", "cosine"]
 
 FULL_SCALE_NEURON_COUNT = 4096
 
-FULL_SCALE_RECURRENT_EDGES = 16_384
+FULL_SCALE_RECURRENT_EDGES = 4_194_304
 
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 RefinementMixer = Literal["linear", "carrier_gate", "attention_residual"]
