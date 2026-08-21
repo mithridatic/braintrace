@@ -80,6 +80,17 @@ LEARNED_RETRIEVAL_KEY_CODINGS = ("learned_keys", "learned_write")
 #: Eligibility-trace engines the model can compile under.
 TRACE_ENGINES = ("pp_prop", "d_rtrl")
 
+#: Neuron-typing modes for the recurrent population (spec
+#: 2026-08-21-example21-neuron-types.md).  ``"none"`` is the untyped legacy
+#: substrate; ``"ei_dale"`` assigns a seeded binary E/I split and constrains
+#: recurrent weight signs by presynaptic type (Dale's law).
+NEURON_TYPINGS = ("none", "ei_dale")
+
+#: Seed offset of the dedicated neuron-type random stream, so enabling typing
+#: never perturbs the existing topology (`seed`), parameter (`seed + 1`), or
+#: memory (`seed + 101..105`) streams.
+_NEURON_TYPE_SEED_OFFSET = 7
+
 #: Reported key-map name per coding; provenance hashes stay on the frozen bases.
 _MEMORY_KEY_MAP_NAMES = {
     "frozen": "fixed_rff_cosine",
@@ -249,6 +260,19 @@ class ModelConfig:
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
         exactly zero.
+    neuron_typing : {"none", "ei_dale"}, default="none"
+        Recurrent neuron-type structure.  ``"none"`` keeps the untyped legacy
+        substrate bit-exactly.  ``"ei_dale"`` assigns every neuron a binary
+        excitatory/inhibitory type deterministically from the seed and
+        constrains every recurrent edge's sign to its *presynaptic* neuron's
+        type (Dale's law) at initialization; training must re-project after
+        each optimizer step via
+        :meth:`LatentWorkspaceModel.project_recurrent_dale_weights`.
+    excitatory_fraction : float, default=0.8
+        Fraction of neurons assigned the excitatory type under ``ei_dale``.
+        The realized excitatory count is ``round(fraction * neuron_count)``
+        and both types must be non-empty.  Supplying a non-default fraction
+        with ``neuron_typing="none"`` is rejected (fail closed).
     seed : int, default=2108
         Seed for all topology and parameter randomness.  Random values are
         drawn exclusively through :mod:`brainstate.random`.
@@ -279,6 +303,8 @@ class ModelConfig:
     recurrent_gain: float = 0.8
     trace_decay: float = 0.9
     event_valid_index: int = 0
+    neuron_typing: Literal["none", "ei_dale"] = "none"
+    excitatory_fraction: float = 0.8
     context_memory_width: int = 0
     memory_decay: float = 1.0
     demonstration_phase_index: int | None = None
@@ -462,6 +488,27 @@ class ModelConfig:
             raise TypeError("trace_engine must be 'pp_prop' or 'd_rtrl'")
         if self.trace_engine not in TRACE_ENGINES:
             raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+        if not isinstance(self.neuron_typing, str):
+            raise TypeError("neuron_typing must be 'none' or 'ei_dale'")
+        if self.neuron_typing not in NEURON_TYPINGS:
+            raise ValueError("neuron_typing must be 'none' or 'ei_dale'")
+        object.__setattr__(
+            self,
+            "excitatory_fraction",
+            _unit_interval_real(self.excitatory_fraction, "excitatory_fraction"),
+        )
+        if self.neuron_typing == "none":
+            if self.excitatory_fraction != 0.8:
+                raise ValueError(
+                    "excitatory_fraction requires neuron_typing='ei_dale'"
+                )
+        else:
+            excitatory = round(self.excitatory_fraction * self.neuron_count)
+            if not 1 <= excitatory <= self.neuron_count - 1:
+                raise ValueError(
+                    "excitatory_fraction must leave at least one neuron of "
+                    "each type"
+                )
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
         if not isinstance(self.decoder_mode, str):
@@ -663,7 +710,10 @@ class SparseTopology:
     Parameters
     ----------
     rows, columns : numpy.ndarray
-        Int32 post- and presynaptic endpoint arrays.
+        Int32 edge endpoint arrays.  The recurrent projection computes
+        ``y = spikes @ CSR`` (:func:`braintrace.sparse_matmul`), so ``rows``
+        is contracted with the spike vector and is therefore the
+        *presynaptic* endpoint; ``columns`` is the postsynaptic endpoint.
     values : numpy.ndarray
         Float32 initial edge values before physical current units are attached.
     neuron_count : int
@@ -1069,6 +1119,150 @@ def build_sparse_topology(
     for array in (rows, columns, values):
         array.setflags(write=False)
     return SparseTopology(rows, columns, values, neuron_count)
+
+
+def assign_neuron_type_signs(
+    neuron_count: int,
+    excitatory_fraction: float,
+    *,
+    seed: int,
+) -> NDArray[np.int8]:
+    """Assign deterministic binary E/I type signs to a neuron population.
+
+    A seeded permutation drawn through :mod:`brainstate.random` marks
+    ``round(excitatory_fraction * neuron_count)`` neurons as excitatory
+    (``+1``) and the remainder as inhibitory (``-1``).  The stream uses a
+    dedicated seed offset so enabling typing never perturbs the existing
+    topology, parameter, or memory random streams.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Number of neurons to type, at least two.
+    excitatory_fraction : float
+        Fraction of excitatory neurons in ``[0, 1]``.  The realized split
+        must leave at least one neuron of each type.
+    seed : int
+        Nonnegative base model seed; the stream uses ``seed + 7``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Read-only int8 vector of ``+1`` (excitatory) and ``-1`` (inhibitory)
+        entries, one per neuron.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> signs = assign_neuron_type_signs(64, 0.75, seed=2108)
+        >>> (int((signs == 1).sum()), int((signs == -1).sum()))
+        (48, 16)
+    """
+    neuron_count = _positive_integer(neuron_count, "neuron_count")
+    excitatory_fraction = _unit_interval_real(
+        excitatory_fraction, "excitatory_fraction"
+    )
+    seed = _nonnegative_integer(seed, "seed")
+    excitatory = round(excitatory_fraction * neuron_count)
+    if not 1 <= excitatory <= neuron_count - 1:
+        raise ValueError(
+            "excitatory_fraction must leave at least one neuron of each type"
+        )
+    random = brainstate.random.RandomState(seed + _NEURON_TYPE_SEED_OFFSET)
+    permutation = np.asarray(random.permutation(neuron_count), dtype=np.int64)
+    signs = np.full(neuron_count, -1, dtype=np.int8)
+    signs[permutation[:excitatory]] = 1
+    signs.setflags(write=False)
+    return signs
+
+
+def apply_dale_signs(
+    topology: SparseTopology,
+    type_signs: NDArray[np.int8],
+) -> SparseTopology:
+    """Constrain a topology's edge signs to their presynaptic neuron types.
+
+    Every edge value becomes ``type_signs[presynaptic] * |value|``, where the
+    presynaptic endpoint is ``topology.rows`` (the axis contracted with the
+    spike vector in ``y = spikes @ CSR``).  Magnitudes, endpoints, and edge
+    order are preserved exactly.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Untyped source topology.
+    type_signs : numpy.ndarray
+        Per-neuron ``+1``/``-1`` vector from
+        :func:`assign_neuron_type_signs`.
+
+    Returns
+    -------
+    SparseTopology
+        New topology whose values obey Dale's law.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> topology = build_sparse_topology(64, 128, seed=1)
+        >>> signs = assign_neuron_type_signs(64, 0.8, seed=1)
+        >>> typed = apply_dale_signs(topology, signs)
+        >>> bool((np.sign(typed.values) == signs[typed.rows]).all())
+        True
+    """
+    signs = np.asarray(type_signs)
+    if signs.shape != (topology.neuron_count,):
+        raise ValueError(
+            "type_signs length must equal the topology neuron count"
+        )
+    if not np.all(np.abs(signs.astype(np.int64)) == 1):
+        raise ValueError("type_signs entries must be +1 or -1")
+    values = (
+        np.abs(topology.values) * signs[topology.rows].astype(np.float32)
+    ).astype(np.float32, copy=False)
+    values.setflags(write=False)
+    return SparseTopology(
+        topology.rows, topology.columns, values, topology.neuron_count
+    )
+
+
+def project_dale_weights(weights: Any, edge_signs: Any) -> Any:
+    """Project edge weights onto their Dale-legal half-line.
+
+    Positive-typed edges are clamped to ``max(w, 0)`` and negative-typed
+    edges to ``min(w, 0)``; legal weights pass through unchanged, so the
+    projection is idempotent.  Works on plain arrays and on
+    :class:`brainunit.Quantity` values alike.
+
+    Parameters
+    ----------
+    weights : ArrayLike or brainunit.Quantity
+        Per-edge weight vector.
+    edge_signs : ArrayLike
+        Per-edge ``+1``/``-1`` presynaptic type signs.
+
+    Returns
+    -------
+    ArrayLike or brainunit.Quantity
+        Projected weights with the input's dtype and unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import brainunit as u
+        >>> import jax.numpy as jnp
+        >>> weights = jnp.asarray([1.0, -2.0]) * u.mA
+        >>> project_dale_weights(weights, jnp.asarray([1, 1]))
+        ArrayImpl([1., 0.], dtype=float32) * mamp
+    """
+    zero = u.math.zeros_like(weights)
+    return u.math.where(
+        jnp.asarray(edge_signs) > 0,
+        u.math.maximum(weights, zero),
+        u.math.minimum(weights, zero),
+    )
 
 
 def _indptr_from_rows(rows: NDArray[np.int32], neuron_count: int) -> NDArray[np.int32]:
@@ -1721,6 +1915,23 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             seed=config.seed,
             recurrent_gain=config.recurrent_gain,
         )
+        if config.neuron_typing == "ei_dale":
+            type_signs = assign_neuron_type_signs(
+                config.neuron_count,
+                config.excitatory_fraction,
+                seed=config.seed,
+            )
+            edge_signs = type_signs[self.topology.rows]
+            self._dale_init_flip_count = int(
+                np.sum(self.topology.values * edge_signs < 0)
+            )
+            self.topology = apply_dale_signs(self.topology, type_signs)
+            self.neuron_type_signs = type_signs
+            self._dale_edge_signs = jnp.asarray(edge_signs, dtype=jnp.int8)
+        else:
+            self.neuron_type_signs = None
+            self._dale_edge_signs = None
+            self._dale_init_flip_count = 0
         random = brainstate.random.RandomState(config.seed + 1)
 
         self.neu = bpstate.LIF(
@@ -2009,6 +2220,87 @@ class LatentWorkspaceModel(brainstate.nn.Module):
     def recurrent_current(self) -> jax.Array:
         """Return the recurrent Expon state numerically in milliamps."""
         return jnp.asarray(self.rec_syn.syn.g.value.to_decimal(u.mA))
+
+    def project_recurrent_dale_weights(self) -> None:
+        """Clamp recurrent weights onto their presynaptic Dale sign in place.
+
+        Under ``neuron_typing="ei_dale"`` this rewrites the recurrent sparse
+        weight so excitatory rows stay nonnegative and inhibitory rows stay
+        nonpositive; call it immediately after every optimizer step.  It is a
+        no-op under ``neuron_typing="none"`` and inside a trace it lowers to
+        a single elementwise ``where``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> config = ModelConfig(input_width=8, neuron_count=128,
+            ...                      recurrent_edges=1024,
+            ...                      neuron_typing="ei_dale")
+            >>> model = LatentWorkspaceModel(config)
+            >>> model.project_recurrent_dale_weights()
+            >>> model.neuron_typing_report()["recurrent_sign_violation_count"]
+            0
+        """
+        if self._dale_edge_signs is None:
+            return
+        parameters = dict(self.rec_syn.comm.weight.value)
+        parameters["weight"] = project_dale_weights(
+            parameters["weight"], self._dale_edge_signs
+        )
+        self.rec_syn.comm.weight.value = parameters
+
+    def neuron_typing_report(self) -> dict[str, object]:
+        """Describe the neuron-type structure and current Dale compliance.
+
+        Returns
+        -------
+        dict
+            JSON-safe mapping.  Under ``"none"`` only ``mode`` and null
+            counts are reported.  Under ``"ei_dale"`` it carries the E/I
+            counts, the realized excitatory fraction, the number of edges
+            whose initial random sign was flipped by the Dale constraint,
+            and the number of *current* recurrent weights violating their
+            presynaptic sign (zero after init and after every projection).
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> config = ModelConfig(input_width=8, neuron_count=128,
+            ...                      recurrent_edges=1024)
+            >>> LatentWorkspaceModel(config).neuron_typing_report()["mode"]
+            'none'
+        """
+        if self.neuron_type_signs is None:
+            return {
+                "mode": "none",
+                "excitatory_count": None,
+                "inhibitory_count": None,
+                "configured_excitatory_fraction": None,
+                "realized_excitatory_fraction": None,
+                "initial_sign_flip_count": None,
+                "recurrent_sign_violation_count": None,
+            }
+        signs = np.asarray(self.neuron_type_signs)
+        excitatory = int(np.sum(signs == 1))
+        weight = np.asarray(
+            u.get_mantissa(self.rec_syn.comm.weight.value["weight"])
+        )
+        edge_signs = np.asarray(self._dale_edge_signs)
+        return {
+            "mode": "ei_dale",
+            "excitatory_count": excitatory,
+            "inhibitory_count": int(signs.size - excitatory),
+            "configured_excitatory_fraction": float(
+                self.config.excitatory_fraction
+            ),
+            "realized_excitatory_fraction": excitatory / signs.size,
+            "initial_sign_flip_count": self._dale_init_flip_count,
+            "recurrent_sign_violation_count": int(
+                np.sum(weight * edge_signs < 0)
+            ),
+        }
 
     def encode_memory_key(self, event: jax.Array) -> jax.Array:
         """Encode input-side row features with a fixed nonlinear key map.

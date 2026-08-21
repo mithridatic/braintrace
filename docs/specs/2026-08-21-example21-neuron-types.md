@@ -215,6 +215,33 @@ measured durations. GPU is reserved by another agent — no GPU runs.
   (Stage A will fix the docstring; it is one of the hashed files, so only
   between runs.)
 
-## 7. Measured results
+## 7. Stage A implementation notes (Piece 2)
+
+Landed on `feat/ex21-neuron-types`:
+
+- `latent_workspace_model.py`: `NEURON_TYPINGS`, `_NEURON_TYPE_SEED_OFFSET`
+  (= 7), `ModelConfig.neuron_typing` / `excitatory_fraction` (+ validation),
+  pure functions `assign_neuron_type_signs`, `apply_dale_signs`,
+  `project_dale_weights`, model attributes `neuron_type_signs` /
+  `_dale_edge_signs` / `_dale_init_flip_count`, methods
+  `project_recurrent_dale_weights` and `neuron_typing_report`. The
+  `SparseTopology` docstring now states the executed orientation (rows =
+  presynaptic under `y = spikes @ CSR`).
+- `21-latent-reasoning-in-context.py`: `NeuronTyping` alias,
+  `ExperimentConfig.neuron_typing` / `excitatory_fraction` (+ validation,
+  `ei_dale` + `task_local_adaptation` rejected fail-closed), `smoke_config`
+  passthrough, `_model_config` passthrough, CLI `--neuron-typing` /
+  `--excitatory-fraction`, Dale projection immediately after
+  `optimizer.update` inside the compiled `train_one`,
+  `model_report["neuron_typing"]`, and one text-report line.
+- Tests: `latent_workspace_neuron_typing_test.py` (37 tests) — golden-digest
+  bit-exactness pin for `"none"` (topology values, parameter digest, 5-step
+  run digest, captured from commit cac015e in
+  `braintrace-gpu:0.11.0-py314` CPU), presynaptic sign orientation,
+  determinism, projection semantics, config validation, report contents, and
+  the experiment surface (parser, smoke_config, `_model_config`, projection
+  ordering in the training source).
+
+## 8. Measured results
 
 To be filled by Piece 3/4.
