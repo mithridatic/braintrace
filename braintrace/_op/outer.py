@@ -80,14 +80,34 @@ Two trace entries suffice for three trainable inputs: ``key_bias`` shares
 ``key_weight``'s postsynaptic factor exactly and differs only in its
 presynaptic factor, which is the constant one.
 
-**Scope**
+**D-RTRL: exact position-retaining traces**
 
-pp-prop / ES-D-RTRL only. The D-RTRL rules raise
-:class:`~braintrace.NotSupportedError`: an exact weight-shaped trace here would
-have to retain the value axis
-(:math:`\epsilon_{W_k} \in \mathbb{R}^{B \times A_k \times K \times V \times S}`),
-which is affordable at diagnostic scale but is not what this primitive was
-built for.
+A dense-style parameter-shaped trace cannot be exact for this primitive: one
+key weight entry :math:`W_k[a, i]` influences the whole memory row
+:math:`S[i, :]`, not a single position. The param-dim (D-RTRL) trace therefore
+retains both position axes per slot,
+
+.. math::
+
+    \epsilon_{W_k} \in \mathbb{R}^{B \times A_k \times K \times V \times S},
+    \quad
+    \epsilon_{b_k} \in \mathbb{R}^{B \times K \times V \times S},
+    \quad
+    \epsilon_{W_v} \in \mathbb{R}^{B \times A_v \times K \times V \times S},
+
+and the primitive registers the trace-structured override pair
+(:data:`~braintrace._op._registries.ETP_RULES_INSTANT_DRTRL` /
+:data:`~braintrace._op._registries.ETP_RULES_SOLVE_DRTRL`, the LoRA precedent)
+so the instantaneous term lands per position and the solve step contracts the
+axis each parameter does not have. With the position axes retained, the
+diagonal recurrence loses nothing on an elementwise memory tail: for a model
+whose hidden Jacobian is genuinely diagonal (the associative memory
+:math:`S_t = \lambda S_{t-1} + g_t \, y_t \odot \Sigma` is), D-RTRL on this
+primitive reproduces BPTT element-wise at any window length — it does **not**
+rely on the sign-consistency premise behind pp-prop's rank-1 collapse, which
+the cos/tanh factors violate by construction. The memory cost is the point of
+this trace (≈``B·(A_k+A_v+1)·K·V·S`` floats): affordable at diagnostic scale,
+deliberate at model scale.
 """
 
 from __future__ import annotations
@@ -98,9 +118,9 @@ import brainunit as u
 import jax
 import jax.numpy as jnp
 
-from braintrace._misc import NotSupportedError
 from braintrace._typing import ArrayLike
 from ._primitive import register_primitive
+from ._registries import ETP_RULES_INSTANT_DRTRL, ETP_RULES_SOLVE_DRTRL
 
 __all__ = [
     'etp_outer_write_p',
@@ -247,26 +267,165 @@ def _outer_write_init_pp(x_var: Any, y_var: Any, weight_vars: Dict[str, Any],
             'value': jnp.zeros(shape, dtype=dtype)}
 
 
-_DRTRL_MESSAGE = (
-    'etp_outer_write does not support D-RTRL (param-dim) eligibility traces. '
-    'An exact weight-shaped trace for the key projection would have to retain '
-    'the value axis (B x key_features x key_out x value_out x n_state), which '
-    'this first version deliberately does not allocate. Compile this model '
-    "with pp-prop (ES-D-RTRL) instead, or raise the primitive's D-RTRL rules "
-    'before using a param-dim algorithm.'
-)
-
-
 def _outer_write_init_drtrl(x_var: Any, y_var: Any, weight_vars: Dict[str, Any],
                             num_hidden_state: int) -> Dict[str, Any]:
-    """Reject D-RTRL loudly rather than allocate a trace this op cannot fill."""
-    raise NotSupportedError(_DRTRL_MESSAGE)
+    r"""Allocate the exact position-retaining D-RTRL traces.
+
+    Every entry keeps both memory position axes ``(key_out, value_out)`` per
+    trace slot — a parameter-shaped trace cannot follow the diagonal
+    recurrence here because one weight entry influences a whole memory row
+    (see the module docstring):
+
+    .. math::
+
+        \epsilon_{W_k} \in \mathbb{R}^{B \times A_k \times K \times V \times S},
+        \quad
+        \epsilon_{b_k} \in \mathbb{R}^{B \times K \times V \times S},
+        \quad
+        \epsilon_{W_v} \in \mathbb{R}^{B \times A_v \times K \times V \times S}.
+
+    Zero-initialised (:math:`\epsilon^0 = 0`); dtype via
+    :func:`jax.numpy.result_type` of the participating avals, following the
+    dense precedent.
+    """
+    batch = x_var.aval.shape[0]
+    positions = y_var.aval.shape[1:]  # (key_out, value_out)
+    dtype = jnp.result_type(
+        x_var.aval.dtype, y_var.aval.dtype,
+        *(v.aval.dtype for v in weight_vars.values()),
+    )
+    key_in = weight_vars['key_weight'].aval.shape[0]
+    value_in = weight_vars['value_weight'].aval.shape[0]
+    return {
+        'key_weight': jnp.zeros(
+            (batch, key_in, *positions, num_hidden_state), dtype=dtype),
+        'key_bias': jnp.zeros(
+            (batch, *positions, num_hidden_state), dtype=dtype),
+        'value_weight': jnp.zeros(
+            (batch, value_in, *positions, num_hidden_state), dtype=dtype),
+    }
 
 
 def _outer_write_dt_to_t(hidden_dim: Any, trace: Dict[str, Any],
                          **params: Any) -> Dict[str, Any]:
-    """Reject D-RTRL trace propagation (see :func:`_outer_write_init_drtrl`)."""
-    raise NotSupportedError(_DRTRL_MESSAGE)
+    r"""Propagate :math:`\partial h / \partial y` through the retained traces.
+
+    Because every trace keeps the full ``(key_out, value_out)`` position axes,
+    the :math:`y \to` position link inside
+    :math:`\mathbf{D}^t \boldsymbol{\epsilon}^{t-1}` is an elementwise
+    broadcast — nothing is summed away and nothing approximated:
+
+    .. math::
+
+        \epsilon^{t}_{W, aij} = (\partial h / \partial y)_{ij}\,
+                                \epsilon^{t-1}_{W, aij}, \qquad
+        \epsilon^{t}_{b, ij}  = (\partial h / \partial y)_{ij}\,
+                                \epsilon^{t-1}_{b, ij}.
+
+    ``jnp.expand_dims(hidden_dim, axis=-3)`` inserts the input-feature axis
+    before the position pair, valid in both executor contexts (batched trace
+    update ``(B, K, V)`` against ``(B, A, K, V)``; batch-stripped solve
+    ``(K, V)`` against ``(A, K, V)``) — the same trick as dense's ``axis=-2``.
+    """
+    lifted = jnp.expand_dims(hidden_dim, axis=-3)
+    return {
+        'key_weight': trace['key_weight'] * lifted,
+        'key_bias': trace['key_bias'] * hidden_dim,
+        'value_weight': trace['value_weight'] * lifted,
+    }
+
+
+def _outer_write_instant_drtrl(x: Any, df: Any, weights: Dict[str, Any], *,
+                               key_features: int, key_scale: float,
+                               key_nonlinearity: str = 'cos_rff',
+                               value_nonlinearity: str = 'tanh') -> Dict[str, Any]:
+    r"""Trace-structured instantaneous term, exact at the raw current-step ``x``.
+
+    Parameters
+    ----------
+    x : Any
+        Raw current-step packed input. The algorithm vmaps the batch and state
+        axes away, so this rule sees a batch-free slice
+        ``(key_features + value_features,)``.
+    df : Any
+        The ``y -> hidden`` tangent for this step, position-shaped
+        ``(key_out, value_out)``.
+    weights : dict
+        Current values of the three trainable inputs.
+
+    Returns
+    -------
+    dict
+        Trace-structured slots: the full per-position Jacobian
+        :math:`\partial h_{ij} / \partial W` with no contraction,
+
+        .. math::
+
+            \epsilon^{\text{inst}}_{W_k, aij} = x^{(k)}_a\,
+                c\,\varphi'_k(p)_i\, \varphi_v(q)_j\, \mathrm{df}_{ij}, \qquad
+            \epsilon^{\text{inst}}_{W_v, aij} = x^{(v)}_a\,
+                c\,\varphi_k(p)_i\, \varphi'_v(q)_j\, \mathrm{df}_{ij},
+
+        with ``key_bias`` sharing ``key_weight``'s postsynaptic factor at
+        presynaptic factor one. Every nonlinearity is evaluated at the raw
+        current-step ``x`` — the property the pp-prop path can only deliver
+        through the factor hook, and the reason this trace is exact.
+    """
+    pre_key, pre_value, key_code, value_code = _codes(
+        x, weights, key_features, key_scale, key_nonlinearity,
+        value_nonlinearity)
+    key_slope = key_scale * _DERIVATIVE[key_nonlinearity](pre_key)
+    value_slope = _DERIVATIVE[value_nonlinearity](pre_value)
+    key_df = df * jnp.einsum('...i,...j->...ij', key_slope, value_code)
+    value_df = df * jnp.einsum('...i,...j->...ij', key_code, value_slope)
+    x_v = u.get_mantissa(x)
+    return {
+        'key_weight': jnp.einsum(
+            '...a,...ij->...aij', x_v[..., :key_features], key_df),
+        'key_bias': key_df,
+        'value_weight': jnp.einsum(
+            '...a,...ij->...aij', x_v[..., key_features:], value_df),
+    }
+
+
+def _outer_write_solve_drtrl(dg_hidden: Any, trace: Dict[str, Any],
+                             weights: Dict[str, Any],
+                             **params: Any) -> Dict[str, Any]:
+    r"""Contract the learning signal with each retained trace.
+
+    Parameters
+    ----------
+    dg_hidden : Any
+        The hidden-side learning signal, position-shaped
+        ``(key_out, value_out)`` (the algorithm vmaps batch and state away).
+    trace : dict
+        The position-retaining traces from :func:`_outer_write_init_drtrl`.
+    weights : dict
+        Current weight values. Unused — every Jacobian factor already entered
+        the trace at its own timestep, so no solve-time chaining remains.
+
+    Returns
+    -------
+    dict
+        Param-shaped gradients: the position axis each parameter does not
+        have is summed here and nowhere else,
+
+        .. math::
+
+            \nabla W_k[a, i] = \sum_j \mathrm{dg}_{ij}\, \epsilon_{W_k, aij},
+            \quad
+            \nabla b_k[i] = \sum_j \mathrm{dg}_{ij}\, \epsilon_{b_k, ij},
+            \quad
+            \nabla W_v[a, j] = \sum_i \mathrm{dg}_{ij}\, \epsilon_{W_v, aij}.
+    """
+    dg = u.get_mantissa(dg_hidden)
+    return {
+        'key_weight': jnp.einsum(
+            '...ij,...aij->...ai', dg, trace['key_weight']),
+        'key_bias': jnp.einsum('...ij,...ij->...i', dg, trace['key_bias']),
+        'value_weight': jnp.einsum(
+            '...ij,...aij->...aj', dg, trace['value_weight']),
+    }
 
 
 etp_outer_write_p = register_primitive(
@@ -283,6 +442,12 @@ etp_outer_write_p.register_etp_rules(
     init_pp=_outer_write_init_pp,
     pp_df_factors=_outer_write_pp_df_factors,
 )
+# Param-dim D-RTRL overrides (the LoRA precedent): the trace structure keeps
+# the (key_out, value_out) position axes, so neither the instantaneous term
+# nor the solve-time contraction can be expressed by xy_to_dw / dt_to_t alone.
+# IO-dim (ES-D-RTRL) keeps using xy_to_dw with the factored df traces.
+ETP_RULES_INSTANT_DRTRL[etp_outer_write_p] = _outer_write_instant_drtrl
+ETP_RULES_SOLVE_DRTRL[etp_outer_write_p] = _outer_write_solve_drtrl
 
 
 # ---------------------------------------------------------------------------

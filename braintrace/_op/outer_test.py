@@ -29,13 +29,14 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from braintrace import NotSupportedError
 from braintrace._op import (
     ETP_RULES_DT_TO_T,
     ETP_RULES_INIT_DRTRL,
     ETP_RULES_INIT_PP,
     ETP_RULES_XY_TO_DW,
+    get_instant_drtrl_rule,
     get_pp_df_factors,
+    get_solve_drtrl_rule,
     get_trainable_invars,
     is_batched_primitive,
     is_etp_primitive,
@@ -255,19 +256,117 @@ class TestPPRules:
             assert grad.shape == weights[name].shape
 
 
-class TestUnsupportedAlgorithms:
-    """v1 is pp-prop only; D-RTRL must fail loudly, never mis-trace."""
+def _weight_var_dict():
+    return {
+        'key_weight': _fake_var((_KEY_IN, _KEY_OUT)),
+        'key_bias': _fake_var((_KEY_OUT,)),
+        'value_weight': _fake_var((_VALUE_IN, _VALUE_OUT)),
+    }
 
-    def test_init_drtrl_raises_not_supported(self):
-        with pytest.raises(NotSupportedError, match='D-RTRL'):
-            ETP_RULES_INIT_DRTRL[etp_outer_write_p](
-                _fake_var((_BATCH, _KEY_IN + _VALUE_IN)),
-                _fake_var((_BATCH, _KEY_OUT, _VALUE_OUT)),
-                {'key_weight': _fake_var((_KEY_IN, _KEY_OUT))},
-                num_hidden_state=1,
-            )
 
-    def test_dt_to_t_raises_not_supported(self):
-        with pytest.raises(NotSupportedError, match='D-RTRL'):
-            ETP_RULES_DT_TO_T[etp_outer_write_p](
-                jnp.ones((_BATCH, _KEY_OUT, _VALUE_OUT)), {}, **_params())
+def _drtrl_trace(seed, batched):
+    """A random position-retaining trace dict, with or without a batch axis."""
+    keys = jax.random.split(jax.random.PRNGKey(seed), 3)
+    lead = (_BATCH,) if batched else ()
+    return {
+        'key_weight': jax.random.normal(
+            keys[0], (*lead, _KEY_IN, _KEY_OUT, _VALUE_OUT)),
+        'key_bias': jax.random.normal(keys[1], (*lead, _KEY_OUT, _VALUE_OUT)),
+        'value_weight': jax.random.normal(
+            keys[2], (*lead, _VALUE_IN, _KEY_OUT, _VALUE_OUT)),
+    }
+
+
+class TestDRTRLRules:
+    """Exact param-dim traces: the position axes ``(key_out, value_out)`` are
+    retained per trace slot, so the diagonal recurrence loses nothing.
+
+    A parameter-shaped (dense-style) trace cannot be exact here -- one key
+    weight entry influences a whole memory row -- which is why these rules go
+    through the ``instant_drtrl`` / ``solve_drtrl`` override pair rather than
+    ``xy_to_dw`` / ``dt_to_t`` alone (the LoRA precedent).
+    """
+
+    def test_init_drtrl_allocates_position_retaining_traces(self):
+        out = ETP_RULES_INIT_DRTRL[etp_outer_write_p](
+            _fake_var((_BATCH, _KEY_IN + _VALUE_IN)),
+            _fake_var((_BATCH, _KEY_OUT, _VALUE_OUT)),
+            _weight_var_dict(),
+            num_hidden_state=2,
+        )
+        assert out['key_weight'].shape == (
+            _BATCH, _KEY_IN, _KEY_OUT, _VALUE_OUT, 2)
+        assert out['key_bias'].shape == (_BATCH, _KEY_OUT, _VALUE_OUT, 2)
+        assert out['value_weight'].shape == (
+            _BATCH, _VALUE_IN, _KEY_OUT, _VALUE_OUT, 2)
+        for trace in out.values():
+            assert jnp.all(trace == 0.0)
+
+    def test_registers_trace_structured_instant_and_solve_rules(self):
+        assert get_instant_drtrl_rule(etp_outer_write_p) is not None
+        assert get_solve_drtrl_rule(etp_outer_write_p) is not None
+
+    def test_one_step_exactness_instant_then_solve_matches_vjp(self):
+        """``solve(dg, instant(x, df)) == vjp`` at cotangent ``dg * df``.
+
+        ``instant`` carries the state-to-output factor ``df`` and ``solve``
+        contracts the learning signal ``dg``; the elementwise tail composes
+        them as ``dg * df`` on the primitive's output, so with no history the
+        pair must reproduce the true pullback element for element.
+        """
+        x_key, x_value, weights = _operands(seed=4)
+        x_slice = jnp.concatenate([x_key[0], x_value[0]])
+        df = jax.random.normal(jax.random.PRNGKey(8), (_KEY_OUT, _VALUE_OUT))
+        dg = jax.random.normal(jax.random.PRNGKey(9), (_KEY_OUT, _VALUE_OUT))
+
+        instant = get_instant_drtrl_rule(etp_outer_write_p)(
+            x_slice, df, weights, **_params())
+        got = get_solve_drtrl_rule(etp_outer_write_p)(
+            dg, instant, weights, **_params())
+
+        def _fwd(w):
+            return _reference(x_key[:1], x_value[:1], w)[0]
+
+        _, vjp_fn = jax.vjp(_fwd, weights)
+        want = vjp_fn(dg * df)[0]
+        assert set(got) == set(want)
+        for name in want:
+            np.testing.assert_allclose(
+                got[name], want[name], atol=1e-5, err_msg=name)
+
+    def test_instant_term_shapes_are_trace_structured(self):
+        x_key, x_value, weights = _operands(seed=5)
+        x_slice = jnp.concatenate([x_key[0], x_value[0]])
+        df = jnp.ones((_KEY_OUT, _VALUE_OUT))
+        instant = get_instant_drtrl_rule(etp_outer_write_p)(
+            x_slice, df, weights, **_params())
+        assert instant['key_weight'].shape == (_KEY_IN, _KEY_OUT, _VALUE_OUT)
+        assert instant['key_bias'].shape == (_KEY_OUT, _VALUE_OUT)
+        assert instant['value_weight'].shape == (
+            _VALUE_IN, _KEY_OUT, _VALUE_OUT)
+
+    def test_dt_to_t_scales_traces_along_their_position_axes(self):
+        """Both executor contexts: batched trace update, batch-stripped solve."""
+        rule = ETP_RULES_DT_TO_T[etp_outer_write_p]
+        hidden = jax.random.normal(
+            jax.random.PRNGKey(10), (_BATCH, _KEY_OUT, _VALUE_OUT))
+
+        batched = rule(hidden, _drtrl_trace(seed=6, batched=True), **_params())
+        trace = _drtrl_trace(seed=6, batched=True)
+        np.testing.assert_allclose(
+            batched['key_weight'],
+            trace['key_weight'] * hidden[:, None, :, :], atol=1e-6)
+        np.testing.assert_allclose(
+            batched['key_bias'], trace['key_bias'] * hidden, atol=1e-6)
+        np.testing.assert_allclose(
+            batched['value_weight'],
+            trace['value_weight'] * hidden[:, None, :, :], atol=1e-6)
+
+        stripped = rule(
+            hidden[0], _drtrl_trace(seed=6, batched=False), **_params())
+        trace0 = _drtrl_trace(seed=6, batched=False)
+        np.testing.assert_allclose(
+            stripped['key_weight'],
+            trace0['key_weight'] * hidden[0][None, :, :], atol=1e-6)
+        np.testing.assert_allclose(
+            stripped['key_bias'], trace0['key_bias'] * hidden[0], atol=1e-6)

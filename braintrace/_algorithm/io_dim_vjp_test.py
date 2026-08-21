@@ -829,75 +829,11 @@ class TestContractHiddenJacobian:
 # Factored df traces: ``etp_outer_write`` and the per-step ``D_f`` factor hook
 # ---------------------------------------------------------------------------
 
-class _OuterWriteMemoryNet(brainstate.nn.Module):
-    """Gated associative memory whose key/value coding is a trainable ETP op.
-
-    The tail from the primitive's output to the memory state is exactly the one
-    Example 21 uses -- decay, an outer-product write and a per-example boolean
-    write gate -- so compiling this model exercises the same position-preserving
-    path the real model needs.
-    """
-
-    KEY_IN = 3
-    VALUE_IN = 3
-    KEY_OUT = 2
-    VALUE_OUT = 2
-    IN_WIDTH = KEY_IN + VALUE_IN + 1  # trailing column drives the write gate
-
-    def __init__(self, decay=0.8, key_scale=0.5):
-        super().__init__()
-        self.decay = decay
-        self.key_scale = key_scale
-        self.key_weight = brainstate.ParamState(
-            jnp.array([[0.3, -0.4], [0.5, 0.2], [-0.1, 0.6]], dtype=jnp.float32))
-        self.key_bias = brainstate.ParamState(
-            jnp.array([0.05, -0.15], dtype=jnp.float32))
-        self.value_weight = brainstate.ParamState(
-            jnp.array([[0.2, 0.7], [-0.6, 0.1], [0.4, -0.3]], dtype=jnp.float32))
-        self.memory = brainstate.HiddenState(
-            jnp.zeros((1, self.KEY_OUT, self.VALUE_OUT), dtype=jnp.float32))
-
-    def init_state(self, batch_size=None, **kwargs):
-        batch = 1 if batch_size is None else batch_size
-        self.memory.value = jnp.zeros(
-            (batch, self.KEY_OUT, self.VALUE_OUT), dtype=jnp.float32)
-
-    def update(self, x):
-        write = braintrace.outer_write(
-            x[..., :self.KEY_IN],
-            x[..., self.KEY_IN:self.KEY_IN + self.VALUE_IN],
-            key_weight=self.key_weight.value,
-            key_bias=self.key_bias.value,
-            value_weight=self.value_weight.value,
-            key_scale=self.key_scale,
-        )
-        gate = x[..., -1] > 0.0
-        candidate = self.decay * self.memory.value + write
-        self.memory.value = jnp.where(
-            gate[:, None, None], candidate, self.memory.value)
-        return self.memory.value
-
-
-def _outer_write_inputs(seed, steps=6, batch=1):
-    return jax.random.normal(
-        jax.random.PRNGKey(seed),
-        (steps, batch, _OuterWriteMemoryNet.IN_WIDTH),
-        dtype=jnp.float32,
-    )
-
-
-def _pairing_permuted(inputs):
-    """Reverse the value halves across time, leaving every key half in place.
-
-    Both sequences present the same multiset of keys and the same multiset of
-    values; only *which value is written with which key* changes. A learning
-    rule that has lost the within-timestep key/value correlation cannot tell
-    them apart.
-    """
-    key_end = _OuterWriteMemoryNet.KEY_IN
-    value_end = key_end + _OuterWriteMemoryNet.VALUE_IN
-    return inputs.at[..., key_end:value_end].set(
-        inputs[::-1, ..., key_end:value_end])
+# Shared with the D-RTRL suite (param_dim_vjp_test), which asserts the *exact*
+# half of the comparison on the very same model and sequences.
+_OuterWriteMemoryNet = om.OuterWriteMemoryNet
+_outer_write_inputs = om.outer_write_memory_inputs
+_pairing_permuted = om.pairing_permuted
 
 
 def _flatten_gradients(tree):

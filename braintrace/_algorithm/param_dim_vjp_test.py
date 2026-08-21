@@ -925,3 +925,71 @@ class TestChunkedTraceEquivalence:
         assert jnp.allclose(oc, ol, rtol=1e-6, atol=1e-8)
         for a, b in zip(_chunk_trace_leaves_sorted(lc), _chunk_trace_leaves_sorted(ll)):
             assert jnp.allclose(a, b, rtol=1e-6, atol=1e-8)
+
+
+# ---------------------------------------------------------------------------
+# ``etp_outer_write``: exact position-retaining D-RTRL traces
+# ---------------------------------------------------------------------------
+#
+# The memory net's recurrence is elementwise in the memory positions, so the
+# diagonal hidden-Jacobian approximation costs nothing there: D-RTRL is
+# *exact* on this model and must reproduce BPTT element-wise -- including on
+# the finite-window path, where pp-prop's rank-1 collapse only manages a 0.80
+# cosine floor (io_dim_vjp_test.TestPairingDiscrimination, same model, same
+# seeds). Spec: docs/specs/2026-08-21-etp-outer-write-drtrl-trace.md.
+
+
+def _outer_write_drtrl_online(inputs, chunk_size):
+    return oracle.chunked_online_param_gradients(
+        om.OuterWriteMemoryNet, inputs,
+        algo_factory=lambda m: ParamDimVjpAlgorithm(m, vjp_method='multi-step'),
+        chunk_size=chunk_size,
+    )
+
+
+class TestOuterWriteExactTrace:
+
+    def test_finite_window_matches_bptt_elementwise(self):
+        """The gate: exact algorithm class => allclose, not a cosine panel."""
+        for seed in (21, 31, 41):
+            inputs = om.outer_write_memory_inputs(seed=seed, steps=6)
+            expected = oracle.bptt_param_gradients(
+                om.OuterWriteMemoryNet, inputs)
+            for chunk_size in (2, 3):
+                oracle.assert_param_gradients_close(
+                    _outer_write_drtrl_online(inputs, chunk_size), expected,
+                    atol=1e-4,
+                )
+
+    def test_pairing_response_matches_bptt_elementwise(self):
+        """The pairing-specific gradient component -- the exact quantity the
+        pp-prop trace loses on this primitive -- survives the D-RTRL trace
+        element-wise, not merely directionally."""
+        inputs = om.outer_write_memory_inputs(seed=21, steps=6)
+        permuted = om.pairing_permuted(inputs)
+
+        def _delta(fn):
+            straight, swapped = fn(inputs), fn(permuted)
+            return {key: jnp.asarray(swapped[key]) - jnp.asarray(straight[key])
+                    for key in straight}
+
+        exact = _delta(lambda seq: oracle.bptt_param_gradients(
+            om.OuterWriteMemoryNet, seq))
+        online = _delta(lambda seq: _outer_write_drtrl_online(seq, 2))
+        oracle.assert_param_gradients_close(online, exact, atol=1e-4)
+
+    def test_single_step_vjp_path_also_supported(self):
+        """The single-step estimator is approximate by recipe, but it must
+        run -- compiling the primitive under D-RTRL must not raise -- and
+        produce finite gradients for every trainable input."""
+        inputs = om.outer_write_memory_inputs(seed=13, steps=4)
+        grads = oracle.online_param_gradients_singlestep_naive(
+            om.OuterWriteMemoryNet, inputs,
+            algo_factory=lambda m: ParamDimVjpAlgorithm(
+                m, vjp_method='single-step'),
+        )
+        for name in ('key_weight', 'key_bias', 'value_weight'):
+            moved = [key for key in grads if name in str(key)]
+            assert moved, f'{name} missing from D-RTRL gradients'
+            for key in moved:
+                assert bool(jnp.all(jnp.isfinite(jnp.asarray(grads[key]))))
