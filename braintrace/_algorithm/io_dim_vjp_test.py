@@ -823,3 +823,243 @@ class TestContractHiddenJacobian:
             _contract_hidden_jacobian(jac, trace),
             atol=1e-6,
         )
+
+
+# ---------------------------------------------------------------------------
+# Factored df traces: ``etp_outer_write`` and the per-step ``D_f`` factor hook
+# ---------------------------------------------------------------------------
+
+class _OuterWriteMemoryNet(brainstate.nn.Module):
+    """Gated associative memory whose key/value coding is a trainable ETP op.
+
+    The tail from the primitive's output to the memory state is exactly the one
+    Example 21 uses -- decay, an outer-product write and a per-example boolean
+    write gate -- so compiling this model exercises the same position-preserving
+    path the real model needs.
+    """
+
+    KEY_IN = 3
+    VALUE_IN = 3
+    KEY_OUT = 2
+    VALUE_OUT = 2
+    IN_WIDTH = KEY_IN + VALUE_IN + 1  # trailing column drives the write gate
+
+    def __init__(self, decay=0.8, key_scale=0.5):
+        super().__init__()
+        self.decay = decay
+        self.key_scale = key_scale
+        self.key_weight = brainstate.ParamState(
+            jnp.array([[0.3, -0.4], [0.5, 0.2], [-0.1, 0.6]], dtype=jnp.float32))
+        self.key_bias = brainstate.ParamState(
+            jnp.array([0.05, -0.15], dtype=jnp.float32))
+        self.value_weight = brainstate.ParamState(
+            jnp.array([[0.2, 0.7], [-0.6, 0.1], [0.4, -0.3]], dtype=jnp.float32))
+        self.memory = brainstate.HiddenState(
+            jnp.zeros((1, self.KEY_OUT, self.VALUE_OUT), dtype=jnp.float32))
+
+    def init_state(self, batch_size=None, **kwargs):
+        batch = 1 if batch_size is None else batch_size
+        self.memory.value = jnp.zeros(
+            (batch, self.KEY_OUT, self.VALUE_OUT), dtype=jnp.float32)
+
+    def update(self, x):
+        write = braintrace.outer_write(
+            x[..., :self.KEY_IN],
+            x[..., self.KEY_IN:self.KEY_IN + self.VALUE_IN],
+            key_weight=self.key_weight.value,
+            key_bias=self.key_bias.value,
+            value_weight=self.value_weight.value,
+            key_scale=self.key_scale,
+        )
+        gate = x[..., -1] > 0.0
+        candidate = self.decay * self.memory.value + write
+        self.memory.value = jnp.where(
+            gate[:, None, None], candidate, self.memory.value)
+        return self.memory.value
+
+
+def _outer_write_inputs(seed, steps=6, batch=1):
+    return jax.random.normal(
+        jax.random.PRNGKey(seed),
+        (steps, batch, _OuterWriteMemoryNet.IN_WIDTH),
+        dtype=jnp.float32,
+    )
+
+
+def _pairing_permuted(inputs):
+    """Reverse the value halves across time, leaving every key half in place.
+
+    Both sequences present the same multiset of keys and the same multiset of
+    values; only *which value is written with which key* changes. A learning
+    rule that has lost the within-timestep key/value correlation cannot tell
+    them apart.
+    """
+    key_end = _OuterWriteMemoryNet.KEY_IN
+    value_end = key_end + _OuterWriteMemoryNet.VALUE_IN
+    return inputs.at[..., key_end:value_end].set(
+        inputs[::-1, ..., key_end:value_end])
+
+
+def _flatten_gradients(tree):
+    """Concatenate a path-keyed gradient tree into one deterministic vector."""
+    return jnp.concatenate([
+        jnp.asarray(tree[key]).ravel() for key in sorted(tree, key=str)
+    ])
+
+
+def _outer_write_algo(model, **kwargs):
+    kwargs.setdefault('decay_or_rank', 0.9)
+    kwargs.setdefault('vjp_method', 'multi-step')
+    return IODimVjpAlgorithm(model, **kwargs)
+
+
+class TestFactoredDfTraces:
+    """``etp_outer_write`` carries a *dict* of df traces, one per factor group."""
+
+    def test_compiles_and_allocates_one_trace_per_factor_group(self):
+        model = _OuterWriteMemoryNet()
+        brainstate.nn.init_all_states(model, batch_size=1)
+        algo = _compiled(
+            model, x=jnp.zeros((1, model.IN_WIDTH), dtype=jnp.float32))
+
+        assert len(algo.etrace_dfs) == 1
+        (trace,) = algo.etrace_dfs.values()
+        assert set(trace.value) == {'key', 'value'}
+        for entry in trace.value.values():
+            assert entry.shape == (1, model.KEY_OUT, model.VALUE_OUT, 1)
+
+    def test_x_trace_holds_both_packed_halves(self):
+        model = _OuterWriteMemoryNet()
+        brainstate.nn.init_all_states(model, batch_size=1)
+        algo = _compiled(
+            model, x=jnp.zeros((1, model.IN_WIDTH), dtype=jnp.float32))
+
+        (x_trace,) = algo.etrace_xs.values()
+        assert x_trace.value.shape == (1, model.KEY_IN + model.VALUE_IN)
+
+    def test_single_step_gradient_is_exact(self):
+        """With one step there is no history to factorise, so the factored
+        rules must reproduce BPTT element-wise."""
+        inputs = _outer_write_inputs(seed=11, steps=1)
+        expected = oracle.bptt_param_gradients(_OuterWriteMemoryNet, inputs)
+        actual = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, inputs,
+            algo_factory=_outer_write_algo, chunk_size=1,
+        )
+        oracle.assert_param_gradients_close(actual, expected, atol=1e-5)
+
+    def test_fast_and_legacy_solve_paths_agree(self):
+        inputs = _outer_write_inputs(seed=12, steps=4)
+        fast = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, inputs,
+            algo_factory=lambda m: _outer_write_algo(m, fast_solve=True),
+            chunk_size=2,
+        )
+        legacy = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, inputs,
+            algo_factory=lambda m: _outer_write_algo(m, fast_solve=False),
+            chunk_size=2,
+        )
+        oracle.assert_param_gradients_close(fast, legacy, atol=1e-6)
+
+    def test_every_trainable_input_receives_gradient(self):
+        inputs = _outer_write_inputs(seed=13, steps=4)
+        grads = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, inputs,
+            algo_factory=_outer_write_algo, chunk_size=2,
+        )
+        moved = [
+            str(key) for key, value in grads.items()
+            if float(jnp.abs(jnp.asarray(value)).sum()) > 0.0
+        ]
+        for name in ('key_weight', 'key_bias', 'value_weight'):
+            assert any(name in key for key in moved), (
+                f'{name} received no gradient; moved={moved}')
+
+
+class TestPairingDiscrimination:
+    """The reason this machinery exists: the write must stay pairing-sensitive.
+
+    Deferring the nonlinearity to a solve-time VJP would evaluate the key and
+    value codes at *independently* low-pass-filtered inputs, which erases the
+    within-timestep correlation between them. These tests measure that the
+    finite-window pp-prop gradient still separates two sequences that differ
+    only in how keys are paired with values.
+    """
+
+    def test_bptt_separates_the_two_pairings(self):
+        """Negative control: the sequences really are different to an exact
+        learner, so a null below would mean something."""
+        inputs = _outer_write_inputs(seed=21, steps=6)
+        oracle.assert_gradients_differ(
+            oracle.bptt_param_gradients(_OuterWriteMemoryNet, inputs),
+            oracle.bptt_param_gradients(
+                _OuterWriteMemoryNet, _pairing_permuted(inputs)),
+            min_rel=1e-3,
+        )
+
+    def test_finite_window_pp_prop_separates_the_two_pairings(self):
+        inputs = _outer_write_inputs(seed=21, steps=6)
+        straight = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, inputs,
+            algo_factory=_outer_write_algo, chunk_size=2,
+        )
+        permuted = oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, _pairing_permuted(inputs),
+            algo_factory=_outer_write_algo, chunk_size=2,
+        )
+        oracle.assert_gradients_differ(straight, permuted, min_rel=1e-3)
+
+    def test_multi_step_windows_stay_aligned_with_bptt(self):
+        """The discriminating test for *where* the nonlinear factors are applied.
+
+        pp-prop is an approximate rule, so it is not expected to match BPTT
+        element-wise over a window -- but the two designs on offer differ in how
+        badly it degrades. Applying the key/value factors at their own timestep
+        keeps the worst case of this panel at cosine 0.87 against BPTT.
+        Recomputing them from the low-pass-filtered ``x`` at solve time (the
+        deferred design the spec rejects) was measured on this same panel at
+        0.34 on its first case, with relative deviation above 1.0 -- i.e. an
+        estimate pointing somewhere else entirely.
+
+        The threshold sits between the two, so this test fails if the factor
+        injection is ever moved back to solve time.
+        """
+        alignments = []
+        for seed in (21, 31, 41):
+            for chunk_size in (2, 3):
+                inputs = _outer_write_inputs(seed=seed, steps=6)
+                exact = _flatten_gradients(
+                    oracle.bptt_param_gradients(_OuterWriteMemoryNet, inputs))
+                online = _flatten_gradients(
+                    oracle.chunked_online_param_gradients(
+                        _OuterWriteMemoryNet, inputs,
+                        algo_factory=_outer_write_algo, chunk_size=chunk_size,
+                    ))
+                alignments.append(float(
+                    (exact @ online)
+                    / (jnp.linalg.norm(exact) * jnp.linalg.norm(online))
+                ))
+        assert min(alignments) > 0.80, f'alignment panel: {alignments}'
+
+    def test_pairing_response_points_the_same_way_as_bptt(self):
+        """Beyond mere difference: the *direction* the pairing swap moves the
+        gradient must agree with the exact learner's."""
+        inputs = _outer_write_inputs(seed=21, steps=6)
+        permuted_inputs = _pairing_permuted(inputs)
+
+        def _delta(fn):
+            return _flatten_gradients(fn(permuted_inputs)) - _flatten_gradients(
+                fn(inputs))
+
+        exact = _delta(
+            lambda seq: oracle.bptt_param_gradients(_OuterWriteMemoryNet, seq))
+        online = _delta(lambda seq: oracle.chunked_online_param_gradients(
+            _OuterWriteMemoryNet, seq,
+            algo_factory=_outer_write_algo, chunk_size=2,
+        ))
+        cosine = float(
+            (exact @ online)
+            / (jnp.linalg.norm(exact) * jnp.linalg.norm(online))
+        )
+        assert cosine > 0.5, f'pairing response misaligned with BPTT: {cosine}'

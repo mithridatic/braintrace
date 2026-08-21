@@ -46,9 +46,11 @@ from braintrace._op import (
     etp_elemwise_p,
     ETP_RULES_XY_TO_DW,
     ETP_RULES_INIT_PP,
+    get_pp_df_factors,
     get_pp_x_repr,
 )
 from braintrace._misc import (
+    NotSupportedError,
     check_dict_keys,
     etrace_x_key,
     etrace_df_key,
@@ -184,6 +186,20 @@ def _io_x_trace_key(relation: HiddenParamOpRelation) -> ETraceX_Key | None:
     return raw_key, id(relation)
 
 
+def _relation_weight_values(
+    relation: HiddenParamOpRelation,
+    weight_vals: Dict[Path, WeightVals],
+) -> Dict[str, Any]:
+    """Return the relation's current weight values keyed by trainable name."""
+    return {
+        key: _extract_leaf(
+            weight_vals[relation.trainable_paths[key]],
+            relation.trainable_leaf_indices[key],
+        )
+        for key in relation.trainable_vars
+    }
+
+
 def _expon_smooth(old: Any, new: Any, decay: Any) -> Any:
     """
     Apply exponential smoothing to update a value.
@@ -210,6 +226,12 @@ def _expon_smooth(old: Any, new: Any, decay: Any) -> Any:
         The smoothed value, which is a combination of the old and new values
         weighted by the decay factor.
     """
+    if isinstance(old, dict):
+        # Factored df trace: one entry per per-step factor group. Mapping here
+        # rather than inside the arithmetic keeps unit-carrying arrays (which
+        # are themselves pytrees) on the untouched scalar path.
+        return {key: _expon_smooth(value, None if new is None else new[key], decay)
+                for key, value in old.items()}
     if new is None:
         return decay * old
     return decay * old + (1 - decay) * new
@@ -283,6 +305,20 @@ def _init_IO_dim_state(
     #   h1, h2, ... = f(x, w)
     #
     # we need to initialize the eligibility trace states for the weight x and the df.
+
+    if (
+        get_pp_df_factors(relation.primitive) is not None
+        and relation.control_flow_context is not None
+    ):
+        # A descended relation's per-step values arrive stacked over the
+        # substep axis, which the per-step factor rule is not written to
+        # consume. Reject it rather than silently factorise the wrong axis.
+        raise NotSupportedError(
+            f'{relation.primitive.name} registers a per-step D_f factor rule, '
+            f'which structured scan descent does not yet support. Move the '
+            f'operation out of the scan body, or compile without control-flow '
+            f'descent.'
+        )
 
     x_var = relation.x_var
     if x_var is not None:
@@ -367,6 +403,7 @@ def _update_IO_dim_etrace_scan_fn(
     hid_weight_op_relations: Sequence[HiddenParamOpRelation],
     decay_x: float,
     decay_f: float,
+    weight_vals: Dict[Path, WeightVals],
 ) -> Any:
     """
     Update the eligibility trace values for input-output dimensions.
@@ -400,6 +437,10 @@ def _update_IO_dim_etrace_scan_fn(
     decay_f : float
         The decay factor applied to the Jacobian-propagated output trace in the
         low-pass filter, a value between 0 and 1.
+    weight_vals : Dict[Path, WeightVals]
+        The current weight values, read only by primitives that register a
+        per-step ``D_f`` factor rule (:data:`ETP_RULES_PP_DF_FACTORS`); every
+        other relation ignores them and its trace roll is unchanged.
 
     Returns
     -------
@@ -471,6 +512,8 @@ def _update_IO_dim_etrace_scan_fn(
 
     for relation in hid_weight_op_relations:
 
+        factors_fn = get_pp_df_factors(relation.primitive)
+
         group: HiddenGroup
         for group in relation.hidden_groups:
 
@@ -491,7 +534,14 @@ def _update_IO_dim_etrace_scan_fn(
             #
             df_key = etrace_df_key(relation.y_var, group.index)
             hid_jac = hid_group_jacobians[group.index]
-            pre_trace_df = _contract_hidden_jacobian(hid_jac, hist_dfs[df_key])
+            hist_df = hist_dfs[df_key]
+            if isinstance(hist_df, dict):
+                pre_trace_df = {
+                    name: _contract_hidden_jacobian(hid_jac, entry)
+                    for name, entry in hist_df.items()
+                }
+            else:
+                pre_trace_df = _contract_hidden_jacobian(hid_jac, hist_df)
 
             #
             # Step 3:
@@ -499,7 +549,28 @@ def _update_IO_dim_etrace_scan_fn(
             # update: eligibility trace * hidden diagonal Jacobian + new hidden df
             #        dϵ^t = dϵ^t_{pre} + df^t, where D_h is the hidden-to-hidden Jacobian diagonal matrix.
             #
-            new_etrace_dfs[df_key] = _expon_smooth(pre_trace_df, dfs[df_key], decay_f)
+            # A primitive that is nonlinear in ``x`` registers a per-step factor
+            # rule; its ``D_f^t`` is split into one trace per factor group, each
+            # multiplied by its own instantaneous postsynaptic factor *at this
+            # timestep*. Deferring those factors to solve time would evaluate
+            # them at the low-pass-filtered ``x`` instead, which destroys the
+            # within-step correlation between the primitive's operands.
+            #
+            new_df = dfs[df_key]
+            if factors_fn is not None:
+                factors = factors_fn(
+                    xs[etrace_x_key(relation.x_var)],
+                    _relation_weight_values(relation, weight_vals),
+                    **relation.eqn_params,
+                )
+                # The rule returns y-shaped factors; the injected df carries a
+                # trailing hidden-state axis, along which each factor is
+                # constant.
+                new_df = {
+                    name: new_df * jnp.expand_dims(factor, axis=-1)
+                    for name, factor in factors.items()
+                }
+            new_etrace_dfs[df_key] = _expon_smooth(pre_trace_df, new_df, decay_f)
 
     return (new_etrace_xs, new_etrace_dfs), None
 
@@ -631,13 +702,7 @@ def _solve_IO_dim_weight_gradients(
         x = None if x_key is None else xs[x_key]
 
         # Build the weights dict consumed by xy_to_dw.
-        weights_dict = {
-            key: _extract_leaf(
-                weight_vals[relation.trainable_paths[key]],
-                relation.trainable_leaf_indices[key],
-            )
-            for key in relation.trainable_vars
-        }
+        weights_dict = _relation_weight_values(relation, weight_vals)
 
         xy_to_dw_rule = ETP_RULES_XY_TO_DW[relation.primitive]
         eqn_params = relation.eqn_params
@@ -648,8 +713,12 @@ def _solve_IO_dim_weight_gradients(
         group: HiddenGroup
         for group in relation.hidden_groups:
             df_key = etrace_df_key(relation.y_var, group.index)
-            df = dfs[df_key] / correction_factor
-            df_hid = df * dG_hidden_groups[group.index]
+            # ``jax.tree.map`` covers both trace layouts: a single array is one
+            # leaf, and a factored trace is one leaf per factor group.
+            df_hid = jax.tree.map(
+                lambda d: (d / correction_factor) * dG_hidden_groups[group.index],
+                dfs[df_key],
+            )
 
             # ``etp_elemwise`` is registered ``batched=False`` (its output is the
             # weight, so its primitive identity carries no batch), but under
@@ -668,7 +737,8 @@ def _solve_IO_dim_weight_gradients(
                 # Fast path: sum over n_state first, then ONE xy_to_dw call.
                 # Valid because every xy_to_dw rule is a VJP of a linear map
                 # in its cotangent argument, so sum-then-apply == apply-then-sum.
-                df_summed = u.math.sum(df_hid, axis=-1)
+                df_summed = jax.tree.map(
+                    lambda d: u.math.sum(d, axis=-1), df_hid)
                 if elemwise_batched:
                     # Elemwise-in-batched-hidden: strip batch dim via a single
                     # vmap over batch, then sum batch after.
@@ -1074,10 +1144,11 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         """Build the per-step ES-D-RTRL eligibility-trace stepper.
 
         Returns the ``partial`` of :func:`_update_IO_dim_etrace_scan_fn` that serves
-        as the body of the trace scan. ``weight_vals`` is accepted for a uniform
-        hook signature but unused (this algorithm's trace roll does not read the
-        weights). Exposing the stepper lets the graph executor fuse the roll into
-        its over-time scan for multi-step input (see the base-class
+        as the body of the trace scan. ``weight_vals`` is bound into the stepper
+        because a primitive that is nonlinear in ``x`` computes its per-step
+        ``D_f`` factors from the current weights; relations without such a rule
+        never read them. Exposing the stepper lets the graph executor fuse the
+        roll into its over-time scan for multi-step input (see the base-class
         :meth:`_make_etrace_stepper`).
         """
         return partial(
@@ -1085,6 +1156,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
             hid_weight_op_relations=self.graph.hidden_param_op_relations,
             decay_x=self.decay_x,
             decay_f=self.decay_f,
+            weight_vals=weight_vals,
         )
 
     def _update_etrace_data(
