@@ -368,6 +368,14 @@ class ExperimentConfig:
         input only. Zero makes the shape answer a pure function of the row
         events, testing whether the shape head suffers the same carrier
         displacement as the row head.
+    memory_value_softcap_beta : float
+        Softcap magnitude ``beta`` of the memory value coding,
+        ``softcap(x, beta) = beta * tanh(x / beta)``, bounding the stored
+        value code to ``(-beta, beta)``. ``1.0`` reproduces the legacy
+        ``tanh`` value map bit-exactly.
+    reasoning_query_softcap_beta : float
+        Softcap magnitude of the iterative reasoning query on latent steps.
+        ``1.0`` reproduces the legacy ``tanh`` cap bit-exactly.
     balanced_color_loss : bool
         Whether each target color contributes equal total valid-cell weight.
         This option is valid only with the explicit legacy CP decoder.
@@ -446,6 +454,8 @@ class ExperimentConfig:
     row_head_carrier_scale: float = 1.0
     row_head_carrier_gate: bool = False
     shape_head_carrier_scale: float = 1.0
+    memory_value_softcap_beta: float = 4.0
+    reasoning_query_softcap_beta: float = 25.0
     balanced_color_loss: bool = False
     ablation_slot: int = 0
     adaptation_task_group: int = 20
@@ -563,6 +573,8 @@ class ExperimentConfig:
             if not math.isfinite(value) or value < 0.0:
                 raise ValueError(f"{name} must be a finite nonnegative real scalar")
             object.__setattr__(self, name, value)
+        for name in ("memory_value_softcap_beta", "reasoning_query_softcap_beta"):
+            object.__setattr__(self, name, _positive_real(getattr(self, name), name))
         object.__setattr__(
             self, "memory_decay", _unit_interval(self.memory_decay, "memory_decay")
         )
@@ -1912,6 +1924,8 @@ def _model_config(
             None if config.sparse_backend == "default" else config.sparse_backend
         ),
         "trace_engine": config.trace_engine,
+        "memory_value_softcap_beta": config.memory_value_softcap_beta,
+        "reasoning_query_softcap_beta": config.reasoning_query_softcap_beta,
     }
     if config.decoder_mode == "row_refinement":
         arguments["refinement_layout"] = _row_refinement_layout(row_config)
@@ -6240,6 +6254,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "input_width": rows.input_width,
         "decoder_mode": model.config.decoder_mode,
         "refinement_steps": model.config.refinement_steps,
+        "memory_value_softcap_beta": config.memory_value_softcap_beta,
+        "reasoning_query_softcap_beta": config.reasoning_query_softcap_beta,
         "training_output_width": model.config.training_output_width,
         "checkpoint_output_width": model.config.checkpoint_output_width,
         "compact_output_width": model.config.compact_output_width,
@@ -6361,6 +6377,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--copy-residual-gain", type=float, default=0.0)
     parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
+    parser.add_argument("--memory-value-softcap-beta", type=float, default=4.0)
+    parser.add_argument("--reasoning-query-softcap-beta", type=float, default=25.0)
     parser.add_argument("--row-head-carrier-gate", action="store_true")
     parser.add_argument("--adaptation-learning-rate", type=float, default=5e-5)
     parser.add_argument("--adaptation-epochs", type=int, default=1)
@@ -6450,6 +6468,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         row_head_carrier_scale=args.row_head_carrier_scale,
         row_head_carrier_gate=args.row_head_carrier_gate,
         shape_head_carrier_scale=args.shape_head_carrier_scale,
+        memory_value_softcap_beta=args.memory_value_softcap_beta,
+        reasoning_query_softcap_beta=args.reasoning_query_softcap_beta,
         balanced_color_loss=args.balanced_color_loss,
         decoder_mode=args.decoder_mode,
         evaluation_task_limit=args.evaluation_task_limit,

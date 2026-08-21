@@ -793,6 +793,37 @@ def test_parameter_travel_budget_halves_under_cosine_schedule(example):
     )
 
 
+def test_softcap_betas_default_and_plumb_into_model_config(example):
+    config = example.ExperimentConfig(structural_only=True)
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    model_config = example._model_config(config, rows, batch_size=1)
+    cli = example._config_from_args(
+        example._parser().parse_args(
+            [
+                "--structural-only",
+                "--memory-value-softcap-beta",
+                "1.0",
+                "--reasoning-query-softcap-beta",
+                "2.5",
+            ]
+        )
+    )
+
+    assert config.memory_value_softcap_beta == 4.0
+    assert config.reasoning_query_softcap_beta == 25.0
+    assert model_config.memory_value_softcap_beta == 4.0
+    assert model_config.reasoning_query_softcap_beta == 25.0
+    assert cli.memory_value_softcap_beta == 1.0
+    assert cli.reasoning_query_softcap_beta == 2.5
+    assert config.to_dict()["memory_value_softcap_beta"] == 4.0
+    with pytest.raises(ValueError, match="memory_value_softcap_beta"):
+        example.ExperimentConfig(structural_only=True, memory_value_softcap_beta=0.0)
+    with pytest.raises(ValueError, match="reasoning_query_softcap_beta"):
+        example.ExperimentConfig(
+            structural_only=True, reasoning_query_softcap_beta=-1.0
+        )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
