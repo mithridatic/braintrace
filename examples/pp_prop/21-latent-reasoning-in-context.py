@@ -1294,9 +1294,14 @@ def _load_data(config: ExperimentConfig) -> _ExperimentData:
             for task in fixture.tasks
         )
         return _ExperimentData(origins, origins, (fixture,), True)
-    if config.source_manifest is None:
+    source_manifest = config.source_manifest
+    if source_manifest is None:
+        declared_manifest = os.environ.get("EXAMPLE21_SOURCE_MANIFEST", "").strip()
+        if declared_manifest:
+            source_manifest = pathlib.Path(declared_manifest)
+    if source_manifest is None:
         raise ValueError("full runs require --source-manifest")
-    declarations = _source_declarations(config.source_manifest)
+    declarations = _source_declarations(source_manifest)
     loaded = tuple(load_dataset_source(source) for source in declarations)
     assert_no_evaluation_leakage(item.manifest for item in loaded)
     training = tuple(

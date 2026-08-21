@@ -1333,6 +1333,26 @@ def test_smoke_data_is_explicitly_plumbing_only(example):
     assert data.loaded[0].manifest.plumbing_only is True
 
 
+def test_full_data_uses_baked_manifest_environment_default(
+    example, monkeypatch, tmp_path
+):
+    manifest = tmp_path / "baked-sources.json"
+    manifest.write_text("{}", encoding="utf-8")
+
+    class StopAfterManifest(Exception):
+        pass
+
+    def capture(path):
+        assert path == manifest
+        raise StopAfterManifest
+
+    monkeypatch.setenv("EXAMPLE21_SOURCE_MANIFEST", str(manifest))
+    monkeypatch.setattr(example, "_source_declarations", capture)
+
+    with pytest.raises(StopAfterManifest):
+        example._load_data(example.ExperimentConfig(device="cpu"))
+
+
 def test_full_data_requires_manifest_and_both_roles(example, monkeypatch, tmp_path):
     with pytest.raises(ValueError, match="source-manifest"):
         example._load_data(example.ExperimentConfig(device="cpu"))
