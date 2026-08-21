@@ -343,4 +343,48 @@ fast-path kernels, tied write/query encoders, arbitrary nonlinearities,
 
 ## Results
 
-(to be filled after implementation approval and runs)
+### Implementation (2026-08-21)
+
+Shipped on `investigate/ex21-learned-memory-keys`:
+
+| commit | contents |
+|---|---|
+| `f01d197` | Layer 1: `etp_outer_write_p` + `outer_write`, the `pp_df_factors` registry hook, `assert_factored_rules_match_vjp` oracle helper |
+| `3bdae2c` | Layer 4: factored (dict-valued) pp df traces, per-step factor injection, `weight_vals` in the stepper, scan-descent rejection |
+| `276c267` | Example 21 `memory_coding="learned_write"`, `encode_memory_write`, `apply_context_memory_write` split, report fields, CLI flag |
+
+Two compiler questions the spec left open were settled empirically, not by
+reading:
+
+- **The position prover never fires.** It classifies only the operands
+  *reachable from* `y`, so the side-validity mask `(B,1,1)`, the `(K,V)`
+  `memory_write_scale` broadcast and the gate's `select_n` are invisible to it.
+  The intended tail compiles unchanged.
+- **The write projections do reach `context_memory`.** In the real model the
+  fused relation is classified `all_direct` and its hidden paths include
+  `('context_memory',)` — the thing that was structurally impossible for
+  `learned_keys`, where the relation deliberately excluded it.
+
+### Measured: per-step injection vs. the deferred design
+
+The rejected design (recompute `φ'` and the codes from the low-pass-filtered
+`x` at solve time) was implemented as a temporary mutant and measured on the
+same panel — three seeds × two chunk sizes, six-step sequences, cosine
+alignment of the finite-window pp-prop gradient with BPTT:
+
+| case | per-step injection | deferred VJP |
+|---|---:|---:|
+| worst of panel | **0.868** | 0.342 |
+| mean of panel | **0.943** | 0.800 |
+| worst relative deviation | **0.570** | 1.047 |
+
+A relative deviation above 1.0 means the deferred estimate is further from
+BPTT than the zero vector is. The review's Finding 1a was therefore not
+theoretical: the two designs are separated by a wide margin on exactly the
+quantity the experiment reads. `test_multi_step_windows_stay_aligned_with_bptt`
+pins the threshold at 0.80, between the two, and was verified to fail under the
+mutant.
+
+Both designs are one-step exact (with no history the filter has averaged
+nothing), so the op-level oracle alone would *not* have caught the difference —
+only the finite-window panel does, as AGENTS.md's rule predicts.
