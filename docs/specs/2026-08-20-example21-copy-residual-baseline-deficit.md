@@ -1,6 +1,6 @@
 # Example 21 — the baseline deficit is an unlearned identity map; fix by copy residual
 
-Status: draft; hypothesis test pending GPU run
+Status: measured; §6 results confirm the mechanism in two stages
 Date: 2026-08-20
 Branch: `worktree-ex21-copy-residual`
 
@@ -202,3 +202,96 @@ stays near 0.3 or pixel fails to clear 0.55 at gain 2.0 — that would mean the
 decode path discards the colour block for a reason not yet found, and the next
 step would be weight-level inspection of a dumped checkpoint, not a bigger
 gain.
+
+## 6. Results — the deficit has two layers, both now measured
+
+### 6.1 Residual alone: real, consistent, and walked back by training
+
+Seed-matched, full ARC-AGI-1 evaluation, effort 60, gain 2.0 vs the sweep's
+gain-0 artifacts:
+
+| seed | pixel base → residual | non-black copy base → residual | rule | shape |
+|---|---|---|---|---|
+| 2108 | 0.3835 → 0.4199 | 0.2054 → 0.3327 | 0.104 → 0.080 | 0.549 → 0.535 |
+| 31337 | 0.4122 → 0.4507 | 0.2987 → 0.4589 | 0.121 → 0.097 | 0.585 → 0.566 |
+| 7777 | 0.3852 → 0.4157 | 0.3058 → 0.4488 | 0.119 → 0.084 | 0.570 → 0.563 |
+
+Every seed improves pixel by ~0.035 — but the §5 bar (non-black copy ≥ 0.8)
+was missed, which by the pre-registered falsification clause demanded a cause
+before a bigger gain. Two controls found it:
+
+- **Plumbing is intact.** An untrained 64-neuron model decodes 86% in-range
+  copy at gain 2.0 and 100% at gain 1000 (CPU probe), and an untrained
+  4096-neuron `--structural-only` run at gain 2.0 decodes **0.661** of
+  non-black copy cells within its predicted-grid overlap on the real
+  evaluation split.
+- **Training walks copy back.** The same overlap metric reads 0.661
+  untrained-with-residual → **0.493** trained-with-residual → 0.303 trained
+  baseline. Training *destroys* copy competence the residual provides for
+  free, in favour of carrier-conditioned fits that do not transfer — the same
+  mechanism the travel spec measured as same-task memorisation at u780.
+
+### 6.2 Carrier starvation: the second layer, confirmed
+
+`--row-head-carrier-scale 0` (row head only; shape head keeps its carrier)
+plus gain 2.0, seed 2108, full evaluation — the arm
+`2026-08-20-example21-parameter-travel-starvation.md` §10.10 ranked first:
+
+| metric | baseline s2108 | residual s2108 | carrier-free + residual s2108 |
+|---|---|---|---|
+| pixel (effort 60) | 0.3835 | 0.4199 | **0.5454** |
+| pixel under oracle shape | 0.4855 | 0.5253 | **0.6031** |
+| copy cells (oracle shape) | 0.6375 | 0.7039 | **0.9178** |
+| non-black copy | 0.2054 | 0.3327 | **0.7944** |
+| rule cells | 0.1043 | 0.0801 | 0.0248 |
+| shape | 0.5489 | 0.5346 | 0.4893 |
+| pixel by effort 0/30/60 | falls after 30 | falls after 30 | **rises: 0.232 / 0.529 / 0.545** |
+| **exact pass@1** | 0/419 | 0/419 | **1/419** |
+
+The +0.16 pixel step is ten times the ±0.016 seed spread of the sweep;
+single-seed suffices for the mechanism claim (a seed-replication is still
+worth running before promoting the configuration). Under an oracle shape the
+carrier-free model reaches 0.6031 against the `copy_input` floor 0.6032 —
+the copy path is saturated — and the remaining oracle-shape gap to the table
+(0.6375) is exactly the rule cells the carrier-free head can no longer
+express plus a small out-of-range shortfall. Pixel now *rises* with latent
+effort instead of decaying: the §10.2 carrier-drift pathology on the row path
+is gone by construction.
+
+The exact answer is `bbb1b8b6` q1 (predict the input's left 4×4 panel):
+shape head chose (4, 4) and the copy path filled it cell-perfect. It is the
+**first exact answer on the ARC-AGI-1 evaluation split in this project** —
+every earlier nonzero exact was on training-split tasks the model had seen.
+
+### 6.3 Corrected root-cause statement
+
+The baseline deficit had two stacked causes:
+
+1. **D-IC** — the identity map must be learned from scratch and is an order
+   of magnitude of optimisation away at any stable operating point (§1.3).
+   The copy residual supplies it architecturally: +0.035 pixel, all seeds.
+2. **D-CD (carrier displacement)** — given the carrier, cross-entropy
+   training actively *unlearns* the copy prior, because carrier-conditioned
+   task fits lower training loss and do not transfer (§6.1). Starving the
+   row head of the carrier removes the displacement: +0.13 further pixel,
+   copy saturated to its floor, and the first evaluation-split exact answer.
+
+## 7. What this hands forward
+
+1. **The carrier-free row head is a diagnosis, not the destination.** It
+   cannot express rules (0.0248 rule cells) and rules are 19.3% of cells and
+   a requirement for almost every exact answer. The needed shape is
+   *selective* carrier access — the Attention Residuals argument applied
+   here: softmax-gated aggregation instead of always-on additive access, so
+   the copy path is preserved by construction and the carrier contributes
+   only where demonstrations support a deviation. Design candidates: a
+   learned scalar gate on the carrier block, a per-column gate driven by the
+   colour block, or depth-wise attention over per-sweep carriers.
+2. **Shape is now the binding constraint** for exactness (0.4893, and the
+   solved query shows the whole pipeline works when shape is right). The
+   shape head kept its carrier; whether it suffers the same displacement is
+   unmeasured — the same scale experiment applies to it.
+3. Replicate the carrier-free arm on seeds 31337/7777 before promoting any
+   configuration, and re-run task-local adaptation on top of the carrier-free
+   base: adaptation was consistently positive and is a multiplier on a base
+   model that is no longer below its own copy floor.
