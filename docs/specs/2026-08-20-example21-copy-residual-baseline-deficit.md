@@ -430,3 +430,19 @@ Tests: gate-on model at init is bit-identical across recurrent gains
 (carrier-free start); compile keeps event head, carrier head, and gate in
 `param_states` as `all_direct`; gate + non-default scale rejected; forcing
 the gate weight open makes the row answer carrier-dependent.
+
+### 8.5 Task-local adaptation on the carrier-free base (cr2cs0ad, s2108)
+
+Wall clock: 2h19m (01:22–03:41 UTC) — the per-task inner loop does not
+amortise like the 3.5-minute frozen runs. **Standing constraint from J: no
+more hour-plus runs; the adaptation arm is answered and will not be
+repeated.**
+
+Adapted vs frozen (same artifact, effort 60): pixel 0.5412 → **0.5861**,
+shape 0.4916 → **0.7112**, exact 1 → **2** pass@1 (`bbb1b8b6` q1 plus
+`e872b94a` q0, a 3×1 output — shape- and rule-driven, not copy). Adaptation
+attacks exactly the constraint §6.2 left binding: it nearly halves shape
+error while leaving the saturated copy path alone (copy@oracle 0.9046).
+Cumulative over the day: baseline 0.3835 → carrier-free 0.5454 →
+adapted 0.5861, with the reported adapted pixel within 0.017 of the
+0.6032 copy-floor reference and shape no longer the dominant deficit.
