@@ -580,6 +580,11 @@ def _bfs_forward(
                 direct_groups.add(g)
                 continue
             for eqn in consumer_map.get(v, []):
+                # ``stop_gradient`` is a gradient barrier: any hidden state
+                # reachable only through it receives exactly zero gradient,
+                # so it must not join this relation.
+                if eqn.primitive.name == 'stop_gradient':
+                    continue
                 if (
                     stop_at_non_grad_etp
                     and is_etp_primitive(eqn.primitive)
@@ -618,6 +623,9 @@ def _bfs_forward(
             else:
                 reachable[v] = None
         for eqn in consumer_map.get(v, []):
+            # Same gradient barrier as the direct-group discovery above.
+            if eqn.primitive.name == 'stop_gradient':
+                continue
             if (
                 stop_at_non_grad_etp
                 and is_etp_primitive(eqn.primitive)

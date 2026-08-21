@@ -4983,3 +4983,24 @@ def test_report_labels_adapted_primary_and_frozen_no_adaptation_separately(examp
     assert "Frozen no-adaptation diagnostic:" in report
     assert "diagnostic control, not primary submission" in report
     assert "Frozen no-adaptation aggregate latent trajectory:" in report
+
+
+def test_memory_coding_flag_wires_into_model_config(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default_args = example._parser().parse_args([])
+    assert default_args.memory_coding == "frozen"
+    args = example._parser().parse_args(["--memory-coding", "learned_keys"])
+    config = example._config_from_args(args)
+    assert config.memory_coding == "learned_keys"
+    model_config = example._model_config(config, rows, batch_size=2)
+    assert model_config.memory_coding == "learned_keys"
+    default_config = example._config_from_args(example._parser().parse_args([]))
+    default_model = example._model_config(default_config, rows, batch_size=2)
+    assert default_model.memory_coding == "frozen"
+    smoke_args = example._parser().parse_args(
+        ["--smoke", "--memory-coding", "learned_keys"]
+    )
+    smoke_config = example._config_from_args(smoke_args)
+    assert smoke_config.memory_coding == "learned_keys"
+    with pytest.raises(SystemExit):
+        example._parser().parse_args(["--memory-coding", "bogus"])

@@ -172,6 +172,17 @@ class ModelConfig:
         Event channels gating complete input/output association writes.
     memory_key_indices, memory_value_indices : tuple of int
         Input-event features projected by fixed deterministic key/value bases.
+    memory_coding : {"frozen", "learned_keys"}
+        Storage-coding trainability. ``"frozen"`` (default) keeps the fixed
+        random Fourier key map and fixed tanh value map bit-exactly.
+        ``"learned_keys"`` replaces the key projection with a trainable ETP
+        linear layer initialized to the frozen basis, function-identical to
+        ``"frozen"`` at initialization. The learned key trains through the
+        retrieval path only (query encoding and read); the write-side key is
+        gradient-detached because pp-prop's position-preserving requirement
+        excludes gradients through the outer-product memory write. The value
+        map stays fixed for the same structural reason: values reach hidden
+        state only through that write.
     decoder_mode : {"legacy_cp", "row_refinement"}, default="legacy_cp"
         Output architecture. Row refinement captures the query and constructs
         an explicit answer with one learned recurrent row per latent tick.
@@ -247,6 +258,7 @@ class ModelConfig:
     output_side_valid_index: int | None = None
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
+    memory_coding: Literal["frozen", "learned_keys"] = "frozen"
     decoder_mode: Literal["legacy_cp", "row_refinement"] = "legacy_cp"
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
@@ -404,6 +416,14 @@ class ModelConfig:
                 raise ValueError(
                     "memory_value_indices is required when context_memory_width is positive"
                 )
+        if not isinstance(self.memory_coding, str):
+            raise TypeError("memory_coding must be 'frozen' or 'learned_keys'")
+        if self.memory_coding not in ("frozen", "learned_keys"):
+            raise ValueError("memory_coding must be 'frozen' or 'learned_keys'")
+        if self.memory_coding != "frozen" and self.context_memory_width == 0:
+            raise ValueError(
+                "memory_coding requires a positive context_memory_width"
+            )
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
             raise TypeError("sparse_backend must be a string or None")
         if not isinstance(self.decoder_mode, str):
@@ -1729,6 +1749,13 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.memory_write_scale = brainstate.ParamState(
                 jnp.ones((memory_width, memory_width), dtype=jnp.float32)
             )
+            if config.memory_coding == "learned_keys":
+                self.memory_key_projection = braintrace.nn.Linear(
+                    key_width,
+                    memory_width,
+                    w_init=MEMORY_KEY_RFF_GAMMA * self._memory_key_basis,
+                    b_init=self._memory_key_bias,
+                )
             self.workspace_query_projection = braintrace.nn.Linear(
                 config.neuron_count,
                 memory_width,
@@ -1916,10 +1943,13 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
         features = event[..., jnp.asarray(self.config.memory_key_indices)]
-        phase = (
-            MEMORY_KEY_RFF_GAMMA * (features @ self._memory_key_basis)
-            + self._memory_key_bias
-        )
+        if self.config.memory_coding == "learned_keys":
+            phase = self.memory_key_projection(features)
+        else:
+            phase = (
+                MEMORY_KEY_RFF_GAMMA * (features @ self._memory_key_basis)
+                + self._memory_key_bias
+            )
         scale = math.sqrt(2.0 / self.config.context_memory_width)
         code = scale * jnp.cos(phase)
         assert self.config.input_side_valid_index is not None
@@ -2012,7 +2042,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             memory_width=self.config.context_memory_width,
             key_feature_width=len(self.config.memory_key_indices),
             value_feature_width=len(self.config.memory_value_indices),
-            key_map="fixed_rff_cosine",
+            key_map=(
+                "learned_rff_cosine_retrieval_path"
+                if self.config.memory_coding == "learned_keys"
+                else "fixed_rff_cosine"
+            ),
             value_map="fixed_tanh_projection",
             rff_gamma=MEMORY_KEY_RFF_GAMMA,
             key_basis_seed=self.config.seed + 101,
@@ -2437,10 +2471,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             write_gate = demonstration & (input_side_valid | output_side_valid)
             key = self.encode_memory_key(event)
             value = self.encode_memory_value(event)
+            write_key = key
+            if self.config.memory_coding == "learned_keys":
+                # pp-prop cannot factor gradients through the outer-product
+                # write; the learned key trains via the retrieval path only.
+                write_key = jax.lax.stop_gradient(key)
             write_scale = braintrace.element_wise(self.memory_write_scale.value)
             self.context_memory.value = update_context_memory(
                 self.context_memory.value,
-                key,
+                write_key,
                 value,
                 write_gate=write_gate,
                 decay=self.config.memory_decay,

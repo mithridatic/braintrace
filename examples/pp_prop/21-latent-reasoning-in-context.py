@@ -154,6 +154,7 @@ PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 SparseBackend = Literal["default", "jax_raw"]
+MemoryCoding = Literal["frozen", "learned_keys"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
@@ -285,6 +286,11 @@ class ExperimentConfig:
         reservoir; positive values up to 512 opt into ``S_K/H_r``.
     memory_decay : float
         Associative memory self-decay in the closed interval ``[0, 1]``.
+    memory_coding : {"frozen", "learned_keys"}
+        Storage-coding trainability. ``"frozen"`` keeps the fixed random
+        Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
+        makes the key projection a trainable ETP linear layer that learns
+        through the retrieval path (the write-side key is gradient-detached).
     max_demonstrations, max_grid_size : int
         Static lossless ARC row-event capacities.
     latent_steps : int
@@ -375,6 +381,7 @@ class ExperimentConfig:
     color_rank: int = 16
     context_memory_width: int = 32
     memory_decay: float = 1.0
+    memory_coding: MemoryCoding = "frozen"
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
@@ -446,6 +453,10 @@ class ExperimentConfig:
             raise ValueError("decoder_mode must be 'legacy_cp' or 'row_refinement'")
         if self.sparse_backend not in ("default", "jax_raw"):
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
+        if self.memory_coding not in ("frozen", "learned_keys"):
+            raise ValueError("memory_coding must be 'frozen' or 'learned_keys'")
+        if self.memory_coding != "frozen" and self.context_memory_width == 0:
+            raise ValueError("memory_coding requires a positive context_memory_width")
         if self.decoder_mode == "row_refinement" and self.context_memory_width == 0:
             raise ValueError(
                 "decoder_mode='row_refinement' requires positive context_memory_width"
@@ -563,6 +574,7 @@ class ExperimentConfig:
         seed: int = 2108,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
+        memory_coding: MemoryCoding = "frozen",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -583,6 +595,8 @@ class ExperimentConfig:
             zero for explicitly selected legacy CP mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
+        memory_coding : {"frozen", "learned_keys"}
+            Storage-coding trainability forwarded to the model.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -609,6 +623,7 @@ class ExperimentConfig:
             color_rank=4,
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
+            memory_coding=memory_coding,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -1834,6 +1849,7 @@ def _model_config(
                 "output_side_valid_index": row_config.side_valid_slice.start + 1,
                 "memory_key_indices": features.key_indices,
                 "memory_value_indices": features.value_indices,
+                "memory_coding": config.memory_coding,
             }
         )
     return ModelConfig(**arguments)
@@ -6123,6 +6139,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--recurrent-edges", type=int, default=1_048_576)
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
+    parser.add_argument(
+        "--memory-coding", choices=("frozen", "learned_keys"), default="frozen"
+    )
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
     parser.add_argument("--training-updates", type=int, default=96)
@@ -6176,6 +6195,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             seed=args.seed,
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
+            memory_coding=args.memory_coding,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6190,6 +6210,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         recurrent_edges=args.recurrent_edges,
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
+        memory_coding=args.memory_coding,
         max_demonstrations=args.max_demonstrations,
         latent_steps=args.latent_steps,
         training_updates=args.training_updates,

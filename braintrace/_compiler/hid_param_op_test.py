@@ -195,3 +195,35 @@ class TestTrainableInvarsPopulatedForDense:
         assert r.trainable_leaf_indices['weight'] == 0
         assert r.trainable_processing_chains['weight'] == ()
         assert r.trainable_param_states['weight'] is not None
+
+
+class TestStopGradientBarrier:
+    def test_stop_gradient_severs_hidden_relation_reachability(self):
+        """A hidden state reachable from an ETP output only through
+        ``stop_gradient`` carries zero gradient by construction, so it must
+        not appear among the relation's connected hidden paths (otherwise
+        algorithms reject the zero-gradient tail, e.g. a mixing write)."""
+        import jax
+        import jax.numpy as jnp
+
+        class StopGradientWriteCell(brainstate.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.linear = braintrace.nn.Linear(3, 4, b_init=None)
+                self.trace = brainstate.HiddenState(jnp.zeros((1, 4)))
+                self.memory = brainstate.HiddenState(jnp.zeros((1, 4, 4)))
+
+            def update(self, x):
+                y = jnp.tanh(self.linear(x))
+                self.trace.value = self.trace.value * 0.9 + y
+                detached = jax.lax.stop_gradient(y)
+                write = detached[:, :, None] * detached[:, None, :]
+                self.memory.value = self.memory.value + write
+                return self.trace.value
+
+        cell = StopGradientWriteCell()
+        relations = find_hidden_param_op_relations_from_module(
+            cell, brainstate.random.rand(1, 3)
+        )
+        assert len(relations) == 1
+        assert list(relations[0].connected_hidden_paths) == [('trace',)]

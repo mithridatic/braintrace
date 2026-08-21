@@ -3594,3 +3594,127 @@ def test_refinement_heads_stay_compiled_all_direct_with_shape_conditioning() -> 
 
     assert classifications["answer_row_head.weight"] == {"all_direct"}
     assert classifications["answer_shape_head.weight"] == {"all_direct"}
+
+
+def test_memory_coding_defaults_to_frozen_and_validates() -> None:
+    assert _memory_config().memory_coding == "frozen"
+    assert _config().memory_coding == "frozen"
+    with pytest.raises(TypeError, match="memory_coding"):
+        _memory_config(memory_coding=7)
+    with pytest.raises(ValueError, match="memory_coding"):
+        _memory_config(memory_coding="learned")
+    with pytest.raises(ValueError, match="memory_coding"):
+        _memory_config(memory_coding="learned_keys_values")
+    with pytest.raises(ValueError, match="memory_coding"):
+        _config(memory_coding="learned_keys")
+
+
+def test_learned_memory_coding_matches_frozen_codes_at_initialization() -> None:
+    config_frozen = _memory_config(batch_size=3)
+    config_learned = _memory_config(batch_size=3, memory_coding="learned_keys")
+    frozen = LatentWorkspaceModel(config_frozen)
+    learned = LatentWorkspaceModel(config_learned)
+    events = jnp.zeros((3, config_frozen.input_width), dtype=jnp.float32)
+    events = events.at[:, jnp.asarray(config_frozen.memory_key_indices)].set(
+        jnp.asarray([[1.0, -0.5], [0.25, 2.0], [0.0, 0.0]])
+    )
+    events = events.at[:, jnp.asarray(config_frozen.memory_value_indices)].set(
+        jnp.asarray([[0.5, 1.0], [-1.0, 0.75], [2.0, -2.0]])
+    )
+    assert config_frozen.input_side_valid_index is not None
+    assert config_frozen.output_side_valid_index is not None
+    events = events.at[:, config_frozen.input_side_valid_index].set(
+        jnp.asarray([1.0, 0.0, 1.0])
+    )
+    events = events.at[:, config_frozen.output_side_valid_index].set(
+        jnp.asarray([1.0, 1.0, 0.0])
+    )
+    np.testing.assert_allclose(
+        np.asarray(learned.encode_memory_key(events)),
+        np.asarray(frozen.encode_memory_key(events)),
+        rtol=1e-5,
+        atol=1e-6,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(learned.encode_memory_value(events)),
+        np.asarray(frozen.encode_memory_value(events)),
+    )
+    invalid_key_rows = np.asarray(learned.encode_memory_key(events))[1]
+    np.testing.assert_array_equal(invalid_key_rows, np.zeros_like(invalid_key_rows))
+
+
+def test_learned_memory_coding_report_names_components_and_keeps_hashes() -> None:
+    frozen = LatentWorkspaceModel(_memory_config()).associative_memory_report()
+    learned = LatentWorkspaceModel(
+        _memory_config(memory_coding="learned_keys")
+    ).associative_memory_report()
+    assert frozen.key_map == "fixed_rff_cosine"
+    assert frozen.value_map == "fixed_tanh_projection"
+    assert learned.key_map == "learned_rff_cosine_retrieval_path"
+    assert learned.value_map == "fixed_tanh_projection"
+    assert learned.key_basis_sha256 == frozen.key_basis_sha256
+    assert learned.key_bias_sha256 == frozen.key_bias_sha256
+    assert learned.value_basis_sha256 == frozen.value_basis_sha256
+
+
+def test_learned_key_coding_trains_through_retrieval_path_only() -> None:
+    import braintrace
+    from braintrace._testing.oracle import chunked_online_param_gradients
+
+    config = _memory_config(
+        memory_decay=0.9, input_gain=8.0, memory_coding="learned_keys"
+    )
+    model = LatentWorkspaceModel(config)
+    learner = compile_pp_prop(model)
+    key_path = ("memory_key_projection", "weight")
+    etrace_paths = {path for path, _ in learner.report.etrace_weights}
+    assert key_path in etrace_paths
+    frozen_learner = compile_pp_prop(LatentWorkspaceModel(_memory_config()))
+    frozen_paths = {path for path, _ in frozen_learner.report.etrace_weights}
+    assert key_path not in frozen_paths
+    relations = [
+        relation
+        for relation in learner.graph.hidden_param_op_relations
+        if key_path in relation.trainable_paths.values()
+    ]
+    assert len(relations) == 1
+    assert set(relations[0].path_classification.values()) == {"all_direct"}
+    relation_hidden_paths = {
+        path for group in relations[0].hidden_groups for path in group.hidden_paths
+    }
+    assert ("context_memory",) not in relation_hidden_paths
+    assert ("query_encoding",) in relation_hidden_paths
+
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    inputs = jnp.concatenate((demonstrations, query, latent), axis=0)
+
+    class _AlwaysAdvanceCodingModel(LatentWorkspaceModel):
+        def update(self, event: jax.Array) -> jax.Array:
+            advance = jnp.ones((self.config.batch_size,), dtype=jnp.bool_)
+            return super().update(event, advance)
+
+    gradients = chunked_online_param_gradients(
+        lambda: _AlwaysAdvanceCodingModel(config),
+        inputs,
+        algo_factory=lambda candidate: braintrace.pp_prop(
+            candidate,
+            decay_or_rank=candidate.config.trace_decay,
+            vjp_method="multi-step",
+        ),
+        chunk_size=1,
+    )
+    gradient_leaves = jax.tree.leaves(gradients[key_path])
+    gradient_norm = sum(
+        float(jnp.sum(jnp.abs(jnp.asarray(u.get_mantissa(leaf)))))
+        for leaf in gradient_leaves
+    )
+    assert gradient_leaves
+    assert math.isfinite(gradient_norm)
+    assert gradient_norm > 0.0
