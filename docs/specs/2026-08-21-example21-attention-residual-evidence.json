@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-08-21",
+  "decision": {
+    "promote_attention_residual": false,
+    "default_refinement_mixer": "linear",
+    "reason": "Attention Residual lost the exact-answer comparison 0 to 1 and regressed mean rule-at-oracle by 0.0507022054, so it failed the predeclared promotion rule despite improving mean pixel, shape, and copy scores.",
+    "tuning_launched": false
+  },
+  "provenance": {
+    "branch": "feat/example21-attention-residual",
+    "source_revision": "42ff015698ff85a98ce6d7249c625231855da47c",
+    "source_dirty": false,
+    "source_tree_sha256": "525e1483750dcaa1c95aae3a121d8b0b0e6ce6a874e19356ee9dc9d1d534080e",
+    "arc_revision": "aa922be204204ec148a1137fe6ed4d34ddde812b",
+    "image": "braintrace-gpu:0.11.0-py314-msgspec-arc",
+    "image_digest": "sha256:3d2d6962bcfe661e1b8cc76039a1fa2dcba77544c72f63cf8045d0ef447b12bc",
+    "paper": "https://arxiv.org/pdf/2603.15031",
+    "official_pseudocode": "https://github.com/MoonshotAI/Attention-Residuals"
+  },
+  "execution": {
+    "command_template": "docker run --rm --gpus all --env XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 --env XLA_PYTHON_CLIENT_PREALLOCATE=false --env CUBLAS_WORKSPACE_CONFIG=:4096:8 --env JAX_COMPILATION_CACHE_DIR=/cache/jax --env JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0 --env PYTHONPATH=/workspace --env EXAMPLE21_SOURCE_REVISION=42ff015698ff85a98ce6d7249c625231855da47c --env EXAMPLE21_SOURCE_DIRTY=0 --env EXAMPLE21_ARC_REVISION=aa922be204204ec148a1137fe6ed4d34ddde812b --env EXAMPLE21_IMAGE_DIGEST=sha256:3d2d6962bcfe661e1b8cc76039a1fa2dcba77544c72f63cf8045d0ef447b12bc --volume ${worktree}:/workspace:ro --volume ${worktree}/var:/work/var --volume ${worktree}/var/jax-cache:/cache/jax braintrace-gpu:0.11.0-py314-msgspec-arc timeout 900s python /workspace/examples/pp_prop/21-latent-reasoning-in-context.py --device gpu --source-manifest /datasets/arc/example21-sources.json --output-dir /work/var/attention-residual-benchmark/${arm}-s${seed} --seed ${seed} --neurons 4096 --recurrent-edges 4096 --max-demonstrations 10 --latent-steps 60 --training-updates 260 --training-batch-size 32 --training-chunk-size 5 --training-workers 4 --sparse-backend jax_raw --learning-rate 0.001 --refinement-mixer ${mixer}",
+    "expansions": [
+      {"arm": "carrier-gate", "mixer": "carrier_gate", "seed": 2108},
+      {"arm": "attention-residual", "mixer": "attention_residual", "seed": 2108},
+      {"arm": "carrier-gate", "mixer": "carrier_gate", "seed": 31337},
+      {"arm": "attention-residual", "mixer": "attention_residual", "seed": 31337},
+      {"arm": "carrier-gate", "mixer": "carrier_gate", "seed": 7777},
+      {"arm": "attention-residual", "mixer": "attention_residual", "seed": 7777}
+    ],
+    "deterministic_environment": {
+      "XLA_PYTHON_CLIENT_MEM_FRACTION": "0.80",
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
+      "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+      "JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS": "0"
+    },
+    "configuration": {
+      "evaluation": "full ARC-AGI-1 evaluation",
+      "neurons": 4096,
+      "recurrent_edges": 4096,
+      "training_batch_size": 32,
+      "training_updates": 260,
+      "latent_steps": 60,
+      "learning_rate": 0.001,
+      "sparse_backend": "jax_raw",
+      "task_local_adaptation": false,
+      "seeds": [2108, 31337, 7777]
+    },
+    "primary_runtime_seconds": 1528.167032557,
+    "primary_runtime_minutes": 25.4694505426,
+    "within_45_minute_cap": true,
+    "each_arm_within_15_minutes": true
+  },
+  "metrics": {
+    "fields": ["pixel", "shape", "exact_queries", "oracle_pixel", "copy", "rule_at_oracle", "out_of_range", "runtime_seconds", "allocator_peak_bytes"],
+    "runs": {
+      "carrier-gate-s2108": [0.49863281362397605, 0.4892601431980907, 0, 0.6169720041364722, 0.750365433357025, 0.10703604596253738, 0.5702884602236207, 199.490407296, 1301280000],
+      "attention-residual-s2108": [0.4978146658940661, 0.6921241050119332, 0, 0.6617062636452797, 0.8271399643283402, 0.060548822078807914, 0.4818906908526757, 211.936513536, 1365628928],
+      "carrier-gate-s31337": [0.47112007904575026, 0.522673031026253, 0, 0.605907654554522, 0.7332403545709343, 0.11579831050947059, 0.5743810302244469, 246.901459064, 1284805376],
+      "attention-residual-s31337": [0.49656532100027256, 0.639618138424821, 0, 0.6987970936677162, 0.8758197106036021, 0.05304580513143397, 0.5160629865091776, 357.534087652, 1341832960],
+      "carrier-gate-s7777": [0.4280666940503427, 0.44630071599045346, 1, 0.5788966252319831, 0.7008542423795411, 0.10462248806338213, 0.5676283823001156, 245.487122756, 1301294336],
+      "attention-residual-s7777": [0.5539920818915235, 0.6921241050119332, 0, 0.7097802304866256, 0.8885327683085464, 0.06175560102838554, 0.5095149942329873, 266.817442253, 1364123904]
+    },
+    "attention_minus_carrier_pixel_by_seed": [-0.00081814772990995, 0.0254452419545223, 0.1259253878411808],
+    "means": {
+      "carrier_pixel": 0.465939862240023,
+      "attention_pixel": 0.5161240229286207,
+      "pixel_delta": 0.0501841606885977,
+      "carrier_shape": 0.4860779634049324,
+      "attention_shape": 0.6746221161495625,
+      "shape_delta": 0.1885441527446301,
+      "carrier_copy": 0.7281533434358335,
+      "attention_copy": 0.8638308144134962,
+      "copy_delta": 0.1356774709776627,
+      "carrier_rule_at_oracle": 0.1091522815117967,
+      "attention_rule_at_oracle": 0.05845007607954247,
+      "rule_at_oracle_delta": -0.05070220543225423
+    },
+    "exact_query_totals": {"carrier_gate": 1, "attention_residual": 0}
+  },
+  "structural_gates": {
+    "finite_outputs": {"passed": true, "evidence": "all six complete result artifacts"},
+    "normalized_convex_attention": {"passed": true, "evidence": "test_forward_and_weights_match_independent_reference and test_masks_zero_sources_and_convex_weights_remain_finite"},
+    "query_updates_nonzero": {
+      "passed": true,
+      "row_l2_by_seed": [0.6011337173, 0.6313328049, 0.6219401417],
+      "shape_l2_by_seed": [0.2431791525, 0.2069106355, 0.2292475346]
+    },
+    "input_dependent_weights": {"passed": true, "evidence": "independent-reference and nonzero-query-gradient tests; trained query intervention changes frozen evaluation"},
+    "routing_all_direct": {"passed": true, "evidence": "all six compiler artifacts and test_attention_residual_proposal_and_query_paths_compile_all_direct"},
+    "repeatability": {
+      "classification": "same-seed_not_byte_identical_metric_drift_observed",
+      "first_pixel": 0.4978146658940661,
+      "repeat_pixel": 0.49573157670602014,
+      "pixel_delta": -0.00208308918804596,
+      "first_shape": 0.6921241050119332,
+      "repeat_shape": 0.6968973747016707,
+      "shape_delta": 0.0047732696897375,
+      "exact_queries_unchanged": true
+    },
+    "zero_query_counterfactual": {
+      "seed": 2108,
+      "trained_pixel": 0.49573157670602014,
+      "zero_query_pixel": 0.537480952527864,
+      "trained_shape": 0.6968973747016707,
+      "zero_query_shape": 0.529832935560859,
+      "exact_queries_before": 0,
+      "exact_queries_after": 0,
+      "row_query_l2_before": 0.6038493543671336,
+      "shape_query_l2_before": 0.24307041624815107,
+      "same_frozen_parameter_sha256": "be2ee24e526cd741c4fe328f6c1a0d4371b3688fcf53f7f538940574a6b1ef88",
+      "trained_queries_restored": true
+    },
+    "gpu_allocator": {
+      "max_peak_bytes": 1365628928,
+      "physical_device_bytes": 17179869184,
+      "max_observed_fraction": 0.079490065574646,
+      "within_85_percent_ceiling": true,
+      "qualification_caveat": "nvidia-smi process sampling timed out in some arms, so those artifacts classify full runtime-safety evidence as incomplete despite the bounded allocator peak"
+    }
+  },
+  "promotion_rule": {
+    "no_seed_pixel_loss_over_0_02": true,
+    "exact_answer_total_noninferior": false,
+    "copy_mean_regression_at_most_0_02": true,
+    "shape_mean_regression_at_most_0_02": true,
+    "mean_pixel_improves_at_least_0_01": true,
+    "mean_rule_at_oracle_improves_at_least_0_01": false,
+    "exact_total_increases": false,
+    "passed": false
+  },
+  "validation": {
+    "attention_operator_module": {"passed": 27, "attention_operator_coverage_percent": 96, "attention_module_coverage_percent": 100},
+    "example21_entry": {"passed": 153},
+    "complete_19_module_example21_gate": {"passed": 2044, "warnings": 129, "workers": 6, "seconds": 331.27},
+    "core_braintrace": {"passed": 3128, "warnings": 290, "subtests": 4, "workers": 6, "coverage_percent": 95, "seconds": 392.07},
+    "mypy": "Success: no issues found in 69 source files",
+    "ruff": "passed",
+    "build": "sdist and wheel passed",
+    "gpu_smoke": "carrier_gate and attention_residual passed"
+  },
+  "artifact_sha256": {
+    "common_data_manifest": "fb3aae51ce535213a2ade3fdba75cbfc6f5c2f4d168a306d07e0a72d52b7446c",
+    "carrier-gate-s2108": {"result.json": "a2e324969a9b951cf3ed51c147d80ae05ace0f5b0bc024a40f2209f34db8ddaf", "report.txt": "e6b78a5e077baf0dd6a49c1adab56916e0d38ce8823b39898c5c761817aa54d4", "latent_reasoning.png": "2762ff5c1442570ff188ac5020691831096fd8e98aa937abf25195e895e844db"},
+    "attention-residual-s2108": {"result.json": "b8da6d74509a75e1d24819fce909929d13442ff9555c4bea666ddb5416ac559d", "report.txt": "0b4289aba17cf5b76e08e2373faf0a755b6cc8d4c4de0045db780e7ae53f068f", "latent_reasoning.png": "1f70a36c6adbd4365fad722bae2610d509c31d53f9c39b3d4d2dd3c2e14c4ce7"},
+    "carrier-gate-s31337": {"result.json": "d481ef66501e6f7e7e255eb76509767206308c88a97c20c832b4f3ef2c7f971b", "report.txt": "f79fccaaadb6265a99d0634ce8ef2d4a60d6e6e6ace6876764585bb0f0ad3058", "latent_reasoning.png": "60d683fac6084da7552a5a582b015a34e9cf101e15dfbb8feccc1b259debb852"},
+    "attention-residual-s31337": {"result.json": "a88e1a7d92f0cf2b13f202083597bbc610f303ed2067469b5789376108eb99f8", "report.txt": "e2f368ede1c6ef225404f41b05d662f5888cb6db5634dd0980c1b5d123845ddc", "latent_reasoning.png": "703149f04b968325820d1e39acae1908f628d38ef0a722a88b98d48eeed5d0ef"},
+    "carrier-gate-s7777": {"result.json": "9b192223bd6a54bcbd9c1020f4184448d45361eb4aa4f4c131b33c8076bb0e13", "report.txt": "6f81f83e1329d846933ba175da9d04b6fadf7e13d0c0565b5f77a669af9d519d", "latent_reasoning.png": "77be4981b0761e0dd915245ee92a754b1abc5e465450760133b175dbe3a3c1bb"},
+    "attention-residual-s7777": {"result.json": "fb2e634297e89e15f4e88112498e2aa8698ec9e3313a474f6405d0dfcaa703a2", "report.txt": "d6d33259d3876b7fae77646e1bf62127594e007e867b0706d2282dd40741bccb", "latent_reasoning.png": "40200f87c580e4e877c2c5ddee3d4f6aec450dddc5642ca6ed411865777cea94"},
+    "zero-query-s2108": {"result.json": "18c7fdc96620b73317b28d5ad2f09bbe2e5e9ad2d98dad5443ddc22250430d42", "report.txt": "8c1cd455f906beca937d099117932473f933277a59c6768b6aa93dbd1c0e466d", "latent_reasoning.png": "3dc3047089e39d96968c5dbcdb1d830de02e4b2719f9e9d5c4e22d61359d29f2", "harness.py": "6299f80ad49f508087c3c1f8c498ecce9637e1a7435416c4c99ea533dbf6845f"}
+  },
+  "qualification": {
+    "comparison_benchmark_complete": true,
+    "full_example21_structural_qualification": false,
+    "scientific_qualification": false,
+    "reasons": [
+      "The comparison intentionally used 4096 edges, not the separate one-million-edge qualification scale.",
+      "Some nvidia-smi process samples timed out, leaving full runtime-safety evidence incomplete.",
+      "The associative capability gates remain pending."
+    ]
+  }
+}
