@@ -720,6 +720,65 @@ def test_zero_gradient_update_applies_decoupled_weight_decay(example, name):
         )
 
 
+def test_lr_schedule_defaults_to_cosine_at_raised_base_rate(example):
+    default = example.ExperimentConfig(structural_only=True)
+    smoke = example.ExperimentConfig.smoke_config()
+    cli = example._config_from_args(
+        example._parser().parse_args(["--structural-only"])
+    )
+
+    assert (default.lr_schedule, default.learning_rate) == ("cosine", 1e-3)
+    assert (cli.lr_schedule, cli.learning_rate) == ("cosine", 1e-3)
+    assert smoke.lr_schedule == "cosine"
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
+    assert constant.lr_schedule == "constant"
+    with pytest.raises(ValueError, match="lr_schedule"):
+        example.ExperimentConfig(structural_only=True, lr_schedule="linear")
+
+
+def test_cosine_training_schedule_decays_base_rate_to_zero(example):
+    config = example.ExperimentConfig(structural_only=True)
+    schedule = example._training_learning_rate(config)
+    horizon = config.training_updates
+
+    assert float(schedule(0)) == pytest.approx(config.learning_rate)
+    assert float(schedule(horizon // 2)) == pytest.approx(
+        config.learning_rate / 2.0, rel=1e-6
+    )
+    assert float(schedule(horizon)) == pytest.approx(0.0, abs=1e-9)
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
+    assert example._training_learning_rate(constant) == constant.learning_rate
+
+
+def test_lr_schedule_round_trips_policy_dict_and_cli(example):
+    cosine = example.ExperimentConfig(structural_only=True)
+    constant = example._config_from_args(
+        example._parser().parse_args(["--structural-only", "--lr-schedule", "constant"])
+    )
+
+    assert example._optimizer_policy(cosine)["lr_schedule"] == "cosine"
+    assert example._optimizer_policy(constant)["lr_schedule"] == "constant"
+    assert cosine.to_dict()["lr_schedule"] == "cosine"
+    assert constant.to_dict()["lr_schedule"] == "constant"
+    assert constant.learning_rate == 1e-3
+
+
+def test_parameter_travel_budget_halves_under_cosine_schedule(example):
+    constant = example.ExperimentConfig(
+        structural_only=True, optimizer="adam", lr_schedule="constant"
+    )
+    cosine = example.ExperimentConfig(structural_only=True, optimizer="adam")
+
+    flat = example._parameter_travel_budget(constant)
+    halved = example._parameter_travel_budget(cosine)
+
+    assert flat["schedule_integral_factor"] == 1.0
+    assert halved["schedule_integral_factor"] == 0.5
+    assert halved["displacement_bound"] == pytest.approx(
+        0.5 * flat["displacement_bound"]
+    )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
@@ -2612,7 +2671,11 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
         )
 
     monkeypatch.setattr(example, "compile_pp_prop", lambda model: Learner())
-    monkeypatch.setattr(example.braintools.optim, "Adam", Optimizer)
+    monkeypatch.setattr(
+        example.braintools.optim,
+        "OptaxOptimizer",
+        lambda *, tx, lr: Optimizer(lr=lr),
+    )
     monkeypatch.setattr(example.brainstate.transform, "jit", lambda function: function)
     monkeypatch.setattr(example.brainstate.transform, "for_loop", host_for_loop)
 

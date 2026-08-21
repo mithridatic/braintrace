@@ -158,6 +158,8 @@ SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
+LrScheduleName = Literal["constant", "cosine"]
+
 TraceEngine = Literal["pp_prop", "d_rtrl"]
 CHECKPOINT_INTERVAL = 30
 CHECKPOINTS = (0, 30, 60)
@@ -328,7 +330,13 @@ class ExperimentConfig:
         Emit diagnostic phase and pipeline timing. Profiling synchronizes
         device work for attribution and is therefore not a throughput mode.
     learning_rate, clip_norm : float
-        Optimizer rate and global gradient clipping norm.
+        Base optimizer rate and global gradient clipping norm.
+    lr_schedule : {"constant", "cosine"}
+        Shared-training learning-rate schedule. ``"constant"`` holds the base
+        rate for every update; ``"cosine"`` decays it from the base rate to
+        zero over ``training_updates`` optimizer updates (optax cosine decay
+        with ``alpha=0``, no warmup). The per-tick adaptation path keeps its
+        own constant ``adaptation_learning_rate`` either way.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
@@ -421,7 +429,8 @@ class ExperimentConfig:
     training_bank_size: int = 0
     training_workers: int = 4
     runtime_profile: bool = False
-    learning_rate: float = 1e-4
+    learning_rate: float = 1e-3
+    lr_schedule: LrScheduleName = "cosine"
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
@@ -487,6 +496,8 @@ class ExperimentConfig:
             raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
         if self.optimizer not in ("adam", "adamw", "muon"):
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
+        if self.lr_schedule not in ("constant", "cosine"):
+            raise ValueError("lr_schedule must be 'constant' or 'cosine'")
         if self.memory_coding not in ("frozen", "learned_keys", "learned_write"):
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys' or 'learned_write'"
@@ -626,6 +637,7 @@ class ExperimentConfig:
         trace_engine: TraceEngine = "pp_prop",
         optimizer: OptimizerName = "muon",
         weight_decay: float | None = None,
+        lr_schedule: LrScheduleName = "cosine",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
         runtime_profile: bool = False,
@@ -655,6 +667,8 @@ class ExperimentConfig:
         weight_decay : float or None
             Explicit optimizer weight decay, or the optimizer-specific default.
             Nonzero values are rejected for plain Adam, which applies no decay.
+        lr_schedule : {"constant", "cosine"}
+            Shared-training learning-rate schedule forwarded unchanged.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -685,6 +699,7 @@ class ExperimentConfig:
             trace_engine=trace_engine,
             optimizer=optimizer,
             weight_decay=weight_decay,
+            lr_schedule=lr_schedule,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -2075,11 +2090,15 @@ def _compiler_evidence(learner: Any) -> dict[str, object]:
 def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
     """Return how far the configured budget can move an answer-head weight.
 
-    Adam cannot displace a coordinate further than ``learning_rate * updates``,
-    so an operating point below one answer-head initialisation sigma trains a
-    head that stays a perturbation of its random initialisation whatever the
-    loss says. Recording the width the sigma was taken against lets a later
-    reader redo the arithmetic without knowing which head revision ran.
+    Adam cannot displace a coordinate further than the summed per-update
+    rates, so an operating point below one answer-head initialisation sigma
+    trains a head that stays a perturbation of its random initialisation
+    whatever the loss says. Under a flat schedule that sum is
+    ``learning_rate * updates``; under cosine decay to zero the schedule
+    integral is half the flat value, so the base rate is multiplied by the
+    schedule integral factor (0.5) before the bound is applied. Recording the
+    width the sigma was taken against lets a later reader redo the arithmetic
+    without knowing which head revision ran.
     """
     if config.optimizer != "adam":
         return {
@@ -2092,9 +2111,13 @@ def _parameter_travel_budget(config: ExperimentConfig) -> dict[str, object]:
         if config.decoder_mode == "row_refinement"
         else config.readout_width
     )
-    return adam_parameter_travel_budget(
-        config.learning_rate, config.training_updates, width
+    integral_factor = 1.0 if config.lr_schedule == "constant" else 0.5
+    budget = adam_parameter_travel_budget(
+        config.learning_rate * integral_factor, config.training_updates, width
     )
+    budget["lr_schedule"] = config.lr_schedule
+    budget["schedule_integral_factor"] = integral_factor
+    return budget
 
 
 def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
@@ -2102,6 +2125,7 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
     policy: dict[str, object] = {
         "name": config.optimizer,
         "learning_rate": config.learning_rate,
+        "lr_schedule": config.lr_schedule,
         "weight_decay": config.weight_decay,
     }
     if config.optimizer == "muon":
@@ -2117,26 +2141,58 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
     return policy
 
 
+def _training_learning_rate(config: ExperimentConfig) -> float | optax.Schedule:
+    """Return the shared-training rate, flat or as a cosine decay schedule.
+
+    Parameters
+    ----------
+    config : ExperimentConfig
+        Resolved experiment configuration.
+
+    Returns
+    -------
+    float or optax.Schedule
+        The flat base rate for ``lr_schedule="constant"``, otherwise an optax
+        cosine decay schedule from the base rate to zero (``alpha=0``) over
+        ``training_updates`` optimizer updates.
+    """
+    if config.lr_schedule == "constant":
+        return config.learning_rate
+    return optax.cosine_decay_schedule(
+        init_value=config.learning_rate,
+        decay_steps=max(int(config.training_updates), 1),
+    )
+
+
 def _make_training_optimizer(
     config: ExperimentConfig, param_states: Mapping[object, brainstate.ParamState]
 ) -> braintools.optim.Optimizer:
-    """Construct and register the configured shared-training optimizer."""
+    """Construct and register the configured shared-training optimizer.
+
+    All three optimizers are built as optax transformations so the
+    shared-training learning-rate schedule threads through identically;
+    ``braintools.optim.Adam``/``AdamW`` accept only flat rates or braintools
+    schedulers, so the adam and adamw branches use the equivalent
+    ``optax.adam``/``optax.adamw`` (same moments, same decoupled decay
+    placement for AdamW) wrapped in ``braintools.optim.OptaxOptimizer``.
+    """
+    rate = _training_learning_rate(config)
     if config.optimizer == "adam":
-        optimizer = braintools.optim.Adam(lr=config.learning_rate)
+        transformation = optax.adam(learning_rate=rate)
     elif config.optimizer == "adamw":
-        optimizer = braintools.optim.AdamW(
-            lr=config.learning_rate, weight_decay=config.weight_decay
+        transformation = optax.adamw(
+            learning_rate=rate, weight_decay=config.weight_decay
         )
     else:
         transformation = optax.contrib.muon(
-            learning_rate=config.learning_rate,
+            learning_rate=rate,
             weight_decay=config.weight_decay,
-            adam_learning_rate=config.learning_rate,
+            adam_learning_rate=rate,
             adam_weight_decay=config.weight_decay,
         )
-        optimizer = braintools.optim.OptaxOptimizer(
-            tx=transformation, lr=config.learning_rate
-        )
+    optimizer = braintools.optim.OptaxOptimizer(
+        tx=transformation, lr=config.learning_rate
+    )
     optimizer.register_trainable_weights(param_states)
     return optimizer
 
@@ -6284,7 +6340,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--sparse-backend", choices=("default", "jax_raw"), default="default"
     )
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument(
+        "--lr-schedule", choices=("constant", "cosine"), default="cosine"
+    )
     parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
@@ -6334,6 +6393,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             trace_engine=args.trace_engine,
             optimizer=args.optimizer,
             weight_decay=args.weight_decay,
+            lr_schedule=args.lr_schedule,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -6370,6 +6430,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         training_holdout_tasks=args.training_holdout_tasks,
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
+        lr_schedule=args.lr_schedule,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,
