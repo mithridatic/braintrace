@@ -58,8 +58,9 @@ The focused Example 21 regression gate must pass before GPU benchmarking.
 
 ## Benchmark protocol
 
-Run three sequential GPU arms from the same worktree revision and source
-manifest:
+Run the three baseline GPU arms sequentially from the same worktree revision
+and source manifest. At the user's request, follow them with AdamW and Muon
+decay-sensitivity arms at `0.05`, again keeping every other setting fixed:
 
 | Setting | Value |
 | --- | --- |
@@ -75,6 +76,8 @@ manifest:
 | Adam weight decay | `0.0` |
 | AdamW weight decay | `0.01` |
 | Muon weight decay | `0.01` |
+| AdamW follow-up weight decay | `0.05` |
+| Muon follow-up weight decay | `0.05` |
 
 The source manifest is the existing complete ARC-AGI-1 v1.0.2 manifest.
 Runs are sequential to avoid GPU contention and share the persistent JAX
@@ -96,3 +99,6 @@ For each arm retain the raw Example 21 output directory and report:
 The winner, if any, is descriptive for this single controlled seed and budget.
 Equal zero ARC scores must be reported as a tie on ARC rather than broken using
 training loss alone.
+
+The retained measurements and interpretation are recorded in
+`2026-08-21-example21-optimizer-benchmark-results.md`.
