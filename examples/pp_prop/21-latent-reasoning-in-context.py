@@ -1467,20 +1467,6 @@ class _TrainingRowJob:
     sequence_length: int
 
 
-def _materialize_training_row(job: _TrainingRowJob) -> dict[str, Any]:
-    """Encode one row from a worker-local deterministic random stream."""
-
-    return _training_row(
-        job.origin,
-        job.config,
-        job.row_config,
-        brainstate.random.RandomState(job.seed),
-        effort=job.effort,
-        plumbing_only=job.plumbing_only,
-        sequence_length=job.sequence_length,
-    )
-
-
 def _materialize_training_episode(job: _TrainingRowJob) -> dict[str, Any]:
     """Prepare one deterministic episode descriptor for batched encoding."""
 
@@ -1504,65 +1490,6 @@ def _materialize_training_episode(job: _TrainingRowJob) -> dict[str, Any]:
         "row_config": job.row_config,
         "sequence_length": job.sequence_length,
     }
-
-
-def _ordered_training_rows(
-    jobs: Iterable[_TrainingRowJob], workers: int
-) -> Iterator[dict[str, Any]]:
-    """Materialize rows concurrently while yielding their ordinal order.
-
-    Parameters
-    ----------
-    jobs
-        Immutable, already-seeded episode descriptors in schedule order.
-    workers
-        Number of CPU workers.  One selects the serial oracle.
-
-    Yields
-    ------
-    dict
-        Encoded rows in the same order as ``jobs`` regardless of completion
-        timing.
-
-    Raises
-    ------
-    BaseException
-        The original worker exception, after pending work is cancelled and
-        the executor is joined.
-    """
-
-    if workers == 1:
-        for job in jobs:
-            yield _materialize_training_row(job)
-        return
-    executor = concurrent.futures.ThreadPoolExecutor(
-        max_workers=workers, thread_name_prefix="example21-training-row"
-    )
-    pending: dict[int, concurrent.futures.Future[dict[str, Any]]] = {}
-    source = iter(jobs)
-    next_ordinal = 0
-
-    def fill() -> None:
-        while len(pending) < 2 * workers:
-            try:
-                job = next(source)
-            except StopIteration:
-                return
-            pending[job.ordinal] = executor.submit(_materialize_training_row, job)
-
-    try:
-        fill()
-        while pending:
-            future = pending.pop(next_ordinal)
-            yield future.result()
-            next_ordinal += 1
-            fill()
-    except BaseException:
-        for future in pending.values():
-            future.cancel()
-        raise
-    finally:
-        executor.shutdown(wait=True, cancel_futures=True)
 
 
 def _ordered_training_episodes(

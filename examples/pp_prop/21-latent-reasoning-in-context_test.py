@@ -4218,50 +4218,6 @@ def test_batched_training_chunks_match_scalar_oracle_and_losses(
     np.testing.assert_allclose(optimized_report, oracle_report, rtol=0.0, atol=1e-6)
 
 
-def test_training_workers_restore_ordinal_order_and_bound_inflight(example, monkeypatch):
-    active = 0
-    peak = 0
-
-    def materialize(job):
-        nonlocal active, peak
-        active += 1
-        peak = max(peak, active)
-        time.sleep(0.002 * (4 - job.ordinal % 4))
-        active -= 1
-        return job.ordinal
-
-    monkeypatch.setattr(example, "_materialize_training_row", materialize)
-    jobs = [type("Job", (), {"ordinal": index})() for index in range(12)]
-
-    assert list(example._ordered_training_rows(jobs, 3)) == list(range(12))
-    assert peak <= 6
-
-
-def test_training_workers_propagate_failure_and_join(example, monkeypatch):
-    started = threading.Event()
-    finished = threading.Event()
-
-    def materialize(job):
-        started.set()
-        if job.ordinal == 1:
-            raise RuntimeError("row worker failed")
-        time.sleep(0.01)
-        finished.set()
-        return job.ordinal
-
-    monkeypatch.setattr(example, "_materialize_training_row", materialize)
-    jobs = [type("Job", (), {"ordinal": index})() for index in range(8)]
-    with pytest.raises(RuntimeError, match="row worker failed"):
-        list(example._ordered_training_rows(jobs, 2))
-    assert started.is_set()
-    assert finished.is_set()
-    assert not [
-        thread
-        for thread in threading.enumerate()
-        if thread.name.startswith("example21-training-row")
-    ]
-
-
 def _adaptation_bank_fixture(example, tasks=4):
     from examples.pp_prop.latent_workspace_arc_adaptation import (
         build_arc_target_free_task_bank,
