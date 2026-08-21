@@ -185,6 +185,11 @@ class ModelConfig:
         query's own colour for every occupied column — an identity residual
         that lets training learn deviations from copy instead of the copy map
         itself.  Zero keeps the bare head bit-exactly.
+    row_head_carrier_scale : float, default=1.0
+        Constant multiplier on the carrier block of the answer row head's
+        input only; the shape head always reads the unit-RMS carrier.  Zero
+        starves the row head of the task-identifying carrier so training
+        cannot displace the copy path with task-conditional fits.
     event_valid_index : int, default=0
         Row-event channel whose one means a context row advances state.  Latent
         steps use a separate advance gate, keeping their external vector
@@ -231,6 +236,7 @@ class ModelConfig:
     refinement_steps: int = MAX_GRID_SIZE
     refinement_layout: RowRefinementLayout | None = None
     copy_residual_gain: float = 0.0
+    row_head_carrier_scale: float = 1.0
     seed: int = 2108
     sparse_backend: str | None = None
 
@@ -306,6 +312,11 @@ class ModelConfig:
             self,
             "copy_residual_gain",
             _nonnegative_real(self.copy_residual_gain, "copy_residual_gain"),
+        )
+        object.__setattr__(
+            self,
+            "row_head_carrier_scale",
+            _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
         )
         for name in (
             "demonstration_phase_index",
@@ -2396,11 +2407,20 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 if self.config.memory_enabled
                 else self.voltage
             )
+            unit_carrier = _unit_rms_carrier(carrier)
             head_input = _refinement_head_input(
-                _unit_rms_carrier(carrier), event, self.config.refinement_layout
+                unit_carrier, event, self.config.refinement_layout
             )
+            if self.config.row_head_carrier_scale == 1.0:
+                row_head_input = head_input
+            else:
+                row_head_input = _refinement_head_input(
+                    unit_carrier * self.config.row_head_carrier_scale,
+                    event,
+                    self.config.refinement_layout,
+                )
             next_row = _copy_residual_logits(
-                self.answer_row_head(head_input),
+                self.answer_row_head(row_head_input),
                 event,
                 self.config.refinement_layout,
                 self.config.copy_residual_gain,

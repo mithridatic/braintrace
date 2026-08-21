@@ -3330,6 +3330,36 @@ def test_model_config_rejects_a_negative_copy_residual_gain() -> None:
         _row_refinement_config(copy_residual_gain=-1.0)
 
 
+def test_model_config_rejects_a_negative_row_head_carrier_scale() -> None:
+    """The carrier scale is a magnitude; a sign flip is a config error."""
+    with pytest.raises(ValueError, match="row_head_carrier_scale"):
+        _row_refinement_config(row_head_carrier_scale=-0.5)
+
+
+def test_row_head_carrier_scale_zero_makes_the_row_answer_carrier_free() -> None:
+    """At scale zero the decoded rows must not depend on the membrane carrier.
+
+    Two models with the same seed but different recurrent gains develop
+    different membrane trajectories on the same episode. With the row head's
+    carrier block scaled to zero the row logits read only the event blocks,
+    which are identical across the two runs, so the scattered answer grids
+    must agree bit for bit while the shape head (which keeps its carrier)
+    remains free to differ.
+    """
+    grids = []
+    for recurrent_gain in (0.8, 1.6):
+        model = LatentWorkspaceModel(
+            _row_refinement_config(
+                row_head_carrier_scale=0.0,
+                copy_residual_gain=2.0,
+                recurrent_gain=recurrent_gain,
+            )
+        )
+        run_context(model, _row_refinement_full_size_episode())
+        grids.append(_swept_answer_grid(model))
+    np.testing.assert_array_equal(grids[0], grids[1])
+
+
 def test_refinement_heads_stay_compiled_all_direct_with_copy_residual() -> None:
     """The residual must not disturb ETP tracking of either answer head.
 
