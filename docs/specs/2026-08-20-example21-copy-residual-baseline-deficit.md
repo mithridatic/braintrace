@@ -401,3 +401,32 @@ multiplying a tracked Linear output keeps both heads `all_direct` in the
 ETP compiler, and whether the gate needs a slower learning rate than the
 heads to prevent early displacement. Awaiting J's approval per the working
 agreement before any code.
+
+### 9.1 Approved (J, 2026-08-20 18:26 PDT) — implementation resolution
+
+The flagged ETP risk is real: `hid_param_op.py` registers trainable
+parameters only as trainable invars of ETP primitives, so a bare scalar
+`ParamState` multiplied into the graph would silently never train.
+Resolution, staying inside the approved semantics:
+
+- The gate is a zero-initialised bias-free `braintrace.nn.Linear(1, 1)` fed
+  with ones, so `gate = tanh(w)` is an ETP-tracked trainable scalar. Its
+  path to the `answer_row` hidden state (tanh → mul → add) traverses no
+  other ETP primitive, so it classifies `all_direct`; the carrier head's
+  output enters the mul as a sibling input, not a chain link.
+- The carrier head is **random-initialised** (same `1/sqrt(width)` scheme as
+  the event head), not zero-initialised: at `gate = 0` the carrier
+  contribution is exactly zero (the §8 carrier-free start), while the
+  gate's own gradient — proportional to the carrier head's output — is
+  nonzero, avoiding the frozen-at-zero saddle of a doubly-zero start.
+- Config: `row_head_carrier_gate: bool = False`; combining the gate with
+  `row_head_carrier_scale != 1.0` is a config error (the gate replaces the
+  scale mechanism). Flag: `--row-head-carrier-gate`.
+- Both heads train from scratch (no checkpoint grafting — §9 item 1's
+  "initialise from the trained head" is dropped; these arms always train
+  from a fresh initialisation, so there is no trained head to graft).
+
+Tests: gate-on model at init is bit-identical across recurrent gains
+(carrier-free start); compile keeps event head, carrier head, and gate in
+`param_states` as `all_direct`; gate + non-default scale rejected; forcing
+the gate weight open makes the row answer carrier-dependent.
