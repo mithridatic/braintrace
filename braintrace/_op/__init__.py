@@ -28,6 +28,7 @@ module. The submodule layout is:
 * :mod:`.conv` — ``etp_conv_p``, :func:`conv`
 * :mod:`.sparse` — ``etp_sp_mm_p``, ``etp_sp_mv_p``, :func:`sparse_matmul`
 * :mod:`.lora` — ``etp_lora_mm_p``, ``etp_lora_mv_p``, :func:`lora_matmul`
+* :mod:`.outer` — ``etp_outer_write_p``, :func:`outer_write`
 
 The public surface mirrors the legacy module: every name previously
 exported from ``braintrace._op`` is also available here.
@@ -44,6 +45,7 @@ from ._registries import (
     ETP_RULES_INIT_DRTRL,
     ETP_RULES_INIT_PP,
     ETP_RULES_INSTANT_DRTRL,
+    ETP_RULES_PP_DF_FACTORS,
     ETP_RULES_PP_X_REPR,
     ETP_RULES_SNAP_ADJACENCY,
     ETP_RULES_SNAP_ANCHOR,
@@ -58,6 +60,7 @@ from ._registries import (
     get_batched_counterpart,
     get_fast_path_rules,
     get_instant_drtrl_rule,
+    get_pp_df_factors,
     get_pp_x_repr,
     get_snap_adjacency_rule,
     get_solve_drtrl_rule,
@@ -77,6 +80,7 @@ from .elemwise import element_wise, etp_elemwise_p
 from .embedding import embedding, etp_emb_p, etp_emb_v_p
 from .grouped import etp_gmm_p, etp_gmv_p, grouped_matmul
 from .lora import etp_lora_mm_p, etp_lora_mv_p, lora_matmul
+from .outer import etp_outer_write_p, outer_write
 from .sparse import etp_sp_mm_p, etp_sp_mv_p, sparse_matmul
 
 __all__ = [
@@ -111,7 +115,9 @@ __all__ = [
     'FastPathRules',
     'ETP_FAST_PATH_RULES',
     'get_fast_path_rules',
+    'ETP_RULES_PP_DF_FACTORS',
     'ETP_RULES_PP_X_REPR',
+    'get_pp_df_factors',
     'get_pp_x_repr',
     'ETP_RULES_SNAP_ANCHOR',
     'is_snap_anchored',
@@ -132,6 +138,7 @@ __all__ = [
     'etp_sp_mv_p',
     'etp_lora_mm_p',
     'etp_lora_mv_p',
+    'etp_outer_write_p',
 
     # user API
     'matmul',
@@ -142,4 +149,5 @@ __all__ = [
     'conv',
     'sparse_matmul',
     'lora_matmul',
+    'outer_write',
 ]

@@ -85,6 +85,8 @@ __all__ = [
     'get_solve_drtrl_rule',
     'ETP_RULES_PP_X_REPR',
     'get_pp_x_repr',
+    'ETP_RULES_PP_DF_FACTORS',
+    'get_pp_df_factors',
     'ETP_RULES_SNAP_ANCHOR',
     'is_snap_anchored',
     'ETP_RULES_SNAP_ADJACENCY',
@@ -405,6 +407,48 @@ def get_pp_x_repr(primitive: Primitive) -> Optional[Callable]:
         not register one (the trace then filters the raw ``x``).
     """
     return ETP_RULES_PP_X_REPR.get(primitive)
+
+
+ETP_RULES_PP_DF_FACTORS: Dict[Primitive, Callable] = {}
+r"""Optional IO-dim (pp_prop / ES-D-RTRL) per-step ``D_f`` factor rule.
+
+``(x, weights: dict, **eqn_params) -> {trace_name: y-shaped array}`` — maps a
+primitive's *raw current-step* ``x`` and weight values into one multiplier per
+df-trace entry. The IO-dim algorithm multiplies the injected
+:math:`\mathbf{D}_f^t` by these factors before smoothing, so the trace becomes
+a **dict** of y-shaped arrays keyed by the same names.
+
+Register it when the instantaneous hidden-to-weight Jacobian does not factor
+as ``x ⊗ D_f``: for :math:`y = x W` it does, so ``etp_mm`` needs no rule and
+defers everything to a solve-time VJP. For a primitive that is *nonlinear in
+x* — ``etp_outer_write``'s :math:`c\,\varphi_k(x_k W_k + b_k) \otimes
+\varphi_v(x_v W_v)` — that deferral would evaluate the nonlinearity at the
+low-pass-filtered ``x``, which is both a Jensen-gap error and (worse) a
+destruction of the within-timestep correlation between the two factors. The
+per-step factor rule keeps those quantities at their own timestep and leaves
+only the genuinely linear operand to the x-trace.
+
+Unregistered primitives keep the legacy single-array df trace, byte-identically.
+Queried through :func:`get_pp_df_factors`.
+"""
+
+
+def get_pp_df_factors(primitive: Primitive) -> Optional[Callable]:
+    """Return the IO-dim per-step ``D_f`` factor rule, or ``None``.
+
+    Parameters
+    ----------
+    primitive : Primitive
+        The ETP primitive to look up.
+
+    Returns
+    -------
+    Callable or None
+        Rule ``(x, weights, **eqn_params) -> dict`` producing one y-shaped
+        multiplier per df-trace name, or ``None`` if the primitive did not
+        register one (its df trace then stays a single array).
+    """
+    return ETP_RULES_PP_DF_FACTORS.get(primitive)
 
 
 ETP_RULES_SNAP_ANCHOR: Dict[Primitive, Callable] = {}

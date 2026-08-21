@@ -340,3 +340,29 @@ class TestSnapAdjacencyRules:
         rule = get_snap_adjacency_rule(etp_sp_mv_p)
         assert rule({'sparse_mat': csr}, 5) is None
         assert rule({'sparse_mat': None}, 5) is None
+
+
+class TestPPDfFactorsRule:
+    """The IO-dim per-step ``D_f`` factor hook (:data:`ETP_RULES_PP_DF_FACTORS`).
+
+    The hook is *optional*: unregistered primitives must keep the legacy
+    single-array df trace, which is what ``get_pp_df_factors`` returning
+    ``None`` signals to the algorithm.
+    """
+
+    def test_unregistered_primitive_returns_none(self):
+        from braintrace._op import get_pp_df_factors
+
+        for prim in _ALL_SHIPPED:
+            assert get_pp_df_factors(prim) is None, prim.name
+
+    def test_registered_rule_is_returned(self):
+        from braintrace._op import get_pp_df_factors
+
+        p = register_primitive('etp_df_factors_probe', lambda x, w: x)
+
+        def _factors(x, weights, **params):
+            return {'key': x}
+
+        p.register_etp_rules(pp_df_factors=_factors)
+        assert get_pp_df_factors(p) is _factors

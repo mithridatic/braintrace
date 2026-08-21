@@ -40,6 +40,7 @@ from ._registries import (
     ETP_PRIMITIVES,
     ETP_RULES_INIT_DRTRL,
     ETP_RULES_INIT_PP,
+    ETP_RULES_PP_DF_FACTORS,
     ETP_RULES_PP_X_REPR,
     ETP_RULES_SNAP_ADJACENCY,
     ETP_RULES_SNAP_ANCHOR,
@@ -138,6 +139,7 @@ class ETPPrimitive(Primitive):
         init_pp: Callable[..., Any] | None = None,
         fast_path: FastPathRules | None = None,
         pp_x_repr: Callable[..., Any] | None = None,
+        pp_df_factors: Callable[..., Any] | None = None,
         snap_anchor: Callable[..., Any] | None = None,
         snap_adjacency: Callable[..., Any] | None = None,
     ) -> None:
@@ -168,6 +170,16 @@ class ETPPrimitive(Primitive):
             the operand the op is linear in (e.g. ``etp_emb_p`` filters the
             one-hot encoding of its integer indices); ``None`` leaves the
             IO-dim trace filtering the raw ``x``. Default ``None``.
+        pp_df_factors : Callable, optional
+            IO-dim per-step ``D_f`` factor rule
+            ``(x, weights, **eqn_params) -> {trace_name: array}``. Registered
+            into ``ETP_RULES_PP_DF_FACTORS``. Supply it when the instantaneous
+            hidden-to-weight Jacobian does not factor as ``x ⊗ D_f`` — i.e. the
+            primitive is nonlinear in ``x`` — so the nonlinear factors are
+            evaluated at their own timestep rather than at the filtered ``x``.
+            Registering it makes the primitive's pp df trace a **dict** keyed by
+            the returned names; ``init_pp`` and ``xy_to_dw`` must agree with
+            that layout. ``None`` (the default) keeps the single-array trace.
         snap_anchor : Callable, optional
             SnAp-n anchor declaration ``eqn_params -> bool``. Registered into
             ``ETP_RULES_SNAP_ANCHOR``. Declares that the primitive's trace
@@ -195,6 +207,8 @@ class ETPPrimitive(Primitive):
             ETP_FAST_PATH_RULES[self] = fast_path
         if pp_x_repr is not None:
             ETP_RULES_PP_X_REPR[self] = pp_x_repr
+        if pp_df_factors is not None:
+            ETP_RULES_PP_DF_FACTORS[self] = pp_df_factors
         if snap_anchor is not None:
             ETP_RULES_SNAP_ANCHOR[self] = snap_anchor
         if snap_adjacency is not None:

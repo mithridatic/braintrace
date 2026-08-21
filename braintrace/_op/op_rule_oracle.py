@@ -58,3 +58,35 @@ def assert_xy_to_dw_matches_vjp(*, rule, impl, x, hidden_dim, weights, params=No
         a = jnp.asarray(rule_dw[key])
         e = jnp.asarray(vjp_dw[key])
         np.testing.assert_allclose(a, e, atol=atol, err_msg=f"xy_to_dw mismatch on {key!r}")
+
+
+def assert_factored_rules_match_vjp(
+    *, factor_rule, xy_rule, impl, x, hidden_dim, weights, params=None, atol=1e-5
+):
+    """Assert a *factored* rule pair reproduces ``vjp(impl)(hidden_dim)`` exactly.
+
+    Primitives that are nonlinear in ``x`` cannot defer their whole weight
+    gradient to a solve-time VJP, because the IO-dim solve path evaluates that
+    VJP at the low-pass-filtered ``x``. They instead register a per-step factor
+    rule (``ETP_RULES_PP_DF_FACTORS``) whose output multiplies the injected
+    ``D_f`` before smoothing, leaving ``xy_to_dw`` a purely linear contraction.
+
+    With a single step of history the composition of the two must be *exact* --
+    the filtering has had nothing to average over yet -- so this is the ground
+    truth for the pair. ``impl`` is a single-argument callable of the weights
+    tree returning the primitive output ``y``.
+    """
+    params = params or {}
+    factors = factor_rule(x, weights, **params)
+    df = {name: factor * hidden_dim for name, factor in factors.items()}
+    rule_dw = xy_rule(x, df, weights, **params)
+    _, vjp_fn = jax.vjp(impl, weights)
+    vjp_dw = vjp_fn(hidden_dim)[0]
+    assert set(rule_dw.keys()) == set(vjp_dw.keys()), (
+        f"key mismatch: rule={set(rule_dw.keys())} vjp={set(vjp_dw.keys())}"
+    )
+    for key in rule_dw:
+        np.testing.assert_allclose(
+            jnp.asarray(rule_dw[key]), jnp.asarray(vjp_dw[key]), atol=atol,
+            err_msg=f"factored rule mismatch on {key!r}",
+        )
