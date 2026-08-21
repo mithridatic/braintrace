@@ -79,6 +79,12 @@ while Adam and AdamW `0.05` are strongest on shape. The `0.05` sensitivity
 arms do not establish a better weight decay: AdamW's shape gain accompanies a
 pixel loss, and Muon's evaluation is effectively unchanged.
 
+After reviewing these results, the user selected Muon at decay `0.1` as the
+new implicit Example 21 optimizer. Decay `0.1` was not one of the measured
+arms, so this is a post-benchmark product default decision rather than a
+measured winner or a claim that Muon won the tied exact ARC metric. Explicit
+Adam and AdamW selection remains supported.
+
 This is one seed at a fixed learning rate and budget, not optimizer-specific
 tuning. The requested 8192-edge topology is intentionally below Example 21's
 1,048,576-edge full-scale qualification target. The artifacts therefore fail

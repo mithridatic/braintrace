@@ -334,7 +334,7 @@ class ExperimentConfig:
         its built-in AdamW fallback for other leaves.
     weight_decay : float or None
         Decoupled weight decay for AdamW and Muon. ``None`` resolves to zero
-        for Adam and 0.01 for AdamW and Muon.
+        for Adam, 0.01 for AdamW, and 0.1 for Muon.
     copy_residual_gain : float
         Fixed identity-residual logit magnitude added to the answer row
         head's output at the query's own colour for every occupied column,
@@ -420,7 +420,7 @@ class ExperimentConfig:
     training_workers: int = 4
     runtime_profile: bool = False
     learning_rate: float = 1e-4
-    optimizer: OptimizerName = "adam"
+    optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
     adaptation_epochs: int = 2
@@ -524,7 +524,7 @@ class ExperimentConfig:
         object.__setattr__(
             self, "learning_rate", _positive_real(self.learning_rate, "learning_rate")
         )
-        decay = 0.0 if self.optimizer == "adam" else 0.01
+        decay = {"adam": 0.0, "adamw": 0.01, "muon": 0.1}[self.optimizer]
         if self.weight_decay is not None:
             decay = _nonnegative_real(self.weight_decay, "weight_decay")
         object.__setattr__(self, "weight_decay", decay)
@@ -616,7 +616,7 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         memory_coding: MemoryCoding = "frozen",
         trace_engine: TraceEngine = "pp_prop",
-        optimizer: OptimizerName = "adam",
+        optimizer: OptimizerName = "muon",
         weight_decay: float | None = None,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "row_refinement",
@@ -6277,7 +6277,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument(
-        "--optimizer", choices=("adam", "adamw", "muon"), default="adam"
+        "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
     parser.add_argument("--weight-decay", type=float)
     parser.add_argument("--copy-residual-gain", type=float, default=0.0)

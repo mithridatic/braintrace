@@ -634,16 +634,24 @@ def test_associative_memory_config_accepts_width_512(example):
     assert config.context_memory_width == 512
 
 
-def test_optimizer_defaults_preserve_adam_and_resolve_decoupled_decay(example):
-    adam = example.ExperimentConfig(structural_only=True)
+def test_optimizer_defaults_to_muon_and_resolves_decoupled_decay(example):
+    default = example.ExperimentConfig(structural_only=True)
+    smoke = example.ExperimentConfig.smoke_config()
+    cli = example._config_from_args(
+        example._parser().parse_args(["--structural-only"])
+    )
+    adam = example.ExperimentConfig(structural_only=True, optimizer="adam")
     adamw = example.ExperimentConfig(structural_only=True, optimizer="adamw")
     muon = example.ExperimentConfig(structural_only=True, optimizer="muon")
 
+    assert (default.optimizer, default.weight_decay) == ("muon", 0.1)
+    assert (smoke.optimizer, smoke.weight_decay) == ("muon", 0.1)
+    assert (cli.optimizer, cli.weight_decay) == ("muon", 0.1)
     assert (adam.optimizer, adam.weight_decay) == ("adam", 0.0)
     assert (adamw.optimizer, adamw.weight_decay) == ("adamw", 0.01)
-    assert (muon.optimizer, muon.weight_decay) == ("muon", 0.01)
-    assert adam.to_dict()["optimizer"] == "adam"
-    assert muon.to_dict()["weight_decay"] == 0.01
+    assert (muon.optimizer, muon.weight_decay) == ("muon", 0.1)
+    assert default.to_dict()["optimizer"] == "muon"
+    assert muon.to_dict()["weight_decay"] == 0.1
 
 
 @pytest.mark.parametrize(
@@ -2601,6 +2609,7 @@ def test_training_uses_explicit_decoder_loss_and_all_sweep_efforts(
     )
 
     config = example.ExperimentConfig.smoke_config(
+        optimizer="adam",
         decoder_mode=decoder_mode,
         balanced_color_loss=decoder_mode == "legacy_cp",
     )

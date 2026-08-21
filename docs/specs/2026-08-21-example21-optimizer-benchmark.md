@@ -11,10 +11,11 @@ training schedule, gradient clipping, learning rate, topology, and evaluation.
 
 `ExperimentConfig` and the Example 21 CLI gain:
 
-- `optimizer`: one of `adam`, `adamw`, or `muon`; default `adam` preserves the
-  existing behavior.
-- `weight_decay`: a finite nonnegative scalar. Its default is `0.0` for Adam
-  and `0.01` for AdamW and Muon when the caller does not specify a value.
+- `optimizer`: one of `adam`, `adamw`, or `muon`. The post-benchmark default is
+  `muon`; callers can still select `adam` explicitly for the historical path.
+- `weight_decay`: a finite nonnegative scalar. Its default is `0.0` for Adam,
+  `0.01` for AdamW, and `0.1` for Muon when the caller does not specify a
+  value. The new implicit configuration is therefore Muon with decay `0.1`.
 
 The command-line forms are `--optimizer` and `--weight-decay`. The resolved
 optimizer and weight decay are included in `configuration` and the training
@@ -22,8 +23,8 @@ report so artifacts identify the exact update rule.
 
 ## Optimizer construction
 
-- Adam remains `braintools.optim.Adam(lr=learning_rate)` and ignores no new
-  hidden defaults.
+- Adam remains `braintools.optim.Adam(lr=learning_rate)` when explicitly
+  selected and ignores no new hidden defaults.
 - AdamW uses `braintools.optim.AdamW` with the resolved learning rate and
   decoupled weight decay.
 - Muon uses `optax.contrib.muon` inside
@@ -45,7 +46,8 @@ JAX 0.11 runtime.
 
 Colocated Example 21 tests must cover:
 
-- unchanged Adam defaults and CLI round-tripping;
+- Muon defaults for direct, smoke, and CLI construction plus explicit Adam
+  selection and CLI round-tripping;
 - optimizer-name and weight-decay validation;
 - conditional default decay resolution;
 - construction and parameter registration for all three optimizers;
