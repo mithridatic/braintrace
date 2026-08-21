@@ -1,6 +1,6 @@
 # Example 21 — context_memory_width sweep with evaluation controls
 
-Status: in progress
+Status: measured; width-capacity hypothesis refuted at tested loads
 Date: 2026-08-20
 Branch: `investigate/ex21-context-width-sweep`
 
@@ -66,10 +66,62 @@ Image: rebuilt from this worktree as
 Outputs: `var/example21-ws-4096n-4096e-b32-u260-l60-lr1e-3-s2108-w{32,128,512}`
 in this worktree.
 
-## Report
+## Results (2026-08-20 evening; all runs measured, none over 6 minutes)
 
-Per width: pairing accuracy with Wilson 95% interval against
-`pairing_chance`, presence, and the shuffled/no-context/ablation control
-verdicts; pairing broken down against demonstration-row count where the
-diagnostics expose it. Shape/pixel metrics recorded as secondary (widths may
-shift the frozen-arm score, which is itself informative).
+The original three-run full-split design was replaced after a runtime
+objection: evaluation capped at 100 tasks for the ARC arms, and the
+quantitative pairing measurement moved to its native instrument, the
+`latent_workspace_binding_gate` runner, which takes `--context-memory-width`
+directly and needs no ARC evaluation. Gate runs used
+`--validation-episodes 1024` (off-preregistration on purpose, identical
+across widths), so both artifacts are explicitly
+`nonqualifying_abbreviated_no_capability_conclusion` — internally valid as a
+width comparison, not as Gate A evidence.
+
+### Binding gate (synthetic K=4 curriculum, 1024 held-out episodes)
+
+| width | intact accuracy [Wilson 95%] | shuffled | no-context | wall |
+|---:|---|---|---|---:|
+| 32 | 1.000 [0.9963, 1.0] | 0.000 [0, 0.0037] | 0.1025 | 133 s |
+| 512 | 1.000 [0.9963, 1.0] | 0.000 [0, 0.0037] | 0.0889 | 296 s |
+
+Chance is 0.25. Binding is *perfect and width-invariant* at the K=4 load:
+intact saturates, the derangement collapses to zero, and no-context sits
+below chance. Width buys nothing because nothing is missing at this load.
+
+### ARC pilot runs (100 evaluation tasks, evaluation controls on, seed 2108)
+
+| width | shape | pixel | pairing-sensitive | no-context zero | wall |
+|---:|---:|---:|---|---|---:|
+| 32 | 0.5096 | 0.3620 | true | true | 233 s |
+| 512 | 0.5385 | 0.3668 | true | true | 359 s |
+
+A 16× width increase moves shape by +0.03 and pixel by +0.005 under the real
+ARC demonstration load (~hundreds of outer-product writes per task).
+
+### Verdict on §4.3's prediction
+
+The capacity prediction is **refuted as stated**: pairing at width 32 is not
+near chance for capacity reasons — the mechanism binds perfectly at low load,
+and widening the memory 16× under ARC load produces no material gain. The
+constraint is load-dependent: either interference at hundreds of writes that
+width does not relieve (because the fixed random Fourier keys, not the store,
+set the effective addressing resolution) or the write/read coding itself.
+This moves recommendation #7 (learn `U_θ`) ahead of any width/decay
+engineering.
+
+### Decisive next measurement (not run; requires curriculum change)
+
+The discriminating axis is **load**, not width: sweep the gate curriculum's
+pair count (`SYMBOL_COUNT`, currently a preregistered constant of 4) at fixed
+width and locate where intact accuracy departs from 1.0, then test whether
+width shifts that knee. If the knee does not move with width, coding is
+conclusively the binder. This modifies the preregistered gate and should be
+proposed, not slipped into a sweep.
+
+### Artifacts
+
+- `var/binding-gate-width-sweep/gate-w{32,512}.json` (this worktree)
+- `var/example21-wspilot-w{32,512}-t100/` (this worktree)
+- ARC arms marked non-scientific by construction (task cap); gate arms marked
+  nonqualifying by construction (off-preregistration validation count).
