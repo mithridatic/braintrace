@@ -165,6 +165,49 @@ Fallback arm (only if B stalls with weights moving): learned linear key map
    233 s at width 32).
 4. Record results here; propose scale-up separately.
 
-## Results
+## Results (2026-08-20 late evening; all runs measured)
 
-(to be filled after runs)
+Smoke (`--smoke --memory-coding learned_keys`, CPU): 27.4 s, exit 0,
+`parameters_moved` true, `memory_key_projection.weight` l2_delta 0.0253 with
+differing before/after digests. Full suite (braintrace/ + examples/pp_prop/,
+CPU-only container): 5,477 passed, 0 failed, 43:30.
+
+GPU pilots — 100 evaluation tasks, evaluation controls, seed 2108, 4096n /
+4096 edges / batch 32 / 260 updates / chunk 5 / lr 1e-3 / width 32
+(non-scientific by construction: task cap):
+
+| arm | intact shape e30/e60 | intact pixel e30/e60 | key l2_delta | wall |
+|---|---|---|---|---:|
+| frozen | 0.5096 / 0.5288 | 0.3814 / 0.3665 | n/a | 336 s |
+| learned_keys | 0.5288 / 0.5192 | 0.3832 / 0.3639 | 2.0496 | ~300 s |
+
+Control-minus-intact deltas (shape, effort 60):
+
+| control | frozen | learned_keys |
+|---|---:|---:|
+| no_context | −0.2212 | −0.3077 |
+| shuffled_demonstrations | +0.0096 | 0.0000 |
+| slot_ablation | −0.0096 | 0.0000 |
+
+### Verdict
+
+Decision-rule branch 2: **B ≈ A with key weights verifiably moving.** The
+key projection trains hard (l2_delta 2.05, ~80× the smoke's 3-update delta)
+yet intact shape/pixel are flat within noise and the shuffled-demonstrations
+deviation stays ≈ 0 in both arms — the model still does not use
+demonstration *pairing* at all, so there is no binding signal for a better
+retrieval addressing to improve. Notably the learned arm's no_context
+dependence deepens (−0.31 vs −0.22 shape), i.e. learned keys make the model
+lean more on contextual memory, but on presence-like content, not pairing.
+
+Retrieval-path key learning is therefore insufficient at pilot scale. The
+two remaining hypotheses, in order:
+
+1. **Write-path gradient**: `U_θ` cannot be meaningfully learned while the
+   write is outside the differentiable path — requires the outer-product ETP
+   primitive with its own trace rule (Layer 1–3).
+2. Interference mechanisms no encoder can fix (single-trace superposition).
+
+Artifacts: `var/example21-ukpilot-{frozen,learned_keys}-t100/` (this
+worktree, uncommitted by var policy); smoke at
+`var/example21-smoke-learnedkeys/`.
