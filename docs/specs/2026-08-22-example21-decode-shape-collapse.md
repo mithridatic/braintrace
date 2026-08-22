@@ -14,12 +14,18 @@ channel.
    the score falls monotonically with area. Shape accuracy 0.5752 -> 0.0072.
    This is the whole of the recorded "v2 regression"; the model was never
    involved.
-2. **The strongest recorded model-only base is an identity map.** With
-   `--copy-residual-gain 2.0 --row-head-carrier-scale 0.0` the row head has no
-   carrier input, so its contribution is query-invariant and `gain * onehot(input)`
-   is the only query-dependent term. The colour argmax is therefore the query
-   input by construction — measured at 113,982 of 113,982 overlapping cells at
-   efforts 30 and 60.
+2. **The strongest recorded model-only base is an identity map.** Measured at
+   113,982 of 113,982 overlapping cells at efforts 30 and 60, its colour argmax
+   equals the test input exactly. The mechanism is `--row-head-carrier-scale 0.0`.
+   `_refinement_head_input` concatenates the workspace carrier with the
+   event-derived blocks (row-position one-hot, the query colours of the row
+   being transcribed, the query's grid dimensions), and **the carrier is the
+   only pathway that carries the demonstrations**. Scaling it to zero leaves the
+   row head reading nothing but the query's own input row, so the best map it
+   can learn is the identity — and training finds it. The `copy_residual_gain`
+   bias does not compound across refinement ticks (`next_row = row_proposal`
+   replaces rather than accumulates); the collapse is the learned head, not the
+   residual.
 
 ## Proof of (1)
 
