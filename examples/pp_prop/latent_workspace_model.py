@@ -213,6 +213,9 @@ class ModelConfig:
         Associative-read projection. Gated modes use the unit-L2-capped
         previous workspace as gate input; ``gated_rms`` additionally
         RMS-normalizes the read inside the fused ETP primitive.
+    memory_read_interval : int, default=1
+        One-based cadence for latent associative reads. Query ingestion always
+        reads; latent tick ``n`` reads when ``n`` is divisible by this value.
     demonstration_phase_index, query_phase_index : int, optional
         Event channels identifying demonstration and query rows in memory mode.
     input_side_valid_index, output_side_valid_index : int, optional
@@ -342,6 +345,7 @@ class ModelConfig:
     context_memory_width: int = 0
     memory_decay: float = 1.0
     memory_read_transform: Literal["linear", "gated", "gated_rms"] = "linear"
+    memory_read_interval: int = 1
     demonstration_phase_index: int | None = None
     query_phase_index: int | None = None
     input_side_valid_index: int | None = None
@@ -388,6 +392,11 @@ class ModelConfig:
             self,
             "context_memory_width",
             _nonnegative_integer(self.context_memory_width, "context_memory_width"),
+        )
+        object.__setattr__(
+            self,
+            "memory_read_interval",
+            _positive_integer(self.memory_read_interval, "memory_read_interval"),
         )
         object.__setattr__(
             self,
@@ -804,6 +813,7 @@ class AssociativeMemoryReport:
     query_component_type: str | None
     read_component_type: str | None
     read_transform: str | None = None
+    read_interval: int | None = None
     update_feature_width: int | None = None
     update_feature_order: tuple[str, ...] | None = None
     update_projection_sha256: str | None = None
@@ -885,6 +895,8 @@ class AssociativeMemoryReport:
         report = asdict(self)
         if self.read_transform is None:
             report.pop("read_transform")
+        if self.read_interval is None:
+            report.pop("read_interval")
         if self.update_routing is None:
             for name in (
                 "update_feature_width",
@@ -1094,6 +1106,10 @@ class PackedTrajectory:
     memory_read : jax.Array
         Associative reads shaped ``(time, batch, memory_width)``.  Legacy mode
         has a zero-width final dimension.
+    memory_read_mask : jax.Array
+        Exact boolean read decision for every executed tick and batch lane.
+    memory_read_count : jax.Array
+        Final per-example number of associative reads.
     final_context_memory : jax.Array
         One final memory snapshot shaped ``(batch, memory_width, memory_width)``;
         legacy mode has two zero-width trailing dimensions.
@@ -1110,6 +1126,8 @@ class PackedTrajectory:
     recurrent_current: jax.Array
     workspace_carrier: jax.Array
     memory_read: jax.Array
+    memory_read_mask: jax.Array
+    memory_read_count: jax.Array
     final_context_memory: jax.Array
     color_rank: int
     decoder_mode: Literal[
@@ -1147,6 +1165,10 @@ class SelectedPackedTrajectory:
     memory_read : jax.Array
         Selected associative reads shaped ``(checkpoints, batch, memory_width)``.
         Legacy mode has a zero-width final dimension.
+    memory_read_mask : jax.Array
+        Exact boolean read decision for every executed stream tick and lane.
+    memory_read_count : jax.Array
+        Final per-example number of associative reads.
     context_memory : jax.Array
         Selected associative states shaped
         ``(checkpoints, batch, memory_width, memory_width)``. Legacy mode has
@@ -1169,6 +1191,8 @@ class SelectedPackedTrajectory:
     recurrent_current: jax.Array
     workspace_carrier: jax.Array
     memory_read: jax.Array
+    memory_read_mask: jax.Array
+    memory_read_count: jax.Array
     context_memory: jax.Array
     final_context_memory: jax.Array
     color_rank: int
@@ -2452,6 +2476,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     (config.batch_size, config.neuron_count), dtype=jnp.float32
                 )
             )
+            self.memory_read_step = brainstate.ShortTermState(
+                jnp.zeros((config.batch_size,), dtype=jnp.int32)
+            )
+            self.memory_read_count = brainstate.ShortTermState(
+                jnp.zeros((config.batch_size,), dtype=jnp.int32)
+            )
+            self.memory_read_active = brainstate.ShortTermState(
+                jnp.zeros((config.batch_size,), dtype=jnp.bool_)
+            )
             self.workspace_carrier = brainstate.HiddenState(
                 jnp.zeros((config.batch_size, config.neuron_count), dtype=jnp.float32)
             )
@@ -3004,6 +3037,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 query_component_type=None,
                 read_component_type=None,
                 read_transform=None,
+                read_interval=None,
             )
         update_projection_sha256 = None
         if self.config.memory_coding == "learned_update":
@@ -3044,6 +3078,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 else "braintrace.nn.GatedProjection"
             ),
             read_transform=self.config.memory_read_transform,
+            read_interval=self.config.memory_read_interval,
             update_feature_width=(
                 len(self.config.memory_update_indices)
                 if self.config.memory_coding == "learned_update"
@@ -3082,6 +3117,9 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 "memory_drive_rms": 0.0,
                 "gate_saturation_fraction": None,
                 "gate_channel_activation": None,
+                "memory_read_interval": None,
+                "memory_read_count": None,
+                "memory_read_active": None,
             }
         read = np.asarray(self.memory_read.value, dtype=np.float64)
         drive = np.asarray(self.memory_drive.value, dtype=np.float64)
@@ -3101,6 +3139,13 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             "gate_channel_activation": (
                 None if gate is None else np.mean(gate, axis=0).tolist()
             ),
+            "memory_read_interval": self.config.memory_read_interval,
+            "memory_read_count": np.asarray(
+                self.memory_read_count.value, dtype=np.int64
+            ).tolist(),
+            "memory_read_active": np.asarray(
+                self.memory_read_active.value, dtype=np.bool_
+            ).tolist(),
         }
 
     def reset_state(self, batch_size: int | None = None, **_: object) -> None:
@@ -3144,6 +3189,15 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.memory_drive.value = jnp.zeros(
                 (self.config.batch_size, self.config.neuron_count),
                 dtype=jnp.float32,
+            )
+            self.memory_read_step.value = jnp.zeros(
+                (self.config.batch_size,), dtype=jnp.int32
+            )
+            self.memory_read_count.value = jnp.zeros(
+                (self.config.batch_size,), dtype=jnp.int32
+            )
+            self.memory_read_active.value = jnp.zeros(
+                (self.config.batch_size,), dtype=jnp.bool_
             )
             self.workspace_carrier.value = jnp.zeros(
                 (self.config.batch_size, self.config.neuron_count),
@@ -3217,23 +3271,32 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             (tuple(path), state)
             for path, state in self.states(brainstate.HiddenState).items()
         )
-        if not self.config.row_refinement_enabled:
-            return items
-        refinement_items = (
-            (("query_grid",), self.query_grid),
-            (("query_shape",), self.query_shape),
-            (("answer_grid",), self.answer_grid),
-            (("reasoning_index",), self.reasoning_index),
-        )
-        if self.config.refinement_mixer == "attention_residual":
-            refinement_items += (
+        short_term_items: tuple[tuple[tuple[Any, ...], Any], ...] = ()
+        if self.config.memory_enabled:
+            short_term_items += (
+                (("memory_read_step",), self.memory_read_step),
+                (("memory_read_count",), self.memory_read_count),
+                (("memory_read_active",), self.memory_read_active),
+            )
+        if self.config.row_refinement_enabled:
+            short_term_items += (
+                (("query_grid",), self.query_grid),
+                (("query_shape",), self.query_shape),
+                (("answer_grid",), self.answer_grid),
+                (("reasoning_index",), self.reasoning_index),
+            )
+        if (
+            self.config.row_refinement_enabled
+            and self.config.refinement_mixer == "attention_residual"
+        ):
+            short_term_items += (
                 (("row_proposal_history",), self.row_proposal_history),
                 (("shape_proposal_history",), self.shape_proposal_history),
                 (("reasoning_sweep",), self.reasoning_sweep),
             )
         hidden_paths = {path for path, _ in items}
         return items + tuple(
-            item for item in refinement_items if item[0] not in hidden_paths
+            item for item in short_term_items if item[0] not in hidden_paths
         )
 
     def snapshot_state(self) -> ModelStateSnapshot:
@@ -3747,22 +3810,37 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 ),
             )
             self.reasoning_query.value = next_reasoning_query
-            reasoning_gate = query | latent
+            previous_read_step = jnp.asarray(self.memory_read_step.value)
+            next_read_step = jnp.where(
+                query,
+                jnp.zeros_like(previous_read_step),
+                jnp.where(latent, previous_read_step + 1, previous_read_step),
+            )
+            periodic_read = latent & (
+                jnp.mod(next_read_step, self.config.memory_read_interval) == 0
+            )
             if self.memory_read_policy == "full":
-                raw_read = self.read_context_memory(next_reasoning_query)
-                raw_read = jnp.where(
-                    reasoning_gate[:, None], raw_read, jnp.zeros_like(raw_read)
-                )
+                read_gate = query | periodic_read
+                diagnostic_gate = read_gate
             else:
-                query_read = jnp.where(
-                    query[:, None],
-                    next_reasoning_query,
-                    jnp.zeros_like(next_reasoning_query),
-                )
-                raw_read = self.read_context_memory(query_read)
-                raw_read = jnp.where(query[:, None], raw_read, jnp.zeros_like(raw_read))
+                read_gate = query
+                diagnostic_gate = query | latent
+            read_query = jnp.where(
+                read_gate[:, None],
+                next_reasoning_query,
+                jnp.zeros_like(next_reasoning_query),
+            )
+            raw_read = self.read_context_memory(read_query)
+            raw_read = jnp.where(
+                read_gate[:, None], raw_read, jnp.zeros_like(raw_read)
+            )
+            self.memory_read_step.value = next_read_step
+            self.memory_read_count.value = self.memory_read_count.value + (
+                read_gate.astype(jnp.int32)
+            )
+            self.memory_read_active.value = read_gate
             self.memory_read.value = jnp.where(
-                reasoning_gate[:, None],
+                diagnostic_gate[:, None],
                 jax.lax.stop_gradient(raw_read),
                 self.memory_read.value,
             )
@@ -3772,12 +3850,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 gate_input = _unit_l2_cap(previous_workspace)
                 memory_drive = self.memory_read_projection(raw_read, gate_input)
                 self.memory_read_gate.value = jnp.where(
-                    reasoning_gate[:, None],
+                    diagnostic_gate[:, None],
                     self.memory_read_projection.gate_activation(gate_input),
                     self.memory_read_gate.value,
                 )
             self.memory_drive.value = jnp.where(
-                reasoning_gate[:, None],
+                diagnostic_gate[:, None],
                 jax.lax.stop_gradient(memory_drive),
                 self.memory_drive.value,
             )
@@ -4059,6 +4137,7 @@ def run_packed_stream(
             jax.Array,
             jax.Array,
             jax.Array,
+            jax.Array,
         ]:
             event, advance_gate, ablation_gate = inputs
             model.mask_slots(slots, ablation_gate)
@@ -4068,6 +4147,11 @@ def run_packed_stream(
                 if model.config.memory_enabled
                 else jnp.zeros((model.config.batch_size, 0), dtype=jnp.float32)
             )
+            memory_read_active = (
+                jnp.asarray(model.memory_read_active.value)
+                if model.config.memory_enabled
+                else jnp.zeros((model.config.batch_size,), dtype=jnp.bool_)
+            )
             return (
                 model.compact_readout(),
                 spikes,
@@ -4075,6 +4159,7 @@ def run_packed_stream(
                 model.feedforward_current,
                 model.recurrent_current,
                 memory_read,
+                memory_read_active,
             )
 
         (
@@ -4084,12 +4169,14 @@ def run_packed_stream(
             feedforward_current,
             recurrent_current,
             memory_read,
+            memory_read_mask,
         ) = brainstate.transform.for_loop(controlled_step, (packed, advance, gates))
     else:
 
         def packed_step(
             inputs: tuple[jax.Array, jax.Array],
         ) -> tuple[
+            jax.Array,
             jax.Array,
             jax.Array,
             jax.Array,
@@ -4104,6 +4191,11 @@ def run_packed_stream(
                 if model.config.memory_enabled
                 else jnp.zeros((model.config.batch_size, 0), dtype=jnp.float32)
             )
+            memory_read_active = (
+                jnp.asarray(model.memory_read_active.value)
+                if model.config.memory_enabled
+                else jnp.zeros((model.config.batch_size,), dtype=jnp.bool_)
+            )
             return (
                 model.compact_readout(),
                 spikes,
@@ -4111,6 +4203,7 @@ def run_packed_stream(
                 model.feedforward_current,
                 model.recurrent_current,
                 memory_read,
+                memory_read_active,
             )
 
         (
@@ -4120,12 +4213,17 @@ def run_packed_stream(
             feedforward_current,
             recurrent_current,
             memory_read,
+            memory_read_mask,
         ) = brainstate.transform.for_loop(packed_step, (packed, advance))
     if model.config.memory_enabled:
         final_context_memory = model.logical_context_memory()
+        memory_read_count = jnp.asarray(model.memory_read_count.value)
     else:
         final_context_memory = jnp.zeros(
             (model.config.batch_size, 0, 0), dtype=jnp.float32
+        )
+        memory_read_count = jnp.zeros(
+            (model.config.batch_size,), dtype=jnp.int32
         )
     return PackedTrajectory(
         compact_logits=compact,
@@ -4135,6 +4233,8 @@ def run_packed_stream(
         recurrent_current=recurrent_current,
         workspace_carrier=voltage,
         memory_read=memory_read,
+        memory_read_mask=memory_read_mask,
+        memory_read_count=memory_read_count,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,
         decoder_mode=model.config.decoder_mode,
@@ -4385,9 +4485,14 @@ def run_selected_packed_stream(
             memory_values,
             context_memory_values,
         )
-        return next_carry, jnp.asarray(0, dtype=jnp.int8)
+        memory_read_active = (
+            jnp.asarray(model.memory_read_active.value)
+            if model.config.memory_enabled
+            else jnp.zeros((batch_size,), dtype=jnp.bool_)
+        )
+        return next_carry, memory_read_active
 
-    final_carry, _ = brainstate.transform.scan(
+    final_carry, memory_read_mask = brainstate.transform.scan(
         scan_step,
         initial_carry,
         (
@@ -4413,8 +4518,10 @@ def run_selected_packed_stream(
     ) = final_carry
     if model.config.memory_enabled:
         final_context_memory = model.logical_context_memory()
+        memory_read_count = jnp.asarray(model.memory_read_count.value)
     else:
         final_context_memory = jnp.zeros((batch_size, 0, 0), dtype=jnp.float32)
+        memory_read_count = jnp.zeros((batch_size,), dtype=jnp.int32)
     return SelectedPackedTrajectory(
         selected_indices=indices,
         compact_logits=compact_buffer,
@@ -4424,6 +4531,8 @@ def run_selected_packed_stream(
         recurrent_current=recurrent_buffer,
         workspace_carrier=voltage_buffer,
         memory_read=memory_buffer,
+        memory_read_mask=memory_read_mask,
+        memory_read_count=memory_read_count,
         context_memory=context_memory_buffer,
         final_context_memory=final_context_memory,
         color_rank=model.config.color_rank,

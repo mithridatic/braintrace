@@ -948,6 +948,38 @@ def test_memory_read_transform_round_trips_cli_model_and_reports(example):
         )
 
 
+def test_memory_read_interval_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    interval = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--memory-read-interval", "4"]
+        )
+    )
+    smoke = example.ExperimentConfig.smoke_config(memory_read_interval=8)
+    model_config = example._model_config(interval, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        interval,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.memory_read_interval == 1
+    assert interval.memory_read_interval == 4
+    assert smoke.memory_read_interval == 8
+    assert interval.to_dict()["memory_read_interval"] == 4
+    assert model_config.memory_read_interval == 4
+    assert architecture["memory_read_interval"] == 4
+    for value in (True, 1.5, "4"):
+        with pytest.raises(ValueError, match="memory_read_interval"):
+            example.ExperimentConfig(
+                structural_only=True, memory_read_interval=value
+            )
+    with pytest.raises(ValueError, match="memory_read_interval"):
+        example.ExperimentConfig(structural_only=True, memory_read_interval=0)
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
@@ -2087,9 +2119,12 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "carrier_normalization_by_consumer",
         "memory_read_rms",
         "memory_drive_rms",
-        "gate_saturation_fraction",
-        "gate_channel_activation",
-    }
+            "gate_saturation_fraction",
+            "gate_channel_activation",
+            "memory_read_interval",
+            "memory_read_count",
+            "memory_read_active",
+        }
     assert memory["gate_saturation_fraction"] is None
     assert memory["gate_channel_activation"] is None
     assert memory["carrier_stabilizer"] == "per_example_stopped_unit_l2_cap"
@@ -4903,6 +4938,24 @@ def test_memory_read_transform_participates_in_checkpoint_compatibility(
 
     with pytest.raises(ValueError, match="parameter checkpoint"):
         example._read_parameter_checkpoint(gated, path)
+
+
+def test_memory_read_interval_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    every_tick_config = example.ExperimentConfig.smoke_config(memory_read_interval=1)
+    periodic_config = example.ExperimentConfig.smoke_config(memory_read_interval=4)
+    rows = example._row_config(every_tick_config)
+    device = jax.devices("cpu")[0]
+    every_tick = example._make_model(
+        every_tick_config, rows, batch_size=1, device=device
+    )
+    periodic = example._make_model(periodic_config, rows, batch_size=1, device=device)
+    path = tmp_path / "every-tick-parameters.npz"
+    example._write_parameter_checkpoint(every_tick, path)
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(periodic, path)
 
 
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):

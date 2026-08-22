@@ -331,6 +331,9 @@ class ExperimentConfig:
     memory_read_transform : {"linear", "gated", "gated_rms"}
         Associative read projection. The default preserves the historical
         linear path; gated modes use the previous workspace as gate input.
+    memory_read_interval : int
+        Positive one-based cadence for latent associative reads. Query rows
+        always read; the default ``1`` reads on every latent tick.
     memory_coding : {"frozen", "learned_keys", "learned_write"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
@@ -476,6 +479,7 @@ class ExperimentConfig:
     context_memory_width: int = 32
     memory_decay: float = 1.0
     memory_read_transform: MemoryReadTransform = "linear"
+    memory_read_interval: int = 1
     memory_coding: MemoryCoding = "learned_update"
     trace_engine: TraceEngine = "pp_prop"
     neuron_typing: NeuronTyping = "none"
@@ -529,6 +533,7 @@ class ExperimentConfig:
             ("readout_width", 1),
             ("color_rank", 1),
             ("context_memory_width", 0),
+            ("memory_read_interval", 1),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
             ("latent_steps", 60),
@@ -791,6 +796,7 @@ class ExperimentConfig:
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
         memory_read_transform: MemoryReadTransform = "linear",
+        memory_read_interval: int = 1,
         memory_coding: MemoryCoding | None = None,
         trace_engine: TraceEngine = "pp_prop",
         neuron_typing: NeuronTyping = "none",
@@ -822,6 +828,8 @@ class ExperimentConfig:
             Associative memory decay in ``[0, 1]``.
         memory_read_transform : {"linear", "gated", "gated_rms"}
             Associative read projection forwarded to the model.
+        memory_read_interval : int
+            Positive one-based latent associative-read cadence.
         memory_coding : {"frozen", "learned_keys", "learned_write"}
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
@@ -874,6 +882,7 @@ class ExperimentConfig:
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
             memory_read_transform=memory_read_transform,
+            memory_read_interval=memory_read_interval,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
             neuron_typing=neuron_typing,
@@ -2194,6 +2203,7 @@ def _model_config(
                 "context_memory_width": config.context_memory_width,
                 "memory_decay": config.memory_decay,
                 "memory_read_transform": config.memory_read_transform,
+                "memory_read_interval": config.memory_read_interval,
                 "demonstration_phase_index": row_config.phase_slice.start,
                 "query_phase_index": row_config.phase_slice.start + 1,
                 "input_side_valid_index": row_config.side_valid_slice.start,
@@ -2247,6 +2257,7 @@ def _memory_architecture_report(
     }
     if enabled:
         report["memory_read_transform"] = config.memory_read_transform
+        report["memory_read_interval"] = config.memory_read_interval
     return report
 
 
@@ -2632,8 +2643,21 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
     leaves = jax.tree.leaves({key: state.value for key, state in states.items()})
     path.parent.mkdir(parents=True, exist_ok=True)
     staged = path.with_name(path.name + ".partial")
+    architecture = np.frombuffer(
+        msgspec.json.encode(
+            {
+                "schema_version": 1,
+                "memory_read_interval": model.config.memory_read_interval,
+            }
+        ),
+        dtype=np.uint8,
+    )
     with staged.open("wb") as handle:
-        np.savez(handle, *[np.asarray(leaf) for leaf in leaves])
+        np.savez(
+            handle,
+            *[np.asarray(leaf) for leaf in leaves],
+            __architecture__=architecture,
+        )
     os.replace(staged, path)
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -2650,8 +2674,18 @@ def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) 
     )
     stored = np.load(path)
     names = [f"arr_{index}" for index in range(len(leaves))]
-    if set(stored.files) != set(names):
+    stored_names = set(stored.files)
+    if stored_names not in (set(names), set(names) | {"__architecture__"}):
         raise ValueError("parameter checkpoint does not match the model tree")
+    if "__architecture__" in stored_names:
+        architecture = msgspec.json.decode(
+            np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
+        )
+        if architecture != {
+            "schema_version": 1,
+            "memory_read_interval": model.config.memory_read_interval,
+        }:
+            raise ValueError("parameter checkpoint does not match model architecture")
     restored = [jnp.asarray(stored[name]) for name in names]
     for target, value in zip(leaves, restored, strict=True):
         if np.shape(target) != np.shape(value):
@@ -7038,6 +7072,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=("linear", "gated", "gated_rms"),
         default="linear",
     )
+    parser.add_argument("--memory-read-interval", type=int, default=1)
     parser.add_argument(
         "--memory-coding",
         choices=("frozen", "learned_keys", "learned_write", "learned_update"),
@@ -7130,6 +7165,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
             memory_read_transform=args.memory_read_transform,
+            memory_read_interval=args.memory_read_interval,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
             neuron_typing=args.neuron_typing,
@@ -7154,6 +7190,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
         memory_read_transform=args.memory_read_transform,
+        memory_read_interval=args.memory_read_interval,
         memory_coding=args.memory_coding or "learned_update",
         trace_engine=args.trace_engine,
         neuron_typing=args.neuron_typing,

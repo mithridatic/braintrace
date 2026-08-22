@@ -665,6 +665,7 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     assert memory.carrier_normalization_by_consumer is None
     assert serialized_legacy == expected_legacy
     assert memory.to_dict()["read_transform"] == "linear"
+    assert memory.to_dict()["read_interval"] == 1
     assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
@@ -685,6 +686,7 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
         "carrier_radius",
         "carrier_consumers",
         "read_transform",
+        "read_interval",
     }
 
 
@@ -2023,6 +2025,105 @@ def test_memory_read_transform_defaults_to_linear_and_validates() -> None:
         _memory_config(memory_read_transform="rms")
     with pytest.raises(ValueError, match="positive context_memory_width"):
         _config(memory_read_transform="gated")
+
+
+def test_memory_read_interval_defaults_and_validates() -> None:
+    assert _config().memory_read_interval == 1
+    assert _memory_config().memory_read_interval == 1
+    assert _memory_config(memory_read_interval=8).memory_read_interval == 8
+    for value in (True, 1.5, "4"):
+        with pytest.raises(TypeError, match="memory_read_interval"):
+            _memory_config(memory_read_interval=value)
+    with pytest.raises(ValueError, match="memory_read_interval"):
+        _memory_config(memory_read_interval=0)
+
+
+@pytest.mark.parametrize(
+    ("interval", "expected_mask"),
+    [
+        (1, [False, False, True, True, True, True, True, True, True, True, True]),
+        (4, [False, False, True, False, False, False, True, False, False, False, True]),
+        (8, [False, False, True, False, False, False, False, False, False, False, True]),
+    ],
+)
+def test_memory_read_interval_records_exact_compiled_mask_and_count(
+    interval: int,
+    expected_mask: list[bool],
+) -> None:
+    config = _memory_config(memory_read_interval=interval, max_latent_steps=8)
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((8, 1, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((demonstrations, query, latent), axis=0)
+    advances = jnp.ones((events.shape[0], 1), dtype=jnp.bool_)
+
+    full = run_packed_stream(
+        LatentWorkspaceModel(config), events, advance_gates=advances
+    )
+    selected = run_selected_packed_stream(
+        LatentWorkspaceModel(config),
+        events,
+        jnp.asarray([[2], [6], [10]], dtype=jnp.int32),
+        advance_gates=advances,
+    )
+
+    expected = np.asarray(expected_mask, dtype=np.bool_)[:, None]
+    np.testing.assert_array_equal(full.memory_read_mask, expected)
+    np.testing.assert_array_equal(selected.memory_read_mask, expected)
+    np.testing.assert_array_equal(full.memory_read_count, [sum(expected_mask)])
+    np.testing.assert_array_equal(selected.memory_read_count, [sum(expected_mask)])
+
+
+def test_memory_read_interval_retains_diagnostics_on_local_ticks_and_resets() -> None:
+    config = _memory_config(memory_read_interval=4, max_latent_steps=4)
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")[0]
+    model.cell_step(query, jnp.ones((1,), dtype=jnp.bool_))
+    retained_read = np.asarray(model.memory_read.value).copy()
+    retained_drive = np.asarray(model.memory_drive.value).copy()
+    snapshot = model.snapshot_state()
+
+    run_packed_stream(
+        model,
+        jnp.zeros((3, 1, config.input_width), dtype=jnp.float32),
+        reset=False,
+        advance_gates=jnp.ones((3, 1), dtype=jnp.bool_),
+    )
+
+    np.testing.assert_array_equal(model.memory_read.value, retained_read)
+    np.testing.assert_array_equal(model.memory_drive.value, retained_drive)
+    np.testing.assert_array_equal(model.memory_read_active.value, [False])
+    np.testing.assert_array_equal(model.memory_read_count.value, [1])
+    model.restore_state(snapshot)
+    np.testing.assert_array_equal(model.memory_read_active.value, [True])
+    np.testing.assert_array_equal(model.memory_read_count.value, [1])
+    model.reset_state()
+    np.testing.assert_array_equal(model.memory_read_step.value, 0)
+    np.testing.assert_array_equal(model.memory_read_count.value, 0)
+    np.testing.assert_array_equal(model.memory_read_active.value, False)
+
+
+def test_query_only_policy_suppresses_interval_reads() -> None:
+    config = _memory_config(memory_read_interval=4, max_latent_steps=8)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((8, 1, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((query, latent), axis=0)
+    trajectory = run_packed_stream(
+        LatentWorkspaceModel(config, memory_read_policy="query_only"),
+        events,
+        advance_gates=jnp.ones((9, 1), dtype=jnp.bool_),
+    )
+
+    np.testing.assert_array_equal(
+        trajectory.memory_read_mask[:, 0],
+        [True, False, False, False, False, False, False, False, False],
+    )
+    np.testing.assert_array_equal(trajectory.memory_read_count, [1])
 
 
 def test_gated_memory_read_is_linear_equivalent_at_initialization() -> None:
