@@ -334,12 +334,21 @@ def decode_candidates(
     logits: OutputLogits,
     max_candidates: int = 2,
 ) -> tuple[DecodedCandidate, ...]:
-    """Decode the exact global top two under the factorized distribution.
+    """Decode the top two grids under the shape heads and colour argmax.
 
-    All 900 shapes are ranked by their complete shape and included-cell log
-    probability. Candidate two is the better of the second-ranked shape and a
-    single second-color substitution within the best shape. Exact ties prefer
-    the shape candidate, then lower shape, row-major cell, and lower color.
+    All 900 shapes are ranked by the height and width heads alone. Their
+    product is the only calibrated shape evidence the model carries: training
+    masks the colour cross entropy to cells inside the true shape, so the
+    colour head is never supervised on whether a cell lies inside the grid and
+    its summed log probability cannot be compared across shapes. Doing so adds
+    one non-positive term per included cell and makes the score fall
+    monotonically with area, collapsing every decode onto a one-by-one grid.
+
+    Candidate two is the better of the second-ranked shape and a single
+    second-colour substitution within the best shape, compared as log
+    likelihood ratios against candidate one so the two alternatives share
+    units. Exact ties prefer the shape candidate, then lower shape, row-major
+    cell, and lower colour.
 
     Parameters
     ----------
@@ -390,7 +399,6 @@ def decode_candidates(
             float(
                 height_log_probability[height - 1]
                 + width_log_probability[width - 1]
-                + prefix[height, width]
             ),
             height,
             width,
@@ -401,36 +409,40 @@ def decode_candidates(
     shapes.sort(key=lambda item: (-item[0], item[1], item[2]))
     best_shape_score, height, width = shapes[0]
     first_grid = np.argmax(color_logits[:height, :width], axis=-1).astype(np.int8)
+    first_log_probability = best_shape_score + float(prefix[height, width])
     first = DecodedCandidate(
         first_grid,
-        log_probability=best_shape_score,
+        log_probability=first_log_probability,
     )
     if int(max_candidates) == 1:
         return (first,)
 
     second_shape_score, second_height, second_width = shapes[1]
+    shape_delta = second_shape_score - best_shape_score
     second_shape_grid = best_colors[:second_height, :second_width].copy()
     cell_alternatives: list[tuple[float, int, int, int]] = []
     for row in range(height):
         for column in range(width):
             color_order = np.argsort(-color_logits[row, column], kind="stable")
             best_color, second_color = int(color_order[0]), int(color_order[1])
-            score = best_shape_score - float(
-                color_log_probabilities[row, column, best_color]
-            ) + float(color_log_probabilities[row, column, second_color])
-            cell_alternatives.append((score, row, column, second_color))
-    cell_score, row, column, replacement = max(
+            delta = float(
+                color_log_probabilities[row, column, second_color]
+            ) - float(color_log_probabilities[row, column, best_color])
+            cell_alternatives.append((delta, row, column, second_color))
+    cell_delta, row, column, replacement = max(
         cell_alternatives, key=lambda item: (item[0], -item[1], -item[2], -item[3])
     )
-    if second_shape_score >= cell_score:
+    if shape_delta >= cell_delta:
         second_grid = second_shape_grid
         changed_decision = "shape"
-        second_score = second_shape_score
+        second_score = second_shape_score + float(
+            prefix[second_height, second_width]
+        )
     else:
         second_grid = first_grid.copy()
         second_grid[row, column] = replacement
         changed_decision = f"cell:{row},{column}"
-        second_score = cell_score
+        second_score = first_log_probability + cell_delta
     second = DecodedCandidate(
         second_grid,
         changed_decision=changed_decision,

@@ -377,7 +377,14 @@ def test_decoder_rejects_unvalidated_container() -> None:
         decode_candidates(object())  # type: ignore[arg-type]
 
 
-def test_decode_candidates_ranks_shapes_by_complete_factorized_probability() -> None:
+def test_decode_candidates_rank_shapes_by_the_shape_heads_alone() -> None:
+    """Uncertain colours must not veto the shape the height and width heads pick.
+
+    Training masks the colour cross entropy to cells inside the true shape, so
+    the colour head carries no calibrated evidence about grid extent. Ranking
+    shapes by the summed included-cell log probability once made this decode
+    return one by one.
+    """
     height = np.full((30,), -100.0)
     width = np.full((30,), -100.0)
     height[:2] = (0.0, 2.0)
@@ -388,12 +395,24 @@ def test_decode_candidates_ranks_shapes_by_complete_factorized_probability() -> 
     colors[1, 0] = 0.0
     colors[1, 1] = 0.0
 
-    first, second = decode_candidates(OutputLogits(height, width, colors))
+    first = decode_candidates(OutputLogits(height, width, colors), max_candidates=1)[0]
 
-    assert first.grid.shape == (1, 1)
-    assert second.grid.shape == (1, 2)
-    assert first.log_probability > second.log_probability
-    assert second.changed_decision == "shape"
+    assert first.grid.shape == (2, 2)
+
+
+def test_decode_candidates_do_not_collapse_to_one_cell_as_area_grows() -> None:
+    """A confident ten by ten shape survives a hundred uncertain colour cells."""
+    height = np.full((30,), -100.0)
+    width = np.full((30,), -100.0)
+    height[0] = 0.0
+    height[9] = 2.0
+    width[0] = 0.0
+    width[9] = 2.0
+    colors = np.random.default_rng(0).normal(size=(30, 30, 10))
+
+    first = decode_candidates(OutputLogits(height, width, colors), max_candidates=1)[0]
+
+    assert first.grid.shape == (10, 10)
 
 
 def test_decode_candidates_global_top_two_prefers_shape_on_exact_tie() -> None:
@@ -413,52 +432,52 @@ def test_decode_candidates_global_top_two_prefers_shape_on_exact_tie() -> None:
     assert second.changed_decision == "shape"
 
 
-def test_decode_candidates_matches_exhaustive_tiny_factorized_distributions() -> None:
-    """Global top two must equal explicit enumeration, not a local heuristic."""
+def test_decode_candidates_first_is_the_shape_argmax_filled_with_colour_argmax() -> None:
+    """Candidate one equals the shape heads' argmax under the colour argmax."""
     for seed in range(20):
         rng = np.random.default_rng(seed)
-        height = np.full((30,), -1.0e9)
-        width = np.full((30,), -1.0e9)
-        height[:2] = rng.normal(size=2)
-        width[:2] = rng.normal(size=2)
-        colors = np.full((30, 30, 10), -1.0e9)
-        colors[:2, :2, :2] = rng.normal(size=(2, 2, 2))
+        height = rng.normal(size=30)
+        width = rng.normal(size=30)
+        colors = rng.normal(size=(30, 30, 10))
 
-        decoded = decode_candidates(OutputLogits(height, width, colors))
+        first = decode_candidates(
+            OutputLogits(height, width, colors), max_candidates=1
+        )[0]
 
-        def log_softmax(values: np.ndarray) -> np.ndarray:
-            maximum = float(np.max(values))
-            return values - (maximum + math.log(float(np.exp(values - maximum).sum())))
+        expected_height = int(np.argmax(height)) + 1
+        expected_width = int(np.argmax(width)) + 1
+        assert first.grid.shape == (expected_height, expected_width)
+        np.testing.assert_array_equal(
+            first.grid,
+            np.argmax(colors[:expected_height, :expected_width], axis=-1),
+        )
 
-        height_logp = log_softmax(height)
-        width_logp = log_softmax(width)
-        color_logp = np.apply_along_axis(log_softmax, -1, colors)
-        enumerated: list[tuple[float, int, int, tuple[int, ...]]] = []
-        for height_value in (1, 2):
-            for width_value in (1, 2):
-                cell_count = height_value * width_value
-                for flat_colors in itertools.product((0, 1), repeat=cell_count):
-                    grid = np.asarray(flat_colors).reshape(height_value, width_value)
-                    score = float(
-                        height_logp[height_value - 1]
-                        + width_logp[width_value - 1]
-                        + sum(
-                            color_logp[row, column, int(grid[row, column])]
-                            for row in range(height_value)
-                            for column in range(width_value)
-                        )
-                    )
-                    enumerated.append(
-                        (score, height_value, width_value, tuple(flat_colors))
-                    )
-        expected = sorted(enumerated, key=lambda item: item[0], reverse=True)[:2]
-        for candidate, (_, height_value, width_value, flat_colors) in zip(
-            decoded, expected, strict=True
-        ):
-            assert candidate.grid.shape == (height_value, width_value)
-            np.testing.assert_array_equal(
-                candidate.grid, np.asarray(flat_colors).reshape(height_value, width_value)
-            )
+
+def test_decode_candidates_runner_up_takes_the_smallest_log_ratio_change() -> None:
+    """The runner-up is whichever single change costs the least log likelihood."""
+    height = np.full((30,), -100.0)
+    width = np.full((30,), -100.0)
+    height[0] = 0.0
+    width[0] = 0.0
+    width[1] = -0.25
+    colors = np.full((30, 30, 10), -100.0)
+    colors[0, 0, 3] = 0.0
+    colors[0, 0, 5] = -4.0
+    colors[0, 1, 3] = 0.0
+
+    shape_runner_up = decode_candidates(OutputLogits(height, width, colors))[1]
+
+    assert shape_runner_up.changed_decision == "shape"
+    assert shape_runner_up.grid.shape == (1, 2)
+
+    closer_colors = np.array(colors)
+    closer_colors[0, 0, 5] = -0.1
+    cell_runner_up = decode_candidates(
+        OutputLogits(height, width, closer_colors)
+    )[1]
+
+    assert cell_runner_up.changed_decision == "cell:0,0"
+    np.testing.assert_array_equal(cell_runner_up.grid, [[5]])
 
 
 def test_one_wrong_cell_fails_exact_but_preserves_pixel_diagnostic() -> None:
