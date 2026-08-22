@@ -94,4 +94,3 @@ hashes, commands, initial/shared parameter hashes, metrics, paired deltas,
 runtime, VRAM, promotion decision, and explicit missing evidence. Synthetic
 operator tests, smoke plumbing, pilots, and full ARC qualification remain
 separately labeled.
-

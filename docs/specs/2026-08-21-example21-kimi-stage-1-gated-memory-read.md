@@ -71,4 +71,3 @@ read RMS, neuron-drive RMS, parameter movement, and matched control effects.
 
 Compare `linear`, `gated`, and `gated_rms` using the shared pilot and full gates.
 No Example 21 default changes without full promotion evidence.
-

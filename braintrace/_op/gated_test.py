@@ -249,4 +249,3 @@ def test_d_rtrl_matches_bptt_and_pp_prop_is_honestly_finite_window() -> None:
     assert_param_gradients_close(d_rtrl, bptt, atol=3e-5)
     assert_param_gradients_close(one_step_pp, independent_bptt, atol=3e-5)
     assert_gradients_differ(pp, bptt, min_rel=1e-8)
-

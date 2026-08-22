@@ -41,4 +41,3 @@ as locally unvalidated.
 - constant/nonzero-warmup rejection;
 - CLI, configuration, report, result, and checkpoint round-trips;
 - unchanged optimizer-specific decay resolution.
-

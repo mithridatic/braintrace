@@ -312,4 +312,3 @@ def gated_projection(
         normalize=bool(normalize),
         epsilon=_epsilon(epsilon, values_array.dtype),
     )
-
