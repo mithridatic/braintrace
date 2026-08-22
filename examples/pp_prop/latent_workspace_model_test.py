@@ -666,6 +666,8 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     assert serialized_legacy == expected_legacy
     assert memory.to_dict()["read_transform"] == "linear"
     assert memory.to_dict()["read_interval"] == 1
+    assert memory.to_dict()["latent_residual_mixer"] == "none"
+    assert memory.to_dict()["latent_residual_block_size"] == 10
     assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
@@ -687,6 +689,8 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
         "carrier_consumers",
         "read_transform",
         "read_interval",
+        "latent_residual_mixer",
+        "latent_residual_block_size",
     }
 
 
@@ -2124,6 +2128,102 @@ def test_query_only_policy_suppresses_interval_reads() -> None:
         [True, False, False, False, False, False, False, False, False],
     )
     np.testing.assert_array_equal(trajectory.memory_read_count, [1])
+
+
+def test_latent_residual_configuration_is_opt_in_and_validates() -> None:
+    default = _memory_config()
+    enabled = _memory_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    assert default.latent_residual_mixer == "none"
+    assert default.latent_residual_block_size == 10
+    assert enabled.latent_residual_mixer == "attention_residual"
+    assert enabled.latent_residual_block_size == 2
+    assert not hasattr(LatentWorkspaceModel(default), "latent_attention_residual")
+    for value in (True, 1.5, "2"):
+        with pytest.raises(TypeError, match="latent_residual_block_size"):
+            _memory_config(latent_residual_block_size=value)
+    with pytest.raises(ValueError, match="latent_residual_block_size"):
+        _memory_config(latent_residual_block_size=0)
+    with pytest.raises(TypeError, match="latent_residual_mixer"):
+        _memory_config(latent_residual_mixer=2)
+    with pytest.raises(ValueError, match="latent_residual_mixer"):
+        _memory_config(latent_residual_mixer="linear")
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(latent_residual_mixer="attention_residual")
+
+
+def test_latent_attention_residual_tracks_full_and_partial_blocks() -> None:
+    config = _memory_config(
+        max_latent_steps=5,
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    model.cell_step(query[0], jnp.ones((1,), dtype=jnp.bool_))
+    source_zero = np.asarray(model.reasoning_query.value).copy()
+    np.testing.assert_array_equal(model.latent_residual_source_zero.value, source_zero)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 0)
+
+    one_tick = jnp.zeros((1, 1, config.input_width), dtype=jnp.float32)
+    one_advance = jnp.ones((1, 1), dtype=jnp.bool_)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 1)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 0)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 0)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 1)
+    assert np.any(np.asarray(model.latent_residual_history.value[:, 0]) != 0.0)
+
+    two_ticks = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    two_advances = jnp.ones((2, 1), dtype=jnp.bool_)
+    run_packed_stream(model, two_ticks, reset=False, advance_gates=two_advances)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 2)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 3)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 0)
+    assert isinstance(model.latent_residual_candidate, brainstate.HiddenState)
+
+
+def test_latent_attention_residual_state_resets_snapshots_and_restores() -> None:
+    config = _memory_config(
+        max_latent_steps=3,
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    events = jnp.concatenate(
+        (query, jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)), axis=0
+    )
+    run_packed_stream(
+        model,
+        events,
+        advance_gates=jnp.ones((3, 1), dtype=jnp.bool_),
+    )
+    snapshot = model.snapshot_state()
+    history = np.asarray(model.latent_residual_history.value).copy()
+    model.reset_state()
+    np.testing.assert_array_equal(model.latent_residual_history.value, 0.0)
+    np.testing.assert_array_equal(model.latent_residual_candidate.value, 0.0)
+    model.restore_state(snapshot)
+    np.testing.assert_array_equal(model.latent_residual_history.value, history)
+
+
+def test_latent_attention_residual_parameter_is_trace_compiled() -> None:
+    model = LatentWorkspaceModel(
+        _memory_config(
+            latent_residual_mixer="attention_residual",
+            latent_residual_block_size=2,
+        )
+    )
+
+    learner = compile_etrace(model)
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert ("latent_attention_residual", "query") in paths
 
 
 def test_gated_memory_read_is_linear_equivalent_at_initialization() -> None:

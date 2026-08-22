@@ -173,6 +173,7 @@ DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write", "learned_update"]
 MemoryReadTransform = Literal["linear", "gated", "gated_rms"]
+LatentResidualMixer = Literal["none", "attention_residual"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
@@ -334,6 +335,10 @@ class ExperimentConfig:
     memory_read_interval : int
         Positive one-based cadence for latent associative reads. Query rows
         always read; the default ``1`` reads on every latent tick.
+    latent_residual_mixer : {"none", "attention_residual"}
+        Optional attention residual across latent reasoning blocks.
+    latent_residual_block_size : int
+        Positive latent ticks per residual summary block.
     memory_coding : {"frozen", "learned_keys", "learned_write"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
@@ -480,6 +485,8 @@ class ExperimentConfig:
     memory_decay: float = 1.0
     memory_read_transform: MemoryReadTransform = "linear"
     memory_read_interval: int = 1
+    latent_residual_mixer: LatentResidualMixer = "none"
+    latent_residual_block_size: int = 10
     memory_coding: MemoryCoding = "learned_update"
     trace_engine: TraceEngine = "pp_prop"
     neuron_typing: NeuronTyping = "none"
@@ -534,6 +541,7 @@ class ExperimentConfig:
             ("color_rank", 1),
             ("context_memory_width", 0),
             ("memory_read_interval", 1),
+            ("latent_residual_block_size", 1),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
             ("latent_steps", 60),
@@ -606,6 +614,17 @@ class ExperimentConfig:
         if self.memory_read_transform != "linear" and self.context_memory_width == 0:
             raise ValueError(
                 "memory_read_transform requires a positive context_memory_width"
+            )
+        if self.latent_residual_mixer not in ("none", "attention_residual"):
+            raise ValueError(
+                "latent_residual_mixer must be 'none' or 'attention_residual'"
+            )
+        if (
+            self.latent_residual_mixer == "attention_residual"
+            and self.context_memory_width == 0
+        ):
+            raise ValueError(
+                "latent_residual_mixer requires a positive context_memory_width"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
@@ -797,6 +816,8 @@ class ExperimentConfig:
         memory_decay: float = 1.0,
         memory_read_transform: MemoryReadTransform = "linear",
         memory_read_interval: int = 1,
+        latent_residual_mixer: LatentResidualMixer = "none",
+        latent_residual_block_size: int = 10,
         memory_coding: MemoryCoding | None = None,
         trace_engine: TraceEngine = "pp_prop",
         neuron_typing: NeuronTyping = "none",
@@ -830,6 +851,10 @@ class ExperimentConfig:
             Associative read projection forwarded to the model.
         memory_read_interval : int
             Positive one-based latent associative-read cadence.
+        latent_residual_mixer : {"none", "attention_residual"}
+            Optional latent-depth residual mixer.
+        latent_residual_block_size : int
+            Positive latent ticks per summary block.
         memory_coding : {"frozen", "learned_keys", "learned_write"}
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
@@ -883,6 +908,8 @@ class ExperimentConfig:
             memory_decay=memory_decay,
             memory_read_transform=memory_read_transform,
             memory_read_interval=memory_read_interval,
+            latent_residual_mixer=latent_residual_mixer,
+            latent_residual_block_size=latent_residual_block_size,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
             neuron_typing=neuron_typing,
@@ -2204,6 +2231,8 @@ def _model_config(
                 "memory_decay": config.memory_decay,
                 "memory_read_transform": config.memory_read_transform,
                 "memory_read_interval": config.memory_read_interval,
+                "latent_residual_mixer": config.latent_residual_mixer,
+                "latent_residual_block_size": config.latent_residual_block_size,
                 "demonstration_phase_index": row_config.phase_slice.start,
                 "query_phase_index": row_config.phase_slice.start + 1,
                 "input_side_valid_index": row_config.side_valid_slice.start,
@@ -2258,6 +2287,8 @@ def _memory_architecture_report(
     if enabled:
         report["memory_read_transform"] = config.memory_read_transform
         report["memory_read_interval"] = config.memory_read_interval
+        report["latent_residual_mixer"] = config.latent_residual_mixer
+        report["latent_residual_block_size"] = config.latent_residual_block_size
     return report
 
 
@@ -2648,6 +2679,10 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
             {
                 "schema_version": 1,
                 "memory_read_interval": model.config.memory_read_interval,
+                "latent_residual_mixer": model.config.latent_residual_mixer,
+                "latent_residual_block_size": (
+                    model.config.latent_residual_block_size
+                ),
             }
         ),
         dtype=np.uint8,
@@ -2684,6 +2719,8 @@ def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) 
         if architecture != {
             "schema_version": 1,
             "memory_read_interval": model.config.memory_read_interval,
+            "latent_residual_mixer": model.config.latent_residual_mixer,
+            "latent_residual_block_size": model.config.latent_residual_block_size,
         }:
             raise ValueError("parameter checkpoint does not match model architecture")
     restored = [jnp.asarray(stored[name]) for name in names]
@@ -7074,6 +7111,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--memory-read-interval", type=int, default=1)
     parser.add_argument(
+        "--latent-residual-mixer",
+        choices=("none", "attention_residual"),
+        default="none",
+    )
+    parser.add_argument("--latent-residual-block-size", type=int, default=10)
+    parser.add_argument(
         "--memory-coding",
         choices=("frozen", "learned_keys", "learned_write", "learned_update"),
         default=None,
@@ -7166,6 +7209,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             memory_decay=args.memory_decay,
             memory_read_transform=args.memory_read_transform,
             memory_read_interval=args.memory_read_interval,
+            latent_residual_mixer=args.latent_residual_mixer,
+            latent_residual_block_size=args.latent_residual_block_size,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
             neuron_typing=args.neuron_typing,
@@ -7191,6 +7236,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         memory_decay=args.memory_decay,
         memory_read_transform=args.memory_read_transform,
         memory_read_interval=args.memory_read_interval,
+        latent_residual_mixer=args.latent_residual_mixer,
+        latent_residual_block_size=args.latent_residual_block_size,
         memory_coding=args.memory_coding or "learned_update",
         trace_engine=args.trace_engine,
         neuron_typing=args.neuron_typing,

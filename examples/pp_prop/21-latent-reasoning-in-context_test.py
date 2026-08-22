@@ -980,6 +980,58 @@ def test_memory_read_interval_round_trips_cli_model_and_reports(example):
         example.ExperimentConfig(structural_only=True, memory_read_interval=0)
 
 
+def test_latent_residual_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    enabled = example._config_from_args(
+        example._parser().parse_args(
+            [
+                "--structural-only",
+                "--latent-residual-mixer",
+                "attention_residual",
+                "--latent-residual-block-size",
+                "10",
+            ]
+        )
+    )
+    smoke = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=5,
+    )
+    model_config = example._model_config(enabled, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        enabled,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.latent_residual_mixer == "none"
+    assert default.latent_residual_block_size == 10
+    assert enabled.latent_residual_mixer == "attention_residual"
+    assert smoke.latent_residual_block_size == 5
+    assert enabled.to_dict()["latent_residual_mixer"] == "attention_residual"
+    assert model_config.latent_residual_mixer == "attention_residual"
+    assert architecture["latent_residual_mixer"] == "attention_residual"
+    assert architecture["latent_residual_block_size"] == 10
+    with pytest.raises(ValueError, match="latent_residual_mixer"):
+        example.ExperimentConfig(
+            structural_only=True, latent_residual_mixer="linear"
+        )
+    with pytest.raises(ValueError, match="latent_residual_block_size"):
+        example.ExperimentConfig(
+            structural_only=True, latent_residual_block_size=0
+        )
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            memory_coding="frozen",
+            decoder_mode="legacy_cp",
+            latent_residual_mixer="attention_residual",
+        )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
@@ -4956,6 +5008,31 @@ def test_memory_read_interval_participates_in_checkpoint_compatibility(
 
     with pytest.raises(ValueError, match="model architecture"):
         example._read_parameter_checkpoint(periodic, path)
+
+
+def test_latent_residual_configuration_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    baseline_config = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="none"
+    )
+    residual_config = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=10,
+    )
+    rows = example._row_config(baseline_config)
+    device = jax.devices("cpu")[0]
+    baseline = example._make_model(
+        baseline_config, rows, batch_size=1, device=device
+    )
+    residual = example._make_model(
+        residual_config, rows, batch_size=1, device=device
+    )
+    path = tmp_path / "baseline-parameters.npz"
+    example._write_parameter_checkpoint(baseline, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._read_parameter_checkpoint(residual, path)
 
 
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):

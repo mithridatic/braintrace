@@ -1,0 +1,49 @@
+{
+  "stage": 3,
+  "title": "attention residuals across latent depth",
+  "base_commit": "9398b61",
+  "commands": [
+    {
+      "command": "python -m pytest <latent residual focused selection> -q",
+      "result": "15 passed, 392 deselected, 4 expected compiler-classification warnings"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/latent_workspace_model_test.py examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "407 passed, 44 expected compiler-classification warnings, 557.00 seconds"
+    },
+    {
+      "command": "ruff check <Stage 3 touched Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "examples/pp_prop/latent_workspace_model.py": "eba35faba9cd255ab83a4dd53aeeb0221da916db50ddb13a028513fc1367c802",
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "1d41eec9d2aadd56fc6cc977ca5b1b7a81a116df8eee8e176b55e372c4546b27"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "structural_evidence": {
+    "default_tree_isolation": "passed",
+    "full_and_partial_block_boundaries": "passed",
+    "detached_history_and_static_mask": "passed",
+    "candidate_and_mixed_hidden_paths": "passed",
+    "pp_prop_compilation": "passed after separating ordinary and mixed hidden groups",
+    "state_reset_snapshot_restore": "passed",
+    "configuration_cli_report_checkpoint_roundtrip": "passed",
+    "full_example21_regression": "passed"
+  },
+  "missing_evidence": [
+    "100-task latent residual pilot",
+    "three-seed 419-query reduced-topology comparison",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}
