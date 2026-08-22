@@ -10,6 +10,7 @@ available.  This is a repository-native experiment, not a reproduction.
 from __future__ import annotations
 
 import argparse
+import collections
 import concurrent.futures
 import hashlib
 import importlib.metadata
@@ -48,6 +49,10 @@ try:
         decode_candidates,
         score_query_candidates,
         select_checkpoint_candidates,
+    )
+    from examples.pp_prop.latent_workspace_rules import (
+        clear_rule_cache,
+        verified_rule_candidates,
     )
     from examples.pp_prop.latent_workspace_arc_adaptation import (
         ArcTargetFreeTaskBank,
@@ -106,6 +111,10 @@ except ModuleNotFoundError:
         score_query_candidates,
         select_checkpoint_candidates,
     )
+    from latent_workspace_rules import (
+        clear_rule_cache,
+        verified_rule_candidates,
+    )
     from latent_workspace_arc_adaptation import (
         ArcTargetFreeTaskBank,
         ArcTaskBankAdaptationResult,
@@ -153,7 +162,7 @@ except ModuleNotFoundError:
 
 
 DeviceName = Literal["cpu", "gpu"]
-PrimaryCandidateMode = Literal["model_only"]
+PrimaryCandidateMode = Literal["model_only", "rule_then_model"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement"]
 SparseBackend = Literal["default", "jax_raw"]
@@ -174,6 +183,10 @@ CHECKPOINTS = (0, 30, 60)
 TRAINING_EFFORTS = (30, 60)
 SUBMISSION_CHECKPOINT = 60
 SUBMISSION_POLICY = "latest_sweep_plus_newest_distinct_earlier"
+RULE_SUBMISSION_POLICY = (
+    "latest_checkpoint_demonstration_verified_rule_then_model_v1"
+)
+RULE_ARM_DEMONSTRATIONS = ("intact", "shuffled")
 EVALUATION_ARM_ORDER = (
     "intact",
     "repeat_intact",
@@ -432,7 +445,7 @@ class ExperimentConfig:
         Whether results use embedded fixtures and are plumbing-only.
     structural_only : bool
         Instantiate and run without optimization; never scientific evidence.
-    primary_candidate_mode : {"model_only"}
+    primary_candidate_mode : {"model_only", "rule_then_model"}
         Fail-closed primary ARC scoring mode. Only candidates decoded from the
         model may occupy submitted pass@2 slots.
     """
@@ -518,8 +531,10 @@ class ExperimentConfig:
             )
         if self.device not in ("cpu", "gpu"):
             raise ValueError("device must be 'cpu' or 'gpu'")
-        if self.primary_candidate_mode != "model_only":
-            raise ValueError("primary_candidate_mode must be 'model_only'")
+        if self.primary_candidate_mode not in ("model_only", "rule_then_model"):
+            raise ValueError(
+                "primary_candidate_mode must be 'model_only' or 'rule_then_model'"
+            )
         if self.adaptation_update_schedule not in ("per_episode", "per_tick"):
             raise ValueError(
                 "adaptation_update_schedule must be 'per_episode' or 'per_tick'"
@@ -2756,6 +2771,67 @@ def _evaluation_records(
     return tuple(records)
 
 
+def _submission_policy_name(mode: PrimaryCandidateMode) -> str:
+    """Return the policy identifier that describes ``mode`` honestly."""
+
+    return SUBMISSION_POLICY if mode == "model_only" else RULE_SUBMISSION_POLICY
+
+
+def _rule_proposals(
+    records: Sequence["_EvaluationRecord"],
+    source_tasks: Sequence["_OriginTask"],
+    *,
+    arm: Literal["intact", "no_context", "shuffled"],
+) -> tuple[tuple[str, np.ndarray] | None, ...]:
+    """Propose one demonstration-verified candidate per query for one arm.
+
+    The channel is fitted on the demonstrations *that arm actually has*, never
+    the original task's. Without this the proposals would be arm-invariant and
+    every control would report the same solves as ``intact`` -- the exact
+    signature this experiment treats as evidence of a non-causal result. No
+    query target is read anywhere in this path.
+
+    Parameters
+    ----------
+    records
+        Evaluation records in scoring order.
+    source_tasks
+        Origin tasks the records were encoded from.
+    arm
+        Evaluation arm whose demonstrations should be fitted.
+
+    Returns
+    -------
+    tuple
+        One ``(rule_name, grid)`` proposal or ``None`` per record, aligned with
+        ``records``.
+    """
+
+    if arm == "no_context":
+        return tuple(None for _ in records)
+    lookup = {
+        _origin_task_key(origin, task_index): origin.task
+        for task_index, origin in enumerate(source_tasks)
+    }
+    proposals: list[tuple[str, np.ndarray] | None] = []
+    for record in records:
+        task = lookup[record.task_key]
+        if arm == "shuffled":
+            task = _derange_task(task)
+        if task is None:
+            proposals.append(None)
+            continue
+        demonstrations = [
+            (pair.input.as_array(), pair.output.as_array())
+            for pair in task.train
+            if pair.output is not None
+        ]
+        query = task.test[record.encoded.query_index].input.as_array()
+        found = verified_rule_candidates(demonstrations, query)
+        proposals.append(found[0] if found else None)
+    return tuple(proposals)
+
+
 def _derange_task(task: ArcTask) -> ArcTask | None:
     if len(task.train) < 2:
         return None
@@ -2845,8 +2921,13 @@ def _score_windows(
     decoder_mode: DecoderMode,
     checkpoints: Sequence[int] = CHECKPOINTS,
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
+    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
-    """Score only model-decoded candidates at every frozen checkpoint."""
+    """Score submitted candidates at every frozen checkpoint.
+
+    With ``rule_proposals`` omitted the submission is model-only. Supplying it
+    selects the ``rule_then_model`` merge described in the submission policy.
+    """
 
     checkpoint_indices = np.asarray(checkpoints, dtype=np.int32)
     checkpoint_compact = (
@@ -2861,7 +2942,97 @@ def _score_windows(
         decoder_mode,
         checkpoints,
         submission_checkpoint,
+        rule_proposals,
     )
+
+
+
+def _dump_checkpoint_logits(
+    height: np.ndarray,
+    width: np.ndarray,
+    colors: np.ndarray,
+    records: Sequence["_EvaluationRecord"],
+    checkpoints: Sequence[int],
+) -> None:
+    """Write raw decoder logits when ``EXAMPLE21_LOGITS_DUMP`` names a path."""
+
+    destination = os.environ.get("EXAMPLE21_LOGITS_DUMP")
+    if not destination:
+        return
+    path = pathlib.Path(destination)
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    targets = np.full((len(records), 30, 30), -1, dtype=np.int8)
+    target_shapes = np.zeros((len(records), 2), dtype=np.int32)
+    for index, record in enumerate(records):
+        target = record.encoded.target
+        assert target is not None
+        grid = np.asarray(target.as_array(), dtype=np.int8)
+        target_shapes[index] = grid.shape
+        targets[index, : grid.shape[0], : grid.shape[1]] = grid
+    np.savez_compressed(
+        path,
+        height=np.asarray(height, dtype=np.float32),
+        width=np.asarray(width, dtype=np.float32),
+        colors=np.asarray(colors, dtype=np.float32),
+        checkpoints=np.asarray(checkpoints, dtype=np.int32),
+        task_ids=np.asarray([record.task_key for record in records]),
+        query_indices=np.asarray(
+            [record.encoded.query_index for record in records], dtype=np.int32
+        ),
+        targets=targets,
+        target_shapes=target_shapes,
+    )
+
+
+def _merge_rule_candidate(
+    proposal: tuple[str, np.ndarray] | None,
+    candidates: Sequence[Any],
+    candidate_payloads: Sequence[Mapping[str, object]],
+) -> tuple[list[np.ndarray], list[dict[str, object]]]:
+    """Place an admitted demonstration-verified rule in submission slot one.
+
+    Candidate two becomes the model's own first decoded grid, so an admitted
+    rule that is wrong costs at most the model's runner-up slot and never
+    displaces the model's best grid.
+
+    Parameters
+    ----------
+    proposal
+        ``(rule_name, grid)`` from the verified rule channel, or ``None`` when
+        the channel admitted no rule for this query.
+    candidates
+        Decoded model candidates in rank order.
+    candidate_payloads
+        Serialized model candidates aligned with ``candidates``.
+
+    Returns
+    -------
+    tuple
+        Submitted grids in rank order and their serialized payloads.
+    """
+
+    model_grids = [np.asarray(candidate.grid) for candidate in candidates]
+    payloads = [dict(payload) for payload in candidate_payloads]
+    if proposal is None:
+        return model_grids, payloads
+    rule_name, rule_grid = proposal
+    rule_payload = {
+        "height": int(np.asarray(rule_grid).shape[0]),
+        "width": int(np.asarray(rule_grid).shape[1]),
+        "grid": np.asarray(rule_grid).astype(int).tolist(),
+        "changed_decision": None,
+        "log_probability": None,
+        "provenance": "rule",
+        "rule_name": str(rule_name),
+        "source_checkpoint": payloads[0].get("source_checkpoint"),
+        "selection_role": "demonstration_verified_rule",
+        "rank": 1,
+    }
+    runner_up = dict(payloads[0])
+    runner_up["rank"] = 2
+    return [np.asarray(rule_grid), model_grids[0]], [rule_payload, runner_up]
 
 
 def _score_checkpoint_logits(
@@ -2871,6 +3042,7 @@ def _score_checkpoint_logits(
     decoder_mode: DecoderMode,
     checkpoints: Sequence[int] = CHECKPOINTS,
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
+    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score model logits supplied at the configured semantic checkpoints.
 
@@ -2906,6 +3078,7 @@ def _score_checkpoint_logits(
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
     colors = np.asarray(expanded.colors)
+    _dump_checkpoint_logits(height, width, colors, records, checkpoints)
     logits_by_checkpoint: dict[int, list[OutputLogits]] = {
         effort: [
             OutputLogits(
@@ -2974,6 +3147,11 @@ def _score_checkpoint_logits(
                 )
             selected_by_checkpoint[effort].append((decoded, candidate_payloads))
 
+    if rule_proposals is not None and len(rule_proposals) != len(records):
+        raise ValueError("rule proposals must match the evaluation records")
+    candidate_mode: PrimaryCandidateMode = (
+        "model_only" if rule_proposals is None else "rule_then_model"
+    )
     metrics: dict[str, dict[str, object]] = {}
     query_details: dict[str, list[dict[str, object]]] = {}
     for effort in checkpoints:
@@ -2983,8 +3161,12 @@ def _score_checkpoint_logits(
             candidates, candidate_payloads = selected_by_checkpoint[effort][query_index]
             target = record.encoded.target
             assert target is not None
+            proposal = None if rule_proposals is None else rule_proposals[query_index]
+            submitted_grids, candidate_payloads = _merge_rule_candidate(
+                proposal, candidates, candidate_payloads
+            )
             score = score_query_candidates(
-                [candidate.grid for candidate in candidates],
+                submitted_grids,
                 target.as_array(),
                 task_id=record.task_key,
                 query_index=record.encoded.query_index,
@@ -2994,7 +3176,7 @@ def _score_checkpoint_logits(
                 {
                     "task_id": record.task_key,
                     "query_index": record.encoded.query_index,
-                    "primary_candidate_mode": "model_only",
+                    "primary_candidate_mode": candidate_mode,
                     "submission_role": (
                         "primary_submission"
                         if effort == submission_checkpoint
@@ -3962,6 +4144,64 @@ def _model_only_completion_report(
     }
 
 
+def _submitted_completion_report(
+    submission_metrics: Mapping[str, object], config: ExperimentConfig
+) -> dict[str, object]:
+    """Summarize the submitted channel's exact task count without purity gates.
+
+    ``model_only_completion`` stays a strict model-only measurement. This report
+    describes whatever the run actually submitted, which under
+    ``rule_then_model`` includes demonstration-verified rule candidates.
+
+    Parameters
+    ----------
+    submission_metrics
+        Aggregate metrics at the submission checkpoint.
+    config
+        Run configuration, read for the active candidate mode.
+
+    Returns
+    -------
+    dict
+        JSON-safe submitted-channel counts and the policy that produced them.
+    """
+
+    task_values = submission_metrics.get("tasks", {})
+    tasks = task_values if isinstance(task_values, Mapping) else {}
+    exact_at_1 = sum(
+        1
+        for value in tasks.values()
+        if isinstance(value, Mapping) and value.get("pass_at_1") is True
+    )
+    exact_at_2 = sum(
+        1
+        for value in tasks.values()
+        if isinstance(value, Mapping) and value.get("pass_at_2") is True
+    )
+    query_count = int(submission_metrics.get("query_count", 0))
+    return {
+        "primary_candidate_mode": config.primary_candidate_mode,
+        "submission_policy": _submission_policy_name(config.primary_candidate_mode),
+        "submission_checkpoint": config.submission_checkpoint,
+        "evaluated_task_count": int(submission_metrics.get("task_count", 0)),
+        "evaluated_query_count": query_count,
+        "exact_query_count_at_1": round(
+            float(submission_metrics.get("query_pass_at_1", 0.0)) * query_count
+        ),
+        "exact_query_count_at_2": round(
+            float(submission_metrics.get("query_pass_at_2", 0.0)) * query_count
+        ),
+        "exact_task_count_at_1": exact_at_1,
+        "exact_task_count_at_2": exact_at_2,
+        "strict_task_pass_at_1": float(
+            submission_metrics.get("strict_task_pass_at_1", 0.0)
+        ),
+        "strict_task_pass_at_2": float(
+            submission_metrics.get("strict_task_pass_at_2", 0.0)
+        ),
+    }
+
+
 def _evaluation_offsets(config: ExperimentConfig) -> np.ndarray:
     """Return sparse primary checkpoints or dense diagnostic trajectory steps."""
     if config.evaluation_controls:
@@ -4088,20 +4328,36 @@ def _evaluate(
     intact, intact_associative = run_arm(
         "intact", intact_events, intact_advances, inactive_gates
     )
-    frozen_metrics, frozen_checkpoint_queries = _score_windows(
+    model_only_metrics, model_only_queries = _score_windows(
         intact[0], records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
     )
+    if config.primary_candidate_mode == "rule_then_model":
+        clear_rule_cache()
+        intact_rules = _rule_proposals(records, data.evaluation, arm="intact")
+        frozen_metrics, frozen_checkpoint_queries = _score_windows(
+            intact[0], records, config.color_rank, config.decoder_mode,
+            checkpoints, submission_checkpoint, intact_rules,
+        )
+    else:
+        frozen_metrics, frozen_checkpoint_queries = (
+            model_only_metrics,
+            model_only_queries,
+        )
     if primary_metrics is None or primary_checkpoint_queries is None:
         primary_metrics = frozen_metrics
         primary_checkpoint_queries = frozen_checkpoint_queries
     completion_report = _model_only_completion_report(
-        primary_checkpoint_queries[str(submission_checkpoint)],
-        primary_metrics[str(submission_checkpoint)],
+        model_only_queries[str(submission_checkpoint)],
+        model_only_metrics[str(submission_checkpoint)],
         data,
         config,
     )
+    submitted_completion = _submitted_completion_report(
+        primary_metrics[str(submission_checkpoint)], config
+    )
     channel_attribution = _channel_attribution(primary_checkpoint_queries)
+    model_only_attribution = _channel_attribution(model_only_queries)
     trajectory_steps = (
         evaluation_offsets
         if intact[0].shape[0] == evaluation_offsets.size
@@ -4158,16 +4414,21 @@ def _evaluate(
             "primary_evaluation_mode": "shared_model_frozen",
             "metrics_by_effort": primary_metrics,
             "submission_policy": {
-                "name": SUBMISSION_POLICY,
+                "name": _submission_policy_name(config.primary_candidate_mode),
                 "submission_checkpoint": config.submission_checkpoint,
                 "completed_sweep_checkpoints": list(training_efforts),
                 "candidate_budget": 2,
                 "fallback": "latest_sweep_deterministic_logit_runner_up",
                 "target_free_selection": True,
-                "rule_channel_enabled": False,
+                "rule_channel_enabled": (
+                    config.primary_candidate_mode == "rule_then_model"
+                ),
             },
             "model_only_completion": completion_report,
+            "submitted_completion": submitted_completion,
             "channel_attribution": channel_attribution,
+            "model_only_metrics_by_effort": model_only_metrics,
+            "model_only_channel_attribution": model_only_attribution,
             "checkpoint_queries": primary_checkpoint_queries,
             "task_local_adaptation": adaptation_evidence,
             "physical_diagnostic_role": "primary_shared_model",
@@ -4331,16 +4592,21 @@ def _evaluate(
         ),
         "metrics_by_effort": primary_metrics,
         "submission_policy": {
-            "name": SUBMISSION_POLICY,
+            "name": _submission_policy_name(config.primary_candidate_mode),
             "submission_checkpoint": submission_checkpoint,
             "completed_sweep_checkpoints": list(training_efforts),
             "candidate_budget": 2,
             "fallback": "latest_sweep_deterministic_logit_runner_up",
             "target_free_selection": True,
-            "rule_channel_enabled": False,
+            "rule_channel_enabled": (
+                config.primary_candidate_mode == "rule_then_model"
+            ),
         },
         "model_only_completion": completion_report,
+        "submitted_completion": submitted_completion,
         "channel_attribution": channel_attribution,
+        "model_only_metrics_by_effort": model_only_metrics,
+        "model_only_channel_attribution": model_only_attribution,
         "checkpoint_queries": primary_checkpoint_queries,
         "task_local_adaptation": adaptation_evidence,
         "physical_diagnostic_role": "frozen_no_adaptation_diagnostic",
@@ -4584,14 +4850,36 @@ def _qualification(
         candidates = row.get("candidates")
         if not isinstance(candidates, list) or len(candidates) != 2:
             return False
+        allowed = (
+            ("model",)
+            if config.primary_candidate_mode == "model_only"
+            else ("model", "rule")
+        )
         if not all(
             isinstance(candidate, dict)
-            and candidate.get("provenance") == "model"
+            and candidate.get("provenance") in allowed
             and candidate.get("rank") == rank
             for rank, candidate in enumerate(candidates, start=1)
         ):
             return False
         first, second = candidates
+        if first.get("provenance") == "rule":
+            return bool(
+                first.get("selection_role") == "demonstration_verified_rule"
+                and isinstance(first.get("rule_name"), str)
+                and second.get("provenance") == "model"
+                and second.get("selection_role")
+                in (
+                    "latest_sweep_joint_argmax",
+                    "diagnostic_checkpoint_joint_argmax",
+                )
+                and row.get("submission_role")
+                == (
+                    "primary_submission"
+                    if effort == submission_checkpoint
+                    else "diagnostic_only"
+                )
+            )
         if effort == 0:
             return bool(
                 row.get("submission_role") == "diagnostic_only"
@@ -4644,7 +4932,7 @@ def _qualification(
                     "score",
                 }
                 <= row.keys()
-                and row["primary_candidate_mode"] == "model_only"
+                and row["primary_candidate_mode"] == config.primary_candidate_mode
                 and candidate_provenance_complete(checkpoint, row)
                 and finite_tree(row)
                 for row in rows
@@ -4658,7 +4946,8 @@ def _qualification(
     submission_policy = evaluation.get("submission_policy")
     submission_policy_complete = bool(
         isinstance(submission_policy, dict)
-        and submission_policy.get("name") == SUBMISSION_POLICY
+        and submission_policy.get("name")
+        == _submission_policy_name(config.primary_candidate_mode)
         and submission_policy.get("submission_checkpoint") == submission_checkpoint
         and submission_policy.get("completed_sweep_checkpoints")
         == list(training_efforts)
@@ -4666,7 +4955,8 @@ def _qualification(
         and submission_policy.get("fallback")
         == "latest_sweep_deterministic_logit_runner_up"
         and submission_policy.get("target_free_selection") is True
-        and submission_policy.get("rule_channel_enabled") is False
+        and submission_policy.get("rule_channel_enabled")
+        is (config.primary_candidate_mode == "rule_then_model")
     )
     completion = evaluation.get("model_only_completion")
     completion_expected_eligible = bool(
@@ -5084,7 +5374,7 @@ def _qualification(
         and isinstance(frozen_no_adaptation.get("checkpoint_queries"), dict)
     )
     primary_evaluation_complete = bool(
-        evaluation.get("primary_candidate_mode") == "model_only"
+        evaluation.get("primary_candidate_mode") == config.primary_candidate_mode
         and query_count > 0
         and query_count == expected_query_count
         and int(evaluation.get("task_count", 0)) == expected_task_count
@@ -5545,7 +5835,7 @@ def _data_summary(
 def _channel_attribution(
     checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
 ) -> dict[str, dict[str, object]]:
-    """Summarize the fail-closed model-only primary candidate channel.
+    """Split exact solves between the model and the verified rule channel.
 
     Parameters
     ----------
@@ -5573,19 +5863,55 @@ def _channel_attribution(
             for candidate in item.get("candidates", ())
             if isinstance(candidate, Mapping)
         ]
-        if any(candidate.get("provenance") != "model" for candidate in candidates):
-            raise ValueError("primary attribution found non-model candidate provenance")
+        if any(
+            candidate.get("provenance") not in ("model", "rule")
+            for candidate in candidates
+        ):
+            raise ValueError("primary attribution found unknown candidate provenance")
+        modes = {item.get("primary_candidate_mode") for item in details}
+        if len(modes) != 1:
+            raise ValueError("primary attribution found mixed candidate modes")
+        mode = next(iter(modes))
+        model_candidates = [
+            candidate
+            for candidate in candidates
+            if candidate.get("provenance") == "model"
+        ]
+        admitted = [
+            item
+            for item in details
+            if any(
+                candidate.get("provenance") == "rule"
+                for candidate in item.get("candidates", ())
+                if isinstance(candidate, Mapping)
+            )
+        ]
+        exact_by_rule = sum(
+            1 for item in admitted if item["score"]["pass_at_1"]
+        )
         pass_at_2 = sum(1 for item in details if item["score"]["pass_at_2"])
+        rule_names = collections.Counter(
+            str(candidate.get("rule_name"))
+            for item in admitted
+            for candidate in item.get("candidates", ())
+            if isinstance(candidate, Mapping)
+            and candidate.get("provenance") == "rule"
+            and item["score"]["pass_at_1"]
+        )
         summary[effort] = {
-            "primary_candidate_mode": "model_only",
+            "primary_candidate_mode": mode,
             "submission_role": channel_role,
             "query_count": len(details),
-            "model_candidate_count": len(candidates),
+            "model_candidate_count": len(model_candidates),
             "submitted_model_candidate_count": (
-                len(candidates) if channel_role == "primary_submission" else 0
+                len(model_candidates) if channel_role == "primary_submission" else 0
             ),
-            "exact_by_model_candidates": pass_at_2,
+            "rule_admitted_query_count": len(admitted),
+            "rule_admitted_not_exact_count": len(admitted) - exact_by_rule,
+            "exact_by_rule_channel": exact_by_rule,
+            "exact_by_model_candidates": pass_at_2 - exact_by_rule,
             "exact_total": pass_at_2,
+            "solving_rules": dict(rule_names.most_common()),
         }
     return summary
 
@@ -5789,10 +6115,40 @@ def _render_report(result: dict[str, object]) -> str:
             continue
         lines.append(
             f"  effort {effort:>2} {split.get('submission_role', 'unreported')} "
-            "channel: model_only; exact="
-            f"{split['exact_by_model_candidates']} of {split['query_count']} queries; "
-            f"model candidates={split.get('model_candidate_count', 'unreported')}; "
-            f"submitted={split['submitted_model_candidate_count']}."
+            f"channel: {split.get('primary_candidate_mode', 'model_only')}; exact "
+            f"total={split.get('exact_total', 'unreported')} of "
+            f"{split['query_count']} queries "
+            f"(rule={split.get('exact_by_rule_channel', 0)}, "
+            f"model={split['exact_by_model_candidates']}); rules admitted="
+            f"{split.get('rule_admitted_query_count', 0)}, admitted-not-exact="
+            f"{split.get('rule_admitted_not_exact_count', 0)}; solving rules="
+            f"{split.get('solving_rules', {})}."
+        )
+    model_only_attribution = evaluation.get("model_only_channel_attribution", {})
+    model_only_efforts = evaluation.get("model_only_metrics_by_effort", {})
+    for effort in checkpoints:
+        split = model_only_attribution.get(str(effort))
+        row = model_only_efforts.get(str(effort))
+        if split is None or row is None:
+            continue
+        lines.append(
+            f"  effort {effort:>2} model-only channel (not the submitted score): "
+            f"exact={split['exact_by_model_candidates']} of "
+            f"{split['query_count']} queries; query pass@1="
+            f"{row['query_pass_at_1']:.4f}, pass@2={row['query_pass_at_2']:.4f}; "
+            f"strict task pass@1={row['strict_task_pass_at_1']:.4f}, pass@2="
+            f"{row['strict_task_pass_at_2']:.4f}."
+        )
+    submitted = evaluation.get("submitted_completion")
+    if submitted:
+        lines.append(
+            "  Submitted channel: policy="
+            f"{submitted.get('submission_policy')}; exact queries pass@1="
+            f"{submitted.get('exact_query_count_at_1')}, pass@2="
+            f"{submitted.get('exact_query_count_at_2')}; exact tasks pass@1="
+            f"{submitted.get('exact_task_count_at_1')}, pass@2="
+            f"{submitted.get('exact_task_count_at_2')} of "
+            f"{submitted.get('evaluated_task_count')}."
         )
     completion = evaluation.get("model_only_completion", {})
     lines.append(
@@ -6501,6 +6857,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--ablation-slot", type=int, default=0)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--structural-only", action="store_true")
+    parser.add_argument(
+        "--primary-candidate-mode",
+        choices=("model_only", "rule_then_model"),
+        default="model_only",
+    )
     return parser
 
 
@@ -6578,6 +6939,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         evaluation_task_limit=args.evaluation_task_limit,
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,
+        primary_candidate_mode=args.primary_candidate_mode,
     )
 
 
