@@ -101,3 +101,33 @@ better colour head, not a better decoder or a better shape prior; the oracle
 shape probe above is the evidence. Feeding demonstration output shapes to the
 shape head as a model input (keeping `model_only` true) is the natural next
 experiment and is not attempted here.
+
+## Measured result
+
+Run `var/example21-rtm-s31337`, 2026-08-22. Pre-protocol-v2 code
+(`bde13ba` + this change), full scale (4,096 neurons / 4,194,304 recurrent
+edges), Muon, cosine, weight decay 0.1, 260 updates, chunk 5, batch 32, seed
+31337, `--copy-residual-gain 2.0 --row-head-carrier-scale 0.0`,
+`--primary-candidate-mode rule_then_model`. Wall clock 466.9 s. 400 tasks,
+419 queries. `full_structural_qualification` is `true`.
+
+Effort 60, the submitted checkpoint:
+
+| channel | q@1 | q@2 | task@1 | task@2 | shape | pixel |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| submitted (`rule_then_model`) | 28 | 29 | 26 | 27 | 0.6134 | 0.5873 |
+| model only (same run, not submitted) | 1 | 2 | 0 | 1 | 0.5752 | 0.5482 |
+
+27 of 419 queries admitted a rule and all 27 were exact; no admitted rule was
+wrong, so the channel cost the run nothing. The model's own candidates
+contributed the remaining two exact queries (`e872b94a` q0 at slot 2, and
+`bbb1b8b6` q1). Seventeen distinct completions did the solving, the most
+frequent being `id|tile2x2` and `id|per0` at four each.
+
+The model-only channel reproduces the retained baseline
+(`example21-oldfull-cr2cs0-s31337`) to within GPU non-determinism: identical
+shape (0.5752) and identical solved tasks, pixel 0.54820 against 0.54839.
+
+`associative_capability_gates_complete` remains `false` because the run does not
+enable `--evaluation-controls`; that is unchanged from the baseline and is not a
+consequence of this change.
