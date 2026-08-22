@@ -47,6 +47,7 @@ try:
         aggregate_arc_metrics,
         analyze_latent_trajectory,
         assess_model_only_completion,
+        input_echo_fraction,
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
@@ -114,6 +115,7 @@ except ModuleNotFoundError:
         aggregate_arc_metrics,
         analyze_latent_trajectory,
         assess_model_only_completion,
+        input_echo_fraction,
         compare_control_trajectories,
         decode_candidates,
         score_query_candidates,
@@ -1098,6 +1100,7 @@ class _EvaluationRecord:
     source_name: str
     task_key: str
     encoded: EncodedQueryEpisode
+    query_input: np.ndarray
 
 
 def _devices_for(platform: DeviceName) -> list[jax.Device]:
@@ -3186,7 +3189,14 @@ def _evaluation_records(
                 raise ValueError(
                     f"evaluation query {task_key}:{query_index} lacks target"
                 )
-            records.append(_EvaluationRecord(origin.source_name, task_key, encoded))
+            records.append(
+                _EvaluationRecord(
+                    origin.source_name,
+                    task_key,
+                    encoded,
+                    np.asarray(origin.task.test[query_index].input.as_array()),
+                )
+            )
     if not records:
         raise ValueError("evaluation produced no scored queries")
     return tuple(records)
@@ -3607,6 +3617,9 @@ def _score_checkpoint_logits(
                 {
                     "task_id": record.task_key,
                     "query_index": record.encoded.query_index,
+                    "input_echo": input_echo_fraction(
+                        submitted_grids[0], record.query_input
+                    ),
                     "primary_candidate_mode": candidate_mode,
                     "submission_role": (
                         "primary_submission"
@@ -4948,6 +4961,7 @@ def _evaluate(
     )
     channel_attribution = _channel_attribution(primary_checkpoint_queries)
     model_only_attribution = _channel_attribution(model_only_queries)
+    model_only_input_echo = _input_echo_summary(model_only_queries)
     trajectory_steps = (
         np.asarray(checkpoints, dtype=np.int32)
         if protocol_v2
@@ -5032,6 +5046,7 @@ def _evaluate(
             "channel_attribution": channel_attribution,
             "model_only_metrics_by_effort": model_only_metrics,
             "model_only_channel_attribution": model_only_attribution,
+            "model_only_input_echo_by_effort": model_only_input_echo,
             "checkpoint_queries": primary_checkpoint_queries,
             "task_local_adaptation": adaptation_evidence,
             "physical_diagnostic_role": "primary_shared_model",
@@ -5300,6 +5315,7 @@ def _evaluate(
         "channel_attribution": channel_attribution,
         "model_only_metrics_by_effort": model_only_metrics,
         "model_only_channel_attribution": model_only_attribution,
+        "model_only_input_echo_by_effort": model_only_input_echo,
         "checkpoint_queries": primary_checkpoint_queries,
         "task_local_adaptation": adaptation_evidence,
         "physical_diagnostic_role": "frozen_no_adaptation_diagnostic",
@@ -6661,6 +6677,36 @@ def _data_summary(
     }
 
 
+def _input_echo_summary(
+    checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
+) -> dict[str, float]:
+    """Mean input-echo fraction of the rank-one candidate at every effort.
+
+    A value near 1.0 says the submitted grids are the query input cropped to
+    the predicted shape. Such a run scores the copy baseline on the pixel
+    diagnostic while carrying no rule content, so the number belongs beside
+    the exact-match metrics rather than behind them.
+
+    Parameters
+    ----------
+    checkpoint_queries
+        Per-effort query records as written to ``result.json``.
+
+    Returns
+    -------
+    dict
+        One mean per effort, keyed by the effort as a string.
+    """
+
+    summary: dict[str, float] = {}
+    for effort, details in checkpoint_queries.items():
+        echoes = [
+            float(item["input_echo"]) for item in details if "input_echo" in item
+        ]
+        summary[str(effort)] = float(np.mean(echoes)) if echoes else 0.0
+    return summary
+
+
 def _channel_attribution(
     checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
 ) -> dict[str, dict[str, object]]:
@@ -6942,6 +6988,12 @@ def _render_report(result: dict[str, object]) -> str:
             f"{metrics['shape_accuracy_diagnostic']:.4f}, pixel diagnostic="
             f"{metrics['valid_cell_pixel_accuracy_diagnostic']:.4f}"
         )
+        echo = evaluation.get("model_only_input_echo_by_effort", {}).get(str(effort))
+        if echo is not None:
+            lines.append(
+                f"    model-only input echo (rank-one cells copying the query "
+                f"input): {float(echo):.4f}"
+            )
     attribution = evaluation.get("channel_attribution", {})
     for effort in checkpoints:
         split = attribution.get(str(effort))

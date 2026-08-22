@@ -2653,7 +2653,7 @@ def test_scoring_trajectory_and_null_control_share_the_same_frozen_windows(
     assert "checkpoint_queries" not in control
 
 
-def test_primary_scoring_uses_latest_checkpoint_global_top_two(example):
+def test_primary_scoring_uses_latest_checkpoint_top_two(example):
     config = example.ExperimentConfig.smoke_config()
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))
@@ -2674,7 +2674,9 @@ def test_primary_scoring_uses_latest_checkpoint_global_top_two(example):
     assert final["candidates"][0]["grid"] == [[6]]
     assert final["candidates"][0]["source_checkpoint"] == 60
     assert final["candidates"][0]["selection_role"] == ("latest_sweep_joint_argmax")
-    assert final["candidates"][1]["grid"] == [[0]]
+    # The width runner-up and the cell runner-up both cost exactly one 20-logit
+    # margin here, and the documented tie order prefers the shape alternative.
+    assert final["candidates"][1]["grid"] == [[6, 0]]
     assert final["candidates"][1]["source_checkpoint"] == 60
     assert final["candidates"][1]["selection_role"] == (
         "latest_sweep_logit_runner_up"

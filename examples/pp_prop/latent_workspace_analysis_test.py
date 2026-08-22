@@ -31,6 +31,7 @@ analyze_latent_trajectory = analysis.analyze_latent_trajectory
 assess_model_only_completion = analysis.assess_model_only_completion
 compare_control_trajectories = analysis.compare_control_trajectories
 decode_candidates = analysis.decode_candidates
+input_echo_fraction = analysis.input_echo_fraction
 score_query_candidates = analysis.score_query_candidates
 select_checkpoint_candidates = analysis.select_checkpoint_candidates
 
@@ -478,6 +479,28 @@ def test_decode_candidates_runner_up_takes_the_smallest_log_ratio_change() -> No
 
     assert cell_runner_up.changed_decision == "cell:0,0"
     np.testing.assert_array_equal(cell_runner_up.grid, [[5]])
+
+
+def test_input_echo_is_one_for_a_crop_of_the_query_input() -> None:
+    """A decode that is the query input cropped to shape reads as pure echo."""
+    query = np.arange(12).reshape(3, 4) % 10
+
+    assert input_echo_fraction(query[:2, :3], query) == 1.0
+    assert input_echo_fraction(query, query) == 1.0
+
+
+def test_input_echo_counts_only_the_overlapping_cells() -> None:
+    """Cells the query input does not reach are outside the diagnostic."""
+    query = np.array([[1, 1], [1, 1]])
+    decoded = np.array([[1, 1, 7], [2, 1, 7]])
+
+    assert input_echo_fraction(decoded, query) == pytest.approx(0.75)
+    assert input_echo_fraction(np.zeros((2, 2), dtype=int), query) == 0.0
+
+
+def test_input_echo_rejects_non_two_dimensional_grids() -> None:
+    with pytest.raises(ValueError, match="two dimensional"):
+        input_echo_fraction(np.zeros(3), np.zeros((2, 2)))
 
 
 def test_one_wrong_cell_fails_exact_but_preserves_pixel_diagnostic() -> None:

@@ -350,6 +350,14 @@ def decode_candidates(
     units. Exact ties prefer the shape candidate, then lower shape, row-major
     cell, and lower colour.
 
+    ``log_probability`` is candidate one's full factorized log probability, and
+    candidate two's is that value plus the log likelihood ratio of the single
+    change it makes. Rank order is therefore monotone in the reported score.
+    For a cell substitution the reported value is the candidate's own joint
+    log probability; for a shape alternative it scores the substituted shape
+    over candidate one's cell set, which is the quantity the decision rule
+    compares.
+
     Parameters
     ----------
     logits : OutputLogits
@@ -435,9 +443,7 @@ def decode_candidates(
     if shape_delta >= cell_delta:
         second_grid = second_shape_grid
         changed_decision = "shape"
-        second_score = second_shape_score + float(
-            prefix[second_height, second_width]
-        )
+        second_score = first_log_probability + shape_delta
     else:
         second_grid = first_grid.copy()
         second_grid[row, column] = replacement
@@ -451,6 +457,61 @@ def decode_candidates(
     if np.array_equal(first.grid, second.grid):
         return (first,)
     return first, second
+
+
+def input_echo_fraction(
+    grid: ArrayLike,
+    query_input: ArrayLike,
+) -> float:
+    """Fraction of decoded cells that repeat the query input at the same cell.
+
+    A decoder whose colour path is dominated by an identity residual returns
+    the query input verbatim wherever the two grids overlap. That decoder
+    scores the copy baseline on the pixel diagnostic while carrying no rule
+    content at all, so the exact-match metrics alone cannot distinguish it
+    from a model that reasons. This diagnostic separates them: 1.0 means the
+    decode is a crop of the query input and nothing else.
+
+    Cells outside the overlap of the two grids are not counted, so the value
+    is undefined and reported as 0.0 for a decode that shares no cell with the
+    query input.
+
+    Parameters
+    ----------
+    grid : array_like
+        Decoded candidate grid.
+    query_input : array_like
+        The query's input grid, as presented to the model.
+
+    Returns
+    -------
+    float
+        Overlap-cell agreement in 0.0 through 1.0.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> from latent_workspace_analysis import input_echo_fraction
+        >>> query = np.array([[1, 2], [3, 4]])
+        >>> input_echo_fraction(query[:1, :2], query)
+        1.0
+
+        >>> input_echo_fraction(np.array([[0, 0]]), query)
+        0.0
+    """
+
+    decoded = np.asarray(grid)
+    source = np.asarray(query_input)
+    if decoded.ndim != 2 or source.ndim != 2:
+        raise ValueError("grid and query_input must each be two dimensional")
+    rows = min(decoded.shape[0], source.shape[0])
+    columns = min(decoded.shape[1], source.shape[1])
+    if rows == 0 or columns == 0:
+        return 0.0
+    overlap = decoded[:rows, :columns] == source[:rows, :columns]
+    return float(np.mean(overlap))
 
 
 def select_checkpoint_candidates(
