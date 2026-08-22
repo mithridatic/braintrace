@@ -3148,6 +3148,12 @@ _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY = {
     path: (1, *shape[1:])
     for path, shape in _GATE_C2_HIDDEN_GEOMETRY.items()
 }
+_GATE_C2_SHORT_TERM_DIAGNOSTIC_PATHS = {
+    "memory_read_active#0",
+    "memory_read_count#0",
+    "memory_read_step#0",
+}
+_GATE_C2_H0_AUXILIARY_HIDDEN_PATHS = {"memory_drive#0"}
 
 
 def _gate_c2_array_endpoint(value: Any) -> dict[str, Any]:
@@ -4872,7 +4878,10 @@ def _gate_c2_snapshot_arrays(snapshot: Any) -> dict[str, np.ndarray]:
     for path, value in snapshot.entries:
         name = gate_a._path(path)
         for index, leaf in enumerate(jax.tree.leaves(value)):
-            result[f"{name}#{index}"] = np.array(
+            leaf_path = f"{name}#{index}"
+            if leaf_path in _GATE_C2_SHORT_TERM_DIAGNOSTIC_PATHS:
+                continue
+            result[leaf_path] = np.array(
                 u.get_mantissa(jax.device_get(leaf)),
                 copy=True,
                 order="C",
@@ -4919,7 +4928,10 @@ def _gate_c2_raw_h0_snapshot_record(
     if not _sha256_complete(parameter_sha256) or parameter_sha256 == "0" * 64:
         raise ValueError("Gate C2 H0 snapshot parameter digest is invalid")
     arrays = _gate_c2_snapshot_arrays(snapshot)
-    if tuple(arrays) != tuple(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY):
+    if set(arrays) != (
+        set(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
+        | _GATE_C2_H0_AUXILIARY_HIDDEN_PATHS
+    ):
         raise ValueError("Gate C2 H0 snapshot hidden paths differ")
     hidden_paths: dict[str, dict[str, Any]] = {}
     for path, expected_shape in _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items():
@@ -5393,13 +5405,16 @@ def _gate_c2_host_boundary_snapshots(
         for path, template in h0_snapshot.entries:
             name = gate_a._path(path)
             leaves: list[np.ndarray] = []
-            for leaf_index, _ in enumerate(jax.tree.leaves(template)):
+            for leaf_index, template_leaf in enumerate(jax.tree.leaves(template)):
                 leaf_path = f"{name}#{leaf_index}"
-                source = (
-                    h0_arrays[leaf_path]
-                    if boundary_index == 0
-                    else stacked[leaf_path][boundary_index - 1]
-                )
+                if leaf_path in h0_arrays:
+                    source = (
+                        h0_arrays[leaf_path]
+                        if boundary_index == 0
+                        else stacked[leaf_path][boundary_index - 1]
+                    )
+                else:
+                    source = u.get_mantissa(jax.device_get(template_leaf))
                 leaves.append(np.array(source, copy=True, order="C"))
             value = jax.tree_util.tree_unflatten(
                 jax.tree_util.tree_structure(template),
