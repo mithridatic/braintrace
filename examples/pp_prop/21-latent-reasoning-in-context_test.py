@@ -785,7 +785,9 @@ def test_lr_schedule_defaults_to_cosine_at_raised_base_rate(example):
     )
 
     assert (default.lr_schedule, default.learning_rate) == ("cosine", 1e-3)
+    assert default.lr_warmup_fraction == 0.0
     assert (cli.lr_schedule, cli.learning_rate) == ("cosine", 1e-3)
+    assert cli.lr_warmup_fraction == 0.0
     assert smoke.lr_schedule == "cosine"
     constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
     assert constant.lr_schedule == "constant"
@@ -807,15 +809,55 @@ def test_cosine_training_schedule_decays_base_rate_to_zero(example):
     assert example._training_learning_rate(constant) == constant.learning_rate
 
 
+def test_cosine_training_schedule_supports_linear_warmup(example):
+    config = example.ExperimentConfig(
+        structural_only=True,
+        training_updates=100,
+        lr_warmup_fraction=0.01,
+    )
+    schedule = example._training_learning_rate(config)
+
+    assert float(schedule(0)) == pytest.approx(0.0)
+    assert float(schedule(1)) == pytest.approx(config.learning_rate)
+    assert float(schedule(config.training_updates)) == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [True, -0.01, 1.0, float("nan"), float("inf")],
+)
+def test_lr_warmup_fraction_rejects_invalid_values(example, value):
+    with pytest.raises(ValueError, match="lr_warmup_fraction"):
+        example.ExperimentConfig(
+            structural_only=True,
+            lr_warmup_fraction=value,
+        )
+
+
+def test_constant_schedule_rejects_nonzero_warmup(example):
+    with pytest.raises(ValueError, match="lr_warmup_fraction"):
+        example.ExperimentConfig(
+            structural_only=True,
+            lr_schedule="constant",
+            lr_warmup_fraction=0.01,
+        )
+
+
 def test_lr_schedule_round_trips_policy_dict_and_cli(example):
     cosine = example.ExperimentConfig(structural_only=True)
-    constant = example._config_from_args(
-        example._parser().parse_args(["--structural-only", "--lr-schedule", "constant"])
+    warm = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--lr-warmup-fraction", "0.01"]
+        )
     )
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
 
     assert example._optimizer_policy(cosine)["lr_schedule"] == "cosine"
+    assert example._optimizer_policy(cosine)["lr_warmup_fraction"] == 0.0
+    assert example._optimizer_policy(warm)["lr_warmup_fraction"] == 0.01
     assert example._optimizer_policy(constant)["lr_schedule"] == "constant"
     assert cosine.to_dict()["lr_schedule"] == "cosine"
+    assert warm.to_dict()["lr_warmup_fraction"] == 0.01
     assert constant.to_dict()["lr_schedule"] == "constant"
     assert constant.learning_rate == 1e-3
 

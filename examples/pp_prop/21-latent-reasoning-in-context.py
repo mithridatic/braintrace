@@ -373,6 +373,10 @@ class ExperimentConfig:
         zero over ``training_updates`` optimizer updates (optax cosine decay
         with ``alpha=0``, no warmup). The per-tick adaptation path keeps its
         own constant ``adaptation_learning_rate`` either way.
+    lr_warmup_fraction : float
+        Fraction of shared-training updates used for linear warmup before
+        cosine decay. Zero preserves the historical cosine schedule exactly.
+        Nonzero warmup is incompatible with the constant-rate control.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
@@ -482,6 +486,7 @@ class ExperimentConfig:
     runtime_profile: bool = False
     learning_rate: float = 1e-3
     lr_schedule: LrScheduleName = "cosine"
+    lr_warmup_fraction: float = 0.0
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
@@ -559,6 +564,17 @@ class ExperimentConfig:
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("lr_schedule must be 'constant' or 'cosine'")
+        warmup = self.lr_warmup_fraction
+        if isinstance(warmup, (bool, np.bool_)) or not isinstance(warmup, Real):
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+        warmup = float(warmup)
+        if not math.isfinite(warmup) or not 0.0 <= warmup < 1.0:
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+        if self.lr_schedule == "constant" and warmup != 0.0:
+            raise ValueError(
+                "lr_warmup_fraction must be zero when lr_schedule='constant'"
+            )
+        object.__setattr__(self, "lr_warmup_fraction", warmup)
         if self.memory_coding not in (
             "frozen",
             "learned_keys",
@@ -765,6 +781,7 @@ class ExperimentConfig:
         weight_decay: float | None = None,
         refinement_mixer: RefinementMixer = "linear",
         lr_schedule: LrScheduleName = "cosine",
+        lr_warmup_fraction: float = 0.0,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "latent_row_decode",
         runtime_profile: bool = False,
@@ -802,6 +819,8 @@ class ExperimentConfig:
             Row-refinement proposal mixer.
         lr_schedule : {"constant", "cosine"}
             Shared-training learning-rate schedule forwarded unchanged.
+        lr_warmup_fraction : float
+            Leading fraction of updates used for linear cosine warmup.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -842,6 +861,7 @@ class ExperimentConfig:
             weight_decay=weight_decay,
             refinement_mixer=refinement_mixer,
             lr_schedule=lr_schedule,
+            lr_warmup_fraction=lr_warmup_fraction,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -2360,6 +2380,7 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
         "name": config.optimizer,
         "learning_rate": config.learning_rate,
         "lr_schedule": config.lr_schedule,
+        "lr_warmup_fraction": config.lr_warmup_fraction,
         "weight_decay": config.weight_decay,
     }
     if config.optimizer == "muon":
@@ -2392,6 +2413,18 @@ def _training_learning_rate(config: ExperimentConfig) -> float | optax.Schedule:
     """
     if config.lr_schedule == "constant":
         return config.learning_rate
+    if config.lr_warmup_fraction:
+        warmup_steps = max(
+            1,
+            math.ceil(config.lr_warmup_fraction * config.training_updates),
+        )
+        return optax.warmup_cosine_decay_schedule(
+            init_value=0.0,
+            peak_value=config.learning_rate,
+            warmup_steps=warmup_steps,
+            decay_steps=max(int(config.training_updates), 1),
+            end_value=0.0,
+        )
     return optax.cosine_decay_schedule(
         init_value=config.learning_rate,
         decay_steps=max(int(config.training_updates), 1),
@@ -7004,6 +7037,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--lr-schedule", choices=("constant", "cosine"), default="cosine"
     )
+    parser.add_argument("--lr-warmup-fraction", type=float, default=0.0)
     parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
@@ -7071,6 +7105,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             weight_decay=args.weight_decay,
             refinement_mixer=args.refinement_mixer,
             lr_schedule=args.lr_schedule,
+            lr_warmup_fraction=args.lr_warmup_fraction,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -7110,6 +7145,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
         lr_schedule=args.lr_schedule,
+        lr_warmup_fraction=args.lr_warmup_fraction,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,
