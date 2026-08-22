@@ -177,6 +177,7 @@ LatentResidualMixer = Literal["none", "attention_residual"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
+EffortScheduleName = Literal["uniform", "progressive"]
 
 FULL_SCALE_NEURON_COUNT = 4096
 
@@ -389,6 +390,9 @@ class ExperimentConfig:
         Fraction of shared-training updates used for linear warmup before
         cosine decay. Zero preserves the historical cosine schedule exactly.
         Nonzero warmup is incompatible with the constant-rate control.
+    effort_schedule : {"uniform", "progressive"}
+        Training-depth sampling schedule. Progressive introduces checkpoints
+        in contiguous phases; uniform preserves the historical global shuffle.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
@@ -503,6 +507,7 @@ class ExperimentConfig:
     learning_rate: float = 1e-3
     lr_schedule: LrScheduleName = "cosine"
     lr_warmup_fraction: float = 0.0
+    effort_schedule: EffortScheduleName = "uniform"
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
@@ -582,6 +587,8 @@ class ExperimentConfig:
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("lr_schedule must be 'constant' or 'cosine'")
+        if self.effort_schedule not in ("uniform", "progressive"):
+            raise ValueError("effort_schedule must be 'uniform' or 'progressive'")
         warmup = self.lr_warmup_fraction
         if isinstance(warmup, (bool, np.bool_)) or not isinstance(warmup, Real):
             raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
@@ -827,6 +834,7 @@ class ExperimentConfig:
         refinement_mixer: RefinementMixer = "linear",
         lr_schedule: LrScheduleName = "cosine",
         lr_warmup_fraction: float = 0.0,
+        effort_schedule: EffortScheduleName = "uniform",
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "latent_row_decode",
         runtime_profile: bool = False,
@@ -874,6 +882,8 @@ class ExperimentConfig:
             Shared-training learning-rate schedule forwarded unchanged.
         lr_warmup_fraction : float
             Leading fraction of updates used for linear cosine warmup.
+        effort_schedule : {"uniform", "progressive"}
+            Training-depth sampling schedule.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -919,6 +929,7 @@ class ExperimentConfig:
             refinement_mixer=refinement_mixer,
             lr_schedule=lr_schedule,
             lr_warmup_fraction=lr_warmup_fraction,
+            effort_schedule=effort_schedule,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -1468,10 +1479,30 @@ def _effort_schedule(
     updates: int,
     rng: brainstate.random.RandomState,
     efforts: Sequence[int] = TRAINING_EFFORTS,
+    schedule: EffortScheduleName = "uniform",
 ) -> np.ndarray:
-    base = np.resize(np.asarray(efforts, dtype=np.int32), updates)
-    order = np.asarray(rng.permutation(updates), dtype=np.int32)
-    return base[order]
+    effort_values = np.asarray(efforts, dtype=np.int32)
+    if schedule == "uniform":
+        base = np.resize(effort_values, updates)
+        order = np.asarray(rng.permutation(updates), dtype=np.int32)
+        return base[order]
+    if schedule != "progressive":
+        raise ValueError("schedule must be 'uniform' or 'progressive'")
+    if updates == 0:
+        return np.zeros((0,), dtype=np.int32)
+    if effort_values.size == 0:
+        raise ValueError("efforts must contain at least one checkpoint")
+    phase_sizes = np.full(effort_values.size, updates // effort_values.size)
+    phase_sizes[: updates % effort_values.size] += 1
+    phases: list[np.ndarray] = []
+    for phase_index, phase_size in enumerate(phase_sizes):
+        if phase_size == 0:
+            continue
+        introduced = effort_values[: phase_index + 1]
+        phase = np.resize(introduced, int(phase_size))
+        order = np.asarray(rng.permutation(int(phase_size)), dtype=np.int32)
+        phases.append(phase[order])
+    return np.concatenate(phases).astype(np.int32, copy=False)
 
 
 def _empty_training_tensors() -> _TrainingTensors:
@@ -1991,7 +2022,12 @@ def _training_chunks(
         return
     pool = _training_pool(data, config)
     rng = brainstate.random.RandomState(config.seed + 1000)
-    efforts = _effort_schedule(config.training_updates, rng, config.training_efforts)
+    efforts = _effort_schedule(
+        config.training_updates,
+        rng,
+        config.training_efforts,
+        config.effort_schedule,
+    )
     batch = config.training_batch_size
     task_indices = np.asarray(
         rng.randint(0, len(pool), size=config.training_updates * batch),
@@ -2274,6 +2310,7 @@ def _memory_architecture_report(
         "reasoning_mode": ("associative_workspace" if enabled else "legacy_reservoir"),
         "context_memory_width": config.context_memory_width,
         "memory_decay": config.memory_decay,
+        "effort_schedule": config.effort_schedule,
         "raw_key_feature_width": key_width,
         "raw_value_feature_width": value_width,
         "context_memory_bytes_per_example": bytes_per_example,
@@ -2663,7 +2700,12 @@ def _train_chunks(
     return losses, schedule
 
 
-def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
+def _write_parameter_checkpoint(
+    model: LatentWorkspaceModel,
+    path: pathlib.Path,
+    *,
+    effort_schedule: EffortScheduleName = "uniform",
+) -> str:
     """Write trainable parameter leaves and return the file digest.
 
     The shared training stage is expensive and optional diagnostic variants can
@@ -2683,6 +2725,7 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
                 "latent_residual_block_size": (
                     model.config.latent_residual_block_size
                 ),
+                "effort_schedule": effort_schedule,
             }
         ),
         dtype=np.uint8,
@@ -2697,7 +2740,12 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
+def _read_parameter_checkpoint(
+    model: LatentWorkspaceModel,
+    path: pathlib.Path,
+    *,
+    effort_schedule: EffortScheduleName = "uniform",
+) -> str:
     """Restore parameter leaves written by :func:`_write_parameter_checkpoint`.
 
     A checkpoint from a different neuron count, edge count, or decoder mode has
@@ -2716,11 +2764,16 @@ def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) 
         architecture = msgspec.json.decode(
             np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
         )
+        if isinstance(architecture, dict) and architecture.get("schema_version") == 1:
+            architecture.setdefault("latent_residual_mixer", "none")
+            architecture.setdefault("latent_residual_block_size", 10)
+            architecture.setdefault("effort_schedule", "uniform")
         if architecture != {
             "schema_version": 1,
             "memory_read_interval": model.config.memory_read_interval,
             "latent_residual_mixer": model.config.latent_residual_mixer,
             "latent_residual_block_size": model.config.latent_residual_block_size,
+            "effort_schedule": effort_schedule,
         }:
             raise ValueError("parameter checkpoint does not match model architecture")
     restored = [jnp.asarray(stored[name]) for name in names]
@@ -2744,7 +2797,9 @@ def _restore_initial_parameters(
     initial = config.initial_checkpoint
     if initial is None or not initial.exists():
         return None
-    return _read_parameter_checkpoint(model, initial)
+    return _read_parameter_checkpoint(
+        model, initial, effort_schedule=config.effort_schedule
+    )
 
 
 def _checkpoint_writer(
@@ -2763,7 +2818,9 @@ def _checkpoint_writer(
 
     def write(index: int) -> None:
         if (index + 1) % every == 0:
-            _write_parameter_checkpoint(model, path)
+            _write_parameter_checkpoint(
+                model, path, effort_schedule=config.effort_schedule
+            )
 
     return write
 
@@ -2788,6 +2845,8 @@ def _restored_training_report(
         "optimizer_updates_by_effort": {
             str(value): 0 for value in config.training_efforts
         },
+        "effort_schedule_policy": config.effort_schedule,
+        "effort_schedule": [],
         "losses": [],
         "parameter_sha256_before": _tree_digest(parameter_snapshot(model)),
         "parameter_sha256_after": _tree_digest(parameter_snapshot(model)),
@@ -2977,6 +3036,7 @@ def _train_model(
             str(value): int(counts[value]) for value in config.training_efforts
         },
         "losses": np.asarray(losses, dtype=np.float64).tolist(),
+        "effort_schedule_policy": config.effort_schedule,
         "effort_schedule": list(schedule.efforts),
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
@@ -6885,7 +6945,11 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         if checkpoint is not None and checkpoint.exists():
             _emit_progress("training", 0, 1, training_started)
             training = _restored_training_report(
-                model, config, _read_parameter_checkpoint(model, checkpoint)
+                model,
+                config,
+                _read_parameter_checkpoint(
+                    model, checkpoint, effort_schedule=config.effort_schedule
+                ),
             )
             _emit_progress("training", 1, 1, training_started)
         else:
@@ -6922,7 +6986,9 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
             if checkpoint is not None:
                 training["parameter_checkpoint"] = str(checkpoint)
                 training["parameter_checkpoint_sha256"] = _write_parameter_checkpoint(
-                    model, checkpoint
+                    model,
+                    checkpoint,
+                    effort_schedule=config.effort_schedule,
                 )
         phase_seconds["training"] = time.perf_counter() - training_started
         evaluation_started = time.perf_counter()
@@ -7149,6 +7215,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--lr-warmup-fraction", type=float, default=0.0)
     parser.add_argument(
+        "--effort-schedule",
+        choices=("uniform", "progressive"),
+        default="uniform",
+    )
+    parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
     parser.add_argument("--weight-decay", type=float)
@@ -7220,6 +7291,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             refinement_mixer=args.refinement_mixer,
             lr_schedule=args.lr_schedule,
             lr_warmup_fraction=args.lr_warmup_fraction,
+            effort_schedule=args.effort_schedule,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -7264,6 +7336,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         learning_rate=args.learning_rate,
         lr_schedule=args.lr_schedule,
         lr_warmup_fraction=args.lr_warmup_fraction,
+        effort_schedule=args.effort_schedule,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,

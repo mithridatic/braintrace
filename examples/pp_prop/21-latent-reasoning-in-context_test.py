@@ -862,6 +862,34 @@ def test_lr_schedule_round_trips_policy_dict_and_cli(example):
     assert constant.learning_rate == 1e-3
 
 
+def test_effort_schedule_round_trips_config_cli_and_training_report(
+    example, monkeypatch
+):
+    default = example.ExperimentConfig(structural_only=True)
+    progressive = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--effort-schedule", "progressive"]
+        )
+    )
+
+    assert default.effort_schedule == "uniform"
+    assert progressive.effort_schedule == "progressive"
+    assert progressive.to_dict()["effort_schedule"] == "progressive"
+    architecture = example._memory_architecture_report(
+        progressive,
+        RowEventConfig(max_demonstrations=10, max_grid_size=30),
+        training_batch_size=1,
+        evaluation_batch_size=1,
+    )
+    assert architecture["effort_schedule"] == "progressive"
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
+    restored = example._restored_training_report(SimpleNamespace(), progressive, "digest")
+    assert restored["effort_schedule_policy"] == "progressive"
+    assert restored["effort_schedule"] == []
+    with pytest.raises(ValueError, match="effort_schedule"):
+        example.ExperimentConfig(structural_only=True, effort_schedule="staged")
+
+
 def test_parameter_travel_budget_halves_under_cosine_schedule(example):
     constant = example.ExperimentConfig(
         structural_only=True, optimizer="adam", lr_schedule="constant"
@@ -1677,6 +1705,78 @@ def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
     assert max(counts.values()) - min(counts.values()) <= 1
 
 
+def test_uniform_effort_schedule_preserves_historical_algorithm(example):
+    expected_rng = brainstate.random.RandomState(7)
+    base = np.resize(np.asarray((0, 30, 60), dtype=np.int32), 17)
+    expected = base[np.asarray(expected_rng.permutation(17), dtype=np.int32)]
+
+    actual = example._effort_schedule(
+        17,
+        brainstate.random.RandomState(7),
+        (0, 30, 60),
+        "uniform",
+    )
+
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_progressive_effort_schedule_has_exact_phases_and_balance(example):
+    first = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(2108),
+        (0, 30, 60),
+        "progressive",
+    )
+    repeat = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(2108),
+        (0, 30, 60),
+        "progressive",
+    )
+    other = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(31337),
+        (0, 30, 60),
+        "progressive",
+    )
+
+    np.testing.assert_array_equal(first, repeat)
+    np.testing.assert_array_equal(first[:87], 0)
+    assert set(first[87:174].tolist()) == {0, 30}
+    assert set(first[174:].tolist()) == {0, 30, 60}
+    for phase in (first[87:174], first[174:]):
+        counts = [int(np.sum(phase == effort)) for effort in np.unique(phase)]
+        assert max(counts) - min(counts) <= 1
+    np.testing.assert_array_equal(other[:87], first[:87])
+    assert not np.array_equal(other[87:], first[87:])
+
+
+def test_progressive_effort_schedule_handles_zero_and_generic_horizons(example):
+    empty = example._effort_schedule(
+        0,
+        brainstate.random.RandomState(1),
+        (5, 10, 20, 40),
+        "progressive",
+    )
+    generic = example._effort_schedule(
+        11,
+        brainstate.random.RandomState(1),
+        (5, 10, 20, 40),
+        "progressive",
+    )
+
+    assert empty.shape == (0,)
+    assert generic.shape == (11,)
+    assert set(generic[:3].tolist()) == {5}
+    assert set(generic[3:6].tolist()) <= {5, 10}
+    assert set(generic[6:9].tolist()) <= {5, 10, 20}
+    assert set(generic[9:].tolist()) <= {5, 10, 20, 40}
+    with pytest.raises(ValueError, match="schedule"):
+        example._effort_schedule(
+            3, brainstate.random.RandomState(1), (0, 30), "staged"
+        )
+
+
 def test_training_stream_compacts_learning_rule_timeline(example):
     """No frozen layout position may age the trace before supervised depths."""
     config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
@@ -2089,8 +2189,9 @@ def test_memory_architecture_report_records_raw_width_and_dense_state_cost(examp
     )
     assert legacy == {
         "reasoning_mode": "legacy_reservoir",
-        "context_memory_width": 0,
-        "memory_decay": 1.0,
+            "context_memory_width": 0,
+            "memory_decay": 1.0,
+            "effort_schedule": "uniform",
         "raw_key_feature_width": 0,
         "raw_value_feature_width": 0,
         "context_memory_bytes_per_example": 0,
@@ -4540,6 +4641,27 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
+def test_progressive_effort_schedule_is_chunk_size_independent(example):
+    whole = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        training_updates=6,
+        effort_schedule="progressive",
+    )
+    split = dataclasses.replace(whole, training_chunk_size=1)
+    data = example._load_data(whole)
+    rows = example._row_config(whole)
+
+    reference = _materialize_training(example, data, whole, rows)
+    chunked = _materialize_training(example, data, split, rows)
+
+    for field in _TRAINING_ARRAY_FIELDS:
+        np.testing.assert_array_equal(
+            getattr(reference, field), getattr(chunked, field), err_msg=field
+        )
+    for field in _TRAINING_METADATA_FIELDS:
+        assert getattr(reference, field) == getattr(chunked, field), field
+
+
 def test_training_sequence_length_covers_every_enabled_orientation(example):
     """The dataset bound covers every fold before static compilation."""
 
@@ -5033,6 +5155,27 @@ def test_latent_residual_configuration_participates_in_checkpoint_compatibility(
 
     with pytest.raises(ValueError, match="parameter checkpoint"):
         example._read_parameter_checkpoint(residual, path)
+
+
+def test_effort_schedule_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "progressive-parameters.npz"
+    example._write_parameter_checkpoint(
+        model, path, effort_schedule="progressive"
+    )
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(
+            model, path, effort_schedule="uniform"
+        )
+    assert example._read_parameter_checkpoint(
+        model, path, effort_schedule="progressive"
+    )
 
 
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):

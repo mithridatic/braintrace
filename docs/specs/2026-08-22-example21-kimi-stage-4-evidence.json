@@ -1,0 +1,49 @@
+{
+  "stage": 4,
+  "title": "progressive effort curriculum",
+  "base_commit": "b4517c2",
+  "commands": [
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q -k <effort schedule and compatibility cluster>",
+      "result": "8 passed, 190 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "199 passed, 108.56 seconds"
+    },
+    {
+      "command": "ruff check <Stage 4 touched Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "aab311f7928b7c257eeb8b4afdde3e41f9052fdf403d8640ea8b6e8de3c9e5ae"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "structural_evidence": {
+    "uniform_historical_equivalence": "passed",
+    "exact_260_update_phase_boundaries": "passed",
+    "within_phase_balance": "passed",
+    "deterministic_brainstate_random_shuffle": "passed",
+    "chunk_size_independence": "passed",
+    "single_model_optimizer_lifecycle": "unchanged and covered by full entry regression",
+    "configuration_cli_report_checkpoint_roundtrip": "passed",
+    "full_example21_entry_regression": "passed"
+  },
+  "missing_evidence": [
+    "matched uniform versus progressive training",
+    "100-task progressive pilot",
+    "three-seed 419-query reduced-topology comparison",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}
