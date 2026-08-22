@@ -172,6 +172,7 @@ AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
 MemoryCoding = Literal["frozen", "learned_keys", "learned_write", "learned_update"]
+MemoryReadTransform = Literal["linear", "gated", "gated_rms"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
@@ -327,6 +328,9 @@ class ExperimentConfig:
         reservoir; positive values up to 512 opt into ``S_K/H_r``.
     memory_decay : float
         Associative memory self-decay in the closed interval ``[0, 1]``.
+    memory_read_transform : {"linear", "gated", "gated_rms"}
+        Associative read projection. The default preserves the historical
+        linear path; gated modes use the previous workspace as gate input.
     memory_coding : {"frozen", "learned_keys", "learned_write"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
@@ -471,6 +475,7 @@ class ExperimentConfig:
     color_rank: int = 16
     context_memory_width: int = 32
     memory_decay: float = 1.0
+    memory_read_transform: MemoryReadTransform = "linear"
     memory_coding: MemoryCoding = "learned_update"
     trace_engine: TraceEngine = "pp_prop"
     neuron_typing: NeuronTyping = "none"
@@ -584,6 +589,18 @@ class ExperimentConfig:
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
                 "'learned_write' or 'learned_update'"
+            )
+        if not isinstance(self.memory_read_transform, str):
+            raise TypeError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform not in ("linear", "gated", "gated_rms"):
+            raise ValueError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform != "linear" and self.context_memory_width == 0:
+            raise ValueError(
+                "memory_read_transform requires a positive context_memory_width"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
@@ -773,6 +790,7 @@ class ExperimentConfig:
         seed: int = 9999,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
+        memory_read_transform: MemoryReadTransform = "linear",
         memory_coding: MemoryCoding | None = None,
         trace_engine: TraceEngine = "pp_prop",
         neuron_typing: NeuronTyping = "none",
@@ -802,6 +820,8 @@ class ExperimentConfig:
             zero for explicitly selected legacy CP mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
+        memory_read_transform : {"linear", "gated", "gated_rms"}
+            Associative read projection forwarded to the model.
         memory_coding : {"frozen", "learned_keys", "learned_write"}
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
@@ -853,6 +873,7 @@ class ExperimentConfig:
             color_rank=4,
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
+            memory_read_transform=memory_read_transform,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
             neuron_typing=neuron_typing,
@@ -2172,6 +2193,7 @@ def _model_config(
             {
                 "context_memory_width": config.context_memory_width,
                 "memory_decay": config.memory_decay,
+                "memory_read_transform": config.memory_read_transform,
                 "demonstration_phase_index": row_config.phase_slice.start,
                 "query_phase_index": row_config.phase_slice.start + 1,
                 "input_side_valid_index": row_config.side_valid_slice.start,
@@ -2209,7 +2231,7 @@ def _memory_architecture_report(
         key_width = 0
         value_width = 0
     bytes_per_example = config.context_memory_width**2 * np.dtype(np.float32).itemsize
-    return {
+    report = {
         "reasoning_mode": ("associative_workspace" if enabled else "legacy_reservoir"),
         "context_memory_width": config.context_memory_width,
         "memory_decay": config.memory_decay,
@@ -2223,6 +2245,9 @@ def _memory_architecture_report(
             bytes_per_example * evaluation_batch_size
         ),
     }
+    if enabled:
+        report["memory_read_transform"] = config.memory_read_transform
+    return report
 
 
 def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
@@ -2235,6 +2260,8 @@ def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
     """
     report = model.associative_memory_report().to_dict()
     report.update(model.memory_coding_divergence())
+    if model.config.memory_enabled:
+        report.update(model.memory_read_diagnostics())
     return report
 
 
@@ -7007,6 +7034,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
+        "--memory-read-transform",
+        choices=("linear", "gated", "gated_rms"),
+        default="linear",
+    )
+    parser.add_argument(
         "--memory-coding",
         choices=("frozen", "learned_keys", "learned_write", "learned_update"),
         default=None,
@@ -7097,6 +7129,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             seed=args.seed,
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
+            memory_read_transform=args.memory_read_transform,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
             neuron_typing=args.neuron_typing,
@@ -7120,6 +7153,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         recurrent_edges=args.recurrent_edges,
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
+        memory_read_transform=args.memory_read_transform,
         memory_coding=args.memory_coding or "learned_update",
         trace_engine=args.trace_engine,
         neuron_typing=args.neuron_typing,

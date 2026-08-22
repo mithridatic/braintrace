@@ -909,6 +909,45 @@ def test_softcap_betas_default_and_plumb_into_model_config(example):
         )
 
 
+def test_memory_read_transform_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    gated = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--memory-read-transform", "gated_rms"]
+        )
+    )
+    model_config = example._model_config(gated, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        gated,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.memory_read_transform == "linear"
+    assert gated.memory_read_transform == "gated_rms"
+    assert gated.to_dict()["memory_read_transform"] == "gated_rms"
+    assert model_config.memory_read_transform == "gated_rms"
+    assert architecture["memory_read_transform"] == "gated_rms"
+    with pytest.raises(ValueError, match="memory_read_transform"):
+        example.ExperimentConfig(
+            structural_only=True, memory_read_transform="normalized"
+        )
+    with pytest.raises(TypeError, match="memory_read_transform"):
+        example.ExperimentConfig(
+            structural_only=True, memory_read_transform=3
+        )
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            memory_coding="frozen",
+            decoder_mode="legacy_cp",
+            memory_read_transform="gated",
+        )
+
+
 @pytest.mark.parametrize("name", ["adam", "adamw", "muon"])
 def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
     example, name
@@ -2046,7 +2085,13 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "carrier_radius",
         "carrier_consumers",
         "carrier_normalization_by_consumer",
+        "memory_read_rms",
+        "memory_drive_rms",
+        "gate_saturation_fraction",
+        "gate_channel_activation",
     }
+    assert memory["gate_saturation_fraction"] is None
+    assert memory["gate_channel_activation"] is None
     assert memory["carrier_stabilizer"] == "per_example_stopped_unit_l2_cap"
     assert memory["carrier_radius"] == 1.0
     assert memory["carrier_consumers"] == (
@@ -4838,6 +4883,26 @@ def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
 
     with pytest.raises(ValueError, match="parameter checkpoint"):
         example._read_parameter_checkpoint(broad, path)
+
+
+def test_memory_read_transform_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    linear_config = example.ExperimentConfig.smoke_config(
+        memory_read_transform="linear"
+    )
+    gated_config = example.ExperimentConfig.smoke_config(
+        memory_read_transform="gated"
+    )
+    rows = example._row_config(linear_config)
+    device = jax.devices("cpu")[0]
+    linear = example._make_model(linear_config, rows, batch_size=1, device=device)
+    gated = example._make_model(gated_config, rows, batch_size=1, device=device)
+    path = tmp_path / "linear-parameters.npz"
+    example._write_parameter_checkpoint(linear, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._read_parameter_checkpoint(gated, path)
 
 
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):

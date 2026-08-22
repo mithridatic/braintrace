@@ -664,6 +664,7 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     )
     assert memory.carrier_normalization_by_consumer is None
     assert serialized_legacy == expected_legacy
+    assert memory.to_dict()["read_transform"] == "linear"
     assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
@@ -683,6 +684,7 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
         "carrier_stabilizer",
         "carrier_radius",
         "carrier_consumers",
+        "read_transform",
     }
 
 
@@ -2008,6 +2010,78 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
     _assert_state_snapshots_equal(
         implicit_model.snapshot_state(), query_only_model.snapshot_state()
     )
+
+
+def test_memory_read_transform_defaults_to_linear_and_validates() -> None:
+    assert _memory_config().memory_read_transform == "linear"
+    assert _config().memory_read_transform == "linear"
+    for transform in ("gated", "gated_rms"):
+        assert _memory_config(memory_read_transform=transform).memory_read_transform == transform
+    with pytest.raises(TypeError, match="memory_read_transform"):
+        _memory_config(memory_read_transform=7)
+    with pytest.raises(ValueError, match="memory_read_transform"):
+        _memory_config(memory_read_transform="rms")
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(memory_read_transform="gated")
+
+
+def test_gated_memory_read_is_linear_equivalent_at_initialization() -> None:
+    linear = LatentWorkspaceModel(_memory_config(memory_read_transform="linear"))
+    gated = LatentWorkspaceModel(_memory_config(memory_read_transform="gated"))
+    raw_read = jnp.asarray([[0.4, -1.2]], dtype=jnp.float32)
+    workspace = jnp.linspace(-2.0, 2.0, 64, dtype=jnp.float32)[None, :]
+
+    linear_drive = linear.memory_read_projection(raw_read)
+    gated_drive = gated.memory_read_projection(
+        raw_read, latent_workspace_module._unit_l2_cap(workspace)
+    )
+
+    np.testing.assert_array_equal(gated.memory_read_projection.gate_weight.value, 0.0)
+    np.testing.assert_array_equal(gated.memory_read_projection.gate_bias.value, 0.0)
+    np.testing.assert_array_equal(
+        gated.memory_read_projection.output_weight.value,
+        2.0 * linear.memory_read_projection.weight.value["weight"],
+    )
+    np.testing.assert_allclose(gated_drive, linear_drive, rtol=0.0, atol=0.0)
+
+
+def test_gated_rms_memory_read_is_finite_and_reported() -> None:
+    model = LatentWorkspaceModel(
+        _memory_config(memory_read_transform="gated_rms")
+    )
+    raw_read = jnp.asarray([[0.0, 0.0]], dtype=jnp.float32)
+    workspace = jnp.ones((1, 64), dtype=jnp.float32)
+
+    drive = model.memory_read_projection(
+        raw_read, latent_workspace_module._unit_l2_cap(workspace)
+    )
+    report = model.associative_memory_report()
+
+    assert np.all(np.isfinite(np.asarray(drive)))
+    np.testing.assert_array_equal(drive, 0.0)
+    assert report.read_transform == "gated_rms"
+    assert report.read_component_type == "braintrace.nn.GatedProjection"
+    model.memory_read.value = jnp.asarray([[3.0, 4.0]], dtype=jnp.float32)
+    model.memory_drive.value = jnp.ones((1, 64), dtype=jnp.float32)
+    model.memory_read_gate.value = jnp.asarray([[0.5, 0.999]], dtype=jnp.float32)
+    diagnostics = model.memory_read_diagnostics()
+    assert diagnostics["memory_read_rms"] == pytest.approx(math.sqrt(12.5))
+    assert diagnostics["memory_drive_rms"] == pytest.approx(1.0)
+    assert diagnostics["gate_saturation_fraction"] == pytest.approx(0.5)
+    assert diagnostics["gate_channel_activation"] == pytest.approx([0.5, 0.999])
+    model.reset_state()
+    assert model.memory_read_diagnostics()["memory_read_rms"] == 0.0
+
+
+def test_gated_memory_read_parameters_are_trace_compiled() -> None:
+    model = LatentWorkspaceModel(_memory_config(memory_read_transform="gated"))
+
+    learner = compile_etrace(model)
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert ("memory_read_projection", "gate_weight") in paths
+    assert ("memory_read_projection", "gate_bias") in paths
+    assert ("memory_read_projection", "output_weight") in paths
 
 
 def test_zero_width_compact_readout_is_byte_identical_to_raw_legacy_formula() -> None:

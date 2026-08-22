@@ -48,6 +48,7 @@ from typing import Any
 from ._conv import Conv1d, Conv2d, Conv3d
 from ._attention import AttentionResidual
 from ._embedding import Embedding
+from ._gated import GatedProjection
 from ._linear import Linear, GroupedLinear, SignedWLinear, ScaledWSLinear, SparseLinear, LoRA
 from ._readout import LeakyRateReadout
 from ._rnn import (
@@ -59,6 +60,7 @@ __all__ = [
     # conv
     'Conv1d', 'Conv2d', 'Conv3d',
     'AttentionResidual',
+    'GatedProjection',
     # linear
     'Linear', 'GroupedLinear', 'SignedWLinear', 'ScaledWSLinear', 'SparseLinear', 'LoRA',
     # embedding

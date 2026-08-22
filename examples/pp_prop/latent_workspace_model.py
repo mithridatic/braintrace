@@ -78,6 +78,9 @@ MEMORY_KEY_RFF_GAMMA = 2.0
 #: Storage-coding trainability levels, in increasing order of what learns.
 MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write", "learned_update")
 
+#: Associative read transforms. ``linear`` is the historical projection.
+MEMORY_READ_TRANSFORMS = ("linear", "gated", "gated_rms")
+
 #: Codings whose *retrieval* key projection is a trainable ETP layer.
 LEARNED_RETRIEVAL_KEY_CODINGS = (
     "learned_keys",
@@ -206,6 +209,10 @@ class ModelConfig:
         the legacy reservoir architecture byte-compatible.
     memory_decay : float, default=1.0
         Self-decay of contextual memory on valid demonstration ticks.
+    memory_read_transform : {"linear", "gated", "gated_rms"}, default="linear"
+        Associative-read projection. Gated modes use the unit-L2-capped
+        previous workspace as gate input; ``gated_rms`` additionally
+        RMS-normalizes the read inside the fused ETP primitive.
     demonstration_phase_index, query_phase_index : int, optional
         Event channels identifying demonstration and query rows in memory mode.
     input_side_valid_index, output_side_valid_index : int, optional
@@ -334,6 +341,7 @@ class ModelConfig:
     excitatory_fraction: float = 0.8
     context_memory_width: int = 0
     memory_decay: float = 1.0
+    memory_read_transform: Literal["linear", "gated", "gated_rms"] = "linear"
     demonstration_phase_index: int | None = None
     query_phase_index: int | None = None
     input_side_valid_index: int | None = None
@@ -433,6 +441,18 @@ class ModelConfig:
             "memory_decay",
             _unit_interval_real(self.memory_decay, "memory_decay"),
         )
+        if not isinstance(self.memory_read_transform, str):
+            raise TypeError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform not in MEMORY_READ_TRANSFORMS:
+            raise ValueError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform != "linear" and self.context_memory_width == 0:
+            raise ValueError(
+                "memory_read_transform requires a positive context_memory_width"
+            )
         object.__setattr__(
             self,
             "copy_residual_gain",
@@ -783,6 +803,7 @@ class AssociativeMemoryReport:
     write_component_type: str | None
     query_component_type: str | None
     read_component_type: str | None
+    read_transform: str | None = None
     update_feature_width: int | None = None
     update_feature_order: tuple[str, ...] | None = None
     update_projection_sha256: str | None = None
@@ -862,6 +883,8 @@ class AssociativeMemoryReport:
             metadata only in associative-workspace mode.
         """
         report = asdict(self)
+        if self.read_transform is None:
+            report.pop("read_transform")
         if self.update_routing is None:
             for name in (
                 "update_feature_width",
@@ -2376,15 +2399,29 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 ),
                 b_init=None,
             )
-            self.memory_read_projection = braintrace.nn.Linear(
-                memory_width,
-                config.neuron_count,
-                w_init=(
-                    read_random.randn(memory_width, config.neuron_count)
-                    / math.sqrt(memory_width)
-                ),
-                b_init=None,
+            read_weights = (
+                read_random.randn(memory_width, config.neuron_count)
+                / math.sqrt(memory_width)
             )
+            if config.memory_read_transform == "linear":
+                self.memory_read_projection = braintrace.nn.Linear(
+                    memory_width,
+                    config.neuron_count,
+                    w_init=read_weights,
+                    b_init=None,
+                )
+            else:
+                self.memory_read_projection = braintrace.nn.GatedProjection(
+                    memory_width,
+                    config.neuron_count,
+                    config.neuron_count,
+                    normalize=config.memory_read_transform == "gated_rms",
+                    gate_weight_init=jnp.zeros(
+                        (config.neuron_count, memory_width), dtype=jnp.float32
+                    ),
+                    gate_bias_init=jnp.zeros((memory_width,), dtype=jnp.float32),
+                    output_weight_init=2.0 * read_weights,
+                )
             self.context_memory = brainstate.HiddenState(
                 jnp.zeros(
                     (
@@ -2403,6 +2440,17 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             )
             self.memory_read = brainstate.HiddenState(
                 jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
+            )
+            if config.memory_read_transform != "linear":
+                self.memory_read_gate = brainstate.HiddenState(
+                    jnp.zeros(
+                        (config.batch_size, memory_width), dtype=jnp.float32
+                    )
+                )
+            self.memory_drive = brainstate.HiddenState(
+                jnp.zeros(
+                    (config.batch_size, config.neuron_count), dtype=jnp.float32
+                )
             )
             self.workspace_carrier = brainstate.HiddenState(
                 jnp.zeros((config.batch_size, config.neuron_count), dtype=jnp.float32)
@@ -2955,6 +3003,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 write_component_type=None,
                 query_component_type=None,
                 read_component_type=None,
+                read_transform=None,
             )
         update_projection_sha256 = None
         if self.config.memory_coding == "learned_update":
@@ -2989,7 +3038,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 )
             ),
             query_component_type="braintrace.nn.Linear",
-            read_component_type="braintrace.nn.Linear",
+            read_component_type=(
+                "braintrace.nn.Linear"
+                if self.config.memory_read_transform == "linear"
+                else "braintrace.nn.GatedProjection"
+            ),
+            read_transform=self.config.memory_read_transform,
             update_feature_width=(
                 len(self.config.memory_update_indices)
                 if self.config.memory_coding == "learned_update"
@@ -3012,6 +3066,42 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 else None
             ),
         )
+
+    def memory_read_diagnostics(self) -> dict[str, object]:
+        """Return final-state associative-read activation diagnostics.
+
+        Returns
+        -------
+        dict of str to object
+            Read and neuron-drive RMS plus gated-channel activation and
+            saturation. Linear reads report no gate-specific values.
+        """
+        if not self.config.memory_enabled:
+            return {
+                "memory_read_rms": 0.0,
+                "memory_drive_rms": 0.0,
+                "gate_saturation_fraction": None,
+                "gate_channel_activation": None,
+            }
+        read = np.asarray(self.memory_read.value, dtype=np.float64)
+        drive = np.asarray(self.memory_drive.value, dtype=np.float64)
+        gate = (
+            None
+            if self.config.memory_read_transform == "linear"
+            else np.asarray(self.memory_read_gate.value, dtype=np.float64)
+        )
+        return {
+            "memory_read_rms": float(np.sqrt(np.mean(np.square(read)))),
+            "memory_drive_rms": float(np.sqrt(np.mean(np.square(drive)))),
+            "gate_saturation_fraction": (
+                None
+                if gate is None
+                else float(np.mean((gate <= 0.01) | (gate >= 0.99)))
+            ),
+            "gate_channel_activation": (
+                None if gate is None else np.mean(gate, axis=0).tolist()
+            ),
+        }
 
     def reset_state(self, batch_size: int | None = None, **_: object) -> None:
         """Reset every inference state without modifying any parameter.
@@ -3047,6 +3137,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.query_encoding.value = zero_query
             self.reasoning_query.value = zero_query
             self.memory_read.value = zero_query
+            if self.config.memory_read_transform != "linear":
+                self.memory_read_gate.value = jnp.zeros(
+                    (self.config.batch_size, memory_width), dtype=jnp.float32
+                )
+            self.memory_drive.value = jnp.zeros(
+                (self.config.batch_size, self.config.neuron_count),
+                dtype=jnp.float32,
+            )
             self.workspace_carrier.value = jnp.zeros(
                 (self.config.batch_size, self.config.neuron_count),
                 dtype=jnp.float32,
@@ -3668,7 +3766,21 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 jax.lax.stop_gradient(raw_read),
                 self.memory_read.value,
             )
-            memory_drive = self.memory_read_projection(raw_read)
+            if self.config.memory_read_transform == "linear":
+                memory_drive = self.memory_read_projection(raw_read)
+            else:
+                gate_input = _unit_l2_cap(previous_workspace)
+                memory_drive = self.memory_read_projection(raw_read, gate_input)
+                self.memory_read_gate.value = jnp.where(
+                    reasoning_gate[:, None],
+                    self.memory_read_projection.gate_activation(gate_input),
+                    self.memory_read_gate.value,
+                )
+            self.memory_drive.value = jnp.where(
+                reasoning_gate[:, None],
+                jax.lax.stop_gradient(memory_drive),
+                self.memory_drive.value,
+            )
         with brainstate.environ.context(dt=self.config.time_step_ms * u.ms):
             self.ff_syn(event)
             recurrent_spikes = jnp.where(
