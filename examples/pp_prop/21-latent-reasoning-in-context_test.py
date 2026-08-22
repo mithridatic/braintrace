@@ -2822,19 +2822,101 @@ def test_scoring_rejects_non_model_candidate_provenance(example, monkeypatch):
         example._score_windows(compact, records, color_rank=4, decoder_mode="legacy_cp")
 
 
-def test_primary_evaluation_has_no_rule_proposal_path(example):
-    evaluate_source = ast.get_source_segment(
-        EXAMPLE.read_text(encoding="utf-8"),
-        next(
-            node
-            for node in ast.parse(EXAMPLE.read_text(encoding="utf-8")).body
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-            and node.name == "_evaluate"
-        ),
+def test_model_only_mode_admits_no_rule_proposal(example):
+    """``model_only`` must reach the rule channel on no code path."""
+
+    config = example.ExperimentConfig.smoke_config()
+    assert config.primary_candidate_mode == "model_only"
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))[:2]
+    compact = np.zeros((TEST_DEPTH_COUNT, 2, 340), dtype=np.float32)
+    metrics, details = example._score_windows(
+        compact, records, color_rank=4, decoder_mode="legacy_cp"
     )
-    assert evaluate_source is not None
-    assert "_rule_proposals" not in evaluate_source
-    assert "verified_rule_candidates" not in evaluate_source
+    for rows in details.values():
+        for row in rows:
+            assert row["primary_candidate_mode"] == "model_only"
+            assert all(
+                candidate["provenance"] == "model" for candidate in row["candidates"]
+            )
+    assert example._submission_policy_name("model_only") == example.SUBMISSION_POLICY
+
+
+def test_rule_then_model_reports_its_own_policy(example):
+    """A rule-assisted submission may never describe itself as model-only."""
+
+    assert example._submission_policy_name("rule_then_model") == (
+        example.RULE_SUBMISSION_POLICY
+    )
+    assert example._submission_policy_name("rule_then_model") != (
+        example.SUBMISSION_POLICY
+    )
+
+
+def test_admitted_rule_takes_slot_one_and_keeps_the_model_best_grid(example):
+    """The merge never displaces the model's own best grid from the budget."""
+
+    class Candidate:
+        def __init__(self, value):
+            self.grid = np.full((1, 1), value, dtype=np.int32)
+
+    payloads = [
+        {"grid": [[1]], "provenance": "model", "rank": 1, "source_checkpoint": 60},
+        {"grid": [[2]], "provenance": "model", "rank": 2, "source_checkpoint": 60},
+    ]
+    grids, merged = example._merge_rule_candidate(
+        ("id|tile2x2", np.full((1, 1), 7, dtype=np.int32)),
+        [Candidate(1), Candidate(2)],
+        payloads,
+    )
+    assert [int(grid[0, 0]) for grid in grids] == [7, 1]
+    assert merged[0]["provenance"] == "rule"
+    assert merged[0]["rule_name"] == "id|tile2x2"
+    assert merged[0]["selection_role"] == "demonstration_verified_rule"
+    assert merged[1]["provenance"] == "model"
+    assert [item["rank"] for item in merged] == [1, 2]
+
+
+def test_absent_rule_leaves_both_model_candidates_submitted(example):
+    class Candidate:
+        def __init__(self, value):
+            self.grid = np.full((1, 1), value, dtype=np.int32)
+
+    payloads = [
+        {"grid": [[1]], "provenance": "model", "rank": 1},
+        {"grid": [[2]], "provenance": "model", "rank": 2},
+    ]
+    grids, merged = example._merge_rule_candidate(
+        None, [Candidate(1), Candidate(2)], payloads
+    )
+    assert [int(grid[0, 0]) for grid in grids] == [1, 2]
+    assert [item["provenance"] for item in merged] == ["model", "model"]
+
+
+def test_rule_proposals_are_empty_without_demonstrations(example):
+    """``no_context`` blanks the demonstrations, so no rule may be admitted."""
+
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    proposals = example._rule_proposals(records, data.evaluation, arm="no_context")
+    assert len(proposals) == len(records)
+    assert all(proposal is None for proposal in proposals)
+
+
+def test_rule_proposal_count_must_match_the_records(example):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))[:2]
+    compact = np.zeros((TEST_DEPTH_COUNT, 2, 340), dtype=np.float32)
+    with pytest.raises(ValueError, match="rule proposals must match"):
+        example._score_windows(
+            compact,
+            records,
+            color_rank=4,
+            decoder_mode="legacy_cp",
+            rule_proposals=(None,),
+        )
 
 
 def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
