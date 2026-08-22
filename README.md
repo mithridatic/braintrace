@@ -90,6 +90,16 @@ apply the legacy slot ablation. Only the latest completed checkpoint supplies
 the factorized global top-two ARC candidates; exact grid matching remains the
 score, while shape and pixel measures are diagnostics.
 
+The submitted candidates come from `--primary-candidate-mode`. The default
+`model_only` submits the two grids the spiking model decoded. `rule_then_model`
+gives slot one to the cheapest demonstration-verified rule when one is admitted
+and keeps the model's best grid in slot two; the run then reports
+`rule_channel_enabled`, per-candidate provenance, and the model-only metrics
+next to the submitted ones. The highest score measured to date is 28 exact
+queries at pass@1, 29 at pass@2, 26 tasks at strict pass@1 and 27 at strict
+pass@2, over all 400 evaluation tasks. The command and the per-tree breakdown
+are in [the pp_prop example README](examples/pp_prop/README.md#highest-scoring-run).
+
 The source default is 4,096 neurons and 4,194,304 recurrent edges. A run with
 `--recurrent-edges 4096` is reduced-scale evidence and must report
 `actual_full_scale=false`. The implementation targets the public interface of

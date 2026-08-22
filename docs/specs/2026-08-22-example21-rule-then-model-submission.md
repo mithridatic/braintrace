@@ -143,13 +143,37 @@ shape (0.5752) and identical solved tasks, pixel 0.54820 against 0.54839.
 enable `--evaluation-controls`; that is unchanged from the baseline and is not a
 consequence of this change.
 
-## Where this lives
+## On main
 
-`feat/ex21-shape-decode`, worktree `../braintrace-ex21-shape`, branched from
-pre-protocol-v2 `bde13ba`. `main` at `929a831` has neither the flag nor a base
-that reproduces pixel 0.55 at full scale — the protocol-v2 regression is still
-open and is orthogonal to this change. Porting `rule_then_model` to `main` does
-not require fixing that regression first; it would simply ride a weaker model.
+The change is on `main`. `model_only` remains the default everywhere, so doing
+nothing keeps the previous behaviour, policy string, and completion gate exactly
+as they were.
 
-`model_only` remains the default everywhere, so doing nothing keeps the previous
-behaviour, policy string, and completion gate exactly as they were.
+Protocol v2 runs the control arms by default, and `_control_summary` recomputes
+the intact metrics and cross-checks them against the primary. Carrying the rule
+channel on the primary alone made that recomputation disagree and the run failed
+closed. Each arm is therefore fitted on its own demonstrations, which is
+`dfe2412`'s discipline: `no_context` admits nothing, `shuffled_demonstrations`
+is fitted on the deranged pairs, and the arms that ablate neurons rather than
+demonstrations keep the intact proposals.
+
+Measured on `main` with the same recipe and seed, at effort 60:
+
+| run | q@1 | q@2 | task@1 | task@2 | model-only pixel | wall |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `var/example21-rtm-main`, `--no-evaluation-controls` | 27 | 27 | 26 | 26 | 0.0160 | 525 s |
+| `var/example21-rtm-main-full`, controls on | 27 | 27 | 26 | 26 | 0.0160 | 720 s |
+
+The rule channel behaves identically to the pre-v2 tree — 27 admitted, 27 exact,
+none wrong. The one-task difference against the pre-v2 result is entirely the
+model channel, which the protocol-v2 regression takes from pixel 0.548 to 0.016
+and from two exact queries to zero. Reproducing 28/29/26/27 therefore still
+needs `feat/ex21-shape-decode`; that branch is retained.
+
+Neither `main` run reaches `full_structural_qualification`. With controls off
+the only failure is `required_controls_executed`, by construction. With controls
+on the failures are `associative_diagnostics_complete`,
+`repeat_intact_deterministic` and `slot_ablation_pre_intervention_matched` —
+all three predate this change and reproduce on `example21-full-muon-cr2g` and
+`example21-full-default-u390`, which additionally fail two checks this run
+passes.

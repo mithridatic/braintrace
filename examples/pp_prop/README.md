@@ -65,7 +65,7 @@ requested neuron count and update budget.
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
 | 20 | `20-post-training-neuron-pruning.py` | Joint causal neuron/edge lesions and a coordinate-wise locally minimal network after Example 18 |
-| 21 | `21-latent-reasoning-in-context.py` | Standard ARC grids through a pp-prop-trained recurrent LIF network at 0/8/16/32 latent steps |
+| 21 | `21-latent-reasoning-in-context.py` | Standard ARC grids through a pp-prop-trained recurrent LIF network at 0/30/60 latent steps |
 
 ### Post-training neuron-and-edge pruning
 
@@ -121,6 +121,64 @@ That command is intentionally nonqualifying for `actual_full_scale`. Reports
 use schema 2, retain disabled checks as `not_run`, capture live source/config/
 image/resource provenance, and write an artifact checksum sidecar. Historical
 schema-1 bundles remain immutable replay evidence.
+
+#### Highest-scoring run
+
+The submitted ARC score comes from two channels. `--primary-candidate-mode
+rule_then_model` puts the cheapest demonstration-verified rule in candidate slot
+one and keeps the model's own best grid in slot two; `model_only` is the default
+and submits only the two grids the spiking model decoded. A run reports which
+channel it used (`submission_policy.rule_channel_enabled`, per-candidate
+`provenance`) and always retains the model-only metrics alongside the submitted
+ones, so the network's own score stays readable.
+
+The highest score measured to date, 2026-08-22 on one RTX 3080 Ti Laptop, over
+all 400 ARC-AGI-1 evaluation tasks and 419 queries at the submission checkpoint,
+comes from the command below. It needs the GPU image, which carries the indexed
+ARC-AGI-1 sources at `/datasets/arc`. Mount the checkout at `/work` and put it
+first on `PYTHONPATH`, or the image's baked `/opt/braintrace` copy shadows it.
+In Git Bash prefix the whole command with `MSYS_NO_PATHCONV=1`, or `-w /work` is
+rewritten into a Windows path and docker refuses to start.
+
+    docker run --rm --gpus all \
+      -v "$(pwd):/work" -v braintrace-example21-jax-cache:/cache/jax \
+      -w /work -e PYTHONPATH=/work -e JAX_COMPILATION_CACHE_DIR=/cache/jax \
+      -e XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 \
+      braintrace-example21:b75b834 \
+      python /work/examples/pp_prop/21-latent-reasoning-in-context.py \
+        --source-manifest /datasets/arc/example21-sources.json \
+        --output-dir /work/var/example21-rtm \
+        --device gpu --seed 31337 --neurons 4096 --latent-steps 60 \
+        --training-updates 260 --training-chunk-size 5 --training-batch-size 32 \
+        --copy-residual-gain 2.0 --row-head-carrier-scale 0.0 \
+        --primary-candidate-mode rule_then_model \
+        --parameter-checkpoint /work/var/example21-rtm-ckpt.npz
+
+| tree | q@1 | q@2 | task@1 | task@2 | model-only | wall |
+| --- | ---: | ---: | ---: | ---: | --- | ---: |
+| `feat/ex21-shape-decode` (pre-v2 base) | **28** | **29** | **26** | **27** | 1 / 2 / 0 / 1 | 523 s |
+| `main` (protocol v2), `--no-evaluation-controls` | 27 | 27 | 26 | 26 | 0 / 0 / 0 / 0 | 525 s |
+| `main` (protocol v2), controls on | 27 | 27 | 26 | 26 | 0 / 0 / 0 / 0 | 720 s |
+
+The rule channel admitted a rule on 27 of 419 queries and was exact on all 27 in
+every one of those runs; no admitted rule was wrong, so the channel never cost a
+candidate slot. The difference between the rows is the model channel: protocol
+v2 regresses `row_refinement` at full scale (pixel 0.016 against 0.548), so on
+`main` the model contributes nothing and only the pre-v2 tree reaches 28/29.
+Reproducing the top row needs that tree; the command is otherwise identical.
+
+Controls are on by default. `--no-evaluation-controls` is the faster run above
+and fails `required_controls_executed` by construction. With controls on, `main`
+also fails `associative_diagnostics_complete`, `repeat_intact_deterministic`,
+and `slot_ablation_pre_intervention_matched`; those predate the rule channel and
+reproduce on `example21-full-muon-cr2g` and `example21-full-default-u390`.
+
+Both channels read only the demonstrations the ARC protocol supplies at test
+time. A rule is admitted only when it reproduces every demonstration pair
+exactly, and each evaluation arm is fitted on the demonstrations that arm
+actually has, so `no_context` admits nothing and `shuffled_demonstrations` is
+fitted on the deranged pairs. See
+`docs/specs/2026-08-22-example21-rule-then-model-submission.md`.
 
 The example targets the public interface described by arXiv 2608.09888. The
 paper does not disclose enough private architecture, data, training details,
