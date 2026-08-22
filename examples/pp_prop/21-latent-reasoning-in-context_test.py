@@ -2953,7 +2953,7 @@ def test_unavailable_shuffle_queries_are_excluded_from_control_statistics(
     recurrent = np.zeros_like(voltage)
     captured: dict[str, object] = {}
 
-    def score(subset_compact, subset_records, color_rank, decoder_mode):
+    def score(subset_compact, subset_records, color_rank, decoder_mode, *args):
         captured["scored_records"] = len(subset_records)
         captured["scored_batch"] = subset_compact.shape[1]
         captured["decoder_mode"] = decoder_mode

@@ -3785,6 +3785,8 @@ def _control_summary(
     metadata: Sequence[dict[str, object]] | None = None,
     checkpoints: Sequence[int] = CHECKPOINTS,
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
+    rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
 ) -> dict[str, object]:
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
@@ -3801,6 +3803,16 @@ def _control_summary(
 
     applicable_intact = subset(intact)
     applicable_control = subset(control)
+
+    def subset_rules(
+        proposals: Sequence[tuple[str, np.ndarray] | None] | None,
+    ) -> tuple[tuple[str, np.ndarray] | None, ...] | None:
+        if proposals is None:
+            return None
+        if len(proposals) != len(records):
+            raise ValueError("control rule proposals must match the records")
+        return tuple(proposals[index] for index in applicable_indices)
+
     if applicable_records:
         metrics, control_checkpoint_queries = _score_windows(
             applicable_control[0],
@@ -3809,6 +3821,7 @@ def _control_summary(
             decoder_mode,
             checkpoints,
             submission_checkpoint,
+            subset_rules(rule_proposals),
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
             applicable_intact[0],
@@ -3817,6 +3830,7 @@ def _control_summary(
             decoder_mode,
             checkpoints,
             submission_checkpoint,
+            subset_rules(intact_rule_proposals),
         )
         if (
             len(applicable_records) == len(records)
@@ -4898,9 +4912,19 @@ def _evaluate(
         intact[0], records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
     )
+    intact_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
+    shuffled_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
+    no_context_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
     if config.primary_candidate_mode == "rule_then_model":
         clear_rule_cache()
         intact_rules = _rule_proposals(records, data.evaluation, arm="intact")
+        if config.evaluation_controls:
+            shuffled_rules = _rule_proposals(
+                records, data.evaluation, arm="shuffled"
+            )
+            no_context_rules = _rule_proposals(
+                records, data.evaluation, arm="no_context"
+            )
         frozen_metrics, frozen_checkpoint_queries = _score_windows(
             intact[0], records, config.color_rank, config.decoder_mode,
             checkpoints, submission_checkpoint, intact_rules,
@@ -5044,6 +5068,8 @@ def _evaluate(
         intact_meta,
         checkpoints,
         submission_checkpoint,
+        intact_rules,
+        intact_rules,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     if protocol_v2:
@@ -5094,6 +5120,8 @@ def _evaluate(
         no_context_meta,
         checkpoints,
         submission_checkpoint,
+        no_context_rules,
+        intact_rules,
     )
     del no_context
 
@@ -5114,6 +5142,8 @@ def _evaluate(
         shuffled_meta,
         checkpoints,
         submission_checkpoint,
+        shuffled_rules,
+        intact_rules,
     )
     del shuffled
 
@@ -5153,6 +5183,8 @@ def _evaluate(
             intact_meta,
             checkpoints,
             submission_checkpoint,
+            intact_rules,
+            intact_rules,
         )
         state_hold_result["r30_r60_equal_r0"] = bool(
             np.array_equal(state_hold[0][0], state_hold[0][1])
@@ -5169,6 +5201,8 @@ def _evaluate(
             intact_meta,
             checkpoints,
             submission_checkpoint,
+            intact_rules,
+            intact_rules,
         )
         del state_hold, recurrent_lesion
     else:
@@ -5202,6 +5236,8 @@ def _evaluate(
         intact_meta,
         checkpoints,
         submission_checkpoint,
+        intact_rules,
+        intact_rules,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
