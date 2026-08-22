@@ -400,6 +400,10 @@ class ExperimentConfig:
     effort_schedule : {"uniform", "progressive"}
         Training-depth sampling schedule. Progressive introduces checkpoints
         in contiguous phases; uniform preserves the historical global shuffle.
+    effort_distillation_weight : float
+        Nonnegative deeper-effort self-distillation weight. The default zero
+        preserves the supervised objective. Positive values remain unavailable
+        until the preregistered R60 teacher gate passes.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
@@ -515,6 +519,7 @@ class ExperimentConfig:
     lr_schedule: LrScheduleName = "cosine"
     lr_warmup_fraction: float = 0.0
     effort_schedule: EffortScheduleName = "uniform"
+    effort_distillation_weight: float = 0.0
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
@@ -596,6 +601,17 @@ class ExperimentConfig:
             raise ValueError("lr_schedule must be 'constant' or 'cosine'")
         if self.effort_schedule not in ("uniform", "progressive"):
             raise ValueError("effort_schedule must be 'uniform' or 'progressive'")
+        distillation_weight = _nonnegative_real(
+            self.effort_distillation_weight, "effort_distillation_weight"
+        )
+        if distillation_weight > 0.0:
+            raise ValueError(
+                "effort_distillation_weight requires a qualified R60 teacher; "
+                "the Stage 6 teacher gate has not been satisfied"
+            )
+        object.__setattr__(
+            self, "effort_distillation_weight", distillation_weight
+        )
         warmup = self.lr_warmup_fraction
         if isinstance(warmup, (bool, np.bool_)) or not isinstance(warmup, Real):
             raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
@@ -845,6 +861,7 @@ class ExperimentConfig:
         lr_schedule: LrScheduleName = "cosine",
         lr_warmup_fraction: float = 0.0,
         effort_schedule: EffortScheduleName = "uniform",
+        effort_distillation_weight: float = 0.0,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "latent_row_decode",
         runtime_profile: bool = False,
@@ -894,6 +911,9 @@ class ExperimentConfig:
             Leading fraction of updates used for linear cosine warmup.
         effort_schedule : {"uniform", "progressive"}
             Training-depth sampling schedule.
+        effort_distillation_weight : float
+            Deeper-effort self-distillation weight. Only zero is accepted
+            while the Stage 6 teacher gate is closed.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -940,6 +960,7 @@ class ExperimentConfig:
             lr_schedule=lr_schedule,
             lr_warmup_fraction=lr_warmup_fraction,
             effort_schedule=effort_schedule,
+            effort_distillation_weight=effort_distillation_weight,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -2321,6 +2342,7 @@ def _memory_architecture_report(
         "context_memory_width": config.context_memory_width,
         "memory_decay": config.memory_decay,
         "effort_schedule": config.effort_schedule,
+        "effort_distillation_weight": config.effort_distillation_weight,
         "raw_key_feature_width": key_width,
         "raw_value_feature_width": value_width,
         "context_memory_bytes_per_example": bytes_per_example,
@@ -2497,6 +2519,7 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
         "learning_rate": config.learning_rate,
         "lr_schedule": config.lr_schedule,
         "lr_warmup_fraction": config.lr_warmup_fraction,
+        "effort_distillation_weight": config.effort_distillation_weight,
         "weight_decay": config.weight_decay,
     }
     if config.optimizer == "muon":
@@ -2715,6 +2738,7 @@ def _write_parameter_checkpoint(
     path: pathlib.Path,
     *,
     effort_schedule: EffortScheduleName = "uniform",
+    effort_distillation_weight: float = 0.0,
 ) -> str:
     """Write trainable parameter leaves and return the file digest.
 
@@ -2737,6 +2761,7 @@ def _write_parameter_checkpoint(
                     model.config.latent_residual_block_size
                 ),
                 "effort_schedule": effort_schedule,
+                "effort_distillation_weight": effort_distillation_weight,
             }
         ),
         dtype=np.uint8,
@@ -2756,6 +2781,7 @@ def _read_parameter_checkpoint(
     path: pathlib.Path,
     *,
     effort_schedule: EffortScheduleName = "uniform",
+    effort_distillation_weight: float = 0.0,
 ) -> str:
     """Restore parameter leaves written by :func:`_write_parameter_checkpoint`.
 
@@ -2780,6 +2806,7 @@ def _read_parameter_checkpoint(
             architecture.setdefault("latent_residual_block_size", 10)
             architecture.setdefault("effort_schedule", "uniform")
             architecture.setdefault("memory_coding", model.config.memory_coding)
+            architecture.setdefault("effort_distillation_weight", 0.0)
         if architecture != {
             "schema_version": 1,
             "memory_coding": model.config.memory_coding,
@@ -2787,6 +2814,7 @@ def _read_parameter_checkpoint(
             "latent_residual_mixer": model.config.latent_residual_mixer,
             "latent_residual_block_size": model.config.latent_residual_block_size,
             "effort_schedule": effort_schedule,
+            "effort_distillation_weight": effort_distillation_weight,
         }:
             raise ValueError("parameter checkpoint does not match model architecture")
     restored = [jnp.asarray(stored[name]) for name in names]
@@ -2811,7 +2839,10 @@ def _restore_initial_parameters(
     if initial is None or not initial.exists():
         return None
     return _read_parameter_checkpoint(
-        model, initial, effort_schedule=config.effort_schedule
+        model,
+        initial,
+        effort_schedule=config.effort_schedule,
+        effort_distillation_weight=config.effort_distillation_weight,
     )
 
 
@@ -2832,7 +2863,10 @@ def _checkpoint_writer(
     def write(index: int) -> None:
         if (index + 1) % every == 0:
             _write_parameter_checkpoint(
-                model, path, effort_schedule=config.effort_schedule
+                model,
+                path,
+                effort_schedule=config.effort_schedule,
+                effort_distillation_weight=config.effort_distillation_weight,
             )
 
     return write
@@ -2860,6 +2894,11 @@ def _restored_training_report(
         },
         "effort_schedule_policy": config.effort_schedule,
         "effort_schedule": [],
+        "effort_self_distillation": {
+            "enabled": False,
+            "weight": config.effort_distillation_weight,
+            "teacher_gate": "not_satisfied",
+        },
         "losses": [],
         "parameter_sha256_before": _tree_digest(parameter_snapshot(model)),
         "parameter_sha256_after": _tree_digest(parameter_snapshot(model)),
@@ -2908,6 +2947,11 @@ def _train_model(
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
             "optimizer": _optimizer_policy(config),
+            "effort_self_distillation": {
+                "enabled": False,
+                "weight": config.effort_distillation_weight,
+                "teacher_gate": "not_satisfied",
+            },
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in config.training_efforts
@@ -3051,6 +3095,11 @@ def _train_model(
         "losses": np.asarray(losses, dtype=np.float64).tolist(),
         "effort_schedule_policy": config.effort_schedule,
         "effort_schedule": list(schedule.efforts),
+        "effort_self_distillation": {
+            "enabled": False,
+            "weight": config.effort_distillation_weight,
+            "teacher_gate": "not_satisfied",
+        },
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
         "parameters_moved": before != after,
@@ -6426,6 +6475,10 @@ def _render_report(result: dict[str, object]) -> str:
         ),
         training_line,
         (
+            "Effort self-distillation: "
+            f"{training.get('effort_self_distillation', {})}."
+        ),
+        (
             f"Training exposure: {training.get('sampled_base_task_count', 'unreported')} "
             "unique base tasks and "
             f"{training.get('sampled_base_fold_count', 'unreported')} unique "
@@ -6961,7 +7014,10 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                 model,
                 config,
                 _read_parameter_checkpoint(
-                    model, checkpoint, effort_schedule=config.effort_schedule
+                    model,
+                    checkpoint,
+                    effort_schedule=config.effort_schedule,
+                    effort_distillation_weight=config.effort_distillation_weight,
                 ),
             )
             _emit_progress("training", 1, 1, training_started)
@@ -7002,6 +7058,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
                     model,
                     checkpoint,
                     effort_schedule=config.effort_schedule,
+                    effort_distillation_weight=config.effort_distillation_weight,
                 )
         phase_seconds["training"] = time.perf_counter() - training_started
         evaluation_started = time.perf_counter()
@@ -7239,6 +7296,7 @@ def _parser() -> argparse.ArgumentParser:
         choices=("uniform", "progressive"),
         default="uniform",
     )
+    parser.add_argument("--effort-distillation-weight", type=float, default=0.0)
     parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
@@ -7312,6 +7370,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             lr_schedule=args.lr_schedule,
             lr_warmup_fraction=args.lr_warmup_fraction,
             effort_schedule=args.effort_schedule,
+            effort_distillation_weight=args.effort_distillation_weight,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -7357,6 +7416,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         lr_schedule=args.lr_schedule,
         lr_warmup_fraction=args.lr_warmup_fraction,
         effort_schedule=args.effort_schedule,
+        effort_distillation_weight=args.effort_distillation_weight,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,

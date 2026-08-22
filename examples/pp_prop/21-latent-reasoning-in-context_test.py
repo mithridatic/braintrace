@@ -890,6 +890,62 @@ def test_effort_schedule_round_trips_config_cli_and_training_report(
         example.ExperimentConfig(structural_only=True, effort_schedule="staged")
 
 
+def test_effort_distillation_setting_round_trips_and_fails_closed(
+    example, monkeypatch
+):
+    default = example.ExperimentConfig(structural_only=True)
+    cli = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--effort-distillation-weight", "0"]
+        )
+    )
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+
+    assert default.effort_distillation_weight == 0.0
+    assert cli.to_dict()["effort_distillation_weight"] == 0.0
+    assert example._optimizer_policy(cli)["effort_distillation_weight"] == 0.0
+    architecture = example._memory_architecture_report(
+        cli,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=1,
+    )
+    assert architecture["effort_distillation_weight"] == 0.0
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
+    restored = example._restored_training_report(SimpleNamespace(), cli, "digest")
+    assert restored["effort_self_distillation"] == {
+        "enabled": False,
+        "weight": 0.0,
+        "teacher_gate": "not_satisfied",
+    }
+    report = example._render_report(
+        {
+            "configuration": cli.to_dict(),
+            "training": restored,
+            "evaluation": {},
+            "qualification": {},
+        }
+    )
+    assert "Effort self-distillation" in report
+    assert "teacher_gate" in report
+
+    for value in (-0.1, float("nan"), float("inf"), True):
+        with pytest.raises(ValueError, match="finite and nonnegative"):
+            example.ExperimentConfig(
+                structural_only=True, effort_distillation_weight=value
+            )
+    with pytest.raises(ValueError, match="qualified R60 teacher"):
+        example.ExperimentConfig(
+            structural_only=True, effort_distillation_weight=0.1
+        )
+    with pytest.raises(ValueError, match="qualified R60 teacher"):
+        example._config_from_args(
+            example._parser().parse_args(
+                ["--structural-only", "--effort-distillation-weight", "0.1"]
+            )
+        )
+
+
 def test_parameter_travel_budget_halves_under_cosine_schedule(example):
     constant = example.ExperimentConfig(
         structural_only=True, optimizer="adam", lr_schedule="constant"
@@ -2192,7 +2248,8 @@ def test_memory_architecture_report_records_raw_width_and_dense_state_cost(examp
             "context_memory_width": 0,
             "memory_decay": 1.0,
             "effort_schedule": "uniform",
-        "raw_key_feature_width": 0,
+            "effort_distillation_weight": 0.0,
+            "raw_key_feature_width": 0,
         "raw_value_feature_width": 0,
         "context_memory_bytes_per_example": 0,
         "context_memory_bytes_training_batch": 0,
@@ -5175,6 +5232,27 @@ def test_effort_schedule_participates_in_checkpoint_compatibility(
         )
     assert example._read_parameter_checkpoint(
         model, path, effort_schedule="progressive"
+    )
+
+
+def test_effort_distillation_weight_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "distillation-parameters.npz"
+    example._write_parameter_checkpoint(
+        model, path, effort_distillation_weight=0.1
+    )
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(
+            model, path, effort_distillation_weight=0.0
+        )
+    assert example._read_parameter_checkpoint(
+        model, path, effort_distillation_weight=0.1
     )
 
 
