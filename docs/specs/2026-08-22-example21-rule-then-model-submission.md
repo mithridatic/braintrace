@@ -114,11 +114,12 @@ experiment and is not attempted here.
 
 ## Measured result
 
-Run `var/example21-rtm-s31337`, 2026-08-22. Pre-protocol-v2 code
+Run `var/example21-rtm-final`, 2026-08-22 (reproduced at the branch tip; the
+earlier `var/example21-rtm-s31337` returned the same four scores). Pre-protocol-v2 code
 (`bde13ba` + this change), full scale (4,096 neurons / 4,194,304 recurrent
 edges), Muon, cosine, weight decay 0.1, 260 updates, chunk 5, batch 32, seed
 31337, `--copy-residual-gain 2.0 --row-head-carrier-scale 0.0`,
-`--primary-candidate-mode rule_then_model`. Wall clock 466.9 s. 400 tasks,
+`--primary-candidate-mode rule_then_model`. Wall clock 523.3 s. 400 tasks,
 419 queries. `full_structural_qualification` is `true`.
 
 Effort 60, the submitted checkpoint:
