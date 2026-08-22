@@ -140,6 +140,8 @@ from ._op import (
     outer_write,
     attention_residual,
     gated_projection,
+    delta_memory_update,
+    situ_glu,
     register_primitive,
 )
 from ._grad_exponential import GradExpon
@@ -211,6 +213,8 @@ __all__ = [
     'outer_write',
     'attention_residual',
     'gated_projection',
+    'delta_memory_update',
+    'situ_glu',
 
     # ETP primitive class & rule registration
     'ETPPrimitive',

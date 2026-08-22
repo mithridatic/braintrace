@@ -5869,6 +5869,40 @@ def test_learned_write_coding_flag_wires_into_model_config(example):
     assert smoke_config.memory_coding == "learned_write"
 
 
+@pytest.mark.parametrize("coding", ["delta_write", "situ_glu_update"])
+def test_stage5_memory_coding_flags_round_trip(example, coding):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    args = example._parser().parse_args(["--memory-coding", coding])
+    config = example._config_from_args(args)
+    model_config = example._model_config(config, rows, batch_size=2)
+
+    assert config.memory_coding == coding
+    assert config.to_dict()["memory_coding"] == coding
+    assert model_config.memory_coding == coding
+    assert example._memory_architecture_report(
+        config,
+        rows,
+        training_batch_size=2,
+        evaluation_batch_size=1,
+    )["reasoning_mode"] == "associative_workspace"
+
+
+def test_memory_coding_participates_in_checkpoint_metadata(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config(memory_coding="delta_write")
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "delta-write-parameters.npz"
+
+    example._write_parameter_checkpoint(model, path)
+    stored = np.load(path)
+    architecture = json.loads(
+        np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
+    )
+
+    assert architecture["memory_coding"] == "delta_write"
+
+
 def test_trace_engine_cli_threads_into_both_config_layers(example):
     parsed = example._parser().parse_args([])
     assert parsed.trace_engine == "pp_prop"

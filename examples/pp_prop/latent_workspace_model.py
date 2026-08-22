@@ -76,7 +76,14 @@ NEURONS_PER_SLOT = 64
 MEMORY_KEY_RFF_GAMMA = 2.0
 
 #: Storage-coding trainability levels, in increasing order of what learns.
-MEMORY_CODINGS = ("frozen", "learned_keys", "learned_write", "learned_update")
+MEMORY_CODINGS = (
+    "frozen",
+    "learned_keys",
+    "learned_write",
+    "learned_update",
+    "delta_write",
+    "situ_glu_update",
+)
 
 #: Associative read transforms. ``linear`` is the historical projection.
 MEMORY_READ_TRANSFORMS = ("linear", "gated", "gated_rms")
@@ -89,6 +96,8 @@ LEARNED_RETRIEVAL_KEY_CODINGS = (
     "learned_keys",
     "learned_write",
     "learned_update",
+    "delta_write",
+    "situ_glu_update",
 )
 
 #: Eligibility-trace engines the model can compile under.
@@ -115,6 +124,8 @@ _MEMORY_KEY_MAP_NAMES = {
     "learned_keys": "learned_rff_cosine_retrieval_path",
     "learned_write": "learned_rff_cosine_write_and_retrieval",
     "learned_update": "learned_rff_cosine_shared_retrieval",
+    "delta_write": "learned_full_feature_delta_key",
+    "situ_glu_update": "learned_rff_cosine_shared_retrieval",
 }
 
 
@@ -362,7 +373,12 @@ class ModelConfig:
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
     memory_coding: Literal[
-        "frozen", "learned_keys", "learned_write", "learned_update"
+        "frozen",
+        "learned_keys",
+        "learned_write",
+        "learned_update",
+        "delta_write",
+        "situ_glu_update",
     ] = "frozen"
     memory_update_indices: tuple[int, ...] = ()
     memory_update_feature_order: tuple[str, ...] = ()
@@ -610,18 +626,24 @@ class ModelConfig:
         if not isinstance(self.memory_coding, str):
             raise TypeError(
                 "memory_coding must be 'frozen', 'learned_keys', "
-                "'learned_write' or 'learned_update'"
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'"
             )
         if self.memory_coding not in MEMORY_CODINGS:
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
-                "'learned_write' or 'learned_update'"
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError(
                 "memory_coding requires a positive context_memory_width"
             )
-        if self.memory_coding == "learned_update":
+        if self.memory_coding in (
+            "learned_update",
+            "delta_write",
+            "situ_glu_update",
+        ):
             indices = self.memory_update_indices
             if not indices:
                 indices = tuple(
@@ -2408,23 +2430,39 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 value_random.randn(value_width, memory_width) / math.sqrt(value_width),
                 dtype=jnp.float32,
             )
-            self.memory_write_scale = brainstate.ParamState(
-                jnp.ones(
-                    (
-                        (memory_width * memory_width,)
-                        if config.memory_coding == "learned_update"
-                        else (memory_width, memory_width)
-                    ),
-                    dtype=jnp.float32,
+            if config.memory_coding != "delta_write":
+                self.memory_write_scale = brainstate.ParamState(
+                    jnp.ones(
+                        (
+                            (memory_width * memory_width,)
+                            if config.memory_coding
+                            in ("learned_update", "situ_glu_update")
+                            else (memory_width, memory_width)
+                        ),
+                        dtype=jnp.float32,
+                    )
                 )
-            )
             if config.memory_coding in LEARNED_RETRIEVAL_KEY_CODINGS:
-                self.memory_key_projection = braintrace.nn.Linear(
-                    key_width,
-                    memory_width,
-                    w_init=MEMORY_KEY_RFF_GAMMA * self._memory_key_basis,
-                    b_init=self._memory_key_bias,
-                )
+                if config.memory_coding == "delta_write":
+                    update_width = len(config.memory_update_indices)
+                    delta_random = brainstate.random.RandomState(config.seed + 107)
+                    delta_key_init = (
+                        delta_random.randn(update_width, memory_width)
+                        / math.sqrt(update_width)
+                    )
+                    self.memory_key_projection = braintrace.nn.Linear(
+                        update_width,
+                        memory_width,
+                        w_init=delta_key_init,
+                        b_init=jnp.zeros((memory_width,), dtype=jnp.float32),
+                    )
+                else:
+                    self.memory_key_projection = braintrace.nn.Linear(
+                        key_width,
+                        memory_width,
+                        w_init=MEMORY_KEY_RFF_GAMMA * self._memory_key_basis,
+                        b_init=self._memory_key_bias,
+                    )
             if config.memory_coding == "learned_write":
                 # Write-side projections owned by the fused `outer_write`
                 # primitive. They are *separate* parameters from the retrieval
@@ -2450,6 +2488,68 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     memory_width * memory_width,
                     w_init=update_weights,
                     b_init=None,
+                )
+            if config.memory_coding == "delta_write":
+                update_width = len(config.memory_update_indices)
+                delta_value_random = brainstate.random.RandomState(config.seed + 108)
+                delta_control_random = brainstate.random.RandomState(config.seed + 109)
+                self.delta_key_weight = brainstate.ParamState(
+                    jnp.asarray(delta_key_init, dtype=jnp.float32)
+                )
+                self.delta_key_bias = brainstate.ParamState(
+                    jnp.zeros((memory_width,), dtype=jnp.float32)
+                )
+                self.delta_value_weight = brainstate.ParamState(
+                    jnp.asarray(
+                        delta_value_random.randn(update_width, memory_width)
+                        / math.sqrt(update_width),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.delta_beta_weight = brainstate.ParamState(
+                    jnp.asarray(
+                        delta_control_random.randn(update_width, 1)
+                        / math.sqrt(update_width),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.delta_beta_bias = brainstate.ParamState(
+                    jnp.zeros((1,), dtype=jnp.float32)
+                )
+                self.delta_retention_weight = brainstate.ParamState(
+                    jnp.asarray(
+                        delta_control_random.randn(update_width, memory_width)
+                        / math.sqrt(update_width),
+                        dtype=jnp.float32,
+                    )
+                )
+                self.delta_retention_bias = brainstate.ParamState(
+                    jnp.zeros((memory_width,), dtype=jnp.float32)
+                )
+            if config.memory_coding == "situ_glu_update":
+                update_width = len(config.memory_update_indices)
+                situ_gate_random = brainstate.random.RandomState(config.seed + 110)
+                situ_up_random = brainstate.random.RandomState(config.seed + 111)
+                situ_output_random = brainstate.random.RandomState(config.seed + 112)
+                situ_hidden_width = 4 * memory_width
+                self.memory_situ_glu = braintrace.nn.SiTUGLU(
+                    update_width,
+                    situ_hidden_width,
+                    memory_width * memory_width,
+                    gate_weight_init=(
+                        situ_gate_random.randn(update_width, situ_hidden_width)
+                        / math.sqrt(update_width)
+                    ),
+                    up_weight_init=(
+                        situ_up_random.randn(update_width, situ_hidden_width)
+                        / math.sqrt(update_width)
+                    ),
+                    output_weight_init=(
+                        situ_output_random.randn(
+                            situ_hidden_width, memory_width * memory_width
+                        )
+                        / math.sqrt(situ_hidden_width)
+                    ),
                 )
             self.workspace_query_projection = braintrace.nn.Linear(
                 config.neuron_count,
@@ -2495,7 +2595,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 jnp.zeros(
                     (
                         (config.batch_size, memory_width * memory_width)
-                        if config.memory_coding == "learned_update"
+                        if config.memory_coding
+                        in ("learned_update", "situ_glu_update")
                         else (config.batch_size, memory_width, memory_width)
                     ),
                     dtype=jnp.float32,
@@ -2504,6 +2605,10 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.query_encoding = brainstate.HiddenState(
                 jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
             )
+            if config.memory_coding == "delta_write":
+                self.memory_key_phase = brainstate.HiddenState(
+                    jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
+                )
             self.reasoning_query = brainstate.HiddenState(
                 jnp.zeros((config.batch_size, memory_width), dtype=jnp.float32)
             )
@@ -2848,7 +2953,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
-        features = event[..., jnp.asarray(self.config.memory_key_indices)]
+        feature_indices = (
+            self.config.memory_update_indices
+            if self.config.memory_coding == "delta_write"
+            else self.config.memory_key_indices
+        )
+        features = event[..., jnp.asarray(feature_indices)]
         if self.config.memory_coding in LEARNED_RETRIEVAL_KEY_CODINGS:
             phase = self.memory_key_projection(features)
         else:
@@ -2856,8 +2966,16 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 MEMORY_KEY_RFF_GAMMA * (features @ self._memory_key_basis)
                 + self._memory_key_bias
             )
-        scale = math.sqrt(2.0 / self.config.context_memory_width)
-        code = scale * jnp.cos(phase)
+        if self.config.memory_coding == "delta_write":
+            self.memory_key_phase.value = phase
+            phase = self.memory_key_phase.value
+            epsilon = jnp.finfo(phase.dtype).eps
+            code = phase / jnp.maximum(
+                jnp.linalg.norm(phase, axis=-1, keepdims=True), epsilon
+            )
+        else:
+            scale = math.sqrt(2.0 / self.config.context_memory_width)
+            code = scale * jnp.cos(phase)
         assert self.config.input_side_valid_index is not None
         side_valid = event[..., self.config.input_side_valid_index] > 0.5
         return jnp.where(side_valid[:, None], code, jnp.zeros_like(code))
@@ -3023,20 +3141,56 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         Raises
         ------
         RuntimeError
-            If ``memory_coding`` is not ``"learned_update"``.
+            If ``memory_coding`` is not an additive learned-update arm.
         """
 
-        if self.config.memory_coding != "learned_update":
+        if self.config.memory_coding not in ("learned_update", "situ_glu_update"):
             raise RuntimeError(
-                "encode_memory_update requires memory_coding='learned_update'"
+                "encode_memory_update requires an additive learned-update coding"
             )
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
             raise ValueError(f"event must have shape {expected}, got {event.shape}")
         features = event[..., jnp.asarray(self.config.memory_update_indices)]
+        if self.config.memory_coding == "situ_glu_update":
+            return self.memory_situ_glu(features)
         projected = self.memory_update_projection(features)
         return softcap(projected, self.config.memory_value_softcap_beta)
+
+    def encode_delta_memory_candidate(self, event: jax.Array) -> jax.Array:
+        """Return the delta-write candidate memory for one event.
+
+        Parameters
+        ----------
+        event : jax.Array
+            Native batched row event shaped ``(batch, input_width)``.
+
+        Returns
+        -------
+        jax.Array
+            Candidate square associative memory. The caller commits it only on
+            the existing demonstration write gate.
+        """
+        if self.config.memory_coding != "delta_write":
+            raise RuntimeError(
+                "encode_delta_memory_candidate requires memory_coding='delta_write'"
+            )
+        features = event[..., jnp.asarray(self.config.memory_update_indices)]
+        return braintrace.delta_memory_update(
+            self.context_memory.value,
+            features,
+            features,
+            key_weight=self.delta_key_weight.value,
+            key_bias=self.delta_key_bias.value,
+            value_weight=self.delta_value_weight.value,
+            beta_weight=self.delta_beta_weight.value,
+            beta_bias=self.delta_beta_bias.value,
+            retention_weight=self.delta_retention_weight.value,
+            retention_bias=self.delta_retention_bias.value,
+            key_scale=1.0,
+            min_log_decay=-5.0,
+        )
 
     def read_context_memory(self, query: jax.Array | None = None) -> jax.Array:
         """Read the frozen contextual memory with a key-space query.
@@ -3064,7 +3218,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if query.shape != expected:
             raise ValueError(f"query must have shape {expected}, got {query.shape}")
         memory = self.context_memory.value
-        if self.config.memory_coding == "learned_update":
+        if self.config.memory_coding in ("learned_update", "situ_glu_update"):
             width = self.config.context_memory_width
             memory = memory.reshape(self.config.batch_size, width, width)
         return jnp.einsum("bkv,bk->bv", memory, query)
@@ -3081,7 +3235,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         if not self.config.memory_enabled:
             return jnp.zeros((self.config.batch_size, 0, 0), dtype=jnp.float32)
         memory = jnp.asarray(self.context_memory.value)
-        if self.config.memory_coding == "learned_update":
+        if self.config.memory_coding in ("learned_update", "situ_glu_update"):
             width = self.config.context_memory_width
             return memory.reshape(self.config.batch_size, width, width)
         return memory
@@ -3237,16 +3391,51 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             update_projection_sha256 = _array_sha256(
                 self.memory_update_projection.weight.value
             )
+        elif self.config.memory_coding == "situ_glu_update":
+            digest = hashlib.sha256()
+            for state in (
+                self.memory_situ_glu.gate_weight,
+                self.memory_situ_glu.gate_bias,
+                self.memory_situ_glu.up_weight,
+                self.memory_situ_glu.up_bias,
+                self.memory_situ_glu.output_weight,
+            ):
+                digest.update(np.asarray(state.value).tobytes())
+            update_projection_sha256 = digest.hexdigest()
+        elif self.config.memory_coding == "delta_write":
+            digest = hashlib.sha256()
+            for state in (
+                self.delta_key_weight,
+                self.delta_key_bias,
+                self.delta_value_weight,
+                self.delta_beta_weight,
+                self.delta_beta_bias,
+                self.delta_retention_weight,
+                self.delta_retention_bias,
+            ):
+                digest.update(np.asarray(state.value).tobytes())
+            update_projection_sha256 = digest.hexdigest()
         return AssociativeMemoryReport(
             mode="associative_workspace",
             memory_width=self.config.context_memory_width,
-            key_feature_width=len(self.config.memory_key_indices),
-            value_feature_width=len(self.config.memory_value_indices),
+            key_feature_width=(
+                len(self.config.memory_update_indices)
+                if self.config.memory_coding == "delta_write"
+                else len(self.config.memory_key_indices)
+            ),
+            value_feature_width=(
+                len(self.config.memory_update_indices)
+                if self.config.memory_coding == "delta_write"
+                else len(self.config.memory_value_indices)
+            ),
             key_map=_MEMORY_KEY_MAP_NAMES[self.config.memory_coding],
             value_map=(
-                "learned_tanh_projection"
-                if self.config.memory_coding in ("learned_write", "learned_update")
-                else "fixed_tanh_projection"
+                {
+                    "learned_write": "learned_tanh_projection",
+                    "learned_update": "learned_softcap_projection",
+                    "delta_write": "learned_full_feature_linear_value",
+                    "situ_glu_update": "situ_glu_softcapped_update",
+                }.get(self.config.memory_coding, "fixed_tanh_projection")
             ),
             rff_gamma=MEMORY_KEY_RFF_GAMMA,
             key_basis_seed=self.config.seed + 101,
@@ -3259,9 +3448,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 "braintrace.outer_write"
                 if self.config.memory_coding == "learned_write"
                 else (
-                    "braintrace.nn.Linear"
-                    if self.config.memory_coding == "learned_update"
-                    else "braintrace.element_wise"
+                    {
+                        "learned_update": "braintrace.nn.Linear",
+                        "delta_write": "braintrace.delta_memory_update",
+                        "situ_glu_update": "braintrace.nn.SiTUGLU",
+                    }.get(self.config.memory_coding, "braintrace.element_wise")
                 )
             ),
             query_component_type="braintrace.nn.Linear",
@@ -3276,24 +3467,40 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             latent_residual_block_size=self.config.latent_residual_block_size,
             update_feature_width=(
                 len(self.config.memory_update_indices)
-                if self.config.memory_coding == "learned_update"
+                if self.config.memory_coding
+                in ("learned_update", "delta_write", "situ_glu_update")
                 else None
             ),
             update_feature_order=(
                 self.config.memory_update_feature_order
-                if self.config.memory_coding == "learned_update"
+                if self.config.memory_coding
+                in ("learned_update", "delta_write", "situ_glu_update")
                 else None
             ),
             update_projection_sha256=update_projection_sha256,
             update_projection_seed=(
-                self.config.seed + 106
-                if self.config.memory_coding == "learned_update"
+                self.config.seed
+                + {
+                    "learned_update": 106,
+                    "delta_write": 107,
+                    "situ_glu_update": 110,
+                }[self.config.memory_coding]
+                if self.config.memory_coding
+                in ("learned_update", "delta_write", "situ_glu_update")
                 else None
             ),
             update_routing=(
-                "memory_update_projection->context_memory;shared_retrieval_key"
-                if self.config.memory_coding == "learned_update"
-                else None
+                {
+                    "learned_update": (
+                        "memory_update_projection->context_memory;shared_retrieval_key"
+                    ),
+                    "delta_write": (
+                        "delta_memory_update->context_memory;full_feature_query_key"
+                    ),
+                    "situ_glu_update": (
+                        "memory_situ_glu->context_memory;shared_retrieval_key"
+                    ),
+                }.get(self.config.memory_coding)
             ),
         )
 
@@ -3366,7 +3573,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.context_memory.value = jnp.zeros(
                 (
                     (self.config.batch_size, memory_width * memory_width)
-                    if self.config.memory_coding == "learned_update"
+                    if self.config.memory_coding
+                    in ("learned_update", "situ_glu_update")
                     else (self.config.batch_size, memory_width, memory_width)
                 ),
                 dtype=jnp.float32,
@@ -3375,6 +3583,8 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 (self.config.batch_size, memory_width), dtype=jnp.float32
             )
             self.query_encoding.value = zero_query
+            if self.config.memory_coding == "delta_write":
+                self.memory_key_phase.value = zero_query
             self.reasoning_query.value = zero_query
             self.memory_read.value = zero_query
             if self.config.memory_read_transform != "linear":
@@ -3986,8 +4196,18 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             write_gate = demonstration & (input_side_valid | output_side_valid)
             key = self.encode_memory_key(event)
             value = self.encode_memory_value(event)
-            write_scale = braintrace.element_wise(self.memory_write_scale.value)
-            if self.config.memory_coding == "learned_update":
+            if self.config.memory_coding == "delta_write":
+                candidate_memory = self.encode_delta_memory_candidate(event)
+                self.context_memory.value = jnp.where(
+                    write_gate[:, None, None],
+                    candidate_memory,
+                    self.context_memory.value,
+                )
+            elif self.config.memory_coding in (
+                "learned_update",
+                "situ_glu_update",
+            ):
+                write_scale = braintrace.element_wise(self.memory_write_scale.value)
                 learned_update = self.encode_memory_update(event)
                 scaled_update = learned_update * write_scale[None, :]
                 candidate_memory = (
@@ -4000,6 +4220,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     self.context_memory.value,
                 )
             elif self.config.memory_coding == "learned_write":
+                write_scale = braintrace.element_wise(self.memory_write_scale.value)
                 self.context_memory.value = apply_context_memory_write(
                     self.context_memory.value,
                     self.encode_memory_write(event) * write_scale[None, :, :],
@@ -4007,6 +4228,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     decay=self.config.memory_decay,
                 )
             else:
+                write_scale = braintrace.element_wise(self.memory_write_scale.value)
                 write_key = key
                 if self.config.memory_coding == "learned_keys":
                     # The unfused outer product is outside the differentiable

@@ -171,7 +171,14 @@ PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
-MemoryCoding = Literal["frozen", "learned_keys", "learned_write", "learned_update"]
+MemoryCoding = Literal[
+    "frozen",
+    "learned_keys",
+    "learned_write",
+    "learned_update",
+    "delta_write",
+    "situ_glu_update",
+]
 MemoryReadTransform = Literal["linear", "gated", "gated_rms"]
 LatentResidualMixer = Literal["none", "attention_residual"]
 OptimizerName = Literal["adam", "adamw", "muon"]
@@ -340,7 +347,7 @@ class ExperimentConfig:
         Optional attention residual across latent reasoning blocks.
     latent_residual_block_size : int
         Positive latent ticks per residual summary block.
-    memory_coding : {"frozen", "learned_keys", "learned_write"}
+    memory_coding : {"frozen", "learned_keys", "learned_write", "learned_update", "delta_write", "situ_glu_update"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
         makes the key projection a trainable ETP linear layer that learns
@@ -605,10 +612,13 @@ class ExperimentConfig:
             "learned_keys",
             "learned_write",
             "learned_update",
+            "delta_write",
+            "situ_glu_update",
         ):
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
-                "'learned_write' or 'learned_update'"
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'"
             )
         if not isinstance(self.memory_read_transform, str):
             raise TypeError(
@@ -863,7 +873,7 @@ class ExperimentConfig:
             Optional latent-depth residual mixer.
         latent_residual_block_size : int
             Positive latent ticks per summary block.
-        memory_coding : {"frozen", "learned_keys", "learned_write"}
+        memory_coding : {"frozen", "learned_keys", "learned_write", "learned_update", "delta_write", "situ_glu_update"}
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
             Eligibility-trace engine forwarded to the model.
@@ -2720,6 +2730,7 @@ def _write_parameter_checkpoint(
         msgspec.json.encode(
             {
                 "schema_version": 1,
+                "memory_coding": model.config.memory_coding,
                 "memory_read_interval": model.config.memory_read_interval,
                 "latent_residual_mixer": model.config.latent_residual_mixer,
                 "latent_residual_block_size": (
@@ -2768,8 +2779,10 @@ def _read_parameter_checkpoint(
             architecture.setdefault("latent_residual_mixer", "none")
             architecture.setdefault("latent_residual_block_size", 10)
             architecture.setdefault("effort_schedule", "uniform")
+            architecture.setdefault("memory_coding", model.config.memory_coding)
         if architecture != {
             "schema_version": 1,
+            "memory_coding": model.config.memory_coding,
             "memory_read_interval": model.config.memory_read_interval,
             "latent_residual_mixer": model.config.latent_residual_mixer,
             "latent_residual_block_size": model.config.latent_residual_block_size,
@@ -7184,7 +7197,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--latent-residual-block-size", type=int, default=10)
     parser.add_argument(
         "--memory-coding",
-        choices=("frozen", "learned_keys", "learned_write", "learned_update"),
+        choices=(
+            "frozen",
+            "learned_keys",
+            "learned_write",
+            "learned_update",
+            "delta_write",
+            "situ_glu_update",
+        ),
         default=None,
     )
     parser.add_argument(

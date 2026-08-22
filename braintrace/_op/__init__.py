@@ -31,6 +31,7 @@ module. The submodule layout is:
 * :mod:`.outer` — ``etp_outer_write_p``, :func:`outer_write`
 * :mod:`.attention` — ``etp_attention_residual_p``, :func:`attention_residual`
 * :mod:`.gated` — ``etp_gated_projection_p``, :func:`gated_projection`
+* :mod:`.memory` — fused delta-memory and SiTU-GLU primitives
 
 The public surface mirrors the legacy module: every name previously
 exported from ``braintrace._op`` is also available here.
@@ -84,6 +85,12 @@ from .embedding import embedding, etp_emb_p, etp_emb_v_p
 from .grouped import etp_gmm_p, etp_gmv_p, grouped_matmul
 from .gated import etp_gated_projection_p, gated_projection
 from .lora import etp_lora_mm_p, etp_lora_mv_p, lora_matmul
+from .memory import (
+    delta_memory_update,
+    etp_delta_memory_update_p,
+    etp_situ_glu_p,
+    situ_glu,
+)
 from .outer import etp_outer_write_p, outer_write
 from .sparse import etp_sp_mm_p, etp_sp_mv_p, sparse_matmul
 
@@ -145,6 +152,8 @@ __all__ = [
     'etp_outer_write_p',
     'etp_attention_residual_p',
     'etp_gated_projection_p',
+    'etp_delta_memory_update_p',
+    'etp_situ_glu_p',
 
     # user API
     'matmul',
@@ -158,4 +167,6 @@ __all__ = [
     'outer_write',
     'attention_residual',
     'gated_projection',
+    'delta_memory_update',
+    'situ_glu',
 ]

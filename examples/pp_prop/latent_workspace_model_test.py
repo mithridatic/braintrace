@@ -4255,6 +4255,149 @@ def test_learned_update_projection_is_trace_compiled() -> None:
     assert ("memory_key_projection", "weight") in paths
 
 
+@pytest.mark.parametrize("coding", ["delta_write", "situ_glu_update"])
+def test_stage5_memory_codings_validate_and_require_memory(coding: str) -> None:
+    assert _memory_config(memory_coding=coding).memory_coding == coding
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(memory_coding=coding)
+
+
+def test_delta_write_one_sided_rows_are_finite_nonzero_and_distinct() -> None:
+    config = _memory_config(memory_coding="delta_write")
+    input_model = LatentWorkspaceModel(config)
+    output_model = LatentWorkspaceModel(config)
+    input_only = _phase_events(
+        config, jnp.asarray([[1.0, -0.5]]), phase="demonstration"
+    )[0]
+    output_only = jnp.zeros_like(input_only)
+    output_only = output_only.at[:, config.event_valid_index].set(1.0)
+    assert config.demonstration_phase_index is not None
+    assert config.output_side_valid_index is not None
+    output_only = output_only.at[:, config.demonstration_phase_index].set(1.0)
+    output_only = output_only.at[:, config.output_side_valid_index].set(1.0)
+    output_only = output_only.at[:, jnp.asarray(config.memory_value_indices)].set(
+        jnp.asarray([[0.25, 0.75]])
+    )
+
+    input_model.cell_step(input_only, jnp.ones((1,), dtype=jnp.bool_))
+    output_model.cell_step(output_only, jnp.ones((1,), dtype=jnp.bool_))
+    input_memory = np.asarray(input_model.context_memory.value)
+    output_memory = np.asarray(output_model.context_memory.value)
+
+    assert np.all(np.isfinite(input_memory))
+    assert np.all(np.isfinite(output_memory))
+    assert np.linalg.norm(input_memory) > 0.0
+    assert np.linalg.norm(output_memory) > 0.0
+    assert not np.array_equal(input_memory, output_memory)
+    report = input_model.associative_memory_report()
+    assert report.update_projection_seed == config.seed + 107
+    assert len(report.update_projection_sha256 or "") == 64
+
+
+def test_delta_write_false_lane_and_latent_ticks_do_not_mutate_memory() -> None:
+    config = _memory_config(memory_coding="delta_write")
+    model = LatentWorkspaceModel(config)
+    demonstration = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0]]),
+        jnp.asarray([[0.25, 1.0]]),
+        phase="demonstration",
+    )[0]
+    before = np.asarray(model.context_memory.value).copy()
+
+    model.cell_step(demonstration, jnp.zeros((1,), dtype=jnp.bool_))
+    np.testing.assert_array_equal(model.context_memory.value, before)
+    model.cell_step(demonstration, jnp.ones((1,), dtype=jnp.bool_))
+    written = np.asarray(model.context_memory.value).copy()
+    assert not np.array_equal(written, before)
+    model.cell_step(
+        jnp.zeros((1, config.input_width), dtype=jnp.float32),
+        jnp.ones((1,), dtype=jnp.bool_),
+    )
+    np.testing.assert_array_equal(model.context_memory.value, written)
+
+
+def test_situ_glu_update_owns_caps_and_resets_flat_memory() -> None:
+    config = _memory_config(memory_coding="situ_glu_update")
+    model = LatentWorkspaceModel(config)
+    event = _phase_events(
+        config, jnp.asarray([[1.0, -0.5]]), phase="demonstration"
+    )[0]
+
+    update = model.encode_memory_update(event)
+    report = model.associative_memory_report()
+
+    assert update.shape == (1, config.context_memory_width**2)
+    assert np.all(np.isfinite(np.asarray(update)))
+    assert model.memory_situ_glu.hidden_size == 4 * config.context_memory_width
+    assert report.write_component_type == "braintrace.nn.SiTUGLU"
+    assert report.value_map == "situ_glu_softcapped_update"
+    assert report.update_projection_seed == config.seed + 110
+    assert len(report.update_projection_sha256 or "") == 64
+    model.memory_situ_glu.gate_weight.value = jnp.zeros_like(
+        model.memory_situ_glu.gate_weight.value
+    )
+    model.memory_situ_glu.gate_bias.value = jnp.ones_like(
+        model.memory_situ_glu.gate_bias.value
+    )
+    model.memory_situ_glu.up_weight.value = jnp.zeros_like(
+        model.memory_situ_glu.up_weight.value
+    )
+    model.memory_situ_glu.up_bias.value = jnp.ones_like(
+        model.memory_situ_glu.up_bias.value
+    )
+    model.memory_situ_glu.output_weight.value = jnp.full_like(
+        model.memory_situ_glu.output_weight.value, 10.0
+    )
+    assert float(jnp.max(jnp.abs(model.encode_memory_update(event)))) > (
+        config.memory_value_softcap_beta
+    )
+    model.context_memory.value = jnp.ones_like(model.context_memory.value)
+    model.reset_state()
+    assert model.context_memory.value.shape == update.shape
+    np.testing.assert_array_equal(model.context_memory.value, 0.0)
+
+
+@pytest.mark.parametrize(
+    ("coding", "required_paths"),
+    [
+        (
+            "delta_write",
+            {
+                ("delta_key_weight",),
+                ("delta_key_bias",),
+                ("delta_value_weight",),
+                ("delta_beta_weight",),
+                ("delta_beta_bias",),
+                ("delta_retention_weight",),
+                ("delta_retention_bias",),
+                ("memory_key_projection", "weight"),
+            },
+        ),
+        (
+            "situ_glu_update",
+            {
+                ("memory_situ_glu", "gate_weight"),
+                ("memory_situ_glu", "gate_bias"),
+                ("memory_situ_glu", "up_weight"),
+                ("memory_situ_glu", "up_bias"),
+                ("memory_situ_glu", "output_weight"),
+            },
+        ),
+    ],
+)
+def test_stage5_memory_parameters_are_trace_compiled(
+    coding: str,
+    required_paths: set[tuple[str, ...]],
+) -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_etrace(LatentWorkspaceModel(_memory_config(memory_coding=coding)))
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert required_paths <= paths
+
+
 def test_learned_memory_coding_matches_frozen_codes_at_initialization() -> None:
     config_frozen = _memory_config(batch_size=3)
     config_learned = _memory_config(batch_size=3, memory_coding="learned_keys")
