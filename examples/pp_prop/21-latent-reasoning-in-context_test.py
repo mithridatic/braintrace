@@ -2877,6 +2877,27 @@ def test_admitted_rule_takes_slot_one_and_keeps_the_model_best_grid(example):
     assert [item["rank"] for item in merged] == [1, 2]
 
 
+def test_rule_matching_the_model_argmax_hedges_with_the_runner_up(example):
+    """Two identical grids would waste the two-candidate budget."""
+
+    class Candidate:
+        def __init__(self, value):
+            self.grid = np.full((1, 1), value, dtype=np.int32)
+
+    payloads = [
+        {"grid": [[1]], "provenance": "model", "rank": 1},
+        {"grid": [[2]], "provenance": "model", "rank": 2},
+    ]
+    grids, merged = example._merge_rule_candidate(
+        ("id|identity", np.full((1, 1), 1, dtype=np.int32)),
+        [Candidate(1), Candidate(2)],
+        payloads,
+    )
+    assert [int(grid[0, 0]) for grid in grids] == [1, 2]
+    assert merged[0]["provenance"] == "rule"
+    assert merged[1]["grid"] == [[2]]
+
+
 def test_absent_rule_leaves_both_model_candidates_submitted(example):
     class Candidate:
         def __init__(self, value):

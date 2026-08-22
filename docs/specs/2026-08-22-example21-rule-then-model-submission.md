@@ -70,6 +70,16 @@ receives none and so admits no rule, and `shuffled_demonstrations` is fitted on
 the deranged demonstrations. Without this the proposals would be arm-invariant
 and every control would report the same solves as `intact`.
 
+## Nothing here was fitted to the evaluation split
+
+The merge policy is not new and was not chosen by looking at eval scores. Rule
+in slot one, the model's own best grid in slot two, is `dfe2412`'s design,
+written before any of these measurements. The rule engine and its families are
+byte-identical to `4e9080b` — this change adds no rule, tunes no rule, and
+removes no rule. The decode policies that *were* measured against the evaluation
+split above (demonstration-derived shape, mean-normalised shape scoring,
+alternative runner-ups) were all **rejected**; none of them ships.
+
 ## Reporting
 
 The run must never describe a rule-assisted score as model-only.
@@ -131,3 +141,14 @@ shape (0.5752) and identical solved tasks, pixel 0.54820 against 0.54839.
 `associative_capability_gates_complete` remains `false` because the run does not
 enable `--evaluation-controls`; that is unchanged from the baseline and is not a
 consequence of this change.
+
+## Where this lives
+
+`feat/ex21-shape-decode`, worktree `../braintrace-ex21-shape`, branched from
+pre-protocol-v2 `bde13ba`. `main` at `929a831` has neither the flag nor a base
+that reproduces pixel 0.55 at full scale — the protocol-v2 regression is still
+open and is orthogonal to this change. Porting `rule_then_model` to `main` does
+not require fixing that regression first; it would simply ride a weaker model.
+
+`model_only` remains the default everywhere, so doing nothing keeps the previous
+behaviour, policy string, and completion gate exactly as they were.

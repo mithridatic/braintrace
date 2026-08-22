@@ -3451,9 +3451,19 @@ def _merge_rule_candidate(
         "selection_role": "demonstration_verified_rule",
         "rank": 1,
     }
-    runner_up = dict(payloads[0])
+    hedge_index = 0
+    if np.asarray(rule_grid).shape == model_grids[0].shape and np.array_equal(
+        np.asarray(rule_grid), model_grids[0]
+    ):
+        if len(model_grids) < 2:
+            return model_grids, payloads
+        hedge_index = 1
+    runner_up = dict(payloads[hedge_index])
     runner_up["rank"] = 2
-    return [np.asarray(rule_grid), model_grids[0]], [rule_payload, runner_up]
+    return (
+        [np.asarray(rule_grid), model_grids[hedge_index]],
+        [rule_payload, runner_up],
+    )
 
 
 def _score_checkpoint_logits(
@@ -5519,10 +5529,13 @@ def _qualification(
                 first.get("selection_role") == "demonstration_verified_rule"
                 and isinstance(first.get("rule_name"), str)
                 and second.get("provenance") == "model"
+                and second.get("grid") != first.get("grid")
                 and second.get("selection_role")
                 in (
                     "latest_sweep_joint_argmax",
                     "diagnostic_checkpoint_joint_argmax",
+                    "latest_sweep_logit_runner_up",
+                    "diagnostic_checkpoint_logit_runner_up",
                 )
                 and row.get("submission_role")
                 == (
