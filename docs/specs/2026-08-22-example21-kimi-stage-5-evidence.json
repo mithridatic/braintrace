@@ -1,0 +1,85 @@
+{
+  "stage": 5,
+  "title": "competing memory-write architectures",
+  "base_commit": "71559e6",
+  "commands": [
+    {
+      "command": "python -m pytest braintrace/_op/memory_test.py braintrace/nn/_situ_test.py -q",
+      "result": "12 passed"
+    },
+    {
+      "command": "python -m pytest <Stage 5 operator, model, and entry tests> -q -k <Stage 5 cluster>",
+      "result": "18 passed, 417 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/latent_workspace_model_test.py -q",
+      "result": "221 passed, 44 expected compiler-classification warnings, 238.91 seconds"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "202 passed, 112.24 seconds"
+    },
+    {
+      "command": "python -m pytest braintrace/_op/_registries_test.py braintrace/_op/memory_test.py braintrace/nn/_situ_test.py -q",
+      "result": "66 passed"
+    },
+    {
+      "command": "python -m pytest braintrace/__init___test.py braintrace/nn/__init___test.py -q",
+      "result": "165 passed, 1 expected scan warning"
+    },
+    {
+      "command": "ruff check <Stage 5 touched Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "basedpyright braintrace/_op/memory.py braintrace/nn/_situ.py",
+      "result": "0 errors; 280 strict-project warnings; nonzero warning exit"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "python -m pytest <operator tests> --cov=<new modules> --cov-report=term-missing -q",
+      "result": "coverage runtime terminated with Windows status -1073740791 before producing a report"
+    }
+  ],
+  "source_hashes": {
+    "braintrace/_op/memory.py": "1ab6daff822ed4e1f83069c401853ef89ab0ceeb57778d4ea876f529fc313255",
+    "braintrace/nn/_situ.py": "7febe528c821a77a31fbf02848c122b42ff01695fc3e3a05dd59be989e3f8ec7",
+    "examples/pp_prop/latent_workspace_model.py": "c3ab8f623e3c2f44aed82b4d569134081894682926ae694ba37e5d44272e7dbc",
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "bc0c864a6f80ebd2e6438d45cfb19f2f37ddc89a85102a5c682d18b6e621703f"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "structural_evidence": {
+    "independent_forward_jit_jvp_vjp_references": "passed",
+    "delta_repeated_key_error_correction": "passed",
+    "delta_orthogonal_key_preservation": "passed",
+    "delta_collision_and_extreme_input_finiteness": "passed",
+    "delta_d_rtrl_bptt_equivalence": "passed",
+    "delta_representative_finite_window_pp_prop": "cosine >= 0.8 and relative deviation < 1.0",
+    "one_sided_rows_nonzero_and_distinguishable": "passed",
+    "false_write_lane_byte_identity": "passed",
+    "latent_tick_memory_immutability": "passed",
+    "situ_glu_internal_caps_without_outer_memory_softcap": "passed",
+    "all_intended_parameter_paths_compile": "passed",
+    "reset_and_checkpoint_metadata": "passed",
+    "configuration_cli_report_result_roundtrip": "passed",
+    "public_exports_and_rule_registries": "passed",
+    "full_example21_model_regression": "passed",
+    "full_example21_entry_regression": "passed"
+  },
+  "missing_evidence": [
+    "numeric coverage report because coverage.py terminates under Python 3.14 with Windows status -1073740791",
+    "complete preregistered finite-window gradient seed and chunk panel",
+    "100-task write-architecture pilots",
+    "three-seed 419-query reduced-topology comparisons",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}

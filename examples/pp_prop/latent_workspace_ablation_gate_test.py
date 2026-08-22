@@ -6915,6 +6915,22 @@ _GATE_C2_CACHED_READ_REPLACEMENTS = {
 }
 
 
+def test_gate_c2_snapshot_arrays_exclude_short_term_diagnostics() -> None:
+    snapshot = SimpleNamespace(
+        entries=(
+            (("memory_read",), jnp.zeros((1, 32), dtype=jnp.float32)),
+            (("memory_read_step",), jnp.ones((1,), dtype=jnp.int32)),
+            (("memory_read_count",), jnp.ones((1,), dtype=jnp.int32)),
+            (("memory_read_active",), jnp.ones((1,), dtype=jnp.bool_)),
+        )
+    )
+
+    arrays = gate_c._gate_c2_snapshot_arrays(snapshot)
+
+    assert tuple(arrays) == ("memory_read#0",)
+    np.testing.assert_array_equal(arrays["memory_read#0"], 0.0)
+
+
 @requires_gate_c
 def test_gate_c2_constants_keep_v1_identity_separate_and_exact() -> None:
     assert gate_c.GATE_C_SCHEMA_VERSION == 1
@@ -8783,13 +8799,25 @@ def test_gate_c2_host_boundaries_are_exact_independent_and_replayable() -> None:
         return gate_c._gate_c2_cached_boundary_tree_sha256(endpoints)
 
     h0_arrays = gate_c._gate_c2_snapshot_arrays(h0_snapshot)
+    h0_diagnostics = {
+        f"{gate_a._path(path)}#{index}": np.ascontiguousarray(
+            np.asarray(u.get_mantissa(jax.device_get(leaf)))
+        )
+        for path, value in h0_snapshot.entries
+        for index, leaf in enumerate(jax.tree.leaves(value))
+        if f"{gate_a._path(path)}#{index}"
+        in gate_c._GATE_C2_SHORT_TERM_DIAGNOSTIC_PATHS
+    }
     actual_arrays = [direct_arrays(boundary) for boundary in boundaries]
     expected_arrays = [
-        h0_arrays,
+        {**h0_arrays, **h0_diagnostics},
         *(
             {
-                path: source_hidden[path][tick_index]
-                for path in sorted(source_hidden)
+                **{
+                    path: source_hidden[path][tick_index]
+                    for path in sorted(source_hidden)
+                },
+                **h0_diagnostics,
             }
             for tick_index in range(7)
         ),
@@ -9576,7 +9604,9 @@ def _gate_c2_test_raw_h0_snapshot(
     parameter_sha256: str,
 ) -> dict[str, Any]:
     arrays = gate_c._gate_c2_snapshot_arrays(snapshot)
-    assert set(arrays) == set(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
+    assert set(arrays) == (
+        set(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY) | {"memory_drive#0"}
+    )
     hidden_paths: dict[str, Any] = {}
     for path, expected_shape in _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items():
         array = np.ascontiguousarray(arrays[path])
@@ -11497,6 +11527,7 @@ def test_gate_c2_h0_raw_evidence_rejects_malformed_paths_geometry_and_schema(
         path: np.zeros(shape, dtype=np.float32)
         for path, shape in gate_c._GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items()
     }
+    wrong_geometry["memory_drive#0"] = np.zeros((1, 2_048), dtype=np.float32)
     first_path = next(iter(wrong_geometry))
     wrong_geometry[first_path] = wrong_geometry[first_path].astype(np.float64)
     with monkeypatch.context() as context:
@@ -11798,12 +11829,14 @@ def test_gate_c2_operational_h0_restores_independent_live_state_leaves(
         }
 
     def snapshot_arrays(snapshot: Any) -> dict[str, np.ndarray]:
+        tracked_paths = set(live_arrays(next(iter(models.values()))))
         return {
             f"{gate_a._path(path)}#{index}": np.asarray(
                 u.get_mantissa(jax.device_get(leaf))
             )
             for path, value in snapshot.entries
             for index, leaf in enumerate(jax.tree.leaves(value))
+            if f"{gate_a._path(path)}#{index}" in tracked_paths
         }
 
     def capture(

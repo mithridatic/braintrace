@@ -664,6 +664,10 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     )
     assert memory.carrier_normalization_by_consumer is None
     assert serialized_legacy == expected_legacy
+    assert memory.to_dict()["read_transform"] == "linear"
+    assert memory.to_dict()["read_interval"] == 1
+    assert memory.to_dict()["latent_residual_mixer"] == "none"
+    assert memory.to_dict()["latent_residual_block_size"] == 10
     assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
@@ -683,6 +687,10 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
         "carrier_stabilizer",
         "carrier_radius",
         "carrier_consumers",
+        "read_transform",
+        "read_interval",
+        "latent_residual_mixer",
+        "latent_residual_block_size",
     }
 
 
@@ -2008,6 +2016,273 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
     _assert_state_snapshots_equal(
         implicit_model.snapshot_state(), query_only_model.snapshot_state()
     )
+
+
+def test_memory_read_transform_defaults_to_linear_and_validates() -> None:
+    assert _memory_config().memory_read_transform == "linear"
+    assert _config().memory_read_transform == "linear"
+    for transform in ("gated", "gated_rms"):
+        assert _memory_config(memory_read_transform=transform).memory_read_transform == transform
+    with pytest.raises(TypeError, match="memory_read_transform"):
+        _memory_config(memory_read_transform=7)
+    with pytest.raises(ValueError, match="memory_read_transform"):
+        _memory_config(memory_read_transform="rms")
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(memory_read_transform="gated")
+
+
+def test_memory_read_interval_defaults_and_validates() -> None:
+    assert _config().memory_read_interval == 1
+    assert _memory_config().memory_read_interval == 1
+    assert _memory_config(memory_read_interval=8).memory_read_interval == 8
+    for value in (True, 1.5, "4"):
+        with pytest.raises(TypeError, match="memory_read_interval"):
+            _memory_config(memory_read_interval=value)
+    with pytest.raises(ValueError, match="memory_read_interval"):
+        _memory_config(memory_read_interval=0)
+
+
+@pytest.mark.parametrize(
+    ("interval", "expected_mask"),
+    [
+        (1, [False, False, True, True, True, True, True, True, True, True, True]),
+        (4, [False, False, True, False, False, False, True, False, False, False, True]),
+        (8, [False, False, True, False, False, False, False, False, False, False, True]),
+    ],
+)
+def test_memory_read_interval_records_exact_compiled_mask_and_count(
+    interval: int,
+    expected_mask: list[bool],
+) -> None:
+    config = _memory_config(memory_read_interval=interval, max_latent_steps=8)
+    demonstrations = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0], [0.0, 1.0]]),
+        jnp.asarray([[0.25, 1.0], [1.5, -0.5]]),
+        phase="demonstration",
+    )
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((8, 1, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((demonstrations, query, latent), axis=0)
+    advances = jnp.ones((events.shape[0], 1), dtype=jnp.bool_)
+
+    full = run_packed_stream(
+        LatentWorkspaceModel(config), events, advance_gates=advances
+    )
+    selected = run_selected_packed_stream(
+        LatentWorkspaceModel(config),
+        events,
+        jnp.asarray([[2], [6], [10]], dtype=jnp.int32),
+        advance_gates=advances,
+    )
+
+    expected = np.asarray(expected_mask, dtype=np.bool_)[:, None]
+    np.testing.assert_array_equal(full.memory_read_mask, expected)
+    np.testing.assert_array_equal(selected.memory_read_mask, expected)
+    np.testing.assert_array_equal(full.memory_read_count, [sum(expected_mask)])
+    np.testing.assert_array_equal(selected.memory_read_count, [sum(expected_mask)])
+
+
+def test_memory_read_interval_retains_diagnostics_on_local_ticks_and_resets() -> None:
+    config = _memory_config(memory_read_interval=4, max_latent_steps=4)
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")[0]
+    model.cell_step(query, jnp.ones((1,), dtype=jnp.bool_))
+    retained_read = np.asarray(model.memory_read.value).copy()
+    retained_drive = np.asarray(model.memory_drive.value).copy()
+    snapshot = model.snapshot_state()
+
+    run_packed_stream(
+        model,
+        jnp.zeros((3, 1, config.input_width), dtype=jnp.float32),
+        reset=False,
+        advance_gates=jnp.ones((3, 1), dtype=jnp.bool_),
+    )
+
+    np.testing.assert_array_equal(model.memory_read.value, retained_read)
+    np.testing.assert_array_equal(model.memory_drive.value, retained_drive)
+    np.testing.assert_array_equal(model.memory_read_active.value, [False])
+    np.testing.assert_array_equal(model.memory_read_count.value, [1])
+    model.restore_state(snapshot)
+    np.testing.assert_array_equal(model.memory_read_active.value, [True])
+    np.testing.assert_array_equal(model.memory_read_count.value, [1])
+    model.reset_state()
+    np.testing.assert_array_equal(model.memory_read_step.value, 0)
+    np.testing.assert_array_equal(model.memory_read_count.value, 0)
+    np.testing.assert_array_equal(model.memory_read_active.value, False)
+
+
+def test_query_only_policy_suppresses_interval_reads() -> None:
+    config = _memory_config(memory_read_interval=4, max_latent_steps=8)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    latent = jnp.zeros((8, 1, config.input_width), dtype=jnp.float32)
+    events = jnp.concatenate((query, latent), axis=0)
+    trajectory = run_packed_stream(
+        LatentWorkspaceModel(config, memory_read_policy="query_only"),
+        events,
+        advance_gates=jnp.ones((9, 1), dtype=jnp.bool_),
+    )
+
+    np.testing.assert_array_equal(
+        trajectory.memory_read_mask[:, 0],
+        [True, False, False, False, False, False, False, False, False],
+    )
+    np.testing.assert_array_equal(trajectory.memory_read_count, [1])
+
+
+def test_latent_residual_configuration_is_opt_in_and_validates() -> None:
+    default = _memory_config()
+    enabled = _memory_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    assert default.latent_residual_mixer == "none"
+    assert default.latent_residual_block_size == 10
+    assert enabled.latent_residual_mixer == "attention_residual"
+    assert enabled.latent_residual_block_size == 2
+    assert not hasattr(LatentWorkspaceModel(default), "latent_attention_residual")
+    for value in (True, 1.5, "2"):
+        with pytest.raises(TypeError, match="latent_residual_block_size"):
+            _memory_config(latent_residual_block_size=value)
+    with pytest.raises(ValueError, match="latent_residual_block_size"):
+        _memory_config(latent_residual_block_size=0)
+    with pytest.raises(TypeError, match="latent_residual_mixer"):
+        _memory_config(latent_residual_mixer=2)
+    with pytest.raises(ValueError, match="latent_residual_mixer"):
+        _memory_config(latent_residual_mixer="linear")
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(latent_residual_mixer="attention_residual")
+
+
+def test_latent_attention_residual_tracks_full_and_partial_blocks() -> None:
+    config = _memory_config(
+        max_latent_steps=5,
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    model.cell_step(query[0], jnp.ones((1,), dtype=jnp.bool_))
+    source_zero = np.asarray(model.reasoning_query.value).copy()
+    np.testing.assert_array_equal(model.latent_residual_source_zero.value, source_zero)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 0)
+
+    one_tick = jnp.zeros((1, 1, config.input_width), dtype=jnp.float32)
+    one_advance = jnp.ones((1, 1), dtype=jnp.bool_)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 1)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 0)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 0)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 1)
+    assert np.any(np.asarray(model.latent_residual_history.value[:, 0]) != 0.0)
+
+    two_ticks = jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)
+    two_advances = jnp.ones((2, 1), dtype=jnp.bool_)
+    run_packed_stream(model, two_ticks, reset=False, advance_gates=two_advances)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 2)
+    run_packed_stream(model, one_tick, reset=False, advance_gates=one_advance)
+    np.testing.assert_array_equal(model.latent_residual_completed_count.value, 3)
+    np.testing.assert_array_equal(model.latent_residual_block_count.value, 0)
+    assert isinstance(model.latent_residual_candidate, brainstate.HiddenState)
+
+
+def test_latent_attention_residual_state_resets_snapshots_and_restores() -> None:
+    config = _memory_config(
+        max_latent_steps=3,
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=2,
+    )
+    model = LatentWorkspaceModel(config)
+    query = _phase_events(config, jnp.asarray([[1.0, 0.0]]), phase="query")
+    events = jnp.concatenate(
+        (query, jnp.zeros((2, 1, config.input_width), dtype=jnp.float32)), axis=0
+    )
+    run_packed_stream(
+        model,
+        events,
+        advance_gates=jnp.ones((3, 1), dtype=jnp.bool_),
+    )
+    snapshot = model.snapshot_state()
+    history = np.asarray(model.latent_residual_history.value).copy()
+    model.reset_state()
+    np.testing.assert_array_equal(model.latent_residual_history.value, 0.0)
+    np.testing.assert_array_equal(model.latent_residual_candidate.value, 0.0)
+    model.restore_state(snapshot)
+    np.testing.assert_array_equal(model.latent_residual_history.value, history)
+
+
+def test_latent_attention_residual_parameter_is_trace_compiled() -> None:
+    model = LatentWorkspaceModel(
+        _memory_config(
+            latent_residual_mixer="attention_residual",
+            latent_residual_block_size=2,
+        )
+    )
+
+    learner = compile_etrace(model)
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert ("latent_attention_residual", "query") in paths
+
+
+def test_gated_memory_read_is_linear_equivalent_at_initialization() -> None:
+    linear = LatentWorkspaceModel(_memory_config(memory_read_transform="linear"))
+    gated = LatentWorkspaceModel(_memory_config(memory_read_transform="gated"))
+    raw_read = jnp.asarray([[0.4, -1.2]], dtype=jnp.float32)
+    workspace = jnp.linspace(-2.0, 2.0, 64, dtype=jnp.float32)[None, :]
+
+    linear_drive = linear.memory_read_projection(raw_read)
+    gated_drive = gated.memory_read_projection(
+        raw_read, latent_workspace_module._unit_l2_cap(workspace)
+    )
+
+    np.testing.assert_array_equal(gated.memory_read_projection.gate_weight.value, 0.0)
+    np.testing.assert_array_equal(gated.memory_read_projection.gate_bias.value, 0.0)
+    np.testing.assert_array_equal(
+        gated.memory_read_projection.output_weight.value,
+        2.0 * linear.memory_read_projection.weight.value["weight"],
+    )
+    np.testing.assert_allclose(gated_drive, linear_drive, rtol=0.0, atol=0.0)
+
+
+def test_gated_rms_memory_read_is_finite_and_reported() -> None:
+    model = LatentWorkspaceModel(
+        _memory_config(memory_read_transform="gated_rms")
+    )
+    raw_read = jnp.asarray([[0.0, 0.0]], dtype=jnp.float32)
+    workspace = jnp.ones((1, 64), dtype=jnp.float32)
+
+    drive = model.memory_read_projection(
+        raw_read, latent_workspace_module._unit_l2_cap(workspace)
+    )
+    report = model.associative_memory_report()
+
+    assert np.all(np.isfinite(np.asarray(drive)))
+    np.testing.assert_array_equal(drive, 0.0)
+    assert report.read_transform == "gated_rms"
+    assert report.read_component_type == "braintrace.nn.GatedProjection"
+    model.memory_read.value = jnp.asarray([[3.0, 4.0]], dtype=jnp.float32)
+    model.memory_drive.value = jnp.ones((1, 64), dtype=jnp.float32)
+    model.memory_read_gate.value = jnp.asarray([[0.5, 0.999]], dtype=jnp.float32)
+    diagnostics = model.memory_read_diagnostics()
+    assert diagnostics["memory_read_rms"] == pytest.approx(math.sqrt(12.5))
+    assert diagnostics["memory_drive_rms"] == pytest.approx(1.0)
+    assert diagnostics["gate_saturation_fraction"] == pytest.approx(0.5)
+    assert diagnostics["gate_channel_activation"] == pytest.approx([0.5, 0.999])
+    model.reset_state()
+    assert model.memory_read_diagnostics()["memory_read_rms"] == 0.0
+
+
+def test_gated_memory_read_parameters_are_trace_compiled() -> None:
+    model = LatentWorkspaceModel(_memory_config(memory_read_transform="gated"))
+
+    learner = compile_etrace(model)
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert ("memory_read_projection", "gate_weight") in paths
+    assert ("memory_read_projection", "gate_bias") in paths
+    assert ("memory_read_projection", "output_weight") in paths
 
 
 def test_zero_width_compact_readout_is_byte_identical_to_raw_legacy_formula() -> None:
@@ -3978,6 +4253,149 @@ def test_learned_update_projection_is_trace_compiled() -> None:
     paths = {path for path, _ in learner.report.etrace_weights}
     assert ("memory_update_projection", "weight") in paths
     assert ("memory_key_projection", "weight") in paths
+
+
+@pytest.mark.parametrize("coding", ["delta_write", "situ_glu_update"])
+def test_stage5_memory_codings_validate_and_require_memory(coding: str) -> None:
+    assert _memory_config(memory_coding=coding).memory_coding == coding
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        _config(memory_coding=coding)
+
+
+def test_delta_write_one_sided_rows_are_finite_nonzero_and_distinct() -> None:
+    config = _memory_config(memory_coding="delta_write")
+    input_model = LatentWorkspaceModel(config)
+    output_model = LatentWorkspaceModel(config)
+    input_only = _phase_events(
+        config, jnp.asarray([[1.0, -0.5]]), phase="demonstration"
+    )[0]
+    output_only = jnp.zeros_like(input_only)
+    output_only = output_only.at[:, config.event_valid_index].set(1.0)
+    assert config.demonstration_phase_index is not None
+    assert config.output_side_valid_index is not None
+    output_only = output_only.at[:, config.demonstration_phase_index].set(1.0)
+    output_only = output_only.at[:, config.output_side_valid_index].set(1.0)
+    output_only = output_only.at[:, jnp.asarray(config.memory_value_indices)].set(
+        jnp.asarray([[0.25, 0.75]])
+    )
+
+    input_model.cell_step(input_only, jnp.ones((1,), dtype=jnp.bool_))
+    output_model.cell_step(output_only, jnp.ones((1,), dtype=jnp.bool_))
+    input_memory = np.asarray(input_model.context_memory.value)
+    output_memory = np.asarray(output_model.context_memory.value)
+
+    assert np.all(np.isfinite(input_memory))
+    assert np.all(np.isfinite(output_memory))
+    assert np.linalg.norm(input_memory) > 0.0
+    assert np.linalg.norm(output_memory) > 0.0
+    assert not np.array_equal(input_memory, output_memory)
+    report = input_model.associative_memory_report()
+    assert report.update_projection_seed == config.seed + 107
+    assert len(report.update_projection_sha256 or "") == 64
+
+
+def test_delta_write_false_lane_and_latent_ticks_do_not_mutate_memory() -> None:
+    config = _memory_config(memory_coding="delta_write")
+    model = LatentWorkspaceModel(config)
+    demonstration = _phase_events(
+        config,
+        jnp.asarray([[1.0, 0.0]]),
+        jnp.asarray([[0.25, 1.0]]),
+        phase="demonstration",
+    )[0]
+    before = np.asarray(model.context_memory.value).copy()
+
+    model.cell_step(demonstration, jnp.zeros((1,), dtype=jnp.bool_))
+    np.testing.assert_array_equal(model.context_memory.value, before)
+    model.cell_step(demonstration, jnp.ones((1,), dtype=jnp.bool_))
+    written = np.asarray(model.context_memory.value).copy()
+    assert not np.array_equal(written, before)
+    model.cell_step(
+        jnp.zeros((1, config.input_width), dtype=jnp.float32),
+        jnp.ones((1,), dtype=jnp.bool_),
+    )
+    np.testing.assert_array_equal(model.context_memory.value, written)
+
+
+def test_situ_glu_update_owns_caps_and_resets_flat_memory() -> None:
+    config = _memory_config(memory_coding="situ_glu_update")
+    model = LatentWorkspaceModel(config)
+    event = _phase_events(
+        config, jnp.asarray([[1.0, -0.5]]), phase="demonstration"
+    )[0]
+
+    update = model.encode_memory_update(event)
+    report = model.associative_memory_report()
+
+    assert update.shape == (1, config.context_memory_width**2)
+    assert np.all(np.isfinite(np.asarray(update)))
+    assert model.memory_situ_glu.hidden_size == 4 * config.context_memory_width
+    assert report.write_component_type == "braintrace.nn.SiTUGLU"
+    assert report.value_map == "situ_glu_softcapped_update"
+    assert report.update_projection_seed == config.seed + 110
+    assert len(report.update_projection_sha256 or "") == 64
+    model.memory_situ_glu.gate_weight.value = jnp.zeros_like(
+        model.memory_situ_glu.gate_weight.value
+    )
+    model.memory_situ_glu.gate_bias.value = jnp.ones_like(
+        model.memory_situ_glu.gate_bias.value
+    )
+    model.memory_situ_glu.up_weight.value = jnp.zeros_like(
+        model.memory_situ_glu.up_weight.value
+    )
+    model.memory_situ_glu.up_bias.value = jnp.ones_like(
+        model.memory_situ_glu.up_bias.value
+    )
+    model.memory_situ_glu.output_weight.value = jnp.full_like(
+        model.memory_situ_glu.output_weight.value, 10.0
+    )
+    assert float(jnp.max(jnp.abs(model.encode_memory_update(event)))) > (
+        config.memory_value_softcap_beta
+    )
+    model.context_memory.value = jnp.ones_like(model.context_memory.value)
+    model.reset_state()
+    assert model.context_memory.value.shape == update.shape
+    np.testing.assert_array_equal(model.context_memory.value, 0.0)
+
+
+@pytest.mark.parametrize(
+    ("coding", "required_paths"),
+    [
+        (
+            "delta_write",
+            {
+                ("delta_key_weight",),
+                ("delta_key_bias",),
+                ("delta_value_weight",),
+                ("delta_beta_weight",),
+                ("delta_beta_bias",),
+                ("delta_retention_weight",),
+                ("delta_retention_bias",),
+                ("memory_key_projection", "weight"),
+            },
+        ),
+        (
+            "situ_glu_update",
+            {
+                ("memory_situ_glu", "gate_weight"),
+                ("memory_situ_glu", "gate_bias"),
+                ("memory_situ_glu", "up_weight"),
+                ("memory_situ_glu", "up_bias"),
+                ("memory_situ_glu", "output_weight"),
+            },
+        ),
+    ],
+)
+def test_stage5_memory_parameters_are_trace_compiled(
+    coding: str,
+    required_paths: set[tuple[str, ...]],
+) -> None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        learner = compile_etrace(LatentWorkspaceModel(_memory_config(memory_coding=coding)))
+
+    paths = {path for path, _ in learner.report.etrace_weights}
+    assert required_paths <= paths
 
 
 def test_learned_memory_coding_matches_frozen_codes_at_initialization() -> None:

@@ -1,0 +1,75 @@
+{
+  "campaign": "Example 21 Kimi transfer",
+  "branch": "feat/example21-kimi-transfer",
+  "base_commit": "7843012",
+  "stage_commits": [
+    "9168989",
+    "a764561",
+    "9398b61",
+    "b4517c2",
+    "71559e6",
+    "c2728e1",
+    "e73cab3"
+  ],
+  "commands": [
+    {
+      "command": "python -m pytest <Example 21 entry plus all 20 latent_workspace sibling test modules> -q -n 6 --dist=loadgroup",
+      "result": "2197 passed, 56 warnings, 502.37 seconds"
+    },
+    {
+      "command": "python -m pytest braintrace -q -n 6 --dist=loadgroup --durations=20",
+      "result": "3163 passed, 287 warnings, 4 subtests passed, 490.86 seconds"
+    },
+    {
+      "command": "python -m pytest --doctest-modules braintrace/_op/gated.py braintrace/_op/memory.py braintrace/nn/_gated.py braintrace/nn/_situ.py -q",
+      "result": "1 passed, 3.45 seconds"
+    },
+    {
+      "command": "python -m build",
+      "result": "built braintrace-0.2.5-py3-none-any.whl and braintrace-0.2.5.tar.gz"
+    },
+    {
+      "command": "ruff check <all campaign-owned Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "ruff check .",
+      "result": "baseline not clean: 226 violations in legacy compatibility imports, tests, and examples"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "examples/pp_prop/latent_workspace_ablation_gate.py": "97617a99699c4ae86285d11d0eb401be4b083a71d4631d7db65806d126fdbe64",
+    "examples/pp_prop/latent_workspace_ablation_gate_test.py": "66e6c0f2c20205d7c30cda3deecf693099cb188673aa16523a012097dd4fcef0"
+  },
+  "build_hashes": {
+    "dist/braintrace-0.2.5-py3-none-any.whl": "b1b0c895d22c4867047ae901883273f2719c3d56d05ed6284b9de3a01a88047f",
+    "dist/braintrace-0.2.5.tar.gz": "ce5b6a7e388e1b62d1ea1f3540b79a7e5c3ac1c156e23a1b457d2a5e5f64be24"
+  },
+  "promotion_result": "not_evaluated",
+  "defaults_changed": false,
+  "stage_6_result": "skipped_teacher_gate_not_satisfied",
+  "structural_evidence": {
+    "example21_numerical_and_oracle_gate": "passed",
+    "core_braintrace_suite": "passed",
+    "public_docstring_doctest": "passed",
+    "package_build": "passed and new operator modules present in wheel",
+    "campaign_owned_lint": "passed",
+    "gate_c2_snapshot_compatibility": "passed with diagnostic-only ShortTermState leaves excluded",
+    "main_modified": false,
+    "published_or_pushed": false
+  },
+  "missing_evidence": [
+    "numeric greater-than-90-percent coverage report because Coverage.py terminates under Python 3.14 with Windows status -1073740791",
+    "Stage 0 one-factor pilots and three-seed combined-winner comparison",
+    "Stage 1 through Stage 5 100-task pilots",
+    "three-seed 419-query reduced-topology comparisons",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and peak-VRAM measurements",
+    "Stage 6 three-seed R60 teacher qualification",
+    "post-winner 1048576-edge scale-sensitivity diagnostic"
+  ]
+}

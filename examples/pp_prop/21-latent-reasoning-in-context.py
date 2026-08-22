@@ -171,10 +171,20 @@ PrimaryCandidateMode = Literal["model_only"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
-MemoryCoding = Literal["frozen", "learned_keys", "learned_write", "learned_update"]
+MemoryCoding = Literal[
+    "frozen",
+    "learned_keys",
+    "learned_write",
+    "learned_update",
+    "delta_write",
+    "situ_glu_update",
+]
+MemoryReadTransform = Literal["linear", "gated", "gated_rms"]
+LatentResidualMixer = Literal["none", "attention_residual"]
 OptimizerName = Literal["adam", "adamw", "muon"]
 
 LrScheduleName = Literal["constant", "cosine"]
+EffortScheduleName = Literal["uniform", "progressive"]
 
 FULL_SCALE_NEURON_COUNT = 4096
 
@@ -327,7 +337,17 @@ class ExperimentConfig:
         reservoir; positive values up to 512 opt into ``S_K/H_r``.
     memory_decay : float
         Associative memory self-decay in the closed interval ``[0, 1]``.
-    memory_coding : {"frozen", "learned_keys", "learned_write"}
+    memory_read_transform : {"linear", "gated", "gated_rms"}
+        Associative read projection. The default preserves the historical
+        linear path; gated modes use the previous workspace as gate input.
+    memory_read_interval : int
+        Positive one-based cadence for latent associative reads. Query rows
+        always read; the default ``1`` reads on every latent tick.
+    latent_residual_mixer : {"none", "attention_residual"}
+        Optional attention residual across latent reasoning blocks.
+    latent_residual_block_size : int
+        Positive latent ticks per residual summary block.
+    memory_coding : {"frozen", "learned_keys", "learned_write", "learned_update", "delta_write", "situ_glu_update"}
         Storage-coding trainability. ``"frozen"`` keeps the fixed random
         Fourier keys and fixed value bases bit-exactly; ``"learned_keys"``
         makes the key projection a trainable ETP linear layer that learns
@@ -373,6 +393,17 @@ class ExperimentConfig:
         zero over ``training_updates`` optimizer updates (optax cosine decay
         with ``alpha=0``, no warmup). The per-tick adaptation path keeps its
         own constant ``adaptation_learning_rate`` either way.
+    lr_warmup_fraction : float
+        Fraction of shared-training updates used for linear warmup before
+        cosine decay. Zero preserves the historical cosine schedule exactly.
+        Nonzero warmup is incompatible with the constant-rate control.
+    effort_schedule : {"uniform", "progressive"}
+        Training-depth sampling schedule. Progressive introduces checkpoints
+        in contiguous phases; uniform preserves the historical global shuffle.
+    effort_distillation_weight : float
+        Nonnegative deeper-effort self-distillation weight. The default zero
+        preserves the supervised objective. Positive values remain unavailable
+        until the preregistered R60 teacher gate passes.
     optimizer : {"adam", "adamw", "muon"}
         Shared-training optimizer. Muon applies to rank-two leaves and uses
         its built-in AdamW fallback for other leaves.
@@ -467,6 +498,10 @@ class ExperimentConfig:
     color_rank: int = 16
     context_memory_width: int = 32
     memory_decay: float = 1.0
+    memory_read_transform: MemoryReadTransform = "linear"
+    memory_read_interval: int = 1
+    latent_residual_mixer: LatentResidualMixer = "none"
+    latent_residual_block_size: int = 10
     memory_coding: MemoryCoding = "learned_update"
     trace_engine: TraceEngine = "pp_prop"
     neuron_typing: NeuronTyping = "none"
@@ -483,6 +518,9 @@ class ExperimentConfig:
     runtime_profile: bool = False
     learning_rate: float = 1e-3
     lr_schedule: LrScheduleName = "cosine"
+    lr_warmup_fraction: float = 0.0
+    effort_schedule: EffortScheduleName = "uniform"
+    effort_distillation_weight: float = 0.0
     optimizer: OptimizerName = "muon"
     weight_decay: float | None = None
     adaptation_learning_rate: float = 5e-5
@@ -520,6 +558,8 @@ class ExperimentConfig:
             ("readout_width", 1),
             ("color_rank", 1),
             ("context_memory_width", 0),
+            ("memory_read_interval", 1),
+            ("latent_residual_block_size", 1),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
             ("latent_steps", 30),
@@ -570,15 +610,65 @@ class ExperimentConfig:
             raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("lr_schedule must be 'constant' or 'cosine'")
+        if self.effort_schedule not in ("uniform", "progressive"):
+            raise ValueError("effort_schedule must be 'uniform' or 'progressive'")
+        distillation_weight = _nonnegative_real(
+            self.effort_distillation_weight, "effort_distillation_weight"
+        )
+        if distillation_weight > 0.0:
+            raise ValueError(
+                "effort_distillation_weight requires a qualified R60 teacher; "
+                "the Stage 6 teacher gate has not been satisfied"
+            )
+        object.__setattr__(
+            self, "effort_distillation_weight", distillation_weight
+        )
+        warmup = self.lr_warmup_fraction
+        if isinstance(warmup, (bool, np.bool_)) or not isinstance(warmup, Real):
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+        warmup = float(warmup)
+        if not math.isfinite(warmup) or not 0.0 <= warmup < 1.0:
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+        if self.lr_schedule == "constant" and warmup != 0.0:
+            raise ValueError(
+                "lr_warmup_fraction must be zero when lr_schedule='constant'"
+            )
+        object.__setattr__(self, "lr_warmup_fraction", warmup)
         if self.memory_coding not in (
             "frozen",
             "learned_keys",
             "learned_write",
             "learned_update",
+            "delta_write",
+            "situ_glu_update",
         ):
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
-                "'learned_write' or 'learned_update'"
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'"
+            )
+        if not isinstance(self.memory_read_transform, str):
+            raise TypeError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform not in ("linear", "gated", "gated_rms"):
+            raise ValueError(
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+            )
+        if self.memory_read_transform != "linear" and self.context_memory_width == 0:
+            raise ValueError(
+                "memory_read_transform requires a positive context_memory_width"
+            )
+        if self.latent_residual_mixer not in ("none", "attention_residual"):
+            raise ValueError(
+                "latent_residual_mixer must be 'none' or 'attention_residual'"
+            )
+        if (
+            self.latent_residual_mixer == "attention_residual"
+            and self.context_memory_width == 0
+        ):
+            raise ValueError(
+                "latent_residual_mixer requires a positive context_memory_width"
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError("memory_coding requires a positive context_memory_width")
@@ -770,6 +860,10 @@ class ExperimentConfig:
         seed: int = 9999,
         context_memory_width: int | None = None,
         memory_decay: float = 1.0,
+        memory_read_transform: MemoryReadTransform = "linear",
+        memory_read_interval: int = 1,
+        latent_residual_mixer: LatentResidualMixer = "none",
+        latent_residual_block_size: int = 10,
         memory_coding: MemoryCoding | None = None,
         trace_engine: TraceEngine = "pp_prop",
         neuron_typing: NeuronTyping = "none",
@@ -778,6 +872,9 @@ class ExperimentConfig:
         weight_decay: float | None = None,
         refinement_mixer: RefinementMixer = "linear",
         lr_schedule: LrScheduleName = "cosine",
+        lr_warmup_fraction: float = 0.0,
+        effort_schedule: EffortScheduleName = "uniform",
+        effort_distillation_weight: float = 0.0,
         balanced_color_loss: bool = False,
         decoder_mode: DecoderMode = "latent_row_decode",
         runtime_profile: bool = False,
@@ -798,7 +895,15 @@ class ExperimentConfig:
             zero for explicitly selected legacy CP mode.
         memory_decay : float
             Associative memory decay in ``[0, 1]``.
-        memory_coding : {"frozen", "learned_keys", "learned_write"}
+        memory_read_transform : {"linear", "gated", "gated_rms"}
+            Associative read projection forwarded to the model.
+        memory_read_interval : int
+            Positive one-based latent associative-read cadence.
+        latent_residual_mixer : {"none", "attention_residual"}
+            Optional latent-depth residual mixer.
+        latent_residual_block_size : int
+            Positive latent ticks per summary block.
+        memory_coding : {"frozen", "learned_keys", "learned_write", "learned_update", "delta_write", "situ_glu_update"}
             Storage-coding trainability forwarded to the model.
         trace_engine : {"pp_prop", "d_rtrl"}
             Eligibility-trace engine forwarded to the model.
@@ -815,6 +920,13 @@ class ExperimentConfig:
             Row-refinement proposal mixer.
         lr_schedule : {"constant", "cosine"}
             Shared-training learning-rate schedule forwarded unchanged.
+        lr_warmup_fraction : float
+            Leading fraction of updates used for linear cosine warmup.
+        effort_schedule : {"uniform", "progressive"}
+            Training-depth sampling schedule.
+        effort_distillation_weight : float
+            Deeper-effort self-distillation weight. Only zero is accepted
+            while the Stage 6 teacher gate is closed.
         balanced_color_loss : bool
             Whether to balance valid-cell color loss by present target class.
         decoder_mode : {"legacy_cp", "row_refinement"}
@@ -847,6 +959,10 @@ class ExperimentConfig:
             color_rank=4,
             context_memory_width=context_memory_width,
             memory_decay=memory_decay,
+            memory_read_transform=memory_read_transform,
+            memory_read_interval=memory_read_interval,
+            latent_residual_mixer=latent_residual_mixer,
+            latent_residual_block_size=latent_residual_block_size,
             memory_coding=memory_coding,
             trace_engine=trace_engine,
             neuron_typing=neuron_typing,
@@ -855,6 +971,9 @@ class ExperimentConfig:
             weight_decay=weight_decay,
             refinement_mixer=refinement_mixer,
             lr_schedule=lr_schedule,
+            lr_warmup_fraction=lr_warmup_fraction,
+            effort_schedule=effort_schedule,
+            effort_distillation_weight=effort_distillation_weight,
             balanced_color_loss=balanced_color_loss,
             decoder_mode=decoder_mode,
             runtime_profile=runtime_profile,
@@ -1404,10 +1523,30 @@ def _effort_schedule(
     updates: int,
     rng: brainstate.random.RandomState,
     efforts: Sequence[int] = TRAINING_EFFORTS,
+    schedule: EffortScheduleName = "uniform",
 ) -> np.ndarray:
-    base = np.resize(np.asarray(efforts, dtype=np.int32), updates)
-    order = np.asarray(rng.permutation(updates), dtype=np.int32)
-    return base[order]
+    effort_values = np.asarray(efforts, dtype=np.int32)
+    if schedule == "uniform":
+        base = np.resize(effort_values, updates)
+        order = np.asarray(rng.permutation(updates), dtype=np.int32)
+        return base[order]
+    if schedule != "progressive":
+        raise ValueError("schedule must be 'uniform' or 'progressive'")
+    if updates == 0:
+        return np.zeros((0,), dtype=np.int32)
+    if effort_values.size == 0:
+        raise ValueError("efforts must contain at least one checkpoint")
+    phase_sizes = np.full(effort_values.size, updates // effort_values.size)
+    phase_sizes[: updates % effort_values.size] += 1
+    phases: list[np.ndarray] = []
+    for phase_index, phase_size in enumerate(phase_sizes):
+        if phase_size == 0:
+            continue
+        introduced = effort_values[: phase_index + 1]
+        phase = np.resize(introduced, int(phase_size))
+        order = np.asarray(rng.permutation(int(phase_size)), dtype=np.int32)
+        phases.append(phase[order])
+    return np.concatenate(phases).astype(np.int32, copy=False)
 
 
 def _empty_training_tensors() -> _TrainingTensors:
@@ -1927,7 +2066,12 @@ def _training_chunks(
         return
     pool = _training_pool(data, config)
     rng = brainstate.random.RandomState(config.seed + 1000)
-    efforts = _effort_schedule(config.training_updates, rng, config.training_efforts)
+    efforts = _effort_schedule(
+        config.training_updates,
+        rng,
+        config.training_efforts,
+        config.effort_schedule,
+    )
     batch = config.training_batch_size
     task_indices = np.asarray(
         rng.randint(0, len(pool), size=config.training_updates * batch),
@@ -2165,6 +2309,10 @@ def _model_config(
             {
                 "context_memory_width": config.context_memory_width,
                 "memory_decay": config.memory_decay,
+                "memory_read_transform": config.memory_read_transform,
+                "memory_read_interval": config.memory_read_interval,
+                "latent_residual_mixer": config.latent_residual_mixer,
+                "latent_residual_block_size": config.latent_residual_block_size,
                 "demonstration_phase_index": row_config.phase_slice.start,
                 "query_phase_index": row_config.phase_slice.start + 1,
                 "input_side_valid_index": row_config.side_valid_slice.start,
@@ -2202,10 +2350,12 @@ def _memory_architecture_report(
         key_width = 0
         value_width = 0
     bytes_per_example = config.context_memory_width**2 * np.dtype(np.float32).itemsize
-    return {
+    report = {
         "reasoning_mode": ("associative_workspace" if enabled else "legacy_reservoir"),
         "context_memory_width": config.context_memory_width,
         "memory_decay": config.memory_decay,
+        "effort_schedule": config.effort_schedule,
+        "effort_distillation_weight": config.effort_distillation_weight,
         "raw_key_feature_width": key_width,
         "raw_value_feature_width": value_width,
         "context_memory_bytes_per_example": bytes_per_example,
@@ -2216,6 +2366,12 @@ def _memory_architecture_report(
             bytes_per_example * evaluation_batch_size
         ),
     }
+    if enabled:
+        report["memory_read_transform"] = config.memory_read_transform
+        report["memory_read_interval"] = config.memory_read_interval
+        report["latent_residual_mixer"] = config.latent_residual_mixer
+        report["latent_residual_block_size"] = config.latent_residual_block_size
+    return report
 
 
 def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
@@ -2228,6 +2384,8 @@ def _model_memory_report(model: LatentWorkspaceModel) -> dict[str, object]:
     """
     report = model.associative_memory_report().to_dict()
     report.update(model.memory_coding_divergence())
+    if model.config.memory_enabled:
+        report.update(model.memory_read_diagnostics())
     return report
 
 
@@ -2373,6 +2531,8 @@ def _optimizer_policy(config: ExperimentConfig) -> dict[str, object]:
         "name": config.optimizer,
         "learning_rate": config.learning_rate,
         "lr_schedule": config.lr_schedule,
+        "lr_warmup_fraction": config.lr_warmup_fraction,
+        "effort_distillation_weight": config.effort_distillation_weight,
         "weight_decay": config.weight_decay,
     }
     if config.optimizer == "muon":
@@ -2405,6 +2565,18 @@ def _training_learning_rate(config: ExperimentConfig) -> float | optax.Schedule:
     """
     if config.lr_schedule == "constant":
         return config.learning_rate
+    if config.lr_warmup_fraction:
+        warmup_steps = max(
+            1,
+            math.ceil(config.lr_warmup_fraction * config.training_updates),
+        )
+        return optax.warmup_cosine_decay_schedule(
+            init_value=0.0,
+            peak_value=config.learning_rate,
+            warmup_steps=warmup_steps,
+            decay_steps=max(int(config.training_updates), 1),
+            end_value=0.0,
+        )
     return optax.cosine_decay_schedule(
         init_value=config.learning_rate,
         decay_steps=max(int(config.training_updates), 1),
@@ -2574,7 +2746,13 @@ def _train_chunks(
     return losses, schedule
 
 
-def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
+def _write_parameter_checkpoint(
+    model: LatentWorkspaceModel,
+    path: pathlib.Path,
+    *,
+    effort_schedule: EffortScheduleName = "uniform",
+    effort_distillation_weight: float = 0.0,
+) -> str:
     """Write trainable parameter leaves and return the file digest.
 
     The shared training stage is expensive and optional diagnostic variants can
@@ -2585,13 +2763,39 @@ def _write_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path)
     leaves = jax.tree.leaves({key: state.value for key, state in states.items()})
     path.parent.mkdir(parents=True, exist_ok=True)
     staged = path.with_name(path.name + ".partial")
+    architecture = np.frombuffer(
+        msgspec.json.encode(
+            {
+                "schema_version": 1,
+                "memory_coding": model.config.memory_coding,
+                "memory_read_interval": model.config.memory_read_interval,
+                "latent_residual_mixer": model.config.latent_residual_mixer,
+                "latent_residual_block_size": (
+                    model.config.latent_residual_block_size
+                ),
+                "effort_schedule": effort_schedule,
+                "effort_distillation_weight": effort_distillation_weight,
+            }
+        ),
+        dtype=np.uint8,
+    )
     with staged.open("wb") as handle:
-        np.savez(handle, *[np.asarray(leaf) for leaf in leaves])
+        np.savez(
+            handle,
+            *[np.asarray(leaf) for leaf in leaves],
+            __architecture__=architecture,
+        )
     os.replace(staged, path)
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) -> str:
+def _read_parameter_checkpoint(
+    model: LatentWorkspaceModel,
+    path: pathlib.Path,
+    *,
+    effort_schedule: EffortScheduleName = "uniform",
+    effort_distillation_weight: float = 0.0,
+) -> str:
     """Restore parameter leaves written by :func:`_write_parameter_checkpoint`.
 
     A checkpoint from a different neuron count, edge count, or decoder mode has
@@ -2603,8 +2807,29 @@ def _read_parameter_checkpoint(model: LatentWorkspaceModel, path: pathlib.Path) 
     )
     stored = np.load(path)
     names = [f"arr_{index}" for index in range(len(leaves))]
-    if set(stored.files) != set(names):
+    stored_names = set(stored.files)
+    if stored_names not in (set(names), set(names) | {"__architecture__"}):
         raise ValueError("parameter checkpoint does not match the model tree")
+    if "__architecture__" in stored_names:
+        architecture = msgspec.json.decode(
+            np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
+        )
+        if isinstance(architecture, dict) and architecture.get("schema_version") == 1:
+            architecture.setdefault("latent_residual_mixer", "none")
+            architecture.setdefault("latent_residual_block_size", 10)
+            architecture.setdefault("effort_schedule", "uniform")
+            architecture.setdefault("memory_coding", model.config.memory_coding)
+            architecture.setdefault("effort_distillation_weight", 0.0)
+        if architecture != {
+            "schema_version": 1,
+            "memory_coding": model.config.memory_coding,
+            "memory_read_interval": model.config.memory_read_interval,
+            "latent_residual_mixer": model.config.latent_residual_mixer,
+            "latent_residual_block_size": model.config.latent_residual_block_size,
+            "effort_schedule": effort_schedule,
+            "effort_distillation_weight": effort_distillation_weight,
+        }:
+            raise ValueError("parameter checkpoint does not match model architecture")
     restored = [jnp.asarray(stored[name]) for name in names]
     for target, value in zip(leaves, restored, strict=True):
         if np.shape(target) != np.shape(value):
@@ -2626,7 +2851,12 @@ def _restore_initial_parameters(
     initial = config.initial_checkpoint
     if initial is None or not initial.exists():
         return None
-    return _read_parameter_checkpoint(model, initial)
+    return _read_parameter_checkpoint(
+        model,
+        initial,
+        effort_schedule=config.effort_schedule,
+        effort_distillation_weight=config.effort_distillation_weight,
+    )
 
 
 def _checkpoint_writer(
@@ -2645,7 +2875,12 @@ def _checkpoint_writer(
 
     def write(index: int) -> None:
         if (index + 1) % every == 0:
-            _write_parameter_checkpoint(model, path)
+            _write_parameter_checkpoint(
+                model,
+                path,
+                effort_schedule=config.effort_schedule,
+                effort_distillation_weight=config.effort_distillation_weight,
+            )
 
     return write
 
@@ -2669,6 +2904,13 @@ def _restored_training_report(
         "balanced_color_loss": config.balanced_color_loss,
         "optimizer_updates_by_effort": {
             str(value): 0 for value in config.training_efforts
+        },
+        "effort_schedule_policy": config.effort_schedule,
+        "effort_schedule": [],
+        "effort_self_distillation": {
+            "enabled": False,
+            "weight": config.effort_distillation_weight,
+            "teacher_gate": "not_satisfied",
         },
         "losses": [],
         "parameter_sha256_before": _tree_digest(parameter_snapshot(model)),
@@ -2718,6 +2960,11 @@ def _train_model(
             "depth_weighting": "uniform_unit_sum_per_update",
             "balanced_color_loss": config.balanced_color_loss,
             "optimizer": _optimizer_policy(config),
+            "effort_self_distillation": {
+                "enabled": False,
+                "weight": config.effort_distillation_weight,
+                "teacher_gate": "not_satisfied",
+            },
             **compiler,
             "optimizer_updates_by_effort": {
                 str(value): 0 for value in config.training_efforts
@@ -2859,7 +3106,13 @@ def _train_model(
             str(value): int(counts[value]) for value in config.training_efforts
         },
         "losses": np.asarray(losses, dtype=np.float64).tolist(),
+        "effort_schedule_policy": config.effort_schedule,
         "effort_schedule": list(schedule.efforts),
+        "effort_self_distillation": {
+            "enabled": False,
+            "weight": config.effort_distillation_weight,
+            "teacher_gate": "not_satisfied",
+        },
         "parameter_sha256_before": before,
         "parameter_sha256_after": after,
         "parameters_moved": before != after,
@@ -6239,6 +6492,10 @@ def _render_report(result: dict[str, object]) -> str:
         ),
         training_line,
         (
+            "Effort self-distillation: "
+            f"{training.get('effort_self_distillation', {})}."
+        ),
+        (
             f"Training exposure: {training.get('sampled_base_task_count', 'unreported')} "
             "unique base tasks and "
             f"{training.get('sampled_base_fold_count', 'unreported')} unique "
@@ -6771,7 +7028,14 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         if checkpoint is not None and checkpoint.exists():
             _emit_progress("training", 0, 1, training_started)
             training = _restored_training_report(
-                model, config, _read_parameter_checkpoint(model, checkpoint)
+                model,
+                config,
+                _read_parameter_checkpoint(
+                    model,
+                    checkpoint,
+                    effort_schedule=config.effort_schedule,
+                    effort_distillation_weight=config.effort_distillation_weight,
+                ),
             )
             _emit_progress("training", 1, 1, training_started)
         else:
@@ -6808,7 +7072,10 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
             if checkpoint is not None:
                 training["parameter_checkpoint"] = str(checkpoint)
                 training["parameter_checkpoint_sha256"] = _write_parameter_checkpoint(
-                    model, checkpoint
+                    model,
+                    checkpoint,
+                    effort_schedule=config.effort_schedule,
+                    effort_distillation_weight=config.effort_distillation_weight,
                 )
         phase_seconds["training"] = time.perf_counter() - training_started
         evaluation_started = time.perf_counter()
@@ -6991,8 +7258,27 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--context-memory-width", type=int, default=32)
     parser.add_argument("--memory-decay", type=float, default=1.0)
     parser.add_argument(
+        "--memory-read-transform",
+        choices=("linear", "gated", "gated_rms"),
+        default="linear",
+    )
+    parser.add_argument("--memory-read-interval", type=int, default=1)
+    parser.add_argument(
+        "--latent-residual-mixer",
+        choices=("none", "attention_residual"),
+        default="none",
+    )
+    parser.add_argument("--latent-residual-block-size", type=int, default=10)
+    parser.add_argument(
         "--memory-coding",
-        choices=("frozen", "learned_keys", "learned_write", "learned_update"),
+        choices=(
+            "frozen",
+            "learned_keys",
+            "learned_write",
+            "learned_update",
+            "delta_write",
+            "situ_glu_update",
+        ),
         default=None,
     )
     parser.add_argument(
@@ -7022,6 +7308,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--lr-schedule", choices=("constant", "cosine"), default="cosine"
     )
+    parser.add_argument("--lr-warmup-fraction", type=float, default=0.0)
+    parser.add_argument(
+        "--effort-schedule",
+        choices=("uniform", "progressive"),
+        default="uniform",
+    )
+    parser.add_argument("--effort-distillation-weight", type=float, default=0.0)
     parser.add_argument(
         "--optimizer", choices=("adam", "adamw", "muon"), default="muon"
     )
@@ -7081,6 +7374,10 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             seed=args.seed,
             context_memory_width=args.context_memory_width,
             memory_decay=args.memory_decay,
+            memory_read_transform=args.memory_read_transform,
+            memory_read_interval=args.memory_read_interval,
+            latent_residual_mixer=args.latent_residual_mixer,
+            latent_residual_block_size=args.latent_residual_block_size,
             memory_coding=args.memory_coding,
             trace_engine=args.trace_engine,
             neuron_typing=args.neuron_typing,
@@ -7089,6 +7386,9 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             weight_decay=args.weight_decay,
             refinement_mixer=args.refinement_mixer,
             lr_schedule=args.lr_schedule,
+            lr_warmup_fraction=args.lr_warmup_fraction,
+            effort_schedule=args.effort_schedule,
+            effort_distillation_weight=args.effort_distillation_weight,
             balanced_color_loss=args.balanced_color_loss,
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
@@ -7103,6 +7403,10 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         recurrent_edges=args.recurrent_edges,
         context_memory_width=args.context_memory_width,
         memory_decay=args.memory_decay,
+        memory_read_transform=args.memory_read_transform,
+        memory_read_interval=args.memory_read_interval,
+        latent_residual_mixer=args.latent_residual_mixer,
+        latent_residual_block_size=args.latent_residual_block_size,
         memory_coding=args.memory_coding or "learned_update",
         trace_engine=args.trace_engine,
         neuron_typing=args.neuron_typing,
@@ -7129,6 +7433,9 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         adaptation_task_group=args.adaptation_task_group,
         learning_rate=args.learning_rate,
         lr_schedule=args.lr_schedule,
+        lr_warmup_fraction=args.lr_warmup_fraction,
+        effort_schedule=args.effort_schedule,
+        effort_distillation_weight=args.effort_distillation_weight,
         optimizer=args.optimizer,
         weight_decay=args.weight_decay,
         copy_residual_gain=args.copy_residual_gain,

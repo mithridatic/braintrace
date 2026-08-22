@@ -1,0 +1,41 @@
+{
+  "stage": 0,
+  "title": "canonical baseline and existing borrowing audit",
+  "branch": "feat/example21-kimi-transfer",
+  "base_revision": "7843012e546a2ab288900bf2d6bf9e3a88fb5711",
+  "protocol": "arc_agi_1_example21_v2",
+  "canonical_configuration": {
+    "seeds": [2108, 31337, 7777],
+    "neurons": 4096,
+    "recurrent_edges": 4096,
+    "context_memory_width": 32,
+    "latent_steps": 60,
+    "training_updates": 260,
+    "training_batch_size": 32,
+    "evaluation_queries": 419
+  },
+  "existing_defaults": {
+    "optimizer": "muon",
+    "weight_decay": 0.1,
+    "lr_schedule": "cosine",
+    "lr_warmup_fraction": 0.0,
+    "memory_value_softcap_beta": 4.0,
+    "reasoning_query_softcap_beta": 25.0
+  },
+  "commands": [],
+  "source_hashes": {},
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "missing_evidence": [
+    "one-factor 100-task optimizer pilots",
+    "one-factor 100-task schedule pilots",
+    "one-factor 100-task softcap pilots",
+    "three-seed 419-query combined-winner comparison",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}

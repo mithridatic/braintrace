@@ -1,0 +1,66 @@
+{
+  "stage": 1,
+  "title": "gated and normalized memory reads",
+  "base_commit": "9168989",
+  "commands": [
+    {
+      "command": "python -m pytest braintrace/_op/gated_test.py braintrace/nn/_gated_test.py -q",
+      "result": "17 passed"
+    },
+    {
+      "command": "python -m pytest <gated and compatibility focused selection>",
+      "result": "33 passed, 377 deselected"
+    },
+    {
+      "command": "python -m pytest <seven full-gate regressions plus gated diagnostic>",
+      "result": "8 passed, 385 deselected"
+    },
+    {
+      "command": "python -m pytest braintrace/_op/gated_test.py braintrace/nn/_gated_test.py examples/pp_prop/latent_workspace_model_test.py examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "410 passed, 40 expected compiler-classification warnings, 603.12 seconds"
+    },
+    {
+      "command": "python -m ruff check <Stage 1 touched files excluding pre-existing braintrace/__init__.py F401 diagnostics>",
+      "result": "passed"
+    },
+    {
+      "command": "python -m pytest braintrace/__init___test.py braintrace/nn/__init___test.py braintrace/_op/_registries_test.py -q",
+      "result": "218 passed, 1 expected unsupported-scan warning"
+    },
+    {
+      "command": "basedpyright braintrace/_op/gated.py braintrace/nn/_gated.py",
+      "result": "0 errors; strict-project warnings remain"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "braintrace/_op/gated.py": "b5868bfb292c7912a95bdf749df93c7d7b1dec183018a0ce7d6a314006f2f9b0",
+    "braintrace/nn/_gated.py": "da6979e1e0c2851c130f8e495b852a19b88cdb42ba907f934e5fc30d88890c22",
+    "examples/pp_prop/latent_workspace_model.py": "a3ea27d56b62e624f22adb4f3918f4bbc65905706e84b2ca4f7ec3f1790fdd85",
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "5105791b6426f7ffe4cbb705a98a7ef94631e75d7e14d47190a71ba5a595a2d2"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "structural_evidence": {
+    "independent_forward_and_autodiff_reference": "passed",
+    "jit": "passed",
+    "pp_prop_finite_window_classification": "passed",
+    "d_rtrl_bptt_oracle": "passed",
+    "configuration_cli_report_checkpoint_roundtrip": "passed",
+    "coverage_measurement": "blocked: Coverage.py 7.15.0 on Python 3.14 exited -1073740791 before producing a report"
+  },
+  "missing_evidence": [
+    "greater-than-90-percent numeric coverage report due coverage runtime crash",
+    "100-task linear versus gated versus gated_rms pilot",
+    "three-seed 419-query reduced-topology comparison",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}

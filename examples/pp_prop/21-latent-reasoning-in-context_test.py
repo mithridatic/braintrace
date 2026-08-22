@@ -785,7 +785,9 @@ def test_lr_schedule_defaults_to_cosine_at_raised_base_rate(example):
     )
 
     assert (default.lr_schedule, default.learning_rate) == ("cosine", 1e-3)
+    assert default.lr_warmup_fraction == 0.0
     assert (cli.lr_schedule, cli.learning_rate) == ("cosine", 1e-3)
+    assert cli.lr_warmup_fraction == 0.0
     assert smoke.lr_schedule == "cosine"
     constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
     assert constant.lr_schedule == "constant"
@@ -807,17 +809,141 @@ def test_cosine_training_schedule_decays_base_rate_to_zero(example):
     assert example._training_learning_rate(constant) == constant.learning_rate
 
 
+def test_cosine_training_schedule_supports_linear_warmup(example):
+    config = example.ExperimentConfig(
+        structural_only=True,
+        training_updates=100,
+        lr_warmup_fraction=0.01,
+    )
+    schedule = example._training_learning_rate(config)
+
+    assert float(schedule(0)) == pytest.approx(0.0)
+    assert float(schedule(1)) == pytest.approx(config.learning_rate)
+    assert float(schedule(config.training_updates)) == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [True, -0.01, 1.0, float("nan"), float("inf")],
+)
+def test_lr_warmup_fraction_rejects_invalid_values(example, value):
+    with pytest.raises(ValueError, match="lr_warmup_fraction"):
+        example.ExperimentConfig(
+            structural_only=True,
+            lr_warmup_fraction=value,
+        )
+
+
+def test_constant_schedule_rejects_nonzero_warmup(example):
+    with pytest.raises(ValueError, match="lr_warmup_fraction"):
+        example.ExperimentConfig(
+            structural_only=True,
+            lr_schedule="constant",
+            lr_warmup_fraction=0.01,
+        )
+
+
 def test_lr_schedule_round_trips_policy_dict_and_cli(example):
     cosine = example.ExperimentConfig(structural_only=True)
-    constant = example._config_from_args(
-        example._parser().parse_args(["--structural-only", "--lr-schedule", "constant"])
+    warm = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--lr-warmup-fraction", "0.01"]
+        )
     )
+    constant = example.ExperimentConfig(structural_only=True, lr_schedule="constant")
 
     assert example._optimizer_policy(cosine)["lr_schedule"] == "cosine"
+    assert example._optimizer_policy(cosine)["lr_warmup_fraction"] == 0.0
+    assert example._optimizer_policy(warm)["lr_warmup_fraction"] == 0.01
     assert example._optimizer_policy(constant)["lr_schedule"] == "constant"
     assert cosine.to_dict()["lr_schedule"] == "cosine"
+    assert warm.to_dict()["lr_warmup_fraction"] == 0.01
     assert constant.to_dict()["lr_schedule"] == "constant"
     assert constant.learning_rate == 1e-3
+
+
+def test_effort_schedule_round_trips_config_cli_and_training_report(
+    example, monkeypatch
+):
+    default = example.ExperimentConfig(structural_only=True)
+    progressive = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--effort-schedule", "progressive"]
+        )
+    )
+
+    assert default.effort_schedule == "uniform"
+    assert progressive.effort_schedule == "progressive"
+    assert progressive.to_dict()["effort_schedule"] == "progressive"
+    architecture = example._memory_architecture_report(
+        progressive,
+        RowEventConfig(max_demonstrations=10, max_grid_size=30),
+        training_batch_size=1,
+        evaluation_batch_size=1,
+    )
+    assert architecture["effort_schedule"] == "progressive"
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
+    restored = example._restored_training_report(SimpleNamespace(), progressive, "digest")
+    assert restored["effort_schedule_policy"] == "progressive"
+    assert restored["effort_schedule"] == []
+    with pytest.raises(ValueError, match="effort_schedule"):
+        example.ExperimentConfig(structural_only=True, effort_schedule="staged")
+
+
+def test_effort_distillation_setting_round_trips_and_fails_closed(
+    example, monkeypatch
+):
+    default = example.ExperimentConfig(structural_only=True)
+    cli = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--effort-distillation-weight", "0"]
+        )
+    )
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+
+    assert default.effort_distillation_weight == 0.0
+    assert cli.to_dict()["effort_distillation_weight"] == 0.0
+    assert example._optimizer_policy(cli)["effort_distillation_weight"] == 0.0
+    architecture = example._memory_architecture_report(
+        cli,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=1,
+    )
+    assert architecture["effort_distillation_weight"] == 0.0
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: {})
+    restored = example._restored_training_report(SimpleNamespace(), cli, "digest")
+    assert restored["effort_self_distillation"] == {
+        "enabled": False,
+        "weight": 0.0,
+        "teacher_gate": "not_satisfied",
+    }
+    report = example._render_report(
+        {
+            "configuration": cli.to_dict(),
+            "training": restored,
+            "evaluation": {},
+            "qualification": {},
+        }
+    )
+    assert "Effort self-distillation" in report
+    assert "teacher_gate" in report
+
+    for value in (-0.1, float("nan"), float("inf"), True):
+        with pytest.raises(ValueError, match="finite and nonnegative"):
+            example.ExperimentConfig(
+                structural_only=True, effort_distillation_weight=value
+            )
+    with pytest.raises(ValueError, match="qualified R60 teacher"):
+        example.ExperimentConfig(
+            structural_only=True, effort_distillation_weight=0.1
+        )
+    with pytest.raises(ValueError, match="qualified R60 teacher"):
+        example._config_from_args(
+            example._parser().parse_args(
+                ["--structural-only", "--effort-distillation-weight", "0.1"]
+            )
+        )
 
 
 def test_parameter_travel_budget_halves_under_cosine_schedule(example):
@@ -864,6 +990,129 @@ def test_softcap_betas_default_and_plumb_into_model_config(example):
     with pytest.raises(ValueError, match="reasoning_query_softcap_beta"):
         example.ExperimentConfig(
             structural_only=True, reasoning_query_softcap_beta=-1.0
+        )
+
+
+def test_memory_read_transform_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    gated = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--memory-read-transform", "gated_rms"]
+        )
+    )
+    model_config = example._model_config(gated, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        gated,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.memory_read_transform == "linear"
+    assert gated.memory_read_transform == "gated_rms"
+    assert gated.to_dict()["memory_read_transform"] == "gated_rms"
+    assert model_config.memory_read_transform == "gated_rms"
+    assert architecture["memory_read_transform"] == "gated_rms"
+    with pytest.raises(ValueError, match="memory_read_transform"):
+        example.ExperimentConfig(
+            structural_only=True, memory_read_transform="normalized"
+        )
+    with pytest.raises(TypeError, match="memory_read_transform"):
+        example.ExperimentConfig(
+            structural_only=True, memory_read_transform=3
+        )
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            memory_coding="frozen",
+            decoder_mode="legacy_cp",
+            memory_read_transform="gated",
+        )
+
+
+def test_memory_read_interval_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    interval = example._config_from_args(
+        example._parser().parse_args(
+            ["--structural-only", "--memory-read-interval", "4"]
+        )
+    )
+    smoke = example.ExperimentConfig.smoke_config(memory_read_interval=8)
+    model_config = example._model_config(interval, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        interval,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.memory_read_interval == 1
+    assert interval.memory_read_interval == 4
+    assert smoke.memory_read_interval == 8
+    assert interval.to_dict()["memory_read_interval"] == 4
+    assert model_config.memory_read_interval == 4
+    assert architecture["memory_read_interval"] == 4
+    for value in (True, 1.5, "4"):
+        with pytest.raises(ValueError, match="memory_read_interval"):
+            example.ExperimentConfig(
+                structural_only=True, memory_read_interval=value
+            )
+    with pytest.raises(ValueError, match="memory_read_interval"):
+        example.ExperimentConfig(structural_only=True, memory_read_interval=0)
+
+
+def test_latent_residual_round_trips_cli_model_and_reports(example):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    default = example.ExperimentConfig(structural_only=True)
+    enabled = example._config_from_args(
+        example._parser().parse_args(
+            [
+                "--structural-only",
+                "--latent-residual-mixer",
+                "attention_residual",
+                "--latent-residual-block-size",
+                "10",
+            ]
+        )
+    )
+    smoke = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=5,
+    )
+    model_config = example._model_config(enabled, rows, batch_size=1)
+    architecture = example._memory_architecture_report(
+        enabled,
+        rows,
+        training_batch_size=1,
+        evaluation_batch_size=2,
+    )
+
+    assert default.latent_residual_mixer == "none"
+    assert default.latent_residual_block_size == 10
+    assert enabled.latent_residual_mixer == "attention_residual"
+    assert smoke.latent_residual_block_size == 5
+    assert enabled.to_dict()["latent_residual_mixer"] == "attention_residual"
+    assert model_config.latent_residual_mixer == "attention_residual"
+    assert architecture["latent_residual_mixer"] == "attention_residual"
+    assert architecture["latent_residual_block_size"] == 10
+    with pytest.raises(ValueError, match="latent_residual_mixer"):
+        example.ExperimentConfig(
+            structural_only=True, latent_residual_mixer="linear"
+        )
+    with pytest.raises(ValueError, match="latent_residual_block_size"):
+        example.ExperimentConfig(
+            structural_only=True, latent_residual_block_size=0
+        )
+    with pytest.raises(ValueError, match="positive context_memory_width"):
+        example.ExperimentConfig(
+            structural_only=True,
+            context_memory_width=0,
+            memory_coding="frozen",
+            decoder_mode="legacy_cp",
+            latent_residual_mixer="attention_residual",
         )
 
 
@@ -1512,6 +1761,78 @@ def test_effort_schedule_is_balanced_reproducible_and_mixed(example):
     assert max(counts.values()) - min(counts.values()) <= 1
 
 
+def test_uniform_effort_schedule_preserves_historical_algorithm(example):
+    expected_rng = brainstate.random.RandomState(7)
+    base = np.resize(np.asarray((0, 30, 60), dtype=np.int32), 17)
+    expected = base[np.asarray(expected_rng.permutation(17), dtype=np.int32)]
+
+    actual = example._effort_schedule(
+        17,
+        brainstate.random.RandomState(7),
+        (0, 30, 60),
+        "uniform",
+    )
+
+    np.testing.assert_array_equal(actual, expected)
+
+
+def test_progressive_effort_schedule_has_exact_phases_and_balance(example):
+    first = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(2108),
+        (0, 30, 60),
+        "progressive",
+    )
+    repeat = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(2108),
+        (0, 30, 60),
+        "progressive",
+    )
+    other = example._effort_schedule(
+        260,
+        brainstate.random.RandomState(31337),
+        (0, 30, 60),
+        "progressive",
+    )
+
+    np.testing.assert_array_equal(first, repeat)
+    np.testing.assert_array_equal(first[:87], 0)
+    assert set(first[87:174].tolist()) == {0, 30}
+    assert set(first[174:].tolist()) == {0, 30, 60}
+    for phase in (first[87:174], first[174:]):
+        counts = [int(np.sum(phase == effort)) for effort in np.unique(phase)]
+        assert max(counts) - min(counts) <= 1
+    np.testing.assert_array_equal(other[:87], first[:87])
+    assert not np.array_equal(other[87:], first[87:])
+
+
+def test_progressive_effort_schedule_handles_zero_and_generic_horizons(example):
+    empty = example._effort_schedule(
+        0,
+        brainstate.random.RandomState(1),
+        (5, 10, 20, 40),
+        "progressive",
+    )
+    generic = example._effort_schedule(
+        11,
+        brainstate.random.RandomState(1),
+        (5, 10, 20, 40),
+        "progressive",
+    )
+
+    assert empty.shape == (0,)
+    assert generic.shape == (11,)
+    assert set(generic[:3].tolist()) == {5}
+    assert set(generic[3:6].tolist()) <= {5, 10}
+    assert set(generic[6:9].tolist()) <= {5, 10, 20}
+    assert set(generic[9:].tolist()) <= {5, 10, 20, 40}
+    with pytest.raises(ValueError, match="schedule"):
+        example._effort_schedule(
+            3, brainstate.random.RandomState(1), (0, 30), "staged"
+        )
+
+
 def test_training_stream_compacts_learning_rule_timeline(example):
     """No frozen layout position may age the trace before supervised depths."""
     config = example.ExperimentConfig.smoke_config(decoder_mode="row_refinement")
@@ -1924,9 +2245,11 @@ def test_memory_architecture_report_records_raw_width_and_dense_state_cost(examp
     )
     assert legacy == {
         "reasoning_mode": "legacy_reservoir",
-        "context_memory_width": 0,
-        "memory_decay": 1.0,
-        "raw_key_feature_width": 0,
+            "context_memory_width": 0,
+            "memory_decay": 1.0,
+            "effort_schedule": "uniform",
+            "effort_distillation_weight": 0.0,
+            "raw_key_feature_width": 0,
         "raw_value_feature_width": 0,
         "context_memory_bytes_per_example": 0,
         "context_memory_bytes_training_batch": 0,
@@ -2004,7 +2327,16 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "carrier_radius",
         "carrier_consumers",
         "carrier_normalization_by_consumer",
-    }
+        "memory_read_rms",
+        "memory_drive_rms",
+            "gate_saturation_fraction",
+            "gate_channel_activation",
+            "memory_read_interval",
+            "memory_read_count",
+            "memory_read_active",
+        }
+    assert memory["gate_saturation_fraction"] is None
+    assert memory["gate_channel_activation"] is None
     assert memory["carrier_stabilizer"] == "per_example_stopped_unit_l2_cap"
     assert memory["carrier_radius"] == 1.0
     assert memory["carrier_consumers"] == (
@@ -4366,6 +4698,27 @@ def test_chunking_does_not_change_the_prepared_schedule(example):
         assert getattr(reference, field) == getattr(chunked, field), field
 
 
+def test_progressive_effort_schedule_is_chunk_size_independent(example):
+    whole = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        training_updates=6,
+        effort_schedule="progressive",
+    )
+    split = dataclasses.replace(whole, training_chunk_size=1)
+    data = example._load_data(whole)
+    rows = example._row_config(whole)
+
+    reference = _materialize_training(example, data, whole, rows)
+    chunked = _materialize_training(example, data, split, rows)
+
+    for field in _TRAINING_ARRAY_FIELDS:
+        np.testing.assert_array_equal(
+            getattr(reference, field), getattr(chunked, field), err_msg=field
+        )
+    for field in _TRAINING_METADATA_FIELDS:
+        assert getattr(reference, field) == getattr(chunked, field), field
+
+
 def test_training_sequence_length_covers_every_enabled_orientation(example):
     """The dataset bound covers every fold before static compilation."""
 
@@ -4796,6 +5149,111 @@ def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
 
     with pytest.raises(ValueError, match="parameter checkpoint"):
         example._read_parameter_checkpoint(broad, path)
+
+
+def test_memory_read_transform_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    linear_config = example.ExperimentConfig.smoke_config(
+        memory_read_transform="linear"
+    )
+    gated_config = example.ExperimentConfig.smoke_config(
+        memory_read_transform="gated"
+    )
+    rows = example._row_config(linear_config)
+    device = jax.devices("cpu")[0]
+    linear = example._make_model(linear_config, rows, batch_size=1, device=device)
+    gated = example._make_model(gated_config, rows, batch_size=1, device=device)
+    path = tmp_path / "linear-parameters.npz"
+    example._write_parameter_checkpoint(linear, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._read_parameter_checkpoint(gated, path)
+
+
+def test_memory_read_interval_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    every_tick_config = example.ExperimentConfig.smoke_config(memory_read_interval=1)
+    periodic_config = example.ExperimentConfig.smoke_config(memory_read_interval=4)
+    rows = example._row_config(every_tick_config)
+    device = jax.devices("cpu")[0]
+    every_tick = example._make_model(
+        every_tick_config, rows, batch_size=1, device=device
+    )
+    periodic = example._make_model(periodic_config, rows, batch_size=1, device=device)
+    path = tmp_path / "every-tick-parameters.npz"
+    example._write_parameter_checkpoint(every_tick, path)
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(periodic, path)
+
+
+def test_latent_residual_configuration_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    baseline_config = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="none"
+    )
+    residual_config = example.ExperimentConfig.smoke_config(
+        latent_residual_mixer="attention_residual",
+        latent_residual_block_size=10,
+    )
+    rows = example._row_config(baseline_config)
+    device = jax.devices("cpu")[0]
+    baseline = example._make_model(
+        baseline_config, rows, batch_size=1, device=device
+    )
+    residual = example._make_model(
+        residual_config, rows, batch_size=1, device=device
+    )
+    path = tmp_path / "baseline-parameters.npz"
+    example._write_parameter_checkpoint(baseline, path)
+
+    with pytest.raises(ValueError, match="parameter checkpoint"):
+        example._read_parameter_checkpoint(residual, path)
+
+
+def test_effort_schedule_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "progressive-parameters.npz"
+    example._write_parameter_checkpoint(
+        model, path, effort_schedule="progressive"
+    )
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(
+            model, path, effort_schedule="uniform"
+        )
+    assert example._read_parameter_checkpoint(
+        model, path, effort_schedule="progressive"
+    )
+
+
+def test_effort_distillation_weight_participates_in_checkpoint_compatibility(
+    example, tmp_path
+):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "distillation-parameters.npz"
+    example._write_parameter_checkpoint(
+        model, path, effort_distillation_weight=0.1
+    )
+
+    with pytest.raises(ValueError, match="model architecture"):
+        example._read_parameter_checkpoint(
+            model, path, effort_distillation_weight=0.0
+        )
+    assert example._read_parameter_checkpoint(
+        model, path, effort_distillation_weight=0.1
+    )
 
 
 def test_restoring_a_checkpoint_permits_a_zero_update_budget(example, tmp_path):
@@ -5487,6 +5945,40 @@ def test_learned_write_coding_flag_wires_into_model_config(example):
         example._parser().parse_args(["--smoke", "--memory-coding", "learned_write"])
     )
     assert smoke_config.memory_coding == "learned_write"
+
+
+@pytest.mark.parametrize("coding", ["delta_write", "situ_glu_update"])
+def test_stage5_memory_coding_flags_round_trip(example, coding):
+    rows = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    args = example._parser().parse_args(["--memory-coding", coding])
+    config = example._config_from_args(args)
+    model_config = example._model_config(config, rows, batch_size=2)
+
+    assert config.memory_coding == coding
+    assert config.to_dict()["memory_coding"] == coding
+    assert model_config.memory_coding == coding
+    assert example._memory_architecture_report(
+        config,
+        rows,
+        training_batch_size=2,
+        evaluation_batch_size=1,
+    )["reasoning_mode"] == "associative_workspace"
+
+
+def test_memory_coding_participates_in_checkpoint_metadata(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config(memory_coding="delta_write")
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    model = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "delta-write-parameters.npz"
+
+    example._write_parameter_checkpoint(model, path)
+    stored = np.load(path)
+    architecture = json.loads(
+        np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
+    )
+
+    assert architecture["memory_coding"] == "delta_write"
 
 
 def test_trace_engine_cli_threads_into_both_config_layers(example):

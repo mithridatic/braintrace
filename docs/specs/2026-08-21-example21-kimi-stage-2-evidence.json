@@ -1,0 +1,52 @@
+{
+  "stage": 2,
+  "title": "local and global memory-read cadence",
+  "base_commit": "a764561",
+  "commands": [
+    {
+      "command": "python -m pytest examples/pp_prop/latent_workspace_model_test.py -q -k <cadence and packed stream cluster>",
+      "result": "33 passed, 177 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q -k <cadence and checkpoint cluster>",
+      "result": "12 passed, 179 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/latent_workspace_model_test.py examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "401 passed, 40 expected compiler-classification warnings, 453.42 seconds"
+    },
+    {
+      "command": "ruff check <Stage 2 touched Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "examples/pp_prop/latent_workspace_model.py": "177493dbcff529282e520b841cadc6b711bc869fac29237702af859848a02e37",
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "685099a2cd3db46bce3535da4b3004c4b7e0eb29cd5a112fa3cb054728242177"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "not_evaluated",
+  "structural_evidence": {
+    "interval_one_legacy_behavior": "passed",
+    "interval_four_and_eight_masks": "passed",
+    "query_only_negative_control": "passed",
+    "compiled_packed_and_selected_drivers": "passed",
+    "state_reset_snapshot_restore": "passed",
+    "configuration_cli_report_checkpoint_roundtrip": "passed",
+    "full_example21_regression": "passed"
+  },
+  "missing_evidence": [
+    "100-task interval pilot",
+    "three-seed 419-query reduced-topology comparison",
+    "seed-stratified paired bootstrap",
+    "uncontended runtime and VRAM measurements"
+  ]
+}

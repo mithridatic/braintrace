@@ -1,0 +1,53 @@
+{
+  "stage": 6,
+  "title": "effort self-distillation gate",
+  "base_commit": "c2728e1",
+  "commands": [
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q -k effort_distillation",
+      "result": "2 passed, 202 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q -k <distillation and architecture manifest cluster>",
+      "result": "3 passed, 201 deselected"
+    },
+    {
+      "command": "python -m pytest examples/pp_prop/21-latent-reasoning-in-context_test.py -q",
+      "result": "204 passed, 119.39 seconds"
+    },
+    {
+      "command": "ruff check <Stage 6 touched Python files>",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_hashes": {
+    "examples/pp_prop/21-latent-reasoning-in-context.py": "3d3564ea908130785cb456976c66cf67ca11c63107bb5d009f41b3b9642d8e9c"
+  },
+  "parameter_hashes": {},
+  "metrics": {},
+  "paired_deltas": {},
+  "runtime_seconds": null,
+  "peak_vram_bytes": null,
+  "promotion_result": "skipped_teacher_gate_not_satisfied",
+  "structural_evidence": {
+    "teacher_gate": "closed because required three-seed R60 versus R30 evidence is absent",
+    "zero_default_behavior": "passed full entry regression",
+    "finite_nonnegative_validation": "passed",
+    "positive_weight_fails_closed": "passed",
+    "configuration_cli_report_result_roundtrip": "passed",
+    "checkpoint_compatibility": "passed",
+    "architecture_manifest": "passed",
+    "distillation_loss_implemented": false
+  },
+  "missing_evidence": [
+    "R60 versus R30 pixel and rule-at-oracle comparisons for seed 2108",
+    "R60 versus R30 pixel and rule-at-oracle comparisons for seed 31337",
+    "R60 versus R30 pixel and rule-at-oracle comparisons for seed 7777",
+    "two-of-three-seed teacher qualification",
+    "effort self-distillation implementation, intentionally deferred"
+  ]
+}
