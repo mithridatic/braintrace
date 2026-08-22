@@ -474,6 +474,7 @@ class ExperimentConfig:
     max_demonstrations: int = 10
     max_grid_size: int = 30
     latent_steps: int = 60
+    submission_effort: int | None = None
     training_updates: int = 260
     training_chunk_size: int = 0
     training_batch_size: int = 32
@@ -521,7 +522,7 @@ class ExperimentConfig:
             ("context_memory_width", 0),
             ("max_demonstrations", 1),
             ("max_grid_size", 1),
-            ("latent_steps", 60),
+            ("latent_steps", 30),
             ("training_updates", 0),
             ("training_chunk_size", 0),
             ("training_batch_size", 1),
@@ -536,6 +537,16 @@ class ExperimentConfig:
             object.__setattr__(
                 self, name, _integer(getattr(self, name), name, minimum=minimum)
             )
+        if self.submission_effort is not None:
+            object.__setattr__(
+                self,
+                "submission_effort",
+                _integer(self.submission_effort, "submission_effort", minimum=0),
+            )
+            if self.submission_effort not in self.checkpoints:
+                raise ValueError(
+                    "submission_effort must be one of the scored checkpoints"
+                )
         if self.device not in ("cpu", "gpu"):
             raise ValueError("device must be 'cpu' or 'gpu'")
         if self.primary_candidate_mode != "model_only":
@@ -746,6 +757,8 @@ class ExperimentConfig:
     @property
     def submission_checkpoint(self) -> int:
         """Primary model-only checkpoint at the configured latent horizon."""
+        if self.submission_effort is not None:
+            return self.submission_effort
         return self.checkpoints[-1]
 
     @classmethod
@@ -3349,12 +3362,16 @@ def _control_summary(
             applicable_records,
             color_rank,
             decoder_mode,
+            checkpoints,
+            submission_checkpoint,
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
             applicable_intact[0],
             applicable_records,
             color_rank,
             decoder_mode,
+            checkpoints,
+            submission_checkpoint,
         )
         if (
             len(applicable_records) == len(records)
@@ -6991,6 +7008,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--excitatory-fraction", type=float, default=0.8)
     parser.add_argument("--max-demonstrations", type=int, default=10)
     parser.add_argument("--latent-steps", type=int, default=60)
+    parser.add_argument("--submission-checkpoint", type=int, default=None)
     parser.add_argument("--training-updates", type=int, default=260)
     parser.add_argument("--training-chunk-size", type=int, default=0)
     parser.add_argument("--training-batch-size", type=int, default=32)
@@ -7091,6 +7109,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         excitatory_fraction=args.excitatory_fraction,
         max_demonstrations=args.max_demonstrations,
         latent_steps=args.latent_steps,
+        submission_effort=args.submission_checkpoint,
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
         training_batch_size=args.training_batch_size,
