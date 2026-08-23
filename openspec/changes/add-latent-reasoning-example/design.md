@@ -227,10 +227,11 @@ below.
 
 The prior demonstration-fitted forest exposes a useful conjunctive inductive
 bias, but it computes candidates from raw demonstrations without reading the
-trained parameters or recurrent trajectory. Its cumulative 32 is therefore a
-`demonstration_only_diagnostic`; the parameter-consuming retained baseline is
-cumulative 6. Diagnostic forest and rule candidates remain reportable but may
-not occupy either primary candidate slot in their raw ordering.
+trained parameters or recurrent trajectory. Its previously measured cumulative
+32 is therefore a `demonstration_only_diagnostic`; the earlier carrier-row
+parameter-consuming baseline at cumulative 6 was also superseded and is not the
+accepted result. Diagnostic forest and rule candidates remain reportable but
+may not occupy either primary candidate slot in their raw ordering.
 
 Every counted candidate is ordered by a target-free executed network path that
 consumes recurrent carrier or memory features and model-owned parameter leaves
@@ -251,12 +252,19 @@ ranking source, dependency class, answer-head version, score components, and
 participating parameter-leaf paths. A separately appended model-dependent
 second candidate cannot launder an unranked demonstration-only first candidate.
 
-A read-only 419-query replay selected this design: the fixed seed-31337
-checkpoint produced `9/9/7/7 = 32`; scaling the same logits by 0.5 produced
-`8/9/6/7 = 30`; a same-schema update-700 checkpoint produced `8/9/7/7 = 31`;
-and deterministic reseeded logits produced `7/9/5/7 = 28`. These measurements
-establish direction but do not replace production-path tests, repeat evidence,
-hashes, or full qualification artifacts.
+A read-only 419-query prototype replay selected this design: the fixed
+seed-31337 checkpoint produced `9/9/7/7 = 32`; scaling the same logits by 0.5
+produced `8/9/6/7 = 30`; a same-schema update-700 checkpoint produced
+`8/9/7/7 = 31`; and deterministic reseeded logits produced `7/9/5/7 = 28`.
+Those prototype measurements established direction but were nonqualifying.
+
+The subsequent authoritative production-path GPU matrix produced baseline and
+exact repeat `8/9/6/7 = 30`; exact 0.5x scale, independently trained swap, and
+deterministic BrainState seed-73 reseed each produced `7/9/5/7 = 28`. Repeat
+preserved canonical candidate and membership bytes. Every perturbation changed
+parameter bytes, candidate bytes, exact membership, and cumulative score from
+baseline. The full-profile, manifest, checkpoint-schema, training-origin, and
+execution-contract audits all passed.
 
 The qualifying checkpoint is nominated before complete evaluation-label
 scoring and must reach

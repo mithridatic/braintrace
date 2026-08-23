@@ -58,10 +58,18 @@ evaluation seed 31337, and answer head `checkpoint_conditioned`. Reduced and
 earlier profiles remain diagnostic only.
 
 - [x] 7.1 Specify the fixed full-matrix profile, candidate-level checkpoint ownership, target-free decoding, cumulative-score semantics, demonstration-only diagnostic status, repeat stability, perturbation movement, hashes, and BrainState execution constraints in `docs/specs/2026-08-23-example21-parameter-dependent-answer-head.md` and this OpenSpec change.
-- [ ] 7.2 Add co-located reproducing tests proving the raw demonstration-forest ordering is parameter-independent, is classified diagnostic-only, and cannot enter either primary candidate slot or cumulative metrics without checkpoint-likelihood reranking.
-- [ ] 7.3 Implement the measured target-free answer path: generate bounded forest proposals, rank each by `forest_log_probability + 1.0 * trained_network_candidate_log_probability`, and record candidate-level proposal/ranking sources plus executed checkpoint-parameter dependencies.
-- [ ] 7.4 Add ordered canonical prediction-byte and exact-rank-membership serialization plus full-checkpoint, participating-parameter, topology, manifest, candidate, and membership SHA-256 provenance with exact-schema checkpoint validation.
-- [ ] 7.5 Add matched eval-only baseline, reload/repeat, predeclared non-unit checkpoint-scale, independently seeded trained same-schema swap, and deterministic `brainstate.random` reseed arms; require all three perturbations separately to move ordered candidate bytes, exact rank membership, and cumulative score while repeat remains exact.
-- [ ] 7.6 Enforce the complete-manifest cumulative threshold `query@1 + query@2 + strict@1 + strict@2 >= 16`, excluding all unranked demonstration-only/rule diagnostics and failing on flat or invalid perturbations.
-- [ ] 7.7 If an EI/Dale arm is promoted, prove zero effective sign violations and require a predeclared sign control to move candidate bytes, exact membership, and cumulative score.
-- [ ] 7.8 Run meaningful co-located coverage above 90 percent for changed modules, the focused Example 21 gate, and the full baseline, repeat, scale, same-schema trained-swap, and deterministic-reseed evaluation matrix; retain exact per-arm artifacts and report the valid score without promoting diagnostic results.
+- [x] 7.2 Add co-located reproducing tests proving the raw demonstration-forest ordering is parameter-independent, is classified diagnostic-only, and cannot enter either primary candidate slot or cumulative metrics without checkpoint-likelihood reranking.
+- [x] 7.3 Implement the measured target-free answer path: generate bounded forest proposals, rank each by `forest_log_probability + 1.0 * trained_network_candidate_log_probability`, and record candidate-level proposal/ranking sources plus executed checkpoint-parameter dependencies.
+- [x] 7.4 Add ordered canonical prediction-byte and exact-rank-membership serialization plus full-checkpoint, participating-parameter, topology, manifest, candidate, and membership SHA-256 provenance with exact-schema checkpoint validation.
+- [x] 7.5 Add matched eval-only baseline, reload/repeat, predeclared non-unit checkpoint-scale, independently seeded trained same-schema swap, and deterministic `brainstate.random` reseed arms; require all three perturbations separately to move ordered candidate bytes, exact rank membership, and cumulative score while repeat remains exact.
+- [x] 7.6 Enforce the complete-manifest cumulative threshold `query@1 + query@2 + strict@1 + strict@2 >= 16`, excluding all unranked demonstration-only/rule diagnostics and failing on flat or invalid perturbations.
+- [x] 7.7 Record the qualifying arm as Dale `not_claimed`; no EI/Dale arm is promoted, so the conditional sign-control requirement is not applicable.
+- [x] 7.8 Run meaningful co-located coverage above 90 percent for changed modules, the focused Example 21 gate, and the full baseline, repeat, scale, same-schema trained-swap, and deterministic-reseed evaluation matrix; retain exact per-arm artifacts and report the valid score without promoting diagnostic results.
+
+Measured qualification: baseline and exact repeat are `8/9/6/7 = 30`.
+Scale, trained swap, and deterministic reseed are each `7/9/5/7 = 28` and
+each independently changes parameter bytes, ordered candidate bytes, exact
+membership, and cumulative score from baseline. The authoritative artifact is
+`var/ex21-paramdep-v1-matrix.json` (SHA-256
+`6ef287bf41fd3cd88ac00aee33c5b69088d8c3549ed0ce1f271b39a82f301581`);
+all matrix checks pass with no rejection reasons.

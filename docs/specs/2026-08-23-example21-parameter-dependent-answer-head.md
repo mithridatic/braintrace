@@ -305,6 +305,48 @@ same-schema trained-checkpoint swap, and deterministic reseed results. Until the
 baseline reaches 16 and every gate passes, the valid parameter-dependent score
 remains the last verified value; diagnostic forest performance is not promoted.
 
+## 8. Measured full-matrix qualification
+
+The completed 2026-08-23 matrix used clean source revision
+`ccc20cf7bd13c5c86dbd274319c0ccb840a13952`, Docker image ID
+`sha256:cfbb91d3195d320335779919050f36622921674a67dc3f9f44671c892b1daa9b`,
+manifest SHA-256
+`b9ab482f3f4f03193cf5ebd73433ab1899685797079e39fb9cf8ee88d6ad7d2f`,
+and topology SHA-256
+`1a32975bc76b50e459d0d3b623750ba53ca7e060555de809600fcd1a681d0460`.
+Every arm ran on the GPU with 4,096 physical LIF neurons, exactly 4,194,304
+directed recurrent edges, checkpoints 0/30/60, submission effort 60, and
+evaluation seed 31337.
+
+| Arm | Query @1 | Query @2 | Strict task @1 | Strict task @2 | Cumulative |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| trained baseline | 8 | 9 | 6 | 7 | **30** |
+| intact reload/repeat | 8 | 9 | 6 | 7 | **30** |
+| exact 0.5x scale | 7 | 9 | 5 | 7 | **28** |
+| independently trained swap | 7 | 9 | 5 | 7 | **28** |
+| deterministic BrainState seed-73 reseed | 7 | 9 | 5 | 7 | **28** |
+
+The baseline exceeds the predeclared cumulative threshold by 14. Repeat is
+exact across checkpoint, parameter, topology, manifest, query-manifest,
+candidate-byte, exact-membership, count, and cumulative-score evidence. Each
+perturbation independently differs from baseline in parameter bytes, ordered
+candidate bytes, exact membership, and cumulative score.
+
+| Arm | Checkpoint SHA-256 | Parameter SHA-256 | Candidate SHA-256 | Membership SHA-256 |
+| --- | --- | --- | --- | --- |
+| baseline | `d8d97f50b62ba71e9c9b31029e3084e508c1666ca12dc7c44a6dcca4e75f93f5` | `dc9d3e2eaca3fc29e93f55e4b8f3e56d1688d094459af4246093565e479fe3ce` | `104fe7fe94f4c4bbbcf44a16ae677ceb333111037217a601254acce76fbdf08c` | `e32632118c8f99bcbb535fce9bf32a8f61399243304a1ce5852594c89e5a1949` |
+| repeat | `d8d97f50b62ba71e9c9b31029e3084e508c1666ca12dc7c44a6dcca4e75f93f5` | `dc9d3e2eaca3fc29e93f55e4b8f3e56d1688d094459af4246093565e479fe3ce` | `104fe7fe94f4c4bbbcf44a16ae677ceb333111037217a601254acce76fbdf08c` | `e32632118c8f99bcbb535fce9bf32a8f61399243304a1ce5852594c89e5a1949` |
+| scale | `e924008d5efe8dfda8e531d4e709adfcf66151b29e6f819172521d70254f8869` | `935cfe5735eb1be831b82e8238ea591d3de5d263d998d6b13c4cbbeaa1f5b94a` | `f0aaa0e62c1660947a5c417ef6b8ec91e8bb904dd7007b33b7c5b443de0ed4fc` | `89d97d2e70161a43e06577c6221e4ba17cdca64177ca19fe56ce1c2deafd95cf` |
+| swap | `78d3e772161c8725ebdf89e8e473568c0527b782b09e72cb814a25aa6cd16607` | `104e7c338b4a0d2c9ca485fddcd33f9384c4ebc14ddf6c42d8467f10ae4dd783` | `72acefa20e0783778b0c44b500bdd39045d99101baf1930ec6b4d39cde80c28f` | `89d97d2e70161a43e06577c6221e4ba17cdca64177ca19fe56ce1c2deafd95cf` |
+| reseed | `46305ce013502b68923381eff4e61a1d7744daef65d1c546f2e885458ca4bd43` | `ea0cf14772c6b51e51dd3ea5e5115160f6264f220a58e89592134a948f8e6488` | `3e800f52cb4d6b501279869d04a35dea9db14fab896f58526fa2b9fb2b6b1e3d` | `89d97d2e70161a43e06577c6221e4ba17cdca64177ca19fe56ce1c2deafd95cf` |
+
+The authoritative artifact is `var/ex21-paramdep-v1-matrix.json`, SHA-256
+`6ef287bf41fd3cd88ac00aee33c5b69088d8c3549ed0ce1f271b39a82f301581`.
+It reports every qualification check true and no rejection reason. The
+qualifying model uses neuron-typing mode `none`; Dale dependence is explicitly
+`not_claimed`, so the conditional EI/Dale sign-control requirement is not
+applicable and no Dale result is promoted.
+
 ## Non-claims
 
 Passing this contract proves exact ARC performance and measured dependence on
