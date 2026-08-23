@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.metadata
 import importlib.util
-import json
+import msgspec_json
 import pathlib
 import platform
 import statistics
@@ -240,7 +240,7 @@ def _package_commit(name: str) -> str | None:
         return None
     if direct_url is None:
         return None
-    document = json.loads(direct_url)
+    document = msgspec_json.loads(direct_url)
     return document.get("vcs_info", {}).get("commit_id")
 
 

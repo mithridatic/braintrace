@@ -22,7 +22,7 @@ Usage:  example21_etp_decoder_probe.py WORKTREE
 
 from __future__ import annotations
 
-import json
+import msgspec
 import pathlib
 import sys
 
@@ -201,7 +201,7 @@ def main() -> int:
         "checks": checks,
         "gate_passed": all(checks.values()),
     }
-    print(json.dumps(result, indent=2))
+    print(msgspec.json.format(msgspec.json.encode(result), indent=2).decode())
     return 0 if result["gate_passed"] else 1
 
 

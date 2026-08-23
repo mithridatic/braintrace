@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import msgspec_json
 import pathlib
 from collections.abc import Mapping
 from typing import Any, NoReturn
@@ -20,10 +20,10 @@ def _reject_constant(value: str) -> NoReturn:
 def load_artifact(path: pathlib.Path) -> dict[str, Any]:
     """Load one strict JSON object without accepting NaN or infinity."""
     try:
-        value = json.loads(
+        value = msgspec_json.loads(
             path.read_text(encoding="utf-8"), parse_constant=_reject_constant
         )
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, msgspec_json.JSONDecodeError) as error:
         raise FreezeArtifactError(f"cannot read artifact {path}: {error}") from error
     if not isinstance(value, dict):
         raise FreezeArtifactError(f"artifact {path} must contain a JSON object")
@@ -48,7 +48,7 @@ def artifact_reference(
 
 def write_artifact(path: pathlib.Path, document: Mapping[str, object]) -> None:
     """Atomically write strict, stable JSON suitable for a committed artifact."""
-    serialized = json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(serialized + "\n", encoding="utf-8")

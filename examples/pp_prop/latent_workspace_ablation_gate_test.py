@@ -9,7 +9,7 @@ import gc
 import hashlib
 import importlib
 import inspect
-import json
+import msgspec_json
 import math
 import re
 import weakref
@@ -2938,7 +2938,7 @@ def test_gate_c_artifact_writer_is_atomic_deterministic_and_strict(
     written = gate_c.write_artifact(value, destination)
 
     expected = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,
@@ -2976,7 +2976,7 @@ def test_gate_c2_controls_writer_streams_exact_compact_strict_json(
     value = _gate_c2_controls_writer_value()
     expected = (
         "".join(
-            json.JSONEncoder(
+            msgspec_json.JSONEncoder(
                 allow_nan=False,
                 sort_keys=True,
                 separators=(",", ":"),
@@ -2989,7 +2989,7 @@ def test_gate_c2_controls_writer_streams_exact_compact_strict_json(
         del args, kwargs
         raise AssertionError("Gate C2 controls must stream JSON chunks")
 
-    monkeypatch.setattr(gate_c.json, "dumps", forbidden_dumps)
+    monkeypatch.setattr(gate_c.msgspec_json, "dumps", forbidden_dumps)
     destination = tmp_path / "gate-c2-controls.json"
 
     written = gate_c.write_artifact(value, destination)
@@ -2999,7 +2999,7 @@ def test_gate_c2_controls_writer_streams_exact_compact_strict_json(
     assert payload == expected
     assert payload.endswith(b"\n")
     assert b"\n" not in payload[:-1]
-    assert json.loads(payload) == value
+    assert msgspec_json.loads(payload) == value
     assert not destination.with_suffix(".json.tmp").exists()
 
 
@@ -3011,7 +3011,7 @@ def test_gate_c2_controls_writer_enforces_exact_size_including_newline(
     assert gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES == 201_326_592
     value = _gate_c2_controls_writer_value()
     compact = "".join(
-        json.JSONEncoder(
+        msgspec_json.JSONEncoder(
             allow_nan=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -3059,7 +3059,7 @@ def test_non_control_gate_c_writer_retains_v1_indented_bytes(
     value = {"schema_version": 1, "control": control, "z": 1, "a": [True]}
     destination = tmp_path / f"{control}.json"
     expected = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,
@@ -3127,7 +3127,7 @@ def test_large_gate_c2_controls_streamed_payload_stays_below_cap(
 
     assert 10 * 1024 * 1024 < destination.stat().st_size
     assert destination.stat().st_size < gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES
-    assert json.loads(destination.read_bytes()) == value
+    assert msgspec_json.loads(destination.read_bytes()) == value
 
 
 @requires_gate_c
@@ -3149,7 +3149,7 @@ def test_complete_gate_c2_controls_fixture_streams_below_cap_and_roundtrips(
     assert payload.endswith(b"\n")
     assert b"\n" not in payload[:-1]
     assert len(payload) < gate_c.GATE_C2_CONTROLS_MAX_JSON_BYTES
-    decoded = json.loads(payload)
+    decoded = msgspec_json.loads(payload)
     assert gate_a._json_exact(decoded, report)
     assert not destination.with_suffix(".json.tmp").exists()
 
@@ -7871,13 +7871,13 @@ def _gate_c2_strict_canonical_json_roundtrip(value: Any) -> Any:
     def reject_nonfinite_constant(token: str) -> Any:
         raise ValueError(f"nonfinite JSON constant {token}")
 
-    payload = json.dumps(
+    payload = msgspec_json.dumps(
         value,
         allow_nan=False,
         sort_keys=True,
         separators=(",", ":"),
     )
-    return json.loads(
+    return msgspec_json.loads(
         payload,
         parse_constant=reject_nonfinite_constant,
         strict=True,
@@ -11774,7 +11774,7 @@ def test_gate_c2_controls_main_runs_fixed_host_lifecycle(
     assert events == ["gpu", "run"]
     output_lines = capsys.readouterr().out.splitlines()
     assert output_lines[0] == str(output.result)
-    assert json.loads(output_lines[1]) == result["qualification"]
+    assert msgspec_json.loads(output_lines[1]) == result["qualification"]
 
 
 @pytest.mark.parametrize("regime", _REGIMES)
@@ -12554,7 +12554,7 @@ def test_gate_c3_controls_writer_streams_and_strictly_roundtrips(
         del args, kwargs
         raise AssertionError("Gate C3 controls must stream JSON chunks")
 
-    monkeypatch.setattr(gate_c.json, "dumps", forbidden_dumps)
+    monkeypatch.setattr(gate_c.msgspec_json, "dumps", forbidden_dumps)
     destination = tmp_path / "gate-c3-controls.json"
     gate_c.write_artifact(value, destination)
 

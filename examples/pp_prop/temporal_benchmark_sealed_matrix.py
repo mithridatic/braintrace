@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import pathlib
 import subprocess
 import sys
@@ -207,7 +207,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         values.python_executable,
     )
     report = run_sealed_matrix(settings)
-    print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
+    print(msgspec_json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 

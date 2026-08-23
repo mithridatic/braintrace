@@ -15,7 +15,7 @@
 
 
 import glob
-import json
+import msgspec
 import os
 import sys
 
@@ -36,7 +36,7 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
     for file_path in notebook_files:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data = msgspec.json.decode(f.read())
 
             needs_fix = False
 
@@ -88,11 +88,11 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
                 # 创建备份
                 backup_path = file_path + '.backup'
                 with open(backup_path, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
+                    f.write(msgspec.json.format(msgspec.json.encode(data), indent=2).decode())
 
                 # 保存修复后的文件
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
+                    f.write(msgspec.json.format(msgspec.json.encode(data), indent=2).decode())
 
                 fixed_count += 1
                 print(f"已修复并备份: {os.path.basename(file_path)}")

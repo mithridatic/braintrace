@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import math
 import pathlib
 import sys
@@ -116,7 +116,7 @@ def _settings(values: argparse.Namespace) -> CurriculumAdoptionSettings:
     accuracy_change = values.example15_accuracy_change
     if values.example15_static_control_result is not None:
         control_path = values.example15_static_control_result.resolve()
-        document = json.loads(control_path.read_text(encoding="utf-8"))
+        document = msgspec_json.loads(control_path.read_text(encoding="utf-8"))
         if not isinstance(document, dict):
             raise ValueError("Example 15 static-control artifact must be an object")
         accuracy_change = validated_accuracy_change(document)
@@ -160,7 +160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not settings.manifest_path.is_file():
         raise FileNotFoundError(settings.manifest_path)
     decision = run_development_curriculum_adoption(settings)
-    print(json.dumps(decision, indent=2, sort_keys=True, allow_nan=False))
+    print(msgspec_json.dumps(decision, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 

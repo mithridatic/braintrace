@@ -8,7 +8,7 @@ capacity or training budget is meaningful. Read-only; touches no production code
 from __future__ import annotations
 
 import collections
-import json
+import msgspec
 import pathlib
 import sys
 
@@ -26,7 +26,7 @@ MAX_SIDE = 30
 
 def load_split(name: str) -> list[tuple[str, dict]]:
     return [
-        (path.stem, json.loads(path.read_text()))
+        (path.stem, msgspec.json.decode(path.read_text()))
         for path in sorted((ARC / name).glob("*.json"))
     ]
 

@@ -7,7 +7,7 @@ import copy
 import dataclasses
 import importlib.util
 import inspect
-import json
+import msgspec_json
 import pathlib
 import sys
 import threading
@@ -1537,7 +1537,7 @@ def test_gpu_environment_gate_precedes_device_resolution_and_monitoring(
 def test_source_manifest_resolves_paths_and_exclusions(example, tmp_path):
     manifest = tmp_path / "sources.json"
     manifest.write_text(
-        json.dumps(
+        msgspec_json.dumps(
             {
                 "sources": [
                     {
@@ -1567,7 +1567,7 @@ def test_source_manifest_resolves_paths_and_exclusions(example, tmp_path):
 )
 def test_source_manifest_rejects_incomplete_declarations(example, tmp_path, payload):
     manifest = tmp_path / "bad.json"
-    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    manifest.write_text(msgspec_json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError):
         example._source_declarations(manifest)
 
@@ -1608,7 +1608,7 @@ def test_full_data_requires_manifest_and_both_roles(example, monkeypatch, tmp_pa
 
     manifest = tmp_path / "sources.json"
     manifest.write_text(
-        json.dumps(
+        msgspec_json.dumps(
             {
                 "sources": [
                     {
@@ -2304,9 +2304,9 @@ def test_model_memory_report_adds_carrier_metadata_without_changing_legacy_json(
         "query_component_type": None,
         "read_component_type": None,
     }
-    assert json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode(
+    assert msgspec_json.dumps(legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
-    ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
+    ) == msgspec_json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     )
 
@@ -2704,8 +2704,8 @@ def test_primary_candidate_bytes_do_not_depend_on_official_targets(example):
         compact, changed_records, color_rank=4, decoder_mode="row_refinement"
     )
 
-    assert json.dumps(left["60"][0]["candidates"], sort_keys=True).encode() == (
-        json.dumps(right["60"][0]["candidates"], sort_keys=True).encode()
+    assert msgspec_json.dumps(left["60"][0]["candidates"], sort_keys=True).encode() == (
+        msgspec_json.dumps(right["60"][0]["candidates"], sort_keys=True).encode()
     )
 
 
@@ -4661,8 +4661,8 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
 
     result = example.run_experiment(config)
 
-    assert json.loads((tmp_path / "result.json").read_text())["schema_version"] == 2
-    artifact_manifest = json.loads((tmp_path / "artifact_manifest.json").read_text())
+    assert msgspec_json.loads((tmp_path / "result.json").read_text())["schema_version"] == 2
+    artifact_manifest = msgspec_json.loads((tmp_path / "artifact_manifest.json").read_text())
     assert artifact_manifest["schema_version"] == 2
     assert set(artifact_manifest["artifacts"]) == {
         "data_manifest",
@@ -4670,7 +4670,7 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         "report",
         "figure",
     }
-    assert json.loads((tmp_path / "data_manifest.json").read_text())[0]["plumbing_only"]
+    assert msgspec_json.loads((tmp_path / "data_manifest.json").read_text())[0]["plumbing_only"]
     assert "Claim boundary" in (tmp_path / "report.txt").read_text()
     assert (tmp_path / "latent_reasoning.png").read_bytes() == b"png"
     assert set(result["artifacts"]) == {
@@ -6079,7 +6079,7 @@ def test_memory_coding_participates_in_checkpoint_metadata(example, tmp_path):
 
     example._write_parameter_checkpoint(model, path)
     stored = np.load(path)
-    architecture = json.loads(
+    architecture = msgspec_json.loads(
         np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
     )
 

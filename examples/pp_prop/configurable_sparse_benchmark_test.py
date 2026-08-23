@@ -1,6 +1,6 @@
 """Tests for configurable sparse pp-prop benchmark orchestration."""
 
-import json
+import msgspec_json
 
 import pytest
 
@@ -39,7 +39,7 @@ def _valid_schema_two_payload(config: SparseBenchmarkConfig) -> dict[str, object
 
 def test_worker_payload_is_separated_from_progress() -> None:
     payload = _valid_payload(SparseBenchmarkConfig())
-    output = f"update=1 loss=0.5\n{json.dumps(payload)}\n"
+    output = f"update=1 loss=0.5\n{msgspec_json.dumps(payload)}\n"
 
     parsed, progress = _parse_worker_payload(output)
 
@@ -51,19 +51,19 @@ def test_schema_two_requires_topology_and_schema_one_remains_valid() -> None:
     config = SparseBenchmarkConfig()
     schema_two = _valid_schema_two_payload(config)
 
-    assert _parse_worker_payload(json.dumps(schema_two))[0] == schema_two
+    assert _parse_worker_payload(msgspec_json.dumps(schema_two))[0] == schema_two
     assert (
-        _parse_worker_payload(json.dumps(_valid_payload(config)))[0]["schema_version"]
+        _parse_worker_payload(msgspec_json.dumps(_valid_payload(config)))[0]["schema_version"]
         == 1
     )
     del schema_two["topology"]
     with pytest.raises(ValueError, match="schema-versioned JSON result"):
-        _parse_worker_payload(json.dumps(schema_two))
+        _parse_worker_payload(msgspec_json.dumps(schema_two))
 
 
 def test_completed_payload_adds_peak_memory() -> None:
     config = SparseBenchmarkConfig()
-    output = json.dumps(_valid_payload(config))
+    output = msgspec_json.dumps(_valid_payload(config))
     result = SupervisedResult(0, output, 2**30, "completed", None)
 
     payload = _completed_payload(config, result)
@@ -81,7 +81,7 @@ def test_completed_payload_keeps_the_worker_device_peak() -> None:
         "device_peak_gib": 1.0,
         "peak_rss_bytes": None,
     }
-    result = SupervisedResult(0, json.dumps(reported), 2**31, "completed", None)
+    result = SupervisedResult(0, msgspec_json.dumps(reported), 2**31, "completed", None)
 
     payload = _completed_payload(config, result)
 
@@ -93,7 +93,7 @@ def test_completed_payload_keeps_the_worker_device_peak() -> None:
 def test_completed_payload_reports_an_unmeasured_device_as_absent() -> None:
     config = SparseBenchmarkConfig()
     result = SupervisedResult(
-        0, json.dumps(_valid_payload(config)), 2**30, "completed", None
+        0, msgspec_json.dumps(_valid_payload(config)), 2**30, "completed", None
     )
 
     payload = _completed_payload(config, result)
@@ -117,7 +117,7 @@ def test_unknown_worker_status_is_rejected() -> None:
     payload["status"] = "garbage"
 
     try:
-        _parse_worker_payload(json.dumps(payload))
+        _parse_worker_payload(msgspec_json.dumps(payload))
     except ValueError:
         return
     raise AssertionError("unknown status was accepted")

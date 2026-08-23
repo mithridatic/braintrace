@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 
 import pytest
@@ -98,7 +98,7 @@ def _raw_document(
 
 def _write(path: Path, document: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def _score(index: int, nll: float, accuracy: float, ratio: float):
@@ -170,7 +170,7 @@ def test_weight_decay_search_resumes_and_emits_unsealed_winner(
     assert winner["development_only"] is True
     assert winner["sealed_test"] is False
     assert winner["winner"]["recurrent_weight_decay"] == 1e-5
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "summary.json").read_text(encoding="utf-8")
     )
     assert summary["candidate_weight_decays"] == [0.0, 1e-5, 1e-4]
@@ -221,7 +221,7 @@ def test_weight_decay_search_rejects_unstable_and_nonfinite_bundles(
     run_development_weight_decay_search(
         settings, runner=runner, progress=lambda _: None
     )
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "summary.json").read_text(encoding="utf-8")
     )
     rejected = next(

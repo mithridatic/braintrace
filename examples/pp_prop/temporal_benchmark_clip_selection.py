@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import pathlib
 import sys
 from collections.abc import Sequence
@@ -34,7 +34,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         values.weight_decay_winner, values.clip_search_evidence
     )
     write_artifact(values.output.resolve(), document)
-    print(json.dumps(document, indent=2, sort_keys=True, allow_nan=False))
+    print(msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 

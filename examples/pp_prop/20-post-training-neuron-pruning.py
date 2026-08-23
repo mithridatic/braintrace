@@ -17,7 +17,7 @@ describe whether removed neurons came from structurally interchangeable groups.
 
 import argparse
 import importlib.util
-import json
+import msgspec_json
 import math
 import pathlib
 import sys
@@ -1212,7 +1212,7 @@ def _save_compact_bundle(compact: Dict[str, Any], path: pathlib.Path) -> None:
     np.savez_compressed(
         path,
         format_version=np.asarray(1, dtype=np.int32),
-        config_json=np.asarray(json.dumps(vars(config), sort_keys=True)),
+        config_json=np.asarray(msgspec_json.dumps(vars(config), sort_keys=True)),
         original_neuron_indices=np.asarray(
             compact["original_neuron_indices"], dtype=np.int64
         ),
@@ -1237,7 +1237,7 @@ def _load_compact_bundle(path: pathlib.Path) -> Dict[str, Any]:
         with np.load(path, allow_pickle=False) as bundle:
             if int(bundle["format_version"]) != 1:
                 raise ValueError("unsupported compact bundle format version")
-            values = json.loads(str(bundle["config_json"]))
+            values = msgspec_json.loads(str(bundle["config_json"]))
             config = SimpleNamespace(**values)
             retained = np.asarray(bundle["original_neuron_indices"], dtype=np.int64)
             rows = np.asarray(bundle["rows"], dtype=np.int64)
@@ -1250,7 +1250,7 @@ def _load_compact_bundle(path: pathlib.Path) -> Dict[str, Any]:
                 else None
             )
             readout_weight = np.asarray(bundle["readout_weight"], dtype=np.float32)
-    except (KeyError, OSError, TypeError, json.JSONDecodeError) as error:
+    except (KeyError, OSError, TypeError, msgspec_json.JSONDecodeError) as error:
         raise ValueError(f"invalid compact model bundle: {path}") from error
     if retained.size != config.n_rec or rows.shape != cols.shape:
         raise ValueError("compact bundle dimensions are inconsistent")

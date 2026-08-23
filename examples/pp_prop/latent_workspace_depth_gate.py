@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
+import msgspec_json
 import math
 import os
 import re
@@ -1102,13 +1102,13 @@ def _array_sha256(value: np.ndarray) -> str:
 
 
 def _ordered_json_list_sha256(values: list[str]) -> str:
-    payload = json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
+    payload = msgspec_json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(payload).hexdigest()
 
 
 def _strict_json_sha256(value: Mapping[str, Any]) -> str:
     payload = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,
@@ -2611,7 +2611,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     payload = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,
@@ -2731,7 +2731,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     destination = write_artifact(result, args.output)
     print(destination)
-    print(json.dumps(result["qualification"], sort_keys=True))
+    print(msgspec_json.dumps(result["qualification"], sort_keys=True))
     return 0
 
 

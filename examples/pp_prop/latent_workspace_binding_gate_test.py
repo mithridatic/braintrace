@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import copy
 import dataclasses
-import json
+import msgspec_json
 from collections import namedtuple
 from pathlib import Path
 from types import SimpleNamespace
@@ -1351,7 +1351,7 @@ def test_artifact_writer_emits_strict_json(tmp_path: Path) -> None:
         {"finite": 1.0, "nonfinite": float("nan"), "array": np.asarray([1, 2])},
         tmp_path / "gate.json",
     )
-    parsed = json.loads(destination.read_text(encoding="utf-8"))
+    parsed = msgspec_json.loads(destination.read_text(encoding="utf-8"))
 
     assert parsed == {"array": [1, 2], "finite": 1.0, "nonfinite": None}
     assert not (tmp_path / "gate.json.tmp").exists()

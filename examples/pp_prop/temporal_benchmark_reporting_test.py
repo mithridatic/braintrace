@@ -1,6 +1,6 @@
 """Tests for strict evidence serialization and immutable packaging."""
 
-import json
+import msgspec_json
 from unittest.mock import patch
 
 import pytest
@@ -30,7 +30,7 @@ def test_sealed_result_requires_confirmed_clean_source(tmp_path) -> None:
 
 def test_release_packaging_fails_closed_then_hashes_files(tmp_path) -> None:
     raw = tmp_path / "raw.json"
-    raw.write_text(json.dumps({"status": "completed"}), encoding="utf-8")
+    raw.write_text(msgspec_json.dumps({"status": "completed"}), encoding="utf-8")
     destination = tmp_path / "release.tar.gz"
 
     with pytest.raises(ValueError, match="passed scientific gates"):

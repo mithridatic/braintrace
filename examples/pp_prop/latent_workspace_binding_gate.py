@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import hashlib
-import json
+import msgspec_json
 import math
 import os
 import platform
@@ -297,7 +297,7 @@ def _path(path: Sequence[object]) -> str:
 
 
 def _configuration_digest(config: BindingGateConfig, model: ModelConfig) -> str:
-    payload = json.dumps(
+    payload = msgspec_json.dumps(
         {
             "experiment": dataclasses.asdict(config),
             "model": dataclasses.asdict(model),
@@ -1831,9 +1831,9 @@ def _real_array(value: Any, *, dtype: Any = np.float64) -> np.ndarray:
 
 def _json_exact(left: Any, right: Any) -> bool:
     try:
-        return json.dumps(
+        return msgspec_json.dumps(
             left, allow_nan=False, sort_keys=True, separators=(",", ":")
-        ) == json.dumps(
+        ) == msgspec_json.dumps(
             right, allow_nan=False, sort_keys=True, separators=(",", ":")
         )
     except (TypeError, ValueError):
@@ -3512,7 +3512,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = run_stage21_admission(args.target)
         destination = write_artifact(result, args.output)
         print(destination)
-        print(json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))
+        print(msgspec_json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))
         return 0
     if args.smoke:
         config = BindingGateConfig.smoke_config()
@@ -3551,7 +3551,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = run_binding_gate(config, admission_manifests=manifests)
     destination = write_artifact(result, args.output)
     print(destination)
-    print(json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))
+    print(msgspec_json.dumps(legacy._json_ready(result["qualification"]), sort_keys=True))
     return 0
 
 

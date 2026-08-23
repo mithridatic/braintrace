@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import msgspec_json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -107,14 +107,14 @@ def write_manifest(path: Path, document: dict[str, object]) -> None:
     """Write a validated manifest with canonical stable formatting."""
     validate_manifest(document)
     path.write_text(
-        json.dumps(document, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
 
 
 def load_manifest(path: Path) -> dict[str, object]:
     """Load and validate a manifest from disk."""
-    document = json.loads(path.read_text(encoding="utf-8"))
+    document = msgspec_json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict):
         raise ValueError("manifest root must be an object")
     validate_manifest(document)

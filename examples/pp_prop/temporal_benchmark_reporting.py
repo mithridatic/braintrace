@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
-import json
+import msgspec_json
 import os
 import platform
 import subprocess
@@ -85,7 +85,7 @@ def write_result(path: Path, payload: dict[str, object]) -> None:
         and environment.get("source_dirty") is not False
     ):
         raise ValueError("sealed results require a confirmed clean source tree")
-    serialized = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(serialized + "\n", encoding="utf-8")
 

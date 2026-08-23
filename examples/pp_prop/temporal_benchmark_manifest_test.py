@@ -1,6 +1,6 @@
 """Tests for domain-separated seeds and sealed trial commitments."""
 
-import json
+import msgspec_json
 
 import pytest
 
@@ -45,7 +45,7 @@ def test_test_specs_remain_sealed_until_explicit_unlock() -> None:
 
 def test_manifest_round_trip_is_schema_valid() -> None:
     document = generate_manifest()
-    repeated = json.loads(json.dumps(document))
+    repeated = msgspec_json.loads(msgspec_json.dumps(document))
 
     validate_manifest(repeated)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
+import msgspec_json
 import math
 import os
 import re
@@ -300,7 +300,7 @@ def load_strict_json(path: str | Path) -> dict[str, Any]:
             result[key] = value
         return result
 
-    value = json.loads(
+    value = msgspec_json.loads(
         Path(path).read_text(encoding="utf-8"),
         parse_constant=reject,
         object_pairs_hook=unique_pairs,
@@ -329,7 +329,7 @@ def write_strict_json(path: str | Path, value: Mapping[str, Any]) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
-    payload = json.dumps(
+    payload = msgspec_json.dumps(
         value,
         allow_nan=False,
         indent=2,
@@ -429,9 +429,9 @@ def _is_finite_real(value: Any) -> bool:
 
 def _json_exact(left: Any, right: Any) -> bool:
     try:
-        return json.dumps(
+        return msgspec_json.dumps(
             left, allow_nan=False, sort_keys=True, separators=(",", ":")
-        ) == json.dumps(
+        ) == msgspec_json.dumps(
             right, allow_nan=False, sort_keys=True, separators=(",", ":")
         )
     except (TypeError, ValueError):
@@ -539,13 +539,13 @@ def _inspect_image(
     )
     raw = _require_success(record, "docker image inspect")
     try:
-        values = json.loads(raw)
+        values = msgspec_json.loads(raw)
         if not isinstance(values, list) or len(values) != 1:
             raise ValueError("expected exactly one local image")
         image = values[0]
         image_id = str(image["Id"])
         revision = str(image["Config"]["Labels"]["org.opencontainers.image.revision"])
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+    except (KeyError, TypeError, ValueError, msgspec_json.JSONDecodeError) as error:
         raise ProvenanceError(f"invalid local image inspection: {error}") from error
     if not _IMAGE_ID_PATTERN.fullmatch(image_id):
         raise ProvenanceError("local image ID is not an immutable sha256 digest")
@@ -1018,7 +1018,7 @@ def _validate_preflight_semantics(
     ]:
         raise ProvenanceError("retained image inspection argv is not exact")
     try:
-        inspection = json.loads(inspect_stdout)
+        inspection = msgspec_json.loads(inspect_stdout)
         if not isinstance(inspection, list) or len(inspection) != 1:
             raise TypeError("expected exactly one retained image inspection")
         inspected = inspection[0]
@@ -1026,7 +1026,7 @@ def _validate_preflight_semantics(
         inspected_revision = inspected["Config"]["Labels"][
             "org.opencontainers.image.revision"
         ]
-    except (IndexError, KeyError, TypeError, json.JSONDecodeError) as error:
+    except (IndexError, KeyError, TypeError, msgspec_json.JSONDecodeError) as error:
         raise ProvenanceError("retained image inspection output is invalid") from error
     if inspected_id != image_id or inspected_revision != head:
         raise ProvenanceError("retained image inspection output disagrees with identity")

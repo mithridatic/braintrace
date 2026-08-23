@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-import json
+import msgspec_json
 from pathlib import Path
 
 import brainstate
@@ -86,7 +86,7 @@ def _source(
 
 
 def _write_json(path: Path, payload: object) -> None:
-    path.write_text(json.dumps(payload), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(payload), encoding="utf-8")
 
 
 def _manifest(task: ArcTask, *, name: str, role: str) -> SourceManifest:
@@ -388,7 +388,7 @@ def test_indexed_dataset_rejects_tampered_payload(tmp_path: Path) -> None:
     loaded = load_dataset_source(_source(raw, source_format="task_json"))
     index = tmp_path / "training.index.json"
     write_dataset_index(loaded, index)
-    envelope = json.loads(index.read_text(encoding="utf-8"))
+    envelope = msgspec_json.loads(index.read_text(encoding="utf-8"))
     envelope["payload"]["tasks"][0]["task_id"] = "tampered"
     _write_json(index, envelope)
     indexed_source = replace(
@@ -484,7 +484,7 @@ def test_jsonl_supports_wrappers_blank_lines_and_rejection_accounting(
     }
     invalid = {"id": "bad", "task": {"train": [], "test": []}}
     path.write_text(
-        "\n" + json.dumps(valid) + "\n{\n" + json.dumps(invalid) + "\n",
+        "\n" + msgspec_json.dumps(valid) + "\n{\n" + msgspec_json.dumps(invalid) + "\n",
         encoding="utf-8",
     )
 

@@ -301,12 +301,12 @@ Analysis over archived result JSONs (no GPU required):
 
 ```bash
 python - <<'PY'
-import json, statistics as st, glob, os
+import msgspec, statistics as st, glob, os
 for d in sorted(glob.glob('var/example21-*')):
     p = os.path.join(d, 'result.json')
     if not os.path.exists(p):
         continue
-    losses = json.load(open(p))['training'].get('losses')
+    losses = msgspec.json.decode(open(p, 'rb').read())['training'].get('losses')
     if not losses:
         continue
     n = len(losses)

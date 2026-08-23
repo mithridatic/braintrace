@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 
 import pytest
@@ -112,7 +112,7 @@ def _raw_document(
 
 def _write(path: Path, document: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def _score(
@@ -211,7 +211,7 @@ def test_full_coordinate_search_selects_pairs_and_resumes(tmp_path: Path) -> Non
         progress=lambda _: None,
     )
     assert resumed["selections"] == selection["selections"]
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "long-f-summary.json").read_text(
             encoding="utf-8"
         )
@@ -241,7 +241,7 @@ def test_stability_invalid_candidate_is_rejected_not_selected(tmp_path: Path) ->
         )
 
     run_development_trace_search(settings, runner=runner, progress=lambda _: None)
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "short-x-summary.json").read_text(
             encoding="utf-8"
         )

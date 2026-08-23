@@ -30,7 +30,7 @@ Usage:  example21_shape_attribution.py RESULT_JSON [--effort 32] [--data DIR]
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec
 import pathlib
 
 LEGACY_SQUARE_FRACTION = 0.7920
@@ -39,7 +39,7 @@ LEGACY_SQUARE_FRACTION = 0.7920
 def _shape_class(data_dir: pathlib.Path, task_id: str, query_index: int) -> str:
     """Return whether this query's output keeps its input's shape."""
     name = task_id.split(":")[1]
-    task = json.loads((data_dir / f"{name}.json").read_text(encoding="utf-8"))
+    task = msgspec.json.decode((data_dir / f"{name}.json").read_text(encoding="utf-8"))
     pair = task["test"][query_index]
     same = len(pair["output"]) == len(pair["input"]) and len(pair["output"][0]) == len(
         pair["input"][0]
@@ -80,7 +80,7 @@ def main() -> int:
         default=pathlib.Path("var/arc-agi-1/data/evaluation"),
     )
     arguments = parser.parse_args()
-    result = json.loads(arguments.result.read_text(encoding="utf-8"))
+    result = msgspec.json.decode(arguments.result.read_text(encoding="utf-8"))
     rows = result["evaluation"]["checkpoint_queries"][arguments.effort]
     summary = _accumulate(rows, arguments.data)
     buckets = summary["buckets"]

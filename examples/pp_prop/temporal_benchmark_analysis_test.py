@@ -1,6 +1,6 @@
 """Tests for fail-closed sealed benchmark analysis."""
 
-import json
+import msgspec_json
 
 import pytest
 
@@ -58,7 +58,7 @@ def _matrix(tmp_path):
                     bundle = f"split{split}-topology{topology}-weight{weight}"
                     path = tmp_path / f"{arm}-{bundle}.json"
                     path.write_text(
-                        json.dumps(_document(arm, bundle)), encoding="utf-8"
+                        msgspec_json.dumps(_document(arm, bundle)), encoding="utf-8"
                     )
                     paths.append(path)
     return paths

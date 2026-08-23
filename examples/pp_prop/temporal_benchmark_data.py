@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import msgspec_json
 import math
 from dataclasses import asdict, dataclass
 from typing import Iterable
@@ -46,7 +46,7 @@ def balanced_trial_specs(count: int, split_seed: int) -> tuple[TrialSpec, ...]:
 def trial_commitment(specs: Iterable[TrialSpec]) -> str:
     """Return the canonical SHA-256 commitment for ordered trial specs."""
     payload = [asdict(spec) for spec in specs]
-    canonical = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+    canonical = msgspec_json.dumps(payload, separators=(",", ":"), sort_keys=True)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

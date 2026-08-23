@@ -147,7 +147,7 @@ class ArcGrid:
         Returns
         -------
         list of list of int
-            Mutable rows suitable for ``json.dump``.
+            Mutable rows suitable for JSON serialization.
         """
 
         return [list(row) for row in self.cells]

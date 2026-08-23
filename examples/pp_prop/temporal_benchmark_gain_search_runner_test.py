@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 
 import pytest
@@ -93,7 +93,7 @@ def _raw_document(
 
 def _write(path: Path, document: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def _score(index: int, accuracy: float, nll: float, rejected: bool = False):
@@ -158,7 +158,7 @@ def test_gain_search_is_resumable_and_emits_development_only_winner(
     assert winner["development_only"] is True
     assert winner["sealed_test"] is False
     assert winner["winner"]["gain"] == 0.8
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "summary.json").read_text(encoding="utf-8")
     )
     assert summary["candidate_gains"] == [0.5, 0.8, 1.0, 1.2]
@@ -200,7 +200,7 @@ def test_gain_search_rejects_stability_invalid_bundle(tmp_path: Path) -> None:
         )
 
     run_development_gain_search(settings, runner=runner, progress=lambda _: None)
-    summary = json.loads(
+    summary = msgspec_json.loads(
         (settings.output_directory / "summary.json").read_text(encoding="utf-8")
     )
     rejected = next(item for item in summary["candidates"] if item["gain"] == 0.8)

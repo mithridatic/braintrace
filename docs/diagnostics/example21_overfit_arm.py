@@ -21,7 +21,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import importlib.util
-import json
+import msgspec
 import pathlib
 import sys
 
@@ -160,7 +160,7 @@ def main() -> None:
             key: {"l2_delta": value["l2_delta"]} for key, value in changes.items()
         },
     }
-    args.output.write_text(json.dumps(record, indent=1))
+    args.output.write_text(msgspec.json.format(msgspec.json.encode(record), indent=1).decode())
     print(
         f"effort={args.effort} lr={args.learning_rate:g} updates={args.updates} "
         f"loss {record['loss_first']:.4f} -> {record['loss_last']:.4f} "

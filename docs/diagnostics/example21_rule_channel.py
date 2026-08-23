@@ -12,7 +12,7 @@ Usage
 from __future__ import annotations
 
 import collections
-import json
+import msgspec
 import pathlib
 import sys
 import time
@@ -38,7 +38,7 @@ def main() -> None:
     solved_tasks: list[str] = []
 
     for path in paths:
-        task = json.loads(path.read_text())
+        task = msgspec.json.decode(path.read_text())
         demos = [
             (np.asarray(pair["input"], np.int32), np.asarray(pair["output"], np.int32))
             for pair in task["train"]

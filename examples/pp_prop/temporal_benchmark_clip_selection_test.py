@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 import pathlib
 
 import pytest
@@ -27,7 +27,7 @@ DIGEST = "sha256:" + "b" * 64
 
 def _write(path: pathlib.Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value) + "\n", encoding="utf-8")
+    path.write_text(msgspec_json.dumps(value) + "\n", encoding="utf-8")
 
 
 def _settings(root: pathlib.Path) -> WeightDecaySearchSettings:
@@ -178,7 +178,7 @@ def test_cli_atomically_writes_decision(
     output = tmp_path / "selection.json"
     assert main(["--weight-decay-winner", str(winner), "--output", str(output)]) == 0
     assert (
-        json.loads(output.read_text(encoding="utf-8"))["kind"]
+        msgspec_json.loads(output.read_text(encoding="utf-8"))["kind"]
         == "temporal_credit_clip_selection"
     )
     assert '"triggered": false' in capsys.readouterr().out
@@ -217,7 +217,7 @@ def test_untriggered_group_rejects_unnecessary_search_evidence(
 def test_rejects_raw_evidence_drift(tmp_path: pathlib.Path, drift: str) -> None:
     winner, _, raw_paths = _fixture(tmp_path)
     path = raw_paths[DEVELOPMENT_BUNDLES[0]]
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = msgspec_json.loads(path.read_text(encoding="utf-8"))
     if drift == "sealed":
         raw["result"]["sealed_test_metrics"] = {"accuracy": 1.0}
     elif drift == "nonfinite":
@@ -235,7 +235,7 @@ def test_rejects_raw_evidence_drift(tmp_path: pathlib.Path, drift: str) -> None:
 
 def test_rejects_raw_path_escape(tmp_path: pathlib.Path) -> None:
     winner, _, _ = _fixture(tmp_path)
-    document = json.loads(winner.read_text(encoding="utf-8"))
+    document = msgspec_json.loads(winner.read_text(encoding="utf-8"))
     document["winner"]["bundle_scores"][0]["raw_path"] = "../outside.json"
     _write(winner, document)
     with pytest.raises(FreezeArtifactError, match="escapes"):
@@ -245,7 +245,7 @@ def test_rejects_raw_path_escape(tmp_path: pathlib.Path) -> None:
 def test_rejects_invalid_clip_event_stream(tmp_path: pathlib.Path) -> None:
     winner, _, raw_paths = _fixture(tmp_path)
     path = raw_paths[DEVELOPMENT_BUNDLES[1]]
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = msgspec_json.loads(path.read_text(encoding="utf-8"))
     raw["result"]["optimizer_telemetry"]["readout"]["clip_event"][0] = 2
     _write(path, raw)
     with pytest.raises(FreezeArtifactError, match="binary"):
@@ -255,7 +255,7 @@ def test_rejects_invalid_clip_event_stream(tmp_path: pathlib.Path) -> None:
 def test_rejects_triggered_search_configuration_drift(tmp_path: pathlib.Path) -> None:
     winner, selected_config, _ = _fixture(tmp_path, triggered=True)
     evidence_path = _search_evidence(tmp_path / "clip-search.json", selected_config)
-    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    evidence = msgspec_json.loads(evidence_path.read_text(encoding="utf-8"))
     evidence["selected_config"]["gain"] = 1.2
     _write(evidence_path, evidence)
     with pytest.raises(FreezeArtifactError, match="configuration drifted"):

@@ -1,6 +1,6 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
 
-import json
+import msgspec_json
 
 import brainstate
 import jax
@@ -105,7 +105,7 @@ def test_main_emits_schema_versioned_json(tmp_path, capsys):
         ]
     )
     assert exit_code == 0
-    payload = json.loads(destination.read_text(encoding='utf-8'))
+    payload = msgspec_json.loads(destination.read_text(encoding='utf-8'))
     assert payload['schema_version'] == 1
     assert payload['total_float32_mib'] > 0.0
-    assert json.loads(capsys.readouterr().out)['config']['neurons'] == 256
+    assert msgspec_json.loads(capsys.readouterr().out)['config']['neurons'] == 256

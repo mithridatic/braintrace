@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import pathlib
 import sys
 from collections.abc import Sequence
@@ -67,7 +67,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not settings.manifest_path.is_file():
         raise FileNotFoundError(settings.manifest_path)
     winner = run_development_weight_decay_search(settings)
-    print(json.dumps(winner, indent=2, sort_keys=True, allow_nan=False))
+    print(msgspec_json.dumps(winner, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 

@@ -7,7 +7,7 @@ import copy
 import dataclasses
 import hashlib
 import inspect
-import json
+import msgspec_json
 import math
 import warnings
 from collections.abc import Mapping
@@ -305,7 +305,7 @@ def _array_digest(value: np.ndarray) -> str:
 
 
 def _ordered_json_list_digest(values: list[str]) -> str:
-    payload = json.dumps(
+    payload = msgspec_json.dumps(
         values,
         sort_keys=True,
         separators=(",", ":"),
@@ -315,7 +315,7 @@ def _ordered_json_list_digest(values: list[str]) -> str:
 
 def _strict_json_digest(value: Mapping[str, Any]) -> str:
     payload = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,
@@ -2861,7 +2861,7 @@ def test_depth_artifact_writer_is_atomic_deterministic_and_strict(
     written = depth.write_artifact(value, destination)
 
     expected = (
-        json.dumps(
+        msgspec_json.dumps(
             value,
             allow_nan=False,
             indent=2,

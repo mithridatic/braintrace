@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 import itertools
-import json
+import msgspec_json
 import math
 
 import numpy as np
@@ -167,7 +167,7 @@ def test_decoder_emits_joint_argmax_and_lowest_margin_cell_alternative() -> None
     assert len(one_candidate) == 1
     np.testing.assert_array_equal(one_candidate[0].grid, candidates[0].grid)
     assert one_candidate[0].changed_decision is None
-    json.dumps([candidate.to_dict() for candidate in candidates], allow_nan=False)
+    msgspec_json.dumps([candidate.to_dict() for candidate in candidates], allow_nan=False)
 
 
 def test_factorized_log_probability_scores_every_included_cell() -> None:
@@ -213,7 +213,7 @@ def test_checkpoint_selection_uses_only_latest_completed_sweep() -> (
     assert selected[1].selection_role == "latest_sweep_logit_runner_up"
     assert selected[1].candidate.changed_decision is not None
     assert selected[0].to_dict()["provenance"] == "model"
-    json.dumps([candidate.to_dict() for candidate in selected], allow_nan=False)
+    msgspec_json.dumps([candidate.to_dict() for candidate in selected], allow_nan=False)
 
 
 def test_checkpoint_selection_never_promotes_an_earlier_distinct_grid() -> (
@@ -595,7 +595,7 @@ def test_strict_task_metrics_are_conjunctive_over_multiple_queries() -> None:
         "b": {"query_count": 1, "pass_at_1": True, "pass_at_2": True},
     }
     assert report["valid_cell_pixel_accuracy_diagnostic"] == pytest.approx(2.75 / 3.0)
-    json.dumps(report, allow_nan=False)
+    msgspec_json.dumps(report, allow_nan=False)
 
 
 def test_model_only_completion_gate_passes_at_exactly_160_of_400_tasks() -> None:
@@ -612,7 +612,7 @@ def test_model_only_completion_gate_passes_at_exactly_160_of_400_tasks() -> None
     assert report["strict_task_pass_at_2"] == 0.4
     assert report["passed"] is True
     assert report["tasks"]["task-000"] == {"query_count": 2, "pass_at_2": True}
-    json.dumps(report, allow_nan=False)
+    msgspec_json.dumps(report, allow_nan=False)
 
 
 def test_model_only_completion_gate_fails_at_159_of_400_tasks() -> None:
@@ -812,7 +812,7 @@ def test_fixed_trajectory_reports_zero_displacement_and_convergence() -> None:
     assert second["converged"]
     assert second["score"]["pass_at_1"]
     assert second["candidates"][0]["grid"] == [[3, 4]]
-    json.dumps(report, allow_nan=False)
+    msgspec_json.dumps(report, allow_nan=False)
 
 
 def test_trajectory_reports_separate_synaptic_currents_and_uses_them_for_convergence() -> (
@@ -1050,7 +1050,7 @@ def test_byte_identical_control_is_stated_as_causally_null() -> None:
         "query_pass_at_1": -0.25,
     }
     assert "causally null at measured precision" in report["interpretation"]
-    json.dumps(report, allow_nan=False)
+    msgspec_json.dumps(report, allow_nan=False)
 
 
 def test_control_change_reports_state_distances_and_non_null_interpretation() -> None:

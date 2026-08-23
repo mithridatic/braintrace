@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import pathlib
 import string
 import sys
@@ -20,7 +20,7 @@ from temporal_benchmark_example15_control_schema import (
 
 
 def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
-    serialized = json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(serialized + "\n", encoding="utf-8")
@@ -28,7 +28,7 @@ def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
 
 
 def _load_json(path: pathlib.Path) -> Mapping[str, object]:
-    value = json.loads(path.read_text(encoding="utf-8"))
+    value = msgspec_json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, Mapping):
         raise ValueError(f"JSON artifact must contain an object: {path}")
     return value
@@ -118,7 +118,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     response: dict[str, object] = {"output": str(output), "sha256": sha256_file(output)}
     if values.operation == "compare":
         response["example15_accuracy_change"] = document["example15_accuracy_change"]
-    print(json.dumps(response, sort_keys=True, allow_nan=False))
+    print(msgspec_json.dumps(response, sort_keys=True, allow_nan=False))
     return 0
 
 

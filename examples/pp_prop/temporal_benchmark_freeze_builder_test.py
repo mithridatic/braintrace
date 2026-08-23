@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import copy
-import json
+import msgspec_json
 import pathlib
 
 import pytest
@@ -219,7 +219,7 @@ def _write_documents(
     paths = {}
     for role, document in documents.items():
         path = directory / f"{role}.json"
-        path.write_text(json.dumps(document) + "\n", encoding="utf-8")
+        path.write_text(msgspec_json.dumps(document) + "\n", encoding="utf-8")
         paths[role] = path
     return paths
 
@@ -368,7 +368,7 @@ def test_cli_writes_valid_frozen_artifact(
     for role, flag in flags.items():
         arguments.extend((flag, str(paths[role])))
     assert main([*arguments, "--output", str(output)]) == 0
-    validate_frozen_selection(json.loads(output.read_text(encoding="utf-8")))
+    validate_frozen_selection(msgspec_json.loads(output.read_text(encoding="utf-8")))
     assert '"frozen_for_sealed_evaluation": true' in capsys.readouterr().out
 
 

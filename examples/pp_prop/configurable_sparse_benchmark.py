@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 import pathlib
 import sys
 from typing import Sequence
@@ -98,8 +98,8 @@ def _parse_worker_payload(output: str) -> tuple[dict[str, object], list[str]]:
     lines = [line for line in output.splitlines() if line.strip()]
     for index in range(len(lines) - 1, -1, -1):
         try:
-            payload = json.loads(lines[index])
-        except json.JSONDecodeError:
+            payload = msgspec_json.loads(lines[index])
+        except msgspec_json.JSONDecodeError:
             continue
         schema = payload.get("schema_version") if isinstance(payload, dict) else None
         required = ("status", "config", "metrics", "timings", "environment")
@@ -137,7 +137,7 @@ def _completed_payload(
 
 
 def _emit(payload: dict[str, object], config: SparseBenchmarkConfig) -> None:
-    serialized = json.dumps(payload, allow_nan=False, indent=2, sort_keys=True)
+    serialized = msgspec_json.dumps(payload, allow_nan=False, indent=2, sort_keys=True)
     if config.json_output is not None:
         config.json_output.parent.mkdir(parents=True, exist_ok=True)
         config.json_output.write_text(serialized + "\n", encoding="utf-8")
@@ -192,6 +192,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             from .sparse_benchmark_worker import run_benchmark
         except ImportError:
             from sparse_benchmark_worker import run_benchmark
-        print(json.dumps(run_benchmark(config), allow_nan=False, sort_keys=True))
+        print(msgspec_json.dumps(run_benchmark(config), allow_nan=False, sort_keys=True))
         return 0
     return _run_parent(config)

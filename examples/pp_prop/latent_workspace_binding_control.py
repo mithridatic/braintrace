@@ -16,7 +16,7 @@ import argparse
 import dataclasses
 import hashlib
 import itertools
-import json
+import msgspec_json
 import math
 import os
 import platform
@@ -1278,7 +1278,7 @@ def write_artifact(result: dict[str, Any], path: str | Path) -> Path:
     destination = Path(path).resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
-    payload = json.dumps(_json_ready(result), indent=2, sort_keys=True, allow_nan=False)
+    payload = msgspec_json.dumps(_json_ready(result), indent=2, sort_keys=True, allow_nan=False)
     temporary.write_text(payload + "\n", encoding="utf-8")
     temporary.replace(destination)
     return destination
@@ -1340,7 +1340,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     result = run_binding_control(config)
     output = write_artifact(result, args.output)
     print(
-        json.dumps(
+        msgspec_json.dumps(
             {
                 "artifact": str(output),
                 "interpretation": result["interpretation"],

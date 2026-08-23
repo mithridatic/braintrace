@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 import math
 
 import pytest
@@ -110,7 +110,7 @@ def test_edge_report_is_json_safe() -> None:
 
     assert payload["safe"] is True
     assert payload["edge_cap"] == 40
-    json.dumps(payload, allow_nan=False)
+    msgspec_json.dumps(payload, allow_nan=False)
 
 
 def test_full_gpu_assessment_accepts_complete_evidence_within_limits() -> None:
@@ -294,7 +294,7 @@ def test_gpu_report_is_json_safe_without_fabricating_missing_evidence() -> None:
     assert payload["peak_device_bytes"] is None
     assert payload["observed_physical_fraction"] is None
     assert payload["full_qualification_safe"] is False
-    json.dumps(payload, allow_nan=False)
+    msgspec_json.dumps(payload, allow_nan=False)
 
 
 def test_pre_device_environment_accepts_recommended_allocator_target() -> None:
@@ -364,7 +364,7 @@ def test_pre_device_report_is_json_safe() -> None:
 
     assert payload["configured_fraction"] is None
     assert payload["safe"] is False
-    json.dumps(payload, allow_nan=False)
+    msgspec_json.dumps(payload, allow_nan=False)
 
 
 def test_full_runtime_safety_normalizes_allocator_and_process_evidence() -> None:
@@ -539,4 +539,4 @@ def test_runtime_safety_report_is_json_safe() -> None:
 
     assert payload["environment"]["safe"] is True  # type: ignore[index]
     assert payload["memory"]["full_qualification_safe"] is True  # type: ignore[index]
-    json.dumps(payload, allow_nan=False)
+    msgspec_json.dumps(payload, allow_nan=False)

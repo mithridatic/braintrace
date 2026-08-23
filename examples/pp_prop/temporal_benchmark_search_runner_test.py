@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 
 import pytest
@@ -84,7 +84,7 @@ def _raw_document(
 
 def _write(path: Path, document: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def _value(command: tuple[str, ...], option: str) -> str:
@@ -229,7 +229,7 @@ def test_failed_child_is_persisted_rejected_and_other_bundles_continue(
     failure_path = failure_result_path(
         settings, stage, candidate, DEVELOPMENT_BUNDLES[0]
     )
-    failure = json.loads(failure_path.read_text(encoding="utf-8"))
+    failure = msgspec_json.loads(failure_path.read_text(encoding="utf-8"))
     assert failure["kind"] == "temporal_credit_optimizer_search_child_failure"
     assert failure["provenance"] == {
         "container_image_digest": settings.container_image_digest,
@@ -296,7 +296,7 @@ def test_successive_halving_writes_summaries_and_resumes_raw_runs(
         summary_path = settings.output_directory / (
             f"stage-{stage.number:02d}-summary.json"
         )
-        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary = msgspec_json.loads(summary_path.read_text(encoding="utf-8"))
         assert summary["candidate_count"] == expected_count
         assert len(summary["promoted_grid_indices"]) == expected_promotions
         assert summary["development_only"] is True

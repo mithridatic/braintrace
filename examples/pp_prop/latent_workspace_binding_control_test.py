@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 import dataclasses
-import json
+import msgspec_json
 from pathlib import Path
 
 import brainstate
@@ -283,7 +283,7 @@ def test_artifact_writer_emits_strict_json(tmp_path):
     }
 
     destination = control.write_artifact(payload, tmp_path / "control.json")
-    parsed = json.loads(destination.read_text(encoding="utf-8"))
+    parsed = msgspec_json.loads(destination.read_text(encoding="utf-8"))
 
     assert parsed == {"array": [1, 2], "finite": 1.0, "nonfinite": None}
     assert not (tmp_path / "control.json.tmp").exists()

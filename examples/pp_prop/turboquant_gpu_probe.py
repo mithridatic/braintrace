@@ -24,7 +24,7 @@ so thermal drift is charged to both.
 from __future__ import annotations
 
 import argparse
-import json
+import msgspec_json
 import pathlib
 import statistics
 import sys
@@ -286,7 +286,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         'contraction_milliseconds': measure_contraction(shapes),
         'edge_buffer_milliseconds': measure_edge_buffers(shapes),
     }
-    serialized = json.dumps(payload, indent=2, sort_keys=True)
+    serialized = msgspec_json.dumps(payload, indent=2, sort_keys=True)
     if options.json_output is not None:
         options.json_output.parent.mkdir(parents=True, exist_ok=True)
         options.json_output.write_text(serialized + '\n', encoding='utf-8')

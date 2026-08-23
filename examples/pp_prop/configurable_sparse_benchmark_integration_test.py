@@ -1,6 +1,6 @@
 """End-to-end test for the configurable sparse pp-prop benchmark."""
 
-import json
+import msgspec_json
 import os
 import pathlib
 import subprocess
@@ -45,7 +45,7 @@ def test_tiny_supervised_worker_emits_learning_schema():
         text=True,
         timeout=150,
     )
-    payload = json.loads(completed.stdout)
+    payload = msgspec_json.loads(completed.stdout)
 
     assert payload["schema_version"] == 2
     assert payload["status"] == "completed"
@@ -64,7 +64,7 @@ def test_a_requested_gpu_is_refused_rather_than_run_on_the_host():
     command = [sys.executable, str(SCRIPT), *_TINY_RUN, "--device", "gpu"]
 
     completed = subprocess.run(command, capture_output=True, text=True, timeout=150)
-    payload = json.loads(completed.stdout)
+    payload = msgspec_json.loads(completed.stdout)
 
     assert completed.returncode != 0
     assert payload["status"] == "failed"
@@ -86,7 +86,7 @@ def test_an_inherited_platform_decides_the_backend_without_a_pin():
     completed = _run_inheriting_an_absent_platform("auto")
 
     assert completed.returncode != 0
-    assert json.loads(completed.stdout)["status"] == "failed"
+    assert msgspec_json.loads(completed.stdout)["status"] == "failed"
 
 
 def test_the_host_backend_can_be_pinned_over_an_inherited_platform():
@@ -94,7 +94,7 @@ def test_the_host_backend_can_be_pinned_over_an_inherited_platform():
         pytest.skip("this host can initialize cuda, so the request is satisfiable")
 
     completed = _run_inheriting_an_absent_platform("cpu")
-    payload = json.loads(completed.stdout)
+    payload = msgspec_json.loads(completed.stdout)
 
     assert completed.returncode == 0
     assert payload["status"] == "completed"

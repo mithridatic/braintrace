@@ -2227,7 +2227,7 @@ Any additional call inside this named Gate B subreport fails the bounded-
 workload test.
 
 Only a `gate_c2_controls` result uses compact streamed JSON. Its writer uses a
-strict `json.JSONEncoder` with `allow_nan=false`, `sort_keys=true`, and compact
+strict JSON encoding with `allow_nan=false`, `sort_keys=true`, and compact
 separators, emits UTF-8 chunks directly to the temporary file, appends one
 newline, flushes and fsyncs, then atomically replaces the final path. The exact
 maximum encoded size is 201,326,592 bytes (192 MiB), including the final

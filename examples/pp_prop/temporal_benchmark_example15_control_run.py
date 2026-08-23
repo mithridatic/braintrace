@@ -7,7 +7,7 @@ import contextlib
 import hashlib
 import importlib.metadata
 import importlib.util
-import json
+import msgspec_json
 import os
 import pathlib
 import platform
@@ -188,7 +188,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
-    serialized = json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(serialized + "\n", encoding="utf-8")

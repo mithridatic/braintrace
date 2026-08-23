@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import hashlib
-import json
+import msgspec_json
 import subprocess
 import sys
 import types
@@ -85,7 +85,7 @@ def _source_at(commit: str) -> dict[str, object]:
 def _strict_write(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(value, allow_nan=False, sort_keys=True), encoding="utf-8"
+        msgspec_json.dumps(value, allow_nan=False, sort_keys=True), encoding="utf-8"
     )
 
 
@@ -260,7 +260,7 @@ class FakeRunner:
         elif argv[:3] == ["git", "check-ignore", "--quiet"]:
             stdout = ""
         elif argv[:3] == ["docker", "image", "inspect"]:
-            stdout = json.dumps(
+            stdout = msgspec_json.dumps(
                 [
                     {
                         "Id": _IMAGE_ID,
@@ -979,12 +979,12 @@ def test_revision_mismatch_stops_before_gate_and_retains_failed_preflight(
     def mismatch(command: Sequence[str], **kwargs: object):
         result = base(command, **kwargs)
         if list(command)[:3] == ["docker", "image", "inspect"]:
-            wrong = json.loads(result.stdout)
+            wrong = msgspec_json.loads(result.stdout)
             wrong[0]["Config"]["Labels"]["org.opencontainers.image.revision"] = (
                 "c" * 40
             )
             result = subprocess.CompletedProcess(
-                list(command), 0, stdout=json.dumps(wrong), stderr=""
+                list(command), 0, stdout=msgspec_json.dumps(wrong), stderr=""
             )
         return result
 
@@ -1218,9 +1218,9 @@ def test_rehashed_semantic_preflight_tampering_fails_closed(
         record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
     elif mutation == "image_identity":
         record = preflight["image"]["inspect_command"]
-        inspection = json.loads(record["stdout"])
+        inspection = msgspec_json.loads(record["stdout"])
         inspection[0]["Id"] = "sha256:" + "c" * 64
-        record["stdout"] = json.dumps(inspection)
+        record["stdout"] = msgspec_json.dumps(inspection)
         record["stdout_sha256"] = launcher._sha256_text(record["stdout"])
     elif mutation == "container_command_count":
         preflight["container_source"]["commands"].pop()

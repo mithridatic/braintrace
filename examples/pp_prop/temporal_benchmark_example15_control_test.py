@@ -1,6 +1,6 @@
 """Tests for Example 15 static-control artifact operations."""
 
-import json
+import msgspec_json
 from pathlib import Path
 
 import pytest
@@ -11,7 +11,7 @@ from temporal_benchmark_example15_control_schema_test import _run_document
 
 
 def _write(path: Path, document) -> None:
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def test_accept_and_compare_cli_require_the_pinned_baseline_hash(
@@ -67,7 +67,7 @@ def test_accept_and_compare_cli_require_the_pinned_baseline_hash(
         )
         == 0
     )
-    result = json.loads(comparison.read_text(encoding="utf-8"))
+    result = msgspec_json.loads(comparison.read_text(encoding="utf-8"))
     assert result["kind"] == "temporal_credit_example15_static_control"
 
 

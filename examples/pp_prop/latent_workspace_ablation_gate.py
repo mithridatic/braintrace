@@ -6,7 +6,7 @@ import argparse
 import dataclasses
 import gc
 import hashlib
-import json
+import msgspec_json
 import math
 import os
 import re
@@ -2175,7 +2175,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
                 if value.get("control") == GATE_C2_CONTROLS_CONTROL
                 else "Gate C3"
             )
-            encoder = json.JSONEncoder(
+            encoder = msgspec_json.JSONEncoder(
                 allow_nan=False,
                 sort_keys=True,
                 separators=(",", ":"),
@@ -2203,7 +2203,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
                 os.fsync(stream.fileno())
         else:
             payload = (
-                json.dumps(
+                msgspec_json.dumps(
                     value,
                     allow_nan=False,
                     indent=2,
@@ -11529,7 +11529,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     destination = write_artifact(result, args.output)
     print(destination)
-    print(json.dumps(result["qualification"], sort_keys=True))
+    print(msgspec_json.dumps(result["qualification"], sort_keys=True))
     return 0
 
 

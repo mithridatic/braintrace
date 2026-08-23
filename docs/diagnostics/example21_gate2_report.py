@@ -14,7 +14,7 @@ Usage:  example21_gate2_report.py RESULT_JSON [RESULT_JSON ...]
 
 from __future__ import annotations
 
-import json
+import msgspec
 import pathlib
 import sys
 
@@ -109,7 +109,7 @@ def main() -> int:
         print(__doc__)
         return 2
     for path in paths:
-        result = json.loads(path.read_text(encoding="utf-8"))
+        result = msgspec.json.decode(path.read_text(encoding="utf-8"))
         metrics = _metrics(result)
         participation = _participation(result)
         print(f"\n=== {path.parent.name} ===")

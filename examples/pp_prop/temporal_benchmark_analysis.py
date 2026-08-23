@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 from typing import Iterable
 
@@ -21,7 +21,7 @@ EXPECTED_BUNDLES = 12
 
 
 def _load_result(path: Path) -> dict[str, object]:
-    document = json.loads(path.read_text(encoding="utf-8"))
+    document = msgspec_json.loads(path.read_text(encoding="utf-8"))
     environment = document.get("environment", {})
     if document.get("schema_version") != 1 or document.get("sealed_test") is not True:
         raise ValueError(f"unsealed or unsupported result: {path}")

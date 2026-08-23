@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 import pathlib
 import statistics
 import subprocess
@@ -73,10 +73,10 @@ def _reject_json_constant(value: str) -> None:
 def load_raw_document(path: pathlib.Path) -> dict[str, Any]:
     """Read strict JSON while rejecting non-finite constants."""
     try:
-        document = json.loads(
+        document = msgspec_json.loads(
             path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant
         )
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, msgspec_json.JSONDecodeError) as error:
         raise RunEvidenceError(f"cannot read raw result {path}: {error}") from error
     if not isinstance(document, dict):
         raise RunEvidenceError("raw result must be a JSON object")
@@ -302,7 +302,7 @@ def _candidate_document(
 
 
 def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
-    serialized = json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(document, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(serialized + "\n", encoding="utf-8")

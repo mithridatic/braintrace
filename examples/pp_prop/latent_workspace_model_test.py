@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast
 import dataclasses
 import inspect
-import json
+import msgspec_json
 import math
 import warnings
 
@@ -668,9 +668,9 @@ def test_associative_memory_report_declares_fixed_carrier_stabilization() -> Non
     assert memory.to_dict()["read_interval"] == 1
     assert memory.to_dict()["latent_residual_mixer"] == "none"
     assert memory.to_dict()["latent_residual_block_size"] == 10
-    assert json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
+    assert msgspec_json.dumps(serialized_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
-    ) == json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
+    ) == msgspec_json.dumps(expected_legacy, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     )
     assert legacy.to_dict() == expected_legacy
@@ -1971,12 +1971,12 @@ def test_zero_width_mode_is_byte_identical_to_implicit_legacy_mode() -> None:
         _assert_state_snapshots_equal(
             implicit_model.snapshot_state(), candidate.snapshot_state()
         )
-    implicit_report = json.dumps(
+    implicit_report = msgspec_json.dumps(
         dataclasses.asdict(implicit_model.associative_memory_report()),
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
-    explicit_report = json.dumps(
+    explicit_report = msgspec_json.dumps(
         dataclasses.asdict(explicit_model.associative_memory_report()),
         sort_keys=True,
         separators=(",", ":"),

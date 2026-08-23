@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from pathlib import Path
 import sys
 
@@ -24,8 +24,8 @@ def test_build_arc_dataset_indexes_writes_runtime_manifest(tmp_path: Path) -> No
     evaluation = dataset / "data" / "evaluation"
     training.mkdir(parents=True)
     evaluation.mkdir(parents=True)
-    (training / "train.json").write_text(json.dumps(_payload(1)), encoding="utf-8")
-    (evaluation / "eval.json").write_text(json.dumps(_payload(2)), encoding="utf-8")
+    (training / "train.json").write_text(msgspec_json.dumps(_payload(1)), encoding="utf-8")
+    (evaluation / "eval.json").write_text(msgspec_json.dumps(_payload(2)), encoding="utf-8")
     output = tmp_path / "index"
     manifest_path = tmp_path / "example21-sources.json"
 
@@ -40,7 +40,7 @@ def test_build_arc_dataset_indexes_writes_runtime_manifest(tmp_path: Path) -> No
     )
 
     assert report == {"training_tasks": 1, "evaluation_tasks": 1}
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = msgspec_json.loads(manifest_path.read_text(encoding="utf-8"))
     assert [item["format"] for item in manifest["sources"]] == [
         "indexed_json",
         "indexed_json",
@@ -65,10 +65,10 @@ def test_build_arc_dataset_indexes_enforces_expected_counts(tmp_path: Path) -> N
     (dataset / "data" / "training").mkdir(parents=True)
     (dataset / "data" / "evaluation").mkdir(parents=True)
     (dataset / "data" / "training" / "train.json").write_text(
-        json.dumps(_payload(1)), encoding="utf-8"
+        msgspec_json.dumps(_payload(1)), encoding="utf-8"
     )
     (dataset / "data" / "evaluation" / "eval.json").write_text(
-        json.dumps(_payload(2)), encoding="utf-8"
+        msgspec_json.dumps(_payload(2)), encoding="utf-8"
     )
 
     try:
@@ -94,8 +94,8 @@ def test_index_builder_cli_emits_count_report(
     evaluation = dataset / "data" / "evaluation"
     training.mkdir(parents=True)
     evaluation.mkdir(parents=True)
-    (training / "train.json").write_text(json.dumps(_payload(1)), encoding="utf-8")
-    (evaluation / "eval.json").write_text(json.dumps(_payload(2)), encoding="utf-8")
+    (training / "train.json").write_text(msgspec_json.dumps(_payload(1)), encoding="utf-8")
+    (evaluation / "eval.json").write_text(msgspec_json.dumps(_payload(2)), encoding="utf-8")
     monkeypatch.setattr(
         sys,
         "argv",
@@ -118,7 +118,7 @@ def test_index_builder_cli_emits_count_report(
 
     index_module._main()
 
-    assert json.loads(capsys.readouterr().out) == {
+    assert msgspec_json.loads(capsys.readouterr().out) == {
         "evaluation_tasks": 1,
         "training_tasks": 1,
     }

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import msgspec_json
 from dataclasses import replace
 from pathlib import Path
 
@@ -128,7 +128,7 @@ def _raw_document(
 
 def _write(path: Path, document: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path.write_text(msgspec_json.dumps(document), encoding="utf-8")
 
 
 def test_accuracy_interval_adopts_and_resume_reuses_all_raw_bundles(

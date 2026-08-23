@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
+import msgspec_json
 import pathlib
 import sys
 import time
@@ -272,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
         ],
     }
     payload['total_float32_mib'] = sum(t.mebibytes for t in tensors)
-    serialized = json.dumps(payload, indent=2, sort_keys=True)
+    serialized = msgspec_json.dumps(payload, indent=2, sort_keys=True)
     if options.json_output is not None:
         options.json_output.parent.mkdir(parents=True, exist_ok=True)
         options.json_output.write_text(serialized + '\n', encoding='utf-8')

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import json
+import msgspec_json
 import math
 import pathlib
 import sys
@@ -265,7 +265,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "environment": environment,
         "result": result,
     }
-    serialized = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
+    serialized = msgspec_json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
     if values.json_output is not None:
         write_result(values.json_output, payload)
     print(serialized)
