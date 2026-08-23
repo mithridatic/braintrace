@@ -33,6 +33,7 @@ try:
         DirectTrainingChunk,
         encode_direct_episode,
         leave_one_out_tasks,
+        load_direct_checkpoint,
         parameter_digest,
         save_direct_checkpoint,
         stack_direct_episodes,
@@ -65,6 +66,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         DirectTrainingChunk,
         encode_direct_episode,
         leave_one_out_tasks,
+        load_direct_checkpoint,
         parameter_digest,
         save_direct_checkpoint,
         stack_direct_episodes,
@@ -119,6 +121,8 @@ class DirectExperimentConfig:
         Manifest containing public train and evaluation sources.
     output_dir : pathlib.Path
         Artifact directory.
+    initial_checkpoint : pathlib.Path, optional
+        Exact-schema direct-model checkpoint used to initialize parameters.
     device : {"cpu", "gpu"}, default="gpu"
         Required JAX platform.
     seed : int, default=2108
@@ -141,6 +145,7 @@ class DirectExperimentConfig:
 
     source_manifest: pathlib.Path
     output_dir: pathlib.Path
+    initial_checkpoint: pathlib.Path | None = None
     device: str = "gpu"
     seed: int = 2108
     validation_task_count: int = 80
@@ -158,6 +163,10 @@ class DirectExperimentConfig:
     def __post_init__(self) -> None:
         object.__setattr__(self, "source_manifest", pathlib.Path(self.source_manifest))
         object.__setattr__(self, "output_dir", pathlib.Path(self.output_dir))
+        if self.initial_checkpoint is not None:
+            object.__setattr__(
+                self, "initial_checkpoint", pathlib.Path(self.initial_checkpoint)
+            )
         if self.device not in {"cpu", "gpu"}:
             raise ValueError("device must be 'cpu' or 'gpu'.")
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
@@ -198,6 +207,11 @@ class DirectExperimentConfig:
         value = asdict(self)
         value["source_manifest"] = str(self.source_manifest)
         value["output_dir"] = str(self.output_dir)
+        value["initial_checkpoint"] = (
+            None
+            if self.initial_checkpoint is None
+            else str(self.initial_checkpoint)
+        )
         return value
 
 
@@ -590,7 +604,24 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             recurrent_layers=config.recurrent_layers,
             seed=config.seed,
         )
-        model = DirectARCGRU(model_config)
+        initial_checkpoint_evidence = None
+        if config.initial_checkpoint is None:
+            model = DirectARCGRU(model_config)
+        else:
+            model, initial_metadata = load_direct_checkpoint(
+                config.initial_checkpoint
+            )
+            if model.config != model_config:
+                raise ValueError(
+                    "initial checkpoint architecture does not match the experiment."
+                )
+            initial_checkpoint_evidence = {
+                "path": str(config.initial_checkpoint),
+                "file_sha256": hashlib.sha256(
+                    config.initial_checkpoint.read_bytes()
+                ).hexdigest(),
+                "parameter_sha256": initial_metadata["parameter_sha256"],
+            }
         before = parameter_digest(model)
         evaluation_before_training = evaluate_model(model, scored_episodes)
         trainer = DirectBPTTTrainer(
@@ -664,6 +695,7 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             "parameter_sha256": checkpoint_digest,
             "file_sha256": checkpoint_file_digest,
         },
+        "initial_checkpoint": initial_checkpoint_evidence,
         "evaluation_before_training": evaluation_before_training,
         "evaluation": evaluation,
     }
@@ -676,6 +708,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-manifest", type=pathlib.Path, required=True)
     parser.add_argument("--output-dir", type=pathlib.Path, required=True)
+    parser.add_argument("--initial-checkpoint", type=pathlib.Path)
     parser.add_argument("--device", choices=("cpu", "gpu"), default="gpu")
     parser.add_argument("--seed", type=int, default=2108)
     parser.add_argument("--validation-task-count", type=int, default=80)
@@ -710,6 +743,7 @@ def main(argv: list[str] | None = None) -> int:
     config = DirectExperimentConfig(
         source_manifest=args.source_manifest,
         output_dir=args.output_dir,
+        initial_checkpoint=args.initial_checkpoint,
         device=args.device,
         seed=args.seed,
         validation_task_count=args.validation_task_count,

@@ -108,6 +108,19 @@ def test_experiment_config_fails_closed(tmp_path, changes: dict[str, object]) ->
         subject.DirectExperimentConfig(**values)
 
 
+def test_experiment_config_serializes_optional_initial_checkpoint(tmp_path) -> None:
+    subject = _subject()
+    checkpoint = tmp_path / "checkpoint.npz"
+    config = subject.DirectExperimentConfig(
+        source_manifest=tmp_path / "sources.json",
+        output_dir=tmp_path / "out",
+        initial_checkpoint=checkpoint,
+    )
+
+    assert config.initial_checkpoint == checkpoint
+    assert config.to_dict()["initial_checkpoint"] == str(checkpoint)
+
+
 def _write_task(path, task: ArcTask) -> None:
     payload = {
         "train": [
@@ -195,6 +208,46 @@ def test_tiny_end_to_end_run_writes_exact_validation_artifact(tmp_path) -> None:
     assert (output / "result.json").is_file()
     assert (output / "checkpoint.npz").is_file()
 
+    resumed_output = tmp_path / "resumed"
+    resumed = subject.run_experiment(
+        subject.DirectExperimentConfig(
+            source_manifest=manifest,
+            output_dir=resumed_output,
+            device="cpu",
+            validation_task_count=1,
+            training_updates=1,
+            training_chunk_size=1,
+            training_batch_size=1,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            recurrent_layers=1,
+            augment=False,
+            initial_checkpoint=output / "checkpoint.npz",
+        )
+    )
+    assert resumed["initial_checkpoint"]["parameter_sha256"] == result["model"][
+        "parameter_sha256_after"
+    ]
+    with pytest.raises(ValueError, match="architecture"):
+        subject.run_experiment(
+            subject.DirectExperimentConfig(
+                source_manifest=manifest,
+                output_dir=tmp_path / "mismatch",
+                device="cpu",
+                validation_task_count=1,
+                training_updates=1,
+                training_chunk_size=1,
+                training_batch_size=1,
+                encoder_width=4,
+                hidden_width=9,
+                decoder_width=6,
+                recurrent_layers=1,
+                augment=False,
+                initial_checkpoint=output / "checkpoint.npz",
+            )
+        )
+
 
 def test_source_manifest_and_sampling_fail_closed(tmp_path) -> None:
     subject = _subject()
@@ -230,6 +283,8 @@ def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys)
             str(tmp_path / "sources.json"),
             "--output-dir",
             str(tmp_path / "out"),
+            "--initial-checkpoint",
+            str(tmp_path / "checkpoint.npz"),
             "--device",
             "cpu",
             "--training-updates",
@@ -242,6 +297,7 @@ def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys)
 
     assert exit_code == 0
     assert observed["config"].augment is False
+    assert observed["config"].initial_checkpoint == tmp_path / "checkpoint.npz"
     output = json.loads(capsys.readouterr().out)
     assert output == {"strict_task_pass_at_1_count": 0}
 

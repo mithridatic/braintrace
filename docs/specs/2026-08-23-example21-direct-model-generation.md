@@ -109,6 +109,12 @@ opened, failures may be diagnosed and reported, but those labels may not tune
 the next eligible run; a materially new run requires a predeclared change
 justified by training/validation evidence.
 
+Longer training arms may resume from a prior direct-model checkpoint. Resume
+must load every floating parameter leaf through the exact schema validator,
+must reject any architecture/path/shape/dtype mismatch, and must record the
+initial checkpoint file and parameter digests. Optimizer state is deliberately
+fresh unless a future artifact schema binds and validates it separately.
+
 ## Staged gates
 
 ### Gate A: contract and regression tests
@@ -193,4 +199,3 @@ The final report leads with the single strict pass@1 integer and lists its exact
 task membership. It may report diagnostics separately, but must not present a
 cumulative score. Until both the threshold and every causal gate pass, the
 result remains unqualified.
-
