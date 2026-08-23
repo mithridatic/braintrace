@@ -436,6 +436,12 @@ class ExperimentConfig:
         Constant multiplier on the carrier block of the answer row head's
         input only. Zero starves the row head of the task-identifying
         carrier so training cannot displace the copy path.
+    row_copy_gate : bool
+        Scale the row head's logits by a learned per-cell gate that leaves the
+        copy residual ungated. Closed at initialisation, so the decoded row is
+        the query row exactly and the model starts as a strict copy machine.
+    row_copy_gate_bias : float
+        Pre-sigmoid bias for that gate. More negative starts it further closed.
     row_head_modulation : {"none", "bilinear"}
         Multiplicative carrier-by-query-row term for the row head. The head is
         a bias-free linear map over ``concat(carrier, event blocks)``, so it can
@@ -555,6 +561,8 @@ class ExperimentConfig:
     row_head_carrier_gate: bool = False
     row_head_modulation: Literal["none", "bilinear"] = "none"
     row_head_modulation_rank: int = 64
+    row_copy_gate: bool = False
+    row_copy_gate_bias: float = -4.0
     shape_head_carrier_scale: float = 1.0
     refinement_mixer: RefinementMixer = "linear"
     memory_value_softcap_beta: float = 4.0
@@ -2329,6 +2337,8 @@ def _model_config(
         arguments["row_head_carrier_gate"] = config.row_head_carrier_gate
         arguments["row_head_modulation"] = config.row_head_modulation
         arguments["row_head_modulation_rank"] = config.row_head_modulation_rank
+        arguments["row_copy_gate"] = config.row_copy_gate
+        arguments["row_copy_gate_bias"] = config.row_copy_gate_bias
         arguments["shape_head_carrier_scale"] = config.shape_head_carrier_scale
         arguments["refinement_mixer"] = config.refinement_mixer
     if config.context_memory_width > 0:
@@ -7791,6 +7801,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--weight-decay", type=float)
     parser.add_argument("--copy-residual-gain", type=float, default=0.0)
     parser.add_argument("--row-head-carrier-scale", type=float, default=1.0)
+    parser.add_argument("--row-copy-gate", action="store_true")
+    parser.add_argument("--row-copy-gate-bias", type=float, default=-4.0)
     parser.add_argument("--shape-head-carrier-scale", type=float, default=1.0)
     parser.add_argument("--memory-value-softcap-beta", type=float, default=4.0)
     parser.add_argument("--reasoning-query-softcap-beta", type=float, default=25.0)
@@ -7922,6 +7934,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         row_head_carrier_gate=args.row_head_carrier_gate,
         row_head_modulation=args.row_head_modulation,
         row_head_modulation_rank=args.row_head_modulation_rank,
+        row_copy_gate=args.row_copy_gate,
+        row_copy_gate_bias=args.row_copy_gate_bias,
         shape_head_carrier_scale=args.shape_head_carrier_scale,
         refinement_mixer=args.refinement_mixer,
         memory_value_softcap_beta=args.memory_value_softcap_beta,

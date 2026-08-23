@@ -361,3 +361,44 @@ extent without origin yields nothing beyond the two top-left crops already count
 
 The ceiling of 6 therefore holds for the architecture as it stands and for every
 adaptation regime available to it.
+
+
+## The per-cell copy gate
+
+The measurements above isolate a tension no global knob resolves:
+
+| | copy fidelity | edits | cumulative |
+|---|---|---|---|
+| `row_head_carrier_scale = 0` | 1.000 (architecturally forced) | none possible | 6 -- ceiling |
+| `row_head_carrier_scale = 1` | 0.652 | weak (0.12 on changed cells) | 0 |
+
+Exact answers need *both*. `--row-copy-gate` adds a learned per-logit gate that scales
+the row head's contribution while leaving the copy residual ungated:
+
+    row_logits = sigmoid(gate(head_input) + bias) * head_logits + gain * onehot(query_row)
+
+Closed, the copy prior is the sole term, so the decoded row is the query row *exactly*
+rather than merely close to it -- which matters because the score is a step function of
+copy fidelity. The gate is emitted at the full 30x10 width and applied elementwise:
+folding the row axis to share one gate across a cell's ten colours inserts a `reshape`,
+and pp-prop rejects it with `NotSupportedError: requires a position-preserving path from
+etp_mm to hidden group 0`. With the elementwise form the compiler reports 11
+eligibility-trace temporal routes including `answer_row_copy_gate.weight`, 0 warnings,
+and `row_routes_all_direct: True`.
+
+**Result: the copy half works, the premise does not.** Frozen, 4096 edges, 260 updates,
+`copy_residual_gain 2.0`, `row_head_carrier_scale 1.0`, bias -4:
+
+| | input echo | shape | pixel | cumulative |
+|---|---|---|---|---|
+| gated | **0.9999** | **0.1241** | 0.3577 | 0 |
+| ungated, same carrier scale (situ_glu) | 0.913 | 0.5227 | 0.5157 | 0 |
+| ungated, carrier scale 0 (best frozen) | 1.000 | 0.5776 | 0.5489 | 4 |
+
+The gate achieves exactly the copy fidelity it was designed for -- 0.9999, the highest of
+any run on record. The bounded-downside argument still fails, because it bounded the
+*colour* head while the *shape* head is what earns the score, and shape fell from 0.52 to
+0.124. The gate weight did train (`answer_row_copy_gate.weight` l2 delta 0.554) and the
+shape head did not collapse to a constant (23 distinct heights, 22 distinct widths across
+419 queries) -- it simply became less accurate. No principled fix follows from the
+measurements, so the flag is left default-off and recorded here rather than tuned.

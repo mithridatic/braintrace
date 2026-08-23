@@ -403,6 +403,8 @@ class ModelConfig:
     row_head_carrier_gate: bool = False
     row_head_modulation: Literal["none", "bilinear"] = "none"
     row_head_modulation_rank: int = 64
+    row_copy_gate: bool = False
+    row_copy_gate_bias: float = -4.0
     shape_head_carrier_scale: float = 1.0
     refinement_mixer: Literal[
         "linear", "carrier_gate", "attention_residual"
@@ -531,6 +533,17 @@ class ModelConfig:
             "row_head_carrier_scale",
             _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
         )
+        if not isinstance(self.row_copy_gate, bool):
+            raise ValueError("row_copy_gate must be a boolean")
+        if not isinstance(self.row_copy_gate_bias, Real) or isinstance(
+            self.row_copy_gate_bias, bool
+        ):
+            raise ValueError("row_copy_gate_bias must be a real number")
+        if self.row_copy_gate and self.copy_residual_gain == 0.0:
+            raise ValueError(
+                "row_copy_gate requires a positive copy_residual_gain -- with no "
+                "copy prior a closed gate emits no logits at all"
+            )
         if self.row_head_modulation not in ("none", "bilinear"):
             raise ValueError("row_head_modulation must be 'none' or 'bilinear'")
         if self.row_head_modulation == "bilinear" and (
@@ -2261,6 +2274,8 @@ def refinement_parameter_paths(config: Any) -> tuple[str, ...]:
         paths = ("answer_row_head.weight", "answer_shape_head.weight")
     if getattr(config, "row_head_modulation", "none") == "bilinear":
         paths = paths + ("row_modulation_output.weight",)
+    if getattr(config, "row_copy_gate", False):
+        paths = paths + ("answer_row_copy_gate.weight",)
     return tuple(sorted(paths))
 
 
@@ -2747,6 +2762,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     head_width,
                     MAX_GRID_SIZE * COLOR_COUNT,
                     w_init=row_weights,
+                    b_init=None,
+                )
+            if config.row_copy_gate:
+                gate_width = MAX_GRID_SIZE * COLOR_COUNT
+                self.answer_row_copy_gate = braintrace.nn.Linear(
+                    head_width,
+                    gate_width,
+                    w_init=jnp.zeros((head_width, gate_width), dtype=jnp.float32),
                     b_init=None,
                 )
             if config.row_head_modulation == "bilinear":
@@ -4030,9 +4053,45 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
             carrier_logits = self.answer_row_carrier_head(unit_carrier)
             additive = self.answer_row_event_head(event_blocks) + gate * carrier_logits
-        if self.config.row_head_modulation != "bilinear":
+        if self.config.row_head_modulation == "bilinear":
+            additive = additive + self._row_modulation_logits(unit_carrier, event)
+        if not self.config.row_copy_gate:
             return additive
-        return additive + self._row_modulation_logits(unit_carrier, event)
+        return self._copy_gated(additive, head_input)
+
+    def _copy_gated(self, additive: jax.Array, head_input: jax.Array) -> jax.Array:
+        """Scale the head's row logits by a learned per-logit gate.
+
+        The gate is emitted at the full ``30 * 10`` width and applied
+        elementwise. pp-prop requires a position-preserving path from an ETP
+        primitive to its hidden state, so folding the row axis to share one gate
+        across a cell's ten colours would insert a ``reshape`` and fail
+        compilation.
+
+        The gate multiplies only the head, never the copy residual added
+        downstream. A closed gate therefore leaves the copy prior as the sole
+        term in the row logits, so the decoded row is the query row *exactly* --
+        not merely close to it. That matters because the score is a step
+        function of copy fidelity: the two queries the model answers are exact
+        crops, and a head that perturbs even a few percent of cells forfeits
+        both. Starting closed makes the gated model a strict improvement on the
+        copy machine, free to open a cell only where it can beat copying.
+
+        Parameters
+        ----------
+        additive
+            Ungated row logits shaped ``(batch, 30 * 10)``.
+        head_input
+            Concatenated carrier and event features driving the gate.
+
+        Returns
+        -------
+        jax.Array
+            Gated row logits with the same shape as ``additive``.
+        """
+        bias = jnp.asarray(self.config.row_copy_gate_bias, dtype=additive.dtype)
+        gate = jax.nn.sigmoid(self.answer_row_copy_gate(head_input) + bias)
+        return additive * gate
 
     def _row_modulation_logits(
         self, unit_carrier: jax.Array, event: jax.Array
