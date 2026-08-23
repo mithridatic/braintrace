@@ -221,11 +221,33 @@ so there is no diluted signal to recover), test-time dihedral augmentation
 severing demonstration writes (refuted by code read -- the `else` branch still
 calls `update_context_memory` with the write gate, so writes do happen).
 
-The binding constraint is upstream of every one of them: the demonstrations do
-not measurably influence the query output. Both output heads are functions of
-the query input alone -- the colour head exactly so, the shape head approximately
-and worse than an input-shape echo. Until a configuration exists in which
-shuffling the demonstrations changes the answer, work on decoders, head
-capacity, training budget, and loss shaping is all downstream of a channel that
-carries no task information, which is precisely the pattern the five previous
-null results and the three refuted here have in common.
+The binding constraint is upstream of every one of them, but it is *not* that
+the demonstrations fail to reach the network. The controls arm of
+`ex21-fixed-controls-s31337` reports
+`causally_null_at_measured_precision = False` for `no_context`,
+`shuffled_demonstrations`, and `slot_ablation` alike, and
+`shuffled_pairing_sensitive_for_every_applicable_query = True`. The
+demonstrations measurably change the trajectory, and the memory is written and
+read (the `frozen` branch still calls `update_context_memory` with the write
+gate).
+
+The constraint is that **the heads cannot convert that signal into correct
+output**. Two regimes, both measured:
+
+- At `row_head_carrier_scale = 0.0` the colour head is architecturally excluded
+  from the carrier, so it is an exact copy of the query input and the
+  demonstration-dependent state cannot reach the answer at all. This is the
+  cumulative-4 configuration.
+- At `row_head_carrier_scale = 1.0` the head does see the carrier and extracts a
+  real but weak signal -- 10-12% rank-1 accuracy on changed cells, with the
+  rank-2 guess still below the marginal colour prior. That is not enough to pay
+  for the copy it destroys, and those runs score cumulative 0.
+
+So the task information is present in the state and absent from the answer. That
+is the gap every null result on record sits in: the width sweep, the training
+budget, learned keys, `etp_outer_write`, and the bilinear term all changed what
+the carrier contains or how the head reads it, when the deficit is the head's
+ability to extract a usable rule from a carrier that already varies with the
+demonstrations. A productive next experiment changes the *write* mechanism or
+the head's readout objective, not its capacity -- `delta_write` and
+`situ_glu_update` are the two write mechanisms never yet run.
