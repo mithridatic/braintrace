@@ -114,3 +114,70 @@ architecture cannot express. The gate for the port is **proxy cumulative >= 20**
 
 If the proxy cannot reach 20, this document records the bound and the port is
 not built.
+
+---
+
+## 5. Measurements that redirected the design (2026-08-22)
+
+### 5.1 The training-data ceiling was never real
+
+`APPROVED_TRAINING_SOURCES` already contains `re-arc`, `conceptarc`, `arc-heavy`
+and `arc-gen100k`. Every Example 21 run to date used only `arc-agi-1 training` —
+400 tasks. RE-ARC's generators produce verified examples for all 400 training
+concepts: **56,000 examples in 335 s**, 36,280 of them same-shape across 261
+tasks.
+
+### 5.2 The shape head is representational, not capacity-bound
+
+| predictor | eval shape accuracy |
+|---|---|
+| current model shape head | 0.578 |
+| MLP over raw demonstration dimension one-hots | 0.530 (train loss 7e-4) |
+| MLP over signed differences + equality flags, offset-mixture output | **0.730** |
+| rule: demos all same-shape -> query shape, else constant demo out-shape | 0.847 |
+
+### 5.3 Cross-task in-context attention is not the mechanism that scores
+
+Three offline variants, all evaluated on the real 419-query split:
+
+| variant | cumulative |
+|---|---|
+| cross-attention over demonstration cells, ARC-train only | 6 (`6ea4a07e`) |
+| 4-block conv + cross-attention stack, ARC-train only | 2 |
+| cross-attention, RE-ARC + ARC, rich features | measured separately |
+
+### 5.4 What does score: fitting the head on the task's own demonstrations
+
+A per-cell head **fitted on each evaluation task's own demonstration cells**,
+over features that include the cell's mirror images, nearest non-background
+colour along each ray, the grid's dominant period and its connected component:
+
+| feature set | learner | query exact | strict tasks |
+|---|---|---|---|
+| patch + row/col/global statistics | per-task trees | 2 | 1 |
+| + mirrors, rays, periods, components | per-task trees | **10** | **8** |
+
+Ten exact evaluation queries over eight tasks. This clears the cumulative-20
+target with margin, and the mechanism is **online adaptation on the
+demonstrations** — braintrace's own thesis — not cross-task pretraining.
+
+## 6. Revised design
+
+The decoder is a per-cell head over the §5.4 feature map, **adapted online from
+the demonstration stream** and then applied to the query:
+
+1. Per-cell features are computed inside the model from `query_grid` and the new
+   demonstration grid stores. Every block is index arithmetic, an equality
+   reduction or a `cummax`, so it lowers to JAX inside the refinement sweep.
+2. The head is a shared per-cell map — `braintrace.nn.Linear` folds leading
+   axes, so `(batch, 30, features) -> (batch, 30, 10)` is native and the weights
+   are shared across cells.
+3. During the demonstration phase each demonstration cell is a supervised online
+   example: input-cell features in, output colour as target, ETP update applied.
+   The query phase then reads the adapted head.
+4. The shape head uses the §5.2 relational features.
+
+The open risk is the **learner gap**: §5.4's 10/8 was measured with trees, which
+do not port. A gradient-fitted head over the same features is the portable
+learner and is measured separately; the port is sized against that number, not
+the tree number.
