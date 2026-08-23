@@ -44,7 +44,7 @@ def test_report_to_str_levels_and_repr():
     s1 = report.to_str(1)
     s2 = report.to_str(2)
     assert 'The hidden groups are:' in s1
-    assert len(s2) >= len(s1)            # level 2 is a superset
+    assert len(s2) >= len(s1)            # Level 2 is a superset
     assert 'CompilationReport(' in repr(report)
 
 

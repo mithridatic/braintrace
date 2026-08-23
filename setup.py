@@ -45,7 +45,7 @@ modules into the build tree:
 This split only holds with ``include-package-data = false`` (set in
 ``pyproject.toml``). Left on, setuptools re-adds every file in the sdist
 manifest to the wheel as *package data*, which put the whole test payload back:
-measured, 17 ``*/tests/*`` modules and all 9 ``braintrace/_testing/`` modules.
+Measured, 17 ``*/tests/*`` modules and all 9 ``braintrace/_testing/`` modules.
 """
 
 from setuptools import setup

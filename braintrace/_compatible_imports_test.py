@@ -32,7 +32,7 @@ def _one_const_one_carry_one_xs_scan_eqn():
 
     def scan_function(w, init, xs):
         def step(c, x):
-            return c + w + x, c * 2.0  # w=const, c=carry, x=xs, y=c*2
+            return c + w + x, c * 2.0  # W=const, c=carry, x=xs, y=c*2
 
         return lax.scan(step, init, xs)
 
@@ -120,8 +120,8 @@ class TestScanAddYs:
         new_params = scan_params_add_ys(params, 2)
         new_carry, new_ys = new_params['ft_out'].unpack()
         assert len(new_params['ft_out']) == len(params['ft_out']) + 2
-        assert len(new_carry) == len(old_carry)      # carry unchanged
-        assert len(new_ys) == len(old_ys) + 2        # ys grew by 2
+        assert len(new_carry) == len(old_carry)      # Carry unchanged
+        assert len(new_ys) == len(old_ys) + 2        # Ys grew by 2
 
 
 class TestPrimitive:

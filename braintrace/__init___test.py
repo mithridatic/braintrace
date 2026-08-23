@@ -44,12 +44,12 @@ from braintrace._testing.oracle_models import tanh_rnn
 
 def test_all_symbols_are_resolvable():
     missing = [name for name in braintrace.__all__ if not hasattr(braintrace, name)]
-    assert not missing, f"__all__ names with no attribute: {missing}"
+    assert not missing, f"__all__ names with no attribute: {missing}. Use an existing attribute or add the missing attribute."
 
 
 def test_all_symbols_are_non_none():
     none_valued = [name for name in braintrace.__all__ if getattr(braintrace, name) is None]
-    assert not none_valued, f"__all__ names resolving to None: {none_valued}"
+    assert not none_valued, f"__all__ names resolving to None: {none_valued}. Update the fixture or expected result to satisfy this assertion."
 
 
 def test_marker_sentinel_fails_first():
@@ -112,8 +112,8 @@ def test_dni_is_usable_end_to_end():
                                   'RandomProjectionVjpAlgorithm'])
 def test_p4_symbols_are_exported_from_both_all_lists(name):
     from braintrace import _algorithm
-    assert name in braintrace.__all__, f'{name} missing from braintrace.__all__'
-    assert name in _algorithm.__all__, f'{name} missing from _algorithm.__all__'
+    assert name in braintrace.__all__, f'{name} missing from braintrace.__all__. Add {name} to braintrace.__all__.'
+    assert name in _algorithm.__all__, f'{name} missing from _algorithm.__all__. Add {name} to _algorithm.__all__.'
     assert getattr(braintrace, name) is getattr(_algorithm, name)
 
 
@@ -167,7 +167,7 @@ def test_weight_used_inside_scan_raises_not_implemented():
 
         def update(self, x):
             def body(carry, _):
-                return braintrace.matmul(carry, self.w.value), None  # weight inside scan
+                return braintrace.matmul(carry, self.w.value), None  # Weight inside scan
             out, _ = jax.lax.scan(body, self.h.value, xs=None, length=64)
             self.h.value = jax.nn.tanh(out)
             return self.h.value
@@ -229,15 +229,15 @@ def test_ostl_is_two_classes_not_a_factory():
 def test_iodim_lives_in_io_dim_vjp_module():
     from braintrace._algorithm.io_dim_vjp import IODimVjpAlgorithm
     assert braintrace.IODimVjpAlgorithm is IODimVjpAlgorithm
-    assert braintrace.pp_prop is braintrace.ES_D_RTRL  # aliases
+    assert braintrace.pp_prop is braintrace.ES_D_RTRL  # Aliases
 
 
 def test_expected_rnn_cells_exist():
     import braintrace.nn as nn
     for cell in ('ValinaRNNCell', 'GRUCell', 'MGUCell', 'LSTMCell', 'URLSTMCell',
                  'MinimalRNNCell', 'MiniGRU', 'MiniLSTM', 'LRUCell', 'CFNCell'):
-        assert hasattr(nn, cell), f"missing cell: {cell}"
-        assert cell in nn.__all__, f"cell not in __all__: {cell}"
+        assert hasattr(nn, cell), f"Missing cell: {cell}. Export or define the named item."
+        assert cell in nn.__all__, f"Cell not in __all__: {cell}. Update the fixture or expected result to satisfy this assertion."
 
 
 def test_nn_dir_advertises_deprecated_forwards():
@@ -246,8 +246,8 @@ def test_nn_dir_advertises_deprecated_forwards():
     # forwarding is invisible to tab-completion and to ``dir()``-based tooling.
     import braintrace.nn as nn
     names = dir(nn)
-    assert 'ReLU' in names  # forwarded to brainstate.nn
-    assert 'LIF' in names  # forwarded to brainpy.state
+    assert 'ReLU' in names  # Forwarded to brainstate.nn
+    assert 'LIF' in names  # Forwarded to brainpy.state
     assert set(nn.__all__).issubset(names)
 
 

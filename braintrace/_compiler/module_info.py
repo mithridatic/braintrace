@@ -72,7 +72,7 @@ def _model_that_not_allow_param_assign(
 def _check_consistent_states_between_model_and_compiler(
     compiled_model_states: Sequence[brainstate.State],
     retrieved_model_states: Dict[Path, brainstate.State],
-    verbose: bool = True,  # whether to print the information
+    verbose: bool = True,  # Whether to print the information
 ) -> None:
     id_to_compiled_state = {
         id(st): st
@@ -127,12 +127,12 @@ def _check_in_out_consistent_units(
     state_tree_outvars: Sequence[PyTree],
     state_tree_path: Sequence[Path],
 ) -> None:
-    assert len(state_tree_invars) == len(state_tree_outvars), 'The number of invars and outvars should be the same.'
-    assert len(state_tree_invars) == len(state_tree_path), 'The number of invars and paths should be the same.'
+    assert len(state_tree_invars) == len(state_tree_outvars), 'The number of invars and outvars must match. Use matching state trees.'
+    assert len(state_tree_invars) == len(state_tree_path), 'The number of invars and paths must match. Use matching state paths.'
     for invar, outvar, path in zip(state_tree_invars, state_tree_outvars, state_tree_path):
         in_leaves = jax.tree.leaves(invar, is_leaf=u.math.is_quantity)
         out_leaves = jax.tree.leaves(outvar, is_leaf=u.math.is_quantity)
-        assert len(in_leaves) == len(out_leaves), 'The number of leaves should be the same.'
+        assert len(in_leaves) == len(out_leaves), 'The number of leaves must match. Use matching input and output trees.'
         for in_leaf, out_leaf in zip(in_leaves, out_leaves):
             if u.get_unit(in_leaf) != u.get_unit(out_leaf):
                 raise ValueError(
@@ -176,18 +176,18 @@ def abstractify_model(
     """
     assert isinstance(model, brainstate.nn.Module), (
         "The model should be an instance of brainstate.nn.Module. "
-        "Since it allows the explicit definition of the model structure."
+        "Since it allows the explicit definition of the model structure. Fix the input condition named in the error, then rerun the operation."
     )
     # ``brainstate.graph.states`` is declared as returning a ``FlattedDict`` *or*
     # a tuple of them; the tuple form is only produced when ``*filters`` are
     # passed, and none are here.
     model_retrieved_states = cast(brainstate.util.FlattedDict, brainstate.graph.states(model))
 
-    # --- stateful model, for extracting states, weights, and variables --- #
+    # --- Stateful model, for extracting states, weights, and variables --- #
     #
     # [ NOTE ]
     # The model does not support "static_argnums" for now.
-    # Please always use ``functools.partial`` to fix the static arguments.
+    # Always use ``functools.partial`` to fix the static arguments.
     #
     # wrap the model so that we can track the iteration number
     stateful_model = brainstate.transform.StatefulFunction(
@@ -195,18 +195,18 @@ def abstractify_model(
         return_only_write=False
     )
 
-    # -- compile the model -- #
+    # -- Compile the model -- #
     #
     # NOTE:
     # The model does not support "static_argnums" for now.
-    # Please always use functools.partial to fix the static arguments.
+    # Always use functools.partial to fix the static arguments.
     #
     stateful_model.make_jaxpr(*model_args, **model_kwargs)
 
-    # -- states -- #
+    # -- States -- #
     compiled_states = stateful_model.get_states(*model_args, **model_kwargs, compile_if_miss=True)
 
-    # check the consistency between the model and the compiler
+    # Check the consistency between the model and the compiler
     _check_consistent_states_between_model_and_compiler(
         compiled_states,
         model_retrieved_states
@@ -288,36 +288,36 @@ class ModuleInfo(NamedTuple):
         >>> isinstance(module_info, braintrace.ModuleInfo)
         True
     """
-    # stateful model
+    # Stateful model
     stateful_model: brainstate.transform.StatefulFunction
 
-    # jaxpr
+    # Jaxpr
     closed_jaxpr: ClosedJaxpr
 
-    # states
+    # States
     retrieved_model_states: brainstate.util.FlattedDict
     compiled_model_states: Sequence[brainstate.State]
     state_id_to_path: Dict[StateID, Path]
     state_tree_invars: PyTree
     state_tree_outvars: PyTree
 
-    # hidden states
+    # Hidden states
     hidden_path_to_invar: Dict[Path, Var]
     hidden_path_to_outvar: Dict[Path, Var]
     invar_to_hidden_path: Dict[Var, Path]
     outvar_to_hidden_path: Dict[Var, Path]
     hidden_outvar_to_invar: Dict[Var, Var]
 
-    # parameter weights
+    # Parameter weights
     weight_invars: List[Var]
     weight_path_to_invars: Dict[Path, List[Var]]
     invar_to_weight_path: Dict[Var, Path]
 
-    # output
+    # Output
     num_var_out: int  # number of original output variables
-    num_var_state: int  # number of state variable outputs
+    num_var_state: int  # Number of state variable outputs
 
-    # control-flow policy the canonicalizer ran with
+    # Control-flow policy the canonicalizer ran with
     control_flow: ControlFlowPolicy = DEFAULT_CONTROL_FLOW_POLICY
 
     @property
@@ -350,9 +350,9 @@ class ModuleInfo(NamedTuple):
         ModuleInfo
             A new ``ModuleInfo`` with the extended jaxpr.
         """
-        assert all(isinstance(v, Var) for v in jax_vars), 'The jax_vars should be the instance of Var.'
+        assert all(isinstance(v, Var) for v in jax_vars), 'Every jax_vars item must be a Var. Pass Var instances.'
 
-        # jaxpr
+        # Jaxpr
         jaxpr = Jaxpr(
             constvars=list(self.jaxpr.constvars),
             invars=list(self.jaxpr.invars),
@@ -362,7 +362,7 @@ class ModuleInfo(NamedTuple):
             debug_info=self.jaxpr.debug_info,
         )
 
-        # closed jaxpr
+        # Closed jaxpr
         #
         # NOTE: pass ``jaxpr`` and ``consts`` positionally. JAX 0.11 merged
         # ``ClosedJaxpr`` into the unified ``Jaxpr`` whose first parameter is
@@ -371,7 +371,7 @@ class ModuleInfo(NamedTuple):
         # JAX alike, matching the other ``ClosedJaxpr(...)`` call sites.
         closed_jaxpr = ClosedJaxpr(jaxpr, self.closed_jaxpr.consts)
 
-        # new instance of `ModuleInfo`
+        # New instance of `ModuleInfo`
         items = self.dict()
         items['closed_jaxpr'] = closed_jaxpr
         return ModuleInfo(**items)
@@ -432,11 +432,11 @@ class ModuleInfo(NamedTuple):
             The temporary intermediate values.
         """
 
-        # state checking
+        # State checking
         if old_state_vals is None:
             old_state_vals = [st.value for st in self.compiled_model_states]
 
-        # calling the function
+        # Calling the function
         jaxpr_outs = jax.core.eval_jaxpr(
             self.closed_jaxpr.jaxpr,
             self.closed_jaxpr.consts,
@@ -451,12 +451,12 @@ class ModuleInfo(NamedTuple):
         jaxpr_outs: Sequence[jax.Array],
     ) -> Tuple[Outputs, ETraceVals, StateVals, TempData]:
 
-        # intermediate values contain three parts:
+        # Intermediate values contain three parts:
         #
         # 1. "jaxpr_outs[:self.num_out]" corresponds to model original outputs
         #     - Outputs
         # 2. "jaxpr_outs[self.num_out:]" corresponds to extra output in  "augmented_jaxpr"
-        #     - others
+        #     - Others
         temps = {
             v: r for v, r in
             zip(
@@ -464,7 +464,7 @@ class ModuleInfo(NamedTuple):
                 jaxpr_outs[self.num_var_out:]
             )
         }
-        # 3. "etrace state" old values
+        # 3. "Etrace state" old values
         for st, val in zip(self.compiled_model_states, self.state_tree_invars):
             if isinstance(st, brainstate.HiddenState):
                 temps[val] = u.get_mantissa(st.value)
@@ -475,14 +475,14 @@ class ModuleInfo(NamedTuple):
         cache_key = self.stateful_model.get_arg_cache_key(*args, compile_if_miss=True)
         i_start = self.num_var_out
         i_end = i_start + self.num_var_state
-        # brainstate types the cached treedef as the broad ``PyTree``; at runtime it is a
+        # Brainstate types the cached treedef as the broad ``PyTree``; at runtime it is a
         # ``jax`` ``PyTreeDef`` that exposes ``unflatten``.
         out, new_state_vals = self.stateful_model.get_out_treedef_by_cache(cache_key).unflatten(  # type: ignore[attr-defined]
             jaxpr_outs[:i_end])
 
         #
         # check state value
-        assert len(self.compiled_model_states) == len(new_state_vals), 'State length mismatch.'
+        assert len(self.compiled_model_states) == len(new_state_vals), 'State length mismatch. Use matching values and structures.'
 
         #
         # split the state values
@@ -493,7 +493,7 @@ class ModuleInfo(NamedTuple):
             if isinstance(st, brainstate.HiddenState):
                 etrace_vals[self.state_id_to_path[id(st)]] = st_val
             elif isinstance(st, brainstate.ParamState):
-                # assume they are not changed
+                # Assume they are not changed
                 pass
             else:
                 oth_state_vals[self.state_id_to_path[id(st)]] = st_val
@@ -530,7 +530,7 @@ def extract_module_info(
     ----------
     model : brainstate.nn.Module
         The model from which to extract the information.
-    *model_args
+    *Model_args
         The positional arguments of the model.
     control_flow : ControlFlowPolicy or None, optional
         Policy governing control-flow canonicalization (``cond``
@@ -545,7 +545,7 @@ def extract_module_info(
         (``etp_in_control_flow='error'``). The policy is stored on the
         returned :class:`ModuleInfo` (``minfo.control_flow``) so later
         compiler passes apply the same rules.
-    **model_kwargs
+    **Model_kwargs
         The keyword arguments of the model.
 
     Returns
@@ -579,7 +579,7 @@ def extract_module_info(
         1
     """
 
-    # abstract the model
+    # Abstract the model
     (
         stateful_model,
         model_retrieved_states
@@ -589,7 +589,7 @@ def extract_module_info(
         **model_kwargs
     )
 
-    # state information
+    # State information
     cache_key = stateful_model.get_arg_cache_key(*model_args, **model_kwargs)
     compiled_states: Sequence[brainstate.State] = stateful_model.get_states_by_cache(cache_key)
     compiled_states = brainstate.util.PrettyList(compiled_states)
@@ -609,7 +609,7 @@ def extract_module_info(
     closed_jaxpr = inline_jit_calls(closed_jaxpr)
     jaxpr = closed_jaxpr.jaxpr
 
-    # out information
+    # Out information
     # brainstate types the cached out-shapes as the broad ``PyTree``; at runtime
     # it is the ``(out_shapes, state_shapes)`` pair the tracer recorded.
     out_shapes = stateful_model.get_out_shapes_by_cache(cache_key)[0]  # type: ignore[index]
@@ -622,7 +622,7 @@ def extract_module_info(
     state_tree_invars = jax.tree.unflatten(state_tree, jaxpr.invars[num_in:])
     state_tree_outvars = jax.tree.unflatten(state_tree, jaxpr.outvars[num_out:])
 
-    # check the consistency between the invars and outvars
+    # Check the consistency between the invars and outvars
     state_tree_path = [state_id_to_path[id(st)] for st in compiled_states]
     _check_in_out_consistent_units(
         state_tree_invars,
@@ -630,13 +630,13 @@ def extract_module_info(
         state_tree_path,
     )
 
-    # remove the quantity from the invars and outvars
+    # Remove the quantity from the invars and outvars
     state_tree_invars = _remove_quantity(state_tree_invars)
     state_tree_outvars = _remove_quantity(state_tree_outvars)
     state_tree_invars = brainstate.util.PrettyList(state_tree_invars)
     state_tree_outvars = brainstate.util.PrettyList(state_tree_outvars)
 
-    # -- checking weights as invar -- #
+    # -- Checking weights as invar -- #
     # Map ALL ParamState (not just ParamState) so primitive-based
     # ETP scanning can find weights used with etp_mm_p / etp_mv_p / etc.
     weight_path_to_invars = {
@@ -646,7 +646,7 @@ def extract_module_info(
     }
     weight_path_to_invars = brainstate.util.PrettyDict(weight_path_to_invars)
 
-    hidden_path_to_invar = {  # one-to-many mapping
+    hidden_path_to_invar = {  # One-to-many mapping
         state_id_to_path[id(st)]: invar  # ETraceState only contains one Array, "invar" is the jaxpr var
         for invar, st in zip(state_tree_invars, compiled_states)
         if isinstance(st, brainstate.HiddenState)
@@ -659,14 +659,14 @@ def extract_module_info(
     }
     invar_to_hidden_path = brainstate.util.PrettyDict(invar_to_hidden_path)
 
-    invar_to_weight_path = {  # many-to-one mapping
+    invar_to_weight_path = {  # Many-to-one mapping
         v: k
         for k, vs in weight_path_to_invars.items()
         for v in vs
     }
     invar_to_weight_path = brainstate.util.PrettyDict(invar_to_weight_path)
 
-    # -- checking states as outvar -- #
+    # -- Checking states as outvar -- #
     hidden_path_to_outvar = {  # one-to-one mapping
         state_id_to_path[id(st)]: outvar  # ETraceState only contains one Array, "outvar" is the jaxpr var
         for outvar, st in zip(state_tree_outvars, compiled_states)
@@ -674,7 +674,7 @@ def extract_module_info(
     }
     hidden_path_to_outvar = brainstate.util.PrettyDict(hidden_path_to_outvar)
 
-    outvar_to_hidden_path = {  # one-to-one mapping
+    outvar_to_hidden_path = {  # One-to-one mapping
         v: state_id
         for state_id, v in hidden_path_to_outvar.items()
     }
@@ -703,35 +703,35 @@ def extract_module_info(
     )
 
     return ModuleInfo(
-        # stateful model
+        # Stateful model
         stateful_model=stateful_model,
 
-        # jaxpr
+        # Jaxpr
         closed_jaxpr=closed_jaxpr,
 
-        # states
+        # States
         retrieved_model_states=model_retrieved_states,
         compiled_model_states=compiled_states,
         state_id_to_path=state_id_to_path,
         state_tree_invars=state_tree_invars,
         state_tree_outvars=state_tree_outvars,
 
-        # hidden states
+        # Hidden states
         hidden_path_to_invar=hidden_path_to_invar,
         invar_to_hidden_path=invar_to_hidden_path,
         hidden_path_to_outvar=hidden_path_to_outvar,
         outvar_to_hidden_path=outvar_to_hidden_path,
         hidden_outvar_to_invar=hidden_outvar_to_invar,
 
-        # parameter weights
+        # Parameter weights
         weight_invars=weight_invars,
         weight_path_to_invars=weight_path_to_invars,
         invar_to_weight_path=invar_to_weight_path,
 
-        # output parameters
+        # Output parameters
         num_var_out=num_out,
         num_var_state=len(jaxpr.outvars[num_out:]),
 
-        # control-flow policy
+        # Control-flow policy
         control_flow=policy,
     )

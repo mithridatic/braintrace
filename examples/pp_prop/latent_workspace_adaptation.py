@@ -63,15 +63,15 @@ class TargetFreeQuery:
         events = jnp.asarray(self.events)
         advances = jnp.asarray(self.advances)
         if events.ndim < 1:
-            raise ValueError("events must have a leading step axis")
+            raise ValueError("Events must have a leading step axis. Ensure Events has a leading step axis.")
         if advances.ndim != 1:
-            raise ValueError("advances must be one-dimensional")
+            raise ValueError("Advances must be one-dimensional. Set Advances to one-dimensional.")
         if events.shape[0] == 0:
-            raise ValueError("query must contain at least one step")
+            raise ValueError("Query must contain at least one step. Add at least one step to Query.")
         if events.shape[0] != advances.shape[0]:
-            raise ValueError("events and advances must have the same step count")
+            raise ValueError("Events and advances must have the same step count. Ensure Events and advances has the same step count.")
         if not np.issubdtype(advances.dtype, np.bool_):
-            raise ValueError("advances must have boolean dtype")
+            raise ValueError("Advances must have boolean dtype. Ensure Advances has boolean dtype.")
         object.__setattr__(self, "events", events)
         object.__setattr__(self, "advances", advances)
 
@@ -172,7 +172,7 @@ def _parameter_items(model: Any) -> tuple[tuple[tuple[Any, ...], Any], ...]:
     try:
         states = model.states(brainstate.ParamState)
     except AttributeError as error:
-        raise TypeError("model must expose BrainState ParamState objects") from error
+        raise TypeError("Model must expose BrainState ParamState objects. Set Model to expose BrainState ParamState objects.") from error
     return tuple((tuple(path), state) for path, state in states.items())
 
 
@@ -223,24 +223,24 @@ def restore_parameters(model: Any, snapshot: ParameterSnapshot) -> None:
         If parameter paths, structures, shapes, or dtypes differ.
     """
     if not isinstance(snapshot, ParameterSnapshot):
-        raise TypeError("snapshot must be a ParameterSnapshot")
+        raise TypeError("Snapshot must be a ParameterSnapshot. Set Snapshot to a ParameterSnapshot.")
     parameter_items = _parameter_items(model)
     expected_paths = tuple(path for path, _ in parameter_items)
     actual_paths = tuple(record.path for record in snapshot.records)
     if actual_paths != expected_paths:
-        raise ValueError("parameter paths do not match this model")
+        raise ValueError("Parameter paths do not match this model. Fix the input condition named in the error, then rerun the operation.")
     validated: list[tuple[Any, Any]] = []
     for record, (_, state) in zip(snapshot.records, parameter_items, strict=True):
         state_leaves, state_structure = jax.tree.flatten(state.value)
         if record.tree_structure != state_structure:
-            raise ValueError(f"parameter structure does not match at {record.path}")
+            raise ValueError(f"Parameter structure does not match at {record.path}. Use matching values and structures.")
         if len(record.leaves) != len(state_leaves):
-            raise ValueError(f"parameter leaf count does not match at {record.path}")
+            raise ValueError(f"Parameter leaf count does not match at {record.path}. Use matching values and structures.")
         for snapshot_leaf, state_leaf in zip(record.leaves, state_leaves, strict=True):
             if np.shape(snapshot_leaf) != np.shape(state_leaf):
-                raise ValueError(f"parameter shape does not match at {record.path}")
+                raise ValueError(f"Parameter shape does not match at {record.path}. Use matching values and structures.")
             if np.dtype(snapshot_leaf.dtype) != np.dtype(state_leaf.dtype):
-                raise ValueError(f"parameter dtype does not match at {record.path}")
+                raise ValueError(f"Parameter dtype does not match at {record.path}. Use matching values and structures.")
         value = jax.tree.unflatten(
             record.tree_structure,
             tuple(_copy_leaf(leaf) for leaf in record.leaves),
@@ -253,17 +253,17 @@ def restore_parameters(model: Any, snapshot: ParameterSnapshot) -> None:
 def _fold_count(fold_inputs: Any) -> int:
     leaves = jax.tree.leaves(fold_inputs)
     if not leaves:
-        raise ValueError("fold inputs must contain at least one array")
+        raise ValueError("Fold inputs must contain at least one array. Add at least one array to Fold inputs.")
     counts: list[int] = []
     for leaf in leaves:
         array = jnp.asarray(leaf)
         if array.ndim < 1:
-            raise ValueError("every fold input must have a leading fold axis")
+            raise ValueError("Every fold input must have a leading fold axis. Ensure Every fold input has a leading fold axis.")
         counts.append(int(array.shape[0]))
     if not counts or counts[0] == 0:
-        raise ValueError("fold inputs must contain at least one fold")
+        raise ValueError("Fold inputs must contain at least one fold. Add at least one fold to Fold inputs.")
     if any(count != counts[0] for count in counts[1:]):
-        raise ValueError("all fold inputs must have the same fold count")
+        raise ValueError("All fold inputs must have the same fold count. Ensure All fold inputs has the same fold count.")
     return counts[0]
 
 
@@ -305,45 +305,45 @@ def build_target_free_task_bank(
     valid = jnp.asarray(query_valid)
     indices = jnp.asarray(checkpoint_indices)
     if events.ndim < 3:
-        raise ValueError("query_events must have task, query, and time axes")
+        raise ValueError("query_events must have task, query, and time axes. Ensure query_events has task, query, and time axes.")
     task_count, query_count, time_count = events.shape[:3]
     if task_count == 0 or query_count == 0 or time_count == 0:
-        raise ValueError("query task, query, and time counts must be positive")
+        raise ValueError("Query task, query, and time counts must be positive. Set Query task, query, and time counts to a positive value.")
     if advances.shape != (task_count, query_count, time_count):
-        raise ValueError("query_advances shape must match query task/query/time axes")
+        raise ValueError("query_advances shape must match query task/query/time axes. Make query_advances shape match query task/query/time axes.")
     if not np.issubdtype(advances.dtype, np.bool_):
-        raise ValueError("query_advances must have boolean dtype")
+        raise ValueError("query_advances must have boolean dtype. Ensure query_advances has boolean dtype.")
     if valid.ndim != 2:
-        raise ValueError("query_valid must be two-dimensional")
+        raise ValueError("query_valid must be two-dimensional. Set query_valid to two-dimensional.")
     if valid.shape != (task_count, query_count):
-        raise ValueError("query_valid shape must match query task/query axes")
+        raise ValueError("query_valid shape must match query task/query axes. Make query_valid shape match query task/query axes.")
     if not np.issubdtype(valid.dtype, np.bool_):
-        raise ValueError("query_valid must have boolean dtype")
+        raise ValueError("query_valid must have boolean dtype. Ensure query_valid has boolean dtype.")
     if indices.ndim != 3:
-        raise ValueError("checkpoint_indices must be three-dimensional")
+        raise ValueError("checkpoint_indices must be three-dimensional. Set checkpoint_indices to three-dimensional.")
     if indices.shape[:2] != (task_count, query_count) or indices.shape[2] == 0:
-        raise ValueError("checkpoint_indices must match task/query axes")
+        raise ValueError("checkpoint_indices must match task/query axes. Make checkpoint_indices match task/query axes.")
     if not np.issubdtype(indices.dtype, np.integer):
-        raise ValueError("checkpoint_indices must have integer dtype")
+        raise ValueError("checkpoint_indices must have integer dtype. Ensure checkpoint_indices has integer dtype.")
     host_indices = np.asarray(indices)
     if np.any(host_indices < 0) or np.any(host_indices >= time_count):
-        raise ValueError("checkpoint index is outside query time")
+        raise ValueError("Checkpoint index is outside query time. Set the named field to a value in the stated range, then rerun the operation.")
     if np.any(np.diff(host_indices, axis=-1) <= 0):
-        raise ValueError("checkpoint indices must be strictly increasing")
+        raise ValueError("Checkpoint indices must be strictly increasing. Set Checkpoint indices to strictly increasing.")
 
     fold_leaves = jax.tree.leaves(fold_inputs)
     if not fold_leaves:
-        raise ValueError("fold inputs must contain at least one array")
+        raise ValueError("Fold inputs must contain at least one array. Add at least one array to Fold inputs.")
     fold_shapes = tuple(np.shape(leaf) for leaf in fold_leaves)
     if any(len(shape) < 2 for shape in fold_shapes):
-        raise ValueError("every fold input must have task and update axes")
+        raise ValueError("Every fold input must have task and update axes. Ensure Every fold input has task and update axes.")
     if any(shape[0] != task_count for shape in fold_shapes):
-        raise ValueError("fold input task count must match query task count")
+        raise ValueError("Fold input task count must match query task count. Make Fold input task count match query task count.")
     update_count = fold_shapes[0][1]
     if update_count == 0:
-        raise ValueError("fold inputs must contain at least one update")
+        raise ValueError("Fold inputs must contain at least one update. Add at least one update to Fold inputs.")
     if any(shape[1] != update_count for shape in fold_shapes[1:]):
-        raise ValueError("all fold inputs must have the same update count")
+        raise ValueError("All fold inputs must have the same update count. Ensure All fold inputs has the same update count.")
     return TargetFreeTaskBank(
         fold_inputs=jax.tree.map(jnp.asarray, fold_inputs),
         query_events=events,
@@ -414,7 +414,7 @@ def run_task_local_adaptation(
         If the fold batch is empty or has inconsistent leading dimensions.
     """
     if not isinstance(query, TargetFreeQuery):
-        raise TypeError("query must be a TargetFreeQuery")
+        raise TypeError("Query must be a TargetFreeQuery. Set Query to a TargetFreeQuery.")
     _fold_count(fold_inputs)
     reset = model.reset_state if reset_dynamic_state is None else reset_dynamic_state
     restore_parameters(model, base_parameters)
@@ -472,7 +472,7 @@ def compile_task_local_adaptation_runner(
     Adam state persists only across the folds belonging to the current task.
 
     Repeated work is lowered through nested :mod:`brainstate.transform` loops:
-    a task loop, an adaptation-fold loop, a padded-query loop, and a query-time
+    A task loop, an adaptation-fold loop, a padded-query loop, and a query-time
     scan. Only named checkpoint outputs are carried; per-step outputs are not
     stacked.
 
@@ -514,31 +514,31 @@ def compile_task_local_adaptation_runner(
         compatible plain Adam configuration.
     """
     if not isinstance(base_parameters, ParameterSnapshot):
-        raise TypeError("base_parameters must be a ParameterSnapshot")
+        raise TypeError("base_parameters must be a ParameterSnapshot. Set base_parameters to a ParameterSnapshot.")
     if any(
         not callable(value) for value in (adapt_fold, query_step, checkpoint_output)
     ):
         raise TypeError(
-            "adapt_fold, query_step, and checkpoint_output must be callable"
+            "adapt_fold, query_step, and checkpoint_output must be callable. Pass a callable value for adapt_fold, query_step, and checkpoint_output."
         )
     if not isinstance(checkpoint_output_shape, tuple) or any(
         isinstance(size, bool) or not isinstance(size, int) or size < 0
         for size in checkpoint_output_shape
     ):
-        raise TypeError("checkpoint_output_shape must be a tuple of non-negative ints")
+        raise TypeError("checkpoint_output_shape must be a tuple of non-negative ints. Set checkpoint_output_shape to a tuple of non-negative ints.")
     batch_size = getattr(getattr(model, "config", None), "batch_size", None)
     if batch_size != 1:
-        raise ValueError("compiled task-local adaptation requires model batch_size=1")
+        raise ValueError("Compiled task-local adaptation requires model batch_size=1. Provide the required value for Compiled task-local adaptation.")
     if type(optimizer).__name__ != "Adam":
         raise ValueError(
-            "compiled task-local adaptation requires a plain Adam optimizer"
+            "Compiled task-local adaptation requires a plain Adam optimizer. Provide the required value for Compiled task-local adaptation."
         )
     if float(getattr(optimizer, "weight_decay", 0.0)) != 0.0:
-        raise ValueError("compiled task-local adaptation requires Adam weight_decay=0")
+        raise ValueError("Compiled task-local adaptation requires Adam weight_decay=0. Provide the required value for Compiled task-local adaptation.")
     if len(getattr(optimizer, "param_groups", ())) > 1:
-        raise ValueError("compiled task-local adaptation does not support Adam groups")
+        raise ValueError("Compiled task-local adaptation does not support Adam groups. Fix the input condition named in the error, then rerun the operation.")
     if getattr(optimizer, "_schedulers", ()):  # noqa: SLF001
-        raise ValueError("compiled task-local adaptation does not support schedulers")
+        raise ValueError("Compiled task-local adaptation does not support schedulers. Fix the input condition named in the error, then rerun the operation.")
     missing_optimizer_state = next(
         (
             name
@@ -549,7 +549,7 @@ def compile_task_local_adaptation_runner(
     )
     if missing_optimizer_state is not None:
         raise ValueError(
-            f"Adam optimizer lacks required state {missing_optimizer_state}"
+            f"Adam optimizer lacks required state {missing_optimizer_state}. Provide the missing item named in the message."
         )
 
     restore_parameters(model, base_parameters)
@@ -636,7 +636,7 @@ def compile_task_local_adaptation_runner(
                     value = jnp.asarray(checkpoint_output(), dtype=output_dtype)
                     if value.shape != checkpoint_output_shape:
                         raise ValueError(
-                            "checkpoint_output returned a value with the wrong shape"
+                            "checkpoint_output returned a value with the wrong shape. Fix the input condition named in the error, then rerun the operation."
                         )
                     safe_cursor = jnp.minimum(cursor, checkpoint_count - 1)
                     matched = (
@@ -692,7 +692,7 @@ def compile_task_local_adaptation_runner(
 
     def run(bank: TargetFreeTaskBank) -> TaskBankAdaptationResult:
         if not isinstance(bank, TargetFreeTaskBank):
-            raise TypeError("bank must be a TargetFreeTaskBank")
+            raise TypeError("Bank must be a TargetFreeTaskBank. Set Bank to a TargetFreeTaskBank.")
         try:
             return compiled_task_bank(
                 bank.fold_inputs,

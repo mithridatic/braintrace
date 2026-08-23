@@ -82,7 +82,7 @@ class SearchSettings:
         for name in ("container_image_digest", "source_commit", "search_kind"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{name} is required for development search")
+                raise ValueError(f"{name} is required for development search. Fix the input condition named in the error, then rerun the operation.")
 
 
 def ordered_candidates() -> tuple[LearningRateCandidate, ...]:

@@ -137,7 +137,7 @@ class TestConv1d:
         y = conv(x)
         assert y.shape == (4, 10, in_channels)
 
-    # def test_conv1d_lhs_dilation(self):
+    # Def test_conv1d_lhs_dilation(self):
     #     """Test Conv1d with lhs_dilation (atrous convolution on input)."""
     #     conv = braintrace.nn.Conv1d(in_size=(10, 3), out_channels=16, kernel_size=3, lhs_dilation=2)
     #     x = brainstate.random.randn(4, 10, 3)
@@ -170,7 +170,7 @@ class TestConv1d:
 
     def test_conv1d_with_weight_mask(self):
         """Test Conv1d with weight mask."""
-        kernel_shape = (3, 3, 16)  # (kernel_size, in_channels, out_channels)
+        kernel_shape = (3, 3, 16)  # (Kernel_size, in_channels, out_channels)
         mask = jnp.ones(kernel_shape)
         conv = braintrace.nn.Conv1d(in_size=(10, 3), out_channels=16, kernel_size=3, w_mask=mask)
         x = brainstate.random.randn(4, 10, 3)
@@ -339,7 +339,7 @@ class TestConv2d:
         y = conv(x)
         assert y.shape == (8, 28, 28, in_channels)
 
-    # def test_conv2d_lhs_dilation(self):
+    # Def test_conv2d_lhs_dilation(self):
     #     """Test Conv2d with lhs_dilation (atrous convolution on input)."""
     #     conv = braintrace.nn.Conv2d(in_size=(28, 28, 3), out_channels=32, kernel_size=3, lhs_dilation=2)
     #     x = brainstate.random.randn(8, 28, 28, 3)
@@ -570,7 +570,7 @@ class TestConv3d:
         y = conv(x)
         assert y.shape == (2, 16, 16, 16, in_channels)
 
-    # def test_conv3d_lhs_dilation(self):
+    # Def test_conv3d_lhs_dilation(self):
     #     """Test Conv3d with lhs_dilation (atrous convolution on input)."""
     #     conv = braintrace.nn.Conv3d(
     #         in_size=(16, 16, 16, 3),
@@ -886,5 +886,5 @@ class TestAdaptDoc:
             prev_indent = len(prev) - len(prev.lstrip())
             indent = len(cur) - len(cur.lstrip())
             assert indent > prev_indent or cur.lstrip().startswith('- '), (
-                f'open bullet list before: {cur!r}'
+                f'Open bullet list before: {cur!r}. Update the fixture or expected result to satisfy this assertion.'
             )

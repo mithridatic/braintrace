@@ -32,7 +32,7 @@ import pytest
 import braintrace
 from braintrace._compiler.diagnostics import DiagnosticKind
 
-# cell name -> (relation count, included weight-path set, excluded W->W->h set)
+# Cell name -> (relation count, included weight-path set, excluded W->W->h set)
 _CELL_GUARDRAILS = {
     'ValinaRNNCell': (1, {('W', 'weight')}, set()),
     'GRUCell': (2, {('Wz', 'weight'), ('Wh', 'weight')}, {('Wr', 'weight')}),
@@ -88,5 +88,5 @@ def test_every_public_rnn_cell_has_a_guardrail():
     pinned = set(_CELL_GUARDRAILS)
     missing = registry - pinned
     extra = pinned - registry
-    assert not missing, f"public RNN cells without a relation guardrail: {sorted(missing)}"
-    assert not extra, f"guardrail rows for non-existent/removed cells: {sorted(extra)}"
+    assert not missing, f"Public RNN cells without a relation guardrail: {sorted(missing)}. Provide the missing item named in the message."
+    assert not extra, f"Guardrail rows for non-existent/removed cells: {sorted(extra)}. Update the fixture or expected result to satisfy this assertion."

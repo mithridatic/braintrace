@@ -111,8 +111,8 @@ def test_sparse_xy_to_dw_matches_vjp():
 def test_lora_xy_to_dw_matches_vjp():
     rng = np.random.RandomState(0)
     x = jnp.asarray(rng.randn(2, 6).astype('float32'))
-    B = jnp.asarray(rng.randn(6, 3).astype('float32'))   # (in, rank)
-    A = jnp.asarray(rng.randn(3, 4).astype('float32'))   # (rank, out)
+    B = jnp.asarray(rng.randn(6, 3).astype('float32'))   # (In, rank)
+    A = jnp.asarray(rng.randn(3, 4).astype('float32'))   # (Rank, out)
     lora_params = dict(alpha=1.0, has_bias=False)
     y = _etp_lora_impl(x, B, A, **lora_params)
     hidden = jnp.ones_like(y)
@@ -133,7 +133,7 @@ def test_lora_dt_to_t_scales_both_traces_along_output_axis():
     gradients wrong even at T=1)."""
     rule = ETP_RULES_DT_TO_T[etp_lora_mm_p]
     in_dim, rank, out_dim = 6, 3, 4
-    hidden = jnp.arange(1.0, out_dim + 1.0)            # (out,)
+    hidden = jnp.arange(1.0, out_dim + 1.0)            # (Out,)
     trace = {'lora_b': jnp.ones((in_dim, out_dim)), 'lora_a': jnp.ones((rank, out_dim))}
     out = rule(hidden, trace)
     np.testing.assert_allclose(out['lora_b'], trace['lora_b'] * hidden[None, :])
@@ -144,13 +144,13 @@ def test_lora_dt_to_t_scales_both_traces_along_output_axis():
 
 def test_init_drtrl_and_pp_shapes_consistent_for_mm():
     n_state = 2
-    x_var = _fake_var((4, 3))           # (batch, in)
-    y_var = _fake_var((4, 5))           # (batch, out)
+    x_var = _fake_var((4, 3))           # (Batch, in)
+    y_var = _fake_var((4, 5))           # (Batch, out)
     weight_vars = {'weight': _fake_var((3, 5))}
     drtrl = ETP_RULES_INIT_DRTRL[etp_mm_p](x_var, y_var, weight_vars, num_hidden_state=n_state)
     pp = ETP_RULES_INIT_PP[etp_mm_p](x_var, y_var, weight_vars, num_hidden_state=n_state)
-    assert drtrl['weight'].shape == (4, 3, 5, n_state)   # batch + weight + state
-    assert pp.shape == (4, 5, n_state)                   # y + state
+    assert drtrl['weight'].shape == (4, 3, 5, n_state)   # Batch + weight + state
+    assert pp.shape == (4, 5, n_state)                   # Y + state
 
 
 # --- Task 6: multi-primitive composition gradients ---------------------------

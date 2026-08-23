@@ -1,5 +1,5 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
-"""07 · vjp_method='single-step' on LIF integrator.
+"""07 · Vjp_method='single-step' on LIF integrator.
 
 Demonstrates pp_prop's default VJP mode. The VJP of the loss w.r.t. hidden
 state is computed at each current time step only (no lookback), which keeps

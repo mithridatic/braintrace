@@ -42,11 +42,11 @@ def build_clip_selection(
     triggered = _triggered_groups(fractions)
     if triggered and clip_search_evidence is None:
         raise FreezeArtifactError(
-            "clip search triggered but explicit candidate-search evidence is missing"
+            "Clip search triggered but explicit candidate-search evidence is missing. Provide the missing value or resource, then rerun the operation."
         )
     if not triggered and clip_search_evidence is not None:
         raise FreezeArtifactError(
-            "clip search evidence is forbidden when no parameter group triggered"
+            "Clip search evidence is forbidden when no parameter group triggered. Provide the missing item named in the message."
         )
     selected: dict[str, float | None] = {group: 1.0 for group in GROUPS}
     search_reference: dict[str, object] | None = None

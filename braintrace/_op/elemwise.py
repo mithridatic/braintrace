@@ -177,7 +177,7 @@ def _elemwise_xy_to_dw(x: Any, hidden_dim: Any, weights: dict[str, Any], *,
         ``{'weight': hidden_dim ⊙ weight_fn'(w)}``, or
         ``{'weight': hidden_dim}`` when ``weight_fn is None``.
     """
-    # ∂h/∂w = (∂h/∂y) · weight_fn'(w). For the identity (weight_fn None) this is
+    # ∂H/∂w = (∂h/∂y) · weight_fn'(w). For the identity (weight_fn None) this is
     # just the cotangent itself.
     if weight_fn is None:
         return {'weight': hidden_dim}

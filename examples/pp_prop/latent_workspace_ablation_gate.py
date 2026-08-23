@@ -619,7 +619,7 @@ class GateCArmSpec:
         Stable arm identifier.
     memory_mode
         Full, query-only, or legacy contextual-memory policy.
-    supervision
+    Supervision
         Per-checkpoint or terminal-only loss policy.
     context_memory_width
         Fast-weight width; zero selects the legacy reservoir.
@@ -737,9 +737,9 @@ class GateCConfig:
 
     def __post_init__(self) -> None:
         if not isinstance(self.gate_a_config, gate_a.BindingGateConfig):
-            raise TypeError("gate_a_config must be a BindingGateConfig")
+            raise TypeError("gate_a_config must be a BindingGateConfig. Set gate_a_config to a BindingGateConfig.")
         if not isinstance(self.gate_b_config, gate_b.DepthGateConfig):
-            raise TypeError("gate_b_config must be a DepthGateConfig")
+            raise TypeError("gate_b_config must be a DepthGateConfig. Set gate_b_config to a DepthGateConfig.")
         for name in (
             "oracle_validation_index",
             "oracle_effort",
@@ -747,12 +747,12 @@ class GateCConfig:
         ):
             value = getattr(self, name)
             if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
-                raise TypeError(f"{name} must be an integer")
+                raise TypeError(f"{name} must be an integer. Set {name} to an integer.")
             if int(value) < 0:
-                raise ValueError(f"{name} must be nonnegative")
+                raise ValueError(f"{name} must be nonnegative. Set {name} to a nonnegative value.")
             object.__setattr__(self, name, int(value))
         if self.gradient_chunk_size == 0:
-            raise ValueError("gradient_chunk_size must be positive")
+            raise ValueError("gradient_chunk_size must be positive. Set gradient_chunk_size to a positive value.")
 
     @property
     def qualification_regime(self) -> str:
@@ -772,14 +772,14 @@ def _arm_spec(arm: str) -> GateCArmSpec:
     try:
         return ARM_SPECS[arm]
     except (KeyError, TypeError) as error:
-        raise ValueError(f"unknown Gate C arm: {arm!r}") from error
+        raise ValueError(f"Unknown Gate C arm: {arm!r}. Set the named field to one of the supported values, then rerun the operation.") from error
 
 
 def _regime_spec(regime: str) -> GateCRegimeSpec:
     try:
         return REGIME_SPECS[regime]
     except (KeyError, TypeError) as error:
-        raise ValueError(f"unknown Gate C regime: {regime!r}") from error
+        raise ValueError(f"Unknown Gate C regime: {regime!r}. Set the named field to one of the supported values, then rerun the operation.") from error
 
 
 def _loss_weights(
@@ -794,9 +794,9 @@ def _loss_weights(
     arm_spec = _arm_spec(arm)
     raw_efforts = np.asarray(efforts)
     if raw_efforts.ndim != 1 or raw_efforts.dtype == np.bool_:
-        raise ValueError("efforts must be a one-dimensional integer array")
+        raise ValueError("Efforts must be a one-dimensional integer array. Set Efforts to a one-dimensional integer array.")
     if not np.issubdtype(raw_efforts.dtype, np.integer):
-        raise TypeError("efforts must contain integers")
+        raise TypeError("Efforts must contain integers. Add integers to Efforts.")
 
     if regime == "gate_a":
         weights = np.zeros((REGIME_SPECS[regime].sequence_length,), dtype=np.float32)
@@ -807,7 +807,7 @@ def _loss_weights(
         return weights
 
     if raw_efforts.size == 0 or not np.isin(raw_efforts, gate_b.QUALIFYING_EFFORTS).all():
-        raise ValueError("Gate B efforts must lie in {1, 2, 4, 8}")
+        raise ValueError("Gate B efforts must lie in {1, 2, 4, 8}. Set Gate B efforts to lie in {1, 2, 4, 8}.")
     weights = np.zeros(
         (raw_efforts.size, REGIME_SPECS[regime].sequence_length), dtype=np.float32
     )
@@ -844,17 +844,17 @@ def _gate_c2_gate_b_loss_weights(
     weights = np.asarray(encoded_loss_weights)
     effort_values = np.asarray(efforts)
     if weights.ndim != 2 or weights.shape[1] != REGIME_SPECS["gate_b"].sequence_length:
-        raise ValueError("encoded_loss_weights must have shape (updates, 19)")
+        raise ValueError("encoded_loss_weights must have shape (updates, 19). Ensure encoded_loss_weights has shape (updates, 19).")
     if weights.dtype != np.dtype(np.float64):
-        raise TypeError("Gate C2 Gate B loss weights must be canonical float64")
+        raise TypeError("Gate C2 Gate B loss weights must be canonical float64. Set Gate C2 Gate B loss weights to canonical float64.")
     if effort_values.shape != (weights.shape[0],):
-        raise ValueError("efforts must match the Gate B update count")
+        raise ValueError("Efforts must match the Gate B update count. Make Efforts match the Gate B update count.")
     if effort_values.dtype == np.bool_ or not np.issubdtype(
         effort_values.dtype, np.integer
     ):
-        raise TypeError("efforts must contain integers")
+        raise TypeError("Efforts must contain integers. Add integers to Efforts.")
     if not np.isin(effort_values, gate_b.QUALIFYING_EFFORTS).all():
-        raise ValueError("Gate B efforts must lie in {1, 2, 4, 8}")
+        raise ValueError("Gate B efforts must lie in {1, 2, 4, 8}. Set Gate B efforts to lie in {1, 2, 4, 8}.")
     if arm != "terminal_only":
         return encoded_loss_weights
     terminal = np.zeros_like(weights)
@@ -917,11 +917,11 @@ def _optimizer_parameter_paths(
     spec = _arm_spec(arm)
     paths = tuple(available_paths)
     if len(paths) != len(set(paths)):
-        raise ValueError("optimizer parameter paths must be unique")
+        raise ValueError("Optimizer parameter paths must be unique. Set Optimizer parameter paths to unique.")
     missing = set(spec.optimizer_excluded_paths) - set(paths)
     if missing:
         raise ValueError(
-            "memory_write_scale is required by the frozen-write intervention"
+            "memory_write_scale is required by the frozen-write intervention. Fix the input condition named in the error, then rerun the operation."
         )
     return tuple(path for path in paths if path not in spec.optimizer_excluded_paths)
 
@@ -964,25 +964,25 @@ def _copy_shared_initialization(
     if not isinstance(canonical, LatentWorkspaceModel) or not isinstance(
         legacy_model, LatentWorkspaceModel
     ):
-        raise TypeError("shared initialization subjects must be workspace models")
+        raise TypeError("Shared initialization subjects must be workspace models. Set Shared initialization subjects to workspace models.")
     canonical_states = _parameter_states_by_path(canonical)
     legacy_states = _parameter_states_by_path(legacy_model)
     if not set(SHARED_PARAMETER_PATHS).issubset(canonical_states):
-        raise ValueError("canonical model is missing a shared parameter path")
+        raise ValueError("Canonical model is missing a shared parameter path. Provide the missing value or resource, then rerun the operation.")
     if tuple(sorted(legacy_states)) != SHARED_PARAMETER_PATHS:
-        raise ValueError("legacy model must contain exactly the shared paths")
+        raise ValueError("Legacy model must contain exactly the shared paths. Add exactly the shared paths to Legacy model.")
     for path in SHARED_PARAMETER_PATHS:
         source = canonical_states[path].value
         target = legacy_states[path].value
         if jax.tree.structure(source) != jax.tree.structure(target):
-            raise ValueError(f"shared parameter structure differs: {path}")
+            raise ValueError(f"Shared parameter structure differs: {path}. Use matching values and structures.")
         for source_leaf, target_leaf in zip(
             jax.tree.leaves(source),
             jax.tree.leaves(target),
             strict=True,
         ):
             if source_leaf.shape != target_leaf.shape or source_leaf.dtype != target_leaf.dtype:
-                raise ValueError(f"shared parameter geometry differs: {path}")
+                raise ValueError(f"Shared parameter geometry differs: {path}. Use matching values and structures.")
         legacy_states[path].value = jax.tree.map(
             lambda leaf: jnp.array(leaf, copy=True), source
         )
@@ -1014,7 +1014,7 @@ def _regenerate_gate_a_data(config: GateCConfig) -> legacy.BindingData:
     """Regenerate the canonical Gate A schedule from its frozen config."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     return legacy.build_binding_data(config.gate_a_config)
 
 
@@ -1024,7 +1024,7 @@ def _regenerate_gate_b_data(
     """Regenerate the canonical Gate B schedule and held-out controls."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     schedule = gate_b._build_schedule(config.gate_b_config)
     return schedule, gate_b._encode_validation_data(schedule, config.gate_b_config)
 
@@ -1037,13 +1037,13 @@ class GateCTrainer:
     ----------
     learner
         Compiled pp-prop sequence learner.
-    optimizer
+    Optimizer
         Fresh Adam optimizer registered only on the arm's update paths.
-    compiler, compile_warnings
+    Compiler, compile_warnings
         Retained compiler topology and warning evidence.
     train_chunk
         One JIT-compiled chunk driver with an internal BrainState loop.
-    algorithm
+    Algorithm
         Stable learning-rule identifier.
     optimizer_parameter_paths, excluded_optimizer_paths
         Exact updated and deliberately frozen parameter paths.
@@ -1062,7 +1062,7 @@ class GateCTrainer:
 def _tree_telemetry(value: Any) -> tuple[jax.Array, jax.Array, jax.Array]:
     leaves = tuple(jnp.asarray(leaf) for leaf in jax.tree.leaves(value))
     if not leaves:
-        raise RuntimeError("telemetry subject has no array leaves")
+        raise RuntimeError("Telemetry subject has no array leaves. Provide the missing item named in the message.")
     finite = jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
     maximum = jnp.max(
         jnp.stack(
@@ -1085,7 +1085,7 @@ def _make_arm_trainer(
     """Compile one fresh pp-prop trainer for a fixed Gate C arm."""
 
     if not isinstance(model, LatentWorkspaceModel):
-        raise TypeError("model must be a LatentWorkspaceModel")
+        raise TypeError("Model must be a LatentWorkspaceModel. Set Model to a LatentWorkspaceModel.")
     _regime_spec(regime)
     arm_spec = _arm_spec(arm)
     regime_config = (
@@ -1118,7 +1118,7 @@ def _make_arm_trainer(
         if path in parameter_keys
     )
     if not trace_labels:
-        raise RuntimeError("trainer has no pp-prop trace parameter")
+        raise RuntimeError("Trainer has no pp-prop trace parameter. Provide the missing item named in the message.")
     model_states = tuple(
         state
         for state in model.states().values()
@@ -1141,7 +1141,7 @@ def _make_arm_trainer(
         elif targets.ndim == 3:
             target_sequences = targets
         else:
-            raise ValueError("targets must have shape (updates,batch) or (updates,time,batch)")
+            raise ValueError("Targets must have shape (updates,batch) or (updates,time,batch). Ensure Targets has shape (updates,batch) or (updates,time,batch).")
         if loss_weights.ndim == 1:
             weight_sequences = jnp.broadcast_to(
                 loss_weights[None, :], events.shape[:2]
@@ -1149,7 +1149,7 @@ def _make_arm_trainer(
         elif loss_weights.ndim == 2:
             weight_sequences = loss_weights
         else:
-            raise ValueError("loss weights must have shape (time,) or (updates,time)")
+            raise ValueError("Loss weights must have shape (time,) or (updates,time). Ensure Loss weights has shape (time,) or (updates,time).")
 
         def train_one(
             inputs: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
@@ -1237,19 +1237,19 @@ def _optimizer_initial_state_report(
     _regime_spec(regime)
     _arm_spec(arm)
     if not isinstance(trainer, GateCTrainer):
-        raise TypeError("trainer must be a GateCTrainer")
+        raise TypeError("Trainer must be a GateCTrainer. Set Trainer to a GateCTrainer.")
     leaves = [
         np.ascontiguousarray(np.asarray(leaf))
         for leaf in jax.tree.leaves(trainer.optimizer.opt_state.value)
     ]
     if not leaves:
-        raise RuntimeError("optimizer state has no array leaves")
+        raise RuntimeError("Optimizer state has no array leaves. Provide the missing item named in the message.")
     if any(
         np.issubdtype(array.dtype, np.bool_)
         or not np.issubdtype(array.dtype, np.number)
         for array in leaves
     ):
-        raise TypeError("optimizer state leaves must be numeric")
+        raise TypeError("Optimizer state leaves must be numeric. Set Optimizer state leaves to numeric.")
     finite = all(np.isfinite(array).all() for array in leaves)
     all_zero = all(np.count_nonzero(array) == 0 for array in leaves)
     fields: list[bytes] = [
@@ -1295,11 +1295,11 @@ def _initialization_topology_report(
 
     _regime_spec(regime)
     if tree not in ("canonical_full", "legacy"):
-        raise ValueError("initialization tree must be canonical_full or legacy")
+        raise ValueError("Initialization tree must be canonical_full or legacy. Set Initialization tree to canonical_full or legacy.")
     if not isinstance(model, LatentWorkspaceModel):
-        raise TypeError("model must be a LatentWorkspaceModel")
+        raise TypeError("Model must be a LatentWorkspaceModel. Set Model to a LatentWorkspaceModel.")
     if not isinstance(trainer, GateCTrainer):
-        raise TypeError("trainer must be a GateCTrainer")
+        raise TypeError("Trainer must be a GateCTrainer. Set Trainer to a GateCTrainer.")
     values = legacy._parameter_values(model)
     leaves = [
         np.asarray(leaf)
@@ -1310,7 +1310,7 @@ def _initialization_topology_report(
         FULL_PARAMETER_PATHS if tree == "canonical_full" else SHARED_PARAMETER_PATHS
     )
     if tuple(sorted(values)) != expected_paths:
-        raise ValueError("initialization parameter paths differ from the tree")
+        raise ValueError("Initialization parameter paths differ from the tree. Use matching values and structures.")
     model_states = _parameter_states_by_path(model)
     learner_states = {
         gate_a._path(path): state
@@ -1319,7 +1319,7 @@ def _initialization_topology_report(
     if tuple(sorted(learner_states)) != expected_paths or any(
         learner_states[path] is not model_states[path] for path in expected_paths
     ):
-        raise ValueError("trainer must be compiled from the same model")
+        raise ValueError("Trainer must be compiled from the same model. Set Trainer to compiled from the same model.")
     return {
         "fresh_model": True,
         "model_seed": model.config.seed,
@@ -1344,13 +1344,13 @@ def _normalized_prerequisites(
         "gate_a",
         "gate_b",
     }:
-        raise ValueError("Gate C initialization requires Gate A and Gate B")
+        raise ValueError("Gate C initialization requires Gate A and Gate B. Provide the required value for Gate C initialization.")
     if not all(isinstance(prerequisites[name], Mapping) for name in prerequisites):
-        raise TypeError("Gate C prerequisite references must be mappings")
+        raise TypeError("Gate C prerequisite references must be mappings. Set Gate C prerequisite references to mappings.")
     expected = {"gate_a": _GATE_A_REFERENCE, "gate_b": _GATE_B_REFERENCE}
     for name in ("gate_a", "gate_b"):
         if not gate_a._json_exact(prerequisites[name], expected[name]):
-            raise ValueError(f"Gate C {name} prerequisite is not authenticated")
+            raise ValueError(f"Gate C {name} prerequisite is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     return {
         name: dict(prerequisites[name]) for name in ("gate_a", "gate_b")
     }
@@ -1902,7 +1902,7 @@ def _validated_gate_c_initialization_admission(
         "admission",
     }
     if not isinstance(prerequisite, Mapping) or set(prerequisite) != expected_keys:
-        raise ValueError("Gate C initialization prerequisite is not authenticated")
+        raise ValueError("Gate C initialization prerequisite is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     source_head = prerequisite["source_head"]
     image_digest = prerequisite["image_digest"]
     if (
@@ -1921,10 +1921,10 @@ def _validated_gate_c_initialization_admission(
             )
         )
     ):
-        raise ValueError("Gate C initialization provenance fields are invalid")
+        raise ValueError("Gate C initialization provenance fields are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     admission = prerequisite["admission"]
     if not isinstance(admission, Mapping):
-        raise ValueError("Gate C initialization admission is missing")
+        raise ValueError("Gate C initialization admission is missing. Provide the missing value or resource, then rerun the operation.")
     admission_keys = {
         "schema_version",
         "control",
@@ -1939,9 +1939,9 @@ def _validated_gate_c_initialization_admission(
         "qualification",
     }
     if set(admission) != admission_keys:
-        raise ValueError("Gate C initialization admission schema is invalid")
+        raise ValueError("Gate C initialization admission schema is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     if gate_b._strict_json_sha256(admission) != prerequisite["result_sha256"]:
-        raise ValueError("Gate C initialization result digest is invalid")
+        raise ValueError("Gate C initialization result digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     expected_bundle = hashlib.sha256(
         (
             "example21-launch-bundle-v1\0gate_c_init\0"
@@ -1950,12 +1950,12 @@ def _validated_gate_c_initialization_admission(
         ).encode("utf-8")
     ).hexdigest()
     if prerequisite["bundle_sha256"] != expected_bundle:
-        raise ValueError("Gate C initialization bundle digest is invalid")
+        raise ValueError("Gate C initialization bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     qualification = _gate_c_initialization_qualification(admission, config=config)
     if not gate_a._json_exact(admission.get("qualification"), qualification):
-        raise ValueError("Gate C initialization qualification is stale")
+        raise ValueError("Gate C initialization qualification is stale. Fix the input condition named in the error, then rerun the operation.")
     if require_pass and qualification["passed"] is not True:
-        raise ValueError("Gate C initialization admission did not pass")
+        raise ValueError("Gate C initialization admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     try:
         source_matches = bool(
             admission["source_start"]["commit"] == source_head
@@ -1967,7 +1967,7 @@ def _validated_gate_c_initialization_admission(
     except (KeyError, TypeError):
         source_matches = False
     if not source_matches:
-        raise ValueError("Gate C initialization source or image differs")
+        raise ValueError("Gate C initialization source or image differs. Use matching values and structures.")
     if not _source_and_gpu_complete(
         {
             "source_start": source_start,
@@ -1975,12 +1975,12 @@ def _validated_gate_c_initialization_admission(
             "environment": environment,
         }
     ):
-        raise ValueError("Gate C formal source or GPU evidence is invalid")
+        raise ValueError("Gate C formal source or GPU evidence is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     if not (
         gate_a._json_exact(admission.get("source_files"), source_files)
         and _source_files_complete(source_files)
     ):
-        raise ValueError("Gate C initialization source files differ")
+        raise ValueError("Gate C initialization source files differ. Use matching values and structures.")
     return admission
 
 
@@ -2088,7 +2088,7 @@ def _formal_arm_initialization_report(
         regime,
         arm,
     ):
-        raise RuntimeError("formal arm initialization was not reproduced")
+        raise RuntimeError("Formal arm initialization was not reproduced. Fix the input condition named in the error, then rerun the operation.")
     return report
 
 
@@ -2153,7 +2153,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
     ----------
     value
         JSON-compatible top-level mapping. NaN and infinity are rejected.
-    path
+    Path
         Final artifact path.
 
     Returns
@@ -2189,7 +2189,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
                         > GATE_C2_CONTROLS_MAX_JSON_BYTES
                     ):
                         raise ValueError(
-                            f"{controls_name} controls JSON exceeds the 192 MiB size limit"
+                            f"{controls_name} controls JSON exceeds the 192 MiB size limit. Set the named field to a value in the stated range, then rerun the operation."
                         )
                     stream.write(encoded)
                     byte_count += len(encoded)
@@ -2197,7 +2197,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
                 byte_count += 1
                 if byte_count > GATE_C2_CONTROLS_MAX_JSON_BYTES:
                     raise ValueError(
-                        f"{controls_name} controls JSON exceeds the 192 MiB size limit"
+                        f"{controls_name} controls JSON exceeds the 192 MiB size limit. Set the named field to a value in the stated range, then rerun the operation."
                     )
                 stream.flush()
                 os.fsync(stream.fileno())
@@ -2238,7 +2238,7 @@ def run_gate_c_initialization(
     ----------
     config
         Fixed paired Gate C configuration.
-    prerequisites
+    Prerequisites
         Launcher-authenticated compact Gate A and Gate B references.
     source_start
         Live clean-source evidence captured before construction.
@@ -2247,7 +2247,7 @@ def run_gate_c_initialization(
         topology and optimizer report is complete.
     source_files
         Exact six-file scientific source digest mapping.
-    environment
+    Environment
         Authenticated GPU image and device evidence.
 
     Returns
@@ -2257,9 +2257,9 @@ def run_gate_c_initialization(
     """
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     if not callable(source_end_reporter):
-        raise TypeError("source_end_reporter must be callable")
+        raise TypeError("source_end_reporter must be callable. Pass a callable value for source_end_reporter.")
     normalized_prerequisites = _normalized_prerequisites(prerequisites)
     source_keys = {
         "asserted_commit",
@@ -2281,13 +2281,13 @@ def run_gate_c_initialization(
         if not isinstance(source_start, Mapping) or not gate_a._source_evidence_clean(
             source_start
         ):
-            raise RuntimeError("Gate C initialization source is not authenticated")
+            raise RuntimeError("Gate C initialization source is not authenticated. Fix the input condition named in the error, then rerun the operation.")
         if not isinstance(environment, Mapping) or not gate_a._gpu_environment_verified(
             environment
         ):
-            raise RuntimeError("Gate C initialization GPU is not authenticated")
+            raise RuntimeError("Gate C initialization GPU is not authenticated. Fix the input condition named in the error, then rerun the operation.")
         if not _source_files_complete(source_files):
-            raise RuntimeError("Gate C initialization source files are not exact")
+            raise RuntimeError("Gate C initialization source files are not exact. Fix the input condition named in the error, then rerun the operation.")
     initialization: dict[str, Any] = {}
     regime_reports = {
         regime: {
@@ -2388,7 +2388,7 @@ def run_gate_c_initialization(
 
     source_end = source_end_reporter()
     if not isinstance(source_end, Mapping):
-        raise TypeError("source_end_reporter must return a mapping")
+        raise TypeError("source_end_reporter must return a mapping. Make source_end_reporter return a mapping.")
     report: dict[str, Any] = {
         "schema_version": GATE_C_SCHEMA_VERSION,
         "control": GATE_C_INITIALIZATION_CONTROL,
@@ -2431,7 +2431,7 @@ def _evaluate_arm(
     legacy._copy_parameters(trained_model, model)
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A evaluation requires BindingData")
+            raise TypeError("Gate A evaluation requires BindingData. Provide the required value for Gate A evaluation.")
         event_streams = {
             "intact": data.validation_intact,
             "shuffled": data.validation_shuffled,
@@ -2446,7 +2446,7 @@ def _evaluate_arm(
         )
     else:
         if not isinstance(data, gate_b.DepthValidationData):
-            raise TypeError("Gate B evaluation requires DepthValidationData")
+            raise TypeError("Gate B evaluation requires DepthValidationData. Provide the required value for Gate B evaluation.")
         event_streams = {
             "intact": data.intact,
             "shuffled": data.shuffled,
@@ -2612,7 +2612,7 @@ def _parameter_movement_report(
     total_squared = 0.0
     total_count = 0
     if set(before) != set(after):
-        raise RuntimeError("formal arm parameter paths changed during training")
+        raise RuntimeError("Formal arm parameter paths changed during training. Fix the input condition named in the error, then rerun the operation.")
     for path in sorted(before):
         squared = 0.0
         count = 0
@@ -2643,7 +2643,7 @@ def _aggregate_training_telemetry(
     chunks: list[Mapping[str, Any]],
 ) -> dict[str, Any]:
     if not chunks:
-        raise RuntimeError("formal arm executed no training chunks")
+        raise RuntimeError("Formal arm executed no training chunks. Provide the missing item named in the message.")
     losses = np.concatenate(
         [np.asarray(chunk["loss"], dtype=np.float64).reshape(-1) for chunk in chunks]
     )
@@ -2686,7 +2686,7 @@ def _aggregate_training_telemetry(
         for category in categories
     }
     if not np.isfinite(losses).all():
-        raise RuntimeError("formal arm produced a non-finite training loss")
+        raise RuntimeError("Formal arm produced a non-finite training loss. Use finite values.")
     return {
         "losses": losses.tolist(),
         "initial_loss": float(losses[0]),
@@ -2723,7 +2723,7 @@ def _run_gate_c_arm(
         not _strict_integer(execution_index)
         or int(execution_index) != expected_execution_index
     ):
-        raise ValueError("formal arm execution index differs from the fixed order")
+        raise ValueError("Formal arm execution index differs from the fixed order. Use matching values and structures.")
     before = legacy._parameter_values(model)
     before_sha256 = legacy._array_digest(before)
     telemetry: list[Mapping[str, Any]] = []
@@ -2731,7 +2731,7 @@ def _run_gate_c_arm(
     start = time.perf_counter()
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A arm requires BindingData")
+            raise TypeError("Gate A arm requires BindingData. Provide the required value for Gate A arm.")
         updates = config.gate_a_config.training_updates
         efforts = np.ones((updates,), dtype=np.int32)
         advances = np.ones(
@@ -2778,12 +2778,12 @@ def _run_gate_c_arm(
         }
     else:
         if not isinstance(data, tuple) or len(data) != 2:
-            raise TypeError("Gate B arm requires its schedule and validation data")
+            raise TypeError("Gate B arm requires its schedule and validation data. Provide the required value for Gate B arm.")
         schedule, validation = data
         if not isinstance(schedule, gate_b.DepthSchedule) or not isinstance(
             validation, gate_b.DepthValidationData
         ):
-            raise TypeError("Gate B arm data has the wrong type")
+            raise TypeError("Gate B arm data has the wrong type. Fix the input condition named in the error, then rerun the operation.")
         chunk_count = 0
         hash_state = gate_b._new_encoded_schedule_hash_state()
         for schedule_chunk in gate_b._iter_schedule_chunks(
@@ -2832,7 +2832,7 @@ def _run_gate_c_arm(
     if data_identity is not None and not gate_a._json_exact(
         data_identity, actual_data_identity
     ):
-        raise ValueError("formal arm data identity differs from consumed bytes")
+        raise ValueError("Formal arm data identity differs from consumed bytes. Use matching values and structures.")
     training_seconds = time.perf_counter() - start
     after = legacy._parameter_values(model)
     aggregate = _aggregate_training_telemetry(telemetry)
@@ -2869,9 +2869,9 @@ def _run_gate_c_arm(
         **aggregate,
     }
     if training["optimizer_final_step"] != executed_updates:
-        raise RuntimeError("formal arm optimizer step count differs from updates")
+        raise RuntimeError("Formal arm optimizer step count differs from updates. Use matching values and structures.")
     if not all(training["finite"].values()):
-        raise RuntimeError("formal arm telemetry is not finite")
+        raise RuntimeError("Formal arm telemetry is not finite. Use finite values.")
     movement = _parameter_movement_report(before, after)
     write_before = before.get("memory_write_scale")
     write_after = after.get("memory_write_scale")
@@ -2917,7 +2917,7 @@ def _schedule_identity_report(config: GateCConfig) -> dict[str, Any]:
     """Return the preregistered schedule identities for both regimes."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     return {
         "gate_a": dict(_GATE_A_SCHEDULE_SHA256),
         "gate_b": {
@@ -2937,16 +2937,16 @@ def _actual_schedule_identity_report(
     """Hash the generated Gate A and Gate B schedule bytes."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     if not isinstance(gate_a_data, legacy.BindingData):
-        raise TypeError("Gate C schedule evidence requires BindingData")
+        raise TypeError("Gate C schedule evidence requires BindingData. Provide the required value for Gate C schedule evidence.")
     if (
         not isinstance(gate_b_data, tuple)
         or len(gate_b_data) != 2
         or not isinstance(gate_b_data[0], gate_b.DepthSchedule)
         or not isinstance(gate_b_data[1], gate_b.DepthValidationData)
     ):
-        raise TypeError("Gate C schedule evidence requires Gate B data")
+        raise TypeError("Gate C schedule evidence requires Gate B data. Provide the required value for Gate C schedule evidence.")
     schedule, validation = gate_b_data
     gate_b_training = gate_b._encoded_schedule_report(
         schedule,
@@ -2982,10 +2982,10 @@ def _actual_schedule_identity_report(
 
 def _finite_real(value: Any, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite real scalar")
+        raise TypeError(f"{name} must be a finite real scalar. Set {name} to a finite real scalar.")
     result = float(value)
     if not math.isfinite(result):
-        raise ValueError(f"{name} must be a finite real scalar")
+        raise ValueError(f"{name} must be a finite real scalar. Set {name} to a finite real scalar.")
     return result
 
 
@@ -3009,10 +3009,10 @@ def _metric_summary(
             for effort in gate_b.QUALIFYING_EFFORTS
         ]
     except (KeyError, TypeError) as error:
-        raise ValueError("evaluation evidence is incomplete") from error
+        raise ValueError("Evaluation evidence is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
     for value in (intact, shuffled, *depth_values):
         if not 0.0 <= value <= 1.0:
-            raise ValueError("accuracy evidence must lie in [0, 1]")
+            raise ValueError("Accuracy evidence must lie in [0, 1]. Set Accuracy evidence to a value in [0, 1].")
     return {
         "binding_gap": intact - shuffled,
         "depth_accuracy": math.fsum(depth_values) / len(depth_values),
@@ -3029,7 +3029,7 @@ def _blocking_margin_report(
     """Compute all blocking and characterization-only Gate C margins."""
 
     if set(metrics) != set(ARM_ORDER):
-        raise ValueError("metrics must contain exactly the five Gate C arms")
+        raise ValueError("Metrics must contain exactly the five Gate C arms. Add exactly the five Gate C arms to Metrics.")
     values: dict[str, dict[str, float]] = {}
     for arm in ARM_ORDER:
         item = metrics[arm]
@@ -3159,7 +3159,7 @@ _GATE_C2_H0_AUXILIARY_HIDDEN_PATHS = {"memory_drive#0"}
 def _gate_c2_array_endpoint(value: Any) -> dict[str, Any]:
     array = np.asarray(u.get_mantissa(value))
     if array.ndim < 1 or array.shape[0] <= 0:
-        raise ValueError("Gate C2 evidence arrays require a nonempty batch axis")
+        raise ValueError("Gate C2 evidence arrays require a nonempty batch axis. Provide the required value for Gate C2 evidence arrays.")
     array = np.ascontiguousarray(array)
     flat = array.reshape(array.shape[0], -1)
     finite = np.isfinite(flat)
@@ -3228,7 +3228,7 @@ def _gate_c2_floating_difference_record(
 
     tolerance = _finite_real(rms_tolerance, "Gate C2 RMS tolerance")
     if tolerance < 0.0:
-        raise ValueError("rms_tolerance must be nonnegative")
+        raise ValueError("rms_tolerance must be nonnegative. Set rms_tolerance to a nonnegative value.")
     left_array = np.ascontiguousarray(np.asarray(u.get_mantissa(left)))
     right_array = np.ascontiguousarray(np.asarray(u.get_mantissa(right)))
     if (
@@ -3237,9 +3237,9 @@ def _gate_c2_floating_difference_record(
         or left_array.ndim < 1
         or not np.issubdtype(left_array.dtype, np.floating)
     ):
-        raise ValueError("Gate C2 floating endpoints need equal floating geometry")
+        raise ValueError("Gate C2 floating endpoints need equal floating geometry. Fix the input condition named in the error, then rerun the operation.")
     if not np.isfinite(left_array).all() or not np.isfinite(right_array).all():
-        raise ValueError("Gate C2 floating endpoints must be finite")
+        raise ValueError("Gate C2 floating endpoints must be finite. Use finite values for Gate C2 floating endpoints.")
     difference = left_array.astype(np.float64) - right_array.astype(np.float64)
     flat = difference.reshape(difference.shape[0], -1)
     squared = np.square(flat)
@@ -3397,9 +3397,9 @@ def _gate_c2_floating_difference_record_complete(
 def _gate_c2_prediction_endpoint(value: np.ndarray) -> dict[str, Any]:
     array = np.ascontiguousarray(np.asarray(value, dtype=np.int32))
     if array.ndim != 1 or array.shape[0] <= 0:
-        raise ValueError("Gate C2 predictions must be one nonempty vector")
+        raise ValueError("Gate C2 predictions must be one nonempty vector. Set Gate C2 predictions to one nonempty vector.")
     if not np.logical_and(array >= 0, array < 10).all():
-        raise ValueError("Gate C2 predictions must lie in 0..9")
+        raise ValueError("Gate C2 predictions must lie in 0..9. Set Gate C2 predictions to lie in 0..9.")
     return {
         "dtype": array.dtype.str,
         "shape": list(array.shape),
@@ -3418,7 +3418,7 @@ def _gate_c2_prediction_difference_record(
     left_array = np.ascontiguousarray(np.asarray(left, dtype=np.int32))
     right_array = np.ascontiguousarray(np.asarray(right, dtype=np.int32))
     if left_array.shape != right_array.shape or left_array.ndim != 1:
-        raise ValueError("Gate C2 prediction endpoints need equal vectors")
+        raise ValueError("Gate C2 prediction endpoints need equal vectors. Fix the input condition named in the error, then rerun the operation.")
     hamming = np.not_equal(left_array, right_array).astype(np.int64)
     count = int(hamming.sum())
     return {
@@ -3503,14 +3503,14 @@ def _gate_c2_zero_array_record(value: Any) -> dict[str, Any]:
 
     array = np.ascontiguousarray(np.asarray(u.get_mantissa(value)))
     if array.size == 0 or not np.issubdtype(array.dtype, np.floating):
-        raise ValueError("Gate C2 selected arrays must be nonempty floating arrays")
+        raise ValueError("Gate C2 selected arrays must be nonempty floating arrays. Set Gate C2 selected arrays to nonempty floating arrays.")
     finite = np.isfinite(array)
     zero = np.equal(array, 0.0)
     if finite.all():
         squared = float(np.sum(np.square(array.astype(np.float64))))
         maximum = float(np.max(np.abs(array.astype(np.float64))))
     else:
-        raise ValueError("Gate C2 selected arrays must be finite")
+        raise ValueError("Gate C2 selected arrays must be finite. Use finite values for Gate C2 selected arrays.")
     exact_zero = bool(zero.all())
     return {
         "dtype": array.dtype.str,
@@ -3884,7 +3884,7 @@ class _GateC2ControlsAudit:
                 del args, kwargs, _original
                 self.trainer_factory_calls.append(_label)
                 raise RuntimeError(
-                    "Gate C2 pretraining controls forbid trainer construction"
+                    "Gate C2 pretraining controls forbid trainer construction. Fix the input condition named in the error, then rerun the operation."
                 )
 
             self._replace(owner, name, blocked_factory)
@@ -3934,7 +3934,7 @@ class _GateC2ControlsAudit:
                     del step_args, step_kwargs
                     self.training_step_calls.append(_label)
                     raise RuntimeError(
-                        "Gate C2 pretraining controls forbid training steps"
+                        "Gate C2 pretraining controls forbid training steps. Fix the input condition named in the error, then rerun the operation."
                     )
 
                 setattr(instance, _callable_name, blocked_step)
@@ -3951,7 +3951,7 @@ class _GateC2ControlsAudit:
                     "braintools.optim.Adam.__init__"
                 )
                 raise RuntimeError(
-                    "Gate C2 pretraining controls forbid Adam construction"
+                    "Gate C2 pretraining controls forbid Adam construction. Fix the input condition named in the error, then rerun the operation."
                 )
 
             self._replace(braintools.optim, "Adam", blocked_adam)
@@ -3964,7 +3964,7 @@ class _GateC2ControlsAudit:
                         "braintools.optim.Adam.update"
                     )
                     raise RuntimeError(
-                        "Gate C2 pretraining controls forbid optimizer updates"
+                        "Gate C2 pretraining controls forbid optimizer updates. Fix the input condition named in the error, then rerun the operation."
                     )
 
                 self._replace(original_adam, "update", blocked_update)
@@ -3987,13 +3987,13 @@ class _GateC2ControlsAudit:
         policy: str,
     ) -> None:
         if role in self.materialized_roles:
-            raise RuntimeError(f"duplicate Gate C2 control model role {role!r}")
+            raise RuntimeError(f"Duplicate Gate C2 control model role {role!r}. Fix the input condition named in the error, then rerun the operation.")
         expected = self.initialization["initialization"][regime][
             "canonical_full"
         ]["parameter_sha256"]
         before = legacy._array_digest(legacy._parameter_values(model))
         if before != expected:
-            raise ValueError("Gate C2 control model did not reproduce initialization")
+            raise ValueError("Gate C2 control model did not reproduce initialization. Fix the input condition named in the error, then rerun the operation.")
         self.model_factory_calls.append(role)
         self.model_constructor_calls.append(role)
         self.materialized_roles[role] = {
@@ -4096,13 +4096,13 @@ def _gate_c2_control_model(
         )
         model = constructor(model_config, policy)
         if not isinstance(model, LatentWorkspaceModel):
-            raise TypeError("Gate C2 control constructor must return a model")
+            raise TypeError("Gate C2 control constructor must return a model. Make Gate C2 control constructor return a model.")
     expected = initialization["initialization"][regime]["canonical_full"][
         "parameter_sha256"
     ]
     actual = legacy._array_digest(legacy._parameter_values(model))
     if actual != expected:
-        raise ValueError("Gate C2 control model initialization differs")
+        raise ValueError("Gate C2 control model initialization differs. Use matching values and structures.")
     if _ACTIVE_GATE_C2_CONTROLS_AUDIT is not None:
         _ACTIVE_GATE_C2_CONTROLS_AUDIT.register(
             role,
@@ -4190,7 +4190,7 @@ def _gate_c2_h0_comparison(
     left_hidden = left["hidden_paths"]
     right_hidden = right["hidden_paths"]
     if set(left_hidden) != set(right_hidden):
-        raise ValueError("Gate C2 H0 hidden-state paths differ")
+        raise ValueError("Gate C2 H0 hidden-state paths differ. Use matching values and structures.")
     hidden = {
         path: _gate_c2_floating_difference_record(
             left_hidden[path],
@@ -4232,7 +4232,7 @@ def _paired_h0_operational_equivalence_report(
     count = regime_config.validation_episodes
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A H0 controls require BindingData")
+            raise TypeError("Gate A H0 controls require BindingData. Provide the required value for Gate A H0 controls.")
         streams = {
             "intact": np.asarray(data.validation_intact),
             "shuffled": np.asarray(data.validation_shuffled),
@@ -4248,7 +4248,7 @@ def _paired_h0_operational_equivalence_report(
             or len(data) != 2
             or not isinstance(data[1], gate_b.DepthValidationData)
         ):
-            raise TypeError("Gate B H0 controls require DepthValidationData")
+            raise TypeError("Gate B H0 controls require DepthValidationData. Provide the required value for Gate B H0 controls.")
         validation = data[1]
         streams = {
             "intact": np.asarray(validation.intact),
@@ -4480,15 +4480,15 @@ def _gate_c2_removed_path_finite_window_influence(
             "canonical_full"
         ]["parameter_sha256"]
     except (KeyError, TypeError) as error:
-        raise ValueError("Gate C2 removed-path initialization is incomplete") from error
+        raise ValueError("Gate C2 removed-path initialization is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
     if (
         not _sha256_complete(canonical_parameter_sha256)
         or canonical_parameter_sha256 == "0" * 64
     ):
-        raise ValueError("Gate C2 removed-path canonical parameters are invalid")
+        raise ValueError("Gate C2 removed-path canonical parameters are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A removed-path objective requires BindingData")
+            raise TypeError("Gate A removed-path objective requires BindingData. Provide the required value for Gate A removed-path objective.")
         pinned = GATE_C2_REMOVED_PATH_OBJECTIVES["gate_a_h1"]
         mapping_id = int(pinned["source_metadata"]["mapping_id"])
         encoded, encoded_targets, _, _, encoded_queries = (
@@ -4530,7 +4530,7 @@ def _gate_c2_removed_path_finite_window_influence(
         )
         query_index = int(np.asarray(encoded_queries[0]).item())
         if query_index != int(query_indices[0]) or target != output_colors[query_index]:
-            raise ValueError("Gate A query metadata differs from its schedule")
+            raise ValueError("Gate A query metadata differs from its schedule. Use matching values and structures.")
         source_metadata = {
             "mapping_id": mapping_id,
             "input_colors": list(input_colors),
@@ -4544,7 +4544,7 @@ def _gate_c2_removed_path_finite_window_influence(
             "h1_index": h0_end,
         }
         if not gate_a._json_exact(source_metadata, pinned["source_metadata"]):
-            raise ValueError("Gate A objective metadata differs from its pin")
+            raise ValueError("Gate A objective metadata differs from its pin. Use matching values and structures.")
     else:
         if (
             not isinstance(data, tuple)
@@ -4552,7 +4552,7 @@ def _gate_c2_removed_path_finite_window_influence(
             or not isinstance(data[0], gate_b.DepthSchedule)
             or not isinstance(data[1], gate_b.DepthValidationData)
         ):
-            raise TypeError("Gate B removed-path objective requires canonical data")
+            raise TypeError("Gate B removed-path objective requires canonical data. Provide the required value for Gate B removed-path objective.")
         schedule, validation = data
         source_events = np.ascontiguousarray(validation.intact[:, 0, :])
         source_advances = np.ascontiguousarray(validation.advance_masks[:, 0])
@@ -4652,7 +4652,7 @@ def _gate_c2_removed_path_finite_window_influence(
             policy: str,
         ) -> _MaterializedObjective:
             if policy != "query_only":
-                raise ValueError("removed-path objective requires query-only policy")
+                raise ValueError("Removed-path objective requires query-only policy. Provide the required value for Removed-path objective.")
             return _MaterializedObjective(model_config)
 
         model = _gate_c2_control_model(
@@ -4667,7 +4667,7 @@ def _gate_c2_removed_path_finite_window_influence(
             constructor=construct,
         )
         if not isinstance(model, _MaterializedObjective):
-            raise TypeError("Gate C2 objective factory returned the wrong model")
+            raise TypeError("Gate C2 objective factory returned the wrong model. Fix the input condition named in the error, then rerun the operation.")
 
         @brainstate.transform.jit
         def materialize(events: jax.Array, advances: jax.Array) -> jax.Array:
@@ -4713,7 +4713,7 @@ def _gate_c2_removed_path_finite_window_influence(
             or not snapshots
             or model is not created_models[-1]
         ):
-            raise TypeError("Gate C2 gradient-boundary callback model differs")
+            raise TypeError("Gate C2 gradient-boundary callback model differs. Use matching values and structures.")
         model.restore_state(snapshots[-1])
         actual_gradient_starts.append(
             _gate_c2_raw_h0_snapshot_record(
@@ -4738,15 +4738,15 @@ def _gate_c2_removed_path_finite_window_influence(
         or len(materialized_prefixes) != 1
         or len(actual_gradient_starts) != 1
     ):
-        raise RuntimeError("Gate C2 gradient boundary was not captured exactly once")
+        raise RuntimeError("Gate C2 gradient boundary was not captured exactly once. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(raw_gradients, Mapping):
-        raise TypeError("Gate C2 removed-path gradients must be a mapping")
+        raise TypeError("Gate C2 removed-path gradients must be a mapping. Set Gate C2 removed-path gradients to a mapping.")
     gradients = {
         key if isinstance(key, str) else gate_a._path(key): value
         for key, value in raw_gradients.items()
     }
     if tuple(sorted(gradients)) != FULL_PARAMETER_PATHS:
-        raise ValueError("Gate C2 removed-path gradient paths differ")
+        raise ValueError("Gate C2 removed-path gradient paths differ. Use matching values and structures.")
     model = created_models[-1]
     snapshot = snapshots[-1]
     model.restore_state(snapshot)
@@ -4934,7 +4934,7 @@ def _gate_c2_hidden_leaf_path_key(path: str) -> tuple[str, int]:
         or not leaf_index
         or not leaf_index.isdecimal()
     ):
-        raise ValueError("Gate C2 hidden leaf path is malformed")
+        raise ValueError("Gate C2 hidden leaf path is malformed. Fix the input condition named in the error, then rerun the operation.")
     return base_path, int(leaf_index)
 
 
@@ -4963,18 +4963,18 @@ def _gate_c2_raw_h0_snapshot_record(
     parameter_sha256: str,
 ) -> dict[str, Any]:
     if not _sha256_complete(parameter_sha256) or parameter_sha256 == "0" * 64:
-        raise ValueError("Gate C2 H0 snapshot parameter digest is invalid")
+        raise ValueError("Gate C2 H0 snapshot parameter digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     arrays = _gate_c2_snapshot_arrays(snapshot)
     if set(arrays) != (
         set(_GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY)
         | _GATE_C2_H0_AUXILIARY_HIDDEN_PATHS
     ):
-        raise ValueError("Gate C2 H0 snapshot hidden paths differ")
+        raise ValueError("Gate C2 H0 snapshot hidden paths differ. Use matching values and structures.")
     hidden_paths: dict[str, dict[str, Any]] = {}
     for path, expected_shape in _GATE_C2_BATCH_ONE_HIDDEN_GEOMETRY.items():
         array = np.ascontiguousarray(arrays[path])
         if array.dtype.str != "<f4" or array.shape != expected_shape:
-            raise ValueError("Gate C2 H0 snapshot hidden geometry differs")
+            raise ValueError("Gate C2 H0 snapshot hidden geometry differs. Use matching values and structures.")
         finite = np.isfinite(array)
         hidden_paths[path] = {
             "dtype": array.dtype.str,
@@ -5317,7 +5317,7 @@ def _gate_c2_tree_equality_record(
 ) -> dict[str, Any]:
     paths = sorted(left)
     if paths != sorted(right):
-        raise ValueError("Gate C2 equality path sets differ")
+        raise ValueError("Gate C2 equality path sets differ. Use matching values and structures.")
     tree_domain = (
         "example21-gate-c2-parameter-tree-v1"
         if parameter_values
@@ -5425,16 +5425,16 @@ def _gate_c2_host_boundary_snapshots(
     for path, expected in h0_arrays.items():
         value = np.asarray(hidden_paths[path])
         if value.ndim < 1:
-            raise ValueError("Gate C2 host boundary leading tick axis is missing")
+            raise ValueError("Gate C2 host boundary leading tick axis is missing. Provide the missing value or resource, then rerun the operation.")
         if tick_count is None:
             tick_count = int(value.shape[0])
         elif int(value.shape[0]) != tick_count:
-            raise ValueError("Gate C2 host boundary tick lengths differ")
+            raise ValueError("Gate C2 host boundary tick lengths differ. Use matching values and structures.")
         if value.shape[1:] != expected.shape or value.dtype != expected.dtype:
-            raise ValueError("Gate C2 host boundary hidden geometry differs")
+            raise ValueError("Gate C2 host boundary hidden geometry differs. Use matching values and structures.")
         stacked[path] = value
     if tick_count is None or tick_count < 1:
-        raise ValueError("Gate C2 host boundary tick length is empty")
+        raise ValueError("Gate C2 host boundary tick length is empty. Provide the missing item named in the message.")
 
     boundaries: list[Any] = []
     for boundary_index in range(tick_count):
@@ -5532,7 +5532,7 @@ def _gate_c2_no_read_stream_data(
     )
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A no-read probe requires BindingData")
+            raise TypeError("Gate A no-read probe requires BindingData. Provide the required value for Gate A no-read probe.")
         streams = {
             "intact": np.asarray(data.validation_intact),
             "shuffled": np.asarray(data.validation_shuffled),
@@ -5548,7 +5548,7 @@ def _gate_c2_no_read_stream_data(
             or len(data) != 2
             or not isinstance(data[1], gate_b.DepthValidationData)
         ):
-            raise TypeError("Gate B no-read probe requires DepthValidationData")
+            raise TypeError("Gate B no-read probe requires DepthValidationData. Provide the required value for Gate B no-read probe.")
         validation = data[1]
         streams = {
             "intact": np.asarray(validation.intact),
@@ -5611,7 +5611,7 @@ def _query_only_latent_no_read_report(
     query_driver, query_hidden_paths = _gate_c2_latent_driver(query_model)
     full_driver, full_hidden_paths = _gate_c2_latent_driver(full_model)
     if query_hidden_paths != full_hidden_paths:
-        raise ValueError("Gate C2 no-read hidden-state paths differ")
+        raise ValueError("Gate C2 no-read hidden-state paths differ. Use matching values and structures.")
     tick_names = GATE_C2_LATENT_TICKS[regime]
     selected_streams: dict[str, Any] = {}
     perturbation_streams = {
@@ -5881,7 +5881,7 @@ def _query_only_latent_no_read_report(
             len(query_boundaries) != len(tick_names)
             or len(full_boundaries) != len(tick_names)
         ):
-            raise ValueError("Gate C2 host boundary tick count differs")
+            raise ValueError("Gate C2 host boundary tick count differs. Use matching values and structures.")
         selected_ticks: dict[str, Any] = {}
         query_ticks_by_replacement = {
             name: {} for name in GATE_C2_CONTEXT_MEMORY_REPLACEMENTS
@@ -7371,18 +7371,18 @@ def _paired_h0_identity_report(
 
     _regime_spec(regime)
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     try:
         canonical = initialization["initialization"][regime]["canonical_full"]
     except (KeyError, TypeError) as error:
-        raise ValueError("Gate C H0 initialization evidence is incomplete") from error
+        raise ValueError("Gate C H0 initialization evidence is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
     regime_config = (
         config.gate_a_config if regime == "gate_a" else config.gate_b_config
     )
     count = regime_config.validation_episodes
     if regime == "gate_a":
         if not isinstance(data, legacy.BindingData):
-            raise TypeError("Gate A H0 identity requires BindingData")
+            raise TypeError("Gate A H0 identity requires BindingData. Provide the required value for Gate A H0 identity.")
         streams = {
             "intact": data.validation_intact,
             "shuffled": data.validation_shuffled,
@@ -7397,7 +7397,7 @@ def _paired_h0_identity_report(
             or len(data) != 2
             or not isinstance(data[1], gate_b.DepthValidationData)
         ):
-            raise TypeError("Gate B H0 identity requires DepthValidationData")
+            raise TypeError("Gate B H0 identity requires DepthValidationData. Provide the required value for Gate B H0 identity.")
         validation = data[1]
         streams = {
             "intact": validation.intact,
@@ -7427,7 +7427,7 @@ def _paired_h0_identity_report(
             for digest in parameter_sha256.values()
         )
     ):
-        raise ValueError("Gate C H0 models did not reproduce initialization")
+        raise ValueError("Gate C H0 models did not reproduce initialization. Fix the input condition named in the error, then rerun the operation.")
     initial_snapshot = models["full"].snapshot_state()
     models["query_only"].restore_state(initial_snapshot)
 
@@ -7491,14 +7491,14 @@ def _numeric_gradient_leaves(value: Any) -> list[np.ndarray]:
     for leaf in jax.tree.leaves(value):
         array = np.ascontiguousarray(np.asarray(u.get_mantissa(leaf)))
         if np.issubdtype(array.dtype, np.bool_):
-            raise TypeError("gradient leaves must be numeric, not boolean")
+            raise TypeError("Gradient leaves must be numeric, not boolean. Set Gradient leaves to numeric, not boolean.")
         if not np.issubdtype(array.dtype, np.number):
-            raise TypeError("gradient leaves must be numeric")
+            raise TypeError("Gradient leaves must be numeric. Set Gradient leaves to numeric.")
         if not np.isfinite(array).all():
-            raise ValueError("gradient leaves must be finite")
+            raise ValueError("Gradient leaves must be finite. Use finite values for Gradient leaves.")
         leaves.append(array)
     if not leaves:
-        raise ValueError("gradient tree has no leaves")
+        raise ValueError("Gradient tree has no leaves. Provide the missing item named in the message.")
     return leaves
 
 
@@ -7506,7 +7506,7 @@ def _shared_path_sha256(path: str, value: Any) -> str:
     """Hash one shared initialization subtree with Gate C framing."""
 
     if not isinstance(path, str) or not path:
-        raise TypeError("shared parameter path must be a nonempty string")
+        raise TypeError("Shared parameter path must be a nonempty string. Set Shared parameter path to a nonempty string.")
     fields: list[bytes] = [
         b"example21-gate-c-shared-path-v1",
         path.encode("utf-8"),
@@ -7527,7 +7527,7 @@ def _shared_global_sha256(values: Mapping[str, Any]) -> str:
     """Hash all shared initialization paths in canonical name order."""
 
     if not isinstance(values, Mapping) or not values:
-        raise TypeError("shared values must be a nonempty mapping")
+        raise TypeError("Shared values must be a nonempty mapping. Set Shared values to a nonempty mapping.")
     fields: list[bytes] = [b"example21-gate-c-shared-global-v1"]
     for path in sorted(values):
         fields.extend(
@@ -7543,7 +7543,7 @@ def _gradient_path_sha256(path: str, value: Any) -> str:
     """Hash one gradient subtree with the frozen Gate C framing."""
 
     if not isinstance(path, str) or not path:
-        raise TypeError("gradient path must be a nonempty string")
+        raise TypeError("Gradient path must be a nonempty string. Set Gradient path to a nonempty string.")
     fields: list[bytes] = [
         b"example21-gate-c-gradient-path-v1",
         path.encode("utf-8"),
@@ -7564,7 +7564,7 @@ def _gradient_global_sha256(gradients: Mapping[str, Any]) -> str:
     """Hash all gradient paths in canonical name order."""
 
     if not isinstance(gradients, Mapping) or not gradients:
-        raise TypeError("gradients must be a nonempty mapping")
+        raise TypeError("Gradients must be a nonempty mapping. Set Gradients to a nonempty mapping.")
     fields: list[bytes] = [b"example21-gate-c-gradient-global-v1"]
     for path in sorted(gradients):
         fields.extend(
@@ -7580,18 +7580,18 @@ def _gradient_comparison(full: Any, arm: Any) -> dict[str, Any]:
     """Compare two flattened gradients using the full norm denominator."""
 
     if jax.tree.structure(full) != jax.tree.structure(arm):
-        raise ValueError("gradient trees must have the same structure")
+        raise ValueError("Gradient trees must have the same structure. Ensure Gradient trees has the same structure.")
     full_leaves = _numeric_gradient_leaves(full)
     arm_leaves = _numeric_gradient_leaves(arm)
     if any(
         full_leaf.shape != arm_leaf.shape or full_leaf.dtype != arm_leaf.dtype
         for full_leaf, arm_leaf in zip(full_leaves, arm_leaves, strict=True)
     ):
-        raise ValueError("gradient leaves must have the same shape and dtype")
+        raise ValueError("Gradient leaves must have the same shape and dtype. Ensure Gradient leaves has the same shape and dtype.")
     full_vector = np.concatenate([leaf.astype(np.float64).reshape(-1) for leaf in full_leaves])
     arm_vector = np.concatenate([leaf.astype(np.float64).reshape(-1) for leaf in arm_leaves])
     if full_vector.shape != arm_vector.shape:
-        raise ValueError("gradient vectors must have the same shape")
+        raise ValueError("Gradient vectors must have the same shape. Ensure Gradient vectors has the same shape.")
     full_norm = float(np.linalg.norm(full_vector))
     arm_norm = float(np.linalg.norm(arm_vector))
     difference = float(np.linalg.norm(arm_vector - full_vector))
@@ -7616,7 +7616,7 @@ def _oracle_contract(config: GateCConfig) -> dict[str, Any]:
     """Return the exact preregistered finite-window mechanism episode."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     return {
         "regime": "gate_b",
         "validation_episode_index": config.oracle_validation_index,
@@ -7660,20 +7660,20 @@ def _gate_c3_terminal_h8_inputs(
     """Materialize the fixed terminal-H8 oracle arrays."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     if (
         config.oracle_validation_index != 0
         or config.oracle_effort != 8
         or config.gradient_chunk_size != 1
     ):
-        raise ValueError("Gate C3 oracle coordinates differ from preregistration")
+        raise ValueError("Gate C3 oracle coordinates differ from preregistration. Use matching values and structures.")
     if (
         not isinstance(gate_b_data, tuple)
         or len(gate_b_data) != 2
         or not isinstance(gate_b_data[0], gate_b.DepthSchedule)
         or not isinstance(gate_b_data[1], gate_b.DepthValidationData)
     ):
-        raise TypeError("Gate C3 oracle requires canonical Gate B data")
+        raise TypeError("Gate C3 oracle requires canonical Gate B data. Provide the required value for Gate C3 oracle.")
     schedule, validation = gate_b_data
     index = GATE_C3_TERMINAL_H8_OBJECTIVE["validation_episode_index"]
     if not (
@@ -7690,7 +7690,7 @@ def _gate_c3_terminal_h8_inputs(
             np.asarray(schedule.validation_presentation_orders[index]),
         )
     ):
-        raise ValueError("Gate C3 oracle validation metadata differs from schedule")
+        raise ValueError("Gate C3 oracle validation metadata differs from schedule. Use matching values and structures.")
 
     events = np.ascontiguousarray(np.asarray(validation.intact[:, index, :]))
     targets = np.zeros((events.shape[0],), dtype=np.int32)
@@ -7759,7 +7759,7 @@ def _gate_c3_terminal_h8_inputs(
         },
     }
     if not gate_a._json_exact(actual, expected):
-        raise ValueError("Gate C3 terminal-H8 input contract differs")
+        raise ValueError("Gate C3 terminal-H8 input contract differs. Use matching values and structures.")
     return {
         "events": events,
         "targets": targets,
@@ -7778,14 +7778,14 @@ def _mechanism_oracle(
     """Measure the preregistered Gate C finite-window pp-prop mechanism."""
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     if (
         config.oracle_validation_index != 0
         or config.oracle_effort != 8
         or config.gradient_chunk_size != 1
         or config.gradient_chunk_size >= REGIME_SPECS["gate_b"].sequence_length
     ):
-        raise ValueError("Gate C oracle coordinates differ from preregistration")
+        raise ValueError("Gate C oracle coordinates differ from preregistration. Use matching values and structures.")
     contract = _oracle_contract(config)
     if (
         not isinstance(gate_b_data, tuple)
@@ -7793,7 +7793,7 @@ def _mechanism_oracle(
         or not isinstance(gate_b_data[0], gate_b.DepthSchedule)
         or not isinstance(gate_b_data[1], gate_b.DepthValidationData)
     ):
-        raise TypeError("Gate C oracle requires canonical Gate B data")
+        raise TypeError("Gate C oracle requires canonical Gate B data. Provide the required value for Gate C oracle.")
     schedule, validation = gate_b_data
     index = contract["validation_episode_index"]
     if not (
@@ -7810,7 +7810,7 @@ def _mechanism_oracle(
             np.asarray(schedule.validation_presentation_orders[index]),
         )
     ):
-        raise ValueError("Gate C oracle validation metadata differs from schedule")
+        raise ValueError("Gate C oracle validation metadata differs from schedule. Use matching values and structures.")
     events = np.ascontiguousarray(np.asarray(validation.intact[:, index, :]))
     mapping_id = int(np.asarray(schedule.validation_mapping_ids[index]).item())
     actual_contract = {
@@ -7831,14 +7831,14 @@ def _mechanism_oracle(
         not gate_a._json_exact(actual_contract[name], contract[name])
         for name in actual_contract
     ):
-        raise ValueError("Gate C oracle event contract or digest differs")
+        raise ValueError("Gate C oracle event contract or digest differs. Use matching values and structures.")
 
     try:
         gate_b_initialization = initialization["initialization"]["gate_b"]
         canonical = gate_b_initialization["canonical_full"]
         arm_refs = gate_b_initialization["arm_initialization_refs"]
     except (KeyError, TypeError) as error:
-        raise ValueError("Gate C oracle initialization evidence is incomplete") from error
+        raise ValueError("Gate C oracle initialization evidence is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
     if (
         not isinstance(canonical, Mapping)
         or canonical.get("parameter_paths") != list(FULL_PARAMETER_PATHS)
@@ -7853,7 +7853,7 @@ def _mechanism_oracle(
             for arm in ("full", "query_only", "terminal_only")
         )
     ):
-        raise ValueError("Gate C oracle initialization identity differs")
+        raise ValueError("Gate C oracle initialization identity differs. Use matching values and structures.")
 
     targets = np.zeros((events.shape[0],), dtype=np.int32)
     targets[10:] = np.asarray(validation.targets_by_depth[:, index], dtype=np.int32)
@@ -7874,7 +7874,7 @@ def _mechanism_oracle(
             expected_width = self.config.input_width + 3
             if packed.ndim != 2 or packed.shape[-1] != expected_width:
                 raise ValueError(
-                    "Gate C oracle input must contain event, advance, target, and weight"
+                    "Gate C oracle input must contain event, advance, target, and weight. Add event, advance, target, and weight to Gate C oracle input."
                 )
             event = packed[:, : self.config.input_width]
             advance = packed[:, self.config.input_width] > 0.5
@@ -7894,7 +7894,7 @@ def _mechanism_oracle(
 
     def model_factory(arm: str, stage: str) -> Any:
         if stage not in ("reference", "finite_window"):
-            raise ValueError("Gate C2 oracle model stage is invalid")
+            raise ValueError("Gate C2 oracle model stage is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
         def factory() -> _OracleObjective:
             policy = "query_only" if arm == "query_only" else "full"
@@ -7921,7 +7921,7 @@ def _mechanism_oracle(
                 constructor=construct,
             )
             if not isinstance(model, _OracleObjective):
-                raise TypeError("Gate C2 oracle factory returned the wrong model")
+                raise TypeError("Gate C2 oracle factory returned the wrong model. Fix the input condition named in the error, then rerun the operation.")
             values = legacy._parameter_values(model)
             count = sum(
                 np.asarray(u.get_mantissa(leaf)).size
@@ -7933,9 +7933,9 @@ def _mechanism_oracle(
                 or count != expected_count
                 or legacy._array_digest(values) != expected_sha256
             ):
-                raise ValueError("Gate C oracle did not reproduce initialization")
+                raise ValueError("Gate C oracle did not reproduce initialization. Fix the input condition named in the error, then rerun the operation.")
             if role in oracle_models:
-                raise RuntimeError(f"duplicate Gate C2 oracle role {role!r}")
+                raise RuntimeError(f"Duplicate Gate C2 oracle role {role!r}. Fix the input condition named in the error, then rerun the operation.")
             oracle_models[role] = model
             return model
 
@@ -8010,7 +8010,7 @@ def _mechanism_oracle(
         not snapshots_equal(full_snapshot, reference_models[arm].snapshot_state())
         for arm in ("query_only", "terminal_only")
     ):
-        raise ValueError("Gate C oracle hidden-state snapshots differ")
+        raise ValueError("Gate C oracle hidden-state snapshots differ. Use matching values and structures.")
 
     raw_gradients = {
         "full": chunked_online_param_gradients(
@@ -8036,7 +8036,7 @@ def _mechanism_oracle(
     gradients: dict[str, dict[str, Any]] = {}
     for arm, raw in raw_gradients.items():
         if not isinstance(raw, Mapping):
-            raise TypeError("Gate C oracle gradients must be a path mapping")
+            raise TypeError("Gate C oracle gradients must be a path mapping. Set Gate C oracle gradients to a path mapping.")
         normalized = {
             key if isinstance(key, str) else gate_a._path(key): value
             for key, value in raw.items()
@@ -8045,12 +8045,12 @@ def _mechanism_oracle(
             len(normalized) != len(raw)
             or tuple(sorted(normalized)) != FULL_PARAMETER_PATHS
         ):
-            raise ValueError("Gate C oracle gradient paths differ")
+            raise ValueError("Gate C oracle gradient paths differ. Use matching values and structures.")
         for path in FULL_PARAMETER_PATHS:
             gradient = normalized[path]
             parameter = reference_parameters[arm][path]
             if jax.tree.structure(gradient) != jax.tree.structure(parameter):
-                raise ValueError("Gate C oracle gradient tree differs from parameter")
+                raise ValueError("Gate C oracle gradient tree differs from parameter. Use matching values and structures.")
             gradient_leaves = _numeric_gradient_leaves(gradient)
             parameter_leaves = _numeric_gradient_leaves(parameter)
             if any(
@@ -8060,7 +8060,7 @@ def _mechanism_oracle(
                     gradient_leaves, parameter_leaves, strict=True
                 )
             ):
-                raise ValueError("Gate C oracle gradient geometry differs")
+                raise ValueError("Gate C oracle gradient geometry differs. Use matching values and structures.")
         gradients[arm] = normalized
 
     def numeric_record(full: Any, arm: Any, *, path: str | None) -> dict[str, Any]:
@@ -8312,7 +8312,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
             "arm_initialization_refs"
         ]
     except (KeyError, TypeError) as error:
-        raise ValueError("Gate C3 oracle initialization evidence is incomplete") from error
+        raise ValueError("Gate C3 oracle initialization evidence is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
     if (
         not isinstance(canonical, Mapping)
         or canonical.get("parameter_paths") != list(FULL_PARAMETER_PATHS)
@@ -8327,13 +8327,13 @@ def _gate_c3_terminal_h8_mechanism_oracle(
             for arm in ("full", "query_only")
         )
     ):
-        raise ValueError("Gate C3 oracle initialization identity differs")
+        raise ValueError("Gate C3 oracle initialization identity differs. Use matching values and structures.")
 
     class _TerminalH8Objective(LatentWorkspaceModel):
         def update(self, packed: jax.Array) -> jax.Array:
             expected_width = self.config.input_width + 3
             if packed.ndim != 2 or packed.shape[-1] != expected_width:
-                raise ValueError("Gate C3 oracle packed input geometry differs")
+                raise ValueError("Gate C3 oracle packed input geometry differs. Use matching values and structures.")
             event = packed[:, : self.config.input_width]
             advance = packed[:, self.config.input_width] > 0.5
             target = packed[:, self.config.input_width + 1].astype(jnp.int32)
@@ -8394,7 +8394,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                 constructor=construct,
             )
             if not isinstance(model, _TerminalH8Objective):
-                raise TypeError("Gate C3 oracle factory returned the wrong model")
+                raise TypeError("Gate C3 oracle factory returned the wrong model. Fix the input condition named in the error, then rerun the operation.")
             values = legacy._parameter_values(model)
             count = sum(
                 np.asarray(u.get_mantissa(leaf)).size
@@ -8406,9 +8406,9 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                 or count != expected_parameter_count
                 or legacy._array_digest(values) != expected_parameter_sha256
             ):
-                raise ValueError("Gate C3 oracle did not reproduce initialization")
+                raise ValueError("Gate C3 oracle did not reproduce initialization. Fix the input condition named in the error, then rerun the operation.")
             if role in models:
-                raise RuntimeError(f"duplicate Gate C3 oracle role {role!r}")
+                raise RuntimeError(f"Duplicate Gate C3 oracle role {role!r}. Fix the input condition named in the error, then rerun the operation.")
             models[role] = model
             return model
 
@@ -8470,7 +8470,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                 selected_role: str = finite_role,
             ) -> None:
                 if not isinstance(model, _TerminalH8Objective):
-                    raise TypeError("Gate C3 finite-window model type differs")
+                    raise TypeError("Gate C3 finite-window model type differs. Use matching values and structures.")
                 model.restore_state(common_snapshot)
                 actual_parameter = legacy._array_digest(
                     legacy._parameter_values(model)
@@ -8480,7 +8480,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                     parameter_sha256.get(selected_role) != actual_parameter
                     or hidden_state_sha256.get(selected_role) != actual_hidden
                 ):
-                    raise ValueError("Gate C3 gradient start identity differs")
+                    raise ValueError("Gate C3 gradient start identity differs. Use matching values and structures.")
 
             raw = chunked_online_param_gradients(
                 model_factory,
@@ -8491,9 +8491,9 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                 after_init=restore_common_start,
             )
             if not finite_models:
-                raise RuntimeError("Gate C3 oracle did not materialize its model")
+                raise RuntimeError("Gate C3 oracle did not materialize its model. Fix the input condition named in the error, then rerun the operation.")
             if not isinstance(raw, Mapping):
-                raise TypeError("Gate C3 oracle gradients must be a path mapping")
+                raise TypeError("Gate C3 oracle gradients must be a path mapping. Set Gate C3 oracle gradients to a path mapping.")
             normalized = {
                 key if isinstance(key, str) else gate_a._path(key): value
                 for key, value in raw.items()
@@ -8501,7 +8501,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
             if len(normalized) != len(raw) or tuple(sorted(normalized)) != (
                 FULL_PARAMETER_PATHS
             ):
-                raise ValueError("Gate C3 oracle gradient paths differ")
+                raise ValueError("Gate C3 oracle gradient paths differ. Use matching values and structures.")
             reference_values = legacy._parameter_values(
                 full_reference
                 if policy_name == "full_read_h8"
@@ -8511,7 +8511,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                 if jax.tree.structure(normalized[path]) != jax.tree.structure(
                     reference_values[path]
                 ):
-                    raise ValueError("Gate C3 oracle gradient tree differs")
+                    raise ValueError("Gate C3 oracle gradient tree differs. Use matching values and structures.")
                 gradient_leaves = _numeric_gradient_leaves(normalized[path])
                 parameter_leaves = _numeric_gradient_leaves(reference_values[path])
                 if any(
@@ -8523,7 +8523,7 @@ def _gate_c3_terminal_h8_mechanism_oracle(
                         strict=True,
                     )
                 ):
-                    raise ValueError("Gate C3 oracle gradient geometry differs")
+                    raise ValueError("Gate C3 oracle gradient geometry differs. Use matching values and structures.")
             raw_gradients[policy_name] = normalized
 
         full_gradients = raw_gradients["full_read_h8"]
@@ -8950,16 +8950,16 @@ def _run_gate_c_controls_engine(
     c3: bool,
 ) -> dict[str, Any]:
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     gate_number = 3 if c3 else 2
     if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
         "gate_a",
         "gate_b",
         "gate_c_initialization",
     }:
-        raise ValueError(f"Gate C{gate_number} controls require exact authenticated prerequisites")
+        raise ValueError(f"Gate C{gate_number} controls require exact authenticated prerequisites. Provide the required value for Gate C{gate_number} controls.")
     if not callable(source_end_reporter):
-        raise TypeError("source_end_reporter must be callable")
+        raise TypeError("source_end_reporter must be callable. Pass a callable value for source_end_reporter.")
     authentication_environment = (
         _gate_c3_controls_base_environment(environment) if c3 else environment
     )
@@ -8989,7 +8989,7 @@ def _run_gate_c_controls_engine(
         config == GateCConfig()
         and not gate_a._json_exact(schedules, _schedule_identity_report(config))
     ):
-        raise RuntimeError(f"generated Gate C{gate_number} schedules differ from preregistration")
+        raise RuntimeError(f"Generated Gate C{gate_number} schedules differ from preregistration. Use matching values and structures.")
     audit = (
         _GateC2ControlsAudit(
             initialization,
@@ -9001,7 +9001,7 @@ def _run_gate_c_controls_engine(
     global _ACTIVE_GATE_C2_CONTROLS_AUDIT
     previous_audit = _ACTIVE_GATE_C2_CONTROLS_AUDIT
     if previous_audit is not None:
-        raise RuntimeError(f"a {'Gate C' if c3 else 'Gate C2'} controls audit is already active")
+        raise RuntimeError(f"A {'Gate C' if c3 else 'Gate C2'} controls audit is already active. Fix the input condition named in the error, then rerun the operation.")
     try:
         _ACTIVE_GATE_C2_CONTROLS_AUDIT = audit
         with audit:
@@ -9049,7 +9049,7 @@ def _run_gate_c_controls_engine(
     execution_evidence = None if c3 else audit.report()
     source_end = source_end_reporter()
     if not isinstance(source_end, Mapping):
-        raise TypeError("source_end_reporter must return a mapping")
+        raise TypeError("source_end_reporter must return a mapping. Make source_end_reporter return a mapping.")
     if c3:
         execution_evidence = audit.report()
     report: dict[str, Any] = {
@@ -9128,7 +9128,7 @@ def run_gate_c3_controls(
     ----------
     config
         Fixed paired Gate C configuration.
-    prerequisites
+    Prerequisites
         Authenticated Gate A, Gate B, and Gate C initialization evidence.
     source_start, source_end_reporter, source_files, environment
         Live source, immutable-file, GPU, and deterministic-environment evidence.
@@ -9165,7 +9165,7 @@ def run_gate_c(
     ----------
     config
         Fixed paired Gate C configuration.
-    prerequisites
+    Prerequisites
         Exact Gate A, Gate B, and authenticated Gate C initialization evidence.
     source_start, source_end_reporter, source_files, environment
         Live provenance and exact GPU evidence.
@@ -9177,15 +9177,15 @@ def run_gate_c(
     """
 
     if not isinstance(config, GateCConfig):
-        raise TypeError("config must be a GateCConfig")
+        raise TypeError("Config must be a GateCConfig. Set Config to a GateCConfig.")
     if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
         "gate_a",
         "gate_b",
         "gate_c_initialization",
     }:
-        raise ValueError("formal Gate C requires exact authenticated prerequisites")
+        raise ValueError("Formal Gate C requires exact authenticated prerequisites. Provide the required value for Formal Gate C.")
     if not callable(source_end_reporter):
-        raise TypeError("source_end_reporter must be callable")
+        raise TypeError("source_end_reporter must be callable. Pass a callable value for source_end_reporter.")
     start = time.perf_counter()
     initialization = _validated_gate_c_initialization_admission(
         prerequisites["gate_c_initialization"],
@@ -9209,7 +9209,7 @@ def run_gate_c(
         config.qualification_regime == "preregistered_full"
         and not gate_a._json_exact(schedule_reports, _schedule_identity_report(config))
     ):
-        raise RuntimeError("generated Gate C schedules differ from preregistration")
+        raise RuntimeError("Generated Gate C schedules differ from preregistration. Use matching values and structures.")
 
     initialization_reports: dict[str, dict[str, dict[str, Any]]] = {
         regime: {} for regime in REGIME_ORDER
@@ -9261,7 +9261,7 @@ def run_gate_c(
             audit = initialization_reports[regime][arm]
             if not gate_a._json_exact(reproduced, audit):
                 raise RuntimeError(
-                    "formal arm initialization changed between audit and training"
+                    "Formal arm initialization changed between audit and training. Fix the input condition named in the error, then rerun the operation."
                 )
             arms[arm][regime] = _run_gate_c_arm(
                 model,
@@ -9305,7 +9305,7 @@ def run_gate_c(
     )
     source_end = source_end_reporter()
     if not isinstance(source_end, Mapping):
-        raise TypeError("source_end_reporter must return a mapping")
+        raise TypeError("source_end_reporter must return a mapping. Make source_end_reporter return a mapping.")
     regimes = {
         regime: {
             "spec": dataclasses.asdict(REGIME_SPECS[regime]),
@@ -10631,7 +10631,7 @@ def _gate_c2_controls_base_environment(value: Any) -> dict[str, Any]:
         "execution_and_update_evidence",
     }
     if not isinstance(value, Mapping) or set(value) != expected:
-        raise ValueError("Gate C2 controls environment schema differs")
+        raise ValueError("Gate C2 controls environment schema differs. Use matching values and structures.")
     return {
         name: value[name]
         for name in ("backend", "devices", "image_digest", "jax", "python")
@@ -10852,7 +10852,7 @@ def _gate_c3_controls_base_environment(value: Any) -> dict[str, Any]:
             value.get("deterministic_environment")
         )
     ):
-        raise ValueError("Gate C3 controls environment schema differs")
+        raise ValueError("Gate C3 controls environment schema differs. Use matching values and structures.")
     return {name: value[name] for name in base_names}
 
 
@@ -11456,18 +11456,18 @@ def main(argv: list[str] | None = None) -> int:
         args.gate_a_result.resolve() != gate_a_paths.result.resolve()
         or args.gate_a_manifest.resolve() != gate_a_paths.manifest.resolve()
     ):
-        raise ValueError("Gate C target requires the fixed Gate A artifact paths")
+        raise ValueError("Gate C target requires the fixed Gate A artifact paths. Provide the required value for Gate C target.")
     if args.gate_b_manifest.resolve() != gate_b_paths.manifest.resolve():
-        raise ValueError("Gate C target requires the fixed Gate B manifest path")
+        raise ValueError("Gate C target requires the fixed Gate B manifest path. Provide the required value for Gate C target.")
 
     if args.target == "gate_c_init":
         if args.gate_c_init_manifest is not None:
             raise ValueError(
-                "gate_c_init does not accept a Gate C initialization manifest"
+                "gate_c_init does not accept a Gate C initialization manifest. Fix the input condition named in the error, then rerun the operation."
             )
     elif args.gate_c_init_manifest is None:
         raise ValueError(
-            f"{args.target} requires the fixed initialization manifest"
+            f"{args.target} requires the fixed initialization manifest. Provide the required value for {args.target}."
         )
 
     source_start = gate_a._source_report()
@@ -11480,7 +11480,7 @@ def main(argv: list[str] | None = None) -> int:
         args.target,
     )
     if args.output.resolve() != expected_paths.result.resolve():
-        raise ValueError("Gate C target requires the fixed output path")
+        raise ValueError("Gate C target requires the fixed output path. Provide the required value for Gate C target.")
 
     if args.target in {
         "formal_gate_c",
@@ -11498,7 +11498,7 @@ def main(argv: list[str] | None = None) -> int:
             != initialization_paths.manifest.resolve()
         ):
             raise ValueError(
-                f"{args.target} requires the fixed initialization manifest path"
+                f"{args.target} requires the fixed initialization manifest path. Provide the required value for {args.target}."
             )
         if args.target == "formal_gate_c":
             prerequisites = launcher._load_formal_gate_c_prerequisites(

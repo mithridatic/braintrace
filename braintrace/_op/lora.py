@@ -207,7 +207,7 @@ def _lora_mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *, alpha: float = 1
     a singleton before the output axis in both execution contexts, for
     both matrix-shaped traces:
 
-        (out,)        → (1, out)         broadcasts with (in|rank, out)        ✓
+        (Out,)        → (1, out)         broadcasts with (in|rank, out)        ✓
         (batch, out)  → (batch, 1, out)  broadcasts with (batch, in|rank, out) ✓
 
     **Shapes.**
@@ -615,7 +615,7 @@ def lora_matmul(
     x : ArrayLike
         Input array, shape ``(batch, in_features)`` or ``(in_features,)``.
         Higher-rank ``x`` (``x.ndim > 2``) is rejected with a ``ValueError``:
-        every ETP trace rule assumes one of these two layouts.
+        Every ETP trace rule assumes one of these two layouts.
     B : ArrayLike
         Low-rank matrix :math:`B`, shape ``(in_features, rank)``.
     A : ArrayLike

@@ -104,7 +104,7 @@ class TestOracle_TanhTail:
         f = _transition_callable(rel, group, temps)
         dh_dy = jax.jacfwd(f)(y_val)
 
-        # h = tanh(y) (after squeezing the trailing concat-axis added by
+        # H = tanh(y) (after squeezing the trailing concat-axis added by
         # group.concat_hidden — only one HiddenState in the group).
         h_val = jnp.tanh(y_val)
         analytic = jnp.diag(1.0 - h_val ** 2)
@@ -134,7 +134,7 @@ class TestOracle_ElemwiseTail:
         y_val = temps[rel.y_var]
         # The compiler's "y" for etp_elemwise_p is the processed weight
         # itself; sum with h_prev + x to get the pre-tanh quantity.
-        h_prev = model.h.value  # zeros after init
+        h_prev = model.h.value  # Zeros after init
         pre = h_prev + inp + y_val
         h_val = jnp.tanh(pre)
         analytic = jnp.diag(1.0 - h_val ** 2)
@@ -178,7 +178,7 @@ class TestOracle_PartialPathDirectOnly:
         y_val = temps[rel_w1.y_var]
 
         f = _transition_callable(rel_w1, group, temps)
-        # h evaluated by the transition jaxpr with the actual y_val and
+        # H evaluated by the transition jaxpr with the actual y_val and
         # the compile-time through-const; its squeezed concat axis is h.
         h_val = f(y_val).squeeze(-1)
         dh_dy = jax.jacfwd(f)(y_val)

@@ -52,7 +52,7 @@ from .base import ETraceAlgorithm
 from .vjp_graph_executor import ETraceVjpGraphExecutor
 
 __all__ = [
-    'ETraceVjpAlgorithm',  # the base class for the eligibility trace algorithm with the VJP gradient computation
+    'ETraceVjpAlgorithm',  # The base class for the eligibility trace algorithm with the VJP gradient computation
 ]
 
 
@@ -280,10 +280,10 @@ def expand_modulator_to_group(
     state axis when ``num_state == n_rec``. The contract, matching AGENTS.md's
     SNN learning-signal trailing-axis rule:
 
-    * a scalar is broadcast to the whole group shape;
-    * a modulator shaped exactly like the group's ``varshape`` gains a trailing
+    * A scalar is broadcast to the whole group shape;
+    * A modulator shaped exactly like the group's ``varshape`` gains a trailing
       size-1 state axis first, then broadcasts;
-    * anything else must broadcast against ``(*varshape, num_state)`` as given.
+    * Anything else must broadcast against ``(*varshape, num_state)`` as given.
 
     The expansion is driven only by shapes, never by group index or group count.
     A scalar reward is therefore valid for any model whatever its HiddenGroup
@@ -331,7 +331,7 @@ def expand_modulator_to_group(
     group_shape = tuple(group_shape)
 
     if m.ndim > 0 and tuple(m.shape) == group_shape[:-1]:
-        # varshape -> varshape + (1,): the trailing state axis.
+        # Varshape -> varshape + (1,): the trailing state axis.
         m = u.math.reshape(m, tuple(m.shape) + (1,))
 
     try:
@@ -452,16 +452,17 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         if vjp_method not in ('single-step', 'multi-step'):
             raise ValueError(
                 'vjp_method must be either "single-step" or "multi-step", '
+                f'got {vjp_method!r}. Set vjp_method to either "single-step" or "multi-step", '
                 f'got {vjp_method!r}.'
             )
         self.vjp_method = vjp_method
 
-        # the learning-rule coordinate
+        # The learning-rule coordinate
         if config is None:
             config = self._default_config
         elif not isinstance(config, ETraceConfig):
             raise TypeError(
-                f'config must be an ETraceConfig, got {type(config).__name__}.')
+                f'Config must be an ETraceConfig, got {type(config).__name__}. Set Config to an ETraceConfig.')
         self.config = config
         self._random_feedback_key = random_feedback_key
         self._random_feedback = {}
@@ -503,7 +504,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 'never set. Use `braintrace.DNI`, or override the hook.'
             )
 
-        # graph
+        # Graph
         graph_executor = ETraceVjpGraphExecutor(
             model,
             vjp_method=vjp_method,
@@ -520,10 +521,10 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             full_jacobian=config.trace_factorization == 'random_projection',
         )
 
-        # super initialization
+        # Super initialization
         super().__init__(model=model, name=name, graph_executor=graph_executor)
 
-        # the update rule
+        # The update rule
         self._true_update_fun = jax.custom_vjp(self._update_fn)
         self._true_update_fun.defvjp(
             fwd=self._update_fn_fwd,
@@ -532,7 +533,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
 
     def _assert_compiled(self) -> None:
         if not self.is_compiled:
-            raise ValueError('The etrace algorithm has not been compiled. Please call `compile_graph()` first. ')
+            raise ValueError('The etrace algorithm is not compiled. Call `compile_graph()` before use.')
 
     # ------------------------------------------------------------------ #
     # axis: recurrence_scope
@@ -572,7 +573,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 if reason is not None:
                     raise NotSupportedError(
                         'pp-prop requires element_wise(weight_fn=...) to '
-                        f'preserve every raw-weight position and shape: {reason}'
+                        f'preserve every raw-weight position and shape: {reason}. Provide the required value for pp-prop.'
                     )
             pairs = zip(
                 relation.y_to_hidden_group_jaxprs,
@@ -862,9 +863,9 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         #
         # This method is the main function to
         #
-        # - update the model
-        # - update the eligibility trace states
-        # - compute the weight gradients
+        # - Update the model
+        # - Update the eligibility trace states
+        # - Compute the weight gradients
         #
         # The key here is that we change the object-oriented attributes as the function arguments.
         # Therefore, the function arguments are the states of the current time step, and the function
@@ -886,11 +887,11 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         # 4. if vjp_method = 'multi-step', input = MultiStepData, then output is multiple step data
         #
 
-        # check the compilation
+        # Check the compilation
         self._assert_compiled()
         completed_steps = self.running_index.value + _count_update_steps(*args)
 
-        # state values
+        # State values
         weight_vals = {
             key: st.value
             for key, st in self.param_states.items()
@@ -903,7 +904,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             key: st.value
             for key, st in self.other_states.items()
         }
-        # etrace data
+        # Etrace data
         last_etrace_vals = self._get_etrace_data()
 
         # Optional per-call auxiliary data (e.g. a neuromodulatory signal) that
@@ -911,13 +912,13 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         # forwarded to the model itself. Read synchronously here -- before the
         # custom_vjp machinery runs -- so it becomes a genuine argument of
         # `_true_update_fun` rather than an instance-attribute side channel:
-        # outer transforms (e.g. `brainstate.transform.grad`) may stage the
+        # Outer transforms (e.g. `brainstate.transform.grad`) may stage the
         # forward trace and only invoke the fwd/bwd rules after this `update()`
         # call has already returned, by which point any such stash would
         # already be gone.
         aux = self._get_update_aux()
 
-        # update all states
+        # Update all states
         #
         # [KEY] The key here is that we change the object-oriented attributes as the function arguments.
         #       Therefore, the function arguments are the states of the current time step, and the function
@@ -939,14 +940,14 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             aux,
         )
 
-        # assign/restore the weight values back
+        # Assign/restore the weight values back
         #
         # [KEY] assuming the weight values are not changed
         #       This is a key assumption in the RTRL algorithm.
         #       This is very important for the implementation.
         assign_state_values_v2(self.param_states, weight_vals, write=False)
 
-        # assign the new hidden and state values
+        # Assign the new hidden and state values
         assign_state_values_v2(self.hidden_states, hidden_vals)
         assign_state_values_v2(self.other_states, other_vals)
 
@@ -960,7 +961,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
 
         self.running_index.value = jax.lax.stop_gradient(completed_steps)
 
-        # return the model output
+        # Return the model output
         return out
 
     def _update_fn(
@@ -977,17 +978,17 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         The main function to update the [model] and the [eligibility trace] states.
 
         Particularly, ``self.graph.solve_h2w_h2h_jacobian()`` is called to:
-          - compute the model output, the hidden states, and the other states
-          - compute the hidden-to-weight Jacobian and the hidden-to-hidden Jacobian
+          - Compute the model output, the hidden states, and the other states
+          - Compute the hidden-to-weight Jacobian and the hidden-to-hidden Jacobian
 
         Then, ``self._update_etrace_data`` is called to:
-          - update the eligibility trace data
+          - Update the eligibility trace data
 
         Moreover, this function returns:
-          - the model output
-          - the updated hidden states
-          - the updated other states
-          - the updated eligibility trace states
+          - The model output
+          - The updated hidden states
+          - The updated other states
+          - The updated eligibility trace states
 
         Note that the weight values are assumed not changed in this function.
 
@@ -998,7 +999,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         """
         input_is_multi_step = has_multistep_data(*args)
 
-        # state value assignment
+        # State value assignment
         assign_state_values_v2(self.param_states, weight_vals, write=False)
         assign_state_values_v2(self.hidden_states, hidden_vals, write=False)
         assign_state_values_v2(self.other_states, oth_state_vals, write=False)
@@ -1009,7 +1010,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         # avoiding a second scan over stacked Jacobians.
         etrace_stepper = self._wrap_etrace_stepper(weight_vals) if input_is_multi_step else None
 
-        # necessary jacobian information of the weights
+        # Necessary jacobian information of the weights
         (
             out,
             hidden_vals,
@@ -1024,10 +1025,10 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         )
 
         if final_etrace is not None:
-            # fused path: the executor already rolled the eligibility trace in-loop.
+            # Fused path: the executor already rolled the eligibility trace in-loop.
             etrace_vals = final_etrace
         else:
-            # eligibility trace update
+            # Eligibility trace update
             #
             # "self._update_etrace_data()" is a protocol method that should be implemented in the subclass.
             # It's logic may be different for different etrace algorithms.
@@ -1042,7 +1043,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 input_is_multi_step,
             )
 
-        # returns
+        # Returns
         return out, hidden_vals, oth_state_vals, etrace_vals
 
     def _update_fn_fwd(
@@ -1061,31 +1062,31 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
 
         Particularly, ``self.graph.solve_h2w_h2h_jacobian_and_l2h_vjp()`` is called to:
 
-        - compute the model output, the hidden states, and the other states
-        - compute the hidden-to-weight Jacobian and the hidden-to-hidden Jacobian
-        - compute the loss-to-hidden or loss-to-weight Jacobian
+        - Compute the model output, the hidden states, and the other states
+        - Compute the hidden-to-weight Jacobian and the hidden-to-hidden Jacobian
+        - Compute the loss-to-hidden or loss-to-weight Jacobian
 
         Then, ``self._update_etrace_data`` is called to:
 
-        - update the eligibility trace data
+        - Update the eligibility trace data
 
         The forward function returns two parts of data:
 
         - The first part is the functional returns (same as "self._update()" function):
-              * the model output
-              * the updated hidden states
-              * the updated other states
-              * the updated eligibility trace states
+              * The model output
+              * The updated hidden states
+              * The updated other states
+              * The updated eligibility trace states
 
         - The second part is the data used for backward gradient computation:
-              * the residuals of the model
-              * the eligibility trace data at the current/last time step
-              * the weight id to its value mapping
-              * the running index
+              * The residuals of the model
+              * The eligibility trace data at the current/last time step
+              * The weight id to its value mapping
+              * The running index
         """
         input_is_multi_step = has_multistep_data(*args)
 
-        # state value assignment
+        # State value assignment
         assign_state_values_v2(self.param_states, weight_vals, write=False)
         assign_state_values_v2(self.hidden_states, hidden_vals, write=False)
         assign_state_values_v2(self.other_states, othstate_vals, write=False)
@@ -1096,7 +1097,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         # the residual jaxpr.
         etrace_stepper = self._wrap_etrace_stepper(weight_vals) if input_is_multi_step else None
 
-        # necessary gradients of the weights
+        # Necessary gradients of the weights
         (
             out,
             hiddens,
@@ -1112,10 +1113,10 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         )
 
         if final_etrace is not None:
-            # fused path: the executor already rolled the eligibility trace in-loop.
+            # Fused path: the executor already rolled the eligibility trace in-loop.
             new_etrace_vals = final_etrace
         else:
-            # eligibility trace update
+            # Eligibility trace update
             #
             # "self._update_etrace_data()" is a protocol method that should be implemented in the subclass.
             # It's logic may be different for different etrace algorithms.
@@ -1130,7 +1131,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 input_is_multi_step
             )
 
-        # returns
+        # Returns
         old_etrace_vals = etrace_vals
         trace_steps = (
             running_index - _count_update_steps(*args)
@@ -1147,8 +1148,8 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             ),
             weight_vals,
             trace_steps,
-            args,  # threaded to _update_fn_bwd for the learning-signal hook
-            aux,  # per-call auxiliary data (see _get_update_aux), also threaded to the hook
+            args,  # Threaded to _update_fn_bwd for the learning-signal hook
+            aux,  # Per-call auxiliary data (see _get_update_aux), also threaded to the hook
             # `learning_signal='bootstrapped'`: the synthetic cotangent for the
             # window-exit hidden values. Computed here because this is the only
             # place `h^exit` exists, and stashed in the residuals rather than
@@ -1184,12 +1185,12 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         # [1] Interpret the fwd results
         #
         (
-            residuals,  # the residuals of the VJP computation, for computing the gradients of input arguments
-            etrace_vals_at_t_or_t_minus_1,  # the eligibility trace data at the current or last time step
-            weight_vals,  # the weight id to its value mapping
+            residuals,  # The residuals of the VJP computation, for computing the gradients of input arguments
+            etrace_vals_at_t_or_t_minus_1,  # The eligibility trace data at the current or last time step
+            weight_vals,  # The weight id to its value mapping
             trace_steps,
-            args,  # original update(*args) tuple, used by _compute_learning_signal
-            aux,  # per-call auxiliary data from _get_update_aux, also used by _compute_learning_signal
+            args,  # Original update(*args) tuple, used by _compute_learning_signal
+            aux,  # Per-call auxiliary data from _get_update_aux, also used by _compute_learning_signal
             exit_cotangent,  # `bootstrapped`: synthetic cotangent at h^exit, or None
         ) = fwd_res
 
@@ -1228,20 +1229,20 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         #
         # We compute:
         #
-        #   - the gradients of input arguments,
+        #   - The gradients of input arguments,
         #     maybe necessary to propagate the gradients to the last layer
         #
-        #   - the gradients of the hidden states at the last time step,
+        #   - The gradients of the hidden states at the last time step,
         #     maybe unnecessary but can be optimized away by the XLA compiler
         #
-        #   - the gradients of the non-etrace parameters, defined by "NonTempParam"
+        #   - The gradients of the non-etrace parameters, defined by "NonTempParam"
         #
-        #   - the gradients of the other states
+        #   - The gradients of the other states
         #
-        #   - the gradients of the loss-to-hidden at the current time step
+        #   - The gradients of the loss-to-hidden at the current time step
         #
 
-        # the `_jaxpr_compute_model_with_vjp()` in `ETraceGraphExecutor`
+        # The `_jaxpr_compute_model_with_vjp()` in `ETraceGraphExecutor`
         (
             dg_args,
             dg_last_hiddens,
@@ -1281,7 +1282,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                     'vjp_method=\'single-step\' reads the hidden-state gradients '
                     'off the hidden perturbation variables, but the compiled '
                     'graph carries no hidden perturbation. Call `compile_graph()` '
-                    'on this algorithm before running the backward pass.'
+                    'on this algorithm before running the backward pass. Fix the input condition named in the error, then rerun the operation.'
                 )
             if len(hidden_perturb.perturb_vars) != len(dg_hid_perturb_or_dl2h):
                 raise ValueError(
@@ -1317,7 +1318,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             dl2h_at_t_or_t_minus_1 = [
                 group.concat_hidden(
                     [
-                        # dimensionless processing
+                        # Dimensionless processing
                         u.get_mantissa(dg_last_hiddens[path])
                         for path in group.hidden_paths
                     ]
@@ -1354,7 +1355,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         #     estimate makes the sum over windows telescope to the exact gradient.
         #   * ETP parameters and the boundary learning signal -- do NOT. Their
         #     cross-window credit is *already* carried by the eligibility trace:
-        #     an occurrence inside this window that reaches a later window's loss
+        #     An occurrence inside this window that reaches a later window's loss
         #     is counted there, because that window's trace contains it. Adding
         #     the estimate here would count the same path twice. This is what an
         #     eligibility trace is for; DNI's job is to give the *plain*
@@ -1477,7 +1478,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         This is deliberately **not** part of `_compute_learning_signal`. Replacing
         a boundary learning signal and adding an exit cotangent are different
         operations, on different tensors, at different points of the window:
-        the boundary signal is per hidden *group* and is consumed only by the
+        The boundary signal is per hidden *group* and is consumed only by the
         trace contraction, while the exit cotangent is per hidden *path* and has
         to be propagated by the window's own reverse pass to reach the plain
         parameters at all.
@@ -1585,7 +1586,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
 
         This is deliberately *not* read lazily from an instance attribute
         inside `_update_fn_fwd`/`_update_fn_bwd`/`_compute_learning_signal`:
-        outer transforms (e.g. `brainstate.transform.grad`) may stage the
+        Outer transforms (e.g. `brainstate.transform.grad`) may stage the
         forward trace and only invoke the custom_vjp fwd/bwd rules after the
         `update()` call that set such a stash has already returned, so a
         lazy read would silently observe a cleared/stale value.

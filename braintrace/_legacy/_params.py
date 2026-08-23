@@ -97,7 +97,7 @@ class ETraceParam(brainstate.ParamState):
     ) -> None:
         super().__init__(weight, name=name)
         if not isinstance(op, ETraceOp):
-            raise TypeError(f'op must be ETraceOp, got {type(op)}')
+            raise TypeError(f'Op must be ETraceOp, got {type(op)}. Set Op to ETraceOp.')
         self.op = op
         if grad is None:
             grad = ETraceGrad.adaptive
@@ -208,7 +208,7 @@ class NonTempParam(brainstate.ParamState):
             self.op = op.raw_xw_to_y
         else:
             if not callable(op):
-                raise TypeError(f'op must be callable, got {type(op)}')
+                raise TypeError(f'Op must be callable, got {type(op)}. Pass a callable value for Op.')
             self._op = None
             self.op = op
 
@@ -255,7 +255,7 @@ class FakeETraceParam(object):
             self.op = op.raw_xw_to_y
         else:
             if not callable(op):
-                raise TypeError(f'op must be callable, got {type(op)}')
+                raise TypeError(f'Op must be callable, got {type(op)}. Pass a callable value for Op.')
             self._op = None
             self.op = op
 
@@ -305,7 +305,7 @@ class FakeElemWiseParam(object):
         if isinstance(op, ETraceOp):
             if not isinstance(op, ElemWiseOp):
                 raise TypeError(
-                    f'op must be ElemWiseOp when an ETraceOp is supplied, got {type(op)}'
+                    f'Op must be ElemWiseOp when an ETraceOp is supplied, got {type(op)}. Set Op to ElemWiseOp when an ETraceOp is supplied.'
                 )
             self._op: Optional[ElemWiseOp] = op
             # ``Callable`` (i.e. ``Callable[..., Any]``): the two branches bind
@@ -314,7 +314,7 @@ class FakeElemWiseParam(object):
             self._is_etrace_op = True
         else:
             if not callable(op):
-                raise TypeError(f'op must be callable, got {type(op)}')
+                raise TypeError(f'Op must be callable, got {type(op)}. Pass a callable value for Op.')
             self._op = None
             self.op = op
         self.value = weight

@@ -79,7 +79,7 @@ class TraceSearchSettings:
         for name in ("python_executable", "container_image_digest", "source_commit"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{name} is required for trace search")
+                raise ValueError(f"{name} is required for trace search. Fix the input condition named in the error, then rerun the operation.")
         expected_trace_benchmark_config(
             self,
             HORIZON_TRACE_GRIDS[0],

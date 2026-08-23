@@ -41,7 +41,7 @@ class Example15RunEvidence:
 
 def _mapping(value: object, location: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
-        raise ValueError(f"{location} must be an object")
+        raise ValueError(f"{location} must be an object. Set {location} to an object.")
     return value
 
 
@@ -50,7 +50,7 @@ def _finite_tree(value: object, location: str = "root") -> None:
         return
     if isinstance(value, (int, float)):
         if not math.isfinite(float(value)):
-            raise ValueError(f"non-finite numeric value at {location}")
+            raise ValueError(f"Non-finite numeric value at {location}. Use finite values.")
         return
     if isinstance(value, Mapping):
         for key, child in value.items():
@@ -64,7 +64,7 @@ def _finite_tree(value: object, location: str = "root") -> None:
 def _number(mapping: Mapping[str, object], key: str, location: str) -> float:
     value = mapping.get(key)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{location}.{key} must be numeric")
+        raise ValueError(f"{location}.{key} must be numeric. Set {location}.{key} to numeric.")
     return float(value)
 
 
@@ -73,9 +73,9 @@ def _validate_environment(document: Mapping[str, object]) -> Mapping[str, object
     for key in ("source_commit", "container_image_digest"):
         value = environment.get(key)
         if not isinstance(value, str) or not value.strip():
-            raise ValueError(f"environment.{key} is required")
+            raise ValueError(f"Environment.{key} is required. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(environment.get("source_dirty"), bool):
-        raise ValueError("environment.source_dirty must be boolean")
+        raise ValueError("Environment.source_dirty must be boolean. Set Environment.source_dirty to boolean.")
     return environment
 
 
@@ -84,25 +84,25 @@ def _validate_seed_results(
 ) -> tuple[tuple[float, ...], bool]:
     raw = result.get("seed_results")
     if not isinstance(raw, list) or len(raw) != 3:
-        raise ValueError("Example 15 must contain exactly three seed results")
+        raise ValueError("Example 15 must contain exactly three seed results. Add exactly three seed results to Example 15.")
     accuracies: list[float] = []
     losses_decrease = True
     recurrent_changes = True
     for expected_seed, item in enumerate(raw):
         seed_result = _mapping(item, f"seed_results[{expected_seed}]")
         if seed_result.get("seed") != expected_seed:
-            raise ValueError("Example 15 seed results must be ordered 0, 1, 2")
+            raise ValueError("Example 15 seed results must be ordered 0, 1, 2. Set Example 15 seed results to ordered 0, 1, 2.")
         accuracy = _number(seed_result, "final_accuracy", "seed_result")
         if not 0.0 <= accuracy <= 1.0:
-            raise ValueError("Example 15 accuracy must lie in [0, 1]")
+            raise ValueError("Example 15 accuracy must lie in [0, 1]. Set Example 15 accuracy to a value in [0, 1].")
         losses = seed_result.get("losses")
         if not isinstance(losses, list) or len(losses) != 5:
-            raise ValueError("each Example 15 seed must contain five epoch losses")
+            raise ValueError("Each Example 15 seed must contain five epoch losses. Add five epoch losses to Each Example 15 seed.")
         if any(
             isinstance(value, bool) or not isinstance(value, (int, float))
             for value in losses
         ):
-            raise ValueError("Example 15 epoch losses must be numeric")
+            raise ValueError("Example 15 epoch losses must be numeric. Set Example 15 epoch losses to numeric.")
         losses_decrease &= float(losses[-1]) < float(losses[0])
         changed = seed_result.get("recurrent_values_changed")
         recurrent_changes &= (
@@ -122,18 +122,18 @@ def validate_example15_run(
         or document.get("development_only") is not True
         or document.get("sealed_test") is not False
     ):
-        raise ValueError("unsupported Example 15 run schema")
+        raise ValueError("Unsupported Example 15 run schema. Use a supported option or change the configuration.")
     _finite_tree(document)
     environment = _validate_environment(document)
     if document.get("fixed_config") != fixed_config_document():
-        raise ValueError("Example 15 run does not match the fixed numerical profile")
+        raise ValueError("Example 15 run does not match the fixed numerical profile. Use matching values and structures.")
     source_hash = document.get("example_source_sha256")
     if not _is_sha256(source_hash):
-        raise ValueError("Example 15 source SHA-256 is required")
+        raise ValueError("Example 15 source SHA-256 is required. Fix the input condition named in the error, then rerun the operation.")
     assert isinstance(source_hash, str)
     result = _mapping(document.get("result"), "result")
     if result.get("status") != "completed":
-        raise ValueError("Example 15 run did not complete")
+        raise ValueError("Example 15 run did not complete. Fix the input condition named in the error, then rerun the operation.")
     accuracies, per_seed_pass = _validate_seed_results(result)
     mean = statistics.fmean(accuracies)
     minimum = min(accuracies)
@@ -141,12 +141,12 @@ def validate_example15_run(
     recorded_minimum = _number(result, "minimum_accuracy", "result")
     recorded_std = _number(result, "std_accuracy", "result")
     if not math.isclose(mean, recorded_mean, abs_tol=1e-12):
-        raise ValueError("Example 15 mean accuracy does not match its seed results")
+        raise ValueError("Example 15 mean accuracy does not match its seed results. Use matching values and structures.")
     if not math.isclose(minimum, recorded_minimum, abs_tol=1e-12):
-        raise ValueError("Example 15 minimum accuracy does not match its seed results")
+        raise ValueError("Example 15 minimum accuracy does not match its seed results. Use matching values and structures.")
     if not math.isclose(statistics.pstdev(accuracies), recorded_std, abs_tol=1e-12):
         raise ValueError(
-            "Example 15 accuracy deviation does not match its seed results"
+            "Example 15 accuracy deviation does not match its seed results. Use matching values and structures."
         )
     acceptance = (
         per_seed_pass
@@ -157,7 +157,7 @@ def validate_example15_run(
     accepted = document.get("accepted_baseline") is True
     if require_accepted_baseline:
         if not accepted or environment.get("source_dirty") is not False:
-            raise ValueError("baseline must be explicitly accepted from clean source")
+            raise ValueError("Baseline must be explicitly accepted from clean source. Set Baseline to explicitly accepted from clean source.")
         baseline = _mapping(document.get("baseline_acceptance"), "baseline_acceptance")
         if (
             baseline.get("acceptance_checks_passed") is not True
@@ -166,7 +166,7 @@ def validate_example15_run(
             or not _is_sha256(baseline.get("candidate_sha256"))
             or not acceptance
         ):
-            raise ValueError("accepted baseline must pass Example 15 acceptance")
+            raise ValueError("Accepted baseline must pass Example 15 acceptance")
     return Example15RunEvidence(
         mean,
         minimum,
@@ -184,11 +184,11 @@ def accept_example15_baseline(
     """Explicitly promote one clean passing run to baseline status."""
     evidence = validate_example15_run(candidate)
     if evidence.environment.get("source_dirty") is not False:
-        raise ValueError("baseline candidate must come from a clean source tree")
+        raise ValueError("Baseline candidate must come from a clean source tree. Set Baseline candidate to come from a clean source tree.")
     if not evidence.acceptance_passed:
-        raise ValueError("baseline candidate must pass Example 15 acceptance")
+        raise ValueError("Baseline candidate must pass Example 15 acceptance")
     if not _is_sha256(candidate_sha256):
-        raise ValueError("candidate SHA-256 is required")
+        raise ValueError("Candidate SHA-256 is required. Fix the input condition named in the error, then rerun the operation.")
     accepted = copy.deepcopy(dict(candidate))
     accepted["accepted_baseline"] = True
     accepted["baseline_acceptance"] = {
@@ -207,7 +207,7 @@ def compare_example15_runs(
 ) -> dict[str, object]:
     """Compare fixed-profile mean accuracy against a pinned accepted baseline."""
     if not _is_sha256(baseline_sha256) or not _is_sha256(current_sha256):
-        raise ValueError("baseline and current artifact SHA-256 values are required")
+        raise ValueError("Baseline and current artifact SHA-256 values are required. Fix the input condition named in the error, then rerun the operation.")
     baseline_evidence = validate_example15_run(baseline, require_accepted_baseline=True)
     current_evidence = validate_example15_run(current)
     change = current_evidence.mean_accuracy - baseline_evidence.mean_accuracy
@@ -250,7 +250,7 @@ def validated_accuracy_change(document: Mapping[str, object]) -> float:
         or document.get("sealed_test") is not False
         or document.get("fixed_config") != fixed_config_document()
     ):
-        raise ValueError("unsupported Example 15 static-control schema")
+        raise ValueError("Unsupported Example 15 static-control schema. Use a supported option or change the configuration.")
     _finite_tree(document)
     baseline = _mapping(document.get("baseline"), "baseline")
     current = _mapping(document.get("current"), "current")
@@ -262,23 +262,23 @@ def validated_accuracy_change(document: Mapping[str, object]) -> float:
         )
         is not False
     ):
-        raise ValueError("static control lacks an accepted passing baseline")
+        raise ValueError("Static control lacks an accepted passing baseline. Provide the missing item named in the message.")
     baseline_mean = _number(baseline, "mean_accuracy", "baseline")
     current_mean = _number(current, "mean_accuracy", "current")
     change = _number(document, "example15_accuracy_change", "root")
     if not math.isclose(change, current_mean - baseline_mean, abs_tol=1e-12):
-        raise ValueError("static-control accuracy change is inconsistent")
+        raise ValueError("Static-control accuracy change is inconsistent")
     if document.get("static_control_gate_passed") is not (change >= -0.01):
-        raise ValueError("static-control gate is inconsistent")
+        raise ValueError("Static-control gate is inconsistent. Use matching values and structures.")
     for side in (baseline, current):
         artifact_hash = side.get("artifact_sha256")
         provenance = _mapping(side.get("provenance"), "provenance")
         if not _is_sha256(artifact_hash):
-            raise ValueError("static-control artifact SHA-256 is required")
+            raise ValueError("Static-control artifact SHA-256 is required. Fix the input condition named in the error, then rerun the operation.")
         if not isinstance(provenance.get("source_dirty"), bool):
-            raise ValueError("static-control provenance is incomplete")
+            raise ValueError("Static-control provenance is incomplete. Fix the input condition named in the error, then rerun the operation.")
         for key in ("source_commit", "container_image_digest"):
             value = provenance.get(key)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError("static-control provenance is incomplete")
+                raise ValueError("Static-control provenance is incomplete. Fix the input condition named in the error, then rerun the operation.")
     return change

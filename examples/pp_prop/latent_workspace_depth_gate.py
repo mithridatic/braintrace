@@ -176,7 +176,7 @@ class DepthGateConfig:
         for name in integer_fields:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
-                raise ValueError(f"DepthGateConfig.{name} must be an integer")
+                raise ValueError(f"DepthGateConfig.{name} must be an integer. Set DepthGateConfig.{name} to an integer.")
             object.__setattr__(self, name, int(value))
         real_fields = (
             "memory_decay",
@@ -189,30 +189,30 @@ class DepthGateConfig:
         for name in real_fields:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float, np.number)):
-                raise ValueError(f"DepthGateConfig.{name} must be a real number")
+                raise ValueError(f"DepthGateConfig.{name} must be a real number. Set DepthGateConfig.{name} to a real number.")
             value = float(value)
             if not math.isfinite(value):
-                raise ValueError(f"DepthGateConfig.{name} must be finite")
+                raise ValueError(f"DepthGateConfig.{name} must be finite. Use finite values for DepthGateConfig.{name}.")
             object.__setattr__(self, name, value)
         if self.training_updates <= 0 or self.batch_size <= 0:
-            raise ValueError("training_updates and batch_size must be positive")
+            raise ValueError("training_updates and batch_size must be positive. Set training_updates and batch_size to a positive value.")
         if self.validation_episodes <= 0:
-            raise ValueError("validation_episodes must be positive")
+            raise ValueError("validation_episodes must be positive. Set validation_episodes to a positive value.")
         if self.gap_steps != 8:
-            raise ValueError("Gate B requires eight latent steps")
+            raise ValueError("Gate B requires eight latent steps. Provide the required value for Gate B.")
         if self.staging_chunk_updates <= 0:
-            raise ValueError("staging_chunk_updates must be positive")
+            raise ValueError("staging_chunk_updates must be positive. Set staging_chunk_updates to a positive value.")
         if (
             self.training_updates == 4_096
             and self.training_updates % self.staging_chunk_updates
         ):
-            raise ValueError("the production schedule must divide into fixed chunks")
+            raise ValueError("The production schedule must divide into fixed chunks. Make the production schedule divide into fixed chunks.")
         if self.training_episode_count + self.validation_episodes > TEN_CYCLE_CATALOG_SIZE:
-            raise ValueError("Gate B episode count exceeds the finite 10-cycle catalog")
+            raise ValueError("Gate B episode count exceeds the finite 10-cycle catalog. Set the named field to a value in the stated range, then rerun the operation.")
         if self.row_config.max_demonstrations != 10:
-            raise ValueError("Gate B requires ten demonstration bindings")
+            raise ValueError("Gate B requires ten demonstration bindings. Provide the required value for Gate B.")
         if self.row_config.max_grid_size != 1:
-            raise ValueError("Gate B requires one-cell grids")
+            raise ValueError("Gate B requires one-cell grids. Provide the required value for Gate B.")
 
     @property
     def sequence_length(self) -> int:
@@ -370,7 +370,7 @@ class DepthTrainingChunk:
     ----------
     events
         Row events with shape ``(updates, 19, batch, input_width)``.
-    targets
+    Targets
         Per-checkpoint color targets with shape ``(updates, 19, batch)``.
     loss_weights
         Per-update temporal masks with shape ``(updates, 19)``.
@@ -530,10 +530,10 @@ def unrank_ten_cycle(mapping_id: int) -> np.ndarray:
     """
 
     if isinstance(mapping_id, bool) or not isinstance(mapping_id, (int, np.integer)):
-        raise ValueError("mapping ID must be an integer in the 10-cycle catalog")
+        raise ValueError("Mapping ID must be an integer in the 10-cycle catalog. Set Mapping ID to an integer in the 10-cycle catalog.")
     rank = int(mapping_id)
     if not 0 <= rank < TEN_CYCLE_CATALOG_SIZE:
-        raise ValueError("mapping ID is outside the 10-cycle catalog")
+        raise ValueError("Mapping ID is outside the 10-cycle catalog. Set the named field to a value in the stated range, then rerun the operation.")
     remaining = list(range(1, 10))
     order = [0]
     for width in range(9, 0, -1):
@@ -551,9 +551,9 @@ def _decode_ten_cycle_batch(mapping_ids: np.ndarray) -> np.ndarray:
 
     ranks_array = np.asarray(mapping_ids)
     if not np.issubdtype(ranks_array.dtype, np.integer):
-        raise ValueError("mapping IDs must be integer catalog ranks")
+        raise ValueError("Mapping IDs must be integer catalog ranks. Set Mapping IDs to integer catalog ranks.")
     if np.any(ranks_array < 0) or np.any(ranks_array >= TEN_CYCLE_CATALOG_SIZE):
-        raise ValueError("mapping ID is outside the 10-cycle catalog")
+        raise ValueError("Mapping ID is outside the 10-cycle catalog. Set the named field to a value in the stated range, then rerun the operation.")
 
     original_shape = ranks_array.shape
     flat_ranks = ranks_array.astype(np.int64, copy=True).reshape(-1)
@@ -597,18 +597,18 @@ def rank_ten_cycle(mapping: np.ndarray) -> int:
 
     array = np.asarray(mapping)
     if array.shape != (10,) or not np.issubdtype(array.dtype, np.integer):
-        raise ValueError("mapping must be an integer successor array of shape (10,)")
+        raise ValueError("Mapping must be an integer successor array of shape (10,). Set Mapping to an integer successor array of shape (10,).")
     if sorted(array.astype(int).tolist()) != list(range(10)):
-        raise ValueError("mapping must be a permutation of all ten colors")
+        raise ValueError("Mapping must be a permutation of all ten colors. Set Mapping to a permutation of all ten colors.")
     order = [0]
     value = 0
     for _ in range(9):
         value = int(array[value])
         if value == 0 or value in order:
-            raise ValueError("mapping must contain one single 10-cycle")
+            raise ValueError("Mapping must contain one single 10-cycle. Add one single 10-cycle to Mapping.")
         order.append(value)
     if int(array[order[-1]]) != 0:
-        raise ValueError("mapping must return to zero after ten colors")
+        raise ValueError("Mapping must return to zero after ten colors. Make Mapping return to zero after ten colors.")
     remaining = list(range(1, 10))
     rank = 0
     for position, value in enumerate(order[1:]):
@@ -631,12 +631,12 @@ def _select_shuffled_rotation(
 ) -> tuple[int, np.ndarray]:
     array = np.asarray(mapping, dtype=np.int32)
     if array.shape != (10,):
-        raise ValueError("mapping must have shape (10,)")
+        raise ValueError("Mapping must have shape (10,). Ensure Mapping has shape (10,).")
     if isinstance(query_color, bool) or not isinstance(query_color, (int, np.integer)):
-        raise ValueError("query color must be an integer")
+        raise ValueError("Query color must be an integer. Set Query color to an integer.")
     query = int(query_color)
     if not 0 <= query < 10:
-        raise ValueError("query color must be in 0..9")
+        raise ValueError("Query color must be in 0..9. Set Query color in 0..9.")
     for shift in range(1, 10):
         shuffled = (array + shift) % 10
         if not np.all(shuffled != array):
@@ -647,7 +647,7 @@ def _select_shuffled_rotation(
             for effort in QUALIFYING_EFFORTS
         ):
             return shift, shuffled.astype(np.int32)
-    raise ValueError("no shuffled rotation breaks every declared depth")
+    raise ValueError("No shuffled rotation breaks every declared depth. Provide the missing value or resource, then rerun the operation.")
 
 
 def _checkpoint_contract(
@@ -656,15 +656,15 @@ def _checkpoint_contract(
     effort: int,
 ) -> CheckpointContract:
     if effort not in QUALIFYING_EFFORTS:
-        raise ValueError("effort must be one of 1, 2, 4, or 8")
+        raise ValueError("Effort must be one of 1, 2, 4, or 8. Set Effort to one of 1, 2, 4, or 8.")
     array = np.asarray(mapping, dtype=np.int32)
     if array.shape != (10,):
-        raise ValueError("mapping must have shape (10,)")
+        raise ValueError("Mapping must have shape (10,). Ensure Mapping has shape (10,).")
     if isinstance(query_color, bool) or not isinstance(query_color, (int, np.integer)):
-        raise ValueError("query color must be an integer")
+        raise ValueError("Query color must be an integer. Set Query color to an integer.")
     query = int(query_color)
     if not 0 <= query < 10:
-        raise ValueError("query color must be in 0..9")
+        raise ValueError("Query color must be in 0..9. Set Query color in 0..9.")
     active_length = 11 + effort
     targets = np.zeros((19,), dtype=np.int32)
     weights = np.zeros((19,), dtype=np.float64)
@@ -737,32 +737,32 @@ def _encode_cycle_batch(
     queries = np.asarray(query_colors)
     orders = np.asarray(presentation_orders)
     if mappings_array.ndim != 2 or mappings_array.shape[1] != 10:
-        raise ValueError("batched mappings must have shape (episodes, 10)")
+        raise ValueError("Batched mappings must have shape (episodes, 10). Ensure Batched mappings has shape (episodes, 10).")
     episode_count = mappings_array.shape[0]
     if queries.shape != (episode_count,):
-        raise ValueError("batched query colors must have shape (episodes,)")
+        raise ValueError("Batched query colors must have shape (episodes,). Ensure Batched query colors has shape (episodes,).")
     if orders.shape != (episode_count, 10):
         raise ValueError(
-            "batched presentation orders must have shape (episodes, 10)"
+            "Batched presentation orders must have shape (episodes, 10). Ensure Batched presentation orders has shape (episodes, 10)."
         )
     if not np.issubdtype(mappings_array.dtype, np.integer):
-        raise ValueError("batched mappings must be integer arrays")
+        raise ValueError("Batched mappings must be integer arrays. Set Batched mappings to integer arrays.")
     if not np.issubdtype(queries.dtype, np.integer):
-        raise ValueError("batched query colors must be integer arrays")
+        raise ValueError("Batched query colors must be integer arrays. Set Batched query colors to integer arrays.")
     if not np.issubdtype(orders.dtype, np.integer):
-        raise ValueError("batched presentation orders must be integer arrays")
+        raise ValueError("Batched presentation orders must be integer arrays. Set Batched presentation orders to integer arrays.")
     if (
         row_config.max_demonstrations != 10
         or row_config.max_grid_size != 1
         or row_config.color_count != 10
     ):
-        raise ValueError("batched Gate B encoding requires the one-cell layout")
+        raise ValueError("Batched Gate B encoding requires the one-cell layout. Provide the required value for Batched Gate B encoding.")
     if np.any(mappings_array < 0) or np.any(mappings_array >= 10):
-        raise ValueError("batched mappings must contain ARC colors")
+        raise ValueError("Batched mappings must contain ARC colors. Add ARC colors to Batched mappings.")
     if np.any(queries < 0) or np.any(queries >= 10):
-        raise ValueError("batched query colors must contain ARC colors")
+        raise ValueError("Batched query colors must contain ARC colors. Add ARC colors to Batched query colors.")
     if np.any(orders < 0) or np.any(orders >= 10):
-        raise ValueError("batched presentation orders must contain ARC colors")
+        raise ValueError("Batched presentation orders must contain ARC colors. Add ARC colors to Batched presentation orders.")
 
     events = np.zeros(
         (11, episode_count, row_config.input_width),
@@ -856,14 +856,14 @@ def _cycle_targets_batch(
     mappings_array = np.asarray(mappings)
     queries = np.asarray(query_colors)
     if mappings_array.ndim != 2 or mappings_array.shape[1] != 10:
-        raise ValueError("batched mappings must have shape (episodes, 10)")
+        raise ValueError("Batched mappings must have shape (episodes, 10). Ensure Batched mappings has shape (episodes, 10).")
     if queries.shape != (mappings_array.shape[0],):
-        raise ValueError("batched query colors must have shape (episodes,)")
+        raise ValueError("Batched query colors must have shape (episodes,). Ensure Batched query colors has shape (episodes,).")
     if isinstance(depth_count, bool) or not isinstance(depth_count, (int, np.integer)):
-        raise ValueError("depth_count must be an integer")  # noqa: TRY004
+        raise ValueError("depth_count must be an integer. Set depth_count to an integer.")  # noqa: TRY004
     depth_count = int(depth_count)
     if depth_count < 1:
-        raise ValueError("depth_count must be positive")
+        raise ValueError("depth_count must be positive. Set depth_count to a positive value.")
     values = queries.astype(np.int32, copy=True)
     targets = np.empty((depth_count, mappings_array.shape[0]), dtype=np.int32)
     for depth_index in range(depth_count):
@@ -889,18 +889,18 @@ def _checkpoint_tensors_batch(
     queries = np.asarray(query_colors)
     effort_array = np.asarray(efforts)
     if mappings_array.ndim != 3 or mappings_array.shape[2] != 10:
-        raise ValueError("batched mappings must have shape (updates, batch, 10)")
+        raise ValueError("Batched mappings must have shape (updates, batch, 10). Ensure Batched mappings has shape (updates, batch, 10).")
     updates, batch_size, _ = mappings_array.shape
     if queries.shape != (updates, batch_size):
-        raise ValueError("batched query colors must match mappings")
+        raise ValueError("Batched query colors must match mappings. Make Batched query colors match mappings.")
     if effort_array.shape != (updates,):
-        raise ValueError("batched efforts must have shape (updates,)")
+        raise ValueError("Batched efforts must have shape (updates,). Ensure Batched efforts has shape (updates,).")
     if not np.issubdtype(effort_array.dtype, np.integer):
-        raise ValueError("batched efforts must be integer values")
+        raise ValueError("Batched efforts must be integer values. Set Batched efforts to integer values.")
     if np.any(~np.isin(effort_array, QUALIFYING_EFFORTS)):
-        raise ValueError("effort must be one of 1, 2, 4, or 8")
+        raise ValueError("Effort must be one of 1, 2, 4, or 8. Set Effort to one of 1, 2, 4, or 8.")
     if sequence_length < 11 or sequence_length - 11 not in (8,):
-        raise ValueError("Gate B checkpoint tensors require a 19-row sequence")
+        raise ValueError("Gate B checkpoint tensors require a 19-row sequence. Provide the required value for Gate B checkpoint tensors.")
 
     flat_mappings = mappings_array.reshape(-1, 10)
     flat_queries = queries.reshape(-1)
@@ -938,16 +938,16 @@ def _encode_training_chunk(
     query_colors = np.asarray(schedule_chunk.training_query_colors)
     presentation_orders = np.asarray(schedule_chunk.training_presentation_orders)
     if mapping_ids.ndim != 2:
-        raise ValueError("training mapping IDs must have shape (updates, batch)")
+        raise ValueError("Training mapping IDs must have shape (updates, batch). Ensure Training mapping IDs has shape (updates, batch).")
     update_count, batch_size = mapping_ids.shape
     if batch_size != config.batch_size:
-        raise ValueError("training chunk batch size differs from the configuration")
+        raise ValueError("Training chunk batch size differs from the configuration. Use matching values and structures.")
     if efforts.shape != (update_count,):
-        raise ValueError("training efforts must have shape (updates,)")
+        raise ValueError("Training efforts must have shape (updates,). Ensure Training efforts has shape (updates,).")
     if query_colors.shape != mapping_ids.shape:
-        raise ValueError("training query colors must match mapping ID shape")
+        raise ValueError("Training query colors must match mapping ID shape. Make Training query colors match mapping ID shape.")
     if presentation_orders.shape != (update_count, batch_size, 10):
-        raise ValueError("training presentation orders have the wrong shape")
+        raise ValueError("Training presentation orders have the wrong shape. Fix the input condition named in the error, then rerun the operation.")
 
     flat_mapping_ids = mapping_ids.reshape(-1)
     flat_query_colors = query_colors.reshape(-1)
@@ -964,7 +964,7 @@ def _encode_training_chunk(
         update_count * batch_size,
         config.row_config.input_width,
     ):
-        raise ValueError("encoded Gate B episode must contain exactly 11 rows")
+        raise ValueError("Encoded Gate B episode must contain exactly 11 rows. Add exactly 11 rows to Encoded Gate B episode.")
     events = np.zeros(
         (
             update_count,
@@ -1007,9 +1007,9 @@ def _encode_validation_data(
     presentation_orders = np.asarray(schedule.validation_presentation_orders)
     count = config.validation_episodes
     if mapping_ids.shape != (count,) or query_colors.shape != (count,):
-        raise ValueError("validation IDs and queries must match validation count")
+        raise ValueError("Validation IDs and queries must match validation count. Make Validation IDs and queries match validation count.")
     if presentation_orders.shape != (count, 10):
-        raise ValueError("validation presentation orders have the wrong shape")
+        raise ValueError("Validation presentation orders have the wrong shape. Fix the input condition named in the error, then rerun the operation.")
     shape = (config.sequence_length, count, config.row_config.input_width)
     intact = np.zeros(shape, dtype=np.float32)
     shuffled = np.zeros(shape, dtype=np.float32)
@@ -1028,7 +1028,7 @@ def _encode_validation_data(
             shuffled_answer = _iterate_mapping(shuffled_mapping, query, effort + 1)
             intact_answer = _iterate_mapping(mapping, query, effort + 1)
             if shuffled_answer == intact_answer:
-                raise ValueError("shuffled control retains an intact qualifying answer")
+                raise ValueError("Shuffled control retains an intact qualifying answer. Fix the input condition named in the error, then rerun the operation.")
     intact[:11] = _encode_cycle_batch(
         mappings,
         query_colors,
@@ -1154,7 +1154,7 @@ def _update_encoded_schedule_hash_state(
 ) -> None:
     chunk_updates = int(np.asarray(encoded.efforts).shape[0])
     if chunk_updates <= 0:
-        raise ValueError("encoded staging chunks must contain at least one update")
+        raise ValueError("Encoded staging chunks must contain at least one update. Add at least one update to Encoded staging chunks.")
     if state.chunk_count == 0:
         for field in _ENCODED_CHUNK_FIELDS:
             array = np.ascontiguousarray(getattr(encoded, field))
@@ -1174,9 +1174,9 @@ def _finish_encoded_schedule_report(
     config: DepthGateConfig,
 ) -> dict[str, Any]:
     if state.encoded_updates != config.training_updates:
-        raise ValueError("encoded chunks do not cover every scheduled update")
+        raise ValueError("Encoded chunks do not cover every scheduled update. Fix the input condition named in the error, then rerun the operation.")
     if state.chunk_count != config.staging_chunk_count:
-        raise ValueError("encoded chunk count differs from the configuration")
+        raise ValueError("Encoded chunk count differs from the configuration. Use matching values and structures.")
     return {
         "chunk_count": state.chunk_count,
         "chunk_updates": config.staging_chunk_updates,
@@ -1277,7 +1277,7 @@ class _DepthPPPropTrainer:
 def _tree_telemetry(value: Any) -> tuple[jax.Array, jax.Array, jax.Array]:
     leaves = tuple(jnp.asarray(leaf) for leaf in jax.tree.leaves(value))
     if not leaves:
-        raise RuntimeError("telemetry subject has no array leaves")
+        raise RuntimeError("Telemetry subject has no array leaves. Provide the missing item named in the message.")
     finite = jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
     maximum = jnp.max(
         jnp.stack(
@@ -1308,7 +1308,7 @@ def _make_pp_prop_trainer(
     missing_trace_paths = set(gate._STAGE21_TRACE_PATHS) - set(parameter_keys)
     if missing_trace_paths:
         raise RuntimeError(
-            f"trainer is missing pp-prop trace paths: {sorted(missing_trace_paths)}"
+            f"Trainer is missing pp-prop trace paths: {sorted(missing_trace_paths)}. Provide the missing value or resource, then rerun the operation."
         )
     model_states = tuple(
         state
@@ -1752,7 +1752,7 @@ def _validated_initialization_admission(
         "admission",
     }
     if not isinstance(prerequisite, Mapping) or set(prerequisite) != expected_keys:
-        raise ValueError("Gate B initialization prerequisite is not authenticated")
+        raise ValueError("Gate B initialization prerequisite is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     source_head = prerequisite["source_head"]
     image_digest = prerequisite["image_digest"]
     if (
@@ -1771,10 +1771,10 @@ def _validated_initialization_admission(
             )
         )
     ):
-        raise ValueError("Gate B initialization provenance fields are invalid")
+        raise ValueError("Gate B initialization provenance fields are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     admission = prerequisite["admission"]
     if not isinstance(admission, Mapping):
-        raise ValueError("Gate B initialization admission is missing")
+        raise ValueError("Gate B initialization admission is missing. Provide the missing value or resource, then rerun the operation.")
     if set(admission) != {
         "schema_version",
         "control",
@@ -1788,9 +1788,9 @@ def _validated_initialization_admission(
         "environment",
         "qualification",
     }:
-        raise ValueError("Gate B initialization admission schema is invalid")
+        raise ValueError("Gate B initialization admission schema is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     if _strict_json_sha256(admission) != prerequisite["result_sha256"]:
-        raise ValueError("Gate B initialization result digest is invalid")
+        raise ValueError("Gate B initialization result digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     expected_bundle = hashlib.sha256(
         (
             "example21-launch-bundle-v1\0gate_b_init\0"
@@ -1799,12 +1799,12 @@ def _validated_initialization_admission(
         ).encode()
     ).hexdigest()
     if prerequisite["bundle_sha256"] != expected_bundle:
-        raise ValueError("Gate B initialization bundle digest is invalid")
+        raise ValueError("Gate B initialization bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     qualification = _gate_b_initialization_qualification(admission, config)
     if not gate._json_exact(admission["qualification"], qualification):
-        raise ValueError("Gate B initialization qualification is stale")
+        raise ValueError("Gate B initialization qualification is stale. Fix the input condition named in the error, then rerun the operation.")
     if require_pass and qualification["passed"] is not True:
-        raise ValueError("Gate B initialization admission did not pass")
+        raise ValueError("Gate B initialization admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     if (
         admission["source_start"]["commit"] != source_head
         or admission["source_end"]["commit"] != source_head
@@ -1812,7 +1812,7 @@ def _validated_initialization_admission(
         or source_start["commit"] != source_head
         or environment["image_digest"] != image_digest
     ):
-        raise ValueError("Gate B initialization source or image differs")
+        raise ValueError("Gate B initialization source or image differs. Use matching values and structures.")
     return admission
 
 
@@ -2161,11 +2161,11 @@ def _gate_b_initialization_report(
     environment: Mapping[str, Any],
 ) -> dict[str, Any]:
     if not callable(source_end_reporter):
-        raise TypeError("source_end_reporter must be callable")
+        raise TypeError("source_end_reporter must be callable. Pass a callable value for source_end_reporter.")
     initialization = _initialization_report(model, config)
     source_end = source_end_reporter()
     if not isinstance(source_end, Mapping):
-        raise TypeError("source_end_reporter must return a mapping")
+        raise TypeError("source_end_reporter must return a mapping. Make source_end_reporter return a mapping.")
     report = {
         "schema_version": GATE_B_SCHEMA_VERSION,
         "control": GATE_B_INITIALIZATION_CONTROL,
@@ -2443,7 +2443,7 @@ def run_depth_gate(
     ----------
     config
         Frozen production configuration or an explicitly nonqualifying smoke.
-    prerequisites
+    Prerequisites
         Authenticated Gate A and Gate B initialization evidence.
     source_start
         Clean live-Git report captured before the run.
@@ -2451,7 +2451,7 @@ def run_depth_gate(
         Zero-argument callback that captures live Git after evaluation.
     source_files
         Frozen model and task source digests.
-    environment
+    Environment
         Authenticated accelerator and immutable-image evidence.
 
     Returns
@@ -2461,7 +2461,7 @@ def run_depth_gate(
     """
 
     if not callable(source_end_reporter):
-        raise TypeError("source_end_reporter must be callable")
+        raise TypeError("source_end_reporter must be callable. Pass a callable value for source_end_reporter.")
     start = time.perf_counter()
     try:
         initialization_prerequisite = prerequisites["gate_b_initialization"]
@@ -2474,7 +2474,7 @@ def run_depth_gate(
         )
     except (KeyError, TypeError, ValueError, OverflowError) as error:
         raise RuntimeError(
-            "Gate B initialization admission authentication failed"
+            "Gate B initialization admission authentication failed. Correct the reported inputs, then retry the operation."
         ) from error
     gate_b_initialization = initialization_admission["initialization"]
     model = LatentWorkspaceModel(
@@ -2513,10 +2513,10 @@ def run_depth_gate(
         )
     except (KeyError, TypeError, ValueError, OverflowError) as error:
         raise RuntimeError(
-            "Gate B runtime initialization differs from admission"
+            "Gate B runtime initialization differs from admission. Use matching values and structures."
         ) from error
     if not runtime_initialization_matches:
-        raise RuntimeError("Gate B runtime initialization differs from admission")
+        raise RuntimeError("Gate B runtime initialization differs from admission. Use matching values and structures.")
     if config.qualification_regime == "preregistered_full" and not (
         _gate_a_prerequisite_complete(prerequisites["gate_a"], config)
         and gate._source_evidence_clean(source_start)
@@ -2530,7 +2530,7 @@ def run_depth_gate(
         )
         and _compiler_evidence_complete(gate_b_initialization["compiler"])
     ):
-        raise RuntimeError("Gate B authentication failed before training")
+        raise RuntimeError("Gate B authentication failed before training. Correct the reported inputs, then retry the operation.")
 
     schedule = _build_schedule(config)
     training, schedule_report = _train_depth_gate(model, schedule, config)
@@ -2538,7 +2538,7 @@ def run_depth_gate(
     evaluation = _evaluate_model(model, validation, config)
     source_end = source_end_reporter()
     if not isinstance(source_end, Mapping):
-        raise TypeError("source_end_reporter must return a mapping")
+        raise TypeError("source_end_reporter must return a mapping. Make source_end_reporter return a mapping.")
     evaluation["initialization_parameter_sha256"] = initial_sha
     data = {
         "schedule": schedule_report,
@@ -2587,7 +2587,7 @@ def _source_files_report(config: DepthGateConfig) -> dict[str, str]:
         "latent_workspace_task.py": config.task_source_sha256,
     }
     if config.qualification_regime == "preregistered_full" and result != expected:
-        raise RuntimeError("Gate B model or task source digest changed")
+        raise RuntimeError("Gate B model or task source digest changed. Fix the input condition named in the error, then rerun the operation.")
     return result
 
 
@@ -2598,7 +2598,7 @@ def write_artifact(value: Mapping[str, Any], path: str | Path) -> Path:
     ----------
     value
         JSON-compatible top-level mapping. NaN and infinity are rejected.
-    path
+    Path
         Final artifact path.
 
     Returns
@@ -2665,9 +2665,9 @@ def main(argv: list[str] | None = None) -> int:
 
     args = _parser().parse_args(argv)
     if args.target == "gate_b_init" and args.gate_b_init_manifest is not None:
-        raise ValueError("gate_b_init target rejects an initialization manifest")
+        raise ValueError("gate_b_init target rejects an initialization manifest. Fix the input condition named in the error, then rerun the operation.")
     if args.target == "formal_gate_b" and args.gate_b_init_manifest is None:
-        raise ValueError("formal_gate_b target requires an initialization manifest")
+        raise ValueError("formal_gate_b target requires an initialization manifest. Provide the required value for formal_gate_b target.")
 
     repo_root = Path(__file__).resolve().parents[2]
     launch_config = launcher.LaunchConfig(
@@ -2680,7 +2680,7 @@ def main(argv: list[str] | None = None) -> int:
         args.gate_a_result.resolve() != gate_a_paths.result.resolve()
         or args.gate_a_manifest.resolve() != gate_a_paths.manifest.resolve()
     ):
-        raise ValueError("Gate B target requires the fixed Gate A artifact paths")
+        raise ValueError("Gate B target requires the fixed Gate A artifact paths. Provide the required value for Gate B target.")
 
     source_start = gate._source_report()
     environment = gate._environment_report()
@@ -2688,13 +2688,13 @@ def main(argv: list[str] | None = None) -> int:
     head = str(source_start["commit"])
     expected_paths = launcher.target_paths(launch_config, head, args.target)
     if args.output.resolve() != expected_paths.result.resolve():
-        raise ValueError("Gate B target requires the fixed output path")
+        raise ValueError("Gate B target requires the fixed output path. Provide the required value for Gate B target.")
     if args.target == "formal_gate_b":
         expected_init = launcher.target_paths(
             launch_config, head, "gate_b_init"
         ).manifest
         if args.gate_b_init_manifest.resolve() != expected_init.resolve():
-            raise ValueError("formal_gate_b requires the fixed initialization manifest")
+            raise ValueError("formal_gate_b requires the fixed initialization manifest. Provide the required value for formal_gate_b.")
 
     gate_a = launcher._load_gate_a_prerequisite(launch_config)
     config = DepthGateConfig()

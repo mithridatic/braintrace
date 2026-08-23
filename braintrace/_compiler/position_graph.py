@@ -110,9 +110,9 @@ DEFAULT_MAX_JACOBIAN_ELEMENTS = 1 << 24
 
 def _validate_max_jacobian_elements(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, Integral):
-        raise TypeError('snap_max_jacobian_elements must be an integer.')
+        raise TypeError('snap_max_jacobian_elements must be an integer. Set snap_max_jacobian_elements to an integer.')
     if value < 1:
-        raise ValueError('snap_max_jacobian_elements must be at least 1.')
+        raise ValueError('snap_max_jacobian_elements must be at least 1. Set snap_max_jacobian_elements to at least 1.')
     return int(value)
 
 # Equations that map position ``p`` of their input to position ``p`` of their
@@ -121,23 +121,23 @@ def _validate_max_jacobian_elements(value: object) -> int:
 # preservation (``rev`` reverses an axis, ``transpose`` of a square array
 # permutes positions, ``sort`` reorders them -- all shape-preserving).
 _POSITION_PRESERVING_PRIMITIVES = frozenset({
-    # arithmetic
+    # Arithmetic
     'add', 'add_any', 'sub', 'mul', 'div', 'rem', 'pow', 'integer_pow',
     'neg', 'abs', 'sign', 'max', 'min', 'nextafter',
-    # exponential / logarithmic / power
+    # Exponential / logarithmic / power
     'exp', 'exp2', 'expm1', 'log', 'log1p', 'logistic', 'sqrt', 'rsqrt', 'cbrt',
     'square',
-    # trigonometric / hyperbolic
+    # Trigonometric / hyperbolic
     'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
     'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
-    # special
+    # Special
     'erf', 'erfc', 'erf_inv', 'lgamma', 'digamma', 'exprel',
-    # rounding / clamping / selection
+    # Rounding / clamping / selection
     'floor', 'ceil', 'round', 'clamp', 'select_n',
-    # comparison / logical
+    # Comparison / logical
     'eq', 'ne', 'lt', 'le', 'gt', 'ge', 'and', 'or', 'xor', 'not',
     'is_finite',
-    # structural no-ops
+    # Structural no-ops
     'broadcast_in_dim', 'convert_element_type', 'stop_gradient', 'copy',
     'real', 'imag', 'conj',
 })
@@ -282,7 +282,7 @@ def _is_position_preserving(
         aval = getattr(v, 'aval', None)
         shape = tuple(getattr(aval, 'shape', ()))
         if shape == ():
-            continue  # a scalar operand broadcasts to every position alike
+            continue  # A scalar operand broadcasts to every position alike
         try:
             broadcast_shape = np.broadcast_shapes(shape, varshape)
         except ValueError:
@@ -411,7 +411,7 @@ def analyze_position_adjacency(
     """
     varshape = tuple(int(d) for d in varshape)
     if not varshape:
-        # a single position: nothing can couple to anything
+        # A single position: nothing can couple to anything
         return AxisAdjacency(axes=(), conservative=False, reason='')
 
     seeds = list(transition_jaxpr.invars if hidden_invars is None else hidden_invars)
@@ -544,7 +544,7 @@ def close_adjacency(
         If ``n < 1``.
     """
     if n < 1:
-        raise ValueError(f'SnAp order n must be at least 1, got {n}.')
+        raise ValueError(f'SnAp order n must be at least 1, got {n}. Set SnAp order n to at least 1.')
     closed: List[np.ndarray] = []
     for a in axes:
         a = np.asarray(a, dtype=bool)
@@ -702,12 +702,12 @@ def build_snap_pattern(
             int(sum(int(q) * s for q, s in zip(combo, strides)))
             for combo in itertools.product(*per_axis)
         )
-        # self first, so slot 0 always carries the instantaneous term
+        # Self first, so slot 0 always carries the instantaneous term
         flat_q.remove(flat_p)
         flat_q.insert(0, flat_p)
         neighbours[flat_p, :len(flat_q)] = flat_q
         valid[flat_p, :len(flat_q)] = True
-        neighbours[flat_p, len(flat_q):] = flat_p  # in-range dummy for the gather
+        neighbours[flat_p, len(flat_q):] = flat_p  # In-range dummy for the gather
 
     return SnapPattern(
         n=n,

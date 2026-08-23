@@ -19,7 +19,7 @@ import brainstate
 import braintools
 import jax
 import matplotlib
-matplotlib.use('Agg')  # headless backend: render to file, no display needed
+matplotlib.use('Agg')  # Headless backend: render to file, no display needed
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -75,15 +75,15 @@ class Trainer(object):
     ):
         super().__init__()
 
-        # target network
+        # Target network
         self.target = target
 
-        # optimizer
+        # Optimizer
         self.opt = opt
         weights = self.target.states().subset(brainstate.ParamState)
         opt.register_trainable_weights(weights)
 
-        # training parameters
+        # Training parameters
         self.n_epochs = n_epochs
         self.n_seq = n_seq
         self.batch_size = batch_size
@@ -98,7 +98,7 @@ class Trainer(object):
         for i, (x_local, y_local) in bar:
             if i == self.n_epochs:
                 break
-            # training
+            # Training
             x_local = jax.numpy.asarray(np.transpose(x_local, (1, 0, 2)))
             y_local = jax.numpy.asarray(np.transpose(y_local, (1, 0)))
             r = self.batch_train(x_local, y_local)
@@ -125,7 +125,7 @@ class OnlineTrainer(Trainer):
                                        vjp_method=self.vjp_method)
 
         elif self.batch_train_method == 'batch':
-            # 同一个调用，只是没有 vmap：模型自己看到 batch 维度
+            # 同一个调用，只是没有 Vmap：模型自己看到 batch 维度
             model = braintrace.compile(self.target, braintrace.ParamDimVjpAlgorithm, inputs[0],
                                        batch_size=inputs.shape[1],
                                        vjp_method=self.vjp_method)
@@ -134,10 +134,10 @@ class OnlineTrainer(Trainer):
             raise ValueError
 
         def _etrace_loss(inp, tar):
-            # call the model
+            # Call the model
             out = model(inp)
 
-            # calculate the loss
+            # Calculate the loss
             return braintools.metric.softmax_cross_entropy_with_integer_labels(out, tar).mean()
 
         def _etrace_train(inputs_):
@@ -179,7 +179,7 @@ class BPTTTrainer(Trainer):
         # 需要求解梯度的参数
         weights = self.target.states(brainstate.ParamState)
 
-        # kept manual: BPTT baseline — no online algorithm to migrate
+        # Kept manual: BPTT baseline — no online algorithm to migrate
         # initialize the states
         @brainstate.transform.vmap_new_states(state_tag='new', axis_size=inputs.shape[1])
         def init():
@@ -205,10 +205,10 @@ class BPTTTrainer(Trainer):
             outs, losses = brainstate.transform.for_loop(_run_step_train, inputs[n_sim:], targets)
             return losses.mean(), outs
 
-        # gradients
+        # Gradients
         grads, loss, outs = brainstate.transform.grad(_bptt_grad_step, weights, has_aux=True, return_value=True)()
 
-        # optimization
+        # Optimization
         self.opt.update(grads)
 
         return loss

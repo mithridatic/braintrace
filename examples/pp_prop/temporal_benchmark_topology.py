@@ -39,9 +39,9 @@ def fixed_degree_topology(
 ) -> FixedDegreeTopology:
     """Build unique per-row neighbors without self-loops or a dense mask."""
     if neurons <= 1 or degree <= 0 or degree >= neurons:
-        raise ValueError("require neurons > 1 and 0 < degree < neurons")
+        raise ValueError("Require neurons > 1 and 0 < degree < neurons. Fix the input condition named in the error, then rerun the operation.")
     if not math.isfinite(gain) or gain <= 0.0:
-        raise ValueError("gain must be finite and positive")
+        raise ValueError("Gain must be finite and positive. Set Gain to a finite positive value.")
     topology_random = np.random.default_rng(topology_seed)
     rows = np.empty((neurons, degree), dtype=np.int32)
     for row in range(neurons):
@@ -70,7 +70,7 @@ def sparse_power_gain_estimate(
 ) -> float:
     """Estimate recurrent operator gain by normalized sparse power iteration."""
     if iterations <= 0:
-        raise ValueError("iterations must be positive")
+        raise ValueError("Iterations must be positive. Set Iterations to a positive value.")
     from scipy.sparse import csr_matrix
 
     matrix = csr_matrix(

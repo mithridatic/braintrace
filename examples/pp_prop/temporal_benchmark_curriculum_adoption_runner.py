@@ -70,7 +70,7 @@ def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
 
 def _mapping(value: object, location: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
-        raise RunEvidenceError(f"{location} must be an object")
+        raise RunEvidenceError(f"{location} must be an object. Set {location} to an object.")
     return value
 
 
@@ -80,10 +80,10 @@ def _accuracy(result: Mapping[str, object], location: str) -> float:
     )
     value = validation.get("ensemble_accuracy")
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise RunEvidenceError(f"{location} accuracy must be numeric")
+        raise RunEvidenceError(f"{location} accuracy must be numeric. Set {location} accuracy to numeric.")
     accuracy = float(value)
     if not 0.0 <= accuracy <= 1.0:
-        raise RunEvidenceError(f"{location} accuracy is outside [0, 1]")
+        raise RunEvidenceError(f"{location} accuracy is outside [0, 1]. Set the named field to a value in the stated range, then rerun the operation.")
     return accuracy
 
 
@@ -91,7 +91,7 @@ def _optional_tick(value: object, location: str) -> int | None:
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise RunEvidenceError(f"{location} must be a positive integer or null")
+        raise RunEvidenceError(f"{location} must be a positive integer or null. Set {location} to a positive integer or null.")
     return value
 
 
@@ -111,7 +111,7 @@ def _validate_provenance(
     )
     if actual != expected:
         raise ResumeConfigurationError(
-            "raw curriculum result provenance does not match the requested source"
+            "Raw curriculum result provenance does not match the requested source. Use matching values and structures."
         )
 
 
@@ -126,16 +126,16 @@ def _validate_budget(budget: Mapping[str, object], batch_size: int) -> tuple[int
         ticks = phase.get("sample_ticks")
         if isinstance(updates, bool) or not isinstance(updates, int) or updates <= 0:
             raise RunEvidenceError(
-                "sample-tick phase updates must be positive integers"
+                "Sample-tick phase updates must be positive integers. Set Sample-tick phase updates to a positive value."
             )
         expected = updates * batch_size * HORIZONS[horizon].total_steps
         if ticks != expected:
-            raise RunEvidenceError("sample-tick phase arithmetic does not match")
+            raise RunEvidenceError("Sample-tick phase arithmetic does not match. Use matching values and structures.")
         total += expected
     direct = _mapping(budget.get("direct_long"), "sample_tick_budget.direct_long")
     updates = direct.get("updates")
     if isinstance(updates, bool) or not isinstance(updates, int) or updates <= 0:
-        raise RunEvidenceError("direct-long updates must be a positive integer")
+        raise RunEvidenceError("Direct-long updates must be a positive integer. Set Direct-long updates to a positive integer.")
     direct_total = updates * batch_size * HORIZONS["long"].total_steps
     if (
         budget.get("curriculum_total_sample_ticks") != total
@@ -143,7 +143,7 @@ def _validate_budget(budget: Mapping[str, object], batch_size: int) -> tuple[int
         or total != direct_total
         or budget.get("exact_match") is not True
     ):
-        raise RunEvidenceError("curriculum and direct sample-tick budgets do not match")
+        raise RunEvidenceError("Curriculum and direct sample-tick budgets do not match. Fix the input condition named in the error, then rerun the operation.")
     return total, updates
 
 
@@ -162,43 +162,43 @@ def validate_curriculum_bundle_document(
         or document.get("development_only") is not True
         or document.get("sealed_test") is not False
     ):
-        raise RunEvidenceError("raw curriculum result has an unsupported schema")
+        raise RunEvidenceError("Raw curriculum result has an unsupported schema. Use a supported option or change the configuration.")
     _validate_provenance(document, settings)
     if document.get("selected_config") != selected_config_document(settings):
         raise ResumeConfigurationError(
-            "raw curriculum result selected configuration does not exactly match"
+            "Raw curriculum result selected configuration does not exactly match. Fix the input condition named in the error, then rerun the operation."
         )
     ensure_finite(document)
     result = _mapping(document.get("result"), "result")
     expected = expected_curriculum_config(settings, bundle_id)
     if result.get("base_config") != config_to_dict(expected):
         raise ResumeConfigurationError(
-            "raw curriculum result base configuration does not exactly match"
+            "Raw curriculum result base configuration does not exactly match. Fix the input condition named in the error, then rerun the operation."
         )
     if result.get("status") != "completed" or result.get("bundle_id") != bundle_id:
-        raise RunEvidenceError("paired curriculum bundle did not complete")
+        raise RunEvidenceError("Paired curriculum bundle did not complete. Fix the input condition named in the error, then rerun the operation.")
     if result.get("sealed_test_metrics") is not None:
-        raise RunEvidenceError("development comparison materialized sealed metrics")
+        raise RunEvidenceError("Development comparison materialized sealed metrics. Fix the input condition named in the error, then rerun the operation.")
     curriculum = _mapping(result.get("curriculum"), "result.curriculum")
     direct = _mapping(result.get("direct_long"), "result.direct_long")
     if curriculum.get("config") != config_to_dict(expected):
-        raise ResumeConfigurationError("curriculum child configuration drifted")
+        raise ResumeConfigurationError("Curriculum child configuration drifted. Fix the input condition named in the error, then rerun the operation.")
     budget = _mapping(result.get("sample_tick_budget"), "result.sample_tick_budget")
     total_ticks, direct_updates = _validate_budget(budget, settings.batch_size)
     expected_direct = replace(expected, curriculum=False, updates=direct_updates)
     if direct.get("config") != config_to_dict(expected_direct):
-        raise ResumeConfigurationError("direct-long child configuration drifted")
+        raise ResumeConfigurationError("Direct-long child configuration drifted. Fix the input condition named in the error, then rerun the operation.")
     if (
         curriculum.get("sealed_test_metrics") is not None
         or direct.get("sealed_test_metrics") is not None
     ):
-        raise RunEvidenceError("development comparison materialized sealed metrics")
+        raise RunEvidenceError("Development comparison materialized sealed metrics. Fix the input condition named in the error, then rerun the operation.")
     times = _mapping(result.get("time_to_0_80"), "result.time_to_0_80")
     stability = _mapping(result.get("stability"), "result.stability")
     if not all(
         isinstance(stability.get(name), bool) for name in ("curriculum", "direct_long")
     ):
-        raise RunEvidenceError("paired stability evidence must be boolean")
+        raise RunEvidenceError("Paired stability evidence must be boolean. Set Paired stability evidence to boolean.")
     curriculum_time = _optional_tick(
         times.get("curriculum_sample_ticks"), "curriculum threshold time"
     )
@@ -209,7 +209,7 @@ def validate_curriculum_bundle_document(
         value is not None and value > total_ticks
         for value in (curriculum_time, direct_time)
     ):
-        raise RunEvidenceError("threshold time exceeds the matched sample-tick budget")
+        raise RunEvidenceError("Threshold time exceeds the matched sample-tick budget. Set the named field to a value in the stated range, then rerun the operation.")
     return CurriculumBundleEvidence(
         bundle_id=bundle_id,
         curriculum_accuracy=_accuracy(curriculum, "curriculum"),
@@ -270,7 +270,7 @@ def obtain_curriculum_bundle_evidence(
         )
         if not partial.is_file():
             raise RunEvidenceError(
-                f"paired child did not write staged result: {partial}"
+                f"Paired child did not write staged result: {partial}. Fix the input condition named in the error, then rerun the operation."
             )
         evidence = validate_curriculum_bundle_document(
             load_raw_document(partial), settings, bundle_id, relative, reused=False

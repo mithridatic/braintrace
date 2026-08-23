@@ -111,10 +111,10 @@ class HiddenPerturbation(NamedTuple):
         >>> isinstance(hidden_perturb, braintrace.HiddenPerturbation)
         True
     """
-    perturb_vars: Sequence[Var]  # the perturbation variables
-    perturb_hidden_paths: Sequence[Path]  # the hidden state paths that are perturbed
-    perturb_hidden_states: Sequence[brainstate.HiddenState]  # the hidden states that are perturbed
-    perturb_jaxpr: ClosedJaxpr  # the perturbed jaxpr
+    perturb_vars: Sequence[Var]  # The perturbation variables
+    perturb_hidden_paths: Sequence[Path]  # The hidden state paths that are perturbed
+    perturb_hidden_states: Sequence[brainstate.HiddenState]  # The hidden states that are perturbed
+    perturb_jaxpr: ClosedJaxpr  # The perturbed jaxpr
 
     def eval_jaxpr(
         self,
@@ -214,7 +214,7 @@ class HiddenPerturbation(NamedTuple):
                         f'and its hidden perturbation disagree; recompile the '
                         f'graph.'
                     )
-                # dimensionless processing
+                # Dimensionless processing
                 vals.append(u.get_mantissa(path_to_perturb_data[path]))
             group_data.append(group.concat_hidden(vals))
         return group_data
@@ -279,7 +279,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
     hidden-to-hidden Jacobian ``D^t`` (see
     ``hidden_group.jacfwd_last_dim``), but a parameter or *other* hidden
     group whose only same-step path to the loss crosses the loop (e.g.
-    an upstream layer feeding the loop) receives a ZERO learning signal.
+    An upstream layer feeding the loop) receives a ZERO learning signal.
     A WARNING-level ``CONTROL_FLOW_OPAQUE_FWD`` diagnostic
     (``site='perturbation'``) records every detach.
     """
@@ -296,7 +296,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
         control_flow: ControlFlowPolicy = DEFAULT_CONTROL_FLOW_POLICY,
         descended_scan_eqn_ids: FrozenSet[int] = frozenset(),
     ):
-        # necessary data structures
+        # Necessary data structures
         self.closed_jaxpr = closed_jaxpr
 
         # Structured scan descent (Phase 4): scan equations rewritten by
@@ -307,7 +307,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
         # outer step; scans are reverse-differentiable, so no detach).
         self.descended_scan_eqn_ids = descended_scan_eqn_ids
 
-        # initialize the super class
+        # Initialize the super class
         # Use dict.fromkeys to deduplicate while preserving insertion order
         # (avoids non-deterministic set iteration for jaxpr variable ordering)
         hidden_outvars_ordered = list(dict.fromkeys(hidden_outvar_to_invar.keys()))
@@ -326,22 +326,22 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
         self.path_to_state = path_to_state
 
     def compile(self) -> HiddenPerturbation:
-        # new invars, the var order is the same as the hidden_outvars (use ordered list for determinism)
+        # New invars, the var order is the same as the hidden_outvars (use ordered list for determinism)
         self.perturb_invars = {
             v: self._new_var_like(v)
             for v in self._hidden_outvars_ordered
         }
 
-        # the hidden states that are not found in the code
+        # The hidden states that are not found in the code
         self.hidden_jaxvars_to_remove = set(self.hidden_outvars)
 
-        # final revised equations
+        # Final revised equations
         self.revised_eqns: list = []
 
-        # revising equations
+        # Revising equations
         self._eval_jaxpr(self.closed_jaxpr.jaxpr)
 
-        # [read-only hidden states]
+        # [Read-only hidden states]
         # A hidden state that is read but never written has no producing
         # equation: its jaxpr outvar IS its invar (or a constvar). Synthesize
         # the perturbed passthrough  ``h^t = h^{t-1} + p``  and substitute the
@@ -354,7 +354,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
             if hidden_var not in self.hidden_jaxvars_to_remove:
                 continue
             if hidden_var not in source_vars:
-                continue  # truly unexplained; reported below
+                continue  # Truly unexplained; reported below
             self.hidden_jaxvars_to_remove.remove(hidden_var)
             perturb_var = self.perturb_invars[hidden_var]
             fresh = self._new_var_like(hidden_var)
@@ -369,20 +369,19 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
             )
             outvar_subst[hidden_var] = fresh
 
-        # [final checking]
+        # [Final checking]
         # If there are hidden states that are not found in the code, we raise an error.
         if len(self.hidden_jaxvars_to_remove) > 0:
             hid_paths = [self.outvar_to_hidden_path[v] for v in self.hidden_jaxvars_to_remove]
             hid_info = '\n'.join([f'{v} -> {path}' for v, path in zip(self.hidden_jaxvars_to_remove, hid_paths)])
             raise ValueError(
-                f'Error: we did not found your defined hidden state '
-                f'(see the following information) in the code. \n'
-                f'Please report an issue to the developers at {git_issue_addr}. \n'
-                f'The missed hidden states are: \n'
+                f'The defined hidden state was not found in the code. Check the hidden-state paths in the model.\n'
+                f'Report an issue to the developers at {git_issue_addr}.\n'
+                f'The missing hidden states are:\n'
                 f'{hid_info}'
             )
 
-        # new jaxpr
+        # New jaxpr
         new_outvars = [
             outvar_subst.get(v, v) if isinstance(v, Var) else v
             for v in self.closed_jaxpr.jaxpr.outvars
@@ -397,7 +396,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
         )
         revised_closed_jaxpr = ClosedJaxpr(jaxpr, self.closed_jaxpr.literals)
 
-        # finalizing
+        # Finalizing
         perturb_hidden_paths = [self.outvar_to_hidden_path[v] for v in self._hidden_outvars_ordered]
         perturb_hidden_states = [self.path_to_state[self.outvar_to_hidden_path[v]] for v in
                                  self._hidden_outvars_ordered]
@@ -408,7 +407,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
             perturb_jaxpr=revised_closed_jaxpr
         )
 
-        # remove the temporal data
+        # Remove the temporal data
         self.perturb_invars = dict()
         self.revised_eqns = []
         self.hidden_jaxvars_to_remove = set()
@@ -490,7 +489,7 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
         #
         # For every hidden outvar the equation produces (any number, at any
         # position), we add a perturbation:
-        #    y = f(x)  =>  y = f(x) + perturb_var
+        #    Y = f(x)  =>  y = f(x) + perturb_var
         #
         # Particularly, each hidden outvar slot is first redirected to a
         # fresh variable
@@ -637,9 +636,9 @@ def add_hidden_perturbation_in_module(
     ----------
     model : brainstate.nn.Module
         The neural-network module to which hidden-state perturbations are added.
-    *model_args
+    *Model_args
         Additional positional arguments passed to the model.
-    **model_kwargs
+    **Model_kwargs
         Additional keyword arguments passed to the model.
 
     Returns

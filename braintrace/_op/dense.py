@@ -182,12 +182,12 @@ def _mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *, has_bias: bool = Fals
     **Two execution contexts.** Both arrive after the outer
     ``n_state``-vmap strips the trailing hidden-state axis:
 
-    (a) trace update (batch retained):
+    (A) trace update (batch retained):
         ``hidden_dim : (batch, out)``,
         ``trace['weight'] : (batch, in, out)``,
         ``trace['bias']   : (batch, out)``.
 
-    (b) gradient solve (an extra batch-vmap strips the batch axis):
+    (B) gradient solve (an extra batch-vmap strips the batch axis):
         ``hidden_dim : (out,)``,
         ``trace['weight'] : (in, out)``,
         ``trace['bias']   : (out,)``.
@@ -195,7 +195,7 @@ def _mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *, has_bias: bool = Fals
     **Broadcast rule.** ``jnp.expand_dims(hidden_dim, axis=-2)`` inserts a
     singleton at the ``in`` position in both contexts:
 
-        (out,)       → (1, out)       broadcasts with (in, out)         ✓
+        (Out,)       → (1, out)       broadcasts with (in, out)         ✓
         (batch, out) → (batch, 1, out) broadcasts with (batch, in, out) ✓
 
     Using a fixed positive axis (the old ``axis=1``) only happened to work
@@ -375,7 +375,7 @@ def _dense_fast_recurrent(diag: jax.Array, old_bwg: dict[str, Any], num_state: i
     bit-identical to the einsum but without a degenerate ``dot_general``.
     """
     if num_state == 1:
-        d = diag[..., 0, 0]  # (..., out) — the hidden ``k`` axis
+        d = diag[..., 0, 0]  # (..., Out) — the hidden ``k`` axis
         out = {'weight': d[..., None, :, None] * old_bwg['weight']}
         if 'bias' in old_bwg:
             out['bias'] = d[..., None] * old_bwg['bias']
@@ -756,7 +756,7 @@ def matmul(
     x : ArrayLike
         Input array, shape ``(batch, in_features)`` or ``(in_features,)``.
         Higher-rank ``x`` (``x.ndim > 2``) is rejected with a ``ValueError``:
-        every ETP trace rule assumes one of these two layouts. For genuine
+        Every ETP trace rule assumes one of these two layouts. For genuine
         tensor contractions use :func:`braintrace.einsum`.
     weight : ArrayLike
         Weight matrix, shape ``(in_features, out_features)``.

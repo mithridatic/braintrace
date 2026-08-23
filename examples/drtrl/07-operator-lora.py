@@ -51,7 +51,7 @@ class LoRACell(brainstate.nn.RNNCell):
 
     def update(self, x):
         xh = jnp.concatenate([x, self.h.value], axis=-1)
-        base = xh @ self.frozen_base.value  # plain matmul — excluded from ETP
+        base = xh @ self.frozen_base.value  # Plain matmul — excluded from ETP
         residual = self.lora(xh)  # ETP-aware via lora_matmul
         self.h.value = jax.nn.tanh(base + residual)
         return self.h.value
@@ -85,7 +85,7 @@ def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict
             out = vmap_model(inp)
             return braintools.metric.squared_error(out, tar).mean()
 
-        # reduction='sum' preserves the accumulated-gradient scale this
+        # Reduction='sum' preserves the accumulated-gradient scale this
         # example was tuned at; the reported loss stays the per-step mean.
         grads, step_losses = vmap_model.etrace_grad(
             inputs, targets, step_fn=step_loss, reduction='sum', return_value=True)

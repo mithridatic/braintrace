@@ -41,14 +41,14 @@ from brainstate._compatible_import import Primitive, Var, JaxprEqn, Jaxpr, Close
 
 try:
     from jax.extend.core import new_jaxpr_eqn
-except ImportError:  # older JAX exposes it on jax.core only
+except ImportError:  # Older JAX exposes it on jax.core only
     # jax.core dropped ``new_jaxpr_eqn`` in JAX 0.11; this fallback only runs on
     # older JAX, so silence mypy's static attr-defined/no-redef complaints.
     from jax.core import new_jaxpr_eqn  # type: ignore[attr-defined, no-redef]
 
 try:
     from jax._src.ad_util import stop_gradient_p
-except ImportError:  # future JAX relocation: recover the primitive by tracing
+except ImportError:  # Future JAX relocation: recover the primitive by tracing
     import jax.numpy as _jnp
 
     _probe_eqns = jax.make_jaxpr(jax.lax.stop_gradient)(_jnp.zeros((1,))).jaxpr.eqns
@@ -58,7 +58,7 @@ except ImportError:  # future JAX relocation: recover the primitive by tracing
             'longer exposes stop_gradient_p and tracing jax.lax.stop_gradient '
             f'produced {[e.primitive.name for e in _probe_eqns]} instead of a '
             'single stop_gradient equation. Update braintrace._compatible_imports '
-            'for this JAX version.'
+            'for this JAX version. Fix the input condition named in the error, then rerun the operation.'
         )
     stop_gradient_p = _probe_eqns[0].primitive
 
@@ -188,7 +188,7 @@ def scan_params_add_ys(params: Dict, n_extra: int) -> Dict:
     """
     if n_extra == 0 or 'ft_out' not in params:  # JAX < 0.11, or nothing to add
         return params
-    from jax._src import flattree as _ft  # only reached on JAX >= 0.11
+    from jax._src import flattree as _ft  # Only reached on JAX >= 0.11
     carry_ft, ys_ft = params['ft_out'].unpack()
     new_ft_out = _ft.pack((carry_ft, _ft.pack((ys_ft, _ft.nones(n_extra)))))
     return {**params, 'ft_out': new_ft_out}

@@ -26,7 +26,7 @@ def test_build_spec_rejects_indivisible_dim():
 
 
 def test_build_spec_rejects_untabulated_width():
-    with pytest.raises(ValueError, match='stage-one width'):
+    with pytest.raises(ValueError, match='(?i)stage-one width'):
         build_spec(brainstate.random.RandomState(0).value, 256, bits=9)
 
 

@@ -156,9 +156,9 @@ def obtain_trace_bundle_score(
         )
     except RuntimeError as error:
         _write_failure(settings, grid, candidate, bundle_id, error)
-        raise RunEvidenceError(f"child run failed: {error}") from error
+        raise RunEvidenceError(f"Child run failed: {error}. Correct the reported inputs, then retry the operation.") from error
     if not partial.is_file():
-        error = RunEvidenceError(f"Example 17 did not write staged result: {partial}")
+        error = RunEvidenceError(f"Example 17 did not write staged result: {partial}. Fix the input condition named in the error, then rerun the operation.")
         _write_failure(settings, grid, candidate, bundle_id, error)
         raise error
     try:
@@ -301,8 +301,8 @@ def _run_coordinate(
     _write_json(path, document)
     if not ranking:
         raise RuntimeError(
-            f"trace search failed closed: {grid.horizon} {coordinate} has no "
-            "valid candidates"
+            f"Trace search failed closed: {grid.horizon} {coordinate} has no "
+            "valid candidates. Correct the reported inputs, then retry the operation."
         )
     return ranking[0], path
 

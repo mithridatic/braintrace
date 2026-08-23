@@ -168,7 +168,7 @@ def test_gain_search_is_resumable_and_emits_development_only_winner(
     resumed = run_development_gain_search(
         settings,
         runner=lambda *_: (_ for _ in ()).throw(
-            AssertionError("valid raw results must be reused")
+            AssertionError("Valid raw results must be reused. Set Valid raw results to reused.")
         ),
         progress=lambda _: None,
     )
@@ -234,7 +234,7 @@ def test_gain_resume_refuses_config_or_provenance_drift(tmp_path: Path) -> None:
         run_development_gain_search(
             settings,
             runner=lambda *_: (_ for _ in ()).throw(
-                AssertionError("mismatched raw result must not run")
+                AssertionError("Mismatched raw result must not run. Ensure Mismatched raw result does not run.")
             ),
             progress=lambda _: None,
         )

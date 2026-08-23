@@ -40,11 +40,11 @@ def _optional_clip_norm(value: str) -> float | None:
         clip_norm = float(value)
     except ValueError as error:
         raise argparse.ArgumentTypeError(
-            "clip norm must be a positive number or 'disabled'"
+            "Clip norm must be a positive number or 'disabled'. Set Clip norm to a positive number or 'disabled'."
         ) from error
     if not math.isfinite(clip_norm) or clip_norm <= 0.0:
         raise argparse.ArgumentTypeError(
-            "clip norm must be a positive number or 'disabled'"
+            "Clip norm must be a positive number or 'disabled'. Set Clip norm to a positive number or 'disabled'."
         )
     return clip_norm
 
@@ -186,13 +186,13 @@ def _sealed_overrides(
     if not values.sealed_test:
         return {}
     if values.frozen_selection is None:
-        raise FreezeArtifactError("sealed execution requires a frozen selection")
+        raise FreezeArtifactError("Sealed execution requires a frozen selection. Provide the required value for Sealed execution.")
     document = load_artifact(values.frozen_selection)
     validate_frozen_selection(document)
     provenance = document["selection_provenance"]
     assert isinstance(provenance, dict)
     if provenance.get("source_commit") != environment.get("source_commit"):
-        raise FreezeArtifactError("frozen selection source commit does not match run")
+        raise FreezeArtifactError("Frozen selection source commit does not match run. Use matching values and structures.")
     references = provenance["input_artifacts"]
     assert isinstance(references, dict)
     image_digests = {
@@ -201,7 +201,7 @@ def _sealed_overrides(
         if isinstance(reference, dict)
     }
     if image_digests != {environment.get("container_image_digest")}:
-        raise FreezeArtifactError("frozen selection container image does not match run")
+        raise FreezeArtifactError("Frozen selection container image does not match run. Use matching values and structures.")
     construction = provenance["construction"]
     assert isinstance(construction, dict)
     overrides = frozen_config_overrides(document, values.horizon)
@@ -219,7 +219,7 @@ def _sealed_overrides(
 def _startup_device(values: argparse.Namespace) -> str:
     """Reject a sealed CLI device that conflicts with the GPU-only freeze."""
     if values.sealed_test and values.device != "gpu":
-        raise FreezeArtifactError("sealed execution requires frozen device gpu")
+        raise FreezeArtifactError("Sealed execution requires frozen device gpu. Provide the required value for Sealed execution.")
     return values.device
 
 
@@ -243,11 +243,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     dirty = environment.get("source_dirty")
     if config.sealed_test and dirty is not False:
         raise RuntimeError(
-            "sealed test execution requires a confirmed clean source tree"
+            "Sealed test execution requires a confirmed clean source tree. Provide the required value for Sealed test execution."
         )
     if dirty and not config.allow_dirty:
         raise RuntimeError(
-            "benchmark source is dirty; pass --allow-dirty for development only"
+            "Benchmark source is dirty; pass --allow-dirty for development only"
         )
     document = load_manifest(values.manifest)
     bundle = find_bundle(document, config.bundle_id)

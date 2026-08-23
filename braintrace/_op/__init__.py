@@ -99,7 +99,7 @@ __all__ = [
     'ETPPrimitive',
     'register_primitive',
 
-    # registries + flag helpers
+    # Registries + flag helpers
     'ETP_PRIMITIVES',
     'ETP_RULES_DT_TO_T',
     'ETP_RULES_XY_TO_DW',
@@ -135,7 +135,7 @@ __all__ = [
     'ETP_RULES_SNAP_ADJACENCY',
     'get_snap_adjacency_rule',
 
-    # primitives
+    # Primitives
     'etp_mm_p',
     'etp_mv_p',
     'etp_gmm_p',
@@ -155,7 +155,7 @@ __all__ = [
     'etp_delta_memory_update_p',
     'etp_situ_glu_p',
 
-    # user API
+    # User API
     'matmul',
     'grouped_matmul',
     'embedding',

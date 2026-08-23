@@ -54,8 +54,8 @@ class ModelSpec:
     """
 
     factory: Callable[[], brainstate.nn.Module]
-    etp_param_keys: Tuple[tuple, ...]    # routed through an ETP primitive
-    plain_param_keys: Tuple[tuple, ...]  # used via plain JAX ops (excluded from ETP)
+    etp_param_keys: Tuple[tuple, ...]    # Routed through an ETP primitive
+    plain_param_keys: Tuple[tuple, ...]  # Used via plain JAX ops (excluded from ETP)
     input_scale: float = 1.0
     batched_input: bool = False
 
@@ -100,7 +100,7 @@ def tanh_rnn(n_in: int = 3, n_rec: int = 4, seed: int = 0) -> ModelSpec:
                 self.h = brainstate.HiddenState(jnp.zeros((1, n_rec)))
 
             def update(self, x):
-                inp = x @ self.win.value  # plain op -> excluded from ETP
+                inp = x @ self.win.value  # Plain op -> excluded from ETP
                 self.h.value = jax.nn.tanh(
                     inp + braintrace.matmul(self.h.value, self.w.value)
                 )
@@ -486,13 +486,13 @@ def sparse_ring_rnn(
 
     Structural properties the acceptance suite pins:
 
-    * one hidden group, ``varshape == (n_rec,)``, ``num_state == 1`` — the
+    * One hidden group, ``varshape == (n_rec,)``, ``num_state == 1`` — the
       ``S = 1, K > 1`` configuration that exercises every ``num_state == 1``
       shortcut in the engine under a widened trace;
-    * the relation's primitive is ``etp_sp_mv``, whose D-RTRL trace is
+    * The relation's primitive is ``etp_sp_mv``, whose D-RTRL trace is
       ``nnz``-shaped rather than position-shaped, so it also pins that the
       widening is transparent to a primitive with a non-trivial anchor map;
-    * the ``y -> hidden`` tail is elementwise (``add`` then ``tanh``), so a
+    * The ``y -> hidden`` tail is elementwise (``add`` then ``tanh``), so a
       saturated within-group SnAp is full RTRL and must equal BPTT.
 
     Parameters
@@ -1118,7 +1118,7 @@ def two_island_rnn(n_in: int = 3, n_rec: int = 3, seed: int = 0) -> ModelSpec:
 # ---------------------------------------------------------------------------
 
 _SNN_SEED = 7
-_SNN_SCALE = 20.0        # conductance-based layers
+_SNN_SCALE = 20.0        # Conductance-based layers
 _SNN_SCALE_DELTA = 1.0   # ALIF + delta synapse: saturates above ~2.0
 
 
@@ -1131,7 +1131,7 @@ def _snn_spec(cls, n_in, n_rec, seed, scale=_SNN_SCALE, **kwargs) -> ModelSpec:
 
     return ModelSpec(
         factory=factory,
-        etp_param_keys=(),   # discovered by the compiler; not asserted per-spec
+        etp_param_keys=(),   # Discovered by the compiler; not asserted per-spec
         plain_param_keys=(),
         input_scale=scale,
         batched_input=True,
@@ -1249,7 +1249,7 @@ class OuterWriteMemoryNet(brainstate.nn.Module):
     VALUE_IN = 3
     KEY_OUT = 2
     VALUE_OUT = 2
-    IN_WIDTH = KEY_IN + VALUE_IN + 1  # trailing column drives the write gate
+    IN_WIDTH = KEY_IN + VALUE_IN + 1  # Trailing column drives the write gate
 
     def __init__(self, decay=0.8, key_scale=0.5):
         super().__init__()

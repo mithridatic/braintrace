@@ -980,7 +980,7 @@ def test_ten_cycle_unranking_rejects_noninteger_ids(mapping_id: Any) -> None:
 def test_ten_cycle_ranking_rejects_malformed_or_disconnected_mappings(
     mapping: np.ndarray,
 ) -> None:
-    with pytest.raises(ValueError, match="mapping|permutation|cycle"):
+    with pytest.raises(ValueError, match="(?i)mapping|permutation|cycle"):
         depth.rank_ten_cycle(mapping)
 
 
@@ -996,7 +996,7 @@ def test_shuffled_rotation_rejects_malformed_inputs(
     mapping: np.ndarray,
     query: Any,
 ) -> None:
-    with pytest.raises(ValueError, match="mapping|query"):
+    with pytest.raises(ValueError, match="(?i)mapping|query"):
         depth._select_shuffled_rotation(mapping, query)
 
 
@@ -1005,7 +1005,7 @@ def test_shuffled_rotation_fails_closed_when_no_control_breaks_all_depths(
 ) -> None:
     monkeypatch.setattr(depth, "_iterate_mapping", lambda *args: 0)
 
-    with pytest.raises(ValueError, match="no shuffled rotation"):
+    with pytest.raises(ValueError, match="(?i)no shuffled rotation"):
         depth._select_shuffled_rotation(depth.unrank_ten_cycle(0), 0)
 
 
@@ -1286,7 +1286,7 @@ def test_encoded_schedule_hashing_rejects_incomplete_coverage(mutation: str) -> 
     else:
         state.chunk_count -= 1
 
-    with pytest.raises(ValueError, match="encoded chunk"):
+    with pytest.raises(ValueError, match="(?i)encoded chunk"):
         depth._finish_encoded_schedule_report(state, config)
 
 
@@ -1504,7 +1504,7 @@ def test_training_encoder_rejects_undeclared_batch_effort() -> None:
         training_efforts=np.asarray([3], dtype=np.int32),
     )
 
-    with pytest.raises(ValueError, match="effort"):
+    with pytest.raises(ValueError, match="(?i)effort"):
         depth._encode_training_chunk(malformed, config)
 
 
@@ -1589,7 +1589,7 @@ def test_validation_encoder_rejects_inconsistent_schedule_shapes(
             )[..., :9],
         )
 
-    with pytest.raises(ValueError, match="validation"):
+    with pytest.raises(ValueError, match="(?i)validation"):
         depth._encode_validation_data(schedule, config)
 
 
@@ -2052,7 +2052,7 @@ def test_run_depth_gate_rejects_precomputed_source_end_mapping(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def forbidden_model(*args: Any, **kwargs: Any) -> Any:
-        raise AssertionError("model constructed before reporter validation")
+        raise AssertionError("Model constructed before reporter validation. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(depth, "LatentWorkspaceModel", forbidden_model)
 
@@ -2115,7 +2115,7 @@ def test_run_depth_gate_rejects_unauthenticated_initialization_before_training(
     def forbidden_training(*args: Any, **kwargs: Any) -> Any:
         nonlocal training_reached
         training_reached = True
-        raise AssertionError("training reached before authentication")
+        raise AssertionError("Training reached before authentication. Update the fixture or expected result to satisfy this assertion.")
 
     def source_end_reporter() -> Mapping[str, Any]:
         nonlocal source_end_calls
@@ -2404,7 +2404,7 @@ def test_checkpoint_contract_has_exact_targets_masks_and_compact_prefix(
 
 @pytest.mark.parametrize("effort", [0, 3, 9])
 def test_checkpoint_contract_rejects_undeclared_effort(effort: int) -> None:
-    with pytest.raises(ValueError, match="effort"):
+    with pytest.raises(ValueError, match="(?i)effort"):
         depth._checkpoint_contract(np.asarray(depth.unrank_ten_cycle(0)), 0, effort)
 
 
@@ -2420,7 +2420,7 @@ def test_checkpoint_contract_rejects_malformed_mapping_or_query(
     mapping: np.ndarray,
     query: Any,
 ) -> None:
-    with pytest.raises(ValueError, match="mapping|query"):
+    with pytest.raises(ValueError, match="(?i)mapping|query"):
         depth._checkpoint_contract(mapping, query, 1)
 
 
@@ -3184,5 +3184,5 @@ def test_depth_cli_propagates_duplicate_json_authentication_failure(
         lambda config: launcher.load_strict_json(duplicate),
     )
 
-    with pytest.raises(ValueError, match="duplicate JSON key"):
+    with pytest.raises(ValueError, match="(?i)duplicate JSON key"):
         depth.main(argv)

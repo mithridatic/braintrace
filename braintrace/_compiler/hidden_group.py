@@ -29,10 +29,10 @@
 #   [2024-11-22] compatible with `brainstate>=0.1.0` (#17)
 #   [2024-11-23] Add the support for vjp_time_ahead > 1, it can combine the
 #                advantage of etrace learning and backpropagation through time.
-#   [2024-11-26] version 0.0.3, a complete new revision for better model debugging.
-#   [2024-12-05] change the ETraceWeight to NonETraceWeight if the hidden states are not found;
+#   [2024-11-26] Version 0.0.3, a complete new revision for better model debugging.
+#   [2024-12-05] Change the ETraceWeight to NonETraceWeight if the hidden states are not found;
 #                remove the connected hidden states when y=x@w is not shape broadcastable with the hidden states.
-#   [2024-12-09] small updates, related to the key items in "CompiledVjpGraph"
+#   [2024-12-09] Small updates, related to the key items in "CompiledVjpGraph"
 #   [2025-02-06]
 #       - [x] unify model retrieved states (brainstate.graph.states)
 #             and compiled states (brainstate.transform.StatefulFunction)
@@ -176,26 +176,26 @@ class HiddenGroup(NamedTuple):
 
     index: int  # type: ignore[assignment]  # intentional NamedTuple field; shadows tuple.index
 
-    # hidden states and their paths
+    # Hidden states and their paths
     hidden_paths: List[Path]  # the hidden state paths
-    hidden_states: List[brainstate.HiddenState]  # the hidden states
+    hidden_states: List[brainstate.HiddenState]  # The hidden states
 
-    # the jax Var at the last time step
+    # The jax Var at the last time step
     hidden_invars: List[HiddenInVar]  # the input hidden states
 
-    # the jax Var at the current time step
+    # The jax Var at the current time step
     hidden_outvars: List[HiddenOutVar]  # the output hidden states
 
-    # the jaxpr for computing hidden state transitions
+    # The jaxpr for computing hidden state transitions
     #
     # h_1^t, h_2^t, ... = f(h_1^{t-1}, h_2^{t-1}, ..., x)
     #
     transition_jaxpr: Jaxpr
 
-    # the other input variables for transition_jaxpr evaluation
+    # The other input variables for transition_jaxpr evaluation
     transition_jaxpr_constvars: List[Var]
 
-    # whether the recurrence is diagonal across the leading ``varshape``
+    # Whether the recurrence is diagonal across the leading ``varshape``
     # positions, i.e. ``h_i^t`` depends only on ``h_i^{t-1}`` (and the input),
     # never on ``h_j^{t-1}`` for ``i != j``. When ``True`` the cheap column-sum
     # Jacobian computed by :func:`jacrev_last_dim` already equals the true
@@ -290,8 +290,8 @@ class HiddenGroup(NamedTuple):
         varshapes = set([tuple(st.varshape) for st in self.hidden_states])
         if len(varshapes) > 1:
             raise NotSupportedError(
-                f'Error: the shapes of the hidden states are not consistent. \n'
-                f'{varshapes}'
+                f'The shapes of the hidden states are not consistent. '
+                f'Use hidden states with matching shapes. Got {varshapes}.'
             )
 
     def transition(
@@ -594,7 +594,7 @@ def jacrev_last_dim(
     new_hid_vals, f_vjp = jax.vjp(fn, hid_vals)
     num_state = new_hid_vals.shape[-1]
     varshape = new_hid_vals.shape[:-1]
-    assert num_state == hid_vals.shape[-1], 'Error: the number of input/output states should be the same.'
+    assert num_state == hid_vals.shape[-1], 'The number of input and output states must be the same. Use matching state counts.'
     basis = u.math.eye(num_state)
     columns = [
         f_vjp(u.math.broadcast_to(basis[index], (*varshape, num_state)))[0]
@@ -640,7 +640,7 @@ def jacfwd_last_dim(
 
     def _push(tangent: jax.Array) -> jax.Array:
         out, tang = jax.jvp(fn, (hid_vals,), (tangent,))
-        assert out.shape[-1] == num_state, 'Error: the number of input/output states should be the same.'
+        assert out.shape[-1] == num_state, 'The number of input and output states must be the same. Use matching state counts.'
         return tang
 
     return jax.vmap(_push, in_axes=-2, out_axes=-1)(basis)
@@ -735,9 +735,9 @@ def block_diagonal_last_dim(
     num_pos = int(np.prod(varshape)) if varshape else 1
     full_jac = full_position_jacobian(fn, hid_vals, use_forward_mode)
     full_jac = u.math.reshape(full_jac, (num_pos, num_state, num_pos, num_state))
-    # take the per-position block: block[p] = full_jac[p, :, p, :]
+    # Take the per-position block: block[p] = full_jac[p, :, p, :]
     block = u.math.diagonal(full_jac, axis1=0, axis2=2)  # (num_state, num_state, num_pos)
-    block = u.math.moveaxis(block, -1, 0)  # (num_pos, num_state, num_state)
+    block = u.math.moveaxis(block, -1, 0)  # (Num_pos, num_state, num_state)
     return u.math.reshape(block, (*varshape, num_state, num_state))
 
 
@@ -796,14 +796,14 @@ def widened_block_jacobian(
 
     At ``K == 1`` with an all-valid mask this returns exactly
     :func:`block_diagonal_last_dim`'s output: the scale's identity element is
-    exact, not approximately exact.
+    exact, not about exact.
     """
     num_state = hid_vals.shape[-1]
     varshape = hid_vals.shape[:-1]
     num_pos = int(np.prod(varshape)) if varshape else 1
     num_nbr = int(neighbours.shape[1])
     jac_fn = jax.jacfwd if use_forward_mode else jax.jacrev
-    full_jac = jac_fn(fn)(hid_vals)  # (*varshape, num_state, *varshape, num_state)
+    full_jac = jac_fn(fn)(hid_vals)  # (*Varshape, num_state, *varshape, num_state)
     full_jac = u.math.reshape(full_jac, (num_pos, num_state, num_pos, num_state))
 
     neighbours = np.asarray(neighbours)
@@ -957,7 +957,7 @@ def _map_positions_to_subjaxpr_seeds(
         seeds = []
         for j in positions:
             if j < cn:
-                continue  # cond consts influence the trip count, not carried values
+                continue  # Cond consts influence the trip count, not carried values
             seeds.append(body.invars[j - cn])
         feedback: Dict[Var, Var] = {}
         for c in range(n_carry):
@@ -1026,7 +1026,7 @@ def _jaxpr_mixes_from(
             else:
                 for sub in _param_subjaxprs(eqn):
                     if len(sub.invars) != len(eqn.invars):
-                        return True  # unknown invar mapping: assume mixing
+                        return True  # Unknown invar mapping: assume mixing
                     sub_seeds = [sub.invars[j] for j in hit]
                     if _jaxpr_mixes_from(sub, sub_seeds, {}):
                         return True
@@ -1111,21 +1111,21 @@ class Hidden2GroupTransition(NamedTuple):
         ``transition_jaxpr``.
     """
 
-    # the hidden state h_i^{t-1}
+    # The hidden state h_i^{t-1}
     hidden_invar: Var
     hidden_path: Path
 
-    # the connected hidden states h_1^t, h_2^t, ...
+    # The connected hidden states h_1^t, h_2^t, ...
     connected_hidden_outvars: List[Var]
     connected_hidden_paths: List[Path]
 
-    # the jaxpr for computing hidden state transitions
+    # The jaxpr for computing hidden state transitions
     #
     # h_1^t, h_2^t, ... = f(h_i^{t-1}, x)
     #
     transition_jaxpr: Jaxpr
 
-    # the other input variables for jaxpr evaluation
+    # The other input variables for jaxpr evaluation
     other_invars: List[Var]
 
     def state_transition(
@@ -1176,7 +1176,7 @@ def _same_recurrence_layer(path1: Path, path2: Path) -> bool:
     Check if two hidden state paths belong to the same recurrence layer.
 
     Paths that diverge at a numeric index (e.g., ('layers', 0, ...) vs
-    ('layers', 1, ...)) indicate different sequential layers and should
+    ('layers', 1, ...)) show different sequential layers and should
     be in separate groups. Paths that diverge at string keys (e.g.,
     ('neu', 'V') vs ('neu', 'a')) are within the same layer.
 
@@ -1270,30 +1270,30 @@ def _simplify_hid2hid_tracer(
                 dict.fromkeys(invar for invar in eqn.invars if isinstance(invar, Var))
             )
 
-    # [second step]
+    # [Second step]
     #
     # Shape filtering was already done in the pre-step.
     hidden_outvars = tuple(compatible_outvars)
 
-    # [third step]
+    # [Third step]
     #
     # Simplify the trace
     visited_needed_vars[tracer.hidden_invar] = None
     constvars = [v for v in whole_trace_needed_vars if v not in visited_needed_vars]
     jaxpr_opt = Jaxpr(
-        # the const vars are not the hidden states, they are
+        # The const vars are not the hidden states, they are
         # intermediate data that are not used in the hidden states
         constvars=constvars,
-        # the invars are always the weight output
+        # The invars are always the weight output
         invars=[tracer.hidden_invar],
-        # the outvars are always the connected hidden states of this weight
+        # The outvars are always the connected hidden states of this weight
         outvars=list(hidden_outvars),
-        # the new equations which are simplified
+        # The new equations which are simplified
         eqns=list(reversed(new_trace)),
         debug_info=debug_info,
     )
 
-    # [final step]
+    # [Final step]
     #
     # Change the "HiddenWeightOpTracer" to "Hidden2GroupTransition"
     return Hidden2GroupTransition(
@@ -1357,7 +1357,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
         descended_scan_eqn_ids: FrozenSet[int] = frozenset(),
         descended_hidden_paths: FrozenSet[Path] = frozenset(),
     ):
-        # the jaxpr of the original model, assuming that the model is well-defined,
+        # The jaxpr of the original model, assuming that the model is well-defined,
         # see the doc for the model which can be online learning compiled.
         self.jaxpr = jaxpr
 
@@ -1369,7 +1369,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
         self.descended_scan_eqn_ids = descended_scan_eqn_ids
         self.descended_hidden_paths = descended_hidden_paths
 
-        # whether the recurrent ETP mixing primitives (``etp_mv``/``etp_mm``/
+        # Whether the recurrent ETP mixing primitives (``etp_mv``/``etp_mm``/
         # ``etp_conv``) are *traced into* the hidden-to-hidden transition jaxpr
         # (``True``) or treated as boundaries and excluded (``False``, default).
         # See :func:`find_hidden_groups_from_jaxpr` for the rationale.
@@ -1385,14 +1385,14 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             snap_max_jacobian_elements
         )
 
-        # the hidden state groups
+        # The hidden state groups
         self.hidden_outvar_to_invar = hidden_outvar_to_invar
         self.hidden_invar_to_outvar = {invar: outvar for outvar, invar in hidden_outvar_to_invar.items()}
         hidden_invars = set(hidden_outvar_to_invar.values())
         hidden_outvars = set(hidden_outvar_to_invar.keys())
         self.path_to_state = path_to_state
 
-        # the data structures for the tracing hidden-hidden relationships
+        # The data structures for the tracing hidden-hidden relationships
         self.active_tracers: Dict[Var, HiddenToHiddenGroupTracer] = dict()
 
         super().__init__(
@@ -1412,16 +1412,16 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
         Compiling the jaxpr for the etrace relationships.
         """
 
-        # the data structures for the tracing hidden-hidden relationships
+        # The data structures for the tracing hidden-hidden relationships
         self.active_tracers = dict()
 
-        # evaluating the jaxpr
+        # Evaluating the jaxpr
         self._eval_jaxpr(self.jaxpr)
 
-        # post checking
+        # Post checking
         hid_groups, hid_path_to_group = self._post_check()
 
-        # reset the temporal data structures
+        # Reset the temporal data structures
         self.active_tracers = dict()
         return hid_groups, hid_path_to_group
 
@@ -1505,7 +1505,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             )
             return
 
-        # check whether the invars have one of the hidden states.
+        # Check whether the invars have one of the hidden states.
         # If it is true, add a new tracer.
         other_invars = []
         hidden_invars = []
@@ -1550,11 +1550,11 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 )
                 self.active_tracers[hidden_var] = tracer
 
-        # check whether this equation is used in other tracers
+        # Check whether this equation is used in other tracers
         for tracer in tuple(self.active_tracers.values()):
             matched = find_matched_vars(eqn.invars, tracer.invar_needed_in_oth_eqns)
 
-            # if matched, add the eqn to the trace
+            # If matched, add the eqn to the trace
             # if not matched, skip
             if len(matched):
                 self._add_eqn_in_a_tracer(eqn, tracer)
@@ -1568,7 +1568,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
         tracer.trace.append(eqn.replace())
         tracer.invar_needed_in_oth_eqns.update(dict.fromkeys(eqn.outvars))
 
-        # check whether the hidden states are needed in the other equations
+        # Check whether the hidden states are needed in the other equations
         for outvar in eqn.outvars:
             if outvar in self.hidden_outvars:
                 tracer.connected_hidden_outvars[outvar] = None
@@ -1714,7 +1714,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             if t is not None
         ]
 
-        # [ second step ]
+        # [ Second step ]
         #
         # Find out the hidden group,
         # i.e., the hidden states that are connected to each other, the union of all hidden-to-group.
@@ -1741,7 +1741,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             for group in outvar_groups
         ]
 
-        # [ third step ]
+        # [ Third step ]
         #
         # compile the state transitions in a hidden group
         #
@@ -1762,14 +1762,14 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 )
             )
 
-        # [ fourth step ]
+        # [ Fourth step ]
         #
         # compile HiddenGroup
         #
         hidden_groups: list = []
         for hidden_invars, hidden_outvars, jaxpr in zip(invar_groups, outvar_groups, jaxpr_groups):
             # ``is_diagonal_recurrence`` is fully determined by the grouping mode:
-            # in the default mode the recurrent-weight boundary skip (see
+            # In the default mode the recurrent-weight boundary skip (see
             # ``_eval_eqn``) removes every *cross-position* coupling, leaving a
             # transition that is position-diagonal across the leading ``varshape``
             # axis -- so the cheap column-sum Jacobian (:func:`jacrev_last_dim`) is
@@ -1814,7 +1814,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 )
             hidden_groups.append(group)
 
-        # [ fourth-b step ]
+        # [ Fourth-b step ]
         #
         # Zero-recurrence groups for hidden states whose entire recurrence was
         # excluded.
@@ -1871,7 +1871,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             )
             hidden_groups.append(group)
 
-        # [ fifth step ]
+        # [ Fifth step ]
         #
         # transform the hidden group set to the HiddenGroup
         #
@@ -1882,8 +1882,7 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
             for path in group.hidden_paths:
                 if path in hidden_path_to_group:
                     raise ValueError(
-                        f'Error: the hidden state {path} '
-                        f'is found in multiple groups. \n'
+                        f'The hidden state {path} is found in multiple groups. Assign it to one group.\n'
                         f'{hidden_path_to_group[path].hidden_paths} '
                         f'\n\n'
                         f'{group.hidden_paths}'
@@ -1938,7 +1937,7 @@ def write_jaxpr_of_hidden_group_transition(
     #
     new_eqns = []
     env = set(list(hidden_invars) + other_invars)
-    max_iterations = len(eqns) * len(eqns) + 1  # upper bound for topological sort passes
+    max_iterations = len(eqns) * len(eqns) + 1  # Upper bound for topological sort passes
     iteration_count = 0
     while len(eqns) > 0:
         iteration_count += 1
@@ -2021,13 +2020,13 @@ def group_merging(
 
     For example, if we have the following hidden states:
 
-        [(h_1, h_2),
+        [(H_1, h_2),
          (h_2, h_3),
          (h_4, h_5)]
 
     The merged hidden states are:
 
-        [(h_1, h_2, h_3),
+        [(H_1, h_2, h_3),
          (h_4, h_5)]
 
 
@@ -2098,7 +2097,7 @@ def group_merging(
         return list(cur)
 
     else:
-        raise ValueError(f'Error: the version {version} is not supported.')
+        raise ValueError(f'Version {version} is not supported. Use a supported version, then rerun the operation.')
 
 
 def find_hidden_groups_from_jaxpr(
@@ -2181,7 +2180,7 @@ def find_hidden_groups_from_jaxpr(
         weight_invars=weight_invars,
         invar_to_hidden_path=invar_to_hidden_path,
         outvar_to_hidden_path=outvar_to_hidden_path,
-        # the evaluator only indexes hidden-state paths, whose entries are HiddenStates,
+        # The evaluator only indexes hidden-state paths, whose entries are HiddenStates,
         # even though the passed mapping carries every model state. The cast is a real
         # State -> HiddenState narrowing; mypy flags it as redundant only because
         # brainstate is currently untyped (both collapse to Any).
@@ -2271,7 +2270,7 @@ def find_hidden_groups_from_module(
     ----------
     model : brainstate.nn.Module
         The model.
-    *model_args
+    *Model_args
         The positional arguments of the model.
     include_recurrent_mixing : bool, default False
         Whether to trace recurrent ETP mixing primitives into the transition
@@ -2280,7 +2279,7 @@ def find_hidden_groups_from_module(
     sparse_n : int, optional
         SnAp order for ``recurrence_scope='sparse_n'``. Keyword-only. Default
         ``None``.
-    **model_kwargs
+    **Model_kwargs
         The keyword arguments of the model.
 
     Returns

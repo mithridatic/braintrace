@@ -78,7 +78,7 @@ def check_dict_keys(
       If the keys of the two dictionaries are not the same.
     """
     if d1.keys() != d2.keys():
-        raise ValueError(f'The keys of the two dictionaries are not the same: {d1.keys()} != {d2.keys()}.')
+        raise ValueError(f'The keys of the two dictionaries are not the same: {d1.keys()} != {d2.keys()}. Fix the input condition named in the error, then rerun the operation.')
 
 
 def hid_group_key(hidden_group_id: int) -> str:
@@ -95,7 +95,7 @@ def hid_group_key(hidden_group_id: int) -> str:
     str
         A string key representing the hidden group.
     """
-    assert isinstance(hidden_group_id, int), f'hidden_group_id must be an int, but got {hidden_group_id}.'
+    assert isinstance(hidden_group_id, int), f'hidden_group_id must be an int, but got {hidden_group_id}. Set hidden_group_id to an int.'
     return f'hidden_group_{hidden_group_id}'
 
 
@@ -137,7 +137,7 @@ def etrace_df_key(
     tuple
         A tuple containing the variable key and a string key representing the hidden group.
     """
-    assert isinstance(y_key, Var), f'y_key must be a Var, but got {y_key}.'
+    assert isinstance(y_key, Var), f'y_key must be a Var, but got {y_key}. Set y_key to a Var.'
     return (id(y_key), hid_group_key(hidden_group_id))
 
 
@@ -223,7 +223,7 @@ def deprecation_getattr(module: str, deprecations: dict) -> Callable[..., Any]:
                 raise AttributeError(message)
             warnings.warn(message, DeprecationWarning, stacklevel=2)
             return fn
-        raise AttributeError(f"module {module!r} has no attribute {name!r}")
+        raise AttributeError(f"Module {module!r} has no attribute {name!r}. Use an existing attribute or add the missing attribute.")
 
     return getattr
 
@@ -343,7 +343,10 @@ class BaseEnum(Enum):
             all_names.append(item.name)
             if item.name == name:
                 return item
-        raise ValueError(f'Cannot find the {cls.__name__} type {name}. Only support {all_names}.')
+        raise ValueError(
+            f'No {cls.__name__} member matches {name!r}. '
+            f'Pass one of the supported names: {all_names}.'
+        )
 
     @classmethod
     def get(cls, item: str | Enum) -> BaseEnum:
@@ -377,7 +380,10 @@ class BaseEnum(Enum):
         elif isinstance(item, str):
             return cls.get_by_name(item)
         else:
-            raise ValueError(f'Cannot find the {cls.__name__} type {item}.')
+            raise ValueError(
+                f'No {cls.__name__} member matches {item!r}. '
+                'Pass a supported name or enum member.'
+            )
 
 
 def suffix_products(diag_seq: jax.Array, num_state: int) -> tuple[jax.Array, jax.Array]:

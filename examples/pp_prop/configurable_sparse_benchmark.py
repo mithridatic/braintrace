@@ -112,7 +112,7 @@ def _parse_worker_payload(output: str) -> tuple[dict[str, object], list[str]]:
         )
         if valid:
             return payload, [*lines[:index], *lines[index + 1 :]]
-    raise ValueError("worker did not emit a schema-versioned JSON result")
+    raise ValueError("Worker did not emit a schema-versioned JSON result. Fix the input condition named in the error, then rerun the operation.")
 
 
 def _completed_payload(

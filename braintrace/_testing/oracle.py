@@ -247,7 +247,7 @@ def chunked_online_param_gradients(
     )
 
     total = None
-    # test-support chunk loop (few iterations), not a model step driver
+    # Test-support chunk loop (few iterations), not a model step driver
     for start in range(0, inputs.shape[0], chunk_size):
         chunk = inputs[start:start + chunk_size]
         g = grad_chunk(chunk)
@@ -272,7 +272,7 @@ def online_param_gradients_singlestep_naive(
     See Also
     --------
     chunked_online_param_gradients : intermediate window size.
-    docs/specs/2026-07-25-known-limitations.md : F-SINGLESTEP and F-23.
+    Docs/specs/2026-07-25-known-limitations.md : F-SINGLESTEP and F-23.
     """
     model = model_factory()
     brainstate.nn.init_all_states(model, batch_size=1)
@@ -359,7 +359,7 @@ def relative_deviation(actual, expected) -> float:
     e = flat_gradient_leaves(expected)
     if set(a) != set(e):
         raise AssertionError(
-            f'gradient trees have different leaves: {sorted(set(a) ^ set(e))}')
+            f'Gradient trees have different leaves: {sorted(set(a) ^ set(e))}. Use matching values and structures.')
     num = sum(float(((np.asarray(a[k], dtype=np.float64)
                       - np.asarray(e[k], dtype=np.float64)) ** 2).sum()) for k in e)
     den = sum(float((np.asarray(e[k], dtype=np.float64) ** 2).sum()) for k in e)
@@ -374,7 +374,7 @@ def assert_model_is_live(model_factory, inputs, *, min_norm: float = 1e-8) -> fl
     A comparison against an all-zero reference gradient passes for every
     algorithm and therefore asserts nothing. SNN models are the common way to
     hit this: at a low input scale the neurons never reach threshold, the loss is
-    zero, and so is the gradient. Spiking alone is not sufficient — a model can
+    zero, and so is the gradient. Spiking alone is not enough — a model can
     spike and still have a zero gradient — so the criterion is the gradient norm
     itself.
 
@@ -400,8 +400,8 @@ def assert_model_is_live(model_factory, inputs, *, min_norm: float = 1e-8) -> fl
     norm = gradient_norm(bptt_param_gradients(model_factory, inputs))
     if not (norm > min_norm):
         raise AssertionError(
-            f'model is not live: BPTT gradient norm {norm:.3e} <= {min_norm:.3e}. '
-            'Any gradient comparison on this model/input pair is vacuous.'
+            f'Model is not live: BPTT gradient norm {norm:.3e} <= {min_norm:.3e}. '
+            'Any gradient comparison on this model/input pair is vacuous. Fix the input condition named in the error, then rerun the operation.'
         )
     return norm
 
@@ -449,7 +449,7 @@ def assert_param_gradients_close(actual, expected, *, atol=1e-4, rtol=0.0, keys=
     """Assert two param-gradient trees match, with a per-leaf diagnostic on failure.
 
     ``keys`` restricts the comparison to a subset of top-level state paths (e.g.
-    only ETP params). When None, every key present in ``expected`` is compared.
+    Only ETP params). When None, every key present in ``expected`` is compared.
     Nested pytrees and unit-carrying leaves are supported.
     """
     compare_keys = list(expected.keys()) if keys is None else list(keys)
@@ -479,7 +479,7 @@ def assert_param_gradients_close(actual, expected, *, atol=1e-4, rtol=0.0, keys=
 def cosine_similarity(a, b) -> float:
     """Cosine of the angle between two gradient arrays (flattened). Returns NaN if
     either is all-zero. The robust direction signal for approximate algorithms:
-    it ignores magnitude, which carries the F-SINGLESTEP / approximation bias."""
+    It ignores magnitude, which carries the F-SINGLESTEP / approximation bias."""
     a = np.asarray(a).ravel()
     b = np.asarray(b).ravel()
     denom = np.linalg.norm(a) * np.linalg.norm(b)
@@ -633,7 +633,7 @@ def fixed_gradient_directions(tree, num: int, *, seed: int = 0, keys=None):
     missing = [k for k in labels if k not in leaves]
     if missing:
         raise AssertionError(
-            f'unknown gradient leaf labels {missing}; available: {sorted(leaves)}')
+            f'Unknown gradient leaf labels {missing}; available: {sorted(leaves)}. Set the named field to one of the supported values, then rerun the operation.')
     rng = np.random.RandomState(seed)
     out = []
     for _ in range(num):
@@ -684,8 +684,8 @@ def assert_unbiased_estimator(
     For each fixed direction ``d``, with ``v_s = <sample_s, d>``, sample mean
     ``m``, sample standard deviation ``sd`` and ``N = len(samples)``:
 
-    - **unbiasedness** -- ``|m - <reference, d>| <= z * sd / sqrt(N)``;
-    - **non-vacuity** -- ``sd / sqrt(N) <= tightness * ||reference||``.
+    - **Unbiasedness** -- ``|m - <reference, d>| <= z * sd / sqrt(N)``;
+    - **Non-vacuity** -- ``sd / sqrt(N) <= tightness * ||reference||``.
 
     Both halves are required. The first alone passes for any estimator whose
     variance is large enough to swallow its bias; the second is what makes the
@@ -732,7 +732,7 @@ def assert_unbiased_estimator(
     samples = list(samples)
     if len(samples) < 2:
         raise AssertionError(
-            f'a confidence interval needs at least 2 samples, got {len(samples)}.')
+            f'A confidence interval needs at least 2 samples, got {len(samples)}. Fix the input condition named in the error, then rerun the operation.')
     if directions is None:
         directions = fixed_gradient_directions(
             reference, num_directions, seed=seed, keys=keys)
@@ -749,7 +749,7 @@ def assert_unbiased_estimator(
         ref = project_gradient(reference, d)
         vals = np.asarray([project_gradient(s, d) for s in samples], dtype=np.float64)
         mean = float(vals.mean())
-        # ddof=1: the sample standard deviation, since the mean is estimated too.
+        # Ddof=1: the sample standard deviation, since the mean is estimated too.
         sd = float(vals.std(ddof=1))
         stderr = sd / np.sqrt(n)
         gap = abs(mean - ref)

@@ -131,46 +131,46 @@ _MEMORY_KEY_MAP_NAMES = {
 
 def _positive_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise TypeError(f"{name} must be a positive non-boolean integer")
+        raise TypeError(f"{name} must be a positive non-boolean integer. Set {name} to a positive non-boolean integer.")
     result = int(value)
     if result <= 0:
-        raise ValueError(f"{name} must be a positive non-boolean integer")
+        raise ValueError(f"{name} must be a positive non-boolean integer. Set {name} to a positive non-boolean integer.")
     return result
 
 
 def _nonnegative_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise TypeError(f"{name} must be a nonnegative non-boolean integer")
+        raise TypeError(f"{name} must be a nonnegative non-boolean integer. Set {name} to a nonnegative non-boolean integer.")
     result = int(value)
     if result < 0:
-        raise ValueError(f"{name} must be a nonnegative non-boolean integer")
+        raise ValueError(f"{name} must be a nonnegative non-boolean integer. Set {name} to a nonnegative non-boolean integer.")
     return result
 
 
 def _positive_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite positive real scalar")
+        raise TypeError(f"{name} must be a finite positive real scalar. Set {name} to a finite positive real scalar.")
     result = float(value)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError(f"{name} must be a finite positive real scalar")
+        raise ValueError(f"{name} must be a finite positive real scalar. Set {name} to a finite positive real scalar.")
     return result
 
 
 def _nonnegative_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite nonnegative real scalar")
+        raise TypeError(f"{name} must be a finite nonnegative real scalar. Set {name} to a finite nonnegative real scalar.")
     result = float(value)
     if not math.isfinite(result) or result < 0.0:
-        raise ValueError(f"{name} must be a finite nonnegative real scalar")
+        raise ValueError(f"{name} must be a finite nonnegative real scalar. Set {name} to a finite nonnegative real scalar.")
     return result
 
 
 def _unit_interval_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite real scalar in [0, 1]")
+        raise TypeError(f"{name} must be a finite real scalar in [0, 1]. Set {name} to a finite real scalar in [0, 1].")
     result = float(value)
     if not math.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise ValueError(f"{name} must be a finite real scalar in [0, 1]")
+        raise ValueError(f"{name} must be a finite real scalar in [0, 1]. Set {name} to a finite real scalar in [0, 1].")
     return result
 
 
@@ -182,10 +182,10 @@ def _optional_index(value: object, name: str) -> int | None:
 
 def _index_tuple(value: object, name: str) -> tuple[int, ...]:
     if not isinstance(value, tuple):
-        raise TypeError(f"{name} must be a tuple of nonnegative integers")
+        raise TypeError(f"{name} must be a tuple of nonnegative integers. Set {name} to a tuple of nonnegative integers.")
     indices = tuple(_nonnegative_integer(index, name) for index in value)
     if len(set(indices)) != len(indices):
-        raise ValueError(f"{name} must not contain duplicate indices")
+        raise ValueError(f"{name} must not contain duplicate indices. Ensure {name} does not contain duplicate indices.")
     return indices
 
 
@@ -436,7 +436,7 @@ class ModelConfig:
             _nonnegative_integer(self.event_valid_index, "event_valid_index"),
         )
         if self.event_valid_index >= self.input_width:
-            raise ValueError("event_valid_index must be smaller than input_width")
+            raise ValueError("event_valid_index must be smaller than input_width. Set event_valid_index to smaller than input_width.")
         for name in (
             "membrane_tau_ms",
             "feedforward_tau_ms",
@@ -451,7 +451,8 @@ class ModelConfig:
         if self.neuron_count % NEURONS_PER_SLOT:
             raise ValueError(
                 f"neuron_count must be divisible by {NEURONS_PER_SLOT} for exact "
-                "slot ablation"
+                "slot ablation. Set neuron_count to a value divisible by {NEURONS_PER_SLOT} for exact "
+                "slot ablation."
             )
         edge_budget = assess_recurrent_edge_budget(
             self.neuron_count,
@@ -472,10 +473,10 @@ class ModelConfig:
         if isinstance(self.trace_decay, (bool, np.bool_)) or not isinstance(
             self.trace_decay, Real
         ):
-            raise TypeError("trace_decay must be a finite real scalar in [0, 1)")
+            raise TypeError("trace_decay must be a finite real scalar in [0, 1). Set trace_decay to a finite real scalar in [0, 1).")
         trace_decay = float(self.trace_decay)
         if not math.isfinite(trace_decay) or not 0.0 <= trace_decay < 1.0:
-            raise ValueError("trace_decay must be a finite real scalar in [0, 1)")
+            raise ValueError("trace_decay must be a finite real scalar in [0, 1). Set trace_decay to a finite real scalar in [0, 1).")
         object.__setattr__(self, "trace_decay", trace_decay)
         object.__setattr__(
             self,
@@ -484,30 +485,30 @@ class ModelConfig:
         )
         if not isinstance(self.memory_read_transform, str):
             raise TypeError(
-                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'. Set memory_read_transform to 'linear', 'gated' or 'gated_rms'."
             )
         if self.memory_read_transform not in MEMORY_READ_TRANSFORMS:
             raise ValueError(
-                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'. Set memory_read_transform to 'linear', 'gated' or 'gated_rms'."
             )
         if self.memory_read_transform != "linear" and self.context_memory_width == 0:
             raise ValueError(
-                "memory_read_transform requires a positive context_memory_width"
+                "memory_read_transform requires a positive context_memory_width. Provide the required value for memory_read_transform."
             )
         if not isinstance(self.latent_residual_mixer, str):
             raise TypeError(
-                "latent_residual_mixer must be 'none' or 'attention_residual'"
+                "latent_residual_mixer must be 'none' or 'attention_residual'. Set latent_residual_mixer to 'none' or 'attention_residual'."
             )
         if self.latent_residual_mixer not in LATENT_RESIDUAL_MIXERS:
             raise ValueError(
-                "latent_residual_mixer must be 'none' or 'attention_residual'"
+                "latent_residual_mixer must be 'none' or 'attention_residual'. Set latent_residual_mixer to 'none' or 'attention_residual'."
             )
         if (
             self.latent_residual_mixer == "attention_residual"
             and self.context_memory_width == 0
         ):
             raise ValueError(
-                "latent_residual_mixer requires a positive context_memory_width"
+                "latent_residual_mixer requires a positive context_memory_width. Provide the required value for latent_residual_mixer."
             )
         object.__setattr__(
             self,
@@ -522,24 +523,26 @@ class ModelConfig:
         if self.row_head_carrier_gate and self.row_head_carrier_scale != 1.0:
             raise ValueError(
                 "row_head_carrier_gate replaces row_head_carrier_scale; "
-                "leave the scale at its default of 1.0"
+                "leave the scale at its default of 1.0. Fix the input condition named in the error, then rerun the operation."
             )
         if not isinstance(self.refinement_mixer, str):
             raise TypeError(
                 "refinement_mixer must be 'linear', 'carrier_gate' or "
-                "'attention_residual'"
+                "'attention_residual'. Set refinement_mixer to 'linear', 'carrier_gate' or "
+                "'attention_residual'."
             )
         if self.refinement_mixer not in REFINEMENT_MIXERS:
             raise ValueError(
                 "refinement_mixer must be 'linear', 'carrier_gate' or "
-                "'attention_residual'"
+                "'attention_residual'. Set refinement_mixer to 'linear', 'carrier_gate' or "
+                "'attention_residual'."
             )
         if self.row_head_carrier_gate:
             if self.refinement_mixer == "attention_residual":
                 raise ValueError(
                     "row_head_carrier_gate conflicts with "
                     "refinement_mixer='attention_residual'; run the carrier "
-                    "ablation separately"
+                    "ablation separately. Fix the input condition named in the error, then rerun the operation."
                 )
             if self.refinement_mixer == "linear":
                 object.__setattr__(self, "refinement_mixer", "carrier_gate")
@@ -560,7 +563,7 @@ class ModelConfig:
             raise ValueError(
                 "refinement_mixer='attention_residual' cannot be combined with "
                 "copy_residual_gain or non-default row/shape carrier scales; "
-                "run those legacy ablations separately"
+                "run those legacy ablations separately. Fix the input condition named in the error, then rerun the operation."
             )
         for name in (
             "demonstration_phase_index",
@@ -570,7 +573,7 @@ class ModelConfig:
         ):
             index = _optional_index(getattr(self, name), name)
             if index is not None and index >= self.input_width:
-                raise ValueError(f"{name} must be smaller than input_width")
+                raise ValueError(f"{name} must be smaller than input_width. Set {name} to smaller than input_width.")
             object.__setattr__(self, name, index)
         for name in (
             "memory_key_indices",
@@ -579,7 +582,7 @@ class ModelConfig:
         ):
             indices = _index_tuple(getattr(self, name), name)
             if any(index >= self.input_width for index in indices):
-                raise ValueError(f"{name} entries must be smaller than input_width")
+                raise ValueError(f"{name} entries must be smaller than input_width. Set {name} entries to smaller than input_width.")
             object.__setattr__(self, name, indices)
         memory_fields = (
             self.demonstration_phase_index,
@@ -593,7 +596,7 @@ class ModelConfig:
             ):
                 raise ValueError(
                     "context_memory_width must be positive when memory event "
-                    "configuration is supplied"
+                    "configuration is supplied. Set context_memory_width to a positive value."
                 )
         else:
             required_names = (
@@ -605,39 +608,43 @@ class ModelConfig:
             for name, index in zip(required_names, memory_fields, strict=True):
                 if index is None:
                     raise ValueError(
-                        f"{name} is required when context_memory_width is positive"
+                        f"{name} is required when context_memory_width is positive. Fix the input condition named in the error, then rerun the operation."
                     )
             if self.demonstration_phase_index == self.query_phase_index:
                 raise ValueError(
-                    "demonstration_phase_index and query_phase_index must differ"
+                    "demonstration_phase_index and query_phase_index must differ. Set demonstration_phase_index and query_phase_index to differ."
                 )
             if self.input_side_valid_index == self.output_side_valid_index:
                 raise ValueError(
-                    "input_side_valid_index and output_side_valid_index must differ"
+                    "input_side_valid_index and output_side_valid_index must differ. Set input_side_valid_index and output_side_valid_index to differ."
                 )
             if not self.memory_key_indices:
                 raise ValueError(
-                    "memory_key_indices is required when context_memory_width is positive"
+                    "memory_key_indices is required when context_memory_width is positive. Fix the input condition named in the error, then rerun the operation."
                 )
             if not self.memory_value_indices:
                 raise ValueError(
-                    "memory_value_indices is required when context_memory_width is positive"
+                    "memory_value_indices is required when context_memory_width is positive. Fix the input condition named in the error, then rerun the operation."
                 )
         if not isinstance(self.memory_coding, str):
             raise TypeError(
                 "memory_coding must be 'frozen', 'learned_keys', "
                 "'learned_write', 'learned_update', 'delta_write' or "
-                "'situ_glu_update'"
+                "'situ_glu_update'. Set memory_coding to 'frozen', 'learned_keys', "
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'."
             )
         if self.memory_coding not in MEMORY_CODINGS:
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
                 "'learned_write', 'learned_update', 'delta_write' or "
-                "'situ_glu_update'"
+                "'situ_glu_update'. Set memory_coding to 'frozen', 'learned_keys', "
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'."
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
             raise ValueError(
-                "memory_coding requires a positive context_memory_width"
+                "memory_coding requires a positive context_memory_width. Provide the required value for memory_coding."
             )
         if self.memory_coding in (
             "learned_update",
@@ -661,14 +668,14 @@ class ModelConfig:
             excluded = {self.event_valid_index, self.demonstration_phase_index, self.query_phase_index}
             if any(index in excluded for index in self.memory_update_indices):
                 raise ValueError(
-                    "memory_update_indices must exclude event-valid and phase indicators"
+                    "memory_update_indices must exclude event-valid and phase indicators. Set memory_update_indices to exclude event-valid and phase indicators."
                 )
             required_side_indices = {
                 self.input_side_valid_index,
                 self.output_side_valid_index,
             }
             if not required_side_indices <= set(self.memory_update_indices):
-                raise ValueError("memory_update_indices must include both side-valid bits")
+                raise ValueError("memory_update_indices must include both side-valid bits. Make memory_update_indices include both side-valid bits.")
             order = self.memory_update_feature_order
             if not order:
                 order = tuple(f"event[{index}]" for index in self.memory_update_indices)
@@ -679,16 +686,16 @@ class ModelConfig:
                 or any(not isinstance(name, str) or not name for name in order)
             ):
                 raise ValueError(
-                    "memory_update_feature_order must name every update feature"
+                    "memory_update_feature_order must name every update feature. Set memory_update_feature_order to name every update feature."
                 )
         if not isinstance(self.trace_engine, str):
-            raise TypeError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+            raise TypeError("trace_engine must be 'pp_prop' or 'd_rtrl'. Set trace_engine to 'pp_prop' or 'd_rtrl'.")
         if self.trace_engine not in TRACE_ENGINES:
-            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'. Set trace_engine to 'pp_prop' or 'd_rtrl'.")
         if not isinstance(self.neuron_typing, str):
-            raise TypeError("neuron_typing must be 'none' or 'ei_dale'")
+            raise TypeError("neuron_typing must be 'none' or 'ei_dale'. Set neuron_typing to 'none' or 'ei_dale'.")
         if self.neuron_typing not in NEURON_TYPINGS:
-            raise ValueError("neuron_typing must be 'none' or 'ei_dale'")
+            raise ValueError("neuron_typing must be 'none' or 'ei_dale'. Set neuron_typing to 'none' or 'ei_dale'.")
         object.__setattr__(
             self,
             "excitatory_fraction",
@@ -697,21 +704,23 @@ class ModelConfig:
         if self.neuron_typing == "none":
             if self.excitatory_fraction != 0.8:
                 raise ValueError(
-                    "excitatory_fraction requires neuron_typing='ei_dale'"
+                    "excitatory_fraction requires neuron_typing='ei_dale'. Provide the required value for excitatory_fraction."
                 )
         else:
             excitatory = round(self.excitatory_fraction * self.neuron_count)
             if not 1 <= excitatory <= self.neuron_count - 1:
                 raise ValueError(
                     "excitatory_fraction must leave at least one neuron of "
-                    "each type"
+                    "each type. Set excitatory_fraction to leave at least one neuron of "
+                    "each type."
                 )
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
-            raise TypeError("sparse_backend must be a string or None")
+            raise TypeError("sparse_backend must be a string or None. Set sparse_backend to a string or None.")
         if not isinstance(self.decoder_mode, str):
             raise TypeError(
                 "decoder_mode must be 'legacy_cp', 'row_refinement' or "
-                "'latent_row_decode'"
+                "'latent_row_decode'. Set decoder_mode to 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'."
             )
         if self.decoder_mode not in (
             "legacy_cp",
@@ -720,30 +729,31 @@ class ModelConfig:
         ):
             raise ValueError(
                 "decoder_mode must be 'legacy_cp', 'row_refinement' or "
-                "'latent_row_decode'"
+                "'latent_row_decode'. Set decoder_mode to 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'."
             )
         if self.decoder_mode == "legacy_cp":
             if self.refinement_layout is not None:
                 raise ValueError(
                     "refinement_layout is valid only when decoder_mode is "
-                    "a row decoder"
+                    "a row decoder. Fix the input condition named in the error, then rerun the operation."
                 )
         else:
             if not isinstance(self.refinement_layout, RowRefinementLayout):
                 raise ValueError(
                     "refinement_layout is required when decoder_mode is "
-                    "a row decoder"
+                    "a row decoder. Fix the input condition named in the error, then rerun the operation."
                 )
             if self.refinement_layout.input_width != self.input_width:
-                raise ValueError("refinement_layout input_width must match input_width")
+                raise ValueError("refinement_layout input_width must match input_width. Make refinement_layout input_width match input_width.")
             if self.refinement_layout.event_valid_index != self.event_valid_index:
                 raise ValueError(
-                    "refinement_layout event_valid_index must match event_valid_index"
+                    "refinement_layout event_valid_index must match event_valid_index. Make refinement_layout event_valid_index match event_valid_index."
                 )
             if self.refinement_steps % MAX_GRID_SIZE:
-                raise ValueError("refinement_steps must be a multiple of 30")
+                raise ValueError("refinement_steps must be a multiple of 30. Set refinement_steps to a multiple of 30.")
             if self.refinement_steps > self.max_latent_steps:
-                raise ValueError("refinement_steps must not exceed max_latent_steps")
+                raise ValueError("refinement_steps must not exceed max_latent_steps. Set refinement_steps to a value no greater than max_latent_steps.")
             if self.memory_enabled:
                 matched_indices = (
                     (
@@ -766,7 +776,8 @@ class ModelConfig:
                 if any(left != right for left, right in matched_indices):
                     raise ValueError(
                         "refinement_layout phase and side indices must match "
-                        "context-memory indices"
+                        "context-memory indices. Set refinement_layout phase and side indices to match "
+                        "context-memory indices."
                     )
             if (
                 self.decoder_mode == "latent_row_decode"
@@ -774,7 +785,7 @@ class ModelConfig:
             ):
                 raise ValueError(
                     "refinement_mixer='attention_residual' bypasses the "
-                    "latent-binding test under latent_row_decode"
+                    "latent-binding test under latent_row_decode. Fix the input condition named in the error, then rerun the operation."
                 )
 
     @property
@@ -1056,7 +1067,7 @@ class ContextCheckpoint:
     ----------
     compact_logits : jax.Array
         Compact output shaped ``(batch, compact_output_width)``.
-    spikes, voltage : jax.Array
+    Spikes, voltage : jax.Array
         Query-terminal spikes and voltage shaped ``(batch, neurons)``.  Voltage
         is stored as the numeric value in millivolts.
     feedforward_current, recurrent_current : jax.Array
@@ -1085,7 +1096,7 @@ class ModelTrajectory:
     ----------
     compact_logits : jax.Array
         Factorized outputs shaped ``(steps + 1, batch, compact_width)``.
-    spikes, voltage : jax.Array
+    Spikes, voltage : jax.Array
         Physical trajectories shaped ``(steps + 1, batch, neurons)``.
     feedforward_current, recurrent_current : jax.Array
         Separate Expon current trajectories shaped
@@ -1139,7 +1150,7 @@ class ModelTrajectory:
         effort = _nonnegative_integer(effort, "effort")
         if effort > self.latent_steps:
             raise ValueError(
-                f"effort {effort} exceeds trajectory length {self.latent_steps}"
+                f"Effort {effort} exceeds trajectory length {self.latent_steps}. Set the named field to a value in the stated range, then rerun the operation."
             )
         return expand_decoder_logits(
             self.compact_logits[effort], self.color_rank, self.decoder_mode
@@ -1154,7 +1165,7 @@ class PackedTrajectory:
     ----------
     compact_logits : jax.Array
         Compact outputs shaped ``(time, batch, compact_width)``.
-    spikes, voltage : jax.Array
+    Spikes, voltage : jax.Array
         Physical states shaped ``(time, batch, neurons)``.
     feedforward_current, recurrent_current : jax.Array
         Separate Expon current states shaped ``(time, batch, neurons)`` and
@@ -1211,7 +1222,7 @@ class SelectedPackedTrajectory:
         Strictly increasing stream indices shaped ``(checkpoints, batch)``.
     compact_logits : jax.Array
         Compact outputs shaped ``(checkpoints, batch, compact_width)``.
-    spikes, voltage : jax.Array
+    Spikes, voltage : jax.Array
         Selected physical states shaped ``(checkpoints, batch, neurons)``.
     feedforward_current, recurrent_current : jax.Array
         Selected Expon current states shaped
@@ -1362,10 +1373,10 @@ def build_sparse_topology(
     seed = _nonnegative_integer(seed, "seed")
     recurrent_gain = _positive_real(recurrent_gain, "recurrent_gain")
     if neuron_count < 2:
-        raise ValueError("neuron_count must be at least 2 for no-self topology")
+        raise ValueError("neuron_count must be at least 2 for no-self topology. Set neuron_count to at least 2 for no-self topology.")
     capacity = neuron_count * (neuron_count - 1)
     if edge_count > capacity:
-        raise ValueError(f"edge_count {edge_count} exceeds no-self capacity {capacity}")
+        raise ValueError(f"edge_count {edge_count} exceeds no-self capacity {capacity}. Set the named field to a value in the stated range, then rerun the operation.")
 
     random = brainstate.random.RandomState(seed)
     modulus = neuron_count - 1
@@ -1410,10 +1421,10 @@ def build_sparse_topology(
     values = values[order].astype(np.float32, copy=False)
 
     if rows.size != edge_count or np.any(rows == columns):
-        raise RuntimeError("sparse topology construction violated its exact contract")
+        raise RuntimeError("Sparse topology construction violated its exact contract. Fix the input condition named in the error, then rerun the operation.")
     flat = rows.astype(np.int64) * neuron_count + columns.astype(np.int64)
     if np.unique(flat).size != edge_count:
-        raise RuntimeError("sparse topology construction produced duplicate edges")
+        raise RuntimeError("Sparse topology construction produced duplicate edges. Fix the input condition named in the error, then rerun the operation.")
     for array in (rows, columns, values):
         array.setflags(write=False)
     return SparseTopology(rows, columns, values, neuron_count)
@@ -1465,7 +1476,7 @@ def assign_neuron_type_signs(
     excitatory = round(excitatory_fraction * neuron_count)
     if not 1 <= excitatory <= neuron_count - 1:
         raise ValueError(
-            "excitatory_fraction must leave at least one neuron of each type"
+            "excitatory_fraction must leave at least one neuron of each type. Set excitatory_fraction to leave at least one neuron of each type."
         )
     random = brainstate.random.RandomState(seed + _NEURON_TYPE_SEED_OFFSET)
     permutation = np.asarray(random.permutation(neuron_count), dtype=np.int64)
@@ -1512,10 +1523,10 @@ def apply_dale_signs(
     signs = np.asarray(type_signs)
     if signs.shape != (topology.neuron_count,):
         raise ValueError(
-            "type_signs length must equal the topology neuron count"
+            "type_signs length must equal the topology neuron count. Set type_signs length to equal the topology neuron count."
         )
     if not np.all(np.abs(signs.astype(np.int64)) == 1):
-        raise ValueError("type_signs entries must be +1 or -1")
+        raise ValueError("type_signs entries must be +1 or -1. Set type_signs entries to +1 or -1.")
     values = (
         np.abs(topology.values) * signs[topology.rows].astype(np.float32)
     ).astype(np.float32, copy=False)
@@ -1587,7 +1598,7 @@ def _split_compact_logits(
     expected = compact_output_width(color_rank)
     if compact.ndim < 1 or compact.shape[-1] != expected:
         raise ValueError(
-            f"compact logits must have final width {expected}, got {compact.shape}"
+            f"Compact logits must have final width {expected}, got {compact.shape}. Ensure Compact logits has final width {expected}."
         )
     cursor = 0
     height = compact[..., cursor : cursor + MAX_GRID_SIZE]
@@ -1660,7 +1671,8 @@ def expand_decoder_logits(
     if decoder_mode not in ("row_refinement", "latent_row_decode"):
         raise ValueError(
             "decoder_mode must be 'legacy_cp', 'row_refinement' or "
-            "'latent_row_decode'"
+            "'latent_row_decode'. Set decoder_mode to 'legacy_cp', 'row_refinement' or "
+            "'latent_row_decode'."
         )
     height, width, colors = split_refinement_output_logits(logits)
     return ArcLogits(height=height, width=width, colors=colors)
@@ -1786,25 +1798,26 @@ def _arc_loss_vectors(
     if compact_logits.ndim != 2:
         raise ValueError(
             "compact_logits must have shape (batch, compact_width), got "
-            f"{compact_logits.shape}"
+            f"{compact_logits.shape}. Ensure compact_logits has shape (batch, compact_width)."
         )
     batch_size = compact_logits.shape[0]
     target_height = jnp.asarray(target_height)
     target_width = jnp.asarray(target_width)
     target_colors = jnp.asarray(target_colors)
     if target_height.shape != (batch_size,) or target_width.shape != (batch_size,):
-        raise ValueError("target_height and target_width must each have shape (batch,)")
+        raise ValueError("target_height and target_width must each have shape (batch,). Set target_height and target_width to each have shape (batch,).")
     if target_colors.shape != (batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE):
         raise ValueError(
             "target_colors must have shape "
-            f"({batch_size}, {MAX_GRID_SIZE}, {MAX_GRID_SIZE})"
+            f"({batch_size}, {MAX_GRID_SIZE}, {MAX_GRID_SIZE}). Set target_colors to a value with shape "
+            f"({batch_size}, {MAX_GRID_SIZE}, {MAX_GRID_SIZE})."
         )
     shape_weight = float(shape_weight)
     color_weight = float(color_weight)
     if not math.isfinite(shape_weight) or shape_weight < 0.0:
-        raise ValueError("shape_weight must be finite and nonnegative")
+        raise ValueError("shape_weight must be finite and nonnegative. Set shape_weight to a finite non-negative value.")
     if not math.isfinite(color_weight) or color_weight < 0.0:
-        raise ValueError("color_weight must be finite and nonnegative")
+        raise ValueError("color_weight must be finite and nonnegative. Set color_weight to a finite non-negative value.")
 
     logits = expand_compact_logits(compact_logits, color_rank)
     height_indices = target_height.astype(jnp.int32) - 1
@@ -1932,7 +1945,7 @@ def update_context_memory(
     ----------
     memory : jax.Array
         Current memory shaped ``(batch, key_width, value_width)``.
-    key, value : jax.Array
+    Key, value : jax.Array
         Per-example write vectors shaped ``(batch, key_width)`` and
         ``(batch, value_width)``.
     write_gate : jax.Array
@@ -1953,19 +1966,19 @@ def update_context_memory(
     value = jnp.asarray(value)
     write_gate = jnp.asarray(write_gate, dtype=jnp.bool_)
     if memory.ndim != 3:
-        raise ValueError("memory must have shape (batch, key_width, value_width)")
+        raise ValueError("Memory must have shape (batch, key_width, value_width). Ensure Memory has shape (batch, key_width, value_width).")
     batch_size, key_width, value_width = memory.shape
     if key.shape != (batch_size, key_width):
         raise ValueError(
-            f"key must have shape ({batch_size}, {key_width}), got {key.shape}"
+            f"Key must have shape ({batch_size}, {key_width}), got {key.shape}. Ensure Key has shape ({batch_size}, {key_width})."
         )
     if value.shape != (batch_size, value_width):
         raise ValueError(
-            f"value must have shape ({batch_size}, {value_width}), got {value.shape}"
+            f"Value must have shape ({batch_size}, {value_width}), got {value.shape}. Ensure Value has shape ({batch_size}, {value_width})."
         )
     if write_gate.shape != (batch_size,):
         raise ValueError(
-            f"write_gate must have shape ({batch_size},), got {write_gate.shape}"
+            f"write_gate must have shape ({batch_size},), got {write_gate.shape}. Ensure write_gate has shape ({batch_size},)."
         )
     decay = _unit_interval_real(decay, "decay")
     write = jnp.einsum("bi,bj->bij", key, value)
@@ -1974,7 +1987,8 @@ def update_context_memory(
         if write_scale.shape != (key_width, value_width):
             raise ValueError(
                 "write_scale must have shape "
-                f"({key_width}, {value_width}), got {write_scale.shape}"
+                f"({key_width}, {value_width}), got {write_scale.shape}. Set write_scale to a value with shape "
+                f"({key_width}, {value_width})."
             )
         write = write * write_scale[None, :, :]
     return apply_context_memory_write(
@@ -2298,11 +2312,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
     ):
         super().__init__()
         if not isinstance(config, ModelConfig):
-            raise TypeError("config must be a ModelConfig")
+            raise TypeError("Config must be a ModelConfig. Set Config to a ModelConfig.")
         if not isinstance(memory_read_policy, str):
-            raise TypeError("memory_read_policy must be 'full' or 'query_only'")
+            raise TypeError("memory_read_policy must be 'full' or 'query_only'. Set memory_read_policy to 'full' or 'query_only'.")
         if memory_read_policy not in ("full", "query_only"):
-            raise ValueError("memory_read_policy must be 'full' or 'query_only'")
+            raise ValueError("memory_read_policy must be 'full' or 'query_only'. Set memory_read_policy to 'full' or 'query_only'.")
         self.config = config
         self._memory_read_policy = memory_read_policy
         self.topology = build_sparse_topology(
@@ -2948,11 +2962,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             without a valid input side are exactly zero.
         """
         if not self.config.memory_enabled:
-            raise RuntimeError("context memory is disabled")
+            raise RuntimeError("Context memory is disabled. Fix the input condition named in the error, then rerun the operation.")
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
-            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+            raise ValueError(f"Event must have shape {expected}, got {event.shape}. Ensure Event has shape {expected}.")
         feature_indices = (
             self.config.memory_update_indices
             if self.config.memory_coding == "delta_write"
@@ -2996,11 +3010,11 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             Rows without a valid output side are exactly zero.
         """
         if not self.config.memory_enabled:
-            raise RuntimeError("context memory is disabled")
+            raise RuntimeError("Context memory is disabled. Fix the input condition named in the error, then rerun the operation.")
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
-            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+            raise ValueError(f"Event must have shape {expected}, got {event.shape}. Ensure Event has shape {expected}.")
         features = event[..., jnp.asarray(self.config.memory_value_indices)]
         code = softcap(
             features @ self._memory_value_basis,
@@ -3097,16 +3111,16 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             ``"learned_write"``.
         """
         if not self.config.memory_enabled:
-            raise RuntimeError("context memory is disabled")
+            raise RuntimeError("Context memory is disabled. Fix the input condition named in the error, then rerun the operation.")
         if self.config.memory_coding != "learned_write":
             raise RuntimeError(
                 "encode_memory_write requires memory_coding='learned_write'; "
-                f"got {self.config.memory_coding!r}"
+                f"got {self.config.memory_coding!r}. Provide the required value for encode_memory_write."
             )
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
-            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+            raise ValueError(f"Event must have shape {expected}, got {event.shape}. Ensure Event has shape {expected}.")
         write = braintrace.outer_write(
             event[..., jnp.asarray(self.config.memory_key_indices)],
             event[..., jnp.asarray(self.config.memory_value_indices)],
@@ -3146,12 +3160,12 @@ class LatentWorkspaceModel(brainstate.nn.Module):
 
         if self.config.memory_coding not in ("learned_update", "situ_glu_update"):
             raise RuntimeError(
-                "encode_memory_update requires an additive learned-update coding"
+                "encode_memory_update requires an additive learned-update coding. Provide the required value for encode_memory_update."
             )
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
-            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+            raise ValueError(f"Event must have shape {expected}, got {event.shape}. Ensure Event has shape {expected}.")
         features = event[..., jnp.asarray(self.config.memory_update_indices)]
         if self.config.memory_coding == "situ_glu_update":
             return self.memory_situ_glu(features)
@@ -3174,7 +3188,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         """
         if self.config.memory_coding != "delta_write":
             raise RuntimeError(
-                "encode_delta_memory_candidate requires memory_coding='delta_write'"
+                "encode_delta_memory_candidate requires memory_coding='delta_write'. Provide the required value for encode_delta_memory_candidate."
             )
         features = event[..., jnp.asarray(self.config.memory_update_indices)]
         return braintrace.delta_memory_update(
@@ -3207,7 +3221,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             Associative read shaped ``(batch, memory_width)``.
         """
         if not self.config.memory_enabled:
-            raise RuntimeError("context memory is disabled")
+            raise RuntimeError("Context memory is disabled. Fix the input condition named in the error, then rerun the operation.")
         if query is None:
             query = self.reasoning_query.value
         query = jnp.asarray(query)
@@ -3216,7 +3230,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             self.config.context_memory_width,
         )
         if query.shape != expected:
-            raise ValueError(f"query must have shape {expected}, got {query.shape}")
+            raise ValueError(f"Query must have shape {expected}, got {query.shape}. Ensure Query has shape {expected}.")
         memory = self.context_memory.value
         if self.config.memory_coding in ("learned_update", "situ_glu_update"):
             width = self.config.context_memory_width
@@ -3254,7 +3268,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         ----------
         candidate : jax.Array
             Ordinary candidate reasoning query shaped ``(batch, memory_width)``.
-        query, latent : jax.Array
+        Query, latent : jax.Array
             Per-lane query-ingestion and latent-update gates.
         latent_index : jax.Array
             One-based latent tick number per lane.
@@ -3768,23 +3782,23 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             Snapshot produced by this model configuration.
         """
         if not isinstance(snapshot, ModelStateSnapshot):
-            raise TypeError("snapshot must be a ModelStateSnapshot")
+            raise TypeError("Snapshot must be a ModelStateSnapshot. Set Snapshot to a ModelStateSnapshot.")
         if (
             snapshot.batch_size != self.config.batch_size
             or snapshot.neuron_count != self.config.neuron_count
         ):
-            raise ValueError("snapshot configuration does not match this model")
+            raise ValueError("Snapshot configuration does not match this model. Use matching values and structures.")
         state_items = self._snapshot_state_items()
         expected_paths = tuple(path for path, _ in state_items)
         actual_paths = tuple(path for path, _ in snapshot.entries)
         if actual_paths != expected_paths:
-            raise ValueError("snapshot state paths do not match this model")
+            raise ValueError("Snapshot state paths do not match this model. Fix the input condition named in the error, then rerun the operation.")
         validated: list[tuple[Any, Any]] = []
         for (path, value), (_, state) in zip(
             snapshot.entries, state_items, strict=True
         ):
             if tuple(path) not in expected_paths:
-                raise ValueError("snapshot contains an unknown state path")
+                raise ValueError("Snapshot contains an unknown state path. Fix the input condition named in the error, then rerun the operation.")
             value_structure = jax.tree.structure(value)
             state_structure = jax.tree.structure(state.value)
             value_leaves = jax.tree.leaves(value)
@@ -3792,14 +3806,14 @@ class LatentWorkspaceModel(brainstate.nn.Module):
             if value_structure != state_structure or len(value_leaves) != len(
                 state_leaves
             ):
-                raise ValueError("snapshot state structure does not match model")
+                raise ValueError("Snapshot state structure does not match model. Use matching values and structures.")
             if any(
                 np.shape(value_leaf) != np.shape(state_leaf)
                 for value_leaf, state_leaf in zip(
                     value_leaves, state_leaves, strict=True
                 )
             ):
-                raise ValueError("snapshot state shape does not match model")
+                raise ValueError("Snapshot state shape does not match model. Use matching values and structures.")
             validated.append((state, value))
         for state, value in validated:
             state.value = _copy_tree(value)
@@ -3820,7 +3834,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         """
         slot_index = _nonnegative_integer(slot_index, "slot_index")
         if slot_index >= self.slot_count:
-            raise ValueError(f"slot_index {slot_index} outside [0, {self.slot_count})")
+            raise ValueError(f"slot_index {slot_index} outside [0, {self.slot_count}). Set the named field to a value in the stated range, then rerun the operation.")
         slots = jnp.full((self.config.batch_size,), slot_index, dtype=jnp.int32)
         enabled = jnp.ones((self.config.batch_size,), dtype=jnp.bool_)
         return self.mask_slots(slots, enabled)
@@ -3857,7 +3871,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         expected = (self.config.batch_size,)
         if slot_indices.shape != expected or enabled.shape != expected:
             raise ValueError(
-                f"slot_indices and enabled must each have shape {expected}"
+                f"slot_indices and enabled must each have shape {expected}. Set slot_indices and enabled to each have shape {expected}."
             )
         neuron_slots = jnp.arange(self.config.neuron_count) // NEURONS_PER_SLOT
         selected = neuron_slots[None, :] == slot_indices[:, None]
@@ -4102,7 +4116,7 @@ class LatentWorkspaceModel(brainstate.nn.Module):
         event = jnp.asarray(event, dtype=jnp.float32)
         expected = (self.config.batch_size, self.config.input_width)
         if event.shape != expected:
-            raise ValueError(f"event must have shape {expected}, got {event.shape}")
+            raise ValueError(f"Event must have shape {expected}, got {event.shape}. Ensure Event has shape {expected}.")
         protocol_gates = advance if isinstance(advance, StepGates) else None
         if protocol_gates is not None:
             advance = jnp.asarray(protocol_gates.advance_physics, dtype=jnp.bool_)
@@ -4448,7 +4462,7 @@ def _batched_events(model: LatentWorkspaceModel, events: jax.Array) -> jax.Array
     if events.ndim == 2:
         if model.config.batch_size != 1:
             raise ValueError(
-                "rank-two events are supported only when configured batch_size is 1"
+                "Rank-two events are supported only when configured batch_size is 1. Fix the input condition named in the error, then rerun the operation."
             )
         events = events[:, None, :]
     expected_tail = (model.config.batch_size, model.config.input_width)
@@ -4458,7 +4472,7 @@ def _batched_events(model: LatentWorkspaceModel, events: jax.Array) -> jax.Array
             f"{expected_tail[1]}), got {events.shape}"
         )
     if events.shape[0] < 1:
-        raise ValueError("context events must contain at least one valid row")
+        raise ValueError("Context events must contain at least one valid row. Add at least one valid row to Context events.")
     return events
 
 
@@ -4563,29 +4577,31 @@ def run_packed_stream(
         if advance.shape != (packed.shape[0], model.config.batch_size):
             raise ValueError(
                 "advance_gates must have shape "
-                f"({packed.shape[0]}, {model.config.batch_size})"
+                f"({packed.shape[0]}, {model.config.batch_size}). Set advance_gates to a value with shape "
+                f"({packed.shape[0]}, {model.config.batch_size})."
             )
     controlled = ablation_slots is not None or ablation_gates is not None
     if controlled:
         if ablation_slots is None or ablation_gates is None:
             raise ValueError(
-                "ablation_slots and ablation_gates must be supplied together"
+                "ablation_slots and ablation_gates must be supplied together. Set ablation_slots and ablation_gates to supplied together."
             )
         raw_slots = np.asarray(ablation_slots)
         if raw_slots.shape != (model.config.batch_size,):
             raise ValueError(
-                f"ablation_slots must have shape ({model.config.batch_size},)"
+                f"ablation_slots must have shape ({model.config.batch_size},). Ensure ablation_slots has shape ({model.config.batch_size},)."
             )
         if not np.issubdtype(raw_slots.dtype, np.integer):
-            raise ValueError("ablation_slots must contain integers")
+            raise ValueError("ablation_slots must contain integers. Add integers to ablation_slots.")
         if np.any(raw_slots < 0) or np.any(raw_slots >= model.slot_count):
-            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count})")
+            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count}). Set ablation_slots to a value in [0, {model.slot_count}).")
         slots = jnp.asarray(raw_slots, dtype=jnp.int32)
         gates = jnp.asarray(ablation_gates, dtype=jnp.bool_)
         if gates.shape != (packed.shape[0], model.config.batch_size):
             raise ValueError(
                 "ablation_gates must have shape "
-                f"({packed.shape[0]}, {model.config.batch_size})"
+                f"({packed.shape[0]}, {model.config.batch_size}). Set ablation_gates to a value with shape "
+                f"({packed.shape[0]}, {model.config.batch_size})."
             )
 
         def controlled_step(
@@ -4751,17 +4767,17 @@ def run_selected_packed_stream(
     raw_indices = np.asarray(selected_indices)
     if raw_indices.ndim != 2 or raw_indices.shape[1] != model.config.batch_size:
         raise ValueError(
-            f"selected_indices must have shape (checkpoints, {model.config.batch_size})"
+            f"selected_indices must have shape (checkpoints, {model.config.batch_size}). Ensure selected_indices has shape (checkpoints, {model.config.batch_size})."
         )
     if raw_indices.shape[0] < 1:
-        raise ValueError("selected_indices must contain at least one checkpoint")
+        raise ValueError("selected_indices must contain at least one checkpoint. Add at least one checkpoint to selected_indices.")
     if not np.issubdtype(raw_indices.dtype, np.integer):
-        raise ValueError("selected_indices must contain integers")
+        raise ValueError("selected_indices must contain integers. Add integers to selected_indices.")
     if np.any(raw_indices < 0) or np.any(raw_indices >= packed.shape[0]):
-        raise ValueError(f"selected_indices must lie in [0, {packed.shape[0]})")
+        raise ValueError(f"selected_indices must lie in [0, {packed.shape[0]}). Set selected_indices to a value in [0, {packed.shape[0]}).")
     if np.any(np.diff(raw_indices.astype(np.int64), axis=0) <= 0):
         raise ValueError(
-            "selected_indices must be strictly increasing in each batch column"
+            "selected_indices must be strictly increasing in each batch column. Set selected_indices to strictly increasing in each batch column."
         )
     indices = jnp.asarray(raw_indices, dtype=jnp.int32)
     checkpoint_count = int(raw_indices.shape[0])
@@ -4774,7 +4790,8 @@ def run_selected_packed_stream(
         if phase_gates.advance_physics.shape != (packed.shape[0], batch_size):
             raise ValueError(
                 "StepGates must have shape "
-                f"({packed.shape[0]}, {batch_size})"
+                f"({packed.shape[0]}, {batch_size}). Set StepGates to a value with shape "
+                f"({packed.shape[0]}, {batch_size})."
             )
         advance = phase_gates.advance_physics
         latent_updates = phase_gates.latent_update
@@ -4791,7 +4808,7 @@ def run_selected_packed_stream(
         advance = jnp.asarray(advance_gates, dtype=jnp.bool_)
         if advance.shape != (packed.shape[0], batch_size):
             raise ValueError(
-                f"advance_gates must have shape ({packed.shape[0]}, {batch_size})"
+                f"advance_gates must have shape ({packed.shape[0]}, {batch_size}). Ensure advance_gates has shape ({packed.shape[0]}, {batch_size})."
             )
         latent_updates = jnp.zeros_like(advance)
         decoder_rows = jnp.zeros_like(advance)
@@ -4802,20 +4819,20 @@ def run_selected_packed_stream(
     if controlled:
         if ablation_slots is None or ablation_gates is None:
             raise ValueError(
-                "ablation_slots and ablation_gates must be supplied together"
+                "ablation_slots and ablation_gates must be supplied together. Set ablation_slots and ablation_gates to supplied together."
             )
         raw_slots = np.asarray(ablation_slots)
         if raw_slots.shape != (batch_size,):
-            raise ValueError(f"ablation_slots must have shape ({batch_size},)")
+            raise ValueError(f"ablation_slots must have shape ({batch_size},). Ensure ablation_slots has shape ({batch_size},).")
         if not np.issubdtype(raw_slots.dtype, np.integer):
-            raise ValueError("ablation_slots must contain integers")
+            raise ValueError("ablation_slots must contain integers. Add integers to ablation_slots.")
         if np.any(raw_slots < 0) or np.any(raw_slots >= model.slot_count):
-            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count})")
+            raise ValueError(f"ablation_slots must lie in [0, {model.slot_count}). Set ablation_slots to a value in [0, {model.slot_count}).")
         slots = jnp.asarray(raw_slots, dtype=jnp.int32)
         ablations = jnp.asarray(ablation_gates, dtype=jnp.bool_)
         if ablations.shape != (packed.shape[0], batch_size):
             raise ValueError(
-                f"ablation_gates must have shape ({packed.shape[0]}, {batch_size})"
+                f"ablation_gates must have shape ({packed.shape[0]}, {batch_size}). Ensure ablation_gates has shape ({packed.shape[0]}, {batch_size})."
             )
     else:
         slots = jnp.zeros((batch_size,), dtype=jnp.int32)
@@ -5026,7 +5043,7 @@ def run_latent_trajectory(
         steps = _nonnegative_integer(steps, "steps")
     if steps > model.config.max_latent_steps:
         raise ValueError(
-            f"steps {steps} exceeds configured maximum {model.config.max_latent_steps}"
+            f"Steps {steps} exceeds configured maximum {model.config.max_latent_steps}. Set the named field to a value in the stated range, then rerun the operation."
         )
 
     initial_spikes = model.spikes
@@ -5177,7 +5194,7 @@ def compile_pp_prop(
     ----------
     model
         Model whose configured trace engine is compiled.
-    verbose
+    Verbose
         BrainTrace compiler verbosity.
 
     Returns

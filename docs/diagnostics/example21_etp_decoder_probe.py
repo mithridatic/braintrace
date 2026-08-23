@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Stage 2 prerequisite gate: how does the ETP compiler classify the new decoder?
 
 `2026-08-18-example21-decoder-redesign.md` §7 asserts, from static reading only,
@@ -12,10 +12,10 @@ This probe builds the *shape* of the Stage 2 decoder -- the same state kinds and
 the same head fan-out, applied at the same point in ``compact_readout`` -- and
 compiles it with the production ``compile_pp_prop``. It asserts:
 
-  1. every new head weight path appears in ``report.excluded_weights``
-  2. no new head weight path appears in ``report.etrace_weights``
+  1. Every new head weight path appears in ``report.excluded_weights``
+  2. No new head weight path appears in ``report.etrace_weights``
   3. ``report.hidden_groups`` is identical to the legacy model's
-  4. the query buffer is not a ``HiddenState`` and gains no eligibility trace
+  4. The query buffer is not a ``HiddenState`` and gains no eligibility trace
 
 Usage:  example21_etp_decoder_probe.py WORKTREE
 """

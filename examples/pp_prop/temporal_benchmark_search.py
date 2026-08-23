@@ -51,7 +51,7 @@ def _settings(values: argparse.Namespace) -> SearchSettings:
     source_commit = os.environ.get("BRAINTRACE_SOURCE_COMMIT")
     if not image_digest or not source_commit:
         raise RuntimeError(
-            "BRAINTRACE_IMAGE_DIGEST and BRAINTRACE_SOURCE_COMMIT are required"
+            "BRAINTRACE_IMAGE_DIGEST and BRAINTRACE_SOURCE_COMMIT are required. Fix the input condition named in the error, then rerun the operation."
         )
     clip_norms = GradientClipNorms(values.clip_norm, values.clip_norm, values.clip_norm)
     return SearchSettings(

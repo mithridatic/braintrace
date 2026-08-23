@@ -23,7 +23,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import brainstate
 import braintools
 import matplotlib
-matplotlib.use('Agg')  # headless backend: render to file, no display needed
+matplotlib.use('Agg')  # Headless backend: render to file, no display needed
 import matplotlib.pyplot as plt
 import numpy as np
 import brainunit as u
@@ -36,10 +36,10 @@ def main(
     batch_size: int = 128,
     num_batch: int = 100,
     n_rec: int = 200,
-    t_fixation: float = 10.,   # ms
-    t_sample: float = 500.,    # ms
-    t_delay: float = 1000.,    # ms
-    t_test: float = 500.,      # ms
+    t_fixation: float = 10.,   # Ms
+    t_sample: float = 500.,    # Ms
+    t_delay: float = 1000.,    # Ms
+    t_test: float = 500.,      # Ms
     plot: bool = True,
 ) -> dict:
     with brainstate.environ.context(dt=1. * u.ms):

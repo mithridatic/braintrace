@@ -197,10 +197,10 @@ ETP_RULES_SOLVE_DRTRL[etp_gated_projection_p] = _solve_drtrl
 def _dimensionless_float(value: ArrayLike, name: str) -> Any:
     unit = u.get_unit(value)
     if not unit.is_unitless:
-        raise ValueError(f"{name} must be dimensionless, got unit {unit}")
+        raise ValueError(f"{name} must be dimensionless, got unit {unit}. Set {name} to dimensionless.")
     result = jnp.asarray(u.get_mantissa(value))
     if not jnp.issubdtype(result.dtype, jnp.floating):
-        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}")
+        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}. Ensure {name} has a floating dtype.")
     return result
 
 
@@ -208,10 +208,10 @@ def _epsilon(epsilon: float | None, dtype: Any) -> float:
     if epsilon is None:
         return float(jnp.finfo(dtype).eps)
     if isinstance(epsilon, (bool, np.bool_)) or not isinstance(epsilon, Real):
-        raise TypeError("epsilon must be a finite positive real scalar or None")
+        raise TypeError("Epsilon must be a finite positive real scalar or None. Set Epsilon to a finite positive real scalar or None.")
     result = float(epsilon)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError("epsilon must be a finite positive real scalar")
+        raise ValueError("Epsilon must be a finite positive real scalar. Set Epsilon to a finite positive real scalar.")
     return result
 
 
@@ -276,31 +276,33 @@ def gated_projection(
         [[1.0, 2.0]]
     """
     if not isinstance(normalize, (bool, np.bool_)):
-        raise TypeError("normalize must be boolean")
+        raise TypeError("Normalize must be boolean. Set Normalize to boolean.")
     values_array = _dimensionless_float(values, "values")
     gate_array = _dimensionless_float(gate_input, "gate_input")
     gate_weight_array = _dimensionless_float(gate_weight, "gate_weight")
     gate_bias_array = _dimensionless_float(gate_bias, "gate_bias")
     output_weight_array = _dimensionless_float(output_weight, "output_weight")
     if values_array.ndim != 2 or gate_array.ndim != 2:
-        raise ValueError("values and gate_input must be batched rank-two arrays")
+        raise ValueError("Values and gate_input must be batched rank-two arrays. Set Values and gate_input to batched rank-two arrays.")
     if values_array.shape[0] != gate_array.shape[0]:
-        raise ValueError("values and gate_input must share the same batch size")
+        raise ValueError("Values and gate_input must share the same batch size. Make Values and gate_input share the same batch size.")
     value_features = values_array.shape[1]
     gate_features = gate_array.shape[1]
     if gate_weight_array.shape != (gate_features, value_features):
         raise ValueError(
             "gate_weight must have shape "
-            f"({gate_features}, {value_features}), got {gate_weight_array.shape}"
+            f"({gate_features}, {value_features}), got {gate_weight_array.shape}. Set gate_weight to a value with shape "
+            f"({gate_features}, {value_features})."
         )
     if gate_bias_array.shape != (value_features,):
         raise ValueError(
-            f"gate_bias must have shape ({value_features},), got {gate_bias_array.shape}"
+            f"gate_bias must have shape ({value_features},), got {gate_bias_array.shape}. Ensure gate_bias has shape ({value_features},)."
         )
     if output_weight_array.ndim != 2 or output_weight_array.shape[0] != value_features:
         raise ValueError(
             "output_weight must have shape "
-            f"({value_features}, output_features), got {output_weight_array.shape}"
+            f"({value_features}, output_features), got {output_weight_array.shape}. Set output_weight to a value with shape "
+            f"({value_features}, output_features)."
         )
     packed = jnp.concatenate((values_array, gate_array), axis=-1)
     return etp_gated_projection_p.bind(

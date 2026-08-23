@@ -40,15 +40,15 @@ class CandidateScore:
 
 
 class ResumeConfigurationError(ValueError):
-    """Indicate that an existing raw run does not match the requested run."""
+    """show that an existing raw run does not match the requested run."""
 
 
 class RunEvidenceError(ValueError):
-    """Indicate that a raw run is incomplete, non-finite, or stability-invalid."""
+    """show that a raw run is incomplete, non-finite, or stability-invalid."""
 
 
 class StabilityEvidenceError(RunEvidenceError):
-    """Indicate complete evidence that fails the scientific stability limits."""
+    """show complete evidence that fails the scientific stability limits."""
 
 
 def ensure_finite(value: object, location: str = "root") -> None:
@@ -57,7 +57,7 @@ def ensure_finite(value: object, location: str = "root") -> None:
         return
     if isinstance(value, (int, float)):
         if not math.isfinite(float(value)):
-            raise RunEvidenceError(f"non-finite numeric value at {location}")
+            raise RunEvidenceError(f"Non-finite numeric value at {location}. Use finite values.")
         return
     if isinstance(value, Mapping):
         for key, child in value.items():
@@ -71,20 +71,20 @@ def ensure_finite(value: object, location: str = "root") -> None:
 def _number(mapping: Mapping[str, object], key: str, location: str) -> float:
     value = mapping.get(key)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise RunEvidenceError(f"{location}.{key} must be numeric")
+        raise RunEvidenceError(f"{location}.{key} must be numeric. Set {location}.{key} to numeric.")
     numeric = float(value)
     if not math.isfinite(numeric):
-        raise RunEvidenceError(f"{location}.{key} must be finite")
+        raise RunEvidenceError(f"{location}.{key} must be finite. Use finite values for {location}.{key}.")
     return numeric
 
 
 def percentile_99(values: Sequence[float]) -> float:
     """Return NumPy-compatible linear interpolation for the 99th percentile."""
     if not values:
-        raise RunEvidenceError("recurrent update ratios must be nonempty")
+        raise RunEvidenceError("Recurrent update ratios must be nonempty. Set Recurrent update ratios to nonempty.")
     ordered = sorted(float(value) for value in values)
     if not all(math.isfinite(value) for value in ordered):
-        raise RunEvidenceError("recurrent update ratios must be finite")
+        raise RunEvidenceError("Recurrent update ratios must be finite. Use finite values for Recurrent update ratios.")
     position = 0.99 * (len(ordered) - 1)
     lower = math.floor(position)
     upper = math.ceil(position)
@@ -97,8 +97,8 @@ def _validate_complete_config(
 ) -> None:
     if result.get("config") != config_to_dict(expected):
         raise ResumeConfigurationError(
-            "existing raw result configuration does not exactly match the requested "
-            "benchmark configuration"
+            "Existing raw result configuration does not exactly match the requested "
+            "benchmark configuration. Fix the input condition named in the error, then rerun the operation."
         )
 
 
@@ -110,14 +110,14 @@ def _validate_provenance(
     environment = document.get("environment")
     if not isinstance(environment, Mapping):
         raise ResumeConfigurationError(
-            "raw result lacks required development-search provenance"
+            "Raw result lacks required development-search provenance. Provide the missing item named in the message."
         )
     if (
         environment.get("container_image_digest") != container_image_digest
         or environment.get("source_commit") != source_commit
     ):
         raise ResumeConfigurationError(
-            "raw result provenance does not match the requested image and source"
+            "Raw result provenance does not match the requested image and source. Use matching values and structures."
         )
 
 
@@ -132,33 +132,33 @@ def score_raw_document(
 ) -> BundleScore:
     """Validate one raw development result and return its ranking values."""
     if document.get("schema_version") != 1:
-        raise RunEvidenceError("raw result has an unsupported schema version")
+        raise RunEvidenceError("Raw result has an unsupported schema version. Use a supported option or change the configuration.")
     if document.get("sealed_test") is not False:
-        raise RunEvidenceError("development search cannot consume sealed results")
+        raise RunEvidenceError("Development search cannot consume sealed results. Fix the input condition named in the error, then rerun the operation.")
     result = document.get("result")
     if not isinstance(result, Mapping):
-        raise RunEvidenceError("raw result lacks its result object")
+        raise RunEvidenceError("Raw result lacks its result object. Provide the missing item named in the message.")
     _validate_complete_config(result, expected)
     _validate_provenance(document, container_image_digest, source_commit)
     if result.get("status") != "completed":
-        raise RunEvidenceError("development run did not complete")
+        raise RunEvidenceError("Development run did not complete. Fix the input condition named in the error, then rerun the operation.")
     if result.get("sealed_test_metrics") is not None:
-        raise RunEvidenceError("development run materialized sealed test metrics")
+        raise RunEvidenceError("Development run materialized sealed test metrics. Fix the input condition named in the error, then rerun the operation.")
     ensure_finite(document)
 
     validation = result.get("final_validation")
     dynamics = result.get("dynamics")
     telemetry = result.get("optimizer_telemetry")
     if not isinstance(validation, Mapping) or not isinstance(dynamics, Mapping):
-        raise RunEvidenceError("raw result lacks validation or dynamics metrics")
+        raise RunEvidenceError("Raw result lacks validation or dynamics metrics. Provide the missing item named in the message.")
     if not isinstance(telemetry, Mapping):
-        raise RunEvidenceError("raw result lacks optimizer telemetry")
+        raise RunEvidenceError("Raw result lacks optimizer telemetry. Provide the missing item named in the message.")
     recurrent = telemetry.get("recurrent")
     if not isinstance(recurrent, Mapping):
-        raise RunEvidenceError("raw result lacks recurrent optimizer telemetry")
+        raise RunEvidenceError("Raw result lacks recurrent optimizer telemetry. Provide the missing item named in the message.")
     ratios_value = recurrent.get("update_to_weight_ratio")
     if not isinstance(ratios_value, list):
-        raise RunEvidenceError("raw result lacks recurrent update ratios")
+        raise RunEvidenceError("Raw result lacks recurrent update ratios. Provide the missing item named in the message.")
     ratio_p99 = percentile_99([float(value) for value in ratios_value])
 
     nll = _number(validation, "ensemble_nll", "final_validation")
@@ -167,7 +167,7 @@ def score_raw_document(
     silent_fraction = _number(dynamics, "silent_neuron_fraction", "dynamics")
     saturated_fraction = _number(dynamics, "saturated_neuron_fraction", "dynamics")
     if nll < 0.0 or not 0.0 <= accuracy <= 1.0:
-        raise RunEvidenceError("validation metrics are outside their valid ranges")
+        raise RunEvidenceError("Validation metrics are outside their valid ranges. Set the named field to a value in the stated range, then rerun the operation.")
     stable = (
         0.001 <= mean_firing <= 0.30
         and silent_fraction <= 0.95
@@ -176,7 +176,7 @@ def score_raw_document(
     )
     if not stable:
         raise StabilityEvidenceError(
-            "development run failed the primary stability gates"
+            "Development run failed the primary stability gates. Correct the reported inputs, then retry the operation."
         )
     return BundleScore(
         bundle_id=expected.bundle_id,

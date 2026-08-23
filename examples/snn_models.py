@@ -22,7 +22,7 @@ import brainstate
 import braintools
 import jax
 import matplotlib
-matplotlib.use('Agg')  # headless backend: render to file, no display needed
+matplotlib.use('Agg')  # Headless backend: render to file, no display needed
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
@@ -52,7 +52,7 @@ class GIF(brainpy.state.Neuron):
     ):
         super().__init__(size, name=name, spk_fun=spike_fun, spk_reset=spk_reset)
 
-        # parameters
+        # Parameters
         self.V_rest = braintools.init.param(V_rest, self.varshape, allow_none=False)
         self.V_th_inf = braintools.init.param(V_th_inf, self.varshape, allow_none=False)
         self.R = braintools.init.param(R, self.varshape, allow_none=False)
@@ -60,12 +60,12 @@ class GIF(brainpy.state.Neuron):
         self.tau_I2 = braintools.init.param(tau_I2, self.varshape, allow_none=False)
         self.A2 = braintools.init.param(A2, self.varshape, allow_none=False)
 
-        # initializers
+        # Initializers
         self._V_initializer = V_initializer
         self._I2_initializer = I2_initializer
 
     def init_state(self, batch_size=None, **kwargs):
-        # 将模型用于在线学习，需要初始化状态变量。batch_size 让非 vmap 的批量
+        # 将模型用于在线学习，需要初始化状态变量。Batch_size 让非 vmap 的批量
         # 初始化路径 (init_all_states(model, batch_size=B)) 也能工作，和 LIF/ALIF
         # 等其它神经元保持一致。
         self.V = brainstate.HiddenState(braintools.init.param(self._V_initializer, self.varshape, batch_size))
@@ -200,10 +200,10 @@ class GifNet(brainstate.nn.Module):
 @numba.njit
 def _dms(num_steps, num_inputs, n_motion_choice, motion_tuning,
          sample_time, test_time, fr, bg_fr, rotate_dir):
-    # data
+    # Data
     X = np.zeros((num_steps, num_inputs))
 
-    # sample
+    # Sample
     match = np.random.randint(2)
     sample_dir = np.random.randint(n_motion_choice)
 
@@ -221,11 +221,11 @@ def _dms(num_steps, num_inputs, n_motion_choice, motion_tuning,
     X[test_time] += motion_tuning[test_dir] * fr
     X += bg_fr
 
-    # to spiking
+    # To spiking
     X = np.random.random(X.shape) < X
     X = X.astype(np.float32)
 
-    # can use a greater weight for test period if needed
+    # Can use a greater weight for test period if needed
     return X, match
 
 
@@ -265,7 +265,7 @@ class DMSDataset:
     ):
         super().__init__()
 
-        # parameters
+        # Parameters
         self.num_batch = num_batch
         self.batch_size = batch_size
         self.num_inputs = n_input
@@ -273,7 +273,7 @@ class DMSDataset:
         self.firing_rate = firing_rate
         dt = brainstate.environ.get_dt()
 
-        # time
+        # Time
         self.t_fixation = int(t_fixation / dt)
         self.t_sample = int(t_sample / dt)
         self.t_delay = int(t_delay / dt)
@@ -285,17 +285,17 @@ class DMSDataset:
         self.fix_time = slice(0, test_onset)
         self.sample_time = slice(self.t_fixation, self.t_fixation + self.t_sample)
 
-        # input shape
+        # Input shape
         self.rotation_match = rotation_match
         self._rotate = self._rotate_choice[rotation_match]
-        self.bg_fr = bg_fr  # background firing rate
+        self.bg_fr = bg_fr  # Background firing rate
         self.v_min = limits[0]
         self.v_max = limits[1]
         self.v_range = limits[1] - limits[0]
 
         # Tuning function data
         self.n_motion_choice = 8
-        self.kappa = kappa  # concentration scaling factor for von Mises
+        self.kappa = kappa  # Concentration scaling factor for von Mises
 
         # Generate list of preferred directions
         # dividing neurons by 2 since two equal
@@ -316,11 +316,11 @@ class DMSDataset:
         return self.num_batch
 
     def __iter__(self):
-        # firing rate
+        # Firing rate
         fr = np.asarray(self.firing_rate * brainstate.environ.get_dt())
         bg_fr = np.asarray(self.bg_fr * brainstate.environ.get_dt())
 
-        # generate data
+        # Generate data
         for _ in range(self.num_batch):
             xs, ys = [], []
             for _ in range(self.batch_size):
@@ -353,19 +353,19 @@ class Trainer:
     ):
         super().__init__()
 
-        # dataset
+        # Dataset
         self.dataset = dataset
         self.x_fun = x_fun
 
-        # target network
+        # Target network
         self.target = target
 
-        # optimizer
+        # Optimizer
         self.opt = opt
         weights = self.target.states(brainstate.ParamState)
         opt.register_trainable_weights(weights)
 
-        # training parameters
+        # Training parameters
         self.n_sim = n_sim
         self.batch_size = batch_size
         self.acc_th = acc_th
@@ -385,9 +385,9 @@ class Trainer:
             i_epoch += 1
             bar = tqdm(enumerate(self.dataset))
             for i, (x_local, y_local) in bar:
-                # training
+                # Training
                 x_local = self.x_fun(x_local)  # [n_steps, n_samples, n_in]
-                y_local = y_local  # [n_samples]
+                y_local = y_local  # [N_samples]
                 loss, acc = self.batch_train(x_local, y_local)
                 bar.set_description(f'loss = {loss:.5f}, acc={acc:.5f}', refresh=True)
                 losses.append(loss)
@@ -404,22 +404,22 @@ class OnlineTrainer(Trainer):
 
     @brainstate.transform.jit(static_argnums=0)
     def batch_train(self, inputs, targets):
-        # initialize the online learning model
+        # Initialize the online learning model
         model = braintrace.compile(self.target, braintrace.pp_prop, inputs[0],
                                    batch_size=inputs.shape[1], vmap=True,
                                    decay_or_rank=self.decay_or_rank)
         model.module.show_graph()
 
         def _etrace_grad(inp):
-            # call the model
+            # Call the model
             out = model(inp)
-            # calculate the loss
+            # Calculate the loss
             loss = braintools.metric.softmax_cross_entropy_with_integer_labels(out, targets).mean()
             return loss, out
 
         def _etrace_train(inputs_):
             # ``reduction='mean'`` is the correction this used to write by hand:
-            # accumulating per-step gradients sums them, while the
+            # Accumulating per-step gradients sums them, while the
             # optimised/reported objective is the per-step mean, so the update
             # has to be divided by the number of accumulated steps to sit at the
             # scale BPTT differentiates. A global-norm clip to 1.0 here instead
@@ -430,7 +430,7 @@ class OnlineTrainer(Trainer):
                 inputs_, step_fn=_etrace_grad, reduction='mean',
                 has_aux=True, return_value=True)
             self.opt.update(grads)
-            # accuracy
+            # Accuracy
             return losses.mean(), outs
 
         # Free-run the prefix: hidden states and the eligibility trace advance,
@@ -439,7 +439,7 @@ class OnlineTrainer(Trainer):
             model.etrace_evolve(inputs[:self.n_sim])
         loss, outs = _etrace_train(inputs[self.n_sim:])
 
-        # returns
+        # Returns
         return loss, self._acc(outs, targets)
 
 
@@ -448,7 +448,7 @@ class BPTTTrainer(Trainer):
     def batch_train(self, inputs, targets):
         weights = self.target.states().subset(brainstate.ParamState)
 
-        # kept manual: BPTT baseline — no online algorithm to migrate
+        # Kept manual: BPTT baseline — no online algorithm to migrate
         # initialize the states
         @brainstate.transform.vmap_new_states(state_tag='new', axis_size=inputs.shape[1])
         def init():
@@ -457,7 +457,7 @@ class BPTTTrainer(Trainer):
         init()
         model = brainstate.nn.Vmap(self.target, vmap_states='new')
 
-        # the model for a single step
+        # The model for a single step
         def _run_step_train(inp):
             out = model(inp)
             loss = braintools.metric.softmax_cross_entropy_with_integer_labels(out, targets).mean()
@@ -469,10 +469,10 @@ class BPTTTrainer(Trainer):
             outs, losses = brainstate.transform.for_loop(_run_step_train, inputs[self.n_sim:])
             return losses.mean(), outs
 
-        # gradients
+        # Gradients
         grads, loss, outs = brainstate.transform.grad(_bptt_grad_step, weights, has_aux=True, return_value=True)()
 
-        # optimization
+        # Optimization
         grads = brainstate.nn.clip_grad_norm(grads, 1.)
         self.opt.update(grads)
 

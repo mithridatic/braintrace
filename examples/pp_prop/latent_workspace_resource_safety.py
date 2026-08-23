@@ -32,12 +32,12 @@ class ResourceSafetyError(RuntimeError):
 def _integer(value: object, name: str, *, minimum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, Integral):
         raise ValueError(
-            f"{name} must be an integer greater than or equal to {minimum}"
+            f"{name} must be an integer greater than or equal to {minimum}. Set {name} to an integer greater than or equal to {minimum}."
         )
     result = int(value)
     if result < minimum:
         raise ValueError(
-            f"{name} must be an integer greater than or equal to {minimum}"
+            f"{name} must be an integer greater than or equal to {minimum}. Set {name} to an integer greater than or equal to {minimum}."
         )
     return result
 
@@ -49,10 +49,10 @@ def _fraction_policy(
     upper_bound: float = 1.0,
 ) -> float:
     if isinstance(value, bool) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be finite and in (0, {upper_bound}]")
+        raise ValueError(f"{name} must be finite and in (0, {upper_bound}]. Set {name} to a finite value in (0, {upper_bound}].")
     result = float(value)
     if not math.isfinite(result) or not 0.0 < result <= upper_bound:
-        raise ValueError(f"{name} must be finite and in (0, {upper_bound}]")
+        raise ValueError(f"{name} must be finite and in (0, {upper_bound}]. Set {name} to a finite value in (0, {upper_bound}].")
     return result
 
 
@@ -155,7 +155,7 @@ class RecurrentEdgeBudgetAssessment:
         """
         if not self.safe:
             detail = ", ".join(self.violations)
-            raise ResourceSafetyError(f"recurrent edge budget is unsafe: {detail}")
+            raise ResourceSafetyError(f"Recurrent edge budget is unsafe: {detail}. Fix the input condition named in the error, then rerun the operation.")
 
 
 def assess_recurrent_edge_budget(
@@ -339,11 +339,11 @@ class GpuMemorySafetyAssessment:
             configured memory limit.
         """
         if self.run_scope != "full":
-            raise ResourceSafetyError("assessment is not a full qualification")
+            raise ResourceSafetyError("Assessment is not a full qualification. Free resources or reduce the allocation.")
         if not self.full_qualification_safe:
             detail = ", ".join(self.violations)
             raise ResourceSafetyError(
-                f"full GPU qualification is not resource-safe: {detail}"
+                f"Full GPU qualification is not resource-safe: {detail}. Free resources or reduce the allocation."
             )
 
 
@@ -388,7 +388,7 @@ def assess_gpu_memory_safety(
         evidence is reported as insufficient rather than raising.
     """
     if run_scope not in ("full", "smoke"):
-        raise ValueError("run_scope must be 'full' or 'smoke'")
+        raise ValueError("run_scope must be 'full' or 'smoke'. Set run_scope to 'full' or 'smoke'.")
     physical_limit = _fraction_policy(
         max_physical_fraction,
         "max_physical_fraction",
@@ -579,7 +579,7 @@ class PreDeviceGpuEnvironmentAssessment:
         if not self.safe:
             detail = ", ".join(self.violations)
             raise ResourceSafetyError(
-                f"pre-device GPU environment is not resource-safe: {detail}"
+                f"Pre-device GPU environment is not resource-safe: {detail}. Fix the input condition named in the error, then rerun the operation."
             )
 
 
@@ -625,7 +625,7 @@ def assess_pre_device_gpu_environment(
         upper_bound=DEFAULT_MAX_ALLOCATOR_TARGET_FRACTION,
     )
     if recommended > hard_limit:
-        raise ValueError("recommended_fraction cannot exceed max_fraction")
+        raise ValueError("recommended_fraction cannot exceed max_fraction. Fix the input condition named in the error, then rerun the operation.")
 
     injected = environment.get(XLA_MEMORY_FRACTION_VARIABLE)
     raw_value = injected if isinstance(injected, str) else None
@@ -778,11 +778,11 @@ class GpuRuntimeSafetyAssessment:
             If evidence is smoke-only, incomplete, incoherent, or over limit.
         """
         if self.run_scope != "full":
-            raise ResourceSafetyError("assessment is not a full qualification")
+            raise ResourceSafetyError("Assessment is not a full qualification. Free resources or reduce the allocation.")
         if not self.full_qualification_safe:
             detail = ", ".join(self.violations)
             raise ResourceSafetyError(
-                f"full GPU runtime qualification is not resource-safe: {detail}"
+                f"Full GPU runtime qualification is not resource-safe: {detail}. Free resources or reduce the allocation."
             )
 
 
@@ -842,7 +842,7 @@ def assess_gpu_runtime_safety(
         If scope or a policy threshold is invalid.
     """
     if run_scope not in ("full", "smoke"):
-        raise ValueError("run_scope must be 'full' or 'smoke'")
+        raise ValueError("run_scope must be 'full' or 'smoke'. Set run_scope to 'full' or 'smoke'.")
     environment_report = assess_pre_device_gpu_environment(
         environment,
         recommended_fraction=recommended_allocator_target_fraction,

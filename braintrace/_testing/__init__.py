@@ -38,7 +38,7 @@ Modules
 models
     Reference layer/model classes (LIF, ALIF, dense/conv variants) shared by
     the algorithm and compiler test suites.
-oracle
+Oracle
     BPTT gradient oracles that online algorithms are compared against,
     including the finite-window ``chunked_online_param_gradients`` path.
 oracle_models

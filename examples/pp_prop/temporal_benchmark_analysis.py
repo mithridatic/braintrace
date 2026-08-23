@@ -24,27 +24,27 @@ def _load_result(path: Path) -> dict[str, object]:
     document = msgspec_json.loads(path.read_text(encoding="utf-8"))
     environment = document.get("environment", {})
     if document.get("schema_version") != 1 or document.get("sealed_test") is not True:
-        raise ValueError(f"unsealed or unsupported result: {path}")
+        raise ValueError(f"Unsealed or unsupported result: {path}. Use a supported option or change the configuration.")
     if (
         not isinstance(environment, dict)
         or environment.get("source_dirty") is not False
     ):
-        raise ValueError(f"sealed result lacks clean provenance: {path}")
+        raise ValueError(f"Sealed result lacks clean provenance: {path}. Provide the missing item named in the message.")
     result = document.get("result")
     if not isinstance(result, dict) or result.get("status") not in {
         "completed",
         "stopped",
     }:
-        raise ValueError(f"result is incomplete: {path}")
+        raise ValueError(f"Result is incomplete: {path}. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(result.get("sealed_test_metrics"), dict):
-        raise ValueError(f"result lacks sealed test metrics: {path}")
+        raise ValueError(f"Result lacks sealed test metrics: {path}. Provide the missing item named in the message.")
     return result
 
 
 def _split_id(bundle_id: str) -> str:
     split_id = bundle_id.split("-", maxsplit=1)[0]
     if split_id not in {"split0", "split1", "split2"}:
-        raise ValueError(f"invalid bundle split: {bundle_id}")
+        raise ValueError(f"Invalid bundle split: {bundle_id}. Set the named field to a value in the stated range, then rerun the operation.")
     return split_id
 
 
@@ -62,9 +62,9 @@ def _arm_records(results: Iterable[dict[str, object]], arm: str):
             )
         )
     if len(records) != EXPECTED_BUNDLES:
-        raise ValueError(f"arm {arm} must contain exactly 12 sealed bundles")
+        raise ValueError(f"Arm {arm} must contain exactly 12 sealed bundles. Add exactly 12 sealed bundles to Arm {arm}.")
     if len({record.bundle_id for record in records}) != EXPECTED_BUNDLES:
-        raise ValueError(f"arm {arm} contains duplicate sealed bundles")
+        raise ValueError(f"Arm {arm} contains duplicate sealed bundles. Fix the input condition named in the error, then rerun the operation.")
     return tuple(records)
 
 
@@ -77,7 +77,7 @@ def _gradient_records(results: Iterable[dict[str, object]], field: str):
         if not isinstance(evidence, dict) or not isinstance(
             evidence.get("probes"), list
         ):
-            raise ValueError("each pp-prop result requires gradient evidence")
+            raise ValueError("Each pp-prop result requires gradient evidence. Provide the required value for Each pp-prop result.")
         values = [float(probe[field]) for probe in evidence["probes"]]
         bundle_id = str(result["bundle_id"])
         records.append(

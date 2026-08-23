@@ -269,7 +269,7 @@ def _phase_events(
     elif phase == "query":
         phase_index = config.query_phase_index
     else:
-        raise ValueError(f"unknown phase {phase!r}")
+        raise ValueError(f"Unknown phase {phase!r}. Select one of the supported values for the named field.")
     assert phase_index is not None
     events = events.at[..., phase_index].set(1.0)
     assert config.input_side_valid_index is not None
@@ -321,7 +321,7 @@ def _assert_max_per_example_rms(
     label: object,
 ) -> None:
     observed = _max_per_example_rms(left, right)
-    assert observed <= limit, f"{label}: max per-example RMS {observed} > {limit}"
+    assert observed <= limit, f"{label}: max per-example RMS {observed} > {limit}. Update the fixture or expected result to satisfy this assertion."
 
 
 def _assert_non_context_snapshot_close(
@@ -1701,7 +1701,7 @@ def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control(
         @brainstate.nn.call_order(9)
         def init_state(self, *, batch_size: int | None = None, **_: object) -> None:
             if batch_size is not None and batch_size != self.config.batch_size:
-                raise ValueError("batch size differs from the materialized objective")
+                raise ValueError("Batch size differs from the materialized objective. Use matching values and structures.")
             snapshot = getattr(self, "_materialized_h0_snapshot", None)
             if snapshot is not None:
                 self.restore_state(snapshot)
@@ -1709,7 +1709,7 @@ def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control(
         def update(self, packed: jax.Array) -> jax.Array:
             width = self.config.input_width
             if packed.shape != (self.config.batch_size, width + 3):
-                raise ValueError("packed latent objective has the wrong shape")
+                raise ValueError("Packed latent objective has the wrong shape. Update the fixture or expected result to satisfy this assertion.")
             event = packed[:, :width]
             advance = packed[:, width] > 0.5
             target = packed[:, width + 1].astype(jnp.int32)
@@ -1935,7 +1935,7 @@ def test_memory_mode_drivers_use_the_implicit_workspace_decoder(
         self: LatentWorkspaceModel,
         carrier: jax.Array | None = None,
     ) -> jax.Array:
-        assert carrier is None, f"{driver} bypassed the memory-mode workspace"
+        assert carrier is None, f"{driver} bypassed the memory-mode workspace. Update the fixture or expected result to satisfy this assertion."
         return original(self)
 
     monkeypatch.setattr(
@@ -2706,7 +2706,7 @@ def test_zero_length_latent_trajectory_retains_only_checkpoint_zero(
 def test_context_and_latent_length_validation(model: LatentWorkspaceModel) -> None:
     with pytest.raises(ValueError, match="at least one"):
         run_context(model, jnp.zeros((0, model.config.input_width)))
-    with pytest.raises(ValueError, match="rank-two"):
+    with pytest.raises(ValueError, match="(?i)rank-two"):
         other = LatentWorkspaceModel(_config(batch_size=2))
         run_context(other, jnp.zeros((2, other.config.input_width)))
     with pytest.raises(ValueError, match="events must have shape"):
@@ -4036,7 +4036,7 @@ def test_row_head_carrier_gate_opens_a_carrier_path() -> None:
 def test_gated_row_heads_stay_compiled_all_direct() -> None:
     """Event head, carrier head, and gate must all remain trainable.
 
-    §9.1: a parameter trains only as a trainable invar of an ETP primitive.
+    §9.1: A parameter trains only as a trainable invar of an ETP primitive.
     If the gate multiply confused the compiler, any of the three would drop
     from ``param_states`` and silently freeze.
     """

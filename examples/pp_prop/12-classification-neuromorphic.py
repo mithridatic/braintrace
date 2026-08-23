@@ -35,7 +35,7 @@ def _accuracy(outputs_seq, labels):
 
 
 def _eval(model, inputs, labels):
-    # kept manual: eval re-init, no online construction
+    # Kept manual: eval re-init, no online construction
     @brainstate.transform.vmap_new_states(state_tag="new", axis_size=inputs.shape[1])
     def init():
         brainstate.nn.init_all_states(model)
@@ -103,15 +103,15 @@ def main(n_epochs: int = 4, batch_size: int = 32, num_step: int = 25, plot: bool
         plt.show()
         plt.close(fig)
 
-    assert jnp.isfinite(jnp.asarray(pp_losses[-1])), f"pp_prop loss not finite: {pp_losses[-1]}"
-    assert jnp.isfinite(jnp.asarray(bp_losses[-1])), f"BPTT loss not finite: {bp_losses[-1]}"
+    assert jnp.isfinite(jnp.asarray(pp_losses[-1])), f"pp_prop loss not finite: {pp_losses[-1]}. Use finite values."
+    assert jnp.isfinite(jnp.asarray(bp_losses[-1])), f"BPTT loss not finite: {bp_losses[-1]}. Use finite values."
     # Chance-level accuracy assertion applies only when training is long enough
     # to beat noise; the smoke harness calls with n_epochs=1 and should not
     # gate on accuracy.
     if n_epochs >= 3:
         chance = 1.0 / n_out
-        assert acc_pp > chance, f"pp_prop accuracy {acc_pp} <= chance {chance}"
-        assert acc_bp > chance, f"BPTT accuracy {acc_bp} <= chance {chance}"
+        assert acc_pp > chance, f"pp_prop accuracy {acc_pp} <= chance {chance}. Fix the input condition named in the error, then rerun the operation."
+        assert acc_bp > chance, f"BPTT accuracy {acc_bp} <= chance {chance}. Fix the input condition named in the error, then rerun the operation."
     return {"losses": pp_losses, "bptt_losses": bp_losses, "acc_pp": acc_pp, "acc_bp": acc_bp}
 
 

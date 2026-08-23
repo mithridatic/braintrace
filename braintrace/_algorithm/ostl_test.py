@@ -145,7 +145,7 @@ class TestOSTLFeedforward(unittest.TestCase):
         assert algo.decay == 0.5
 
     def test_int_rank_sets_decay(self):
-        # rank r -> decay = (r-1)/(r+1); rank 3 -> 0.5
+        # Rank r -> decay = (r-1)/(r+1); rank 3 -> 0.5
         algo = OSTLFeedforward(_tiny_rec_net(), decay_or_rank=3)
         assert abs(algo.decay - 0.5) < 1e-9
 
@@ -385,7 +385,7 @@ class TestOSTLRecurrentVsBPTT(unittest.TestCase):
             brainstate.random.seed(42)
             xs = 0.3 * brainstate.random.randn(4, 1, 3)
             rel = _ostl_recurrent_rel_err(factory, xs)
-        assert rel < 1e-10, f'expected an exact match on a diagonal model, got rel={rel:.3e}'
+        assert rel < 1e-10, f'Expected an exact match on a diagonal model, got rel={rel:.3e}. Return the expected value for the reported field.'
 
     def test_off_block_diagonal_model_diverges_from_bptt(self):
         with brainstate.environ.context(precision=64):

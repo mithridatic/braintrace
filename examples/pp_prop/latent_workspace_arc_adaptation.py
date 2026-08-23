@@ -194,9 +194,9 @@ def _validate_compact_task_inputs(
     row_config: RowEventConfig,
 ) -> int:
     if not isinstance(fold_inputs, ArcAdaptationFoldInputs):
-        raise TypeError("fold_inputs must be ArcAdaptationFoldInputs")
+        raise TypeError("fold_inputs must be ArcAdaptationFoldInputs. Set fold_inputs to ArcAdaptationFoldInputs.")
     if not isinstance(row_config, RowEventConfig):
-        raise TypeError("row_config must be a RowEventConfig")
+        raise TypeError("row_config must be a RowEventConfig. Set row_config to a RowEventConfig.")
     grid_size = row_config.max_grid_size
     inputs = jnp.asarray(fold_inputs.demonstration_inputs)
     input_shapes = jnp.asarray(fold_inputs.demonstration_input_shapes)
@@ -207,22 +207,22 @@ def _validate_compact_task_inputs(
     fold_valid = jnp.asarray(fold_inputs.fold_valid)
     if inputs.ndim != 3 or inputs.shape[1:] != (grid_size, grid_size):
         raise ValueError(
-            "task demonstration_inputs must have shape (demonstrations, rows, columns)"
+            "Task demonstration_inputs must have shape (demonstrations, rows, columns). Ensure Task demonstration_inputs has shape (demonstrations, rows, columns)."
         )
     demonstration_count = int(inputs.shape[0])
     if not 1 <= demonstration_count <= row_config.max_demonstrations:
-        raise ValueError("task demonstration capacity is outside row_config")
+        raise ValueError("Task demonstration capacity is outside row_config. Set the named field to a value in the stated range, then rerun the operation.")
     expected_grids = (demonstration_count, grid_size, grid_size)
     expected_shapes = (demonstration_count, 2)
     expected_masks = (demonstration_count,)
     if outputs.shape != expected_grids:
-        raise ValueError("task demonstration_outputs shape is inconsistent")
+        raise ValueError("Task demonstration_outputs shape is inconsistent. Use matching values and structures.")
     if input_shapes.shape != expected_shapes or output_shapes.shape != expected_shapes:
-        raise ValueError("task demonstration shape tensors are inconsistent")
+        raise ValueError("Task demonstration shape tensors are inconsistent. Use matching values and structures.")
     if valid.shape != expected_masks:
-        raise ValueError("task demonstration_valid shape is inconsistent")
+        raise ValueError("Task demonstration_valid shape is inconsistent. Use matching values and structures.")
     if held.shape != expected_masks or fold_valid.shape != expected_masks:
-        raise ValueError("task leave-one-out schedule shape is inconsistent")
+        raise ValueError("Task leave-one-out schedule shape is inconsistent. Use matching values and structures.")
     for name, value in (
         ("demonstration_inputs", inputs),
         ("demonstration_outputs", outputs),
@@ -231,11 +231,11 @@ def _validate_compact_task_inputs(
         ("held_out_demonstration_index", held),
     ):
         if not np.issubdtype(value.dtype, np.integer):
-            raise ValueError(f"{name} must have integer dtype")
+            raise ValueError(f"{name} must have integer dtype. Ensure {name} has integer dtype.")
     if not np.issubdtype(valid.dtype, np.bool_) or not np.issubdtype(
         fold_valid.dtype, np.bool_
     ):
-        raise ValueError("demonstration_valid and fold_valid must have boolean dtype")
+        raise ValueError("demonstration_valid and fold_valid must have boolean dtype. Ensure demonstration_valid and fold_valid has boolean dtype.")
     return demonstration_count
 
 
@@ -248,13 +248,13 @@ def _validate_query_arrays(
     shape = jnp.asarray(query_shape)
     expected = (row_config.max_grid_size, row_config.max_grid_size)
     if grid.shape != expected:
-        raise ValueError(f"query_input must have shape {expected}")
+        raise ValueError(f"query_input must have shape {expected}. Ensure query_input has shape {expected}.")
     if shape.shape != (2,):
-        raise ValueError("query_shape must have shape (2,)")
+        raise ValueError("query_shape must have shape (2,). Ensure query_shape has shape (2,).")
     if not np.issubdtype(grid.dtype, np.integer) or not np.issubdtype(
         shape.dtype, np.integer
     ):
-        raise ValueError("query_input and query_shape must have integer dtype")
+        raise ValueError("query_input and query_shape must have integer dtype. Ensure query_input and query_shape has integer dtype.")
     return grid, shape
 
 
@@ -399,7 +399,7 @@ def _synthesize_arc_context(
     demonstration_valid = jnp.asarray(fold_inputs.demonstration_valid)
     held = jnp.asarray(held_out_demonstration_index, dtype=jnp.int32)
     if held.shape != ():
-        raise ValueError("held_out_demonstration_index must be scalar")
+        raise ValueError("held_out_demonstration_index must be scalar. Set held_out_demonstration_index to scalar.")
     safe_held = jnp.clip(held, 0, demonstration_count - 1)
     held_valid = (
         (held >= 0) & (held < demonstration_count) & demonstration_valid[safe_held]
@@ -581,7 +581,7 @@ def build_arc_target_free_task_bank(
     """Build compact fixed-shape ARC adaptation and prediction inputs.
 
     Public row-event encoders and decoders establish the prediction boundary:
-    each official query is encoded without its output and decoded back to the
+    Each official query is encoded without its output and decoded back to the
     exact visible demonstrations/query input before compact storage. Public
     leave-one-demonstration-out episodes establish fold count and order, while
     their targets remain represented only by the demonstration outputs.
@@ -611,27 +611,27 @@ def build_arc_target_free_task_bank(
     """
 
     if not isinstance(row_config, RowEventConfig):
-        raise TypeError("row_config must be a RowEventConfig")
+        raise TypeError("row_config must be a RowEventConfig. Set row_config to a RowEventConfig.")
     if isinstance(latent_steps, bool) or not isinstance(latent_steps, int):
-        raise TypeError("latent_steps must be an integer")
+        raise TypeError("latent_steps must be an integer. Set latent_steps to an integer.")
     if latent_steps < ARC_ADAPTATION_CHECKPOINTS[-1]:
-        raise ValueError("latent_steps must be at least 60")
+        raise ValueError("latent_steps must be at least 60. Set latent_steps to at least 60.")
     task_items = tuple(tasks)
     if not task_items:
-        raise ValueError("tasks must be a non-empty sequence")
+        raise ValueError("Tasks must be a non-empty sequence. Set Tasks to a non-empty sequence.")
     if any(not isinstance(task, ArcTask) for task in task_items):
-        raise TypeError("every task must be an ArcTask")
+        raise TypeError("Every task must be an ArcTask. Set Every task to an ArcTask.")
     if any(len(task.train) < 2 for task in task_items):
-        raise ValueError("every task needs at least two demonstrations")
+        raise ValueError("Every task needs at least two demonstrations. Fix the input condition named in the error, then rerun the operation.")
     if any(len(task.train) > row_config.max_demonstrations for task in task_items):
-        raise ValueError("task demonstration count exceeds row_config capacity")
+        raise ValueError("Task demonstration count exceeds row_config capacity. Set the named field to a value in the stated range, then rerun the operation.")
 
     task_count = len(task_items)
     demo_capacity = max(len(task.train) for task in task_items)
     grid_capacity = row_config.max_grid_size
     query_capacity = max(len(task.test) for task in task_items)
     if query_capacity == 0:
-        raise ValueError("every task collection must expose at least one query")
+        raise ValueError("Every task collection must expose at least one query. Set Every task collection to expose at least one query.")
 
     demo_inputs = np.zeros(
         (task_count, demo_capacity, grid_capacity, grid_capacity), dtype=np.uint8
@@ -717,31 +717,31 @@ def _validate_arc_runner_bank(
     row_config: RowEventConfig,
 ) -> None:
     if not isinstance(bank, ArcTargetFreeTaskBank):
-        raise TypeError("bank must be an ArcTargetFreeTaskBank")
+        raise TypeError("Bank must be an ArcTargetFreeTaskBank. Set Bank to an ArcTargetFreeTaskBank.")
     task_count = int(bank.query_inputs.shape[0])
     if task_count < 1:
-        raise ValueError("bank must contain at least one task")
+        raise ValueError("Bank must contain at least one task. Add at least one task to Bank.")
     query_count = int(bank.query_inputs.shape[1])
     grid_size = row_config.max_grid_size
     if bank.query_inputs.shape != (task_count, query_count, grid_size, grid_size):
-        raise ValueError("bank query_inputs shape is inconsistent")
+        raise ValueError("Bank query_inputs shape is inconsistent. Use matching values and structures.")
     if bank.query_shapes.shape != (task_count, query_count, 2):
-        raise ValueError("bank query_shapes shape is inconsistent")
+        raise ValueError("Bank query_shapes shape is inconsistent. Use matching values and structures.")
     if bank.query_valid.shape != (task_count, query_count):
-        raise ValueError("bank query_valid shape is inconsistent")
+        raise ValueError("Bank query_valid shape is inconsistent. Use matching values and structures.")
     if not np.issubdtype(bank.query_valid.dtype, np.bool_):
-        raise ValueError("bank query_valid must have boolean dtype")
+        raise ValueError("Bank query_valid must have boolean dtype. Ensure Bank query_valid has boolean dtype.")
     if bank.checkpoint_indices.shape != (task_count, query_count, 3):
-        raise ValueError("bank checkpoint_indices must have shape (tasks, queries, 3)")
+        raise ValueError("Bank checkpoint_indices must have shape (tasks, queries, 3). Ensure Bank checkpoint_indices has shape (tasks, queries, 3).")
     expected = np.broadcast_to(
         np.asarray(ARC_ADAPTATION_CHECKPOINTS, dtype=np.int32),
         bank.checkpoint_indices.shape,
     )
     if not np.array_equal(np.asarray(bank.checkpoint_indices), expected):
-        raise ValueError("bank checkpoints must be exactly (0, 30, 60)")
+        raise ValueError("Bank checkpoints must be exactly (0, 30, 60). Set Bank checkpoints to exactly (0, 30, 60).")
     fold_leaves = jax.tree.leaves(bank.fold_inputs)
     if not fold_leaves or any(int(leaf.shape[0]) != task_count for leaf in fold_leaves):
-        raise ValueError("bank fold inputs must share the query task axis")
+        raise ValueError("Bank fold inputs must share the query task axis. Make Bank fold inputs share the query task axis.")
 
 
 def _validate_arc_runner_configuration(
@@ -754,43 +754,43 @@ def _validate_arc_runner_configuration(
     clip_norm: float,
 ) -> None:
     if not isinstance(base_parameters, ParameterSnapshot):
-        raise TypeError("base_parameters must be a ParameterSnapshot")
+        raise TypeError("base_parameters must be a ParameterSnapshot. Set base_parameters to a ParameterSnapshot.")
     if not isinstance(row_config, RowEventConfig):
-        raise TypeError("row_config must be a RowEventConfig")
+        raise TypeError("row_config must be a RowEventConfig. Set row_config to a RowEventConfig.")
     if isinstance(latent_steps, bool) or not isinstance(latent_steps, int):
-        raise TypeError("latent_steps must be an integer")
+        raise TypeError("latent_steps must be an integer. Set latent_steps to an integer.")
     if latent_steps != ARC_ADAPTATION_CHECKPOINTS[-1]:
-        raise ValueError("ARC task-local adaptation requires exactly 60 latent steps")
+        raise ValueError("ARC task-local adaptation requires exactly 60 latent steps. Provide the required value for ARC task-local adaptation.")
     if isinstance(clip_norm, bool) or not isinstance(clip_norm, Real):
-        raise TypeError("clip_norm must be a positive finite real")
+        raise TypeError("clip_norm must be a positive finite real. Set clip_norm to a positive finite real.")
     if not np.isfinite(float(clip_norm)) or float(clip_norm) <= 0.0:
-        raise ValueError("clip_norm must be a positive finite real")
+        raise ValueError("clip_norm must be a positive finite real. Set clip_norm to a positive finite real.")
     config = getattr(model, "config", None)
     if getattr(config, "batch_size", None) != 1:
-        raise ValueError("ARC task-local adaptation requires model batch_size=1")
+        raise ValueError("ARC task-local adaptation requires model batch_size=1. Provide the required value for ARC task-local adaptation.")
     if getattr(config, "decoder_mode", None) != "row_refinement":
-        raise ValueError("ARC task-local adaptation requires row_refinement mode")
+        raise ValueError("ARC task-local adaptation requires row_refinement mode. Provide the required value for ARC task-local adaptation.")
     if getattr(config, "input_width", None) != row_config.input_width:
-        raise ValueError("model input width does not match row_config")
+        raise ValueError("Model input width does not match row_config. Use matching values and structures.")
     if getattr(config, "refinement_steps", 0) < latent_steps:
-        raise ValueError("model refinement_steps must cover 60 latent steps")
+        raise ValueError("Model refinement_steps must cover 60 latent steps. Set Model refinement_steps to cover 60 latent steps.")
     if getattr(config, "checkpoint_output_width", None) != 9060:
-        raise ValueError("row-refinement checkpoint output width must be 9060")
+        raise ValueError("Row-refinement checkpoint output width must be 9060. Set Row-refinement checkpoint output width to 9060.")
     if not hasattr(learner, "etrace_grad") or not hasattr(learner, "reset_state"):
-        raise TypeError("learner must expose etrace_grad and reset_state")
+        raise TypeError("Learner must expose etrace_grad and reset_state. Set Learner to expose etrace_grad and reset_state.")
     if not hasattr(learner, "etrace_online"):
-        raise TypeError("learner must expose etrace_online")
+        raise TypeError("Learner must expose etrace_online. Set Learner to expose etrace_online.")
     if type(optimizer).__name__ != "Adam":
-        raise ValueError("ARC task-local adaptation requires a plain Adam optimizer")
+        raise ValueError("ARC task-local adaptation requires a plain Adam optimizer. Provide the required value for ARC task-local adaptation.")
     if float(getattr(optimizer, "weight_decay", 0.0)) != 0.0:
-        raise ValueError("ARC task-local adaptation requires Adam weight_decay=0")
+        raise ValueError("ARC task-local adaptation requires Adam weight_decay=0. Provide the required value for ARC task-local adaptation.")
     if len(getattr(optimizer, "param_groups", ())) > 1:
-        raise ValueError("ARC task-local adaptation does not support Adam groups")
+        raise ValueError("ARC task-local adaptation does not support Adam groups. Fix the input condition named in the error, then rerun the operation.")
     if getattr(optimizer, "_schedulers", ()):  # noqa: SLF001
-        raise ValueError("ARC task-local adaptation does not support schedulers")
+        raise ValueError("ARC task-local adaptation does not support schedulers. Fix the input condition named in the error, then rerun the operation.")
     for name in ("opt_state", "step_count", "_current_lr"):
         if not hasattr(optimizer, name):
-            raise ValueError(f"Adam optimizer lacks required state {name}")
+            raise ValueError(f"Adam optimizer lacks required state {name}. Provide the missing item named in the message.")
 
 
 def compile_arc_task_local_adaptation_runner(
@@ -824,9 +824,9 @@ def compile_arc_task_local_adaptation_runner(
     ----------
     model
         Batch-size-one row-refinement model.
-    learner
+    Learner
         Compiled pp-prop learner for ``model``.
-    optimizer
+    Optimizer
         Fresh plain Adam registered against ``learner.param_states``.
     base_parameters
         Immutable shared pretrained parameter snapshot.
@@ -836,7 +836,7 @@ def compile_arc_task_local_adaptation_runner(
         Fixed refinement depth. The current protocol requires exactly 60.
     clip_norm
         Positive finite gradient clipping norm.
-    epochs
+    Epochs
         Positive number of passes over each task's fold schedule.
     update_schedule
         ``"per_episode"`` accumulates one gradient per fold and takes one
@@ -853,10 +853,10 @@ def compile_arc_task_local_adaptation_runner(
     """
 
     if isinstance(epochs, bool) or not isinstance(epochs, Integral) or int(epochs) < 1:
-        raise ValueError("epochs must be a positive integer")
+        raise ValueError("Epochs must be a positive integer. Set Epochs to a positive integer.")
     epochs = int(epochs)
     if update_schedule not in ("per_episode", "per_tick"):
-        raise ValueError("update_schedule must be 'per_episode' or 'per_tick'")
+        raise ValueError("update_schedule must be 'per_episode' or 'per_tick'. Set update_schedule to 'per_episode' or 'per_tick'.")
     _validate_arc_runner_configuration(
         model,
         learner,

@@ -117,7 +117,7 @@ class TestJAXRules:
 
     def test_vmap_promotes_emb_v_to_emb(self):
         """Identity-preserving promotion via register_batched_counterpart:
-        vmap over scalar indices re-binds the batched primitive."""
+        Vmap over scalar indices re-binds the batched primitive."""
         table = jnp.arange(12, dtype=jnp.float32).reshape(4, 3)
         idx = jnp.array([0, 2, 1], dtype=jnp.int32)
         jaxpr = jax.make_jaxpr(jax.vmap(lambda i: embedding(i, table)))(idx)
@@ -180,7 +180,7 @@ class TestEmbEtpRules:
             _fake_var((self.B, self.D), jnp.bfloat16),
             {'weight': _fake_var((self.V, self.D), jnp.bfloat16)}, self.A)
         assert drtrl['weight'].shape == (self.B, self.V, self.D, self.A)
-        # int32 indices don't affect jnp.result_type(int32, bf16, bf16)
+        # Int32 indices don't affect jnp.result_type(int32, bf16, bf16)
         assert drtrl['weight'].dtype == jnp.bfloat16
         pp = ETP_RULES_INIT_PP[etp_emb_p](
             _fake_var((self.B,), jnp.int32), _fake_var((self.B, self.D), jnp.bfloat16),
@@ -239,7 +239,7 @@ class TestPPXRepr:
 
     def test_xy_to_dw_float_x_matches_onehot_matmul_vjp(self):
         brainstate.random.seed(45)
-        xf = brainstate.random.randn(3, 5)  # a filtered one-hot: dense float
+        xf = brainstate.random.randn(3, 5)  # A filtered one-hot: dense float
         hd = brainstate.random.randn(3, 4)
         weights = {'weight': brainstate.random.randn(5, 4)}
         assert_xy_to_dw_matches_vjp(

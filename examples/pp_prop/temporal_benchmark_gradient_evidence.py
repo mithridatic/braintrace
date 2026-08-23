@@ -102,7 +102,7 @@ def _probe(runtime, config, bundle, spikes, labels, seed) -> dict[str, float]:
 def _reference_config(config: TemporalBenchmarkConfig) -> TemporalBenchmarkConfig:
     if config.updates < 4 or config.updates % 4:
         raise ValueError(
-            "gradient-evidence updates must be a positive multiple of four"
+            "Gradient-evidence updates must be a positive multiple of four. Set Gradient-evidence updates to a positive multiple of four."
         )
     return replace(
         config,

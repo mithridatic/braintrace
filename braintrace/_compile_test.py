@@ -32,10 +32,10 @@ def test_resolve_class_passthrough():
 
 @pytest.mark.parametrize('name,cls_name', [
     ('d_rtrl', 'D_RTRL'),
-    ('D_RTRL', 'D_RTRL'),          # case-insensitive
+    ('D_RTRL', 'D_RTRL'),          # Case-insensitive
     ('pp_prop', 'pp_prop'),
-    ('es_d_rtrl', 'pp_prop'),      # alias
-    ('esd_rtrl', 'pp_prop'),       # alias
+    ('es_d_rtrl', 'pp_prop'),      # Alias
+    ('esd_rtrl', 'pp_prop'),       # Alias
     ('eprop', 'EProp'),
     ('e_prop', 'EProp'),
     ('ostl_recurrent', 'OSTLRecurrent'),
@@ -76,7 +76,7 @@ def test_resolve_unknown_string_raises_value_error():
 
 def test_resolve_bare_ostl_is_rejected():
     with pytest.raises(ValueError):
-        _resolve_algorithm('ostl')   # ambiguous; removed in 0.2.0
+        _resolve_algorithm('ostl')   # Ambiguous; removed in 0.2.0
 
 
 def test_resolve_instance_raises_type_error():
@@ -94,7 +94,7 @@ def test_resolve_unrelated_class_raises_type_error():
 # --- Task 2: compile() end-to-end + errors ----------------------------------
 
 def _fresh_model():
-    # compile() now owns initialization, so the model is returned uninitialized.
+    # Compile() now owns initialization, so the model is returned uninitialized.
     return tanh_rnn(n_in=3, n_rec=4, seed=0).factory()
 
 
@@ -104,7 +104,7 @@ def test_compile_returns_ready_learner_and_updates():
     learner = braintrace.compile(model, 'D_RTRL', x0, batch_size=1)
     assert isinstance(learner, braintrace.D_RTRL)
     assert learner.is_compiled
-    y = learner.update(x0)          # must NOT raise "not compiled"
+    y = learner.update(x0)          # Must NOT raise "not compiled"
     assert y.shape == (1, 4)
     assert bool(jnp.all(jnp.isfinite(y)))
 
@@ -119,7 +119,7 @@ def test_compile_accepts_class_and_forwards_options():
 def test_compile_requires_example_inputs():
     model = _fresh_model()
     with pytest.raises(ValueError) as exc:
-        braintrace.compile(model, 'D_RTRL')   # no example inputs
+        braintrace.compile(model, 'D_RTRL')   # No example inputs
     assert 'example input' in str(exc.value).lower()
 
 
@@ -189,7 +189,7 @@ class _NoEtraceModel(brainstate.nn.Module):
         self.w = brainstate.ParamState(jnp.ones((3, 4)))
 
     def update(self, x):
-        # plain matmul -> w is NOT an eligibility-trace weight
+        # Plain matmul -> w is NOT an eligibility-trace weight
         self.h.value = jnp.tanh(jnp.matmul(x, self.w.value))
         return self.h.value
 
@@ -239,7 +239,7 @@ def test_documented_options_are_real_constructor_params(algo_name, options):
     cls = _resolve_algorithm(algo_name)
     params = inspect.signature(cls.__init__).parameters
     for opt in options:
-        assert opt in params, f'{algo_name}: documented option {opt!r} is not a constructor parameter'
+        assert opt in params, f'{algo_name}: documented option {opt!r} is not a constructor parameter. Update the fixture or expected result to satisfy this assertion.'
 
 
 # --- Task 5a: vmap= parameter ------------------------------------------------
@@ -289,7 +289,7 @@ def test_compile_vmap_returns_wrapper_exposing_report():
     assert learner.module.is_compiled
 
 
-# --- both-modes coverage across RNN architectures + algorithms ---------------
+# --- Both-modes coverage across RNN architectures + algorithms ---------------
 # Each architecture/algorithm must build, forward, and back-prop a finite,
 # non-zero gradient under BOTH compile(vmap=False) (internal batch primitive)
 # and compile(vmap=True) (per-sample vmap lanes). A multi-step scan exercises
@@ -432,12 +432,12 @@ def test_compile_both_modes_finite_nonzero_grad(name, builder, algo, kw, feat, v
     grads = brainstate.transform.grad(total_loss, weights)(xs)
     leaves = jax.tree.leaves(grads)
     assert all(bool(jnp.all(jnp.isfinite(jnp.asarray(g)))) for g in leaves), \
-        f'{name} vmap={vmap}: non-finite grad'
+        f'{name} vmap={vmap}: non-finite grad. Use finite input values and check the gradient path.'
     assert sum(float(jnp.sum(jnp.asarray(g) ** 2)) for g in leaves) > 0.0, \
-        f'{name} vmap={vmap}: zero grad'
+        f'{name} vmap={vmap}: zero grad. Use inputs that produce a non-zero gradient.'
 
 
-# --- docstring example: braintrace.compile -----------------------------------
+# --- Docstring example: braintrace.compile -----------------------------------
 
 def test_compile_docstring_example_runs():
     """Verify the runnable, self-contained example in ``compile``'s docstring.

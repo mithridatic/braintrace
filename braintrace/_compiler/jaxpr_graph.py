@@ -282,7 +282,7 @@ def inline_jit_calls(closed_jaxpr: ClosedJaxpr) -> ClosedJaxpr:
                     invars=[res(v) for v in eqn.invars],
                     outvars=fresh_outvars,
                 )
-                # a control-flow eqn inside a jit body may itself hide jits
+                # A control-flow eqn inside a jit body may itself hide jits
                 new_params = _inline_jits_in_control_flow_params(eqn)
                 if new_params is not None:
                     replace_kwargs['params'] = new_params

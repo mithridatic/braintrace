@@ -53,7 +53,7 @@ def _winner(document: Mapping[str, Any]) -> Mapping[str, Any]:
         or winner.get("rank") != 1
         or winner.get("rejection_reasons") != []
     ):
-        raise FreezeArtifactError("weight-decay winner is not uniquely accepted")
+        raise FreezeArtifactError("Weight-decay winner is not uniquely accepted. Fix the input condition named in the error, then rerun the operation.")
     return winner
 
 
@@ -78,18 +78,18 @@ def _validate_fixed_settings(
         "sealed_test": False,
     }
     if fixed != expected_fixed:
-        raise FreezeArtifactError("weight-decay winner fixed configuration drifted")
+        raise FreezeArtifactError("Weight-decay winner fixed configuration drifted. Fix the input condition named in the error, then rerun the operation.")
 
 
 def _raw_path(root: pathlib.Path, relative: object) -> pathlib.Path:
     if not isinstance(relative, str) or not relative:
-        raise FreezeArtifactError("weight-decay winner raw path is invalid")
+        raise FreezeArtifactError("Weight-decay winner raw path is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     path = (root / pathlib.PurePosixPath(relative)).resolve()
     try:
         path.relative_to(root.resolve())
     except ValueError as error:
         raise FreezeArtifactError(
-            "weight-decay raw path escapes its artifact root"
+            "Weight-decay raw path escapes its artifact root. Fix the input condition named in the error, then rerun the operation."
         ) from error
     return path
 
@@ -98,11 +98,11 @@ def _clip_fraction(telemetry: Mapping[str, Any], group: str, updates: int) -> fl
     group_values = require_mapping(telemetry.get(group), f"telemetry.{group}")
     events = group_values.get("clip_event")
     if not isinstance(events, list) or len(events) != updates:
-        raise FreezeArtifactError(f"{group} clip events must cover every update")
+        raise FreezeArtifactError(f"{group} clip events must cover every update. Set {group} clip events to cover every update.")
     if any(
         isinstance(value, str) or value not in (0, 1, False, True) for value in events
     ):
-        raise FreezeArtifactError(f"{group} clip events must be binary")
+        raise FreezeArtifactError(f"{group} clip events must be binary. Set {group} clip events to binary.")
     return sum(float(value) for value in events) / updates
 
 
@@ -115,14 +115,14 @@ def _validate_raw(
     document = load_artifact(path)
     ensure_finite_tree(document, f"raw.{bundle_id}")
     if document.get("schema_version") != 1 or document.get("sealed_test") is not False:
-        raise FreezeArtifactError(f"raw {bundle_id} is not unsealed schema 1")
+        raise FreezeArtifactError(f"Raw {bundle_id} is not unsealed schema 1. Fix the input condition named in the error, then rerun the operation.")
     if contains_sealed_metrics(document):
-        raise FreezeArtifactError(f"raw {bundle_id} materialized sealed metrics")
+        raise FreezeArtifactError(f"Raw {bundle_id} materialized sealed metrics. Fix the input condition named in the error, then rerun the operation.")
     result = require_mapping(document.get("result"), f"raw.{bundle_id}.result")
     if document.get("status") != "completed" or result.get("status") != "completed":
-        raise FreezeArtifactError(f"raw {bundle_id} did not complete")
+        raise FreezeArtifactError(f"Raw {bundle_id} did not complete. Fix the input condition named in the error, then rerun the operation.")
     if result.get("bundle_id") != bundle_id or result.get("config") != expected_config:
-        raise FreezeArtifactError(f"raw {bundle_id} configuration drifted")
+        raise FreezeArtifactError(f"Raw {bundle_id} configuration drifted. Fix the input condition named in the error, then rerun the operation.")
     environment = require_mapping(
         document.get("environment"), f"raw.{bundle_id}.environment"
     )
@@ -137,13 +137,13 @@ def _validate_raw(
         or environment.get("backend") != "gpu"
         or not isinstance(dirty, bool)
     ):
-        raise FreezeArtifactError(f"raw {bundle_id} provenance drifted")
+        raise FreezeArtifactError(f"Raw {bundle_id} provenance drifted. Fix the input condition named in the error, then rerun the operation.")
     telemetry = require_mapping(
         result.get("optimizer_telemetry"), f"raw.{bundle_id}.telemetry"
     )
     updates_value = expected_config["updates"]
     if isinstance(updates_value, bool) or not isinstance(updates_value, int):
-        raise FreezeArtifactError("expected update count is invalid")
+        raise FreezeArtifactError("Expected update count is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     updates = updates_value
     fractions = {group: _clip_fraction(telemetry, group, updates) for group in GROUPS}
     return fractions, dirty, artifact_reference(path, document)
@@ -164,10 +164,10 @@ def derive_weight_decay_clip_source(winner_path: pathlib.Path) -> dict[str, obje
         or not isinstance(index, int)
         or not 0 <= index < len(candidates)
     ):
-        raise FreezeArtifactError("weight-decay winner index is invalid")
+        raise FreezeArtifactError("Weight-decay winner index is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     candidate = candidates[index]
     if winner.get("recurrent_weight_decay") != candidate.weight_decay:
-        raise FreezeArtifactError("weight-decay winner index and value disagree")
+        raise FreezeArtifactError("Weight-decay winner index and value disagree. Use matching values and structures.")
     search_settings = _search_settings(winner_path, settings)
     first_expected = config_to_dict(
         expected_weight_decay_benchmark_config(
@@ -177,14 +177,14 @@ def derive_weight_decay_clip_source(winner_path: pathlib.Path) -> dict[str, obje
     _validate_fixed_settings(settings, first_expected)
     scores = winner.get("bundle_scores")
     if not isinstance(scores, list) or len(scores) != len(DEVELOPMENT_BUNDLES):
-        raise FreezeArtifactError("weight-decay winner bundle evidence is incomplete")
+        raise FreezeArtifactError("Weight-decay winner bundle evidence is incomplete. Fix the input condition named in the error, then rerun the operation.")
     fractions: dict[str, dict[str, float]] = {group: {} for group in GROUPS}
     raw_references: dict[str, object] = {}
     dirty_states: list[bool] = []
     for score, bundle_id in zip(scores, DEVELOPMENT_BUNDLES, strict=True):
         score_mapping = require_mapping(score, f"weight_decay.score.{bundle_id}")
         if score_mapping.get("bundle_id") != bundle_id:
-            raise FreezeArtifactError("weight-decay winner bundle order drifted")
+            raise FreezeArtifactError("Weight-decay winner bundle order drifted. Fix the input condition named in the error, then rerun the operation.")
         path = _raw_path(winner_path.parent, score_mapping.get("raw_path"))
         expected = config_to_dict(
             expected_weight_decay_benchmark_config(
@@ -199,7 +199,7 @@ def derive_weight_decay_clip_source(winner_path: pathlib.Path) -> dict[str, obje
         dirty_states.append(dirty)
         raw_references[bundle_id] = reference
     if len(set(dirty_states)) != 1:
-        raise FreezeArtifactError("weight-decay raws disagree on source dirty state")
+        raise FreezeArtifactError("Weight-decay raws disagree on source dirty state. Use matching values and structures.")
     return {
         "selected_config": {
             "gain": expected["gain"],

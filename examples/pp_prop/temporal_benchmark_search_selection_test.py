@@ -110,7 +110,7 @@ def test_scoring_rejects_nonfinite_and_sealed_metrics(tmp_path: Path) -> None:
     result = document["result"]
     result["final_validation"]["ensemble_nll"] = float("nan")
 
-    with pytest.raises(RunEvidenceError, match="non-finite"):
+    with pytest.raises(RunEvidenceError, match="(?i)non-finite"):
         score_raw_document(
             document,
             config,

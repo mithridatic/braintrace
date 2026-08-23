@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Step B: can Example 21's pipeline learn one ARC task, and does effort help?
 
 Overfits a single ARC task through the production training path: the same
@@ -10,9 +10,9 @@ Reads
 -----
 loss -> ~0 on both arms
     The pipeline learns; the 96-update budget was the whole story.
-loss -> ~0 but effort 32 approximately equals effort 0
+Loss -> ~0 but effort 32 about equals effort 0
     The recurrence is decorative: a second, separate defect.
-loss stuck near 9.1 at an adequate rate
+Loss stuck near 9.1 at an adequate rate
     Something else is broken; return to Phase 1.
 """
 

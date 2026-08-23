@@ -18,10 +18,10 @@ same real automorphism group: prod S_k over twin classes <= Aut(graph) <=
 prod S_k over refined-role classes.
 
 CFSG as a language for emergent organization:
-  - orbit (twin class)      -> topology-only structural interchangeability
-  - orbit shrinking to 1    -> symmetry breaking: the neuron specialized
+  - Orbit (twin class)      -> topology-only structural interchangeability
+  - Orbit shrinking to 1    -> symmetry breaking: the neuron specialized
 
-18's own per-edge task attribution gives a second, independent read on the
+18'S own per-edge task attribution gives a second, independent read on the
 same question: an orbit is *attribution-pure* if every member's synapses
 lean toward the same task (or are all shared); *mixed* if members sit on
 different sides of a task boundary despite being structurally
@@ -51,7 +51,7 @@ def _load_structural_evolution():
         "_pp_prop_structural_evolution", path
     )
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load example 18 from {path}")
+        raise ImportError(f"Cannot load example 18 from {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -67,25 +67,25 @@ def _validate_topology(
     n_rec: int, rows: np.ndarray, cols: np.ndarray
 ) -> tuple[List[set], List[set]]:
     if n_rec < 1:
-        raise ValueError("n_rec must be positive")
+        raise ValueError("n_rec must be positive. Set n_rec to a positive value.")
     if rows.ndim != 1 or cols.ndim != 1 or rows.shape != cols.shape:
-        raise ValueError("rows and cols must be aligned one-dimensional arrays")
+        raise ValueError("Rows and cols must be aligned one-dimensional arrays. Set Rows and cols to aligned one-dimensional arrays.")
     if not np.issubdtype(rows.dtype, np.integer) or not np.issubdtype(
         cols.dtype, np.integer
     ):
-        raise ValueError("edge endpoints must be integers")
+        raise ValueError("Edge endpoints must be integers. Set Edge endpoints to integers.")
     if rows.size and (
         np.any(rows < 0)
         or np.any(rows >= n_rec)
         or np.any(cols < 0)
         or np.any(cols >= n_rec)
     ):
-        raise ValueError("edge endpoint is outside [0, n_rec)")
+        raise ValueError("Edge endpoint is outside [0, n_rec). Set the named field to a value in the stated range, then rerun the operation.")
     outgoing = [set() for _ in range(n_rec)]
     incoming = [set() for _ in range(n_rec)]
     for row, col in zip(rows.tolist(), cols.tolist()):
         if col in outgoing[row]:
-            raise ValueError("duplicate directed edge")
+            raise ValueError("Duplicate directed edge. Fix the input condition named in the error, then rerun the operation.")
         outgoing[row].add(col)
         incoming[col].add(row)
     return outgoing, incoming
@@ -166,9 +166,9 @@ def _neuron_label_profiles(
     Isolated neurons have an empty set.
     """
     if attribution.ndim != 1 or attribution.shape != rows.shape:
-        raise ValueError("attribution must align with edge endpoints")
+        raise ValueError("Attribution must align with edge endpoints. Align Attribution with edge endpoints.")
     if not np.issubdtype(attribution.dtype, np.integer):
-        raise ValueError("attribution labels must be integers")
+        raise ValueError("Attribution labels must be integers. Set Attribution labels to integers.")
     profile = [set() for _ in range(n_rec)]
     for row, col, label in zip(rows.tolist(), cols.tolist(), attribution.tolist()):
         profile[row].add(label)
@@ -179,7 +179,7 @@ def _neuron_label_profiles(
 def _orbit_attribution_split(
     class_of: np.ndarray, label_profiles: List[frozenset], degree: np.ndarray
 ) -> tuple:
-    """(pure, mixed) counts among wired orbits of size >= 2."""
+    """(Pure, mixed) counts among wired orbits of size >= 2."""
     pure = mixed = 0
     for orbit, size in Counter(class_of.tolist()).items():
         if size < 2:
@@ -205,17 +205,17 @@ def _task_pair_overlap(task_mass: np.ndarray, attribution: np.ndarray, n_tasks: 
     count.
     """
     if n_tasks < 2:
-        raise ValueError("task-pair overlap requires at least two tasks")
+        raise ValueError("Task-pair overlap requires at least two tasks. Provide the required value for Task-pair overlap.")
     if task_mass.ndim != 2 or task_mass.shape[0] != n_tasks:
-        raise ValueError("task_mass must have shape (n_tasks, n_edges)")
+        raise ValueError("task_mass must have shape (n_tasks, n_edges). Ensure task_mass has shape (n_tasks, n_edges).")
     if attribution.ndim != 1 or task_mass.shape[1] != attribution.size:
-        raise ValueError("task_mass and attribution must align by edge")
+        raise ValueError("task_mass and attribution must align by edge. Align task_mass and attribution by edge.")
     if not np.all(np.isfinite(task_mass)) or np.any(task_mass < 0):
-        raise ValueError("task_mass must contain finite nonnegative values")
+        raise ValueError("task_mass must contain finite nonnegative values. Add finite nonnegative values to task_mass.")
     if not np.issubdtype(attribution.dtype, np.integer):
-        raise ValueError("attribution labels must be integers")
+        raise ValueError("Attribution labels must be integers. Set Attribution labels to integers.")
     if np.any(attribution < 0) or np.any(attribution > n_tasks):
-        raise ValueError("attribution labels must be task indices or shared")
+        raise ValueError("Attribution labels must be task indices or shared. Set Attribution labels to task indices or shared.")
     matrix = np.zeros((n_tasks, n_tasks), dtype=int)
     shared = (attribution == n_tasks) & (task_mass.sum(axis=0) > 0)
     for mass in task_mass[:, shared].T:

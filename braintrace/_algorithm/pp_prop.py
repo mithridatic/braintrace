@@ -18,7 +18,7 @@ from __future__ import annotations
 from .io_dim_vjp import IODimVjpAlgorithm
 
 __all__ = [
-    'pp_prop',  # the diagonally approximated algorithm with the input-output dimension complexity
+    'pp_prop',  # The diagonally approximated algorithm with the input-output dimension complexity
     'ES_D_RTRL',
 ]
 

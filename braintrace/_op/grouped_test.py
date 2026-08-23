@@ -81,11 +81,11 @@ class TestForwardCorrectness:
 
     def test_rejects_bad_ranks(self):
         with pytest.raises(ValueError, match=r'ndim'):
-            grouped_matmul(jnp.ones((3,)), jnp.ones((2, 3, 4)))          # x rank < 2
+            grouped_matmul(jnp.ones((3,)), jnp.ones((2, 3, 4)))          # X rank < 2
         with pytest.raises(ValueError, match=r'ndim'):
-            grouped_matmul(jnp.ones((6, 5, 2, 3)), jnp.ones((2, 3, 4)))  # x rank > 3
+            grouped_matmul(jnp.ones((6, 5, 2, 3)), jnp.ones((2, 3, 4)))  # X rank > 3
         with pytest.raises(ValueError):
-            grouped_matmul(jnp.ones((5, 2, 3)), jnp.ones((3, 4)))        # weight rank != 3
+            grouped_matmul(jnp.ones((5, 2, 3)), jnp.ones((3, 4)))        # Weight rank != 3
 
 
 class TestAutoDispatch:
@@ -144,7 +144,7 @@ class TestJAXRules:
         x = jnp.ones((5, 2, 3))
         w = jnp.ones((2, 3, 4))
         g = jax.grad(lambda ww: grouped_matmul(x, ww).sum())(w)
-        # d/dw[g,k,n] sum(y) = sum_b x[b,g,k] = 5
+        # D/dw[g,k,n] sum(y) = sum_b x[b,g,k] = 5
         np.testing.assert_allclose(g, jnp.full((2, 3, 4), 5.0), atol=1e-6)
 
 
@@ -158,7 +158,7 @@ from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
 
 
 class TestGmmEtpRules:
-    B, G, K, N, A = 5, 2, 3, 4, 2   # batch, groups, in, out, n_state
+    B, G, K, N, A = 5, 2, 3, 4, 2   # Batch, groups, in, out, n_state
 
     def test_dt_to_t_broadcasts_hidden_over_in_axis(self):
         brainstate.random.seed(10)
@@ -304,7 +304,7 @@ class TestGroupedFastPath:
         bwg = {'weight': brainstate.random.randn(self.B, self.G, self.K, self.N, self.A),
                'bias': brainstate.random.randn(self.B, self.G, self.N, self.A)}
         out = get_fast_path_rules(etp_gmm_p).recurrent(diag, bwg, self.A)
-        # reference einsum: x = new-state axis, y = contracted old-state axis
+        # Reference einsum: x = new-state axis, y = contracted old-state axis
         # (cannot reuse 'b' for a state axis — it is the batch label here)
         want_w = jnp.einsum('bgnxy,bgkny->bgknx', diag, bwg['weight'])
         want_b = jnp.einsum('bgnxy,bgny->bgnx', diag, bwg['bias'])
@@ -357,7 +357,7 @@ from braintrace._testing.oracle import (
 
 
 def _grouped_tanh_rnn_factory(G=2, K=3, n_in=3, seed=0):
-    """tanh RNN whose recurrence is a block-diagonal grouped_matmul.
+    """Tanh RNN whose recurrence is a block-diagonal grouped_matmul.
 
     ``w (G, K, K)`` is the ETP recurrent weight; ``win`` is a plain input
     projection (excluded from ETP). Hidden state is flat ``(1, G*K)``;

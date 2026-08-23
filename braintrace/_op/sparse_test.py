@@ -226,7 +226,7 @@ class TestSpMmEtpRules:
         rule = ETP_RULES_DT_TO_T[etp_sp_mm_p]
         stub = _StubSparseMat(jnp.zeros((3, 4)))
         hidden = jnp.array([1.0, 2.0, 3.0, 4.0])
-        # trace is now a dict {'weight': ...}
+        # Trace is now a dict {'weight': ...}
         trace = {'weight': jnp.ones((3, 4))}
         out = rule(hidden, trace, sparse_mat=stub)
         # stub.dt2t_transposed broadcasts hidden over rows.
@@ -247,7 +247,7 @@ class TestSpMmEtpRules:
         x = jnp.ones((2, 3))
         w_data = jnp.arange(12.0)
         hidden = jnp.ones((2, 4))
-        # weights is now a dict
+        # Weights is now a dict
         weights = {'weight': w_data}
         dw = rule(x, hidden, weights, sparse_mat=stub)
         # Equivalent to VJP through `x @ stub.with_data(w)` wrt w.
@@ -307,7 +307,7 @@ class TestSpMvEtpRules:
         rule = ETP_RULES_DT_TO_T[etp_sp_mv_p]
         stub = _StubSparseMat(jnp.zeros((3, 4)))
         hidden = jnp.array([1.0, 2.0, 3.0, 4.0])
-        # trace is now a dict {'weight': ...}
+        # Trace is now a dict {'weight': ...}
         trace = {'weight': jnp.ones((3, 4))}
         out = rule(hidden, trace, sparse_mat=stub)
         np.testing.assert_allclose(out['weight'], jnp.ones((3, 4)) * hidden[None, :])
@@ -369,7 +369,7 @@ class TestSparseMMBiasGradient:
         dim = 4
         rows = jnp.array([0, 1, 2, 3])
         cols = jnp.array([0, 1, 2, 3])
-        dense_template = jnp.eye(dim)  # shape (dim, dim)
+        dense_template = jnp.eye(dim)  # Shape (dim, dim)
 
         class _HashableStub(brainevent.DataRepresentation):
             """Minimal hashable DataRepresentation satisfying the ETP contract."""
@@ -390,7 +390,7 @@ class TestSparseMMBiasGradient:
             def dt2t_transposed(self, hidden_dim, trace):
                 # Per D-RTRL executor call: trace is (nnz,), hidden_dim is (out,).
                 # For a diagonal matrix col_i == i, so:
-                #   e^t_i = hidden_dim[col_i] * trace_i = hidden_dim[i] * trace_i.
+                #   E^t_i = hidden_dim[col_i] * trace_i = hidden_dim[i] * trace_i.
                 if hidden_dim.ndim == 0:
                     return trace * hidden_dim
                 n = trace.shape[0]
@@ -444,7 +444,7 @@ class TestSparseMMBiasGradient:
         # grads_etrace is keyed by path; cell.p is a dict-valued ParamState
         grad_p = list(grads_etrace.values())[0]
         assert isinstance(grad_p, dict), (
-            f'Expected dict gradient for merged ParamState, got {type(grad_p)}'
+            f'Expected dict gradient for merged ParamState, got {type(grad_p)}. Return the expected value for the reported field.'
         )
 
         # --- BPTT reference ---
@@ -461,7 +461,7 @@ class TestSparseMMBiasGradient:
 
         # Non-zero sanity check for bias gradient
         assert jnp.abs(bptt['bias']).max() > 1e-3, (
-            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}'
+            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}. Use inputs that produce a non-zero gradient.'
         )
 
         np.testing.assert_allclose(grad_p['weight'], bptt['weight'], atol=1e-5,
@@ -575,7 +575,7 @@ class TestSparseWeightFnBiasFn:
         # Use the hashable stub so it can be a static primitive param
         stub = _HashableStubMat(jnp.zeros((3, 4)))
         x = jnp.ones((2, 3))
-        w_data = jnp.arange(1.0, 13.0)  # shape (12,)
+        w_data = jnp.arange(1.0, 13.0)  # Shape (12,)
         hidden = brainstate.random.randn(2, 4)
 
         rule = ETP_RULES_XY_TO_DW[etp_sp_mm_p]
@@ -751,7 +751,7 @@ class TestBatchedSparseDRTRLOracle:
                 assert a.shape == b.shape
                 denom = max(float(jnp.abs(a).max()), 1e-12)
                 rel = float(jnp.abs(a - b).max() / denom)
-                assert rel < 1e-10, f'{key}: max_rel_err={rel:.3e}'
+                assert rel < 1e-10, f'{key}: max_rel_err={rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 # ---------------------------------------------------------------------------
@@ -801,7 +801,7 @@ class TestDtToTFirstPrinciplesFromJacobian:
             [1, 0, 1, 0],
             [0, 1, 0, 1],
             [1, 1, 0, 0],
-        ], dtype=bool)  # (in=3, out=4), deliberately non-diagonal/non-square
+        ], dtype=bool)  # (In=3, out=4), deliberately non-diagonal/non-square
 
     def test_mv_dt_to_t_matches_jacobian_contraction(self):
         from braintrace._op.sparse import _sp_mv_dt_to_t
@@ -816,7 +816,7 @@ class TestDtToTFirstPrinciplesFromJacobian:
         def fwd(w):
             return x0 @ csr.with_data(w)
 
-        J = jax.jacobian(fwd)(csr.data)  # (out, nnz)
+        J = jax.jacobian(fwd)(csr.data)  # (Out, nnz)
         for o in range(n_out):
             for k in range(nnz):
                 expected = x0[row_of_nnz[k]] if col_of_nnz[k] == o else 0.0
@@ -856,7 +856,7 @@ class TestDtToTFirstPrinciplesFromJacobian:
         def fwd(w):
             return x0 @ csr.with_data(w)
 
-        J = jax.jacobian(fwd)(csr.data)  # (batch, out, nnz)
+        J = jax.jacobian(fwd)(csr.data)  # (Batch, out, nnz)
         for b in range(batch):
             for o in range(n_out):
                 for k in range(nnz):

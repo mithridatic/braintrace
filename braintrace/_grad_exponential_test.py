@@ -35,7 +35,7 @@ class TestGradExponInit:
         assert jnp.allclose(acc.gradients.value, 0.0)
 
     def test_quantity_tau_resolves_to_exponential_decay(self):
-        # decay = exp(-1 / (tau / dt)) = exp(-1 / 100) for tau=10ms, dt=0.1ms.
+        # Decay = exp(-1 / (tau / dt)) = exp(-1 / 100) for tau=10ms, dt=0.1ms.
         with brainstate.environ.context(dt=0.1 * u.ms):
             acc = GradExpon(jnp.zeros((3,)), 10.0 * u.ms)
         assert 0.0 < float(acc.decay) < 1.0

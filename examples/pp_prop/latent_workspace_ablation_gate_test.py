@@ -191,7 +191,7 @@ _GATE_B_VALIDATION_SHA256 = {
 
 def test_gate_c_module_is_importable() -> None:
     assert _IMPORT_ERROR is None, (
-        "missing production module examples.pp_prop.latent_workspace_ablation_gate"
+        "Missing production module examples.pp_prop.latent_workspace_ablation_gate. Provide the missing item named in the message."
     )
 
 
@@ -652,7 +652,7 @@ def _mutate_gate_c_initialization_report(
             "executed_updates"
         ] = 1
     else:
-        raise AssertionError(f"unhandled criterion {criterion}")
+        raise AssertionError(f"Unhandled criterion {criterion}. Update the fixture or expected result to satisfy this assertion.")
 
 
 def _reduced_gate_c_config() -> Any:
@@ -1739,13 +1739,13 @@ def test_core_contract_inputs_fail_closed_before_execution() -> None:
             gate_c.GateCConfig(**{field: invalid})
 
     for invalid in ("unknown", None):
-        with pytest.raises(ValueError, match="unknown Gate C arm"):
+        with pytest.raises(ValueError, match="(?i)unknown Gate C arm"):
             gate_c._loss_weights(
                 "gate_a",
                 invalid,
                 efforts=np.asarray([1], dtype=np.int32),
             )
-        with pytest.raises(ValueError, match="unknown Gate C regime"):
+        with pytest.raises(ValueError, match="(?i)unknown Gate C regime"):
             gate_c._loss_weights(
                 invalid,
                 "full",
@@ -1830,7 +1830,7 @@ def test_shared_initialization_rejects_type_topology_and_geometry_drift(
             "_parameter_states_by_path",
             missing_canonical_path,
         )
-        with pytest.raises(ValueError, match="canonical model is missing"):
+        with pytest.raises(ValueError, match="(?i)canonical model is missing"):
             gate_c._copy_shared_initialization(full, legacy_model)
 
     structure_drift = gate_c._new_model_for_arm(
@@ -2151,7 +2151,7 @@ def test_reduced_gate_c_initialization_is_isolated_and_has_no_behavioral_run(
         return real_copy_shared(canonical, legacy_model)
 
     def no_behavior(*args: Any, **kwargs: Any) -> Any:
-        raise AssertionError("initialization admission must not execute behavior")
+        raise AssertionError("Initialization admission must not execute behavior. Ensure Initialization admission does not execute behavior.")
 
     def make_trainer(
         model: LatentWorkspaceModel,
@@ -2778,7 +2778,7 @@ def test_initialization_authentication_precedes_model_construction(
     def forbidden_model(*args: Any, **kwargs: Any) -> Any:
         nonlocal model_calls
         model_calls += 1
-        raise AssertionError("model construction preceded authentication")
+        raise AssertionError("Model construction preceded authentication. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(gate_c, "_new_model_for_arm", forbidden_model)
     invalid_prerequisites = copy.deepcopy(valid_prerequisites)
@@ -2987,7 +2987,7 @@ def test_gate_c2_controls_writer_streams_exact_compact_strict_json(
 
     def forbidden_dumps(*args: Any, **kwargs: Any) -> str:
         del args, kwargs
-        raise AssertionError("Gate C2 controls must stream JSON chunks")
+        raise AssertionError("Gate C2 controls must stream JSON chunks. Set Gate C2 controls to stream JSON chunks.")
 
     monkeypatch.setattr(gate_c.msgspec_json, "dumps", forbidden_dumps)
     destination = tmp_path / "gate-c2-controls.json"
@@ -3595,7 +3595,7 @@ def test_formal_gate_c_cli_stops_before_core_when_prerequisite_authentication_fa
     def reject_prerequisites(*args: Any, **kwargs: Any) -> dict[str, Any]:
         del args, kwargs
         events.append("prerequisites_rejected")
-        raise launcher.ProvenanceError("Gate C initialization authentication failed")
+        raise launcher.ProvenanceError("Gate C initialization authentication failed. Check the reported inputs and retry the operation.")
 
     monkeypatch.setattr(
         launcher,
@@ -4280,7 +4280,7 @@ def _mutate_formal_gate_c_report(
     elif criterion == "source_and_gpu_authenticated":
         report["source_end"]["dirty"] = True
     else:
-        raise AssertionError(f"unhandled Gate C criterion {criterion}")
+        raise AssertionError(f"Unhandled Gate C criterion {criterion}. Update the fixture or expected result to satisfy this assertion.")
 
 
 @pytest.fixture(scope="module")
@@ -4691,7 +4691,7 @@ def test_training_report_fails_closed_on_malformed_retained_evidence(
     elif mutation == "compiler_mismatch":
         arm_report["compiler"]["all_required_direct"] = False
     else:
-        raise AssertionError(f"unhandled training mutation {mutation}")
+        raise AssertionError(f"Unhandled training mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._training_report_complete(
         arm_report,
@@ -4748,7 +4748,7 @@ def test_parameter_movement_validator_rejects_malformed_or_dead_paths(
     elif mutation == "wrong_total_count":
         movement["parameter_count"] += 1
     else:
-        raise AssertionError(f"unhandled movement mutation {mutation}")
+        raise AssertionError(f"Unhandled movement mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._parameter_movement_complete(
         movement,
@@ -4829,7 +4829,7 @@ def test_gate_b_evaluation_validator_rejects_malformed_or_stale_evidence(
     elif mutation == "shuffled_gap":
         evaluation["efforts"]["8"]["intact_minus_shuffled"] += 0.1
     else:
-        raise AssertionError(f"unhandled Gate B evaluation mutation {mutation}")
+        raise AssertionError(f"Unhandled Gate B evaluation mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_b_evaluation_complete(
         evaluation,
@@ -4943,7 +4943,7 @@ def test_gradient_record_validator_rejects_type_confusion_and_impossible_geometr
             }
         )
     else:
-        raise AssertionError(f"unhandled gradient mutation {mutation}")
+        raise AssertionError(f"Unhandled gradient mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gradient_record_complete(record)
 
@@ -5008,7 +5008,7 @@ def test_mechanism_oracle_validator_rejects_malformed_or_colluding_evidence(
     elif mutation == "complete_flag":
         oracle["complete"] = False
     else:
-        raise AssertionError(f"unhandled oracle mutation {mutation}")
+        raise AssertionError(f"Unhandled oracle mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._mechanism_oracle_complete(oracle, config)
 
@@ -5065,7 +5065,7 @@ def test_gate_a_evaluation_validator_rejects_malformed_binding_evidence(
     elif mutation == "binding_state":
         evaluation["binding_state"]["all_finite"] = False
     else:
-        raise AssertionError(f"unhandled Gate A evaluation mutation {mutation}")
+        raise AssertionError(f"Unhandled Gate A evaluation mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_a_evaluation_complete(evaluation, config)
 
@@ -5108,7 +5108,7 @@ def test_paired_diagnostic_validator_rejects_incoherent_count_norm_and_hashes(
     elif mutation == "negative_no_context_norm":
         record["no_context_l2_norm"] = -1.0
     else:
-        raise AssertionError(f"unhandled paired diagnostic mutation {mutation}")
+        raise AssertionError(f"Unhandled paired diagnostic mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._paired_diagnostic_record_complete(record, count=512)
 
@@ -5195,7 +5195,7 @@ def test_formal_configuration_validator_rejects_stale_or_type_confused_identity(
             "memory_mode"
         ] = "none"
     else:
-        raise AssertionError(f"unhandled formal configuration mutation {mutation}")
+        raise AssertionError(f"Unhandled formal configuration mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._exact_formal_configuration_complete(
         report,
@@ -5288,7 +5288,7 @@ def test_formal_identity_validators_reject_malformed_or_stale_evidence(
     elif mutation == "paired_pass":
         paired["passed"] = False
     else:
-        raise AssertionError(f"unhandled formal identity mutation {mutation}")
+        raise AssertionError(f"Unhandled formal identity mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
     assert not gate_c._paired_h0_identity_complete(
         paired,
         admission,
@@ -5394,12 +5394,12 @@ def test_formal_runner_authenticates_initialization_before_models(
 
     def reject_initialization(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
-        raise ValueError("Gate C initialization is not authenticated")
+        raise ValueError("Gate C initialization is not authenticated. Update the fixture or expected result to satisfy this assertion.")
 
     def forbidden_model(*args: Any, **kwargs: Any) -> Any:
         nonlocal model_calls
         model_calls += 1
-        raise AssertionError("model constructed before initialization auth")
+        raise AssertionError("Model constructed before initialization auth. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(
         gate_c,
@@ -5721,7 +5721,7 @@ def test_formal_runner_executes_ten_fresh_isolated_arms_in_fixed_order(
         gate_c,
         "_schedule_identity_report",
         lambda actual_config: (_ for _ in ()).throw(
-            AssertionError("constants-only schedule reporter is inadmissible")
+            AssertionError("Constants-only schedule reporter is inadmissible. Update the fixture or expected result to satisfy this assertion.")
         ),
     )
     monkeypatch.setattr(
@@ -6554,7 +6554,7 @@ def test_oracle_rejects_event_digest_mismatch_before_gradients(
     def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
         nonlocal calls
         calls += 1
-        raise AssertionError("gradient execution preceded oracle authentication")
+        raise AssertionError("Gradient execution preceded oracle authentication. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(
         gate_c,
@@ -6598,7 +6598,7 @@ def test_oracle_rejects_nonpreregistered_coordinates_before_gradients(
     def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
         nonlocal calls
         calls += 1
-        raise AssertionError("nonpreregistered oracle reached gradient execution")
+        raise AssertionError("Nonpreregistered oracle reached gradient execution. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(
         gate_c,
@@ -6670,7 +6670,7 @@ def test_oracle_rejects_validation_metadata_disagreeing_with_schedule(
     def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
         nonlocal calls
         calls += 1
-        raise AssertionError("metadata mismatch reached gradient execution")
+        raise AssertionError("Metadata mismatch reached gradient execution. Use matching values and structures.")
 
     monkeypatch.setattr(
         gate_c,
@@ -6715,7 +6715,7 @@ def test_oracle_rejects_fresh_hidden_state_snapshot_mismatch_before_gradients(
     def forbidden_gradients(*args: Any, **kwargs: Any) -> Any:
         nonlocal gradient_calls
         gradient_calls += 1
-        raise AssertionError("state mismatch reached gradient execution")
+        raise AssertionError("State mismatch reached gradient execution. Use matching values and structures.")
 
     monkeypatch.setattr(
         brainstate.nn,
@@ -7119,7 +7119,7 @@ def test_gate_c2_consumed_weight_validator_rejects_all_five_arm_failures(
     elif mutation == "extra_arm":
         reports["extra"] = dict(_GATE_C2_NONTERMINAL_WEIGHT_REPORT)
     else:
-        raise AssertionError(f"unhandled consumed-weight mutation {mutation}")
+        raise AssertionError(f"Unhandled consumed-weight mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_consumed_gate_b_loss_weights_complete(reports)
 
@@ -7227,7 +7227,7 @@ def test_gate_c2_control_update_evidence_recomputes_zero_calls_and_parameters(
     elif mutation == "stored_complete":
         evidence["complete"] = False
     else:
-        raise AssertionError(f"unhandled no-update mutation {mutation}")
+        raise AssertionError(f"Unhandled no-update mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_no_update_evidence_complete(
         evidence,
@@ -7322,7 +7322,7 @@ def test_gate_c2_control_audit_requires_exact_role_and_boundary_matrix(
         ]
         evidence["training_step_call_count"] = 1
     else:
-        raise AssertionError(f"unhandled audit matrix mutation {mutation}")
+        raise AssertionError(f"Unhandled audit matrix mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_no_update_evidence_complete(
         evidence,
@@ -7427,7 +7427,7 @@ def test_gate_c2_controls_audit_rolls_back_partial_enter_installation(
         replace_calls += 1
         real_replace(owner, name, replacement)
         if replace_calls == fail_at:
-            raise RuntimeError("injected late audit install failure")
+            raise RuntimeError("Injected late audit install failure")
 
     monkeypatch.setattr(audit, "_replace", fail_after_install)
     try:
@@ -7869,7 +7869,7 @@ def passing_gate_c2_no_read_reports() -> tuple[
 
 def _gate_c2_strict_canonical_json_roundtrip(value: Any) -> Any:
     def reject_nonfinite_constant(token: str) -> Any:
-        raise ValueError(f"nonfinite JSON constant {token}")
+        raise ValueError(f"Nonfinite JSON constant {token}. Update the fixture or expected result to satisfy this assertion.")
 
     payload = msgspec_json.dumps(
         value,
@@ -8250,7 +8250,7 @@ def test_gate_c2_no_read_validator_rejects_each_nested_raw_mutation(
         container, key = report, "passed"
         replacement = False
     else:
-        raise AssertionError(f"unhandled no-read mutation {mutation}")
+        raise AssertionError(f"Unhandled no-read mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     original = container[key]
     container[key] = replacement
@@ -8371,7 +8371,7 @@ def test_gate_c2_no_read_validator_fails_closed_on_malformed_admission(
             "parameter_sha256"
         ] = True
     else:
-        raise AssertionError(f"unhandled admission mutation {mutation}")
+        raise AssertionError(f"Unhandled admission mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_query_only_latent_no_read_complete(
         reports[regime],
@@ -9094,7 +9094,7 @@ def test_gate_c2_operational_h0_validator_recomputes_all_three_controls(
     elif mutation == "stored_pass":
         report["passed"] = False
     else:
-        raise AssertionError(f"unhandled H0 mutation {mutation}")
+        raise AssertionError(f"Unhandled H0 mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_paired_h0_operational_equivalence_complete(
         report,
@@ -9960,7 +9960,7 @@ def test_gate_c2_removed_path_validator_cross_binds_every_raw_field(
         path = gate_c.GATE_C2_REMOVED_PATHS[0]
         report["removed_paths"][path]["exact_zero"] = False
     else:
-        raise AssertionError(f"unhandled removed-path mutation {mutation}")
+        raise AssertionError(f"Unhandled removed-path mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_a._json_exact(report, canonical_report)
     assert not gate_c._gate_c2_removed_path_influence_complete(
@@ -10047,7 +10047,7 @@ def test_gate_c2_removed_path_validator_recomputes_h0_geometry_and_digests(
     elif mutation == "tree_digest":
         snapshot["hidden_state_tree_sha256"] = "0" * 64
     else:
-        raise AssertionError(f"unhandled H0 snapshot mutation {mutation}")
+        raise AssertionError(f"Unhandled H0 snapshot mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_removed_path_influence_complete(
         report,
@@ -10104,7 +10104,7 @@ def test_gate_c2_removed_path_validator_rejects_colluding_h0_boundary_evidence(
     elif mutation == "stored_boundary_pass":
         boundary["passed"] = False
     else:
-        raise AssertionError(f"unhandled H0 boundary mutation {mutation}")
+        raise AssertionError(f"Unhandled H0 boundary mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     assert not gate_c._gate_c2_removed_path_influence_complete(
         report,
@@ -10436,7 +10436,7 @@ def test_gate_c2_controls_qualifier_independently_rejects_each_criterion(
     elif mutation == "source":
         report["source_end"]["dirty"] = True
     else:
-        raise AssertionError(f"unhandled controls mutation {mutation}")
+        raise AssertionError(f"Unhandled controls mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
 
     qualification = gate_c._gate_c2_controls_qualification(
         report,
@@ -10601,7 +10601,7 @@ def test_gate_c2_controls_runner_is_read_only_and_orders_all_probes(
     def forbidden(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
         forbidden_calls.append("called")
-        raise AssertionError("control admission reached training or optimizer code")
+        raise AssertionError("Control admission reached training or optimizer code. Update the fixture or expected result to satisfy this assertion.")
 
     def source_end_reporter() -> dict[str, Any]:
         events.append(("source_end",))
@@ -10658,7 +10658,7 @@ def test_gate_c2_controls_runner_is_read_only_and_orders_all_probes(
         lambda actual_config: (
             copy.deepcopy(schedules)
             if actual_config is config
-            else (_ for _ in ()).throw(AssertionError("unexpected config"))
+            else (_ for _ in ()).throw(AssertionError("Unexpected config. Use the expected value or update the contract."))
         ),
     )
     monkeypatch.setattr(
@@ -10810,7 +10810,7 @@ def test_gate_c2_controls_writer_preserves_destination_on_stream_failures(
 
     def failed_fsync(file_descriptor: int) -> None:
         del file_descriptor
-        raise OSError("simulated fsync failure")
+        raise OSError("Simulated fsync failure. Check the reported inputs and retry the operation.")
 
     with monkeypatch.context() as context:
         context.setattr(gate_c.os, "fsync", failed_fsync)
@@ -10823,7 +10823,7 @@ def test_gate_c2_controls_writer_preserves_destination_on_stream_failures(
 
     def failed_replace(path: Path, target: Path) -> Path:
         if path == temporary:
-            raise OSError("simulated atomic replace failure")
+            raise OSError("Simulated atomic replace failure. Check the reported inputs and retry the operation.")
         return original_replace(path, target)
 
     with monkeypatch.context() as context:
@@ -11198,7 +11198,7 @@ def test_gate_c2_controls_runner_restores_audit_when_probe_raises(
 
     def failed_probe(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
-        raise RuntimeError("simulated control probe failure")
+        raise RuntimeError("Simulated control probe failure. Check the reported inputs and retry the operation.")
 
     monkeypatch.setattr(
         gate_c,
@@ -11333,7 +11333,7 @@ def test_gate_c2_no_read_validator_rejects_top_level_and_family_schema_damage(
     elif mutation == "positive_stored_pass":
         container, key, replacement = positive, "passed", False
     else:
-        raise AssertionError(f"unhandled no-read schema mutation {mutation}")
+        raise AssertionError(f"Unhandled no-read schema mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
     original = container[key]
     container[key] = replacement
     try:
@@ -11441,7 +11441,7 @@ def test_gate_c2_removed_path_validator_rejects_structural_failures(
     elif mutation == "numeric_exception":
         report["global"]["l2_norm"] = object()
     else:
-        raise AssertionError(f"unhandled removed-path structure {mutation}")
+        raise AssertionError(f"Unhandled removed-path structure {mutation}. Update the fixture or expected result to satisfy this assertion.")
     assert not gate_c._gate_c2_removed_path_influence_complete(
         report,
         regime=regime,
@@ -11477,7 +11477,7 @@ def test_gate_c2_removed_path_validator_cross_checks_preregistered_constants(
     elif mutation == "gate_a_weight_contract":
         expected["continuation"]["base_checkpoint_weights"] = [1.0]
     else:
-        raise AssertionError(f"unhandled removed-path contract {mutation}")
+        raise AssertionError(f"Unhandled removed-path contract {mutation}. Update the fixture or expected result to satisfy this assertion.")
     monkeypatch.setattr(gate_c, "GATE_C2_REMOVED_PATH_OBJECTIVES", contracts)
     assert not gate_c._gate_c2_removed_path_influence_complete(
         report,
@@ -11626,7 +11626,7 @@ def test_gate_c2_controls_qualifier_fails_closed_on_internal_evidence_errors(
         monkeypatch.setattr(
             gate_c,
             "_validated_gate_c_initialization_admission",
-            lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("invalid")),
+            lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("Invalid. Use a value in the stated range.")),
         )
     elif mutation == "schedule":
         report["regimes"] = _GateC2RaisingMapping(report["regimes"])
@@ -11645,7 +11645,7 @@ def test_gate_c2_controls_qualifier_fails_closed_on_internal_evidence_errors(
     elif mutation == "source":
         report.pop("source_start")
     else:
-        raise AssertionError(f"unhandled qualifier error mutation {mutation}")
+        raise AssertionError(f"Unhandled qualifier error mutation {mutation}. Update the fixture or expected result to satisfy this assertion.")
     qualification = gate_c._gate_c2_controls_qualification(
         report,
         config=gate_c.GateCConfig(),
@@ -11731,7 +11731,7 @@ def test_gate_c2_controls_main_runs_fixed_host_lifecycle(
         launcher,
         "_load_formal_gate_c_prerequisites",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("formal loader must not run")
+            AssertionError("Formal loader must not run. Ensure Formal loader does not run.")
         ),
     )
     monkeypatch.setattr(gate_c, "_source_files_report", lambda: {"source": "hash"})
@@ -12164,7 +12164,7 @@ def _fake_gate_c3_terminal_h8_report(
                 gradients[first_path],
             )
         else:
-            raise AssertionError(f"unknown fake producer mode {producer_mode!r}")
+            raise AssertionError(f"Unknown fake producer mode {producer_mode!r}. Select one of the supported values for the named field.")
         return gradients
 
     monkeypatch.setattr(
@@ -12534,7 +12534,7 @@ def test_gate_c3_controls_writer_streams_and_strictly_roundtrips(
 
     def forbidden_dumps(*args: Any, **kwargs: Any) -> str:
         del args, kwargs
-        raise AssertionError("Gate C3 controls must stream JSON chunks")
+        raise AssertionError("Gate C3 controls must stream JSON chunks. Set Gate C3 controls to stream JSON chunks.")
 
     monkeypatch.setattr(gate_c.msgspec_json, "dumps", forbidden_dumps)
     destination = tmp_path / "gate-c3-controls.json"
@@ -12861,7 +12861,7 @@ def test_gate_c3_controls_runner_never_updates_or_constructs_an_optimizer(
     def forbidden(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
         forbidden_calls.append("called")
-        raise AssertionError("C3 controls reached training or optimizer code")
+        raise AssertionError("C3 controls reached training or optimizer code. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(gate_c, "_make_arm_trainer", forbidden)
     monkeypatch.setattr(gate_a, "_make_pp_prop_trainer", forbidden)

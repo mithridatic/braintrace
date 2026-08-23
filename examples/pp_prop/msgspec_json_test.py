@@ -56,11 +56,11 @@ def test_loads_preserves_duplicate_key_rejection_hook() -> None:
         values: dict[str, object] = {}
         for key, value in pairs:
             if key in values:
-                raise ValueError(f"duplicate JSON key {key!r}")
+                raise ValueError(f"Duplicate JSON key {key!r}. Update the fixture or expected result to satisfy this assertion.")
             values[key] = value
         return values
 
-    with pytest.raises(ValueError, match="duplicate JSON key"):
+    with pytest.raises(ValueError, match="(?i)duplicate JSON key"):
         msgspec_json.loads(
             b'{"a": 1, "a": 2}',
             object_pairs_hook=reject_duplicates,

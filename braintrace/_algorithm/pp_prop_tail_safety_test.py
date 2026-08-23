@@ -91,7 +91,7 @@ def test_tail_proof_never_allocates_position_matrices(monkeypatch):
     learner = braintrace.pp_prop(model, 0.9)
 
     def fail(*args, **kwargs):
-        raise AssertionError('dense position matrix allocated')
+        raise AssertionError('Dense position matrix allocated. Update the fixture or expected result to satisfy this assertion.')
 
     monkeypatch.setattr(position_graph.np, 'eye', fail)
     monkeypatch.setattr(position_graph.np, 'ones', fail)

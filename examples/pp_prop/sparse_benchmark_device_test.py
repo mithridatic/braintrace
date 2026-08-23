@@ -62,7 +62,7 @@ def test_satisfiable_requests_are_accepted(device: str, platform: str) -> None:
 
 @pytest.mark.parametrize("platform", ["cpu", "tpu", ""])
 def test_a_requested_gpu_refuses_another_backend(platform: str) -> None:
-    with pytest.raises(RuntimeError, match="requested device gpu"):
+    with pytest.raises(RuntimeError, match="(?i)requested device gpu"):
         verify_device_selection("gpu", platform)
 
 

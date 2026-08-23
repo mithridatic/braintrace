@@ -67,7 +67,7 @@ class CompilationReport:
         """The wrapped :class:`ETraceGraph`."""
         return self._graph
 
-    # --- data views ------------------------------------------------------
+    # --- Data views ------------------------------------------------------
 
     @property
     def hidden_groups(self) -> List[Tuple[int, List[Path]]]:
@@ -140,7 +140,7 @@ class CompilationReport:
             'errors': sum(1 for d in diags if d.level is DiagnosticLevel.ERROR),
         }
 
-    # --- rendering -------------------------------------------------------
+    # --- Rendering -------------------------------------------------------
 
     def to_str(self, level: int = 1) -> str:
         """Render the report as text.

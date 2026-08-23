@@ -15,17 +15,17 @@ adaptive budget controller after each round's evaluation (the v1 behavior —
 prune the weakest 5% by ``|w|`` and respawn the same count on a constant
 budget — remains available via ``--fixed-budget``):
 
-- weakest trick below ``--target-accuracy`` (default 0.95) → GROW: add
+- Weakest trick below ``--target-accuracy`` (default 0.95) → GROW: add
   activity-biased edges (endpoints proportional to per-neuron mean spike
   rate on probe trials plus a small floor, no self-loops, no within-row
   duplicates, values drawn from the initial value distribution), growing
   the budget by ``--growth-factor`` (default 1.1x) up to ``--max-edges``
   (default 1048576);
-- every trick at or above target → SHRINK: prune the weakest 10% by ``|w|``
+- Every trick at or above target → SHRINK: prune the weakest 10% by ``|w|``
   without replacement, never below ``--min-edges`` (default 64).
 
 The expected trace is a sawtooth — shrink until the weakest trick dips
-below target, grow back — settling near the minimal sufficient budget. The
+below target, grow back — settling near the minimal enough budget. The
 edge count over rounds is part of the story: the right PNG panel draws it
 in grey behind the accuracy curves, and the plain-English report narrates
 the budget journey with per-round wall times. At this scale edge count
@@ -152,7 +152,7 @@ def _load_sparse_example():
     path = pathlib.Path(__file__).resolve().with_name("09-operator-sparse.py")
     spec = importlib.util.spec_from_file_location("_pp_prop_sparse_operator", path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load sparse pp-prop operators from {path}")
+        raise ImportError(f"Cannot load sparse pp-prop operators from {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -336,80 +336,80 @@ class _EvolutionConfig:
         }
         invalid = [name for name, value in positive.items() if value <= 0]
         if invalid:
-            raise ValueError(f"{', '.join(invalid)} must be positive")
+            raise ValueError(f"{', '.join(invalid)} must be positive. Set {', '.join(invalid)} to a positive value.")
         if self.seed < 0:
-            raise ValueError("seed must be non-negative")
+            raise ValueError("Seed must be non-negative. Set Seed to a non-negative value.")
         if not 0.0 < self.prune_fraction < 1.0:
-            raise ValueError("prune_fraction must be in (0, 1)")
+            raise ValueError("prune_fraction must be in (0, 1). Set prune_fraction in (0, 1).")
         if not 0.5 < self.share_threshold < 1.0:
-            raise ValueError("share_threshold must be in (0.5, 1)")
+            raise ValueError("share_threshold must be in (0.5, 1). Set share_threshold in (0.5, 1).")
         if not 0.0 < self.cue_probability <= 1.0:
-            raise ValueError("cue_probability must be in (0, 1]")
+            raise ValueError("cue_probability must be in (0, 1]. Set cue_probability in (0, 1].")
         if self.recurrent_scale <= 0:
-            raise ValueError("recurrent_scale must be positive")
+            raise ValueError("recurrent_scale must be positive. Set recurrent_scale to a positive value.")
         if self.task_style not in _TASK_STYLES:
-            raise ValueError(f"task_style must be one of {_TASK_STYLES}")
+            raise ValueError(f"task_style must be one of {_TASK_STYLES}. Set task_style to one of {_TASK_STYLES}.")
         if self.task_style == _SIMPLE_STYLE:
             if self.n_in < 2 * _CUE_UNITS:
-                raise ValueError(f"n_in must be at least {2 * _CUE_UNITS}")
+                raise ValueError(f"n_in must be at least {2 * _CUE_UNITS}. Set n_in to at least {2 * _CUE_UNITS}.")
             latest_response = max(_RESPONSE_START.values()) + _RESPONSE_TICKS
             if self.n_step < latest_response:
-                raise ValueError(f"n_step must be at least {latest_response}")
+                raise ValueError(f"n_step must be at least {latest_response}. Set n_step to at least {latest_response}.")
         for name in ("cue_rate_hz", "go_rate_hz", "dt_seconds", "trace_half_life"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
-                raise ValueError(f"{name} must be finite and positive")
+                raise ValueError(f"{name} must be finite and positive. Set {name} to a finite positive value.")
         if not math.isfinite(self.recurrent_gain) or self.recurrent_gain <= 0:
-            raise ValueError("recurrent_gain must be finite and positive")
+            raise ValueError("recurrent_gain must be finite and positive. Set recurrent_gain to a finite positive value.")
         if isinstance(self.num_tricks, bool) or not 2 <= self.num_tricks <= len(
             _TRICK_NAMES
         ):
-            raise ValueError(f"num_tricks must be between 2 and {len(_TRICK_NAMES)}")
+            raise ValueError(f"num_tricks must be between 2 and {len(_TRICK_NAMES)}. Set num_tricks to a value between 2 and {len(_TRICK_NAMES)}.")
         if self.num_tricks > 2 and self.task_style == _SIMPLE_STYLE:
-            raise ValueError("num_tricks above two requires a temporal task style")
+            raise ValueError("num_tricks above two requires a temporal task style. Provide the required value for num_tricks above two.")
         if self.task_style == _CONTEXT_STYLE and self.num_tricks != 4:
             raise ValueError(
-                "the context style has exactly four conditions (num_tricks=4)"
+                "The context style has exactly four conditions (num_tricks=4). Fix the input condition named in the error, then rerun the operation."
             )
         if self.task_style != _SIMPLE_STYLE:
             last_start = max(_layout(self).response_start.values())
             if last_start > _TEMPORAL_MAX_RESPONSE_START:
                 raise ValueError(
-                    "response windows must stay at or inside the medium horizon"
+                    "Response windows must stay at or inside the medium horizon. Make Response windows stay at or inside the medium horizon."
                 )
         if self.n_edges > self.n_rec * (self.n_rec - 1):
-            raise ValueError("n_edges exceeds the off-diagonal positions")
+            raise ValueError("n_edges exceeds the off-diagonal positions. Set the named field to a value in the stated range, then rerun the operation.")
         if isinstance(self.decay_or_rank, bool):
-            raise ValueError("decay_or_rank must be a float decay or integer rank")
+            raise ValueError("decay_or_rank must be a float decay or integer rank. Set decay_or_rank to a float decay or integer rank.")
         if isinstance(self.decay_or_rank, int):
             if self.decay_or_rank < 1:
-                raise ValueError("integer decay_or_rank must be at least one")
+                raise ValueError("Integer decay_or_rank must be at least one. Set Integer decay_or_rank to at least one.")
         elif isinstance(self.decay_or_rank, float):
             valid_decay = math.isfinite(self.decay_or_rank) and (
                 0.0 <= self.decay_or_rank < 1.0
             )
             if not valid_decay:
-                raise ValueError("float decay_or_rank must be in [0, 1)")
+                raise ValueError("Float decay_or_rank must be in [0, 1). Set Float decay_or_rank to a value in [0, 1).")
         else:
-            raise ValueError("decay_or_rank must be a float decay or integer rank")
+            raise ValueError("decay_or_rank must be a float decay or integer rank. Set decay_or_rank to a float decay or integer rank.")
         if self.sparse_backend == "":
-            raise ValueError("sparse_backend must be non-empty or None")
+            raise ValueError("sparse_backend must be non-empty or None. Provide at least one value for sparse_backend.")
         # Values outside [0, 1] are deliberately legal: 0.0 forces shrink and
         # anything above 1.0 forces growth, which the tests and demos exploit.
         if not math.isfinite(self.target_accuracy) or self.target_accuracy < 0:
-            raise ValueError("target_accuracy must be finite and non-negative")
+            raise ValueError("target_accuracy must be finite and non-negative. Set target_accuracy to a finite non-negative value.")
         if self.max_edges < self.min_edges:
-            raise ValueError("max_edges must be at least min_edges")
+            raise ValueError("max_edges must be at least min_edges. Set max_edges to at least min_edges.")
         if not self.growth_factor > 1.0:
-            raise ValueError("growth_factor must exceed one")
+            raise ValueError("growth_factor must exceed one. Make growth_factor exceed one.")
         if self.grow_rule not in ("activity", "gradient"):
-            raise ValueError("grow_rule must be 'activity' or 'gradient'")
+            raise ValueError("grow_rule must be 'activity' or 'gradient'. Set grow_rule to 'activity' or 'gradient'.")
         if self.max_growth_events is not None and (
             isinstance(self.max_growth_events, bool) or self.max_growth_events < 0
         ):
-            raise ValueError("max_growth_events must be a non-negative int or None")
+            raise ValueError("max_growth_events must be a non-negative int or None. Set max_growth_events to a non-negative int or None.")
         if not 0.0 < self.shrink_fraction < 1.0:
-            raise ValueError("shrink_fraction must be in (0, 1)")
+            raise ValueError("shrink_fraction must be in (0, 1). Set shrink_fraction in (0, 1).")
 
     @classmethod
     def smoke(cls) -> "_EvolutionConfig":
@@ -485,7 +485,7 @@ def _draw_free_pairs(
     """
     capacity = n_rec * (n_rec - 1) - keep_rows.size
     if count > capacity:
-        raise ValueError("no free off-diagonal positions left to draw from")
+        raise ValueError("No free off-diagonal positions left to draw from. Provide the missing value or resource, then rerun the operation.")
     blocked = keep_rows.astype(np.int64) * n_rec + keep_cols.astype(np.int64)
 
     def _probabilities(weight: Optional[np.ndarray]) -> Optional[np.ndarray]:
@@ -493,7 +493,7 @@ def _draw_free_pairs(
             return None
         total = weight.sum()
         if total <= 0.0:
-            raise ValueError("sampling weights carry no positive mass")
+            raise ValueError("Sampling weights carry no positive mass. Provide the missing item named in the message.")
         return weight / total
 
     p_row = _probabilities(row_weight)
@@ -528,7 +528,7 @@ def _draw_free_pairs(
                 batch = max(64, 2 * (count - grown.size))
             accepted = grown
         batch = max(64, 2 * (count - accepted.size))
-    raise ValueError("pair draw failed to converge on free positions")
+    raise ValueError("Pair draw failed to converge on free positions. Correct the reported inputs, then retry the operation.")
 
 
 def _sample_irregular_topology(
@@ -621,7 +621,7 @@ def _prune_survivors(values: np.ndarray, prune_count: int) -> np.ndarray:
         broken by stable sort order).
     """
     if not 0 < prune_count < values.size:
-        raise ValueError("prune_count must leave at least one survivor")
+        raise ValueError("prune_count must leave at least one survivor. Set prune_count to leave at least one survivor.")
     order = np.argsort(np.abs(values), kind="stable")
     return np.sort(order[prune_count:])
 
@@ -701,7 +701,7 @@ def _gradient_endpoints(
     grad_mass : np.ndarray
         Per-edge accumulated absolute-gradient mass, aligned with
         ``rows``/``cols``.
-    rows, cols : np.ndarray
+    Rows, cols : np.ndarray
         Endpoints of the existing edges; candidates may not duplicate them.
     floor : float
         Additive floor on both marginals before taking the product.
@@ -714,7 +714,7 @@ def _gradient_endpoints(
         ``(new_rows, new_cols)`` int64 arrays of length ``count``.
     """
     if grad_mass.shape != rows.shape or rows.shape != cols.shape:
-        raise ValueError("grad_mass, rows and cols must align")
+        raise ValueError("grad_mass, rows and cols must align. Set grad_mass, rows and cols to align.")
     demand = np.zeros(n_rec, dtype=np.float64)
     supply = np.zeros(n_rec, dtype=np.float64)
     np.add.at(demand, rows, grad_mass)
@@ -968,7 +968,7 @@ def _parameter_group(path: Tuple[Any, ...]) -> str:
         return "feedforward"
     if "rec_syn" in names:
         return "recurrent"
-    raise ValueError(f"parameter path {path} matches no optimizer group")
+    raise ValueError(f"Parameter path {path} matches no optimizer group. Provide the missing item named in the message.")
 
 
 def _carry_params(old_model: _Net, new_model: _Net) -> None:
@@ -1148,7 +1148,7 @@ def _carry_optimizer_moments(
     for name, optimizer in experiment.optimizers.items():
         donor_state = donor.optimizers[name].opt_state.value
         if not isinstance(donor_state, tuple):
-            continue  # donor never updated; nothing to carry
+            continue  # Donor never updated; nothing to carry
         adam_index = next(i for i, s in enumerate(donor_state) if hasattr(s, "mu"))
         donor_adam = donor_state[adam_index]
         mu_map: Dict[Any, Any] = {}

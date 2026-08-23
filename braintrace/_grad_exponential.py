@@ -78,20 +78,20 @@ class GradExpon(brainstate.nn.Module):
     ) -> None:
         super().__init__()
 
-        # gradients (stored as LongTermState for proper JAX transform tracking)
+        # Gradients (stored as LongTermState for proper JAX transform tracking)
         self.gradients = brainstate.LongTermState(
             jax.tree.map(lambda x: jax.numpy.zeros_like(x), grad_shape)
         )
 
-        # decay time constant
+        # Decay time constant
         if isinstance(tau_or_decay, u.Quantity):
             tau = u.maybe_decimal(tau_or_decay / brainstate.environ.get_dt())
             decay = u.math.exp(-1.0 / tau)
         elif isinstance(tau_or_decay, float):
-            assert 0.0 < tau_or_decay < 1.0, f"Decay must be between 0 and 1, but got {tau_or_decay}"
+            assert 0.0 < tau_or_decay < 1.0, f"Decay must be between 0 and 1, but got {tau_or_decay}. Set Decay to a value between 0 and 1."
             decay = tau_or_decay
         else:
-            raise TypeError(f"tau_or_decay must be a Quantity or a float, but got {tau_or_decay}")
+            raise TypeError(f"tau_or_decay must be a Quantity or a float, but got {tau_or_decay}. Set tau_or_decay to a Quantity or a float.")
         self.decay = decay
 
     def update(self, grads: PyTree) -> None:

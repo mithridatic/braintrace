@@ -31,7 +31,7 @@ def _skip_json_whitespace(data: bytes, position: int) -> int:
 
 def _scan_json_string(data: bytes, position: int) -> tuple[str, int]:
     if position >= len(data) or data[position] != ord('"'):
-        raise _JsonScanError("expected JSON string")
+        raise _JsonScanError("Expected JSON string. Fix the input condition named in the error, then rerun the operation.")
     end = position + 1
     while end < len(data):
         if data[end] == ord('\\'):
@@ -43,10 +43,10 @@ def _scan_json_string(data: bytes, position: int) -> tuple[str, int]:
             except msgspec.DecodeError as error:
                 raise _JsonScanError from error
             if not isinstance(value, str):
-                raise _JsonScanError("JSON object key was not text")
+                raise _JsonScanError("JSON object key was not text. Fix the input condition named in the error, then rerun the operation.")
             return value, end + 1
         end += 1
-    raise _JsonScanError("unterminated JSON string")
+    raise _JsonScanError("Unterminated JSON string. Fix the input condition named in the error, then rerun the operation.")
 
 
 def _scan_json_value(
@@ -56,7 +56,7 @@ def _scan_json_value(
 ) -> int:
     position = _skip_json_whitespace(data, position)
     if position >= len(data):
-        raise _JsonScanError("missing JSON value")
+        raise _JsonScanError("Missing JSON value. Provide the missing item named in the message.")
     token = data[position]
     if token == ord('"'):
         return _scan_json_string(data, position)[1]
@@ -71,17 +71,17 @@ def _scan_json_value(
             position = _scan_json_value(data, position, object_pairs_hook)
             position = _skip_json_whitespace(data, position)
             if position >= len(data):
-                raise _JsonScanError("unterminated JSON array")
+                raise _JsonScanError("Unterminated JSON array. Fix the input condition named in the error, then rerun the operation.")
             if data[position] == ord(']'):
                 return position + 1
             if data[position] != ord(','):
-                raise _JsonScanError("expected JSON array separator")
+                raise _JsonScanError("Expected JSON array separator. Fix the input condition named in the error, then rerun the operation.")
             position += 1
     start = position
     while position < len(data) and data[position] not in b" \t\r\n,]}":
         position += 1
     if position == start:
-        raise _JsonScanError("missing JSON scalar")
+        raise _JsonScanError("Missing JSON scalar. Provide the missing item named in the message.")
     return position
 
 
@@ -100,16 +100,16 @@ def _scan_json_object(
         keys.append(key)
         position = _skip_json_whitespace(data, position)
         if position >= len(data) or data[position] != ord(':'):
-            raise _JsonScanError("expected JSON object separator")
+            raise _JsonScanError("Expected JSON object separator. Fix the input condition named in the error, then rerun the operation.")
         position = _scan_json_value(data, position + 1, object_pairs_hook)
         position = _skip_json_whitespace(data, position)
         if position >= len(data):
-            raise _JsonScanError("unterminated JSON object")
+            raise _JsonScanError("Unterminated JSON object. Fix the input condition named in the error, then rerun the operation.")
         if data[position] == ord('}'):
             object_pairs_hook([(item, None) for item in keys])
             return position + 1
         if data[position] != ord(','):
-            raise _JsonScanError("expected JSON object separator")
+            raise _JsonScanError("Expected JSON object separator. Fix the input condition named in the error, then rerun the operation.")
         position = _skip_json_whitespace(data, position + 1)
 
 
@@ -121,7 +121,7 @@ def _check_duplicate_keys(
     try:
         position = _scan_json_value(data, 0, object_pairs_hook)
         if _skip_json_whitespace(data, position) != len(data):
-            raise _JsonScanError("trailing JSON data")
+            raise _JsonScanError("Trailing JSON data. Fix the input condition named in the error, then rerun the operation.")
     except _JsonScanError:
         # Let msgspec produce the authoritative malformed-input exception.
         return
@@ -165,7 +165,7 @@ def _reject_non_finite(value: object) -> None:
 
     if isinstance(value, Real) and not isinstance(value, (bool, int)):
         if not math.isfinite(value):
-            raise ValueError("Out of range float values are not JSON compliant")
+            raise ValueError("Out of range float values are not JSON compliant. Fix the input condition named in the error, then rerun the operation.")
         return
     if isinstance(value, Mapping):
         for key, item in value.items():
@@ -247,12 +247,12 @@ def dumps(
     allow_nan
         If false, reject non-finite real values like the standard library
         encoder's strict mode.
-    indent
+    Indent
         Optional indentation width.  ``None`` preserves the standard
         library's compact-with-separators default.
     sort_keys
         Sort mapping keys deterministically when true.
-    separators
+    Separators
         Optional comma/colon separators.  The compact ``(',', ':')`` form is
         supported for canonical fingerprints; the other repository call sites
         use the normal JSON separators.
@@ -269,7 +269,7 @@ def dumps(
     if separators == (",", ":"):
         return _restore_non_finite(encoded, replacements).decode("utf-8")
     if indent is None:
-        # indent=0 is msgspec's compact representation with standard JSON
+        # Indent=0 is msgspec's compact representation with standard JSON
         # spaces after commas and colons, matching the standard encoder default.
         encoded = msgspec.json.format(encoded, indent=0)
     else:

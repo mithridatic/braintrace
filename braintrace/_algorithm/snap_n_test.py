@@ -120,7 +120,7 @@ def _rel_etp(actual, expected, spec) -> float:
     statement.
     """
     keys = set(spec.etp_param_keys)
-    assert keys, 'the spec declares no ETP parameters; the comparison is empty'
+    assert keys, 'The spec declares no ETP parameters; the comparison is empty. Provide the missing item named in the message.'
     return relative_deviation(
         {k: v for k, v in actual.items() if k in keys},
         {k: v for k, v in expected.items() if k in keys},
@@ -207,7 +207,7 @@ class TestCoordinates(unittest.TestCase):
         ]:
             text = cfg.describe()
             rebuilt = eval(f'ETraceConfig({text})', {'ETraceConfig': ETraceConfig})
-            assert rebuilt == cfg, f'{text!r} rebuilt as {rebuilt}'
+            assert rebuilt == cfg, f'{text!r} rebuilt as {rebuilt}. Update the fixture or expected result to satisfy this assertion.'
 
 
 class TestSnAp1EqualsOSTLRecurrent(unittest.TestCase):
@@ -256,7 +256,7 @@ class TestSaturationEqualsBPTT(unittest.TestCase):
 
     def _assert_single_group_saturated(self, algo):
         pins = _pins(algo)
-        assert pins['n_groups'] == 1, 'criterion 3 requires one hidden group'
+        assert pins['n_groups'] == 1, 'Criterion 3 requires one hidden group. Provide the required value for Criterion 3.'
         assert pins['saturated'] == (True,), pins
         assert pins['K'] == (RING,), pins
         assert pins['M'] == (RING,), pins   # S == 1
@@ -273,7 +273,7 @@ class TestSaturationEqualsBPTT(unittest.TestCase):
         self._assert_single_group_saturated(
             _compiled(spec, _snap(RING), xs))
 
-        # chunk sizes: the most aggressive window, a non-divisor of T, and T-1.
+        # Chunk sizes: the most aggressive window, a non-divisor of T, and T-1.
         for chunk_size in (1, 3, T - 1):
             for chunked_trace in (True, False):
                 g = _grads(spec, _snap(RING, chunked_trace=chunked_trace),
@@ -309,7 +309,7 @@ class TestSaturationEqualsBPTT(unittest.TestCase):
         bptt = bptt_param_gradients(spec.factory, xs)
         g = _grads(spec, _snap(n_rec), xs, chunk_size=3)
         rel = _rel_etp(g, bptt, spec)
-        assert rel < EXACT_RTOL, f'S=2 saturated SnAp vs BPTT: {rel:.3e}'
+        assert rel < EXACT_RTOL, f'S=2 saturated SnAp vs BPTT: {rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_dense_recurrence_saturates_at_n_2(self):
         """A dense recurrent weight has diameter 1, so ``n = 2`` is already full RTRL."""
@@ -319,18 +319,18 @@ class TestSaturationEqualsBPTT(unittest.TestCase):
 
         algo = _compiled(spec, _snap(2), xs)
         pins = _pins(algo)
-        # varshape is (batch, n_rec): the batch axis is structurally
+        # Varshape is (batch, n_rec): the batch axis is structurally
         # uncoupled, so K is n_rec and not batch * n_rec.
         assert pins['n_groups'] == 1, pins
         assert pins['K'] == (4,), pins
-        assert pins['P'] == (4,), pins    # batch == 1 here
+        assert pins['P'] == (4,), pins    # Batch == 1 here
         assert pins['saturated'] == (True,), pins
         assert pins['primitives'] == ('etp_mm',), pins
 
         bptt = bptt_param_gradients(spec.factory, xs)
         g = _grads(spec, _snap(2), xs, chunk_size=2)
         rel = _rel_etp(g, bptt, spec)
-        assert rel < EXACT_RTOL, f'dense saturated SnAp vs BPTT: {rel:.3e}'
+        assert rel < EXACT_RTOL, f'Dense saturated SnAp vs BPTT: {rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 class TestTracePathAgreement(unittest.TestCase):
@@ -366,7 +366,7 @@ class TestNestedness(unittest.TestCase):
     """Criterion 4 — the neighbourhoods nest and saturation is a fixed point.
 
     The *gradient error* curve in ``n`` is reported, never asserted monotone:
-    nested masks do not imply monotone error, because a newly retained path can
+    Nested masks do not imply monotone error, because a newly retained path can
     overshoot terms the truncation was previously cancelling against. Only the
     two endpoints are asserted (they are criteria 2 and 3).
     """
@@ -374,7 +374,7 @@ class TestNestedness(unittest.TestCase):
     def _neighbour_sets(self, n):
         algo = _compiled(_ring_spec(), _snap(n), _ring_inputs())
         group = algo.graph.hidden_groups[0]
-        if group.snap is None:            # n == 1 canonicalises to 'coupled'
+        if group.snap is None:            # N == 1 canonicalises to 'coupled'
             return [{p} for p in range(RING)]
         nbr, valid = group.snap.neighbours, group.snap.valid
         return [set(nbr[p][valid[p]].tolist()) for p in range(nbr.shape[0])]
@@ -443,7 +443,7 @@ def _masked_rtrl_trace(model, xs, order, snap, n_rec=MASKED_RING):
     for q in range(n_rec):
         for off in (0, 1):
             dense[q, (q + off) % n_rec] = 1.0
-    rows, cols = np.nonzero(dense)         # row-major, i.e. CSR data order
+    rows, cols = np.nonzero(dense)         # Row-major, i.e. CSR data order
     weight = np.zeros((n_rec, n_rec))
     weight[rows, cols] = w
     nnz = len(rows)
@@ -468,7 +468,7 @@ def _masked_rtrl_trace(model, xs, order, snap, n_rec=MASKED_RING):
         dphi = 1.0 - h_new ** 2
         transition = dphi[:, None] * weight.T          # D[p, s] = phi'(z_p) W[s, p]
         instant = np.zeros((nnz, n_rec))
-        # weight entry e = (row q, col r) enters h[r] only, scaled by h_{t-1}[q]
+        # Weight entry e = (row q, col r) enters h[r] only, scaled by h_{t-1}[q]
         instant[np.arange(nnz), cols] = dphi[cols] * h[rows]
         influence = mask * (influence @ transition.T + instant)
         h = h_new
@@ -515,7 +515,7 @@ class TestInteriorAgainstMaskedRTRL(unittest.TestCase):
     def _deviation(got, want):
         num = max(float(np.abs(g - w).max()) for g, w in zip(got, want))
         den = max(float(np.abs(w).max()) for w in want)
-        assert den > 1e-6, 'the reference trace is ~zero; the comparison is vacuous'
+        assert den > 1e-6, 'The reference trace is ~zero; the comparison is vacuous. Update the fixture or expected result to satisfy this assertion.'
         return num / den
 
     def test_interior_orders_match_the_masked_recursion(self):
@@ -524,7 +524,7 @@ class TestInteriorAgainstMaskedRTRL(unittest.TestCase):
             assert snap.num_neighbour == order, (order, snap.num_neighbour)
             want = _masked_rtrl_trace(model, xs, order, snap)
             rel = self._deviation(traces, want)
-            assert rel < EXACT_RTOL, f'SnAp-{order} trace deviates by {rel:.3e}'
+            assert rel < EXACT_RTOL, f'SnAp-{order} trace deviates by {rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_a_narrower_reference_does_not_match(self):
         """Negative control: the comparison above has content.
@@ -577,7 +577,7 @@ class TestTraceStateStorage(unittest.TestCase):
             for n in range(1, RING + 2)
         ]
         assert counts == sorted(counts), counts
-        # and it genuinely grows: a flat sequence would mean nothing widened.
+        # And it genuinely grows: a flat sequence would mean nothing widened.
         assert counts[-1] > counts[0]
 
     def test_trace_width_is_k_times_num_state(self):
@@ -917,7 +917,7 @@ class TestModelAgnostic(unittest.TestCase):
             report[prim_name] = (rel_fast, rel_legacy)
             assert rel_fast < EXACT_RTOL, (prim_name, 'fast', rel_fast, pins)
             assert rel_legacy < EXACT_RTOL, (prim_name, 'legacy', rel_legacy, pins)
-            # the two solve paths must also agree with *each other*, which is
+            # The two solve paths must also agree with *each other*, which is
             # the stronger statement where both happen to be wrong the same way
             assert relative_deviation(fast, legacy) < EXACT_RTOL, (
                 prim_name, relative_deviation(fast, legacy))
@@ -933,14 +933,14 @@ class TestModelAgnostic(unittest.TestCase):
         pins = _pins(algo)
         assert pins['n_groups'] == 1, pins
         assert pins['primitives'] == ('etp_lora_mm',), pins
-        assert pins['conservative'] == (True,), pins   # no adjacency rule
+        assert pins['conservative'] == (True,), pins   # No adjacency rule
         assert pins['saturated'] == (True,), pins
         assert pins['K'] == (4,), pins
 
         bptt = bptt_param_gradients(spec.factory, xs)
         g = _grads(spec, _snap(2), xs, chunk_size=3)
         rel = _rel_etp(g, bptt, spec)
-        assert rel < EXACT_RTOL, f'LoRA saturated SnAp vs BPTT: {rel:.3e}'
+        assert rel < EXACT_RTOL, f'LoRA saturated SnAp vs BPTT: {rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_two_relations_on_one_group_both_widen(self):
         spec = _elemwise_plus_dense_net()
@@ -954,7 +954,7 @@ class TestModelAgnostic(unittest.TestCase):
         bptt = bptt_param_gradients(spec.factory, xs)
         g = _grads(spec, _snap(2), xs, chunk_size=3)
         rel = _rel_etp(g, bptt, spec)
-        assert rel < EXACT_RTOL, f'two-relation saturated SnAp vs BPTT: {rel:.3e}'
+        assert rel < EXACT_RTOL, f'Two-relation saturated SnAp vs BPTT: {rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 # ---------------------------------------------------------------------------
@@ -1011,7 +1011,7 @@ class TestAnchorRejection(unittest.TestCase):
             model, x0 = self._model_and_input()
             algo = braintrace.D_RTRL(
                 model, config=ETraceConfig(recurrence_scope=scope))
-            algo.compile_graph(x0)          # must not raise
+            algo.compile_graph(x0)          # Must not raise
             assert algo.is_compiled
 
     def test_snap_1_is_rejected_too_even_though_it_canonicalises_to_coupled(self):
@@ -1027,7 +1027,7 @@ class TestAnchorRejection(unittest.TestCase):
         """
         model, x0 = self._model_and_input()
         algo = braintrace.SnAp(model, n=1)
-        assert algo.config.recurrence_scope == 'coupled'   # the canonical form
+        assert algo.config.recurrence_scope == 'coupled'   # The canonical form
         with pytest.raises(NotImplementedError) as excinfo:
             algo.compile_graph(x0)
         assert 'etp_einsum' in str(excinfo.value)
@@ -1038,7 +1038,7 @@ class TestAnchorRejection(unittest.TestCase):
         model = spec.factory()
         brainstate.nn.init_all_states(model, batch_size=1)
         algo = braintrace.SnAp(model, n=1)
-        algo.compile_graph(_ring_inputs()[0])              # must not raise
+        algo.compile_graph(_ring_inputs()[0])              # Must not raise
         assert algo.is_compiled
 
     def test_embedding_is_rejected_under_sparse_n(self):
@@ -1087,7 +1087,7 @@ class TestDegeneracyPins(unittest.TestCase):
         assert pins['S'] == (2,), pins
         assert pins['K'] == (1,), pins
         assert pins['M'] == (2,), pins
-        # structural, not a fallback: the analysis found no mixing equation and
+        # Structural, not a fallback: the analysis found no mixing equation and
         # returned the identity, so `conservative` is False.
         assert pins['conservative'] == (False,), pins
         assert group.snap.is_degenerate
@@ -1181,27 +1181,27 @@ class TestConservativeFallbackEndToEnd(unittest.TestCase):
         xs = control.make_inputs(T, N_IN, seed=1)
         assert_model_is_live(rolled.factory, xs)
 
-        # (a) the control: a dense mixing graph has diameter 1, so n=2 saturates
+        # (A) the control: a dense mixing graph has diameter 1, so n=2 saturates
         ctrl_bptt = bptt_param_gradients(control.factory, xs)
         ctrl_pins = _pins(_compiled(control, _snap(2), xs))
         assert all(ctrl_pins['saturated']) and not any(ctrl_pins['conservative'])
         ctrl_rel = _rel_etp(_grads(control, _snap(2), xs, 2), ctrl_bptt, control)
         assert ctrl_rel < EXACT_RTOL, ctrl_rel
 
-        # (b) the same order on the rolled model misses, and n=4 does not help
+        # (B) the same order on the rolled model misses, and n=4 does not help
         bptt = bptt_param_gradients(rolled.factory, xs)
         rel_2 = _rel_etp(_grads(rolled, _snap(2), xs, 2), bptt, rolled)
         rel_4 = _rel_etp(_grads(rolled, _snap(4), xs, 2), bptt, rolled)
         assert rel_2 > 1e-2, rel_2
         np.testing.assert_allclose(rel_4, rel_2, rtol=1e-5)
 
-        # the coordinate below it is hit too, so this is not SnAp's failure
+        # The coordinate below it is hit too, so this is not SnAp's failure
         rel_coupled = _rel_etp(
             _grads(rolled, lambda m: braintrace.OSTLRecurrent(
                 m, vjp_method='multi-step'), xs, 2), bptt, rolled)
         assert rel_coupled > 1e-2, rel_coupled
 
-        # (c) and the compiler says the pattern could not be derived
+        # (C) and the compiler says the pattern could not be derived
         algo = _compiled(rolled, _snap(2), xs)
         records = [r for r in algo.graph.diagnostics
                    if r.kind == DiagnosticKind.SNAP_PATTERN_CONSERVATIVE]

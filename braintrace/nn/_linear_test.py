@@ -435,7 +435,7 @@ class TestLoRA:
         assert lora.in_features == 3
         assert lora.out_features == 4
         assert lora.base_module is None
-        # rank is stored implicitly as the shared inner dim of lora_a/lora_b.
+        # Rank is stored implicitly as the shared inner dim of lora_a/lora_b.
         assert lora.weight.value['lora_a'].shape == (3, 2)
         assert lora.weight.value['lora_b'].shape == (2, 4)
 
@@ -535,12 +535,12 @@ class TestLoRA:
         bypassed eligibility-trace computation.
         """
         lora = braintrace.nn.LoRA(in_features=5, lora_rank=2, out_features=4)
-        # batched input -> etp_lora_mm
+        # Batched input -> etp_lora_mm
         jp = jax.make_jaxpr(lambda z: lora(z))(jnp.ones((8, 5)))
         prims = {str(e.primitive) for e in jp.jaxpr.eqns}
         assert 'etp_lora_mm' in prims, prims
         assert 'dot_general' not in prims, prims
-        # unbatched input -> etp_lora_mv
+        # Unbatched input -> etp_lora_mv
         jp1 = jax.make_jaxpr(lambda z: lora(z))(jnp.ones((5,)))
         prims1 = {str(e.primitive) for e in jp1.jaxpr.eqns}
         assert 'etp_lora_mv' in prims1, prims1
@@ -871,7 +871,7 @@ class TestScaledWSLinearWeightFn:
                 self.h = brainstate.HiddenState(jnp.zeros(size))
 
             def update(self, x):
-                # x is shape (2,); h.value is (1, 4) after init_all_states(batch_size=1)
+                # X is shape (2,); h.value is (1, 4) after init_all_states(batch_size=1)
                 xh = jnp.concatenate([x.reshape(1, -1), self.h.value], axis=-1)
                 self.h.value = jnp.tanh(self.layer(xh))
                 return self.h.value
@@ -927,7 +927,7 @@ class TestScaledWSLinearForwardBiasGain:
 
         # Override bias and gain on BOTH layers with non-trivial values.
         bias_val = jnp.array([1.0, 2.0, 3.0, 4.0])
-        gain_val = jnp.array([[2.0, 0.5, 3.0, 1.5]])  # shape (1, out_size)
+        gain_val = jnp.array([[2.0, 0.5, 3.0, 1.5]])  # Shape (1, out_size)
 
         new_params = dict(bt_params)
         new_params['bias'] = bias_val
@@ -979,12 +979,12 @@ class TestGroupedLinear:
 
     def test_uses_etp_primitive(self):
         layer = braintrace.nn.GroupedLinear(2, 3, 4)
-        # batched input -> etp_gmm
+        # Batched input -> etp_gmm
         jp = jax.make_jaxpr(lambda z: layer(z))(jnp.ones((5, 2, 3)))
         prims = {str(e.primitive) for e in jp.jaxpr.eqns}
         assert 'etp_gmm' in prims, prims
         assert 'dot_general' not in prims, prims
-        # unbatched input -> etp_gmv
+        # Unbatched input -> etp_gmv
         jp1 = jax.make_jaxpr(lambda z: layer(z))(jnp.ones((2, 3)))
         prims1 = {str(e.primitive) for e in jp1.jaxpr.eqns}
         assert 'etp_gmv' in prims1, prims1

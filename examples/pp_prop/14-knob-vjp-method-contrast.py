@@ -31,7 +31,7 @@ def _accuracy(outputs_seq, labels):
 
 
 def _eval(model, inputs, labels):
-    # kept manual: eval re-init, no online construction
+    # Kept manual: eval re-init, no online construction
     @brainstate.transform.vmap_new_states(state_tag="new", axis_size=inputs.shape[1])
     def init():
         brainstate.nn.init_all_states(model)
@@ -139,5 +139,5 @@ def main(
 if __name__ == "__main__":
     result = main()
     # Full-run chance-level bounds (smoke test skips these since it uses n_epochs=1):
-    assert result["acc_single"] > 0.5, f"single-step acc {result['acc_single']} <= 0.5"
-    assert result["acc_multi"] > 0.5, f"multi-step acc {result['acc_multi']} <= 0.5"
+    assert result["acc_single"] > 0.5, f"Single-step acc {result['acc_single']} <= 0.5. Fix the input condition named in the error, then rerun the operation."
+    assert result["acc_multi"] > 0.5, f"Multi-step acc {result['acc_multi']} <= 0.5. Fix the input condition named in the error, then rerun the operation."

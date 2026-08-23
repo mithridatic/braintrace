@@ -111,13 +111,13 @@ class SparseBenchmarkConfig:
         _require_positive_int("updates", self.updates)
         _require_positive_int("eval_interval", self.eval_interval)
         if self.degree > self.neurons:
-            raise ValueError("degree must not exceed neurons")
+            raise ValueError("Degree must not exceed neurons. Set Degree to a value no greater than neurons.")
         if self.neurons * self.degree > _MAX_CSR_INDEX:
-            raise ValueError("neurons * degree exceeds the CSR int32 index limit")
+            raise ValueError("Neurons * degree exceeds the CSR int32 index limit. Set the named field to a value in the stated range, then rerun the operation.")
         if _TRAIN_EXAMPLES % self.batch_size:
-            raise ValueError("batch_size must divide the 288-example training split")
+            raise ValueError("batch_size must divide the 288-example training split. Set batch_size to divide the 288-example training split.")
         if self.final_window > self.steps:
-            raise ValueError("final_window must not exceed steps")
+            raise ValueError("final_window must not exceed steps. Set final_window to a value no greater than steps.")
         _require_probability("target_accuracy", self.target_accuracy)
         _require_positive_float("learning_rate", self.learning_rate)
         _require_unit_interval("decay", self.decay)
@@ -131,9 +131,9 @@ class SparseBenchmarkConfig:
         _require_nonnegative_float("min_available_gib", self.min_available_gib)
         _require_positive_float("max_wall_seconds", self.max_wall_seconds)
         if not isinstance(self.require_target, bool):
-            raise TypeError("require_target must be a bool")
+            raise TypeError("require_target must be a bool. Set require_target to a bool.")
         if self.json_output is not None and not isinstance(self.json_output, Path):
-            raise TypeError("json_output must be a pathlib.Path or None")
+            raise TypeError("json_output must be a pathlib.Path or None. Set json_output to a pathlib.Path or None.")
 
 
 def parse_config(argv: Sequence[str] | None = None) -> SparseBenchmarkConfig:
@@ -242,49 +242,49 @@ def config_to_cli_args(config: SparseBenchmarkConfig) -> list[str]:
 
 def _require_choice(name: str, value: object, choices: tuple[str, ...]) -> None:
     if value not in choices:
-        raise ValueError(f"{name} must be one of {choices}")
+        raise ValueError(f"{name} must be one of {choices}. Set {name} to one of {choices}.")
 
 
 def _require_positive_int(name: str, value: int) -> None:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise TypeError(f"{name} must be an int")
+        raise TypeError(f"{name} must be an int. Set {name} to an int.")
     if value <= 0:
-        raise ValueError(f"{name} must be positive")
+        raise ValueError(f"{name} must be positive. Set {name} to a positive value.")
 
 
 def _require_nonnegative_int(name: str, value: int) -> None:
     if isinstance(value, bool) or not isinstance(value, int):
-        raise TypeError(f"{name} must be an int")
+        raise TypeError(f"{name} must be an int. Set {name} to an int.")
     if value < 0:
-        raise ValueError(f"{name} must be nonnegative")
+        raise ValueError(f"{name} must be nonnegative. Set {name} to a nonnegative value.")
 
 
 def _require_finite_float(name: str, value: float) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise TypeError(f"{name} must be a number")
+        raise TypeError(f"{name} must be a number. Set {name} to a number.")
     converted = float(value)
     if not math.isfinite(converted):
-        raise ValueError(f"{name} must be finite")
+        raise ValueError(f"{name} must be finite. Use finite values for {name}.")
     return converted
 
 
 def _require_positive_float(name: str, value: float) -> None:
     if _require_finite_float(name, value) <= 0.0:
-        raise ValueError(f"{name} must be positive")
+        raise ValueError(f"{name} must be positive. Set {name} to a positive value.")
 
 
 def _require_nonnegative_float(name: str, value: float) -> None:
     if _require_finite_float(name, value) < 0.0:
-        raise ValueError(f"{name} must be nonnegative")
+        raise ValueError(f"{name} must be nonnegative. Set {name} to a nonnegative value.")
 
 
 def _require_probability(name: str, value: float) -> None:
     converted = _require_finite_float(name, value)
     if not 0.0 < converted <= 1.0:
-        raise ValueError(f"{name} must be in (0, 1]")
+        raise ValueError(f"{name} must be in (0, 1]. Set {name} in (0, 1].")
 
 
 def _require_unit_interval(name: str, value: float) -> None:
     converted = _require_finite_float(name, value)
     if not 0.0 <= converted < 1.0:
-        raise ValueError(f"{name} must be in [0, 1)")
+        raise ValueError(f"{name} must be in [0, 1). Set {name} to a value in [0, 1).")

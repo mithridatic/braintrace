@@ -349,7 +349,7 @@ class DepthFakeRunner(FakeRunner):
                 )
             elif self.target == "formal_gate_b":
                 if self.gate_b_init is None:
-                    raise AssertionError("formal Gate B fixture requires initialization")
+                    raise AssertionError("Formal Gate B fixture requires initialization. Provide the required value for Formal Gate B fixture.")
                 result = passing
                 result["prerequisites"] = {
                     "gate_a": copy.deepcopy(self.gate_a),
@@ -360,7 +360,7 @@ class DepthFakeRunner(FakeRunner):
                     config=depth.DepthGateConfig(),
                 )
             else:
-                raise AssertionError(f"unsupported depth fixture target {self.target}")
+                raise AssertionError(f"Unsupported depth fixture target {self.target}. Use a supported option or change the configuration.")
             launcher.write_strict_json(destination, result)
             return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
         return super().__call__(command, **kwargs)
@@ -1013,7 +1013,7 @@ def test_dirty_start_or_end_fails_closed(tmp_path: Path) -> None:
                 )
         return result
 
-    with pytest.raises(launcher.ProvenanceError, match="source changed"):
+    with pytest.raises(launcher.ProvenanceError, match="(?i)source changed"):
         launcher.launch(config, command_runner=dirty)
 
     paths = launcher.target_paths(config, _HEAD, "one_update")
@@ -1250,7 +1250,7 @@ def test_rehashed_semantic_preflight_tampering_fails_closed(
 
     with pytest.raises(
         launcher.ProvenanceError,
-        match="preflight|planned Gate|retained|environment|mount|command",
+        match="(?i)preflight|planned Gate|retained|environment|mount|command",
     ):
         launcher.load_authenticated_admission(
             paths.manifest,
@@ -1428,7 +1428,7 @@ def test_authenticated_bundle_rejects_internally_consistent_alternate_root(
     launcher.write_strict_json(paths.manifest, manifest)
     _refresh_bundle_manifest(config, "one_update")
 
-    with pytest.raises(launcher.ProvenanceError, match="root|worktree|preflight"):
+    with pytest.raises(launcher.ProvenanceError, match="(?i)root|worktree|preflight"):
         launcher.load_authenticated_admission(
             paths.manifest,
             target="one_update",
@@ -1800,7 +1800,7 @@ def test_formal_gate_c2_stays_unrunnable_until_controls_pass(
 
     repo = tmp_path / "repo"
     repo.mkdir()
-    with pytest.raises(ValueError, match="target must be one of"):
+    with pytest.raises(ValueError, match="(?i)target must be one of"):
         launcher.LaunchConfig(
             target="formal_gate_c2",
             repo_root=repo,
@@ -1812,7 +1812,7 @@ def test_formal_gate_c2_stays_unrunnable_until_controls_pass(
         repo_root=repo,
         output_dir=repo / "var" / "example21-causal-gate",
     )
-    with pytest.raises(ValueError, match="unknown target"):
+    with pytest.raises(ValueError, match="(?i)unknown target"):
         launcher.target_paths(controls, _HEAD, "formal_gate_c2")
 
     launch_called = False
@@ -1820,7 +1820,7 @@ def test_formal_gate_c2_stays_unrunnable_until_controls_pass(
     def unexpected_launch(config: launcher.LaunchConfig) -> Path:
         nonlocal launch_called
         launch_called = True
-        raise AssertionError(f"unexpected launch for {config.target}")
+        raise AssertionError(f"Unexpected launch for {config.target}. Use the expected value or update the contract.")
 
     monkeypatch.setattr(launcher, "launch", unexpected_launch)
     with pytest.raises(SystemExit) as caught:
@@ -1858,7 +1858,7 @@ def test_gate_c3_controls_is_appended_while_formal_target_stays_absent(
         repo_root=repo,
         output_dir=repo / "var" / "example21-causal-gate",
     )
-    with pytest.raises(ValueError, match="unknown target"):
+    with pytest.raises(ValueError, match="(?i)unknown target"):
         launcher.target_paths(controls, _HEAD, "formal_gate_c3")
 
     launch_called = False
@@ -1866,7 +1866,7 @@ def test_gate_c3_controls_is_appended_while_formal_target_stays_absent(
     def unexpected_launch(config: launcher.LaunchConfig) -> Path:
         nonlocal launch_called
         launch_called = True
-        raise AssertionError(f"unexpected launch for {config.target}")
+        raise AssertionError(f"Unexpected launch for {config.target}. Use the expected value or update the contract.")
 
     monkeypatch.setattr(launcher, "launch", unexpected_launch)
     with pytest.raises(SystemExit) as caught:
@@ -2810,7 +2810,7 @@ def test_gate_c_init_scientific_validation_failure_is_manifested(
 
     def fail_validation(*args: Any, **kwargs: Any) -> bool:
         raise launcher.ProvenanceError(
-            "gate_c_init scientific qualification does not recompute"
+            "gate_c_init scientific qualification does not recompute. Update the fixture or expected result to satisfy this assertion."
         )
 
     monkeypatch.setattr(launcher, "_validate_target_result", fail_validation)
@@ -3823,7 +3823,7 @@ def test_cli_returns_provenance_error_without_manifest(
 
     def fail_launch(config: launcher.LaunchConfig) -> Path:
         del config
-        raise launcher.ProvenanceError("authenticated launch rejected")
+        raise launcher.ProvenanceError("Authenticated launch rejected. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(launcher, "launch", fail_launch)
 
@@ -3832,7 +3832,7 @@ def test_cli_returns_provenance_error_without_manifest(
     ) == 2
     streams = capsys.readouterr()
     assert streams.out == ""
-    assert "authenticated launch rejected" in streams.err
+    assert "authenticated launch rejected" in streams.err.casefold()
 
 
 def test_missing_child_result_writes_a_complete_failure_manifest(
@@ -3886,11 +3886,11 @@ def test_unexpected_result_validator_error_is_manifested_and_wrapped(
     config = _config(tmp_path, "one_update")
 
     def fail_validation(*args: object, **kwargs: object) -> bool:
-        raise RuntimeError("validator exploded")
+        raise RuntimeError("Validator exploded. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(launcher, "_validate_target_result", fail_validation)
 
-    with pytest.raises(launcher.ProvenanceError, match="validator exploded") as caught:
+    with pytest.raises(launcher.ProvenanceError, match="(?i)validator exploded") as caught:
         launcher.launch(
             config,
             command_runner=FakeRunner(config.repo_root, "one_update"),
@@ -3903,4 +3903,7 @@ def test_unexpected_result_validator_error_is_manifested_and_wrapped(
     assert manifest["bundle_valid"] is False
     assert manifest["process_succeeded"] is True
     assert manifest["result"] is None
-    assert manifest["failure"] == "RuntimeError: validator exploded"
+    assert manifest["failure"] == (
+        "RuntimeError: Validator exploded. Update the fixture or expected result "
+        "to satisfy this assertion."
+    )

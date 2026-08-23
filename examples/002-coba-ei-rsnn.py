@@ -22,7 +22,7 @@ import braintools
 import jax
 import jax.numpy as jnp
 import matplotlib
-matplotlib.use('Agg')  # headless backend: render to file, no display needed
+matplotlib.use('Agg')  # Headless backend: render to file, no display needed
 import matplotlib.pyplot as plt
 import numpy as np
 import brainunit as u
@@ -45,22 +45,22 @@ class EvidenceAccumulation:
         prob: float = 0.3,
         num_cue: int = 7,
         batch_size: int = 128,
-        # number of neurons:
-        #         left, right, recall, noise
+        # Number of neurons:
+        #         Left, right, recall, noise
         n_neurons=(25, 25, 25, 25),
         firing_rates=(40., 40., 40., 10.) * u.Hz,
     ):
 
-        # input / output information
+        # Input / output information
         self.batch_size = batch_size
 
-        # time
+        # Time
         self.t_interval = t_interval
         self.t_cue = t_cue
         self.t_delay = t_delay
         self.t_recall = t_recall
 
-        # features
+        # Features
         self.n_neurons = n_neurons
         self.feat_neurons = {
             'left': slice(0, n_neurons[0]),
@@ -82,7 +82,7 @@ class EvidenceAccumulation:
         self.prob = prob
         self.num_cue = num_cue
 
-        # input / output information
+        # Input / output information
         dt = brainstate.environ.get_dt()
         t_interval = int(self.t_interval / dt)
         t_cue = int(self.t_cue / dt)
@@ -102,37 +102,37 @@ class EvidenceAccumulation:
         def sample_a_trial(key):
             rng = brainstate.random.RandomState(key)
 
-            # assign input spike probability
+            # Assign input spike probability
             ground_truth = rng.rand() < 0.5
             prob = u.math.where(ground_truth, self.prob, 1 - self.prob)
 
-            # for each example in batch, draw which cues are going to be active (left or right)
+            # For each example in batch, draw which cues are going to be active (left or right)
             cue_assignments = u.math.asarray(rng.random(self.num_cue) > prob, dtype=int)
 
             X = jnp.zeros((t_total, self.num_inputs))
-            # generate input spikes
+            # Generate input spikes
             for k in range(self.num_cue):
-                # input channels only fire when they are selected (left or right)
+                # Input channels only fire when they are selected (left or right)
                 i_start = u.math.where(cue_assignments[k],
                                        self.feat_neurons['left'].start,
                                        self.feat_neurons['right'].start)
                 fr = u.math.where(cue_assignments[k], self.feat_fr['left'], self.feat_fr['right']) * dt
                 update = jnp.ones((t_cue, 25)) * fr
 
-                # reverse order of cues
+                # Reverse order of cues
                 i_seq = t_interval + k * (t_interval + t_cue)
                 # X[i_seq:i_seq + t_cue, i_start: i_start + 25] = fr
                 X = jax.lax.dynamic_update_slice(X, update, (i_seq, i_start))
 
-            # recall cue (functional update: in-place ``Quantity[...] =`` is
+            # Recall cue (functional update: in-place ``Quantity[...] =`` is
             # rejected under jit/vmap on the latest brainunit; ``feat_fr * dt``
             # auto-simplifies Hz*ms to a plain dimensionless probability)
             X = X.at[-t_recall:, self.feat_neurons['recall']].set(self.feat_fr['recall'] * dt)
 
-            # background noise
+            # Background noise
             X = X.at[:, self.feat_neurons['noise']].set(self.feat_fr['noise'] * dt)
 
-            # generate inputs and targets
+            # Generate inputs and targets
             # X = u.math.asarray(rng.rand(*X.shape) < X, dtype=float)
             X = rng.rand(*X.shape) < X
             Y = u.math.asarray(u.math.sum(cue_assignments) > (self.num_cue / 2), dtype=int)
@@ -171,7 +171,7 @@ class GIF(brainpy.state.Neuron):
     ):
         super().__init__(size, name=name, spk_fun=spike_fun, spk_reset=spk_reset)
 
-        # parameters
+        # Parameters
         self.V_rest = braintools.init.param(V_rest, self.varshape, allow_none=False)
         self.V_th_inf = braintools.init.param(V_th_inf, self.varshape, allow_none=False)
         self.R = braintools.init.param(R, self.varshape, allow_none=False)
@@ -179,7 +179,7 @@ class GIF(brainpy.state.Neuron):
         self.tau_I2 = braintools.init.param(tau_I2, self.varshape, allow_none=False)
         self.A2 = braintools.init.param(A2, self.varshape, allow_none=False)
 
-        # initializers
+        # Initializers
         self._V_initializer = V_initializer
         self._I2_initializer = I2_initializer
 
@@ -233,10 +233,10 @@ class _SNNEINet(brainstate.nn.Module):
         self.n_exc = int(n_rec * 0.8)
         self.n_inh = n_rec - self.n_exc
 
-        # neurons
+        # Neurons
         tau_a = brainstate.random.uniform(100. * u.ms, tau_a * 2., n_rec)
         self.pop = GIF(n_rec, tau=tau_neu, tau_I2=tau_a, A2=beta)
-        # feedforward
+        # Feedforward
         self.ff2r = brainpy.state.AlignPostProj(
             comm=braintrace.nn.SignedWLinear(
                 n_in,
@@ -251,7 +251,7 @@ class _SNNEINet(brainstate.nn.Module):
             out=(brainpy.state.CUBA.desc() if E_exc is None else brainpy.state.COBA.desc(E=E_exc)),
             post=self.pop
         )
-        # recurrent
+        # Recurrent
         inh_init = braintools.init.KaimingNormal(scale=rec_scale * w_ei_ratio, unit=u.siemens)
         inh2r_conn = braintrace.nn.SignedWLinear(
             self.n_inh,
@@ -281,7 +281,7 @@ class _SNNEINet(brainstate.nn.Module):
             out=(brainpy.state.CUBA.desc() if E_exc is None else brainpy.state.COBA.desc(E=E_exc)),
             post=self.pop
         )
-        # output
+        # Output
         self.out = braintrace.nn.LeakyRateReadout(n_rec, n_out, tau=tau_out)
 
     def update(self, spk):
@@ -316,24 +316,24 @@ class _SNNEINet(brainstate.nn.Module):
 
         fig, gs = braintools.visualize.get_figure(4, n2show, 3., 4.5)
         for i in range(n2show):
-            # input spikes
+            # Input spikes
             ax = fig.add_subplot(gs[0, i])
             t_indices, n_indices = np.where(inputs[:, i])
             plt.scatter(t_indices, n_indices, s=1)
             plt.xlim(0, n_seq)
 
-            # recurrent spikes
+            # Recurrent spikes
             ax = fig.add_subplot(gs[1, i])
             t_indices, n_indices = np.where(rec_spks[:, i])
             plt.scatter(t_indices, n_indices, s=1)
             plt.xlim(0, n_seq)
 
-            # recurrent membrane potentials
+            # Recurrent membrane potentials
             ax = fig.add_subplot(gs[2, i])
             ax.plot(rec_mems[:, i])
             plt.xlim(0, n_seq)
 
-            # output potentials
+            # Output potentials
             ax = fig.add_subplot(gs[3, i])
             ax.plot(outs[:, i])
             plt.xlim(0, n_seq)
@@ -401,29 +401,29 @@ class Trainer:
         method: str = 'expsm_diag',
         acc_threshold: float = 0.90,
     ):
-        # the network
+        # The network
         self.target = target_net
 
-        # the dataset
+        # The dataset
         self.loader = loader
         self.n_sim = n_sim
 
-        # parameters
+        # Parameters
         self.n_epochs = n_epochs
 
-        # optimizer
+        # Optimizer
         weights = self.target.states().subset(brainstate.ParamState)
         self.optimizer = optimizer
         self.optimizer.register_trainable_weights(weights)
 
-        # traning method
-        assert method in ['expsm_diag', 'diag'], 'Unknown online learning methods.'
+        # Traning method
+        assert method in ['expsm_diag', 'diag'], 'Unknown online learning methods. Set the named field to one of the supported values, then rerun the operation.'
         self.method = method
         self.acc_threshold = acc_threshold
 
     def _acc(self, outs, target):
         pred = jnp.argmax(jnp.sum(outs, 0), 1)  # [T, B, N] -> [B, N] -> [B]
-        # pred = jnp.argmax(jnp.max(outs, 0), 1)  # [T, B, N] -> [B, N] -> [B]
+        # Pred = jnp.argmax(jnp.max(outs, 0), 1)  # [T, B, N] -> [B, N] -> [B]
         acc = jnp.asarray(pred == target, dtype=brainstate.environ.dftype()).mean()
         return acc
 
@@ -431,7 +431,7 @@ class Trainer:
     def etrace_train(self, inputs, targets):
         inputs = jnp.asarray(inputs, dtype=brainstate.environ.dftype())  # [T, B, N]
 
-        # initialize the online learning model
+        # Initialize the online learning model
         if self.method == 'expsm_diag':
             model = braintrace.compile(self.target, braintrace.ES_D_RTRL, inputs[0],
                                        batch_size=inputs.shape[1], vmap=True, decay_or_rank=0.99)
@@ -439,17 +439,17 @@ class Trainer:
             model = braintrace.compile(self.target, braintrace.D_RTRL, inputs[0],
                                        batch_size=inputs.shape[1], vmap=True)
         else:
-            raise ValueError(f'Unknown online learning methods: {self.method}.')
+            raise ValueError(f'Unknown online learning methods: {self.method}. Set the named field to one of the supported values, then rerun the operation.')
 
         def _etrace_grad(inp):
-            # call the model
+            # Call the model
             out = model(inp)
-            # calculate the loss
+            # Calculate the loss
             me = braintools.metric.softmax_cross_entropy_with_integer_labels(out, targets).mean()
             return me, out
 
         def _etrace_train(inputs_):
-            # reduction='sum' preserves the accumulated-gradient scale this
+            # Reduction='sum' preserves the accumulated-gradient scale this
             # example was tuned at; the reported loss stays the per-step mean.
             grads, mse_ls, outs = model.etrace_grad(
                 inputs_, step_fn=_etrace_grad, reduction='sum',
@@ -458,10 +458,10 @@ class Trainer:
 
             grads = brainstate.nn.clip_grad_norm(grads, 1.)
             self.optimizer.update(grads)
-            # accuracy
+            # Accuracy
             return mse_ls.mean(), acc
 
-        # running indices: free-run the prefix so hidden states and the
+        # Running indices: free-run the prefix so hidden states and the
         # eligibility trace advance without computing a loss.
         if self.n_sim > 0:
             model.etrace_evolve(inputs[:self.n_sim])
@@ -520,11 +520,11 @@ def training(
     n_epochs=1000,  # Maximum number of training batches
     visualize=False,  # Whether to visualize network activity before training
 ):
-    # data
+    # Data
     loader = EvidenceAccumulation(batch_size=batch_size)
 
-    # network
-    assert net in ['coba', 'cuba'], 'Unknown network type.'
+    # Network
+    assert net in ['coba', 'cuba'], 'Unknown network type. Set the named field to one of the supported values, then rerun the operation.'
     net_cls = SNNCobaNet if net == 'coba' else SNNCubaNet
     net_obj = net_cls(
         loader.num_inputs,
@@ -542,7 +542,7 @@ def training(
     if visualize:
         net_obj.visualize(loader.sampling(brainstate.random.split_key(5))[0], n2show=5)
 
-    # trainer
+    # Trainer
     trainer = Trainer(
         net_obj,
         braintools.optim.Adam(lr=lr),

@@ -66,16 +66,16 @@ class TestParser:
         assert parse_etp_einsum(' bk , kn -> bn ') == parse_etp_einsum('bk,kn->bn')
 
     @pytest.mark.parametrize('bad', [
-        'bk,kn',            # no explicit output
-        'bk->b',            # one operand
-        'bk,kn,nm->bm',     # three operands
-        'bk,kn->bnz',       # output letter from nowhere
-        'Bk,kn->Bn',        # uppercase
-        'b...k,kn->b...n',  # ellipsis
-        'bkk,kn->bn',       # repeated letter within a spec
-        'bk,bn->bn',        # batch letter inside weight spec
-        'kb,kn->bn',        # x does not lead with the batch letter
-        'bk,kv->bn',        # weight letter v in neither x nor output
+        'bk,kn',            # No explicit output
+        'bk->b',            # One operand
+        'bk,kn,nm->bm',     # Three operands
+        'bk,kn->bnz',       # Output letter from nowhere
+        'Bk,kn->Bn',        # Uppercase
+        'b...k,kn->b...n',  # Ellipsis
+        'bkk,kn->bn',       # Repeated letter within a spec
+        'bk,bn->bn',        # Batch letter inside weight spec
+        'kb,kn->bn',        # X does not lead with the batch letter
+        'bk,kv->bn',        # Weight letter v in neither x nor output
     ])
     def test_rejections(self, bad):
         with pytest.raises(ValueError):
@@ -180,15 +180,15 @@ class TestEinsumEtpRules:
 
     def test_dt_to_t_grad_context_batch_stripped(self):
         brainstate.random.seed(12)
-        hd = brainstate.random.randn(4)                    # (n,) — batch stripped
-        tr = {'weight': brainstate.random.randn(3, 4)}     # (k, n)
+        hd = brainstate.random.randn(4)                    # (N,) — batch stripped
+        tr = {'weight': brainstate.random.randn(3, 4)}     # (K, n)
         got = ETP_RULES_DT_TO_T[etp_einsum_p](hd, tr, equation='bk,kn->bn')
         np.testing.assert_allclose(got['weight'], tr['weight'] * hd[None, :], atol=1e-6)
 
     def test_dt_to_t_per_head_diagonal_axes(self):
         brainstate.random.seed(13)
-        hd = brainstate.random.randn(5, 2, 4)              # (b, h, e)
-        tr = {'weight': brainstate.random.randn(5, 2, 3, 4)}  # (b, h, d, e)
+        hd = brainstate.random.randn(5, 2, 4)              # (B, h, e)
+        tr = {'weight': brainstate.random.randn(5, 2, 3, 4)}  # (B, h, d, e)
         got = ETP_RULES_DT_TO_T[etp_einsum_p](hd, tr, equation='bhd,hde->bhe')
         want = tr['weight'] * hd[:, :, None, :]
         np.testing.assert_allclose(got['weight'], want, atol=1e-6)
@@ -198,8 +198,8 @@ class TestEinsumEtpRules:
         broadcast — oracle-proven exact when the hidden state carries the
         shared axes (see TestSharedAxisOracle)."""
         brainstate.random.seed(14)
-        hd = brainstate.random.randn(5, 2, 4)              # (b, t, n)
-        tr = {'weight': brainstate.random.randn(5, 3, 4)}  # (b, k, n)
+        hd = brainstate.random.randn(5, 2, 4)              # (B, t, n)
+        tr = {'weight': brainstate.random.randn(5, 3, 4)}  # (B, k, n)
         got = ETP_RULES_DT_TO_T[etp_einsum_p](hd, tr, equation='btk,kn->btn')
         want = tr['weight'] * hd.sum(axis=1)[:, None, :]
         np.testing.assert_allclose(got['weight'], want, atol=1e-5)
@@ -272,7 +272,7 @@ from braintrace._testing.oracle import (
 
 
 def _per_head_rnn_factory(H=2, E=3, n_in=3, seed=0):
-    """tanh RNN whose recurrence is a per-head contraction 'bhd,hde->bhe'
+    """Tanh RNN whose recurrence is a per-head contraction 'bhd,hde->bhe'
     (each head has its own E×E mixing matrix).
 
     The hidden state is kept rank-3 ``(1, H, E)``: the compiler requires the
@@ -427,7 +427,7 @@ class TestSharedAxisOracle:
 
     def test_d_rtrl_exact_with_cross_position_mixing_tail(self):
         """Shared-axis exactness is not an artifact of a t-diagonal tail:
-        even when every h[t] also sees the mean over all t positions (the
+        Even when every h[t] also sees the mean over all t positions (the
         conv-like cross-position mixing), D-RTRL matches BPTT exactly."""
         T2, N, n_in = 2, 3, 3
 

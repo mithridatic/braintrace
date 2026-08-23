@@ -67,7 +67,7 @@ def main(*, n_epochs: int = 1, batch_size: int = 64, max_batches: int | None = 1
 
     train_loader, _ = _load_mnist(batch_size)
 
-    # compile outside jit: init_all_states + compile_graph run once eagerly
+    # Compile outside jit: init_all_states + compile_graph run once eagerly
     learner = braintrace.compile(
         model_online, 'D_RTRL', jnp.zeros((batch_size, 28)), batch_size=batch_size)
 

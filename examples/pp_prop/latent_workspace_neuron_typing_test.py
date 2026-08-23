@@ -300,7 +300,7 @@ def _load_example():
     name = "example21_neuron_typing_under_test"
     spec = importlib.util.spec_from_file_location(name, EXAMPLE)
     if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load {EXAMPLE}")
+        raise ImportError(f"Cannot load {EXAMPLE}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)

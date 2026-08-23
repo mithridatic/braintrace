@@ -209,7 +209,7 @@ class HiddenParamOpRelation(NamedTuple):
     their runtime values through ``control_flow_context.scan.stacked_var_map``
     (stacked over the substep axis). ``None`` for ordinary flat relations."""
 
-    # backward compat aliases
+    # Backward compat aliases
     @property
     def x(self) -> Optional[Var]:
         return self.x_var
@@ -764,7 +764,7 @@ def _build_transition_jaxpr(
     for eqn in selected:
         for ov in eqn.outvars:
             produced.add(ov)
-    invars_needed: Dict[Var, None] = {}  # ordered set
+    invars_needed: Dict[Var, None] = {}  # Ordered set
     for eqn in selected:
         for iv in eqn.invars:
             if isinstance(iv, Var) and iv not in produced:
@@ -1045,7 +1045,7 @@ def find_hidden_param_op_relations_from_jaxpr(
 
         # --- Filter by shape compatibility ---
         # The unrestricted forward closure depends only on ``y_var``:
-        # compute it once per primitive equation, not once per hidden var.
+        # Compute it once per primitive equation, not once per hidden var.
         y_forward = forward_closure(y_var, consumers)
         connected_paths: List[Path] = []
         path_class: Dict[Path, str] = {}
@@ -1317,9 +1317,9 @@ def find_hidden_param_op_relations_from_module(
     ----------
     model : brainstate.nn.Module
         The model.
-    *model_args
+    *Model_args
         The positional arguments of the model.
-    **model_kwargs
+    **Model_kwargs
         The keyword arguments of the model.
 
     Returns

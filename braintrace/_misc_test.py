@@ -201,7 +201,7 @@ class TestSuffixProducts:
     def test_zero_decay_step(self):
         brainstate.random.seed(2)
         d = brainstate.random.uniform(0.3, 1.0, (6, 2, 1, 1))
-        d = d.at[3].set(0.0)  # hard reset mid-window
+        d = d.at[3].set(0.0)  # Hard reset mid-window
         p, full = suffix_products(d, num_state=1)
         p_ref, full_ref = _naive_suffix(d)
         assert jnp.allclose(p, p_ref, rtol=1e-5, atol=1e-7)

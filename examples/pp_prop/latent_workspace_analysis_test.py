@@ -278,7 +278,7 @@ def test_checkpoint_selection_falls_back_to_latest_logit_runner_up() -> None:
 def test_checkpoint_selection_rejects_malformed_history(
     checkpoints: object, latest: object, sweep_size: object, message: str
 ) -> None:
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         select_checkpoint_candidates(
             checkpoints,  # type: ignore[arg-type]
             latest_checkpoint=latest,  # type: ignore[arg-type]
@@ -569,7 +569,7 @@ def test_duplicate_second_candidate_is_removed() -> None:
 def test_query_scorer_rejects_malformed_grids(
     candidates: object, target: object, message: str
 ) -> None:
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         score_query_candidates(
             candidates,  # type: ignore[arg-type]
             target,
@@ -732,7 +732,7 @@ def test_model_only_completion_rejects_incomplete_or_invalid_records(
     elif case == "score_candidate_count":
         first["score"]["candidate_count"] = 1
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         assess_model_only_completion(records, expected_queries)
 
 
@@ -740,7 +740,7 @@ def test_aggregate_rejects_empty_duplicate_and_wrong_type() -> None:
     score = QueryScore("a", 0, False, False, False, 0.0, 1)
     with pytest.raises(ValueError, match="at least one"):
         aggregate_arc_metrics([])
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match="(?i)duplicate"):
         aggregate_arc_metrics([score, score])
     with pytest.raises(ValueError, match="QueryScore"):
         aggregate_arc_metrics([object()])  # type: ignore[list-item]
@@ -757,7 +757,7 @@ def test_aggregate_rejects_empty_duplicate_and_wrong_type() -> None:
 def test_query_scorer_validates_identity(
     kwargs: dict[str, object], message: str
 ) -> None:
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         score_query_candidates([[[1]]], [[1]], **kwargs)  # type: ignore[arg-type]
 
 
@@ -935,7 +935,7 @@ def test_trajectory_rejects_malformed_logits_and_states(
     elif mutation == "voltage_shape":
         voltages = [[0.0]]
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         analyze_latent_trajectory(height, width, colors, spikes, voltages)
 
 
@@ -952,7 +952,7 @@ def test_trajectory_rejects_partial_currents_and_mismatched_current_shapes() -> 
             voltages,
             feedforward_current=np.zeros((1, 2)),
         )
-    with pytest.raises(ValueError, match="feedforward synaptic current shape"):
+    with pytest.raises(ValueError, match="(?i)feedforward synaptic current shape"):
         analyze_latent_trajectory(
             height,
             width,

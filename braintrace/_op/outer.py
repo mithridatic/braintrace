@@ -289,7 +289,7 @@ def _outer_write_init_drtrl(x_var: Any, y_var: Any, weight_vars: Dict[str, Any],
     dense precedent.
     """
     batch = x_var.aval.shape[0]
-    positions = y_var.aval.shape[1:]  # (key_out, value_out)
+    positions = y_var.aval.shape[1:]  # (Key_out, value_out)
     dtype = jnp.result_type(
         x_var.aval.dtype, y_var.aval.dtype,
         *(v.aval.dtype for v in weight_vars.values()),
@@ -546,7 +546,7 @@ def outer_write(
                                ('value_nonlinearity', value_nonlinearity)):
         if nonlinearity not in _FORWARD:
             raise ValueError(
-                f'{name} must be one of {sorted(_FORWARD)}; got {nonlinearity!r}.'
+                f'{name} must be one of {sorted(_FORWARD)}; got {nonlinearity!r}. Set {name} to one of {sorted(_FORWARD)}; got {nonlinearity!r}.'
             )
     x_key_v = _require_dimensionless(x_key, 'x_key')
     x_value_v = _require_dimensionless(x_value, 'x_value')

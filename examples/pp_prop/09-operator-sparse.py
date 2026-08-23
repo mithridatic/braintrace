@@ -23,7 +23,7 @@ import braintrace
 _shared_path = pathlib.Path(__file__).resolve().with_name("_shared.py")
 _shared_spec = importlib.util.spec_from_file_location("_pp_prop_shared", _shared_path)
 if _shared_spec is None or _shared_spec.loader is None:
-    raise ImportError(f"Cannot load pp-prop shared helpers from {_shared_path}")
+    raise ImportError(f"Cannot load pp-prop shared helpers from {_shared_path}. Check the path and install the required resource.")
 _shared = importlib.util.module_from_spec(_shared_spec)
 _shared_spec.loader.exec_module(_shared)
 
@@ -100,7 +100,7 @@ def _fixed_degree_csr(
 ) -> brainevent.CSR:
     """Build an O(nnz) fixed-out-degree recurrent CSR matrix."""
     if not 0.0 < density <= 1.0:
-        raise ValueError(f"density must be in (0, 1], got {density!r}")
+        raise ValueError(f"Density must be in (0, 1], got {density!r}. Set Density in (0, 1].")
     degree = max(1, min(n_rec, round(n_rec * density)))
     rng = brainstate.random.RandomState(seed)
     offsets = jnp.sort(

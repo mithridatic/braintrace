@@ -183,7 +183,7 @@ class ETraceNet(brainstate.nn.Module):
     ):
         super().__init__()
 
-        # arguments
+        # Arguments
         self.n_in = n_in
         self.n_rec = n_rec
         self.n_out = n_out
@@ -196,9 +196,9 @@ class ETraceNet(brainstate.nn.Module):
         elif args.spk_fun == 'multi_gaussian':
             spk_fun = braintools.surrogate.MultiGaussianGrad()
         else:
-            raise ValueError('Unknown spiking surrogate gradient function.')
+            raise ValueError('Unknown spiking surrogate gradient function. Set the named field to one of the supported values, then rerun the operation.')
 
-        # recurrent layers
+        # Recurrent layers
         self.rec_layers = []
         for layer_idx in range(n_layer):
             tau_mem = (
@@ -233,11 +233,11 @@ class ETraceNet(brainstate.nn.Module):
                 n_in = n_rec
 
             else:
-                raise ValueError('Unknown neuron model.')
+                raise ValueError('Unknown neuron model. Set the named field to one of the supported values, then rerun the operation.')
 
             self.rec_layers.append(rec)
 
-        # output layer
+        # Output layer
         self.out = braintrace.nn.LeakyRateReadout(
             in_size=n_rec,
             out_size=n_out,
@@ -253,9 +253,9 @@ class ETraceNet(brainstate.nn.Module):
     def membrane_reg(self, mem_low: float, mem_high: float, factor: float = 0.):
         loss = 0.
         if factor > 0.:
-            # extract all Neuron models
+            # Extract all Neuron models
             neurons = self.nodes().subset(brainpy.state.Neuron).unique().values()
-            # evaluate the membrane potential
+            # Evaluate the membrane potential
             for l in neurons:
                 loss += jnp.square(
                     jnp.mean(
@@ -270,9 +270,9 @@ class ETraceNet(brainstate.nn.Module):
         # target_fr: Hz
         loss = 0.
         if factor > 0.:
-            # extract all Neuron models
+            # Extract all Neuron models
             neurons = self.nodes().subset(brainpy.state.Neuron).unique().values()
-            # evaluate the spiking dynamics
+            # Evaluate the spiking dynamics
             for l in neurons:
                 loss += (jnp.mean(l.get_spike()) - target_fr / 1e3 * brainstate.environ.get_dt()) ** 2
             loss = loss * factor
@@ -288,13 +288,13 @@ class Trainer(object):
     ):
         super().__init__()
 
-        # target network
+        # Target network
         self.target = target
 
-        # parameters
+        # Parameters
         self.args = args
 
-        # loss function
+        # Loss function
         if self.args.loss == 'mse':
             self.loss_fn = braintools.metric.squared_error
         elif self.args.loss == 'cel':
@@ -302,11 +302,11 @@ class Trainer(object):
         else:
             raise ValueError
 
-        # optimizer
+        # Optimizer
         self.opt = opt
         opt.register_trainable_weights(self.target.states().subset(brainstate.ParamState))
 
-        # define etrace functions
+        # Define etrace functions
         if self.args.method != 'bptt':
             self._compile_etrace_function(
                 jax.ShapeDtypeStruct((self.args.batch_size, 32768,), brainstate.environ.dftype()))
@@ -322,13 +322,13 @@ class Trainer(object):
             leaves = self.target.states().subset(brainstate.ParamState).to_dict_values()
             loss += self.args.weight_L1 * reduce(jnp.add, jax.tree.map(lambda x: jnp.sum(jnp.abs(x)), leaves))
 
-        # membrane potential regularization loss
+        # Membrane potential regularization loss
         if self.args.v_reg_factor != 0.:
             mem_low = self.args.v_reg_low
             mem_high = self.args.v_reg_high
             loss += self.target.membrane_reg(mem_low, mem_high, self.args.v_reg_factor)
 
-        # spike regularization loss
+        # Spike regularization loss
         if self.args.spk_reg_factor != 0.:
             fr = self.args.spk_reg_rate
             loss += self.target.spike_reg(fr, self.args.spk_reg_factor)
@@ -352,14 +352,14 @@ class Trainer(object):
         return losses.mean(), acc
 
     def _compile_etrace_function(self, input_info):
-        # kept manual: braintrace.compile has no path for this state scheme.
+        # Kept manual: braintrace.compile has no path for this state scheme.
         # It offers two: init_all_states(batch_size=B) (vmap=False), or
         # vmap_new_states(state_tag='new') + compile_graph on an *unbatched*
         # sample + an ETraceVmap wrapper (vmap=True). This benchmark uses a
         # third -- vmap_init_all_states(state_tag='new') for the per-sample
         # states, compile_graph on the *batched* example, no wrapper, and an
         # explicit brainstate.transform.vmap(in_states=...) only for the reset.
-        # compile's vmap branch would also reject `input_info`: it strips the
+        # Compile's vmap branch would also reject `input_info`: it strips the
         # batch axis with `a[0]`, and a jax.ShapeDtypeStruct is not
         # subscriptable.
         if self.args.method == 'expsm_diag':
@@ -367,9 +367,9 @@ class Trainer(object):
         elif self.args.method == 'diag':
             model = braintrace.D_RTRL(self.target)
         else:
-            raise ValueError(f'Unknown online learning methods: {self.args.method}.')
+            raise ValueError(f'Unknown online learning methods: {self.args.method}. Set the named field to one of the supported values, then rerun the operation.')
 
-        # initialize the states
+        # Initialize the states
         brainstate.nn.vmap_init_all_states(self.target, axis_size=input_info.shape[0], state_tag='new')
         model.compile_graph(input_info)
 
@@ -384,17 +384,17 @@ class Trainer(object):
                 model(batch_inp)
 
         def _etrace_grad(i, batch_inp, targets):
-            # call the model
+            # Call the model
             with brainstate.environ.context(i=i, t=i * brainstate.environ.get_dt()):
                 out = model(batch_inp)
-            # calculate the loss
+            # Calculate the loss
             loss = self._loss(out, targets)
             return loss, out
 
         @brainstate.transform.jit
         def _etrace_step(prev_grads, inputs, targets):
             i, inp = inputs
-            # no need to return weights and states, since they are generated then no longer needed
+            # No need to return weights and states, since they are generated then no longer needed
             # The latest brainstate ``grad`` requires grad_states to be State
             # instances (a pytree of States), not a StateManager object; convert
             # via ``to_pytree()`` (matches the sibling -batched benchmark).
@@ -406,11 +406,11 @@ class Trainer(object):
 
         @brainstate.transform.jit
         def _update_and_acc(grads, outs, targets):
-            # gradient updates
+            # Gradient updates
             grads = brainstate.nn.clip_grad_norm(grads, 1.)
             self.opt.update(grads)
 
-            # accuracy
+            # Accuracy
             acc = self._acc(jnp.asarray(outs), targets)
             return acc
 
@@ -419,9 +419,9 @@ class Trainer(object):
         self._update_and_acc = _update_and_acc
         self._etrace_train_fun = _etrace_step
 
-    # @brainstate.transform.jit(static_argnums=0)
+    # @Brainstate.transform.jit(static_argnums=0)
     def etrace_train(self, inputs, targets):
-        inputs = np.reshape(inputs, (inputs.shape[0], inputs.shape[1], -1))  # [n_steps, n_samples, n_in]
+        inputs = np.reshape(inputs, (inputs.shape[0], inputs.shape[1], -1))  # [N_steps, n_samples, n_in]
         self._etrace_reset_fun()
 
         # Kept manual on purpose -- this is a memory/speed benchmark. A single
@@ -435,7 +435,7 @@ class Trainer(object):
         # per-step ``jax.tree.map(a + b, ...)`` accumulation aligns.
         grads = jax.tree.map(lambda a: jnp.zeros_like(a), self.opt.param_states.to_pytree_value())
 
-        # training
+        # Training
         indices = np.arange(inputs.shape[0])
         n_sim = _format_sim_epoch(self.args.warmup_ratio, inputs.shape[0])
         outs, losses = [], []
@@ -456,12 +456,12 @@ class Trainer(object):
         inputs = u.math.flatten(inputs, start_axis=2)
         indices = np.arange(inputs.shape[0])
 
-        # kept manual: BPTT baseline — no online algorithm to migrate
+        # Kept manual: BPTT baseline — no online algorithm to migrate
         # initialize the states
         brainstate.nn.vmap_init_all_states(self.target, axis_size=inputs.shape[1], state_tag='new')
         model = brainstate.nn.Vmap(self.target, vmap_states='new')
 
-        # the model for a single step
+        # The model for a single step
         def _single_step(i, inp, fit: bool = True):
             with brainstate.environ.context(i=i, t=i * brainstate.environ.get_dt(), fit=fit):
                 model(inp)
@@ -480,15 +480,15 @@ class Trainer(object):
                 outs, losses = brainstate.transform.for_loop(_run_step_train, indices, inputs)
             return losses.mean(), outs
 
-        # gradients
+        # Gradients
         weights = self.target.states().subset(brainstate.ParamState)
         grads, loss, outs = brainstate.transform.grad(_grad_step, weights, has_aux=True, return_value=True)()
 
-        # optimization
+        # Optimization
         grads = brainstate.nn.clip_grad_norm(grads, 1.)
         self.opt.update(grads)
 
-        # accuracy
+        # Accuracy
         acc = self._acc(outs, targets)
 
         mem_after = get_mem_usage()
@@ -501,7 +501,7 @@ class Trainer(object):
 
         mem_before = get_mem_usage()
 
-        # training
+        # Training
         losses, acces, mems, times = [], [], [], []
         for i_batch in range(n_batches):
             t0 = time.time()
@@ -537,13 +537,13 @@ def network_training(args, n_batches: int = 10):
     brainstate.util.clear_buffer_memory()
     brainstate.random.seed()
     print(args)
-    # environment setting
+    # Environment setting
     brainstate.environ.set(dt=args.dt)
 
     # net: inputs correspond to 128x128 pixels with 2 channels (e.g., RGB), DVS Gesture dataset
     net = ETraceNet((128 * 128 * 2), args.n_rec, 11, args.n_layer, args=args)
 
-    # optimizer
+    # Optimizer
     if args.optimizer == 'adam':
         opt_cls = braintools.optim.Adam
     elif args.optimizer == 'momentum':
@@ -551,10 +551,10 @@ def network_training(args, n_batches: int = 10):
     elif args.optimizer == 'sgd':
         opt_cls = braintools.optim.SGD
     else:
-        raise ValueError(f'Unknown optimizer: {args.optimizer}')
+        raise ValueError(f'Unknown optimizer: {args.optimizer}. Set the named field to one of the supported values, then rerun the operation.')
     opt = opt_cls(lr=args.lr, weight_decay=args.weight_L2)
 
-    # creating the trainer
+    # Creating the trainer
     trainer = Trainer(net, opt, args)
     return trainer.f_train(n_batches=n_batches)
 

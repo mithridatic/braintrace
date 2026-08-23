@@ -50,7 +50,7 @@ class TestProducerConsumerMaps:
         c_var = add_eqn.outvars[0]
         assert producers[c_var] is add_eqn
         assert mul_eqn in consumers[c_var]
-        # the first invar `a` feeds both equations
+        # The first invar `a` feeds both equations
         a_var = jaxpr.invars[0]
         assert consumers[a_var] == [add_eqn, mul_eqn]
 
@@ -58,7 +58,7 @@ class TestProducerConsumerMaps:
         def f(a):
             b = a + 1.0
             c = b * 2.0
-            d = a - 1.0  # not downstream of b
+            d = a - 1.0  # Not downstream of b
             return c, d
 
         jaxpr = jax.make_jaxpr(f)(1.0).jaxpr
@@ -70,7 +70,7 @@ class TestProducerConsumerMaps:
         assert b_var in closure
         assert c_var in closure
         assert d_var not in closure
-        # insertion order: start var first
+        # Insertion order: start var first
         assert next(iter(closure)) is b_var
 
 
@@ -96,7 +96,7 @@ class TestInlineJitCalls:
 
         inlined = inline_jit_calls(closed)
         assert not _has_jit_eqn(inlined.jaxpr)
-        # invars are preserved as the same Var objects
+        # Invars are preserved as the same Var objects
         assert list(inlined.jaxpr.invars) == list(closed.jaxpr.invars)
         np.testing.assert_allclose(_eval_closed(inlined, x)[0], f(x))
 
@@ -153,7 +153,7 @@ class TestInlineJitCalls:
             return x * 2.0
 
         def f(x):
-            return g(x)  # jit result is directly the jaxpr output
+            return g(x)  # Jit result is directly the jaxpr output
 
         x = jnp.arange(3.0)
         closed = jax.make_jaxpr(f)(x)
@@ -176,7 +176,7 @@ class TestInlineJitCalls:
         np.testing.assert_allclose(_eval_closed(inlined, x)[0], x + c)
 
     def test_scan_body_jit_left_untouched(self):
-        # jit inside a scan body is NOT inlined (control flow is opaque here).
+        # Jit inside a scan body is NOT inlined (control flow is opaque here).
         @jax.jit
         def g(x):
             return x * 2.0
@@ -212,7 +212,7 @@ class TestInlineJitCalls:
         seen = set()
         for eqn in inlined.jaxpr.eqns:
             for ov in eqn.outvars:
-                assert id(ov) not in seen, 'duplicate var definition'
+                assert id(ov) not in seen, 'Duplicate var definition. Update the fixture or expected result to satisfy this assertion.'
                 seen.add(id(ov))
         np.testing.assert_allclose(_eval_closed(inlined, x)[0], f(x))
 
@@ -258,10 +258,10 @@ class TestInlineJitInsideControlFlow:
         cleaned = inline_jit_calls(closed)
         scan_eqn2 = next(e for e in cleaned.jaxpr.eqns if is_scan_primitive(e))
         assert not _has_jit_eqn(scan_eqn2.params['jaxpr'].jaxpr)
-        # outer interface identity preserved
+        # Outer interface identity preserved
         assert cleaned.jaxpr.invars == closed.jaxpr.invars
         assert list(cleaned.jaxpr.outvars) == list(closed.jaxpr.outvars)
-        # numerics preserved
+        # Numerics preserved
         xs = jnp.arange(4.0)
         ref = _eval_closed(closed, xs)
         got = _eval_closed(cleaned, xs)
@@ -279,7 +279,7 @@ class TestInlineJitInsideControlFlow:
             return c + x, c
 
         def f(xs):
-            # a top-level jit forces the pass to actually run; the jit-free
+            # A top-level jit forces the pass to actually run; the jit-free
             # scan eqn must still come through by identity
             return jax.lax.scan(body, inner(jnp.zeros(())), xs)
 

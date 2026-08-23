@@ -237,7 +237,7 @@ class Test_find_hidden_groups_from_module:
             pprint(group.hidden_paths)
 
         assert (len(hidden_groups) == 2)
-        # print()
+        # Print()
 
 
 class Test_module_with_group_state:
@@ -392,25 +392,25 @@ class Test_module_with_group_state:
                 if hidden_paths_with_group[0] in group_without.hidden_paths:
                     break
             if group_without is None:
-                raise ValueError('Group not found')
+                raise ValueError('Group not found. Update the fixture or expected result to satisfy this assertion.')
 
-            # etrace variables with group state
+            # Etrace variables with group state
             hidden_vals_v1 = [temp1[invar] for invar in group_with.hidden_invars]
             input_vals_v1 = [temp1[invar] for invar in group_with.transition_jaxpr_constvars]
             out_vals_with_group = group_with.concat_hidden(group_with.transition(hidden_vals_v1, input_vals_v1))
 
-            # index mapping
+            # Index mapping
             a_index_map = {element: index for index, element in enumerate(group_without.hidden_paths)}
             b_indices = [a_index_map[element] for element in hidden_paths_with_group]
             b_indices = np.asarray(b_indices)
 
-            # etrace variables without group state
+            # Etrace variables without group state
             hidden_vals_v2 = [temp2[invar] for invar in group_without.hidden_invars]
             input_vals_v2 = [temp2[invar] for invar in group_without.transition_jaxpr_constvars]
             out_vals_without_group = group_without.concat_hidden(
                 group_without.transition(hidden_vals_v2, input_vals_v2))
 
-            # comparison
+            # Comparison
             assert np.allclose(out_vals_with_group, out_vals_without_group[..., b_indices], atol=1e-3, rtol=1e-3)
 
     @pytest.mark.parametrize(
@@ -529,26 +529,26 @@ class Test_module_with_group_state:
                 if hidden_paths_with_group[0] in group_without.hidden_paths:
                     break
             if group_without is None:
-                raise ValueError('Group not found')
+                raise ValueError('Group not found. Update the fixture or expected result to satisfy this assertion.')
 
-            # etrace variables with group state
+            # Etrace variables with group state
             hidden_vals_v1 = [temp1[invar] for invar in group_with.hidden_invars]
             input_vals_v1 = [temp1[invar] for invar in group_with.transition_jaxpr_constvars]
             jac_with_group = group_with.diagonal_jacobian(hidden_vals_v1, input_vals_v1)
 
-            # index mapping
+            # Index mapping
             a_index_map = {element: index for index, element in enumerate(group_without.hidden_paths)}
             b_indices = [a_index_map[element] for element in hidden_paths_with_group]
             b_indices = np.asarray(b_indices)
 
-            # etrace variables without group state
+            # Etrace variables without group state
             hidden_vals_v2 = [temp2[invar] for invar in group_without.hidden_invars]
             input_vals_v2 = [temp2[invar] for invar in group_without.transition_jaxpr_constvars]
             jac_without_group = group_without.diagonal_jacobian(hidden_vals_v2, input_vals_v2)
             jac_without_group = jac_without_group[..., b_indices]
             jac_without_group = jac_without_group[..., b_indices, :]
 
-            # comparison
+            # Comparison
             assert np.allclose(jac_with_group, jac_without_group, atol=1e-3, rtol=1e-3)
 
 
@@ -665,7 +665,7 @@ def _true_block_diagonal(group, hidden_vals, input_vals):
     num_state = hid.shape[-1]
     varshape = hid.shape[:-1]
     num_pos = int(np.prod(varshape)) if varshape else 1
-    full = jax.jacrev(fn)(hid)  # (*varshape, num_state, *varshape, num_state)
+    full = jax.jacrev(fn)(hid)  # (*Varshape, num_state, *varshape, num_state)
     full = u.math.reshape(full, (num_pos, num_state, num_pos, num_state))
     blocks = u.math.stack([full[p, :, p, :] for p in range(num_pos)], axis=0)
     return u.math.reshape(blocks, (*varshape, num_state, num_state))
@@ -748,9 +748,9 @@ class TestHiddenGroup_diagonal_jacobian:
     def test_gru_accuracy_multiunit(self, cls, include_recurrent_mixing):
         # ``diagonal_jacobian`` must equal the true per-position block diagonal
         # (never the column sum over output positions) in *both* grouping modes:
-        #   - default (without recurrence): the transition is element-wise, so the
+        #   - Default (without recurrence): the transition is element-wise, so the
         #     block diagonal is trivially correct;
-        #   - with recurrence: the transition is coupled, so the block-diagonal
+        #   - With recurrence: the transition is coupled, so the block-diagonal
         #     extraction must drop the cross-position terms (the column-sum bug).
         # The single-unit ``test_gru_accuracy`` (n_out == 1) cannot see this.
         n_in = 3
@@ -774,7 +774,7 @@ class TestHiddenGroup_diagonal_jacobian:
 
     def test_is_diagonal_recurrence_flag(self):
         # ``is_diagonal_recurrence`` is determined purely by the grouping mode:
-        # it equals ``not include_recurrent_mixing`` for every cell.
+        # It equals ``not include_recurrent_mixing`` for every cell.
         cells = (braintrace.nn.GRUCell, braintrace.nn.LSTMCell,
                  braintrace.nn.MGUCell, braintrace.nn.MinimalRNNCell,
                  braintrace.nn.LRUCell)
@@ -891,7 +891,7 @@ class TestHiddenGroup_diagonal_jacobian:
                 self.h = brainstate.HiddenState(jax.numpy.zeros(n_out))
 
             def update(self, x):
-                rec = self.h.value @ self.w_rec  # plain dot_general reading hidden
+                rec = self.h.value @ self.w_rec  # Plain dot_general reading hidden
                 inp = braintrace.matmul(x, self.w_in.value)  # ETP, feed-forward
                 self.h.value = jax.nn.tanh(rec + inp)
                 return self.h.value
@@ -951,8 +951,8 @@ class TestHiddenGroup_diagonal_jacobian:
         # recurrent ETP weight). ``diagonal_jacobian`` must equal the true
         # per-position block diagonal in BOTH grouping modes (the n_out == 1
         # ``test_snn_single_layer_accuracy`` could not detect the column-sum bug):
-        #   - default: the recurrent matmul is excluded -> diagonal transition;
-        #   - with recurrence: the matmul is traced in -> coupled, exercised via
+        #   - Default: the recurrent matmul is excluded -> diagonal transition;
+        #   - With recurrence: the matmul is traced in -> coupled, exercised via
         #     the block-diagonal extraction.
         n_in = 3
         n_out = 4
@@ -1156,7 +1156,7 @@ class TestGroupOrderingAndDiagnostics:
 
         assert len(groups) == 1
         assert groups[0].hidden_paths == state_order
-        # invars/outvars follow the same canonical order.
+        # Invars/outvars follow the same canonical order.
         expected_outvars = [minfo.hidden_path_to_outvar[p] for p in state_order]
         assert groups[0].hidden_outvars == expected_outvars
 
@@ -1534,7 +1534,7 @@ class TestWhileRecurrentMixingGuard:
         _, x, groups, reporter = self._compile_mixing()
         assert len(groups) == 1
         group = groups[0]
-        # zero-recurrence fallback: empty transition, D == 0
+        # Zero-recurrence fallback: empty transition, D == 0
         assert list(group.transition_jaxpr.eqns) == []
         h0 = brainstate.random.rand(*group.hidden_invars[0].aval.shape)
         const_vals = [
@@ -1561,7 +1561,7 @@ class TestWhileRecurrentMixingGuard:
         kinds = [r.kind for r in reporter.records()]
         assert DiagnosticKind.CONTROL_FLOW_RECURRENT_MIXING not in kinds
 
-        # forward-mode block diagonal equals the hand-composed twin's blocks.
+        # Forward-mode block diagonal equals the hand-composed twin's blocks.
         # The mixing cell's constvars are the counter init (int) plus two
         # float arrays distinguishable by shape: x (n,) and R (n, n).
         n = group.hidden_invars[0].aval.shape[0]
@@ -1613,7 +1613,7 @@ class TestWhileRecurrentMixingGuard:
                 groups, _pg = find_hidden_groups_from_module(cell, x)
         assert len(groups) == 1
         group = groups[0]
-        # zero-recurrence fallback, exactly like the un-jitted mixing cell
+        # Zero-recurrence fallback, exactly like the un-jitted mixing cell
         assert list(group.transition_jaxpr.eqns) == []
         kinds = [r.kind for r in reporter.records()]
         assert DiagnosticKind.CONTROL_FLOW_RECURRENT_MIXING in kinds
@@ -1696,7 +1696,7 @@ class TestFullPositionJacobian:
 
     def test_multi_axis_varshape_is_preserved(self):
         rng = brainstate.random.RandomState(1)
-        h = rng.randn(2, 3, 2)  # varshape (2, 3), num_state 2
+        h = rng.randn(2, 3, 2)  # Varshape (2, 3), num_state 2
 
         def fn(hid):
             flat = hid.reshape(-1)
@@ -1760,12 +1760,12 @@ class TestWidenedBlockJacobian:
     def test_an_invalid_slot_has_a_zero_row_and_a_zero_column(self):
         fn, h = self._fn_and_point()
         num_pos, num_state = h.shape
-        # two neighbour slots, but position 0's second slot is padding
+        # Two neighbour slots, but position 0's second slot is padding
         nbr = np.stack([np.arange(num_pos), (np.arange(num_pos) + 1) % num_pos], 1)
         nbr = nbr.astype(np.int32)
         valid = np.ones((num_pos, 2), dtype=bool)
         valid[0, 1] = False
-        nbr[0, 1] = 0  # padded slots repeat self
+        nbr[0, 1] = 0  # Padded slots repeat self
         got = np.asarray(widened_block_jacobian(fn, h, nbr, valid))
         pad = slice(num_state, 2 * num_state)
         np.testing.assert_array_equal(got[0, pad, :], 0.0)
@@ -1812,7 +1812,7 @@ class TestWidenedBlockJacobian:
 
         nbr, valid = _saturated_snap(6)
         got = widened_block_jacobian(fn, h, nbr, valid)
-        assert got.shape == (2, 3, 6, 6)  # (*varshape, K*S, K*S), S == 1
+        assert got.shape == (2, 3, 6, 6)  # (*Varshape, K*S, K*S), S == 1
 
 
 class _SnapTanhRNN(brainstate.nn.Module):
@@ -1861,7 +1861,7 @@ class TestHiddenGroupSnapWidening:
         group, _, _ = self._compiled()
         pattern = build_snap_pattern(group.transition_jaxpr, group.varshape, 2)
         widened = group._replace(snap=pattern)
-        assert pattern.num_neighbour == 4  # dense recurrence saturates at n=2
+        assert pattern.num_neighbour == 4  # Dense recurrence saturates at n=2
         assert widened.trace_state_width == 4 * group.num_state
 
     def test_diagonal_jacobian_dispatches_on_the_pattern(self):
@@ -1875,7 +1875,7 @@ class TestHiddenGroupSnapWidening:
         s = group.num_state
         assert plain.shape == (*group.varshape, s, s)
         assert wide.shape == (*group.varshape, width, width)
-        # slot 0 of the widened operator is the un-widened block diagonal, and
+        # Slot 0 of the widened operator is the un-widened block diagonal, and
         # the off-diagonal blocks it adds are genuinely non-zero (otherwise the
         # equality above would hold vacuously)
         np.testing.assert_allclose(
@@ -1930,14 +1930,14 @@ class TestConcatHiddenLengthGuard:
 
     def test_short_value_list_raises_instead_of_truncating(self):
         group = _e01_group(num_states=(1, 1, 1))
-        vals = [jnp.zeros((2, 3)), jnp.zeros((2, 3))]  # one short
+        vals = [jnp.zeros((2, 3)), jnp.zeros((2, 3))]  # One short
 
         with pytest.raises(ValueError) as exc:
             group.concat_hidden(vals)
 
         message = str(exc.value)
-        assert '7' in message                  # names the group
-        assert '3' in message and '2' in message   # names both counts
+        assert '7' in message                  # Names the group
+        assert '3' in message and '2' in message   # Names both counts
 
     def test_short_value_list_used_to_produce_a_narrow_array(self):
         """Pin the pre-fix behaviour so the regression stays legible.
@@ -1953,7 +1953,7 @@ class TestConcatHiddenLengthGuard:
             [jnp.expand_dims(v, -1) for v, _ in zip(vals, group.hidden_states)],
             axis=-1,
         )
-        assert truncated.shape == (2, 3, 2)          # what used to come back
+        assert truncated.shape == (2, 3, 2)          # What used to come back
         assert truncated.shape[-1] != group.num_state  # ... and it was wrong
 
     def test_long_value_list_raises(self):

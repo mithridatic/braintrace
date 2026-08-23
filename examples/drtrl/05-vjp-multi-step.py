@@ -1,5 +1,5 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
-"""05 · vjp_method='multi-step' on the copying-memory task.
+"""05 · Vjp_method='multi-step' on the copying-memory task.
 
 Multi-step computes the VJP over a window, reducing single-step bias at the
 cost of more compute and memory. Compare the loss curve here with Task 04.

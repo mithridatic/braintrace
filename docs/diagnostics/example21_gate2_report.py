@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Report Gate 2 metrics and neural-participation metrics from a run artifact.
 
 Gate 2 asks whether the model has stopped losing to a predictor that uses no

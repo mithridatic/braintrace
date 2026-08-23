@@ -54,7 +54,7 @@ class LoRARecLIFCell(brainstate.nn.Module):
         )
         # LoRA factors B (n_rec, rank), A (rank, n_rec); carry mA on one side
         b_init = braintools.init.KaimingNormal(1.0, unit=u.mA)
-        a_init = braintools.init.KaimingNormal(1.0)  # dimensionless
+        a_init = braintools.init.KaimingNormal(1.0)  # Dimensionless
         self.B = brainstate.ParamState(b_init((n_rec, rank)))
         self.A = brainstate.ParamState(a_init((rank, n_rec)))
 

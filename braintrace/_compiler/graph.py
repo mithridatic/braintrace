@@ -86,7 +86,7 @@ def order_hidden_group_index(
         If any hidden group's index doesn't match its position in the sequence.
     """
     for i, group in enumerate(hidden_groups):
-        assert group.index == i, f"Hidden group index {group.index} should be equal to its position {i}."
+        assert group.index == i, f"Hidden group index {group.index} should be equal to its position {i}. Fix the input condition named in the error, then rerun the operation."
 
 
 class ETraceGraph(NamedTuple):
@@ -227,11 +227,11 @@ class ETraceGraph(NamedTuple):
             the same four-element structure produced by a normal forward call
             through :meth:`ModuleInfo.jaxpr_call`.
         """
-        # state checking
+        # State checking
         if old_state_vals is None:
             old_state_vals = [st.value for st in self.module_info.compiled_model_states]
 
-        # calling the function
+        # Calling the function
         assert self.hidden_perturb is not None
         jaxpr_outs = self.hidden_perturb.eval_jaxpr(
             jax.tree.leaves((args, old_state_vals)),
@@ -300,14 +300,14 @@ def compiler_context(name: str) -> Iterator[None]:
         If a recursive call to "compile_graph" is detected.
     """
     try:
-        # add the compiler to the context
+        # Add the compiler to the context
         context.add_compiler(name)
 
-        # check if there is a recursive graph compilation
+        # Check if there is a recursive graph compilation
         if len(context.compilers) > 1:
             raise NotImplementedError(
                 'Detected recursive call to "compile_graph". '
-                'This is not supported currently.'
+                'This is not supported currently. Fix the input condition named in the error, then rerun the operation.'
             )
 
         yield
@@ -353,7 +353,7 @@ def _check_sparse_n_request(
             f'{sparse_n!r} ({type(sparse_n).__name__}).'
         )
     if int(sparse_n) < 1:
-        raise ValueError(f'sparse_n must be at least 1, got {sparse_n}.')
+        raise ValueError(f'sparse_n must be at least 1, got {sparse_n}. Set sparse_n to at least 1.')
     if not include_recurrent_mixing:
         raise NotSupportedError(
             f'sparse_n={sparse_n} needs include_recurrent_mixing=True: the '
@@ -444,13 +444,13 @@ def compile_etrace_graph(
         (via ``ModuleInfo.control_flow``) to every later compiler pass.
         ``None`` (default) uses the default policy, which:
 
-        - if-converts every ETP-relevant ``cond`` into inlined branches +
+        - If-converts every ETP-relevant ``cond`` into inlined branches +
           ``select_n`` (both branches then execute every step); pass
           ``ControlFlowPolicy(cond='opaque')`` to restore the previous
           behavior (weights inside ``cond`` raise ``NotImplementedError``);
-        - unrolls every ETP-relevant ``scan`` of static length at most
+        - Unrolls every ETP-relevant ``scan`` of static length at most
           ``scan_unroll_limit`` (default 16);
-        - applies **structured scan descent** (``scan_descent='auto'``) to
+        - Applies **structured scan descent** (``scan_descent='auto'``) to
           ETP-relevant scans *above* the unroll limit: relations and hidden
           groups are discovered inside the scan body, the equation is
           rewritten to emit stacked per-substep values as extra ys, and the
@@ -458,21 +458,21 @@ def compile_etrace_graph(
           compile size stays independent of the scan length. Pass
           ``ControlFlowPolicy(scan_descent='off')`` to restore the
           pre-Phase-4 error. See the internal ``scan_descent`` module;
-        - keeps a **weight-free** ``while`` that reads/updates hidden state
+        - Keeps a **weight-free** ``while`` that reads/updates hidden state
           as an opaque forward node (``while_hidden='opaque-fwd'``):
-          hidden-to-hidden Jacobians for groups whose transition crosses the
+          Hidden-to-hidden Jacobians for groups whose transition crosses the
           loop are extracted in forward mode, and the perturbation pass
           detaches the loop's inputs with ``stop_gradient`` so the perturbed
           jaxpr stays reverse-traceable. Pass
           ``ControlFlowPolicy(while_hidden='error')`` to reject such loops
           instead. A weight *used through an ETP primitive* inside a
           ``while`` is always a hard error;
-        - raises on ETP primitives left inside a control-flow body the
+        - Raises on ETP primitives left inside a control-flow body the
           canonicalizer could not flatten
           (``etp_in_control_flow='error'``); pass
           ``ControlFlowPolicy(etp_in_control_flow='exclude')`` to restore
           the warn-and-exclude behavior;
-        - caps every canonicalization fixpoint at
+        - Caps every canonicalization fixpoint at
           ``fixpoint_iteration_limit`` sweeps (default 64) so control flow
           that never converges raises
           :class:`~braintrace.CompilationError` naming the offending
@@ -519,7 +519,7 @@ def compile_etrace_graph(
         assert isinstance(model_args, tuple)
         minfo = extract_module_info(model, *model_args, control_flow=control_flow)
 
-        # ---   structured scan descent (Phase 4): analyze eligible scans   --- #
+        # ---   Structured scan descent (Phase 4): analyze eligible scans   --- #
         #
         # Each descended scan is rewritten to emit stacked per-substep values
         # as extra ys; its body-discovered hidden groups / relations are
@@ -533,7 +533,7 @@ def compile_etrace_graph(
             p for b in descent_bundles for g in b.groups for p in g.hidden_paths
         )
 
-        # ---       evaluating the relationship for hidden-to-hidden        --- #
+        # ---       Evaluating the relationship for hidden-to-hidden        --- #
         hidden_groups, hid_path_to_group = find_hidden_groups_from_minfo(
             minfo, include_recurrent_mixing=include_recurrent_mixing,
             sparse_n=sparse_n,
@@ -542,7 +542,7 @@ def compile_etrace_graph(
             descended_hidden_paths=descended_paths,
         )
 
-        # merge the descended groups after the flat ones, re-indexing them to
+        # Merge the descended groups after the flat ones, re-indexing them to
         # their final positions, and re-point the bundle relations at the
         # re-indexed group objects (relations reference groups by identity).
         hidden_groups = list(hidden_groups)
@@ -567,7 +567,7 @@ def compile_etrace_graph(
             _descended_parameter_ownership(minfo, descent_bundles)
         )
 
-        # ---       evaluating the jaxpr for (hidden, param, op) relationships      --- #
+        # ---       Evaluating the jaxpr for (hidden, param, op) relationships      --- #
 
         hidden_param_op_relations = list(find_hidden_param_op_relations_from_minfo(
             minfo=minfo,
@@ -577,7 +577,7 @@ def compile_etrace_graph(
             additional_boundary_inputs=descended_boundary_inputs,
         ))
 
-        # v1 restriction: an *outer* relation may not target a hidden state
+        # V1 restriction: an *outer* relation may not target a hidden state
         # whose group lives inside a descended scan — the per-substep trace
         # fold has no slot for a once-per-outer-step injection.
         for relation in hidden_param_op_relations:
@@ -608,14 +608,14 @@ def compile_etrace_graph(
         # runtime values arrive through the scan's stacked ys instead, so
         # they are excluded from the flat hoisting lists below.
 
-        # all weight x (deduplicate while preserving insertion order)
+        # All weight x (deduplicate while preserving insertion order)
         out_wx_jaxvars = list(dict.fromkeys(
             relation.x_var for relation in hidden_param_op_relations
             if relation.x_var is not None
             and relation.control_flow_context is None
         ))
 
-        # all y-to-hidden vars (deduplicate while preserving insertion order)
+        # All y-to-hidden vars (deduplicate while preserving insertion order)
         out_wy2hid_jaxvars_dict: dict = dict()
         for relation in hidden_param_op_relations:
             if relation.control_flow_context is not None:
@@ -625,7 +625,7 @@ def compile_etrace_graph(
                     out_wy2hid_jaxvars_dict[v] = None
         out_wy2hid_jaxvars = list(out_wy2hid_jaxvars_dict)
 
-        # hidden-hidden transition vars (deduplicate while preserving insertion order)
+        # Hidden-hidden transition vars (deduplicate while preserving insertion order)
         hid2hid_jaxvars_dict: dict = dict()
         for group in hidden_groups:
             if group.descent is not None:
@@ -636,25 +636,25 @@ def compile_etrace_graph(
                 hid2hid_jaxvars_dict[v] = None
         hid2hid_jaxvars = list(hid2hid_jaxvars_dict)
 
-        # all temporary outvars (deduplicate while preserving insertion order, exclude original outputs)
+        # All temporary outvars (deduplicate while preserving insertion order, exclude original outputs)
         original_outvars = set(minfo.jaxpr.outvars)
         all_vars = (
-            minfo.jaxpr.outvars[minfo.num_var_out:] +  # all state variables
-            out_wx_jaxvars +  # all weight x
-            out_wy2hid_jaxvars +  # all y-to-hidden invars
-            hid2hid_jaxvars +  # all hidden-hidden transition vars
-            # stacked per-substep values of every descended scan
+            minfo.jaxpr.outvars[minfo.num_var_out:] +  # All state variables
+            out_wx_jaxvars +  # All weight x
+            out_wy2hid_jaxvars +  # All y-to-hidden invars
+            hid2hid_jaxvars +  # All hidden-hidden transition vars
+            # Stacked per-substep values of every descended scan
             [v for b in descent_bundles for v in b.stacked_outer_vars]
         )
         temp_outvars = list(dict.fromkeys(
             v for v in all_vars if v not in original_outvars
         ))
 
-        # rewrite module_info
+        # Rewrite module_info
         minfo = minfo.add_jaxpr_outs(list(temp_outvars))
 
-        # ---               add perturbations to the hidden states                  --- #
-        # --- new jaxpr with hidden state perturbations for computing the residuals --- #
+        # ---               Add perturbations to the hidden states                  --- #
+        # --- New jaxpr with hidden state perturbations for computing the residuals --- #
 
         hidden_perturb = (
             add_hidden_perturbation_from_minfo(
@@ -662,7 +662,7 @@ def compile_etrace_graph(
             if include_hidden_perturb else None
         )
 
-        # ---              return the compiled graph               --- #
+        # ---              Return the compiled graph               --- #
 
         return ETraceGraph(
             module_info=minfo,

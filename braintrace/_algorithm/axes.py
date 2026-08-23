@@ -32,7 +32,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 __all__ = ['ETraceConfig']
 
-# --- the vocabulary ------------------------------------------------------- #
+# --- The vocabulary ------------------------------------------------------- #
 
 #: ``axis -> ordered legal values``. Values marked in :data:`_UNIMPLEMENTED`
 #: parse but are rejected, so a typo and a not-yet-delivered feature get
@@ -69,7 +69,7 @@ def _check_decay(value: Any, what: str) -> float:
     non-decaying sum.
     """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise TypeError(f'{what} must be a float in [0, 1), got {value!r}.')
+        raise TypeError(f'{what} must be a float in [0, 1), got {value!r}. Set {what} to a float in [0, 1).')
     value = float(value)
     if not (0.0 <= value < 1.0):
         raise ValueError(
@@ -95,13 +95,13 @@ def _check_snap_order(value: Any) -> int:
     if isinstance(value, bool):
         raise TypeError(
             f'sparse_n must be an integer >= 1, got {value!r}. A bool is not a '
-            'SnAp order (True would silently mean n=1).'
+            'SnAp order (True would silently mean n=1). Set sparse_n to an integer >= 1.'
         )
     try:
         order = operator.index(value)
     except TypeError:
         raise TypeError(
-            f'sparse_n must be an integer >= 1, got {value!r}.'
+            f'sparse_n must be an integer >= 1, got {value!r}. Set sparse_n to an integer >= 1.'
         ) from None
     if order < 1:
         raise ValueError(
@@ -247,7 +247,7 @@ class ETraceConfig:
     sparse_n: Optional[int] = None
     window_size: Optional[int] = None
 
-    # -- construction ------------------------------------------------------ #
+    # -- Construction ------------------------------------------------------ #
 
     def __post_init__(self) -> None:
         self._check_vocabulary()
@@ -381,7 +381,7 @@ class ETraceConfig:
             decay = 0.0
         return recursion, decay
 
-    # -- the compatibility matrix ------------------------------------------ #
+    # -- The compatibility matrix ------------------------------------------ #
 
     def _validate(self) -> None:
         """Apply the compatibility matrix to the canonical form."""
@@ -557,7 +557,7 @@ class ETraceConfig:
                 'saved -- the anchored per_param trace is already smaller than '
                 "UORO's two factors."
             )
-        else:  # 'sparse_n'
+        else:  # 'Sparse_n'
             why = (
                 "'sparse_n' widens the trace's trailing state axis to retain n "
                 'steps of influence, but the random projection retains the *whole* '
@@ -573,7 +573,7 @@ class ETraceConfig:
             f'the transition for it to be full of. {why}'
         )
 
-    # -- derived views ----------------------------------------------------- #
+    # -- Derived views ----------------------------------------------------- #
 
     @property
     def is_factorized(self) -> bool:

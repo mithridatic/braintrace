@@ -126,7 +126,7 @@ class _ExpCo_Dense_Layer(brainstate.nn.Module):
             self.exe_syn(rec_exe_spk)
             self.inh_syn(rec_inh_spk)
             self.neu()
-        # only output excitatory spikes
+        # Only output excitatory spikes
         # return self.neu.spike[..., :self.n_exc]
         return self.neu.get_spike()
 

@@ -68,7 +68,7 @@ def main(*, n_epochs: int = 20, batch_size: int = 16, plot: bool = True) -> dict
     opt_bptt = braintools.optim.Adam(3e-3);
     opt_bptt.register_trainable_weights(w_bptt)
 
-    # compile outside jit: init_all_states + compile_graph run once eagerly
+    # Compile outside jit: init_all_states + compile_graph run once eagerly
     om = braintrace.compile(
         model_online, 'D_RTRL', jnp.zeros((batch_size, vocab_size)), batch_size=batch_size,
     )
@@ -79,7 +79,7 @@ def main(*, n_epochs: int = 20, batch_size: int = 16, plot: bool = True) -> dict
 
     @brainstate.transform.jit
     def online_step(inputs, targets):
-        # reduction='sum' preserves the accumulated-gradient scale this example
+        # Reduction='sum' preserves the accumulated-gradient scale this example
         # was tuned at; the reported loss stays the per-step mean.
         grads, step_losses = om.etrace_grad(
             inputs, targets, step_fn=step_loss, reduction='sum', return_value=True)

@@ -124,9 +124,9 @@ def test_a_rule_that_cannot_divide_evenly_defers_instead_of_guessing() -> None:
     even = jnp.exp(_halved(8))
     odd = jnp.exp(_halved(5))
 
-    assert float(even[0, 3]) > 0.99  # side 4, confidently
+    assert float(even[0, 3]) > 0.99  # Side 4, confidently
     assert float(jnp.max(odd)) < 0.5
-    assert float(odd[0, 1]) < 0.5  # never asserts side 2 for an odd input
+    assert float(odd[0, 1]) < 0.5  # Never asserts side 2 for an odd input
 
 
 def test_shared_gate_still_produces_a_non_square_shape() -> None:

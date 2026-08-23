@@ -77,30 +77,30 @@ def generate_manifest(
 def validate_manifest(document: dict[str, object]) -> None:
     """Fail closed on malformed, colliding, or incomplete seed manifests."""
     if document.get("schema_version") != MANIFEST_SCHEMA_VERSION:
-        raise ValueError("unsupported temporal benchmark manifest schema")
+        raise ValueError("Unsupported temporal benchmark manifest schema. Use a supported option or change the configuration.")
     bundles = document.get("bundles")
     if not isinstance(bundles, list) or len(bundles) != 12:
-        raise ValueError("manifest must contain exactly 12 paired bundles")
+        raise ValueError("Manifest must contain exactly 12 paired bundles. Add exactly 12 paired bundles to Manifest.")
     ids = [bundle.get("bundle_id") for bundle in bundles if isinstance(bundle, dict)]
     if len(ids) != 12 or len(set(ids)) != 12:
-        raise ValueError("bundle identifiers must be unique")
+        raise ValueError("Bundle identifiers must be unique. Set Bundle identifiers to unique.")
     per_bundle_seeds: list[int] = []
     for bundle in bundles:
         if not isinstance(bundle, dict):
-            raise ValueError("each bundle must be an object")
+            raise ValueError("Each bundle must be an object. Set Each bundle to an object.")
         local = [
             bundle.get("training_order_seed"),
             bundle.get("training_encoding_seed"),
         ]
         evaluation = bundle.get("evaluation_encoding_seeds")
         if not isinstance(evaluation, (list, tuple)) or len(evaluation) != 8:
-            raise ValueError("each bundle must have eight evaluation encoding seeds")
+            raise ValueError("Each bundle must have eight evaluation encoding seeds. Ensure Each bundle has eight evaluation encoding seeds.")
         local.extend(evaluation)
         if any(isinstance(seed, bool) or not isinstance(seed, int) for seed in local):
-            raise ValueError("all derived seeds must be integers")
+            raise ValueError("All derived seeds must be integers. Set All derived seeds to integers.")
         per_bundle_seeds.extend(local)  # type: ignore[arg-type]
     if len(per_bundle_seeds) != len(set(per_bundle_seeds)):
-        raise ValueError("order and encoding seed domains must not collide")
+        raise ValueError("Order and encoding seed domains must not collide. Ensure Order and encoding seed domains does not collide.")
 
 
 def write_manifest(path: Path, document: dict[str, object]) -> None:
@@ -116,7 +116,7 @@ def load_manifest(path: Path) -> dict[str, object]:
     """Load and validate a manifest from disk."""
     document = msgspec_json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict):
-        raise ValueError("manifest root must be an object")
+        raise ValueError("Manifest root must be an object. Set Manifest root to an object.")
     validate_manifest(document)
     return document
 
@@ -137,15 +137,15 @@ def find_bundle(document: dict[str, object], bundle_id: str) -> SeedBundle:
                     ),
                 }
             )
-    raise KeyError(f"unknown bundle: {bundle_id}")
+    raise KeyError(f"Unknown bundle: {bundle_id}. Set the named field to one of the supported values, then rerun the operation.")
 
 
 def split_specs(bundle: SeedBundle, split: str, sizes: SplitSizes) -> tuple:
     """Materialize train or validation specs; test requires the sealed path."""
     if split == "test":
-        raise PermissionError("test specs require materialize_sealed_test_specs")
+        raise PermissionError("Test specs require materialize_sealed_test_specs. Provide the required value for Test specs.")
     if split not in {"train", "validation"}:
-        raise ValueError("split must be train or validation")
+        raise ValueError("Split must be train or validation. Set Split to train or validation.")
     count = getattr(sizes, split)
     return balanced_trial_specs(count, _seed(bundle.split_seed, split))
 
@@ -155,8 +155,8 @@ def materialize_sealed_test_specs(
 ) -> tuple:
     """Materialize test specs only after checking the committed seal."""
     if not sealed:
-        raise PermissionError("test split is sealed until configuration is frozen")
+        raise PermissionError("Test split is sealed until configuration is frozen. Fix the input condition named in the error, then rerun the operation.")
     specs = balanced_trial_specs(sizes.test, _seed(bundle.split_seed, "test"))
     if trial_commitment(specs) != bundle.test_commitment_sha256:
-        raise ValueError("test trial commitment mismatch")
+        raise ValueError("Test trial commitment mismatch. Use matching values and structures.")
     return specs

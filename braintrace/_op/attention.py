@@ -208,7 +208,7 @@ ETP_RULES_SOLVE_DRTRL[etp_attention_residual_p] = _attention_solve_drtrl
 def _floating_array(value: ArrayLike, name: str) -> Any:
     result = jnp.asarray(value)
     if not jnp.issubdtype(result.dtype, jnp.floating):
-        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}")
+        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}. Ensure {name} has a floating dtype.")
     return result
 
 
@@ -216,10 +216,10 @@ def _epsilon_value(epsilon: float | None, dtype: Any) -> float:
     if epsilon is None:
         return float(jnp.finfo(dtype).eps)
     if isinstance(epsilon, (bool, np.bool_)) or not isinstance(epsilon, Real):
-        raise TypeError("epsilon must be a finite positive real scalar or None")
+        raise TypeError("Epsilon must be a finite positive real scalar or None. Set Epsilon to a finite positive real scalar or None.")
     result = float(epsilon)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError("epsilon must be a finite positive real scalar")
+        raise ValueError("Epsilon must be a finite positive real scalar. Set Epsilon to a finite positive real scalar.")
     return result
 
 
@@ -233,16 +233,17 @@ def _prepare_attention_inputs(
     sources_array = _floating_array(sources, "sources")
     query_array = _floating_array(query, "query")
     if sources_array.ndim < 2:
-        raise ValueError("sources must have rank at least two")
+        raise ValueError("Sources must have rank at least two. Ensure Sources has rank at least two.")
     if query_array.ndim not in (1, 2):
-        raise ValueError("query must have shape (hidden_size,) or (query_count, hidden_size)")
+        raise ValueError("Query must have shape (hidden_size,) or (query_count, hidden_size). Ensure Query has shape (hidden_size,) or (query_count, hidden_size).")
     hidden_size = sources_array.shape[-1]
     if hidden_size == 0:
-        raise ValueError("sources hidden_size must be positive")
+        raise ValueError("Sources hidden_size must be positive. Set Sources hidden_size to a positive value.")
     if query_array.shape[-1] != hidden_size:
         raise ValueError(
-            "query hidden dimension must match sources; got "
-            f"{query_array.shape[-1]} and {hidden_size}"
+            "Query hidden dimension must match sources; got "
+            f"{query_array.shape[-1]} and {hidden_size}. Set Query hidden dimension to match sources; got "
+            f"{query_array.shape[-1]} and {hidden_size}."
         )
     if query_array.dtype != sources_array.dtype:
         query_array = query_array.astype(sources_array.dtype)
@@ -252,22 +253,22 @@ def _prepare_attention_inputs(
     leading_shape = sources_array.shape[:-2]
     source_count = sources_array.shape[-2]
     if source_count == 0:
-        raise ValueError("sources source_count must be positive")
+        raise ValueError("Sources source_count must be positive. Set Sources source_count to a positive value.")
 
     index = jnp.asarray(query_index)
     if not jnp.issubdtype(index.dtype, jnp.integer):
-        raise TypeError("query_index must have an integer dtype")
+        raise TypeError("query_index must have an integer dtype. Ensure query_index has an integer dtype.")
     if index.ndim == 0:
         index = jnp.broadcast_to(index, leading_shape)
     elif index.shape != leading_shape:
         raise ValueError(
-            f"query_index must be scalar or have shape {leading_shape}, got {index.shape}"
+            f"query_index must be scalar or have shape {leading_shape}, got {index.shape}. Set query_index to scalar or have shape {leading_shape}."
         )
     if not isinstance(index, jax.core.Tracer):
         concrete_index = np.asarray(index)
         if np.any(concrete_index < 0) or np.any(concrete_index >= query_count):
             raise ValueError(
-                f"query_index entries must be in [0, {query_count}), got {query_index!r}"
+                f"query_index entries must be in [0, {query_count}), got {query_index!r}. Set query_index entries to values in [0, {query_count})."
             )
 
     if source_mask is None:
@@ -275,13 +276,14 @@ def _prepare_attention_inputs(
     else:
         mask = jnp.asarray(source_mask)
         if mask.dtype != jnp.bool_:
-            raise TypeError(f"source_mask must have boolean dtype, got {mask.dtype}")
+            raise TypeError(f"source_mask must have boolean dtype, got {mask.dtype}. Ensure source_mask has boolean dtype.")
         if mask.shape == (source_count,):
             mask = jnp.broadcast_to(mask, (*leading_shape, source_count))
         elif mask.shape != (*leading_shape, source_count):
             raise ValueError(
                 "source_mask must have shape "
-                f"({source_count},) or {(*leading_shape, source_count)}, got {mask.shape}"
+                f"({source_count},) or {(*leading_shape, source_count)}, got {mask.shape}. Set source_mask to a value with shape "
+                f"({source_count},) or {(*leading_shape, source_count)}."
             )
 
     selector = jax.nn.one_hot(index, query_count, dtype=sources_array.dtype)

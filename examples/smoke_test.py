@@ -34,10 +34,10 @@ def _load(fname: str):
             batch_size=2,
             num_batch=1,
             n_rec=4,
-            t_fixation=10.,   # ms (already tiny default)
-            t_sample=10.,     # ms (shrunk from 500 ms)
-            t_delay=10.,      # ms (shrunk from 1000 ms)
-            t_test=10.,       # ms (shrunk from 500 ms)
+            t_fixation=10.,   # Ms (already tiny default)
+            t_sample=10.,     # Ms (shrunk from 500 ms)
+            t_delay=10.,      # Ms (shrunk from 1000 ms)
+            t_test=10.,       # Ms (shrunk from 500 ms)
             plot=False,
         ),
     ),
@@ -46,7 +46,7 @@ def _load(fname: str):
         "002-coba-ei-rsnn.py",
         dict(batch_size=2, n_rec=4, n_epochs=1, plot=False),
     ),
-    # 003-all: synthetic tensors — tiny net, 1 data step, 1 batch
+    # 003-All: synthetic tensors — tiny net, 1 data step, 1 batch
     (
         "003-snn-memory-and-speed-evaluation-all.py",
         dict(method='diag', n_rec=4, n_layer=1, data_length=2, batch_size=2, n_batches=1, plot=False),
@@ -86,6 +86,6 @@ def _load(fname: str):
 def test_example_runs(fname, tiny_kwargs):
     mod = _load(fname)
     result = mod.main(**tiny_kwargs)
-    assert isinstance(result, dict), f"main() must return a dict, got {type(result)}"
-    assert "losses" in result, f"result must contain 'losses' key, got keys: {list(result.keys())}"
-    assert len(result["losses"]) >= 1, f"losses must be non-empty, got: {result['losses']}"
+    assert isinstance(result, dict), f"Main() must return a dict, got {type(result)}. Make Main() return a dict."
+    assert "losses" in result, f"Result must contain 'losses' key, got keys: {list(result.keys())}. Add 'losses' key to Result."
+    assert len(result["losses"]) >= 1, f"Losses must be non-empty, got: {result['losses']}. Provide at least one value for Losses."

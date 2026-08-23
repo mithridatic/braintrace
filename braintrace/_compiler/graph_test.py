@@ -188,7 +188,7 @@ class TestCompileGraphRNN(unittest.TestCase):
             if relation.path[0] in ['C_re', 'C_im', 'D']:
                 self.assertTrue(len(relation.connected_hidden_paths) == 0)
 
-        # pprint(graph)
+        # Pprint(graph)
 
     def test_lstm_one_layer(self):
         n_in = 3
@@ -219,7 +219,7 @@ class TestCompileGraphRNN(unittest.TestCase):
             else:
                 self.assertTrue(set(relation.connected_hidden_paths) == hidden_paths)
 
-        # pprint(graph)
+        # Pprint(graph)
 
     def test_lstm_two_layers(self):
         n_in = 3
@@ -252,7 +252,7 @@ class TestCompileGraphRNN(unittest.TestCase):
                 if relation.path[2] != 'Wo':
                     self.assertTrue(set(relation.connected_hidden_paths) == hidden_group2_path)
 
-        # pprint(graph)
+        # Pprint(graph)
 
     def test_lru_two_layers(self):
         n_in = 3
@@ -571,7 +571,7 @@ class TestCompileEtraceGraphSparseNGuards(unittest.TestCase):
         model, x = self._model()
         graph = braintrace.compile_etrace_graph(
             model, x, sparse_n=2, include_recurrent_mixing=True)
-        # negative control for the test above: the same order *does* widen once
+        # Negative control for the test above: the same order *does* widen once
         # the mixing primitive is in the transition, so the guard is rejecting a
         # degenerate configuration rather than a valid one.
         assert [g.snap.num_neighbour for g in graph.hidden_groups] == [4]

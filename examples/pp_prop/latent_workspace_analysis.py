@@ -30,11 +30,11 @@ def _finite_array(
     try:
         array = np.asarray(value, dtype=np.float64)
     except (OverflowError, TypeError, ValueError) as error:
-        raise ValueError(f"{name} must be a rectangular numeric array") from error
+        raise ValueError(f"{name} must be a rectangular numeric array. Set {name} to a rectangular numeric array.") from error
     if shape is not None and array.shape != shape:
-        raise ValueError(f"{name} shape must be {shape}; got {array.shape}")
+        raise ValueError(f"{name} shape must be {shape}; got {array.shape}. Set {name} shape to {shape}; got {array.shape}.")
     if not np.all(np.isfinite(array)):
-        raise ValueError(f"{name} contains non-finite values")
+        raise ValueError(f"{name} contains non-finite values. Use finite values.")
     result = np.ascontiguousarray(array)
     result.setflags(write=False)
     return result
@@ -44,7 +44,7 @@ def _grid_array(value: ArrayLike, name: str) -> GridArray:
     try:
         array = np.asarray(value)
     except (TypeError, ValueError) as error:
-        raise ValueError(f"{name} must be a rectangular integer grid") from error
+        raise ValueError(f"{name} must be a rectangular integer grid. Set {name} to a rectangular integer grid.") from error
     if array.ndim != 2 or any(size < 1 or size > _AXIS_SIZE for size in array.shape):
         raise ValueError(
             f"{name} shape must be a nonempty 1..{_AXIS_SIZE} by "
@@ -53,10 +53,10 @@ def _grid_array(value: ArrayLike, name: str) -> GridArray:
     if not np.issubdtype(array.dtype, np.integer) or np.issubdtype(
         array.dtype, np.bool_
     ):
-        raise ValueError(f"{name} must contain non-boolean integer colors")
+        raise ValueError(f"{name} must contain non-boolean integer colors. Add non-boolean integer colors to {name}.")
     integer = array.astype(np.int64, copy=False)
     if np.any(integer < 0) or np.any(integer >= _COLOR_COUNT):
-        raise ValueError(f"{name} colors must be in [0, {_COLOR_COUNT})")
+        raise ValueError(f"{name} colors must be in [0, {_COLOR_COUNT}). Set {name} colors to a value in [0, {_COLOR_COUNT}).")
     result = np.ascontiguousarray(integer, dtype=np.int8)
     result.setflags(write=False)
     return result
@@ -64,10 +64,10 @@ def _grid_array(value: ArrayLike, name: str) -> GridArray:
 
 def _nonnegative_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be a nonnegative integer")
+        raise ValueError(f"{name} must be a nonnegative integer. Set {name} to a nonnegative integer.")
     result = int(value)
     if result < 0:
-        raise ValueError(f"{name} must be a nonnegative integer")
+        raise ValueError(f"{name} must be a nonnegative integer. Set {name} to a nonnegative integer.")
     return result
 
 
@@ -137,14 +137,14 @@ class DecodedCandidate:
         if self.changed_decision is not None and not isinstance(
             self.changed_decision, str
         ):
-            raise ValueError("changed_decision must be a string or None")
+            raise ValueError("changed_decision must be a string or None. Set changed_decision to a string or None.")
         if isinstance(self.log_probability, (bool, np.bool_)) or not isinstance(
             self.log_probability, Real
         ):
-            raise ValueError("log_probability must be finite")
+            raise ValueError("log_probability must be finite. Use finite values for log_probability.")
         value = float(self.log_probability)
         if not math.isfinite(value):
-            raise ValueError("log_probability must be finite")
+            raise ValueError("log_probability must be finite. Use finite values for log_probability.")
         object.__setattr__(self, "log_probability", value)
 
     def to_dict(self) -> dict[str, object]:
@@ -201,10 +201,10 @@ class SelectedModelCandidate:
 
     def __post_init__(self) -> None:
         if not isinstance(self.candidate, DecodedCandidate):
-            raise TypeError("candidate must be a DecodedCandidate")
+            raise TypeError("Candidate must be a DecodedCandidate. Set Candidate to a DecodedCandidate.")
         checkpoint = _nonnegative_integer(self.source_checkpoint, "source_checkpoint")
         if checkpoint == 0:
-            raise ValueError("source_checkpoint must be positive")
+            raise ValueError("source_checkpoint must be positive. Set source_checkpoint to a positive value.")
         object.__setattr__(self, "source_checkpoint", checkpoint)
         valid_roles = {
             "latest_sweep_joint_argmax",
@@ -212,12 +212,12 @@ class SelectedModelCandidate:
             "latest_sweep_logit_runner_up",
         }
         if self.selection_role not in valid_roles:
-            raise ValueError("selection_role is invalid")
+            raise ValueError("selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
         is_runner_up = self.selection_role == "latest_sweep_logit_runner_up"
         if is_runner_up and self.candidate.changed_decision is None:
-            raise ValueError("runner-up candidate must name its changed decision")
+            raise ValueError("Runner-up candidate must name its changed decision. Set Runner-up candidate to name its changed decision.")
         if not is_runner_up and self.candidate.changed_decision is not None:
-            raise ValueError("joint-argmax candidate cannot name a changed decision")
+            raise ValueError("Joint-argmax candidate cannot name a changed decision. Fix the input condition named in the error, then rerun the operation.")
 
     def to_dict(self) -> dict[str, object]:
         """Return candidate cells and model-only selection provenance.
@@ -267,24 +267,24 @@ class QueryScore:
 
     def __post_init__(self) -> None:
         if not isinstance(self.task_id, str) or not self.task_id:
-            raise ValueError("task_id must be a nonempty string")
+            raise ValueError("task_id must be a nonempty string. Set task_id to a nonempty string.")
         object.__setattr__(
             self, "query_index", _nonnegative_integer(self.query_index, "query_index")
         )
         for name in ("pass_at_1", "pass_at_2", "shape_accuracy"):
             value = getattr(self, name)
             if not isinstance(value, (bool, np.bool_)):
-                raise ValueError(f"{name} must be boolean")
+                raise ValueError(f"{name} must be boolean. Set {name} to boolean.")
             object.__setattr__(self, name, bool(value))
         if self.pass_at_1 and not self.pass_at_2:
-            raise ValueError("pass_at_2 cannot be false when pass_at_1 is true")
+            raise ValueError("pass_at_2 cannot be false when pass_at_1 is true. Fix the input condition named in the error, then rerun the operation.")
         pixel = float(self.valid_cell_pixel_accuracy)
         if not math.isfinite(pixel) or not 0.0 <= pixel <= 1.0:
-            raise ValueError("valid_cell_pixel_accuracy must be finite and in [0, 1]")
+            raise ValueError("valid_cell_pixel_accuracy must be finite and in [0, 1]. Set valid_cell_pixel_accuracy to a finite value in [0, 1].")
         object.__setattr__(self, "valid_cell_pixel_accuracy", pixel)
         count = _nonnegative_integer(self.candidate_count, "candidate_count")
         if count not in (1, 2):
-            raise ValueError("candidate_count must be one or two")
+            raise ValueError("candidate_count must be one or two. Set candidate_count to one or two.")
         object.__setattr__(self, "candidate_count", count)
 
     def to_dict(self) -> dict[str, object]:
@@ -378,13 +378,13 @@ def decode_candidates(
         If ``logits`` is not :class:`OutputLogits`.
     """
     if not isinstance(logits, OutputLogits):
-        raise TypeError("logits must be an OutputLogits instance")
+        raise TypeError("Logits must be an OutputLogits instance. Set Logits to an OutputLogits instance.")
     if (
         isinstance(max_candidates, (bool, np.bool_))
         or not isinstance(max_candidates, Integral)
         or int(max_candidates) not in (1, 2)
     ):
-        raise ValueError("max_candidates must be one or two")
+        raise ValueError("max_candidates must be one or two. Set max_candidates to one or two.")
     height_log_probability = np.array(
         [_log_softmax_choice(np.asarray(logits.height), index) for index in range(30)]
     )
@@ -505,7 +505,7 @@ def input_echo_fraction(
     decoded = np.asarray(grid)
     source = np.asarray(query_input)
     if decoded.ndim != 2 or source.ndim != 2:
-        raise ValueError("grid and query_input must each be two dimensional")
+        raise ValueError("Grid and query_input must each be two dimensional. Set Grid and query_input to each be two dimensional.")
     rows = min(decoded.shape[0], source.shape[0])
     columns = min(decoded.shape[1], source.shape[1])
     if rows == 0 or columns == 0:
@@ -557,26 +557,26 @@ def select_checkpoint_candidates(
     """
 
     if not isinstance(logits_by_checkpoint, Mapping):
-        raise TypeError("logits_by_checkpoint must be a mapping")
+        raise TypeError("logits_by_checkpoint must be a mapping. Set logits_by_checkpoint to a mapping.")
     latest = _nonnegative_integer(latest_checkpoint, "latest_checkpoint")
     sweep = _nonnegative_integer(sweep_size, "sweep_size")
     if sweep == 0:
-        raise ValueError("sweep_size must be positive")
+        raise ValueError("sweep_size must be positive. Set sweep_size to a positive value.")
     if latest == 0 or latest % sweep:
-        raise ValueError("latest_checkpoint must identify a completed sweep")
+        raise ValueError("latest_checkpoint must identify a completed sweep. Set latest_checkpoint to identify a completed sweep.")
 
     validated: dict[int, OutputLogits] = {}
     for raw_checkpoint, logits in logits_by_checkpoint.items():
         checkpoint = _nonnegative_integer(raw_checkpoint, "checkpoint")
         if checkpoint > latest:
-            raise ValueError("checkpoint history contains a checkpoint after latest")
+            raise ValueError("Checkpoint history contains a checkpoint after latest. Fix the input condition named in the error, then rerun the operation.")
         if checkpoint and checkpoint % sweep:
-            raise ValueError("positive checkpoints must identify completed sweeps")
+            raise ValueError("Positive checkpoints must identify completed sweeps. Set Positive checkpoints to identify completed sweeps.")
         if not isinstance(logits, OutputLogits):
-            raise TypeError("checkpoint values must be OutputLogits")
+            raise TypeError("Checkpoint values must be OutputLogits. Set Checkpoint values to OutputLogits.")
         validated[checkpoint] = logits
     if latest not in validated:
-        raise ValueError("latest checkpoint is absent from checkpoint history")
+        raise ValueError("Latest checkpoint is absent from checkpoint history. Fix the input condition named in the error, then rerun the operation.")
 
     latest_logits = validated[latest]
     latest_candidates = decode_candidates(latest_logits, max_candidates=2)
@@ -589,7 +589,7 @@ def select_checkpoint_candidates(
     if len(latest_candidates) != 2 or np.array_equal(
         latest_argmax.grid, latest_candidates[1].grid
     ):
-        raise ValueError("latest logits did not produce a distinct runner-up")
+        raise ValueError("Latest logits did not produce a distinct runner-up. Fix the input condition named in the error, then rerun the operation.")
     return first, SelectedModelCandidate(
         latest_candidates[1],
         source_checkpoint=latest,
@@ -601,9 +601,9 @@ def _distinct_candidate_grids(
     candidates: Sequence[DecodedCandidate | ArrayLike],
 ) -> tuple[GridArray, ...]:
     if not isinstance(candidates, Sequence) or isinstance(candidates, (str, bytes)):
-        raise ValueError("candidates must be a sequence of one or two ARC grids")
+        raise ValueError("Candidates must be a sequence of one or two ARC grids. Set Candidates to a sequence of one or two ARC grids.")
     if not 1 <= len(candidates) <= 2:
-        raise ValueError("candidates must contain one or two ARC grids")
+        raise ValueError("Candidates must contain one or two ARC grids. Add one or two ARC grids to Candidates.")
     grids: list[GridArray] = []
     for index, candidate in enumerate(candidates):
         value = candidate.grid if isinstance(candidate, DecodedCandidate) else candidate
@@ -688,15 +688,15 @@ def aggregate_arc_metrics(scores: Sequence[QueryScore]) -> dict[str, object]:
         and query index occurs more than once.
     """
     if not scores:
-        raise ValueError("scores must contain at least one query")
+        raise ValueError("Scores must contain at least one query. Add at least one query to Scores.")
     grouped: dict[str, list[QueryScore]] = defaultdict(list)
     identities: set[tuple[str, int]] = set()
     for score in scores:
         if not isinstance(score, QueryScore):
-            raise ValueError("scores must contain only QueryScore instances")
+            raise ValueError("Scores must contain only QueryScore instances. Add only QueryScore instances to Scores.")
         identity = (score.task_id, score.query_index)
         if identity in identities:
-            raise ValueError(f"duplicate task/query score {identity!r}")
+            raise ValueError(f"Duplicate task/query score {identity!r}. Fix the input condition named in the error, then rerun the operation.")
         identities.add(identity)
         grouped[score.task_id].append(score)
 
@@ -737,7 +737,7 @@ def aggregate_arc_metrics(scores: Sequence[QueryScore]) -> dict[str, object]:
 
 def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCandidate:
     if not isinstance(value, Mapping):
-        raise ValueError(f"{name} must be a candidate provenance mapping")
+        raise ValueError(f"{name} must be a candidate provenance mapping. Set {name} to a candidate provenance mapping.")
     required = {
         "height",
         "width",
@@ -750,14 +750,14 @@ def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCa
     }
     missing = sorted(required - value.keys())
     if missing:
-        raise ValueError(f"{name} is missing provenance fields {missing}")
+        raise ValueError(f"{name} is missing provenance fields {missing}. Provide the missing value or resource, then rerun the operation.")
     if value["provenance"] != "model":
-        raise ValueError(f"{name} must carry model provenance")
+        raise ValueError(f"{name} must carry model provenance. Make {name} carry model provenance.")
     grid = _grid_array(value["grid"], f"{name} grid")
     height = _nonnegative_integer(value["height"], f"{name} height")
     width = _nonnegative_integer(value["width"], f"{name} width")
     if (height, width) != grid.shape:
-        raise ValueError(f"{name} declared shape does not match its grid")
+        raise ValueError(f"{name} declared shape does not match its grid. Use matching values and structures.")
     decoded = DecodedCandidate(
         grid,
         changed_decision=value["changed_decision"],  # type: ignore[arg-type]
@@ -765,7 +765,7 @@ def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCa
     )
     role = value["selection_role"]
     if not isinstance(role, str):
-        raise ValueError(f"{name} selection_role is invalid")
+        raise ValueError(f"{name} selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return SelectedModelCandidate(
         decoded,
         source_checkpoint=value["source_checkpoint"],  # type: ignore[arg-type]
@@ -775,7 +775,7 @@ def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCa
 
 def _query_score_from_record(value: object, name: str) -> QueryScore:
     if not isinstance(value, Mapping):
-        raise ValueError(f"{name} score must be a mapping")
+        raise ValueError(f"{name} score must be a mapping. Set {name} score to a mapping.")
     required = {
         "task_id",
         "query_index",
@@ -787,7 +787,7 @@ def _query_score_from_record(value: object, name: str) -> QueryScore:
     }
     missing = sorted(required - value.keys())
     if missing:
-        raise ValueError(f"{name} score is missing fields {missing}")
+        raise ValueError(f"{name} score is missing fields {missing}. Provide the missing value or resource, then rerun the operation.")
     return QueryScore(
         task_id=value["task_id"],  # type: ignore[arg-type]
         query_index=value["query_index"],  # type: ignore[arg-type]
@@ -835,21 +835,21 @@ def assess_model_only_completion(
     """
 
     if not isinstance(expected_queries_by_task, Mapping):
-        raise ValueError("expected_queries_by_task must be a mapping")
+        raise ValueError("expected_queries_by_task must be a mapping. Set expected_queries_by_task to a mapping.")
     if len(expected_queries_by_task) != _MODEL_ONLY_REQUIRED_TASK_COUNT:
-        raise ValueError("completion requires exactly 400 expected ARC tasks")
+        raise ValueError("Completion requires exactly 400 expected ARC tasks. Provide the required value for Completion.")
     expected: dict[str, int] = {}
     for task_id, raw_count in expected_queries_by_task.items():
         if not isinstance(task_id, str) or not task_id:
-            raise ValueError("expected task ids must be nonempty strings")
+            raise ValueError("Expected task ids must be nonempty strings. Set Expected task ids to nonempty strings.")
         count = _nonnegative_integer(raw_count, f"query count for {task_id}")
         if count == 0:
-            raise ValueError("every expected task must have an official query")
+            raise ValueError("Every expected task must have an official query. Ensure Every expected task has an official query.")
         expected[task_id] = count
     if not isinstance(query_records, Sequence) or isinstance(
         query_records, (str, bytes)
     ):
-        raise ValueError("query_records must be a sequence")
+        raise ValueError("query_records must be a sequence. Set query_records to a sequence.")
 
     expected_identities = {
         (task_id, query_index)
@@ -861,59 +861,59 @@ def assess_model_only_completion(
     for record_index, record in enumerate(query_records):
         name = f"query_records[{record_index}]"
         if not isinstance(record, Mapping):
-            raise ValueError(f"{name} must be a mapping")
+            raise ValueError(f"{name} must be a mapping. Set {name} to a mapping.")
         if record.get("primary_candidate_mode") != "model_only":
-            raise ValueError(f"{name} primary_candidate_mode must be model_only")
+            raise ValueError(f"{name} primary_candidate_mode must be model_only. Set {name} primary_candidate_mode to model_only.")
         task_id = record.get("task_id")
         if not isinstance(task_id, str) or task_id not in expected:
-            raise ValueError(f"{name} has an unexpected task_id")
+            raise ValueError(f"{name} has an unexpected task_id. Use the expected value or update the contract.")
         query_index = _nonnegative_integer(record.get("query_index"), "query_index")
         identity = (task_id, query_index)
         if identity not in expected_identities:
-            raise ValueError(f"{name} has an unexpected official query")
+            raise ValueError(f"{name} has an unexpected official query. Use the expected value or update the contract.")
         if identity in identities:
-            raise ValueError(f"duplicate task/query record {identity!r}")
+            raise ValueError(f"Duplicate task/query record {identity!r}. Fix the input condition named in the error, then rerun the operation.")
         identities.add(identity)
 
         candidate_values = record.get("candidates")
         if not isinstance(candidate_values, Sequence) or isinstance(
             candidate_values, (str, bytes)
         ):
-            raise ValueError(f"{name} candidates must be a sequence")
+            raise ValueError(f"{name} candidates must be a sequence. Set {name} candidates to a sequence.")
         if len(candidate_values) != 2:
-            raise ValueError(f"{name} must contain exactly two candidates")
+            raise ValueError(f"{name} must contain exactly two candidates. Add exactly two candidates to {name}.")
         first = _selected_candidate_from_record(candidate_values[0], "candidate 1")
         second = _selected_candidate_from_record(candidate_values[1], "candidate 2")
         latest = first.source_checkpoint
         if first.selection_role != "latest_sweep_joint_argmax":
-            raise ValueError("candidate 1 selection_role must identify latest argmax")
+            raise ValueError("Candidate 1 selection_role must identify latest argmax. Set Candidate 1 selection_role to identify latest argmax.")
         if latest % _AXIS_SIZE:
-            raise ValueError("candidate 1 source checkpoint must be a completed sweep")
+            raise ValueError("Candidate 1 source checkpoint must be a completed sweep. Set Candidate 1 source checkpoint to a completed sweep.")
         if second.selection_role == "earlier_sweep_joint_argmax":
             if not 0 < second.source_checkpoint < latest:
-                raise ValueError("earlier candidate checkpoint must precede latest")
+                raise ValueError("Earlier candidate checkpoint must precede latest. Set Earlier candidate checkpoint to precede latest.")
             if second.source_checkpoint % _AXIS_SIZE:
                 raise ValueError(
-                    "earlier candidate checkpoint must be a completed sweep"
+                    "Earlier candidate checkpoint must be a completed sweep. Set Earlier candidate checkpoint to a completed sweep."
                 )
         elif second.selection_role == "latest_sweep_logit_runner_up":
             if second.source_checkpoint != latest:
-                raise ValueError("runner-up checkpoint must equal latest checkpoint")
+                raise ValueError("Runner-up checkpoint must equal latest checkpoint. Set Runner-up checkpoint to equal latest checkpoint.")
         else:
-            raise ValueError("candidate 2 selection_role is invalid")
+            raise ValueError("Candidate 2 selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
         if np.array_equal(first.candidate.grid, second.candidate.grid):
-            raise ValueError("model-only candidates must be distinct")
+            raise ValueError("Model-only candidates must be distinct. Set Model-only candidates to distinct.")
 
         score = _query_score_from_record(record.get("score"), name)
         if (score.task_id, score.query_index) != identity:
-            raise ValueError(f"{name} score identity does not match its record")
+            raise ValueError(f"{name} score identity does not match its record. Use matching values and structures.")
         if score.candidate_count != 2:
-            raise ValueError(f"{name} score candidate_count must be two")
+            raise ValueError(f"{name} score candidate_count must be two. Set {name} score candidate_count to two.")
         scores_by_task[task_id].append(score)
 
     missing = expected_identities - identities
     if missing:
-        raise ValueError(f"missing official query records: {len(missing)}")
+        raise ValueError(f"Missing official query records: {len(missing)}. Provide the missing item named in the message.")
     task_results = {
         task_id: {
             "query_count": expected[task_id],
@@ -944,14 +944,14 @@ def _logit_sequences(
     color_array = _finite_array(colors, "color logit sequence")
     if height_array.ndim != 2 or height_array.shape[1:] != (_AXIS_SIZE,):
         raise ValueError(
-            f"height logit sequence shape must be (steps, 30); got {height_array.shape}"
+            f"Height logit sequence shape must be (steps, 30); got {height_array.shape}. Set Height logit sequence shape to (steps, 30); got {height_array.shape}."
         )
     steps = height_array.shape[0]
     if steps < 1:
-        raise ValueError("logit sequences must contain at least one step")
+        raise ValueError("Logit sequences must contain at least one step. Add at least one step to Logit sequences.")
     if width_array.shape != (steps, _AXIS_SIZE):
         raise ValueError(
-            f"width logit sequence shape must be ({steps}, 30); got {width_array.shape}"
+            f"Width logit sequence shape must be ({steps}, 30); got {width_array.shape}. Set Width logit sequence shape to ({steps}, 30); got {width_array.shape}."
         )
     expected_colors = (steps, _AXIS_SIZE, _AXIS_SIZE, _COLOR_COUNT)
     if color_array.shape != expected_colors:
@@ -968,31 +968,32 @@ def _state_sequences(
     try:
         spike_array = np.asarray(spikes)
     except (TypeError, ValueError) as error:
-        raise ValueError("spikes must be a rectangular binary array") from error
+        raise ValueError("Spikes must be a rectangular binary array. Set Spikes to a rectangular binary array.") from error
     if spike_array.ndim != 2 or any(size < 1 for size in spike_array.shape):
         raise ValueError(
-            f"spikes shape must be (steps, neurons) with nonempty axes; got {spike_array.shape}"
+            f"Spikes shape must be (steps, neurons) with nonempty axes; got {spike_array.shape}. Set Spikes shape to (steps, neurons) with nonempty axes; got {spike_array.shape}."
         )
     if expected_steps is not None and spike_array.shape[0] != expected_steps:
         raise ValueError(
-            f"spikes have {spike_array.shape[0]} steps; expected {expected_steps}"
+            f"Spikes have {spike_array.shape[0]} steps; expected {expected_steps}. Fix the input condition named in the error, then rerun the operation."
         )
     if not (
         np.issubdtype(spike_array.dtype, np.bool_)
         or np.issubdtype(spike_array.dtype, np.number)
     ):
-        raise ValueError("spikes must contain binary numeric values")
+        raise ValueError("Spikes must contain binary numeric values. Add binary numeric values to Spikes.")
     if not np.all(np.isfinite(spike_array)) or not np.all(
         (spike_array == 0) | (spike_array == 1)
     ):
-        raise ValueError("spikes must contain only finite binary values")
+        raise ValueError("Spikes must contain only finite binary values. Add only finite binary values to Spikes.")
     spike_result = np.ascontiguousarray(spike_array, dtype=np.bool_)
     spike_result.setflags(write=False)
     voltage_result = _finite_array(voltages, "voltages")
     if voltage_result.shape != spike_result.shape:
         raise ValueError(
-            "voltages shape must match spikes; got "
-            f"voltages {voltage_result.shape}, spikes {spike_result.shape}"
+            "Voltages shape must match spikes; got "
+            f"voltages {voltage_result.shape}, spikes {spike_result.shape}. Set Voltages shape to match spikes; got "
+            f"voltages {voltage_result.shape}, spikes {spike_result.shape}."
         )
     return spike_result, voltage_result
 
@@ -1006,12 +1007,12 @@ def _step_indices(values: Sequence[int] | ArrayLike | None, count: int) -> list[
         or not np.issubdtype(array.dtype, np.integer)
         or np.issubdtype(array.dtype, np.bool_)
     ):
-        raise ValueError(f"step_indices must contain {count} integers")
+        raise ValueError(f"step_indices must contain {count} integers. Add {count} integers to step_indices.")
     result = [int(value) for value in array]
     if any(value < 0 for value in result) or any(
         right <= left for left, right in zip(result, result[1:])
     ):
-        raise ValueError("step_indices must be nonnegative and strictly increasing")
+        raise ValueError("step_indices must be nonnegative and strictly increasing. Set step_indices to a nonnegative, strictly increasing sequence.")
     return result
 
 
@@ -1065,10 +1066,10 @@ def _state_hash(
 
 def _bounded_fraction(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be finite and in [0, 1]")
+        raise ValueError(f"{name} must be finite and in [0, 1]. Set {name} to a finite value in [0, 1].")
     result = float(value)
     if not math.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise ValueError(f"{name} must be finite and in [0, 1]")
+        raise ValueError(f"{name} must be finite and in [0, 1]. Set {name} to a finite value in [0, 1].")
     return result
 
 
@@ -1097,7 +1098,7 @@ def analyze_latent_trajectory(
     height_logits, width_logits, color_logits : array-like
         Unbatched output-head stacks shaped ``(steps, 30)``, ``(steps, 30)``,
         and ``(steps, 30, 30, 10)``.
-    spikes, voltages : array-like
+    Spikes, voltages : array-like
         Matched state stacks shaped ``(steps, neurons)``. Step zero may be the
         query-terminal state and later rows zero-input recurrent states.
     feedforward_current, recurrent_current : array-like or None, default=None
@@ -1139,7 +1140,7 @@ def analyze_latent_trajectory(
     )
     if (feedforward_current is None) != (recurrent_current is None):
         raise ValueError(
-            "feedforward_current and recurrent_current must be provided together"
+            "feedforward_current and recurrent_current must be provided together. Provide both current arrays or omit both."
         )
     feedforward_array: FloatArray | None = None
     recurrent_array: FloatArray | None = None
@@ -1150,13 +1151,15 @@ def analyze_latent_trajectory(
         recurrent_array = _finite_array(recurrent_current, "recurrent synaptic current")
         if feedforward_array.shape != spike_array.shape:
             raise ValueError(
-                "feedforward synaptic current shape must match spikes; got "
-                f"{feedforward_array.shape} and {spike_array.shape}"
+                "Feedforward synaptic current shape must match spikes; got "
+                f"{feedforward_array.shape} and {spike_array.shape}. Set Feedforward synaptic current shape to match spikes; got "
+                f"{feedforward_array.shape} and {spike_array.shape}."
             )
         if recurrent_array.shape != spike_array.shape:
             raise ValueError(
-                "recurrent synaptic current shape must match spikes; got "
-                f"{recurrent_array.shape} and {spike_array.shape}"
+                "Recurrent synaptic current shape must match spikes; got "
+                f"{recurrent_array.shape} and {spike_array.shape}. Set Recurrent synaptic current shape to match spikes; got "
+                f"{recurrent_array.shape} and {spike_array.shape}."
             )
     labels = _step_indices(step_indices, height.shape[0])
     if (
@@ -1165,14 +1168,14 @@ def analyze_latent_trajectory(
         or not math.isfinite(float(convergence_atol))
         or float(convergence_atol) < 0.0
     ):
-        raise ValueError("convergence_atol must be finite and nonnegative")
+        raise ValueError("convergence_atol must be finite and nonnegative. Set convergence_atol to a finite non-negative value.")
     silence = _bounded_fraction(silence_rate, "silence_rate")
     saturation = _bounded_fraction(saturation_rate, "saturation_rate")
     if silence >= saturation:
-        raise ValueError("silence_rate must be smaller than saturation_rate")
+        raise ValueError("silence_rate must be smaller than saturation_rate. Set silence_rate to smaller than saturation_rate.")
     raster_width = _nonnegative_integer(raster_neurons, "raster_neurons")
     if raster_width < 1:
-        raise ValueError("raster_neurons must be positive")
+        raise ValueError("raster_neurons must be positive. Set raster_neurons to a positive value.")
     truth = None if target is None else _grid_array(target, "target grid")
 
     reports: list[dict[str, object]] = []
@@ -1416,7 +1419,7 @@ def compare_control_trajectories(
         If names, state shapes, binary spikes, or score pairing are invalid.
     """
     if not isinstance(control_name, str) or not control_name:
-        raise ValueError("control_name must be a nonempty string")
+        raise ValueError("control_name must be a nonempty string. Set control_name to a nonempty string.")
     raw_intact_spikes = np.asarray(intact_spikes)
     raw_intact_voltages = np.asarray(intact_voltages)
     raw_control_spikes = np.asarray(control_spikes)
@@ -1429,8 +1432,9 @@ def compare_control_trajectories(
     )
     if control_spike_array.shape != intact_spike_array.shape:
         raise ValueError(
-            "control state shape must match intact state shape; got "
-            f"control {control_spike_array.shape}, intact {intact_spike_array.shape}"
+            "Control state shape must match intact state shape; got "
+            f"control {control_spike_array.shape}, intact {intact_spike_array.shape}. Set Control state shape to match intact state shape; got "
+            f"control {control_spike_array.shape}, intact {intact_spike_array.shape}."
         )
 
     byte_identical_steps = [
@@ -1446,7 +1450,7 @@ def compare_control_trajectories(
     )
     if (intact_synaptic_currents is None) != (control_synaptic_currents is None):
         raise ValueError(
-            "intact_synaptic_currents and control_synaptic_currents must be provided together"
+            "intact_synaptic_currents and control_synaptic_currents must be provided together. Provide both current arrays or omit both."
         )
     current_distances: dict[str, list[float]] = {}
     current_byte_identity: dict[str, list[bool]] = {}
@@ -1455,7 +1459,7 @@ def compare_control_trajectories(
             intact_synaptic_currents.keys() != control_synaptic_currents.keys()
         ):
             raise ValueError(
-                "matched synaptic current mappings must have identical nonempty names"
+                "Matched synaptic current mappings must have identical nonempty names. Ensure Matched synaptic current mappings has identical nonempty names."
             )
         for name in sorted(intact_synaptic_currents):
             raw_intact_current = np.asarray(intact_synaptic_currents[name])
@@ -1494,7 +1498,7 @@ def compare_control_trajectories(
     causal_null = bool(all(byte_identical_steps))
 
     if (intact_scores is None) != (control_scores is None):
-        raise ValueError("intact_scores and control_scores must be provided together")
+        raise ValueError("intact_scores and control_scores must be provided together. Provide both score arrays or omit both.")
     score_deltas: dict[str, float] = {}
     if intact_scores is not None and control_scores is not None:
         intact_flat = _flatten_numeric(intact_scores)
@@ -1582,13 +1586,13 @@ def adam_parameter_travel_budget(
 
     rate = float(learning_rate)
     if not math.isfinite(rate) or rate <= 0.0:
-        raise ValueError("learning_rate must be a positive finite float")
+        raise ValueError("learning_rate must be a positive finite float. Set learning_rate to a positive finite float.")
     step_count = _nonnegative_integer(updates, "updates")
     if step_count == 0:
-        raise ValueError("updates must be positive")
+        raise ValueError("Updates must be positive. Set Updates to a positive value.")
     width = _nonnegative_integer(head_width, "head_width")
     if width == 0:
-        raise ValueError("head_width must be positive")
+        raise ValueError("head_width must be positive. Set head_width to a positive value.")
     bound = rate * step_count
     sigma = 1.0 / math.sqrt(width)
     sigmas = bound / sigma

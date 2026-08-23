@@ -55,7 +55,7 @@ def main(n_epochs: int = 5, batch_size: int = 32, num_step: int = 50, plot: bool
 
     if plot:
         _shared.plot_loss_curve(losses, title="01 · LIF integrator (pp_prop)")
-    assert jnp.isfinite(jnp.asarray(losses[-1])), f"final loss not finite: {losses[-1]}"
+    assert jnp.isfinite(jnp.asarray(losses[-1])), f"Final loss not finite: {losses[-1]}. Use finite values."
     return {"losses": losses}
 
 

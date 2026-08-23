@@ -65,9 +65,9 @@ class SplitSizes:
     def __post_init__(self) -> None:
         for name, count in asdict(self).items():
             if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
-                raise ValueError(f"{name} size must be a positive integer")
+                raise ValueError(f"{name} size must be a positive integer. Set {name} size to a positive integer.")
             if count % 2:
-                raise ValueError(f"{name} size must be balanced and therefore even")
+                raise ValueError(f"{name} size must be balanced and therefore even. Set {name} size to balanced and therefore even.")
 
 
 @dataclass(frozen=True)
@@ -81,7 +81,7 @@ class LearningRates:
     def __post_init__(self) -> None:
         for name, rate in asdict(self).items():
             if not math.isfinite(rate) or rate <= 0.0:
-                raise ValueError(f"{name} learning rate must be finite and positive")
+                raise ValueError(f"{name} learning rate must be finite and positive. Set {name} learning rate to a finite positive value.")
 
 
 @dataclass(frozen=True)
@@ -98,11 +98,11 @@ class GradientClipNorms:
                 continue
             if isinstance(clip_norm, bool) or not math.isfinite(clip_norm):
                 raise ValueError(
-                    f"{name} clip norm must be finite and positive or None"
+                    f"{name} clip norm must be finite and positive or None. Set {name} clip norm to a finite positive value or None."
                 )
             if clip_norm <= 0.0:
                 raise ValueError(
-                    f"{name} clip norm must be finite and positive or None"
+                    f"{name} clip norm must be finite and positive or None. Set {name} clip norm to a finite positive value or None."
                 )
 
 
@@ -116,7 +116,7 @@ class TraceHalfLives:
     def __post_init__(self) -> None:
         for name, half_life in asdict(self).items():
             if not math.isfinite(half_life) or half_life <= 0.0:
-                raise ValueError(f"{name} trace half-life must be finite and positive")
+                raise ValueError(f"{name} trace half-life must be finite and positive. Set {name} trace half-life to a finite positive value.")
 
 
 @dataclass(frozen=True)
@@ -163,31 +163,31 @@ class TemporalBenchmarkConfig:
 
     def __post_init__(self) -> None:
         if self.arm not in ARMS:
-            raise ValueError(f"arm must be one of {ARMS}")
+            raise ValueError(f"Arm must be one of {ARMS}. Set Arm to one of {ARMS}.")
         if self.horizon not in HORIZONS:
-            raise ValueError(f"unknown horizon: {self.horizon}")
+            raise ValueError(f"Unknown horizon: {self.horizon}. Set the named field to one of the supported values, then rerun the operation.")
         for name in ("neurons", "degree", "batch_size", "updates"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-                raise ValueError(f"{name} must be a positive integer")
+                raise ValueError(f"{name} must be a positive integer. Set {name} to a positive integer.")
         if self.degree >= self.neurons:
-            raise ValueError("degree must be smaller than neurons to forbid self-loops")
+            raise ValueError("Degree must be smaller than neurons to forbid self-loops. Set Degree to smaller than neurons to forbid self-loops.")
         if self.split_sizes.train % self.batch_size:
-            raise ValueError("batch_size must divide the training split")
+            raise ValueError("batch_size must divide the training split. Set batch_size to divide the training split.")
         if self.evaluation_interval <= 0:
-            raise ValueError("evaluation_interval must be positive")
+            raise ValueError("evaluation_interval must be positive. Set evaluation_interval to a positive value.")
         for name in ("dt_seconds", "cue_rate_hz", "go_rate_hz", "gain"):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{name} must be finite and positive")
+                raise ValueError(f"{name} must be finite and positive. Set {name} to a finite positive value.")
         for name in ("trace_half_life_x_steps", "trace_half_life_f_steps"):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{name} must be finite and positive")
+                raise ValueError(f"{name} must be finite and positive. Set {name} to a finite positive value.")
         if self.recurrent_weight_decay not in {0.0, 1e-5, 1e-4}:
-            raise ValueError("recurrent_weight_decay is outside the sealed grid")
+            raise ValueError("recurrent_weight_decay is outside the sealed grid. Set the named field to a value in the stated range, then rerun the operation.")
         if self.device not in {"auto", "cpu", "gpu"}:
-            raise ValueError("device must be auto, cpu, or gpu")
+            raise ValueError("Device must be auto, cpu, or gpu. Set Device to auto, cpu, or gpu.")
 
 
 def config_to_dict(config: TemporalBenchmarkConfig) -> dict[str, object]:
@@ -198,5 +198,5 @@ def config_to_dict(config: TemporalBenchmarkConfig) -> dict[str, object]:
 def half_life_decay(half_life_steps: float) -> float:
     """Convert a trace half-life into its per-step decay."""
     if not math.isfinite(half_life_steps) or half_life_steps <= 0.0:
-        raise ValueError("half_life_steps must be finite and positive")
+        raise ValueError("half_life_steps must be finite and positive. Set half_life_steps to a finite positive value.")
     return 2.0 ** (-1.0 / half_life_steps)

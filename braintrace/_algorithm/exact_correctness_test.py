@@ -94,7 +94,7 @@ _EXACT_MULTISTEP_ALGOS = {
     'OSTLRecurrent': lambda m: braintrace.OSTLRecurrent(m, vjp_method='multi-step'),
 }
 
-# (model_name, algo_name) pairs verified exact by the P4 spikes.
+# (Model_name, algo_name) pairs verified exact by the P4 spikes.
 # cond_gate exercises the Phase 1 cond -> select_n canonicalization: ETP
 # matmuls inside `lax.cond` branches must stay BPTT-exact after conversion.
 # tied_weight locks the multi-eqn-per-weight invariant (one ParamState, two

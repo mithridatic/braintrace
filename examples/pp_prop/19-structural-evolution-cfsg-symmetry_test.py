@@ -42,7 +42,7 @@ def test_topology_validation_and_directed_twin_partition():
 )
 def test_topology_validation_rejects_invalid_inputs(n_rec, rows, cols, message):
     example = _load()
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         example._validate_topology(n_rec, rows, cols)
 
 
@@ -128,7 +128,7 @@ def test_sparse_analysis_does_not_allocate_a_dense_adjacency(monkeypatch):
 
     def guarded_zeros(shape, *args, **kwargs):
         if isinstance(shape, tuple) and shape == (100, 100):
-            raise AssertionError("dense square allocation")
+            raise AssertionError("Dense square allocation. Update the fixture or expected result to satisfy this assertion.")
         return original_zeros(shape, *args, **kwargs)
 
     monkeypatch.setattr(example.np, "zeros", guarded_zeros)

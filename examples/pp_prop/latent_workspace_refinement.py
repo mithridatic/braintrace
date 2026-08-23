@@ -15,7 +15,7 @@ COLOR_COUNT = 10
 
 def _integer(value: object, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be an integer")
+        raise ValueError(f"{name} must be an integer. Set {name} to an integer.")
     return int(value)
 
 
@@ -98,11 +98,11 @@ class RowRefinementLayout:
         for name in self.__dataclass_fields__:
             object.__setattr__(self, name, _integer(getattr(self, name), name))
         if self.input_width <= 0:
-            raise ValueError("input_width must be positive")
+            raise ValueError("input_width must be positive. Set input_width to a positive value.")
         if self.max_grid_size != MAX_GRID_SIZE:
-            raise ValueError("max_grid_size must be 30 for ARC refinement")
+            raise ValueError("max_grid_size must be 30 for ARC refinement. Set max_grid_size to 30 for ARC refinement.")
         if self.color_count != COLOR_COUNT:
-            raise ValueError("color_count must be 10 for ARC refinement")
+            raise ValueError("color_count must be 10 for ARC refinement. Set color_count to 10 for ARC refinement.")
 
         scalar_indices = (
             self.event_valid_index,
@@ -112,9 +112,9 @@ class RowRefinementLayout:
             self.output_side_valid_index,
         )
         if len(set(scalar_indices)) != len(scalar_indices):
-            raise ValueError("scalar feature indices must be unique")
+            raise ValueError("Scalar feature indices must be unique. Set Scalar feature indices to unique.")
         if any(index < 0 or index >= self.input_width for index in scalar_indices):
-            raise ValueError("scalar feature indices must be inside input_width")
+            raise ValueError("Scalar feature indices must be inside input_width. Set Scalar feature indices to inside input_width.")
 
         expected_starts = (
             (self.row_index_start, self.normalized_start + 5),
@@ -131,13 +131,13 @@ class RowRefinementLayout:
             ),
         )
         if any(actual != expected for actual, expected in expected_starts):
-            raise ValueError("row refinement feature slices must be contiguous")
+            raise ValueError("Row refinement feature slices must be contiguous. Set Row refinement feature slices to contiguous.")
         if self.normalized_start < 0 or self.output_color_slice.stop > self.input_width:
-            raise ValueError("row refinement feature slices must be inside input_width")
+            raise ValueError("Row refinement feature slices must be inside input_width. Set Row refinement feature slices to inside input_width.")
         occupied = set(range(self.normalized_start, self.output_color_slice.stop))
         if any(index in occupied for index in scalar_indices):
             raise ValueError(
-                "scalar feature indices must not overlap row feature slices"
+                "Scalar feature indices must not overlap row feature slices. Ensure Scalar feature indices does not overlap row feature slices."
             )
 
     @property
@@ -242,16 +242,16 @@ def _check_state_shapes(
         layout.color_count,
     )
     if query_grid.ndim != 4 or query_grid.shape[1:] != expected_grid_tail:
-        raise ValueError(f"query_grid must have shape (batch, {expected_grid_tail})")
+        raise ValueError(f"query_grid must have shape (batch, {expected_grid_tail}). Ensure query_grid has shape (batch, {expected_grid_tail}).")
     batch_size = query_grid.shape[0]
     if query_shape.shape != (batch_size, layout.shape_width):
         raise ValueError(
-            f"query_shape must have shape ({batch_size}, {layout.shape_width})"
+            f"query_shape must have shape ({batch_size}, {layout.shape_width}). Ensure query_shape has shape ({batch_size}, {layout.shape_width})."
         )
     if answer_grid is not None and answer_grid.shape != query_grid.shape:
-        raise ValueError("answer_grid must have the same shape as query_grid")
+        raise ValueError("answer_grid must have the same shape as query_grid. Ensure answer_grid has the same shape as query_grid.")
     if answer_shape is not None and answer_shape.shape != query_shape.shape:
-        raise ValueError("answer_shape must have the same shape as query_shape")
+        raise ValueError("answer_shape must have the same shape as query_shape. Ensure answer_shape has the same shape as query_shape.")
     return batch_size
 
 
@@ -268,11 +268,11 @@ def capture_query_rows(
     ----------
     query_grid, query_shape
         Previous captured query state.
-    event
+    Event
         Batched row events shaped ``(batch, input_width)``.
-    advance
+    Advance
         Boolean per-example physical advance gate.
-    layout
+    Layout
         Validated row-event feature layout.
 
     Returns
@@ -287,9 +287,9 @@ def capture_query_rows(
     advance = jnp.asarray(advance, dtype=jnp.bool_)
     batch_size = _check_state_shapes(query_grid, query_shape, None, None, layout)
     if event.shape != (batch_size, layout.input_width):
-        raise ValueError(f"event must have shape ({batch_size}, {layout.input_width})")
+        raise ValueError(f"Event must have shape ({batch_size}, {layout.input_width}). Ensure Event has shape ({batch_size}, {layout.input_width}).")
     if advance.shape != (batch_size,):
-        raise ValueError(f"advance must have shape ({batch_size},)")
+        raise ValueError(f"Advance must have shape ({batch_size},). Ensure Advance has shape ({batch_size},).")
 
     row_one_hot = event[:, layout.row_index_slice]
     capture_gate = (
@@ -325,7 +325,7 @@ def _soft_column_mask(width_probabilities: jax.Array) -> jax.Array:
 def _validated_row_indices(row_indices: jax.Array) -> jax.Array:
     raw = jnp.asarray(row_indices)
     if raw.ndim != 1 or not jnp.issubdtype(raw.dtype, jnp.integer):
-        raise ValueError("row_indices must be a one-dimensional integer array")
+        raise ValueError("row_indices must be a one-dimensional integer array. Set row_indices to a one-dimensional integer array.")
     return raw.astype(jnp.int32)
 
 
@@ -351,7 +351,7 @@ def build_refinement_feedback_event(
         Current learned answer logits.
     row_indices
         Per-example row indices shaped ``(batch,)``.
-    layout
+    Layout
         Validated row-event feature layout.
 
     Returns
@@ -369,7 +369,7 @@ def build_refinement_feedback_event(
         query_grid, query_shape, answer_grid, answer_shape, layout
     )
     if row_indices.shape != (batch_size,):
-        raise ValueError(f"row_indices must have shape ({batch_size},)")
+        raise ValueError(f"row_indices must have shape ({batch_size},). Ensure row_indices has shape ({batch_size},).")
 
     safe_rows = jnp.mod(row_indices, layout.max_grid_size)
     gather_index = safe_rows[:, None, None, None]
@@ -442,7 +442,7 @@ def build_latent_row_decode_event(
         Frozen target-free query state.
     row_indices
         Explicit decoder row indices shaped ``(batch,)``.
-    layout
+    Layout
         Validated row-event layout.
 
     Returns
@@ -496,12 +496,12 @@ def scatter_answer_rows(
     row_logits = jnp.asarray(row_logits, dtype=jnp.float32)
     row_indices = _validated_row_indices(row_indices)
     if answer_grid.ndim != 4 or answer_grid.shape[1:] != (30, 30, 10):
-        raise ValueError("answer_grid must have shape (batch, 30, 30, 10)")
+        raise ValueError("answer_grid must have shape (batch, 30, 30, 10). Ensure answer_grid has shape (batch, 30, 30, 10).")
     batch_size = answer_grid.shape[0]
     if row_logits.shape != (batch_size, 300):
-        raise ValueError(f"row_logits must have shape ({batch_size}, 300)")
+        raise ValueError(f"row_logits must have shape ({batch_size}, 300). Ensure row_logits has shape ({batch_size}, 300).")
     if row_indices.shape != (batch_size,):
-        raise ValueError(f"row_indices must have shape ({batch_size},)")
+        raise ValueError(f"row_indices must have shape ({batch_size},). Ensure row_indices has shape ({batch_size},).")
     safe_rows = jnp.mod(row_indices, MAX_GRID_SIZE)
     row_gate = jax.nn.one_hot(safe_rows, MAX_GRID_SIZE, dtype=jnp.bool_)
     return jnp.where(
@@ -553,20 +553,20 @@ def refinement_training_logits(
     answer_shape = jnp.asarray(answer_shape, dtype=jnp.float32)
     answer_row = jnp.asarray(answer_row, dtype=jnp.float32)
     if answer_shape.shape[-1:] != (60,):
-        raise ValueError("answer_shape must have trailing shape (60,)")
+        raise ValueError("answer_shape must have trailing shape (60,). Ensure answer_shape has trailing shape (60,).")
     if answer_row.shape[-1:] != (300,):
-        raise ValueError("answer_row must have trailing shape (300,)")
+        raise ValueError("answer_row must have trailing shape (300,). Ensure answer_row has trailing shape (300,).")
     if answer_shape.shape[:-1] != answer_row.shape[:-1]:
-        raise ValueError("answer_shape and answer_row leading axes must match")
+        raise ValueError("answer_shape and answer_row leading axes must match. Set answer_shape and answer_row leading axes to match.")
     return jnp.concatenate((answer_shape, answer_row), axis=-1)
 
 
 def _floating_logits(logits: jax.Array, name: str, width: int) -> jax.Array:
     values = jnp.asarray(logits)
     if values.ndim < 1 or values.shape[-1] != width:
-        raise ValueError(f"{name} must have trailing shape ({width},)")
+        raise ValueError(f"{name} must have trailing shape ({width},). Ensure {name} has trailing shape ({width},).")
     if not jnp.issubdtype(values.dtype, jnp.floating):
-        raise ValueError(f"{name} must have a floating-point dtype")
+        raise ValueError(f"{name} must have a floating-point dtype. Ensure {name} has a floating-point dtype.")
     return values
 
 
@@ -638,9 +638,9 @@ def split_refinement_output_logits(
 def _integer_target(value: jax.Array, name: str, shape: tuple[int, ...]) -> jax.Array:
     values = jnp.asarray(value)
     if values.shape != shape:
-        raise ValueError(f"{name} must have shape {shape}")
+        raise ValueError(f"{name} must have shape {shape}. Ensure {name} has shape {shape}.")
     if not jnp.issubdtype(values.dtype, jnp.integer):
-        raise ValueError(f"{name} must have an integer dtype")
+        raise ValueError(f"{name} must have an integer dtype. Ensure {name} has an integer dtype.")
     return values
 
 
@@ -707,7 +707,7 @@ def row_refinement_loss_per_example(
 
     logits = _floating_logits(logits, "logits", 360)
     if logits.ndim != 2:
-        raise ValueError("logits must have shape (batch, 360)")
+        raise ValueError("Logits must have shape (batch, 360). Ensure Logits has shape (batch, 360).")
     batch_size = logits.shape[0]
     vector_shape = (batch_size,)
     target_height = _integer_target(target_height, "target_height", vector_shape)
@@ -774,11 +774,11 @@ def refinement_output_logits(
     answer_shape = jnp.asarray(answer_shape, dtype=jnp.float32)
     answer_grid = jnp.asarray(answer_grid, dtype=jnp.float32)
     if answer_shape.shape[-1:] != (60,):
-        raise ValueError("answer_shape must have trailing shape (60,)")
+        raise ValueError("answer_shape must have trailing shape (60,). Ensure answer_shape has trailing shape (60,).")
     if answer_grid.shape[-3:] != (30, 30, 10):
-        raise ValueError("answer_grid must have trailing shape (30, 30, 10)")
+        raise ValueError("answer_grid must have trailing shape (30, 30, 10). Ensure answer_grid has trailing shape (30, 30, 10).")
     if answer_shape.shape[:-1] != answer_grid.shape[:-3]:
-        raise ValueError("answer_shape and answer_grid leading axes must match")
+        raise ValueError("answer_shape and answer_grid leading axes must match. Set answer_shape and answer_grid leading axes to match.")
     return jnp.concatenate(
         (answer_shape, answer_grid.reshape(*answer_grid.shape[:-3], 9000)), axis=-1
     )

@@ -80,7 +80,7 @@ def test_bptt_param_gradients_shapes_and_finiteness():
     assert grads[('win',)].shape == (3, 4)
     for v in grads.values():
         assert bool(jnp.all(jnp.isfinite(v)))
-    # win is upstream of the loss every step -> its gradient is non-trivial
+    # Win is upstream of the loss every step -> its gradient is non-trivial
     assert float(jnp.abs(grads[('win',)]).sum()) > 1e-3
 
 
@@ -93,7 +93,7 @@ def test_finite_difference_matches_bptt():
     g_fd = finite_difference_param_gradients(spec.factory, inputs, eps=1e-3)
     for key in g_bptt:
         diff = float(jnp.max(jnp.abs(jnp.asarray(g_bptt[key]) - jnp.asarray(g_fd[key]))))
-        assert diff < 1e-3, f"{key}: BPTT vs FD maxdiff={diff:.3e}"
+        assert diff < 1e-3, f"{key}: BPTT vs FD maxdiff={diff:.3e}. Update the fixture or expected result to satisfy this assertion."
 
 
 # --- Task 4: multi-step online gradients -------------------------------------
@@ -341,7 +341,7 @@ class TestChunkedOnlineParamGradientsCompiledScan:
 def test_assert_close_passes_for_equal_trees():
     a = {('w',): jnp.ones((2, 2))}
     b = {('w',): jnp.ones((2, 2)) + 1e-7}
-    assert_param_gradients_close(a, b, atol=1e-4)  # must not raise
+    assert_param_gradients_close(a, b, atol=1e-4)  # Must not raise
 
 
 def test_assert_close_reports_offending_key():
@@ -354,7 +354,7 @@ def test_assert_close_reports_offending_key():
 def test_assert_close_can_restrict_to_subset_of_keys():
     a = {('w',): jnp.zeros((2, 2)), ('v',): jnp.zeros((2, 2))}
     b = {('w',): jnp.zeros((2, 2)), ('v',): jnp.ones((2, 2))}
-    assert_param_gradients_close(a, b, atol=1e-4, keys=[('w',)])  # ('v',) ignored
+    assert_param_gradients_close(a, b, atol=1e-4, keys=[('w',)])  # ('V',) ignored
 
 
 # --- Task 6: HEADLINE — multi-step D_RTRL == BPTT ----------------------------
@@ -368,7 +368,7 @@ def test_d_rtrl_multistep_matches_bptt():
         spec.factory, inputs,
         algo_factory=lambda m: braintrace.ParamDimVjpAlgorithm(m, vjp_method='multi-step'),
     )
-    # multi-step reproduces BPTT for ALL params (observed maxdiff 0.0 in the spike)
+    # Multi-step reproduces BPTT for ALL params (observed maxdiff 0.0 in the spike)
     assert_param_gradients_close(g_online, g_bptt, atol=1e-4)
 
 
@@ -636,7 +636,7 @@ def _xs_for(name, T, seed):
     return 0.3 * brainstate.random.randn(*shapes[name])
 
 
-# name -> (factory, xs seed)
+# Name -> (factory, xs seed)
 _FAMILIES = {
     'dense_mm': (_dense_mm_factory, 101),
     'dense_mv': (_dense_mv_factory, 102),
@@ -667,7 +667,7 @@ def test_d_rtrl_singlestep_matches_bptt_across_families(name, T):
         )
         for key in g_bptt:
             rel = _rel_err(g_bptt[key], g_online[key])
-            assert rel < _TOL, f'{name} T={T} {key}: D_RTRL vs BPTT rel={rel:.3e}'
+            assert rel < _TOL, f'{name} T={T} {key}: D_RTRL vs BPTT rel={rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 @pytest.mark.parametrize('name', sorted(_FAMILIES))
@@ -685,7 +685,7 @@ def test_pp_prop_singlestep_exact_at_t1_across_families(name):
         )
         for key in g_bptt:
             rel = _rel_err(g_bptt[key], g_online[key])
-            assert rel < _TOL, f'{name} T=1 {key}: pp_prop vs BPTT rel={rel:.3e}'
+            assert rel < _TOL, f'{name} T=1 {key}: pp_prop vs BPTT rel={rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 @pytest.mark.parametrize('name', sorted(_FAMILIES))
@@ -707,7 +707,7 @@ def test_pp_prop_singlestep_bounded_at_t2_across_families(name):
         for key in g_bptt:
             rel = _rel_err(g_bptt[key], g_online[key])
             assert np.isfinite(rel) and rel < 1.0, (
-                f'{name} T=2 {key}: pp_prop vs BPTT rel={rel:.3e} (expected bounded, not exact)'
+                f'{name} T=2 {key}: pp_prop vs BPTT rel={rel:.3e} (expected bounded, not exact). Update the fixture or expected result to satisfy this assertion.'
             )
 
 
@@ -733,7 +733,7 @@ def test_pp_prop_conv_bias_matches_bptt():
         )
         for key in g_bptt:
             rel = _rel_err(g_bptt[key], g_online[key])
-            assert rel < _TOL, f'conv_nwc_bias T=1 {key}: pp_prop vs BPTT rel={rel:.3e}'
+            assert rel < _TOL, f'conv_nwc_bias T=1 {key}: pp_prop vs BPTT rel={rel:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 # --- P1: negative-control helpers -------------------------------------------
@@ -766,7 +766,7 @@ def test_gradient_norm_and_relative_deviation():
     # ||[3,4] - [0,4]|| / ||[0,4]|| == 3 / 4.
     c = {('w',): jnp.array([0.0, 4.0])}
     assert relative_deviation(a, c) == pytest.approx(3.0 / 4.0, abs=1e-6)
-    # all-zero reference: infinite deviation, not a silent zero.
+    # All-zero reference: infinite deviation, not a silent zero.
     zero = {('w',): jnp.zeros(2)}
     assert relative_deviation(a, zero) == float('inf')
     assert relative_deviation(zero, zero) == 0.0
@@ -933,7 +933,7 @@ class TestAssertUnbiasedEstimator:
         with pytest.raises(AssertionError) as info:
             assert_unbiased_estimator(samples, _REF_TREE, num_directions=5, seed=0)
         text = str(info.value)
-        # a statistical failure that prints one number is unactionable
+        # A statistical failure that prints one number is unactionable
         assert text.count('direction') >= 5
 
     def test_a_single_sample_is_rejected_rather_than_dividing_by_zero(self):

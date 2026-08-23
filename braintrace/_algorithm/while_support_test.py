@@ -75,7 +75,7 @@ def _inputs(T, n_in, seed=42):
     return jnp.asarray(np.random.RandomState(seed).randn(T, n_in).astype('float32'))
 
 
-# --- twin contract -------------------------------------------------------------
+# --- Twin contract -------------------------------------------------------------
 
 def test_while_and_twin_share_weights_and_forward_values():
     """Same seed => identical weights, and the two updates produce identical
@@ -92,12 +92,12 @@ def test_while_and_twin_share_weights_and_forward_values():
     np.testing.assert_allclose(np.asarray(out_w), np.asarray(out_t), atol=1e-6)
 
 
-# --- primary: single-step D_RTRL while == twin ----------------------------------
+# --- Primary: single-step D_RTRL while == twin ----------------------------------
 
 def test_d_rtrl_singlestep_while_equals_twin():
     """D_RTRL (default single-step VJP) total gradient over T=6 on the while
     model equals the twin element-wise. Isolates the Phase 3 machinery:
-    jacfwd-vs-jacrev extraction and the perturbation detach must be
+    Jacfwd-vs-jacrev extraction and the perturbation detach must be
     gradient-neutral."""
     inputs = _inputs(6, 3)
     g_while = online_param_gradients_singlestep_naive(
@@ -109,7 +109,7 @@ def test_d_rtrl_singlestep_while_equals_twin():
     assert_param_gradients_close(g_while, g_twin, atol=ATOL_EQUIV)
 
 
-# --- negative: weight-in-while is a hard compile error --------------------------
+# --- Negative: weight-in-while is a hard compile error --------------------------
 
 class _WeightInWhileNet(brainstate.nn.Module):
     """Recurrent ETP matmul INSIDE the while body — must be rejected."""
@@ -137,7 +137,7 @@ def test_weight_in_while_raises_at_compile():
         braintrace.compile_etrace_graph(model, jnp.ones((3,), dtype='float32'))
 
 
-# --- negative: ETP primitive in while without a weight invar --------------------
+# --- Negative: ETP primitive in while without a weight invar --------------------
 
 class _EtpConstInWhileNet(brainstate.nn.Module):
     """ETP matmul applied to a plain CONSTANT matrix inside the while body: no
@@ -172,7 +172,7 @@ def test_etp_primitive_in_while_raises_under_default_policy():
         braintrace.compile_etrace_graph(model, jnp.ones((3,), dtype='float32'))
 
 
-# --- negative: multi-step VJP hits reverse-through-while (documented limit) -----
+# --- Negative: multi-step VJP hits reverse-through-while (documented limit) -----
 
 def test_multistep_vjp_on_while_model_raises_reverse_through_while():
     """Pin the current failure mode: the multi-step VJP path differentiates in
@@ -188,7 +188,7 @@ def test_multistep_vjp_on_while_model_raises_reverse_through_while():
         )
 
 
-# --- documented limitation: upstream layer behind a while-hidden layer ----------
+# --- Documented limitation: upstream layer behind a while-hidden layer ----------
 
 class _StackedWhileNet(brainstate.nn.Module):
     """Layer 1: tanh RNN (ETP ``w1``) feeding layer 2: while-settle (ETP
@@ -249,8 +249,8 @@ def test_upstream_layer_gradient_is_zero_behind_while_DOCUMENTED_LIMITATION():
 
     g_while = grads(True)
     g_twin = grads(False)
-    # the while layer's own weight: exact match with the twin
+    # The while layer's own weight: exact match with the twin
     assert_param_gradients_close(g_while, g_twin, atol=ATOL_EQUIV, keys=[('w2',)])
-    # the upstream weight: exactly zero under the while model, nonzero in the twin
+    # The upstream weight: exactly zero under the while model, nonzero in the twin
     assert bool(jnp.all(jnp.asarray(g_while[('w1',)]) == 0))
     assert float(jnp.max(jnp.abs(jnp.asarray(g_twin[('w1',)])))) > 1e-4

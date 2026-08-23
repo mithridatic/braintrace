@@ -28,7 +28,7 @@ def _require_selected_config(
     )
     if selected != expected:
         raise FreezeArtifactError(
-            f"{location}.selected_config does not match prior selections"
+            f"{location}.selected_config does not match prior selections. Use matching values and structures."
         )
 
 
@@ -39,26 +39,26 @@ def _clip_group(value: object, group: str) -> float | None:
     )
     if set(fractions) != set(DEVELOPMENT_BUNDLES):
         raise FreezeArtifactError(
-            f"clip {group} fractions do not cover development bundles"
+            f"Clip {group} fractions do not cover development bundles. Fix the input condition named in the error, then rerun the operation."
         )
     values = [
         require_number(fractions[bundle], f"clip.groups.{group}.{bundle}")
         for bundle in DEVELOPMENT_BUNDLES
     ]
     if not all(0.0 <= item <= 1.0 for item in values):
-        raise FreezeArtifactError(f"clip {group} fractions must be probabilities")
+        raise FreezeArtifactError(f"Clip {group} fractions must be probabilities. Set Clip {group} fractions to probabilities.")
     triggered = evidence.get("triggered")
     expected_trigger = any(item > CLIP_TRIGGER_THRESHOLD for item in values)
     if not isinstance(triggered, bool) or triggered != expected_trigger:
-        raise FreezeArtifactError(f"clip {group} trigger decision is inconsistent")
+        raise FreezeArtifactError(f"Clip {group} trigger decision is inconsistent. Use matching values and structures.")
     candidates = evidence.get("candidates")
     expected_candidates: list[float | None] = CLIP_CANDIDATES if triggered else []
     if candidates != expected_candidates:
-        raise FreezeArtifactError(f"clip {group} candidates do not match its trigger")
+        raise FreezeArtifactError(f"Clip {group} candidates do not match its trigger. Fix the input condition named in the error, then rerun the operation.")
     selected = evidence.get("selected_clip_norm")
     allowed = CLIP_CANDIDATES if triggered else [1.0]
     if isinstance(selected, bool) or selected not in allowed:
-        raise FreezeArtifactError(f"clip {group} selected norm is invalid")
+        raise FreezeArtifactError(f"Clip {group} selected norm is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return None if selected is None else float(selected)
 
 
@@ -73,14 +73,14 @@ def validate_clip_selection(
         require_number(document.get("trigger_threshold"), "clip.trigger_threshold")
         != CLIP_TRIGGER_THRESHOLD
     ):
-        raise FreezeArtifactError("clip trigger threshold must be 0.25")
+        raise FreezeArtifactError("Clip trigger threshold must be 0.25. Set Clip trigger threshold to 0.25.")
     expected = {
         key: prior[key] for key in ("gain", "learning_rates", "recurrent_weight_decay")
     }
     _require_selected_config(document, expected, "clip")
     groups = require_mapping(document.get("groups"), "clip.groups")
     if set(groups) != set(GROUPS):
-        raise FreezeArtifactError("clip selection must contain exactly three groups")
+        raise FreezeArtifactError("Clip selection must contain exactly three groups. Add exactly three groups to Clip selection.")
     return ({group: _clip_group(groups[group], group) for group in GROUPS}, provenance)
 
 
@@ -91,13 +91,13 @@ def _adoption_evidence(document: Mapping[str, Any]) -> bool:
     complete = evidence.get("time_to_0_80_complete")
     if not isinstance(complete, bool):
         raise FreezeArtifactError(
-            "curriculum time-to-threshold completeness must be boolean"
+            "Curriculum time-to-threshold completeness must be boolean. Set Curriculum time-to-threshold completeness to boolean."
         )
     reduction_value = evidence.get("time_to_0_80_reduction_fraction")
     if complete:
         reduction = require_number(reduction_value, "curriculum.time_reduction")
     elif reduction_value is not None:
-        raise FreezeArtifactError("censored time-to-threshold reduction must be null")
+        raise FreezeArtifactError("Censored time-to-threshold reduction must be null. Set Censored time-to-threshold reduction to null.")
     else:
         reduction = None
     interval = require_mapping(
@@ -106,10 +106,10 @@ def _adoption_evidence(document: Mapping[str, Any]) -> bool:
     lower = require_number(interval.get("lower"), "curriculum.accuracy_interval.lower")
     upper = require_number(interval.get("upper"), "curriculum.accuracy_interval.upper")
     if not -1.0 <= lower <= upper <= 1.0:
-        raise FreezeArtifactError("curriculum accuracy interval is invalid")
+        raise FreezeArtifactError("Curriculum accuracy interval is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     if interval.get("resamples") != 10_000 or interval.get("seed") != 20_260_811:
         raise FreezeArtifactError(
-            "curriculum accuracy interval must use the fixed bootstrap"
+            "Curriculum accuracy interval must use the fixed bootstrap"
         )
     static_change = require_number(
         evidence.get("example15_accuracy_change"), "curriculum.example15_change"
@@ -118,7 +118,7 @@ def _adoption_evidence(document: Mapping[str, Any]) -> bool:
         raise FreezeArtifactError("Example 15 accuracy change is outside [-1, 1]")
     stable = evidence.get("all_paired_runs_stable")
     if not isinstance(stable, bool):
-        raise FreezeArtifactError("curriculum paired stability decision is missing")
+        raise FreezeArtifactError("Curriculum paired stability decision is missing. Provide the missing value or resource, then rerun the operation.")
     time_gate = complete and reduction is not None and reduction >= 0.20
     accuracy_gate = lower > 0.0
     static_gate = static_change >= -0.01
@@ -128,7 +128,7 @@ def _adoption_evidence(document: Mapping[str, Any]) -> bool:
         "static_control_gate_passed": static_gate,
     }
     if any(evidence.get(name) is not result for name, result in expected_gates.items()):
-        raise FreezeArtifactError("curriculum recorded gate decisions are inconsistent")
+        raise FreezeArtifactError("Curriculum recorded gate decisions are inconsistent. Use matching values and structures.")
     return stable and static_gate and (time_gate or accuracy_gate)
 
 
@@ -139,12 +139,12 @@ def validate_curriculum_adoption(
     ensure_finite_tree(document, "curriculum")
     validate_header(document, "temporal_credit_curriculum_adoption")
     if document.get("status") != "completed":
-        raise FreezeArtifactError("curriculum adoption decision did not complete")
+        raise FreezeArtifactError("Curriculum adoption decision did not complete. Fix the input condition named in the error, then rerun the operation.")
     provenance = validate_decision_provenance(document, "curriculum")
     _require_selected_config(document, expected, "curriculum")
     adoption = document.get("adoption")
     if not isinstance(adoption, bool) or adoption != _adoption_evidence(document):
         raise FreezeArtifactError(
-            "curriculum adoption is inconsistent with decision evidence"
+            "Curriculum adoption is inconsistent with decision evidence. Use matching values and structures."
         )
     return adoption, provenance

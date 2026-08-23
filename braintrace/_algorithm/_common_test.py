@@ -48,7 +48,7 @@ class TestKappaFilter(unittest.TestCase):
     def test_kappa_zero_disables(self):
         flt = KappaFilter(jnp.zeros((3,)), kappa=0.0)
         y = flt.update(jnp.full((3,), 5.0))
-        assert jnp.allclose(y, jnp.full((3,), 5.0))  # pass-through
+        assert jnp.allclose(y, jnp.full((3,), 5.0))  # Pass-through
 
 
 class TestFixedRandomFeedback(unittest.TestCase):
@@ -63,7 +63,7 @@ class TestFixedRandomFeedback(unittest.TestCase):
 
     def test_project_shapes(self):
         fb = FixedRandomFeedback(n_target=4, n_layer=7, key=brainstate.random.RandomState(1).value)
-        y_target = jnp.ones((3, 4))  # batched
+        y_target = jnp.ones((3, 4))  # Batched
         proj = fb.project(y_target)
         assert proj.shape == (3, 7)
 
@@ -118,7 +118,7 @@ class TestZerosLikeBatchOrNot:
     def test_with_batch_1d_input(self):
         x = jnp.ones((5,), dtype=jnp.float32)
         result = _zeros_like_batch_or_not(3, x)
-        # shape[1:] for 1D is () so result is (3,)
+        # Shape[1:] for 1D is () so result is (3,)
         assert result.shape == (3,)
 
     def test_batch_size_must_be_int(self):
@@ -297,7 +297,7 @@ class TestSumDim:
     def test_1d_array_default_axis(self):
         x = jnp.array([1.0, 2.0, 3.0])
         result = _sum_dim(x)
-        # sum over axis=-1 of 1D gives a scalar
+        # Sum over axis=-1 of 1D gives a scalar
         npt.assert_array_almost_equal(result, jnp.array(6.0))
 
     def test_3d_array_last_axis(self):

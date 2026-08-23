@@ -95,7 +95,7 @@ class SnAp(ParamDimVjpAlgorithm):
         ``recurrence_scope='coupled'`` (:class:`~braintrace.OSTLRecurrent`'s
         coordinate); any ``n`` at or above a group's diameter saturates to full
         within-group RTRL. There is deliberately no "infinity" spelling:
-        saturation is a property of the model, not of the vocabulary.
+        Saturation is a property of the model, not of the vocabulary.
     name : str, optional
         Name of the algorithm instance. Forwarded verbatim.
     vjp_method : {'single-step', 'multi-step'}, default 'single-step'
@@ -125,7 +125,7 @@ class SnAp(ParamDimVjpAlgorithm):
     **The pattern is computed, not assumed.** The compiler analyses the hidden
     group's transition jaxpr and derives :math:`\mathbf{A}` from the recurrent
     mixing primitive it finds. Two primitive families yield a *precise* pattern:
-    dense (``etp_mm`` / ``etp_mv``, all-to-all) and sparse (``etp_sp_mm`` /
+    Dense (``etp_mm`` / ``etp_mv``, all-to-all) and sparse (``etp_sp_mm`` /
     ``etp_sp_mv``, the structural pattern of ``sparse_mat``, transposed). For
     **every other** primitive, more than one mixing equation, any control flow
     around it, or a non-position-preserving tail, the analysis falls back to the
@@ -214,7 +214,7 @@ class SnAp(ParamDimVjpAlgorithm):
         )
         self.n = n
         # Provenance for the anchor check. The coordinate alone cannot carry it:
-        # at `n = 1` the coordinate *is* `coupled`, which is legal on models
+        # At `n = 1` the coordinate *is* `coupled`, which is legal on models
         # with no anchored primitive, but a caller who asked for SnAp must not
         # be handed `coupled` in its place. See
         # ``ETraceVjpAlgorithm._assert_relations_are_snap_anchored``.

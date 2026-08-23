@@ -69,7 +69,7 @@ def test_run_supervised_stops_at_failed_preflight(monkeypatch):
     monkeypatch.setattr(
         supervisor.subprocess,
         "Popen",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("launched")),
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("Launched. Update the fixture or expected result to satisfy this assertion.")),
     )
 
     result = supervisor.run_supervised(

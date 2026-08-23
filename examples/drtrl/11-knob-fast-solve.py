@@ -2,8 +2,8 @@
 """11 · ``fast_solve=True`` vs ``fast_solve=False``.
 
 Demonstrates:
-  * numerical equivalence (allclose on summed gradients)
-  * wall-clock speedup from the einsum fast path
+  * Numerical equivalence (allclose on summed gradients)
+  * Wall-clock speedup from the einsum fast path
 
 The fast path applies when every ETP primitive in the graph has an
 elementwise ``dt_to_t`` rule (matmul, mv, element_wise). For this example
@@ -37,7 +37,7 @@ class RNN(brainstate.nn.Module):
 
 
 def _grad_run(model, weights, inputs, targets, *, fast_solve: bool):
-    # compile outside jit so init_all_states + compile_graph run eagerly
+    # Compile outside jit so init_all_states + compile_graph run eagerly
     online = braintrace.compile(
         model, 'D_RTRL', inputs[0], batch_size=inputs.shape[1],
         fast_solve=fast_solve,
@@ -49,7 +49,7 @@ def _grad_run(model, weights, inputs, targets, *, fast_solve: bool):
 
     @brainstate.transform.jit
     def f_grad(inputs, targets):
-        # reduction='sum': this knob comparison is about the solve path, so the
+        # Reduction='sum': this knob comparison is about the solve path, so the
         # gradient scale must stay exactly what it was.
         return online.etrace_grad(
             inputs, targets, step_fn=step_loss, reduction='sum')
@@ -69,7 +69,7 @@ def main(*, n_epochs: int = 5, batch_size: int = 16, plot: bool = True) -> dict:
 
     x, y = _shared.make_integrator_batch(num_step=num_step, num_batch=batch_size, seed=0)
 
-    # warmup (compile)
+    # Warmup (compile)
     _ = _grad_run(model_a, wa, x, y, fast_solve=True)
     _ = _grad_run(model_b, wb, x, y, fast_solve=False)
 

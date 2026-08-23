@@ -50,10 +50,10 @@ class UORO(RandomProjectionVjpAlgorithm):
     ``ETraceConfig(trace_factorization='random_projection', recurrence_scope='coupled')``.
     Both halves are load-bearing:
 
-    * **random_projection** replaces the per-parameter influence trace with one
+    * **Random_projection** replaces the per-parameter influence trace with one
       rank-1 pair per hidden group, ``eps_tilde[j, u] ~= s_tilde[u] *
       theta_tilde[j]``, re-randomised each step with a Rademacher draw.
-    * **coupled** is required, not merely recommended (matrix rule 11). A rank-1
+    * **Coupled** is required, not merely recommended (matrix rule 11). A rank-1
       *unbiased* estimator of an already-*biased* recursion would be strictly
       worse than the biased recursion itself: same asymptotic error, more
       variance, no memory saved — the anchored per-parameter trace is already the

@@ -77,7 +77,7 @@ def _reject_unsupported_options(
     if not offenders:
         return
     raise NotImplementedError(
-        f'braintrace.nn.Embedding does not support: {", ".join(offenders)}. '
+        f'Braintrace.nn.Embedding does not support: {", ".join(offenders)}. '
         'These modify the lookup or its gradient outside the ETP primitive '
         'that online learning traces. Use braintrace.nn.Embedding with '
         'default values for max_norm, freeze, scale_grad_by_freq and '
@@ -282,7 +282,7 @@ class Embedding(brainstate.nn.Embedding):
         table = self.weight.value
         if indices.ndim <= 1:
             return embedding(indices, table)
-        # fold all index axes into one batch axis, unfold on the output
+        # Fold all index axes into one batch axis, unfold on the output
         # (reshape via brainunit so quantities keep their units)
         y = embedding(indices.reshape(-1), table)
         return u.math.reshape(y, (*indices.shape, y.shape[-1]))  # type: ignore[union-attr]

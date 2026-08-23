@@ -49,7 +49,7 @@ def test_brainpy_state_forward_warns_and_resolves(name):
         obj = getattr(nn, name)
     assert obj is getattr(brainpy.state, name)
     assert f'Use brainpy.state.{name} instead.' in str(record[0].message)
-    assert f'braintrace.nn.{name} is deprecated' in str(record[0].message)
+    assert f'braintrace.nn.{name} is deprecated'.casefold() in str(record[0].message).casefold()
 
 
 @pytest.mark.parametrize('name', nn._DEPRECATED_TO_BRAINSTATE_NN)
@@ -58,7 +58,7 @@ def test_brainstate_nn_forward_warns_and_resolves(name):
         obj = getattr(nn, name)
     assert obj is getattr(brainstate.nn, name)
     assert f'Use brainstate.nn.{name} instead.' in str(record[0].message)
-    assert f'braintrace.nn.{name} is deprecated' in str(record[0].message)
+    assert f'braintrace.nn.{name} is deprecated'.casefold() in str(record[0].message).casefold()
 
 
 def test_marker_sentinel_the_deprecated_lists_are_not_empty():
@@ -113,7 +113,7 @@ def test_the_two_target_lists_are_disjoint():
     the second entry would be unreachable -- and misleading, since it names a
     different replacement package."""
     overlap = set(nn._DEPRECATED_TO_BRAINPY_STATE) & set(nn._DEPRECATED_TO_BRAINSTATE_NN)
-    assert not overlap, f'name listed under two replacement packages: {sorted(overlap)}'
+    assert not overlap, f'Name listed under two replacement packages: {sorted(overlap)}. Update the fixture or expected result to satisfy this assertion.'
 
 
 def test_deprecated_names_do_not_shadow_real_exports():
@@ -122,7 +122,7 @@ def test_deprecated_names_do_not_shadow_real_exports():
     wins and no warning is ever emitted for it."""
     deprecated = set(nn._DEPRECATED_TO_BRAINPY_STATE) | set(nn._DEPRECATED_TO_BRAINSTATE_NN)
     collisions = deprecated & set(nn.__all__)
-    assert not collisions, f'deprecated entries shadowed by real exports: {sorted(collisions)}'
+    assert not collisions, f'Deprecated entries shadowed by real exports: {sorted(collisions)}. Update the fixture or expected result to satisfy this assertion.'
 
 
 @pytest.mark.parametrize(
@@ -157,7 +157,7 @@ def test_every_advertised_name_actually_resolves():
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', DeprecationWarning)
         unresolvable = [name for name in dir(nn) if not hasattr(nn, name)]
-    assert not unresolvable, f'advertised by __dir__ but not gettable: {unresolvable}'
+    assert not unresolvable, f'Advertised by __dir__ but not gettable: {unresolvable}. Update the fixture or expected result to satisfy this assertion.'
 
 
 # ===========================================================================
@@ -216,10 +216,10 @@ def test_from_import_of_an_unknown_name_raises_import_error():
 @pytest.mark.parametrize(
     'name',
     [
-        '__wrapped__',  # probed by inspect.signature / functools
-        '__deepcopy__',  # probed by copy.deepcopy
-        '__setstate__',  # probed by pickle (``object`` provides no default)
-        '_ipython_canary_method_should_not_exist_',  # probed by IPython completion
+        '__wrapped__',  # Probed by inspect.signature / functools
+        '__deepcopy__',  # Probed by copy.deepcopy
+        '__setstate__',  # Probed by pickle (``object`` provides no default)
+        '_ipython_canary_method_should_not_exist_',  # Probed by IPython completion
     ],
 )
 def test_dunder_and_private_probes_raise(name):

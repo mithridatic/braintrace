@@ -19,13 +19,13 @@ The parameter-dimension VJP algorithm is an *exact* online estimator: its
 total-sequence gradient via the multi-step VJP path must reproduce BPTT
 element-wise. Coverage:
 
-* construction & validation (vjp_method, fast_solve, trace_dtype, D_RTRL alias);
-* eligibility-trace state lifecycle (compile / init / reset / get_etrace_of);
-* forward / update mechanics (shapes, running index, trace evolution);
-* gradient correctness — exact match to BPTT across the model zoo, and the
+* Construction & validation (vjp_method, fast_solve, trace_dtype, D_RTRL alias);
+* Eligibility-trace state lifecycle (compile / init / reset / get_etrace_of);
+* Forward / update mechanics (shapes, running index, trace evolution);
+* Gradient correctness — exact match to BPTT across the model zoo, and the
   fast-solve path numerically identical to the legacy nested-vmap path;
-* reduced-precision (``trace_dtype``) storage; and
-* the pure module helpers (``_cast_to_dtype``, ``_remove_units``).
+* Reduced-precision (``trace_dtype``) storage; and
+* The pure module helpers (``_cast_to_dtype``, ``_remove_units``).
 """
 
 import brainstate
@@ -186,7 +186,7 @@ class TestStateLifecycle:
         model = _build(om.tanh_rnn)
         algo = _compiled(model)
         with pytest.raises(ValueError):
-            algo.get_etrace_of(model.win)  # plain projection, not an ETP relation
+            algo.get_etrace_of(model.win)  # Plain projection, not an ETP relation
 
     def test_get_etrace_of_before_compile_raises(self):
         model = _build(om.tanh_rnn)
@@ -384,7 +384,7 @@ class TestTraceDtypeGateMatchesRuntimePredicate:
             assert bool(jnp.all(jnp.isfinite(u.get_mantissa(leaf))))
 
     def test_fast_solve_true_with_weight_fn_runs(self):
-        # fp exists for etp_mm_p, but weight_fn makes fp.applicable False ->
+        # Fp exists for etp_mm_p, but weight_fn makes fp.applicable False ->
         # use_fast is False at runtime despite fast_solve=True.
         self._run(fast_solve=True)
 
@@ -513,7 +513,7 @@ class TestHelpers:
             assert u.get_mantissa(leaf).dtype == jnp.bfloat16
 
     def test_cast_to_dtype_handles_quantity_leaf(self):
-        # "unit-safe" means casting a unit-carrying leaf does not crash; the
+        # "Unit-safe" means casting a unit-carrying leaf does not crash; the
         # mantissa is still cast to the requested dtype.
         tree = {'w': jnp.ones((2,)) * u.mV}
         out = _cast_to_dtype(tree, jnp.bfloat16)
@@ -748,7 +748,7 @@ class TestInstantSolveDrtrlDispatch:
 
         assert seen_weight_keys and all(
             keys == ('weight',) for keys in seen_weight_keys
-        ), f'solve rule saw unexpected weights_dict keys: {seen_weight_keys}'
+        ), f'Solve rule saw unexpected weights_dict keys: {seen_weight_keys}. Use the expected value or update the contract.'
         oracle.assert_param_gradients_close(routed, baseline, atol=0.0, rtol=0.0)
 
     def test_fast_path_precedence_over_registered_rules(self):
@@ -766,7 +766,7 @@ class TestInstantSolveDrtrlDispatch:
 
         def _must_not_run(*args, **kwargs):
             raise AssertionError(
-                'instant/solve drtrl rule invoked despite the fast path'
+                'Instant/solve drtrl rule invoked despite the fast path. Update the fixture or expected result to satisfy this assertion.'
             )
 
         baseline = self._grads(spec, inputs, fast_solve=True)
@@ -852,7 +852,7 @@ def _chunk_assert_grads_close(ga, gb, rtol=1e-4, atol=1e-6):
     assert ta == tb
     for a, b in zip(la, lb):
         assert jnp.allclose(a, b, rtol=rtol, atol=atol), (
-            f'max abs diff {jnp.max(jnp.abs(a - b))}')
+            f'Max abs diff {jnp.max(jnp.abs(a - b))}. Update the fixture or expected result to satisfy this assertion.')
 
 
 class TestChunkedTraceEquivalence:
@@ -866,7 +866,7 @@ class TestChunkedTraceEquivalence:
         for a, b in zip(_chunk_trace_leaves_sorted(lc), _chunk_trace_leaves_sorted(ll)):
             assert a.shape == b.shape
             assert jnp.allclose(a, b, rtol=1e-4, atol=1e-6), (
-                f'max abs diff {jnp.max(jnp.abs(a - b))}')
+                f'Max abs diff {jnp.max(jnp.abs(a - b))}. Update the fixture or expected result to satisfy this assertion.')
 
     def test_gru_two_window_gradients_match_legacy(self):
         brainstate.random.seed(43)
@@ -878,7 +878,7 @@ class TestChunkedTraceEquivalence:
         gc1, gc2 = _chunk_two_window_grads(mc, lc, xs1, xs2, ys)
         gl1, gl2 = _chunk_two_window_grads(ml, ll, xs1, xs2, ys)
         _chunk_assert_grads_close(gc1, gl1)
-        # window 2 exposes trace-roll differences (window-1 trace feeds it)
+        # Window 2 exposes trace-roll differences (window-1 trace feeds it)
         _chunk_assert_grads_close(gc2, gl2)
 
     def test_mixed_partition_masked_readout_matches_legacy(self):
@@ -990,6 +990,6 @@ class TestOuterWriteExactTrace:
         )
         for name in ('key_weight', 'key_bias', 'value_weight'):
             moved = [key for key in grads if name in str(key)]
-            assert moved, f'{name} missing from D-RTRL gradients'
+            assert moved, f'{name} missing from D-RTRL gradients. Add {name} to D-RTRL gradients.'
             for key in moved:
                 assert bool(jnp.all(jnp.isfinite(jnp.asarray(grads[key]))))

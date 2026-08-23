@@ -17,9 +17,9 @@
 
 All names re-exported here are deprecated in v0.2.0. Each class either:
 
-* routes through the new ETP primitive user-API (``ETraceParam`` +
+* Routes through the new ETP primitive user-API (``ETraceParam`` +
   :class:`MatMulOp` / :class:`ConvOp` / ...), or
-* uses plain JAX ops so the compiler does not register a relation
+* Uses plain JAX ops so the compiler does not register a relation
   (``NonTempParam``, ``FakeETraceParam``, ``FakeElemWiseParam``).
 
 Importing any of these names triggers a :class:`DeprecationWarning`
@@ -45,20 +45,20 @@ from ._params import (
 )
 
 __all__ = [
-    # params
+    # Params
     'ETraceParam',
     'ElemWiseParam',
     'NonTempParam',
     'FakeETraceParam',
     'FakeElemWiseParam',
-    # ops
+    # Ops
     'ETraceOp',
     'MatMulOp',
     'ElemWiseOp',
     'ConvOp',
     'SpMatMulOp',
     'LoraOp',
-    # utilities
+    # Utilities
     'general_y2w',
     'stop_param_gradients',
 ]

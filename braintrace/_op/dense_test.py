@@ -23,7 +23,7 @@ Coverage:
   assumes a ``(batch, in)`` layout); rank 1 / 2 remain accepted.
 * Forward correctness — agrees with ``x @ w (+ b)``.
 * Bias presence — ``has_bias`` parameter is propagated through ``bind``.
-* brainunit support — quantities, mixed units, unitless inputs.
+* Brainunit support — quantities, mixed units, unitless inputs.
 * JAX rules — jit, vmap, grad, jvp work with no extra plumbing.
 * Four ETP rules — ``dt_to_t``, ``xy_to_dw``, ``init_drtrl``, ``init_pp``
   return tensors of the documented shape and value.
@@ -216,7 +216,7 @@ class TestJAXRules:
         x = jnp.ones((2, 3))
         w = jnp.arange(12.0).reshape(3, 4)
         gw = jax.grad(lambda w_: matmul(x, w_).sum())(w)
-        # d(sum(x@w))/dw = x.T @ ones(2, 4) = sum(x, axis=0)[:, None] * ones((1,4))
+        # D(sum(x@w))/dw = x.T @ ones(2, 4) = sum(x, axis=0)[:, None] * ones((1,4))
         expected = x.sum(axis=0)[:, None] * jnp.ones((1, 4))
         np.testing.assert_allclose(gw, expected)
 
@@ -224,7 +224,7 @@ class TestJAXRules:
         x = jnp.arange(6.0).reshape(2, 3)
         w = jnp.ones((3, 4))
         gx = jax.grad(lambda x_: matmul(x_, w).sum())(x)
-        # d(sum(x@w))/dx = ones(2,4) @ w.T
+        # D(sum(x@w))/dx = ones(2,4) @ w.T
         expected = jnp.ones((2, 4)) @ w.T
         np.testing.assert_allclose(gx, expected)
 
@@ -244,7 +244,7 @@ class TestMmEtpRules:
         Correct for non-square (in != out)."""
         rule = ETP_RULES_DT_TO_T[etp_mm_p]
         in_dim, out_dim = 5, 3
-        hidden = jnp.array([1.0, 2.0, 3.0])  # (out,)
+        hidden = jnp.array([1.0, 2.0, 3.0])  # (Out,)
         trace = {'weight': jnp.ones((in_dim, out_dim))}
         out = rule(hidden, trace)
         assert isinstance(out, dict)
@@ -258,10 +258,10 @@ class TestMmEtpRules:
         """When has_bias=True, ``dt_to_t`` also scales ``trace['bias']``."""
         rule = ETP_RULES_DT_TO_T[etp_mm_p]
         in_dim, out_dim = 5, 4
-        hidden = jnp.array([1.0, 2.0, 3.0, 4.0])  # (out,)
+        hidden = jnp.array([1.0, 2.0, 3.0, 4.0])  # (Out,)
         trace = {
-            'weight': jnp.ones((in_dim, out_dim)),  # (in, out)
-            'bias': jnp.ones((out_dim,)),  # (out,)
+            'weight': jnp.ones((in_dim, out_dim)),  # (In, out)
+            'bias': jnp.ones((out_dim,)),  # (Out,)
         }
         out = rule(hidden, trace, has_bias=True)
         assert isinstance(out, dict)
@@ -292,12 +292,12 @@ class TestMmEtpRules:
         assert isinstance(dw_dict, dict)
         assert 'weight' in dw_dict
         assert 'bias' in dw_dict
-        # db = sum of hidden over batch axis = ones(4)
+        # Db = sum of hidden over batch axis = ones(4)
         np.testing.assert_allclose(dw_dict['bias'], hidden.sum(axis=0))
 
     def test_init_drtrl_shape(self):
         rule = ETP_RULES_INIT_DRTRL[etp_mm_p]
-        x_var = _fake_var((4, 3))  # (batch, in)
+        x_var = _fake_var((4, 3))  # (Batch, in)
         y_var = _fake_var((4, 5))
         weight_vars = {'weight': _fake_var((3, 5))}
         out = rule(x_var, y_var, weight_vars, num_hidden_state=2)
@@ -329,12 +329,12 @@ class TestMvEtpRules:
         """``dt_to_t`` multiplies ``trace['weight']`` by ``hidden`` broadcast
         along the column axis. The rule accepts and returns a dict."""
         rule = ETP_RULES_DT_TO_T[etp_mv_p]
-        hidden = jnp.array([1.0, 2.0, 3.0, 4.0])  # (out,)
-        trace = {'weight': jnp.ones((3, 4))}  # (in, out)
+        hidden = jnp.array([1.0, 2.0, 3.0, 4.0])  # (Out,)
+        trace = {'weight': jnp.ones((3, 4))}  # (In, out)
         out = rule(hidden, trace)
         assert isinstance(out, dict)
         assert out['weight'].shape == (3, 4)
-        # column j scaled by hidden[j]
+        # Column j scaled by hidden[j]
         np.testing.assert_allclose(out['weight'], jnp.ones((3, 4)) * hidden[None, :])
 
     def test_dt_to_t_with_bias(self):
@@ -369,7 +369,7 @@ class TestMvEtpRules:
         assert isinstance(dw_dict, dict)
         assert 'weight' in dw_dict
         assert 'bias' in dw_dict
-        # db = hidden (unbatched VJP)
+        # Db = hidden (unbatched VJP)
         np.testing.assert_allclose(dw_dict['bias'], hidden)
 
     def test_init_drtrl_shape(self):
@@ -461,7 +461,7 @@ class TestMMBiasGradient:
         # Its value is a dict {'weight': ..., 'bias': ...}
         grad_p = list(grads_etrace.values())[0]
         assert isinstance(grad_p, dict), (
-            f'Expected dict gradient for merged ParamState, got {type(grad_p)}'
+            f'Expected dict gradient for merged ParamState, got {type(grad_p)}. Return the expected value for the reported field.'
         )
 
         # --- BPTT reference ---
@@ -497,7 +497,7 @@ class TestMMNonSquareWeight:
         trace_weight = jnp.arange(in_dim * out_dim, dtype=jnp.float32).reshape(
             in_dim, out_dim
         )
-        hidden_dim = jnp.array([1.0, 2.0, 3.0])  # (out,)
+        hidden_dim = jnp.array([1.0, 2.0, 3.0])  # (Out,)
 
         out = _mm_dt_to_t(hidden_dim, {'weight': trace_weight}, has_bias=False)
 
@@ -574,7 +574,7 @@ class TestSeparateParamStateBias:
         leaves = jax.tree.leaves(grads_etrace)
         shapes = sorted(leaf.shape for leaf in leaves)
         assert shapes == [(4,), (4, 4)], (
-            f'Expected two gradient leaves with shapes [(4,), (4, 4)], got {shapes}'
+            f'Expected two gradient leaves with shapes [(4,), (4, 4)], got {shapes}. Return the expected value for the reported field.'
         )
 
         w_leaf = next(l for l in leaves if l.shape == (4, 4))
@@ -587,7 +587,7 @@ class TestSeparateParamStateBias:
 
 
 class TestWeightFnBiasFn:
-    """y = x @ weight_fn(w) (+ bias_fn(b)); gradient stays w.r.t. raw w/b."""
+    """Y = x @ weight_fn(w) (+ bias_fn(b)); gradient stays w.r.t. raw w/b."""
 
     def test_forward_applies_weight_fn(self):
         x = brainstate.random.randn(2, 3)
@@ -660,7 +660,7 @@ class TestMatmulWeightFnExactness:
                 self.h = brainstate.HiddenState(jnp.zeros((1, 4)))
 
             def update(self, x):
-                # x arrives as (n_in,) from for_loop; reshape to (1, n_in) for batch compat
+                # X arrives as (n_in,) from for_loop; reshape to (1, n_in) for batch compat
                 xh = jnp.concatenate([x.reshape(1, -1), self.h.value], axis=-1)
                 self.h.value = jnp.tanh(matmul(xh, self.W.value, weight_fn=weight_fn))
                 return self.h.value
@@ -734,7 +734,7 @@ class TestDenseFastPath:
 
     def test_fast_applicable_false_with_bias_fn(self):
         # bias_fn set, weight_fn None -> still False (locks the AND-both rule:
-        # any transform hook disables the fast path, even a bias-only one).
+        # Any transform hook disables the fast path, even a bias-only one).
         rules = get_fast_path_rules(etp_mm_p)
         assert rules.applicable(
             {'weight_fn': None, 'bias_fn': u.math.abs, 'has_bias': True}
@@ -821,8 +821,8 @@ class TestDtToTFirstPrinciplesFromJacobian:
         w0 = brainstate.random.randn(n_in, n_out)
         b0 = brainstate.random.randn(n_out)
 
-        J_w = jax.jacobian(lambda w: x @ w)(w0)  # (batch, out, in, out)
-        J_b = jax.jacobian(lambda b: x @ w0 + b)(b0)  # (batch, out, out)
+        J_w = jax.jacobian(lambda w: x @ w)(w0)  # (Batch, out, in, out)
+        J_b = jax.jacobian(lambda b: x @ w0 + b)(b0)  # (Batch, out, out)
 
         # Structural fact relied on by the rule: both Jacobians are diagonal
         # in the two "out" axes.
@@ -862,13 +862,13 @@ class TestDtToTFirstPrinciplesFromJacobian:
     def test_mv_dt_to_t_weight_and_bias_match_jacobian_contraction(self):
         from braintrace._op.dense import _mv_dt_to_t
         brainstate.random.seed(302)
-        n_in, n_out = 3, 5  # non-square
+        n_in, n_out = 3, 5  # Non-square
         x = brainstate.random.randn(n_in)
         w0 = brainstate.random.randn(n_in, n_out)
         b0 = brainstate.random.randn(n_out)
 
-        J_w = jax.jacobian(lambda w: x @ w)(w0)  # (out, in, out)
-        J_b = jax.jacobian(lambda b: x @ w0 + b)(b0)  # (out, out)
+        J_w = jax.jacobian(lambda w: x @ w)(w0)  # (Out, in, out)
+        J_b = jax.jacobian(lambda b: x @ w0 + b)(b0)  # (Out, out)
 
         for o in range(n_out):
             for o2 in range(n_out):
@@ -916,7 +916,7 @@ class TestDenseFastChunk:
         x = brainstate.random.normal(size=(T, B, I))
         df = brainstate.random.normal(size=(T, B, O, S))
         diag = brainstate.random.uniform(0.3, 1.0, (T, B, O, S, S))
-        diag = diag.at[3].set(0.0)  # zero-decay step
+        diag = diag.at[3].set(0.0)  # Zero-decay step
         init = {
             'weight': brainstate.random.normal(size=(B, I, O, S)),
             'bias': brainstate.random.normal(size=(B, O, S)),

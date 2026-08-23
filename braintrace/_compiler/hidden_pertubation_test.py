@@ -148,7 +148,7 @@ class TestPerturbationRobustness:
         b = jnp.asarray([10.0, 20.0, 30.0])
         closed = jax.make_jaxpr(f)(a, b)
         (eqn,) = closed.jaxpr.eqns
-        assert len(eqn.outvars) == 2, 'expected a single multi-output eqn'
+        assert len(eqn.outvars) == 2, 'Expected a single multi-output eqn. Update the fixture or expected result to satisfy this assertion.'
         h1, h2 = closed.jaxpr.outvars
         a_in, b_in = closed.jaxpr.invars
 
@@ -235,7 +235,7 @@ class TestPerturbationRobustness:
             return a * 2.0
 
         closed = jax.make_jaxpr(f)(jnp.ones(3))
-        assert closed.jaxpr.effects, 'fixture must carry at least one effect'
+        assert closed.jaxpr.effects, 'Fixture must carry at least one effect. Make Fixture carry at least one effect.'
         h = closed.jaxpr.outvars[0]
         a_in = closed.jaxpr.invars[0]
 
@@ -301,7 +301,7 @@ class TestWhileDetach:
         eqns = perturb.perturb_jaxpr.jaxpr.eqns
         names = [e.primitive.name for e in eqns]
 
-        # one stop_gradient per Var invar, all before the while
+        # One stop_gradient per Var invar, all before the while
         assert names.count('stop_gradient') == n_var_invars
         sg_outs = {
             e.outvars[0] for e in eqns if e.primitive.name == 'stop_gradient'
@@ -309,10 +309,10 @@ class TestWhileDetach:
         (new_while,) = [e for e in eqns if e.primitive.name == 'while']
         var_invars = [v for v in new_while.invars if isinstance(v, Var)]
         assert all(v in sg_outs for v in var_invars), (
-            'the while must consume ONLY detached copies of its Var inputs'
+            'The while must consume ONLY detached copies of its Var inputs. Make the while consume ONLY detached copies of its Var inputs.'
         )
 
-        # the hidden slot is redirected to a fresh var, and an add re-defines
+        # The hidden slot is redirected to a fresh var, and an add re-defines
         # the ORIGINAL hidden outvar (so downstream eqns keep their reference)
         assert h_out not in new_while.outvars
         (add_eqn,) = [
@@ -322,7 +322,7 @@ class TestWhileDetach:
         assert add_eqn.invars[0] in set(new_while.outvars)
         assert add_eqn.invars[1] in set(perturb.perturb_vars)
 
-        # downstream consumer (reduce_sum) still consumes the original var
+        # Downstream consumer (reduce_sum) still consumes the original var
         (sum_eqn,) = [e for e in eqns if e.primitive.name == 'reduce_sum']
         assert h_out in sum_eqn.invars
 
@@ -340,14 +340,14 @@ class TestWhileDetach:
 
         p0 = jnp.zeros_like(h0)
         _, f_vjp = jax.vjp(eval_loss, h0, p0)
-        # the load-bearing property: tracing f_vjp must not hit
+        # The load-bearing property: tracing f_vjp must not hit
         # "Reverse-mode differentiation does not work for lax.while_loop"
         jax.make_jaxpr(f_vjp)(jnp.ones(()))
 
         dh0, dp = f_vjp(jnp.ones(()))
         # L = sum(while(...) + p): dL/dp is exactly ones
         np.testing.assert_allclose(np.asarray(dp), np.ones_like(h0), rtol=1e-6)
-        # the loop inputs are detached, so the reverse signal into h0 is zero
+        # The loop inputs are detached, so the reverse signal into h0 is zero
         # (temporal credit flows via the forward-computed D^t instead)
         np.testing.assert_allclose(np.asarray(dh0), np.zeros_like(h0))
 
@@ -377,7 +377,7 @@ class TestWhileDetach:
         )
 
         def f(h_prev, x):
-            # the while computes an auxiliary value; the hidden state is
+            # The while computes an auxiliary value; the hidden state is
             # produced by a plain tanh equation
             def body(s):
                 i, v = s

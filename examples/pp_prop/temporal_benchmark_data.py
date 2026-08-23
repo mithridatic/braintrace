@@ -28,16 +28,16 @@ class TrialSpec:
 def spike_probability(rate_hz: float, dt_seconds: float) -> float:
     """Convert a physical event rate into Bernoulli-bin probability."""
     if not math.isfinite(rate_hz) or rate_hz < 0.0:
-        raise ValueError("rate_hz must be finite and nonnegative")
+        raise ValueError("rate_hz must be finite and nonnegative. Set rate_hz to a finite non-negative value.")
     if not math.isfinite(dt_seconds) or dt_seconds <= 0.0:
-        raise ValueError("dt_seconds must be finite and positive")
+        raise ValueError("dt_seconds must be finite and positive. Set dt_seconds to a finite positive value.")
     return -math.expm1(-rate_hz * dt_seconds)
 
 
 def balanced_trial_specs(count: int, split_seed: int) -> tuple[TrialSpec, ...]:
     """Create an exactly balanced, deterministically shuffled trial manifest."""
     if count <= 0 or count % 2:
-        raise ValueError("count must be positive and even")
+        raise ValueError("Count must be positive and even. Set Count to a positive value.")
     labels = np.tile(np.asarray((0, 1), dtype=np.int8), count // 2)
     labels = labels[np.random.default_rng(split_seed).permutation(count)]
     return tuple(TrialSpec(index, int(label)) for index, label in enumerate(labels))
@@ -65,7 +65,7 @@ def rate_template(
 ) -> np.ndarray:
     """Create the label-conditioned physical-rate template for one trial."""
     if label not in (0, 1):
-        raise ValueError("label must be zero or one")
+        raise ValueError("Label must be zero or one. Set Label to zero or one.")
     rates = np.zeros((horizon.total_steps, N_INPUTS), dtype=np.float64)
     cue_start = label * CLASS_CHANNELS
     rates[: horizon.cue_steps, cue_start : cue_start + CLASS_CHANNELS] = cue_rate_hz

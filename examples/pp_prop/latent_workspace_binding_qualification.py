@@ -81,7 +81,7 @@ class SyntheticBindingCase:
     ----------
     name
         Stable family name used in the report.
-    task
+    Task
         Two-demonstration ARC task with one scored query.
     """
 
@@ -90,9 +90,9 @@ class SyntheticBindingCase:
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name:
-            raise ValueError("SyntheticBindingCase.name must be non-empty")
+            raise ValueError("SyntheticBindingCase.name must be non-empty. Provide at least one value for SyntheticBindingCase.name.")
         if not isinstance(self.task, ArcTask):
-            raise TypeError("SyntheticBindingCase.task must be an ArcTask")
+            raise TypeError("SyntheticBindingCase.task must be an ArcTask. Set SyntheticBindingCase.task to an ArcTask.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,7 +115,7 @@ class BindingQualificationConfig:
         Positive learned readout bottleneck width.
     context_memory_width
         Positive associative workspace width.
-    seed
+    Seed
         Non-negative deterministic initialization seed.
     """
 
@@ -138,25 +138,25 @@ class BindingQualificationConfig:
         ):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, Integral):
-                raise ValueError(f"{name} must be a positive integer")
+                raise ValueError(f"{name} must be a positive integer. Set {name} to a positive integer.")
             value = int(value)
             if value <= 0:
-                raise ValueError(f"{name} must be a positive integer")
+                raise ValueError(f"{name} must be a positive integer. Set {name} to a positive integer.")
             object.__setattr__(self, name, value)
         if self.neuron_count % 64:
-            raise ValueError("neuron_count must be divisible by 64")
+            raise ValueError("neuron_count must be divisible by 64. Set neuron_count to a value divisible by 64.")
         if isinstance(self.seed, bool) or not isinstance(self.seed, Integral):
-            raise ValueError("seed must be a non-negative integer")
+            raise ValueError("Seed must be a non-negative integer. Set Seed to a non-negative integer.")
         if int(self.seed) < 0:
-            raise ValueError("seed must be a non-negative integer")
+            raise ValueError("Seed must be a non-negative integer. Set Seed to a non-negative integer.")
         object.__setattr__(self, "seed", int(self.seed))
         for name in ("learning_rate", "clip_norm"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, Real):
-                raise ValueError(f"{name} must be a positive finite real")
+                raise ValueError(f"{name} must be a positive finite real. Set {name} to a positive finite real.")
             value = float(value)
             if not math.isfinite(value) or value <= 0.0:
-                raise ValueError(f"{name} must be a positive finite real")
+                raise ValueError(f"{name} must be a positive finite real. Set {name} to a positive finite real.")
             object.__setattr__(self, name, value)
 
 
@@ -314,7 +314,7 @@ def _binding_batch(
         encoded = encode_query_episode(case.task, 0, rows, task_index=case_index)
         target = encoded.target
         if target is None:
-            raise ValueError(f"synthetic case {case.name} has no target")
+            raise ValueError(f"Synthetic case {case.name} has no target. Provide the missing item named in the message.")
         events[: rows.max_events, case_index] = encoded.events
         advances[: rows.max_events, case_index] = (
             encoded.events[:, rows.valid_slice.start] > 0.5
@@ -470,7 +470,7 @@ def _parameter_movement(
     before: dict[str, Any], after: dict[str, Any]
 ) -> dict[str, object]:
     if before.keys() != after.keys():
-        raise ValueError("parameter paths changed during qualification")
+        raise ValueError("Parameter paths changed during qualification. Fix the input condition named in the error, then rerun the operation.")
     changed_paths: list[str] = []
     squared_delta = 0.0
     for path in before:
@@ -478,7 +478,7 @@ def _parameter_movement(
         after_leaves = jax.tree.leaves(after[path])
         if len(before_leaves) != len(after_leaves):
             raise ValueError(
-                f"parameter structure changed during qualification: {path}"
+                f"Parameter structure changed during qualification: {path}. Fix the input condition named in the error, then rerun the operation."
             )
         changed = False
         for before_leaf, after_leaf in zip(before_leaves, after_leaves, strict=True):
@@ -555,7 +555,7 @@ def run_binding_qualification(
 
     config = config or BindingQualificationConfig()
     if not isinstance(config, BindingQualificationConfig):
-        raise TypeError("config must be a BindingQualificationConfig")
+        raise TypeError("Config must be a BindingQualificationConfig. Set Config to a BindingQualificationConfig.")
     cases = synthetic_binding_tasks()
     rows = RowEventConfig(max_demonstrations=2)
     batch = _binding_batch(cases, rows)
@@ -653,6 +653,6 @@ def require_binding_qualification(
     if not report["qualified"]:
         violations = ", ".join(str(item) for item in report["violations"])
         raise BindingQualificationError(
-            f"synthetic row-binding qualification failed: {violations}"
+            f"Synthetic row-binding qualification failed: {violations}. Correct the reported inputs, then retry the operation."
         )
     return report

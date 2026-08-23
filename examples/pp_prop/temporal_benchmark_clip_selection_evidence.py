@@ -28,19 +28,19 @@ def _winner(value: object, group: str) -> float | None:
         or winner.get("rank") != 1
         or winner.get("rejection_reasons") != []
     ):
-        raise FreezeArtifactError(f"clip-search {group} winner is not accepted")
+        raise FreezeArtifactError(f"Clip-search {group} winner is not accepted. Fix the input condition named in the error, then rerun the operation.")
     scores = winner.get("bundle_scores")
     if not isinstance(scores, list):
-        raise FreezeArtifactError(f"clip-search {group} bundle scores are missing")
+        raise FreezeArtifactError(f"Clip-search {group} bundle scores are missing. Provide the missing value or resource, then rerun the operation.")
     bundle_ids = [
         require_mapping(item, f"clip_search.{group}.score").get("bundle_id")
         for item in scores
     ]
     if bundle_ids != list(DEVELOPMENT_BUNDLES):
-        raise FreezeArtifactError(f"clip-search {group} bundle scores drifted")
+        raise FreezeArtifactError(f"Clip-search {group} bundle scores drifted. Fix the input condition named in the error, then rerun the operation.")
     selected = winner.get("selected_clip_norm")
     if isinstance(selected, bool) or selected not in CLIP_CANDIDATES:
-        raise FreezeArtifactError(f"clip-search {group} winner norm is invalid")
+        raise FreezeArtifactError(f"Clip-search {group} winner norm is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return None if selected is None else float(selected)
 
 
@@ -54,26 +54,26 @@ def validate_clip_search_evidence(
     ensure_finite_tree(document, "clip_search")
     validate_header(document, "temporal_credit_clip_search_selection")
     if document.get("status") != "completed":
-        raise FreezeArtifactError("clip-search selection did not complete")
+        raise FreezeArtifactError("Clip-search selection did not complete. Fix the input condition named in the error, then rerun the operation.")
     provenance = validate_decision_provenance(document, "clip_search")
     source_provenance = require_mapping(source["provenance"], "source.provenance")
     for name in ("source_commit", "source_dirty"):
         if provenance[name] != source_provenance[name]:
-            raise FreezeArtifactError(f"clip-search {name} drifted")
+            raise FreezeArtifactError(f"Clip-search {name} drifted. Fix the input condition named in the error, then rerun the operation.")
     construction = require_mapping(source["construction"], "source.construction")
     for name in ("device", "neurons", "degree", "batch_size"):
         if provenance[name] != construction[name]:
-            raise FreezeArtifactError(f"clip-search construction {name} drifted")
+            raise FreezeArtifactError(f"Clip-search construction {name} drifted. Fix the input condition named in the error, then rerun the operation.")
     if document.get("selected_config") != source["selected_config"]:
-        raise FreezeArtifactError("clip-search selected configuration drifted")
+        raise FreezeArtifactError("Clip-search selected configuration drifted. Fix the input condition named in the error, then rerun the operation.")
     groups = require_mapping(document.get("groups"), "clip_search.groups")
     if set(groups) != set(triggered_groups):
-        raise FreezeArtifactError("clip-search groups do not match triggered groups")
+        raise FreezeArtifactError("Clip-search groups do not match triggered groups. Fix the input condition named in the error, then rerun the operation.")
     selected: dict[str, float | None] = {}
     for group in triggered_groups:
         group_evidence = require_mapping(groups[group], f"clip_search.groups.{group}")
         if group_evidence.get("candidates") != CLIP_CANDIDATES:
-            raise FreezeArtifactError(f"clip-search {group} candidates are incomplete")
+            raise FreezeArtifactError(f"Clip-search {group} candidates are incomplete. Fix the input condition named in the error, then rerun the operation.")
         selected[group] = _winner(group_evidence.get("winner"), group)
     reference = artifact_reference(path, document)
     reference["container_image_digest"] = provenance["container_image_digest"]

@@ -117,19 +117,19 @@ _MAPPING_COUNT = len(_INPUT_SETS) * len(_OUTPUT_ASSIGNMENTS)
 
 def _positive_int(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, int):
-        raise TypeError(f"{name} must be a positive non-boolean integer")
+        raise TypeError(f"{name} must be a positive non-boolean integer. Set {name} to a positive non-boolean integer.")
     result = int(value)
     if result <= 0:
-        raise ValueError(f"{name} must be a positive non-boolean integer")
+        raise ValueError(f"{name} must be a positive non-boolean integer. Set {name} to a positive non-boolean integer.")
     return result
 
 
 def _finite_positive(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float)):
-        raise TypeError(f"{name} must be a finite positive scalar")
+        raise TypeError(f"{name} must be a finite positive scalar. Set {name} to a finite positive scalar.")
     result = float(value)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError(f"{name} must be a finite positive scalar")
+        raise ValueError(f"{name} must be a finite positive scalar. Set {name} to a finite positive scalar.")
     return result
 
 
@@ -212,9 +212,9 @@ class BindingControlConfig:
         ):
             value = getattr(self, name)
             if isinstance(value, (bool, np.bool_)) or not isinstance(value, int):
-                raise TypeError(f"{name} must be a nonnegative integer")
+                raise TypeError(f"{name} must be a nonnegative integer. Set {name} to a nonnegative integer.")
             if value < 0:
-                raise ValueError(f"{name} must be a nonnegative integer")
+                raise ValueError(f"{name} must be a nonnegative integer. Set {name} to a nonnegative integer.")
             object.__setattr__(self, name, int(value))
         for name in (
             "input_gain",
@@ -226,27 +226,27 @@ class BindingControlConfig:
         if isinstance(self.trace_decay, (bool, np.bool_)) or not isinstance(
             self.trace_decay, (int, float)
         ):
-            raise TypeError("trace_decay must be a finite scalar in [0, 1)")
+            raise TypeError("trace_decay must be a finite scalar in [0, 1). Set trace_decay to a finite scalar in [0, 1).")
         decay = float(self.trace_decay)
         if not math.isfinite(decay) or not 0.0 <= decay < 1.0:
-            raise ValueError("trace_decay must be a finite scalar in [0, 1)")
+            raise ValueError("trace_decay must be a finite scalar in [0, 1). Set trace_decay to a finite scalar in [0, 1).")
         object.__setattr__(self, "trace_decay", decay)
         if self.neuron_count % 64:
-            raise ValueError("neuron_count must be divisible by 64")
+            raise ValueError("neuron_count must be divisible by 64. Set neuron_count to a value divisible by 64.")
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
-            raise ValueError("recurrent_edges exceeds the no-self-edge capacity")
+            raise ValueError("recurrent_edges exceeds the no-self-edge capacity. Set the named field to a value in the stated range, then rerun the operation.")
         if self.training_episode_count + self.validation_episodes > _MAPPING_COUNT:
             raise ValueError(
-                f"requested episodes exceed the unique K={SYMBOL_COUNT} mapping catalog"
+                f"Requested episodes exceed the unique K={SYMBOL_COUNT} mapping catalog. Set the named field to a value in the stated range, then rerun the operation."
             )
         if self.validation_episodes > self.training_episode_count:
             raise ValueError(
-                "validation_episodes cannot exceed the fixed training-probe pool"
+                "validation_episodes cannot exceed the fixed training-probe pool. Fix the input condition named in the error, then rerun the operation."
             )
         if self.gradient_chunk_size >= self.sequence_length:
-            raise ValueError("gradient_chunk_size must be shorter than the sequence")
+            raise ValueError("gradient_chunk_size must be shorter than the sequence. Set gradient_chunk_size to shorter than the sequence.")
         if self.sparse_backend is not None and not isinstance(self.sparse_backend, str):
-            raise TypeError("sparse_backend must be a string or None")
+            raise TypeError("sparse_backend must be a string or None. Set sparse_backend to a string or None.")
 
     @property
     def symbol_count(self) -> int:
@@ -466,13 +466,13 @@ def build_binding_data(config: BindingControlConfig) -> BindingData:
     """
 
     if not isinstance(config, BindingControlConfig):
-        raise TypeError("config must be a BindingControlConfig")
+        raise TypeError("Config must be a BindingControlConfig. Set Config to a BindingControlConfig.")
     total = config.training_episode_count + config.validation_episodes
     all_ids = _affine_mapping_ids(total, seed=config.split_seed)
     train_ids = all_ids[: config.training_episode_count]
     validation_ids = all_ids[config.training_episode_count :]
     if np.intersect1d(train_ids, validation_ids).size:
-        raise RuntimeError("training and validation mapping ranges overlap")
+        raise RuntimeError("Training and validation mapping ranges overlap. Fix the input condition named in the error, then rerun the operation.")
     train, train_targets, _, _, train_queries = _encode_mapping_episodes(
         train_ids,
         seed=config.train_episode_seed,
@@ -564,7 +564,7 @@ def _copy_parameters(
     source_states = source.states(brainstate.ParamState)
     target_states = target.states(brainstate.ParamState)
     if tuple(source_states.keys()) != tuple(target_states.keys()):
-        raise ValueError("parameter paths differ")
+        raise ValueError("Parameter paths differ. Use matching values and structures.")
     for source_state, target_state in zip(
         source_states.values(), target_states.values(), strict=True
     ):
@@ -605,7 +605,7 @@ def _parameter_movement(
     totals: dict[str, list[float]] = {}
     for path in before:
         if path not in after:
-            raise ValueError(f"parameter disappeared during training: {path}")
+            raise ValueError(f"Parameter disappeared during training: {path}. Fix the input condition named in the error, then rerun the operation.")
         group = _path_group(path)
         bucket = totals.setdefault(group, [0.0, 0.0])
         for old, new in zip(
@@ -771,7 +771,7 @@ def _train_pp_prop(
 
 def _wilson_interval(successes: int, count: int) -> tuple[float, float]:
     if count <= 0:
-        raise ValueError("count must be positive")
+        raise ValueError("Count must be positive. Set Count to a positive value.")
     z = 1.959963984540054
     p = successes / count
     denominator = 1.0 + z * z / count
@@ -1029,7 +1029,7 @@ def _gradient_oracle(data: BindingData, config: BindingControlConfig) -> dict[st
     bptt_flat = flat_gradient_leaves(bptt)
     pp_flat = flat_gradient_leaves(pp_prop)
     if set(bptt_flat) != set(pp_flat):
-        raise RuntimeError("BPTT and pp-prop gradient structures differ")
+        raise RuntimeError("BPTT and pp-prop gradient structures differ. Use matching values and structures.")
     groups = sorted({_path_group(label) for label in bptt_flat})
     by_group = {}
     for group in groups:
@@ -1190,7 +1190,7 @@ def run_binding_control(config: BindingControlConfig) -> dict[str, Any]:
     """
 
     if not isinstance(config, BindingControlConfig):
-        raise TypeError("config must be a BindingControlConfig")
+        raise TypeError("Config must be a BindingControlConfig. Set Config to a BindingControlConfig.")
     total_start = time.perf_counter()
     data_start = time.perf_counter()
     data = build_binding_data(config)
@@ -1205,7 +1205,7 @@ def run_binding_control(config: BindingControlConfig) -> dict[str, Any]:
     bptt_initial_digest = _array_digest(bptt_initial)
     pp_initial_digest = _array_digest(pp_initial)
     if bptt_initial_digest != pp_initial_digest:
-        raise RuntimeError("BPTT and pp-prop initializations are not byte-identical")
+        raise RuntimeError("BPTT and pp-prop initializations are not byte-identical. Fix the input condition named in the error, then rerun the operation.")
 
     bptt_training, _ = _train_bptt(bptt_model, data, config)
     pp_training, _ = _train_pp_prop(pp_model, data, config)

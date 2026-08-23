@@ -30,7 +30,7 @@ def _write_json(path: pathlib.Path, document: Mapping[str, object]) -> None:
 def _load_json(path: pathlib.Path) -> Mapping[str, object]:
     value = msgspec_json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, Mapping):
-        raise ValueError(f"JSON artifact must contain an object: {path}")
+        raise ValueError(f"JSON artifact must contain an object: {path}. Add an object: {path} to JSON artifact.")
     return value
 
 
@@ -39,7 +39,7 @@ def _sha256(value: str) -> str:
     if len(normalized) != 64 or any(
         character not in string.hexdigits for character in normalized
     ):
-        raise argparse.ArgumentTypeError("SHA-256 must contain exactly 64 hex digits")
+        raise argparse.ArgumentTypeError("SHA-256 must contain exactly 64 hex digits. Add exactly 64 hex digits to SHA-256.")
     return normalized
 
 
@@ -99,7 +99,7 @@ def _compare(values: argparse.Namespace) -> dict[str, object]:
     current_path = values.current.resolve()
     actual_baseline_hash = sha256_file(baseline_path)
     if actual_baseline_hash != values.baseline_sha256:
-        raise ValueError("baseline artifact does not match the pinned SHA-256")
+        raise ValueError("Baseline artifact does not match the pinned SHA-256. Use matching values and structures.")
     return compare_example15_runs(
         _load_json(baseline_path),
         _load_json(current_path),

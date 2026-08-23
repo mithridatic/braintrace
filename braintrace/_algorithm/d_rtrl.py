@@ -44,7 +44,7 @@ class D_RTRL(ParamDimVjpAlgorithm):
         \end{aligned}
 
     This formulation follows the D-RTRL estimator presented by Wang et al.
-    [1]_ and the original RTRL construction of Williams and Zipser [2]_.
+    [1]_ And the original RTRL construction of Williams and Zipser [2]_.
 
     Parameters
     ----------

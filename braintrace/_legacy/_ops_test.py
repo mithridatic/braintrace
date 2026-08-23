@@ -16,11 +16,11 @@
 """Smoke tests for the v0.1.x op compatibility shims.
 
 Coverage:
-* every legacy op constructs and executes forward.
+* Every legacy op constructs and executes forward.
 * ``MatMulOp.xw_to_y`` matches its raw forward.
-* the utility shims (``general_y2w``, ``stop_param_gradients``) work.
+* The utility shims (``general_y2w``, ``stop_param_gradients``) work.
 * ``DeprecationWarning`` fires on package-root op access.
-* every legacy op is re-exported at the package root.
+* Every legacy op is re-exported at the package root.
 """
 
 

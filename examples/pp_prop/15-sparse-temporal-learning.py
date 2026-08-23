@@ -33,7 +33,7 @@ def _load_sparse_example():
     path = pathlib.Path(__file__).resolve().with_name("09-operator-sparse.py")
     spec = importlib.util.spec_from_file_location("_pp_prop_sparse_operator", path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load sparse pp-prop operators from {path}")
+        raise ImportError(f"Cannot load sparse pp-prop operators from {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -78,30 +78,30 @@ class _RunConfig:
         }
         invalid = [name for name, value in positive.items() if value <= 0]
         if invalid:
-            raise ValueError(f"{', '.join(invalid)} must be positive")
+            raise ValueError(f"{', '.join(invalid)} must be positive. Set {', '.join(invalid)} to a positive value.")
         if self.seed < 0:
-            raise ValueError("seed must be non-negative")
+            raise ValueError("Seed must be non-negative. Set Seed to a non-negative value.")
         if self.degree > self.n_rec:
-            raise ValueError("degree must not exceed n_rec")
+            raise ValueError("Degree must not exceed n_rec. Set Degree to a value no greater than n_rec.")
         if self.final_window > self.n_step:
-            raise ValueError("final_window must not exceed n_step")
+            raise ValueError("final_window must not exceed n_step. Set final_window to a value no greater than n_step.")
         if isinstance(self.decay_or_rank, bool):
-            raise ValueError("decay_or_rank must be a float decay or integer rank")
+            raise ValueError("decay_or_rank must be a float decay or integer rank. Set decay_or_rank to a float decay or integer rank.")
         if isinstance(self.decay_or_rank, int):
             if self.decay_or_rank < 1:
-                raise ValueError("integer decay_or_rank must be at least one")
+                raise ValueError("Integer decay_or_rank must be at least one. Set Integer decay_or_rank to at least one.")
         elif isinstance(self.decay_or_rank, float):
             valid_decay = math.isfinite(self.decay_or_rank) and (
                 0.0 <= self.decay_or_rank < 1.0
             )
             if not valid_decay:
-                raise ValueError("float decay_or_rank must be in [0, 1)")
+                raise ValueError("Float decay_or_rank must be in [0, 1). Set Float decay_or_rank to a value in [0, 1).")
         else:
-            raise ValueError("decay_or_rank must be a float decay or integer rank")
+            raise ValueError("decay_or_rank must be a float decay or integer rank. Set decay_or_rank to a float decay or integer rank.")
         if self.sparse_backend == "":
-            raise ValueError("sparse_backend must be non-empty or None")
+            raise ValueError("sparse_backend must be non-empty or None. Provide at least one value for sparse_backend.")
         if self.recurrent_scale_basis not in {"neurons", "degree"}:
-            raise ValueError("recurrent_scale_basis must be 'neurons' or 'degree'")
+            raise ValueError("recurrent_scale_basis must be 'neurons' or 'degree'. Set recurrent_scale_basis to 'neurons' or 'degree'.")
 
 
 @dataclass(frozen=True)
@@ -314,7 +314,7 @@ def _plot(results) -> None:
 def main(n_epochs: int = N_EPOCH, batch_size: int = 32, plot: bool = True) -> Dict:
     data = _load_digits()
     if data.train_labels.size % batch_size:
-        raise ValueError("batch_size must divide the 288-example training split")
+        raise ValueError("batch_size must divide the 288-example training split. Set batch_size to divide the 288-example training split.")
     started = time.perf_counter()
     with brainstate.environ.context(dt=1.0 * u.ms):
         results = [

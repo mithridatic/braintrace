@@ -229,7 +229,7 @@ def _sp_mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *,
         scan context: ``hidden_dim : (batch, out)``,
                       ``trace['weight'] : (batch, nnz)``,
                       ``trace['bias']   : (batch, out)``.
-        solve context: batch axis dropped by the outer vmap.
+        Solve context: batch axis dropped by the outer vmap.
 
     **Batching (audit C3).** The scan-context call above hands this rule a
     2-D ``hidden_dim``/``trace['weight']`` pair straight from the online
@@ -242,7 +242,7 @@ def _sp_mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *,
     mat = _unwrap_sparse_mat(sparse_mat)
     weight_trace = trace['weight']
     if hidden_dim.ndim == 2:
-        # (batch, out), (batch, nnz) -> vmap the 1-D-only brainevent kernel
+        # (Batch, out), (batch, nnz) -> vmap the 1-D-only brainevent kernel
         # over the leading batch axis.
         weight_out = jax.vmap(mat.dt2t_transposed)(hidden_dim, weight_trace)
     else:
@@ -434,7 +434,7 @@ def _sp_snap_anchor(eqn_params: dict) -> bool:
     of the stored weight at structural coordinate ``(row(p), col(p))``, whose
     instantaneous term lands on output position ``col(p)`` and nowhere else.
     The anchor is that column map -- an index map rather than an array axis,
-    which is equally sufficient for the widening.
+    which is equally enough for the widening.
 
     Parameters
     ----------
@@ -585,14 +585,16 @@ def sparse_matmul(
         raise TypeError(
             'sparse_mat must be a brainevent.DataRepresentation providing the '
             'with_data, dt2t_transposed and dt2t online-learning protocol '
-            f'methods, got {type(sparse_mat).__name__!r}.'
+            f'methods, got {type(sparse_mat).__name__!r}. Set sparse_mat to a brainevent.DataRepresentation providing the '
+            'with_data, dt2t_transposed and dt2t online-learning protocol '
+            f'methods.'
         )
     p = etp_sp_mm_p if x.ndim >= 2 else etp_sp_mv_p  # type: ignore[union-attr]  # x is an array here; ArrayLike also admits scalars without .ndim
     x_v, x_u = u.split_mantissa_unit(x)
     w_v, w_u = u.split_mantissa_unit(weight)
     unit = x_u * w_u
     # Bind an identity-hashable wrapper, not the DataRepresentation itself:
-    # brainevent structures define __eq__ without __hash__, which JAX >= 0.7
+    # Brainevent structures define __eq__ without __hash__, which JAX >= 0.7
     # rejects as a jaxpr equation parameter (audit finding H1).
     wrapped_mat = _HashableSparseMat(sparse_mat)
     if bias is not None:

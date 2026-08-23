@@ -132,7 +132,7 @@ def check_unsupported_op(
     if op_name == 'scan' and id(eqn) in getattr(self, 'descended_scan_eqn_ids', ()):
         return
 
-    # checking whether the weight variables are used in the equation
+    # Checking whether the weight variables are used in the equation
     # Note: user ``jax.jit`` boundaries are inlined at extraction time
     # (see ``jaxpr_graph.inline_jit_calls``), so reaching this check means
     # a weight is used inside a genuinely opaque region (scan/while/cond).
@@ -177,13 +177,13 @@ def check_unsupported_op(
         )
         raise NotImplementedError(
             f'Currently, we do not support the weight states are used within a {op_name} function. \n'
-            f'Please remove your {op_name} on the intermediate steps. \n\n'
+            f'Move the weight-state update outside the {op_name} region.\n'
             f'The weight state variable is: {invar}. \n'
             f'The Jaxpr of the {op_name} function is: \n\n'
             f'{eqn} \n\n'
         )
 
-    # checking whether the hidden variables are computed in the equation
+    # Checking whether the hidden variables are computed in the equation
     outvar = find_element_exist_in_the_set(eqn.outvars, self.hidden_outvars)
     if outvar is not None:
         if op_name in ('scan', 'while', 'cond'):
@@ -215,7 +215,7 @@ def check_unsupported_op(
                 )
         raise NotImplementedError(
             f'Currently, we do not support the hidden states are computed within a {op_name} function. \n'
-            f'Please remove your {op_name} on the intermediate steps. \n\n'
+            f'Move the hidden-state update outside the {op_name} region.\n'
             f'The hidden state is: {self.outvar_to_hidden_path[outvar]}. \n'
             f'The Jaxpr of the {op_name} function is: \n\n'
             f'{eqn} \n\n'
@@ -331,7 +331,7 @@ class JaxprEvaluation(object):
                 self._eval_eqn(eqn)
             return
         check_unsupported_op(self, eqn, 'jit')
-        # treat the pjit as a normal jaxpr equation
+        # Treat the pjit as a normal jaxpr equation
         self._eval_eqn(eqn)
 
     def _eval_scan(self, eqn: JaxprEqn) -> None:
@@ -388,5 +388,5 @@ class JaxprEvaluation(object):
             This method must be implemented in subclasses.
         """
         raise NotImplementedError(
-            'The method "_eval_eqn" should be implemented in the subclass.'
+            'The method "_eval_eqn" is not implemented in the subclass. Implement it before use.'
         )

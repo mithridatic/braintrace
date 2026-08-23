@@ -1219,7 +1219,7 @@ def test_source_report_fails_closed_when_git_and_env_are_unavailable(
     monkeypatch.delenv("BRAINTRACE_SOURCE_DIRTY", raising=False)
 
     def unavailable(*args: object, **kwargs: object) -> object:
-        raise OSError("git unavailable")
+        raise OSError("Git unavailable. Update the fixture or expected result to satisfy this assertion.")
 
     monkeypatch.setattr(gate.subprocess, "run", unavailable)
 
@@ -2167,7 +2167,7 @@ def test_fixed_admission_cli_rejects_every_topology_or_budget_override(
         "run_stage21_admission",
         lambda target: pytest.fail("invalid fixed target reached execution"),
     )
-    with pytest.raises(ValueError, match="fixed admission"):
+    with pytest.raises(ValueError, match="(?i)fixed admission"):
         gate.main(["--target", "one_update", *option])
 
 

@@ -206,7 +206,7 @@ def test_full_coordinate_search_selects_pairs_and_resumes(tmp_path: Path) -> Non
     resumed = run_development_trace_search(
         settings,
         runner=lambda *_: (_ for _ in ()).throw(
-            AssertionError("exact raw results must be reused")
+            AssertionError("Exact raw results must be reused. Set Exact raw results to reused.")
         ),
         progress=lambda _: None,
     )
@@ -278,5 +278,5 @@ def test_resume_refuses_configuration_or_provenance_drift(
             grid,
             candidate,
             bundle_id,
-            lambda *_: (_ for _ in ()).throw(AssertionError("must reuse")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("Must reuse. Update the fixture or expected result to satisfy this assertion.")),
         )

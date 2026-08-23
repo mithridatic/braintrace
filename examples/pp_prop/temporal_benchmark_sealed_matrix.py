@@ -120,7 +120,7 @@ def _command(
 def _run_subprocess(command: Sequence[str], source_root: pathlib.Path) -> None:
     completed = subprocess.run(command, cwd=source_root, check=False)
     if completed.returncode:
-        raise RuntimeError(f"sealed child failed with exit {completed.returncode}")
+        raise RuntimeError(f"Sealed child failed with exit {completed.returncode}. Correct the reported inputs, then retry the operation.")
 
 
 def run_sealed_matrix(
@@ -159,7 +159,7 @@ def run_sealed_matrix(
             partial.parent.mkdir(parents=True, exist_ok=True)
             runner(_command(settings, arm, bundle_id, partial), source_root)
             if not partial.is_file():
-                raise RuntimeError(f"sealed child did not write {partial}")
+                raise RuntimeError(f"Sealed child did not write {partial}. Fix the input condition named in the error, then rerun the operation.")
             partial.replace(final)
     paths = expected_result_paths(settings)
     report = analyzer(paths)

@@ -128,7 +128,7 @@ class TestPrincipleWeightToWeightExclusion:
             kind=DiagnosticKind.RELATION_EXCLUDED_NON_TEMPORAL,
         )
         assert len(non_temporal) == 0, (
-            f'GRU should not emit non-temporal records; got {non_temporal}'
+            f'GRU should not emit non-temporal records; got {non_temporal}. Update the fixture or expected result to satisfy this assertion.'
         )
 
 
@@ -148,7 +148,7 @@ class TestPrincipleTypeIdentityDispatch:
         # GRUCell input is 1-D, so each Linear uses etp_mv_p (unbatched).
         for record in included:
             assert record.primitive is etp_mv_p, (
-                f'Expected primitive identity etp_mv_p, got {record.primitive}'
+                f'Expected primitive identity etp_mv_p, got {record.primitive}. Return the expected value for the reported field.'
             )
 
 
@@ -188,7 +188,7 @@ class TestTrainableInvarNotParamState:
 
         kinds = [d.kind for d in graph.diagnostics]
         assert DiagnosticKind.TRAINABLE_INVAR_NOT_PARAMSTATE in kinds, (
-            f'Expected TRAINABLE_INVAR_NOT_PARAMSTATE in diagnostics; got {kinds}'
+            f'Expected TRAINABLE_INVAR_NOT_PARAMSTATE in diagnostics; got {kinds}. Return the expected value for the reported field.'
         )
 
     def test_constant_bias_diagnostic_names_key(self):

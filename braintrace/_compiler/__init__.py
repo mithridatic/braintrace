@@ -78,20 +78,20 @@ from braintrace._compiler.position_graph import (
 )
 
 __all__ = [
-    # jaxpr walking primitives
+    # Jaxpr walking primitives
     'JaxprEvaluation',
     'check_unsupported_op',
     'find_element_exist_in_the_set',
     'find_matched_vars',
 
-    # control-flow canonicalization
+    # Control-flow canonicalization
     'ControlFlowPolicy',
     'DEFAULT_CONTROL_FLOW_POLICY',
     'canonicalize_control_flow',
     'if_convert_conds',
     'unroll_inner_scans',
 
-    # diagnostics
+    # Diagnostics
     'CompilationRecord',
     'CompilationReport',
     'DiagnosticKind',
@@ -101,28 +101,28 @@ __all__ = [
     'emit',
     'get_reporter',
 
-    # the compiled graph
+    # The compiled graph
     'ETraceGraph',
     'compile_etrace_graph',
 
-    # hidden <-> parameter relations
+    # Hidden <-> parameter relations
     'HiddenParamOpRelation',
     'find_hidden_param_op_relations_from_minfo',
     'find_hidden_param_op_relations_from_module',
 
-    # hidden groups
+    # Hidden groups
     'HiddenGroup',
     'find_hidden_groups_from_minfo',
     'find_hidden_groups_from_module',
     'gather_learning_signal',
     'widen_instant_term',
 
-    # hidden perturbation
+    # Hidden perturbation
     'HiddenPerturbation',
     'add_hidden_perturbation_from_minfo',
     'add_hidden_perturbation_in_module',
 
-    # module introspection
+    # Module introspection
     'ModuleInfo',
     'extract_module_info',
 

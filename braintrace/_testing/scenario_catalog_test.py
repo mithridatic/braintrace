@@ -105,12 +105,12 @@ def _assert_deterministic(model_factory, inp):
     order2 = [(r.path, tuple(r.connected_hidden_paths))
               for r in g2.hidden_param_op_relations]
     assert order1 == order2, (
-        f'Relation ordering is not deterministic: {order1} vs {order2}'
+        f'Relation ordering is not deterministic: {order1} vs {order2}. Update the fixture or expected result to satisfy this assertion.'
     )
     kinds1 = [d.kind for d in g1.diagnostics]
     kinds2 = [d.kind for d in g2.diagnostics]
     assert kinds1 == kinds2, (
-        f'Diagnostic record ordering is not deterministic: {kinds1} vs {kinds2}'
+        f'Diagnostic record ordering is not deterministic: {kinds1} vs {kinds2}. Update the fixture or expected result to satisfy this assertion.'
     )
 
 
@@ -141,13 +141,13 @@ class _BatchedMmRNN(brainstate.nn.Module):
     def __init__(self, n_in: int, n_out: int):
         super().__init__()
         self.w = brainstate.ParamState(brainstate.random.randn(n_in + n_out, n_out))
-        self.h = brainstate.HiddenState(jnp.zeros((2, n_out)))  # batch size 2
+        self.h = brainstate.HiddenState(jnp.zeros((2, n_out)))  # Batch size 2
 
     def init_state(self, *args, **kwargs):
         self.h.value = jnp.zeros_like(self.h.value)
 
     def update(self, x):
-        xh = jnp.concatenate([x, self.h.value], axis=-1)  # (batch, n_in+n_out)
+        xh = jnp.concatenate([x, self.h.value], axis=-1)  # (Batch, n_in+n_out)
         self.h.value = jnp.tanh(braintrace.matmul(xh, self.w.value))
         return self.h.value
 
@@ -177,7 +177,7 @@ class _ConvRNN(brainstate.nn.Module):
     """2-D conv into a hidden state. ``etp_conv_p`` is batched.
 
     Shapes follow JAX ``conv_general_dilated`` defaults (NCHW / OIHW):
-    input ``(N, C_in, H, W)``, kernel ``(C_out, C_in, kH, kW)``.
+    Input ``(N, C_in, H, W)``, kernel ``(C_out, C_in, kH, kW)``.
     """
 
     def __init__(self):
@@ -212,7 +212,7 @@ class TestCategoryA_SinglePrimitiveBaselines:
     def test_mm_batched(self):
         model = _BatchedMmRNN(3, 4)
         brainstate.nn.init_all_states(model)
-        inp = brainstate.random.rand(2, 3)  # batched
+        inp = brainstate.random.rand(2, 3)  # Batched
 
         graph = _compile(model, inp)
 
@@ -396,13 +396,13 @@ class TestCategoryB_ChainTraversal:
             kind=DiagnosticKind.RELATION_EXCLUDED_WEIGHT_TO_WEIGHT,
         )
         assert len(w2w) == 1, (
-            f'W1 must emit exactly one WEIGHT_TO_WEIGHT record; got {w2w}'
+            f'W1 must emit exactly one WEIGHT_TO_WEIGHT record; got {w2w}. Make W1 emit exactly one WEIGHT_TO_WEIGHT record; got {w2w}.'
         )
         # The blocking primitive reported in context must be the exact
         # object identity of ``etp_mv_p``.
         blocking = w2w[0].context['blocking_primitives']
         assert etp_mv_p in blocking, (
-            f'Blocking primitives should include etp_mv_p; got {blocking}'
+            f'Blocking primitives should include etp_mv_p; got {blocking}. Update the fixture or expected result to satisfy this assertion.'
         )
 
         # And the NON_TEMPORAL kind must NOT be emitted for W1 — the two
@@ -412,7 +412,7 @@ class TestCategoryB_ChainTraversal:
             kind=DiagnosticKind.RELATION_EXCLUDED_NON_TEMPORAL,
         )
         assert len(non_temporal) == 0, (
-            f'W1 must NOT emit NON_TEMPORAL (it is W->W->h); got {non_temporal}'
+            f'W1 must NOT emit NON_TEMPORAL (it is W->W->h); got {non_temporal}. Ensure W1 does not emit NON_TEMPORAL (it is W->W->h); got {non_temporal}.'
         )
 
 
@@ -531,8 +531,8 @@ class _MixedPlainAndEtpRNN(brainstate.nn.Module):
         self.h.value = jnp.zeros_like(self.h.value)
 
     def update(self, x):
-        plain = x @ self.w_plain.value  # regular JAX — excluded
-        etp = braintrace.matmul(self.h.value, self.w_etp.value)  # included
+        plain = x @ self.w_plain.value  # Regular JAX — excluded
+        etp = braintrace.matmul(self.h.value, self.w_etp.value)  # Included
         self.h.value = jnp.tanh(plain + etp)
         return self.h.value
 
@@ -608,7 +608,7 @@ class TestCategoryD_ExclusionPaths:
             kind=DiagnosticKind.RELATION_EXCLUDED_NON_TEMPORAL,
         )
         assert len(non_temporal) == 1, (
-            f'w_loss must emit exactly one NON_TEMPORAL record; got {non_temporal}'
+            f'w_loss must emit exactly one NON_TEMPORAL record; got {non_temporal}. Make w_loss emit exactly one NON_TEMPORAL record; got {non_temporal}.'
         )
         w2w = graph.explain(
             weight_path=('w_loss',),
@@ -637,7 +637,7 @@ class TestCategoryE_CanonicalRecurrences:
         # Exact inclusion set — Wr excluded.
         paths = {r.path[0] for r in graph.hidden_param_op_relations}
         assert paths == {'Wz', 'Wh'}, (
-            f'GRU must include exactly Wz and Wh; got {paths}'
+            f'GRU must include exactly Wz and Wh; got {paths}. Make GRU include exactly Wz and Wh; got {paths}.'
         )
         for r in graph.hidden_param_op_relations:
             assert r.primitive is etp_mv_p
@@ -832,7 +832,7 @@ class TestCategoryK_SharedTiedWeight:
 
         rels = graph.hidden_param_op_relations
         assert len(rels) == 2, (
-            f'Expected exactly two relations for shared weight; got {len(rels)}'
+            f'Expected exactly two relations for shared weight; got {len(rels)}. Return the expected value for the reported field.'
         )
         for r in rels:
             assert r.path == ('w',)
@@ -914,7 +914,7 @@ class TestCategoryM_PartialPath:
             weight_path=('w1',),
         )
         assert len(partial) == 1, (
-            f'w1 must emit exactly one PARTIAL_PATH record; got {partial}'
+            f'W1 must emit exactly one PARTIAL_PATH record; got {partial}. Make W1 emit exactly one PARTIAL_PATH record; got {partial}.'
         )
         assert partial[0].context['classification'] == PathClassification.MIXED
 
@@ -1005,7 +1005,7 @@ class TestCategoryN_ControlFlow:
 
     def test_scan_body_etp_exclude_policy_warns_and_drops(self):
         """``etp_in_control_flow='exclude'`` pins the pre-Phase-3 behavior:
-        a WARNING record and exclusion (no bubbling up), no raise."""
+        A WARNING record and exclusion (no bubbling up), no raise."""
         jaxpr = make_scan_body_etp_jaxpr(3, 4)
         policy = braintrace.ControlFlowPolicy(etp_in_control_flow='exclude')
 
@@ -1014,7 +1014,7 @@ class TestCategoryN_ControlFlow:
             with diagnostic_context() as reporter:
                 top = _scan_jaxpr_for_etp_eqns(jaxpr, policy=policy)
 
-        assert top == [], 'ETP inside scan body must NOT bubble up'
+        assert top == [], 'ETP inside scan body must NOT bubble up. Ensure ETP inside scan body does not bubble up.'
         records = [
             r for r in reporter.records()
             if r.kind is DiagnosticKind.PRIMITIVE_INSIDE_CONTROL_FLOW
@@ -1118,7 +1118,7 @@ class TestCategoryG_StructuralSmoke:
 
         assert executed > 0, (
             'No relation had its y_var available as a temp — '
-            'the compiler is not emitting the y values it registered.'
+            'the compiler is not emitting the y values it registered. Provide the missing item named in this message.'
         )
 
 
@@ -1322,7 +1322,7 @@ class TestCategoryR_ComplexModuleGraphs:
         assert rel.path_classification == {('h',): PathClassification.ALL_DIRECT}
 
     def test_residual_transition_includes_skip_add(self):
-        # dh/dy must run through the residual add: perturbing y shifts h by
+        # Dh/dy must run through the residual add: perturbing y shifts h by
         # tanh'(y + x) — structurally, the transition jaxpr executes and
         # produces the group-shaped output.
         model = ResidualSkipRNN(4)

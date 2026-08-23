@@ -88,9 +88,9 @@ class GatedProjection(brainstate.nn.Module):
             (output_size, "output_size"),
         ):
             if isinstance(dimension, bool) or not isinstance(dimension, int):
-                raise TypeError(f"{dimension_name} must be a positive integer")
+                raise TypeError(f"{dimension_name} must be a positive integer. Set {dimension_name} to a positive integer.")
             if dimension <= 0:
-                raise ValueError(f"{dimension_name} must be a positive integer")
+                raise ValueError(f"{dimension_name} must be a positive integer. Set {dimension_name} to a positive integer.")
         self.value_size = value_size
         self.gate_size = gate_size
         self.output_size = output_size

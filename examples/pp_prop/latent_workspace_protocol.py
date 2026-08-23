@@ -21,7 +21,7 @@ CANDIDATE_POLICY = "latest_checkpoint_factorized_global_top2_v2"
 def _boolean_gate(value: Any, name: str) -> jax.Array:
     array = jnp.asarray(value)
     if array.ndim not in (1, 2):
-        raise ValueError(f"{name} must have time or time-by-batch shape")
+        raise ValueError(f"{name} must have time or time-by-batch shape. Ensure {name} has time or time-by-batch shape.")
     return array.astype(jnp.bool_)
 
 
@@ -59,16 +59,16 @@ class StepGates:
         )
         arrays = tuple(_boolean_gate(getattr(self, name), name) for name in names)
         if len({array.shape for array in arrays}) != 1:
-            raise ValueError("all StepGates leaves must have the same shape")
+            raise ValueError("All StepGates leaves must have the same shape. Ensure All StepGates leaves has the same shape.")
         for name, array in zip(names, arrays, strict=True):
             object.__setattr__(self, name, array)
         if not any(isinstance(array, jax.core.Tracer) for array in arrays):
             if bool(np.asarray(jnp.any(arrays[3]))):
-                raise ValueError("protocol v2 forbids answer feedback")
+                raise ValueError("Protocol v2 forbids answer feedback. Fix the input condition named in the error, then rerun the operation.")
             if bool(np.asarray(jnp.any(arrays[1] & ~arrays[0]))):
-                raise ValueError("latent_update requires advance_physics")
+                raise ValueError("latent_update requires advance_physics. Provide the required value for latent_update.")
             if bool(np.asarray(jnp.any(arrays[2] & (arrays[0] | arrays[1])))):
-                raise ValueError("decoder rows must preserve physical and latent state")
+                raise ValueError("Decoder rows must preserve physical and latent state. Set Decoder rows to preserve physical and latent state.")
 
     def tree_flatten(self) -> tuple[tuple[jax.Array, ...], None]:
         """Return JAX pytree leaves and no static auxiliary data."""
@@ -115,11 +115,11 @@ class ArmStream:
     ----------
     events
         Float event tensor shaped ``(time, batch, feature)``.
-    gates
+    Gates
         Explicit gates shaped ``(time, batch)``.
-    boundaries
+    Boundaries
         Monotonic named half-open phase boundaries.
-    metadata
+    Metadata
         JSON-oriented protocol metadata.
     """
 
@@ -131,29 +131,29 @@ class ArmStream:
     def __post_init__(self) -> None:
         events = jnp.asarray(self.events, dtype=jnp.float32)
         if events.ndim != 3:
-            raise ValueError("events must have time, batch, and feature axes")
+            raise ValueError("Events must have time, batch, and feature axes. Ensure Events has time, batch, and feature axes.")
         if self.gates.advance_physics.shape != events.shape[:2]:
-            raise ValueError("gate shape must match the event time and batch axes")
+            raise ValueError("Gate shape must match the event time and batch axes. Make Gate shape match the event time and batch axes.")
         if not isinstance(self.boundaries, Mapping) or not self.boundaries:
-            raise ValueError("boundaries must be a nonempty mapping")
+            raise ValueError("Boundaries must be a nonempty mapping. Set Boundaries to a nonempty mapping.")
         normalized: dict[str, int] = {}
         previous = 0
         for name, raw_value in self.boundaries.items():
             if not isinstance(name, str) or not name:
-                raise ValueError("boundary names must be nonempty strings")
+                raise ValueError("Boundary names must be nonempty strings. Set Boundary names to nonempty strings.")
             if isinstance(raw_value, (bool, np.bool_)) or not isinstance(
                 raw_value, Integral
             ):
-                raise TypeError("boundary values must be integers")
+                raise TypeError("Boundary values must be integers. Set Boundary values to integers.")
             value = int(raw_value)
             if value < previous or value > events.shape[0]:
-                raise ValueError("boundaries must be monotonic and within the stream")
+                raise ValueError("Boundaries must be monotonic and within the stream. Set Boundaries to monotonic and within the stream.")
             normalized[name] = value
             previous = value
         if normalized.get("total_steps") != events.shape[0]:
-            raise ValueError("total_steps boundary must equal the stream length")
+            raise ValueError("total_steps boundary must equal the stream length. Set total_steps boundary to equal the stream length.")
         if not isinstance(self.metadata, Mapping):
-            raise TypeError("metadata must be a mapping")
+            raise TypeError("Metadata must be a mapping. Set Metadata to a mapping.")
         object.__setattr__(self, "events", events)
         object.__setattr__(self, "boundaries", MappingProxyType(normalized))
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
@@ -161,26 +161,26 @@ class ArmStream:
 
 def _positive_integer(value: object, name: str) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise TypeError(f"{name} must be a positive integer")
+        raise TypeError(f"{name} must be a positive integer. Set {name} to a positive integer.")
     result = int(value)
     if result <= 0:
-        raise ValueError(f"{name} must be a positive integer")
+        raise ValueError(f"{name} must be a positive integer. Set {name} to a positive integer.")
     return result
 
 
 def _effort_schedule(values: Sequence[int]) -> tuple[int, ...]:
     if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
-        raise TypeError("efforts must be a sequence")
+        raise TypeError("Efforts must be a sequence. Set Efforts to a sequence.")
     efforts: list[int] = []
     for value in values:
         if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-            raise TypeError("efforts must be nonnegative integers")
+            raise TypeError("Efforts must be nonnegative integers. Use nonnegative integers.")
         efforts.append(int(value))
     result = tuple(efforts)
     if not result or result[0] != 0 or any(value < 0 for value in result):
-        raise ValueError("efforts must begin at zero and be nonnegative")
+        raise ValueError("Efforts must begin at zero and be nonnegative. Set Efforts to begin at zero and be nonnegative.")
     if tuple(sorted(set(result))) != result:
-        raise ValueError("efforts must be strictly increasing")
+        raise ValueError("Efforts must be strictly increasing. Set Efforts to strictly increasing.")
     return result
 
 
@@ -204,12 +204,12 @@ def build_protocol_v2_arm(
         Half-open query interval inside ``context_events``.
     decoder_rows
         Fixed row count used at every effort checkpoint.
-    efforts
+    Efforts
         Strictly increasing recurrent tick counts beginning at zero.
     no_context
         Zero demonstration content before ``query_start`` while preserving its
         physical schedule.
-    control
+    Control
         Intact, frozen-state, or recurrent-lesion causal arm.
 
     Returns
@@ -220,13 +220,13 @@ def build_protocol_v2_arm(
 
     context = np.asarray(context_events, dtype=np.float32)
     if context.ndim != 3 or not context.shape[0] or not context.shape[1]:
-        raise ValueError("context_events must have nonempty time, batch, feature axes")
+        raise ValueError("context_events must have nonempty time, batch, feature axes. Ensure context_events has nonempty time, batch, feature axes.")
     if not 0 <= query_start < query_stop <= context.shape[0]:
-        raise ValueError("query boundaries must be a nonempty interval in context")
+        raise ValueError("Query boundaries must be a nonempty interval in context. Set Query boundaries to a nonempty interval in context.")
     rows = _positive_integer(decoder_rows, "decoder_rows")
     checkpoints = _effort_schedule(efforts)
     if control not in ("intact", "state_hold", "recurrent_lesion"):
-        raise ValueError("control is not a protocol-v2 control")
+        raise ValueError("Control is not a protocol-v2 control. Fix the input condition named in the error, then rerun the operation.")
 
     context = context.copy()
     if no_context:
@@ -336,16 +336,16 @@ def build_batched_protocol_v2_arm(
         or advance.ndim != 2
         or advance.shape[1] != context.shape[1]
     ):
-        raise ValueError("context events and advance schedule batches must align")
+        raise ValueError("Context events and advance schedule batches must align. Set Context events and advance schedule batches to align.")
     if stops.shape != (context.shape[1],) or not np.issubdtype(stops.dtype, np.integer):
-        raise ValueError("query_stops must contain one integer per batch lane")
+        raise ValueError("query_stops must contain one integer per batch lane. Add one integer per batch lane to query_stops.")
     stops = stops.astype(np.int32)
     if np.any(stops <= 0) or np.any(stops > min(context.shape[0], advance.shape[0])):
-        raise ValueError("query_stops must lie inside the context stream")
+        raise ValueError("query_stops must lie inside the context stream. Set query_stops to lie inside the context stream.")
     rows = _positive_integer(decoder_rows, "decoder_rows")
     checkpoints = _effort_schedule(efforts)
     if control not in ("intact", "state_hold", "recurrent_lesion"):
-        raise ValueError("control is not a protocol-v2 control")
+        raise ValueError("Control is not a protocol-v2 control. Fix the input condition named in the error, then rerun the operation.")
     tail = rows * len(checkpoints) + checkpoints[-1]
     total = int(np.max(stops)) + tail
     events = np.zeros((total, context.shape[1], context.shape[2]), dtype=np.float32)
@@ -415,9 +415,9 @@ def normalized_episode_weights(valid: Any) -> jax.Array:
 
     mask = jnp.asarray(valid, dtype=jnp.bool_)
     if mask.ndim < 2 or mask.shape[0] < 1:
-        raise ValueError("valid must have a nonempty batch and value axes")
+        raise ValueError("Valid must have a nonempty batch and value axes. Ensure Valid has a nonempty batch and value axes.")
     axes = tuple(range(1, mask.ndim))
     counts = jnp.sum(mask, axis=axes, keepdims=True)
     if bool(np.asarray(jnp.any(counts == 0))):
-        raise ValueError("every episode must contain at least one valid value")
+        raise ValueError("Every episode must contain at least one valid value. Add at least one valid value to Every episode.")
     return mask.astype(jnp.float32) / counts / float(mask.shape[0])

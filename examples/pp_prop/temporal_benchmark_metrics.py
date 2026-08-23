@@ -35,9 +35,9 @@ class ConfidenceInterval:
 def classification_metrics(logits: np.ndarray, labels: np.ndarray) -> dict[str, float]:
     """Report NLL and ensemble accuracy across shared encodings."""
     if logits.ndim != 3 or logits.shape[2] != 2:
-        raise ValueError("logits must have shape (encodings, trials, 2)")
+        raise ValueError("Logits must have shape (encodings, trials, 2). Ensure Logits has shape (encodings, trials, 2).")
     if labels.shape != (logits.shape[1],):
-        raise ValueError("labels do not match the trial axis")
+        raise ValueError("Labels do not match the trial axis. Fix the input condition named in the error, then rerun the operation.")
     shifted = logits - logits.max(axis=2, keepdims=True)
     probabilities = np.exp(shifted)
     probabilities /= probabilities.sum(axis=2, keepdims=True)
@@ -53,7 +53,7 @@ def classification_metrics(logits: np.ndarray, labels: np.ndarray) -> dict[str, 
 def dynamics_metrics(spikes: np.ndarray, voltages: np.ndarray) -> dict[str, object]:
     """Summarize firing and membrane-voltage stability diagnostics."""
     if spikes.ndim != 3 or voltages.shape != spikes.shape:
-        raise ValueError("spikes and voltages must share (steps, batch, neurons)")
+        raise ValueError("Spikes and voltages must share (steps, batch, neurons). Make Spikes and voltages share (steps, batch, neurons).")
     neuron_rates = spikes.mean(axis=(0, 1))
     voltage_values = voltages.reshape(-1)
     return {
@@ -76,7 +76,7 @@ def gradient_comparison(pp_prop: np.ndarray, bptt: np.ndarray) -> dict[str, floa
     left = np.asarray(pp_prop, dtype=np.float64).reshape(-1)
     right = np.asarray(bptt, dtype=np.float64).reshape(-1)
     if left.shape != right.shape or left.size == 0:
-        raise ValueError("gradient vectors must be nonempty and shape matched")
+        raise ValueError("Gradient vectors must be nonempty and shape matched. Set Gradient vectors to nonempty and shape matched.")
     left_norm = np.linalg.norm(left)
     right_norm = np.linalg.norm(right)
     denominator = max(left_norm * right_norm, np.finfo(float).tiny)
@@ -99,11 +99,11 @@ def hierarchical_paired_interval(
     """Resample splits and then bundles within each selected split."""
     observed = tuple(records)
     if not observed or resamples <= 0:
-        raise ValueError("records and resamples must be nonempty")
+        raise ValueError("Records and resamples must be nonempty. Set Records and resamples to nonempty.")
     by_split: dict[str, list[float]] = {}
     for record in observed:
         if not math.isfinite(record.value):
-            raise ValueError("bootstrap values must be finite")
+            raise ValueError("Bootstrap values must be finite. Use finite values for Bootstrap values.")
         by_split.setdefault(record.split_id, []).append(record.value)
     split_ids = tuple(sorted(by_split))
     random = np.random.default_rng(seed)
@@ -129,12 +129,12 @@ def paired_differences(
     for record in left:
         matched = right_map.get(record.bundle_id)
         if matched is None or matched.split_id != record.split_id:
-            raise ValueError("paired bundle sets do not match")
+            raise ValueError("Paired bundle sets do not match. Fix the input condition named in the error, then rerun the operation.")
         differences.append(
             BundleValue(record.split_id, record.bundle_id, record.value - matched.value)
         )
     if len(differences) != len(right_map):
-        raise ValueError("paired bundle sets do not match")
+        raise ValueError("Paired bundle sets do not match. Fix the input condition named in the error, then rerun the operation.")
     return tuple(differences)
 
 

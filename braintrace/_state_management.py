@@ -45,7 +45,7 @@ def assign_dict_state_values(
         Defaults to `True`.
     """
     if set(states.keys()) != set(state_values.keys()):
-        raise ValueError('The keys of states and state_values must be the same.')
+        raise ValueError('The keys of states and state_values must match. Use matching keys in both mappings.')
 
     if write:
         for key in states.keys():
@@ -192,10 +192,10 @@ def split_dict_states_v2(
     --------
     Tuple[Dict[Path, brainstate.ParamState], Dict[Path, brainstate.HiddenState], Dict[Path, brainstate.ParamState], Dict[Path, brainstate.State]]
         A tuple containing four dictionaries:
-        - etrace_param_states: ParamState instances owned by compiled ETP relations.
-        - hidden_states: The hidden states.
-        - param_states: Other ParamState instances.
-        - other_states: The other states.
+        - Etrace_param_states: ParamState instances owned by compiled ETP relations.
+        - Hidden_states: The hidden states.
+        - Param_states: Other ParamState instances.
+        - Other_states: The other states.
     """
     etrace_param_states = dict()
     hidden_states = dict()

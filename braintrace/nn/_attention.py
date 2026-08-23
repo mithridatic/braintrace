@@ -77,13 +77,13 @@ class AttentionResidual(brainstate.nn.Module):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
         if isinstance(hidden_size, bool) or not isinstance(hidden_size, int):
-            raise TypeError("hidden_size must be a positive integer")
+            raise TypeError("hidden_size must be a positive integer. Set hidden_size to a positive integer.")
         if isinstance(query_count, bool) or not isinstance(query_count, int):
-            raise TypeError("query_count must be a positive integer")
+            raise TypeError("query_count must be a positive integer. Set query_count to a positive integer.")
         if hidden_size <= 0:
-            raise ValueError("hidden_size must be a positive integer")
+            raise ValueError("hidden_size must be a positive integer. Set hidden_size to a positive integer.")
         if query_count <= 0:
-            raise ValueError("query_count must be a positive integer")
+            raise ValueError("query_count must be a positive integer. Set query_count to a positive integer.")
         self.hidden_size = hidden_size
         self.query_count = query_count
         self.epsilon = epsilon

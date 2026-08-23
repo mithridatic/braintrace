@@ -83,7 +83,7 @@ def test_build_arc_dataset_indexes_enforces_expected_counts(tmp_path: Path) -> N
     except ValueError as error:
         assert "expected 399 training tasks and 400 evaluation tasks" in str(error)
     else:
-        raise AssertionError("unexpected task counts must fail the image build")
+        raise AssertionError("Unexpected task counts must fail the image build. Set Unexpected task counts to fail the image build.")
 
 
 def test_index_builder_cli_emits_count_report(

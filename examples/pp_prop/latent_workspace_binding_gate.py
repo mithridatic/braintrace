@@ -178,20 +178,20 @@ class BindingGateConfig(legacy.BindingControlConfig):
         super().__post_init__()
         if self.batch_size < STRUCTURAL_COLOR_COUNT:
             raise ValueError(
-                "batch_size must be at least ten for the all-color key gate"
+                "batch_size must be at least ten for the all-color key gate. Set batch_size to at least ten for the all-color key gate."
             )
         width = self.context_memory_width
         if isinstance(width, (bool, np.bool_)) or not isinstance(width, int):
-            raise TypeError("context_memory_width must be a positive integer")
+            raise TypeError("context_memory_width must be a positive integer. Set context_memory_width to a positive integer.")
         if width <= 0 or width > 512:
-            raise ValueError("context_memory_width must be in [1, 512]")
+            raise ValueError("context_memory_width must be in [1, 512]. Set context_memory_width to a value in [1, 512].")
         object.__setattr__(self, "context_memory_width", int(width))
         decay = self.memory_decay
         if isinstance(decay, (bool, np.bool_)) or not isinstance(decay, (int, float)):
-            raise TypeError("memory_decay must be a finite scalar in [0, 1]")
+            raise TypeError("memory_decay must be a finite scalar in [0, 1]. Set memory_decay to a finite scalar in [0, 1].")
         decay = float(decay)
         if not math.isfinite(decay) or not 0.0 <= decay <= 1.0:
-            raise ValueError("memory_decay must be a finite scalar in [0, 1]")
+            raise ValueError("memory_decay must be a finite scalar in [0, 1]. Set memory_decay to a finite scalar in [0, 1].")
         object.__setattr__(self, "memory_decay", decay)
 
     @property
@@ -372,9 +372,9 @@ def _key_separation_metrics(
     architecture: Mapping[str, Any],
 ) -> dict[str, Any]:
     if keys.ndim != 2 or keys.shape[0] != STRUCTURAL_COLOR_COUNT:
-        raise ValueError("key separation requires one key for every catalog color")
+        raise ValueError("Key separation requires one key for every catalog color. Provide the required value for Key separation.")
     if zero_keys.ndim != 2 or zero_keys.shape != keys.shape:
-        raise ValueError("zero-event keys must match the catalog key matrix")
+        raise ValueError("Zero-event keys must match the catalog key matrix. Make Zero-event keys match the catalog key matrix.")
     gram = keys @ keys.T
     diagonal = np.diag(gram)
     off_diagonal = gram[~np.eye(STRUCTURAL_COLOR_COUNT, dtype=bool)]
@@ -459,7 +459,7 @@ def _gate_native_key_separation_report(
     model: LatentWorkspaceModel, config: BindingGateConfig
 ) -> dict[str, Any]:
     if model.config.batch_size < STRUCTURAL_COLOR_COUNT:
-        raise ValueError("binding gate batch_size must be at least ten")
+        raise ValueError("Binding gate batch_size must be at least ten. Set Binding gate batch_size to at least ten.")
     rows = config.row_config
     events = np.zeros((model.config.batch_size, rows.input_width), dtype=np.float32)
     events[:STRUCTURAL_COLOR_COUNT] = _catalog_query_events(rows)
@@ -487,7 +487,7 @@ def _gate_native_key_separation_report(
 
 def _paired_array_report(left: np.ndarray, right: np.ndarray) -> dict[str, Any]:
     if left.shape != right.shape or left.ndim < 1:
-        raise ValueError("paired diagnostic arrays must have the same batched shape")
+        raise ValueError("Paired diagnostic arrays must have the same batched shape. Ensure Paired diagnostic arrays has the same batched shape.")
     different = np.any(left != right, axis=tuple(range(1, left.ndim)))
     flat_difference = (left - right).reshape(left.shape[0], -1)
     return {
@@ -505,7 +505,7 @@ def _diagnostic_report(
 ) -> dict[str, Any]:
     required = {"intact", "shuffled", "no_context"}
     if set(trajectories) != required:
-        raise ValueError("diagnostic trajectories must contain all three arms")
+        raise ValueError("Diagnostic trajectories must contain all three arms. Add all three arms to Diagnostic trajectories.")
     intact_memory, intact_read, intact_workspace = trajectories["intact"]
     shuffled_memory, shuffled_read, shuffled_workspace = trajectories["shuffled"]
     no_context_memory, no_context_read, no_context_workspace = trajectories[
@@ -517,7 +517,7 @@ def _diagnostic_report(
         for array in trajectory
     )
     if no_context_memory.shape != intact_memory.shape:
-        raise ValueError("all memory snapshots must share one batched shape")
+        raise ValueError("All memory snapshots must share one batched shape. Make All memory snapshots share one batched shape.")
     memory = _paired_array_report(intact_memory, shuffled_memory)
     memory.update(
         {
@@ -540,7 +540,7 @@ def _diagnostic_report(
         or intact_workspace.ndim < 2
         or intact_read.shape[:2] != intact_workspace.shape[:2]
     ):
-        raise ValueError("read and workspace trajectories must share depth and batch")
+        raise ValueError("Read and workspace trajectories must share depth and batch. Make Read and workspace trajectories share depth and batch.")
     read_by_depth = {
         str(depth): {
             **_paired_array_report(intact_read[depth], shuffled_read[depth]),
@@ -673,7 +673,7 @@ def _required_parameter_movement(
     for path in _REQUIRED_DIRECT_PATHS:
         label = _path(path)
         if label not in before or label not in after:
-            raise ValueError(f"required parameter path is absent: {label}")
+            raise ValueError(f"Required parameter path is absent: {label}. Fix the input condition named in the error, then rerun the operation.")
         squared_delta = 0.0
         parameter_count = 0
         for old, new in zip(
@@ -758,7 +758,7 @@ def _jax_tree_stats(value: Any) -> tuple[jax.Array, jax.Array, jax.Array]:
 def _mapping_value_by_path(values: Mapping[Any, Any], label: str) -> Any:
     matches = [value for path, value in values.items() if _path(path) == label]
     if len(matches) != 1:
-        raise KeyError(f"expected one value for parameter path {label!r}")
+        raise KeyError(f"Expected one value for parameter path {label!r}. Fix the input condition named in the error, then rerun the operation.")
     return matches[0]
 
 
@@ -779,7 +779,7 @@ def _make_pp_prop_trainer(
     }
     missing = set(_STAGE21_OPTIMIZATION_PATHS) - set(parameter_keys)
     if missing:
-        raise RuntimeError(f"trainer is missing required parameters: {sorted(missing)}")
+        raise RuntimeError(f"Trainer is missing required parameters: {sorted(missing)}. Provide the missing value or resource, then rerun the operation.")
     parameter_counts = {
         label: int(
             sum(
@@ -1165,7 +1165,7 @@ def _reports_from_vector(
 ) -> dict[str, Any]:
     vector = np.asarray(values, dtype=np.float64)
     if vector.shape[-1:] != (len(paths),):
-        raise ValueError("telemetry vector does not match required paths")
+        raise ValueError("Telemetry vector does not match required paths. Use matching values and structures.")
     vector = vector.reshape(-1, len(paths))[-1]
     return {
         path: {
@@ -1218,7 +1218,7 @@ def _initialization_report(
 def _scalar_step(value: Any, label: str) -> int:
     array = np.asarray(value)
     if array.shape != () or not np.issubdtype(array.dtype, np.integer):
-        raise RuntimeError(f"{label} is not one scalar integer step")
+        raise RuntimeError(f"{label} is not one scalar integer step. Fix the input condition named in the error, then rerun the operation.")
     return int(array)
 
 
@@ -1235,16 +1235,16 @@ def _adam_factor_reports(trainer: _PPPropTrainer) -> dict[str, Any]:
         or not hasattr(state[0], "count")
         or not hasattr(state[1], "count")
     ):
-        raise RuntimeError("Adam optimizer state does not expose first/second moments")
+        raise RuntimeError("Adam optimizer state does not expose first/second moments. Fix the input condition named in the error, then rerun the operation.")
     adam = state[0]
     if not isinstance(adam.mu, Mapping) or not isinstance(adam.nu, Mapping):
-        raise RuntimeError("Adam moments are not keyed by learner parameter paths")
+        raise RuntimeError("Adam moments are not keyed by learner parameter paths. Fix the input condition named in the error, then rerun the operation.")
     learner_keys = set(trainer.learner.param_states.keys())
     if (
         set(adam.mu) != learner_keys
         or set(adam.nu) != learner_keys
     ):
-        raise RuntimeError("Adam moments do not exactly match learner parameter keys")
+        raise RuntimeError("Adam moments do not exactly match learner parameter keys. Fix the input condition named in the error, then rerun the operation.")
     adam_step = _scalar_step(adam.count, "Adam moment count")
     schedule_step = _scalar_step(state[1].count, "Adam schedule count")
     optimizer_step = _scalar_step(optimizer.step_count.value, "optimizer step count")
@@ -1252,7 +1252,7 @@ def _adam_factor_reports(trainer: _PPPropTrainer) -> dict[str, Any]:
     for path in _STAGE21_OPTIMIZATION_PATHS:
         learner_key = trainer.parameter_keys[path]
         if learner_key not in adam.mu or learner_key not in adam.nu:
-            raise RuntimeError(f"Adam moments omit exact learner key for {path!r}")
+            raise RuntimeError(f"Adam moments omit exact learner key for {path!r}. Fix the input condition named in the error, then rerun the operation.")
         first_value = adam.mu[learner_key]
         second_value = adam.nu[learner_key]
         parameter_value = trainer.learner.param_states[learner_key].value
@@ -1261,7 +1261,7 @@ def _adam_factor_reports(trainer: _PPPropTrainer) -> dict[str, Any]:
             jax.tree.structure(first_value) != parameter_structure
             or jax.tree.structure(second_value) != parameter_structure
         ):
-            raise RuntimeError(f"Adam moment structure differs for {path!r}")
+            raise RuntimeError(f"Adam moment structure differs for {path!r}. Use matching values and structures.")
         first_leaves = [
             np.asarray(jax.device_get(leaf), dtype=np.float64)
             for leaf in jax.tree.leaves(first_value)
@@ -1822,10 +1822,10 @@ def _contains_boolean(value: Any) -> bool:
 
 def _real_array(value: Any, *, dtype: Any = np.float64) -> np.ndarray:
     if _contains_boolean(value):
-        raise TypeError("numeric evidence cannot contain boolean values")
+        raise TypeError("Numeric evidence cannot contain boolean values. Fix the input condition named in the error, then rerun the operation.")
     array = np.asarray(value)
     if array.dtype.kind not in {"i", "u", "f"}:
-        raise TypeError("numeric evidence must contain non-boolean real values")
+        raise TypeError("Numeric evidence must contain non-boolean real values. Add non-boolean real values to Numeric evidence.")
     return array.astype(dtype, copy=False)
 
 
@@ -3198,7 +3198,7 @@ def _formal_admission_evidence(
     environment: Mapping[str, Any],
 ) -> dict[str, Any]:
     if set(manifest_paths) != {"one_update", "stability_256"}:
-        raise ValueError("formal Gate A requires both fixed admission manifests")
+        raise ValueError("Formal Gate A requires both fixed admission manifests. Provide the required value for Formal Gate A.")
     from examples.pp_prop import latent_workspace_binding_gate_launcher as launcher
 
     root = Path(__file__).resolve().parents[2]
@@ -3217,7 +3217,7 @@ def _formal_admission_evidence(
         )
         admission = dict(bundle["admission"])
         if qualifiers[target](admission)["passed"] is not True:
-            raise ValueError(f"authenticated {target} admission fails recomputation")
+            raise ValueError(f"Authenticated {target} admission fails recomputation. Fix the input condition named in the error, then rerun the operation.")
         evidence[target] = {
             "target": target,
             "source_head": source["commit"],
@@ -3235,9 +3235,9 @@ def _require_authenticated_gpu_launch(
     source: Mapping[str, Any], environment: Mapping[str, Any]
 ) -> None:
     if not _source_evidence_clean(source):
-        raise RuntimeError("launch source is not a verified clean full revision")
+        raise RuntimeError("Launch source is not a verified clean full revision. Free resources or reduce the allocation.")
     if not _gpu_environment_verified(environment):
-        raise RuntimeError("launch did not select an authenticated GPU image/device")
+        raise RuntimeError("Launch did not select an authenticated GPU image/device. Fix the input condition named in the error, then rerun the operation.")
 
 
 def run_stage21_admission(
@@ -3263,7 +3263,7 @@ def run_stage21_admission(
         "stability_256": BindingGateConfig.stage21_stability_config,
     }
     if target not in configurations:
-        raise ValueError("target must be 'one_update' or 'stability_256'")
+        raise ValueError("Target must be 'one_update' or 'stability_256'. Set Target to 'one_update' or 'stability_256'.")
     source_start = _source_report()
     environment = _environment_report()
     _require_authenticated_gpu_launch(source_start, environment)
@@ -3314,7 +3314,7 @@ def run_binding_gate(
     """
 
     if not isinstance(config, BindingGateConfig):
-        raise TypeError("config must be a BindingGateConfig")
+        raise TypeError("Config must be a BindingGateConfig. Set Config to a BindingGateConfig.")
     total_start = time.perf_counter()
     source_start = _source_report()
     environment = _environment_report()
@@ -3323,7 +3323,7 @@ def run_binding_gate(
         _require_authenticated_gpu_launch(source_start, environment)
         if admission_manifests is None:
             raise ValueError(
-                "preregistered full Gate A requires authenticated Stage 2.1 manifests"
+                "Preregistered full Gate A requires authenticated Stage 2.1 manifests. Provide the required value for Preregistered full Gate A."
             )
         authenticated_admissions = _formal_admission_evidence(
             admission_manifests,
@@ -3346,14 +3346,14 @@ def run_binding_gate(
     initialization = _initialization_report(initial, config)
     if config.qualification_regime == "preregistered_full":
         if not _preregistered_gpu_initialization(initialization):
-            raise RuntimeError("formal Gate initialization differs from admissions")
+            raise RuntimeError("Formal Gate initialization differs from admissions. Use matching values and structures.")
         if (
             data_report["training_schedule_sha256"]
             != PREREGISTERED_TRAINING_SCHEDULE_SHA256
             or data_report["validation_schedule_sha256"]
             != PREREGISTERED_STABILITY_DIGESTS["validation_schedule_sha256"]
         ):
-            raise RuntimeError("formal Gate schedule differs from admissions")
+            raise RuntimeError("Formal Gate schedule differs from admissions. Use matching values and structures.")
     training, _, compiler = _train_pp_prop(model, data, config)
     evaluation, diagnostics = _evaluate_model(model, data, config)
     marginals = _marginal_identity_report(data, config)
@@ -3488,7 +3488,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.target is not None:
         if args.smoke or args.one_update_manifest or args.stability_manifest:
             raise ValueError(
-                "fixed admission targets do not accept smoke or manifest options"
+                "Fixed admission targets do not accept smoke or manifest options. Fix the input condition named in the error, then rerun the operation."
             )
         admission_defaults = {
             "training_updates": 10_000,
@@ -3508,7 +3508,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             getattr(args, name) != expected
             for name, expected in admission_defaults.items()
         ):
-            raise ValueError("fixed admission targets reject topology and budget overrides")
+            raise ValueError("Fixed admission targets reject topology and budget overrides. Fix the input condition named in the error, then rerun the operation.")
         result = run_stage21_admission(args.target)
         destination = write_artifact(result, args.output)
         print(destination)
@@ -3534,16 +3534,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     manifests = None
     if args.one_update_manifest is not None or args.stability_manifest is not None:
         if args.smoke:
-            raise ValueError("smoke runs cannot consume formal admission manifests")
+            raise ValueError("Smoke runs cannot consume formal admission manifests. Fix the input condition named in the error, then rerun the operation.")
         if args.one_update_manifest is None or args.stability_manifest is None:
-            raise ValueError("formal Gate A requires both admission manifests")
+            raise ValueError("Formal Gate A requires both admission manifests. Provide the required value for Formal Gate A.")
         manifests = {
             "one_update": args.one_update_manifest,
             "stability_256": args.stability_manifest,
         }
         if config.qualification_regime != "preregistered_full":
             raise ValueError(
-                "admission manifests are accepted only by preregistered full Gate A"
+                "Admission manifests are accepted only by preregistered full Gate A. Free resources or reduce the allocation."
             )
     if manifests is None:
         result = run_binding_gate(config)

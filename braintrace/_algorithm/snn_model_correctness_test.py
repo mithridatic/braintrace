@@ -58,7 +58,7 @@ def _setup(name):
 @pytest.mark.parametrize('name', _ALL_SPECS)
 def test_d_rtrl_matches_bptt_on_snn_models(name):
     """D_RTRL is exact, so it must reproduce BPTT on every realistic model:
-    multi-timescale synapses, heterogeneous leaks, E/I populations and
+    Multi-timescale synapses, heterogeneous leaks, E/I populations and
     HiddenGroups with num_state from 1 to 5."""
     spec, xs = _setup(name)
     with brainstate.environ.context(dt=0.1 * u.ms):

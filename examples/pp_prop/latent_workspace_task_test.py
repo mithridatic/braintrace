@@ -221,7 +221,7 @@ def test_direct_loader_rejects_json_collection_and_bad_json(tmp_path: Path) -> N
 
     broken = tmp_path / "broken.json"
     broken.write_text("{", encoding="utf-8")
-    with pytest.raises(ValueError, match="cannot load"):
+    with pytest.raises(ValueError, match="(?i)cannot load"):
         load_arc_task(broken)
 
 
@@ -362,7 +362,7 @@ def test_indexed_dataset_round_trip_avoids_raw_source_work(
     )
 
     def unexpected(*args: object, **kwargs: object) -> None:
-        raise AssertionError("indexed loading must not scan, hash, or fingerprint raw tasks")
+        raise AssertionError("Indexed loading must not scan, hash, or fingerprint raw tasks. Ensure Indexed loading does not scan, hash, or fingerprint raw tasks.")
 
     monkeypatch.setattr(task_module, "_source_files", unexpected)
     monkeypatch.setattr(task_module, "_hash_file", unexpected)
@@ -1046,7 +1046,7 @@ def test_batched_training_encoder_preserves_target_free_metadata_and_rejects_bad
 
     with pytest.raises(ValueError, match="task_index"):
         task_module._encode_arc_query_episodes_batched((replace(episode, task_index=-1),))
-    with pytest.raises(ValueError, match="grid shapes.*capacity"):
+    with pytest.raises(ValueError, match="(?i)grid shapes.*capacity"):
         task_module._encode_arc_query_episodes_batched(
             (episode,), RowEventConfig(max_grid_size=1)
         )
@@ -1128,7 +1128,7 @@ def test_encoding_rejects_demo_grid_and_query_overflow() -> None:
         encode_query_episode(too_many, 0)
 
     task = _task()
-    with pytest.raises(ValueError, match="grid shapes.*capacity"):
+    with pytest.raises(ValueError, match="(?i)grid shapes.*capacity"):
         encode_query_episode(task, 0, RowEventConfig(max_grid_size=2))
     with pytest.raises(ValueError, match="query_index"):
         encode_query_episode(task, 1)
@@ -1160,7 +1160,7 @@ def test_decoder_fails_closed_on_corrupt_features(corruption: str) -> None:
 
 def test_decoder_rejects_wrong_shape_and_nonfinite_values() -> None:
     config = RowEventConfig()
-    with pytest.raises(ValueError, match="events shape"):
+    with pytest.raises(ValueError, match="(?i)events shape"):
         decode_row_events(np.zeros((1, 1), dtype=np.float32), config)
     encoded = encode_query_episode(_task(), 0, config)
     events = encoded.events.copy()

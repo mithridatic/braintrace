@@ -92,9 +92,9 @@ def _emb_xy_to_dw(x: Any, hidden_dim: Any, weights: dict[str, Any], *,
 
     Two ``x`` representations arrive here, distinguished by dtype:
 
-    - **integer** ``x`` — the raw indices (param-dim D-RTRL instantaneous
+    - **Integer** ``x`` — the raw indices (param-dim D-RTRL instantaneous
       term): the VJP of the gather, a scatter-add into ``(V, D)``.
-    - **float** ``x`` — the low-pass-filtered one-hot representation from
+    - **Float** ``x`` — the low-pass-filtered one-hot representation from
       the IO-dim input trace (see :func:`_emb_pp_x_repr`): the VJP of the
       equivalent ``x @ table`` contraction, mirroring the dense-matmul rule.
     """
@@ -273,17 +273,18 @@ def embedding(
     indices = jnp.asarray(indices)
     if not jnp.issubdtype(indices.dtype, jnp.integer):
         raise TypeError(
-            f'embedding indices must be integers; got dtype {indices.dtype}.'
+            f'Embedding indices must be integers; got dtype {indices.dtype}. Set Embedding indices to integers; got dtype {indices.dtype}.'
         )
     if indices.ndim > 1:
         raise NotImplementedError(
-            'braintrace.embedding supports scalar or rank-1 (batch,) indices; '
+            'Braintrace.embedding supports scalar or rank-1 (batch,) indices; '
             f'got indices.ndim={indices.ndim}. Embed one step at a time or '
-            'flatten the leading axes outside the op.'
+            'flatten the leading axes outside the op. Set the named field to a value in the stated range, then rerun the operation.'
         )
     if getattr(weight, 'ndim', None) != 2:
         raise ValueError(
-            'embedding weight must be a (num_embeddings, features) matrix; '
+            'Embedding weight must be a (num_embeddings, features) matrix; '
+            f'got ndim={getattr(weight, "ndim", None)}. Set Embedding weight to a (num_embeddings, features) matrix; '
             f'got ndim={getattr(weight, "ndim", None)}.'
         )
     w_v, w_u = u.split_mantissa_unit(weight)

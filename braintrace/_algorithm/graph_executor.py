@@ -29,7 +29,7 @@
 #   [2024-11-22] compatible with `brainstate>=0.1.0` (#17)
 #   [2024-11-23] Add the support for vjp_time_ahead > 1, it can combine the
 #                advantage of etrace learning and backpropagation through time.
-#   [2024-11] version 0.0.3, a complete new revision for better model debugging.
+#   [2024-11] Version 0.0.3, a complete new revision for better model debugging.
 #
 # ==============================================================================
 
@@ -103,11 +103,11 @@ class ETraceGraphExecutor:
             raise TypeError(
                 'The model should be an instance of "brainstate.nn.Module" since '
                 'we can extract the program structure from the model for '
-                'better debugging.'
+                'better debugging. Fix the input condition named in the error, then rerun the operation.'
             )
         self.model = model
 
-        # hidden-group grouping mode for the hidden-to-hidden transition; see
+        # Hidden-group grouping mode for the hidden-to-hidden transition; see
         # ``compile_etrace_graph(..., include_recurrent_mixing=...)``.
         self.include_recurrent_mixing = include_recurrent_mixing
 
@@ -119,10 +119,10 @@ class ETraceGraphExecutor:
             snap_max_jacobian_elements
         )
 
-        # control-flow canonicalization policy; None -> compiler default
+        # Control-flow canonicalization policy; None -> compiler default
         self.control_flow = control_flow
 
-        # the compiled graph
+        # The compiled graph
         self._compiled_graph: Optional[ETraceGraph] = None
         self._state_id_to_path: Optional[Dict[int, Path]] = None
 
@@ -149,7 +149,7 @@ class ETraceGraphExecutor:
             :meth:`compile_graph` method before accessing this property.
         """
         if self._compiled_graph is None:
-            raise ValueError('The graph is not compiled yet. Please call ".compile_graph()" first.')
+            raise ValueError('The graph is not compiled. Call `compile_graph()` before use.')
         return self._compiled_graph
 
     @property
@@ -221,13 +221,13 @@ class ETraceGraphExecutor:
             other necessary data required for graph compilation.
         """
 
-        # invalidate cached mappings on recompilation
+        # Invalidate cached mappings on recompilation
         self._state_id_to_path = None
 
-        # process the inputs
+        # Process the inputs
         args = get_single_step_data(*args)
 
-        # compile the graph
+        # Compile the graph
         self._compiled_graph = compile_etrace_graph(
             self.model, *args,
             include_recurrent_mixing=self.include_recurrent_mixing,
@@ -310,7 +310,7 @@ class ETraceGraphExecutor:
         4. The Jacobian matrix of hidden-to-hidden, i.e., :math:`\partial h^t / \partial h^{t-1}`.
         """
         raise NotImplementedError('The method "solve_h2w_h2h_jacobian" should be '
-                                  'implemented in the subclass.')
+                                  'implemented in the subclass. Fix the input condition named in the error, then rerun the operation.')
 
     def solve_h2w_h2h_l2h_jacobian(
         self, *args: Any,
@@ -358,4 +358,4 @@ class ETraceGraphExecutor:
            That is, :math:`\partial L / \partial h`, where :math:`L` is the loss and :math:`h` is the hidden state.
         """
         raise NotImplementedError('The method "solve_h2w_h2h_jacobian_and_l2h_vjp" '
-                                  'should be implemented in the subclass.')
+                                  'should be implemented in the subclass. Implement the method in the subclass.')

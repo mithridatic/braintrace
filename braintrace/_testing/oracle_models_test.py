@@ -47,7 +47,7 @@ def test_snn_spec_construction_is_deterministic(name):
             {k: v.value for k, v in spec.factory().states(brainstate.ParamState).items()})
     assert set(w1) == set(w2)
     for key in w1:
-        assert bool(jnp.allclose(w1[key], w2[key])), f'{name}: {key} differs across calls'
+        assert bool(jnp.allclose(w1[key], w2[key])), f'{name}: {key} differs across calls. Use matching values and structures.'
 
 
 @pytest.mark.parametrize('name', sorted(SNN_SPECS))
@@ -68,7 +68,7 @@ def test_underdriven_input_scale_is_dead():
     is exactly zero, so any comparison on it would be vacuous."""
     spec = SNN_SPECS['lif_expcu']()
     with brainstate.environ.context(dt=0.1 * u.ms):
-        dead_xs = spec.make_inputs(6, 4) / spec.input_scale  # undo the scaling
+        dead_xs = spec.make_inputs(6, 4) / spec.input_scale  # Undo the scaling
         assert gradient_norm(bptt_param_gradients(spec.factory, dead_xs)) == 0.0
 
 
@@ -93,7 +93,7 @@ def test_overdriven_input_scale_is_also_dead_while_still_spiking():
         spike_rate = float(jnp.mean(jnp.asarray(u.get_mantissa(outs)) > 0.0))
 
         assert gradient_norm(bptt_param_gradients(spec.factory, live_xs)) > 1e-6
-        assert spike_rate > 0.1, 'the over-driven network must still be spiking'
+        assert spike_rate > 0.1, 'The over-driven network must still be spiking. Make the over-driven network still be spiking.'
         assert gradient_norm(bptt_param_gradients(spec.factory, over_xs)) == 0.0
 
 
@@ -166,7 +166,7 @@ class TestNonzeroInitRnn:
         base = step_from(base_h)
         bumped = step_from(base_h.at[0, 0].add(eps))
         off = abs(float((bumped[0, 1] - base[0, 1]) / eps))
-        assert off > 1e-2, f'd h[1] / d h[0] is {off}: positions do not mix'
+        assert off > 1e-2, f'D h[1] / d h[0] is {off}: positions do not mix. Update the fixture or expected result to satisfy this assertion.'
 
     def test_the_first_step_trace_is_nonzero_unlike_the_h0_zero_control(self):
         # Why h0 != 0 is load-bearing: with h0 == 0 the recurrent weight's first
@@ -184,11 +184,11 @@ class TestNonzeroInitRnn:
             algo(braintrace.MultiStepData(x[None]))
             mags = [float(jnp.abs(u.get_mantissa(v)).max())
                     for v in jax.tree.leaves(algo._get_etrace_data())]
-            assert mags, 'the algorithm has no eligibility trace state'
+            assert mags, 'The algorithm has no eligibility trace state. Provide the missing item named in the message.'
             if want_nonzero:
-                assert max(mags) > 1e-3, f'h0={h0}: trace is {mags}'
+                assert max(mags) > 1e-3, f'H0={h0}: trace is {mags}. Update the fixture or expected result to satisfy this assertion.'
             else:
-                assert max(mags) == 0.0, f'h0={h0}: trace is {mags}'
+                assert max(mags) == 0.0, f'H0={h0}: trace is {mags}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_it_has_no_plain_parameters(self):
         from braintrace._testing.oracle_models import nonzero_init_rnn
@@ -214,7 +214,7 @@ class TestUnitWeightRnn:
         assert group.varshape == (1, 4)
         hidden = model.states(brainstate.HiddenState)
         units = {u.get_unit(hidden[p].value) for p in group.hidden_paths}
-        assert len(units) == 2, f'the units must differ, got {units}'
+        assert len(units) == 2, f'The units must differ, got {units}. Make the units differ.'
 
     def test_a_step_and_a_gradient_both_survive(self):
         from braintrace._testing.oracle_models import unit_weight_rnn
@@ -225,7 +225,7 @@ class TestUnitWeightRnn:
         x = jnp.ones((1, 3))
         algo.compile_graph(x)
         algo.init_etrace_state()
-        algo(x)  # move off the zero initial state so the trace is live
+        algo(x)  # Move off the zero initial state so the trace is live
 
         g = brainstate.transform.grad(
             lambda a: u.get_mantissa((algo(a) ** 2).sum()),
@@ -275,7 +275,7 @@ class TestPlainAndEtpRnn:
         # win: reaches every future loss through the recurrence -- truncated.
         gap = float(np.abs(np.asarray(got[('win',)])
                            - np.asarray(ref[('win',)])).max())
-        assert gap > 1e-3, f'win must be truncated by the window, gap={gap}'
+        assert gap > 1e-3, f'Win must be truncated by the window, gap={gap}. Set Win to truncated by the window, gap={gap}.'
 
     def test_it_declares_both_plain_kinds(self):
         from braintrace._testing.oracle_models import plain_and_etp_rnn
@@ -310,7 +310,7 @@ class TestDelayedRewardRnn:
         T = 20
         inputs = _inputs(T, 2)
 
-        # d(final output)/d(input at step 0) must be non-negligible, which is
+        # D(final output)/d(input at step 0) must be non-negligible, which is
         # the property a bandit task lacks and DNI needs.
         def final_out(xs):
             model = spec.factory()
@@ -321,9 +321,9 @@ class TestDelayedRewardRnn:
         g = jax.grad(final_out)(inputs)
         early = float(np.abs(np.asarray(g[0])).max())
         late = float(np.abs(np.asarray(g[-1])).max())
-        assert early > 1e-3, f'no credit reaches step 0 (|g|={early})'
+        assert early > 1e-3, f'No credit reaches step 0 (|g|={early}). Provide the missing item named in this message.'
         assert early > 0.05 * late, (
-            f'credit decays too fast to span windows: early={early}, late={late}')
+            f'Credit decays too fast to span windows: early={early}, late={late}. Update the fixture or expected result to satisfy this assertion.')
 
     def test_the_output_is_scalar_per_step(self):
         from braintrace._testing.oracle_models import delayed_reward_rnn

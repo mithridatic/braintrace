@@ -230,7 +230,7 @@ def _conv_layout(params: dict[str, Any]) -> tuple[int, int, int, int]:
         # JAX default: iota = (0,1,2,...) → NCHW/NCH output, OIHW/OIH kernel.
         batch_axis = 0
         channel_axis = 1
-        kernel_out_axis = 0  # out-channel at axis 0 of kernel (OIHW-style)
+        kernel_out_axis = 0  # Out-channel at axis 0 of kernel (OIHW-style)
     elif isinstance(dn, tuple) and len(dn) == 3 and isinstance(dn[2], str):
         # String-tuple form e.g. ('NHWC', 'HWIO', 'NHWC').
         out_spec_str = dn[2]
@@ -244,7 +244,7 @@ def _conv_layout(params: dict[str, Any]) -> tuple[int, int, int, int]:
         batch_axis = out_spec[0]
         channel_axis = out_spec[1]
         rhs_spec = dn.rhs_spec
-        kernel_out_axis = rhs_spec[0]  # logical out-channel position in kernel
+        kernel_out_axis = rhs_spec[0]  # Logical out-channel position in kernel
     return n_spatial, channel_axis, batch_axis, kernel_out_axis
 
 
@@ -300,7 +300,7 @@ def _conv_dt_to_t(hidden_dim: Any, trace: dict[str, Any], **params: Any) -> dict
     hd = jnp.transpose(hidden_dim, (batch_axis, *spatial_axes, channel_axis))
 
     # Broadcast over the kernel block with out_ch aligned to kernel_out_axis.
-    kernel_rank = w_trace.ndim - 1 - n_spatial  # minus batch and spatial_out
+    kernel_rank = w_trace.ndim - 1 - n_spatial  # Minus batch and spatial_out
     target_shape = hd.shape[:1 + n_spatial] + tuple(
         hd.shape[-1] if j == kernel_out_axis else 1 for j in range(kernel_rank)
     )
@@ -403,7 +403,7 @@ def _conv_xy_to_dw(x: Any, hidden_dim: Any, weights: dict[str, Any], **params: A
             _, b_vjp = jax.vjp(bias_fn, b)
             db = u.get_mantissa(b_vjp(jnp.ones_like(b))[0])  # bias_fn'(b), shape (out_ch,)
             _, channel_axis, _, _ = _conv_layout(params)
-            batched_rank = n_spatial + 2  # (batch, *spatial, channel) up to permutation
+            batched_rank = n_spatial + 2  # (Batch, *spatial, channel) up to permutation
             axes_right_of_channel = batched_rank - 1 - channel_axis
             ax = bias_grad.ndim - 1 - axes_right_of_channel
             shape = [1] * bias_grad.ndim
@@ -467,7 +467,7 @@ def _conv_extract_patches(x: Any, kernel_shape: Sequence[int],
         rhs_dilation=params.get('rhs_dilation', None),
         dimension_numbers=dn,
     )
-    # patches follows the output layout with a packed channel axis of size
+    # Patches follows the output layout with a packed channel axis of size
     # c_in * prod(filter_shape); bring it to (batch, *spatial_out, packed).
     batch_ax, ch_ax = dn.out_spec[0], dn.out_spec[1]
     spatial_axes = tuple(sorted(set(range(patches.ndim)) - {batch_ax, ch_ax}))
@@ -494,7 +494,7 @@ def _conv_instant_bias(hidden_dim: Any, weights: dict[str, Any],
         _, b_vjp = jax.vjp(bias_fn, b)
         db = u.get_mantissa(b_vjp(jnp.ones_like(b))[0])  # bias_fn'(b), shape (out_ch,)
         n_spatial, channel_axis, _, _ = _conv_layout(params)
-        batched_rank = n_spatial + 2  # (batch, *spatial, channel) up to permutation
+        batched_rank = n_spatial + 2  # (Batch, *spatial, channel) up to permutation
         axes_right_of_channel = batched_rank - 1 - channel_axis
         ax = bias_grad.ndim - 1 - axes_right_of_channel
         shape = [1] * bias_grad.ndim
@@ -552,17 +552,17 @@ def _conv_instant_drtrl(x: Any, hidden_dim: Any, weights: dict[str, Any],
     dn = jax.lax.conv_dimension_numbers(
         x_in.shape, kernel.shape, params.get('dimension_numbers', None)
     )
-    # (batch, *spatial_out, c_in, *kernel_spatial)
+    # (Batch, *spatial_out, c_in, *kernel_spatial)
     patches = _conv_extract_patches(x_in, kernel.shape, params)
 
-    # df -> (batch, *spatial_out, out_ch), spatial in output-tensor order
+    # Df -> (batch, *spatial_out, out_ch), spatial in output-tensor order
     # (matching the trace's spatial prefix).
     batch_ax, ch_ax = dn.out_spec[0], dn.out_spec[1]
     spatial_axes = tuple(sorted(set(range(hd_in.ndim)) - {batch_ax, ch_ax}))
     df_t = jnp.transpose(hd_in, (batch_ax, *spatial_axes, ch_ax))
 
     # Outer product over the kernel block: (batch, *s, c_in, *u, out_ch).
-    lead = 1 + n_spatial  # batch + spatial_out prefix
+    lead = 1 + n_spatial  # Batch + spatial_out prefix
     df_b = df_t.reshape(
         df_t.shape[:lead] + (1,) * (1 + n_spatial) + df_t.shape[-1:]
     )
@@ -575,7 +575,7 @@ def _conv_instant_drtrl(x: Any, hidden_dim: Any, weights: dict[str, Any],
     for m, ax in enumerate(rhs_spec[2:]):
         src[ax] = lead + 1 + m
     perm = tuple(range(lead)) + tuple(src[j] for j in range(kernel.ndim))
-    inst = jnp.transpose(eff, perm)  # (batch, *spatial_out, *kernel_shape)
+    inst = jnp.transpose(eff, perm)  # (Batch, *spatial_out, *kernel_shape)
 
     if kernel_fn is not None:
         # Chain kernel_fn' via the same VJP _conv_xy_to_dw composes, applied
@@ -631,8 +631,8 @@ def _conv_solve_drtrl(dg_hidden: Any, trace: dict[str, Any],
     ch_axis = remaining.index(channel_axis_b)
     spatial_axes = tuple(i for i in range(len(remaining)) if i != ch_axis)
 
-    dg_t = jnp.transpose(dg_hidden, (*spatial_axes, ch_axis))  # (*spatial_out, out_ch)
-    w_trace = trace['weight']                                  # (*spatial_out, *kernel)
+    dg_t = jnp.transpose(dg_hidden, (*spatial_axes, ch_axis))  # (*Spatial_out, out_ch)
+    w_trace = trace['weight']                                  # (*Spatial_out, *kernel)
     kernel_rank = w_trace.ndim - n_spatial
     target_shape = dg_t.shape[:n_spatial] + tuple(
         dg_t.shape[-1] if j == kernel_out_axis else 1 for j in range(kernel_rank)
@@ -706,7 +706,7 @@ def _conv_init_drtrl(x_var: Any, y_var: Any, weight_vars: dict[str, Any],
     if (eqn_params.get('feature_group_count', 1) != 1
             or eqn_params.get('batch_group_count', 1) != 1):
         raise NotImplementedError(
-            'param-dim D-RTRL (ParamDimVjpAlgorithm / D_RTRL) does not support '
+            'Param-dim D-RTRL (ParamDimVjpAlgorithm / D_RTRL) does not support '
             'grouped convolutions (feature_group_count != 1 or '
             'batch_group_count != 1): the exact per-position kernel trace '
             'requires ungrouped input patches. Use the IO-dim algorithm '

@@ -123,7 +123,7 @@ class TestEmbeddingUnsupportedOptions:
 
         with pytest.raises(NotImplementedError):
             brainstate.transform.jit(build_and_run)(jnp.array([0, 1], dtype=jnp.int32))
-        assert called == [], 'construction should have raised before the lookup'
+        assert called == [], 'Construction should have raised before the lookup. Make construction reject the invalid arguments.'
 
     def test_explicit_defaults_construct_and_run(self):
         layer = braintrace.nn.Embedding(

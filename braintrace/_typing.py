@@ -29,7 +29,7 @@ ArrayLike: TypeAlias = brainstate.typing.ArrayLike
 DType: TypeAlias = brainstate.typing.DType
 DTypeLike: TypeAlias = brainstate.typing.DTypeLike
 
-# --- types --- #
+# --- Types --- #
 PyTree: TypeAlias = Any
 StateID: TypeAlias = int
 WeightID: TypeAlias = int
@@ -67,11 +67,11 @@ def as_size_tuple(size: Size) -> Tuple[int, ...]:
 Axes: TypeAlias = Union[int, Sequence[int]]
 Path: TypeAlias = Tuple[str, ...]
 
-# --- inputs and outputs --- #
+# --- Inputs and outputs --- #
 Inputs: TypeAlias = PyTree
 Outputs: TypeAlias = PyTree
 
-# --- state values --- #
+# --- State values --- #
 HiddenVals: TypeAlias = Dict[Path, PyTree]
 StateVals: TypeAlias = Dict[Path, PyTree]
 WeightVals: TypeAlias = Dict[Path, PyTree]
@@ -80,11 +80,11 @@ ETraceVals: TypeAlias = Dict[Path, PyTree]
 HiddenOutVar: TypeAlias = Var
 HiddenInVar: TypeAlias = Var
 
-# --- gradients --- #
+# --- Gradients --- #
 dG_Inputs: TypeAlias = PyTree  # gradients of inputs
-dG_Weight: TypeAlias = Sequence[PyTree]  # gradients of weights
-dG_Hidden: TypeAlias = Sequence[PyTree]  # gradients of hidden states
-dG_State: TypeAlias = Sequence[PyTree]  # gradients of other states
+dG_Weight: TypeAlias = Sequence[PyTree]  # Gradients of weights
+dG_Hidden: TypeAlias = Sequence[PyTree]  # Gradients of hidden states
+dG_State: TypeAlias = Sequence[PyTree]  # Gradients of other states
 
 VarID: TypeAlias = int
 
@@ -100,16 +100,16 @@ _HiddenPath: TypeAlias = Path
 ETraceWG_Key: TypeAlias = Tuple[ETraceY_Key, int]
 HidHidJac_Key: TypeAlias = Tuple[Path, Path]
 
-# --- data --- #
+# --- Data --- #
 WeightXVar: TypeAlias = Var
 WeightYVar: TypeAlias = Var
 WeightXs: TypeAlias = Dict[Var, jax.Array]
 WeightDfs: TypeAlias = Dict[Var, jax.Array]
 TempData: TypeAlias = Dict[Var, jax.Array]
-Current: TypeAlias = ArrayLike  # the synaptic current
-Conductance: TypeAlias = ArrayLike  # the synaptic conductance
-Spike: TypeAlias = ArrayLike  # the spike signal
-# the diagonal Jacobian of the hidden-to-hidden function
+Current: TypeAlias = ArrayLike  # The synaptic current
+Conductance: TypeAlias = ArrayLike  # The synaptic conductance
+Spike: TypeAlias = ArrayLike  # The spike signal
+# The diagonal Jacobian of the hidden-to-hidden function
 Hid2HidDiagJacobian: TypeAlias = Dict[
     FrozenSet[HiddenOutVar],
     Dict[HiddenOutVar, List[jax.Array]]

@@ -140,7 +140,7 @@ def _load_example():
     name = "_pp_prop_arc_latent_reasoning_entry"
     spec = importlib.util.spec_from_file_location(name, EXAMPLE)
     if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load {EXAMPLE}")
+        raise ImportError(f"Cannot load {EXAMPLE}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
@@ -668,7 +668,7 @@ def test_lean_390_tick_evaluation_gathers_only_scoring_checkpoints(example):
     ],
 )
 def test_associative_memory_config_rejects_invalid_values(example, kwargs, message):
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         example.ExperimentConfig(structural_only=True, **kwargs)
 
 
@@ -707,7 +707,7 @@ def test_optimizer_defaults_to_muon_and_resolves_decoupled_decay(example):
     ],
 )
 def test_optimizer_config_rejects_invalid_values(example, kwargs, message):
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         example.ExperimentConfig(structural_only=True, **kwargs)
 
 
@@ -1170,12 +1170,12 @@ def test_training_optimizer_compiled_update_moves_matrix_and_vector_leaves(
 def test_config_rejects_invalid_or_scientifically_incomplete_values(
     example, kwargs, message
 ):
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         example.ExperimentConfig(**kwargs)
 
 
 def test_config_fails_closed_above_1024_recurrent_edges_per_neuron(example):
-    with pytest.raises(RuntimeError, match="recurrent edge budget"):
+    with pytest.raises(RuntimeError, match="(?i)recurrent edge budget"):
         example.ExperimentConfig(
             structural_only=True,
             neuron_count=2048,
@@ -1287,10 +1287,10 @@ def test_device_resolution_reports_backend_and_fails_closed(example, monkeypatch
         example._resolve_device("gpu")
 
     def unavailable(platform):
-        raise RuntimeError("driver missing")
+        raise RuntimeError("Driver missing. Provide the missing item named in this message.")
 
     monkeypatch.setattr(example, "_devices_for", unavailable)
-    with pytest.raises(RuntimeError, match="driver missing"):
+    with pytest.raises(RuntimeError, match="(?i)driver missing"):
         example._resolve_device("gpu")
 
 
@@ -1688,7 +1688,7 @@ def test_advance_schedule_skips_demonstration_padding_rows(example):
     occupied = max(
         int(valid[start:stop].sum()) for start, stop in encoded.demonstration_spans
     )
-    assert occupied < rows.max_grid_size, "fixture must exercise padded blocks"
+    assert occupied < rows.max_grid_size, "Fixture must exercise padded blocks. Set Fixture to exercise padded blocks."
     for start, stop in encoded.demonstration_spans:
         assert advances[start : start + occupied].all()
         assert not advances[start + occupied : stop].any()
@@ -1829,7 +1829,7 @@ def test_progressive_effort_schedule_handles_zero_and_generic_horizons(example):
     assert set(generic[3:6].tolist()) <= {5, 10}
     assert set(generic[6:9].tolist()) <= {5, 10, 20}
     assert set(generic[9:].tolist()) <= {5, 10, 20, 40}
-    with pytest.raises(ValueError, match="schedule"):
+    with pytest.raises(ValueError, match="(?i)schedule"):
         example._effort_schedule(
             3, brainstate.random.RandomState(1), (0, 30), "staged"
         )
@@ -2936,7 +2936,7 @@ def test_rule_proposal_count_must_match_the_records(example):
     data = example._load_data(config)
     records = example._evaluation_records(data, config, example._row_config(config))[:2]
     compact = np.zeros((TEST_DEPTH_COUNT, 2, 340), dtype=np.float32)
-    with pytest.raises(ValueError, match="rule proposals must match"):
+    with pytest.raises(ValueError, match="(?i)rule proposals must match"):
         example._score_windows(
             compact,
             records,
@@ -4999,11 +4999,11 @@ def test_training_chunk_prefetch_is_ordered_and_at_most_one_ahead(example):
 def test_training_chunk_prefetch_propagates_the_producer_exception(example):
     def source():
         yield "ready"
-        raise RuntimeError("episode encoding failed")
+        raise RuntimeError("Episode encoding failed. Check the reported inputs and retry the operation.")
 
     chunks = example._prefetched_training_chunks(source())
     assert next(chunks) == "ready"
-    with pytest.raises(RuntimeError, match="episode encoding failed"):
+    with pytest.raises(RuntimeError, match="(?i)episode encoding failed"):
         next(chunks)
 
 
@@ -5050,14 +5050,14 @@ def test_training_episode_workers_restore_order_and_join_on_failure(
     def materialize(job):
         started.set()
         if job.ordinal == 1:
-            raise RuntimeError("episode worker failed")
+            raise RuntimeError("Episode worker failed. Check the reported inputs and retry the operation.")
         time.sleep(0.01)
         finished.set()
         return job.ordinal
 
     monkeypatch.setattr(example, "_materialize_training_episode", materialize)
     jobs = [type("Job", (), {"ordinal": index})() for index in range(8)]
-    with pytest.raises(RuntimeError, match="episode worker failed"):
+    with pytest.raises(RuntimeError, match="(?i)episode worker failed"):
         list(example._ordered_training_episodes(jobs, 2))
     assert started.is_set()
     assert finished.is_set()
@@ -5256,7 +5256,7 @@ def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
     path = tmp_path / "parameters.npz"
     example._write_parameter_checkpoint(narrow, path)
 
-    with pytest.raises(ValueError, match="parameter checkpoint"):
+    with pytest.raises(ValueError, match="(?i)parameter checkpoint"):
         example._read_parameter_checkpoint(broad, path)
 
 
@@ -5276,7 +5276,7 @@ def test_memory_read_transform_participates_in_checkpoint_compatibility(
     path = tmp_path / "linear-parameters.npz"
     example._write_parameter_checkpoint(linear, path)
 
-    with pytest.raises(ValueError, match="parameter checkpoint"):
+    with pytest.raises(ValueError, match="(?i)parameter checkpoint"):
         example._read_parameter_checkpoint(gated, path)
 
 
@@ -5319,7 +5319,7 @@ def test_latent_residual_configuration_participates_in_checkpoint_compatibility(
     path = tmp_path / "baseline-parameters.npz"
     example._write_parameter_checkpoint(baseline, path)
 
-    with pytest.raises(ValueError, match="parameter checkpoint"):
+    with pytest.raises(ValueError, match="(?i)parameter checkpoint"):
         example._read_parameter_checkpoint(residual, path)
 
 
@@ -5522,7 +5522,7 @@ def test_an_initial_checkpoint_from_another_scale_is_rejected(example, tmp_path)
     path = tmp_path / "segment.npz"
     example._write_parameter_checkpoint(narrow, path)
 
-    with pytest.raises(ValueError, match="parameter checkpoint"):
+    with pytest.raises(ValueError, match="(?i)parameter checkpoint"):
         example._restore_initial_parameters(
             broad, dataclasses.replace(wider, initial_checkpoint=path)
         )
@@ -5578,7 +5578,7 @@ def test_a_failed_checkpoint_write_leaves_the_previous_file_intact(
     survivor = path.read_bytes()
 
     def explode(*_args, **_kwargs):
-        raise OSError("device full")
+        raise OSError("Device full. Free resources or reduce the allocation.")
 
     monkeypatch.setattr(example.np, "savez", explode)
     with pytest.raises(OSError):

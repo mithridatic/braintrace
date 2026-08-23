@@ -21,10 +21,10 @@ transform_correctness_test) pin behavior at *fixed* dimensions. This module
 broadens hidden_size / seq_len / layers / batch into a generated range and
 asserts the structural invariants we already trust at fixed dims:
 
-  * exact-class ``D_RTRL`` via the multi-step VJP path equals BPTT element-wise,
+  * Exact-class ``D_RTRL`` via the multi-step VJP path equals BPTT element-wise,
     for a single-relation rate RNN, a 2-layer stacked RNN (two relations), and a
     ``num_state == 2`` coupled-state group;
-  * batch invariance: a batched multi-step gradient equals the sum of the
+  * Batch invariance: a batched multi-step gradient equals the sum of the
     per-sequence single-batch gradients.
 
 Every test carries ``@pytest.mark.diagnostic``. That marker is deselected by the

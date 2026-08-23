@@ -163,7 +163,7 @@ def test_restore_parameters_rejects_incompatible_snapshot_transactionally(
         )
     incompatible = ParameterSnapshot(records=tuple(records))
 
-    with pytest.raises(ValueError, match="parameter"):
+    with pytest.raises(ValueError, match="(?i)parameter"):
         restore_parameters(model, incompatible)
 
     _assert_snapshots_equal(snapshot_parameters(model), before_failure)
@@ -340,9 +340,9 @@ def test_task_local_runner_restores_shared_state_after_failure() -> None:
     def fail_after_mutation(_: object, fold: jax.Array) -> jax.Array:
         model.weight.value = model.weight.value + fold
         model.hidden.value = model.hidden.value + fold
-        raise RuntimeError("synthetic adaptation failure")
+        raise RuntimeError("Synthetic adaptation failure. Check the reported inputs and retry the operation.")
 
-    with pytest.raises(RuntimeError, match="synthetic adaptation failure"):
+    with pytest.raises(RuntimeError, match="(?i)synthetic adaptation failure"):
         run_task_local_adaptation(
             model,
             base_parameters=base,
@@ -367,7 +367,7 @@ def test_task_local_runner_restores_shared_state_after_failure() -> None:
 )
 def test_task_local_runner_rejects_invalid_fold_batches(fold_inputs: object) -> None:
     model = _ToyModel()
-    with pytest.raises(ValueError, match="fold"):
+    with pytest.raises(ValueError, match="(?i)fold"):
         run_task_local_adaptation(
             model,
             base_parameters=snapshot_parameters(model),
@@ -607,7 +607,7 @@ def test_compiled_task_runner_restores_everything_after_callback_failure() -> No
     ) -> jax.Array:
         model.hidden.value = fold
         active_optimizer.update({("weight",): -fold})
-        raise RuntimeError("compiled synthetic failure")
+        raise RuntimeError("Compiled synthetic failure. Check the reported inputs and retry the operation.")
 
     runner = compile_task_local_adaptation_runner(
         model,
@@ -621,7 +621,7 @@ def test_compiled_task_runner_restores_everything_after_callback_failure() -> No
         checkpoint_output_dtype=jnp.float32,
     )
 
-    with pytest.raises(RuntimeError, match="compiled synthetic failure"):
+    with pytest.raises(RuntimeError, match="(?i)compiled synthetic failure"):
         runner(_toy_task_bank())
 
     assert float(model.hidden.value) == 0.0

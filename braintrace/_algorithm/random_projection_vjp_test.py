@@ -31,9 +31,9 @@ How ``proj`` is recovered from the public carrier: after one step from a zero
 carrier, ``s_tilde == rho1 * nu`` and ``theta_tilde == proj / rho1``, so with a
 *known* ``nu`` (a tabulated draw of ±1, hence ``||nu|| == sqrt(size)``),
 
-    proj == theta_tilde * ||s_tilde|| / ||nu||
+    Proj == theta_tilde * ||s_tilde|| / ||nu||
 
-with no access to a private normaliser. The recovery itself is checked against a
+With no access to a private normaliser. The recovery itself is checked against a
 hand-computed dense case before being trusted for the rest.
 """
 
@@ -92,7 +92,7 @@ def _one_step_projection(factory, x, nu_sign=1.0):
     rho1 = float(np.linalg.norm(s) / np.linalg.norm(nu))
     proj = {}
     for (gi, path), th in data['theta_tilde'].items():
-        assert gi == 0, 'these fixtures have exactly one hidden group'
+        assert gi == 0, 'These fixtures have exactly one hidden group. Update the fixture or expected result to satisfy this assertion.'
         proj[path] = jax.tree.map(lambda a: a * rho1, th)
     return proj, nu, model
 
@@ -108,7 +108,7 @@ def _vjp_reference(factory, x, nu, drive_fn, param_paths):
         return drive_fn(model, x, vs)
 
     out, pullback = jax.vjp(f, vals)
-    # nu carries the trailing state axis; the drive does not.
+    # Nu carries the trailing state axis; the drive does not.
     ct = jnp.reshape(jnp.asarray(nu), jnp.shape(out))
     return pullback(ct)[0]
 
@@ -116,9 +116,9 @@ def _vjp_reference(factory, x, nu, drive_fn, param_paths):
 def _assert_close(got, want, label, *, atol=1e-5, rtol=1e-4):
     got_l = jax.tree.leaves(jax.tree.map(lambda a: np.asarray(u.get_mantissa(a)), got))
     want_l = jax.tree.leaves(jax.tree.map(lambda a: np.asarray(u.get_mantissa(a)), want))
-    assert len(got_l) == len(want_l), f'{label}: leaf count {len(got_l)} != {len(want_l)}'
+    assert len(got_l) == len(want_l), f'{label}: leaf count {len(got_l)} != {len(want_l)}. Update the fixture or expected result to satisfy this assertion.'
     for g, w in zip(got_l, want_l):
-        assert g.shape == w.shape, f'{label}: shape {g.shape} != {w.shape}'
+        assert g.shape == w.shape, f'{label}: shape {g.shape} != {w.shape}. Update the fixture or expected result to satisfy this assertion.'
         np.testing.assert_allclose(g, w, atol=atol, rtol=rtol,
                                    err_msg=f'{label}: projector != jax.vjp')
 
@@ -132,7 +132,7 @@ def test_the_recovery_recipe_matches_a_hand_computed_dense_projection():
     x = _xs_for('dense_mm', 1, seed)[0]
     proj, nu, model = _one_step_projection(factory, x)
 
-    # dense mm drive == x @ w, df == 1 (the tail is a plain leak), so
+    # Dense mm drive == x @ w, df == 1 (the tail is a plain leak), so
     # nu^T J_f == outer(x, nu).
     want = np.einsum('bi,bo->io', np.asarray(x), np.asarray(nu)[..., 0])
     _assert_close(proj[('w',)], want, 'dense_mm hand-computed')
@@ -152,7 +152,7 @@ _DRIVES = {
     'conv_nwc_bias': lambda m, x, v: braintrace.conv(
         x, v[('k',)], v[('b',)], strides=(1,), padding='SAME',
         dimension_numbers=('NWC', 'WIO', 'NWC')),
-    'sparse_unbatched': None,   # filled in below (needs the CSR)
+    'sparse_unbatched': None,   # Filled in below (needs the CSR)
     'sparse_batched': None,
     'lora': lambda m, x, v: braintrace.lora_matmul(
         x, v[('B',)], v[('A',)], alpha=2.0, bias=v[('bias',)]),
@@ -188,7 +188,7 @@ def test_the_projector_equals_jax_vjp_per_primitive(name):
     want = _vjp_reference(factory, x, nu, _DRIVES[name], _PARAMS[name])
 
     assert set(proj) == set(want), (
-        f'{name}: projector covers {sorted(proj)}, vjp covers {sorted(want)}')
+        f'{name}: projector covers {sorted(proj)}, vjp covers {sorted(want)}. Update the fixture or expected result to satisfy this assertion.')
     for path in want:
         _assert_close(proj[path], want[path], f'{name} {path}')
 
@@ -325,7 +325,7 @@ def test_a_tied_parameter_accumulates_both_relations():
 
 
 def test_the_projector_is_linear_in_nu():
-    # nu^T J_f is linear in nu by construction. Scaling the draw must scale the
+    # Nu^T J_f is linear in nu by construction. Scaling the draw must scale the
     # projection exactly -- the cheapest check that no norm has leaked into the
     # projector itself (the norms belong in rho, not in proj).
     factory, seed = _FAMILIES['dense_mm']
@@ -354,7 +354,7 @@ def test_one_hidden_factor_per_group_and_one_parameter_factor_per_group_path():
 
     data = algo._get_etrace_data()
     groups = algo.graph.hidden_groups
-    assert len(groups) == 2, 'the fixture must stay disconnected'
+    assert len(groups) == 2, 'The fixture must stay disconnected. Make the fixture stay disconnected.'
     assert [g.hidden_paths for g in groups] == [[('ha',)], [('hb',)]]
     assert len(data['s_tilde']) == len(groups) == 2
     assert set(data['theta_tilde']) == {(0, ('wa',)), (1, ('wb',))}
@@ -403,7 +403,7 @@ def test_a_tied_weight_shares_one_hidden_factor_and_one_parameter_factor():
 
     data = algo._get_etrace_data()
     assert len(algo.graph.hidden_param_op_relations) == 2, (
-        'the fixture must have two relations for this test to mean anything')
+        'The fixture must have two relations for this test to mean anything. Ensure the fixture has two relations for this test to mean anything.')
     assert len(data['s_tilde']) == 1
     # Two relations, one group, one ParamState path -> ONE parameter factor.
     # The rank-1 carrier is per (group, parameter), not per relation, so the two

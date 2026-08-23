@@ -1,5 +1,5 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
-"""04 · vjp_method='single-step' on the copying-memory task.
+"""04 · Vjp_method='single-step' on the copying-memory task.
 
 Single-step computes the VJP only at the current timestep. Cheapest mode,
 introduces gradient bias over long dependencies. Good default.

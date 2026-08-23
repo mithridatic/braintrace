@@ -23,9 +23,9 @@ trace, and the weight gradients must match the legacy two-scan path. The legacy
 path is forced here by stubbing ``_make_etrace_stepper`` to return ``None``.
 
 ``test_fused_*`` exercises both fused executor entry points:
-  * the forward outputs / final trace go through ``solve_h2w_h2h_jacobian``
+  * The forward outputs / final trace go through ``solve_h2w_h2h_jacobian``
     (the non-differentiated ``_update_fn``), and
-  * the gradients go through ``solve_h2w_h2h_l2h_jacobian`` (the custom-VJP
+  * The gradients go through ``solve_h2w_h2h_l2h_jacobian`` (the custom-VJP
     ``_update_fn_fwd`` / ``_update_fn_bwd``), which is where the trace carry is
     threaded through a ``jax.vjp``-traced scan.
 """
@@ -83,11 +83,11 @@ def _build(algo_factory, inputs, *, fuse):
 
 def _assert_tree_close(a, b, *, atol, msg):
     leaves_a, leaves_b = jax.tree.leaves(a), jax.tree.leaves(b)
-    assert len(leaves_a) == len(leaves_b), f'{msg}: pytree structure differs'
+    assert len(leaves_a) == len(leaves_b), f'{msg}: pytree structure differs. Use matching values and structures.'
     for x, y in zip(leaves_a, leaves_b):
         x, y = jnp.asarray(x), jnp.asarray(y)
         maxdiff = float(jnp.max(jnp.abs(x - y))) if x.size else 0.0
-        assert bool(jnp.allclose(x, y, atol=atol)), f'{msg}: maxabsdiff={maxdiff:.3e}'
+        assert bool(jnp.allclose(x, y, atol=atol)), f'{msg}: maxabsdiff={maxdiff:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 @pytest.mark.parametrize('name', list(_ALGOS))
@@ -95,7 +95,7 @@ def test_fused_multistep_matches_legacy(name):
     algo_factory = _ALGOS[name]
     inputs = _inputs(8, 3)
 
-    # --- forward: outputs + final eligibility trace (solve_h2w_h2h_jacobian) ---
+    # --- Forward: outputs + final eligibility trace (solve_h2w_h2h_jacobian) ---
     _, algo_f = _build(algo_factory, inputs, fuse=True)
     out_f = algo_f(braintrace.MultiStepData(inputs))
     trace_f = algo_f._get_etrace_data()
@@ -107,7 +107,7 @@ def test_fused_multistep_matches_legacy(name):
     _assert_tree_close(out_f, out_u, atol=1e-5, msg=f'{name} outputs')
     _assert_tree_close(trace_f, trace_u, atol=1e-5, msg=f'{name} final trace')
 
-    # --- gradients (solve_h2w_h2h_l2h_jacobian custom-VJP path) ---
+    # --- Gradients (solve_h2w_h2h_l2h_jacobian custom-VJP path) ---
     def grads(fuse):
         model, algo = _build(algo_factory, inputs, fuse=fuse)
         return brainstate.transform.grad(

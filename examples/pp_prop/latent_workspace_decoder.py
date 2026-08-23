@@ -132,7 +132,7 @@ def split_decoder_logits(
     expected = decoder_output_width()
     if compact.shape[-1] != expected:
         raise ValueError(
-            f"compact trailing axis must be {expected}, got {compact.shape}"
+            f"Compact trailing axis must be {expected}, got {compact.shape}. Set Compact trailing axis to {expected}."
         )
     height = compact[..., :MAX_GRID_SIZE]
     width = compact[..., MAX_GRID_SIZE : 2 * MAX_GRID_SIZE]

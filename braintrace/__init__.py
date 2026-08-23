@@ -53,7 +53,7 @@ Notes
 -----
 The convenience entry point :func:`compile` wraps a model together with an
 algorithm into a single trainable object and is the recommended starting point:
-one call replaces ``init_all_states`` + algorithm construction +
+One call replaces ``init_all_states`` + algorithm construction +
 ``compile_graph`` (+ the vmap wrapper, with ``vmap=True``). The object it
 returns drives a sequence with :meth:`~SequenceDriverMixin.etrace_grad`
 (accumulate online gradients under a loss) or
@@ -171,14 +171,14 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
-    # version
+    # Version
     '__version__',
     '__version_info__',
 
-    # learning-rule axes
+    # Learning-rule axes
     'ETraceConfig',
 
-    # algorithms
+    # Algorithms
     'ETraceAlgorithm',
     'EligibilityTrace',
     'ETraceVmap',
@@ -198,7 +198,7 @@ __all__ = [
     'SyntheticGradient',
     'train_synthetic_gradient',
 
-    # one-call entry point
+    # One-call entry point
     'compile',
 
     # ETP primitives (user API)
@@ -220,14 +220,14 @@ __all__ = [
     'ETPPrimitive',
     'register_primitive',
 
-    # input data
+    # Input data
     'SingleStepData',
     'MultiStepData',
 
-    # graph executor
+    # Graph executor
     'ETraceGraphExecutor',
 
-    # compiler
+    # Compiler
     'ControlFlowPolicy',
     'ETraceGraph',
     'compile_etrace_graph',
@@ -243,13 +243,13 @@ __all__ = [
     'add_hidden_perturbation_from_minfo',
     'add_hidden_perturbation_in_module',
 
-    # compiler diagnostics
+    # Compiler diagnostics
     'CompilationRecord',
     'CompilationReport',
     'DiagnosticKind',
     'DiagnosticLevel',
 
-    # gradient utilities
+    # Gradient utilities
     'GradExpon',
 
     # SNN online-learning algorithms
@@ -259,16 +259,16 @@ __all__ = [
     'FixedRandomFeedback',
     'KappaFilter',
 
-    # errors
+    # Errors
     'NotSupportedError',
     'CompilationError',
 
-    # submodules
+    # Submodules
     'nn',
 ]
 
 
-# --- v0.1.x legacy shims: deprecated, served lazily with an access-time warning.
+# --- V0.1.x legacy shims: deprecated, served lazily with an access-time warning.
 # Each maps the public name -> migration replacement text. The shim classes still
 # work; new code should use the primitive-based ETP user-API instead.
 _DEPRECATED_LEGACY = {
@@ -297,7 +297,7 @@ def __getattr__(name: str) -> Any:
         )
         from . import _legacy
         return getattr(_legacy, name)
-    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
+    raise AttributeError(f'Module {__name__!r} has no attribute {name!r}. Use an existing attribute or add the missing attribute.')
 
 
 def __dir__() -> list[str]:

@@ -86,7 +86,7 @@ def _object_key(grid: IntArray, mask: IntArray, property_name: str) -> object:
                 )
             )
         )
-    raise ValueError(f"unknown object property: {property_name!r}")
+    raise ValueError(f"Unknown object property: {property_name!r}. Set the named field to one of the supported values, then rerun the operation.")
 
 
 def _enclosed_mask(free: IntArray) -> IntArray:

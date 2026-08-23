@@ -132,10 +132,10 @@ def build_spec(
         (4, 64)
     """
     if dim % block:
-        raise ValueError(f'dim {dim} is not a multiple of block {block}')
+        raise ValueError(f'Dim {dim} is not a multiple of block {block}. Fix the input condition named in the error, then rerun the operation.')
     stage_one = bits - 1 if use_qjl else bits
     if not 1 <= stage_one <= 4:
-        raise ValueError(f'stage-one width {stage_one} is outside 1..4 bits')
+        raise ValueError(f'Stage-one width {stage_one} is outside 1..4 bits. Set the named field to a value in the stated range, then rerun the operation.')
     polar_key, qjl_key = brainstate.random.RandomState(key).split_key(2)
     return TurboQuantSpec(
         bits=bits,
@@ -180,7 +180,7 @@ def encode(values: jax.Array, spec: TurboQuantSpec) -> TurboQuantCode:
     """
     if values.shape[-1] != spec.dim:
         raise ValueError(
-            f'trailing axis {values.shape[-1]} does not match spec dim {spec.dim}'
+            f'Trailing axis {values.shape[-1]} does not match spec dim {spec.dim}. Use matching values and structures.'
         )
     norms = jnp.linalg.norm(values, axis=-1, keepdims=True)
     safe = jnp.where(norms > 0.0, norms, 1.0)

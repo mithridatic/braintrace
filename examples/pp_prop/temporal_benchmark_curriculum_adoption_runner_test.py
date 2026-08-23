@@ -168,7 +168,7 @@ def test_accuracy_interval_adopts_and_resume_reuses_all_raw_bundles(
     resumed = run_development_curriculum_adoption(
         settings,
         runner=lambda *_: (_ for _ in ()).throw(
-            AssertionError("valid raw comparisons must be reused")
+            AssertionError("Valid raw comparisons must be reused. Set Valid raw comparisons to reused.")
         ),
         progress=lambda _: None,
     )

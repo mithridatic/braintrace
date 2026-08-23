@@ -303,44 +303,44 @@ def _emit_progress(
 
 def _integer(value: object, name: str, *, minimum: int = 0) -> int:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Integral):
-        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}")
+        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}. Set {name} to a non-boolean integer >= {minimum}.")
     result = int(value)
     if result < minimum:
-        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}")
+        raise ValueError(f"{name} must be a non-boolean integer >= {minimum}. Set {name} to a non-boolean integer >= {minimum}.")
     return result
 
 
 def _positive_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be finite and positive")
+        raise ValueError(f"{name} must be finite and positive. Set {name} to a finite positive value.")
     result = float(value)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError(f"{name} must be finite and positive")
+        raise ValueError(f"{name} must be finite and positive. Set {name} to a finite positive value.")
     return result
 
 
 def _unit_interval(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be finite and in [0, 1]")
+        raise ValueError(f"{name} must be finite and in [0, 1]. Set {name} to a finite value in [0, 1].")
     result = float(value)
     if not math.isfinite(result) or not 0.0 <= result <= 1.0:
-        raise ValueError(f"{name} must be finite and in [0, 1]")
+        raise ValueError(f"{name} must be finite and in [0, 1]. Set {name} to a finite value in [0, 1].")
     return result
 
 
 def _nonnegative_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise ValueError(f"{name} must be finite and nonnegative")
+        raise ValueError(f"{name} must be finite and nonnegative. Set {name} to a finite non-negative value.")
     result = float(value)
     if not math.isfinite(result) or result < 0.0:
-        raise ValueError(f"{name} must be finite and nonnegative")
+        raise ValueError(f"{name} must be finite and nonnegative. Set {name} to a finite non-negative value.")
     return result
 
 
 def _checkpoint_schedule(latent_steps: int) -> tuple[int, ...]:
     """Return complete 30-tick checkpoints through the configured horizon."""
     if latent_steps % CHECKPOINT_INTERVAL:
-        raise ValueError("latent_steps must be divisible by 30")
+        raise ValueError("latent_steps must be divisible by 30. Set latent_steps to a value divisible by 30.")
     return tuple(range(0, latent_steps + 1, CHECKPOINT_INTERVAL))
 
 
@@ -622,21 +622,22 @@ class ExperimentConfig:
             )
             if self.submission_effort not in self.checkpoints:
                 raise ValueError(
-                    "submission_effort must be one of the scored checkpoints"
+                    "submission_effort must be one of the scored checkpoints. Set submission_effort to one of the scored checkpoints."
                 )
         if self.device not in ("cpu", "gpu"):
-            raise ValueError("device must be 'cpu' or 'gpu'")
+            raise ValueError("Device must be 'cpu' or 'gpu'. Set Device to 'cpu' or 'gpu'.")
         if self.answer_head not in ("carrier_row", "demonstration_fitted"):
             raise ValueError(
-                "answer_head must be 'carrier_row' or 'demonstration_fitted'"
+                "Answer head must be 'carrier_row' or 'demonstration_fitted'. "
+                "Set answer_head to 'carrier_row' or 'demonstration_fitted'."
             )
         if self.primary_candidate_mode not in ("model_only", "rule_then_model"):
             raise ValueError(
-                "primary_candidate_mode must be 'model_only' or 'rule_then_model'"
+                "primary_candidate_mode must be 'model_only' or 'rule_then_model'. Set primary_candidate_mode to 'model_only' or 'rule_then_model'."
             )
         if self.adaptation_update_schedule not in ("per_episode", "per_tick"):
             raise ValueError(
-                "adaptation_update_schedule must be 'per_episode' or 'per_tick'"
+                "adaptation_update_schedule must be 'per_episode' or 'per_tick'. Set adaptation_update_schedule to 'per_episode' or 'per_tick'."
             )
         if self.decoder_mode not in (
             "legacy_cp",
@@ -645,36 +646,37 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "decoder_mode must be 'legacy_cp', 'row_refinement' or "
-                "'latent_row_decode'"
+                "'latent_row_decode'. Set decoder_mode to 'legacy_cp', 'row_refinement' or "
+                "'latent_row_decode'."
             )
         if self.sparse_backend not in ("default", "jax_raw"):
-            raise ValueError("sparse_backend must be 'default' or 'jax_raw'")
+            raise ValueError("sparse_backend must be 'default' or 'jax_raw'. Set sparse_backend to 'default' or 'jax_raw'.")
         if self.optimizer not in ("adam", "adamw", "muon"):
-            raise ValueError("optimizer must be 'adam', 'adamw', or 'muon'")
+            raise ValueError("Optimizer must be 'adam', 'adamw', or 'muon'. Set Optimizer to 'adam', 'adamw', or 'muon'.")
         if self.lr_schedule not in ("constant", "cosine"):
-            raise ValueError("lr_schedule must be 'constant' or 'cosine'")
+            raise ValueError("lr_schedule must be 'constant' or 'cosine'. Set lr_schedule to 'constant' or 'cosine'.")
         if self.effort_schedule not in ("uniform", "progressive"):
-            raise ValueError("effort_schedule must be 'uniform' or 'progressive'")
+            raise ValueError("effort_schedule must be 'uniform' or 'progressive'. Set effort_schedule to 'uniform' or 'progressive'.")
         distillation_weight = _nonnegative_real(
             self.effort_distillation_weight, "effort_distillation_weight"
         )
         if distillation_weight > 0.0:
             raise ValueError(
                 "effort_distillation_weight requires a qualified R60 teacher; "
-                "the Stage 6 teacher gate has not been satisfied"
+                "the Stage 6 teacher gate has not been satisfied. Provide the required value for effort_distillation_weight."
             )
         object.__setattr__(
             self, "effort_distillation_weight", distillation_weight
         )
         warmup = self.lr_warmup_fraction
         if isinstance(warmup, (bool, np.bool_)) or not isinstance(warmup, Real):
-            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1). Set lr_warmup_fraction to a finite value in [0, 1).")
         warmup = float(warmup)
         if not math.isfinite(warmup) or not 0.0 <= warmup < 1.0:
-            raise ValueError("lr_warmup_fraction must be finite and in [0, 1)")
+            raise ValueError("lr_warmup_fraction must be finite and in [0, 1). Set lr_warmup_fraction to a finite value in [0, 1).")
         if self.lr_schedule == "constant" and warmup != 0.0:
             raise ValueError(
-                "lr_warmup_fraction must be zero when lr_schedule='constant'"
+                "lr_warmup_fraction must be zero when lr_schedule='constant'. Set lr_warmup_fraction to zero when lr_schedule='constant'."
             )
         object.__setattr__(self, "lr_warmup_fraction", warmup)
         if self.memory_coding not in (
@@ -688,35 +690,37 @@ class ExperimentConfig:
             raise ValueError(
                 "memory_coding must be 'frozen', 'learned_keys', "
                 "'learned_write', 'learned_update', 'delta_write' or "
-                "'situ_glu_update'"
+                "'situ_glu_update'. Set memory_coding to 'frozen', 'learned_keys', "
+                "'learned_write', 'learned_update', 'delta_write' or "
+                "'situ_glu_update'."
             )
         if not isinstance(self.memory_read_transform, str):
             raise TypeError(
-                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'. Set memory_read_transform to 'linear', 'gated' or 'gated_rms'."
             )
         if self.memory_read_transform not in ("linear", "gated", "gated_rms"):
             raise ValueError(
-                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'"
+                "memory_read_transform must be 'linear', 'gated' or 'gated_rms'. Set memory_read_transform to 'linear', 'gated' or 'gated_rms'."
             )
         if self.memory_read_transform != "linear" and self.context_memory_width == 0:
             raise ValueError(
-                "memory_read_transform requires a positive context_memory_width"
+                "memory_read_transform requires a positive context_memory_width. Provide the required value for memory_read_transform."
             )
         if self.latent_residual_mixer not in ("none", "attention_residual"):
             raise ValueError(
-                "latent_residual_mixer must be 'none' or 'attention_residual'"
+                "latent_residual_mixer must be 'none' or 'attention_residual'. Set latent_residual_mixer to 'none' or 'attention_residual'."
             )
         if (
             self.latent_residual_mixer == "attention_residual"
             and self.context_memory_width == 0
         ):
             raise ValueError(
-                "latent_residual_mixer requires a positive context_memory_width"
+                "latent_residual_mixer requires a positive context_memory_width. Provide the required value for latent_residual_mixer."
             )
         if self.memory_coding != "frozen" and self.context_memory_width == 0:
-            raise ValueError("memory_coding requires a positive context_memory_width")
+            raise ValueError("memory_coding requires a positive context_memory_width. Provide the required value for memory_coding.")
         if self.trace_engine not in ("pp_prop", "d_rtrl"):
-            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'")
+            raise ValueError("trace_engine must be 'pp_prop' or 'd_rtrl'. Set trace_engine to 'pp_prop' or 'd_rtrl'.")
         if self.refinement_mixer not in (
             "linear",
             "carrier_gate",
@@ -724,25 +728,26 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "refinement_mixer must be 'linear', 'carrier_gate' or "
-                "'attention_residual'"
+                "'attention_residual'. Set refinement_mixer to 'linear', 'carrier_gate' or "
+                "'attention_residual'."
             )
         if self.row_head_carrier_gate:
             if self.refinement_mixer == "attention_residual":
                 raise ValueError(
-                    "--row-head-carrier-gate conflicts with "
-                    "--refinement-mixer attention_residual"
+                    "--Row-head-carrier-gate conflicts with "
+                    "--refinement-mixer attention_residual. Fix the input condition named in the error, then rerun the operation."
                 )
             if self.refinement_mixer == "linear":
                 object.__setattr__(self, "refinement_mixer", "carrier_gate")
         if self.refinement_mixer == "carrier_gate":
             object.__setattr__(self, "row_head_carrier_gate", True)
         if self.neuron_typing not in ("none", "ei_dale"):
-            raise ValueError("neuron_typing must be 'none' or 'ei_dale'")
+            raise ValueError("neuron_typing must be 'none' or 'ei_dale'. Set neuron_typing to 'none' or 'ei_dale'.")
         if self.neuron_typing == "ei_dale" and self.task_local_adaptation:
             raise ValueError(
                 "neuron_typing='ei_dale' does not support task_local_adaptation "
                 "yet: the adaptation path takes optimizer steps without the "
-                "Dale sign projection"
+                "Dale sign projection. Fix the input condition named in the error, then rerun the operation."
             )
         object.__setattr__(
             self,
@@ -751,15 +756,15 @@ class ExperimentConfig:
         )
         if self.neuron_typing == "none" and self.excitatory_fraction != 0.8:
             raise ValueError(
-                "excitatory_fraction requires neuron_typing='ei_dale'"
+                "excitatory_fraction requires neuron_typing='ei_dale'. Provide the required value for excitatory_fraction."
             )
         if self.decoder_mode in ("row_refinement", "latent_row_decode") and self.context_memory_width == 0:
             raise ValueError(
-                "decoder_mode='row_refinement' requires positive context_memory_width"
+                "decoder_mode='row_refinement' requires positive context_memory_width. Provide the required value for decoder_mode='row_refinement'."
             )
         if self.decoder_mode in ("row_refinement", "latent_row_decode") and self.balanced_color_loss:
             raise ValueError(
-                "balanced_color_loss is supported only by decoder_mode='legacy_cp'"
+                "balanced_color_loss is supported only by decoder_mode='legacy_cp'. Fix the input condition named in the error, then rerun the operation."
             )
         if (
             self.decoder_mode == "latent_row_decode"
@@ -767,20 +772,20 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "attention_residual bypasses the latent-binding test under "
-                "latent_row_decode"
+                "latent_row_decode. Fix the input condition named in the error, then rerun the operation."
             )
         if self.neuron_count % 64:
-            raise ValueError("neuron_count must be divisible by 64")
+            raise ValueError("neuron_count must be divisible by 64. Set neuron_count to a value divisible by 64.")
         if self.context_memory_width > 512:
-            raise ValueError("context_memory_width must be at most 512")
+            raise ValueError("context_memory_width must be at most 512. Set context_memory_width to at most 512.")
         if self.recurrent_edges > self.neuron_count * (self.neuron_count - 1):
-            raise ValueError("recurrent_edges exceeds directed no-self capacity")
+            raise ValueError("recurrent_edges exceeds directed no-self capacity. Set the named field to a value in the stated range, then rerun the operation.")
         require_recurrent_edge_budget(self.neuron_count, self.recurrent_edges)
         if self.max_grid_size != 30:
-            raise ValueError("max_grid_size must be 30 for standard ARC")
+            raise ValueError("max_grid_size must be 30 for standard ARC. Set max_grid_size to 30 for standard ARC.")
         _checkpoint_schedule(self.latent_steps)
         if self.ablation_slot >= self.neuron_count // 64:
-            raise ValueError("ablation_slot exceeds the configured 64-neuron slots")
+            raise ValueError("ablation_slot exceeds the configured 64-neuron slots. Set the named field to a value in the stated range, then rerun the operation.")
         if self.evaluation_task_limit is not None:
             object.__setattr__(
                 self,
@@ -799,7 +804,9 @@ class ExperimentConfig:
             raise ValueError(
                 "weight_decay must be zero for optimizer='adam': plain Adam "
                 "applies no decoupled decay, so a nonzero value would be "
-                "reported in the optimizer policy but never applied"
+                "reported in the optimizer policy but never applied. Set weight_decay to zero for optimizer='adam': plain Adam "
+                "applies no decoupled decay, so a nonzero value would be "
+                "reported in the optimizer policy but never applied."
             )
         object.__setattr__(self, "weight_decay", decay)
         object.__setattr__(
@@ -812,7 +819,7 @@ class ExperimentConfig:
         ):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value < 0.0:
-                raise ValueError(f"{name} must be a finite nonnegative real scalar")
+                raise ValueError(f"{name} must be a finite nonnegative real scalar. Set {name} to a finite nonnegative real scalar.")
             object.__setattr__(self, name, value)
         if self.refinement_mixer == "attention_residual" and (
             self.copy_residual_gain != 0.0
@@ -821,7 +828,7 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "refinement_mixer='attention_residual' cannot be combined with "
-                "copy_residual_gain or non-default row/shape carrier scales"
+                "copy_residual_gain or non-default row/shape carrier scales. Fix the input condition named in the error, then rerun the operation."
             )
         for name in ("memory_value_softcap_beta", "reasoning_query_softcap_beta"):
             object.__setattr__(self, name, _positive_real(getattr(self, name), name))
@@ -842,7 +849,7 @@ class ExperimentConfig:
                 self, "initial_checkpoint", pathlib.Path(self.initial_checkpoint)
             )
         if self.checkpoint_every and self.parameter_checkpoint is None:
-            raise ValueError("checkpoint_every requires parameter_checkpoint")
+            raise ValueError("checkpoint_every requires parameter_checkpoint. Provide the required value for checkpoint_every.")
         restored = (
             self.parameter_checkpoint is not None and self.parameter_checkpoint.exists()
         )
@@ -853,19 +860,20 @@ class ExperimentConfig:
         ):
             raise ValueError(
                 "training_updates must cover every configured training effort "
-                "including effort zero under protocol v2"
+                "including effort zero under protocol v2. Set training_updates to cover every configured training effort "
+                "including effort zero under protocol v2."
             )
         if (
             self.training_chunk_size
             and self.training_updates
             and self.training_updates % self.training_chunk_size
         ):
-            raise ValueError("training_chunk_size must divide training_updates")
+            raise ValueError("training_chunk_size must divide training_updates. Set training_chunk_size to divide training_updates.")
         if (
             self.training_bank_size
             and self.training_bank_size < self.training_batch_size
         ):
-            raise ValueError("training_bank_size must cover one training batch")
+            raise ValueError("training_bank_size must cover one training batch. Set training_bank_size to cover one training batch.")
         if self.adaptation_learning_rate:
             object.__setattr__(
                 self,
@@ -1173,7 +1181,7 @@ def _mib_bytes(value: str) -> int:
 
     stripped = value.strip()
     if not stripped.isdigit():
-        raise ValueError("nvidia-smi memory value must be an integer MiB count")
+        raise ValueError("Nvidia-smi memory value must be an integer MiB count. Set Nvidia-smi memory value to an integer MiB count.")
     return int(stripped) * 1024 * 1024
 
 
@@ -1205,10 +1213,10 @@ def _sample_nvidia_smi(
     current_process_bytes: int | None = None
     try:
         if len(device_rows) != 1:
-            raise ValueError("nvidia-smi returned no unique device memory row")
+            raise ValueError("Nvidia-smi returned no unique device memory row. Provide the missing item named in the message.")
         device_fields = tuple(field.strip() for field in device_rows[0].split(","))
         if len(device_fields) != 2:
-            raise ValueError("nvidia-smi returned malformed device memory evidence")
+            raise ValueError("Nvidia-smi returned malformed device memory evidence. Fix the input condition named in the error, then rerun the operation.")
         current_device_bytes = _mib_bytes(device_fields[0])
         physical_bytes = _mib_bytes(device_fields[1])
         matching_bytes = 0
@@ -1217,7 +1225,7 @@ def _sample_nvidia_smi(
         for row in process_rows:
             fields = tuple(field.strip() for field in row.split(","))
             if len(fields) != 2 or not fields[0].isdigit():
-                raise ValueError("nvidia-smi returned malformed process evidence")
+                raise ValueError("Nvidia-smi returned malformed process evidence. Fix the input condition named in the error, then rerun the operation.")
             if int(fields[0]) == int(process_id):
                 if fields[1].casefold() in {"n/a", "[n/a]"}:
                     process_unavailable = True
@@ -1318,7 +1326,7 @@ class _NvidiaSmiGpuMonitor:
         """Take an initial sample and start periodic background sampling."""
 
         if self._thread is not None:
-            raise RuntimeError("GPU monitor is already started")
+            raise RuntimeError("GPU monitor is already started. Stop the existing monitor before starting it again.")
         self._sample_once()
         self._thread = threading.Thread(
             target=self._monitor,
@@ -1332,7 +1340,7 @@ class _NvidiaSmiGpuMonitor:
 
         thread = self._thread
         if thread is None:
-            raise RuntimeError("GPU monitor was not started")
+            raise RuntimeError("GPU monitor was not started. Start the monitor before using it.")
         self._stop_event.set()
         thread.join(timeout=5.0)
         if thread.is_alive():
@@ -1420,8 +1428,8 @@ def _resolve_device(platform: DeviceName) -> tuple[jax.Device, dict[str, object]
         detail = ""
     if not devices:
         raise RuntimeError(
-            f"requested JAX {platform} backend is unavailable{detail}; "
-            "choose --device cpu explicitly only for a reduced run"
+            f"Requested JAX {platform} backend is unavailable{detail}; "
+            "choose --device cpu explicitly only for a reduced run. Fix the input condition named in the error, then rerun the operation."
         )
     device = devices[0]
     return device, {
@@ -1437,18 +1445,18 @@ def _source_declarations(path: pathlib.Path) -> tuple[DatasetSource, ...]:
     try:
         payload = msgspec.json.decode(path.read_bytes())
     except (OSError, msgspec.DecodeError) as error:
-        raise ValueError(f"cannot read source manifest {path}: {error}") from error
+        raise ValueError(f"Cannot read source manifest {path}: {error}. Check the path and install the required resource.") from error
     values = payload.get("sources") if isinstance(payload, dict) else None
     if not isinstance(values, list) or not values:
-        raise ValueError("source manifest must contain a nonempty 'sources' list")
+        raise ValueError("Source manifest must contain a nonempty 'sources' list. Add a nonempty 'sources' list to Source manifest.")
     declarations: list[DatasetSource] = []
     for index, value in enumerate(values):
         if not isinstance(value, dict):
-            raise ValueError(f"sources[{index}] must be an object")
+            raise ValueError(f"Sources[{index}] must be an object. Set Sources[{index}] to an object.")
         required = {"name", "role", "version", "path", "license_reference"}
         missing = sorted(required - value.keys())
         if missing:
-            raise ValueError(f"sources[{index}] is missing {missing}")
+            raise ValueError(f"Sources[{index}] is missing {missing}. Provide the missing value or resource, then rerun the operation.")
         source_path = pathlib.Path(str(value["path"]))
         if not source_path.is_absolute():
             source_path = path.parent / source_path
@@ -1480,7 +1488,7 @@ def _load_data(config: ExperimentConfig) -> _ExperimentData:
         if declared_manifest:
             source_manifest = pathlib.Path(declared_manifest)
     if source_manifest is None:
-        raise ValueError("full runs require --source-manifest")
+        raise ValueError("Full runs require --source-manifest. Provide the required value for Full runs.")
     declarations = _source_declarations(source_manifest)
     loaded = tuple(load_dataset_source(source) for source in declarations)
     assert_no_evaluation_leakage(item.manifest for item in loaded)
@@ -1497,9 +1505,9 @@ def _load_data(config: ExperimentConfig) -> _ExperimentData:
         for task in item.tasks
     )
     if not config.structural_only and not training:
-        raise ValueError("scientific training requires at least one train-role source")
+        raise ValueError("Scientific training requires at least one train-role source. Provide the required value for Scientific training.")
     if not evaluation:
-        raise ValueError("evaluation requires at least one evaluation-role source")
+        raise ValueError("Evaluation requires at least one evaluation-role source. Provide the required value for Evaluation.")
     return _ExperimentData(training, evaluation, loaded, False)
 
 
@@ -1575,11 +1583,11 @@ def _effort_schedule(
         order = np.asarray(rng.permutation(updates), dtype=np.int32)
         return base[order]
     if schedule != "progressive":
-        raise ValueError("schedule must be 'uniform' or 'progressive'")
+        raise ValueError("Schedule must be 'uniform' or 'progressive'. Set Schedule to 'uniform' or 'progressive'.")
     if updates == 0:
         return np.zeros((0,), dtype=np.int32)
     if effort_values.size == 0:
-        raise ValueError("efforts must contain at least one checkpoint")
+        raise ValueError("Efforts must contain at least one checkpoint. Add at least one checkpoint to Efforts.")
     phase_sizes = np.full(effort_values.size, updates // effort_values.size)
     phase_sizes[: updates % effort_values.size] += 1
     phases: list[np.ndarray] = []
@@ -1605,7 +1613,7 @@ def _training_sequence_length(data: _ExperimentData, config: ExperimentConfig) -
     ----------
     data
         Admitted training and evaluation data.
-    config
+    Config
         Resolved experiment configuration.
 
     Returns
@@ -1614,12 +1622,12 @@ def _training_sequence_length(data: _ExperimentData, config: ExperimentConfig) -
         Maximum semantic advance count over every fold and orientation.
     """
     if not data.training:
-        raise ValueError("training data is empty")
+        raise ValueError("Training data is empty. Provide the missing item named in the message.")
     maximum = 0
     for origin in data.training:
         demonstrations = origin.task.train
         if not demonstrations:
-            raise ValueError("training task has no demonstrations")
+            raise ValueError("Training task has no demonstrations. Provide the missing item named in the message.")
         orientations = (False,) if data.plumbing_only else (False, True)
         for transposed in orientations:
             for held_out_index, held_out in enumerate(demonstrations):
@@ -1647,7 +1655,7 @@ def _training_sequence_length(data: _ExperimentData, config: ExperimentConfig) -
                     ),
                 )
     if maximum <= config.latent_steps:
-        raise ValueError("training horizon contains no observed query rows")
+        raise ValueError("Training horizon contains no observed query rows. Provide the missing item named in the message.")
     return maximum
 
 
@@ -1672,7 +1680,7 @@ def _compact_training_stream(
     query_terminal = encoded.query_stop - 1
     compact_query = np.flatnonzero(active_indices == query_terminal)
     if compact_query.size != 1:
-        raise ValueError("query terminal must be one semantic training advance")
+        raise ValueError("Query terminal must be one semantic training advance. Set Query terminal to one semantic training advance.")
 
     required_length = int(active_indices.size)
     if sequence_length is None:
@@ -1683,11 +1691,11 @@ def _compact_training_stream(
         or int(sequence_length) < required_length
     ):
         raise ValueError(
-            "training sequence length is shorter than the semantic advance prefix"
+            "Training sequence length is shorter than the semantic advance prefix. Fix the input condition named in the error, then rerun the operation."
         )
     sequence_length = int(sequence_length)
     if sequence_length > int(padded.shape[0]):
-        raise ValueError("training sequence length exceeds packed event capacity")
+        raise ValueError("Training sequence length exceeds packed event capacity. Set the named field to a value in the stated range, then rerun the operation.")
     compact = np.zeros((sequence_length, padded.shape[1]), dtype=padded.dtype)
     compact[: active_indices.size] = padded[active_indices]
     advances = np.zeros((sequence_length,), dtype=padded_advances.dtype)
@@ -1695,7 +1703,7 @@ def _compact_training_stream(
     query_checkpoint = int(compact_query[0])
     latent_count = int(active_indices.size) - query_checkpoint - 1
     if latent_count != config.latent_steps:
-        raise ValueError("compact training prefix has the wrong latent length")
+        raise ValueError("Compact training prefix has the wrong latent length. Fix the input condition named in the error, then rerun the operation.")
     return compact, advances, query_checkpoint
 
 
@@ -1732,12 +1740,12 @@ def _protocol_v2_training_schedule(
     """
 
     if effort not in CHECKPOINTS:
-        raise ValueError("protocol-v2 effort must be one of 0, 30, or 60")
+        raise ValueError("Protocol-v2 effort must be one of 0, 30, or 60. Set Protocol-v2 effort to one of 0, 30, or 60.")
     context_stop = query_checkpoint + 1
     decoder_start = sequence.shape[0] - CHECKPOINT_INTERVAL
     reasoning_start = decoder_start - effort
     if reasoning_start < context_stop:
-        raise ValueError("protocol-v2 training sequence is too short")
+        raise ValueError("Protocol-v2 training sequence is too short. Fix the input condition named in the error, then rerun the operation.")
     packed = np.zeros_like(sequence)
     packed[:context_stop] = sequence[:context_stop]
     physical = np.zeros_like(advances)
@@ -1786,7 +1794,7 @@ def _training_row(
     else:
         terminal = query_checkpoint + effort
         if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
-            raise ValueError("terminal effort exceeds packed sequence capacity")
+            raise ValueError("Terminal effort exceeds packed sequence capacity. Set the named field to a value in the stated range, then rerun the operation.")
     if config.decoder_mode == "row_refinement":
         mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
     elif config.decoder_mode == "legacy_cp":
@@ -1832,7 +1840,7 @@ def _training_row_from_encoded(
     else:
         terminal = query_checkpoint + effort
         if effort > config.latent_steps or terminal >= int(np.count_nonzero(advances)):
-            raise ValueError("terminal effort exceeds packed sequence capacity")
+            raise ValueError("Terminal effort exceeds packed sequence capacity. Set the named field to a value in the stated range, then rerun the operation.")
     if config.decoder_mode == "row_refinement":
         mask[query_checkpoint + 1 : terminal + 1] = np.float32(1.0 / effort)
     elif config.decoder_mode == "legacy_cp":
@@ -1840,7 +1848,7 @@ def _training_row_from_encoded(
         mask[query_checkpoint : terminal + 1] = np.float32(1.0 / depth_count)
     target = encoded.target
     if target is None:
-        raise ValueError("batched training episode lacks a target")
+        raise ValueError("Batched training episode lacks a target. Provide the missing item named in the message.")
     padded = np.zeros((30, 30), dtype=np.int32)
     padded[: target.height, : target.width] = target.as_array()
     return {
@@ -2060,10 +2068,10 @@ def _training_pool(
     can be compared without spending — or selecting on — the ARC evaluation split.
     """
     if not data.training:
-        raise ValueError("training data is empty")
+        raise ValueError("Training data is empty. Provide the missing item named in the message.")
     reserved = config.training_holdout_tasks
     if reserved >= len(data.training):
-        raise ValueError("training_holdout_tasks leaves no task to train on")
+        raise ValueError("training_holdout_tasks leaves no task to train on. Provide the missing item named in the message.")
     return data.training[: len(data.training) - reserved] if reserved else data.training
 
 
@@ -2207,7 +2215,7 @@ def _prefetched_training_chunks(
     ----------
     chunks
         Ordered items to prepare.
-    profile
+    Profile
         Optional diagnostic accumulator. When provided, producer construction
         and consumer queue wait are timed without changing item order.
 
@@ -2452,7 +2460,7 @@ def _copy_parameters(
     source_states = source.states(brainstate.ParamState)
     target_states = target.states(brainstate.ParamState)
     if tuple(source_states.keys()) != tuple(target_states.keys()):
-        raise ValueError("training and evaluation parameter paths differ")
+        raise ValueError("Training and evaluation parameter paths differ. Use matching values and structures.")
     for source_state, target_state in zip(
         source_states.values(), target_states.values(), strict=True
     ):
@@ -2664,13 +2672,13 @@ def _parameter_change_evidence(
     before: dict[str, Any], after: dict[str, Any]
 ) -> dict[str, dict[str, object]]:
     if before.keys() != after.keys():
-        raise ValueError("parameter paths changed during optimization")
+        raise ValueError("Parameter paths changed during optimization. Fix the input condition named in the error, then rerun the operation.")
     result: dict[str, dict[str, object]] = {}
     for path in before:
         before_leaves = jax.tree.leaves(before[path])
         after_leaves = jax.tree.leaves(after[path])
         if len(before_leaves) != len(after_leaves):
-            raise ValueError(f"parameter structure changed during optimization: {path}")
+            raise ValueError(f"Parameter structure changed during optimization: {path}. Fix the input condition named in the error, then rerun the operation.")
         squared = 0.0
         for before_leaf, after_leaf in zip(before_leaves, after_leaves, strict=True):
             delta = np.asarray(after_leaf, dtype=np.float64) - np.asarray(
@@ -2705,7 +2713,7 @@ class _TrainingSchedule:
             self.training_sequence_length is not None
             and self.training_sequence_length != sequence_length
         ):
-            raise ValueError("training chunks disagree on packed sequence length")
+            raise ValueError("Training chunks disagree on packed sequence length. Use matching values and structures.")
         return _TrainingSchedule(
             training_sequence_length=sequence_length,
             efforts=self.efforts + tuple(int(value) for value in chunk.efforts),
@@ -2740,7 +2748,7 @@ def _train_chunks(
         if sequence_length is None:
             sequence_length = int(chunk.events.shape[1])
         elif int(chunk.events.shape[1]) != sequence_length:
-            raise ValueError("training chunks disagree on packed sequence length")
+            raise ValueError("Training chunks disagree on packed sequence length. Use matching values and structures.")
         if profile is None:
             output = train_all(
                 jnp.asarray(chunk.events),
@@ -2786,7 +2794,7 @@ def _train_chunks(
         if on_chunk is not None:
             on_chunk(index)
     if len(losses) != len(schedule.efforts):
-        raise ValueError("training losses and effort schedule disagree in length")
+        raise ValueError("Training losses and effort schedule disagree in length. Use matching values and structures.")
     return losses, schedule
 
 
@@ -2853,7 +2861,7 @@ def _read_parameter_checkpoint(
     names = [f"arr_{index}" for index in range(len(leaves))]
     stored_names = set(stored.files)
     if stored_names not in (set(names), set(names) | {"__architecture__"}):
-        raise ValueError("parameter checkpoint does not match the model tree")
+        raise ValueError("Parameter checkpoint does not match the model tree. Use matching values and structures.")
     if "__architecture__" in stored_names:
         architecture = msgspec.json.decode(
             np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
@@ -2873,11 +2881,11 @@ def _read_parameter_checkpoint(
             "effort_schedule": effort_schedule,
             "effort_distillation_weight": effort_distillation_weight,
         }:
-            raise ValueError("parameter checkpoint does not match model architecture")
+            raise ValueError("Parameter checkpoint does not match model architecture. Use matching values and structures.")
     restored = [jnp.asarray(stored[name]) for name in names]
     for target, value in zip(leaves, restored, strict=True):
         if np.shape(target) != np.shape(value):
-            raise ValueError("parameter checkpoint does not match the model shapes")
+            raise ValueError("Parameter checkpoint does not match the model shapes. Use matching values and structures.")
     for key, value in jax.tree.unflatten(structure, restored).items():
         states[key].value = value
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -3213,7 +3221,7 @@ def _evaluation_records(
             )
             if encoded.target is None:
                 raise ValueError(
-                    f"evaluation query {task_key}:{query_index} lacks target"
+                    f"Evaluation query {task_key}:{query_index} lacks target. Provide the missing item named in the message."
                 )
             records.append(
                 _EvaluationRecord(
@@ -3224,7 +3232,7 @@ def _evaluation_records(
                 )
             )
     if not records:
-        raise ValueError("evaluation produced no scored queries")
+        raise ValueError("Evaluation produced no scored queries. Provide the missing item named in the message.")
     return tuple(records)
 
 
@@ -3254,7 +3262,7 @@ def _rule_proposals(
         Evaluation records in scoring order.
     source_tasks
         Origin tasks the records were encoded from.
-    arm
+    Arm
         Evaluation arm whose demonstrations should be fitted.
 
     Returns
@@ -3551,7 +3559,7 @@ def _merge_rule_candidate(
     proposal
         ``(rule_name, grid)`` from the verified rule channel, or ``None`` when
         the channel admitted no rule for this query.
-    candidates
+    Candidates
         Decoded model candidates in rank order.
     candidate_payloads
         Serialized model candidates aligned with ``candidates``.
@@ -3610,7 +3618,7 @@ def _score_checkpoint_logits(
     checkpoint_compact
         Model logits in ``checkpoints`` order. No intermediate trajectory is
         required.
-    records
+    Records
         Ordered official-query metadata and out-of-band targets.
     color_rank
         Legacy CP decoder rank. Ignored by explicit row-refinement logits.
@@ -3625,12 +3633,12 @@ def _score_checkpoint_logits(
 
     checkpoint_compact = np.asarray(checkpoint_compact)
     if checkpoint_compact.ndim != 3:
-        raise ValueError("checkpoint_compact must have checkpoint, query, width axes")
+        raise ValueError("checkpoint_compact must have checkpoint, query, width axes. Ensure checkpoint_compact has checkpoint, query, width axes.")
     checkpoints = tuple(int(value) for value in checkpoints)
     if checkpoint_compact.shape[0] != len(checkpoints):
-        raise ValueError("checkpoint_compact must match the checkpoint schedule")
+        raise ValueError("checkpoint_compact must match the checkpoint schedule. Make checkpoint_compact match the checkpoint schedule.")
     if checkpoint_compact.shape[1] != len(records):
-        raise ValueError("checkpoint query count must match evaluation records")
+        raise ValueError("Checkpoint query count must match evaluation records. Make Checkpoint query count match evaluation records.")
     expanded = expand_decoder_logits(
         jnp.asarray(checkpoint_compact), color_rank, decoder_mode
     )
@@ -3669,8 +3677,8 @@ def _score_checkpoint_logits(
                     provenance = payload.get("provenance", "model")
                     if provenance != "model":
                         raise ValueError(
-                            "primary scoring rejected non-model candidate provenance "
-                            f"{provenance!r}"
+                            "Primary scoring rejected non-model candidate provenance "
+                            f"{provenance!r}. Fix the input condition named in the error, then rerun the operation."
                         )
                     payload.update(
                         {
@@ -3696,18 +3704,18 @@ def _score_checkpoint_logits(
                     payload = candidate.to_dict()
                     if payload.get("provenance") != "model":
                         raise ValueError(
-                            "primary scoring rejected non-model candidate provenance"
+                            "Primary scoring rejected non-model candidate provenance. Fix the input condition named in the error, then rerun the operation."
                         )
                     payload["rank"] = rank
                     candidate_payloads.append(payload)
             if len(candidate_payloads) != 2:
                 raise ValueError(
-                    "primary scoring requires exactly two model candidates"
+                    "Primary scoring requires exactly two model candidates. Provide the required value for Primary scoring."
                 )
             selected_by_checkpoint[effort].append((decoded, candidate_payloads))
 
     if rule_proposals is not None and len(rule_proposals) != len(records):
-        raise ValueError("rule proposals must match the evaluation records")
+        raise ValueError("Rule proposals must match the evaluation records. Make Rule proposals match the evaluation records.")
     candidate_mode: PrimaryCandidateMode = (
         "model_only" if rule_proposals is None else "rule_then_model"
     )
@@ -3769,7 +3777,7 @@ def _trajectory_reports(
     else:
         steps = np.asarray(step_indices, dtype=np.int32)
         if steps.shape != (compact.shape[0],):
-            raise ValueError("step_indices must match the gathered trajectory")
+            raise ValueError("step_indices must match the gathered trajectory. Make step_indices match the gathered trajectory.")
     expanded = expand_decoder_logits(jnp.asarray(compact), color_rank, decoder_mode)
     height = np.asarray(expanded.height)
     width = np.asarray(expanded.width)
@@ -3924,7 +3932,7 @@ def _control_summary(
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
     if len(metadata) != len(records):
-        raise ValueError("control metadata must match the evaluation records")
+        raise ValueError("Control metadata must match the evaluation records. Make Control metadata match the evaluation records.")
     applicable = np.asarray(
         [bool(item.get("available", False)) for item in metadata], dtype=np.bool_
     )
@@ -3955,7 +3963,7 @@ def _control_summary(
         if proposals is None:
             return None
         if len(proposals) != len(records):
-            raise ValueError("control rule proposals must match the records")
+            raise ValueError("Control rule proposals must match the records. Make Control rule proposals match the records.")
         return tuple(proposals[index] for index in applicable_indices)
 
     if applicable_records:
@@ -3981,7 +3989,7 @@ def _control_summary(
             len(applicable_records) == len(records)
             and matched_intact_metrics != intact_metrics
         ):
-            raise ValueError("recomputed intact control metrics are inconsistent")
+            raise ValueError("Recomputed intact control metrics are inconsistent. Use matching values and structures.")
         candidate_match_count_by_effort: dict[str, int] = {}
         candidates_match_by_effort: dict[str, bool] = {}
         for effort in checkpoints:
@@ -3989,7 +3997,7 @@ def _control_summary(
             intact_rows = intact_checkpoint_queries[key]
             control_rows = control_checkpoint_queries[key]
             if len(intact_rows) != len(control_rows):
-                raise ValueError("matched control candidate rows differ in length")
+                raise ValueError("Matched control candidate rows differ in length. Use matching values and structures.")
             match_count = int(
                 sum(
                     intact_row["candidates"] == control_row["candidates"]
@@ -4111,21 +4119,21 @@ def _state_tolerance_summary(
         strict=True,
     ):
         if left.shape != right.shape or left.ndim != 3:
-            raise ValueError(f"matched {name} windows must have equal rank-3 shapes")
+            raise ValueError(f"Matched {name} windows must have equal rank-3 shapes. Ensure Matched {name} windows has equal rank-3 shapes.")
         if left.shape[:2] != leading_shape:
             raise ValueError(
-                f"matched {name} windows must share step and query dimensions"
+                f"Matched {name} windows must share step and query dimensions. Make Matched {name} windows share step and query dimensions."
             )
     if leading_shape[1] < 1:
-        raise ValueError("matched state windows must contain at least one query")
+        raise ValueError("Matched state windows must contain at least one query. Add at least one query to Matched state windows.")
     if step_indices is None:
         indices = np.arange(intact[0].shape[0], dtype=np.int32)
     else:
         indices = np.asarray(step_indices, dtype=np.int32)
         if indices.ndim != 1 or indices.size < 1:
-            raise ValueError("step_indices must be a nonempty rank-1 sequence")
+            raise ValueError("step_indices must be a nonempty rank-1 sequence. Set step_indices to a nonempty rank-1 sequence.")
         if np.any(indices < 0) or np.any(indices >= intact[0].shape[0]):
-            raise ValueError("step_indices exceed the matched windows")
+            raise ValueError("step_indices exceed the matched windows. Set the named field to a value in the stated range, then rerun the operation.")
 
     selected_spikes = intact[1][indices]
     candidate_spikes = candidate[1][indices]
@@ -4295,23 +4303,23 @@ def _associative_evaluation_diagnostics(
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         workspace, memory_read, context_memory = map(np.asarray, window)
         if workspace.ndim != 3 or memory_read.ndim != 3:
-            raise ValueError(f"{name} workspace/read diagnostics must be rank three")
+            raise ValueError(f"{name} workspace/read diagnostics must be rank three. Set {name} workspace/read diagnostics to rank three.")
         if workspace.shape[:2] != memory_read.shape[:2]:
-            raise ValueError(f"{name} workspace/read checkpoints must align")
+            raise ValueError(f"{name} workspace/read checkpoints must align. Set {name} workspace/read checkpoints to align.")
         if context_memory.ndim != 3 or context_memory.shape[0] != workspace.shape[1]:
-            raise ValueError(f"{name} context memory batch must align")
+            raise ValueError(f"{name} context memory batch must align. Set {name} context memory batch to align.")
         if context_memory.shape[1] != context_memory.shape[2]:
-            raise ValueError(f"{name} context memory must be square")
+            raise ValueError(f"{name} context memory must be square. Set {name} context memory to square.")
         if memory_read.shape[2] != context_memory.shape[1]:
-            raise ValueError(f"{name} memory read width must match context memory")
+            raise ValueError(f"{name} memory read width must match context memory. Make {name} memory read width match context memory.")
         if context_memory.shape[1] < 1:
-            raise ValueError(f"{name} associative diagnostics must have positive width")
+            raise ValueError(f"{name} associative diagnostics must have positive width. Ensure {name} associative diagnostics has positive width.")
         for array in (workspace, memory_read, context_memory):
             if (
                 not np.issubdtype(array.dtype, np.floating)
                 or not np.isfinite(array).all()
             ):
-                raise ValueError(f"{name} associative diagnostics must be finite")
+                raise ValueError(f"{name} associative diagnostics must be finite. Use finite values for {name} associative diagnostics.")
         return workspace, memory_read, context_memory
 
     intact_workspace, intact_read, intact_memory = validate("intact", intact)
@@ -4328,13 +4336,13 @@ def _associative_evaluation_diagnostics(
     ) -> dict[str, object]:
         workspace, memory_read, context_memory = validate(name, window)
         if workspace.shape != intact_workspace.shape:
-            raise ValueError(f"{name} workspace shape must match intact")
+            raise ValueError(f"{name} workspace shape must match intact. Make {name} workspace shape match intact.")
         if memory_read.shape != intact_read.shape:
-            raise ValueError(f"{name} memory read shape must match intact")
+            raise ValueError(f"{name} memory read shape must match intact. Make {name} memory read shape match intact.")
         if context_memory.shape != intact_memory.shape:
-            raise ValueError(f"{name} context memory shape must match intact")
+            raise ValueError(f"{name} context memory shape must match intact. Make {name} context memory shape match intact.")
         if len(metadata) != query_count:
-            raise ValueError(f"{name} metadata must match the query count")
+            raise ValueError(f"{name} metadata must match the query count. Make {name} metadata match the query count.")
         applicable = np.asarray(
             [bool(item.get("available", True)) for item in metadata],
             dtype=np.bool_,
@@ -4420,7 +4428,7 @@ def _associative_evaluation_diagnostics(
         "slot_ablation",
     }
     if set(controls) != expected_controls:
-        raise ValueError("associative controls are incomplete")
+        raise ValueError("Associative controls are incomplete. Fix the input condition named in the error, then rerun the operation.")
     control_reports = {
         name: comparison(name, *controls[name]) for name in sorted(expected_controls)
     }
@@ -4518,7 +4526,7 @@ def _expected_queries_by_task(data: _ExperimentData) -> dict[str, int]:
         for task_index, origin in enumerate(data.evaluation)
     }
     if len(expected) != len(data.evaluation):
-        raise ValueError("target-free evaluation task identities must be unique")
+        raise ValueError("Target-free evaluation task identities must be unique. Set Target-free evaluation task identities to unique.")
     return expected
 
 
@@ -4579,9 +4587,9 @@ def _task_local_adaptation_evaluation(
     ----------
     trained_model
         Shared post-training batch-one model.
-    data, config, row_config, device
+    Data, config, row_config, device
         Resolved experiment inputs and execution device.
-    records
+    Records
         Ordered official-query metadata. Targets remain here and are joined
         only after the compiled runner returns model logits.
 
@@ -4624,7 +4632,7 @@ def _task_local_adaptation_evaluation(
     recorded = np.asarray(result.checkpoint_recorded, dtype=np.bool_)
     expected_recorded = np.broadcast_to(valid[..., None], recorded.shape)
     if not np.array_equal(recorded, expected_recorded):
-        raise ValueError("task-local adaptation checkpoint validity is inconsistent")
+        raise ValueError("Task-local adaptation checkpoint validity is inconsistent. Use matching values and structures.")
     task_ordinals = np.broadcast_to(
         np.asarray(bank.task_ordinals)[:, None], valid.shape
     )[valid]
@@ -4635,10 +4643,10 @@ def _task_local_adaptation_evaluation(
     )
     actual_ordinals = np.stack((task_ordinals, query_ordinals), axis=-1)
     if not np.array_equal(actual_ordinals, expected_ordinals):
-        raise ValueError("adapted task/query order does not match evaluation records")
+        raise ValueError("Adapted task/query order does not match evaluation records. Use matching values and structures.")
     flattened = np.asarray(result.checkpoint_outputs)[valid]
     if flattened.shape[0] != len(records):
-        raise ValueError("adapted query order does not match evaluation records")
+        raise ValueError("Adapted query order does not match evaluation records. Use matching values and structures.")
     checkpoint_logits = np.transpose(flattened, (1, 0, 2))
     metrics, checkpoint_queries = _score_checkpoint_logits(
         checkpoint_logits,
@@ -4689,7 +4697,7 @@ def _task_local_adaptation_evaluation(
         or int(optimizer.step_count.value) != 0
         or applied_fold_count != fold_count
     ):
-        raise ValueError("task-local adaptation did not restore shared state")
+        raise ValueError("Task-local adaptation did not restore shared state. Fix the input condition named in the error, then rerun the operation.")
     return metrics, checkpoint_queries, evidence
 
 
@@ -4760,7 +4768,7 @@ def _submitted_completion_report(
     ----------
     submission_metrics
         Aggregate metrics at the submission checkpoint.
-    config
+    Config
         Run configuration, read for the active candidate mode.
 
     Returns
@@ -4884,7 +4892,7 @@ def _evaluate(
         if not np.array_equal(query_stops, no_context_stops) or not np.array_equal(
             query_stops, shuffled_stops
         ):
-            raise ValueError("control query boundaries are not matched")
+            raise ValueError("Control query boundaries are not matched. Fix the input condition named in the error, then rerun the operation.")
     else:
         no_context_events = np.empty((0,), dtype=np.float32)
         no_context_advances = np.empty((0,), dtype=np.bool_)
@@ -6904,7 +6912,7 @@ def _channel_attribution(
             "diagnostic_only",
             "primary_submission",
         }:
-            raise ValueError("primary attribution found invalid submission roles")
+            raise ValueError("Primary attribution found invalid submission roles. Set the named field to a value in the stated range, then rerun the operation.")
         channel_role = next(iter(channel_roles))
         candidates = [
             candidate
@@ -6916,10 +6924,10 @@ def _channel_attribution(
             candidate.get("provenance") not in ("model", "rule")
             for candidate in candidates
         ):
-            raise ValueError("primary attribution found unknown candidate provenance")
+            raise ValueError("Primary attribution found unknown candidate provenance. Fix the input condition named in the error, then rerun the operation.")
         modes = {item.get("primary_candidate_mode") for item in details}
         if len(modes) != 1:
-            raise ValueError("primary attribution found mixed candidate modes")
+            raise ValueError("Primary attribution found mixed candidate modes. Fix the input condition named in the error, then rerun the operation.")
         mode = next(iter(modes))
         model_candidates = [
             candidate
@@ -7762,8 +7770,8 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
             architecture_name
         ):
             raise ValueError(
-                "model and experiment associative-memory reports disagree on "
-                f"{implementation_name}"
+                "Model and experiment associative-memory reports disagree on "
+                f"{implementation_name}. Fix the input condition named in the error, then rerun the operation."
             )
     model_report = {
         "neuron_count": model.neuron_count,
@@ -8044,7 +8052,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             args.neurons != FULL_SCALE_NEURON_COUNT
             or args.recurrent_edges != FULL_SCALE_RECURRENT_EDGES
         ):
-            raise ValueError("--smoke owns its reduced neuron and edge scale")
+            raise ValueError("--Smoke owns its reduced neuron and edge scale. Fix the input condition named in the error, then rerun the operation.")
         return _with_answer_head(ExperimentConfig.smoke_config(
             output_dir=args.output_dir,
             device=args.device,

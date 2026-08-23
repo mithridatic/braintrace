@@ -84,7 +84,7 @@ def write_result(path: Path, payload: dict[str, object]) -> None:
         and isinstance(environment, dict)
         and environment.get("source_dirty") is not False
     ):
-        raise ValueError("sealed results require a confirmed clean source tree")
+        raise ValueError("Sealed results require a confirmed clean source tree. Provide the required value for Sealed results.")
     serialized = msgspec_json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(serialized + "\n", encoding="utf-8")
@@ -112,9 +112,9 @@ def package_release(
     """Create an immutable tar.gz only when all episodic scientific gates pass."""
     artifacts = tuple(files)
     if gate_document.get("passed") is not True:
-        raise ValueError("release packaging requires passed scientific gates")
+        raise ValueError("Release packaging requires passed scientific gates. Provide the required value for Release packaging.")
     if not artifacts or any(not path.is_file() for path in artifacts):
-        raise ValueError("release files must all exist")
+        raise ValueError("Release files must all exist. Set Release files to all exist.")
     checksums = destination.with_name("SHA256SUMS")
     write_sha256sums(artifacts, checksums)
     with tarfile.open(destination, mode="x:gz") as archive:

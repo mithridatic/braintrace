@@ -71,7 +71,7 @@ def _load_learning_example() -> Any:
         sys.path.insert(0, str(repo_root))
     spec = importlib.util.spec_from_file_location("_sparse_learning_example", path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load sparse learning example from {path}")
+        raise ImportError(f"Cannot load sparse learning example from {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -163,7 +163,7 @@ def _run_updates(runtime: _Runtime, config: SparseBenchmarkConfig) -> _RunState:
         if batch_index == 0:
             epoch_spikes, order = _epoch_data(runtime, config, epoch)
         if epoch_spikes is None or order is None:
-            raise RuntimeError("epoch data were not initialized")
+            raise RuntimeError("Epoch data were not initialized. Fix the input condition named in the error, then rerun the operation.")
         start = batch_index * config.batch_size
         indices = order[start : start + config.batch_size]
         spikes = epoch_spikes[:, indices]
@@ -173,7 +173,7 @@ def _run_updates(runtime: _Runtime, config: SparseBenchmarkConfig) -> _RunState:
         jax.block_until_ready(loss)
         loss_value = float(loss)
         if not np.isfinite(loss_value):
-            raise RuntimeError("training loss became non-finite")
+            raise RuntimeError("Training loss became non-finite. Use finite values.")
         state.updates += 1
         state.examples_seen += indices.size
         state.losses.append(loss_value)

@@ -43,7 +43,7 @@ complete corruption of the small leaf pass under the threshold.
 
 Regenerate after a *deliberate* numerical change with::
 
-    python -m braintrace._algorithm.axis_golden_test
+    Python -m braintrace._algorithm.axis_golden_test
 """
 
 from __future__ import annotations
@@ -186,18 +186,18 @@ def _leaf_deviations(actual: dict, golden: dict) -> dict:
     """
     if set(actual) != set(golden):
         raise AssertionError(
-            f'leaf labels changed: {sorted(set(actual) ^ set(golden))}')
+            f'Leaf labels changed: {sorted(set(actual) ^ set(golden))}. Regenerate the expected labels from the current model.')
     if all(not np.any(np.asarray(v)) for v in golden.values()):
         raise AssertionError(
-            'the golden gradients are all zero — this comparison is vacuous. '
-            'Regenerate them against a live model.')
+            'The golden gradients are all zero — this comparison is vacuous. '
+            'Regenerate them against a live model. Use inputs that produce a non-zero gradient.')
     out = {}
     for label in golden:
         ref = np.asarray(golden[label], dtype=np.float64)
         got = np.asarray(actual[label], dtype=np.float64)
         if got.shape != ref.shape:
             raise AssertionError(
-                f'{label}: shape changed {ref.shape} -> {got.shape}')
+                f'{label}: shape changed {ref.shape} -> {got.shape}. Update the fixture or expected result to satisfy this assertion.')
         den = float(np.sqrt((ref ** 2).sum()))
         num = float(np.sqrt(((got - ref) ** 2).sum()))
         out[label] = num / den if den > 0.0 else num
@@ -207,8 +207,8 @@ def _leaf_deviations(actual: dict, golden: dict) -> dict:
 def _load_golden() -> dict:
     if not os.path.exists(GOLDEN_PATH):
         raise AssertionError(
-            f'missing golden reference {GOLDEN_PATH}; regenerate with '
-            '`python -m braintrace._algorithm.axis_golden_test`')
+            f'Missing golden reference {GOLDEN_PATH}; regenerate with '
+            '`python -m braintrace._algorithm.axis_golden_test`. Update the fixture or expected result to satisfy this assertion.')
     with np.load(GOLDEN_PATH) as data:
         return {k: np.asarray(data[k]) for k in data.files}
 
@@ -269,7 +269,7 @@ def test_every_axis_is_live_somewhere():
         live = [m for m in MODELS if (m, preset) not in DEGENERATE]
         assert live, (
             f'{preset} collapses onto d_rtrl on every model in the golden set, '
-            'so its axis is not guarded here. Add a model that separates it.')
+            'so its axis is not guarded here. Add a model that separates it. Update the fixture or expected result to satisfy this assertion.')
 
 
 @pytest.mark.parametrize('model_name,case_name', ALL_CASES)
@@ -280,8 +280,8 @@ def test_matches_golden(model_name, case_name):
     golden = {k[len(prefix):]: v for k, v in golden_all.items()
               if k.startswith(prefix)}
     assert golden, (
-        f'no golden entries for {prefix}; regenerate with '
-        '`python -m braintrace._algorithm.axis_golden_test`')
+        f'No golden entries for {prefix}; regenerate with '
+        '`python -m braintrace._algorithm.axis_golden_test`. Provide the missing item named in this message.')
     deviations = _leaf_deviations(compute_case(model_name, case_name), golden)
     # 1e-6 sits two orders above float32 round-off on these trees (~1e-8) and
     # two-to-five orders below the deviations the presets show from each other

@@ -70,7 +70,7 @@ def verify_device_selection(device: DeviceSelection, platform: str) -> None:
         If an accelerator was requested and the bound platform is not one.
     """
     if device == "gpu" and platform not in _GPU_PLATFORMS:
-        raise RuntimeError(f"requested device gpu, bound backend is {platform}")
+        raise RuntimeError(f"Requested device gpu, bound backend is {platform}. Fix the input condition named in the error, then rerun the operation.")
 
 
 def device_memory_peak_bytes(device: object) -> int | None:

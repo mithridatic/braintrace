@@ -67,7 +67,7 @@ def _dense_rnn_jaxpr(varshape=(1, 4), seed=0):
 def _sparse_pattern(n=6, density=0.4, seed=0):
     rng = np.random.RandomState(seed)
     dense = (rng.rand(n, n) < density).astype(np.float32)
-    # guarantee at least one entry per row so the pattern is not vacuous
+    # Guarantee at least one entry per row so the pattern is not vacuous
     dense[np.arange(n), (np.arange(n) + 1) % n] = 1.0
     return dense
 
@@ -142,17 +142,17 @@ class TestAnalyzeOneStepAdjacency:
         np.testing.assert_array_equal(adj.axes[1], _identity_pattern(3))
 
     def test_sparse_adjacency_is_the_pattern_transposed(self):
-        # forward is y = x @ W, so h_p depends on h_q iff W[q, p] != 0.
+        # Forward is y = x @ W, so h_p depends on h_q iff W[q, p] != 0.
         dense = _sparse_pattern(6)
         adj = analyze_position_adjacency(_sparse_rnn_jaxpr(dense), (6,))
         assert not adj.conservative
         assert len(adj.axes) == 1
         np.testing.assert_array_equal(adj.axes[0], (dense != 0).T)
-        # and it is genuinely not the untransposed pattern (guards the direction)
+        # And it is genuinely not the untransposed pattern (guards the direction)
         assert not np.array_equal(dense != 0, (dense != 0).T)
 
     def test_sparse_adjacency_ignores_stored_numeric_zeros(self):
-        # the pattern is a *static* structure; a stored zero is still an edge.
+        # The pattern is a *static* structure; a stored zero is still an edge.
         dense = _sparse_pattern(5)
         csr = brainevent.CSR.fromdense(jnp.asarray(dense))
         zeros = jnp.zeros_like(csr.data)
@@ -192,14 +192,14 @@ class TestConservativeFallbacks:
         )
 
     def test_non_elementwise_equation_on_the_hidden_path(self):
-        # a reduction couples every position without being a "mixing" primitive
+        # A reduction couples every position without being a "mixing" primitive
         jaxpr = _jaxpr(lambda h: h * 0.9 + jnp.sum(h), jnp.zeros((1, 4)))
         self._assert_conservative(
             analyze_position_adjacency(jaxpr, (1, 4)), (1, 4), 'reduce_sum'
         )
 
     def test_reshape_on_the_hidden_path(self):
-        # a reshape relabels the axes an axis-indexed pattern is attached to
+        # A reshape relabels the axes an axis-indexed pattern is attached to
         jaxpr = _jaxpr(
             lambda h: jnp.reshape(jnp.reshape(h, (4, 1)) * 0.5, (1, 4)),
             jnp.zeros((1, 4)),
@@ -218,7 +218,7 @@ class TestConservativeFallbacks:
         )
 
     def test_scan_hiding_a_registered_mixing_equation(self):
-        # a single dot inside a length-L scan transfers A^L, not A: the
+        # A single dot inside a length-L scan transfers A^L, not A: the
         # registered rule would be wrong, so the scan alone forces conservative.
         w = jnp.ones((4, 4))
 
@@ -233,7 +233,7 @@ class TestConservativeFallbacks:
         )
 
     def test_mixing_output_shape_differs_from_varshape(self):
-        # y is not the group's position layout, so the rule's axis indices do
+        # Y is not the group's position layout, so the rule's axis indices do
         # not refer to the group's axes
         w = jnp.ones((4, 7))
         jaxpr = _jaxpr(lambda h: braintrace.matmul(h, w), jnp.zeros((1, 4)))
@@ -266,7 +266,7 @@ class TestConservativeFallbacks:
         data = jnp.asarray(csr.data)
 
         cases = [
-            # (label, transition fn, varshape, conservative?, tightness)
+            # (Label, transition fn, varshape, conservative?, tightness)
             ('reduce_sum', lambda h: h * 0.9 + jnp.sum(h), (1, 4), True, 'free'),
             ('dot_general', lambda h: jnp.tanh(h @ w_full), (1, 4), True, 'free'),
             ('cond', lambda h: jax.lax.cond(
@@ -282,14 +282,14 @@ class TestConservativeFallbacks:
             adj = analyze_position_adjacency(_jaxpr(fn, jnp.zeros(varshape)), varshape)
             got = flat_adjacency(adj.axes)
             assert adj.conservative == conservative, (
-                f'{label}: expected conservative={conservative}, got {adj.reason!r}')
-            # differentiate at a generic point so no entry vanishes by accident
+                f'{label}: expected conservative={conservative}, got {adj.reason!r}. Return the expected value for the reported field.')
+            # Differentiate at a generic point so no entry vanishes by accident
             with brainstate.random.seed_context(3):
                 h0 = brainstate.random.randn(*varshape)
             jac = jax.jacobian(lambda h: jnp.ravel(fn(h)))(h0)
             true_dep = np.abs(np.asarray(jac).reshape(got.shape)) > 1e-6
-            assert np.any(true_dep), f'{label}: the reference Jacobian is empty'
-            assert np.all(got >= true_dep), f'{label}: analysis lost a dependency'
+            assert np.any(true_dep), f'{label}: the reference Jacobian is empty. Provide the missing item named in the message.'
+            assert np.all(got >= true_dep), f'{label}: analysis lost a dependency. Update the fixture or expected result to satisfy this assertion.'
             if tightness == 'lossy':
                 assert np.any(got > true_dep), (
                     f'{label}: expected the fallback to over-retain, but it was '
@@ -320,7 +320,7 @@ class TestCloseAdjacency:
         prev = close_adjacency((a,), 1)[0]
         for n in range(2, 10):
             cur = close_adjacency((a,), n)[0]
-            assert np.all(cur >= prev), f'closure shrank at n={n}'
+            assert np.all(cur >= prev), f'Closure shrank at n={n}. Update the fixture or expected result to satisfy this assertion.'
             prev = cur
 
     def test_closure_saturates_and_is_then_a_fixed_point(self):
@@ -353,10 +353,10 @@ class TestCloseAdjacency:
         size = fan + 2
         a = np.zeros((size, size), dtype=bool)
         for m in range(fan):
-            a[m + 1, 0] = True          # 0 -> each of the fan-out positions
-            a[size - 1, m + 1] = True   # each of them -> the far position
+            a[m + 1, 0] = True          # 0 -> Each of the fan-out positions
+            a[size - 1, m + 1] = True   # Each of them -> the far position
         closed = close_adjacency((a,), 3)[0]
-        assert closed[size - 1, 0], 'a 256-fold two-hop path was lost to wraparound'
+        assert closed[size - 1, 0], 'A 256-fold two-hop path was lost to wraparound. Update the fixture or expected result to satisfy this assertion.'
         np.testing.assert_array_equal(closed, _matrix_closure(a, 3))
 
     def test_factorised_closure_contains_the_flat_closure(self):
@@ -370,16 +370,16 @@ class TestCloseAdjacency:
         a0 = np.roll(np.eye(3, dtype=bool), 1, axis=1)
         a1 = np.roll(np.eye(2, dtype=bool), 1, axis=1)
 
-        # two non-identity axes: superset, and strictly so for some n
+        # Two non-identity axes: superset, and strictly so for some n
         strict_somewhere = False
         for n in (2, 3, 4):
             factorised = flat_adjacency(close_adjacency((a0, a1), n))
             flat = _matrix_closure(flat_adjacency((a0, a1)), n)
-            assert np.all(factorised >= flat), f'factorised closure lost an edge at n={n}'
+            assert np.all(factorised >= flat), f'Factorised closure lost an edge at n={n}. Update the fixture or expected result to satisfy this assertion.'
             strict_somewhere |= bool(np.any(factorised > flat))
-        assert strict_somewhere, 'fixture does not exercise the strict case'
+        assert strict_somewhere, 'Fixture does not exercise the strict case. Update the fixture or expected result to satisfy this assertion.'
 
-        # one non-identity axis: exact
+        # One non-identity axis: exact
         for n in (1, 2, 3, 4, 9):
             axes = (_identity_pattern(3), a1)
             factorised = flat_adjacency(close_adjacency(axes, n))
@@ -435,7 +435,7 @@ class TestBuildSnapPattern:
         for p in range(pat.num_position):
             for k in range(pat.num_neighbour):
                 if not pat.valid[p, k]:
-                    # a dummy index that is always in range, so a gather on it
+                    # A dummy index that is always in range, so a gather on it
                     # can never read out of bounds
                     assert pat.neighbours[p, k] == p
 
@@ -457,7 +457,7 @@ class TestBuildSnapPattern:
         pat2 = build_snap_pattern(_dense_rnn_jaxpr((1, 4)), (1, 4), 2)
         pat3 = build_snap_pattern(_dense_rnn_jaxpr((1, 4)), (1, 4), 3)
         assert (pat1.num_neighbour, pat2.num_neighbour, pat3.num_neighbour) == (1, 4, 4)
-        assert pat2.num_neighbour == pat2.num_position  # saturated
+        assert pat2.num_neighbour == pat2.num_position  # Saturated
         np.testing.assert_array_equal(pat2.valid, np.ones((4, 4), dtype=bool))
 
     def test_no_mixing_gives_one_neighbour_at_every_n(self):
@@ -478,11 +478,11 @@ class TestBuildSnapPattern:
             # closure. On this fixture the row maxima happen to agree, so the
             # column is spelled out rather than left to coincidence.
             want = int(_matrix_closure(a, n).sum(axis=0).max())
-            assert pat.num_neighbour == want, f'n={n}'
+            assert pat.num_neighbour == want, f'N={n}. Update the fixture or expected result to satisfy this assertion.'
             ks.append(pat.num_neighbour)
         assert ks == sorted(ks), ks
         assert ks[0] == 1
-        assert ks[-1] == 6  # saturates on this fixture
+        assert ks[-1] == 6  # Saturates on this fixture
 
     def test_neighbourhoods_are_nested_in_n(self):
         dense = _sparse_pattern(6, density=0.25, seed=1)
@@ -496,7 +496,7 @@ class TestBuildSnapPattern:
             ]
             if prev is not None:
                 for p, (a_set, b_set) in enumerate(zip(prev, cur)):
-                    assert a_set <= b_set, f'neighbourhood shrank at n={n}, p={p}'
+                    assert a_set <= b_set, f'Neighbourhood shrank at n={n}, p={p}. Update the fixture or expected result to satisfy this assertion.'
             prev = cur
 
     def test_scalar_varshape_pattern(self):
@@ -572,7 +572,7 @@ class TestNeighbourhoodDirection:
 
     @staticmethod
     def _shift_pattern(n_rec):
-        # dense[q, r] != 0 means h_new[r] reads h[q], so this is q -> q+1
+        # Dense[q, r] != 0 means h_new[r] reads h[q], so this is q -> q+1
         dense = np.zeros((n_rec, n_rec), dtype='float32')
         dense[np.arange(n_rec), (np.arange(n_rec) + 1) % n_rec] = 1.0
         return dense
@@ -582,17 +582,17 @@ class TestNeighbourhoodDirection:
         jaxpr = _sparse_rnn_jaxpr(self._shift_pattern(n_rec))
         for n in (1, 2, 3, 4):
             pat = build_snap_pattern(jaxpr, (n_rec,), n)
-            assert pat.num_neighbour == n, f'n={n}'
+            assert pat.num_neighbour == n, f'N={n}. Update the fixture or expected result to satisfy this assertion.'
             for p in range(n_rec):
                 listed = set(int(q) for q, ok in zip(pat.neighbours[p], pat.valid[p]) if ok)
                 downstream = {(p + k) % n_rec for k in range(n)}
                 upstream = {(p - k) % n_rec for k in range(n)}
-                assert listed == downstream, f'n={n}, p={p}'
-                if n > 1:  # the two only coincide at the anchor itself
+                assert listed == downstream, f'N={n}, p={p}. Update the fixture or expected result to satisfy this assertion.'
+                if n > 1:  # The two only coincide at the anchor itself
                     assert listed != upstream
 
     def test_adjacency_reads_as_dependency(self):
-        # the convention the direction argument rests on: A[p, q] is "p depends
+        # The convention the direction argument rests on: A[p, q] is "p depends
         # on q", so the shift q -> q+1 has to show up as A[q + 1, q]. `pat.axes`
         # is the closure, and at n=2 that is exactly `I | A`.
         n_rec = 5

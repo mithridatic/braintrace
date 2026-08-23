@@ -72,7 +72,7 @@ def lloydmax_codebook(bits: int, scale: float | jax.Array = 1.0) -> jax.Array:
     """
     if bits not in LLOYDMAX_CENTROIDS:
         raise ValueError(
-            f'bits must be one of {sorted(LLOYDMAX_CENTROIDS)}, got {bits}'
+            f'Bits must be one of {sorted(LLOYDMAX_CENTROIDS)}, got {bits}. Set Bits to one of {sorted(LLOYDMAX_CENTROIDS)}.'
         )
     table = jnp.asarray(LLOYDMAX_CENTROIDS[bits], dtype=jnp.float32)
     return table * jnp.asarray(scale, dtype=jnp.float32)

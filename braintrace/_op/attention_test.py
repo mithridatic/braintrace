@@ -177,7 +177,7 @@ def test_leading_dimensions_jit_and_vmap() -> None:
     ],
 )
 def test_validation(sources, query, kwargs, error, match) -> None:
-    with pytest.raises(error, match=match):
+    with pytest.raises(error, match=f"(?i){match}"):
         braintrace.attention_residual(sources, query, **kwargs)
 
 

@@ -24,7 +24,7 @@ sequences before any analysis runs — the same role
 boundaries.
 
 Phase 1 implements ``cond`` if-conversion (:func:`if_convert_conds`):
-every ETP-relevant ``cond`` equation is replaced by the inlined bodies of
+Every ETP-relevant ``cond`` equation is replaced by the inlined bodies of
 *all* its branches followed by one ``select_n`` equation per output. The
 integer index semantics of ``cond`` and ``select_n`` match exactly, and the
 JVP of ``select_n`` selects tangents, so — for branches with finite values
@@ -33,7 +33,7 @@ derivative (see :class:`ControlFlowPolicy` for the dead-branch NaN/Inf
 caveat under reverse mode).
 
 Phase 2 implements inner-``scan`` unrolling (:func:`unroll_inner_scans`):
-every ETP-relevant ``scan`` equation with static length at most
+Every ETP-relevant ``scan`` equation with static length at most
 ``policy.scan_unroll_limit`` is replaced by ``length`` clones of its body
 (fresh variables per iteration, carry threaded between them), with per-
 iteration ``xs`` slices materialized as ``slice``/``squeeze`` equations and
@@ -250,7 +250,7 @@ def _fixpoint_not_reached(
 ) -> CompilationError:
     """Build the error raised when a canonicalization fixpoint runs out of sweeps.
 
-    *last_sweep* holds the equations the final iteration rewrote — the ones
+    *Last_sweep* holds the equations the final iteration rewrote — the ones
     still churning — so the message can name them.
     """
     if last_sweep:
@@ -413,7 +413,7 @@ def if_convert_conds(
         return closed_jaxpr
     if policy.cond != 'convert':
         raise ValueError(
-            f"policy.cond must be 'convert' or 'opaque', got {policy.cond!r}."
+            f"Policy.cond must be 'convert' or 'opaque', got {policy.cond!r}. Set Policy.cond to 'convert' or 'opaque'."
         )
 
     # Fixpoint loop: converting a cond can surface user ``jit`` equations
@@ -531,7 +531,7 @@ def _convert_conds_once(
         br = getattr(branch_closed, 'jaxpr', branch_closed)
         consts = getattr(branch_closed, 'consts', [])
         # Freshen constvars (instead of adopting the branch's Var objects):
-        # the same branch ClosedJaxpr object may be inlined at several call
+        # The same branch ClosedJaxpr object may be inlined at several call
         # sites, and adopting would define its vars more than once.
         subst: Dict[Var, Any] = {}
         for cv, cval in zip(br.constvars, consts):
@@ -932,7 +932,7 @@ def _unroll_scans_once(
             ):
                 final_carry_map[bv] = ov
 
-        # reverse=True threads the carry from the LAST xs slice to the
+        # Reverse=True threads the carry from the LAST xs slice to the
         # first, but the y computed for slice t still lands at ys[t].
         order = range(length - 1, -1, -1) if reverse else range(length)
         final_t = order[-1] if length else None
@@ -1214,7 +1214,7 @@ def canonicalize_control_flow(
     """
     if policy.cond not in ('convert', 'opaque'):
         raise ValueError(
-            f"policy.cond must be 'convert' or 'opaque', got {policy.cond!r}."
+            f"Policy.cond must be 'convert' or 'opaque', got {policy.cond!r}. Set Policy.cond to 'convert' or 'opaque'."
         )
 
     # Each sweep buffers its skip diagnostics rather than emitting them; only

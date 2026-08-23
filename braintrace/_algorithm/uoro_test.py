@@ -60,9 +60,9 @@ from braintrace._testing.oracle import (
 
 # U1's fixture constants. Both are load-bearing and measured; see
 # ``nonzero_init_rnn``'s docstring.
-H = 2       # hidden units == the width of one Rademacher draw
-T = 3       # >= 3, or the boundary trace holds only instantaneous terms
-CHUNK = 1   # one-step windows: maximally sensitive to the trace
+H = 2       # Hidden units == the width of one Rademacher draw
+T = 3       # >= 3, Or the boundary trace holds only instantaneous terms
+CHUNK = 1   # One-step windows: maximally sensitive to the trace
 N_U3 = 64   # U3's sample size; the floor is measured in ``_u3_samples``
 
 
@@ -95,7 +95,7 @@ class _TabulatedUORO(braintrace.UORO):
 
     def __init__(self, model, table, **kwargs):
         super().__init__(model, **kwargs)
-        # (n_steps, n_groups, *draw_shape)
+        # (N_steps, n_groups, *draw_shape)
         self._table = jnp.asarray(table)
 
     def _draw_projection(self, key, step, group_index, shape, dtype):
@@ -132,7 +132,7 @@ def _exhaustive_mean_gradient(spec, inputs, *, n_draw_steps, draw_shape,
     total = None
     per_pattern = []
     for combo in itertools.product(patterns, repeat=n_draw_steps):
-        # (n_steps, n_groups, *draw_shape)
+        # (N_steps, n_groups, *draw_shape)
         table = np.stack([c.reshape((n_groups,) + tuple(draw_shape))
                           for c in combo])
         g = chunked_online_param_gradients(
@@ -188,12 +188,12 @@ class TestExhaustiveExactness:
 
     def test_the_enumeration_mean_matches_the_exact_within_group_recursion(self):
         spec, inputs, mean, count, _ = _u1_enumeration()
-        assert count == 4 ** 2, f'expected 16 runs, enumerated {count}'
+        assert count == 4 ** 2, f'Expected 16 runs, enumerated {count}. Update the fixture or expected result to satisfy this assertion.'
 
         ref = _saturating_snap_reference(spec, inputs)
         dev = relative_deviation(
             {('w',): mean[('w',)]}, {('w',): ref[('w',)]})
-        assert dev < 1e-5, f'deviation from the exact recursion: {dev}'
+        assert dev < 1e-5, f'Deviation from the exact recursion: {dev}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_the_enumeration_mean_also_matches_bptt_on_this_fixture(self):
         # Single group, position-preserving elementwise tail: the within-group
@@ -202,7 +202,7 @@ class TestExhaustiveExactness:
         ref = bptt_param_gradients(spec.factory, inputs)
         dev = relative_deviation(
             {('w',): mean[('w',)]}, {('w',): ref[('w',)]})
-        assert dev < 1e-5, f'deviation from BPTT: {dev}'
+        assert dev < 1e-5, f'Deviation from BPTT: {dev}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_rolling_the_block_diagonal_would_fail_the_same_pin(self):
         # The negative control that gives U1 its teeth: an implementation that
@@ -256,7 +256,7 @@ class TestHandComputedFactors:
     def test_the_first_step_factors_match_the_hand_computed_values(self):
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
         x = _inputs(1)[0]
-        table = np.array([[[[1.0], [-1.0]]]])  # step 0, group 0, (1, H, 1)
+        table = np.array([[[[1.0], [-1.0]]]])  # Step 0, group 0, (1, H, 1)
         table = table.reshape(1, 1, 1, H, 1)
 
         model = spec.factory()
@@ -276,7 +276,7 @@ class TestHandComputedFactors:
         pre = np.asarray(x) + h0 @ w
         dphi = 1.0 - np.tanh(pre) ** 2           # (1, H)
         nu = np.array([[1.0], [-1.0]]).reshape(1, H, 1)
-        # nu^T J_f for a dense recurrent matmul: outer(h_prev, nu * dphi).
+        # Nu^T J_f for a dense recurrent matmul: outer(h_prev, nu * dphi).
         proj = h0.T @ (nu[..., 0] * dphi)        # (H, H)
         rho1 = np.sqrt((np.linalg.norm(proj) + 1e-12)
                        / (np.linalg.norm(nu) + 1e-12))
@@ -320,7 +320,7 @@ class TestHandComputedFactors:
         x0, x1 = np.asarray(inputs[0]), np.asarray(inputs[1])
         h0 = np.full((1, H), 0.4)
 
-        # --- step 0: d_s == 0 and theta == 0, so rho0 == 1 exactly ------------
+        # --- Step 0: d_s == 0 and theta == 0, so rho0 == 1 exactly ------------
         pre0 = x0 + h0 @ w
         dphi0 = 1.0 - np.tanh(pre0) ** 2                     # (1, H)
         h1 = np.tanh(pre0)
@@ -330,10 +330,10 @@ class TestHandComputedFactors:
         s1 = rho1_0 * nu0
         theta1 = proj0 / rho1_0
 
-        # --- step 1: both normalisers live ------------------------------------
+        # --- Step 1: both normalisers live ------------------------------------
         pre1 = x1 + h1 @ w
         dphi1 = 1.0 - np.tanh(pre1) ** 2
-        # d f(h)[0, o] / d h[0, q] == dphi[o] * w[q, o], contracted with s1.
+        # D f(h)[0, o] / d h[0, q] == dphi[o] * w[q, o], contracted with s1.
         d_s = (dphi1[0] * (w.T @ s1[0, :, 0])).reshape(1, H, 1)
         proj1 = h1.T @ (nu1[..., 0] * dphi1)
         rho0_1 = np.sqrt((np.linalg.norm(theta1) + eps)
@@ -341,7 +341,7 @@ class TestHandComputedFactors:
         rho1_1 = np.sqrt((np.linalg.norm(proj1) + eps)
                          / (np.linalg.norm(nu1) + eps))
         assert rho0_1 > 4.0 or rho0_1 < 0.25, (
-            f'rho0 == {rho0_1} is too close to 1 for this fixture to pin it')
+            f'Rho0 == {rho0_1} is too close to 1 for this fixture to pin it. Update the fixture or expected result to satisfy this assertion.')
 
         want_s = rho0_1 * d_s + rho1_1 * nu1
         want_theta = theta1 / rho0_1 + proj1 / rho1_1
@@ -356,7 +356,7 @@ class TestHandComputedFactors:
         # scaled by the sign pattern, which is checkable without any recursion.
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
         x = _inputs(1)[0]
-        table = np.ones((1, 1, 1, H, 1))  # nu == +1 everywhere
+        table = np.ones((1, 1, 1, H, 1))  # Nu == +1 everywhere
 
         model = spec.factory()
         brainstate.nn.init_all_states(model, batch_size=1)
@@ -372,7 +372,7 @@ class TestHandComputedFactors:
             np.asarray(u.get_mantissa(theta[(0, ('w',))])))
         assert outer.shape == (H, H, 1, H, 1)
 
-        # rho0/rho1 cancel in the product, so after one step from zero the
+        # Rho0/rho1 cancel in the product, so after one step from zero the
         # estimate is exactly nu nu^T J_f. With nu == 1 that is, for every
         # hidden index u, the row sum of J_f -- and for a dense recurrent matmul
         # J_f[(i,o), (q,0)] == h0[i] * dphi[o] * delta(q, o), whose row sum is
@@ -398,7 +398,7 @@ class TestKeyingAndSharing:
         ref = _saturating_snap_reference(spec, inputs)
         dev = relative_deviation(
             {('w',): mean[('w',)]}, {('w',): ref[('w',)]})
-        assert dev < 1e-4, f'tied-weight deviation: {dev}'
+        assert dev < 1e-4, f'Tied-weight deviation: {dev}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_two_groups_each_get_their_own_hidden_factor(self):
         # ``two_island_rnn`` is the only fixture with two groups at coupled
@@ -415,7 +415,7 @@ class TestKeyingAndSharing:
         data = algo._get_etrace_data()
         assert len(algo.graph.hidden_groups) == 2
         assert set(data['s_tilde']) == {0, 1}
-        # one parameter-shaped factor per (group, ETP path)
+        # One parameter-shaped factor per (group, ETP path)
         assert set(data['theta_tilde']) == {(0, ('wa',)), (1, ('wb',))}
 
     def test_two_groups_stay_unbiased_with_per_group_draws(self):
@@ -427,12 +427,12 @@ class TestKeyingAndSharing:
         inputs = _inputs(T, 1, scale=0.6)
         mean, count, _ = _exhaustive_mean_gradient(
             spec, inputs, n_draw_steps=2, draw_shape=(1, 1), n_groups=2)
-        assert count == 16, f'expected 2^(2 steps * 2 groups), got {count}'
+        assert count == 16, f'Expected 2^(2 steps * 2 groups), got {count}. Return the expected value for the reported field.'
 
         ref = _saturating_snap_reference(spec, inputs)
         for key in (('wa',), ('wb',)):
             dev = relative_deviation({key: mean[key]}, {key: ref[key]})
-            assert dev < 1e-4, f'{key} deviation across two groups: {dev}'
+            assert dev < 1e-4, f'{key} deviation across two groups: {dev}. Update the fixture or expected result to satisfy this assertion.'
 
 
 class TestTheDrawIndexAdvances:
@@ -444,7 +444,7 @@ class TestTheDrawIndexAdvances:
         # fixed-projection rule.
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
         x = _inputs(1)[0]
-        # step 0 -> +1, step 1 -> -1. If the index did not advance, the two
+        # Step 0 -> +1, step 1 -> -1. If the index did not advance, the two
         # windows would apply the same draw and s_tilde would keep its sign.
         table = np.stack([np.ones((1, 1, H, 1)), -np.ones((1, 1, H, 1))])
 
@@ -460,11 +460,11 @@ class TestTheDrawIndexAdvances:
         algo(braintrace.MultiStepData(x[None]))
         second = np.asarray(algo._get_etrace_data()['s_tilde'][0])
 
-        assert step_after_first == 1, f'the step counter is {step_after_first}'
+        assert step_after_first == 1, f'The step counter is {step_after_first}. Update the fixture or expected result to satisfy this assertion.'
         assert int(algo._get_etrace_data()['step']) == 2
         assert float(np.sign(first).sum()) > 0
         assert float(np.sign(second).sum()) < 0, (
-            'the second window reused the first window\'s draw')
+            'The second window reused the first window\'s draw. Update the fixture or expected result to satisfy this assertion.')
 
     def test_the_carried_key_advances_when_drawing_for_real(self):
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
@@ -554,7 +554,7 @@ class TestNegativeControls:
         dev = relative_deviation(
             {('w',): np.asarray(uoro[('w',)])},
             {('w',): np.asarray(diagonal[('w',)])})
-        assert dev > 1e-3, f'UORO reproduced the diagonal rule (dev={dev})'
+        assert dev > 1e-3, f'UORO reproduced the diagonal rule (dev={dev}). Update the fixture or expected result to satisfy this assertion.'
 
     def test_two_projection_keys_give_different_gradients(self):
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
@@ -567,7 +567,7 @@ class TestNegativeControls:
             chunk_size=CHUNK)
         dev = relative_deviation(
             {('w',): np.asarray(a[('w',)])}, {('w',): np.asarray(b[('w',)])})
-        assert dev > 1e-4, 'the estimator is deterministic across keys'
+        assert dev > 1e-4, 'The estimator is deterministic across keys. Update the fixture or expected result to satisfy this assertion.'
 
 
 # ---------------------------------------------------------------------------
@@ -615,7 +615,7 @@ class TestStructure:
         elements = sum(int(np.size(u.get_mantissa(a)))
                        for a in jax.tree.leaves(
                            (data['s_tilde'], data['theta_tilde'])))
-        assert elements == 20, f'carrier holds {elements} elements'
+        assert elements == 20, f'Carrier holds {elements} elements. Update the fixture or expected result to satisfy this assertion.'
 
     def test_heterogeneous_units_survive_a_step_and_a_gradient(self):
         spec = om.unit_weight_rnn(n_in=3, n_rec=4)
@@ -664,11 +664,11 @@ class TestStructure:
         x = braintrace.MultiStepData(jnp.ones((2, 1, H), dt))
         algo.compile_graph(x)
         algo.init_etrace_state()
-        algo(x)   # the call that used to raise
+        algo(x)   # The call that used to raise
         data = algo._get_etrace_data()
         for leaf in jax.tree.leaves((data['s_tilde'], data['theta_tilde'])):
             assert jnp.dtype(u.get_mantissa(leaf).dtype) == dt, (
-                f'factor came back as {u.get_mantissa(leaf).dtype}, not {dt}')
+                f'Factor came back as {u.get_mantissa(leaf).dtype}, not {dt}. Update the fixture or expected result to satisfy this assertion.')
 
     @pytest.mark.parametrize('scope', ['diagonal', 'sparse_n'])
     def test_a_non_coupled_scope_is_refused_by_name(self, scope):
@@ -775,7 +775,7 @@ class TestReproducibility:
         algo.reset_state(batch_size=1)
         brainstate.nn.init_all_states(model, batch_size=1)
         second = run()
-        assert np.abs(first).max() > 1e-6, 'a zero gradient would pin nothing'
+        assert np.abs(first).max() > 1e-6, 'A zero gradient would pin nothing. Use inputs that produce a non-zero gradient.'
         np.testing.assert_array_equal(first, second)
 
     def test_the_first_step_factors_are_finite_with_the_default_epsilon(self):
@@ -880,11 +880,11 @@ class TestTheProductionDrawAndItsKeySchedule:
             for subkeys in self._schedule(algo._initial_projection_key(), 1, 4)
         ]
         assert len(set(draws)) > 1, (
-            'four steps of the production schedule drew the same vector')
+            'Four steps of the production schedule drew the same vector. Update the fixture or expected result to satisfy this assertion.')
 
     def test_the_two_hidden_groups_draw_independently(self):
         algo = self._algo(om.two_island_rnn(n_in=6, n_rec=6))
-        assert len(algo.graph.hidden_groups) == 2, 'the fixture must be two groups'
+        assert len(algo.graph.hidden_groups) == 2, 'The fixture must be two groups. Ensure the fixture is two groups.'
         subkeys = self._schedule(algo._initial_projection_key(), 2, 1)[0]
         step0 = jnp.asarray(0, jnp.int32)
         a, b = (
@@ -892,7 +892,7 @@ class TestTheProductionDrawAndItsKeySchedule:
                 subkeys[gi], step0, gi, (1, 6, 1), jnp.float32)).tobytes()
             for gi in (0, 1)
         )
-        assert a != b, 'both hidden groups drew the same projection vector'
+        assert a != b, 'Both hidden groups drew the same projection vector. Update the fixture or expected result to satisfy this assertion.'
 
     def test_the_draw_is_rademacher_which_is_what_the_parity_argument_needs(self):
         # +-1 valued (so E[nu nu^T] == I) and hence negation-symmetric.

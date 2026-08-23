@@ -102,7 +102,7 @@ def _gmm_xy_to_dw(x: Any, hidden_dim: Any, weights: dict[str, Any], *,
                   bias_fn: WeightFn | None = None) -> dict[str, Any]:
     r"""Batched ``xy_to_dw`` — instantaneous hidden-to-weight Jacobian via one
     fused dict-valued ``jax.vjp`` (transforms auto-composed, gradient w.r.t.
-    the **raw** weights)."""
+    The **raw** weights)."""
 
     def _fwd(w_dict: dict[str, Any]) -> Any:
         w = w_dict['weight']
@@ -437,13 +437,14 @@ def grouped_matmul(
     if getattr(weight, 'ndim', None) != 3:
         raise ValueError(
             'grouped_matmul weight must have shape (groups, in_features, '
+            f'out_features); got ndim={getattr(weight, "ndim", None)}. Set grouped_matmul weight to a value with shape (groups, in_features, '
             f'out_features); got ndim={getattr(weight, "ndim", None)}.'
         )
     if x.ndim not in (2, 3):  # type: ignore[union-attr]
         raise ValueError(
             'grouped_matmul() supports x.ndim of 2 (groups, in_features) or 3 '
             '(batch, groups, in_features); fold extra leading axes into the '
-            f'batch axis first. Got x.ndim={x.ndim}.'  # type: ignore[union-attr]
+            f'batch axis first. Got x.ndim={x.ndim}. Fix the input condition named in the error, then rerun the operation.'  # type: ignore[union-attr]
         )
     if x.shape[-2:] != weight.shape[:2]:  # type: ignore[union-attr]  # rank checks above exclude scalar ArrayLike items
         raise ValueError(

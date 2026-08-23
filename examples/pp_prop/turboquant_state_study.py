@@ -59,7 +59,7 @@ def _load_example() -> Any:
     path = pathlib.Path(__file__).with_name('15-sparse-temporal-learning.py')
     spec = importlib.util.spec_from_file_location('_tq_study_example', path)
     if spec is None or spec.loader is None:
-        raise ImportError(f'Cannot load the sparse learning example from {path}')
+        raise ImportError(f'Cannot load the sparse learning example from {path}. Check the path and install the required resource.')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

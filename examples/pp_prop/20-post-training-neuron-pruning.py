@@ -38,7 +38,7 @@ def _load_neighbor(number: str, module_name: str):
     path = pathlib.Path(__file__).resolve().with_name(number)
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load {path}")
+        raise ImportError(f"Cannot load {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -53,17 +53,17 @@ EX19 = _load_neighbor(
 def _bind_device(requested: str) -> str:
     """Bind JAX to the requested backend and fail closed on a mismatch."""
     if requested not in ("gpu", "cpu", "auto"):
-        raise ValueError("device must be 'gpu', 'cpu', or 'auto'")
+        raise ValueError("Device must be 'gpu', 'cpu', or 'auto'. Set device to 'gpu', 'cpu', or 'auto'.")
     if requested != "auto":
         jax.config.update("jax_platform_name", requested)
     try:
         backend = jax.default_backend()
     except RuntimeError as error:
         raise RuntimeError(
-            f"requested device {requested}, but that JAX backend is unavailable"
+            f"Requested device {requested}, but that JAX backend is unavailable. Install or select an available JAX backend."
         ) from error
     if requested != "auto" and backend != requested:
-        raise RuntimeError(f"requested device {requested}, bound backend is {backend}")
+        raise RuntimeError(f"Requested device {requested}, bound backend is {backend}. Use the bound backend or select an available device.")
     return backend
 
 
@@ -71,7 +71,7 @@ def _normalize_task_rows(values: np.ndarray) -> np.ndarray:
     """Normalize every nonzero task row by its maximum absolute value."""
     values = np.asarray(values, dtype=np.float64)
     if values.ndim != 2 or not np.all(np.isfinite(values)):
-        raise ValueError("values must be a finite two-dimensional array")
+        raise ValueError("Values must be a finite two-dimensional array. Set Values to a finite two-dimensional array.")
     scale = np.max(np.abs(values), axis=1, keepdims=True)
     return np.divide(values, scale, out=np.zeros_like(values), where=scale > 0)
 
@@ -93,16 +93,16 @@ def _contribution_scores(
     values = np.asarray(values, dtype=np.float64)
     task_mass = np.asarray(task_mass, dtype=np.float64)
     if rates.ndim != 2 or rates.shape[1] != n_rec:
-        raise ValueError("rates must have shape (n_tasks, n_rec)")
+        raise ValueError("Rates must have shape (n_tasks, n_rec). Ensure Rates has shape (n_tasks, n_rec).")
     n_tasks = rates.shape[0]
     if n_tasks < 1 or readout_weight.shape != (n_rec, n_tasks):
-        raise ValueError("readout_weight must have shape (n_rec, n_tasks)")
+        raise ValueError("readout_weight must have shape (n_rec, n_tasks). Ensure readout_weight has shape (n_rec, n_tasks).")
     if rows.ndim != 1 or cols.ndim != 1 or values.ndim != 1:
-        raise ValueError("edge arrays must be one-dimensional and aligned")
+        raise ValueError("Edge arrays must be one-dimensional and aligned. Set Edge arrays to one-dimensional and aligned.")
     if not (rows.shape == cols.shape == values.shape):
-        raise ValueError("edge arrays must be aligned")
+        raise ValueError("Edge arrays must be aligned. Set Edge arrays to aligned.")
     if task_mass.shape != (n_tasks, rows.size):
-        raise ValueError("task_mass must have shape (n_tasks, n_edges)")
+        raise ValueError("task_mass must have shape (n_tasks, n_edges). Ensure task_mass has shape (n_tasks, n_edges).")
     finite = (
         np.all(np.isfinite(rates))
         and np.all(np.isfinite(readout_weight))
@@ -111,19 +111,19 @@ def _contribution_scores(
     )
     if not finite or np.any(rates < 0) or np.any(task_mass < 0):
         raise ValueError(
-            "contribution inputs must be finite and nonnegative where required"
+            "Contribution inputs must be finite and nonnegative where required. Set Contribution inputs to a finite non-negative value where required."
         )
     if not np.issubdtype(rows.dtype, np.integer) or not np.issubdtype(
         cols.dtype, np.integer
     ):
-        raise ValueError("edge endpoints must be integers")
+        raise ValueError("Edge endpoints must be integers. Set Edge endpoints to integers.")
     if rows.size and (
         np.any(rows < 0)
         or np.any(rows >= n_rec)
         or np.any(cols < 0)
         or np.any(cols >= n_rec)
     ):
-        raise ValueError("edge endpoint is outside [0, n_rec)")
+        raise ValueError("Edge endpoint is outside [0, n_rec). Set the named field to a value in the stated range, then rerun the operation.")
 
     direct = rates * np.abs(readout_weight.T)
     outgoing_strength = np.zeros(n_rec, dtype=np.float64)
@@ -161,28 +161,28 @@ def _edge_contribution_scores(
     neuron_alive = np.asarray(neuron_alive, dtype=np.float64)
     edge_alive = np.asarray(edge_alive, dtype=np.float64)
     if rates.ndim != 2 or rates.shape[1] != neuron_alive.size:
-        raise ValueError("rates and neuron_alive must align by neuron")
+        raise ValueError("Rates and neuron_alive must align by neuron. Align Rates and neuron_alive by neuron.")
     if rows.ndim != 1 or not (rows.shape == cols.shape == values.shape):
-        raise ValueError("edge arrays must be one-dimensional and aligned")
+        raise ValueError("Edge arrays must be one-dimensional and aligned. Set Edge arrays to one-dimensional and aligned.")
     if task_mass.shape != (rates.shape[0], rows.size):
-        raise ValueError("task_mass must have shape (n_tasks, n_edges)")
+        raise ValueError("task_mass must have shape (n_tasks, n_edges). Ensure task_mass has shape (n_tasks, n_edges).")
     if edge_alive.shape != rows.shape:
-        raise ValueError("edge_alive must have shape (n_edges,)")
+        raise ValueError("edge_alive must have shape (n_edges,). Ensure edge_alive has shape (n_edges,).")
     if not np.all((neuron_alive == 0.0) | (neuron_alive == 1.0)):
-        raise ValueError("neuron_alive must be binary")
+        raise ValueError("neuron_alive must be binary. Set neuron_alive to binary.")
     if not np.all((edge_alive == 0.0) | (edge_alive == 1.0)):
-        raise ValueError("edge_alive must be binary")
+        raise ValueError("edge_alive must be binary. Set edge_alive to binary.")
     if not np.issubdtype(rows.dtype, np.integer) or not np.issubdtype(
         cols.dtype, np.integer
     ):
-        raise ValueError("edge endpoints must be integers")
+        raise ValueError("Edge endpoints must be integers. Set Edge endpoints to integers.")
     if rows.size and (
         np.any(rows < 0)
         or np.any(cols < 0)
         or np.any(rows >= neuron_alive.size)
         or np.any(cols >= neuron_alive.size)
     ):
-        raise ValueError("edge endpoint is outside the neuron mask")
+        raise ValueError("Edge endpoint is outside the neuron mask. Set the named field to a value in the stated range, then rerun the operation.")
     if (
         not np.all(np.isfinite(rates))
         or not np.all(np.isfinite(values))
@@ -190,7 +190,7 @@ def _edge_contribution_scores(
         or np.any(rates < 0.0)
         or np.any(task_mass < 0.0)
     ):
-        raise ValueError("edge contribution inputs must be finite and nonnegative")
+        raise ValueError("Edge contribution inputs must be finite and nonnegative. Set Edge contribution inputs to a finite non-negative value.")
     active = edge_alive * neuron_alive[rows] * neuron_alive[cols]
     transmission = rates[:, cols] * np.abs(values)[None, :] * active[None, :]
     gradient = task_mass * active[None, :]
@@ -206,16 +206,16 @@ def _removal_order(scores: np.ndarray) -> np.ndarray:
     """Return neuron indices from least to most important, stably by index."""
     scores = np.asarray(scores, dtype=np.float64)
     if scores.ndim != 1 or scores.size < 1 or not np.all(np.isfinite(scores)):
-        raise ValueError("scores must be a nonempty finite one-dimensional array")
+        raise ValueError("Scores must be a nonempty finite one-dimensional array. Set Scores to a nonempty finite one-dimensional array.")
     return np.lexsort((np.arange(scores.size), scores))
 
 
 def _coarse_removed_counts(n_rec: int, fraction: float) -> np.ndarray:
     """Return coarse removal counts including all-alive and one-retained ends."""
     if isinstance(n_rec, bool) or n_rec < 1:
-        raise ValueError("n_rec must be a positive integer")
+        raise ValueError("n_rec must be a positive integer. Set n_rec to a positive integer.")
     if not math.isfinite(fraction) or not 0.0 < fraction < 1.0:
-        raise ValueError("prune step fraction must be finite and in (0, 1)")
+        raise ValueError("Prune step fraction must be finite and in (0, 1). Set Prune step fraction to a finite value in (0, 1).")
     step = max(1, math.ceil(n_rec * fraction))
     counts = np.arange(0, n_rec, step, dtype=int)
     if counts[-1] != n_rec - 1:
@@ -228,17 +228,17 @@ def _alive_masks(order: np.ndarray, removed_counts: np.ndarray) -> np.ndarray:
     order = np.asarray(order)
     removed_counts = np.asarray(removed_counts)
     if order.ndim != 1 or order.size < 1 or not np.issubdtype(order.dtype, np.integer):
-        raise ValueError("order must be a nonempty integer permutation")
+        raise ValueError("Order must be a nonempty integer permutation. Set Order to a nonempty integer permutation.")
     if not np.array_equal(np.sort(order), np.arange(order.size)):
-        raise ValueError("order must be a permutation of neuron indices")
+        raise ValueError("Order must be a permutation of neuron indices. Set Order to a permutation of neuron indices.")
     if removed_counts.ndim != 1 or not np.issubdtype(removed_counts.dtype, np.integer):
-        raise ValueError("removed_counts must be a one-dimensional integer array")
+        raise ValueError("removed_counts must be a one-dimensional integer array. Set removed_counts to a one-dimensional integer array.")
     if (
         removed_counts.size < 1
         or np.any(removed_counts < 0)
         or np.any(removed_counts >= order.size)
     ):
-        raise ValueError("removed_counts must stay in [0, n_rec)")
+        raise ValueError("removed_counts must stay in [0, n_rec). Make removed_counts stay in [0, n_rec).")
     rank = np.empty(order.size, dtype=int)
     rank[order] = np.arange(order.size)
     return (rank[None, :] >= removed_counts[:, None]).astype(np.float32)
@@ -251,7 +251,7 @@ def _select_safe_frontier(
     removed_counts = np.asarray(removed_counts)
     accuracies = np.asarray(accuracies, dtype=np.float64)
     if not math.isfinite(target) or not 0.0 <= target <= 1.0:
-        raise ValueError("target must be finite and in [0, 1]")
+        raise ValueError("Target must be finite and in [0, 1]. Set Target to a finite value in [0, 1].")
     valid_counts = (
         removed_counts.ndim == 1
         and removed_counts.size > 0
@@ -260,7 +260,7 @@ def _select_safe_frontier(
         and np.all(np.diff(removed_counts) > 0)
     )
     if not valid_counts:
-        raise ValueError("removed_counts must start at zero and strictly increase")
+        raise ValueError("removed_counts must start at zero and strictly increase. Make removed_counts start at zero and strictly increase.")
     if (
         accuracies.ndim != 2
         or accuracies.shape[0] != removed_counts.size
@@ -269,7 +269,7 @@ def _select_safe_frontier(
         or np.any(accuracies < 0)
         or np.any(accuracies > 1)
     ):
-        raise ValueError("accuracies must align with counts and stay in [0, 1]")
+        raise ValueError("Accuracies must align with counts and stay in [0, 1]. Align Accuracies with counts and stay in [0, 1].")
     valid = np.all(accuracies >= target, axis=1)
     failed = np.flatnonzero(~valid)
     if failed.size == 0:
@@ -314,7 +314,7 @@ def _alignment_owners(
         or not np.issubdtype(initial_owners.dtype, np.integer)
         or not np.issubdtype(final_owners.dtype, np.integer)
     ):
-        raise ValueError("initial, final, and removed ownership arrays must align")
+        raise ValueError("Initial, final, and removed ownership arrays must align. Set Initial, final, and removed ownership arrays to align.")
     return np.where(removed, initial_owners, final_owners)
 
 
@@ -335,9 +335,9 @@ def _alignment_summary(
         or removed.dtype != np.bool_
         or not np.issubdtype(owners.dtype, np.integer)
     ):
-        raise ValueError("class_of, removed, and owners must align by neuron")
+        raise ValueError("class_of, removed, and owners must align by neuron. Align class_of, removed, and owners by neuron.")
     if n_tasks < 1 or np.any(owners < 0) or np.any(owners >= n_tasks):
-        raise ValueError("owners must contain valid task indices")
+        raise ValueError("Owners must contain valid task indices. Add valid task indices to Owners.")
     sizes = Counter(class_of.tolist())
     twin = np.array([sizes[label] >= 2 for label in class_of.tolist()])
     full = partial = 0
@@ -468,11 +468,11 @@ def _evaluate_probe_logits(
     if neuron_alive.shape != (config.n_rec,) or not np.all(
         (neuron_alive == 0.0) | (neuron_alive == 1.0)
     ):
-        raise ValueError("neuron_alive must be a binary (n_rec,) array")
+        raise ValueError("neuron_alive must be a binary (n_rec,) array. Set neuron_alive to a binary (n_rec,) array.")
     if edge_alive.shape != (experiment.task_mass.shape[1],) or not np.all(
         (edge_alive == 0.0) | (edge_alive == 1.0)
     ):
-        raise ValueError("edge_alive must be a binary (n_edges,) array")
+        raise ValueError("edge_alive must be a binary (n_edges,) array. Set edge_alive to a binary (n_edges,) array.")
     evaluate_logits = _probe_logit_evaluator(experiment, config)
 
     @brainstate.transform.jit
@@ -515,13 +515,13 @@ def _evaluate_structural_masks(
         or alive_masks.shape[0] < 1
         or not np.all((alive_masks == 0.0) | (alive_masks == 1.0))
     ):
-        raise ValueError("alive_masks must be a nonempty binary (masks, n_rec) array")
+        raise ValueError("alive_masks must be a nonempty binary (masks, n_rec) array. Set alive_masks to a nonempty binary (masks, n_rec) array.")
     if (
         edge_masks.ndim != 2
         or edge_masks.shape != (alive_masks.shape[0], experiment.task_mass.shape[1])
         or not np.all((edge_masks == 0.0) | (edge_masks == 1.0))
     ):
-        raise ValueError("edge_masks must be binary and align with alive_masks")
+        raise ValueError("edge_masks must be binary and align with alive_masks. Set edge_masks to binary and align with alive_masks.")
     evaluate_mask = _mask_evaluator(experiment, config)
 
     @brainstate.transform.jit
@@ -555,13 +555,13 @@ def _joint_fixed_point_prune(
     if initial_alive.shape != (n_rec,) or not np.all(
         (initial_alive == 0.0) | (initial_alive == 1.0)
     ):
-        raise ValueError("initial_alive must be a binary (n_rec,) array")
+        raise ValueError("initial_alive must be a binary (n_rec,) array. Set initial_alive to a binary (n_rec,) array.")
     if not math.isfinite(target) or not 0.0 <= target <= 1.0:
-        raise ValueError("target must be finite and in [0, 1]")
+        raise ValueError("Target must be finite and in [0, 1]. Set Target to a finite value in [0, 1].")
     if rows.shape != cols.shape or rows.shape != values.shape or rows.ndim != 1:
-        raise ValueError("edge arrays must be one-dimensional and aligned")
+        raise ValueError("Edge arrays must be one-dimensional and aligned. Set Edge arrays to one-dimensional and aligned.")
     if task_mass.shape != (n_tasks, rows.size):
-        raise ValueError("task_mass must have shape (n_tasks, n_edges)")
+        raise ValueError("task_mass must have shape (n_tasks, n_edges). Ensure task_mass has shape (n_tasks, n_edges).")
 
     evaluate_mask = _mask_evaluator(experiment, config)
     readout_weight = jnp.asarray(_readout_weight(experiment.model), dtype=jnp.float32)
@@ -1042,7 +1042,7 @@ def _readout_weight(model: Any) -> np.ndarray:
     readout = model.readout if hasattr(model.readout, "W") else model.readout.readout
     weight = np.asarray(u.get_mantissa(readout.W.value), dtype=np.float64)
     if weight.ndim != 2:
-        raise ValueError("trained readout weight must be two-dimensional")
+        raise ValueError("Trained readout weight must be two-dimensional. Set Trained readout weight to two-dimensional.")
     return weight
 
 
@@ -1060,32 +1060,32 @@ def _compact_topology(
     neuron_alive = np.asarray(neuron_alive)
     edge_alive = np.asarray(edge_alive)
     if rows.ndim != 1 or not (rows.shape == cols.shape == values.shape):
-        raise ValueError("edge arrays must be one-dimensional and aligned")
+        raise ValueError("Edge arrays must be one-dimensional and aligned. Set Edge arrays to one-dimensional and aligned.")
     if neuron_alive.ndim != 1 or not np.all((neuron_alive == 0) | (neuron_alive == 1)):
-        raise ValueError("neuron_alive must be a one-dimensional binary array")
+        raise ValueError("neuron_alive must be a one-dimensional binary array. Set neuron_alive to a one-dimensional binary array.")
     if edge_alive.shape != rows.shape or not np.all(
         (edge_alive == 0) | (edge_alive == 1)
     ):
-        raise ValueError("edge_alive must be binary and align with edge arrays")
+        raise ValueError("edge_alive must be binary and align with edge arrays. Set edge_alive to binary and align with edge arrays.")
     if not np.issubdtype(rows.dtype, np.integer) or not np.issubdtype(
         cols.dtype, np.integer
     ):
-        raise ValueError("edge endpoints must be integers")
+        raise ValueError("Edge endpoints must be integers. Set Edge endpoints to integers.")
     if rows.size and (
         np.any(rows < 0)
         or np.any(cols < 0)
         or np.any(rows >= neuron_alive.size)
         or np.any(cols >= neuron_alive.size)
     ):
-        raise ValueError("edge endpoint is outside the neuron mask")
+        raise ValueError("Edge endpoint is outside the neuron mask. Set the named field to a value in the stated range, then rerun the operation.")
     active = edge_alive.astype(bool)
     if np.any(
         active & ~(neuron_alive[rows].astype(bool) & neuron_alive[cols].astype(bool))
     ):
-        raise ValueError("active edge is incident to a dead neuron")
+        raise ValueError("Active edge is incident to a dead neuron. Clear the edge or mark both endpoint neurons as alive.")
     retained = np.flatnonzero(neuron_alive).astype(np.int64)
     if retained.size == 0:
-        raise ValueError("physical compaction requires at least one retained neuron")
+        raise ValueError("Physical compaction requires at least one retained neuron. Provide the required value for Physical compaction.")
     old_to_new = np.full(neuron_alive.size, -1, dtype=np.int64)
     old_to_new[retained] = np.arange(retained.size, dtype=np.int64)
     return (
@@ -1131,7 +1131,7 @@ def _install_compact_parameters(
     if ff_bias is None:
         ff_params.pop("bias", None)
     elif "bias" not in ff_params:
-        raise ValueError("bundle contains feed-forward bias for a bias-free model")
+        raise ValueError("Bundle contains feed-forward bias for a bias-free model. Fix the input condition named in the error, then rerun the operation.")
     else:
         ff_params["bias"] = _with_template_unit(ff_bias, ff_params["bias"])
     model.ff_syn.comm.weight.value = ff_params
@@ -1236,7 +1236,7 @@ def _load_compact_bundle(path: pathlib.Path) -> Dict[str, Any]:
     try:
         with np.load(path, allow_pickle=False) as bundle:
             if int(bundle["format_version"]) != 1:
-                raise ValueError("unsupported compact bundle format version")
+                raise ValueError("Unsupported compact bundle format version. Use a supported option or change the configuration.")
             values = msgspec_json.loads(str(bundle["config_json"]))
             config = SimpleNamespace(**values)
             retained = np.asarray(bundle["original_neuron_indices"], dtype=np.int64)
@@ -1251,16 +1251,16 @@ def _load_compact_bundle(path: pathlib.Path) -> Dict[str, Any]:
             )
             readout_weight = np.asarray(bundle["readout_weight"], dtype=np.float32)
     except (KeyError, OSError, TypeError, msgspec_json.JSONDecodeError) as error:
-        raise ValueError(f"invalid compact model bundle: {path}") from error
+        raise ValueError(f"Invalid compact model bundle: {path}. Set the named field to a value in the stated range, then rerun the operation.") from error
     if retained.size != config.n_rec or rows.shape != cols.shape:
-        raise ValueError("compact bundle dimensions are inconsistent")
+        raise ValueError("Compact bundle dimensions are inconsistent. Use matching values and structures.")
     layout = EX18._layout(config)
     if ff_weight.shape != (layout.n_in, config.n_rec):
-        raise ValueError("compact feed-forward weight shape is inconsistent")
+        raise ValueError("Compact feed-forward weight shape is inconsistent. Use matching values and structures.")
     if ff_bias is not None and ff_bias.shape != (config.n_rec,):
-        raise ValueError("compact feed-forward bias shape is inconsistent")
+        raise ValueError("Compact feed-forward bias shape is inconsistent. Use matching values and structures.")
     if readout_weight.shape != (config.n_rec, config.num_tricks):
-        raise ValueError("compact readout weight shape is inconsistent")
+        raise ValueError("Compact readout weight shape is inconsistent. Use matching values and structures.")
     return _compact_experiment(
         config,
         retained,
@@ -1305,7 +1305,7 @@ def _benchmark_compaction(
 ) -> Dict[str, float]:
     """Benchmark warmed masked and compact full-probe inference on one device."""
     if isinstance(repetitions, bool) or repetitions < 1:
-        raise ValueError("repetitions must be a positive integer")
+        raise ValueError("Repetitions must be a positive integer. Set repetitions to a positive integer.")
 
     def measure(current_experiment, current_config, neurons, edges):
         evaluate_logits = _probe_logit_evaluator(current_experiment, current_config)
@@ -1351,7 +1351,7 @@ def _analyze_compaction(
 ) -> Dict[str, Any]:
     """Materialize, verify, benchmark, and optionally save the compact model."""
     if isinstance(benchmark_repetitions, bool) or benchmark_repetitions < 1:
-        raise ValueError("benchmark_repetitions must be a positive integer")
+        raise ValueError("benchmark_repetitions must be a positive integer. Set benchmark_repetitions to a positive integer.")
     neuron_alive = np.asarray(fixed_point["final_alive_mask"], dtype=np.float32)
     edge_alive = np.asarray(fixed_point["final_edge_alive_mask"], dtype=np.float32)
     if not np.any(neuron_alive):
@@ -1912,9 +1912,9 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
     parser.add_argument("--device", choices=("gpu", "cpu", "auto"), default="gpu")
     args, forwarded = parser.parse_known_args(raw)
     if not math.isfinite(args.prune_target) or not 0.0 <= args.prune_target <= 1.0:
-        parser.error("--prune-target must be finite and in [0, 1]")
+        parser.error("--Prune-target must be finite and in [0, 1]. Set --Prune-target to a finite value in [0, 1].")
     if args.compact_benchmark_repetitions < 1:
-        parser.error("--compact-benchmark-repetitions must be positive")
+        parser.error("--Compact-benchmark-repetitions must be positive. Set --Compact-benchmark-repetitions to a positive value.")
     _coarse_removed_counts(1, args.prune_step_fraction)
     backend = _bind_device(args.device)
     has_task_style = any(
@@ -1964,7 +1964,7 @@ def main(argv: Optional[list] = None) -> Dict[str, Any]:
         evolve_checkpoint=analyze_checkpoint,
     )
     if "analysis" not in captured:
-        raise RuntimeError("Example 18 did not invoke the evolving-arm posthoc hook")
+        raise RuntimeError("Example 18 did not invoke the evolving-arm posthoc hook. Fix the input condition named in the error, then rerun the operation.")
     analysis = captured["analysis"]
     analysis["device"] = backend
     plot_path = args.pruning_plot_output.resolve()

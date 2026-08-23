@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Complete the Gate 2 acceptance measurements and attribute them by channel.
 
 Two of the four Gate 2 criteria are not in the summary metrics, and both are
@@ -6,7 +6,7 @@ the direct measurement of a named defect:
 
 * ``shape_square_fraction`` -- 79.2% of legacy candidate-1 shapes were square
   because two 30-way softmaxes collapsed onto one function (D2).
-* the count of queries reaching pixel >= 0.95 -- legacy managed 0 of 419, the
+* The count of queries reaching pixel >= 0.95 -- legacy managed 0 of 419, the
   signature of a rank-16 colour tensor that cannot express a grid (D3).
 
 The summary also cannot answer the question that decides what to do next. Most

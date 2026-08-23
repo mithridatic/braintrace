@@ -55,28 +55,28 @@ _SITU_PARAMETERS = (
 def _dimensionless_float(value: ArrayLike, name: str) -> Any:
     unit = u.get_unit(value)
     if not unit.is_unitless:
-        raise ValueError(f"{name} must be dimensionless, got unit {unit}")
+        raise ValueError(f"{name} must be dimensionless, got unit {unit}. Set {name} to dimensionless.")
     result = jnp.asarray(u.get_mantissa(value))
     if not jnp.issubdtype(result.dtype, jnp.floating):
-        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}")
+        raise TypeError(f"{name} must have a floating dtype, got {result.dtype}. Ensure {name} has a floating dtype.")
     return result
 
 
 def _positive_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite positive real scalar")
+        raise TypeError(f"{name} must be a finite positive real scalar. Set {name} to a finite positive real scalar.")
     result = float(value)
     if not math.isfinite(result) or result <= 0.0:
-        raise ValueError(f"{name} must be a finite positive real scalar")
+        raise ValueError(f"{name} must be a finite positive real scalar. Set {name} to a finite positive real scalar.")
     return result
 
 
 def _negative_real(value: object, name: str) -> float:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
-        raise TypeError(f"{name} must be a finite negative real scalar")
+        raise TypeError(f"{name} must be a finite negative real scalar. Set {name} to a finite negative real scalar.")
     result = float(value)
     if not math.isfinite(result) or result >= 0.0:
-        raise ValueError(f"{name} must be a finite negative real scalar")
+        raise ValueError(f"{name} must be a finite negative real scalar. Set {name} to a finite negative real scalar.")
     return result
 
 
@@ -266,7 +266,7 @@ def _solve_drtrl_factory(
                 result[name] = jnp.einsum("...ij,...abij->...ab", dg, trace[name])
             else:
                 raise ValueError(
-                    f"unsupported output/parameter ranks {output_rank}/{parameter_rank}"
+                    f"Unsupported output/parameter ranks {output_rank}/{parameter_rank}. Use a supported option or change the configuration."
                 )
         return result
 
@@ -413,11 +413,11 @@ def delta_memory_update(
     x_key_array = arrays.pop("x_key")
     x_value_array = arrays.pop("x_value")
     if memory_array.ndim != 3 or x_key_array.ndim != 2 or x_value_array.ndim != 2:
-        raise ValueError("memory must be rank three and feature inputs rank two")
+        raise ValueError("Memory must be rank three and feature inputs rank two. Set Memory to rank three and feature inputs rank two.")
     if not (
         memory_array.shape[0] == x_key_array.shape[0] == x_value_array.shape[0]
     ):
-        raise ValueError("memory and feature inputs must share the batch size")
+        raise ValueError("Memory and feature inputs must share the batch size. Make Memory and feature inputs share the batch size.")
     key_width, value_width = memory_array.shape[1:]
     key_features = x_key_array.shape[1]
     value_features = x_value_array.shape[1]
@@ -432,7 +432,7 @@ def delta_memory_update(
     }
     for name, shape in expected.items():
         if arrays[name].shape != shape:
-            raise ValueError(f"{name} must have shape {shape}, got {arrays[name].shape}")
+            raise ValueError(f"{name} must have shape {shape}, got {arrays[name].shape}. Ensure {name} has shape {shape}.")
     packed = jnp.concatenate(
         (memory_array.reshape(memory_array.shape[0], -1), x_key_array, x_value_array),
         axis=-1,
@@ -493,9 +493,9 @@ def situ_glu(
     }
     x_array = arrays.pop("x")
     if x_array.ndim != 2:
-        raise ValueError("x must be a batched rank-two array")
+        raise ValueError("X must be a batched rank-two array. Set X to a batched rank-two array.")
     if arrays["gate_weight"].ndim != 2:
-        raise ValueError("gate_weight must be rank two")
+        raise ValueError("gate_weight must be rank two. Set gate_weight to rank two.")
     input_width, hidden_width = arrays["gate_weight"].shape
     expected = {
         "gate_weight": (input_width, hidden_width),
@@ -504,14 +504,15 @@ def situ_glu(
         "up_bias": (hidden_width,),
     }
     if x_array.shape[1] != input_width:
-        raise ValueError(f"x must have final width {input_width}")
+        raise ValueError(f"X must have final width {input_width}. Ensure X has final width {input_width}.")
     for name, shape in expected.items():
         if arrays[name].shape != shape:
-            raise ValueError(f"{name} must have shape {shape}, got {arrays[name].shape}")
+            raise ValueError(f"{name} must have shape {shape}, got {arrays[name].shape}. Ensure {name} has shape {shape}.")
     if arrays["output_weight"].ndim != 2 or arrays["output_weight"].shape[0] != hidden_width:
         raise ValueError(
             "output_weight must have shape "
-            f"({hidden_width}, output_width), got {arrays['output_weight'].shape}"
+            f"({hidden_width}, output_width), got {arrays['output_weight'].shape}. Set output_weight to a value with shape "
+            f"({hidden_width}, output_width)."
         )
     return etp_situ_glu_p.bind(
         x_array,

@@ -331,7 +331,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
     body = body_closed.jaxpr
     num_consts, num_carry = scan_num_consts_carry(eqn)
 
-    # ---- outer<->body position maps ---------------------------------------
+    # ---- Outer<->body position maps ---------------------------------------
     # scan invars [*consts, *carry, *xs] are positionally identical to
     # body.invars; outvars are [*carry, *ys].
     carry_hidden: Dict[int, Path] = {}
@@ -342,7 +342,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
     if not carry_hidden:
         return None
 
-    # v1 guard: every hidden carry must be initialized from the *pristine*
+    # V1 guard: every hidden carry must be initialized from the *pristine*
     # step-entry hidden invar. If the model transforms the hidden state
     # between step entry and the scan (e.g. ``h.value = h.value * 0.5``
     # before the loop), that outer segment of the per-step transition is
@@ -371,7 +371,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
             )
             return None
 
-    # ---- body-scope maps ---------------------------------------------------
+    # ---- Body-scope maps ---------------------------------------------------
     body_invar_to_hidden_path = {
         body.invars[num_consts + c]: p for c, p in carry_hidden.items()
     }
@@ -393,7 +393,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
             body_weight_path_to_invars.setdefault(wp, []).append(bv)
     path_to_state = minfo.retrieved_model_states
 
-    # ---- reuse the flat finders on the body --------------------------------
+    # ---- Reuse the flat finders on the body --------------------------------
     body_groups, body_hid_path_to_group = find_hidden_groups_from_jaxpr(
         body,
         hidden_outvar_to_invar=body_hidden_outvar_to_invar,
@@ -439,7 +439,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
             context={'weight_paths': tuple(missing)},
         )
 
-    # ---- assemble the hoist list (ordered dedup, body vars) ----------------
+    # ---- Assemble the hoist list (ordered dedup, body vars) ----------------
     hoist_seen: Dict[Var, None] = {}
     for r in body_relations:
         if r.x_var is not None:
@@ -452,7 +452,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
             hoist_seen[v] = None
     hoist: List[Var] = list(hoist_seen)
 
-    # ---- rewrite the eqn ----------------------------------------------------
+    # ---- Rewrite the eqn ----------------------------------------------------
     inlined_eqn = eqn if body_closed is eqn.params['jaxpr'] else eqn.replace(
         params={**eqn.params, 'jaxpr': body_closed})
     new_eqn, stacked = add_scan_ys(inlined_eqn, hoist)
@@ -465,7 +465,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
         scan_eqn_id=id(new_eqn),
     )
 
-    # ---- re-scope groups to outer hidden vars -------------------------------
+    # ---- Re-scope groups to outer hidden vars -------------------------------
     path_to_carry = {p: c for c, p in carry_hidden.items()}
     final_groups = []
     for g in body_groups:
@@ -479,7 +479,7 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
                                  body_hidden_invars=list(g.hidden_invars)),
         ))
 
-    # ---- patch relations: point at final groups + attach context ------------
+    # ---- Patch relations: point at final groups + attach context ------------
     by_paths = {tuple(g.hidden_paths): g for g in final_groups}
     final_relations = [
         r._replace(
@@ -557,7 +557,7 @@ def apply_scan_descent(minfo: 'ModuleInfo') -> Tuple['ModuleInfo', List[ScanDesc
             continue
         bundle = analyze_and_rewrite_scan(eqn, minfo)
         if bundle is None:
-            # no hidden state in the carry: nothing to descend; the walkers
+            # No hidden state in the carry: nothing to descend; the walkers
             # keep their existing behavior for this equation.
             new_eqns.append(eqn)
             continue

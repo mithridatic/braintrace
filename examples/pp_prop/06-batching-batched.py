@@ -49,7 +49,7 @@ def main(n_epochs: int = 3, batch_size: int = 32, num_step: int = 50, plot: bool
 
         @brainstate.transform.jit
         def train_step(inputs, targets):
-            # reduction='sum' preserves the accumulated-gradient scale this
+            # Reduction='sum' preserves the accumulated-gradient scale this
             # example was tuned at; the reported loss stays the per-step mean.
             grads, step_losses = online_model.etrace_grad(
                 inputs, targets, step_fn=step_loss, reduction='sum', return_value=True)

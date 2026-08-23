@@ -56,7 +56,7 @@ class _ZeroResetState(brainstate.ShortTermState):
             If given, the state is re-zeroed with ``batch_size`` as the leading
             dimension (prepended when the original state was scalar-shaped).
             When ``None`` (default) the original unbatched shape is restored.
-        **kwargs
+        **Kwargs
             Ignored; accepted for compatibility with the brainstate state-reset
             protocol.
         """
@@ -112,7 +112,7 @@ class KappaFilter(_ZeroResetState):
     def __init__(self, init_value: Any, kappa: float) -> None:
         super().__init__(init_value)
         if not (0.0 <= kappa < 1.0):
-            raise ValueError(f'kappa must be in [0, 1); got {kappa}')
+            raise ValueError(f'Kappa must be in [0, 1); got {kappa}. Set Kappa to a value in [0, 1).')
         self.kappa = float(kappa)
 
     def update(self, x: ArrayLike) -> Any:
@@ -148,7 +148,7 @@ class FixedRandomFeedback:
     n_layer : int
         Number of layer dimensions (the column count of ``B``).
     key : jax.Array
-        A PRNG key used to sample the feedback matrix. Obtain one from
+        A PRNG key used to sample the feedback matrix. get one from
         :func:`brainstate.random.split_key`.
     init_scale : float, optional
         Standard-deviation scaling applied to the sampled normal entries. Default is ``0.1``.
@@ -258,7 +258,7 @@ def _zeros_like_batch_or_not(
         optionally including a batch dimension if `batch_size` is provided.
     """
     if batch_size is not None:
-        assert isinstance(batch_size, int), 'The batch size should be an integer. '
+        assert isinstance(batch_size, int), 'The batch size should be an integer. Fix the input condition named in the error, then rerun the operation.'
         return u.math.zeros((batch_size,) + x.shape[1:], x.dtype)
     else:
         return u.math.zeros_like(x)
@@ -266,8 +266,8 @@ def _zeros_like_batch_or_not(
 
 def _batched_zeros_like(
     batch_size: Optional[int],
-    num_state: int,  # the number of hidden states
-    x: jax.Array  # the input array
+    num_state: int,  # The number of hidden states
+    x: jax.Array  # The input array
 ) -> Any:
     """
     Create a batched zeros array with the same shape as the input array,
@@ -353,7 +353,7 @@ def _extract_leaf(pytree_val: PyTree, leaf_idx: int) -> Any:
         return pytree_val
     if leaf_idx < 0 or leaf_idx >= len(leaves):
         raise IndexError(
-            f'leaf_idx {leaf_idx} out of range for pytree with {len(leaves)} leaves'
+            f'leaf_idx {leaf_idx} out of range for pytree with {len(leaves)} leaves. Fix the input condition named in the error, then rerun the operation.'
         )
     return leaves[leaf_idx]
 
@@ -373,7 +373,7 @@ def _wrap_leaves_as_pytree(
     """
     ref_treedef = jax.tree.structure(reference_pytree)
     # Bare-array fast path.
-    # jax's PyTreeDef stubs omit num_leaves and __eq__; both are valid at runtime.
+    # JAX's PyTreeDef stubs omit num_leaves and __eq__; both are valid at runtime.
     if ref_treedef.num_leaves <= 1 and ref_treedef == jax.tree.structure(0):  # type: ignore[attr-defined, operator]
         if 0 in leaf_grads:
             return leaf_grads[0]
@@ -383,7 +383,7 @@ def _wrap_leaves_as_pytree(
     for idx in leaf_grads:
         if idx < 0 or idx >= n:
             raise IndexError(
-                f'leaf_idx {idx} out of range for pytree with {n} leaves'
+                f'leaf_idx {idx} out of range for pytree with {n} leaves. Fix the input condition named in the error, then rerun the operation.'
             )
     new_leaves = [
         leaf_grads[i] if i in leaf_grads else u.math.zeros_like(leaf)
@@ -453,7 +453,7 @@ def _update_dict(
     """
     if key not in the_dict:
         if error_when_no_key:
-            raise ValueError(f'The key {key} does not exist in the dictionary. ')
+            raise ValueError(f'The key {key} does not exist in the dictionary. Fix the input condition named in the error, then rerun the operation.')
         the_dict[key] = value
     else:
         old_value = the_dict[key]

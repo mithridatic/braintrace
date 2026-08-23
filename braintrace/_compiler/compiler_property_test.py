@@ -207,7 +207,7 @@ def _make_chain_rnn(chain_len: int, n: int) -> brainstate.nn.Module:
     """Return a model with ``chain_len`` matmuls in series feeding ``h``.
 
     ``mid_0 = matmul(xh, w_1); mid_1 = matmul(mid_0, w_2); ...
-    h = tanh(mid_{chain_len-1})``.
+    H = tanh(mid_{chain_len-1})``.
 
     Only ``w_{chain_len}`` (the final matmul) must be included in
     relations; all earlier weights are W -> W -> h excluded.
@@ -272,7 +272,7 @@ class TestChainExclusion:
             kind=DiagnosticKind.RELATION_EXCLUDED_WEIGHT_TO_WEIGHT,
         )
         assert len(excluded) == chain_len - 1, (
-            f'Expected {chain_len - 1} W->W->h exclusions; got {len(excluded)}'
+            f'Expected {chain_len - 1} W->W->h exclusions; got {len(excluded)}. Return the expected value for the reported field.'
         )
 
 

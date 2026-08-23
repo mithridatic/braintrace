@@ -102,7 +102,7 @@ def _make_net(neuron):
     (num_state == 1); ``neuron='ALIF'`` a coupled (V, a) group (num_state == 2),
     exercising the multi-state recurrent + solve branches.
     """
-    brainstate.random.seed(SEED)  # identical conv weights on every build
+    brainstate.random.seed(SEED)  # Identical conv weights on every build
     conv_inits = dict(w_init=braintools.init.XavierNormal(scale=5.0), b_init=None)
     surr = braintools.surrogate.Arctan()
 
@@ -182,12 +182,12 @@ def _vmap_grad(data, targets, make_net):
     return grads
 
 
-N_HID = 7  # mixed-net Linear out features (!= flattened conv size, so a wrong
-           # in-feature reduction is unmistakable in the gradient shape)
+N_HID = 7  # Mixed-net Linear out features (!= flattened conv size, so a wrong
+           # In-feature reduction is unmistakable in the gradient shape)
 
 
 def _make_mixed_net():
-    """conv -> IF -> flatten -> Linear -> IF: a *mixed* batched/unbatched model.
+    """Conv -> IF -> flatten -> Linear -> IF: a *mixed* batched/unbatched model.
 
     Under ``vmap_states='new'`` the graph is compiled per-lane, so the conv stays
     a *batched* primitive (its parent layer forces a leading batch axis) while the
@@ -225,7 +225,7 @@ def _make_mixed_net():
 
 
 def _make_conv_ln_net(use_fast_variance):
-    """conv -> LayerNorm -> IF: a non-elementwise (mean-subtracting) transition.
+    """Conv -> LayerNorm -> IF: a non-elementwise (mean-subtracting) transition.
 
     The param-dim trace reads ``dh/dy`` through the norm via an all-ones jvp; for
     a shift-invariant op its value is the Jacobian row sums = *exactly* zero (the
@@ -263,10 +263,10 @@ def _make_conv_ln_net(use_fast_variance):
 def _assert_grads_match(ref, got):
     ref_leaves = jax.tree.leaves(ref)
     got_leaves = jax.tree.leaves(got)
-    assert len(ref_leaves) == len(got_leaves) and ref_leaves, 'no gradient leaves compared'
+    assert len(ref_leaves) == len(got_leaves) and ref_leaves, 'No gradient leaves compared. Provide the missing item named in this message.'
     for e, a in zip(ref_leaves, got_leaves):
         e, a = np.asarray(e), np.asarray(a)
-        assert a.shape == e.shape, f'shape mismatch: got {a.shape} vs ref {e.shape}'
+        assert a.shape == e.shape, f'Shape mismatch: got {a.shape} vs ref {e.shape}. Use matching values and structures.'
         # Relative tolerance: conv grads here are large-magnitude; float32 ~1e-6.
         np.testing.assert_allclose(a, e, rtol=1e-4, atol=1e-5)
 
@@ -309,7 +309,7 @@ def test_mixed_conv_dense_vmap_grad_equals_sum_of_eager_single_sample():
 
 
 def test_conv_layernorm_vmap_grad_matches_eager_and_stays_finite():
-    """conv -> LayerNorm -> IF: vmap grad == sum of eager batch=1, and stays finite.
+    """Conv -> LayerNorm -> IF: vmap grad == sum of eager batch=1, and stays finite.
 
     Regression for the ``examples/004`` ``loss=ln(10)`` stall. A mean-subtracting
     norm makes ``dh/dy`` non-diagonal; the param-dim trace's all-ones jvp returns
@@ -332,7 +332,7 @@ def test_conv_layernorm_vmap_grad_matches_eager_and_stays_finite():
     got = _vmap_grad(data, targets, make_net)
     # No overflow/NaN in either path (the bug produced ~1e14 -> NaN under vmap).
     for leaf in jax.tree.leaves(got):
-        assert np.all(np.isfinite(np.asarray(leaf))), 'vmap grad is non-finite'
+        assert np.all(np.isfinite(np.asarray(leaf))), 'Vmap grad is non-finite. Use finite values.'
     for leaf in jax.tree.leaves(ref):
-        assert np.all(np.isfinite(np.asarray(leaf))), 'eager grad is non-finite'
+        assert np.all(np.isfinite(np.asarray(leaf))), 'Eager grad is non-finite. Use finite values.'
     _assert_grads_match(ref, got)

@@ -67,7 +67,7 @@ def run_subprocess(command: Sequence[str], source_root: pathlib.Path) -> None:
 
 
 def _reject_json_constant(value: str) -> None:
-    raise RunEvidenceError(f"raw result contains non-finite JSON constant {value}")
+    raise RunEvidenceError(f"Raw result contains non-finite JSON constant {value}. Use finite values.")
 
 
 def load_raw_document(path: pathlib.Path) -> dict[str, Any]:
@@ -77,9 +77,9 @@ def load_raw_document(path: pathlib.Path) -> dict[str, Any]:
             path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant
         )
     except (OSError, msgspec_json.JSONDecodeError) as error:
-        raise RunEvidenceError(f"cannot read raw result {path}: {error}") from error
+        raise RunEvidenceError(f"Cannot read raw result {path}: {error}. Check the path and install the required resource.") from error
     if not isinstance(document, dict):
-        raise RunEvidenceError("raw result must be a JSON object")
+        raise RunEvidenceError("Raw result must be a JSON object. Set Raw result to a JSON object.")
     return document
 
 
@@ -190,7 +190,7 @@ def obtain_bundle_score(
             raise
         except RunEvidenceError as error:
             raise ResumeConfigurationError(
-                f"existing final raw result is not safely reusable: {error}"
+                f"Existing final raw result is not safely reusable: {error}. Fix the input condition named in the error, then rerun the operation."
             ) from error
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -199,10 +199,10 @@ def obtain_bundle_score(
         runner(command, settings.source_root)
     except RuntimeError as error:
         _write_failure_artifact(settings, stage, candidate, bundle_id, error)
-        raise RunEvidenceError(f"child run failed: {error}") from error
+        raise RunEvidenceError(f"Child run failed: {error}. Correct the reported inputs, then retry the operation.") from error
     if not partial.is_file():
         error = RuntimeError(
-            f"Example 17 did not write requested staged result: {partial}"
+            f"Example 17 did not write requested staged result: {partial}. Fix the input condition named in the error, then rerun the operation."
         )
         _write_failure_artifact(settings, stage, candidate, bundle_id, error)
         raise RunEvidenceError(str(error)) from error
@@ -369,8 +369,8 @@ def run_development_optimizer_search(
         )
         if not promoted:
             raise RuntimeError(
-                f"optimizer search failed closed: stage {stage.number} has no valid "
-                "candidates"
+                f"Optimizer search failed closed: stage {stage.number} has no valid "
+                "candidates. Correct the reported inputs, then retry the operation."
             )
         candidates = tuple(score.candidate for score in promoted)
         winner_score = promoted[0]

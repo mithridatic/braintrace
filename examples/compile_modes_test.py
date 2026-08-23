@@ -57,7 +57,7 @@ def _build_net(cell_name):
 @pytest.mark.parametrize("cell_name", ["lif", "alif", "gif", "cobaei"])
 @pytest.mark.parametrize("vmap", [False, True])
 def test_snn_cell_compiles_and_runs_in_both_modes(cell_name, vmap):
-    """compile(vmap=False/True) must build, forward, and back-prop a finite grad."""
+    """Compile(vmap=False/True) must build, forward, and back-prop a finite grad."""
     with brainstate.environ.context(dt=1.0 * u.ms):
         xs = jnp.asarray(brainstate.random.bernoulli(0.5, (T, B, N_IN)), dtype=float)
         net = _build_net(cell_name)
@@ -75,7 +75,7 @@ def test_snn_cell_compiles_and_runs_in_both_modes(cell_name, vmap):
 
         grads = brainstate.transform.grad(total_loss, weights)(xs)
         flat = jnp.concatenate([jnp.ravel(jnp.asarray(g)) for g in jax.tree.leaves(grads)])
-        assert bool(jnp.all(jnp.isfinite(flat))), f"{cell_name} vmap={vmap}: non-finite grad"
+        assert bool(jnp.all(jnp.isfinite(flat))), f"{cell_name} vmap={vmap}: non-finite grad. Use finite input values and check the gradient path."
 
 
 def test_gif_neuron_init_state_accepts_batch_size():

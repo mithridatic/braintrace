@@ -49,27 +49,27 @@ def _normalise_grid(value: object, *, field: str) -> tuple[tuple[int, ...], ...]
         return value.cells
     if isinstance(value, np.ndarray):
         if value.ndim != 2:
-            raise ValueError(f"{field} must be a rectangular two-dimensional grid")
+            raise ValueError(f"{field} must be a rectangular two-dimensional grid. Set {field} to a rectangular two-dimensional grid.")
         rows: object = value.tolist()
     else:
         rows = value
     if not _is_sequence(rows) or len(rows) == 0:
-        raise ValueError(f"{field} must contain at least one row")
+        raise ValueError(f"{field} must contain at least one row. Add at least one row to {field}.")
     if len(rows) > MAX_GRID_SIZE:
         raise ValueError(
-            f"{field} height {len(rows)} exceeds ARC maximum {MAX_GRID_SIZE}"
+            f"{field} height {len(rows)} exceeds ARC maximum {MAX_GRID_SIZE}. Set the named field to a value in the stated range, then rerun the operation."
         )
 
     normalised: list[tuple[int, ...]] = []
     width: int | None = None
     for row_index, raw_row in enumerate(rows):
         if not _is_sequence(raw_row) or len(raw_row) == 0:
-            raise ValueError(f"{field}[{row_index}] must be a non-empty row")
+            raise ValueError(f"{field}[{row_index}] must be a non-empty row. Set {field}[{row_index}] to a non-empty row.")
         if width is None:
             width = len(raw_row)
             if width > MAX_GRID_SIZE:
                 raise ValueError(
-                    f"{field} width {width} exceeds ARC maximum {MAX_GRID_SIZE}"
+                    f"{field} width {width} exceeds ARC maximum {MAX_GRID_SIZE}. Set the named field to a value in the stated range, then rerun the operation."
                 )
         elif len(raw_row) != width:
             raise ValueError(
@@ -83,13 +83,13 @@ def _normalise_grid(value: object, *, field: str) -> tuple[tuple[int, ...], ...]
                 cell, (int, np.integer)
             ):
                 raise ValueError(
-                    f"{field}[{row_index}][{column_index}] must be an integer ARC color"
+                    f"{field}[{row_index}][{column_index}] must be an integer ARC color. Set {field}[{row_index}][{column_index}] to an integer ARC color."
                 )
             color = int(cell)
             if not 0 <= color < COLOR_COUNT:
                 raise ValueError(
                     f"{field}[{row_index}][{column_index}] color {color} is "
-                    "outside 0..9"
+                    "outside 0..9. Set the named field to a value in the stated range, then rerun the operation."
                 )
             row.append(color)
         normalised.append(tuple(row))
@@ -161,14 +161,14 @@ class ArcPair:
     ----------
     input
         Input grid.
-    output
+    Output
         Output grid, or ``None`` for an unscored test query.
 
     Attributes
     ----------
     input
         Validated input grid.
-    output
+    Output
         Validated output grid when available.
     """
 
@@ -190,7 +190,7 @@ class ArcTask:
     ----------
     train
         One or more demonstration input/output pairs.
-    test
+    Test
         One or more query pairs.  Query outputs may be absent for inference.
     task_id
         Optional human-facing identifier.  It is never encoded for the model.
@@ -199,7 +199,7 @@ class ArcTask:
     ----------
     train
         Demonstration pairs in task order.
-    test
+    Test
         Test queries in task order.
     task_id
         Optional source identifier excluded from fingerprints and model input.
@@ -213,20 +213,20 @@ class ArcTask:
         train = tuple(self.train)
         test = tuple(self.test)
         if not train:
-            raise ValueError("ArcTask.train must contain at least one demonstration")
+            raise ValueError("ArcTask.train must contain at least one demonstration. Add at least one demonstration to ArcTask.train.")
         if not test:
-            raise ValueError("ArcTask.test must contain at least one query")
+            raise ValueError("ArcTask.test must contain at least one query. Add at least one query to ArcTask.test.")
         if any(not isinstance(pair, ArcPair) for pair in train):
-            raise ValueError("ArcTask.train entries must be ArcPair instances")
+            raise ValueError("ArcTask.train entries must be ArcPair instances. Set ArcTask.train entries to ArcPair instances.")
         if any(not isinstance(pair, ArcPair) for pair in test):
-            raise ValueError("ArcTask.test entries must be ArcPair instances")
+            raise ValueError("ArcTask.test entries must be ArcPair instances. Set ArcTask.test entries to ArcPair instances.")
         for index, pair in enumerate(train):
             if pair.output is None:
-                raise ValueError(f"ArcTask.train[{index}].output is required")
+                raise ValueError(f"ArcTask.train[{index}].output is required. Fix the input condition named in the error, then rerun the operation.")
         if self.task_id is not None and (
             not isinstance(self.task_id, str) or not self.task_id.strip()
         ):
-            raise ValueError("ArcTask.task_id must be a non-empty string or None")
+            raise ValueError("ArcTask.task_id must be a non-empty string or None. Set ArcTask.task_id to a non-empty string or None.")
         object.__setattr__(self, "train", train)
         object.__setattr__(self, "test", test)
 
@@ -245,11 +245,11 @@ class ArcQueryEpisode:
         Optional human-facing task identifier.
     task_fingerprint
         Content fingerprint of the complete parent task.
-    demonstrations
+    Demonstrations
         Complete, ordered demonstration set shared by every task query.
     query_input
         Held-out query input grid.
-    target
+    Target
         Query output when available for scoring.
     """
 
@@ -291,14 +291,14 @@ def arc_task_from_mapping(
     """
 
     if not isinstance(payload, Mapping):
-        raise ValueError(f"task {task_id or '<unknown>'} must be a JSON object")
+        raise ValueError(f"Task {task_id or '<unknown>'} must be a JSON object. Set Task {task_id or '<unknown>'} to a JSON object.")
     label = f"task {task_id or '<unknown>'}"
     train_payload = payload.get("train")
     test_payload = payload.get("test")
     if not _is_sequence(train_payload) or not train_payload:
-        raise ValueError(f"{label}.train must contain at least one pair")
+        raise ValueError(f"{label}.train must contain at least one pair. Add at least one pair to {label}.train.")
     if not _is_sequence(test_payload) or not test_payload:
-        raise ValueError(f"{label}.test must contain at least one query")
+        raise ValueError(f"{label}.test must contain at least one query. Add at least one query to {label}.test.")
 
     train = tuple(
         _pair_from_mapping(pair, field=f"{label}.train[{index}]", require_output=True)
@@ -317,11 +317,11 @@ def arc_task_from_mapping(
 
 def _pair_from_mapping(payload: object, *, field: str, require_output: bool) -> ArcPair:
     if not isinstance(payload, Mapping):
-        raise ValueError(f"{field} must be a JSON object")
+        raise ValueError(f"{field} must be a JSON object. Set {field} to a JSON object.")
     if "input" not in payload:
-        raise ValueError(f"{field}.input is required")
+        raise ValueError(f"{field}.input is required. Fix the input condition named in the error, then rerun the operation.")
     if require_output and "output" not in payload:
-        raise ValueError(f"{field}.output is required")
+        raise ValueError(f"{field}.output is required. Fix the input condition named in the error, then rerun the operation.")
     try:
         input_grid = ArcGrid(_normalise_grid(payload["input"], field=f"{field}.input"))
         output_grid = (
@@ -330,9 +330,9 @@ def _pair_from_mapping(payload: object, *, field: str, require_output: bool) -> 
             else None
         )
     except (TypeError, KeyError) as error:
-        raise ValueError(f"{field} is malformed: {error}") from error
+        raise ValueError(f"{field} is malformed: {error}. Fix the input condition named in the error, then rerun the operation.") from error
     if require_output and output_grid is None:
-        raise ValueError(f"{field}.output is required")
+        raise ValueError(f"{field}.output is required. Fix the input condition named in the error, then rerun the operation.")
     return ArcPair(input=input_grid, output=output_grid)
 
 
@@ -391,9 +391,9 @@ def load_arc_task(
     try:
         payload = msgspec.json.decode(task_path.read_bytes())
     except (OSError, msgspec.DecodeError) as error:
-        raise ValueError(f"cannot load ARC task {task_path}: {error}") from error
+        raise ValueError(f"Cannot load ARC task {task_path}: {error}. Check the path and install the required resource.") from error
     if not isinstance(payload, Mapping):
-        raise ValueError(f"ARC task file {task_path} must contain one JSON object")
+        raise ValueError(f"ARC task file {task_path} must contain one JSON object. Add one JSON object to ARC task file {task_path}.")
     return arc_task_from_mapping(
         payload,
         task_id=task_path.stem,
@@ -445,10 +445,10 @@ def query_episodes(
     """
 
     if isinstance(task_index, bool) or not isinstance(task_index, (int, np.integer)):
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     task_index = int(task_index)
     if task_index < 0:
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     fingerprint = canonical_task_fingerprint(task)
     return tuple(
         ArcQueryEpisode(
@@ -494,13 +494,13 @@ def leave_one_demonstration_out_episodes(
     """
 
     if isinstance(task_index, bool) or not isinstance(task_index, (int, np.integer)):
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     task_index = int(task_index)
     if task_index < 0:
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     if len(task.train) < 2:
         raise ValueError(
-            "leave-one-demonstration-out episodes require at least two demonstrations"
+            "Leave-one-demonstration-out episodes require at least two demonstrations. Provide the required value for Leave-one-demonstration-out episodes."
         )
 
     fingerprint = canonical_task_fingerprint(task)
@@ -528,15 +528,15 @@ class DatasetSource:
     ----------
     name
         Declared public corpus name.
-    role
+    Role
         One of ``train``, ``tuning``, ``evaluation``, or ``fixture``.
-    version
+    Version
         Operator-declared dataset version or immutable revision.
-    path
+    Path
         Local file or directory.
     license_reference
         Non-empty license URL/name or authoritative dataset reference.
-    format
+    Format
         ``task_json``, ``collection_json``, ``jsonl``, ``indexed_json``, or
         automatic detection.
     exclude_fingerprints
@@ -561,46 +561,46 @@ class DatasetSource:
         for field_name in ("name", "version", "license_reference"):
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"DatasetSource.{field_name} must be non-empty")
+                raise ValueError(f"DatasetSource.{field_name} must be non-empty. Provide at least one value for DatasetSource.{field_name}.")
             object.__setattr__(self, field_name, value.strip())
         if not isinstance(self.path, (str, os.PathLike)) or not os.fspath(self.path):
-            raise ValueError("DatasetSource.path must be non-empty")
+            raise ValueError("DatasetSource.path must be non-empty. Provide at least one value for DatasetSource.path.")
         object.__setattr__(self, "path", os.fspath(self.path))
         if self.role not in _SOURCE_ROLES:
             raise ValueError(
-                f"DatasetSource.role must be one of {sorted(_SOURCE_ROLES)}"
+                f"DatasetSource.role must be one of {sorted(_SOURCE_ROLES)}. Set DatasetSource.role to one of {sorted(_SOURCE_ROLES)}."
             )
         if self.format not in _SOURCE_FORMATS:
             raise ValueError(
-                f"DatasetSource.format must be one of {sorted(_SOURCE_FORMATS)}"
+                f"DatasetSource.format must be one of {sorted(_SOURCE_FORMATS)}. Set DatasetSource.format to one of {sorted(_SOURCE_FORMATS)}."
             )
         fingerprints: list[str] = []
         for fingerprint in self.exclude_fingerprints:
             if not isinstance(fingerprint, str) or len(fingerprint) != 64:
                 raise ValueError(
-                    "DatasetSource.exclude_fingerprints entries must be SHA-256 hex digests"
+                    "DatasetSource.exclude_fingerprints entries must be SHA-256 hex digests. Set DatasetSource.exclude_fingerprints entries to SHA-256 hex digests."
                 )
             normalized = fingerprint.casefold()
             if any(character not in "0123456789abcdef" for character in normalized):
                 raise ValueError(
-                    "DatasetSource.exclude_fingerprints entries must be SHA-256 hex digests"
+                    "DatasetSource.exclude_fingerprints entries must be SHA-256 hex digests. Set DatasetSource.exclude_fingerprints entries to SHA-256 hex digests."
                 )
             fingerprints.append(normalized)
         if len(fingerprints) != len(set(fingerprints)):
-            raise ValueError("DatasetSource.exclude_fingerprints must be unique")
+            raise ValueError("DatasetSource.exclude_fingerprints must be unique. Set DatasetSource.exclude_fingerprints to unique.")
         if fingerprints and self.role not in {"train", "tuning"}:
             raise ValueError(
-                "DatasetSource.exclude_fingerprints are allowed only for train/tuning roles"
+                "DatasetSource.exclude_fingerprints are allowed only for train/tuning roles. Fix the input condition named in the error, then rerun the operation."
             )
         object.__setattr__(self, "exclude_fingerprints", tuple(fingerprints))
         folded_name = self.name.casefold()
         if folded_name in _EVALUATION_ONLY_SOURCES and self.role != "evaluation":
-            raise ValueError(f"{self.name} is evaluation-only, not role {self.role}")
+            raise ValueError(f"{self.name} is evaluation-only, not role {self.role}. Fix the input condition named in the error, then rerun the operation.")
         if "private" in folded_name and (
             "paper" in folded_name or "bdh" in folded_name
         ):
             raise ValueError(
-                "the paper's private data is not an available dataset source"
+                "The paper's private data is not an available dataset source"
             )
 
 
@@ -612,7 +612,7 @@ class SourceFileHash:
     ----------
     path
         Path relative to the declared source root.
-    sha256
+    Sha256
         Lowercase file digest.
     size_bytes
         Exact file size.
@@ -631,7 +631,7 @@ class RejectedTask:
     ----------
     origin
         File and collection/line position.
-    reason
+    Reason
         Human-readable validation failure.
     """
 
@@ -649,7 +649,7 @@ class ExcludedTask:
         File and collection/line position from which the task was loaded.
     task_id
         Logical task identifier supplied by the corpus adapter.
-    fingerprint
+    Fingerprint
         Canonical task content fingerprint matched by the declaration.
     """
 
@@ -668,19 +668,19 @@ class SourceManifest:
         Original auditable declaration.
     resolved_path
         Absolute local source path, or ``<embedded>`` for fixtures.
-    files
+    Files
         Hashes of every parsed source file.
     parsed_task_count
         Valid tasks before within-source deduplication.
     valid_task_count
         Unique accepted tasks returned to the caller.
-    rejected
+    Rejected
         Invalid file/items and their reasons.
     duplicate_fingerprints
         Fingerprints removed as within-source duplicates.
     task_fingerprints
         Unique accepted content fingerprints.
-    exclusions
+    Exclusions
         Every explicit source-declaration exclusion that matched a valid task.
     plumbing_only
         True only for embedded smoke fixtures.
@@ -706,7 +706,7 @@ class SourceManifest:
     def __post_init__(self) -> None:
         if self.private_paper_data_available or self.private_training_recipe_available:
             raise ValueError(
-                "the paper's private data and training recipe are unavailable"
+                "The paper's private data and training recipe are unavailable. Fix the input condition named in the error, then rerun the operation."
             )
 
     @property
@@ -787,7 +787,7 @@ class LoadedDataset:
     ----------
     tasks
         Unique accepted ARC tasks.
-    manifest
+    Manifest
         Resolved source evidence and rejection accounting.
     """
 
@@ -815,7 +815,7 @@ def write_dataset_index(dataset: LoadedDataset, path: str | os.PathLike[str]) ->
     ----------
     dataset
         Already validated and deduplicated tasks with their source manifest.
-    path
+    Path
         Destination JSON index path.
 
     Raises
@@ -825,9 +825,9 @@ def write_dataset_index(dataset: LoadedDataset, path: str | os.PathLike[str]) ->
     """
 
     if len(dataset.tasks) != dataset.manifest.valid_task_count:
-        raise ValueError("dataset tasks disagree with manifest valid_task_count")
+        raise ValueError("Dataset tasks disagree with manifest valid_task_count")
     if len(dataset.tasks) != len(dataset.manifest.task_fingerprints):
-        raise ValueError("dataset tasks disagree with manifest task_fingerprints")
+        raise ValueError("Dataset tasks disagree with manifest task_fingerprints")
     payload = {
         "schema_version": _DATASET_INDEX_SCHEMA_VERSION,
         "source": _index_source_declaration(dataset.manifest.source),
@@ -860,30 +860,30 @@ def _load_dataset_index(
     try:
         envelope = msgspec.json.decode(root.read_bytes())
     except (OSError, msgspec.DecodeError) as error:
-        raise ValueError(f"invalid dataset index: {error}") from error
+        raise ValueError(f"Invalid dataset index: {error}") from error
     if not isinstance(envelope, Mapping):
-        raise ValueError("dataset index envelope must be a JSON object")
+        raise ValueError("Dataset index envelope must be a JSON object")
     if envelope.get("schema_version") != _DATASET_INDEX_SCHEMA_VERSION:
-        raise ValueError("unsupported dataset index schema_version")
+        raise ValueError("Unsupported dataset index schema_version")
     payload = envelope.get("payload")
     if not isinstance(payload, Mapping):
-        raise ValueError("dataset index payload must be a JSON object")
+        raise ValueError("Dataset index payload must be a JSON object")
     canonical = msgspec.json.encode(payload, order="sorted")
     if envelope.get("payload_sha256") != hashlib.sha256(canonical).hexdigest():
-        raise ValueError("dataset index integrity digest does not match its payload")
+        raise ValueError("Dataset index integrity digest does not match its payload")
     if payload.get("schema_version") != _DATASET_INDEX_SCHEMA_VERSION:
-        raise ValueError("unsupported dataset index payload schema_version")
+        raise ValueError("Unsupported dataset index payload schema_version")
     declaration = payload.get("source")
     if not isinstance(declaration, Mapping):
-        raise ValueError("dataset index source declaration is missing")
+        raise ValueError("Dataset index source declaration is missing")
     if dict(declaration) != _index_source_declaration(source):
-        raise ValueError("dataset index source declaration does not match DatasetSource")
+        raise ValueError("Dataset index source declaration does not match DatasetSource")
     manifest_payload = payload.get("manifest")
     task_payloads = payload.get("tasks")
     if not isinstance(manifest_payload, Mapping) or not isinstance(
         task_payloads, Sequence
     ):
-        raise ValueError("dataset index manifest or tasks are malformed")
+        raise ValueError("Dataset index manifest or tasks are malformed")
 
     try:
         tasks = tuple(
@@ -938,13 +938,13 @@ def _load_dataset_index(
             ),
         )
     except (KeyError, TypeError, ValueError) as error:
-        raise ValueError(f"dataset index content is malformed: {error}") from error
+        raise ValueError(f"Dataset index content is malformed: {error}") from error
     if len(tasks) != len(task_payloads):
-        raise ValueError("dataset index contains a non-object task entry")
+        raise ValueError("Dataset index contains a non-object task entry")
     if len(tasks) != manifest.valid_task_count:
-        raise ValueError("dataset index tasks disagree with valid_task_count")
+        raise ValueError("Dataset index tasks disagree with valid_task_count")
     if len(tasks) != len(manifest.task_fingerprints):
-        raise ValueError("dataset index tasks disagree with task_fingerprints")
+        raise ValueError("Dataset index tasks disagree with task_fingerprints")
     return LoadedDataset(tasks=tasks, manifest=manifest)
 
 
@@ -970,9 +970,9 @@ def _source_files(root: Path, source_format: SourceFormat) -> tuple[Path, ...]:
             )
         )
     else:
-        raise ValueError(f"dataset path does not exist: {root}")
+        raise ValueError(f"Dataset path does not exist: {root}")
     if not files:
-        raise ValueError(f"dataset path contains no supported files: {root}")
+        raise ValueError(f"Dataset path contains no supported files: {root}")
     return files
 
 
@@ -1012,7 +1012,7 @@ def _collection_entries(payload: object, stem: str) -> list[tuple[str, object]]:
         ]
     if isinstance(payload, Mapping):
         return [_unwrap_task(item, str(task_id)) for task_id, item in payload.items()]
-    raise ValueError("collection must be a task, sequence of tasks, or task mapping")
+    raise ValueError("Collection must be a task, sequence of tasks, or task mapping. Set Collection to a task, sequence of tasks, or task mapping.")
 
 
 def _file_entries(
@@ -1107,7 +1107,7 @@ def load_dataset_source(
                 continue
             try:
                 if not isinstance(payload, Mapping):
-                    raise ValueError("task payload must be a JSON object")
+                    raise ValueError("Task payload must be a JSON object. Set Task payload to a JSON object.")
                 parsed.append(
                     (
                         arc_task_from_mapping(
@@ -1154,7 +1154,7 @@ def load_dataset_source(
     if not unique:
         summary = "; ".join(item.reason for item in rejected[:3])
         raise ValueError(
-            f"dataset source {source.name} has no valid unique tasks: {summary}"
+            f"Dataset source {source.name} has no valid unique tasks: {summary}"
         )
 
     manifest = SourceManifest(
@@ -1282,7 +1282,7 @@ class AugmentationConfig:
     ----------
     permute_colors
         Permute foreground colors 1 through 9 while retaining background 0.
-    dihedral
+    Dihedral
         Draw one of the eight square-grid dihedral transforms.
     shuffle_demonstrations
         Permute demonstration order without changing query order.
@@ -1338,11 +1338,11 @@ def draw_training_augmentation(
     ----------
     task
         Immutable source task.
-    rng
+    Rng
         BrainState random stream used for every random choice.
-    role
+    Role
         Must be ``train``; evaluation and fixture tasks fail closed.
-    config
+    Config
         Enabled color, dihedral, and demonstration-order transforms.
 
     Returns
@@ -1352,9 +1352,9 @@ def draw_training_augmentation(
     """
 
     if role != "train":
-        raise ValueError(f"augmentation is training-only, not role {role}")
+        raise ValueError(f"Augmentation is training-only, not role {role}. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(config, AugmentationConfig):
-        raise ValueError("config must be an AugmentationConfig")
+        raise ValueError("Config must be an AugmentationConfig. Set Config to an AugmentationConfig.")
 
     color_map = np.arange(COLOR_COUNT, dtype=np.int32)
     if config.permute_colors:
@@ -1442,14 +1442,14 @@ class RowEventConfig:
         for name in ("max_demonstrations", "max_grid_size", "color_count"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
-                raise ValueError(f"RowEventConfig.{name} must be an integer")
+                raise ValueError(f"RowEventConfig.{name} must be an integer. Set RowEventConfig.{name} to an integer.")
             object.__setattr__(self, name, int(value))
         if self.max_demonstrations < 1:
-            raise ValueError("RowEventConfig.max_demonstrations must be positive")
+            raise ValueError("RowEventConfig.max_demonstrations must be positive. Set RowEventConfig.max_demonstrations to a positive value.")
         if not 1 <= self.max_grid_size <= MAX_GRID_SIZE:
-            raise ValueError("RowEventConfig.max_grid_size must be in 1..30")
+            raise ValueError("RowEventConfig.max_grid_size must be in 1..30. Set RowEventConfig.max_grid_size in 1..30.")
         if self.color_count != COLOR_COUNT:
-            raise ValueError("RowEventConfig.color_count must be 10 for ARC")
+            raise ValueError("RowEventConfig.color_count must be 10 for ARC. Set RowEventConfig.color_count to 10 for ARC.")
 
     @property
     def max_events(self) -> int:
@@ -1585,7 +1585,7 @@ class AssociativeMemoryFeatureIndices:
             raw_indices = getattr(self, name)
             if not raw_indices:
                 raise ValueError(
-                    "AssociativeMemoryFeatureIndices tuples must be non-empty"
+                    "AssociativeMemoryFeatureIndices tuples must be non-empty. Provide at least one value for AssociativeMemoryFeatureIndices tuples."
                 )
             if any(
                 isinstance(index, (bool, np.bool_))
@@ -1593,21 +1593,21 @@ class AssociativeMemoryFeatureIndices:
                 for index in raw_indices
             ):
                 raise ValueError(
-                    "AssociativeMemoryFeatureIndices entries must be integers"
+                    "AssociativeMemoryFeatureIndices entries must be integers. Set AssociativeMemoryFeatureIndices entries to integers."
                 )
             indices = tuple(int(index) for index in raw_indices)
             if any(index < 0 for index in indices):
                 raise ValueError(
-                    "AssociativeMemoryFeatureIndices entries must be non-negative"
+                    "AssociativeMemoryFeatureIndices entries must be non-negative. Set AssociativeMemoryFeatureIndices entries to a non-negative value."
                 )
             if len(indices) != len(set(indices)):
                 raise ValueError(
-                    f"AssociativeMemoryFeatureIndices.{name} must be unique"
+                    f"AssociativeMemoryFeatureIndices.{name} must be unique. Set AssociativeMemoryFeatureIndices.{name} to unique."
                 )
             normalized[name] = indices
         if len(normalized["key_indices"]) != len(normalized["value_indices"]):
             raise ValueError(
-                "AssociativeMemoryFeatureIndices tuples must have the same width"
+                "AssociativeMemoryFeatureIndices tuples must have the same width. Ensure AssociativeMemoryFeatureIndices tuples has the same width."
             )
         object.__setattr__(self, "key_indices", normalized["key_indices"])
         object.__setattr__(self, "value_indices", normalized["value_indices"])
@@ -1621,7 +1621,7 @@ class LearnedUpdateFeatureIndices:
     ----------
     indices
         Event indices excluding event-valid and phase channels.
-    order
+    Order
         Stable semantic name for every index.
     """
 
@@ -1630,9 +1630,9 @@ class LearnedUpdateFeatureIndices:
 
     def __post_init__(self) -> None:
         if not self.indices or len(self.indices) != len(self.order):
-            raise ValueError("learned-update indices and order must be nonempty and aligned")
+            raise ValueError("Learned-update indices and order must be nonempty and aligned. Set Learned-update indices and order to nonempty and aligned.")
         if len(set(self.indices)) != len(self.indices):
-            raise ValueError("learned-update indices must be unique")
+            raise ValueError("Learned-update indices must be unique. Set Learned-update indices to unique.")
 
 
 def learned_update_feature_indices(
@@ -1765,7 +1765,7 @@ class EncodedQueryEpisode:
         Stable indices used to reconstruct strict task metrics.
     task_id, task_fingerprint
         Host metadata that is not present in ``events``.
-    target
+    Target
         Held-out target kept outside model input, when available.
     """
 
@@ -1833,10 +1833,10 @@ def encode_target_grid(
     """
 
     if not 1 <= max_grid_size <= MAX_GRID_SIZE:
-        raise ValueError("max_grid_size must be in 1..30")
+        raise ValueError("max_grid_size must be in 1..30. Set max_grid_size in 1..30.")
     if grid.height > max_grid_size or grid.width > max_grid_size:
         raise ValueError(
-            f"target shape {grid.height}x{grid.width} exceeds capacity {max_grid_size}"
+            f"Target shape {grid.height}x{grid.width} exceeds capacity {max_grid_size}. Set the named field to a value in the stated range, then rerun the operation."
         )
     colors = np.zeros((max_grid_size, max_grid_size), dtype=np.int32)
     mask = np.zeros_like(colors, dtype=np.bool_)
@@ -1895,7 +1895,7 @@ def encode_query_episode(
         Standard ARC task.
     query_index
         Index into ``task.test``.
-    config
+    Config
         Static demonstration, grid, and feature capacities.
     task_index
         Stable parent-task collection index.
@@ -1907,11 +1907,11 @@ def encode_query_episode(
     """
 
     if isinstance(query_index, bool) or not isinstance(query_index, (int, np.integer)):
-        raise ValueError("query_index must be an integer")
+        raise ValueError("query_index must be an integer. Set query_index to an integer.")
     query_index = int(query_index)
     if not 0 <= query_index < len(task.test):
         raise ValueError(
-            f"query_index {query_index} outside task.test size {len(task.test)}"
+            f"query_index {query_index} outside task.test size {len(task.test)}. Set the named field to a value in the stated range, then rerun the operation."
         )
     if len(task.train) > config.max_demonstrations:
         raise ValueError(
@@ -1919,10 +1919,10 @@ def encode_query_episode(
             f"{config.max_demonstrations}"
         )
     if isinstance(task_index, bool) or not isinstance(task_index, (int, np.integer)):
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     task_index = int(task_index)
     if task_index < 0:
-        raise ValueError("task_index must be a non-negative integer")
+        raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
     all_grids = [pair.input for pair in task.train]
     all_grids.extend(pair.output for pair in task.train if pair.output is not None)
     all_grids.append(task.test[query_index].input)
@@ -1933,7 +1933,7 @@ def encode_query_episode(
     ]
     if oversized:
         raise ValueError(
-            f"grid shapes {oversized} exceed row-event capacity {config.max_grid_size}"
+            f"Grid shapes {oversized} exceed row-event capacity {config.max_grid_size}. Set the named field to a value in the stated range, then rerun the operation."
         )
 
     events = np.zeros((config.max_events, config.input_width), dtype=np.float32)
@@ -2005,7 +2005,7 @@ def encode_arc_query_episode(
     episode
         Prepared query episode, including ordinary evaluation queries or
         leave-one-demonstration-out training queries.
-    config
+    Config
         Static demonstration, grid, and feature capacities.
 
     Returns
@@ -2136,7 +2136,7 @@ def _encode_arc_query_episodes_batched(
     ----------
     episodes
         Ordered target-free episodes to encode.
-    config
+    Config
         Static demonstration, grid, and feature capacities.
 
     Returns
@@ -2161,7 +2161,7 @@ def _encode_arc_query_episodes_batched(
             or not isinstance(episode.task_index, (int, np.integer))
             or episode.task_index < 0
         ):
-            raise ValueError("task_index must be a non-negative integer")
+            raise ValueError("task_index must be a non-negative integer. Set task_index to a non-negative integer.")
         if len(episode.demonstrations) > config.max_demonstrations:
             raise ValueError(
                 f"task has {len(episode.demonstrations)} demonstrations, exceeds "
@@ -2170,7 +2170,7 @@ def _encode_arc_query_episodes_batched(
         all_grids = [episode.query_input]
         for pair in episode.demonstrations:
             if pair.output is None:
-                raise ValueError("encoded demonstration output is required")
+                raise ValueError("Encoded demonstration output is required. Fix the input condition named in the error, then rerun the operation.")
             all_grids.extend((pair.input, pair.output))
         oversized = [
             f"{grid.height}x{grid.width}"
@@ -2335,7 +2335,7 @@ def _decode_one_hot(row: FloatArray, feature_slice: slice, *, field: str) -> int
     values = row[feature_slice]
     active = np.flatnonzero(values == 1.0)
     if active.size != 1 or np.any((values != 0.0) & (values != 1.0)):
-        raise ValueError(f"{field} must be exactly one-hot")
+        raise ValueError(f"{field} must be exactly one-hot. Set {field} to exactly one-hot.")
     return int(active[0])
 
 
@@ -2347,7 +2347,7 @@ def _decode_grid_side(
         row for row in rows if row[config.side_valid_slice.start + side_offset] == 1.0
     ]
     if not selected:
-        raise ValueError("encoded grid side contains no rows")
+        raise ValueError("Encoded grid side contains no rows. Provide the missing item named in the message.")
     height_slice = (
         config.output_height_slice if is_output else config.input_height_slice
     )
@@ -2359,14 +2359,14 @@ def _decode_grid_side(
     recovered: dict[int, tuple[int, ...]] = {}
     for row in selected:
         if _decode_one_hot(row, height_slice, field="height") + 1 != height:
-            raise ValueError("encoded height changes across grid rows")
+            raise ValueError("Encoded height changes across grid rows. Fix the input condition named in the error, then rerun the operation.")
         if _decode_one_hot(row, width_slice, field="width") + 1 != width:
-            raise ValueError("encoded width changes across grid rows")
+            raise ValueError("Encoded width changes across grid rows. Fix the input condition named in the error, then rerun the operation.")
         row_index = _decode_one_hot(row, config.row_index_slice, field="row index")
         expected_mask = np.zeros(config.max_grid_size, dtype=np.float32)
         expected_mask[:width] = 1.0
         if not np.array_equal(row[mask_slice], expected_mask):
-            raise ValueError("encoded cell mask disagrees with width")
+            raise ValueError("Encoded cell mask disagrees with width. Use matching values and structures.")
         colors = tuple(
             _decode_one_hot(
                 row,
@@ -2379,10 +2379,10 @@ def _decode_grid_side(
             for column in range(width)
         )
         if row_index in recovered:
-            raise ValueError(f"duplicate encoded row index {row_index}")
+            raise ValueError(f"Duplicate encoded row index {row_index}. Fix the input condition named in the error, then rerun the operation.")
         recovered[row_index] = colors
     if set(recovered) != set(range(height)):
-        raise ValueError("encoded row indices do not cover the declared height")
+        raise ValueError("Encoded row indices do not cover the declared height. Fix the input condition named in the error, then rerun the operation.")
     return ArcGrid(tuple(recovered[index] for index in range(height)))
 
 
@@ -2395,7 +2395,7 @@ def decode_row_events(
     ----------
     events
         Row-event array produced by :func:`encode_query_episode`.
-    config
+    Config
         Exact layout configuration used during encoding.
 
     Returns
@@ -2408,16 +2408,16 @@ def decode_row_events(
     array = np.asarray(events)
     if array.shape != (config.max_events, config.input_width):
         raise ValueError(
-            f"events shape {array.shape} != {(config.max_events, config.input_width)}"
+            f"Events shape {array.shape} != {(config.max_events, config.input_width)}. Fix the input condition named in the error, then rerun the operation."
         )
     if not np.all(np.isfinite(array)):
-        raise ValueError("events contain non-finite values")
+        raise ValueError("Events contain non-finite values. Use finite values.")
     valid_values = array[:, config.valid_slice.start]
     if np.any((valid_values != 0.0) & (valid_values != 1.0)):
-        raise ValueError("event-valid flags must be binary")
+        raise ValueError("Event-valid flags must be binary. Set Event-valid flags to binary.")
     valid = valid_values == 1.0
     if np.any(array[~valid] != 0.0):
-        raise ValueError("padding rows must be exactly zero")
+        raise ValueError("Padding rows must be exactly zero. Set Padding rows to exactly zero.")
     demonstration_rows: dict[int, list[FloatArray]] = {}
     query_rows: list[FloatArray] = []
     query_started = False
@@ -2427,30 +2427,30 @@ def decode_row_events(
         phase = _decode_one_hot(row, config.phase_slice, field="phase")
         if phase == 0:
             if query_started:
-                raise ValueError("demonstration event appears after query")
+                raise ValueError("Demonstration event appears after query. Fix the input condition named in the error, then rerun the operation.")
             demo = _decode_one_hot(
                 row, config.demonstration_slice, field="demonstration index"
             )
             block_start = demo * config.max_grid_size
             if not block_start <= event_index < block_start + config.max_grid_size:
-                raise ValueError("demonstration event is outside its fixed block")
+                raise ValueError("Demonstration event is outside its fixed block. Set the named field to a value in the stated range, then rerun the operation.")
             demonstration_rows.setdefault(demo, []).append(row)
         else:
             query_started = True
             if event_index < query_block_start:
-                raise ValueError("query event is outside the fixed query block")
+                raise ValueError("Query event is outside the fixed query block. Set the named field to a value in the stated range, then rerun the operation.")
             if np.any(row[config.demonstration_slice] != 0.0):
-                raise ValueError("query event must not contain a demonstration index")
+                raise ValueError("Query event must not contain a demonstration index. Ensure Query event does not contain a demonstration index.")
             if row[config.side_valid_slice.start + 1] != 0.0 or np.any(
                 row[config.output_color_slice] != 0.0
             ):
-                raise ValueError("query event contains forbidden output features")
+                raise ValueError("Query event contains forbidden output features. Fix the input condition named in the error, then rerun the operation.")
             query_rows.append(row)
     if not query_rows:
-        raise ValueError("encoded episode contains no query rows")
+        raise ValueError("Encoded episode contains no query rows. Provide the missing item named in the message.")
     expected_demos = list(range(len(demonstration_rows)))
     if sorted(demonstration_rows) != expected_demos:
-        raise ValueError("demonstration indices must be contiguous from zero")
+        raise ValueError("Demonstration indices must be contiguous from zero. Set Demonstration indices to contiguous from zero.")
     demonstrations = tuple(
         ArcPair(
             input=_decode_grid_side(

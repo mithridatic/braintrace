@@ -30,10 +30,10 @@ def _optional_clip_norm(value: str) -> float | None:
         clip_norm = float(value)
     except ValueError as error:
         raise argparse.ArgumentTypeError(
-            "clip norm must be positive or disabled"
+            "Clip norm must be positive or disabled. Set Clip norm to a positive value."
         ) from error
     if not math.isfinite(clip_norm) or clip_norm <= 0.0:
-        raise argparse.ArgumentTypeError("clip norm must be positive or disabled")
+        raise argparse.ArgumentTypeError("Clip norm must be positive or disabled. Set Clip norm to a positive value.")
     return clip_norm
 
 

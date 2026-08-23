@@ -58,7 +58,7 @@ def test_make_poisson_mnist_fails_when_sklearn_is_missing(monkeypatch):
 
     def import_without_sklearn(name, *args, **kwargs):
         if name == "sklearn.datasets":
-            raise ImportError("missing sklearn")
+            raise ImportError("Missing sklearn. Provide the missing item named in the message.")
         return import_fn(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", import_without_sklearn)

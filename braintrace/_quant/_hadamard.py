@@ -56,7 +56,7 @@ def block_hadamard_matrix(block: int) -> jax.Array:
         True
     """
     if block <= 0 or block & (block - 1):
-        raise ValueError(f'block must be a positive power of two, got {block}')
+        raise ValueError(f'Block must be a positive power of two, got {block}. Set Block to a positive power of two.')
     matrix = np.ones((1, 1), dtype=np.float64)
     while matrix.shape[0] < block:
         matrix = np.block([[matrix, matrix], [matrix, -matrix]])
@@ -89,7 +89,7 @@ def sign_diagonal(key: jax.Array, size: int) -> jax.Array:
         (8,)
     """
     if size <= 0:
-        raise ValueError(f'size must be positive, got {size}')
+        raise ValueError(f'Size must be positive, got {size}. Set Size to a positive value.')
     return jnp.where(brainstate.random.bernoulli(0.5, size=(size,), key=key), 1.0, -1.0).astype(
         jnp.float32
     )
@@ -99,7 +99,7 @@ def _reshaped(values: jax.Array, block: int) -> jax.Array:
     trailing = values.shape[-1]
     if trailing % block:
         raise ValueError(
-            f'trailing axis {trailing} is not a multiple of block {block}'
+            f'Trailing axis {trailing} is not a multiple of block {block}. Fix the input condition named in the error, then rerun the operation.'
         )
     return values.reshape(*values.shape[:-1], trailing // block, block)
 

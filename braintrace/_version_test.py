@@ -81,7 +81,7 @@ def _brainevent_requirement(dependencies, extra: Optional[str] = None) -> Option
 def _floor(requirement: str) -> Tuple[int, ...]:
     """Extract the ``>=`` floor of a requirement as a comparable tuple."""
     match = re.search(r'>=\s*([0-9]+(?:\.[0-9]+)*)', requirement)
-    assert match is not None, f'no >= floor in {requirement!r}'
+    assert match is not None, f'No >= floor in {requirement!r}. Provide the missing item named in this message.'
     return tuple(int(part) for part in match.group(1).split('.'))
 
 
@@ -110,7 +110,7 @@ class TestJaxDependencyDeclaration:
     def test_jax_is_a_core_dependency_with_a_floor(self):
         deps = _load_pyproject()['project']['dependencies']
         requirement = _jax_requirement(deps)
-        assert requirement is not None, f'jax missing from core dependencies: {deps}'
+        assert requirement is not None, f'JAX missing from core dependencies: {deps}. Add JAX to core dependencies: {deps}.'
         assert _floor(requirement) >= (0, 8, 0)
 
     def test_declared_floor_matches_the_lowest_tested_jax(self):
@@ -124,7 +124,7 @@ class TestJaxDependencyDeclaration:
             pytest.skip('CI workflow not available outside a repo checkout')
         text = CI_WORKFLOW.read_text(encoding='utf-8')
         match = re.search(r'jax-version:\s*\[([^\]]*)\]', text)
-        assert match is not None, 'no jax-version matrix found in CI.yml'
+        assert match is not None, 'No jax-version matrix found in CI.yml. Add jax-version matrix to CI.yml.'
         # `""` means "latest" and carries no lower bound; non-numeric entries
         # (a pre-release, say) are not comparable as dotted tuples.
         versions = [
@@ -132,7 +132,7 @@ class TestJaxDependencyDeclaration:
             for raw in re.findall(r'"([^"]*)"', match.group(1))
             if re.fullmatch(r'[0-9]+(\.[0-9]+)*', raw)
         ]
-        assert versions, 'CI matrix pins no explicit JAX version'
+        assert versions, 'CI matrix pins no explicit JAX version. Provide the missing item named in the message.'
 
         deps = _load_pyproject()['project']['dependencies']
         assert _floor(_jax_requirement(deps)) == min(versions)
@@ -152,7 +152,7 @@ class TestJaxDependencyDeclaration:
             for line in REQUIREMENTS.read_text(encoding='utf-8').splitlines()
         ]
         requirement = _jax_requirement([line for line in lines if line])
-        assert requirement is not None, 'jax missing from requirements.txt'
+        assert requirement is not None, 'JAX missing from requirements.txt. Add JAX to requirements.txt.'
 
         deps = _load_pyproject()['project']['dependencies']
         assert _floor(requirement) == _floor(_jax_requirement(deps))

@@ -65,7 +65,7 @@ def _make_compiled_algo(n_in=3, n_rec=4, decay_or_rank=0.9, vjp_method='single-s
 class TestFormatDecayAndRank:
     """Unit tests for _format_decay_and_rank."""
 
-    # --- valid float inputs (decay) ---
+    # --- Valid float inputs (decay) ---
 
     def test_float_returns_tuple(self):
         result = _format_decay_and_rank(0.5)
@@ -77,7 +77,7 @@ class TestFormatDecayAndRank:
         assert decay == 0.9
 
     def test_float_rank_formula(self):
-        """rank = round(2/(1-decay) - 1)"""
+        """Rank = round(2/(1-decay) - 1)"""
         decay_in = 0.9
         _, rank = _format_decay_and_rank(decay_in)
         expected_rank = round(2.0 / (1 - decay_in) - 1)
@@ -86,22 +86,22 @@ class TestFormatDecayAndRank:
     def test_float_decay_0_5(self):
         decay, rank = _format_decay_and_rank(0.5)
         assert decay == 0.5
-        # round(2/(1-0.5) - 1) = round(4 - 1) = 3
+        # Round(2/(1-0.5) - 1) = round(4 - 1) = 3
         assert rank == 3
 
     def test_float_decay_small(self):
         decay, rank = _format_decay_and_rank(0.1)
         assert decay == 0.1
-        # round(2/0.9 - 1) = round(2.222.. - 1) = round(1.222..) = 1
+        # Round(2/0.9 - 1) = round(2.222.. - 1) = round(1.222..) = 1
         assert rank == round(2.0 / 0.9 - 1)
 
     def test_float_decay_large(self):
         decay, rank = _format_decay_and_rank(0.99)
         assert decay == 0.99
-        # round(2/0.01 - 1) = round(199) = 199
+        # Round(2/0.01 - 1) = round(199) = 199
         assert rank == 199
 
-    # --- valid int inputs (rank) ---
+    # --- Valid int inputs (rank) ---
 
     def test_int_returns_tuple(self):
         result = _format_decay_and_rank(5)
@@ -113,7 +113,7 @@ class TestFormatDecayAndRank:
         assert rank == 5
 
     def test_int_decay_formula(self):
-        """decay = (rank-1)/(rank+1)"""
+        """Decay = (rank-1)/(rank+1)"""
         rank_in = 5
         decay, _ = _format_decay_and_rank(rank_in)
         expected_decay = (rank_in - 1) / (rank_in + 1)
@@ -136,7 +136,7 @@ class TestFormatDecayAndRank:
         assert rank == 1000
         assert decay == pytest.approx(999 / 1001)
 
-    # --- invalid float inputs ---
+    # --- Invalid float inputs ---
 
     def test_float_zero_is_admitted(self):
         """The bound is ``[0, 1)``: decay 0 is the degenerate no-recursion rule.
@@ -148,28 +148,28 @@ class TestFormatDecayAndRank:
         assert _format_decay_and_rank(0.0) == (0.0, 1)
 
     def test_float_one_raises(self):
-        with pytest.raises(ValueError, match="decay must be in"):
+        with pytest.raises(ValueError, match="(?i)decay must be in"):
             _format_decay_and_rank(1.0)
 
     def test_float_negative_raises(self):
-        with pytest.raises(ValueError, match="decay must be in"):
+        with pytest.raises(ValueError, match="(?i)decay must be in"):
             _format_decay_and_rank(-0.5)
 
     def test_float_greater_than_one_raises(self):
-        with pytest.raises(ValueError, match="decay must be in"):
+        with pytest.raises(ValueError, match="(?i)decay must be in"):
             _format_decay_and_rank(1.5)
 
-    # --- invalid int inputs ---
+    # --- Invalid int inputs ---
 
     def test_int_zero_raises(self):
-        with pytest.raises(ValueError, match="rank must be at least 1"):
+        with pytest.raises(ValueError, match="(?i)rank must be at least 1"):
             _format_decay_and_rank(0)
 
     def test_int_negative_raises(self):
-        with pytest.raises(ValueError, match="rank must be at least 1"):
+        with pytest.raises(ValueError, match="(?i)rank must be at least 1"):
             _format_decay_and_rank(-3)
 
-    # --- invalid types ---
+    # --- Invalid types ---
 
     def test_string_raises(self):
         with pytest.raises(TypeError, match="integer rank or float decay"):
@@ -188,7 +188,7 @@ class TestFormatDecayAndRank:
         with pytest.raises(TypeError, match='integer rank or float decay'):
             _format_decay_and_rank(bad)
 
-    # --- round-trip consistency ---
+    # --- Round-trip consistency ---
 
     def test_float_to_int_roundtrip_approximate(self):
         """Verify that going float -> (decay, rank) -> decay_from_rank is close to original."""
@@ -199,7 +199,7 @@ class TestFormatDecayAndRank:
         assert abs(reconstructed_decay - original_decay) < 0.15
 
     def test_int_to_float_roundtrip_exact(self):
-        """int -> (decay, rank) -> rank is always exact."""
+        """Int -> (decay, rank) -> rank is always exact."""
         original_rank = 7
         decay, rank = _format_decay_and_rank(original_rank)
         assert rank == original_rank
@@ -328,8 +328,8 @@ class TestLowPassFilter:
     def test_difference_from_expon_smooth(self):
         """
         _low_pass_filter and _expon_smooth differ when new is not None:
-          - expon_smooth: decay*old + (1-decay)*new
-          - low_pass_filter: alpha*old + new
+          - Expon_smooth: decay*old + (1-decay)*new
+          - Low_pass_filter: alpha*old + new
         """
         old = jnp.array(10.0)
         new = jnp.array(3.0)
@@ -532,7 +532,7 @@ class TestGetAndAssignEtraceData:
             assert not isinstance(v, brainstate.State)
 
     def test_round_trip_preserves_data(self):
-        """get -> modify -> assign -> get should reflect the modification."""
+        """Get -> modify -> assign -> get should reflect the modification."""
         _, algo = _make_compiled_algo()
 
         # Get current data (zeros)
@@ -561,7 +561,7 @@ class TestGetEtraceOf:
         gru = braintrace.nn.GRUCell(3, 4)
         brainstate.nn.init_all_states(gru)
         algo = pp_prop(gru, decay_or_rank=0.9)
-        with pytest.raises(ValueError, match="not been compiled"):
+        with pytest.raises(ValueError, match="(?i)not compiled"):
             algo.get_etrace_of(list(gru.states(brainstate.ParamState).values())[0])
 
     def test_get_etrace_of_returns_dicts(self):
@@ -579,7 +579,7 @@ class TestGetEtraceOf:
             except ValueError:
                 continue
         # At least one param should be trackable
-        assert found, "No parameter found in the etrace graph"
+        assert found, "No parameter found in the etrace graph. Add parameter to the etrace graph."
 
     def test_get_etrace_of_nonexistent_weight_raises(self):
         _, algo = _make_compiled_algo()
@@ -777,7 +777,7 @@ class TestPpPropGradients:
         for path, g in grads.items():
             leaves = jax.tree.leaves(g)
             for leaf in leaves:
-                assert jnp.all(jnp.isfinite(leaf)), f"Non-finite gradient at {path}"
+                assert jnp.all(jnp.isfinite(leaf)), f"Non-finite gradient at {path}. Use finite input values and check the gradient path."
 
     def test_grad_two_consecutive_steps(self):
         """Gradients should be computable over multiple consecutive steps."""
@@ -1035,11 +1035,11 @@ class TestPPPropDictGradientRouting:
         flat = jax.tree.leaves(grads)
         # We expect at least one gradient leaf with the weight shape (4, 4).
         assert any(leaf.shape == (4, 4) for leaf in flat), (
-            f"Expected a (4, 4) gradient leaf, got shapes: {[leaf.shape for leaf in flat]}"
+            f"Expected a (4, 4) gradient leaf, got shapes: {[leaf.shape for leaf in flat]}. Return the expected value for the reported field."
         )
         # All gradient leaves should be finite.
         for leaf in flat:
-            assert jnp.all(jnp.isfinite(leaf)), f"Non-finite gradient leaf with shape {leaf.shape}"
+            assert jnp.all(jnp.isfinite(leaf)), f"Non-finite gradient leaf with shape {leaf.shape}. Use finite input values and check the gradient path."
 
 
 def _docstring_rnn():

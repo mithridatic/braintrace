@@ -47,8 +47,8 @@ from braintrace._testing.oracle import (
     relative_deviation,
 )
 
-H = 2   # hidden width of the single-group fixture
-T = 4   # steps in the single-step sweep
+H = 2   # Hidden width of the single-group fixture
+T = 4   # Steps in the single-step sweep
 
 
 def _inputs(t=T, n=H, *, seed=0, scale=0.5):
@@ -96,7 +96,7 @@ def _capture_symmetric_signals(spec, inputs):
         spec.factory, inputs,
         algo_factory=lambda m: _CapturingDRTRL(m, vjp_method='single-step'))
     assert len(_SINK) == inputs.shape[0], (
-        f'expected one capture per step, got {len(_SINK)}')
+        f'Expected one capture per step, got {len(_SINK)}. Return the expected value for the reported field.')
     return [list(entry) for entry in _SINK]
 
 
@@ -171,7 +171,7 @@ class TestDegenerateEquality:
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
         inputs = _inputs()
         captured = _capture_symmetric_signals(spec, inputs)
-        assert len(captured[0]) == 1, 'the fixture must be single-group'
+        assert len(captured[0]) == 1, 'The fixture must be single-group. Ensure the fixture is single-group.'
 
         symmetric = online_param_gradients_singlestep_naive(
             spec.factory, inputs,
@@ -199,7 +199,7 @@ class TestDegenerateEquality:
 
         dev = relative_deviation(_arrays(doubled, [('w',)]),
                                  _arrays(symmetric, [('w',)]))
-        assert dev > 1e-2, f'a 2x modulator must change the gradient (dev={dev})'
+        assert dev > 1e-2, f'A 2x modulator must change the gradient (dev={dev})'
 
     def test_the_etp_gradient_is_linear_in_the_modulator(self):
         # Sharper than "differs": for the single-step rule the trace is
@@ -256,7 +256,7 @@ class TestTheExpansionIsShapeDriven:
 
         assert len(_SINK) == inputs.shape[0]
         for step_signals in _SINK:
-            assert len(step_signals) == 2, 'the fixture must have two groups'
+            assert len(step_signals) == 2, 'The fixture must have two groups. Ensure the fixture has two groups.'
             for sig in step_signals:
                 # Materialised to the group's full shape, not left as a bare
                 # scalar -- otherwise this comparison would be vacuous.
@@ -348,7 +348,7 @@ class TestRefusalsAndLifecycle:
         with pytest.raises(ValueError, match=r'\(3, 7\)') as exc:
             algo(_inputs()[0])
         msg = str(exc.value)
-        assert '(1, 2, 1)' in msg, msg     # the group's own shape
+        assert '(1, 2, 1)' in msg, msg     # The group's own shape
         assert 'group' in msg.lower(), msg
 
     @pytest.mark.slow
@@ -372,11 +372,11 @@ class TestRefusalsAndLifecycle:
         algo.compile_graph(x)
         algo.init_etrace_state()
         assert any(g.descent is not None for g in algo.graph.hidden_groups), (
-            'the fixture no longer descends, so this test pins nothing')
+            'The fixture no longer descends, so this test pins nothing. Provide the missing item named in the message.')
 
         algo.modulator = jnp.ones((3,))
         with pytest.raises(ValueError, match=r'\(3,\)') as exc:
-            algo(x)                     # forward only: no outer grad
+            algo(x)                     # Forward only: no outer grad
         assert '(1, 4, 1)' in str(exc.value), str(exc.value)
 
         # ... and a well-formed one still goes through.
@@ -413,7 +413,7 @@ class TestRefusalsAndLifecycle:
         algo = self._algo()
         assert algo.modulator is None
         with pytest.raises(Exception):
-            algo.update(jnp.ones((1, H + 3)), modulator=1.0)  # wrong input width
+            algo.update(jnp.ones((1, H + 3)), modulator=1.0)  # Wrong input width
         with pytest.raises(RuntimeError, match='modulator'):
             algo(_inputs()[0])
 
@@ -430,7 +430,7 @@ class TestRefusalsAndLifecycle:
         the ``finally`` on the *failure* path. Nothing covered the success path, so
         an implementation that stashed the keyword and only cleared it when an
         exception unwound would have passed the whole suite while quietly making
-        every subsequent call inherit the last one's modulator.
+        every next call inherit the last one's modulator.
         """
         algo = self._algo()
         assert algo.modulator is None
@@ -447,7 +447,7 @@ class TestRefusalsAndLifecycle:
         a = _singlestep_gradients(spec, inputs, modulator=1.0)
         b = _singlestep_gradients(spec, inputs, modulator=lambda t: float(t + 1))
         dev = relative_deviation(_arrays(a, [('w',)]), _arrays(b, [('w',)]))
-        assert dev > 1e-2, f'a time-varying modulator must matter (dev={dev})'
+        assert dev > 1e-2, f'A time-varying modulator must matter (dev={dev}). Make a time-varying modulator matter (dev={dev}).'
 
     def test_the_modulator_is_not_forwarded_to_the_model(self):
         # The model's ``update(self, x)`` takes exactly one argument; if the
@@ -475,7 +475,7 @@ class TestItDoesSomethingMeasurably:
             algo_factory=lambda m: braintrace.D_RTRL(m, vjp_method='single-step'))
         dev = relative_deviation(_arrays(modulated, [('w',)]),
                                  _arrays(symmetric, [('w',)]))
-        assert dev > 1e-2, f'the axis must change the rule (dev={dev})'
+        assert dev > 1e-2, f'The axis must change the rule (dev={dev})'
 
     def test_a_zero_modulator_gives_exactly_zero_etp_gradient(self):
         spec = om.nonzero_init_rnn(n_rec=H, h0=0.4)
@@ -490,7 +490,7 @@ class TestItDoesSomethingMeasurably:
                       [('w',)])[('w',)]
         neg = _arrays(_singlestep_gradients(spec, inputs, modulator=-1.0),
                       [('w',)])[('w',)]
-        assert np.abs(pos).max() > 1e-4, 'the gradient must not be trivially zero'
+        assert np.abs(pos).max() > 1e-4, 'The gradient must not be trivially zero. Ensure the gradient does not be trivially zero.'
         np.testing.assert_allclose(neg, -pos, rtol=1e-6, atol=1e-7)
 
     def test_every_plain_parameter_gets_its_exact_local_vjp_gradient(self):
@@ -506,7 +506,7 @@ class TestItDoesSomethingMeasurably:
             [('win',), ('wout',)],
         )
         assert np.abs(got[('w',)]).max() > 1e-6, (
-            'the ETP parameter must be trained, else this test is vacuous')
+            'The ETP parameter must be trained, else this test is vacuous. Ensure the ETP parameter is trained, else this test is vacuous.')
         for key in [('win',), ('wout',)]:
             np.testing.assert_allclose(
                 got[key], expected[key], rtol=1e-6, atol=1e-7,
@@ -578,11 +578,11 @@ class TestItDoesSomethingMeasurably:
 
         before_pos, after_pos = activity_after_training(1.0)
         before_neg, after_neg = activity_after_training(-1.0)
-        assert before_pos == before_neg, 'both runs must start from one model'
+        assert before_pos == before_neg, 'Both runs must start from one model. Make Both runs start from one model.'
         assert after_pos < before_pos - 1e-4, (
-            f'm=+1 must reduce total activity: {before_pos} -> {after_pos}')
+            f'M=+1 must reduce total activity: {before_pos} -> {after_pos}. Set M=+1 to reduce total activity: {before_pos} -> {after_pos}.')
         assert after_neg > before_neg + 1e-4, (
-            f'm=-1 must raise total activity: {before_neg} -> {after_neg}')
+            f'M=-1 must raise total activity: {before_neg} -> {after_neg}. Set M=-1 to raise total activity: {before_neg} -> {after_neg}.')
 
 
 # ---------------------------------------------------------------------------
@@ -656,7 +656,7 @@ class TestTheStandingModulatorUnderJit:
         brainstate.nn.init_all_states(model, batch_size=1)
         algo.init_etrace_state()
         second = np.asarray(u.get_mantissa(step(x)[('w',)]))
-        assert np.abs(first).max() > 1e-6, 'the gradient must not be trivially zero'
+        assert np.abs(first).max() > 1e-6, 'The gradient must not be trivially zero. Ensure the gradient does not be trivially zero.'
         # Captured at trace time: the sign does *not* flip.
         np.testing.assert_allclose(second, first, rtol=1e-6, atol=1e-7)
 

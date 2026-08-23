@@ -50,7 +50,7 @@ class ALIF(brainpy.state.Neuron):
     ):
         super().__init__(in_size, name=name, spk_fun=spk_fun, spk_reset=spk_reset)
 
-        # parameters
+        # Parameters
         self.R = braintools.init.param(R, self.varshape)
         self.tau = braintools.init.param(tau, self.varshape)
         self.tau_a = braintools.init.param(tau_a, self.varshape)
@@ -59,7 +59,7 @@ class ALIF(brainpy.state.Neuron):
         self.V_rest = braintools.init.param(V_rest, self.varshape)
         self.beta = braintools.init.param(beta, self.varshape)
 
-        # functions
+        # Functions
         self.V_initializer = V_initializer
         self.a_initializer = a_initializer
 
@@ -92,7 +92,7 @@ class ALIF(brainpy.state.Neuron):
         V_th = self.V_th if self.spk_reset == 'soft' else jax.lax.stop_gradient(last_v)
         V = last_v - (V_th - self.V_reset) * lst_spk
         a = last_a + lst_spk
-        # membrane potential
+        # Membrane potential
         dv = lambda v: (-v + self.V_rest + self.R * self.sum_current_inputs(x, v)) / self.tau
         da = lambda a: -a / self.tau_a
         V = brainstate.nn.exp_euler_step(dv, V)

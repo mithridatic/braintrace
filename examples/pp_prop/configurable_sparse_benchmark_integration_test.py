@@ -68,7 +68,7 @@ def test_a_requested_gpu_is_refused_rather_than_run_on_the_host():
 
     assert completed.returncode != 0
     assert payload["status"] == "failed"
-    assert "requested device gpu" in payload["error_output"]
+    assert "requested device gpu" in payload["error_output"].casefold()
 
 
 def _run_inheriting_an_absent_platform(device: str) -> subprocess.CompletedProcess:

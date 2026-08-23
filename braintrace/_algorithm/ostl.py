@@ -76,7 +76,7 @@ class OSTLRecurrent(ParamDimVjpAlgorithm):
     **Accuracy caveat.** The D-RTRL trace machinery underlying this class only
     ever retains the per-position *block-diagonal* of :math:`\mathbf{D}^t`
     (:func:`HiddenGroup.diagonal_jacobian`, via ``block_diagonal_last_dim``):
-    cross-hidden-unit terms :math:`\partial h^t_p / \partial h^{t-1}_q` for
+    Cross-hidden-unit terms :math:`\partial h^t_p / \partial h^{t-1}_q` for
     :math:`p \ne q` are retained only insofar as they flow through a *traced
     ETP weight* (e.g. a recurrent :func:`~braintrace.matmul`); any other
     hidden-to-hidden mixing (e.g. a hand-written convolution/roll/mixing term

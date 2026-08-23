@@ -24,7 +24,7 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
     """
     批量修复指定目录中所有 Jupyter Notebook 文件的 ipython2 lexer 问题
     """
-    # 查找所有.ipynb文件
+    # 查找所有.Ipynb文件
     notebook_files = glob.glob(os.path.join(directory_path, "**", "*.ipynb"), recursive=True)
 
     if not notebook_files:
@@ -42,7 +42,7 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
 
             # 检查并修复顶层元数据
             if 'metadata' in data:
-                # 修复 language_info
+                # 修复 Language_info
                 if 'language_info' in data['metadata']:
                     lang_info = data['metadata']['language_info']
                     if lang_info.get('name') == 'ipython2':
@@ -55,7 +55,7 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
                         needs_fix = True
                         print(f"修复 {os.path.basename(file_path)}: 顶层 language_info.pygments_lexer")
 
-                # 修复 kernelspec
+                # 修复 Kernelspec
                 if 'kernelspec' in data['metadata']:
                     kernelspec = data['metadata']['kernelspec']
                     if kernelspec.get('language') == 'ipython2':
@@ -77,7 +77,7 @@ def fix_ipython2_lexer_in_notebooks(directory_path):
                         needs_fix = True
                         print(f"修复 {os.path.basename(file_path)}: 单元格 {i} 的语言设置")
 
-                    # 修复其他可能的 lexer 设置
+                    # 修复其他可能的 Lexer 设置
                     if 'pygments_lexer' in cell['metadata'] and cell['metadata']['pygments_lexer'] == 'ipython2':
                         cell['metadata']['pygments_lexer'] = 'ipython3'
                         needs_fix = True

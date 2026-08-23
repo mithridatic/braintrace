@@ -48,7 +48,7 @@ class CurriculumAdoptionSettings:
         for name in ("python_executable", "container_image_digest", "source_commit"):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{name} is required for curriculum adoption")
+                raise ValueError(f"{name} is required for curriculum adoption. Fix the input condition named in the error, then rerun the operation.")
         if not math.isfinite(self.example15_accuracy_change):
             raise ValueError("example15_accuracy_change must be finite")
         expected_curriculum_config(self, DEVELOPMENT_BUNDLES[0])

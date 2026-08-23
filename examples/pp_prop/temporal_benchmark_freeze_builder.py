@@ -37,7 +37,7 @@ def _validate_declared_dirty_states(
         dirty = settings["source_dirty"]
         if not isinstance(dirty, bool) or dirty != expected:
             raise FreezeArtifactError(
-                f"{role} source dirty state conflicts with decision evidence"
+                f"{role} source dirty state conflicts with decision evidence. Fix the input condition named in the error, then rerun the operation."
             )
 
 
@@ -51,15 +51,15 @@ def _consistent_provenance(
     construction_keys = ("device", "neurons", "degree", "batch_size")
     construction = {key: all_items[0][key] for key in construction_keys}
     if any(item["source_commit"] != commit for item in all_items[1:]):
-        raise FreezeArtifactError("selection artifacts use different source commits")
+        raise FreezeArtifactError("Selection artifacts use different source commits")
     if any(
         any(item[key] != construction[key] for key in construction_keys)
         for item in all_items[1:]
     ):
-        raise FreezeArtifactError("selection artifacts use different constructions")
+        raise FreezeArtifactError("Selection artifacts use different constructions")
     dirty = clip["source_dirty"]
     if curriculum["source_dirty"] != dirty:
-        raise FreezeArtifactError("decision artifacts disagree on source dirty state")
+        raise FreezeArtifactError("Decision artifacts disagree on source dirty state. Use matching values and structures.")
     return {
         "source_commit": commit,
         "selection_source_dirty": dirty,
@@ -83,7 +83,7 @@ def _references(
 def build_frozen_selection(paths: Mapping[str, pathlib.Path]) -> dict[str, object]:
     """Load exact development artifacts and return the frozen configuration."""
     if set(paths) != set(INPUT_ROLES):
-        raise FreezeArtifactError("all six named selection artifact paths are required")
+        raise FreezeArtifactError("All six named selection artifact paths are required. Fix the input condition named in the error, then rerun the operation.")
     documents = {role: load_artifact(paths[role]) for role in INPUT_ROLES}
     search_result = validate_search_selections(
         {role: documents[role] for role in INPUT_ROLES[:4]}

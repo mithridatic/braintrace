@@ -39,7 +39,7 @@ def build_arc_dataset_indexes(
         Build-time directory for generated indexes.
     manifest_path
         Build-time destination for the Example 21 source manifest.
-    version
+    Version
         Immutable ARC-AGI-1 revision recorded in both declarations.
     runtime_index_root
         Absolute in-image directory from which Example 21 reads the indexes.

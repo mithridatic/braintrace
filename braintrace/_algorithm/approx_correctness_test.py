@@ -71,8 +71,8 @@ def test_sign_agreement_counts_matching_signs():
 
 
 def test_relative_magnitude_ratio():
-    a = jnp.array([3.0, 4.0])      # norm 5
-    b = jnp.array([6.0, 8.0])      # norm 10
+    a = jnp.array([3.0, 4.0])      # Norm 5
+    b = jnp.array([6.0, 8.0])      # Norm 10
     assert relative_magnitude(a, b) == pytest.approx(0.5, abs=1e-6)
 
 
@@ -80,20 +80,20 @@ def test_relative_magnitude_ratio():
 
 def test_assert_direction_aligned_passes_for_scaled_tree():
     ref = {('w',): jnp.array([1.0, 2.0, -3.0])}
-    approx = {('w',): jnp.array([2.0, 4.0, -6.0])}  # same direction, 2x magnitude
+    approx = {('w',): jnp.array([2.0, 4.0, -6.0])}  # Same direction, 2x magnitude
     assert_direction_aligned(approx, ref, min_cosine=0.99, min_sign_agreement=0.99)
 
 
 def test_assert_direction_aligned_flags_misaligned_key():
     ref = {('w',): jnp.array([1.0, 2.0, 3.0])}
-    approx = {('w',): jnp.array([-1.0, -2.0, -3.0])}  # opposite direction
+    approx = {('w',): jnp.array([-1.0, -2.0, -3.0])}  # Opposite direction
     with pytest.raises(AssertionError, match=r"\('w',\)"):
         assert_direction_aligned(approx, ref, min_cosine=0.95)
 
 
 def test_assert_direction_aligned_checks_magnitude_bounds():
     ref = {('w',): jnp.array([1.0, 2.0, 3.0])}
-    approx = {('w',): jnp.array([10.0, 20.0, 30.0])}  # aligned but 10x magnitude
+    approx = {('w',): jnp.array([10.0, 20.0, 30.0])}  # Aligned but 10x magnitude
     with pytest.raises(AssertionError, match='relmag'):
         assert_direction_aligned(approx, ref, min_cosine=0.95, mag_bounds=(0.5, 2.0))
 
@@ -245,9 +245,9 @@ def test_rank1_pp_prop_is_degenerate_on_a_recurrent_only_relation():
         algo_factory=_EXACT_ON_RATE['pp_prop_rank1'])
     rel = relative_deviation(g_rank1, _chunked_exact(spec, inputs))
     assert rel < 1e-6, (
-        f'rank-1 pp_prop deviated by {rel:.3e} on a recurrent-only relation; '
+        f'Rank-1 pp_prop deviated by {rel:.3e} on a recurrent-only relation; '
         'F-29 recorded it as exact to round-off there. If this now differs, the '
-        'IO-dim trace semantics changed and F-29 needs revisiting.'
+        'IO-dim trace semantics changed and F-29 needs revisiting. Update the fixture or expected result to satisfy this assertion.'
     )
 
     snn = SNN_SPECS['lif_expcu']()

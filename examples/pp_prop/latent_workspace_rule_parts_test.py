@@ -48,7 +48,7 @@ def test_dihedral_maps_are_involutive_under_repetition(name: str) -> None:
 def test_dihedral_rejects_unknown_name() -> None:
     """An unknown map name is a programming error, not a silent no-op."""
 
-    with pytest.raises(ValueError, match="unknown dihedral map"):
+    with pytest.raises(ValueError, match="(?i)unknown dihedral map"):
         apply_dihedral(np.zeros((2, 2), np.int32), "shear")
 
 

@@ -52,7 +52,7 @@ def assert_xy_to_dw_matches_vjp(*, rule, impl, x, hidden_dim, weights, params=No
     compare = list(rule_dw.keys()) if keys is None else list(keys)
     if keys is None:
         assert set(rule_dw.keys()) == set(vjp_dw.keys()), (
-            f"key mismatch: rule={set(rule_dw.keys())} vjp={set(vjp_dw.keys())}"
+            f"Key mismatch: rule={set(rule_dw.keys())} vjp={set(vjp_dw.keys())}. Use matching values and structures."
         )
     for key in compare:
         a = jnp.asarray(rule_dw[key])
@@ -83,7 +83,7 @@ def assert_factored_rules_match_vjp(
     _, vjp_fn = jax.vjp(impl, weights)
     vjp_dw = vjp_fn(hidden_dim)[0]
     assert set(rule_dw.keys()) == set(vjp_dw.keys()), (
-        f"key mismatch: rule={set(rule_dw.keys())} vjp={set(vjp_dw.keys())}"
+        f"Key mismatch: rule={set(rule_dw.keys())} vjp={set(vjp_dw.keys())}. Use matching values and structures."
     )
     for key in rule_dw:
         np.testing.assert_allclose(

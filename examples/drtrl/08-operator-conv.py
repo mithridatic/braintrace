@@ -56,7 +56,7 @@ class ConvRNN(brainstate.nn.Module):
 def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict:
     n_classes, n_hidden = 4, 32
     model = ConvRNN(n_hidden, n_classes)
-    # example input: one timestep of shape (B, 28, 1) matching Conv1d in_size=(28,1)
+    # Example input: one timestep of shape (B, 28, 1) matching Conv1d in_size=(28,1)
     learner = braintrace.compile(
         model, 'D_RTRL', jnp.zeros((batch_size, 28, 1)), batch_size=batch_size,
     )

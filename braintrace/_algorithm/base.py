@@ -110,29 +110,29 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
 
-        # the model
+        # The model
         if not isinstance(model, brainstate.nn.Module):
             raise ValueError(
-                f'The model should be a brainstate.nn.Module, this can help us to '
-                f'better obtain the program structure. But we got {type(model)}.'
+                f'The model must be a brainstate.nn.Module; got {type(model)}. '
+                'Pass a brainstate.nn.Module instance.'
             )
         self.model4compile = model
 
-        # the graph
+        # The graph
         if not isinstance(graph_executor, ETraceGraphExecutor):
             raise ValueError(
-                f'The graph should be a ETraceGraphExecutor, this can help us to '
-                f'better obtain the program structure. But we got {type(graph_executor)}.'
+                f'The graph must be an ETraceGraphExecutor; got {type(graph_executor)}. '
+                'Pass an ETraceGraphExecutor instance.'
             )
         self.graph_executor = graph_executor
 
-        # The flag to indicate whether the etrace algorithm has been compiled
+        # The flag to show whether the etrace algorithm has been compiled
         self.is_compiled = False
 
-        # the running index
+        # The running index
         self.running_index = brainstate.LongTermState(0)
 
-        # other states
+        # Other states
         self._param_states: Optional[brainstate.util.FlattedDict] = None
         self._hidden_states: Optional[brainstate.util.FlattedDict] = None
         self._other_states: Optional[brainstate.util.FlattedDict] = None
@@ -167,7 +167,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
             raise RuntimeError(
                 'The eligibility-trace graph is not compiled yet. Build the '
                 'learner with braintrace.compile(...) (or call .compile_graph(...)) '
-                'before accessing .report.'
+                'before accessing .report. Fix the input condition named in the error, then rerun the operation.'
             )
         return CompilationReport(self.graph)
 
@@ -244,7 +244,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         return getattr(self, 'vjp_method', None)
 
     def _split_state(self) -> None:
-        # --- the state separation --- #
+        # --- The state separation --- #
         #
         # [NOTE]
         #
@@ -252,9 +252,9 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         # `ETraceAlgorithm` depends on the states we created in the
         # `ETraceGraphExecutor`, including:
         #
-        #   - the weight states, which is invariant during the training process
-        #   - the hidden states, the recurrent states, which may be changed between different training epochs
-        #   - the other states, which may be changed between different training epochs
+        #   - The weight states, which is invariant during the training process
+        #   - The hidden states, the recurrent states, which may be changed between different training epochs
+        #   - The other states, which may be changed between different training epochs
         (
             self._param_states,
             self._hidden_states,
@@ -270,9 +270,9 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
 
         The compilation process includes:
 
-        - building the etrace graph
-        - separating the states
-        - initializing the etrace states
+        - Building the etrace graph
+        - Separating the states
+        - Initializing the etrace states
 
         Parameters
         ----------
@@ -284,7 +284,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         # probe* that executes the surrounding ``init`` (including this call)
         # once against throwaway, un-batched states before the real mapped
         # pass. Compiling there would bind the executor to those probe states
-        # (which are discarded and left untagged), so the subsequent
+        # (which are discarded and left untagged), so the next
         # ``brainstate.nn.Vmap(..., vmap_states='new')`` would not cover them
         # and writing a batched value raises ``BatchAxisError``. Defer to the
         # real mapped pass, which creates the 'new'-tagged batched states.
@@ -293,12 +293,12 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
             return
 
         if not self.is_compiled:
-            # --- invalidate cached state splits --- #
+            # --- Invalidate cached state splits --- #
             self._param_states = None
             self._hidden_states = None
             self._other_states = None
 
-            # --- the model etrace graph -- #
+            # --- The model etrace graph -- #
             self.graph_executor.compile_graph(*args)
             self._validate_compiled_graph()
 
@@ -337,10 +337,10 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
                     + (f' {reason}' if reason else '')
                 )
 
-            # --- the initialization of the states --- #
+            # --- The initialization of the states --- #
             self.init_etrace_state(*args)
 
-            # mark the graph is compiled
+            # Mark the graph is compiled
             self.is_compiled = True
 
     @property
@@ -398,7 +398,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         ----------
         *args
             The input arguments.
-        **kwargs
+        **Kwargs
             Per-call options forwarded to :meth:`update`. Not model inputs: the
             model's forward call receives ``*args`` only. Used by axes that take
             a per-call auxiliary signal, e.g. ``learning_signal='modulatory'``
@@ -419,7 +419,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         ----------
         *args
             The input arguments.
-        **kwargs
+        **Kwargs
             Per-call options, not model inputs. See ``__call__``.
 
         Returns
@@ -444,7 +444,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         ----------
         *args
             The positional arguments.
-        **kwargs
+        **Kwargs
             The keyword arguments.
 
         Raises

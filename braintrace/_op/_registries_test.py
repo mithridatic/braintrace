@@ -16,7 +16,7 @@
 """Tests for the global ETP registries and flag-checking helpers.
 
 These tests pin down the *contracts* of the registry module:
-membership of every shipped primitive, lockstep population of the
+Membership of every shipped primitive, lockstep population of the
 flag-sets, and the True/False semantics of the three predicates that
 the compiler relies on.
 """
@@ -77,7 +77,7 @@ class TestETPPrimitivesMembership:
     def test_all_shipped_primitives_in_set(self):
         for prim in _ALL_SHIPPED:
             assert prim in ETP_PRIMITIVES, (
-                f'{prim.name} missing from ETP_PRIMITIVES'
+                f'{prim.name} missing from ETP_PRIMITIVES. Add {prim.name} to ETP_PRIMITIVES.'
             )
 
     def test_set_contains_at_least_eight_entries(self):
@@ -216,7 +216,7 @@ class TestFastPathRulesChunkField:
         assert fp.chunk is marker
 
     def test_registered_bundles_expose_chunk(self):
-        # importing the op modules runs primitive registration
+        # Importing the op modules runs primitive registration
         import braintrace._op.dense  # noqa: F401
         import braintrace._op.elemwise  # noqa: F401
         from braintrace._op._registries import ETP_FAST_PATH_RULES
@@ -291,10 +291,10 @@ class TestSnapAnchorDeclarations:
         assert not is_snap_anchored(etp_emb_v_p, {})
 
     def test_einsum_anchor_is_conditional_on_the_equation(self):
-        # no shared axis -> laid out like a dense matmul, anchored
+        # No shared axis -> laid out like a dense matmul, anchored
         assert is_snap_anchored(etp_einsum_p, {'equation': 'bk,kn->bn'})
         assert is_snap_anchored(etp_einsum_p, {'equation': 'bgk,gkn->bgn'})
-        # a shared axis is summed away by dt_to_t and has no trace slot
+        # A shared axis is summed away by dt_to_t and has no trace slot
         assert not is_snap_anchored(etp_einsum_p, {'equation': 'btk,kn->btn'})
 
     def test_missing_params_are_tolerated(self):

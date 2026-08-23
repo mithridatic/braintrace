@@ -142,21 +142,21 @@ class LaunchConfig:
 
     def __post_init__(self) -> None:
         if self.target not in _TARGETS:
-            raise ValueError(f"target must be one of {_TARGETS!r}")
+            raise ValueError(f"Target must be one of {_TARGETS!r}. Set Target to one of {_TARGETS!r}.")
         root = Path(self.repo_root).resolve()
         output = Path(self.output_dir).resolve()
         if not output.is_relative_to(root):
-            raise ValueError("output_dir must be contained by repo_root")
+            raise ValueError("output_dir must be contained by repo_root. Set output_dir to contained by repo_root.")
         if output == root:
-            raise ValueError("output_dir cannot be the repository root")
+            raise ValueError("output_dir cannot be the repository root. Fix the input condition named in the error, then rerun the operation.")
         if self.target in _GATE_C_TARGETS and output != (root / _GATE_C_DIRECTORY):
             raise ValueError(
-                "Gate C output_dir must be repo_root/var/example21-causal-gate"
+                "Gate C output_dir must be repo_root/var/example21-causal-gate. Set Gate C output_dir to repo_root/var/example21-causal-gate."
             )
         if not self.image.strip():
-            raise ValueError("image must be nonempty")
+            raise ValueError("Image must be nonempty. Set Image to nonempty.")
         if not re.fullmatch(r"[A-Za-z0-9_.-]+", self.cache_volume):
-            raise ValueError("cache_volume contains unsupported characters")
+            raise ValueError("cache_volume contains unsupported characters. Use a supported option or change the configuration.")
         object.__setattr__(self, "repo_root", root)
         object.__setattr__(self, "output_dir", output)
 
@@ -193,7 +193,7 @@ class CommandRecord:
         Explicit environment evidence relevant to the command.
     returncode : int
         Process exit status.
-    stdout, stderr : str
+    Stdout, stderr : str
         Exact captured streams.
     stdout_sha256, stderr_sha256 : str
         SHA-256 digests of the captured UTF-8 streams.
@@ -290,13 +290,13 @@ def load_strict_json(path: str | Path) -> dict[str, Any]:
     """
 
     def reject(value: str) -> None:
-        raise ValueError(f"non-finite JSON constant {value!r}")
+        raise ValueError(f"Non-finite JSON constant {value!r}. Use finite values.")
 
     def unique_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
         for key, value in pairs:
             if key in result:
-                raise ValueError(f"duplicate JSON key {key!r}")
+                raise ValueError(f"Duplicate JSON key {key!r}. Fix the input condition named in the error, then rerun the operation.")
             result[key] = value
         return result
 
@@ -306,7 +306,7 @@ def load_strict_json(path: str | Path) -> dict[str, Any]:
         object_pairs_hook=unique_pairs,
     )
     if not isinstance(value, dict):
-        raise ValueError("artifact must contain a top-level JSON object")
+        raise ValueError("Artifact must contain a top-level JSON object. Add a top-level JSON object to Artifact.")
     return value
 
 
@@ -369,10 +369,10 @@ def target_paths(
     """
 
     if not _HEAD_PATTERN.fullmatch(head):
-        raise ValueError("head must be a full lowercase 40-hex commit")
+        raise ValueError("Head must be a full lowercase 40-hex commit. Set Head to a full lowercase 40-hex commit.")
     selected = config.target if target is None else target
     if selected not in _TARGETS:
-        raise ValueError(f"unknown target {selected!r}")
+        raise ValueError(f"Unknown target {selected!r}. Set the named field to one of the supported values, then rerun the operation.")
     stem = f"{head}-{selected.replace('_', '-')}"
     result = config.output_dir / f"{stem}.json"
     relative = result.relative_to(config.repo_root).as_posix()
@@ -484,7 +484,7 @@ def _run(
 def _require_success(record: CommandRecord, label: str) -> str:
     if record.returncode != 0:
         raise ProvenanceError(
-            f"{label} failed with exit {record.returncode}: {record.stderr.strip()}"
+            f"{label} failed with exit {record.returncode}: {record.stderr.strip()}. Correct the reported inputs, then retry the operation."
         )
     return record.stdout.strip()
 
@@ -518,11 +518,11 @@ def _host_source_snapshot(
     git_dir = Path(outputs[2]).resolve()
     head = outputs[3].lower()
     if root != config.repo_root:
-        raise ProvenanceError(f"unexpected worktree root {root}")
+        raise ProvenanceError(f"Unexpected worktree root {root}. Use the expected value or update the contract.")
     if not git_dir.is_relative_to(common):
-        raise ProvenanceError("worktree Git directory is outside the common Git directory")
+        raise ProvenanceError("Worktree Git directory is outside the common Git directory. Set the named field to a value in the stated range, then rerun the operation.")
     if not _HEAD_PATTERN.fullmatch(head):
-        raise ProvenanceError("live HEAD is not a full lowercase 40-hex commit")
+        raise ProvenanceError("Live HEAD is not a full lowercase 40-hex commit. Free resources or reduce the allocation.")
     clean = outputs[4] == ""
     return SourceSnapshot(root, common, git_dir, head, clean, records)
 
@@ -541,17 +541,17 @@ def _inspect_image(
     try:
         values = msgspec_json.loads(raw)
         if not isinstance(values, list) or len(values) != 1:
-            raise ValueError("expected exactly one local image")
+            raise ValueError("Expected exactly one local image. Fix the input condition named in the error, then rerun the operation.")
         image = values[0]
         image_id = str(image["Id"])
         revision = str(image["Config"]["Labels"]["org.opencontainers.image.revision"])
     except (KeyError, TypeError, ValueError, msgspec_json.JSONDecodeError) as error:
-        raise ProvenanceError(f"invalid local image inspection: {error}") from error
+        raise ProvenanceError(f"Invalid local image inspection: {error}. Set the named field to a value in the stated range, then rerun the operation.") from error
     if not _IMAGE_ID_PATTERN.fullmatch(image_id):
-        raise ProvenanceError("local image ID is not an immutable sha256 digest")
+        raise ProvenanceError("Local image ID is not an immutable sha256 digest. Fix the input condition named in the error, then rerun the operation.")
     if revision != head:
         raise ProvenanceError(
-            f"OCI revision {revision!r} does not equal clean HEAD {head!r}"
+            f"OCI revision {revision!r} does not equal clean HEAD {head!r}. Fix the input condition named in the error, then rerun the operation."
         )
     return ImageIdentity(config.image, image_id, revision, record)
 
@@ -655,7 +655,7 @@ def _container_source_snapshot(
         for record in records
     )
     if not version.startswith("git version "):
-        raise ProvenanceError("qualifying image does not report a valid Git version")
+        raise ProvenanceError("Qualifying image does not report a valid Git version. Fix the input condition named in the error, then rerun the operation.")
     head = head.lower()
     return {
         "git_version": version,
@@ -692,7 +692,7 @@ def _validate_artifact_reference(
     label: str,
 ) -> dict[str, Any]:
     if not isinstance(value, Mapping):
-        raise ProvenanceError(f"{label} artifact reference is missing")
+        raise ProvenanceError(f"{label} artifact reference is missing. Provide the missing value or resource, then rerun the operation.")
     relative = expected_path.resolve().relative_to(repo_root.resolve()).as_posix()
     if (
         not expected_path.is_file()
@@ -702,7 +702,7 @@ def _validate_artifact_reference(
         or not _is_integer(value.get("size_bytes"))
         or int(value["size_bytes"]) != expected_path.stat().st_size
     ):
-        raise ProvenanceError(f"{label} artifact digest/path mismatch")
+        raise ProvenanceError(f"{label} artifact digest/path mismatch. Use matching values and structures.")
     return dict(value)
 
 
@@ -724,13 +724,13 @@ def _load_gate_a_prerequisite(config: LaunchConfig) -> dict[str, Any]:
     paths = _gate_a_artifact_paths(config)
     for path in (paths.manifest, paths.preflight, paths.result):
         if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
-            raise ProvenanceError("authenticated Gate A prerequisite is missing")
+            raise ProvenanceError("Authenticated Gate A prerequisite is missing. Provide the missing value or resource, then rerun the operation.")
     manifest_sha256 = sha256_file(paths.manifest)
     result_sha256 = sha256_file(paths.result)
     if manifest_sha256 != _GATE_A_MANIFEST_SHA256:
-        raise ProvenanceError("authenticated Gate A manifest SHA-256 mismatch")
+        raise ProvenanceError("Authenticated Gate A manifest SHA-256 mismatch. Use matching values and structures.")
     if result_sha256 != _GATE_A_RESULT_SHA256:
-        raise ProvenanceError("authenticated Gate A result SHA-256 mismatch")
+        raise ProvenanceError("Authenticated Gate A result SHA-256 mismatch. Use matching values and structures.")
 
     manifest = load_strict_json(paths.manifest)
     if (
@@ -745,7 +745,7 @@ def _load_gate_a_prerequisite(config: LaunchConfig) -> dict[str, Any]:
         or manifest.get("scientific_qualification_passed") is not True
         or manifest.get("failure") is not None
     ):
-        raise ProvenanceError("authenticated Gate A manifest is invalid")
+        raise ProvenanceError("Authenticated Gate A manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     preflight_reference = _validate_artifact_reference(
         manifest.get("preflight"),
         paths.preflight,
@@ -768,7 +768,7 @@ def _load_gate_a_prerequisite(config: LaunchConfig) -> dict[str, Any]:
         manifest.get("bundle_sha256") != expected_bundle
         or expected_bundle != _GATE_A_BUNDLE_SHA256
     ):
-        raise ProvenanceError("authenticated Gate A bundle digest is invalid")
+        raise ProvenanceError("Authenticated Gate A bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     result = load_strict_json(paths.result)
     source = result.get("source")
@@ -789,7 +789,7 @@ def _load_gate_a_prerequisite(config: LaunchConfig) -> dict[str, Any]:
         or result.get("interpretation")
         != "gate_a_passed_associative_binding"
     ):
-        raise ProvenanceError("authenticated Gate A result is invalid")
+        raise ProvenanceError("Authenticated Gate A result is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return {
         "qualification_passed": True,
         "result_sha256": result_sha256,
@@ -836,7 +836,7 @@ def _validated_command_record(
         "wall_seconds",
     }
     if set(value) != required:
-        raise ProvenanceError("retained command record has an unexpected schema")
+        raise ProvenanceError("Retained command record has an unexpected schema. Use the expected value or update the contract.")
     argv = value["argv"]
     stdout = value["stdout"]
     stderr = value["stderr"]
@@ -861,7 +861,7 @@ def _validated_command_record(
         or not isinstance(value["environment"], Mapping)
         or (environment is not None and dict(value["environment"]) != dict(environment))
     ):
-        raise ProvenanceError("retained command record is incomplete or inconsistent")
+        raise ProvenanceError("Retained command record is incomplete or inconsistent. Use matching values and structures.")
     return stdout, stderr
 
 
@@ -921,7 +921,7 @@ def _validate_preflight_semantics(
         or not isinstance(planned_gate, Mapping)
         or set(planned_gate) != {"argv", "environment"}
     ):
-        raise ProvenanceError(f"required {target} preflight evidence is invalid")
+        raise ProvenanceError(f"Required {target} preflight evidence is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     worktree_mount = mounts["worktree"]
     common_mount = mounts["common_git"]
@@ -940,14 +940,14 @@ def _validate_preflight_semantics(
         or _portable_host_path(common_mount.get("source"))
         != _portable_host_path(source.get("common_git_dir"))
     ):
-        raise ProvenanceError("preflight does not retain the required mount contract")
+        raise ProvenanceError("Preflight does not retain the required mount contract. Fix the input condition named in the error, then rerun the operation.")
 
     planned_environment = planned_gate["environment"]
     container_environment = container_source.get("environment")
     if not isinstance(planned_environment, Mapping) or not isinstance(
         container_environment, Mapping
     ):
-        raise ProvenanceError("preflight omits the exact container environment")
+        raise ProvenanceError("Preflight omits the exact container environment. Fix the input condition named in the error, then rerun the operation.")
     git_dir = str(planned_environment.get("GIT_DIR", ""))
     git_path = PurePosixPath(git_dir)
     if (
@@ -955,7 +955,7 @@ def _validate_preflight_semantics(
         or not git_path.is_relative_to(PurePosixPath("/git-common"))
         or ".." in git_path.parts
     ):
-        raise ProvenanceError("preflight GIT_DIR is outside the read-only Git mount")
+        raise ProvenanceError("Preflight GIT_DIR is outside the read-only Git mount. Set the named field to a value in the stated range, then rerun the operation.")
     expected_environment = _container_environment(
         head,
         image_id,
@@ -966,11 +966,11 @@ def _validate_preflight_semantics(
         dict(planned_environment) != expected_environment
         or dict(container_environment) != expected_environment
     ):
-        raise ProvenanceError("preflight environment differs from the fixed contract")
+        raise ProvenanceError("Preflight environment differs from the fixed contract. Use matching values and structures.")
 
     host_commands = source.get("commands")
     if not isinstance(host_commands, list) or len(host_commands) != 5:
-        raise ProvenanceError("preflight omits host Git command evidence")
+        raise ProvenanceError("Preflight omits host Git command evidence. Fix the input condition named in the error, then rerun the operation.")
     host_tails = (
         ("git", "rev-parse", "--show-toplevel"),
         ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"),
@@ -991,19 +991,19 @@ def _validate_preflight_semantics(
         record["argv"] != list(tail)
         for record, tail in zip(host_commands, host_tails, strict=True)
     ):
-        raise ProvenanceError("host Git command argv differs from preflight")
+        raise ProvenanceError("Host Git command argv differs from preflight. Use matching values and structures.")
     if host_outputs[3].strip().lower() != head or host_outputs[4].strip() != "":
-        raise ProvenanceError("host Git command evidence disagrees with clean HEAD")
+        raise ProvenanceError("Host Git command evidence disagrees with clean HEAD. Use matching values and structures.")
     if any(
         _portable_host_path(host_outputs[index])
         != _portable_host_path(source[field])
         for index, field in enumerate(("root", "common_git_dir", "git_dir"))
     ):
-        raise ProvenanceError("host Git paths disagree with retained source paths")
+        raise ProvenanceError("Host Git paths disagree with retained source paths. Use matching values and structures.")
 
     inspect_record = image.get("inspect_command")
     if not isinstance(inspect_record, Mapping):
-        raise ProvenanceError("preflight omits immutable image inspection evidence")
+        raise ProvenanceError("Preflight omits immutable image inspection evidence. Fix the input condition named in the error, then rerun the operation.")
     inspect_stdout, _ = _validated_command_record(
         inspect_record,
         argv_tail=("docker", "image", "inspect", str(image.get("reference", ""))),
@@ -1016,24 +1016,24 @@ def _validate_preflight_semantics(
         "inspect",
         str(image.get("reference", "")),
     ]:
-        raise ProvenanceError("retained image inspection argv is not exact")
+        raise ProvenanceError("Retained image inspection argv is not exact. Fix the input condition named in the error, then rerun the operation.")
     try:
         inspection = msgspec_json.loads(inspect_stdout)
         if not isinstance(inspection, list) or len(inspection) != 1:
-            raise TypeError("expected exactly one retained image inspection")
+            raise TypeError("Expected exactly one retained image inspection. Fix the input condition named in the error, then rerun the operation.")
         inspected = inspection[0]
         inspected_id = inspected["Id"]
         inspected_revision = inspected["Config"]["Labels"][
             "org.opencontainers.image.revision"
         ]
     except (IndexError, KeyError, TypeError, msgspec_json.JSONDecodeError) as error:
-        raise ProvenanceError("retained image inspection output is invalid") from error
+        raise ProvenanceError("Retained image inspection output is invalid. Set the named field to a value in the stated range, then rerun the operation.") from error
     if inspected_id != image_id or inspected_revision != head:
-        raise ProvenanceError("retained image inspection output disagrees with identity")
+        raise ProvenanceError("Retained image inspection output disagrees with identity. Use matching values and structures.")
 
     container_commands = container_source.get("commands")
     if not isinstance(container_commands, list) or len(container_commands) != 3:
-        raise ProvenanceError("preflight omits container Git command evidence")
+        raise ProvenanceError("Preflight omits container Git command evidence. Fix the input condition named in the error, then rerun the operation.")
     container_tails = (
         (image_id, "git", "--version"),
         (image_id, "git", "rev-parse", "HEAD"),
@@ -1074,18 +1074,18 @@ def _validate_preflight_semantics(
             container_commands, container_commands_tail, strict=True
         )
     ):
-        raise ProvenanceError("container Git command argv differs from preflight")
+        raise ProvenanceError("Container Git command argv differs from preflight. Use matching values and structures.")
     if (
         not container_outputs[0].strip().startswith("git version ")
         or container_outputs[0].strip() != container_source.get("git_version")
         or container_outputs[1].strip().lower() != head
         or container_outputs[2].strip() != ""
     ):
-        raise ProvenanceError("container Git command evidence disagrees with clean HEAD")
+        raise ProvenanceError("Container Git command evidence disagrees with clean HEAD. Use matching values and structures.")
 
     argv = planned_gate["argv"]
     if not isinstance(argv, list) or not all(isinstance(item, str) for item in argv):
-        raise ProvenanceError("planned Gate command is not shell-free argv")
+        raise ProvenanceError("Planned Gate command is not shell-free argv. Fix the input condition named in the error, then rerun the operation.")
     mount_values = [argv[index + 1] for index, item in enumerate(argv) if item == "--mount"]
     parsed_mounts = [_parse_mount(value) for value in mount_values]
     if (
@@ -1102,7 +1102,7 @@ def _validate_preflight_semantics(
             for mount in parsed_mounts
         )
     ):
-        raise ProvenanceError("planned Gate command mount argv is not fixed")
+        raise ProvenanceError("Planned Gate command mount argv is not fixed. Fix the input condition named in the error, then rerun the operation.")
     work_argv_mount = next(mount for mount in parsed_mounts if mount.get("dst") == "/work")
     git_argv_mount = next(
         mount for mount in parsed_mounts if mount.get("dst") == "/git-common"
@@ -1118,7 +1118,7 @@ def _validate_preflight_semantics(
         != _portable_host_path(common_mount.get("source"))
         or not re.fullmatch(r"[A-Za-z0-9_.-]+", cache_source)
     ):
-        raise ProvenanceError("planned Gate mount sources disagree with the sidecar")
+        raise ProvenanceError("Planned Gate mount sources disagree with the sidecar. Use matching values and structures.")
     container_result = str(
         PurePosixPath("/work") / expected_result.relative_to(repo_root).as_posix()
     )
@@ -1209,7 +1209,7 @@ def _validate_preflight_semantics(
         expected_argv.extend(["--env", f"{name}={expected_environment[name]}"])
     expected_argv.extend(expected_tail)
     if argv != expected_argv:
-        raise ProvenanceError("planned Gate argv differs from its fixed target")
+        raise ProvenanceError("Planned Gate argv differs from its fixed target. Use matching values and structures.")
 
 
 def _validate_manifest_execution(
@@ -1223,7 +1223,7 @@ def _validate_manifest_execution(
     expected_environment = planned["environment"]
     gate_record = manifest.get("gate_command")
     if not isinstance(gate_record, Mapping):
-        raise ProvenanceError("admission manifest omits the executed Gate command")
+        raise ProvenanceError("Admission manifest omits the executed Gate command. Fix the input condition named in the error, then rerun the operation.")
     host_cwd = _authenticated_host_cwd(preflight["source"], repo_root)
     _validated_command_record(
         gate_record,
@@ -1232,7 +1232,7 @@ def _validate_manifest_execution(
         cwd=host_cwd,
     )
     if gate_record["argv"] != planned["argv"]:
-        raise ProvenanceError("executed Gate command differs from preflight")
+        raise ProvenanceError("Executed Gate command differs from preflight. Use matching values and structures.")
 
     postflight = manifest.get("postflight")
     if (
@@ -1241,10 +1241,10 @@ def _validate_manifest_execution(
         or postflight.get("head") != head
         or postflight.get("clean") is not True
     ):
-        raise ProvenanceError("admission postflight did not retain clean source")
+        raise ProvenanceError("Admission postflight did not retain clean source. Fix the input condition named in the error, then rerun the operation.")
     host_commands = postflight.get("host_commands")
     if not isinstance(host_commands, list) or len(host_commands) != 5:
-        raise ProvenanceError("admission postflight omits host Git commands")
+        raise ProvenanceError("Admission postflight omits host Git commands. Fix the input condition named in the error, then rerun the operation.")
     host_tails = (
         ("git", "rev-parse", "--show-toplevel"),
         ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"),
@@ -1265,7 +1265,7 @@ def _validate_manifest_execution(
         record["argv"] != list(tail)
         for record, tail in zip(host_commands, host_tails, strict=True)
     ):
-        raise ProvenanceError("admission host postflight argv is not exact")
+        raise ProvenanceError("Admission host postflight argv is not exact. Fix the input condition named in the error, then rerun the operation.")
     source = preflight["source"]
     if (
         host_outputs[3].strip().lower() != head
@@ -1276,7 +1276,7 @@ def _validate_manifest_execution(
             for index, field in enumerate(("root", "common_git_dir", "git_dir"))
         )
     ):
-        raise ProvenanceError("admission host postflight disagrees with clean HEAD")
+        raise ProvenanceError("Admission host postflight disagrees with clean HEAD. Use matching values and structures.")
 
     container = postflight.get("container")
     container_commands = postflight.get("container_commands")
@@ -1289,7 +1289,7 @@ def _validate_manifest_execution(
         or not isinstance(container_commands, list)
         or len(container_commands) != 3
     ):
-        raise ProvenanceError("admission container postflight is incomplete")
+        raise ProvenanceError("Admission container postflight is incomplete. Fix the input condition named in the error, then rerun the operation.")
     image_id = expected_environment["BRAINTRACE_IMAGE_DIGEST"]
     container_tails = (
         (image_id, "git", "--version"),
@@ -1330,14 +1330,14 @@ def _validate_manifest_execution(
         record["argv"] != [*container_base, *tail]
         for record, tail in zip(container_commands, command_tails, strict=True)
     ):
-        raise ProvenanceError("admission container postflight argv is not exact")
+        raise ProvenanceError("Admission container postflight argv is not exact. Fix the input condition named in the error, then rerun the operation.")
     if (
         not container_outputs[0].strip().startswith("git version ")
         or container_outputs[0].strip() != container.get("git_version")
         or container_outputs[1].strip().lower() != head
         or container_outputs[2].strip() != ""
     ):
-        raise ProvenanceError("admission container postflight disagrees with clean HEAD")
+        raise ProvenanceError("Admission container postflight disagrees with clean HEAD. Use matching values and structures.")
 
 
 def _validate_gate_b_scientific_result(
@@ -1391,11 +1391,11 @@ def _validate_gate_b_scientific_result(
         or gate_a.get("manifest_sha256") != _GATE_A_MANIFEST_SHA256
         or gate_a.get("source_commit") != _GATE_A_SOURCE_COMMIT
     ):
-        raise ProvenanceError(f"{target} result provenance/configuration is invalid")
+        raise ProvenanceError(f"{target} result provenance/configuration is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping):
-        raise ProvenanceError(f"{target} result qualification is missing")
+        raise ProvenanceError(f"{target} result qualification is missing. Provide the missing value or resource, then rerun the operation.")
     qualifier = (
         depth._gate_b_initialization_qualification
         if target == "gate_b_init"
@@ -1403,7 +1403,7 @@ def _validate_gate_b_scientific_result(
     )
     recomputed = qualifier(result, config=config)
     if not _json_exact(qualification, recomputed):
-        raise ProvenanceError(f"{target} scientific qualification does not recompute")
+        raise ProvenanceError(f"{target} scientific qualification does not recompute. Fix the input condition named in the error, then rerun the operation.")
     return bool(recomputed["passed"])
 
 
@@ -1420,7 +1420,7 @@ def _validate_gate_c_scientific_result(
     from examples.pp_prop import latent_workspace_ablation_gate as gate_c
 
     if target not in _GATE_C_V1_TARGETS:
-        raise ProvenanceError("unsupported Gate C launch target")
+        raise ProvenanceError("Unsupported Gate C launch target. Use a supported option or change the configuration.")
     config = gate_c.GateCConfig()
     formal = target == "formal_gate_c"
     source_start = result.get("source_start")
@@ -1529,10 +1529,10 @@ def _validate_gate_c_scientific_result(
         or not all(isinstance(device, Mapping) for device in devices)
         or not any(device.get("platform") == "gpu" for device in devices)
     ):
-        raise ProvenanceError(f"{target} result provenance/configuration is invalid")
+        raise ProvenanceError(f"{target} result provenance/configuration is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping):
-        raise ProvenanceError(f"{target} result qualification is missing")
+        raise ProvenanceError(f"{target} result qualification is missing. Provide the missing value or resource, then rerun the operation.")
     qualifier = (
         gate_c._qualification_report
         if formal
@@ -1540,7 +1540,7 @@ def _validate_gate_c_scientific_result(
     )
     recomputed = qualifier(result, config=config)
     if not _json_exact(qualification, recomputed):
-        raise ProvenanceError(f"{target} scientific qualification does not recompute")
+        raise ProvenanceError(f"{target} scientific qualification does not recompute. Fix the input condition named in the error, then rerun the operation.")
     return bool(recomputed["passed"])
 
 
@@ -1710,7 +1710,7 @@ def _validate_gate_c_controls_result_shape(
         or float(result["total_wall_seconds"]) < 0.0
     ):
         raise ProvenanceError(
-            f"{target} result provenance/configuration is invalid"
+            f"{target} result provenance/configuration is invalid. Set the named field to a value in the stated range, then rerun the operation."
         )
 
 
@@ -1739,11 +1739,11 @@ def _validate_gate_c2_controls_scientific_result(
     )
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping):
-        raise ProvenanceError("gate_c2_controls result qualification is missing")
+        raise ProvenanceError("gate_c2_controls result qualification is missing. Provide the missing value or resource, then rerun the operation.")
     recomputed = gate_c._gate_c2_controls_qualification(result, config=config)
     if not _json_exact(qualification, recomputed):
         raise ProvenanceError(
-            "gate_c2_controls scientific qualification does not recompute"
+            "gate_c2_controls scientific qualification does not recompute. Fix the input condition named in the error, then rerun the operation."
         )
     return bool(recomputed["passed"])
 
@@ -1783,14 +1783,14 @@ def _validate_gate_c3_controls_scientific_result(
         qualification
     ) != expected_qualification_keys:
         raise ProvenanceError(
-            "gate_c3_controls result qualification is missing or invalid"
+            "gate_c3_controls result qualification is missing or invalid. Provide the missing value or resource, then rerun the operation."
         )
     recomputed = gate_c._gate_c3_controls_qualification(result, config=config)
     if not isinstance(recomputed, Mapping) or not _json_exact(
         qualification, recomputed
     ):
         raise ProvenanceError(
-            "gate_c3_controls scientific qualification does not recompute"
+            "gate_c3_controls scientific qualification does not recompute. Fix the input condition named in the error, then rerun the operation."
         )
     criteria = recomputed.get("criteria")
     failures = recomputed.get("failures")
@@ -1823,17 +1823,17 @@ def _validate_gate_c3_controls_scientific_result(
         or passed is not (valid and all(criteria.values()))
     ):
         raise ProvenanceError(
-            "gate_c3_controls scientific qualification is invalid"
+            "gate_c3_controls scientific qualification is invalid. Set the named field to a value in the stated range, then rerun the operation."
         )
     if valid is not True:
-        raise ProvenanceError("gate_c3_controls result qualification is invalid")
+        raise ProvenanceError("gate_c3_controls result qualification is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return passed
 
 
 def _validate_fixed_config(result: Mapping[str, Any], target: LaunchTarget) -> None:
     config = result.get("config")
     if not isinstance(config, Mapping):
-        raise ProvenanceError("result config is missing")
+        raise ProvenanceError("Result config is missing. Provide the missing value or resource, then rerun the operation.")
     from examples.pp_prop import latent_workspace_binding_gate as gate
 
     fixed = (
@@ -1881,7 +1881,7 @@ def _validate_target_result(
             or gate_b_init_bundle is not None
             or gate_c_prerequisites is None
         ):
-            raise ProvenanceError("Gate C prerequisites are invalid")
+            raise ProvenanceError("Gate C prerequisites are invalid. Set the named field to a value in the stated range, then rerun the operation.")
         if target == "gate_c2_controls":
             return _validate_gate_c2_controls_scientific_result(
                 result,
@@ -1905,7 +1905,7 @@ def _validate_target_result(
         )
     if target in _GATE_B_TARGETS:
         if admission_manifests is not None:
-            raise ProvenanceError("Gate B targets do not accept Gate A admissions")
+            raise ProvenanceError("Gate B targets do not accept Gate A admissions. Fix the input condition named in the error, then rerun the operation.")
         prerequisites = result.get("prerequisites")
         embedded_gate_a = (
             prerequisites.get("gate_a")
@@ -1915,17 +1915,17 @@ def _validate_target_result(
         if gate_a_prerequisite is None or not _json_exact(
             embedded_gate_a, gate_a_prerequisite
         ):
-            raise ProvenanceError("Gate B result does not bind Gate A prerequisite")
+            raise ProvenanceError("Gate B result does not bind Gate A prerequisite. Fix the input condition named in the error, then rerun the operation.")
         if target == "formal_gate_b":
             embedded_init = prerequisites.get("gate_b_initialization")
             if gate_b_init_bundle is None or not _json_exact(
                 embedded_init, gate_b_init_bundle
             ):
                 raise ProvenanceError(
-                    "formal Gate B result does not bind initialization manifest"
+                    "Formal Gate B result does not bind initialization manifest. Fix the input condition named in the error, then rerun the operation."
                 )
         elif gate_b_init_bundle is not None:
-            raise ProvenanceError("Gate B initialization received a circular prerequisite")
+            raise ProvenanceError("Gate B initialization received a circular prerequisite. Fix the input condition named in the error, then rerun the operation.")
         return _validate_gate_b_scientific_result(
             result,
             target=target,
@@ -1943,16 +1943,16 @@ def _validate_target_result(
         or int(result["schema_version"]) != 3
         or result.get("control") != controls[target]
     ):
-        raise ProvenanceError("result schema/control does not match launch target")
+        raise ProvenanceError("Result schema/control does not match launch target. Use matching values and structures.")
     if target != "formal_gate_a" and result.get("target") != target:
-        raise ProvenanceError("admission result target mismatch")
+        raise ProvenanceError("Admission result target mismatch. Use matching values and structures.")
     _validate_fixed_config(result, target)
     source = result.get("source")
     source_end = result.get("source_end")
     if not isinstance(source, Mapping) or not _source_report_matches(source, head):
-        raise ProvenanceError("result start source evidence is not authenticated")
+        raise ProvenanceError("Result start source evidence is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(source_end, Mapping) or not _source_report_matches(source_end, head):
-        raise ProvenanceError("result end source evidence is not authenticated")
+        raise ProvenanceError("Result end source evidence is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     environment = result.get("environment")
     devices = environment.get("devices") if isinstance(environment, Mapping) else None
     if (
@@ -1964,18 +1964,18 @@ def _validate_target_result(
         or not all(isinstance(device, Mapping) for device in devices)
         or not any(device.get("platform") == "gpu" for device in devices)
     ):
-        raise ProvenanceError("result image/backend evidence is not authenticated")
+        raise ProvenanceError("Result image/backend evidence is not authenticated. Fix the input condition named in the error, then rerun the operation.")
     qualification = result.get("qualification")
     if not isinstance(qualification, Mapping) or not isinstance(
         qualification.get("passed"), bool
     ):
-        raise ProvenanceError("result qualification is incomplete")
+        raise ProvenanceError("Result qualification is incomplete. Fix the input condition named in the error, then rerun the operation.")
     if target != "formal_gate_a":
         admission = result.get("admission")
         if not isinstance(admission, Mapping):
-            raise ProvenanceError("admission result omits its inner evidence")
+            raise ProvenanceError("Admission result omits its inner evidence. Fix the input condition named in the error, then rerun the operation.")
         if not _json_exact(admission.get("config"), result.get("config")):
-            raise ProvenanceError("admission envelope config differs from inner evidence")
+            raise ProvenanceError("Admission envelope config differs from inner evidence. Use matching values and structures.")
         from examples.pp_prop import latent_workspace_binding_gate as gate
 
         qualifier = (
@@ -1990,7 +1990,7 @@ def _validate_target_result(
             or not _json_exact(qualification, recomputed)
             or result.get("interpretation") != recomputed["interpretation"]
         ):
-            raise ProvenanceError("admission qualification does not recompute exactly")
+            raise ProvenanceError("Admission qualification does not recompute exactly. Fix the input condition named in the error, then rerun the operation.")
         return bool(recomputed["passed"])
     if target == "formal_gate_a":
         from examples.pp_prop import latent_workspace_binding_gate as gate
@@ -2015,7 +2015,7 @@ def _validate_target_result(
             != gate.PREREGISTERED_STABILITY_DIGESTS["validation_schedule_sha256"]
         ):
             raise ProvenanceError(
-                "formal result initialization/schedule differs from admissions"
+                "Formal result initialization/schedule differs from admissions. Use matching values and structures."
             )
         admissions = result.get("stage21_admissions")
         if (
@@ -2024,7 +2024,7 @@ def _validate_target_result(
             or admission_manifests is None
             or set(admission_manifests) != {"one_update", "stability_256"}
         ):
-            raise ProvenanceError("formal result omits authenticated admissions")
+            raise ProvenanceError("Formal result omits authenticated admissions. Fix the input condition named in the error, then rerun the operation.")
         for name, path in admission_manifests.items():
             evidence = admissions.get(name)
             bundle = load_authenticated_admission(
@@ -2045,7 +2045,7 @@ def _validate_target_result(
                 "admission": bundle["admission"],
             }
             if not isinstance(evidence, Mapping) or not _json_exact(evidence, expected):
-                raise ProvenanceError(f"formal result does not bind {name} manifest")
+                raise ProvenanceError(f"Formal result does not bind {name} manifest. Fix the input condition named in the error, then rerun the operation.")
         try:
             training = result["training"]
             recomputed = gate._qualification_report(
@@ -2067,15 +2067,15 @@ def _validate_target_result(
                 config=gate.BindingGateConfig(),
             )
         except (KeyError, TypeError) as error:
-            raise ProvenanceError("formal scientific evidence is incomplete") from error
+            raise ProvenanceError("Formal scientific evidence is incomplete. Fix the input condition named in the error, then rerun the operation.") from error
         if (
             result.get("learner") != "pp_prop_only"
             or not _json_exact(qualification, recomputed)
             or result.get("interpretation") != recomputed["interpretation"]
         ):
-            raise ProvenanceError("formal scientific qualification does not recompute")
+            raise ProvenanceError("Formal scientific qualification does not recompute. Fix the input condition named in the error, then rerun the operation.")
         return bool(recomputed["passed"])
-    raise AssertionError("unreachable launch target")
+    raise AssertionError("Unreachable launch target. Fix the input condition named in the error, then rerun the operation.")
 
 
 def load_authenticated_admission(
@@ -2110,16 +2110,16 @@ def load_authenticated_admission(
     root = Path(repo_root).resolve()
     path = Path(manifest_path).resolve()
     if not path.is_relative_to(root) or path.parent == root:
-        raise ProvenanceError(f"required {target} admission manifest path is invalid")
+        raise ProvenanceError(f"Required {target} admission manifest path is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     expected_stem = f"{head}-{target.replace('_', '-')}"
     expected_manifest = path.parent / f"{expected_stem}.manifest.json"
     expected_preflight = path.parent / f"{expected_stem}.preflight.json"
     expected_result = path.parent / f"{expected_stem}.json"
     if path != expected_manifest:
-        raise ProvenanceError(f"required {target} admission manifest path is not fixed")
+        raise ProvenanceError(f"Required {target} admission manifest path is not fixed. Fix the input condition named in the error, then rerun the operation.")
     for artifact in (expected_manifest, expected_preflight, expected_result):
         if not artifact.is_file() or not artifact.resolve().is_relative_to(root):
-            raise ProvenanceError(f"required {target} admission bundle is incomplete")
+            raise ProvenanceError(f"Required {target} admission bundle is incomplete. Fix the input condition named in the error, then rerun the operation.")
 
     value = load_strict_json(expected_manifest)
     if (
@@ -2133,14 +2133,14 @@ def load_authenticated_admission(
         or value.get("scientific_qualification_passed") is not True
         or value.get("source_head") != head
     ):
-        raise ProvenanceError(f"required {target} admission manifest is invalid")
+        raise ProvenanceError(f"Required {target} admission manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     references = {
         "preflight": (value.get("preflight"), expected_preflight),
         "result": (value.get("result"), expected_result),
     }
     for label, (reference, expected_path) in references.items():
         if not isinstance(reference, Mapping):
-            raise ProvenanceError(f"required {target} {label} reference is missing")
+            raise ProvenanceError(f"Required {target} {label} reference is missing. Provide the missing value or resource, then rerun the operation.")
         if (
             reference.get("path") != expected_path.relative_to(root).as_posix()
             or reference.get("repo_relative_path")
@@ -2149,7 +2149,7 @@ def load_authenticated_admission(
             or not _is_integer(reference.get("size_bytes"))
             or int(reference["size_bytes"]) != expected_path.stat().st_size
         ):
-            raise ProvenanceError(f"required {target} {label} digest/path mismatch")
+            raise ProvenanceError(f"Required {target} {label} digest/path mismatch. Use matching values and structures.")
 
     expected_bundle_sha256 = hashlib.sha256(
         (
@@ -2159,7 +2159,7 @@ def load_authenticated_admission(
         ).encode("utf-8")
     ).hexdigest()
     if value.get("bundle_sha256") != expected_bundle_sha256:
-        raise ProvenanceError(f"required {target} bundle digest is invalid")
+        raise ProvenanceError(f"Required {target} bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     preflight = load_strict_json(expected_preflight)
     _validate_preflight_semantics(
@@ -2182,10 +2182,10 @@ def load_authenticated_admission(
         repo_root=root,
     )
     if not scientific:
-        raise ProvenanceError(f"required {target} admission did not pass")
+        raise ProvenanceError(f"Required {target} admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     admission = result.get("admission")
     if not isinstance(admission, Mapping):
-        raise ProvenanceError(f"required {target} admission report is missing")
+        raise ProvenanceError(f"Required {target} admission report is missing. Provide the missing value or resource, then rerun the operation.")
     return {
         "manifest": value,
         "preflight": preflight,
@@ -2206,7 +2206,7 @@ def _load_gate_b_init_manifest(
     paths = target_paths(config, head, "gate_b_init")
     for path in (paths.manifest, paths.preflight, paths.result):
         if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
-            raise ProvenanceError("required Gate B initialization manifest is missing")
+            raise ProvenanceError("Required Gate B initialization manifest is missing. Provide the missing value or resource, then rerun the operation.")
     manifest = load_strict_json(paths.manifest)
     if (
         not _is_integer(manifest.get("schema_version"))
@@ -2220,7 +2220,7 @@ def _load_gate_b_init_manifest(
         or manifest.get("scientific_qualification_passed") is not True
         or manifest.get("failure") is not None
     ):
-        raise ProvenanceError("required Gate B initialization manifest is invalid")
+        raise ProvenanceError("Required Gate B initialization manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     preflight_reference = _validate_artifact_reference(
         manifest.get("preflight"),
         paths.preflight,
@@ -2240,7 +2240,7 @@ def _load_gate_b_init_manifest(
         result_reference["sha256"],
     )
     if manifest.get("bundle_sha256") != bundle_sha256:
-        raise ProvenanceError("required Gate B initialization bundle is invalid")
+        raise ProvenanceError("Required Gate B initialization bundle is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     gate_a = _load_gate_a_prerequisite(config)
     preflight = load_strict_json(paths.preflight)
@@ -2251,7 +2251,7 @@ def _load_gate_b_init_manifest(
         or prerequisites.get("gate_b_initialization") is not None
     ):
         raise ProvenanceError(
-            "Gate B initialization preflight prerequisite binding is invalid"
+            "Gate B initialization preflight prerequisite binding is invalid. Set the named field to a value in the stated range, then rerun the operation."
         )
     _validate_preflight_semantics(
         preflight,
@@ -2279,7 +2279,7 @@ def _load_gate_b_init_manifest(
         gate_b_init_bundle=None,
     )
     if not passed:
-        raise ProvenanceError("required Gate B initialization admission did not pass")
+        raise ProvenanceError("Required Gate B initialization admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     return {
         "target": "gate_b_init",
         "source_head": head,
@@ -2323,7 +2323,7 @@ def load_authenticated_formal_gate_b(
     )
     paths = target_paths(config, _GATE_B_SOURCE_COMMIT, "formal_gate_b")
     if path != paths.manifest:
-        raise ProvenanceError("required formal Gate B manifest path is not fixed")
+        raise ProvenanceError("Required formal Gate B manifest path is not fixed. Fix the input condition named in the error, then rerun the operation.")
     expected_hashes = {
         paths.preflight: _GATE_B_PREFLIGHT_SHA256,
         paths.result: _GATE_B_RESULT_SHA256,
@@ -2336,7 +2336,7 @@ def load_authenticated_formal_gate_b(
             or sha256_file(artifact) != expected_sha256
         ):
             raise ProvenanceError(
-                "required formal Gate B retained bytes are missing or changed"
+                "Required formal Gate B retained bytes are missing or changed. Provide the missing value or resource, then rerun the operation."
             )
 
     manifest = load_strict_json(paths.manifest)
@@ -2352,7 +2352,7 @@ def load_authenticated_formal_gate_b(
         or manifest.get("scientific_qualification_passed") is not True
         or manifest.get("failure") is not None
     ):
-        raise ProvenanceError("required formal Gate B manifest is invalid")
+        raise ProvenanceError("Required formal Gate B manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     preflight_reference = _validate_artifact_reference(
         manifest.get("preflight"),
         paths.preflight,
@@ -2375,7 +2375,7 @@ def load_authenticated_formal_gate_b(
         bundle_sha256 != _GATE_B_BUNDLE_SHA256
         or manifest.get("bundle_sha256") != bundle_sha256
     ):
-        raise ProvenanceError("required formal Gate B bundle digest is invalid")
+        raise ProvenanceError("Required formal Gate B bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     gate_a = _load_gate_a_prerequisite(config)
     gate_b_initialization = _load_gate_b_init_manifest(
@@ -2392,7 +2392,7 @@ def load_authenticated_formal_gate_b(
             prerequisites.get("gate_b_initialization"), gate_b_initialization
         )
     ):
-        raise ProvenanceError("formal Gate B preflight prerequisites are invalid")
+        raise ProvenanceError("Formal Gate B preflight prerequisites are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     _validate_preflight_semantics(
         preflight,
         target="formal_gate_b",
@@ -2419,7 +2419,7 @@ def load_authenticated_formal_gate_b(
         gate_b_init_bundle=gate_b_initialization,
     )
     if not passed:
-        raise ProvenanceError("required formal Gate B capability gate did not pass")
+        raise ProvenanceError("Required formal Gate B capability gate did not pass. Fix the input condition named in the error, then rerun the operation.")
     return {
         "target": "formal_gate_b",
         "source_head": _GATE_B_SOURCE_COMMIT,
@@ -2449,7 +2449,7 @@ def _load_gate_c_prerequisites(config: LaunchConfig) -> dict[str, dict[str, Any]
         gate_b_bundle.get("target") != "formal_gate_b"
         or gate_b_bundle.get("source_head") != _GATE_B_SOURCE_COMMIT
     ):
-        raise ProvenanceError("authenticated formal Gate B identity is invalid")
+        raise ProvenanceError("Authenticated formal Gate B identity is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     gate_b = {
         "qualification_passed": True,
         "result_sha256": gate_b_bundle.get("result_sha256"),
@@ -2477,9 +2477,9 @@ def _load_gate_c_prerequisites(config: LaunchConfig) -> dict[str, dict[str, Any]
     references = {"gate_a": dict(gate_a), "gate_b": gate_b}
     for name, reference in references.items():
         if set(reference) != required or reference["qualification_passed"] is not True:
-            raise ProvenanceError(f"authenticated {name} reference is incomplete")
+            raise ProvenanceError(f"Authenticated {name} reference is incomplete. Fix the input condition named in the error, then rerun the operation.")
         if not _HEAD_PATTERN.fullmatch(str(reference["source_commit"])):
-            raise ProvenanceError(f"authenticated {name} source commit is invalid")
+            raise ProvenanceError(f"Authenticated {name} source commit is invalid. Set the named field to a value in the stated range, then rerun the operation.")
         if any(
             not re.fullmatch(r"[0-9a-f]{64}", str(reference[field]))
             for field in (
@@ -2489,7 +2489,7 @@ def _load_gate_c_prerequisites(config: LaunchConfig) -> dict[str, dict[str, Any]
                 "preflight_sha256",
             )
         ):
-            raise ProvenanceError(f"authenticated {name} digest is invalid")
+            raise ProvenanceError(f"Authenticated {name} digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return references
 
 
@@ -2507,16 +2507,16 @@ def _load_gate_c_init_manifest(
         "gate_c2_controls",
         "gate_c3_controls",
     }:
-        raise ProvenanceError("Gate C initialization is only a formal prerequisite")
+        raise ProvenanceError("Gate C initialization is only a formal prerequisite. Fix the input condition named in the error, then rerun the operation.")
     if not isinstance(base_prerequisites, Mapping) or set(base_prerequisites) != {
         "gate_a",
         "gate_b",
     }:
-        raise ProvenanceError("Gate C initialization base prerequisites are invalid")
+        raise ProvenanceError("Gate C initialization base prerequisites are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     paths = target_paths(config, head, "gate_c_init")
     for path in (paths.manifest, paths.preflight, paths.result):
         if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
-            raise ProvenanceError("required Gate C initialization bundle is incomplete")
+            raise ProvenanceError("Required Gate C initialization bundle is incomplete. Fix the input condition named in the error, then rerun the operation.")
 
     manifest_sha256 = sha256_file(paths.manifest)
     manifest = load_strict_json(paths.manifest)
@@ -2549,7 +2549,7 @@ def _load_gate_c_init_manifest(
         or manifest.get("scientific_qualification_passed") is not True
         or manifest.get("failure") is not None
     ):
-        raise ProvenanceError("required Gate C initialization manifest is invalid")
+        raise ProvenanceError("Required Gate C initialization manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     preflight_reference = _validate_artifact_reference(
         manifest.get("preflight"),
         paths.preflight,
@@ -2569,7 +2569,7 @@ def _load_gate_c_init_manifest(
         result_reference["sha256"],
     )
     if manifest.get("bundle_sha256") != bundle_sha256:
-        raise ProvenanceError("required Gate C initialization bundle digest is invalid")
+        raise ProvenanceError("Required Gate C initialization bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     preflight = load_strict_json(paths.preflight)
     if (
@@ -2595,7 +2595,7 @@ def _load_gate_c_init_manifest(
         )
     ):
         raise ProvenanceError(
-            "Gate C initialization preflight prerequisite binding is invalid"
+            "Gate C initialization preflight prerequisite binding is invalid. Set the named field to a value in the stated range, then rerun the operation."
         )
     _validate_preflight_semantics(
         preflight,
@@ -2622,14 +2622,14 @@ def _load_gate_c_init_manifest(
         gate_c_prerequisites=base_prerequisites,
     )
     if not passed:
-        raise ProvenanceError("required Gate C initialization admission did not pass")
+        raise ProvenanceError("Required Gate C initialization admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     if (
         sha256_file(paths.manifest) != manifest_sha256
         or sha256_file(paths.preflight) != preflight_reference["sha256"]
         or sha256_file(paths.result) != result_reference["sha256"]
     ):
         raise ProvenanceError(
-            "Gate C initialization bundle changed during authentication"
+            "Gate C initialization bundle changed during authentication. Fix the input condition named in the error, then rerun the operation."
         )
     return {
         "target": "gate_c_init",
@@ -2652,7 +2652,7 @@ def _load_formal_gate_c_prerequisites(
     """Authenticate the exact three prerequisites for formal Gate C."""
 
     if config.target != "formal_gate_c":
-        raise ProvenanceError("formal Gate C prerequisites require formal_gate_c")
+        raise ProvenanceError("Formal Gate C prerequisites require formal_gate_c. Provide the required value for Formal Gate C prerequisites.")
     base = _load_gate_c_prerequisites(config)
     initialization = _load_gate_c_init_manifest(
         config,
@@ -2676,7 +2676,7 @@ def _load_gate_c_controls_prerequisites(
 ) -> dict[str, Any]:
     if config.target != target:
         raise ProvenanceError(
-            f"{target} prerequisites require target {target}"
+            f"{target} prerequisites require target {target}. Provide the required value for {target} prerequisites."
         )
     base = _load_gate_c_prerequisites(config)
     initialization = _load_gate_c_init_manifest(
@@ -2735,18 +2735,18 @@ def _load_gate_c2_controls_manifest(
 
     if config.target != "gate_c2_controls":
         raise ProvenanceError(
-            "Gate C2 control admission requires gate_c2_controls"
+            "Gate C2 control admission requires gate_c2_controls. Provide the required value for Gate C2 control admission."
         )
     if not isinstance(prerequisites, Mapping) or set(prerequisites) != {
         "gate_a",
         "gate_b",
         "gate_c_initialization",
     }:
-        raise ProvenanceError("Gate C2 control prerequisites are invalid")
+        raise ProvenanceError("Gate C2 control prerequisites are invalid. Set the named field to a value in the stated range, then rerun the operation.")
     paths = target_paths(config, head, "gate_c2_controls")
     for path in (paths.manifest, paths.preflight, paths.result):
         if not path.is_file() or not path.resolve().is_relative_to(config.repo_root):
-            raise ProvenanceError("required Gate C2 control bundle is incomplete")
+            raise ProvenanceError("Required Gate C2 control bundle is incomplete. Fix the input condition named in the error, then rerun the operation.")
 
     manifest_sha256 = sha256_file(paths.manifest)
     manifest = load_strict_json(paths.manifest)
@@ -2779,7 +2779,7 @@ def _load_gate_c2_controls_manifest(
         or manifest.get("scientific_qualification_passed") is not True
         or manifest.get("failure") is not None
     ):
-        raise ProvenanceError("required Gate C2 control manifest is invalid")
+        raise ProvenanceError("Required Gate C2 control manifest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     preflight_reference = _validate_artifact_reference(
         manifest.get("preflight"),
         paths.preflight,
@@ -2799,7 +2799,7 @@ def _load_gate_c2_controls_manifest(
         result_reference["sha256"],
     )
     if manifest.get("bundle_sha256") != bundle_sha256:
-        raise ProvenanceError("required Gate C2 control bundle digest is invalid")
+        raise ProvenanceError("Required Gate C2 control bundle digest is invalid. Set the named field to a value in the stated range, then rerun the operation.")
 
     preflight = load_strict_json(paths.preflight)
     if (
@@ -2823,7 +2823,7 @@ def _load_gate_c2_controls_manifest(
         or not _json_exact(preflight.get("gate_c_prerequisites"), prerequisites)
     ):
         raise ProvenanceError(
-            "Gate C2 control preflight prerequisite binding is invalid"
+            "Gate C2 control preflight prerequisite binding is invalid. Set the named field to a value in the stated range, then rerun the operation."
         )
     _validate_preflight_semantics(
         preflight,
@@ -2850,14 +2850,14 @@ def _load_gate_c2_controls_manifest(
         gate_c_prerequisites=prerequisites,
     )
     if not passed:
-        raise ProvenanceError("required Gate C2 control admission did not pass")
+        raise ProvenanceError("Required Gate C2 control admission did not pass. Fix the input condition named in the error, then rerun the operation.")
     if (
         sha256_file(paths.manifest) != manifest_sha256
         or sha256_file(paths.preflight) != preflight_reference["sha256"]
         or sha256_file(paths.result) != result_reference["sha256"]
     ):
         raise ProvenanceError(
-            "Gate C2 control bundle changed during authentication"
+            "Gate C2 control bundle changed during authentication. Fix the input condition named in the error, then rerun the operation."
         )
     return {
         "target": "gate_c2_controls",
@@ -2880,7 +2880,7 @@ def _load_admission_manifests(
     }
     for target, path in manifests.items():
         if not path.is_file():
-            raise ProvenanceError(f"required {target} admission manifest is missing")
+            raise ProvenanceError(f"Required {target} admission manifest is missing. Provide the missing value or resource, then rerun the operation.")
         load_authenticated_admission(
             path,
             target=target,
@@ -2950,7 +2950,7 @@ def gate_command(
     command.extend(["python", "-m", module])
     if config.target in _GATE_B_TARGETS:
         if admission_manifests is not None:
-            raise ProvenanceError("Gate B targets do not accept Gate A admissions")
+            raise ProvenanceError("Gate B targets do not accept Gate A admissions. Fix the input condition named in the error, then rerun the operation.")
         gate_a = _gate_a_artifact_paths(config)
         command.extend(
             [
@@ -2974,7 +2974,7 @@ def gate_command(
             )
     elif config.target in _GATE_C_TARGETS:
         if admission_manifests is not None:
-            raise ProvenanceError("Gate C targets do not accept Gate A admissions")
+            raise ProvenanceError("Gate C targets do not accept Gate A admissions. Fix the input condition named in the error, then rerun the operation.")
         gate_a = _gate_a_artifact_paths(config)
         gate_b = _formal_gate_b_artifact_paths(config)
         command.extend(
@@ -3003,7 +3003,7 @@ def gate_command(
             )
     elif config.target == "formal_gate_a":
         if set(admission_manifests or {}) != {"one_update", "stability_256"}:
-            raise ProvenanceError("formal Gate A requires both admission manifests")
+            raise ProvenanceError("Formal Gate A requires both admission manifests. Provide the required value for Formal Gate A.")
         for target, flag in (
             ("one_update", "--one-update-manifest"),
             ("stability_256", "--stability-manifest"),
@@ -3047,10 +3047,10 @@ def launch(
     source_start = _host_source_snapshot(config, command_runner)
     paths = target_paths(config, source_start.head)
     if not source_start.clean:
-        raise ProvenanceError("source is dirty before launch")
+        raise ProvenanceError("Source is dirty before launch. Fix the input condition named in the error, then rerun the operation.")
     for path in (paths.result, paths.preflight, paths.manifest):
         if path.exists() or path.with_suffix(path.suffix + ".tmp").exists():
-            raise ProvenanceError(f"artifact already exists: {path}")
+            raise ProvenanceError(f"Artifact already exists: {path}. Fix the input condition named in the error, then rerun the operation.")
     ignore = _run(
         command_runner,
         ["git", "check-ignore", "--quiet", str(paths.result)],
@@ -3058,7 +3058,7 @@ def launch(
         environment=_sanitized_host_environment(),
     )
     if ignore.returncode != 0:
-        raise ProvenanceError("output path is not ignored by Git")
+        raise ProvenanceError("Output path is not ignored by Git. Fix the input condition named in the error, then rerun the operation.")
 
     preflight: dict[str, Any] = {
         "schema_version": 1,
@@ -3091,7 +3091,7 @@ def launch(
             runner=command_runner,
         )
         if not container_start["head_matches_expected"] or not container_start["clean"]:
-            raise ProvenanceError("container source preflight disagrees with clean HEAD")
+            raise ProvenanceError("Container source preflight disagrees with clean HEAD. Use matching values and structures.")
         admissions = (
             _load_admission_manifests(config, source_start.head, image.image_id)
             if config.target == "formal_gate_a"
@@ -3212,7 +3212,7 @@ def launch(
         )
         _require_success(gate_record, f"{config.target} Gate command")
         if not paths.result.is_file():
-            raise ProvenanceError("Gate command did not create its declared result")
+            raise ProvenanceError("Gate command did not create its declared result. Fix the input condition named in the error, then rerun the operation.")
         result = load_strict_json(paths.result)
         scientific_passed = _validate_target_result(
             result,
@@ -3245,7 +3245,7 @@ def launch(
                 or container_end["head"] != source_start.head
                 or not container_end["clean"]
             ):
-                raise ProvenanceError("source changed or became dirty during launch")
+                raise ProvenanceError("Source changed or became dirty during launch. Fix the input condition named in the error, then rerun the operation.")
         except BaseException as error:
             if failure is None:
                 failure = error
@@ -3262,13 +3262,13 @@ def launch(
                 or paths.result.stat().st_size != result_reference["size_bytes"]
             ):
                 raise ProvenanceError(
-                    "preflight or result changed before manifest signing"
+                    "Preflight or result changed before manifest signing. Fix the input condition named in the error, then rerun the operation."
                 )
             if config.target in _GATE_B_TARGETS:
                 reloaded_gate_a = _load_gate_a_prerequisite(config)
                 if not _json_exact(reloaded_gate_a, gate_a_prerequisite):
                     raise ProvenanceError(
-                        "Gate A prerequisite changed before signing"
+                        "Gate A prerequisite changed before signing. Fix the input condition named in the error, then rerun the operation."
                     )
             if config.target == "formal_gate_b":
                 reloaded_init = _load_gate_b_init_manifest(
@@ -3278,7 +3278,7 @@ def launch(
                 )
                 if not _json_exact(reloaded_init, gate_b_init_bundle):
                     raise ProvenanceError(
-                        "Gate B initialization prerequisite changed before signing"
+                        "Gate B initialization prerequisite changed before signing. Fix the input condition named in the error, then rerun the operation."
                     )
             retained_result = load_strict_json(paths.result)
             rechecked_scientific = _validate_target_result(
@@ -3294,7 +3294,7 @@ def launch(
             )
             if rechecked_scientific is not scientific_passed:
                 raise ProvenanceError(
-                    "scientific qualification changed before manifest signing"
+                    "Scientific qualification changed before manifest signing. Fix the input condition named in the error, then rerun the operation."
                 )
             if config.target == "gate_c_init":
                 reloaded_gate_c = _load_gate_c_prerequisites(config)
@@ -3325,13 +3325,13 @@ def launch(
                 gate_c_names = ()
             for name in gate_c_names:
                 if reloaded_gate_c is None:
-                    raise ProvenanceError("Gate C prerequisites were not reloaded")
+                    raise ProvenanceError("Gate C prerequisites were not reloaded. Fix the input condition named in the error, then rerun the operation.")
                 if not _json_exact(
                     reloaded_gate_c.get(name),
                     (gate_c_prerequisites or {}).get(name),
                 ):
                     raise ProvenanceError(
-                        f"{name} prerequisite changed before signing"
+                        f"{name} prerequisite changed before signing. Fix the input condition named in the error, then rerun the operation."
                     )
         except BaseException as error:
             failure = error

@@ -34,7 +34,7 @@ def _load():
 def test_run_config_rejects_invalid_values(overrides, message):
     example = _load()
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         example._RunConfig(seed=0, n_epochs=1, batch_size=1, **overrides)
 
 

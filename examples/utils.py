@@ -27,7 +27,7 @@ def _set_gpu_preallocation(mode: float):
     If preallocation is enabled, this makes JAX preallocate ``percent`` of the total GPU memory,
     instead of the default 75%. Lowering the amount preallocated can fix OOMs that occur when the JAX program starts.
     """
-    assert isinstance(mode, float) and 0. <= mode < 1., f'GPU memory preallocation must be in [0., 1.]. But got {mode}.'
+    assert isinstance(mode, float) and 0. <= mode < 1., f'GPU memory preallocation must be in [0., 1.]. Set mode to a float in this range; got {mode}.'
     os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = str(mode)
 
 
@@ -50,11 +50,11 @@ class MyArgumentParser(argparse.ArgumentParser):
         self.add_argument("--method", type=str, default='expsm_diag', help="Training method.")
         args, _ = self.parse_known_args()
 
-        # device management
+        # Device management
         _set_gpu_device(args.devices)
         _set_gpu_preallocation(gpu_pre_allocate)
 
-        # training method
+        # Training method
         if args.method != 'bptt':
             self.add_argument(
                 "--vjp_method",

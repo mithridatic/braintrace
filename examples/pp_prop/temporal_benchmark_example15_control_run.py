@@ -88,7 +88,7 @@ def source_fingerprint(source_root: pathlib.Path) -> dict[str, object]:
 def _load_example(path: pathlib.Path):
     spec = importlib.util.spec_from_file_location("_example15_static_control", path)
     if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load Example 15 from {path}")
+        raise ImportError(f"Cannot load Example 15 from {path}. Check the path and install the required resource.")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -115,7 +115,7 @@ def _verify_example_profile(example: Any) -> None:
     }
     if actual != expected:
         raise RuntimeError(
-            "Example 15 numerical defaults differ from the fixed profile"
+            "Example 15 numerical defaults differ from the fixed profile. Use matching values and structures."
         )
 
 
@@ -146,7 +146,7 @@ def run_fixed_example15(
 ) -> dict[str, object]:
     """Execute unchanged Example 15 and return provenance-bound raw evidence."""
     if not container_image_digest.strip():
-        raise ValueError("container_image_digest is required")
+        raise ValueError("container_image_digest is required. Fix the input condition named in the error, then rerun the operation.")
     if device == "cpu":
         os.environ["JAX_PLATFORMS"] = "cpu"
     example = _load_example(example_script)
@@ -155,7 +155,7 @@ def run_fixed_example15(
 
     if device == "gpu" and jax.devices()[0].platform not in {"gpu", "cuda", "rocm"}:
         raise RuntimeError(
-            f"requested device gpu, bound backend is {jax.default_backend()}"
+            f"Requested device gpu, bound backend is {jax.default_backend()}. Fix the input condition named in the error, then rerun the operation."
         )
     with contextlib.redirect_stdout(sys.stderr):
         result = example.main(n_epochs=5, batch_size=32, plot=False)

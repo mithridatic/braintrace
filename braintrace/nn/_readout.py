@@ -113,7 +113,7 @@ class LeakyRateReadout(brainstate.nn.Module):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
 
-        # parameters
+        # Parameters
         self.in_size = as_size_tuple(in_size)
         self.out_size = as_size_tuple(out_size)
         self.tau = braintools.init.param(tau, self.out_size)
@@ -122,7 +122,7 @@ class LeakyRateReadout(brainstate.nn.Module):
         self.decay = u.math.exp(-1.0 / tau_normalized)
         self.r_init = r_init
 
-        # weights
+        # Weights
         self.W = brainstate.ParamState(
             braintools.init.param(w_init, (as_size_tuple(self.in_size)[0], as_size_tuple(self.out_size)[0]))
         )

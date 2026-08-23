@@ -202,7 +202,7 @@ class TestFindElementExistInTheSet(unittest.TestCase):
     def test_literals_are_skipped(self):
         v1 = _make_var(0)
         lit = _make_literal(1.0)
-        # lit is not a Var, so it should be skipped; v1 is in the set
+        # Lit is not a Var, so it should be skipped; v1 is in the set
         result = find_element_exist_in_the_set([lit, v1], {v1})
         self.assertIs(result, v1)
 
@@ -376,7 +376,7 @@ class TestCheckUnsupportedOpPhase3(unittest.TestCase):
             eqn = factory([_make_var(0)], [h_out])
             obj = self._hidden_obj(h_out)
             with diagnostic_context() as reporter:
-                check_unsupported_op(obj, eqn, op_name)  # must not raise
+                check_unsupported_op(obj, eqn, op_name)  # Must not raise
             records = [
                 r for r in reporter.records()
                 if r.kind is DiagnosticKind.CONTROL_FLOW_OPAQUE_FWD
@@ -431,7 +431,7 @@ class TestCheckUnsupportedOpPhase3(unittest.TestCase):
         obj.hidden_outvars = {h_out}
         obj.outvar_to_hidden_path = {h_out: ('h',)}
         eqn = _make_while_eqn([_make_var(0)], [h_out])
-        check_unsupported_op(obj, eqn, 'while')  # must not raise
+        check_unsupported_op(obj, eqn, 'while')  # Must not raise
 
 
 # ===========================================================================
@@ -535,7 +535,7 @@ class TestJaxprEvaluationEvalJaxpr(unittest.TestCase):
         mock_jaxpr = MagicMock()
         mock_jaxpr.eqns = [eqn]
 
-        # scan with no weight/hidden vars should pass through to _eval_eqn
+        # Scan with no weight/hidden vars should pass through to _eval_eqn
         evaluator._eval_jaxpr(mock_jaxpr)
         self.assertEqual(len(evaluator.evaluated_eqns), 1)
 
@@ -822,7 +822,7 @@ class TestJaxprEvaluationIntegration(unittest.TestCase):
         evaluator = _make_concrete_evaluator()
         evaluator._eval_jaxpr(jaxpr_closed.jaxpr)
 
-        # x * y -> mul, then + x -> add: 2 equations
+        # X * y -> mul, then + x -> add: 2 equations
         self.assertEqual(len(evaluator.evaluated_eqns), 2)
 
     def test_eval_jaxpr_with_jit_traced(self):

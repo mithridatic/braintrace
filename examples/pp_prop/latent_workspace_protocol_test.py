@@ -92,7 +92,7 @@ def test_step_gates_reject_latent_without_physics_and_decoder_overlap() -> None:
 
     physics = zeros.copy()
     physics[0, 0] = True
-    with pytest.raises(ValueError, match="decoder rows"):
+    with pytest.raises(ValueError, match="(?i)decoder rows"):
         StepGates(physics, zeros, physics, zeros, zeros)
 
 
@@ -115,7 +115,7 @@ def test_protocol_arm_rejects_malformed_inputs(
     control: str,
     message: str,
 ) -> None:
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         build_protocol_v2_arm(
             events,
             query_start=query_start,

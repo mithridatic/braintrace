@@ -106,7 +106,7 @@ def _init_param_dim_state(
     for group in relation.hidden_groups:
         bwg_key = (id(relation.y_var), group.index)
         if bwg_key in etrace_bwg:
-            raise ValueError(f'The relation {bwg_key} has been added. ')
+            raise ValueError(f'Relation {bwg_key} is already registered. Use a unique relation key.')
         init_fn = ETP_RULES_INIT_DRTRL[relation.primitive]
         # ``etp_elemwise`` has no x/y batch carrier (its output is the weight),
         # so it needs the hidden group to size the trace's leading (position /
@@ -146,9 +146,9 @@ def _init_param_dim_state(
 def _update_param_dim_etrace_scan_fn(
     hist_etrace_vals: Dict[ETraceWG_Key, jax.Array],
     jacobians: Tuple[
-        Dict[ETraceRawX_Key, jax.Array],  # the weight x
-        Dict[ETraceDF_Key, jax.Array],  # the weight df
-        Sequence[jax.Array],  # the hidden group Jacobians
+        Dict[ETraceRawX_Key, jax.Array],  # The weight x
+        Dict[ETraceDF_Key, jax.Array],  # The weight df
+        Sequence[jax.Array],  # The hidden group Jacobians
     ],
     weight_path_to_vals: Dict[Path, PyTree],
     hidden_param_op_relations: Any,
@@ -188,19 +188,19 @@ def _update_param_dim_etrace_scan_fn(
         A tuple containing a dictionary of updated eligibility trace values for
         the weight gradients, keyed by ETraceWG_Key, and None.
     """
-    # --- the data --- #
+    # --- The data --- #
 
     #
     # + "hist_etrace_vals" has the following structure:
-    #    - key: the weight id, the weight-x jax var, the hidden state var
-    #    - value: the batched weight gradients
+    #    - Key: the weight id, the weight-x jax var, the hidden state var
+    #    - Value: the batched weight gradients
     #
 
-    # + "hid2weight_jac" has the following structure:
-    #    - a dict of weight x gradients
+    # + "Hid2weight_jac" has the following structure:
+    #    - A dict of weight x gradients
     #       * key: the weight x jax var
     #       * value: the weight x gradients
-    #    - a dict of weight y gradients
+    #    - A dict of weight y gradients
     #       * key: the tuple of the weight y jax var and the hidden state jax var
     #       * value: the weight y gradients
     #
@@ -212,7 +212,7 @@ def _update_param_dim_etrace_scan_fn(
     #
     hid_group_jacobians: Sequence[jax.Array] = jacobians[2]
 
-    # --- partition: flat relations vs descended relations (by owning scan) --- #
+    # --- Partition: flat relations vs descended relations (by owning scan) --- #
     #
     # Descended relations (structured scan descent, Phase 4) carry stacked
     # per-substep Jacobians with a leading axis ``L``; their trace update is
@@ -551,9 +551,9 @@ def _chunk_supported(relation: HiddenParamOpRelation, fast_solve: bool) -> bool:
 def _update_param_dim_etrace_chunked(
     hist_etrace_vals: Dict[ETraceWG_Key, PyTree],
     stacked_jacobians: Tuple[
-        Dict[ETraceRawX_Key, jax.Array],  # stacked weight x, leading axis T
-        Dict[ETraceDF_Key, jax.Array],  # stacked weight df, leading axis T
-        Sequence[jax.Array],            # stacked hidden-group Jacobians
+        Dict[ETraceRawX_Key, jax.Array],  # Stacked weight x, leading axis T
+        Dict[ETraceDF_Key, jax.Array],  # Stacked weight df, leading axis T
+        Sequence[jax.Array],            # Stacked hidden-group Jacobians
     ],
     hidden_param_op_relations: Any,
     weight_path_to_vals: Dict[Path, PyTree],
@@ -577,7 +577,7 @@ def _update_param_dim_etrace_chunked(
 
     new_etrace_bwg: Dict[ETraceWG_Key, PyTree] = dict(hist_etrace_vals)
 
-    # suffix products are per hidden group; share them across relations
+    # Suffix products are per hidden group; share them across relations
     p_cache: Dict[int, Tuple[jax.Array, jax.Array]] = {}
     relation: HiddenParamOpRelation
     for relation in chunkable:
@@ -600,7 +600,7 @@ def _update_param_dim_etrace_chunked(
             p_seq, m_full = p_cache[gi]
             df_seq = dfs_seq[etrace_df_key(relation.y_var, gi)]
             if group.snap is not None:
-                # same widening as the per-step body; ``df_seq`` is stacked over
+                # Same widening as the per-step body; ``df_seq`` is stacked over
                 # time but the padded axis is still the trailing one.
                 df_seq = widen_instant_term(df_seq, group.snap.num_neighbour)
             df_seq = _cast_to_dtype(df_seq, trace_dtype)
@@ -717,7 +717,7 @@ def relation_solve_to_param(
         # coordinates before the contraction.
         dg_hidden = gather_learning_signal(dg_hidden, group.snap)
 
-    # dimensionless processing (unit strip + restore). Apply per-leaf.
+    # Dimensionless processing (unit strip + restore). Apply per-leaf.
     etrace_data_unitless, fn_unit_restore = _remove_units(etrace_data)
     dg_hidden_unitless, _ = _remove_units(dg_hidden)
 
@@ -756,7 +756,7 @@ def relation_solve_to_param(
             dg_hidden_unitless, etrace_for_solve, fold_batch=batched,
         )
     elif group.trace_state_width == 1:
-        # width==1 shortcut: skip outer vmap of size 1. Reads the widened
+        # Width==1 shortcut: skip outer vmap of size 1. Reads the widened
         # width, not num_state: under `sparse_n` a single-state group
         # with K > 1 has a size-K trailing axis and must NOT take it.
         dg_hid_squeezed = jax.tree.map(
@@ -825,11 +825,11 @@ def reduce_param_batch_axes(
 
 
 def _solve_param_dim_weight_gradients(
-    hist_etrace_data: Dict[ETraceWG_Key, PyTree],  # the history etrace data
-    dG_weights: Dict[Path, dG_Weight],  # weight gradients
-    dG_hidden_groups: Sequence[jax.Array],  # hidden group gradients
+    hist_etrace_data: Dict[ETraceWG_Key, PyTree],  # The history etrace data
+    dG_weights: Dict[Path, dG_Weight],  # Weight gradients
+    dG_hidden_groups: Sequence[jax.Array],  # Hidden group gradients
     weight_hidden_relations: Sequence[HiddenParamOpRelation],
-    weight_vals: Dict[Path, PyTree],  # current ParamState pytree values for structure
+    weight_vals: Dict[Path, PyTree],  # Current ParamState pytree values for structure
     fast_solve: bool = True,
 ) -> None:
     """
@@ -859,7 +859,7 @@ def _solve_param_dim_weight_gradients(
         Whether to use the per-primitive fast contraction instead of the legacy
         vmap path.
     """
-    # update the etrace weight gradients
+    # Update the etrace weight gradients
     temp_data: Dict[Path, PyTree] = dict()
     # Paths whose gradient was already batch-reduced inside the fast-path einsum
     # (fold_batch). The trailing batch-sum must skip these.
@@ -899,7 +899,7 @@ def _solve_param_dim_weight_gradients(
     # sum up the batched weight gradients
     reduce_param_batch_axes(temp_data, weight_vals, folded_paths, batched_paths)
 
-    # update the weight gradients
+    # Update the weight gradients
     for key, val in temp_data.items():
         _update_dict(dG_weights, key, val)
 
@@ -936,8 +936,8 @@ def _remove_units(xs_maybe_quantity: PyTree) -> Any:
 
     def restore_units(xs_unitless: PyTree) -> Any:
         leaves, treedef2 = jax.tree.flatten(xs_unitless)
-        # jax's PyTreeDef stubs omit __eq__; the comparison is valid at runtime.
-        assert treedef == treedef2, 'The tree structure should be the same. '  # type: ignore[operator]
+        # JAX's PyTreeDef stubs omit __eq__; the comparison is valid at runtime.
+        assert treedef == treedef2, 'The tree structures must match. Use matching parameter trees.'  # type: ignore[operator]
         new_leaves = [
             leaf if unit.dim.is_dimensionless else leaf * unit
             for leaf, unit in zip(leaves, units)
@@ -1106,7 +1106,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
        Computation*, 1(2), 270-280. https://doi.org/10.1162/neco.1989.1.2.270
     """
 
-    # batch of weight gradients
+    # Batch of weight gradients
     etrace_bwg: Dict[ETraceWG_Key, brainstate.State]
 
     #: ``trace_filter='kappa'`` state, keyed exactly like :attr:`etrace_bwg`
@@ -1237,10 +1237,10 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
                 target_state = self.graph_executor.path_to_states[weight]
             except (KeyError, TypeError) as error:
                 raise ValueError(
-                    f'No eligibility trace found for parameter {weight!r}.') from error
+                    f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.') from error
         if not isinstance(target_state, brainstate.ParamState):
             raise ValueError(
-                f'No eligibility trace found for parameter {weight!r}.')
+                f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.')
 
         found = False
         etraces = dict()
@@ -1253,7 +1253,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
                 continue
             found = True
 
-            # retrieve the etrace data
+            # Retrieve the etrace data
             group: HiddenGroup
             for group in relation.hidden_groups:
                 key = (id(relation.y_var), group.index)
@@ -1261,7 +1261,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
 
         if not found:
             raise ValueError(
-                f'No eligibility trace found for parameter {weight!r}.')
+                f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.')
         return etraces
 
     def _get_etrace_data(self) -> Dict:
@@ -1354,7 +1354,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
 
         This method implements the core update equation for the D-RTRL algorithm's eligibility traces:
 
-        ε^t ≈ D^t·ε^{t-1} + diag(D_f^t)⊗x^t
+        ε^T ≈ D^t·ε^{t-1} + diag(D_f^t)⊗x^t
 
         It uses JAX's scan operation to efficiently process the historical trace values and
         combines them with current Jacobians to compute updated traces according to the
@@ -1483,7 +1483,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
 
         dG_weights: Dict[Path, Any] = {path: None for path in self.param_states}
 
-        # update the etrace weight gradients
+        # Update the etrace weight gradients
         _solve_param_dim_weight_gradients(
             etrace_h2w_at_t,
             dG_weights,
@@ -1493,11 +1493,11 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
             fast_solve=self.fast_solve,
         )
 
-        # update the non-etrace weight gradients
+        # Update the non-etrace weight gradients
         for path, dg in dl_to_nonetws_at_t.items():
             _update_dict(dG_weights, path, dg)
 
-        # update the etrace parameters when "dl_to_etws_at_t" is not None
+        # Update the etrace parameters when "dl_to_etws_at_t" is not None
         if dl_to_etws_at_t is not None:
             for path, dg in dl_to_etws_at_t.items():
                 _update_dict(dG_weights, path, dg, error_when_no_key=True)

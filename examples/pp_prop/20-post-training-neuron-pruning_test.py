@@ -81,7 +81,7 @@ def test_contribution_scores_reject_invalid_contracts(kwargs, message):
         "n_rec": 3,
     }
     inputs.update(kwargs)
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         _load()._contribution_scores(**inputs)
 
 
@@ -109,7 +109,7 @@ def test_device_binding_fails_closed_on_backend_mismatch(monkeypatch):
     monkeypatch.setattr(example, "jax", fake_jax)
     assert example._bind_device("auto") == "cpu"
     with pytest.raises(
-        RuntimeError, match="requested device gpu, bound backend is cpu"
+        RuntimeError, match="(?i)requested device gpu, bound backend is cpu"
     ):
         example._bind_device("gpu")
     assert updates == [("jax_platform_name", "gpu")]
@@ -117,11 +117,11 @@ def test_device_binding_fails_closed_on_backend_mismatch(monkeypatch):
 
 def test_device_binding_rejects_invalid_and_unavailable_backends(monkeypatch):
     example = _load()
-    with pytest.raises(ValueError, match="device must be"):
+    with pytest.raises(ValueError, match="(?i)device must be"):
         example._bind_device("tpu")
 
     def unavailable():
-        raise RuntimeError("backend missing")
+        raise RuntimeError("Backend missing. Provide the missing item named in this message.")
 
     fake_jax = SimpleNamespace(
         config=SimpleNamespace(update=lambda name, value: None),
@@ -304,7 +304,7 @@ def test_compacted_bundle_matches_masked_model_and_reloads(tmp_path):
 
 
 def test_compaction_rejects_active_edge_incident_to_dead_neuron():
-    with pytest.raises(ValueError, match="active edge"):
+    with pytest.raises(ValueError, match="(?i)active edge"):
         _load()._compact_topology(
             rows=np.array([0]),
             cols=np.array([1]),
@@ -353,7 +353,7 @@ def test_compaction_skips_an_empty_neuron_network():
 
 
 def test_compaction_benchmark_rejects_nonpositive_repetitions():
-    with pytest.raises(ValueError, match="repetitions"):
+    with pytest.raises(ValueError, match="(?i)repetitions"):
         _load()._benchmark_compaction(None, None, None, None, None, repetitions=0)
 
 

@@ -315,7 +315,7 @@ def test_arc_bank_requires_two_demonstrations() -> None:
 def test_arc_bank_rejects_invalid_static_contracts(
     tasks: Any, rows: RowEventConfig, latent_steps: int, message: str
 ) -> None:
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         build_arc_target_free_task_bank(tasks, rows, latent_steps=latent_steps)
 
 
@@ -445,7 +445,7 @@ def test_context_synthesis_rejects_malformed_compact_task_fields(
     )
     task_inputs = _task_fold_inputs(bank)._replace(**{field: replacement})
 
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         synthesize_arc_evaluation_context(
             task_inputs, bank.query_inputs[0, 0], bank.query_shapes[0, 0], rows
         )
@@ -473,7 +473,7 @@ def test_context_synthesis_rejects_malformed_query_arrays(
         rows,
     )
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         synthesize_arc_evaluation_context(
             _task_fold_inputs(bank), query_input, query_shape, rows
         )
@@ -505,7 +505,7 @@ def test_arc_runner_bank_validation_fails_closed(
     bank = build_arc_target_free_task_bank((task,), rows)
     malformed = bank._replace(**{field: replacement})
 
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         arc_adaptation._validate_arc_runner_bank(malformed, rows)
 
 
@@ -621,7 +621,7 @@ def test_runner_rejects_a_non_positive_epoch_count(epochs) -> None:
     learner = compile_pp_prop(model)
     optimizer = braintools.optim.Adam(lr=0.01)
     optimizer.register_trainable_weights(learner.param_states)
-    with pytest.raises(ValueError, match="epochs"):
+    with pytest.raises(ValueError, match="(?i)epochs"):
         compile_arc_task_local_adaptation_runner(
             model,
             learner,

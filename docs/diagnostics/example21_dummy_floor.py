@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Phase-1 diagnostic: score trivial predictors through Example 21's own scorer.
 
 Establishes the floor that the pp-prop model must beat before any claim about

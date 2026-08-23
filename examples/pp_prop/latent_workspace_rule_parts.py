@@ -48,7 +48,7 @@ def apply_dihedral(grid: IntArray, name: str) -> IntArray:
     ----------
     grid
         Two-dimensional integer grid.
-    name
+    Name
         Entry of :data:`DIHEDRAL_NAMES`.
 
     Returns
@@ -75,7 +75,7 @@ def apply_dihedral(grid: IntArray, name: str) -> IntArray:
 
     operation = _DIHEDRAL_OPS.get(name)
     if operation is None:
-        raise ValueError(f"unknown dihedral map: {name!r}")
+        raise ValueError(f"Unknown dihedral map: {name!r}. Set the named field to one of the supported values, then rerun the operation.")
     return np.ascontiguousarray(operation(grid))
 
 
@@ -152,9 +152,9 @@ def connected_components(
     ----------
     grid
         Two-dimensional integer grid.
-    background
+    Background
         Colour treated as empty space.
-    diagonal
+    Diagonal
         Whether diagonal adjacency joins two cells.
     same_color
         Whether adjacency additionally requires equal colour.
@@ -218,7 +218,7 @@ def crop_to_mask(grid: IntArray, mask: IntArray) -> IntArray:
     ----------
     grid
         Two-dimensional integer grid.
-    mask
+    Mask
         Boolean array with the same shape as ``grid``.
 
     Returns
@@ -250,7 +250,7 @@ def separator_indices(grid: IntArray, axis: int) -> IntArray:
     ----------
     grid
         Two-dimensional integer grid.
-    axis
+    Axis
         ``0`` to scan rows, ``1`` to scan columns.
 
     Returns
@@ -383,7 +383,7 @@ def periodic_fill(grid: IntArray, noise: int) -> IntArray | None:
     ----------
     grid
         Two-dimensional integer grid.
-    noise
+    Noise
         Colour treated as unknown and repaired.
 
     Returns

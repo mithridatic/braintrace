@@ -23,12 +23,12 @@ class TestPublicAPI(unittest.TestCase):
                 'EProp', 'OSTLRecurrent', 'OSTLFeedforward',
                 'FixedRandomFeedback', 'KappaFilter',
         ):
-            assert hasattr(pkg, name), f'missing export: {name}'
+            assert hasattr(pkg, name), f'Missing export: {name}. Export or define the named item.'
 
     def test_top_level_exports(self):
         import braintrace
         for name in ('EProp', 'OSTLRecurrent', 'OSTLFeedforward'):
-            assert hasattr(braintrace, name), f'missing top-level export: {name}'
+            assert hasattr(braintrace, name), f'Missing top-level export: {name}. Provide the missing item named in the message.'
             assert name in braintrace.__all__
 
     def test_removed_algorithms_are_gone(self):
@@ -41,6 +41,6 @@ class TestPublicAPI(unittest.TestCase):
         import braintrace
         import braintrace._algorithm as pkg
         for name in ('OTTT', 'OSTTP', 'OTPE', 'PresynapticTrace'):
-            assert not hasattr(braintrace, name), f'{name} should have been removed'
+            assert not hasattr(braintrace, name), f'{name} should have been removed. Update the fixture or expected result to satisfy this assertion.'
             assert name not in braintrace.__all__
-            assert not hasattr(pkg, name), f'{name} should have been removed'
+            assert not hasattr(pkg, name), f'{name} should have been removed. Update the fixture or expected result to satisfy this assertion.'

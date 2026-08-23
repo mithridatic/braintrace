@@ -236,7 +236,7 @@ def test_adaptive_budget_respects_max_growth_events(tmp_path):
         rate_probe_trials=2,
         max_edges=64,
         min_edges=16,
-        target_accuracy=1.01,  # demand stays high: would grow every round
+        target_accuracy=1.01,  # Demand stays high: would grow every round
         max_growth_events=1,
     )
     result = example.run(config, tmp_path / "capped.png")
@@ -296,7 +296,7 @@ def test_attribution_classification_generalizes_to_n_tasks():
 
     labels = example._classify_attribution(*masses, threshold=0.6)
 
-    # edge 0: fetch 7/10; edge 1: roll over 7/10; edge 2: 2/8 each (shared);
+    # Edge 0: fetch 7/10; edge 1: roll over 7/10; edge 2: 2/8 each (shared);
     # edge 3: fetch 5/10 and roll over 5/10 tie (shared); edge 4: sit 9/10.
     assert labels.tolist() == [0, 1, 4, 4, 2]
 

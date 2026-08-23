@@ -31,7 +31,7 @@ THRESHOLD_ACCURACY = 0.80
 def sample_tick_count(updates: int, batch_size: int, horizon: str) -> int:
     """Return trial samples advanced through physical timesteps."""
     if updates <= 0 or batch_size <= 0 or horizon not in HORIZONS:
-        raise ValueError("updates, batch_size, and horizon must be valid")
+        raise ValueError("Updates, batch_size, and horizon must be valid. Set Updates, batch_size, and horizon to valid.")
     return updates * batch_size * HORIZONS[horizon].total_steps
 
 
@@ -41,7 +41,7 @@ def matched_sample_tick_budget(
     """Derive an exact integer direct-long budget from curriculum evidence."""
     raw_phases = curriculum_result.get("phases")
     if not isinstance(raw_phases, Mapping):
-        raise ValueError("curriculum result lacks phase evidence")
+        raise ValueError("Curriculum result lacks phase evidence. Provide the missing item named in the message.")
     phases: dict[str, object] = {}
     total = 0
     saw_gap = False
@@ -51,12 +51,12 @@ def matched_sample_tick_budget(
             saw_gap = True
             continue
         if saw_gap or not isinstance(raw_phase, Mapping):
-            raise ValueError("curriculum phases must form a contiguous prefix")
+            raise ValueError("Curriculum phases must form a contiguous prefix. Set Curriculum phases to form a contiguous prefix.")
         updates = raw_phase.get("updates_completed")
         if isinstance(updates, bool) or not isinstance(updates, int):
-            raise ValueError("phase updates must be integers")
+            raise ValueError("Phase updates must be integers. Set Phase updates to integers.")
         if updates <= 0 or updates > ceiling:
-            raise ValueError("phase updates fall outside their declared ceiling")
+            raise ValueError("Phase updates fall outside their declared ceiling. Set the named field to a value in the stated range, then rerun the operation.")
         ticks = sample_tick_count(updates, batch_size, horizon)
         phases[horizon] = {
             "updates_completed": updates,
@@ -69,7 +69,7 @@ def matched_sample_tick_budget(
     quotient, remainder = divmod(total, direct_unit)
     if total <= 0 or remainder:
         raise ValueError(
-            "curriculum sample-ticks are not an integer number of long updates"
+            "Curriculum sample-ticks are not an integer number of long updates. Fix the input condition named in the error, then rerun the operation."
         )
     return {
         "definition": "updates * batch_size * horizon_steps",
@@ -97,7 +97,7 @@ def _concatenate_telemetry(
     chunks: Mapping[str, list[jax.Array]],
 ) -> dict[str, jax.Array]:
     if not chunks:
-        raise ValueError("direct-long telemetry must be nonempty")
+        raise ValueError("Direct-long telemetry must be nonempty. Set Direct-long telemetry to nonempty.")
     return {
         group: jax.numpy.concatenate(values, axis=0) for group, values in chunks.items()
     }
@@ -136,7 +136,7 @@ def _run_direct_long(
             {"update": completed, "metrics": metrics, "stability_passed": stable}
         )
     if final_dynamics is None:
-        raise RuntimeError("direct-long run produced no validation checkpoint")
+        raise RuntimeError("Direct-long run produced no validation checkpoint. Provide the missing item named in the message.")
     combined = _concatenate_telemetry(telemetry_chunks)
     return {
         "status": "completed",
@@ -190,7 +190,7 @@ def threshold_times(
     phases = curriculum_result.get("phases")
     phase_ticks = budget.get("curriculum_phases")
     if not isinstance(phases, Mapping) or not isinstance(phase_ticks, Mapping):
-        raise ValueError("threshold evidence lacks curriculum phases")
+        raise ValueError("Threshold evidence lacks curriculum phases. Provide the missing item named in the message.")
     preceding = 0
     for horizon in ("short", "medium"):
         phase = phase_ticks.get(horizon)
@@ -202,7 +202,7 @@ def threshold_times(
     )
     direct_budget = budget.get("direct_long")
     if not isinstance(direct_budget, Mapping):
-        raise ValueError("threshold evidence lacks direct-long budget")
+        raise ValueError("Threshold evidence lacks direct-long budget. Provide the missing item named in the message.")
     direct_unit = int(direct_budget["sample_ticks_per_update"])
     return {
         "curriculum_sample_ticks": _threshold_time(
@@ -237,13 +237,13 @@ def run_paired_curriculum_experiment(
     """Run curriculum and a fresh exactly sample-tick-matched direct control."""
     if config.sealed_test or not config.curriculum or config.arm != "all_pp_prop":
         raise ValueError(
-            "paired adoption execution requires unsealed pp-prop curriculum"
+            "Paired adoption execution requires unsealed pp-prop curriculum. Provide the required value for Paired adoption execution."
         )
     curriculum = run_curriculum(config, bundle)
     budget = matched_sample_tick_budget(curriculum, config.batch_size)
     direct_budget = budget.get("direct_long")
     if not isinstance(direct_budget, Mapping):
-        raise ValueError("matched budget lacks direct-long evidence")
+        raise ValueError("Matched budget lacks direct-long evidence. Provide the missing item named in the message.")
     direct_updates = int(direct_budget["updates"])
     long_trace = config.curriculum_trace_half_lives.long
     direct_config = replace(

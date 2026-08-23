@@ -90,7 +90,7 @@ def test_invalid_numeric_config_is_rejected(change: dict[str, object], message: 
     values = config_to_dict(SparseBenchmarkConfig())
     values.update(change)
 
-    with pytest.raises((TypeError, ValueError), match=message):
+    with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         SparseBenchmarkConfig(**values)
 
 

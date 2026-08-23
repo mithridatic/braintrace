@@ -16,12 +16,12 @@
 """Smoke tests for the v0.1.x param compatibility shims.
 
 Coverage:
-* every legacy param constructs and executes forward.
+* Every legacy param constructs and executes forward.
 * ``ETraceParam`` + ``MatMulOp`` produces *one* compiler relation.
 * ``NonTempParam`` + ``MatMulOp`` produces *zero* compiler relations.
 * ``FakeETraceParam`` is invisible to the compiler.
 * ``DeprecationWarning`` fires on package-root param access.
-* every legacy param is re-exported at the package root.
+* Every legacy param is re-exported at the package root.
 """
 
 

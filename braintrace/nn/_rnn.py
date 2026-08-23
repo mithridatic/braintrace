@@ -93,19 +93,19 @@ class ValinaRNNCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         self.W = Linear(
             _as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1],
             w_init=w_init,
@@ -192,19 +192,19 @@ class GRUCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.Wz = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.Wr = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
@@ -294,19 +294,19 @@ class CFNCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.Wf = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.Wi = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
@@ -415,19 +415,19 @@ class MGUCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.Wf = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.Wh = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
@@ -545,21 +545,21 @@ class LSTMCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # initializers
+        # Initializers
         self._state_initializer = state_init
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.Wi = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.Wg = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
@@ -653,21 +653,21 @@ class URLSTMCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # initializers
+        # Initializers
         self._state_initializer = state_init
 
-        # activation function
+        # Activation function
         if isinstance(activation, str):
             self.activation = getattr(brainstate.nn, activation)
         else:
-            assert callable(activation), "The activation function should be a string or a callable function. "
+            assert callable(activation), "The activation function must be a string or a callable function. Pass a string or callable value for activation."
             self.activation = activation
 
-        # weights
+        # Weights
         params: dict[str, Any] = dict(w_init=w_init, b_init=None)
         self.Wu = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.Wf = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
@@ -789,19 +789,19 @@ class MinimalRNNCell(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # functions
+        # Functions
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         if phi is None:
             phi = Linear(_as_size_tuple(self.in_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
-        assert callable(phi), f"The phi function should be a callable function. But got {phi}"
+        assert callable(phi), f"The phi function must be callable. Pass a callable value for phi; got {phi}."
         self.phi = phi
 
-        # weights
+        # Weights
         self.W_u = Linear(_as_size_tuple(self.out_size)[-1] * 2, _as_size_tuple(self.out_size)[-1], **params)
 
     def init_state(self, batch_size: int | None = None, **kwargs: Any) -> None:
@@ -890,16 +890,16 @@ class MiniGRU(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # functions
+        # Functions
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.W_x = Linear(_as_size_tuple(self.in_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
 
-        # weights
+        # Weights
         self.W_z = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
 
     def init_state(self, batch_size: int | None = None, **kwargs: Any) -> None:
@@ -987,16 +987,16 @@ class MiniLSTM(brainstate.nn.RNNCell):
     ) -> None:
         super().__init__(name=name)  # type: ignore[call-arg]
 
-        # parameters
+        # Parameters
         self._state_initializer = state_init
         self.out_size = _as_size_tuple(out_size)
         self.in_size = _as_size_tuple(in_size)
 
-        # functions
+        # Functions
         params: dict[str, Any] = dict(w_init=w_init, b_init=b_init)
         self.W_x = Linear(_as_size_tuple(self.in_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
 
-        # weights
+        # Weights
         self.W_f = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
         self.W_i = Linear(_as_size_tuple(self.in_size)[-1] + _as_size_tuple(self.out_size)[-1], _as_size_tuple(self.out_size)[-1], **params)
 
@@ -1075,11 +1075,11 @@ class LRUCell(brainstate.nn.Module):
 
     def __init__(
         self,
-        d_model: int,  # input and output dimensions
-        d_hidden: int,  # hidden state dimension
-        r_min: float = 0.0,  # smallest lambda norm
-        r_max: float = 1.0,  # largest lambda norm
-        max_phase: float = 6.28,  # max phase lambda
+        d_model: int,  # Input and output dimensions
+        d_hidden: int,  # Hidden state dimension
+        r_min: float = 0.0,  # Smallest lambda norm
+        r_max: float = 1.0,  # Largest lambda norm
+        max_phase: float = 6.28,  # Max phase lambda
     ) -> None:
         super().__init__()
 
@@ -1092,13 +1092,13 @@ class LRUCell(brainstate.nn.Module):
         self.r_max = r_max
         self.max_phase = max_phase
 
-        # -------- recurrent weight matrix --------
+        # -------- Recurrent weight matrix --------
 
-        # theta parameter
+        # Theta parameter
         theta_log = u.math.log(max_phase * brainstate.random.uniform(size=d_hidden))
         self.theta_log = brainstate.ParamState(theta_log)
 
-        # nu parameter
+        # Nu parameter
         nu_log = u.math.log(
             -0.5 * u.math.log(
                 brainstate.random.uniform(size=d_hidden) * (r_max ** 2 - r_min ** 2) + r_min ** 2
@@ -1106,9 +1106,9 @@ class LRUCell(brainstate.nn.Module):
         )
         self.nu_log = brainstate.ParamState(nu_log)
 
-        # -------- input weight matrix --------
+        # -------- Input weight matrix --------
 
-        # gamma parameter
+        # Gamma parameter
         diag_lambda = u.math.exp(-u.math.exp(nu_log) + 1j * u.math.exp(theta_log))
         gamma_log = u.math.log(u.math.sqrt(1 - u.math.abs(diag_lambda) ** 2))
         self.gamma_log = brainstate.ParamState(gamma_log)
@@ -1117,7 +1117,7 @@ class LRUCell(brainstate.nn.Module):
         self.B_re = Linear(d_model, d_hidden, w_init=glorot_init, b_init=None)
         self.B_im = Linear(d_model, d_hidden, w_init=glorot_init, b_init=None)
 
-        # -------- output weight matrix --------
+        # -------- Output weight matrix --------
 
         self.C_re = Linear(d_hidden, d_model, w_init=glorot_init, b_init=None)
         self.C_im = Linear(d_hidden, d_model, w_init=glorot_init, b_init=None)

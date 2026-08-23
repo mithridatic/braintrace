@@ -21,7 +21,7 @@ Coverage:
   under SAME and VALID padding, with and without bias.
 * The ``etp_conv_p`` primitive appears in the jaxpr and carries the
   expected static parameters.
-* brainunit support — quantities with units multiply correctly.
+* Brainunit support — quantities with units multiply correctly.
 * JAX rules — jit / grad work.
 * Four ETP rules — the ``conv`` rules use a VJP-based ``xy_to_dw`` that
   must match a hand-written JAX VJP; the init fns return arrays of the
@@ -81,8 +81,8 @@ _BASE_CONV_KW = dict(
 class TestForwardCorrectness:
 
     def test_same_padding_no_bias(self):
-        x = jnp.ones((1, 3, 8))  # (batch, in_ch, L)
-        k = jnp.arange(36.0).reshape(4, 3, 3)  # (out_ch, in_ch, kw)
+        x = jnp.ones((1, 3, 8))  # (Batch, in_ch, L)
+        k = jnp.arange(36.0).reshape(4, 3, 3)  # (Out_ch, in_ch, kw)
         out = conv(x, k)
         ref = _ref_conv(x, k, **_BASE_CONV_KW)
         np.testing.assert_allclose(out, ref)
@@ -100,7 +100,7 @@ class TestForwardCorrectness:
         x = jnp.ones((1, 3, 8))
         k = jnp.ones((4, 3, 3))
         b = jnp.arange(4.0)
-        # bias broadcasts on the channel dim
+        # Bias broadcasts on the channel dim
         out = conv(x, k, b.reshape(1, 4, 1))
         ref = _ref_conv(x, k, **_BASE_CONV_KW) + b.reshape(1, 4, 1)
         np.testing.assert_allclose(out, ref)
@@ -229,8 +229,8 @@ class TestConvEtpRules:
         rule = ETP_RULES_DT_TO_T[etp_conv_p]
         # Recurrence context for 1-D conv NHC-HIO.
         # hidden_dim = (batch=1, H_out=6, out_ch=4).
-        # trace['weight'] = (batch=1, H_out=6, H_k=3, in_ch=4, out_ch=4).
-        # trace['bias']   = (batch=1, H_out=6, out_ch=4)  ← y-shaped (per-position).
+        # Trace['weight'] = (batch=1, H_out=6, H_k=3, in_ch=4, out_ch=4).
+        # Trace['bias']   = (batch=1, H_out=6, out_ch=4)  ← y-shaped (per-position).
         batch = 1
         brainstate.random.seed(1)
         hidden = brainstate.random.randn(batch, 6, 4)
@@ -255,10 +255,10 @@ class TestConvEtpRules:
         batch, c_out, length = 1, 3, 8
         brainstate.random.seed(2)
         hidden = brainstate.random.randn(batch, c_out, length)      # NCH
-        w_trace = brainstate.random.randn(batch, length, c_out, 2, 3)  # (b, s, O, I, H)
+        w_trace = brainstate.random.randn(batch, length, c_out, 2, 3)  # (B, s, O, I, H)
         params = dict(has_bias=False, strides=(1,), dimension_numbers=None)
         out = rule(hidden, {'weight': w_trace}, **params)
-        hd = jnp.transpose(hidden, (0, 2, 1))  # (b, s, k)
+        hd = jnp.transpose(hidden, (0, 2, 1))  # (B, s, k)
         expected = w_trace * hd[:, :, :, None, None]
         np.testing.assert_allclose(out['weight'], expected)
 
@@ -292,12 +292,12 @@ class TestConvEtpRules:
         k = jnp.arange(36.0).reshape(4, 3, 3)
         b = jnp.ones(4)
         ref_y_shape = _ref_conv(x, k, **_BASE_CONV_KW).shape
-        hidden = jnp.ones(ref_y_shape)  # (1, 4, 8) in NCH layout
+        hidden = jnp.ones(ref_y_shape)  # (1, 4, 8) In NCH layout
         weights = {'weight': k, 'bias': b}
         dk_dict = rule(x, hidden, weights, has_bias=True, **_BASE_CONV_KW)
         assert 'weight' in dk_dict
         assert 'bias' in dk_dict
-        # bias 'trace' = hidden_dim itself (per-position, no summation)
+        # Bias 'trace' = hidden_dim itself (per-position, no summation)
         assert dk_dict['bias'].shape == hidden.shape
         np.testing.assert_allclose(dk_dict['bias'], hidden)
 
@@ -318,14 +318,14 @@ class TestConvEtpRules:
         rule = ETP_RULES_INIT_DRTRL[etp_conv_p]
         x_var = _fake_var((1, 3, 8))
         y_var = _fake_var((1, 4, 8))
-        # bias has shape (4,) but the trace stores per-position ∂h/∂b
+        # Bias has shape (4,) but the trace stores per-position ∂h/∂b
         weight_vars = {'weight': _fake_var((4, 3, 3)), 'bias': _fake_var((4,))}
         eqn_params = dict(strides=(1,), dimension_numbers=None,
                           feature_group_count=1, batch_group_count=1)
         out = rule(x_var, y_var, weight_vars, num_hidden_state=2,
                    eqn_params=eqn_params)
         assert out['weight'].shape == (1, 8, 4, 3, 3, 2)
-        # bias trace: (batch, *y_shape[1:], n_state) = (1, 4, 8, 2)
+        # Bias trace: (batch, *y_shape[1:], n_state) = (1, 4, 8, 2)
         assert out['bias'].shape == (1, 4, 8, 2)
 
     def test_init_drtrl_shape_channel_last(self):
@@ -410,7 +410,7 @@ class TestConvBiasGradient:
         # grads_etrace is keyed by path; cell.p is a dict-valued ParamState
         grad_p = list(grads_etrace.values())[0]
         assert isinstance(grad_p, dict), (
-            f'Expected dict gradient for merged ParamState, got {type(grad_p)}'
+            f'Expected dict gradient for merged ParamState, got {type(grad_p)}. Return the expected value for the reported field.'
         )
 
         # --- BPTT reference ---
@@ -431,7 +431,7 @@ class TestConvBiasGradient:
 
         # Non-zero sanity check for bias gradient
         assert jnp.abs(bptt['bias']).max() > 1e-3, (
-            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}'
+            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}. Use inputs that produce a non-zero gradient.'
         )
 
         np.testing.assert_allclose(grad_p['weight'], bptt['weight'], atol=1e-5,
@@ -453,7 +453,7 @@ class TestConv2dBiasGradient:
         # Compute output spatial size for SAME padding (input size unchanged).
         # For VALID: floor((H - Hk) / stride + 1).
         if padding == 'SAME':
-            out_h = -(-spatial_h // strides[0])  # ceil division
+            out_h = -(-spatial_h // strides[0])  # Ceil division
             out_w = -(-spatial_w // strides[1])
         else:  # VALID
             out_h = (spatial_h - kernel_h) // strides[0] + 1
@@ -495,7 +495,7 @@ class TestConv2dBiasGradient:
         grads_etrace = etrace_grad_step(x)
         grad_p = list(grads_etrace.values())[0]
         assert isinstance(grad_p, dict), (
-            f'Expected dict gradient for merged ParamState, got {type(grad_p)}'
+            f'Expected dict gradient for merged ParamState, got {type(grad_p)}. Return the expected value for the reported field.'
         )
 
         # --- BPTT reference ---
@@ -515,7 +515,7 @@ class TestConv2dBiasGradient:
         })
 
         assert jnp.abs(bptt['bias']).max() > 1e-3, (
-            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}'
+            f'BPTT bias gradient is unexpectedly near-zero: {bptt["bias"]}. Use inputs that produce a non-zero gradient.'
         )
 
         np.testing.assert_allclose(grad_p['weight'], bptt['weight'], atol=1e-5,
@@ -716,8 +716,8 @@ class TestConvPatchExtraction:
         k = brainstate.random.randn(4, 3, 3)        # OIH
         params = dict(strides=(1,), padding='SAME', dimension_numbers=None)
         patches = self._patches(x, k.shape, **params)
-        assert patches.shape == (2, 8, 3, 3)        # (b, s, c_in, u)
-        y = jnp.einsum('bscu,kcu->bks', patches, k)  # back to NCH
+        assert patches.shape == (2, 8, 3, 3)        # (B, s, c_in, u)
+        y = jnp.einsum('bscu,kcu->bks', patches, k)  # Back to NCH
         ref = jax.lax.conv_general_dilated(x, k, window_strides=(1,), padding='SAME')
         np.testing.assert_allclose(y, ref, atol=1e-5)
 
@@ -749,8 +749,8 @@ class TestConvPatchExtraction:
         dn = ('NWC', 'WIO', 'NWC')
         params = dict(strides=(1,), padding='SAME', dimension_numbers=dn)
         patches = self._patches(x, k.shape, **params)
-        assert patches.shape == (2, 8, 3, 3)        # (b, s, c_in, u)
-        y = jnp.einsum('bscu,uco->bso', patches, k)  # back to NWC
+        assert patches.shape == (2, 8, 3, 3)        # (B, s, c_in, u)
+        y = jnp.einsum('bscu,uco->bso', patches, k)  # Back to NWC
         ref = jax.lax.conv_general_dilated(
             x, k, window_strides=(1,), padding='SAME', dimension_numbers=dn
         )
@@ -936,17 +936,17 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
 
     def test_instant_drtrl_weight_matches_jacobian_repeated_index_contraction(self):
         brainstate.random.seed(701)
-        in_ch, out_ch, kw, L = 2, 4, 3, 6  # odd kernel width: symmetric SAME pad
-        x = brainstate.random.randn(in_ch, L)  # unbatched, default NCH-style
-        K0 = brainstate.random.randn(out_ch, in_ch, kw)  # default OIH kernel
+        in_ch, out_ch, kw, L = 2, 4, 3, 6  # Odd kernel width: symmetric SAME pad
+        x = brainstate.random.randn(in_ch, L)  # Unbatched, default NCH-style
+        K0 = brainstate.random.randn(out_ch, in_ch, kw)  # Default OIH kernel
 
         def fwd(K):
             y = jax.lax.conv_general_dilated(
                 x[None], K, window_strides=(1,), padding='SAME',
             )
-            return y[0]  # (out_ch, L)
+            return y[0]  # (Out_ch, L)
 
-        J = jax.jacobian(fwd)(K0)  # (k, s, k2, c, u)
+        J = jax.jacobian(fwd)(K0)  # (K, s, k2, c, u)
 
         pad = (kw - 1) // 2
         x_padded = jnp.pad(x, ((0, 0), (pad, pad)))
@@ -1009,7 +1009,7 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
         # Bias: jacobian of bias_fn itself (diagonal), never assumed.
         J_b = jax.jacobian(bias_fn)(b0)
         db = jnp.diagonal(J_b)
-        ref_bias = g * db[:, None]  # channel axis is axis 0 in (k, s) layout
+        ref_bias = g * db[:, None]  # Channel axis is axis 0 in (k, s) layout
 
         out_b = _conv_instant_drtrl(
             x, g, {'weight': K0, 'bias': b0}, strides=(1,), padding='SAME',
@@ -1023,14 +1023,14 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
         in_ch, out_ch, kw, L = 2, 4, 3, 6
         K0 = brainstate.random.randn(out_ch, in_ch, kw)
 
-        trace_w = brainstate.random.randn(L, out_ch, in_ch, kw)  # (*spatial_out, *kernel)
-        trace_b = brainstate.random.randn(out_ch, L)  # (*y_layout)
-        dg_hidden = brainstate.random.randn(out_ch, L)  # (*y_layout)
+        trace_w = brainstate.random.randn(L, out_ch, in_ch, kw)  # (*Spatial_out, *kernel)
+        trace_b = brainstate.random.randn(out_ch, L)  # (*Y_layout)
+        dg_hidden = brainstate.random.randn(out_ch, L)  # (*Y_layout)
 
         # Independent reimplementation of the documented spatial-sum
         # contraction, built without reusing `_conv_layout` or any of the
         # rule's own axis-alignment code.
-        dg_t = jnp.transpose(dg_hidden, (1, 0))  # (s, k)
+        dg_t = jnp.transpose(dg_hidden, (1, 0))  # (S, k)
         ref_w = jnp.einsum('sk,skcu->kcu', dg_t, trace_w)
         ref_b = jnp.sum(trace_b * dg_hidden, axis=1)
 

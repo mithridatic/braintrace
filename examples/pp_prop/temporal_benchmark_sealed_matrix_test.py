@@ -36,8 +36,8 @@ def test_matrix_stops_on_failed_child_without_promoting_partial(tmp_path: Path) 
     settings = _settings(tmp_path)
 
     def fail(_command, _root):
-        raise RuntimeError("gpu failed")
+        raise RuntimeError("Gpu failed. Check the reported inputs and retry the operation.")
 
-    with pytest.raises(RuntimeError, match="gpu failed"):
+    with pytest.raises(RuntimeError, match="(?i)gpu failed"):
         run_sealed_matrix(settings, runner=fail, analyzer=lambda _paths: {})
     assert not any(settings.output_directory.rglob("*.json"))

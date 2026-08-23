@@ -53,7 +53,7 @@ def test_edge_budget_rejects_one_edge_over_policy_cap() -> None:
     assert report.edges_per_neuron == 1_024.25
     assert report.budget_utilization > 1.0
     assert "policy_edge_cap_exceeded" in report.violations
-    with pytest.raises(safety.ResourceSafetyError, match="recurrent edge budget"):
+    with pytest.raises(safety.ResourceSafetyError, match="(?i)recurrent edge budget"):
         require_recurrent_edge_budget(4, 4_097)
 
 
@@ -209,7 +209,7 @@ def test_full_gpu_assessment_fails_closed_for_missing_or_invalid_evidence(
     assert not report.within_limits
     assert not report.full_qualification_safe
     assert violation in report.violations
-    with pytest.raises(safety.ResourceSafetyError, match="full GPU qualification"):
+    with pytest.raises(safety.ResourceSafetyError, match="(?i)full GPU qualification"):
         report.require_full_qualification_safe()
 
 
@@ -344,7 +344,7 @@ def test_pre_device_environment_fails_closed(
 
     assert not report.safe
     assert violation in report.violations
-    with pytest.raises(safety.ResourceSafetyError, match="pre-device GPU"):
+    with pytest.raises(safety.ResourceSafetyError, match="(?i)pre-device GPU"):
         report.require_safe()
 
 
@@ -447,7 +447,7 @@ def test_full_runtime_safety_fails_closed_for_incomplete_runtime_evidence(
     assert not report.within_limits
     assert not report.full_qualification_safe
     assert violation in report.violations
-    with pytest.raises(safety.ResourceSafetyError, match="full GPU runtime"):
+    with pytest.raises(safety.ResourceSafetyError, match="(?i)full GPU runtime"):
         report.require_full_qualification_safe()
 
 

@@ -154,7 +154,7 @@ class TestJITAndJVP:
             lambda x: p.bind(x), (jnp.asarray(3.0),), (jnp.asarray(1.0),),
         )
         np.testing.assert_allclose(primal, 9.0)
-        np.testing.assert_allclose(tangent, 6.0)  # d(x^2)/dx = 2x
+        np.testing.assert_allclose(tangent, 6.0)  # D(x^2)/dx = 2x
 
     def test_grad_matches_analytic(self):
         p = register_primitive(_fresh_name('grad'), lambda x: x ** 3)
@@ -167,7 +167,7 @@ class TestJITAndJVP:
         the user-supplied ``impl_fn`` can take the JVP unconditionally."""
         p = register_primitive(_fresh_name('jvpzero'), lambda x, y: x * y)
 
-        # vjp implicitly produces Zero tangents for non-active inputs.
+        # Vjp implicitly produces Zero tangents for non-active inputs.
         def f(x, y):
             return p.bind(x, y)
 
@@ -203,7 +203,7 @@ class TestIntBoolPrimalZeroTangent:
 
         primal, tangent = jax.jvp(f, (jnp.asarray(2.0),), (jnp.asarray(1.0),))
         np.testing.assert_allclose(primal, 6.0)
-        np.testing.assert_allclose(tangent, 3.0)  # d(x*y)/dy = x = 3
+        np.testing.assert_allclose(tangent, 3.0)  # D(x*y)/dy = x = 3
 
     def test_jvp_bool_primal_zero_tangent_does_not_raise(self):
         p = register_primitive(
@@ -370,7 +370,7 @@ def _prim_names(fn, *args):
 
 
 class TestVmapIdentityPreservation:
-    """vmap over an unbatched ETP op must promote to the batched primitive."""
+    """Vmap over an unbatched ETP op must promote to the batched primitive."""
 
     def test_vmap_matmul_promotes_to_etp_mm(self):
         x = jnp.ones((4, 3))
@@ -406,7 +406,7 @@ class TestVmapIdentityPreservation:
         assert jnp.allclose(fn(x), x @ (w ** 2), atol=1e-6)
 
     def test_promotion_from_nonzero_batch_axis(self):
-        xt = jnp.asarray(brainstate.random.randn(3, 4))  # batch on axis 1
+        xt = jnp.asarray(brainstate.random.randn(3, 4))  # Batch on axis 1
         w = jnp.asarray(brainstate.random.randn(3, 5))
         fn = jax.vmap(lambda xi: braintrace.matmul(xi, w), in_axes=1)
         assert 'etp_mm' in _prim_names(fn, xt)
@@ -421,7 +421,7 @@ class TestVmapIdentityPreservation:
 
     def test_batched_weight_falls_back_with_warning(self):
         x = jnp.asarray(brainstate.random.randn(3))
-        ws = jnp.asarray(brainstate.random.randn(4, 3, 5))  # per-lane weights
+        ws = jnp.asarray(brainstate.random.randn(4, 3, 5))  # Per-lane weights
         fn = jax.vmap(lambda wi: braintrace.matmul(x, wi))
         with pytest.warns(UserWarning, match='decomposed'):
             out = fn(ws)

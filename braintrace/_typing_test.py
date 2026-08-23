@@ -67,7 +67,7 @@ def test_numpy_integer_array_is_accepted():
 @pytest.mark.parametrize(
     'size',
     [
-        3,  # int
+        3,  # Int
         np.int64(3),  # np.integer
         (3, 4),  # Sequence[int]
         (np.int64(3), np.int64(4)),  # Sequence[np.integer]
@@ -242,9 +242,9 @@ def test_float_array_raises_nothing_but_truncates():
 @pytest.mark.parametrize(
     'size, expected',
     [
-        ((2.7,), (2,)),  # truncates toward zero, not rounds
+        ((2.7,), (2,)),  # Truncates toward zero, not rounds
         ((-2.7,), (-2,)),  # ... in both directions
-        ((3.0, 4.0), (3, 4)),  # integral floats pass through silently
+        ((3.0, 4.0), (3, 4)),  # Integral floats pass through silently
     ],
 )
 def test_float_inside_a_sequence_is_silently_truncated(size, expected):
@@ -278,7 +278,7 @@ def test_brainstate_aliases_are_reexported_not_redeclared(name):
 
 def test_size_union_is_what_as_size_tuple_documents():
     """Guard the premise of ``test_every_arm_of_the_declared_size_union_is_accepted``:
-    if ``brainstate`` widens ``Size``, the union-coverage test above silently
+    If ``brainstate`` widens ``Size``, the union-coverage test above silently
     stops covering the whole union.
 
     Compared structurally, via :func:`typing.get_args`, rather than against the

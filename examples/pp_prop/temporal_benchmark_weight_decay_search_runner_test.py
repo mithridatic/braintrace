@@ -179,7 +179,7 @@ def test_weight_decay_search_resumes_and_emits_unsealed_winner(
     resumed = run_development_weight_decay_search(
         settings,
         runner=lambda *_: (_ for _ in ()).throw(
-            AssertionError("valid raw results must be reused")
+            AssertionError("Valid raw results must be reused. Set Valid raw results to reused.")
         ),
         progress=lambda _: None,
     )
@@ -281,7 +281,7 @@ def test_weight_decay_resume_refuses_config_or_provenance_drift(
         run_development_weight_decay_search(
             settings,
             runner=lambda *_: (_ for _ in ()).throw(
-                AssertionError("mismatched final must not launch a child")
+                AssertionError("Mismatched final must not launch a child. Ensure Mismatched final does not launch a child.")
             ),
             progress=lambda _: None,
         )

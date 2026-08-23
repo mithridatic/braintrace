@@ -332,7 +332,7 @@ class LoRA(brainstate.nn.LoRA):
         out = unfold(lora_matmul(x2, param['lora_a'], param['lora_b'], alpha=1.0 / lora_rank))
         if self.base_module is not None:
             if not callable(self.base_module):
-                raise ValueError('`self.base_module` must be callable.')
+                raise ValueError('`Self.base_module` must be callable. Pass a callable value for `Self.base_module`.')
             out += self.base_module(x)
         return out
 
@@ -437,7 +437,7 @@ class GroupedLinear(brainstate.nn.Module):
         params = self.weight.value
         if x.ndim <= 3:  # type: ignore[union-attr]  # callers feed (..., G, K)
             return grouped_matmul(x, params['weight'], params.get('bias'))
-        # the rank-guarded op accepts only (G, K) / (batch, G, K); fold extra
+        # The rank-guarded op accepts only (G, K) / (batch, G, K); fold extra
         # leading axes into one batch axis, unfold on the output (reshape via
         # brainunit so quantities keep their units)
         lead_shape = x.shape[:-2]  # type: ignore[union-attr]

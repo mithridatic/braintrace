@@ -65,7 +65,7 @@ def _check_chunk_size(chunk_size: Any) -> Optional[int]:
             f'({chunk_size!r}). Pass a Python int, not a traced or numpy value.'
         )
     if chunk_size < 1:
-        raise ValueError(f'chunk_size must be at least 1, got {chunk_size}.')
+        raise ValueError(f'chunk_size must be at least 1, got {chunk_size}. Set chunk_size to at least 1.')
     # 1 is the plain single-step path, not a length-1 window -- the same
     # encoding `train_synthetic_gradient` uses.
     return None if chunk_size == 1 else chunk_size
@@ -123,8 +123,8 @@ def _sequence_length(sequences: tuple) -> int:
     assert length is not None
     if length == 0:
         raise ValueError(
-            'the sequences are empty (leading length 0), so there is no '
-            'objective to reduce and no step to drive.'
+            'The sequences are empty (leading length 0), so there is no '
+            'objective to reduce and no step to drive. Provide the missing item named in the message.'
         )
     return length
 
@@ -185,7 +185,7 @@ class SequenceDriverMixin:
     def _seq_vjp_method(self) -> Optional[str]:
         raise NotImplementedError
 
-    # -- validation ---------------------------------------------------------
+    # -- Validation ---------------------------------------------------------
 
     def _seq_check_window(self, chunk_size: Optional[int], length: int,
                           *, for_grad: bool) -> None:
@@ -225,7 +225,7 @@ class SequenceDriverMixin:
                 f'chunk_size that divides {length}.'
             )
 
-    # -- the gradient driver ------------------------------------------------
+    # -- The gradient driver ------------------------------------------------
 
     def etrace_grad(
         self,
@@ -362,10 +362,10 @@ class SequenceDriverMixin:
         """
         if reduction not in _REDUCTIONS:
             raise ValueError(
-                f'reduction must be one of {_REDUCTIONS}, got {reduction!r}.')
+                f'Reduction must be one of {_REDUCTIONS}, got {reduction!r}. Set Reduction to one of {_REDUCTIONS}.')
         if loss_output not in _LOSS_OUTPUTS:
             raise ValueError(
-                f'loss_output must be one of {_LOSS_OUTPUTS}, got {loss_output!r}.')
+                f'loss_output must be one of {_LOSS_OUTPUTS}, got {loss_output!r}. Set loss_output to one of {_LOSS_OUTPUTS}.')
 
         chunk_size = _check_chunk_size(chunk_size)
         length = _sequence_length(sequences)
@@ -445,7 +445,7 @@ class SequenceDriverMixin:
 
         return (total, value, aux) if has_aux else (total, value)
 
-    # -- the online driver ---------------------------------------------------
+    # -- The online driver ---------------------------------------------------
 
     def etrace_online(
         self,
@@ -572,7 +572,7 @@ class SequenceDriverMixin:
                 'etrace_online needs an optimizer: it applies the update '
                 'itself, once per step, inside the compiled loop. Register it '
                 'against the same weights first, e.g. '
-                'opt.register_trainable_weights(learner.param_states).'
+                'opt.register_trainable_weights(learner.param_states). Fix the input condition named in the error, then rerun the operation.'
             )
 
         chunk_size = _check_chunk_size(chunk_size)
@@ -584,7 +584,7 @@ class SequenceDriverMixin:
             weights = self._seq_param_states
 
         windowed = chunk_size is not None
-        if chunk_size is not None:  # narrows the int; see ``etrace_grad``
+        if chunk_size is not None:  # Narrows the int; see ``etrace_grad``
             n_steps = length // chunk_size
             xs = (_to_windows(sequences, n_steps, chunk_size),
                   mask.reshape(n_steps, chunk_size))
@@ -639,7 +639,7 @@ class SequenceDriverMixin:
         losses = losses.reshape((length,))
         return (losses, aux) if has_aux else losses
 
-    # -- the evolution driver -----------------------------------------------
+    # -- The evolution driver -----------------------------------------------
 
     def etrace_evolve(
         self,
@@ -704,7 +704,7 @@ class SequenceDriverMixin:
         self._seq_check_window(chunk_size, length, for_grad=False)
 
         windowed = chunk_size is not None
-        if chunk_size is not None:  # narrows the int; see ``etrace_grad``
+        if chunk_size is not None:  # Narrows the int; see ``etrace_grad``
             n_steps = length // chunk_size
             xs = _to_windows(sequences, n_steps, chunk_size)
         else:

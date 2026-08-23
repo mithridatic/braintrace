@@ -47,7 +47,7 @@ def main(*, n_epochs: int = 30, batch_size: int = 64, plot: bool = True) -> dict
             out = learner(inp)
             return braintools.metric.squared_error(out, tar).mean()
 
-        # reduction='sum' preserves the accumulated-gradient scale this
+        # Reduction='sum' preserves the accumulated-gradient scale this
         # example was tuned at; the reported loss stays the per-step mean.
         grads, step_losses = learner.etrace_grad(
             inputs, targets, step_fn=step_loss, reduction='sum', return_value=True)

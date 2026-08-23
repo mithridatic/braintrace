@@ -142,13 +142,13 @@ class TestAddScanYs:
         assert list(new_eqn.outvars[:len(eqn.outvars)]) == list(eqn.outvars)
         assert stacked[tanh_var].aval.shape == (4,)
         assert stacked[carry_invar].aval.shape == (4,)
-        # the input structure (consts/carry) is preserved; only ys grow
+        # The input structure (consts/carry) is preserved; only ys grow
         assert scan_num_consts_carry(new_eqn) == (num_consts, num_carry)
         assert new_eqn.params['length'] == eqn.params['length']
-        # body eqns preserved by identity
+        # Body eqns preserved by identity
         assert new_eqn.params['jaxpr'].jaxpr.eqns == body_jaxpr.eqns
 
-        # evaluate the rewritten jaxpr: replace the eqn, extend outvars, compare
+        # Evaluate the rewritten jaxpr: replace the eqn, extend outvars, compare
         new_eqns = [new_eqn if e is eqn else e for e in closed.jaxpr.eqns]
         new_jaxpr = Jaxpr(
             constvars=closed.jaxpr.constvars, invars=closed.jaxpr.invars,
@@ -168,7 +168,7 @@ class TestAddScanYs:
             tanhs.append(t)
         assert jnp.allclose(outs[-2], jnp.stack(tanhs))
         assert jnp.allclose(outs[-1], jnp.stack(cs))
-        # original outputs unchanged
+        # Original outputs unchanged
         ref = jax.core.eval_jaxpr(closed.jaxpr, closed.consts, xs)
         assert jnp.allclose(outs[0], ref[0])
         assert jnp.allclose(outs[1], ref[1])
@@ -220,7 +220,7 @@ class TestAnalyzeAndRewriteScan:
         g = bundle.groups[0]
         assert g.descent is not None
         assert g.num_state == 1
-        # outer-facing hidden vars are the scan carry vars, known to minfo
+        # Outer-facing hidden vars are the scan carry vars, known to minfo
         assert g.hidden_outvars[0] in minfo.outvar_to_hidden_path
         assert g.hidden_invars[0] in minfo.invar_to_hidden_path
         # Body-scoped transition: one substep, with external inputs preceding
@@ -234,7 +234,7 @@ class TestAnalyzeAndRewriteScan:
         assert r.control_flow_context is not None
         assert r.trainable_paths['weight'] == ('w',)
         assert r.hidden_groups[0] is g
-        # everything the executor needs is in the stacked map
+        # Everything the executor needs is in the stacked map
         m = bundle.info.stacked_var_map
         assert r.x_var in m and r.y_var in m
         for j in r.y_to_hidden_group_jaxprs:
@@ -243,11 +243,11 @@ class TestAnalyzeAndRewriteScan:
             )
         assert all(v in m for v in g.descent.body_hidden_invars)
         assert all(v in m for v in g.transition_jaxpr_constvars)
-        # stacked avals carry the substep axis
+        # Stacked avals carry the substep axis
         L = bundle.info.length
         assert L == 8
         assert all(m[v].aval.shape[0] == L for v in m)
-        # the rewritten eqn's outvars extend the original with the stacked vars
+        # The rewritten eqn's outvars extend the original with the stacked vars
         assert list(bundle.new_eqn.outvars[-len(bundle.stacked_outer_vars):]) \
             == list(bundle.stacked_outer_vars)
         assert bundle.info.scan_eqn_id == id(bundle.new_eqn)
@@ -290,7 +290,7 @@ class TestAnalyzeAndRewriteScan:
         assert len(bundle.relations) == 2
         assert all(r.control_flow_context is not None
                    for r in bundle.relations)
-        # tied weight: both relations route the SAME param via distinct y_vars
+        # Tied weight: both relations route the SAME param via distinct y_vars
         assert bundle.relations[0].y_var is not bundle.relations[1].y_var
 
 
@@ -336,7 +336,7 @@ class TestApplyScanDescentPipeline:
             range(len(graph.hidden_groups)))
         assert any(d.kind is DiagnosticKind.SCAN_DESCENT_APPLIED
                    for d in graph.diagnostics)
-        # stacked temps are hoisted: every mapped outer var is a jaxpr outvar
+        # Stacked temps are hoisted: every mapped outer var is a jaxpr outvar
         m = rels[0].control_flow_context.scan.stacked_var_map
         outvars = set(graph.module_info.jaxpr.outvars)
         assert all(sv in outvars for sv in m.values())
@@ -402,7 +402,7 @@ class TestApplyScanDescentPipeline:
                 self.h = brainstate.HiddenState(jnp.zeros((1, 4)))
 
             def update(self, x):
-                # outer ETP relation whose y reaches ``h`` through the scan
+                # Outer ETP relation whose y reaches ``h`` through the scan
                 drive = braintrace.matmul(x.reshape(1, -1), self.w_in.value)
 
                 def substep(_):
@@ -473,7 +473,7 @@ class TestApplyScanDescentPipeline:
                 x_row = x.reshape(1, -1)
 
                 def substep(_):
-                    # plain matmul: deliberately NOT an ETP primitive
+                    # Plain matmul: deliberately NOT an ETP primitive
                     self.h.value = 0.9 * self.h.value + jnp.tanh(
                         x_row @ self.w.value)
                     return self.h.value

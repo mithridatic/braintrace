@@ -155,20 +155,20 @@ class Trainer(object):
     ):
         super().__init__()
 
-        # dataset
+        # Dataset
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.x_fun = x_fun
 
-        # target network
+        # Target network
         self.target = target
 
-        # optimizer
+        # Optimizer
         self.opt = opt
         weights = self.target.states().subset(brainstate.ParamState)
         opt.register_trainable_weights(weights)
 
-        # training parameters
+        # Training parameters
         self.n_epoch = n_epoch
 
     def _acc(self, out, target):
@@ -181,9 +181,9 @@ class Trainer(object):
 
         def _step(inp):
             with brainstate.environ.context(fit=False):
-                # call the model
+                # Call the model
                 out = model(inp)
-                # calculate the loss
+                # Calculate the loss
                 loss = braintools.metric.softmax_cross_entropy_with_integer_labels(out, ys).mean()
                 return loss, out
 
@@ -197,12 +197,12 @@ class Trainer(object):
         train_losses, train_accs = [], []
         test_losses, test_accs = [], []
         for i_epoch in range(self.n_epoch):
-            # training
+            # Training
             losses, accs = [], []
             bar = tqdm(self.train_loader)
             for x_local, y_local in bar:
-                x_local = self.x_fun(x_local)  # [n_steps, n_samples, n_in]
-                y_local = jax.numpy.asarray(y_local)  # [n_samples]
+                x_local = self.x_fun(x_local)  # [N_steps, n_samples, n_in]
+                y_local = jax.numpy.asarray(y_local)  # [N_samples]
                 loss, acc = self.batch_train(x_local, y_local)
                 bar.set_description(f'Training loss = {loss:.5f}, acc={acc:.5f}', refresh=True)
                 losses.append(loss)
@@ -212,12 +212,12 @@ class Trainer(object):
             train_losses.append(train_loss)
             train_accs.append(train_acc)
 
-            # testing
+            # Testing
             test_losses, test_accs = [], []
             bar = tqdm(self.test_loader)
             for x_local, y_local in bar:
-                x_local = self.x_fun(x_local)  # [n_steps, n_samples, n_in]
-                y_local = jax.numpy.asarray(y_local)  # [n_samples]
+                x_local = self.x_fun(x_local)  # [N_steps, n_samples, n_in]
+                y_local = jax.numpy.asarray(y_local)  # [N_samples]
                 loss, acc = self.batch_eval(x_local, y_local)
                 bar.set_description(f'Testing loss = {loss:.5f}, acc={acc:.5f}', refresh=True)
                 test_losses.append(loss)
@@ -250,7 +250,7 @@ class OnlineVmapTrainer(Trainer):
         # batched single step inputs[0]; compile strips axis 0 to recover the
         # per-sample example, so this is the same graph the manual expansion in
         # examples/drtrl/02-batching-vmap.py builds by hand.
-        # model = braintrace.compile(self.target, braintrace.ES_D_RTRL, inputs[0],
+        # Model = braintrace.compile(self.target, braintrace.ES_D_RTRL, inputs[0],
         #                            batch_size=inputs.shape[1], vmap=True,
         #                            decay_or_rank=self.decay_or_rank)
         with brainstate.environ.context(fit=True):
@@ -268,20 +268,20 @@ class OnlineVmapTrainer(Trainer):
 
         def _etrace_grad(inp):
             with brainstate.environ.context(fit=True):
-                # call the model
+                # Call the model
                 out = model(inp)
-                # calculate the loss
+                # Calculate the loss
                 loss = braintools.metric.softmax_cross_entropy_with_integer_labels(out, targets).mean()
                 return loss, out
 
-        # forward propagation. reduction='sum' preserves the
+        # Forward propagation. reduction='sum' preserves the
         # accumulated-gradient scale this example was tuned at; the reported
         # loss stays the per-step mean.
         grads, losses, outs = model.etrace_grad(
             inputs, step_fn=_etrace_grad, reduction='sum',
             has_aux=True, return_value=True)
 
-        # gradient updates
+        # Gradient updates
         # grads = brainstate.nn.clip_grad_norm(grads, 1.)
         self.opt.update(grads)
         return losses.mean(), self._acc(outs, targets)
@@ -300,7 +300,7 @@ class OnlineBatchTrainer(Trainer):
         # Same call as OnlineVmapTrainer above, minus vmap=True: the model sees
         # the batch axis itself, so compile only has to init the states with
         # batch_size and build the graph on the batched example inputs[0].
-        # model = braintrace.compile(self.target, braintrace.ES_D_RTRL, inputs[0],
+        # Model = braintrace.compile(self.target, braintrace.ES_D_RTRL, inputs[0],
         #                            batch_size=inputs.shape[1],
         #                            decay_or_rank=self.decay_or_rank)
         with brainstate.environ.context(fit=True):
@@ -312,20 +312,20 @@ class OnlineBatchTrainer(Trainer):
 
         def _etrace_grad(inp):
             with brainstate.environ.context(fit=True):
-                # call the model
+                # Call the model
                 out = model(inp)
-                # calculate the loss
+                # Calculate the loss
                 loss = braintools.metric.softmax_cross_entropy_with_integer_labels(out, targets).mean()
                 return loss, out
 
-        # forward propagation. reduction='sum' preserves the
+        # Forward propagation. reduction='sum' preserves the
         # accumulated-gradient scale this example was tuned at; the reported
         # loss stays the per-step mean.
         grads, losses, outs = model.etrace_grad(
             inputs, step_fn=_etrace_grad, reduction='sum',
             has_aux=True, return_value=True)
 
-        # gradient updates
+        # Gradient updates
         # grads = brainstate.nn.clip_grad_norm(grads, 1.)
         self.opt.update(grads)
         return losses.mean(), self._acc(outs, targets)
@@ -336,11 +336,11 @@ class BPTTTrainer(Trainer):
     def batch_train(self, inputs, targets):
         # inputs: [n_step, n_batch, ...]
 
-        # kept manual: BPTT baseline — no online algorithm to migrate
+        # Kept manual: BPTT baseline — no online algorithm to migrate
         brainstate.nn.vmap_init_all_states(self.target, axis_size=inputs.shape[1], state_tag='new')
         model = brainstate.nn.Vmap(self.target, vmap_states='new')
 
-        # the model for a single step
+        # The model for a single step
         def _run_step_train(inp):
             with brainstate.environ.context(fit=True):
                 out = model(inp)
@@ -351,11 +351,11 @@ class BPTTTrainer(Trainer):
             outs, losses = brainstate.transform.for_loop(_run_step_train, inputs)
             return losses.mean(), outs
 
-        # gradients
+        # Gradients
         weights = self.target.states().subset(brainstate.ParamState)
         grads, loss, outs = brainstate.transform.grad(_bptt_grad_step, weights, has_aux=True, return_value=True)()
 
-        # optimization
+        # Optimization
         # grads = brainstate.nn.clip_grad_norm(grads, 1.)
         self.opt.update(grads)
 
@@ -372,7 +372,7 @@ def get_shd_data(
     # the English and German languages. The audio waveforms have been converted into spike trains using an
     # artificial model of the inner ear and parts of the ascending auditory pathway. The SHD dataset has 8,156
     # training and 2,264 test samples. A full description of the dataset and how it was created can be found
-    # in the paper below. Please cite this paper if you make use of the dataset.
+    # in the paper below. Cite this paper if you use the dataset.
 
     in_shape = SHD.sensor_size
     out_shape = 20
@@ -443,8 +443,8 @@ def get_nmnist_data(
 
 
 def data_processing(x_local):
-    assert x_local.ndim == 5  # (sequence, batch, channel, height, width)
-    x_local = x_local.permute(0, 1, 3, 4, 2)  # (sequence, batch, height, width, channel)
+    assert x_local.ndim == 5  # (Sequence, batch, channel, height, width)
+    x_local = x_local.permute(0, 1, 3, 4, 2)  # (Sequence, batch, height, width, channel)
     # x_local is a torch tensor here; convert via numpy first so brainunit stays on
     # the numpy/jax backend (u.math.asarray would otherwise dispatch to the torch
     # backend and reject the JAX dtype).
@@ -453,13 +453,13 @@ def data_processing(x_local):
 
 if __name__ == '__main__':
     with brainstate.environ.context(dt=1.0):
-        # n-mnist data
+        # N-mnist data
         data = get_nmnist_data(batch_size=256, cache_dir='./data/')
 
         # SHD data
         # data = get_shd_data(batch_size=256)
 
-        # model
+        # Model
         net = ConvSNN(data.in_shape, data.out_shape)
 
         # Online Trainer

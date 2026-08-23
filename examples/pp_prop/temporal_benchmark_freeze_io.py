@@ -10,11 +10,11 @@ from typing import Any, NoReturn
 
 
 class FreezeArtifactError(ValueError):
-    """Indicate malformed or mutually inconsistent selection evidence."""
+    """show malformed or mutually inconsistent selection evidence."""
 
 
 def _reject_constant(value: str) -> NoReturn:
-    raise FreezeArtifactError(f"artifact contains non-finite JSON constant {value}")
+    raise FreezeArtifactError(f"Artifact contains non-finite JSON constant {value}. Use finite values.")
 
 
 def load_artifact(path: pathlib.Path) -> dict[str, Any]:
@@ -24,9 +24,9 @@ def load_artifact(path: pathlib.Path) -> dict[str, Any]:
             path.read_text(encoding="utf-8"), parse_constant=_reject_constant
         )
     except (OSError, msgspec_json.JSONDecodeError) as error:
-        raise FreezeArtifactError(f"cannot read artifact {path}: {error}") from error
+        raise FreezeArtifactError(f"Cannot read artifact {path}: {error}. Check the path and install the required resource.") from error
     if not isinstance(value, dict):
-        raise FreezeArtifactError(f"artifact {path} must contain a JSON object")
+        raise FreezeArtifactError(f"Artifact {path} must contain a JSON object. Add a JSON object to Artifact {path}.")
     return value
 
 
@@ -37,7 +37,7 @@ def artifact_reference(
     try:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError as error:
-        raise FreezeArtifactError(f"cannot hash artifact {path}: {error}") from error
+        raise FreezeArtifactError(f"Cannot hash artifact {path}: {error}. Fix the input condition named in the error, then rerun the operation.") from error
     return {
         "filename": path.name,
         "sha256": digest,

@@ -86,7 +86,7 @@ def _format_decay_and_rank(decay_or_rank: Any) -> Tuple[float, int]:
     """
     Determines the decay factor and the number of approximation ranks based on the input.
 
-    This function takes either a decay factor or a number of approximation ranks as input
+    This function takes either a decay factor or many approximation ranks as input
     and returns both the decay factor and the number of approximation ranks. If the input
     is a float, it is treated as a decay factor, and the number of ranks is calculated.
     If the input is an integer, it is treated as the number of ranks, and the decay factor
@@ -117,19 +117,19 @@ def _format_decay_and_rank(decay_or_rank: Any) -> Tuple[float, int]:
     expressible as a float. Decay zero is also reachable as rank one.
     """
     if isinstance(decay_or_rank, bool):
-        raise TypeError('decay_or_rank must be an integer rank or float decay.')
+        raise TypeError('decay_or_rank must be an integer rank or float decay. Set decay_or_rank to an integer rank or float decay.')
     if isinstance(decay_or_rank, Integral):
         num_rank = int(decay_or_rank)
         if num_rank < 1:
-            raise ValueError(f'rank must be at least 1, got {decay_or_rank!r}.')
+            raise ValueError(f'Rank must be at least 1, got {decay_or_rank!r}. Set Rank to at least 1.')
         decay = (num_rank - 1) / (num_rank + 1)
     elif isinstance(decay_or_rank, Real):
         decay = float(decay_or_rank)
         if not math.isfinite(decay) or not 0 <= decay < 1:
-            raise ValueError(f'decay must be in [0, 1), got {decay_or_rank!r}.')
+            raise ValueError(f'Decay must be in [0, 1), got {decay_or_rank!r}. Set decay_or_rank to a value in [0, 1).')
         num_rank = round(2. / (1 - decay) - 1)
     else:
-        raise TypeError('decay_or_rank must be an integer rank or float decay.')
+        raise TypeError('decay_or_rank must be an integer rank or float decay. Set decay_or_rank to an integer rank or float decay.')
     return decay, num_rank
 
 
@@ -159,7 +159,7 @@ def _format_decays(decay_or_rank: Any) -> Tuple[float, float]:
         if len(decay_or_rank) != 2:
             raise ValueError(
                 'decay_or_rank as a pair must have exactly two entries '
-                f'(x-side, f-side), got {len(decay_or_rank)}: {decay_or_rank!r}.'
+                f'(x-side, f-side), got {len(decay_or_rank)}: {decay_or_rank!r}. Pass a pair with exactly two entries: (x-side, f-side).'
             )
         x_side, f_side = decay_or_rank
     else:
@@ -330,7 +330,7 @@ def _init_IO_dim_state(
                 shape = x_var.aval.shape
                 dtype = x_var.aval.dtype
             else:
-                # the trace filters the primitive's x *representation*
+                # The trace filters the primitive's x *representation*
                 # (e.g. embedding: the one-hot encoding of its integer
                 # indices), so size the zero state from the transformed aval.
                 weight_avals = {k: v.aval for k, v in relation.trainable_vars.items()}
@@ -362,7 +362,7 @@ def _init_IO_dim_state(
             )
         key = etrace_df_key(relation.y_var, group.index)
         if key in etrace_dfs:  # relation.y_var is a unique output of the weight operation
-            raise ValueError(f'The relation {key} has been added. ')
+            raise ValueError(f'Relation {key} is already registered. Use a unique relation key.')
 
         #
         # Group 1:
@@ -396,9 +396,9 @@ def _update_IO_dim_etrace_scan_fn(
         Dict[ETraceDF_Key, jax.Array]
     ],
     jacobians: Tuple[
-        Dict[ETraceRawX_Key, jax.Array],  # the weight x
-        Dict[ETraceDF_Key, jax.Array],  # the weight df
-        Sequence[jax.Array],  # the hidden group Jacobians
+        Dict[ETraceRawX_Key, jax.Array],  # The weight x
+        Dict[ETraceDF_Key, jax.Array],  # The weight df
+        Sequence[jax.Array],  # The hidden group Jacobians
     ],
     hid_weight_op_relations: Sequence[HiddenParamOpRelation],
     decay_x: float,
@@ -449,7 +449,7 @@ def _update_IO_dim_etrace_scan_fn(
         the weight x and df, keyed by ETraceX_Key and ETraceDF_Key,
         respectively.
     """
-    # --- the data --- #
+    # --- The data --- #
 
     #
     # the etrace data at the current time step (t) of the O(n) algorithm
@@ -472,10 +472,10 @@ def _update_IO_dim_etrace_scan_fn(
     #
     # the history etrace values
     #
-    # - hist_xs is a dictionary,
+    # - Hist_xs is a dictionary,
     #       {ETraceX_Key: brainstate.State}
     #
-    # - hist_dfs is a dictionary,
+    # - Hist_dfs is a dictionary,
     #       {ETraceDF_Key: brainstate.State}
     #
     hist_xs, hist_dfs = hist_etrace_vals
@@ -485,13 +485,13 @@ def _update_IO_dim_etrace_scan_fn(
     #
     new_etrace_xs, new_etrace_dfs = dict(), dict()
 
-    # --- the update --- #
+    # --- The update --- #
 
     #
     # Step 1:
     #
     #   update the weight x using the equation:
-    #           x^t = α * x^t-1 + x^t, where α is the decay factor.
+    #           X^t = α * x^t-1 + x^t, where α is the decay factor.
     #
     relation: HiddenParamOpRelation
     for relation in hid_weight_op_relations:
@@ -652,7 +652,7 @@ def _solve_IO_dim_weight_gradients(
         Dict[ETraceDF_Key, jax.Array]
     ],
     dG_weights: Dict[Path, dG_Weight],
-    dG_hidden_groups: Sequence[jax.Array],  # same length as total hidden groups
+    dG_hidden_groups: Sequence[jax.Array],  # Same length as total hidden groups
     weight_hidden_relations: Sequence[HiddenParamOpRelation],
     weight_vals: Dict[Path, WeightVals],
     trace_steps: int,
@@ -911,10 +911,10 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
        Computation*, 1(2), 270-280. https://doi.org/10.1162/neco.1989.1.2.270
     """
 
-    # the spatial gradients of the weights
+    # The spatial gradients of the weights
     etrace_xs: Dict[ETraceX_Key, brainstate.State]
 
-    # the spatial gradients of the hidden states
+    # The spatial gradients of the hidden states
     etrace_dfs: Dict[ETraceDF_Key, brainstate.State]
 
     #: The x-side (presynaptic input trace) exponential-smoothing decay factor.
@@ -939,7 +939,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         decay_x, decay_f = _format_decays(decay_or_rank)
         if config is not None and not isinstance(config, ETraceConfig):
             raise TypeError(
-                f'config must be an ETraceConfig, got {type(config).__name__}.')
+                f'Config must be an ETraceConfig, got {type(config).__name__}. Set Config to an ETraceConfig.')
         if config is not None and not config.is_factorized:
             raise ValueError(
                 f'{type(self).__name__} is the input/output-factorized trace '
@@ -997,7 +997,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         :meth:`~braintrace.ETraceAlgorithm.compile_graph` for the details.
         """
         # The states of weight spatial gradients:
-        #   1. x
+        #   1. X
         #   2. df
         self.etrace_xs = dict()
         self.etrace_dfs = dict()
@@ -1051,10 +1051,10 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
                 target_state = self.graph_executor.path_to_states[weight]
             except (KeyError, TypeError) as error:
                 raise ValueError(
-                    f'No eligibility trace found for parameter {weight!r}.') from error
+                    f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.') from error
         if not isinstance(target_state, brainstate.ParamState):
             raise ValueError(
-                f'No eligibility trace found for parameter {weight!r}.')
+                f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.')
 
         etrace_xs = dict()
         etrace_dfs = dict()
@@ -1072,7 +1072,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
             if x_key is not None:
                 etrace_xs[x_key] = self.etrace_xs[x_key].value
 
-            # get the weight_op df
+            # Get the weight_op df
             wy_var = relation.y_var
             group: HiddenGroup
             for group in relation.hidden_groups:
@@ -1080,7 +1080,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
                 etrace_dfs[df_key] = self.etrace_dfs[df_key].value
         if not found:
             raise ValueError(
-                f'No eligibility trace found for parameter {weight!r}.')
+                f'No eligibility trace found for parameter {weight!r}. Provide the missing value or resource, then rerun the operation.')
         return etrace_xs, etrace_dfs
 
     def _get_etrace_data(self) -> Tuple[
@@ -1127,14 +1127,14 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         #           h^t = f(x^t \theta)
         #
         # etrace_xs:
-        #           x^t
+        #           X^t
         #
         # etrace_dfs:
-        #           df^t = ∂h^t / ∂y^t, where y^t = x^t \theta
+        #           Df^t = ∂h^t / ∂y^t, where y^t = x^t \theta
         #
         (etrace_xs, etrace_dfs) = hist_etrace_vals
 
-        # the weight x and df
+        # The weight x and df
         for x, val in etrace_xs.items():
             self.etrace_xs[x].value = val
         for df, val in etrace_dfs.items():
@@ -1209,21 +1209,21 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         """
         #
         # "running_index":
-        #            the running index
+        #            The running index
         #
         # "hist_etrace_vals":
-        #            the history etrace values,
+        #            The history etrace values,
         #            including the x and df values, see "etrace_xs" and "etrace_dfs".
         #
         # "hid2weight_jac_single_or_multi_times":
-        #           the current etrace values at the time "t", \epsilon^t, if vjp_time == "t".
+        #           The current etrace values at the time "t", \epsilon^t, if vjp_time == "t".
         #           Otherwise, the etrace values at the time "t-1", \epsilon^{t-1}.
         #
         # "hid2hid_jac_single_or_multi_times":
-        #           the data for computing the hidden-to-hidden Jacobian at the time "t".
+        #           The data for computing the hidden-to-hidden Jacobian at the time "t".
         #
         # "weight_path_to_vals":
-        #           the weight values.
+        #           The weight values.
         #
 
         scan_fn = self._make_etrace_stepper(weight_vals)
@@ -1271,7 +1271,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
 
         ∇_θ L = ∑ (∂L/∂h) ⊙ ϵ
 
-        where ϵ represents the eligibility traces and ∂L/∂h are the gradients of
+        Where ϵ represents the eligibility traces and ∂L/∂h are the gradients of
         the loss with respect to hidden states.
 
         Parameters
@@ -1317,7 +1317,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         #
         dG_weights: Dict[Path, Any] = {path: None for path in self.param_states.keys()}
 
-        # update the etrace parameters
+        # Update the etrace parameters
         _solve_IO_dim_weight_gradients(
             etrace_h2w_at_t,
             dG_weights,
@@ -1331,11 +1331,11 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
             fast_solve=self.fast_solve,
         )
 
-        # update the non-etrace parameters
+        # Update the non-etrace parameters
         for path, dg in dl_to_nonetws_at_t.items():
             _update_dict(dG_weights, path, dg)
 
-        # update the etrace parameters when "dl_to_etws_at_t" is not None
+        # Update the etrace parameters when "dl_to_etws_at_t" is not None
         if dl_to_etws_at_t is not None:
             for path, dg in dl_to_etws_at_t.items():
                 _update_dict(dG_weights, path, dg, error_when_no_key=True)

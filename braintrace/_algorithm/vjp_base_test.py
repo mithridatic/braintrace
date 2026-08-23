@@ -230,7 +230,7 @@ class TestAssertCompiled:
         with pytest.raises(ValueError) as exc_info:
             algo._assert_compiled()
         assert 'compile_graph()' in str(exc_info.value)
-        assert 'not been compiled' in str(exc_info.value)
+        assert 'not compiled' in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -664,7 +664,7 @@ class TestComputeLearningSignalHook:
             return ConstantSignalAlgo
 
         ones = _w_grad(_constant(1.0))
-        assert 'autodiff' in captured, 'the hook was never invoked'
+        assert 'autodiff' in captured, 'The hook was never invoked. Update the fixture or expected result to satisfy this assertion.'
         assert np.any(ones != 0.0)
 
         twos = _w_grad(_constant(2.0))
@@ -672,8 +672,8 @@ class TestComputeLearningSignalHook:
 
         autodiff = _w_grad(ParamDimVjpAlgorithm)
         assert not np.allclose(ones, autodiff, rtol=1e-3), (
-            'the constant signal produced the reverse-AD gradient, so the '
-            'override was called but its return value was discarded')
+            'The constant signal produced the reverse-AD gradient, so the '
+            'override was called but its return value was discarded. Update the fixture or expected result to satisfy this assertion.')
 
 # ---------------------------------------------------------------------------
 # P4: the modulator expansion contract, and the two-pass exit-cotangent hooks.
@@ -698,10 +698,10 @@ class TestExpandModulatorToGroup:
         assert got.shape == (1, 4, 1)
         assert jnp.allclose(got[..., 0], m)
         with pytest.raises(Exception):
-            jnp.broadcast_to(m, (1, 4, 1))     # the trap, pinned
+            jnp.broadcast_to(m, (1, 4, 1))     # The trap, pinned
 
     def test_a_square_group_is_not_transposed_by_accident(self):
-        # varshape (1, 3) with num_state 3 -> group shape (1, 3, 3). Bare
+        # Varshape (1, 3) with num_state 3 -> group shape (1, 3, 3). Bare
         # broadcasting would happily align the modulator's width against the
         # state axis here; ``expand_to`` must put it on the width axis.
         from braintrace._algorithm.vjp_base import expand_modulator_to_group
@@ -886,7 +886,7 @@ class TestHiddenGradientCorrespondence:
 
     def test_a_well_formed_mapping_is_accepted(self):
         groups = _e01_groups()
-        # returns None, raises nothing
+        # Returns None, raises nothing
         assert _check_hidden_gradient_correspondence(
             groups, _e01_well_formed(groups), source='unit test') is None
 
@@ -926,8 +926,8 @@ class TestHiddenGradientCorrespondence:
                 groups, mapping, source='unit test')
         message = str(exc.value)
         assert str(path) in message
-        assert '(9,)' in message       # what arrived
-        assert '(4,)' in message       # what the hidden state wants
+        assert '(9,)' in message       # What arrived
+        assert '(4,)' in message       # What the hidden state wants
 
     def test_a_dtype_mismatch_is_refused_naming_both_dtypes(self):
         groups = _e01_groups()

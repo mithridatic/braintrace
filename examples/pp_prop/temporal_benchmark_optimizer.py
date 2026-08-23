@@ -14,7 +14,7 @@ import jax.numpy as jnp
 def scheduled_learning_rate(update: int, total_updates: int, peak: float) -> float:
     """Apply 10% warmup, 70% hold, then cosine decay to 15% peak."""
     if total_updates <= 0 or update < 0 or update >= total_updates or peak <= 0.0:
-        raise ValueError("invalid learning-rate schedule arguments")
+        raise ValueError("Invalid learning-rate schedule arguments. Set the named field to a value in the stated range, then rerun the operation.")
     warmup_updates = max(1, math.ceil(0.1 * total_updates))
     hold_updates = max(warmup_updates, math.ceil(0.7 * total_updates))
     if update < warmup_updates:
@@ -36,7 +36,7 @@ class SealedLearningRateSchedule(braintools.optim.LRScheduler):
 
     def __init__(self, peak: float, total_updates: int):
         if peak <= 0.0 or total_updates <= 0:
-            raise ValueError("peak and total_updates must be positive")
+            raise ValueError("Peak and total_updates must be positive. Set Peak and total_updates to a positive value.")
         self.total_updates = total_updates
         self.warmup_updates = max(1, math.ceil(0.1 * total_updates))
         self.hold_updates = max(

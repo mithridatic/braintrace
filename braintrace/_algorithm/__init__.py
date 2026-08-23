@@ -42,13 +42,13 @@ from .vjp_base import ETraceVjpAlgorithm
 from .vjp_graph_executor import ETraceVjpGraphExecutor
 
 __all__ = [
-    # axes
+    # Axes
     'ETraceConfig',
-    # core
+    # Core
     'ETraceAlgorithm',
     'EligibilityTrace',
     'ETraceGraphExecutor',
-    # sequence drivers
+    # Sequence drivers
     'ETraceVmap',
     'SequenceDriverMixin',
     # VJP

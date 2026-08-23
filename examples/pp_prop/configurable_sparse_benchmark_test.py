@@ -120,7 +120,7 @@ def test_unknown_worker_status_is_rejected() -> None:
         _parse_worker_payload(msgspec_json.dumps(payload))
     except ValueError:
         return
-    raise AssertionError("unknown status was accepted")
+    raise AssertionError("Unknown status was accepted. Select one of the supported values for the named field.")
 
 
 def test_memory_guard_failure_is_structured() -> None:

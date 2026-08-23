@@ -56,7 +56,7 @@ class GridRule:
     ----------
     name
         Stable identifier reported alongside any solve this rule produces.
-    apply
+    Apply
         Callable mapping one input grid to a proposed output, or ``None`` when
         the rule does not apply to that input.
     """
@@ -132,7 +132,7 @@ def _object_reduction(
                 return None
             chosen = singles[0]
         else:
-            raise ValueError(f"unknown object criterion: {criterion!r}")
+            raise ValueError(f"Unknown object criterion: {criterion!r}. Set the named field to one of the supported values, then rerun the operation.")
         return crop_to_mask(grid, chosen)
 
     return reduce
@@ -167,7 +167,7 @@ def _panel_reduction(criterion: str, background: int) -> GridMap:
             counts = collections.Counter(keys)
             repeats = [panel for panel, key in zip(panels, keys) if counts[key] > 1]
             return repeats[0] if repeats else None
-        raise ValueError(f"unknown panel criterion: {criterion!r}")
+        raise ValueError(f"Unknown panel criterion: {criterion!r}. Set the named field to one of the supported values, then rerun the operation.")
 
     return reduce
 
@@ -559,7 +559,7 @@ def fit_verified_rules(demonstrations: DemoPairs) -> tuple[GridRule, ...]:
     """
 
     if not demonstrations:
-        raise ValueError("fit_verified_rules requires at least one demonstration")
+        raise ValueError("fit_verified_rules requires at least one demonstration. Provide the required value for fit_verified_rules.")
     pairs = [
         (np.asarray(source, np.int32), np.asarray(target, np.int32))
         for source, target in demonstrations

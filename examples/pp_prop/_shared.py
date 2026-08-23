@@ -92,7 +92,7 @@ def make_poisson_mnist(
         labels = labels[mask]
     except ImportError as error:
         raise RuntimeError(
-            "Poisson digit examples require the BrainTrace examples extra"
+            "Poisson digit examples require the BrainTrace examples extra. Provide the required value for Poisson digit examples."
         ) from error
     rng = np.random.default_rng(seed)
     idx = rng.integers(0, len(labels), size=(num_batch,))
@@ -221,7 +221,7 @@ class GIFCell(brainstate.nn.Module):
         super().__init__()
         import pathlib
         import sys
-        # lazy import of local GIF class (tau_I2 heterogeneity)
+        # Lazy import of local GIF class (tau_I2 heterogeneity)
         repo_examples = pathlib.Path(__file__).resolve().parent.parent
         if str(repo_examples) not in sys.path:
             sys.path.insert(0, str(repo_examples))
@@ -326,7 +326,7 @@ def _masked_mean(losses: jnp.ndarray, mask: jnp.ndarray | None) -> jnp.ndarray:
         return losses.mean()
     if mask.shape != losses.shape:
         raise ValueError(
-            f"loss mask shape {mask.shape} does not match losses {losses.shape}"
+            f"Loss mask shape {mask.shape} does not match losses {losses.shape}. Use matching values and structures."
         )
     return jnp.sum(losses * mask) / jnp.maximum(jnp.sum(mask), 1.0)
 
@@ -352,7 +352,7 @@ def online_train_epoch(
         out = vmap_model(inp)
         return loss_fn(out, tar)
 
-    # reduction='sum' preserves the accumulated-gradient scale these examples
+    # Reduction='sum' preserves the accumulated-gradient scale these examples
     # were tuned at; the reported loss stays the per-step mean.
     grads, step_losses = vmap_model.etrace_grad(
         inputs, targets, step_fn=step_loss, reduction='sum', return_value=True)
@@ -418,7 +418,7 @@ def bptt_train_epoch_fixed_target(
     """BPTT baseline with per-step softmax-cross-entropy over a fixed label."""
     weights = model.states(brainstate.ParamState)
 
-    # kept manual: BPTT re-init — no algorithm construction, no compile_graph
+    # Kept manual: BPTT re-init — no algorithm construction, no compile_graph
     @brainstate.transform.vmap_new_states(state_tag="new", axis_size=inputs.shape[1])
     def init():
         brainstate.nn.init_all_states(model)

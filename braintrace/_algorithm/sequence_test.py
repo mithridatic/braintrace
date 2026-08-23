@@ -47,8 +47,8 @@ from braintrace._testing import oracle
 from braintrace._algorithm.dni import _as_window, train_synthetic_gradient
 from braintrace._compile import _ALGORITHM_REGISTRY
 
-T = 6          # sequence length; divisible by 2 and 3
-K = 2          # a genuine window size (>= 2)
+T = 6          # Sequence length; divisible by 2 and 3
+K = 2          # A genuine window size (>= 2)
 N_IN = 3
 N_REC = 4
 
@@ -107,7 +107,7 @@ def _arrays(tree):
 
 def _assert_trees_equal(a, b, *, atol=0.0, rtol=0.0, msg=''):
     aa, bb = _arrays(a), _arrays(b)
-    assert set(aa) == set(bb), f'{msg}: key mismatch {set(aa)} vs {set(bb)}'
+    assert set(aa) == set(bb), f'{msg}: key mismatch {set(aa)} vs {set(bb)}. Use matching values and structures.'
     for k in aa:
         np.testing.assert_allclose(aa[k], bb[k], atol=atol, rtol=rtol,
                                    err_msg=f'{msg}: at {k}')
@@ -558,7 +558,7 @@ class TestMasking:
             _inputs(), _targets(), step_fn=_plain_step(learner),
             mask=jnp.zeros(T))
         for k, v in _arrays(grads).items():
-            assert np.all(np.isfinite(v)), f'{k} is not finite'
+            assert np.all(np.isfinite(v)), f'{k} is not finite. Use finite values.'
             np.testing.assert_array_equal(v, np.zeros_like(v))
 
     def test_a_weighted_mask_reweights_the_objective(self):
@@ -567,7 +567,7 @@ class TestMasking:
         Asserting only "weighted differs from all-ones" is far too weak: an
         implementation that *binarised* the mask -- treating every non-zero
         weight as 1 -- also differs from all-ones, and would pass. (Measured:
-        binary-vs-ones ``6.5e-03``, while binary-vs-correct is ``1.0e-01``.)
+        Binary-vs-ones ``6.5e-03``, while binary-vs-correct is ``1.0e-01``.)
 
         So the arithmetic is pinned against an independent construction that
         never multiplies by a weight at all. The trace evolves identically
@@ -594,10 +594,11 @@ class TestMasking:
             combination = scaled if combination is None else jax.tree.map(
                 lambda p, q: p + q, combination, scaled)
 
-        # measured 1.5e-08 against a gradient of scale 2.2e-01
+        # Measured 1.5e-08 against a gradient of scale 2.2e-01
         assert _max_abs_diff(g_weighted, combination) < 1e-6, (
-            'a weighted mask must scale each step\'s contribution by its own '
-            'weight, not merely select the non-zero steps')
+            'A weighted mask must scale each step\'s contribution by its own '
+            'weight, not merely select the non-zero steps. Make a weighted mask scale each step\'s contribution by its own '
+            'weight, not merely select the non-zero steps.')
 
         # The mutant this test exists to kill: same support, weights binarised.
         binarised = _learner()
@@ -605,8 +606,8 @@ class TestMasking:
             xs, ys, step_fn=_plain_step(binarised),
             mask=(weights_vec > 0).astype(jnp.float32), reduction='sum')
         assert _max_abs_diff(g_weighted, g_binary) > 1e-3, (
-            'the binarised control is indistinguishable here, so the '
-            'tolerance above proves nothing -- pick more separated weights')
+            'The binarised control is indistinguishable here, so the '
+            'tolerance above proves nothing -- pick more separated weights. Update the fixture or expected result to satisfy this assertion.')
 
 
 # ---------------------------------------------------------------------------
@@ -709,9 +710,9 @@ class TestVmap:
                 lambda a, b: a + b, lane_total, g_lane)
 
         flat = _arrays(g_batched)
-        assert set(flat) == set(_arrays(lane_total)), 'gradient keys diverged'
+        assert set(flat) == set(_arrays(lane_total)), 'Gradient keys diverged. Update the fixture or expected result to satisfy this assertion.'
         for k, v in flat.items():
-            assert np.max(np.abs(v)) > 0.0, f'{k} is identically zero -- vacuous'
+            assert np.max(np.abs(v)) > 0.0, f'{k} is identically zero -- vacuous. Update the fixture or expected result to satisfy this assertion.'
         _assert_trees_equal(g_batched, lane_total, rtol=2e-6, atol=1e-6,
                             msg='batched vs sum over independent lanes')
 
@@ -734,7 +735,7 @@ class TestVmap:
         g_swapped = swapped.etrace_grad(
             xs, ys[:, perm], step_fn=lambda i, t: jnp.sum((swapped(i) - t) ** 2))
 
-        # measured 1.6e-01 relative
+        # Measured 1.6e-01 relative
         oracle.assert_gradients_differ(_arrays(g_straight), _arrays(g_swapped),
                                        min_rel=1e-3)
 
@@ -774,7 +775,7 @@ class TestVmap:
             xs, ys, chunk_size=1,
             step_fn=lambda i, t: jnp.sum((grad_learner(i) - t) ** 2))
         for k, v in _arrays(grads).items():
-            assert np.all(np.isfinite(v)), f'{k} is not finite'
+            assert np.all(np.isfinite(v)), f'{k} is not finite. Use finite values.'
 
     def test_the_vmap_return_value_is_still_a_brainstate_vmap(self):
         """Spec test 20 -- existing ``vmap=True`` users must be unaffected."""
@@ -865,7 +866,7 @@ class TestTheReturnSurface:
         _, masked = b.etrace_grad(xs, ys, step_fn=_plain_step(b), mask=mask,
                                   loss_output='masked', return_value=True)
 
-        assert float(raw[1]) > 0.0, 'a zero-weighted step still has a real loss'
+        assert float(raw[1]) > 0.0, 'A zero-weighted step still has a real loss. Update the fixture or expected result to satisfy this assertion.'
         assert float(masked[1]) == 0.0
         np.testing.assert_allclose(np.asarray(raw)[[0, 2, 3, 4, 5]],
                                    np.asarray(masked)[[0, 2, 3, 4, 5]], rtol=1e-6)
@@ -900,7 +901,7 @@ class TestTheReturnSurface:
         g_full = full.etrace_grad(xs, ys, step_fn=_plain_step(full))
         assert set(g_full) == {('w',), ('win',)}
         assert np.max(np.abs(_arrays(g_full)['win|'])) > 0.0, (
-            'win has no gradient even unrestricted, so excluding it is vacuous')
+            'Win has no gradient even unrestricted, so excluding it is vacuous. Provide the missing item named in the message.')
 
         learner = _learner('multi-step')
         excluded_before = np.asarray(learner.param_states[('win',)].value)
@@ -1008,14 +1009,14 @@ class TestTheReturnSurface:
         xs, ys = _inputs(), _targets()
 
         def step_fn(inp, tar):
-            out_a, _out_b = learner(inp)      # head b is computed but unsupervised
+            out_a, _out_b = learner(inp)      # Head b is computed but unsupervised
             return _sq_error(out_a, tar)
 
         grads = learner.etrace_grad(xs, ys, step_fn=step_fn, reduction='sum')
         flat = _arrays(grads)
         for k, v in flat.items():
-            assert np.all(np.isfinite(v)), f'{k} is not finite'
-        assert np.max(np.abs(flat['head_a|'])) > 0.0, 'the supervised head got no gradient'
+            assert np.all(np.isfinite(v)), f'{k} is not finite. Use finite values.'
+        assert np.max(np.abs(flat['head_a|'])) > 0.0, 'The supervised head got no gradient. Provide the missing item named in the message.'
         np.testing.assert_array_equal(
             flat['head_b|'], np.zeros_like(flat['head_b|']),
             err_msg='an unsupervised head picked up a gradient')
@@ -1161,7 +1162,7 @@ class TestAlgorithmInteractions:
         assert not isinstance(seen[0], braintrace.MultiStepData)
         assert not isinstance(seen[0], braintrace.SingleStepData)
         assert jnp.shape(seen[0]) == (N_IN,), (
-            f'chunk_size=1 handed over {jnp.shape(seen[0])}, not seq[t]')
+            f'chunk_size=1 handed over {jnp.shape(seen[0])}, not seq[t]. Update the fixture or expected result to satisfy this assertion.')
 
     def test_a_chunk_size_mismatch_degrades_a_fitted_synthesiser(self):
         """Spec test 30 -- F-35 through the driver's new surface.
@@ -1171,7 +1172,7 @@ class TestAlgorithmInteractions:
         matches. ``chunk_size`` is the surface the driver newly exposes, so the
         regression fits one synthesiser at ``chunk_size=1`` and another at
         ``chunk_size=K``, deploys *both* at ``K``, and requires them to differ:
-        the mismatched one is not degraded DNI but noise shaped like a
+        The mismatched one is not degraded DNI but noise shaped like a
         cotangent. Measured ``2.0e-02`` relative.
 
         ``reduction`` is deliberately *not* tested as an F-35 surface. It is a
@@ -1295,16 +1296,16 @@ class TestRobustness:
             xs, step_fn=step_fn,
             mask=jnp.asarray([1., 0., 1., 1., 0., 1.]), reduction='mean')
 
-        assert set(grads) == {('w',)}, f'unexpected gradient keys: {set(grads)}'
+        assert set(grads) == {('w',)}, f'Unexpected gradient keys: {set(grads)}. Use the expected value or update the contract.'
         g = grads[('w',)]
         assert isinstance(g, u.Quantity), (
             f'the gradient of an mV parameter came back as {type(g).__name__}, '
             f'so the unit was stripped somewhere in the pipeline')
-        assert g.unit == u.mV, f'expected mV, got {g.unit}'
+        assert g.unit == u.mV, f'Expected mV, got {g.unit}. Return the expected value for the reported field.'
         assert jnp.shape(u.get_mantissa(g)) == (N_IN, N_REC)
         mantissa = np.asarray(u.get_mantissa(g))
         assert np.all(np.isfinite(mantissa))
-        assert np.max(np.abs(mantissa)) > 0.0, 'gradient is identically zero'
+        assert np.max(np.abs(mantissa)) > 0.0, 'Gradient is identically zero. Use inputs that produce a non-zero gradient.'
 
         # The accumulator's first step, which is where a stripped unit surfaces
         # as a brainunit dimension error rather than a wrong number.
@@ -1358,7 +1359,7 @@ class TestRobustness:
     def test_an_illegal_enum_value_is_refused(self, kwargs):
         """Spec test 33, continued."""
         learner = _learner()
-        with pytest.raises(ValueError, match='reduction|loss_output'):
+        with pytest.raises(ValueError, match='(?i)reduction|loss_output'):
             learner.etrace_grad(_inputs(), step_fn=lambda x: 0.0, **kwargs)
 
     def test_step_fn_is_required_for_etrace_grad(self):

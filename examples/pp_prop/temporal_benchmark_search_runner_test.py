@@ -174,7 +174,7 @@ def test_resume_refuses_any_complete_config_mismatch(tmp_path: Path) -> None:
     _write(path, document)
 
     def forbidden_runner(_command, _source_root) -> None:
-        raise AssertionError("an existing file must be validated, not rerun")
+        raise AssertionError("An existing file must be validated, not rerun. Ensure an existing file is validated, not rerun.")
 
     with pytest.raises(ResumeConfigurationError, match="exactly match"):
         obtain_bundle_score(settings, stage, candidate, bundle_id, forbidden_runner)
@@ -198,7 +198,7 @@ def test_resume_refuses_image_or_source_provenance_mismatch(tmp_path: Path) -> N
             stage,
             candidate,
             bundle_id,
-            lambda *_: (_ for _ in ()).throw(AssertionError("must reuse")),
+            lambda *_: (_ for _ in ()).throw(AssertionError("Must reuse. Update the fixture or expected result to satisfy this assertion.")),
         )
 
 
@@ -215,7 +215,7 @@ def test_failed_child_is_persisted_rejected_and_other_bundles_continue(
         bundle_id = _value(command, "--bundle-id")
         calls.append(bundle_id)
         if bundle_id == DEVELOPMENT_BUNDLES[0]:
-            raise RuntimeError("non-finite child result")
+            raise RuntimeError("Non-finite child result. Use finite values.")
         _write(
             Path(_value(command, "--json-output")),
             _raw_document(settings, candidate, bundle_id, stage.updates),
@@ -225,7 +225,7 @@ def test_failed_child_is_persisted_rejected_and_other_bundles_continue(
 
     assert calls == list(DEVELOPMENT_BUNDLES)
     assert score.accepted is False
-    assert "child run failed" in score.rejection_reasons[0]
+    assert "child run failed" in score.rejection_reasons[0].casefold()
     failure_path = failure_result_path(
         settings, stage, candidate, DEVELOPMENT_BUNDLES[0]
     )
@@ -303,7 +303,7 @@ def test_successive_halving_writes_summaries_and_resumes_raw_runs(
         assert summary["sealed_test"] is False
 
     def forbidden_runner(_command, _source_root) -> None:
-        raise AssertionError("valid resumed raw files must not launch subprocesses")
+        raise AssertionError("Valid resumed raw files must not launch subprocesses. Ensure Valid resumed raw files does not launch subprocesses.")
 
     resumed = run_development_optimizer_search(
         settings, runner=forbidden_runner, progress=lambda _: None

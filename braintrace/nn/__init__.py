@@ -58,18 +58,18 @@ from ._rnn import (
 )
 
 __all__ = [
-    # conv
+    # Conv
     'Conv1d', 'Conv2d', 'Conv3d',
     'AttentionResidual',
     'GatedProjection',
     'SiTUGLU',
-    # linear
+    # Linear
     'Linear', 'GroupedLinear', 'SignedWLinear', 'ScaledWSLinear', 'SparseLinear', 'LoRA',
-    # embedding
+    # Embedding
     'Embedding',
-    # readout
+    # Readout
     'LeakyRateReadout',
-    # rnn
+    # Rnn
     'ValinaRNNCell', 'GRUCell', 'MGUCell', 'LSTMCell', 'URLSTMCell',
     'MinimalRNNCell', 'MiniGRU', 'MiniLSTM', 'LRUCell', 'CFNCell',
 ]
@@ -106,7 +106,7 @@ def __getattr__(name: str) -> Any:
     import warnings
     if name in _DEPRECATED_TO_BRAINPY_STATE:
         warnings.warn(
-            f'braintrace.nn.{name} is deprecated. Use brainpy.state.{name} instead.',
+            f'Braintrace.nn.{name} is deprecated. Use brainpy.state.{name} instead.',
             DeprecationWarning,
             stacklevel=2
         )
@@ -115,14 +115,14 @@ def __getattr__(name: str) -> Any:
 
     if name in _DEPRECATED_TO_BRAINSTATE_NN:
         warnings.warn(
-            f'braintrace.nn.{name} is deprecated. Use brainstate.nn.{name} instead.',
+            f'Braintrace.nn.{name} is deprecated. Use brainstate.nn.{name} instead.',
             DeprecationWarning,
             stacklevel=2
         )
         import brainstate
         return getattr(brainstate.nn, name)
 
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}. Use an existing attribute or add the missing attribute.")
 
 
 def __dir__() -> list[str]:

@@ -426,9 +426,9 @@ def train_synthetic_gradient(
 
     Two properties make the fit honest, and both are enforced here:
 
-    * the **model** parameters do not move -- only the synthesiser's are handed
+    * The **model** parameters do not move -- only the synthesiser's are handed
       to the optimiser;
-    * the **target is detached**, so the regression cannot reshape the model's
+    * The **target is detached**, so the regression cannot reshape the model's
       gradients to make itself easy to predict.
 
     The auxiliary optimiser is left to the caller, as it is in the paper.
@@ -510,7 +510,7 @@ def train_synthetic_gradient(
     if learner.synthesizer is None:
         raise RuntimeError(
             'train_synthetic_gradient needs a synthesizer attached to the '
-            'learner; call `learner.attach_synthesizer(...)` first.')
+            'learner; call `learner.attach_synthesizer(...)` first. Fix the input condition named in the error, then rerun the operation.')
     # Bound to a local after the check: the closures below run outside the
     # narrowing, so `learner.synthesizer` reads as `Optional` inside them.
     synthesizer = learner.synthesizer
@@ -525,7 +525,7 @@ def train_synthetic_gradient(
 
     n_steps = int(inputs.shape[0])
     if chunk_size < 1:
-        raise ValueError(f'chunk_size must be at least 1, got {chunk_size}.')
+        raise ValueError(f'chunk_size must be at least 1, got {chunk_size}. Set chunk_size to at least 1.')
     if n_steps % chunk_size:
         # Refused, not truncated. The window loop is a `for_loop`, which needs
         # every window the same length -- but the deeper reason is the contract
@@ -586,7 +586,7 @@ def train_synthetic_gradient(
         target = jax.tree.map(jax.lax.stop_gradient, grads)
         return _fit_one(_grouped(entry), _grouped(target))
 
-    # (n_windows, chunk_size, *feature) -- the shape `for_loop` maps over.
+    # (N_windows, chunk_size, *feature) -- the shape `for_loop` maps over.
     windows = inputs.reshape((n_windows, chunk_size) + tuple(inputs.shape[1:]))
 
     for _ in range(epochs):

@@ -17,9 +17,9 @@
 
 Coverage follows the spec's two guarantees:
 
-* **canonicalisation** — one coordinate has exactly one spelling, and the
+* **Canonicalisation** — one coordinate has exactly one spelling, and the
   rewrite is idempotent;
-* **the compatibility matrix** — every rule rejects, every legal coordinate is
+* **The compatibility matrix** — every rule rejects, every legal coordinate is
   admitted, and no rule fires on a spelling canonicalisation would have removed.
 
 The second half matters more than it looks: a matrix that rejects too much is as
@@ -82,7 +82,7 @@ class TestVocabulary:
     def test_describe_names_the_non_default_axes(self):
         text = ETraceConfig(recurrence_scope='coupled').describe()
         assert "recurrence_scope='coupled'" in text
-        assert 'learning_signal' not in text  # left at its default
+        assert 'learning_signal' not in text  # Left at its default
 
 
 class TestCanonicalisation:
@@ -149,7 +149,7 @@ class TestCanonicalisation:
         cfg = ETraceConfig(trace_factorization='io_factorized', decay=0.9)
         assert cfg.replace(decay=0.5).decay == (0.5, 0.5)
         with pytest.raises(ValueError):
-            cfg.replace(trace_filter='kappa', kappa=0.5)  # matrix rule 1
+            cfg.replace(trace_filter='kappa', kappa=0.5)  # Matrix rule 1
 
 
 class TestCompatibilityMatrix:
@@ -159,13 +159,13 @@ class TestCompatibilityMatrix:
         with pytest.raises(ValueError, match='not rank-1'):
             ETraceConfig(trace_factorization='io_factorized', decay=0.9,
                          trace_filter='kappa', kappa=0.5)
-        ETraceConfig(trace_filter='kappa', kappa=0.5)  # legal neighbour
+        ETraceConfig(trace_filter='kappa', kappa=0.5)  # Legal neighbour
 
     def test_rule_2_scope_requires_a_consumed_jacobian(self):
         with pytest.raises(ValueError, match='never.*consumes one'):
             ETraceConfig(temporal_recursion='scalar_leak', decay=0.5,
                          recurrence_scope='coupled')
-        ETraceConfig(recurrence_scope='coupled')  # legal neighbour
+        ETraceConfig(recurrence_scope='coupled')  # Legal neighbour
 
     def test_rule_2_reads_the_f_side_under_io_factorization(self):
         """The x-side never consumes ``D``, so a rule over both sides would
@@ -174,7 +174,7 @@ class TestCompatibilityMatrix:
         written — and illegal only once the f-side stops using the Jacobian."""
         legal = ETraceConfig(trace_factorization='io_factorized', decay=0.9,
                              recurrence_scope='coupled')
-        assert legal.recursion_x == 'scalar_leak'   # x-side is not a jacobian
+        assert legal.recursion_x == 'scalar_leak'   # X-side is not a jacobian
         assert legal.recursion_f == 'jacobian'
         with pytest.raises(ValueError, match='f-side'):
             ETraceConfig(trace_factorization='io_factorized', decay=(0.9, 0.0),
@@ -340,7 +340,7 @@ class TestSparseNAxis:
             )
 
     def test_rule_9_negative_control_coupled_stays_legal_under_io_factorized(self):
-        # rule 9 must reject `sparse_n` specifically, not every non-diagonal scope
+        # Rule 9 must reject `sparse_n` specifically, not every non-diagonal scope
         cfg = ETraceConfig(
             trace_factorization='io_factorized',
             temporal_recursion=('scalar_leak', 'jacobian'),
@@ -407,7 +407,7 @@ class TestRandomProjectionAxis:
             )
 
     def test_rule_11_negative_control_per_param_keeps_every_scope(self):
-        # rule 11 must constrain `random_projection` only.
+        # Rule 11 must constrain `random_projection` only.
         for scope, extra in (('diagonal', {}), ('coupled', {}),
                              ('sparse_n', {'sparse_n': 2})):
             cfg = ETraceConfig(recurrence_scope=scope, **extra)

@@ -265,12 +265,12 @@ def register_primitive(
     -----
     The following standard JAX rules are installed automatically:
 
-    - **impl** — eager execution.
-    - **abstract_eval** — via ``jax.eval_shape(impl)``.
-    - **lowering** — via ``mlir.lower_fun(impl)``.
+    - **Impl** — eager execution.
+    - **Abstract_eval** — via ``jax.eval_shape(impl)``.
+    - **Lowering** — via ``mlir.lower_fun(impl)``.
     - **JVP** — via ``jax.jvp(impl)``.
-    - **transpose** — derived by JAX from the JVP.
-    - **batching** — identity-preserving: when only ``x`` is mapped and a
+    - **Transpose** — derived by JAX from the JVP.
+    - **Batching** — identity-preserving: when only ``x`` is mapped and a
       batched counterpart is registered
       (``register_batched_counterpart``),
       the counterpart primitive is bound with the batch axis leading;

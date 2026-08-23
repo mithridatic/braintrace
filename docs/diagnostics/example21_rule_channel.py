@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Gate 1: score the demonstration-verified rule channel alone on ARC.
 
 Measures the exact pass@1 / pass@2 floor the rule channel establishes before any

@@ -201,7 +201,7 @@ class TestRecurrenceScope:
             _grads('tanh_rnn',
                    lambda m: braintrace.OSTLRecurrent(m, vjp_method='multi-step')),
         ).items():
-            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}'
+            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_coupled_raises_inside_a_descended_scan(self):
         """A scope that cannot be delivered must say so, not degrade silently.
@@ -215,10 +215,10 @@ class TestRecurrenceScope:
         from braintrace._algorithm.scan_descent_support_test import (
             DESCEND, make_snn_scan_net,
         )
-        # loops must exceed the policy's unroll limit or nothing descends and
+        # Loops must exceed the policy's unroll limit or nothing descends and
         # the guard has nothing to fire on.
         x = jnp.ones((4,), dtype='float32')
-        braintrace.D_RTRL(  # the diagonal scope compiles fine
+        braintrace.D_RTRL(  # The diagonal scope compiles fine
             make_snn_scan_net(loops=8), vjp_method='multi-step',
             control_flow=DESCEND()).compile_graph(x)
         with pytest.raises(NotImplementedError, match='descended scan'):
@@ -258,7 +258,7 @@ class TestLearningSignal:
             m, feedback='random', random_feedback_key=key,
             vjp_method='multi-step'))
         for label, deviation in _leafwise(lifted, preset).items():
-            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}'
+            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_random_feedback_reaches_the_io_dim_engine(self):
         """The generalisation the decomposition buys.
@@ -289,7 +289,7 @@ class TestTraceFilter:
         preset = _grads('tanh_rnn', lambda m: braintrace.EProp(
             m, kappa_filter_decay=0.9, vjp_method='multi-step'))
         for label, deviation in _leafwise(lifted, preset).items():
-            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}'
+            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_zero_kappa_is_exactly_d_rtrl(self):
         """``EProp(kappa_filter_decay=0)`` documents this reduction; now it is
@@ -299,7 +299,7 @@ class TestTraceFilter:
                 m, kappa_filter_decay=0.0, vjp_method='multi-step')),
             _grads('tanh_rnn', _d_rtrl()),
         ).items():
-            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}'
+            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
 
 # ---------------------------------------------------------------------------
@@ -313,10 +313,10 @@ class TestDecaySplit:
             _grads('tanh_rnn', _pp_prop(decay=0.9)),
             _grads('tanh_rnn', _pp_prop(decay=(0.9, 0.9))),
         ).items():
-            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}'
+            assert deviation == 0.0, f'{label}: deviates by {deviation:.3e}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_an_asymmetric_pair_is_a_different_rule(self):
-        # x-side leak, f-side instantaneous. Measured 4.7e-03.
+        # X-side leak, f-side instantaneous. Measured 4.7e-03.
         assert_gradients_differ(
             _grads('tanh_rnn', _pp_prop(decay=0.9)),
             _grads('tanh_rnn', _pp_prop(decay=(0.9, 0.0))),
@@ -383,7 +383,7 @@ def test_preset_coordinates_match_the_spec_table(factory, expected):
     config = factory(model).config
     for field, value in expected.items():
         assert getattr(config, field) == value, (
-            f'{field}: expected {value!r}, got {getattr(config, field)!r}')
+            f'{field}: expected {value!r}, got {getattr(config, field)!r}. Return the expected value for the reported field.')
 
 
 def test_ostl_feedforward_reaches_the_exact_none_coordinate():
@@ -509,7 +509,7 @@ def _leafwise(actual: dict, reference: dict) -> dict:
     so a joint norm can absorb a large error in the smaller leaf.
     """
     assert set(actual) == set(reference), (
-        f'leaf labels differ: {sorted(set(actual) ^ set(reference))}')
+        f'Leaf labels differ: {sorted(set(actual) ^ set(reference))}. Regenerate the expected labels from the current model.')
     out = {}
     for label in reference:
         ref = np.asarray(reference[label], dtype=np.float64)

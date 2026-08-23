@@ -34,7 +34,7 @@ def test_half_life_conversion_halves_after_requested_steps(half_life: float) -> 
 
 
 def test_no_self_loop_topology_requires_degree_below_neurons() -> None:
-    with pytest.raises(ValueError, match="degree must be smaller"):
+    with pytest.raises(ValueError, match="(?i)degree must be smaller"):
         TemporalBenchmarkConfig(neurons=8, degree=8)
 
 

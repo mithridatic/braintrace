@@ -101,7 +101,7 @@ def _resolve_algorithm(
         if issubclass(algorithm, ETraceAlgorithm):
             return algorithm
         raise TypeError(
-            f'algorithm class must be a subclass of ETraceAlgorithm, got {algorithm!r}.'
+            f'Algorithm class must be a subclass of ETraceAlgorithm, got {algorithm!r}. Set Algorithm class to a subclass of ETraceAlgorithm.'
         )
     if isinstance(algorithm, str):
         key = algorithm.strip().lower()
@@ -296,7 +296,7 @@ def compile(
     if isinstance(algorithm, ETraceConfig):
         if 'config' in options:
             raise TypeError(
-                'compile() got a config both in the `algorithm` position and as '
+                'Compile() got a config both in the `algorithm` position and as '
                 'a `config=` option. Pass it once.'
             )
         options['config'] = algorithm
@@ -307,15 +307,15 @@ def compile(
             options.setdefault('decay_or_rank', algorithm.decay)
     if len(example_inputs) == 0:
         raise ValueError(
-            'compile() needs at least one example input to build the graph '
+            'Compile() needs at least one example input to build the graph '
             'eagerly, e.g. compile(model, "D_RTRL", x0). Pass the same inputs '
             'you will give to learner.update(...).'
         )
     if verbose not in (0, 1, 2):
-        raise ValueError(f'verbose must be 0, 1, or 2, got {verbose!r}.')
+        raise ValueError(f'Verbose must be 0, 1, or 2, got {verbose!r}. Set Verbose to 0, 1, or 2.')
     if vmap and batch_size is None:
         raise ValueError(
-            'compile(..., vmap=True) requires batch_size, used as the per-sample '
+            'Compile(..., vmap=True) requires batch_size, used as the per-sample '
             'vmap axis size. Pass batch_size=<n_batch> matching the batch axis '
             '(axis 0) of example_inputs.'
         )
@@ -366,18 +366,18 @@ def compile(
         # still a brainstate.nn.Vmap, so existing users are unaffected.
         result: ETraceAlgorithm | brainstate.nn.Vmap = ETraceVmap(learner, vmap_states='new')
     else:
-        # --- state initialization (always) --- #
+        # --- State initialization (always) --- #
         if seed is not None:
             with brainstate.random.seed_context(seed):
                 brainstate.nn.init_all_states(model, batch_size=batch_size)
         else:
             brainstate.nn.init_all_states(model, batch_size=batch_size)
-        # --- construct + compile the graph --- #
+        # --- Construct + compile the graph --- #
         learner = cls(model, **options)
         learner.compile_graph(*example_inputs)
         result = learner
 
-    # --- guardrail: nothing trainable online (uses learner.graph in both modes) --- #
+    # --- Guardrail: nothing trainable online (uses learner.graph in both modes) --- #
     # A model is trainable online iff the compiler discovered at least one
     # hidden<->parameter ETP relation. No relations means no trainable weight
     # reaches a hidden state through an ETP op — nothing to train online.
@@ -386,10 +386,10 @@ def compile(
             'No trainable weights are routed through ETP ops, so the model has '
             'nothing to train online. Route trainable parameters through an ETP '
             'op (braintrace.matmul / conv / sparse_matmul / lora_matmul / '
-            'element_wise) instead of a plain JAX op.'
+            'element_wise) instead of a plain JAX op. Provide the missing value or resource, then rerun the operation.'
         )
 
-    # --- compile-time report --- #
+    # --- Compile-time report --- #
     if verbose >= 1:
         learner.report.show(level=verbose)
 

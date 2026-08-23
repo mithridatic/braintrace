@@ -23,7 +23,7 @@ verifies:
 * ``element_wise(w)`` (default ``weight_fn=None``) round-trips ``w``.
 * ``element_wise(w, weight_fn=lambda w: 2*w)`` applies ``weight_fn`` *inside*
   the primitive.
-* brainunit quantities pass through.
+* Brainunit quantities pass through.
 * JAX rules — jit, vmap, grad, jvp.
 * Four ETP rules return the documented values / shapes.
 """
@@ -189,7 +189,7 @@ class TestEtpRules:
 
     def test_xy_to_dw_returns_hidden(self):
         rule = ETP_RULES_XY_TO_DW[etp_elemwise_p]
-        # x is None for elemwise (x_invar_index=None) — but the function
+        # X is None for elemwise (x_invar_index=None) — but the function
         # signature still accepts it; just ignored.
         hidden = jnp.array([1.0, 2.0, 3.0])
         weights = {'weight': None}  # Not actually used in the body
@@ -293,9 +293,9 @@ class TestElemwiseWeightFnInside:
         from braintrace._op import ETP_RULES_XY_TO_DW, etp_elemwise_p
         rule = ETP_RULES_XY_TO_DW[etp_elemwise_p]
         w = brainstate.random.randn(4)
-        hidden = brainstate.random.randn(2, 4)  # (batch, n) cotangent
+        hidden = brainstate.random.randn(2, 4)  # (Batch, n) cotangent
         out = rule(None, hidden, {'weight': w}, weight_fn=lambda x: x ** 2)
-        # f'(w) = 2w, broadcast over the batch axis.
+        # F'(w) = 2w, broadcast over the batch axis.
         expected = hidden * (2.0 * w)
         assert out['weight'].shape == (2, 4)
         np.testing.assert_allclose(out['weight'], expected, atol=1e-5)
@@ -380,7 +380,7 @@ class TestElemwiseFastPath:
 
     def test_fast_recurrent_num_state_1_equals_general_einsum(self):
         rules = get_fast_path_rules(etp_elemwise_p)
-        # diag (*var, 1, 1); trace (*var, 1).
+        # Diag (*var, 1, 1); trace (*var, 1).
         var = 4
         diag = brainstate.random.randn(var, 1, 1)
         trace = {'weight': brainstate.random.randn(var, 1)}
@@ -423,7 +423,7 @@ class TestDtToTFirstPrinciplesFromJacobian:
         n = 5
         w0 = brainstate.random.randn(n)
 
-        J = jax.jacobian(lambda w: w)(w0)  # (n, n), should be identity
+        J = jax.jacobian(lambda w: w)(w0)  # (N, n), should be identity
         np.testing.assert_allclose(J, jnp.eye(n), atol=1e-10)
 
         g = brainstate.random.randn(n)
@@ -467,10 +467,10 @@ class TestElemwiseFastChunk:
 
         brainstate.random.seed(0)
         T, S = 11, num_state
-        shape = (4, 5)  # group varshape
+        shape = (4, 5)  # Group varshape
         df = brainstate.random.normal(size=(T, *shape, S))
         diag = brainstate.random.uniform(0.3, 1.0, (T, *shape, S, S))
-        diag = diag.at[2].set(0.0)  # zero-decay step
+        diag = diag.at[2].set(0.0)  # Zero-decay step
         init = {'weight': brainstate.random.normal(size=(*shape, S))}
 
         bwg = init

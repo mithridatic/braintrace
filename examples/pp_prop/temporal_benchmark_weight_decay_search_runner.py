@@ -189,7 +189,7 @@ def run_development_weight_decay_search(
     }
     _write_json(settings.output_directory / "summary.json", summary)
     if not ranking:
-        raise RuntimeError("weight-decay search failed closed: no valid candidates")
+        raise RuntimeError("Weight-decay search failed closed: no valid candidates. Correct the reported inputs, then retry the operation.")
     winner: dict[str, object] = {
         "schema_version": WEIGHT_DECAY_SEARCH_SCHEMA_VERSION,
         "kind": "temporal_credit_weight_decay_search_winner",

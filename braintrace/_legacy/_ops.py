@@ -82,7 +82,7 @@ def general_y2w(xw2y: Callable, x: Any, y: Any, w: Any) -> Any:
     x = u.math.ones_like(x)
     primals, f_vjp = jax.vjp(lambda w_: u.get_mantissa(xw2y(x, w_)), w)
     assert y.shape == primals.shape, (
-        f'shape mismatch: {y.shape} vs {primals.shape}'
+        f'Shape mismatch: {y.shape} vs {primals.shape}. Use matching values and structures.'
     )
     return f_vjp(u.get_mantissa(y))[0]
 
@@ -162,7 +162,7 @@ class ETraceOp:
             weights,
         )
         assert hidden_dim_arr.shape == primals.shape, (
-            f'shape mismatch: {hidden_dim_arr.shape} vs {primals.shape}'
+            f'Shape mismatch: {hidden_dim_arr.shape} vs {primals.shape}. Use matching values and structures.'
         )
         return f_vjp(u.get_mantissa(hidden_dim_arr))[0]
 
@@ -211,19 +211,19 @@ class MatMulOp(ETraceOp):
             weight_mask = u.math.asarray(weight_mask)
         else:
             raise TypeError(
-                f'weight_mask must be array-like, got {type(weight_mask)}'
+                f'weight_mask must be array-like, got {type(weight_mask)}. Set weight_mask to array-like.'
             )
         self.weight_mask = weight_mask
-        assert callable(weight_fn), f'weight_fn must be callable, got {type(weight_fn)}'
+        assert callable(weight_fn), f'weight_fn must be callable, got {type(weight_fn)}. Pass a callable value for weight_fn.'
         self.weight_fn = weight_fn
         assert isinstance(apply_weight_fn_before_mask, bool)
         self.apply_weight_fn_before_mask = apply_weight_fn_before_mask
 
     def _check(self, w: Dict[str, Any]) -> None:
         if not isinstance(w, dict):
-            raise TypeError(f'MatMulOp weight must be dict, got {type(w)}')
+            raise TypeError(f'MatMulOp weight must be dict, got {type(w)}. Set MatMulOp weight to dict.')
         if 'weight' not in w:
-            raise ValueError("MatMulOp weight dict must contain 'weight'")
+            raise ValueError("MatMulOp weight dict must contain 'weight'. Add 'weight' to MatMulOp weight dict.")
 
     def _process_weight(self, w: Dict[str, Any]) -> Any:
         if self.apply_weight_fn_before_mask:
@@ -360,7 +360,7 @@ class ConvOp(ETraceOp):
             weight_mask = u.math.asarray(weight_mask)
         else:
             raise TypeError(
-                f'weight_mask must be array-like, got {type(weight_mask)}'
+                f'weight_mask must be array-like, got {type(weight_mask)}. Set weight_mask to array-like.'
             )
         self.weight_mask = weight_mask
         assert callable(weight_fn)
@@ -368,9 +368,9 @@ class ConvOp(ETraceOp):
 
     def _check(self, w: Dict[str, Any]) -> None:
         if not isinstance(w, dict):
-            raise TypeError(f'ConvOp weight must be dict, got {type(w)}')
+            raise TypeError(f'ConvOp weight must be dict, got {type(w)}. Set ConvOp weight to dict.')
         if 'weight' not in w:
-            raise ValueError("ConvOp weight dict must contain 'weight'")
+            raise ValueError("ConvOp weight dict must contain 'weight'. Add 'weight' to ConvOp weight dict.")
 
     def _process_weight(self, w: Dict[str, Any]) -> Any:
         W = w['weight']
@@ -451,7 +451,7 @@ class SpMatMulOp(ETraceOp):
         super().__init__(is_diagonal=False)
         if not isinstance(sparse_mat, u.sparse.SparseMatrix):
             raise TypeError(
-                f'sparse_mat must be a brainunit SparseMatrix, got {type(sparse_mat)}'
+                f'sparse_mat must be a brainunit SparseMatrix, got {type(sparse_mat)}. Set sparse_mat to a brainunit SparseMatrix.'
             )
         self.sparse_mat = sparse_mat
         assert callable(weight_fn)
@@ -459,9 +459,9 @@ class SpMatMulOp(ETraceOp):
 
     def _check(self, w: Dict[str, Any]) -> None:
         if not isinstance(w, dict):
-            raise TypeError(f'SpMatMulOp weight must be dict, got {type(w)}')
+            raise TypeError(f'SpMatMulOp weight must be dict, got {type(w)}. Set SpMatMulOp weight to dict.')
         if 'weight' not in w:
-            raise ValueError("SpMatMulOp weight dict must contain 'weight'")
+            raise ValueError("SpMatMulOp weight dict must contain 'weight'. Add 'weight' to SpMatMulOp weight dict.")
 
     def xw_to_y(self, x: Any, w: Dict[str, Any]) -> Any:
         self._check(w)
@@ -514,9 +514,9 @@ class LoraOp(ETraceOp):
 
     def _check(self, w: Dict[str, Any]) -> None:
         if not isinstance(w, dict):
-            raise TypeError(f'LoraOp weight must be dict, got {type(w)}')
+            raise TypeError(f'LoraOp weight must be dict, got {type(w)}. Set LoraOp weight to dict.')
         if 'B' not in w or 'A' not in w:
-            raise ValueError("LoraOp weight dict must contain 'B' and 'A'")
+            raise ValueError("LoraOp weight dict must contain 'B' and 'A'. Add 'B' and 'A' to LoraOp weight dict.")
 
     def xw_to_y(self, x: Any, w: Dict[str, Any]) -> Any:
         self._check(w)

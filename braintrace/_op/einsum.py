@@ -19,10 +19,10 @@ r"""General linear-in-weight contraction ETP primitive.
 the trainable weight. The ETP rules are derived mechanically from the
 equation by classifying each weight/output axis letter:
 
-* **diagonal** — in both ``w_spec`` and ``y_spec``: ``hidden_dim``
+* **Diagonal** — in both ``w_spec`` and ``y_spec``: ``hidden_dim``
   broadcasts along the trace on these axes (dense-style).
-* **contracted** — in ``w_spec`` only (consumed by ``x``): free trace axes.
-* **shared** — in ``y_spec`` only (weight reused across them):
+* **Contracted** — in ``w_spec`` only (consumed by ``x``): free trace axes.
+* **Shared** — in ``y_spec`` only (weight reused across them):
   ``hidden_dim`` is summed over them before broadcasting.
 
 The batched equation form is required: the leading ``x``/``y`` letter is the
@@ -92,12 +92,12 @@ def parse_etp_einsum(equation: str) -> EinsumSpec:
     """
     eq = equation.replace(' ', '')
     if '->' not in eq:
-        raise ValueError(f"equation must be explicit ('lhs->rhs'): {equation!r}")
+        raise ValueError(f"Equation must be explicit ('lhs->rhs'): {equation!r}. Set Equation to explicit ('lhs->rhs'): {equation!r}.")
     lhs, y_spec = eq.split('->', 1)
     operands = lhs.split(',')
     if len(operands) != 2:
         raise ValueError(
-            f'exactly two operands (x, weight) are required: {equation!r}')
+            f'Exactly two operands (x, weight) are required: {equation!r}. Fix the input condition named in the error, then rerun the operation.')
     x_spec, w_spec = operands
     for name, s in (('x', x_spec), ('weight', w_spec), ('output', y_spec)):
         if not s or not (s.isalpha() and s.islower()):
@@ -105,30 +105,31 @@ def parse_etp_einsum(equation: str) -> EinsumSpec:
                 f'{name} spec must be non-empty lowercase letters '
                 f'(no ellipsis/digits): {equation!r}')
         if len(set(s)) != len(s):
-            raise ValueError(f'repeated axis letter in {name} spec: {equation!r}')
+            raise ValueError(f'Repeated axis letter in {name} spec: {equation!r}. Fix the input condition named in the error, then rerun the operation.')
     if x_spec[0] != y_spec[0]:
         raise ValueError(
-            'batched form required: x and output must share the leading '
-            f'batch letter: {equation!r}')
+            'Batched form required: x and output must share the leading '
+            f'batch letter: {equation!r}. Set Batched form required: x and output to share the leading '
+            f'batch letter: {equation!r}.')
     batch = x_spec[0]
     if batch in w_spec:
         raise ValueError(
-            f'batch axis {batch!r} must not appear in the weight spec: {equation!r}')
+            f'Batch axis {batch!r} must not appear in the weight spec: {equation!r}. Ensure Batch axis {batch!r} does not appear in the weight spec: {equation!r}.')
     unknown = set(y_spec) - set(x_spec) - set(w_spec)
     if unknown:
         raise ValueError(
-            f'output letters {sorted(unknown)} appear in no input: {equation!r}')
+            f'Output letters {sorted(unknown)} appear in no input: {equation!r}. Provide the missing item named in the message.')
     diagonal = ''.join(c for c in w_spec if c in y_spec)
     contracted = ''.join(c for c in w_spec if c not in y_spec)
     missing = [c for c in contracted if c not in x_spec]
     if missing:
         raise ValueError(
-            f'weight letters {missing} appear in neither x nor output: {equation!r}')
+            f'Weight letters {missing} appear in neither x nor output: {equation!r}. Provide the missing item named in the message.')
     shared = ''.join(c for c in y_spec if c not in w_spec and c != batch)
     missing = [c for c in shared if c not in x_spec]
     if missing:
         raise ValueError(
-            f'output letters {missing} are not driven by x: {equation!r}')
+            f'Output letters {missing} are not driven by x: {equation!r}. Provide the missing item named in the message.')
     return EinsumSpec(x_spec, w_spec, y_spec, batch, diagonal, contracted, shared)
 
 
@@ -292,7 +293,7 @@ def einsum(
         A two-operand explicit einsum equation ``'x_spec,w_spec->y_spec'``
         in **batched form**: the leading letter of ``x_spec`` must equal the
         leading letter of ``y_spec`` and must not appear in ``w_spec``.
-        v1 restrictions: lowercase letters only, no ellipsis, no repeated
+        V1 restrictions: lowercase letters only, no ellipsis, no repeated
         letter within one spec, every output letter present in some input,
         every weight letter present in ``x`` or the output. Spaces are
         stripped before binding.
@@ -330,13 +331,13 @@ def einsum(
     or use :func:`matmul` / :func:`grouped_matmul`, which carry one.
 
     Shared-axis equations (output axes absent from the weight spec, e.g.
-    the ``t`` in ``'btk,kn->btn'``) are exact for D-RTRL when the hidden
+    The ``t`` in ``'btk,kn->btn'``) are exact for D-RTRL when the hidden
     state fed by the output **carries the shared axes** (e.g. a
     ``(B, T, N)`` hidden state) — proven against the BPTT oracle. If the
     output's shared-axis positions instead collapse into a smaller hidden
     state (e.g. ``rec.sum(axis=1)`` into a ``(B, N)`` hidden), online
     learning fails loudly at compile time with a cotangent-shape error:
-    the per-position structure required for the weight gradient cannot be
+    The per-position structure required for the weight gradient cannot be
     recovered from a hidden-shaped learning signal.
 
     Examples

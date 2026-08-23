@@ -157,7 +157,7 @@ def test_zero_and_extreme_inputs_remain_finite() -> None:
     ],
 )
 def test_validation(values, gate_input, kwargs, error, match) -> None:
-    with pytest.raises(error, match=match):
+    with pytest.raises(error, match=f"(?i){match}"):
         braintrace.gated_projection(
             values,
             gate_input,

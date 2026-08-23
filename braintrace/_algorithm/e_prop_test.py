@@ -99,7 +99,7 @@ class TestEPropKappaApplied(unittest.TestCase):
         assert jnp.allclose(g_drtrl, g_eprop, atol=1e-6)
 
     def test_kappa_nonzero_differs_from_zero(self):
-        """κ only accumulates history (``bar_e^t = kappa*bar_e^{t-1} + e^t``),
+        """κ Only accumulates history (``bar_e^t = kappa*bar_e^{t-1} + e^t``),
         so its effect is invisible on the very first backward-invoking step
         (bar_e^{t-1} starts at zero) and only shows up once a *second*
         backward step carries forward non-trivial filter history.
@@ -198,7 +198,7 @@ class TestEPropNumStateIsolation(unittest.TestCase):
             channel_0, channel_1 = w[..., 0], w[..., 1]
             assert not jnp.allclose(channel_0, channel_1, atol=1e-4), (
                 f'fast_solve={fast_solve}: per-state channels are identical -- '
-                'looks like a summed-then-broadcast contamination.'
+                'looks like a summed-then-broadcast contamination. Update the fixture or expected result to satisfy this assertion.'
             )
 
 
@@ -245,7 +245,7 @@ class TestEPropFilterSemantics(unittest.TestCase):
                 return grads[next(iter(grads))]
 
             g_unfiltered = compute(0.0)
-            # kappa=0.0 takes the `kappa_filter_decay > 0.0` branch's *else*
+            # Kappa=0.0 takes the `kappa_filter_decay > 0.0` branch's *else*
             # path (no filters allocated at all), so this is a genuine
             # code-path regression anchor, not just a numerically-tiny kappa.
             assert jnp.allclose(g_unfiltered, jnp.array([[8.0]]), atol=1e-10)

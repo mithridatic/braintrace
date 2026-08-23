@@ -21,11 +21,11 @@ outer product ``eps ~= eps_f (x) eps_x`` smoothed by a decay factor, so it is an
 with BPTT rather than match it element-wise. Coverage:
 
 * ``_format_decay_and_rank`` (the decay<->rank conversion and its guards);
-* the smoothing primitives ``_expon_smooth`` / ``_low_pass_filter``;
-* construction & validation (decay_or_rank, vjp_method, fast_solve, aliases);
-* eligibility-trace state lifecycle over the *two* trace dicts (xs and dfs);
-* forward / update mechanics; and
-* gradient behaviour — directional alignment with BPTT and fast/legacy parity.
+* The smoothing primitives ``_expon_smooth`` / ``_low_pass_filter``;
+* Construction & validation (decay_or_rank, vjp_method, fast_solve, aliases);
+* Eligibility-trace state lifecycle over the *two* trace dicts (xs and dfs);
+* Forward / update mechanics; and
+* Gradient behaviour — directional alignment with BPTT and fast/legacy parity.
 """
 
 import math
@@ -910,7 +910,7 @@ class TestFactoredDfTraces:
         ]
         for name in ('key_weight', 'key_bias', 'value_weight'):
             assert any(name in key for key in moved), (
-                f'{name} received no gradient; moved={moved}')
+                f'{name} received no gradient; moved={moved}. Provide the missing item named in the message.')
 
 
 class TestPairingDiscrimination:
@@ -976,7 +976,7 @@ class TestPairingDiscrimination:
                     (exact @ online)
                     / (jnp.linalg.norm(exact) * jnp.linalg.norm(online))
                 ))
-        assert min(alignments) > 0.80, f'alignment panel: {alignments}'
+        assert min(alignments) > 0.80, f'Alignment panel: {alignments}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_pairing_response_points_the_same_way_as_bptt(self):
         """Beyond mere difference: the *direction* the pairing swap moves the
@@ -998,4 +998,4 @@ class TestPairingDiscrimination:
             (exact @ online)
             / (jnp.linalg.norm(exact) * jnp.linalg.norm(online))
         )
-        assert cosine > 0.5, f'pairing response misaligned with BPTT: {cosine}'
+        assert cosine > 0.5, f'Pairing response misaligned with BPTT: {cosine}. Update the fixture or expected result to satisfy this assertion.'

@@ -54,7 +54,7 @@ class ConvLIFCell(brainstate.nn.Module):
         )
 
     def update(self, x):
-        current = self.conv(x)  # (..., h, w, out_ch)
+        current = self.conv(x)  # (..., H, w, out_ch)
         flat = current.reshape(*current.shape[:-3], self.flat_size)
         g = self.syn(flat)
         self.neu(g)
@@ -69,7 +69,7 @@ class Net(brainstate.nn.Module):
         self.readout = _shared.LeakyReadout(n_rec=out_ch, n_out=n_out)
 
     def update(self, x):
-        spikes_2d = self.cell(x)  # (..., 8, 8, out_ch)
+        spikes_2d = self.cell(x)  # (..., 8, 8, Out_ch)
         pooled = spikes_2d.mean(axis=(-3, -2))  # -> (..., out_ch)
         return self.readout(pooled)
 

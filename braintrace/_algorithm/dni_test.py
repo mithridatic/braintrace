@@ -46,8 +46,8 @@ from braintrace._testing.oracle import (
     relative_deviation,
 )
 
-T = 6      # sequence length
-CHUNK = 2  # window size: 3 windows, so 2 interior boundaries carry credit
+T = 6      # Sequence length
+CHUNK = 2  # Window size: 3 windows, so 2 interior boundaries carry credit
 N_IN = 3
 N_REC = 4
 
@@ -78,7 +78,7 @@ def _group_shapes(n_rec=N_REC):
 class _OracleSynthesizer(SyntheticGradient):
     def __init__(self, group_shapes, table):
         super().__init__(group_shapes)
-        self._table = table      # list over windows of {gid: array}
+        self._table = table      # List over windows of {gid: array}
         self.window = 0
 
     def param_values(self):
@@ -214,7 +214,7 @@ class TestTheZeroSynthesiserIsANoOp:
         dev = relative_deviation(_arrays(live, [('win',)]),
                                  _arrays(plain, [('win',)]))
         assert dev > 1e-3, (
-            f'a live synthesiser must move the truncated plain key (dev={dev})')
+            f'A live synthesiser must move the truncated plain key (dev={dev}). Make a live synthesiser move the truncated plain key (dev={dev}).')
 
         # ``wout`` is the readout: ``h @ wout`` uses it only at the step that
         # produces the loss, so it has no cross-window credit to be truncated and
@@ -280,7 +280,7 @@ class TestTheOracleSynthesiser:
 
         for key in (('win',), ('wout',)):
             dev = relative_deviation(_arrays(got, [key]), _arrays(want, [key]))
-            assert dev < 1e-4, f'{key} must telescope onto BPTT (dev={dev})'
+            assert dev < 1e-4, f'{key} must telescope onto BPTT (dev={dev}). Make {key} telescope onto BPTT (dev={dev}).'
 
     def test_a_zero_synthesiser_does_not_equal_bptt_on_those_keys(self):
         # Otherwise the fixture has no cross-window plain credit and the
@@ -400,7 +400,7 @@ class TestALearnedSynthesiserHelps:
         before = {k: np.asarray(st.value) for k, st in
                   model.states(brainstate.ParamState).items()}
         # `chunk_size` must match the window the learner is *evaluated* with:
-        # the synthesiser predicts the future at a window boundary, and the
+        # The synthesiser predicts the future at a window boundary, and the
         # boundaries move when the window size does.
         history = train_synthetic_gradient(
             learner, train_inputs, chunk_size=CHUNK, epochs=10, lr=0.05)
@@ -411,7 +411,7 @@ class TestALearnedSynthesiserHelps:
                 before[k], after[k],
                 err_msg=f'the model parameter {k} must stay frozen')
         assert history[-1] < history[0], (
-            f'the regression must make progress: {history[0]} -> {history[-1]}')
+            f'The regression must make progress: {history[0]} -> {history[-1]}. Make the regression make progress: {history[0]} -> {history[-1]}.')
 
         trained_dev = deviation(lambda: synth)
         assert trained_dev < zero_dev, (
@@ -482,7 +482,7 @@ class TestStructure:
                 assert path not in synth.states_dict(), path
         for st in algo.param_states.values():
             assert id(st) not in synth_ids, (
-                'the synthesiser must not appear among the model parameters')
+                'The synthesiser must not appear among the model parameters. Ensure the synthesiser does not appear among the model parameters.')
 
     def test_the_injected_cotangent_is_provably_non_zero(self):
         algo, _ = self._compiled(synth=False)
@@ -529,7 +529,7 @@ class TestStructure:
         history = train_synthetic_gradient(algo, inputs, epochs=2)
         assert len(history) == 2
         assert all(np.isfinite(h) for h in history)
-        assert history[0] > 0.0, 'the regression loss must be live'
+        assert history[0] > 0.0, 'The regression loss must be live. Ensure the regression loss is live.'
 
     def test_the_window_body_is_traced_once_not_once_per_window(self):
         """AGENTS.md rule 10, observed rather than asserted by inspection.
@@ -857,9 +857,9 @@ class TestTheDelayedRewardTask:
         zero_first, zero_last = train(SyntheticGradient(shapes), mode='off')
 
         assert oracle_first == trained_first == frozen_first == zero_first, (
-            'every arm must start from one model')
+            'Every arm must start from one model. Make Every arm start from one model.')
         assert trained_last < trained_first, (
-            f'the task must be learnable at all: {trained_first} -> {trained_last}')
+            f'The task must be learnable at all: {trained_first} -> {trained_last}. Ensure the task is learnable at all: {trained_first} -> {trained_last}.')
         # The exact future cotangent is the ceiling: it must beat truncation.
         assert oracle_last < zero_last, (
             f'an exact estimate must beat the truncated run: '
@@ -874,7 +874,7 @@ class TestTheDelayedRewardTask:
             f'{trained_last} vs {frozen_last}')
         # ...and must not beat the exact estimate it is approximating.
         assert oracle_last <= trained_last + 1e-6, (
-            f'nothing may beat the oracle: {oracle_last} vs {trained_last}')
+            f'Nothing may beat the oracle: {oracle_last} vs {trained_last}. Update the fixture or expected result to satisfy this assertion.')
 
 
 class TestMixedRoutingIsRejected:

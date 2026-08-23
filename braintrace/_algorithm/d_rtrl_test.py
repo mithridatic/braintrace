@@ -60,10 +60,10 @@ class TestRemoveUnits:
         """A brainunit Quantity should be stripped and restored."""
         x = jnp.array([1.0, 2.0]) * u.mV
         unitless, restore = _remove_units(x)
-        # unitless should be the mantissa
+        # Unitless should be the mantissa
         npt.assert_array_almost_equal(unitless, jnp.array([1.0, 2.0]))
         restored = restore(unitless)
-        # restored should be equal to the original quantity
+        # Restored should be equal to the original quantity
         npt.assert_array_almost_equal(u.get_mantissa(restored), u.get_mantissa(x))
         assert u.get_unit(restored) == u.get_unit(x)
 
@@ -375,7 +375,7 @@ class TestParamDimVjpAlgorithmForwardPass:
         model = braintrace.nn.GRUCell(3, 4)
         brainstate.nn.init_all_states(model)
         algo = ParamDimVjpAlgorithm(model, vjp_method='multi-step')
-        x_single = brainstate.random.rand(3)  # single-step shape for compilation
+        x_single = brainstate.random.rand(3)  # Single-step shape for compilation
         algo.compile_graph(x_single)
 
         x_multi = brainstate.random.rand(5, 3)  # 5 time steps
@@ -398,7 +398,7 @@ class TestParamDimVjpAlgorithmForwardPass:
             )(inp)
 
         grads = compute_grad(x)
-        # grads should be a non-empty dict-like structure
+        # Grads should be a non-empty dict-like structure
         assert len(grads) > 0
         # Check that at least some gradients are non-zero
         all_zero = all(
@@ -665,7 +665,7 @@ class TestDRtrlDictTraceStorage:
         (_, entry), = etrace.items()
         assert isinstance(entry.value, dict)
         assert set(entry.value.keys()) == {'weight'}
-        assert entry.value['weight'].shape[0] == 1  # batch
+        assert entry.value['weight'].shape[0] == 1  # Batch
         assert entry.value['weight'].shape[1:3] == (4, 4)  # W shape
 
 
@@ -937,7 +937,7 @@ class TestTraceDtypeKnob:
         for k in g32:
             a = u.get_mantissa(jax.tree.leaves(g32[k])[0])
             b = u.get_mantissa(jax.tree.leaves(gbf[k])[0])
-            # bf16 trace -> ~2-3 significant digits; assert bounded divergence.
+            # Bf16 trace -> ~2-3 significant digits; assert bounded divergence.
             npt.assert_allclose(b, a, rtol=0.2, atol=1e-2)
 
 
@@ -967,14 +967,14 @@ class TestMultiStateUnaffected:
     broadcast would silently drop the cross-state coupling). Pin fast==legacy
     on an ALIF model to guarantee the new ``num_state==1`` branch is not taken.
 
-    fast and legacy reduce over the state axis in a different order (einsum vs
+    Fast and legacy reduce over the state axis in a different order (einsum vs
     nested vmap+sum), so this is numerically equal, not bit-identical."""
 
     def test_alif_fast_equals_legacy(self):
         with brainstate.environ.context(dt=0.1 * u.ms):
             xs = brainstate.random.randn(5, 4)
             m_fast, m_legacy = _alif(), _alif()
-            _clone_state_values(m_fast, m_legacy)  # force identical weights + init
+            _clone_state_values(m_fast, m_legacy)  # Force identical weights + init
             fast = _run_updates(ParamDimVjpAlgorithm(m_fast, fast_solve=True), xs)
             legacy = _run_updates(ParamDimVjpAlgorithm(m_legacy, fast_solve=False), xs)
             # canon_state_axis: the two states' num_state column order is not
@@ -1037,7 +1037,7 @@ class TestSolveBatchFold:
     def test_batched_solve_fold_equals_legacy(self):
         # Batched mm (etp_mm_p) -> fast path folds the batch; legacy path does
         # per-batch contraction + trailing sum. They must agree.
-        xs = brainstate.random.randn(4, 1, 4)  # steps, batch=1, n=4
+        xs = brainstate.random.randn(4, 1, 4)  # Steps, batch=1, n=4
         g_fast = self._grad_after_warmup(
             ParamDimVjpAlgorithm(_rnn_mm(bias=True), fast_solve=True), xs
         )
@@ -1047,8 +1047,8 @@ class TestSolveBatchFold:
         self._assert_grads_close(g_fast, g_legacy, atol=1e-5)
 
     def test_unbatched_solve_unaffected(self):
-        # mv (etp_mv_p) is unbatched: no fold, no trailing sum. fast == legacy.
-        xs = brainstate.random.randn(4, 4)  # steps, n=4 (unbatched)
+        # Mv (etp_mv_p) is unbatched: no fold, no trailing sum. fast == legacy.
+        xs = brainstate.random.randn(4, 4)  # Steps, n=4 (unbatched)
         g_fast = self._grad_after_warmup(
             ParamDimVjpAlgorithm(_rnn_mv(), fast_solve=True), xs
         )
@@ -1084,7 +1084,7 @@ class TestCoupledTraceBoundedness:
         brainstate.random.seed(0)
         model = braintrace.nn.GRUCell(3, 16)
         brainstate.nn.init_all_states(model)
-        algo = ParamDimVjpAlgorithm(model)  # default single-step per-step trace path
+        algo = ParamDimVjpAlgorithm(model)  # Default single-step per-step trace path
         xs = brainstate.random.randn(150, 3)
         algo.compile_graph(xs[0])
         algo.init_etrace_state()
@@ -1093,11 +1093,11 @@ class TestCoupledTraceBoundedness:
 
         leaves = self._etrace_leaves(algo)
         assert len(leaves) >= 1
-        # finite (no inf/NaN from overflow) ...
+        # Finite (no inf/NaN from overflow) ...
         assert all(bool(jnp.all(jnp.isfinite(leaf))) for leaf in leaves)
         # ... and bounded well below the pre-fix ~1e12 explosion.
         max_abs = max(float(jnp.max(jnp.abs(leaf))) for leaf in leaves)
-        assert max_abs < 1e3, f'eligibility trace grew to {max_abs}'
+        assert max_abs < 1e3, f'Eligibility trace grew to {max_abs}. Update the fixture or expected result to satisfy this assertion.'
 
     def test_gru_with_recurrence_trace_is_bounded(self):
         """The 'with-recurrence' (block-diagonal) path must also stay bounded.
@@ -1111,12 +1111,12 @@ class TestCoupledTraceBoundedness:
         brainstate.random.seed(0)
         model = braintrace.nn.GRUCell(3, 16)
         brainstate.nn.init_all_states(model)
-        algo = braintrace.OSTLRecurrent(model)  # with-recurrence -> block-diagonal
+        algo = braintrace.OSTLRecurrent(model)  # With-recurrence -> block-diagonal
         xs = brainstate.random.randn(150, 3)
         algo.compile_graph(xs[0])
         algo.init_etrace_state()
 
-        # the with-recurrence grouping really took the coupled (block-diagonal)
+        # The with-recurrence grouping really took the coupled (block-diagonal)
         # path -- otherwise this test would not be guarding it.
         groups = algo.graph_executor.graph.hidden_groups
         assert any(not g.is_diagonal_recurrence for g in groups)
@@ -1128,4 +1128,4 @@ class TestCoupledTraceBoundedness:
         assert len(leaves) >= 1
         assert all(bool(jnp.all(jnp.isfinite(leaf))) for leaf in leaves)
         max_abs = max(float(jnp.max(jnp.abs(leaf))) for leaf in leaves)
-        assert max_abs < 1e3, f'eligibility trace grew to {max_abs}'
+        assert max_abs < 1e3, f'Eligibility trace grew to {max_abs}. Update the fixture or expected result to satisfy this assertion.'

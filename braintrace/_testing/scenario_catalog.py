@@ -218,7 +218,7 @@ class SharedTiedWeightRNN(brainstate.nn.Module):
         super().__init__()
         # Square so the weight can be applied to both x (size n_in=n_out)
         # and h (size n_out).
-        assert n_in == n_out, 'SharedTiedWeightRNN requires n_in == n_out'
+        assert n_in == n_out, 'SharedTiedWeightRNN requires n_in == n_out. Provide the required value for SharedTiedWeightRNN.'
         self.w = brainstate.ParamState(brainstate.random.randn(n_in, n_out))
         self.h = brainstate.HiddenState(jnp.zeros(n_out))
 
@@ -273,8 +273,8 @@ class PartialPathRNN(brainstate.nn.Module):
     r"""``mid = matmul(xh, w1); h = tanh(mid + matmul(mid, w2))``.
 
     ``w1`` reaches ``h`` along *two* paths:
-      1. directly through the addition (no other ETP),
-      2. indirectly through ``w2``'s matmul.
+      1. Directly through the addition (no other ETP),
+      2. Indirectly through ``w2``'s matmul.
 
     Path classification must report ``MIXED`` for ``w1``. ``w2`` is
     classified ``ALL_DIRECT``.
@@ -405,7 +405,7 @@ def make_cond_branches_etp_jaxpr(n_in: int, n_out: int):
 def make_while_body_etp_jaxpr(n_in: int, n_out: int, n_iter: int = 3):
     """Return a jaxpr containing ``braintrace.matmul`` inside the body of
     ``lax.while_loop``."""
-    assert n_in == n_out, 'while-body fixture requires square w'
+    assert n_in == n_out, 'While-body fixture requires square w. Provide the required value for While-body fixture.'
     w = jnp.zeros((n_in, n_out))
     x = jnp.zeros(n_in)
 

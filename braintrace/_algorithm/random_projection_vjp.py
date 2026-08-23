@@ -89,7 +89,7 @@ def _tree_norm(tree: PyTree) -> jax.Array:
 
 
 def _at_precision_of(value: Any, template: Any) -> Any:
-    """*value* narrowed back to *template*'s dtype, unit-preserving.
+    """*Value* narrowed back to *template*'s dtype, unit-preserving.
 
     ``_tree_sq_norm`` accumulates in at least float32 deliberately — a sum of
     squares in float16 underflows for state magnitudes below about ``1e-3`` — so
@@ -198,12 +198,12 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
     That is the whole claim, and it is narrower than "unbiased". Three
     approximations are untouched:
 
-    1. **cross-group coupling** — the compiler splits hidden states into groups
+    1. **Cross-group coupling** — the compiler splits hidden states into groups
        and drops inter-group terms; one factor pair per group cannot carry them;
-    2. **the instantaneous term's tail** — ``df`` comes from a single all-ones
+    2. **The instantaneous term's tail** — ``df`` comes from a single all-ones
        JVP of the ``y -> hidden`` map, exact only for a position-preserving
        elementwise tail (finding F-31);
-    3. **each primitive's own solve regime** — the projector is built from the
+    3. **Each primitive's own solve regime** — the projector is built from the
        framework's own per-primitive rules, so it inherits them exactly.
 
     On a single-group model with a position-preserving elementwise tail — the
@@ -505,7 +505,10 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
         )
         found = {k: st.value for k, st in self.etrace_theta.items() if k[1] == path}
         if not found:
-            raise ValueError(f'Do not the etrace of the given weight: {weight}.')
+            raise ValueError(
+                f'No eligibility trace exists for weight {weight!r}. '
+                'Use a weight registered by an ETP operation.'
+            )
         return found
 
     # ------------------------------------------------------------------ #
@@ -599,7 +602,7 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
                 paths = self._etp_paths_of_group(group)
                 theta_g = {p: carry[_THETA_TILDE][(gi, p)] for p in paths}
 
-                # rho0 may be any positive draw-independent scalar and rho1 any
+                # Rho0 may be any positive draw-independent scalar and rho1 any
                 # positive *even* function of the draw without touching
                 # unbiasedness (the cross terms are odd, and rho1 is even because
                 # both its norms are). The choice below is the variance-balancing
@@ -690,11 +693,11 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
                 theta = etrace_h2w_at_t[_THETA_TILDE][(gi, path)]
                 _update_dict(dG_weights, path, _scale_tree(theta, scale))
 
-        # the non-etrace weight gradients (reverse-AD, in-window)
+        # The non-etrace weight gradients (reverse-AD, in-window)
         for path, dg in dl_to_nonetws_at_t.items():
             _update_dict(dG_weights, path, dg)
 
-        # the in-window direct term for etrace parameters (multi-step only)
+        # The in-window direct term for etrace parameters (multi-step only)
         if dl_to_etws_at_t is not None:
             for path, dg in dl_to_etws_at_t.items():
                 _update_dict(dG_weights, path, dg, error_when_no_key=True)

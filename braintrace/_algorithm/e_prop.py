@@ -125,7 +125,7 @@ class EProp(ParamDimVjpAlgorithm):
         ``0`` disables filtering (the algorithm then reduces exactly to
         :class:`~braintrace.D_RTRL`).
     random_feedback_key : jax.Array, optional
-        PRNG key seeding the random-feedback matrices; obtain one from
+        PRNG key seeding the random-feedback matrices; get one from
         :func:`brainstate.random.split_key`. Required when
         ``feedback='random'``; ignored otherwise.
     name : str, optional
@@ -198,11 +198,11 @@ class EProp(ParamDimVjpAlgorithm):
     ) -> None:
         if feedback not in ('symmetric', 'random'):
             raise ValueError(
-                f"feedback must be 'symmetric' or 'random'; got {feedback!r}"
+                f"Feedback must be 'symmetric' or 'random'; got {feedback!r}. Set feedback to 'symmetric' or 'random'."
             )
         if feedback == 'random' and random_feedback_key is None:
             raise ValueError(
-                "feedback='random' requires random_feedback_key=<PRNGKey>"
+                "Feedback='random' requires random_feedback_key=<PRNGKey>. Provide the required value for Feedback='random'."
             )
         kappa_filter_decay = float(kappa_filter_decay)
         # The preset's constructor is the boundary where the paper's parameter

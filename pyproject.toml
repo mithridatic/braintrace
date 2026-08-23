@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 # `include-package-data` defaults to true for a pyproject-only configuration,
 # which re-adds every file in the sdist manifest to the wheel as *package data*
-# -- including the test payload `setup.py` prunes. The real package data here is
+# -- Including the test payload `setup.py` prunes. The real package data here is
 # one file (`py.typed`), declared explicitly below, so the manifest sweep buys
 # nothing and is turned off.
 [tool.setuptools]
@@ -169,7 +169,7 @@ module = [
 ]
 ignore_missing_imports = true
 
-# brainunit ships a py.typed marker, but its public API (brainunit.math.*,
+# Brainunit ships a py.typed marker, but its public API (brainunit.math.*,
 # Quantity, units, ...) is merely re-exported via `from saiunit... import *`,
 # and saiunit ships NO py.typed. mypy therefore cannot resolve any of the
 # re-exported names and emits spurious `attr-defined` errors at every call
@@ -224,7 +224,7 @@ module = [
     # Public-symbol owners added for 0.2.5. Each of these defines at least one
     # name in `braintrace.__all__`, so leaving them out meant the "every public
     # API is typed" invariant above did not actually cover them:
-    #   axes -> ETraceConfig            snap_n -> SnAp
+    #   Axes -> ETraceConfig            snap_n -> SnAp
     #   uoro -> UORO                    three_factor -> ThreeFactor
     #   sequence -> SequenceDriverMixin, ETraceVmap (etrace_grad/etrace_evolve)
     #   dni -> DNI, SyntheticGradient, train_synthetic_gradient

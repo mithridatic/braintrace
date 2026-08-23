@@ -94,7 +94,7 @@ def test_layout_rejects_corrupt_or_ambiguous_feature_boundaries(
     values = asdict(_layout())
     values.update(updates)
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         RowRefinementLayout(**values)
 
 
@@ -189,7 +189,7 @@ def test_capture_query_rows_rejects_incompatible_state_shapes(
     advance_shape: tuple[int, ...],
     message: str,
 ) -> None:
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=f"(?i){message}"):
         capture_query_rows(
             jnp.zeros(grid_shape),
             jnp.zeros(shape_shape),

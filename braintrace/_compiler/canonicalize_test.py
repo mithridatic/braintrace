@@ -397,7 +397,7 @@ class TestIfConvertConds:
         conv = _convert(closed)
         names = _primitive_names(conv)
         assert 'cond' not in names
-        assert 'scan' in names  # surfaced, not unrolled by this pass alone
+        assert 'scan' in names  # Surfaced, not unrolled by this pass alone
         for xi in (jnp.ones(3), -jnp.ones(3)):
             assert jnp.allclose(_eval(conv, xi, jnp.eye(3))[0], f(xi, jnp.eye(3)))
 
@@ -471,7 +471,7 @@ class TestIfConvertConds:
 
 
 class _CondGateCell(brainstate.nn.Module):
-    """h' = tanh(cond(sum(x) > 0, etp_mv(x, w_a), etp_mv(x, w_b)) + 0.9 h)."""
+    """H' = tanh(cond(sum(x) > 0, etp_mv(x, w_a), etp_mv(x, w_b)) + 0.9 h)."""
 
     def __init__(self, n_in, n_rec):
         super().__init__()
@@ -510,7 +510,7 @@ class _SelectGateCell(brainstate.nn.Module):
         idx = (jnp.sum(x) > 0.).astype(jnp.int32)
         y_a = braintrace.matmul(x, self.w_a.value)
         y_b = braintrace.matmul(x, self.w_b.value)
-        # cond(pred, true_fn, false_fn): branches[0] is false_fn -> w_b.
+        # Cond(pred, true_fn, false_fn): branches[0] is false_fn -> w_b.
         u_val = jax.lax.select_n(idx, y_b, y_a)
         self.h.value = jnp.tanh(u_val + 0.9 * self.h.value)
         return self.h.value
@@ -752,7 +752,7 @@ class TestUnrollInnerScans:
         closed = jax.make_jaxpr(f)(w, h0, xs)
         body = [e for e in closed.jaxpr.eqns if e.primitive.name == 'scan'][0]
         body_outvars = body.params['jaxpr'].jaxpr.outvars
-        assert body_outvars[0] is body_outvars[1]  # fixture really is degenerate
+        assert body_outvars[0] is body_outvars[1]  # Fixture really is degenerate
         conv = _unroll(closed, weights=[closed.jaxpr.invars[0]])
         assert 'scan' not in _primitive_names(conv)
         ref = f(w, h0, xs)
@@ -1165,7 +1165,7 @@ class TestFixpointIterationLimit:
         xs = jnp.stack([jnp.ones(3), -jnp.ones(3)])
         return f, jax.make_jaxpr(f)(w, h0, xs), w, h0, xs
 
-    # -- cond fixpoint ----------------------------------------------------
+    # -- Cond fixpoint ----------------------------------------------------
 
     def test_cond_fixpoint_raises_when_limit_exhausted(self):
         f, closed, x, w = self._cond_jaxpr()
@@ -1210,7 +1210,7 @@ class TestFixpointIterationLimit:
         )
         assert conv is closed
 
-    # -- scan fixpoint ----------------------------------------------------
+    # -- Scan fixpoint ----------------------------------------------------
 
     def test_scan_fixpoint_raises_when_limit_exhausted(self):
         f, closed, w, h0, xs = self._scan_in_scan_jaxpr()
@@ -1252,7 +1252,7 @@ class TestFixpointIterationLimit:
         )
         assert conv is closed
 
-    # -- joint fixpoint ---------------------------------------------------
+    # -- Joint fixpoint ---------------------------------------------------
 
     def _canonicalize(self, closed, weight, limit):
         return canonicalize_control_flow(
@@ -1503,7 +1503,7 @@ class TestSkipWarningDedup:
         assert _primitive_names(conv).count('cond') == 2
         recs = _records_of(reporter, DiagnosticKind.COND_CONVERSION_SKIPPED)
         assert len(recs) == 2
-        assert len({r.message for r in recs}) == 1  # identical messages
+        assert len({r.message for r in recs}) == 1  # Identical messages
         assert _warning_count(caught, 'NOT if-converted') == 2
 
     def test_unsafe_cond_after_convertible_cond_warns_once(self):

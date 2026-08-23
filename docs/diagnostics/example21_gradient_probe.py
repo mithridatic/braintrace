@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/Usr/bin/env python3
 """Step A: does the ARC grid loss reach the recurrent synapses at all?
 
 Builds one real ARC training episode through Example 21's own production path,

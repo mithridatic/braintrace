@@ -200,7 +200,7 @@ def merge_data(tree_def: Any, *args: dict[int, Any]) -> Any:
         data.update(arg)
     for i in range(len(data)):
         if i not in data:
-            raise ValueError(f"Data at index {i} is missing.")
+            raise ValueError(f"Data at index {i} is missing. Provide the missing value or resource, then rerun the operation.")
     return jax.tree.unflatten(tree_def, tuple(data[i] for i in range(len(data))))
 
 
@@ -229,7 +229,7 @@ def get_single_step_data(*args: Any) -> Any:
         if isinstance(leaf, SingleStepData):
             leaves_processed.append(leaf.data)
         elif isinstance(leaf, MultiStepData):
-            # we need the data at only single time step
+            # We need the data at only single time step
             leaves_processed.append(jax.tree.map(lambda x: x[0], leaf.data))
         else:
             leaves_processed.append(leaf)
@@ -271,15 +271,15 @@ def _count_update_steps(*args: Any) -> int:
         for value in jax.tree.leaves(leaf.data):
             shape = jax.numpy.shape(value)
             if not shape:
-                raise ValueError('MultiStepData leaves must have a leading time axis.')
+                raise ValueError('MultiStepData leaves must have a leading time axis. Ensure all MultiStepData leaves have a leading time axis.')
             lengths.append(shape[0])
     if not has_multi:
         return 1
     if not lengths:
-        raise ValueError('MultiStepData must contain at least one array leaf.')
+        raise ValueError('MultiStepData must contain at least one array leaf. Add at least one array leaf to MultiStepData.')
     if len(set(lengths)) != 1:
-        raise ValueError(f'MultiStepData leaves must have the same sequence size, got {lengths}.')
+        raise ValueError(f'MultiStepData leaves must have the same sequence size, got {lengths}. Ensure all MultiStepData leaves have the same sequence size.')
     length = int(lengths[0])
     if length < 1:
-        raise ValueError('MultiStepData must contain at least one timestep.')
+        raise ValueError('MultiStepData must contain at least one timestep. Add at least one timestep to MultiStepData.')
     return length

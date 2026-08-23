@@ -73,9 +73,9 @@ class SiTUGLU(brainstate.nn.Module):
             (output_size, "output_size"),
         ):
             if isinstance(size, bool) or not isinstance(size, int):
-                raise TypeError(f"{size_name} must be a positive integer")
+                raise TypeError(f"{size_name} must be a positive integer. Set {size_name} to a positive integer.")
             if size <= 0:
-                raise ValueError(f"{size_name} must be a positive integer")
+                raise ValueError(f"{size_name} must be a positive integer. Set {size_name} to a positive integer.")
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size

@@ -29,10 +29,10 @@ def _optional_clip_norm(value: str) -> float | None:
         clip_norm = float(value)
     except ValueError as error:
         raise argparse.ArgumentTypeError(
-            "clip norm must be positive or disabled"
+            "Clip norm must be positive or disabled. Set Clip norm to a positive value."
         ) from error
     if not math.isfinite(clip_norm) or clip_norm <= 0.0:
-        raise argparse.ArgumentTypeError("clip norm must be positive or disabled")
+        raise argparse.ArgumentTypeError("Clip norm must be positive or disabled. Set Clip norm to a positive value.")
     return clip_norm
 
 
@@ -118,7 +118,7 @@ def _settings(values: argparse.Namespace) -> CurriculumAdoptionSettings:
         control_path = values.example15_static_control_result.resolve()
         document = msgspec_json.loads(control_path.read_text(encoding="utf-8"))
         if not isinstance(document, dict):
-            raise ValueError("Example 15 static-control artifact must be an object")
+            raise ValueError("Example 15 static-control artifact must be an object. Set Example 15 static-control artifact to an object.")
         accuracy_change = validated_accuracy_change(document)
     assert accuracy_change is not None
     return CurriculumAdoptionSettings(

@@ -74,13 +74,13 @@ class TestStackedJacobians:
         L, decay = 8, 0.9
         algo = _compiled_algo(make_snn_scan_net(loops=L, decay=decay), DESCEND())
         executor = algo.graph_executor
-        # drive one real step through the executor plumbing to get temps
+        # Drive one real step through the executor plumbing to get temps
         (_, _, _, hid2w, hid2h, _) = executor.solve_h2w_h2h_jacobian(
             jnp.ones((4,), dtype='float32'))
         g = next(gr for gr in algo.graph.hidden_groups if gr.descent is not None)
         diag = hid2h[g.index]
         assert diag.shape == (L, 1, 4, 1, 1)
-        # body h-path is `decay * h` -> D_tau == decay exactly, every substep
+        # Body h-path is `decay * h` -> D_tau == decay exactly, every substep
         np.testing.assert_allclose(np.asarray(diag), decay, atol=1e-6)
 
     def test_descended_df_matches_manual_tanh_prime(self):
@@ -155,7 +155,7 @@ class TestSubstepFold:
                 x_row = x.reshape(1, -1)
 
                 def substep(_):
-                    # plain matmul: no ETP relation is produced
+                    # Plain matmul: no ETP relation is produced
                     self.h.value = 0.9 * self.h.value + jnp.tanh(
                         x_row @ self.w.value)
                     return self.h.value
@@ -219,7 +219,7 @@ from braintrace._testing.oracle_models import (
 )
 
 ATOL_BPTT = 1e-4
-# float32 accumulation-order noise between the folded (inner-scan) and the
+# Float32 accumulation-order noise between the folded (inner-scan) and the
 # unrolled (flat-relation) trace paths; the design probes measured <=2e-5.
 ATOL_EQUIV = 3e-5
 
@@ -279,14 +279,14 @@ class TestDescentCorrectness:
         spec = snn_scan_rnn(n_rec=4, loops=100, seed=0)
         inputs = _inputs(4, 4)
         g_bptt = bptt_param_gradients(spec.factory, inputs)
-        # default-limit policy: L=100 must descend, not unroll
+        # Default-limit policy: L=100 must descend, not unroll
         policy = ControlFlowPolicy(scan_descent='auto')
         algo_factory = lambda m: braintrace.D_RTRL(
             m, vjp_method='multi-step', control_flow=policy)
         g = online_param_gradients(spec.factory, inputs,
                                    algo_factory=algo_factory)
         assert_param_gradients_close(g, g_bptt, atol=ATOL_BPTT)
-        # no unroll blowup
+        # No unroll blowup
         model = spec.factory()
         brainstate.nn.init_all_states(model, batch_size=1)
         algo = algo_factory(model)
@@ -328,7 +328,7 @@ class TestDescentCorrectness:
         assert_param_gradients_close(g_d, g_u, atol=ATOL_EQUIV)
 
     def test_single_step_ys_readout_drops_same_step_signal(self):
-        """v1 limitation pin: when the loss reads the hidden state through
+        """V1 limitation pin: when the loss reads the hidden state through
         the descended scan's stacked ys output (``for_loop(...)[-1]``)
         instead of the carry, the same-step loss path bypasses the per-step
         hidden perturbation (which is added to the scan's *carry* outvar),
