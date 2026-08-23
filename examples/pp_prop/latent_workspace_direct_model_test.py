@@ -65,6 +65,33 @@ def test_direct_gru_is_seed_deterministic() -> None:
         assert left.tobytes() == right.tobytes()
 
 
+def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=23,
+        )
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    first_query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    first_query = first_query.at[0, 0, 0, 1].set(1.0)
+    first_query = first_query.at[0, 0, 0, 10].set(1.0)
+    first_query = first_query.at[0, 7, 9, 2].set(1.0)
+    first_query = first_query.at[0, 7, 9, 10].set(1.0)
+    second_query = first_query.at[0, 7, 9, 2].set(0.0)
+    second_query = second_query.at[0, 7, 9, 4].set(1.0)
+
+    first_colors = np.asarray(model.decode(hidden, first_query)[2])
+    second_colors = np.asarray(model.decode(hidden, second_query)[2])
+
+    assert model.config.architecture_version == "cross_spatial_attention_v2"
+    assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -73,6 +100,7 @@ def test_direct_gru_is_seed_deterministic() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
+        {"architecture_version": "local_decoder_v1"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

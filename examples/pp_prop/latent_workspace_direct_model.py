@@ -14,6 +14,7 @@ import braintrace
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
+ARCHITECTURE_VERSION = "cross_spatial_attention_v2"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -52,6 +53,8 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
+    architecture_version : str, default="cross_spatial_attention_v2"
+        Fixed checkpoint-schema architecture identifier.
     """
 
     input_width: int
@@ -60,6 +63,7 @@ class DirectModelConfig:
     decoder_width: int = 256
     recurrent_layers: int = 2
     seed: int = 2108
+    architecture_version: str = ARCHITECTURE_VERSION
 
     def __post_init__(self) -> None:
         for name in (
@@ -73,6 +77,10 @@ class DirectModelConfig:
                 self, name, _positive_integer(getattr(self, name), name)
             )
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        if self.architecture_version != ARCHITECTURE_VERSION:
+            raise ValueError(
+                f"architecture_version must be {ARCHITECTURE_VERSION!r}."
+            )
 
 
 def _coordinate_features() -> jnp.ndarray:
@@ -124,6 +132,14 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
+            )
+            self.attention_key_projection = braintrace.nn.Linear(
+                QUERY_FEATURE_WIDTH + 2 * MAX_GRID_SIZE,
+                config.decoder_width,
+            )
+            self.attention_value_projection = braintrace.nn.Linear(
+                QUERY_FEATURE_WIDTH + 2 * MAX_GRID_SIZE,
+                config.decoder_width,
             )
             self.color_head = braintrace.nn.Linear(config.decoder_width, COLOR_COUNT)
         self.coordinate_features = _coordinate_features()
@@ -180,13 +196,44 @@ class DirectARCGRU(brainstate.nn.Module):
             raise ValueError("query_features must have shape (batch, 30, 30, 11).")
         if hidden.ndim != 2 or hidden.shape[0] != query_features.shape[0]:
             raise ValueError("hidden and query_features batch dimensions must match.")
-        context = self.context_projection(hidden)[:, None, None, :]
+        batch_size = query_features.shape[0]
+        context_vector = self.context_projection(hidden)
+        context = context_vector[:, None, None, :]
         query = self.query_projection(query_features)
         coordinate = self.coordinate_projection(self.coordinate_features)
         coordinate = coordinate.reshape(
             MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
-        cell_state = brainstate.nn.tanh(context + query + coordinate[None])
+        flat_query = query_features.reshape(
+            batch_size, MAX_GRID_SIZE * MAX_GRID_SIZE, QUERY_FEATURE_WIDTH
+        )
+        flat_coordinates = jnp.broadcast_to(
+            self.coordinate_features[None],
+            (batch_size, MAX_GRID_SIZE * MAX_GRID_SIZE, 2 * MAX_GRID_SIZE),
+        )
+        source_features = jnp.concatenate(
+            (flat_query, flat_coordinates), axis=-1
+        )
+        keys = self.attention_key_projection(source_features)
+        values = self.attention_value_projection(source_features)
+        output_queries = brainstate.nn.tanh(
+            context_vector[:, None, :] + coordinate.reshape(-1, self.config.decoder_width)[None]
+        )
+        attention_logits = jnp.einsum(
+            "bod,bsd->bos", output_queries, keys
+        ) / np.sqrt(float(self.config.decoder_width))
+        source_valid = flat_query[..., -1] > 0.5
+        attention_logits = jnp.where(
+            source_valid[:, None, :], attention_logits, -1.0e9
+        )
+        attention = jnp.einsum(
+            "bos,bsd->bod", brainstate.nn.softmax(attention_logits, axis=-1), values
+        ).reshape(
+            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
+        )
+        cell_state = brainstate.nn.tanh(
+            context + query + coordinate[None] + attention
+        )
         return (
             self.height_head(hidden),
             self.width_head(hidden),
@@ -218,4 +265,3 @@ class DirectARCGRU(brainstate.nn.Module):
             )
         hidden_sequence = brainstate.transform.for_loop(self.update, events)
         return self.decode(hidden_sequence[-1], query_features)
-

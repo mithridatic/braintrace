@@ -70,6 +70,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   demonstration/query event stream;
 - checkpoint-owned recurrent, memory, and readout parameters;
 - learned shape heads for the 30 possible heights and widths;
+- a checkpoint-owned cross-spatial attention path from every valid query-input
+  cell to every output coordinate, so learned spatial remapping is expressible
+  without a fixed copy or transform residual;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;

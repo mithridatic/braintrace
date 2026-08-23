@@ -173,7 +173,14 @@ def test_checkpoint_load_rejects_schema_corruption(tmp_path, corruption: str) ->
         "examples.pp_prop.latent_workspace_direct_model"
     )
     model = model_subject.DirectARCGRU(
-        model_subject.DirectModelConfig(input_width=6, hidden_width=8, seed=19)
+        model_subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            recurrent_layers=1,
+            seed=19,
+        )
     )
     path = tmp_path / "checkpoint.npz"
     subject.save_direct_checkpoint(model, path)
