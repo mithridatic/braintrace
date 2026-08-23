@@ -75,6 +75,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 - learned shape heads for the 30 possible heights and widths, conditioned on
   both recurrent task state and a checkpoint-owned projection of query
   row/column validity;
+- a fixed lossless one-hot encoding of demonstration input/output dimensions
+  and query-input dimensions, followed only by checkpoint-owned neural
+  projections; held-out query-output dimensions are never encoded;
 - a checkpoint-owned cross-spatial attention path from every valid query-input
   cell to every output coordinate, so learned spatial remapping is expressible
   without a fixed copy or transform residual;

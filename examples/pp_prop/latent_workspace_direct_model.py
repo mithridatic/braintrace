@@ -14,7 +14,12 @@ import braintrace
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
-ARCHITECTURE_VERSION = "temporally_pooled_shape_attention_v4"
+MAX_DEMONSTRATIONS = 10
+DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
+SHAPE_FEATURE_WIDTH = (
+    MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
+)
+ARCHITECTURE_VERSION = "explicit_demo_shape_attention_v5"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -53,7 +58,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="temporally_pooled_shape_attention_v4"
+    architecture_version : str, default="explicit_demo_shape_attention_v5"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -127,6 +132,9 @@ class DirectARCGRU(brainstate.nn.Module):
             self.query_shape_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.hidden_width
             )
+            self.episode_shape_projection = braintrace.nn.Linear(
+                SHAPE_FEATURE_WIDTH, config.hidden_width
+            )
             self.temporal_summary_projection = braintrace.nn.Linear(
                 2 * config.hidden_width, config.hidden_width
             )
@@ -175,7 +183,10 @@ class DirectARCGRU(brainstate.nn.Module):
         return hidden
 
     def decode(
-        self, hidden: jnp.ndarray, query_features: jnp.ndarray
+        self,
+        hidden: jnp.ndarray,
+        query_features: jnp.ndarray,
+        shape_features: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Emit direct height, width, and per-cell colour logits.
 
@@ -185,6 +196,10 @@ class DirectARCGRU(brainstate.nn.Module):
             Final recurrent task state shaped ``(batch, hidden_width)``.
         query_features : jax.Array
             Lossless query colours plus validity shaped ``(batch, 30, 30, 11)``.
+        shape_features : jax.Array, optional
+            Lossless demonstration/query dimension encoding shaped
+            ``(batch, 1270)``. When omitted, an all-zero diagnostic encoding
+            is used.
 
         Returns
         -------
@@ -203,12 +218,21 @@ class DirectARCGRU(brainstate.nn.Module):
         if hidden.ndim != 2 or hidden.shape[0] != query_features.shape[0]:
             raise ValueError("hidden and query_features batch dimensions must match.")
         batch_size = query_features.shape[0]
+        if shape_features is None:
+            shape_features = jnp.zeros(
+                (batch_size, SHAPE_FEATURE_WIDTH), dtype=query_features.dtype
+            )
+        shape_features = jnp.asarray(shape_features)
+        if shape_features.shape != (batch_size, SHAPE_FEATURE_WIDTH):
+            raise ValueError("shape_features must have shape (batch, 1270).")
         validity = query_features[..., -1]
         query_shape = jnp.concatenate(
             (jnp.max(validity, axis=2), jnp.max(validity, axis=1)), axis=-1
         )
         shape_state = brainstate.nn.tanh(
-            hidden + self.query_shape_projection(query_shape)
+            hidden
+            + self.query_shape_projection(query_shape)
+            + self.episode_shape_projection(shape_features)
         )
         context_vector = self.context_projection(hidden)
         context = context_vector[:, None, None, :]
@@ -254,7 +278,10 @@ class DirectARCGRU(brainstate.nn.Module):
         )
 
     def run(
-        self, events: jnp.ndarray, query_features: jnp.ndarray
+        self,
+        events: jnp.ndarray,
+        query_features: jnp.ndarray,
+        shape_features: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Encode all events with one compiled loop and decode one grid.
 
@@ -264,6 +291,8 @@ class DirectARCGRU(brainstate.nn.Module):
             Time-major row events shaped ``(time, batch, input_width)``.
         query_features : jax.Array
             Lossless query colours plus validity shaped ``(batch, 30, 30, 11)``.
+        shape_features : jax.Array, optional
+            Lossless target-free demonstration/query dimension features.
 
         Returns
         -------
@@ -286,4 +315,4 @@ class DirectARCGRU(brainstate.nn.Module):
                 jnp.concatenate((hidden_sequence[-1], pooled), axis=-1)
             )
         )
-        return self.decode(summary, query_features)
+        return self.decode(summary, query_features, shape_features)

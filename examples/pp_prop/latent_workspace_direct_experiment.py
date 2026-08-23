@@ -453,6 +453,7 @@ def sample_training_chunk(
     return DirectTrainingChunk(
         events=np.stack([batch.events for batch in batches]),
         query_features=np.stack([batch.query_features for batch in batches]),
+        shape_features=np.stack([batch.shape_features for batch in batches]),
         target_colors=np.stack([batch.target_colors for batch in batches]),
         target_mask=np.stack([batch.target_mask for batch in batches]),
         target_heights=np.stack([batch.target_heights for batch in batches]),
@@ -484,11 +485,17 @@ def evaluate_model(
     brainstate.nn.init_all_states(model, batch_size=len(episodes))
 
     @brainstate.transform.jit
-    def run_once(events: jax.Array, query_features: jax.Array):
-        return model.run(events, query_features)
+    def run_once(
+        events: jax.Array,
+        query_features: jax.Array,
+        shape_features: jax.Array,
+    ):
+        return model.run(events, query_features, shape_features)
 
     height, width, colors = run_once(
-        jax.numpy.asarray(batch.events), jax.numpy.asarray(batch.query_features)
+        jax.numpy.asarray(batch.events),
+        jax.numpy.asarray(batch.query_features),
+        jax.numpy.asarray(batch.shape_features),
     )
     height_array = np.asarray(height)
     width_array = np.asarray(width)

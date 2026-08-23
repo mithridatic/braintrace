@@ -45,6 +45,11 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
+MAX_DEMONSTRATIONS = 10
+DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
+SHAPE_FEATURE_WIDTH = (
+    MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
+)
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,8 @@ class DirectEpisode:
         Lossless row events shaped ``(time, input_width)``.
     query_features : numpy.ndarray
         Query colours and validity shaped ``(30, 30, 11)``.
+    shape_features : numpy.ndarray
+        Target-free one-hot demonstration/query dimensions shaped ``(1270,)``.
     target_colors, target_mask : numpy.ndarray
         Padded scorer-side target and valid-cell mask.
     target_height, target_width : int
@@ -67,6 +74,7 @@ class DirectEpisode:
 
     events: np.ndarray
     query_features: np.ndarray
+    shape_features: np.ndarray
     target_colors: np.ndarray
     target_mask: np.ndarray
     target_height: int
@@ -84,6 +92,8 @@ class DirectBatch:
         Time-major tensor shaped ``(time, batch, input_width)``.
     query_features : numpy.ndarray
         Query features shaped ``(batch, 30, 30, 11)``.
+    shape_features : numpy.ndarray
+        Target-free dimension features shaped ``(batch, 1270)``.
     target_colors, target_mask : numpy.ndarray
         Padded targets and valid-cell masks shaped ``(batch, 30, 30)``.
     target_heights, target_widths : numpy.ndarray
@@ -92,6 +102,7 @@ class DirectBatch:
 
     events: np.ndarray
     query_features: np.ndarray
+    shape_features: np.ndarray
     target_colors: np.ndarray
     target_mask: np.ndarray
     target_heights: np.ndarray
@@ -104,12 +115,14 @@ class DirectTrainingChunk:
 
     Parameters
     ----------
-    events, query_features, target_colors, target_mask, target_heights, target_widths
+    events, query_features, shape_features, target_colors, target_mask,
+    target_heights, target_widths
         Arrays from :class:`DirectBatch` with a leading update dimension.
     """
 
     events: np.ndarray
     query_features: np.ndarray
+    shape_features: np.ndarray
     target_colors: np.ndarray
     target_mask: np.ndarray
     target_heights: np.ndarray
@@ -165,6 +178,30 @@ def _query_features(grid: ArcGrid) -> np.ndarray:
     return features
 
 
+def _shape_features(task: ArcTask, query_index: int) -> np.ndarray:
+    features = np.zeros((SHAPE_FEATURE_WIDTH,), dtype=np.float32)
+    if len(task.train) > MAX_DEMONSTRATIONS:
+        raise ValueError("Direct shape encoding supports at most 10 demonstrations.")
+    for index, pair in enumerate(task.train):
+        if pair.output is None:
+            raise ValueError("Demonstration outputs are required for shape encoding.")
+        offset = index * DEMONSTRATION_SHAPE_WIDTH
+        features[offset] = 1.0
+        dimensions = (
+            pair.input.height,
+            pair.input.width,
+            pair.output.height,
+            pair.output.width,
+        )
+        for group, dimension in enumerate(dimensions):
+            features[offset + 1 + group * MAX_GRID_SIZE + dimension - 1] = 1.0
+    query = task.test[query_index].input
+    query_offset = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH
+    features[query_offset + query.height - 1] = 1.0
+    features[query_offset + MAX_GRID_SIZE + query.width - 1] = 1.0
+    return features
+
+
 def encode_direct_episode(
     task: ArcTask, query_index: int, row_config: RowEventConfig
 ) -> DirectEpisode:
@@ -196,6 +233,7 @@ def encode_direct_episode(
     return DirectEpisode(
         events=np.asarray(encoded.events, dtype=np.float32),
         query_features=_query_features(query.input),
+        shape_features=_shape_features(task, query_index),
         target_colors=np.asarray(grid_target.colors, dtype=np.int32),
         target_mask=np.asarray(grid_target.valid_mask, dtype=np.bool_),
         target_height=grid_target.height_index,
@@ -229,6 +267,9 @@ def stack_direct_episodes(episodes: tuple[DirectEpisode, ...]) -> DirectBatch:
         events=np.stack([episode.events for episode in episodes], axis=1),
         query_features=np.stack(
             [episode.query_features for episode in episodes], axis=0
+        ),
+        shape_features=np.stack(
+            [episode.shape_features for episode in episodes], axis=0
         ),
         target_colors=np.stack(
             [episode.target_colors for episode in episodes], axis=0
@@ -273,6 +314,7 @@ def repeat_batch(batch: DirectBatch, *, updates: int) -> DirectTrainingChunk:
     return DirectTrainingChunk(
         events=repeated(batch.events),
         query_features=repeated(batch.query_features),
+        shape_features=repeated(batch.shape_features),
         target_colors=repeated(batch.target_colors),
         target_mask=repeated(batch.target_mask),
         target_heights=repeated(batch.target_heights),
@@ -539,6 +581,7 @@ class DirectBPTTTrainer:
         def update(
             events: jax.Array,
             query_features: jax.Array,
+            shape_features: jax.Array,
             target_colors: jax.Array,
             target_mask: jax.Array,
             target_heights: jax.Array,
@@ -547,7 +590,7 @@ class DirectBPTTTrainer:
             brainstate.nn.reset_all_states(model, batch_size=batch_size)
 
             def objective() -> jax.Array:
-                logits = model.run(events, query_features)
+                logits = model.run(events, query_features, shape_features)
                 return direct_prediction_loss(
                     logits,
                     target_heights,
@@ -566,6 +609,7 @@ class DirectBPTTTrainer:
         def train_many(
             events: jax.Array,
             query_features: jax.Array,
+            shape_features: jax.Array,
             target_colors: jax.Array,
             target_mask: jax.Array,
             target_heights: jax.Array,
@@ -575,6 +619,7 @@ class DirectBPTTTrainer:
                 update,
                 events,
                 query_features,
+                shape_features,
                 target_colors,
                 target_mask,
                 target_heights,
@@ -606,6 +651,7 @@ class DirectBPTTTrainer:
         return self._train_many(
             jnp.asarray(chunk.events),
             jnp.asarray(chunk.query_features),
+            jnp.asarray(chunk.shape_features),
             jnp.asarray(chunk.target_colors),
             jnp.asarray(chunk.target_mask),
             jnp.asarray(chunk.target_heights),

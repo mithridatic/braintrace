@@ -51,6 +51,7 @@ def test_leave_one_out_episode_keeps_held_out_output_out_of_events() -> None:
 
     assert first_encoded.events.tobytes() == changed_encoded.events.tobytes()
     assert first_encoded.query_features.tobytes() == changed_encoded.query_features.tobytes()
+    assert first_encoded.shape_features.tobytes() == changed_encoded.shape_features.tobytes()
     assert first_encoded.target_colors[0, 0] == 2
     assert changed_encoded.target_colors[0, 0] == 9
 
@@ -67,6 +68,40 @@ def test_query_features_are_lossless_color_plus_validity() -> None:
     assert np.count_nonzero(encoded.query_features) == 2
 
 
+def test_shape_features_encode_demos_but_exclude_held_out_dimensions() -> None:
+    subject = _subject()
+    row_config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
+    first_task = ArcTask(
+        train=(
+            ArcPair(ArcGrid(((0,),)), ArcGrid(((0, 0),))),
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((1, 1),))),
+        ),
+        test=(ArcPair(ArcGrid(((2,),)), ArcGrid(((2,),))),),
+        task_id="shape-firewall",
+    )
+    changed_task = ArcTask(
+        train=(
+            first_task.train[0],
+            ArcPair(ArcGrid(((1,),)), ArcGrid(((1,), (1,)))),
+        ),
+        test=first_task.test,
+        task_id="shape-firewall",
+    )
+
+    first = subject.encode_direct_episode(
+        subject.leave_one_out_tasks(first_task)[1], 0, row_config
+    )
+    changed = subject.encode_direct_episode(
+        subject.leave_one_out_tasks(changed_task)[1], 0, row_config
+    )
+
+    assert first.shape_features.shape == (subject.SHAPE_FEATURE_WIDTH,)
+    assert first.shape_features.tobytes() == changed.shape_features.tobytes()
+    assert (first.target_height, first.target_width) == (0, 1)
+    assert (changed.target_height, changed.target_width) == (1, 0)
+    assert np.count_nonzero(first.shape_features) == 7
+
+
 def test_stack_direct_episodes_is_time_major_and_target_separated() -> None:
     subject = _subject()
     row_config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
@@ -80,6 +115,7 @@ def test_stack_direct_episodes_is_time_major_and_target_separated() -> None:
 
     assert batch.events.shape == (9, 2, row_config.input_width)
     assert batch.query_features.shape == (2, 30, 30, 11)
+    assert batch.shape_features.shape == (2, subject.SHAPE_FEATURE_WIDTH)
     assert batch.target_colors.shape == (2, 30, 30)
     assert batch.target_mask.shape == (2, 30, 30)
     assert batch.target_heights.tolist() == [0, 0]
