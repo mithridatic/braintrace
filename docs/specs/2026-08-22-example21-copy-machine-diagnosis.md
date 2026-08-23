@@ -150,11 +150,82 @@ while the head had already collapsed onto copying. The binding constraint is
 upstream of the heads: the demonstrations do not measurably influence the query
 output (shuffled-demonstration deviation is approximately zero).
 
-The narrowest testable target is the crop family: 19 queries, 18 of them worth
-+4 each, all requiring only a learned origin `(r, c)` to accompany the extent
-`(h, w)` the shape head already predicts. The decode origin is currently
-hardcoded to (0, 0) and was never a learned quantity. Note the cautionary
-evidence: the shape head reaches only 10.5% on this same family, so an offset
-head trained under the same diluted objective may fail the same way. A dedicated
-masked loss, supervised only on episodes where the target is a sub-grid of the
-input, is what distinguishes the proposal from what has already failed.
+The narrowest testable target was the crop family: 19 queries, 18 of them worth
++4 each. The decode origin is hardcoded to (0, 0) and was never a learned
+quantity. That proposal was investigated and is refuted below.
+
+
+### 3. Learned crop-window heads
+
+The proposal was to widen `answer_shape_head` from 60 to 120 outputs so it emits
+an origin `(r, c)` alongside the extent `(h, w)`, supervised by a masked loss on
+episodes where the target is a unique sub-grid of the input, with the decoder
+reading `canvas[r:r+h, c:c+w]`. Reading the canvas rather than the input keeps
+the channel model-only, and is well-posed because the canvas is a full copy of
+the input.
+
+Three measurements refuted it before implementation.
+
+**Origin alone converts nothing.** The shape head is 2/19 on the crop family, and
+the intersection of "extent already correct" with "needs a non-zero origin" is a
+single query, `bf699163`. Extent and origin would have to be learned jointly.
+
+**Label support is thin and concentrated.** Across the 400-task training split:
+
+| | pairs | share |
+|---|---|---|
+| demonstration pairs | 1302 | |
+| target is a sub-grid of the input | 114 | 8.76% |
+| ... with a unique matching window | 76 | 5.84% |
+| ... unique and area >= 4 (usable) | 74 | 5.68% |
+
+Those 74 labels come from only **27 distinct tasks**. Dihedral and colour
+permutation augmentation re-present the same 27 concepts rather than creating new
+ones. 16 of the 27 (43 pairs) follow a marker-bbox rule, and 39 pairs teach
+"bounding box of some colour" — which colour permutation collapses into one
+colour-invariant concept, and which is exactly the rule the winnable evaluation
+queries need. That was the strongest form of the case for building.
+
+**The function is not expressible on the family, let alone learnable.** An
+offline probe built the strongest version of this head that hand engineering
+allows: candidate windows generated as every colour's bounding box and each
+bounding box's interior, ten hand-designed features per candidate (colour
+rarity, hollowness, area fraction, background flag, aspect), and a softmax
+ranker trained over candidates on the training split.
+
+| | result |
+|---|---|
+| candidate generator covers the eval test-query crop family | **3 / 19** |
+| learned ranker top-1, on groups it can express | 8/20 = **0.400** |
+
+Expected conversion is therefore about **one** query. The ceiling is set by
+coverage, not by the ranker: 16 of the 19 crop windows are not a colour bounding
+box or its interior at all. A dedicated feature-engineered model with oracle
+candidate generation cannot reach the target, so a shape head computing from
+row-serial input cannot either. **Refuted.**
+
+## Conclusion
+
+Cumulative 10 on the model-only channel is not reachable by any lever measured
+here. The measured best remains **4**, and it is two top-left crop queries:
+`bbb1b8b6` q1 at rank 1 and `e872b94a` q0 at rank 2.
+
+Ten distinct paths were closed, each by measurement rather than by argument:
+decode policy (ceiling 6), training budget (u700 null), width and edge count
+(null), the bilinear carrier x row product (refuted, with the trained weight norm
+as evidence), copy priors on the colour logits (no-op), changed-cell loss
+reweighting (refuted -- the head's true-colour rank on changed cells is uniform,
+so there is no diluted signal to recover), test-time dihedral augmentation
+(averaging a copy machine returns the copy), confidence-based crop localization
+(0/19), learned crop-window heads (refuted above), and `memory_coding="frozen"`
+severing demonstration writes (refuted by code read -- the `else` branch still
+calls `update_context_memory` with the write gate, so writes do happen).
+
+The binding constraint is upstream of every one of them: the demonstrations do
+not measurably influence the query output. Both output heads are functions of
+the query input alone -- the colour head exactly so, the shape head approximately
+and worse than an input-shape echo. Until a configuration exists in which
+shuffling the demonstrations changes the answer, work on decoders, head
+capacity, training budget, and loss shaping is all downstream of a channel that
+carries no task information, which is precisely the pattern the five previous
+null results and the three refuted here have in common.
