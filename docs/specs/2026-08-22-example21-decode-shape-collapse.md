@@ -161,3 +161,44 @@ No decode policy over the recorded logits exceeds 6, and the copy path that
 produces the two solved queries is exhausted at 2 of 419. Raising the score
 further requires a model that is not a crop of its input, which is the
 demonstration-pairing problem that remains open.
+
+## More training does not create exact answers
+
+`var/ex21-default-u700` runs the non-degenerate recipe (no copy residual,
+carrier at full scale, `row_refinement`, muon 1e-3, seed 9999) for 700 updates
+and extends the update-count curve:
+
+| updates | shape | pixel | input echo | small-grid cell acc | ham=0 under oracle shape | cumulative |
+|---|---|---|---|---|---|---|
+| 390 (`example21-full-default-u390`) | 0.5442 | 0.4425 | 0.652 | 0.336 | 1 | 0 |
+| 700 (`ex21-default-u700`) | 0.5919 | 0.4769 | 0.654 | 0.317 | 0 | 0 |
+
+Shape rises and saturates toward the ~0.59 that
+`example21-training-regime-was-the-blocker` recorded at 6,000 updates. Per-cell
+colour accuracy on the small grids where exact match lives does not move, the
+input-echo fraction does not move, and **no query reaches Hamming zero under an
+oracle shape at 700 updates**. Exact match needs roughly 0.85+ per-cell accuracy
+on a 9-to-16-cell grid; the model sits at 0.32.
+
+Measured throughput on the RTX 3080 Ti laptop, for planning: **1.65 s/update**
+at 4096 neurons / 4.19M edges / batch 32 (700 updates = 1151.6 s training,
+1188.6 s wall for the whole run). A 260-update run with all five control arms is
+716.9 s. An earlier 1.0 s/update figure was read off a partially warm cache and
+is wrong.
+
+## What would have to change
+
+Every route measured here is closed:
+
+- **Decode.** No policy over the recorded logits exceeds cumulative 6.
+- **More training.** Shape saturates, colour does not move, exacts stay at zero.
+- **Augmentation.** Dihedral, colour-permutation and demonstration-shuffle
+  augmentation are already on by default (`AugmentationConfig`).
+- **A pointer into the demonstration outputs.** No query-only signal selects the
+  right demonstration (see the family table above).
+
+What remains is the open problem the `var/example21-drtrl30*` pilots left: the
+model does not condition on the demonstration pairing, so it can only learn a
+marginal prior over ARC outputs, and that prior is approximately the identity.
+Raising the exact-match count requires making the pairing usable, not tuning
+what is here.
