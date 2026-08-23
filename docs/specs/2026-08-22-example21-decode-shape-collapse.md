@@ -162,23 +162,32 @@ produces the two solved queries is exhausted at 2 of 419. Raising the score
 further requires a model that is not a crop of its input, which is the
 demonstration-pairing problem that remains open.
 
-## More training does not create exact answers
+## The update count is not what is binding
 
 `var/ex21-default-u700` runs the non-degenerate recipe (no copy residual,
-carrier at full scale, `row_refinement`, muon 1e-3, seed 9999) for 700 updates
-and extends the update-count curve:
+carrier at full scale, `row_refinement`, muon 1e-3 cosine, seed 9999) for 700
+updates:
 
-| updates | shape | pixel | input echo | small-grid cell acc | ham=0 under oracle shape | cumulative |
+| | shape | pixel | input echo | small-grid cell acc | ham=0 under oracle shape | cumulative |
 |---|---|---|---|---|---|---|
-| 390 (`example21-full-default-u390`) | 0.5442 | 0.4425 | 0.652 | 0.336 | 1 | 0 |
-| 700 (`ex21-default-u700`) | 0.5919 | 0.4769 | 0.654 | 0.317 | 0 | 0 |
+| `ex21-default-u700`, 700 updates | 0.5919 | 0.4769 | 0.654 | 0.317 | 0 | 0 |
+| `example21-full-default-u390`, 390 updates | 0.5442 | 0.4425 | 0.652 | 0.336 | 1 | 0 |
 
-Shape rises and saturates toward the ~0.59 that
-`example21-training-regime-was-the-blocker` recorded at 6,000 updates. Per-cell
-colour accuracy on the small grids where exact match lives does not move, the
-input-echo fraction does not move, and **no query reaches Hamming zero under an
-oracle shape at 700 updates**. Exact match needs roughly 0.85+ per-cell accuracy
-on a 9-to-16-cell grid; the model sits at 0.32.
+**Do not read the two rows as a curve.** `example21-full-default-u390` came off
+a different source tree with `training_chunk_size = 0` against this run's 5, so
+the pair differs in more than the update count, and a 0.336 -> 0.317 move on a
+45-query band is inside seed noise.
+
+What the run does establish, on its own:
+
+- At 700 updates **no query reaches Hamming zero under an oracle shape**, and
+  small-grid per-cell colour accuracy is 0.317 — the same regime as every other
+  checkpoint measured here (0.260 to 0.336).
+- Shape accuracy is 0.5919. `example21-training-regime-was-the-blocker` records
+  shape 0.59 at **6,000** updates. Reaching the 6,000-update shape accuracy at
+  700 says the update count is not the binding constraint.
+- Exact match on a 9-to-16 cell grid needs roughly 0.85 per-cell accuracy. The
+  model sits at 0.32 wherever it is measured.
 
 Measured throughput on the RTX 3080 Ti laptop, for planning: **1.65 s/update**
 at 4096 neurons / 4.19M edges / batch 32 (700 updates = 1151.6 s training,
@@ -191,7 +200,9 @@ is wrong.
 Every route measured here is closed:
 
 - **Decode.** No policy over the recorded logits exceeds cumulative 6.
-- **More training.** Shape saturates, colour does not move, exacts stay at zero.
+- **More training.** 700 updates already reaches the shape accuracy that 6,000
+  updates reached, colour accuracy on small grids stays near 0.32, and no query
+  reaches Hamming zero under an oracle shape.
 - **Augmentation.** Dihedral, colour-permutation and demonstration-shuffle
   augmentation are already on by default (`AugmentationConfig`).
 - **A pointer into the demonstration outputs.** No query-only signal selects the
