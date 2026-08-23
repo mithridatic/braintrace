@@ -366,9 +366,12 @@ def direct_prediction_loss(
         class_counts > 0.0, jnp.clip(class_weights, 0.5, 4.0), 0.0
     )
     cell_weights = jnp.take(class_weights, target_colors) * mask
-    color_loss = jnp.sum(per_cell * cell_weights) / jnp.maximum(
+    weighted_cell_loss = per_cell * cell_weights
+    mean_color_loss = jnp.sum(weighted_cell_loss) / jnp.maximum(
         jnp.sum(cell_weights), 1.0
     )
+    hard_color_loss = jnp.max(weighted_cell_loss, axis=(1, 2)).mean()
+    color_loss = 0.75 * mean_color_loss + 0.25 * hard_color_loss
     return (height_loss + width_loss + color_loss) / 3.0
 
 
