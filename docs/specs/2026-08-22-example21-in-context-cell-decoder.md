@@ -181,3 +181,33 @@ The open risk is the **learner gap**: §5.4's 10/8 was measured with trees, whic
 do not port. A gradient-fitted head over the same features is the portable
 learner and is measured separately; the port is sized against that number, not
 the tree number.
+
+## 7. Gate results (2026-08-22)
+
+Per-cell head **fitted on each evaluation task's own demonstration cells**,
+scored on the real 419-query split with the harness four-tuple:
+
+| feature set | learner | q@1 | q@2 | s@1 | s@2 | cumulative |
+|---|---|---|---|---|---|---|
+| patch + row/col/global statistics | trees | 2 | – | 1 | – | 6 |
+| + mirrors, rays, periods, components | trees | 11 | 11 | 9 | 9 | 40 |
+| + mirrors, rays, periods, **no components** | trees | **12** | 12 | **10** | 10 | **44** |
+
+Dropping connected components *raises* the score, so the block that does not
+lower cleanly to JAX is not needed; `latent_workspace_cell_features.py` omits it
+and reproduces the better feature set.
+
+Three facts about that 44 that bound the claim:
+
+- **The shape branch is the easy one.** All eleven winning tasks have
+  `output shape == input shape` on every demonstration *and* on the query, so the
+  shape sub-problem for the winners is exactly the relation the §5.2 head
+  predicts as a zero offset. The 44 does not depend on the 0.847 rule's hard
+  branch.
+- **The second candidate contributes nothing.** `q@2 == q@1` and `s@2 == s@1`
+  across all 400 tasks: flipping the least-confident cell to its runner-up never
+  converts a miss. A real second candidate (a second fitting seed, or a
+  different feature subset) is unclaimed upside.
+- **Trees do not port.** The portable learner is a head adapted by gradient
+  updates over the demonstration cells. That arm is measured separately; the
+  port is sized against it, not against 44.
