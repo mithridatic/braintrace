@@ -402,3 +402,21 @@ any run on record. The bounded-downside argument still fails, because it bounded
 shape head did not collapse to a constant (23 distinct heights, 22 distinct widths across
 419 queries) -- it simply became less accurate. No principled fix follows from the
 measurements, so the flag is left default-off and recorded here rather than tuned.
+
+
+### Matched-scale control for the copy gate
+
+The first gated run used 4,096 recurrent edges while every ungated run it was compared
+against used 4,194,304 -- a thousandfold difference that could by itself explain the
+shape drop. The comparison was invalid, so the gated configuration was re-run at the
+matched edge count:
+
+| run | edges | input echo | shape | pixel | cumulative |
+|---|---|---|---|---|---|
+| gated | 4,096 | 0.9999 | 0.1241 | 0.3577 | 0 |
+| gated | 4,194,304 | 0.9996 | **0.1432** | 0.3005 | 0 |
+| ungated, same carrier scale | 4,194,304 | 0.913 | 0.5227 | 0.5157 | 0 |
+
+Shape is 0.1432 at full scale against 0.1241 at reduced scale, so the edge count is not
+the cause. The gate itself depresses shape, from 0.5227 to 0.1432 at matched scale, while
+raising copy fidelity to 0.9996. The finding stands after the control.
