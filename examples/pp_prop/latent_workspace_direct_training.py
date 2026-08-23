@@ -301,7 +301,8 @@ def direct_prediction_loss(
     Returns
     -------
     jax.Array
-        Scalar mean loss with equal height, width, and cell terms.
+        Scalar loss with bounded inverse-frequency cell weighting and a
+        one-half aggregate cell contribution.
     """
 
     height_logits, width_logits, color_logits = logits
@@ -315,8 +316,18 @@ def direct_prediction_loss(
         color_logits, target_colors
     )
     mask = jnp.asarray(target_mask, dtype=per_cell.dtype)
-    color_loss = jnp.sum(per_cell * mask) / jnp.maximum(jnp.sum(mask), 1.0)
-    return (height_loss + width_loss + color_loss) / 3.0
+    one_hot = jax.nn.one_hot(target_colors, COLOR_COUNT, dtype=per_cell.dtype)
+    class_counts = jnp.sum(one_hot * mask[..., None], axis=(0, 1, 2))
+    valid_count = jnp.maximum(jnp.sum(mask), 1.0)
+    class_weights = jnp.sqrt(valid_count / jnp.maximum(class_counts, 1.0))
+    class_weights = jnp.where(
+        class_counts > 0.0, jnp.clip(class_weights, 0.5, 4.0), 0.0
+    )
+    cell_weights = jnp.take(class_weights, target_colors) * mask
+    color_loss = jnp.sum(per_cell * cell_weights) / jnp.maximum(
+        jnp.sum(cell_weights), 1.0
+    )
+    return (height_loss + width_loss + 2.0 * color_loss) / 4.0
 
 
 def parameter_digest(model: DirectARCGRU) -> str:

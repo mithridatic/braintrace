@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 
 import brainstate
+import jax
 import jax.numpy as jnp
 import msgspec
 import numpy as np
@@ -20,6 +21,12 @@ from examples.pp_prop.latent_workspace_task import (
 
 def _subject():
     return importlib.import_module("examples.pp_prop.latent_workspace_direct_training")
+
+
+@pytest.fixture(autouse=True)
+def _clear_compilation_caches():
+    yield
+    jax.clear_caches()
 
 
 def _task(second_output: int = 2) -> ArcTask:
@@ -109,6 +116,41 @@ def test_compiled_training_chunk_moves_parameters_and_reduces_tiny_loss() -> Non
     assert np.all(np.isfinite(losses))
     assert losses[-1] < losses[0]
     assert subject.parameter_digest(model) != before
+
+
+def test_direct_loss_penalizes_rare_color_error_more_than_background() -> None:
+    subject = _subject()
+    height = jnp.asarray([[20.0, -20.0]])
+    width = jnp.asarray([[20.0, -20.0]])
+    target_colors = jnp.asarray([[[0, 0], [0, 7]]])
+    mask = jnp.ones_like(target_colors, dtype=jnp.float32)
+    correct = jnp.full((1, 2, 2, 10), -10.0)
+    correct = correct.at[0, 0, 0, 0].set(10.0)
+    correct = correct.at[0, 0, 1, 0].set(10.0)
+    correct = correct.at[0, 1, 0, 0].set(10.0)
+    correct = correct.at[0, 1, 1, 7].set(10.0)
+    background_error = correct.at[0, 0, 0, 0].set(-10.0)
+    background_error = background_error.at[0, 0, 0, 1].set(10.0)
+    rare_error = correct.at[0, 1, 1, 7].set(-10.0)
+    rare_error = rare_error.at[0, 1, 1, 1].set(10.0)
+    dimensions = jnp.asarray([0])
+
+    background_loss = subject.direct_prediction_loss(
+        (height, width, background_error),
+        dimensions,
+        dimensions,
+        target_colors,
+        mask,
+    )
+    rare_loss = subject.direct_prediction_loss(
+        (height, width, rare_error),
+        dimensions,
+        dimensions,
+        target_colors,
+        mask,
+    )
+
+    assert float(rare_loss) > float(background_loss)
 
 
 def test_training_interfaces_reject_invalid_inputs() -> None:

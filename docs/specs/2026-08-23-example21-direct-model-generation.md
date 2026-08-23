@@ -99,6 +99,11 @@ roles sampled. Training-only augmentation may apply task-independent color,
 spatial, and demonstration-order symmetries to complete episodes. Augmentation
 parameters and seeds are fixed without evaluation-label feedback.
 
+The cell loss uses bounded inverse-square-root frequency weights computed only
+from each training batch's valid target cells. This prevents the dominant
+background class from hiding rare object-color errors; it does not enter the
+answer path or inspect validation/evaluation targets.
+
 Rule engines and forests may not create pseudo-targets for evaluation inputs or
 choose training episodes based on evaluation success. Evaluation targets may
 be decoded only after the architecture, checkpoint, effort, and perturbations
