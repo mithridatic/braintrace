@@ -188,12 +188,14 @@ def fit_demonstration_forest(
     --------
     .. code-block:: python
 
-        >>> import jax, jax.numpy as jnp
+        >>> import brainstate
+        >>> import jax.numpy as jnp
         >>> from latent_workspace_demonstration_forest import (
         ...     DemonstrationForestConfig, fit_demonstration_forest)
         >>> config = DemonstrationForestConfig(depth=2, tree_count=2)
         >>> splits, counts = fit_demonstration_forest(
-        ...     jax.random.key(0), jnp.eye(4), jnp.arange(4), config)
+        ...     brainstate.random.RandomState(0).value,
+        ...     jnp.eye(4), jnp.arange(4), config)
         >>> splits.shape
         (2, 2, 4)
     """
@@ -203,11 +205,11 @@ def fit_demonstration_forest(
     keep = max(1, int(round(config.feature_fraction * width)))
 
     def tree(tree_key):
-        rank = jax.random.uniform(tree_key, (width,))
+        rank = brainstate.random.uniform(size=(width,), key=tree_key)
         offered = rank <= jnp.sort(rank)[keep - 1]
         return _fit_tree(binary, labels, offered, config)
 
-    keys = jax.random.split(key, config.tree_count)
+    keys = brainstate.random.RandomState(key).split_key(config.tree_count)
     return brainstate.transform.scan(lambda _, k: (None, tree(k)), None, keys)[1]
 
 
@@ -241,13 +243,15 @@ def demonstration_forest_probabilities(
     --------
     .. code-block:: python
 
-        >>> import jax, jax.numpy as jnp
+        >>> import brainstate
+        >>> import jax.numpy as jnp
         >>> from latent_workspace_demonstration_forest import (
         ...     DemonstrationForestConfig, demonstration_forest_probabilities,
         ...     fit_demonstration_forest)
         >>> config = DemonstrationForestConfig(depth=2, tree_count=2)
         >>> forest = fit_demonstration_forest(
-        ...     jax.random.key(0), jnp.eye(4), jnp.arange(4), config)
+        ...     brainstate.random.RandomState(0).value,
+        ...     jnp.eye(4), jnp.arange(4), config)
         >>> demonstration_forest_probabilities(forest, jnp.eye(4), config).shape
         (4, 11)
     """

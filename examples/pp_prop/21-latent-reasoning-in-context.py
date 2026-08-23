@@ -87,6 +87,10 @@ try:
         StepGates,
         build_batched_protocol_v2_arm,
     )
+    from examples.pp_prop.latent_workspace_parameter_dependence import (
+        assess_parameter_dependence,
+        checkpoint_conditioned_candidates,
+    )
     from examples.pp_prop.latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
@@ -163,6 +167,10 @@ except ModuleNotFoundError:
         StepGates,
         build_batched_protocol_v2_arm,
     )
+    from latent_workspace_parameter_dependence import (
+        assess_parameter_dependence,
+        checkpoint_conditioned_candidates,
+    )
     from latent_workspace_refinement import (
         RowRefinementLayout,
         row_refinement_loss_per_example,
@@ -195,7 +203,7 @@ except ModuleNotFoundError:
 
 DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only", "rule_then_model"]
-AnswerHead = Literal["carrier_row", "demonstration_fitted"]
+AnswerHead = Literal["carrier_row", "demonstration_fitted", "checkpoint_conditioned"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
@@ -582,6 +590,7 @@ class ExperimentConfig:
     decoder_mode: DecoderMode = "latent_row_decode"
     sparse_backend: SparseBackend = "default"
     answer_head: AnswerHead = "carrier_row"
+    checkpoint_conditioning_coupling: float = 1.0
     demonstration_forest_depth: int = 12
     demonstration_forest_trees: int = 1
     demonstration_forest_feature_fraction: float = 1.0
@@ -626,14 +635,39 @@ class ExperimentConfig:
                 )
         if self.device not in ("cpu", "gpu"):
             raise ValueError("Device must be 'cpu' or 'gpu'. Set Device to 'cpu' or 'gpu'.")
-        if self.answer_head not in ("carrier_row", "demonstration_fitted"):
+        if self.answer_head not in (
+            "carrier_row",
+            "demonstration_fitted",
+            "checkpoint_conditioned",
+        ):
             raise ValueError(
-                "Answer head must be 'carrier_row' or 'demonstration_fitted'. "
-                "Set answer_head to 'carrier_row' or 'demonstration_fitted'."
+                "Answer head must be 'carrier_row', 'demonstration_fitted', or "
+                "'checkpoint_conditioned'. Set answer_head to one of those values."
             )
+        object.__setattr__(
+            self,
+            "checkpoint_conditioning_coupling",
+            _positive_real(
+                self.checkpoint_conditioning_coupling,
+                "checkpoint_conditioning_coupling",
+            ),
+        )
         if self.primary_candidate_mode not in ("model_only", "rule_then_model"):
             raise ValueError(
                 "primary_candidate_mode must be 'model_only' or 'rule_then_model'. Set primary_candidate_mode to 'model_only' or 'rule_then_model'."
+            )
+        if (
+            self.answer_head == "checkpoint_conditioned"
+            and self.primary_candidate_mode != "model_only"
+        ):
+            raise ValueError(
+                "checkpoint_conditioned requires primary_candidate_mode='model_only'; "
+                "a rule candidate would bypass checkpoint ranking."
+            )
+        if self.answer_head == "checkpoint_conditioned" and self.task_local_adaptation:
+            raise ValueError(
+                "checkpoint_conditioned does not yet support task_local_adaptation; "
+                "the adapted scoring path must be wired to the same proposal reranker first."
             )
         if self.adaptation_update_schedule not in ("per_episode", "per_tick"):
             raise ValueError(
@@ -2479,6 +2513,162 @@ def _tree_digest(values: dict[str, Any]) -> str:
     return digest.hexdigest()
 
 
+def _update_typed_array_digest(
+    digest: Any, name: str, value: object
+) -> None:
+    """Add one length-delimited typed array to a canonical digest."""
+    array = np.ascontiguousarray(np.asarray(value))
+    metadata = msgspec.json.encode(
+        {
+            "name": name,
+            "dtype": array.dtype.str,
+            "shape": list(array.shape),
+        },
+        order="sorted",
+    )
+    raw = array.tobytes()
+    digest.update(len(metadata).to_bytes(8, "little", signed=False))
+    digest.update(metadata)
+    digest.update(len(raw).to_bytes(8, "little", signed=False))
+    digest.update(raw)
+
+
+def _sparse_topology_sha256(model: LatentWorkspaceModel) -> str:
+    """Hash the immutable sparse endpoints with explicit type and shape data."""
+    topology = model.topology
+    rows = np.asarray(topology.rows)
+    columns = np.asarray(topology.columns)
+    if rows.shape != columns.shape:
+        raise ValueError(
+            "Sparse topology rows and columns must have identical shapes. "
+            "Use matching values and structures."
+        )
+    if not np.issubdtype(rows.dtype, np.integer) or not np.issubdtype(
+        columns.dtype, np.integer
+    ):
+        raise ValueError(
+            "Sparse topology endpoints must use integer arrays. Use integer "
+            "rows and columns."
+        )
+    digest = hashlib.sha256()
+    _update_typed_array_digest(
+        digest,
+        "neuron_count",
+        np.asarray(int(topology.neuron_count), dtype=np.dtype("<i8")),
+    )
+    _update_typed_array_digest(digest, "rows", rows)
+    _update_typed_array_digest(digest, "columns", columns)
+    return digest.hexdigest()
+
+
+def _lower_hex_digest(value: object, name: str, lengths: tuple[int, ...]) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) not in lengths
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        joined = " or ".join(str(length) for length in lengths)
+        raise ValueError(
+            f"{name} must be a {joined}-character lowercase hexadecimal digest."
+        )
+    return value
+
+
+def _parameter_binding_report(
+    model: LatentWorkspaceModel,
+    training: Mapping[str, object],
+    evaluation: Mapping[str, object],
+    *,
+    topology_sha256: str,
+    require_candidate_dependencies: bool,
+) -> dict[str, object]:
+    """Bind checkpoint, parameter leaves, topology, and scored candidates."""
+    checkpoint_sha256 = _lower_hex_digest(
+        training.get("parameter_checkpoint_sha256"),
+        "training.parameter_checkpoint_sha256",
+        (64,),
+    )
+    topology_sha256 = _lower_hex_digest(
+        topology_sha256, "model.topology_sha256", (64,)
+    )
+    before = _lower_hex_digest(
+        evaluation.get("parameter_sha256_before"),
+        "evaluation.parameter_sha256_before",
+        (64,),
+    )
+    after = _lower_hex_digest(
+        evaluation.get("parameter_sha256_after"),
+        "evaluation.parameter_sha256_after",
+        (64,),
+    )
+    snapshot = parameter_snapshot(model)
+    parameter_sha256 = _tree_digest(snapshot)
+    if parameter_sha256 != before or parameter_sha256 != after:
+        raise ValueError(
+            "Evaluation parameter digest does not match the checkpoint-bound "
+            "model before and after evaluation. Use one frozen parameter tree."
+        )
+
+    ordered_leaves: list[dict[str, object]] = []
+    for name in sorted(snapshot):
+        leaves = jax.tree.leaves(snapshot[name])
+        if len(leaves) != 1:
+            raise ValueError(
+                "Checkpoint parameter paths must each resolve to exactly one leaf; "
+                f"{name!r} resolved to {len(leaves)} leaves."
+            )
+        array = np.ascontiguousarray(np.asarray(leaves[0]))
+        ordered_leaves.append(
+            {
+                "name": name,
+                "shape": list(array.shape),
+                "dtype": array.dtype.str,
+                "sha256": hashlib.sha256(array.tobytes()).hexdigest(),
+            }
+        )
+    if not ordered_leaves:
+        raise ValueError("Parameter binding requires at least one checkpoint leaf.")
+
+    ordered_names = [leaf["name"] for leaf in ordered_leaves]
+    if require_candidate_dependencies:
+        checkpoint_queries = evaluation.get("checkpoint_queries")
+        if not isinstance(checkpoint_queries, Mapping):
+            raise ValueError(
+                "Checkpoint-conditioned evaluation requires checkpoint_queries."
+            )
+        candidate_count = 0
+        for rows in checkpoint_queries.values():
+            if not isinstance(rows, list):
+                raise ValueError("Checkpoint query rows must be lists.")
+            for row in rows:
+                candidates = row.get("candidates") if isinstance(row, Mapping) else None
+                if not isinstance(candidates, list):
+                    raise ValueError("Checkpoint query candidates must be lists.")
+                for candidate in candidates:
+                    dependencies = (
+                        candidate.get("parameter_dependencies")
+                        if isinstance(candidate, Mapping)
+                        else None
+                    )
+                    if dependencies != ordered_names:
+                        raise ValueError(
+                            "Checkpoint candidate parameter_dependencies must "
+                            "exactly equal ordered parameter leaf names."
+                        )
+                    candidate_count += 1
+        if candidate_count == 0:
+            raise ValueError(
+                "Checkpoint-conditioned evaluation requires scored candidates."
+            )
+
+    return {
+        "checkpoint_sha256": checkpoint_sha256,
+        "parameter_sha256": parameter_sha256,
+        "topology_sha256": topology_sha256,
+        "ordered_leaves": ordered_leaves,
+    }
+
+
 def _compiler_evidence(learner: Any) -> dict[str, object]:
     report = getattr(learner, "report", None)
     if report is None:
@@ -2857,35 +3047,44 @@ def _read_parameter_checkpoint(
     leaves, structure = jax.tree.flatten(
         {key: state.value for key, state in states.items()}
     )
-    stored = np.load(path)
     names = [f"arr_{index}" for index in range(len(leaves))]
-    stored_names = set(stored.files)
-    if stored_names not in (set(names), set(names) | {"__architecture__"}):
-        raise ValueError("Parameter checkpoint does not match the model tree. Use matching values and structures.")
-    if "__architecture__" in stored_names:
-        architecture = msgspec.json.decode(
-            np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
-        )
-        if isinstance(architecture, dict) and architecture.get("schema_version") == 1:
-            architecture.setdefault("latent_residual_mixer", "none")
-            architecture.setdefault("latent_residual_block_size", 10)
-            architecture.setdefault("effort_schedule", "uniform")
-            architecture.setdefault("memory_coding", model.config.memory_coding)
-            architecture.setdefault("effort_distillation_weight", 0.0)
-        if architecture != {
-            "schema_version": 1,
-            "memory_coding": model.config.memory_coding,
-            "memory_read_interval": model.config.memory_read_interval,
-            "latent_residual_mixer": model.config.latent_residual_mixer,
-            "latent_residual_block_size": model.config.latent_residual_block_size,
-            "effort_schedule": effort_schedule,
-            "effort_distillation_weight": effort_distillation_weight,
-        }:
-            raise ValueError("Parameter checkpoint does not match model architecture. Use matching values and structures.")
-    restored = [jnp.asarray(stored[name]) for name in names]
-    for target, value in zip(leaves, restored, strict=True):
+    with np.load(path) as stored:
+        stored_names = set(stored.files)
+        if stored_names not in (set(names), set(names) | {"__architecture__"}):
+            raise ValueError("Parameter checkpoint does not match the model tree. Use matching values and structures.")
+        if "__architecture__" in stored_names:
+            architecture = msgspec.json.decode(
+                np.asarray(stored["__architecture__"], dtype=np.uint8).tobytes()
+            )
+            if (
+                isinstance(architecture, dict)
+                and architecture.get("schema_version") == 1
+            ):
+                architecture.setdefault("latent_residual_mixer", "none")
+                architecture.setdefault("latent_residual_block_size", 10)
+                architecture.setdefault("effort_schedule", "uniform")
+                architecture.setdefault("memory_coding", model.config.memory_coding)
+                architecture.setdefault("effort_distillation_weight", 0.0)
+            if architecture != {
+                "schema_version": 1,
+                "memory_coding": model.config.memory_coding,
+                "memory_read_interval": model.config.memory_read_interval,
+                "latent_residual_mixer": model.config.latent_residual_mixer,
+                "latent_residual_block_size": model.config.latent_residual_block_size,
+                "effort_schedule": effort_schedule,
+                "effort_distillation_weight": effort_distillation_weight,
+            }:
+                raise ValueError("Parameter checkpoint does not match model architecture. Use matching values and structures.")
+        stored_values = [np.asarray(stored[name]) for name in names]
+    for target, value in zip(leaves, stored_values, strict=True):
         if np.shape(target) != np.shape(value):
             raise ValueError("Parameter checkpoint does not match the model shapes. Use matching values and structures.")
+        if np.asarray(target).dtype != value.dtype:
+            raise ValueError(
+                "Parameter checkpoint does not match the model dtypes. "
+                "Restore a checkpoint with identical leaf dtypes."
+            )
+    restored = [jnp.asarray(value) for value in stored_values]
     for key, value in jax.tree.unflatten(structure, restored).items():
         states[key].value = value
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -3242,6 +3441,14 @@ def _submission_policy_name(mode: PrimaryCandidateMode) -> str:
     return SUBMISSION_POLICY if mode == "model_only" else RULE_SUBMISSION_POLICY
 
 
+def _submission_policy_fallback(answer_head: AnswerHead) -> str:
+    """Return the fallback identifier required for ``answer_head``."""
+
+    if answer_head == "checkpoint_conditioned":
+        return "checkpoint_conditioned_forest_top_two"
+    return "latest_checkpoint_factorized_global_runner_up"
+
+
 def _rule_proposals(
     records: Sequence["_EvaluationRecord"],
     source_tasks: Sequence["_OriginTask"],
@@ -3307,12 +3514,15 @@ def _demonstration_fitted_windows(
 ) -> np.ndarray:
     """Decode every query with a forest fitted on that query's demonstrations.
 
-    This is a model-only channel, not a rule channel: nothing here encodes an
-    ARC transformation and no query target is read. Each query gets its own
-    forest, fitted from its own task's demonstration cells, and both the answer
+    This is a target-free demonstration-only diagnostic, not a trained-model
+    channel: nothing here encodes an ARC transformation or reads a query target,
+    but it also does not consume checkpoint parameters. Each query gets its own
+    forest, fitted from its task's demonstration cells, and both the answer
     colours *and* the answer extent come out of that forest -- the eleventh
     class carries "not part of the output grid", so the shape rule the
-    ``rule_then_model`` channel uses is never consulted.
+    ``rule_then_model`` channel uses is never consulted. Its grids become
+    model-owned only when ``checkpoint_conditioned`` separately ranks them with
+    executed trained-network logits.
 
     Like the rule channel, the head is fitted on the demonstrations *that arm
     actually has*. ``shuffled`` fits the deranged task, and ``no_context`` has
@@ -3479,6 +3689,9 @@ def _score_windows(
     checkpoints: Sequence[int] = CHECKPOINTS,
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
     rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    proposal_compact: np.ndarray | None = None,
+    checkpoint_conditioning_coupling: float = 1.0,
+    parameter_dependencies: Sequence[str] = (),
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score submitted candidates at every frozen checkpoint.
 
@@ -3492,6 +3705,18 @@ def _score_windows(
         if compact.shape[0] == len(checkpoints)
         else compact[checkpoint_indices]
     )
+    checkpoint_proposals = None
+    if proposal_compact is not None:
+        proposals = np.asarray(proposal_compact)
+        if proposals.ndim != 3:
+            raise ValueError(
+                "proposal_compact must have checkpoint, query, and width axes."
+            )
+        checkpoint_proposals = (
+            proposals
+            if proposals.shape[0] == len(checkpoints)
+            else proposals[checkpoint_indices]
+        )
     return _score_checkpoint_logits(
         checkpoint_compact,
         records,
@@ -3500,6 +3725,9 @@ def _score_windows(
         checkpoints,
         submission_checkpoint,
         rule_proposals,
+        checkpoint_proposals,
+        checkpoint_conditioning_coupling,
+        parameter_dependencies,
     )
 
 
@@ -3610,6 +3838,9 @@ def _score_checkpoint_logits(
     checkpoints: Sequence[int] = CHECKPOINTS,
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
     rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    proposal_checkpoint_compact: np.ndarray | None = None,
+    checkpoint_conditioning_coupling: float = 1.0,
+    parameter_dependencies: Sequence[str] = (),
 ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
     """Score model logits supplied at the configured semantic checkpoints.
 
@@ -3657,13 +3888,93 @@ def _score_checkpoint_logits(
         ]
         for effort_index, effort in enumerate(checkpoints)
     }
+    proposal_logits_by_checkpoint: dict[int, list[OutputLogits]] | None = None
+    dependencies = tuple(parameter_dependencies)
+    if proposal_checkpoint_compact is not None:
+        proposals = np.asarray(proposal_checkpoint_compact)
+        if proposals.ndim != 3 or proposals.shape[:2] != checkpoint_compact.shape[:2]:
+            raise ValueError(
+                "proposal_checkpoint_compact must match checkpoint and query axes."
+            )
+        if rule_proposals is not None:
+            raise ValueError(
+                "Checkpoint-conditioned scoring cannot merge an unranked rule proposal."
+            )
+        if not dependencies or not all(
+            isinstance(path, str) and bool(path) for path in dependencies
+        ):
+            raise ValueError(
+                "Checkpoint-conditioned scoring requires nonempty parameter_dependencies."
+            )
+        proposal_expanded = expand_decoder_logits(
+            jnp.asarray(proposals), color_rank, "row_refinement"
+        )
+        proposal_height = np.asarray(proposal_expanded.height)
+        proposal_width = np.asarray(proposal_expanded.width)
+        proposal_colors = np.asarray(proposal_expanded.colors)
+        proposal_logits_by_checkpoint = {
+            effort: [
+                OutputLogits(
+                    proposal_height[effort_index, query_index],
+                    proposal_width[effort_index, query_index],
+                    proposal_colors[effort_index, query_index],
+                )
+                for query_index in range(len(records))
+            ]
+            for effort_index, effort in enumerate(checkpoints)
+        }
     selected_by_checkpoint: dict[
         int, list[tuple[list[Any], list[dict[str, object]]]]
     ] = {effort: [] for effort in checkpoints}
     for effort in checkpoints:
         for query_index in range(len(records)):
             logits = logits_by_checkpoint[effort][query_index]
-            if effort == 0:
+            if proposal_logits_by_checkpoint is not None:
+                demonstration_candidates = tuple(
+                    decode_candidates(proposal_logits_by_checkpoint[effort][query_index])
+                )
+                ranked = checkpoint_conditioned_candidates(
+                    demonstration_candidates,
+                    logits,
+                    checkpoint_conditioning_coupling,
+                )
+                decoded = list(ranked)
+                candidate_payloads = []
+                for rank, candidate in enumerate(ranked, start=1):
+                    forest_rank, forest_candidate = next(
+                        (forest_rank, proposal)
+                        for forest_rank, proposal in enumerate(
+                            demonstration_candidates, start=1
+                        )
+                        if np.array_equal(candidate.grid, proposal.grid)
+                    )
+                    network_log_probability = (
+                        candidate.log_probability - forest_candidate.log_probability
+                    ) / float(checkpoint_conditioning_coupling)
+                    payload = dict(candidate.to_dict())
+                    payload.update(
+                        {
+                            "rank": rank,
+                            "provenance": "model",
+                            "dependency_class": "model_checkpoint",
+                            "proposal_source": "demonstration_fitted_forest",
+                            "ranking_source": (
+                                "trained_network_factorized_candidate_log_probability"
+                            ),
+                            "answer_head_version": "checkpoint_conditioned_v1",
+                            "source_checkpoint": effort,
+                            "selection_role": "checkpoint_conditioned_rank",
+                            "forest_rank": forest_rank,
+                            "forest_log_probability": (
+                                forest_candidate.log_probability
+                            ),
+                            "network_log_probability": network_log_probability,
+                            "combined_log_probability": candidate.log_probability,
+                            "parameter_dependencies": list(dependencies),
+                        }
+                    )
+                    candidate_payloads.append(payload)
+            elif effort == 0:
                 decoded = list(decode_candidates(logits))
                 candidate_payloads = []
                 diagnostic_roles = (
@@ -3928,6 +4239,10 @@ def _control_summary(
     intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
     intact_windows: np.ndarray | None = None,
     control_windows: np.ndarray | None = None,
+    intact_proposal_windows: np.ndarray | None = None,
+    control_proposal_windows: np.ndarray | None = None,
+    checkpoint_conditioning_coupling: float = 1.0,
+    parameter_dependencies: Sequence[str] = (),
 ) -> dict[str, object]:
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
@@ -3966,23 +4281,40 @@ def _control_summary(
             raise ValueError("Control rule proposals must match the records. Make Control rule proposals match the records.")
         return tuple(proposals[index] for index in applicable_indices)
 
-    if applicable_records:
-        metrics, control_checkpoint_queries = _score_windows(
-            scored(control_windows, applicable_control[0]),
+    def score_arm(
+        compact: np.ndarray,
+        proposals: np.ndarray | None,
+        rules: tuple[tuple[str, np.ndarray] | None, ...] | None,
+    ) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
+        kwargs: dict[str, object] = {}
+        if proposals is not None:
+            kwargs = {
+                "proposal_compact": proposals[:, applicable_indices],
+                "checkpoint_conditioning_coupling": (
+                    checkpoint_conditioning_coupling
+                ),
+                "parameter_dependencies": parameter_dependencies,
+            }
+        return _score_windows(
+            compact,
             applicable_records,
             color_rank,
             decoder_mode,
             checkpoints,
             submission_checkpoint,
+            rules,
+            **kwargs,
+        )
+
+    if applicable_records:
+        metrics, control_checkpoint_queries = score_arm(
+            scored(control_windows, applicable_control[0]),
+            control_proposal_windows,
             subset_rules(rule_proposals),
         )
-        matched_intact_metrics, intact_checkpoint_queries = _score_windows(
+        matched_intact_metrics, intact_checkpoint_queries = score_arm(
             scored(intact_windows, applicable_intact[0]),
-            applicable_records,
-            color_rank,
-            decoder_mode,
-            checkpoints,
-            submission_checkpoint,
+            intact_proposal_windows,
             subset_rules(intact_rule_proposals),
         )
         if (
@@ -4714,6 +5046,7 @@ def _model_only_completion_report(
         and not data.plumbing_only
         and config.evaluation_task_limit is None
         and config.decoder_mode in ("row_refinement", "latent_row_decode")
+        and config.answer_head != "demonstration_fitted"
         and len(expected) == 400
     )
     if eligible:
@@ -4740,7 +5073,9 @@ def _model_only_completion_report(
         "primary_candidate_mode": "model_only",
         "eligible_for_completion": False,
         "eligibility_reason": (
-            "completion requires a complete 400-task non-smoke row-refinement run"
+            "demonstration_fitted is a demonstration-only diagnostic"
+            if config.answer_head == "demonstration_fitted"
+            else "completion requires a complete 400-task non-smoke row-refinement run"
         ),
         "submission_checkpoint": config.submission_checkpoint,
         "submission_policy": SUBMISSION_POLICY,
@@ -4811,6 +5146,67 @@ def _submitted_completion_report(
             submission_metrics.get("strict_task_pass_at_2", 0.0)
         ),
     }
+
+
+def _diagnostic_only_primary_surface(
+    records: Sequence[_EvaluationRecord], checkpoints: Sequence[int]
+) -> tuple[dict[str, dict[str, object]], dict[str, list[dict[str, object]]]]:
+    """Return a complete zero-score surface for a diagnostic-only answer head.
+
+    The evaluation population remains visible, but no candidate row or target-
+    derived diagnostic from the raw forest is copied into a primary surface.
+    """
+
+    task_query_counts = collections.Counter(record.task_key for record in records)
+    metrics: dict[str, dict[str, object]] = {}
+    checkpoint_queries: dict[str, list[dict[str, object]]] = {}
+    for checkpoint in checkpoints:
+        metrics[str(int(checkpoint))] = {
+            "query_count": len(records),
+            "task_count": len(task_query_counts),
+            "query_pass_at_1": 0.0,
+            "query_pass_at_2": 0.0,
+            "strict_task_pass_at_1": 0.0,
+            "strict_task_pass_at_2": 0.0,
+            "shape_accuracy_diagnostic": 0.0,
+            "valid_cell_pixel_accuracy_diagnostic": 0.0,
+            "tasks": {
+                task_id: {
+                    "query_count": query_count,
+                    "pass_at_1": False,
+                    "pass_at_2": False,
+                }
+                for task_id, query_count in sorted(task_query_counts.items())
+            },
+        }
+        checkpoint_queries[str(int(checkpoint))] = []
+    return metrics, checkpoint_queries
+
+
+def _demonstration_only_checkpoint_queries(
+    checkpoint_queries: Mapping[str, Sequence[Mapping[str, object]]],
+) -> dict[str, list[dict[str, object]]]:
+    """Classify raw forest query records as ineligible diagnostic evidence."""
+
+    diagnostic: dict[str, list[dict[str, object]]] = {}
+    for effort, rows in checkpoint_queries.items():
+        diagnostic_rows: list[dict[str, object]] = []
+        for row in rows:
+            payload = dict(row)
+            payload["submission_role"] = "diagnostic_only"
+            payload["answer_dependency_class"] = "demonstration_only_diagnostic"
+            payload["candidates"] = [
+                {
+                    **dict(candidate),
+                    "provenance": "demonstration_only_diagnostic",
+                    "dependency_class": "demonstration_only_diagnostic",
+                }
+                for candidate in row.get("candidates", ())
+                if isinstance(candidate, Mapping)
+            ]
+            diagnostic_rows.append(payload)
+        diagnostic[str(effort)] = diagnostic_rows
+    return diagnostic
 
 
 def _evaluation_offsets(config: ExperimentConfig) -> np.ndarray:
@@ -4966,13 +5362,16 @@ def _evaluate(
     answer_head_windows: dict[str, np.ndarray | None] = {
         arm: None for arm in ("intact", "no_context", "shuffled")
     }
-    if config.answer_head == "demonstration_fitted":
-        answer_head_windows = {
-            arm: _demonstration_fitted_windows(
+    if config.answer_head in ("demonstration_fitted", "checkpoint_conditioned"):
+        fitted_arms = (
+            tuple(answer_head_windows)
+            if config.evaluation_controls
+            else ("intact",)
+        )
+        for arm in fitted_arms:
+            answer_head_windows[arm] = _demonstration_fitted_windows(
                 records, data.evaluation, config, len(checkpoints), arm=arm
             )
-            for arm in answer_head_windows
-        }
 
     protocol_evidence: dict[str, object] | None = None
     if protocol_v2:
@@ -5072,16 +5471,69 @@ def _evaluate(
             ),
         }
         del audit_window, audit_voltage, audit_memory
-    scored_windows = answer_head_windows["intact"]
-    model_only_metrics, model_only_queries = _score_windows(
+    scored_windows = (
+        answer_head_windows["intact"]
+        if config.answer_head == "demonstration_fitted"
+        else None
+    )
+    proposal_windows = (
+        answer_head_windows["intact"]
+        if config.answer_head == "checkpoint_conditioned"
+        else None
+    )
+    answer_parameter_dependencies = (
+        tuple(sorted(parameter_snapshot(model)))
+        if config.answer_head == "checkpoint_conditioned"
+        else ()
+    )
+    scoring_override_windows = {
+        arm: windows if config.answer_head == "demonstration_fitted" else None
+        for arm, windows in answer_head_windows.items()
+    }
+    checkpoint_proposal_windows = {
+        arm: windows if config.answer_head == "checkpoint_conditioned" else None
+        for arm, windows in answer_head_windows.items()
+    }
+    scored_metrics, scored_queries = _score_windows(
         intact[0] if scored_windows is None else scored_windows,
         records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
+        proposal_compact=proposal_windows,
+        checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+        parameter_dependencies=answer_parameter_dependencies,
+    )
+    if config.answer_head == "demonstration_fitted":
+        model_only_metrics, model_only_queries = _diagnostic_only_primary_surface(
+            records, checkpoints
+        )
+    else:
+        model_only_metrics, model_only_queries = scored_metrics, scored_queries
+    answer_dependency_class = (
+        "demonstration_only_diagnostic"
+        if config.answer_head == "demonstration_fitted"
+        else "model_checkpoint"
+    )
+    demonstration_only_diagnostic = (
+        {
+            "eligible_for_primary_score": False,
+            "reason": "raw forest ordering does not consume checkpoint parameters",
+            "metrics_by_effort": scored_metrics,
+            "checkpoint_queries": _demonstration_only_checkpoint_queries(
+                scored_queries
+            ),
+        }
+        if config.answer_head == "demonstration_fitted"
+        else None
     )
     intact_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
     shuffled_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
     no_context_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
-    if config.primary_candidate_mode == "rule_then_model":
+    if config.answer_head == "demonstration_fitted":
+        frozen_metrics, frozen_checkpoint_queries = (
+            model_only_metrics,
+            model_only_queries,
+        )
+    elif config.primary_candidate_mode == "rule_then_model":
         clear_rule_cache()
         intact_rules = _rule_proposals(records, data.evaluation, arm="intact")
         if config.evaluation_controls:
@@ -5095,13 +5547,21 @@ def _evaluate(
             intact[0] if scored_windows is None else scored_windows,
             records, config.color_rank, config.decoder_mode,
             checkpoints, submission_checkpoint, intact_rules,
+            proposal_compact=proposal_windows,
+            checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+            parameter_dependencies=answer_parameter_dependencies,
         )
     else:
         frozen_metrics, frozen_checkpoint_queries = (
             model_only_metrics,
             model_only_queries,
         )
-    if primary_metrics is None or primary_checkpoint_queries is None:
+    if config.answer_head == "demonstration_fitted":
+        primary_metrics, primary_checkpoint_queries = (
+            model_only_metrics,
+            model_only_queries,
+        )
+    elif primary_metrics is None or primary_checkpoint_queries is None:
         primary_metrics = frozen_metrics
         primary_checkpoint_queries = frozen_checkpoint_queries
     completion_report = _model_only_completion_report(
@@ -5113,8 +5573,12 @@ def _evaluate(
     submitted_completion = _submitted_completion_report(
         primary_metrics[str(submission_checkpoint)], config
     )
-    channel_attribution = _channel_attribution(primary_checkpoint_queries)
-    model_only_attribution = _channel_attribution(model_only_queries)
+    if config.answer_head == "demonstration_fitted":
+        channel_attribution: dict[str, dict[str, object]] = {}
+        model_only_attribution: dict[str, dict[str, object]] = {}
+    else:
+        channel_attribution = _channel_attribution(primary_checkpoint_queries)
+        model_only_attribution = _channel_attribution(model_only_queries)
     model_only_input_echo = _input_echo_summary(model_only_queries)
     trajectory_steps = (
         np.asarray(checkpoints, dtype=np.int32)
@@ -5182,12 +5646,13 @@ def _evaluate(
                 "submission_checkpoint": config.submission_checkpoint,
                 "completed_sweep_checkpoints": list(training_efforts),
                 "candidate_budget": 2,
-                "fallback": "latest_checkpoint_factorized_global_runner_up",
+                "fallback": _submission_policy_fallback(config.answer_head),
                 "target_free_selection": True,
                 "rule_channel_enabled": (
                     config.primary_candidate_mode == "rule_then_model"
                 ),
                 "answer_head": config.answer_head,
+                "answer_dependency_class": answer_dependency_class,
             },
             "protocol": {
                 **(protocol_evidence or {}),
@@ -5197,6 +5662,8 @@ def _evaluate(
                 ),
             },
             "model_only_completion": completion_report,
+            "answer_dependency_class": answer_dependency_class,
+            "demonstration_only_diagnostic": demonstration_only_diagnostic,
             "submitted_completion": submitted_completion,
             "channel_attribution": channel_attribution,
             "model_only_metrics_by_effort": model_only_metrics,
@@ -5240,8 +5707,12 @@ def _evaluate(
         submission_checkpoint,
         intact_rules,
         intact_rules,
-        answer_head_windows["intact"],
-        answer_head_windows["intact"],
+        scoring_override_windows["intact"],
+        scoring_override_windows["intact"],
+        intact_proposal_windows=checkpoint_proposal_windows["intact"],
+        control_proposal_windows=checkpoint_proposal_windows["intact"],
+        checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+        parameter_dependencies=answer_parameter_dependencies,
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     if protocol_v2:
@@ -5294,8 +5765,12 @@ def _evaluate(
         submission_checkpoint,
         no_context_rules,
         intact_rules,
-        answer_head_windows["intact"],
-        answer_head_windows["no_context"],
+        scoring_override_windows["intact"],
+        scoring_override_windows["no_context"],
+        intact_proposal_windows=checkpoint_proposal_windows["intact"],
+        control_proposal_windows=checkpoint_proposal_windows["no_context"],
+        checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+        parameter_dependencies=answer_parameter_dependencies,
     )
     del no_context
 
@@ -5318,8 +5793,12 @@ def _evaluate(
         submission_checkpoint,
         shuffled_rules,
         intact_rules,
-        answer_head_windows["intact"],
-        answer_head_windows["shuffled"],
+        scoring_override_windows["intact"],
+        scoring_override_windows["shuffled"],
+        intact_proposal_windows=checkpoint_proposal_windows["intact"],
+        control_proposal_windows=checkpoint_proposal_windows["shuffled"],
+        checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+        parameter_dependencies=answer_parameter_dependencies,
     )
     del shuffled
 
@@ -5361,11 +5840,14 @@ def _evaluate(
             submission_checkpoint,
             intact_rules,
             intact_rules,
-            # neither the held state nor the lesioned recurrence is an input to a
-            # head fitted on demonstration grids, so both arms score under the
-            # intact fit and the state comparison carries the causal claim.
-            answer_head_windows["intact"],
-            answer_head_windows["intact"],
+            scoring_override_windows["intact"],
+            scoring_override_windows["intact"],
+            intact_proposal_windows=checkpoint_proposal_windows["intact"],
+            control_proposal_windows=checkpoint_proposal_windows["intact"],
+            checkpoint_conditioning_coupling=(
+                config.checkpoint_conditioning_coupling
+            ),
+            parameter_dependencies=answer_parameter_dependencies,
         )
         state_hold_result["r30_r60_equal_r0"] = bool(
             np.array_equal(state_hold[0][0], state_hold[0][1])
@@ -5384,11 +5866,14 @@ def _evaluate(
             submission_checkpoint,
             intact_rules,
             intact_rules,
-            # neither the held state nor the lesioned recurrence is an input to a
-            # head fitted on demonstration grids, so both arms score under the
-            # intact fit and the state comparison carries the causal claim.
-            answer_head_windows["intact"],
-            answer_head_windows["intact"],
+            scoring_override_windows["intact"],
+            scoring_override_windows["intact"],
+            intact_proposal_windows=checkpoint_proposal_windows["intact"],
+            control_proposal_windows=checkpoint_proposal_windows["intact"],
+            checkpoint_conditioning_coupling=(
+                config.checkpoint_conditioning_coupling
+            ),
+            parameter_dependencies=answer_parameter_dependencies,
         )
         del state_hold, recurrent_lesion
     else:
@@ -5424,12 +5909,12 @@ def _evaluate(
         submission_checkpoint,
         intact_rules,
         intact_rules,
-        # the forest reads demonstrations, not the ablated memory slot, so
-        # ablating a slot genuinely cannot move its answer; the honest report
-        # scores both arms with the same fit and lets the state comparison
-        # carry the causal claim.
-        answer_head_windows["intact"],
-        answer_head_windows["intact"],
+        scoring_override_windows["intact"],
+        scoring_override_windows["intact"],
+        intact_proposal_windows=checkpoint_proposal_windows["intact"],
+        control_proposal_windows=checkpoint_proposal_windows["intact"],
+        checkpoint_conditioning_coupling=config.checkpoint_conditioning_coupling,
+        parameter_dependencies=answer_parameter_dependencies,
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
@@ -5474,12 +5959,13 @@ def _evaluate(
             "submission_checkpoint": submission_checkpoint,
             "completed_sweep_checkpoints": list(training_efforts),
             "candidate_budget": 2,
-            "fallback": "latest_checkpoint_factorized_global_runner_up",
+            "fallback": _submission_policy_fallback(config.answer_head),
             "target_free_selection": True,
             "rule_channel_enabled": (
                 config.primary_candidate_mode == "rule_then_model"
             ),
             "answer_head": config.answer_head,
+            "answer_dependency_class": answer_dependency_class,
         },
         "protocol": {
             **(protocol_evidence or {}),
@@ -5489,6 +5975,8 @@ def _evaluate(
             ),
         },
         "model_only_completion": completion_report,
+        "answer_dependency_class": answer_dependency_class,
+        "demonstration_only_diagnostic": demonstration_only_diagnostic,
         "submitted_completion": submitted_completion,
         "channel_attribution": channel_attribution,
         "model_only_metrics_by_effort": model_only_metrics,
@@ -5588,6 +6076,14 @@ def _qualification(
     checkpoints = config.checkpoints
     training_efforts = config.training_efforts
     submission_checkpoint = config.submission_checkpoint
+    parameter_dependence = assess_parameter_dependence(
+        evaluation.get("parameter_dependence_evidence"),
+        minimum_cumulative_score=16,
+    )
+    parameter_dependence_passed = bool(
+        config.answer_head == "checkpoint_conditioned"
+        and parameter_dependence.get("passed") is True
+    )
     execution_evidence = evaluation.get("execution", {})
     reported_steps = (
         execution_evidence.get("gathered_steps")
@@ -5754,6 +6250,37 @@ def _qualification(
         ):
             return False
         first, second = candidates
+        if config.answer_head == "checkpoint_conditioned":
+            return bool(
+                config.primary_candidate_mode == "model_only"
+                and row.get("submission_role")
+                == (
+                    "primary_submission"
+                    if effort == submission_checkpoint
+                    else "diagnostic_only"
+                )
+                and all(
+                    candidate.get("provenance") == "model"
+                    and candidate.get("dependency_class") == "model_checkpoint"
+                    and candidate.get("proposal_source")
+                    == "demonstration_fitted_forest"
+                    and candidate.get("ranking_source")
+                    == "trained_network_factorized_candidate_log_probability"
+                    and candidate.get("answer_head_version")
+                    == "checkpoint_conditioned_v1"
+                    and candidate.get("source_checkpoint") == effort
+                    and candidate.get("selection_role")
+                    == "checkpoint_conditioned_rank"
+                    and candidate.get("forest_rank") in (1, 2)
+                    and isinstance(candidate.get("parameter_dependencies"), list)
+                    and bool(candidate["parameter_dependencies"])
+                    and all(
+                        isinstance(path, str) and bool(path)
+                        for path in candidate["parameter_dependencies"]
+                    )
+                    for candidate in candidates
+                )
+            )
         if first.get("provenance") == "rule":
             return bool(
                 first.get("selection_role") == "demonstration_verified_rule"
@@ -5836,7 +6363,7 @@ def _qualification(
         == list(training_efforts)
         and submission_policy.get("candidate_budget") == 2
         and submission_policy.get("fallback")
-        == "latest_checkpoint_factorized_global_runner_up"
+        == _submission_policy_fallback(config.answer_head)
         and submission_policy.get("target_free_selection") is True
         and submission_policy.get("rule_channel_enabled")
         is (config.primary_candidate_mode == "rule_then_model")
@@ -5849,6 +6376,7 @@ def _qualification(
         and not data.plumbing_only
         and config.evaluation_task_limit is None
         and config.decoder_mode in ("row_refinement", "latent_row_decode")
+        and config.answer_head != "demonstration_fitted"
         and len(data.evaluation) == 400
     )
     completion_complete = bool(
@@ -6459,6 +6987,7 @@ def _qualification(
         "frozen_parameters_unchanged": frozen,
         "repeat_intact_deterministic": repeatable,
         "slot_ablation_pre_intervention_matched": ablation_matched,
+        "parameter_dependence": parameter_dependence_passed,
         "required_controls_executed": bool(
             config.evaluation_controls and required_controls_complete
         ),
@@ -6563,7 +7092,7 @@ def _qualification(
         and isinstance(completion, dict)
         and completion.get("passed") is True
     )
-    approved_completion_target = bool(scientific and score_gate_passed)
+    approved_completion_target = bool(scientific and parameter_dependence_passed)
     structural_messages = {
         "actual_full_scale": (
             f"actual model is not the required {FULL_SCALE_NEURON_COUNT}-neuron/"
@@ -6582,6 +7111,12 @@ def _qualification(
         "frozen_parameters_unchanged": "evaluation mutated frozen parameter bytes",
         "repeat_intact_deterministic": "same-run intact repeat exceeded the declared state/logit tolerance or changed exact candidates or metrics",
         "slot_ablation_pre_intervention_matched": "slot-ablation checkpoint zero exceeded the declared state/logit tolerance or changed exact candidates or effort-0 metrics",
+        "parameter_dependence": (
+            "raw demonstration-fitted answers are diagnostic-only and cannot "
+            "satisfy checkpoint parameter dependence"
+            if config.answer_head == "demonstration_fitted"
+            else "the baseline/repeat/scale/swap/reseed parameter-dependence matrix is missing, malformed, flat, or below cumulative 16"
+        ),
         "required_controls_executed": "one or more required protocol-v2 controls were disabled, incomplete, or failed its invariant",
     }
     scientific_messages = {
@@ -6651,8 +7186,10 @@ def _qualification(
         "full_structural_qualification": structural,
         "full_scientific_qualification": scientific,
         "model_only_score_gate_passed": score_gate_passed,
+        "parameter_dependent_score_gate_passed": parameter_dependence_passed,
         "approved_completion_target_passed": approved_completion_target,
         "model_only_completion": completion,
+        "parameter_dependence": parameter_dependence,
         "plumbing_only": data.plumbing_only,
         "associative_capability_status": associative_capability_status,
         "structural_checks": structural_checks,
@@ -6713,7 +7250,7 @@ def _software_report(
 
 
 def _git_source_provenance(directory: pathlib.Path) -> dict[str, object]:
-    """Resolve live Git provenance without trusting launcher declarations.
+    """Resolve live Git provenance with a strict launcher fallback.
 
     Parameters
     ----------
@@ -6723,9 +7260,10 @@ def _git_source_provenance(directory: pathlib.Path) -> dict[str, object]:
     Returns
     -------
     dict
-        Actual revision and dirty state plus any declared-revision mismatch.
+        Actual revision and dirty state plus their provenance source.
     """
     root = directory if directory.is_dir() else directory.parent
+    live_available = False
     try:
         revision = subprocess.run(
             ("git", "-C", str(root), "rev-parse", "HEAD"),
@@ -6743,14 +7281,48 @@ def _git_source_provenance(directory: pathlib.Path) -> dict[str, object]:
         revision = None
         dirty = None
     else:
-        dirty = bool(status.strip())
+        if (
+            len(revision) in (40, 64)
+            and all(character in "0123456789abcdef" for character in revision)
+        ):
+            dirty = bool(status.strip())
+            live_available = True
+        else:
+            revision = None
+            dirty = None
     declared = os.environ.get("EXAMPLE21_SOURCE_REVISION")
+    declared_dirty = os.environ.get("EXAMPLE21_SOURCE_DIRTY")
+    if live_available:
+        provenance_source = "git"
+    elif declared is None and declared_dirty is None:
+        provenance_source = "unavailable"
+    else:
+        if declared is None or declared_dirty is None:
+            raise ValueError(
+                "EXAMPLE21_SOURCE_REVISION and EXAMPLE21_SOURCE_DIRTY must be "
+                "provided together when live Git metadata is unavailable."
+            )
+        revision = _lower_hex_digest(
+            declared, "EXAMPLE21_SOURCE_REVISION", (40, 64)
+        )
+        if declared_dirty not in ("true", "false"):
+            raise ValueError(
+                "EXAMPLE21_SOURCE_DIRTY must be exactly 'true' or 'false' when "
+                "live Git metadata is unavailable."
+            )
+        dirty = declared_dirty == "true"
+        provenance_source = "environment"
     return {
         "source_revision": revision,
         "source_dirty": dirty,
+        "provenance_source": provenance_source,
         "declared_source_revision": declared,
+        "declared_source_dirty": declared_dirty,
         "declared_revision_mismatch": bool(
-            declared is not None and revision is not None and declared != revision
+            live_available
+            and declared is not None
+            and revision is not None
+            and declared != revision
         ),
     }
 
@@ -6768,6 +7340,7 @@ def _implementation_report() -> dict[str, object]:
         "latent_workspace_cell_features.py",
         "latent_workspace_demonstration_forest.py",
         "latent_workspace_demo_fitted_decode.py",
+        "latent_workspace_parameter_dependence.py",
         "21-arc-agi-latent-reasoning.py",
     )
     combined = hashlib.sha256()
@@ -7722,6 +8295,17 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         evaluation_started = time.perf_counter()
         _emit_progress("evaluation", 0, 1, evaluation_started)
         evaluation = _evaluate(model, data, config, rows, device)
+        topology_sha256 = _sparse_topology_sha256(model)
+        if training.get("parameter_checkpoint_sha256") is not None:
+            evaluation["parameter_binding"] = _parameter_binding_report(
+                model,
+                training,
+                evaluation,
+                topology_sha256=topology_sha256,
+                require_candidate_dependencies=(
+                    config.answer_head == "checkpoint_conditioned"
+                ),
+            )
         _emit_progress("evaluation", 1, 1, evaluation_started)
         phase_seconds["evaluation"] = time.perf_counter() - evaluation_started
     finally:
@@ -7792,6 +8376,7 @@ def run_experiment(config: ExperimentConfig) -> dict[str, object]:
         "compact_output_width": model.config.compact_output_width,
         "color_rank": model.config.color_rank,
         "parameter_count": _parameter_count(parameter_snapshot(model)),
+        "topology_sha256": topology_sha256,
         "component_types": {
             "neuron": type(model.neu).__name__,
             "feedforward_projection_wrapper": type(model.ff_syn).__name__,
@@ -8006,13 +8591,20 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--answer-head",
-        choices=("carrier_row", "demonstration_fitted"),
+        choices=("carrier_row", "demonstration_fitted", "checkpoint_conditioned"),
         default="carrier_row",
         help=(
             "carrier_row uses the trained row refinement heads; "
             "demonstration_fitted fits a per-cell decision forest on each "
-            "task's own demonstrations and decodes the query with it"
+            "task's own demonstrations as a diagnostic; checkpoint_conditioned "
+            "uses that forest for proposals and the trained network for ranking"
         ),
+    )
+    parser.add_argument(
+        "--checkpoint-conditioning-coupling",
+        type=float,
+        default=1.0,
+        help="Positive fixed weight on trained-network candidate log likelihood.",
     )
     parser.add_argument("--demonstration-forest-depth", type=int, default=12)
     parser.add_argument("--demonstration-forest-trees", type=int, default=1)
@@ -8037,6 +8629,7 @@ def _with_answer_head(
     return replace(
         config,
         answer_head=args.answer_head,
+        checkpoint_conditioning_coupling=args.checkpoint_conditioning_coupling,
         demonstration_forest_depth=args.demonstration_forest_depth,
         demonstration_forest_trees=args.demonstration_forest_trees,
         demonstration_forest_feature_fraction=(
@@ -8137,6 +8730,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         structural_only=args.structural_only,
         primary_candidate_mode=args.primary_candidate_mode,
         answer_head=args.answer_head,
+        checkpoint_conditioning_coupling=args.checkpoint_conditioning_coupling,
         demonstration_forest_depth=args.demonstration_forest_depth,
         demonstration_forest_trees=args.demonstration_forest_trees,
         demonstration_forest_feature_fraction=(

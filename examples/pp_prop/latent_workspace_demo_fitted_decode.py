@@ -2,8 +2,10 @@
 
 Produces the same explicit ``30 + 30 + 30*30*10`` logit vector the row
 refinement decoder emits, so every downstream stage of Example 21 -- candidate
-decoding, the four-tuple metrics, the model-only accounting -- consumes it
-unchanged.
+decoding and diagnostic metrics -- can consume it unchanged. Raw forest ranks
+are demonstration-only diagnostics; the checkpoint-conditioned answer head
+uses these logits only to propose grids and lets trained-network likelihood
+decide their submitted order.
 
 The head predicts eleven classes per cell: the ten ARC colours plus "not part
 of the output grid".  Extent therefore comes from the same fitted head as
@@ -20,6 +22,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -237,22 +240,56 @@ def demonstration_fitted_windows(
 
     if not batches:
         raise ValueError("demonstration_fitted_windows requires at least one query")
-    compiled = jax.jit(_batch_window, static_argnums=(8,))
-    keys = jax.random.split(jax.random.key(int(seed)), len(batches))
-    windows = [
-        np.asarray(
-            compiled(
-                jnp.asarray(batch.demonstration_grids),
-                jnp.asarray(batch.demonstration_heights),
-                jnp.asarray(batch.demonstration_widths),
-                jnp.asarray(batch.demonstration_targets),
-                jnp.asarray(batch.query_grid),
-                jnp.asarray(batch.query_height, dtype=jnp.int32),
-                jnp.asarray(batch.query_width, dtype=jnp.int32),
+    keys = brainstate.random.RandomState(int(seed)).split_key(len(batches))
+    grouped: dict[int, list[int]] = {}
+    for index, batch in enumerate(batches):
+        grouped.setdefault(int(batch.demonstration_grids.shape[0]), []).append(index)
+    windows: list[np.ndarray | None] = [None] * len(batches)
+    for positions in grouped.values():
+        selected = [batches[index] for index in positions]
+
+        def fit_one(
+            grids, heights, widths, targets, query_grid, query_height, query_width, key
+        ):
+            return _batch_window(
+                grids,
+                heights,
+                widths,
+                targets,
+                query_grid,
+                query_height,
+                query_width,
                 key,
                 config,
             )
+
+        fitted = np.asarray(
+            brainstate.transform.for_loop(
+                fit_one,
+                jnp.asarray(
+                    np.stack([batch.demonstration_grids for batch in selected])
+                ),
+                jnp.asarray(
+                    np.stack([batch.demonstration_heights for batch in selected])
+                ),
+                jnp.asarray(
+                    np.stack([batch.demonstration_widths for batch in selected])
+                ),
+                jnp.asarray(
+                    np.stack([batch.demonstration_targets for batch in selected])
+                ),
+                jnp.asarray(np.stack([batch.query_grid for batch in selected])),
+                jnp.asarray(
+                    [batch.query_height for batch in selected], dtype=jnp.int32
+                ),
+                jnp.asarray(
+                    [batch.query_width for batch in selected], dtype=jnp.int32
+                ),
+                keys[np.asarray(positions)],
+            )
         )
-        for batch, key in zip(batches, keys, strict=True)
-    ]
+        for position, window in zip(positions, fitted, strict=True):
+            windows[position] = window
+    if any(window is None for window in windows):
+        raise RuntimeError("Every demonstration-fitted query must produce one window.")
     return np.stack(windows).astype(np.float32)

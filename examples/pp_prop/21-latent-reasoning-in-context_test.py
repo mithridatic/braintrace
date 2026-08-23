@@ -522,6 +522,51 @@ def test_smoke_config_defaults_to_protocol_v2_controls(example):
     assert config.to_dict()["primary_evaluation_mode"] == "shared_model_frozen"
 
 
+def test_config_accepts_checkpoint_conditioned_answer_head(example):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        answer_head="checkpoint_conditioned",
+        checkpoint_conditioning_coupling=1.0,
+    )
+
+    assert config.answer_head == "checkpoint_conditioned"
+    assert config.checkpoint_conditioning_coupling == 1.0
+    assert config.to_dict()["checkpoint_conditioning_coupling"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "coupling",
+    [0.0, -1.0, np.nan, np.inf, True],
+)
+def test_config_rejects_invalid_checkpoint_conditioning_coupling(
+    example, coupling
+):
+    with pytest.raises(ValueError, match="checkpoint_conditioning_coupling"):
+        dataclasses.replace(
+            example.ExperimentConfig.smoke_config(),
+            answer_head="checkpoint_conditioned",
+            checkpoint_conditioning_coupling=coupling,
+        )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"primary_candidate_mode": "rule_then_model"},
+        {"task_local_adaptation": True},
+    ],
+)
+def test_checkpoint_conditioned_head_rejects_unwired_candidate_paths(
+    example, changes
+):
+    with pytest.raises(ValueError, match="checkpoint_conditioned"):
+        dataclasses.replace(
+            example.ExperimentConfig.smoke_config(),
+            answer_head="checkpoint_conditioned",
+            **changes,
+        )
+
+
 def test_cli_can_select_the_single_shared_gpu_run(example):
     args = example._parser().parse_args(
         [
@@ -562,19 +607,85 @@ def test_cli_can_explicitly_disable_protocol_v2_controls(example):
 def test_git_provenance_reports_declared_revision_mismatch(
     example, monkeypatch, tmp_path
 ):
-    calls = iter(("actual-revision\n", " M changed.py\n"))
+    actual = "a" * 40
+    declared = "b" * 40
+    calls = iter((f"{actual}\n", " M changed.py\n"))
 
     def run(*_args, **_kwargs):
         return SimpleNamespace(stdout=next(calls))
 
     monkeypatch.setattr(example.subprocess, "run", run)
-    monkeypatch.setenv("EXAMPLE21_SOURCE_REVISION", "declared-revision")
+    monkeypatch.setenv("EXAMPLE21_SOURCE_REVISION", declared)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_DIRTY", "false")
 
     report = example._git_source_provenance(tmp_path)
 
-    assert report["source_revision"] == "actual-revision"
+    assert report["source_revision"] == actual
     assert report["source_dirty"] is True
+    assert report["provenance_source"] == "git"
     assert report["declared_revision_mismatch"] is True
+
+
+def test_git_provenance_uses_strict_environment_fallback(
+    example, monkeypatch, tmp_path
+):
+    revision = "c" * 64
+
+    def unavailable(*args, **_kwargs):
+        raise example.subprocess.CalledProcessError(128, args[0])
+
+    monkeypatch.setattr(example.subprocess, "run", unavailable)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_REVISION", revision)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_DIRTY", "false")
+
+    report = example._git_source_provenance(tmp_path)
+
+    assert report["source_revision"] == revision
+    assert report["source_dirty"] is False
+    assert report["provenance_source"] == "environment"
+    assert report["declared_revision_mismatch"] is False
+
+
+@pytest.mark.parametrize(
+    ("revision", "dirty"),
+    (
+        ("not-a-revision", "true"),
+        ("D" * 40, "true"),
+        ("d" * 40, "False"),
+        ("d" * 40, "0"),
+    ),
+)
+def test_git_provenance_rejects_malformed_environment_fallback(
+    example, monkeypatch, tmp_path, revision, dirty
+):
+    def unavailable(*args, **_kwargs):
+        raise example.subprocess.CalledProcessError(128, args[0])
+
+    monkeypatch.setattr(example.subprocess, "run", unavailable)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_REVISION", revision)
+    monkeypatch.setenv("EXAMPLE21_SOURCE_DIRTY", dirty)
+
+    with pytest.raises(ValueError, match="EXAMPLE21_SOURCE"):
+        example._git_source_provenance(tmp_path)
+
+
+def test_implementation_report_binds_parameter_dependence_source(
+    example, monkeypatch
+):
+    name = "latent_workspace_parameter_dependence.py"
+    baseline = example._implementation_report()
+    original_read_bytes = example.pathlib.Path.read_bytes
+
+    def changed_read_bytes(path):
+        payload = original_read_bytes(path)
+        return payload + b"\n# digest-binding-probe\n" if path.name == name else payload
+
+    monkeypatch.setattr(example.pathlib.Path, "read_bytes", changed_read_bytes)
+    changed = example._implementation_report()
+
+    assert name in baseline["file_sha256"]
+    assert baseline["file_sha256"][name] != changed["file_sha256"][name]
+    assert baseline["source_tree_sha256"] != changed["source_tree_sha256"]
 
 
 def test_artifact_manifest_hashes_materialized_files(example, tmp_path):
@@ -2713,6 +2824,57 @@ def test_primary_candidate_bytes_do_not_depend_on_official_targets(example):
     )
 
 
+def test_checkpoint_conditioned_scoring_keeps_forest_proposals_but_uses_model_rank(
+    example,
+):
+    config = example.ExperimentConfig.smoke_config()
+    data = example._load_data(config)
+    records = example._evaluation_records(data, config, example._row_config(config))
+    batch = len(records)
+    model = np.full((TEST_DEPTH_COUNT, batch, 9060), -50.0, dtype=np.float32)
+    proposal = np.full_like(model, -50.0)
+    for compact in (model, proposal):
+        compact[:, :, 0] = 10.0
+        compact[:, :, 30] = 10.0
+    proposal[:, :, 60] = 10.0
+    proposal[:, :, 61] = 9.0
+    model[:, :, 60] = 0.0
+    model[:, :, 61] = 20.0
+
+    _metrics, details = example._score_windows(
+        model,
+        records,
+        color_rank=config.color_rank,
+        decoder_mode="row_refinement",
+        proposal_compact=proposal,
+        checkpoint_conditioning_coupling=1.0,
+        parameter_dependencies=("answer_row_head.weight",),
+    )
+
+    candidates = details["60"][0]["candidates"]
+    assert [candidate["grid"] for candidate in candidates] == [[[1]], [[0]]]
+    assert [candidate["forest_rank"] for candidate in candidates] == [2, 1]
+    assert all(candidate["provenance"] == "model" for candidate in candidates)
+    assert all(
+        candidate["dependency_class"] == "model_checkpoint"
+        for candidate in candidates
+    )
+    assert all(
+        candidate["ranking_source"]
+        == "trained_network_factorized_candidate_log_probability"
+        for candidate in candidates
+    )
+    assert all(
+        candidate["parameter_dependencies"] == ["answer_row_head.weight"]
+        for candidate in candidates
+    )
+    assert all(
+        candidate["combined_log_probability"]
+        == candidate["log_probability"]
+        for candidate in candidates
+    )
+
+
 def test_evaluation_identity_and_encoded_record_ignore_official_targets(example):
     fixture = smoke_loaded_dataset()
     original = fixture.tasks[0]
@@ -2856,6 +3018,17 @@ def test_rule_then_model_reports_its_own_policy(example):
     )
     assert example._submission_policy_name("rule_then_model") != (
         example.SUBMISSION_POLICY
+    )
+
+
+def test_submission_fallback_tracks_checkpoint_conditioning(example):
+    """Qualification and result writing must require the same fallback."""
+
+    assert example._submission_policy_fallback("carrier_row") == (
+        "latest_checkpoint_factorized_global_runner_up"
+    )
+    assert example._submission_policy_fallback("checkpoint_conditioned") == (
+        "checkpoint_conditioned_forest_top_two"
     )
 
 
@@ -3438,7 +3611,9 @@ def test_default_evaluation_runs_only_intact_without_adaptation_or_repeat(
         lambda *args: pytest.fail("default evaluation invoked task-local adaptation"),
     )
     monkeypatch.setattr(
-        example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
+        example,
+        "_score_windows",
+        lambda *args, **kwargs: (metrics, checkpoint_queries),
     )
     monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
 
@@ -3448,6 +3623,173 @@ def test_default_evaluation_runs_only_intact_without_adaptation_or_repeat(
     assert result["task_local_adaptation"]["performed"] is False
     assert result["execution"]["arm_order"] == ["intact"]
     assert "repeat_intact" not in result["execution"]["wall_seconds_by_arm"]
+
+
+def test_demonstration_fitted_evaluation_is_diagnostic_only(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(decoder_mode="row_refinement"),
+        answer_head="demonstration_fitted",
+        evaluation_controls=False,
+    )
+    data = example._load_data(config)
+    rows = example._row_config(config)
+    records = example._evaluation_records(data, config, rows)
+    batch = len(records)
+    task_query_counts: dict[str, int] = {}
+    for record in records:
+        task_query_counts[record.task_key] = task_query_counts.get(record.task_key, 0) + 1
+    forest_windows = np.full(
+        (len(TEST_CHECKPOINTS), batch, 9060), 7.0, dtype=np.float32
+    )
+    forest_metrics = {
+        str(effort): {
+            "query_count": batch,
+            "task_count": len(task_query_counts),
+            "query_pass_at_1": 1.0,
+            "query_pass_at_2": 1.0,
+            "strict_task_pass_at_1": 1.0,
+            "strict_task_pass_at_2": 1.0,
+            "shape_accuracy_diagnostic": 1.0,
+            "valid_cell_pixel_accuracy_diagnostic": 1.0,
+            "tasks": {
+                task_id: {
+                    "query_count": query_count,
+                    "pass_at_1": True,
+                    "pass_at_2": True,
+                }
+                for task_id, query_count in task_query_counts.items()
+            },
+        }
+        for effort in TEST_CHECKPOINTS
+    }
+    forest_queries = {
+        str(effort): [
+            {
+                "task_id": record.task_key,
+                "query_index": record.encoded.query_index,
+                "primary_candidate_mode": "model_only",
+                "submission_role": (
+                    "primary_submission" if effort == 60 else "diagnostic_only"
+                ),
+                "candidates": _checkpoint_candidate_payloads(effort),
+                "score": {"pass_at_1": True, "pass_at_2": True},
+            }
+            for record in records
+        ]
+        for effort in TEST_CHECKPOINTS
+    }
+    fake_model = SimpleNamespace(
+        config=SimpleNamespace(color_rank=4, decoder_mode="row_refinement")
+    )
+    time_steps = rows.max_events + config.latent_steps
+
+    def sequences(records, config, rows, *, arm, source_tasks):
+        assert arm == "intact"
+        events = np.ones(
+            (time_steps, batch, rows.input_width), dtype=np.float32
+        )
+        advances = np.ones((time_steps, batch), dtype=np.bool_)
+        stops = np.asarray(
+            [record.encoded.query_stop for record in records], dtype=np.int32
+        )
+        metadata = [{"available": True, "timing_matched": True} for _ in records]
+        return events, advances, stops, metadata
+
+    def packed(model, events, selected_indices, **kwargs):
+        return SimpleNamespace(
+            compact_logits=np.zeros((TEST_DEPTH_COUNT, batch, 9060), dtype=np.float32),
+            spikes=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            voltage=np.zeros((TEST_DEPTH_COUNT, batch, 8), dtype=np.float32),
+            feedforward_current=np.zeros(
+                (TEST_DEPTH_COUNT, batch, 8), dtype=np.float32
+            ),
+            recurrent_current=np.zeros(
+                (TEST_DEPTH_COUNT, batch, 8), dtype=np.float32
+            ),
+            memory_read=np.zeros((TEST_DEPTH_COUNT, batch, 2), dtype=np.float32),
+            final_context_memory=np.zeros((batch, 2, 2), dtype=np.float32),
+        )
+
+    demonstration_arms: list[str] = []
+
+    def demonstration_windows(*args, arm, **kwargs):
+        demonstration_arms.append(arm)
+        return forest_windows
+
+    monkeypatch.setattr(example, "_make_model", lambda *args, **kwargs: fake_model)
+    monkeypatch.setattr(example, "_copy_parameters", lambda source, target: None)
+    monkeypatch.setattr(
+        example, "parameter_snapshot", lambda model: {"p": np.array([1])}
+    )
+    monkeypatch.setattr(example, "_arm_sequences", sequences)
+    monkeypatch.setattr(example, "run_selected_packed_stream", packed)
+    monkeypatch.setattr(
+        example.brainstate.transform,
+        "jit",
+        lambda **kwargs: lambda function: function,
+    )
+    monkeypatch.setattr(
+        example,
+        "_demonstration_fitted_windows",
+        demonstration_windows,
+    )
+    monkeypatch.setattr(
+        example,
+        "_score_windows",
+        lambda compact, *args, **kwargs: (
+            forest_metrics,
+            forest_queries,
+        )
+        if compact is forest_windows
+        else pytest.fail("raw model windows unexpectedly entered primary scoring"),
+    )
+    monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
+
+    result = example._evaluate(SimpleNamespace(), data, config, rows, SimpleNamespace())
+
+    assert demonstration_arms == ["intact"]
+    diagnostic = result["demonstration_only_diagnostic"]
+    assert diagnostic["eligible_for_primary_score"] is False
+    assert diagnostic["metrics_by_effort"] is forest_metrics
+    assert all(
+        row["submission_role"] == "diagnostic_only"
+        and all(
+            candidate["provenance"] == "demonstration_only_diagnostic"
+            and candidate["dependency_class"] == "demonstration_only_diagnostic"
+            for candidate in row["candidates"]
+        )
+        for rows_at_effort in diagnostic["checkpoint_queries"].values()
+        for row in rows_at_effort
+    )
+    zero_metric_names = {
+        "query_pass_at_1",
+        "query_pass_at_2",
+        "strict_task_pass_at_1",
+        "strict_task_pass_at_2",
+        "shape_accuracy_diagnostic",
+        "valid_cell_pixel_accuracy_diagnostic",
+    }
+    for metric in result["metrics_by_effort"].values():
+        assert metric["query_count"] == batch
+        assert metric["task_count"] == len(task_query_counts)
+        assert all(metric[name] == 0.0 for name in zero_metric_names)
+        assert all(
+            task["pass_at_1"] is False and task["pass_at_2"] is False
+            for task in metric["tasks"].values()
+        )
+    assert all(not queries for queries in result["checkpoint_queries"].values())
+    assert result["model_only_metrics_by_effort"] == result["metrics_by_effort"]
+    assert result["model_only_completion"]["exact_task_count"] == 0
+    assert result["model_only_completion"]["passed"] is False
+    submitted = result["submitted_completion"]
+    assert submitted["exact_query_count_at_1"] == 0
+    assert submitted["exact_query_count_at_2"] == 0
+    assert submitted["exact_task_count_at_1"] == 0
+    assert submitted["exact_task_count_at_2"] == 0
+    assert result["channel_attribution"] == {}
+    assert result["model_only_channel_attribution"] == {}
 
 
 def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
@@ -3545,7 +3887,9 @@ def test_evaluation_runs_four_frozen_arms_and_ablation_at_latent_step_one(
         ),
     )
     monkeypatch.setattr(
-        example, "_score_windows", lambda *args: (metrics, checkpoint_queries)
+        example,
+        "_score_windows",
+        lambda *args, **kwargs: (metrics, checkpoint_queries),
     )
     monkeypatch.setattr(example, "_trajectory_reports", lambda *args: ([], []))
     monkeypatch.setattr(
@@ -3982,6 +4326,81 @@ def test_associative_diagnostics_exclude_unavailable_queries_and_validate_arrays
     )
     with pytest.raises(ValueError, match="must be finite"):
         example._associative_evaluation_diagnostics(True, intact, malformed)
+
+
+def test_qualification_recomputes_parameter_dependence_and_rejects_raw_forest(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(), answer_head="demonstration_fitted"
+    )
+    data = example._load_data(config)
+    raw_evidence = {"stored_passed_label": True}
+    observed: list[object] = []
+
+    def assess(evidence, *, minimum_cumulative_score=16):
+        observed.append(evidence)
+        assert minimum_cumulative_score == 16
+        return {"passed": True, "checks": {"forged": True}, "reasons": []}
+
+    monkeypatch.setattr(example, "assess_parameter_dependence", assess, raising=False)
+
+    report = example._qualification(
+        config,
+        data,
+        {},
+        {
+            "parameter_dependence_evidence": raw_evidence,
+            "parameter_dependence": {"passed": True},
+        },
+        {},
+        {},
+    )
+
+    assert observed == [raw_evidence]
+    assert report["parameter_dependence"]["passed"] is True
+    assert report["structural_checks"]["parameter_dependence"] is False
+    assert report["approved_completion_target_passed"] is False
+    assert any(
+        "demonstration" in reason.casefold()
+        for reason in report["reasons_not_structural"]
+    )
+
+
+def test_qualification_fails_closed_without_raw_parameter_evidence(
+    example, monkeypatch
+):
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(),
+        answer_head="checkpoint_conditioned",
+        checkpoint_conditioning_coupling=1.0,
+    )
+    data = example._load_data(config)
+    observed: list[object] = []
+
+    def assess(evidence, *, minimum_cumulative_score=16):
+        observed.append(evidence)
+        return {
+            "passed": False,
+            "checks": {"evidence_complete": False},
+            "reasons": ["parameter-dependence evidence is missing"],
+        }
+
+    monkeypatch.setattr(example, "assess_parameter_dependence", assess, raising=False)
+
+    report = example._qualification(
+        config,
+        data,
+        {},
+        {"parameter_dependence": {"passed": True}},
+        {},
+        {},
+    )
+
+    assert observed == [None]
+    assert report["parameter_dependence"]["passed"] is False
+    assert report["structural_checks"]["parameter_dependence"] is False
+    assert report["approved_completion_target_passed"] is False
 
 
 def test_qualification_separates_plumbing_structural_and_scientific_claims(example):
@@ -4583,9 +5002,12 @@ def test_report_and_agg_plot_expose_exact_metrics_controls_and_claim_boundary(
 
 
 def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_path):
-    config = example.ExperimentConfig.smoke_config(
-        output_dir=tmp_path,
-        decoder_mode="legacy_cp",
+    config = dataclasses.replace(
+        example.ExperimentConfig.smoke_config(
+            output_dir=tmp_path,
+            decoder_mode="legacy_cp",
+        ),
+        answer_head="checkpoint_conditioned",
     )
     fixture = smoke_loaded_dataset()
     origin = example._OriginTask("fixture", "fixture", fixture.tasks[0])
@@ -4611,13 +5033,34 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         rec_syn=SimpleNamespace(
             comm=SimpleNamespace(), syn=SimpleNamespace(), out=SimpleNamespace()
         ),
+        topology=SimpleNamespace(
+            neuron_count=128,
+            rows=np.asarray([0, 7, 127], dtype=np.int32),
+            columns=np.asarray([1, 3, 0], dtype=np.int32),
+        ),
     )
+    parameter_values = {
+        "answer.a": np.asarray([3], dtype=np.int16),
+        "answer.z": np.asarray([[1.0, 2.0]], dtype=np.float32),
+    }
+    parameter_sha256 = example._tree_digest(parameter_values)
+    checkpoint_sha256 = "c" * 64
     training = {
         "performed": True,
         "pp_prop_compiled": True,
         "optimizer_updates_by_effort": {"30": 1, "60": 1},
+        "parameter_checkpoint_sha256": checkpoint_sha256,
+        "parameter_sha256_before": parameter_sha256,
+        "parameter_sha256_after": parameter_sha256,
     }
     evaluation = _evaluation_payload()
+    evaluation["parameter_sha256_before"] = parameter_sha256
+    evaluation["parameter_sha256_after"] = parameter_sha256
+    ordered_names = sorted(parameter_values)
+    for checkpoint_rows in evaluation["checkpoint_queries"].values():
+        for row in checkpoint_rows:
+            for candidate in row["candidates"]:
+                candidate["parameter_dependencies"] = ordered_names
     monkeypatch.setattr(
         example,
         "require_pre_device_gpu_environment",
@@ -4640,7 +5083,7 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         lambda device: {"peak_bytes_in_use": 123456},
     )
     monkeypatch.setattr(
-        example, "parameter_snapshot", lambda model: {"p": np.ones((3,))}
+        example, "parameter_snapshot", lambda model: parameter_values
     )
     monkeypatch.setattr(
         example,
@@ -4708,6 +5151,124 @@ def test_run_experiment_writes_complete_artifact_set(example, monkeypatch, tmp_p
         "key_feature_width": 0,
         "value_feature_width": 0,
     }
+    topology_sha256 = result["model"]["topology_sha256"]
+    assert len(topology_sha256) == 64
+    assert topology_sha256 == example._sparse_topology_sha256(model)
+    binding = result["evaluation"]["parameter_binding"]
+    assert binding == {
+        "checkpoint_sha256": checkpoint_sha256,
+        "parameter_sha256": parameter_sha256,
+        "topology_sha256": topology_sha256,
+        "ordered_leaves": [
+            {
+                "name": name,
+                "shape": list(parameter_values[name].shape),
+                "dtype": parameter_values[name].dtype.str,
+                "sha256": example.hashlib.sha256(
+                    np.ascontiguousarray(parameter_values[name]).tobytes()
+                ).hexdigest(),
+            }
+            for name in ordered_names
+        ],
+    }
+
+
+def test_sparse_topology_digest_binds_values_dtypes_shapes_and_neuron_count(example):
+    def model(neuron_count, rows, columns):
+        return SimpleNamespace(
+            topology=SimpleNamespace(
+                neuron_count=neuron_count,
+                rows=np.asarray(rows),
+                columns=np.asarray(columns),
+            )
+        )
+
+    baseline = model(
+        8,
+        np.asarray([0, 1], dtype=np.int32),
+        np.asarray([2, 3], dtype=np.int32),
+    )
+    same = model(
+        8,
+        np.asarray([0, 1], dtype=np.int32),
+        np.asarray([2, 3], dtype=np.int32),
+    )
+
+    assert example._sparse_topology_sha256(baseline) == (
+        example._sparse_topology_sha256(same)
+    )
+    assert example._sparse_topology_sha256(baseline) != (
+        example._sparse_topology_sha256(
+            model(9, baseline.topology.rows, baseline.topology.columns)
+        )
+    )
+    assert example._sparse_topology_sha256(baseline) != (
+        example._sparse_topology_sha256(
+            model(
+                8,
+                baseline.topology.rows.astype(np.int64),
+                baseline.topology.columns.astype(np.int64),
+            )
+        )
+    )
+    assert example._sparse_topology_sha256(baseline) != (
+        example._sparse_topology_sha256(
+            model(
+                8,
+                baseline.topology.rows.reshape(1, 2),
+                baseline.topology.columns.reshape(1, 2),
+            )
+        )
+    )
+
+
+def test_parameter_binding_rejects_digest_and_candidate_dependency_mismatches(
+    example, monkeypatch
+):
+    values = {
+        "answer.a": np.asarray([1.0], dtype=np.float32),
+        "answer.z": np.asarray([[2]], dtype=np.int16),
+    }
+    digest = example._tree_digest(values)
+    model = SimpleNamespace()
+    monkeypatch.setattr(example, "parameter_snapshot", lambda model: values)
+    training = {"parameter_checkpoint_sha256": "e" * 64}
+    evaluation = {
+        "parameter_sha256_before": "f" * 64,
+        "parameter_sha256_after": "f" * 64,
+        "checkpoint_queries": {},
+    }
+
+    with pytest.raises(ValueError, match="parameter digest"):
+        example._parameter_binding_report(
+            model,
+            training,
+            evaluation,
+            topology_sha256="d" * 64,
+            require_candidate_dependencies=True,
+        )
+
+    evaluation.update(
+        parameter_sha256_before=digest,
+        parameter_sha256_after=digest,
+        checkpoint_queries={
+            "60": [
+                {
+                    "candidates": [
+                        {"parameter_dependencies": ["answer.z", "answer.a"]}
+                    ]
+                }
+            ]
+        },
+    )
+    with pytest.raises(ValueError, match="parameter_dependencies"):
+        example._parameter_binding_report(
+            model,
+            training,
+            evaluation,
+            topology_sha256="d" * 64,
+            require_candidate_dependencies=True,
+        )
 
 
 def test_main_prints_report_and_returns_result(example, monkeypatch, capsys, tmp_path):
@@ -5258,6 +5819,24 @@ def test_a_checkpoint_from_another_scale_is_rejected(example, tmp_path):
 
     with pytest.raises(ValueError, match="(?i)parameter checkpoint"):
         example._read_parameter_checkpoint(broad, path)
+
+
+def test_a_parameter_checkpoint_with_changed_dtype_is_rejected(example, tmp_path):
+    config = example.ExperimentConfig.smoke_config()
+    rows = example._row_config(config)
+    device = jax.devices("cpu")[0]
+    source = example._make_model(config, rows, batch_size=1, device=device)
+    target = example._make_model(config, rows, batch_size=1, device=device)
+    path = tmp_path / "parameters.npz"
+    example._write_parameter_checkpoint(source, path)
+    with np.load(path) as stored:
+        arrays = {name: np.asarray(stored[name]) for name in stored.files}
+    arrays["arr_0"] = arrays["arr_0"].astype(np.float64)
+    with path.open("wb") as handle:
+        np.savez(handle, **arrays)
+
+    with pytest.raises(ValueError, match="(?i)parameter checkpoint.*dtype"):
+        example._read_parameter_checkpoint(target, path)
 
 
 def test_memory_read_transform_participates_in_checkpoint_compatibility(

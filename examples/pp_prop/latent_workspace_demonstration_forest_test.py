@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-import jax
+from pathlib import Path
+
+import brainstate
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -13,6 +15,18 @@ from latent_workspace_demonstration_forest import (
     demonstration_forest_probabilities,
     fit_demonstration_forest,
 )
+
+
+def _key(seed: int):
+    return brainstate.random.RandomState(seed).value
+
+
+def test_forest_randomness_uses_brainstate_only():
+    source = Path(fit_demonstration_forest.__code__.co_filename).read_text(
+        encoding="utf-8"
+    )
+
+    assert "jax.random" not in source
 
 
 def _conjunction_problem(rows, seed=0):
@@ -52,7 +66,7 @@ def test_configuration_rejects_booleans_dressed_as_counts():
 def test_a_tree_recovers_an_exact_conjunction():
     features, labels = _conjunction_problem(600)
     config = DemonstrationForestConfig(depth=6, tree_count=1, feature_fraction=1.0)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     predicted = np.asarray(
         demonstration_forest_probabilities(forest, features, config)
     ).argmax(-1)
@@ -63,7 +77,7 @@ def test_the_recovered_rule_transfers_to_unseen_cells():
     features, labels = _conjunction_problem(600)
     held_out, held_out_labels = _conjunction_problem(300, seed=1)
     config = DemonstrationForestConfig(depth=6, tree_count=1, feature_fraction=1.0)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     predicted = np.asarray(
         demonstration_forest_probabilities(forest, held_out, config)
     ).argmax(-1)
@@ -74,7 +88,7 @@ def test_shapes_follow_the_configuration():
     features, labels = _conjunction_problem(80)
     config = DemonstrationForestConfig(depth=4, tree_count=3)
     splits, counts = fit_demonstration_forest(
-        jax.random.key(0), features, labels, config
+        _key(0), features, labels, config
     )
     assert splits.shape == (3, 4, 16)
     assert counts.shape == (3, 5, 16, CLASS_COUNT)
@@ -83,7 +97,7 @@ def test_shapes_follow_the_configuration():
 def test_probabilities_are_normalised():
     features, labels = _conjunction_problem(200)
     config = DemonstrationForestConfig(depth=5, tree_count=4)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     probabilities = np.asarray(
         demonstration_forest_probabilities(forest, features, config)
     )
@@ -103,7 +117,7 @@ def test_an_unreached_leaf_backs_off_instead_of_guessing_uniformly():
     features = jnp.asarray(np.eye(8, dtype=np.float32))
     labels = jnp.asarray(np.full(8, 10, np.int32))
     config = DemonstrationForestConfig(depth=6, tree_count=1, feature_fraction=1.0)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     stranger = jnp.zeros((1, 8), jnp.float32)
     probabilities = np.asarray(
         demonstration_forest_probabilities(forest, stranger, config)
@@ -115,7 +129,7 @@ def test_an_unreached_leaf_backs_off_instead_of_guessing_uniformly():
 def test_feature_subsampling_still_fits_the_demonstrations():
     features, labels = _conjunction_problem(400)
     config = DemonstrationForestConfig(depth=7, tree_count=8, feature_fraction=0.5)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     predicted = np.asarray(
         demonstration_forest_probabilities(forest, features, config)
     ).argmax(-1)
@@ -126,7 +140,7 @@ def test_a_constant_label_needs_no_split():
     features, _ = _conjunction_problem(50)
     labels = jnp.full((50,), 7, jnp.int32)
     config = DemonstrationForestConfig(depth=3, tree_count=1, feature_fraction=1.0)
-    forest = fit_demonstration_forest(jax.random.key(0), features, labels, config)
+    forest = fit_demonstration_forest(_key(0), features, labels, config)
     probabilities = np.asarray(
         demonstration_forest_probabilities(forest, features, config)
     )
@@ -136,8 +150,8 @@ def test_a_constant_label_needs_no_split():
 def test_fitting_is_deterministic_under_a_fixed_key():
     features, labels = _conjunction_problem(120)
     config = DemonstrationForestConfig(depth=5, tree_count=2, feature_fraction=0.7)
-    first = fit_demonstration_forest(jax.random.key(3), features, labels, config)
-    second = fit_demonstration_forest(jax.random.key(3), features, labels, config)
+    first = fit_demonstration_forest(_key(3), features, labels, config)
+    second = fit_demonstration_forest(_key(3), features, labels, config)
     assert np.array_equal(np.asarray(first[0]), np.asarray(second[0]))
     assert np.allclose(np.asarray(first[1]), np.asarray(second[1]))
 
@@ -145,6 +159,6 @@ def test_fitting_is_deterministic_under_a_fixed_key():
 def test_different_keys_give_different_feature_subsets():
     features, labels = _conjunction_problem(120)
     config = DemonstrationForestConfig(depth=5, tree_count=2, feature_fraction=0.3)
-    first = fit_demonstration_forest(jax.random.key(0), features, labels, config)
-    second = fit_demonstration_forest(jax.random.key(11), features, labels, config)
+    first = fit_demonstration_forest(_key(0), features, labels, config)
+    second = fit_demonstration_forest(_key(11), features, labels, config)
     assert not np.array_equal(np.asarray(first[0]), np.asarray(second[0]))

@@ -96,15 +96,15 @@ of sources actually used.
 
 ### Requirement: BrainTrace recurrent spiking substrate
 
-The full experiment SHALL use 2,048 BrainPy LIF neurons, BrainTrace input and
+The full experiment SHALL use 4,096 BrainPy LIF neurons, BrainTrace input and
 readout projections, exponential current synapses, and a BrainTrace sparse
-recurrent projection containing exactly 16,384 directed edges. The report SHALL
-record physical neuron and edge counts.
+recurrent projection containing exactly 4,194,304 directed edges. The report
+SHALL record physical neuron and edge counts.
 
 #### Scenario: Full configuration has the declared scale
 
 - **WHEN** the full model is constructed
-- **THEN** it contains 2,048 LIF neurons grouped as 32 analysis slots of 64 and its recurrent sparse operator contains exactly 16,384 edges
+- **THEN** it contains 4,096 LIF neurons grouped as 64 analysis slots of 64 and its recurrent sparse operator contains exactly 4,194,304 edges
 
 #### Scenario: Compact color factors expand to full ARC logits
 
@@ -123,9 +123,11 @@ record physical neuron and edge counts.
 
 ### Requirement: One model with variable latent effort
 
-One parameter set SHALL be trained with terminal supervision at mixed effort
-lengths 8, 16, and 32. The same frozen parameter set and the same encoded
-queries SHALL be evaluated at latent checkpoints 0, 8, 16, and 32.
+One parameter set SHALL support the fixed effort set 0, 30, and 60. Training
+updates that use post-query terminal supervision SHALL use effort 30 or 60. The
+same frozen parameter set and the same encoded queries SHALL be evaluated at
+latent checkpoints 0, 30, and 60, and effort 60 SHALL be the nominated
+submission checkpoint.
 
 #### Scenario: Mixed effort shares parameters
 
@@ -139,7 +141,7 @@ queries SHALL be evaluated at latent checkpoints 0, 8, 16, and 32.
 
 #### Scenario: Effort changes only recurrent computation
 
-- **WHEN** the 0, 8, 16, and 32 checkpoints are compared
+- **WHEN** the 0, 30, and 60 checkpoints are compared
 - **THEN** parameters, task order, demonstrations, query events, initial state, and decoder are identical and only the number of zero-external-input recurrent steps differs
 
 ### Requirement: pp-prop terminal training
@@ -190,6 +192,48 @@ candidates. Shape and pixel metrics SHALL be labelled diagnostics only.
 
 - **WHEN** one of a task's test queries fails pass@k
 - **THEN** strict task pass@k is false even if every other query passes
+
+### Requirement: Model-owned target-free candidate provenance
+
+Every candidate included in primary exact metrics SHALL be the deterministic
+result of target-free proposal generation followed by an executed network path
+that consumes recurrent state or features and trained model-owned parameter
+leaves restored from the nominated checkpoint. Candidate provenance SHALL
+identify proposal source, ranking source, answer-head version, score components,
+and participating parameter-leaf paths. Raw demonstration-only forest ordering
+and rules MAY be reported as diagnostics but SHALL NOT determine a primary
+candidate slot.
+
+#### Scenario: Held-out targets cannot influence candidates
+
+- **WHEN** held-out outputs are replaced while demonstrations, test inputs, checkpoint, and configuration remain fixed
+- **THEN** canonical candidate bytes are identical
+- **AND** candidate construction receives no target shape, target cell, exactness bit, task/source identity, or target-derived selector
+
+#### Scenario: Demonstration-only forest ordering is diagnostic
+
+- **WHEN** a forest or rule produces candidates from demonstrations and the query without consuming an executed checkpoint-owned value
+- **THEN** its dependency class is `demonstration_only_diagnostic` or `rule_diagnostic`
+- **AND** none of its candidates contributes to primary query, strict-task, or cumulative metrics
+
+#### Scenario: Checkpoint likelihood can rank target-free forest proposals
+
+- **WHEN** the target-free forest supplies bounded proposal grids for the model-owned answer path
+- **THEN** every proposal is ordered by `forest_log_probability + 1.0 * trained_network_candidate_log_probability`
+- **AND** the network term uses the recurrent model's factorized height, width, and cell-color likelihood under the restored checkpoint
+- **AND** the coefficient and proposal policy are fixed before evaluation-label scoring
+
+#### Scenario: Every counted candidate owns its dependence
+
+- **WHEN** either primary candidate contributes to pass@1 or pass@2 membership
+- **THEN** that candidate has `model_checkpoint` provenance and a nonempty executed parameter-dependency set
+- **AND** movement by another candidate cannot qualify it
+
+#### Scenario: Repeated answer-head execution is compiled
+
+- **WHEN** network inference, task-local model routing, or trainable-state updates repeat
+- **THEN** repetition uses a `brainstate.transform` loop primitive rather than a bare Python `for` or `while` loop
+- **AND** model, topology, augmentation, reseed, and perturbation randomness uses `brainstate.random` rather than `jax.random` directly
 
 ### Requirement: Per-step latent trajectory evidence
 
@@ -249,6 +293,27 @@ runtime, exact metrics, diagnostics, controls, and trajectory summaries. It
 SHALL describe the work as an instantiation of the public task/effort contract,
 not a reproduction of proprietary internals.
 
+The nominated baseline SHALL have a cumulative exact score of at least 16,
+defined as the integer sum of query pass@1, query pass@2, strict-task pass@1,
+and strict-task pass@2 counts on one complete fixed evaluation manifest. It
+SHALL additionally pass matched repeat, checkpoint-scale, and same-schema
+trained-checkpoint-swap and deterministic-parameter-reseed evaluations. The
+three perturbations are separately mandatory and SHALL NOT substitute for one
+another.
+
+The accepted full-matrix configuration SHALL use 4,096 neurons, exactly
+4,194,304 recurrent edges, 60 latent steps, retained effort checkpoints
+0/30/60, submission effort 60, fixed evaluation seed 31337, and the
+`checkpoint_conditioned` answer head. Baseline, repeat, scale, same-schema
+trained-checkpoint swap, and deterministic reseed SHALL match this profile
+apart from their declared checkpoint intervention.
+
+#### Scenario: Qualification profile is fixed across the matrix
+
+- **WHEN** the five-arm parameter-dependence matrix is evaluated
+- **THEN** every arm records 4,096 neurons, 4,194,304 recurrent edges, 60 latent steps, checkpoints 0/30/60, submission effort 60, evaluation seed 31337, and answer head `checkpoint_conditioned`
+- **AND** changing model scale, effort, evaluation seed, answer head, task order, decoder, backend, or scorer cannot be used as evidence of checkpoint dependence
+
 #### Scenario: Same-run intact execution is reproducible
 
 - **WHEN** the same frozen intact arm is executed twice within one process using the same data fingerprints, configuration, seed, software, and device
@@ -256,6 +321,50 @@ not a reproduction of proprietary internals.
 - **AND** voltage, feedforward synaptic current, and recurrent synaptic current are float32 with per-query neuron-axis RMS difference at most `1e-6` at every checkpoint-query pair
 - **AND** an additional compact-logit feature-axis RMS check uses the same threshold
 - **AND** byte identity is reported separately rather than inferred from the RMS tolerance
+
+#### Scenario: Cumulative score reaches the accepted threshold
+
+- **WHEN** the nominated baseline is evaluated on the complete fixed manifest
+- **THEN** the report gives all four integer exact counts separately
+- **AND** their sum is at least 16
+- **AND** candidates from diagnostic-only sources contribute zero to every term
+
+#### Scenario: Checkpoint scaling moves model answers
+
+- **WHEN** a predeclared finite non-unit factor scales every floating trainable leaf on the recorded answer-dependency path under otherwise matched evaluation
+- **THEN** the answer-parameter digest, canonical candidate-byte digest, exact-membership digest, and cumulative integer score all differ from baseline
+- **AND** a flat score, invalid numeric output, or partial checkpoint load fails qualification
+
+#### Scenario: Same-schema trained-checkpoint swap moves model answers
+
+- **WHEN** an independently seeded trained checkpoint with identical ordered leaf paths, shapes, and dtypes is substituted
+- **THEN** the answer-parameter digest, canonical candidate-byte digest, exact-membership digest, and cumulative integer score all differ from baseline
+- **AND** architecture, input manifest, task order, effort, decoder, backend, and scorer remain matched
+
+#### Scenario: Deterministic parameter reseed moves model answers
+
+- **WHEN** every trainable leaf on the recorded answer-dependency path is deterministically reseeded under the exact baseline schema using `brainstate.random`
+- **THEN** the answer-parameter digest, canonical candidate-byte digest, exact-membership digest, and cumulative integer score all differ from baseline
+- **AND** passing the trained-checkpoint swap does not waive this separate gate
+
+#### Scenario: Prediction movement excludes metadata
+
+- **WHEN** candidate and exact-membership digests are computed
+- **THEN** candidate bytes contain only candidate rank, dimensions, and row-major colors in manifest and submitted-rank order
+- **AND** membership bytes contain ordered per-query pass@1/pass@2 and per-task strict pass@1/pass@2 booleans
+- **AND** reranking an identical proposal set changes candidate bytes while provenance strings, score values, timestamps, filenames, and hashes cannot themselves satisfy movement
+
+#### Scenario: Parameter and prediction provenance is auditable
+
+- **WHEN** any baseline, repeat, scale, swap, or reseed arm completes
+- **THEN** the artifact records source revision, dirty state, manifest digest, checkpoint/run identity, training seed and configuration, full-checkpoint SHA-256, ordered participating-leaf schema and SHA-256, topology digest, candidate digest, membership digest, all four exact counts, cumulative score, and perturbation details
+- **AND** exact-schema restoration fails closed on missing, extra, reshaped, or dtype-changed leaves
+
+#### Scenario: Optional Dale dependence is measured rather than asserted
+
+- **WHEN** a qualifying arm claims EI/Dale dependence
+- **THEN** it records the neuron-type mask digest and proves zero effective recurrent-weight sign violations
+- **AND** a predeclared sign control changes candidate bytes, exact membership, and cumulative score or the Dale-dependence claim fails
 
 #### Scenario: Slot ablation has a matched pre-intervention state
 
@@ -266,7 +375,7 @@ not a reproduction of proprietary internals.
 #### Scenario: Full qualification requires full scale
 
 - **WHEN** a result is labelled a full Example 21 qualification
-- **THEN** its report proves 2,048 neurons, 16,384 recurrent edges, successful pp-prop compilation, a non-evaluation training source, held-out evaluation tasks, and all four effort checkpoints
+- **THEN** its report proves 4,096 neurons, 4,194,304 recurrent edges, successful pp-prop compilation, a non-evaluation training source, held-out evaluation tasks, retained checkpoints 0/30/60, submission effort 60, evaluation seed 31337, and answer head `checkpoint_conditioned`
 
 #### Scenario: Proprietary claims are excluded
 

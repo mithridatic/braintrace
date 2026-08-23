@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -52,6 +54,15 @@ def test_an_empty_demonstration_set_is_refused():
 def test_no_queries_is_refused():
     with pytest.raises(ValueError):
         demonstration_fitted_windows([], DemonstrationForestConfig())
+
+
+def test_repeated_forest_driver_uses_brainstate_loop_and_randomness():
+    source = Path(demonstration_fitted_windows.__code__.co_filename).read_text(
+        encoding="utf-8"
+    )
+
+    assert "jax.random" not in source
+    assert "brainstate.transform.for_loop" in source
 
 
 @pytest.mark.parametrize("extent", [1, 5, 17, 30])
