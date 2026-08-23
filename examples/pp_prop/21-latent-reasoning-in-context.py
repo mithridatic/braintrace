@@ -436,6 +436,13 @@ class ExperimentConfig:
         Constant multiplier on the carrier block of the answer row head's
         input only. Zero starves the row head of the task-identifying
         carrier so training cannot displace the copy path.
+    row_head_modulation : {"none", "bilinear"}
+        Multiplicative carrier-by-query-row term for the row head. The head is
+        a bias-free linear map over ``concat(carrier, event blocks)``, so it can
+        add a task carrier to a query row but cannot apply a carrier-selected
+        transformation to it. ``"bilinear"`` adds that missing product term.
+    row_head_modulation_rank : int
+        Rank of the bilinear modulation.
     row_head_carrier_gate : bool
         Compatibility spelling for ``refinement_mixer="carrier_gate"``.
         The carrier ablation uses an event-only head plus a carrier head
@@ -546,6 +553,8 @@ class ExperimentConfig:
     copy_residual_gain: float = 0.0
     row_head_carrier_scale: float = 1.0
     row_head_carrier_gate: bool = False
+    row_head_modulation: Literal["none", "bilinear"] = "none"
+    row_head_modulation_rank: int = 64
     shape_head_carrier_scale: float = 1.0
     refinement_mixer: RefinementMixer = "linear"
     memory_value_softcap_beta: float = 4.0
@@ -2318,6 +2327,8 @@ def _model_config(
         arguments["copy_residual_gain"] = config.copy_residual_gain
         arguments["row_head_carrier_scale"] = config.row_head_carrier_scale
         arguments["row_head_carrier_gate"] = config.row_head_carrier_gate
+        arguments["row_head_modulation"] = config.row_head_modulation
+        arguments["row_head_modulation_rank"] = config.row_head_modulation_rank
         arguments["shape_head_carrier_scale"] = config.shape_head_carrier_scale
         arguments["refinement_mixer"] = config.refinement_mixer
     if config.context_memory_width > 0:
@@ -7785,6 +7796,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--reasoning-query-softcap-beta", type=float, default=25.0)
     parser.add_argument("--row-head-carrier-gate", action="store_true")
     parser.add_argument(
+        "--row-head-modulation", choices=("none", "bilinear"), default="none"
+    )
+    parser.add_argument("--row-head-modulation-rank", type=int, default=64)
+    parser.add_argument(
         "--refinement-mixer",
         choices=("linear", "carrier_gate", "attention_residual"),
         default="linear",
@@ -7905,6 +7920,8 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         copy_residual_gain=args.copy_residual_gain,
         row_head_carrier_scale=args.row_head_carrier_scale,
         row_head_carrier_gate=args.row_head_carrier_gate,
+        row_head_modulation=args.row_head_modulation,
+        row_head_modulation_rank=args.row_head_modulation_rank,
         shape_head_carrier_scale=args.shape_head_carrier_scale,
         refinement_mixer=args.refinement_mixer,
         memory_value_softcap_beta=args.memory_value_softcap_beta,

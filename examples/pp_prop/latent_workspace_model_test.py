@@ -3870,6 +3870,108 @@ def test_zero_gate_matches_carrier_free_linear_head_exactly() -> None:
     np.testing.assert_array_equal(actual, expected)
 
 
+def test_bilinear_modulation_starts_exactly_at_the_additive_head() -> None:
+    """The zero-initialised output projection must add nothing at all."""
+    plain = LatentWorkspaceModel(_row_refinement_config())
+    modulated = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_modulation="bilinear", row_head_modulation_rank=8
+        )
+    )
+    layout = _row_refinement_layout()
+    carrier = jnp.linspace(-1.0, 1.0, plain.config.neuron_count, dtype=jnp.float32)[
+        None
+    ]
+    event = jnp.linspace(0.0, 1.0, layout.input_width, dtype=jnp.float32)[None]
+    head_input = latent_workspace_module._refinement_head_input(
+        carrier, event, layout
+    )
+
+    np.testing.assert_array_equal(
+        modulated._row_head_logits(carrier, event, head_input),
+        plain._row_head_logits(carrier, event, head_input),
+    )
+
+
+def test_bilinear_modulation_multiplies_the_carrier_by_the_query_row() -> None:
+    """A trained output projection must make the row depend on the product.
+
+    The additive head can only sum a carrier term and a row term, so scaling
+    the carrier while the row is zero leaves an all-zero contribution. The
+    bilinear term is what makes the same carrier act differently on different
+    rows.
+    """
+    model = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_modulation="bilinear", row_head_modulation_rank=8
+        )
+    )
+    for path, state in model.states(brainstate.ParamState).items():
+        if "row_modulation_output" in ".".join(map(str, path)):
+            state.value = jax.tree.map(lambda a: a + 0.5, state.value)
+    layout = _row_refinement_layout()
+    carrier = jnp.linspace(-1.0, 1.0, model.config.neuron_count, dtype=jnp.float32)[
+        None
+    ]
+    colors = jnp.zeros((1, layout.input_width), dtype=jnp.float32)
+    populated = colors.at[:, layout.input_color_slice].set(0.25)
+
+    empty_row = model._row_modulation_logits(carrier, colors)
+    filled_row = model._row_modulation_logits(carrier, populated)
+    scaled_carrier = model._row_modulation_logits(2.0 * carrier, populated)
+
+    np.testing.assert_array_equal(empty_row, jnp.zeros_like(empty_row))
+    assert not np.allclose(np.asarray(filled_row), 0.0)
+    np.testing.assert_allclose(
+        np.asarray(scaled_carrier), 2.0 * np.asarray(filled_row), rtol=1e-5
+    )
+
+
+def test_bilinear_sketches_do_not_depend_on_the_run_seed() -> None:
+    """A checkpoint must restore into the same random features in any run."""
+    first = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_modulation="bilinear", row_head_modulation_rank=8, seed=11
+        )
+    )
+    second = LatentWorkspaceModel(
+        _row_refinement_config(
+            row_head_modulation="bilinear", row_head_modulation_rank=8, seed=9973
+        )
+    )
+
+    np.testing.assert_array_equal(
+        first._row_modulation_carrier_sketch, second._row_modulation_carrier_sketch
+    )
+    np.testing.assert_array_equal(
+        first._row_modulation_input_sketch, second._row_modulation_input_sketch
+    )
+
+
+def test_model_config_rejects_a_malformed_bilinear_modulation() -> None:
+    with pytest.raises(ValueError, match="row_head_modulation must be"):
+        _row_refinement_config(row_head_modulation="quadratic")
+    with pytest.raises(ValueError, match="row_head_modulation_rank"):
+        _row_refinement_config(
+            row_head_modulation="bilinear", row_head_modulation_rank=0
+        )
+
+
+def test_bilinear_modulation_adds_only_the_output_projection_to_the_manifest() -> None:
+    """Only the trainable map is required; the sketches are not parameters."""
+    manifest = latent_workspace_module.refinement_parameter_paths
+    plain = set(manifest(_row_refinement_config()))
+    modulated = set(
+        manifest(
+            _row_refinement_config(
+                row_head_modulation="bilinear", row_head_modulation_rank=8
+            )
+        )
+    )
+
+    assert modulated - plain == {"row_modulation_output.weight"}
+
+
 def test_refinement_routing_manifest_tracks_each_architecture() -> None:
     manifest = latent_workspace_module.refinement_parameter_paths
 

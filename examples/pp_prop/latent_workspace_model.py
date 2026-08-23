@@ -282,6 +282,16 @@ class ModelConfig:
         input only.  Zero starves the row head of the task-identifying
         carrier so training cannot displace the copy path with
         task-conditional fits.
+    row_head_modulation : {"none", "bilinear"}, default="none"
+        Multiplicative carrier-by-query-row path for the row head. The head is
+        a bias-free linear map over ``concat(carrier, event blocks)``, so it can
+        only *add* the task carrier to the query row; it cannot apply a
+        carrier-selected transformation to that row. ``"bilinear"`` adds a
+        zero-initialised low-rank term ``C(carrier) * X(query row colours)``
+        projected back to the row logits, which is the smallest change that
+        makes a task-conditioned map representable at all.
+    row_head_modulation_rank : int, default=64
+        Rank of the bilinear modulation. Ignored when modulation is off.
     row_head_carrier_gate : bool, default=False
         Compatibility spelling for ``refinement_mixer="carrier_gate"``.
         Replace the single answer row head with an event-only head plus a
@@ -391,6 +401,8 @@ class ModelConfig:
     copy_residual_gain: float = 0.0
     row_head_carrier_scale: float = 1.0
     row_head_carrier_gate: bool = False
+    row_head_modulation: Literal["none", "bilinear"] = "none"
+    row_head_modulation_rank: int = 64
     shape_head_carrier_scale: float = 1.0
     refinement_mixer: Literal[
         "linear", "carrier_gate", "attention_residual"
@@ -519,6 +531,14 @@ class ModelConfig:
             "row_head_carrier_scale",
             _nonnegative_real(self.row_head_carrier_scale, "row_head_carrier_scale"),
         )
+        if self.row_head_modulation not in ("none", "bilinear"):
+            raise ValueError("row_head_modulation must be 'none' or 'bilinear'")
+        if self.row_head_modulation == "bilinear" and (
+            not isinstance(self.row_head_modulation_rank, Integral)
+            or isinstance(self.row_head_modulation_rank, bool)
+            or int(self.row_head_modulation_rank) < 1
+        ):
+            raise ValueError("row_head_modulation_rank must be a positive integer")
         if self.row_head_carrier_gate and self.row_head_carrier_scale != 1.0:
             raise ValueError(
                 "row_head_carrier_gate replaces row_head_carrier_scale; "
@@ -2203,6 +2223,9 @@ def _rms_balanced_identity_source(
     return identity * jax.lax.stop_gradient(multiplier).astype(identity.dtype)
 
 
+_MODULATION_SKETCH_SEED = 0x51DE
+
+
 def refinement_parameter_paths(config: Any) -> tuple[str, ...]:
     """Return architecture-aware required refinement parameter paths.
 
@@ -2236,6 +2259,8 @@ def refinement_parameter_paths(config: Any) -> tuple[str, ...]:
         )
     else:
         paths = ("answer_row_head.weight", "answer_shape_head.weight")
+    if getattr(config, "row_head_modulation", "none") == "bilinear":
+        paths = paths + ("row_modulation_output.weight",)
     return tuple(sorted(paths))
 
 
@@ -2722,6 +2747,26 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                     head_width,
                     MAX_GRID_SIZE * COLOR_COUNT,
                     w_init=row_weights,
+                    b_init=None,
+                )
+            if config.row_head_modulation == "bilinear":
+                rank = int(config.row_head_modulation_rank)
+                color_width = MAX_GRID_SIZE * COLOR_COUNT
+                sketch = np.random.default_rng(_MODULATION_SKETCH_SEED)
+                self._row_modulation_carrier_sketch = jnp.asarray(
+                    sketch.standard_normal((config.neuron_count, rank))
+                    / math.sqrt(config.neuron_count),
+                    dtype=jnp.float32,
+                )
+                self._row_modulation_input_sketch = jnp.asarray(
+                    sketch.standard_normal((color_width, rank))
+                    / math.sqrt(color_width),
+                    dtype=jnp.float32,
+                )
+                self.row_modulation_output = braintrace.nn.Linear(
+                    rank,
+                    color_width,
+                    w_init=jnp.zeros((rank, color_width)),
                     b_init=None,
                 )
             if config.refinement_mixer != "attention_residual":
@@ -3976,14 +4021,46 @@ class LatentWorkspaceModel(brainstate.nn.Module):
                 self.config.row_head_carrier_scale,
                 head_input,
             )
-            return self.answer_row_head(row_head_input)
-        if self.config.refinement_mixer == "attention_residual":
-            return self.answer_row_proposal_head(head_input)
-        event_blocks = head_input[:, self.config.neuron_count :]
-        gate_input = jnp.ones((head_input.shape[0], 1), dtype=head_input.dtype)
-        gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
-        carrier_logits = self.answer_row_carrier_head(unit_carrier)
-        return self.answer_row_event_head(event_blocks) + gate * carrier_logits
+            additive = self.answer_row_head(row_head_input)
+        elif self.config.refinement_mixer == "attention_residual":
+            additive = self.answer_row_proposal_head(head_input)
+        else:
+            event_blocks = head_input[:, self.config.neuron_count :]
+            gate_input = jnp.ones((head_input.shape[0], 1), dtype=head_input.dtype)
+            gate = jnp.tanh(self.row_carrier_gate_head(gate_input))
+            carrier_logits = self.answer_row_carrier_head(unit_carrier)
+            additive = self.answer_row_event_head(event_blocks) + gate * carrier_logits
+        if self.config.row_head_modulation != "bilinear":
+            return additive
+        return additive + self._row_modulation_logits(unit_carrier, event)
+
+    def _row_modulation_logits(
+        self, unit_carrier: jax.Array, event: jax.Array
+    ) -> jax.Array:
+        """Return the bilinear carrier-by-query-row contribution to the row.
+
+        The additive heads can add a task embedding to a query row but cannot
+        apply a task-selected map to it, because a bias-free linear map over
+        ``concat(carrier, row)`` has no term in which the two multiply. This
+        rank-limited product supplies exactly that term.
+
+        The two factors are fixed random sketches, not parameters. Making them
+        trainable puts them behind another trainable ETP primitive, which the
+        non-parametric-tail invariant excludes from eligibility tracing and
+        which turns ``row_routes_all_direct`` False. One trainable map over a
+        sketched outer product keeps every row route direct. The sketches come
+        from a fixed seed, independent of ``--seed``, so a checkpoint restores
+        into the same features in any later run. The output projection is
+        zero-initialised, so a fresh model is bit-identical to the additive head
+        and training can only add to it.
+        """
+        assert self.config.refinement_layout is not None
+        colors = event[:, self.config.refinement_layout.input_color_slice]
+        carrier_factor = unit_carrier @ self._row_modulation_carrier_sketch
+        input_factor = (
+            colors.astype(carrier_factor.dtype) @ self._row_modulation_input_sketch
+        )
+        return self.row_modulation_output(carrier_factor * input_factor)
 
     def _shape_head_logits(self, head_input: jax.Array) -> jax.Array:
         """Return the current shape proposal under the configured mixer."""
