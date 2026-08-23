@@ -88,8 +88,36 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "cross_spatial_attention_v2"
+    assert (
+        model.config.architecture_version
+        == "query_shape_conditioned_attention_v3"
+    )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
+
+
+def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=29,
+        )
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    one_cell = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    one_cell = one_cell.at[0, 0, 0, 0].set(1.0)
+    one_cell = one_cell.at[0, 0, 0, 10].set(1.0)
+    larger = one_cell.at[0, :2, :3, 0].set(1.0)
+    larger = larger.at[0, :2, :3, 10].set(1.0)
+
+    first_height, first_width, _ = model.decode(hidden, one_cell)
+    second_height, second_width, _ = model.decode(hidden, larger)
+
+    assert np.asarray(first_height).tobytes() != np.asarray(second_height).tobytes()
+    assert np.asarray(first_width).tobytes() != np.asarray(second_width).tobytes()
 
 
 @pytest.mark.parametrize(
@@ -100,7 +128,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "local_decoder_v1"},
+        {"architecture_version": "cross_spatial_attention_v2"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

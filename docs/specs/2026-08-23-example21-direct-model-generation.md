@@ -69,7 +69,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 - a BrainTrace recurrent encoder that consumes the complete ordered
   demonstration/query event stream;
 - checkpoint-owned recurrent, memory, and readout parameters;
-- learned shape heads for the 30 possible heights and widths;
+- learned shape heads for the 30 possible heights and widths, conditioned on
+  both recurrent task state and a checkpoint-owned projection of query
+  row/column validity;
 - a checkpoint-owned cross-spatial attention path from every valid query-input
   cell to every output coordinate, so learned spatial remapping is expressible
   without a fixed copy or transform residual;

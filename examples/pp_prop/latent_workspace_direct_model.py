@@ -14,7 +14,7 @@ import braintrace
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
-ARCHITECTURE_VERSION = "cross_spatial_attention_v2"
+ARCHITECTURE_VERSION = "query_shape_conditioned_attention_v3"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -53,7 +53,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="cross_spatial_attention_v2"
+    architecture_version : str, default="query_shape_conditioned_attention_v3"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -124,6 +124,9 @@ class DirectARCGRU(brainstate.nn.Module):
             self.recurrent = tuple(layers)
             self.height_head = braintrace.nn.Linear(config.hidden_width, MAX_GRID_SIZE)
             self.width_head = braintrace.nn.Linear(config.hidden_width, MAX_GRID_SIZE)
+            self.query_shape_projection = braintrace.nn.Linear(
+                2 * MAX_GRID_SIZE, config.hidden_width
+            )
             self.context_projection = braintrace.nn.Linear(
                 config.hidden_width, config.decoder_width
             )
@@ -197,6 +200,13 @@ class DirectARCGRU(brainstate.nn.Module):
         if hidden.ndim != 2 or hidden.shape[0] != query_features.shape[0]:
             raise ValueError("hidden and query_features batch dimensions must match.")
         batch_size = query_features.shape[0]
+        validity = query_features[..., -1]
+        query_shape = jnp.concatenate(
+            (jnp.max(validity, axis=2), jnp.max(validity, axis=1)), axis=-1
+        )
+        shape_state = brainstate.nn.tanh(
+            hidden + self.query_shape_projection(query_shape)
+        )
         context_vector = self.context_projection(hidden)
         context = context_vector[:, None, None, :]
         query = self.query_projection(query_features)
@@ -235,8 +245,8 @@ class DirectARCGRU(brainstate.nn.Module):
             context + query + coordinate[None] + attention
         )
         return (
-            self.height_head(hidden),
-            self.width_head(hidden),
+            self.height_head(shape_state),
+            self.width_head(shape_state),
             self.color_head(cell_state),
         )
 
