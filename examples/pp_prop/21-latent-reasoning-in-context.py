@@ -26,7 +26,7 @@ import threading
 import time
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from functools import lru_cache
 from numbers import Integral, Real
 from typing import Any, Literal
@@ -52,6 +52,13 @@ try:
         decode_candidates,
         score_query_candidates,
         select_checkpoint_candidates,
+    )
+    from examples.pp_prop.latent_workspace_demo_fitted_decode import (
+        build_demonstration_batch,
+        demonstration_fitted_windows,
+    )
+    from examples.pp_prop.latent_workspace_demonstration_forest import (
+        DemonstrationForestConfig,
     )
     from examples.pp_prop.latent_workspace_rules import (
         clear_rule_cache,
@@ -121,6 +128,13 @@ except ModuleNotFoundError:
         score_query_candidates,
         select_checkpoint_candidates,
     )
+    from latent_workspace_demo_fitted_decode import (
+        build_demonstration_batch,
+        demonstration_fitted_windows,
+    )
+    from latent_workspace_demonstration_forest import (
+        DemonstrationForestConfig,
+    )
     from latent_workspace_rules import (
         clear_rule_cache,
         verified_rule_candidates,
@@ -179,6 +193,7 @@ except ModuleNotFoundError:
 
 DeviceName = Literal["cpu", "gpu"]
 PrimaryCandidateMode = Literal["model_only", "rule_then_model"]
+AnswerHead = Literal["carrier_row", "demonstration_fitted"]
 AdaptationSchedule = Literal["per_episode", "per_tick"]
 DecoderMode = Literal["legacy_cp", "row_refinement", "latent_row_decode"]
 SparseBackend = Literal["default", "jax_raw"]
@@ -564,6 +579,11 @@ class ExperimentConfig:
     primary_candidate_mode: PrimaryCandidateMode = "model_only"
     decoder_mode: DecoderMode = "latent_row_decode"
     sparse_backend: SparseBackend = "default"
+    answer_head: AnswerHead = "carrier_row"
+    demonstration_forest_depth: int = 12
+    demonstration_forest_trees: int = 1
+    demonstration_forest_feature_fraction: float = 1.0
+    demonstration_forest_backoff: float = 0.05
 
     def __post_init__(self) -> None:
         for name, minimum in (
@@ -604,6 +624,10 @@ class ExperimentConfig:
                 )
         if self.device not in ("cpu", "gpu"):
             raise ValueError("device must be 'cpu' or 'gpu'")
+        if self.answer_head not in ("carrier_row", "demonstration_fitted"):
+            raise ValueError(
+                "answer_head must be 'carrier_row' or 'demonstration_fitted'"
+            )
         if self.primary_candidate_mode not in ("model_only", "rule_then_model"):
             raise ValueError(
                 "primary_candidate_mode must be 'model_only' or 'rule_then_model'"
@@ -3263,6 +3287,72 @@ def _rule_proposals(
     return tuple(proposals)
 
 
+def _demonstration_fitted_windows(
+    records: Sequence["_EvaluationRecord"],
+    source_tasks: Sequence["_OriginTask"],
+    config: ExperimentConfig,
+    checkpoint_count: int,
+) -> np.ndarray:
+    """Decode every query with a forest fitted on that query's demonstrations.
+
+    This is a model-only channel, not a rule channel: nothing here encodes an
+    ARC transformation, and no query target is read. Each query gets its own
+    forest, fitted from its own task's demonstration cells, and both the answer
+    colours *and* the answer extent come out of that forest -- the eleventh
+    class carries "not part of the output grid", so the shape rule the
+    ``rule_then_model`` channel uses is never consulted.
+
+    The forest does not depend on the reasoning trajectory, so one window per
+    query is broadcast across the effort axis. Effort-varying metrics are
+    therefore flat for this head by construction, which is the honest report:
+    extra recurrent ticks do not change an answer this head did not use them
+    to produce.
+
+    Parameters
+    ----------
+    records
+        Evaluation records in scoring order.
+    source_tasks
+        Origin tasks the records were encoded from.
+    config
+        Experiment configuration supplying the forest shape and the seed.
+    checkpoint_count
+        Effort checkpoints to broadcast the windows across.
+
+    Returns
+    -------
+    numpy.ndarray
+        Explicit decoder logits shaped ``(checkpoints, queries, 9060)``.
+    """
+
+    lookup = {
+        _origin_task_key(origin, task_index): origin.task
+        for task_index, origin in enumerate(source_tasks)
+    }
+    forest_config = DemonstrationForestConfig(
+        depth=config.demonstration_forest_depth,
+        tree_count=config.demonstration_forest_trees,
+        feature_fraction=config.demonstration_forest_feature_fraction,
+        backoff=config.demonstration_forest_backoff,
+    )
+    batches = []
+    for record in records:
+        task = lookup[record.task_key]
+        if task is None:
+            raise ValueError(f"no origin task for {record.task_key}")
+        demonstrations = [
+            (np.asarray(pair.input.as_array()), np.asarray(pair.output.as_array()))
+            for pair in task.train
+            if pair.output is not None
+        ]
+        query = np.asarray(task.test[record.encoded.query_index].input.as_array())
+        batches.append(build_demonstration_batch(demonstrations, query))
+    windows = demonstration_fitted_windows(batches, forest_config, seed=config.seed)
+    return np.broadcast_to(
+        windows[None], (checkpoint_count, *windows.shape)
+    ).copy()
+
+
 def _derange_task(task: ArcTask) -> ArcTask | None:
     if len(task.train) < 2:
         return None
@@ -4921,8 +5011,15 @@ def _evaluate(
             ),
         }
         del audit_window, audit_voltage, audit_memory
+    model_only_source = (
+        _demonstration_fitted_windows(
+            records, data.evaluation, config, len(checkpoints)
+        )
+        if config.answer_head == "demonstration_fitted"
+        else intact[0]
+    )
     model_only_metrics, model_only_queries = _score_windows(
-        intact[0], records, config.color_rank, config.decoder_mode,
+        model_only_source, records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
     )
     intact_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
@@ -4939,7 +5036,7 @@ def _evaluate(
                 records, data.evaluation, arm="no_context"
             )
         frozen_metrics, frozen_checkpoint_queries = _score_windows(
-            intact[0], records, config.color_rank, config.decoder_mode,
+            model_only_source, records, config.color_rank, config.decoder_mode,
             checkpoints, submission_checkpoint, intact_rules,
         )
     else:
@@ -5033,6 +5130,7 @@ def _evaluate(
                 "rule_channel_enabled": (
                     config.primary_candidate_mode == "rule_then_model"
                 ),
+                "answer_head": config.answer_head,
             },
             "protocol": {
                 **(protocol_evidence or {}),
@@ -5302,6 +5400,7 @@ def _evaluate(
             "rule_channel_enabled": (
                 config.primary_candidate_mode == "rule_then_model"
             ),
+            "answer_head": config.answer_head,
         },
         "protocol": {
             **(protocol_evidence or {}),
@@ -5662,6 +5761,7 @@ def _qualification(
         and submission_policy.get("target_free_selection") is True
         and submission_policy.get("rule_channel_enabled")
         is (config.primary_candidate_mode == "rule_then_model")
+        and submission_policy.get("answer_head") == config.answer_head
     )
     completion = evaluation.get("model_only_completion")
     completion_expected_eligible = bool(
@@ -6586,6 +6686,9 @@ def _implementation_report() -> dict[str, object]:
         "latent_workspace_protocol.py",
         "latent_workspace_refinement.py",
         "latent_workspace_resource_safety.py",
+        "latent_workspace_cell_features.py",
+        "latent_workspace_demonstration_forest.py",
+        "latent_workspace_demo_fitted_decode.py",
         "21-arc-agi-latent-reasoning.py",
     )
     combined = hashlib.sha256()
@@ -7822,7 +7925,46 @@ def _parser() -> argparse.ArgumentParser:
         choices=("model_only", "rule_then_model"),
         default="model_only",
     )
+    parser.add_argument(
+        "--answer-head",
+        choices=("carrier_row", "demonstration_fitted"),
+        default="carrier_row",
+        help=(
+            "carrier_row uses the trained row refinement heads; "
+            "demonstration_fitted fits a per-cell decision forest on each "
+            "task's own demonstrations and decodes the query with it"
+        ),
+    )
+    parser.add_argument("--demonstration-forest-depth", type=int, default=12)
+    parser.add_argument("--demonstration-forest-trees", type=int, default=1)
+    parser.add_argument(
+        "--demonstration-forest-feature-fraction", type=float, default=1.0
+    )
+    parser.add_argument("--demonstration-forest-backoff", type=float, default=0.05)
     return parser
+
+
+def _with_answer_head(
+    config: ExperimentConfig, args: argparse.Namespace
+) -> ExperimentConfig:
+    """Carry the answer-head selection onto a fixed recipe.
+
+    ``smoke_config`` owns its own reduced scale and deliberately ignores most
+    command-line settings, but the answer head decides *what produces the
+    answer* rather than how big the run is, so a smoke run has to be able to
+    exercise it.
+    """
+
+    return replace(
+        config,
+        answer_head=args.answer_head,
+        demonstration_forest_depth=args.demonstration_forest_depth,
+        demonstration_forest_trees=args.demonstration_forest_trees,
+        demonstration_forest_feature_fraction=(
+            args.demonstration_forest_feature_fraction
+        ),
+        demonstration_forest_backoff=args.demonstration_forest_backoff,
+    )
 
 
 def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
@@ -7832,7 +7974,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             or args.recurrent_edges != FULL_SCALE_RECURRENT_EDGES
         ):
             raise ValueError("--smoke owns its reduced neuron and edge scale")
-        return ExperimentConfig.smoke_config(
+        return _with_answer_head(ExperimentConfig.smoke_config(
             output_dir=args.output_dir,
             device=args.device,
             seed=args.seed,
@@ -7857,7 +7999,7 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
             decoder_mode=args.decoder_mode,
             runtime_profile=args.profile,
             sparse_backend=args.sparse_backend,
-        )
+        ), args)
     return ExperimentConfig(
         source_manifest=args.source_manifest,
         output_dir=args.output_dir,
@@ -7915,6 +8057,13 @@ def _config_from_args(args: argparse.Namespace) -> ExperimentConfig:
         ablation_slot=args.ablation_slot,
         structural_only=args.structural_only,
         primary_candidate_mode=args.primary_candidate_mode,
+        answer_head=args.answer_head,
+        demonstration_forest_depth=args.demonstration_forest_depth,
+        demonstration_forest_trees=args.demonstration_forest_trees,
+        demonstration_forest_feature_fraction=(
+            args.demonstration_forest_feature_fraction
+        ),
+        demonstration_forest_backoff=args.demonstration_forest_backoff,
     )
 
 
