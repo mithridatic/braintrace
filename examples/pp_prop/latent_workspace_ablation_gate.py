@@ -3177,6 +3177,47 @@ def _gate_c2_array_endpoint(value: Any) -> dict[str, Any]:
     }
 
 
+def _gate_c2_integer_list_array(
+    value: Any,
+    *,
+    length: int,
+) -> np.ndarray | None:
+    """Convert a strict integer list to an array without scalar ABC costs."""
+
+    if not isinstance(value, list) or len(value) != length:
+        return None
+    if not all(type(item) is int for item in value) and not all(
+        _strict_integer(item) for item in value
+    ):
+        return None
+    try:
+        return np.asarray(value, dtype=np.int64)
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _gate_c2_real_list_array(
+    value: Any,
+    *,
+    length: int,
+) -> np.ndarray | None:
+    """Convert a strict finite-real list to an array after schema checks."""
+
+    if not isinstance(value, list) or len(value) != length:
+        return None
+    if not all(type(item) is float for item in value) and not all(
+        isinstance(item, Real)
+        and not isinstance(item, (bool, np.bool_))
+        for item in value
+    ):
+        return None
+    try:
+        result = np.asarray(value, dtype=np.float64)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return result if result.shape == (length,) and np.isfinite(result).all() else None
+
+
 def _gate_c2_floating_difference_record(
     left: Any,
     right: Any,
@@ -3237,20 +3278,18 @@ def _gate_c2_endpoint_complete(
     per_count = math.prod(expected_shape[1:])
     finite = value["per_example_finite_count"]
     nonfinite = value["per_example_nonfinite_count"]
+    finite_array = _gate_c2_integer_list_array(finite, length=batch)
+    nonfinite_array = _gate_c2_integer_list_array(nonfinite, length=batch)
+    if finite_array is None or nonfinite_array is None:
+        return False
     return bool(
         value["dtype"] == expected_dtype
         and value["shape"] == list(expected_shape)
         and _sha256_complete(value["sha256"])
         and _strict_integer(value["value_count"])
         and int(value["value_count"]) == math.prod(expected_shape)
-        and isinstance(finite, list)
-        and len(finite) == batch
-        and all(
-            _strict_integer(item) and int(item) == per_count for item in finite
-        )
-        and isinstance(nonfinite, list)
-        and len(nonfinite) == batch
-        and all(_strict_integer(item) and int(item) == 0 for item in nonfinite)
+        and np.all(finite_array == per_count)
+        and np.all(nonfinite_array == 0)
         and _strict_integer(value["finite_count"])
         and int(value["finite_count"]) == math.prod(expected_shape)
         and _strict_integer(value["nonfinite_count"])
@@ -3297,41 +3336,39 @@ def _gate_c2_floating_difference_record_complete(
             for section in (per_sum, per_counts, per_rms, per_max)
         ):
             return False
-        if not all(
-            _strict_integer(item) and int(item) == compared_count
-            for item in per_counts
+        counts = _gate_c2_integer_list_array(per_counts, length=batch)
+        sums = _gate_c2_real_list_array(per_sum, length=batch)
+        rms_values = _gate_c2_real_list_array(per_rms, length=batch)
+        maxima = _gate_c2_real_list_array(per_max, length=batch)
+        if counts is None or sums is None or rms_values is None or maxima is None:
+            return False
+        if (
+            counts.shape != (batch,)
+            or sums.shape != (batch,)
+            or rms_values.shape != (batch,)
+            or maxima.shape != (batch,)
+            or not np.isfinite(sums).all()
+            or not np.isfinite(rms_values).all()
+            or not np.isfinite(maxima).all()
+            or not np.all(counts == compared_count)
+            or np.any(sums < 0.0)
+            or np.any(rms_values < 0.0)
+            or np.any(maxima < 0.0)
         ):
             return False
-        sums = [
-            _finite_real(item, "per-example squared difference")
-            for item in per_sum
-        ]
-        rms_values = [
-            _finite_real(item, "per-example RMS difference")
-            for item in per_rms
-        ]
-        maxima = [
-            _finite_real(item, "per-example maximum difference")
-            for item in per_max
-        ]
-        if any(item < 0.0 for item in (*sums, *rms_values, *maxima)):
+        expected_rms = np.sqrt(sums / compared_count)
+        is_close = np.abs(rms_values - expected_rms) <= np.maximum(
+            1e-15,
+            1e-12 * np.maximum(np.abs(rms_values), np.abs(expected_rms)),
+        )
+        if not np.all(is_close):
             return False
-        if any(
-            not math.isclose(
-                actual,
-                math.sqrt(squared / compared_count),
-                rel_tol=1e-12,
-                abs_tol=1e-15,
-            )
-            for squared, actual in zip(sums, rms_values, strict=True)
-        ):
+        if np.any(maxima + 1e-15 < rms_values):
             return False
-        if any(maximum + 1e-15 < rms for maximum, rms in zip(maxima, rms_values)):
-            return False
-        total_sum = math.fsum(sums)
+        total_sum = math.fsum(sums.tolist())
         total_rms = math.sqrt(total_sum / (batch * compared_count))
-        maximum_rms = max(rms_values)
-        maximum_abs = max(maxima)
+        maximum_rms = float(np.max(rms_values))
+        maximum_abs = float(np.max(maxima))
         if not all(
             math.isclose(
                 _finite_real(value[field], field),

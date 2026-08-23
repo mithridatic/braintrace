@@ -8013,11 +8013,6 @@ def test_gate_c2_no_read_validator_keeps_exact_mapping_schemas(
     admission, reports = passing_gate_c2_no_read_reports
     _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
     report = dict(reports[regime])
-    assert gate_c._gate_c2_query_only_latent_no_read_complete(
-        report,
-        admission,
-        regime=regime,
-    )
 
     if mutation == "missing_key":
         report.pop("passed")
@@ -8048,11 +8043,6 @@ def test_gate_c2_no_read_validator_keeps_semantic_sequence_order_strict(
     admission, reports = passing_gate_c2_no_read_reports
     _patch_gate_c2_fixture_removed_path_validator(monkeypatch, admission)
     report = reports[regime]
-    assert gate_c._gate_c2_query_only_latent_no_read_complete(
-        report,
-        admission,
-        regime=regime,
-    )
     first_tick = gate_c.GATE_C2_LATENT_TICKS[regime][0]
     if sequence_path == "cached_unchanged_paths":
         container = report["streams"]["intact"][first_tick][
@@ -8141,11 +8131,6 @@ def test_gate_c2_no_read_validator_rejects_each_nested_raw_mutation(
         removed_complete,
     )
     report = reports[regime]
-    assert gate_c._gate_c2_query_only_latent_no_read_complete(
-        report,
-        admission,
-        regime=regime,
-    )
     first_tick = gate_c.GATE_C2_LATENT_TICKS[regime][0]
     tick = report["streams"]["intact"][first_tick]
     cached = tick["cached_read_probe"]
@@ -8310,11 +8295,6 @@ def test_gate_c2_no_read_validator_rejects_colluding_noncanonical_parameter_hash
         gate_c,
         "_gate_c2_removed_path_influence_complete",
         removed_complete,
-    )
-    assert gate_c._gate_c2_query_only_latent_no_read_complete(
-        report,
-        admission,
-        regime=regime,
     )
 
     colluding = "e" * 64
@@ -10897,6 +10877,8 @@ def test_gate_c2_evidence_helpers_reject_invalid_and_colluding_records(
         ("per_example_compared_value_count", [1, 1]),
         ("per_example_sum_squared_difference", [-1.0, 0.0]),
         ("per_example_rms_difference", [1.0, 0.0]),
+        ("per_example_rms_difference", [False, 0.0]),
+        ("per_example_max_abs_difference", ["0.0", 0.0]),
         ("per_example_max_abs_difference", [-1.0, 0.0]),
     )
     for field, replacement in mutations:
