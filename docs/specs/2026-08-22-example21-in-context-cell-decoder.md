@@ -279,3 +279,65 @@ usefully. Threshold codes (`q >= k` for each level) recover the shape accuracy
 (110/126 against 109/126 on a 120-task probe) but only part of the colour
 accuracy, because the per-row and per-column colour counts need the same
 treatment. The fix is a wholly binary feature map, not a change to the learner.
+
+## 9. Harness result (2026-08-23)
+
+`--answer-head demonstration_fitted` at full scale (4096 neurons, 4,194,304
+recurrent edges, `row_refinement`, seed 31337), restoring
+`ex21-fixed-controls-s31337-ckpt.npz` with `--training-updates 0`, complete
+evaluation split, `primary_candidate_mode=model_only`,
+`rule_channel_enabled: false`, `answer_head: demonstration_fitted` recorded in
+the submission policy:
+
+```
+query_count 419   task_count 400
+query pass@1  0.021479713603818614   ->  9 queries
+query pass@2  0.021479713603818614   ->  9 queries
+strict task pass@1  0.0175           ->  7 tasks
+strict task pass@2  0.0175           ->  7 tasks
+                                         cumulative 32
+shape_accuracy_diagnostic 0.7637231503579952
+valid_cell_pixel_accuracy_diagnostic 0.664910310486932
+```
+
+Against cumulative 6 for the shipped `carrier_row` head on the same split. The
+offline prediction in §8.1 was 9/9/7/7; the harness returned 9/9/7/7.
+
+### 9.1 Controls
+
+| arm | query pass@1 | strict task pass@1 | shape |
+|---|---|---|---|
+| intact | 0.02148 | 0.0175 | 0.7637 |
+| repeat_intact | 0.02148 | 0.0175 | 0.7637 |
+| slot_ablation | 0.02148 | 0.0175 | 0.7637 |
+| shuffled_demonstrations | 0.00239 | 0.0025 | 0.3795 |
+| no_context | 0.0 | 0.0 | 0.0048 |
+
+Deranging the demonstrations costs eight of the nine solved queries and half
+the shape accuracy; removing them zeroes the channel. The score is carried by
+the demonstrations, not by the query grid alone.
+
+`repeat_intact` and `slot_ablation` reproduce intact exactly *by construction*:
+a head fitted on demonstration grids reads neither the trajectory it is
+repeated against nor the memory slot that is ablated. The causal claim for
+those two arms rests on the state comparison, which uses each arm's own logits
+and is unaffected by the head.
+
+### 9.2 What this number is and is not
+
+- **Parameter-independent.** The forest consumes demonstration grids only. The
+  trained weights, the LIF carrier and the pp-prop recurrence are upstream of
+  it and do not enter the answer. That is why the four-tuple is identical at
+  efforts 0, 30 and 60, and why "effort 60 tied effort 0" is structural rather
+  than a finding. The 6 that `carrier_row` scores remains the number for the
+  head that *does* consume them.
+- **Demonstration count is not capped away.** `build_demonstration_batch` takes
+  every `task.train` pair while the network arm encodes at most
+  `--max-demonstrations 10`; the evaluation split's largest task has 7, so the
+  two see the same context.
+- **The two failing determinism gates are pre-existing.** `repeat_intact_
+  deterministic` and `slot_ablation_pre_intervention_matched` are false here
+  and equally false in the shipped-head acceptance run
+  (`var/ex21-fixed-controls-s31337/result.json`): at 4096 neurons the GPU's own
+  reductions produce 23,960 spike mismatches over 419 queries x 61 steps.
+  Decoded candidates and metrics are exact in both.
