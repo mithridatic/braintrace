@@ -54,6 +54,7 @@ try:
         select_checkpoint_candidates,
     )
     from examples.pp_prop.latent_workspace_demo_fitted_decode import (
+        DECODER_WIDTH as DEMONSTRATION_DECODER_WIDTH,
         build_demonstration_batch,
         demonstration_fitted_windows,
     )
@@ -129,6 +130,7 @@ except ModuleNotFoundError:
         select_checkpoint_candidates,
     )
     from latent_workspace_demo_fitted_decode import (
+        DECODER_WIDTH as DEMONSTRATION_DECODER_WIDTH,
         build_demonstration_batch,
         demonstration_fitted_windows,
     )
@@ -3292,15 +3294,23 @@ def _demonstration_fitted_windows(
     source_tasks: Sequence["_OriginTask"],
     config: ExperimentConfig,
     checkpoint_count: int,
+    *,
+    arm: Literal["intact", "no_context", "shuffled"] = "intact",
 ) -> np.ndarray:
     """Decode every query with a forest fitted on that query's demonstrations.
 
     This is a model-only channel, not a rule channel: nothing here encodes an
-    ARC transformation, and no query target is read. Each query gets its own
+    ARC transformation and no query target is read. Each query gets its own
     forest, fitted from its own task's demonstration cells, and both the answer
     colours *and* the answer extent come out of that forest -- the eleventh
     class carries "not part of the output grid", so the shape rule the
     ``rule_then_model`` channel uses is never consulted.
+
+    Like the rule channel, the head is fitted on the demonstrations *that arm
+    actually has*. ``shuffled`` fits the deranged task, and ``no_context`` has
+    nothing to fit and returns flat logits -- a head defined by fitting on
+    demonstrations has no answer without them, and saying so is the honest
+    control rather than reusing the intact answer.
 
     The forest does not depend on the reasoning trajectory, so one window per
     query is broadcast across the effort axis. Effort-varying metrics are
@@ -3318,6 +3328,8 @@ def _demonstration_fitted_windows(
         Experiment configuration supplying the forest shape and the seed.
     checkpoint_count
         Effort checkpoints to broadcast the windows across.
+    arm
+        Evaluation arm whose demonstrations should be fitted.
 
     Returns
     -------
@@ -3325,32 +3337,56 @@ def _demonstration_fitted_windows(
         Explicit decoder logits shaped ``(checkpoints, queries, 9060)``.
     """
 
-    lookup = {
-        _origin_task_key(origin, task_index): origin.task
-        for task_index, origin in enumerate(source_tasks)
-    }
-    forest_config = DemonstrationForestConfig(
-        depth=config.demonstration_forest_depth,
-        tree_count=config.demonstration_forest_trees,
-        feature_fraction=config.demonstration_forest_feature_fraction,
-        backoff=config.demonstration_forest_backoff,
-    )
-    batches = []
-    for record in records:
-        task = lookup[record.task_key]
-        if task is None:
-            raise ValueError(f"no origin task for {record.task_key}")
-        demonstrations = [
-            (np.asarray(pair.input.as_array()), np.asarray(pair.output.as_array()))
-            for pair in task.train
-            if pair.output is not None
-        ]
-        query = np.asarray(task.test[record.encoded.query_index].input.as_array())
-        batches.append(build_demonstration_batch(demonstrations, query))
-    windows = demonstration_fitted_windows(batches, forest_config, seed=config.seed)
+    windows = np.zeros((len(records), DEMONSTRATION_DECODER_WIDTH), dtype=np.float32)
+    if arm != "no_context":
+        lookup = {
+            _origin_task_key(origin, task_index): origin.task
+            for task_index, origin in enumerate(source_tasks)
+        }
+        forest_config = DemonstrationForestConfig(
+            depth=config.demonstration_forest_depth,
+            tree_count=config.demonstration_forest_trees,
+            feature_fraction=config.demonstration_forest_feature_fraction,
+            backoff=config.demonstration_forest_backoff,
+        )
+        batches: list[object] = []
+        positions: list[int] = []
+        for index, record in enumerate(records):
+            task = lookup[record.task_key]
+            if arm == "shuffled":
+                task = _derange_task(task) if task is not None else None
+            if task is None:
+                continue
+            demonstrations = [
+                (
+                    np.asarray(pair.input.as_array()),
+                    np.asarray(pair.output.as_array()),
+                )
+                for pair in task.train
+                if pair.output is not None
+            ]
+            if not demonstrations:
+                continue
+            query = np.asarray(
+                task.test[record.encoded.query_index].input.as_array()
+            )
+            batches.append(build_demonstration_batch(demonstrations, query))
+            positions.append(index)
+        if batches:
+            windows[positions] = demonstration_fitted_windows(
+                batches, forest_config, seed=config.seed
+            )
     return np.broadcast_to(
         windows[None], (checkpoint_count, *windows.shape)
     ).copy()
+
+
+def _answer_head_arm(
+    arm_window: tuple[np.ndarray, ...], windows: np.ndarray | None
+) -> tuple[np.ndarray, ...]:
+    """Swap an arm's decoder logits for the demonstration-fitted head's."""
+
+    return arm_window if windows is None else (windows, *arm_window[1:])
 
 
 def _derange_task(task: ArcTask) -> ArcTask | None:
@@ -4913,6 +4949,17 @@ def _evaluate(
     intact, intact_associative = run_arm(
         "intact", intact_events, intact_advances, inactive_gates
     )
+    answer_head_windows: dict[str, np.ndarray | None] = {
+        arm: None for arm in ("intact", "no_context", "shuffled")
+    }
+    if config.answer_head == "demonstration_fitted":
+        answer_head_windows = {
+            arm: _demonstration_fitted_windows(
+                records, data.evaluation, config, len(checkpoints), arm=arm
+            )
+            for arm in answer_head_windows
+        }
+        intact = _answer_head_arm(intact, answer_head_windows["intact"])
     protocol_evidence: dict[str, object] | None = None
     if protocol_v2:
         boundaries = intact_protocol.metadata["per_example_boundaries"]
@@ -5011,15 +5058,8 @@ def _evaluate(
             ),
         }
         del audit_window, audit_voltage, audit_memory
-    model_only_source = (
-        _demonstration_fitted_windows(
-            records, data.evaluation, config, len(checkpoints)
-        )
-        if config.answer_head == "demonstration_fitted"
-        else intact[0]
-    )
     model_only_metrics, model_only_queries = _score_windows(
-        model_only_source, records, config.color_rank, config.decoder_mode,
+        intact[0], records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
     )
     intact_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
@@ -5036,7 +5076,7 @@ def _evaluate(
                 records, data.evaluation, arm="no_context"
             )
         frozen_metrics, frozen_checkpoint_queries = _score_windows(
-            model_only_source, records, config.color_rank, config.decoder_mode,
+            intact[0], records, config.color_rank, config.decoder_mode,
             checkpoints, submission_checkpoint, intact_rules,
         )
     else:
@@ -5170,6 +5210,7 @@ def _evaluate(
     repeat_intact, repeat_associative = run_arm(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
+    repeat_intact = _answer_head_arm(repeat_intact, answer_head_windows["intact"])
     repeat_result = _control_summary(
         "repeat_intact",
         intact,
@@ -5222,6 +5263,7 @@ def _evaluate(
     no_context, no_context_associative = run_arm(
         "no_context", no_context_events, no_context_advances, inactive_gates
     )
+    no_context = _answer_head_arm(no_context, answer_head_windows["no_context"])
     no_context_result = _control_summary(
         "no_context",
         intact,
@@ -5244,6 +5286,7 @@ def _evaluate(
         shuffled_advances,
         inactive_gates,
     )
+    shuffled = _answer_head_arm(shuffled, answer_head_windows["shuffled"])
     shuffled_result = _control_summary(
         "shuffled_demonstrations",
         intact,
@@ -5338,6 +5381,10 @@ def _evaluate(
     ablated, ablated_associative = run_arm(
         "slot_ablation", intact_events, intact_advances, gates
     )
+    # the forest reads demonstrations, not the ablated memory slot, so its
+    # answer is unchanged by the ablation -- including at checkpoint zero,
+    # where the pre-intervention gate requires the two arms to agree exactly.
+    ablated = _answer_head_arm(ablated, answer_head_windows["intact"])
     ablation_result = _control_summary(
         f"slot_ablation_{config.ablation_slot}",
         intact,
