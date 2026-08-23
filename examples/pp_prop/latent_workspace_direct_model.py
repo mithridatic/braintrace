@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "explicit_demo_shape_attention_v5"
+ARCHITECTURE_VERSION = "pooled_demo_shape_attention_v6"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -58,7 +58,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="explicit_demo_shape_attention_v5"
+    architecture_version : str, default="pooled_demo_shape_attention_v6"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -132,8 +132,11 @@ class DirectARCGRU(brainstate.nn.Module):
             self.query_shape_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.hidden_width
             )
-            self.episode_shape_projection = braintrace.nn.Linear(
-                SHAPE_FEATURE_WIDTH, config.hidden_width
+            self.demo_shape_projection = braintrace.nn.Linear(
+                DEMONSTRATION_SHAPE_WIDTH, config.hidden_width
+            )
+            self.query_dimension_projection = braintrace.nn.Linear(
+                2 * MAX_GRID_SIZE, config.hidden_width
             )
             self.temporal_summary_projection = braintrace.nn.Linear(
                 2 * config.hidden_width, config.hidden_width
@@ -225,6 +228,21 @@ class DirectARCGRU(brainstate.nn.Module):
         shape_features = jnp.asarray(shape_features)
         if shape_features.shape != (batch_size, SHAPE_FEATURE_WIDTH):
             raise ValueError("shape_features must have shape (batch, 1270).")
+        demonstration_features = shape_features[
+            :, : MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH
+        ].reshape(batch_size, MAX_DEMONSTRATIONS, DEMONSTRATION_SHAPE_WIDTH)
+        demonstration_valid = demonstration_features[..., 0]
+        demonstration_states = brainstate.nn.tanh(
+            self.demo_shape_projection(demonstration_features)
+        )
+        demonstration_summary = jnp.sum(
+            demonstration_states * demonstration_valid[..., None], axis=1
+        ) / jnp.maximum(
+            jnp.sum(demonstration_valid, axis=1)[..., None], 1.0
+        )
+        query_dimensions = shape_features[
+            :, MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH :
+        ]
         validity = query_features[..., -1]
         query_shape = jnp.concatenate(
             (jnp.max(validity, axis=2), jnp.max(validity, axis=1)), axis=-1
@@ -232,7 +250,8 @@ class DirectARCGRU(brainstate.nn.Module):
         shape_state = brainstate.nn.tanh(
             hidden
             + self.query_shape_projection(query_shape)
-            + self.episode_shape_projection(shape_features)
+            + demonstration_summary
+            + self.query_dimension_projection(query_dimensions)
         )
         context_vector = self.context_projection(hidden)
         context = context_vector[:, None, None, :]

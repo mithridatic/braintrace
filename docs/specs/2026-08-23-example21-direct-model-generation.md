@@ -77,7 +77,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   row/column validity;
 - a fixed lossless one-hot encoding of demonstration input/output dimensions
   and query-input dimensions, followed only by checkpoint-owned neural
-  projections; held-out query-output dimensions are never encoded;
+  projections; a shared per-demonstration projection is pooled with a
+  validity-masked mean so demonstration order cannot alter the relation
+  summary, and held-out query-output dimensions are never encoded;
 - a checkpoint-owned cross-spatial attention path from every valid query-input
   cell to every output coordinate, so learned spatial remapping is expressible
   without a fixed copy or transform residual;

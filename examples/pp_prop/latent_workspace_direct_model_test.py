@@ -91,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "explicit_demo_shape_attention_v5"
+        == "pooled_demo_shape_attention_v6"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -165,11 +165,14 @@ def test_demo_shape_projection_changes_executed_shape_logits() -> None:
     hidden = jnp.zeros((1, 8), dtype=jnp.float32)
     query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
     first_shapes = jnp.zeros((1, subject.SHAPE_FEATURE_WIDTH), dtype=jnp.float32)
-    second_shapes = first_shapes.at[0, 67].set(1.0)
+    second_shapes = first_shapes.at[0, 0].set(1.0)
+    second_shapes = second_shapes.at[0, 67].set(1.0)
 
     first = model.decode(hidden, query, first_shapes)[:2]
     second = model.decode(hidden, query, second_shapes)[:2]
 
+    assert hasattr(model, "demo_shape_projection")
+    assert hasattr(model, "query_dimension_projection")
     assert any(
         np.asarray(left).tobytes() != np.asarray(right).tobytes()
         for left, right in zip(first, second, strict=True)
@@ -184,7 +187,7 @@ def test_demo_shape_projection_changes_executed_shape_logits() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "temporally_pooled_shape_attention_v4"},
+        {"architecture_version": "explicit_demo_shape_attention_v5"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:
