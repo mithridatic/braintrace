@@ -1738,12 +1738,14 @@ def test_padding_changes_finite_window_pp_prop_credit_not_bptt_objective():
             padded,
             algo_factory=_padding_probe_pp_prop,
             chunk_size=1,
+            compiled_scan=True,
         )
         compact_pp_prop = chunked_online_param_gradients(
             factory,
             compact,
             algo_factory=_padding_probe_pp_prop,
             chunk_size=1,
+            compiled_scan=True,
         )
 
     assert gradient_norm(compact_bptt) > 1.0
@@ -2064,12 +2066,14 @@ def test_production_training_row_matches_explicit_compact_pp_prop_gradient(examp
             produced_inputs,
             algo_factory=_padding_probe_pp_prop,
             chunk_size=4,
+            compiled_scan=True,
         )
         reference_gradient = chunked_online_param_gradients(
             factory,
             reference_inputs,
             algo_factory=_padding_probe_pp_prop,
             chunk_size=4,
+            compiled_scan=True,
         )
 
     assert gradient_norm(reference_gradient) > 1e-3

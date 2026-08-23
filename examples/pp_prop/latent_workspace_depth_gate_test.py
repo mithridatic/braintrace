@@ -1685,12 +1685,14 @@ def test_padded_t19_matches_compact_prefix_finite_window_pp_prop(
             padded,
             algo_factory=_depth_probe_pp_prop,
             chunk_size=1,
+            compiled_scan=True,
         )
         compact_gradients = chunked_online_param_gradients(
             lambda: _DepthObjectiveProbe(config),
             compact,
             algo_factory=_depth_probe_pp_prop,
             chunk_size=1,
+            compiled_scan=True,
         )
 
     assert padded_objective == pytest.approx(compact_objective, rel=0.0, abs=1e-7)

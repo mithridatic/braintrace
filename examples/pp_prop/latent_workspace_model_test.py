@@ -1656,6 +1656,7 @@ def test_memory_etp_paths_are_direct_with_finite_window_pp_prop_gradients(
             vjp_method="multi-step",
         ),
         chunk_size=1,
+        compiled_scan=True,
     )
     for path in expected_paths:
         gradient_leaves = jax.tree.leaves(gradients[path])
@@ -1743,12 +1744,14 @@ def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control(
         inputs,
         algo_factory=algorithm_factory,
         chunk_size=1,
+        compiled_scan=True,
     )
     full_gradients = chunked_online_param_gradients(
         lambda: _MaterializedLatentObjective("full"),
         inputs,
         algo_factory=algorithm_factory,
         chunk_size=1,
+        compiled_scan=True,
     )
 
     def gradient_l2(value: object) -> float:
@@ -4498,6 +4501,7 @@ def test_learned_key_coding_trains_through_retrieval_path_only() -> None:
             vjp_method="multi-step",
         ),
         chunk_size=1,
+        compiled_scan=True,
     )
     gradient_leaves = jax.tree.leaves(gradients[key_path])
     gradient_norm = sum(
@@ -4646,6 +4650,7 @@ def test_learned_write_trains_the_write_projections_through_the_memory() -> None
             vjp_method="multi-step",
         ),
         chunk_size=1,
+        compiled_scan=True,
     )
     for path in sorted(write_paths):
         leaves = jax.tree.leaves(gradients[path])

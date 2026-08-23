@@ -84,12 +84,15 @@ _malloc_trim = _make_malloc_trim()
 
 _XDIST_GROUP_BY_FIXTURE = {
     "reduced_gate_run": "depth-reduced-run",
-    "reduced_gate_a_full_legacy_run": "gate-a-arms",
-    "reduced_gate_b_arm_run": "gate-b-arms",
-    "reduced_gate_c_initialization_subject": "initialization",
+    # These fixtures each compile a real reduced Gate C pp-prop model. Keep
+    # them on one worker so six concurrent XLA compilations do not contend for
+    # the same CPU backend; their consumers still all run in the default gate.
+    "reduced_gate_a_full_legacy_run": "gate-c-runtime",
+    "reduced_gate_b_arm_run": "gate-c-runtime",
+    "reduced_gate_c_initialization_subject": "gate-c-runtime",
+    "reduced_formal_terminal_and_frozen_reports": "gate-c-runtime",
+    "reduced_finite_window_oracle_inputs": "gate-c-runtime",
     "passing_formal_gate_c_report": "formal-arms",
-    "reduced_formal_terminal_and_frozen_reports": "formal-arms",
-    "reduced_finite_window_oracle_inputs": "mechanism-oracle",
     "passing_gate_c2_no_read_reports": "removed-path-reports",
     "reduced_gate_c2_removed_path_reports": "removed-path-reports",
 }
