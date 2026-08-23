@@ -333,3 +333,31 @@ bound is 6 and it has been attained. Exceeding it requires a colour head that em
 correct **non-copy** content -- and the two regimes above show the current head cannot:
 constrained it copies, freed it is wrong. That is a design change, not a configuration
 search, and it is the only remaining honest route.
+
+
+## The offset route is closed under adaptation too
+
+The ceiling of 6 assumes a top-left decode origin. An offset-capable decoder would raise
+the answerable set to the 19-query crop family (18 single-query, so a nominal ceiling
+near 72). The remaining question was whether *task-local* adaptation could supply the
+origin where a global rule could not -- a crop task's own demonstrations do exhibit the
+crop.
+
+They do not supply it. For each of the 19 crop queries, comparing the offsets recovered
+from that task's demonstrations against the query's own offset:
+
+| | count |
+|---|---|
+| demo offsets all equal **and** matching the query offset | **0 / 19** |
+| all demo output shapes equal and matching the query shape | 8 / 19 |
+
+No task has a constant demonstration offset, so adaptation cannot memorise one. The
+origin would have to be genuinely *located* in the query input -- which is refuted three
+independent ways: model confidence ranks the true window 0/19, hand-engineered
+colour-bbox rules cover 3/19, and demonstration memorisation gives 0/19.
+
+The extent is a different matter -- 8 of 19 have constant demonstration shapes -- but
+extent without origin yields nothing beyond the two top-left crops already counted.
+
+The ceiling of 6 therefore holds for the architecture as it stands and for every
+adaptation regime available to it.
