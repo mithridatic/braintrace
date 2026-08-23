@@ -251,3 +251,43 @@ ability to extract a usable rule from a carrier that already varies with the
 demonstrations. A productive next experiment changes the *write* mechanism or
 the head's readout objective, not its capacity -- `delta_write` and
 `situ_glu_update` are the two write mechanisms never yet run.
+
+
+## Write mechanisms: the two never-run codings
+
+Run inventory by `memory_coding` before this session: frozen 33, learned_update 15,
+learned_write 3, learned_keys 0, delta_write 0, situ_glu_update 0. Both untried
+mechanisms were run.
+
+**`situ_glu_update`** ran cleanly -- 14 eligibility-trace temporal routes including
+`memory_situ_glu.gate_weight`, `.up_weight` and `.output_weight`, 0 warnings, 0
+errors -- and scored **cumulative 0** at shape 0.5227 and pixel 0.5157. Its
+changed-cell rank-1 accuracy is **0.035**, *below* the carrier-connected baseline
+of 0.105-0.120, because the copy residual suppresses precisely the edits the new
+write mechanism was meant to enable.
+
+**`delta_write`** trains but diverges in the evaluation forward pass, producing
+non-finite height logits. This reproduced at **lr 1e-3 and lr 2e-4** -- five times
+apart -- so it is the mechanism, not the learning rate. It replaces the whole
+memory state per write (`candidate_memory = encode_delta_memory_candidate(event)`)
+with no decay term, which is the likely cause. Recorded as unstable in this
+configuration rather than as evaluated.
+
+## The score is a step function of copy fidelity
+
+| configuration | input echo | changed-cell rank-1 | cumulative |
+|---|---|---|---|
+| copy residual 2, carrier 0, frozen | **1.000** | 0.000 | **4** |
+| copy residual 2, carrier 1, situ_glu | 0.913 | 0.035 | 0 |
+| copy residual 0, carrier 1, frozen u700 | 0.652 | 0.120 | 0 |
+
+Cumulative 4 occurs at exactly one point: where the colour head is a *perfect* copy.
+Every step away trades a guaranteed win for a small chance of a correct edit, and the
+trade never pays -- the two winning queries are exact crops, and a 9% deviation
+breaks both.
+
+The 4 is narrower than even that suggests. Forcing `situ_glu`'s logits to a perfect
+copy offline recovers only **1**, not 4: its shape head (0.5561) misses the two crop
+shapes the winning run's (0.5776) happens to hit. Cumulative 4 requires a perfect copy
+*and* two fortunate shape predictions -- a coincidence rather than a capability, which
+is the honest characterisation of the baseline this work started from.
