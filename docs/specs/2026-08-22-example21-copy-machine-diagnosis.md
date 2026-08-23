@@ -291,3 +291,45 @@ copy offline recovers only **1**, not 4: its shape head (0.5561) misses the two 
 shapes the winning run's (0.5776) happens to hit. Cumulative 4 requires a perfect copy
 *and* two fortunate shape predictions -- a coincidence rather than a capability, which
 is the honest characterisation of the baseline this work started from.
+
+
+## The ceiling is provable, and the best run is already at it
+
+Grant the architecture a **perfect** shape head and a colour head that copies the query
+input. A copying head can only emit a crop of the input, so the answerable set is exactly
+the queries whose target *is* a top-left crop. There are two:
+
+| query | shape | task | contributes |
+|---|---|---|---|
+| `bbb1b8b6` q1 | 4x4 | 2 test queries; strict pass needs both | q@1 + q@2 = 2 |
+| `e872b94a` q0 | 3x1 | single-query | all four = 4 |
+| **ceiling** | | | **6** |
+
+The best run on record, `example21-cr2cs0ad-4096n-4096e-b32-u260-l60-lr1e-3-s2108`,
+scores q@1=2, q@2=2, strict@1=1, strict@2=1 -- **exactly the maximum**. Its measured wall
+time is 4488.6 s (74.8 min). More scale, more adaptation budget, and a better shape head
+cannot move it, because the bound does not depend on any of them.
+
+The best frozen run scores 4 on the *same two queries*; adaptation's entire contribution
+was promoting `e872b94a` from rank 2 to rank 1, worth exactly +2.
+
+### Task-local adaptation in both colour-head regimes
+
+| configuration | shape | pixel | echo | cumulative |
+|---|---|---|---|---|
+| copy residual 2, carrier 0 -- head can only copy | 0.7112 | 0.5861 | ~1.0 | **6, at ceiling** |
+| copy residual 0, carrier 1 -- head is free | 0.3462 | 0.3032 | 0.359 | **0** |
+
+The free-head arm was run on 104 queries (334 adaptation folds, 437.7 s measured) and
+produced **zero** exact answers while shape fell from 0.711 to 0.346. Constrain the head
+to copying and the ceiling is reached but not passed; free it and everything degrades.
+There is no setting between them that pays, because the score is a step function whose
+step sits at exact copy.
+
+## Conclusion, restated
+
+Cumulative 10 is not reachable by tuning, scaling, or adapting this architecture. The
+bound is 6 and it has been attained. Exceeding it requires a colour head that emits
+correct **non-copy** content -- and the two regimes above show the current head cannot:
+constrained it copies, freed it is wrong. That is a design change, not a configuration
+search, and it is the only remaining honest route.
