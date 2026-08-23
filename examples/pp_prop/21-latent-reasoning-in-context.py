@@ -3381,14 +3381,6 @@ def _demonstration_fitted_windows(
     ).copy()
 
 
-def _answer_head_arm(
-    arm_window: tuple[np.ndarray, ...], windows: np.ndarray | None
-) -> tuple[np.ndarray, ...]:
-    """Swap an arm's decoder logits for the demonstration-fitted head's."""
-
-    return arm_window if windows is None else (windows, *arm_window[1:])
-
-
 def _derange_task(task: ArcTask) -> ArcTask | None:
     if len(task.train) < 2:
         return None
@@ -3926,6 +3918,8 @@ def _control_summary(
     submission_checkpoint: int = SUBMISSION_CHECKPOINT,
     rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
     intact_rule_proposals: Sequence[tuple[str, np.ndarray] | None] | None = None,
+    intact_windows: np.ndarray | None = None,
+    control_windows: np.ndarray | None = None,
 ) -> dict[str, object]:
     if metadata is None:
         metadata = tuple({"available": True, "timing_matched": True} for _ in records)
@@ -3943,6 +3937,18 @@ def _control_summary(
     applicable_intact = subset(intact)
     applicable_control = subset(control)
 
+    def scored(window: np.ndarray | None, fallback: np.ndarray) -> np.ndarray:
+        """Score the answer head's logits while comparing the network's state.
+
+        An answer head that does not read the reasoning trajectory emits one
+        window per query, not one per trajectory step, so it cannot stand in
+        for element zero of the arm tuple -- the state comparisons below index
+        that array by step. Scoring takes the head's windows; everything else
+        keeps the arm's own.
+        """
+
+        return fallback if window is None else window[:, applicable_indices]
+
     def subset_rules(
         proposals: Sequence[tuple[str, np.ndarray] | None] | None,
     ) -> tuple[tuple[str, np.ndarray] | None, ...] | None:
@@ -3954,7 +3960,7 @@ def _control_summary(
 
     if applicable_records:
         metrics, control_checkpoint_queries = _score_windows(
-            applicable_control[0],
+            scored(control_windows, applicable_control[0]),
             applicable_records,
             color_rank,
             decoder_mode,
@@ -3963,7 +3969,7 @@ def _control_summary(
             subset_rules(rule_proposals),
         )
         matched_intact_metrics, intact_checkpoint_queries = _score_windows(
-            applicable_intact[0],
+            scored(intact_windows, applicable_intact[0]),
             applicable_records,
             color_rank,
             decoder_mode,
@@ -4959,7 +4965,7 @@ def _evaluate(
             )
             for arm in answer_head_windows
         }
-        intact = _answer_head_arm(intact, answer_head_windows["intact"])
+
     protocol_evidence: dict[str, object] | None = None
     if protocol_v2:
         boundaries = intact_protocol.metadata["per_example_boundaries"]
@@ -5058,8 +5064,10 @@ def _evaluate(
             ),
         }
         del audit_window, audit_voltage, audit_memory
+    scored_windows = answer_head_windows["intact"]
     model_only_metrics, model_only_queries = _score_windows(
-        intact[0], records, config.color_rank, config.decoder_mode,
+        intact[0] if scored_windows is None else scored_windows,
+        records, config.color_rank, config.decoder_mode,
         checkpoints, submission_checkpoint,
     )
     intact_rules: tuple[tuple[str, np.ndarray] | None, ...] | None = None
@@ -5076,7 +5084,8 @@ def _evaluate(
                 records, data.evaluation, arm="no_context"
             )
         frozen_metrics, frozen_checkpoint_queries = _score_windows(
-            intact[0], records, config.color_rank, config.decoder_mode,
+            intact[0] if scored_windows is None else scored_windows,
+            records, config.color_rank, config.decoder_mode,
             checkpoints, submission_checkpoint, intact_rules,
         )
     else:
@@ -5210,7 +5219,6 @@ def _evaluate(
     repeat_intact, repeat_associative = run_arm(
         "repeat_intact", intact_events, intact_advances, inactive_gates
     )
-    repeat_intact = _answer_head_arm(repeat_intact, answer_head_windows["intact"])
     repeat_result = _control_summary(
         "repeat_intact",
         intact,
@@ -5224,6 +5232,8 @@ def _evaluate(
         submission_checkpoint,
         intact_rules,
         intact_rules,
+        answer_head_windows["intact"],
+        answer_head_windows["intact"],
     )
     repeat_match = _state_tolerance_summary(intact, repeat_intact)
     if protocol_v2:
@@ -5263,7 +5273,6 @@ def _evaluate(
     no_context, no_context_associative = run_arm(
         "no_context", no_context_events, no_context_advances, inactive_gates
     )
-    no_context = _answer_head_arm(no_context, answer_head_windows["no_context"])
     no_context_result = _control_summary(
         "no_context",
         intact,
@@ -5277,6 +5286,8 @@ def _evaluate(
         submission_checkpoint,
         no_context_rules,
         intact_rules,
+        answer_head_windows["intact"],
+        answer_head_windows["no_context"],
     )
     del no_context
 
@@ -5286,7 +5297,6 @@ def _evaluate(
         shuffled_advances,
         inactive_gates,
     )
-    shuffled = _answer_head_arm(shuffled, answer_head_windows["shuffled"])
     shuffled_result = _control_summary(
         "shuffled_demonstrations",
         intact,
@@ -5300,6 +5310,8 @@ def _evaluate(
         submission_checkpoint,
         shuffled_rules,
         intact_rules,
+        answer_head_windows["intact"],
+        answer_head_windows["shuffled"],
     )
     del shuffled
 
@@ -5341,6 +5353,11 @@ def _evaluate(
             submission_checkpoint,
             intact_rules,
             intact_rules,
+            # neither the held state nor the lesioned recurrence is an input to a
+            # head fitted on demonstration grids, so both arms score under the
+            # intact fit and the state comparison carries the causal claim.
+            answer_head_windows["intact"],
+            answer_head_windows["intact"],
         )
         state_hold_result["r30_r60_equal_r0"] = bool(
             np.array_equal(state_hold[0][0], state_hold[0][1])
@@ -5359,6 +5376,11 @@ def _evaluate(
             submission_checkpoint,
             intact_rules,
             intact_rules,
+            # neither the held state nor the lesioned recurrence is an input to a
+            # head fitted on demonstration grids, so both arms score under the
+            # intact fit and the state comparison carries the causal claim.
+            answer_head_windows["intact"],
+            answer_head_windows["intact"],
         )
         del state_hold, recurrent_lesion
     else:
@@ -5381,10 +5403,6 @@ def _evaluate(
     ablated, ablated_associative = run_arm(
         "slot_ablation", intact_events, intact_advances, gates
     )
-    # the forest reads demonstrations, not the ablated memory slot, so its
-    # answer is unchanged by the ablation -- including at checkpoint zero,
-    # where the pre-intervention gate requires the two arms to agree exactly.
-    ablated = _answer_head_arm(ablated, answer_head_windows["intact"])
     ablation_result = _control_summary(
         f"slot_ablation_{config.ablation_slot}",
         intact,
@@ -5398,6 +5416,12 @@ def _evaluate(
         submission_checkpoint,
         intact_rules,
         intact_rules,
+        # the forest reads demonstrations, not the ablated memory slot, so
+        # ablating a slot genuinely cannot move its answer; the honest report
+        # scores both arms with the same fit and lets the state comparison
+        # carry the causal claim.
+        answer_head_windows["intact"],
+        answer_head_windows["intact"],
     )
     pre_intervention_match = _state_tolerance_summary(
         intact, ablated, step_indices=(0,)
