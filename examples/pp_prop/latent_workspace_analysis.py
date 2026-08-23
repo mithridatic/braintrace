@@ -169,6 +169,7 @@ SelectionRole = Literal[
     "latest_sweep_joint_argmax",
     "earlier_sweep_joint_argmax",
     "latest_sweep_logit_runner_up",
+    "checkpoint_conditioned_rank",
 ]
 
 
@@ -183,7 +184,8 @@ class SelectedModelCandidate:
     source_checkpoint : int
         Positive completed-sweep checkpoint that supplied the candidate.
     selection_role : {"latest_sweep_joint_argmax", \
-            "earlier_sweep_joint_argmax", "latest_sweep_logit_runner_up"}
+            "earlier_sweep_joint_argmax", "latest_sweep_logit_runner_up", \
+            "checkpoint_conditioned_rank"}
         Deterministic role occupied by the candidate in the two-slot policy.
 
     Raises
@@ -210,13 +212,18 @@ class SelectedModelCandidate:
             "latest_sweep_joint_argmax",
             "earlier_sweep_joint_argmax",
             "latest_sweep_logit_runner_up",
+            "checkpoint_conditioned_rank",
         }
         if self.selection_role not in valid_roles:
             raise ValueError("selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
         is_runner_up = self.selection_role == "latest_sweep_logit_runner_up"
+        is_joint_argmax = self.selection_role in {
+            "latest_sweep_joint_argmax",
+            "earlier_sweep_joint_argmax",
+        }
         if is_runner_up and self.candidate.changed_decision is None:
             raise ValueError("Runner-up candidate must name its changed decision. Set Runner-up candidate to name its changed decision.")
-        if not is_runner_up and self.candidate.changed_decision is not None:
+        if is_joint_argmax and self.candidate.changed_decision is not None:
             raise ValueError("Joint-argmax candidate cannot name a changed decision. Fix the input condition named in the error, then rerun the operation.")
 
     def to_dict(self) -> dict[str, object]:
@@ -885,22 +892,34 @@ def assess_model_only_completion(
         first = _selected_candidate_from_record(candidate_values[0], "candidate 1")
         second = _selected_candidate_from_record(candidate_values[1], "candidate 2")
         latest = first.source_checkpoint
-        if first.selection_role != "latest_sweep_joint_argmax":
-            raise ValueError("Candidate 1 selection_role must identify latest argmax. Set Candidate 1 selection_role to identify latest argmax.")
         if latest % _AXIS_SIZE:
             raise ValueError("Candidate 1 source checkpoint must be a completed sweep. Set Candidate 1 source checkpoint to a completed sweep.")
-        if second.selection_role == "earlier_sweep_joint_argmax":
-            if not 0 < second.source_checkpoint < latest:
-                raise ValueError("Earlier candidate checkpoint must precede latest. Set Earlier candidate checkpoint to precede latest.")
-            if second.source_checkpoint % _AXIS_SIZE:
+        if first.selection_role == "checkpoint_conditioned_rank":
+            if second.selection_role != "checkpoint_conditioned_rank":
                 raise ValueError(
-                    "Earlier candidate checkpoint must be a completed sweep. Set Earlier candidate checkpoint to a completed sweep."
+                    "Checkpoint-conditioned candidates must both identify their "
+                    "conditioned rank."
                 )
-        elif second.selection_role == "latest_sweep_logit_runner_up":
             if second.source_checkpoint != latest:
-                raise ValueError("Runner-up checkpoint must equal latest checkpoint. Set Runner-up checkpoint to equal latest checkpoint.")
+                raise ValueError(
+                    "Checkpoint-conditioned candidates must use the same source "
+                    "checkpoint."
+                )
         else:
-            raise ValueError("Candidate 2 selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
+            if first.selection_role != "latest_sweep_joint_argmax":
+                raise ValueError("Candidate 1 selection_role must identify latest argmax. Set Candidate 1 selection_role to identify latest argmax.")
+            if second.selection_role == "earlier_sweep_joint_argmax":
+                if not 0 < second.source_checkpoint < latest:
+                    raise ValueError("Earlier candidate checkpoint must precede latest. Set Earlier candidate checkpoint to precede latest.")
+                if second.source_checkpoint % _AXIS_SIZE:
+                    raise ValueError(
+                        "Earlier candidate checkpoint must be a completed sweep. Set Earlier candidate checkpoint to a completed sweep."
+                    )
+            elif second.selection_role == "latest_sweep_logit_runner_up":
+                if second.source_checkpoint != latest:
+                    raise ValueError("Runner-up checkpoint must equal latest checkpoint. Set Runner-up checkpoint to equal latest checkpoint.")
+            else:
+                raise ValueError("Candidate 2 selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
         if np.array_equal(first.candidate.grid, second.candidate.grid):
             raise ValueError("Model-only candidates must be distinct. Set Model-only candidates to distinct.")
 

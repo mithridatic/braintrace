@@ -615,6 +615,21 @@ def test_model_only_completion_gate_passes_at_exactly_160_of_400_tasks() -> None
     msgspec_json.dumps(report, allow_nan=False)
 
 
+def test_model_only_completion_accepts_checkpoint_conditioned_rank_pair() -> None:
+    records, expected_queries = _model_only_completion_fixture(160)
+    for record in records:
+        candidates = record["candidates"]
+        candidates.reverse()
+        for candidate in candidates:
+            candidate["source_checkpoint"] = 60
+            candidate["selection_role"] = "checkpoint_conditioned_rank"
+
+    report = assess_model_only_completion(records, expected_queries)
+
+    assert report["exact_task_count"] == 160
+    assert report["passed"] is True
+
+
 def test_model_only_completion_gate_fails_at_159_of_400_tasks() -> None:
     records, expected_queries = _model_only_completion_fixture(159)
 
