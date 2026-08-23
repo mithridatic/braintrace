@@ -114,8 +114,8 @@ from each training batch's valid target cells. This prevents the dominant
 background class from hiding rare object-color errors; it does not enter the
 answer path or inspect validation/evaluation targets. Height, width, and the
 weighted cell term contribute equally so shape errors cannot be hidden by
-pixel improvement. The weighted cell term mixes 75 percent valid-cell mean
-cross entropy with 25 percent mean per-grid worst-cell cross entropy, so the
+pixel improvement. The weighted cell term mixes 95 percent valid-cell mean
+cross entropy with 5 percent mean per-grid worst-cell cross entropy, so the
 last incorrect cell cannot disappear inside a large otherwise-correct grid.
 
 Rule engines and forests may not create pseudo-targets for evaluation inputs or

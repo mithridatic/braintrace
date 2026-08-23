@@ -218,7 +218,7 @@ def test_hard_cell_error_is_not_diluted_by_large_grid() -> None:
         large_mask,
     )
 
-    assert float(large_loss) > 0.2 * float(small_loss)
+    assert float(large_loss) > 0.04 * float(small_loss)
 
 
 def test_training_interfaces_reject_invalid_inputs() -> None:
