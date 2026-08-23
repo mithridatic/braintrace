@@ -3,18 +3,23 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import pathlib
+from dataclasses import asdict, dataclass
 from numbers import Integral, Real
 
 import brainstate
 import braintools
 import jax
 import jax.numpy as jnp
+import msgspec
 import numpy as np
 import optax
 
 try:
-    from examples.pp_prop.latent_workspace_direct_model import DirectARCGRU
+    from examples.pp_prop.latent_workspace_direct_model import (
+        DirectARCGRU,
+        DirectModelConfig,
+    )
     from examples.pp_prop.latent_workspace_task import (
         ArcGrid,
         ArcPair,
@@ -26,6 +31,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
     from latent_workspace_direct_model import (  # pyright: ignore[reportImplicitRelativeImport]
         DirectARCGRU,
+        DirectModelConfig,
     )
     from latent_workspace_task import (  # pyright: ignore[reportImplicitRelativeImport]
         ArcGrid,
@@ -339,6 +345,139 @@ def parameter_digest(model: DirectARCGRU) -> str:
             digest.update(str(array.shape).encode("ascii"))
             digest.update(array.tobytes())
     return digest.hexdigest()
+
+
+def save_direct_checkpoint(
+    model: DirectARCGRU, path: pathlib.Path
+) -> str:
+    """Save an exact, schema-bound direct-model checkpoint.
+
+    Parameters
+    ----------
+    model : DirectARCGRU
+        Model whose checkpoint-owned parameters are saved.
+    path : pathlib.Path
+        Destination ``.npz`` path.
+
+    Returns
+    -------
+    str
+        SHA-256 digest of the ordered parameter schema and bytes.
+    """
+
+    if not isinstance(model, DirectARCGRU):
+        raise TypeError("model must be a DirectARCGRU instance.")
+    path = pathlib.Path(path)
+    states = model.states(brainstate.ParamState)
+    arrays: dict[str, np.ndarray] = {}
+    leaves_metadata = []
+    leaf_number = 0
+    for state_path, state in states.items():
+        path_text = ".".join(map(str, state_path))
+        for index, leaf in enumerate(jax.tree.leaves(state.value)):
+            array = np.ascontiguousarray(np.asarray(leaf))
+            key = f"leaf_{leaf_number:04d}"
+            arrays[key] = array
+            leaves_metadata.append(
+                {
+                    "key": key,
+                    "state_path": path_text,
+                    "tree_leaf_index": index,
+                    "shape": list(array.shape),
+                    "dtype": array.dtype.str,
+                }
+            )
+            leaf_number += 1
+    digest = parameter_digest(model)
+    metadata = {
+        "schema_version": 1,
+        "architecture": asdict(model.config),
+        "parameter_sha256": digest,
+        "leaves": leaves_metadata,
+    }
+    arrays["__metadata__"] = np.frombuffer(
+        msgspec.json.encode(metadata, order="sorted"), dtype=np.uint8
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as stream:
+        np.savez(stream, **arrays)
+    return digest
+
+
+def load_direct_checkpoint(
+    path: pathlib.Path,
+) -> tuple[DirectARCGRU, dict[str, object]]:
+    """Load a direct-model checkpoint while enforcing its exact leaf schema.
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        Existing checkpoint path.
+
+    Returns
+    -------
+    model : DirectARCGRU
+        Reconstructed model with exact saved parameters.
+    metadata : dict
+        Validated checkpoint metadata.
+    """
+
+    path = pathlib.Path(path)
+    try:
+        with np.load(path, allow_pickle=False) as archive:
+            names = set(archive.files)
+            if "__metadata__" not in names:
+                raise ValueError("checkpoint metadata is missing.")
+            metadata = msgspec.json.decode(bytes(archive["__metadata__"]))
+            if not isinstance(metadata, dict) or metadata.get("schema_version") != 1:
+                raise ValueError("checkpoint schema_version is unsupported.")
+            architecture = metadata.get("architecture")
+            leaves_metadata = metadata.get("leaves")
+            if not isinstance(architecture, dict) or not isinstance(
+                leaves_metadata, list
+            ):
+                raise TypeError("checkpoint metadata schema is invalid.")
+            model = DirectARCGRU(DirectModelConfig(**architecture))
+            states = model.states(brainstate.ParamState)
+            expected_names = {
+                item.get("key") for item in leaves_metadata if isinstance(item, dict)
+            }
+            if names != expected_names | {"__metadata__"}:
+                raise ValueError("checkpoint leaf set does not match metadata.")
+            cursor = 0
+            for state_path, state in states.items():
+                expected_path = ".".join(map(str, state_path))
+                structure = jax.tree.structure(state.value)
+                original_leaves = jax.tree.leaves(state.value)
+                restored = []
+                for index, original in enumerate(original_leaves):
+                    if cursor >= len(leaves_metadata):
+                        raise ValueError("checkpoint is missing parameter leaves.")
+                    item = leaves_metadata[cursor]
+                    if not isinstance(item, dict):
+                        raise TypeError("checkpoint leaf metadata is invalid.")
+                    key = item.get("key")
+                    array = np.asarray(archive[key])
+                    if (
+                        item.get("state_path") != expected_path
+                        or item.get("tree_leaf_index") != index
+                        or item.get("shape") != list(np.asarray(original).shape)
+                        or item.get("dtype") != np.asarray(original).dtype.str
+                        or list(array.shape) != item.get("shape")
+                        or array.dtype.str != item.get("dtype")
+                    ):
+                        raise ValueError("checkpoint parameter schema does not match model.")
+                    restored.append(jnp.asarray(array))
+                    cursor += 1
+                state.value = jax.tree.unflatten(structure, restored)
+            if cursor != len(leaves_metadata):
+                raise ValueError("checkpoint has unexpected parameter leaves.")
+    except (KeyError, OSError, TypeError, msgspec.DecodeError) as error:
+        raise ValueError("checkpoint could not be decoded safely.") from error
+    expected_digest = metadata.get("parameter_sha256")
+    if not isinstance(expected_digest, str) or parameter_digest(model) != expected_digest:
+        raise ValueError("checkpoint parameter digest does not match its contents.")
+    return model, metadata
 
 
 class DirectBPTTTrainer:

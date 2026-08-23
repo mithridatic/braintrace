@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import importlib
 
+import brainstate
+import jax.numpy as jnp
+import msgspec
 import numpy as np
 import pytest
 
@@ -127,3 +130,69 @@ def test_training_interfaces_reject_invalid_inputs() -> None:
         subject.repeat_batch(batch, updates=0)
     with pytest.raises(TypeError, match="DirectARCGRU"):
         subject.parameter_digest(object())
+
+
+def test_checkpoint_round_trip_is_byte_exact(tmp_path) -> None:
+    subject = _subject()
+    model_subject = importlib.import_module(
+        "examples.pp_prop.latent_workspace_direct_model"
+    )
+    config = model_subject.DirectModelConfig(
+        input_width=6,
+        encoder_width=4,
+        hidden_width=8,
+        decoder_width=6,
+        seed=17,
+    )
+    model = model_subject.DirectARCGRU(config)
+    path = tmp_path / "checkpoint.npz"
+
+    saved = subject.save_direct_checkpoint(model, path)
+    loaded, metadata = subject.load_direct_checkpoint(path)
+
+    assert saved == subject.parameter_digest(model)
+    assert subject.parameter_digest(loaded) == saved
+    assert metadata["parameter_sha256"] == saved
+    assert loaded.config == config
+    events = jnp.ones((3, 1, 6), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    original = tuple(np.asarray(value) for value in model.run(events, query))
+    brainstate.nn.init_all_states(loaded, batch_size=1)
+    reloaded = tuple(np.asarray(value) for value in loaded.run(events, query))
+    assert all(
+        left.tobytes() == right.tobytes()
+        for left, right in zip(original, reloaded, strict=True)
+    )
+
+
+@pytest.mark.parametrize("corruption", ["missing", "shape", "dtype", "schema"])
+def test_checkpoint_load_rejects_schema_corruption(tmp_path, corruption: str) -> None:
+    subject = _subject()
+    model_subject = importlib.import_module(
+        "examples.pp_prop.latent_workspace_direct_model"
+    )
+    model = model_subject.DirectARCGRU(
+        model_subject.DirectModelConfig(input_width=6, hidden_width=8, seed=19)
+    )
+    path = tmp_path / "checkpoint.npz"
+    subject.save_direct_checkpoint(model, path)
+    with np.load(path, allow_pickle=False) as archive:
+        payload = {name: archive[name] for name in archive.files}
+    metadata = msgspec.json.decode(bytes(payload.pop("__metadata__")))
+    if corruption == "missing":
+        payload.pop("leaf_0000")
+    elif corruption == "shape":
+        original_shape = payload["leaf_0000"].shape
+        payload["leaf_0000"] = payload["leaf_0000"].reshape(1, -1)
+        assert payload["leaf_0000"].shape != original_shape
+    elif corruption == "dtype":
+        payload["leaf_0000"] = payload["leaf_0000"].astype(np.float64)
+    else:
+        metadata["schema_version"] = 999
+    payload["__metadata__"] = np.frombuffer(msgspec.json.encode(metadata), dtype=np.uint8)
+    with path.open("wb") as stream:
+        np.savez(stream, **payload)
+
+    with pytest.raises(ValueError, match="checkpoint"):
+        subject.load_direct_checkpoint(path)

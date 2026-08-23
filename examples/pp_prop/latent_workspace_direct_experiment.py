@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import pathlib
 import subprocess
 import time
@@ -33,6 +34,7 @@ try:
         encode_direct_episode,
         leave_one_out_tasks,
         parameter_digest,
+        save_direct_checkpoint,
         stack_direct_episodes,
     )
     from examples.pp_prop.latent_workspace_task import (
@@ -64,6 +66,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         encode_direct_episode,
         leave_one_out_tasks,
         parameter_digest,
+        save_direct_checkpoint,
         stack_direct_episodes,
     )
     from latent_workspace_task import (  # pyright: ignore[reportImplicitRelativeImport]
@@ -464,7 +467,7 @@ def evaluate_model(
     if not episodes:
         raise ValueError("Evaluation episodes must be nonempty.")
     batch = stack_direct_episodes(episodes)
-    brainstate.nn.reset_all_states(model, batch_size=len(episodes))
+    brainstate.nn.init_all_states(model, batch_size=len(episodes))
 
     @brainstate.transform.jit
     def run_once(events: jax.Array, query_features: jax.Array):
@@ -514,6 +517,22 @@ def evaluate_model(
 
 
 def _source_revision() -> tuple[str, bool]:
+    explicit_revision = os.environ.get("BRAINTRACE_SOURCE_REVISION")
+    explicit_dirty = os.environ.get("BRAINTRACE_SOURCE_DIRTY")
+    if explicit_revision is not None or explicit_dirty is not None:
+        if explicit_revision is None or explicit_dirty is None:
+            raise ValueError(
+                "BRAINTRACE_SOURCE_REVISION and BRAINTRACE_SOURCE_DIRTY must be set together."
+            )
+        if len(explicit_revision) != 40 or any(
+            character not in "0123456789abcdefABCDEF"
+            for character in explicit_revision
+        ):
+            raise ValueError("BRAINTRACE_SOURCE_REVISION must be a 40-character hex hash.")
+        normalized_dirty = explicit_dirty.lower()
+        if normalized_dirty not in {"true", "false"}:
+            raise ValueError("BRAINTRACE_SOURCE_DIRTY must be true or false.")
+        return explicit_revision.lower(), normalized_dirty == "true"
     try:
         revision = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -572,12 +591,13 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             seed=config.seed,
         )
         model = DirectARCGRU(model_config)
+        before = parameter_digest(model)
+        evaluation_before_training = evaluate_model(model, scored_episodes)
         trainer = DirectBPTTTrainer(
             model,
             batch_size=config.training_batch_size,
             learning_rate=config.learning_rate,
         )
-        before = parameter_digest(model)
         rng = brainstate.random.RandomState(config.seed + 1)
         losses = []
         started = time.perf_counter()
@@ -601,6 +621,10 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
         training_seconds = time.perf_counter() - started
         after = parameter_digest(model)
         evaluation = evaluate_model(model, scored_episodes)
+        config.output_dir.mkdir(parents=True, exist_ok=True)
+        checkpoint_path = config.output_dir / "checkpoint.npz"
+        checkpoint_digest = save_direct_checkpoint(model, checkpoint_path)
+        checkpoint_file_digest = hashlib.sha256(checkpoint_path.read_bytes()).hexdigest()
     revision, dirty = _source_revision()
     result = {
         "schema_version": 1,
@@ -635,9 +659,14 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             "finite": bool(np.all(np.isfinite(losses))),
             "wall_seconds": training_seconds,
         },
+        "checkpoint": {
+            "filename": checkpoint_path.name,
+            "parameter_sha256": checkpoint_digest,
+            "file_sha256": checkpoint_file_digest,
+        },
+        "evaluation_before_training": evaluation_before_training,
         "evaluation": evaluation,
     }
-    config.output_dir.mkdir(parents=True, exist_ok=True)
     result_path = config.output_dir / "result.json"
     result_path.write_bytes(msgspec.json.encode(result, order="sorted"))
     return result
@@ -696,7 +725,12 @@ def main(argv: list[str] | None = None) -> int:
         evaluate_complete_manifest=args.evaluate_complete_manifest,
     )
     result = run_experiment(config)
-    print(msgspec.json.encode(result["evaluation"], order="sorted").decode())
+    summary = {
+        "strict_task_pass_at_1_count": result["evaluation"][
+            "strict_task_pass_at_1_count"
+        ]
+    }
+    print(msgspec.json.encode(summary, order="sorted").decode())
     return 0
 
 

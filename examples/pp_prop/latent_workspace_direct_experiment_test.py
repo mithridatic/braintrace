@@ -188,7 +188,12 @@ def test_tiny_end_to_end_run_writes_exact_validation_artifact(tmp_path) -> None:
     assert result["evaluation"]["query_count"] == 1
     assert isinstance(result["evaluation"]["strict_task_pass_at_1_count"], int)
     assert result["model"]["parameters_moved"] is True
+    assert result["checkpoint"]["parameter_sha256"] == result["model"][
+        "parameter_sha256_after"
+    ]
+    assert result["evaluation_before_training"]["task_count"] == 1
     assert (output / "result.json").is_file()
+    assert (output / "checkpoint.npz").is_file()
 
 
 def test_source_manifest_and_sampling_fail_closed(tmp_path) -> None:
@@ -237,4 +242,17 @@ def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys)
 
     assert exit_code == 0
     assert observed["config"].augment is False
-    assert "strict_task_pass_at_1_count" in capsys.readouterr().out
+    output = json.loads(capsys.readouterr().out)
+    assert output == {"strict_task_pass_at_1_count": 0}
+
+
+def test_source_revision_prefers_explicit_container_provenance(monkeypatch) -> None:
+    subject = _subject()
+    monkeypatch.setenv("BRAINTRACE_SOURCE_REVISION", "a" * 40)
+    monkeypatch.setenv("BRAINTRACE_SOURCE_DIRTY", "false")
+
+    assert subject._source_revision() == ("a" * 40, False)
+
+    monkeypatch.setenv("BRAINTRACE_SOURCE_DIRTY", "not-a-boolean")
+    with pytest.raises(ValueError, match="BRAINTRACE_SOURCE_DIRTY"):
+        subject._source_revision()
