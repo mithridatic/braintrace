@@ -189,38 +189,6 @@ def test_direct_loss_penalizes_rare_color_error_more_than_background() -> None:
     assert float(rare_loss) > float(background_loss)
 
 
-def test_hard_cell_error_is_not_diluted_by_large_grid() -> None:
-    subject = _subject()
-    shape_logits = jnp.full((1, 30), -20.0)
-    shape_logits = shape_logits.at[0, 29].set(20.0)
-    colors = jnp.full((1, 30, 30, 10), -10.0)
-    colors = colors.at[..., 0].set(10.0)
-    colors = colors.at[0, 0, 0, 0].set(-10.0)
-    colors = colors.at[0, 0, 0, 1].set(10.0)
-    targets = jnp.zeros((1, 30, 30), dtype=jnp.int32)
-    small_mask = jnp.zeros((1, 30, 30), dtype=jnp.float32)
-    small_mask = small_mask.at[0, 0, 0].set(1.0)
-    large_mask = jnp.ones((1, 30, 30), dtype=jnp.float32)
-    dimensions = jnp.asarray([29])
-
-    small_loss = subject.direct_prediction_loss(
-        (shape_logits, shape_logits, colors),
-        dimensions,
-        dimensions,
-        targets,
-        small_mask,
-    )
-    large_loss = subject.direct_prediction_loss(
-        (shape_logits, shape_logits, colors),
-        dimensions,
-        dimensions,
-        targets,
-        large_mask,
-    )
-
-    assert float(large_loss) > 0.04 * float(small_loss)
-
-
 def test_training_interfaces_reject_invalid_inputs() -> None:
     subject = _subject()
     row_config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
