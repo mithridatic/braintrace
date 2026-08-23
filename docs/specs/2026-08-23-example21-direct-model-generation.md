@@ -68,6 +68,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 
 - a BrainTrace recurrent encoder that consumes the complete ordered
   demonstration/query event stream;
+- a checkpoint-owned temporal summary that combines the final recurrent state
+  with a validity-masked mean of all recurrent states, preserving early
+  demonstration evidence for shape and cell decoding;
 - checkpoint-owned recurrent, memory, and readout parameters;
 - learned shape heads for the 30 possible heights and widths, conditioned on
   both recurrent task state and a checkpoint-owned projection of query

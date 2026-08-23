@@ -14,7 +14,7 @@ import braintrace
 MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
-ARCHITECTURE_VERSION = "query_shape_conditioned_attention_v3"
+ARCHITECTURE_VERSION = "temporally_pooled_shape_attention_v4"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -53,7 +53,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="query_shape_conditioned_attention_v3"
+    architecture_version : str, default="temporally_pooled_shape_attention_v4"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -126,6 +126,9 @@ class DirectARCGRU(brainstate.nn.Module):
             self.width_head = braintrace.nn.Linear(config.hidden_width, MAX_GRID_SIZE)
             self.query_shape_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.hidden_width
+            )
+            self.temporal_summary_projection = braintrace.nn.Linear(
+                2 * config.hidden_width, config.hidden_width
             )
             self.context_projection = braintrace.nn.Linear(
                 config.hidden_width, config.decoder_width
@@ -274,4 +277,13 @@ class DirectARCGRU(brainstate.nn.Module):
                 "events must have shape (time, batch, config.input_width)."
             )
         hidden_sequence = brainstate.transform.for_loop(self.update, events)
-        return self.decode(hidden_sequence[-1], query_features)
+        valid = jnp.asarray(events[..., 0] > 0.5, dtype=hidden_sequence.dtype)
+        pooled = jnp.sum(hidden_sequence * valid[..., None], axis=0) / jnp.maximum(
+            jnp.sum(valid, axis=0)[..., None], 1.0
+        )
+        summary = brainstate.nn.tanh(
+            self.temporal_summary_projection(
+                jnp.concatenate((hidden_sequence[-1], pooled), axis=-1)
+            )
+        )
+        return self.decode(summary, query_features)

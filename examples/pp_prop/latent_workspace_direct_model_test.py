@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 
 import brainstate
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -90,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "query_shape_conditioned_attention_v3"
+        == "temporally_pooled_shape_attention_v4"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -120,6 +121,36 @@ def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
     assert np.asarray(first_width).tobytes() != np.asarray(second_width).tobytes()
 
 
+def test_temporal_summary_parameters_change_executed_outputs() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=31,
+        )
+    )
+    events = jnp.ones((4, 1, 6), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :2, :2, 0].set(1.0)
+    query = query.at[0, :2, :2, 10].set(1.0)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    before = tuple(np.asarray(value) for value in model.run(events, query))
+    model.temporal_summary_projection.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.temporal_summary_projection.weight.value,
+    )
+    brainstate.nn.init_all_states(model, batch_size=1)
+    after = tuple(np.asarray(value) for value in model.run(events, query))
+
+    assert any(
+        left.tobytes() != right.tobytes()
+        for left, right in zip(before, after, strict=True)
+    )
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -128,7 +159,7 @@ def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "cross_spatial_attention_v2"},
+        {"architecture_version": "query_shape_conditioned_attention_v3"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:
