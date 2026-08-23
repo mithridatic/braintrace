@@ -420,3 +420,28 @@ matched edge count:
 Shape is 0.1432 at full scale against 0.1241 at reduced scale, so the edge count is not
 the cause. The gate itself depresses shape, from 0.5227 to 0.1432 at matched scale, while
 raising copy fidelity to 0.9996. The finding stands after the control.
+
+
+### Why the gate depresses shape: trunk starvation, refuted
+
+One mechanism could explain the shape drop without condemning the gate. With the row head
+scaled to roughly 2%, the colour task contributes almost no gradient to the shared trunk,
+and the shape head reads that trunk -- so gating the colour task off may starve the trunk
+of the signal that teaches it to represent the grid. That predicts a clean discriminator:
+start the gate *open* so the trunk still learns.
+
+| gate init | gate at init | input echo (effort 60) | shape | cumulative |
+|---|---|---|---|---|
+| bias -4 (closed) | 0.018 | 0.9996 | 0.1432 | 0 |
+| bias 0 (open) | 0.500 | 0.9896 | **0.1289** | 0 |
+
+**Refuted.** Shape is unchanged at 0.129 against 0.143; the gate depresses shape
+regardless of how open it starts. Two further observations from the open-gate run: the
+gate *closed itself* during training, with echo rising from 0.6120 at effort 0 to 0.9896
+at effort 60, independently confirming that copying is the loss-minimising behaviour; and
+the gate weight trained in both arms (l2 delta 0.585 open, 0.554 closed).
+
+The copy gate is therefore closed as a mechanism, on four runs spanning two edge counts
+and two initialisations. Its one durable contribution is the highest copy fidelity on
+record (0.9996) and the demonstration that copy fidelity alone is worthless -- shape is
+the binding component, and any future copy/edit mechanism must be measured against it.
