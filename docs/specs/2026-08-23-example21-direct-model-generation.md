@@ -104,7 +104,9 @@ parameters and seeds are fixed without evaluation-label feedback.
 The cell loss uses bounded inverse-square-root frequency weights computed only
 from each training batch's valid target cells. This prevents the dominant
 background class from hiding rare object-color errors; it does not enter the
-answer path or inspect validation/evaluation targets.
+answer path or inspect validation/evaluation targets. Height, width, and the
+weighted cell term contribute equally so shape errors cannot be hidden by
+pixel improvement.
 
 Rule engines and forests may not create pseudo-targets for evaluation inputs or
 choose training episodes based on evaluation success. Evaluation targets may

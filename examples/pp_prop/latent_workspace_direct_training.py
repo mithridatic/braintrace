@@ -301,8 +301,8 @@ def direct_prediction_loss(
     Returns
     -------
     jax.Array
-        Scalar loss with bounded inverse-frequency cell weighting and a
-        one-half aggregate cell contribution.
+        Scalar loss with bounded inverse-frequency cell weighting and equal
+        height, width, and aggregate cell contributions.
     """
 
     height_logits, width_logits, color_logits = logits
@@ -327,7 +327,7 @@ def direct_prediction_loss(
     color_loss = jnp.sum(per_cell * cell_weights) / jnp.maximum(
         jnp.sum(cell_weights), 1.0
     )
-    return (height_loss + width_loss + 2.0 * color_loss) / 4.0
+    return (height_loss + width_loss + color_loss) / 3.0
 
 
 def parameter_digest(model: DirectARCGRU) -> str:
