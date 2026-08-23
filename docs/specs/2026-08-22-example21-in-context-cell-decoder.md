@@ -211,3 +211,71 @@ Three facts about that 44 that bound the claim:
 - **Trees do not port.** The portable learner is a head adapted by gradient
   updates over the demonstration cells. That arm is measured separately; the
   port is sized against it, not against 44.
+
+## 8. Correction: §7's numbers were label-gated (2026-08-23)
+
+Every four-tuple in §7 came through this gate:
+
+```python
+if predicted_shape(t, gi) != go.shape or gi.shape != go.shape:
+    a1 = a2 = False; continue
+...
+probs = probs[: gi.shape[0], : gi.shape[1]]
+```
+
+`go` is the **target**. That is not "the shape rule applied" — it checks the
+rule against the label, drops every query where they disagree, and hands the
+survivors their extent for free. 44, 40 and 18 are upper bounds on a
+label-verified subset, reportable in neither the `model_only` nor the
+`rule_then_model` channel. §7's three bullets are corrected below, and its
+table should be read as a feature-set comparison only.
+
+### 8.1 Extent has to come from the head
+
+Re-scored with the eleventh class carrying "not part of the output grid", so
+extent is decoded from the fitted head and no target is read anywhere. Full
+419-query evaluation split, harness two-candidate decode:
+
+| learner | features | q@1 | q@2 | s@1 | s@2 | cumulative | shape |
+|---|---|---|---|---|---|---|---|
+| shipped carrier-row head | carrier + one query row | 2 | 2 | 1 | 1 | 6 | 242/419 |
+| gradient MLP, 600 updates | 482-dim, one-hot | 0 | 0 | 0 | 0 | 0 | — |
+| 1-nearest demonstration cell | 482-dim, one-hot | 0 | 0 | 0 | 0 | 0 | 304/419 |
+| softmax attention over demo cells | 482-dim, one-hot | 0 | 0 | 0 | 0 | 0 | 160/419 |
+| exact 5x5→3x3→1x1 backoff lookup | raw colours | 2 | 2 | 2 | 2 | 8 | 295/419 |
+| sklearn tree | 482-dim, continuous | 14 | 14 | 10 | 10 | **48** | 353/419 |
+| sklearn tree | 482-dim, binarised at 0.5 | 11 | 11 | 9 | 9 | 40 | 320/419 |
+| **shipped JAX forest, depth 12** | 482-dim, binarised at 0.5 | **9** | 9 | **7** | 7 | **32** | 320/419 |
+
+The learned extent is not the weak link: 353/419 = 0.843 against 355/419 =
+0.847 for the hand-written shape rule. A head that learns where the grid ends
+from the task's own demonstrations is as accurate as the rule and owes it
+nothing.
+
+### 8.2 The three corrected bullets
+
+- **Trees do port.** `latent_workspace_demonstration_forest.py` is an
+  axis-aligned tree in JAX: one segment sum plus one argmax per level, node
+  arrays sized `2 ** depth`, class counts read back along the whole
+  root-to-leaf path so an unreached leaf backs off to its ancestors. Against
+  sklearn on identical binary features it fits demonstrations to 0.992 (sklearn
+  0.995) and reaches 0.946 query-cell accuracy (sklearn 0.944).
+- **The learner was the whole gap, not the features.** Over one feature map the
+  same-extent spread runs 0 (gradient MLP) to 48 (tree). The gradient head was
+  not underfitting a hyperparameter; it was carrying the wrong inductive bias
+  for exact conjunctive rules over one-hot cells.
+- **The second candidate still contributes nothing**, and now the reason is
+  visible: a purity-grown tree returns near-degenerate probabilities, so the
+  harness's "second-ranked shape or one colour substitution" rule has nothing
+  to trade. The one arm where `q@2 > q@1` (4→6, 3→5) was an eight-tree
+  ensemble, whose smoother probabilities cost more on q@1 than they bought on
+  q@2. A second candidate that pays is still unclaimed upside.
+
+### 8.3 Known cost, not yet paid
+
+Binarising at 0.5 costs 48 → 40 (shape 353 → 320): the position, extent and
+colour-count columns are ordered quantities a 0.5 threshold cannot split
+usefully. Threshold codes (`q >= k` for each level) recover the shape accuracy
+(110/126 against 109/126 on a 120-task probe) but only part of the colour
+accuracy, because the per-row and per-column colour counts need the same
+treatment. The fix is a wholly binary feature map, not a change to the learner.
