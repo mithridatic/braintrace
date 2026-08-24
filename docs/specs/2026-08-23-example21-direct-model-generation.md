@@ -1350,6 +1350,39 @@ at least one non-copy/non-label task, and every mechanism check are mandatory.
 Failure closes V39. A pass permits specification of one fresh real-ARC
 validation arm; it does not permit complete evaluation directly.
 
+V39 is rejected at clean revision
+`dae3c51e11f35291c9f4b5664a7311b2f3f37f4f`, with artifact
+`var/ex21-online-v39-patch-capability-v1`. The anti-collapse gate passed, every
+parameter group moved, and 600 training updates took 106.09 seconds. The
+independent oracle improved to 5/120: four `pattern_label` tasks and one
+`select_marked_region` task. It did not exceed seven or span two non-label
+families, so no real-ARC V39 run is permitted. Diagnostic miss distances show
+that five copy, nine complete-corner, nine project-marker, all ten
+select-marked-region, and all twenty pattern-label tasks were within ten cells
+when their shapes matched. These distances motivate a loss-balance test but do
+not satisfy the capability gate.
+
+### Twofold edit compromise V40
+
+V40 keeps the exact V39 spatial model, input encoding, checkpoint schema,
+decoder, optimizer, PP-prop trace, and answer path. It changes the
+training-only edited-cell multiplier from 4.0 to the predeclared 2.0. This is
+the midpoint between no edit emphasis and V37's rejected fourfold emphasis;
+it preserves additional gradient on transformation cells while reducing the
+observed penalty to unchanged-cell fidelity. The loss identifier becomes
+`twofold_edit_fourth_root_hierarchical_v40`.
+
+The existing sibling weighting test must first fail and then prove exact
+2-to-1 weights for changed or newly created cells, with all compiler,
+parameter-movement, target-isolation, provenance, and checkpoint tests
+unchanged. V40 runs only a fresh synthetic capability oracle: 800 updates,
+1,400 training tasks from seed 19108, 120 independent tasks from seed 72108,
+and the otherwise fixed V39 configuration. The unchanged gate requires more
+than seven strict tasks, two non-label families, one non-copy/non-label exact,
+and every mechanism check. Failure closes the patch-decoder/loss family. A
+pass permits specification of one synthetic-pretraining-to-real-ARC pilot,
+never direct complete evaluation.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
