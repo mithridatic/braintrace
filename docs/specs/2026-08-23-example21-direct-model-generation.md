@@ -106,6 +106,11 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 - a dedicated checkpoint-owned relation-to-color head added directly to final
   color logits, giving the two-hop relation path an unsaturated supervised
   route in addition to the shared nonlinear cell decoder;
+- whole-demonstration neural cross-attention that reconstructs each
+  demonstration input/output grid from declared lossless event columns,
+  embeds complete color-invariant input occupancy with the same checkpoint
+  projection as the query, and passes the attended demonstration-output grid
+  only through learned value and color projections before final logits;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;

@@ -17,7 +17,7 @@ QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "augmented_relation_logits_v12"
+ARCHITECTURE_VERSION = "whole_demo_relation_v13"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -62,7 +62,7 @@ class DirectModelConfig:
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
         One foreground-occupancy feature per group is appended to the full key.
-    architecture_version : str, default="augmented_relation_logits_v12"
+    architecture_version : str, default="whole_demo_relation_v13"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -211,6 +211,12 @@ class DirectARCGRU(brainstate.nn.Module):
             self.relation_color_head = braintrace.nn.Linear(
                 config.decoder_width, COLOR_COUNT
             )
+            self.whole_demo_value_projection = braintrace.nn.Linear(
+                COLOR_COUNT, config.decoder_width
+            )
+            self.whole_demo_color_head = braintrace.nn.Linear(
+                config.decoder_width, COLOR_COUNT
+            )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
             )
@@ -272,6 +278,9 @@ class DirectARCGRU(brainstate.nn.Module):
         associative_valid: jnp.ndarray | None = None,
         associative_queries: jnp.ndarray | None = None,
         associative_query_valid: jnp.ndarray | None = None,
+        demonstration_patterns: jnp.ndarray | None = None,
+        demonstration_outputs: jnp.ndarray | None = None,
+        demonstration_grid_valid: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Emit direct height, width, and per-cell colour logits.
 
@@ -301,6 +310,12 @@ class DirectARCGRU(brainstate.nn.Module):
             ``(batch, time, decoder_width)``.
         associative_query_valid : jax.Array, optional
             Boolean query-row mask shaped ``(batch, time)``.
+        demonstration_patterns : jax.Array, optional
+            Complete demonstration foreground patterns shaped ``(batch, 10, 900)``.
+        demonstration_outputs : jax.Array, optional
+            Complete demonstration output colors shaped ``(batch, 10, 30, 30, 10)``.
+        demonstration_grid_valid : jax.Array, optional
+            Boolean demonstration mask shaped ``(batch, 10)``.
 
         Returns
         -------
@@ -396,6 +411,55 @@ class DirectARCGRU(brainstate.nn.Module):
             raise ValueError(
                 "associative queries must have aligned batch, time, and decoder widths."
             )
+        demonstration_items = (
+            demonstration_patterns,
+            demonstration_outputs,
+            demonstration_grid_valid,
+        )
+        if any(item is None for item in demonstration_items) and not all(
+            item is None for item in demonstration_items
+        ):
+            raise ValueError(
+                "demonstration patterns, outputs, and valid mask must be provided together."
+            )
+        if demonstration_patterns is None:
+            demonstration_patterns = jnp.zeros(
+                (batch_size, MAX_DEMONSTRATIONS, MAX_GRID_SIZE * MAX_GRID_SIZE),
+                dtype=query_features.dtype,
+            )
+            demonstration_outputs = jnp.zeros(
+                (
+                    batch_size,
+                    MAX_DEMONSTRATIONS,
+                    MAX_GRID_SIZE,
+                    MAX_GRID_SIZE,
+                    COLOR_COUNT,
+                ),
+                dtype=query_features.dtype,
+            )
+            demonstration_grid_valid = jnp.zeros(
+                (batch_size, MAX_DEMONSTRATIONS), dtype=bool
+            )
+        demonstration_patterns = jnp.asarray(demonstration_patterns)
+        demonstration_outputs = jnp.asarray(demonstration_outputs)
+        demonstration_grid_valid = jnp.asarray(demonstration_grid_valid, dtype=bool)
+        if demonstration_patterns.shape != (
+            batch_size,
+            MAX_DEMONSTRATIONS,
+            MAX_GRID_SIZE * MAX_GRID_SIZE,
+        ) or demonstration_outputs.shape != (
+            batch_size,
+            MAX_DEMONSTRATIONS,
+            MAX_GRID_SIZE,
+            MAX_GRID_SIZE,
+            COLOR_COUNT,
+        ):
+            raise ValueError("whole demonstration grids have invalid shapes.")
+        if demonstration_grid_valid.shape != (
+            batch_size,
+            MAX_DEMONSTRATIONS,
+        ):
+            raise ValueError("demonstration_grid_valid has an invalid shape.")
         if shape_features is None:
             shape_features = jnp.zeros(
                 (batch_size, SHAPE_FEATURE_WIDTH), dtype=query_features.dtype
@@ -526,6 +590,21 @@ class DirectARCGRU(brainstate.nn.Module):
         relation_attention = self.relation_output_projection(
             jnp.einsum("boq,bqd->bod", output_relation_weights, inferred_query_values)
         ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
+        whole_demo_keys = self.global_query_pattern_projection(demonstration_patterns)
+        whole_demo_logits = jnp.einsum(
+            "bd,bnd->bn", global_pattern[:, 0, 0, :], whole_demo_keys
+        ) / np.sqrt(float(self.config.decoder_width))
+        whole_demo_weights = brainstate.nn.softmax(
+            jnp.where(demonstration_grid_valid, whole_demo_logits, -1.0e9), axis=-1
+        )
+        whole_demo_weights = whole_demo_weights * demonstration_grid_valid
+        whole_demo_weights = whole_demo_weights / jnp.maximum(
+            jnp.sum(whole_demo_weights, axis=-1, keepdims=True), 1.0
+        )
+        whole_demo_values = self.whole_demo_value_projection(demonstration_outputs)
+        whole_demo_attention = jnp.einsum(
+            "bn,bnrcd->brcd", whole_demo_weights, whole_demo_values
+        )
         cell_state = brainstate.nn.tanh(
             context
             + query
@@ -539,7 +618,9 @@ class DirectARCGRU(brainstate.nn.Module):
         return (
             self.height_head(shape_state),
             self.width_head(shape_state),
-            self.color_head(cell_state) + self.relation_color_head(relation_attention),
+            self.color_head(cell_state)
+            + self.relation_color_head(relation_attention)
+            + self.whole_demo_color_head(whole_demo_attention),
         )
 
     def run(
@@ -585,6 +666,9 @@ class DirectARCGRU(brainstate.nn.Module):
         associative_valid = None
         associative_queries = None
         associative_query_valid = None
+        demonstration_patterns = None
+        demonstration_outputs = None
+        demonstration_grid_valid = None
         if self.config.memory_key_indices:
             value_indices = jnp.asarray(self.config.memory_value_indices)
             projected_keys = jnp.swapaxes(
@@ -603,6 +687,52 @@ class DirectARCGRU(brainstate.nn.Module):
             associative_query_valid = jnp.swapaxes(
                 jnp.logical_and(valid > 0.5, events[..., 2] > 0.5), 0, 1
             )
+            demonstration_event_count = MAX_DEMONSTRATIONS * MAX_GRID_SIZE
+            if events.shape[0] >= demonstration_event_count:
+                raw_demo_keys = events[
+                    :demonstration_event_count,
+                    ...,
+                    jnp.asarray(self.config.memory_key_indices),
+                ]
+                raw_demo_values = events[
+                    :demonstration_event_count,
+                    ...,
+                    value_indices,
+                ]
+                input_colors = raw_demo_keys[..., -MAX_GRID_SIZE * COLOR_COUNT :]
+                output_colors = raw_demo_values[..., -MAX_GRID_SIZE * COLOR_COUNT :]
+                input_colors = input_colors.reshape(
+                    MAX_DEMONSTRATIONS,
+                    MAX_GRID_SIZE,
+                    events.shape[1],
+                    MAX_GRID_SIZE,
+                    COLOR_COUNT,
+                ).transpose(2, 0, 1, 3, 4)
+                demonstration_outputs = output_colors.reshape(
+                    MAX_DEMONSTRATIONS,
+                    MAX_GRID_SIZE,
+                    events.shape[1],
+                    MAX_GRID_SIZE,
+                    COLOR_COUNT,
+                ).transpose(2, 0, 1, 3, 4)
+                demonstration_patterns = jnp.sum(
+                    input_colors[..., 1:], axis=-1
+                ).reshape(
+                    events.shape[1],
+                    MAX_DEMONSTRATIONS,
+                    MAX_GRID_SIZE * MAX_GRID_SIZE,
+                )
+                demonstration_grid_valid = jnp.any(
+                    events[:demonstration_event_count, ..., 0]
+                    .reshape(
+                        MAX_DEMONSTRATIONS,
+                        MAX_GRID_SIZE,
+                        events.shape[1],
+                    )
+                    .transpose(2, 0, 1)
+                    > 0.5,
+                    axis=-1,
+                )
         return self.decode(
             summary,
             query_features,
@@ -614,4 +744,7 @@ class DirectARCGRU(brainstate.nn.Module):
             associative_valid,
             associative_queries,
             associative_query_valid,
+            demonstration_patterns,
+            demonstration_outputs,
+            demonstration_grid_valid,
         )

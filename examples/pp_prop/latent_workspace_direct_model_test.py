@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "augmented_relation_logits_v12"
+    assert model.config.architecture_version == "whole_demo_relation_v13"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -334,6 +334,54 @@ def test_associative_keys_append_foreground_occupancy() -> None:
     assert first_key.tobytes() != background_key.tobytes()
 
 
+def test_whole_demonstration_attention_changes_executed_colors() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=12,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=10,
+            seed=61,
+        )
+    )
+    hidden = jnp.zeros((1, 16), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :2, :2, 5].set(1.0)
+    query = query.at[0, :2, :2, 10].set(1.0)
+    patterns = jnp.zeros((1, 10, 900), dtype=jnp.float32)
+    patterns = patterns.at[0, 0, :2].set(1.0)
+    patterns = patterns.at[0, 1, 30:32].set(1.0)
+    outputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
+    outputs = outputs.at[0, 0, 0, 0, 6].set(1.0)
+    outputs = outputs.at[0, 1, 0, 0, 1].set(1.0)
+    demonstration_valid = jnp.asarray([[True, True] + [False] * 8])
+    before = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_patterns=patterns,
+            demonstration_outputs=outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
+    )
+    model.whole_demo_color_head.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.whole_demo_color_head.weight.value,
+    )
+    after = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_patterns=patterns,
+            demonstration_outputs=outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
+    )
+
+    assert before.tobytes() != after.tobytes()
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -342,7 +390,7 @@ def test_associative_keys_append_foreground_occupancy() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "color_invariant_shared_relation_v11"},
+        {"architecture_version": "augmented_relation_logits_v12"},
         {"memory_key_indices": (2,), "memory_value_indices": ()},
         {"memory_key_indices": (12,), "memory_value_indices": (2,)},
         {
