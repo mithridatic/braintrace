@@ -91,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "global_pattern_shape_attention_v7"
+        == "relational_memory_attention_v8"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -204,6 +204,37 @@ def test_global_query_pattern_projection_changes_executed_colors() -> None:
     assert before.tobytes() != after.tobytes()
 
 
+def test_temporal_memory_attention_changes_executed_colors() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=43,
+        )
+    )
+    events = jnp.zeros((5, 1, 6), dtype=jnp.float32)
+    events = events.at[:, :, 0].set(1.0)
+    events = events.at[:, :, 1:].set(
+        jnp.arange(25, dtype=jnp.float32).reshape(5, 1, 5) / 25.0
+    )
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :3, :3, 2].set(1.0)
+    query = query.at[0, :3, :3, 10].set(1.0)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    before = np.asarray(model.run(events, query)[2])
+    model.memory_value_projection.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.memory_value_projection.weight.value,
+    )
+    brainstate.nn.init_all_states(model, batch_size=1)
+    after = np.asarray(model.run(events, query)[2])
+
+    assert before.tobytes() != after.tobytes()
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -212,7 +243,7 @@ def test_global_query_pattern_projection_changes_executed_colors() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "pooled_demo_shape_attention_v6"},
+        {"architecture_version": "global_pattern_shape_attention_v7"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

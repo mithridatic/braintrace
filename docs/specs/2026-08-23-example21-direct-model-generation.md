@@ -86,6 +86,11 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 - a checkpoint-owned projection of the complete query foreground-occupancy
   pattern, giving the decoder global color-invariant spatial evidence for
   pattern-defined outputs;
+- checkpoint-owned temporal-memory attention whose queries combine that global
+  query pattern with each output coordinate and whose keys and values come
+  from the recurrent demonstration-event states, so prediction can compare a
+  query pattern with demonstrated input/output relations instead of relying
+  only on an additive fixed-width task summary;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;

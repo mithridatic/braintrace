@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "global_pattern_shape_attention_v7"
+ARCHITECTURE_VERSION = "relational_memory_attention_v8"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -58,7 +58,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="global_pattern_shape_attention_v7"
+    architecture_version : str, default="relational_memory_attention_v8"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -150,6 +150,12 @@ class DirectARCGRU(brainstate.nn.Module):
             self.global_query_pattern_projection = braintrace.nn.Linear(
                 MAX_GRID_SIZE * MAX_GRID_SIZE, config.decoder_width
             )
+            self.memory_key_projection = braintrace.nn.Linear(
+                config.hidden_width, config.decoder_width
+            )
+            self.memory_value_projection = braintrace.nn.Linear(
+                config.hidden_width, config.decoder_width
+            )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
             )
@@ -193,6 +199,8 @@ class DirectARCGRU(brainstate.nn.Module):
         hidden: jnp.ndarray,
         query_features: jnp.ndarray,
         shape_features: jnp.ndarray | None = None,
+        temporal_memory: jnp.ndarray | None = None,
+        temporal_valid: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Emit direct height, width, and per-cell colour logits.
 
@@ -206,6 +214,12 @@ class DirectARCGRU(brainstate.nn.Module):
             Lossless demonstration/query dimension encoding shaped
             ``(batch, 1270)``. When omitted, an all-zero diagnostic encoding
             is used.
+        temporal_memory : jax.Array, optional
+            Recurrent demonstration-event states shaped
+            ``(batch, time, hidden_width)``. When omitted with
+            ``temporal_valid``, zero memory is used for direct diagnostics.
+        temporal_valid : jax.Array, optional
+            Boolean event-valid mask shaped ``(batch, time)``.
 
         Returns
         -------
@@ -224,6 +238,27 @@ class DirectARCGRU(brainstate.nn.Module):
         if hidden.ndim != 2 or hidden.shape[0] != query_features.shape[0]:
             raise ValueError("hidden and query_features batch dimensions must match.")
         batch_size = query_features.shape[0]
+        if (temporal_memory is None) != (temporal_valid is None):
+            raise ValueError(
+                "temporal_memory and temporal_valid must be provided together."
+            )
+        if temporal_memory is None:
+            temporal_memory = jnp.zeros(
+                (batch_size, 1, self.config.hidden_width), dtype=query_features.dtype
+            )
+            temporal_valid = jnp.zeros((batch_size, 1), dtype=bool)
+        temporal_memory = jnp.asarray(temporal_memory)
+        temporal_valid = jnp.asarray(temporal_valid, dtype=bool)
+        if (
+            temporal_memory.ndim != 3
+            or temporal_memory.shape[0] != batch_size
+            or temporal_memory.shape[2] != self.config.hidden_width
+            or temporal_valid.shape != temporal_memory.shape[:2]
+        ):
+            raise ValueError(
+                "temporal memory must have shapes (batch, time, hidden_width) "
+                "and (batch, time)."
+            )
         if shape_features is None:
             shape_features = jnp.zeros(
                 (batch_size, SHAPE_FEATURE_WIDTH), dtype=query_features.dtype
@@ -294,8 +329,34 @@ class DirectARCGRU(brainstate.nn.Module):
         ).reshape(
             batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
+        memory_keys = self.memory_key_projection(temporal_memory)
+        memory_values = self.memory_value_projection(temporal_memory)
+        memory_queries = brainstate.nn.tanh(
+            global_pattern.reshape(batch_size, 1, self.config.decoder_width)
+            + coordinate.reshape(-1, self.config.decoder_width)[None]
+        )
+        memory_logits = jnp.einsum(
+            "bod,btd->bot", memory_queries, memory_keys
+        ) / np.sqrt(float(self.config.decoder_width))
+        memory_weights = brainstate.nn.softmax(
+            jnp.where(temporal_valid[:, None, :], memory_logits, -1.0e9), axis=-1
+        )
+        memory_weights = memory_weights * temporal_valid[:, None, :]
+        memory_weights = memory_weights / jnp.maximum(
+            jnp.sum(memory_weights, axis=-1, keepdims=True), 1.0
+        )
+        memory_attention = jnp.einsum(
+            "bot,btd->bod", memory_weights, memory_values
+        ).reshape(
+            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
+        )
         cell_state = brainstate.nn.tanh(
-            context + query + global_pattern + coordinate[None] + attention
+            context
+            + query
+            + global_pattern
+            + coordinate[None]
+            + attention
+            + memory_attention
         )
         return (
             self.height_head(shape_state),
@@ -341,4 +402,10 @@ class DirectARCGRU(brainstate.nn.Module):
                 jnp.concatenate((hidden_sequence[-1], pooled), axis=-1)
             )
         )
-        return self.decode(summary, query_features, shape_features)
+        return self.decode(
+            summary,
+            query_features,
+            shape_features,
+            jnp.swapaxes(hidden_sequence, 0, 1),
+            jnp.swapaxes(valid, 0, 1),
+        )
