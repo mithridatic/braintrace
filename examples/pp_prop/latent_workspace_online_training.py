@@ -46,8 +46,9 @@ class OnlineEpisode:
     ----------
     events : numpy.ndarray
         Fixed sequence of left padding, lossless input rows, and decode tokens.
-    target_rows, target_cell_mask : numpy.ndarray
-        Per-step scorer-side colour labels and cell masks.
+    target_rows, target_cell_mask, class_weights : numpy.ndarray
+        Per-step scorer-side colour labels, cell masks, and bounded colour
+        weights. None are model inputs.
     target_heights, target_widths : numpy.ndarray
         Per-step zero-based shape labels.
     decode_mask : numpy.ndarray
@@ -59,6 +60,7 @@ class OnlineEpisode:
     events: np.ndarray
     target_rows: np.ndarray
     target_cell_mask: np.ndarray
+    class_weights: np.ndarray
     target_heights: np.ndarray
     target_widths: np.ndarray
     decode_mask: np.ndarray
@@ -73,8 +75,8 @@ class OnlineBatch:
     ----------
     events : numpy.ndarray
         Time-major model inputs.
-    target_rows, target_cell_mask : numpy.ndarray
-        Time-major scorer-side colour labels and cell masks.
+    target_rows, target_cell_mask, class_weights : numpy.ndarray
+        Time-major scorer-side colour labels, cell masks, and colour weights.
     target_heights, target_widths : numpy.ndarray
         Time-major shape labels.
     decode_mask : numpy.ndarray
@@ -84,6 +86,7 @@ class OnlineBatch:
     events: np.ndarray
     target_rows: np.ndarray
     target_cell_mask: np.ndarray
+    class_weights: np.ndarray
     target_heights: np.ndarray
     target_widths: np.ndarray
     decode_mask: np.ndarray
@@ -95,7 +98,8 @@ class OnlineTrainingChunk:
 
     Parameters
     ----------
-    events, target_rows, target_cell_mask, target_heights, target_widths
+    events, target_rows, target_cell_mask, class_weights, target_heights,
+    target_widths
         Arrays with leading update and time dimensions.
     decode_mask : numpy.ndarray
         Common one-dimensional decode-step mask.
@@ -104,9 +108,46 @@ class OnlineTrainingChunk:
     events: np.ndarray
     target_rows: np.ndarray
     target_cell_mask: np.ndarray
+    class_weights: np.ndarray
     target_heights: np.ndarray
     target_widths: np.ndarray
     decode_mask: np.ndarray
+
+
+def target_color_weights(
+    target_colors: np.ndarray, target_mask: np.ndarray
+) -> np.ndarray:
+    """Compute bounded inverse-frequency weights from one training target.
+
+    Parameters
+    ----------
+    target_colors : numpy.ndarray
+        Integer ARC colours in a padded target grid.
+    target_mask : numpy.ndarray
+        Mask selecting the valid target cells.
+
+    Returns
+    -------
+    numpy.ndarray
+        Ten ``float32`` weights; absent colours have weight zero.
+    """
+
+    colors = np.asarray(target_colors)
+    mask = np.asarray(target_mask, dtype=np.bool_)
+    if colors.shape != mask.shape or colors.ndim != 2:
+        raise ValueError("target_colors and target_mask must have the same 2-D shape.")
+    if not np.issubdtype(colors.dtype, np.integer):
+        raise TypeError("target_colors must contain integers.")
+    valid_colors = colors[mask]
+    if valid_colors.size < 1 or np.any((valid_colors < 0) | (valid_colors >= 10)):
+        raise ValueError("target_mask must select valid ARC colours.")
+    counts = np.bincount(valid_colors, minlength=10).astype(np.float32)
+    weights = np.zeros((10,), dtype=np.float32)
+    present = counts > 0.0
+    weights[present] = np.clip(
+        np.sqrt(float(valid_colors.size) / counts[present]), 0.5, 4.0
+    )
+    return weights
 
 
 def encode_online_episode(
@@ -155,6 +196,8 @@ def encode_online_episode(
     )
     target_rows[row_config.max_events :] = direct.target_colors
     target_cell_mask[row_config.max_events :] = direct.target_mask
+    weights = target_color_weights(direct.target_colors, direct.target_mask)
+    class_weights = np.repeat(weights[None, :], sequence_length, axis=0)
     target_heights = np.full(
         (sequence_length,), direct.target_height, dtype=np.int32
     )
@@ -167,6 +210,7 @@ def encode_online_episode(
         events=events,
         target_rows=target_rows,
         target_cell_mask=target_cell_mask,
+        class_weights=class_weights,
         target_heights=target_heights,
         target_widths=target_widths,
         decode_mask=decode_mask,
@@ -206,6 +250,9 @@ def stack_online_episodes(episodes: tuple[OnlineEpisode, ...]) -> OnlineBatch:
         target_rows=np.stack([episode.target_rows for episode in episodes], axis=1),
         target_cell_mask=np.stack(
             [episode.target_cell_mask for episode in episodes], axis=1
+        ),
+        class_weights=np.stack(
+            [episode.class_weights for episode in episodes], axis=1
         ),
         target_heights=np.stack(
             [episode.target_heights for episode in episodes], axis=1
@@ -248,6 +295,7 @@ def repeat_online_batch(batch: OnlineBatch, updates: int) -> OnlineTrainingChunk
         events=repeat(batch.events),
         target_rows=repeat(batch.target_rows),
         target_cell_mask=repeat(batch.target_cell_mask),
+        class_weights=repeat(batch.class_weights),
         target_heights=repeat(batch.target_heights),
         target_widths=repeat(batch.target_widths),
         decode_mask=np.array(batch.decode_mask, copy=True),
@@ -321,6 +369,7 @@ def sample_online_training_chunk(
         target_cell_mask=np.stack(
             [batch.target_cell_mask for batch in batches]
         ),
+        class_weights=np.stack([batch.class_weights for batch in batches]),
         target_heights=np.stack([batch.target_heights for batch in batches]),
         target_widths=np.stack([batch.target_widths for batch in batches]),
         decode_mask=np.array(batches[0].decode_mask, copy=True),
@@ -455,6 +504,7 @@ def online_step_loss(
     target_cell_mask: jnp.ndarray,
     target_height: jnp.ndarray,
     target_width: jnp.ndarray,
+    class_weights: jnp.ndarray,
 ) -> jnp.ndarray:
     """Compute one decode-step colour and shape objective.
 
@@ -468,6 +518,8 @@ def online_step_loss(
         Batched mask selecting true target columns on this row.
     target_height, target_width : jax.Array
         Batched zero-based output dimension labels.
+    class_weights : jax.Array
+        Batched ten-colour weights computed from training targets only.
 
     Returns
     -------
@@ -480,7 +532,13 @@ def online_step_loss(
         row_logits, target_row
     )
     mask = jnp.asarray(target_cell_mask, dtype=per_cell.dtype)
-    color_loss = jnp.sum(per_cell * mask) / jnp.maximum(jnp.sum(mask), 1.0)
+    selected_weights = jnp.take_along_axis(
+        class_weights[:, None, :], target_row[..., None], axis=-1
+    )[..., 0]
+    weighted_mask = mask * selected_weights
+    color_loss = jnp.sum(per_cell * weighted_mask) / jnp.maximum(
+        jnp.sum(weighted_mask), 1.0
+    )
     height_loss = optax.softmax_cross_entropy_with_integer_labels(
         height_logits, target_height
     ).mean()
@@ -581,6 +639,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
+    loss_version = "target_balanced_color_v21"
 
     def __init__(
         self,
@@ -657,16 +716,27 @@ class OnlinePPPropTrainer:
                 sum(jnp.sum(jnp.square(jnp.asarray(leaf))) for leaf in leaves)
             )
 
-        def train_one(events, rows, cell_mask, heights, widths, decode_mask):
+        def train_one(
+            events,
+            rows,
+            cell_mask,
+            class_weights,
+            heights,
+            widths,
+            decode_mask,
+        ):
             self._reset()
 
-            def step_loss(event, row, mask, height, width):
-                return online_step_loss(learner(event), row, mask, height, width)
+            def step_loss(event, row, mask, weights, height, width):
+                return online_step_loss(
+                    learner(event), row, mask, height, width, weights
+                )
 
             gradients, objective = learner.etrace_grad(
                 events,
                 rows,
                 cell_mask,
+                class_weights,
                 heights,
                 widths,
                 step_fn=step_loss,
@@ -682,12 +752,20 @@ class OnlinePPPropTrainer:
             return objective, norms
 
         @brainstate.transform.jit
-        def train_many(events, rows, cell_mask, heights, widths, decode_mask):
+        def train_many(
+            events,
+            rows,
+            cell_mask,
+            class_weights,
+            heights,
+            widths,
+            decode_mask,
+        ):
             def body(update_values):
                 return train_one(*update_values, decode_mask)
 
             return brainstate.transform.for_loop(
-                body, (events, rows, cell_mask, heights, widths)
+                body, (events, rows, cell_mask, class_weights, heights, widths)
             )
 
         return train_many
@@ -720,6 +798,7 @@ class OnlinePPPropTrainer:
             jnp.asarray(chunk.events),
             jnp.asarray(chunk.target_rows),
             jnp.asarray(chunk.target_cell_mask),
+            jnp.asarray(chunk.class_weights),
             jnp.asarray(chunk.target_heights),
             jnp.asarray(chunk.target_widths),
             jnp.asarray(chunk.decode_mask),

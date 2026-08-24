@@ -58,6 +58,7 @@ def test_packing_is_lossless_ordered_and_target_independent() -> None:
     assert first.events.tobytes() == changed.events.tobytes()
     assert first.decode_mask.tobytes() == changed.decode_mask.tobytes()
     assert first.target_rows.tobytes() != changed.target_rows.tobytes()
+    assert first.class_weights.tobytes() != changed.class_weights.tobytes()
     assert first.events.shape == (config.max_events + 30, config.input_width + 31)
     assert (
         first.events[input_start : config.max_events, : config.input_width].tobytes()
@@ -85,9 +86,26 @@ def test_stack_and_repeat_keep_time_major_targets_out_of_events() -> None:
     assert batch.events.shape == (config.max_events + 30, 2, config.input_width + 31)
     assert batch.target_rows.shape == (config.max_events + 30, 2, 30)
     assert batch.target_cell_mask.shape == batch.target_rows.shape
+    assert batch.class_weights.shape == (config.max_events + 30, 2, 10)
     assert batch.decode_mask.shape == (config.max_events + 30,)
     assert chunk.events.shape[0] == 4
     assert chunk.target_heights.shape == (4, config.max_events + 30, 2)
+
+
+def test_target_color_weights_are_bounded_and_emphasize_rare_colors() -> None:
+    subject = _subject()
+    colors = np.asarray([[0, 0], [0, 7]], dtype=np.int32)
+    mask = np.ones_like(colors, dtype=np.float32)
+
+    weights = subject.target_color_weights(colors, mask)
+
+    assert weights[0] == pytest.approx(np.sqrt(4.0 / 3.0))
+    assert weights[7] == pytest.approx(2.0)
+    assert weights[7] > weights[0]
+    assert np.all(weights[[1, 2, 3, 4, 5, 6, 8, 9]] == 0.0)
+    assert np.all((weights == 0.0) | ((weights >= 0.5) & (weights <= 4.0)))
+    with pytest.raises(ValueError, match="shape"):
+        subject.target_color_weights(colors, mask[:1])
 
 
 def test_online_step_loss_masks_cells_and_scores_shape() -> None:
@@ -101,14 +119,52 @@ def test_online_step_loss_masks_cells_and_scores_shape() -> None:
     target_mask = jnp.zeros((1, 30), dtype=jnp.float32).at[0, :2].set(1.0)
 
     correct = subject.online_step_loss(
-        output, target_row, target_mask, jnp.asarray([0]), jnp.asarray([1])
+        output,
+        target_row,
+        target_mask,
+        jnp.asarray([0]),
+        jnp.asarray([1]),
+        jnp.ones((1, 10)),
     )
     wrong_output = output.at[0, model_subject.ROW_COLOR_WIDTH :].set(0.0)
     wrong = subject.online_step_loss(
-        wrong_output, target_row, target_mask, jnp.asarray([0]), jnp.asarray([1])
+        wrong_output,
+        target_row,
+        target_mask,
+        jnp.asarray([0]),
+        jnp.asarray([1]),
+        jnp.ones((1, 10)),
     )
 
     assert float(correct) < float(wrong)
+
+
+def test_balanced_step_loss_penalizes_rare_foreground_error_more() -> None:
+    subject = _subject()
+    model_subject = _model_subject()
+    target = jnp.asarray([[0, 0, 0, 7] + [0] * 26])
+    mask = jnp.zeros((1, 30)).at[0, :4].set(1.0)
+    weights = jnp.asarray([[np.sqrt(4.0 / 3.0)] + [0.0] * 6 + [2.0] + [0.0] * 2])
+    row = jnp.full((1, 30, 10), -10.0)
+    row = row.at[0, :, 0].set(10.0).at[0, 3, 7].set(20.0)
+    height = jnp.full((1, 30), -10.0).at[0, 0].set(10.0)
+    width = jnp.full((1, 30), -10.0).at[0, 3].set(10.0)
+    correct = jnp.concatenate((row.reshape(1, -1), height, width), axis=-1)
+    background_error = correct.at[0, 0].set(-20.0).at[0, 1].set(20.0)
+    rare_offset = 3 * 10
+    rare_error = correct.at[0, rare_offset + 7].set(-20.0)
+    rare_error = rare_error.at[0, rare_offset + 1].set(20.0)
+    dimensions = jnp.asarray([0])
+
+    background_loss = subject.online_step_loss(
+        background_error, target, mask, dimensions, jnp.asarray([3]), weights
+    )
+    rare_loss = subject.online_step_loss(
+        rare_error, target, mask, dimensions, jnp.asarray([3]), weights
+    )
+
+    assert model_subject.ROW_COLOR_WIDTH == 300
+    assert float(rare_loss) > float(background_loss)
 
 
 def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
@@ -170,6 +226,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
+    assert trainer.loss_version == "target_balanced_color_v21"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:

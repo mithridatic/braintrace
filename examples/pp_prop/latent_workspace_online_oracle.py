@@ -407,6 +407,7 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
         "learner": {
             "algorithm": trainer.algorithm,
             "vjp_method": trainer.vjp_method,
+            "loss_version": trainer.loss_version,
             "trace_decay": config.trace_decay,
             "gradient_norm_maxima": gradient_norms,
         },
