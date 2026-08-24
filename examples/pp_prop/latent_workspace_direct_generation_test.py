@@ -108,6 +108,10 @@ def test_first_prediction_bytes_exclude_metadata_and_scores() -> None:
         ("online_model_logits", "task_conditioned_shared_cell_decoder_v36"),
         ("online_model_logits", "task_conditioned_query_patch_decoder_v39"),
         ("spatial_model_logits", "spatial_conv_lif_row_decoder_v22"),
+        (
+            "continuous_spatial_model_logits",
+            "continuous_spatial_row_decoder_v41",
+        ),
     ],
 )
 def test_candidate_validator_accepts_only_bound_neural_source_head_pair(
