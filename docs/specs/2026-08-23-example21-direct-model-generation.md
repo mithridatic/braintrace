@@ -219,6 +219,11 @@ V13 whole-demonstration dot-product attention produced 55/85 shape-exact
 queries, 0/85 exact queries, and 0/80 strict tasks; `27a28665` predictions were
 4, 3, and 3. Whole-grid dot-product attention is rejected.
 
+V14 replaced dot-product scoring with projected negative squared distance. It
+produced 57/85 shape-exact queries, 0/85 exact queries, and 0/80 strict tasks;
+`27a28665` predictions were 5, 7, and 9. Metric whole-grid attention is
+rejected.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
