@@ -21,7 +21,7 @@ def _config(subject, **overrides):
     max_demonstrations = overrides.pop("max_demonstrations", 1)
     max_grid_size = overrides.pop("max_grid_size", 2)
     return subject.OnlineModelConfig(
-        input_width=41 + max_demonstrations + 27 * max_grid_size,
+        input_width=subject.online_input_width(max_demonstrations, max_grid_size),
         max_demonstrations=max_demonstrations,
         max_grid_size=max_grid_size,
         **overrides,
@@ -37,7 +37,7 @@ def _clear_compilation_caches():
 def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
-    assert subject.ARCHITECTURE_VERSION == "online_task_conditioned_cell_decoder_v36"
+    assert subject.ARCHITECTURE_VERSION == "online_task_patch_decoder_v39"
 
     with pytest.raises(ValueError, match="architecture_version"):
         _config(subject, architecture_version="old")
@@ -221,6 +221,34 @@ def test_shared_cell_decoder_is_local_and_task_conditioned() -> None:
         "height_head",
         "width_head",
     }.issubset(parameter_paths)
+
+
+def test_query_patch_changes_only_one_cell_and_interacts_with_context() -> None:
+    subject = _subject()
+    config = _config(
+        subject,
+        encoder_width=5,
+        hidden_width=9,
+        recurrent_layers=2,
+        seed=37,
+    )
+    model = subject.OnlineARCVanillaRNN(config)
+    event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    changed_event = event.at[0, config.decode_patch_slice.start + 6].set(1.0)
+    hidden_a = jnp.zeros((1, config.hidden_width), dtype=jnp.float32)
+    hidden_b = jnp.full((1, config.hidden_width), 0.5, dtype=jnp.float32)
+
+    base_a = np.asarray(model._cell_logits(hidden_a, event))
+    changed_a = np.asarray(model._cell_logits(hidden_a, changed_event))
+    base_b = np.asarray(model._cell_logits(hidden_b, event))
+    changed_b = np.asarray(model._cell_logits(hidden_b, changed_event))
+
+    assert config.decode_patch_slice.stop == config.input_width
+    assert changed_a[:, 0].tobytes() != base_a[:, 0].tobytes()
+    assert changed_a[:, 1:].tobytes() == base_a[:, 1:].tobytes()
+    assert not np.allclose(
+        changed_a[:, 0] - base_a[:, 0], changed_b[:, 0] - base_b[:, 0]
+    )
 
 
 def test_shape_decoder_interacts_query_dimensions_with_task_context() -> None:

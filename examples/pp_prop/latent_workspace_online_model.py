@@ -15,7 +15,11 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_task_conditioned_cell_decoder_v36"
+QUERY_PATCH_RADIUS = 1
+QUERY_PATCH_SIDE = 2 * QUERY_PATCH_RADIUS + 1
+QUERY_PATCH_CHANNELS = COLOR_COUNT + 1
+QUERY_PATCH_WIDTH = QUERY_PATCH_SIDE * QUERY_PATCH_SIDE * QUERY_PATCH_CHANNELS
+ARCHITECTURE_VERSION = "online_task_patch_decoder_v39"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -36,6 +40,31 @@ def _nonnegative_integer(value: object, name: str) -> int:
     return integer
 
 
+def online_input_width(max_demonstrations: int, max_grid_size: int) -> int:
+    """Return the complete V39 row-event plus decode-patch width.
+
+    Parameters
+    ----------
+    max_demonstrations : int
+        Positive demonstration capacity.
+    max_grid_size : int
+        Positive grid capacity no greater than 30.
+
+    Returns
+    -------
+    int
+        Bound input width for :class:`OnlineModelConfig`.
+    """
+
+    demonstrations = _positive_integer(max_demonstrations, "max_demonstrations")
+    grid_size = _positive_integer(max_grid_size, "max_grid_size")
+    if grid_size > MAX_GRID_SIZE:
+        raise ValueError(f"max_grid_size must be at most {MAX_GRID_SIZE}.")
+    base_width = 10 + demonstrations + 27 * grid_size
+    decode_width = 1 + MAX_GRID_SIZE + grid_size * QUERY_PATCH_WIDTH
+    return base_width + decode_width
+
+
 @dataclass(frozen=True)
 class OnlineModelConfig:
     """Configure the hierarchical row-decoded recurrent model.
@@ -48,6 +77,8 @@ class OnlineModelConfig:
         Width of the trainable event projection.
     hidden_width : int, default=256
         Width of every BrainTrace recurrent layer after the first.
+    spatial_context_width : int, default=32
+        Leading recurrent coordinates multiplied by every query-patch value.
     recurrent_layers : int, default=2
         Number of stacked recurrent layers, at least two. The first has
         ``encoder_width`` units and later layers have ``hidden_width`` units.
@@ -57,13 +88,14 @@ class OnlineModelConfig:
         Grid capacity bound into the row-event feature layout.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_task_conditioned_cell_decoder_v36"
+    architecture_version : str, default="online_task_patch_decoder_v39"
         Exact checkpoint-schema identifier.
     """
 
     input_width: int
     encoder_width: int = 128
     hidden_width: int = 256
+    spatial_context_width: int = 32
     recurrent_layers: int = 2
     max_demonstrations: int = 10
     max_grid_size: int = MAX_GRID_SIZE
@@ -75,6 +107,7 @@ class OnlineModelConfig:
             "input_width",
             "encoder_width",
             "hidden_width",
+            "spatial_context_width",
             "max_demonstrations",
             "max_grid_size",
         ):
@@ -86,8 +119,8 @@ class OnlineModelConfig:
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
         if self.max_grid_size > MAX_GRID_SIZE:
             raise ValueError(f"max_grid_size must be at most {MAX_GRID_SIZE}.")
-        expected_input_width = (
-            41 + self.max_demonstrations + 27 * self.max_grid_size
+        expected_input_width = online_input_width(
+            self.max_demonstrations, self.max_grid_size
         )
         if self.input_width != expected_input_width:
             raise ValueError(
@@ -126,6 +159,19 @@ class OnlineModelConfig:
 
         stop = self.query_color_slice.start
         return slice(stop - self.max_grid_size, stop)
+
+    @property
+    def decode_patch_slice(self) -> slice:
+        """Return the flattened per-cell query-patch feature slice."""
+
+        start = 41 + self.max_demonstrations + 27 * self.max_grid_size
+        return slice(start, start + self.max_grid_size * QUERY_PATCH_WIDTH)
+
+    @property
+    def effective_spatial_context_width(self) -> int:
+        """Return the recurrent width available to patch interactions."""
+
+        return min(self.hidden_width, self.spatial_context_width)
 
 
 def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
@@ -194,6 +240,8 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
                 + COLOR_COUNT
                 + MAX_GRID_SIZE
                 + config.hidden_width * COLOR_COUNT
+                + QUERY_PATCH_WIDTH
+                + config.effective_spatial_context_width * QUERY_PATCH_WIDTH
             )
             self.cell_color_head = braintrace.nn.Linear(
                 cell_feature_width, COLOR_COUNT
@@ -215,6 +263,13 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
             padding = [(0, 0)] * query_colors.ndim
             padding[-2] = (0, MAX_GRID_SIZE - self.config.max_grid_size)
             query_colors = jnp.pad(query_colors, padding)
+        query_patches = event[..., self.config.decode_patch_slice].reshape(
+            *event.shape[:-1], self.config.max_grid_size, QUERY_PATCH_WIDTH
+        )
+        if self.config.max_grid_size < MAX_GRID_SIZE:
+            padding = [(0, 0)] * query_patches.ndim
+            padding[-2] = (0, MAX_GRID_SIZE - self.config.max_grid_size)
+            query_patches = jnp.pad(query_patches, padding)
         context = jnp.broadcast_to(
             hidden[..., None, :], (*hidden.shape[:-1], MAX_GRID_SIZE, hidden.shape[-1])
         )
@@ -225,8 +280,26 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
         interaction = (context[..., :, None] * query_colors[..., None, :]).reshape(
             *hidden.shape[:-1], MAX_GRID_SIZE, hidden.shape[-1] * COLOR_COUNT
         )
+        spatial_context = context[
+            ..., : self.config.effective_spatial_context_width
+        ]
+        patch_interaction = (
+            spatial_context[..., :, None] * query_patches[..., None, :]
+        ).reshape(
+            *hidden.shape[:-1],
+            MAX_GRID_SIZE,
+            self.config.effective_spatial_context_width * QUERY_PATCH_WIDTH,
+        )
         features = jnp.concatenate(
-            (context, query_colors, columns, interaction), axis=-1
+            (
+                context,
+                query_colors,
+                columns,
+                interaction,
+                query_patches,
+                patch_interaction,
+            ),
+            axis=-1,
         )
         return self.cell_color_head(features)
 

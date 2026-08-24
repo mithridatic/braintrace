@@ -110,7 +110,7 @@ def test_tiny_oracle_run_writes_bound_finite_artifact(tmp_path, monkeypatch) -> 
     assert np.isfinite(result["training"]["losses"]).all()
     assert result["model"]["parameters_moved"] is True
     assert result["model"]["architecture"]["architecture_version"] == (
-        "online_query_residual_hierarchical_decoder_v35"
+        "online_task_patch_decoder_v39"
     )
     assert result["learner"]["compiler"]["recurrent_excluded_paths"] == []
     assert "relation_excluded_weight_to_weight" not in result["learner"][

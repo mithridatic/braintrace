@@ -63,7 +63,8 @@ def test_packing_is_lossless_ordered_and_target_independent() -> None:
     assert first.decode_mask.tobytes() == changed.decode_mask.tobytes()
     assert first.target_rows.tobytes() != changed.target_rows.tobytes()
     assert first.class_weights.tobytes() != changed.class_weights.tobytes()
-    assert first.events.shape == (config.max_events + 30, config.input_width + 31)
+    event_width = config.input_width + subject.online_decode_feature_width(config)
+    assert first.events.shape == (config.max_events + 30, event_width)
     assert (
         first.events[input_start : config.max_events, : config.input_width].tobytes()
         == valid_rows.tobytes()
@@ -91,7 +92,10 @@ def test_packing_is_lossless_ordered_and_target_independent() -> None:
     assert np.count_nonzero(
         decode[len(query_rows) :, config.input_color_slice]
     ) == 0
-    assert np.array_equal(decode[:, config.input_width + 1 :], np.eye(30, dtype=np.float32))
+    assert np.array_equal(
+        decode[:, config.input_width + 1 : config.input_width + 31],
+        np.eye(30, dtype=np.float32),
+    )
     assert first.decode_mask.sum() == 30
 
 
@@ -116,6 +120,34 @@ def test_query_replay_changes_with_query_input_but_not_target() -> None:
     assert first.target_rows.tobytes() != target_changed.target_rows.tobytes()
 
 
+def test_query_patch_rows_are_ordered_padded_and_target_independent() -> None:
+    subject = _subject()
+    direct = importlib.import_module(
+        "examples.pp_prop.latent_workspace_direct_training"
+    )
+    config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
+    base = direct.encode_direct_episode(_task(3), 0, config)
+    changed = direct.encode_direct_episode(_task(9), 0, config)
+
+    patches = subject.query_patch_rows(base.events, config).reshape(
+        30, 3, 3, 3, 11
+    )
+    changed_patches = subject.query_patch_rows(changed.events, config)
+
+    assert patches[0, 0, 1, 1, 6] == 1.0
+    assert patches[0, 0, 1, 1, 10] == 1.0
+    assert patches[0, 0, 1, 2, 0] == 1.0
+    assert patches[0, 0, 1, 2, 10] == 1.0
+    assert np.count_nonzero(patches[0, 0, 0]) == 0
+    assert np.count_nonzero(patches[0, 2, 1, 1]) == 0
+    assert np.count_nonzero(patches[3:]) == 0
+    assert subject.query_patch_rows(base.events, config).tobytes() == (
+        changed_patches.tobytes()
+    )
+    with pytest.raises(ValueError, match="row-event width"):
+        subject.query_patch_rows(base.events[:, :-1], config)
+
+
 def test_stack_and_repeat_keep_time_major_targets_out_of_events() -> None:
     subject = _subject()
     config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
@@ -124,7 +156,8 @@ def test_stack_and_repeat_keep_time_major_targets_out_of_events() -> None:
     batch = subject.stack_online_episodes((episode, episode))
     chunk = subject.repeat_online_batch(batch, updates=4)
 
-    assert batch.events.shape == (config.max_events + 30, 2, config.input_width + 31)
+    event_width = config.input_width + subject.online_decode_feature_width(config)
+    assert batch.events.shape == (config.max_events + 30, 2, event_width)
     assert batch.target_rows.shape == (config.max_events + 30, 2, 30)
     assert batch.target_cell_mask.shape == batch.target_rows.shape
     assert batch.class_weights.shape == (config.max_events + 30, 2, 10)
@@ -439,7 +472,9 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     batch = subject.stack_online_episodes((episode, episode))
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
-            input_width=config.input_width + 31,
+            input_width=model_subject.online_input_width(
+                config.max_demonstrations, config.max_grid_size
+            ),
             max_demonstrations=config.max_demonstrations,
             max_grid_size=config.max_grid_size,
             encoder_width=8,
@@ -577,7 +612,9 @@ def test_target_free_evaluation_is_deterministic() -> None:
     )
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
-            input_width=config.input_width + 31,
+            input_width=model_subject.online_input_width(
+                config.max_demonstrations, config.max_grid_size
+            ),
             max_demonstrations=config.max_demonstrations,
             max_grid_size=config.max_grid_size,
             encoder_width=6,
@@ -606,7 +643,9 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
     model_subject = _model_subject()
     row_config = RowEventConfig(max_demonstrations=1, max_grid_size=2)
     config = model_subject.OnlineModelConfig(
-        input_width=row_config.input_width + 31,
+        input_width=model_subject.online_input_width(
+            row_config.max_demonstrations, row_config.max_grid_size
+        ),
         max_demonstrations=row_config.max_demonstrations,
         max_grid_size=row_config.max_grid_size,
         encoder_width=5,
@@ -637,7 +676,9 @@ def test_checkpoint_rejects_exact_schema_corruption(tmp_path, corruption: str) -
     row_config = RowEventConfig(max_demonstrations=1, max_grid_size=2)
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
-            input_width=row_config.input_width + 31,
+            input_width=model_subject.online_input_width(
+                row_config.max_demonstrations, row_config.max_grid_size
+            ),
             max_demonstrations=row_config.max_demonstrations,
             max_grid_size=row_config.max_grid_size,
             encoder_width=5,
@@ -691,5 +732,5 @@ def test_hierarchical_decode_uses_gate_then_nonzero_argmax_on_fixed_steps() -> N
     assert candidate["grid"] == [[7, 0]]
     assert candidate["parameter_dependencies"] == []
     assert candidate["answer_head_version"] == (
-        "task_conditioned_shared_cell_decoder_v36"
+        "task_conditioned_query_patch_decoder_v39"
     )

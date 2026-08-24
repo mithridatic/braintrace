@@ -27,6 +27,7 @@ from examples.pp_prop.latent_workspace_direct_experiment import (
 from examples.pp_prop.latent_workspace_online_model import (
     OnlineARCVanillaRNN,
     OnlineModelConfig,
+    online_input_width,
 )
 from examples.pp_prop.latent_workspace_online_training import (
     OnlinePPPropTrainer,
@@ -166,10 +167,7 @@ class OnlineOracleConfig:
             raise ValueError("trace_decay must be at most 1.0.")
         object.__setattr__(self, "trace_decay", decay)
         OnlineModelConfig(
-            input_width=RowEventConfig(
-                max_demonstrations=10, max_grid_size=30
-            ).input_width
-            + 31,
+            input_width=online_input_width(10, 30),
             encoder_width=self.encoder_width,
             hidden_width=self.hidden_width,
             recurrent_layers=self.recurrent_layers,
@@ -304,7 +302,9 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
             oracle_curriculum.tasks, row_config
         )
         model_config = OnlineModelConfig(
-            input_width=row_config.input_width + 31,
+            input_width=online_input_width(
+                row_config.max_demonstrations, row_config.max_grid_size
+            ),
             encoder_width=config.encoder_width,
             hidden_width=config.hidden_width,
             recurrent_layers=config.recurrent_layers,

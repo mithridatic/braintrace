@@ -159,6 +159,7 @@ def validate_direct_candidate(value: object) -> None:
         ("online_model_logits", "online_row_decoder_v20"),
         ("online_model_logits", "hierarchical_row_decoder_v29"),
         ("online_model_logits", "task_conditioned_shared_cell_decoder_v36"),
+        ("online_model_logits", "task_conditioned_query_patch_decoder_v39"),
         ("spatial_model_logits", "spatial_conv_lif_row_decoder_v22"),
     }
     if source_head not in allowed_source_heads:

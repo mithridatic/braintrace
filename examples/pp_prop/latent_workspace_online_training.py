@@ -26,6 +26,9 @@ from examples.pp_prop.latent_workspace_direct_generation import (
 from examples.pp_prop.latent_workspace_online_model import (
     COLOR_COUNT,
     MAX_GRID_SIZE,
+    QUERY_PATCH_CHANNELS,
+    QUERY_PATCH_SIDE,
+    QUERY_PATCH_WIDTH,
     OnlineARCVanillaRNN,
     OnlineModelConfig,
     split_step_logits,
@@ -39,7 +42,25 @@ from examples.pp_prop.latent_workspace_task import (
 )
 
 EDIT_CELL_MULTIPLIER = 4.0
-DECODE_FEATURE_WIDTH = 1 + MAX_GRID_SIZE
+
+
+def online_decode_feature_width(row_config: RowEventConfig) -> int:
+    """Return the V39 decode flag, row index, and query-patch width.
+
+    Parameters
+    ----------
+    row_config : RowEventConfig
+        Bound base-event capacity.
+
+    Returns
+    -------
+    int
+        Number of features appended to every base row event.
+    """
+
+    if not isinstance(row_config, RowEventConfig):
+        raise TypeError("row_config must be a RowEventConfig instance.")
+    return 1 + MAX_GRID_SIZE + row_config.max_grid_size * QUERY_PATCH_WIDTH
 
 
 @dataclass(frozen=True)
@@ -210,6 +231,59 @@ def query_replay_rows(
     return replay
 
 
+def query_patch_rows(
+    encoded_events: np.ndarray, row_config: RowEventConfig
+) -> np.ndarray:
+    """Encode ordered 3-by-3 query neighbourhoods for every decode row.
+
+    Parameters
+    ----------
+    encoded_events : numpy.ndarray
+        Lossless base row events containing a target-free query grid.
+    row_config : RowEventConfig
+        Static base-event feature layout.
+
+    Returns
+    -------
+    numpy.ndarray
+        Thirty rows of flattened per-column colour/validity patches.
+    """
+
+    replay = query_replay_rows(encoded_events, row_config)
+    grid_size = row_config.max_grid_size
+    colors = replay[:grid_size, row_config.input_color_slice].reshape(
+        grid_size, grid_size, COLOR_COUNT
+    )
+    valid = replay[:grid_size, row_config.input_mask_slice][..., None]
+    grid = np.concatenate((colors, valid), axis=-1)
+    padding = QUERY_PATCH_SIDE // 2
+    padded = np.pad(
+        grid,
+        ((padding, padding), (padding, padding), (0, 0)),
+        mode="constant",
+    )
+    offsets = [
+        padded[
+            row_offset : row_offset + grid_size,
+            column_offset : column_offset + grid_size,
+        ]
+        for row_offset in range(QUERY_PATCH_SIDE)
+        for column_offset in range(QUERY_PATCH_SIDE)
+    ]
+    patches = np.concatenate(offsets, axis=-1)
+    if patches.shape != (
+        grid_size,
+        grid_size,
+        QUERY_PATCH_WIDTH,
+    ) or patches.shape[-1] != QUERY_PATCH_SIDE**2 * QUERY_PATCH_CHANNELS:
+        raise RuntimeError("query patch layout is inconsistent.")
+    rows = np.zeros(
+        (MAX_GRID_SIZE, grid_size * QUERY_PATCH_WIDTH), dtype=np.float32
+    )
+    rows[:grid_size] = patches.reshape(grid_size, -1)
+    return rows
+
+
 def encode_online_episode(
     task: ArcTask, query_index: int, row_config: RowEventConfig
 ) -> OnlineEpisode:
@@ -239,7 +313,10 @@ def encode_online_episode(
         raise ValueError("valid input rows exceed the fixed event horizon.")
     sequence_length = row_config.max_events + MAX_GRID_SIZE
     events = np.zeros(
-        (sequence_length, row_config.input_width + DECODE_FEATURE_WIDTH),
+        (
+            sequence_length,
+            row_config.input_width + online_decode_feature_width(row_config),
+        ),
         dtype=np.float32,
     )
     input_start = row_config.max_events - input_rows.shape[0]
@@ -249,9 +326,12 @@ def encode_online_episode(
         direct.events, row_config
     )
     decode[:, row_config.input_width] = 1.0
-    decode[:, row_config.input_width + 1 :] = np.eye(
+    row_index_start = row_config.input_width + 1
+    row_index_stop = row_index_start + MAX_GRID_SIZE
+    decode[:, row_index_start:row_index_stop] = np.eye(
         MAX_GRID_SIZE, dtype=np.float32
     )
+    decode[:, row_index_stop:] = query_patch_rows(direct.events, row_config)
 
     target_rows = np.zeros((sequence_length, MAX_GRID_SIZE), dtype=np.int32)
     target_cell_mask = np.zeros(
@@ -1646,5 +1726,5 @@ def decode_hierarchical_online_outputs(
         "proposal_source": "online_model_logits",
         "selection_role": "greedy_argmax",
         "ranking_source": "none_single_greedy_candidate",
-        "answer_head_version": "task_conditioned_shared_cell_decoder_v36",
+        "answer_head_version": "task_conditioned_query_patch_decoder_v39",
     }

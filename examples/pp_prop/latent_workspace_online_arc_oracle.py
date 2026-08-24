@@ -21,6 +21,7 @@ from examples.pp_prop.latent_workspace_direct_experiment import (
 from examples.pp_prop.latent_workspace_online_model import (
     OnlineARCVanillaRNN,
     OnlineModelConfig,
+    online_input_width,
 )
 from examples.pp_prop.latent_workspace_online_oracle import _source_revision
 from examples.pp_prop.latent_workspace_online_training import (
@@ -339,7 +340,9 @@ def run_arc_oracle(config: OnlineARCOracleConfig) -> dict[str, object]:
 
     with jax.default_device(device):
         model_config = OnlineModelConfig(
-            input_width=row_config.input_width + 31,
+            input_width=online_input_width(
+                row_config.max_demonstrations, row_config.max_grid_size
+            ),
             encoder_width=config.encoder_width,
             hidden_width=config.hidden_width,
             recurrent_layers=config.recurrent_layers,
