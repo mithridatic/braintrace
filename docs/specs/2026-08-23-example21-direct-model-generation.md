@@ -1476,6 +1476,49 @@ families, solve one non-copy/non-label task, and pass every mechanism and
 anti-collapse check. Failure closes task-gated operator banks. A pass permits
 one fresh real-ARC validation fold, never direct complete evaluation.
 
+V42 passes its capability gate at clean revision
+`fd9591bf9701775bdcb4f7d555ff9e42f4d3fb56`, with artifact
+`var/ex21-online-v42-task-gated-capability-v1`. The sealed 800-update run took
+278.11 training seconds and solved 11/120 untouched synthetic tasks: three
+copy, five pattern-label, and three select-marked-region tasks. It reached
+71/120 exact shapes, 162/445 foreground cells (36.40%), and 1,882/2,143
+background cells (87.82%). All four parameter groups and all ten ordered
+leaves moved; recurrent exclusions were zero; parameter and candidate digests
+changed; and mechanism, anti-collapse, family-diversity, and promotion gates
+all passed. The checkpoint file hash is
+`a792a071f8eda395915ddb09d23e2224ef34d34e1200eaee45eacaccb785cd04`.
+This remains score-ineligible synthetic evidence and contributes zero tasks to
+the acceptance score.
+
+### Synthetic-to-public-ARC transfer V43
+
+V43 changes no V42 topology, answer path, loss, or decoder. It must reload the
+exact V42 checkpoint above and reject any architecture, ordered-schema, or
+parameter-digest mismatch before training. It then fine-tunes that one global
+checkpoint on integrity-indexed public ARC-AGI-1 training-role tasks only.
+There is no task-local fitting, rule path, target-derived selection, or
+evaluation-role scoring.
+
+V33 through V37 already scored canonical public-training fingerprint
+positions 0 through 383. The only fresh score-ineligible scope is therefore
+the tail at positions 384 through 398: 15 tasks. V43 holds out exactly that
+tail and fits the other 384 tasks. The fixed pilot uses model seed 2108,
+sampling and augmentation seed 22108, 400 updates in chunks of 20, batch size
+eight, learning rate 0.001, the V42 128/256 two-layer recurrent topology,
+twelve experts, the V42 unweighted fourth-root hierarchical loss, and the
+existing trace decay. Public-training augmentation remains enabled.
+
+Sibling tests must first fail against the absent runner, then prove exact
+tail selection and disjoint fingerprints, fit-only episode membership, exact
+V42 checkpoint and digest validation, target-free deterministic scoring,
+compiled recurrent inclusion, finite nonzero group gradients, movement of
+every parameter group and ordered leaf, changed candidate bytes, and complete
+artifact binding. The promotion gate is the mechanism gate plus at least one
+strict task out of the 15-task fresh fold. Failure closes V42/V43 transfer.
+One or more strict tasks permits one separately specified all-training
+nomination run against the complete fixed evaluation manifest; the 15-task
+pilot score itself remains ineligible and is never added to acceptance.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
