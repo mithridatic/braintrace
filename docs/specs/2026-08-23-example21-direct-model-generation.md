@@ -429,34 +429,44 @@ arm is rejected and must not receive a complete-manifest evaluation.
 
 ### Task-conditioned spatial recurrence V19
 
-V19 retains the V18 recurrent encoder, direct query preservation, and local
-demonstration memory, then adds two checkpoint-owned neural paths. First, a
-task-conditioned correspondence gate mixes learned local-neighbourhood and
-learned absolute-coordinate embeddings separately in every decoder channel.
-The gate is emitted from the final recurrent task state. Query cells attend to
-all valid demonstration-input cells with the mixed embeddings; attended values
-are learned projections of paired demonstration input colours, output colours,
-and coordinates. A learned colour head converts the attended representation to
-cell logits. This is one differentiable neural attention operation. It neither
-enumerates transforms nor retrieves another task or candidate.
+A renewed literal audit of the goal rejects V18's local and whole-demonstration
+value attention as a qualifying answer path: both retrieve demonstration output
+colours into the emitted grid. The row-associative value and relation paths have
+the same ambiguity. Their measured V18 results remain truthful diagnostics, but
+none of those branches may determine a V19 counted prediction. The initially
+specified V19 demonstration-cell correspondence head is withdrawn before
+implementation for the same reason.
 
-Second, a context-conditioned spatial state starts from a learned convolution
-of the lossless query tensor. A learned summary of complete demonstration
-input/output pairs and the recurrent task state supplies feature-wise scale and
-bias. One shared learned 3x3 convolution updates the state for four steps inside
-`brainstate.transform.scan`; a learned colour head emits an additional direct
-logit field. The fixed step count is neural depth, not a transformation search,
-and no Python loop may drive it. All new projections, convolution kernels,
-gates, biases, and colour heads are trainable checkpoint leaves and must appear
-in candidate dependencies and strict checkpoint schema validation.
+V19 removes all local, whole-demonstration, and row-associative value transfer
+from the counted model and checkpoint schema. Demonstrations influence the
+answer only after checkpoint-owned neural encoding: lossless row events execute
+through the event projection and recurrent BrainTrace GRU, while a trainable
+convolution encodes each complete demonstration input/output pair. Only the
+resulting recurrent state and pooled convolutional latent activation may
+condition the decoder; no raw demonstration colour or weighted demonstration
+grid may be added to output logits.
+
+A context-conditioned spatial state starts from a learned convolution of the
+lossless query tensor. The pooled learned demonstration-pair activation and the
+final recurrent task state supply feature-wise scale and bias. One shared
+learned 3x3 convolution updates the state for four steps inside
+`brainstate.transform.scan`; a learned colour head emits direct logits. The
+fixed step count is neural depth, not a transformation search, and no Python
+loop may drive it. The ordinary direct query-colour projection may remain as a
+checkpoint-owned residual, but every other cell-logit contribution must be a
+trained activation descended from the recurrent summary, query encoder, or
+spatial state. All new projections, convolution kernels, biases, and colour
+heads are trainable checkpoint leaves and must appear in candidate dependencies
+and strict checkpoint schema validation.
 
 The V19 implementation must be preceded by sibling tests that prove: exact
-architecture-version rejection; gate, attention, pair-value, spatial-context,
-and recurrent-convolution shape validation; compiled four-step execution;
-finite gradients through every new leaf; changed logits after a controlled
-perturbation of each new path; checkpoint roundtrip coverage; and preservation
-of the fixed direct-candidate provenance contract. Combined meaningful coverage
-for the direct curriculum, model, and experiment modules remains above 90%.
+architecture-version rejection; absence of local, whole-grid, and associative
+retrieval leaves from the counted schema; demonstration-pair and spatial-context
+shape validation; compiled four-step execution; finite gradients through every
+new leaf; changed logits after a controlled perturbation of the new path;
+checkpoint roundtrip coverage; and preservation of the fixed direct-candidate
+provenance contract. Combined meaningful coverage for the direct curriculum,
+model, and experiment modules remains above 90%.
 
 V19 first runs the existing fresh 120-task synthetic v3 oracle. It is rejected
 unless it strictly solves at least one non-label spatial task and remains
