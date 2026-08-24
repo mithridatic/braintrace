@@ -1195,6 +1195,15 @@ mechanism gate and solve at least two of 80 held-out public-training tasks. Only
 a pass permits the fresh 2,000-update complete-manifest run and literal 16/400
 acceptance threshold.
 
+V35 is rejected at clean revision
+`e0d944331230a92684e74e025742a6a16eaa264c`, with artifact
+`var/ex21-online-v35-query-residual-pilot-v1`. The mechanism gate passed and
+all recurrent and residual parameter groups moved. Training took 64.10 seconds,
+but strict score on fold two was 0/80 across 81 queries. Exact shape rose to
+25/81, foreground accuracy was 98/711 cells (13.78%), and background accuracy
+was 698/1,560 cells (44.74%). These cell and shape measurements do not satisfy
+the integer promotion gate. No complete V35 run is permitted.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
