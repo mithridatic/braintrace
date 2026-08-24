@@ -24,6 +24,7 @@ from examples.pp_prop.latent_workspace_direct_generation import (
     strict_task_pass_at_1,
 )
 from examples.pp_prop.latent_workspace_online_model import (
+    COLOR_COUNT,
     MAX_GRID_SIZE,
     OUTPUT_WIDTH,
     split_step_logits,
@@ -185,6 +186,64 @@ def foreground_background_step_loss(
     return (color_loss + height_loss + width_loss) / 3.0
 
 
+def present_color_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    class_weights: jnp.ndarray,
+) -> jnp.ndarray:
+    """Assign equal loss mass to every target colour present in a row.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row : jax.Array
+        Batched integer colours for all 30 columns.
+    target_cell_mask : jax.Array
+        Batched mask selecting true target columns.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    class_weights : jax.Array
+        Batched target-only colour metadata retained for the fixed trainer schema.
+
+    Returns
+    -------
+    jax.Array
+        Scalar mean of present-colour-balanced colour and shape losses.
+    """
+
+    if class_weights.shape[-1] != COLOR_COUNT:
+        raise ValueError(f"class_weights last dimension must be {COLOR_COUNT}.")
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits, target_row
+    )
+    mask = jnp.asarray(target_cell_mask, dtype=per_cell.dtype)
+    color_ids = jnp.arange(COLOR_COUNT, dtype=target_row.dtype)
+    membership = mask[..., None] * (
+        target_row[..., None] == color_ids
+    ).astype(per_cell.dtype)
+    counts = jnp.sum(membership, axis=-2)
+    per_color = jnp.sum(per_cell[..., None] * membership, axis=-2) / jnp.maximum(
+        counts, 1.0
+    )
+    present = (counts > 0.0).astype(per_cell.dtype)
+    color_per_example = jnp.sum(per_color * present, axis=-1) / jnp.maximum(
+        jnp.sum(present, axis=-1), 1.0
+    )
+    color_loss = jnp.mean(color_per_example)
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return (color_loss + height_loss + width_loss) / 3.0
+
+
 class SpatialPPPropTrainer:
     """Train the Conv-LIF canvas with compiled single-step PP-prop.
 
@@ -202,7 +261,7 @@ class SpatialPPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "foreground_background_balanced_v23"
+    loss_version = "present_color_balanced_v24"
 
     def __init__(
         self,
@@ -274,7 +333,7 @@ class SpatialPPPropTrainer:
             self._reset()
 
             def step_loss(event, row, mask, class_weights, height, width):
-                return foreground_background_step_loss(
+                return present_color_step_loss(
                     learner(event), row, mask, height, width, class_weights
                 )
 

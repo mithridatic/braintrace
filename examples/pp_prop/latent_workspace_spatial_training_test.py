@@ -99,6 +99,40 @@ def test_v23_loss_handles_all_background_and_ignores_masked_cells() -> None:
     assert float(outside_loss) == pytest.approx(float(baseline_loss))
 
 
+def test_v24_loss_equalizes_every_present_color_not_just_foreground() -> None:
+    subject = _subject()
+    target = jnp.asarray([[7, 8] + [0] * 28])
+    mask = jnp.ones((1, 30), dtype=jnp.float32)
+    weights = jnp.asarray(
+        [[np.sqrt(30.0 / 28.0)] + [0.0] * 6 + [4.0, 4.0, 0.0]]
+    )
+    zero_prediction = _confident_output(0)
+    seven_prediction = _confident_output(7)
+    eight_prediction = _confident_output(8)
+    dimensions = jnp.asarray([0])
+    widths = jnp.asarray([29])
+
+    v23_zero = subject.foreground_background_step_loss(
+        zero_prediction, target, mask, dimensions, widths, weights
+    )
+    v23_seven = subject.foreground_background_step_loss(
+        seven_prediction, target, mask, dimensions, widths, weights
+    )
+    v24_zero = subject.present_color_step_loss(
+        zero_prediction, target, mask, dimensions, widths, weights
+    )
+    v24_seven = subject.present_color_step_loss(
+        seven_prediction, target, mask, dimensions, widths, weights
+    )
+    v24_eight = subject.present_color_step_loss(
+        eight_prediction, target, mask, dimensions, widths, weights
+    )
+
+    assert float(v23_zero) < float(v23_seven)
+    assert float(v24_zero) == pytest.approx(float(v24_seven), rel=1e-5)
+    assert float(v24_zero) == pytest.approx(float(v24_eight), rel=1e-5)
+
+
 def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -140,7 +174,7 @@ def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     assert all(before[name].tobytes() != after[name].tobytes() for name in before)
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "foreground_background_balanced_v23"
+    assert trainer.loss_version == "present_color_balanced_v24"
 
 
 def test_spatial_checkpoint_roundtrip_is_output_exact(tmp_path) -> None:

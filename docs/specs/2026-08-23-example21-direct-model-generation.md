@@ -760,6 +760,38 @@ oracle may use the otherwise unchanged configuration and fresh oracle seed
 82108. The promotion gate remains greater than 7/120, at least two non-label
 families, and at least one non-copy/non-label exact task.
 
+V23 is rejected at clean revision
+`ea44d6c44c885b1d28ec4aca082b98c7f4c53f7f`, with artifact
+`var/ex21-online-v23-anti-collapse-pilot-v1`. Its mechanism gate passed after
+200 updates, but its anti-collapse gate failed: all 2,120 predicted cells were
+zero, with 0/73 foreground and 506/506 background cells correct among 19
+shape-correct tasks. The score-ineligible exact count was 0/40, so no full V23
+oracle ran. Equal foreground/background mass is insufficient because the
+foreground mass can be divided among nine nonzero classes while colour zero
+retains the full background mass and remains the constant argmax.
+
+### Present-colour-balanced spatial PP-prop V24
+
+V24 again changes only the spatial loss. Within each example and decode row,
+cross-entropy is averaged separately for every target colour present among valid
+cells, then those nonempty colour means are averaged equally. Thus background
+and each distinct foreground colour receive the same objective mass regardless
+of pixel frequency; absent colours receive none. All-background rows remain a
+single finite partition. Shape losses, model topology, pp-prop configuration,
+target isolation, and scorer-only diagnostics are unchanged. The loss version
+is `present_color_balanced_v24`.
+
+A regression fixture with 28 zero cells and one cell each of colours seven and
+eight must prove that the V23 two-partition loss still prefers all-zero output,
+while V24 assigns equal loss to constant-zero, constant-seven, and
+constant-eight predictions. The full five-group descent test must remain green.
+One score-ineligible 200-update anti-collapse pilot reuses the fixed training
+configuration but evaluates 40 diagnostic tasks at fresh seed 102108. Its gate
+is unchanged: mechanism pass, changed candidate bytes, at least one nonzero
+predicted cell, and at least one correct foreground cell. Only a pass permits
+the still-untouched seed-82108 full oracle under the existing greater-than-seven
+and family-diversity gate.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
