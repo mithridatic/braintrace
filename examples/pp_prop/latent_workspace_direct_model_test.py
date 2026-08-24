@@ -91,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "two_hop_relation_attention_v10"
+        == "color_invariant_shared_relation_v11"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -297,14 +297,43 @@ def test_query_to_demonstration_relation_changes_executed_colors() -> None:
     query = query.at[0, :2, :3, 10].set(1.0)
     brainstate.nn.init_all_states(model, batch_size=1)
     before = np.asarray(model.run(events, query)[2])
-    model.associative_query_projection.weight.value = jax.tree.map(
+    model.relation_output_projection.weight.value = jax.tree.map(
         lambda value: value * 0.0,
-        model.associative_query_projection.weight.value,
+        model.relation_output_projection.weight.value,
     )
     brainstate.nn.init_all_states(model, batch_size=1)
     after = np.asarray(model.run(events, query)[2])
 
     assert before.tobytes() != after.tobytes()
+
+
+def test_associative_keys_collapse_foreground_color_identity() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=24,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=10,
+            seed=59,
+            memory_key_indices=tuple(range(12)),
+            memory_value_indices=tuple(range(12, 24)),
+            memory_key_color_block_width=10,
+        )
+    )
+    first = jnp.zeros((1, 1, 24), dtype=jnp.float32)
+    first = first.at[..., 3].set(1.0)
+    second = first.at[..., 3].set(0.0)
+    second = second.at[..., 7].set(1.0)
+    background = first.at[..., 3].set(0.0)
+    background = background.at[..., 2].set(1.0)
+
+    first_key = np.asarray(model._associative_key_features(first))
+    second_key = np.asarray(model._associative_key_features(second))
+    background_key = np.asarray(model._associative_key_features(background))
+
+    assert first_key.tobytes() == second_key.tobytes()
+    assert first_key.tobytes() != background_key.tobytes()
 
 
 @pytest.mark.parametrize(
@@ -315,9 +344,14 @@ def test_query_to_demonstration_relation_changes_executed_colors() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "raw_associative_memory_attention_v9"},
+        {"architecture_version": "two_hop_relation_attention_v10"},
         {"memory_key_indices": (2,), "memory_value_indices": ()},
         {"memory_key_indices": (12,), "memory_value_indices": (2,)},
+        {
+            "memory_key_indices": (2, 3),
+            "memory_value_indices": (4, 5),
+            "memory_key_color_block_width": 3,
+        },
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

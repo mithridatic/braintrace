@@ -615,6 +615,9 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             seed=config.seed,
             memory_key_indices=memory_features.key_indices,
             memory_value_indices=memory_features.value_indices,
+            memory_key_color_block_width=(
+                row_config.max_grid_size * row_config.color_count
+            ),
         )
         initial_checkpoint_evidence = None
         if config.initial_checkpoint is None:

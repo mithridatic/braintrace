@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "two_hop_relation_attention_v10"
+ARCHITECTURE_VERSION = "color_invariant_shared_relation_v11"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -61,7 +61,10 @@ class DirectModelConfig:
     memory_key_indices, memory_value_indices : tuple of int, default=()
         Matched input-side key and output-side value columns in each lossless
         row event. Both must be supplied together with equal nonzero length.
-    architecture_version : str, default="two_hop_relation_attention_v10"
+    memory_key_color_block_width : int, default=0
+        Trailing key-feature width containing groups of ten ARC color one-hots.
+        Each group is collapsed to one foreground-occupancy feature.
+    architecture_version : str, default="color_invariant_shared_relation_v11"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -73,6 +76,7 @@ class DirectModelConfig:
     seed: int = 2108
     memory_key_indices: tuple[int, ...] = ()
     memory_value_indices: tuple[int, ...] = ()
+    memory_key_color_block_width: int = 0
     architecture_version: str = ARCHITECTURE_VERSION
 
     def __post_init__(self) -> None:
@@ -110,6 +114,20 @@ class DirectModelConfig:
             normalized_indices["memory_value_indices"]
         ):
             raise ValueError("memory key and value indices must have equal length.")
+        color_block_width = _nonnegative_integer(
+            self.memory_key_color_block_width, "memory_key_color_block_width"
+        )
+        if color_block_width > len(self.memory_key_indices):
+            raise ValueError(
+                "memory_key_color_block_width cannot exceed the key width."
+            )
+        if color_block_width % COLOR_COUNT:
+            raise ValueError(
+                "memory_key_color_block_width must contain complete color groups."
+            )
+        object.__setattr__(
+            self, "memory_key_color_block_width", color_block_width
+        )
         if self.architecture_version != ARCHITECTURE_VERSION:
             raise ValueError(
                 f"architecture_version must be {ARCHITECTURE_VERSION!r}."
@@ -184,15 +202,21 @@ class DirectARCGRU(brainstate.nn.Module):
             self.memory_value_projection = braintrace.nn.Linear(
                 config.hidden_width, config.decoder_width
             )
-            associative_width = max(1, len(config.memory_key_indices))
-            self.associative_key_projection = braintrace.nn.Linear(
-                associative_width, config.decoder_width
+            associative_key_width = (
+                len(config.memory_key_indices)
+                - config.memory_key_color_block_width
+                + config.memory_key_color_block_width // COLOR_COUNT
             )
-            self.associative_query_projection = braintrace.nn.Linear(
-                associative_width, config.decoder_width
+            associative_key_width = max(1, associative_key_width)
+            associative_value_width = max(1, len(config.memory_value_indices))
+            self.associative_key_projection = braintrace.nn.Linear(
+                associative_key_width, config.decoder_width
             )
             self.associative_value_projection = braintrace.nn.Linear(
-                associative_width, config.decoder_width
+                associative_value_width, config.decoder_width
+            )
+            self.relation_output_projection = braintrace.nn.Linear(
+                config.decoder_width, config.decoder_width
             )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
@@ -207,6 +231,18 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             self.color_head = braintrace.nn.Linear(config.decoder_width, COLOR_COUNT)
         self.coordinate_features = _coordinate_features()
+
+    def _associative_key_features(self, events: jnp.ndarray) -> jnp.ndarray:
+        selected = events[..., jnp.asarray(self.config.memory_key_indices)]
+        color_width = self.config.memory_key_color_block_width
+        if color_width == 0:
+            return selected
+        prefix = selected[..., :-color_width]
+        colors = selected[..., -color_width:].reshape(
+            *selected.shape[:-1], color_width // COLOR_COUNT, COLOR_COUNT
+        )
+        foreground = jnp.sum(colors[..., 1:], axis=-1)
+        return jnp.concatenate((prefix, foreground), axis=-1)
 
     def update(self, event: jnp.ndarray) -> jnp.ndarray:
         """Advance the recurrent encoder by one row event.
@@ -512,9 +548,9 @@ class DirectARCGRU(brainstate.nn.Module):
         output_relation_weights = output_relation_weights / jnp.maximum(
             jnp.sum(output_relation_weights, axis=-1, keepdims=True), 1.0
         )
-        relation_attention = jnp.einsum(
+        relation_attention = self.relation_output_projection(jnp.einsum(
             "boq,bqd->bod", output_relation_weights, inferred_query_values
-        ).reshape(
+        )).reshape(
             batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
         cell_state = brainstate.nn.tanh(
@@ -577,20 +613,20 @@ class DirectARCGRU(brainstate.nn.Module):
         associative_queries = None
         associative_query_valid = None
         if self.config.memory_key_indices:
-            key_indices = jnp.asarray(self.config.memory_key_indices)
             value_indices = jnp.asarray(self.config.memory_value_indices)
-            associative_keys = jnp.swapaxes(
-                self.associative_key_projection(events[..., key_indices]), 0, 1
+            projected_keys = jnp.swapaxes(
+                self.associative_key_projection(self._associative_key_features(events)),
+                0,
+                1,
             )
+            associative_keys = projected_keys
             associative_values = jnp.swapaxes(
                 self.associative_value_projection(events[..., value_indices]), 0, 1
             )
             associative_valid = jnp.swapaxes(
                 jnp.logical_and(valid > 0.5, events[..., 1] > 0.5), 0, 1
             )
-            associative_queries = jnp.swapaxes(
-                self.associative_query_projection(events[..., key_indices]), 0, 1
-            )
+            associative_queries = projected_keys
             associative_query_valid = jnp.swapaxes(
                 jnp.logical_and(valid > 0.5, events[..., 2] > 0.5), 0, 1
             )

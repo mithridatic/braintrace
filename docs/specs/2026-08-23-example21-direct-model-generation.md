@@ -99,6 +99,10 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   demonstration input-row keys to form inferred output-row embeddings, then
   output coordinates attend those inferred query-row values; all projections
   and attention logits remain checkpoint-owned and execute in the direct model;
+- shared query/demonstration key weights and a declared color-block collapse
+  from per-color input one-hots to foreground occupancy for relation matching,
+  so identical spatial patterns in different colors share a neural key while
+  the aligned value path retains the complete demonstration-output colors;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;
@@ -185,6 +189,11 @@ The additive global-pattern V7, recurrent-state-memory V8, and raw
 associative-memory V9 pilots are rejected: all scored 0/80 strict validation
 tasks and 0/85 exact queries. Their shape-exact counts were respectively 57,
 56, and 57 of 85. None may be promoted or extended solely from training loss.
+
+Narrow V10 produced 2/85 exact queries after 500 updates but 0/80 strict tasks;
+at 2,500 total updates it regressed to 1/85 exact. A 4x wider decoder and a
+no-augmentation arm each also produced only 1/85 exact and 0/80 strict. Those
+training-time, width, and augmentation variants are rejected.
 
 ### Gate C: complete evaluation
 
