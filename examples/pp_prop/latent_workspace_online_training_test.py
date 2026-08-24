@@ -669,6 +669,34 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
     assert original.tobytes() == restored.tobytes()
 
 
+def test_checkpoint_loader_dispatches_v44_and_preserves_bytes(tmp_path) -> None:
+    subject = _subject()
+    gated = importlib.import_module(
+        "examples.pp_prop.latent_workspace_gated_memory_model"
+    )
+    model = gated.PhaseSeparatedGatedMemoryRNN(
+        gated.GatedMemoryConfig(
+            input_width=gated.MODEL_INPUT_WIDTH,
+            memory_width=16,
+            expert_count=12,
+            seed=61,
+        )
+    )
+    path = tmp_path / "gated-memory.npz"
+
+    digest = subject.save_online_checkpoint(model, path)
+    loaded, metadata = subject.load_online_checkpoint(path)
+
+    assert isinstance(loaded, gated.PhaseSeparatedGatedMemoryRNN)
+    assert metadata["parameter_sha256"] == digest
+    event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    original = np.asarray(model(event))
+    brainstate.nn.init_all_states(loaded, batch_size=1)
+    restored = np.asarray(loaded(event))
+    assert original.tobytes() == restored.tobytes()
+
+
 @pytest.mark.parametrize("corruption", ["missing", "shape", "nonfinite", "schema"])
 def test_checkpoint_rejects_exact_schema_corruption(tmp_path, corruption: str) -> None:
     subject = _subject()

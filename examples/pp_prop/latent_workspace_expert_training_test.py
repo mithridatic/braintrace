@@ -132,3 +132,59 @@ def test_v42_target_free_evaluation_is_deterministic_and_registered() -> None:
     assert candidate["proposal_source"] == "task_gated_model_logits"
     assert candidate["dependency_class"] == "model_checkpoint"
     assert candidate["ranking_source"] == "none_single_greedy_candidate"
+
+
+def test_v44_target_free_evaluation_uses_model_bound_provenance() -> None:
+    subject = _subject()
+    online = _online_subject()
+    gated = importlib.import_module(
+        "examples.pp_prop.latent_workspace_gated_memory_model"
+    )
+    row_config = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    episodes = (online.encode_online_episode(_task(), 0, row_config),)
+    model = gated.PhaseSeparatedGatedMemoryRNN(
+        gated.GatedMemoryConfig(
+            input_width=gated.MODEL_INPUT_WIDTH,
+            memory_width=16,
+            expert_count=12,
+            seed=53,
+        )
+    )
+
+    result = subject.evaluate_task_gated_model(model, episodes, batch_size=1)
+    candidate = result["candidates"][0]
+
+    assert candidate["answer_head_version"] == "phase_separated_gated_memory_v44"
+    assert candidate["proposal_source"] == "gated_memory_model_logits"
+
+
+def test_v44_pp_prop_moves_every_phase_memory_and_decoder_leaf() -> None:
+    subject = _subject()
+    online = _online_subject()
+    gated = importlib.import_module(
+        "examples.pp_prop.latent_workspace_gated_memory_model"
+    )
+    row_config = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+    episode = online.encode_online_episode(_task(), 0, row_config)
+    batch = online.stack_online_episodes((episode, episode))
+    model = gated.PhaseSeparatedGatedMemoryRNN(
+        gated.GatedMemoryConfig(
+            input_width=gated.MODEL_INPUT_WIDTH,
+            memory_width=16,
+            expert_count=12,
+            seed=59,
+        )
+    )
+    trainer = subject.TaskGatedPPPropTrainer(
+        model, batch_size=2, learning_rate=0.001
+    )
+    before = subject.parameter_leaf_arrays(model)
+
+    losses, norms = trainer.train_chunk(online.repeat_online_batch(batch, updates=2))
+    after = subject.parameter_leaf_arrays(model)
+
+    assert np.all(np.isfinite(np.asarray(losses)))
+    assert all(np.isfinite(value) and value > 0.0 for value in norms.values()), norms
+    assert before.keys() == after.keys()
+    assert all(before[name].tobytes() != after[name].tobytes() for name in before)
+    assert len(before) == 18

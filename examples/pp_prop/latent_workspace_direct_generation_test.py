@@ -113,6 +113,7 @@ def test_first_prediction_bytes_exclude_metadata_and_scores() -> None:
             "continuous_spatial_row_decoder_v41",
         ),
         ("task_gated_model_logits", "task_gated_operator_bank_v42"),
+        ("gated_memory_model_logits", "phase_separated_gated_memory_v44"),
     ],
 )
 def test_candidate_validator_accepts_only_bound_neural_source_head_pair(

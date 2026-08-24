@@ -166,6 +166,7 @@ def validate_direct_candidate(value: object) -> None:
             "continuous_spatial_row_decoder_v41",
         ),
         ("task_gated_model_logits", "task_gated_operator_bank_v42"),
+        ("gated_memory_model_logits", "phase_separated_gated_memory_v44"),
     }
     if source_head not in allowed_source_heads:
         raise ValueError(

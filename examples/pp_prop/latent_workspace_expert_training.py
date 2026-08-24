@@ -11,8 +11,6 @@ import numpy as np
 
 from examples.pp_prop.latent_workspace_direct_generation import first_prediction_bytes
 from examples.pp_prop.latent_workspace_expert_model import (
-    ANSWER_HEAD_VERSION,
-    PROPOSAL_SOURCE,
     TaskGatedOnlineRNN,
 )
 from examples.pp_prop.latent_workspace_online_training import (
@@ -199,8 +197,8 @@ def evaluate_task_gated_model(
         batch_size=batch_size,
     )
     for candidate in result["candidates"]:
-        candidate["answer_head_version"] = ANSWER_HEAD_VERSION
-        candidate["proposal_source"] = PROPOSAL_SOURCE
+        candidate["answer_head_version"] = model.answer_head_version
+        candidate["proposal_source"] = model.proposal_source
     candidate_bytes = first_prediction_bytes(result["candidates"])
     result["candidate_sha256"] = hashlib.sha256(candidate_bytes).hexdigest()
     result["candidate_bytes_size"] = len(candidate_bytes)

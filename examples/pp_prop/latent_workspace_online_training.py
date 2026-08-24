@@ -1582,16 +1582,23 @@ def load_online_checkpoint(
                 leaves_metadata, list
             ):
                 raise ValueError("checkpoint metadata schema is invalid.")
-            if (
-                architecture.get("architecture_version")
-                == "task_gated_operator_bank_v42"
-            ):
+            architecture_version = architecture.get("architecture_version")
+            if architecture_version == "task_gated_operator_bank_v42":
                 from examples.pp_prop.latent_workspace_expert_model import (
                     ExpertModelConfig,
                     TaskGatedOnlineRNN,
                 )
 
                 model = TaskGatedOnlineRNN(ExpertModelConfig(**architecture))
+            elif architecture_version == "phase_separated_gated_memory_v44":
+                from examples.pp_prop.latent_workspace_gated_memory_model import (
+                    GatedMemoryConfig,
+                    PhaseSeparatedGatedMemoryRNN,
+                )
+
+                model = PhaseSeparatedGatedMemoryRNN(
+                    GatedMemoryConfig(**architecture)
+                )
             else:
                 model = OnlineARCVanillaRNN(OnlineModelConfig(**architecture))
             states = model.states(brainstate.ParamState)
