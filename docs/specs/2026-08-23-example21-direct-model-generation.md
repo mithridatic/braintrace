@@ -706,6 +706,18 @@ topology: five updates, chunk size five, 24 training tasks, eight diagnostic
 tasks at separate seed 72108. Its only decisions are capacity and projected
 runtime; its exact count cannot alter architecture, hyperparameters, or gates.
 
+The score-ineligible resource probe passed at clean revision
+`fe777d1abbd0539c6b777d74efd503c7de17b963`, with artifact
+`var/ex21-online-v22-full-topology-probe-v1`. The 16-channel, batch-eight model
+completed five updates in 3.69 training seconds and 24.45 seconds end to end;
+all relation roots had nonzero gradients, all groups moved, parameters and
+candidate bytes changed, and every recorded value was finite. Linear scaling
+from the measured training segment estimates roughly 12.3 minutes for 1,000
+updates, subject to chunk and evaluation overhead. The diagnostic 0/8 exact
+count is ineligible by declaration and did not affect the full-oracle design.
+The capacity and runtime decision is pass, so the untouched seed-62108 oracle
+may run once with the previously fixed V22 configuration.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
