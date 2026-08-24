@@ -406,6 +406,22 @@ against the prior single-batch evaluator on a population that crosses the
 10-query boundary. Python may prepare and pad the static arrays but may not
 drive the repeated model calls.
 
+The bounded V18 fixed arm scored 3/80 strict with exact membership
+`bb43febb`, `67385a82`, and `3618c87e`, improving the prior 1/80 baseline and
+therefore passing the development promotion gate. Its nominated complete
+400-task/419-query run scored 1 strict and is nonqualifying. Complete-evaluation
+membership must not be inspected or used for tuning.
+
+One validation-driven continuation is predeclared. It resumes the exact V18
+fixed-validation checkpoint, uses a fresh synthetic seed 22108 and 2,800-task
+catalog, performs 2,000 synthetic updates followed by 1,000 fitting-task
+updates, and otherwise keeps the architecture, model seed, widths, batch size,
+learning rate, augmentation, decoder, and fixed validation split unchanged.
+The optimizer is freshly initialized and the initial checkpoint digest is
+bound by the existing strict loader. This arm is rejected unless it exceeds
+3/80 strict validation tasks; only such an improvement may nominate another
+materially new complete-manifest run.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
