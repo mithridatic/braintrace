@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from collections import Counter
 import hashlib
 from numbers import Integral, Real
 import pathlib
@@ -13,6 +14,7 @@ import jax
 import jax.numpy as jnp
 import msgspec
 import numpy as np
+import optax
 import brainunit as u
 
 import braintrace
@@ -29,7 +31,6 @@ from examples.pp_prop.latent_workspace_online_model import (
 from examples.pp_prop.latent_workspace_online_training import (
     OnlineEpisode,
     OnlineTrainingChunk,
-    online_step_loss,
     stack_online_episodes,
 )
 from examples.pp_prop.latent_workspace_spatial_model import (
@@ -118,6 +119,72 @@ def spatial_parameter_digest(model: SpatialARCConvLIF) -> str:
     return digest.hexdigest()
 
 
+def foreground_background_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    class_weights: jnp.ndarray,
+) -> jnp.ndarray:
+    """Balance foreground and background mass within every decode row.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row : jax.Array
+        Batched integer colours for all 30 columns.
+    target_cell_mask : jax.Array
+        Batched mask selecting true target columns.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    class_weights : jax.Array
+        Batched target-only colour weights.
+
+    Returns
+    -------
+    jax.Array
+        Scalar mean of partition-balanced colour, height, and width losses.
+    """
+
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits, target_row
+    )
+    mask = jnp.asarray(target_cell_mask, dtype=per_cell.dtype)
+    selected_weights = jnp.take_along_axis(
+        class_weights[:, None, :], target_row[..., None], axis=-1
+    )[..., 0]
+    foreground = mask * (target_row != 0).astype(per_cell.dtype)
+    background = mask * (target_row == 0).astype(per_cell.dtype)
+
+    def partition_mean(partition):
+        weighted = partition * selected_weights
+        denominator = jnp.sum(weighted, axis=-1)
+        mean = jnp.sum(per_cell * weighted, axis=-1) / jnp.maximum(
+            denominator, 1.0
+        )
+        present = (denominator > 0.0).astype(per_cell.dtype)
+        return mean, present
+
+    foreground_mean, foreground_present = partition_mean(foreground)
+    background_mean, background_present = partition_mean(background)
+    partition_count = foreground_present + background_present
+    color_per_example = (
+        foreground_mean * foreground_present
+        + background_mean * background_present
+    ) / jnp.maximum(partition_count, 1.0)
+    color_loss = jnp.mean(color_per_example)
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return (color_loss + height_loss + width_loss) / 3.0
+
+
 class SpatialPPPropTrainer:
     """Train the Conv-LIF canvas with compiled single-step PP-prop.
 
@@ -135,7 +202,7 @@ class SpatialPPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "target_balanced_color_v21"
+    loss_version = "foreground_background_balanced_v23"
 
     def __init__(
         self,
@@ -207,7 +274,7 @@ class SpatialPPPropTrainer:
             self._reset()
 
             def step_loss(event, row, mask, class_weights, height, width):
-                return online_step_loss(
+                return foreground_background_step_loss(
                     learner(event), row, mask, height, width, class_weights
                 )
 
@@ -410,12 +477,44 @@ def evaluate_spatial_model(
         task_ids.append(episode.task_id)
     score = strict_task_pass_at_1(predictions, targets, task_ids)
     candidate_bytes = first_prediction_bytes(candidates)
+    shape_pairs = [
+        (np.asarray(prediction), np.asarray(target))
+        for prediction, target in zip(predictions, targets, strict=True)
+        if np.asarray(prediction).shape == np.asarray(target).shape
+    ]
+    foreground_total = sum(int(np.count_nonzero(target != 0)) for _, target in shape_pairs)
+    background_total = sum(int(np.count_nonzero(target == 0)) for _, target in shape_pairs)
+    foreground_correct = sum(
+        int(np.count_nonzero((prediction == target) & (target != 0)))
+        for prediction, target in shape_pairs
+    )
+    background_correct = sum(
+        int(np.count_nonzero((prediction == target) & (target == 0)))
+        for prediction, target in shape_pairs
+    )
+    predicted_colors = Counter(
+        int(color)
+        for prediction in predictions
+        for color in np.asarray(prediction).reshape(-1)
+    )
     return {
         **score,
         "query_count": len(episodes),
         "task_count": len(set(task_ids)),
         "candidate_sha256": hashlib.sha256(candidate_bytes).hexdigest(),
         "candidate_bytes_size": len(candidate_bytes),
+        "diagnostics": {
+            "shape_exact_count": len(shape_pairs),
+            "foreground_correct": foreground_correct,
+            "foreground_total": foreground_total,
+            "foreground_accuracy": foreground_correct / max(foreground_total, 1),
+            "background_correct": background_correct,
+            "background_total": background_total,
+            "background_accuracy": background_correct / max(background_total, 1),
+            "predicted_color_counts": {
+                str(color): count for color, count in sorted(predicted_colors.items())
+            },
+        },
         "candidates": candidates,
     }
 

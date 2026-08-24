@@ -718,6 +718,48 @@ count is ineligible by declaration and did not affect the full-oracle design.
 The capacity and runtime decision is pass, so the untouched seed-62108 oracle
 may run once with the previously fixed V22 configuration.
 
+V22 is rejected at clean revision
+`40b38030347ef23e175aec9e5d3cf55ab11d7051`, with artifact
+`var/ex21-online-v22-ppprop-oracle-v1`. The run completed all 1,000 updates in
+294.34 training seconds and scored 0/120 on oracle seed 62108. Its mechanism
+gate passed: all five relation roots had finite nonzero gradients, every group
+moved, and both checkpoint and candidate digests changed. The exact failure was
+not attributable to a flat checkpoint or pp-prop alone. Every one of 4,663
+predicted cells was colour zero. Among 61 shape-correct tasks, background
+accuracy was 1,529/1,529 and foreground accuracy was 0/212. The bounded V21
+class weights therefore did not prevent background collapse. No ARC run is
+permitted, and V22 is closed.
+
+### Foreground/background-balanced spatial PP-prop V23
+
+V23 changes only the spatial trainer loss. For every example and decode row,
+valid target cells are partitioned scorer-side into background (target colour
+zero) and foreground (target colour nonzero). Cross-entropy is normalized
+within each nonempty partition, retaining V21 target-only colour weights within
+the foreground partition, and the nonempty partition means receive equal mass.
+An all-background row uses its sole partition with full mass. Height and width
+losses remain unchanged. Targets, partitions, weights, and diagnostics remain
+loss/scorer-only and never enter the model event, recurrent state, or decoder.
+The loss version is `foreground_background_balanced_v23`.
+
+Sibling tests must reproduce the V22 imbalance, prove that one foreground error
+and one background error receive equal partition mass despite unequal cell
+counts, cover all-background and masked rows, and retain finite nonzero PP-prop
+gradients in all five answer-path groups. Evaluation artifacts add separate
+shape-exact, foreground, background, and predicted-colour diagnostics; none is
+an acceptance score.
+
+Before another learning oracle, one score-ineligible anti-collapse pilot uses
+the unchanged 16-channel topology, seed 2108, training seed 12108, 120 synthetic
+tasks, 200 updates in chunks of 20, batch size eight, and 40 diagnostic tasks at
+seed 92108. It passes only if the existing mechanism gate passes, ordered
+candidate bytes change, predictions contain at least one nonzero cell, and at
+least one foreground target cell is correct among shape-correct tasks. Its exact
+count cannot tune or promote the model. If it passes, one full 1,000-update
+oracle may use the otherwise unchanged configuration and fresh oracle seed
+82108. The promotion gate remains greater than 7/120, at least two non-label
+families, and at least one non-copy/non-label exact task.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

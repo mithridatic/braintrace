@@ -43,6 +43,62 @@ def _task() -> ArcTask:
     )
 
 
+def _confident_output(color: int) -> jnp.ndarray:
+    row = jnp.full((1, 30, 10), -10.0).at[0, :, color].set(10.0)
+    height = jnp.full((1, 30), -10.0).at[0, 0].set(10.0)
+    width = jnp.full((1, 30), -10.0).at[0, 29].set(10.0)
+    return jnp.concatenate((row.reshape(1, -1), height, width), axis=-1)
+
+
+def test_v23_loss_equalizes_foreground_and_background_partition_mass() -> None:
+    subject = _subject()
+    online = _online_subject()
+    target = jnp.asarray([[7] + [0] * 29])
+    mask = jnp.ones((1, 30), dtype=jnp.float32)
+    weights = jnp.asarray(
+        [[np.sqrt(30.0 / 29.0)] + [0.0] * 6 + [4.0] + [0.0] * 2]
+    )
+    zero_prediction = _confident_output(0)
+    foreground_prediction = _confident_output(7)
+    dimensions = jnp.asarray([0])
+
+    v22_zero = online.online_step_loss(
+        zero_prediction, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+    v22_foreground = online.online_step_loss(
+        foreground_prediction, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+    v23_zero = subject.foreground_background_step_loss(
+        zero_prediction, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+    v23_foreground = subject.foreground_background_step_loss(
+        foreground_prediction, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+
+    assert float(v22_zero) < float(v22_foreground)
+    assert float(v23_zero) == pytest.approx(float(v23_foreground), rel=1e-5)
+
+
+def test_v23_loss_handles_all_background_and_ignores_masked_cells() -> None:
+    subject = _subject()
+    target = jnp.zeros((1, 30), dtype=jnp.int32)
+    mask = jnp.zeros((1, 30), dtype=jnp.float32).at[0, :3].set(1.0)
+    weights = jnp.asarray([[1.0] + [0.0] * 9])
+    baseline = _confident_output(0)
+    outside_error = baseline.at[0, 29 * 10].set(-20.0)
+    dimensions = jnp.asarray([0])
+
+    baseline_loss = subject.foreground_background_step_loss(
+        baseline, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+    outside_loss = subject.foreground_background_step_loss(
+        outside_error, target, mask, dimensions, jnp.asarray([29]), weights
+    )
+
+    assert np.isfinite(float(baseline_loss))
+    assert float(outside_loss) == pytest.approx(float(baseline_loss))
+
+
 def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -84,7 +140,7 @@ def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     assert all(before[name].tobytes() != after[name].tobytes() for name in before)
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "target_balanced_color_v21"
+    assert trainer.loss_version == "foreground_background_balanced_v23"
 
 
 def test_spatial_checkpoint_roundtrip_is_output_exact(tmp_path) -> None:
@@ -132,6 +188,10 @@ def test_spatial_target_free_evaluation_is_deterministic() -> None:
 
     assert first["candidate_sha256"] == second["candidate_sha256"]
     assert first["query_count"] == 1
+    assert first["diagnostics"]["shape_exact_count"] >= 0
+    assert sum(first["diagnostics"]["predicted_color_counts"].values()) == sum(
+        candidate["height"] * candidate["width"] for candidate in first["candidates"]
+    )
     assert first["candidates"][0]["answer_head_version"] == (
         "spatial_conv_lif_row_decoder_v22"
     )

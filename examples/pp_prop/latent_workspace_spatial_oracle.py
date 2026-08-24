@@ -317,6 +317,17 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         and len(family_summary["non_label_families"]) >= 2
         and family_summary["non_copy_non_label_ids"]
     )
+    diagnostics = evaluation["diagnostics"]
+    predicted_nonzero = sum(
+        count
+        for color, count in diagnostics["predicted_color_counts"].items()
+        if color != "0"
+    )
+    anti_collapse_passed = bool(
+        mechanism_passed
+        and predicted_nonzero > 0
+        and diagnostics["foreground_correct"] > 0
+    )
     result = {
         "schema_version": 1,
         "configuration": config.to_dict(),
@@ -366,6 +377,7 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         "evaluation": evaluation,
         "exact_family_summary": family_summary,
         "mechanism_gate_passed": mechanism_passed,
+        "anti_collapse_gate_passed": anti_collapse_passed,
         "promotion_gate_passed": gate_passed,
     }
     (config.output_dir / "result.json").write_bytes(
