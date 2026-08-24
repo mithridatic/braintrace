@@ -650,9 +650,26 @@ spatial state uses 16 channels, membrane time constant 100 ms, synapse time
 constant 20 ms, 1 mV threshold, 1 ms logical step, and zero initial state. A
 checkpoint-owned 1-by-1 colour convolution emits ten logits per cell. The fixed
 decode-row plane selects exactly one neural-logit row at each decode step;
-checkpoint-owned linear heads on pooled spikes emit height and width logits.
+checkpoint-owned linear heads on pooled LIF membrane-rate activations emit
+height and width logits. Hard threshold spikes drive the recurrent convolution;
+all readout heads consume the corresponding sigmoid surrogate rate so a valid
+subthreshold decode row cannot make a checkpoint-owned decoder weight exactly
+untrainable.
 No input/demo colour is added to output logits, and no retrieval, forest, rule,
 template, search, or task-local fitter exists in the answer path.
+
+The exponential-current and LIF-voltage variables are explicit spatial
+`brainstate.HiddenState` arrays with shape `(30, 30, channels)` per sample;
+they must never be flattened across spatial positions. This shape is a compiler
+contract as well as an architectural one: each BrainTrace Conv2d ETP output is
+shape-compatible with the hidden variable it drives, so the compiler can bind
+both input and recurrent kernels to finite-window eligibility traces. Leaky
+colour, height, and width logit states likewise match their ETP-head outputs.
+The LIF threshold uses a hard-forward sigmoid straight-through surrogate made
+only from compiler-proven position-preserving primitives; a custom surrogate
+primitive is forbidden because pp-prop cannot certify its spatial dependency.
+The pilot must inspect the compiled relation paths and fail before optimization
+unless all five answer-path parameter groups are registered.
 
 Training retains V21 target-balanced colour loss and compiles one batched
 logical step with single-step PP-prop. Both neuron/synapse state and learner

@@ -157,6 +157,7 @@ def validate_direct_candidate(value: object) -> None:
     allowed_source_heads = {
         ("direct_model_logits", "direct_model_generation_v1"),
         ("online_model_logits", "online_row_decoder_v20"),
+        ("spatial_model_logits", "spatial_conv_lif_row_decoder_v22"),
     }
     if source_head not in allowed_source_heads:
         raise ValueError(

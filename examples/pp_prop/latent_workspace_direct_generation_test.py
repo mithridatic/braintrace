@@ -100,11 +100,20 @@ def test_first_prediction_bytes_exclude_metadata_and_scores() -> None:
     )
 
 
-def test_candidate_validator_accepts_only_bound_online_source_head_pair() -> None:
+@pytest.mark.parametrize(
+    ("proposal_source", "answer_head_version"),
+    [
+        ("online_model_logits", "online_row_decoder_v20"),
+        ("spatial_model_logits", "spatial_conv_lif_row_decoder_v22"),
+    ],
+)
+def test_candidate_validator_accepts_only_bound_neural_source_head_pair(
+    proposal_source: str, answer_head_version: str
+) -> None:
     subject = _subject()
     candidate = subject.decode_first_candidate(_logits())
-    candidate["proposal_source"] = "online_model_logits"
-    candidate["answer_head_version"] = "online_row_decoder_v20"
+    candidate["proposal_source"] = proposal_source
+    candidate["answer_head_version"] = answer_head_version
 
     subject.validate_direct_candidate(candidate)
     assert subject.first_prediction_bytes([candidate])
