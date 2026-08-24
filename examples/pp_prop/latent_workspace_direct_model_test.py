@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "direct_pixel_memory_v18"
+    assert model.config.architecture_version == "direct_spatial_recurrence_v19"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -167,7 +167,7 @@ def test_direct_query_color_head_has_scaled_identity_and_changes_logits() -> Non
     assert before.tobytes() != after.tobytes()
 
 
-def test_local_demo_memory_matches_neighborhoods_and_gates_shape_changes() -> None:
+def test_demonstration_pair_encoder_changes_latent_conditioned_logits() -> None:
     subject = _subject()
     model = subject.DirectARCGRU(
         subject.DirectModelConfig(
@@ -178,46 +178,40 @@ def test_local_demo_memory_matches_neighborhoods_and_gates_shape_changes() -> No
             seed=32,
         )
     )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
     query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
-    query = query.at[0, :7, :7, 0].set(1.0)
-    query = query.at[0, :7, :7, 10].set(1.0)
-    query = query.at[0, 4, 4, 0].set(0.0)
-    query = query.at[0, 4, 4, 5].set(1.0)
-    demonstration_inputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
-    demonstration_inputs = demonstration_inputs.at[0, 0, :7, :7, 0].set(1.0)
-    demonstration_inputs = demonstration_inputs.at[0, 0, 2, 2, 0].set(0.0)
-    demonstration_inputs = demonstration_inputs.at[0, 0, 2, 2, 5].set(1.0)
-    demonstration_outputs = jnp.zeros_like(demonstration_inputs)
-    demonstration_outputs = demonstration_outputs.at[0, 0, :7, :7, 0].set(1.0)
-    demonstration_outputs = demonstration_outputs.at[0, 0, 2, 2, 0].set(0.0)
-    demonstration_outputs = demonstration_outputs.at[0, 0, 2, 2, 3].set(1.0)
-    valid = jnp.asarray([[True] + [False] * 9])
-    query_keys = brainstate.nn.tanh(model.local_query_projection(query))
-
-    retrieved = np.asarray(
-        model._local_demo_color_memory(
-            query_keys,
-            demonstration_inputs,
-            demonstration_outputs,
-            valid,
-        )
+    query = query.at[0, :3, :3, 0].set(1.0)
+    query = query.at[0, :3, :3, 10].set(1.0)
+    inputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
+    inputs = inputs.at[0, 0, :3, :3, 0].set(1.0)
+    first_outputs = inputs.at[0, 0, 1, 1, 0].set(0.0)
+    first_outputs = first_outputs.at[0, 0, 1, 1, 2].set(1.0)
+    second_outputs = inputs.at[0, 0, 1, 1, 0].set(0.0)
+    second_outputs = second_outputs.at[0, 0, 1, 1, 7].set(1.0)
+    demonstration_valid = jnp.asarray([[True] + [False] * 9])
+    first = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_inputs=inputs,
+            demonstration_outputs=first_outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
     )
-    assert int(np.argmax(retrieved[0, 4, 4])) == 3
-
-    shape_changed_outputs = demonstration_outputs.at[0, 0, 1:, :, :].set(0.0)
-    shape_changed_outputs = shape_changed_outputs.at[0, 0, 0, 1:, :].set(0.0)
-    gated = np.asarray(
-        model._local_demo_color_memory(
-            query_keys,
-            demonstration_inputs,
-            shape_changed_outputs,
-            valid,
-        )
+    second = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_inputs=inputs,
+            demonstration_outputs=second_outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
     )
-    np.testing.assert_array_equal(gated, np.zeros_like(gated))
+
+    assert first.tobytes() != second.tobytes()
 
 
-def test_local_demo_color_head_is_scaled_identity_and_changes_logits() -> None:
+def test_v19_spatial_parameter_groups_have_finite_nonzero_gradients() -> None:
     subject = _subject()
     model = subject.DirectARCGRU(
         subject.DirectModelConfig(
@@ -225,52 +219,61 @@ def test_local_demo_color_head_is_scaled_identity_and_changes_logits() -> None:
             encoder_width=4,
             hidden_width=8,
             decoder_width=6,
-            seed=34,
+            seed=33,
         )
     )
-    parameters = model.local_demo_direct_color_head.weight.value
-    np.testing.assert_array_equal(
-        np.asarray(parameters["weight"]),
-        np.eye(10, dtype=np.float32) * subject.LOCAL_DEMO_COLOR_INITIAL_SCALE,
-    )
-    np.testing.assert_array_equal(
-        np.asarray(parameters["bias"]), np.zeros((10,), dtype=np.float32)
-    )
-    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    hidden = jnp.ones((1, 8), dtype=jnp.float32) * 0.25
     query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
-    query = query.at[0, :3, :3, 0].set(1.0)
-    query = query.at[0, :3, :3, 10].set(1.0)
+    query = query.at[0, :4, :4, 0].set(1.0)
+    query = query.at[0, :4, :4, 10].set(1.0)
     inputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
-    inputs = inputs.at[0, 0, :3, :3, 0].set(1.0)
-    outputs = inputs.at[0, 0, 1, 1, 0].set(0.0)
-    outputs = outputs.at[0, 0, 1, 1, 2].set(1.0)
+    inputs = inputs.at[0, 0, :4, :4, 0].set(1.0)
+    inputs = inputs.at[0, 0, 1:3, 1:3, 0].set(0.0)
+    inputs = inputs.at[0, 0, 1:3, 1:3, 3].set(1.0)
+    outputs = jnp.zeros_like(inputs)
+    outputs = outputs.at[0, 0, :4, :4, 0].set(1.0)
+    outputs = outputs.at[0, 0, 1:3, 1:3, 0].set(0.0)
+    outputs = outputs.at[0, 0, 1:3, 1:3, 7].set(1.0)
     demonstration_valid = jnp.asarray([[True] + [False] * 9])
-    before = np.asarray(
-        model.decode(
+    expected_prefixes = {
+        "demonstration_pair_projection",
+        "demonstration_pair_refinement",
+        "spatial_query_projection",
+        "spatial_context_projection",
+        "spatial_update",
+        "spatial_color_head",
+    }
+    weights = model.states(brainstate.ParamState).filter(
+        lambda path, _: str(path[0]) in expected_prefixes
+    )
+
+    def objective() -> jax.Array:
+        colors = model.decode(
             hidden,
             query,
             demonstration_inputs=inputs,
             demonstration_outputs=outputs,
             demonstration_grid_valid=demonstration_valid,
         )[2]
-    )
-    model.local_demo_direct_color_head.weight.value = jax.tree.map(
-        jnp.zeros_like, model.local_demo_direct_color_head.weight.value
-    )
-    after = np.asarray(
-        model.decode(
-            hidden,
-            query,
-            demonstration_inputs=inputs,
-            demonstration_outputs=outputs,
-            demonstration_grid_valid=demonstration_valid,
-        )[2]
-    )
+        return jnp.mean(jnp.square(colors))
 
-    assert before.tobytes() != after.tobytes()
+    gradients = brainstate.transform.grad(objective, weights)()
+    observed_prefixes = set()
+    for path in weights:
+        prefix = str(path[0])
+        if prefix not in expected_prefixes:
+            continue
+        observed_prefixes.add(prefix)
+        leaves = jax.tree.leaves(gradients[path])
+        assert leaves
+        norm = sum(float(jnp.sum(jnp.abs(leaf))) for leaf in leaves)
+        assert np.isfinite(norm)
+        assert norm > 0.0, path
+
+    assert observed_prefixes == expected_prefixes
 
 
-def test_local_demo_memory_rejects_invalid_input_shape() -> None:
+def test_demonstration_pair_encoder_rejects_invalid_input_shape() -> None:
     subject = _subject()
     model = subject.DirectARCGRU(
         subject.DirectModelConfig(
@@ -289,7 +292,46 @@ def test_local_demo_memory_rejects_invalid_input_shape() -> None:
             demonstration_inputs=jnp.zeros(
                 (1, 9, 30, 30, 10), dtype=jnp.float32
             ),
+            demonstration_outputs=jnp.zeros(
+                (1, 10, 30, 30, 10), dtype=jnp.float32
+            ),
+            demonstration_grid_valid=jnp.zeros((1, 10), dtype=bool),
         )
+
+
+def test_spatial_recurrence_uses_compiled_four_step_scan_and_changes_logits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=39,
+        )
+    )
+    hidden = jnp.ones((1, 8), dtype=jnp.float32) * 0.125
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, 2:5, 3:6, 7].set(1.0)
+    query = query.at[0, 2:5, 3:6, 10].set(1.0)
+    observed_lengths: list[int] = []
+    real_scan = brainstate.transform.scan
+
+    def recording_scan(function, carry, xs, *args, **kwargs):
+        observed_lengths.append(int(xs.shape[0]))
+        return real_scan(function, carry, xs, *args, **kwargs)
+
+    monkeypatch.setattr(brainstate.transform, "scan", recording_scan)
+    before = np.asarray(model.decode(hidden, query)[2])
+    model.spatial_color_head.weight.value = jax.tree.map(
+        jnp.zeros_like, model.spatial_color_head.weight.value
+    )
+    after = np.asarray(model.decode(hidden, query)[2])
+
+    assert observed_lengths == [subject.SPATIAL_RECURRENCE_STEPS] * 2
+    assert before.tobytes() != after.tobytes()
 
 
 def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
@@ -431,7 +473,7 @@ def test_temporal_memory_attention_changes_executed_colors() -> None:
     assert before.tobytes() != after.tobytes()
 
 
-def test_raw_associative_memory_changes_executed_colors() -> None:
+def test_counted_schema_contains_no_demonstration_value_retrieval_leaves() -> None:
     subject = _subject()
     model = subject.DirectARCGRU(
         subject.DirectModelConfig(
@@ -444,204 +486,21 @@ def test_raw_associative_memory_changes_executed_colors() -> None:
             memory_value_indices=(5, 6, 7),
         )
     )
-    events = jnp.zeros((5, 1, 12), dtype=jnp.float32)
-    events = events.at[:, :, 0].set(1.0)
-    events = events.at[:4, :, 1].set(1.0)
-    events = events.at[:4, :, 2:8].set(
-        jnp.arange(24, dtype=jnp.float32).reshape(4, 1, 6) / 24.0
+    paths = tuple(
+        ".".join(map(str, path)) for path in model.states(brainstate.ParamState)
     )
-    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
-    query = query.at[0, :2, :3, 3].set(1.0)
-    query = query.at[0, :2, :3, 10].set(1.0)
-    brainstate.nn.init_all_states(model, batch_size=1)
-    before = np.asarray(model.run(events, query)[2])
-    model.associative_value_projection.weight.value = jax.tree.map(
-        lambda value: value * 0.0,
-        model.associative_value_projection.weight.value,
+    forbidden_attributes = (
+        "associative_key_projection",
+        "associative_value_projection",
+        "relation_color_head",
+        "whole_demo_direct_color_head",
+        "whole_demo_value_projection",
+        "local_demo_direct_color_head",
     )
-    brainstate.nn.init_all_states(model, batch_size=1)
-    after = np.asarray(model.run(events, query)[2])
+    forbidden_path_tokens = ("associative_", "relation_", "whole_demo_", "local_demo_")
 
-    assert before.tobytes() != after.tobytes()
-
-
-def test_query_to_demonstration_relation_changes_executed_colors() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=12,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=10,
-            seed=53,
-            memory_key_indices=(2, 3, 4),
-            memory_value_indices=(5, 6, 7),
-        )
-    )
-    events = jnp.zeros((6, 1, 12), dtype=jnp.float32)
-    events = events.at[:, :, 0].set(1.0)
-    events = events.at[:4, :, 1].set(1.0)
-    events = events.at[4:, :, 2:5].set(
-        jnp.asarray([[[0.2, 0.5, 0.8]], [[0.8, 0.5, 0.2]]])
-    )
-    events = events.at[4:, :, 2].set(1.0)
-    events = events.at[:4, :, 2:8].set(
-        jnp.arange(24, dtype=jnp.float32).reshape(4, 1, 6) / 24.0
-    )
-    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
-    query = query.at[0, :2, :3, 4].set(1.0)
-    query = query.at[0, :2, :3, 10].set(1.0)
-    brainstate.nn.init_all_states(model, batch_size=1)
-    before = np.asarray(model.run(events, query)[2])
-    model.relation_color_head.weight.value = jax.tree.map(
-        lambda value: value * 0.0,
-        model.relation_color_head.weight.value,
-    )
-    brainstate.nn.init_all_states(model, batch_size=1)
-    after = np.asarray(model.run(events, query)[2])
-
-    assert before.tobytes() != after.tobytes()
-
-
-def test_associative_keys_append_foreground_occupancy() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=24,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=10,
-            seed=59,
-            memory_key_indices=tuple(range(12)),
-            memory_value_indices=tuple(range(12, 24)),
-            memory_key_color_block_width=10,
-        )
-    )
-    first = jnp.zeros((1, 1, 24), dtype=jnp.float32)
-    first = first.at[..., 3].set(1.0)
-    second = first.at[..., 3].set(0.0)
-    second = second.at[..., 7].set(1.0)
-    background = first.at[..., 3].set(0.0)
-    background = background.at[..., 2].set(1.0)
-
-    first_key = np.asarray(model._associative_key_features(first))
-    second_key = np.asarray(model._associative_key_features(second))
-    background_key = np.asarray(model._associative_key_features(background))
-
-    assert first_key[..., :-1].tobytes() != second_key[..., :-1].tobytes()
-    assert first_key[..., -1:].tobytes() == second_key[..., -1:].tobytes()
-    assert first_key.tobytes() != background_key.tobytes()
-
-
-def test_absent_associative_memory_registers_no_dead_projection_states() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=12,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=10,
-            seed=60,
-        )
-    )
-
-    assert not hasattr(model, "associative_key_projection")
-    assert not hasattr(model, "associative_value_projection")
-
-
-def test_whole_demonstration_attention_changes_executed_colors() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=12,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=10,
-            seed=61,
-        )
-    )
-    hidden = jnp.zeros((1, 16), dtype=jnp.float32)
-    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
-    query = query.at[0, :2, :2, 5].set(1.0)
-    query = query.at[0, :2, :2, 10].set(1.0)
-    patterns = jnp.zeros((1, 10, 900), dtype=jnp.float32)
-    patterns = patterns.at[0, 0, jnp.asarray([0, 1, 30, 31])].set(1.0)
-    patterns = patterns.at[0, 1, jnp.asarray([60, 61, 90, 91])].set(1.0)
-    outputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
-    outputs = outputs.at[0, 0, 0, 0, 6].set(1.0)
-    outputs = outputs.at[0, 1, 0, 0, 1].set(1.0)
-    demonstration_valid = jnp.asarray([[True, True] + [False] * 8])
-    before = np.asarray(
-        model.decode(
-            hidden,
-            query,
-            demonstration_patterns=patterns,
-            demonstration_outputs=outputs,
-            demonstration_grid_valid=demonstration_valid,
-        )[2]
-    )
-    model.whole_demo_direct_color_head.weight.value = jax.tree.map(
-        lambda value: value * 0.0,
-        model.whole_demo_direct_color_head.weight.value,
-    )
-    after = np.asarray(
-        model.decode(
-            hidden,
-            query,
-            demonstration_patterns=patterns,
-            demonstration_outputs=outputs,
-            demonstration_grid_valid=demonstration_valid,
-        )[2]
-    )
-
-    assert int(np.argmax(before[0, 0, 0])) == 6
-    assert before.tobytes() != after.tobytes()
-
-
-def test_whole_demo_direct_color_head_has_scaled_identity_initialization() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=12,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=10,
-            seed=63,
-        )
-    )
-    parameters = model.whole_demo_direct_color_head.weight.value
-
-    np.testing.assert_array_equal(
-        np.asarray(parameters["weight"]),
-        np.eye(10, dtype=np.float32) * subject.DIRECT_COLOR_INITIAL_SCALE,
-    )
-    np.testing.assert_array_equal(
-        np.asarray(parameters["bias"]), np.zeros((10,), dtype=np.float32)
-    )
-
-
-def test_whole_demonstration_metric_prefers_identical_embedding() -> None:
-    subject = _subject()
-    model = subject.DirectARCGRU(
-        subject.DirectModelConfig(
-            input_width=12,
-            encoder_width=8,
-            hidden_width=16,
-            decoder_width=4,
-            seed=67,
-        )
-    )
-    query = jnp.asarray([[1.0, -2.0, 0.5, 3.0]], dtype=jnp.float32)
-    keys = jnp.asarray(
-        [[[1.0, -2.0, 0.5, 3.0], [7.0, 7.0, 7.0, 7.0]]],
-        dtype=jnp.float32,
-    )
-    valid = jnp.asarray([[True, True]])
-
-    weights = np.asarray(model._whole_demo_attention_weights(query, keys, valid))
-
-    assert int(np.argmax(weights[0])) == 0
-    assert weights[0, 0] > weights[0, 1]
+    assert all(not hasattr(model, name) for name in forbidden_attributes)
+    assert not any(any(token in path for token in forbidden_path_tokens) for path in paths)
 
 
 @pytest.mark.parametrize(
