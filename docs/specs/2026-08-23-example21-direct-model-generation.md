@@ -1669,6 +1669,63 @@ The final checkpoint file hash is
 No complete evaluation or causal perturbation is permitted for this rejected
 checkpoint, and it contributes zero acceptance tasks.
 
+### Paired spatial recurrent canvas V46
+
+V45 learned output dimensions and broad colour frequencies but not spatial
+relations. Its nearest failures copied or globally recoloured cells that the
+demonstrations instead moved, completed, or selected. V46 therefore changes
+the representation and recurrent synapses; it is not a longer V45 schedule.
+
+Each episode has a fixed 18-step, target-free input sequence. The first ten
+slots represent up to ten demonstrations, followed by eight query-refinement
+steps. Every event is a lossless 30-by-30 canvas with integer input colour,
+integer demonstration-output colour, input-validity, output-validity,
+demonstration-phase, and query-phase planes. Missing demonstration slots have
+both phases zero and update no hidden state. Query events repeat only the
+query input and its dimensions; their demonstration-output plane and mask are
+exactly zero. Fixed coordinate planes and fixed one-hot colour expansion are
+computed inside the model. Targets, target shapes, and exactness signals remain
+outside the model input.
+
+V46 has two independent 32-channel continuous tanh canvases. A
+checkpoint-owned 3-by-3 input convolution and recurrent convolution update the
+demonstration canvas only on demonstration events. A second pair of
+checkpoint-owned 3-by-3 convolutions updates the query canvas only on query
+events, consuming query colours, validity, coordinates, and the frozen local
+demonstration canvas. Both states use fixed retention 0.8. Eight query steps
+give the shared recurrent kernel a 17-by-17 receptive field without a Python
+model loop; the compiled event sequence carries the state.
+
+The colour decoder is one checkpoint-owned 1-by-1 BrainTrace convolution over
+local demonstration state, local query state, their elementwise product,
+query colour and validity, coordinates, and broadcast global means of the two
+states and their product. Checkpoint-owned linear heads decode height and
+width from pooled recurrent state and lossless query dimensions. Greedy
+argmax over these logits is the only candidate. There is no query-grid output
+bypass, fixed transformation bank, rule or template path, retrieval,
+task-local fitting, repair, selection, or reranking. V46 uses single-step
+PP-prop with the existing fourth-root whole-grid hierarchical objective; BPTT
+is not used.
+
+Sibling tests must first fail against the absent V46 modules, then prove exact
+event layout and query-target isolation, padded/demo/query phase gating,
+spatial receptive-field growth, output sensitivity to either recurrent
+canvas, zero recurrent compiler exclusions, finite nonzero gradients for
+every group, movement of every ordered leaf, target-free deterministic greedy
+provenance, and byte-exact checkpoint reload through an exact schema. Changed
+production modules must retain more than 90% meaningful branch coverage.
+
+The first score-ineligible screen uses seed 2108, 800 synthetic-v3 training
+tasks from seed 27108, 400 updates in chunks of 20, batch size eight, four
+demonstrations, maximum side 12, 32 channels, eight query-refinement steps,
+learning rate 0.001, and 60 independent tasks from seed 132108. It passes only
+if every mechanism and anti-collapse condition holds, strict count is at least
+5/60, at least two task families are solved, and at least one solved task is
+from `dihedral`, `crop`, `upscale`, `project_marker`, `complete_corner`, or
+`mirror_concat`. Failure closes V46. A pass permits a separately specified
+full synthetic capability oracle, never direct public-ARC or complete-manifest
+evaluation.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
