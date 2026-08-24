@@ -83,6 +83,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
 - a checkpoint-owned cross-spatial attention path from every valid query-input
   cell to every output coordinate, so learned spatial remapping is expressible
   without a fixed copy or transform residual;
+- a checkpoint-owned projection of the complete query foreground-occupancy
+  pattern, giving the decoder global color-invariant spatial evidence for
+  pattern-defined outputs;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;

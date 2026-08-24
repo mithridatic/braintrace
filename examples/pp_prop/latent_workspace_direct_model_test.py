@@ -91,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "pooled_demo_shape_attention_v6"
+        == "global_pattern_shape_attention_v7"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -179,6 +179,31 @@ def test_demo_shape_projection_changes_executed_shape_logits() -> None:
     )
 
 
+def test_global_query_pattern_projection_changes_executed_colors() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=41,
+        )
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :3, :3, 5].set(1.0)
+    query = query.at[0, :3, :3, 10].set(1.0)
+    before = np.asarray(model.decode(hidden, query)[2])
+    model.global_query_pattern_projection.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.global_query_pattern_projection.weight.value,
+    )
+    after = np.asarray(model.decode(hidden, query)[2])
+
+    assert before.tobytes() != after.tobytes()
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -187,7 +212,7 @@ def test_demo_shape_projection_changes_executed_shape_logits() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "explicit_demo_shape_attention_v5"},
+        {"architecture_version": "pooled_demo_shape_attention_v6"},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "pooled_demo_shape_attention_v6"
+ARCHITECTURE_VERSION = "global_pattern_shape_attention_v7"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -58,7 +58,7 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="pooled_demo_shape_attention_v6"
+    architecture_version : str, default="global_pattern_shape_attention_v7"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -146,6 +146,9 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             self.query_projection = braintrace.nn.Linear(
                 QUERY_FEATURE_WIDTH, config.decoder_width
+            )
+            self.global_query_pattern_projection = braintrace.nn.Linear(
+                MAX_GRID_SIZE * MAX_GRID_SIZE, config.decoder_width
             )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
@@ -256,6 +259,10 @@ class DirectARCGRU(brainstate.nn.Module):
         context_vector = self.context_projection(hidden)
         context = context_vector[:, None, None, :]
         query = self.query_projection(query_features)
+        occupancy = jnp.sum(query_features[..., 1:COLOR_COUNT], axis=-1)
+        global_pattern = self.global_query_pattern_projection(
+            occupancy.reshape(batch_size, -1)
+        )[:, None, None, :]
         coordinate = self.coordinate_projection(self.coordinate_features)
         coordinate = coordinate.reshape(
             MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
@@ -288,7 +295,7 @@ class DirectARCGRU(brainstate.nn.Module):
             batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
         cell_state = brainstate.nn.tanh(
-            context + query + coordinate[None] + attention
+            context + query + global_pattern + coordinate[None] + attention
         )
         return (
             self.height_head(shape_state),
