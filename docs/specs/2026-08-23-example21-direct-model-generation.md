@@ -1307,6 +1307,49 @@ family rather than licensing more ARC-fold loss or duration changes. A pass
 would justify specifying a separate synthetic-pretraining-to-real-ARC arm; the
 oracle itself is never an acceptance score.
 
+V38 is rejected at clean revision
+`504f23e256d15c06059b57e0f9627a12bd4c7575`, with artifact
+`var/ex21-online-v38-synthetic-capability-v1`. The anti-collapse gate passed,
+every parameter group moved, and training 600 updates took 61.94 seconds. The
+independent 120-task oracle scored only 3 strict tasks, all from
+`pattern_label`; there was no exact copy or spatial transformation and the
+diversity gate failed. This closes the V36/V37 same-coordinate cell-decoder
+family.
+
+### Task-conditioned query-patch decoder V39
+
+V39 makes a spatial representational change before any further real-ARC fold.
+The fixed target-free decode encoding duplicates a 3-by-3 neighbourhood for
+each possible query coordinate. Each neighbourhood contains the ten lossless
+colour one-hots plus one validity bit at every offset; out-of-grid positions
+are all zero. The complete ordered query rows remain in the original event
+stream, so this is a deterministic redundant lossless encoding, not a feature
+extractor that discards input. Demonstration outputs and query targets never
+enter the patch block.
+
+At each decode row, the shared cell readout receives its V36 features plus the
+corresponding 99 patch values and the complete outer product between that patch
+and the first 32 coordinates of the current recurrent task state. The fixed
+interaction is followed directly by the one checkpoint-owned BrainTrace linear
+colour head. There is no chained trainable primitive, convolutional transform,
+rule, template, retrieval, or task-local fitting. The shape path, V37
+training-only edit emphasis, V32 recurrent cells, optimizer, PP-prop trace, and
+greedy hierarchical serialization remain unchanged. The architecture and
+answer-head identifiers become `online_task_patch_decoder_v39` and
+`task_conditioned_query_patch_decoder_v39`.
+
+Tests must first fail against V38, then prove exact patch position/order and
+padding, target independence, cell-locality, recurrent-context interaction,
+input-width/schema binding, zero recurrent and decoder weight-to-weight
+exclusions, finite nonzero compiled gradients, movement of every parameter
+leaf, and byte-exact checkpoint reload. V39 first repeats only the synthetic
+capability gate with 600 updates, 1,400 training tasks from seed 18108, 120
+independent oracle tasks from seed 62108, and the otherwise fixed V38
+configuration. More than seven strict tasks, at least two non-label families,
+at least one non-copy/non-label task, and every mechanism check are mandatory.
+Failure closes V39. A pass permits specification of one fresh real-ARC
+validation arm; it does not permit complete evaluation directly.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
