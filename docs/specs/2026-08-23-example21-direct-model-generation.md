@@ -624,6 +624,58 @@ solves at least two non-label families, and includes an exact task outside
 `copy` and `pattern_label`. Only then may one fixed 80-task ARC arm run; its gate
 remains greater than 3/80.
 
+V21 is rejected at clean revision
+`c88e83d061ab54107f32805d96da8c08212ed9ac`. Its fresh seed-52108 oracle
+scored 6/120: three `count`, two `select_marked_region`, and one
+`pattern_label`. Training remained finite for 69.8 seconds and all parameter
+groups moved, but the required greater-than-seven count was not reached.
+Among 63 shape-correct tasks, foreground accuracy rose only to 3.3% while
+background accuracy remained 100%. This weak improvement does not justify
+another vector-GRU loss or trace adjustment. The V20/V21 row-decoder family is
+closed and no ARC run is permitted.
+
+### Spatial Conv-LIF online PP-prop V22
+
+V22 replaces vector compression with a checkpoint-owned spatial spiking state.
+A fixed target-free adapter maps each lossless row event into a 30-by-30 feature
+plane: cell-specific input/output colour one-hots and masks are placed on the
+encoded row; event phase, demonstration identity, dimensions, and normalized
+metadata are broadcast as channels; a decode instruction contributes only its
+dedicated row plane. This is a layout transformation of the existing lossless
+encoding, not a learned or task-specific transformation and not a value bypass.
+
+A BrainTrace 3-by-3 input convolution and a shared 3-by-3 recurrent convolution
+drive an exponential synapse and LIF population on the 30-by-30 canvas. The
+spatial state uses 16 channels, membrane time constant 100 ms, synapse time
+constant 20 ms, 1 mV threshold, 1 ms logical step, and zero initial state. A
+checkpoint-owned 1-by-1 colour convolution emits ten logits per cell. The fixed
+decode-row plane selects exactly one neural-logit row at each decode step;
+checkpoint-owned linear heads on pooled spikes emit height and width logits.
+No input/demo colour is added to output logits, and no retrieval, forest, rule,
+template, search, or task-local fitter exists in the answer path.
+
+Training retains V21 target-balanced colour loss and compiles one batched
+logical step with single-step PP-prop. Both neuron/synapse state and learner
+trace state reset together per episode batch; `etrace_grad` advances the whole
+sequence and applies the fixed decode mask. Repeated optimizer updates remain a
+compiled BrainState loop. All randomness uses `brainstate.random`.
+
+Sibling tests must prove target-free spatial feature placement, exact decode-row
+selection, recurrent Conv-LIF state evolution, PP-prop connectivity for both
+input and recurrent convolutions, finite nonzero gradients for convolution,
+colour, and shape groups, simultaneous model/trace reset, deterministic
+checkpoint reload, changed candidate bytes after descent, malformed/non-finite
+failure, and greater-than-90% meaningful coverage.
+
+The compiler pilot uses seed 2108, four spatial channels, batch size 2, five
+updates, the V20 pilot curriculum, and the fixed neuron constants above. It must
+pass every mechanism gate before one learning oracle. The learning oracle uses
+16 channels, seed 2108, synthetic seed 12108, 1,400 tasks, 1,000 updates, batch
+size 8, learning rate 0.001, trace half-life 40, and untouched 120-task seed
+62108. It is rejected unless it exceeds 7/120, solves at least two non-label
+families, and includes a non-copy/non-label exact task. Only then may one fixed
+80-task ARC arm run; its gate remains greater than 3/80.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
