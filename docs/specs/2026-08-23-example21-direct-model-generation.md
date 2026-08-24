@@ -1431,6 +1431,17 @@ in the training split and assigns the same learned puzzle identifier to those
 pairs and its test query. That is task-local demonstration fitting under this
 goal, irrespective of the reported benchmark score.
 
+V41 is rejected at clean revision
+`9eea1786b3c650d891617a0360c2251d6b5a24cf`, with artifact
+`var/ex21-online-v41-continuous-spatial-capability-v1`. All parameter groups
+and leaves moved, no recurrent weight was excluded, candidate bytes changed,
+and the mechanism and anti-collapse gates passed. Training 600 updates took
+211.18 seconds. The independent oracle scored 6/120: two `count`, three
+`pattern_label`, and one `select_marked_region` task. Shape was exact on 73
+tasks, foreground accuracy was 6.42%, and background accuracy was 97.58%.
+Because the strict count did not exceed seven, V41 is not permitted a real-ARC
+fold and continuous spatial recurrence is closed.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
