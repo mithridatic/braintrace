@@ -224,8 +224,8 @@ def test_edit_cell_weights_emphasize_changes_and_absent_query_cells() -> None:
         subject.edit_cell_weights(targets, target_mask, query, query_mask)
     )
 
-    assert subject.EDIT_CELL_MULTIPLIER == 4.0
-    assert weights.tolist() == [[1.0, 4.0, 4.0, 0.0]]
+    assert subject.EDIT_CELL_MULTIPLIER == 2.0
+    assert weights.tolist() == [[1.0, 2.0, 2.0, 0.0]]
     with pytest.raises(ValueError, match="matching shapes"):
         subject.edit_cell_weights(targets, target_mask[:, :3], query, query_mask)
 
@@ -566,7 +566,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "edit_weighted_fourth_root_hierarchical_v37"
+    assert trainer.loss_version == "twofold_edit_fourth_root_hierarchical_v40"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:

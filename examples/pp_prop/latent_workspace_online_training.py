@@ -41,7 +41,7 @@ from examples.pp_prop.latent_workspace_task import (
     augment_training_task,
 )
 
-EDIT_CELL_MULTIPLIER = 4.0
+EDIT_CELL_MULTIPLIER = 2.0
 
 
 def online_decode_feature_width(row_config: RowEventConfig) -> int:
@@ -1134,7 +1134,7 @@ def edit_weighted_hierarchical_step_loss(
     gate_mass: jnp.ndarray,
     color_mass: jnp.ndarray,
 ) -> jnp.ndarray:
-    """Score hierarchical logits with fourfold training-only edit emphasis.
+    """Score hierarchical logits with twofold training-only edit emphasis.
 
     Parameters
     ----------
@@ -1292,7 +1292,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "edit_weighted_fourth_root_hierarchical_v37"
+    loss_version = "twofold_edit_fourth_root_hierarchical_v40"
 
     def __init__(
         self,
