@@ -1519,6 +1519,22 @@ One or more strict tasks permits one separately specified all-training
 nomination run against the complete fixed evaluation manifest; the 15-task
 pilot score itself remains ineligible and is never added to acceptance.
 
+V43 is rejected at clean revision
+`22f9eae629ca4a25e3de22d51b7aad227726203a`, with artifact
+`var/ex21-online-v43-task-gated-transfer-pilot-v1`. The exact V42 parameter
+digest reloaded, all four parameter groups and all ten leaves moved, recurrent
+exclusions remained zero, candidate bytes changed, and the mechanism gate
+passed. Fine-tuning took 160.40 seconds and reduced mean loss from 1.4162 over
+the first 100 updates to 1.2396 over the last 100. The untouched 15-task,
+16-query tail nevertheless scored 0 strict tasks, so the integer pilot gate
+failed. Exact shape improved from 2/16 before fine-tuning to 9/16, foreground
+accuracy from 11.29% to 27.36%, and background accuracy from 69.57% to 95.21%,
+but these diagnostics do not alter the zero. Five of the nine shape-correct
+predictions were byte-exact copies of their query inputs while still missing
+their targets, identifying copy bias rather than a near-exact transformation.
+No complete evaluation or longer/tuned V43 run is permitted, and V42/V43
+task-gated transfer is closed.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
