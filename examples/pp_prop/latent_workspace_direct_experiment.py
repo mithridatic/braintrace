@@ -17,6 +17,10 @@ import msgspec
 import numpy as np
 
 try:
+    from examples.pp_prop.latent_workspace_direct_curriculum import (
+        SyntheticCurriculumConfig,
+        generate_synthetic_curriculum,
+    )
     from examples.pp_prop.latent_workspace_direct_generation import (
         DirectPredictionLogits,
         decode_first_candidate,
@@ -51,6 +55,10 @@ try:
         load_dataset_source,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
+    from latent_workspace_direct_curriculum import (  # pyright: ignore[reportImplicitRelativeImport]
+        SyntheticCurriculumConfig,
+        generate_synthetic_curriculum,
+    )
     from latent_workspace_direct_generation import (  # pyright: ignore[reportImplicitRelativeImport]
         DirectPredictionLogits,
         decode_first_candidate,
@@ -133,6 +141,14 @@ class DirectExperimentConfig:
         Number of ARC training tasks held out by fingerprint for validation.
     training_updates, training_chunk_size, training_batch_size : int
         Optimizer schedule and compiled chunk dimensions.
+    synthetic_pretraining_updates, synthetic_task_count : int, default=0
+        Optional training-only curriculum schedule. Both are zero or positive.
+    synthetic_demonstrations : int, default=4
+        Demonstrations per generated task.
+    synthetic_max_grid_size : int, default=12
+        Maximum generated grid side length.
+    synthetic_seed : int, default=12108
+        Independent BrainState curriculum-generation seed.
     learning_rate : float, default=0.001
         Adam learning rate.
     encoder_width, hidden_width, decoder_width, recurrent_layers : int
@@ -154,6 +170,11 @@ class DirectExperimentConfig:
     training_updates: int = 100
     training_chunk_size: int = 5
     training_batch_size: int = 8
+    synthetic_pretraining_updates: int = 0
+    synthetic_task_count: int = 0
+    synthetic_demonstrations: int = 4
+    synthetic_max_grid_size: int = 12
+    synthetic_seed: int = 12108
     learning_rate: float = 0.001
     encoder_width: int = 128
     hidden_width: int = 256
@@ -172,6 +193,24 @@ class DirectExperimentConfig:
         if self.device not in {"cpu", "gpu"}:
             raise ValueError("device must be 'cpu' or 'gpu'.")
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        object.__setattr__(
+            self,
+            "synthetic_pretraining_updates",
+            _nonnegative_integer(
+                self.synthetic_pretraining_updates,
+                "synthetic_pretraining_updates",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "synthetic_task_count",
+            _nonnegative_integer(self.synthetic_task_count, "synthetic_task_count"),
+        )
+        object.__setattr__(
+            self,
+            "synthetic_seed",
+            _nonnegative_integer(self.synthetic_seed, "synthetic_seed"),
+        )
         for name in (
             "validation_task_count",
             "training_updates",
@@ -182,11 +221,29 @@ class DirectExperimentConfig:
             "decoder_width",
             "recurrent_layers",
         ):
-            object.__setattr__(
-                self, name, _positive_integer(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         if self.training_updates % self.training_chunk_size:
             raise ValueError("training_chunk_size must divide training_updates.")
+        if bool(self.synthetic_pretraining_updates) != bool(self.synthetic_task_count):
+            raise ValueError(
+                "synthetic_pretraining_updates and synthetic_task_count must "
+                "both be zero or both be positive."
+            )
+        if self.synthetic_pretraining_updates % self.training_chunk_size:
+            raise ValueError(
+                "training_chunk_size must divide synthetic_pretraining_updates."
+            )
+        curriculum_validation = SyntheticCurriculumConfig(
+            task_count=max(1, self.synthetic_task_count),
+            demonstrations=self.synthetic_demonstrations,
+            max_grid_size=self.synthetic_max_grid_size,
+        )
+        object.__setattr__(
+            self, "synthetic_demonstrations", curriculum_validation.demonstrations
+        )
+        object.__setattr__(
+            self, "synthetic_max_grid_size", curriculum_validation.max_grid_size
+        )
         object.__setattr__(
             self,
             "learning_rate",
@@ -210,9 +267,7 @@ class DirectExperimentConfig:
         value["source_manifest"] = str(self.source_manifest)
         value["output_dir"] = str(self.output_dir)
         value["initial_checkpoint"] = (
-            None
-            if self.initial_checkpoint is None
-            else str(self.initial_checkpoint)
+            None if self.initial_checkpoint is None else str(self.initial_checkpoint)
         )
         return value
 
@@ -503,8 +558,7 @@ def evaluate_model(
     width_array = np.asarray(width)
     color_array = np.asarray(colors)
     dependencies = tuple(
-        ".".join(map(str, path))
-        for path in model.states(brainstate.ParamState)
+        ".".join(map(str, path)) for path in model.states(brainstate.ParamState)
     )
     candidates = []
     predictions = []
@@ -523,9 +577,7 @@ def evaluate_model(
         predictions.append(candidate["grid"])
         target_height = episode.target_height + 1
         target_width = episode.target_width + 1
-        targets.append(
-            episode.target_colors[:target_height, :target_width].tolist()
-        )
+        targets.append(episode.target_colors[:target_height, :target_width].tolist())
         task_ids.append(episode.task_id)
     strict = strict_task_pass_at_1(predictions, targets, task_ids)
     candidate_bytes = first_prediction_bytes(candidates)
@@ -548,10 +600,11 @@ def _source_revision() -> tuple[str, bool]:
                 "BRAINTRACE_SOURCE_REVISION and BRAINTRACE_SOURCE_DIRTY must be set together."
             )
         if len(explicit_revision) != 40 or any(
-            character not in "0123456789abcdefABCDEF"
-            for character in explicit_revision
+            character not in "0123456789abcdefABCDEF" for character in explicit_revision
         ):
-            raise ValueError("BRAINTRACE_SOURCE_REVISION must be a 40-character hex hash.")
+            raise ValueError(
+                "BRAINTRACE_SOURCE_REVISION must be a 40-character hex hash."
+            )
         normalized_dirty = explicit_dirty.lower()
         if normalized_dirty not in {"true", "false"}:
             raise ValueError("BRAINTRACE_SOURCE_DIRTY must be true or false.")
@@ -604,7 +657,9 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
         row_config = RowEventConfig(max_demonstrations=10, max_grid_size=30)
         memory_features = associative_memory_feature_indices(row_config)
         catalog = training_episode_catalog(fitting)
-        scored_tasks = corpora.evaluation if config.evaluate_complete_manifest else validation
+        scored_tasks = (
+            corpora.evaluation if config.evaluate_complete_manifest else validation
+        )
         scored_episodes = evaluation_episodes(scored_tasks, row_config)
         model_config = DirectModelConfig(
             input_width=row_config.input_width,
@@ -623,9 +678,7 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
         if config.initial_checkpoint is None:
             model = DirectARCGRU(model_config)
         else:
-            model, initial_metadata = load_direct_checkpoint(
-                config.initial_checkpoint
-            )
+            model, initial_metadata = load_direct_checkpoint(config.initial_checkpoint)
             if model.config != model_config:
                 raise ValueError(
                     "initial checkpoint architecture does not match the experiment."
@@ -644,6 +697,50 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             batch_size=config.training_batch_size,
             learning_rate=config.learning_rate,
         )
+        synthetic_pretraining = None
+        if config.synthetic_pretraining_updates:
+            curriculum = generate_synthetic_curriculum(
+                SyntheticCurriculumConfig(
+                    task_count=config.synthetic_task_count,
+                    demonstrations=config.synthetic_demonstrations,
+                    max_grid_size=config.synthetic_max_grid_size,
+                ),
+                brainstate.random.RandomState(config.synthetic_seed),
+            )
+            synthetic_catalog = training_episode_catalog(curriculum.tasks)
+            synthetic_rng = brainstate.random.RandomState(config.synthetic_seed + 1)
+            synthetic_losses = []
+            synthetic_started = time.perf_counter()
+            synthetic_chunk_count = (
+                config.synthetic_pretraining_updates // config.training_chunk_size
+            )
+            for chunk_index in range(synthetic_chunk_count):
+                chunk = sample_training_chunk(
+                    synthetic_catalog,
+                    row_config,
+                    synthetic_rng,
+                    updates=config.training_chunk_size,
+                    batch_size=config.training_batch_size,
+                    augment=False,
+                )
+                observed = np.asarray(trainer.train_chunk(chunk), dtype=np.float64)
+                synthetic_losses.extend(observed.tolist())
+                print(
+                    f"[direct-synthetic] chunk={chunk_index + 1}/"
+                    f"{synthetic_chunk_count} loss={observed[-1]:.6f}",
+                    flush=True,
+                )
+            synthetic_pretraining = {
+                "schema_version": curriculum.schema_version,
+                "seed": config.synthetic_seed,
+                "task_count": len(curriculum.tasks),
+                "family_counts": curriculum.family_counts,
+                "task_sha256": curriculum.task_sha256,
+                "training_episode_count": len(synthetic_catalog),
+                "losses": synthetic_losses,
+                "finite": bool(np.all(np.isfinite(synthetic_losses))),
+                "wall_seconds": time.perf_counter() - synthetic_started,
+            }
         rng = brainstate.random.RandomState(config.seed + 1)
         losses = []
         started = time.perf_counter()
@@ -670,7 +767,9 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
         config.output_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = config.output_dir / "checkpoint.npz"
         checkpoint_digest = save_direct_checkpoint(model, checkpoint_path)
-        checkpoint_file_digest = hashlib.sha256(checkpoint_path.read_bytes()).hexdigest()
+        checkpoint_file_digest = hashlib.sha256(
+            checkpoint_path.read_bytes()
+        ).hexdigest()
     revision, dirty = _source_revision()
     result = {
         "schema_version": 1,
@@ -711,6 +810,7 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             "file_sha256": checkpoint_file_digest,
         },
         "initial_checkpoint": initial_checkpoint_evidence,
+        "synthetic_pretraining": synthetic_pretraining,
         "evaluation_before_training": evaluation_before_training,
         "evaluation": evaluation,
     }
@@ -730,6 +830,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--training-updates", type=int, default=100)
     parser.add_argument("--training-chunk-size", type=int, default=5)
     parser.add_argument("--training-batch-size", type=int, default=8)
+    parser.add_argument("--synthetic-pretraining-updates", type=int, default=0)
+    parser.add_argument("--synthetic-task-count", type=int, default=0)
+    parser.add_argument("--synthetic-demonstrations", type=int, default=4)
+    parser.add_argument("--synthetic-max-grid-size", type=int, default=12)
+    parser.add_argument("--synthetic-seed", type=int, default=12108)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--encoder-width", type=int, default=128)
     parser.add_argument("--hidden-width", type=int, default=256)
@@ -765,6 +870,11 @@ def main(argv: list[str] | None = None) -> int:
         training_updates=args.training_updates,
         training_chunk_size=args.training_chunk_size,
         training_batch_size=args.training_batch_size,
+        synthetic_pretraining_updates=args.synthetic_pretraining_updates,
+        synthetic_task_count=args.synthetic_task_count,
+        synthetic_demonstrations=args.synthetic_demonstrations,
+        synthetic_max_grid_size=args.synthetic_max_grid_size,
+        synthetic_seed=args.synthetic_seed,
         learning_rate=args.learning_rate,
         encoder_width=args.encoder_width,
         hidden_width=args.hidden_width,

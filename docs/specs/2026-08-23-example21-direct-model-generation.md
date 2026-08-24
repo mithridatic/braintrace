@@ -167,6 +167,32 @@ must reject any architecture/path/shape/dtype mismatch, and must record the
 initial checkpoint file and parameter digests. Optimizer state is deliberately
 fresh unless a future artifact schema binds and validates it separately.
 
+### Training-only synthetic curriculum
+
+Architecture-only pilots V7 through V14 did not produce a strict validation
+task. A materially new arm may therefore pretrain the same direct recurrent
+checkpoint on procedurally generated ARC episodes before ordinary fitting-task
+training. This curriculum is training data, never an answer-path component.
+
+The first curriculum version balances seven task families: exact copy,
+foreground recoloring, dihedral transforms, foreground bounding-box crop,
+integer pixel upscaling, foreground-count-to-label, and pattern-to-label
+classification. Every task has multiple demonstrations plus a supervised query,
+uses only `brainstate.random`, respects the 30x30/10-color ARC bounds, and is
+generated without reading validation or evaluation tasks.
+
+The curriculum module may be imported by the experiment trainer only. The
+direct model, decoder, scorer, and candidate serializer must not import it or
+any forest/rule/template module. Evaluation constructs no synthetic tasks and
+executes only the trained checkpoint on target-free manifest inputs.
+
+Each artifact with curriculum updates binds the curriculum schema version,
+seed, requested task count, exact per-family counts, canonical ordered task
+digest, pretraining update schedule, and separate pretraining losses. A zero-
+curriculum configuration must remain behaviorally identical to the ordinary
+training path. A small learning oracle must show finite loss reduction before a
+fixed 80-task validation pilot is allowed.
+
 ## Staged gates
 
 ### Gate A: contract and regression tests

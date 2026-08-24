@@ -18,7 +18,9 @@ from examples.pp_prop.latent_workspace_task import (
 
 
 def _subject():
-    return importlib.import_module("examples.pp_prop.latent_workspace_direct_experiment")
+    return importlib.import_module(
+        "examples.pp_prop.latent_workspace_direct_experiment"
+    )
 
 
 def _task(task_id: str, color: int) -> ArcTask:
@@ -78,9 +80,10 @@ def test_training_chunk_sampling_is_brainstate_seed_deterministic() -> None:
     )
 
     for name in first.__dataclass_fields__:
-        assert np.asarray(getattr(first, name)).tobytes() == np.asarray(
-            getattr(second, name)
-        ).tobytes()
+        assert (
+            np.asarray(getattr(first, name)).tobytes()
+            == np.asarray(getattr(second, name)).tobytes()
+        )
 
 
 @pytest.mark.parametrize(
@@ -91,6 +94,11 @@ def test_training_chunk_sampling_is_brainstate_seed_deterministic() -> None:
         {"device": "tpu"},
         {"learning_rate": 0.0},
         {"validation_task_count": True},
+        {"synthetic_pretraining_updates": 1},
+        {"synthetic_task_count": 7},
+        {"synthetic_pretraining_updates": 3, "synthetic_task_count": 7},
+        {"synthetic_demonstrations": 1},
+        {"synthetic_seed": -1},
     ],
 )
 def test_experiment_config_fails_closed(tmp_path, changes: dict[str, object]) -> None:
@@ -201,10 +209,12 @@ def test_tiny_end_to_end_run_writes_exact_validation_artifact(tmp_path) -> None:
     assert result["evaluation"]["query_count"] == 1
     assert isinstance(result["evaluation"]["strict_task_pass_at_1_count"], int)
     assert result["model"]["parameters_moved"] is True
-    assert result["checkpoint"]["parameter_sha256"] == result["model"][
-        "parameter_sha256_after"
-    ]
+    assert (
+        result["checkpoint"]["parameter_sha256"]
+        == result["model"]["parameter_sha256_after"]
+    )
     assert result["evaluation_before_training"]["task_count"] == 1
+    assert result["synthetic_pretraining"] is None
     assert (output / "result.json").is_file()
     assert (output / "checkpoint.npz").is_file()
 
@@ -226,9 +236,10 @@ def test_tiny_end_to_end_run_writes_exact_validation_artifact(tmp_path) -> None:
             initial_checkpoint=output / "checkpoint.npz",
         )
     )
-    assert resumed["initial_checkpoint"]["parameter_sha256"] == result["model"][
-        "parameter_sha256_after"
-    ]
+    assert (
+        resumed["initial_checkpoint"]["parameter_sha256"]
+        == result["model"]["parameter_sha256_after"]
+    )
     with pytest.raises(ValueError, match="architecture"):
         subject.run_experiment(
             subject.DirectExperimentConfig(
@@ -268,7 +279,54 @@ def test_source_manifest_and_sampling_fail_closed(tmp_path) -> None:
         )
 
 
-def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys) -> None:
+def test_tiny_synthetic_pretraining_writes_bound_provenance(tmp_path) -> None:
+    subject = _subject()
+    manifest = _tiny_manifest(tmp_path)
+    output = tmp_path / "synthetic"
+
+    result = subject.run_experiment(
+        subject.DirectExperimentConfig(
+            source_manifest=manifest,
+            output_dir=output,
+            device="cpu",
+            validation_task_count=1,
+            training_updates=1,
+            training_chunk_size=1,
+            training_batch_size=1,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            recurrent_layers=1,
+            augment=False,
+            synthetic_pretraining_updates=1,
+            synthetic_task_count=7,
+            synthetic_demonstrations=2,
+            synthetic_max_grid_size=6,
+            synthetic_seed=101,
+        )
+    )
+
+    evidence = result["synthetic_pretraining"]
+    assert evidence["schema_version"] == "direct_synthetic_curriculum_v1"
+    assert evidence["seed"] == 101
+    assert evidence["task_count"] == 7
+    assert evidence["family_counts"] == {
+        "copy": 1,
+        "recolor": 1,
+        "dihedral": 1,
+        "crop": 1,
+        "upscale": 1,
+        "count": 1,
+        "pattern_label": 1,
+    }
+    assert len(evidence["task_sha256"]) == 64
+    assert len(evidence["losses"]) == 1
+    assert evidence["finite"] is True
+
+
+def test_cli_builds_config_and_reports_evaluation(
+    monkeypatch, tmp_path, capsys
+) -> None:
     subject = _subject()
     observed = {}
 
@@ -291,6 +349,12 @@ def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys)
             "2",
             "--training-chunk-size",
             "1",
+            "--synthetic-pretraining-updates",
+            "1",
+            "--synthetic-task-count",
+            "7",
+            "--synthetic-seed",
+            "99",
             "--no-augment",
         ]
     )
@@ -298,6 +362,9 @@ def test_cli_builds_config_and_reports_evaluation(monkeypatch, tmp_path, capsys)
     assert exit_code == 0
     assert observed["config"].augment is False
     assert observed["config"].initial_checkpoint == tmp_path / "checkpoint.npz"
+    assert observed["config"].synthetic_pretraining_updates == 1
+    assert observed["config"].synthetic_task_count == 7
+    assert observed["config"].synthetic_seed == 99
     output = json.loads(capsys.readouterr().out)
     assert output == {"strict_task_pass_at_1_count": 0}
 
