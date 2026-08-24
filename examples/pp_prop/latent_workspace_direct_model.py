@@ -17,7 +17,7 @@ QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "whole_demo_relation_v13"
+ARCHITECTURE_VERSION = "metric_whole_demo_relation_v14"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -62,7 +62,7 @@ class DirectModelConfig:
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
         One foreground-occupancy feature per group is appended to the full key.
-    architecture_version : str, default="whole_demo_relation_v13"
+    architecture_version : str, default="metric_whole_demo_relation_v14"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -241,6 +241,21 @@ class DirectARCGRU(brainstate.nn.Module):
         )
         foreground = jnp.sum(colors[..., 1:], axis=-1)
         return jnp.concatenate((selected, foreground), axis=-1)
+
+    def _whole_demo_attention_weights(
+        self,
+        query: jnp.ndarray,
+        keys: jnp.ndarray,
+        valid: jnp.ndarray,
+    ) -> jnp.ndarray:
+        differences = query[:, None, :] - keys
+        logits = -jnp.sum(jnp.square(differences), axis=-1) / np.sqrt(
+            float(self.config.decoder_width)
+        )
+        valid = jnp.asarray(valid, dtype=bool)
+        weights = brainstate.nn.softmax(jnp.where(valid, logits, -1.0e9), axis=-1)
+        weights = weights * valid
+        return weights / jnp.maximum(jnp.sum(weights, axis=-1, keepdims=True), 1.0)
 
     def update(self, event: jnp.ndarray) -> jnp.ndarray:
         """Advance the recurrent encoder by one row event.
@@ -591,15 +606,10 @@ class DirectARCGRU(brainstate.nn.Module):
             jnp.einsum("boq,bqd->bod", output_relation_weights, inferred_query_values)
         ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
         whole_demo_keys = self.global_query_pattern_projection(demonstration_patterns)
-        whole_demo_logits = jnp.einsum(
-            "bd,bnd->bn", global_pattern[:, 0, 0, :], whole_demo_keys
-        ) / np.sqrt(float(self.config.decoder_width))
-        whole_demo_weights = brainstate.nn.softmax(
-            jnp.where(demonstration_grid_valid, whole_demo_logits, -1.0e9), axis=-1
-        )
-        whole_demo_weights = whole_demo_weights * demonstration_grid_valid
-        whole_demo_weights = whole_demo_weights / jnp.maximum(
-            jnp.sum(whole_demo_weights, axis=-1, keepdims=True), 1.0
+        whole_demo_weights = self._whole_demo_attention_weights(
+            global_pattern[:, 0, 0, :],
+            whole_demo_keys,
+            demonstration_grid_valid,
         )
         whole_demo_values = self.whole_demo_value_projection(demonstration_outputs)
         whole_demo_attention = jnp.einsum(

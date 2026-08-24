@@ -111,6 +111,9 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   embeds complete color-invariant input occupancy with the same checkpoint
   projection as the query, and passes the attended demonstration-output grid
   only through learned value and color projections before final logits;
+- negative squared distance between checkpoint-projected whole-query and
+  demonstration patterns for whole-grid attention, so an identical embedding
+  cannot lose solely because an unrelated key has a larger vector norm;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;
@@ -211,6 +214,10 @@ V12 restored full color keys, appended occupancy, and added direct relation
 color logits. It produced 59/85 shape-exact queries but 0/85 exact queries and
 0/80 strict tasks; `27a28665` predictions were 4, 7, and 4 against 6, 1, and 2.
 The direct relation-logit arm is rejected.
+
+V13 whole-demonstration dot-product attention produced 55/85 shape-exact
+queries, 0/85 exact queries, and 0/80 strict tasks; `27a28665` predictions were
+4, 3, and 3. Whole-grid dot-product attention is rejected.
 
 ### Gate C: complete evaluation
 

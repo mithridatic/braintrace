@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "whole_demo_relation_v13"
+    assert model.config.architecture_version == "metric_whole_demo_relation_v14"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -382,6 +382,30 @@ def test_whole_demonstration_attention_changes_executed_colors() -> None:
     assert before.tobytes() != after.tobytes()
 
 
+def test_whole_demonstration_metric_prefers_identical_embedding() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=12,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=4,
+            seed=67,
+        )
+    )
+    query = jnp.asarray([[1.0, -2.0, 0.5, 3.0]], dtype=jnp.float32)
+    keys = jnp.asarray(
+        [[[1.0, -2.0, 0.5, 3.0], [7.0, 7.0, 7.0, 7.0]]],
+        dtype=jnp.float32,
+    )
+    valid = jnp.asarray([[True, True]])
+
+    weights = np.asarray(model._whole_demo_attention_weights(query, keys, valid))
+
+    assert int(np.argmax(weights[0])) == 0
+    assert weights[0, 0] > weights[0, 1]
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -390,7 +414,7 @@ def test_whole_demonstration_attention_changes_executed_colors() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "augmented_relation_logits_v12"},
+        {"architecture_version": "whole_demo_relation_v13"},
         {"memory_key_indices": (2,), "memory_value_indices": ()},
         {"memory_key_indices": (12,), "memory_value_indices": (2,)},
         {
