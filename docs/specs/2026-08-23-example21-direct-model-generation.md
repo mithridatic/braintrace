@@ -1288,6 +1288,25 @@ foreground accuracy was 435/1,172 cells (37.12%), and background accuracy was
 2,750/2,778 cells (98.99%). The predeclared integer gate failed; no longer or
 complete V37 run is permitted.
 
+### Synthetic capability diagnostic V38
+
+Before another real-ARC architecture is proposed, V38 measures whether the
+unchanged V36 recurrent decoder with the V37 training loss can learn known
+task-conditioned transformations at all. This is a score-ineligible capability
+oracle and cannot nominate an ARC evaluation run. It trains from a fresh
+seed-2108 checkpoint for 600 updates, in 20-update chunks and batches of eight,
+on 1,400 synthetic-v3 tasks generated with seed 17108. It then scores 120
+independently generated tasks from seed 52108. Topology, widths, learning rate,
+trace decay, demonstrations, maximum grid size, and loss remain fixed.
+
+The capability gate is the existing oracle gate: more than seven strict tasks,
+at least two non-label families, at least one exact non-copy/non-label task,
+the anti-collapse checks, every parameter group moved, finite leaves, changed
+candidate bytes, and zero recurrent exclusions. Failure closes this decoder
+family rather than licensing more ARC-fold loss or duration changes. A pass
+would justify specifying a separate synthetic-pretraining-to-real-ARC arm; the
+oracle itself is never an acceptance score.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
