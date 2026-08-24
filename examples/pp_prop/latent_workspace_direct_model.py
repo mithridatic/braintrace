@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "raw_associative_memory_attention_v9"
+ARCHITECTURE_VERSION = "two_hop_relation_attention_v10"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -61,7 +61,7 @@ class DirectModelConfig:
     memory_key_indices, memory_value_indices : tuple of int, default=()
         Matched input-side key and output-side value columns in each lossless
         row event. Both must be supplied together with equal nonzero length.
-    architecture_version : str, default="raw_associative_memory_attention_v9"
+    architecture_version : str, default="two_hop_relation_attention_v10"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -188,6 +188,9 @@ class DirectARCGRU(brainstate.nn.Module):
             self.associative_key_projection = braintrace.nn.Linear(
                 associative_width, config.decoder_width
             )
+            self.associative_query_projection = braintrace.nn.Linear(
+                associative_width, config.decoder_width
+            )
             self.associative_value_projection = braintrace.nn.Linear(
                 associative_width, config.decoder_width
             )
@@ -239,6 +242,8 @@ class DirectARCGRU(brainstate.nn.Module):
         associative_keys: jnp.ndarray | None = None,
         associative_values: jnp.ndarray | None = None,
         associative_valid: jnp.ndarray | None = None,
+        associative_queries: jnp.ndarray | None = None,
+        associative_query_valid: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Emit direct height, width, and per-cell colour logits.
 
@@ -263,6 +268,11 @@ class DirectARCGRU(brainstate.nn.Module):
             ``(batch, time, decoder_width)``.
         associative_valid : jax.Array, optional
             Boolean demonstration-row mask shaped ``(batch, time)``.
+        associative_queries : jax.Array, optional
+            Projected target-free query rows shaped
+            ``(batch, time, decoder_width)``.
+        associative_query_valid : jax.Array, optional
+            Boolean query-row mask shaped ``(batch, time)``.
 
         Returns
         -------
@@ -336,6 +346,29 @@ class DirectARCGRU(brainstate.nn.Module):
         ):
             raise ValueError(
                 "associative memory must have aligned batch, time, and decoder widths."
+            )
+        if (associative_queries is None) != (associative_query_valid is None):
+            raise ValueError(
+                "associative queries and their valid mask must be provided together."
+            )
+        if associative_queries is None:
+            associative_queries = jnp.zeros(
+                (batch_size, 1, self.config.decoder_width),
+                dtype=query_features.dtype,
+            )
+            associative_query_valid = jnp.zeros((batch_size, 1), dtype=bool)
+        associative_queries = jnp.asarray(associative_queries)
+        associative_query_valid = jnp.asarray(
+            associative_query_valid, dtype=bool
+        )
+        if (
+            associative_queries.ndim != 3
+            or associative_queries.shape[0] != batch_size
+            or associative_queries.shape[2] != self.config.decoder_width
+            or associative_query_valid.shape != associative_queries.shape[:2]
+        ):
+            raise ValueError(
+                "associative queries must have aligned batch, time, and decoder widths."
             )
         if shape_features is None:
             shape_features = jnp.zeros(
@@ -446,6 +479,44 @@ class DirectARCGRU(brainstate.nn.Module):
         ).reshape(
             batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
+        relation_logits = jnp.einsum(
+            "bqd,btd->bqt", associative_queries, associative_keys
+        ) / np.sqrt(float(self.config.decoder_width))
+        relation_weights = brainstate.nn.softmax(
+            jnp.where(
+                associative_valid[:, None, :], relation_logits, -1.0e9
+            ),
+            axis=-1,
+        )
+        relation_weights = relation_weights * associative_valid[:, None, :]
+        relation_weights = relation_weights / jnp.maximum(
+            jnp.sum(relation_weights, axis=-1, keepdims=True), 1.0
+        )
+        inferred_query_values = jnp.einsum(
+            "bqt,btd->bqd", relation_weights, associative_values
+        )
+        output_relation_logits = jnp.einsum(
+            "bod,bqd->boq", memory_queries, associative_queries
+        ) / np.sqrt(float(self.config.decoder_width))
+        output_relation_weights = brainstate.nn.softmax(
+            jnp.where(
+                associative_query_valid[:, None, :],
+                output_relation_logits,
+                -1.0e9,
+            ),
+            axis=-1,
+        )
+        output_relation_weights = (
+            output_relation_weights * associative_query_valid[:, None, :]
+        )
+        output_relation_weights = output_relation_weights / jnp.maximum(
+            jnp.sum(output_relation_weights, axis=-1, keepdims=True), 1.0
+        )
+        relation_attention = jnp.einsum(
+            "boq,bqd->bod", output_relation_weights, inferred_query_values
+        ).reshape(
+            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
+        )
         cell_state = brainstate.nn.tanh(
             context
             + query
@@ -454,6 +525,7 @@ class DirectARCGRU(brainstate.nn.Module):
             + attention
             + memory_attention
             + associative_attention
+            + relation_attention
         )
         return (
             self.height_head(shape_state),
@@ -502,6 +574,8 @@ class DirectARCGRU(brainstate.nn.Module):
         associative_keys = None
         associative_values = None
         associative_valid = None
+        associative_queries = None
+        associative_query_valid = None
         if self.config.memory_key_indices:
             key_indices = jnp.asarray(self.config.memory_key_indices)
             value_indices = jnp.asarray(self.config.memory_value_indices)
@@ -514,6 +588,12 @@ class DirectARCGRU(brainstate.nn.Module):
             associative_valid = jnp.swapaxes(
                 jnp.logical_and(valid > 0.5, events[..., 1] > 0.5), 0, 1
             )
+            associative_queries = jnp.swapaxes(
+                self.associative_query_projection(events[..., key_indices]), 0, 1
+            )
+            associative_query_valid = jnp.swapaxes(
+                jnp.logical_and(valid > 0.5, events[..., 2] > 0.5), 0, 1
+            )
         return self.decode(
             summary,
             query_features,
@@ -523,4 +603,6 @@ class DirectARCGRU(brainstate.nn.Module):
             associative_keys,
             associative_values,
             associative_valid,
+            associative_queries,
+            associative_query_valid,
         )

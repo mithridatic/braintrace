@@ -95,6 +95,10 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   using input-side row features only for keys and the aligned output-side row
   features for values; query rows and padding are excluded from memory values,
   and the held-out target remains absent from every model input;
+- a two-hop neural relation path in which target-free query rows attend the
+  demonstration input-row keys to form inferred output-row embeddings, then
+  output coordinates attend those inferred query-row values; all projections
+  and attention logits remain checkpoint-owned and execute in the direct model;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;
@@ -177,10 +181,10 @@ configuration to full training only when its strict task accuracy and exact
 memberships improve over the direct-logit baseline. Shape and pixel diagnostics
 may explain failures but cannot promote an arm on their own.
 
-The additive global-pattern V7 pilot and recurrent-state-memory V8 pilot are
-rejected: both scored 0/80 strict validation tasks and 0/85 exact queries. V8
-also reduced shape-exact queries from 57/85 to 56/85. Neither checkpoint may be
-promoted or extended solely from its training loss.
+The additive global-pattern V7, recurrent-state-memory V8, and raw
+associative-memory V9 pilots are rejected: all scored 0/80 strict validation
+tasks and 0/85 exact queries. Their shape-exact counts were respectively 57,
+56, and 57 of 85. None may be promoted or extended solely from training loss.
 
 ### Gate C: complete evaluation
 
