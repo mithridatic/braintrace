@@ -583,6 +583,47 @@ non-parametric-tail exclusions and correctly classified the three output heads
 as current-step non-temporal parameters; no separate event projection was
 excluded after the direct-input correction.
 
+The full V20 learning oracle is rejected at clean revision
+`3792284f8e318caa24c2f9fb7966a16f9a90dac9`. Its 1,000 PP-prop updates took
+69.7 seconds, remained finite, moved all four parameter groups, and changed the
+parameter digest from
+`e6d8c748623f2e46fdca5c90414453c26c8136490e95986c0249d5652c66ad43` to
+`9b1cd85bde74bc162ba56ec57c0fae58dd1a29adb25421665335026298063c4a`.
+The untouched seed-42108 oracle improved from 0/120 to 5/120, below the required
+greater-than-seven count. Exact tasks were two `count`, one
+`select_marked_region`, and two `pattern_label`; no ARC arm is permitted.
+
+Scorer-side diagnosis, which is not part of a counted answer path, found 66/120
+correct shapes. On every shape-correct multi-cell family, background-cell
+accuracy was 100% and foreground-cell accuracy was 0%. The row decoder had
+therefore collapsed to background rather than failing primarily on shape,
+runtime, parameter motion, or trace execution.
+
+### Target-balanced online PP-prop V21
+
+V21 preserves the V20 model, event bytes, decode contract, trace half-life,
+single-step PP-prop learner, and optimizer schedule. It changes one training
+mechanism: each target-isolated training episode computes ten colour weights
+from its complete scorer-side target grid. For every present colour, weight is
+the square root of valid-cell count divided by that colour's count, clipped to
+0.5 through 4.0; absent colours receive zero. The weights are repeated only as
+loss operands and may never enter model events, state, evaluation, or candidate
+selection. Per-cell colour cross-entropy is multiplied by the selected target
+colour weight and normalized by active weight mass. Shape losses are unchanged.
+
+Sibling tests must prove the weights are deterministic, bounded, computed from
+training targets only, absent from event bytes, and effective against rare-
+foreground errors. The existing target-independence, PP-prop, checkpoint,
+candidate, regression, and greater-than-90% coverage gates remain mandatory.
+
+The V21 arm reuses seed 2108, synthetic seed 12108, 1,400 training tasks, 1,000
+updates, batch size 8, widths 128/256, two layers, learning rate 0.001, and trace
+half-life 40. Because seed 42108 was inspected diagnostically, V21 uses fresh
+120-task oracle seed 52108. It is rejected unless it exceeds 7/120 strict tasks,
+solves at least two non-label families, and includes an exact task outside
+`copy` and `pattern_label`. Only then may one fixed 80-task ARC arm run; its gate
+remains greater than 3/80.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
