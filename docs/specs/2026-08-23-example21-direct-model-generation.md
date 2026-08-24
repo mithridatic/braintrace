@@ -202,6 +202,11 @@ The V11 replacement of color-specific keys by occupancy-only keys collapsed
 all three `27a28665` outputs to color 4 and produced 0/85 exact queries and
 0/80 strict tasks. It is rejected; subsequent keys must preserve color inputs.
 
+V12 restored full color keys, appended occupancy, and added direct relation
+color logits. It produced 59/85 shape-exact queries but 0/85 exact queries and
+0/80 strict tasks; `27a28665` predictions were 4, 7, and 4 against 6, 1, and 2.
+The direct relation-logit arm is rejected.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
