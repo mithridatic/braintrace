@@ -15,7 +15,7 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_query_residual_hierarchical_decoder_v35"
+ARCHITECTURE_VERSION = "online_task_conditioned_cell_decoder_v36"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -57,7 +57,7 @@ class OnlineModelConfig:
         Grid capacity bound into the row-event feature layout.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_query_residual_hierarchical_decoder_v35"
+    architecture_version : str, default="online_task_conditioned_cell_decoder_v36"
         Exact checkpoint-schema identifier.
     """
 
@@ -182,22 +182,68 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
                     )
                 )
             self.recurrent = tuple(layers)
-            self.row_color_head = braintrace.nn.Linear(
-                config.hidden_width, ROW_COLOR_WIDTH
+            cell_feature_width = (
+                config.hidden_width
+                + COLOR_COUNT
+                + MAX_GRID_SIZE
+                + config.hidden_width * COLOR_COUNT
             )
-            self.query_color_head = braintrace.nn.Linear(
-                config.max_grid_size * COLOR_COUNT, ROW_COLOR_WIDTH
+            self.cell_color_head = braintrace.nn.Linear(
+                cell_feature_width, COLOR_COUNT
             )
-            self.height_head = braintrace.nn.Linear(
-                config.hidden_width, MAX_GRID_SIZE
+            shape_feature_width = (
+                config.hidden_width
+                + 2 * MAX_GRID_SIZE
+                + config.hidden_width * 2 * MAX_GRID_SIZE
             )
-            self.query_height_head = braintrace.nn.Linear(
-                config.max_grid_size, MAX_GRID_SIZE
-            )
-            self.width_head = braintrace.nn.Linear(config.hidden_width, MAX_GRID_SIZE)
-            self.query_width_head = braintrace.nn.Linear(
-                config.max_grid_size, MAX_GRID_SIZE
-            )
+            self.height_head = braintrace.nn.Linear(shape_feature_width, MAX_GRID_SIZE)
+            self.width_head = braintrace.nn.Linear(shape_feature_width, MAX_GRID_SIZE)
+        self.column_features = jnp.eye(MAX_GRID_SIZE, dtype=jnp.float32)
+
+    def _cell_logits(self, hidden: jnp.ndarray, event: jnp.ndarray) -> jnp.ndarray:
+        query_colors = event[..., self.config.query_color_slice].reshape(
+            *event.shape[:-1], self.config.max_grid_size, COLOR_COUNT
+        )
+        if self.config.max_grid_size < MAX_GRID_SIZE:
+            padding = [(0, 0)] * query_colors.ndim
+            padding[-2] = (0, MAX_GRID_SIZE - self.config.max_grid_size)
+            query_colors = jnp.pad(query_colors, padding)
+        context = jnp.broadcast_to(
+            hidden[..., None, :], (*hidden.shape[:-1], MAX_GRID_SIZE, hidden.shape[-1])
+        )
+        columns = jnp.broadcast_to(
+            self.column_features,
+            (*hidden.shape[:-1], MAX_GRID_SIZE, MAX_GRID_SIZE),
+        )
+        interaction = (context[..., :, None] * query_colors[..., None, :]).reshape(
+            *hidden.shape[:-1], MAX_GRID_SIZE, hidden.shape[-1] * COLOR_COUNT
+        )
+        features = jnp.concatenate(
+            (context, query_colors, columns, interaction), axis=-1
+        )
+        return self.cell_color_head(features)
+
+    def _shape_logits(
+        self, hidden: jnp.ndarray, event: jnp.ndarray
+    ) -> tuple[jnp.ndarray, jnp.ndarray]:
+        query_dimensions = jnp.concatenate(
+            (
+                event[..., self.config.query_height_slice],
+                event[..., self.config.query_width_slice],
+            ),
+            axis=-1,
+        )
+        if self.config.max_grid_size < MAX_GRID_SIZE:
+            height, width = jnp.split(query_dimensions, 2, axis=-1)
+            pad_width = MAX_GRID_SIZE - self.config.max_grid_size
+            height = jnp.pad(height, [(0, 0)] * (height.ndim - 1) + [(0, pad_width)])
+            width = jnp.pad(width, [(0, 0)] * (width.ndim - 1) + [(0, pad_width)])
+            query_dimensions = jnp.concatenate((height, width), axis=-1)
+        interaction = (hidden[..., :, None] * query_dimensions[..., None, :]).reshape(
+            *hidden.shape[:-1], hidden.shape[-1] * 2 * MAX_GRID_SIZE
+        )
+        features = jnp.concatenate((hidden, query_dimensions, interaction), axis=-1)
+        return self.height_head(features), self.width_head(features)
 
     def update(self, event: jnp.ndarray) -> jnp.ndarray:
         """Advance one logical event and return fixed-layout logits.
@@ -221,18 +267,11 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
         hidden = event
         for layer in self.recurrent:
             hidden = layer(hidden)
-        row_color = self.row_color_head(hidden) + self.query_color_head(
-            event[..., self.config.query_color_slice]
-        )
-        height = self.height_head(hidden) + self.query_height_head(
-            event[..., self.config.query_height_slice]
-        )
-        width = self.width_head(hidden) + self.query_width_head(
-            event[..., self.config.query_width_slice]
-        )
+        row_color = self._cell_logits(hidden, event)
+        height, width = self._shape_logits(hidden, event)
         return jnp.concatenate(
             (
-                row_color,
+                row_color.reshape(*row_color.shape[:-2], ROW_COLOR_WIDTH),
                 height,
                 width,
             ),

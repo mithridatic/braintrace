@@ -446,10 +446,10 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         for path, state in model.states(brainstate.ParamState).items()
         if path[0] == "recurrent"
     }
-    residual_before = {
+    decoder_before = {
         (path, index): np.ascontiguousarray(np.asarray(leaf)).tobytes()
         for path, state in model.states(brainstate.ParamState).items()
-        if str(path[0]).startswith("query_")
+        if path[0] in {"cell_color_head", "height_head", "width_head"}
         for index, leaf in enumerate(jax.tree.leaves(state.value))
     }
 
@@ -476,10 +476,10 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         for path, state in model.states(brainstate.ParamState).items()
         if path[0] == "recurrent"
     }
-    residual_after = {
+    decoder_after = {
         (path, index): np.ascontiguousarray(np.asarray(leaf)).tobytes()
         for path, state in model.states(brainstate.ParamState).items()
-        if str(path[0]).startswith("query_")
+        if path[0] in {"cell_color_head", "height_head", "width_head"}
         for index, leaf in enumerate(jax.tree.leaves(state.value))
     }
     candidate_after = subject.decode_hierarchical_online_outputs(
@@ -505,9 +505,9 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     assert not any(
         path[0] == "recurrent" for path, _ in trainer.learner.report.excluded_weights
     )
-    assert residual_before
+    assert decoder_before
     assert all(
-        residual_before[path] != residual_after[path] for path in residual_before
+        decoder_before[path] != decoder_after[path] for path in decoder_before
     )
     assert msgspec.json.encode(candidate_before["grid"]) != msgspec.json.encode(
         candidate_after["grid"]
@@ -675,4 +675,6 @@ def test_hierarchical_decode_uses_gate_then_nonzero_argmax_on_fixed_steps() -> N
     assert candidate["width"] == 2
     assert candidate["grid"] == [[7, 0]]
     assert candidate["parameter_dependencies"] == []
-    assert candidate["answer_head_version"] == "hierarchical_row_decoder_v29"
+    assert candidate["answer_head_version"] == (
+        "task_conditioned_shared_cell_decoder_v36"
+    )

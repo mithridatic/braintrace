@@ -1003,11 +1003,11 @@ def _parameter_group(path: tuple[object, ...]) -> str:
     root = str(path[0])
     if root == "recurrent":
         return "recurrent"
-    if root in {"row_color_head", "query_color_head"}:
+    if root == "cell_color_head":
         return "row_color"
-    if root in {"height_head", "query_height_head"}:
+    if root == "height_head":
         return "height"
-    if root in {"width_head", "query_width_head"}:
+    if root == "width_head":
         return "width"
     raise ValueError(f"Parameter path {path!r} has no online parameter group.")
 
@@ -1510,5 +1510,5 @@ def decode_hierarchical_online_outputs(
         "proposal_source": "online_model_logits",
         "selection_role": "greedy_argmax",
         "ranking_source": "none_single_greedy_candidate",
-        "answer_head_version": "hierarchical_row_decoder_v29",
+        "answer_head_version": "task_conditioned_shared_cell_decoder_v36",
     }

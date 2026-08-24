@@ -37,9 +37,7 @@ def _clear_compilation_caches():
 def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
-    assert subject.ARCHITECTURE_VERSION == (
-        "online_query_residual_hierarchical_decoder_v35"
-    )
+    assert subject.ARCHITECTURE_VERSION == "online_task_conditioned_cell_decoder_v36"
 
     with pytest.raises(ValueError, match="architecture_version"):
         _config(subject, architecture_version="old")
@@ -109,7 +107,7 @@ def test_decode_instruction_changes_checkpoint_owned_output() -> None:
         for path in model.states(brainstate.ParamState)
     }
     assert any(path.startswith("recurrent") for path in parameter_paths)
-    assert any(path.startswith("row_color_head") for path in parameter_paths)
+    assert any(path.startswith("cell_color_head") for path in parameter_paths)
     assert any(path.startswith("height_head") for path in parameter_paths)
     assert any(path.startswith("width_head") for path in parameter_paths)
 
@@ -184,7 +182,7 @@ def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
     assert "relation_excluded_weight_to_weight" not in kinds
 
 
-def test_query_residual_features_change_cell_and_shape_logits() -> None:
+def test_shared_cell_decoder_is_local_and_task_conditioned() -> None:
     subject = _subject()
     config = _config(
         subject,
@@ -194,28 +192,54 @@ def test_query_residual_features_change_cell_and_shape_logits() -> None:
         seed=29,
     )
     model = subject.OnlineARCVanillaRNN(config)
-    brainstate.nn.init_all_states(model, batch_size=1)
-    baseline = np.asarray(
-        model(jnp.zeros((1, config.input_width), dtype=jnp.float32))
-    )
-    brainstate.nn.reset_all_states(model, batch_size=1)
-    changed_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
-    changed_event = changed_event.at[0, config.query_color_slice.start].set(1.0)
-    changed_event = changed_event.at[0, config.query_height_slice.start].set(1.0)
-    changed_event = changed_event.at[0, config.query_width_slice.start + 1].set(1.0)
-    changed = np.asarray(model(changed_event))
-    base_parts = subject.split_step_logits(jnp.asarray(baseline))
-    changed_parts = subject.split_step_logits(jnp.asarray(changed))
+    event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    changed_event = event.at[0, config.query_color_slice.start + 1].set(1.0)
+    hidden_a = jnp.zeros((1, config.hidden_width), dtype=jnp.float32)
+    hidden_b = jnp.full((1, config.hidden_width), 0.5, dtype=jnp.float32)
 
-    assert all(
-        np.asarray(first).tobytes() != np.asarray(second).tobytes()
-        for first, second in zip(base_parts, changed_parts, strict=True)
-    )
-    parameter_paths = {
-        path[0] for path in model.states(brainstate.ParamState)
-    }
+    base_a = np.asarray(model._cell_logits(hidden_a, event))
+    changed_a = np.asarray(model._cell_logits(hidden_a, changed_event))
+    base_b = np.asarray(model._cell_logits(hidden_b, event))
+    changed_b = np.asarray(model._cell_logits(hidden_b, changed_event))
+
+    assert base_a.shape == (1, subject.MAX_GRID_SIZE, subject.COLOR_COUNT)
+    assert changed_a[:, 0].tobytes() != base_a[:, 0].tobytes()
+    assert changed_a[:, 1:].tobytes() == base_a[:, 1:].tobytes()
+    assert not np.allclose(changed_a[:, 0] - base_a[:, 0], changed_b[:, 0] - base_b[:, 0])
+    parameter_paths = {path[0] for path in model.states(brainstate.ParamState)}
     assert {
-        "query_color_head",
-        "query_height_head",
-        "query_width_head",
+        "cell_color_head",
+        "height_head",
+        "width_head",
     }.issubset(parameter_paths)
+
+
+def test_shape_decoder_interacts_query_dimensions_with_task_context() -> None:
+    subject = _subject()
+    config = _config(
+        subject,
+        encoder_width=5,
+        hidden_width=9,
+        recurrent_layers=2,
+        seed=31,
+    )
+    model = subject.OnlineARCVanillaRNN(config)
+    event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    changed_event = event.at[0, config.query_height_slice.start].set(1.0)
+    changed_event = changed_event.at[0, config.query_width_slice.start + 1].set(1.0)
+    hidden_a = jnp.zeros((1, config.hidden_width), dtype=jnp.float32)
+    hidden_b = jnp.full((1, config.hidden_width), 0.5, dtype=jnp.float32)
+
+    base_a = model._shape_logits(hidden_a, event)
+    changed_a = model._shape_logits(hidden_a, changed_event)
+    base_b = model._shape_logits(hidden_b, event)
+    changed_b = model._shape_logits(hidden_b, changed_event)
+
+    for first, second in zip(base_a, changed_a, strict=True):
+        assert np.asarray(first).tobytes() != np.asarray(second).tobytes()
+    for first, second, third, fourth in zip(
+        base_a, changed_a, base_b, changed_b, strict=True
+    ):
+        assert not np.allclose(
+            np.asarray(second - first), np.asarray(fourth - third)
+        )

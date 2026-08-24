@@ -1204,6 +1204,42 @@ but strict score on fold two was 0/80 across 81 queries. Exact shape rose to
 was 698/1,560 cells (44.74%). These cell and shape measurements do not satisfy
 the integer promotion gate. No complete V35 run is permitted.
 
+### Task-conditioned shared-cell decoder V36
+
+V36 removes V35's additive, position-specific row-colour heads. Addition keeps
+the recurrent task state and replayed query colours in separate linear terms,
+so it cannot express a demonstration-conditioned colour mapping without asking
+the recurrent stack to synthesize all 300 output logits itself. At every
+compiled decode-row step, V36 instead constructs a fixed multiplicative feature
+map from the current recurrent state, the corresponding lossless query-cell
+colour one-hot, their complete outer product, and a column-coordinate one-hot.
+One shared checkpoint-owned BrainTrace linear head emits 10 logits for each of
+the 30 columns. No query value is copied to an answer except through these
+trained synapses.
+
+The originally proposed two-layer MLP is withdrawn before scoring because its
+first learned projections trigger PP-prop's weight-to-weight exclusion. The
+single-head interaction map retains nonlinear task/query expressivity while
+placing no trainable primitive behind another trainable primitive. The shape
+path uses the analogous fixed outer product between recurrent task state and
+the concatenated query height/width one-hots, followed directly by separate
+checkpoint-owned height and width heads. The event stream, V31 loss, V32 direct-state
+recurrence, PP-prop learner, real ARC corpus, augmentation, and fixed greedy
+serialization remain unchanged. The architecture identifier is
+`online_task_conditioned_cell_decoder_v36`, and the answer-head identifier is
+`task_conditioned_shared_cell_decoder_v36`.
+
+Tests must first fail against V35 and then prove column sharing, colour/context
+interaction, target isolation, zero decoder weight-to-weight exclusions,
+finite nonzero compiled gradients for every recurrent and decoder leaf,
+movement of every parameter group, direct candidate
+provenance, exact checkpoint-schema rejection, and byte-exact reload. One
+score-ineligible pilot uses fresh validation fold three, sampling seed 15108,
+and the otherwise unchanged 400-update configuration. Its promotion gate is
+the mechanism gate plus at least two strict tasks out of 80. Failure ends V36;
+only a pass permits the fresh 2,000-update complete-manifest run under the
+literal 16/400 acceptance threshold.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
