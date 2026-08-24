@@ -1442,6 +1442,40 @@ tasks, foreground accuracy was 6.42%, and background accuracy was 97.58%.
 Because the strict count did not exceed seven, V41 is not permitted a real-ARC
 fold and continuous spatial recurrence is closed.
 
+### Task-gated neural operator bank V42
+
+V42 addresses decoder interference rather than recurrence duration, loss
+weighting, or spatial state. It returns to the V32 direct-state row recurrence
+and the V36 lossless query replay, without V39 patches or any spatial-recurrence
+path. The first twelve coordinates of the final recurrent task state are fixed
+as gate logits. A fixed softmax converts them to mixture weights over twelve
+parallel neural colour experts. One checkpoint-owned BrainTrace linear operator
+emits all expert logits from each cell's recurrent state, query colour, column
+identity, and recurrent-state-by-query-colour interaction; a fixed weighted sum
+produces the ten eligible colour logits. The ordinary checkpoint-owned V36
+shape heads remain shared because V41 already reached 73/120 exact shapes.
+
+The gate has no family label, task identifier, target input, or external
+selector. It is trained only through the ordinary target-grid objective and is
+part of the executed recurrent activations. Experts are not assigned rules or
+transformations, and no expert output is individually decoded or reranked.
+There is one greedy mixed candidate. V42 uses the unweighted fourth-root
+hierarchical whole-grid loss, so it does not reopen the rejected V37/V40
+edit-weight family.
+
+Sibling tests must first fail against the absent V42 implementation, then prove
+exact configuration binding, gate normalization, cell locality, changed gate
+activations changing mixed logits, zero recurrent weight-to-weight exclusions,
+finite nonzero compiled gradients, every parameter leaf moving, target-free
+determinism, registered direct-neural provenance, and byte-exact checkpoint
+reload through the shared schema loader. V42 receives one synthetic capability
+oracle: 800 updates, 1,400 training tasks from seed 21108, 120 independent
+tasks from seed 92108, batch size 8, twelve experts, and otherwise the V36
+recurrent widths and trace. It must exceed 7/120, solve at least two non-label
+families, solve one non-copy/non-label task, and pass every mechanism and
+anti-collapse check. Failure closes task-gated operator banks. A pass permits
+one fresh real-ARC validation fold, never direct complete evaluation.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
