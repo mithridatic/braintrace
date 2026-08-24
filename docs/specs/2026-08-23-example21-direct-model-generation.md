@@ -422,6 +422,50 @@ bound by the existing strict loader. This arm is rejected unless it exceeds
 3/80 strict validation tasks; only such an improvement may nominate another
 materially new complete-manifest run.
 
+The continuation reloaded at the expected 3/80 membership and moved every
+trained parameter set to a new bound digest, but finished at 2/80. It gained
+`d10ecb37` while losing `67385a82` and `3618c87e`, with all losses finite. The
+arm is rejected and must not receive a complete-manifest evaluation.
+
+### Task-conditioned spatial recurrence V19
+
+V19 retains the V18 recurrent encoder, direct query preservation, and local
+demonstration memory, then adds two checkpoint-owned neural paths. First, a
+task-conditioned correspondence gate mixes learned local-neighbourhood and
+learned absolute-coordinate embeddings separately in every decoder channel.
+The gate is emitted from the final recurrent task state. Query cells attend to
+all valid demonstration-input cells with the mixed embeddings; attended values
+are learned projections of paired demonstration input colours, output colours,
+and coordinates. A learned colour head converts the attended representation to
+cell logits. This is one differentiable neural attention operation. It neither
+enumerates transforms nor retrieves another task or candidate.
+
+Second, a context-conditioned spatial state starts from a learned convolution
+of the lossless query tensor. A learned summary of complete demonstration
+input/output pairs and the recurrent task state supplies feature-wise scale and
+bias. One shared learned 3x3 convolution updates the state for four steps inside
+`brainstate.transform.scan`; a learned colour head emits an additional direct
+logit field. The fixed step count is neural depth, not a transformation search,
+and no Python loop may drive it. All new projections, convolution kernels,
+gates, biases, and colour heads are trainable checkpoint leaves and must appear
+in candidate dependencies and strict checkpoint schema validation.
+
+The V19 implementation must be preceded by sibling tests that prove: exact
+architecture-version rejection; gate, attention, pair-value, spatial-context,
+and recurrent-convolution shape validation; compiled four-step execution;
+finite gradients through every new leaf; changed logits after a controlled
+perturbation of each new path; checkpoint roundtrip coverage; and preservation
+of the fixed direct-candidate provenance contract. Combined meaningful coverage
+for the direct curriculum, model, and experiment modules remains above 90%.
+
+V19 first runs the existing fresh 120-task synthetic v3 oracle. It is rejected
+unless it strictly solves at least one non-label spatial task and remains
+finite. Its first fixed-validation arm uses the matched V18 seed 2108, widths
+128/256/64, two recurrent layers, batch size 8, learning rate 0.001, synthetic
+seed 12108, 1,400 synthetic tasks, 1,000 synthetic updates, and 500 fitting
+updates. It must exceed 3/80 before any complete-manifest evaluation. Full-run
+memberships remain sealed unless the final qualification threshold is reached.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
