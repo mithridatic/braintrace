@@ -468,9 +468,10 @@ checkpoint roundtrip coverage; and preservation of the fixed direct-candidate
 provenance contract. Combined meaningful coverage for the direct curriculum,
 model, and experiment modules remains above 90%.
 
-V19 first runs the existing fresh 120-task synthetic v3 oracle. It is rejected
-unless it strictly solves at least one non-label spatial task and remains
-finite. Its first fixed-validation arm uses the matched V18 seed 2108, widths
+V19 first runs a fresh 120-task synthetic v3 oracle generated with independent
+seed 32108. It is rejected unless it strictly solves at least one non-label
+spatial task and remains finite. Its first fixed-validation arm uses the matched
+V18 seed 2108, widths
 128/256/64, two recurrent layers, batch size 8, learning rate 0.001, synthetic
 seed 12108, 1,400 synthetic tasks, 1,000 synthetic updates, and 500 fitting
 updates. It must exceed 3/80 before any complete-manifest evaluation. Full-run
