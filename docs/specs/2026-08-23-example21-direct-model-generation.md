@@ -1644,6 +1644,31 @@ Failure closes V44/V45. A pass permits specification of one all-training
 nomination against the untouched complete evaluation manifest; it does not
 relax the literal 16/400 acceptance or causal qualification matrix.
 
+V45 fails and closes the V44/V45 architecture at clean revision
+`fb36189da4f919cae6153e22f2cdc1718532f278`, with artifact
+`var/ex21-online-v45-gated-memory-arc-pilot-v1`. The strict result was 0/80
+both before and after public-ARC fine-tuning, below the predeclared minimum of
+4. The exact-task membership was empty. The 500-update training segment took
+220.57 seconds; mean loss fell from 1.4261 over the first 50 updates to 0.9082
+over the last 50. Shape exactness rose from 20 to 58 of 85 queries,
+foreground accuracy rose from 26.55% to 78.67%, and background accuracy rose
+from 74.40% to 91.81%, but none of those diagnostics changes the strict
+decision.
+
+The mechanism gate passed: all four groups and all 18 ordered leaves moved,
+all six MiniLSTM matrices were included through twelve compiler relations,
+recurrent exclusions were zero, gradients and parameters remained finite,
+and candidate bytes changed. The parameter digest changed from
+`c3383b882d2a14f704a4e3563924a3e9321e2445ca317d6875f94d6dd98b9a11` to
+`1469f9e1286c1222a8827e52ea9b1eee1341f7f0fca8033df3079b090d9f3560`;
+the candidate digest changed from
+`1763fe4a3f48b9e8336f7d9d2609bbe487bf4ac33837fa57ea6451afb1dc946a` to
+`bfdc030c5b4b2b312decf50f8fe0876957f1c847a2e1fa06d82e50d166ae6432`.
+The final checkpoint file hash is
+`2d7916b20201a87b510cd4090cb87266fc5438c10b860e9167c77dc6beba5fe2`.
+No complete evaluation or causal perturbation is permitted for this rejected
+checkpoint, and it contributes zero acceptance tasks.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
