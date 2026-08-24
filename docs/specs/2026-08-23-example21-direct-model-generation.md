@@ -91,6 +91,10 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   from the recurrent demonstration-event states, so prediction can compare a
   query pattern with demonstrated input/output relations instead of relying
   only on an additive fixed-width task summary;
+- checkpoint-owned associative attention over lossless demonstration rows,
+  using input-side row features only for keys and the aligned output-side row
+  features for values; query rows and padding are excluded from memory values,
+  and the held-out target remains absent from every model input;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;
@@ -172,6 +176,11 @@ Next, train and score a fixed task-level validation split. Promote a
 configuration to full training only when its strict task accuracy and exact
 memberships improve over the direct-logit baseline. Shape and pixel diagnostics
 may explain failures but cannot promote an arm on their own.
+
+The additive global-pattern V7 pilot and recurrent-state-memory V8 pilot are
+rejected: both scored 0/80 strict validation tasks and 0/85 exact queries. V8
+also reduced shape-exact queries from 57/85 to 56/85. Neither checkpoint may be
+promoted or extended solely from its training loss.
 
 ### Gate C: complete evaluation
 

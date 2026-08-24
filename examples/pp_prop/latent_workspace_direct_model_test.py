@@ -91,7 +91,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
 
     assert (
         model.config.architecture_version
-        == "relational_memory_attention_v8"
+        == "raw_associative_memory_attention_v9"
     )
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
@@ -235,6 +235,40 @@ def test_temporal_memory_attention_changes_executed_colors() -> None:
     assert before.tobytes() != after.tobytes()
 
 
+def test_raw_associative_memory_changes_executed_colors() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=12,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=10,
+            seed=47,
+            memory_key_indices=(2, 3, 4),
+            memory_value_indices=(5, 6, 7),
+        )
+    )
+    events = jnp.zeros((5, 1, 12), dtype=jnp.float32)
+    events = events.at[:, :, 0].set(1.0)
+    events = events.at[:4, :, 1].set(1.0)
+    events = events.at[:4, :, 2:8].set(
+        jnp.arange(24, dtype=jnp.float32).reshape(4, 1, 6) / 24.0
+    )
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :2, :3, 3].set(1.0)
+    query = query.at[0, :2, :3, 10].set(1.0)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    before = np.asarray(model.run(events, query)[2])
+    model.associative_value_projection.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.associative_value_projection.weight.value,
+    )
+    brainstate.nn.init_all_states(model, batch_size=1)
+    after = np.asarray(model.run(events, query)[2])
+
+    assert before.tobytes() != after.tobytes()
+
+
 @pytest.mark.parametrize(
     "changes",
     [
@@ -243,7 +277,9 @@ def test_temporal_memory_attention_changes_executed_colors() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "global_pattern_shape_attention_v7"},
+        {"architecture_version": "relational_memory_attention_v8"},
+        {"memory_key_indices": (2,), "memory_value_indices": ()},
+        {"memory_key_indices": (12,), "memory_value_indices": (2,)},
     ],
 )
 def test_direct_model_config_rejects_invalid_values(changes: dict[str, object]) -> None:

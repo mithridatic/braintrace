@@ -44,6 +44,7 @@ try:
         DatasetSource,
         LoadedDataset,
         RowEventConfig,
+        associative_memory_feature_indices,
         assert_no_evaluation_leakage,
         augment_training_task,
         canonical_task_fingerprint,
@@ -77,6 +78,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         DatasetSource,
         LoadedDataset,
         RowEventConfig,
+        associative_memory_feature_indices,
         assert_no_evaluation_leakage,
         augment_training_task,
         canonical_task_fingerprint,
@@ -600,6 +602,7 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             corpora.training, config.validation_task_count
         )
         row_config = RowEventConfig(max_demonstrations=10, max_grid_size=30)
+        memory_features = associative_memory_feature_indices(row_config)
         catalog = training_episode_catalog(fitting)
         scored_tasks = corpora.evaluation if config.evaluate_complete_manifest else validation
         scored_episodes = evaluation_episodes(scored_tasks, row_config)
@@ -610,6 +613,8 @@ def run_experiment(config: DirectExperimentConfig) -> dict[str, object]:
             decoder_width=config.decoder_width,
             recurrent_layers=config.recurrent_layers,
             seed=config.seed,
+            memory_key_indices=memory_features.key_indices,
+            memory_value_indices=memory_features.value_indices,
         )
         initial_checkpoint_evidence = None
         if config.initial_checkpoint is None:

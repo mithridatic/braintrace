@@ -19,7 +19,7 @@ DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = (
     MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
 )
-ARCHITECTURE_VERSION = "relational_memory_attention_v8"
+ARCHITECTURE_VERSION = "raw_associative_memory_attention_v9"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -58,7 +58,10 @@ class DirectModelConfig:
         Number of stacked recurrent layers.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="relational_memory_attention_v8"
+    memory_key_indices, memory_value_indices : tuple of int, default=()
+        Matched input-side key and output-side value columns in each lossless
+        row event. Both must be supplied together with equal nonzero length.
+    architecture_version : str, default="raw_associative_memory_attention_v9"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -68,6 +71,8 @@ class DirectModelConfig:
     decoder_width: int = 256
     recurrent_layers: int = 2
     seed: int = 2108
+    memory_key_indices: tuple[int, ...] = ()
+    memory_value_indices: tuple[int, ...] = ()
     architecture_version: str = ARCHITECTURE_VERSION
 
     def __post_init__(self) -> None:
@@ -82,6 +87,29 @@ class DirectModelConfig:
                 self, name, _positive_integer(getattr(self, name), name)
             )
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        normalized_indices = {}
+        for name in ("memory_key_indices", "memory_value_indices"):
+            raw = getattr(self, name)
+            if isinstance(raw, (str, bytes)):
+                raise TypeError(f"{name} must be a sequence of integers.")
+            indices = tuple(raw)
+            if any(
+                isinstance(index, (bool, np.bool_))
+                or not isinstance(index, Integral)
+                for index in indices
+            ):
+                raise TypeError(f"{name} must contain only integers.")
+            indices = tuple(int(index) for index in indices)
+            if len(indices) != len(set(indices)):
+                raise ValueError(f"{name} must contain unique indices.")
+            if any(index < 0 or index >= self.input_width for index in indices):
+                raise ValueError(f"{name} indices must be within input_width.")
+            normalized_indices[name] = indices
+            object.__setattr__(self, name, indices)
+        if len(normalized_indices["memory_key_indices"]) != len(
+            normalized_indices["memory_value_indices"]
+        ):
+            raise ValueError("memory key and value indices must have equal length.")
         if self.architecture_version != ARCHITECTURE_VERSION:
             raise ValueError(
                 f"architecture_version must be {ARCHITECTURE_VERSION!r}."
@@ -156,6 +184,13 @@ class DirectARCGRU(brainstate.nn.Module):
             self.memory_value_projection = braintrace.nn.Linear(
                 config.hidden_width, config.decoder_width
             )
+            associative_width = max(1, len(config.memory_key_indices))
+            self.associative_key_projection = braintrace.nn.Linear(
+                associative_width, config.decoder_width
+            )
+            self.associative_value_projection = braintrace.nn.Linear(
+                associative_width, config.decoder_width
+            )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
             )
@@ -201,6 +236,9 @@ class DirectARCGRU(brainstate.nn.Module):
         shape_features: jnp.ndarray | None = None,
         temporal_memory: jnp.ndarray | None = None,
         temporal_valid: jnp.ndarray | None = None,
+        associative_keys: jnp.ndarray | None = None,
+        associative_values: jnp.ndarray | None = None,
+        associative_valid: jnp.ndarray | None = None,
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
         """Emit direct height, width, and per-cell colour logits.
 
@@ -220,6 +258,11 @@ class DirectARCGRU(brainstate.nn.Module):
             ``temporal_valid``, zero memory is used for direct diagnostics.
         temporal_valid : jax.Array, optional
             Boolean event-valid mask shaped ``(batch, time)``.
+        associative_keys, associative_values : jax.Array, optional
+            Projected lossless demonstration-row keys and values shaped
+            ``(batch, time, decoder_width)``.
+        associative_valid : jax.Array, optional
+            Boolean demonstration-row mask shaped ``(batch, time)``.
 
         Returns
         -------
@@ -258,6 +301,41 @@ class DirectARCGRU(brainstate.nn.Module):
             raise ValueError(
                 "temporal memory must have shapes (batch, time, hidden_width) "
                 "and (batch, time)."
+            )
+        associative_items = (
+            associative_keys,
+            associative_values,
+            associative_valid,
+        )
+        if any(item is None for item in associative_items) and not all(
+            item is None for item in associative_items
+        ):
+            raise ValueError(
+                "associative keys, values, and valid mask must be provided together."
+            )
+        if associative_keys is None:
+            associative_keys = jnp.zeros(
+                (batch_size, 1, self.config.decoder_width),
+                dtype=query_features.dtype,
+            )
+            associative_values = jnp.zeros_like(associative_keys)
+            associative_valid = jnp.zeros((batch_size, 1), dtype=bool)
+        associative_keys = jnp.asarray(associative_keys)
+        associative_values = jnp.asarray(associative_values)
+        associative_valid = jnp.asarray(associative_valid, dtype=bool)
+        expected_associative_shape = (
+            batch_size,
+            associative_keys.shape[1],
+            self.config.decoder_width,
+        )
+        if (
+            associative_keys.ndim != 3
+            or associative_keys.shape != expected_associative_shape
+            or associative_values.shape != expected_associative_shape
+            or associative_valid.shape != expected_associative_shape[:2]
+        ):
+            raise ValueError(
+                "associative memory must have aligned batch, time, and decoder widths."
             )
         if shape_features is None:
             shape_features = jnp.zeros(
@@ -350,6 +428,24 @@ class DirectARCGRU(brainstate.nn.Module):
         ).reshape(
             batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
         )
+        associative_logits = jnp.einsum(
+            "bod,btd->bot", memory_queries, associative_keys
+        ) / np.sqrt(float(self.config.decoder_width))
+        associative_weights = brainstate.nn.softmax(
+            jnp.where(
+                associative_valid[:, None, :], associative_logits, -1.0e9
+            ),
+            axis=-1,
+        )
+        associative_weights = associative_weights * associative_valid[:, None, :]
+        associative_weights = associative_weights / jnp.maximum(
+            jnp.sum(associative_weights, axis=-1, keepdims=True), 1.0
+        )
+        associative_attention = jnp.einsum(
+            "bot,btd->bod", associative_weights, associative_values
+        ).reshape(
+            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
+        )
         cell_state = brainstate.nn.tanh(
             context
             + query
@@ -357,6 +453,7 @@ class DirectARCGRU(brainstate.nn.Module):
             + coordinate[None]
             + attention
             + memory_attention
+            + associative_attention
         )
         return (
             self.height_head(shape_state),
@@ -402,10 +499,28 @@ class DirectARCGRU(brainstate.nn.Module):
                 jnp.concatenate((hidden_sequence[-1], pooled), axis=-1)
             )
         )
+        associative_keys = None
+        associative_values = None
+        associative_valid = None
+        if self.config.memory_key_indices:
+            key_indices = jnp.asarray(self.config.memory_key_indices)
+            value_indices = jnp.asarray(self.config.memory_value_indices)
+            associative_keys = jnp.swapaxes(
+                self.associative_key_projection(events[..., key_indices]), 0, 1
+            )
+            associative_values = jnp.swapaxes(
+                self.associative_value_projection(events[..., value_indices]), 0, 1
+            )
+            associative_valid = jnp.swapaxes(
+                jnp.logical_and(valid > 0.5, events[..., 1] > 0.5), 0, 1
+            )
         return self.decode(
             summary,
             query_features,
             shape_features,
             jnp.swapaxes(hidden_sequence, 0, 1),
             jnp.swapaxes(valid, 0, 1),
+            associative_keys,
+            associative_values,
+            associative_valid,
         )
