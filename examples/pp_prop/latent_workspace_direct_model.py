@@ -17,7 +17,9 @@ QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "metric_whole_demo_relation_v14"
+ARCHITECTURE_VERSION = "direct_whole_demo_color_v15"
+DIRECT_COLOR_INITIAL_SCALE = 8.0
+WHOLE_DEMO_DISTANCE_SCALE = 32.0
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -62,7 +64,7 @@ class DirectModelConfig:
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
         One foreground-occupancy feature per group is appended to the full key.
-    architecture_version : str, default="metric_whole_demo_relation_v14"
+    architecture_version : str, default="direct_whole_demo_color_v15"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -217,6 +219,14 @@ class DirectARCGRU(brainstate.nn.Module):
             self.whole_demo_color_head = braintrace.nn.Linear(
                 config.decoder_width, COLOR_COUNT
             )
+            self.whole_demo_direct_color_head = braintrace.nn.Linear(
+                COLOR_COUNT, COLOR_COUNT
+            )
+            self.whole_demo_direct_color_head.weight.value = {
+                "weight": jnp.eye(COLOR_COUNT, dtype=jnp.float32)
+                * DIRECT_COLOR_INITIAL_SCALE,
+                "bias": jnp.zeros((COLOR_COUNT,), dtype=jnp.float32),
+            }
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
             )
@@ -249,8 +259,9 @@ class DirectARCGRU(brainstate.nn.Module):
         valid: jnp.ndarray,
     ) -> jnp.ndarray:
         differences = query[:, None, :] - keys
-        logits = -jnp.sum(jnp.square(differences), axis=-1) / np.sqrt(
-            float(self.config.decoder_width)
+        logits = (
+            -jnp.sum(jnp.square(differences), axis=-1)
+            * WHOLE_DEMO_DISTANCE_SCALE
         )
         valid = jnp.asarray(valid, dtype=bool)
         weights = brainstate.nn.softmax(jnp.where(valid, logits, -1.0e9), axis=-1)
@@ -615,6 +626,9 @@ class DirectARCGRU(brainstate.nn.Module):
         whole_demo_attention = jnp.einsum(
             "bn,bnrcd->brcd", whole_demo_weights, whole_demo_values
         )
+        whole_demo_colors = jnp.einsum(
+            "bn,bnrck->brck", whole_demo_weights, demonstration_outputs
+        )
         cell_state = brainstate.nn.tanh(
             context
             + query
@@ -630,7 +644,8 @@ class DirectARCGRU(brainstate.nn.Module):
             self.width_head(shape_state),
             self.color_head(cell_state)
             + self.relation_color_head(relation_attention)
-            + self.whole_demo_color_head(whole_demo_attention),
+            + self.whole_demo_color_head(whole_demo_attention)
+            + self.whole_demo_direct_color_head(whole_demo_colors),
         )
 
     def run(

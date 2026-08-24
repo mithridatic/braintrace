@@ -113,7 +113,13 @@ existing factorized candidate-likelihood head. Its minimum structure is:
   only through learned value and color projections before final logits;
 - negative squared distance between checkpoint-projected whole-query and
   demonstration patterns for whole-grid attention, so an identical embedding
-  cannot lose solely because an unrelated key has a larger vector norm;
+  cannot lose solely because an unrelated key has a larger vector norm; the
+  squared-distance logits use the predeclared scale 32.0 rather than
+  dot-product `sqrt(width)` normalization, which made exact matches too diffuse;
+- an additional trainable 10-to-10 whole-demo color projection initialized to
+  a predeclared scaled identity, applied to the raw attention-weighted
+  demonstration output colors and added to final logits; the leaf remains
+  checkpoint-owned and trainable, so perturbation qualification covers it;
 - a learned coordinate-conditioned cell head that combines recurrent task
   state, encoded query information, row/column coordinates, and previously
   decoded neural state when the selected decoder is autoregressive;
@@ -249,6 +255,15 @@ V14 replaced dot-product scoring with projected negative squared distance. It
 produced 57/85 shape-exact queries, 0/85 exact queries, and 0/80 strict tasks;
 `27a28665` predictions were 5, 7, and 9. Metric whole-grid attention is
 rejected.
+
+Synthetic-curriculum v1 learned its training distribution (first loss 3.3292,
+last 1.1495 in the oracle) and a 1,000-update fixed-split arm improved
+shape-exact validation queries from 57/85 to 59/85 and exact queries from 0/85
+to 1/85, but strict tasks remained 0/80. On a fresh 70-task synthetic holdout it
+solved 5 copy tasks and 1 counting task; all other families were zero. A
+pattern-label diagnostic showed correct whole-demo attention mass (0.596 on
+target-label demos) but an incorrect final color, isolating the learned value
+projection as the next bottleneck.
 
 ### Gate C: complete evaluation
 

@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "metric_whole_demo_relation_v14"
+    assert model.config.architecture_version == "direct_whole_demo_color_v15"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -350,8 +350,8 @@ def test_whole_demonstration_attention_changes_executed_colors() -> None:
     query = query.at[0, :2, :2, 5].set(1.0)
     query = query.at[0, :2, :2, 10].set(1.0)
     patterns = jnp.zeros((1, 10, 900), dtype=jnp.float32)
-    patterns = patterns.at[0, 0, :2].set(1.0)
-    patterns = patterns.at[0, 1, 30:32].set(1.0)
+    patterns = patterns.at[0, 0, jnp.asarray([0, 1, 30, 31])].set(1.0)
+    patterns = patterns.at[0, 1, jnp.asarray([60, 61, 90, 91])].set(1.0)
     outputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
     outputs = outputs.at[0, 0, 0, 0, 6].set(1.0)
     outputs = outputs.at[0, 1, 0, 0, 1].set(1.0)
@@ -365,9 +365,9 @@ def test_whole_demonstration_attention_changes_executed_colors() -> None:
             demonstration_grid_valid=demonstration_valid,
         )[2]
     )
-    model.whole_demo_color_head.weight.value = jax.tree.map(
+    model.whole_demo_direct_color_head.weight.value = jax.tree.map(
         lambda value: value * 0.0,
-        model.whole_demo_color_head.weight.value,
+        model.whole_demo_direct_color_head.weight.value,
     )
     after = np.asarray(
         model.decode(
@@ -379,7 +379,30 @@ def test_whole_demonstration_attention_changes_executed_colors() -> None:
         )[2]
     )
 
+    assert int(np.argmax(before[0, 0, 0])) == 6
     assert before.tobytes() != after.tobytes()
+
+
+def test_whole_demo_direct_color_head_has_scaled_identity_initialization() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=12,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=10,
+            seed=63,
+        )
+    )
+    parameters = model.whole_demo_direct_color_head.weight.value
+
+    np.testing.assert_array_equal(
+        np.asarray(parameters["weight"]),
+        np.eye(10, dtype=np.float32) * subject.DIRECT_COLOR_INITIAL_SCALE,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(parameters["bias"]), np.zeros((10,), dtype=np.float32)
+    )
 
 
 def test_whole_demonstration_metric_prefers_identical_embedding() -> None:
@@ -414,7 +437,7 @@ def test_whole_demonstration_metric_prefers_identical_embedding() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "whole_demo_relation_v13"},
+        {"architecture_version": "metric_whole_demo_relation_v14"},
         {"memory_key_indices": (2,), "memory_value_indices": ()},
         {"memory_key_indices": (12,), "memory_value_indices": (2,)},
         {
