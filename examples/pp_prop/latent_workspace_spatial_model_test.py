@@ -88,7 +88,7 @@ def test_conv_lif_model_emits_row_and_shape_logits_from_neural_state() -> None:
     with brainstate.environ.context(dt=1.0 * u.ms):
         first = np.asarray(model(event))
         first_voltage = np.asarray(u.get_mantissa(model.membrane.value)).copy()
-        second = np.asarray(model(event))
+        model(event)
         second_voltage = np.asarray(u.get_mantissa(model.membrane.value)).copy()
 
     assert first.shape == (1, subject.OUTPUT_WIDTH)
