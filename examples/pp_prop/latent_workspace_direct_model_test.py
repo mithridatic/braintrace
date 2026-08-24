@@ -89,10 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert (
-        model.config.architecture_version
-        == "color_invariant_shared_relation_v11"
-    )
+    assert model.config.architecture_version == "augmented_relation_logits_v12"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -297,9 +294,9 @@ def test_query_to_demonstration_relation_changes_executed_colors() -> None:
     query = query.at[0, :2, :3, 10].set(1.0)
     brainstate.nn.init_all_states(model, batch_size=1)
     before = np.asarray(model.run(events, query)[2])
-    model.relation_output_projection.weight.value = jax.tree.map(
+    model.relation_color_head.weight.value = jax.tree.map(
         lambda value: value * 0.0,
-        model.relation_output_projection.weight.value,
+        model.relation_color_head.weight.value,
     )
     brainstate.nn.init_all_states(model, batch_size=1)
     after = np.asarray(model.run(events, query)[2])
@@ -307,7 +304,7 @@ def test_query_to_demonstration_relation_changes_executed_colors() -> None:
     assert before.tobytes() != after.tobytes()
 
 
-def test_associative_keys_collapse_foreground_color_identity() -> None:
+def test_associative_keys_append_foreground_occupancy() -> None:
     subject = _subject()
     model = subject.DirectARCGRU(
         subject.DirectModelConfig(
@@ -332,7 +329,8 @@ def test_associative_keys_collapse_foreground_color_identity() -> None:
     second_key = np.asarray(model._associative_key_features(second))
     background_key = np.asarray(model._associative_key_features(background))
 
-    assert first_key.tobytes() == second_key.tobytes()
+    assert first_key[..., :-1].tobytes() != second_key[..., :-1].tobytes()
+    assert first_key[..., -1:].tobytes() == second_key[..., -1:].tobytes()
     assert first_key.tobytes() != background_key.tobytes()
 
 
@@ -344,7 +342,7 @@ def test_associative_keys_collapse_foreground_color_identity() -> None:
         {"recurrent_layers": 0},
         {"seed": -1},
         {"seed": True},
-        {"architecture_version": "two_hop_relation_attention_v10"},
+        {"architecture_version": "color_invariant_shared_relation_v11"},
         {"memory_key_indices": (2,), "memory_value_indices": ()},
         {"memory_key_indices": (12,), "memory_value_indices": (2,)},
         {

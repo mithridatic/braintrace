@@ -16,10 +16,8 @@ COLOR_COUNT = 10
 QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
-SHAPE_FEATURE_WIDTH = (
-    MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-)
-ARCHITECTURE_VERSION = "color_invariant_shared_relation_v11"
+SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
+ARCHITECTURE_VERSION = "augmented_relation_logits_v12"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -63,8 +61,8 @@ class DirectModelConfig:
         row event. Both must be supplied together with equal nonzero length.
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
-        Each group is collapsed to one foreground-occupancy feature.
-    architecture_version : str, default="color_invariant_shared_relation_v11"
+        One foreground-occupancy feature per group is appended to the full key.
+    architecture_version : str, default="augmented_relation_logits_v12"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -87,9 +85,7 @@ class DirectModelConfig:
             "decoder_width",
             "recurrent_layers",
         ):
-            object.__setattr__(
-                self, name, _positive_integer(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
         normalized_indices = {}
         for name in ("memory_key_indices", "memory_value_indices"):
@@ -98,8 +94,7 @@ class DirectModelConfig:
                 raise TypeError(f"{name} must be a sequence of integers.")
             indices = tuple(raw)
             if any(
-                isinstance(index, (bool, np.bool_))
-                or not isinstance(index, Integral)
+                isinstance(index, (bool, np.bool_)) or not isinstance(index, Integral)
                 for index in indices
             ):
                 raise TypeError(f"{name} must contain only integers.")
@@ -125,13 +120,9 @@ class DirectModelConfig:
             raise ValueError(
                 "memory_key_color_block_width must contain complete color groups."
             )
-        object.__setattr__(
-            self, "memory_key_color_block_width", color_block_width
-        )
+        object.__setattr__(self, "memory_key_color_block_width", color_block_width)
         if self.architecture_version != ARCHITECTURE_VERSION:
-            raise ValueError(
-                f"architecture_version must be {ARCHITECTURE_VERSION!r}."
-            )
+            raise ValueError(f"architecture_version must be {ARCHITECTURE_VERSION!r}.")
 
 
 def _coordinate_features() -> jnp.ndarray:
@@ -204,7 +195,6 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             associative_key_width = (
                 len(config.memory_key_indices)
-                - config.memory_key_color_block_width
                 + config.memory_key_color_block_width // COLOR_COUNT
             )
             associative_key_width = max(1, associative_key_width)
@@ -217,6 +207,9 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             self.relation_output_projection = braintrace.nn.Linear(
                 config.decoder_width, config.decoder_width
+            )
+            self.relation_color_head = braintrace.nn.Linear(
+                config.decoder_width, COLOR_COUNT
             )
             self.coordinate_projection = braintrace.nn.Linear(
                 2 * MAX_GRID_SIZE, config.decoder_width
@@ -237,12 +230,11 @@ class DirectARCGRU(brainstate.nn.Module):
         color_width = self.config.memory_key_color_block_width
         if color_width == 0:
             return selected
-        prefix = selected[..., :-color_width]
         colors = selected[..., -color_width:].reshape(
             *selected.shape[:-1], color_width // COLOR_COUNT, COLOR_COUNT
         )
         foreground = jnp.sum(colors[..., 1:], axis=-1)
-        return jnp.concatenate((prefix, foreground), axis=-1)
+        return jnp.concatenate((selected, foreground), axis=-1)
 
     def update(self, event: jnp.ndarray) -> jnp.ndarray:
         """Advance the recurrent encoder by one row event.
@@ -394,9 +386,7 @@ class DirectARCGRU(brainstate.nn.Module):
             )
             associative_query_valid = jnp.zeros((batch_size, 1), dtype=bool)
         associative_queries = jnp.asarray(associative_queries)
-        associative_query_valid = jnp.asarray(
-            associative_query_valid, dtype=bool
-        )
+        associative_query_valid = jnp.asarray(associative_query_valid, dtype=bool)
         if (
             associative_queries.ndim != 3
             or associative_queries.shape[0] != batch_size
@@ -422,9 +412,7 @@ class DirectARCGRU(brainstate.nn.Module):
         )
         demonstration_summary = jnp.sum(
             demonstration_states * demonstration_valid[..., None], axis=1
-        ) / jnp.maximum(
-            jnp.sum(demonstration_valid, axis=1)[..., None], 1.0
-        )
+        ) / jnp.maximum(jnp.sum(demonstration_valid, axis=1)[..., None], 1.0)
         query_dimensions = shape_features[
             :, MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH :
         ]
@@ -456,26 +444,21 @@ class DirectARCGRU(brainstate.nn.Module):
             self.coordinate_features[None],
             (batch_size, MAX_GRID_SIZE * MAX_GRID_SIZE, 2 * MAX_GRID_SIZE),
         )
-        source_features = jnp.concatenate(
-            (flat_query, flat_coordinates), axis=-1
-        )
+        source_features = jnp.concatenate((flat_query, flat_coordinates), axis=-1)
         keys = self.attention_key_projection(source_features)
         values = self.attention_value_projection(source_features)
         output_queries = brainstate.nn.tanh(
-            context_vector[:, None, :] + coordinate.reshape(-1, self.config.decoder_width)[None]
+            context_vector[:, None, :]
+            + coordinate.reshape(-1, self.config.decoder_width)[None]
         )
-        attention_logits = jnp.einsum(
-            "bod,bsd->bos", output_queries, keys
-        ) / np.sqrt(float(self.config.decoder_width))
+        attention_logits = jnp.einsum("bod,bsd->bos", output_queries, keys) / np.sqrt(
+            float(self.config.decoder_width)
+        )
         source_valid = flat_query[..., -1] > 0.5
-        attention_logits = jnp.where(
-            source_valid[:, None, :], attention_logits, -1.0e9
-        )
+        attention_logits = jnp.where(source_valid[:, None, :], attention_logits, -1.0e9)
         attention = jnp.einsum(
             "bos,bsd->bod", brainstate.nn.softmax(attention_logits, axis=-1), values
-        ).reshape(
-            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
-        )
+        ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
         memory_keys = self.memory_key_projection(temporal_memory)
         memory_values = self.memory_value_projection(temporal_memory)
         memory_queries = brainstate.nn.tanh(
@@ -494,16 +477,12 @@ class DirectARCGRU(brainstate.nn.Module):
         )
         memory_attention = jnp.einsum(
             "bot,btd->bod", memory_weights, memory_values
-        ).reshape(
-            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
-        )
+        ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
         associative_logits = jnp.einsum(
             "bod,btd->bot", memory_queries, associative_keys
         ) / np.sqrt(float(self.config.decoder_width))
         associative_weights = brainstate.nn.softmax(
-            jnp.where(
-                associative_valid[:, None, :], associative_logits, -1.0e9
-            ),
+            jnp.where(associative_valid[:, None, :], associative_logits, -1.0e9),
             axis=-1,
         )
         associative_weights = associative_weights * associative_valid[:, None, :]
@@ -512,16 +491,12 @@ class DirectARCGRU(brainstate.nn.Module):
         )
         associative_attention = jnp.einsum(
             "bot,btd->bod", associative_weights, associative_values
-        ).reshape(
-            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
-        )
+        ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
         relation_logits = jnp.einsum(
             "bqd,btd->bqt", associative_queries, associative_keys
         ) / np.sqrt(float(self.config.decoder_width))
         relation_weights = brainstate.nn.softmax(
-            jnp.where(
-                associative_valid[:, None, :], relation_logits, -1.0e9
-            ),
+            jnp.where(associative_valid[:, None, :], relation_logits, -1.0e9),
             axis=-1,
         )
         relation_weights = relation_weights * associative_valid[:, None, :]
@@ -548,11 +523,9 @@ class DirectARCGRU(brainstate.nn.Module):
         output_relation_weights = output_relation_weights / jnp.maximum(
             jnp.sum(output_relation_weights, axis=-1, keepdims=True), 1.0
         )
-        relation_attention = self.relation_output_projection(jnp.einsum(
-            "boq,bqd->bod", output_relation_weights, inferred_query_values
-        )).reshape(
-            batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width
-        )
+        relation_attention = self.relation_output_projection(
+            jnp.einsum("boq,bqd->bod", output_relation_weights, inferred_query_values)
+        ).reshape(batch_size, MAX_GRID_SIZE, MAX_GRID_SIZE, self.config.decoder_width)
         cell_state = brainstate.nn.tanh(
             context
             + query
@@ -566,7 +539,7 @@ class DirectARCGRU(brainstate.nn.Module):
         return (
             self.height_head(shape_state),
             self.width_head(shape_state),
-            self.color_head(cell_state),
+            self.color_head(cell_state) + self.relation_color_head(relation_attention),
         )
 
     def run(
