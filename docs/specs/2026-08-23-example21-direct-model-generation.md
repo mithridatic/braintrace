@@ -1240,6 +1240,44 @@ the mechanism gate plus at least two strict tasks out of 80. Failure ends V36;
 only a pass permits the fresh 2,000-update complete-manifest run under the
 literal 16/400 acceptance threshold.
 
+V36 is rejected at clean revision
+`19cea7e5b41a627baa2b09584d9fac0930a4cd38`, with artifact
+`var/ex21-online-v36-task-conditioned-pilot-v1`. The mechanism gate passed,
+all parameter groups moved, and compiler evidence contained four recurrent
+ETP relations with zero recurrent or decoder weight-to-weight exclusions.
+Training took 92.84 seconds. The fresh fold-three score was 0/80 across 85
+queries, so no longer V36 run is permitted. Exact shape was 37/85;
+foreground accuracy was 2,308/3,879 cells (59.50%) and background accuracy was
+3,390/3,520 cells (96.31%). Six correctly shaped tasks were only 4 through 9
+cells from exact, but miss distance is diagnostic and does not alter the zero
+strict score.
+
+### Training-only edit emphasis V37
+
+V37 keeps the exact V36 checkpoint schema, event stream, model, decoder,
+optimizer, PP-prop configuration, and greedy answer path. It changes only the
+training loss. For each labeled training cell, the fixed lossless replay row
+provides the corresponding query-input colour and validity. A cell whose
+target colour differs from that valid query cell, or lies outside the valid
+query extent, receives the predeclared multiplier 4.0 in both the foreground
+gate and conditional nonzero-colour terms. Unchanged cells retain multiplier
+1.0. Height and width losses and V31's fourth-root gate and conditional-colour
+masses remain unchanged. The multiplier is computed only inside supervised
+training from training-role labels; evaluation inputs contain no target and
+evaluation executes the unchanged V36 model. The loss identifier is
+`edit_weighted_fourth_root_hierarchical_v37`.
+
+Tests must first fail against the V36 loss, then prove exact 4-to-1 edited-cell
+weighting under otherwise equal logits, correct treatment of absent query
+cells, target isolation during evaluation, finite nonzero compiled gradients,
+movement of every parameter leaf, and unchanged direct candidate provenance.
+The score-ineligible pilot uses the previously untouched canonical training
+positions 320 through 383: validation count 64, fold index five, sampling seed
+16108, and the otherwise unchanged 400-update configuration. It must pass the
+mechanism gate and solve at least two of 64 strict tasks. Failure ends V37;
+only a pass permits a fresh 2,000-update complete-manifest run under the literal
+16/400 acceptance threshold.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
