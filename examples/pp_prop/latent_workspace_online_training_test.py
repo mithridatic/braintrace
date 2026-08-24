@@ -235,6 +235,88 @@ def test_v28_loss_weights_color_eight_times_each_shape_component() -> None:
     assert float(color_delta / width_delta) == pytest.approx(8.0, rel=1e-5)
 
 
+def test_v29_mass_balances_gate_and_present_nonzero_colors_whole_grid() -> None:
+    subject = _subject()
+    rows = jnp.zeros((10, 1, 30), dtype=jnp.int32)
+    rows = rows.at[-1, 0, 0].set(7).at[-1, 0, 1].set(8)
+    masks = jnp.zeros_like(rows, dtype=jnp.float32).at[:, 0, :10].set(1.0)
+
+    gate_mass, color_mass = subject.hierarchical_whole_grid_mass(rows, masks)
+
+    assert gate_mass.shape == (10, 1, 2)
+    assert color_mass.shape == (10, 1, 9)
+    assert float(gate_mass[0, 0, 0]) == pytest.approx(30.0 / (2.0 * 98.0))
+    assert float(gate_mass[0, 0, 1]) == pytest.approx(30.0 / (2.0 * 2.0))
+    assert float(color_mass[0, 0, 6]) == pytest.approx(15.0)
+    assert float(color_mass[0, 0, 7]) == pytest.approx(15.0)
+    assert np.count_nonzero(np.asarray(color_mass[..., :6])) == 0
+    assert np.count_nonzero(np.asarray(color_mass[..., 8:])) == 0
+
+    all_background = jnp.zeros((2, 1, 30), dtype=jnp.int32)
+    background_mask = jnp.zeros_like(all_background, dtype=jnp.float32)
+    background_mask = background_mask.at[:, 0, :3].set(1.0)
+    background_gate, background_color = subject.hierarchical_whole_grid_mass(
+        all_background, background_mask
+    )
+    assert float(background_gate[0, 0, 0]) == pytest.approx(5.0)
+    assert float(background_gate[0, 0, 1]) == 0.0
+    assert np.count_nonzero(np.asarray(background_color)) == 0
+
+
+def test_v29_loss_excludes_background_conditional_logits_and_binds_weights() -> None:
+    subject = _subject()
+    model_subject = _model_subject()
+    target = jnp.zeros((1, 30), dtype=jnp.int32).at[0, 0].set(1)
+    mask = jnp.zeros((1, 30), dtype=jnp.float32).at[0, :2].set(1.0)
+    dimension = jnp.zeros((1,), dtype=jnp.int32)
+    gate_mass = jnp.ones((1, 2), dtype=jnp.float32)
+    color_mass = jnp.ones((1, 9), dtype=jnp.float32)
+    row = jnp.full((1, 30, 10), -100.0)
+    row = row.at[0, 0, 0].set(10.0)
+    row = row.at[0, 0, 1].set(5.0).at[0, 0, 2].set(-5.0)
+    row = row.at[0, 1, 0].set(-10.0)
+    height = jnp.full((1, 30), -100.0).at[0, 0].set(5.0).at[0, 1].set(-5.0)
+    width = height.copy()
+    baseline = jnp.concatenate((row.reshape(1, -1), height, width), axis=-1)
+
+    background_changed = baseline.at[0, 10 + 1].set(-1000.0)
+    background_changed = background_changed.at[0, 10 + 9].set(1000.0)
+    baseline_loss = subject.hierarchical_whole_grid_step_loss(
+        baseline, target, mask, dimension, dimension, gate_mass, color_mass
+    )
+    background_loss = subject.hierarchical_whole_grid_step_loss(
+        background_changed,
+        target,
+        mask,
+        dimension,
+        dimension,
+        gate_mass,
+        color_mass,
+    )
+    assert float(background_loss) == pytest.approx(float(baseline_loss), rel=1e-6)
+
+    gate_error = baseline.at[0, 0].set(-10.0)
+    color_error = baseline.at[0, 1].set(-5.0).at[0, 2].set(5.0)
+    height_error = baseline.at[0, model_subject.ROW_COLOR_WIDTH].set(-5.0)
+    height_error = height_error.at[0, model_subject.ROW_COLOR_WIDTH + 1].set(5.0)
+    width_offset = model_subject.ROW_COLOR_WIDTH + model_subject.MAX_GRID_SIZE
+    width_error = baseline.at[0, width_offset].set(-5.0)
+    width_error = width_error.at[0, width_offset + 1].set(5.0)
+
+    def delta(output):
+        return subject.hierarchical_whole_grid_step_loss(
+            output, target, mask, dimension, dimension, gate_mass, color_mass
+        ) - baseline_loss
+
+    gate_delta = float(delta(gate_error))
+    color_delta = float(delta(color_error))
+    height_delta = float(delta(height_error))
+    width_delta = float(delta(width_error))
+    assert gate_delta == pytest.approx(color_delta, rel=1e-5)
+    assert gate_delta / height_delta == pytest.approx(4.0, rel=1e-5)
+    assert color_delta / width_delta == pytest.approx(4.0, rel=1e-5)
+
+
 def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -263,7 +345,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         brainstate.nn.reset_all_states(model, batch_size=2)
         return brainstate.transform.for_loop(model, events)
 
-    candidate_before = subject.decode_online_outputs(
+    candidate_before = subject.decode_hierarchical_online_outputs(
         np.asarray(forward(jnp.asarray(batch.events)))[:, 0],
         episode.decode_mask,
         (),
@@ -273,7 +355,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         subject.repeat_online_batch(batch, updates=5)
     )
     after = subject.parameter_arrays(model)
-    candidate_after = subject.decode_online_outputs(
+    candidate_after = subject.decode_hierarchical_online_outputs(
         np.asarray(forward(jnp.asarray(batch.events)))[:, 0],
         episode.decode_mask,
         (),
@@ -294,7 +376,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "color_dominant_whole_grid_balanced_v28"
+    assert trainer.loss_version == "hierarchical_foreground_color_balanced_v29"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:
@@ -425,7 +507,7 @@ def test_checkpoint_rejects_exact_schema_corruption(tmp_path, corruption: str) -
         subject.load_online_checkpoint(path)
 
 
-def test_decode_online_outputs_uses_only_fixed_decode_steps() -> None:
+def test_hierarchical_decode_uses_gate_then_nonzero_argmax_on_fixed_steps() -> None:
     subject = _subject()
     model_subject = _model_subject()
     time = 40
@@ -434,12 +516,15 @@ def test_decode_online_outputs_uses_only_fixed_decode_steps() -> None:
     decode_mask[5:35] = True
     outputs[5:35, model_subject.ROW_COLOR_WIDTH] = 10.0
     outputs[5:35, model_subject.ROW_COLOR_WIDTH + 30 + 1] = 10.0
-    for row in range(30):
-        outputs[5 + row, : model_subject.ROW_COLOR_WIDTH : 10] = 10.0
+    outputs[5:35, : model_subject.ROW_COLOR_WIDTH : 10] = -10.0
+    outputs[5, 0] = 10.0
+    outputs[5, 7] = 20.0
+    outputs[5, 10 + 9] = 30.0
 
-    candidate = subject.decode_online_outputs(outputs, decode_mask, ())
+    candidate = subject.decode_hierarchical_online_outputs(outputs, decode_mask, ())
 
     assert candidate["height"] == 1
     assert candidate["width"] == 2
-    assert candidate["grid"] == [[0, 0]]
+    assert candidate["grid"] == [[7, 0]]
     assert candidate["parameter_dependencies"] == []
+    assert candidate["answer_head_version"] == "hierarchical_row_decoder_v29"

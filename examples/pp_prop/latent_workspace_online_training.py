@@ -480,7 +480,9 @@ def evaluate_online_model(
     targets = []
     task_ids = []
     for episode, outputs in zip(episodes, ordered_outputs, strict=True):
-        candidate = decode_online_outputs(outputs, episode.decode_mask, dependencies)
+        candidate = decode_hierarchical_online_outputs(
+            outputs, episode.decode_mask, dependencies
+        )
         candidates.append(candidate)
         predictions.append(candidate["grid"])
         selected_rows = episode.target_rows[episode.decode_mask.astype(np.bool_)]
@@ -718,6 +720,136 @@ def color_dominant_whole_grid_step_loss(
     return 0.8 * color_loss + 0.1 * height_loss + 0.1 * width_loss
 
 
+def hierarchical_whole_grid_mass(
+    target_rows: jnp.ndarray, target_cell_masks: jnp.ndarray
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Compute balanced whole-grid gate and conditional-colour masses.
+
+    Parameters
+    ----------
+    target_rows : jax.Array
+        Time-major batched integer target rows shaped ``(time, batch, 30)``.
+    target_cell_masks : jax.Array
+        Matching valid-cell masks.
+
+    Returns
+    -------
+    gate_mass, color_mass : tuple of jax.Array
+        Time-broadcast masses shaped ``(time, batch, 2)`` for background and
+        foreground, and ``(time, batch, 9)`` for nonzero colours one to nine.
+    """
+
+    if target_rows.shape != target_cell_masks.shape or target_rows.ndim != 3:
+        raise ValueError("target_rows and target_cell_masks must match in 3-D.")
+    if target_rows.shape[-1] != MAX_GRID_SIZE:
+        raise ValueError(f"target row width must be {MAX_GRID_SIZE}.")
+    mask = jnp.asarray(target_cell_masks, dtype=jnp.float32)
+    gate_targets = (target_rows != 0).astype(target_rows.dtype)
+    gate_ids = jnp.arange(2, dtype=target_rows.dtype)
+    gate_membership = mask[..., None] * (
+        gate_targets[..., None] == gate_ids
+    ).astype(mask.dtype)
+    gate_counts = jnp.sum(gate_membership, axis=(0, 2))
+    gate_present = (gate_counts > 0.0).astype(mask.dtype)
+    gate_present_count = jnp.sum(gate_present, axis=-1, keepdims=True)
+    per_gate = jnp.where(
+        gate_counts > 0.0,
+        MAX_GRID_SIZE / jnp.maximum(gate_present_count * gate_counts, 1.0),
+        0.0,
+    )
+
+    nonzero_ids = jnp.arange(1, COLOR_COUNT, dtype=target_rows.dtype)
+    color_membership = mask[..., None] * (
+        target_rows[..., None] == nonzero_ids
+    ).astype(mask.dtype)
+    color_counts = jnp.sum(color_membership, axis=(0, 2))
+    color_present = (color_counts > 0.0).astype(mask.dtype)
+    color_present_count = jnp.sum(color_present, axis=-1, keepdims=True)
+    per_color = jnp.where(
+        color_counts > 0.0,
+        MAX_GRID_SIZE / jnp.maximum(color_present_count * color_counts, 1.0),
+        0.0,
+    )
+    time = target_rows.shape[0]
+    gate_mass = jnp.broadcast_to(per_gate[None, ...], (time, *per_gate.shape))
+    color_mass = jnp.broadcast_to(per_color[None, ...], (time, *per_color.shape))
+    return gate_mass, color_mass
+
+
+def hierarchical_whole_grid_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    gate_mass: jnp.ndarray,
+    color_mass: jnp.ndarray,
+) -> jnp.ndarray:
+    """Score a binary foreground gate and conditional nonzero colour.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row : jax.Array
+        Batched integer colours for all 30 columns.
+    target_cell_mask : jax.Array
+        Batched mask selecting true target columns.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    gate_mass : jax.Array
+        Batched background/foreground mass computed over the complete grid.
+    color_mass : jax.Array
+        Batched mass for conditional nonzero colours one through nine.
+
+    Returns
+    -------
+    jax.Array
+        Scalar objective with coefficients 0.4, 0.4, 0.1, and 0.1.
+    """
+
+    if gate_mass.shape[-1] != 2:
+        raise ValueError("gate_mass last dimension must be 2.")
+    if color_mass.shape[-1] != COLOR_COUNT - 1:
+        raise ValueError(f"color_mass last dimension must be {COLOR_COUNT - 1}.")
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    mask = jnp.asarray(target_cell_mask, dtype=row_logits.dtype)
+    gate_targets = (target_row != 0).astype(jnp.int32)
+    gate_per_cell = optax.sigmoid_binary_cross_entropy(
+        row_logits[..., 0], gate_targets
+    )
+    selected_gate_mass = jnp.take_along_axis(
+        gate_mass[:, None, :], gate_targets[..., None], axis=-1
+    )[..., 0]
+    gate_loss = jnp.mean(
+        jnp.sum(gate_per_cell * mask * selected_gate_mass, axis=-1)
+    )
+
+    conditional_targets = jnp.clip(target_row - 1, 0, COLOR_COUNT - 2)
+    color_per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits[..., 1:], conditional_targets
+    )
+    selected_color_mass = jnp.take_along_axis(
+        color_mass[:, None, :], conditional_targets[..., None], axis=-1
+    )[..., 0]
+    foreground_mask = mask * gate_targets.astype(mask.dtype)
+    color_loss = jnp.mean(
+        jnp.sum(color_per_cell * foreground_mask * selected_color_mass, axis=-1)
+    )
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return (
+        0.4 * gate_loss
+        + 0.4 * color_loss
+        + 0.1 * height_loss
+        + 0.1 * width_loss
+    )
+
+
 def _parameter_group(path: tuple[object, ...]) -> str:
     root = str(path[0])
     if root == "recurrent":
@@ -809,7 +941,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "color_dominant_whole_grid_balanced_v28"
+    loss_version = "hierarchical_foreground_color_balanced_v29"
 
     def __init__(
         self,
@@ -896,17 +1028,32 @@ class OnlinePPPropTrainer:
             decode_mask,
         ):
             self._reset()
-            color_mass = whole_grid_color_mass(rows, cell_mask)
+            gate_mass, color_mass = hierarchical_whole_grid_mass(rows, cell_mask)
 
-            def step_loss(event, row, mask, step_color_mass, height, width):
-                return color_dominant_whole_grid_step_loss(
-                    learner(event), row, mask, height, width, step_color_mass
+            def step_loss(
+                event,
+                row,
+                mask,
+                step_gate_mass,
+                step_color_mass,
+                height,
+                width,
+            ):
+                return hierarchical_whole_grid_step_loss(
+                    learner(event),
+                    row,
+                    mask,
+                    height,
+                    width,
+                    step_gate_mass,
+                    step_color_mass,
                 )
 
             gradients, objective = learner.etrace_grad(
                 events,
                 rows,
                 cell_mask,
+                gate_mass,
                 color_mass,
                 heights,
                 widths,
@@ -1161,4 +1308,56 @@ def decode_online_outputs(
         "selection_role": "greedy_argmax",
         "ranking_source": "none_single_greedy_candidate",
         "answer_head_version": "online_row_decoder_v20",
+    }
+
+
+def decode_hierarchical_online_outputs(
+    outputs: np.ndarray,
+    decode_mask: np.ndarray,
+    parameter_dependencies: tuple[str, ...],
+) -> dict[str, object]:
+    """Decode a binary foreground gate and conditional colour logits.
+
+    Parameters
+    ----------
+    outputs : numpy.ndarray
+        Per-step model logits shaped ``(time, OUTPUT_WIDTH)``.
+    decode_mask : numpy.ndarray
+        One-dimensional mask selecting exactly 30 decode steps.
+    parameter_dependencies : tuple of str
+        Ordered checkpoint paths that determine the logits.
+
+    Returns
+    -------
+    dict
+        One fixed greedy first candidate directly serialized from model logits.
+    """
+
+    values = np.asarray(outputs)
+    mask = np.asarray(decode_mask, dtype=np.bool_)
+    if values.ndim != 2 or mask.shape != (values.shape[0],):
+        raise ValueError("outputs and decode_mask shapes are incompatible.")
+    selected = values[mask]
+    if selected.shape[0] != MAX_GRID_SIZE:
+        raise ValueError("decode_mask must select exactly 30 steps.")
+    if not np.all(np.isfinite(selected)):
+        raise ValueError("decode outputs must be finite.")
+    row_logits, height_logits, width_logits = split_step_logits(jnp.asarray(selected))
+    gate_logits = np.asarray(row_logits[..., 0])
+    nonzero_colors = np.asarray(jnp.argmax(row_logits[..., 1:], axis=-1)) + 1
+    colors = np.where(gate_logits > 0.0, nonzero_colors, 0).astype(np.int32)
+    height = int(np.argmax(np.asarray(height_logits).mean(axis=0))) + 1
+    width = int(np.argmax(np.asarray(width_logits).mean(axis=0))) + 1
+    return {
+        "rank": 1,
+        "height": height,
+        "width": width,
+        "grid": colors[:height, :width].tolist(),
+        "provenance": "model",
+        "dependency_class": "model_checkpoint",
+        "parameter_dependencies": list(parameter_dependencies),
+        "proposal_source": "online_model_logits",
+        "selection_role": "greedy_argmax",
+        "ranking_source": "none_single_greedy_candidate",
+        "answer_head_version": "hierarchical_row_decoder_v29",
     }

@@ -104,6 +104,7 @@ def test_first_prediction_bytes_exclude_metadata_and_scores() -> None:
     ("proposal_source", "answer_head_version"),
     [
         ("online_model_logits", "online_row_decoder_v20"),
+        ("online_model_logits", "hierarchical_row_decoder_v29"),
         ("spatial_model_logits", "spatial_conv_lif_row_decoder_v22"),
     ],
 )

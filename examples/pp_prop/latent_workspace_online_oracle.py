@@ -1,4 +1,4 @@
-"""Run the staged synthetic V20 row-decoded PP-prop oracle."""
+"""Run the staged synthetic V29 hierarchical PP-prop oracle."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def _positive_real(value: object, name: str) -> float:
 
 @dataclass(frozen=True)
 class OnlineOracleConfig:
-    """Configure one synthetic V20 PP-prop learning oracle.
+    """Configure one synthetic V29 PP-prop learning oracle.
 
     Parameters
     ----------
@@ -259,7 +259,7 @@ def _source_revision() -> tuple[str, bool]:
 
 
 def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
-    """Train and score one sealed synthetic V20 PP-prop oracle.
+    """Train and score one sealed synthetic V29 PP-prop oracle.
 
     Parameters
     ----------

@@ -927,6 +927,56 @@ with 40 fresh diagnostic tasks at seed 142108. It retains the nonzero-output,
 5% foreground, and 50% background gates. Only a pass permits the untouched
 seed-82108 full oracle under the existing exact/family promotion gate.
 
+V28 is rejected at clean revision
+`4db261cb7dadd17bf9506dcbf4d1676037326308`, with artifact
+`var/ex21-online-v28-anti-collapse-pilot-v1`. Every parameter group moved and
+the decoder emitted all ten colours, but the score-ineligible exact count was
+0/40. Among shape-correct cells it achieved only 1/53 foreground cells (1.89%)
+versus 437/526 background cells (83.08%), so the 5% foreground gate failed.
+Training took 16.80 seconds; extending this loss to the full schedule is not
+permitted.
+
+### Hierarchical foreground/colour row GRU V29
+
+V29 keeps the V28 BrainTrace GRU, event stream, recurrent topology, PP-prop
+trace, training data, and fixed output width. It changes the meaning of the ten
+per-cell output logits. Logit zero becomes a binary foreground gate; logits
+one through nine become conditional logits for ARC colours one through nine.
+Fixed serialization emits colour zero when the gate logit is at most zero and
+otherwise emits one plus the argmax of the nine conditional logits. This is a
+fixed argmax decoder over executed model logits and introduces no rule,
+retrieval, target, or task-local fitting path. The architecture and answer-head
+identifiers must bind these semantics as
+`online_hierarchical_row_decoder_v29` and
+`hierarchical_row_decoder_v29` respectively.
+
+The whole-grid loss has four predeclared components. A sigmoid binary
+cross-entropy gate loss gives the foreground and background partitions equal
+total mass whenever both are present. A conditional nine-colour
+cross-entropy is evaluated only on foreground target cells and gives every
+present nonzero target colour equal total mass. Gate and conditional-colour
+losses each receive coefficient 0.4; height and width cross-entropies each
+receive coefficient 0.1. All masses are computed from training targets only
+and remain outside the event, recurrent state, and decoder. The loss version is
+`hierarchical_foreground_color_balanced_v29`.
+
+Sibling tests must prove both branches of fixed serialization, background
+exclusion from conditional colour loss, equal whole-grid foreground/background
+gate mass, equal mass across present nonzero colours, finite all-background
+behavior, exact 0.4/0.4/0.1/0.1 coefficients, bound checkpoint reload, direct
+candidate provenance, compiled nonzero recurrent/gate-colour/height/width
+gradients, and changed candidate bytes.
+
+One score-ineligible pilot uses the unchanged seed 2108, training seed 12108,
+120-task curriculum, 200 updates in chunks of 20, batch size eight, full
+128/256 two-layer topology, and 40 fresh diagnostic tasks at seed 152108. It
+passes only if every parameter group and candidate bytes move, predictions
+contain nonzero cells, foreground accuracy is at least 5%, and background
+accuracy is at least 50% among shape-correct tasks. Only a pass permits one
+1,000-update oracle with the fixed 1,400-task curriculum and untouched seed
+82108. The full promotion gate remains greater than 7/120, at least two
+non-label families, and at least one non-copy/non-label exact task.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

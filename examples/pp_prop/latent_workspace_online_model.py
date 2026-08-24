@@ -1,4 +1,4 @@
-"""Checkpoint-owned row-decoded recurrent model for online ARC learning."""
+"""Checkpoint-owned hierarchical recurrent model for online ARC learning."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_row_decoder_v20"
+ARCHITECTURE_VERSION = "online_hierarchical_row_decoder_v29"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -38,7 +38,7 @@ def _nonnegative_integer(value: object, name: str) -> int:
 
 @dataclass(frozen=True)
 class OnlineModelConfig:
-    """Configure the row-decoded recurrent model.
+    """Configure the hierarchical row-decoded recurrent model.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ class OnlineModelConfig:
         ``encoder_width`` units and later layers have ``hidden_width`` units.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_row_decoder_v20"
+    architecture_version : str, default="online_hierarchical_row_decoder_v29"
         Exact checkpoint-schema identifier.
     """
 
@@ -83,7 +83,7 @@ class OnlineModelConfig:
 
 
 def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Split one-step output into row-colour and shape logits.
+    """Split one-step output into hierarchical cell and shape logits.
 
     Parameters
     ----------
@@ -93,8 +93,8 @@ def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jn
     Returns
     -------
     row_colors, height, width : tuple of jax.Array
-        Colour logits shaped ``(..., 30, 10)`` and two shape-logit arrays
-        shaped ``(..., 30)``.
+        Gate/conditional-colour logits shaped ``(..., 30, 10)`` and two
+        shape-logit arrays shaped ``(..., 30)``.
     """
 
     if values.shape[-1] != OUTPUT_WIDTH:
@@ -156,7 +156,7 @@ class OnlineARCGRU(brainstate.nn.Module):
         Returns
         -------
         jax.Array
-            Concatenated row-colour, height, and width logits shaped
+            Concatenated hierarchical cell, height, and width logits shaped
             ``(..., OUTPUT_WIDTH)``.
         """
 

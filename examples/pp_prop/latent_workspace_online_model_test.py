@@ -24,6 +24,8 @@ def _clear_compilation_caches():
 def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
+    assert subject.ARCHITECTURE_VERSION == "online_hierarchical_row_decoder_v29"
+
     with pytest.raises(ValueError, match="architecture_version"):
         subject.OnlineModelConfig(input_width=8, architecture_version="old")
     with pytest.raises(TypeError, match="encoder_width"):
