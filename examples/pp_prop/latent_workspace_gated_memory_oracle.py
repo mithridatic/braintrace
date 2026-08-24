@@ -104,6 +104,8 @@ class GatedMemoryOracleConfig:
         Width of each phase-separated MiniLSTM population.
     expert_count : int, default=12
         Number of checkpoint-owned neural colour experts.
+    minimum_strict_task_count : int, default=4
+        Inclusive strict count required by this sealed screen or oracle.
     trace_decay : float, default=2 ** (-1 / 40)
         Single-step PP-prop trace decay.
     """
@@ -123,6 +125,7 @@ class GatedMemoryOracleConfig:
     learning_rate: float = 0.001
     memory_width: int = 128
     expert_count: int = 12
+    minimum_strict_task_count: int = 4
     trace_decay: float = 2.0 ** (-1.0 / 40.0)
 
     def __post_init__(self) -> None:
@@ -143,6 +146,7 @@ class GatedMemoryOracleConfig:
             "oracle_task_count",
             "memory_width",
             "expert_count",
+            "minimum_strict_task_count",
         ):
             object.__setattr__(
                 self, name, _positive_integer(getattr(self, name), name)
@@ -195,6 +199,46 @@ def _parameter_leaves_finite(model: PhaseSeparatedGatedMemoryRNN) -> bool:
         bool(np.isfinite(np.asarray(leaf)).all())
         for state in model.states(brainstate.ParamState).values()
         for leaf in jax.tree.leaves(state.value)
+    )
+
+
+def gated_memory_promotion_gate(
+    strict_count: int,
+    family_summary: dict[str, object],
+    anti_collapse_passed: bool,
+    *,
+    minimum: int,
+) -> bool:
+    """Apply the sealed V44 strict and family promotion boundary.
+
+    Parameters
+    ----------
+    strict_count : int
+        Observed strict task pass-at-one count.
+    family_summary : dict
+        Exact family membership summary for strict tasks.
+    anti_collapse_passed : bool
+        Whether mechanism and foreground/background checks passed.
+    minimum : int
+        Inclusive predeclared strict-count threshold.
+
+    Returns
+    -------
+    bool
+        True only when every declared promotion condition passes.
+    """
+
+    observed = _nonnegative_integer(strict_count, "strict_count")
+    required = _positive_integer(minimum, "minimum")
+    if not isinstance(anti_collapse_passed, bool):
+        raise TypeError("anti_collapse_passed must be boolean.")
+    if not isinstance(family_summary, dict):
+        raise TypeError("family_summary must be a dictionary.")
+    return bool(
+        anti_collapse_passed
+        and observed >= required
+        and len(family_summary.get("non_label_families", ())) >= 2
+        and family_summary.get("non_copy_non_label_ids")
     )
 
 
@@ -363,11 +407,11 @@ def run_gated_memory_oracle(
         and diagnostics["background_total"] > 0
         and diagnostics["background_accuracy"] >= 0.5
     )
-    gate_passed = bool(
-        anti_collapse_passed
-        and evaluation["strict_task_pass_at_1_count"] > 3
-        and len(family_summary["non_label_families"]) >= 2
-        and family_summary["non_copy_non_label_ids"]
+    gate_passed = gated_memory_promotion_gate(
+        evaluation["strict_task_pass_at_1_count"],
+        family_summary,
+        anti_collapse_passed,
+        minimum=config.minimum_strict_task_count,
     )
     result = {
         "schema_version": 1,
@@ -446,6 +490,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--memory-width", type=int, default=128)
     parser.add_argument("--expert-count", type=int, default=12)
+    parser.add_argument("--minimum-strict-task-count", type=int, default=4)
     parser.add_argument("--trace-decay", type=float, default=2.0 ** (-1.0 / 40.0))
     return parser
 

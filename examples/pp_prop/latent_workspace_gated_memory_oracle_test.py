@@ -41,6 +41,7 @@ def test_v44_oracle_config_validates_and_serializes(tmp_path) -> None:
     assert payload["output_dir"] == str(tmp_path)
     assert payload["synthetic_seed"] == 24108
     assert payload["oracle_seed"] == 112108
+    assert payload["minimum_strict_task_count"] == 4
     with pytest.raises(ValueError, match="divide"):
         subject.GatedMemoryOracleConfig(
             output_dir=tmp_path, training_updates=3, training_chunk_size=2
@@ -51,6 +52,28 @@ def test_v44_oracle_config_validates_and_serializes(tmp_path) -> None:
         )
     with pytest.raises(ValueError, match="device"):
         subject.GatedMemoryOracleConfig(output_dir=tmp_path, device="tpu")
+    with pytest.raises(ValueError, match="minimum_strict_task_count"):
+        subject.GatedMemoryOracleConfig(
+            output_dir=tmp_path, minimum_strict_task_count=0
+        )
+
+
+def test_v44_promotion_gate_binds_minimum_and_family_evidence() -> None:
+    subject = _subject()
+    families = {
+        "non_label_families": ["copy", "count"],
+        "non_copy_non_label_ids": ["synthetic-v3:count:000001"],
+    }
+
+    assert subject.gated_memory_promotion_gate(12, families, True, minimum=12)
+    assert not subject.gated_memory_promotion_gate(11, families, True, minimum=12)
+    assert not subject.gated_memory_promotion_gate(12, families, False, minimum=12)
+    assert not subject.gated_memory_promotion_gate(
+        12,
+        {"non_label_families": ["copy"], "non_copy_non_label_ids": []},
+        True,
+        minimum=12,
+    )
 
 
 def test_tiny_v44_oracle_writes_bound_finite_artifact(tmp_path, monkeypatch) -> None:
