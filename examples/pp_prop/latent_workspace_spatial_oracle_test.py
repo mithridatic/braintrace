@@ -81,8 +81,10 @@ def test_tiny_spatial_oracle_writes_bound_finite_artifact(
     assert np.isfinite(result["training"]["losses"]).all()
     assert result["model"]["parameters_moved"] is True
     assert all(result["model"]["parameter_groups_moved"].values())
+    assert "recurrent_conv.weight#1" in result["model"]["parameter_leaves_moved"]
+    assert result["mechanism_gate_passed"] is False
     assert result["model"]["architecture"]["architecture_version"] == (
-        "spatial_conv_lif_v22"
+        "spatial_conv_lif_v26"
     )
     assert result["evaluation"]["task_count"] == 4
     assert result["evaluation"]["query_count"] == 4

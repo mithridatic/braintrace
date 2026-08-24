@@ -200,9 +200,11 @@ def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
         "width_head",
     }
     before = subject.spatial_parameter_arrays(model)
+    before_leaves = subject.spatial_parameter_leaf_arrays(model)
 
     losses, norms = trainer.train_chunk(online.repeat_online_batch(batch, updates=2))
     after = subject.spatial_parameter_arrays(model)
+    after_leaves = subject.spatial_parameter_leaf_arrays(model)
 
     assert np.asarray(losses).shape == (2,)
     assert np.all(np.isfinite(np.asarray(losses)))
@@ -211,6 +213,13 @@ def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
         np.isfinite(value) and value > 0.0 for value in norms.values()
     ), norms
     assert all(before[name].tobytes() != after[name].tobytes() for name in before)
+    assert before_leaves.keys() == after_leaves.keys()
+    leaves_moved = {
+        name: before_leaves[name].tobytes() != after_leaves[name].tobytes()
+        for name in before_leaves
+    }
+    unmoved = [name for name, moved in leaves_moved.items() if not moved]
+    assert not unmoved, unmoved
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
     assert trainer.loss_version == "whole_grid_present_color_balanced_v25"

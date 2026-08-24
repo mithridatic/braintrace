@@ -91,6 +91,32 @@ def spatial_parameter_arrays(model: SpatialARCConvLIF) -> dict[str, np.ndarray]:
     }
 
 
+def spatial_parameter_leaf_arrays(
+    model: SpatialARCConvLIF,
+) -> dict[str, np.ndarray]:
+    """Return every ordered trainable leaf as a separate contiguous array.
+
+    Parameters
+    ----------
+    model : SpatialARCConvLIF
+        Spatial model whose exact leaves are bound.
+
+    Returns
+    -------
+    dict
+        Insertion-ordered ``path#leaf-index`` to copied parameter array.
+    """
+
+    if not isinstance(model, SpatialARCConvLIF):
+        raise TypeError("model must be a SpatialARCConvLIF instance.")
+    arrays = {}
+    for path, state in model.states(brainstate.ParamState).items():
+        state_name = ".".join(map(str, path))
+        for index, leaf in enumerate(_parameter_tree(state.value)[0]):
+            arrays[f"{state_name}#{index}"] = _array(leaf).copy()
+    return arrays
+
+
 def spatial_parameter_digest(model: SpatialARCConvLIF) -> str:
     """Hash ordered spatial parameter paths, units, metadata, and bytes.
 

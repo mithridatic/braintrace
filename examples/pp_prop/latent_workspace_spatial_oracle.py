@@ -41,6 +41,7 @@ from examples.pp_prop.latent_workspace_spatial_training import (
     save_spatial_checkpoint,
     spatial_parameter_arrays,
     spatial_parameter_digest,
+    spatial_parameter_leaf_arrays,
 )
 from examples.pp_prop.latent_workspace_task import RowEventConfig
 
@@ -243,6 +244,7 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         model = SpatialARCConvLIF(model_config)
         parameter_before = spatial_parameter_digest(model)
         groups_before = spatial_parameter_arrays(model)
+        leaves_before = spatial_parameter_leaf_arrays(model)
         evaluation_before = evaluate_spatial_model(
             model,
             oracle_episodes,
@@ -285,6 +287,7 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         training_seconds = time.perf_counter() - started
         parameter_after = spatial_parameter_digest(model)
         groups_after = spatial_parameter_arrays(model)
+        leaves_after = spatial_parameter_leaf_arrays(model)
         evaluation = evaluate_spatial_model(
             model,
             oracle_episodes,
@@ -301,11 +304,17 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         name: groups_before[name].tobytes() != groups_after[name].tobytes()
         for name in groups_before
     }
+    leaves_moved = {
+        name: leaves_before[name].tobytes() != leaves_after[name].tobytes()
+        for name in leaves_before
+    }
     mechanism_passed = bool(
         set(relation_roots)
         == {"input_conv", "recurrent_conv", "color_head", "height_head", "width_head"}
         and parameter_before != parameter_after
         and all(groups_moved.values())
+        and leaves_before.keys() == leaves_after.keys()
+        and all(leaves_moved.values())
         and all(np.isfinite(value) and value > 0.0 for value in gradient_norms.values())
         and evaluation_before["candidate_sha256"] != evaluation["candidate_sha256"]
         and _parameter_leaves_finite(model)
@@ -356,6 +365,7 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
             "parameter_sha256_after": parameter_after,
             "parameters_moved": parameter_before != parameter_after,
             "parameter_groups_moved": groups_moved,
+            "parameter_leaves_moved": leaves_moved,
             "parameter_leaves_finite": _parameter_leaves_finite(model),
         },
         "learner": {

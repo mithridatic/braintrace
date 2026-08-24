@@ -822,6 +822,47 @@ gate, changed/nonconstant candidate bytes, at least 5% foreground accuracy, and
 at least 50% background accuracy among shape-correct tasks. Only then may the
 untouched seed-82108 full oracle run under the existing exact/family gate.
 
+V25 is rejected at clean revision
+`82c30906aa053608e97f04f22bacad0d411335e2`, with artifact
+`var/ex21-online-v25-anti-collapse-pilot-v1`. Whole-grid mass escaped the strict
+all-zero solution but failed the stronger gate: it scored a score-ineligible
+1/40 on `pattern_label`, predicted 291 nonzero cells, and achieved only 1/79
+foreground cells (1.27%) versus 499/500 background cells (99.8%) among 19
+shape-correct tasks. No full V25 oracle ran.
+
+The V25 audit also finds a recurrent-state defect inherited by V22-V25. The
+custom LIF computed a hard spike, reset the membrane immediately, then derived
+the next step's recurrent input by thresholding that reset membrane. Thus the
+recurrent Conv kernel received an identically zero spike tensor in forward
+execution. The earlier group-level movement gate could be satisfied by the
+recurrent Conv bias even while its kernel was functionally dead. This is an
+implementation error, not an expected pp-prop approximation.
+
+### Stored-spike recurrent Conv-LIF V26
+
+V26 adds an explicit same-shape `last_spikes` hidden state. Each step feeds the
+stored previous hard spikes to the recurrent BrainTrace Conv2d, computes new
+spikes from the pre-reset membrane, stores those spikes, and separately resets
+voltage. Initialization and episode reset zero membrane, current, stored spikes,
+and readout traces together. The firing threshold changes from 1 mV to 0.05 mV;
+membrane/synapse time constants and every other configuration remain fixed. On
+the identical two-update development fixture, 0.05 mV produced finite losses,
+recurrent group norm 0.05048, and changed bytes for every ordered leaf, whereas
+1 mV left the recurrent kernel unchanged. The V25 whole-grid loss remains
+fixed.
+
+Tests must first reproduce the dead recurrence, then prove that forcing a stored
+spike changes the next-step membrane through the recurrent kernel. The compiled
+descent gate is strengthened from group bytes to every ordered trainable leaf:
+input kernel/bias, recurrent kernel/bias, colour head, height head, and width
+head must each have finite nonzero gradients and changed bytes. Checkpoint
+metadata binds these leaf movements separately. One score-ineligible 200-update
+pilot uses the fixed training setup and fresh diagnostic seed 122108. It must
+pass the leaf-level mechanism gate, change candidate bytes, achieve at least 5%
+foreground and 50% background accuracy, and predict nonzero cells. Only then
+may the untouched seed-82108 full oracle run under the existing exact/family
+gate.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

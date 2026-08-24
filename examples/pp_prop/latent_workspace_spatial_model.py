@@ -21,7 +21,7 @@ from examples.pp_prop.latent_workspace_online_model import (
 )
 from examples.pp_prop.latent_workspace_task import RowEventConfig
 
-ARCHITECTURE_VERSION = "spatial_conv_lif_v22"
+ARCHITECTURE_VERSION = "spatial_conv_lif_v26"
 ANSWER_HEAD_VERSION = "spatial_conv_lif_row_decoder_v22"
 ROW_CONFIG = RowEventConfig(max_demonstrations=10, max_grid_size=30)
 BASE_INPUT_WIDTH = ROW_CONFIG.input_width
@@ -69,7 +69,7 @@ class SpatialModelConfig:
         LIF membrane time constant in milliseconds.
     synapse_tau_ms : float, default=20
         Exponential-synapse time constant in milliseconds.
-    threshold_mv : float, default=1
+    threshold_mv : float, default=0.05
         LIF firing threshold in millivolts.
     architecture_version : str, default="spatial_conv_lif_v22"
         Exact checkpoint schema identifier.
@@ -80,7 +80,7 @@ class SpatialModelConfig:
     seed: int = 2108
     membrane_tau_ms: float = 100.0
     synapse_tau_ms: float = 20.0
-    threshold_mv: float = 1.0
+    threshold_mv: float = 0.05
     architecture_version: str = ARCHITECTURE_VERSION
 
     def __post_init__(self) -> None:
@@ -253,6 +253,9 @@ class SpatialARCConvLIF(brainstate.nn.Module):
         self.membrane = brainstate.HiddenState(
             jnp.zeros(spatial_shape, dtype=jnp.float32) * u.mV
         )
+        self.last_spikes = brainstate.HiddenState(
+            jnp.zeros(spatial_shape, dtype=jnp.float32)
+        )
         self.color_trace = brainstate.HiddenState(
             jnp.zeros(color_shape, dtype=jnp.float32)
         )
@@ -291,6 +294,10 @@ class SpatialARCConvLIF(brainstate.nn.Module):
             )
             * u.mV
         )
+        self.last_spikes.value = jnp.zeros(
+            (*prefix, MAX_GRID_SIZE, MAX_GRID_SIZE, channels),
+            dtype=jnp.float32,
+        )
         self.color_trace.value = jnp.zeros(
             (*prefix, MAX_GRID_SIZE, MAX_GRID_SIZE, COLOR_COUNT),
             dtype=jnp.float32,
@@ -318,9 +325,7 @@ class SpatialARCConvLIF(brainstate.nn.Module):
 
         features = spatial_event_features(event)
         threshold = self.config.threshold_mv * u.mV
-        prior_spikes = self._spike(
-            u.get_magnitude((self.membrane.value - threshold) / threshold)
-        )
+        prior_spikes = self.last_spikes.value
         current = self.input_conv(features) + self.recurrent_conv(prior_spikes)
         dt = brainstate.environ.get_dt()
         synapse_steps = u.maybe_decimal(
@@ -342,6 +347,7 @@ class SpatialARCConvLIF(brainstate.nn.Module):
         membrane = membrane * (1.0 - jax.lax.stop_gradient(spikes))
         self.synaptic_current.value = synaptic_current
         self.membrane.value = membrane
+        self.last_spikes.value = spikes
 
         grid_logits = 0.9 * self.color_trace.value + self.color_head(
             readout_activity

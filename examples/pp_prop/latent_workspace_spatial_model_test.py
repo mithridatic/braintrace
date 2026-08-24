@@ -98,3 +98,28 @@ def test_conv_lif_model_emits_row_and_shape_logits_from_neural_state() -> None:
     assert any(path.startswith("input_conv") for path in paths)
     assert any(path.startswith("recurrent_conv") for path in paths)
     assert any(path.startswith("color_head") for path in paths)
+
+
+def test_stored_spike_drives_recurrent_kernel_after_voltage_reset() -> None:
+    subject = _subject()
+    model = subject.SpatialARCConvLIF(
+        subject.SpatialModelConfig(
+            input_width=subject.MODEL_INPUT_WIDTH,
+            spatial_channels=1,
+            seed=43,
+        )
+    )
+    event = jnp.zeros((1, subject.MODEL_INPUT_WIDTH), dtype=jnp.float32)
+
+    with brainstate.environ.context(dt=1.0 * u.ms):
+        brainstate.nn.init_all_states(model, batch_size=1)
+        model(event)
+        without_spike = np.asarray(u.get_mantissa(model.membrane.value)).copy()
+        brainstate.nn.reset_all_states(model, batch_size=1)
+        forced = jnp.zeros_like(model.last_spikes.value).at[0, 15, 15, 0].set(1.0)
+        model.last_spikes.value = forced
+        model(event)
+        with_spike = np.asarray(u.get_mantissa(model.membrane.value)).copy()
+
+    assert np.count_nonzero(np.asarray(forced)) == 1
+    assert without_spike.tobytes() != with_spike.tobytes()
