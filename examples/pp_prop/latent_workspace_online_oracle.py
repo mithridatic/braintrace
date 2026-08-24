@@ -365,8 +365,28 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
     family_summary = exact_family_summary(evaluation["strict_task_ids"])
     non_label_families = family_summary["non_label_families"]
     non_copy_ids = family_summary["non_copy_non_label_ids"]
+    diagnostics = evaluation["diagnostics"]
+    predicted_nonzero = sum(
+        count
+        for color, count in diagnostics["predicted_color_counts"].items()
+        if color != "0"
+    )
+    anti_collapse_passed = bool(
+        parameter_before != parameter_after
+        and all(
+            groups_before[name].tobytes() != groups_after[name].tobytes()
+            for name in groups_before
+        )
+        and evaluation_before["candidate_sha256"] != evaluation["candidate_sha256"]
+        and predicted_nonzero > 0
+        and diagnostics["foreground_total"] > 0
+        and diagnostics["foreground_accuracy"] >= 0.05
+        and diagnostics["background_total"] > 0
+        and diagnostics["background_accuracy"] >= 0.5
+    )
     gate_passed = bool(
-        evaluation["strict_task_pass_at_1_count"] > 7
+        anti_collapse_passed
+        and evaluation["strict_task_pass_at_1_count"] > 7
         and len(non_label_families) >= 2
         and non_copy_ids
     )
@@ -424,6 +444,7 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
         "evaluation_before_training": evaluation_before,
         "evaluation": evaluation,
         "exact_family_summary": family_summary,
+        "anti_collapse_gate_passed": anti_collapse_passed,
         "promotion_gate_passed": gate_passed,
     }
     (config.output_dir / "result.json").write_bytes(

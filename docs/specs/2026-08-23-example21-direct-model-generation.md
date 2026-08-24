@@ -863,6 +863,44 @@ foreground and 50% background accuracy, and predict nonzero cells. Only then
 may the untouched seed-82108 full oracle run under the existing exact/family
 gate.
 
+V26 is rejected at clean revision
+`0dc1552693fdfc2fb54cb3e13f472b8f205a95d6`, with artifact
+`var/ex21-online-v26-anti-collapse-pilot-v1`. Its stored recurrence and 0.05 mV
+threshold passed the strengthened mechanism gate: every ordered leaf moved and
+the recurrent group reached gradient norm 0.5502. Behavior still failed after
+200 updates: 0/74 foreground, 505/505 background, only ten nonzero predicted
+cells, and score-ineligible 0/40 exact. No full V26 oracle ran. With the loss,
+spike carry, threshold, and recurrent-kernel defects isolated and corrected,
+the spatial Conv-LIF family is closed rather than given more runtime.
+
+### Whole-grid-balanced row GRU V27
+
+V27 returns to the V20/V21 two-layer BrainTrace GRU because it remains the
+strongest measured direct neural architecture (V21 reached 6/120) and applies
+the V25 whole-grid present-colour loss that was unavailable when that family was
+closed. The target-free row encoding, 128/256 widths, two recurrent layers,
+single-step pp-prop, trace half-life 40, fixed greedy row decoder, shape heads,
+and all answer-path eligibility rules remain unchanged. This is not another
+class-weight cap or trace tweak: target-colour counts are computed over the
+complete target grid, and the mean over 30 decode steps gives every present
+colour equal total mass. The loss version is
+`whole_grid_present_color_balanced_v27`.
+
+The online trainer's sibling regression must reproduce the V24 temporal
+imbalance and prove whole-grid equality, padding exclusion, finite all-background
+behavior, compiled nonzero gradients in recurrent/colour/height/width groups,
+and changed candidate bytes. Online evaluation records the same separate
+shape/foreground/background/predicted-colour diagnostics as the spatial path.
+
+One score-ineligible pilot uses seed 2108, training seed 12108, 120 tasks, 200
+updates in chunks of 20, batch size eight, the fixed full GRU widths, and 40
+fresh diagnostic tasks at seed 132108. It passes only with the mechanism gate,
+changed candidate bytes, at least 5% foreground accuracy, at least 50%
+background accuracy, and nonzero predictions. A pass permits one 1,000-update
+oracle with the fixed 1,400-task curriculum and still-untouched seed 82108. The
+promotion gate remains greater than 7/120, at least two non-label families, and
+at least one non-copy/non-label exact task.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

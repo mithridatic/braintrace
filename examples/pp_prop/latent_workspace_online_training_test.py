@@ -167,6 +167,39 @@ def test_balanced_step_loss_penalizes_rare_foreground_error_more() -> None:
     assert float(rare_loss) > float(background_loss)
 
 
+def test_v27_loss_balances_present_colors_across_the_whole_grid() -> None:
+    subject = _subject()
+    steps = 10
+    rows = jnp.zeros((steps, 1, 30), dtype=jnp.int32)
+    rows = rows.at[-1, 0, 0].set(7)
+    masks = jnp.zeros((steps, 1, 30), dtype=jnp.float32).at[:, 0, :10].set(1.0)
+    dimensions = jnp.zeros((steps, 1), dtype=jnp.int32)
+    widths = jnp.full((steps, 1), 9, dtype=jnp.int32)
+    row_zero = jnp.full((1, 30, 10), -10.0).at[0, :, 0].set(10.0)
+    row_seven = jnp.full((1, 30, 10), -10.0).at[0, :, 7].set(10.0)
+    height = jnp.full((1, 30), -10.0).at[0, 0].set(10.0)
+    width = jnp.full((1, 30), -10.0).at[0, 9].set(10.0)
+    zero = jnp.concatenate((row_zero.reshape(1, -1), height, width), axis=-1)
+    seven = jnp.concatenate((row_seven.reshape(1, -1), height, width), axis=-1)
+    zero_outputs = jnp.broadcast_to(zero, (steps, 1, 360))
+    seven_outputs = jnp.broadcast_to(seven, (steps, 1, 360))
+
+    color_mass = subject.whole_grid_color_mass(rows, masks)
+    step_loss = jax.vmap(subject.whole_grid_online_step_loss)
+    zero_loss = jnp.mean(
+        step_loss(zero_outputs, rows, masks, dimensions, widths, color_mass)
+    )
+    seven_loss = jnp.mean(
+        step_loss(seven_outputs, rows, masks, dimensions, widths, color_mass)
+    )
+
+    assert float(zero_loss) == pytest.approx(float(seven_loss), rel=1e-5)
+    assert float(color_mass[0, 0, 0]) == pytest.approx(30.0 / (2.0 * 99.0))
+    assert float(color_mass[-1, 0, 7]) == pytest.approx(15.0)
+    assert np.count_nonzero(np.asarray(color_mass[..., 1:7])) == 0
+    assert np.count_nonzero(np.asarray(color_mass[..., 8:])) == 0
+
+
 def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -226,7 +259,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "target_balanced_color_v21"
+    assert trainer.loss_version == "whole_grid_present_color_balanced_v27"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:
@@ -287,6 +320,10 @@ def test_target_free_evaluation_is_deterministic() -> None:
     assert first["candidates"][0]["grid"] == first["candidates"][1]["grid"]
     assert first["query_count"] == 2
     assert first["task_count"] == 1
+    assert first["diagnostics"]["shape_exact_count"] >= 0
+    assert sum(first["diagnostics"]["predicted_color_counts"].values()) == sum(
+        candidate["height"] * candidate["width"] for candidate in first["candidates"]
+    )
     assert first["candidates"][0]["parameter_dependencies"]
 
 
