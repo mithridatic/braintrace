@@ -1599,6 +1599,51 @@ checkpoint file hash is
 This permits only the already specified 800-update capability oracle and
 contributes zero acceptance tasks.
 
+The full V44 capability oracle passes at clean revision
+`20d41b979ce4fd1b54e48c137d203ed3673be990`, with artifact
+`var/ex21-online-v44-gated-memory-capability-v1`. The artifact-bound minimum
+was 12 and the strict result was 23/120: ten copy, nine recolour, and four
+select-marked-region tasks. It reached 110/120 exact shapes, 36.61%
+foreground accuracy, and 91.38% background accuracy. Mean loss declined from
+1.2187 over the first 100 updates to 0.8331 over the last 100; the training
+segment took 262.59 seconds. All four groups and 18 leaves moved, all six
+MiniLSTM matrices were included through twelve compiler relations, recurrent
+exclusions were zero, and mechanism, anti-collapse, family, and strict gates
+passed. The final parameter digest is
+`c3383b882d2a14f704a4e3563924a3e9321e2445ca317d6875f94d6dd98b9a11` and
+the checkpoint file hash is
+`2a1178c4d21c27164d008be662778ff6cdadd1e7ad8d161b301c1873c02045cd`.
+This is still score-ineligible synthetic evidence.
+
+### Public-ARC gated-memory transfer V45
+
+Every canonical public-training interval has already been scored by an older
+architecture, so no independent training-role validation fold remains. V45
+therefore reuses canonical positions 0 through 79 only as a declared
+selection-biased development benchmark. It may not count toward acceptance.
+The complete evaluation role remains loaded only for corpus-integrity checks
+and is neither encoded nor scored.
+
+V45 reloads the exact V44 checkpoint and rejects any file, parameter,
+architecture, or ordered-leaf mismatch. It globally fine-tunes on the other
+319 public ARC-AGI-1 training tasks for 500 updates in chunks of 20, batch size
+eight, with augmentation seed 26108, learning rate 0.001, and the unchanged
+single-step PP-prop trace. Model seed 2108, two 128-unit phase-separated
+MiniLSTM populations, twelve experts, relation activation, decoder, loss, and
+greedy answer path remain fixed. There is no task-local fitting or answer-time
+adaptation.
+
+Sibling tests must first fail against the absent runner, then prove exact
+scope selection, fit/score fingerprint disjointness, fit-only episode
+membership, V44 checkpoint and digest validation, target-free deterministic
+scoring, recurrent compiler inclusion, finite group gradients, all-group and
+all-leaf movement, changed candidate bytes, and complete artifact binding.
+The pilot passes only if every mechanism condition holds and strict count is
+at least 4/80, exceeding the historical direct-neural 3/80 development best.
+Failure closes V44/V45. A pass permits specification of one all-training
+nomination against the untouched complete evaluation manifest; it does not
+relax the literal 16/400 acceptance or causal qualification matrix.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
