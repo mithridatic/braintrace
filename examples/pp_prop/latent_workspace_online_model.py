@@ -1,4 +1,4 @@
-"""Checkpoint-owned hierarchical recurrent model for online ARC learning."""
+"""Checkpoint-owned direct-state recurrent model for online ARC learning."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_hierarchical_row_decoder_v29"
+ARCHITECTURE_VERSION = "online_vanilla_rnn_hierarchical_decoder_v32"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -47,13 +47,13 @@ class OnlineModelConfig:
     encoder_width : int, default=128
         Width of the trainable event projection.
     hidden_width : int, default=256
-        Width of every BrainTrace GRU layer.
+        Width of every BrainTrace recurrent layer after the first.
     recurrent_layers : int, default=2
         Number of stacked recurrent layers, at least two. The first has
         ``encoder_width`` units and later layers have ``hidden_width`` units.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_hierarchical_row_decoder_v29"
+    architecture_version : str, default="online_vanilla_rnn_hierarchical_decoder_v32"
         Exact checkpoint-schema identifier.
     """
 
@@ -107,8 +107,8 @@ def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jn
     return row, height, width
 
 
-class OnlineARCGRU(brainstate.nn.Module):
-    """Consume one lossless event and emit one answer row plus shape logits.
+class OnlineARCVanillaRNN(brainstate.nn.Module):
+    """Consume one lossless event through direct-state recurrent layers.
 
     Parameters
     ----------
@@ -129,12 +129,18 @@ class OnlineARCGRU(brainstate.nn.Module):
         self.config = config
         with brainstate.random.seed_context(config.seed):
             layers = [
-                braintrace.nn.GRUCell(config.input_width, config.encoder_width),
-                braintrace.nn.GRUCell(config.encoder_width, config.hidden_width),
+                braintrace.nn.ValinaRNNCell(
+                    config.input_width, config.encoder_width, activation="tanh"
+                ),
+                braintrace.nn.ValinaRNNCell(
+                    config.encoder_width, config.hidden_width, activation="tanh"
+                ),
             ]
             for _ in range(config.recurrent_layers - 2):
                 layers.append(
-                    braintrace.nn.GRUCell(config.hidden_width, config.hidden_width)
+                    braintrace.nn.ValinaRNNCell(
+                        config.hidden_width, config.hidden_width, activation="tanh"
+                    )
                 )
             self.recurrent = tuple(layers)
             self.row_color_head = braintrace.nn.Linear(

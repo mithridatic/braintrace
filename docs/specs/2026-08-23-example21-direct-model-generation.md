@@ -1037,6 +1037,45 @@ the one untouched-seed-82108 1,000-update oracle under the existing greater-
 than-7/120 and family-diversity promotion gate. There is no further gate-mass
 tuning if this midpoint fails.
 
+V31 is rejected at clean revision
+`3e49e99b30dfb4baa2bb0e4135a9d59f3957508e`, with artifact
+`var/ex21-online-v31-anti-collapse-pilot-v1`. In 17.44 training seconds it
+moved every parameter group and changed candidate bytes, but scored a
+score-ineligible 0/40. Background was 423/439 cells (96.36%) and foreground
+was 0/59. The unchanged 5% foreground gate failed. No full V31 oracle runs and
+the gate-mass family is closed.
+
+### Direct-state vanilla recurrent PP-prop V32
+
+V32 addresses the remaining compiler-reported topology defect rather than
+changing gate mass again. Each of the two BrainTrace GRU cells is replaced by
+a `braintrace.nn.ValinaRNNCell` with `tanh` activation and the same 128/256
+hidden widths. Its single trainable matrix consumes the concatenated current
+input and previous hidden state, then flows through only `tanh` before writing
+that cell's `HiddenState`. This satisfies the compiler's non-parametric-tail
+invariant. In contrast, each V20-V31 GRU reset matrix reached state only through
+the trainable candidate matrix and was explicitly excluded from ETP. The fixed
+hierarchical decoder, V31 fourth-root gate loss, conditional colour/shape
+losses, event stream, data, trace decay, optimizer, and schedule remain fixed.
+The architecture identifier is
+`online_vanilla_rnn_hierarchical_decoder_v32`; the answer-head identifier
+remains `hierarchical_row_decoder_v29` because serialization is unchanged.
+
+Tests must first reproduce the GRU weight-to-weight exclusions, then prove V32
+has no recurrent excluded weight and no
+`relation_excluded_weight_to_weight` diagnostic. Every recurrent parameter
+leaf, every output group, and candidate bytes must move under compiled
+single-step PP-prop. Checkpoint round-trip must bind the V32 architecture and
+preserve bytes. The oracle artifact records compiler counts, excluded paths,
+and diagnostic kinds.
+
+One score-ineligible pilot uses the unchanged 200-update schedule and 40 fresh
+diagnostic tasks at seed 182108. It must clear the mechanism gate, predict
+nonzero cells, and achieve at least 5% foreground and 50% background accuracy.
+Only a pass permits one 1,000-update oracle with the untouched seed 82108 and
+existing exact/family promotion gate. This is a topology test, not another
+loss-weight search.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

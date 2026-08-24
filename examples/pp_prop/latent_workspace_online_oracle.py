@@ -25,7 +25,7 @@ from examples.pp_prop.latent_workspace_direct_experiment import (
     training_episode_catalog,
 )
 from examples.pp_prop.latent_workspace_online_model import (
-    OnlineARCGRU,
+    OnlineARCVanillaRNN,
     OnlineModelConfig,
 )
 from examples.pp_prop.latent_workspace_online_training import (
@@ -307,7 +307,7 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
             recurrent_layers=config.recurrent_layers,
             seed=config.seed,
         )
-        model = OnlineARCGRU(model_config)
+        model = OnlineARCVanillaRNN(model_config)
         parameter_before = parameter_digest(model)
         groups_before = parameter_arrays(model)
         evaluation_before = evaluate_online_model(
@@ -322,6 +322,26 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
             learning_rate=config.learning_rate,
             trace_decay=config.trace_decay,
         )
+        compiler_report = trainer.learner.report
+        compiler_summary = {
+            "counts": dict(compiler_report.counts),
+            "etrace_weight_paths": [
+                ".".join(map(str, path))
+                for path, _ in compiler_report.etrace_weights
+            ],
+            "excluded_paths": [
+                ".".join(map(str, path))
+                for path, _ in compiler_report.excluded_weights
+            ],
+            "recurrent_excluded_paths": [
+                ".".join(map(str, path))
+                for path, _ in compiler_report.excluded_weights
+                if path[0] == "recurrent"
+            ],
+            "diagnostic_kinds": [
+                item.kind.value for item in compiler_report.diagnostics
+            ],
+        }
         sampling_rng = brainstate.random.RandomState(config.synthetic_seed + 1)
         losses = []
         gradient_norms = {name: 0.0 for name in trainer.groups}
@@ -430,6 +450,7 @@ def run_oracle(config: OnlineOracleConfig) -> dict[str, object]:
             "loss_version": trainer.loss_version,
             "trace_decay": config.trace_decay,
             "gradient_norm_maxima": gradient_norms,
+            "compiler": compiler_summary,
         },
         "training": {
             "losses": losses,

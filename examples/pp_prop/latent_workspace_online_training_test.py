@@ -379,7 +379,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
     episode = subject.encode_online_episode(_task(), 0, config)
     batch = subject.stack_online_episodes((episode, episode))
-    model = model_subject.OnlineARCGRU(
+    model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
             input_width=config.input_width + 31,
             encoder_width=8,
@@ -395,6 +395,14 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         trace_decay=2.0 ** (-1.0 / 40.0),
     )
     before = subject.parameter_arrays(model)
+    recurrent_before = {
+        path: b"".join(
+            np.ascontiguousarray(np.asarray(leaf)).tobytes()
+            for leaf in jax.tree.leaves(state.value)
+        )
+        for path, state in model.states(brainstate.ParamState).items()
+        if path[0] == "recurrent"
+    }
 
     @brainstate.transform.jit
     def forward(events):
@@ -411,6 +419,14 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         subject.repeat_online_batch(batch, updates=5)
     )
     after = subject.parameter_arrays(model)
+    recurrent_after = {
+        path: b"".join(
+            np.ascontiguousarray(np.asarray(leaf)).tobytes()
+            for leaf in jax.tree.leaves(state.value)
+        )
+        for path, state in model.states(brainstate.ParamState).items()
+        if path[0] == "recurrent"
+    }
     candidate_after = subject.decode_hierarchical_online_outputs(
         np.asarray(forward(jnp.asarray(batch.events)))[:, 0],
         episode.decode_mask,
@@ -427,6 +443,13 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     }
     assert all(np.isfinite(float(value)) and float(value) > 0.0 for value in gradient_norms.values())
     assert all(before[name].tobytes() != after[name].tobytes() for name in before)
+    assert recurrent_before
+    assert all(
+        recurrent_before[path] != recurrent_after[path] for path in recurrent_before
+    )
+    assert not any(
+        path[0] == "recurrent" for path, _ in trainer.learner.report.excluded_weights
+    )
     assert msgspec.json.encode(candidate_before["grid"]) != msgspec.json.encode(
         candidate_after["grid"]
     )
@@ -478,7 +501,7 @@ def test_target_free_evaluation_is_deterministic() -> None:
         subject.encode_online_episode(_task(3), 0, config),
         subject.encode_online_episode(_task(9), 0, config),
     )
-    model = model_subject.OnlineARCGRU(
+    model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
             input_width=config.input_width + 31,
             encoder_width=6,
@@ -512,7 +535,7 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
         recurrent_layers=2,
         seed=17,
     )
-    model = model_subject.OnlineARCGRU(config)
+    model = model_subject.OnlineARCVanillaRNN(config)
     path = tmp_path / "online.npz"
 
     digest = subject.save_online_checkpoint(model, path)
@@ -532,7 +555,7 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
 def test_checkpoint_rejects_exact_schema_corruption(tmp_path, corruption: str) -> None:
     subject = _subject()
     model_subject = _model_subject()
-    model = model_subject.OnlineARCGRU(
+    model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
             input_width=7,
             encoder_width=5,

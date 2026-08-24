@@ -10,6 +10,8 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
+import braintrace
+
 
 def _subject():
     return importlib.import_module("examples.pp_prop.latent_workspace_online_model")
@@ -24,7 +26,9 @@ def _clear_compilation_caches():
 def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
-    assert subject.ARCHITECTURE_VERSION == "online_hierarchical_row_decoder_v29"
+    assert subject.ARCHITECTURE_VERSION == (
+        "online_vanilla_rnn_hierarchical_decoder_v32"
+    )
 
     with pytest.raises(ValueError, match="architecture_version"):
         subject.OnlineModelConfig(input_width=8, architecture_version="old")
@@ -37,7 +41,7 @@ def test_config_rejects_schema_and_invalid_widths() -> None:
     with pytest.raises(TypeError, match="nonnegative"):
         subject.OnlineModelConfig(input_width=8, seed=1.5)
     with pytest.raises(TypeError, match="OnlineModelConfig"):
-        subject.OnlineARCGRU(object())
+        subject.OnlineARCVanillaRNN(object())
 
 
 def test_model_emits_one_row_and_shape_logits_per_step() -> None:
@@ -49,7 +53,7 @@ def test_model_emits_one_row_and_shape_logits_per_step() -> None:
         recurrent_layers=2,
         seed=9,
     )
-    model = subject.OnlineARCGRU(config)
+    model = subject.OnlineARCVanillaRNN(config)
     brainstate.nn.init_all_states(model, batch_size=3)
 
     output = np.asarray(model(jnp.ones((3, config.input_width), dtype=jnp.float32)))
@@ -66,7 +70,7 @@ def test_model_emits_one_row_and_shape_logits_per_step() -> None:
 
 def test_decode_instruction_changes_checkpoint_owned_output() -> None:
     subject = _subject()
-    model = subject.OnlineARCGRU(
+    model = subject.OnlineARCVanillaRNN(
         subject.OnlineModelConfig(
             input_width=10,
             encoder_width=8,
@@ -107,7 +111,7 @@ def test_split_step_logits_validates_last_dimension() -> None:
 
 def test_model_rejects_wrong_event_width() -> None:
     subject = _subject()
-    model = subject.OnlineARCGRU(
+    model = subject.OnlineARCVanillaRNN(
         subject.OnlineModelConfig(
             input_width=8,
             encoder_width=4,
@@ -119,3 +123,44 @@ def test_model_rejects_wrong_event_width() -> None:
 
     with pytest.raises(ValueError, match="last dimension"):
         model(jnp.zeros((1, 7), dtype=jnp.float32))
+
+
+def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
+    subject = _subject()
+    legacy = braintrace.nn.GRUCell(3, 4)
+    legacy_learner = braintrace.compile(
+        legacy,
+        braintrace.pp_prop,
+        jnp.zeros((1, 3), dtype=jnp.float32),
+        batch_size=1,
+        vmap=False,
+        decay_or_rank=0.9,
+        vjp_method="single-step",
+    )
+    legacy_kinds = {item.kind.value for item in legacy_learner.report.diagnostics}
+    assert "relation_excluded_weight_to_weight" in legacy_kinds
+
+    model = subject.OnlineARCVanillaRNN(
+        subject.OnlineModelConfig(
+            input_width=7,
+            encoder_width=5,
+            hidden_width=9,
+            recurrent_layers=2,
+            seed=23,
+        )
+    )
+    learner = braintrace.compile(
+        model,
+        braintrace.pp_prop,
+        jnp.zeros((1, 7), dtype=jnp.float32),
+        batch_size=1,
+        vmap=False,
+        decay_or_rank=0.9,
+        vjp_method="single-step",
+    )
+    recurrent_exclusions = [
+        path for path, _ in learner.report.excluded_weights if path[0] == "recurrent"
+    ]
+    kinds = {item.kind.value for item in learner.report.diagnostics}
+    assert recurrent_exclusions == []
+    assert "relation_excluded_weight_to_weight" not in kinds

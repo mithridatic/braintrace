@@ -26,7 +26,7 @@ from examples.pp_prop.latent_workspace_direct_generation import (
 from examples.pp_prop.latent_workspace_online_model import (
     COLOR_COUNT,
     MAX_GRID_SIZE,
-    OnlineARCGRU,
+    OnlineARCVanillaRNN,
     OnlineModelConfig,
     split_step_logits,
 )
@@ -406,7 +406,7 @@ def evaluation_online_episodes(
 
 
 def evaluate_online_model(
-    model: OnlineARCGRU,
+    model: OnlineARCVanillaRNN,
     episodes: tuple[OnlineEpisode, ...],
     *,
     trace_decay: float = 2.0 ** (-1.0 / 40.0),
@@ -416,7 +416,7 @@ def evaluate_online_model(
 
     Parameters
     ----------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Frozen checkpoint-owned model.
     episodes : tuple of OnlineEpisode
         Ordered model inputs with out-of-band scorer targets.
@@ -431,8 +431,8 @@ def evaluate_online_model(
         Exact task score, memberships, candidates, and candidate digest.
     """
 
-    if not isinstance(model, OnlineARCGRU):
-        raise TypeError("model must be an OnlineARCGRU instance.")
+    if not isinstance(model, OnlineARCVanillaRNN):
+        raise TypeError("model must be an OnlineARCVanillaRNN instance.")
     if not isinstance(episodes, tuple) or not episodes:
         raise ValueError("episodes must be a nonempty tuple.")
     if isinstance(batch_size, bool) or not isinstance(batch_size, Integral):
@@ -630,7 +630,7 @@ def whole_grid_online_step_loss(
     target_width: jnp.ndarray,
     color_mass: jnp.ndarray,
 ) -> jnp.ndarray:
-    """Apply fixed whole-grid colour mass at one GRU decode step.
+    """Apply fixed whole-grid colour mass at one recurrent decode step.
 
     Parameters
     ----------
@@ -953,12 +953,12 @@ def _parameter_group(path: tuple[object, ...]) -> str:
     raise ValueError(f"Parameter path {path!r} has no online parameter group.")
 
 
-def parameter_arrays(model: OnlineARCGRU) -> dict[str, np.ndarray]:
+def parameter_arrays(model: OnlineARCVanillaRNN) -> dict[str, np.ndarray]:
     """Return deterministic byte arrays grouped by answer-path role.
 
     Parameters
     ----------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Model whose ordered checkpoint leaves are grouped.
 
     Returns
@@ -967,8 +967,8 @@ def parameter_arrays(model: OnlineARCGRU) -> dict[str, np.ndarray]:
         One contiguous ``uint8`` array for each parameter group.
     """
 
-    if not isinstance(model, OnlineARCGRU):
-        raise TypeError("model must be an OnlineARCGRU instance.")
+    if not isinstance(model, OnlineARCVanillaRNN):
+        raise TypeError("model must be an OnlineARCVanillaRNN instance.")
     chunks: dict[str, list[bytes]] = {
         "recurrent": [],
         "row_color": [],
@@ -987,12 +987,12 @@ def parameter_arrays(model: OnlineARCGRU) -> dict[str, np.ndarray]:
     }
 
 
-def parameter_digest(model: OnlineARCGRU) -> str:
+def parameter_digest(model: OnlineARCVanillaRNN) -> str:
     """Hash ordered parameter paths, metadata, and bytes.
 
     Parameters
     ----------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Model whose current checkpoint-owned parameters are bound.
 
     Returns
@@ -1001,8 +1001,8 @@ def parameter_digest(model: OnlineARCGRU) -> str:
         Lowercase SHA-256 digest.
     """
 
-    if not isinstance(model, OnlineARCGRU):
-        raise TypeError("model must be an OnlineARCGRU instance.")
+    if not isinstance(model, OnlineARCVanillaRNN):
+        raise TypeError("model must be an OnlineARCVanillaRNN instance.")
     digest = hashlib.sha256()
     for path, state in model.states(brainstate.ParamState).items():
         digest.update(".".join(map(str, path)).encode("utf-8"))
@@ -1019,7 +1019,7 @@ class OnlinePPPropTrainer:
 
     Parameters
     ----------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Model updated in place.
     batch_size : int
         Static batch size used by model and eligibility states.
@@ -1035,14 +1035,14 @@ class OnlinePPPropTrainer:
 
     def __init__(
         self,
-        model: OnlineARCGRU,
+        model: OnlineARCVanillaRNN,
         *,
         batch_size: int,
         learning_rate: float = 0.001,
         trace_decay: float = 2.0 ** (-1.0 / 40.0),
     ):
-        if not isinstance(model, OnlineARCGRU):
-            raise TypeError("model must be an OnlineARCGRU instance.")
+        if not isinstance(model, OnlineARCVanillaRNN):
+            raise TypeError("model must be an OnlineARCVanillaRNN instance.")
         if isinstance(batch_size, bool) or not isinstance(batch_size, Integral):
             raise TypeError("batch_size must be a positive integer.")
         self.batch_size = int(batch_size)
@@ -1220,12 +1220,12 @@ class OnlinePPPropTrainer:
         }
 
 
-def save_online_checkpoint(model: OnlineARCGRU, path: pathlib.Path) -> str:
+def save_online_checkpoint(model: OnlineARCVanillaRNN, path: pathlib.Path) -> str:
     """Save an exact-schema online-model checkpoint.
 
     Parameters
     ----------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Model whose parameters are saved.
     path : pathlib.Path
         Destination ``.npz`` path.
@@ -1236,8 +1236,8 @@ def save_online_checkpoint(model: OnlineARCGRU, path: pathlib.Path) -> str:
         Ordered parameter digest.
     """
 
-    if not isinstance(model, OnlineARCGRU):
-        raise TypeError("model must be an OnlineARCGRU instance.")
+    if not isinstance(model, OnlineARCVanillaRNN):
+        raise TypeError("model must be an OnlineARCVanillaRNN instance.")
     path = pathlib.Path(path)
     arrays: dict[str, np.ndarray] = {}
     leaves_metadata = []
@@ -1276,7 +1276,7 @@ def save_online_checkpoint(model: OnlineARCGRU, path: pathlib.Path) -> str:
 
 def load_online_checkpoint(
     path: pathlib.Path,
-) -> tuple[OnlineARCGRU, dict[str, object]]:
+) -> tuple[OnlineARCVanillaRNN, dict[str, object]]:
     """Load an exact-schema online-model checkpoint.
 
     Parameters
@@ -1286,7 +1286,7 @@ def load_online_checkpoint(
 
     Returns
     -------
-    model : OnlineARCGRU
+    model : OnlineARCVanillaRNN
         Restored model.
     metadata : dict
         Validated checkpoint metadata.
@@ -1307,7 +1307,7 @@ def load_online_checkpoint(
                 leaves_metadata, list
             ):
                 raise ValueError("checkpoint metadata schema is invalid.")
-            model = OnlineARCGRU(OnlineModelConfig(**architecture))
+            model = OnlineARCVanillaRNN(OnlineModelConfig(**architecture))
             states = model.states(brainstate.ParamState)
             expected_names = {
                 item.get("key") for item in leaves_metadata if isinstance(item, dict)

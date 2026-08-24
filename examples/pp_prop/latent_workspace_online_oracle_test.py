@@ -110,8 +110,12 @@ def test_tiny_oracle_run_writes_bound_finite_artifact(tmp_path, monkeypatch) -> 
     assert np.isfinite(result["training"]["losses"]).all()
     assert result["model"]["parameters_moved"] is True
     assert result["model"]["architecture"]["architecture_version"] == (
-        "online_hierarchical_row_decoder_v29"
+        "online_vanilla_rnn_hierarchical_decoder_v32"
     )
+    assert result["learner"]["compiler"]["recurrent_excluded_paths"] == []
+    assert "relation_excluded_weight_to_weight" not in result["learner"][
+        "compiler"
+    ]["diagnostic_kinds"]
     assert result["evaluation"]["task_count"] == 4
     assert result["evaluation"]["query_count"] == 4
     assert result["checkpoint"]["parameter_sha256"] == (
