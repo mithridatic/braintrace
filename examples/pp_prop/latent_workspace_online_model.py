@@ -15,7 +15,7 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_query_replay_hierarchical_decoder_v34"
+ARCHITECTURE_VERSION = "online_query_residual_hierarchical_decoder_v35"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -51,9 +51,13 @@ class OnlineModelConfig:
     recurrent_layers : int, default=2
         Number of stacked recurrent layers, at least two. The first has
         ``encoder_width`` units and later layers have ``hidden_width`` units.
+    max_demonstrations : int, default=10
+        Demonstration capacity bound into the row-event feature layout.
+    max_grid_size : int, default=30
+        Grid capacity bound into the row-event feature layout.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_query_replay_hierarchical_decoder_v34"
+    architecture_version : str, default="online_query_residual_hierarchical_decoder_v35"
         Exact checkpoint-schema identifier.
     """
 
@@ -61,6 +65,8 @@ class OnlineModelConfig:
     encoder_width: int = 128
     hidden_width: int = 256
     recurrent_layers: int = 2
+    max_demonstrations: int = 10
+    max_grid_size: int = MAX_GRID_SIZE
     seed: int = 2108
     architecture_version: str = ARCHITECTURE_VERSION
 
@@ -69,6 +75,8 @@ class OnlineModelConfig:
             "input_width",
             "encoder_width",
             "hidden_width",
+            "max_demonstrations",
+            "max_grid_size",
         ):
             object.__setattr__(self, name, _positive_integer(getattr(self, name), name))
         layers = _positive_integer(self.recurrent_layers, "recurrent_layers")
@@ -76,10 +84,41 @@ class OnlineModelConfig:
             raise ValueError("recurrent_layers must be at least two.")
         object.__setattr__(self, "recurrent_layers", layers)
         object.__setattr__(self, "seed", _nonnegative_integer(self.seed, "seed"))
+        if self.max_grid_size > MAX_GRID_SIZE:
+            raise ValueError(f"max_grid_size must be at most {MAX_GRID_SIZE}.")
+        expected_input_width = (
+            41 + self.max_demonstrations + 27 * self.max_grid_size
+        )
+        if self.input_width != expected_input_width:
+            raise ValueError(
+                "input_width must match the bound row-event and decode layout "
+                f"({expected_input_width})."
+            )
         if self.architecture_version != ARCHITECTURE_VERSION:
             raise ValueError(
                 f"architecture_version must be {ARCHITECTURE_VERSION!r}."
             )
+
+    @property
+    def query_height_slice(self) -> slice:
+        """Return the replayed query-input-height feature slice."""
+
+        start = 10 + self.max_demonstrations + self.max_grid_size
+        return slice(start, start + self.max_grid_size)
+
+    @property
+    def query_width_slice(self) -> slice:
+        """Return the replayed query-input-width feature slice."""
+
+        start = self.query_height_slice.stop
+        return slice(start, start + self.max_grid_size)
+
+    @property
+    def query_color_slice(self) -> slice:
+        """Return the replayed position-specific query-colour feature slice."""
+
+        start = 10 + self.max_demonstrations + 7 * self.max_grid_size
+        return slice(start, start + self.max_grid_size * COLOR_COUNT)
 
 
 def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
@@ -146,10 +185,19 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
             self.row_color_head = braintrace.nn.Linear(
                 config.hidden_width, ROW_COLOR_WIDTH
             )
+            self.query_color_head = braintrace.nn.Linear(
+                config.max_grid_size * COLOR_COUNT, ROW_COLOR_WIDTH
+            )
             self.height_head = braintrace.nn.Linear(
                 config.hidden_width, MAX_GRID_SIZE
             )
+            self.query_height_head = braintrace.nn.Linear(
+                config.max_grid_size, MAX_GRID_SIZE
+            )
             self.width_head = braintrace.nn.Linear(config.hidden_width, MAX_GRID_SIZE)
+            self.query_width_head = braintrace.nn.Linear(
+                config.max_grid_size, MAX_GRID_SIZE
+            )
 
     def update(self, event: jnp.ndarray) -> jnp.ndarray:
         """Advance one logical event and return fixed-layout logits.
@@ -173,11 +221,20 @@ class OnlineARCVanillaRNN(brainstate.nn.Module):
         hidden = event
         for layer in self.recurrent:
             hidden = layer(hidden)
+        row_color = self.row_color_head(hidden) + self.query_color_head(
+            event[..., self.config.query_color_slice]
+        )
+        height = self.height_head(hidden) + self.query_height_head(
+            event[..., self.config.query_height_slice]
+        )
+        width = self.width_head(hidden) + self.query_width_head(
+            event[..., self.config.query_width_slice]
+        )
         return jnp.concatenate(
             (
-                self.row_color_head(hidden),
-                self.height_head(hidden),
-                self.width_head(hidden),
+                row_color,
+                height,
+                width,
             ),
             axis=-1,
         )

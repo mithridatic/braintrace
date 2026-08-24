@@ -423,6 +423,8 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
             input_width=config.input_width + 31,
+            max_demonstrations=config.max_demonstrations,
+            max_grid_size=config.max_grid_size,
             encoder_width=8,
             hidden_width=12,
             recurrent_layers=2,
@@ -443,6 +445,12 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         )
         for path, state in model.states(brainstate.ParamState).items()
         if path[0] == "recurrent"
+    }
+    residual_before = {
+        (path, index): np.ascontiguousarray(np.asarray(leaf)).tobytes()
+        for path, state in model.states(brainstate.ParamState).items()
+        if str(path[0]).startswith("query_")
+        for index, leaf in enumerate(jax.tree.leaves(state.value))
     }
 
     @brainstate.transform.jit
@@ -468,6 +476,12 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
         for path, state in model.states(brainstate.ParamState).items()
         if path[0] == "recurrent"
     }
+    residual_after = {
+        (path, index): np.ascontiguousarray(np.asarray(leaf)).tobytes()
+        for path, state in model.states(brainstate.ParamState).items()
+        if str(path[0]).startswith("query_")
+        for index, leaf in enumerate(jax.tree.leaves(state.value))
+    }
     candidate_after = subject.decode_hierarchical_online_outputs(
         np.asarray(forward(jnp.asarray(batch.events)))[:, 0],
         episode.decode_mask,
@@ -490,6 +504,10 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert not any(
         path[0] == "recurrent" for path, _ in trainer.learner.report.excluded_weights
+    )
+    assert residual_before
+    assert all(
+        residual_before[path] != residual_after[path] for path in residual_before
     )
     assert msgspec.json.encode(candidate_before["grid"]) != msgspec.json.encode(
         candidate_after["grid"]
@@ -545,6 +563,8 @@ def test_target_free_evaluation_is_deterministic() -> None:
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
             input_width=config.input_width + 31,
+            max_demonstrations=config.max_demonstrations,
+            max_grid_size=config.max_grid_size,
             encoder_width=6,
             hidden_width=8,
             recurrent_layers=2,
@@ -569,8 +589,11 @@ def test_target_free_evaluation_is_deterministic() -> None:
 def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
     subject = _subject()
     model_subject = _model_subject()
+    row_config = RowEventConfig(max_demonstrations=1, max_grid_size=2)
     config = model_subject.OnlineModelConfig(
-        input_width=7,
+        input_width=row_config.input_width + 31,
+        max_demonstrations=row_config.max_demonstrations,
+        max_grid_size=row_config.max_grid_size,
         encoder_width=5,
         hidden_width=9,
         recurrent_layers=2,
@@ -584,7 +607,7 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
 
     assert metadata["parameter_sha256"] == digest
     assert subject.parameter_digest(loaded) == digest
-    inputs = jnp.ones((2, 7), dtype=jnp.float32)
+    inputs = jnp.ones((2, config.input_width), dtype=jnp.float32)
     brainstate.nn.init_all_states(model, batch_size=2)
     original = np.asarray(model(inputs))
     brainstate.nn.init_all_states(loaded, batch_size=2)
@@ -596,9 +619,12 @@ def test_checkpoint_roundtrip_preserves_outputs_and_digest(tmp_path) -> None:
 def test_checkpoint_rejects_exact_schema_corruption(tmp_path, corruption: str) -> None:
     subject = _subject()
     model_subject = _model_subject()
+    row_config = RowEventConfig(max_demonstrations=1, max_grid_size=2)
     model = model_subject.OnlineARCVanillaRNN(
         model_subject.OnlineModelConfig(
-            input_width=7,
+            input_width=row_config.input_width + 31,
+            max_demonstrations=row_config.max_demonstrations,
+            max_grid_size=row_config.max_grid_size,
             encoder_width=5,
             hidden_width=9,
             recurrent_layers=2,

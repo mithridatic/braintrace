@@ -166,7 +166,10 @@ class OnlineOracleConfig:
             raise ValueError("trace_decay must be at most 1.0.")
         object.__setattr__(self, "trace_decay", decay)
         OnlineModelConfig(
-            input_width=1,
+            input_width=RowEventConfig(
+                max_demonstrations=10, max_grid_size=30
+            ).input_width
+            + 31,
             encoder_width=self.encoder_width,
             hidden_width=self.hidden_width,
             recurrent_layers=self.recurrent_layers,

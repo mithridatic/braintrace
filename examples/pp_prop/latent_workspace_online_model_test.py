@@ -17,6 +17,17 @@ def _subject():
     return importlib.import_module("examples.pp_prop.latent_workspace_online_model")
 
 
+def _config(subject, **overrides):
+    max_demonstrations = overrides.pop("max_demonstrations", 1)
+    max_grid_size = overrides.pop("max_grid_size", 2)
+    return subject.OnlineModelConfig(
+        input_width=41 + max_demonstrations + 27 * max_grid_size,
+        max_demonstrations=max_demonstrations,
+        max_grid_size=max_grid_size,
+        **overrides,
+    )
+
+
 @pytest.fixture(autouse=True)
 def _clear_compilation_caches():
     yield
@@ -27,27 +38,31 @@ def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
     assert subject.ARCHITECTURE_VERSION == (
-        "online_query_replay_hierarchical_decoder_v34"
+        "online_query_residual_hierarchical_decoder_v35"
     )
 
     with pytest.raises(ValueError, match="architecture_version"):
-        subject.OnlineModelConfig(input_width=8, architecture_version="old")
+        _config(subject, architecture_version="old")
     with pytest.raises(TypeError, match="encoder_width"):
-        subject.OnlineModelConfig(input_width=8, encoder_width=True)
+        _config(subject, encoder_width=True)
     with pytest.raises(ValueError, match="positive"):
         subject.OnlineModelConfig(input_width=0)
     with pytest.raises(ValueError, match="at least two"):
-        subject.OnlineModelConfig(input_width=8, recurrent_layers=1)
+        _config(subject, recurrent_layers=1)
     with pytest.raises(TypeError, match="nonnegative"):
-        subject.OnlineModelConfig(input_width=8, seed=1.5)
+        _config(subject, seed=1.5)
+    with pytest.raises(ValueError, match="layout"):
+        subject.OnlineModelConfig(
+            input_width=95, max_demonstrations=1, max_grid_size=2
+        )
     with pytest.raises(TypeError, match="OnlineModelConfig"):
         subject.OnlineARCVanillaRNN(object())
 
 
 def test_model_emits_one_row_and_shape_logits_per_step() -> None:
     subject = _subject()
-    config = subject.OnlineModelConfig(
-        input_width=12,
+    config = _config(
+        subject,
         encoder_width=8,
         hidden_width=16,
         recurrent_layers=2,
@@ -71,8 +86,8 @@ def test_model_emits_one_row_and_shape_logits_per_step() -> None:
 def test_decode_instruction_changes_checkpoint_owned_output() -> None:
     subject = _subject()
     model = subject.OnlineARCVanillaRNN(
-        subject.OnlineModelConfig(
-            input_width=10,
+        _config(
+            subject,
             encoder_width=8,
             hidden_width=12,
             recurrent_layers=2,
@@ -80,9 +95,12 @@ def test_decode_instruction_changes_checkpoint_owned_output() -> None:
         )
     )
     brainstate.nn.init_all_states(model, batch_size=1)
-    first = np.asarray(model(jnp.zeros((1, 10), dtype=jnp.float32)))
+    first = np.asarray(
+        model(jnp.zeros((1, model.config.input_width), dtype=jnp.float32))
+    )
     brainstate.nn.reset_all_states(model, batch_size=1)
-    event = jnp.zeros((1, 10), dtype=jnp.float32).at[0, -1].set(1.0)
+    event = jnp.zeros((1, model.config.input_width), dtype=jnp.float32)
+    event = event.at[0, -1].set(1.0)
     second = np.asarray(model(event))
 
     assert first.tobytes() != second.tobytes()
@@ -112,8 +130,8 @@ def test_split_step_logits_validates_last_dimension() -> None:
 def test_model_rejects_wrong_event_width() -> None:
     subject = _subject()
     model = subject.OnlineARCVanillaRNN(
-        subject.OnlineModelConfig(
-            input_width=8,
+        _config(
+            subject,
             encoder_width=4,
             hidden_width=6,
             recurrent_layers=2,
@@ -122,7 +140,7 @@ def test_model_rejects_wrong_event_width() -> None:
     brainstate.nn.init_all_states(model, batch_size=1)
 
     with pytest.raises(ValueError, match="last dimension"):
-        model(jnp.zeros((1, 7), dtype=jnp.float32))
+        model(jnp.zeros((1, model.config.input_width - 1), dtype=jnp.float32))
 
 
 def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
@@ -141,8 +159,8 @@ def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
     assert "relation_excluded_weight_to_weight" in legacy_kinds
 
     model = subject.OnlineARCVanillaRNN(
-        subject.OnlineModelConfig(
-            input_width=7,
+        _config(
+            subject,
             encoder_width=5,
             hidden_width=9,
             recurrent_layers=2,
@@ -152,7 +170,7 @@ def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
     learner = braintrace.compile(
         model,
         braintrace.pp_prop,
-        jnp.zeros((1, 7), dtype=jnp.float32),
+        jnp.zeros((1, model.config.input_width), dtype=jnp.float32),
         batch_size=1,
         vmap=False,
         decay_or_rank=0.9,
@@ -164,3 +182,40 @@ def test_v32_removes_recurrent_weight_to_weight_exclusions() -> None:
     kinds = {item.kind.value for item in learner.report.diagnostics}
     assert recurrent_exclusions == []
     assert "relation_excluded_weight_to_weight" not in kinds
+
+
+def test_query_residual_features_change_cell_and_shape_logits() -> None:
+    subject = _subject()
+    config = _config(
+        subject,
+        encoder_width=5,
+        hidden_width=9,
+        recurrent_layers=2,
+        seed=29,
+    )
+    model = subject.OnlineARCVanillaRNN(config)
+    brainstate.nn.init_all_states(model, batch_size=1)
+    baseline = np.asarray(
+        model(jnp.zeros((1, config.input_width), dtype=jnp.float32))
+    )
+    brainstate.nn.reset_all_states(model, batch_size=1)
+    changed_event = jnp.zeros((1, config.input_width), dtype=jnp.float32)
+    changed_event = changed_event.at[0, config.query_color_slice.start].set(1.0)
+    changed_event = changed_event.at[0, config.query_height_slice.start].set(1.0)
+    changed_event = changed_event.at[0, config.query_width_slice.start + 1].set(1.0)
+    changed = np.asarray(model(changed_event))
+    base_parts = subject.split_step_logits(jnp.asarray(baseline))
+    changed_parts = subject.split_step_logits(jnp.asarray(changed))
+
+    assert all(
+        np.asarray(first).tobytes() != np.asarray(second).tobytes()
+        for first, second in zip(base_parts, changed_parts, strict=True)
+    )
+    parameter_paths = {
+        path[0] for path in model.states(brainstate.ParamState)
+    }
+    assert {
+        "query_color_head",
+        "query_height_head",
+        "query_width_head",
+    }.issubset(parameter_paths)

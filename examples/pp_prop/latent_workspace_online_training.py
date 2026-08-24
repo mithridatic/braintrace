@@ -1003,11 +1003,11 @@ def _parameter_group(path: tuple[object, ...]) -> str:
     root = str(path[0])
     if root == "recurrent":
         return "recurrent"
-    if root == "row_color_head":
+    if root in {"row_color_head", "query_color_head"}:
         return "row_color"
-    if root == "height_head":
+    if root in {"height_head", "query_height_head"}:
         return "height"
-    if root == "width_head":
+    if root in {"width_head", "query_width_head"}:
         return "width"
     raise ValueError(f"Parameter path {path!r} has no online parameter group.")
 

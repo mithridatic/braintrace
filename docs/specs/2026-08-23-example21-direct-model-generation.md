@@ -1158,6 +1158,43 @@ the mechanism gate and solve at least two of 80 held-out public-training tasks.
 Only a pass permits the unchanged fresh 2,000-update complete-manifest run and
 the literal 16/400 acceptance threshold.
 
+V34 is rejected at clean revision
+`a10c6eb624fe6c87260ac147185c32d99acbdda8`, with artifact
+`var/ex21-online-v34-query-replay-pilot-v1`. The mechanism gate passed and the
+fresh fold-one run took 54.93 training seconds, but strict score remained 0/80.
+Query replay increased exact-shape tasks from V33's 14 to 21 and raised
+foreground accuracy from 6.45% to 8.05%; these are diagnostics only. No complete
+V34 run is permitted.
+
+### Trainable query-residual synapses V35
+
+V35 keeps V34 replay, V32 recurrence, V31 loss, public ARC training, and fixed
+hierarchical serialization. It adds three randomly initialized checkpoint-owned
+BrainTrace `Linear` synapses. The query-colour residual consumes the current
+replayed input-colour one-hots and emits the 30-by-10 cell-logit layout. Query
+height and width residuals consume their respective replayed one-hots and emit
+30 shape logits. Each residual is added to its corresponding recurrent-head
+logits before serialization. There is no fixed identity weight, direct copy,
+or handcrafted transform: all residual values are ordinary trainable
+checkpoint leaves, and a random untrained checkpoint has no copy guarantee.
+The architecture identifier becomes
+`online_query_residual_hierarchical_decoder_v35`; answer-head serialization
+remains `hierarchical_row_decoder_v29`.
+
+`OnlineModelConfig` now binds the row-event capacities used to locate these
+features and rejects mismatched input widths. Residual synapses belong to the
+existing row-colour, height, and width parameter groups. Tests must prove the
+capacity/width contract, that changing only query replay changes all three
+residual logit families, that recurrent and residual leaves receive finite
+nonzero compiled gradients and move, byte-exact checkpoint reload, target
+isolation, and direct candidate provenance.
+
+One score-ineligible pilot uses fresh validation fold two, sampling seed 14108,
+and the otherwise fixed 400-update real-ARC configuration. It must pass the
+mechanism gate and solve at least two of 80 held-out public-training tasks. Only
+a pass permits the fresh 2,000-update complete-manifest run and literal 16/400
+acceptance threshold.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
