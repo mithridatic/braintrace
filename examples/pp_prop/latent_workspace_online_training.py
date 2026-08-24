@@ -669,6 +669,55 @@ def whole_grid_online_step_loss(
     return (color_loss + height_loss + width_loss) / 3.0
 
 
+def color_dominant_whole_grid_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    color_mass: jnp.ndarray,
+) -> jnp.ndarray:
+    """Weight whole-grid colour loss 0.8 and each shape loss 0.1.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row : jax.Array
+        Batched integer colours for all 30 columns.
+    target_cell_mask : jax.Array
+        Batched mask selecting true target columns.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    color_mass : jax.Array
+        Batched ten-colour mass computed over the complete target grid.
+
+    Returns
+    -------
+    jax.Array
+        Scalar fixed-weight colour and shape objective.
+    """
+
+    if color_mass.shape[-1] != COLOR_COUNT:
+        raise ValueError(f"color_mass last dimension must be {COLOR_COUNT}.")
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits, target_row
+    )
+    mask = jnp.asarray(target_cell_mask, dtype=per_cell.dtype)
+    selected_mass = jnp.take_along_axis(
+        color_mass[:, None, :], target_row[..., None], axis=-1
+    )[..., 0]
+    color_loss = jnp.mean(jnp.sum(per_cell * mask * selected_mass, axis=-1))
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return 0.8 * color_loss + 0.1 * height_loss + 0.1 * width_loss
+
+
 def _parameter_group(path: tuple[object, ...]) -> str:
     root = str(path[0])
     if root == "recurrent":
@@ -760,7 +809,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "whole_grid_present_color_balanced_v27"
+    loss_version = "color_dominant_whole_grid_balanced_v28"
 
     def __init__(
         self,
@@ -850,7 +899,7 @@ class OnlinePPPropTrainer:
             color_mass = whole_grid_color_mass(rows, cell_mask)
 
             def step_loss(event, row, mask, step_color_mass, height, width):
-                return whole_grid_online_step_loss(
+                return color_dominant_whole_grid_step_loss(
                     learner(event), row, mask, height, width, step_color_mass
                 )
 

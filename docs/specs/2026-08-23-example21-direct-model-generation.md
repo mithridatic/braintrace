@@ -901,6 +901,32 @@ oracle with the fixed 1,400-task curriculum and still-untouched seed 82108. The
 promotion gate remains greater than 7/120, at least two non-label families, and
 at least one non-copy/non-label exact task.
 
+V27 is rejected at clean revision
+`038611611cd46b345349415b414a1dbb730f3ad6`, with artifact
+`var/ex21-online-v27-anti-collapse-pilot-v1`. After 200 updates it diversified
+predictions across seven colours and moved every parameter group, but achieved
+only 1/48 foreground cells (2.08%) versus 445/450 background cells (98.89%)
+among 18 shape-correct tasks. Its score-ineligible 1/40 exact task was
+`pattern_label`; the 5% foreground gate failed, so no full V27 oracle ran.
+
+### Colour-dominant whole-grid row GRU V28
+
+V28 keeps the V27 model, whole-grid colour mass, training data, pp-prop trace,
+and decoder exactly fixed. It changes only the three objective coefficients
+from equal thirds to 0.8 colour, 0.1 height, and 0.1 width. V27's shape accuracy
+was already 18/40 while foreground accuracy remained 2.08%; repeating two shape
+losses with two-thirds of total mass therefore competed with the diagnosed
+colour failure. The loss version is
+`color_dominant_whole_grid_balanced_v28`.
+
+A regression must isolate equal-magnitude colour, height, and width errors and
+prove that colour contributes exactly eight times either shape component.
+Compiled recurrent/colour/height/width gradients and changed candidate bytes
+remain mandatory. One score-ineligible 200-update pilot reuses the fixed setup
+with 40 fresh diagnostic tasks at seed 142108. It retains the nonzero-output,
+5% foreground, and 50% background gates. Only a pass permits the untouched
+seed-82108 full oracle under the existing exact/family promotion gate.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

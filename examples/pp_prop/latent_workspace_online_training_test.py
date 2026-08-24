@@ -200,6 +200,41 @@ def test_v27_loss_balances_present_colors_across_the_whole_grid() -> None:
     assert np.count_nonzero(np.asarray(color_mass[..., 8:])) == 0
 
 
+def test_v28_loss_weights_color_eight_times_each_shape_component() -> None:
+    subject = _subject()
+    row = jnp.full((1, 30, 10), -10.0).at[0, :, 0].set(10.0)
+    height = jnp.full((1, 30), -10.0).at[0, 0].set(10.0)
+    width = jnp.full((1, 30), -10.0).at[0, 0].set(10.0)
+    correct = jnp.concatenate((row.reshape(1, -1), height, width), axis=-1)
+    color_error = correct.at[0, 0].set(-10.0).at[0, 1].set(10.0)
+    height_offset = 300
+    height_error = correct.at[0, height_offset].set(-10.0)
+    height_error = height_error.at[0, height_offset + 1].set(10.0)
+    width_offset = 330
+    width_error = correct.at[0, width_offset].set(-10.0)
+    width_error = width_error.at[0, width_offset + 1].set(10.0)
+    target = jnp.zeros((1, 30), dtype=jnp.int32)
+    mask = jnp.zeros((1, 30), dtype=jnp.float32).at[0, 0].set(1.0)
+    dimension = jnp.zeros((1,), dtype=jnp.int32)
+    mass = jnp.asarray([[1.0] + [0.0] * 9])
+
+    baseline = subject.color_dominant_whole_grid_step_loss(
+        correct, target, mask, dimension, dimension, mass
+    )
+    color_delta = subject.color_dominant_whole_grid_step_loss(
+        color_error, target, mask, dimension, dimension, mass
+    ) - baseline
+    height_delta = subject.color_dominant_whole_grid_step_loss(
+        height_error, target, mask, dimension, dimension, mass
+    ) - baseline
+    width_delta = subject.color_dominant_whole_grid_step_loss(
+        width_error, target, mask, dimension, dimension, mass
+    ) - baseline
+
+    assert float(color_delta / height_delta) == pytest.approx(8.0, rel=1e-5)
+    assert float(color_delta / width_delta) == pytest.approx(8.0, rel=1e-5)
+
+
 def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -259,7 +294,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "whole_grid_present_color_balanced_v27"
+    assert trainer.loss_version == "color_dominant_whole_grid_balanced_v28"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:
