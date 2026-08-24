@@ -352,6 +352,42 @@ batch size, learning rate, and update counts. V17 is rejected unless the oracle
 strictly solves an unseen non-pattern v3 task and the fixed split exceeds V15's
 1/80 strict membership.
 
+V17's oracle satisfied its written gate with 7/120 fresh v3 tasks, including
+one non-pattern counting task. The fixed arm nevertheless scored 0/80 strict,
+2/85 exact queries, and 56/85 shape-exact queries. It restored the first and
+third queries of `27a28665` but missed the second, and reduced `3618c87e` to the
+four cells that its local movement must change. V17 is rejected; direct query
+preservation alone does not infer demonstrated local edits.
+
+### Demonstration pixel-memory V18
+
+V18 adds one checkpoint-owned local associative-memory path. The existing
+BrainTrace 3x3 query convolution is shared with every complete demonstration
+input grid. For each query cell, negative squared distance between its projected
+neighbourhood and all valid projected demonstration-input neighbourhoods forms
+a differentiable attention distribution. The values are the demonstration
+output colours at the corresponding source cells. Retrieved colours pass
+through a new trained 10-to-10 BrainTrace projection initialized to eight times
+the identity before contributing to direct cell logits.
+
+The attention uses the squared-norm/einsum identity rather than materializing
+the feature-width broadcast. Demonstrations participate only when their input
+and output dimensions are identical, computed from their lossless validity
+masks. This prevents equal-coordinate local memory from contaminating crop,
+upscale, mirror-concatenation, and scalar-label tasks, whose other recurrent and
+whole-demonstration paths remain active. It is a shared neural memory: it does
+not enumerate transformations, execute a rule, select a candidate, or inspect
+the query target.
+
+The lossless episode path must expose complete demonstration input colours to
+the model beside the already-bound demonstration outputs. Tests must prove
+shape validation, identical-neighbourhood preference across different spatial
+locations, same-shape gating, exact head initialization, executed logit
+dependence, checkpoint roundtrip coverage, and finite compiled training. V18
+retains curriculum schema v3 and the matched V17 seeds, widths, batch size,
+learning rate, and update counts. Its oracle must solve an unseen local spatial
+task; its fixed arm is rejected unless strict membership exceeds 1/80.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

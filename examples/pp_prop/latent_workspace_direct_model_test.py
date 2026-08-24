@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "direct_preserving_local_v17"
+    assert model.config.architecture_version == "direct_pixel_memory_v18"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -165,6 +165,131 @@ def test_direct_query_color_head_has_scaled_identity_and_changes_logits() -> Non
     after = np.asarray(model.decode(hidden, query)[2])
 
     assert before.tobytes() != after.tobytes()
+
+
+def test_local_demo_memory_matches_neighborhoods_and_gates_shape_changes() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=32,
+        )
+    )
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :7, :7, 0].set(1.0)
+    query = query.at[0, :7, :7, 10].set(1.0)
+    query = query.at[0, 4, 4, 0].set(0.0)
+    query = query.at[0, 4, 4, 5].set(1.0)
+    demonstration_inputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
+    demonstration_inputs = demonstration_inputs.at[0, 0, :7, :7, 0].set(1.0)
+    demonstration_inputs = demonstration_inputs.at[0, 0, 2, 2, 0].set(0.0)
+    demonstration_inputs = demonstration_inputs.at[0, 0, 2, 2, 5].set(1.0)
+    demonstration_outputs = jnp.zeros_like(demonstration_inputs)
+    demonstration_outputs = demonstration_outputs.at[0, 0, :7, :7, 0].set(1.0)
+    demonstration_outputs = demonstration_outputs.at[0, 0, 2, 2, 0].set(0.0)
+    demonstration_outputs = demonstration_outputs.at[0, 0, 2, 2, 3].set(1.0)
+    valid = jnp.asarray([[True] + [False] * 9])
+    query_keys = brainstate.nn.tanh(model.local_query_projection(query))
+
+    retrieved = np.asarray(
+        model._local_demo_color_memory(
+            query_keys,
+            demonstration_inputs,
+            demonstration_outputs,
+            valid,
+        )
+    )
+    assert int(np.argmax(retrieved[0, 4, 4])) == 3
+
+    shape_changed_outputs = demonstration_outputs.at[0, 0, 1:, :, :].set(0.0)
+    shape_changed_outputs = shape_changed_outputs.at[0, 0, 0, 1:, :].set(0.0)
+    gated = np.asarray(
+        model._local_demo_color_memory(
+            query_keys,
+            demonstration_inputs,
+            shape_changed_outputs,
+            valid,
+        )
+    )
+    np.testing.assert_array_equal(gated, np.zeros_like(gated))
+
+
+def test_local_demo_color_head_is_scaled_identity_and_changes_logits() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=34,
+        )
+    )
+    parameters = model.local_demo_direct_color_head.weight.value
+    np.testing.assert_array_equal(
+        np.asarray(parameters["weight"]),
+        np.eye(10, dtype=np.float32) * subject.LOCAL_DEMO_COLOR_INITIAL_SCALE,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(parameters["bias"]), np.zeros((10,), dtype=np.float32)
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, :3, :3, 0].set(1.0)
+    query = query.at[0, :3, :3, 10].set(1.0)
+    inputs = jnp.zeros((1, 10, 30, 30, 10), dtype=jnp.float32)
+    inputs = inputs.at[0, 0, :3, :3, 0].set(1.0)
+    outputs = inputs.at[0, 0, 1, 1, 0].set(0.0)
+    outputs = outputs.at[0, 0, 1, 1, 2].set(1.0)
+    demonstration_valid = jnp.asarray([[True] + [False] * 9])
+    before = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_inputs=inputs,
+            demonstration_outputs=outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
+    )
+    model.local_demo_direct_color_head.weight.value = jax.tree.map(
+        jnp.zeros_like, model.local_demo_direct_color_head.weight.value
+    )
+    after = np.asarray(
+        model.decode(
+            hidden,
+            query,
+            demonstration_inputs=inputs,
+            demonstration_outputs=outputs,
+            demonstration_grid_valid=demonstration_valid,
+        )[2]
+    )
+
+    assert before.tobytes() != after.tobytes()
+
+
+def test_local_demo_memory_rejects_invalid_input_shape() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=36,
+        )
+    )
+
+    with pytest.raises(ValueError, match="demonstration_inputs"):
+        model.decode(
+            jnp.zeros((1, 8), dtype=jnp.float32),
+            jnp.zeros((1, 30, 30, 11), dtype=jnp.float32),
+            demonstration_inputs=jnp.zeros(
+                (1, 9, 30, 30, 10), dtype=jnp.float32
+            ),
+        )
 
 
 def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
