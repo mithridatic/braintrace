@@ -1583,6 +1583,22 @@ oracle must beat V42's 11/120 strict count while retaining the family and
 mechanism gates. A pass may specify one public-training validation arm; no
 synthetic score permits direct complete-manifest evaluation.
 
+The V44 screen passes at clean revision
+`b133f89d55ad6a9baac2186a24396fce35a5f3b0`, with artifact
+`var/ex21-online-v44-gated-memory-screen-v1`. Its 200 updates took 58.93
+seconds, mean loss fell from 1.3424 over the first 50 updates to 0.9727 over
+the last 50, and the untouched score was 6/40. Exact membership comprised two
+copy, two count, one pattern-label, and one select-marked-region task, meeting
+both family conditions. Shape was exact on 31/40 tasks, foreground accuracy
+was 34.39%, and background accuracy was 95.60%. The compiler included all six
+MiniLSTM matrices through twelve state relations with zero recurrent
+exclusions; all four groups and all 18 ordered leaves moved; parameter and
+candidate digests changed; and mechanism and anti-collapse gates passed. The
+checkpoint file hash is
+`b4115804b64367d80fb63e7ea6ab6e98708b7a4c696b245da25d138a5421aaad`.
+This permits only the already specified 800-update capability oracle and
+contributes zero acceptance tasks.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
