@@ -1535,6 +1535,54 @@ their targets, identifying copy bias rather than a near-exact transformation.
 No complete evaluation or longer/tuned V43 run is permitted, and V42/V43
 task-gated transfer is closed.
 
+### Phase-separated gated relation memory V44
+
+V43's shape-correct failures expose a temporal representation defect: late
+query rows dominate the single vanilla recurrent state, and five of nine
+shape-correct predictions collapse to exact query copies despite earlier
+paired demonstration input/output rows. V44 changes neuron dynamics and state
+topology rather than loss, duration, or output-expert count.
+
+Two independent 128-unit `braintrace.nn.MiniLSTM` populations receive the
+unchanged lossless row events. The demonstration population updates only when
+the fixed demonstration-phase channel is active, then remains frozen through
+query replay and decoding. The query population updates only on query and
+decode events. Zero padding updates neither population. These phase masks are
+part of the fixed event protocol, not learned rules or task selectors. Each
+MiniLSTM has input, forget, and candidate BrainTrace synapses and one explicit
+gated hidden state; all six matrices must be included by the PP-prop compiler.
+
+At every decode step the model concatenates the frozen demonstration state,
+the current query state, and their elementwise product. V42's twelve
+checkpoint-owned colour experts, activation-derived softmax mixture, direct
+cell head, shared neural shape heads, fixed hierarchical serialization, and
+unweighted fourth-root training loss then consume that relation activation.
+There remains one mixed greedy candidate; no expert is externally selected,
+decoded, or reranked, and no raw demonstration output or query value is added
+to logits. Training remains single-step PP-prop with compiled update loops;
+BPTT is not used.
+
+Sibling tests must first fail against the absent V44 modules, then prove exact
+phase gating, unchanged demo state during query/decode, unchanged query state
+during demonstrations/padding, relation sensitivity to either population,
+normalized expert mixing, zero recurrent exclusions, finite nonzero gradients
+for every group, movement of every ordered leaf, deterministic direct-neural
+candidate provenance, and byte-exact checkpoint reload through an exact V44
+schema. Changed production modules retain more than 90% meaningful coverage.
+
+One short score-ineligible screen uses seed 2108, 400 synthetic-v3 training
+tasks from seed 24108, 200 updates in chunks of 20, batch size eight, four
+demonstrations, maximum side 12, the fixed learning rate and trace decay, and
+40 independent tasks from seed 112108. It must pass all mechanism and
+anti-collapse checks, solve more than three strict tasks, span at least two
+non-label families, and solve a non-copy/non-label task. Failure closes V44.
+
+Only a screen pass permits one 800-update capability oracle with 1,400 fresh
+training tasks from seed 25108 and 120 untouched tasks from seed 122108. That
+oracle must beat V42's 11/120 strict count while retaining the family and
+mechanism gates. A pass may specify one public-training validation arm; no
+synthetic score permits direct complete-manifest evaluation.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
