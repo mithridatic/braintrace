@@ -477,6 +477,15 @@ seed 12108, 1,400 synthetic tasks, 1,000 synthetic updates, and 500 fitting
 updates. It must exceed 3/80 before any complete-manifest evaluation. Full-run
 memberships remain sealed unless the final qualification threshold is reached.
 
+The seed-32108 oracle executed successfully with finite parameter leaves and
+scored 7/120 strict tasks. Six were non-label tasks, all from the `copy` family;
+the seventh was `pattern_label`. The candidate digest was
+`6b29f064d04aa0dc9b2f377e52ee50c27d4c997dd1783731110eb74d21124004`
+and the generated-task digest was
+`bc7d7f11c94da10983950cfb42cb8c86e6f3256a65a663c686e842986d74078d`.
+This clears the deliberately minimal oracle gate but is weak, family-narrow
+evidence; it does not relax the fixed-validation requirement.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
