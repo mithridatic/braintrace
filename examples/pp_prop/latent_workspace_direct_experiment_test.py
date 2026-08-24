@@ -86,6 +86,36 @@ def test_training_chunk_sampling_is_brainstate_seed_deterministic() -> None:
         )
 
 
+def test_chunked_evaluation_matches_single_batch_bytes(monkeypatch) -> None:
+    subject = _subject()
+    row_config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
+    tasks = tuple(_task(f"task-{index}", index % 8) for index in range(11))
+    episodes = subject.evaluation_episodes(tasks, row_config)
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=row_config.input_width,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            recurrent_layers=1,
+            seed=19,
+        )
+    )
+
+    assert subject.EVALUATION_BATCH_SIZE == 10
+    chunked = subject.evaluate_model(model, episodes)
+    monkeypatch.setattr(subject, "EVALUATION_BATCH_SIZE", 11)
+    single_batch = subject.evaluate_model(model, episodes)
+
+    assert chunked["candidate_sha256"] == single_batch["candidate_sha256"]
+    assert chunked["candidates"] == single_batch["candidates"]
+    assert chunked["strict_task_ids"] == single_batch["strict_task_ids"]
+    assert (
+        chunked["strict_task_pass_at_1_count"]
+        == single_batch["strict_task_pass_at_1_count"]
+    )
+
+
 @pytest.mark.parametrize(
     "changes",
     [

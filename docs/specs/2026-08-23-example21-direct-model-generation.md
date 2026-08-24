@@ -388,6 +388,24 @@ retains curriculum schema v3 and the matched V17 seeds, widths, batch size,
 learning rate, and update counts. Its oracle must solve an unseen local spatial
 task; its fixed arm is rejected unless strict membership exceeds 1/80.
 
+V18's oracle passed strongly: its synthetic loss fell from 3.108 to 0.792 with
+finite values, and the fresh 120-task holdout scored 30 strict. Exact spatial
+membership included 10/10 `complete_corner` tasks and 4/10 `project_marker`
+tasks, plus two recolours, two counts, and twelve pattern-label tasks. V18 is
+promoted to the fixed-validation stage.
+
+A monolithic 120-query diagnostic exceeded the 16 GiB GPU while allocating the
+pixel-attention tensor. Therefore the production evaluator must partition an
+ordered episode population into fixed batches of 10, pad only the final batch
+by repeating its final target-free episode, and execute all batches inside one
+compiled `brainstate.transform.for_loop`. Model state is reset inside the
+compiled batch body. Padded outputs are discarded before decoding and scoring,
+so manifest order, candidate bytes, task membership, and strict pass-at-one are
+unchanged. A matched test must prove byte-identical candidates and strict score
+against the prior single-batch evaluator on a population that crosses the
+10-query boundary. Python may prepare and pad the static arrays but may not
+drive the repeated model calls.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

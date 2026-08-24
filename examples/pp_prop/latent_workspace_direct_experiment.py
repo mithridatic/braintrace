@@ -28,6 +28,7 @@ try:
         strict_task_pass_at_1,
     )
     from examples.pp_prop.latent_workspace_direct_model import (
+        MAX_GRID_SIZE,
         DirectARCGRU,
         DirectModelConfig,
     )
@@ -48,8 +49,8 @@ try:
         DatasetSource,
         LoadedDataset,
         RowEventConfig,
-        associative_memory_feature_indices,
         assert_no_evaluation_leakage,
+        associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         load_dataset_source,
@@ -66,6 +67,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         strict_task_pass_at_1,
     )
     from latent_workspace_direct_model import (  # pyright: ignore[reportImplicitRelativeImport]
+        MAX_GRID_SIZE,
         DirectARCGRU,
         DirectModelConfig,
     )
@@ -86,12 +88,14 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         DatasetSource,
         LoadedDataset,
         RowEventConfig,
-        associative_memory_feature_indices,
         assert_no_evaluation_leakage,
+        associative_memory_feature_indices,
         augment_training_task,
         canonical_task_fingerprint,
         load_dataset_source,
     )
+
+EVALUATION_BATCH_SIZE = 10
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -538,25 +542,48 @@ def evaluate_model(
 
     if not episodes:
         raise ValueError("Evaluation episodes must be nonempty.")
-    batch = stack_direct_episodes(episodes)
-    brainstate.nn.init_all_states(model, batch_size=len(episodes))
+    batch_size = min(EVALUATION_BATCH_SIZE, len(episodes))
+    padding = (-len(episodes)) % batch_size
+    padded_episodes = episodes + (episodes[-1],) * padding
+    batches = tuple(
+        stack_direct_episodes(
+            padded_episodes[index : index + batch_size]
+        )
+        for index in range(0, len(padded_episodes), batch_size)
+    )
+    brainstate.nn.init_all_states(model, batch_size=batch_size)
 
-    @brainstate.transform.jit
-    def run_once(
+    def run_batch(
         events: jax.Array,
         query_features: jax.Array,
         shape_features: jax.Array,
     ):
+        brainstate.nn.reset_all_states(model, batch_size=batch_size)
         return model.run(events, query_features, shape_features)
 
-    height, width, colors = run_once(
-        jax.numpy.asarray(batch.events),
-        jax.numpy.asarray(batch.query_features),
-        jax.numpy.asarray(batch.shape_features),
+    @brainstate.transform.jit
+    def run_all(
+        events: jax.Array,
+        query_features: jax.Array,
+        shape_features: jax.Array,
+    ):
+        return brainstate.transform.for_loop(
+            run_batch,
+            events,
+            query_features,
+            shape_features,
+        )
+
+    height, width, colors = run_all(
+        jax.numpy.asarray(np.stack([batch.events for batch in batches])),
+        jax.numpy.asarray(np.stack([batch.query_features for batch in batches])),
+        jax.numpy.asarray(np.stack([batch.shape_features for batch in batches])),
     )
-    height_array = np.asarray(height)
-    width_array = np.asarray(width)
-    color_array = np.asarray(colors)
+    height_array = np.asarray(height).reshape(-1, MAX_GRID_SIZE)[: len(episodes)]
+    width_array = np.asarray(width).reshape(-1, MAX_GRID_SIZE)[: len(episodes)]
+    color_array = np.asarray(colors).reshape(
+        -1, MAX_GRID_SIZE, MAX_GRID_SIZE, 10
+    )[: len(episodes)]
     dependencies = tuple(
         ".".join(map(str, path)) for path in model.states(brainstate.ParamState)
     )
