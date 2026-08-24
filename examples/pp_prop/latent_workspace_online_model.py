@@ -120,6 +120,13 @@ class OnlineModelConfig:
         start = 10 + self.max_demonstrations + 7 * self.max_grid_size
         return slice(start, start + self.max_grid_size * COLOR_COUNT)
 
+    @property
+    def query_mask_slice(self) -> slice:
+        """Return the replayed query-input cell-validity feature slice."""
+
+        stop = self.query_color_slice.start
+        return slice(stop - self.max_grid_size, stop)
+
 
 def split_step_logits(values: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """Split one-step output into hierarchical cell and shape logits.

@@ -180,6 +180,23 @@ def test_online_step_loss_masks_cells_and_scores_shape() -> None:
     assert float(correct) < float(wrong)
 
 
+def test_edit_cell_weights_emphasize_changes_and_absent_query_cells() -> None:
+    subject = _subject()
+    targets = jnp.asarray([[2, 3, 4, 9]], dtype=jnp.int32)
+    target_mask = jnp.asarray([[1.0, 1.0, 1.0, 0.0]])
+    query = jnp.asarray([[2, 8, 4, 9]], dtype=jnp.int32)
+    query_mask = jnp.asarray([[1.0, 1.0, 0.0, 1.0]])
+
+    weights = np.asarray(
+        subject.edit_cell_weights(targets, target_mask, query, query_mask)
+    )
+
+    assert subject.EDIT_CELL_MULTIPLIER == 4.0
+    assert weights.tolist() == [[1.0, 4.0, 4.0, 0.0]]
+    with pytest.raises(ValueError, match="matching shapes"):
+        subject.edit_cell_weights(targets, target_mask[:, :3], query, query_mask)
+
+
 def test_balanced_step_loss_penalizes_rare_foreground_error_more() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -514,9 +531,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == (
-        "fourth_root_gate_hierarchical_color_balanced_v31"
-    )
+    assert trainer.loss_version == "edit_weighted_fourth_root_hierarchical_v37"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:

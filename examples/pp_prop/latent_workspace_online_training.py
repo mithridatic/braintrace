@@ -30,6 +30,7 @@ from examples.pp_prop.latent_workspace_online_model import (
     OnlineModelConfig,
     split_step_logits,
 )
+
 from examples.pp_prop.latent_workspace_task import (
     ArcTask,
     AugmentationConfig,
@@ -37,6 +38,7 @@ from examples.pp_prop.latent_workspace_task import (
     augment_training_task,
 )
 
+EDIT_CELL_MULTIPLIER = 4.0
 DECODE_FEATURE_WIDTH = 1 + MAX_GRID_SIZE
 
 
@@ -999,6 +1001,126 @@ def hierarchical_whole_grid_step_loss(
     )
 
 
+def edit_cell_weights(
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    query_row: jnp.ndarray,
+    query_cell_mask: jnp.ndarray,
+) -> jnp.ndarray:
+    """Return fixed training weights for query-to-target cell edits.
+
+    Parameters
+    ----------
+    target_row, query_row : jax.Array
+        Matching integer target and query colours.
+    target_cell_mask, query_cell_mask : jax.Array
+        Matching target and query validity masks.
+
+    Returns
+    -------
+    jax.Array
+        Zero outside the target, one for unchanged valid query cells, and
+        :data:`EDIT_CELL_MULTIPLIER` for changed or newly created cells.
+
+    Raises
+    ------
+    ValueError
+        If all four inputs do not have matching shapes.
+    """
+
+    shapes = {
+        target_row.shape,
+        target_cell_mask.shape,
+        query_row.shape,
+        query_cell_mask.shape,
+    }
+    if len(shapes) != 1:
+        raise ValueError("target/query rows and masks must have matching shapes.")
+    target_valid = jnp.asarray(target_cell_mask) > 0.5
+    query_valid = jnp.asarray(query_cell_mask) > 0.5
+    edited = jnp.logical_or(~query_valid, target_row != query_row)
+    weights = jnp.where(edited, EDIT_CELL_MULTIPLIER, 1.0)
+    return jnp.where(target_valid, weights, 0.0).astype(jnp.float32)
+
+
+def edit_weighted_hierarchical_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    query_row: jnp.ndarray,
+    query_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    gate_mass: jnp.ndarray,
+    color_mass: jnp.ndarray,
+) -> jnp.ndarray:
+    """Score hierarchical logits with fourfold training-only edit emphasis.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row, query_row : jax.Array
+        Batched target and corresponding replayed query colours.
+    target_cell_mask, query_cell_mask : jax.Array
+        Batched target and query validity masks.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    gate_mass : jax.Array
+        Batched fourth-root background/foreground mass.
+    color_mass : jax.Array
+        Batched conditional nonzero-colour mass.
+
+    Returns
+    -------
+    jax.Array
+        Scalar edit-weighted hierarchical objective.
+    """
+
+    if gate_mass.shape[-1] != 2:
+        raise ValueError("gate_mass last dimension must be 2.")
+    if color_mass.shape[-1] != COLOR_COUNT - 1:
+        raise ValueError(f"color_mass last dimension must be {COLOR_COUNT - 1}.")
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    weights = edit_cell_weights(
+        target_row, target_cell_mask, query_row, query_cell_mask
+    ).astype(row_logits.dtype)
+    gate_targets = (target_row != 0).astype(jnp.int32)
+    gate_per_cell = optax.sigmoid_binary_cross_entropy(
+        row_logits[..., 0], gate_targets
+    )
+    selected_gate_mass = jnp.take_along_axis(
+        gate_mass[:, None, :], gate_targets[..., None], axis=-1
+    )[..., 0]
+    gate_loss = jnp.mean(jnp.sum(gate_per_cell * weights * selected_gate_mass, axis=-1))
+
+    conditional_targets = jnp.clip(target_row - 1, 0, COLOR_COUNT - 2)
+    color_per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits[..., 1:], conditional_targets
+    )
+    selected_color_mass = jnp.take_along_axis(
+        color_mass[:, None, :], conditional_targets[..., None], axis=-1
+    )[..., 0]
+    foreground_weights = weights * gate_targets.astype(weights.dtype)
+    color_loss = jnp.mean(
+        jnp.sum(
+            color_per_cell * foreground_weights * selected_color_mass, axis=-1
+        )
+    )
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return (
+        0.4 * gate_loss
+        + 0.4 * color_loss
+        + 0.1 * height_loss
+        + 0.1 * width_loss
+    )
+
+
 def _parameter_group(path: tuple[object, ...]) -> str:
     root = str(path[0])
     if root == "recurrent":
@@ -1090,7 +1212,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "fourth_root_gate_hierarchical_color_balanced_v31"
+    loss_version = "edit_weighted_fourth_root_hierarchical_v37"
 
     def __init__(
         self,
@@ -1190,10 +1312,24 @@ class OnlinePPPropTrainer:
                 height,
                 width,
             ):
-                return hierarchical_whole_grid_step_loss(
+                query_width = self.model.config.max_grid_size
+                query_one_hot = event[
+                    ..., self.model.config.query_color_slice
+                ].reshape(*event.shape[:-1], query_width, COLOR_COUNT)
+                query_cells = jnp.argmax(query_one_hot, axis=-1)
+                query_mask = event[..., self.model.config.query_mask_slice]
+                if query_width < MAX_GRID_SIZE:
+                    padding = [(0, 0)] * (query_cells.ndim - 1) + [
+                        (0, MAX_GRID_SIZE - query_width)
+                    ]
+                    query_cells = jnp.pad(query_cells, padding)
+                    query_mask = jnp.pad(query_mask, padding)
+                return edit_weighted_hierarchical_step_loss(
                     learner(event),
                     row,
                     mask,
+                    query_cells,
+                    query_mask,
                     height,
                     width,
                     step_gate_mass,

@@ -125,6 +125,15 @@ def test_split_step_logits_validates_last_dimension() -> None:
         subject.split_step_logits(jnp.zeros((subject.OUTPUT_WIDTH - 1,)))
 
 
+def test_query_replay_slices_bind_mask_before_colours() -> None:
+    subject = _subject()
+    config = _config(subject, max_demonstrations=2, max_grid_size=3)
+
+    assert config.query_mask_slice.stop == config.query_color_slice.start
+    assert config.query_mask_slice.stop - config.query_mask_slice.start == 3
+    assert config.query_color_slice.stop - config.query_color_slice.start == 30
+
+
 def test_model_rejects_wrong_event_width() -> None:
     subject = _subject()
     model = subject.OnlineARCVanillaRNN(
