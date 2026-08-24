@@ -1278,6 +1278,16 @@ mechanism gate and solve at least two of 64 strict tasks. Failure ends V37;
 only a pass permits a fresh 2,000-update complete-manifest run under the literal
 16/400 acceptance threshold.
 
+V37 is rejected at clean revision
+`0282515e3dfa8813b9fa2a53a41cc5c1c44296c5`, with artifact
+`var/ex21-online-v37-edit-weighted-pilot-v1`. The mechanism gate passed, every
+parameter group moved, and the compiler retained the V36 four-relation,
+zero-recurrent-exclusion topology. Training took 85.09 seconds, but the fresh
+64-task/66-query fold scored 0 strict tasks. Exact shape was 31/66,
+foreground accuracy was 435/1,172 cells (37.12%), and background accuracy was
+2,750/2,778 cells (98.99%). The predeclared integer gate failed; no longer or
+complete V37 run is permitted.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
