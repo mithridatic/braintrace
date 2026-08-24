@@ -693,6 +693,19 @@ size 8, learning rate 0.001, trace half-life 40, and untouched 120-task seed
 families, and includes a non-copy/non-label exact task. Only then may one fixed
 80-task ARC arm run; its gate remains greater than 3/80.
 
+The V22 compiler pilot passed at clean revision
+`1d1da9fb0c46e81ceb7988f74d093d5fb5d01ca4`, with artifact
+`var/ex21-online-v22-ppprop-pilot-v1`. All five compiled relation roots had
+finite nonzero gradients, all five parameter groups moved, the parameter digest
+changed from `e58a67d5...76df3` to `68e126a0...aa69`, and the ordered candidate
+digest changed from `7db0034c...35988` to `dba43227...77508`. Five updates took
+2.74 seconds and ended at finite loss 1.988746. The 0/4 pilot exact count is not
+a promotion score. Before consuming untouched oracle seed 62108, one
+score-ineligible resource probe is allowed at the full 16-channel, batch-eight
+topology: five updates, chunk size five, 24 training tasks, eight diagnostic
+tasks at separate seed 72108. Its only decisions are capacity and projected
+runtime; its exact count cannot alter architecture, hyperparameters, or gates.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
