@@ -1383,6 +1383,15 @@ and every mechanism check. Failure closes the patch-decoder/loss family. A
 pass permits specification of one synthetic-pretraining-to-real-ARC pilot,
 never direct complete evaluation.
 
+V40 is rejected at clean revision
+`4d19e03ac27af30582c5ae8d6fd397b64ab15fab`, with artifact
+`var/ex21-online-v40-twofold-capability-v1`. Every parameter group moved, the
+anti-collapse gate passed, and 800 training updates took 142.94 seconds. The
+independent oracle regressed to 3/120: two `pattern_label` tasks and one
+`select_marked_region` task. It therefore failed the strict-count and family
+diversity requirements. No real-ARC V40 run is permitted, and the
+patch-decoder/loss-balancing family is closed.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
