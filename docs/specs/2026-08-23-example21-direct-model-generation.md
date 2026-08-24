@@ -486,6 +486,79 @@ and the generated-task digest was
 This clears the deliberately minimal oracle gate but is weak, family-narrow
 evidence; it does not relax the fixed-validation requirement.
 
+The fixed V19 arm is rejected. At clean source revision
+`7b6931f4684b7a54b9849b87010dc9d551e4e879`, the predeclared 1,000 synthetic
+and 500 ARC-fitting updates remained finite and moved the parameter digest from
+`58feb42c04ca77777cb29df8a944e7975c9e1117a7912099c050af9241acf37b` to
+`ad6fa348a9a98ee5e7091c7b413809ac3a2217b420236191fd79a55d0f5689eb`.
+Nevertheless, both the before-training and after-training fixed scores were
+0/80 strict tasks (85 queries). The final candidate digest was
+`8cee034100861e1b344ced9265dce4a9fef25847b622323132b264a301a5ffc6`.
+Synthetic and ARC optimizer work took about 115 and 127 seconds respectively,
+so neither runtime nor parameter immobility explains the failure. No complete
+manifest run or V19 tuning arm is permitted.
+
+The V19 process mistake was allowing a family-narrow copy result to satisfy a
+mechanism oracle. A residual query-colour path could produce that result without
+showing task-conditioned spatial abstraction. Every later oracle therefore has
+to report exact families and solve a non-copy, non-label family before promotion.
+
+### Row-decoded online PP-prop V20
+
+V20 changes the temporal prediction contract and the learning algorithm
+together. It does not preserve the V19 end-of-sequence 9,000-colour output head.
+Each episode is a fixed, target-free online sequence:
+
+1. Compact the valid demonstration and query rows from the existing lossless
+   row-event encoding without changing their order or feature values.
+2. Append exactly 30 fixed decode-row instruction events. Each instruction has
+   a decode flag and one fixed row-index one-hot; it contains no target shape,
+   colour, label, selector, or held-out signal.
+3. Pad only after all decode instructions to a static sequence length. The
+   compacted input plus the 30 instructions is lossless because only explicit
+   zero-padding rows are removed.
+
+One checkpoint-owned recurrent model consumes one event per logical step. A
+trainable event projection feeds two BrainTrace GRU layers; a trainable row head
+emits 30-by-10 colour logits and trainable shape heads emit 30 height and 30
+width logits. The 30 decoded rows are assembled in fixed order, and greedy
+argmax shape/colour serialization produces the sole candidate. No raw query or
+demonstration value may bypass the recurrent network, and no rule, retrieval,
+template, task-local fitter, or transformation search may influence logits.
+
+Training uses `braintrace.compile(model, braintrace.pp_prop, ...)` with
+`vjp_method="single-step"` and exponential trace decay
+`2 ** (-1 / 40)`. A compiled `brainstate.transform.for_loop` performs repeated
+optimizer updates. Within every update, model state and learner trace state are
+reset together, all input rows advance both states, and loss is masked to the
+30 decode instructions. Colour cross-entropy is masked to true training target
+cells; height and width cross-entropy are training signals only and never model
+inputs. Gradients use mean reduction, global-norm clipping at 1.0, and Adam.
+Evaluation resets model and trace state together and executes the same target-
+free sequence with `etrace_evolve`; scorer targets remain out of the answer path.
+
+Sibling tests must precede implementation and prove: exact packing order and
+roundtrip losslessness; decode instructions are target-independent; targets are
+passed only to the PP-prop loss callback; no BPTT gradient path exists in the
+trainer; single-step PP-prop, decay, reset, masking, and compiled optimizer-loop
+contracts; finite nonzero gradients and parameter movement for every parameter
+group; row assembly and greedy decoding; checkpoint exact-schema roundtrip;
+candidate dependence on checkpoint leaves; deterministic reload bytes; and
+failure on malformed shapes or non-finite values. Combined meaningful coverage
+for the new V20 modules must exceed 90%.
+
+The first runtime is a compiler/descent pilot only: seed 2108, batch size 2,
+widths 32/64, two recurrent layers, five updates, and no ARC evaluation. It must
+stay finite, move parameters, change candidate bytes, and show nonzero gradients
+for event, recurrent, row-colour, height, and width parameter groups. The first
+learning oracle then uses seed 2108, synthetic seed 12108, 1,400 synthetic tasks,
+1,000 updates, batch size 8, widths 128/256, learning rate 0.001, and fresh
+120-task seed 42108. It is rejected unless it exceeds 7/120 strict tasks, solves
+at least two non-label families, and includes at least one exact task outside
+`copy` and `pattern_label`. Only then may one fixed 80-task ARC arm run for 500
+additional fitting updates. That arm must exceed 3/80 before any complete-
+manifest evaluation. These are diagnostic promotion gates, not success criteria.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
