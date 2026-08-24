@@ -265,6 +265,58 @@ pattern-label diagnostic showed correct whole-demo attention mass (0.596 on
 target-label demos) but an incorrect final color, isolating the learned value
 projection as the next bottleneck.
 
+V15 replaced that bottleneck with a checkpoint-owned direct colour projection
+initialized to a sharp identity map. Its 1,000-synthetic-update plus
+500-fitting-update arm produced the first nonzero eligible result: 3/85 exact
+queries and 1/80 strict tasks, with exact membership `27a28665`. A fresh
+70-task synthetic holdout solved all 10 pattern-label tasks but no tasks from
+the spatial transformation families. V15 is therefore evidence that the
+answer path can learn and generalize one demonstration-conditioned operation,
+but it remains below the 16-task pilot gate.
+
+### Synthetic curriculum v2 and local spatial path
+
+The next predeclared arm keeps the V15 direct colour path and adds four general
+training-only families identified from operation-level analysis of the closest
+fixed-validation misses:
+
+- `select_marked_region`: partition an input into solid-colour rectangles,
+  place a shared anomalous marker colour in each rectangle, and emit the base
+  colour of the uniquely most-marked rectangle;
+- `project_marker`: move one or more marker cells along an adjacent straight
+  connector to its terminal cell while restoring the marker's old cell;
+- `complete_corner`: complete each three-cell, axis-aligned 2x2 corner with a
+  task-specific new colour, including all rotations and reflections; and
+- `mirror_concat`: concatenate a rectangular grid with its reflection across
+  one task-fixed edge, including all four edge directions.
+
+Each v2 task samples its transformation parameters once and applies the same
+operation to every demonstration and query. Generators must ensure an
+unambiguous target, keep every grid within 30x30, use only
+`brainstate.random`, and record the expanded family counts and a new curriculum
+schema digest. The fixed-validation examples justify the operation classes
+only; their grids, colours, sizes, and outputs must never enter the generator.
+
+The matching architecture version adds a two-layer checkpoint-owned 3x3
+BrainTrace convolutional query path. It consumes only the fixed lossless query
+encoding, preserves the 30x30 lattice, and contributes to the same direct cell
+logits as the recurrent, attention, and demonstration paths. This local path
+is intended to expose neighbourhood relations such as corners and connectors;
+it is not an executable transformation rule. Its weights must be present in
+the exact checkpoint schema, affect emitted candidate bytes when perturbed,
+and train jointly through the existing direct loss. Repeated application, if
+introduced later, must use a `brainstate.transform` loop rather than a Python
+rollout.
+
+Before a fixed 80-task run, sibling tests must prove every v2 family across
+multiple seeds, deterministic generation/digests, family balance, ARC bounds,
+and the local path's checkpoint dependence. A small synthetic learning oracle
+must reduce finite loss and solve at least one unseen v2 task strictly. The
+first v2 fixed-validation arm uses the existing V15 width, batch size, seeds,
+1,000 synthetic updates, and 500 fitting updates so that only the curriculum
+and local path change. It is rejected unless strict task membership improves
+over 1/80; diagnostics alone cannot promote it.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

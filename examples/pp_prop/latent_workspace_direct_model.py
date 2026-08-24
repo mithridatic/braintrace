@@ -17,7 +17,7 @@ QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "direct_whole_demo_color_v15"
+ARCHITECTURE_VERSION = "direct_local_spatial_v16"
 DIRECT_COLOR_INITIAL_SCALE = 8.0
 WHOLE_DEMO_DISTANCE_SCALE = 32.0
 
@@ -64,7 +64,7 @@ class DirectModelConfig:
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
         One foreground-occupancy feature per group is appended to the full key.
-    architecture_version : str, default="direct_whole_demo_color_v15"
+    architecture_version : str, default="direct_local_spatial_v16"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -186,6 +186,18 @@ class DirectARCGRU(brainstate.nn.Module):
             self.query_projection = braintrace.nn.Linear(
                 QUERY_FEATURE_WIDTH, config.decoder_width
             )
+            self.local_query_projection = braintrace.nn.Conv2d(
+                in_size=(MAX_GRID_SIZE, MAX_GRID_SIZE, QUERY_FEATURE_WIDTH),
+                out_channels=config.decoder_width,
+                kernel_size=3,
+                padding="SAME",
+            )
+            self.local_query_refinement = braintrace.nn.Conv2d(
+                in_size=(MAX_GRID_SIZE, MAX_GRID_SIZE, config.decoder_width),
+                out_channels=config.decoder_width,
+                kernel_size=3,
+                padding="SAME",
+            )
             self.global_query_pattern_projection = braintrace.nn.Linear(
                 MAX_GRID_SIZE * MAX_GRID_SIZE, config.decoder_width
             )
@@ -195,18 +207,17 @@ class DirectARCGRU(brainstate.nn.Module):
             self.memory_value_projection = braintrace.nn.Linear(
                 config.hidden_width, config.decoder_width
             )
-            associative_key_width = (
-                len(config.memory_key_indices)
-                + config.memory_key_color_block_width // COLOR_COUNT
-            )
-            associative_key_width = max(1, associative_key_width)
-            associative_value_width = max(1, len(config.memory_value_indices))
-            self.associative_key_projection = braintrace.nn.Linear(
-                associative_key_width, config.decoder_width
-            )
-            self.associative_value_projection = braintrace.nn.Linear(
-                associative_value_width, config.decoder_width
-            )
+            if config.memory_key_indices:
+                associative_key_width = (
+                    len(config.memory_key_indices)
+                    + config.memory_key_color_block_width // COLOR_COUNT
+                )
+                self.associative_key_projection = braintrace.nn.Linear(
+                    associative_key_width, config.decoder_width
+                )
+                self.associative_value_projection = braintrace.nn.Linear(
+                    len(config.memory_value_indices), config.decoder_width
+                )
             self.relation_output_projection = braintrace.nn.Linear(
                 config.decoder_width, config.decoder_width
             )
@@ -519,6 +530,9 @@ class DirectARCGRU(brainstate.nn.Module):
         context_vector = self.context_projection(hidden)
         context = context_vector[:, None, None, :]
         query = self.query_projection(query_features)
+        local_query = self.local_query_refinement(
+            brainstate.nn.tanh(self.local_query_projection(query_features))
+        )
         occupancy = jnp.sum(query_features[..., 1:COLOR_COUNT], axis=-1)
         global_pattern = self.global_query_pattern_projection(
             occupancy.reshape(batch_size, -1)
@@ -632,6 +646,7 @@ class DirectARCGRU(brainstate.nn.Module):
         cell_state = brainstate.nn.tanh(
             context
             + query
+            + local_query
             + global_pattern
             + coordinate[None]
             + attention

@@ -307,7 +307,7 @@ def test_tiny_synthetic_pretraining_writes_bound_provenance(tmp_path) -> None:
     )
 
     evidence = result["synthetic_pretraining"]
-    assert evidence["schema_version"] == "direct_synthetic_curriculum_v1"
+    assert evidence["schema_version"] == "direct_synthetic_curriculum_v2"
     assert evidence["seed"] == 101
     assert evidence["task_count"] == 7
     assert evidence["family_counts"] == {
@@ -318,6 +318,10 @@ def test_tiny_synthetic_pretraining_writes_bound_provenance(tmp_path) -> None:
         "upscale": 1,
         "count": 1,
         "pattern_label": 1,
+        "select_marked_region": 0,
+        "project_marker": 0,
+        "complete_corner": 0,
+        "mirror_concat": 0,
     }
     assert len(evidence["task_sha256"]) == 64
     assert len(evidence["losses"]) == 1

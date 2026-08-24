@@ -89,8 +89,34 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "direct_whole_demo_color_v15"
+    assert model.config.architecture_version == "direct_local_spatial_v16"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
+
+
+def test_local_spatial_path_is_checkpoint_owned_and_changes_cell_logits() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=27,
+        )
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, 4:6, 4:6, 8].set(1.0)
+    query = query.at[0, 4:6, 4:6, 10].set(1.0)
+
+    before = np.asarray(model.decode(hidden, query)[2])
+    model.local_query_refinement.weight.value = jax.tree.map(
+        lambda value: value * 0.0,
+        model.local_query_refinement.weight.value,
+    )
+    after = np.asarray(model.decode(hidden, query)[2])
+
+    assert before.tobytes() != after.tobytes()
 
 
 def test_shape_heads_have_checkpoint_owned_query_shape_dependence() -> None:
@@ -332,6 +358,22 @@ def test_associative_keys_append_foreground_occupancy() -> None:
     assert first_key[..., :-1].tobytes() != second_key[..., :-1].tobytes()
     assert first_key[..., -1:].tobytes() == second_key[..., -1:].tobytes()
     assert first_key.tobytes() != background_key.tobytes()
+
+
+def test_absent_associative_memory_registers_no_dead_projection_states() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=12,
+            encoder_width=8,
+            hidden_width=16,
+            decoder_width=10,
+            seed=60,
+        )
+    )
+
+    assert not hasattr(model, "associative_key_projection")
+    assert not hasattr(model, "associative_value_projection")
 
 
 def test_whole_demonstration_attention_changes_executed_colors() -> None:

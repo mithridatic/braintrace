@@ -24,7 +24,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         canonical_task_fingerprint,
     )
 
-CURRICULUM_SCHEMA_VERSION = "direct_synthetic_curriculum_v1"
+CURRICULUM_SCHEMA_VERSION = "direct_synthetic_curriculum_v2"
 FAMILIES = (
     "copy",
     "recolor",
@@ -33,6 +33,10 @@ FAMILIES = (
     "upscale",
     "count",
     "pattern_label",
+    "select_marked_region",
+    "project_marker",
+    "complete_corner",
+    "mirror_concat",
 )
 
 
@@ -167,6 +171,18 @@ def _pair(input_array: np.ndarray, output_array: np.ndarray) -> ArcPair:
     return ArcPair(_grid(input_array), _grid(output_array))
 
 
+def _task(
+    family: str,
+    task_index: int,
+    pairs: list[ArcPair],
+) -> ArcTask:
+    return ArcTask(
+        train=tuple(pairs[:-1]),
+        test=(pairs[-1],),
+        task_id=f"synthetic-v2:{family}:{task_index:06d}",
+    )
+
+
 def _ordinary_task(
     family: str,
     task_index: int,
@@ -210,11 +226,7 @@ def _ordinary_task(
             pairs.append(_pair(array, np.asarray([[count]], dtype=np.int32)))
     else:  # pragma: no cover - guarded by generate_synthetic_curriculum.
         raise ValueError(f"Unknown synthetic curriculum family: {family!r}.")
-    return ArcTask(
-        train=tuple(pairs[:-1]),
-        test=(pairs[-1],),
-        task_id=f"synthetic-v1:{family}:{task_index:06d}",
-    )
+    return _task(family, task_index, pairs)
 
 
 def _pattern_label_task(
@@ -244,8 +256,165 @@ def _pattern_label_task(
     return ArcTask(
         train=tuple(pairs),
         test=(query,),
-        task_id=f"synthetic-v1:pattern_label:{task_index:06d}",
+        task_id=f"synthetic-v2:pattern_label:{task_index:06d}",
     )
+
+
+def _select_marked_region_task(
+    task_index: int,
+    config: SyntheticCurriculumConfig,
+    rng: brainstate.random.RandomState,
+) -> ArcTask:
+    pairs = []
+    block_limit = min(5, config.max_grid_size // 2)
+    for _ in range(config.demonstrations + 1):
+        block_height = int(_randint(rng, 3, block_limit + 1))
+        block_width = int(_randint(rng, 3, block_limit + 1))
+        colors = np.asarray(
+            rng.permutation(np.arange(1, 10, dtype=np.int32)), dtype=np.int32
+        )[:5]
+        bases = colors[:4]
+        marker = int(colors[4])
+        counts = np.asarray(rng.permutation(np.arange(1, 5)), dtype=np.int32)
+        array = np.zeros((2 * block_height, 2 * block_width), dtype=np.int32)
+        for region_index, (row_start, column_start) in enumerate(
+            (
+                (0, 0),
+                (0, block_width),
+                (block_height, 0),
+                (block_height, block_width),
+            )
+        ):
+            region = np.full(
+                (block_height, block_width), bases[region_index], dtype=np.int32
+            )
+            positions = np.asarray(
+                rng.permutation(block_height * block_width), dtype=np.int32
+            )[: int(counts[region_index])]
+            region.reshape(-1)[positions] = marker
+            array[
+                row_start : row_start + block_height,
+                column_start : column_start + block_width,
+            ] = region
+        winning_base = int(bases[int(np.argmax(counts))])
+        pairs.append(
+            _pair(array, np.asarray([[winning_base]], dtype=np.int32))
+        )
+    return _task("select_marked_region", task_index, pairs)
+
+
+def _project_marker_task(
+    task_index: int,
+    config: SyntheticCurriculumConfig,
+    rng: brainstate.random.RandomState,
+) -> ArcTask:
+    colors = np.asarray(
+        rng.permutation(np.arange(1, 10, dtype=np.int32)), dtype=np.int32
+    )[:2]
+    marker, connector = (int(colors[0]), int(colors[1]))
+    direction_index = int(_randint(rng, 0, 4))
+    row_delta, column_delta = ((1, 0), (-1, 0), (0, 1), (0, -1))[
+        direction_index
+    ]
+    side = min(config.max_grid_size, 9)
+    pairs = []
+    for _ in range(config.demonstrations + 1):
+        connector_length = int(_randint(rng, 2, min(4, side - 2) + 1))
+        if row_delta > 0:
+            row = int(_randint(rng, 0, side - connector_length))
+            column = int(_randint(rng, 0, side))
+        elif row_delta < 0:
+            row = int(_randint(rng, connector_length, side))
+            column = int(_randint(rng, 0, side))
+        elif column_delta > 0:
+            row = int(_randint(rng, 0, side))
+            column = int(_randint(rng, 0, side - connector_length))
+        else:
+            row = int(_randint(rng, 0, side))
+            column = int(_randint(rng, connector_length, side))
+        input_array = np.zeros((side, side), dtype=np.int32)
+        input_array[row, column] = marker
+        for offset in range(1, connector_length + 1):
+            input_array[
+                row + row_delta * offset,
+                column + column_delta * offset,
+            ] = connector
+        output_array = input_array.copy()
+        output_array[row, column] = 0
+        output_array[
+            row + row_delta * connector_length,
+            column + column_delta * connector_length,
+        ] = marker
+        pairs.append(_pair(input_array, output_array))
+    return _task("project_marker", task_index, pairs)
+
+
+def _complete_corner_task(
+    task_index: int,
+    config: SyntheticCurriculumConfig,
+    rng: brainstate.random.RandomState,
+) -> ArcTask:
+    colors = np.asarray(
+        rng.permutation(np.arange(1, 10, dtype=np.int32)), dtype=np.int32
+    )[:2]
+    shape_color, completion_color = (int(colors[0]), int(colors[1]))
+    missing_index = int(_randint(rng, 0, 4))
+    side = min(config.max_grid_size, 9)
+    candidates = np.asarray(
+        [
+            (row, column)
+            for row in range(0, side - 1, 3)
+            for column in range(0, side - 1, 3)
+        ],
+        dtype=np.int32,
+    )
+    pairs = []
+    for _ in range(config.demonstrations + 1):
+        object_count = int(_randint(rng, 1, min(4, len(candidates)) + 1))
+        selected = candidates[
+            np.asarray(rng.permutation(len(candidates)), dtype=np.int32)[:object_count]
+        ]
+        input_array = np.zeros((side, side), dtype=np.int32)
+        output_array = np.zeros_like(input_array)
+        for row, column in selected:
+            input_block = np.full((2, 2), shape_color, dtype=np.int32)
+            input_block.reshape(-1)[missing_index] = 0
+            output_block = input_block.copy()
+            output_block.reshape(-1)[missing_index] = completion_color
+            input_array[row : row + 2, column : column + 2] = input_block
+            output_array[row : row + 2, column : column + 2] = output_block
+        pairs.append(_pair(input_array, output_array))
+    return _task("complete_corner", task_index, pairs)
+
+
+def _mirror_concat_task(
+    task_index: int,
+    config: SyntheticCurriculumConfig,
+    rng: brainstate.random.RandomState,
+) -> ArcTask:
+    direction = int(_randint(rng, 0, 4))
+    pairs = []
+    for _ in range(config.demonstrations + 1):
+        if direction < 2:
+            height = int(_randint(rng, 3, config.max_grid_size // 2 + 1))
+            width = int(_randint(rng, 3, min(9, config.max_grid_size) + 1))
+        else:
+            height = int(_randint(rng, 3, min(9, config.max_grid_size) + 1))
+            width = int(_randint(rng, 3, config.max_grid_size // 2 + 1))
+        mask = np.asarray(rng.random((height, width)), dtype=np.float32) < 0.35
+        mask[int(_randint(rng, 0, height)), int(_randint(rng, 0, width))] = True
+        colors = _randint(rng, 1, 10, size=(height, width))
+        input_array = np.where(mask, colors, 0).astype(np.int32)
+        if direction == 0:
+            output_array = np.concatenate((np.flipud(input_array), input_array), axis=0)
+        elif direction == 1:
+            output_array = np.concatenate((input_array, np.flipud(input_array)), axis=0)
+        elif direction == 2:
+            output_array = np.concatenate((np.fliplr(input_array), input_array), axis=1)
+        else:
+            output_array = np.concatenate((input_array, np.fliplr(input_array)), axis=1)
+        pairs.append(_pair(input_array, output_array))
+    return _task("mirror_concat", task_index, pairs)
 
 
 def generate_synthetic_curriculum(
@@ -277,6 +446,14 @@ def generate_synthetic_curriculum(
         family = FAMILIES[task_index % len(FAMILIES)]
         if family == "pattern_label":
             task = _pattern_label_task(task_index, config, rng)
+        elif family == "select_marked_region":
+            task = _select_marked_region_task(task_index, config, rng)
+        elif family == "project_marker":
+            task = _project_marker_task(task_index, config, rng)
+        elif family == "complete_corner":
+            task = _complete_corner_task(task_index, config, rng)
+        elif family == "mirror_concat":
+            task = _mirror_concat_task(task_index, config, rng)
         else:
             task = _ordinary_task(family, task_index, config, rng)
         tasks.append(task)
