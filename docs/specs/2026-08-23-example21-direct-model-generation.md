@@ -1076,6 +1076,50 @@ Only a pass permits one 1,000-update oracle with the untouched seed 82108 and
 existing exact/family promotion gate. This is a topology test, not another
 loss-weight search.
 
+V32 is rejected at clean revision
+`17c3438675dac8321def5e0d75caaa2913676bb1`, with artifact
+`var/ex21-online-v32-direct-state-pilot-v1`. The topology correction is real:
+the compiler recorded two hidden groups, four ETP weight relations, zero
+recurrent exclusions, and no weight-to-weight diagnostic; every parameter
+group and candidate bytes moved. Training took 11.60 seconds. Behavior still
+failed at score-ineligible 0/40, with 0/96 foreground and 457/561 background
+cells. No full V32 synthetic oracle runs. Recurrent eligibility was not the
+remaining cause of failure.
+
+### Public ARC training-corpus alignment V33
+
+V33 keeps the exact V32 model, V31 hierarchical loss and decoder, PP-prop
+algorithm, optimizer, and trace configuration. It changes the training corpus
+from 120 generated tasks to the integrity-indexed public ARC-AGI-1 training
+role. No evaluation task or evaluation target enters training. Every public
+training task is converted into the existing target-isolated leave-one-pair-out
+episodes plus official training-role queries whose outputs are public training
+labels. Sampling is global across the corpus; there is one shared checkpoint
+and no evaluation-time or task-local fitting. Training-only colour, dihedral,
+and demonstration-order augmentation is enabled.
+
+The score-ineligible pilot deterministically holds out the first 80 public
+training tasks by canonical fingerprint and fits the other 319. It uses seed
+2108, sampling/augmentation seed 12108, 400 updates in chunks of 20, batch size
+eight, full 128/256 two-layer V32 topology, and learning rate 0.001. The 80
+held-out tasks are encoded target-free and scored only after training. The
+evaluation-role corpus is loaded only for manifest/leakage validation and is
+neither encoded nor scored in the pilot.
+
+Sibling tests must prove deterministic disjoint splitting, fit-only episode
+membership, target-independent validation events, correct 80-task score scope,
+exact source-manifest binding, no recurrent compiler exclusions, finite
+training, every parameter-group movement, and changed candidate bytes. The
+pilot gate is the mechanism gate plus at least two strict held-out training
+tasks at pass@1. This integer is a development gate, not the acceptance score.
+
+Only a pilot pass permits one sealed run from a fresh seed-2108 model trained
+for 2,000 updates on all 399 public training tasks and scored once on the
+complete fixed 400-task/419-query evaluation manifest. That run has one
+acceptance score, `strict_task_pass_at_1_count`, and must reach at least 16
+before the mandatory checkpoint-dependence matrix is allowed. No synthetic
+oracle or pilot score is added to it.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
