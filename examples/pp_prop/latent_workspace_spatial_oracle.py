@@ -311,12 +311,6 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
         and _parameter_leaves_finite(model)
         and bool(np.all(np.isfinite(losses)))
     )
-    gate_passed = bool(
-        mechanism_passed
-        and evaluation["strict_task_pass_at_1_count"] > 7
-        and len(family_summary["non_label_families"]) >= 2
-        and family_summary["non_copy_non_label_ids"]
-    )
     diagnostics = evaluation["diagnostics"]
     predicted_nonzero = sum(
         count
@@ -326,7 +320,16 @@ def run_spatial_oracle(config: SpatialOracleConfig) -> dict[str, object]:
     anti_collapse_passed = bool(
         mechanism_passed
         and predicted_nonzero > 0
-        and diagnostics["foreground_correct"] > 0
+        and diagnostics["foreground_total"] > 0
+        and diagnostics["foreground_accuracy"] >= 0.05
+        and diagnostics["background_total"] > 0
+        and diagnostics["background_accuracy"] >= 0.5
+    )
+    gate_passed = bool(
+        anti_collapse_passed
+        and evaluation["strict_task_pass_at_1_count"] > 7
+        and len(family_summary["non_label_families"]) >= 2
+        and family_summary["non_copy_non_label_ids"]
     )
     result = {
         "schema_version": 1,

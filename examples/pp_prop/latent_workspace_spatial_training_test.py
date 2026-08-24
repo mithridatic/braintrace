@@ -133,6 +133,45 @@ def test_v24_loss_equalizes_every_present_color_not_just_foreground() -> None:
     assert float(v24_zero) == pytest.approx(float(v24_eight), rel=1e-5)
 
 
+def test_v25_loss_balances_present_colors_across_the_whole_grid() -> None:
+    subject = _subject()
+    steps = 10
+    rows = jnp.zeros((steps, 1, 30), dtype=jnp.int32)
+    rows = rows.at[-1, 0, 0].set(7)
+    masks = jnp.zeros((steps, 1, 30), dtype=jnp.float32).at[:, 0, :10].set(1.0)
+    dimensions = jnp.zeros((steps, 1), dtype=jnp.int32)
+    widths = jnp.full((steps, 1), 9, dtype=jnp.int32)
+    v21_weights = jnp.broadcast_to(
+        jnp.asarray([[np.sqrt(100.0 / 99.0)] + [0.0] * 6 + [4.0] + [0.0] * 2]),
+        (steps, 1, 10),
+    )
+    zero_outputs = jnp.broadcast_to(_confident_output(0), (steps, 1, 360))
+    seven_outputs = jnp.broadcast_to(_confident_output(7), (steps, 1, 360))
+
+    v24 = jax.vmap(subject.present_color_step_loss)
+    v24_zero = jnp.mean(
+        v24(zero_outputs, rows, masks, dimensions, widths, v21_weights)
+    )
+    v24_seven = jnp.mean(
+        v24(seven_outputs, rows, masks, dimensions, widths, v21_weights)
+    )
+    color_mass = subject.whole_grid_color_mass(rows, masks)
+    v25 = jax.vmap(subject.whole_grid_present_color_step_loss)
+    v25_zero = jnp.mean(
+        v25(zero_outputs, rows, masks, dimensions, widths, color_mass)
+    )
+    v25_seven = jnp.mean(
+        v25(seven_outputs, rows, masks, dimensions, widths, color_mass)
+    )
+
+    assert float(v24_zero) < float(v24_seven)
+    assert float(v25_zero) == pytest.approx(float(v25_seven), rel=1e-5)
+    assert float(color_mass[0, 0, 0]) == pytest.approx(30.0 / (2.0 * 99.0))
+    assert float(color_mass[-1, 0, 7]) == pytest.approx(15.0)
+    assert np.count_nonzero(np.asarray(color_mass[..., 1:7])) == 0
+    assert np.count_nonzero(np.asarray(color_mass[..., 8:])) == 0
+
+
 def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -174,7 +213,7 @@ def test_spatial_pp_prop_pilot_moves_every_parameter_group() -> None:
     assert all(before[name].tobytes() != after[name].tobytes() for name in before)
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "present_color_balanced_v24"
+    assert trainer.loss_version == "whole_grid_present_color_balanced_v25"
 
 
 def test_spatial_checkpoint_roundtrip_is_output_exact(tmp_path) -> None:

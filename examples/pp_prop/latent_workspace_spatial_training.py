@@ -244,6 +244,93 @@ def present_color_step_loss(
     return (color_loss + height_loss + width_loss) / 3.0
 
 
+def whole_grid_color_mass(
+    target_rows: jnp.ndarray, target_cell_masks: jnp.ndarray
+) -> jnp.ndarray:
+    """Compute equal whole-grid mass for every present target colour.
+
+    Parameters
+    ----------
+    target_rows : jax.Array
+        Time-major batched integer target rows shaped ``(time, batch, 30)``.
+    target_cell_masks : jax.Array
+        Matching valid-cell masks.
+
+    Returns
+    -------
+    jax.Array
+        Time-broadcast colour masses shaped ``(time, batch, 10)``.
+    """
+
+    if target_rows.shape != target_cell_masks.shape or target_rows.ndim != 3:
+        raise ValueError("target_rows and target_cell_masks must match in 3-D.")
+    if target_rows.shape[-1] != MAX_GRID_SIZE:
+        raise ValueError(f"target row width must be {MAX_GRID_SIZE}.")
+    mask = jnp.asarray(target_cell_masks, dtype=jnp.float32)
+    color_ids = jnp.arange(COLOR_COUNT, dtype=target_rows.dtype)
+    membership = mask[..., None] * (
+        target_rows[..., None] == color_ids
+    ).astype(mask.dtype)
+    counts = jnp.sum(membership, axis=(0, 2))
+    present = (counts > 0.0).astype(mask.dtype)
+    present_count = jnp.sum(present, axis=-1, keepdims=True)
+    per_color = jnp.where(
+        counts > 0.0,
+        MAX_GRID_SIZE / jnp.maximum(present_count * counts, 1.0),
+        0.0,
+    )
+    return jnp.broadcast_to(per_color[None, ...], (*target_rows.shape[:2], COLOR_COUNT))
+
+
+def whole_grid_present_color_step_loss(
+    output: jnp.ndarray,
+    target_row: jnp.ndarray,
+    target_cell_mask: jnp.ndarray,
+    target_height: jnp.ndarray,
+    target_width: jnp.ndarray,
+    color_mass: jnp.ndarray,
+) -> jnp.ndarray:
+    """Apply fixed whole-grid colour mass at one online decode step.
+
+    Parameters
+    ----------
+    output : jax.Array
+        Batched fixed-layout neural logits.
+    target_row : jax.Array
+        Batched integer colours for all 30 columns.
+    target_cell_mask : jax.Array
+        Batched mask selecting true target columns.
+    target_height, target_width : jax.Array
+        Batched zero-based output dimension labels.
+    color_mass : jax.Array
+        Batched ten-colour mass computed over the complete target grid.
+
+    Returns
+    -------
+    jax.Array
+        Scalar mean of whole-grid-balanced colour and shape losses.
+    """
+
+    if color_mass.shape[-1] != COLOR_COUNT:
+        raise ValueError(f"color_mass last dimension must be {COLOR_COUNT}.")
+    row_logits, height_logits, width_logits = split_step_logits(output)
+    per_cell = optax.softmax_cross_entropy_with_integer_labels(
+        row_logits, target_row
+    )
+    mask = jnp.asarray(target_cell_mask, dtype=per_cell.dtype)
+    selected_mass = jnp.take_along_axis(
+        color_mass[:, None, :], target_row[..., None], axis=-1
+    )[..., 0]
+    color_loss = jnp.mean(jnp.sum(per_cell * mask * selected_mass, axis=-1))
+    height_loss = optax.softmax_cross_entropy_with_integer_labels(
+        height_logits, target_height
+    ).mean()
+    width_loss = optax.softmax_cross_entropy_with_integer_labels(
+        width_logits, target_width
+    ).mean()
+    return (color_loss + height_loss + width_loss) / 3.0
+
+
 class SpatialPPPropTrainer:
     """Train the Conv-LIF canvas with compiled single-step PP-prop.
 
@@ -261,7 +348,7 @@ class SpatialPPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "present_color_balanced_v24"
+    loss_version = "whole_grid_present_color_balanced_v25"
 
     def __init__(
         self,
@@ -329,19 +416,22 @@ class SpatialPPPropTrainer:
             ]
             return jnp.sqrt(sum(jnp.sum(jnp.square(leaf)) for leaf in leaves))
 
-        def train_one(events, rows, masks, weights, heights, widths, decode_mask):
+        def train_one(
+            events, rows, masks, _class_weights, heights, widths, decode_mask
+        ):
             self._reset()
+            color_mass = whole_grid_color_mass(rows, masks)
 
-            def step_loss(event, row, mask, class_weights, height, width):
-                return present_color_step_loss(
-                    learner(event), row, mask, height, width, class_weights
+            def step_loss(event, row, mask, step_color_mass, height, width):
+                return whole_grid_present_color_step_loss(
+                    learner(event), row, mask, height, width, step_color_mass
                 )
 
             gradients, objective = learner.etrace_grad(
                 events,
                 rows,
                 masks,
-                weights,
+                color_mass,
                 heights,
                 widths,
                 step_fn=step_loss,

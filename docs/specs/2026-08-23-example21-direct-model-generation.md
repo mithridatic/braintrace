@@ -792,6 +792,36 @@ predicted cell, and at least one correct foreground cell. Only a pass permits
 the still-untouched seed-82108 full oracle under the existing greater-than-seven
 and family-diversity gate.
 
+V24 is rejected at clean revision
+`7e07db2402c6c8b3824a0e1d677f503b256ed51d`, with artifact
+`var/ex21-online-v24-anti-collapse-pilot-v1`. After 200 updates its mechanism
+gate passed but all 2,136 predicted cells were still zero, with 0/51 foreground
+and 447/447 background cells correct among 18 shape-correct tasks. The
+score-ineligible exact count was 0/40, so no full V24 oracle ran. Per-row colour
+balancing leaves every all-background target row with full background mass;
+those rows dominate across the target grid even when mixed rows are balanced.
+
+### Whole-grid present-colour-balanced spatial PP-prop V25
+
+V25 computes target-colour counts once across every valid cell of the complete
+training target grid. Each cell receives fixed mass
+`30 / (number_of_present_colours * count_of_its_colour)`. The per-step colour
+loss is the unnormalized sum of cell cross-entropies times this mass; PP-prop's
+mean over the fixed 30 decode steps then equals the mean cross-entropy over
+present target colours for the whole grid. Absent colours and padded cells have
+zero mass. Height, width, model, trace, and target-isolation semantics remain
+unchanged. The loss version is `whole_grid_present_color_balanced_v25`.
+
+Tests must reproduce a multirow failure with nine all-background rows and one
+mixed row: V24 prefers constant zero, whereas V25 gives each present colour
+equal total sequence mass. They must also prove absent-colour zero mass, finite
+all-background behavior, exact padding exclusion, and five-group PP-prop
+descent. One score-ineligible 200-update pilot uses the fixed training setup and
+40 fresh diagnostic tasks at seed 112108. It passes only with the mechanism
+gate, changed/nonconstant candidate bytes, at least 5% foreground accuracy, and
+at least 50% background accuracy among shape-correct tasks. Only then may the
+untouched seed-82108 full oracle run under the existing exact/family gate.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
