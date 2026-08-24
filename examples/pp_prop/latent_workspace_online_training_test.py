@@ -263,6 +263,32 @@ def test_v29_mass_balances_gate_and_present_nonzero_colors_whole_grid() -> None:
     assert np.count_nonzero(np.asarray(background_color)) == 0
 
 
+def test_v30_gate_mass_uses_square_root_group_totals() -> None:
+    subject = _subject()
+    rows = jnp.zeros((10, 1, 30), dtype=jnp.int32)
+    rows = rows.at[-1, 0, 0].set(7).at[-1, 0, 1].set(8)
+    masks = jnp.zeros_like(rows, dtype=jnp.float32).at[:, 0, :10].set(1.0)
+
+    gate_mass, color_mass = subject.sqrt_balanced_hierarchical_mass(rows, masks)
+    _, equal_color_mass = subject.hierarchical_whole_grid_mass(rows, masks)
+    background_total = float(gate_mass[0, 0, 0]) * 98.0
+    foreground_total = float(gate_mass[0, 0, 1]) * 2.0
+
+    assert background_total + foreground_total == pytest.approx(30.0)
+    assert background_total / foreground_total == pytest.approx(7.0)
+    assert np.asarray(color_mass).tobytes() == np.asarray(equal_color_mass).tobytes()
+
+    all_background = jnp.zeros((2, 1, 30), dtype=jnp.int32)
+    background_mask = jnp.zeros_like(all_background, dtype=jnp.float32)
+    background_mask = background_mask.at[:, 0, :3].set(1.0)
+    background_gate, background_color = subject.sqrt_balanced_hierarchical_mass(
+        all_background, background_mask
+    )
+    assert float(background_gate[0, 0, 0]) == pytest.approx(5.0)
+    assert float(background_gate[0, 0, 1]) == 0.0
+    assert np.count_nonzero(np.asarray(background_color)) == 0
+
+
 def test_v29_loss_excludes_background_conditional_logits_and_binds_weights() -> None:
     subject = _subject()
     model_subject = _model_subject()
@@ -376,7 +402,7 @@ def test_pp_prop_compiler_descent_pilot_moves_all_parameter_groups() -> None:
     )
     assert trainer.algorithm == "pp_prop"
     assert trainer.vjp_method == "single-step"
-    assert trainer.loss_version == "hierarchical_foreground_color_balanced_v29"
+    assert trainer.loss_version == "sqrt_gate_hierarchical_color_balanced_v30"
 
 
 def test_sampling_is_brainstate_deterministic_and_target_isolated() -> None:

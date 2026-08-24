@@ -977,6 +977,38 @@ accuracy is at least 50% among shape-correct tasks. Only a pass permits one
 82108. The full promotion gate remains greater than 7/120, at least two
 non-label families, and at least one non-copy/non-label exact task.
 
+V29 is rejected at clean revision
+`afd11003af693c6dd9cd74d5e13a21373ad63cc5`, with artifact
+`var/ex21-online-v29-anti-collapse-pilot-v1`. In 16.72 training seconds it
+moved every parameter group and improved the score-ineligible exact count to
+3/40, spanning `count`, `pattern_label`, and `select_marked_region`. It cleared
+the foreground threshold at 7/52 cells (13.46%) but achieved only 142/446
+background cells (31.84%), below the predeclared 50% gate. No full V29 oracle
+is permitted. Equal foreground/background loss mass overcorrected the earlier
+foreground collapse and made the decoder emit foreground too often.
+
+### Square-root-balanced hierarchical gate V30
+
+V30 keeps the V29 model, hierarchical serialization, conditional-colour loss,
+shape loss, data, and PP-prop schedule exactly fixed. Only the binary gate mass
+changes. For each present background/foreground group with count `n_g`, its
+total whole-grid mass is proportional to `sqrt(n_g)` and the totals sum to 30;
+each cell in that group receives its group total divided by `n_g`. This is the
+square-root inverse-frequency compromise already used by the bounded V20 class
+weights, applied once across the complete grid. It gives the more prevalent
+background group greater total evidence without restoring unweighted
+per-pixel dominance. A sole present group retains total mass 30. The loss
+version is `sqrt_gate_hierarchical_color_balanced_v30`.
+
+Tests must prove the exact square-root total-mass ratio, total mass 30,
+all-background finite behavior, unchanged conditional-colour masses and fixed
+decoder, compiled gradients in every parameter group, and candidate-byte
+movement. One score-ineligible pilot reuses the 200-update V29 setup with 40
+fresh diagnostic tasks at seed 162108. It must again clear at least 5%
+foreground and 50% background accuracy, nonzero predictions, parameter-group
+movement, and changed candidate bytes. Only a pass permits one 1,000-update
+oracle with the untouched seed 82108 and existing exact/family promotion gate.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

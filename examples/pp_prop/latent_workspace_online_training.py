@@ -776,6 +776,50 @@ def hierarchical_whole_grid_mass(
     return gate_mass, color_mass
 
 
+def sqrt_balanced_hierarchical_mass(
+    target_rows: jnp.ndarray, target_cell_masks: jnp.ndarray
+) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """Compute square-root-balanced gate and equal conditional-colour masses.
+
+    Parameters
+    ----------
+    target_rows : jax.Array
+        Time-major batched integer target rows shaped ``(time, batch, 30)``.
+    target_cell_masks : jax.Array
+        Matching valid-cell masks.
+
+    Returns
+    -------
+    gate_mass, color_mass : tuple of jax.Array
+        Gate groups receive total mass proportional to the square root of their
+        whole-grid counts and summing to 30. Conditional nonzero colours retain
+        equal whole-grid mass.
+    """
+
+    _, color_mass = hierarchical_whole_grid_mass(target_rows, target_cell_masks)
+    mask = jnp.asarray(target_cell_masks, dtype=jnp.float32)
+    gate_targets = (target_rows != 0).astype(target_rows.dtype)
+    gate_ids = jnp.arange(2, dtype=target_rows.dtype)
+    membership = mask[..., None] * (
+        gate_targets[..., None] == gate_ids
+    ).astype(mask.dtype)
+    counts = jnp.sum(membership, axis=(0, 2))
+    roots = jnp.sqrt(counts)
+    total_roots = jnp.sum(roots, axis=-1, keepdims=True)
+    group_totals = jnp.where(
+        counts > 0.0,
+        MAX_GRID_SIZE * roots / jnp.maximum(total_roots, 1.0),
+        0.0,
+    )
+    per_gate = jnp.where(
+        counts > 0.0, group_totals / jnp.maximum(counts, 1.0), 0.0
+    )
+    gate_mass = jnp.broadcast_to(
+        per_gate[None, ...], (target_rows.shape[0], *per_gate.shape)
+    )
+    return gate_mass, color_mass
+
+
 def hierarchical_whole_grid_step_loss(
     output: jnp.ndarray,
     target_row: jnp.ndarray,
@@ -941,7 +985,7 @@ class OnlinePPPropTrainer:
 
     algorithm = "pp_prop"
     vjp_method = "single-step"
-    loss_version = "hierarchical_foreground_color_balanced_v29"
+    loss_version = "sqrt_gate_hierarchical_color_balanced_v30"
 
     def __init__(
         self,
@@ -1028,7 +1072,7 @@ class OnlinePPPropTrainer:
             decode_mask,
         ):
             self._reset()
-            gate_mass, color_mass = hierarchical_whole_grid_mass(rows, cell_mask)
+            gate_mass, color_mass = sqrt_balanced_hierarchical_mass(rows, cell_mask)
 
             def step_loss(
                 event,
