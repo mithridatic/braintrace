@@ -15,7 +15,7 @@ MAX_GRID_SIZE = 30
 COLOR_COUNT = 10
 ROW_COLOR_WIDTH = MAX_GRID_SIZE * COLOR_COUNT
 OUTPUT_WIDTH = ROW_COLOR_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "online_vanilla_rnn_hierarchical_decoder_v32"
+ARCHITECTURE_VERSION = "online_query_replay_hierarchical_decoder_v34"
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -53,7 +53,7 @@ class OnlineModelConfig:
         ``encoder_width`` units and later layers have ``hidden_width`` units.
     seed : int, default=2108
         BrainState parameter-initialization seed.
-    architecture_version : str, default="online_vanilla_rnn_hierarchical_decoder_v32"
+    architecture_version : str, default="online_query_replay_hierarchical_decoder_v34"
         Exact checkpoint-schema identifier.
     """
 

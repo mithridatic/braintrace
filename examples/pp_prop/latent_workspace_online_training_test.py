@@ -53,6 +53,10 @@ def test_packing_is_lossless_ordered_and_target_independent() -> None:
         "examples.pp_prop.latent_workspace_direct_training"
     ).encode_direct_episode(_task(3), 0, config)
     valid_rows = direct.events[direct.events[:, config.valid_slice.start] == 1.0]
+    query_rows = direct.events[
+        (direct.events[:, config.valid_slice.start] == 1.0)
+        & (direct.events[:, config.phase_slice.start + 1] == 1.0)
+    ]
     input_start = config.max_events - len(valid_rows)
 
     assert first.events.tobytes() == changed.events.tobytes()
@@ -70,9 +74,46 @@ def test_packing_is_lossless_ordered_and_target_independent() -> None:
     ) == 0
     decode = first.events[config.max_events :]
     assert np.all(decode[:, config.input_width] == 1.0)
-    assert np.count_nonzero(decode[:, : config.input_width]) == 0
+    assert decode[: len(query_rows), : config.input_width].tobytes() == (
+        query_rows.tobytes()
+    )
+    assert np.all(
+        decode[:, config.input_height_slice]
+        == query_rows[0, config.input_height_slice]
+    )
+    assert np.all(
+        decode[:, config.input_width_slice]
+        == query_rows[0, config.input_width_slice]
+    )
+    assert np.count_nonzero(
+        decode[len(query_rows) :, config.input_mask_slice]
+    ) == 0
+    assert np.count_nonzero(
+        decode[len(query_rows) :, config.input_color_slice]
+    ) == 0
     assert np.array_equal(decode[:, config.input_width + 1 :], np.eye(30, dtype=np.float32))
     assert first.decode_mask.sum() == 30
+
+
+def test_query_replay_changes_with_query_input_but_not_target() -> None:
+    subject = _subject()
+    config = RowEventConfig(max_demonstrations=2, max_grid_size=3)
+    base = _task(3)
+    changed_input = ArcTask(
+        train=base.train,
+        test=(ArcPair(ArcGrid(((9, 0),)), base.test[0].output),),
+        task_id=base.task_id,
+    )
+    changed_target = _task(9)
+
+    first = subject.encode_online_episode(base, 0, config)
+    input_changed = subject.encode_online_episode(changed_input, 0, config)
+    target_changed = subject.encode_online_episode(changed_target, 0, config)
+
+    assert first.events.tobytes() != input_changed.events.tobytes()
+    assert first.events.tobytes() == target_changed.events.tobytes()
+    assert first.target_rows.tobytes() == input_changed.target_rows.tobytes()
+    assert first.target_rows.tobytes() != target_changed.target_rows.tobytes()
 
 
 def test_stack_and_repeat_keep_time_major_targets_out_of_events() -> None:

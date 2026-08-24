@@ -15,7 +15,6 @@ import msgspec
 import numpy as np
 
 from examples.pp_prop.latent_workspace_direct_experiment import (
-    deterministic_task_split,
     load_corpora,
     training_episode_catalog,
 )
@@ -83,6 +82,8 @@ class OnlineARCOracleConfig:
         Independent model and BrainState sampling/augmentation seeds.
     validation_task_count : int, default=80
         Public training tasks held out during a pilot.
+    validation_fold_index : int, default=0
+        Zero-based nonoverlapping canonical-fingerprint validation fold.
     expected_training_task_count, expected_evaluation_task_count : int
         Fail-closed indexed-corpus task counts.
     training_updates, training_chunk_size, training_batch_size : int
@@ -106,6 +107,7 @@ class OnlineARCOracleConfig:
     seed: int = 2108
     sampling_seed: int = 12108
     validation_task_count: int = 80
+    validation_fold_index: int = 0
     expected_training_task_count: int = 399
     expected_evaluation_task_count: int = 400
     training_updates: int = 400
@@ -130,6 +132,13 @@ class OnlineARCOracleConfig:
             "sampling_seed",
             _nonnegative_integer(self.sampling_seed, "sampling_seed"),
         )
+        object.__setattr__(
+            self,
+            "validation_fold_index",
+            _nonnegative_integer(
+                self.validation_fold_index, "validation_fold_index"
+            ),
+        )
         for name in (
             "validation_task_count",
             "expected_training_task_count",
@@ -146,6 +155,12 @@ class OnlineARCOracleConfig:
             raise ValueError(
                 "validation_task_count must be smaller than "
                 "expected_training_task_count."
+            )
+        if (
+            self.validation_fold_index + 1
+        ) * self.validation_task_count > self.expected_training_task_count:
+            raise ValueError(
+                "validation fold must fit inside expected_training_task_count."
             )
         if self.training_updates % self.training_chunk_size:
             raise ValueError("training_chunk_size must divide training_updates.")
@@ -215,6 +230,7 @@ def select_arc_scope(
     evaluation: tuple[ArcTask, ...],
     *,
     validation_task_count: int,
+    validation_fold_index: int,
     complete: bool,
 ) -> ARCRunScope:
     """Select disjoint pilot tasks or the complete public ARC roles.
@@ -225,6 +241,8 @@ def select_arc_scope(
         Integrity-checked role-separated corpora.
     validation_task_count : int
         Held-out public-training task count for a pilot.
+    validation_fold_index : int
+        Zero-based nonoverlapping canonical-fingerprint fold.
     complete : bool
         Whether to select the complete evaluation role.
 
@@ -242,9 +260,15 @@ def select_arc_scope(
         raise TypeError("complete must be boolean.")
     if complete:
         return ARCRunScope("complete_arc_evaluation", training, evaluation)
-    fitting, validation = deterministic_task_split(
-        training, _positive_integer(validation_task_count, "validation_task_count")
-    )
+    count = _positive_integer(validation_task_count, "validation_task_count")
+    fold = _nonnegative_integer(validation_fold_index, "validation_fold_index")
+    start = fold * count
+    stop = start + count
+    if stop > len(training):
+        raise ValueError("validation fold must fit inside the training corpus.")
+    ordered = tuple(sorted(training, key=canonical_task_fingerprint))
+    validation = ordered[start:stop]
+    fitting = ordered[:start] + ordered[stop:]
     fit_fingerprints = {canonical_task_fingerprint(task) for task in fitting}
     score_fingerprints = {canonical_task_fingerprint(task) for task in validation}
     if fit_fingerprints.intersection(score_fingerprints):
@@ -306,6 +330,7 @@ def run_arc_oracle(config: OnlineARCOracleConfig) -> dict[str, object]:
         corpora.training,
         corpora.evaluation,
         validation_task_count=config.validation_task_count,
+        validation_fold_index=config.validation_fold_index,
         complete=config.evaluate_complete_manifest,
     )
     row_config = RowEventConfig(max_demonstrations=10, max_grid_size=30)
@@ -410,6 +435,11 @@ def run_arc_oracle(config: OnlineARCOracleConfig) -> dict[str, object]:
             "name": scope.scope,
             "fit_task_count": len(scope.fit_tasks),
             "score_task_count": len(scope.score_tasks),
+            "validation_fold_index": (
+                None
+                if config.evaluate_complete_manifest
+                else config.validation_fold_index
+            ),
             "fit_task_ids": list(scope.fit_task_ids),
             "score_task_ids": list(scope.score_task_ids),
             "fit_task_fingerprints": [
@@ -465,6 +495,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, default=2108)
     parser.add_argument("--sampling-seed", type=int, default=12108)
     parser.add_argument("--validation-task-count", type=int, default=80)
+    parser.add_argument("--validation-fold-index", type=int, default=0)
     parser.add_argument("--expected-training-task-count", type=int, default=399)
     parser.add_argument("--expected-evaluation-task-count", type=int, default=400)
     parser.add_argument("--training-updates", type=int, default=400)

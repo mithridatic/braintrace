@@ -59,6 +59,7 @@ def test_config_validates_schedule_counts_and_serializes_paths(tmp_path) -> None
     assert payload["source_manifest"] == str(tmp_path / "sources.json")
     assert payload["output_dir"] == str(tmp_path / "output")
     assert payload["sampling_seed"] == 12108
+    assert payload["validation_fold_index"] == 0
     with pytest.raises(ValueError, match="divide"):
         subject.OnlineARCOracleConfig(
             source_manifest=tmp_path / "sources.json",
@@ -71,6 +72,14 @@ def test_config_validates_schedule_counts_and_serializes_paths(tmp_path) -> None
             source_manifest=tmp_path / "sources.json",
             output_dir=tmp_path,
             validation_task_count=4,
+            expected_training_task_count=4,
+        )
+    with pytest.raises(ValueError, match="fold"):
+        subject.OnlineARCOracleConfig(
+            source_manifest=tmp_path / "sources.json",
+            output_dir=tmp_path,
+            validation_task_count=2,
+            validation_fold_index=2,
             expected_training_task_count=4,
         )
 
@@ -109,10 +118,18 @@ def test_pilot_scope_is_deterministic_disjoint_and_never_scores_evaluation() -> 
     evaluation = tuple(_task(index, role="evaluation") for index in range(3))
 
     first = subject.select_arc_scope(
-        training, evaluation, validation_task_count=2, complete=False
+        training,
+        evaluation,
+        validation_task_count=2,
+        validation_fold_index=0,
+        complete=False,
     )
     second = subject.select_arc_scope(
-        training, evaluation, validation_task_count=2, complete=False
+        training,
+        evaluation,
+        validation_task_count=2,
+        validation_fold_index=0,
+        complete=False,
     )
 
     assert [task.task_id for task in first.fit_tasks] == [
@@ -128,11 +145,24 @@ def test_pilot_scope_is_deterministic_disjoint_and_never_scores_evaluation() -> 
     assert first.scope == "held_out_public_training"
 
     complete = subject.select_arc_scope(
-        training, evaluation, validation_task_count=2, complete=True
+        training,
+        evaluation,
+        validation_task_count=2,
+        validation_fold_index=0,
+        complete=True,
     )
     assert complete.fit_task_ids == tuple(task.task_id for task in training)
     assert complete.score_task_ids == tuple(task.task_id for task in evaluation)
     assert complete.scope == "complete_arc_evaluation"
+
+    next_fold = subject.select_arc_scope(
+        training,
+        evaluation,
+        validation_task_count=2,
+        validation_fold_index=1,
+        complete=False,
+    )
+    assert set(first.score_task_ids).isdisjoint(next_fold.score_task_ids)
 
 
 def test_tiny_arc_run_binds_fit_scope_compiler_and_artifact(
@@ -167,6 +197,7 @@ def test_tiny_arc_run_binds_fit_scope_compiler_and_artifact(
         seed=41,
         sampling_seed=51,
         validation_task_count=2,
+        validation_fold_index=0,
         expected_training_task_count=4,
         expected_evaluation_task_count=2,
         training_updates=1,

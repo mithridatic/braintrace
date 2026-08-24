@@ -1120,6 +1120,44 @@ acceptance score, `strict_task_pass_at_1_count`, and must reach at least 16
 before the mandatory checkpoint-dependence matrix is allowed. No synthetic
 oracle or pilot score is added to it.
 
+V33 is rejected at clean revision
+`48a76c2682e3fd97d92c4156657c594f8939e400`, with artifact
+`var/ex21-online-v33-real-arc-pilot-v1`. The mechanism gate passed after 400
+updates over 319 fitting tasks: every parameter group moved, candidate bytes
+changed, recurrent exclusions remained zero, and training took 54.59 seconds.
+The score on 80 held-out public-training tasks and 85 queries was nevertheless
+0/80. Only 14 tasks had exact output shape. No complete evaluation or longer
+V33 run is permitted.
+
+### Target-free query-row replay V34
+
+V34 changes only the fixed lossless event encoding and its bound architecture
+identifier. The existing sequence presents query input rows before 30 decode
+tokens, but the ARC-feature portion of every decode token is all zero. V34
+copies the corresponding query-input row event into that decode step before
+setting the existing decode flag and row one-hot. Rows beyond the query height
+remain zero in their input-mask and colour blocks while retaining the query
+dimension one-hots. Thus every candidate cell and shape still comes from
+executed V32 recurrent activations and checkpoint-owned output heads; the
+replayed values are model inputs, never direct candidates. Demonstration
+outputs, query targets, rules, retrieval, fitting, and target-derived selectors
+remain absent. The architecture identifier becomes
+`online_query_replay_hierarchical_decoder_v34`; the fixed answer-head
+identifier remains `hierarchical_row_decoder_v29`.
+
+Tests must prove exact row correspondence, zero target dependence, sensitivity
+to a changed query input, unchanged 30-step decode ordering, checkpoint binding,
+compiled recurrent/output gradients, and candidate-byte movement. The ARC
+runner gains a deterministic validation-fold index so V34 uses fingerprint
+positions 80 through 159 rather than the V33 fold. The chosen fold must be
+disjoint from fitting and from V33's score fold.
+
+One score-ineligible pilot uses validation fold one, sampling/augmentation seed
+13108, and the otherwise unchanged V33 400-update configuration. It must pass
+the mechanism gate and solve at least two of 80 held-out public-training tasks.
+Only a pass permits the unchanged fresh 2,000-update complete-manifest run and
+the literal 16/400 acceptance threshold.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

@@ -27,7 +27,7 @@ def test_config_rejects_schema_and_invalid_widths() -> None:
     subject = _subject()
 
     assert subject.ARCHITECTURE_VERSION == (
-        "online_vanilla_rnn_hierarchical_decoder_v32"
+        "online_query_replay_hierarchical_decoder_v34"
     )
 
     with pytest.raises(ValueError, match="architecture_version"):

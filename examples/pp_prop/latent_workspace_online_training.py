@@ -152,6 +152,62 @@ def target_color_weights(
     return weights
 
 
+def query_replay_rows(
+    encoded_events: np.ndarray, row_config: RowEventConfig
+) -> np.ndarray:
+    """Build 30 target-free decode inputs from encoded query rows.
+
+    Parameters
+    ----------
+    encoded_events : numpy.ndarray
+        Lossless base row events before left-padding or decode augmentation.
+    row_config : RowEventConfig
+        Static base-event feature layout.
+
+    Returns
+    -------
+    numpy.ndarray
+        Thirty base-width query replay rows. Real query rows are byte-exact;
+        later rows retain query dimensions and row position without cells.
+    """
+
+    values = np.asarray(encoded_events, dtype=np.float32)
+    if values.ndim != 2 or values.shape[1] != row_config.input_width:
+        raise ValueError("encoded_events must match the row-event width.")
+    is_query = (
+        (values[:, row_config.valid_slice.start] == 1.0)
+        & (values[:, row_config.phase_slice.start + 1] == 1.0)
+    )
+    query_rows = values[is_query]
+    if query_rows.shape[0] < 1 or query_rows.shape[0] > MAX_GRID_SIZE:
+        raise ValueError("encoded_events must contain 1..30 query rows.")
+    row_ids = np.argmax(query_rows[:, row_config.row_index_slice], axis=-1)
+    if not np.array_equal(row_ids, np.arange(query_rows.shape[0])):
+        raise ValueError("query rows must use consecutive ordered row indices.")
+
+    replay = np.zeros((MAX_GRID_SIZE, row_config.input_width), dtype=np.float32)
+    replay[: query_rows.shape[0]] = query_rows
+    template = query_rows[0]
+    for row_index in range(query_rows.shape[0], MAX_GRID_SIZE):
+        row = replay[row_index]
+        row[row_config.valid_slice] = 1.0
+        row[row_config.phase_slice.start + 1] = 1.0
+        row[row_config.normalized_slice.start] = (
+            row_index + 1
+        ) / row_config.max_grid_size
+        row[row_config.normalized_slice.start + 1 : row_config.normalized_slice.start + 3] = (
+            template[
+                row_config.normalized_slice.start + 1 : row_config.normalized_slice.start
+                + 3
+            ]
+        )
+        if row_index < row_config.max_grid_size:
+            row[row_config.row_index_slice.start + row_index] = 1.0
+        row[row_config.input_height_slice] = template[row_config.input_height_slice]
+        row[row_config.input_width_slice] = template[row_config.input_width_slice]
+    return replay
+
+
 def encode_online_episode(
     task: ArcTask, query_index: int, row_config: RowEventConfig
 ) -> OnlineEpisode:
@@ -187,6 +243,9 @@ def encode_online_episode(
     input_start = row_config.max_events - input_rows.shape[0]
     events[input_start : row_config.max_events, : row_config.input_width] = input_rows
     decode = events[row_config.max_events :]
+    decode[:, : row_config.input_width] = query_replay_rows(
+        direct.events, row_config
+    )
     decode[:, row_config.input_width] = 1.0
     decode[:, row_config.input_width + 1 :] = np.eye(
         MAX_GRID_SIZE, dtype=np.float32
