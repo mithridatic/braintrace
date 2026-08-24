@@ -511,17 +511,22 @@ Each episode is a fixed, target-free online sequence:
 
 1. Compact the valid demonstration and query rows from the existing lossless
    row-event encoding without changing their order or feature values.
-2. Append exactly 30 fixed decode-row instruction events. Each instruction has
-   a decode flag and one fixed row-index one-hot; it contains no target shape,
-   colour, label, selector, or held-out signal.
-3. Pad only after all decode instructions to a static sequence length. The
-   compacted input plus the 30 instructions is lossless because only explicit
-   zero-padding rows are removed.
+2. Append exactly 30 fixed decode-row instruction events. The event layout adds
+   31 dedicated channels: one decode flag and a fixed 30-row one-hot. Each
+   instruction contains no target shape, colour, label, selector, or held-out
+   signal; the dedicated channels avoid overloading the input-row position.
+3. Left-pad the compacted rows to the fixed input horizon, then place all 30
+   decode instructions at the same final time positions for every batch item.
+   The last real query row stays adjacent to decoding. This satisfies PP-prop's
+   one-mask-value-per-time-step contract, and the representation remains
+   lossless because only explicit zero-padding rows are moved.
 
-One checkpoint-owned recurrent model consumes one event per logical step. A
-trainable event projection feeds two BrainTrace GRU layers; a trainable row head
-emits 30-by-10 colour logits and trainable shape heads emit 30 height and 30
-width logits. The 30 decoded rows are assembled in fixed order, and greedy
+One checkpoint-owned recurrent model consumes one event per logical step. The
+augmented event feeds the first BrainTrace GRU directly; its output feeds the
+second GRU. This direct connection is required because PP-prop excludes a
+separate trainable projection hidden behind another trainable primitive. A
+trainable row head emits 30-by-10 colour logits and trainable shape heads emit
+30 height and 30 width logits. The 30 decoded rows are assembled in fixed order, and greedy
 argmax shape/colour serialization produces the sole candidate. No raw query or
 demonstration value may bypass the recurrent network, and no rule, retrieval,
 template, task-local fitter, or transformation search may influence logits.
@@ -550,7 +555,7 @@ for the new V20 modules must exceed 90%.
 The first runtime is a compiler/descent pilot only: seed 2108, batch size 2,
 widths 32/64, two recurrent layers, five updates, and no ARC evaluation. It must
 stay finite, move parameters, change candidate bytes, and show nonzero gradients
-for event, recurrent, row-colour, height, and width parameter groups. The first
+for recurrent, row-colour, height, and width parameter groups. The first
 learning oracle then uses seed 2108, synthetic seed 12108, 1,400 synthetic tasks,
 1,000 updates, batch size 8, widths 128/256, learning rate 0.001, and fresh
 120-task seed 42108. It is rejected unless it exceeds 7/120 strict tasks, solves

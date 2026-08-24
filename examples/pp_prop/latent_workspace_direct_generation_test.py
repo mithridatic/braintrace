@@ -100,6 +100,20 @@ def test_first_prediction_bytes_exclude_metadata_and_scores() -> None:
     )
 
 
+def test_candidate_validator_accepts_only_bound_online_source_head_pair() -> None:
+    subject = _subject()
+    candidate = subject.decode_first_candidate(_logits())
+    candidate["proposal_source"] = "online_model_logits"
+    candidate["answer_head_version"] = "online_row_decoder_v20"
+
+    subject.validate_direct_candidate(candidate)
+    assert subject.first_prediction_bytes([candidate])
+
+    candidate["answer_head_version"] = "direct_model_generation_v1"
+    with pytest.raises(ValueError, match="source/head"):
+        subject.validate_direct_candidate(candidate)
+
+
 @pytest.mark.parametrize(
     ("value", "message"),
     [

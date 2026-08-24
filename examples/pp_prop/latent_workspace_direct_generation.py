@@ -144,9 +144,7 @@ def validate_direct_candidate(value: object) -> None:
         "rank": 1,
         "provenance": "model",
         "dependency_class": "model_checkpoint",
-        "proposal_source": "direct_model_logits",
         "ranking_source": "none_single_greedy_candidate",
-        "answer_head_version": "direct_model_generation_v1",
         "selection_role": "greedy_argmax",
     }
     for name, expected in required.items():
@@ -155,6 +153,16 @@ def validate_direct_candidate(value: object) -> None:
                 f"Candidate {name} must prove generation from direct model logits; "
                 "forest or external proposals are ineligible."
             )
+    source_head = (value.get("proposal_source"), value.get("answer_head_version"))
+    allowed_source_heads = {
+        ("direct_model_logits", "direct_model_generation_v1"),
+        ("online_model_logits", "online_row_decoder_v20"),
+    }
+    if source_head not in allowed_source_heads:
+        raise ValueError(
+            "Candidate source/head pair must name one registered direct neural "
+            "decoder; mixed, forest, or external proposal paths are ineligible."
+        )
     forbidden = {
         "forest_log_probability",
         "network_log_probability",
