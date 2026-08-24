@@ -1009,6 +1009,34 @@ foreground and 50% background accuracy, nonzero predictions, parameter-group
 movement, and changed candidate bytes. Only a pass permits one 1,000-update
 oracle with the untouched seed 82108 and existing exact/family promotion gate.
 
+V30 is rejected at clean revision
+`9bb1c6e7f00f534830c4a0f42980b6c5d2f736a3`, with artifact
+`var/ex21-online-v30-anti-collapse-pilot-v1`. In 16.70 training seconds it
+moved every parameter group and produced a score-ineligible 3/40 across
+`count` and `pattern_label`. Background rose to 487/496 cells (98.19%), but
+foreground fell to 3/83 cells (3.61%), below the predeclared 5% gate. No full
+V30 oracle is permitted. The equal-mass V29 and square-root-mass V30 results
+bracket the gate tradeoff rather than justify more updates to either endpoint.
+
+### Fourth-root-balanced hierarchical gate V31
+
+V31 is the predeclared geometric midpoint between the V29 and V30 gate-mass
+exponents. For each present gate group with count `n_g`, its total whole-grid
+mass is proportional to `n_g ** 0.25`, with group totals summing to 30 and
+uniform mass within each group. A sole group retains total mass 30. Model,
+decoder, conditional-colour mass, component coefficients, data, and PP-prop
+schedule remain fixed. The loss version is
+`fourth_root_gate_hierarchical_color_balanced_v31`.
+
+Tests must prove the exact fourth-root total-mass ratio, total mass 30,
+all-background finite behavior, unchanged conditional-colour masses, compiled
+group gradients, and changed candidate bytes. One score-ineligible pilot uses
+the same 200-update setup and 40 fresh diagnostic tasks at seed 172108. It must
+clear the unchanged 5% foreground and 50% background gates. Only a pass permits
+the one untouched-seed-82108 1,000-update oracle under the existing greater-
+than-7/120 and family-diversity promotion gate. There is no further gate-mass
+tuning if this midpoint fails.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
