@@ -1392,6 +1392,45 @@ independent oracle regressed to 3/120: two `pattern_label` tasks and one
 diversity requirements. No real-ARC V40 run is permitted, and the
 patch-decoder/loss-balancing family is closed.
 
+### Continuous spatial recurrence V41
+
+V41 is a neuron-dynamics change rather than another duration or loss-weight
+ablation. It replaces the rejected hard-threshold Conv-LIF canvas with a
+continuous leaky-tanh convolutional recurrent state. A checkpoint-owned input
+convolution and checkpoint-owned recurrent convolution update a 30-by-30
+feature canvas on every lossless row event. A fixed non-unit retention mixes
+the prior state with the proposal; there is no spike threshold, reset, or
+accumulating output-logit trace.
+
+The colour head is one checkpoint-owned 1-by-1 BrainTrace convolution over the
+current recurrent canvas, current target-free input-row colours, and the input
+cell-validity plane. The shape heads are checkpoint-owned BrainTrace linear
+operators over pooled recurrent state and the losslessly replayed query height
+and width one-hots. The fixed decode-row selector only selects the corresponding
+neural row. There is no raw-grid output bypass, handcrafted transformation,
+retrieval, task-local parameter update, candidate repair, or selector. V41 uses
+single-step PP-prop and the existing fourth-root hierarchical whole-grid loss,
+without V37/V40 edit weighting.
+
+Sibling tests must first fail against the absent V41 implementation, then prove
+the exact feature layout, continuous state equation, target independence,
+state reset, row locality, query-shape interaction, direct dependence on every
+parameter group, zero recurrent compiler exclusions, finite nonzero compiled
+gradients, all-leaf movement, deterministic checkpoint reload, and greedy
+hierarchical decode provenance. The first run is a fresh synthetic capability
+oracle only: 600 updates, 1,400 tasks from seed 20108, 120 independent tasks
+from seed 82108, batch size 8, 32 spatial channels, retention 0.8, and the fixed
+single-step trace. It must exceed 7/120, solve at least two non-label families,
+solve one non-copy/non-label task, and pass every mechanism and anti-collapse
+gate. Failure closes continuous spatial recurrence. A pass permits one fresh
+real-ARC validation fold, never direct complete evaluation.
+
+The public HRM/TRM ARC checkpoints are not eligible substitutes for V41. Their
+published dataset builder places each evaluation puzzle's demonstration pairs
+in the training split and assigns the same learned puzzle identifier to those
+pairs and its test query. That is task-local demonstration fitting under this
+goal, irrespective of the reported benchmark score.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
