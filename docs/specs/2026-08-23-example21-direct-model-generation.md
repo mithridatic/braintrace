@@ -553,9 +553,12 @@ failure on malformed shapes or non-finite values. Combined meaningful coverage
 for the new V20 modules must exceed 90%.
 
 The first runtime is a compiler/descent pilot only: seed 2108, batch size 2,
-widths 32/64, two recurrent layers, five updates, and no ARC evaluation. It must
-stay finite, move parameters, change candidate bytes, and show nonzero gradients
-for recurrent, row-colour, height, and width parameter groups. The first
+widths 32/64, two recurrent layers, five updates in one chunk, learning rate
+0.001, trace half-life 40, 12 two-demonstration synthetic tasks with maximum
+side 6 and seed 12108, and four untouched synthetic queries with seed 42108.
+It performs no ARC evaluation. It must stay finite, move parameters, change
+candidate bytes, and show nonzero gradients for recurrent, row-colour, height,
+and width parameter groups. The first
 learning oracle then uses seed 2108, synthetic seed 12108, 1,400 synthetic tasks,
 1,000 updates, batch size 8, widths 128/256, learning rate 0.001, and fresh
 120-task seed 42108. It is rejected unless it exceeds 7/120 strict tasks, solves
