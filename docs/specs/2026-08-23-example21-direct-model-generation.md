@@ -567,6 +567,22 @@ at least two non-label families, and includes at least one exact task outside
 additional fitting updates. That arm must exceed 3/80 before any complete-
 manifest evaluation. These are diagnostic promotion gates, not success criteria.
 
+The five-update pilot passed at clean source revision
+`5df72e0693c624151f5cc6fcf68ad5d49abde83b`. All losses and parameter leaves
+were finite; final loss was 2.384321. The parameter digest changed from
+`e658a7507fa7bbf47e46153cdbdae12a86a49ebe220946d1a260e91175eb6bc8` to
+`5ba3f4aacf2ea82c37db54e2a84109bfbaa84467b091188e230147853315bf0a`.
+Recurrent, row-colour, height, and width groups all moved, with maximum gradient
+norms 0.159839, 0.025582, 0.331849, and 0.331817 respectively. Ordered candidate
+bytes changed from digest
+`e30522add74b6ef45604c375db56e036935ed8853520e91569bbfb73732f473b` to
+`239d284ef9aed6b4a77ee317c8b1d1d82fa103a0120ffec0c955bd83ba4dfe44`.
+The four-task strict score remained zero, which is not a pilot failure and is
+not learning evidence. The compiler reported the known GRU reset-gate
+non-parametric-tail exclusions and correctly classified the three output heads
+as current-step non-temporal parameters; no separate event projection was
+excluded after the direct-input correction.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
