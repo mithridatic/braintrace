@@ -17,8 +17,9 @@ QUERY_FEATURE_WIDTH = COLOR_COUNT + 1
 MAX_DEMONSTRATIONS = 10
 DEMONSTRATION_SHAPE_WIDTH = 1 + 4 * MAX_GRID_SIZE
 SHAPE_FEATURE_WIDTH = MAX_DEMONSTRATIONS * DEMONSTRATION_SHAPE_WIDTH + 2 * MAX_GRID_SIZE
-ARCHITECTURE_VERSION = "direct_local_spatial_v16"
+ARCHITECTURE_VERSION = "direct_preserving_local_v17"
 DIRECT_COLOR_INITIAL_SCALE = 8.0
+DIRECT_QUERY_COLOR_INITIAL_SCALE = 4.0
 WHOLE_DEMO_DISTANCE_SCALE = 32.0
 
 
@@ -64,7 +65,7 @@ class DirectModelConfig:
     memory_key_color_block_width : int, default=0
         Trailing key-feature width containing groups of ten ARC color one-hots.
         One foreground-occupancy feature per group is appended to the full key.
-    architecture_version : str, default="direct_local_spatial_v16"
+    architecture_version : str, default="direct_preserving_local_v17"
         Fixed checkpoint-schema architecture identifier.
     """
 
@@ -198,6 +199,10 @@ class DirectARCGRU(brainstate.nn.Module):
                 kernel_size=3,
                 padding="SAME",
             )
+            self.local_query_refinement.weight.value = {
+                name: jnp.zeros_like(value)
+                for name, value in self.local_query_refinement.weight.value.items()
+            }
             self.global_query_pattern_projection = braintrace.nn.Linear(
                 MAX_GRID_SIZE * MAX_GRID_SIZE, config.decoder_width
             )
@@ -236,6 +241,14 @@ class DirectARCGRU(brainstate.nn.Module):
             self.whole_demo_direct_color_head.weight.value = {
                 "weight": jnp.eye(COLOR_COUNT, dtype=jnp.float32)
                 * DIRECT_COLOR_INITIAL_SCALE,
+                "bias": jnp.zeros((COLOR_COUNT,), dtype=jnp.float32),
+            }
+            self.direct_query_color_head = braintrace.nn.Linear(
+                COLOR_COUNT, COLOR_COUNT
+            )
+            self.direct_query_color_head.weight.value = {
+                "weight": jnp.eye(COLOR_COUNT, dtype=jnp.float32)
+                * DIRECT_QUERY_COLOR_INITIAL_SCALE,
                 "bias": jnp.zeros((COLOR_COUNT,), dtype=jnp.float32),
             }
             self.coordinate_projection = braintrace.nn.Linear(
@@ -660,7 +673,8 @@ class DirectARCGRU(brainstate.nn.Module):
             self.color_head(cell_state)
             + self.relation_color_head(relation_attention)
             + self.whole_demo_color_head(whole_demo_attention)
-            + self.whole_demo_direct_color_head(whole_demo_colors),
+            + self.whole_demo_direct_color_head(whole_demo_colors)
+            + self.direct_query_color_head(query_features[..., :COLOR_COUNT]),
         )
 
     def run(

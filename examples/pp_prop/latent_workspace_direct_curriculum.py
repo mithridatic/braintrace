@@ -24,7 +24,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         canonical_task_fingerprint,
     )
 
-CURRICULUM_SCHEMA_VERSION = "direct_synthetic_curriculum_v2"
+CURRICULUM_SCHEMA_VERSION = "direct_synthetic_curriculum_v3"
 FAMILIES = (
     "copy",
     "recolor",
@@ -38,6 +38,7 @@ FAMILIES = (
     "complete_corner",
     "mirror_concat",
 )
+FAMILY_SCHEDULE = (*FAMILIES, "pattern_label")
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -51,7 +52,7 @@ def _positive_integer(value: object, name: str) -> int:
 
 @dataclass(frozen=True)
 class SyntheticCurriculumConfig:
-    """Configure a balanced training-only synthetic ARC curriculum.
+    """Configure a weighted training-only synthetic ARC curriculum.
 
     Parameters
     ----------
@@ -179,7 +180,7 @@ def _task(
     return ArcTask(
         train=tuple(pairs[:-1]),
         test=(pairs[-1],),
-        task_id=f"synthetic-v2:{family}:{task_index:06d}",
+        task_id=f"synthetic-v3:{family}:{task_index:06d}",
     )
 
 
@@ -256,7 +257,7 @@ def _pattern_label_task(
     return ArcTask(
         train=tuple(pairs),
         test=(query,),
-        task_id=f"synthetic-v2:pattern_label:{task_index:06d}",
+        task_id=f"synthetic-v3:pattern_label:{task_index:06d}",
     )
 
 
@@ -443,7 +444,7 @@ def generate_synthetic_curriculum(
     tasks = []
     family_counts = {family: 0 for family in FAMILIES}
     for task_index in range(config.task_count):
-        family = FAMILIES[task_index % len(FAMILIES)]
+        family = FAMILY_SCHEDULE[task_index % len(FAMILY_SCHEDULE)]
         if family == "pattern_label":
             task = _pattern_label_task(task_index, config, rng)
         elif family == "select_marked_region":

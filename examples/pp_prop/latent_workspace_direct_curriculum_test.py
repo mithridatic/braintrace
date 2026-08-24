@@ -18,7 +18,7 @@ def _subject():
 
 def test_curriculum_is_seed_deterministic_balanced_and_bounded() -> None:
     subject = _subject()
-    config = subject.SyntheticCurriculumConfig(task_count=22, demonstrations=3)
+    config = subject.SyntheticCurriculumConfig(task_count=24, demonstrations=3)
 
     first = subject.generate_synthetic_curriculum(
         config, brainstate.random.RandomState(17)
@@ -28,10 +28,12 @@ def test_curriculum_is_seed_deterministic_balanced_and_bounded() -> None:
     )
 
     assert first.task_sha256 == second.task_sha256
-    assert first.schema_version == "direct_synthetic_curriculum_v2"
-    assert first.family_counts == {family: 2 for family in subject.FAMILIES}
+    expected_counts = {family: 2 for family in subject.FAMILIES}
+    expected_counts["pattern_label"] = 4
+    assert first.schema_version == "direct_synthetic_curriculum_v3"
+    assert first.family_counts == expected_counts
     assert first.family_counts == second.family_counts
-    assert len(first.tasks) == 22
+    assert len(first.tasks) == 24
     for left, right in zip(first.tasks, second.tasks, strict=True):
         assert left == right
         assert len(left.train) == 3
@@ -46,7 +48,7 @@ def test_curriculum_is_seed_deterministic_balanced_and_bounded() -> None:
 
 def test_curriculum_changes_with_brainstate_seed() -> None:
     subject = _subject()
-    config = subject.SyntheticCurriculumConfig(task_count=11, demonstrations=2)
+    config = subject.SyntheticCurriculumConfig(task_count=12, demonstrations=2)
 
     first = subject.generate_synthetic_curriculum(
         config, brainstate.random.RandomState(3)
@@ -62,7 +64,7 @@ def test_curriculum_changes_with_brainstate_seed() -> None:
 def test_every_curriculum_family_has_its_declared_relation(seed: int) -> None:
     subject = _subject()
     result = subject.generate_synthetic_curriculum(
-        subject.SyntheticCurriculumConfig(task_count=11, demonstrations=3),
+        subject.SyntheticCurriculumConfig(task_count=12, demonstrations=3),
         brainstate.random.RandomState(seed),
     )
     by_family = {
@@ -224,6 +226,12 @@ def test_curriculum_source_has_no_numpy_or_jax_randomness() -> None:
     assert "np.random" not in source
     assert "jax.random" not in source
     assert "brainstate.random.RandomState" in source
+
+
+def test_curriculum_uses_declared_weighted_family_cycle() -> None:
+    subject = _subject()
+
+    assert subject.FAMILY_SCHEDULE == (*subject.FAMILIES, "pattern_label")
 
 
 def test_inference_modules_do_not_import_training_curriculum() -> None:

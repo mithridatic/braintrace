@@ -317,6 +317,41 @@ first v2 fixed-validation arm uses the existing V15 width, batch size, seeds,
 and local path change. It is rejected unless strict task membership improves
 over 1/80; diagnostics alone cannot promote it.
 
+V16 passed its learning oracle: its per-update synthetic loss fell from 3.357
+to 1.519 with finite values, and a fresh 110-task v2 holdout scored 10 strict,
+including one unseen `complete_corner` task and nine `pattern_label` tasks. It
+nevertheless regressed on the fixed split to 0/80 strict, 1/85 exact queries,
+and 58/85 shape-exact queries. Its sole exact query was the third query of
+`27a28665`; V15 had solved all three. V16 is rejected and must not be promoted.
+
+### Zero-residual direct-preservation V17
+
+V17 keeps the v2 spatial operations but corrects two identified interference
+paths. First, the second local 3x3 convolution is initialized with exactly zero
+weights and bias. The local branch therefore contributes an exact zero at
+initialization, then becomes trainable through its output convolution before
+gradients reach the first convolution. Second, a checkpoint-owned 10-to-10
+direct query-colour projection contributes raw query-cell colour logits. It is
+initialized to four times the identity, below the demonstration-colour path's
+scale of eight. This creates a sharp learned preservation route for unchanged
+cells without overriding a confident demonstration-conditioned scalar label.
+Both paths remain ordinary trained BrainTrace operations; neither contains a
+transformation rule or bypasses the checkpoint.
+
+Curriculum schema v3 uses a fixed 12-position family cycle containing every v2
+family once and `pattern_label` twice. With 1,400 generated tasks this supplies
+at least 200 pattern-label tasks while retaining more than 100 tasks from every
+spatial family. The artifact continues to record exact family counts and the
+ordered task digest, so the weighting is explicit and reproducible. Tests must
+prove the cycle counts, seed determinism, zero local initialization, scaled
+query-identity initialization, and that perturbing each new leaf changes
+executed logits.
+
+The first V17 oracle and fixed-validation arm retain the V16 seeds, widths,
+batch size, learning rate, and update counts. V17 is rejected unless the oracle
+strictly solves an unseen non-pattern v3 task and the fixed split exceeds V15's
+1/80 strict membership.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first

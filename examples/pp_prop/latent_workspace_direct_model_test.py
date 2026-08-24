@@ -89,7 +89,7 @@ def test_cell_decoder_has_checkpoint_owned_cross_spatial_dependence() -> None:
     first_colors = np.asarray(model.decode(hidden, first_query)[2])
     second_colors = np.asarray(model.decode(hidden, second_query)[2])
 
-    assert model.config.architecture_version == "direct_local_spatial_v16"
+    assert model.config.architecture_version == "direct_preserving_local_v17"
     assert first_colors[0, 0, 0].tobytes() != second_colors[0, 0, 0].tobytes()
 
 
@@ -111,8 +111,56 @@ def test_local_spatial_path_is_checkpoint_owned_and_changes_cell_logits() -> Non
 
     before = np.asarray(model.decode(hidden, query)[2])
     model.local_query_refinement.weight.value = jax.tree.map(
-        lambda value: value * 0.0,
+        lambda value: jnp.ones_like(value) * 0.25,
         model.local_query_refinement.weight.value,
+    )
+    after = np.asarray(model.decode(hidden, query)[2])
+
+    assert before.tobytes() != after.tobytes()
+
+
+def test_local_spatial_residual_has_exact_zero_initialization() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=28,
+        )
+    )
+
+    for value in model.local_query_refinement.weight.value.values():
+        np.testing.assert_array_equal(np.asarray(value), np.zeros_like(value))
+
+
+def test_direct_query_color_head_has_scaled_identity_and_changes_logits() -> None:
+    subject = _subject()
+    model = subject.DirectARCGRU(
+        subject.DirectModelConfig(
+            input_width=6,
+            encoder_width=4,
+            hidden_width=8,
+            decoder_width=6,
+            seed=30,
+        )
+    )
+    parameters = model.direct_query_color_head.weight.value
+    np.testing.assert_array_equal(
+        np.asarray(parameters["weight"]),
+        np.eye(10, dtype=np.float32) * subject.DIRECT_QUERY_COLOR_INITIAL_SCALE,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(parameters["bias"]), np.zeros((10,), dtype=np.float32)
+    )
+    hidden = jnp.zeros((1, 8), dtype=jnp.float32)
+    query = jnp.zeros((1, 30, 30, 11), dtype=jnp.float32)
+    query = query.at[0, 3, 4, 7].set(1.0)
+    query = query.at[0, 3, 4, 10].set(1.0)
+    before = np.asarray(model.decode(hidden, query)[2])
+    model.direct_query_color_head.weight.value = jax.tree.map(
+        jnp.zeros_like, model.direct_query_color_head.weight.value
     )
     after = np.asarray(model.decode(hidden, query)[2])
 

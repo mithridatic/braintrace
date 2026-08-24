@@ -307,7 +307,7 @@ def test_tiny_synthetic_pretraining_writes_bound_provenance(tmp_path) -> None:
     )
 
     evidence = result["synthetic_pretraining"]
-    assert evidence["schema_version"] == "direct_synthetic_curriculum_v2"
+    assert evidence["schema_version"] == "direct_synthetic_curriculum_v3"
     assert evidence["seed"] == 101
     assert evidence["task_count"] == 7
     assert evidence["family_counts"] == {
