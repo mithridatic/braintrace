@@ -1726,6 +1726,31 @@ from `dihedral`, `crop`, `upscale`, `project_marker`, `complete_corner`, or
 full synthetic capability oracle, never direct public-ARC or complete-manifest
 evaluation.
 
+V46 fails and closes at clean revision
+`75add69aa77261a0b0d9db72c861682b6ab37931`, with artifact
+`var/ex21-online-v46-paired-spatial-screen-v1`. The strict result was 3/60,
+below the predeclared minimum of five. Exact membership was
+`synthetic-v3:select_marked_region:000031`,
+`synthetic-v3:pattern_label:000042`, and
+`synthetic-v3:pattern_label:000054`. This also failed family diversity and
+solved none of the six required position-changing families. No full synthetic
+oracle, public-ARC fold, complete evaluation, or causal perturbation is
+permitted.
+
+The mechanism and anti-collapse gates passed. All seven parameter groups and
+all ordered leaves moved; the compiler included the four input/recurrent
+convolutions with zero recurrent exclusions; gradients, losses, and parameters
+remained finite; and candidate bytes changed. The 400-update training segment
+took 14.71 seconds, with mean loss declining from 1.6657 over the first 50
+updates to 1.3422 over the last 50. Shape was exact on 26/60 tasks, foreground
+accuracy was 40.52%, and background accuracy was 97.85%, but these diagnostics
+do not alter the strict rejection. The parameter digest changed from
+`a7a8d966b7a73966059ec93dea1d0a2662c1bcbf1d4eb0f66d8c7855f3a12f95` to
+`6665438ae5b2fdfa9ee2dce8800e05a40c11179535245eb4e1fd704fe1531e12`;
+the final checkpoint file hash is
+`d08df81c06f2cfc31658c8c7f0ba508b1643339788e0a56952965a677bc5d41d`.
+V46 contributes zero acceptance tasks.
+
 ### Gate C: complete evaluation
 
 Nominate one checkpoint, decoder, effort, seed, topology, and greedy first
