@@ -7,6 +7,17 @@ The implementation is limited to the baseline 2,048-neuron model and its
 episode trainer. Structural, Dale, timing, and artifact stages remain outside
 this change.
 
+## Review Gate 3 corrections
+
+The episode objective must pass its request mask to `etrace_grad`; masking only
+the returned loss does not mask the gradient. The schedule runner must enforce
+the declared training task order and reject validation episodes before any
+optimizer call. Validation has a separate forward-only entry point. The matched
+timestep check must return the selected substep count so the caller can apply
+the two-half-step fallback. Tests must include an interspersed false PP-Prop
+event and a complete trainer update that changes parameters while retaining
+Adam moments across reset.
+
 ## Required invariants
 
 - Input CSR has 14,112 entries. Recurrent CSR has 16,384 entries.

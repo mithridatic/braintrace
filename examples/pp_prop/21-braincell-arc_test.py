@@ -249,3 +249,86 @@ def test_pp_prop_sequence_skips_false_events():
     outputs = fixture.run_pp_prop_sequence(learner, events, [False, False])
     assert outputs.shape == (2, fixture.N_NEURONS)
     assert jnp.array_equal(model.cell.V.value.to_decimal(u.mV), before)
+
+
+def test_pp_prop_sequence_preserves_eligibility_across_interspersed_padding():
+    events = jnp.zeros((2, fixture.N_INPUTS), dtype=jnp.float32)
+    direct_model = fixture.BrainCellArcModel()
+    padded_model = fixture.BrainCellArcModel()
+    direct = fixture.run_pp_prop_sequence(
+        fixture.compile_pp_prop_model(direct_model), events
+    )
+    padded = fixture.run_pp_prop_sequence(
+        fixture.compile_pp_prop_model(padded_model),
+        jnp.concatenate((events[:1], events[:1], events[1:])),
+        [True, False, True],
+    )
+    assert jnp.array_equal(direct[1], padded[2])
+    assert jnp.array_equal(
+        direct_model.cell.V.value.to_decimal(u.mV),
+        padded_model.cell.V.value.to_decimal(u.mV),
+    )
+
+
+def test_trainer_passes_request_mask_into_gradient_objective():
+    class Learner:
+        def __init__(self):
+            self.mask = None
+
+        def etrace_grad(self, events, *, step_fn, mask, **kwargs):
+            self.mask = mask
+            return {"input": jnp.ones((1,))}, jnp.asarray([2.0, 3.0]) * mask
+
+    learner = Learner()
+    trainer = fixture.PPPropEpisodeTrainer(learner, {"input": jnp.zeros((1,))})
+    mask = jnp.asarray([1.0, 0.0])
+    loss, _ = trainer.update_episode(jnp.zeros((2, 1)), lambda _: 0.0, loss_mask=mask)
+    assert jnp.array_equal(learner.mask, mask)
+    assert float(loss) == pytest.approx(2.0)
+    assert trainer.updates == 1
+    assert trainer.optimizer_is_finite()
+
+
+def test_schedule_rejects_validation_and_wrong_ordinary_task_order():
+    class Trainer:
+        def update_episode(self, **kwargs):
+            raise AssertionError("gate must reject before update")
+
+    proof = [{"task_id": "d631b094", "validation": True}] * 8
+    with pytest.raises(ValueError, match="forward-only"):
+        fixture.run_fixed_schedule(Trainer(), proof, proof=True)
+    wrong = [{"task_id": "dc433765"}] * 64
+    with pytest.raises(ValueError, match="task order"):
+        fixture.run_fixed_schedule(Trainer(), wrong)
+
+
+def test_matched_check_reports_selected_fallback_and_forward_validation_isolated():
+    check = fixture.matched_integration_check(jnp.zeros((1, fixture.N_INPUTS)))
+    assert check["selected_substeps"] in (1, 2)
+    trainer = fixture.PPPropEpisodeTrainer(
+        object(), {"input": jnp.zeros((1,))}
+    )
+    before = trainer.parameters["input"].copy()
+    result = trainer.evaluate_forward(lambda: "validation")
+    assert result == "validation"
+    assert jnp.array_equal(trainer.parameters["input"], before)
+
+
+def test_real_compiled_episode_updates_grouped_parameters_and_param_states():
+    model = fixture.BrainCellArcModel()
+    learner = fixture.compile_pp_prop_model(model)
+    trainer = fixture.PPPropEpisodeTrainer(
+        learner,
+        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+    )
+    trainer.update_episode(
+        jnp.zeros((1, fixture.N_INPUTS)),
+        lambda event: jnp.sum(
+            learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+        ),
+    )
+    assert trainer.updates == 1
+    assert trainer.optimizer_is_finite()
+    assert jnp.array_equal(
+        model.input_weight.value, trainer.parameters["input"]
+    )

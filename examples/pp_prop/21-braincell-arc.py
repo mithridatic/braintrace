@@ -22,6 +22,11 @@ GRADIENT_CLIP_NORM = 1.0
 PROOF_UPDATES = 8
 ORDINARY_UPDATES = 64
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
+TRAINING_TASK_IDS = (
+    "d631b094", "dc433765", "b782dc8a", "d06dbe63",
+    "aedd82e4", "0b148d64", "b2862040", "150deff5",
+)
+VALIDATION_TASK_IDS = ("46f33fce", "342f8a4f5", "d8c310e9", "09629e4f")
 
 
 def _normal(shape, seed, scale):
@@ -140,6 +145,12 @@ def update_schedule(steps, proof=False):
     if steps != expected:
         raise ValueError(f"expected exactly {expected} updates, got {steps}")
     return tuple(range(expected))
+
+
+def select_integration_substeps(check):
+    """Select one event step or the matched two-half-step fallback."""
+
+    return 1 if check["default_selected"] else 2
 
 
 def compile_pp_prop_model(model):
@@ -314,6 +325,16 @@ def matched_integration_check(events):
         "spike_equal": bool(spike_equal),
         "prediction_equal": bool(prediction_equal),
         "strict_equal": bool(strict_equal),
+        "selected_substeps": select_integration_substeps({
+            "default_selected": bool(
+                jnp.all(jnp.isfinite(default))
+                and jnp.all(jnp.isfinite(matched))
+                and voltage_difference <= 1.0
+                and spike_equal
+                and prediction_equal
+                and strict_equal
+            )
+        }),
         "default_selected": bool(
             jnp.all(jnp.isfinite(default))
             and jnp.all(jnp.isfinite(matched))
@@ -354,26 +375,70 @@ class PPPropEpisodeTrainer:
 
         model.reset_episode(self.learner)
 
+    def _group_gradients(self, gradients):
+        """Map compiled parameter paths to the declared optimizer groups."""
+
+        if not self.adam_groups or set(gradients).issubset(self.adam_groups):
+            return gradients
+        grouped = {}
+        for path, gradient in gradients.items():
+            parts = path if isinstance(path, tuple) else (path,)
+            name = next(
+                (group for group in self.adam_groups if any(group in str(part) for part in parts)),
+                None,
+            )
+            if name is not None:
+                grouped[name] = gradient
+        return grouped
+
+    def _sync_compiled_parameters(self):
+        """Write grouped optimizer values back to matching compiled states."""
+
+        states = getattr(self.learner, "param_states", {})
+        for path, state in states.items():
+            parts = path if isinstance(path, tuple) else (path,)
+            name = next(
+                (group for group in self.adam_groups or {} if any(group in str(part) for part in parts)),
+                None,
+            )
+            if name in self.parameters:
+                state.value = self.parameters[name]
+
     def optimizer_is_finite(self):
         """Return whether parameters, moments, and step state are finite."""
 
-        leaves = jax.tree_util.tree_leaves((self.parameters, self.adam.first, self.adam.second))
+        if self.adam_groups is None:
+            moments = (self.adam.first, self.adam.second)
+        else:
+            moments = tuple(
+                (state.first, state.second) for state in self.adam_groups.values()
+            )
+        leaves = jax.tree_util.tree_leaves((self.parameters, moments))
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
-    def update_episode(self, events, step_fn, valid_rows=None):
+    def update_episode(self, events, step_fn, valid_rows=None, loss_mask=None):
         """Apply one update from one masked PP-Prop query episode."""
 
+        if loss_mask is not None and valid_rows is not None:
+            raise ValueError("provide only one episode loss mask")
+        mask = loss_mask if loss_mask is not None else valid_rows
         gradients, losses = self.learner.etrace_grad(
-            events, step_fn=step_fn, reduction="sum", return_value=True
+            events,
+            step_fn=step_fn,
+            mask=mask,
+            reduction="sum",
+            loss_output="masked",
+            return_value=True,
         )
-        if valid_rows is not None:
-            losses = accumulate_masked_loss(losses, valid_rows)
+        losses = jnp.sum(losses)
         gradients, norm = clip_gradient(gradients)
+        gradients = self._group_gradients(gradients)
         if self.adam_groups is not None:
             self.parameters, self.adam_groups = grouped_adam_update(
                 self.parameters, gradients, self.adam_groups
             )
             self.adam = self.adam_groups.get("input", self.adam)
+            self._sync_compiled_parameters()
         else:
             rate = self.learning_rates.get("input", 0.001)
             self.parameters, self.adam = adam_update(
@@ -382,17 +447,40 @@ class PPPropEpisodeTrainer:
         self.updates += 1
         return losses, norm
 
+    def evaluate_forward(self, forward_fn, *args, **kwargs):
+        """Evaluate an episode without changing parameters or learner state."""
+
+        before = jax.tree_util.tree_map(jnp.array, self.parameters)
+        result = forward_fn(*args, **kwargs)
+        after = jax.tree_util.tree_map(jnp.array, self.parameters)
+        if not bool(jax.tree_util.tree_all(
+            jax.tree_util.tree_map(jnp.array_equal, before, after)
+        )):
+            raise RuntimeError("forward validation changed trainable parameters")
+        return result
+
 
 def run_fixed_schedule(trainer, episodes, *, proof=False):
     """Run the exact proof or ordinary number of ordered episodes."""
 
     update_schedule(len(episodes), proof=proof)
-    if proof and any(
-        "task_id" in episode and episode["task_id"] != "d631b094"
-        for episode in episodes
+    task_ids = [episode.get("task_id") for episode in episodes]
+    if any(task_id is None for task_id in task_ids):
+        raise ValueError("every counted episode must declare task_id")
+    if proof:
+        if any(task_id != "d631b094" for task_id in task_ids):
+            raise ValueError("proof schedule accepts only d631b094")
+    else:
+        expected = tuple(
+            TRAINING_TASK_IDS[index % len(TRAINING_TASK_IDS)]
+            for index in range(len(episodes))
+        )
+        if tuple(task_ids) != expected:
+            raise ValueError("ordinary schedule task order is not fixed")
+    if any(
+        episode.get("validation", False) or task_id in VALIDATION_TASK_IDS
+        for episode, task_id in zip(episodes, task_ids)
     ):
-        raise ValueError("proof schedule accepts only d631b094")
-    if any(episode.get("validation", False) for episode in episodes):
         raise ValueError("validation episodes are forward-only")
     return brainstate.transform.for_loop(
         lambda episode: trainer.update_episode(**episode), episodes
