@@ -82,3 +82,16 @@ gradients, or runtime state. Load validates dtype, shape, endpoints, counts,
 labels, and connection limits, then resets biological and eligibility state.
 Writes use a temporary sibling and atomic replacement. A child path must
 differ from its parent, and child failure must leave parent bytes unchanged.
+
+The required array schema is fixed. It contains `neuron_ids` (`int32`, shape
+`[N]`), `dale_codes` (`int8`, `[N]`), `owner_codes` (`int16`, `[N]`),
+`mechanism_codes` (`uint8`, `[N]`), `neuron_count` and
+`integration_substeps` (scalar `int32`), input and recurrent
+`*_indptr`/`*_indices` (`int32`) and `*_values`/`*_m1`/`*_m2` (`float32`),
+`readout_weight`/`readout_bias` and their `*_m1`/`*_m2` arrays (`float32`),
+and scalar `input_step`, `recurrent_step`, and `readout_step` (`int64`).
+CSR arrays must agree with their neuron count and endpoint bounds. Dale values
+are limited to `-1`, `0`, and `1`; owner values are `-1`, `-2`, or nonnegative;
+mechanism codes are nonnegative; all moments and parameters are finite; and
+each CSR value/moment triplet has matching length. No extra arrays are
+accepted. The total biological CSR entries are limited to 30,496.

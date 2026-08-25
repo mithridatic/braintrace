@@ -53,11 +53,13 @@ def test_full_decoder_has_independent_cell_colors_and_result_recomputes_flags(tm
     arc.write_result(result, [{"task_id": "d631b094", "queries": [{"query_index": 0, "prediction": [[1]], "target": [[2]], "exact": True}], "strict_pass_at_1": True}])
     assert json.loads(result.read_text())["tasks"][0]["queries"][0]["exact"] is False
     assert json.loads(result.read_text())["tasks"][0]["strict_pass_at_1"] is False
+    with pytest.raises(ValueError, match="integer color"):
+        arc.write_result(result, [{"task_id": "x", "queries": [{"query_index": 0, "prediction": [[1.5]], "target": [[2]], "exact": False}], "strict_pass_at_1": False}])
 
 
 def test_checkpoint_rejects_nan_and_same_parent(tmp_path):
     checkpoint = tmp_path / "checkpoint.npz"
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match="schema"):
         arc.write_checkpoint(checkpoint, {"weights": np.asarray([np.nan])})
     with pytest.raises(ValueError, match="differ"):
         arc.write_checkpoint(checkpoint, {"weights": np.ones(1)}, parent=checkpoint)
@@ -81,8 +83,23 @@ def test_result_and_checkpoint_are_bounded_and_round_trip(tmp_path):
     arc.write_result(result, [{"task_id": "x", "queries": [{"query_index": 0, "prediction": np.zeros((1, 1), dtype=np.uint8), "target": np.zeros((1, 1), dtype=np.uint8), "exact": True}], "strict_pass_at_1": True}])
     assert json.loads(result.read_text())["strict_task_pass_at_1_count"] == 1
     checkpoint = tmp_path / "checkpoint.npz"
-    arc.write_checkpoint(checkpoint, {"weights": np.ones(3, dtype=np.float32)})
+    arrays = {
+        "neuron_ids": np.arange(2, dtype=np.int32), "dale_codes": np.zeros(2, dtype=np.int8),
+        "owner_codes": np.full(2, -1, dtype=np.int16), "mechanism_codes": np.zeros(2, dtype=np.uint8),
+        "neuron_count": np.asarray(2, dtype=np.int32), "integration_substeps": np.asarray(1, dtype=np.int32),
+        "input_indptr": np.zeros(3, dtype=np.int32), "input_indices": np.zeros(0, dtype=np.int32),
+        "input_values": np.zeros(0, dtype=np.float32), "input_m1": np.zeros(0, dtype=np.float32), "input_m2": np.zeros(0, dtype=np.float32),
+        "recurrent_indptr": np.zeros(3, dtype=np.int32), "recurrent_indices": np.zeros(0, dtype=np.int32),
+        "recurrent_values": np.zeros(0, dtype=np.float32), "recurrent_m1": np.zeros(0, dtype=np.float32), "recurrent_m2": np.zeros(0, dtype=np.float32),
+        "readout_weight": np.zeros((1, 1), dtype=np.float32), "readout_bias": np.zeros(1, dtype=np.float32),
+        "readout_weight_m1": np.zeros((1, 1), dtype=np.float32), "readout_weight_m2": np.zeros((1, 1), dtype=np.float32),
+        "readout_bias_m1": np.zeros(1, dtype=np.float32), "readout_bias_m2": np.zeros(1, dtype=np.float32),
+        "input_step": np.asarray(0, dtype=np.int64), "recurrent_step": np.asarray(0, dtype=np.int64), "readout_step": np.asarray(0, dtype=np.int64),
+    }
+    arc.write_checkpoint(checkpoint, arrays)
     loaded = arc.load_checkpoint(checkpoint)
-    assert np.array_equal(loaded["weights"], np.ones(3, dtype=np.float32))
-    with pytest.raises(ValueError, match="format"):
+    assert np.array_equal(loaded["neuron_ids"], arrays["neuron_ids"])
+    with pytest.raises(ValueError, match="schema"):
         arc.write_checkpoint(tmp_path / "bad.npz", {}, format=2)
+    with pytest.raises(ValueError, match="schema"):
+        arc.write_checkpoint(tmp_path / "bad-schema.npz", {"weights": np.ones(1, dtype=np.float32)})

@@ -17,6 +17,7 @@ EVENTS = 705
 EVENT_WIDTH = 441
 MAX_RESULT_BYTES = 256 * 1024
 MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
+MAX_BIOLOGICAL_CONNECTIONS = 30_496
 TRAINING_ORDER = ("d631b094", "dc433765", "b782dc8a", "d06dbe63", "aedd82e4", "0b148d64", "b2862040", "150deff5")
 VALIDATION_ORDER = ("46f33fce", "3428a4f5", "d8c310e9", "09629e4f")
 PROOF_ORDER = ("d631b094", "46f33fce")
@@ -206,7 +207,17 @@ def decode_prediction(voltage: np.ndarray) -> np.ndarray:
 def query_exact(prediction: np.ndarray, target: np.ndarray) -> bool:
     """Return true only for equal integer grids."""
     prediction, target = np.asarray(prediction), np.asarray(target)
-    return bool(np.issubdtype(prediction.dtype, np.integer) and np.issubdtype(target.dtype, np.integer) and prediction.ndim == 2 and target.ndim == 2 and np.array_equal(prediction, target))
+    return bool(_is_result_grid(prediction) and _is_result_grid(target) and np.array_equal(prediction, target))
+
+
+def _is_result_grid(value: np.ndarray) -> bool:
+    return bool(
+        value.ndim == 2
+        and 0 < value.shape[0] <= MAX_GRID
+        and 0 < value.shape[1] <= MAX_GRID
+        and np.issubdtype(value.dtype, np.integer)
+        and np.all((value >= 0) & (value <= 9))
+    )
 
 
 def strict_task_pass_at_1(predictions: Sequence[np.ndarray], targets: Sequence[np.ndarray]) -> bool:
@@ -217,15 +228,27 @@ def strict_task_pass_at_1(predictions: Sequence[np.ndarray], targets: Sequence[n
 def write_result(path: str | os.PathLike[str], records: Sequence[Mapping[str, object]]) -> None:
     """Validate and atomically write the bounded result schema."""
     tasks = []
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        raise ValueError("records must be a sequence")
     for record in records:
         if set(record) != {"task_id", "queries", "strict_pass_at_1"}:
             raise ValueError("task result fields must be task_id, queries, and strict_pass_at_1")
+        if not isinstance(record["task_id"], str) or not isinstance(record["strict_pass_at_1"], (bool, np.bool_)):
+            raise ValueError("task_id must be text and strict_pass_at_1 must be Boolean")
         queries = []
         predictions, targets = [], []
-        for query in record["queries"]:  # type: ignore[union-attr]
+        if not isinstance(record["queries"], Sequence) or isinstance(record["queries"], (str, bytes)):
+            raise ValueError("queries must be a sequence")
+        for query in record["queries"]:
             if set(query) != {"query_index", "prediction", "target", "exact"}:
                 raise ValueError("query result fields must be query_index, prediction, target, and exact")
-            prediction, target = np.asarray(query["prediction"], dtype=np.uint8), np.asarray(query["target"], dtype=np.uint8)
+            if isinstance(query["query_index"], (bool, np.bool_)) or not isinstance(query["query_index"], (int, np.integer)) or query["query_index"] < 0:
+                raise ValueError("query_index must be a nonnegative integer")
+            if not isinstance(query["exact"], (bool, np.bool_)):
+                raise ValueError("exact must be Boolean")
+            prediction, target = np.asarray(query["prediction"]), np.asarray(query["target"])
+            if not _is_result_grid(prediction) or not _is_result_grid(target):
+                raise ValueError("prediction and target must be integer color grids from 0 through 9")
             predictions.append(prediction)
             targets.append(target)
             queries.append({"query_index": int(query["query_index"]), "prediction": prediction.tolist(), "target": target.tolist(), "exact": query_exact(prediction, target)})
@@ -256,8 +279,7 @@ def write_checkpoint(path: str | os.PathLike[str], arrays: Mapping[str, np.ndarr
     path = Path(path)
     if parent is not None and path.resolve() == Path(parent).resolve():
         raise ValueError("checkpoint child path must differ from parent")
-    if format != 1 or not arrays or "format" in arrays or any(not isinstance(value, np.ndarray) or value.dtype.hasobject or not np.all(np.isfinite(value)) for value in arrays.values()):
-        raise ValueError("checkpoint format 1 requires finite named NumPy arrays")
+    _validate_checkpoint_arrays(arrays, format)
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=path.parent) as directory:
         temporary = Path(directory) / "checkpoint.npz"
@@ -274,6 +296,69 @@ def load_checkpoint(path: str | os.PathLike[str]) -> dict[str, np.ndarray]:
         if "format" not in archive or archive["format"].shape != () or int(archive["format"]) != 1:
             raise ValueError("checkpoint format must be scalar value 1")
         result = {name: np.array(archive[name], copy=True) for name in archive.files if name != "format"}
-    if not result or any(value.dtype.hasobject or not np.all(np.isfinite(value)) for value in result.values()):
-        raise ValueError("checkpoint must contain finite numeric arrays")
+    _validate_checkpoint_arrays(result, 1)
     return result
+
+
+_CHECKPOINT_DTYPES = {
+    "neuron_ids": np.dtype("int32"), "dale_codes": np.dtype("int8"),
+    "owner_codes": np.dtype("int16"), "mechanism_codes": np.dtype("uint8"),
+    "neuron_count": np.dtype("int32"), "integration_substeps": np.dtype("int32"),
+    "input_indptr": np.dtype("int32"), "input_indices": np.dtype("int32"),
+    "input_values": np.dtype("float32"), "input_m1": np.dtype("float32"), "input_m2": np.dtype("float32"),
+    "recurrent_indptr": np.dtype("int32"), "recurrent_indices": np.dtype("int32"),
+    "recurrent_values": np.dtype("float32"), "recurrent_m1": np.dtype("float32"), "recurrent_m2": np.dtype("float32"),
+    "readout_weight": np.dtype("float32"), "readout_bias": np.dtype("float32"),
+    "readout_weight_m1": np.dtype("float32"), "readout_weight_m2": np.dtype("float32"),
+    "readout_bias_m1": np.dtype("float32"), "readout_bias_m2": np.dtype("float32"),
+    "input_step": np.dtype("int64"), "recurrent_step": np.dtype("int64"), "readout_step": np.dtype("int64"),
+}
+
+
+def _validate_checkpoint_arrays(arrays: Mapping[str, np.ndarray], format: int) -> None:
+    if format != 1 or set(arrays) != set(_CHECKPOINT_DTYPES):
+        raise ValueError("checkpoint format 1 requires the exact array schema")
+    for name, dtype in _CHECKPOINT_DTYPES.items():
+        value = arrays[name]
+        if not isinstance(value, np.ndarray) or value.dtype != dtype or value.dtype.hasobject:
+            raise ValueError(f"checkpoint {name} has invalid dtype")
+        if value.dtype.kind == "f" and not np.all(np.isfinite(value)):
+            raise ValueError(f"checkpoint {name} must be finite")
+    n = _scalar_count(arrays["neuron_count"], "neuron_count")
+    substeps = _scalar_count(arrays["integration_substeps"], "integration_substeps")
+    if n <= 0 or substeps <= 0 or arrays["neuron_ids"].shape != (n,):
+        raise ValueError("checkpoint neuron counts are inconsistent")
+    if any(arrays[name].shape != (n,) for name in ("dale_codes", "owner_codes", "mechanism_codes")):
+        raise ValueError("checkpoint label shapes must match neuron_count")
+    if not np.all(np.isin(arrays["dale_codes"], (-1, 0, 1))) or np.any(arrays["owner_codes"] < -2):
+        raise ValueError("checkpoint labels contain an invalid code")
+    if np.any(arrays["mechanism_codes"] < 0):
+        raise ValueError("checkpoint mechanism code is invalid")
+    for prefix, endpoint_limit in (("input", EVENTS and EVENT_WIDTH), ("recurrent", n)):
+        indptr = arrays[f"{prefix}_indptr"]
+        indices = arrays[f"{prefix}_indices"]
+        if indptr.shape != (n + 1,) or indptr[0] != 0 or np.any(np.diff(indptr) < 0) or indptr[-1] != len(indices):
+            raise ValueError(f"checkpoint {prefix} CSR structure is invalid")
+        if np.any(indices < 0) or np.any(indices >= endpoint_limit):
+            raise ValueError(f"checkpoint {prefix} CSR endpoint is invalid")
+        if len(indices) > MAX_BIOLOGICAL_CONNECTIONS:
+            raise ValueError("checkpoint exceeds the biological connection limit")
+        for suffix in ("indices", "values", "m1", "m2"):
+            if arrays[f"{prefix}_{suffix}"].shape != indices.shape:
+                raise ValueError(f"checkpoint {prefix} arrays have inconsistent lengths")
+    if len(arrays["input_indices"]) + len(arrays["recurrent_indices"]) > MAX_BIOLOGICAL_CONNECTIONS:
+        raise ValueError("checkpoint exceeds the biological connection limit")
+    for name in ("input_step", "recurrent_step", "readout_step"):
+        if arrays[name].shape != () or int(arrays[name]) < 0:
+            raise ValueError(f"checkpoint {name} must be a nonnegative scalar")
+    if arrays["readout_weight"].ndim != 2 or arrays["readout_bias"].ndim != 1:
+        raise ValueError("checkpoint readout parameters have invalid shapes")
+    for suffix in ("m1", "m2"):
+        if arrays[f"readout_weight_{suffix}"].shape != arrays["readout_weight"].shape or arrays[f"readout_bias_{suffix}"].shape != arrays["readout_bias"].shape:
+            raise ValueError("checkpoint readout moments have inconsistent shapes")
+
+
+def _scalar_count(value: np.ndarray, name: str) -> int:
+    if value.shape != ():
+        raise ValueError(f"checkpoint {name} must be a scalar")
+    return int(value)
