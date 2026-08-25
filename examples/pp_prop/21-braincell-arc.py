@@ -130,7 +130,7 @@ def compile_pp_prop_model(model):
         model,
         braintrace.pp_prop,
         jnp.zeros((N_INPUTS,), dtype=jnp.float32),
-        batch_size=1,
+        batch_size=None,
         decay_or_rank=TRACE_DECAY,
         vjp_method="single-step",
     )
@@ -168,7 +168,9 @@ class BrainCellArcModel(brainstate.nn.Module):
         current = bounded_population_current(input_drive, recurrent_drive)
         with brainstate.environ.context(dt=0.1 * u.ms):
             self.cell.update(current)
-        self.previous_spikes.value = self.cell.spike.value.astype(jnp.float32)
+        self.previous_spikes.value = jax.lax.stop_gradient(
+            self.cell.spike.value.astype(jnp.float32)
+        )
         return self.cell.V.value.to_decimal(u.mV)
 
     def update(self, event):

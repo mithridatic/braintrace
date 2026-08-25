@@ -177,3 +177,11 @@ def test_episode_loss_clip_adam_and_fixed_schedules():
     assert fixture.update_schedule(64) == tuple(range(64))
     with pytest.raises(ValueError):
         fixture.update_schedule(9, proof=True)
+
+
+def test_production_pp_prop_compile_has_two_temporal_relations():
+    learner = fixture.compile_pp_prop_model(fixture.BrainCellArcModel())
+    relations = learner.graph.hidden_param_op_relations
+    assert len(relations) == 2
+    assert all(relation.connected_hidden_paths for relation in relations)
+    assert all(relation.trainable_vars for relation in relations)
