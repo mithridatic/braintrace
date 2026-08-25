@@ -120,20 +120,31 @@ def adam_update(parameters, gradient, state, learning_rate, beta1=0.9, beta2=0.9
     return updated, AdamState(first, second, step)
 
 
-def grouped_adam_update(parameters, gradients, states=None):
+def grouped_adam_update(parameters, gradients, states=None, learning_rates=None):
     """Apply the declared input, recurrent, and readout Adam rates."""
 
+    learning_rates = learning_rates or LEARNING_RATES
     states = states or {
         name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
         for name, value in parameters.items()
     }
     updated = dict(parameters)
     next_states = dict(states)
-    for name, rate in LEARNING_RATES.items():
-        if name not in parameters or name not in gradients:
+    for name, parameter in parameters.items():
+        group = next(
+            (candidate for candidate in learning_rates if candidate in name),
+            None,
+        )
+        gradient = gradients.get(name)
+        if gradient is None and group is not None:
+            gradient = gradients.get(group)
+        if group is None or gradient is None:
             continue
+        state = states.get(name)
+        if state is None:
+            state = AdamState(jnp.zeros_like(parameter), jnp.zeros_like(parameter))
         updated[name], next_states[name] = adam_update(
-            parameters[name], gradients[name], states[name], rate
+            parameter, gradient, state, learning_rates[group]
         )
     return updated, next_states
 
@@ -220,12 +231,12 @@ class BrainCellArcModel(brainstate.nn.Module):
     def interval(self, event, advance=True, *, substeps=1):
         """Advance one biological interval with one or two compiled substeps."""
 
-        def run(_):
-            return self._advance(event, 0.1 / substeps)
+        substep_events = integration_substep_events(event, substeps)
 
         def advancing():
             return brainstate.transform.for_loop(
-                run, jnp.arange(substeps, dtype=jnp.int32)
+                lambda subevent: self._advance(subevent, 0.1 / substeps),
+                substep_events,
             )[-1]
 
         return brainstate.transform.cond(
@@ -237,6 +248,17 @@ class BrainCellArcModel(brainstate.nn.Module):
 
         feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
         return feature @ self.readout_weight.value + self.readout_bias.value
+
+
+def integration_substep_events(event, substeps):
+    """Return one external event followed by zero half-step events."""
+
+    if substeps < 1:
+        raise ValueError("substeps must be positive")
+    event = jnp.asarray(event)
+    return jnp.concatenate(
+        (event[None, :], jnp.zeros((substeps - 1,) + event.shape, dtype=event.dtype))
+    )
 
 
 def run_event_sequence(model, events, advances=None):
@@ -360,7 +382,12 @@ class PPPropEpisodeTrainer:
 
     def __init__(self, learner, parameters, learning_rates=None):
         self.learner = learner
-        self.parameters = parameters
+        self.parameters = dict(parameters)
+        model = getattr(learner, "model4compile", None)
+        for name in ("readout_weight", "readout_bias"):
+            state = getattr(model, name, None)
+            if name not in self.parameters and state is not None:
+                self.parameters[name] = state.value
         self.learning_rates = learning_rates or LEARNING_RATES
         zeros = jax.tree_util.tree_map(jnp.zeros_like, parameters)
         self.adam = AdamState(zeros, zeros)
@@ -403,6 +430,11 @@ class PPPropEpisodeTrainer:
             )
             if name in self.parameters:
                 state.value = self.parameters[name]
+        model = getattr(self.learner, "model4compile", None)
+        for name in ("readout_weight", "readout_bias"):
+            state = getattr(model, name, None)
+            if state is not None and name in self.parameters:
+                state.value = self.parameters[name]
 
     def optimizer_is_finite(self):
         """Return whether parameters, moments, and step state are finite."""
@@ -416,7 +448,9 @@ class PPPropEpisodeTrainer:
         leaves = jax.tree_util.tree_leaves((self.parameters, moments))
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
-    def update_episode(self, events, step_fn, valid_rows=None, loss_mask=None):
+    def update_episode(
+        self, events, step_fn, valid_rows=None, loss_mask=None, direct_grad_fn=None
+    ):
         """Apply one update from one masked PP-Prop query episode."""
 
         if loss_mask is not None and valid_rows is not None:
@@ -430,12 +464,17 @@ class PPPropEpisodeTrainer:
             loss_output="masked",
             return_value=True,
         )
+        if direct_grad_fn is not None:
+            direct_gradients = direct_grad_fn(
+                events=events, step_fn=step_fn, mask=mask
+            )
+            gradients = {**gradients, **direct_gradients}
         losses = jnp.sum(losses)
         gradients, norm = clip_gradient(gradients)
         gradients = self._group_gradients(gradients)
         if self.adam_groups is not None:
             self.parameters, self.adam_groups = grouped_adam_update(
-                self.parameters, gradients, self.adam_groups
+                self.parameters, gradients, self.adam_groups, self.learning_rates
             )
             self.adam = self.adam_groups.get("input", self.adam)
             self._sync_compiled_parameters()

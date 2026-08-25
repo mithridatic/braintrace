@@ -201,6 +201,14 @@ def test_matched_integration_and_decoder_boundary_are_explicit():
     assert jnp.any(before != after)
 
 
+def test_two_half_step_fallback_does_not_replay_event():
+    event = jnp.asarray([1.0, 2.0])
+    assert jnp.array_equal(
+        fixture.integration_substep_events(event, 2),
+        jnp.asarray([[1.0, 2.0], [0.0, 0.0]]),
+    )
+
+
 def test_trainer_schedule_keeps_episode_update_count_contract():
     assert fixture.update_schedule(fixture.PROOF_UPDATES, proof=True)[-1] == 7
     assert fixture.update_schedule(fixture.ORDINARY_UPDATES)[-1] == 63
@@ -288,6 +296,31 @@ def test_trainer_passes_request_mask_into_gradient_objective():
     assert float(loss) == pytest.approx(2.0)
     assert trainer.updates == 1
     assert trainer.optimizer_is_finite()
+
+
+def test_trainer_updates_direct_readout_parameters_and_shared_schedule():
+    class Learner:
+        def etrace_grad(self, events, *, step_fn, mask, **kwargs):
+            return {"input": jnp.ones((1,))}, jnp.asarray([1.0])
+
+    parameters = {
+        "input": jnp.zeros((1,)),
+        "readout_weight": jnp.zeros((1, 2)),
+        "readout_bias": jnp.zeros((2,)),
+    }
+    trainer = fixture.PPPropEpisodeTrainer(Learner(), parameters)
+    trainer.update_episode(
+        jnp.zeros((1, 1)), lambda _: 0.0,
+        direct_grad_fn=lambda **_: {
+            "readout_weight": jnp.ones((1, 2)),
+            "readout_bias": jnp.ones((2,)),
+        },
+    )
+    assert jnp.all(parameters["readout_weight"] == 0.0)
+    assert jnp.all(trainer.parameters["readout_weight"] == -0.003)
+    assert jnp.all(trainer.parameters["readout_bias"] == -0.003)
+    assert trainer.adam_groups["readout_weight"].step == 1
+    assert trainer.adam_groups["readout_bias"].step == 1
 
 
 def test_schedule_rejects_validation_and_wrong_ordinary_task_order():

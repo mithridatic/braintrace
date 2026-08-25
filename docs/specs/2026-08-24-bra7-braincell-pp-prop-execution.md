@@ -59,6 +59,13 @@ state and eligibility traces, and reject any change with exact array equality.
 
 ## Review correction record
 
+The review follow-up requires the two-half-step fallback to consume the
+external event only in its first half-step; the second half-step receives a
+zero event so it cannot replay same-event spike drive. Production episode
+updates must include direct voltage-readout weight and bias gradients and
+apply them through the shared readout Adam schedule alongside the temporal
+input and recurrent groups.
+
 The first implementation stopped at compatibility fixtures. The production
 path must also expose a compiled sequence driver and an episode trainer. The
 driver uses `brainstate.transform.for_loop` for events and
