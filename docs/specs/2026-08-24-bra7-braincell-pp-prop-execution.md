@@ -50,6 +50,13 @@ missing temporal relations, target leakage into model events, extra optimizer
 updates after a failed gate, and non-finite optimizer state. A zero advance
 must return zero loss and zero gradient while preserving state bitwise.
 
+## Review correction
+
+Schedule metadata (`task_id` and `validation`) is a gate only and must not be
+forwarded to `update_episode`. Forward validation must snapshot every
+non-parameter state reachable from the learner, including biological hidden
+state and eligibility traces, and reject any change with exact array equality.
+
 ## Review correction record
 
 The first implementation stopped at compatibility fixtures. The production

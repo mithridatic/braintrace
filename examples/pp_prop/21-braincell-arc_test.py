@@ -6,6 +6,7 @@ import importlib.util
 from pathlib import Path
 
 import braincell
+import brainstate
 import brainunit as u
 import jax.numpy as jnp
 import pytest
@@ -302,6 +303,21 @@ def test_schedule_rejects_validation_and_wrong_ordinary_task_order():
         fixture.run_fixed_schedule(Trainer(), wrong)
 
 
+def test_valid_schedule_does_not_forward_schedule_metadata():
+    class Trainer:
+        def update_episode(self, **kwargs):
+            return kwargs["events"]
+
+    trainer = Trainer()
+    episodes = [{
+        "task_id": fixture.TRAINING_TASK_IDS[index % len(fixture.TRAINING_TASK_IDS)],
+        "validation": False,
+        "events": jnp.asarray([index]),
+    } for index in range(fixture.ORDINARY_UPDATES)]
+    result = fixture.run_fixed_schedule(trainer, episodes)
+    assert jnp.array_equal(result[-1], jnp.asarray([fixture.ORDINARY_UPDATES - 1]))
+
+
 def test_matched_check_reports_selected_fallback_and_forward_validation_isolated():
     check = fixture.matched_integration_check(jnp.zeros((1, fixture.N_INPUTS)))
     assert check["selected_substeps"] in (1, 2)
@@ -312,6 +328,26 @@ def test_matched_check_reports_selected_fallback_and_forward_validation_isolated
     result = trainer.evaluate_forward(lambda: "validation")
     assert result == "validation"
     assert jnp.array_equal(trainer.parameters["input"], before)
+
+
+def test_forward_validation_rejects_biological_and_eligibility_state_changes():
+    class Learner:
+        def __init__(self):
+            self.biological = brainstate.HiddenState(jnp.zeros((1,)))
+            self.eligibility = fixture.braintrace.EligibilityTrace(jnp.zeros((1,)))
+
+        def states(self):
+            return {"biological": self.biological, "eligibility": self.eligibility}
+
+    learner = Learner()
+    trainer = fixture.PPPropEpisodeTrainer(learner, {"input": jnp.zeros((1,))})
+
+    def mutate_state():
+        learner.biological.value = jnp.ones((1,))
+        return "validation"
+
+    with pytest.raises(RuntimeError, match="biological or eligibility"):
+        trainer.evaluate_forward(mutate_state)
 
 
 def test_real_compiled_episode_updates_grouped_parameters_and_param_states():

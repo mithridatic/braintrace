@@ -451,13 +451,44 @@ class PPPropEpisodeTrainer:
         """Evaluate an episode without changing parameters or learner state."""
 
         before = jax.tree_util.tree_map(jnp.array, self.parameters)
+        state_values = self._non_parameter_state_values()
         result = forward_fn(*args, **kwargs)
         after = jax.tree_util.tree_map(jnp.array, self.parameters)
         if not bool(jax.tree_util.tree_all(
             jax.tree_util.tree_map(jnp.array_equal, before, after)
         )):
             raise RuntimeError("forward validation changed trainable parameters")
+        current_states = self._non_parameter_state_values()
+        if len(state_values) != len(current_states) or any(
+            not bool(jnp.array_equal(initial, current))
+            for initial, current in zip(state_values, current_states)
+        ):
+            raise RuntimeError("forward validation changed biological or eligibility state")
         return result
+
+    def _non_parameter_state_values(self):
+        """Snapshot learner states that validation must preserve."""
+
+        containers = []
+        states = getattr(self.learner, "states", None)
+        if callable(states):
+            containers.append(states())
+        for name in ("hidden_states", "other_states"):
+            value = getattr(self.learner, name, None)
+            if value is not None:
+                containers.append(value)
+        executor = getattr(self.learner, "graph_executor", None)
+        if executor is not None:
+            containers.append(executor.states)
+        values = []
+        for container in containers:
+            for state in container.values():
+                if not isinstance(state, brainstate.ParamState):
+                    values.append(jnp.array(state.value))
+        running_index = getattr(self.learner, "running_index", None)
+        if running_index is not None:
+            values.append(jnp.array(running_index.value))
+        return values
 
 
 def run_fixed_schedule(trainer, episodes, *, proof=False):
@@ -482,9 +513,19 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
         for episode, task_id in zip(episodes, task_ids)
     ):
         raise ValueError("validation episodes are forward-only")
-    return brainstate.transform.for_loop(
-        lambda episode: trainer.update_episode(**episode), episodes
+    payloads = [{
+            key: value for key, value in episode.items()
+            if key not in {"task_id", "validation"}
+    } for episode in episodes]
+    stacked = jax.tree_util.tree_map(
+        lambda *values: jnp.stack(values), *payloads
     )
+
+    def update(episode):
+        payload = episode
+        return trainer.update_episode(**payload)
+
+    return brainstate.transform.for_loop(update, stacked)
 import importlib.util
 import sys
 from pathlib import Path
