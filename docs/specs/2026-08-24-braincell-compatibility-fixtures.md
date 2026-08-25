@@ -28,7 +28,10 @@ It checks the production bounded current-density path, one compiled `0.1 ms`
 step, reset-state isolation for plus and minus perturbations, finite gates and
 voltage, zero spikes, and finite nonzero gradients. The centered derivative
 uses `epsilon=1e-3` and the declared tolerance
-`1e-5 + 1e-2 * max(abs(a), abs(b))`.
+`1e-5 + 1e-2 * max(abs(a), abs(b))`. Its analytic value SHALL come from the
+compiled one-step PP-Prop learner, with the same CSR-backed relation used by
+the perturbed forward evaluations; a standalone `jax.grad` is not a valid
+PP-Prop fixture.
 
 A separate spike fixture starts from reset gates, sets voltage to `-0.001 mV`,
 uses zero previous spikes, and applies input drive `20` through the same bounded
@@ -41,11 +44,22 @@ finiteness and nonzero values in both output heads.
 The finite-difference fixture is a one-step local derivative check only. It
 does not call BPTT, a multi-step VJP, or any temporal BPTT oracle. PP-Prop
 relations are checked through the compiled single-step relation report and
-direct finite gradients. A temporal PP-Prop result is never labelled a BPTT
-gradient.
+the learner's one-step `etrace_grad` result. A temporal PP-Prop result is
+never labelled a BPTT gradient.
 
 ## Repeated execution
 
 Repeated model execution uses `brainstate.transform.jit` for one step and
 `brainstate.transform.for_loop` for sequences. Random values use
 `brainstate.random`. No repeated model execution uses a bare Python loop.
+
+## Gate 1 remediation
+
+The finite-difference objective now runs one real BrainCell step for each
+perturbation after an independent reset. The PP-Prop compiler relation report
+and one-step learner gradient are built from the same CSR-backed model before
+the derivative is measured. The spike gradient differentiates the emitted
+BrainCell spike value, and the readout fixture differentiates both direct
+output heads. Constructor checks inspect the reset sodium and potassium gates
+and all declared ion and channel values, including the full `360 = 30 + 30 +
+300` direct voltage-readout shape and height, width, and color gradient groups.

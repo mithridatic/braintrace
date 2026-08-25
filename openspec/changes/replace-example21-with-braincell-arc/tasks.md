@@ -1,15 +1,15 @@
 ## 1. Runtime and compatibility
 
-- [ ] 1.1 Add `braincell==0.1.0` to the Example 21 image, development
+- [x] 1.1 Add `braincell==0.1.0` to the Example 21 image, development
   requirements, and applicable project extras, and keep the raw ARC copy;
   verify that a clean development install and image build import BrainCell,
   BrainState, BrainUnit, JAX, and BrainTrace.
-- [ ] 1.2 Add the small Hodgkin-Huxley and PP-Prop compatibility fixtures to
+- [x] 1.2 Add the small Hodgkin-Huxley and PP-Prop compatibility fixtures to
   `21-braincell-arc_test.py`; verify finite `mA/cm²` execution, the expected
   current-unit error, every declared BrainCell 0.1.0 constructor value, reset
   gate values, compiler relations for input and recurrent weights, and finite
   direct readout gradients.
-- [ ] 1.3 Add the one-step centered finite-difference fixture and spike-path
+- [x] 1.3 Add the one-step centered finite-difference fixture and spike-path
   fixture; verify the custom 1 by 4 CSR, separate reset copies, declared
   objective and derivative tolerance, the deterministic threshold crossing,
   finite gradients, and at least one nonzero spike-path gradient without a

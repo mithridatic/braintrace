@@ -14,6 +14,7 @@ import jax.numpy as jnp
 
 N_FEATURES = 1
 N_CELLS = 4
+N_READOUT = 360
 FINITE_DIFFERENCE_EPSILON = 1e-3
 
 
@@ -85,22 +86,26 @@ def recurrent_csr() -> brainevent.CSR:
 class PPPropRelationFixture(brainstate.nn.Module):
     """Expose input and recurrent sparse weights to the PP-Prop compiler."""
 
-    def __init__(self):
+    def __init__(self, input_weight=0.1):
         super().__init__()
         self.hidden = brainstate.HiddenState(jnp.zeros((1, N_CELLS)))
-        self.input_weight = brainstate.ParamState(jnp.asarray([0.1, 0.0, 0.0, 0.0]))
+        self.input_weight = brainstate.ParamState(
+            jnp.asarray([input_weight, 0.0, 0.0, 0.0])
+        )
         self.recurrent_weight = brainstate.ParamState(jnp.ones((N_CELLS,)))
+        self._input_csr = input_csr()
+        self._recurrent_csr = recurrent_csr()
 
     def update(self, x):
         hidden = braintrace.sparse_matmul(
             x,
             self.input_weight.value,
-            sparse_mat=input_csr(),
+            sparse_mat=self._input_csr,
         )
         recurrent = braintrace.sparse_matmul(
             self.hidden.value,
             self.recurrent_weight.value,
-            sparse_mat=recurrent_csr(),
+            sparse_mat=self._recurrent_csr,
         )
         self.hidden.value = jnp.tanh(hidden + recurrent)
         return self.hidden.value
@@ -119,6 +124,41 @@ def pp_prop_relation_fixture():
         vjp_method="single-step",
     )
     return learner.graph.hidden_param_op_relations
+
+
+def _pp_prop_gradient(input_weight):
+    model = PPPropRelationFixture(input_weight)
+    learner = braintrace.compile(
+        model,
+        braintrace.pp_prop,
+        jnp.zeros((1, N_FEATURES), dtype=jnp.float32),
+        batch_size=1,
+        decay_or_rank=0.95,
+        vjp_method="single-step",
+    )
+
+    def step_loss(x):
+        return jnp.mean(jnp.tanh(learner(x)))
+
+    gradients = learner.etrace_grad(
+        jnp.ones((1, 1, N_FEATURES), dtype=jnp.float32),
+        step_fn=step_loss,
+        reduction="sum",
+    )
+    return gradients[("input_weight",)][0]
+
+
+def _pp_prop_objective(input_weight):
+    model = PPPropRelationFixture(input_weight)
+    learner = braintrace.compile(
+        model,
+        braintrace.pp_prop,
+        jnp.zeros((1, N_FEATURES), dtype=jnp.float32),
+        batch_size=1,
+        decay_or_rank=0.95,
+        vjp_method="single-step",
+    )
+    return jnp.mean(jnp.tanh(learner(jnp.ones((1, N_FEATURES)))))
 
 
 def bounded_current_density(input_drive, recurrent_drive=0.0):
@@ -141,27 +181,21 @@ def advance_one_step(cell: CompatibilityHodgkinHuxley, current):
 def compiled_one_step(cell: CompatibilityHodgkinHuxley):
     """Return a JIT-compiled one-step driver for a fixture cell."""
 
-    return brainstate.transform.jit(advance_one_step)(
+    return brainstate.transform.jit(advance_one_step, static_argnums=0)(
         cell, bounded_current_density(0.0)
     )
 
 
-def smooth_objective(raw_weight):
-    """Return the declared one-step smooth finite-difference objective."""
-
-    drive = raw_weight * 1.0
-    voltage = -65.0 + 20.0 * jnp.tanh(drive)
-    return jnp.mean(jnp.tanh((voltage + 65.0) / 20.0))
-
-
 def finite_difference_fixture() -> dict[str, float]:
-    """Compare the local PP-Prop-compatible derivative with central difference."""
+    """Compare one PP-Prop relation step with a BrainCell central difference."""
 
     weight = jnp.asarray(0.1, dtype=jnp.float32)
     epsilon = FINITE_DIFFERENCE_EPSILON
-    direct = float(jax.grad(smooth_objective)(weight))
+
+    pp_prop_relation_fixture()
+    direct = float(_pp_prop_gradient(weight))
     centered = float(
-        (smooth_objective(weight + epsilon) - smooth_objective(weight - epsilon))
+        (_pp_prop_objective(weight + epsilon) - _pp_prop_objective(weight - epsilon))
         / (2.0 * epsilon)
     )
     tolerance = 1e-5 + 1e-2 * max(abs(direct), abs(centered))
@@ -179,14 +213,45 @@ def spike_path_fixture() -> dict[str, bool]:
     cell = CompatibilityHodgkinHuxley()
     cell.init_state()
     cell.V.value = jnp.full((N_CELLS,), -0.001) * u.mV
+    def spike_objective(input_drive):
+        trial = CompatibilityHodgkinHuxley()
+        trial.init_state()
+        trial.reset_state()
+        trial.V.value = jnp.full((N_CELLS,), -0.001) * u.mV
+        _, spikes = advance_one_step(trial, bounded_current_density(input_drive))
+        return jnp.sum(spikes)
+
     voltage, spikes = advance_one_step(cell, bounded_current_density(20.0))
-    spike_gradient = jax.grad(lambda x: jnp.sum(jnp.tanh(x)))(jnp.ones((N_CELLS,)))
+    spike_gradient = jax.grad(spike_objective)(jnp.asarray(1.0))
     return {
         "threshold_crossed": bool(jnp.any(voltage >= 0.0 * u.mV)),
         "finite_voltage": bool(jnp.all(jnp.isfinite(voltage.mantissa))),
         "finite_spikes": bool(jnp.all(jnp.isfinite(spikes))),
         "finite_gradient": bool(jnp.all(jnp.isfinite(spike_gradient))),
         "nonzero_gradient": bool(jnp.any(spike_gradient != 0.0)),
+    }
+
+
+def direct_readout_gradient_fixture() -> dict[str, bool]:
+    """Check finite direct gradients for all 360 voltage-readout values."""
+
+    features = jnp.asarray([[0.1, -0.2, 0.3, -0.4]])
+    weight = jnp.ones((N_CELLS, N_READOUT)) * 0.1
+    bias = jnp.zeros((N_READOUT,))
+
+    def objective(readout_weight, readout_bias):
+        return jnp.sum(jnp.tanh(features @ readout_weight + readout_bias))
+
+    grad_weight, grad_bias = jax.grad(objective, argnums=(0, 1))(weight, bias)
+    return {
+        "shape": grad_bias.shape == (N_READOUT,),
+        "finite": bool(
+            jnp.all(jnp.isfinite(grad_weight))
+            and jnp.all(jnp.isfinite(grad_bias))
+        ),
+        "height_nonzero": bool(jnp.any(grad_weight[:, :30] != 0.0)),
+        "width_nonzero": bool(jnp.any(grad_weight[:, 30:60] != 0.0)),
+        "color_nonzero": bool(jnp.any(grad_weight[:, 60:] != 0.0)),
     }
 
 

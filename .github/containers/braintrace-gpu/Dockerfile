@@ -22,6 +22,7 @@ RUN python -m pip install --no-cache-dir \
       "brainunit==0.5.2" \
       "brainevent[cuda12]==0.2.1" \
       "braintools==0.3.0" \
+      "braincell==0.1.0" \
       "optax==0.2.8" \
       "brainpy==2.8.2" \
       "brainpy-state==0.1.0" \

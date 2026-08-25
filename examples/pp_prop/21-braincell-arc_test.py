@@ -27,12 +27,30 @@ def test_braincell_pin_and_imports():
 def test_hodgkin_huxley_constructor_values_and_reset_state():
     cell = fixture.CompatibilityHodgkinHuxley()
     cell.init_state()
+    cell.reset_state()
     assert cell.length.to_decimal(u.um) == pytest.approx(10.0)
     assert cell.radius.to_decimal(u.um) == pytest.approx(5.0)
     assert cell.C.to_decimal(u.uF / u.cm**2) == pytest.approx(1.0)
     assert cell.V_th.to_decimal(u.mV) == pytest.approx(0.0)
     assert jnp.allclose(cell.V.value.to_decimal(u.mV), -65.0)
     assert jnp.all(cell.spike.value == 0)
+    assert jnp.allclose(cell.na.INa.p.value, 0.05293248, atol=1e-6)
+    assert jnp.allclose(cell.na.INa.q.value, 0.5961208, atol=1e-6)
+    assert jnp.allclose(cell.k.IK.p.value, 0.31767693, atol=1e-6)
+    assert cell.na.E.to_decimal(u.mV) == pytest.approx(50.0)
+    assert cell.k.E.to_decimal(u.mV) == pytest.approx(-77.0)
+    assert cell.na.INa.g_max.to_decimal(u.mS / u.cm**2) == pytest.approx(120.0)
+    assert cell.na.INa.temp.to_decimal(u.kelvin) == pytest.approx(309.15)
+    assert cell.na.INa.temp_ref.to_decimal(u.kelvin) == pytest.approx(309.15)
+    assert cell.na.INa.q10 == pytest.approx(3.0)
+    assert cell.na.INa.V_sh.to_decimal(u.mV) == pytest.approx(-45.0)
+    assert cell.k.IK.g_max.to_decimal(u.mS / u.cm**2) == pytest.approx(10.0)
+    assert cell.k.IK.temp.to_decimal(u.kelvin) == pytest.approx(309.15)
+    assert cell.k.IK.temp_ref.to_decimal(u.kelvin) == pytest.approx(309.15)
+    assert cell.k.IK.q10 == pytest.approx(3.0)
+    assert cell.k.IK.V_sh.to_decimal(u.mV) == pytest.approx(-45.0)
+    assert cell.IL.g_max.to_decimal(u.mS / u.cm**2) == pytest.approx(0.03)
+    assert cell.IL.E.to_decimal(u.mV) == pytest.approx(-54.387)
 
 
 def test_csr_and_current_density_contract():
@@ -71,4 +89,14 @@ def test_spike_path_fixture_is_finite_and_crosses_threshold():
         "finite_spikes": True,
         "finite_gradient": True,
         "nonzero_gradient": True,
+    }
+
+
+def test_direct_readout_gradients_are_finite_and_nonzero():
+    assert fixture.direct_readout_gradient_fixture() == {
+        "shape": True,
+        "finite": True,
+        "height_nonzero": True,
+        "width_nonzero": True,
+        "color_nonzero": True,
     }
