@@ -1207,6 +1207,8 @@ def _parameter_group(path: tuple[object, ...]) -> str:
         return "recurrent"
     if root == "cell_color_head":
         return "row_color"
+    if root == "routing_query":
+        return "row_color"
     if root == "height_head":
         return "height"
     if root == "width_head":
@@ -1598,6 +1600,15 @@ def load_online_checkpoint(
 
                 model = PhaseSeparatedGatedMemoryRNN(
                     GatedMemoryConfig(**architecture)
+                )
+            elif architecture_version == "query_routing_gated_memory_v48":
+                from examples.pp_prop.latent_workspace_query_routing_model import (
+                    QueryRoutingConfig,
+                    QueryRoutingGatedMemoryRNN,
+                )
+
+                model = QueryRoutingGatedMemoryRNN(
+                    QueryRoutingConfig(**architecture)
                 )
             else:
                 model = OnlineARCVanillaRNN(OnlineModelConfig(**architecture))
