@@ -23,8 +23,8 @@ must include the direct prediction/intervention records required by Gate 4.
 ## Local verification record
 
 The Gate 4 helper has focused coverage of 97 percent. Its 14 tests finish in
-1.79 seconds. The complete co-located Example 21 selection has 41 passing
-tests and finished in 58.14 seconds on the CPU worktree environment.
+1.79 seconds. The complete co-located Example 21 selection has 44 passing
+tests and finished in 56.74 seconds on the CPU worktree environment.
 
 The backend guard rejects non-finite timings, selects the lower valid median,
 and rejects mismatched prediction bytes. The proof guard requires Boolean
