@@ -38,3 +38,19 @@ Reject dense topology, duplicate or self recurrent edges, total-current units,
 missing temporal relations, target leakage into model events, extra optimizer
 updates after a failed gate, and non-finite optimizer state. A zero advance
 must return zero loss and zero gradient while preserving state bitwise.
+
+## Review correction record
+
+The first implementation stopped at compatibility fixtures. The production
+path must also expose a compiled sequence driver and an episode trainer. The
+driver uses `brainstate.transform.for_loop` for events and
+`brainstate.transform.jit` for the outer call. A false event returns a zero
+voltage sentinel without touching biological or learner state. The trainer
+resets only biological and eligibility state between episodes, accumulates
+masked request loss, clips the combined gradient once, and applies one Adam
+update. The readout width is a production constant, not a test-module global.
+
+Focused tests must execute these paths, including a false event inserted into
+an advancing sequence, retained Adam moments after reset, and exact proof and
+ordinary schedule counts. Validation is represented as forward-only by the
+trainer API and cannot call the update method.

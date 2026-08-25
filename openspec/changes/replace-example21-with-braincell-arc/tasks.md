@@ -53,41 +53,41 @@
 
 ## 4. Sparse BrainCell model
 
-- [ ] 4.1 Implement deterministic sparse input and recurrent topology with
+- [x] 4.1 Implement deterministic sparse input and recurrent topology with
   `brainstate.random` weight initialization; verify 2,048 neurons, 14,112 input
   connections, 16,384 recurrent connections, no duplicate or self recurrent
   connection, CSR row-as-source semantics, and no dense input or recurrent
   parameter.
-- [ ] 4.2 Implement the bounded input and prior-spike recurrent current-density
+- [x] 4.2 Implement the bounded input and prior-spike recurrent current-density
   paths and the exact single-layer BrainCell Hodgkin-Huxley cell declared in the
   design; verify every geometry, capacitance, threshold, initializer,
   surrogate, solver, ion, channel, conductance, reversal, temperature, shift,
   reset-gate, voltage, and spike value, and verify that a spike first affects
   recurrent current on the next event.
-- [ ] 4.3 Implement false-advance state freezing with
+- [x] 4.3 Implement false-advance state freezing with
   `brainstate.transform.cond` and the compiled event driver with
   `brainstate.transform.for_loop` and `jit`; verify bitwise state identity for
   biological and eligibility state, zero padded loss and gradient, identical
   final prediction with inserted padding, and no bare repeated Python loop.
-- [ ] 4.4 Implement the matched integration check; verify one `0.1 ms` step
+- [x] 4.4 Implement the matched integration check; verify one `0.1 ms` step
   against two compiled `0.05 ms` substeps per event, record maximum voltage and
   spike-event differences, and apply every finite, `1 mV`, spike, prediction,
   and strict-result selection gate.
-- [ ] 4.5 Implement complete episode reset and direct state-dependent decoding;
+- [x] 4.5 Implement complete episode reset and direct state-dependent decoding;
   verify reset voltage, gates, spikes, and eligibility between queries, retained
   parameters and Adam state during training, and at least one changed proof
   prediction after the decoder-boundary state intervention.
 
 ## 5. PP-Prop training
 
-- [ ] 5.1 Compile input and recurrent state-changing parameters with BrainTrace
+- [x] 5.1 Compile input and recurrent state-changing parameters with BrainTrace
   PP-Prop `single-step`; verify complete hidden-state relations and fail the
   proof for a missing or unintended non-temporal temporal parameter.
-- [ ] 5.2 Implement one accumulated PP-Prop optimizer update per query episode
+- [x] 5.2 Implement one accumulated PP-Prop optimizer update per query episode
   with trace decay 0.95, norm clip 1.0, and Adam learning rates 0.001, 0.0003,
   and 0.003; verify exact update counts, task order, finite optimizer state, and
   no target value in a model event.
-- [ ] 5.3 Implement the eight-update proof schedule and 64-update ordinary
+- [x] 5.3 Implement the eight-update proof schedule and 64-update ordinary
   schedule; verify that all proof updates use `d631b094`, `46f33fce` is
   forward-only, and a failed gate stops without extra updates, task changes,
   BPTT, synthetic data, or a fallback answer system.

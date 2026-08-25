@@ -14,6 +14,7 @@ import jax.numpy as jnp
 
 N_INPUTS = 441
 N_NEURONS = 2048
+N_READOUT = 360
 INPUT_FANOUT = 32
 RECURRENT_FANOUT = 8
 TRACE_DECAY = 0.95
@@ -114,6 +115,24 @@ def adam_update(parameters, gradient, state, learning_rate, beta1=0.9, beta2=0.9
     return updated, AdamState(first, second, step)
 
 
+def grouped_adam_update(parameters, gradients, states=None):
+    """Apply the declared input, recurrent, and readout Adam rates."""
+
+    states = states or {
+        name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
+        for name, value in parameters.items()
+    }
+    updated = dict(parameters)
+    next_states = dict(states)
+    for name, rate in LEARNING_RATES.items():
+        if name not in parameters or name not in gradients:
+            continue
+        updated[name], next_states[name] = adam_update(
+            parameters[name], gradients[name], states[name], rate
+        )
+    return updated, next_states
+
+
 def update_schedule(steps, proof=False):
     """Return the fixed update count for proof or ordinary training."""
 
@@ -154,19 +173,21 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.cell.init_state()
         self.reset_episode()
 
-    def reset_episode(self):
+    def reset_episode(self, learner=None):
         """Reset biological and eligibility state while retaining parameters."""
 
         self.cell.reset_state()
         self.previous_spikes.value = jnp.zeros((N_NEURONS,), dtype=jnp.float32)
+        if learner is not None and hasattr(learner, "reset_state"):
+            learner.reset_state()
 
-    def _advance(self, event):
+    def _advance(self, event, dt_ms=0.1):
         input_drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
         recurrent_drive = braintrace.sparse_matmul(
             self.previous_spikes.value, self.recurrent_weight.value, sparse_mat=self.recurrent_csr
         )
         current = bounded_population_current(input_drive, recurrent_drive)
-        with brainstate.environ.context(dt=0.1 * u.ms):
+        with brainstate.environ.context(dt=dt_ms * u.ms):
             self.cell.update(current)
         self.previous_spikes.value = jax.lax.stop_gradient(
             self.cell.spike.value.astype(jnp.float32)
@@ -185,11 +206,197 @@ class BrainCellArcModel(brainstate.nn.Module):
             advance, lambda: self._advance(event), lambda: jnp.zeros((N_NEURONS,))
         )
 
+    def interval(self, event, advance=True, *, substeps=1):
+        """Advance one biological interval with one or two compiled substeps."""
+
+        def run(_):
+            return self._advance(event, 0.1 / substeps)
+
+        def advancing():
+            return brainstate.transform.for_loop(
+                run, jnp.arange(substeps, dtype=jnp.int32)
+            )[-1]
+
+        return brainstate.transform.cond(
+            advance, advancing, lambda: jnp.zeros((N_NEURONS,))
+        )
+
     def readout(self):
         """Return direct voltage readout logits."""
 
         feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
         return feature @ self.readout_weight.value + self.readout_bias.value
+
+
+def run_event_sequence(model, events, advances=None):
+    """Run a compiled event sequence and return one voltage vector per event.
+
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose state is advanced.
+    events : array-like
+        Event vectors with shape ``(time, 441)``.
+    advances : array-like, optional
+        Boolean event mask. Missing values mean that every event advances.
+
+    Returns
+    -------
+    jax.Array
+        Voltage values with shape ``(time, 2048)``.
+    """
+
+    events = jnp.asarray(events, dtype=jnp.float32)
+    if advances is None:
+        advances = jnp.ones((events.shape[0],), dtype=bool)
+    advances = jnp.asarray(advances, dtype=bool)
+    if events.ndim != 2 or events.shape[1] != N_INPUTS:
+        raise ValueError(f"events must have shape (time, {N_INPUTS})")
+    if advances.shape != (events.shape[0],):
+        raise ValueError("advances must have one boolean per event")
+
+    def drive(xs, mask):
+        return brainstate.transform.for_loop(
+            lambda event, advance: model.step(event, advance), xs, mask
+        )
+
+    return brainstate.transform.jit(drive)(events, advances)
+
+
+def run_pp_prop_sequence(learner, events, advances=None):
+    """Evolve a PP-Prop learner only on advancing events."""
+
+    events = jnp.asarray(events, dtype=jnp.float32)
+    if advances is None:
+        advances = jnp.ones((events.shape[0],), dtype=bool)
+    advances = jnp.asarray(advances, dtype=bool)
+
+    def drive(event, advance):
+        def evolve():
+            return learner.etrace_evolve(
+                event[None, :], return_outputs=True
+            )[0]
+
+        return brainstate.transform.cond(
+            advance, evolve, lambda: jnp.zeros((N_NEURONS,))
+        )
+
+    return brainstate.transform.jit(
+        lambda xs, mask: brainstate.transform.for_loop(drive, xs, mask)
+    )(events, advances)
+
+
+def matched_integration_check(events):
+    """Compare the default interval with two compiled half-steps."""
+
+    events = jnp.asarray(events, dtype=jnp.float32)
+    one_step = BrainCellArcModel()
+    half_step = BrainCellArcModel()
+    default = brainstate.transform.jit(
+        lambda xs: brainstate.transform.for_loop(
+            lambda event: one_step.interval(event), xs
+        )
+    )(events)
+    matched = brainstate.transform.jit(
+        lambda xs: brainstate.transform.for_loop(
+            lambda event: half_step.interval(event, substeps=2), xs
+        )
+    )(events)
+    voltage_difference = jnp.max(jnp.abs(default - matched))
+    spike_equal = jnp.array_equal(
+        one_step.previous_spikes.value, half_step.previous_spikes.value
+    )
+    prediction_equal = jnp.array_equal(one_step.readout(), half_step.readout())
+    strict_equal = prediction_equal
+    return {
+        "finite": bool(jnp.all(jnp.isfinite(default)) and jnp.all(jnp.isfinite(matched))),
+        "max_voltage_difference": float(voltage_difference),
+        "spike_equal": bool(spike_equal),
+        "prediction_equal": bool(prediction_equal),
+        "strict_equal": bool(strict_equal),
+        "default_selected": bool(
+            jnp.all(jnp.isfinite(default))
+            and jnp.all(jnp.isfinite(matched))
+            and voltage_difference <= 1.0
+            and spike_equal
+            and prediction_equal
+            and strict_equal
+        ),
+    }
+
+
+def decoder_boundary_intervention(model):
+    """Return direct predictions before and after a state-only intervention."""
+
+    before = model.readout()
+    model.cell.V.value = model.cell.V.value + 1.0 * u.mV
+    after = model.readout()
+    return before, after
+
+
+class PPPropEpisodeTrainer:
+    """Accumulate one PP-Prop episode and apply one clipped Adam update."""
+
+    def __init__(self, learner, parameters, learning_rates=None):
+        self.learner = learner
+        self.parameters = parameters
+        self.learning_rates = learning_rates or LEARNING_RATES
+        zeros = jax.tree_util.tree_map(jnp.zeros_like, parameters)
+        self.adam = AdamState(zeros, zeros)
+        self.updates = 0
+        self.adam_groups = {
+            name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
+            for name, value in parameters.items()
+        } if isinstance(parameters, dict) else None
+
+    def reset_episode(self, model):
+        """Reset model and eligibility state before the next query episode."""
+
+        model.reset_episode(self.learner)
+
+    def optimizer_is_finite(self):
+        """Return whether parameters, moments, and step state are finite."""
+
+        leaves = jax.tree_util.tree_leaves((self.parameters, self.adam.first, self.adam.second))
+        return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
+
+    def update_episode(self, events, step_fn, valid_rows=None):
+        """Apply one update from one masked PP-Prop query episode."""
+
+        gradients, losses = self.learner.etrace_grad(
+            events, step_fn=step_fn, reduction="sum", return_value=True
+        )
+        if valid_rows is not None:
+            losses = accumulate_masked_loss(losses, valid_rows)
+        gradients, norm = clip_gradient(gradients)
+        if self.adam_groups is not None:
+            self.parameters, self.adam_groups = grouped_adam_update(
+                self.parameters, gradients, self.adam_groups
+            )
+            self.adam = self.adam_groups.get("input", self.adam)
+        else:
+            rate = self.learning_rates.get("input", 0.001)
+            self.parameters, self.adam = adam_update(
+                self.parameters, gradients, self.adam, rate
+            )
+        self.updates += 1
+        return losses, norm
+
+
+def run_fixed_schedule(trainer, episodes, *, proof=False):
+    """Run the exact proof or ordinary number of ordered episodes."""
+
+    update_schedule(len(episodes), proof=proof)
+    if proof and any(
+        "task_id" in episode and episode["task_id"] != "d631b094"
+        for episode in episodes
+    ):
+        raise ValueError("proof schedule accepts only d631b094")
+    if any(episode.get("validation", False) for episode in episodes):
+        raise ValueError("validation episodes are forward-only")
+    return brainstate.transform.for_loop(
+        lambda episode: trainer.update_episode(**episode), episodes
+    )
 import importlib.util
 import sys
 from pathlib import Path

@@ -165,6 +165,46 @@ def test_false_advance_preserves_biological_state_bitwise():
     assert jnp.array_equal(model.previous_spikes.value, spikes)
 
 
+def test_compiled_event_sequence_freezes_padding_and_returns_outputs():
+    model = fixture.BrainCellArcModel()
+    events = jnp.zeros((2, fixture.N_INPUTS), dtype=jnp.float32)
+    before = model.cell.V.value.to_decimal(u.mV).copy()
+    outputs = fixture.run_event_sequence(model, events, [False, False])
+    assert outputs.shape == (2, fixture.N_NEURONS)
+    assert jnp.array_equal(model.cell.V.value.to_decimal(u.mV), before)
+    assert jnp.array_equal(outputs, jnp.zeros_like(outputs))
+
+
+def test_padding_does_not_change_a_valid_sequence_result():
+    events = jnp.zeros((2, fixture.N_INPUTS), dtype=jnp.float32)
+    first = fixture.BrainCellArcModel()
+    second = fixture.BrainCellArcModel()
+    direct = fixture.run_event_sequence(first, events)
+    padded = fixture.run_event_sequence(
+        second, jnp.concatenate((events[:1], jnp.zeros((1, fixture.N_INPUTS)), events[1:])),
+        [True, False, True],
+    )
+    assert jnp.array_equal(direct[1], padded[2])
+    assert jnp.array_equal(
+        first.cell.V.value.to_decimal(u.mV), second.cell.V.value.to_decimal(u.mV)
+    )
+
+
+def test_matched_integration_and_decoder_boundary_are_explicit():
+    events = jnp.zeros((1, fixture.N_INPUTS), dtype=jnp.float32)
+    check = fixture.matched_integration_check(events)
+    assert check["finite"]
+    assert check["max_voltage_difference"] <= 1.0
+    model = fixture.BrainCellArcModel()
+    before, after = fixture.decoder_boundary_intervention(model)
+    assert jnp.any(before != after)
+
+
+def test_trainer_schedule_keeps_episode_update_count_contract():
+    assert fixture.update_schedule(fixture.PROOF_UPDATES, proof=True)[-1] == 7
+    assert fixture.update_schedule(fixture.ORDINARY_UPDATES)[-1] == 63
+
+
 def test_episode_loss_clip_adam_and_fixed_schedules():
     assert fixture.accumulate_masked_loss([1.0, 2.0, 3.0], [1, 0, 1]) == pytest.approx(4.0)
     gradient = {"x": jnp.asarray([3.0, 4.0])}
@@ -179,9 +219,33 @@ def test_episode_loss_clip_adam_and_fixed_schedules():
         fixture.update_schedule(9, proof=True)
 
 
+def test_grouped_adam_uses_declared_rates_and_finite_moments():
+    parameters = {
+        "input": jnp.zeros((1,)),
+        "recurrent": jnp.zeros((1,)),
+        "readout": jnp.zeros((1,)),
+    }
+    gradients = {name: jnp.ones((1,)) for name in parameters}
+    updated, states = fixture.grouped_adam_update(parameters, gradients)
+    assert float(updated["input"][0]) == pytest.approx(-0.001)
+    assert float(updated["recurrent"][0]) == pytest.approx(-0.0003)
+    assert float(updated["readout"][0]) == pytest.approx(-0.003)
+    assert all(state.step == 1 for state in states.values())
+
+
 def test_production_pp_prop_compile_has_two_temporal_relations():
     learner = fixture.compile_pp_prop_model(fixture.BrainCellArcModel())
     relations = learner.graph.hidden_param_op_relations
     assert len(relations) == 2
     assert all(relation.connected_hidden_paths for relation in relations)
     assert all(relation.trainable_vars for relation in relations)
+
+
+def test_pp_prop_sequence_skips_false_events():
+    model = fixture.BrainCellArcModel()
+    learner = fixture.compile_pp_prop_model(model)
+    before = model.cell.V.value.to_decimal(u.mV).copy()
+    events = jnp.zeros((2, fixture.N_INPUTS), dtype=jnp.float32)
+    outputs = fixture.run_pp_prop_sequence(learner, events, [False, False])
+    assert outputs.shape == (2, fixture.N_NEURONS)
+    assert jnp.array_equal(model.cell.V.value.to_decimal(u.mV), before)
