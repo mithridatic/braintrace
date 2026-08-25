@@ -1,0 +1,40 @@
+# BRA-7 BrainCell and PP-Prop execution
+
+## Scope
+
+This note maps OpenSpec tasks 4.1-5.3 to the implementation and focused tests.
+The implementation is limited to the baseline 2,048-neuron model and its
+episode trainer. Structural, Dale, timing, and artifact stages remain outside
+this change.
+
+## Required invariants
+
+- Input CSR has 14,112 entries. Recurrent CSR has 16,384 entries.
+- CSR rows identify source neurons. Recurrent pairs are unique and non-self.
+- Weight initialization uses `brainstate.random.RandomState(21)` and `(22)`.
+- Every cell uses the declared BrainCell 0.1.0 single-compartment values.
+- False events preserve voltage, channel gates, spikes, and eligibility state.
+- Episode reset clears biological and eligibility state but retains parameters
+  and Adam moments.
+- Input and recurrent weights have PP-Prop hidden-state relations. Readout
+  weights use a finite direct gradient and are not temporal parameters.
+- Loss is accumulated only on shape and valid row requests. The combined
+  gradient is clipped to norm 1.0 and receives one Adam update per episode.
+- Training uses eight updates for proof and 64 updates for ordinary runs.
+  Validation is forward-only.
+
+## Verification matrix
+
+The sibling test module must cover topology counts and CSR direction, all
+declared cell values, bounded current units, next-event spike transmission,
+compiled false-event freezing, reset retention rules, compiler relations,
+loss masking, gradient clipping, learning rates, trace decay, task order, and
+update counts. Tests must use compiled transform paths for repeated events and
+must not call BPTT or synthetic data.
+
+## Edge cases
+
+Reject dense topology, duplicate or self recurrent edges, total-current units,
+missing temporal relations, target leakage into model events, extra optimizer
+updates after a failed gate, and non-finite optimizer state. A zero advance
+must return zero loss and zero gradient while preserving state bitwise.

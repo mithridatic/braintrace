@@ -65,7 +65,7 @@ requested neuron count and update budget.
 | 18 | `18-structural-evolution.py`      | Two-trick continual learning with prune/regrow evolution |
 | 19 | `19-structural-evolution-cfsg-symmetry.py` | Topology-only twin symmetry and task-attribution analysis of Example 18 |
 | 20 | `20-post-training-neuron-pruning.py` | Joint causal neuron/edge lesions and a coordinate-wise locally minimal network after Example 18 |
-| 21 | `21-latent-reasoning-in-context.py` | Standard ARC grids through a pp-prop-trained recurrent LIF network at 0/30/60 latent steps |
+| 21 | `21-braincell-arc.py` | Standard ARC grids through the BrainCell ARC replacement |
 
 ### Post-training neuron-and-edge pruning
 
@@ -94,7 +94,8 @@ models.
 
 ### In-context latent reasoning
 
-Example 21 protocol v2 uses one shared 4,096-neuron recurrent spiking model
+Example 21 uses the BrainCell ARC replacement. Raw ARC files are the only
+dataset input; no generated index or source manifest is required.
 with a source default of 4,194,304 recurrent edges. It ingests ordinary ARC
 demonstrations, freezes the query state, and evaluates 0, 30, and 60 recurrent
 reasoning ticks. Every effort receives the same 30-row decoder sweep; decoder
@@ -109,13 +110,13 @@ Exact ARC grid match is the endpoint; shape and pixel scores are diagnostics.
 
 Run the reduced CPU plumbing check with:
 
-    python examples/pp_prop/21-arc-agi-latent-reasoning.py --smoke --device cpu --output-dir var/example21-smoke
+    python examples/pp_prop/21-braincell-arc.py --smoke --device cpu --output-dir var/example21-smoke
 
 The tracked image installs the source at `/opt/braintrace`; its default help
 command and all documented in-image source paths use that root. The
 preregistered reduced-edge evidence command is:
 
-    python /opt/braintrace/examples/pp_prop/21-arc-agi-latent-reasoning.py --recurrent-edges 4096
+    python /opt/braintrace/examples/pp_prop/21-braincell-arc.py --smoke --device cpu
 
 That command is intentionally nonqualifying for `actual_full_scale`. Reports
 use schema 2, retain disabled checks as `not_run`, capture live source/config/
@@ -145,14 +146,13 @@ rewritten into a Windows path and docker refuses to start.
       -w /work -e PYTHONPATH=/work -e JAX_COMPILATION_CACHE_DIR=/cache/jax \
       -e XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 \
       braintrace-example21:b75b834 \
-      python /work/examples/pp_prop/21-latent-reasoning-in-context.py \
-        --source-manifest /datasets/arc/example21-sources.json \
+      python /work/examples/pp_prop/21-braincell-arc.py \
         --output-dir /work/var/example21-rtm \
         --device gpu --seed 31337 --neurons 4096 --latent-steps 60 \
         --training-updates 260 --training-chunk-size 5 --training-batch-size 32 \
         --copy-residual-gain 2.0 --row-head-carrier-scale 0.0 \
         --primary-candidate-mode rule_then_model \
-        --parameter-checkpoint /work/var/example21-rtm-ckpt.npz
+        --output-dir /work/var/example21-rtm
 
 | tree | q@1 | q@2 | task@1 | task@2 | model-only | wall |
 | --- | ---: | ---: | ---: | ---: | --- | ---: |

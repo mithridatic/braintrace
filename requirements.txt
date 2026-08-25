@@ -5,3 +5,4 @@ brainunit
 brainevent[cpu]>=0.2.0
 brainpy-state
 braintools
+braincell==0.1.0
