@@ -10,6 +10,29 @@ import braintools
 import brainevent
 import jax
 import jax.numpy as jnp
+import importlib.util
+import sys
+from pathlib import Path
+
+
+_ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
+    "example21_arc_contracts", Path(__file__).with_name("arc_contracts.py")
+)
+assert _ARC_CONTRACTS_SPEC is not None and _ARC_CONTRACTS_SPEC.loader is not None
+_ARC_CONTRACTS = importlib.util.module_from_spec(_ARC_CONTRACTS_SPEC)
+sys.modules[_ARC_CONTRACTS_SPEC.name] = _ARC_CONTRACTS
+_ARC_CONTRACTS_SPEC.loader.exec_module(_ARC_CONTRACTS)
+ARCTask = _ARC_CONTRACTS.ARCTask
+load_task = _ARC_CONTRACTS.load_task
+encode_episode = _ARC_CONTRACTS.encode_episode
+decode_episode = _ARC_CONTRACTS.decode_episode
+request_loss = _ARC_CONTRACTS.request_loss
+decode_prediction = _ARC_CONTRACTS.decode_prediction
+query_exact = _ARC_CONTRACTS.query_exact
+strict_task_pass_at_1 = _ARC_CONTRACTS.strict_task_pass_at_1
+write_result = _ARC_CONTRACTS.write_result
+write_checkpoint = _ARC_CONTRACTS.write_checkpoint
+load_checkpoint = _ARC_CONTRACTS.load_checkpoint
 
 
 N_FEATURES = 1

@@ -6,6 +6,18 @@ This specification covers OpenSpec tasks 2.1 through 3.5 for the BrainCell
 ARC replacement. It defines the public contracts for raw data, temporal
 events, request loss, direct decoding, strict results, and checkpoints.
 
+## Implementation API
+
+The authority module `examples/pp_prop/21-braincell-arc.py` exposes the
+co-located contract implementation from `examples/pp_prop/arc_contracts.py`.
+It provides
+`load_task`, `encode_episode`, `decode_episode`, `request_loss`,
+`decode_prediction`, `query_exact`, `strict_task_pass_at_1`, `write_result`,
+`write_checkpoint`, and `load_checkpoint`. These functions use NumPy arrays
+and immutable dataclasses at the boundary. A loader call names the role;
+the default role is `practice`, and evaluation data is rejected unless the
+caller explicitly passes `allow_evaluation=True`.
+
 ## Data
 
 The loader reads `<arc-root>/data/training/<task-id>.json` for practice data
@@ -44,8 +56,10 @@ Shape loss is height cross-entropy plus width cross-entropy. Each row loss is
 the mean cross-entropy over valid target cells. Non-request, empty, and
 invalid-row steps have zero loss. The decoder selects height and width
 independently from 30 logits each, then selects one color from ten logits for
-each of 30 columns at each row request. It returns a rectangular `uint8`
-grid and consumes no target or query residual.
+each of 30 output rows in the direct 360-value readout. It returns a
+rectangular `uint8` grid and consumes no target or query residual. A 360-value
+compatibility readout remains accepted for old fixture checks and repeats one
+color across each decoded row.
 
 Query exactness requires a non-Boolean integer prediction with equal shape and
 equal cells. Strict task pass-at-1 is true only when every query is exact.
