@@ -16,6 +16,9 @@ N_FEATURES = 1
 N_CELLS = 4
 N_READOUT = 360
 FINITE_DIFFERENCE_EPSILON = 1e-3
+OBJECTIVE_VOLTAGE_OFFSET = 65.0
+OBJECTIVE_VOLTAGE_SCALE = 20.0
+SPIKE_DRIVE = 20.0
 
 
 class CompatibilityHodgkinHuxley(braincell.SingleCompartment):
@@ -83,12 +86,24 @@ def recurrent_csr() -> brainevent.CSR:
     )
 
 
+def bounded_current_density(input_drive, recurrent_drive=0.0):
+    """Convert bounded dimensionless drives to current density."""
+
+    return (
+        0.02 * jnp.tanh(input_drive / 20.0) * u.mA / u.cm**2
+        + 0.01 * jnp.tanh(recurrent_drive / 20.0) * u.mA / u.cm**2
+    )
+
+
 class PPPropRelationFixture(brainstate.nn.Module):
     """Expose input and recurrent sparse weights to the PP-Prop compiler."""
 
     def __init__(self, input_weight=0.1):
         super().__init__()
         self.hidden = brainstate.HiddenState(jnp.zeros((1, N_CELLS)))
+        self.cell = CompatibilityHodgkinHuxley()
+        self.cell.init_state()
+        self.cell.reset_state()
         self.input_weight = brainstate.ParamState(
             jnp.asarray([input_weight, 0.0, 0.0, 0.0])
         )
@@ -107,7 +122,10 @@ class PPPropRelationFixture(brainstate.nn.Module):
             self.recurrent_weight.value,
             sparse_mat=self._recurrent_csr,
         )
-        self.hidden.value = jnp.tanh(hidden + recurrent)
+        drive = hidden + recurrent
+        with brainstate.environ.context(dt=0.1 * u.ms):
+            self.cell.update(bounded_current_density(drive))
+        self.hidden.value = self.cell.V.value.to_decimal(u.mV)
         return self.hidden.value
 
 
@@ -138,7 +156,10 @@ def _pp_prop_gradient(input_weight):
     )
 
     def step_loss(x):
-        return jnp.mean(jnp.tanh(learner(x)))
+        voltage = learner(x)
+        return jnp.mean(
+            jnp.tanh((voltage + OBJECTIVE_VOLTAGE_OFFSET) / OBJECTIVE_VOLTAGE_SCALE)
+        )
 
     gradients = learner.etrace_grad(
         jnp.ones((1, 1, N_FEATURES), dtype=jnp.float32),
@@ -149,25 +170,14 @@ def _pp_prop_gradient(input_weight):
 
 
 def _pp_prop_objective(input_weight):
-    model = PPPropRelationFixture(input_weight)
-    learner = braintrace.compile(
-        model,
-        braintrace.pp_prop,
-        jnp.zeros((1, N_FEATURES), dtype=jnp.float32),
-        batch_size=1,
-        decay_or_rank=0.95,
-        vjp_method="single-step",
-    )
-    return jnp.mean(jnp.tanh(learner(jnp.ones((1, N_FEATURES)))))
+    return _braincell_objective(input_weight)["objective"]
 
 
-def bounded_current_density(input_drive, recurrent_drive=0.0):
-    """Convert bounded dimensionless drives to current density."""
-
-    return (
-        0.02 * jnp.tanh(input_drive) * u.mA / u.cm**2
-        + 0.01 * jnp.tanh(recurrent_drive) * u.mA / u.cm**2
-    )
+def _csr_input_drive(input_weight):
+    weights = jnp.asarray([input_weight, 0.0, 0.0, 0.0])
+    return braintrace.sparse_matmul(
+        jnp.ones((1, N_FEATURES)), weights, sparse_mat=input_csr()
+    ).reshape((N_CELLS,))
 
 
 def advance_one_step(cell: CompatibilityHodgkinHuxley, current):
@@ -187,23 +197,66 @@ def compiled_one_step(cell: CompatibilityHodgkinHuxley):
 
 
 def finite_difference_fixture() -> dict[str, float]:
-    """Compare one PP-Prop relation step with a BrainCell central difference."""
+    """Compare one PP-Prop BrainCell step with a central difference."""
 
     weight = jnp.asarray(0.1, dtype=jnp.float32)
     epsilon = FINITE_DIFFERENCE_EPSILON
 
-    pp_prop_relation_fixture()
+    relations = pp_prop_relation_fixture()
     direct = float(_pp_prop_gradient(weight))
-    centered = float(
-        (_pp_prop_objective(weight + epsilon) - _pp_prop_objective(weight - epsilon))
-        / (2.0 * epsilon)
-    )
+    plus = _braincell_objective(weight + epsilon)
+    minus = _braincell_objective(weight - epsilon)
+    centered = float((plus["objective"] - minus["objective"]) / (2.0 * epsilon))
     tolerance = 1e-5 + 1e-2 * max(abs(direct), abs(centered))
     return {
         "pp_prop": direct,
         "finite_difference": centered,
         "absolute_error": abs(direct - centered),
         "tolerance": tolerance,
+        "relations": float(len(relations)),
+        "finite_voltage": float(
+            bool(jnp.isfinite(plus["voltage"]) and jnp.isfinite(minus["voltage"]))
+        ),
+        "finite_gates": float(plus["finite_gates"] and minus["finite_gates"]),
+        "zero_spikes": float(plus["zero_spikes"] and minus["zero_spikes"]),
+        "reset_isolated": float(plus["reset_isolated"] and minus["reset_isolated"]),
+    }
+
+
+def _braincell_objective(input_weight):
+    cell = CompatibilityHodgkinHuxley()
+    cell.init_state()
+    cell.reset_state()
+    reset_copy = CompatibilityHodgkinHuxley()
+    reset_copy.init_state()
+    reset_copy.reset_state()
+    reset_voltage = reset_copy.V.value.to_decimal(u.mV).copy()
+    reset_gates = tuple(
+        gate.value.copy()
+        for gate in (reset_copy.na.INa.p, reset_copy.na.INa.q, reset_copy.k.IK.p)
+    )
+    current = bounded_current_density(_csr_input_drive(input_weight))
+    voltage, spikes = advance_one_step(cell, current)
+    objective = jnp.mean(
+        jnp.tanh((voltage.to_decimal(u.mV) + OBJECTIVE_VOLTAGE_OFFSET) / OBJECTIVE_VOLTAGE_SCALE)
+    )
+    finite_gates = all(
+        jnp.all(jnp.isfinite(gate))
+        for gate in (cell.na.INa.p.value, cell.na.INa.q.value, cell.k.IK.p.value)
+    )
+    reset_isolated = all(
+        jnp.allclose(gate.value, initial)
+        for gate, initial in zip(
+            (reset_copy.na.INa.p, reset_copy.na.INa.q, reset_copy.k.IK.p),
+            reset_gates,
+        )
+    ) and jnp.allclose(reset_copy.V.value.to_decimal(u.mV), reset_voltage)
+    return {
+        "objective": objective,
+        "voltage": jnp.mean(voltage.to_decimal(u.mV)),
+        "finite_gates": bool(finite_gates),
+        "zero_spikes": bool(jnp.all(spikes == 0)),
+        "reset_isolated": reset_isolated,
     }
 
 
@@ -221,8 +274,8 @@ def spike_path_fixture() -> dict[str, bool]:
         _, spikes = advance_one_step(trial, bounded_current_density(input_drive))
         return jnp.sum(spikes)
 
-    voltage, spikes = advance_one_step(cell, bounded_current_density(20.0))
-    spike_gradient = jax.grad(spike_objective)(jnp.asarray(1.0))
+    voltage, spikes = advance_one_step(cell, bounded_current_density(SPIKE_DRIVE))
+    spike_gradient = jax.grad(spike_objective)(jnp.asarray(SPIKE_DRIVE))
     return {
         "threshold_crossed": bool(jnp.any(voltage >= 0.0 * u.mV)),
         "finite_voltage": bool(jnp.all(jnp.isfinite(voltage.mantissa))),

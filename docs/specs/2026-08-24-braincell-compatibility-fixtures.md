@@ -55,11 +55,20 @@ Repeated model execution uses `brainstate.transform.jit` for one step and
 
 ## Gate 1 remediation
 
-The finite-difference objective now runs one real BrainCell step for each
-perturbation after an independent reset. The PP-Prop compiler relation report
+Gate 1 requires the derivative fixture to use the same real BrainCell
+Hodgkin–Huxley voltage objective in every arm. The finite-difference objective
+runs one real BrainCell step for each perturbation after an independent reset.
+The PP-Prop compiler relation report
 and one-step learner gradient are built from the same CSR-backed model before
 the derivative is measured. The spike gradient differentiates the emitted
 BrainCell spike value, and the readout fixture differentiates both direct
 output heads. Constructor checks inspect the reset sodium and potassium gates
 and all declared ion and channel values, including the full `360 = 30 + 30 +
 300` direct voltage-readout shape and height, width, and color gradient groups.
+
+The selected PP-Prop objective is
+`mean(tanh((voltage + 65 mV) / 20 mV))`. The plus and minus arms must each
+construct and reset their own cell, use the CSR-derived bounded current, and
+assert finite voltage and gate state plus zero spikes after the `0.1 ms` step.
+The spike-path derivative is evaluated at drive `20`, with the same reset state
+and bounded-current transform used for its threshold-crossing forward pass.

@@ -72,6 +72,11 @@ def test_finite_difference_fixture_has_declared_tolerance():
     assert result["absolute_error"] <= result["tolerance"]
     assert jnp.isfinite(result["pp_prop"])
     assert result["pp_prop"] != 0.0
+    assert result["relations"] == 2.0
+    assert result["finite_voltage"] == 1.0
+    assert result["finite_gates"] == 1.0
+    assert result["zero_spikes"] == 1.0
+    assert result["reset_isolated"] == 1.0
 
 
 def test_pp_prop_compiler_sees_input_and_recurrent_relations():
@@ -82,6 +87,7 @@ def test_pp_prop_compiler_sees_input_and_recurrent_relations():
 
 
 def test_spike_path_fixture_is_finite_and_crosses_threshold():
+    assert fixture.SPIKE_DRIVE == 20.0
     result = fixture.spike_path_fixture()
     assert result == {
         "threshold_crossed": True,
