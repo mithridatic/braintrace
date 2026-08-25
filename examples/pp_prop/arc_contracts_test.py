@@ -87,13 +87,13 @@ def test_result_and_checkpoint_are_bounded_and_round_trip(tmp_path):
         "neuron_ids": np.arange(2, dtype=np.int32), "dale_codes": np.zeros(2, dtype=np.int8),
         "owner_codes": np.full(2, -1, dtype=np.int16), "mechanism_codes": np.zeros(2, dtype=np.uint8),
         "neuron_count": np.asarray(2, dtype=np.int32), "integration_substeps": np.asarray(1, dtype=np.int32),
-        "input_indptr": np.zeros(3, dtype=np.int32), "input_indices": np.zeros(0, dtype=np.int32),
+        "input_indptr": np.zeros(2, dtype=np.int32), "input_indices": np.zeros(0, dtype=np.int32),
         "input_values": np.zeros(0, dtype=np.float32), "input_m1": np.zeros(0, dtype=np.float32), "input_m2": np.zeros(0, dtype=np.float32),
         "recurrent_indptr": np.zeros(3, dtype=np.int32), "recurrent_indices": np.zeros(0, dtype=np.int32),
         "recurrent_values": np.zeros(0, dtype=np.float32), "recurrent_m1": np.zeros(0, dtype=np.float32), "recurrent_m2": np.zeros(0, dtype=np.float32),
-        "readout_weight": np.zeros((1, 1), dtype=np.float32), "readout_bias": np.zeros(1, dtype=np.float32),
-        "readout_weight_m1": np.zeros((1, 1), dtype=np.float32), "readout_weight_m2": np.zeros((1, 1), dtype=np.float32),
-        "readout_bias_m1": np.zeros(1, dtype=np.float32), "readout_bias_m2": np.zeros(1, dtype=np.float32),
+        "readout_weight": np.zeros((2, 360), dtype=np.float32), "readout_bias": np.zeros(360, dtype=np.float32),
+        "readout_weight_m1": np.zeros((2, 360), dtype=np.float32), "readout_weight_m2": np.zeros((2, 360), dtype=np.float32),
+        "readout_bias_m1": np.zeros(360, dtype=np.float32), "readout_bias_m2": np.zeros(360, dtype=np.float32),
         "input_step": np.asarray(0, dtype=np.int64), "recurrent_step": np.asarray(0, dtype=np.int64), "readout_step": np.asarray(0, dtype=np.int64),
     }
     arc.write_checkpoint(checkpoint, arrays)
@@ -103,3 +103,31 @@ def test_result_and_checkpoint_are_bounded_and_round_trip(tmp_path):
         arc.write_checkpoint(tmp_path / "bad.npz", {}, format=2)
     with pytest.raises(ValueError, match="schema"):
         arc.write_checkpoint(tmp_path / "bad-schema.npz", {"weights": np.ones(1, dtype=np.float32)})
+
+
+def test_checkpoint_enforces_input_destination_and_fixed_readout(tmp_path):
+    arrays = {
+        "neuron_ids": np.arange(2, dtype=np.int32), "dale_codes": np.zeros(2, dtype=np.int8),
+        "owner_codes": np.full(2, -1, dtype=np.int16), "mechanism_codes": np.zeros(2, dtype=np.uint8),
+        "neuron_count": np.asarray(2, dtype=np.int32), "integration_substeps": np.asarray(1, dtype=np.int32),
+        "input_indptr": np.asarray([0, 1], dtype=np.int32), "input_indices": np.asarray([1], dtype=np.int32),
+        "input_values": np.zeros(1, dtype=np.float32), "input_m1": np.zeros(1, dtype=np.float32), "input_m2": np.zeros(1, dtype=np.float32),
+        "recurrent_indptr": np.zeros(3, dtype=np.int32), "recurrent_indices": np.zeros(0, dtype=np.int32),
+        "recurrent_values": np.zeros(0, dtype=np.float32), "recurrent_m1": np.zeros(0, dtype=np.float32), "recurrent_m2": np.zeros(0, dtype=np.float32),
+        "readout_weight": np.zeros((2, 360), dtype=np.float32), "readout_bias": np.zeros(360, dtype=np.float32),
+        "readout_weight_m1": np.zeros((2, 360), dtype=np.float32), "readout_weight_m2": np.zeros((2, 360), dtype=np.float32),
+        "readout_bias_m1": np.zeros(360, dtype=np.float32), "readout_bias_m2": np.zeros(360, dtype=np.float32),
+        "input_step": np.asarray(0, dtype=np.int64), "recurrent_step": np.asarray(0, dtype=np.int64), "readout_step": np.asarray(0, dtype=np.int64),
+    }
+    arc.write_checkpoint(tmp_path / "valid.npz", arrays)
+    arrays["input_indptr"] = np.zeros(3, dtype=np.int32)
+    with pytest.raises(ValueError, match="input CSR structure"):
+        arc.write_checkpoint(tmp_path / "bad-input.npz", arrays)
+    arrays["input_indptr"] = np.asarray([0, 1], dtype=np.int32)
+    arrays["input_indices"] = np.asarray([2], dtype=np.int32)
+    with pytest.raises(ValueError, match="input CSR endpoint"):
+        arc.write_checkpoint(tmp_path / "bad-endpoint.npz", arrays)
+    arrays["input_indices"] = np.asarray([1], dtype=np.int32)
+    arrays["readout_bias"] = np.zeros(359, dtype=np.float32)
+    with pytest.raises(ValueError, match="readout parameters"):
+        arc.write_checkpoint(tmp_path / "bad-readout.npz", arrays)

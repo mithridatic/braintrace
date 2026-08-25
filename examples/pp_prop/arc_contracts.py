@@ -334,10 +334,10 @@ def _validate_checkpoint_arrays(arrays: Mapping[str, np.ndarray], format: int) -
         raise ValueError("checkpoint labels contain an invalid code")
     if np.any(arrays["mechanism_codes"] < 0):
         raise ValueError("checkpoint mechanism code is invalid")
-    for prefix, endpoint_limit in (("input", EVENTS and EVENT_WIDTH), ("recurrent", n)):
+    for prefix, rows, endpoint_limit in (("input", 1, n), ("recurrent", n, n)):
         indptr = arrays[f"{prefix}_indptr"]
         indices = arrays[f"{prefix}_indices"]
-        if indptr.shape != (n + 1,) or indptr[0] != 0 or np.any(np.diff(indptr) < 0) or indptr[-1] != len(indices):
+        if indptr.shape != (rows + 1,) or indptr[0] != 0 or np.any(np.diff(indptr) < 0) or indptr[-1] != len(indices):
             raise ValueError(f"checkpoint {prefix} CSR structure is invalid")
         if np.any(indices < 0) or np.any(indices >= endpoint_limit):
             raise ValueError(f"checkpoint {prefix} CSR endpoint is invalid")
@@ -351,7 +351,7 @@ def _validate_checkpoint_arrays(arrays: Mapping[str, np.ndarray], format: int) -
     for name in ("input_step", "recurrent_step", "readout_step"):
         if arrays[name].shape != () or int(arrays[name]) < 0:
             raise ValueError(f"checkpoint {name} must be a nonnegative scalar")
-    if arrays["readout_weight"].ndim != 2 or arrays["readout_bias"].ndim != 1:
+    if arrays["readout_weight"].shape != (n, 360) or arrays["readout_bias"].shape != (360,):
         raise ValueError("checkpoint readout parameters have invalid shapes")
     for suffix in ("m1", "m2"):
         if arrays[f"readout_weight_{suffix}"].shape != arrays["readout_weight"].shape or arrays[f"readout_bias_{suffix}"].shape != arrays["readout_bias"].shape:
