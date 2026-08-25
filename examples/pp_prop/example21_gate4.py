@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import statistics
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -38,7 +39,30 @@ class BackendProbe:
     @property
     def valid(self) -> bool:
         """Return whether this probe can participate in selection."""
-        return bool(self.finite and self.times_ms and all(t >= 0.0 for t in self.times_ms))
+        return bool(
+            self.finite
+            and self.times_ms
+            and all(math.isfinite(t) and t >= 0.0 for t in self.times_ms)
+        )
+
+
+def validate_backend_probes(cpu: BackendProbe, gpu: BackendProbe) -> dict[str, object]:
+    """Validate matched backend outputs and return selection evidence.
+
+    Raises
+    ------
+    RuntimeError
+        If the matched probes produce different predictions.
+    """
+    if cpu.prediction_bytes != gpu.prediction_bytes:
+        raise RuntimeError("matched backend probes produced different predictions")
+    selected = select_backend(cpu, gpu)
+    return {
+        "selected_backend": selected,
+        "cpu_median_ms": cpu.median_ms if cpu.valid else None,
+        "gpu_median_ms": gpu.median_ms if gpu.valid else None,
+        "prediction_bytes_stable": True,
+    }
 
 
 def select_backend(cpu: BackendProbe, gpu: BackendProbe) -> str:
@@ -158,6 +182,16 @@ def validate_temporary_proof(
     missing = required.difference(interventions)
     if missing:
         raise RuntimeError(f"missing state interventions: {sorted(missing)}")
+    if any(
+        not isinstance(observation, Mapping)
+        or not isinstance(observation.get("changed"), bool)
+        for observation in interventions.values()
+    ):
+        raise RuntimeError("interventions must record a Boolean changed field")
+    if interventions["null"]["changed"]:
+        raise RuntimeError("null intervention must not change the prediction")
+    if not any(interventions[name]["changed"] for name in required if name != "null"):
+        raise RuntimeError("state interventions produced no direct change")
     return {
         "training_task": training_task,
         "validation_task": validation_task,

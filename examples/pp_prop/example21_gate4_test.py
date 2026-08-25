@@ -11,6 +11,7 @@ from examples.pp_prop.example21_gate4 import (
     benchmark_decoder,
     measure_probe,
     select_backend,
+    validate_backend_probes,
     validate_temporary_proof,
 )
 
@@ -26,6 +27,20 @@ def test_select_backend_ignores_invalid_probe() -> None:
     assert select_backend(BackendProbe("cpu", (1.0,), False, b""), BackendProbe("gpu", (2.0,), True, b"p")) == "gpu"
     with pytest.raises(RuntimeError, match="no valid"):
         select_backend(BackendProbe("cpu", (), False, b""), BackendProbe("gpu", (), False, b""))
+
+
+def test_backend_validation_requires_stable_prediction_and_finite_timing() -> None:
+    cpu = BackendProbe("cpu", (1.0, 2.0, 3.0), True, b"same")
+    gpu = BackendProbe("gpu", (float("inf"),), True, b"same")
+    evidence = validate_backend_probes(cpu, gpu)
+    assert evidence["selected_backend"] == "cpu"
+    assert evidence["prediction_bytes_stable"] is True
+    with pytest.raises(RuntimeError, match="different predictions"):
+        validate_backend_probes(cpu, BackendProbe("gpu", (1.0,), True, b"other"))
+
+
+def test_backend_validation_rejects_nan_probe() -> None:
+    assert not BackendProbe("cpu", (float("nan"),), True, b"p").valid
 
 
 def test_measure_probe_warms_and_records_three_calls() -> None:
@@ -94,4 +109,23 @@ def test_temporary_proof_rejects_gate_failures(field: str) -> None:
     else:
         kwargs["elapsed_seconds"] = 181.0
     with pytest.raises(RuntimeError):
+        validate_temporary_proof(**kwargs)
+
+
+def test_temporary_proof_requires_changed_state_observations() -> None:
+    kwargs = dict(
+        training_task="d631b094",
+        validation_task="46f33fce",
+        update_tasks=["d631b094"] * 8,
+        validation_state_before=b"same",
+        validation_state_after=b"same",
+        prediction_before=b"before",
+        prediction_after=b"after",
+        interventions={name: {"changed": False} for name in ("voltage", "sodium_gates", "potassium_gates", "spikes", "all_state", "null")},
+        elapsed_seconds=1.0,
+    )
+    with pytest.raises(RuntimeError, match="no direct change"):
+        validate_temporary_proof(**kwargs)
+    kwargs["interventions"]["null"]["changed"] = True
+    with pytest.raises(RuntimeError, match="null intervention"):
         validate_temporary_proof(**kwargs)

@@ -19,3 +19,18 @@ This note records the implementation boundary for OpenSpec tasks 6.1–6.4.
 
 Acceptance evidence must be written outside `result.json` for timing fields and
 must include the direct prediction/intervention records required by Gate 4.
+
+## Local verification record
+
+The Gate 4 helper has focused coverage of 97 percent. Its 14 tests finish in
+1.79 seconds. The complete co-located Example 21 selection has 41 passing
+tests and finished in 58.14 seconds on the CPU worktree environment.
+
+The backend guard rejects non-finite timings, selects the lower valid median,
+and rejects mismatched prediction bytes. The proof guard requires Boolean
+change records for all six interventions, requires the null intervention to
+remain unchanged, and requires at least one non-null direct change.
+
+The real-data CPU/GPU process run remains an environment-owned execution step:
+the local checkout has no `/datasets/arc` or equivalent `d631b094` and
+`46f33fce` files. No real-data result is claimed from this worktree run.
