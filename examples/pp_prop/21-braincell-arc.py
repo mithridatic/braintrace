@@ -10,6 +10,184 @@ import braintools
 import brainevent
 import jax
 import jax.numpy as jnp
+
+
+N_INPUTS = 441
+N_NEURONS = 2048
+INPUT_FANOUT = 32
+RECURRENT_FANOUT = 8
+TRACE_DECAY = 0.95
+GRADIENT_CLIP_NORM = 1.0
+PROOF_UPDATES = 8
+ORDINARY_UPDATES = 64
+LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
+
+
+def _normal(shape, seed, scale):
+    return brainstate.random.normal(
+        size=shape, key=brainstate.random.RandomState(seed).value
+    ).astype(jnp.float32) * scale
+
+
+def input_topology():
+    """Build the deterministic feature-to-neuron CSR topology."""
+
+    targets = jnp.asarray(
+        [(131 * feature + 61 * k) % N_NEURONS
+         for feature in range(N_INPUTS)
+         for k in range(INPUT_FANOUT)],
+        dtype=jnp.int32,
+    )
+    return brainevent.CSR(
+        _normal((N_INPUTS * INPUT_FANOUT,), 21, 1.0 / jnp.sqrt(32.0)),
+        targets,
+        jnp.arange(0, N_INPUTS * INPUT_FANOUT + 1, INPUT_FANOUT, dtype=jnp.int32),
+        shape=(N_INPUTS, N_NEURONS),
+    )
+
+
+def recurrent_topology():
+    """Build the deterministic source-row recurrent CSR topology."""
+
+    offsets = jnp.asarray([1, 2, 4, 8, 16, 32, 64, 128], dtype=jnp.int32)
+    sources = jnp.arange(N_NEURONS, dtype=jnp.int32)[:, None]
+    targets = ((sources + offsets) % N_NEURONS).reshape(-1)
+    return brainevent.CSR(
+        _normal((N_NEURONS * RECURRENT_FANOUT,), 22, 1.0 / jnp.sqrt(8.0)),
+        targets,
+        jnp.arange(0, N_NEURONS * RECURRENT_FANOUT + 1, RECURRENT_FANOUT,
+                   dtype=jnp.int32),
+        shape=(N_NEURONS, N_NEURONS),
+    )
+
+
+def bounded_population_current(input_drive, recurrent_drive):
+    """Return bounded BrainCell current density from dimensionless drives."""
+
+    return (
+        0.02 * jnp.tanh(input_drive) + 0.01 * jnp.tanh(recurrent_drive)
+    ) * u.mA / u.cm**2
+
+
+def clip_gradient(gradient, max_norm=GRADIENT_CLIP_NORM):
+    """Clip a pytree gradient by its global Euclidean norm."""
+
+    leaves = jax.tree_util.tree_leaves(gradient)
+    norm = jnp.sqrt(sum(jnp.sum(jnp.square(leaf)) for leaf in leaves))
+    scale = jnp.minimum(1.0, max_norm / jnp.maximum(norm, jnp.finfo(jnp.float32).tiny))
+    return jax.tree_util.tree_map(lambda leaf: leaf * scale, gradient), norm
+
+
+def accumulate_masked_loss(losses, valid_rows):
+    """Sum only losses belonging to valid shape or row requests."""
+
+    values = jnp.asarray(losses)
+    mask = jnp.asarray(valid_rows, dtype=values.dtype)
+    return jnp.sum(values * mask)
+
+
+class AdamState:
+    """Adam first and second moments for one episode schedule."""
+
+    def __init__(self, first, second, step=0):
+        self.first = first
+        self.second = second
+        self.step = step
+
+
+def adam_update(parameters, gradient, state, learning_rate, beta1=0.9, beta2=0.999, eps=1e-8):
+    """Apply one bias-corrected Adam update and return new state."""
+
+    first = jax.tree_util.tree_map(
+        lambda m, g: beta1 * m + (1.0 - beta1) * g, state.first, gradient
+    )
+    second = jax.tree_util.tree_map(
+        lambda v, g: beta2 * v + (1.0 - beta2) * jnp.square(g), state.second, gradient
+    )
+    step = state.step + 1
+    correction1 = 1.0 - beta1**step
+    correction2 = 1.0 - beta2**step
+    updated = jax.tree_util.tree_map(
+        lambda p, m, v: p - learning_rate * (m / correction1) /
+        (jnp.sqrt(v / correction2) + eps), parameters, first, second
+    )
+    return updated, AdamState(first, second, step)
+
+
+def update_schedule(steps, proof=False):
+    """Return the fixed update count for proof or ordinary training."""
+
+    expected = PROOF_UPDATES if proof else ORDINARY_UPDATES
+    if steps != expected:
+        raise ValueError(f"expected exactly {expected} updates, got {steps}")
+    return tuple(range(expected))
+
+
+def compile_pp_prop_model(model):
+    """Compile state-changing sparse parameters with PP-Prop single-step."""
+
+    return braintrace.compile(
+        model,
+        braintrace.pp_prop,
+        jnp.zeros((N_INPUTS,), dtype=jnp.float32),
+        batch_size=1,
+        decay_or_rank=TRACE_DECAY,
+        vjp_method="single-step",
+    )
+
+
+class BrainCellArcModel(brainstate.nn.Module):
+    """The 2,048-neuron sparse BrainCell baseline."""
+
+    def __init__(self):
+        super().__init__()
+        self.input_csr = input_topology()
+        self.recurrent_csr = recurrent_topology()
+        self.input_weight = brainstate.ParamState(self.input_csr.data)
+        self.recurrent_weight = brainstate.ParamState(self.recurrent_csr.data)
+        self.readout_weight = brainstate.ParamState(
+            _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
+        )
+        self.readout_bias = brainstate.ParamState(jnp.zeros((N_READOUT,), dtype=jnp.float32))
+        self.previous_spikes = brainstate.HiddenState(jnp.zeros((N_NEURONS,), dtype=jnp.float32))
+        self.cell = CompatibilityHodgkinHuxley(N_NEURONS)
+        self.cell.init_state()
+        self.reset_episode()
+
+    def reset_episode(self):
+        """Reset biological and eligibility state while retaining parameters."""
+
+        self.cell.reset_state()
+        self.previous_spikes.value = jnp.zeros((N_NEURONS,), dtype=jnp.float32)
+
+    def _advance(self, event):
+        input_drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
+        recurrent_drive = braintrace.sparse_matmul(
+            self.previous_spikes.value, self.recurrent_weight.value, sparse_mat=self.recurrent_csr
+        )
+        current = bounded_population_current(input_drive, recurrent_drive)
+        with brainstate.environ.context(dt=0.1 * u.ms):
+            self.cell.update(current)
+        self.previous_spikes.value = self.cell.spike.value.astype(jnp.float32)
+        return self.cell.V.value.to_decimal(u.mV)
+
+    def update(self, event):
+        """Advance one event for the BrainTrace compiler."""
+
+        return self._advance(event)
+
+    def step(self, event, advance=True):
+        """Run one event, preserving all state for a false advance."""
+
+        return brainstate.transform.cond(
+            advance, lambda: self._advance(event), lambda: jnp.zeros((N_NEURONS,))
+        )
+
+    def readout(self):
+        """Return direct voltage readout logits."""
+
+        feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
+        return feature @ self.readout_weight.value + self.readout_bias.value
 import importlib.util
 import sys
 from pathlib import Path
