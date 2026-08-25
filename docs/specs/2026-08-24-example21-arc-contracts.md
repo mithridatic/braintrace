@@ -54,12 +54,13 @@ changing only the target leaves inference bytes unchanged.
 
 Shape loss is height cross-entropy plus width cross-entropy. Each row loss is
 the mean cross-entropy over valid target cells. Non-request, empty, and
-invalid-row steps have zero loss. The decoder selects height and width
-independently from 30 logits each, then selects one color from ten logits for
-each of 30 output rows in the direct 360-value readout. It returns a
-rectangular `uint8` grid and consumes no target or query residual. A 360-value
-compatibility readout remains accepted for old fixture checks and repeats one
-color across each decoded row.
+invalid-row steps have zero loss. The direct decoder consumes 31 request-state
+vectors: one shape request followed by thirty row requests. It selects height
+and width independently from 30 logits each, then selects one color from ten
+logits for each valid cell of each row. It returns a rectangular `uint8` grid
+and consumes no target or query residual. A 360-value compatibility readout
+remains accepted for old fixture checks and repeats one color across each
+decoded row.
 
 Query exactness requires a non-Boolean integer prediction with equal shape and
 equal cells. Strict task pass-at-1 is true only when every query is exact.

@@ -172,8 +172,10 @@ def decode_episode(events: np.ndarray, task_id: str = "decoded") -> tuple[tuple[
     return tuple(pairs), query
 
 
-def request_loss(logits: np.ndarray, target: np.ndarray, *, request: str, valid_mask: np.ndarray | None = None) -> float:
+def request_loss(logits: np.ndarray, target: np.ndarray, *, request: str | None, valid_mask: np.ndarray | None = None) -> float:
     """Return strict shape or valid-cell row cross-entropy."""
+    if request in (None, "non-request", "padding", "input", "invalid-row"):
+        return 0.0
     values, labels = np.asarray(logits, dtype=np.float64), np.asarray(target, dtype=np.int64)
     if request == "shape":
         if values.shape != (60,) or labels.shape != (2,) or np.any((labels < 0) | (labels >= 30)):
@@ -191,16 +193,28 @@ def request_loss(logits: np.ndarray, target: np.ndarray, *, request: str, valid_
 
 
 def decode_prediction(voltage: np.ndarray) -> np.ndarray:
-    """Decode shape logits and one color distribution for each output cell."""
+    """Decode shape and row request states into an integer color grid.
+
+    Parameters
+    ----------
+    voltage : numpy.ndarray
+        Either one compatibility readout with shape ``(360,)`` or the 31
+        request readouts with shape ``(31, 360)``.
+
+    Returns
+    -------
+    numpy.ndarray
+        A ``uint8`` grid with the independently decoded height and width.
+    """
     values = np.asarray(voltage)
     if values.shape == (360,):
         height, width = np.argmax(values[:30]) + 1, np.argmax(values[30:60]) + 1
         colors = np.argmax(values[60:].reshape(30, 10), axis=1)
         return np.asarray(colors[:height, None].repeat(width, axis=1), dtype=np.uint8)
-    if values.shape != (30, 360):
-        raise ValueError("voltage must contain 30 rows of 360 values")
+    if values.shape != (31, 360):
+        raise ValueError("voltage must contain one shape and 30 row request states")
     height, width = np.argmax(values[0, :30]) + 1, np.argmax(values[0, 30:60]) + 1
-    colors = np.argmax(values[:, 60:].reshape(30, 30, 10), axis=2)
+    colors = np.argmax(values[1:, 60:].reshape(30, 30, 10), axis=2)
     return np.asarray(colors[:height, :width], dtype=np.uint8)
 
 

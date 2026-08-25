@@ -17,35 +17,35 @@
 
 ## 2. ARC data and events
 
-- [ ] 2.1 Implement the direct raw-file ARC loader and its integer-grid contract;
+- [x] 2.1 Implement the direct raw-file ARC loader and its integer-grid contract;
   verify both practice-role and evaluation-role fixtures, all invalid grid edge
   cases, a corrective error above ten demonstrations, direct task identifiers,
   and ordinary rejection of evaluation data.
-- [ ] 2.2 Implement the fixed 705 by 441 event encoder and Boolean advance mask;
+- [x] 2.2 Implement the fixed 705 by 441 event encoder and Boolean advance mask;
   verify exact round trips at minimum and 30 by 30 sizes, byte stability,
   event-specific one-hot and all-zero fields, all-zero padding, fixed request
   positions, and byte-identical inference input after target-only mutation.
-- [ ] 2.3 Add the fixed eight-task training order, four-task validation order,
+- [x] 2.3 Add the fixed eight-task training order, four-task validation order,
   and two-task proof order; verify that direct paths resolve only the declared
   files and that no index, hash, fingerprint, or synthetic-task path runs.
 
 ## 3. Exact loss, prediction, and result
 
-- [ ] 3.1 Implement request-masked shape and row loss; verify two shape terms,
+- [x] 3.1 Implement request-masked shape and row loss; verify two shape terms,
   all 900 maximum-grid cell terms, zero non-request loss, and changed loss for
   each changed strict datum when its class logits differ.
-- [ ] 3.2 Implement the 360-value direct voltage readout and integer decoder;
+- [x] 3.2 Implement the 360-value direct voltage readout and integer decoder;
   verify independent height and width argmax, all row and column slices,
   output dimensions 1 through 30, colors 0 through 9, integer dtype, and no
   query-input residual or target input.
-- [ ] 3.3 Implement zero-tolerance query exactness and strict task pass-at-1;
+- [x] 3.3 Implement zero-tolerance query exactness and strict task pass-at-1;
   verify that one wrong dimension, cell, non-integer dtype, or query makes the
   applicable exact Boolean false, that integer width does not affect exactness,
   and that no partial or average score is calculated.
-- [ ] 3.4 Implement the exact small `result.json` schema and atomic writer;
+- [x] 3.4 Implement the exact small `result.json` schema and atomic writer;
   verify JSON integer cells, reproducible Booleans, rejected extra fields,
   clear oversized-record errors, and encoded size at or below 256 KiB.
-- [ ] 3.5 Implement the compressed array-only checkpoint writer and loader;
+- [x] 3.5 Implement the compressed array-only checkpoint writer and loader;
   verify format value 1, `allow_pickle=False`, every declared array and code,
   three optimizer step counts, exact round trip, reset runtime state, invalid
   data rejection, 32 MiB limit, atomic write, distinct child path, and
