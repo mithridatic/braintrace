@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "issue": "BRA-4",
+  "source_commit": "0a101278c7839cd25f59c303d1510bc75fdf3f79",
+  "profile": "medium-horizon-cpu-development",
+  "process_monitor": {
+    "scope": "single Python process working set",
+    "sampling_interval_seconds": 0.1,
+    "pp_prop": {
+      "exit_code": 0,
+      "wall_seconds": 18.5288304,
+      "peak_working_set_bytes": 1087328256,
+      "peak_working_set_mib": 1036.95703125
+    },
+    "bptt": {
+      "exit_code": 0,
+      "wall_seconds": 18.1269221,
+      "peak_working_set_bytes": 1078513664,
+      "peak_working_set_mib": 1028.55078125
+    }
+  },
+  "pp_prop_cold_process_compile_log": {
+    "source": "pp-prop-compile.log",
+    "trace_event_count": 38,
+    "trace_seconds_sum": 1.139533041,
+    "mlir_event_count": 34,
+    "mlir_seconds_sum": 0.569968223,
+    "xla_event_count": 34,
+    "xla_seconds_sum": 2.780697344,
+    "logged_pipeline_seconds_sum": 4.490198608
+  },
+  "limits": [
+    "Working set is sampled process RSS, not allocator-resident model state.",
+    "Logged compile duration is the sum of JAX trace, MLIR, and XLA completion events in one cold process; it is not a single fused-program compile time.",
+    "The profile was repeated in fresh processes for monitoring, so its wall times are not paired within one process."
+  ]
+}
