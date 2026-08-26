@@ -26,7 +26,7 @@ TRAINING_TASK_IDS = (
     "d631b094", "dc433765", "b782dc8a", "d06dbe63",
     "aedd82e4", "0b148d64", "b2862040", "150deff5",
 )
-VALIDATION_TASK_IDS = ("46f33fce", "342f8a4f5", "d8c310e9", "09629e4f")
+VALIDATION_TASK_IDS = ("46f33fce", "3428a4f5", "d8c310e9", "09629e4f")
 
 
 def _normal(shape, seed, scale):

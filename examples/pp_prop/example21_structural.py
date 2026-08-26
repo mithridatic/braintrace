@@ -557,9 +557,8 @@ def _fixed_task_evidence(module, model, learner, data_root):
                 continue
             encoded, mask = module.encode_episode(task, query_index)
             model.reset_episode(learner)
-            voltage = module.run_event_sequence(model, encoded, mask)
-            request = np.asarray(voltage)[-31:]
-            predictions.append(module.decode_prediction(request))
+            module.run_event_sequence(model, encoded, mask)
+            predictions.append(module.decode_prediction(np.asarray(model.readout())))
             targets.append(target)
         strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
     evidence.update({
@@ -805,20 +804,27 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     edge_scores = np.asarray(evidence["connection_scores"])
     started = clock()
     if arm == "neuron-prune":
-        alive = prune_neurons(topology, scores, baseline[-len(module.VALIDATION_TASK_IDS):])
-        candidate = compact(topology, alive,
-                            StructuralAdam(
-                                np.zeros_like(topology.readout), np.zeros_like(topology.readout),
-                                np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
-                                np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
-                            ))[0]
+        validation = baseline[-len(module.VALIDATION_TASK_IDS):]
+        if any(validation):
+            alive = prune_neurons(topology, scores, validation)
+            candidate = compact(topology, alive,
+                                StructuralAdam(
+                                    np.zeros_like(topology.readout), np.zeros_like(topology.readout),
+                                    np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
+                                    np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+                                ))[0]
+        else:
+            candidate = topology
         count = topology.neuron_count - candidate.neuron_count
         updates = 0
     elif arm == "connection-prune":
-        candidate, keep = prune_recurrent(
-            topology, edge_scores, baseline[-len(module.VALIDATION_TASK_IDS):]
-        )
-        count = int(np.sum(~keep))
+        validation = baseline[-len(module.VALIDATION_TASK_IDS):]
+        if any(validation):
+            candidate, keep = prune_recurrent(topology, edge_scores, validation)
+            count = int(np.sum(~keep))
+        else:
+            candidate = topology
+            count = 0
         updates = 0
     elif arm == "neuron-add":
         candidate, donors = add_twin_neurons(topology, scores)
@@ -871,7 +877,9 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],
         "task_spike_evidence": evidence["task_spike_evidence"],
         "task_readout_evidence": evidence["task_readout_evidence"],
-        "preclip_exceeds_clip": bool(np.max(evidence["gradient_mass"], initial=0.0) > 1.0),
+        "preclip_exceeds_clip": bool(
+            np.max(evidence["preclip_gradient_mass"], initial=0.0) > 1.0
+        ),
     }
 
 
