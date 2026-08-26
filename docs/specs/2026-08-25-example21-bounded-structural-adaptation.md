@@ -22,7 +22,7 @@ artifact path and SHA-256 digest are reported.
 The reproducible baseline command is:
 
 ```text
-python examples/pp_prop/example21_structural.py baseline --output <artifact.json>
+python examples/pp_prop/example21_structural.py baseline --data-root <repo-root> --output <artifact.json>
 ```
 
 The arm command adds exactly one of `neuron-prune`, `connection-prune`,
@@ -93,6 +93,14 @@ masked parent zeros removed neurons and incident edges. The compact child uses
 the remapped sparse topology. Promotion requires byte-identical decoded
 prediction arrays and identical strict vectors before any post-compaction
 training.
+
+The measured runner requires `--data-root` (or `EXAMPLE21_DATA_ROOT`) and loads
+the declared practice tasks through `load_task`. It must collect strict task
+Booleans by decoding the model's 31 request readouts, and must use the same
+episode snapshot for evidence and validation. Addition updates use the real
+`PPPropEpisodeTrainer.update_episode` callback inside the compiled
+`brainstate.transform.for_loop`; an identity callback is allowed only in
+isolated unit-test doubles.
 
 ## Risk register
 
