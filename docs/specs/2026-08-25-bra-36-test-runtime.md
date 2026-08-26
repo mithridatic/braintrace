@@ -2,6 +2,39 @@
 
 Status: proposed; implementation requires approval
 
+## Revision 2: compile-event instrumentation before candidate selection
+
+The first implementation candidate (Gate C evaluator reuse) was rejected after
+matched measurement: its 64.90 s median was 0.15 s (0.2%) slower than the
+64.75 s baseline. The candidate was reverted and its negative result is
+recorded in `2026-08-25-gate-c-evaluator-reuse.md`.
+
+A fresh-process Gate A run on 2026-08-25 used:
+
+`python -m pytest examples/pp_prop/latent_workspace_ablation_gate_test.py -k
+"reduced_gate_a_runs_real_full_and_legacy_pp_prop_arms" -q --durations=8`
+
+It completed with 1 passed and 631 deselected in 51.02 s. Pytest attributed
+36.64 s to module-fixture setup, 0.28 s to teardown, and less than 0.005 s to
+the selected test body. This confirms that assertion execution and ordinary
+pytest harness work are not useful optimization targets for this path.
+
+Before a second implementation candidate, add temporary benchmark-only
+instrumentation (kept outside product behavior) around the fixture's four
+phases: data regeneration/encoding, model construction, trainer/compiler
+construction, and first synchronized train/evaluate execution. For the JAX
+phases, capture trace/compile counts as well as elapsed time. Run Gate A and
+Gate B in three fresh processes each, after one unmeasured environment warm-up.
+
+Select the second candidate only if one phase accounts for at least 20% of
+fixture setup in both the median and every measured run, and the candidate has
+a mechanism expected to remove work from that phase (not merely move it into
+an unmeasured fixture). Update this specification with the measured target and
+its exact semantic invariants, then request approval before changing product
+or test code. The acceptance gate remains a material median improvement across
+three matched fresh-process runs, with no weakened assertions, tolerances,
+coverage, state isolation, or finite-window oracle checks.
+
 ## Objective
 
 Reduce developer and CI feedback time without changing algorithm semantics,
