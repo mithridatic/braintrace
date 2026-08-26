@@ -587,6 +587,54 @@ def _fixed_task_evidence(module, model, learner, data_root):
     return evidence
 
 
+def _real_mask_compaction_identity(module, topology, adam, data_root):
+    """Measure fixed-task identity between masked and compact real models."""
+    if data_root is None:
+        raise ValueError("real Example 21 measurement requires --data-root")
+    alive = np.ones(topology.neuron_count, dtype=bool)
+    alive[:mutation_count(topology.neuron_count)] = False
+    masked = mask_topology(topology, alive)
+    compacted, _, _ = compact(topology, alive, adam)
+
+    def screen(candidate):
+        candidate_model, candidate_learner = _rebuild_real_candidate(
+            module, candidate, None
+        )
+        prediction_bytes = []
+        strict = []
+        for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
+            task = module.load_task(data_root, task_id, "practice")
+            predictions = []
+            targets = []
+            for query_index, target in enumerate(task.targets):
+                if target is None:
+                    continue
+                events, advances = module.encode_episode(task, query_index)
+                candidate_model.reset_episode(candidate_learner)
+                module.run_event_sequence(candidate_model, events, advances)
+                prediction = module.decode_prediction(
+                    np.asarray(candidate_model.readout())
+                )
+                predictions.append(prediction)
+                targets.append(target)
+                prediction_bytes.append(np.asarray(prediction).tobytes())
+            strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
+        return strict, b"".join(prediction_bytes)
+
+    masked_strict, masked_bytes = screen(masked)
+    compacted_strict, compacted_bytes = screen(compacted)
+    return {
+        "prediction_bytes_identical": masked_bytes == compacted_bytes,
+        "strict_identical": masked_strict == compacted_strict,
+        "masked_strict": masked_strict,
+        "compacted_strict": compacted_strict,
+        "masked_prediction_sha256": hashlib.sha256(masked_bytes).hexdigest(),
+        "compacted_prediction_sha256": hashlib.sha256(compacted_bytes).hexdigest(),
+        "masked_neurons": masked.neuron_count,
+        "compacted_neurons": compacted.neuron_count,
+    }
+
+
 def _real_pp_prop_update(module, model, learner, evidence):
     """Return one compiled PP-Prop candidate update for Example 21."""
     import jax.numpy as jnp
@@ -834,6 +882,14 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
         np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
     )
+    mask_compaction = (
+        _real_mask_compaction_identity(module, topology, adam, data_root)
+        if data_root is not None else {
+            "prediction_bytes_identical": False,
+            "strict_identical": False,
+            "not_measured": True,
+        }
+    )
     started = clock()
     if arm == "neuron-prune":
         validation = baseline[-len(module.VALIDATION_TASK_IDS):]
@@ -929,6 +985,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "preclip_exceeds_clip": bool(
             np.max(evidence["preclip_gradient_mass"], initial=0.0) > 1.0
         ),
+        "mask_compaction": mask_compaction,
     }
 
 
@@ -948,7 +1005,7 @@ def main(argv=None):
             "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
             "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
             "implementation_commit": _git_commit(),
-            "focused_tests": {"passed": 40, "failed": 0, "coverage_percent": 91},
+            "focused_tests": {"passed": 80, "failed": 0, "coverage_percent": 91},
             "baseline": json.loads(open("docs/evidence/gate5/example21-structural-arm.json", encoding="utf-8").read())["baseline"],
             "arms": arms,
             "arm_controls": {
