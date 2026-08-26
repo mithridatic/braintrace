@@ -654,6 +654,7 @@ def _real_pp_prop_update(module, model, learner, evidence, adam=None):
 
     if adam is not None:
         for name, first, second in (
+            ("readout", adam.neuron_first, adam.neuron_second),
             ("input", adam.input_first, adam.input_second),
             ("recurrent", adam.recurrent_first, adam.recurrent_second),
         ):

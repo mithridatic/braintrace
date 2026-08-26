@@ -534,6 +534,7 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     class Trainer:
         def __init__(self, *args, **kwargs):
             self.adam_groups = {
+                "readout": type("Adam", (), {"first": np.zeros(1), "second": np.zeros(1), "step": 0})(),
                 "input": type("Adam", (), {"first": np.zeros(2), "second": np.zeros(2), "step": 0})(),
                 "recurrent": type("Adam", (), {"first": np.zeros(3), "second": np.zeros(3), "step": 0})(),
             }
@@ -546,7 +547,7 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     learner = SimpleNamespace()
     module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
     adam = structural.StructuralAdam(
-        np.zeros(1), np.zeros(1), np.array([2.0, 3.0]), np.array([4.0, 5.0]),
+        np.array([1.0]), np.array([2.0]), np.array([2.0, 3.0]), np.array([4.0, 5.0]),
         np.array([6.0, 7.0, 8.0]), np.array([9.0, 10.0, 11.0]), step=4,
     )
     update = structural._real_pp_prop_update(
@@ -555,6 +556,9 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     )
     update()
     trainer = update.trainer
+    np.testing.assert_array_equal(trainer.adam_groups["readout"].first, [1])
+    np.testing.assert_array_equal(trainer.adam_groups["readout"].second, [2])
+    assert trainer.adam_groups["readout"].step == 4
     np.testing.assert_array_equal(trainer.adam_groups["input"].first, [2, 3])
     np.testing.assert_array_equal(trainer.adam_groups["recurrent"].second, [9, 10, 11])
     assert trainer.adam_groups["recurrent"].step == 4
