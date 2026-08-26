@@ -611,6 +611,18 @@ def _real_pp_prop_update(module, model, learner, evidence):
     return update
 
 
+def _rebuild_real_candidate(module, candidate, fallback_learner):
+    try:
+        candidate_model = module.BrainCellArcModel(candidate)
+    except TypeError:
+        candidate_model = module.BrainCellArcModel()
+    candidate_learner = (
+        module.compile_pp_prop_model(candidate_model)
+        if hasattr(module, "compile_pp_prop_model") else fallback_learner
+    )
+    return candidate_model, candidate_learner
+
+
 def execute_one_arm(arm, before_strict, operation, evaluate, *, updates=0,
                     transform=None, update=None, clock=time.perf_counter):
     """Execute one isolated structural candidate and return direct evidence."""
@@ -756,7 +768,8 @@ def run_integrated_arm(
     else:
         raise ValueError("exactly one recognized arm is required")
     candidate_model, candidate_learner = rebuild(candidate, candidate_adam)
-    candidate_model.reset_episode(candidate_learner)
+    if hasattr(candidate_model, "reset_episode"):
+        candidate_model.reset_episode(candidate_learner)
     result = execute_one_arm(
         arm, before_strict, lambda: (candidate_model, count),
         lambda value: evaluate(value, candidate_learner),

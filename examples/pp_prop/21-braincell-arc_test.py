@@ -8,6 +8,7 @@ from pathlib import Path
 import braincell
 import brainstate
 import brainunit as u
+import jax
 import jax.numpy as jnp
 import pytest
 
@@ -242,6 +243,21 @@ def test_grouped_adam_uses_declared_rates_and_finite_moments():
     assert all(state.step == 1 for state in states.values())
 
 
+def test_grouped_muon_updates_matrix_and_vector_parameters():
+    parameters = {
+        "input": jnp.zeros((2, 2)),
+        "readout_bias": jnp.zeros((2,)),
+    }
+    gradients = {name: jnp.ones_like(value) for name, value in parameters.items()}
+    updated, states = fixture.grouped_muon_update(parameters, gradients)
+    assert set(states) == set(parameters)
+    assert all(jnp.any(value != parameters[name]) for name, value in updated.items())
+    assert all(
+        jnp.all(jnp.isfinite(leaf))
+        for leaf in jax.tree_util.tree_leaves((updated, states))
+    )
+
+
 def test_production_pp_prop_compile_has_two_temporal_relations():
     learner = fixture.compile_pp_prop_model(fixture.BrainCellArcModel())
     relations = learner.graph.hidden_param_op_relations
@@ -258,6 +274,24 @@ def test_pp_prop_sequence_skips_false_events():
     outputs = fixture.run_pp_prop_sequence(learner, events, [False, False])
     assert outputs.shape == (2, fixture.N_NEURONS)
     assert jnp.array_equal(model.cell.V.value.to_decimal(u.mV), before)
+
+
+def test_event_sequence_uses_candidate_neuron_count_for_false_events():
+    topology = type("Topology", (), {
+        "neuron_count": 3,
+        "input_source": jnp.asarray([], dtype=jnp.int32),
+        "input_target": jnp.asarray([], dtype=jnp.int32),
+        "input_value": jnp.asarray([], dtype=jnp.float32),
+        "recurrent_source": jnp.asarray([], dtype=jnp.int32),
+        "recurrent_target": jnp.asarray([], dtype=jnp.int32),
+        "recurrent_value": jnp.asarray([], dtype=jnp.float32),
+        "readout": jnp.zeros((3, fixture.N_READOUT), dtype=jnp.float32),
+    })()
+    model = fixture.BrainCellArcModel(topology)
+    outputs = fixture.run_event_sequence(
+        model, jnp.zeros((1, fixture.N_INPUTS)), [False]
+    )
+    assert outputs.shape == (1, 3)
 
 
 def test_pp_prop_sequence_preserves_eligibility_across_interspersed_padding():
@@ -317,10 +351,9 @@ def test_trainer_updates_direct_readout_parameters_and_shared_schedule():
         },
     )
     assert jnp.all(parameters["readout_weight"] == 0.0)
-    assert jnp.all(trainer.parameters["readout_weight"] == -0.003)
-    assert jnp.all(trainer.parameters["readout_bias"] == -0.003)
-    assert trainer.adam_groups["readout_weight"].step == 1
-    assert trainer.adam_groups["readout_bias"].step == 1
+    assert jnp.all(trainer.parameters["readout_weight"] < 0.0)
+    assert jnp.all(trainer.parameters["readout_bias"] < 0.0)
+    assert set(trainer.muon_groups) == set(parameters)
 
 
 def test_schedule_rejects_validation_and_wrong_ordinary_task_order():
@@ -401,3 +434,54 @@ def test_real_compiled_episode_updates_grouped_parameters_and_param_states():
     assert jnp.array_equal(
         model.input_weight.value, trainer.parameters["input"]
     )
+
+
+def test_inferred_readout_parameters_have_muon_groups_and_update():
+    model = fixture.BrainCellArcModel()
+    class Learner:
+        model4compile = model
+
+        def etrace_grad(self, events, *, step_fn, mask, **kwargs):
+            return {"input": jnp.zeros_like(model.input_weight.value)}, jnp.asarray([0.0])
+
+    trainer = fixture.PPPropEpisodeTrainer(
+        Learner(),
+        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+    )
+    before_weight = trainer.parameters["readout_weight"].copy()
+    before_bias = trainer.parameters["readout_bias"].copy()
+
+    trainer.update_episode(
+        jnp.zeros((1, fixture.N_INPUTS)),
+        lambda event: jnp.asarray(0.0),
+        direct_grad_fn=lambda **_: {
+            "readout_weight": jnp.ones_like(before_weight),
+            "readout_bias": jnp.ones_like(before_bias),
+        },
+    )
+
+    assert "readout_weight" in trainer.muon_groups
+    assert "readout_bias" in trainer.muon_groups
+    assert not jnp.array_equal(trainer.parameters["readout_weight"], before_weight)
+    assert not jnp.array_equal(trainer.parameters["readout_bias"], before_bias)
+
+
+def test_compacted_model_reset_uses_candidate_neuron_count():
+    structural_path = Path(__file__).with_name("example21_structural.py")
+    structural_spec = importlib.util.spec_from_file_location("example21_structural", structural_path)
+    structural = importlib.util.module_from_spec(structural_spec)
+    structural_spec.loader.exec_module(structural)
+    model = fixture.BrainCellArcModel()
+    topology = structural.topology_from_model(model)
+    alive = jnp.ones((topology.neuron_count,), dtype=bool)
+    alive = alive.at[:structural.mutation_count(topology.neuron_count)].set(False)
+    zeros = [jnp.zeros_like(value) for value in (
+        topology.readout, topology.readout, topology.input_value,
+        topology.input_value, topology.recurrent_value, topology.recurrent_value,
+    )]
+    compacted = structural.compact(
+        topology, alive, structural.StructuralAdam(*zeros)
+    )[0]
+    candidate = fixture.BrainCellArcModel(compacted)
+    candidate.reset_episode()
+    assert candidate.previous_spikes.value.shape == (compacted.neuron_count,)

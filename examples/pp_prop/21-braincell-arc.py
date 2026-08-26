@@ -10,6 +10,7 @@ import braintools
 import brainevent
 import jax
 import jax.numpy as jnp
+import optax
 
 
 N_INPUTS = 441
@@ -149,6 +150,36 @@ def grouped_adam_update(parameters, gradients, states=None, learning_rates=None)
     return updated, next_states
 
 
+def grouped_muon_update(parameters, gradients, states=None, learning_rates=None):
+    """Apply Muon with AdamW fallback at the declared group rates."""
+
+    learning_rates = learning_rates or LEARNING_RATES
+    states = states or {}
+    updated = dict(parameters)
+    next_states = dict(states)
+    for name, parameter in parameters.items():
+        group = next(
+            (candidate for candidate in learning_rates if candidate in name),
+            None,
+        )
+        gradient = gradients.get(name)
+        if gradient is None and group is not None:
+            gradient = gradients.get(group)
+        if group is None or gradient is None:
+            continue
+        rate = learning_rates[group]
+        transform = optax.contrib.muon(
+            learning_rate=rate,
+            weight_decay=0.1,
+            adam_learning_rate=rate,
+            adam_weight_decay=0.1,
+        )
+        state = states.get(name, transform.init(parameter))
+        updates, next_states[name] = transform.update(gradient, state, parameter)
+        updated[name] = optax.apply_updates(parameter, updates)
+    return updated, next_states
+
+
 def update_schedule(steps, proof=False):
     """Return the fixed update count for proof or ordinary training."""
 
@@ -252,7 +283,8 @@ class BrainCellArcModel(brainstate.nn.Module):
         """Run one event, preserving all state for a false advance."""
 
         return brainstate.transform.cond(
-            advance, lambda: self._advance(event), lambda: jnp.zeros((N_NEURONS,))
+            advance, lambda: self._advance(event),
+            lambda: jnp.zeros_like(self.previous_spikes.value),
         )
 
     def interval(self, event, advance=True, *, substeps=1):
@@ -267,7 +299,7 @@ class BrainCellArcModel(brainstate.nn.Module):
             )[-1]
 
         return brainstate.transform.cond(
-            advance, advancing, lambda: jnp.zeros((N_NEURONS,))
+            advance, advancing, lambda: jnp.zeros_like(self.previous_spikes.value)
         )
 
     def readout(self):
@@ -405,7 +437,7 @@ def decoder_boundary_intervention(model):
 
 
 class PPPropEpisodeTrainer:
-    """Accumulate one PP-Prop episode and apply one clipped Adam update."""
+    """Accumulate one PP-Prop episode and apply one clipped Muon update."""
 
     def __init__(self, learner, parameters, learning_rates=None):
         self.learner = learner
@@ -416,13 +448,14 @@ class PPPropEpisodeTrainer:
             if name not in self.parameters and state is not None:
                 self.parameters[name] = state.value
         self.learning_rates = learning_rates or LEARNING_RATES
-        zeros = jax.tree_util.tree_map(jnp.zeros_like, parameters)
+        zeros = jax.tree_util.tree_map(jnp.zeros_like, self.parameters)
         self.adam = AdamState(zeros, zeros)
         self.updates = 0
         self.adam_groups = {
             name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
-            for name, value in parameters.items()
-        } if isinstance(parameters, dict) else None
+            for name, value in self.parameters.items()
+        } if isinstance(self.parameters, dict) else None
+        self.muon_groups = {}
 
     def reset_episode(self, model):
         """Reset model and eligibility state before the next query episode."""
@@ -472,7 +505,7 @@ class PPPropEpisodeTrainer:
             moments = tuple(
                 (state.first, state.second) for state in self.adam_groups.values()
             )
-        leaves = jax.tree_util.tree_leaves((self.parameters, moments))
+        leaves = jax.tree_util.tree_leaves((self.parameters, moments, self.muon_groups))
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
     def update_episode(
@@ -500,10 +533,9 @@ class PPPropEpisodeTrainer:
         gradients, norm = clip_gradient(gradients)
         gradients = self._group_gradients(gradients)
         if self.adam_groups is not None:
-            self.parameters, self.adam_groups = grouped_adam_update(
-                self.parameters, gradients, self.adam_groups, self.learning_rates
+            self.parameters, self.muon_groups = grouped_muon_update(
+                self.parameters, gradients, self.muon_groups, self.learning_rates
             )
-            self.adam = self.adam_groups.get("input", self.adam)
             self._sync_compiled_parameters()
         else:
             rate = self.learning_rates.get("input", 0.001)
