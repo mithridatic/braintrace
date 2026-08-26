@@ -112,9 +112,9 @@ def train_bptt(n_epochs=5, num_batch=512, num_hidden=100, n_batches_per_epoch=50
 
     @brainstate.transform.jit
     def f_train(inputs, targets):
-        grads, l = brainstate.transform.grad(f_loss, weights, return_value=True)(inputs, targets)
+        grads, loss = brainstate.transform.grad(f_loss, weights, return_value=True)(inputs, targets)
         opt.update(grads)
-        return l
+        return loss
 
     losses = []
     for i_epoch in range(n_epochs):

@@ -856,7 +856,7 @@ class TestHiddenGroup_diagonal_jacobian:
         assert len(groups) >= 1
         mixing = {'etp_mv', 'etp_mm', 'etp_conv'}
         assert any(
-            (prims := {e.primitive.name for e in g.transition_jaxpr.eqns}) & mixing
+            {e.primitive.name for e in g.transition_jaxpr.eqns} & mixing
             for g in groups
         ), cls.__name__
 

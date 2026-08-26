@@ -995,11 +995,11 @@ class TestSolveBatchFold:
     not bit-identical)."""
 
     def test_fast_solve_contract_fold_equals_unfold_sum(self):
-        B, I, O, S = 3, 2, 4, 1
-        diag_like = brainstate.random.randn(B, O, S)
+        batch_size, input_size, output_size, state_size = 3, 2, 4, 1
+        diag_like = brainstate.random.randn(batch_size, output_size, state_size)
         etrace = {
-            'weight': brainstate.random.randn(B, I, O, S),
-            'bias': brainstate.random.randn(B, O, S),
+            'weight': brainstate.random.randn(batch_size, input_size, output_size, state_size),
+            'bias': brainstate.random.randn(batch_size, output_size, state_size),
         }
         # reference: current per-batch contraction, then explicit batch sum
         solve = get_fast_path_rules(etp_mm_p).solve
@@ -1008,8 +1008,8 @@ class TestSolveBatchFold:
         ref_b = ref['bias'].sum(axis=0)     # (O,)
         # new: fold the batch axis inside the einsum
         folded = solve(diag_like, etrace, fold_batch=True)
-        assert folded['weight'].shape == (I, O)
-        assert folded['bias'].shape == (O,)
+        assert folded['weight'].shape == (input_size, output_size)
+        assert folded['bias'].shape == (output_size,)
         npt.assert_allclose(folded['weight'], ref_w, atol=1e-6)
         npt.assert_allclose(folded['bias'], ref_b, atol=1e-6)
 

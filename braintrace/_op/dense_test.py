@@ -577,8 +577,8 @@ class TestSeparateParamStateBias:
             f'Expected two gradient leaves with shapes [(4,), (4, 4)], got {shapes}. Return the expected value for the reported field.'
         )
 
-        w_leaf = next(l for l in leaves if l.shape == (4, 4))
-        b_leaf = next(l for l in leaves if l.shape == (4,))
+        w_leaf = next(leaf for leaf in leaves if leaf.shape == (4, 4))
+        b_leaf = next(leaf for leaf in leaves if leaf.shape == (4,))
 
         npt.assert_allclose(w_leaf, dW_bptt, atol=1e-5,
                             err_msg='D-RTRL dW does not match BPTT')
@@ -912,14 +912,14 @@ class TestDenseFastChunk:
     def test_mm_matches_per_step_roll(self, num_state):
         suffix_products, fast_path, _, _ = self._imports()
         brainstate.random.seed(0)
-        T, B, I, O, S = 13, 4, 5, 6, num_state
-        x = brainstate.random.normal(size=(T, B, I))
-        df = brainstate.random.normal(size=(T, B, O, S))
-        diag = brainstate.random.uniform(0.3, 1.0, (T, B, O, S, S))
+        T, B, input_size, output_size, S = 13, 4, 5, 6, num_state
+        x = brainstate.random.normal(size=(T, B, input_size))
+        df = brainstate.random.normal(size=(T, B, output_size, S))
+        diag = brainstate.random.uniform(0.3, 1.0, (T, B, output_size, S, S))
         diag = diag.at[3].set(0.0)  # Zero-decay step
         init = {
-            'weight': brainstate.random.normal(size=(B, I, O, S)),
-            'bias': brainstate.random.normal(size=(B, O, S)),
+            'weight': brainstate.random.normal(size=(B, input_size, output_size, S)),
+            'bias': brainstate.random.normal(size=(B, output_size, S)),
         }
         ref = self._roll_reference(x, df, diag, init, S, has_bias=True)
         p_seq, m_full = suffix_products(diag, S)
@@ -932,11 +932,11 @@ class TestDenseFastChunk:
     def test_mv_matches_per_step_roll(self, num_state):
         suffix_products, fast_path, _, _ = self._imports()
         brainstate.random.seed(1)
-        T, I, O, S = 9, 5, 6, num_state
-        x = brainstate.random.normal(size=(T, I))
-        df = brainstate.random.normal(size=(T, O, S))
-        diag = brainstate.random.uniform(0.3, 1.0, (T, O, S, S))
-        init = {'weight': brainstate.random.normal(size=(I, O, S))}
+        T, input_size, output_size, S = 9, 5, 6, num_state
+        x = brainstate.random.normal(size=(T, input_size))
+        df = brainstate.random.normal(size=(T, output_size, S))
+        diag = brainstate.random.uniform(0.3, 1.0, (T, output_size, S, S))
+        init = {'weight': brainstate.random.normal(size=(input_size, output_size, S))}
         ref = self._roll_reference(x, df, diag, init, S, has_bias=False)
         p_seq, m_full = suffix_products(diag, S)
         got = fast_path.chunk(x, df, p_seq, m_full, init, S)
@@ -945,11 +945,11 @@ class TestDenseFastChunk:
     def test_t1_equals_single_step(self):
         suffix_products, fast_path, _, _ = self._imports()
         brainstate.random.seed(2)
-        T, B, I, O, S = 1, 2, 3, 4, 1
-        x = brainstate.random.normal(size=(T, B, I))
-        df = brainstate.random.normal(size=(T, B, O, S))
-        diag = brainstate.random.uniform(0.3, 1.0, (T, B, O, S, S))
-        init = {'weight': brainstate.random.normal(size=(B, I, O, S))}
+        T, B, input_size, output_size, S = 1, 2, 3, 4, 1
+        x = brainstate.random.normal(size=(T, B, input_size))
+        df = brainstate.random.normal(size=(T, B, output_size, S))
+        diag = brainstate.random.uniform(0.3, 1.0, (T, B, output_size, S, S))
+        init = {'weight': brainstate.random.normal(size=(B, input_size, output_size, S))}
         ref = self._roll_reference(x, df, diag, init, S, has_bias=False)
         p_seq, m_full = suffix_products(diag, S)
         got = fast_path.chunk(x, df, p_seq, m_full, init, S)

@@ -958,11 +958,14 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
             for s in range(L):
                 for k2 in range(out_ch):
                     for c in range(in_ch):
-                        for u in range(kw):
-                            expected = float(manual_patch(s, u, c)) if k == k2 else 0.0
+                        for kernel_index in range(kw):
+                            expected = float(manual_patch(s, kernel_index, c)) if k == k2 else 0.0
                             np.testing.assert_allclose(
-                                J[k, s, k2, c, u], expected, atol=1e-6,
-                                err_msg=f'Jacobian mismatch at k={k},s={s},k2={k2},c={c},u={u}',
+                                J[k, s, k2, c, kernel_index], expected, atol=1e-6,
+                                err_msg=(
+                                    f'Jacobian mismatch at k={k},s={s},k2={k2},c={c},'
+                                    f'u={kernel_index}'
+                                ),
                             )
 
         g = brainstate.random.randn(out_ch, L)  # hidden_dim, (k, s) layout

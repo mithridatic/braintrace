@@ -63,8 +63,10 @@ def test_tanh_rnn_factory_builds_runnable_model():
 
 
 def test_tanh_rnn_factory_is_deterministic():
-    m1 = tanh_rnn(seed=0).factory(); brainstate.nn.init_all_states(m1, batch_size=1)
-    m2 = tanh_rnn(seed=0).factory(); brainstate.nn.init_all_states(m2, batch_size=1)
+    m1 = tanh_rnn(seed=0).factory()
+    brainstate.nn.init_all_states(m1, batch_size=1)
+    m2 = tanh_rnn(seed=0).factory()
+    brainstate.nn.init_all_states(m2, batch_size=1)
     w1 = m1.states(brainstate.ParamState)[('w',)].value
     w2 = m2.states(brainstate.ParamState)[('w',)].value
     assert bool(jnp.allclose(w1, w2))
