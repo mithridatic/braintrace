@@ -51,10 +51,10 @@
       "candidate_neurons": 2048,
       "candidate_recurrent_items": 16384,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 39.30014340003254,
+      "elapsed_seconds": 37.69924649997847,
       "eligibility_reset": true,
       "environment": {
-        "pid": 20712,
+        "pid": 31488,
         "platform": "Windows-11-10.0.26200-SP0",
         "python": "3.14.6",
         "seeds": [
@@ -62,6 +62,42 @@
           22,
           23
         ]
+      },
+      "mask_compaction": {
+        "compacted_neurons": 1945,
+        "compacted_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "compacted_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "masked_neurons": 2048,
+        "masked_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "masked_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "prediction_bytes_identical": true,
+        "strict_identical": true
       },
       "max_resident_tile_pairs": 65536,
       "model": "BrainCellArcModel",
@@ -20606,10 +20642,10 @@
       "candidate_neurons": 2048,
       "candidate_recurrent_items": 16384,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 41.27090619999217,
+      "elapsed_seconds": 37.570234399987385,
       "eligibility_reset": true,
       "environment": {
-        "pid": 23948,
+        "pid": 50996,
         "platform": "Windows-11-10.0.26200-SP0",
         "python": "3.14.6",
         "seeds": [
@@ -20617,6 +20653,42 @@
           22,
           23
         ]
+      },
+      "mask_compaction": {
+        "compacted_neurons": 1945,
+        "compacted_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "compacted_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "masked_neurons": 2048,
+        "masked_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "masked_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "prediction_bytes_identical": true,
+        "strict_identical": true
       },
       "max_resident_tile_pairs": 65536,
       "model": "BrainCellArcModel",
@@ -41161,10 +41233,10 @@
       "candidate_neurons": 2151,
       "candidate_recurrent_items": 18032,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 57.71852369996486,
+      "elapsed_seconds": 124.82760560000315,
       "eligibility_reset": true,
       "environment": {
-        "pid": 44696,
+        "pid": 6992,
         "platform": "Windows-11-10.0.26200-SP0",
         "python": "3.14.6",
         "seeds": [
@@ -41172,6 +41244,42 @@
           22,
           23
         ]
+      },
+      "mask_compaction": {
+        "compacted_neurons": 1945,
+        "compacted_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "compacted_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "masked_neurons": 2048,
+        "masked_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "masked_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "prediction_bytes_identical": true,
+        "strict_identical": true
       },
       "max_resident_tile_pairs": 65536,
       "model": "BrainCellArcModel",
@@ -61716,10 +61824,10 @@
       "candidate_neurons": 2048,
       "candidate_recurrent_items": 17204,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 59.73001360002672,
+      "elapsed_seconds": 119.37692200002493,
       "eligibility_reset": true,
       "environment": {
-        "pid": 43960,
+        "pid": 36372,
         "platform": "Windows-11-10.0.26200-SP0",
         "python": "3.14.6",
         "seeds": [
@@ -61727,6 +61835,42 @@
           22,
           23
         ]
+      },
+      "mask_compaction": {
+        "compacted_neurons": 1945,
+        "compacted_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "compacted_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "masked_neurons": 2048,
+        "masked_prediction_sha256": "c7ff3f4988ec8e1d6e9a7561829f30f4f70c787d0d22a84228ca3963c287fc5a",
+        "masked_strict": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "prediction_bytes_identical": true,
+        "strict_identical": true
       },
       "max_resident_tile_pairs": 65536,
       "model": "BrainCellArcModel",
@@ -82244,7 +82388,7 @@
   },
   "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
   "environment": {
-    "pid": 2520,
+    "pid": 27720,
     "platform": "Windows-11-10.0.26200-SP0",
     "python": "3.14.6",
     "seeds": [
@@ -82256,8 +82400,8 @@
   "focused_tests": {
     "coverage_percent": 91,
     "failed": 0,
-    "passed": 40
+    "passed": 80
   },
-  "implementation_commit": "e80cc9e17212dd1dedbf184dc355c747fc5956bd",
+  "implementation_commit": "7ed28263c9e89a8a2aaef62365e18d4530873aac",
   "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b"
 }

@@ -137,6 +137,83 @@ def test_neuron_mask_and_compaction_have_prediction_byte_identity():
     )
 
 
+def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
+    topology = structural.SparseTopology(
+        input_source=np.array([0, 1]), input_target=np.array([0, 1]),
+        input_value=np.array([1.0, 2.0]), recurrent_source=np.array([0, 1]),
+        recurrent_target=np.array([1, 0]), recurrent_value=np.array([3.0, 4.0]),
+        readout=np.array([[1.0], [2.0]]), dale=np.array([1, -1]),
+        mechanisms=((), ()),
+    )
+    adam = structural.StructuralAdam(
+        np.zeros((2, 1)), np.zeros((2, 1)), np.zeros(2), np.zeros(2),
+        np.zeros(2), np.zeros(2), 0,
+    )
+
+    class Model:
+        def __init__(self, candidate):
+            self.candidate = candidate
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return self.candidate.readout
+
+    task = SimpleNamespace(targets=[np.array([[1]], dtype=np.uint8)])
+    module = SimpleNamespace(
+        TRAINING_TASK_IDS=("train",), VALIDATION_TASK_IDS=("valid",),
+        load_task=lambda *_args: task,
+        encode_episode=lambda *_args: (np.zeros((1, 1)), np.ones(1, dtype=bool)),
+        run_event_sequence=lambda *_args: None,
+        decode_prediction=lambda value: np.asarray([value.sum()], dtype=np.uint8),
+        strict_task_pass_at_1=lambda predictions, targets: True,
+    )
+    monkeypatch.setattr(
+        structural, "_rebuild_real_candidate",
+        lambda _module, candidate, _learner: (Model(candidate), object()),
+    )
+    result = structural._real_mask_compaction_identity(
+        module, topology, adam, "data"
+    )
+    assert result["prediction_bytes_identical"]
+    assert result["strict_identical"]
+    assert result["masked_neurons"] == 2
+    assert result["compacted_neurons"] == 1
+
+
+def test_real_pp_prop_update_builds_episode_driver():
+    import jax.numpy as jnp
+
+    class Learner:
+        def etrace_evolve(self, events, return_outputs):
+            return (events,)
+
+    class Model:
+        input_weight = SimpleNamespace(value=jnp.ones(1))
+        recurrent_weight = SimpleNamespace(value=jnp.ones(1))
+
+        def reset_episode(self, learner):
+            self.reset = learner
+
+    class Trainer:
+        def __init__(self, learner, parameters):
+            self.learner = learner
+            self.parameters = parameters
+
+        def update_episode(self, events, step_fn, loss_mask):
+            return events.shape, loss_mask.shape, step_fn(events[0])
+
+    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    update = structural._real_pp_prop_update(
+        module, Model(), Learner(), {"events": [[1.0]], "advances": [True]}
+    )
+    shape, mask_shape, value = update(0)
+    assert shape == (1, 1)
+    assert mask_shape == (1,)
+    assert value.shape == ()
+
+
 def test_recurrent_pruning_uses_exact_ceiling_and_preserves_other_arrays():
     topology = structural.SparseTopology(
         input_source=np.array([0]), input_target=np.array([0]), input_value=np.array([1.0]),
@@ -606,6 +683,18 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
     )
     monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda _: None)
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        structural,
+        "_real_mask_compaction_identity",
+        lambda *args, **kwargs: {
+            "prediction_bytes_identical": True,
+            "strict_identical": True,
+            "masked_strict": [False],
+            "compacted_strict": [False],
+        },
+        raising=False,
+    )
     result = structural.measure_real_arm("neuron-add", data_root="data")
     assert result["candidate_neurons"] == 3
     assert result["after_strict"] == [True]
+    assert result["mask_compaction"]["prediction_bytes_identical"] is True
