@@ -17,11 +17,33 @@ from examples.pp_prop import latent_workspace_ablation_gate_test as gate_test
 from examples.pp_prop import latent_workspace_depth_gate as gate_b
 
 
+_EVENTS: Counter[str] = Counter()
+
+
+def _compiler_events() -> dict[str, int]:
+    return {
+        name: count
+        for name, count in sorted(_EVENTS.items())
+        if "compil" in name or "cache" in name
+    }
+
+
 def _timed(label: str, function: Callable[[], Any]) -> tuple[Any, dict[str, Any]]:
+    before = _compiler_events()
     started = time.perf_counter()
     result = function()
     result = jax.device_get(jax.block_until_ready(result))
-    return result, {"phase": label, "seconds": time.perf_counter() - started}
+    after = _compiler_events()
+    event_delta = {
+        name: after.get(name, 0) - before.get(name, 0)
+        for name in after.keys() | before.keys()
+        if after.get(name, 0) != before.get(name, 0)
+    }
+    return result, {
+        "phase": label,
+        "seconds": time.perf_counter() - started,
+        "compiler_event_delta": dict(sorted(event_delta.items())),
+    }
 
 
 def _train_and_evaluate(
@@ -152,27 +174,20 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("gate", choices=("a", "b"))
     args = parser.parse_args()
-    events: Counter[str] = Counter()
-
     def count_event(name: str, **metadata: Any) -> None:
         del metadata
-        events[name] += 1
+        _EVENTS[name] += 1
 
     jax.monitoring.register_event_listener(count_event)
     started = time.perf_counter()
     timings = _profile_gate_a() if args.gate == "a" else _profile_gate_b()
-    compile_events = {
-        name: count
-        for name, count in sorted(events.items())
-        if "compil" in name or "cache" in name
-    }
     print(
         json.dumps(
             {
                 "gate": args.gate,
                 "total_seconds": time.perf_counter() - started,
                 "timings": timings,
-                "compile_events": compile_events,
+                "compile_events": _compiler_events(),
             }
         )
     )

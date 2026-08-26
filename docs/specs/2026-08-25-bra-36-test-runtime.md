@@ -72,6 +72,38 @@ to attribute compiler requests/misses to individual train and evaluation
 boundaries, then propose only a unit whose redundant work can actually be
 removed. Product and scientific test behavior remain unchanged.
 
+## Revision 4: per-boundary compiler-event attribution
+
+The profiling harness now snapshots JAX's public compiler/cache event counter at
+every synchronized phase boundary. One fresh Gate A and Gate B diagnostic run
+on 2026-08-25 produced the following attribution:
+
+| Boundary | Gate A requests / seconds | Gate B requests / seconds |
+| --- | ---: | ---: |
+| Data | 10 / 2.62 | 8 / 1.95 |
+| All model construction | 35 / 12.02 | 35 / 12.18 |
+| All trainer construction | 15 / 1.12 | 15 / 1.55 |
+| First (`full`) cold train | 1 / 4.95 | 1 / 10.56 |
+| First (`full`) cold evaluation | 22 / 3.35 | 22 / 4.44 |
+| Each later cold train | 1 / 3.21 | 1 / 3.06--4.76 |
+| Each later cold evaluation | 2 / 1.51 | 2 / 2.85--3.43 |
+
+The equal 35-request model-construction and 22-request first-evaluation counts
+for a two-arm and five-arm fixture show that JAX already reuses those compiled
+units within a process. This explains why evaluator-object reuse did not reduce
+runtime: it changed Python object lifetime but did not eliminate the dominant
+compiler requests. The public event still reports requests rather than proven
+misses, so this is diagnostic attribution, not a speedup claim.
+
+No safe removable unit is demonstrated in the Gate A/Gate B fixture after this
+attribution. Reattempting evaluator reuse, merging scientific arms, weakening
+fresh state, or moving the same cold work outside the timed boundary is
+rejected. The next proposed scope is to profile the broader suite for repeated
+same-shape construction across independent tests and select a new target only
+where a fresh-process benchmark proves duplicated work. This scope requires a
+new approval because the current approval is bounded to the Gate A/Gate B
+investigation.
+
 ## Objective
 
 Reduce developer and CI feedback time without changing algorithm semantics,
