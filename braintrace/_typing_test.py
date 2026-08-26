@@ -293,3 +293,13 @@ def test_size_union_is_what_as_size_tuple_documents():
         np.integer,
         typing.Sequence[np.integer],
     })
+
+
+def test_pytree_uses_the_safe_arbitrary_value_boundary():
+    class CustomNode:
+        pass
+
+    values = [object(), CustomNode(), [1, {"leaf": CustomNode()}]]
+
+    assert _typing.PyTree is object
+    assert all(isinstance(value, _typing.PyTree) for value in values)

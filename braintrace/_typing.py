@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Any, TypeAlias
+from typing import TypeAlias
 
 import brainstate
 import jax
@@ -31,7 +31,7 @@ DType: TypeAlias = brainstate.typing.DType
 DTypeLike: TypeAlias = brainstate.typing.DTypeLike
 
 # --- Types --- #
-PyTree: TypeAlias = Any
+PyTree: TypeAlias = object
 StateID: TypeAlias = int
 WeightID: TypeAlias = int
 Size: TypeAlias = brainstate.typing.Size

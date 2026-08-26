@@ -43,6 +43,13 @@ Replace deprecated `typing` container aliases and `Union` with built-in generic
 syntax. Preserve alias names, accepted values, and runtime behavior. Keep the
 PyTree `Any` boundary until a later unit can define its required recursive type.
 
+Replace the PyTree `Any` boundary with `object`. A closed recursive container
+union is not valid because JAX permits registered custom PyTree node classes and
+arbitrary leaf types. The `object` boundary preserves those values and requires
+callers to narrow a value before they use type-specific operations. Add a test
+that fixes this boundary and includes built-in containers, an arbitrary leaf,
+and a custom node value.
+
 ## Type-cleanup sequence
 
 Use the project development environment when running basedpyright so installed
