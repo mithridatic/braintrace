@@ -1,5 +1,17 @@
 # Example 21 bounded structural adaptation
 
+## Optimizer clarification (2026-08-26)
+
+The board selected Optax Muon for the model-integrated structural arms. The
+active environment provides it as `optax.contrib.muon` through the declared
+`optax>=0.2.8` dependency; the unrelated PyPI package named `muon` is not used.
+Rank-two parameters use Muon and non-matrix parameters use Muon's built-in
+AdamW fallback. The existing input, recurrent, and readout learning rates are
+preserved, and both paths use decoupled weight decay 0.1. Topology rebuilds
+remap the optimizer leaves that correspond to surviving items and initialize
+new item state to zero. References below to Adam remapping mean this optimizer
+state remapping contract and are superseded by Muon for execution.
+
 ## Baseline and success metrics
 
 The baseline is `BrainCellArcModel`: 2,048 Hodgkin-Huxley neurons, 441 sparse
@@ -90,6 +102,8 @@ mass per task and sparse parameter item. Spike evidence is accumulated from
 voltage feature and readout rows. Physical compaction rebuilds model and learner
 objects, remaps surviving Adam moments, and calls `reset_episode(learner)` so no
 eligibility state crosses a topology change.
+Compiled advance and padding branches must derive their output width from the
+rebuilt model state, not from the 2,048-neuron baseline constant.
 
 Mask-versus-compaction identity is evaluated on the same episode snapshot. The
 masked parent zeros removed neurons and incident edges. The compact child uses
