@@ -6,12 +6,26 @@ import importlib.util
 import json
 import os
 import platform
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from math import ceil
 
 import numpy as np
+
+
+def _git_commit():
+    """Return the current implementation revision for measured artifacts."""
+
+    try:
+        result = subprocess.run(
+            ("git", "rev-parse", "HEAD"), capture_output=True, text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return result.stdout.strip() or "unknown"
 
 
 def _load_example21_model():
@@ -898,7 +912,7 @@ def main(argv=None):
         evidence = {
             "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
             "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
-            "implementation_commit": "working-tree",
+            "implementation_commit": _git_commit(),
             "focused_tests": {"passed": 40, "failed": 0, "coverage_percent": 91},
             "baseline": json.loads(open("docs/evidence/gate5/example21-structural-arm.json", encoding="utf-8").read())["baseline"],
             "arms": arms,

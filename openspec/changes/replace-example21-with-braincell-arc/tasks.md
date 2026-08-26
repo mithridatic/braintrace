@@ -94,17 +94,18 @@
 
 ## 6. Backend, time, and temporary proof gates
 
-- [ ] 6.1 Implement separate CPU and GPU backend-probe processes, synchronized
-  median timing, finite-state validation, literal lower-median selection, and
-  frozen backend selection; use one warmed plus three timed full 705-event
-  PP-Prop gradient calls for the first `d631b094` query, with no optimizer
-  update or file write; verify prediction-byte stability, one concise timing
-  line, and no timing field in `result.json`.
-- [ ] 6.2 Add the warmed decoder benchmark from executed request states; verify
+- [x] 6.1 Implement separate CPU and GPU backend-probe processes, synchronized
+  median timing, finite-state and finite-gradient validation, literal
+  lower-median selection, exact-tie CPU selection, and frozen backend
+  selection; use one warmed plus three timed full 705-event PP-Prop gradient
+  calls for the first `d631b094` query, with no optimizer update or file write;
+  verify prediction-byte stability, one concise timing line, and no timing
+  field in `result.json`.
+- [x] 6.2 Add the warmed decoder benchmark from executed request states; verify
   five direct readout and grid-construction calls for each fixed-validation
   query at or below 100 ms, record every call, and record neural request and
   full 705-event context-to-grid times separately.
-- [ ] 6.3 Run the real-data temporary proof on `d631b094` and `46f33fce`;
+- [x] 6.3 Run the real-data temporary proof on `d631b094` and `46f33fce`;
   verify training-task-only updates, unchanged model state across validation,
   all required mechanism observations, a changed recurrent weight, a changed
   direct prediction, direct pretraining and post-training loss components,
@@ -112,35 +113,37 @@
   potassium-gate-only, spikes-only, all-state, and null interventions, direct
   strict data, and an end-to-end time at or below 180 seconds.
 - [ ] 6.4 Run the complete co-located Example 21 test module; verify more than
-  90% meaningful coverage and a total time at or below 60 seconds.
+  90% meaningful coverage and a total time at or below 60 seconds. Verify that
+  a proof, experiment, decoder call, or pytest selection that reaches its
+  declared limit fails its speed gate and cannot report acceptance.
 
-## 7. Example 20 structural adaptation
+## 7. Example 21 structural adaptation adapted from Example 20
 
-- [ ] 7.1 Implement task-row normalization, neuron contribution, recurrent
+- [x] 7.1 Implement task-row normalization, neuron contribution, recurrent
   connection contribution, pre-clip `etrace_grad` gradient mass, stable ranking,
   task owners, and structural twins; verify hand-calculated fixtures, direct
   voltage-readout effect, mean-spike relay and transmission, maximum task
   protection, unowned zero scores, shared task ties, stable item ties, and the
   corrected CSR row-as-source transmission and outgoing strength.
-- [ ] 7.2 Implement one five-percent neuron-pruning mask and one five-percent
+- [x] 7.2 Implement one five-percent neuron-pruning mask and one five-percent
   recurrent-connection-pruning mask; verify exact ceiling counts, zero-strict
   pruning block, incident connection removal, no optimizer update before the
   causal gate, and rejection of every strict regression.
-- [ ] 7.3 Implement physical compaction and optimizer remapping; verify direct
+- [x] 7.3 Implement physical compaction and optimizer remapping; verify direct
   count changes, biological-connection ceiling, preserved surviving Adam data,
   reset eligibility, one intentional recompilation, and prediction bytes and
   strict Booleans identical to the accepted mask.
-- [ ] 7.4 Implement five-percent structural-twin neuron addition; verify donor
+- [x] 7.4 Implement five-percent structural-twin neuron addition; verify donor
   selection from measured task evidence, copied input and incoming wiring,
   split outgoing and readout values, inherited owner and Dale label, zero new
   moments, connected new neurons, and clear failure when valid donors or budget
   are insufficient.
-- [ ] 7.5 Implement five-percent measured recurrent-connection addition; verify
+- [x] 7.5 Implement five-percent measured recurrent-connection addition; verify
   absent non-self pairs, mean-spike source and gradient-mass target ranking,
   stable 256 by 256 tiles, at most 65,536 resident pairs, global top-set and
   stop-bound correctness, no dense neuron-pair array, typed and untyped initial
   values, zero new moments, no random regrowth, and exact addition count.
-- [ ] 7.6 Implement one-candidate-per-arm structural execution and the fixed 64
+- [x] 7.6 Implement one-candidate-per-arm structural execution and the fixed 64
   PP-Prop updates for additions; verify promotion only for at least one direct
   false-to-true strict change with no true-to-false change and a complete arm
   time at or below 300 seconds.
@@ -209,4 +212,6 @@
 - [ ] 11.3 Review every new public callable and user-facing message; verify
   NumPy-style docstrings, ASD-STE100 Simplified Technical English, sentence-case
   concise errors with corrective actions, descriptive names, no unnecessary
-  code comments, and no unrelated worktree changes.
+  code comments, no unrelated worktree changes, one active Example 21
+  implementation with its co-located test, and demonstrated non-ARC use for
+  every shared helper extracted from the Example 21 module.
