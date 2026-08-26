@@ -451,6 +451,47 @@ def preclip_gradient_mass(learner, events, step_fn, task_index, task_count, **kw
     return mass, losses
 
 
+def collect_model_evidence(
+    model,
+    learner,
+    events,
+    step_fn,
+    readout_effect,
+    spikes_by_task,
+    *,
+    task_index=0,
+    task_count=None,
+    **kwargs,
+):
+    """Collect structural scores at the real model and pre-clip boundary."""
+    readout_effect = np.asarray(readout_effect, dtype=float)
+    spikes_by_task = np.asarray(spikes_by_task, dtype=float)
+    if task_count is None:
+        task_count = readout_effect.shape[0]
+    mass, losses = preclip_gradient_mass(
+        learner, events, step_fn, task_index, task_count, **kwargs
+    )
+    recurrent_name = next(
+        (key for key in mass if key.endswith("recurrent_weight")), None
+    )
+    if recurrent_name is None:
+        raise ValueError("pre-clip mass has no recurrent weight")
+    topology = topology_from_model(model)
+    gradient_mass = task_gradient_mass(mass, recurrent_name, task_count)
+    if spikes_by_task.shape != (task_count, topology.neuron_count):
+        raise ValueError("spikes must be task-by-neuron")
+    result = structural_evidence(
+        topology, readout_effect, spikes_by_task, gradient_mass
+    )
+    result["gradient_mass"] = gradient_mass
+    result["preclip_loss"] = np.asarray(losses).tolist()
+    result["preclip_exceeds_clip"] = bool(
+        np.max(gradient_mass, initial=0.0) > 1.0
+    )
+    result["model_neurons"] = topology.neuron_count
+    return result
+
+
 def run_addition_updates(transform, update, *, updates=64):
     """Run exactly 64 addition updates through a BrainState loop primitive."""
 
@@ -510,6 +551,117 @@ def promote_arm(before, after, elapsed_seconds, arm, updates):
         return False
     before = tuple(before)
     after = tuple(after)
-    return any(not old and new for old, new in zip(before, after)) and not any(
-        old and not new for old, new in zip(before, after)
-    ) if arm == "addition" else not any(old and not new for old, new in zip(before, after))
+    gained = any(not old and new for old, new in zip(before, after))
+    regressed = any(old and not new for old, new in zip(before, after))
+    return gained and not regressed
+
+
+def run_integrated_arm(
+    arm,
+    model_factory,
+    learner_factory,
+    evaluate,
+    rebuild,
+    *,
+    transform=None,
+    update=None,
+    before_strict=None,
+    evidence=None,
+    clock=time.perf_counter,
+):
+    """Run one structural arm against a model and rebuilt learner.
+
+    Parameters
+    ----------
+    arm : str
+        One structural arm name.
+    model_factory : callable
+        Builds a fresh Example 21 model.
+    learner_factory : callable
+        Builds a learner for a model.
+    evaluate : callable
+        Returns the fixed-task strict Boolean vector for a model and learner.
+    rebuild : callable
+        Builds a candidate model and learner from a topology and remapped Adam state.
+    transform, update : object and callable, optional
+        BrainState transform module and one compiled addition update.
+    before_strict : sequence of bool, optional
+        Baseline strict vector. It is measured when omitted.
+    evidence : dict, optional
+        Pre-clip and task evidence to include in the result.
+
+    Returns
+    -------
+    dict
+        Direct arm evidence, including model dimensions and rebuilt-state status.
+    """
+    model = model_factory()
+    learner = learner_factory(model)
+    topology = topology_from_model(model)
+    adam = StructuralAdam(
+        np.zeros_like(np.asarray(model.readout_weight.value)),
+        np.zeros_like(np.asarray(model.readout_weight.value)),
+        np.zeros_like(np.asarray(model.input_weight.value)),
+        np.zeros_like(np.asarray(model.input_weight.value)),
+        np.zeros_like(np.asarray(model.recurrent_weight.value)),
+        np.zeros_like(np.asarray(model.recurrent_weight.value)),
+    )
+    if before_strict is None:
+        before_strict = tuple(bool(value) for value in evaluate(model, learner))
+    scores = (evidence or {}).get("neuron_scores", np.zeros(topology.neuron_count))
+    connection_scores = (evidence or {}).get(
+        "connection_scores", np.zeros(len(topology.recurrent_value))
+    )
+    validation = (evidence or {}).get("validation_strict", before_strict)
+    if arm == "neuron-prune":
+        alive = prune_neurons(topology, scores, validation)
+        candidate, candidate_adam, reset = compact(topology, alive, adam)
+        count = int(np.sum(~alive))
+    elif arm == "connection-prune":
+        candidate, keep = prune_recurrent(topology, connection_scores, validation)
+        candidate_adam = StructuralAdam(
+            adam.neuron_first, adam.neuron_second, adam.input_first,
+            adam.input_second, adam.recurrent_first[keep],
+            adam.recurrent_second[keep], adam.step,
+        )
+        reset = True
+        count = int(np.sum(~keep))
+    elif arm == "neuron-add":
+        candidate, donors = add_twin_neurons(topology, scores)
+        candidate_adam = grow_adam_for_twins(adam, topology, candidate)
+        reset = True
+        count = len(donors)
+    elif arm == "connection-add":
+        pairs = select_connection_additions(
+            topology.neuron_count,
+            set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist())),
+            scores,
+            (evidence or {}).get("target_scores", scores),
+            mutation_count(len(topology.recurrent_value)),
+        )
+        candidate = add_recurrent_connections(topology, pairs)
+        candidate_adam = grow_adam_for_connections(adam, len(pairs))
+        reset = True
+        count = len(pairs)
+    else:
+        raise ValueError("exactly one recognized arm is required")
+    candidate_model, candidate_learner = rebuild(candidate, candidate_adam)
+    candidate_model.reset_episode(candidate_learner)
+    result = execute_one_arm(
+        arm, before_strict, lambda: (candidate_model, count),
+        lambda value: evaluate(value, candidate_learner),
+        updates=64 if arm.endswith("add") else 0,
+        transform=transform, update=update, clock=clock,
+    )
+    result.update({
+        "model": type(model).__name__,
+        "baseline_neurons": int(topology.neuron_count),
+        "candidate_neurons": int(candidate.neuron_count),
+        "baseline_recurrent_items": int(len(topology.recurrent_value)),
+        "candidate_recurrent_items": int(len(candidate.recurrent_value)),
+        "adam_remapped": True,
+        "eligibility_reset": bool(reset),
+        "real_model": True,
+        "evidence": evidence or {},
+    })
+    return result
