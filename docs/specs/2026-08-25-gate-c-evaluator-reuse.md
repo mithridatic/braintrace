@@ -2,7 +2,8 @@
 
 ## Status
 
-Proposed implementation specification for `paperclip/bra-36-speedups`.
+Rejected after matched measurement on `paperclip/bra-36-speedups`; no
+implementation retained.
 
 ## Objective
 
@@ -105,3 +106,30 @@ Keeping three evaluator programs alive instead of compiling five may modestly
 increase the lifetime of evaluation state while reducing executable count;
 peak RSS must be observed during the focused benchmark. No scientific claim is
 made from this performance work.
+
+## Measurement result
+
+The candidate reused one evaluator for `full`, `terminal_only`, and
+`frozen_write`, retained distinct evaluators for `query_only` and `legacy`, and
+passed byte-exact reusable-versus-one-shot and compatibility regressions. The
+candidate was then rejected because matched fresh-process timing did not show a
+material improvement.
+
+Command (baseline and candidate):
+`python -m pytest examples/pp_prop/latent_workspace_ablation_gate_test.py -k
+"reduced_gate_b_runs_all_five_real_pp_prop_arms" -q --durations=5`. Candidate
+runs also selected the two new lifecycle regressions; setup duration below is
+the shared reduced Gate B fixture and excludes their 5.68--5.95 s one-shot
+equivalence call.
+
+| Revision | Fixture setup runs (s) | Median (s) | Range (s) |
+| --- | --- | ---: | ---: |
+| Baseline `ac7e2b8` | 64.34, 66.94, 64.75 | 64.75 | 2.60 |
+| Candidate | 64.90, 68.29, 59.42 | 64.90 | 8.87 |
+
+The candidate median was 0.15 s (0.2%) slower. This is within observed host and
+JAX compilation variance and misses the preregistered 10% improvement gate.
+The code and test-fixture changes were therefore reverted. The earlier 71.34 s
+profile remains useful bottleneck evidence but was not a stable comparison
+baseline. A future attempt should first add lower-variance compile-cache-miss
+instrumentation or isolate evaluator construction from arm training.
