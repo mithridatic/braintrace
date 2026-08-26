@@ -324,12 +324,12 @@ class TestReadoutIntegration:
 
         # First update
         x1 = jnp.ones((4, 32))
-        output1 = readout.update(x1)
+        readout.update(x1)
         state_after_first = readout.r.value.copy()
 
         # Second update with zero input
         x2 = jnp.zeros((4, 32))
-        output2 = readout.update(x2)
+        readout.update(x2)
 
         # State should have decayed but not reset to zero
         assert not u.math.allclose(readout.r.value, 0.0)

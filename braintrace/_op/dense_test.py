@@ -444,7 +444,7 @@ class TestMMBiasGradient:
         alg.compile_graph(jnp.zeros((1, 4)))
 
         x = jnp.ones((1, 4)) * 0.3
-        target = jnp.zeros((1, 4))
+        jnp.zeros((1, 4))
 
         # --- ETP gradient via D-RTRL ---
         @brainstate.transform.jit

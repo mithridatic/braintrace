@@ -11,8 +11,6 @@ import sys
 
 import brainstate
 import braintools
-import jax
-import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
 import braintrace
@@ -95,9 +93,9 @@ def main(*, n_epochs: int = 50, batch_size: int = 64, plot: bool = True) -> dict
     if plot:
         plt.plot(online_losses, label='D_RTRL')
         plt.plot(bptt_losses, label='BPTT')
-        plt.xlabel('epoch');
+        plt.xlabel('epoch')
         plt.ylabel('MSE')
-        plt.legend();
+        plt.legend()
         plt.title('01 · Basics — integrator')
         plt.show()
     return {"losses": online_losses, "bptt_losses": bptt_losses}

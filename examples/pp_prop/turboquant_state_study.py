@@ -28,7 +28,7 @@ import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
-from braintrace._quant import build_spec, decode, encode, relative_distortion
+from braintrace._quant import build_spec, relative_distortion
 
 _BLOCKS = (1, 16, 64, 256)
 _BITS = (2, 3, 4)

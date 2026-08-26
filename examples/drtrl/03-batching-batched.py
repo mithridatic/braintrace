@@ -11,7 +11,6 @@ import sys
 
 import brainstate
 import braintools
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
@@ -60,10 +59,10 @@ def main(*, n_epochs: int = 30, batch_size: int = 64, plot: bool = True) -> dict
         losses.append(float(f_train(x, y)))
 
     if plot:
-        plt.plot(losses);
-        plt.xlabel('epoch');
+        plt.plot(losses)
+        plt.xlabel('epoch')
         plt.ylabel('MSE')
-        plt.title('03 · Batching via brainstate.mixin.Batching');
+        plt.title('03 · Batching via brainstate.mixin.Batching')
         plt.show()
     return {"losses": losses}
 

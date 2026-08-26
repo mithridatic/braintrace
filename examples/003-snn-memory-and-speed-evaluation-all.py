@@ -590,7 +590,7 @@ if __name__ == '__main__':
         setting.method = 'bptt'
         try:
             network_training(setting)
-        except Exception as e:
+        except Exception:
             break
 
     # ES-D-RTRL

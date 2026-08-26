@@ -401,7 +401,7 @@ class TestParamDimVjpAlgorithmForwardPass:
         # Grads should be a non-empty dict-like structure
         assert len(grads) > 0
         # Check that at least some gradients are non-zero
-        all_zero = all(
+        all(
             jnp.allclose(jax.tree.leaves(v)[0], 0.0)
             for v in grads.values()
         )
@@ -843,7 +843,8 @@ class TestTransformFastEqualsLegacy:
 
     def test_mm_weight_fn_fast_equals_legacy(self):
         xs = self._xs_mm()
-        wfn = lambda w: w ** 2
+        def wfn(w):
+            return w ** 2
         fast = _run_updates(ParamDimVjpAlgorithm(_rnn_mm(weight_fn=wfn), fast_solve=True), xs)
         legacy = _run_updates(ParamDimVjpAlgorithm(_rnn_mm(weight_fn=wfn), fast_solve=False), xs)
         _assert_etrace_lists_equal(fast, legacy, exact=True)

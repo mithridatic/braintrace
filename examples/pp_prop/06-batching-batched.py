@@ -12,7 +12,6 @@ from typing import Dict
 
 import brainstate
 import braintools
-import jax
 import jax.numpy as jnp
 import brainunit as u
 

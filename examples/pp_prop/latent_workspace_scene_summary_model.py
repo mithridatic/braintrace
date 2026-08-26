@@ -27,7 +27,6 @@ from examples.pp_prop.latent_workspace_online_model import (
 )
 from examples.pp_prop.latent_workspace_query_routing_model import (
     BASE_INPUT_WIDTH,
-    MATCH_FEATURE_COUNT,
     QueryRoutingConfig,
     QueryRoutingGatedMemoryRNN,
     SOURCE_COUNT,
@@ -95,7 +94,7 @@ def extend_events_scene_summary(events: np.ndarray) -> np.ndarray:
         _count_onehot(total),
         _count_onehot(per_color).reshape(*array.shape[:-1], -1),
     ]
-    rows = valid.any(axis=-1)
+    valid.any(axis=-1)
     row_index = np.arange(SOURCE_COUNT)
     bbox = np.zeros((*array.shape[:-1], 2 * MAX_GRID_SIZE), dtype=np.float32)
     has_cell = total > 0

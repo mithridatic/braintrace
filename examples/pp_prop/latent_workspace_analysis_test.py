@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import itertools
 import msgspec_json
 import math
 

@@ -986,8 +986,10 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
         K0 = brainstate.random.randn(out_ch, in_ch, kw)
         b0 = brainstate.random.randn(out_ch)
 
-        kernel_fn = lambda K: 1.5 * K + 0.1 * K ** 2
-        bias_fn = lambda b: jnp.tanh(b)
+        def kernel_fn(K):
+            return 1.5 * K + 0.1 * K ** 2
+        def bias_fn(b):
+            return jnp.tanh(b)
 
         def fwd(K):
             y = jax.lax.conv_general_dilated(

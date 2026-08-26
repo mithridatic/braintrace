@@ -14,7 +14,6 @@ from collections.abc import Callable, Iterator, Sequence
 import numpy as np
 
 from latent_workspace_rule_parts import (
-    COLOR_COUNT,
     MAX_SIDE,
     background_color,
     connected_components,

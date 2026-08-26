@@ -278,7 +278,8 @@ def test_conv_vmap_grad_equals_sum_of_eager_single_sample(neuron):
     data = jnp.asarray(rng.rand(N_STEP, B, H, W, C_IN).astype('float32'))
     targets = jnp.asarray(rng.rand(B, H, W, C_OUT).astype('float32'))
 
-    make_net = lambda: _make_net(neuron)
+    def make_net():
+        return _make_net(neuron)
     ref = None
     for b in range(B):
         g = _eager_grad_one(data[:, b], targets[b], make_net)
@@ -323,7 +324,8 @@ def test_conv_layernorm_vmap_grad_matches_eager_and_stays_finite():
     data = jnp.asarray(rng.rand(N_STEP, B, H, W, C_IN).astype('float32'))
     targets = jnp.asarray(rng.rand(B, H, W, C_OUT).astype('float32'))
 
-    make_net = lambda: _make_conv_ln_net(use_fast_variance=False)
+    def make_net():
+        return _make_conv_ln_net(use_fast_variance=False)
     ref = None
     for b in range(B):
         g = _eager_grad_one(data[:, b], targets[b], make_net)

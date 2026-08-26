@@ -10,7 +10,6 @@ import sys
 
 import brainstate
 import braintools
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
@@ -38,7 +37,7 @@ def main(*, n_epochs: int = 50, batch_size: int = 32, plot: bool = True) -> dict
         vjp_method='single-step',
     )
     weights = model.states(brainstate.ParamState)
-    opt = braintools.optim.Adam(1e-3);
+    opt = braintools.optim.Adam(1e-3)
     opt.register_trainable_weights(weights)
 
     def step_loss(inp, tar):
@@ -64,10 +63,10 @@ def main(*, n_epochs: int = 50, batch_size: int = 32, plot: bool = True) -> dict
         losses.append(float(f_train(x, y)))
 
     if plot:
-        plt.plot(losses);
-        plt.xlabel('epoch');
+        plt.plot(losses)
+        plt.xlabel('epoch')
         plt.ylabel('cross-entropy')
-        plt.title('04 · single-step VJP — copying task');
+        plt.title('04 · single-step VJP — copying task')
         plt.show()
     return {"losses": losses}
 

@@ -553,7 +553,7 @@ class Trainer(object):
 
     @brainstate.transform.jit(static_argnums=(0,))
     def bptt_train(self, inputs, targets):
-        mem_before = jax.pure_callback(get_mem_usage, jax.ShapeDtypeStruct((), brainstate.environ.dftype()))
+        jax.pure_callback(get_mem_usage, jax.ShapeDtypeStruct((), brainstate.environ.dftype()))
 
         inputs = u.math.flatten(inputs, start_axis=2)
         indices = np.arange(inputs.shape[0])

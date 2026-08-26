@@ -137,7 +137,8 @@ def _match_at(model, row, height, width):
 def test_match_features_cover_representative_geometry() -> None:
     model = _model()
     matches = _match_at(model, row=2, height=4, width=3)
-    source = lambda r, c: r * 30 + c
+    def source(r, c):
+        return r * 30 + c
 
     assert matches[0, 1, source(2, 1), 0] == 1.0  # identity
     shift_index = 1 + (1 + 3) * 7 + (-1 + 3)
@@ -177,7 +178,7 @@ def test_config_validation() -> None:
 
 
 def test_checkpoint_roundtrip_binds_v48_schema(tmp_path) -> None:
-    subject = _subject()
+    _subject()
     model = _model()
     path = tmp_path / "checkpoint.npz"
     digest = save_online_checkpoint(model, path)

@@ -53,7 +53,6 @@ from braintrace._testing.oracle import (
     assert_unbiased_estimator,
     bptt_param_gradients,
     chunked_online_param_gradients,
-    flat_gradient_leaves,
     relative_deviation,
     seed_gradient_samples,
 )

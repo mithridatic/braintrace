@@ -707,8 +707,10 @@ class TestInstantSolveDrtrlFirstPrinciplesFromJacobian:
         trace_bias = brainstate.random.randn(n_out)
         dg_hidden = brainstate.random.randn(n_out)
 
-        b_fn = lambda B: jnp.tanh(B)
-        a_fn = lambda A: 1.5 * A
+        def b_fn(B):
+            return jnp.tanh(B)
+        def a_fn(A):
+            return 1.5 * A
 
         # Independent reimplementation of the documented solve-time formula
         # (never calls `_lora_solve_drtrl`'s own code):

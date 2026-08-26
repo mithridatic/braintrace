@@ -358,7 +358,6 @@ class _Conv1dMiniGRUNet(brainstate.nn.Module):
 class _LoRACell(brainstate.nn.RNNCell):
     def __init__(self, n_in=_NI, n_hidden=_NR, rank=2):
         super().__init__()
-        import braintools
         self.in_size, self.out_size = n_in, n_hidden
         self.frozen_base = brainstate.ParamState(
             braintools.init.XavierNormal()((n_in + n_hidden, n_hidden)))
@@ -366,7 +365,6 @@ class _LoRACell(brainstate.nn.RNNCell):
                                        out_features=n_hidden)
 
     def init_state(self, batch_size=None, **kwargs):
-        import braintools
         self.h = brainstate.HiddenState(
             braintools.init.param(braintools.init.ZeroInit(), self.out_size, batch_size))
 

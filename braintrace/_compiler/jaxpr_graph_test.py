@@ -17,7 +17,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from braintrace._compatible_imports import Var, is_jit_primitive
+from braintrace._compatible_imports import is_jit_primitive
 from braintrace._compiler.jaxpr_graph import (
     build_consumer_map,
     build_producer_map,

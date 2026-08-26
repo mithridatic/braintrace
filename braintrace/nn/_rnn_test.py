@@ -626,12 +626,12 @@ class TestRNNCellIntegration:
 
         # First update
         x1 = jnp.ones((4, 32))
-        h1 = cell(x1)
+        cell(x1)
         state_after_first = cell.h.value.copy()
 
         # Second update
         x2 = jnp.ones((4, 32))
-        h2 = cell(x2)
+        cell(x2)
 
         # State should have changed
         assert not jnp.allclose(state_after_first, cell.h.value)
