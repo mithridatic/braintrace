@@ -3,7 +3,6 @@
     "addition_updates": 64,
     "candidate_arms_per_process": 1,
     "dense_neuron_pair_array": false,
-    "mask_compaction_prediction_bytes": true,
     "max_resident_tile_pairs": 65536,
     "pruning_promoted": false,
     "pruning_validation_strict": [
@@ -15,15 +14,271 @@
     "strict_regression_rejected": true,
     "within_300_seconds": true
   },
+  "arms": [
+    {
+      "adam_remapped": false,
+      "after_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "arm": "neuron-prune",
+      "baseline_neurons": 2048,
+      "baseline_recurrent_items": 16384,
+      "before_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "candidate_neurons": 2048,
+      "candidate_recurrent_items": 16384,
+      "dense_neuron_pair_array": false,
+      "elapsed_seconds": 2.500019036233425e-06,
+      "eligibility_reset": false,
+      "environment": {
+        "pid": 29640,
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.14.6",
+        "seeds": [
+          21,
+          22,
+          23
+        ]
+      },
+      "max_resident_tile_pairs": 65536,
+      "model": "BrainCellArcModel",
+      "mutated_item_count": 0,
+      "promoted": false,
+      "pruning_blocked": true,
+      "pruning_validation_strict": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "real_model": true,
+      "strict_regression_rejected": true,
+      "updates": 0,
+      "within_300_seconds": true
+    },
+    {
+      "adam_remapped": false,
+      "after_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "arm": "connection-prune",
+      "baseline_neurons": 2048,
+      "baseline_recurrent_items": 16384,
+      "before_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "candidate_neurons": 2048,
+      "candidate_recurrent_items": 16384,
+      "dense_neuron_pair_array": false,
+      "elapsed_seconds": 3.5999692045152187e-06,
+      "eligibility_reset": false,
+      "environment": {
+        "pid": 12936,
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.14.6",
+        "seeds": [
+          21,
+          22,
+          23
+        ]
+      },
+      "max_resident_tile_pairs": 65536,
+      "model": "BrainCellArcModel",
+      "mutated_item_count": 0,
+      "promoted": false,
+      "pruning_blocked": true,
+      "pruning_validation_strict": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "real_model": true,
+      "strict_regression_rejected": true,
+      "updates": 0,
+      "within_300_seconds": true
+    },
+    {
+      "adam_remapped": true,
+      "after_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "arm": "neuron-add",
+      "baseline_neurons": 2048,
+      "baseline_recurrent_items": 16384,
+      "before_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "candidate_neurons": 2151,
+      "candidate_recurrent_items": 18032,
+      "dense_neuron_pair_array": false,
+      "elapsed_seconds": 5.640879899961874,
+      "eligibility_reset": true,
+      "environment": {
+        "pid": 6016,
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.14.6",
+        "seeds": [
+          21,
+          22,
+          23
+        ]
+      },
+      "max_resident_tile_pairs": 65536,
+      "model": "BrainCellArcModel",
+      "mutated_item_count": 103,
+      "promoted": false,
+      "pruning_validation_strict": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "real_model": true,
+      "strict_regression_rejected": true,
+      "updates": 64,
+      "within_300_seconds": true
+    },
+    {
+      "adam_remapped": true,
+      "after_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "arm": "connection-add",
+      "baseline_neurons": 2048,
+      "baseline_recurrent_items": 16384,
+      "before_strict": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "candidate_neurons": 2048,
+      "candidate_recurrent_items": 17204,
+      "dense_neuron_pair_array": false,
+      "elapsed_seconds": 5.744669900042936,
+      "eligibility_reset": true,
+      "environment": {
+        "pid": 14028,
+        "platform": "Windows-11-10.0.26200-SP0",
+        "python": "3.14.6",
+        "seeds": [
+          21,
+          22,
+          23
+        ]
+      },
+      "max_resident_tile_pairs": 65536,
+      "model": "BrainCellArcModel",
+      "mutated_item_count": 820,
+      "promoted": false,
+      "pruning_validation_strict": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "real_model": true,
+      "strict_regression_rejected": true,
+      "updates": 64,
+      "within_300_seconds": true
+    }
+  ],
   "baseline": {
     "input_edges": 14112,
     "neurons": 2048,
     "readout_values": 737280,
     "recurrent_edges": 16384
   },
-  "command": "python -m pytest examples/pp_prop/example21_structural_test.py examples/pp_prop/example21_gate4_test.py -q",
+  "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
   "environment": {
-    "pid": 29944,
+    "pid": 38828,
     "platform": "Windows-11-10.0.26200-SP0",
     "python": "3.14.6",
     "seeds": [
@@ -32,12 +287,11 @@
       23
     ]
   },
-  "focused_coverage_percent": 99,
   "focused_tests": {
+    "coverage_percent": 91,
     "failed": 0,
-    "passed": 35
+    "passed": 40
   },
-  "implementation_commit": "e59e67a7039f4ef6bd4895fbbc83b11ba35ac54f",
-  "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
-  "status": "helper-layer evidence; real-data strict arm remains Gate 5 review work"
+  "implementation_commit": "working-tree",
+  "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b"
 }

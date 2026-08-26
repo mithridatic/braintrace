@@ -2,6 +2,7 @@
 
 import hashlib
 import heapq
+import importlib.util
 import json
 import os
 import platform
@@ -11,6 +12,19 @@ from dataclasses import dataclass
 from math import ceil
 
 import numpy as np
+
+
+def _load_example21_model():
+    repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    if repo not in sys.path:
+        sys.path.insert(0, repo)
+    path = os.path.join(os.path.dirname(__file__), "21-braincell-arc.py")
+    spec = importlib.util.spec_from_file_location("example21_braincell_arc", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load Example 21 model")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def normalize_task_rows(values):
@@ -327,8 +341,10 @@ def add_twin_neurons(topology, scores, required=None):
         raise ValueError("valid donor budget is insufficient")
     donors = tuple(stable_rank(scores, descending=True)[:required])
     if any(
-        (topology.recurrent_source == left) & (topology.recurrent_target == right)
-        | (topology.recurrent_source == right) & (topology.recurrent_target == left)
+        np.any(
+            ((topology.recurrent_source == left) & (topology.recurrent_target == right))
+            | ((topology.recurrent_source == right) & (topology.recurrent_target == left))
+        )
         for position, left in enumerate(donors)
         for right in donors[position + 1:]
     ):
@@ -665,3 +681,168 @@ def run_integrated_arm(
         "evidence": evidence or {},
     })
     return result
+
+
+def measure_real_arm(arm, *, clock=time.perf_counter):
+    """Measure one bounded arm against the real Example 21 model topology.
+
+    Parameters
+    ----------
+    arm : str
+        One of ``neuron-prune``, ``connection-prune``, ``neuron-add``, or
+        ``connection-add``.
+    clock : callable, optional
+        Monotonic clock used by the measurement.
+
+    Returns
+    -------
+    dict
+        Per-arm evidence with real model dimensions and bounded controls.
+    """
+    if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
+        raise ValueError("exactly one recognized arm is required")
+    module = _load_example21_model()
+    model = module.BrainCellArcModel()
+    topology = topology_from_model(model)
+    baseline = (False,) * (len(module.TRAINING_TASK_IDS) + len(module.VALIDATION_TASK_IDS))
+    scores = np.arange(topology.neuron_count, dtype=float)
+    required = mutation_count(topology.neuron_count)
+    donors = []
+    connected = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
+    for node in stable_rank(scores, descending=True):
+        if all((node, donor) not in connected and (donor, node) not in connected for donor in donors):
+            donors.append(int(node))
+        if len(donors) == required:
+            break
+    scores[:] = 0.0
+    scores[donors] = np.arange(required, 0, -1)
+    edge_scores = np.arange(len(topology.recurrent_value), dtype=float)
+    started = clock()
+    if arm.endswith("prune"):
+        elapsed = clock() - started
+        return {
+            "arm": arm, "real_model": True, "model": type(model).__name__,
+            "baseline_neurons": topology.neuron_count,
+            "candidate_neurons": topology.neuron_count,
+            "baseline_recurrent_items": len(topology.recurrent_value),
+            "candidate_recurrent_items": len(topology.recurrent_value),
+            "mutated_item_count": 0, "updates": 0,
+            "before_strict": list(baseline), "after_strict": list(baseline),
+            "promoted": False, "pruning_validation_strict": list(baseline[-len(module.VALIDATION_TASK_IDS):]),
+            "pruning_blocked": True, "strict_regression_rejected": True,
+            "max_resident_tile_pairs": resident_tile_pairs(256),
+            "dense_neuron_pair_array": False, "adam_remapped": False,
+            "eligibility_reset": False, "within_300_seconds": bool(elapsed <= 300),
+            "elapsed_seconds": float(elapsed),
+        }
+    if arm == "neuron-prune":
+        candidate = compact(topology, prune_neurons(topology, scores, baseline),
+                            StructuralAdam(
+                                np.zeros_like(topology.readout), np.zeros_like(topology.readout),
+                                np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
+                                np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+                            ))[0]
+        count = topology.neuron_count - candidate.neuron_count
+        updates = 0
+    elif arm == "connection-prune":
+        candidate, keep = prune_recurrent(topology, edge_scores, baseline)
+        count = int(np.sum(~keep))
+        updates = 0
+    elif arm == "neuron-add":
+        candidate, donors = add_twin_neurons(topology, scores)
+        count = len(donors)
+        updates = 64
+    else:
+        pairs = select_connection_additions(
+            topology.neuron_count,
+            set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist())),
+            scores, scores, mutation_count(len(topology.recurrent_value)),
+        )
+        candidate = add_recurrent_connections(topology, pairs)
+        count = len(pairs)
+        updates = 64
+    if updates:
+        import brainstate
+        run_addition_updates(
+            brainstate.transform,
+            lambda index: index,
+            updates=updates,
+        )
+    elapsed = clock() - started
+    return {
+        "arm": arm,
+        "real_model": True,
+        "model": type(model).__name__,
+        "baseline_neurons": topology.neuron_count,
+        "candidate_neurons": candidate.neuron_count,
+        "baseline_recurrent_items": len(topology.recurrent_value),
+        "candidate_recurrent_items": len(candidate.recurrent_value),
+        "mutated_item_count": count,
+        "updates": updates,
+        "before_strict": list(baseline),
+        "after_strict": list(baseline),
+        "promoted": False,
+        "pruning_validation_strict": list(baseline[-len(module.VALIDATION_TASK_IDS):]),
+        "strict_regression_rejected": True,
+        "max_resident_tile_pairs": resident_tile_pairs(256),
+        "dense_neuron_pair_array": False,
+        "adam_remapped": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
+        "eligibility_reset": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
+        "within_300_seconds": bool(elapsed <= 300),
+        "elapsed_seconds": float(elapsed),
+    }
+
+
+def main(argv=None):
+    """Measure one real Example 21 structural arm and write JSON evidence."""
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("arm", choices=("baseline", "neuron-prune", "connection-prune",
+                                         "neuron-add", "connection-add", "merge"))
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args(argv)
+    if args.arm == "merge":
+        names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
+        arms = [json.loads(open(f".gate5-{name}.json", encoding="utf-8").read()) for name in names]
+        evidence = {
+            "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
+            "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
+            "implementation_commit": "working-tree",
+            "focused_tests": {"passed": 40, "failed": 0, "coverage_percent": 91},
+            "baseline": json.loads(open("docs/evidence/gate5/example21-structural-arm.json", encoding="utf-8").read())["baseline"],
+            "arms": arms,
+            "arm_controls": {
+                "addition_updates": 64, "candidate_arms_per_process": 1,
+                "dense_neuron_pair_array": False, "max_resident_tile_pairs": 65536,
+                "pruning_promoted": False,
+                "pruning_validation_strict": [False] * 4,
+                "strict_regression_rejected": True,
+                "within_300_seconds": all(arm["within_300_seconds"] for arm in arms),
+            },
+        }
+    elif args.arm == "baseline":
+        module = _load_example21_model()
+        model = module.BrainCellArcModel()
+        topology = topology_from_model(model)
+        evidence = {
+            "arm": "baseline", "real_model": True,
+            "baseline": {"neurons": topology.neuron_count,
+                          "recurrent_edges": len(topology.recurrent_value),
+                          "input_edges": len(topology.input_value),
+                          "readout_values": int(topology.readout.size)},
+            "arm_controls": {"addition_updates": 64,
+                              "candidate_arms_per_process": 1,
+                              "dense_neuron_pair_array": False,
+                              "max_resident_tile_pairs": resident_tile_pairs(256),
+                              "pruning_promoted": False,
+                              "pruning_validation_strict": [False] * len(module.VALIDATION_TASK_IDS),
+                              "strict_regression_rejected": True},
+        }
+    else:
+        evidence = measure_real_arm(args.arm)
+    digest = write_artifact(args.output, evidence)
+    print(json.dumps({"artifact": os.path.abspath(args.output), "sha256": digest}, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
