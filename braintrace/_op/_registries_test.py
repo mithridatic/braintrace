@@ -21,6 +21,8 @@ flag-sets, and the True/False semantics of the three predicates that
 the compiler relies on.
 """
 
+import importlib
+
 import pytest
 
 from braintrace._compatible_imports import Primitive
@@ -217,8 +219,8 @@ class TestFastPathRulesChunkField:
 
     def test_registered_bundles_expose_chunk(self):
         # Importing the op modules runs primitive registration
-        import braintrace._op.dense  # noqa: F401
-        import braintrace._op.elemwise  # noqa: F401
+        importlib.import_module('braintrace._op.dense')
+        importlib.import_module('braintrace._op.elemwise')
         from braintrace._op._registries import ETP_FAST_PATH_RULES
 
         assert len(ETP_FAST_PATH_RULES) > 0

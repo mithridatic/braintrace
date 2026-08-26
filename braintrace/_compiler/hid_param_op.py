@@ -95,7 +95,7 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from .scan_descent import RelationDescent  # noqa: F401
+    from .scan_descent import RelationDescent
 
 
 # ---------------------------------------------------------------------------

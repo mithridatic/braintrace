@@ -95,8 +95,8 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from .scan_descent import GroupDescent  # noqa: F401
-    from .position_graph import SnapPattern  # noqa: F401
+    from .scan_descent import GroupDescent
+    from .position_graph import SnapPattern
 
 # Recurrent-weight mixing primitives -- dense / convolutional weights -- whose
 # consumption of a hidden state is a genuine *cross-position* coupling, i.e. that
