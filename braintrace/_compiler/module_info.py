@@ -395,7 +395,7 @@ class ModuleInfo(NamedTuple):
             weight_jaxvar_tree,
             hidden_jaxvar,
             other_state_jaxvar_tree
-        ) = sequence_split_state_values(  # type: ignore[misc]
+        ) = sequence_split_state_values(
             self.compiled_model_states, self.state_tree_outvars
         )
         return weight_jaxvar_tree, hidden_jaxvar, other_state_jaxvar_tree
@@ -477,7 +477,7 @@ class ModuleInfo(NamedTuple):
         i_end = i_start + self.num_var_state
         # Brainstate types the cached treedef as the broad ``PyTree``; at runtime it is a
         # ``jax`` ``PyTreeDef`` that exposes ``unflatten``.
-        out, new_state_vals = self.stateful_model.get_out_treedef_by_cache(cache_key).unflatten(  # type: ignore[attr-defined]
+        out, new_state_vals = self.stateful_model.get_out_treedef_by_cache(cache_key).unflatten(
             jaxpr_outs[:i_end])
 
         #
@@ -612,7 +612,7 @@ def extract_module_info(
     # Out information
     # brainstate types the cached out-shapes as the broad ``PyTree``; at runtime
     # it is the ``(out_shapes, state_shapes)`` pair the tracer recorded.
-    out_shapes = stateful_model.get_out_shapes_by_cache(cache_key)[0]  # type: ignore[index]
+    out_shapes = stateful_model.get_out_shapes_by_cache(cache_key)[0]
     state_vals = [state.value for state in compiled_states]
     in_avals, _ = jax.tree.flatten((model_args, model_kwargs))
     out_avals, _ = jax.tree.flatten(out_shapes)

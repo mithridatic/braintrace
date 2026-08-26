@@ -285,4 +285,4 @@ class Embedding(brainstate.nn.Embedding):
         # Fold all index axes into one batch axis, unfold on the output
         # (reshape via brainunit so quantities keep their units)
         y = embedding(indices.reshape(-1), table)
-        return u.math.reshape(y, (*indices.shape, y.shape[-1]))  # type: ignore[union-attr]
+        return u.math.reshape(y, (*indices.shape, y.shape[-1]))

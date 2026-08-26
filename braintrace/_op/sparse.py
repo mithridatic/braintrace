@@ -170,7 +170,7 @@ def _etp_sp_matmul_impl(*args: Any,
     mat = _unwrap_sparse_mat(sparse_mat)
     if weight_fn is not None:
         weight_data = weight_fn(weight_data)
-    w = mat.with_data(weight_data)  # type: ignore[union-attr]  # sparse_mat is always supplied at bind time
+    w = mat.with_data(weight_data)
     y = x @ w
     if has_bias:
         b = args[2]
@@ -246,7 +246,7 @@ def _sp_mm_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *,
         # over the leading batch axis.
         weight_out = jax.vmap(mat.dt2t_transposed)(hidden_dim, weight_trace)
     else:
-        weight_out = mat.dt2t_transposed(hidden_dim, weight_trace)  # type: ignore[union-attr]  # sparse_mat is always supplied at bind time
+        weight_out = mat.dt2t_transposed(hidden_dim, weight_trace)
     out = {'weight': weight_out}
     if has_bias:
         out['bias'] = trace['bias'] * hidden_dim
@@ -292,7 +292,7 @@ def _sp_xy_to_dw(x: Any, hidden_dim: Any, weights: dict[str, Any], *,
         wd = w_dict['weight']
         if weight_fn is not None:
             wd = weight_fn(wd)
-        y = x @ mat.with_data(wd)  # type: ignore[union-attr]  # sparse_mat is always supplied at bind time
+        y = x @ mat.with_data(wd)
         if has_bias:
             b = w_dict['bias']
             if bias_fn is not None:
@@ -377,7 +377,7 @@ def _sp_mv_dt_to_t(hidden_dim: Any, trace: dict[str, Any], *,
              ``trace['bias']   : (out,)``.
     """
     mat = _unwrap_sparse_mat(sparse_mat)
-    out = {'weight': mat.dt2t_transposed(hidden_dim, trace['weight'])}  # type: ignore[union-attr]  # sparse_mat is always supplied at bind time
+    out = {'weight': mat.dt2t_transposed(hidden_dim, trace['weight'])}
     if has_bias:
         out['bias'] = trace['bias'] * hidden_dim
     return out
@@ -478,7 +478,7 @@ def _sp_snap_adjacency(eqn_params: dict, size: int) -> Optional[np.ndarray]:
         return None
     try:
         dense = np.asarray(mat.with_data(jnp.ones_like(mat.data)).todense())
-    except Exception:  # noqa: BLE001 - any failure to materialise means "decline"
+    except Exception:
         # A structure whose pattern cannot be read concretely at compile time
         # (an exotic representation, a traced index array) must not be guessed
         # at: declining yields the conservative all-to-all pattern, which is
@@ -589,7 +589,7 @@ def sparse_matmul(
             'with_data, dt2t_transposed and dt2t online-learning protocol '
             f'methods.'
         )
-    p = etp_sp_mm_p if x.ndim >= 2 else etp_sp_mv_p  # type: ignore[union-attr]  # x is an array here; ArrayLike also admits scalars without .ndim
+    p = etp_sp_mm_p if x.ndim >= 2 else etp_sp_mv_p
     x_v, x_u = u.split_mantissa_unit(x)
     w_v, w_u = u.split_mantissa_unit(weight)
     unit = x_u * w_u

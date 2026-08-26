@@ -175,7 +175,7 @@ class SequenceDriverMixin:
 
     @property
     def _seq_call(self) -> Callable:
-        return self  # type: ignore[return-value]
+        return self
 
     @property
     def _seq_param_states(self) -> Any:
@@ -756,7 +756,7 @@ class ETraceVmap(SequenceDriverMixin, brainstate.nn.Vmap):
         # module an ETraceVmap wraps is always an ETraceAlgorithm, which is
         # what carries ``param_states``. ``compile(..., vmap=True)`` is the only
         # constructor, and it always passes a learner.
-        return self.module.param_states  # type: ignore[attr-defined]
+        return self.module.param_states
 
     @property
     def _seq_vjp_method(self) -> Optional[str]:

@@ -374,7 +374,7 @@ def _wrap_leaves_as_pytree(
     ref_treedef = jax.tree.structure(reference_pytree)
     # Bare-array fast path.
     # JAX's PyTreeDef stubs omit num_leaves and __eq__; both are valid at runtime.
-    if ref_treedef.num_leaves <= 1 and ref_treedef == jax.tree.structure(0):  # type: ignore[attr-defined, operator]
+    if ref_treedef.num_leaves <= 1 and ref_treedef == jax.tree.structure(0):
         if 0 in leaf_grads:
             return leaf_grads[0]
         return u.math.zeros_like(reference_pytree)

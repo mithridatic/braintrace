@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from latent_workspace_rules import (  # noqa: E402
+from latent_workspace_rules import (
     fit_verified_rules,
     verified_rule_candidates,
 )

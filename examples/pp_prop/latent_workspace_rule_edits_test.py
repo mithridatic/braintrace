@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from latent_workspace_rule_edits import (  # noqa: E402
+from latent_workspace_rule_edits import (
     CONNECTIVITY,
     EDIT_FAMILIES,
     family_border,

@@ -91,7 +91,7 @@ class ValinaRNNCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'relu',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -190,7 +190,7 @@ class GRUCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'tanh',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -292,7 +292,7 @@ class CFNCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'tanh',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -413,7 +413,7 @@ class MGUCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'tanh',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -543,7 +543,7 @@ class LSTMCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'tanh',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self.out_size = _as_size_tuple(out_size)
@@ -651,7 +651,7 @@ class URLSTMCell(brainstate.nn.RNNCell):
         activation: str | Callable = 'tanh',
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self.out_size = _as_size_tuple(out_size)
@@ -787,7 +787,7 @@ class MinimalRNNCell(brainstate.nn.RNNCell):
         phi: Callable = None,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -888,7 +888,7 @@ class MiniGRU(brainstate.nn.RNNCell):
         state_init: Union[ArrayLike, Callable] = braintools.init.ZeroInit(),
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init
@@ -985,7 +985,7 @@ class MiniLSTM(brainstate.nn.RNNCell):
         state_init: Union[ArrayLike, Callable] = braintools.init.ZeroInit(),
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
 
         # Parameters
         self._state_initializer = state_init

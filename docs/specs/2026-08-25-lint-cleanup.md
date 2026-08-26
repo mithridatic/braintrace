@@ -18,6 +18,10 @@ co-located tests, examples, documentation sources, and notebooks.
 Run `ruff check .` and basedpyright. Run focused tests for any behavior changed
 during cleanup.
 
+Search tracked Python and configuration files for `noqa`, `type: ignore`,
+`pyright: ignore`, and `ruff: noqa`. The search must return no suppression
+directives. Explanatory prose that names a directive is not a suppression.
+
 ## Measured baseline
 
 The first repository-wide basedpyright run analyzed 582 files and reported
@@ -30,3 +34,6 @@ After Ruff reaches zero findings, remove the remaining inline Ruff suppressions
 before the larger type cleanup. Replace late imports with explicit dynamic
 imports only where the file must update `sys.path` first. Use ordinary top-level
 imports everywhere else.
+
+The first review found 185 suppression lines after Ruff reported no findings.
+Ruff success alone is therefore not sufficient evidence for this change.

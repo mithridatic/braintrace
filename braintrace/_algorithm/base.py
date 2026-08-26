@@ -108,7 +108,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         graph_executor: ETraceGraphExecutor,
         name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
+        super().__init__(name=name)
 
         # The model
         if not isinstance(model, brainstate.nn.Module):

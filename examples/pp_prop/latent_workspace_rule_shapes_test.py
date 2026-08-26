@@ -9,7 +9,7 @@ import numpy as np
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from latent_workspace_rule_shapes import (  # noqa: E402
+from latent_workspace_rule_shapes import (
     SHAPE_FAMILIES,
     family_color_rank,
     family_count_bar,

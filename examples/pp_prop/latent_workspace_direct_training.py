@@ -29,11 +29,11 @@ try:
         encode_target_grid,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
-    from latent_workspace_direct_model import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_direct_model import (
         DirectARCGRU,
         DirectModelConfig,
     )
-    from latent_workspace_task import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_task import (
         ArcGrid,
         ArcPair,
         ArcTask,

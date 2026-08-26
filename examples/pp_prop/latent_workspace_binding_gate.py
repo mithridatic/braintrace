@@ -1722,13 +1722,13 @@ def _evaluate_model(
         evaluate(jnp.asarray(data.validation_no_context))
     )
     raw: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {
-        "intact": tuple(  # type: ignore[dict-item]
+        "intact": tuple(
             np.asarray(value) for value in intact_values
         ),
-        "shuffled": tuple(  # type: ignore[dict-item]
+        "shuffled": tuple(
             np.asarray(value) for value in shuffled_values
         ),
-        "no_context": tuple(  # type: ignore[dict-item]
+        "no_context": tuple(
             np.asarray(value) for value in no_context_values
         ),
     }

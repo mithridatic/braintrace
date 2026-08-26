@@ -1375,7 +1375,7 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             flat_injected, injected_tree = jax.tree.flatten((injected,))
             # `PyTreeDef` compares by value at runtime; mypy's jax stubs do not
             # model its `__ne__`.
-            if injected_tree != grad_tree:  # type: ignore[operator]
+            if injected_tree != grad_tree:
                 raise TypeError(
                     f'The injected exit cotangent must have the same tree '
                     f'structure as the incoming gradients, so it can go through '

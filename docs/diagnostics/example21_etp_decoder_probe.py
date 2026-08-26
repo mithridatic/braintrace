@@ -22,6 +22,7 @@ Usage:  example21_etp_decoder_probe.py WORKTREE
 
 from __future__ import annotations
 
+import importlib
 import msgspec
 import pathlib
 import sys
@@ -35,17 +36,16 @@ WORKTREE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
 sys.path.insert(0, str(WORKTREE / "examples" / "pp_prop"))
 sys.path.insert(0, str(WORKTREE))
 
-from latent_workspace_model import (  # noqa: E402
-    COLOR_COUNT,
-    MAX_GRID_SIZE,
-    LatentWorkspaceModel,
-    ModelConfig,
-    compile_pp_prop,
-)
-from latent_workspace_task import (  # noqa: E402
-    RowEventConfig,
-    associative_memory_feature_indices,
-)
+model_module = importlib.import_module("latent_workspace_model")
+task_module = importlib.import_module("latent_workspace_task")
+
+COLOR_COUNT = model_module.COLOR_COUNT
+MAX_GRID_SIZE = model_module.MAX_GRID_SIZE
+LatentWorkspaceModel = model_module.LatentWorkspaceModel
+ModelConfig = model_module.ModelConfig
+compile_pp_prop = model_module.compile_pp_prop
+RowEventConfig = task_module.RowEventConfig
+associative_memory_feature_indices = task_module.associative_memory_feature_indices
 
 NEURONS = 256
 EDGES = 2048

@@ -102,7 +102,7 @@ def test_parameter_snapshot_is_immutable_and_does_not_alias_model() -> None:
         np.asarray([1.0, 2.0], dtype=np.float32),
     )
     with pytest.raises(dataclasses.FrozenInstanceError):
-        snapshot.records = ()  # type: ignore[misc]
+        snapshot.records = ()
 
 
 def test_restore_parameters_round_trips_real_latent_workspace_model() -> None:
@@ -190,7 +190,7 @@ def test_target_free_query_has_no_target_boundary() -> None:
     fields = tuple(field.name for field in dataclasses.fields(TargetFreeQuery))
     assert fields == ("events", "advances")
     with pytest.raises(TypeError):
-        TargetFreeQuery(  # type: ignore[call-arg]
+        TargetFreeQuery(
             events=jnp.ones((1, 1)),
             advances=jnp.ones((1,), dtype=jnp.bool_),
             target=jnp.asarray(9),
@@ -199,7 +199,7 @@ def test_target_free_query_has_no_target_boundary() -> None:
 
 def test_restore_parameters_rejects_wrong_snapshot_type() -> None:
     with pytest.raises(TypeError, match="ParameterSnapshot"):
-        restore_parameters(_ToyModel(), object())  # type: ignore[arg-type]
+        restore_parameters(_ToyModel(), object())
 
 
 def test_task_local_runner_resets_folds_and_discards_adapted_parameters() -> None:
@@ -390,7 +390,7 @@ def test_task_local_runner_rejects_non_target_free_query() -> None:
             model,
             base_parameters=snapshot_parameters(model),
             fold_inputs=jnp.asarray([1.0]),
-            query=object(),  # type: ignore[arg-type]
+            query=object(),
             make_optimizer=object,
             adapt_fold=lambda _optimizer, fold: fold,
             query_step=lambda _event, _advance: None,
@@ -498,7 +498,7 @@ def test_target_free_task_bank_has_no_official_target_boundary() -> None:
     bank = _toy_task_bank()
     assert bank.query_events.shape == (2, 2, 3)
     with pytest.raises(TypeError):
-        TargetFreeTaskBank(  # type: ignore[call-arg]
+        TargetFreeTaskBank(
             fold_inputs=bank.fold_inputs,
             query_events=bank.query_events,
             query_advances=bank.query_advances,

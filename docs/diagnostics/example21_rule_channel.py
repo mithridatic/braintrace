@@ -20,7 +20,7 @@ import time
 import numpy as np
 
 sys.path.insert(0, "examples/pp_prop")
-from latent_workspace_rules import verified_rule_candidates  # noqa: E402
+from latent_workspace_rules import verified_rule_candidates
 
 ARC = pathlib.Path(sys.argv[1])
 SPLIT = sys.argv[2] if len(sys.argv) > 2 else "evaluation"

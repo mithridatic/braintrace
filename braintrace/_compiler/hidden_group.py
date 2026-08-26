@@ -174,7 +174,7 @@ class HiddenGroup(NamedTuple):
         1
     """
 
-    index: int  # type: ignore[assignment]  # intentional NamedTuple field; shadows tuple.index
+    index: int
 
     # Hidden states and their paths
     hidden_paths: List[Path]  # the hidden state paths
@@ -2184,7 +2184,7 @@ def find_hidden_groups_from_jaxpr(
         # even though the passed mapping carries every model state. The cast is a real
         # State -> HiddenState narrowing; mypy flags it as redundant only because
         # brainstate is currently untyped (both collapse to Any).
-        path_to_state=cast(Dict[Path, brainstate.HiddenState], path_to_state),  # type: ignore[redundant-cast]
+        path_to_state=cast(Dict[Path, brainstate.HiddenState], path_to_state),
         include_recurrent_mixing=include_recurrent_mixing,
         sparse_n=sparse_n,
         snap_max_jacobian_elements=snap_max_jacobian_elements,
