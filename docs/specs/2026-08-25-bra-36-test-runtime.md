@@ -1,6 +1,13 @@
 # BRA-36 test-runtime profiling and bounded optimization
 
-Status: proposed; implementation requires approval
+Status: profiling approved by independent review on 2026-08-25
+
+The reviewer clarified that trainer construction must be timed separately from
+JAX tracing/compilation. Cold training and evaluation are therefore recorded
+per arm with an explicit synchronization at every timed boundary; warm timing,
+when collected, is labeled separately. Approval applies to profiling only. A
+measured optimization candidate still requires this specification to record
+its target and semantic invariants before product or test behavior changes.
 
 ## Revision 2: compile-event instrumentation before candidate selection
 
@@ -34,6 +41,36 @@ its exact semantic invariants, then request approval before changing product
 or test code. The acceptance gate remains a material median improvement across
 three matched fresh-process runs, with no weakened assertions, tolerances,
 coverage, state isolation, or finite-window oracle checks.
+
+## Revision 3: measured phase breakdown
+
+Independent review approved Revision 2 and required synchronized per-arm cold
+train/evaluation boundaries. The profiling harness is
+`examples/pp_prop/latent_workspace_ablation_gate_profile.py`. Each measured
+sample ran in a fresh process after one unmeasured warm-up, using
+`PYTHONPATH=.;examples/pp_prop python -m
+examples.pp_prop.latent_workspace_ablation_gate_profile <gate>`.
+
+| Gate | Total runs (s) | Median (s) | Model construction median (range) | Cold synchronized execution median |
+| --- | --- | ---: | ---: | ---: |
+| A | 34.45, 36.52, 34.91 | 34.91 | 14.52 (14.05--15.64), 41.6% | 16.20, 46.4% |
+| B | 77.20, 79.24, 79.33 | 79.24 | 15.05 (14.42--16.35), 19.0% | 58.75, 74.1% |
+
+The percentages use each phase median divided by the total median. Model
+construction exceeded 20% in every Gate A run, but only one of three Gate B
+runs (18.7%, 19.0%, and 20.6%), so it fails the preregistered cross-gate target
+rule. Aggregate synchronized cold execution clears 20% in both gates, but the
+current measurement does not isolate a removable compilation unit. The prior
+compatible-arm evaluator reuse candidate already failed matched timing, so
+that mechanism must not be retried without new evidence.
+
+JAX monitoring recorded 97 compilation-cache requests in a subsequent Gate A
+validation run and 104 in Gate B. This public event does not distinguish cache
+hits from misses, so these counts are diagnostic only. No second optimization
+candidate is authorized by this revision. The next bounded investigation is
+to attribute compiler requests/misses to individual train and evaluation
+boundaries, then propose only a unit whose redundant work can actually be
+removed. Product and scientific test behavior remain unchanged.
 
 ## Objective
 
