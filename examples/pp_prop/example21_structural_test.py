@@ -526,6 +526,90 @@ def test_integrated_arm_rebuilds_model_remaps_adam_and_resets_eligibility():
     assert not result["promoted"]
 
 
+def test_real_pp_prop_update_seeds_remapped_adam_state():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Trainer:
+        def __init__(self, *args, **kwargs):
+            self.adam_groups = {
+                "input": type("Adam", (), {"first": np.zeros(2), "second": np.zeros(2), "step": 0})(),
+                "recurrent": type("Adam", (), {"first": np.zeros(3), "second": np.zeros(3), "step": 0})(),
+            }
+
+        def update_episode(self, *args, **kwargs):
+            return 0.0, 0.0
+
+    model = SimpleNamespace(input_weight=State([1, 1]), recurrent_weight=State([1, 1, 1]))
+    model.reset_episode = lambda learner: None
+    learner = SimpleNamespace()
+    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    adam = structural.StructuralAdam(
+        np.zeros(1), np.zeros(1), np.array([2.0, 3.0]), np.array([4.0, 5.0]),
+        np.array([6.0, 7.0, 8.0]), np.array([9.0, 10.0, 11.0]), step=4,
+    )
+    update = structural._real_pp_prop_update(
+        module, model, learner,
+        {"events": np.zeros((1, 2)), "advances": np.ones(1)}, adam,
+    )
+    update()
+    trainer = update.trainer
+    np.testing.assert_array_equal(trainer.adam_groups["input"].first, [2, 3])
+    np.testing.assert_array_equal(trainer.adam_groups["recurrent"].second, [9, 10, 11])
+    assert trainer.adam_groups["recurrent"].step == 4
+
+
+def test_real_mask_compaction_identity_reuses_pruning_episode_snapshot(monkeypatch):
+    episodes = []
+
+    class Module:
+        TRAINING_TASK_IDS = ("train",)
+        VALIDATION_TASK_IDS = ("valid",)
+
+        def load_task(self, root, task_id, split):
+            return SimpleNamespace(targets=(task_id,))
+
+        def encode_episode(self, task, query_index):
+            episodes.append((task.targets[0], query_index))
+            return np.ones((1, 1)), np.ones(1, dtype=bool)
+
+        def strict_task_pass_at_1(self, predictions, targets):
+            return True
+
+        def decode_prediction(self, value):
+            return np.asarray(value)
+
+        def run_event_sequence(self, model, events, advances):
+            return None
+
+    class Model:
+        def __init__(self):
+            self.readout_weight = SimpleNamespace(value=np.ones((2, 1)))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.ones(1)
+
+    module = Module()
+    topology = SimpleNamespace(
+        neuron_count=2, input_source=np.array([0, 0]), input_target=np.array([0, 1]),
+        input_value=np.ones(2), recurrent_source=np.array([0]),
+        recurrent_target=np.array([1]), recurrent_value=np.ones(1),
+        readout=np.ones((2, 1)), dale=np.ones(2), mechanisms=((), ()),
+    )
+    monkeypatch.setattr(structural, "_rebuild_real_candidate", lambda *args: (Model(), object()))
+    structural._real_mask_compaction_identity(
+        module, topology, structural.StructuralAdam(
+            np.zeros((2, 1)), np.zeros((2, 1)), np.zeros(2), np.zeros(2),
+            np.zeros(1), np.zeros(1),
+        ), "data", alive=np.array([True, False]),
+    )
+    assert episodes == [("train", 0), ("valid", 0)]
+
+
 def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
     class State:
         def __init__(self, value):

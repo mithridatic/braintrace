@@ -141,3 +141,11 @@ Adam remapping, connected twin addition, tiled connection selection, absence of
 dense pair allocation, and strict promotion rules. Integration tests must check
 prediction-byte equality across accepted mask compaction and the fixed 64-update
 driver.
+### Gate 5 remediation contract
+
+The real-model rebuild must carry the remapped structural Adam moments and step
+into the PP-Prop trainer. Compaction identity must receive the exact pruning
+alive mask and evaluate both candidates from one decoded episode snapshot. The
+focused evidence command is `python -m coverage run --branch --source=. -m
+pytest examples/pp_prop/example21_structural_test.py -q`, followed by
+`python -m coverage report -m`.
