@@ -31,7 +31,7 @@ Rationale for the JAX floor: ``docs/specs/2026-08-07-e05-declare-jax-dependency.
 import re
 import tomllib
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import TypedDict, cast
 
 import pytest
 
@@ -50,13 +50,40 @@ CI_WORKFLOW = REPO_ROOT / '.github' / 'workflows' / 'CI.yml'
 BACKEND_EXTRAS = ('cpu', 'cuda12', 'cuda13', 'tpu')
 
 
-def _load_pyproject() -> dict:
+class DynamicMetadata(TypedDict):
+    version: dict[str, str]
+
+
+class SetuptoolsMetadata(TypedDict):
+    dynamic: DynamicMetadata
+
+
+class ToolMetadata(TypedDict):
+    setuptools: SetuptoolsMetadata
+
+
+ProjectMetadata = TypedDict(
+    'ProjectMetadata',
+    {
+        'dependencies': list[str],
+        'optional-dependencies': dict[str, list[str]],
+    },
+)
+
+
+class PyprojectMetadata(TypedDict):
+    tool: ToolMetadata
+    project: ProjectMetadata
+
+
+def _load_pyproject() -> PyprojectMetadata:
     if not PYPROJECT.is_file():
         pytest.skip('pyproject.toml not available (wheel install)')
-    return tomllib.loads(PYPROJECT.read_text(encoding='utf-8'))
+    metadata = cast(object, tomllib.loads(PYPROJECT.read_text(encoding='utf-8')))
+    return cast(PyprojectMetadata, metadata)
 
 
-def _jax_requirement(dependencies) -> Optional[str]:
+def _jax_requirement(dependencies: list[str]) -> str | None:
     """Return the requirement string naming the ``jax`` project, if any.
 
     Matches the distribution name at the start of the requirement so that
@@ -68,7 +95,7 @@ def _jax_requirement(dependencies) -> Optional[str]:
     return None
 
 
-def _brainevent_requirement(dependencies, extra: Optional[str] = None) -> Optional[str]:
+def _brainevent_requirement(dependencies: list[str], extra: str | None = None) -> str | None:
     """Return the requirement string naming BrainEvent and an optional extra."""
     suffix = rf'\[{re.escape(extra)}\]' if extra is not None else r'(?:\[[^\]]+\])?'
     pattern = rf'^\s*brainevent\s*{suffix}\s*([<>=!~]|$)'
@@ -78,7 +105,7 @@ def _brainevent_requirement(dependencies, extra: Optional[str] = None) -> Option
     return None
 
 
-def _floor(requirement: str) -> Tuple[int, ...]:
+def _floor(requirement: str) -> tuple[int, ...]:
     """Extract the ``>=`` floor of a requirement as a comparable tuple."""
     match = re.search(r'>=\s*([0-9]+(?:\.[0-9]+)*)', requirement)
     assert match is not None, f'No >= floor in {requirement!r}. Provide the missing item named in this message.'
@@ -127,21 +154,25 @@ class TestJaxDependencyDeclaration:
         assert match is not None, 'No jax-version matrix found in CI.yml. Add jax-version matrix to CI.yml.'
         # `""` means "latest" and carries no lower bound; non-numeric entries
         # (a pre-release, say) are not comparable as dotted tuples.
+        raw_versions: list[str] = re.findall(r'"([^"]*)"', match.group(1))
         versions = [
             tuple(int(p) for p in raw.split('.'))
-            for raw in re.findall(r'"([^"]*)"', match.group(1))
+            for raw in raw_versions
             if re.fullmatch(r'[0-9]+(\.[0-9]+)*', raw)
         ]
         assert versions, 'CI matrix pins no explicit JAX version. Provide the missing item named in the message.'
 
         deps = _load_pyproject()['project']['dependencies']
-        assert _floor(_jax_requirement(deps)) == min(versions)
+        requirement = _jax_requirement(deps)
+        assert requirement is not None
+        assert _floor(requirement) == min(versions)
 
     def test_no_upper_cap_on_jax(self):
         # A cap published today constrains JAX releases that do not exist yet,
         # for every braintrace artifact already on PyPI. Breakage is answered
         # with a targeted exclusion plus a fix instead.
         requirement = _jax_requirement(_load_pyproject()['project']['dependencies'])
+        assert requirement is not None
         assert '<' not in requirement, requirement
 
     def test_requirements_txt_states_the_same_floor(self):
@@ -155,7 +186,9 @@ class TestJaxDependencyDeclaration:
         assert requirement is not None, 'JAX missing from requirements.txt. Add JAX to requirements.txt.'
 
         deps = _load_pyproject()['project']['dependencies']
-        assert _floor(requirement) == _floor(_jax_requirement(deps))
+        core_requirement = _jax_requirement(deps)
+        assert core_requirement is not None
+        assert _floor(requirement) == _floor(core_requirement)
 
 
 class TestBackendExtrasSurviveTheCoreDependency:
@@ -167,12 +200,12 @@ class TestBackendExtrasSurviveTheCoreDependency:
     """
 
     @pytest.mark.parametrize('extra', BACKEND_EXTRAS)
-    def test_extra_requests_the_backend_flavoured_jax(self, extra):
+    def test_extra_requests_the_backend_flavoured_jax(self, extra: str):
         optional = _load_pyproject()['project']['optional-dependencies']
         assert f'jax[{extra}]' in optional[extra]
 
     @pytest.mark.parametrize('extra', BACKEND_EXTRAS)
-    def test_extra_requests_the_backend_flavoured_brainevent(self, extra):
+    def test_extra_requests_the_backend_flavoured_brainevent(self, extra: str):
         metadata = _load_pyproject()['project']
         core = _brainevent_requirement(metadata['dependencies'])
         backend = _brainevent_requirement(metadata['optional-dependencies'][extra], extra)
@@ -181,7 +214,7 @@ class TestBackendExtrasSurviveTheCoreDependency:
         assert _floor(backend) == _floor(core)
 
     @pytest.mark.parametrize('extra', ('testing', 'dev'))
-    def test_cpu_test_extras_install_brainevent_cpu_backend(self, extra):
+    def test_cpu_test_extras_install_brainevent_cpu_backend(self, extra: str):
         optional = _load_pyproject()['project']['optional-dependencies']
         assert _brainevent_requirement(optional[extra], 'cpu') is not None
 

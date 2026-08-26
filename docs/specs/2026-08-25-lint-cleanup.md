@@ -37,3 +37,13 @@ imports everywhere else.
 
 The first review found 185 suppression lines after Ruff reported no findings.
 Ruff success alone is therefore not sufficient evidence for this change.
+
+## Type-cleanup sequence
+
+Use the project development environment when running basedpyright so installed
+test dependencies resolve. Clean one source module and its sibling test module
+as one review unit. Start with `_version.py` and `_version_test.py`, because this
+pair has no runtime dependency on the recurrent-network execution paths. Keep
+TOML values behind an `object` boundary, then apply a typed schema for the
+fields that these metadata tests own. This preserves the test assertions and
+removes unknown types without a suppression.
