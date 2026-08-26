@@ -141,6 +141,42 @@ unchanged sibling `d_rtrl_test.py` suite to pass. Reject and revert the
 candidate if compilation overhead offsets the loop reduction or numerical
 behavior changes.
 
+## Revision 6: implemented candidate and matched result
+
+The user approved Revision 5 with the 2026-08-26 comment `execute`. The two
+150-step Python loops in `TestCoupledTraceBoundedness` were replaced with
+`brainstate.transform.for_loop`. Inputs, seeds, graph compilation, eligibility
+trace initialization, fresh state, and all assertions and bounds are unchanged.
+
+Three matched fresh-process candidate runs used the same focused command as the
+baseline:
+
+| Run | Pytest total (s) | Two test calls (s) | Process wall (s) |
+| --- | ---: | ---: | ---: |
+| 1 | 19.10 | 11.36 | 25.83 |
+| 2 | 18.15 | 10.91 | 24.71 |
+| 3 | 17.37 | 10.64 | 23.35 |
+| Median | 18.15 | 10.91 | 24.71 |
+
+Relative to the Revision 5 medians, pytest total improved 50.4%, combined test
+calls improved 62.2%, and measured process wall improved 38.8%. The ranges do
+not overlap the corresponding baseline ranges, so the result is materially
+larger than observed host variance. These are cold fresh-process measurements;
+no warm steady-state claim is made.
+
+Correctness verification passed both tests together and individually. The full
+sibling module passed 83 tests in 126.98 seconds with its pre-existing warnings.
+Two attempts to collect focused changed-test-file coverage exited before pytest
+execution; the second emitted only an Abseil `SetTimeZone()` duplicate-call
+diagnostic. Per the two-failure rule this was not retried. The changed file is a
+test module and no product coverage changed; independent review should treat
+coverage evidence as unavailable rather than passed.
+
+Correction note: the coverage command was initially run with captured output,
+which hid the native-runtime diagnostic. It was repeated once with `-s`; future
+JAX coverage runs should use uncaptured output on the first attempt so native
+initialization failures remain visible.
+
 ## Objective
 
 Reduce developer and CI feedback time without changing algorithm semantics,
