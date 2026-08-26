@@ -38,6 +38,11 @@ imports everywhere else.
 The first review found 185 suppression lines after Ruff reported no findings.
 Ruff success alone is therefore not sufficient evidence for this change.
 
+Modernize the type aliases in `_typing.py` as a separate mechanical unit.
+Replace deprecated `typing` container aliases and `Union` with built-in generic
+syntax. Preserve alias names, accepted values, and runtime behavior. Keep the
+PyTree `Any` boundary until a later unit can define its required recursive type.
+
 ## Type-cleanup sequence
 
 Use the project development environment when running basedpyright so installed
