@@ -82244,7 +82244,7 @@
   },
   "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
   "environment": {
-    "pid": 5864,
+    "pid": 2520,
     "platform": "Windows-11-10.0.26200-SP0",
     "python": "3.14.6",
     "seeds": [
@@ -82258,6 +82258,6 @@
     "failed": 0,
     "passed": 40
   },
-  "implementation_commit": "63836afef486424b6d6bc2972a1190ac5a5e058d",
+  "implementation_commit": "e80cc9e17212dd1dedbf184dc355c747fc5956bd",
   "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b"
 }
