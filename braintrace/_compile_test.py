@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+import inspect
+
 import jax
 import brainstate
 import braintools
@@ -147,7 +149,6 @@ def test_compile_matches_manual_construction():
     assert jnp.allclose(y_manual, y_compiled)
 
 
-import inspect
 
 # --- Task 3: always-init / seed / guardrail / verbose -----------------------
 

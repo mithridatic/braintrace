@@ -24,6 +24,17 @@ import pytest
 
 import braintrace
 from braintrace import ControlFlowPolicy
+from braintrace._testing.oracle import (
+    assert_param_gradients_close,
+    bptt_param_gradients,
+    chunked_online_param_gradients,
+    online_param_gradients,
+)
+from braintrace._testing.oracle_models import (
+    scan_body_rnn,
+    snn_scan_rnn,
+    snn_scan_two_state_rnn,
+)
 
 def DESCEND():
     return ControlFlowPolicy(scan_unroll_limit=4, scan_descent='auto')
@@ -207,17 +218,6 @@ class TestSubstepFold:
         assert jnp.shape(out) == (1, 4)
 
 
-from braintrace._testing.oracle import (
-    assert_param_gradients_close,
-    bptt_param_gradients,
-    chunked_online_param_gradients,
-    online_param_gradients,
-)
-from braintrace._testing.oracle_models import (
-    scan_body_rnn,
-    snn_scan_rnn,
-    snn_scan_two_state_rnn,
-)
 
 ATOL_BPTT = 1e-4
 # Float32 accumulation-order noise between the folded (inner-scan) and the

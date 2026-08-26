@@ -27,6 +27,20 @@ import brainunit as u
 
 import braintrace
 from braintrace._op.embedding import embedding, etp_emb_p, etp_emb_v_p
+from braintrace._op import (
+    ETP_RULES_INIT_DRTRL,
+    ETP_RULES_INIT_PP,
+    ETP_RULES_XY_TO_DW,
+    ETP_RULES_DT_TO_T,
+    get_pp_x_repr,
+)
+from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
+from braintrace._testing.oracle import (
+    assert_direction_aligned,
+    assert_param_gradients_close,
+    bptt_param_gradients,
+    online_param_gradients,
+)
 
 _FakeVar = namedtuple('_FakeVar', ['aval'])
 _FakeAval = namedtuple('_FakeAval', ['shape', 'dtype'])
@@ -125,13 +139,6 @@ class TestJAXRules:
         assert etp_emb_p in prims and etp_emb_v_p not in prims
 
 
-from braintrace._op import (
-    ETP_RULES_INIT_DRTRL,
-    ETP_RULES_INIT_PP,
-    ETP_RULES_XY_TO_DW,
-    ETP_RULES_DT_TO_T,
-)
-from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
 
 
 class TestEmbEtpRules:
@@ -210,7 +217,6 @@ class TestEmbEtpRules:
         assert drtrl['weight'].dtype == jnp.float16
 
 
-from braintrace._op import get_pp_x_repr
 
 
 class TestPPXRepr:
@@ -286,12 +292,6 @@ class TestPublicExports:
             assert name in op.__all__
 
 
-from braintrace._testing.oracle import (
-    assert_direction_aligned,
-    assert_param_gradients_close,
-    bptt_param_gradients,
-    online_param_gradients,
-)
 
 
 def _leaky_embedding_factory(V=5, D=4, leak=0.9, seed=0):

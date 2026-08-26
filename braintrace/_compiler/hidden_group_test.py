@@ -20,14 +20,27 @@ from pprint import pprint
 
 import brainstate
 import jax
+import jax.numpy as jnp
 import numpy as np
 import pytest
 import brainunit as u
 
 import braintrace
+from braintrace import DiagnosticKind, DiagnosticLevel
+from braintrace._compiler.diagnostics import diagnostic_context
 from braintrace._testing import compiler_models as group_etrace_model
-from braintrace._compiler.hidden_group import find_hidden_groups_from_module
-from braintrace._compiler.hidden_group import group_merging
+from braintrace._compiler.hidden_group import (
+    _transition_contains_while,
+    block_diagonal_last_dim,
+    find_hidden_groups_from_minfo,
+    find_hidden_groups_from_module,
+    full_position_jacobian,
+    group_merging,
+    jacfwd_last_dim,
+    jacrev_last_dim,
+    widened_block_jacobian,
+)
+from braintrace._compiler.position_graph import build_snap_pattern
 from braintrace._testing.models import (
     IF_Delta_Dense_Layer,
     LIF_ExpCo_Dense_Layer,
@@ -1246,18 +1259,6 @@ class TestGroupOrderingAndDiagnostics:
 # Phase 3: weight-free while loops as opaque forward nodes
 # ---------------------------------------------------------------------------
 
-import jax.numpy as jnp
-
-from braintrace import DiagnosticKind, DiagnosticLevel
-from braintrace._compiler.diagnostics import diagnostic_context
-from braintrace._compiler.hidden_group import (
-    _transition_contains_while,
-    block_diagonal_last_dim,
-    find_hidden_groups_from_minfo,
-    full_position_jacobian,
-    jacfwd_last_dim,
-    jacrev_last_dim,
-)
 
 _WHILE_K = 3
 
@@ -1635,8 +1636,6 @@ class TestWhileRecurrentMixingGuard:
 # SnAp-n: the widened transition operator (P3)
 # ---------------------------------------------------------------------------
 
-from braintrace._compiler.hidden_group import widened_block_jacobian
-from braintrace._compiler.position_graph import build_snap_pattern
 
 
 def _full_jacobian(fn, h):

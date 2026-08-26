@@ -13,6 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
+import os
+import pathlib
+import subprocess
+import sys
+import textwrap
+
 import brainstate
 import brainunit as u
 import jax
@@ -22,7 +28,10 @@ import pytest
 
 import braintrace
 from braintrace._algorithm import ETraceAlgorithm
-from braintrace._algorithm.vjp_base import ETraceVjpAlgorithm
+from braintrace._algorithm.vjp_base import (
+    ETraceVjpAlgorithm,
+    _check_hidden_gradient_correspondence,
+)
 from braintrace._algorithm.vjp_graph_executor import ETraceVjpGraphExecutor
 
 
@@ -851,13 +860,6 @@ class TestTheExitCotangentTemplate:
 # `python -O` stripped all three.
 # ---------------------------------------------------------------------------
 
-import os
-import pathlib
-import subprocess
-import sys
-import textwrap
-
-from braintrace._algorithm.vjp_base import _check_hidden_gradient_correspondence
 
 
 def _e01_groups(n_rec=4):

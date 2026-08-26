@@ -27,6 +27,22 @@ import brainunit as u
 
 import braintrace
 from braintrace._op.einsum import EinsumSpec, parse_etp_einsum
+from braintrace._op.einsum import einsum, etp_einsum_p
+from braintrace._op import (
+    ETP_RULES_INIT_DRTRL,
+    ETP_RULES_INIT_PP,
+    ETP_RULES_XY_TO_DW,
+    ETP_RULES_DT_TO_T,
+)
+from braintrace._op.dense import etp_mm_p
+from braintrace._op.grouped import etp_gmm_p
+from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
+from braintrace._testing.oracle import (
+    assert_direction_aligned,
+    assert_param_gradients_close,
+    bptt_param_gradients,
+    online_param_gradients,
+)
 
 _FakeVar = namedtuple('_FakeVar', ['aval'])
 _FakeAval = namedtuple('_FakeAval', ['shape', 'dtype'])
@@ -82,7 +98,6 @@ class TestParser:
             parse_etp_einsum(bad)
 
 
-from braintrace._op.einsum import einsum, etp_einsum_p
 
 
 class TestForwardCorrectness:
@@ -149,15 +164,6 @@ class TestJAXRules:
         np.testing.assert_allclose(g, jnp.tile(x.sum(0)[:, None], (1, 4)), atol=1e-5)
 
 
-from braintrace._op import (
-    ETP_RULES_INIT_DRTRL,
-    ETP_RULES_INIT_PP,
-    ETP_RULES_XY_TO_DW,
-    ETP_RULES_DT_TO_T,
-)
-from braintrace._op.dense import etp_mm_p
-from braintrace._op.grouped import etp_gmm_p
-from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
 
 
 class TestEinsumEtpRules:
@@ -264,12 +270,6 @@ class TestPublicExports:
             braintrace.matmul(jnp.ones((5, 2, 3)), jnp.ones((3, 4)))
 
 
-from braintrace._testing.oracle import (
-    assert_direction_aligned,
-    assert_param_gradients_close,
-    bptt_param_gradients,
-    online_param_gradients,
-)
 
 
 def _per_head_rnn_factory(H=2, E=3, n_in=3, seed=0):

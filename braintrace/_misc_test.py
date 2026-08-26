@@ -32,6 +32,7 @@ from braintrace._misc import (
     remove_units,
     set_module_as,
     state_traceback,
+    suffix_products,
     unknown_state_path,
 )
 
@@ -162,7 +163,6 @@ class TestBaseEnum:
             _Color.get(123)
 
 
-from braintrace._misc import suffix_products
 
 
 def _naive_suffix(diag_seq):

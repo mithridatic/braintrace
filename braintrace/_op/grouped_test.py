@@ -27,6 +27,20 @@ import brainunit as u
 
 import braintrace
 from braintrace._op.grouped import etp_gmm_p, etp_gmv_p, grouped_matmul
+from braintrace._op import (
+    ETP_RULES_INIT_DRTRL,
+    ETP_RULES_INIT_PP,
+    ETP_RULES_XY_TO_DW,
+    ETP_RULES_DT_TO_T,
+    get_fast_path_rules,
+)
+from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
+from braintrace._testing.oracle import (
+    assert_direction_aligned,
+    assert_param_gradients_close,
+    bptt_param_gradients,
+    online_param_gradients,
+)
 
 _FakeVar = namedtuple('_FakeVar', ['aval'])
 _FakeAval = namedtuple('_FakeAval', ['shape', 'dtype'])
@@ -148,13 +162,6 @@ class TestJAXRules:
         np.testing.assert_allclose(g, jnp.full((2, 3, 4), 5.0), atol=1e-6)
 
 
-from braintrace._op import (
-    ETP_RULES_INIT_DRTRL,
-    ETP_RULES_INIT_PP,
-    ETP_RULES_XY_TO_DW,
-    ETP_RULES_DT_TO_T,
-)
-from braintrace._op.op_rule_oracle import assert_xy_to_dw_matches_vjp
 
 
 class TestGmmEtpRules:
@@ -273,7 +280,6 @@ class TestGmvEtpRules:
         assert pp.dtype == jnp.float16
 
 
-from braintrace._op import get_fast_path_rules
 
 
 class TestGroupedFastPath:
@@ -349,12 +355,6 @@ class TestPublicExports:
             assert name in op.__all__
 
 
-from braintrace._testing.oracle import (
-    assert_direction_aligned,
-    assert_param_gradients_close,
-    bptt_param_gradients,
-    online_param_gradients,
-)
 
 
 def _grouped_tanh_rnn_factory(G=2, K=3, n_in=3, seed=0):

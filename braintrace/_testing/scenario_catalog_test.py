@@ -53,6 +53,32 @@ from braintrace._op import (
     etp_mm_p,
     etp_mv_p,
 )
+from braintrace._compiler.diagnostics import diagnostic_context
+from braintrace._compiler.hid_param_op import (
+    PathClassification,
+    _scan_jaxpr_for_etp_eqns,
+)
+from braintrace._testing.scenario_catalog import (
+    BranchingFanOutRNN,
+    CondBranchRNN,
+    ConstWeightParamBiasRNN,
+    DeepNestedModuleRNN,
+    MaskedWeightRNN,
+    MixedBatchedRNN,
+    NestedJitRNN,
+    PartialPathRNN,
+    PytreeParamRNN,
+    ResidualSkipRNN,
+    ScanBodyRNN,
+    SharedSubmoduleTwiceRNN,
+    SharedTiedWeightRNN,
+    StackedDeepRNN,
+    WhileSettleRNN,
+    WhileSettleTwinRNN,
+    make_cond_branches_etp_jaxpr,
+    make_scan_body_etp_jaxpr,
+    make_while_body_etp_jaxpr,
+)
 
 
 def _compile(model, *inputs):
@@ -700,25 +726,6 @@ class TestCategoryF_Determinism:
 # concatenated-hidden shape.  If this fails, the transition jaxpr is
 # malformed and downstream VJP algorithms will crash at runtime.
 
-from braintrace._compiler.diagnostics import diagnostic_context
-from braintrace._compiler.hid_param_op import (
-    PathClassification,
-    _scan_jaxpr_for_etp_eqns,
-)
-from braintrace._testing.scenario_catalog import (
-    PytreeParamRNN,
-    MaskedWeightRNN,
-    StackedDeepRNN,
-    SharedTiedWeightRNN,
-    MixedBatchedRNN,
-    PartialPathRNN,
-    NestedJitRNN,
-    CondBranchRNN,
-    ScanBodyRNN,
-    make_scan_body_etp_jaxpr,
-    make_cond_branches_etp_jaxpr,
-    make_while_body_etp_jaxpr,
-)
 
 
 # ---------------------------------------------------------------------------
@@ -1171,10 +1178,6 @@ class TestCategoryO_NestedJit:
 # Category P — Branching fan-out (one y directly feeds two groups)
 # ---------------------------------------------------------------------------
 
-from braintrace._testing.scenario_catalog import (
-    BranchingFanOutRNN,
-    ConstWeightParamBiasRNN,
-)
 
 
 class TestCategoryP_BranchingFanOut:
@@ -1281,11 +1284,6 @@ class TestCategoryQ_AnyTrainableKeyGating:
 # Category R — Complex module graphs (shared submodule, residual, deep nesting)
 # ---------------------------------------------------------------------------
 
-from braintrace._testing.scenario_catalog import (
-    SharedSubmoduleTwiceRNN,
-    ResidualSkipRNN,
-    DeepNestedModuleRNN,
-)
 
 
 class TestCategoryR_ComplexModuleGraphs:
@@ -1376,10 +1374,6 @@ class TestCategoryR_ComplexModuleGraphs:
 # Category S — While-hidden opaque forward (Phase 3)
 # ---------------------------------------------------------------------------
 
-from braintrace._testing.scenario_catalog import (
-    WhileSettleRNN,
-    WhileSettleTwinRNN,
-)
 
 
 class TestCategoryS_WhileHiddenOpaqueFwd:

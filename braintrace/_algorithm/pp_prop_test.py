@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import brainstate
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -803,7 +804,6 @@ class TestPpPropGradients:
 # ===========================================================================
 #  Import needed for gradient leaf checking
 # ===========================================================================
-import jax
 
 
 class TestDiagOn:

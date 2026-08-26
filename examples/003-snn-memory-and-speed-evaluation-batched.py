@@ -19,11 +19,21 @@ import time
 from functools import reduce
 from typing import Callable, Union
 
+import braintrace
+import brainstate
+import braintools
+import brainunit as u
+import jax
+import jax.numpy as jnp
 import brainpy.state
 import matplotlib
 matplotlib.use('Agg')  # Headless backend: render to file, no display needed
 import matplotlib.pyplot as plt
 import numpy as np
+import tonic
+from tonic.collation import PadTensors
+from tonic.datasets import DVSGesture
+from torch.utils.data import DataLoader
 
 from utils import MyArgumentParser
 
@@ -86,18 +96,6 @@ parser.add_argument("--rec_scale", type=float, default=2.)
 parser.add_argument("--spk_reset", type=str, default='soft')
 
 global_args = parser.parse_args()
-
-import braintrace
-import brainstate
-import braintools
-import brainunit as u
-import jax
-import jax.numpy as jnp
-import tonic
-from tonic.collation import PadTensors
-from tonic.datasets import DVSGesture
-from torch.utils.data import DataLoader
-
 
 def _format_sim_epoch(sim: Union[int, float], length: int):
     if 0. <= sim < 1.:
