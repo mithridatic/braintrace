@@ -295,6 +295,38 @@ def test_preclip_mass_is_taken_directly_from_real_etrace_boundary():
     assert loss == 7.0
 
 
+def test_collect_model_evidence_keeps_preclip_mass_and_task_scores():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = type("CSR", (), {"indptr": np.array([0, 1]), "indices": np.array([0])})()
+        recurrent_csr = type("CSR", (), {
+            "indptr": np.array([0, 1, 2]), "indices": np.array([1, 0])
+        })()
+        input_weight = State([1.0])
+        recurrent_weight = State([2.0, 3.0])
+        readout_weight = State(np.ones((2, 1)))
+
+    class Learner:
+        def etrace_grad(self, events, **kwargs):
+            return {("model", "recurrent_weight"): np.array([2.0, -3.0])}, np.array([4.0])
+
+    result = structural.collect_model_evidence(
+        Model(), Learner(), np.ones((1, 1)), lambda value: value,
+        np.ones((2, 2)), np.ones((2, 2)), reduction="sum",
+    )
+    assert result["model_neurons"] == 2
+    assert result["preclip_exceeds_clip"]
+    np.testing.assert_array_equal(result["gradient_mass"], [[2.0, 3.0], [0.0, 0.0]])
+    with pytest.raises(ValueError, match="recurrent weight"):
+        structural.collect_model_evidence(
+            Model(), type("L", (), {"etrace_grad": lambda *a, **k: ({}, 0)})(),
+            np.ones((1, 1)), lambda value: value, np.ones((2, 2)), np.ones((2, 2)),
+        )
+
+
 def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
     class Transform:
         calls: ClassVar[list] = []
@@ -334,7 +366,7 @@ def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
         "neuron-prune", (True,), lambda: (None, 1), lambda _: (True,),
         clock=iter((0.0, 1.0)).__next__,
     )
-    assert pruning["promoted"] and pruning["updates"] == 0
+    assert not pruning["promoted"] and pruning["updates"] == 0
 
 
 def test_artifact_is_canonical_and_records_environment(tmp_path):
@@ -350,6 +382,56 @@ def test_arm_gate_requires_gain_no_regression_limits_and_fixed_updates():
     assert structural.promote_arm((False, True), (True, True), 299.0, "addition", 64)
     assert not structural.promote_arm((False, True), (True, False), 1.0, "addition", 64)
     assert not structural.promote_arm((False,), (True,), 301.0, "addition", 64)
-    assert structural.promote_arm((True,), (True,), 1.0, "pruning", 0)
+    assert not structural.promote_arm((True,), (True,), 1.0, "pruning", 0)
     with pytest.raises(ValueError, match="64"):
         structural.promote_arm((False,), (True,), 1.0, "addition", 63)
+
+
+def test_integrated_arm_rebuilds_model_remaps_adam_and_resets_eligibility():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        def __init__(self):
+            self.input_csr = type("CSR", (), {
+                "indptr": np.array([0, 1, 2]),
+                "indices": np.array([0, 1]),
+            })()
+            self.recurrent_csr = type("CSR", (), {
+                "indptr": np.array([0, 1, 2, 3]),
+                "indices": np.array([1, 2, 0]),
+            })()
+            self.input_weight = State([1.0, 1.0])
+            self.recurrent_weight = State([1.0, 1.0, 1.0])
+            self.readout_weight = State(np.ones((3, 1)))
+            self.reset_count = 0
+
+        def reset_episode(self, learner):
+            self.reset_count += 1
+
+    def rebuild(topology, adam):
+        model = Model()
+        model.input_csr.indices = topology.input_target
+        model.recurrent_csr.indices = topology.recurrent_target
+        model.input_weight.value = topology.input_value
+        model.recurrent_weight.value = topology.recurrent_value
+        model.readout_weight.value = topology.readout
+        return model, object()
+
+    result = structural.run_integrated_arm(
+        "connection-prune", Model, lambda model: object(),
+        lambda model, learner: (False, True), rebuild,
+        before_strict=(False, True),
+        evidence={
+            "neuron_scores": np.array([1.0, 1.0, 1.0]),
+            "connection_scores": np.array([0.1, 0.2, 0.3]),
+            "validation_strict": (False, True),
+        },
+        clock=iter((0.0, 1.0)).__next__,
+    )
+    assert result["real_model"]
+    assert result["adam_remapped"]
+    assert result["eligibility_reset"]
+    assert result["mutated_item_count"] == 1
+    assert not result["promoted"]
