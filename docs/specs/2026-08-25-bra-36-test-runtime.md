@@ -104,6 +104,43 @@ where a fresh-process benchmark proves duplicated work. This scope requires a
 new approval because the current approval is bounded to the Gate A/Gate B
 investigation.
 
+## Revision 5: broader-suite candidate for approval
+
+The 2026-08-26 user comment `handle that` authorizes the broader-suite
+profiling proposed in Revision 4. A fresh-process sample of five algorithm test
+modules completed 343 tests in 260.99 seconds. The two slowest related
+regressions were the GRU eligibility-trace boundedness tests in
+`braintrace/_algorithm/d_rtrl_test.py`. Both drive 150 repeated model updates
+with a bare Python loop.
+
+Three matched fresh-process baseline runs of the boundedness class produced:
+
+| Run | Pytest total (s) | Two test calls (s) | Process wall (s) |
+| --- | ---: | ---: | ---: |
+| 1 | 37.67 | 28.83 | 43.01 |
+| 2 | 34.33 | 28.13 | 38.26 |
+| 3 | 36.61 | 30.96 | 40.35 |
+| Median | 36.61 | 28.83 | 40.35 |
+
+The proposed candidate replaces only these two 150-step test-driver loops with
+`brainstate.transform.for_loop`. This is expected to lower the complete update
+sequence as one XLA program and complies with the repository rule against bare
+Python loops for repeated model execution.
+
+The semantic invariants are exact: preserve the same random seed, model and
+algorithm types, 150 input values and order, graph compilation and eligibility
+trace initialization boundaries, fresh mutable state per test, recurrence-path
+assertion, finite-value assertion, and `max_abs < 1e3` bound. Do not change
+product code, tolerances, assertions, or the scientific scope of either
+regression.
+
+Approval is requested for this test-only candidate. Acceptance requires the
+focused tests to pass individually and together, three matched candidate runs
+to improve median pytest time materially beyond observed variance, and the
+unchanged sibling `d_rtrl_test.py` suite to pass. Reject and revert the
+candidate if compilation overhead offsets the loop reduction or numerical
+behavior changes.
+
 ## Objective
 
 Reduce developer and CI feedback time without changing algorithm semantics,
