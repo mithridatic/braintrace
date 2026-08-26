@@ -816,32 +816,43 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     scores[:] = 0.0
     scores[donors] = np.arange(required, 0, -1)
     edge_scores = np.asarray(evidence["connection_scores"])
+    adam = StructuralAdam(
+        np.zeros_like(topology.readout), np.zeros_like(topology.readout),
+        np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
+        np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+    )
     started = clock()
     if arm == "neuron-prune":
         validation = baseline[-len(module.VALIDATION_TASK_IDS):]
         if any(validation):
             alive = prune_neurons(topology, scores, validation)
-            candidate = compact(topology, alive,
-                                StructuralAdam(
-                                    np.zeros_like(topology.readout), np.zeros_like(topology.readout),
-                                    np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
-                                    np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
-                                ))[0]
+            candidate, candidate_adam, reset = compact(topology, alive, adam)
         else:
             candidate = topology
+            candidate_adam = adam
+            reset = True
         count = topology.neuron_count - candidate.neuron_count
         updates = 0
     elif arm == "connection-prune":
         validation = baseline[-len(module.VALIDATION_TASK_IDS):]
         if any(validation):
             candidate, keep = prune_recurrent(topology, edge_scores, validation)
+            candidate_adam = StructuralAdam(
+                adam.neuron_first, adam.neuron_second, adam.input_first,
+                adam.input_second, adam.recurrent_first[keep],
+                adam.recurrent_second[keep], adam.step,
+            )
             count = int(np.sum(~keep))
         else:
             candidate = topology
+            candidate_adam = adam
             count = 0
+        reset = True
         updates = 0
     elif arm == "neuron-add":
         candidate, donors = add_twin_neurons(topology, scores)
+        candidate_adam = grow_adam_for_twins(adam, topology, candidate)
+        reset = True
         count = len(donors)
         updates = 64
     else:
@@ -851,18 +862,29 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
             scores, scores, mutation_count(len(topology.recurrent_value)),
         )
         candidate = add_recurrent_connections(topology, pairs)
+        candidate_adam = grow_adam_for_connections(adam, len(pairs))
+        reset = True
         count = len(pairs)
         updates = 64
+    candidate_model, candidate_learner = _rebuild_real_candidate(
+        module, candidate, learner
+    )
+    if hasattr(candidate_model, "reset_episode"):
+        candidate_model.reset_episode(candidate_learner)
     if updates:
         import brainstate
-        update = _real_pp_prop_update(module, model, learner, evidence)
+        update = _real_pp_prop_update(
+            module, candidate_model, candidate_learner, evidence
+        )
         run_addition_updates(
             brainstate.transform,
             update,
             updates=updates,
         )
+    after = tuple(_fixed_task_evidence(
+        module, candidate_model, candidate_learner, data_root
+    )["strict"])
     elapsed = clock() - started
-    after = tuple(baseline)
     validation = baseline[-len(module.VALIDATION_TASK_IDS):]
     return {
         "arm": arm,
@@ -884,8 +906,8 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         ),
         "max_resident_tile_pairs": resident_tile_pairs(256),
         "dense_neuron_pair_array": False,
-        "adam_remapped": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
-        "eligibility_reset": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
+        "adam_remapped": True,
+        "eligibility_reset": bool(reset),
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],

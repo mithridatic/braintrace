@@ -562,3 +562,50 @@ def test_real_pruning_arm_records_closed_validation_gate(monkeypatch):
     assert result["pruning_blocked"]
     assert result["mutated_item_count"] == 0
     assert result["candidate_neurons"] == result["baseline_neurons"]
+
+
+def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        def __init__(self, topology=None):
+            self.is_candidate = topology is not None
+            self.input_csr = SimpleNamespace(
+                indptr=np.array([0, 1, 2]), indices=np.array([0, 1])
+            )
+            self.recurrent_csr = SimpleNamespace(
+                indptr=np.array([0, 1, 2]), indices=np.array([1, 0])
+            )
+            self.input_weight = State(np.ones(2))
+            self.recurrent_weight = State(np.ones(2))
+            self.readout_weight = State(np.ones((2, 1)))
+
+        def reset_episode(self, learner):
+            pass
+
+    module = SimpleNamespace(
+        BrainCellArcModel=Model,
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+        compile_pp_prop_model=lambda model: object(),
+    )
+    evidence = {
+        "strict": [False], "neuron_scores": np.array([1.0, 0.0]),
+        "connection_scores": np.ones(2), "gradient_mass": np.ones(2),
+        "preclip_gradient_mass": [], "task_spike_evidence": [],
+        "task_readout_evidence": [],
+    }
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(
+        structural, "_fixed_task_evidence",
+        lambda _module, model, _learner, _root: {
+            **evidence, "strict": [True] if model.is_candidate else [False]
+        },
+    )
+    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda _: None)
+    monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
+    result = structural.measure_real_arm("neuron-add", data_root="data")
+    assert result["candidate_neurons"] == 3
+    assert result["after_strict"] == [True]

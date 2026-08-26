@@ -177,21 +177,48 @@ def compile_pp_prop_model(model):
     )
 
 
+def _csr_indptr(source, rows):
+    counts = jnp.bincount(jnp.asarray(source, dtype=jnp.int32), length=rows)
+    return jnp.concatenate((jnp.zeros((1,), dtype=jnp.int32), jnp.cumsum(counts)))
+
+
 class BrainCellArcModel(brainstate.nn.Module):
     """The 2,048-neuron sparse BrainCell baseline."""
 
-    def __init__(self):
+    def __init__(self, topology=None):
         super().__init__()
-        self.input_csr = input_topology()
-        self.recurrent_csr = recurrent_topology()
-        self.input_weight = brainstate.ParamState(self.input_csr.data)
-        self.recurrent_weight = brainstate.ParamState(self.recurrent_csr.data)
+        if topology is None:
+            self.input_csr = input_topology()
+            self.recurrent_csr = recurrent_topology()
+            input_values = self.input_csr.data
+            recurrent_values = self.recurrent_csr.data
+            neuron_count = N_NEURONS
+            readout = _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
+        else:
+            neuron_count = topology.neuron_count
+            self.input_csr = brainevent.CSR(
+                jnp.asarray(topology.input_value),
+                jnp.asarray(topology.input_target, dtype=jnp.int32),
+                _csr_indptr(topology.input_source, N_INPUTS),
+                shape=(N_INPUTS, neuron_count),
+            )
+            self.recurrent_csr = brainevent.CSR(
+                jnp.asarray(topology.recurrent_value),
+                jnp.asarray(topology.recurrent_target, dtype=jnp.int32),
+                _csr_indptr(topology.recurrent_source, neuron_count),
+                shape=(neuron_count, neuron_count),
+            )
+            input_values = self.input_csr.data
+            recurrent_values = self.recurrent_csr.data
+            readout = jnp.asarray(topology.readout)
+        self.input_weight = brainstate.ParamState(input_values)
+        self.recurrent_weight = brainstate.ParamState(recurrent_values)
         self.readout_weight = brainstate.ParamState(
-            _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
+            readout
         )
         self.readout_bias = brainstate.ParamState(jnp.zeros((N_READOUT,), dtype=jnp.float32))
-        self.previous_spikes = brainstate.HiddenState(jnp.zeros((N_NEURONS,), dtype=jnp.float32))
-        self.cell = CompatibilityHodgkinHuxley(N_NEURONS)
+        self.previous_spikes = brainstate.HiddenState(jnp.zeros((neuron_count,), dtype=jnp.float32))
+        self.cell = CompatibilityHodgkinHuxley(neuron_count)
         self.cell.init_state()
         self.reset_episode()
 
@@ -199,7 +226,7 @@ class BrainCellArcModel(brainstate.nn.Module):
         """Reset biological and eligibility state while retaining parameters."""
 
         self.cell.reset_state()
-        self.previous_spikes.value = jnp.zeros((N_NEURONS,), dtype=jnp.float32)
+        self.previous_spikes.value = jnp.zeros((self.cell.V.value.shape[0],), dtype=jnp.float32)
         if learner is not None and hasattr(learner, "reset_state"):
             learner.reset_state()
 
