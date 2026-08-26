@@ -137,6 +137,87 @@ class StructuralAdam:
     step: int = 0
 
 
+def remap_muon_groups(muon_groups, parameter_maps):
+    """Remap Muon state leaves when structural parameters change shape.
+
+    Parameters
+    ----------
+    muon_groups : mapping
+        Muon optimizer state keyed by parameter name.
+    parameter_maps : mapping
+        Each value is ``(selector, target_shape)`` for the parameter rows.
+
+    Returns
+    -------
+    mapping
+        A copied state tree with parameter-shaped leaves remapped.
+    """
+    import copy
+
+    def remap(value, selector, target_shape):
+        if isinstance(value, dict):
+            return {key: remap(item, selector, target_shape)
+                    for key, item in value.items()}
+        if isinstance(value, tuple) and hasattr(value, "_fields"):
+            return type(value)(*(remap(item, selector, target_shape)
+                                 for item in value))
+        if hasattr(value, "__dict__"):
+            result = copy.copy(value)
+            for name, item in vars(value).items():
+                setattr(result, name, remap(item, selector, target_shape))
+            return result
+        shape = getattr(value, "shape", None)
+        source_shape = (len(selector),) + tuple(target_shape[1:])
+        if shape != source_shape:
+            return value
+        selected = value[selector]
+        if selected.shape[0] == target_shape[0]:
+            return selected
+        padding = [(0, target_shape[0] - selected.shape[0])]
+        padding.extend((0, 0) for _ in target_shape[1:])
+        return np.pad(selected, padding)
+
+    return {
+        name: remap(state, *parameter_maps[name])
+        if name in parameter_maps else state
+        for name, state in muon_groups.items()
+    }
+
+
+def structural_muon_parameter_maps(source, candidate, arm, alive=None):
+    """Return row selectors for Muon state during a structural rebuild."""
+    if arm == "neuron-prune":
+        alive = np.asarray(alive, dtype=bool)
+        input_selector = alive[source.input_target]
+        recurrent_selector = alive[source.recurrent_source] & alive[source.recurrent_target]
+        neuron_selector = alive
+    elif arm == "connection-prune":
+        input_selector = np.ones(len(source.input_value), dtype=bool)
+        recurrent_selector = np.asarray(
+            [
+                (src, dst) in set(zip(
+                    candidate.recurrent_source.tolist(),
+                    candidate.recurrent_target.tolist(),
+                ))
+                for src, dst in zip(
+                    source.recurrent_source, source.recurrent_target
+                )
+            ],
+            dtype=bool,
+        )
+        neuron_selector = np.ones(source.neuron_count, dtype=bool)
+    else:
+        input_selector = np.arange(len(source.input_value))
+        recurrent_selector = np.arange(len(source.recurrent_value))
+        neuron_selector = np.arange(source.neuron_count)
+    return {
+        "input": (input_selector, (len(candidate.input_value),)),
+        "recurrent": (recurrent_selector, (len(candidate.recurrent_value),)),
+        "readout_weight": (neuron_selector, candidate.readout.shape),
+        "readout_bias": (neuron_selector, (candidate.neuron_count,)),
+    }
+
+
 def pruning_mask(scores, validation_strict):
     if not any(validation_strict):
         raise ValueError("validation strict gate is closed")
@@ -641,7 +722,10 @@ def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=N
     }
 
 
-def _real_pp_prop_update(module, model, learner, evidence, adam=None):
+def _real_pp_prop_update(
+    module, model, learner, evidence, adam=None, *, muon_groups=None,
+    parameter_maps=None,
+):
     """Return one compiled PP-Prop candidate update for Example 21."""
     import jax.numpy as jnp
 
@@ -651,6 +735,10 @@ def _real_pp_prop_update(module, model, learner, evidence, adam=None):
         learner,
         {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
     )
+    if muon_groups is not None:
+        trainer.muon_groups = remap_muon_groups(
+            muon_groups, parameter_maps or {}
+        )
 
     if adam is not None:
         for name, first, second in (
@@ -955,9 +1043,23 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         candidate_model.reset_episode(candidate_learner)
     if updates:
         import brainstate
-        update = _real_pp_prop_update(
-            module, candidate_model, candidate_learner, evidence, candidate_adam
+        source_update = _real_pp_prop_update(
+            module, model, learner, evidence, adam
         )
+        source_trainer = getattr(source_update, "trainer", None)
+        parameter_maps = structural_muon_parameter_maps(
+            topology, candidate, arm, pruning_alive
+        )
+        muon_groups = getattr(source_trainer, "muon_groups", None)
+        if muon_groups is None:
+            update = _real_pp_prop_update(
+                module, candidate_model, candidate_learner, evidence, candidate_adam
+            )
+        else:
+            update = _real_pp_prop_update(
+                module, candidate_model, candidate_learner, evidence, candidate_adam,
+                muon_groups=muon_groups, parameter_maps=parameter_maps,
+            )
         run_addition_updates(
             brainstate.transform,
             update,
@@ -999,6 +1101,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "max_resident_tile_pairs": resident_tile_pairs(256),
         "dense_neuron_pair_array": False,
         "adam_remapped": True,
+        "muon_remapped": bool(updates),
         "eligibility_reset": bool(reset),
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),

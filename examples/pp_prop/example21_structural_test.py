@@ -564,6 +564,47 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     assert trainer.adam_groups["recurrent"].step == 4
 
 
+def test_muon_groups_are_remapped_for_structural_candidate():
+    state = SimpleNamespace(
+        mu=np.arange(6, dtype=float).reshape(3, 2),
+        count=np.array(7, dtype=np.int32),
+    )
+    mapped = structural.remap_muon_groups(
+        {"readout_weight": state},
+        {"readout_weight": (np.array([True, False, True]), (2, 2))},
+    )
+    np.testing.assert_array_equal(mapped["readout_weight"].mu, [[0, 1], [4, 5]])
+    assert mapped["readout_weight"].count == 7
+
+
+def test_real_update_hands_remapped_muon_groups_to_trainer():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Trainer:
+        def __init__(self, *args, **kwargs):
+            self.muon_groups = {}
+
+        def update_episode(self, *args, **kwargs):
+            return 0.0, 0.0
+
+    model = SimpleNamespace(
+        input_weight=State([1, 1]), recurrent_weight=State([1, 1, 1])
+    )
+    model.reset_episode = lambda learner: None
+    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    state = SimpleNamespace(mu=np.arange(6, dtype=float).reshape(3, 2))
+    update = structural._real_pp_prop_update(
+        module, model, SimpleNamespace(),
+        {"events": np.zeros((1, 2)), "advances": np.ones(1)},
+        muon_groups={"readout_weight": state},
+        parameter_maps={"readout_weight": (np.array([True, False, True]), (2, 2))},
+    )
+    np.testing.assert_array_equal(update.trainer.muon_groups["readout_weight"].mu,
+                                  [[0, 1], [4, 5]])
+
+
 def test_real_mask_compaction_identity_reuses_pruning_episode_snapshot(monkeypatch):
     episodes = []
 
