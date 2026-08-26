@@ -155,7 +155,8 @@ def stacked_tanh_rnn(n_in: int = 3, n_rec: int = 4, seed: int = 0) -> ModelSpec:
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = lambda seed: brainstate.random.RandomState(seed).value
+                def k(seed):
+                    return brainstate.random.RandomState(seed).value
                 self.w1 = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed)))
                 self.w2 = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed + 1)))
                 self.win = brainstate.ParamState(0.1 * brainstate.random.normal(size=(n_in, n_rec), key=k(seed + 2)))

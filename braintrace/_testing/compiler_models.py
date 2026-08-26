@@ -93,8 +93,11 @@ class ALIF(brainpy.state.Neuron):
         V = last_v - (V_th - self.V_reset) * lst_spk
         a = last_a + lst_spk
         # Membrane potential
-        dv = lambda v: (-v + self.V_rest + self.R * self.sum_current_inputs(x, v)) / self.tau
-        da = lambda a: -a / self.tau_a
+        def dv(v):
+            return (-v + self.V_rest + self.R * self.sum_current_inputs(x, v)) / self.tau
+
+        def da(a):
+            return -a / self.tau_a
         V = brainstate.nn.exp_euler_step(dv, V)
         a = brainstate.nn.exp_euler_step(da, a)
         V = self.sum_delta_inputs(V)

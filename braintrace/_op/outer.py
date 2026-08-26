@@ -140,7 +140,7 @@ _DERIVATIVE: Dict[str, Callable[[Any], Any]] = {
 
 
 def _codes(x: Any, weights: Dict[str, Any], key_features: int, key_scale: float,
-           key_nonlinearity: str, value_nonlinearity: str) -> tuple:
+           key_nonlinearity: str, value_nonlinearity: str) -> tuple[Any, ...]:
     """Return ``(pre_key, pre_value, key_code, value_code)`` for a packed ``x``.
 
     ``key_code`` carries ``key_scale``; ``value_code`` does not, so that every

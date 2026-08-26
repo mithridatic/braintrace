@@ -38,10 +38,12 @@ import brainunit as u
 import jax
 import jax.numpy as jnp
 
-from braintrace._compiler import ControlFlowPolicy, DEFAULT_MAX_JACOBIAN_ELEMENTS
+from braintrace._input_data import MultiStepData
 from braintrace._typing import Path
 from .axes import ETraceConfig
 from .param_dim_vjp import ParamDimVjpAlgorithm
+
+DEFAULT_MAX_JACOBIAN_ELEMENTS = 1 << 24
 
 __all__ = ['SyntheticGradient', 'DNI', 'train_synthetic_gradient']
 
@@ -273,7 +275,7 @@ class DNI(ParamDimVjpAlgorithm):
         fast_solve: bool = True,
         trace_dtype: Any = None,
         chunked_trace: bool = True,
-        control_flow: Optional[ControlFlowPolicy] = None,
+        control_flow: Optional[Any] = None,
         snap_max_jacobian_elements: int = DEFAULT_MAX_JACOBIAN_ELEMENTS,
     ) -> None:
         super().__init__(
@@ -662,7 +664,6 @@ def _infer_batch_size(hidden_states: dict, groups: Any) -> int:
 
 def _as_window(seq: Any, chunk_size: int) -> Any:
     """Wrap a window for the learner, matching how it will be driven."""
-    import braintrace
     if chunk_size == 1:
         return seq[0]
-    return braintrace.MultiStepData(seq)
+    return MultiStepData(seq)
