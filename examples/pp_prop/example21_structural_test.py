@@ -478,3 +478,87 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
         result = structural.measure_real_arm(arm)
         assert result["real_model"] and result["updates"] == (64 if arm.endswith("add") else 0)
     structural.main(["baseline", "--output", str(tmp_path / "baseline.json")])
+
+
+def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatch):
+    class Model:
+        readout_weight = SimpleNamespace(value=np.ones((2, 360)))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.zeros(360)
+
+    task = SimpleNamespace(targets=(np.zeros((1, 1), dtype=np.uint8),))
+    module = SimpleNamespace(
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+        load_task=lambda *args: task,
+        encode_episode=lambda *args: (np.ones((1, 441)), np.ones(1, dtype=bool)),
+        run_event_sequence=lambda *args: np.zeros((1, 2)),
+        decode_prediction=lambda value: (
+            np.zeros((1, 1), dtype=np.uint8)
+            if np.asarray(value).shape == (360,)
+            else (_ for _ in ()).throw(AssertionError("decoded neuron voltage"))
+        ),
+        strict_task_pass_at_1=lambda predictions, targets: True,
+    )
+    monkeypatch.setattr(
+        structural,
+        "preclip_gradient_mass",
+        lambda *args, **kwargs: ({"model/recurrent_weight": np.ones((1, 2))}, 0.0),
+    )
+    monkeypatch.setattr(
+        structural,
+        "topology_from_model",
+        lambda model: SimpleNamespace(neuron_count=2),
+    )
+    monkeypatch.setattr(
+        structural,
+        "structural_evidence",
+        lambda *args: {"neuron_scores": np.ones(2), "connection_scores": np.ones(2)},
+    )
+    evidence = structural._fixed_task_evidence(module, Model(), object(), "data")
+    assert evidence["strict"] == [True, True]
+
+
+def test_real_model_uses_canonical_validation_task_ids():
+    module = structural._load_example21_model()
+    assert module.VALIDATION_TASK_IDS == (
+        "46f33fce", "3428a4f5", "d8c310e9", "09629e4f"
+    )
+
+
+def test_real_pruning_arm_records_closed_validation_gate(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.arange(2))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([1, 0]))
+        input_weight = State(np.ones(2))
+        recurrent_weight = State(np.ones(2))
+        readout_weight = State(np.ones((2, 1)))
+
+    module = SimpleNamespace(
+        BrainCellArcModel=Model,
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+    )
+    evidence = {
+        "strict": [False, False],
+        "neuron_scores": np.ones(2),
+        "connection_scores": np.ones(2),
+        "gradient_mass": np.ones(2),
+        "preclip_gradient_mass": [],
+        "task_spike_evidence": [],
+        "task_readout_evidence": [],
+    }
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(structural, "_fixed_task_evidence", lambda *args: evidence)
+    result = structural.measure_real_arm("neuron-prune")
+    assert result["pruning_blocked"]
+    assert result["mutated_item_count"] == 0
+    assert result["candidate_neurons"] == result["baseline_neurons"]

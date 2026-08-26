@@ -58,6 +58,9 @@ Compaction remaps every surviving sparse endpoint, neuron row, Dale label, and
 Adam row or edge value. It preserves surviving moments and step counts, gives
 new items zero moments, and reports that eligibility must reset. A caller must
 compare prediction bytes and strict Booleans before promotion.
+Example 21's grouped Adam implementation and the canonical task identifiers in
+`arc_contracts.py` are authoritative for structural measurement; structural
+runs use the same eight training and four validation tasks.
 
 Neuron addition selects distinct high-score donors for the first failing
 training task. Selected donors may not connect to one another. Each twin copies
