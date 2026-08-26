@@ -76,7 +76,7 @@ Examples
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from . import nn
 from ._compile import compile
@@ -151,24 +151,6 @@ from ._input_data import (
 )
 from ._misc import NotSupportedError, CompilationError
 from ._version import __version__, __version_info__
-
-if TYPE_CHECKING:
-    # The v0.1.x legacy shims are deprecated and served lazily via ``__getattr__``
-    # below. Re-import them here so static type checkers / IDEs can still resolve
-    # ``braintrace.MatMulOp`` etc.
-    from ._legacy import (
-        ConvOp,
-        ElemWiseOp,
-        ElemWiseParam,
-        ETraceOp,
-        ETraceParam,
-        FakeElemWiseParam,
-        FakeETraceParam,
-        LoraOp,
-        MatMulOp,
-        NonTempParam,
-        SpMatMulOp,
-    )
 
 __all__ = [
     # Version
