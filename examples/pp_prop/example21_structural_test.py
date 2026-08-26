@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+from types import SimpleNamespace
 from pathlib import Path
 from typing import ClassVar
 
@@ -238,6 +239,17 @@ def test_twin_addition_is_connected_splits_values_and_zeros_new_moments():
         structural.add_twin_neurons(topology, [2.0, 1.0], required=2)
 
 
+def test_twin_connectivity_guard_handles_numpy_edge_arrays():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([2, 3]), np.ones(2),
+        np.ones((4, 1)), np.zeros(4), ((),) * 4,
+    )
+    grown, donors = structural.add_twin_neurons(topology, np.arange(4.0), required=2)
+    assert donors == (3, 2)
+    assert grown.neuron_count == 6
+
+
 def test_tiled_connection_addition_is_global_stable_and_never_dense(monkeypatch):
     original_empty = np.empty
     def guarded_empty(shape, *args, **kwargs):
@@ -435,3 +447,26 @@ def test_integrated_arm_rebuilds_model_remaps_adam_and_resets_eligibility():
     assert result["eligibility_reset"]
     assert result["mutated_item_count"] == 1
     assert not result["promoted"]
+
+
+def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1, 2, 3, 4]), indices=np.arange(4))
+        recurrent_csr = SimpleNamespace(indptr=np.arange(5), indices=np.array([1, 2, 3, 0]))
+        input_weight = State(np.ones(4))
+        recurrent_weight = State(np.ones(4))
+        readout_weight = State(np.ones((4, 1)))
+
+    fake_module = SimpleNamespace(
+        BrainCellArcModel=Model, TRAINING_TASK_IDS=("a",), VALIDATION_TASK_IDS=("b",)
+    )
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: fake_module)
+    monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
+    for arm in ("neuron-prune", "connection-prune", "neuron-add", "connection-add"):
+        result = structural.measure_real_arm(arm)
+        assert result["real_model"] and result["updates"] == (64 if arm.endswith("add") else 0)
+    structural.main(["baseline", "--output", str(tmp_path / "baseline.json")])
