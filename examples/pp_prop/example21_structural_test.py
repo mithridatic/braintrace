@@ -464,7 +464,15 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
     fake_module = SimpleNamespace(
         BrainCellArcModel=Model, TRAINING_TASK_IDS=("a",), VALIDATION_TASK_IDS=("b",)
     )
+    fake_evidence = {
+        "strict": [False, True], "neuron_scores": np.ones(4),
+        "connection_scores": np.ones(4), "gradient_mass": np.ones(4),
+        "preclip_gradient_mass": [], "task_spike_evidence": [],
+        "task_readout_evidence": [],
+    }
     monkeypatch.setattr(structural, "_load_example21_model", lambda: fake_module)
+    monkeypatch.setattr(structural, "_fixed_task_evidence", lambda *args: fake_evidence)
+    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda index: index)
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
     for arm in ("neuron-prune", "connection-prune", "neuron-add", "connection-add"):
         result = structural.measure_real_arm(arm)

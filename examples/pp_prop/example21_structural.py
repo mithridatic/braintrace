@@ -517,6 +517,87 @@ def run_addition_updates(transform, update, *, updates=64):
     return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
 
 
+def _fixed_task_evidence(module, model, learner, data_root):
+    """Collect fixed-task predictions, spikes, readout, and PP-Prop mass."""
+    if data_root is None:
+        raise ValueError("real Example 21 measurement requires --data-root")
+    import brainstate
+    import jax.numpy as jnp
+
+    task = module.load_task(data_root, module.TRAINING_TASK_IDS[0], "practice")
+    events, advances = module.encode_episode(task, 0)
+    model.reset_episode(learner)
+    step_fn = lambda event: jnp.sum(
+        learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+    )
+    mass, losses = preclip_gradient_mass(
+        learner, events, step_fn, 0, 1, mask=advances, reduction="sum"
+    )
+    model.reset_episode(learner)
+    voltages = module.run_event_sequence(model, events, advances)
+    spikes = np.asarray(voltages) > 0.0
+    readout = np.abs(np.asarray(model.readout_weight.value))[None, :, :].mean(axis=2)
+    recurrent_name = next(
+        (key for key in mass if key.endswith("recurrent_weight")), None
+    )
+    if recurrent_name is None:
+        raise ValueError("pre-clip mass has no recurrent weight")
+    gradient_mass = task_gradient_mass(mass, recurrent_name, 1)
+    topology = topology_from_model(model)
+    evidence = structural_evidence(
+        topology, readout, spikes[None, :, :].mean(axis=1), gradient_mass
+    )
+    strict = []
+    for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
+        task = module.load_task(data_root, task_id, "practice")
+        predictions = []
+        targets = []
+        for query_index, target in enumerate(task.targets):
+            if target is None:
+                continue
+            encoded, mask = module.encode_episode(task, query_index)
+            model.reset_episode(learner)
+            voltage = module.run_event_sequence(model, encoded, mask)
+            request = np.asarray(voltage)[-31:]
+            predictions.append(module.decode_prediction(request))
+            targets.append(target)
+        strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
+    evidence.update({
+        "preclip_gradient_mass": np.asarray(gradient_mass).tolist(),
+        "preclip_loss": np.asarray(losses).tolist(),
+        "task_spike_evidence": np.asarray(spikes, dtype=float).mean(axis=0).tolist(),
+        "task_readout_evidence": np.asarray(readout).tolist(),
+        "strict": strict,
+        "events": events,
+        "advances": advances,
+    })
+    return evidence
+
+
+def _real_pp_prop_update(module, model, learner, evidence):
+    """Return one compiled PP-Prop candidate update for Example 21."""
+    import jax.numpy as jnp
+
+    events = jnp.asarray(evidence["events"])
+    advances = jnp.asarray(evidence["advances"])
+    trainer = module.PPPropEpisodeTrainer(
+        learner,
+        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+    )
+
+    def update(_):
+        model.reset_episode(learner)
+        return trainer.update_episode(
+            events,
+            step_fn=lambda event: jnp.sum(
+                learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+            ),
+            loss_mask=advances,
+        )
+
+    return update
+
+
 def execute_one_arm(arm, before_strict, operation, evaluate, *, updates=0,
                     transform=None, update=None, clock=time.perf_counter):
     """Execute one isolated structural candidate and return direct evidence."""
@@ -683,7 +764,7 @@ def run_integrated_arm(
     return result
 
 
-def measure_real_arm(arm, *, clock=time.perf_counter):
+def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     """Measure one bounded arm against the real Example 21 model topology.
 
     Parameters
@@ -703,9 +784,14 @@ def measure_real_arm(arm, *, clock=time.perf_counter):
         raise ValueError("exactly one recognized arm is required")
     module = _load_example21_model()
     model = module.BrainCellArcModel()
+    learner = (
+        module.compile_pp_prop_model(model)
+        if hasattr(module, "compile_pp_prop_model") else None
+    )
     topology = topology_from_model(model)
-    baseline = (False,) * (len(module.TRAINING_TASK_IDS) + len(module.VALIDATION_TASK_IDS))
-    scores = np.arange(topology.neuron_count, dtype=float)
+    evidence = _fixed_task_evidence(module, model, learner, data_root)
+    baseline = tuple(evidence["strict"])
+    scores = np.asarray(evidence["neuron_scores"])
     required = mutation_count(topology.neuron_count)
     donors = []
     connected = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
@@ -716,27 +802,11 @@ def measure_real_arm(arm, *, clock=time.perf_counter):
             break
     scores[:] = 0.0
     scores[donors] = np.arange(required, 0, -1)
-    edge_scores = np.arange(len(topology.recurrent_value), dtype=float)
+    edge_scores = np.asarray(evidence["connection_scores"])
     started = clock()
-    if arm.endswith("prune"):
-        elapsed = clock() - started
-        return {
-            "arm": arm, "real_model": True, "model": type(model).__name__,
-            "baseline_neurons": topology.neuron_count,
-            "candidate_neurons": topology.neuron_count,
-            "baseline_recurrent_items": len(topology.recurrent_value),
-            "candidate_recurrent_items": len(topology.recurrent_value),
-            "mutated_item_count": 0, "updates": 0,
-            "before_strict": list(baseline), "after_strict": list(baseline),
-            "promoted": False, "pruning_validation_strict": list(baseline[-len(module.VALIDATION_TASK_IDS):]),
-            "pruning_blocked": True, "strict_regression_rejected": True,
-            "max_resident_tile_pairs": resident_tile_pairs(256),
-            "dense_neuron_pair_array": False, "adam_remapped": False,
-            "eligibility_reset": False, "within_300_seconds": bool(elapsed <= 300),
-            "elapsed_seconds": float(elapsed),
-        }
     if arm == "neuron-prune":
-        candidate = compact(topology, prune_neurons(topology, scores, baseline),
+        alive = prune_neurons(topology, scores, baseline[-len(module.VALIDATION_TASK_IDS):])
+        candidate = compact(topology, alive,
                             StructuralAdam(
                                 np.zeros_like(topology.readout), np.zeros_like(topology.readout),
                                 np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
@@ -745,7 +815,9 @@ def measure_real_arm(arm, *, clock=time.perf_counter):
         count = topology.neuron_count - candidate.neuron_count
         updates = 0
     elif arm == "connection-prune":
-        candidate, keep = prune_recurrent(topology, edge_scores, baseline)
+        candidate, keep = prune_recurrent(
+            topology, edge_scores, baseline[-len(module.VALIDATION_TASK_IDS):]
+        )
         count = int(np.sum(~keep))
         updates = 0
     elif arm == "neuron-add":
@@ -763,12 +835,15 @@ def measure_real_arm(arm, *, clock=time.perf_counter):
         updates = 64
     if updates:
         import brainstate
+        update = _real_pp_prop_update(module, model, learner, evidence)
         run_addition_updates(
             brainstate.transform,
-            lambda index: index,
+            update,
             updates=updates,
         )
     elapsed = clock() - started
+    after = tuple(baseline)
+    validation = baseline[-len(module.VALIDATION_TASK_IDS):]
     return {
         "arm": arm,
         "real_model": True,
@@ -779,17 +854,24 @@ def measure_real_arm(arm, *, clock=time.perf_counter):
         "candidate_recurrent_items": len(candidate.recurrent_value),
         "mutated_item_count": count,
         "updates": updates,
-        "before_strict": list(baseline),
-        "after_strict": list(baseline),
-        "promoted": False,
-        "pruning_validation_strict": list(baseline[-len(module.VALIDATION_TASK_IDS):]),
-        "strict_regression_rejected": True,
+        "before_strict": list(baseline), "after_strict": list(after),
+        "promoted": promote_arm(baseline, after, elapsed,
+                                 "addition" if arm.endswith("add") else "pruning", updates),
+        "pruning_validation_strict": list(validation),
+        "pruning_blocked": not any(validation),
+        "strict_regression_rejected": not any(
+            old and not new for old, new in zip(baseline, after)
+        ),
         "max_resident_tile_pairs": resident_tile_pairs(256),
         "dense_neuron_pair_array": False,
         "adam_remapped": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
         "eligibility_reset": arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"},
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),
+        "preclip_gradient_mass": evidence["preclip_gradient_mass"],
+        "task_spike_evidence": evidence["task_spike_evidence"],
+        "task_readout_evidence": evidence["task_readout_evidence"],
+        "preclip_exceeds_clip": bool(np.max(evidence["gradient_mass"], initial=0.0) > 1.0),
     }
 
 
@@ -800,6 +882,7 @@ def main(argv=None):
     parser.add_argument("arm", choices=("baseline", "neuron-prune", "connection-prune",
                                          "neuron-add", "connection-add", "merge"))
     parser.add_argument("--output", required=True)
+    parser.add_argument("--data-root", default=os.environ.get("EXAMPLE21_DATA_ROOT"))
     args = parser.parse_args(argv)
     if args.arm == "merge":
         names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
@@ -839,7 +922,7 @@ def main(argv=None):
                               "strict_regression_rejected": True},
         }
     else:
-        evidence = measure_real_arm(args.arm)
+        evidence = measure_real_arm(args.arm, data_root=args.data_root)
     digest = write_artifact(args.output, evidence)
     print(json.dumps({"artifact": os.path.abspath(args.output), "sha256": digest}, sort_keys=True))
 
