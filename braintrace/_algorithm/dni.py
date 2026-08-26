@@ -31,7 +31,7 @@ and :func:`train_synthetic_gradient` for the recipe that fits ``M``.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import brainstate
 import brainunit as u
@@ -42,6 +42,9 @@ from braintrace._input_data import MultiStepData
 from braintrace._typing import Path
 from .axes import ETraceConfig
 from .param_dim_vjp import ParamDimVjpAlgorithm
+
+if TYPE_CHECKING:
+    from braintrace._compiler import ControlFlowPolicy
 
 DEFAULT_MAX_JACOBIAN_ELEMENTS = 1 << 24
 
@@ -275,7 +278,7 @@ class DNI(ParamDimVjpAlgorithm):
         fast_solve: bool = True,
         trace_dtype: Any = None,
         chunked_trace: bool = True,
-        control_flow: Optional[Any] = None,
+        control_flow: Optional['ControlFlowPolicy'] = None,
         snap_max_jacobian_elements: int = DEFAULT_MAX_JACOBIAN_ELEMENTS,
     ) -> None:
         super().__init__(

@@ -76,7 +76,6 @@ Examples
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import Any
 
 from . import nn
@@ -153,11 +152,7 @@ from ._input_data import (
 )
 from ._misc import NotSupportedError, CompilationError
 from ._version import __version__, __version_info__
-
-
-def compile(*args: Any, **kwargs: Any) -> Any:
-    """Compile a model and online-learning algorithm."""
-    return import_module('braintrace._compile').compile(*args, **kwargs)
+from ._compile import compile
 
 __all__ = [
     # Version
