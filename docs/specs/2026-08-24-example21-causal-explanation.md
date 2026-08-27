@@ -1,44 +1,37 @@
 # Example 21 causal explanation
 
-## Scope
+## Observed path
 
-This document reports the executed direct-system evidence available in the
-workspace. It does not report the planned BrainCell replacement as executed.
+Example 21 encodes an ARC task as a fixed event sequence. The sparse input
+relation maps each event to cell drive. The sparse recurrent relation maps
+the previous emitted spikes to additional drive. A Hodgkin-Huxley population
+updates its state. A dense voltage readout produces shape and color logits.
+The decoder converts the logits into one integer grid.
 
-The acceptance measure is strict task pass-at-1. A task passes only when every
-test query has the exact height, width, and cell values in the first model
-prediction.
+The event encoder does not include a query target. The target is used only by
+loss and exact scoring. The result is strict only when every prediction for a
+task has the target shape and all target cell values.
 
-## Observations
+## What the tests establish
 
-- The fixed evaluation manifest contains 400 tasks and 419 test queries.
-- The latest recorded direct artifact is
-  `var/ex21-online-v48-query-routing-v1/result.json`.
-- The artifact reports 12/120 synthetic holdout tasks, 0/53 real in-library
-  queries grouped into 51 tasks, and 0/85 real fold-zero queries grouped into
-  80 tasks. The fixed evaluation manifest was not run.
-- The direct model uses two 128-unit MiniLSTM memories. It joins their states
-  and their elementwise product into 384 values. It uses 12 color experts and
-  16 routing programs.
-- The output path produced one exact synthetic upscale result. It produced no
-  strict real development task.
-- A target-fed decoder check produced 400/400 strict tasks. This check used
-  target-derived logits. It is a scorer check, not model performance.
+The focused tests establish that the declared sparse relation sizes are used,
+false events do not change biological state, and interspersed padding leaves
+an advancing sequence unchanged. They also establish that input and recurrent
+weights have compiled PP-Prop relations, direct readout gradients are finite
+and nonzero in the fixture, and an episode update can change the declared
+parameter groups.
 
-## Inferences
+These are component and integration checks. They do not establish that the
+model learns ARC transformations.
 
-The observations support a limited inference. The direct path can preserve
-some task information and can produce exact answers for some synthetic tasks.
-The main measured break is between task state and reliable exact-grid output.
-This does not prove that every failed task was recognized correctly. It also
-does not prove that PP-Prop equals BPTT.
+## Current limit
 
-The 400/400 target-fed result shows that the decoder and strict scorer can
-represent the target grids. It does not show that the executed model produces
-the required logits.
+No completed raw-ARC training or evaluation result for this BrainCell path is
+stored in the repository. The available real-data Gate 4 run was not executed
+because its ARC files were unavailable. There is therefore no observed model
+failure location within ARC task solving. Any statement that the encoder,
+recurrent state, or decoder is the main cause of ARC failure would be a
+hypothesis, not a finding.
 
-## Boundary
-
-No executed BrainCell checkpoint, topology plot, or BrainCell prediction is
-present in this worktree. Therefore this document makes no BrainCell neuron,
-connection, Dale-type, or causal-success claim.
+The earlier MiniLSTM v48 measurements describe a retired path. They are not
+evidence about this BrainCell baseline.

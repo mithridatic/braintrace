@@ -57,7 +57,7 @@ the mean cross-entropy over valid target cells. Non-request, empty, and
 invalid-row steps have zero loss. The direct decoder consumes 31 request-state
 vectors: one shape request followed by thirty row requests. It selects height
 and width independently from 30 logits each, then selects one color from ten
-logits for each valid cell of each row. It returns a rectangular `uint8` grid
+logits for each cell of the selected rectangle. It returns a rectangular `uint8` grid
 and consumes no target or query residual. A 360-value compatibility readout
 remains accepted for old fixture checks and repeats one color across each
 decoded row.
@@ -80,8 +80,8 @@ Checkpoints are compressed NumPy archives with `format == 1`, arrays only,
 `float32` CSR values, readout parameters, all Adam moments, three step counts,
 and neuron/substep counts. They do not contain targets, predictions, losses,
 gradients, or runtime state. Load validates dtype, shape, endpoints, counts,
-labels, and connection limits, then resets biological and eligibility state.
-Writes use a temporary sibling and atomic replacement. A child path must
+labels, and connection limits. It returns arrays only; the caller owns any
+biological or eligibility reset. Writes use a temporary sibling and atomic replacement. A child path must
 differ from its parent, and child failure must leave parent bytes unchanged.
 
 The required array schema is fixed. It contains `neuron_ids` (`int32`, shape
