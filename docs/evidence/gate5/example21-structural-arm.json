@@ -82392,9 +82392,9 @@
   },
   "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
   "environment": {
-    "pid": 9048,
-    "platform": "Windows-11-10.0.26200-SP0",
-    "python": "3.13.14",
+    "pid": 3,
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
     "seeds": [
       21,
       22,
@@ -82402,10 +82402,10 @@
     ]
   },
   "focused_tests": {
-    "coverage_percent": 91,
+    "coverage_percent": 96.74,
     "failed": 0,
-    "passed": 28
+    "passed": 35
   },
-  "implementation_commit": "7c8a9c720761517f4becf7bd576d7c64ffa86091",
+  "implementation_commit": "5b88b2060c892a1156060b71d9f0e82e6062449d",
   "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b"
 }

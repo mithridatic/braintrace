@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+from collections import namedtuple
 from types import SimpleNamespace
 from pathlib import Path
 from typing import ClassVar
@@ -827,3 +828,139 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
     assert result["candidate_neurons"] == 3
     assert result["after_strict"] == [True]
     assert result["mask_compaction"]["prediction_bytes_identical"] is True
+
+
+def test_muon_remap_handles_nested_named_states_padding_and_shape_misses():
+    State = namedtuple("State", "matrix")
+    mapped = structural.remap_muon_groups(
+        {"group": {"state": State(np.arange(6.0).reshape(3, 2)),
+                    "scalar": np.array([7.0])}},
+        {"group": (np.array([True, False, True]), (4, 2))},
+    )
+    np.testing.assert_array_equal(
+        mapped["group"]["state"].matrix,
+        [[0.0, 1.0], [4.0, 5.0], [0.0, 0.0], [0.0, 0.0]],
+    )
+    np.testing.assert_array_equal(mapped["group"]["scalar"], [7.0])
+    untouched = object()
+    assert structural.remap_muon_groups({"other": untouched}, {})["other"] is untouched
+
+
+def test_structural_muon_maps_cover_pruning_and_growth_selectors():
+    topology = structural.SparseTopology(
+        np.array([0, 1, 2]), np.array([0, 1, 2]), np.ones(3),
+        np.array([0, 1, 2]), np.array([1, 2, 0]), np.ones(3),
+        np.ones((3, 1)), np.zeros(3), ((),) * 3,
+    )
+    adam = structural.StructuralAdam(
+        np.zeros((3, 1)), np.zeros((3, 1)), np.zeros(3), np.zeros(3),
+        np.zeros(3), np.zeros(3),
+    )
+    alive = np.array([True, False, True])
+    compacted, _, _ = structural.compact(topology, alive, adam)
+    pruned = structural.structural_muon_parameter_maps(
+        topology, compacted, "neuron-prune", alive
+    )
+    assert pruned["readout_weight"][0].tolist() == [True, False, True]
+    recurrent, _ = structural.prune_recurrent(
+        topology, np.array([0.0, 1.0, 2.0]), (True,)
+    )
+    connection = structural.structural_muon_parameter_maps(
+        topology, recurrent, "connection-prune"
+    )
+    assert connection["recurrent"][0].tolist() == [False, True, True]
+    grown, _ = structural.add_twin_neurons(topology, np.array([3.0, 1.0, 0.0]), 1)
+    for arm, candidate in (("neuron-add", grown), ("connection-add", topology)):
+        selectors = structural.structural_muon_parameter_maps(topology, candidate, arm)
+        assert set(selectors) == {"input", "recurrent", "readout_weight", "readout_bias"}
+
+
+def test_evidence_validates_explicit_task_shape_and_data_requirements(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1]), indices=np.array([0]))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([1, 0]))
+        input_weight = State([1.0])
+        recurrent_weight = State([2.0, 3.0])
+        readout_weight = State(np.ones((2, 1)))
+
+    class Learner:
+        def etrace_grad(self, events, **kwargs):
+            return {("model", "recurrent_weight"): np.array([2.0, -3.0])}, np.array([4.0])
+
+    kwargs = dict(
+        model=Model(), learner=Learner(), events=np.ones((1, 1)),
+        step_fn=lambda value: value, readout_effect=np.ones((2, 2)),
+        spikes_by_task=np.ones((2, 2)), task_count=2, reduction="sum",
+    )
+    result = structural.collect_model_evidence(**kwargs)
+    assert result["gradient_mass"].shape == (2, 2)
+    with pytest.raises(ValueError, match="task-by-neuron"):
+        structural.collect_model_evidence(**{**kwargs, "spikes_by_task": np.ones((1, 2))})
+    with pytest.raises(ValueError, match="data-root"):
+        structural._fixed_task_evidence(SimpleNamespace(), Model(), object(), None)
+    with pytest.raises(ValueError, match="data-root"):
+        structural._real_mask_compaction_identity(
+            SimpleNamespace(), SimpleNamespace(neuron_count=1), object(), None
+        )
+
+
+def test_integrated_dispatch_covers_each_arm_and_rejects_unknown_arm():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        def __init__(self):
+            self.input_csr = SimpleNamespace(indptr=np.array([0, 1, 2, 3]), indices=np.array([0, 1, 2]))
+            self.recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2, 3]), indices=np.array([1, 2, 0]))
+            self.input_weight = State([1.0, 1.0, 1.0])
+            self.recurrent_weight = State([1.0, 1.0, 1.0])
+            self.readout_weight = State(np.ones((3, 1)))
+
+    class Transform:
+        @staticmethod
+        def jit(function):
+            return function
+
+        @staticmethod
+        def for_loop(function, values):
+            return np.asarray([function(value) for value in values])
+
+    evidence = {
+        "neuron_scores": np.array([3.0, 1.0, 0.0]),
+        "connection_scores": np.array([0.0, 1.0, 2.0]),
+        "target_scores": np.array([0.0, 2.0, 1.0]),
+        "validation_strict": (True,),
+    }
+    rebuild = lambda topology, adam: (SimpleNamespace(), object())
+    for arm in ("neuron-prune", "connection-prune", "neuron-add", "connection-add"):
+        result = structural.run_integrated_arm(
+            arm, Model, lambda model: object(), lambda model, learner: (True,), rebuild,
+            transform=Transform, update=lambda index: index,
+            before_strict=(False,), evidence=evidence,
+            clock=iter((0.0, 1.0)).__next__,
+        )
+        assert result["real_model"] and result["eligibility_reset"]
+    with pytest.raises(ValueError, match="recognized"):
+        structural.run_integrated_arm(
+            "unknown", Model, lambda model: object(), lambda model, learner: (False,), rebuild,
+            before_strict=(False,), evidence=evidence,
+        )
+
+
+def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(monkeypatch, tmp_path):
+    with pytest.raises(ValueError, match="recognized"):
+        structural.measure_real_arm("unknown")
+    monkeypatch.chdir(Path(__file__).parents[2])
+    target = tmp_path / "merged.json"
+    structural.main(["merge", "--output", str(target)])
+    merged = json.loads(target.read_text())
+    assert len(merged["arms"]) == 4
+    assert merged["focused_tests"] == {
+        "passed": 35, "failed": 0, "coverage_percent": 96.74
+    }
+    assert merged["arm_controls"]["max_resident_tile_pairs"] == 65_536
