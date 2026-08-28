@@ -35,14 +35,14 @@ WORKTREE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
 sys.path.insert(0, str(WORKTREE / "examples" / "pp_prop"))
 sys.path.insert(0, str(WORKTREE))
 
-from latent_workspace_model import (  # noqa: E402
+from latent_workspace_model import (
     COLOR_COUNT,
     MAX_GRID_SIZE,
     LatentWorkspaceModel,
     ModelConfig,
     compile_pp_prop,
 )
-from latent_workspace_task import (  # noqa: E402
+from latent_workspace_task import (
     RowEventConfig,
     associative_memory_feature_indices,
 )

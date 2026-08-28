@@ -2,7 +2,6 @@
 
 # Ruff's TRY004 conflicts with this module's public fail-closed contract: all
 # malformed external evidence is intentionally reported as ValueError.
-# ruff: noqa: TRY004
 
 from __future__ import annotations
 
@@ -26,7 +25,7 @@ try:
         OutputLogits,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
-    from latent_workspace_analysis import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_analysis import (
         DecodedCandidate,
         OutputLogits,
     )
@@ -373,7 +372,7 @@ def write_checkpoint_perturbation(
         with staged.open("wb") as handle:
             np.savez(
                 handle,
-                **serialized_values,  # pyright: ignore[reportArgumentType]
+                **serialized_values,
             )
         os.replace(staged, destination_path)
     finally:

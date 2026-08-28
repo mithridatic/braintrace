@@ -100,7 +100,7 @@ def test_edge_budget_rejects_invalid_configuration(
     arguments: dict[str, object], message: str
 ) -> None:
     with pytest.raises(ValueError, match=message):
-        assess_recurrent_edge_budget(**arguments)  # type: ignore[arg-type]
+        assess_recurrent_edge_budget(**arguments)
 
 
 def test_edge_report_is_json_safe() -> None:
@@ -278,7 +278,7 @@ def test_gpu_assessment_rejects_invalid_policy_configuration(
     arguments[keyword] = value
 
     with pytest.raises(ValueError, match=message):
-        assess_gpu_memory_safety(**arguments)  # type: ignore[arg-type]
+        assess_gpu_memory_safety(**arguments)
 
 
 def test_gpu_report_is_json_safe_without_fabricating_missing_evidence() -> None:
@@ -440,7 +440,7 @@ def test_full_runtime_safety_fails_closed_for_incomplete_runtime_evidence(
     }
     arguments[keyword] = value
 
-    report = assess_gpu_runtime_safety(**arguments)  # type: ignore[arg-type]
+    report = assess_gpu_runtime_safety(**arguments)
 
     assert report.status == "insufficient_evidence"
     assert not report.evidence_complete
@@ -537,6 +537,6 @@ def test_runtime_safety_report_is_json_safe() -> None:
 
     payload = report.to_dict()
 
-    assert payload["environment"]["safe"] is True  # type: ignore[index]
-    assert payload["memory"]["full_qualification_safe"] is True  # type: ignore[index]
+    assert payload["environment"]["safe"] is True
+    assert payload["memory"]["full_qualification_safe"] is True
     msgspec_json.dumps(payload, allow_nan=False)

@@ -2511,7 +2511,7 @@ def _evaluate_arm(
     ] = {}
     for name, events in event_streams.items():
         values = jax.block_until_ready(evaluate_stream(jnp.asarray(events)))
-        raw[name] = tuple(np.asarray(value) for value in values)  # type: ignore[assignment]
+        raw[name] = tuple(np.asarray(value) for value in values)
     finite = all(
         bool(np.isfinite(value).all())
         for values in raw.values()

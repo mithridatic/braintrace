@@ -19,7 +19,7 @@ import brainunit as u
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class Net(brainstate.nn.Module):

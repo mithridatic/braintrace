@@ -837,7 +837,7 @@ def test_assert_param_gradients_close_supports_nested_unit_trees():
 # fixed 10% bias satisfies that at every N a test can afford. So the helpers are
 # tested here against estimators whose bias is known by construction.
 
-from braintrace._testing.oracle import (  # noqa: E402
+from braintrace._testing.oracle import (
     assert_unbiased_estimator,
     fixed_gradient_directions,
     project_gradient,

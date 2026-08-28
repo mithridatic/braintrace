@@ -157,7 +157,7 @@ class ElemWiseParam(ETraceParam):
             op = ElemWiseOp(op)
         super().__init__(weight, op=op, grad=ETraceGrad.full, name=name)
 
-    def execute(self) -> Any:  # type: ignore[override]
+    def execute(self) -> Any:
         return self.op(self.value)
 
 

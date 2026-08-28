@@ -75,7 +75,7 @@ class AttentionResidual(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        super().__init__(name=name)
         if isinstance(hidden_size, bool) or not isinstance(hidden_size, int):
             raise TypeError("hidden_size must be a positive integer. Set hidden_size to a positive integer.")
         if isinstance(query_count, bool) or not isinstance(query_count, int):

@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class LoRACell(brainstate.nn.RNNCell):

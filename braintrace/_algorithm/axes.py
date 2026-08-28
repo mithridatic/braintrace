@@ -121,7 +121,7 @@ def _as_pair(value: Any, what: str) -> Tuple[Any, Any]:
                 f'{what} as a pair must have exactly two entries (x-side, '
                 f'f-side), got {len(value)}: {value!r}.'
             )
-        return tuple(value)  # type: ignore[return-value]
+        return tuple(value)
     return (value, value)
 
 

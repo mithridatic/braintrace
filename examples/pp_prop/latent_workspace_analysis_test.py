@@ -280,9 +280,9 @@ def test_checkpoint_selection_rejects_malformed_history(
 ) -> None:
     with pytest.raises((TypeError, ValueError), match=f"(?i){message}"):
         select_checkpoint_candidates(
-            checkpoints,  # type: ignore[arg-type]
-            latest_checkpoint=latest,  # type: ignore[arg-type]
-            sweep_size=sweep_size,  # type: ignore[arg-type]
+            checkpoints,
+            latest_checkpoint=latest,
+            sweep_size=sweep_size,
         )
 
 
@@ -334,9 +334,9 @@ def test_selected_model_candidate_rejects_invalid_metadata(
 ) -> None:
     with pytest.raises((TypeError, ValueError), match=message):
         SelectedModelCandidate(
-            candidate,  # type: ignore[arg-type]
+            candidate,
             checkpoint,
-            role,  # type: ignore[arg-type]
+            role,
         )
 
 
@@ -370,12 +370,12 @@ def test_decoder_can_select_width_runner_up() -> None:
 @pytest.mark.parametrize("value", [0, 3, True, 1.5])
 def test_decoder_rejects_invalid_candidate_count(value: object) -> None:
     with pytest.raises(ValueError, match="one or two"):
-        decode_candidates(_logits(np.array([[1]])), value)  # type: ignore[arg-type]
+        decode_candidates(_logits(np.array([[1]])), value)
 
 
 def test_decoder_rejects_unvalidated_container() -> None:
     with pytest.raises(TypeError, match="OutputLogits"):
-        decode_candidates(object())  # type: ignore[arg-type]
+        decode_candidates(object())
 
 
 def test_decode_candidates_rank_shapes_by_the_shape_heads_alone() -> None:
@@ -571,7 +571,7 @@ def test_query_scorer_rejects_malformed_grids(
 ) -> None:
     with pytest.raises(ValueError, match=f"(?i){message}"):
         score_query_candidates(
-            candidates,  # type: ignore[arg-type]
+            candidates,
             target,
             task_id="bad",
             query_index=0,
@@ -676,13 +676,13 @@ def test_model_only_completion_requires_exactly_400_expected_tasks() -> None:
 def test_model_only_completion_rejects_malformed_manifest(
     expected: object, records: object, message: str
 ) -> None:
-    if expected is not None and len(expected) < 400:  # type: ignore[arg-type]
+    if expected is not None and len(expected) < 400:
         expected = {
-            **expected,  # type: ignore[misc]
-            **{f"task-{index:03d}": 1 for index in range(400 - len(expected))},  # type: ignore[arg-type]
+            **expected,
+            **{f"task-{index:03d}": 1 for index in range(400 - len(expected))},
         }
     with pytest.raises(ValueError, match=message):
-        assess_model_only_completion(records, expected)  # type: ignore[arg-type]
+        assess_model_only_completion(records, expected)
 
 
 def test_model_only_completion_rejects_malformed_candidate_provenance() -> None:
@@ -758,7 +758,7 @@ def test_aggregate_rejects_empty_duplicate_and_wrong_type() -> None:
     with pytest.raises(ValueError, match="(?i)duplicate"):
         aggregate_arc_metrics([score, score])
     with pytest.raises(ValueError, match="QueryScore"):
-        aggregate_arc_metrics([object()])  # type: ignore[list-item]
+        aggregate_arc_metrics([object()])
 
 
 @pytest.mark.parametrize(
@@ -773,14 +773,14 @@ def test_query_scorer_validates_identity(
     kwargs: dict[str, object], message: str
 ) -> None:
     with pytest.raises(ValueError, match=f"(?i){message}"):
-        score_query_candidates([[[1]]], [[1]], **kwargs)  # type: ignore[arg-type]
+        score_query_candidates([[[1]]], [[1]], **kwargs)
 
 
 def test_query_score_rejects_inconsistent_or_invalid_values() -> None:
     with pytest.raises(ValueError, match="pass_at_2"):
         QueryScore("a", 0, True, False, True, 1.0, 1)
     with pytest.raises(ValueError, match="boolean"):
-        QueryScore("a", 0, 1, True, True, 1.0, 1)  # type: ignore[arg-type]
+        QueryScore("a", 0, 1, True, True, 1.0, 1)
     with pytest.raises(ValueError, match="pixel"):
         QueryScore("a", 0, False, False, False, np.nan, 1)
     with pytest.raises(ValueError, match="one or two"):
@@ -797,7 +797,7 @@ def test_candidate_validates_grid_metadata_and_serializes() -> None:
         "log_probability": -1.25,
     }
     with pytest.raises(ValueError, match="changed_decision"):
-        DecodedCandidate([[1]], 2)  # type: ignore[arg-type]
+        DecodedCandidate([[1]], 2)
     with pytest.raises(ValueError, match="log_probability"):
         DecodedCandidate([[1]], log_probability=np.inf)
 

@@ -66,7 +66,7 @@ class SiTUGLU(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # pyright: ignore[reportCallIssue]
+        super().__init__(name=name)
         for size, size_name in (
             (input_size, "input_size"),
             (hidden_size, "hidden_size"),

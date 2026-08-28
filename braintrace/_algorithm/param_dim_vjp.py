@@ -937,7 +937,7 @@ def _remove_units(xs_maybe_quantity: PyTree) -> Any:
     def restore_units(xs_unitless: PyTree) -> Any:
         leaves, treedef2 = jax.tree.flatten(xs_unitless)
         # JAX's PyTreeDef stubs omit __eq__; the comparison is valid at runtime.
-        assert treedef == treedef2, 'The tree structures must match. Use matching parameter trees.'  # type: ignore[operator]
+        assert treedef == treedef2, 'The tree structures must match. Use matching parameter trees.'
         new_leaves = [
             leaf if unit.dim.is_dimensionless else leaf * unit
             for leaf, unit in zip(leaves, units)

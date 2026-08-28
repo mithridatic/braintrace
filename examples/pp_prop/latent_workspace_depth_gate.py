@@ -860,7 +860,7 @@ def _cycle_targets_batch(
     if queries.shape != (mappings_array.shape[0],):
         raise ValueError("Batched query colors must have shape (episodes,). Ensure Batched query colors has shape (episodes,).")
     if isinstance(depth_count, bool) or not isinstance(depth_count, (int, np.integer)):
-        raise ValueError("depth_count must be an integer. Set depth_count to an integer.")  # noqa: TRY004
+        raise ValueError("depth_count must be an integer. Set depth_count to an integer.")
     depth_count = int(depth_count)
     if depth_count < 1:
         raise ValueError("depth_count must be positive. Set depth_count to a positive value.")

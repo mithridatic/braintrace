@@ -15,6 +15,11 @@ repos:
     entry: python -m pytest repo_conventions_test.py -q
     language: system
     pass_filenames: false
+  - id: ruff
+    name: ruff
+    entry: python -m ruff check
+    language: system
+    types: [python]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
@@ -28,8 +33,3 @@ repos:
   - id: trailing-whitespace
     # Only include python files
     files: \.py$
-
-- repo: https://github.com/pycqa/flake8
-  rev: '6.1.0'
-  hooks:
-  - id: flake8

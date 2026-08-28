@@ -106,12 +106,12 @@ class LeakyRateReadout(brainstate.nn.Module):
         self,
         in_size: Size,
         out_size: Size,
-        tau: ArrayLike = 5. * u.ms,  # type: ignore[assignment]  # brainunit types `float * Unit` as `Unit | Quantity`
+        tau: ArrayLike = 5. * u.ms,
         w_init: Callable = braintools.init.KaimingNormal(),
         r_init: Callable = braintools.init.ZeroInit(),
         name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
+        super().__init__(name=name)
 
         # Parameters
         self.in_size = as_size_tuple(in_size)

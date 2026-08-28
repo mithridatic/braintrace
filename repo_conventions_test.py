@@ -10,12 +10,27 @@ GENERATIVE_JAX_RANDOM = re.compile(
     r"jax\.random\.(?:PRNGKey|bernoulli|bits|categorical|choice|fold_in|"
     r"normal|permutation|randint|split|truncated_normal|uniform)\b"
 )
+SUPPRESSION_DIRECTIVE = re.compile(
+    r"#\s*(?:noqa\b|ruff:\s*noqa\b|type:\s*ignore\b|pyright:\s*ignore\b)"
+)
 
 
 def source_files() -> list[pathlib.Path]:
     return [
         path
         for base in (ROOT / "braintrace", ROOT / "examples")
+        for path in base.rglob("*.py")
+    ]
+
+
+def linted_source_files() -> list[pathlib.Path]:
+    return [
+        path
+        for base in (
+            ROOT / "braintrace",
+            ROOT / "examples",
+            ROOT / "docs/diagnostics",
+        )
         for path in base.rglob("*.py")
     ]
 
@@ -42,6 +57,16 @@ def test_generation_uses_brainstate_random() -> None:
         path.relative_to(ROOT)
         for path in source_files()
         if GENERATIVE_JAX_RANDOM.search(path.read_text(encoding="utf-8"))
+    )
+
+    assert violations == []
+
+
+def test_source_has_no_inline_lint_suppressions() -> None:
+    violations = sorted(
+        path.relative_to(ROOT)
+        for path in linted_source_files()
+        if SUPPRESSION_DIRECTIVE.search(path.read_text(encoding="utf-8"))
     )
 
     assert violations == []

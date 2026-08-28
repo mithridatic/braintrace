@@ -210,7 +210,7 @@ def test_from_import_of_an_unknown_name_raises_import_error():
     """``from ... import`` converts the dispatcher's ``AttributeError`` into an
     ``ImportError``. Without the raise, the name would import as ``None``."""
     with pytest.raises(ImportError):
-        from braintrace.nn import ThisNameDoesNotExist  # noqa: F401
+        from braintrace.nn import ThisNameDoesNotExist
 
 
 @pytest.mark.parametrize(

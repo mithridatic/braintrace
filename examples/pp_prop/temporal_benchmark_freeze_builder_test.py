@@ -79,7 +79,7 @@ def _decision_base(kind: str) -> dict[str, object]:
 
 def _documents() -> dict[str, dict[str, object]]:
     gain = _winner("temporal_credit_gain_search_winner", {"gain": 0.8, "index": 1})
-    gain["settings"]["fixed_configuration"] = {  # type: ignore[index]
+    gain["settings"]["fixed_configuration"] = {
         "learning_rates": {
             "readout": 0.003,
             "feedforward": 0.001,
@@ -98,7 +98,7 @@ def _documents() -> dict[str, dict[str, object]]:
         "temporal_credit_optimizer_search_winner",
         {"learning_rates": RATES, "grid_index": 23},
     )
-    optimizer["settings"].update(  # type: ignore[union-attr]
+    optimizer["settings"].update(
         {
             "gain": 0.8,
             "search_kind": "optimizer",
@@ -116,7 +116,7 @@ def _documents() -> dict[str, dict[str, object]]:
         "temporal_credit_weight_decay_search_winner",
         {"recurrent_weight_decay": 1e-5, "index": 1},
     )
-    decay["settings"]["fixed_configuration"] = {  # type: ignore[index]
+    decay["settings"]["fixed_configuration"] = {
         "gain": 0.8,
         "learning_rates": RATES,
         "trace_half_life_x_steps": 60.0,
@@ -231,8 +231,8 @@ def test_builds_hash_pinned_frozen_selection(tmp_path: pathlib.Path) -> None:
     assert selected["curriculum"] is False
     assert selected["trace_half_lives"] == TRACES
     provenance = frozen["selection_provenance"]
-    assert provenance["selection_source_dirty"] is True  # type: ignore[index]
-    assert len(provenance["input_artifacts"]) == 6  # type: ignore[index]
+    assert provenance["selection_source_dirty"] is True
+    assert len(provenance["input_artifacts"]) == 6
 
 
 def test_translates_selection_to_typed_benchmark_overrides(
@@ -263,14 +263,14 @@ def test_rejects_materialized_sealed_metrics(tmp_path: pathlib.Path) -> None:
 
 def test_rejects_source_commit_mismatch(tmp_path: pathlib.Path) -> None:
     documents = _documents()
-    documents["trace"]["settings"]["source_commit"] = "c" * 40  # type: ignore[index]
+    documents["trace"]["settings"]["source_commit"] = "c" * 40
     with pytest.raises(FreezeArtifactError, match="mismatched source"):
         build_frozen_selection(_write_documents(tmp_path, documents))
 
 
 def test_rejects_dirty_state_mismatch(tmp_path: pathlib.Path) -> None:
     documents = _documents()
-    documents["curriculum"]["provenance"]["source_dirty"] = False  # type: ignore[index]
+    documents["curriculum"]["provenance"]["source_dirty"] = False
     with pytest.raises(FreezeArtifactError, match="dirty state"):
         build_frozen_selection(_write_documents(tmp_path, documents))
 
@@ -279,14 +279,14 @@ def test_rejects_search_declared_dirty_state_mismatch(
     tmp_path: pathlib.Path,
 ) -> None:
     documents = _documents()
-    documents["optimizer"]["settings"]["source_dirty"] = False  # type: ignore[index]
+    documents["optimizer"]["settings"]["source_dirty"] = False
     with pytest.raises(FreezeArtifactError, match="conflicts"):
         build_frozen_selection(_write_documents(tmp_path, documents))
 
 
 def test_rejects_inconsistent_clip_trigger(tmp_path: pathlib.Path) -> None:
     documents = _documents()
-    recurrent = documents["clip"]["groups"]["recurrent"]  # type: ignore[index]
+    recurrent = documents["clip"]["groups"]["recurrent"]
     recurrent["observed_clip_event_fractions"][DEVELOPMENT_BUNDLES[0]] = 0.3
     with pytest.raises(FreezeArtifactError, match="trigger decision"):
         build_frozen_selection(_write_documents(tmp_path, documents))
@@ -294,7 +294,7 @@ def test_rejects_inconsistent_clip_trigger(tmp_path: pathlib.Path) -> None:
 
 def test_accepts_triggered_disabled_clip(tmp_path: pathlib.Path) -> None:
     documents = _documents()
-    recurrent = documents["clip"]["groups"]["recurrent"]  # type: ignore[index]
+    recurrent = documents["clip"]["groups"]["recurrent"]
     recurrent["observed_clip_event_fractions"][DEVELOPMENT_BUNDLES[0]] = 0.3
     recurrent.update(
         {
@@ -303,11 +303,11 @@ def test_accepts_triggered_disabled_clip(tmp_path: pathlib.Path) -> None:
             "selected_clip_norm": None,
         }
     )
-    documents["curriculum"]["selected_config"]["gradient_clip_norms"][  # type: ignore[index]
+    documents["curriculum"]["selected_config"]["gradient_clip_norms"][
         "recurrent"
     ] = None
     frozen = build_frozen_selection(_write_documents(tmp_path, documents))
-    assert frozen["selected_config"]["gradient_clip_norms"]["recurrent"] is None  # type: ignore[index]
+    assert frozen["selected_config"]["gradient_clip_norms"]["recurrent"] is None
 
 
 def test_rejects_curriculum_adoption_not_supported_by_evidence(
@@ -322,33 +322,33 @@ def test_rejects_curriculum_adoption_not_supported_by_evidence(
 def test_accepts_curriculum_adoption_gate(tmp_path: pathlib.Path) -> None:
     documents = _documents()
     documents["curriculum"]["adoption"] = True
-    evidence = documents["curriculum"]["decision_evidence"]  # type: ignore[assignment]
+    evidence = documents["curriculum"]["decision_evidence"]
     evidence["time_to_0_80_reduction_fraction"] = 0.2
     evidence["time_gate_passed"] = True
     frozen = build_frozen_selection(_write_documents(tmp_path, documents))
-    assert frozen["selected_config"]["curriculum"] is True  # type: ignore[index]
+    assert frozen["selected_config"]["curriculum"] is True
 
 
 def test_censored_time_reduction_does_not_pass(tmp_path: pathlib.Path) -> None:
     documents = copy.deepcopy(_documents())
-    evidence = documents["curriculum"]["decision_evidence"]  # type: ignore[assignment]
+    evidence = documents["curriculum"]["decision_evidence"]
     evidence["time_to_0_80_complete"] = False
     evidence["time_to_0_80_reduction_fraction"] = None
     frozen = build_frozen_selection(_write_documents(tmp_path, documents))
-    assert frozen["selected_config"]["curriculum"] is False  # type: ignore[index]
+    assert frozen["selected_config"]["curriculum"] is False
 
 
 def test_unstable_curriculum_evidence_blocks_adoption(
     tmp_path: pathlib.Path,
 ) -> None:
     documents = _documents()
-    evidence = documents["curriculum"]["decision_evidence"]  # type: ignore[assignment]
+    evidence = documents["curriculum"]["decision_evidence"]
     interval = evidence["paired_long_accuracy_interval"]
     interval["lower"] = 0.01
     evidence["accuracy_gate_passed"] = True
     evidence["all_paired_runs_stable"] = False
     frozen = build_frozen_selection(_write_documents(tmp_path, documents))
-    assert frozen["selected_config"]["curriculum"] is False  # type: ignore[index]
+    assert frozen["selected_config"]["curriculum"] is False
 
 
 def test_cli_writes_valid_frozen_artifact(
@@ -374,7 +374,7 @@ def test_cli_writes_valid_frozen_artifact(
 
 def test_frozen_consumer_rejects_tampered_config(tmp_path: pathlib.Path) -> None:
     frozen = build_frozen_selection(_write_documents(tmp_path, _documents()))
-    frozen["selected_config"]["gain"] = 0.7  # type: ignore[index]
+    frozen["selected_config"]["gain"] = 0.7
     with pytest.raises(FreezeArtifactError, match="outside its grid"):
         validate_frozen_selection(frozen)
 
@@ -383,7 +383,7 @@ def test_frozen_consumer_rejects_tampered_input_digest(
     tmp_path: pathlib.Path,
 ) -> None:
     frozen = build_frozen_selection(_write_documents(tmp_path, _documents()))
-    references = frozen["selection_provenance"]["input_artifacts"]  # type: ignore[index]
+    references = frozen["selection_provenance"]["input_artifacts"]
     references["gain"]["sha256"] = "0" * 63
     with pytest.raises(FreezeArtifactError, match="artifact digest"):
         validate_frozen_selection(frozen)

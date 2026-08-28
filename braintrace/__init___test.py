@@ -276,7 +276,7 @@ def test_legacy_names_not_in_all(name):
 
 def test_from_import_warns():
     with pytest.warns(DeprecationWarning):
-        from braintrace import MatMulOp  # noqa: F401
+        from braintrace import MatMulOp
 
 
 def test_unknown_attribute_raises_attribute_error():

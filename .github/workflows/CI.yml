@@ -148,8 +148,10 @@ jobs:
           python -m pip install --upgrade pip setuptools --no-cache-dir
           python -m pip install -r requirements-dev.txt --no-cache-dir
           pip install .
-      - name: Type check with mypy
+      - name: Lint and type check
         run: |
+          python -m ruff check braintrace examples docs/diagnostics repo_conventions_test.py
+          python -m basedpyright braintrace
           python -m mypy braintrace
       - name: Build wheel and sdist
         run: |

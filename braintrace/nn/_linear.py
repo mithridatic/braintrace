@@ -64,13 +64,13 @@ def _fold_leading_axes(x: ArrayLike) -> tuple[ArrayLike, Callable[[ArrayLike], A
         output of shape ``(prod(leading), out_size)`` back to
         ``(*leading, out_size)``.
     """
-    if x.ndim <= 2:  # type: ignore[union-attr]  # scalars never reach here: callers feed (..., in_size)
+    if x.ndim <= 2:
         return x, lambda y: y
-    lead_shape = x.shape[:-1]  # type: ignore[union-attr]
-    x2 = u.math.reshape(x, (-1, x.shape[-1]))  # type: ignore[union-attr]
+    lead_shape = x.shape[:-1]
+    x2 = u.math.reshape(x, (-1, x.shape[-1]))
 
     def unfold(y: ArrayLike) -> ArrayLike:
-        return u.math.reshape(y, (*lead_shape, y.shape[-1]))  # type: ignore[union-attr]
+        return u.math.reshape(y, (*lead_shape, y.shape[-1]))
 
     return x2, unfold
 
@@ -406,7 +406,7 @@ class GroupedLinear(brainstate.nn.Module):
         name: str | None = None,
         param_type: type = brainstate.ParamState,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
+        super().__init__(name=name)
         self.num_groups = num_groups
         self.in_features = in_features
         self.out_features = out_features
@@ -435,12 +435,12 @@ class GroupedLinear(brainstate.nn.Module):
             The transformed output, of shape ``(..., num_groups, out_features)``.
         """
         params = self.weight.value
-        if x.ndim <= 3:  # type: ignore[union-attr]  # callers feed (..., G, K)
+        if x.ndim <= 3:
             return grouped_matmul(x, params['weight'], params.get('bias'))
         # The rank-guarded op accepts only (G, K) / (batch, G, K); fold extra
         # leading axes into one batch axis, unfold on the output (reshape via
         # brainunit so quantities keep their units)
-        lead_shape = x.shape[:-2]  # type: ignore[union-attr]
-        x2 = u.math.reshape(x, (-1, *x.shape[-2:]))  # type: ignore[union-attr]
+        lead_shape = x.shape[:-2]
+        x2 = u.math.reshape(x, (-1, *x.shape[-2:]))
         y = grouped_matmul(x2, params['weight'], params.get('bias'))
-        return u.math.reshape(y, (*lead_shape, *y.shape[-2:]))  # type: ignore[union-attr]
+        return u.math.reshape(y, (*lead_shape, *y.shape[-2:]))

@@ -112,7 +112,7 @@ def _config(**changes: object) -> ModelConfig:
         "seed": 41,
     }
     values.update(changes)
-    return ModelConfig(**values)  # type: ignore[arg-type]
+    return ModelConfig(**values)
 
 
 @pytest.fixture(scope="module")
@@ -178,7 +178,7 @@ def _memory_config(**changes: object) -> ModelConfig:
         "memory_value_indices": (7, 8),
     }
     values.update(changes)
-    return ModelConfig(**values)  # type: ignore[arg-type]
+    return ModelConfig(**values)
 
 
 def test_protocol_v2_decoder_validates_and_rejects_attention_bypass() -> None:
@@ -437,7 +437,7 @@ def _row_refinement_config(**changes: object) -> ModelConfig:
         "refinement_layout": _row_refinement_layout(rows),
     }
     values.update(changes)
-    return ModelConfig(**values)  # type: ignore[arg-type]
+    return ModelConfig(**values)
 
 
 def _row_refinement_episode() -> tuple[RowEventConfig, jax.Array]:
@@ -900,7 +900,7 @@ def test_memory_read_policy_rejects_invalid_constructor_values(
     policy: object, exception: type[Exception]
 ) -> None:
     with pytest.raises(exception, match="memory_read_policy"):
-        LatentWorkspaceModel(_memory_config(), memory_read_policy=policy)  # type: ignore[arg-type]
+        LatentWorkspaceModel(_memory_config(), memory_read_policy=policy)
 
 
 def test_memory_read_policy_is_constructor_only_and_config_neutral() -> None:
@@ -916,7 +916,7 @@ def test_memory_read_policy_is_constructor_only_and_config_neutral() -> None:
     assert explicit_full.memory_read_policy == "full"
     assert query_only.memory_read_policy == "query_only"
     with pytest.raises(AttributeError):
-        query_only.memory_read_policy = "full"  # type: ignore[misc]
+        query_only.memory_read_policy = "full"
 
     expected_parameters = parameter_snapshot(implicit_full)
     _assert_parameter_snapshots_equal(
@@ -1693,7 +1693,7 @@ def test_query_only_latent_window_has_zero_read_path_gradients_and_live_control(
         def __init__(self, memory_read_policy: str):
             super().__init__(
                 config,
-                memory_read_policy=memory_read_policy,  # type: ignore[arg-type]
+                memory_read_policy=memory_read_policy,
             )
             run_context(self, h0_prefix)
             self._materialized_h0_snapshot = self.snapshot_state()
@@ -3002,7 +3002,7 @@ def test_restore_rejects_wrong_type_configuration_or_paths(
     model: LatentWorkspaceModel,
 ) -> None:
     with pytest.raises(TypeError, match="ModelStateSnapshot"):
-        model.restore_state(object())  # type: ignore[arg-type]
+        model.restore_state(object())
     snapshot = model.snapshot_state()
     incompatible = ModelStateSnapshot(snapshot.entries, 2, snapshot.neuron_count)
     with pytest.raises(ValueError, match="configuration"):

@@ -672,16 +672,16 @@ def lora_matmul(
         >>> print(y.shape)
         (16, 4)
     """
-    if x.ndim > 2:  # type: ignore[union-attr]
+    if x.ndim > 2:
         raise ValueError(
             f'lora_matmul() supports x.ndim of 1 (unbatched `(in_features,)`) or 2 '
-            f'(batched `(batch, in_features)`); got x.ndim={x.ndim} '  # type: ignore[union-attr]
-            f'(shape={x.shape}). Every ETP trace rule for etp_lora_mm_p / '  # type: ignore[union-attr]
+            f'(batched `(batch, in_features)`); got x.ndim={x.ndim} '
+            f'(shape={x.shape}). Every ETP trace rule for etp_lora_mm_p / '
             f'etp_lora_mv_p assumes one of those two layouts, so higher-rank '
             f'inputs (e.g. `(batch, time, in_features)`) are not supported -- '
             f'reshape/vmap over the extra axes before calling lora_matmul().'
         )
-    p = etp_lora_mm_p if x.ndim >= 2 else etp_lora_mv_p  # type: ignore[union-attr]  # x is an array here; ArrayLike also admits scalars without .ndim
+    p = etp_lora_mm_p if x.ndim >= 2 else etp_lora_mv_p
     x_v, x_u = u.split_mantissa_unit(x)
     B_v, B_u = u.split_mantissa_unit(B)
     A_v, A_u = u.split_mantissa_unit(A)

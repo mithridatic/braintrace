@@ -537,7 +537,7 @@ def compile_task_local_adaptation_runner(
         raise ValueError("Compiled task-local adaptation requires Adam weight_decay=0. Provide the required value for Compiled task-local adaptation.")
     if len(getattr(optimizer, "param_groups", ())) > 1:
         raise ValueError("Compiled task-local adaptation does not support Adam groups. Fix the input condition named in the error, then rerun the operation.")
-    if getattr(optimizer, "_schedulers", ()):  # noqa: SLF001
+    if getattr(optimizer, "_schedulers", ()):
         raise ValueError("Compiled task-local adaptation does not support schedulers. Fix the input condition named in the error, then rerun the operation.")
     missing_optimizer_state = next(
         (
@@ -562,7 +562,7 @@ def compile_task_local_adaptation_runner(
     optimizer_base = _OptimizerSnapshot(
         opt_state=_copy_tree(optimizer.opt_state.value),
         step_count=_copy_leaf(optimizer.step_count.value),
-        current_lr=_copy_leaf(optimizer._current_lr.value),  # noqa: SLF001
+        current_lr=_copy_leaf(optimizer._current_lr.value),
     )
     output_dtype = jnp.dtype(checkpoint_output_dtype)
 
@@ -572,7 +572,7 @@ def compile_task_local_adaptation_runner(
     def restore_optimizer() -> None:
         optimizer.opt_state.value = _copy_tree(optimizer_base.opt_state)
         optimizer.step_count.value = _copy_leaf(optimizer_base.step_count)
-        optimizer._current_lr.value = _copy_leaf(  # noqa: SLF001
+        optimizer._current_lr.value = _copy_leaf(
             optimizer_base.current_lr
         )
 

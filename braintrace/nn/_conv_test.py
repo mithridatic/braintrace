@@ -878,7 +878,7 @@ class TestAdaptDoc:
 
     def test_conv3d_doc_has_no_open_bullet_list(self):
         """The shipped Conv3d docstring closes every bullet list it opens."""
-        from braintrace.nn._conv import _adapt_doc  # noqa: F401
+        from braintrace.nn._conv import _adapt_doc
         lines = braintrace.nn.Conv3d.__doc__.split('\n')
         for prev, cur in zip(lines, lines[1:]):
             if not prev.lstrip().startswith('- ') or not cur.strip():

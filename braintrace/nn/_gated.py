@@ -81,7 +81,7 @@ class GatedProjection(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # pyright: ignore[reportCallIssue]
+        super().__init__(name=name)
         for dimension, dimension_name in (
             (value_size, "value_size"),
             (gate_size, "gate_size"),

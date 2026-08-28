@@ -44,7 +44,7 @@ try:
 except ImportError:  # Older JAX exposes it on jax.core only
     # jax.core dropped ``new_jaxpr_eqn`` in JAX 0.11; this fallback only runs on
     # older JAX, so silence mypy's static attr-defined/no-redef complaints.
-    from jax.core import new_jaxpr_eqn  # type: ignore[attr-defined, no-redef]
+    from jax.core import new_jaxpr_eqn
 
 try:
     from jax._src.ad_util import stop_gradient_p

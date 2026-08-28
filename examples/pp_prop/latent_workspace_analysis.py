@@ -767,15 +767,15 @@ def _selected_candidate_from_record(value: object, name: str) -> SelectedModelCa
         raise ValueError(f"{name} declared shape does not match its grid. Use matching values and structures.")
     decoded = DecodedCandidate(
         grid,
-        changed_decision=value["changed_decision"],  # type: ignore[arg-type]
-        log_probability=value["log_probability"],  # type: ignore[arg-type]
+        changed_decision=value["changed_decision"],
+        log_probability=value["log_probability"],
     )
     role = value["selection_role"]
     if not isinstance(role, str):
         raise ValueError(f"{name} selection_role is invalid. Set the named field to a value in the stated range, then rerun the operation.")
     return SelectedModelCandidate(
         decoded,
-        source_checkpoint=value["source_checkpoint"],  # type: ignore[arg-type]
+        source_checkpoint=value["source_checkpoint"],
         selection_role=cast(SelectionRole, role),
     )
 
@@ -796,15 +796,15 @@ def _query_score_from_record(value: object, name: str) -> QueryScore:
     if missing:
         raise ValueError(f"{name} score is missing fields {missing}. Provide the missing value or resource, then rerun the operation.")
     return QueryScore(
-        task_id=value["task_id"],  # type: ignore[arg-type]
-        query_index=value["query_index"],  # type: ignore[arg-type]
-        pass_at_1=value["pass_at_1"],  # type: ignore[arg-type]
-        pass_at_2=value["pass_at_2"],  # type: ignore[arg-type]
-        shape_accuracy=value["shape_accuracy_diagnostic"],  # type: ignore[arg-type]
-        valid_cell_pixel_accuracy=value[  # type: ignore[arg-type]
+        task_id=value["task_id"],
+        query_index=value["query_index"],
+        pass_at_1=value["pass_at_1"],
+        pass_at_2=value["pass_at_2"],
+        shape_accuracy=value["shape_accuracy_diagnostic"],
+        valid_cell_pixel_accuracy=value[
             "valid_cell_pixel_accuracy_diagnostic"
         ],
-        candidate_count=value["candidate_count"],  # type: ignore[arg-type]
+        candidate_count=value["candidate_count"],
     )
 
 
