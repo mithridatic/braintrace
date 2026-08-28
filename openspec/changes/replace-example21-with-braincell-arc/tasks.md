@@ -112,7 +112,7 @@
   actual prediction and target grids, voltage-only, sodium-gates-only,
   potassium-gate-only, spikes-only, all-state, and null interventions, direct
   strict data, and an end-to-end time at or below 180 seconds.
-- [ ] 6.4 Run the complete co-located Example 21 test module; verify more than
+- [x] 6.4 Run the complete co-located Example 21 test module; verify more than
   90% meaningful coverage and a total time at or below 60 seconds. Verify that
   a proof, experiment, decoder call, or pytest selection that reaches its
   declared limit fails its speed gate and cannot report acceptance.
