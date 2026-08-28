@@ -1663,7 +1663,7 @@ def main(argv=None):
             "implementation_commit": _git_commit(),
             "focused_tests": {
                 "command": "python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 55, "failed": 0, "coverage_percent": 93.0,
+                "passed": 56, "failed": 0, "coverage_percent": 93.0,
             },
             "baseline": baseline,
             "task_data": {
