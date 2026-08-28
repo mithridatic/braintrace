@@ -320,6 +320,36 @@ def integration_substep_events(event, substeps):
     )
 
 
+def _run_event_sequence(model, events, advances, return_spikes):
+    events = jnp.asarray(events, dtype=jnp.float32)
+    if advances is None:
+        advances = jnp.ones((events.shape[0],), dtype=bool)
+    advances = jnp.asarray(advances, dtype=bool)
+    if events.ndim != 2 or events.shape[1] != N_INPUTS:
+        raise ValueError(f"events must have shape (time, {N_INPUTS})")
+    if advances.shape != (events.shape[0],):
+        raise ValueError("advances must have one boolean per event")
+
+    def step(event, advance):
+        if not return_spikes:
+            return model.step(event, advance)
+
+        def advancing():
+            voltage = model._advance(event)
+            return voltage, model.previous_spikes.value
+
+        def skipped():
+            zeros = jnp.zeros_like(model.previous_spikes.value)
+            return zeros, zeros
+
+        return brainstate.transform.cond(advance, advancing, skipped)
+
+    def drive(xs, mask):
+        return brainstate.transform.for_loop(step, xs, mask)
+
+    return brainstate.transform.jit(drive)(events, advances)
+
+
 def run_event_sequence(model, events, advances=None):
     """Run a compiled event sequence and return one voltage vector per event.
 
@@ -337,22 +367,27 @@ def run_event_sequence(model, events, advances=None):
     jax.Array
         Voltage values with shape ``(time, 2048)``.
     """
+    return _run_event_sequence(model, events, advances, False)
 
-    events = jnp.asarray(events, dtype=jnp.float32)
-    if advances is None:
-        advances = jnp.ones((events.shape[0],), dtype=bool)
-    advances = jnp.asarray(advances, dtype=bool)
-    if events.ndim != 2 or events.shape[1] != N_INPUTS:
-        raise ValueError(f"events must have shape (time, {N_INPUTS})")
-    if advances.shape != (events.shape[0],):
-        raise ValueError("advances must have one boolean per event")
 
-    def drive(xs, mask):
-        return brainstate.transform.for_loop(
-            lambda event, advance: model.step(event, advance), xs, mask
-        )
+def run_event_sequence_with_spikes(model, events, advances=None):
+    """Run a compiled event sequence and return voltage and spike traces.
 
-    return brainstate.transform.jit(drive)(events, advances)
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose state is advanced.
+    events : array-like
+        Event vectors with shape ``(time, 441)``.
+    advances : array-like, optional
+        Boolean event mask. Missing values mean that every event advances.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Voltage and direct ``previous_spikes`` values for every event.
+    """
+    return _run_event_sequence(model, events, advances, True)
 
 
 def run_pp_prop_sequence(learner, events, advances=None):

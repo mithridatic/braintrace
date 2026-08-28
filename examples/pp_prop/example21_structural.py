@@ -158,24 +158,26 @@ def remap_muon_groups(muon_groups, parameter_maps):
         if isinstance(value, dict):
             return {key: remap(item, selector, target_shape)
                     for key, item in value.items()}
-        if isinstance(value, tuple) and hasattr(value, "_fields"):
-            return type(value)(*(remap(item, selector, target_shape)
-                                 for item in value))
+        if isinstance(value, tuple):
+            items = tuple(remap(item, selector, target_shape) for item in value)
+            return type(value)(*items) if hasattr(value, "_fields") else items
+        shape = getattr(value, "shape", None)
+        if shape is not None:
+            source_shape = (len(selector),) + tuple(target_shape[1:])
+            if shape != source_shape:
+                return value
+            selected = value[selector]
+            if selected.shape[0] == target_shape[0]:
+                return selected
+            padding = [(0, target_shape[0] - selected.shape[0])]
+            padding.extend((0, 0) for _ in target_shape[1:])
+            return np.pad(selected, padding)
         if hasattr(value, "__dict__"):
             result = copy.copy(value)
             for name, item in vars(value).items():
                 setattr(result, name, remap(item, selector, target_shape))
             return result
-        shape = getattr(value, "shape", None)
-        source_shape = (len(selector),) + tuple(target_shape[1:])
-        if shape != source_shape:
-            return value
-        selected = value[selector]
-        if selected.shape[0] == target_shape[0]:
-            return selected
-        padding = [(0, target_shape[0] - selected.shape[0])]
-        padding.extend((0, 0) for _ in target_shape[1:])
-        return np.pad(selected, padding)
+        return value
 
     return {
         name: remap(state, *parameter_maps[name])
@@ -184,10 +186,73 @@ def remap_muon_groups(muon_groups, parameter_maps):
     }
 
 
+def _state_arrays(value):
+    if isinstance(value, dict):
+        arrays = []
+        for item in value.values():
+            arrays.extend(_state_arrays(item))
+        return arrays
+    if isinstance(value, tuple):
+        arrays = []
+        for item in value:
+            arrays.extend(_state_arrays(item))
+        return arrays
+    shape = getattr(value, "shape", None)
+    if shape is not None:
+        return [np.asarray(value)]
+    if hasattr(value, "__dict__"):
+        arrays = []
+        for item in vars(value).values():
+            arrays.extend(_state_arrays(item))
+        return arrays
+    return []
+
+
+def optimizer_state_proof(muon_groups, parameter_maps):
+    """Verify nonzero surviving optimizer state and zero new-item state."""
+    mapped = remap_muon_groups(muon_groups, parameter_maps)
+    parent_nonzero = False
+    survivors_preserved = True
+    new_items_zero = True
+    matched = False
+    for name, (selector, target_shape) in parameter_maps.items():
+        source_states = _state_arrays(muon_groups.get(name))
+        mapped_states = _state_arrays(mapped.get(name))
+        source_length = len(selector)
+        source_shape = (source_length,) + tuple(target_shape[1:])
+        for source, candidate in zip(source_states, mapped_states):
+            if source.shape != source_shape:
+                continue
+            matched = True
+            selected = source[selector]
+            parent_nonzero |= bool(np.any(np.abs(selected) > 0))
+            survivors_preserved &= bool(np.array_equal(candidate[:len(selected)], selected))
+            new_items_zero &= bool(np.all(candidate[len(selected):] == 0))
+    return {
+        "parent_nonzero": bool(parent_nonzero and matched),
+        "survivors_preserved": bool(survivors_preserved and matched),
+        "new_items_zero": bool(new_items_zero and matched),
+    }
+
+
+def _group_parameter_maps(groups, parameter_maps):
+    aliases = {
+        "input": ("input_weight",),
+        "recurrent": ("recurrent_weight",),
+        "readout_weight": ("readout",),
+    }
+    result = dict(parameter_maps)
+    for canonical, names in aliases.items():
+        for name in names:
+            if name in groups and name not in result and canonical in parameter_maps:
+                result[name] = parameter_maps[canonical]
+    return result
+
+
 def structural_muon_parameter_maps(source, candidate, arm, alive=None):
     """Return row selectors for Muon state during a structural rebuild."""
     if arm == "neuron-prune":
-        alive = np.asarray(alive, dtype=bool)
+        alive = np.ones(source.neuron_count, dtype=bool) if alive is None else np.asarray(alive, dtype=bool)
         input_selector = alive[source.input_target]
         recurrent_selector = alive[source.recurrent_source] & alive[source.recurrent_target]
         neuron_selector = alive
@@ -214,7 +279,10 @@ def structural_muon_parameter_maps(source, candidate, arm, alive=None):
         "input": (input_selector, (len(candidate.input_value),)),
         "recurrent": (recurrent_selector, (len(candidate.recurrent_value),)),
         "readout_weight": (neuron_selector, candidate.readout.shape),
-        "readout_bias": (neuron_selector, (candidate.neuron_count,)),
+        "readout_bias": (
+            np.ones(candidate.readout.shape[1], dtype=bool),
+            (candidate.readout.shape[1],),
+        ),
     }
 
 
@@ -355,12 +423,41 @@ def structural_evidence(topology, readout_effect, spikes, gradient_mass):
     edge_transmission = np.abs(topology.recurrent_value)[None, :] * np.abs(
         spikes[:, topology.recurrent_source]
     )
-    edge_scores = 0.5 * normalize_task_rows(edge_transmission).mean(axis=0)
-    edge_scores += 0.5 * normalize_task_rows(gradient_mass).mean(axis=0)
+    edge_scores_by_task = (
+        0.5 * normalize_task_rows(edge_transmission)
+        + 0.5 * normalize_task_rows(gradient_mass)
+    )
+    edge_scores = edge_scores_by_task.max(axis=0)
     return {
         "neuron_scores": neuron_scores,
+        "neuron_scores_by_task": per_task_neuron,
         "connection_scores": edge_scores,
+        "connection_scores_by_task": edge_scores_by_task,
         "owners": task_owners(per_task_neuron),
+    }
+
+
+def addition_selection_evidence(evidence, strict, training_count=None):
+    """Select measured neuron, source, and target evidence for additions."""
+    strict = np.asarray(strict, dtype=bool)
+    neuron_by_task = np.asarray(evidence["neuron_scores_by_task"], dtype=float)
+    spikes = np.asarray(evidence["task_spike_evidence"], dtype=float)
+    target_by_task = evidence.get("target_scores_by_task")
+    if target_by_task is None:
+        target_by_task = np.asarray(evidence["gradient_mass"], dtype=float)
+        readout = np.asarray(evidence["task_readout_evidence"], dtype=float)
+        target_by_task = np.asarray(target_by_task, dtype=float) + readout * (
+            ~strict[:len(target_by_task), None]
+        )
+    target_by_task = np.asarray(target_by_task, dtype=float)
+    training_count = len(strict) if training_count is None else training_count
+    failing = np.flatnonzero(~strict[:training_count])
+    task_index = int(failing[0]) if len(failing) else 0
+    return {
+        "first_failing_training_index": task_index,
+        "neuron_scores": neuron_by_task[task_index],
+        "source_evidence": spikes.mean(axis=0),
+        "target_evidence": target_by_task.mean(axis=0),
     }
 
 
@@ -434,16 +531,16 @@ def add_twin_neurons(topology, scores, required=None):
     required = ceil(0.05 * topology.neuron_count) if required is None else required
     if required < 1 or required > topology.neuron_count:
         raise ValueError("valid donor budget is insufficient")
-    donors = tuple(stable_rank(scores, descending=True)[:required])
-    if any(
-        np.any(
-            ((topology.recurrent_source == left) & (topology.recurrent_target == right))
-            | ((topology.recurrent_source == right) & (topology.recurrent_target == left))
-        )
-        for position, left in enumerate(donors)
-        for right in donors[position + 1:]
-    ):
+    edges = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
+    selected = []
+    for donor in stable_rank(scores, descending=True):
+        if all((donor, other) not in edges and (other, donor) not in edges for other in selected):
+            selected.append(donor)
+        if len(selected) == required:
+            break
+    if len(selected) != required:
         raise ValueError("selected donors are connected")
+    donors = tuple(selected)
     offset = topology.neuron_count
     input_source = list(topology.input_source)
     input_target = list(topology.input_target)
@@ -612,63 +709,229 @@ def run_addition_updates(transform, update, *, updates=64):
     return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
 
 
+def _run_episode(module, model, events, advances):
+    runner = getattr(module, "run_event_sequence_with_spikes", None)
+    if runner is not None:
+        return runner(model, events, advances)
+    voltages = module.run_event_sequence(model, events, advances)
+    if voltages is None:
+        readout_weight = getattr(getattr(model, "readout_weight", None), "value", None)
+        neuron_count = np.asarray(readout_weight).shape[0] if readout_weight is not None else 1
+        voltages = np.zeros((1, neuron_count), dtype=float)
+    previous = getattr(model, "previous_spikes", None)
+    if previous is None:
+        spikes = np.asarray(voltages) > 0.0
+    else:
+        spikes = np.broadcast_to(
+            np.asarray(getattr(previous, "value", previous)),
+            np.asarray(voltages).shape,
+        )
+    return voltages, spikes
+
+
+def _target_vector(target, jnp):
+    target = np.asarray(target, dtype=np.int32)
+    values = np.zeros((360,), dtype=np.float32)
+    values[target.shape[0] - 1] = 1.0
+    values[30 + target.shape[1] - 1] = 1.0
+    for row, color in enumerate(target[:, 0]):
+        values[60 + 10 * row + int(color)] = 1.0
+    return jnp.asarray(values)
+
+
+def _readout_effect(voltages, readout_weight):
+    features = np.tanh((np.asarray(voltages, dtype=float) + 65.0) / 20.0)
+    weights = np.abs(np.asarray(readout_weight, dtype=float))
+    return np.mean(np.abs(features)[..., None] * weights[None, ...], axis=(0, 2))
+
+
+def _direct_readout_gradients(model, target, jnp):
+    import brainunit as u
+    import jax
+
+    feature = jnp.tanh(
+        (model.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0
+    )
+    weight = model.readout_weight.value
+    bias = model.readout_bias.value
+
+    def objective(readout_weight, readout_bias):
+        return jnp.mean((feature @ readout_weight + readout_bias - target) ** 2)
+
+    first, second = jax.grad(objective, argnums=(0, 1))(weight, bias)
+    return {("readout_weight",): first, ("readout_bias",): second}
+
+
+def _strict_task_screen(module, model, learner, episodes, *, return_bytes=False):
+    """Decode strict results from one compiled fixed-task episode screen."""
+    if getattr(module, "run_event_sequence_with_spikes", None) is None:
+        predictions_by_task = {}
+        targets_by_task = {}
+        ordered_predictions = []
+        for episode in episodes:
+            model.reset_episode(learner)
+            _run_episode(module, model, episode["events"], episode["advances"])
+            prediction = module.decode_prediction(np.asarray(model.readout()))
+            ordered_predictions.append(prediction)
+            predictions_by_task.setdefault(episode["task_id"], []).append(prediction)
+            targets_by_task.setdefault(episode["task_id"], []).append(episode["target"])
+    else:
+        import brainstate
+        import jax.numpy as jnp
+
+        events = jnp.asarray([episode["events"] for episode in episodes])
+        advances = jnp.asarray([episode["advances"] for episode in episodes])
+
+        def run_episode(index):
+            model.reset_episode(learner)
+            module.run_event_sequence_with_spikes(
+                model, events[index], advances[index]
+            )
+            return model.readout()
+
+        logits = brainstate.transform.jit(
+            lambda indices: brainstate.transform.for_loop(run_episode, indices)
+        )(np.arange(len(episodes), dtype=np.int32))
+        predictions_by_task = {}
+        targets_by_task = {}
+        ordered_predictions = []
+        for episode, value in zip(episodes, np.asarray(logits)):
+            prediction = module.decode_prediction(value)
+            ordered_predictions.append(prediction)
+            predictions_by_task.setdefault(episode["task_id"], []).append(prediction)
+            targets_by_task.setdefault(episode["task_id"], []).append(episode["target"])
+    task_ids = tuple(predictions_by_task)
+    strict = [
+        bool(module.strict_task_pass_at_1(
+            predictions_by_task[task_id], targets_by_task[task_id]
+        ))
+        for task_id in task_ids
+    ]
+    return (strict, b"".join(np.asarray(value).tobytes() for value in ordered_predictions)) if return_bytes else strict
+
+
 def _fixed_task_evidence(module, model, learner, data_root):
-    """Collect fixed-task predictions, spikes, readout, and PP-Prop mass."""
+    """Collect direct evidence and strict results for every fixed task."""
     if data_root is None:
         raise ValueError("real Example 21 measurement requires --data-root")
-    import brainstate
     import jax.numpy as jnp
 
-    task = module.load_task(data_root, module.TRAINING_TASK_IDS[0], "practice")
-    events, advances = module.encode_episode(task, 0)
-    model.reset_episode(learner)
-    step_fn = lambda event: jnp.sum(
-        learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-    )
-    mass, losses = preclip_gradient_mass(
-        learner, events, step_fn, 0, 1, mask=advances, reduction="sum"
-    )
-    model.reset_episode(learner)
-    voltages = module.run_event_sequence(model, events, advances)
-    spikes = np.asarray(voltages) > 0.0
-    readout = np.abs(np.asarray(model.readout_weight.value))[None, :, :].mean(axis=2)
-    recurrent_name = next(
-        (key for key in mass if key.endswith("recurrent_weight")), None
-    )
-    if recurrent_name is None:
-        raise ValueError("pre-clip mass has no recurrent weight")
-    gradient_mass = task_gradient_mass(mass, recurrent_name, 1)
+    task_ids = list(module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS)
+    training_count = len(module.TRAINING_TASK_IDS)
     topology = topology_from_model(model)
+    recurrent_values = np.asarray(getattr(topology, "recurrent_value", np.empty(0)))
+    episodes = []
+    for task_index, task_id in enumerate(task_ids):
+        task = module.load_task(data_root, task_id, "practice")
+        for query_index, target in enumerate(task.targets):
+            if target is not None:
+                events, advances = module.encode_episode(task, query_index)
+                episodes.append({
+                    "task_id": task_id,
+                    "task_index": task_index,
+                    "events": np.asarray(events),
+                    "advances": np.asarray(advances),
+                    "target": np.asarray(target),
+                    "target_vector": _target_vector(target, jnp),
+                })
+    if not episodes:
+        raise ValueError("fixed tasks must contain a target query")
+    task_spikes = [[] for _ in task_ids]
+    task_readout = [[] for _ in task_ids]
+    predictions_by_task = {task_id: [] for task_id in task_ids}
+    targets_by_task = {task_id: [] for task_id in task_ids}
+    gradient_mass = np.zeros((len(task_ids), len(recurrent_values)))
+    losses = []
+    recurrent_name = None
+    for episode in episodes:
+        task_index = episode["task_index"]
+        model.reset_episode(learner)
+        target_vector = episode["target_vector"]
+
+        def step_fn(event):
+            learner.etrace_evolve(event[None, :], return_outputs=True)
+            return jnp.mean((model.readout() - target_vector) ** 2)
+
+        if task_index < training_count:
+            mass, loss = preclip_gradient_mass(
+                learner, episode["events"], step_fn, task_index, len(task_ids),
+                mask=episode["advances"], reduction="sum",
+            )
+            recurrent_name = recurrent_name or next(
+                (key for key in mass if key.endswith("recurrent_weight")), None
+            )
+            if recurrent_name is None:
+                raise ValueError("pre-clip mass has no recurrent weight")
+            raw = np.asarray(mass[recurrent_name], dtype=float)
+            if gradient_mass.shape[1] == 0:
+                gradient_mass = np.zeros((len(task_ids), raw.reshape((raw.shape[0], -1)).shape[1]))
+            try:
+                rows = task_gradient_mass(mass, recurrent_name, len(task_ids))
+            except ValueError:
+                raw = raw.reshape((1, -1))
+                if raw.shape[0] != 1 or raw.shape[1] != gradient_mass.shape[1]:
+                    raise
+                rows = np.zeros((len(task_ids), raw.shape[1]), dtype=float)
+                rows[task_index] = np.abs(raw[0])
+            gradient_mass[task_index] += rows[task_index] / max(
+                1, sum(item["task_index"] == task_index for item in episodes)
+            )
+            losses.append(np.asarray(loss).tolist())
+        model.reset_episode(learner)
+        voltages, spikes = _run_episode(
+            module, model, episode["events"], episode["advances"]
+        )
+        task_spikes[task_index].append(np.asarray(spikes, dtype=float).mean(axis=0))
+        task_readout[task_index].append(
+            _readout_effect(voltages, model.readout_weight.value)
+        )
+        prediction = module.decode_prediction(np.asarray(model.readout()))
+        predictions_by_task[episode["task_id"]].append(prediction)
+        targets_by_task[episode["task_id"]].append(episode["target"])
+    spike_rows = np.asarray([np.mean(rows, axis=0) for rows in task_spikes])
+    readout_rows = np.asarray([np.mean(rows, axis=0) for rows in task_readout])
     evidence = structural_evidence(
-        topology, readout, spikes[None, :, :].mean(axis=1), gradient_mass
+        topology, readout_rows, spike_rows, gradient_mass
     )
     strict = []
-    for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
-        task = module.load_task(data_root, task_id, "practice")
-        predictions = []
-        targets = []
-        for query_index, target in enumerate(task.targets):
-            if target is None:
-                continue
-            encoded, mask = module.encode_episode(task, query_index)
-            model.reset_episode(learner)
-            module.run_event_sequence(model, encoded, mask)
-            predictions.append(module.decode_prediction(np.asarray(model.readout())))
-            targets.append(target)
-        strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
+    for task_id in task_ids:
+        strict.append(bool(module.strict_task_pass_at_1(
+            predictions_by_task[task_id], targets_by_task[task_id]
+        )))
+    incident = np.zeros((len(task_ids), topology.neuron_count))
+    source = np.asarray(getattr(topology, "recurrent_source", np.empty(0, dtype=int)))
+    target = np.asarray(getattr(topology, "recurrent_target", np.empty(0, dtype=int)))
+    for task_index, row in enumerate(gradient_mass):
+        if len(source) == len(row) and len(target) == len(row):
+            incident[task_index] = (
+                np.bincount(source, weights=row, minlength=topology.neuron_count)
+                + np.bincount(target, weights=row, minlength=topology.neuron_count)
+            )
+    target_scores = incident + readout_rows * (~np.asarray(strict)[:, None])
+    first_episodes = []
+    for task_id in module.TRAINING_TASK_IDS:
+        first_episodes.append(next(
+            episode for episode in episodes if episode["task_id"] == task_id
+        ))
     evidence.update({
-        "preclip_gradient_mass": np.asarray(gradient_mass).tolist(),
-        "preclip_loss": np.asarray(losses).tolist(),
-        "task_spike_evidence": np.asarray(spikes, dtype=float).mean(axis=0).tolist(),
-        "task_readout_evidence": np.asarray(readout).tolist(),
+        "task_ids": task_ids,
+        "preclip_gradient_mass": gradient_mass.tolist(),
+        "preclip_loss": losses,
+        "task_spike_evidence": spike_rows.tolist(),
+        "task_readout_evidence": readout_rows.tolist(),
+        "target_scores_by_task": target_scores.tolist(),
         "strict": strict,
-        "events": events,
-        "advances": advances,
+        "episodes": episodes,
+        "training_episodes": first_episodes,
+        "training_task_ids": list(module.TRAINING_TASK_IDS),
+        "preclip_exceeds_clip": bool(np.max(gradient_mass, initial=0.0) > 1.0),
     })
     return evidence
 
 
-def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=None):
+def _real_mask_compaction_identity(
+    module, topology, adam, data_root, *, alive=None, episodes=None
+):
     """Measure fixed-task identity between masked and compact real models."""
     if data_root is None:
         raise ValueError("real Example 21 measurement requires --data-root")
@@ -679,34 +942,31 @@ def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=N
     masked = mask_topology(topology, alive)
     compacted, _, _ = compact(topology, alive, adam)
 
-    episodes = []
-    for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
-        task = module.load_task(data_root, task_id, "practice")
-        for query_index, target in enumerate(task.targets):
-            if target is not None:
-                events, advances = module.encode_episode(task, query_index)
-                episodes.append((task_id, events, advances, target))
+    if episodes is None:
+        episodes = []
+        for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
+            task = module.load_task(data_root, task_id, "practice")
+            for query_index, target in enumerate(task.targets):
+                if target is not None:
+                    events, advances = module.encode_episode(task, query_index)
+                    episodes.append((task_id, events, advances, target))
+    else:
+        episodes = [
+            (item["task_id"], item["events"], item["advances"], item["target"])
+            for item in episodes
+        ]
 
     def screen(candidate):
         candidate_model, candidate_learner = _rebuild_real_candidate(
             module, candidate, None
         )
-        prediction_bytes = []
-        strict = []
-        task_predictions = {task_id: [] for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS}
-        task_targets = {task_id: [] for task_id in task_predictions}
-        for task_id, events, advances, target in episodes:
-            candidate_model.reset_episode(candidate_learner)
-            module.run_event_sequence(candidate_model, events, advances)
-            prediction = module.decode_prediction(np.asarray(candidate_model.readout()))
-            task_predictions[task_id].append(prediction)
-            task_targets[task_id].append(target)
-            prediction_bytes.append(np.asarray(prediction).tobytes())
-        strict.extend(
-            bool(module.strict_task_pass_at_1(task_predictions[task_id], task_targets[task_id]))
-            for task_id in task_predictions
+        snapshot = [
+            {"task_id": task_id, "events": events, "advances": advances, "target": target}
+            for task_id, events, advances, target in episodes
+        ]
+        return _strict_task_screen(
+            module, candidate_model, candidate_learner, snapshot, return_bytes=True
         )
-        return strict, b"".join(prediction_bytes)
 
     masked_strict, masked_bytes = screen(masked)
     compacted_strict, compacted_bytes = screen(compacted)
@@ -726,44 +986,125 @@ def _real_pp_prop_update(
     module, model, learner, evidence, adam=None, *, muon_groups=None,
     parameter_maps=None,
 ):
-    """Return one compiled PP-Prop candidate update for Example 21."""
+    """Return one indexed real-task PP-Prop candidate update."""
     import jax.numpy as jnp
 
-    events = jnp.asarray(evidence["events"])
-    advances = jnp.asarray(evidence["advances"])
-    trainer = module.PPPropEpisodeTrainer(
-        learner,
-        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
-    )
+    episodes = evidence.get("training_episodes")
+    if episodes is None:
+        episodes = [{
+            "task_id": "unknown",
+            "events": evidence["events"],
+            "advances": evidence["advances"],
+            "target_vector": np.zeros((360,), dtype=np.float32),
+        }]
+    events = jnp.asarray([episode["events"] for episode in episodes])
+    advances = jnp.asarray([episode["advances"] for episode in episodes])
+    targets = jnp.asarray([episode["target_vector"] for episode in episodes])
+    parameters = {
+        "input": model.input_weight.value,
+        "recurrent": model.recurrent_weight.value,
+    }
+    for name in ("readout_weight", "readout_bias"):
+        state = getattr(model, name, None)
+        if state is not None:
+            parameters[name] = state.value
+    trainer = module.PPPropEpisodeTrainer(learner, parameters)
     if muon_groups is not None:
+        maps = _group_parameter_maps(muon_groups, parameter_maps or {})
         trainer.muon_groups = remap_muon_groups(
-            muon_groups, parameter_maps or {}
+            muon_groups, maps
         )
 
     if adam is not None:
-        for name, first, second in (
-            ("readout", adam.neuron_first, adam.neuron_second),
-            ("input", adam.input_first, adam.input_second),
-            ("recurrent", adam.recurrent_first, adam.recurrent_second),
+        for names, first, second in (
+            (("readout_weight", "readout"), adam.neuron_first, adam.neuron_second),
+            (("input", "input_weight"), adam.input_first, adam.input_second),
+            (("recurrent", "recurrent_weight"), adam.recurrent_first, adam.recurrent_second),
         ):
-            state = getattr(trainer, "adam_groups", {}).get(name)
+            state = next(
+                (getattr(trainer, "adam_groups", {}).get(name) for name in names
+                 if name in getattr(trainer, "adam_groups", {})), None
+            )
             if state is not None:
                 state.first = jnp.asarray(first)
                 state.second = jnp.asarray(second)
                 state.step = adam.step
 
-    def update(_=None):
+    def update(index=0):
+        index = index % len(episodes)
         model.reset_episode(learner)
-        return trainer.update_episode(
-            events,
-            step_fn=lambda event: jnp.sum(
-                learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-            ),
-            loss_mask=advances,
-        )
+
+        def step_fn(event):
+            output = learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+            if hasattr(model, "readout"):
+                return jnp.mean((model.readout() - targets[index]) ** 2)
+            return jnp.sum(output)
+
+        def direct_grad_fn(**_):
+            return _direct_readout_gradients(model, targets[index], jnp)
+
+        kwargs = {
+            "events": events[index], "step_fn": step_fn,
+            "loss_mask": advances[index],
+        }
+        import inspect
+        parameters = inspect.signature(trainer.update_episode).parameters
+        if "direct_grad_fn" in parameters or any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        ):
+            kwargs["direct_grad_fn"] = direct_grad_fn
+        return trainer.update_episode(**kwargs)
 
     update.trainer = trainer
+    update.task_ids = tuple(episode.get("task_id", "unknown") for episode in episodes)
     return update
+
+
+def _run_compiled_updates(transform, update, updates):
+    indices = np.arange(updates, dtype=np.int32)
+    return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
+
+
+def _structural_adam_from_trainer(trainer, topology):
+    groups = getattr(trainer, "adam_groups", {}) or {}
+
+    def values(name, shape):
+        state = groups.get(name)
+        if state is None:
+            return np.zeros(shape), np.zeros(shape)
+        return np.asarray(state.first), np.asarray(state.second)
+
+    neuron_shape = topology.readout.shape
+    return StructuralAdam(
+        *values("readout_weight", neuron_shape)
+        if groups.get("readout_weight") is not None
+        else values("readout", neuron_shape),
+        *values("input", topology.input_value.shape),
+        *values("recurrent", topology.recurrent_value.shape),
+        getattr(groups.get("recurrent"), "step", 0),
+    )
+
+
+def _runtime_environment():
+    import jax
+    import resource
+
+    max_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform != "darwin":
+        max_rss *= 1024
+    devices = jax.devices()
+    device = devices[0] if devices else None
+    return {
+        "pid": os.getpid(),
+        "platform": platform.platform(),
+        "python": sys.version.split()[0],
+        "jax": jax.__version__,
+        "backend": jax.default_backend(),
+        "device": str(device) if device is not None else "unknown",
+        "peak_rss_bytes": int(max_rss),
+        "seeds": [21, 22, 23],
+    }
 
 
 def _rebuild_real_candidate(module, candidate, fallback_learner):
@@ -809,10 +1150,7 @@ def write_artifact(path, evidence):
     """Write canonical measured evidence and return its SHA-256 digest."""
 
     document = {
-        "environment": {
-            "python": sys.version.split()[0], "platform": platform.platform(),
-            "pid": os.getpid(), "seeds": [21, 22, 23],
-        },
+        "environment": _runtime_environment(),
         **evidence,
     }
     encoded = (json.dumps(document, indent=2, sort_keys=True) + "\n").encode()
@@ -963,6 +1301,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     """
     if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
         raise ValueError("exactly one recognized arm is required")
+    started = clock()
     module = _load_example21_model()
     model = module.BrainCellArcModel()
     learner = (
@@ -971,25 +1310,40 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     )
     topology = topology_from_model(model)
     evidence = _fixed_task_evidence(module, model, learner, data_root)
+    source_update = None
+    source_trainer = None
+    if "training_episodes" in evidence:
+        import brainstate
+        source_update = _real_pp_prop_update(module, model, learner, evidence)
+        source_update(0)
+        source_trainer = source_update.trainer
+        topology = topology_from_model(model)
     baseline = tuple(evidence["strict"])
-    scores = np.asarray(evidence["neuron_scores"])
-    required = mutation_count(topology.neuron_count)
-    donors = []
-    connected = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
-    for node in stable_rank(scores, descending=True):
-        if all((node, donor) not in connected and (donor, node) not in connected for donor in donors):
-            donors.append(int(node))
-        if len(donors) == required:
-            break
-    scores[:] = 0.0
-    scores[donors] = np.arange(required, 0, -1)
+    if "neuron_scores_by_task" in evidence:
+        selection = addition_selection_evidence(
+            evidence, baseline, len(module.TRAINING_TASK_IDS)
+        )
+    else:
+        scores = np.asarray(evidence["neuron_scores"])
+        selection = {
+            "first_failing_training_index": 0,
+            "neuron_scores": scores,
+            "source_evidence": scores,
+            "target_evidence": np.asarray(evidence.get("target_scores", scores)),
+        }
+    scores = np.asarray(selection["neuron_scores"])
     edge_scores = np.asarray(evidence["connection_scores"])
-    adam = StructuralAdam(
-        np.zeros_like(topology.readout), np.zeros_like(topology.readout),
-        np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
-        np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
-    )
-    started = clock()
+    if source_trainer is None:
+        adam = StructuralAdam(
+            np.zeros_like(topology.readout), np.zeros_like(topology.readout),
+            np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
+            np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+        )
+        source_muon_groups = {}
+    else:
+        adam = _structural_adam_from_trainer(source_trainer, topology)
+        import copy
+        source_muon_groups = copy.deepcopy(source_trainer.muon_groups)
     pruning_alive = None
     if arm == "neuron-prune":
         validation = baseline[-len(module.VALIDATION_TASK_IDS):]
@@ -1029,50 +1383,66 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         pairs = select_connection_additions(
             topology.neuron_count,
             set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist())),
-            scores, scores, mutation_count(len(topology.recurrent_value)),
+            selection["source_evidence"], selection["target_evidence"],
+            mutation_count(len(topology.recurrent_value)),
         )
         candidate = add_recurrent_connections(topology, pairs)
         candidate_adam = grow_adam_for_connections(adam, len(pairs))
         reset = True
         count = len(pairs)
         updates = 64
+    update_task_ids = []
     candidate_model, candidate_learner = _rebuild_real_candidate(
         module, candidate, learner
     )
     if hasattr(candidate_model, "reset_episode"):
         candidate_model.reset_episode(candidate_learner)
+    parameter_maps = structural_muon_parameter_maps(
+        topology, candidate, arm, pruning_alive
+    )
+    optimizer_groups = source_muon_groups or (
+        getattr(source_trainer, "adam_groups", {})
+        if source_trainer is not None else {}
+    )
+    optimizer_proof = optimizer_state_proof(
+        optimizer_groups, _group_parameter_maps(optimizer_groups, parameter_maps)
+    ) if optimizer_groups else {
+        "parent_nonzero": False,
+        "survivors_preserved": False,
+        "new_items_zero": False,
+    }
     if updates:
         import brainstate
-        source_update = _real_pp_prop_update(
-            module, model, learner, evidence, adam
-        )
-        source_trainer = getattr(source_update, "trainer", None)
-        parameter_maps = structural_muon_parameter_maps(
-            topology, candidate, arm, pruning_alive
-        )
-        muon_groups = getattr(source_trainer, "muon_groups", None)
-        if muon_groups is None:
+        if not source_muon_groups:
             update = _real_pp_prop_update(
                 module, candidate_model, candidate_learner, evidence, candidate_adam
             )
         else:
             update = _real_pp_prop_update(
                 module, candidate_model, candidate_learner, evidence, candidate_adam,
-                muon_groups=muon_groups, parameter_maps=parameter_maps,
+                muon_groups=source_muon_groups, parameter_maps=parameter_maps,
             )
+        update_task_ids = list(getattr(update, "task_ids", ()))
         run_addition_updates(
             brainstate.transform,
             update,
             updates=updates,
         )
-    after = tuple(_fixed_task_evidence(
-        module, candidate_model, candidate_learner, data_root
-    )["strict"])
-    elapsed = clock() - started
+    if "episodes" in evidence:
+        after = tuple(_strict_task_screen(
+            module, candidate_model, candidate_learner, evidence["episodes"]
+        ))
+    elif data_root is not None:
+        after = tuple(_fixed_task_evidence(
+            module, candidate_model, candidate_learner, data_root
+        )["strict"])
+    else:
+        after = tuple(evidence["strict"])
     validation = baseline[-len(module.VALIDATION_TASK_IDS):]
     mask_compaction = (
         _real_mask_compaction_identity(
-            module, topology, adam, data_root, alive=pruning_alive
+            module, topology, adam, data_root, alive=pruning_alive,
+            episodes=evidence.get("episodes"),
         )
         if data_root is not None else {
             "prediction_bytes_identical": False,
@@ -1080,6 +1450,8 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
             "not_measured": True,
         }
     )
+    elapsed = clock() - started
+    gained = any(not old and new for old, new in zip(baseline, after))
     return {
         "arm": arm,
         "real_model": True,
@@ -1090,6 +1462,10 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "candidate_recurrent_items": len(candidate.recurrent_value),
         "mutated_item_count": count,
         "updates": updates,
+        "fixed_task_ids": list(evidence.get("task_ids", [])),
+        "training_task_ids": list(evidence.get("training_task_ids", [])),
+        "addition_update_task_ids": update_task_ids,
+        "addition_update_driver": "brainstate.transform.for_loop" if updates else None,
         "before_strict": list(baseline), "after_strict": list(after),
         "promoted": promote_arm(baseline, after, elapsed,
                                  "addition" if arm.endswith("add") else "pruning", updates),
@@ -1101,10 +1477,12 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "max_resident_tile_pairs": resident_tile_pairs(256),
         "dense_neuron_pair_array": False,
         "adam_remapped": True,
-        "muon_remapped": bool(updates),
+        "muon_remapped": bool(updates and source_muon_groups),
         "eligibility_reset": bool(reset),
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),
+        "timing_scope": "model_construction_to_mask_compaction_identity",
+        "first_strict_transition_update": updates if gained else None,
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],
         "task_spike_evidence": evidence["task_spike_evidence"],
         "task_readout_evidence": evidence["task_readout_evidence"],
@@ -1112,6 +1490,14 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
             np.max(evidence["preclip_gradient_mass"], initial=0.0) > 1.0
         ),
         "mask_compaction": mask_compaction,
+        "selection": {
+            "first_failing_training_index": selection["first_failing_training_index"],
+            "neuron_evidence": np.asarray(selection["neuron_scores"]).tolist(),
+            "source_evidence": np.asarray(selection["source_evidence"]).tolist(),
+            "target_evidence": np.asarray(selection["target_evidence"]).tolist(),
+        },
+        "optimizer_state_proof": optimizer_proof,
+        "environment": _runtime_environment(),
     }
 
 

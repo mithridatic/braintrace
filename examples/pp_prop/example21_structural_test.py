@@ -578,6 +578,19 @@ def test_muon_groups_are_remapped_for_structural_candidate():
     assert mapped["readout_weight"].count == 7
 
 
+def test_muon_remap_traverses_plain_tuples_inside_named_states():
+    import jax.numpy as jnp
+
+    State = namedtuple("State", "inner")
+    state = State((jnp.arange(3.0).reshape(3, 1),))
+    mapped = structural.remap_muon_groups(
+        {"input": state}, {"input": (np.array([True, False, True]), (4, 1))}
+    )
+    np.testing.assert_array_equal(
+        mapped["input"].inner[0], [[0.0], [2.0], [0.0], [0.0]]
+    )
+
+
 def test_real_update_hands_remapped_muon_groups_to_trainer():
     class State:
         def __init__(self, value):
@@ -906,6 +919,213 @@ def test_evidence_validates_explicit_task_shape_and_data_requirements(monkeypatc
         structural._real_mask_compaction_identity(
             SimpleNamespace(), SimpleNamespace(neuron_count=1), object(), None
         )
+
+
+def test_structural_edge_scores_keep_task_maxima():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 0]), np.ones(2),
+        np.ones((2, 1)), np.zeros(2), ((),) * 2,
+    )
+    evidence = structural.structural_evidence(
+        topology,
+        np.ones((2, 2)),
+        np.array([[1.0, 0.0], [0.0, 3.0]]),
+        np.array([[1.0, 0.0], [0.0, 4.0]]),
+    )
+    np.testing.assert_array_equal(
+        evidence["connection_scores"],
+        np.max(evidence["connection_scores_by_task"], axis=0),
+    )
+
+
+def test_addition_evidence_uses_first_failed_task_and_separate_target_signal():
+    evidence = {
+        "neuron_scores_by_task": np.array([[1.0, 4.0], [8.0, 2.0]]),
+        "task_spike_evidence": np.array([[1.0, 2.0], [3.0, 5.0]]),
+        "task_readout_evidence": np.array([[10.0, 1.0], [2.0, 20.0]]),
+        "gradient_mass": np.array([[1.0, 2.0], [3.0, 4.0]]),
+    }
+    result = structural.addition_selection_evidence(evidence, (False, True))
+    np.testing.assert_array_equal(result["neuron_scores"], [1.0, 4.0])
+    np.testing.assert_allclose(result["source_evidence"], [2.0, 3.5])
+    assert not np.array_equal(result["source_evidence"], result["target_evidence"])
+
+
+def test_fixed_evidence_collects_all_tasks_and_direct_spikes(monkeypatch):
+    calls = []
+
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        readout_weight = State(np.ones((2, 360)))
+        previous_spikes = State(np.zeros(2))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.ones(360)
+
+    class Module:
+        TRAINING_TASK_IDS = ("train-a", "train-b")
+        VALIDATION_TASK_IDS = ("valid-a",)
+
+        def load_task(self, root, task_id, split):
+            calls.append(("load", task_id, split))
+            return SimpleNamespace(
+                task_id=task_id, targets=(np.zeros((1, 1), dtype=np.uint8),)
+            )
+
+        def encode_episode(self, task, query_index):
+            return np.full((2, 2), self._task_number(task)), np.ones(2, dtype=bool)
+
+        @staticmethod
+        def _task_number(task):
+            return ("train-a", "train-b", "valid-a").index(task.task_id) + 1
+
+        def run_event_sequence_with_spikes(self, model, events, advances):
+            return np.full((2, 2), -1.0), np.full((2, 2), events[0, 0])
+
+        def decode_prediction(self, value):
+            return np.zeros((1, 1), dtype=np.uint8)
+
+        def strict_task_pass_at_1(self, predictions, targets):
+            return True
+
+    topology = SimpleNamespace(neuron_count=2, recurrent_value=np.ones(2))
+    monkeypatch.setattr(structural, "topology_from_model", lambda model: topology)
+    def fake_mass(learner, events, step_fn, task_index, task_count, **kwargs):
+        rows = np.zeros((task_count, 2))
+        rows[task_index] = task_index + 2.0
+        return {"model/recurrent_weight": rows}, np.array([1.0])
+    monkeypatch.setattr(structural, "preclip_gradient_mass", fake_mass)
+    monkeypatch.setattr(
+        structural,
+        "structural_evidence",
+        lambda topology, readout, spikes, gradient: {
+            "neuron_scores": np.ones(2),
+            "connection_scores": np.ones(2),
+            "neuron_scores_by_task": np.ones((3, 2)),
+            "connection_scores_by_task": np.ones((3, 2)),
+            "owners": ((), ()),
+        },
+    )
+    result = structural._fixed_task_evidence(Module(), Model(), object(), "data")
+    assert result["strict"] == [True, True, True]
+    assert np.asarray(result["task_spike_evidence"]).shape == (3, 2)
+    assert np.asarray(result["preclip_gradient_mass"]).shape == (3, 2)
+    assert np.asarray(result["task_readout_evidence"]).shape == (3, 2)
+    assert result["task_ids"] == ["train-a", "train-b", "valid-a"]
+    assert result["task_spike_evidence"][0] != result["task_spike_evidence"][1]
+
+
+def test_real_update_uses_indexed_training_schedule_and_target_loss():
+    calls = []
+
+    class Learner:
+        def etrace_evolve(self, events, return_outputs):
+            return (events,)
+
+    class Model:
+        input_weight = SimpleNamespace(value=np.ones(1))
+        recurrent_weight = SimpleNamespace(value=np.ones(1))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.ones(360)
+
+    class Trainer:
+        def __init__(self, learner, parameters):
+            self.learner = learner
+            self.parameters = parameters
+            self.muon_groups = {}
+
+        def update_episode(self, **kwargs):
+            calls.append(kwargs)
+            kwargs["step_fn"](kwargs["events"][0])
+            assert kwargs["direct_grad_fn"] is not None
+            return 0.0, 0.0
+
+    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    update = structural._real_pp_prop_update(
+        module, Model(), Learner(), {
+            "training_episodes": [
+                {"events": np.full((2, 1), 1.0), "advances": np.ones(2),
+                 "target_vector": np.zeros(360)},
+                {"events": np.full((2, 1), 2.0), "advances": np.ones(2),
+                 "target_vector": np.ones(360)},
+            ]
+        },
+    )
+    update(0)
+    update(1)
+    assert [int(call["events"][0, 0]) for call in calls] == [1, 2]
+
+
+def test_direct_readout_gradients_cover_voltage_features_and_bias():
+    import brainunit as u
+    import jax.numpy as jnp
+
+    model = SimpleNamespace(
+        cell=SimpleNamespace(V=SimpleNamespace(value=jnp.zeros(2) * u.mV)),
+        readout_weight=SimpleNamespace(value=jnp.ones((2, 3))),
+        readout_bias=SimpleNamespace(value=jnp.zeros(3)),
+    )
+    gradients = structural._direct_readout_gradients(model, jnp.ones(3), jnp)
+    assert set(gradients) == {("readout_weight",), ("readout_bias",)}
+    assert gradients[("readout_weight",)].shape == (2, 3)
+    assert gradients[("readout_bias",)].shape == (3,)
+    assert jnp.all(jnp.isfinite(gradients[("readout_weight",)]))
+    assert jnp.any(gradients[("readout_weight",)] != 0)
+
+
+def test_optimizer_state_proof_requires_nonzero_survivors_and_zero_new_items():
+    state = SimpleNamespace(mu=np.array([[1.0], [2.0]]), nu=np.array([[3.0], [4.0]]))
+    result = structural.optimizer_state_proof(
+        {"readout_weight": state},
+        {"readout_weight": (np.array([True, False]), (3, 1))},
+    )
+    assert result == {
+        "parent_nonzero": True,
+        "survivors_preserved": True,
+        "new_items_zero": True,
+    }
+
+
+def test_real_update_remaps_model_weight_aliases_for_growth():
+    class State:
+        def __init__(self, value):
+            self.mu = np.asarray(value)
+
+    class Trainer:
+        def __init__(self, *args, **kwargs):
+            self.muon_groups = {}
+
+        def update_episode(self, **kwargs):
+            return 0.0, 0.0
+
+    class Model:
+        input_weight = SimpleNamespace(value=np.ones(3))
+        recurrent_weight = SimpleNamespace(value=np.ones(2))
+
+        def reset_episode(self, learner):
+            pass
+
+    update = structural._real_pp_prop_update(
+        SimpleNamespace(PPPropEpisodeTrainer=Trainer), Model(), SimpleNamespace(),
+        {"events": np.zeros((1, 1)), "advances": np.ones(1)},
+        muon_groups={"input_weight": State([[1.0], [2.0]])},
+        parameter_maps={"input": (np.array([True, False]), (3, 1))},
+    )
+    np.testing.assert_array_equal(
+        update.trainer.muon_groups["input_weight"].mu,
+        [[1.0], [0.0], [0.0]],
+    )
 
 
 def test_integrated_dispatch_covers_each_arm_and_rejects_unknown_arm():

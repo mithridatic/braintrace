@@ -436,6 +436,14 @@ def test_real_compiled_episode_updates_grouped_parameters_and_param_states():
     )
 
 
+def test_run_event_sequence_with_spikes_returns_direct_previous_spikes():
+    model = fixture.BrainCellArcModel()
+    events = jnp.zeros((2, fixture.N_INPUTS))
+    voltages, spikes = fixture.run_event_sequence_with_spikes(model, events)
+    assert voltages.shape == spikes.shape
+    assert spikes.shape[-1] == model.previous_spikes.value.shape[0]
+
+
 def test_inferred_readout_parameters_have_muon_groups_and_update():
     model = fixture.BrainCellArcModel()
     class Learner:

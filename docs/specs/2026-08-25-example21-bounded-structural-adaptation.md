@@ -149,3 +149,32 @@ alive mask and evaluate both candidates from one decoded episode snapshot. The
 focused evidence command is `python -m coverage run --branch --source=. -m
 pytest examples/pp_prop/example21_structural_test.py -q`, followed by
 `python -m coverage report -m`.
+
+### Gate 5 evidence clarifications (2026-08-28)
+
+The measured runner must collect one row for every fixed task, in the declared
+eight-training then four-validation order. Rows contain direct
+`model.previous_spikes` means, direct voltage-readout effects, and pre-clip
+`etrace_grad` mass. Validation rows are forward-only; their gradient-mass rows
+are zero when no learning update is permitted. Structural scores retain their
+task dimension: neuron evidence is reduced by task maximum, recurrent-edge
+evidence is reduced by task maximum, and owners retain all tied task maxima.
+
+Neuron additions select non-connected donors from the first failing training
+task. Connection additions use mean spike evidence for sources and the sum of
+incident pre-clip gradient mass and wrong-output readout evidence for targets.
+These arrays are measured inputs to selection; synthetic fallback scores are
+not valid measured evidence.
+
+Each addition update is a real target/readout-loss PP-Prop update from the
+ordered eight-task training schedule. The 64 updates are executed inside one
+`brainstate.transform.for_loop`; repeating one episode or an identity callback
+does not satisfy this contract.
+
+The parent optimizer state is captured after a real warm-up update. Structural
+rebuilds preserve nonzero state for surviving items and zero state for new
+items, and the artifact records these checks. Complete arm time starts before
+model construction and ends after strict evaluation and mask/compaction
+identity. It records Python, JAX, backend, device, peak RSS, the first strict
+transition update, and the PID for each isolated arm process. The final commit
+must contain exactly `Co-Authored-By: Paperclip <noreply@paperclip.ing>`.
