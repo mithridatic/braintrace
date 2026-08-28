@@ -175,7 +175,7 @@ def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
         lambda _module, candidate, _learner: (Model(candidate), object()),
     )
     result = structural._real_mask_compaction_identity(
-        module, topology, adam, "data"
+        module, topology, adam, "data", alive=np.array([True, False])
     )
     assert result["prediction_bytes_identical"]
     assert result["strict_identical"]
@@ -343,6 +343,44 @@ def test_tiled_connection_addition_is_global_stable_and_never_dense(monkeypatch)
     assert structural.resident_tile_pairs(256) == 65536
     with pytest.raises(ValueError, match="256"):
         structural.resident_tile_pairs(257)
+
+
+def test_tiled_connection_addition_stops_after_score_upper_bound():
+    stats = {}
+    selected = structural.select_connection_additions(
+        1024, existing=set(), source_evidence=np.arange(1024.0, 0.0, -1.0),
+        target_evidence=np.arange(1024.0, 0.0, -1.0), required=2,
+        tile_size=256, stats=stats,
+    )
+    assert selected == ((0, 1), (1, 0))
+    assert stats["tile_stop_bound"] is True
+    assert stats["tiles_evaluated"] < 16
+    assert stats["max_resident_tile_pairs"] == 65_536
+
+
+@pytest.mark.parametrize(
+    ("source", "target", "required", "message"),
+    [
+        ([1.0], [1.0, 2.0], 1, "match"),
+        ([np.inf, 1.0], [1.0, 2.0], 1, "finite"),
+        ([-1.0, 1.0], [1.0, 2.0], 1, "nonnegative"),
+        ([1.0, 2.0], [1.0, 2.0], 0, "at least one"),
+    ],
+)
+def test_tiled_connection_addition_rejects_invalid_evidence(
+    source, target, required, message
+):
+    with pytest.raises(ValueError, match=message):
+        structural.select_connection_additions(
+            2, set(), source, target, required
+        )
+
+
+def test_tiled_connection_addition_rejects_invalid_bounds():
+    with pytest.raises(ValueError, match="neuron count"):
+        structural.select_connection_additions(0, set(), [], [], 1)
+    with pytest.raises(ValueError, match="tile size"):
+        structural.select_connection_additions(2, set(), [1, 1], [1, 1], 1, 0)
 
 
 def test_connection_addition_appends_exact_items_and_zero_moments():
@@ -941,18 +979,296 @@ def test_structural_edge_scores_keep_task_maxima():
 
 def test_addition_evidence_uses_first_failed_task_and_separate_target_signal():
     evidence = {
-        "neuron_scores_by_task": np.array([[1.0, 4.0], [8.0, 2.0]]),
-        "task_spike_evidence": np.array([[1.0, 2.0], [3.0, 5.0]]),
-        "task_readout_evidence": np.array([[10.0, 1.0], [2.0, 20.0]]),
-        "gradient_mass": np.array([[1.0, 2.0], [3.0, 4.0]]),
+        "neuron_scores_by_task": np.array([
+            [1.0, 4.0], [8.0, 2.0], [99.0, 101.0],
+        ]),
+        "task_spike_evidence": np.array([
+            [1.0, 2.0], [3.0, 5.0], [300.0, 500.0],
+        ]),
+        "target_scores_by_task": np.array([
+            [10.0, 20.0], [30.0, 40.0], [300.0, 400.0],
+        ]),
     }
-    result = structural.addition_selection_evidence(evidence, (False, True))
+    result = structural.addition_selection_evidence(evidence, (False, True, True))
     np.testing.assert_array_equal(result["neuron_scores"], [1.0, 4.0])
-    np.testing.assert_allclose(result["source_evidence"], [2.0, 3.5])
-    assert not np.array_equal(result["source_evidence"], result["target_evidence"])
+    np.testing.assert_allclose(result["source_evidence"], [1.0, 2.0])
+    np.testing.assert_allclose(result["target_evidence"], [10.0, 20.0])
+
+
+def test_addition_evidence_fallback_uses_incident_signal_and_first_task():
+    evidence = {
+        "neuron_scores_by_task": np.ones((2, 2)),
+        "task_spike_evidence": np.array([[1.0, 2.0], [3.0, 5.0]]),
+        "incident_gradient_mass_by_task": np.array([[6.0, 7.0], [8.0, 9.0]]),
+        "gradient_mass": np.ones((2, 2)),
+        "task_readout_evidence": np.array([[10.0, 20.0], [30.0, 40.0]]),
+    }
+    result = structural.addition_selection_evidence(evidence, (True, True))
+    np.testing.assert_array_equal(result["source_evidence"], [1.0, 2.0])
+    np.testing.assert_array_equal(result["target_evidence"], [6.0, 7.0])
+    with pytest.raises(ValueError, match="training count"):
+        structural.addition_selection_evidence(evidence, (True, True), 0)
+
+
+def test_measurement_passes_selected_pruning_mask_when_validation_is_closed(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.arange(2))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([1, 0]))
+        input_weight = State(np.ones(2))
+        recurrent_weight = State(np.ones(2))
+        readout_weight = State(np.ones((2, 1)))
+
+    module = SimpleNamespace(
+        BrainCellArcModel=Model,
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+    )
+    evidence = {
+        "strict": [False, False], "neuron_scores": np.array([1.0, 2.0]),
+        "connection_scores": np.ones(2), "gradient_mass": np.ones(2),
+        "preclip_gradient_mass": [], "task_spike_evidence": [],
+        "task_readout_evidence": [],
+    }
+    seen = {}
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(structural, "_fixed_task_evidence", lambda *args: evidence)
+    def identity(*args, **kwargs):
+        seen["alive"] = kwargs["alive"]
+        return {"prediction_bytes_identical": True, "strict_identical": True}
+    monkeypatch.setattr(
+        structural, "_real_mask_compaction_identity", identity,
+    )
+    result = structural.measure_real_arm("neuron-prune", data_root="data")
+    np.testing.assert_array_equal(seen["alive"], [False, True])
+    assert result["pruning_blocked"] is True
+
+
+def test_fixed_task_evidence_runs_episode_batch_through_transform(monkeypatch):
+    import brainstate
+
+    calls = []
+    def spy_for_loop(function, values):
+        calls.append(len(values))
+        results = [function(value) for value in values]
+        return tuple(np.asarray(items) for items in zip(*results))
+
+    monkeypatch.setattr(brainstate.transform, "jit", lambda function: function)
+    monkeypatch.setattr(
+        brainstate.transform, "for_loop",
+        spy_for_loop,
+    )
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        readout_weight = State(np.ones((2, 360)))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.ones(360)
+
+    class Module:
+        TRAINING_TASK_IDS = ("train",)
+        VALIDATION_TASK_IDS = ("valid",)
+
+        load_task = lambda self, *_args: SimpleNamespace(
+            targets=(np.zeros((1, 1), dtype=np.uint8),)
+        )
+        encode_episode = lambda self, *_args: (
+            np.ones((2, 441)), np.ones(2, dtype=bool)
+        )
+        run_event_sequence_with_spikes = lambda self, model, events, advances: (
+            np.zeros((2, 2)), np.ones((2, 2))
+        )
+        decode_prediction = lambda self, value: np.zeros((1, 1), dtype=np.uint8)
+        strict_task_pass_at_1 = lambda self, predictions, targets: True
+
+    monkeypatch.setattr(
+        structural, "topology_from_model",
+        lambda model: SimpleNamespace(neuron_count=2, recurrent_value=np.ones(2)),
+    )
+    monkeypatch.setattr(
+        structural, "preclip_gradient_mass",
+        lambda *args, **kwargs: (
+            {"model/recurrent_weight": np.ones((2, 2))}, 0.0
+        ),
+    )
+    monkeypatch.setattr(
+        structural, "structural_evidence",
+        lambda *args: {
+            "neuron_scores": np.ones(2), "connection_scores": np.ones(2),
+            "neuron_scores_by_task": np.ones((2, 2)),
+            "connection_scores_by_task": np.ones((2, 2)), "owners": ((), ()),
+        },
+    )
+    result = structural._fixed_task_evidence(Module(), Model(), object(), "data")
+    assert result["strict"] == [True, True]
+    assert calls, "fixed-task execution must use brainstate.transform.for_loop"
+
+
+def test_episode_fallback_uses_direct_previous_spikes_and_zero_shape():
+    module = SimpleNamespace(run_event_sequence=lambda *args: None)
+    model = SimpleNamespace(
+        readout_weight=SimpleNamespace(value=np.ones((3, 1)))
+    )
+    voltages, spikes = structural._run_episode(
+        module, model, np.zeros((2, 4)), np.ones(2, dtype=bool)
+    )
+    assert voltages.shape == (1, 3)
+    assert not np.any(spikes)
+
+    module = SimpleNamespace(
+        run_event_sequence=lambda *args: np.ones((2, 3))
+    )
+    model.previous_spikes = SimpleNamespace(value=np.array([1.0, 0.0, 1.0]))
+    _, spikes = structural._run_episode(
+        module, model, np.zeros((2, 4)), np.ones(2, dtype=bool)
+    )
+    np.testing.assert_array_equal(spikes, [[1.0, 0.0, 1.0]] * 2)
+
+
+def test_strict_screen_uses_compiled_runner_branch():
+    import jax.numpy as jnp
+
+    class Module:
+        run_event_sequence_with_spikes = staticmethod(
+            lambda model, events, advances: (
+                jnp.ones((2, 3)), jnp.zeros((2, 3))
+            )
+        )
+        decode_prediction = staticmethod(lambda value: np.asarray([value[0]]))
+        strict_task_pass_at_1 = staticmethod(lambda predictions, targets: True)
+
+    class Model:
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return jnp.ones(3)
+
+    episodes = [
+        {"task_id": "a", "events": np.ones((2, 1)),
+         "advances": np.ones(2, dtype=bool), "target": np.zeros((1, 1))},
+        {"task_id": "b", "events": np.ones((2, 1)),
+         "advances": np.ones(2, dtype=bool), "target": np.zeros((1, 1))},
+    ]
+    strict, prediction_bytes = structural._strict_task_screen(
+        Module, Model(), object(), episodes, return_bytes=True
+    )
+    assert strict == [True, True]
+    assert prediction_bytes
+
+
+def test_fixed_evidence_rejects_missing_queries_and_training_queries(monkeypatch):
+    monkeypatch.setattr(
+        structural, "topology_from_model",
+        lambda model: SimpleNamespace(neuron_count=1, recurrent_value=np.ones(1)),
+    )
+
+    class Module:
+        TRAINING_TASK_IDS = ("train",)
+        VALIDATION_TASK_IDS = ("valid",)
+        load_task = staticmethod(
+            lambda *_args: SimpleNamespace(targets=(None,))
+        )
+
+    with pytest.raises(ValueError, match="target query"):
+        structural._fixed_task_evidence(Module, object(), object(), "data")
+
+    class ValidationModule(Module):
+        encode_episode = staticmethod(
+            lambda _task, _query_index: (
+                np.ones((1, 1)), np.ones(1, dtype=bool)
+            )
+        )
+
+        @staticmethod
+        def load_task(_root, task_id, _split):
+            target = None if task_id == "train" else np.zeros((1, 1), dtype=np.uint8)
+            return SimpleNamespace(targets=(target,))
+
+    with pytest.raises(ValueError, match="training query"):
+        structural._fixed_task_evidence(
+            ValidationModule, object(), object(), "data"
+        )
+
+
+def test_fixed_evidence_batches_real_training_gradients(monkeypatch):
+    import jax.numpy as jnp
+
+    class State:
+        def __init__(self, value):
+            self.value = value
+
+    class Learner:
+        def etrace_evolve(self, events, return_outputs=True):
+            return (events,)
+
+        def etrace_grad(self, events, step_fn, **kwargs):
+            del kwargs
+            step_fn(events[0])
+            return {("model", "recurrent_weight"): jnp.array([1.0, 2.0])}, jnp.array(3.0)
+
+    class Model:
+        readout_weight = State(jnp.ones((2, 360)))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return jnp.ones(360)
+
+    class Module:
+        TRAINING_TASK_IDS = ("train-a", "train-b")
+        VALIDATION_TASK_IDS = ("valid-a",)
+
+        @staticmethod
+        def load_task(_root, task_id, _split):
+            return SimpleNamespace(
+                targets=(np.zeros((1, 1), dtype=np.uint8),), task_id=task_id
+            )
+
+        @staticmethod
+        def encode_episode(_task, _query_index):
+            return np.ones((2, 1)), np.ones(2, dtype=bool)
+
+        @staticmethod
+        def run_event_sequence_with_spikes(model, events, advances):
+            del model, advances
+            return jnp.ones((2, 2)) * events[0, 0], jnp.ones((2, 2))
+
+        @staticmethod
+        def decode_prediction(value):
+            return np.zeros((1, 1), dtype=np.uint8)
+
+        @staticmethod
+        def strict_task_pass_at_1(predictions, targets):
+            return True
+
+    monkeypatch.setattr(
+        structural, "topology_from_model",
+        lambda model: SimpleNamespace(
+            neuron_count=2, recurrent_value=np.ones(2),
+            recurrent_source=np.array([0, 1]), recurrent_target=np.array([1, 0]),
+        ),
+    )
+    result = structural._fixed_task_evidence(
+        Module, Model(), Learner(), "data"
+    )
+    assert np.asarray(result["preclip_gradient_mass"]).shape == (3, 2)
+    np.testing.assert_array_equal(result["preclip_gradient_mass"][2], [0.0, 0.0])
 
 
 def test_fixed_evidence_collects_all_tasks_and_direct_spikes(monkeypatch):
+    import jax.numpy as jnp
+
     calls = []
 
     class State:
@@ -987,7 +1303,7 @@ def test_fixed_evidence_collects_all_tasks_and_direct_spikes(monkeypatch):
             return ("train-a", "train-b", "valid-a").index(task.task_id) + 1
 
         def run_event_sequence_with_spikes(self, model, events, advances):
-            return np.full((2, 2), -1.0), np.full((2, 2), events[0, 0])
+            return jnp.full((2, 2), -1.0), jnp.full((2, 2), events[0, 0])
 
         def decode_prediction(self, value):
             return np.zeros((1, 1), dtype=np.uint8)
@@ -1180,7 +1496,8 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     structural.main(["merge", "--output", str(target)])
     merged = json.loads(target.read_text())
     assert len(merged["arms"]) == 4
-    assert merged["focused_tests"] == {
-        "passed": 35, "failed": 0, "coverage_percent": 96.74
-    }
+    assert merged["focused_tests"]["passed"] == 55
+    assert merged["focused_tests"]["failed"] == 0
+    assert merged["focused_tests"]["coverage_percent"] == 93.0
+    assert "coverage run --branch" in merged["focused_tests"]["command"]
     assert merged["arm_controls"]["max_resident_tile_pairs"] == 65_536

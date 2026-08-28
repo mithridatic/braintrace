@@ -178,3 +178,12 @@ model construction and ends after strict evaluation and mask/compaction
 identity. It records Python, JAX, backend, device, peak RSS, the first strict
 transition update, and the PID for each isolated arm process. The final commit
 must contain exactly `Co-Authored-By: Paperclip <noreply@paperclip.ing>`.
+
+The runner always derives the evidence-ranked neuron alive mask before the
+validation gate. A closed validation gate leaves the parent candidate
+unchanged and reports zero mutations, but mask-versus-compaction identity uses
+that measured mask rather than an index-generated substitute. Tiled connection
+selection may stop only when a tile's nonnegative score upper bound is strictly
+below the current retained threshold; equal-score tiles remain eligible for
+stable index tie-breaking. Fixed-task forward and spike collection uses one
+compiled `brainstate.transform.for_loop` over the episode snapshot.
