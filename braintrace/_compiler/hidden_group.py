@@ -95,8 +95,8 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from .scan_descent import GroupDescent  # noqa: F401
-    from .position_graph import SnapPattern  # noqa: F401
+    from .scan_descent import GroupDescent
+    from .position_graph import SnapPattern
 
 # Recurrent-weight mixing primitives -- dense / convolutional weights -- whose
 # consumption of a hidden state is a genuine *cross-position* coupling, i.e. that
@@ -118,7 +118,31 @@ _RECURRENT_WEIGHT_MIXING_PRIMITIVES = frozenset({
 })
 
 
-class HiddenGroup(NamedTuple):
+_HiddenGroupBase = NamedTuple(
+    '_HiddenGroupBase',
+    [
+        ('index', int),
+        ('hidden_paths', List[Path]),
+        ('hidden_states', List[brainstate.HiddenState]),
+        ('hidden_invars', List[HiddenInVar]),
+        ('hidden_outvars', List[HiddenOutVar]),
+        ('transition_jaxpr', Jaxpr),
+        ('transition_jaxpr_constvars', List[Var]),
+        ('is_diagonal_recurrence', bool),
+        ('snap', Optional['SnapPattern']),
+        ('descent', Optional['GroupDescent']),
+    ],
+)
+_hidden_group_type: Any = _HiddenGroupBase
+_hidden_group_type.__new__.__defaults__ = (True, None, None)
+_hidden_group_type._field_defaults = {
+    'is_diagonal_recurrence': True,
+    'snap': None,
+    'descent': None,
+}
+
+
+class HiddenGroup(_HiddenGroupBase):
     r"""The data structure recording a hidden-group relation.
 
     A hidden group bundles the hidden states that are mutually connected through
@@ -173,69 +197,6 @@ class HiddenGroup(NamedTuple):
         >>> len(hidden_groups)
         1
     """
-
-    index: int  # type: ignore[assignment]  # intentional NamedTuple field; shadows tuple.index
-
-    # Hidden states and their paths
-    hidden_paths: List[Path]  # the hidden state paths
-    hidden_states: List[brainstate.HiddenState]  # The hidden states
-
-    # The jax Var at the last time step
-    hidden_invars: List[HiddenInVar]  # the input hidden states
-
-    # The jax Var at the current time step
-    hidden_outvars: List[HiddenOutVar]  # the output hidden states
-
-    # The jaxpr for computing hidden state transitions
-    #
-    # h_1^t, h_2^t, ... = f(h_1^{t-1}, h_2^{t-1}, ..., x)
-    #
-    transition_jaxpr: Jaxpr
-
-    # The other input variables for transition_jaxpr evaluation
-    transition_jaxpr_constvars: List[Var]
-
-    # Whether the recurrence is diagonal across the leading ``varshape``
-    # positions, i.e. ``h_i^t`` depends only on ``h_i^{t-1}`` (and the input),
-    # never on ``h_j^{t-1}`` for ``i != j``. When ``True`` the cheap column-sum
-    # Jacobian computed by :func:`jacrev_last_dim` already equals the true
-    # per-position block diagonal; when ``False`` (a recurrent weight couples the
-    # positions) the column sum over-counts the off-diagonal cross-position terms,
-    # so the true block diagonal is extracted explicitly by
-    # :func:`block_diagonal_last_dim`.
-    #
-    # This flag is determined entirely by the grouping mode:
-    # ``is_diagonal_recurrence = not include_recurrent_mixing``. In the default
-    # ("without recurrence") mode the cross-position weight-mixing primitives are
-    # excluded from the transition (see ``_eval_eqn``), so it is position-diagonal
-    # by construction even when the transition still contains within-position ops
-    # (a stacked-state ``gather``, an element-wise leak). ``include_recurrent_mixing``
-    # opts into the coupled transition that needs the block-diagonal path. Defaults
-    # to ``True`` to preserve the cheap behavior for any positional construction.
-    is_diagonal_recurrence: bool = True
-
-    snap: Optional['SnapPattern'] = None
-    """The SnAp-n neighbourhood this group's trace is widened onto, or ``None``.
-
-    Set only when ``recurrence_scope='sparse_n'``; ``'diagonal'`` and
-    ``'coupled'`` groups carry ``None`` and every pre-P3 code path is reached
-    unchanged. When set, :meth:`diagonal_jacobian` returns the widened operator
-    (:func:`widened_block_jacobian`) instead of the per-position block diagonal,
-    and :attr:`trace_state_width` -- not :attr:`num_state` -- sizes the trailing
-    axis of every trace leaf.
-
-    Orthogonal to :attr:`is_diagonal_recurrence`, which answers a different
-    question: *is this transition position-diagonal, so the cheap column-sum
-    Jacobian is exact?* SnAp-n needs the coupled transition, so a widened group
-    always has ``is_diagonal_recurrence=False``.
-    """
-
-    descent: Optional['GroupDescent'] = None
-    """Set when this group's transition is one substep of a descended scan
-    (Phase 4 structured scan descent): ``transition_jaxpr``/
-    ``transition_jaxpr_constvars`` are body-scoped while ``hidden_invars``/
-    ``hidden_outvars`` are the outer scan carry vars. ``None`` for ordinary
-    groups."""
 
     @property
     def varshape(self) -> Tuple[int, ...]:
@@ -556,7 +517,9 @@ class HiddenGroup(NamedTuple):
         return repr(brainstate.util.PrettyMapping(self._asdict(), type_name=self.__class__.__name__))
 
 
-HiddenGroup.__module__ = 'braintrace'
+_hidden_group_class: Any = HiddenGroup
+_hidden_group_class.__annotations__ = _HiddenGroupBase.__annotations__
+_hidden_group_class.__module__ = 'braintrace'
 
 
 def jacrev_last_dim(
@@ -1796,6 +1759,8 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 transition_jaxpr_constvars=open_jaxpr_constvars(
                     jaxpr, hidden_invars),
                 is_diagonal_recurrence=not self.include_recurrent_mixing,
+                snap=None,
+                descent=None,
             )
             group = self._attach_snap_pattern(group)
             # Belt-and-braces: the per-transition shape filter in
@@ -1868,6 +1833,8 @@ class JaxprEvalForHiddenGroup(JaxprEvaluation):
                 # keep the flag mode-derived for uniformity (this fallback only
                 # fires in the default mode in practice).
                 is_diagonal_recurrence=not self.include_recurrent_mixing,
+                snap=None,
+                descent=None,
             )
             hidden_groups.append(group)
 
@@ -2184,7 +2151,9 @@ def find_hidden_groups_from_jaxpr(
         # even though the passed mapping carries every model state. The cast is a real
         # State -> HiddenState narrowing; mypy flags it as redundant only because
         # brainstate is currently untyped (both collapse to Any).
-        path_to_state=cast(Dict[Path, brainstate.HiddenState], path_to_state),  # type: ignore[redundant-cast]
+        path_to_state=cast(
+            Dict[Path, brainstate.HiddenState], path_to_state
+        ),
         include_recurrent_mixing=include_recurrent_mixing,
         sparse_n=sparse_n,
         snap_max_jacobian_elements=snap_max_jacobian_elements,

@@ -21,7 +21,7 @@ description; this module documents the representation and the update.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 
 import brainstate
 import brainunit as u
@@ -147,7 +147,7 @@ def _apply_full_transition(jac: jax.Array, s_tilde: jax.Array) -> jax.Array:
             f'executor\'s full_jacobian flag selects; a block-diagonal Jacobian '
             f'cannot be rolled by a rank-1 carrier.'
         )
-    return u.math.tensordot(jac, s_tilde, axes=n)
+    return cast(jax.Array, u.math.tensordot(jac, s_tilde, axes=n))
 
 
 class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
@@ -647,7 +647,7 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
     def _update_etrace_data(
         self,
         running_index: Optional[int],
-        hist_etrace_vals: Dict[str, Any],
+        etrace_vals_util_t_1: Dict[str, Any],
         hid2weight_jac_single_or_multi_times: Hid2WeightJacobian,
         hid2hid_jac_single_or_multi_times: HiddenGroupJacobian,
         weight_vals: Dict[Path, PyTree],
@@ -661,8 +661,8 @@ class RandomProjectionVjpAlgorithm(ETraceVjpAlgorithm):
         )
         scan_fn = self._make_scan_fn(weight_vals)
         if input_is_multi_step:
-            return jax.lax.scan(scan_fn, hist_etrace_vals, jacobians)[0]
-        return scan_fn(hist_etrace_vals, jacobians)[0]
+            return jax.lax.scan(scan_fn, etrace_vals_util_t_1, jacobians)[0]
+        return scan_fn(etrace_vals_util_t_1, jacobians)[0]
 
     # ------------------------------------------------------------------ #
     # the boundary contraction

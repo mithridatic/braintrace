@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Tuple, Any, Optional, Sequence
+from typing import Callable, Dict, Tuple, Any, Optional, Sequence, cast
 
 import brainstate
 import jax
@@ -1224,7 +1224,9 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
                 f'out_tree  = {out_tree}\n!=\n'
                 f'grad_tree = {grad_tree}'
             )
-        cts_out = jax.core.eval_jaxpr(jaxpr, consts, *grad_flat)
+        cts_out = cast(Any, jax).core.eval_jaxpr(
+            jaxpr, consts, *grad_flat
+        )
 
         #
         # We compute:
@@ -1375,14 +1377,17 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
             flat_injected, injected_tree = jax.tree.flatten((injected,))
             # `PyTreeDef` compares by value at runtime; mypy's jax stubs do not
             # model its `__ne__`.
-            if injected_tree != grad_tree:  # type: ignore[operator]
+            comparable_tree: Any = injected_tree
+            if comparable_tree != grad_tree:
                 raise TypeError(
                     f'The injected exit cotangent must have the same tree '
                     f'structure as the incoming gradients, so it can go through '
                     f'the same transposed jaxpr. Got\n'
                     f'{injected_tree}\n!=\n{grad_tree}'
                 )
-            cts_future = jax.core.eval_jaxpr(jaxpr, consts, *flat_injected)
+            cts_future = cast(Any, jax).core.eval_jaxpr(
+                jaxpr, consts, *flat_injected
+            )
             (
                 dg_args_future,
                 dg_last_hiddens_future,
@@ -1675,7 +1680,9 @@ class ETraceVjpAlgorithm(ETraceAlgorithm):
         for relation in self.graph.hidden_param_op_relations:
             for group in relation.hidden_groups:
                 widths.setdefault(group.index, int(group.varshape[-1]))
-        with brainstate.random.seed_context(self._random_feedback_key):
+        with brainstate.random.seed_context(
+            cast(jax.Array, self._random_feedback_key)
+        ):
             for group_index, width in widths.items():
                 # n_target == n_layer: a square projection over the reverse-AD
                 # signal. See F-28 for why the readout width is not visible here.

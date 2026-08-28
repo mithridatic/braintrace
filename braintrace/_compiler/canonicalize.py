@@ -49,7 +49,7 @@ equations rather than spinning forever.
 """
 
 from dataclasses import dataclass
-from typing import Any, Callable, Container, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Container, Dict, Iterable, List, Optional, Sequence, Set, Tuple, cast
 
 import jax
 
@@ -1007,7 +1007,7 @@ def _unroll_scans_once(
         for ov, final_atom in zip(eqn.outvars[:num_carry], carry_atoms):
             if ov not in consumed or final_atom is ov:
                 continue
-            shape = tuple(ov.aval.shape)
+            shape = tuple(cast(Any, ov.aval).shape)
             new_eqns.append(new_jaxpr_eqn(
                 [final_atom],
                 [ov],
@@ -1023,7 +1023,7 @@ def _unroll_scans_once(
         for j, ov in enumerate(eqn.outvars[num_carry:]):
             if ov not in consumed:
                 continue
-            stacked_shape = tuple(ov.aval.shape)
+            stacked_shape = tuple(cast(Any, ov.aval).shape)
             slice_shape = stacked_shape[1:]
             slice_vars = []
             for y_atom in ys_atoms[j]:

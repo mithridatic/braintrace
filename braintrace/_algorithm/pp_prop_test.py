@@ -793,7 +793,7 @@ class TestPpPropGradients:
 
         inp1 = brainstate.random.rand(n_in)
         inp2 = brainstate.random.rand(n_in)
-        grads1 = compute_grad(inp1)
+        compute_grad(inp1)
         grads2 = compute_grad(inp2)
         # Second step gradients should generally differ from first
         assert isinstance(grads2, dict)

@@ -29,7 +29,7 @@ from __future__ import annotations
 import math
 from numbers import Integral, Real
 from functools import partial
-from typing import Callable, Dict, Tuple, Optional, Sequence, Any
+from typing import Callable, Dict, Tuple, Optional, Sequence, Any, cast
 
 import brainstate
 import jax
@@ -322,13 +322,14 @@ def _init_IO_dim_state(
 
     x_var = relation.x_var
     if x_var is not None:
+        x_var_aval = cast(Any, x_var.aval)
         x_key = _io_x_trace_key(relation)
         assert x_key is not None
         if x_key not in etrace_xs:
             x_repr_fn = get_pp_x_repr(relation.primitive)
             if x_repr_fn is None:
-                shape = x_var.aval.shape
-                dtype = x_var.aval.dtype
+                shape = x_var_aval.shape
+                dtype = x_var_aval.dtype
             else:
                 # The trace filters the primitive's x *representation*
                 # (e.g. embedding: the one-hot encoding of its integer
@@ -337,12 +338,12 @@ def _init_IO_dim_state(
                 x_aval = jax.eval_shape(
                     lambda x_, _fn=x_repr_fn, _w=weight_avals: _fn(x_, _w),
                     jax.ShapeDtypeStruct(
-                        x_var.aval.shape, x_var.aval.dtype),
+                        x_var_aval.shape, x_var_aval.dtype),
                 )
                 shape, dtype = x_aval.shape, x_aval.dtype
             etrace_xs[x_key] = EligibilityTrace(u.math.zeros(shape, dtype))
 
-    y_shape = relation.y_var.aval.shape
+    y_shape = cast(Any, relation.y_var.aval).shape
     group: HiddenGroup
     for group in relation.hidden_groups:
         # Exact match required, or (elemwise only) allow trailing-dim match
@@ -498,7 +499,7 @@ def _update_IO_dim_etrace_scan_fn(
         trace_key = _io_x_trace_key(relation)
         if trace_key is None or trace_key in new_etrace_xs:
             continue
-        raw_key = etrace_x_key(relation.x_var)
+        raw_key = etrace_x_key(cast(Any, relation.x_var))
         x_t = xs[raw_key]
         x_repr_fn = get_pp_x_repr(relation.primitive)
         if x_repr_fn is not None:
@@ -559,7 +560,7 @@ def _update_IO_dim_etrace_scan_fn(
             new_df: Any = dfs[df_key]
             if factors_fn is not None:
                 factors = factors_fn(
-                    xs[etrace_x_key(relation.x_var)],
+                    xs[etrace_x_key(cast(Any, relation.x_var))],
                     _relation_weight_values(relation, weight_vals),
                     **relation.eqn_params,
                 )
@@ -730,7 +731,7 @@ def _solve_IO_dim_weight_gradients(
             # gate the branch.)
             elemwise_batched = (
                 relation.primitive is etp_elemwise_p
-                and len(group.varshape) > relation.y_var.aval.ndim
+                and len(group.varshape) > cast(Any, relation.y_var.aval).ndim
             )
 
             if fast_solve:
@@ -1105,7 +1106,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
 
     def _assign_etrace_data(
         self,
-        hist_etrace_vals: Tuple[
+        etrace_vals: Tuple[
             Dict[ETraceX_Key, jax.Array],
             Dict[ETraceDF_Key, jax.Array]
         ]
@@ -1132,7 +1133,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         # etrace_dfs:
         #           Df^t = ∂h^t / ∂y^t, where y^t = x^t \theta
         #
-        (etrace_xs, etrace_dfs) = hist_etrace_vals
+        (etrace_xs, etrace_dfs) = etrace_vals
 
         # The weight x and df
         for x, val in etrace_xs.items():
@@ -1162,7 +1163,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
     def _update_etrace_data(
         self,
         running_index: Optional[int],
-        hist_etrace_vals: Tuple[
+        etrace_vals_util_t_1: Tuple[
             Dict[ETraceX_Key, jax.Array],
             Dict[ETraceDF_Key, jax.Array]
         ],
@@ -1229,9 +1230,9 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
         scan_fn = self._make_etrace_stepper(weight_vals)
 
         if input_is_multi_step:
-            hist_etrace_vals = jax.lax.scan(
+            etrace_vals_util_t_1 = jax.lax.scan(
                 scan_fn,
-                hist_etrace_vals,
+                etrace_vals_util_t_1,
                 (
                     hid2weight_jac_single_or_multi_times[0],
                     hid2weight_jac_single_or_multi_times[1],
@@ -1240,8 +1241,8 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
             )[0]
 
         else:
-            hist_etrace_vals = scan_fn(
-                hist_etrace_vals,
+            etrace_vals_util_t_1 = scan_fn(
+                etrace_vals_util_t_1,
                 (
                     hid2weight_jac_single_or_multi_times[0],
                     hid2weight_jac_single_or_multi_times[1],
@@ -1249,11 +1250,11 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
                 ),
             )[0]
 
-        return hist_etrace_vals
+        return etrace_vals_util_t_1
 
     def _solve_weight_gradients(
         self,
-        trace_steps: int,
+        running_index: int,
         etrace_h2w_at_t: Tuple[
             Dict[ETraceX_Key, jax.Array],
             Dict[ETraceDF_Key, jax.Array]
@@ -1324,7 +1325,7 @@ class IODimVjpAlgorithm(ETraceVjpAlgorithm):
             dl_to_hidden_groups,
             self.graph.hidden_param_op_relations,
             weight_vals,
-            trace_steps,
+            running_index,
             # The correction undoes the f-side exponential-smoothing warm-up
             # bias; the x-side low-pass has none to undo.
             self.decay_f,

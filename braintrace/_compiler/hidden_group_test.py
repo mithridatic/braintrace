@@ -290,8 +290,10 @@ class Test_module_with_group_state:
         cls_without_group,
         cls_with_group,
     ):
-        rec_init = lambda shape: brainstate.random.RandomState(0).randn(*shape)
-        ff_init = lambda shape: brainstate.random.RandomState(1).randn(*shape)
+        def rec_init(shape):
+            return brainstate.random.RandomState(0).randn(*shape)
+        def ff_init(shape):
+            return brainstate.random.RandomState(1).randn(*shape)
 
         n_in = 3
         n_out = 4
@@ -352,8 +354,10 @@ class Test_module_with_group_state:
         cls_without_group,
         cls_with_group,
     ):
-        rec_init = lambda shape: brainstate.random.RandomState(0).randn(*shape)
-        ff_init = lambda shape: brainstate.random.RandomState(1).randn(*shape)
+        def rec_init(shape):
+            return brainstate.random.RandomState(0).randn(*shape)
+        def ff_init(shape):
+            return brainstate.random.RandomState(1).randn(*shape)
 
         n_in = 3
         n_out = 4
@@ -427,8 +431,10 @@ class Test_module_with_group_state:
         cls_without_group,
         cls_with_group,
     ):
-        rec_init = lambda shape: brainstate.random.RandomState(0).randn(*shape)
-        ff_init = lambda shape: brainstate.random.RandomState(1).randn(*shape)
+        def rec_init(shape):
+            return brainstate.random.RandomState(0).randn(*shape)
+        def ff_init(shape):
+            return brainstate.random.RandomState(1).randn(*shape)
 
         n_in = 3
         n_out = 4
@@ -489,8 +495,10 @@ class Test_module_with_group_state:
         cls_without_group,
         cls_with_group,
     ):
-        rec_init = lambda shape: brainstate.random.RandomState(0).randn(*shape)
-        ff_init = lambda shape: brainstate.random.RandomState(1).randn(*shape)
+        def rec_init(shape):
+            return brainstate.random.RandomState(0).randn(*shape)
+        def ff_init(shape):
+            return brainstate.random.RandomState(1).randn(*shape)
 
         n_in = 3
         n_out = 4
@@ -660,7 +668,8 @@ def _true_block_diagonal(group, hidden_vals, input_vals):
     loop + ``stack`` so it shares no code with the production
     ``diagonal``/``moveaxis`` extraction it is meant to check.
     """
-    fn = lambda hid: group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
+    def fn(hid):
+        return group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
     hid = group.concat_hidden(hidden_vals)
     num_state = hid.shape[-1]
     varshape = hid.shape[:-1]
@@ -727,7 +736,8 @@ class TestHiddenGroup_diagonal_jacobian:
             diag_jac = u.math.squeeze(diag_jac)
             print(diag_jac)
 
-            fn = lambda hid: group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
+            def fn(hid):
+                return group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
             jax_jac = jax.jacrev(fn)(group.concat_hidden(hidden_vals))
             jax_jac = u.math.squeeze(jax_jac)
             print(jax_jac)
@@ -846,7 +856,7 @@ class TestHiddenGroup_diagonal_jacobian:
         assert len(groups) >= 1
         mixing = {'etp_mv', 'etp_mm', 'etp_conv'}
         assert any(
-            (prims := {e.primitive.name for e in g.transition_jaxpr.eqns}) & mixing
+            {e.primitive.name for e in g.transition_jaxpr.eqns} & mixing
             for g in groups
         ), cls.__name__
 
@@ -1049,7 +1059,8 @@ class TestHiddenGroup_diagonal_jacobian:
             diag_jac = u.math.squeeze(diag_jac)
             print(diag_jac)
 
-            fn = lambda hid: group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
+            def fn(hid):
+                return group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
             jax_jac = jax.jacrev(fn)(group.concat_hidden(hidden_vals))
             jax_jac = u.math.squeeze(jax_jac)
             print(jax_jac)
@@ -1125,7 +1136,8 @@ class TestHiddenGroup_diagonal_jacobian:
             diag_jac = u.math.squeeze(diag_jac)
             print(diag_jac)
 
-            fn = lambda hid: group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
+            def fn(hid):
+                return group.concat_hidden(group.transition(group.split_hidden(hid), input_vals))
             jax_jac = jax.jacrev(fn)(group.concat_hidden(hidden_vals))
             jax_jac = u.math.squeeze(jax_jac)
             print(jax_jac)
@@ -1624,7 +1636,7 @@ class TestWhileRecurrentMixingGuard:
 # ---------------------------------------------------------------------------
 
 from braintrace._compiler.hidden_group import widened_block_jacobian
-from braintrace._compiler.position_graph import SnapPattern, build_snap_pattern
+from braintrace._compiler.position_graph import build_snap_pattern
 
 
 def _full_jacobian(fn, h):
@@ -1708,7 +1720,8 @@ class TestFullPositionJacobian:
     def test_a_diagonal_transition_gives_a_position_diagonal_jacobian(self):
         rng = brainstate.random.RandomState(2)
         h = rng.randn(4, 1)
-        fn = lambda hid: jnp.tanh(hid * 0.7)
+        def fn(hid):
+            return jnp.tanh(hid * 0.7)
         full = np.asarray(full_position_jacobian(fn, h))
         for p in range(4):
             for q in range(4):

@@ -1450,7 +1450,7 @@ class TestRobustness:
             pass
 
         def exploding_step(inp, tar):
-            out = learner(inp)
+            learner(inp)
             raise _Boom('failure inside the loop body')
 
         with pytest.raises(_Boom):

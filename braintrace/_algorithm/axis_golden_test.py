@@ -51,7 +51,6 @@ from __future__ import annotations
 import os
 
 import brainstate
-import jax
 import numpy as np
 import pytest
 

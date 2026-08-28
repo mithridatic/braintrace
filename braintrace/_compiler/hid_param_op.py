@@ -40,6 +40,7 @@ from collections import deque
 from typing import TYPE_CHECKING
 from typing import (
     Any,
+    cast,
     Dict,
     FrozenSet,
     Iterable,
@@ -95,7 +96,7 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
-    from .scan_descent import RelationDescent  # noqa: F401
+    from .scan_descent import RelationDescent
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +255,9 @@ class HiddenParamOpRelation(NamedTuple):
                 for var in open_jaxpr_constvars(jaxpr, [self.y_var])
             ]
             # ``list[Array]`` before concatenation, a single ``Array`` after.
-            hidden_vals: Any = jax.core.eval_jaxpr(jaxpr, consts, y_val)
+            hidden_vals: Any = cast(Any, jax).core.eval_jaxpr(
+                jaxpr, consts, y_val
+            )
             if concat_hidden_vals:
                 hidden_vals = group.concat_hidden(hidden_vals)
             vals_of_hidden_groups.append(hidden_vals)
@@ -291,7 +294,11 @@ def _resolve_eqn_trainable_invars(
 ) -> Dict[str, Var]:
     """Return ``{key: invar_var}`` for every trainable input of *eqn*."""
     key_to_idx = get_trainable_invars(eqn.primitive, eqn.params)
-    return {k: eqn.invars[i] for k, i in key_to_idx.items()}
+    return {
+        key: invar
+        for key, index in key_to_idx.items()
+        if isinstance(invar := eqn.invars[index], Var)
+    }
 
 
 def _resolve_eqn_vars(
@@ -973,7 +980,11 @@ def find_hidden_param_op_relations_from_jaxpr(
 
         # --- Resolve every trainable invar declared by the primitive ---
         key_to_idx = get_trainable_invars(primitive, eqn.params)
-        trainable_invars_map = {k: eqn.invars[i] for k, i in key_to_idx.items()}
+        trainable_invars_map = {
+            key: invar
+            for key, index in key_to_idx.items()
+            if isinstance(invar := eqn.invars[index], Var)
+        }
         trainable_vars: Dict[str, Var] = {}
         trainable_paths: Dict[str, Path] = {}
         trainable_leaf_indices: Dict[str, int] = {}
@@ -1050,24 +1061,26 @@ def find_hidden_param_op_relations_from_jaxpr(
         connected_paths: List[Path] = []
         path_class: Dict[Path, str] = {}
         for hvar in list(reachable_hvars):
+            y_aval = cast(Any, y_var.aval)
+            hidden_aval = cast(Any, hvar.aval)
             try:
-                jax.numpy.broadcast_shapes(y_var.aval.shape, hvar.aval.shape)
+                jax.numpy.broadcast_shapes(y_aval.shape, hidden_aval.shape)
             except ValueError:
                 emit(
                     kind=DiagnosticKind.RELATION_EXCLUDED_SHAPE_MISMATCH,
                     level=DiagnosticLevel.WARNING,
                     message=(
                         f'ETP op {primitive.name}: weight={weight_path}, '
-                        f'y shape={y_var.aval.shape} not broadcastable with '
-                        f'hidden shape={hvar.aval.shape} at '
+                        f'y shape={y_aval.shape} not broadcastable with '
+                        f'hidden shape={hidden_aval.shape} at '
                         f'{outvar_to_hidden_path[hvar]}. Removing connection.'
                     ),
                     primitive=primitive,
                     weight_path=weight_path,
                     hidden_paths=(outvar_to_hidden_path[hvar],),
                     context={
-                        'y_shape': tuple(y_var.aval.shape),
-                        'hidden_shape': tuple(hvar.aval.shape),
+                        'y_shape': tuple(y_aval.shape),
+                        'hidden_shape': tuple(hidden_aval.shape),
                     },
                 )
                 reachable_hvars.pop(hvar, None)

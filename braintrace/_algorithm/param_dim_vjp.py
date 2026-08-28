@@ -937,7 +937,8 @@ def _remove_units(xs_maybe_quantity: PyTree) -> Any:
     def restore_units(xs_unitless: PyTree) -> Any:
         leaves, treedef2 = jax.tree.flatten(xs_unitless)
         # JAX's PyTreeDef stubs omit __eq__; the comparison is valid at runtime.
-        assert treedef == treedef2, 'The tree structures must match. Use matching parameter trees.'  # type: ignore[operator]
+        comparable_treedef: Any = treedef
+        assert comparable_treedef == treedef2, 'The tree structures must match. Use matching parameter trees.'
         new_leaves = [
             leaf if unit.dim.is_dimensionless else leaf * unit
             for leaf, unit in zip(leaves, units)
@@ -1344,7 +1345,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
     def _update_etrace_data(
         self,
         running_index: Optional[int],
-        hist_etrace_vals: Dict[ETraceWG_Key, PyTree],
+        etrace_vals_util_t_1: Dict[ETraceWG_Key, PyTree],
         hid2weight_jac_single_or_multi_times: Hid2WeightJacobian,
         hid2hid_jac_single_or_multi_times: HiddenGroupJacobian,
         weight_vals: Dict[Path, PyTree],
@@ -1394,7 +1395,7 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
         if input_is_multi_step:
             if self.chunked_trace:
                 new_etrace = _update_param_dim_etrace_chunked(
-                    hist_etrace_vals,
+                    etrace_vals_util_t_1,
                     jacobians,
                     self.graph.hidden_param_op_relations,
                     weight_vals,
@@ -1404,13 +1405,13 @@ class ParamDimVjpAlgorithm(ETraceVjpAlgorithm):
             else:
                 new_etrace = jax.lax.scan(
                     self._make_scan_fn(weight_vals),
-                    hist_etrace_vals,
+                    etrace_vals_util_t_1,
                     jacobians,
                 )[0]
 
         else:
             new_etrace = self._make_scan_fn(weight_vals)(
-                hist_etrace_vals,
+                etrace_vals_util_t_1,
                 jacobians,
             )[0]
 

@@ -72,12 +72,20 @@ def _build(algo_factory, inputs, *, fuse):
         exe = algo.graph_executor
         _orig_j = exe.solve_h2w_h2h_jacobian
         _orig_l = exe.solve_h2w_h2h_l2h_jacobian
-        exe.solve_h2w_h2h_jacobian = (
-            lambda *a, **k: _orig_j(*a, **{**k, 'etrace_stepper': None, 'init_etrace': None})
-        )
-        exe.solve_h2w_h2h_l2h_jacobian = (
-            lambda *a, **k: _orig_l(*a, **{**k, 'etrace_stepper': None, 'init_etrace': None})
-        )
+        def solve_h2w_h2h_jacobian(*args, **kwargs):
+            return _orig_j(
+                *args,
+                **{**kwargs, 'etrace_stepper': None, 'init_etrace': None},
+            )
+
+        def solve_h2w_h2h_l2h_jacobian(*args, **kwargs):
+            return _orig_l(
+                *args,
+                **{**kwargs, 'etrace_stepper': None, 'init_etrace': None},
+            )
+
+        exe.solve_h2w_h2h_jacobian = solve_h2w_h2h_jacobian
+        exe.solve_h2w_h2h_l2h_jacobian = solve_h2w_h2h_l2h_jacobian
     return model, algo
 
 

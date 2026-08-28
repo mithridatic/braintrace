@@ -400,11 +400,6 @@ class TestParamDimVjpAlgorithmForwardPass:
         grads = compute_grad(x)
         # Grads should be a non-empty dict-like structure
         assert len(grads) > 0
-        # Check that at least some gradients are non-zero
-        all_zero = all(
-            jnp.allclose(jax.tree.leaves(v)[0], 0.0)
-            for v in grads.values()
-        )
         # After first step, it is possible all grads are zero, so we just check it runs.
 
 
@@ -843,7 +838,8 @@ class TestTransformFastEqualsLegacy:
 
     def test_mm_weight_fn_fast_equals_legacy(self):
         xs = self._xs_mm()
-        wfn = lambda w: w ** 2
+        def wfn(w):
+            return w ** 2
         fast = _run_updates(ParamDimVjpAlgorithm(_rnn_mm(weight_fn=wfn), fast_solve=True), xs)
         legacy = _run_updates(ParamDimVjpAlgorithm(_rnn_mm(weight_fn=wfn), fast_solve=False), xs)
         _assert_etrace_lists_equal(fast, legacy, exact=True)
@@ -994,11 +990,13 @@ class TestSolveBatchFold:
     not bit-identical)."""
 
     def test_fast_solve_contract_fold_equals_unfold_sum(self):
-        B, I, O, S = 3, 2, 4, 1
-        diag_like = brainstate.random.randn(B, O, S)
+        batch_size, in_size, out_size, num_state = 3, 2, 4, 1
+        diag_like = brainstate.random.randn(batch_size, out_size, num_state)
         etrace = {
-            'weight': brainstate.random.randn(B, I, O, S),
-            'bias': brainstate.random.randn(B, O, S),
+            'weight': brainstate.random.randn(
+                batch_size, in_size, out_size, num_state
+            ),
+            'bias': brainstate.random.randn(batch_size, out_size, num_state),
         }
         # reference: current per-batch contraction, then explicit batch sum
         solve = get_fast_path_rules(etp_mm_p).solve
@@ -1007,8 +1005,8 @@ class TestSolveBatchFold:
         ref_b = ref['bias'].sum(axis=0)     # (O,)
         # new: fold the batch axis inside the einsum
         folded = solve(diag_like, etrace, fold_batch=True)
-        assert folded['weight'].shape == (I, O)
-        assert folded['bias'].shape == (O,)
+        assert folded['weight'].shape == (in_size, out_size)
+        assert folded['bias'].shape == (out_size,)
         npt.assert_allclose(folded['weight'], ref_w, atol=1e-6)
         npt.assert_allclose(folded['bias'], ref_b, atol=1e-6)
 

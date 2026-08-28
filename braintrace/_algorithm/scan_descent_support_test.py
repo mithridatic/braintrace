@@ -18,7 +18,6 @@ substep trace fold, descended == unrolled == BPTT on diagonal-recurrence
 bodies, and gating/diagnostic pins."""
 
 import brainstate
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -26,8 +25,10 @@ import pytest
 import braintrace
 from braintrace import ControlFlowPolicy
 
-DESCEND = lambda: ControlFlowPolicy(scan_unroll_limit=4, scan_descent='auto')
-UNROLL = lambda: ControlFlowPolicy(scan_unroll_limit=16, scan_descent='off')
+def DESCEND():
+    return ControlFlowPolicy(scan_unroll_limit=4, scan_descent='auto')
+def UNROLL():
+    return ControlFlowPolicy(scan_unroll_limit=16, scan_descent='off')
 
 
 def make_snn_scan_net(loops, n_rec=4, decay=0.9, seed=0, carry_readout=False):
@@ -281,8 +282,10 @@ class TestDescentCorrectness:
         g_bptt = bptt_param_gradients(spec.factory, inputs)
         # Default-limit policy: L=100 must descend, not unroll
         policy = ControlFlowPolicy(scan_descent='auto')
-        algo_factory = lambda m: braintrace.D_RTRL(
-            m, vjp_method='multi-step', control_flow=policy)
+        def algo_factory(m):
+            return braintrace.D_RTRL(
+                m, vjp_method='multi-step', control_flow=policy
+            )
         g = online_param_gradients(spec.factory, inputs,
                                    algo_factory=algo_factory)
         assert_param_gradients_close(g, g_bptt, atol=ATOL_BPTT)

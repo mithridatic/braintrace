@@ -45,10 +45,8 @@ from braintrace._algorithm.axes import ETraceConfig
 from braintrace._testing.oracle import (
     assert_gradients_differ,
     assert_model_is_live,
-    assert_param_gradients_close,
     bptt_param_gradients,
     chunked_online_param_gradients,
-    flat_gradient_leaves,
     relative_deviation,
 )
 from braintrace._compiler.diagnostics import DiagnosticKind, DiagnosticLevel

@@ -22,6 +22,7 @@ import brainstate
 import jax
 import numpy as np
 
+from braintrace._compatible_imports import Var
 from braintrace._misc import NotSupportedError
 from braintrace._typing import (
     ETraceVals,
@@ -381,7 +382,10 @@ def _descended_parameter_ownership(
         positions = frozenset(
             index
             for index, invar in enumerate(bundle.new_eqn.invars)
-            if minfo.invar_to_weight_path.get(invar) in bundle_paths
+            if (
+                isinstance(invar, Var)
+                and minfo.invar_to_weight_path.get(invar) in bundle_paths
+            )
         )
         if positions:
             boundary_inputs[id(bundle.new_eqn)] = positions
@@ -651,7 +655,9 @@ def compile_etrace_graph(
         ))
 
         # Rewrite module_info
-        minfo = minfo.add_jaxpr_outs(list(temp_outvars))
+        minfo = minfo.add_jaxpr_outs([
+            var for var in temp_outvars if isinstance(var, Var)
+        ])
 
         # ---               Add perturbations to the hidden states                  --- #
         # --- New jaxpr with hidden state perturbations for computing the residuals --- #

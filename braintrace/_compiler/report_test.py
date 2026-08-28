@@ -4,7 +4,6 @@
 
 import brainstate
 import jax.numpy as jnp
-import pytest
 
 import braintrace
 from braintrace._compiler import CompilationReport

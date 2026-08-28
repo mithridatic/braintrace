@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Dict, FrozenSet, Set, Sequence, NamedTuple, Any
+from typing import Dict, FrozenSet, Set, Sequence, NamedTuple, Any, cast
 
 import brainstate
 import jax.core
@@ -135,7 +135,7 @@ class HiddenPerturbation(NamedTuple):
         sequence of jax.Array
             The outputs of the perturbed jaxpr.
         """
-        return jax.core.eval_jaxpr(
+        return cast(Any, jax).core.eval_jaxpr(
             self.perturb_jaxpr.jaxpr,
             self.perturb_jaxpr.consts,
             *(tuple(inputs) + tuple(perturb_data))
@@ -150,7 +150,13 @@ class HiddenPerturbation(NamedTuple):
             One zero array per perturbation variable, matching its shape and
             dtype.
         """
-        return [jax.numpy.zeros(v.aval.shape, dtype=v.aval.dtype) for v in self.perturb_vars]
+        return [
+            jax.numpy.zeros(
+                cast(Any, v.aval).shape,
+                dtype=cast(Any, v.aval).dtype,
+            )
+            for v in self.perturb_vars
+        ]
 
     def perturb_data_to_hidden_group_data(
         self,
@@ -528,7 +534,8 @@ class JaxprEvalForHiddenPerturbation(JaxprEvaluation):
             )
 
     def _new_var_like(self, v: Var) -> Var:
-        return new_var('', jax.core.ShapedArray(v.aval.shape, v.aval.dtype))
+        aval = cast(Any, v.aval)
+        return new_var('', cast(Any, jax).core.ShapedArray(aval.shape, aval.dtype))
 
 
 def add_hidden_perturbation_in_jaxpr(

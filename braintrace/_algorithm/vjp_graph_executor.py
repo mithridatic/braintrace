@@ -40,7 +40,7 @@
 from __future__ import annotations
 
 from math import prod
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, cast
 
 import brainstate
 import jax.core
@@ -690,14 +690,21 @@ class ETraceVjpGraphExecutor(ETraceGraphExecutor):
         assign_dict_state_values(etrace_params, etrace_param_vals, write=False)
 
         # Return the results
-        return (
+        return cast(Tuple[
+            Outputs,
+            ETraceVals,
+            StateVals,
+            Hid2WeightJacobian,
+            HiddenGroupJacobian,
+            Any,
+        ], (
             outs_single_or_multi_steps,
             etrace_state_vals,
             other_state_vals,
             hid2weight_jac_single_or_multi_steps,
             hid2hid_jac_single_or_multi_steps,
             final_etrace,
-        )
+        ))
 
     def solve_h2w_h2h_l2h_jacobian(
         self,

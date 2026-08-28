@@ -34,7 +34,7 @@ Two encodings are load-bearing and easy to get wrong silently:
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import brainstate
 import jax
@@ -175,7 +175,7 @@ class SequenceDriverMixin:
 
     @property
     def _seq_call(self) -> Callable:
-        return self  # type: ignore[return-value]
+        return cast(Callable, self)
 
     @property
     def _seq_param_states(self) -> Any:
@@ -409,7 +409,9 @@ class SequenceDriverMixin:
                 )
             return jnp.sum(weight * loss), (loss, aux)
 
-        grad_fn = brainstate.transform.grad(objective, weights, has_aux=True)
+        grad_fn = cast(Any, brainstate.transform.grad)(
+            objective, weights, has_aux=True
+        )
 
         def body(carry: Any, xs_t: Any) -> Any:
             slices, weight = xs_t
@@ -614,7 +616,9 @@ class SequenceDriverMixin:
                 )
             return jnp.sum(weight * loss), (loss, aux)
 
-        grad_fn = brainstate.transform.grad(objective, weights, has_aux=True)
+        grad_fn = cast(Any, brainstate.transform.grad)(
+            objective, weights, has_aux=True
+        )
 
         def body(carry: Any, xs_t: Any) -> Any:
             slices, weight = xs_t
@@ -756,7 +760,8 @@ class ETraceVmap(SequenceDriverMixin, brainstate.nn.Vmap):
         # module an ETraceVmap wraps is always an ETraceAlgorithm, which is
         # what carries ``param_states``. ``compile(..., vmap=True)`` is the only
         # constructor, and it always passes a learner.
-        return self.module.param_states  # type: ignore[attr-defined]
+        module: Any = self.module
+        return module.param_states
 
     @property
     def _seq_vjp_method(self) -> Optional[str]:

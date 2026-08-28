@@ -54,7 +54,7 @@ Jacobian extraction and the trace update see the substep axis.
    ETP mixing into a body transition has no consumer.
 """
 
-from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple, TYPE_CHECKING, cast
 
 from braintrace._compatible_imports import (
     ClosedJaxpr,
@@ -270,7 +270,10 @@ def add_scan_ys(
     )
     new_closed = ClosedJaxpr(new_body, body_closed.consts)
     stacked = {
-        v: new_var('', v.aval.update(shape=(length, *v.aval.shape)))
+        v: new_var(
+            '',
+            v.aval.update(shape=(length, *cast(Any, v.aval).shape)),
+        )
         for v in extra
     }
     new_params = scan_params_add_ys(
@@ -376,11 +379,14 @@ def analyze_and_rewrite_scan(eqn: JaxprEqn, minfo: 'ModuleInfo') -> Optional[Sca
         body.invars[num_consts + c]: p for c, p in carry_hidden.items()
     }
     body_outvar_to_hidden_path = {
-        body.outvars[c]: p for c, p in carry_hidden.items()
+        outvar: path
+        for carry_index, path in carry_hidden.items()
+        if isinstance(outvar := body.outvars[carry_index], Var)
     }
     body_hidden_outvar_to_invar = {
-        body.outvars[c]: body.invars[num_consts + c]
-        for c in carry_hidden
+        outvar: body.invars[num_consts + carry_index]
+        for carry_index in carry_hidden
+        if isinstance(outvar := body.outvars[carry_index], Var)
     }
     body_invar_to_weight_path: Dict[Var, Path] = {}
     body_weight_path_to_invars: Dict[Path, List[Var]] = {}

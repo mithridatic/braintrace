@@ -253,8 +253,8 @@ class TestTheOracleSynthesiser:
     def test_the_local_runner_agrees_with_the_oracle_helper(self):
         spec = om.plain_and_etp_rnn(n_in=N_IN, n_rec=N_REC)
         inputs = _inputs()
-        factory = (lambda m: DNI(
-            m, synthesizer=SyntheticGradient(_group_shapes())))
+        def factory(m):
+            return DNI(m, synthesizer=SyntheticGradient(_group_shapes()))
         local = _windowed_gradients(spec, inputs, algo_factory=factory)
         helper = chunked_online_param_gradients(
             spec.factory, inputs, algo_factory=factory, chunk_size=CHUNK)

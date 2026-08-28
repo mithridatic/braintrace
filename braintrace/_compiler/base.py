@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Container, Dict, Sequence, Set, List
+from typing import Any, Container, Dict, Sequence, Set, List
 
 from braintrace._compatible_imports import (
     Var,
@@ -38,7 +38,7 @@ __all__ = [
 
 
 def find_matched_vars(
-    invars: Sequence[Var],
+    invars: Sequence[Any],
     invar_needed_in_oth_eqns: Container[Var]
 ) -> List[Var]:
     """
@@ -65,7 +65,7 @@ def find_matched_vars(
 
 
 def find_element_exist_in_the_set(
-    elements: Sequence[Var],
+    elements: Sequence[Any],
     the_set: Set[Var]
 ) -> Var | None:
     """

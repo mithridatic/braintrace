@@ -31,7 +31,7 @@ and :func:`train_synthetic_gradient` for the recipe that fits ``M``.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, cast
 
 import brainstate
 import brainunit as u
@@ -558,9 +558,11 @@ def train_synthetic_gradient(
             return sum(jnp.mean((pred[gi] - group_target[gi]) ** 2)
                        for gi in group_hiddens)
 
-        g_synth = brainstate.transform.grad(
+        grad_fn = cast(Any, brainstate.transform.grad)(
             lambda: regression(synthesizer.param_values()),
-            synth_states)()
+            synth_states,
+        )
+        g_synth = cast(Dict[tuple, Any], grad_fn())
         err = regression(synthesizer.param_values())
         if optimizer is None:
             for key, st in synth_states.items():

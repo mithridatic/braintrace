@@ -28,7 +28,7 @@ import brainstate
 from braintrace._compiler import ETraceGraph, CompilationReport
 from .graph_executor import ETraceGraphExecutor
 from .sequence import SequenceDriverMixin
-from .._typing import Path
+from .._typing import Path, _init_module
 
 __all__ = [
     'ETraceAlgorithm',
@@ -108,7 +108,7 @@ class ETraceAlgorithm(SequenceDriverMixin, brainstate.nn.Module):
         graph_executor: ETraceGraphExecutor,
         name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
+        _init_module(super().__init__, name)
 
         # The model
         if not isinstance(model, brainstate.nn.Module):

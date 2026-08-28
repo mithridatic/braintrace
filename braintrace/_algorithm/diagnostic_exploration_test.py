@@ -35,7 +35,6 @@ database for replay. Verified bit-exact (batch within float32 round-off) on
 2026-05-27; see ``temp/spike_p8.py``.
 """
 
-import importlib.util
 import warnings
 
 import pytest

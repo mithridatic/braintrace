@@ -200,6 +200,12 @@ class TestDescentContextTypes:
         assert 'control_flow_context' in HiddenParamOpRelation._field_defaults
         assert HiddenGroup._field_defaults.get('descent') is None
         assert 'descent' in HiddenGroup._field_defaults
+        assert HiddenGroup._field_defaults == {
+            'is_diagonal_recurrence': True,
+            'snap': None,
+            'descent': None,
+        }
+        assert tuple(HiddenGroup.__annotations__) == HiddenGroup._fields
         assert ScanDescentInfo._fields == (
             'length', 'num_consts', 'num_carry', 'body_jaxpr',
             'stacked_var_map', 'scan_eqn_id')

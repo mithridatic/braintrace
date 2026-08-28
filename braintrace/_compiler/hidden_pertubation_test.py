@@ -222,7 +222,6 @@ class TestPerturbationRobustness:
 
     def test_effects_preserved(self):
         from braintrace._compiler.hidden_pertubation import (
-            add_hidden_perturbation_from_minfo,
             JaxprEvalForHiddenPerturbation,
         )
         import jax

@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import dataclasses
 import operator
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 __all__ = ['ETraceConfig']
 
@@ -121,7 +121,7 @@ def _as_pair(value: Any, what: str) -> Tuple[Any, Any]:
                 f'{what} as a pair must have exactly two entries (x-side, '
                 f'f-side), got {len(value)}: {value!r}.'
             )
-        return tuple(value)  # type: ignore[return-value]
+        return cast(Tuple[Any, Any], tuple(value))
     return (value, value)
 
 
