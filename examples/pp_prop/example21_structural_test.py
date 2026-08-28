@@ -1010,6 +1010,121 @@ def test_addition_evidence_fallback_uses_incident_signal_and_first_task():
         structural.addition_selection_evidence(evidence, (True, True), 0)
 
 
+def test_measurement_keeps_task_max_scores_for_pruning(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.arange(2))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([1, 0]))
+        input_weight = State(np.ones(2))
+        recurrent_weight = State(np.ones(2))
+        readout_weight = State(np.ones((2, 1)))
+
+    module = SimpleNamespace(
+        BrainCellArcModel=Model,
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+    )
+    evidence = {
+        "strict": [False, False],
+        "neuron_scores": np.array([9.0, 1.0]),
+        "neuron_scores_by_task": np.array([[1.0, 9.0], [8.0, 2.0]]),
+        "task_spike_evidence": np.ones((2, 2)),
+        "target_scores_by_task": np.ones((2, 2)),
+        "connection_scores": np.ones(2),
+        "preclip_gradient_mass": [],
+        "task_readout_evidence": [],
+    }
+    seen = {}
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(structural, "_fixed_task_evidence", lambda *args: evidence)
+    def identity(*args, **kwargs):
+        seen["alive"] = kwargs["alive"]
+        return {"prediction_bytes_identical": True, "strict_identical": True}
+
+    monkeypatch.setattr(structural, "_real_mask_compaction_identity", identity)
+    result = structural.measure_real_arm("neuron-prune", data_root="data")
+    np.testing.assert_array_equal(seen["alive"], [True, False])
+    assert result["pruning_blocked"] is True
+
+
+def test_readout_evidence_only_uses_wrong_output_fields():
+    logits = np.zeros(360)
+    logits[1] = 1.0
+    logits[30] = 1.0
+    logits[60] = 1.0
+    wrong = structural._wrong_output_mask(logits, np.zeros((1, 1), dtype=np.uint8))
+    assert np.all(wrong[:30])
+    assert not np.any(wrong[30:])
+    weights = np.ones((2, 360))
+    weights[:, 30:60] = 100.0
+    result = structural._readout_effect(
+        np.ones((2, 2)), weights, output_mask=wrong
+    )
+    np.testing.assert_allclose(result, [np.tanh(3.3)] * 2)
+
+
+def test_measurement_collects_post_warmup_parent_evidence(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1]), indices=np.array([0]))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1]), indices=np.array([0]))
+        input_weight = State(np.ones(1))
+        recurrent_weight = State(np.ones(1))
+        readout_weight = State(np.ones((1, 1)))
+
+        def __init__(self, topology=None):
+            self.warm_count = 0
+
+    module = SimpleNamespace(
+        BrainCellArcModel=Model,
+        TRAINING_TASK_IDS=("train",),
+        VALIDATION_TASK_IDS=("valid",),
+        compile_pp_prop_model=lambda model: object(),
+        load_task=lambda *args: SimpleNamespace(targets=(np.zeros((1, 1), dtype=np.uint8),)),
+    )
+    calls = []
+
+    def fake_episodes(*args):
+        return ["train", "valid"], [{"task_id": "train", "task_index": 0,
+                 "events": np.ones((1, 1)), "advances": np.ones(1, dtype=bool),
+                 "target": np.zeros((1, 1), dtype=np.uint8),
+                 "target_vector": np.zeros(360)}]
+
+    def fake_evidence(module_value, model, learner, data_root, *, episodes=None):
+        calls.append(model.warm_count)
+        return {
+            "strict": [False, False], "neuron_scores": np.ones(1),
+            "connection_scores": np.ones(1), "preclip_gradient_mass": [],
+            "task_spike_evidence": [], "task_readout_evidence": [],
+            "episodes": episodes or [], "training_episodes": episodes or [],
+            "training_task_ids": ["train"], "task_ids": ["train", "valid"],
+        }
+
+    def fake_update(module_value, model, learner, evidence, *args, **kwargs):
+        def update(_index):
+            model.warm_count += 1
+        update.trainer = SimpleNamespace(muon_groups={}, adam_groups={})
+        return update
+
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(structural, "_fixed_task_episodes", fake_episodes, raising=False)
+    monkeypatch.setattr(structural, "_fixed_task_evidence", fake_evidence)
+    monkeypatch.setattr(structural, "_real_pp_prop_update", fake_update)
+    monkeypatch.setattr(structural, "_strict_task_screen", lambda *args, **kwargs: [False, False])
+    monkeypatch.setattr(
+        structural, "_real_mask_compaction_identity",
+        lambda *args, **kwargs: {"prediction_bytes_identical": True, "strict_identical": True},
+    )
+    structural.measure_real_arm("neuron-prune", data_root="data")
+    assert calls == [1]
+
+
 def test_measurement_passes_selected_pruning_mask_when_validation_is_closed(monkeypatch):
     class State:
         def __init__(self, value):
@@ -1496,8 +1611,8 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     structural.main(["merge", "--output", str(target)])
     merged = json.loads(target.read_text())
     assert len(merged["arms"]) == 4
-    assert merged["focused_tests"]["passed"] == 56
+    assert merged["focused_tests"]["passed"] == 59
     assert merged["focused_tests"]["failed"] == 0
-    assert merged["focused_tests"]["coverage_percent"] == 93.0
+    assert merged["focused_tests"]["coverage_percent"] == 94.0
     assert "coverage run --branch" in merged["focused_tests"]["command"]
     assert merged["arm_controls"]["max_resident_tile_pairs"] == 65_536

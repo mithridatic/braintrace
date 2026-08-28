@@ -776,9 +776,38 @@ def _target_vector(target, jnp):
     return jnp.asarray(values)
 
 
-def _readout_effect(voltages, readout_weight):
+def _wrong_output_mask(logits, target):
+    """Return the 360 readout fields whose decoded values are wrong."""
+    logits = np.asarray(logits, dtype=float)
+    target = np.asarray(target, dtype=np.int32)
+    if logits.shape != (360,):
+        raise ValueError("logits must have shape (360,)")
+    if target.ndim != 2 or target.shape[0] < 1 or target.shape[1] < 1:
+        raise ValueError("target must be a non-empty grid")
+    wrong = np.zeros(360, dtype=bool)
+    height = target.shape[0] - 1
+    width = target.shape[1] - 1
+    if int(np.argmax(logits[:30])) != height:
+        wrong[:30] = True
+    if int(np.argmax(logits[30:60])) != width:
+        wrong[30:60] = True
+    colors = np.argmax(logits[60:].reshape(30, 10), axis=1)
+    for row, color in enumerate(target[:, 0]):
+        if int(colors[row]) != int(color):
+            wrong[60 + 10 * row:60 + 10 * (row + 1)] = True
+    return wrong
+
+
+def _readout_effect(voltages, readout_weight, *, output_mask=None):
     features = np.tanh((np.asarray(voltages, dtype=float) + 65.0) / 20.0)
     weights = np.abs(np.asarray(readout_weight, dtype=float))
+    if output_mask is not None:
+        output_mask = np.asarray(output_mask, dtype=bool)
+        if output_mask.shape != (weights.shape[1],):
+            raise ValueError("output mask must match readout width")
+        if not np.any(output_mask):
+            return np.zeros(weights.shape[0], dtype=float)
+        weights = weights[:, output_mask]
     return np.mean(np.abs(features)[..., None] * weights[None, ...], axis=(0, 2))
 
 
@@ -868,15 +897,9 @@ def _run_fixed_episode_batch(module, model, learner, episodes):
     )(indices)
 
 
-def _fixed_task_evidence(module, model, learner, data_root):
-    """Collect direct evidence and strict results for every fixed task."""
-    if data_root is None:
-        raise ValueError("real Example 21 measurement requires --data-root")
-    import jax.numpy as jnp
-
+def _fixed_task_episodes(module, data_root, jnp):
+    """Load the fixed Example 21 episode snapshot without running the model."""
     task_ids = list(module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS)
-    training_count = len(module.TRAINING_TASK_IDS)
-    topology = topology_from_model(model)
     episodes = []
     for task_index, task_id in enumerate(task_ids):
         task = module.load_task(data_root, task_id, "practice")
@@ -893,6 +916,22 @@ def _fixed_task_evidence(module, model, learner, data_root):
                 })
     if not episodes:
         raise ValueError("fixed tasks must contain a target query")
+    return task_ids, episodes
+
+
+def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
+    """Collect direct evidence and strict results for every fixed task."""
+    if data_root is None:
+        raise ValueError("real Example 21 measurement requires --data-root")
+    import jax.numpy as jnp
+
+    task_ids = list(module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS)
+    training_count = len(module.TRAINING_TASK_IDS)
+    topology = topology_from_model(model)
+    if episodes is None:
+        _, episodes = _fixed_task_episodes(module, data_root, jnp)
+    else:
+        episodes = list(episodes)
     training_episodes = [
         episode for episode in episodes if episode["task_index"] < training_count
     ]
@@ -983,13 +1022,20 @@ def _fixed_task_evidence(module, model, learner, data_root):
     )
     task_spikes = [[] for _ in task_ids]
     task_readout = [[] for _ in task_ids]
+    task_wrong_outputs = [[] for _ in task_ids]
     predictions_by_task = {task_id: [] for task_id in task_ids}
     targets_by_task = {task_id: [] for task_id in task_ids}
     for episode, voltage, spike, logit in zip(episodes, voltages, spikes, logits):
         task_index = episode["task_index"]
         task_spikes[task_index].append(np.asarray(spike, dtype=float).mean(axis=0))
         task_readout[task_index].append(
-            _readout_effect(voltage, model.readout_weight.value)
+            _readout_effect(
+                voltage, model.readout_weight.value,
+                output_mask=_wrong_output_mask(logit, episode["target"]),
+            )
+        )
+        task_wrong_outputs[task_index].append(
+            _wrong_output_mask(logit, episode["target"])
         )
         prediction = module.decode_prediction(np.asarray(logit))
         predictions_by_task[episode["task_id"]].append(prediction)
@@ -1013,7 +1059,7 @@ def _fixed_task_evidence(module, model, learner, data_root):
                 np.bincount(source, weights=row, minlength=topology.neuron_count)
                 + np.bincount(target, weights=row, minlength=topology.neuron_count)
             )
-    target_scores = incident + readout_rows * (~np.asarray(strict)[:, None])
+    target_scores = incident + readout_rows
     first_episodes = []
     for task_id in module.TRAINING_TASK_IDS:
         first_episodes.append(next(
@@ -1025,6 +1071,10 @@ def _fixed_task_evidence(module, model, learner, data_root):
         "preclip_loss": losses,
         "task_spike_evidence": spike_rows.tolist(),
         "task_readout_evidence": readout_rows.tolist(),
+        "task_wrong_output_fields": [
+            np.any(rows, axis=0).tolist() if rows else [False] * 360
+            for rows in task_wrong_outputs
+        ],
         "incident_gradient_mass_by_task": incident.tolist(),
         "target_scores_by_task": target_scores.tolist(),
         "strict": strict,
@@ -1417,15 +1467,45 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         if hasattr(module, "compile_pp_prop_model") else None
     )
     topology = topology_from_model(model)
-    evidence = _fixed_task_evidence(module, model, learner, data_root)
     source_update = None
     source_trainer = None
-    if "training_episodes" in evidence:
+    if (
+        data_root is not None
+        and hasattr(module, "load_task")
+        and hasattr(module, "compile_pp_prop_model")
+    ):
+        import jax.numpy as jnp
+
+        _, episodes = _fixed_task_episodes(module, data_root, jnp)
+        training_episodes = [
+            episode for episode in episodes
+            if episode["task_index"] < len(module.TRAINING_TASK_IDS)
+        ]
+        warmup_evidence = {"training_episodes": [
+            next(
+                episode for episode in training_episodes
+                if episode["task_id"] == task_id
+            )
+            for task_id in module.TRAINING_TASK_IDS
+        ]}
         import brainstate
-        source_update = _real_pp_prop_update(module, model, learner, evidence)
+        source_update = _real_pp_prop_update(
+            module, model, learner, warmup_evidence
+        )
         source_update(0)
         source_trainer = source_update.trainer
         topology = topology_from_model(model)
+        evidence = _fixed_task_evidence(
+            module, model, learner, data_root, episodes=episodes
+        )
+    else:
+        evidence = _fixed_task_evidence(module, model, learner, data_root)
+        if "training_episodes" in evidence:
+            import brainstate
+            source_update = _real_pp_prop_update(module, model, learner, evidence)
+            source_update(0)
+            source_trainer = source_update.trainer
+            topology = topology_from_model(model)
     baseline = tuple(evidence["strict"])
     if "neuron_scores_by_task" in evidence:
         selection = addition_selection_evidence(
@@ -1439,9 +1519,10 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
             "source_evidence": scores,
             "target_evidence": np.asarray(evidence.get("target_scores", scores)),
         }
+    pruning_scores = np.asarray(evidence["neuron_scores"])
     scores = np.asarray(selection["neuron_scores"])
     edge_scores = np.asarray(evidence["connection_scores"])
-    pruning_alive = pruning_mask(scores, (True,))
+    pruning_alive = pruning_mask(pruning_scores, (True,))
     if source_trainer is None:
         adam = StructuralAdam(
             np.zeros_like(topology.readout), np.zeros_like(topology.readout),
@@ -1574,6 +1655,8 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "updates": updates,
         "fixed_task_ids": list(evidence.get("task_ids", [])),
         "training_task_ids": list(evidence.get("training_task_ids", [])),
+        "parent_state": "post_warmup" if source_trainer is not None else "test_double",
+        "parent_warmup_updates": 1 if source_trainer is not None else 0,
         "addition_update_task_ids": update_task_ids,
         "addition_update_driver": "brainstate.transform.for_loop" if updates else None,
         "before_strict": list(baseline), "after_strict": list(after),
@@ -1602,6 +1685,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],
         "task_spike_evidence": evidence["task_spike_evidence"],
         "task_readout_evidence": evidence["task_readout_evidence"],
+        "task_wrong_output_fields": evidence.get("task_wrong_output_fields", []),
         "incident_gradient_mass_by_task": evidence.get(
             "incident_gradient_mass_by_task", []
         ),
@@ -1613,6 +1697,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "selection": {
             "first_failing_training_index": selection["first_failing_training_index"],
             "neuron_evidence": np.asarray(selection["neuron_scores"]).tolist(),
+            "pruning_neuron_evidence": pruning_scores.tolist(),
             "source_evidence": np.asarray(selection["source_evidence"]).tolist(),
             "target_evidence": np.asarray(selection["target_evidence"]).tolist(),
         },
@@ -1663,7 +1748,7 @@ def main(argv=None):
             "implementation_commit": _git_commit(),
             "focused_tests": {
                 "command": "python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 56, "failed": 0, "coverage_percent": 93.0,
+                "passed": 59, "failed": 0, "coverage_percent": 94.0,
             },
             "baseline": baseline,
             "task_data": {
@@ -1686,6 +1771,16 @@ def main(argv=None):
                 "dense_neuron_pair_array": False, "max_resident_tile_pairs": 65536,
                 "exact_fixed_task_count": all(
                     "fixed_task_ids" in arm and arm["fixed_task_ids"] == fixed_task_ids
+                    for arm in arms
+                ),
+                "post_warmup_parent_evidence": all(
+                    arm.get("parent_state") == "post_warmup"
+                    and arm.get("parent_warmup_updates") == 1
+                    for arm in arms
+                ),
+                "wrong_output_readout_evidence": all(
+                    len(arm.get("task_wrong_output_fields", [])) == len(fixed_task_ids)
+                    and len(arm.get("task_readout_evidence", [])) == len(fixed_task_ids)
                     for arm in arms
                 ),
                 "exact_item_counts": all(exact_counts.values()),
