@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+from collections import namedtuple
 from types import SimpleNamespace
 from pathlib import Path
 from typing import ClassVar
@@ -575,6 +576,25 @@ def test_muon_groups_are_remapped_for_structural_candidate():
     )
     np.testing.assert_array_equal(mapped["readout_weight"].mu, [[0, 1], [4, 5]])
     assert mapped["readout_weight"].count == 7
+
+
+def test_muon_remap_reaches_nested_plain_optimizer_tuples():
+    Adam = namedtuple("Adam", "count mu nu")
+    Masked = namedtuple("Masked", "inner_state")
+    Partition = namedtuple("Partition", "inner_states")
+    state = Partition({
+        "adam": Masked((Adam(np.array(2), np.arange(3.0), np.arange(3.0)),)),
+    })
+
+    mapped = structural.remap_muon_groups(
+        {"recurrent": state},
+        {"recurrent": (np.arange(3), (5,))},
+    )["recurrent"]
+
+    adam = mapped.inner_states["adam"].inner_state[0]
+    np.testing.assert_array_equal(adam.mu, [0.0, 1.0, 2.0, 0.0, 0.0])
+    np.testing.assert_array_equal(adam.nu, [0.0, 1.0, 2.0, 0.0, 0.0])
+    assert adam.count == 2
 
 
 def test_real_update_hands_remapped_muon_groups_to_trainer():

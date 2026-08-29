@@ -158,24 +158,28 @@ def remap_muon_groups(muon_groups, parameter_maps):
         if isinstance(value, dict):
             return {key: remap(item, selector, target_shape)
                     for key, item in value.items()}
-        if isinstance(value, tuple) and hasattr(value, "_fields"):
-            return type(value)(*(remap(item, selector, target_shape)
-                                 for item in value))
+        if isinstance(value, tuple):
+            items = [remap(item, selector, target_shape) for item in value]
+            if hasattr(value, "_fields"):
+                return type(value)(*items)
+            return tuple(items)
+        shape = getattr(value, "shape", None)
+        if shape is not None:
+            source_shape = (len(selector),) + tuple(target_shape[1:])
+            if shape != source_shape:
+                return value
+            selected = value[selector]
+            if selected.shape[0] == target_shape[0]:
+                return selected
+            padding = [(0, target_shape[0] - selected.shape[0])]
+            padding.extend((0, 0) for _ in target_shape[1:])
+            return np.pad(selected, padding)
         if hasattr(value, "__dict__"):
             result = copy.copy(value)
             for name, item in vars(value).items():
                 setattr(result, name, remap(item, selector, target_shape))
             return result
-        shape = getattr(value, "shape", None)
-        source_shape = (len(selector),) + tuple(target_shape[1:])
-        if shape != source_shape:
-            return value
-        selected = value[selector]
-        if selected.shape[0] == target_shape[0]:
-            return selected
-        padding = [(0, target_shape[0] - selected.shape[0])]
-        padding.extend((0, 0) for _ in target_shape[1:])
-        return np.pad(selected, padding)
+        return value
 
     return {
         name: remap(state, *parameter_maps[name])
