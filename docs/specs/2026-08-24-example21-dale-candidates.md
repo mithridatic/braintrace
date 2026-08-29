@@ -37,6 +37,14 @@ runner. Every new recurrent coordinate SHALL derive its initialization from
 `inverse_softplus(1e-6)` and untyped sources use raw zero. A caller flag SHALL
 not override the source-neuron label.
 
+The production Dale command SHALL load the accepted parent checkpoint, derive
+all candidate measurements from that checkpoint's untyped topology, and run
+both arms through the real PP-Prop update callback and direct fixed strict
+screen. A supplied checkpoint SHALL be bound to the accepted parent by its
+serialized topology, parameters, optimizer arrays, and checkpoint digest; a
+matching identifier alone is insufficient. The runner SHALL reject a
+different checkpoint state before either arm starts.
+
 Chemical and optional biological mechanisms are deferred. Construction
 defaults to no AMPA, GABAa, NMDA, HCN, calcium-dependent adaptation, electrical
 junctions, multiple compartments, morphology, neuromodulation, or persistent
@@ -56,5 +64,9 @@ corrective error.
   outgoing sign and leaves all new optimizer moments at zero;
 - each Dale arm has exactly 64 updates, uses an isolated child checkpoint, and
   passes the strict false-to-true/no-regression gate before promotion;
+- the production structural command invokes both Dale arms from one accepted
+  checkpoint and records the real PP-Prop update and strict-screen evidence;
+- a checkpoint with the accepted identifier but different serialized state is
+  rejected;
 - zero type signs keep raw signed behavior;
 - all optional biology remains disabled by default and is rejected when set.
