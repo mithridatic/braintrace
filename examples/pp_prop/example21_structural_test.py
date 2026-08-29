@@ -1249,7 +1249,7 @@ def test_parent_writer_uses_real_update_state_and_writes_digest(
         structural.write_parent_checkpoint(module, target, "data")
 
 
-def test_merge_validation_rejects_unpromoted_or_unbounded_arm():
+def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_evidence():
     task_ids = [f"task-{index}" for index in range(8)]
 
     def arm(name, pid):
@@ -1266,13 +1266,15 @@ def test_merge_validation_rejects_unpromoted_or_unbounded_arm():
             "candidate_recurrent_items": 105 if name == "connection-add" else (95 if name == "connection-prune" else 100),
             "mutated_item_count": 5,
             "updates": 64 if addition else 0,
-            "before_strict": [False, True],
-            "after_strict": [True, True],
+            "before_strict": [False] + [True] * 11,
+            "after_strict": [True] * 12,
             "promoted": True,
             "strict_regression_rejected": True,
             "within_300_seconds": True,
             "dense_neuron_pair_array": False,
             "parent_checkpoint_sha256": "parent",
+            "parent_checkpoint_sha256_after": "parent",
+            "parent_checkpoint_unchanged": True,
             "parent_optimizer_nonzero": True,
             "training_evidence_task_ids": task_ids,
             "adam_remapped": True,
@@ -1301,10 +1303,33 @@ def test_merge_validation_rejects_unpromoted_or_unbounded_arm():
         ("neuron-prune", "connection-prune", "neuron-add", "connection-add"), 1
     )]
     structural.validate_merged_arms(arms)
-    arms[2]["promoted"] = False
-    with pytest.raises(ValueError, match="promoted"):
-        structural.validate_merged_arms(arms)
-    arms[2]["promoted"] = True
+    for arm_evidence in arms:
+        arm_evidence["before_strict"] = [False] * 12
+        arm_evidence["after_strict"] = [False] * 12
+        arm_evidence["promoted"] = False
+    for arm_evidence in arms[:2]:
+        arm_evidence.update({
+            "candidate_neurons": arm_evidence["baseline_neurons"],
+            "candidate_recurrent_items": arm_evidence["baseline_recurrent_items"],
+            "mutated_item_count": 0,
+            "pruning_blocked": True,
+            "muon_remapped": False,
+            "mask_compaction": {"not_measured": True},
+        })
+    structural.validate_merged_arms(arms)
+
+    invalid_promotion = copy.deepcopy(arms)
+    invalid_promotion[2]["promoted"] = True
+    with pytest.raises(ValueError, match="promotion record"):
+        structural.validate_merged_arms(invalid_promotion)
+    invalid_parent = copy.deepcopy(arms)
+    invalid_parent[3]["parent_checkpoint_unchanged"] = False
+    with pytest.raises(ValueError, match="parent checkpoint"):
+        structural.validate_merged_arms(invalid_parent)
+
+    arms = [arm(name, index) for index, name in enumerate(
+        ("neuron-prune", "connection-prune", "neuron-add", "connection-add"), 1
+    )]
     arms[3]["connection_selection"]["stopped_by_bound"] = False
     with pytest.raises(ValueError, match="tile bound"):
         structural.validate_merged_arms(arms)
@@ -1317,8 +1342,10 @@ def test_merge_validation_rejects_unpromoted_or_unbounded_arm():
         (lambda values: values[1]["environment"].update(pid=1), "separate process"),
         (lambda values: values[1].update(implementation_commit="def"), "implementation commit"),
         (lambda values: values[1].update(parent_checkpoint_sha256="other"), "parent checkpoint"),
-        (lambda values: values[0].update(after_strict=[False, False]), "promoted"),
-        (lambda values: values[0].update(after_strict=[True, False]), "strict regression"),
+        (lambda values: values[0].update(
+            after_strict=values[0]["before_strict"].copy()
+        ), "promotion record"),
+        (lambda values: values[0].update(after_strict=[True, False] + [True] * 10), "strict regression"),
         (lambda values: values[0].update(within_300_seconds=False), "300-second"),
         (lambda values: values[0].update(dense_neuron_pair_array=True), "sparse pair"),
         (lambda values: values[0].update(training_evidence_task_ids=[]), "eight training"),

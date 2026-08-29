@@ -1719,7 +1719,7 @@ def promote_arm(before, after, elapsed_seconds, arm, updates):
 
 
 def validate_merged_arms(arms):
-    """Reject a merged artifact unless every real arm satisfies Gate 5.
+    """Reject a merged artifact unless every real arm is bounded and honest.
 
     Parameters
     ----------
@@ -1750,26 +1750,41 @@ def validate_merged_arms(arms):
         name = arm["arm"]
         before = arm.get("before_strict", [])
         after = arm.get("after_strict", [])
+        if (len(before) != 12 or len(after) != 12
+                or not all(isinstance(value, bool) for value in before + after)):
+            raise ValueError(f"{name} does not contain two 12-task strict vectors")
         gained = any(not old and new for old, new in zip(before, after))
         regressed = any(old and not new for old, new in zip(before, after))
-        if not arm.get("promoted") or not gained:
-            raise ValueError(f"{name} is not promoted by a strict Boolean gain")
+        expected_promotion = bool(
+            gained and not regressed and arm.get("within_300_seconds")
+        )
         if regressed or not arm.get("strict_regression_rejected"):
             raise ValueError(f"{name} has a strict regression")
         if not arm.get("within_300_seconds"):
             raise ValueError(f"{name} exceeds the 300-second limit")
+        if bool(arm.get("promoted")) != expected_promotion:
+            raise ValueError(f"{name} has an inconsistent promotion record")
         if arm.get("dense_neuron_pair_array") is not False:
             raise ValueError(f"{name} does not prove sparse pair storage")
         if len(arm.get("training_evidence_task_ids", [])) != 8:
             raise ValueError(f"{name} does not contain eight training evidence rows")
         if not arm.get("parent_optimizer_nonzero"):
             raise ValueError(f"{name} did not load nonzero parent optimizer state")
+        if (arm.get("parent_checkpoint_sha256_after")
+                != arm.get("parent_checkpoint_sha256")
+                or not arm.get("parent_checkpoint_unchanged")):
+            raise ValueError(f"{name} did not preserve the parent checkpoint")
         remap = arm.get("optimizer_remap", {})
         if not all(remap.get(key) for key in (
             "surviving_values_preserved", "new_values_zero", "step_counts_preserved"
         )):
             raise ValueError(f"{name} does not preserve optimizer state")
-        if not arm.get("adam_remapped") or not arm.get("muon_remapped"):
+        pruning_blocked = bool(
+            name.endswith("prune") and arm.get("pruning_blocked")
+        )
+        if not arm.get("adam_remapped"):
+            raise ValueError(f"{name} does not preserve active optimizer state")
+        if not pruning_blocked and not arm.get("muon_remapped"):
             raise ValueError(f"{name} does not preserve active optimizer state")
         addition = name.endswith("add")
         if arm.get("updates") != (64 if addition else 0):
@@ -1778,11 +1793,20 @@ def validate_merged_arms(arms):
             arm["baseline_neurons"] if name.startswith("neuron")
             else arm["baseline_recurrent_items"]
         )
-        if arm.get("mutated_item_count") != mutation_count(baseline_count):
+        expected_mutations = 0 if pruning_blocked else mutation_count(baseline_count)
+        if arm.get("mutated_item_count") != expected_mutations:
             raise ValueError(f"{name} has an invalid mutation count")
+        if pruning_blocked:
+            validation = arm.get("pruning_validation_strict", [])
+            if (any(validation) or arm.get("promoted") or before != after
+                    or arm.get("candidate_neurons") != arm.get("baseline_neurons")
+                    or arm.get("candidate_recurrent_items")
+                    != arm.get("baseline_recurrent_items")):
+                raise ValueError(f"{name} has an invalid blocked pruning record")
     compaction = arms[0].get("mask_compaction", {})
-    if not (compaction.get("prediction_bytes_identical")
-            and compaction.get("strict_identical")):
+    if (not arms[0].get("pruning_blocked")
+            and not (compaction.get("prediction_bytes_identical")
+                     and compaction.get("strict_identical"))):
         raise ValueError("neuron pruning does not prove compaction identity")
     connection_selection = arms[3].get("connection_selection", {})
     if (not connection_selection.get("stopped_by_bound")
@@ -1945,6 +1969,7 @@ def measure_real_arm(
         load_parent_checkpoint(module, parent_checkpoint)
         if parent_checkpoint is not None else None
     )
+    parent_digest_before = parent.digest if parent is not None else None
     model = (
         module.BrainCellArcModel(parent.topology)
         if parent is not None else module.BrainCellArcModel()
@@ -2118,6 +2143,10 @@ def measure_real_arm(
             "not_measured": True,
         }
     )
+    parent_digest_after = (
+        hashlib.sha256(Path(parent_checkpoint).read_bytes()).hexdigest()
+        if parent_checkpoint is not None else None
+    )
     return {
         "arm": arm,
         "implementation_commit": _git_commit(),
@@ -2145,7 +2174,12 @@ def measure_real_arm(
         "max_resident_tile_pairs": selection_statistics["max_resident_pairs"],
         "connection_selection": selection_statistics,
         "dense_neuron_pair_array": False,
-        "parent_checkpoint_sha256": parent.digest if parent is not None else None,
+        "parent_checkpoint_sha256": parent_digest_before,
+        "parent_checkpoint_sha256_after": parent_digest_after,
+        "parent_checkpoint_unchanged": bool(
+            parent_digest_before is not None
+            and parent_digest_before == parent_digest_after
+        ),
         "parent_optimizer_nonzero": (
             parent.nonzero_optimizer_values if parent is not None else False
         ),
@@ -2208,7 +2242,16 @@ def main(argv=None):
             "arm_controls": {
                 "addition_updates": 64, "candidate_arms_per_process": 1,
                 "dense_neuron_pair_array": False, "max_resident_tile_pairs": 65536,
-                "all_arms_promoted": True,
+                "promotion_requires_strict_gain": True,
+                "promoted_arms": [
+                    arm["arm"] for arm in arms if arm.get("promoted", False)
+                ],
+                "non_promoted_arms": [
+                    arm["arm"] for arm in arms if not arm.get("promoted", False)
+                ],
+                "pruning_blocked_by_design": [
+                    arm["arm"] for arm in arms if arm.get("pruning_blocked")
+                ],
                 "strict_regression_rejected": True,
                 "within_300_seconds": all(arm["within_300_seconds"] for arm in arms),
             },
