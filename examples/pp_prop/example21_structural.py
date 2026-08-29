@@ -1701,6 +1701,7 @@ def write_artifact(path, evidence):
         "environment": {
             "python": sys.version.split()[0], "platform": platform.platform(),
             "pid": os.getpid(), "pid_namespace": pid_namespace,
+            "process_start_ticks": _process_start_ticks(),
             "seeds": [21, 22, 23],
         },
         **evidence,
@@ -1746,10 +1747,12 @@ def validate_merged_arms(arms):
         (
             arm.get("environment", {}).get("pid_namespace"),
             arm.get("environment", {}).get("pid"),
+            arm.get("environment", {}).get("process_start_ticks"),
         )
         for arm in arms
     ]
-    if (any(pid is None for _namespace, pid in process_identities)
+    if (any(pid is None or started is None
+            for _namespace, pid, started in process_identities)
             or len(set(process_identities)) != len(process_identities)):
         raise ValueError("each structural arm must use one separate process")
     commits = {arm.get("implementation_commit") for arm in arms}
@@ -1853,6 +1856,16 @@ def _peak_process_resident_memory_bytes(status_path=Path("/proc/self/status")):
         if line.startswith("VmHWM:"):
             return int(line.split()[1]) * 1024
     return None
+
+
+def _process_start_ticks(stat_path=Path("/proc/self/stat")):
+    """Read the Linux process start time in clock ticks since boot."""
+
+    try:
+        fields = Path(stat_path).read_text(encoding="utf-8").rsplit(") ", 1)[1]
+        return int(fields.split()[19])
+    except (IndexError, OSError, ValueError):
+        return None
 
 
 def run_integrated_arm(
