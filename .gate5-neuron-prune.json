@@ -38,14 +38,14 @@
   "candidate_recurrent_items": 16384,
   "canonical_loss": "arc_contracts.request_loss",
   "dense_neuron_pair_array": false,
-  "elapsed_seconds": 78.98529322099057,
+  "elapsed_seconds": 78.20391242401092,
   "eligibility_reset": true,
   "environment": {
     "backend": "cpu",
     "device": "cpu:0",
     "jax": "0.11.1",
-    "peak_rss_bytes": 5450031104,
-    "pid": 1761351,
+    "peak_rss_bytes": 5426446336,
+    "pid": 1934237,
     "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
     "python": "3.12.3",
     "seeds": [
@@ -229565,6 +229565,7 @@
       1.5446438872114923
     ]
   },
+  "strict_history": [],
   "strict_regression_rejected": true,
   "target_scores_by_task": [
     [
@@ -307735,6 +307736,7 @@
     "b2862040",
     "150deff5"
   ],
+  "transition_probe_task_id": null,
   "updates": 0,
   "within_300_seconds": true,
   "wrong_output_readout_evidence": [
