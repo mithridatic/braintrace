@@ -12,6 +12,8 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
+from examples.pp_prop.dale_candidates import DaleMeasurements, measure_dale_candidates
+
 _SPEC = importlib.util.spec_from_file_location(
     "example21_structural", Path(__file__).with_name("example21_structural.py")
 )
@@ -49,6 +51,47 @@ def test_evidence_scores_owners_ranking_and_twins_are_direct_and_stable():
         mechanisms=(("hh",), ("hh",), ("hh",)),
     )
     assert twins == ((0, 1), (2,))
+
+
+def test_dale_task_evidence_is_scale_invariant_for_both_selection_arms():
+    activity = np.array([[1.0, 0.2, 0.8, 0.1], [0.3, 3.0, 0.2, 0.4]])
+    gradients = np.array([[1.0, 0.1, 0.5, 0.2], [0.1, 3.0, 0.2, 0.4]])
+    source = np.array([0, 0, 1, 1])
+    base_activity, base_gradient = structural.dale_task_evidence(
+        activity, source, gradients
+    )
+    common = {
+        "parent_id": "accepted-parent",
+        "rows": source,
+        "weights": np.array([1.0, 1.0, -1.0, -1.0]),
+        "task_ownership": np.ones(4),
+        "lesion_evidence": np.ones(4),
+    }
+    base = measure_dale_candidates(DaleMeasurements(
+        activity=base_activity, gradient_mass=base_gradient, **common
+    ), fraction=0.5)
+    for task in range(activity.shape[0]):
+        for field in ("activity", "gradient"):
+            scaled_activity = activity.copy()
+            scaled_gradient = gradients.copy()
+            values = scaled_activity if field == "activity" else scaled_gradient
+            values[task] *= 100.0
+            scaled_activity, scaled_gradient = structural.dale_task_evidence(
+                scaled_activity, source, scaled_gradient
+            )
+            scaled = measure_dale_candidates(DaleMeasurements(
+                activity=scaled_activity, gradient_mass=scaled_gradient, **common
+            ), fraction=0.5)
+            np.testing.assert_array_equal(base.excitatory, scaled.excitatory)
+            np.testing.assert_array_equal(base.inhibitory, scaled.inhibitory)
+    with pytest.raises(ValueError, match="task-by-item"):
+        structural.dale_task_evidence(np.ones(4), source, gradients)
+    with pytest.raises(ValueError, match="same task count"):
+        structural.dale_task_evidence(activity, source, gradients[:1])
+    with pytest.raises(ValueError, match="match gradient"):
+        structural.dale_task_evidence(activity, source[:1], gradients)
+    with pytest.raises(ValueError, match="nonnegative"):
+        structural.dale_task_evidence(activity, [-1, 0, 1, 1], gradients)
 
 
 def test_causal_block_lesion_evidence_measures_each_source_loss():
