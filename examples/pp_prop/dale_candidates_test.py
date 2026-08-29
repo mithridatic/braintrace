@@ -1,9 +1,9 @@
 """Tests for measured Dale candidate selection and sparse constraints."""
 
+import brainevent
 import jax.numpy as jnp
 import numpy as np
 import pytest
-import brainevent
 
 from examples.pp_prop.dale_candidates import (
     DaleMeasurements,
