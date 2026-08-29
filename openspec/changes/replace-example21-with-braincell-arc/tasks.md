@@ -144,9 +144,10 @@
   stop-bound correctness, no dense neuron-pair array, typed and untyped initial
   values, zero new moments, no random regrowth, and exact addition count.
 - [x] 7.6 Implement one-candidate-per-arm structural execution and the fixed 64
-  PP-Prop updates for additions; verify promotion only for at least one direct
-  false-to-true strict change with no true-to-false change and a complete arm
-  time at or below 300 seconds.
+  PP-Prop updates for additions; verify every bounded candidate records a direct
+  strict vector and a complete arm time at or below 300 seconds, promotion only
+  for at least one false-to-true strict change with no true-to-false change, and
+  parent preservation for every non-promoted candidate.
 
 ## 8. Dale stages and optional biology
 

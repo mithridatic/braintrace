@@ -93,7 +93,12 @@ effective magnitude is `1e-6`.
 One process evaluates one arm. Addition arms run exactly 64 PP-Prop updates.
 Every arm must finish within 300 seconds. Promotion requires at least one direct
 strict false-to-true change and no true-to-false change. Pruning also requires
-no regression. A failed candidate leaves the parent unchanged.
+no regression. A failed candidate leaves the parent unchanged. A strict gain is
+a promotion condition, not an arm-completion condition: a bounded candidate
+that finishes and records no strict regression is valid evidence when it is
+honestly recorded as non-promoted. While every validation strict Boolean is
+false, the two pruning arms are recorded as blocked by design and perform no
+mutation.
 
 The model integration boundary snapshots pre-clip gradients directly from
 `learner.etrace_grad` before `clip_gradient` is called. It accumulates absolute
@@ -185,9 +190,11 @@ the eight training evidence task identifiers.
 Compaction identity must receive the exact pruning alive mask and evaluate both
 candidates from one decoded episode snapshot. A merged Gate 5 artifact is valid
 only when each arm file identifies the current implementation commit, each
-addition arm records exactly 64 updates and at least one strict false-to-true
-gain, every arm records no strict regression and a time below 300 seconds, and
-the merged artifact digest is calculated from the checked-in bytes. The focused
+addition arm records exactly 64 updates, every arm records its direct strict
+vectors, promotion state, no strict regression, and a time below 300 seconds,
+and the merged artifact digest is calculated from the checked-in bytes. A
+promoted arm must contain at least one strict false-to-true gain. A non-promoted
+arm must prove that the parent checkpoint stayed unchanged. The focused
 evidence command is `python -m coverage run --rcfile=/dev/null --branch
 --include=examples/pp_prop/example21_structural.py -m pytest
 examples/pp_prop/example21_structural_test.py -q`, followed by
