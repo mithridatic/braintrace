@@ -15,6 +15,13 @@ from math import ceil
 import numpy as np
 
 
+STRUCTURAL_ADDITION_LEARNING_RATES = {
+    "input": 0.01,
+    "recurrent": 0.003,
+    "readout": 0.03,
+}
+
+
 def _git_commit():
     """Return the current implementation revision for measured artifacts."""
 
@@ -1040,6 +1047,26 @@ def _wrong_output_mask(logits, target):
     return wrong
 
 
+def _wrong_request_output_mask(logits, target):
+    logits = np.asarray(logits, dtype=float)
+    target = np.asarray(target, dtype=np.int32)
+    if logits.shape != (31, 360):
+        raise ValueError("request logits must have shape (31, 360)")
+    if target.ndim != 2 or target.shape[0] < 1 or target.shape[1] < 1:
+        raise ValueError("target must be a non-empty grid")
+    wrong = np.zeros(360, dtype=bool)
+    if int(np.argmax(logits[0, :30])) != target.shape[0] - 1:
+        wrong[:30] = True
+    if int(np.argmax(logits[0, 30:60])) != target.shape[1] - 1:
+        wrong[30:60] = True
+    for row in range(target.shape[0]):
+        colors = np.argmax(logits[row + 1, 60:].reshape(30, 10), axis=1)
+        for column, color in enumerate(target[row]):
+            if int(colors[column]) != int(color):
+                wrong[60 + 10 * column:60 + 10 * (column + 1)] = True
+    return wrong
+
+
 def _readout_effect(voltages, readout_weight, *, output_mask=None):
     features = np.tanh((np.asarray(voltages, dtype=float) + 65.0) / 20.0)
     weights = np.abs(np.asarray(readout_weight, dtype=float))
@@ -1062,6 +1089,28 @@ def _wrong_output_readout_evidence(readout_weight, output_mask):
     return np.sum(weights[:, output_mask], axis=1)
 
 
+def _request_indices(events):
+    kinds = np.argmax(np.asarray(events)[:, :7], axis=1)
+    shape = np.flatnonzero(kinds == 4)
+    rows = np.flatnonzero(kinds == 6)
+    if len(shape) != 1 or len(rows) != 30:
+        raise ValueError("episode must contain one shape and thirty row requests")
+    return np.concatenate((shape, rows)).astype(np.int32)
+
+
+def _voltage_readout(model, voltages):
+    import jax.numpy as jnp
+
+    feature = jnp.tanh((jnp.asarray(voltages) + 65.0) / 20.0)
+    return feature @ model.readout_weight.value + model.readout_bias.value
+
+
+def _episode_readouts(model, events, voltages):
+    if not hasattr(model, "readout_weight") or not hasattr(model, "readout_bias"):
+        return model.readout()
+    return _voltage_readout(model, voltages)[_request_indices(events)]
+
+
 def _direct_readout_gradients(model, target, jnp):
     import brainunit as u
     import jax
@@ -1079,23 +1128,36 @@ def _direct_readout_gradients(model, target, jnp):
     return {("readout_weight",): first, ("readout_bias",): second}
 
 
-def _direct_request_gradients(model, events, target_grid, target_shape, jnp):
+def _direct_request_gradients(
+    model, events, target_grid, target_shape, jnp, *, module=None,
+    learner=None, advances=None,
+):
     import jax
     import brainunit as u
 
-    feature = jnp.tanh(
-        (model.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0
-    )
+    if module is None:
+        feature = jnp.tanh(
+            (model.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0
+        )
+    else:
+        model.reset_episode(learner)
+        voltages, _ = module.run_event_sequence_with_spikes(
+            model, events, advances
+        )
+        feature = jnp.tanh((jnp.asarray(voltages) + 65.0) / 20.0)
     weight = model.readout_weight.value
     bias = model.readout_bias.value
 
     def objective(readout_weight, readout_bias):
         logits = feature @ readout_weight + readout_bias
-        losses = jax.vmap(
-            lambda event: _request_loss(
+        if logits.ndim == 1:
+            losses = jax.vmap(lambda event: _request_loss(
                 event, logits, target_grid, target_shape, jnp
-            )
-        )(events)
+            ))(events)
+        else:
+            losses = jax.vmap(lambda event, values: _request_loss(
+                event, values, target_grid, target_shape, jnp
+            ))(events, logits)
         return jnp.sum(losses)
 
     first, second = jax.grad(objective, argnums=(0, 1))(weight, bias)
@@ -1110,8 +1172,12 @@ def _strict_task_screen(module, model, learner, episodes, *, return_bytes=False)
         ordered_predictions = []
         for episode in episodes:
             model.reset_episode(learner)
-            _run_episode(module, model, episode["events"], episode["advances"])
-            prediction = module.decode_prediction(np.asarray(model.readout()))
+            voltages, _ = _run_episode(
+                module, model, episode["events"], episode["advances"]
+            )
+            prediction = module.decode_prediction(np.asarray(_episode_readouts(
+                model, episode["events"], voltages
+            )))
             ordered_predictions.append(prediction)
             predictions_by_task.setdefault(episode["task_id"], []).append(prediction)
             targets_by_task.setdefault(episode["task_id"], []).append(episode["target"])
@@ -1121,13 +1187,20 @@ def _strict_task_screen(module, model, learner, episodes, *, return_bytes=False)
 
         events = jnp.asarray([episode["events"] for episode in episodes])
         advances = jnp.asarray([episode["advances"] for episode in episodes])
+        request_indices = jnp.asarray([
+            _request_indices(episode["events"]) for episode in episodes
+        ]) if hasattr(model, "readout_weight") and hasattr(
+            model, "readout_bias"
+        ) else None
 
         def run_episode(index):
             model.reset_episode(learner)
-            module.run_event_sequence_with_spikes(
+            voltages, _ = module.run_event_sequence_with_spikes(
                 model, events[index], advances[index]
             )
-            return model.readout()
+            if request_indices is None:
+                return model.readout()
+            return _voltage_readout(model, voltages)[request_indices[index]]
 
         logits = brainstate.transform.jit(
             lambda indices: brainstate.transform.for_loop(run_episode, indices)
@@ -1157,13 +1230,22 @@ def _run_fixed_episode_batch(module, model, learner, episodes):
 
     events = jnp.asarray([episode["events"] for episode in episodes])
     advances = jnp.asarray([episode["advances"] for episode in episodes])
+    request_indices = jnp.asarray([
+        _request_indices(episode["events"]) for episode in episodes
+    ]) if hasattr(model, "readout_weight") and hasattr(
+        model, "readout_bias"
+    ) else None
 
     def run_episode(index):
         model.reset_episode(learner)
         voltages, spikes = _run_episode(
             module, model, events[index], advances[index]
         )
-        return voltages, spikes, model.readout()
+        if request_indices is None:
+            logits = model.readout()
+        else:
+            logits = _voltage_readout(model, voltages)[request_indices[index]]
+        return voltages, spikes, logits
 
     indices = np.arange(len(episodes), dtype=np.int32)
     return brainstate.transform.jit(
@@ -1307,7 +1389,12 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
                 voltage, model.readout_weight.value,
             )
         )
-        wrong_outputs = _wrong_output_mask(logit, episode["target"])
+        wrong_outputs = (
+            _wrong_request_output_mask(logit, episode["target"])
+            if np.asarray(logit).ndim == 2 else _wrong_output_mask(
+                logit, episode["target"]
+            )
+        )
         task_wrong_outputs[task_index].append(wrong_outputs)
         task_wrong_readout[task_index].append(
             _wrong_output_readout_evidence(model.readout_weight.value, wrong_outputs)
@@ -1421,7 +1508,7 @@ def _real_mask_compaction_identity(
 
 def _real_pp_prop_update(
     module, model, learner, evidence, adam=None, *, muon_groups=None,
-    parameter_maps=None,
+    parameter_maps=None, learning_rates=None,
 ):
     """Return one indexed real-task PP-Prop candidate update."""
     import jax.numpy as jnp
@@ -1447,6 +1534,8 @@ def _real_pp_prop_update(
         if state is not None:
             parameters[name] = state.value
     trainer = module.PPPropEpisodeTrainer(learner, parameters)
+    if learning_rates is not None:
+        trainer.learning_rates = dict(learning_rates)
     if muon_groups is not None:
         maps = _group_parameter_maps(muon_groups, parameter_maps or {})
         trainer.muon_groups = remap_muon_groups(
@@ -1484,7 +1573,8 @@ def _real_pp_prop_update(
         def direct_grad_fn(**_):
             return _direct_request_gradients(
                 model, events[index], target_grids[index],
-                target_shapes[index], jnp
+                target_shapes[index], jnp, module=module,
+                learner=learner, advances=advances[index],
             )
 
         kwargs = {
@@ -1896,12 +1986,14 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         import brainstate
         if not source_muon_groups:
             update = _real_pp_prop_update(
-                module, candidate_model, candidate_learner, evidence, candidate_adam
+                module, candidate_model, candidate_learner, evidence, candidate_adam,
+                learning_rates=STRUCTURAL_ADDITION_LEARNING_RATES,
             )
         else:
             update = _real_pp_prop_update(
                 module, candidate_model, candidate_learner, evidence, candidate_adam,
                 muon_groups=source_muon_groups, parameter_maps=parameter_maps,
+                learning_rates=STRUCTURAL_ADDITION_LEARNING_RATES,
             )
         update_task_ids = list(getattr(update, "task_ids", ()))
         run_addition_updates(
@@ -1949,6 +2041,10 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "parent_warmup_updates": 1 if source_trainer is not None else 0,
         "addition_update_task_ids": update_task_ids,
         "addition_update_driver": "brainstate.transform.for_loop" if updates else None,
+        "canonical_loss": "arc_contracts.request_loss",
+        "candidate_learning_rates": dict(
+            STRUCTURAL_ADDITION_LEARNING_RATES if updates else {}
+        ),
         "before_strict": list(baseline), "after_strict": list(after),
         "promoted": promote_arm(baseline, after, elapsed,
                                  "addition" if arm.endswith("add") else "pruning", updates),
@@ -2041,7 +2137,7 @@ def main(argv=None):
             "implementation_commit": _git_commit(),
             "focused_tests": {
                 "command": "uv run --extra testing python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 67, "failed": 0, "coverage_percent": 93.0,
+                "passed": 70, "failed": 0, "coverage_percent": 92.0,
             },
             "baseline": baseline,
             "task_data": {
@@ -2054,6 +2150,10 @@ def main(argv=None):
             "arms": arms,
             "arm_controls": {
                 "addition_updates": 64,
+                "canonical_loss": all(
+                    arm.get("canonical_loss") == "arc_contracts.request_loss"
+                    for arm in arms
+                ),
                 "addition_schedule_ordered": all(
                     arm.get("updates") == 64
                     and arm.get("addition_update_driver") == "brainstate.transform.for_loop"
@@ -2092,6 +2192,16 @@ def main(argv=None):
                     for arm in pruning
                 ),
                 "pruning_promoted": any(arm.get("promoted", False) for arm in pruning),
+                "strict_gain_transition": any(
+                    any(not old and new for old, new in zip(
+                        arm.get("before_strict", ()), arm.get("after_strict", ())
+                    )) for arm in additions
+                ),
+                "addition_candidate_rates": all(
+                    arm.get("candidate_learning_rates") == {
+                        "input": 0.01, "recurrent": 0.003, "readout": 0.03
+                    } for arm in additions
+                ),
                 "pruning_validation_strict": pruning[0].get(
                     "pruning_validation_strict", [False] * 4
                 ),

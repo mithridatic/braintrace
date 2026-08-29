@@ -218,3 +218,21 @@ selection may stop only when a tile's nonnegative score upper bound is strictly
 below the current retained threshold; equal-score tiles remain eligible for
 stable index tie-breaking. Fixed-task forward and spike collection uses one
 compiled `brainstate.transform.for_loop` over the episode snapshot.
+
+#### Gate 5 strict-gain correction (2026-08-29)
+
+An addition arm is eligible only when its canonical-loss updates mutate the
+candidate model parameters used by the subsequent fixed-task screen. The
+runner must preserve the candidate learner and trainer state created for the
+structural topology through all 64 transformed updates; rebuilding or
+evaluating a separate model instance invalidates the measurement. The artifact
+must contain at least one direct strict false-to-true transition across the
+fixed task vector, no true-to-false transition, and `promoted: true`. A
+canonical-loss run with zero strict gain is a failed Gate 5 result even when
+timing, sparse-memory, exact-count, and identity controls pass.
+
+The measured candidate-only Muon rates for the real model are input `0.01`,
+recurrent `0.003`, and readout `0.03`. Parent warm-up state keeps the model's
+declared rates; only the 64-update addition candidate uses these rates. This
+override is part of the arm artifact and must be repeated for both addition
+arms.

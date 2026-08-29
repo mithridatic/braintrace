@@ -875,7 +875,7 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
     }
     monkeypatch.setattr(structural, "_load_example21_model", lambda: fake_module)
     monkeypatch.setattr(structural, "_fixed_task_evidence", lambda *args: fake_evidence)
-    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda index: index)
+    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args, **kwargs: lambda index: index)
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
     for arm in ("neuron-prune", "connection-prune", "neuron-add", "connection-add"):
         result = structural.measure_real_arm(arm)
@@ -1007,7 +1007,7 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
             **evidence, "strict": [True] if model.is_candidate else [False]
         },
     )
-    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda _: None)
+    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args, **kwargs: lambda _: None)
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
     monkeypatch.setattr(
         structural,
@@ -1292,6 +1292,20 @@ def test_readout_evidence_only_uses_wrong_output_fields():
     np.testing.assert_allclose(result, [np.tanh(3.3)] * 2)
 
 
+def test_request_output_mask_checks_shape_and_all_target_columns():
+    logits = np.zeros((31, 360), dtype=float)
+    logits[0, 0] = logits[0, 31] = 1.0
+    logits[1, 62] = 1.0
+    logits[1, 73] = 1.0
+    target = np.asarray([[2, 3]], dtype=np.uint8)
+    wrong = structural._wrong_request_output_mask(logits, target)
+    assert not np.any(wrong)
+    logits[1, 73] = 0.0
+    logits[1, 74] = 1.0
+    wrong = structural._wrong_request_output_mask(logits, target)
+    assert np.all(wrong[70:80])
+
+
 def test_measurement_collects_post_warmup_parent_evidence(monkeypatch):
     class State:
         def __init__(self, value):
@@ -1505,6 +1519,50 @@ def test_strict_screen_uses_compiled_runner_branch():
     )
     assert strict == [True, True]
     assert prediction_bytes
+
+
+def test_strict_screen_uses_each_request_readout_not_final_row():
+    import jax.numpy as jnp
+    from examples.pp_prop.arc_contracts import (
+        decode_prediction as arc_decode_prediction,
+        strict_task_pass_at_1 as arc_strict_task_pass_at_1,
+    )
+
+    events = np.zeros((31, 441), dtype=bool)
+    events[0, 4] = True
+    events[1:, 6] = True
+    events[1:, 81 + np.arange(30)] = True
+    voltages = jnp.ones((31, 1)) * 0.0
+    voltages = voltages.at[-1].set(-100.0)
+    weights = np.zeros((1, 360), dtype=np.float32)
+    weights[0, 0] = 1.0
+    weights[0, 30] = 1.0
+    weights[0, 62] = 1.0
+
+    class Module:
+        run_event_sequence_with_spikes = staticmethod(
+            lambda model, values, advances: (voltages, jnp.zeros_like(voltages))
+        )
+        decode_prediction = staticmethod(arc_decode_prediction)
+        strict_task_pass_at_1 = staticmethod(arc_strict_task_pass_at_1)
+
+    class Model:
+        readout_weight = SimpleNamespace(value=jnp.asarray(weights))
+        readout_bias = SimpleNamespace(value=jnp.zeros(360))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return jnp.zeros(360)
+
+    strict, _ = structural._strict_task_screen(
+        Module, Model(), object(), [{
+            "task_id": "a", "events": events, "advances": np.ones(31, dtype=bool),
+            "target": np.asarray([[2]], dtype=np.uint8),
+        }], return_bytes=True
+    )
+    assert strict == [True]
 
 
 def test_fixed_evidence_rejects_missing_queries_and_training_queries(monkeypatch):
@@ -1764,6 +1822,26 @@ def test_real_update_uses_indexed_training_schedule_and_target_loss():
     assert [int(call["events"][0, 0]) for call in calls] == [1, 2]
 
 
+def test_real_update_accepts_candidate_learning_rates():
+    class Trainer:
+        def __init__(self, learner, parameters):
+            self.learning_rates = {"input": 1.0}
+
+        def update_episode(self, **kwargs):
+            return 0.0, 0.0
+
+    model = SimpleNamespace(
+        input_weight=SimpleNamespace(value=np.ones(1)),
+        recurrent_weight=SimpleNamespace(value=np.ones(1)),
+    )
+    update = structural._real_pp_prop_update(
+        SimpleNamespace(PPPropEpisodeTrainer=Trainer), model, SimpleNamespace(),
+        {"events": np.zeros((1, 1)), "advances": np.ones(1)},
+        learning_rates={"input": 0.01, "recurrent": 0.003, "readout": 0.03},
+    )
+    assert update.trainer.learning_rates["readout"] == 0.03
+
+
 def test_direct_readout_gradients_cover_voltage_features_and_bias():
     import brainunit as u
     import jax.numpy as jnp
@@ -1877,8 +1955,8 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     structural.main(["merge", "--output", str(target)])
     merged = json.loads(target.read_text())
     assert len(merged["arms"]) == 4
-    assert merged["focused_tests"]["passed"] == 67
+    assert merged["focused_tests"]["passed"] == 70
     assert merged["focused_tests"]["failed"] == 0
-    assert merged["focused_tests"]["coverage_percent"] == 93.0
+    assert merged["focused_tests"]["coverage_percent"] == 92.0
     assert "coverage run --branch" in merged["focused_tests"]["command"]
     assert merged["arm_controls"]["max_resident_tile_pairs"] == 65_536
