@@ -1,11 +1,12 @@
 {
   "issue": "BRA-9",
-  "implementation_commit": "9617a0a2c571cace2c82e20cf9ae549f220c64a7",
+  "implementation_commit": "eb69ceb477ee131c6209a2f818f954bbe67a4d3e",
+  "artifact": "docs/evidence/gate5/example21-structural-arm.json",
+  "artifact_sha256": "efecee9c9e634b38489befbf7bd5c101602c6202c6f11f5cd12ed2420f6db0d9",
   "model": "BrainCellArcModel",
-  "task": "Example 21 fixed ARC train/validation strict screen",
-  "arm": "neuron-add",
+  "task": "Example 21 fixed eight-training and four-validation ARC practice screen",
   "parent_checkpoint_sha256": "f5a7f40ec99784a1f7b76e1ab748e4110ad388c9e1eb344493b14d2eecf33e9d",
-  "diagnostic_artifact_sha256": "065647708d58a9d79dc1a32ca1b43796e3a95b2db56a7622373acab8c01c5aa3",
+  "parent_strict": [false, false, false, false, false, false, false, false, false, false, false, false],
   "training_task_ids": [
     "d631b094",
     "dc433765",
@@ -16,44 +17,78 @@
     "b2862040",
     "150deff5"
   ],
-  "first_failing_training_task": "d631b094",
-  "learning_quality_metric": {
-    "name": "strict task pass at 1",
-    "before": [false, false, false, false, false, false, false, false, false, false, false, false],
-    "after": [false, false, false, false, false, false, false, false, false, false, false, false],
-    "strict_gain": false,
-    "strict_regression": false
-  },
-  "adaptation_speed_metric": {
-    "updates": 64,
-    "elapsed_seconds": 72.87579132299288,
-    "within_300_seconds": true
-  },
-  "structure": {
-    "baseline_neurons": 2048,
-    "candidate_neurons": 2151,
-    "candidate_recurrent_items": 18032,
-    "mutated_neurons": 103,
-    "dense_neuron_pair_array": false
-  },
-  "optimizer": {
-    "parent_nonzero": true,
-    "source_steps": {"input": 64, "recurrent": 64, "readout": 64},
-    "candidate_initial_steps": {"input": 64, "recurrent": 64, "readout": 64},
-    "surviving_values_preserved": true,
-    "new_values_zero": true,
-    "active_muon_loaded": true,
-    "active_muon_nonzero": true,
-    "active_muon_surviving_values_preserved": true
-  },
-  "runtime": {
+  "environment": {
     "container_image": "braintrace-example21:b75b834",
     "python": "3.14.0",
     "jax_platform": "cpu",
     "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
-    "cgroup_memory_peak_bytes_upper_bound": 1024770048,
     "seeds": [21, 22, 23]
   },
-  "promotion": false,
-  "pruning_blocked_by_zero_validation_strict": true
+  "focused_verification": {
+    "passed": 56,
+    "failed": 0,
+    "line_and_branch_percent": 90.86294416243655,
+    "branch_data": true
+  },
+  "arms": [
+    {
+      "arm": "neuron-prune",
+      "blocked_by_design": true,
+      "updates": 0,
+      "mutated_items": 0,
+      "complete_process_seconds": 27.674807489005616,
+      "peak_process_resident_memory_bytes": 1215717376,
+      "strict_after": [false, false, false, false, false, false, false, false, false, false, false, false],
+      "strict_regression": false,
+      "promoted": false
+    },
+    {
+      "arm": "connection-prune",
+      "blocked_by_design": true,
+      "updates": 0,
+      "mutated_items": 0,
+      "complete_process_seconds": 115.36156625201693,
+      "peak_process_resident_memory_bytes": 1212698624,
+      "strict_after": [false, false, false, false, false, false, false, false, false, false, false, false],
+      "strict_regression": false,
+      "promoted": false
+    },
+    {
+      "arm": "neuron-add",
+      "blocked_by_design": false,
+      "updates": 64,
+      "mutated_items": 103,
+      "complete_process_seconds": 97.11441692200606,
+      "peak_process_resident_memory_bytes": 1457164288,
+      "strict_after": [false, false, false, false, false, false, false, false, false, false, false, false],
+      "strict_regression": false,
+      "promoted": false,
+      "optimizer_nonzero_and_remapped": true
+    },
+    {
+      "arm": "connection-add",
+      "blocked_by_design": false,
+      "updates": 64,
+      "mutated_items": 820,
+      "complete_process_seconds": 94.01715083100135,
+      "peak_process_resident_memory_bytes": 1394212864,
+      "strict_after": [false, false, false, false, false, false, false, false, false, false, false, false],
+      "strict_regression": false,
+      "promoted": false,
+      "optimizer_nonzero_and_remapped": true,
+      "max_resident_tile_pairs": 65536,
+      "tiles_scanned": 2,
+      "tiles_total": 64,
+      "dense_neuron_pair_array": false
+    }
+  ],
+  "controls": {
+    "one_arm_per_process": true,
+    "all_within_300_seconds": true,
+    "all_parent_checkpoints_unchanged": true,
+    "all_strict_regressions_rejected": true,
+    "promotion_requires_strict_false_to_true": true,
+    "promoted_arms": [],
+    "non_promoted_arms": ["neuron-prune", "connection-prune", "neuron-add", "connection-add"]
+  }
 }
