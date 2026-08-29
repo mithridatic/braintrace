@@ -127,13 +127,15 @@ episode snapshot for evidence and validation. Addition updates use the real
 `brainstate.transform.for_loop`; an identity callback is allowed only in
 isolated unit-test doubles.
 
-For addition arms, the compiled update loop also returns the fixed-task screen
-for each update. The runner computes the first update whose screen changes any
-fixed-task Boolean from false to true, while still completing all 64 updates.
-The transition value is measured from those per-update screens; it must not be
-inferred from the final screen or replaced with the fixed update count. The
-aggregate control requires every addition arm to be promoted, with no strict
-regression and a non-null measured transition update.
+For addition arms, the compiled update loop also returns a direct strict screen
+for the first failing training task after each update. The runner computes the
+first update whose screen changes that task from false to true, while still
+completing all 64 updates. A full fixed-task screen runs after the loop and
+must show no strict regression. The transition value is measured from the
+per-update screens; it must not be inferred from the final screen or replaced
+with the fixed update count. The artifact records the transition probe task,
+the full final fixed-task vector, and the aggregate control requires every
+addition arm to be promoted with a non-null measured transition update.
 
 ## Risk register
 

@@ -1307,17 +1307,25 @@ def _compiled_fixed_task_screen(module, model, learner, episodes):
     )
 
 
-def _strict_vectors_from_logits(module, episodes, logits):
+def _strict_vectors_from_logits(module, episodes, logits, *, default=None):
     """Decode one fixed-task strict vector for every measured screen."""
     task_ids = list(module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS)
+    if default is None:
+        default = (False,) * len(task_ids)
+    default = tuple(bool(value) for value in default)
+    if len(default) != len(task_ids):
+        raise ValueError("strict default must match fixed task count")
     predictions = {task_id: [] for task_id in task_ids}
     targets = {task_id: [] for task_id in task_ids}
     for episode, value in zip(episodes, np.asarray(logits)):
         predictions[episode["task_id"]].append(module.decode_prediction(value))
         targets[episode["task_id"]].append(episode["target"])
-    return tuple(bool(module.strict_task_pass_at_1(
-        predictions[task_id], targets[task_id]
-    )) for task_id in task_ids)
+    return tuple(
+        bool(module.strict_task_pass_at_1(
+            predictions[task_id], targets[task_id]
+        )) if predictions[task_id] else default[index]
+        for index, task_id in enumerate(task_ids)
+    )
 
 
 def _fixed_task_episodes(module, data_root, jnp):
@@ -2030,6 +2038,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         count = len(pairs)
         updates = 64
     update_task_ids = []
+    transition_probe_task_id = None
     candidate_model, candidate_learner = _rebuild_real_candidate(
         module, candidate, learner
     )
@@ -2063,23 +2072,30 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
                 learning_rates=STRUCTURAL_ADDITION_LEARNING_RATES,
             )
         update_task_ids = list(getattr(update, "task_ids", ()))
+        transition_probe_task_id = module.TRAINING_TASK_IDS[
+            selection["first_failing_training_index"]
+        ]
+        transition_episodes = [
+            episode for episode in evidence.get("episodes", ())
+            if episode["task_id"] == transition_probe_task_id
+        ]
         screen_outputs = run_addition_updates(
             brainstate.transform,
             update,
             updates=updates,
             observe=lambda _: _compiled_fixed_task_screen(
-                module, candidate_model, candidate_learner, evidence["episodes"]
+                module, candidate_model, candidate_learner, transition_episodes
             ),
         )
         strict_history = [
-            _strict_vectors_from_logits(module, evidence["episodes"], output)
+            _strict_vectors_from_logits(
+                module, transition_episodes, output, default=baseline
+            )
             for output in np.asarray(screen_outputs)
         ] if screen_outputs is not None else []
     else:
         strict_history = []
-    if strict_history:
-        after = strict_history[-1]
-    elif "episodes" in evidence:
+    if "episodes" in evidence:
         after = tuple(_strict_task_screen(
             module, candidate_model, candidate_learner, evidence["episodes"]
         ))
@@ -2118,6 +2134,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "parent_state": "post_warmup" if source_trainer is not None else "test_double",
         "parent_warmup_updates": 1 if source_trainer is not None else 0,
         "addition_update_task_ids": update_task_ids,
+        "transition_probe_task_id": transition_probe_task_id,
         "addition_update_driver": "brainstate.transform.for_loop" if updates else None,
         "canonical_loss": "arc_contracts.request_loss",
         "candidate_learning_rates": dict(
