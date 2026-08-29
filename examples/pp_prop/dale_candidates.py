@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pickle
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -264,6 +265,26 @@ def strict_dale_gate(before, after, *, updates: int, elapsed_seconds: float | No
     return gained and not regressed
 
 
+def _serialize_checkpoint(value) -> bytes:
+    try:
+        return pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL)
+    except (AttributeError, OSError, pickle.PickleError, TypeError) as error:
+        raise ValueError("Dale parent must provide a serializable checkpoint") from error
+
+
+def _validate_deferred_candidate(candidate) -> None:
+    options = getattr(candidate, "biology_options", {})
+    if any(bool(value) for value in options.values()):
+        raise ValueError("Dale candidate enables deferred biology")
+    mechanisms = getattr(candidate, "mechanisms", ())
+    if any(
+        mechanism in {"ampa", "gabaa"}
+        for group in mechanisms
+        for mechanism in group
+    ):
+        raise ValueError("Dale candidate enables deferred chemistry")
+
+
 def run_dale_arm(
     parent,
     candidate_indices,
@@ -272,6 +293,7 @@ def run_dale_arm(
     update: Callable,
     strict: Callable,
     *,
+    before_strict=None,
     transform=None,
     updates: int = 64,
     clock=time.perf_counter,
@@ -286,7 +308,13 @@ def run_dale_arm(
         transform = brainstate.transform
     started = clock()
     candidate = build_candidate(parent, np.asarray(candidate_indices), sign)
-    before = tuple(bool(value) for value in strict(parent))
+    if candidate is parent:
+        raise ValueError("Dale candidate aliases its checkpoint parent")
+    _validate_deferred_candidate(candidate)
+    before = (
+        tuple(bool(value) for value in strict(parent))
+        if before_strict is None else tuple(bool(value) for value in before_strict)
+    )
 
     def step(index):
         return update(candidate, index)
@@ -320,34 +348,79 @@ def run_dale_candidates(
     update: Callable,
     strict: Callable,
     *,
+    checkpoint: bytes | None = None,
     transform=None,
     updates: int = 64,
     clock=time.perf_counter,
 ) -> dict:
-    """Run isolated excitatory and inhibitory arms from one parent."""
+    """Run isolated excitatory and inhibitory arms from one parent checkpoint.
+
+    Parameters
+    ----------
+    parent : object
+        Accepted untyped parent used only for the baseline strict screen.
+    measurements : DaleMeasurements
+        Measurements collected from ``parent``.
+    build_candidate, update, strict : callable
+        Candidate construction, compiled update, and strict-screen callbacks.
+    checkpoint : bytes, optional
+        Serialized immutable parent checkpoint. When omitted, ``parent`` is
+        serialized once before either arm starts.
+
+    Returns
+    -------
+    dict
+        Candidate selection, arm evidence, and checkpoint integrity evidence.
+    """
     selection = measure_dale_candidates(measurements)
     parent_id = getattr(parent, "parent_id", getattr(parent, "id", None))
     if parent_id is not None and measurements.parent_id != parent_id:
         raise ValueError("Dale measurements do not belong to the accepted parent")
-    arms = tuple(
-        run_dale_arm(
-            parent,
+    parent_bytes = _serialize_checkpoint(parent)
+    checkpoint_bytes = parent_bytes if checkpoint is None else bytes(checkpoint)
+    try:
+        pickle.loads(checkpoint_bytes)
+    except (EOFError, pickle.PickleError, TypeError, ValueError) as error:
+        raise ValueError("Dale parent checkpoint is invalid") from error
+    before = tuple(bool(value) for value in strict(parent))
+    sources = []
+    candidates_seen = []
+    arms = []
+    for sign, candidates in (
+        (1, selection.excitatory), (-1, selection.inhibitory)
+    ):
+        source = pickle.loads(checkpoint_bytes)
+        if source is parent or any(source is value for value in sources):
+            raise ValueError("Dale checkpoint restore aliases a parent arm")
+        source_id = getattr(source, "parent_id", getattr(source, "id", None))
+        if parent_id is not None and source_id != parent_id:
+            raise ValueError("Dale checkpoint does not match the accepted parent")
+        sources.append(source)
+        arm = run_dale_arm(
+            source,
             candidates,
             sign,
             build_candidate,
             update,
             strict,
+            before_strict=before,
             transform=transform,
             updates=updates,
             clock=clock,
         )
-        for sign, candidates in (
-            (1, selection.excitatory), (-1, selection.inhibitory)
-        )
-    )
+        candidate = arm["candidate"]
+        if any(candidate is value for value in candidates_seen):
+            raise ValueError("Dale arms share a candidate object")
+        candidates_seen.append(candidate)
+        if _serialize_checkpoint(source) != checkpoint_bytes:
+            raise ValueError("Dale arm mutated its checkpoint parent")
+        arms.append(arm)
+    if _serialize_checkpoint(parent) != parent_bytes:
+        raise ValueError("Dale arm mutated the accepted parent")
     return {
         "parent_id": parent_id,
         "candidate_count": int(selection.excitatory.size),
         "selection": selection,
-        "arms": arms,
+        "arms": tuple(arms),
+        "parent_checkpoint_unchanged": True,
     }

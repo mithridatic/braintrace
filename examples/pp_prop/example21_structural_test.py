@@ -2,6 +2,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import pickle
 import subprocess
 import sys
 from pathlib import Path
@@ -399,7 +400,7 @@ def test_connection_addition_appends_exact_items_and_zero_moments():
     mapped = structural.grow_adam_for_connections(adam, 2)
     np.testing.assert_array_equal(mapped.recurrent_first, [1.0, 0.0, 0.0])
     typed = structural.add_recurrent_connections(topology, ((2, 1),), typed=True)
-    np.testing.assert_allclose(np.log1p(np.exp(typed.recurrent_value[-1])), 1e-6)
+    np.testing.assert_array_equal(typed.recurrent_value[-1:], [0.0])
     with pytest.raises(ValueError, match="distinct"):
         structural.add_recurrent_connections(topology, ((0, 1),))
     with pytest.raises(ValueError, match="65,536"):
@@ -464,6 +465,50 @@ def test_inhibitory_addition_uses_source_label_and_zero_new_moments():
     )
     mapped = structural.grow_adam_for_connections(adam, 1)
     assert mapped.recurrent_first.tolist() == [1.0, 0.0]
+
+
+def test_recurrent_addition_ignores_caller_type_flag_and_uses_source_label():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0]), np.array([1]), np.array([2.0]), np.ones((3, 1)),
+        np.array([1, 0, 0], dtype=np.int8), ((),) * 3,
+    )
+    grown = structural.add_recurrent_connections(topology, ((0, 2),), typed=False)
+    assert structural.effective_topology_recurrent_values(grown)[-1] == pytest.approx(1e-6)
+    untyped = structural.add_recurrent_connections(
+        topology, ((1, 2),), typed=True
+    )
+    assert untyped.recurrent_value[-1] == 0.0
+    with pytest.raises(ValueError, match="source Dale"):
+        structural.add_recurrent_connections(
+            topology, ((0, 2),), source_dale=np.array([-1])
+        )
+
+
+def test_production_dale_wrapper_supplies_a_serialized_checkpoint(monkeypatch):
+    captured = {}
+
+    def runner(parent, measurements, build, update, strict, **kwargs):
+        captured.update({"parent": parent, "measurements": measurements, **kwargs})
+        return {"arms": ()}
+
+    monkeypatch.setattr(structural, "_run_dale_candidates", runner)
+    parent = SimpleNamespace(parent_id="accepted-parent")
+    measurements = SimpleNamespace(parent_id="accepted-parent")
+    result = structural.run_dale_candidate_arms(
+        parent, measurements, object(), object(), object()
+    )
+    assert result == {"arms": ()}
+    assert pickle.loads(captured["checkpoint"]).parent_id == parent.parent_id
+
+
+def test_default_example21_construction_keeps_deferred_biology_inactive():
+    module = structural._load_example21_model()
+    model = module.BrainCellArcModel()
+    assert model.biology_options == {
+        name: False for name in module.deferred_biology_defaults()
+    }
+    assert not any(model.mechanisms)
 
 
 def test_preclip_mass_is_taken_directly_from_real_etrace_boundary():

@@ -21,13 +21,21 @@ transform is used by training, addition, pruning, and compaction. A structural
 operation must validate every outgoing edge from each typed source after the
 operation and must not create optimizer moments for new coordinates.
 
-The Dale runner receives one accepted untyped parent checkpoint, creates
-independent excitatory and inhibitory children from that immutable parent, and
-runs exactly 64 PP-Prop updates in each arm. It records the same direct strict
-vector before and after each arm. An arm is accepted only when at least one
-strict value changes from false to true and no strict value changes from true
-to false; otherwise the parent remains active. Candidate selection and arm
+The Dale runner receives one accepted untyped parent checkpoint, snapshots its
+serialized state once, and restores an independent child from that checkpoint
+for each arm. It SHALL reject a child that aliases the parent or the other arm,
+and SHALL reject any mutation of the checkpoint state. Each child runs exactly
+64 PP-Prop updates in the compiled loop. The runner records the same direct
+strict vector before and after each arm. An arm is accepted only when at least
+one strict value changes from false to true and no strict value changes from
+true to false; otherwise the parent remains active. Candidate selection and arm
 execution are deterministic and do not use a random ratio or random regrowth.
+
+The production Example 21 structural path SHALL invoke this checkpoint-backed
+runner. Every new recurrent coordinate SHALL derive its initialization from
+`topology.dale[source]`: typed sources use
+`inverse_softplus(1e-6)` and untyped sources use raw zero. A caller flag SHALL
+not override the source-neuron label.
 
 Chemical and optional biological mechanisms are deferred. Construction
 defaults to no AMPA, GABAa, NMDA, HCN, calcium-dependent adaptation, electrical
