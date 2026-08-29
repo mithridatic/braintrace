@@ -1679,6 +1679,34 @@ def test_fixed_evidence_collects_all_tasks_and_direct_spikes(monkeypatch):
     assert result["task_spike_evidence"][0] != result["task_spike_evidence"][1]
 
 
+def test_request_loss_uses_every_target_column_and_zeroes_non_requests():
+    import jax.numpy as jnp
+
+    event = np.zeros(441, dtype=np.float32)
+    event[6] = 1.0
+    event[81] = 1.0
+    logits = jnp.zeros(360).at[61].set(1.0).at[62].set(2.0)
+    first = np.zeros((30, 30), dtype=np.int32)
+    first[0, :2] = (1, 1)
+    second = first.copy()
+    second[0, 1] = 2
+    shape = jnp.asarray((1, 2), dtype=jnp.int32)
+    first_loss = structural._request_loss(
+        event, logits, first, shape, jnp
+    )
+    second_loss = structural._request_loss(
+        event, logits, second, shape, jnp
+    )
+    assert float(first_loss) != float(second_loss)
+    assert float(structural._request_loss(
+        np.zeros(441), logits, first, shape, jnp
+    )) == 0.0
+    padding = np.zeros(441, dtype=np.float32)
+    assert float(structural._request_loss(
+        padding, logits, second, shape, jnp
+    )) == 0.0
+
+
 def test_real_update_uses_indexed_training_schedule_and_target_loss():
     calls = []
 

@@ -962,14 +962,60 @@ def _run_episode(module, model, events, advances):
     return voltages, spikes
 
 
-def _target_vector(target, jnp):
+def _padded_target(target):
     target = np.asarray(target, dtype=np.int32)
-    values = np.zeros((360,), dtype=np.float32)
-    values[target.shape[0] - 1] = 1.0
-    values[30 + target.shape[1] - 1] = 1.0
-    for row, color in enumerate(target[:, 0]):
-        values[60 + 10 * row + int(color)] = 1.0
-    return jnp.asarray(values)
+    padded = np.zeros((30, 30), dtype=np.int32)
+    padded[:target.shape[0], :target.shape[1]] = target
+    return padded
+
+
+def _request_loss(event, logits, target_grid, target_shape, jnp):
+    """Return the differentiable loss for one ARC request event."""
+    import jax.nn
+
+    event = jnp.asarray(event)
+    logits = jnp.asarray(logits)
+    if event.shape[0] < 111:
+        return jnp.asarray(0.0, dtype=logits.dtype)
+    target_grid = jnp.asarray(target_grid, dtype=jnp.int32)
+    target_shape = jnp.asarray(target_shape, dtype=jnp.int32)
+    kind = jnp.argmax(event[:7])
+    shape_logits = jnp.stack((logits[:30], logits[30:60]))
+    shape_labels = target_shape - 1
+    shape_loss = jnp.sum(
+        -shape_logits[jnp.arange(2), shape_labels]
+        + jax.nn.logsumexp(shape_logits, axis=1)
+    )
+    row = jnp.argmax(event[81:111])
+    row_logits = logits[60:].reshape((30, 10))[row]
+    width = target_shape[1]
+    valid = jnp.arange(30) < width
+    row_labels = target_grid[row]
+    row_terms = -row_logits[row_labels] + jax.nn.logsumexp(row_logits)
+    row_loss = jnp.where(
+        jnp.any(valid), jnp.sum(jnp.where(valid, row_terms, 0.0)) / jnp.maximum(width, 1), 0.0
+    )
+    present = jnp.any(event)
+    return jnp.where(
+        present & (kind == 4), shape_loss,
+        jnp.where(present & (kind == 6) & (row < target_shape[0]), row_loss, 0.0),
+    )
+
+
+def _episode_target_arrays(episodes, jnp):
+    grids = []
+    shapes = []
+    for episode in episodes:
+        target = episode.get("target")
+        grid = episode.get("target_grid")
+        if grid is None:
+            grid = _padded_target(target) if target is not None else np.zeros((30, 30), dtype=np.int32)
+        shape = episode.get("target_shape")
+        if shape is None:
+            shape = np.asarray(target).shape if target is not None else (1, 1)
+        grids.append(grid)
+        shapes.append(shape)
+    return jnp.asarray(grids, dtype=jnp.int32), jnp.asarray(shapes, dtype=jnp.int32)
 
 
 def _wrong_output_mask(logits, target):
@@ -1028,6 +1074,29 @@ def _direct_readout_gradients(model, target, jnp):
 
     def objective(readout_weight, readout_bias):
         return jnp.mean((feature @ readout_weight + readout_bias - target) ** 2)
+
+    first, second = jax.grad(objective, argnums=(0, 1))(weight, bias)
+    return {("readout_weight",): first, ("readout_bias",): second}
+
+
+def _direct_request_gradients(model, events, target_grid, target_shape, jnp):
+    import jax
+    import brainunit as u
+
+    feature = jnp.tanh(
+        (model.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0
+    )
+    weight = model.readout_weight.value
+    bias = model.readout_bias.value
+
+    def objective(readout_weight, readout_bias):
+        logits = feature @ readout_weight + readout_bias
+        losses = jax.vmap(
+            lambda event: _request_loss(
+                event, logits, target_grid, target_shape, jnp
+            )
+        )(events)
+        return jnp.sum(losses)
 
     first, second = jax.grad(objective, argnums=(0, 1))(weight, bias)
     return {("readout_weight",): first, ("readout_bias",): second}
@@ -1117,7 +1186,8 @@ def _fixed_task_episodes(module, data_root, jnp):
                     "events": np.asarray(events),
                     "advances": np.asarray(advances),
                     "target": np.asarray(target),
-                    "target_vector": _target_vector(target, jnp),
+                    "target_grid": _padded_target(target),
+                    "target_shape": np.asarray(target.shape, dtype=np.int32),
                 })
     if not episodes:
         raise ValueError("fixed tasks must contain a target query")
@@ -1144,11 +1214,14 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
         raise ValueError("fixed tasks must contain a training query")
 
     def step_fn_for(episode):
-        target_vector = episode["target_vector"]
+        target_grid, target_shape = _episode_target_arrays([episode], jnp)
+        target_grid, target_shape = target_grid[0], target_shape[0]
 
         def step_fn(event):
             learner.etrace_evolve(event[None, :], return_outputs=True)
-            return jnp.mean((model.readout() - target_vector) ** 2)
+            return _request_loss(
+                event, model.readout(), target_grid, target_shape, jnp
+            )
 
         return step_fn
 
@@ -1184,17 +1257,20 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
 
         training_events = jnp.asarray([episode["events"] for episode in remaining])
         training_advances = jnp.asarray([episode["advances"] for episode in remaining])
-        training_targets = jnp.asarray(
-            [episode["target_vector"] for episode in remaining]
+        training_target_grids, training_target_shapes = _episode_target_arrays(
+            remaining, jnp
         )
 
         def collect_gradient(index):
             model.reset_episode(learner)
-            target_vector = training_targets[index]
+            target_grid = training_target_grids[index]
+            target_shape = training_target_shapes[index]
 
             def step_fn(event):
                 learner.etrace_evolve(event[None, :], return_outputs=True)
-                return jnp.mean((model.readout() - target_vector) ** 2)
+                return _request_loss(
+                    event, model.readout(), target_grid, target_shape, jnp
+                )
 
             gradients, loss = learner.etrace_grad(
                 training_events[index], step_fn=step_fn,
@@ -1356,11 +1432,12 @@ def _real_pp_prop_update(
             "task_id": "unknown",
             "events": evidence["events"],
             "advances": evidence["advances"],
-            "target_vector": np.zeros((360,), dtype=np.float32),
+            "target_grid": np.zeros((30, 30), dtype=np.int32),
+            "target_shape": np.array((1, 1), dtype=np.int32),
         }]
     events = jnp.asarray([episode["events"] for episode in episodes])
     advances = jnp.asarray([episode["advances"] for episode in episodes])
-    targets = jnp.asarray([episode["target_vector"] for episode in episodes])
+    target_grids, target_shapes = _episode_target_arrays(episodes, jnp)
     parameters = {
         "input": model.input_weight.value,
         "recurrent": model.recurrent_weight.value,
@@ -1398,11 +1475,17 @@ def _real_pp_prop_update(
         def step_fn(event):
             output = learner.etrace_evolve(event[None, :], return_outputs=True)[0]
             if hasattr(model, "readout"):
-                return jnp.mean((model.readout() - targets[index]) ** 2)
+                return _request_loss(
+                    event, model.readout(), target_grids[index],
+                    target_shapes[index], jnp
+                )
             return jnp.sum(output)
 
         def direct_grad_fn(**_):
-            return _direct_readout_gradients(model, targets[index], jnp)
+            return _direct_request_gradients(
+                model, events[index], target_grids[index],
+                target_shapes[index], jnp
+            )
 
         kwargs = {
             "events": events[index], "step_fn": step_fn,

@@ -179,6 +179,19 @@ ordered eight-task training schedule. The 64 updates are executed inside one
 `brainstate.transform.for_loop`; repeating one episode or an identity callback
 does not satisfy this contract.
 
+The update loss follows the strict request schedule in `arc_contracts.py`.
+Only kind-4 shape-request events contribute the sum of two categorical
+cross-entropies for target height and width. Only kind-6 row-request events
+contribute the mean categorical cross-entropy for every valid target cell in
+the requested row. Kind-0 through kind-3 input/demonstration events, kind-5
+separators, invalid rows, and padding contribute exactly zero. The loss is
+computed from the live 360-value readout with JAX operations so every target
+column and valid row cell can affect the PP-Prop gradient; targets must not be
+encoded by selecting only column zero. Co-located regressions must prove that
+a non-first-column target change changes the loss or gradient, that non-request
+events remain zero, and that the compiled 64-update state/order contract is
+unchanged.
+
 The parent optimizer state is captured after a real warm-up update. Structural
 rebuilds preserve nonzero state for surviving items and zero state for new
 items, and the artifact records these checks. Complete arm time starts before
