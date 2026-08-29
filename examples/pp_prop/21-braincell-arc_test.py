@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import numpy as np
 import braincell
 import brainstate
 import brainunit as u
@@ -464,6 +465,54 @@ def test_inferred_readout_parameters_have_muon_groups_and_update():
     assert "readout_bias" in trainer.muon_groups
     assert not jnp.array_equal(trainer.parameters["readout_weight"], before_weight)
     assert not jnp.array_equal(trainer.parameters["readout_bias"], before_bias)
+
+
+def test_compiled_64_updates_match_sequential_trainer_state_and_order():
+    class Learner:
+        def etrace_grad(self, events, *, step_fn, mask, **kwargs):
+            event = jnp.asarray(events)
+            return {"input": event + 1.0}, event
+
+    def make_trainer():
+        return fixture.PPPropEpisodeTrainer(
+            Learner(),
+            {"input": jnp.zeros((1,), dtype=jnp.float32)},
+            learning_rates={"input": 0.001},
+        )
+
+    events = jnp.arange(64, dtype=jnp.float32)
+
+    sequential = make_trainer()
+    sequential_outputs = jnp.stack([
+        sequential.update_episode(
+            event, lambda value: value, loss_mask=jnp.asarray(1.0)
+        )[0]
+        for event in events
+    ])
+
+    compiled = make_trainer()
+    compiled_outputs = brainstate.transform.jit(
+        lambda values: brainstate.transform.for_loop(
+            lambda event: compiled.update_episode(
+                event, lambda value: value, loss_mask=jnp.asarray(1.0)
+            )[0],
+            values,
+        )
+    )(events)
+
+    np.testing.assert_array_equal(compiled_outputs, sequential_outputs)
+    np.testing.assert_allclose(
+        compiled.parameters["input"], sequential.parameters["input"],
+        rtol=1e-6, atol=1e-7,
+    )
+    jax.tree_util.tree_map(
+        lambda actual, expected: np.testing.assert_allclose(
+            actual, expected, rtol=1e-6, atol=1e-7
+        ),
+        compiled.muon_groups,
+        sequential.muon_groups,
+    )
+    assert compiled.updates == sequential.updates == 64
 
 
 def test_compacted_model_reset_uses_candidate_neuron_count():

@@ -441,21 +441,69 @@ class PPPropEpisodeTrainer:
 
     def __init__(self, learner, parameters, learning_rates=None):
         self.learner = learner
-        self.parameters = dict(parameters)
+        parameters = dict(parameters)
         model = getattr(learner, "model4compile", None)
         for name in ("readout_weight", "readout_bias"):
             state = getattr(model, name, None)
-            if name not in self.parameters and state is not None:
-                self.parameters[name] = state.value
+            if name not in parameters and state is not None:
+                parameters[name] = state.value
         self.learning_rates = learning_rates or LEARNING_RATES
+        self._parameters_state = brainstate.State(parameters, name="pp_prop_parameters")
         zeros = jax.tree_util.tree_map(jnp.zeros_like, self.parameters)
         self.adam = AdamState(zeros, zeros)
-        self.updates = 0
+        self._updates_state = brainstate.State(
+            jnp.asarray(0, dtype=jnp.int32), name="pp_prop_updates"
+        )
         self.adam_groups = {
             name: AdamState(jnp.zeros_like(value), jnp.zeros_like(value))
             for name, value in self.parameters.items()
         } if isinstance(self.parameters, dict) else None
-        self.muon_groups = {}
+        self._muon_groups_state = brainstate.State(
+            {
+                name: optax.contrib.muon(
+                    learning_rate=self.learning_rates[next(
+                        group for group in self.learning_rates if group in name
+                    )],
+                    weight_decay=0.1,
+                    adam_learning_rate=self.learning_rates[next(
+                        group for group in self.learning_rates if group in name
+                    )],
+                    adam_weight_decay=0.1,
+                ).init(value)
+                for name, value in parameters.items()
+            },
+            name="pp_prop_muon_groups",
+        )
+
+    @property
+    def parameters(self):
+        """Return trainable parameters carried by BrainState."""
+
+        return self._parameters_state.value
+
+    @parameters.setter
+    def parameters(self, value):
+        self._parameters_state.value = dict(value)
+
+    @property
+    def muon_groups(self):
+        """Return Muon optimizer state carried by BrainState."""
+
+        return self._muon_groups_state.value
+
+    @muon_groups.setter
+    def muon_groups(self, value):
+        self._muon_groups_state.value = value
+
+    @property
+    def updates(self):
+        """Return the number of completed optimizer updates."""
+
+        return self._updates_state.value
+
+    @updates.setter
+    def updates(self, value):
+        self._updates_state.value = jnp.asarray(value, dtype=jnp.int32)
 
     def reset_episode(self, model):
         """Reset model and eligibility state before the next query episode."""

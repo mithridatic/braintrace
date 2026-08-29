@@ -149,3 +149,12 @@ alive mask and evaluate both candidates from one decoded episode snapshot. The
 focused evidence command is `python -m coverage run --branch --source=. -m
 pytest examples/pp_prop/example21_structural_test.py -q`, followed by
 `python -m coverage report -m`.
+
+The compiled addition driver must carry all mutable training state through the
+transform boundary. The 64-step result must include candidate parameters,
+every Muon state leaf, and the update count; mutating ordinary Python
+attributes inside the traced callback is not sufficient. A regression test
+compares final parameters, optimizer state, update count, and task order from
+the compiled driver with 64 sequential `update_episode` calls. The measured
+addition artifact may report `updates: 64` only when this state equivalence
+passes.
