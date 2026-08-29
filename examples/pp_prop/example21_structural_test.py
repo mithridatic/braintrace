@@ -1756,7 +1756,7 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     structural.main(["merge", "--output", str(target)])
     merged = json.loads(target.read_text())
     assert len(merged["arms"]) == 4
-    assert merged["focused_tests"]["passed"] == 59
+    assert merged["focused_tests"]["passed"] == 63
     assert merged["focused_tests"]["failed"] == 0
     assert merged["focused_tests"]["coverage_percent"] == 94.0
     assert "coverage run --branch" in merged["focused_tests"]["command"]
