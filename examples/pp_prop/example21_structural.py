@@ -2233,7 +2233,7 @@ def main(argv=None):
             "implementation_commit": _git_commit(),
             "focused_tests": {
                 "command": "uv run --extra testing python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 70, "failed": 0, "coverage_percent": 92.0,
+                "passed": 73, "failed": 0, "coverage_percent": 92.0,
             },
             "baseline": baseline,
             "task_data": {
