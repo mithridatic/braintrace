@@ -466,6 +466,33 @@ def test_inferred_readout_parameters_have_muon_groups_and_update():
     assert not jnp.array_equal(trainer.parameters["readout_bias"], before_bias)
 
 
+def test_muon_state_remains_concrete_after_transformed_updates():
+    class Learner:
+        def etrace_grad(self, events, *, step_fn, mask, **kwargs):
+            return {"input": jnp.ones((2,))}, jnp.zeros((1,))
+
+    trainer = fixture.PPPropEpisodeTrainer(
+        Learner(), {"input": jnp.zeros((2,))}
+    )
+
+    def update(_index):
+        return trainer.update_episode(
+            jnp.zeros((1, fixture.N_INPUTS)),
+            lambda event: jnp.asarray(0.0),
+            loss_mask=jnp.ones((1,), dtype=bool),
+        )
+
+    brainstate.transform.jit(
+        lambda indices: brainstate.transform.for_loop(update, indices)
+    )(jnp.arange(2, dtype=jnp.int32))
+    leaves = jax.tree_util.tree_leaves(trainer.muon_groups)
+    assert leaves
+    assert all(type(leaf).__name__ != "DynamicJaxprTracer" for leaf in leaves)
+    counts = [int(leaf) for leaf in leaves if getattr(leaf, "shape", None) == ()]
+    assert 2 in counts
+    assert int(trainer.updates) == 2
+
+
 def test_compacted_model_reset_uses_candidate_neuron_count():
     structural_path = Path(__file__).with_name("example21_structural.py")
     structural_spec = importlib.util.spec_from_file_location("example21_structural", structural_path)

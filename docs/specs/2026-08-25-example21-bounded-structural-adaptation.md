@@ -143,9 +143,55 @@ prediction-byte equality across accepted mask compaction and the fixed 64-update
 driver.
 ### Gate 5 remediation contract
 
-The real-model rebuild must carry the remapped structural Adam moments and step
-into the PP-Prop trainer. Compaction identity must receive the exact pruning
-alive mask and evaluate both candidates from one decoded episode snapshot. The
-focused evidence command is `python -m coverage run --branch --source=. -m
-pytest examples/pp_prop/example21_structural_test.py -q`, followed by
-`python -m coverage report -m`.
+The structural evidence snapshot must execute one supervised query from each of
+the eight fixed training tasks. It must keep eight separate task rows for mean
+spikes, direct voltage-readout effect, input and recurrent pre-clip gradient
+mass, and recurrent-edge contribution. Validation tasks are forward-only and
+must not contribute to structural ranking.
+
+For neuron contribution, direct voltage-readout effect is the mean absolute
+request-state voltage feature multiplied by the L1 norm of each neuron's 360
+readout weights. Recurrent relay is each neuron's mean spike activity multiplied
+by the L1 norm of its outgoing recurrent row. Incident gradient mass is the sum
+of input-edge mass for edges that target the neuron and recurrent-edge mass for
+edges whose source or target is the neuron. Each of these three arrays is
+normalized independently within each task row before their mean and task
+maximum are calculated.
+
+Addition evidence is taken from the first training task whose direct strict
+Boolean is false. Neuron donors use that task's neuron contribution row.
+Connection sources use that task's normalized mean-spike row. Connection
+targets use the normalized sum of recurrent gradient mass incident to the
+target and wrong-output readout evidence. Wrong-output readout evidence is the
+L1 readout weight for logits whose supervised request prediction differs from
+the target, multiplied by the absolute voltage feature recorded for that
+request. The connection selector returns its scan statistics with the selected
+pairs. It sorts source and target evidence once, visits 256 by 256 tiles in
+descending tile-upper-bound order, and stops only when the next tile's upper
+bound is strictly below the worst retained pair score. An equal bound is still
+visited so stable source and target ties cannot be skipped. At most one tile of
+65,536 source-target pairs may be resident, and no dense pair array is allowed.
+
+Every real arm must load a validated parent checkpoint through
+`load_checkpoint`. The loaded topology and parameters must construct the parent
+model. The checkpoint's nonzero surviving optimizer values and all three step
+counts must seed the parent trainer, be remapped into the candidate trainer,
+and remain byte-equal on surviving items before candidate updates. New items
+must have zero optimizer state. Creating a fresh zero-valued source trainer is
+not valid evidence. The artifact records the parent checkpoint digest, source
+and candidate step counts, preserved-state checks, new-state zero checks, and
+the eight training evidence task identifiers.
+
+Compaction identity must receive the exact pruning alive mask and evaluate both
+candidates from one decoded episode snapshot. A merged Gate 5 artifact is valid
+only when each arm file identifies the current implementation commit, each
+addition arm records exactly 64 updates and at least one strict false-to-true
+gain, every arm records no strict regression and a time below 300 seconds, and
+the merged artifact digest is calculated from the checked-in bytes. The focused
+evidence command is `python -m coverage run --rcfile=/dev/null --branch
+--include=examples/pp_prop/example21_structural.py -m pytest
+examples/pp_prop/example21_structural_test.py -q`, followed by
+`python -m coverage report --rcfile=/dev/null -m
+examples/pp_prop/example21_structural.py`. The reported percentage is total line-plus-
+branch coverage and must exceed 90%; statement-only coverage must not be called
+branch coverage.

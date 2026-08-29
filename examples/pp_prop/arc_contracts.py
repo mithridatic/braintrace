@@ -348,7 +348,9 @@ def _validate_checkpoint_arrays(arrays: Mapping[str, np.ndarray], format: int) -
         raise ValueError("checkpoint labels contain an invalid code")
     if np.any(arrays["mechanism_codes"] < 0):
         raise ValueError("checkpoint mechanism code is invalid")
-    for prefix, rows, endpoint_limit in (("input", 1, n), ("recurrent", n, n)):
+    for prefix, rows, endpoint_limit in (
+        ("input", EVENT_WIDTH, n), ("recurrent", n, n)
+    ):
         indptr = arrays[f"{prefix}_indptr"]
         indices = arrays[f"{prefix}_indices"]
         if indptr.shape != (rows + 1,) or indptr[0] != 0 or np.any(np.diff(indptr) < 0) or indptr[-1] != len(indices):
