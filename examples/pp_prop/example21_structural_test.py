@@ -665,6 +665,47 @@ def test_addition_driver_returns_each_screen_for_earliest_transition():
     ) is None
 
 
+def test_compiled_screen_and_strict_decoder_cover_each_update_observation(monkeypatch):
+    import brainstate
+
+    monkeypatch.setattr(
+        brainstate.transform, "for_loop",
+        lambda function, values: np.asarray([function(value) for value in values]),
+    )
+
+    class Model:
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.arange(2.0)
+
+    module = SimpleNamespace(
+        run_event_sequence_with_spikes=lambda model, events, advances: (
+            np.zeros((1, 1)), np.zeros((1, 1), dtype=bool)
+        ),
+        TRAINING_TASK_IDS=("train",), VALIDATION_TASK_IDS=("valid",),
+    )
+    episodes = [
+        {"task_id": "train", "events": np.zeros((1, 2)), "advances": np.ones(1),
+         "target": np.zeros((1, 1))},
+        {"task_id": "valid", "events": np.zeros((1, 2)), "advances": np.ones(1),
+         "target": np.zeros((1, 1))},
+    ]
+    logits = structural._compiled_fixed_task_screen(module, Model(), object(), episodes)
+    assert logits.shape == (2, 2)
+
+    decoder_module = SimpleNamespace(
+        TRAINING_TASK_IDS=("train",), VALIDATION_TASK_IDS=("valid",),
+        decode_prediction=lambda value: int(np.argmax(value)),
+        strict_task_pass_at_1=lambda predictions, targets: predictions == [0],
+    )
+    strict = structural._strict_vectors_from_logits(
+        decoder_module, episodes, np.asarray([[1.0, 0.0], [0.0, 1.0]])
+    )
+    assert strict == (True, False)
+
+
 def test_artifact_is_canonical_and_records_environment(tmp_path):
     target = tmp_path / "arm.json"
     digest = structural.write_artifact(target, {"arm": "neuron-prune"})
