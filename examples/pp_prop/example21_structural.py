@@ -987,11 +987,11 @@ def _request_loss(event, logits, target_grid, target_shape, jnp):
         + jax.nn.logsumexp(shape_logits, axis=1)
     )
     row = jnp.argmax(event[81:111])
-    row_logits = logits[60:].reshape((30, 10))[row]
+    row_logits = logits[60:].reshape((30, 10))
     width = target_shape[1]
     valid = jnp.arange(30) < width
     row_labels = target_grid[row]
-    row_terms = -row_logits[row_labels] + jax.nn.logsumexp(row_logits)
+    row_terms = -row_logits[jnp.arange(30), row_labels] + jax.nn.logsumexp(row_logits, axis=1)
     row_loss = jnp.where(
         jnp.any(valid), jnp.sum(jnp.where(valid, row_terms, 0.0)) / jnp.maximum(width, 1), 0.0
     )
@@ -2040,8 +2040,8 @@ def main(argv=None):
             "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
             "implementation_commit": _git_commit(),
             "focused_tests": {
-                "command": "python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 66, "failed": 0, "coverage_percent": 93.0,
+                "command": "uv run --extra testing python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
+                "passed": 67, "failed": 0, "coverage_percent": 93.0,
             },
             "baseline": baseline,
             "task_data": {

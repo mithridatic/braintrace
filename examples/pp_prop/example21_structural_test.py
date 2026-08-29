@@ -1680,12 +1680,16 @@ def test_fixed_evidence_collects_all_tasks_and_direct_spikes(monkeypatch):
 
 
 def test_request_loss_uses_every_target_column_and_zeroes_non_requests():
+    import jax
     import jax.numpy as jnp
+
+    from examples.pp_prop import arc_contracts
 
     event = np.zeros(441, dtype=np.float32)
     event[6] = 1.0
     event[81] = 1.0
-    logits = jnp.zeros(360).at[61].set(1.0).at[62].set(2.0)
+    row_logits = jnp.zeros((30, 10)).at[0, 1].set(1.0).at[1, 2].set(2.0)
+    logits = jnp.concatenate((jnp.zeros(60), row_logits.reshape(-1)))
     first = np.zeros((30, 30), dtype=np.int32)
     first[0, :2] = (1, 1)
     second = first.copy()
@@ -1698,6 +1702,14 @@ def test_request_loss_uses_every_target_column_and_zeroes_non_requests():
         event, logits, second, shape, jnp
     )
     assert float(first_loss) != float(second_loss)
+    expected = arc_contracts.request_loss(
+        np.asarray(row_logits), first[0], request="row", valid_mask=np.arange(30) < 2
+    )
+    assert float(first_loss) == pytest.approx(expected)
+    gradient = jax.grad(
+        lambda values: structural._request_loss(event, values, first, shape, jnp)
+    )(logits)
+    assert np.any(np.abs(np.asarray(gradient[70:80])) > 0.0)
     assert float(structural._request_loss(
         np.zeros(441), logits, first, shape, jnp
     )) == 0.0
@@ -1865,7 +1877,7 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     structural.main(["merge", "--output", str(target)])
     merged = json.loads(target.read_text())
     assert len(merged["arms"]) == 4
-    assert merged["focused_tests"]["passed"] == 66
+    assert merged["focused_tests"]["passed"] == 67
     assert merged["focused_tests"]["failed"] == 0
     assert merged["focused_tests"]["coverage_percent"] == 93.0
     assert "coverage run --branch" in merged["focused_tests"]["command"]

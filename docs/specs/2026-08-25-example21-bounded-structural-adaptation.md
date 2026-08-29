@@ -192,6 +192,16 @@ a non-first-column target change changes the loss or gradient, that non-request
 events remain zero, and that the compiled 64-update state/order contract is
 unchanged.
 
+#### Gate 5 row-loss correction (2026-08-29)
+
+For a kind-6 row request, reshape the final 300 readout values to `(30, 10)`
+and use the complete matrix. Each valid target column `c` is scored against
+`row_logits[c]` and `target_grid[row, c]`; selecting `row_logits[row]` would
+reuse one column's ten logits and is incorrect. The structural JAX loss must
+match `arc_contracts.request_loss` for the same matrix, labels, and width mask.
+The co-located regression uses distinct logits per column and checks a
+non-first-column gradient slice.
+
 The parent optimizer state is captured after a real warm-up update. Structural
 rebuilds preserve nonzero state for surviving items and zero state for new
 items, and the artifact records these checks. Complete arm time starts before
