@@ -855,6 +855,7 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
     result = structural.measure_real_arm("neuron-add", data_root="data")
     assert result["candidate_neurons"] == 3
     assert result["after_strict"] == [True]
+    assert result["pruning_blocked"] is False
     assert result["mask_compaction"]["not_measured"] is True
 
 
