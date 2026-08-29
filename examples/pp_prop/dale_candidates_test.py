@@ -223,7 +223,9 @@ def test_dale_runner_isolates_both_arms_and_requires_exact_gate() -> None:
     assert result["candidate_count"] == 1
     assert [arm["sign"] for arm in result["arms"]] == [1, -1]
     assert all(arm["updates"] == 64 and arm["promoted"] for arm in result["arms"])
-    assert all(item[0] is parent for item in built)
+    assert all(item[0] is not parent for item in built)
+    assert built[0][0] is not built[1][0]
+    assert result["parent_checkpoint_unchanged"]
     assert strict_dale_gate((False, True), (True, True), updates=64)
     assert not strict_dale_gate((True,), (False,), updates=64)
     with pytest.raises(ValueError, match="64"):
@@ -242,3 +244,48 @@ def test_dale_runner_rejects_invalid_arm_and_parent() -> None:
         run_dale_candidates(SimpleNamespace(parent_id="other"), _measurements(),
                             lambda *_: parent, lambda *_: 0,
                             lambda _: (False,), transform=_EagerTransform)
+
+
+def test_dale_runner_rejects_alias_and_checkpoint_mutation() -> None:
+    parent = SimpleNamespace(parent_id="accepted-parent", updates=0)
+    kwargs = {
+        "measurements": _measurements(),
+        "update": lambda candidate, _index: setattr(candidate, "updates", candidate.updates + 1),
+        "strict": lambda value: (value.updates == 64,),
+        "transform": _EagerTransform,
+    }
+    with pytest.raises(ValueError, match="alias"):
+        run_dale_candidates(
+            parent, build_candidate=lambda value, *_: value, **kwargs
+        )
+
+    def mutate_checkpoint(value, *_):
+        value.updates = 1
+        return SimpleNamespace(parent_id=value.parent_id, updates=0)
+
+    with pytest.raises(ValueError, match="checkpoint"):
+        run_dale_candidates(parent, build_candidate=mutate_checkpoint, **kwargs)
+
+    shared = SimpleNamespace(parent_id=parent.parent_id, updates=0)
+    with pytest.raises(ValueError, match="share"):
+        run_dale_candidates(
+            parent, build_candidate=lambda *_: shared, **kwargs
+        )
+
+
+def test_dale_runner_rejects_deferred_chemistry_in_an_arm() -> None:
+    parent = SimpleNamespace(parent_id="accepted-parent", updates=0)
+    with pytest.raises(ValueError, match="deferred"):
+        run_dale_candidates(
+            parent,
+            _measurements(),
+            lambda value, *_: SimpleNamespace(
+                parent_id=value.parent_id,
+                biology_options={"ampa": True},
+                mechanisms=(),
+                updates=0,
+            ),
+            lambda candidate, _index: setattr(candidate, "updates", candidate.updates + 1),
+            lambda value: (value.updates == 64,),
+            transform=_EagerTransform,
+        )

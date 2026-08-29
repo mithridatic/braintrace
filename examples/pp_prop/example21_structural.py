@@ -5,6 +5,7 @@ import heapq
 import importlib.util
 import json
 import os
+import pickle
 import platform
 import subprocess
 import sys
@@ -18,6 +19,7 @@ import numpy as np
 from examples.pp_prop.dale_candidates import (
     effective_dale_weights,
     encode_dale_weights,
+    inverse_softplus,
     validate_effective_signs,
 )
 from examples.pp_prop.dale_candidates import (
@@ -1282,16 +1284,16 @@ def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None)
         len(topology.recurrent_value) + len(pairs),
     )
     sources = np.asarray([p[0] for p in pairs], dtype=int)
-    if source_dale is None:
-        source_dale = (
-            np.where(topology.dale[sources] == 0, 1, topology.dale[sources])
-            if typed else np.zeros(len(pairs), dtype=np.int8)
-        )
-    source_dale = np.asarray(source_dale, dtype=np.int8)
-    if source_dale.shape != (len(pairs),) or not np.all(np.isin(source_dale, (-1, 0, 1))):
-        raise ValueError("source Dale signs must match added connections")
-    initial = np.full(len(pairs), np.log(np.expm1(1e-6)))
-    initial = np.where(source_dale == 0, 0.0, initial)
+    derived_dale = np.asarray(topology.dale[sources], dtype=np.int8)
+    if source_dale is not None:
+        requested_dale = np.asarray(source_dale, dtype=np.int8)
+        if (requested_dale.shape != derived_dale.shape
+                or not np.array_equal(requested_dale, derived_dale)):
+            raise ValueError("source Dale signs must match topology source Dale labels")
+    initial = np.full(
+        len(pairs), float(inverse_softplus(np.asarray(1e-6, dtype=np.float32)))
+    )
+    initial = np.where(derived_dale == 0, 0.0, initial)
     grown = SparseTopology(
         topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
         np.concatenate((topology.recurrent_source, sources)),
@@ -1308,9 +1310,10 @@ def run_dale_candidate_arms(
     clock=time.perf_counter,
 ):
     """Run measured excitatory and inhibitory arms from one parent checkpoint."""
+    checkpoint = pickle.dumps(parent, protocol=pickle.HIGHEST_PROTOCOL)
     return _run_dale_candidates(
         parent, measurements, build_candidate, update, strict,
-        transform=transform, clock=clock,
+        checkpoint=checkpoint, transform=transform, clock=clock,
     )
 
 
