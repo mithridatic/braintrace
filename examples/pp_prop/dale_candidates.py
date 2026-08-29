@@ -273,16 +273,23 @@ def _serialize_checkpoint(value) -> bytes:
 
 
 def _validate_deferred_candidate(candidate) -> None:
-    options = getattr(candidate, "biology_options", {})
-    if any(bool(value) for value in options.values()):
-        raise ValueError("Dale candidate enables deferred biology")
-    mechanisms = getattr(candidate, "mechanisms", ())
-    if any(
-        mechanism in {"ampa", "gabaa"}
-        for group in mechanisms
-        for mechanism in group
-    ):
-        raise ValueError("Dale candidate enables deferred chemistry")
+    expected = deferred_biology_defaults()
+    options = getattr(candidate, "biology_options", None)
+    if not isinstance(options, dict) or set(options) != set(expected):
+        raise ValueError("Dale candidate must declare every deferred biology option")
+    validate_deferred_biology(**options)
+    mechanisms = getattr(candidate, "mechanisms", None)
+    if mechanisms is None:
+        raise ValueError("Dale candidate must declare deferred mechanisms")
+    enabled = set()
+    for group in mechanisms:
+        enabled.update((group,) if isinstance(group, str) else group)
+    deferred = enabled.intersection(expected)
+    if deferred:
+        raise ValueError(
+            "Dale candidate enables deferred biology: "
+            + ", ".join(sorted(deferred))
+        )
 
 
 def run_dale_arm(
@@ -378,6 +385,8 @@ def run_dale_candidates(
         raise ValueError("Dale measurements do not belong to the accepted parent")
     parent_bytes = _serialize_checkpoint(parent)
     checkpoint_bytes = parent_bytes if checkpoint is None else bytes(checkpoint)
+    if checkpoint is not None and checkpoint_bytes != parent_bytes:
+        raise ValueError("Dale checkpoint does not match the accepted parent state")
     try:
         pickle.loads(checkpoint_bytes)
     except (EOFError, pickle.PickleError, TypeError, ValueError) as error:

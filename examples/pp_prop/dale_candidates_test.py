@@ -1,5 +1,6 @@
 """Tests for measured Dale candidate selection and sparse constraints."""
 
+import pickle
 from types import SimpleNamespace
 
 import brainevent
@@ -205,7 +206,10 @@ def test_dale_runner_isolates_both_arms_and_requires_exact_gate() -> None:
     built = []
 
     def build(parent_value, indices, sign):
-        candidate = SimpleNamespace(parent_id=parent_value.parent_id, updates=0, sign=sign)
+        candidate = SimpleNamespace(
+            parent_id=parent_value.parent_id, updates=0, sign=sign,
+            biology_options=deferred_biology_defaults(), mechanisms=(),
+        )
         built.append((parent_value, tuple(indices), sign))
         return candidate
 
@@ -261,12 +265,18 @@ def test_dale_runner_rejects_alias_and_checkpoint_mutation() -> None:
 
     def mutate_checkpoint(value, *_):
         value.updates = 1
-        return SimpleNamespace(parent_id=value.parent_id, updates=0)
+        return SimpleNamespace(
+            parent_id=value.parent_id, updates=0,
+            biology_options=deferred_biology_defaults(), mechanisms=(),
+        )
 
     with pytest.raises(ValueError, match="checkpoint"):
         run_dale_candidates(parent, build_candidate=mutate_checkpoint, **kwargs)
 
-    shared = SimpleNamespace(parent_id=parent.parent_id, updates=0)
+    shared = SimpleNamespace(
+        parent_id=parent.parent_id, updates=0,
+        biology_options=deferred_biology_defaults(), mechanisms=(),
+    )
     with pytest.raises(ValueError, match="share"):
         run_dale_candidates(
             parent, build_candidate=lambda *_: shared, **kwargs
@@ -288,4 +298,43 @@ def test_dale_runner_rejects_deferred_chemistry_in_an_arm() -> None:
             lambda candidate, _index: setattr(candidate, "updates", candidate.updates + 1),
             lambda value: (value.updates == 64,),
             transform=_EagerTransform,
+    )
+
+
+def test_dale_runner_rejects_checkpoint_with_same_id_but_different_state() -> None:
+    parent = SimpleNamespace(parent_id="accepted-parent", updates=0)
+    different = SimpleNamespace(parent_id="accepted-parent", updates=1)
+    with pytest.raises(ValueError, match="accepted parent state"):
+        run_dale_candidates(
+            parent,
+            _measurements(),
+            lambda value, *_: SimpleNamespace(
+                parent_id=value.parent_id,
+                biology_options=deferred_biology_defaults(),
+                mechanisms=(),
+                updates=0,
+            ),
+            lambda candidate, _index: candidate,
+            lambda value: (False,),
+            checkpoint=pickle.dumps(different),
+            transform=_EagerTransform,
         )
+
+
+def test_dale_runner_rejects_every_deferred_mechanism() -> None:
+    parent = SimpleNamespace(parent_id="accepted-parent", updates=0)
+    for mechanism in ("nmda", "hcn", "calcium_dependent_adaptation", "electrical_junctions"):
+        with pytest.raises(ValueError, match="deferred biology"):
+            run_dale_candidates(
+                parent,
+                _measurements(),
+                lambda value, _, sign, mechanism=mechanism: SimpleNamespace(
+                    parent_id=value.parent_id,
+                    biology_options=deferred_biology_defaults(),
+                    mechanisms=((mechanism,),),
+                    updates=0,
+                ),
+                lambda candidate, _index: candidate,
+                lambda value: (False,),
+                transform=_EagerTransform,
+            )

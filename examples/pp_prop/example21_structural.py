@@ -17,6 +17,8 @@ from pathlib import Path
 import numpy as np
 
 from examples.pp_prop.dale_candidates import (
+    DaleMeasurements,
+    deferred_biology_defaults,
     effective_dale_weights,
     encode_dale_weights,
     inverse_softplus,
@@ -199,6 +201,26 @@ class ParentCheckpoint:
     readout_bias: np.ndarray
     digest: str
     nonzero_optimizer_values: bool
+
+
+@dataclass
+class _DaleParentState:
+    parent_id: str
+    topology: SparseTopology
+    optimizer: StructuralAdam
+    readout_bias: np.ndarray
+    strict: tuple[bool, ...]
+
+
+@dataclass
+class _DaleCandidateState:
+    parent_id: str
+    topology: SparseTopology
+    model: object
+    learner: object
+    update: object
+    biology_options: dict[str, bool]
+    mechanisms: tuple
 
 
 def load_parent_checkpoint(module, path):
@@ -1317,6 +1339,108 @@ def run_dale_candidate_arms(
     )
 
 
+def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
+    """Run both measured Dale arms from one accepted real parent."""
+    import brainstate
+
+    model = module.BrainCellArcModel(parent.topology)
+    model.readout_bias.value = parent.readout_bias
+    learner = module.compile_pp_prop_model(model)
+    evidence = _fixed_task_evidence(module, model, learner, data_root)
+    topology = topology_from_model(model)
+    edge_gradient = np.mean(np.asarray(evidence["preclip_gradient_mass"]), axis=0)
+    gradient_mass = np.zeros(topology.neuron_count, dtype=float)
+    np.add.at(
+        gradient_mass,
+        topology.recurrent_source,
+        edge_gradient,
+    )
+    measurements = DaleMeasurements(
+        parent.digest,
+        topology.recurrent_source,
+        topology.recurrent_value,
+        np.mean(np.asarray(evidence["task_spike_evidence"]), axis=0),
+        gradient_mass,
+        np.asarray([len(owner) for owner in evidence["owners"]], dtype=float),
+        np.mean(np.asarray(evidence["task_readout_evidence"]), axis=0),
+        topology.dale,
+    )
+    parent_state = _DaleParentState(
+        parent.digest, topology, parent.optimizer, parent.readout_bias,
+        tuple(bool(value) for value in evidence["strict"]),
+    )
+
+    def build_candidate(source, indices, sign):
+        candidate_topology = assign_dale_type(source.topology, indices, sign)
+        candidate_model, candidate_learner = _rebuild_real_candidate(
+            module, candidate_topology, learner
+        )
+        candidate_model.readout_bias.value = source.readout_bias
+        candidate_update = _real_pp_prop_update(
+            module, candidate_model, candidate_learner, evidence, source.optimizer
+        )
+        return _DaleCandidateState(
+            source.parent_id, candidate_topology, candidate_model, candidate_learner,
+            candidate_update, dict(candidate_model.biology_options),
+            tuple(candidate_model.mechanisms),
+        )
+
+    def update(candidate, index):
+        return candidate.update(index)
+
+    def strict(value):
+        if isinstance(value, _DaleParentState):
+            return value.strict
+        return _fixed_strict_screen(
+            module, value.model, value.learner, data_root,
+            transform=brainstate.transform,
+        )
+
+    result = run_dale_candidate_arms(
+        parent_state, measurements, build_candidate, update, strict,
+        transform=brainstate.transform, clock=clock,
+    )
+    selection = result["selection"]
+    arms = []
+    for arm in result["arms"]:
+        candidate = arm.pop("candidate")
+        arm.update({
+            "candidate_neurons": candidate.topology.neuron_count,
+            "typed_neurons": int(np.count_nonzero(candidate.topology.dale)),
+            "deferred_biology": dict(candidate.biology_options),
+            "deferred_mechanisms": tuple(
+                tuple(group) if not isinstance(group, str) else (group,)
+                for group in candidate.mechanisms
+            ),
+            "typed_signs_valid": validate_topology_dale(candidate.topology),
+        })
+        arms.append(arm)
+    return {
+        "arm": "dale",
+        "implementation_commit": _git_commit(),
+        "real_model": True,
+        "parent_checkpoint_sha256": parent.digest,
+        "parent_checkpoint_sha256_after": parent.digest,
+        "parent_checkpoint_unchanged": result["parent_checkpoint_unchanged"],
+        "candidate_selection": {
+            "parent_id": selection.parent_id,
+            "excitatory": selection.excitatory.tolist(),
+            "inhibitory": selection.inhibitory.tolist(),
+            "excitatory_scores": selection.excitatory_scores.tolist(),
+            "inhibitory_scores": selection.inhibitory_scores.tolist(),
+        },
+        "measurement_parent_id": measurements.parent_id,
+        "arms": arms,
+        "updates": 64,
+        "deferred_biology": deferred_biology_defaults(),
+        "strict_regression_rejected": all(
+            not any(old and not new for old, new in zip(
+                arm["before_strict"], arm["after_strict"]
+            )) for arm in arms
+        ),
+    }
+
+
 def grow_adam_for_connections(adam, added_count):
     """Append zero Adam moments for new recurrent edges."""
 
@@ -2190,6 +2314,12 @@ def measure_real_arm(
     dict
         Per-arm evidence with real model dimensions and bounded controls.
     """
+    if arm == "dale":
+        if data_root is None or parent_checkpoint is None:
+            raise ValueError("dale requires --data-root and --parent-checkpoint")
+        module = _load_example21_model()
+        parent = load_parent_checkpoint(module, parent_checkpoint)
+        return _measure_real_dale(module, parent, data_root, clock=clock)
     if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
         raise ValueError("exactly one recognized arm is required")
     module = _load_example21_model()
@@ -2441,7 +2571,7 @@ def main(argv=None):
     import argparse
     command_started = time.perf_counter()
     parser = argparse.ArgumentParser()
-    parser.add_argument("arm", choices=("baseline", "parent", "neuron-prune", "connection-prune",
+    parser.add_argument("arm", choices=("baseline", "parent", "dale", "neuron-prune", "connection-prune",
                                          "neuron-add", "connection-add", "merge"))
     parser.add_argument("--output", required=True)
     parser.add_argument("--data-root", default=os.environ.get("EXAMPLE21_DATA_ROOT"))
@@ -2519,7 +2649,7 @@ def main(argv=None):
         )
     else:
         if args.parent_checkpoint is None:
-            parser.error("a real structural arm requires --parent-checkpoint")
+            parser.error("a real structural or Dale arm requires --parent-checkpoint")
         evidence = measure_real_arm(
             args.arm,
             data_root=args.data_root,

@@ -502,6 +502,120 @@ def test_production_dale_wrapper_supplies_a_serialized_checkpoint(monkeypatch):
     assert pickle.loads(captured["checkpoint"]).parent_id == parent.parent_id
 
 
+def test_dale_arm_is_exposed_by_the_production_structural_route(monkeypatch):
+    module = object()
+    parent = object()
+    monkeypatch.setattr(structural, "_load_example21_model", lambda: module)
+    monkeypatch.setattr(structural, "load_parent_checkpoint", lambda *_: parent)
+    monkeypatch.setattr(
+        structural,
+        "_measure_real_dale",
+        lambda received_module, received_parent, data_root, clock: {
+            "module": received_module, "parent": received_parent,
+            "data_root": data_root, "clock": clock,
+        },
+    )
+    clock = lambda: 1.0
+    result = structural.measure_real_arm(
+        "dale", data_root="arc", parent_checkpoint="accepted", clock=clock
+    )
+    assert result == {
+        "module": module, "parent": parent, "data_root": "arc", "clock": clock,
+    }
+
+
+def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monkeypatch):
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    topology = structural.SparseTopology(
+        np.array([0]), np.array([0]), np.array([1.0]),
+        np.array([0, 1, 2]), np.array([1, 2, 0]), np.array([2.0, -3.0, 1.0]),
+        np.ones((3, 1)), np.zeros(3, dtype=np.int8), ((),) * 3,
+    )
+
+    class Model:
+        def __init__(self, source):
+            self.input_csr = type("CSR", (), {
+                "indptr": np.array([0, 1]), "indices": np.array([0]),
+            })()
+            self.recurrent_csr = type("CSR", (), {
+                "indptr": np.array([0, 1, 2, 3]),
+                "indices": np.asarray(source.recurrent_target),
+            })()
+            self.input_weight = State(source.input_value)
+            self.recurrent_weight = State(source.recurrent_value)
+            self.readout_weight = State(source.readout)
+            self.readout_bias = State(np.zeros(1))
+            self.dale = np.asarray(source.dale)
+            self.mechanisms = ((),) * 3
+            self.biology_options = structural.deferred_biology_defaults()
+
+    parent = structural.ParentCheckpoint(
+        topology, structural.StructuralAdam(
+            np.ones((3, 1)), np.ones((3, 1)), np.ones(1), np.ones(1),
+            np.ones(3), np.ones(3), 1,
+        ), np.zeros(1), "accepted-digest", True,
+    )
+    module = type(
+        "Module", (), {
+            "BrainCellArcModel": Model,
+            "compile_pp_prop_model": staticmethod(lambda model: object()),
+        },
+    )
+    monkeypatch.setattr(
+        structural, "_fixed_task_evidence", lambda *_args: {
+            "preclip_gradient_mass": [[1.0, 2.0, 3.0], [2.0, 1.0, 0.0]],
+            "task_spike_evidence": [[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]],
+            "owners": ((), (0,), (1,)),
+            "task_readout_evidence": [[1.0, 2.0, 3.0], [2.0, 1.0, 0.0]],
+            "strict": (False,),
+        },
+    )
+    monkeypatch.setattr(
+        structural, "_rebuild_real_candidate",
+        lambda _module, candidate, _learner: (Model(candidate), object()),
+    )
+    monkeypatch.setattr(
+        structural, "_real_pp_prop_update",
+        lambda *_args, **_kwargs: lambda _index: None,
+    )
+    monkeypatch.setattr(structural, "_fixed_strict_screen", lambda *_args, **_kwargs: (True,))
+
+    def run(parent_state, measurements, build, update, strict, **kwargs):
+        assert measurements.parent_id == parent_state.parent_id == "accepted-digest"
+        candidate = build(parent_state, np.array([0]), 1)
+        update(candidate, 0)
+        assert strict(candidate) == (True,)
+        selection = type("Selection", (), {
+            "parent_id": measurements.parent_id,
+            "excitatory": np.array([0]), "inhibitory": np.array([1]),
+            "excitatory_scores": np.array([1.0]),
+            "inhibitory_scores": np.array([0.5]),
+        })()
+        return {
+            "selection": selection,
+            "arms": [{
+                "candidate": candidate, "sign": 1, "updates": 64,
+                "before_strict": [False], "after_strict": [True],
+                "promoted": True,
+            }, {
+                "candidate": candidate, "sign": -1, "updates": 64,
+                "before_strict": [False], "after_strict": [True],
+                "promoted": True,
+            }],
+            "parent_checkpoint_unchanged": True,
+        }
+
+    monkeypatch.setattr(structural, "run_dale_candidate_arms", run)
+    result = structural._measure_real_dale(module, parent, "arc")
+    assert result["candidate_selection"]["parent_id"] == "accepted-digest"
+    assert result["parent_checkpoint_unchanged"]
+    assert all(arm["typed_signs_valid"] for arm in result["arms"])
+    assert all(not any(result["deferred_biology"].values()) for _ in result["arms"])
+
+
 def test_default_example21_construction_keeps_deferred_biology_inactive():
     module = structural._load_example21_model()
     model = module.BrainCellArcModel()
@@ -720,6 +834,53 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     np.testing.assert_array_equal(trainer.adam_groups["input"].first, [2, 3])
     np.testing.assert_array_equal(trainer.adam_groups["recurrent"].second, [9, 10, 11])
     assert trainer.adam_groups["recurrent"].step == 4
+
+
+def test_real_pp_prop_update_then_structural_addition_preserves_dale_signs():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Trainer:
+        def __init__(self, learner, parameters):
+            self.learner = learner
+            self.parameters = parameters
+            self.calls = 0
+
+        def update_episode(self, events, **kwargs):
+            self.calls += 1
+            return events.shape, kwargs["loss_mask"].shape
+
+    model = SimpleNamespace(
+        input_weight=State([1.0]), recurrent_weight=State([1.0]),
+        reset_episode=lambda learner: None,
+    )
+    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    adam = structural.StructuralAdam(
+        np.zeros((3, 1)), np.zeros((3, 1)), np.zeros(1), np.zeros(1),
+        np.zeros(2), np.zeros(2),
+    )
+    update = structural._real_pp_prop_update(
+        module, model, SimpleNamespace(),
+        {"events": np.zeros((1, 2)), "advances": np.ones(1)}, adam,
+    )
+    update()
+    assert update.trainer.calls == 1
+
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]),
+        np.asarray(structural.encode_dale_weights(
+            [0.25, -0.5], [1, -1]
+        )), np.ones((3, 1)), np.array([1, -1, 0], dtype=np.int8), ((),) * 3,
+    )
+    grown = structural.add_recurrent_connections(topology, ((0, 2), (1, 0)))
+    effective = structural.effective_topology_recurrent_values(grown)
+    np.testing.assert_allclose(effective[-2:], [1e-6, -1e-6], atol=1e-10)
+    assert structural.validate_topology_dale(grown)
+    mapped = structural.grow_adam_for_connections(adam, 2)
+    np.testing.assert_array_equal(mapped.recurrent_first[-2:], [0.0, 0.0])
+    np.testing.assert_array_equal(mapped.recurrent_second[-2:], [0.0, 0.0])
 
 
 def test_muon_groups_are_remapped_for_structural_candidate():
