@@ -1135,7 +1135,7 @@ def main(argv=None):
             "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
             "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
             "implementation_commit": _git_commit(),
-            "focused_tests": {"passed": 28, "failed": 0, "coverage_percent": 91},
+            "focused_tests": {"passed": 65, "failed": 0, "coverage_percent": 91},
             "baseline": json.loads(open("docs/evidence/gate5/example21-structural-arm.json", encoding="utf-8").read())["baseline"],
             "arms": arms,
             "arm_controls": {

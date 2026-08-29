@@ -41235,12 +41235,12 @@
       "candidate_neurons": 2151,
       "candidate_recurrent_items": 18032,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 68.72396480001044,
+      "elapsed_seconds": 76.84649362898199,
       "eligibility_reset": true,
       "environment": {
-        "pid": 30936,
-        "platform": "Windows-11-10.0.26200-SP0",
-        "python": "3.13.14",
+        "pid": 1197733,
+        "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "python": "3.12.3",
         "seeds": [
           21,
           22,
@@ -61827,12 +61827,12 @@
       "candidate_neurons": 2048,
       "candidate_recurrent_items": 17204,
       "dense_neuron_pair_array": false,
-      "elapsed_seconds": 61.93121529999189,
+      "elapsed_seconds": 78.49003548899782,
       "eligibility_reset": true,
       "environment": {
-        "pid": 49860,
-        "platform": "Windows-11-10.0.26200-SP0",
-        "python": "3.13.14",
+        "pid": 1203277,
+        "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "python": "3.12.3",
         "seeds": [
           21,
           22,
@@ -82392,9 +82392,9 @@
   },
   "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
   "environment": {
-    "pid": 9048,
-    "platform": "Windows-11-10.0.26200-SP0",
-    "python": "3.13.14",
+    "pid": 1211918,
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
     "seeds": [
       21,
       22,
@@ -82404,8 +82404,8 @@
   "focused_tests": {
     "coverage_percent": 91,
     "failed": 0,
-    "passed": 28
+    "passed": 65
   },
-  "implementation_commit": "7c8a9c720761517f4becf7bd576d7c64ffa86091",
+  "implementation_commit": "5a26b117dece70eb96ae2f59a0d2865b050cd1c0",
   "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b"
 }

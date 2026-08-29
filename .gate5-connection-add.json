@@ -34,12 +34,12 @@
   "candidate_neurons": 2048,
   "candidate_recurrent_items": 17204,
   "dense_neuron_pair_array": false,
-  "elapsed_seconds": 61.93121529999189,
+  "elapsed_seconds": 78.49003548899782,
   "eligibility_reset": true,
   "environment": {
-    "pid": 49860,
-    "platform": "Windows-11-10.0.26200-SP0",
-    "python": "3.13.14",
+    "pid": 1203277,
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
     "seeds": [
       21,
       22,
