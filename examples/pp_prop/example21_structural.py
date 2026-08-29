@@ -64,6 +64,44 @@ def normalize_task_rows(values):
     return np.divide(values, scale, out=np.zeros_like(values), where=scale != 0)
 
 
+def dale_task_evidence(task_activity, recurrent_source, gradient_mass):
+    """Aggregate task evidence for measured Dale candidate selection.
+
+    Parameters
+    ----------
+    task_activity : array-like
+        Per-task source-neuron activity with shape ``(tasks, neurons)``.
+    recurrent_source : array-like
+        Source neuron index for each recurrent edge.
+    gradient_mass : array-like
+        Per-task recurrent-edge gradient mass with shape
+        ``(tasks, recurrent_edges)``.
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        Mean task-normalized activity and source-gradient evidence.
+    """
+    activity = np.asarray(task_activity, dtype=float)
+    source = np.asarray(recurrent_source, dtype=int)
+    gradients = np.asarray(gradient_mass, dtype=float)
+    if activity.ndim != 2 or gradients.ndim != 2:
+        raise ValueError("Dale evidence must be task-by-item arrays")
+    if activity.shape[0] != gradients.shape[0]:
+        raise ValueError("Dale evidence must have the same task count")
+    if source.ndim != 1 or source.size != gradients.shape[1]:
+        raise ValueError("recurrent source labels must match gradient edges")
+    if np.any(source < 0):
+        raise ValueError("recurrent source labels must be nonnegative")
+    source_mass = np.zeros((activity.shape[0], activity.shape[1]), dtype=float)
+    for task, row in enumerate(gradients):
+        np.add.at(source_mass[task], source, np.abs(row))
+    return (
+        np.mean(normalize_task_rows(activity), axis=0),
+        np.mean(normalize_task_rows(source_mass), axis=0),
+    )
+
+
 def neuron_contribution(readout, transmission, gradient_mass):
     rows = tuple(normalize_task_rows(value) for value in (readout, transmission, gradient_mass))
     return np.mean(rows, axis=0).max(axis=0)
@@ -1426,12 +1464,9 @@ def _measure_real_dale(
     learner = module.compile_pp_prop_model(model)
     evidence = _fixed_task_evidence(module, model, learner, data_root)
     topology = topology_from_model(model)
-    edge_gradient = np.mean(np.asarray(evidence["preclip_gradient_mass"]), axis=0)
-    gradient_mass = np.zeros(topology.neuron_count, dtype=float)
-    np.add.at(
-        gradient_mass,
-        topology.recurrent_source,
-        edge_gradient,
+    activity, gradient_mass = dale_task_evidence(
+        evidence["task_spike_evidence"], topology.recurrent_source,
+        evidence["preclip_gradient_mass"],
     )
     task_spikes = np.asarray(evidence["task_spike_evidence"], dtype=float)
 
@@ -1479,7 +1514,7 @@ def _measure_real_dale(
         parent.digest,
         topology.recurrent_source,
         topology.recurrent_value,
-        np.mean(np.asarray(evidence["task_spike_evidence"]), axis=0),
+        activity,
         gradient_mass,
         np.asarray([len(owner) for owner in evidence["owners"]], dtype=float),
         np.mean(lesion_evidence, axis=0),

@@ -52,6 +52,10 @@ measurement or arm construction.
 The causal lesion SHALL execute the model with each source's outgoing
 recurrent coordinates blocked, compare the resulting task output with the
 unblocked output, and normalize each task row independently before ranking.
+Activity and pre-clip recurrent-gradient evidence SHALL also be normalized per
+task before cross-task aggregation; recurrent-edge gradient mass SHALL first be
+aggregated to source neurons separately for each task. Multiplying any one task
+row by a positive constant SHALL not change either Dale candidate selection.
 The production command SHALL write each promoted arm as a distinct array-only
 child checkpoint, including its post-update model values and optimizer state.
 Rejected arms SHALL not replace the accepted parent checkpoint.
@@ -83,6 +87,9 @@ corrective error.
   and construction paths;
 - block-lesion effects are measured from the accepted parent and affect both
   candidate ranking vectors;
+- activity and source-aggregated pre-clip gradient evidence are task-normalized
+  before aggregation, and positive rescaling of one task row leaves both
+  selections unchanged;
 - a checkpoint with the accepted identifier but different serialized state is
   rejected;
 - zero type signs keep raw signed behavior;
