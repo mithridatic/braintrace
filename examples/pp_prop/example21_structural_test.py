@@ -407,6 +407,151 @@ def test_connection_addition_appends_exact_items_and_zero_moments():
         structural.select_connection_additions(2, set(), [1, 1], [1, 1], 1, 257)
 
 
+def test_real_rebuild_canonicalizes_added_recurrent_edges_and_values():
+    topology = structural.SparseTopology(
+        input_source=np.array([], dtype=int), input_target=np.array([], dtype=int),
+        input_value=np.array([], dtype=float), recurrent_source=np.array([0, 1]),
+        recurrent_target=np.array([1, 2]), recurrent_value=np.array([10.0, 20.0]),
+        readout=np.ones((3, 360)), dale=np.zeros(3), mechanisms=((), (), ()),
+    )
+    grown = structural.add_recurrent_connections(topology, ((0, 0),))
+    expected = [(0, 0, 0.0), (0, 1, 10.0), (1, 2, 20.0)]
+    assert list(zip(grown.recurrent_source, grown.recurrent_target, grown.recurrent_value)) == expected
+    adam = structural.StructuralAdam(
+        np.zeros((3, 360)), np.zeros((3, 360)), np.array([]), np.array([]),
+        np.array([100.0, 200.0]), np.array([1.0, 2.0]), 4,
+    )
+    mapped = structural.grow_adam_for_connections(
+        adam, 1, topology=topology, candidate=grown
+    )
+    np.testing.assert_array_equal(mapped.recurrent_first, [0.0, 100.0, 200.0])
+    np.testing.assert_array_equal(mapped.recurrent_second, [0.0, 1.0, 2.0])
+
+    module = structural._load_example21_model()
+    model = module.BrainCellArcModel(grown)
+    sources = np.repeat(
+        np.arange(len(model.recurrent_csr.indptr) - 1),
+        np.diff(np.asarray(model.recurrent_csr.indptr)),
+    )
+    assert list(zip(sources, np.asarray(model.recurrent_csr.indices),
+                   np.asarray(model.recurrent_csr.data))) == expected
+
+
+def test_real_rebuild_preserves_nonzero_readout_bias_for_mask_and_compaction():
+    topology = structural.SparseTopology(
+        input_source=np.array([], dtype=int), input_target=np.array([], dtype=int),
+        input_value=np.array([], dtype=float), recurrent_source=np.array([], dtype=int),
+        recurrent_target=np.array([], dtype=int), recurrent_value=np.array([], dtype=float),
+        readout=np.arange(720.0).reshape(2, 360), dale=np.zeros(2),
+        mechanisms=((), ()), readout_bias=np.arange(360.0) + 0.5,
+    )
+    adam = structural.StructuralAdam(
+        np.zeros((2, 360)), np.zeros((2, 360)), np.array([]), np.array([]),
+        np.array([]), np.array([]), 1,
+    )
+    alive = np.array([False, True])
+    masked = structural.mask_topology(topology, alive)
+    compacted, _, _ = structural.compact(topology, alive, adam)
+    module = structural._load_example21_model()
+    masked_model = module.BrainCellArcModel(masked)
+    compacted_model = module.BrainCellArcModel(compacted)
+    np.testing.assert_array_equal(masked_model.readout_bias.value, topology.readout_bias)
+    np.testing.assert_array_equal(compacted_model.readout_bias.value, topology.readout_bias)
+    assert np.asarray(masked_model.readout()).tobytes() == np.asarray(
+        compacted_model.readout()
+    ).tobytes()
+
+
+def test_fixed_task_evidence_sums_multi_query_preclip_mass(monkeypatch):
+    import brainstate
+    import jax.numpy as jnp
+
+    class State:
+        def __init__(self, value):
+            self.value = jnp.asarray(value)
+
+    class Learner:
+        def etrace_evolve(self, events, return_outputs=True):
+            return (events,)
+
+        def etrace_grad(self, events, step_fn, **kwargs):
+            del kwargs
+            step_fn(events[0])
+            value = events[0, 0]
+            return {("model", "recurrent_weight"): jnp.array([value, 0.0])}, value
+
+    class Model:
+        readout_weight = State(np.ones((2, 360)))
+
+        def reset_episode(self, learner):
+            del learner
+
+        def readout(self):
+            return jnp.zeros(360)
+
+    class Module:
+        TRAINING_TASK_IDS = ("train",)
+        VALIDATION_TASK_IDS = ("valid",)
+        decode_prediction = staticmethod(lambda value: np.zeros((1, 1), dtype=np.uint8))
+        strict_task_pass_at_1 = staticmethod(lambda predictions, targets: True)
+
+    episodes = [
+        {"task_id": "train", "task_index": 0, "events": np.array([[2.0]]),
+         "advances": np.ones(1, dtype=bool), "target": np.ones((1, 1)),
+         "target_vector": np.zeros(360)},
+        {"task_id": "train", "task_index": 0, "events": np.array([[4.0]]),
+         "advances": np.ones(1, dtype=bool), "target": np.ones((1, 1)),
+         "target_vector": np.zeros(360)},
+        {"task_id": "valid", "task_index": 1, "events": np.array([[8.0]]),
+         "advances": np.ones(1, dtype=bool), "target": np.ones((1, 1)),
+         "target_vector": np.zeros(360)},
+    ]
+    monkeypatch.setattr(
+        structural, "topology_from_model",
+        lambda model: SimpleNamespace(
+            neuron_count=2, recurrent_value=np.ones(2),
+            recurrent_source=np.array([0, 1]), recurrent_target=np.array([1, 0]),
+        ),
+    )
+    monkeypatch.setattr(
+        structural, "_run_fixed_episode_batch",
+        lambda *args: (
+            np.zeros((3, 1, 2)), np.zeros((3, 1, 2)), np.zeros((3, 360)),
+        ),
+    )
+    monkeypatch.setattr(
+        structural, "structural_evidence",
+        lambda *args: {
+            "neuron_scores": np.ones(2), "connection_scores": np.ones(2),
+            "neuron_scores_by_task": np.ones((2, 2)),
+            "connection_scores_by_task": np.ones((2, 2)), "owners": ((), ()),
+        },
+    )
+    monkeypatch.setattr(brainstate.transform, "jit", lambda function: function)
+    monkeypatch.setattr(
+        brainstate.transform, "for_loop",
+        lambda function, values: tuple(
+            np.asarray(items) for items in zip(
+                *(function(value) for value in values)
+            )
+        ),
+    )
+    result = structural._fixed_task_evidence(
+        Module, Model(), Learner(), "data", episodes=episodes
+    )
+    np.testing.assert_array_equal(result["preclip_gradient_mass"], [[6.0, 0.0], [0.0, 0.0]])
+    np.testing.assert_array_equal(result["target_scores_by_task"][0], [16.0, 16.0])
+
+
+def test_wrong_output_target_evidence_uses_l1_weights_not_voltage_effect():
+    weights = np.array([[2.0, -3.0, 100.0], [-4.0, 5.0, -200.0]])
+    output_mask = np.array([True, True, False])
+    np.testing.assert_array_equal(
+        structural._wrong_output_readout_evidence(weights, output_mask),
+        [5.0, 9.0],
+    )
+
+
 def test_preclip_mass_is_taken_directly_from_real_etrace_boundary():
     class Learner:
         def etrace_grad(self, events, **kwargs):

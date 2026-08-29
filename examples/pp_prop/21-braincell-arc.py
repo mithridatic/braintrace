@@ -213,6 +213,14 @@ def _csr_indptr(source, rows):
     return jnp.concatenate((jnp.zeros((1,), dtype=jnp.int32), jnp.cumsum(counts)))
 
 
+def _canonical_sparse_relation(source, target, values):
+    source = jnp.asarray(source, dtype=jnp.int32)
+    target = jnp.asarray(target, dtype=jnp.int32)
+    values = jnp.asarray(values)
+    order = jnp.lexsort((target, source))
+    return source[order], target[order], values[order]
+
+
 class BrainCellArcModel(brainstate.nn.Module):
     """The 2,048-neuron sparse BrainCell baseline."""
 
@@ -227,16 +235,21 @@ class BrainCellArcModel(brainstate.nn.Module):
             readout = _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
         else:
             neuron_count = topology.neuron_count
+            input_source, input_target, input_values = _canonical_sparse_relation(
+                topology.input_source, topology.input_target, topology.input_value
+            )
+            recurrent_source, recurrent_target, recurrent_values = _canonical_sparse_relation(
+                topology.recurrent_source, topology.recurrent_target,
+                topology.recurrent_value,
+            )
             self.input_csr = brainevent.CSR(
-                jnp.asarray(topology.input_value),
-                jnp.asarray(topology.input_target, dtype=jnp.int32),
-                _csr_indptr(topology.input_source, N_INPUTS),
+                input_values, input_target,
+                _csr_indptr(input_source, N_INPUTS),
                 shape=(N_INPUTS, neuron_count),
             )
             self.recurrent_csr = brainevent.CSR(
-                jnp.asarray(topology.recurrent_value),
-                jnp.asarray(topology.recurrent_target, dtype=jnp.int32),
-                _csr_indptr(topology.recurrent_source, neuron_count),
+                recurrent_values, recurrent_target,
+                _csr_indptr(recurrent_source, neuron_count),
                 shape=(neuron_count, neuron_count),
             )
             input_values = self.input_csr.data
@@ -247,7 +260,11 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.readout_weight = brainstate.ParamState(
             readout
         )
-        self.readout_bias = brainstate.ParamState(jnp.zeros((N_READOUT,), dtype=jnp.float32))
+        readout_bias = getattr(topology, "readout_bias", None) if topology is not None else None
+        self.readout_bias = brainstate.ParamState(
+            jnp.zeros((N_READOUT,), dtype=jnp.float32)
+            if readout_bias is None else jnp.asarray(readout_bias)
+        )
         self.previous_spikes = brainstate.HiddenState(jnp.zeros((neuron_count,), dtype=jnp.float32))
         self.cell = CompatibilityHodgkinHuxley(neuron_count)
         self.cell.init_state()

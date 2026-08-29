@@ -120,6 +120,7 @@ class SparseTopology:
     readout: np.ndarray
     dale: np.ndarray
     mechanisms: tuple
+    readout_bias: np.ndarray | None = None
 
     @property
     def neuron_count(self):
@@ -135,6 +136,34 @@ class StructuralAdam:
     recurrent_first: np.ndarray
     recurrent_second: np.ndarray
     step: int = 0
+
+
+def _canonical_relation(source, target, values):
+    source = np.asarray(source)
+    target = np.asarray(target)
+    values = np.asarray(values)
+    order = np.lexsort((target, source))
+    return source[order], target[order], values[order], order
+
+
+def _topology_readout_bias(topology):
+    bias = getattr(topology, "readout_bias", None)
+    if bias is None:
+        return np.zeros(topology.readout.shape[1], dtype=topology.readout.dtype)
+    return np.asarray(bias).copy()
+
+
+def _remap_edge_state(source, target, values, candidate_source, candidate_target):
+    values = np.asarray(values)
+    mapped = np.zeros((len(candidate_source),) + values.shape[1:], dtype=values.dtype)
+    slots = {}
+    for index, pair in enumerate(zip(source, target)):
+        slots.setdefault((int(pair[0]), int(pair[1])), []).append(index)
+    for index, pair in enumerate(zip(candidate_source, candidate_target)):
+        available = slots.get((int(pair[0]), int(pair[1])), [])
+        if available:
+            mapped[index] = values[available.pop(0)]
+    return mapped
 
 
 def remap_muon_groups(muon_groups, parameter_maps):
@@ -322,6 +351,7 @@ def prune_recurrent(topology, scores, validation_strict):
         topology.input_value.copy(), topology.recurrent_source[keep],
         topology.recurrent_target[keep], topology.recurrent_value[keep],
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
+        _topology_readout_bias(topology),
     )
     return pruned, keep
 
@@ -339,12 +369,23 @@ def topology_from_model(model):
     recurrent_sources = np.repeat(
         np.arange(len(recurrent_indptr) - 1), np.diff(recurrent_indptr)
     )
+    input_sources, input_targets, input_values, _ = _canonical_relation(
+        input_sources, input_targets, np.asarray(model.input_weight.value)
+    )
+    recurrent_sources, recurrent_targets, recurrent_values, _ = _canonical_relation(
+        recurrent_sources, recurrent_targets, np.asarray(model.recurrent_weight.value)
+    )
     readout = np.asarray(model.readout_weight.value)
+    bias_state = getattr(model, "readout_bias", None)
+    readout_bias = (
+        np.asarray(bias_state.value).copy()
+        if bias_state is not None else np.zeros(readout.shape[1], dtype=readout.dtype)
+    )
     count = readout.shape[0]
     return SparseTopology(
-        input_sources, input_targets, np.asarray(model.input_weight.value),
-        recurrent_sources, recurrent_targets, np.asarray(model.recurrent_weight.value),
-        readout, np.zeros(count, dtype=np.int8), ((),) * count,
+        input_sources, input_targets, input_values,
+        recurrent_sources, recurrent_targets, recurrent_values,
+        readout, np.zeros(count, dtype=np.int8), ((),) * count, readout_bias,
     )
 
 
@@ -447,7 +488,10 @@ def addition_selection_evidence(evidence, strict, training_count=None):
         target_by_task = evidence.get("incident_gradient_mass_by_task")
         if target_by_task is None:
             target_by_task = np.asarray(evidence["gradient_mass"], dtype=float)
-        readout = np.asarray(evidence["task_readout_evidence"], dtype=float)
+        readout = np.asarray(
+            evidence.get("wrong_output_readout_evidence", evidence["task_readout_evidence"]),
+            dtype=float,
+        )
         target_by_task = np.asarray(target_by_task, dtype=float) + readout * (
             ~strict[:len(target_by_task), None]
         )
@@ -475,6 +519,9 @@ def _remap_edges(source, target, values, alive):
 def compact(topology, alive, adam):
     alive = np.asarray(alive, dtype=bool)
     input_keep = alive[topology.input_target]
+    input_source = topology.input_source[input_keep]
+    input_target = topology.input_target[input_keep]
+    input_value = topology.input_value[input_keep]
     recurrent_source, recurrent_target, recurrent_value = _remap_edges(
         topology.recurrent_source, topology.recurrent_target,
         topology.recurrent_value, alive,
@@ -482,22 +529,28 @@ def compact(topology, alive, adam):
     mapping = -np.ones(len(alive), dtype=int)
     mapping[alive] = np.arange(np.sum(alive))
     recurrent_keep = alive[topology.recurrent_source] & alive[topology.recurrent_target]
+    input_source, input_target, input_value, input_order = _canonical_relation(
+        input_source, mapping[input_target], input_value
+    )
+    recurrent_source, recurrent_target, recurrent_value, recurrent_order = _canonical_relation(
+        recurrent_source, recurrent_target, recurrent_value
+    )
     compacted = SparseTopology(
-        topology.input_source[input_keep],
-        mapping[topology.input_target[input_keep]],
-        topology.input_value[input_keep],
+        input_source, input_target, input_value,
         recurrent_source,
         recurrent_target,
         recurrent_value,
         topology.readout[alive],
         topology.dale[alive],
         tuple(mechanism for mechanism, keep in zip(topology.mechanisms, alive) if keep),
+        _topology_readout_bias(topology),
     )
     mapped = StructuralAdam(
         adam.neuron_first[alive], adam.neuron_second[alive],
-        adam.input_first[input_keep], adam.input_second[input_keep],
-        adam.recurrent_first[recurrent_keep],
-        adam.recurrent_second[recurrent_keep],
+        adam.input_first[input_keep][input_order],
+        adam.input_second[input_keep][input_order],
+        adam.recurrent_first[recurrent_keep][recurrent_order],
+        adam.recurrent_second[recurrent_keep][recurrent_order],
         adam.step,
     )
     return compacted, mapped, True
@@ -516,6 +569,7 @@ def mask_topology(topology, alive):
         ),
         topology.readout * alive[:, None], topology.dale.copy(),
         tuple(topology.mechanisms),
+        _topology_readout_bias(topology),
     )
     return masked
 
@@ -571,10 +625,16 @@ def add_twin_neurons(topology, scores, required=None):
         readout[donor] *= 0.5
         readout = np.vstack((readout, readout[donor]))
         dale.append(topology.dale[donor]); mechanisms.append(topology.mechanisms[donor])
+    input_source, input_target, input_value, _ = _canonical_relation(
+        input_source, input_target, input_value
+    )
+    recurrent_source, recurrent_target, recurrent_value, _ = _canonical_relation(
+        recurrent_source, recurrent_target, recurrent_value
+    )
     return SparseTopology(
-        np.asarray(input_source), np.asarray(input_target), np.asarray(input_value),
-        np.asarray(recurrent_source), np.asarray(recurrent_target), np.asarray(recurrent_value),
-        readout, np.asarray(dale), tuple(mechanisms),
+        input_source, input_target, input_value,
+        recurrent_source, recurrent_target, recurrent_value,
+        readout, np.asarray(dale), tuple(mechanisms), _topology_readout_bias(topology),
     ), donors
 
 
@@ -585,13 +645,26 @@ def grow_adam_for_twins(adam, topology, grown):
         padding = [(0, length - len(values))] + [(0, 0)] * (values.ndim - 1)
         return np.pad(values, padding)
 
+    input_first = _remap_edge_state(
+        topology.input_source, topology.input_target, adam.input_first,
+        grown.input_source, grown.input_target,
+    )
+    input_second = _remap_edge_state(
+        topology.input_source, topology.input_target, adam.input_second,
+        grown.input_source, grown.input_target,
+    )
+    recurrent_first = _remap_edge_state(
+        topology.recurrent_source, topology.recurrent_target, adam.recurrent_first,
+        grown.recurrent_source, grown.recurrent_target,
+    )
+    recurrent_second = _remap_edge_state(
+        topology.recurrent_source, topology.recurrent_target, adam.recurrent_second,
+        grown.recurrent_source, grown.recurrent_target,
+    )
     return StructuralAdam(
         extend(adam.neuron_first, grown.neuron_count),
         extend(adam.neuron_second, grown.neuron_count),
-        extend(adam.input_first, len(grown.input_value)),
-        extend(adam.input_second, len(grown.input_value)),
-        extend(adam.recurrent_first, len(grown.recurrent_value)),
-        extend(adam.recurrent_second, len(grown.recurrent_value)), adam.step,
+        input_first, input_second, recurrent_first, recurrent_second, adam.step,
     )
 
 
@@ -661,22 +734,37 @@ def add_recurrent_connections(topology, pairs, *, typed=False):
     if len(set(pairs)) != len(pairs) or any(pair in existing for pair in pairs):
         raise ValueError("connection additions must be distinct and absent")
     initial = np.log(np.expm1(1e-6)) if typed else 0.0
-    return SparseTopology(
-        topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
+    recurrent_source, recurrent_target, recurrent_value, _ = _canonical_relation(
         np.concatenate((topology.recurrent_source, np.asarray([p[0] for p in pairs], dtype=int))),
         np.concatenate((topology.recurrent_target, np.asarray([p[1] for p in pairs], dtype=int))),
         np.concatenate((topology.recurrent_value, np.full(len(pairs), initial))),
+    )
+    return SparseTopology(
+        topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
+        recurrent_source, recurrent_target, recurrent_value,
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
+        _topology_readout_bias(topology),
     )
 
 
-def grow_adam_for_connections(adam, added_count):
+def grow_adam_for_connections(adam, added_count, *, topology=None, candidate=None):
     """Append zero Adam moments for new recurrent edges."""
 
+    if topology is not None and candidate is not None:
+        recurrent_first = _remap_edge_state(
+            topology.recurrent_source, topology.recurrent_target, adam.recurrent_first,
+            candidate.recurrent_source, candidate.recurrent_target,
+        )
+        recurrent_second = _remap_edge_state(
+            topology.recurrent_source, topology.recurrent_target, adam.recurrent_second,
+            candidate.recurrent_source, candidate.recurrent_target,
+        )
+    else:
+        recurrent_first = np.pad(adam.recurrent_first, (0, added_count))
+        recurrent_second = np.pad(adam.recurrent_second, (0, added_count))
     return StructuralAdam(
         adam.neuron_first.copy(), adam.neuron_second.copy(), adam.input_first.copy(),
-        adam.input_second.copy(), np.pad(adam.recurrent_first, (0, added_count)),
-        np.pad(adam.recurrent_second, (0, added_count)), adam.step,
+        adam.input_second.copy(), recurrent_first, recurrent_second, adam.step,
     )
 
 
@@ -809,6 +897,15 @@ def _readout_effect(voltages, readout_weight, *, output_mask=None):
             return np.zeros(weights.shape[0], dtype=float)
         weights = weights[:, output_mask]
     return np.mean(np.abs(features)[..., None] * weights[None, ...], axis=(0, 2))
+
+
+def _wrong_output_readout_evidence(readout_weight, output_mask):
+    """Return per-neuron L1 readout weights for selected output fields."""
+    weights = np.abs(np.asarray(readout_weight, dtype=float))
+    output_mask = np.asarray(output_mask, dtype=bool)
+    if output_mask.shape != (weights.shape[1],):
+        raise ValueError("output mask must match readout width")
+    return np.sum(weights[:, output_mask], axis=1)
 
 
 def _direct_readout_gradients(model, target, jnp):
@@ -971,13 +1068,7 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
 
     first_row = mass_row(first_mass, first["task_index"])
     gradient_mass = np.zeros((len(task_ids), first_row.size), dtype=float)
-    query_counts = np.bincount(
-        [episode["task_index"] for episode in training_episodes],
-        minlength=len(task_ids),
-    )
-    gradient_mass[first["task_index"]] += first_row / max(
-        1, query_counts[first["task_index"]]
-    )
+    gradient_mass[first["task_index"]] += first_row
     losses = [np.asarray(first_loss).tolist()]
     remaining = training_episodes[1:]
     if remaining and callable(getattr(learner, "etrace_grad", None)):
@@ -1012,9 +1103,7 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
             lambda values: brainstate.transform.for_loop(collect_gradient, values)
         )(np.arange(len(remaining), dtype=np.int32))
         for episode, row, loss in zip(remaining, np.asarray(gradient_rows), np.asarray(batch_losses)):
-            gradient_mass[episode["task_index"]] += np.asarray(row) / max(
-                1, query_counts[episode["task_index"]]
-            )
+            gradient_mass[episode["task_index"]] += np.asarray(row)
             losses.append(np.asarray(loss).tolist())
 
     voltages, spikes, logits = _run_fixed_episode_batch(
@@ -1022,6 +1111,7 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
     )
     task_spikes = [[] for _ in task_ids]
     task_readout = [[] for _ in task_ids]
+    task_wrong_readout = [[] for _ in task_ids]
     task_wrong_outputs = [[] for _ in task_ids]
     predictions_by_task = {task_id: [] for task_id in task_ids}
     targets_by_task = {task_id: [] for task_id in task_ids}
@@ -1031,17 +1121,21 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
         task_readout[task_index].append(
             _readout_effect(
                 voltage, model.readout_weight.value,
-                output_mask=_wrong_output_mask(logit, episode["target"]),
             )
         )
-        task_wrong_outputs[task_index].append(
-            _wrong_output_mask(logit, episode["target"])
+        wrong_outputs = _wrong_output_mask(logit, episode["target"])
+        task_wrong_outputs[task_index].append(wrong_outputs)
+        task_wrong_readout[task_index].append(
+            _wrong_output_readout_evidence(model.readout_weight.value, wrong_outputs)
         )
         prediction = module.decode_prediction(np.asarray(logit))
         predictions_by_task[episode["task_id"]].append(prediction)
         targets_by_task[episode["task_id"]].append(episode["target"])
     spike_rows = np.asarray([np.mean(rows, axis=0) for rows in task_spikes])
     readout_rows = np.asarray([np.mean(rows, axis=0) for rows in task_readout])
+    wrong_readout_rows = np.asarray([
+        np.mean(rows, axis=0) for rows in task_wrong_readout
+    ])
     evidence = structural_evidence(
         topology, readout_rows, spike_rows, gradient_mass
     )
@@ -1059,7 +1153,7 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
                 np.bincount(source, weights=row, minlength=topology.neuron_count)
                 + np.bincount(target, weights=row, minlength=topology.neuron_count)
             )
-    target_scores = incident + readout_rows
+    target_scores = incident + wrong_readout_rows
     first_episodes = []
     for task_id in module.TRAINING_TASK_IDS:
         first_episodes.append(next(
@@ -1071,6 +1165,7 @@ def _fixed_task_evidence(module, model, learner, data_root, *, episodes=None):
         "preclip_loss": losses,
         "task_spike_evidence": spike_rows.tolist(),
         "task_readout_evidence": readout_rows.tolist(),
+        "wrong_output_readout_evidence": wrong_readout_rows.tolist(),
         "task_wrong_output_fields": [
             np.any(rows, axis=0).tolist() if rows else [False] * 360
             for rows in task_wrong_outputs
@@ -1413,7 +1508,9 @@ def run_integrated_arm(
             mutation_count(len(topology.recurrent_value)),
         )
         candidate = add_recurrent_connections(topology, pairs)
-        candidate_adam = grow_adam_for_connections(adam, len(pairs))
+        candidate_adam = grow_adam_for_connections(
+            adam, len(pairs), topology=topology, candidate=candidate
+        )
         reset = True
         count = len(pairs)
     else:
@@ -1578,7 +1675,9 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
             stats=tile_selection,
         )
         candidate = add_recurrent_connections(topology, pairs)
-        candidate_adam = grow_adam_for_connections(adam, len(pairs))
+        candidate_adam = grow_adam_for_connections(
+            adam, len(pairs), topology=topology, candidate=candidate
+        )
         reset = True
         count = len(pairs)
         updates = 64
@@ -1685,6 +1784,9 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],
         "task_spike_evidence": evidence["task_spike_evidence"],
         "task_readout_evidence": evidence["task_readout_evidence"],
+        "wrong_output_readout_evidence": evidence.get(
+            "wrong_output_readout_evidence", []
+        ),
         "task_wrong_output_fields": evidence.get("task_wrong_output_fields", []),
         "incident_gradient_mass_by_task": evidence.get(
             "incident_gradient_mass_by_task", []
@@ -1781,6 +1883,7 @@ def main(argv=None):
                 "wrong_output_readout_evidence": all(
                     len(arm.get("task_wrong_output_fields", [])) == len(fixed_task_ids)
                     and len(arm.get("task_readout_evidence", [])) == len(fixed_task_ids)
+                    and len(arm.get("wrong_output_readout_evidence", [])) == len(fixed_task_ids)
                     for arm in arms
                 ),
                 "exact_item_counts": all(exact_counts.values()),
