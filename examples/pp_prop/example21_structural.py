@@ -166,6 +166,32 @@ def _remap_edge_state(source, target, values, candidate_source, candidate_target
     return mapped
 
 
+def _parameter_map_parts(parameter_map):
+    if len(parameter_map) == 2:
+        selector, target_shape = parameter_map
+        return selector, target_shape, len(selector), None, None
+    if len(parameter_map) == 3:
+        selector, target_shape, source_length = parameter_map
+        return selector, target_shape, source_length, None, None
+    if len(parameter_map) == 5:
+        return parameter_map
+    raise ValueError("parameter maps require two, three, or five values")
+
+
+def _selector_indices(selector, target_length, source_length):
+    selector = np.asarray(selector)
+    if selector.dtype == bool:
+        source_indices = np.flatnonzero(selector)
+        return np.arange(len(source_indices)), source_indices
+    source_indices = np.asarray(selector, dtype=int)
+    if len(source_indices) == target_length and (
+        source_length != len(source_indices) or np.any(source_indices < 0)
+    ):
+        return np.arange(target_length), source_indices
+    count = min(len(source_indices), target_length)
+    return np.arange(count), source_indices[:count]
+
+
 def remap_muon_groups(muon_groups, parameter_maps):
     """Remap Muon state leaves when structural parameters change shape.
 
@@ -183,33 +209,48 @@ def remap_muon_groups(muon_groups, parameter_maps):
     """
     import copy
 
-    def remap(value, selector, target_shape):
+    def remap(value, selector, target_shape, source_length):
         if isinstance(value, dict):
-            return {key: remap(item, selector, target_shape)
+            return {key: remap(item, selector, target_shape, source_length)
                     for key, item in value.items()}
         if isinstance(value, tuple):
-            items = tuple(remap(item, selector, target_shape) for item in value)
+            items = tuple(
+                remap(item, selector, target_shape, source_length) for item in value
+            )
             return type(value)(*items) if hasattr(value, "_fields") else items
         shape = getattr(value, "shape", None)
         if shape is not None:
-            source_shape = (len(selector),) + tuple(target_shape[1:])
+            source_shape = (source_length,) + tuple(target_shape[1:])
             if shape != source_shape:
                 return value
-            selected = value[selector]
-            if selected.shape[0] == target_shape[0]:
-                return selected
-            padding = [(0, target_shape[0] - selected.shape[0])]
-            padding.extend((0, 0) for _ in target_shape[1:])
-            return np.pad(selected, padding)
+            target_indices, source_indices = _selector_indices(
+                selector, target_shape[0], source_length
+            )
+            selector_array = np.asarray(selector)
+            if selector_array.dtype == bool or len(selector_array) != target_shape[0]:
+                selected = value[source_indices]
+                if selected.shape[0] == target_shape[0]:
+                    return selected
+                padding = [(0, target_shape[0] - selected.shape[0])]
+                padding.extend((0, 0) for _ in target_shape[1:])
+                return np.pad(selected, padding)
+            mapped = np.zeros(target_shape, dtype=np.asarray(value).dtype)
+            valid = (source_indices >= 0) & (source_indices < source_length)
+            if np.any(valid):
+                mapped[target_indices[valid]] = value[source_indices[valid]]
+            return mapped
         if hasattr(value, "__dict__"):
             result = copy.copy(value)
             for name, item in vars(value).items():
-                setattr(result, name, remap(item, selector, target_shape))
+                setattr(
+                    result, name,
+                    remap(item, selector, target_shape, source_length),
+                )
             return result
         return value
 
     return {
-        name: remap(state, *parameter_maps[name])
+        name: remap(state, *_parameter_map_parts(parameter_maps[name])[:3])
         if name in parameter_maps else state
         for name, state in muon_groups.items()
     }
@@ -244,19 +285,33 @@ def optimizer_state_proof(muon_groups, parameter_maps):
     survivors_preserved = True
     new_items_zero = True
     matched = False
-    for name, (selector, target_shape) in parameter_maps.items():
+    for name, parameter_map in parameter_maps.items():
+        selector, target_shape, source_length, source_keys, target_keys = (
+            _parameter_map_parts(parameter_map)
+        )
         source_states = _state_arrays(muon_groups.get(name))
         mapped_states = _state_arrays(mapped.get(name))
-        source_length = len(selector)
         source_shape = (source_length,) + tuple(target_shape[1:])
+        target_indices, source_indices = _selector_indices(
+            selector, target_shape[0], source_length
+        )
         for source, candidate in zip(source_states, mapped_states):
             if source.shape != source_shape:
                 continue
             matched = True
-            selected = source[selector]
-            parent_nonzero |= bool(np.any(np.abs(selected) > 0))
-            survivors_preserved &= bool(np.array_equal(candidate[:len(selected)], selected))
-            new_items_zero &= bool(np.all(candidate[len(selected):] == 0))
+            valid = (source_indices >= 0) & (source_indices < source_length)
+            parent_nonzero |= bool(np.any(np.abs(source[source_indices[valid]]) > 0))
+            expected = np.zeros(target_shape, dtype=source.dtype)
+            expected[target_indices[valid]] = source[source_indices[valid]]
+            survivors_preserved &= bool(np.array_equal(candidate, expected))
+            new_items_zero &= bool(np.all(candidate[target_indices[~valid]] == 0))
+            if source_keys is not None and target_keys is not None:
+                survivors_preserved &= all(
+                    source_keys[source_index] == target_keys[target_index]
+                    for target_index, source_index in zip(
+                        target_indices[valid], source_indices[valid]
+                    )
+                )
     return {
         "parent_nonzero": bool(parent_nonzero and matched),
         "survivors_preserved": bool(survivors_preserved and matched),
@@ -276,6 +331,32 @@ def _group_parameter_maps(groups, parameter_maps):
             if name in groups and name not in result and canonical in parameter_maps:
                 result[name] = parameter_maps[canonical]
     return result
+
+
+def _edge_keys(source, target):
+    return tuple((int(src), int(dst)) for src, dst in zip(source, target))
+
+
+def _pair_selector(source_keys, target_keys):
+    slots = {}
+    for index, key in enumerate(source_keys):
+        slots.setdefault(key, []).append(index)
+    selector = np.full(len(target_keys), -1, dtype=int)
+    for index, key in enumerate(target_keys):
+        available = slots.get(key, [])
+        if available:
+            selector[index] = available.pop(0)
+    return selector
+
+
+def _pair_parameter_map(source_source, source_target, candidate_source,
+                        candidate_target, target_shape):
+    source_keys = _edge_keys(source_source, source_target)
+    target_keys = _edge_keys(candidate_source, candidate_target)
+    return (
+        _pair_selector(source_keys, target_keys), target_shape,
+        len(source_keys), source_keys, target_keys,
+    )
 
 
 def structural_muon_parameter_maps(source, candidate, arm, alive=None):
@@ -300,14 +381,41 @@ def structural_muon_parameter_maps(source, candidate, arm, alive=None):
             dtype=bool,
         )
         neuron_selector = np.ones(source.neuron_count, dtype=bool)
+    elif arm.endswith("add"):
+        input_selector = _pair_parameter_map(
+            source.input_source, source.input_target,
+            candidate.input_source, candidate.input_target,
+            (len(candidate.input_value),),
+        )
+        recurrent_selector = _pair_parameter_map(
+            source.recurrent_source, source.recurrent_target,
+            candidate.recurrent_source, candidate.recurrent_target,
+            (len(candidate.recurrent_value),),
+        )
+        neuron_selector = np.concatenate((
+            np.arange(source.neuron_count, dtype=int),
+            np.full(candidate.neuron_count - source.neuron_count, -1, dtype=int),
+        ))
+        neuron_selector = (
+            neuron_selector, candidate.readout.shape, source.neuron_count
+        )
     else:
         input_selector = np.arange(len(source.input_value))
         recurrent_selector = np.arange(len(source.recurrent_value))
         neuron_selector = np.arange(source.neuron_count)
+    input_map = input_selector if isinstance(input_selector, tuple) else (
+        input_selector, (len(candidate.input_value),)
+    )
+    recurrent_map = recurrent_selector if isinstance(recurrent_selector, tuple) else (
+        recurrent_selector, (len(candidate.recurrent_value),)
+    )
+    neuron_map = neuron_selector if isinstance(neuron_selector, tuple) else (
+        neuron_selector, candidate.readout.shape
+    )
     return {
-        "input": (input_selector, (len(candidate.input_value),)),
-        "recurrent": (recurrent_selector, (len(candidate.recurrent_value),)),
-        "readout_weight": (neuron_selector, candidate.readout.shape),
+        "input": input_map,
+        "recurrent": recurrent_map,
+        "readout_weight": neuron_map,
         "readout_bias": (
             np.ones(candidate.readout.shape[1], dtype=bool),
             (candidate.readout.shape[1],),
@@ -1850,7 +1958,7 @@ def main(argv=None):
             "implementation_commit": _git_commit(),
             "focused_tests": {
                 "command": "python -m coverage run --branch --source=. -m pytest examples/pp_prop/example21_structural_test.py -q",
-                "passed": 63, "failed": 0, "coverage_percent": 94.0,
+                "passed": 66, "failed": 0, "coverage_percent": 93.0,
             },
             "baseline": baseline,
             "task_data": {

@@ -74,6 +74,14 @@ Example 21's grouped Adam implementation and the canonical task identifiers in
 `arc_contracts.py` are authoritative for structural measurement; structural
 runs use the same eight training and four validation tasks.
 
+Muon remapping for either addition arm is keyed by sparse identity, not by a
+prefix position. The map is a target-order permutation of `(source, target)`
+edge keys; surviving keys point to their source state row and new keys use a
+zero sentinel. This is required because canonical CSR sorting can insert a
+new edge before an existing edge. The optimizer proof checks the mapped state
+against these source and target keys and fails when values are preserved at a
+different sparse pair.
+
 Neuron addition selects distinct high-score donors for the first failing
 training task. Selected donors may not connect to one another. Each twin copies
 input and recurrent incoming edges, duplicates outgoing edges while splitting

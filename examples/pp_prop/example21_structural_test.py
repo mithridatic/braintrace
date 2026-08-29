@@ -1071,6 +1071,87 @@ def test_structural_muon_maps_cover_pruning_and_growth_selectors():
         assert set(selectors) == {"input", "recurrent", "readout_weight", "readout_bias"}
 
 
+def test_muon_growth_remap_preserves_canonical_recurrent_pair_identity():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]), np.array([1.0, 2.0]),
+        np.ones((3, 1)), np.zeros(3), ((),) * 3,
+    )
+    candidate = structural.add_recurrent_connections(topology, ((0, 0),))
+    state = SimpleNamespace(mu=np.array([100.0, 200.0]))
+    maps = structural.structural_muon_parameter_maps(
+        topology, candidate, "connection-add"
+    )
+    mapped = structural.remap_muon_groups(
+        {"recurrent": state}, {"recurrent": maps["recurrent"]}
+    )
+    np.testing.assert_array_equal(mapped["recurrent"].mu, [0.0, 100.0, 200.0])
+
+
+def test_optimizer_state_proof_rejects_misaligned_sparse_pair_state():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]), np.array([1.0, 2.0]),
+        np.ones((3, 1)), np.zeros(3), ((),) * 3,
+    )
+    candidate = structural.add_recurrent_connections(topology, ((0, 0),))
+    state = SimpleNamespace(mu=np.array([100.0, 200.0]))
+    correct = structural.structural_muon_parameter_maps(
+        topology, candidate, "connection-add"
+    )["recurrent"]
+    bad = (np.array([0, 1, -1]), correct[1], correct[2], correct[3], correct[4])
+    assert structural.optimizer_state_proof(
+        {"recurrent": state}, {"recurrent": correct}
+    ) == {
+        "parent_nonzero": True,
+        "survivors_preserved": True,
+        "new_items_zero": True,
+    }
+    assert structural.optimizer_state_proof(
+        {"recurrent": state}, {"recurrent": bad}
+    ) == {
+        "parent_nonzero": True,
+        "survivors_preserved": False,
+        "new_items_zero": True,
+    }
+
+
+def test_real_update_hands_pair_aware_muon_state_to_trainer():
+    class State:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Trainer:
+        def __init__(self, *args, **kwargs):
+            self.muon_groups = {}
+
+        def update_episode(self, *args, **kwargs):
+            return 0.0, 0.0
+
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]), np.array([1.0, 2.0]),
+        np.ones((3, 1)), np.zeros(3), ((),) * 3,
+    )
+    candidate = structural.add_recurrent_connections(topology, ((0, 0),))
+    maps = structural.structural_muon_parameter_maps(
+        topology, candidate, "connection-add"
+    )
+    update = structural._real_pp_prop_update(
+        SimpleNamespace(PPPropEpisodeTrainer=Trainer),
+        SimpleNamespace(
+            input_weight=State([1.0]), recurrent_weight=State([1.0, 1.0, 1.0])
+        ),
+        SimpleNamespace(),
+        {"events": np.zeros((1, 1)), "advances": np.ones(1)},
+        muon_groups={"recurrent": SimpleNamespace(mu=np.array([100.0, 200.0]))},
+        parameter_maps={"recurrent": maps["recurrent"]},
+    )
+    np.testing.assert_array_equal(
+        update.trainer.muon_groups["recurrent"].mu, [0.0, 100.0, 200.0]
+    )
+
+
 def test_evidence_validates_explicit_task_shape_and_data_requirements(monkeypatch):
     class State:
         def __init__(self, value):
