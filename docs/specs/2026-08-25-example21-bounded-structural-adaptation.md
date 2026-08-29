@@ -28,8 +28,9 @@ updates even if the transition occurs earlier. Engineering metrics are complete
 arm wall time (limit 300 seconds), peak process resident memory, mutated item
 count, and maximum resident connection-candidate tile size (limit 65,536
 pairs). The evidence artifact records Python, JAX, backend, device, platform,
-PID namespace identity, seeds, starting commit, command, and all metrics. A
-claim is valid only when its artifact path and SHA-256 digest are reported.
+PID namespace and process-start identity, seeds, starting commit, command, and
+all metrics. A claim is valid only when its artifact path and SHA-256 digest are
+reported.
 
 The reproducible baseline command is:
 

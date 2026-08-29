@@ -1257,7 +1257,11 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
         addition = name.endswith("add")
         result = {
             "arm": name,
-            "environment": {"pid": pid, "pid_namespace": f"pid:[{pid}]"},
+            "environment": {
+                "pid": 1,
+                "pid_namespace": "pid:[shared]",
+                "process_start_ticks": pid,
+            },
             "implementation_commit": "abc",
             "real_model": True,
             "baseline_neurons": 100,
@@ -1411,6 +1415,12 @@ def test_peak_process_resident_memory_reads_linux_high_water_mark(tmp_path):
     status.write_text("Name:\tpython\n")
     assert structural._peak_process_resident_memory_bytes(status) is None
     assert structural._peak_process_resident_memory_bytes(tmp_path / "missing") is None
+
+    stat = tmp_path / "stat"
+    fields = ["R"] + ["0"] * 18 + ["9876"]
+    stat.write_text(f"13 (python worker) {' '.join(fields)}\n")
+    assert structural._process_start_ticks(stat) == 9876
+    assert structural._process_start_ticks(tmp_path / "missing-stat") is None
 
 
 def test_merge_cli_uses_measured_files_and_arm_cli_requires_parent(
