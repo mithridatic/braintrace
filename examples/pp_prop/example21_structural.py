@@ -1842,6 +1842,19 @@ def _coverage_summary():
     return {"line_and_branch_percent": percent, "branch_data": True}
 
 
+def _peak_process_resident_memory_bytes(status_path=Path("/proc/self/status")):
+    """Read the Linux process high-water resident set in bytes."""
+
+    try:
+        lines = Path(status_path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        if line.startswith("VmHWM:"):
+            return int(line.split()[1]) * 1024
+    return None
+
+
 def run_integrated_arm(
     arm,
     model_factory,
@@ -2223,6 +2236,7 @@ def measure_real_arm(
 def main(argv=None):
     """Measure one real Example 21 structural arm and write JSON evidence."""
     import argparse
+    command_started = time.perf_counter()
     parser = argparse.ArgumentParser()
     parser.add_argument("arm", choices=("baseline", "parent", "neuron-prune", "connection-prune",
                                          "neuron-add", "connection-add", "merge"))
@@ -2301,6 +2315,12 @@ def main(argv=None):
             data_root=args.data_root,
             parent_checkpoint=args.parent_checkpoint,
         )
+    evidence["complete_process_seconds"] = float(
+        time.perf_counter() - command_started
+    )
+    evidence["peak_process_resident_memory_bytes"] = (
+        _peak_process_resident_memory_bytes()
+    )
     digest = write_artifact(args.output, evidence)
     print(json.dumps({"artifact": os.path.abspath(args.output), "sha256": digest}, sort_keys=True))
 

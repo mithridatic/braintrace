@@ -1404,6 +1404,15 @@ def test_coverage_summary_requires_branch_data_above_ninety(monkeypatch):
         structural._coverage_summary()
 
 
+def test_peak_process_resident_memory_reads_linux_high_water_mark(tmp_path):
+    status = tmp_path / "status"
+    status.write_text("Name:\tpython\nVmHWM:\t1234 kB\n")
+    assert structural._peak_process_resident_memory_bytes(status) == 1_263_616
+    status.write_text("Name:\tpython\n")
+    assert structural._peak_process_resident_memory_bytes(status) is None
+    assert structural._peak_process_resident_memory_bytes(tmp_path / "missing") is None
+
+
 def test_merge_cli_uses_measured_files_and_arm_cli_requires_parent(
     monkeypatch, tmp_path
 ):
@@ -1431,6 +1440,8 @@ def test_merge_cli_uses_measured_files_and_arm_cli_requires_parent(
     assert merged["implementation_commit"] == "code-commit"
     assert merged["artifact_build_commit"] == "artifact-commit"
     assert merged["focused_tests"]["line_and_branch_percent"] == 91.5
+    assert merged["complete_process_seconds"] >= 0.0
+    assert merged["peak_process_resident_memory_bytes"] is not None
     with pytest.raises(SystemExit):
         structural.main(["neuron-add", "--output", "arm.json"])
 
