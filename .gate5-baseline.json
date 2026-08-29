@@ -1,0 +1,38 @@
+{
+  "arm": "baseline",
+  "arm_controls": {
+    "addition_updates": 64,
+    "candidate_arms_per_process": 1,
+    "dense_neuron_pair_array": false,
+    "max_resident_tile_pairs": 65536,
+    "pruning_promoted": false,
+    "pruning_validation_strict": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "strict_regression_rejected": true
+  },
+  "baseline": {
+    "input_edges": 14112,
+    "neurons": 2048,
+    "readout_values": 737280,
+    "recurrent_edges": 16384
+  },
+  "complete_process_seconds": 5.651035727991257,
+  "environment": {
+    "pid": 13,
+    "pid_namespace": "pid:[4026532410]",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "process_start_ticks": 17974932,
+    "python": "3.14.0",
+    "seeds": [
+      21,
+      22,
+      23
+    ]
+  },
+  "peak_process_resident_memory_bytes": 934334464,
+  "real_model": true
+}
