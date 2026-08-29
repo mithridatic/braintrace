@@ -74,6 +74,14 @@ Example 21's grouped Adam implementation and the canonical task identifiers in
 `arc_contracts.py` are authoritative for structural measurement; structural
 runs use the same eight training and four validation tasks.
 
+Muon remapping for either addition arm is keyed by sparse identity, not by a
+prefix position. The map is a target-order permutation of `(source, target)`
+edge keys; surviving keys point to their source state row and new keys use a
+zero sentinel. This is required because canonical CSR sorting can insert a
+new edge before an existing edge. The optimizer proof checks the mapped state
+against these source and target keys and fails when values are preserved at a
+different sparse pair.
+
 Neuron addition selects distinct high-score donors for the first failing
 training task. Selected donors may not connect to one another. Each twin copies
 input and recurrent incoming edges, duplicates outgoing edges while splitting
@@ -150,11 +158,40 @@ focused evidence command is `python -m coverage run --branch --source=. -m
 pytest examples/pp_prop/example21_structural_test.py -q`, followed by
 `python -m coverage report -m`.
 
-The compiled addition driver must carry all mutable training state through the
-transform boundary. The 64-step result must include candidate parameters,
-every Muon state leaf, and the update count; mutating ordinary Python
-attributes inside the traced callback is not sufficient. A regression test
-compares final parameters, optimizer state, update count, and task order from
-the compiled driver with 64 sequential `update_episode` calls. The measured
-addition artifact may report `updates: 64` only when this state equivalence
-passes.
+### Gate 5 evidence clarifications (2026-08-28)
+
+The measured runner must collect one row for every fixed task, in the declared
+eight-training then four-validation order. Rows contain direct
+`model.previous_spikes` means, direct voltage-readout effects, and pre-clip
+`etrace_grad` mass. Validation rows are forward-only; their gradient-mass rows
+are zero when no learning update is permitted. Structural scores retain their
+task dimension: neuron evidence is reduced by task maximum, recurrent-edge
+evidence is reduced by task maximum, and owners retain all tied task maxima.
+
+Neuron additions select non-connected donors from the first failing training
+task. Connection additions use mean spike evidence for sources and the sum of
+incident pre-clip gradient mass and wrong-output readout evidence for targets.
+These arrays are measured inputs to selection; synthetic fallback scores are
+not valid measured evidence.
+
+Each addition update is a real target/readout-loss PP-Prop update from the
+ordered eight-task training schedule. The 64 updates are executed inside one
+`brainstate.transform.for_loop`; repeating one episode or an identity callback
+does not satisfy this contract.
+
+The parent optimizer state is captured after a real warm-up update. Structural
+rebuilds preserve nonzero state for surviving items and zero state for new
+items, and the artifact records these checks. Complete arm time starts before
+model construction and ends after strict evaluation and mask/compaction
+identity. It records Python, JAX, backend, device, peak RSS, the first strict
+transition update, and the PID for each isolated arm process. The final commit
+must contain exactly `Co-Authored-By: Paperclip <noreply@paperclip.ing>`.
+
+The runner always derives the evidence-ranked neuron alive mask before the
+validation gate. A closed validation gate leaves the parent candidate
+unchanged and reports zero mutations, but mask-versus-compaction identity uses
+that measured mask rather than an index-generated substitute. Tiled connection
+selection may stop only when a tile's nonnegative score upper bound is strictly
+below the current retained threshold; equal-score tiles remain eligible for
+stable index tie-breaking. Fixed-task forward and spike collection uses one
+compiled `brainstate.transform.for_loop` over the episode snapshot.

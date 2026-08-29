@@ -213,6 +213,14 @@ def _csr_indptr(source, rows):
     return jnp.concatenate((jnp.zeros((1,), dtype=jnp.int32), jnp.cumsum(counts)))
 
 
+def _canonical_sparse_relation(source, target, values):
+    source = jnp.asarray(source, dtype=jnp.int32)
+    target = jnp.asarray(target, dtype=jnp.int32)
+    values = jnp.asarray(values)
+    order = jnp.lexsort((target, source))
+    return source[order], target[order], values[order]
+
+
 class BrainCellArcModel(brainstate.nn.Module):
     """The 2,048-neuron sparse BrainCell baseline."""
 
@@ -227,16 +235,21 @@ class BrainCellArcModel(brainstate.nn.Module):
             readout = _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
         else:
             neuron_count = topology.neuron_count
+            input_source, input_target, input_values = _canonical_sparse_relation(
+                topology.input_source, topology.input_target, topology.input_value
+            )
+            recurrent_source, recurrent_target, recurrent_values = _canonical_sparse_relation(
+                topology.recurrent_source, topology.recurrent_target,
+                topology.recurrent_value,
+            )
             self.input_csr = brainevent.CSR(
-                jnp.asarray(topology.input_value),
-                jnp.asarray(topology.input_target, dtype=jnp.int32),
-                _csr_indptr(topology.input_source, N_INPUTS),
+                input_values, input_target,
+                _csr_indptr(input_source, N_INPUTS),
                 shape=(N_INPUTS, neuron_count),
             )
             self.recurrent_csr = brainevent.CSR(
-                jnp.asarray(topology.recurrent_value),
-                jnp.asarray(topology.recurrent_target, dtype=jnp.int32),
-                _csr_indptr(topology.recurrent_source, neuron_count),
+                recurrent_values, recurrent_target,
+                _csr_indptr(recurrent_source, neuron_count),
                 shape=(neuron_count, neuron_count),
             )
             input_values = self.input_csr.data
@@ -247,7 +260,11 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.readout_weight = brainstate.ParamState(
             readout
         )
-        self.readout_bias = brainstate.ParamState(jnp.zeros((N_READOUT,), dtype=jnp.float32))
+        readout_bias = getattr(topology, "readout_bias", None) if topology is not None else None
+        self.readout_bias = brainstate.ParamState(
+            jnp.zeros((N_READOUT,), dtype=jnp.float32)
+            if readout_bias is None else jnp.asarray(readout_bias)
+        )
         self.previous_spikes = brainstate.HiddenState(jnp.zeros((neuron_count,), dtype=jnp.float32))
         self.cell = CompatibilityHodgkinHuxley(neuron_count)
         self.cell.init_state()
@@ -320,6 +337,36 @@ def integration_substep_events(event, substeps):
     )
 
 
+def _run_event_sequence(model, events, advances, return_spikes):
+    events = jnp.asarray(events, dtype=jnp.float32)
+    if advances is None:
+        advances = jnp.ones((events.shape[0],), dtype=bool)
+    advances = jnp.asarray(advances, dtype=bool)
+    if events.ndim != 2 or events.shape[1] != N_INPUTS:
+        raise ValueError(f"events must have shape (time, {N_INPUTS})")
+    if advances.shape != (events.shape[0],):
+        raise ValueError("advances must have one boolean per event")
+
+    def step(event, advance):
+        if not return_spikes:
+            return model.step(event, advance)
+
+        def advancing():
+            voltage = model._advance(event)
+            return voltage, model.previous_spikes.value
+
+        def skipped():
+            zeros = jnp.zeros_like(model.previous_spikes.value)
+            return zeros, zeros
+
+        return brainstate.transform.cond(advance, advancing, skipped)
+
+    def drive(xs, mask):
+        return brainstate.transform.for_loop(step, xs, mask)
+
+    return brainstate.transform.jit(drive)(events, advances)
+
+
 def run_event_sequence(model, events, advances=None):
     """Run a compiled event sequence and return one voltage vector per event.
 
@@ -337,22 +384,27 @@ def run_event_sequence(model, events, advances=None):
     jax.Array
         Voltage values with shape ``(time, 2048)``.
     """
+    return _run_event_sequence(model, events, advances, False)
 
-    events = jnp.asarray(events, dtype=jnp.float32)
-    if advances is None:
-        advances = jnp.ones((events.shape[0],), dtype=bool)
-    advances = jnp.asarray(advances, dtype=bool)
-    if events.ndim != 2 or events.shape[1] != N_INPUTS:
-        raise ValueError(f"events must have shape (time, {N_INPUTS})")
-    if advances.shape != (events.shape[0],):
-        raise ValueError("advances must have one boolean per event")
 
-    def drive(xs, mask):
-        return brainstate.transform.for_loop(
-            lambda event, advance: model.step(event, advance), xs, mask
-        )
+def run_event_sequence_with_spikes(model, events, advances=None):
+    """Run a compiled event sequence and return voltage and spike traces.
 
-    return brainstate.transform.jit(drive)(events, advances)
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose state is advanced.
+    events : array-like
+        Event vectors with shape ``(time, 441)``.
+    advances : array-like, optional
+        Boolean event mask. Missing values mean that every event advances.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Voltage and direct ``previous_spikes`` values for every event.
+    """
+    return _run_event_sequence(model, events, advances, True)
 
 
 def run_pp_prop_sequence(learner, events, advances=None):
