@@ -2200,7 +2200,7 @@ def measure_real_arm(
         "promoted": promote_arm(baseline, after, elapsed,
                                  "addition" if arm.endswith("add") else "pruning", updates),
         "pruning_validation_strict": list(validation),
-        "pruning_blocked": not any(validation),
+        "pruning_blocked": bool(arm.endswith("prune") and not any(validation)),
         "strict_regression_rejected": not any(
             old and not new for old, new in zip(baseline, after)
         ),
@@ -2289,7 +2289,9 @@ def main(argv=None):
                     arm["arm"] for arm in arms if not arm.get("promoted", False)
                 ],
                 "pruning_blocked_by_design": [
-                    arm["arm"] for arm in arms if arm.get("pruning_blocked")
+                    arm["arm"] for arm in arms
+                    if arm["arm"].endswith("prune")
+                    and arm.get("pruning_blocked")
                 ],
                 "strict_regression_rejected": True,
                 "within_300_seconds": all(arm["within_300_seconds"] for arm in arms),
