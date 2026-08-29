@@ -104,12 +104,21 @@ mutation.
 The model integration boundary snapshots pre-clip gradients directly from
 `learner.etrace_grad` before `clip_gradient` is called. It accumulates absolute
 mass per task and sparse parameter item. Spike evidence is accumulated from
-`model.previous_spikes`; direct readout evidence is measured from the model's
-voltage feature and readout rows. Physical compaction rebuilds model and learner
-objects, remaps surviving Adam moments, and calls `reset_episode(learner)` so no
-eligibility state crosses a topology change.
+the direct Boolean event state in `model.previous_spikes` after every model
+step. A voltage threshold, including `voltage > 0`, is not valid spike evidence.
+Direct readout evidence is measured from the model's voltage feature and readout
+rows. Physical compaction rebuilds model and learner objects, remaps surviving
+Adam moments, and calls `reset_episode(learner)` so no eligibility state crosses
+a topology change.
 Compiled advance and padding branches must derive their output width from the
 rebuilt model state, not from the 2,048-neuron baseline constant.
+
+Both addition paths must calculate the candidate's complete input-plus-
+recurrent biological-connection count before constructing or compiling the
+candidate model. They must fail closed when that count would exceed `1,024 *
+candidate_neuron_count`. The ceiling check may inspect only sparse one-
+dimensional endpoint arrays and scalar counts; it must not allocate a dense pair
+array.
 
 Mask-versus-compaction identity is evaluated on the same episode snapshot. The
 masked parent zeros removed neurons and incident edges. The compact child uses
@@ -203,3 +212,10 @@ examples/pp_prop/example21_structural_test.py -q`, followed by
 examples/pp_prop/example21_structural.py`. The reported percentage is total line-plus-
 branch coverage and must exceed 90%; statement-only coverage must not be called
 branch coverage.
+
+The 300-second merge gate uses each arm artifact's finite, nonnegative
+`complete_process_seconds`, measured from command entry through evidence
+construction immediately before artifact serialization. It must reject a value
+above 300 seconds even when the internal structural-operation timer and
+`within_300_seconds` flag pass. Promotion and the merged bounded-runtime control
+must use this complete-process result.

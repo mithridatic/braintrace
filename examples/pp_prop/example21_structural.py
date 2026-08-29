@@ -16,6 +16,9 @@ from pathlib import Path
 import numpy as np
 
 
+BIOLOGICAL_CONNECTIONS_PER_NEURON = 1024
+
+
 def _git_commit():
     """Return the current implementation revision for measured artifacts."""
 
@@ -813,6 +816,39 @@ def resident_tile_pairs(tile_size):
     return tile_size * tile_size
 
 
+def enforce_biological_connection_ceiling(
+    neuron_count, input_count, recurrent_count
+):
+    """Validate the sparse biological-connection count before compilation.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Candidate biological-neuron count.
+    input_count, recurrent_count : int
+        Candidate one-dimensional sparse edge counts.
+
+    Returns
+    -------
+    int
+        Validated total biological-connection count.
+
+    Raises
+    ------
+    ValueError
+        If a count is negative or the candidate exceeds 1,024 connections per
+        neuron.
+    """
+
+    counts = (int(neuron_count), int(input_count), int(recurrent_count))
+    if any(value < 0 for value in counts) or counts[0] < 1:
+        raise ValueError("biological connection counts must be nonnegative")
+    total = counts[1] + counts[2]
+    if total > BIOLOGICAL_CONNECTIONS_PER_NEURON * counts[0]:
+        raise ValueError("candidate exceeds the biological-connection ceiling")
+    return total
+
+
 def structural_evidence(
     topology, readout_effect, spikes, gradient_mass, input_gradient_mass=None
 ):
@@ -997,6 +1033,25 @@ def add_twin_neurons(topology, scores, required=None):
     if len(donors) != required:
         raise ValueError("selected donors are connected")
     donors = tuple(donors)
+    input_degree = np.bincount(
+        topology.input_target, minlength=topology.neuron_count
+    )
+    recurrent_in_degree = np.bincount(
+        topology.recurrent_target, minlength=topology.neuron_count
+    )
+    recurrent_out_degree = np.bincount(
+        topology.recurrent_source, minlength=topology.neuron_count
+    )
+    added_input = int(np.sum(input_degree[np.asarray(donors, dtype=int)]))
+    added_recurrent = int(np.sum(
+        recurrent_in_degree[np.asarray(donors, dtype=int)]
+        + recurrent_out_degree[np.asarray(donors, dtype=int)]
+    ))
+    enforce_biological_connection_ceiling(
+        topology.neuron_count + len(donors),
+        len(topology.input_value) + added_input,
+        len(topology.recurrent_value) + added_recurrent,
+    )
     offset = topology.neuron_count
     input_source = list(topology.input_source)
     input_target = list(topology.input_target)
@@ -1159,6 +1214,11 @@ def add_recurrent_connections(topology, pairs, *, typed=False):
     existing = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
     if len(set(pairs)) != len(pairs) or any(pair in existing for pair in pairs):
         raise ValueError("connection additions must be distinct and absent")
+    enforce_biological_connection_ceiling(
+        topology.neuron_count,
+        len(topology.input_value),
+        len(topology.recurrent_value) + len(pairs),
+    )
     initial = np.log(np.expm1(1e-6)) if typed else 0.0
     return SparseTopology(
         topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
@@ -1405,19 +1465,21 @@ def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
         if input_gradient is None or recurrent_gradient is None:
             raise ValueError("pre-clip mass must contain input and recurrent weights")
         model.reset_episode(learner)
-        voltages = module.run_event_sequence(model, events, advances)
+        voltages, spikes = module.run_event_sequence(
+            model, events, advances, return_spikes=True
+        )
         return (
             jnp.abs(input_gradient), jnp.abs(recurrent_gradient),
-            jnp.sum(losses), voltages,
+            jnp.sum(losses), voltages, spikes,
         )
 
-    input_mass, gradient_mass, losses, voltages = transform.for_loop(
+    input_mass, gradient_mass, losses, voltages, spikes = transform.for_loop(
         measure_task, training_events, training_advances
     )
     input_mass = np.asarray(input_mass)
     gradient_mass = np.asarray(gradient_mass)
     voltages = np.asarray(voltages)
-    spikes = np.mean(voltages > 0.0, axis=1)
+    spikes = np.mean(np.asarray(spikes, dtype=float), axis=1)
     readout_weight = np.asarray(model.readout_weight.value)
     readout_bias = np.asarray(model.readout_bias.value)
     request_voltages = voltages[:, -31:, :]
@@ -1724,6 +1786,39 @@ def promote_arm(before, after, elapsed_seconds, arm, updates):
     return gained and not regressed
 
 
+def apply_complete_process_timing(evidence, elapsed_seconds):
+    """Apply the complete command timer to bounded arm evidence.
+
+    Parameters
+    ----------
+    evidence : dict
+        Mutable arm or aggregate evidence.
+    elapsed_seconds : float
+        Command-entry through evidence-construction wall time.
+
+    Returns
+    -------
+    dict
+        The same evidence mapping with complete-process timing applied.
+    """
+
+    elapsed_seconds = float(elapsed_seconds)
+    if not np.isfinite(elapsed_seconds) or elapsed_seconds < 0.0:
+        raise ValueError("complete process time must be finite and nonnegative")
+    evidence["complete_process_seconds"] = elapsed_seconds
+    arm = evidence.get("arm")
+    if arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
+        evidence["within_300_seconds"] = elapsed_seconds <= 300.0
+        evidence["promoted"] = promote_arm(
+            evidence.get("before_strict", ()),
+            evidence.get("after_strict", ()),
+            elapsed_seconds,
+            "addition" if arm.endswith("add") else "pruning",
+            int(evidence.get("updates", 0)),
+        )
+    return evidence
+
+
 def validate_merged_arms(arms):
     """Reject a merged artifact unless every real arm is bounded and honest.
 
@@ -1771,10 +1866,17 @@ def validate_merged_arms(arms):
         gained = any(not old and new for old, new in zip(before, after))
         regressed = any(old and not new for old, new in zip(before, after))
         expected_promotion = bool(
-            gained and not regressed and arm.get("within_300_seconds")
+            gained and not regressed
         )
         if regressed or not arm.get("strict_regression_rejected"):
             raise ValueError(f"{name} has a strict regression")
+        complete_process_seconds = arm.get("complete_process_seconds")
+        if (isinstance(complete_process_seconds, bool)
+                or not isinstance(complete_process_seconds, (int, float))
+                or not np.isfinite(complete_process_seconds)
+                or complete_process_seconds < 0.0
+                or complete_process_seconds > 300.0):
+            raise ValueError(f"{name} complete process exceeds the 300-second limit")
         if not arm.get("within_300_seconds"):
             raise ValueError(f"{name} exceeds the 300-second limit")
         if bool(arm.get("promoted")) != expected_promotion:
@@ -2330,8 +2432,8 @@ def main(argv=None):
             data_root=args.data_root,
             parent_checkpoint=args.parent_checkpoint,
         )
-    evidence["complete_process_seconds"] = float(
-        time.perf_counter() - command_started
+    apply_complete_process_timing(
+        evidence, time.perf_counter() - command_started
     )
     evidence["peak_process_resident_memory_bytes"] = (
         _peak_process_resident_memory_bytes()

@@ -320,8 +320,8 @@ def integration_substep_events(event, substeps):
     )
 
 
-def run_event_sequence(model, events, advances=None):
-    """Run a compiled event sequence and return one voltage vector per event.
+def run_event_sequence(model, events, advances=None, *, return_spikes=False):
+    """Run a compiled event sequence and return direct biological state.
 
     Parameters
     ----------
@@ -331,11 +331,16 @@ def run_event_sequence(model, events, advances=None):
         Event vectors with shape ``(time, 441)``.
     advances : array-like, optional
         Boolean event mask. Missing values mean that every event advances.
+    return_spikes : bool, optional
+        Return the direct ``model.previous_spikes`` value after each advancing
+        event in addition to voltage.
 
     Returns
     -------
-    jax.Array
-        Voltage values with shape ``(time, 2048)``.
+    jax.Array or tuple of jax.Array
+        Voltage values with shape ``(time, neurons)``. When ``return_spikes``
+        is true, the second array contains direct spike states with the same
+        shape and exact zeros for non-advancing padding events.
     """
 
     events = jnp.asarray(events, dtype=jnp.float32)
@@ -348,9 +353,21 @@ def run_event_sequence(model, events, advances=None):
         raise ValueError("advances must have one boolean per event")
 
     def drive(xs, mask):
-        return brainstate.transform.for_loop(
-            lambda event, advance: model.step(event, advance), xs, mask
-        )
+        if not return_spikes:
+            return brainstate.transform.for_loop(
+                lambda event, advance: model.step(event, advance), xs, mask
+            )
+
+        def step_with_spikes(event, advance):
+            voltage = model.step(event, advance)
+            spikes = jnp.where(
+                advance,
+                model.previous_spikes.value,
+                jnp.zeros_like(model.previous_spikes.value),
+            )
+            return voltage, spikes
+
+        return brainstate.transform.for_loop(step_with_spikes, xs, mask)
 
     return brainstate.transform.jit(drive)(events, advances)
 

@@ -171,10 +171,14 @@ def test_compiled_event_sequence_freezes_padding_and_returns_outputs():
     model = fixture.BrainCellArcModel()
     events = jnp.zeros((2, fixture.N_INPUTS), dtype=jnp.float32)
     before = model.cell.V.value.to_decimal(u.mV).copy()
-    outputs = fixture.run_event_sequence(model, events, [False, False])
+    outputs, spikes = fixture.run_event_sequence(
+        model, events, [False, False], return_spikes=True
+    )
     assert outputs.shape == (2, fixture.N_NEURONS)
+    assert spikes.shape == (2, fixture.N_NEURONS)
     assert jnp.array_equal(model.cell.V.value.to_decimal(u.mV), before)
     assert jnp.array_equal(outputs, jnp.zeros_like(outputs))
+    assert jnp.array_equal(spikes, jnp.zeros_like(spikes))
 
 
 def test_padding_does_not_change_a_valid_sequence_result():

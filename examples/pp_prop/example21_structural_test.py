@@ -334,6 +334,26 @@ def test_twin_addition_is_connected_splits_values_and_zeros_new_moments():
         structural.add_twin_neurons(topology, [2.0, 1.0], required=2)
 
 
+def test_neuron_addition_rejects_connection_ceiling_before_candidate_build(monkeypatch):
+    topology = structural.SparseTopology(
+        input_source=np.zeros(1024, dtype=int),
+        input_target=np.zeros(1024, dtype=int),
+        input_value=np.ones(1024),
+        recurrent_source=np.zeros(1024, dtype=int),
+        recurrent_target=np.ones(1024, dtype=int),
+        recurrent_value=np.ones(1024),
+        readout=np.ones((2, 1)), dale=np.zeros(2), mechanisms=((), ()),
+    )
+    monkeypatch.setattr(
+        np, "vstack",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("candidate arrays were constructed before the ceiling check")
+        ),
+    )
+    with pytest.raises(ValueError, match="biological-connection ceiling"):
+        structural.add_twin_neurons(topology, [1.0, 0.0], required=1)
+
+
 def test_twin_connectivity_guard_handles_numpy_edge_arrays():
     topology = structural.SparseTopology(
         np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
@@ -384,6 +404,28 @@ def test_connection_addition_appends_exact_items_and_zero_moments():
         structural.add_recurrent_connections(topology, ((0, 1),))
     with pytest.raises(ValueError, match="65,536"):
         structural.select_connection_additions(2, set(), [1, 1], [1, 1], 1, 257)
+
+
+def test_connection_addition_rejects_connection_ceiling_before_concatenation(
+    monkeypatch,
+):
+    topology = structural.SparseTopology(
+        input_source=np.zeros(1024, dtype=int),
+        input_target=np.zeros(1024, dtype=int),
+        input_value=np.ones(1024),
+        recurrent_source=np.zeros(1024, dtype=int),
+        recurrent_target=np.zeros(1024, dtype=int),
+        recurrent_value=np.ones(1024),
+        readout=np.ones((2, 1)), dale=np.zeros(2), mechanisms=((), ()),
+    )
+    monkeypatch.setattr(
+        np, "concatenate",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("candidate arrays were constructed before the ceiling check")
+        ),
+    )
+    with pytest.raises(ValueError, match="biological-connection ceiling"):
+        structural.add_recurrent_connections(topology, ((0, 1),))
 
 
 def test_preclip_mass_is_taken_directly_from_real_etrace_boundary():
@@ -474,6 +516,21 @@ def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
         clock=iter((0.0, 1.0)).__next__,
     )
     assert not pruning["promoted"] and pruning["updates"] == 0
+
+
+def test_complete_process_timing_controls_bounded_result_and_promotion():
+    evidence = {
+        "arm": "neuron-add",
+        "updates": 64,
+        "before_strict": [False, True],
+        "after_strict": [True, True],
+        "within_300_seconds": True,
+        "promoted": True,
+    }
+    structural.apply_complete_process_timing(evidence, 300.25)
+    assert evidence["complete_process_seconds"] == 300.25
+    assert not evidence["within_300_seconds"]
+    assert not evidence["promoted"]
 
 
 def test_artifact_is_canonical_and_records_environment(tmp_path):
@@ -709,6 +766,7 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
     class Model:
         readout_weight = SimpleNamespace(value=np.ones((2, 360)))
         readout_bias = SimpleNamespace(value=np.zeros(360))
+        previous_spikes = SimpleNamespace(value=np.array([0.0, 1.0]))
 
         def reset_episode(self, learner):
             pass
@@ -717,12 +775,17 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
             return np.zeros(360)
 
     task = SimpleNamespace(targets=(np.zeros((1, 1), dtype=np.uint8),))
+    def run_event_sequence(_model, _events, _advances, *, return_spikes=False):
+        voltages = np.full((31, 2), 10.0)
+        direct_spikes = np.tile(np.array([0.0, 1.0]), (31, 1))
+        return (voltages, direct_spikes) if return_spikes else voltages
+
     module = SimpleNamespace(
         TRAINING_TASK_IDS=("train",),
         VALIDATION_TASK_IDS=("valid",),
         load_task=lambda *args: task,
         encode_episode=lambda *args: (np.ones((31, 441)), np.ones(31, dtype=bool)),
-        run_event_sequence=lambda *args: np.zeros((31, 2)),
+        run_event_sequence=run_event_sequence,
         decode_prediction=lambda value: (
             np.zeros((1, 1), dtype=np.uint8)
             if np.asarray(value).shape == (31, 360)
@@ -755,6 +818,7 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
         module, Model(), learner, "data", transform=_EagerTransform
     )
     assert evidence["strict"] == [True, True]
+    np.testing.assert_array_equal(evidence["task_spike_evidence"], [[0.0, 1.0]])
 
 
 def test_real_model_uses_canonical_validation_task_ids():
@@ -971,7 +1035,10 @@ def test_fixed_task_evidence_measures_all_eight_training_tasks(monkeypatch):
         VALIDATION_TASK_IDS=("valid",),
         load_task=load_task,
         encode_episode=encode_episode,
-        run_event_sequence=lambda *_args: np.full((31, 2), -45.0),
+        run_event_sequence=lambda *_args, **kwargs: (
+            (np.full((31, 2), -45.0), np.ones((31, 2)))
+            if kwargs.get("return_spikes") else np.full((31, 2), -45.0)
+        ),
         decode_prediction=lambda _value: np.zeros((1, 1), dtype=np.uint8),
         strict_task_pass_at_1=lambda _predictions, _targets: False,
     )
@@ -1276,6 +1343,7 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
             "promoted": True,
             "strict_regression_rejected": True,
             "within_300_seconds": True,
+            "complete_process_seconds": 299.0,
             "dense_neuron_pair_array": False,
             "parent_checkpoint_sha256": "parent",
             "parent_checkpoint_sha256_after": "parent",
@@ -1357,6 +1425,7 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
         ), "promotion record"),
         (lambda values: values[0].update(after_strict=[True, False] + [True] * 10), "strict regression"),
         (lambda values: values[0].update(within_300_seconds=False), "300-second"),
+        (lambda values: values[0].update(complete_process_seconds=300.01), "complete process"),
         (lambda values: values[0].update(dense_neuron_pair_array=True), "sparse pair"),
         (lambda values: values[0].update(training_evidence_task_ids=[]), "eight training"),
         (lambda values: values[0].update(parent_optimizer_nonzero=False), "nonzero parent"),
