@@ -1257,7 +1257,7 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
         addition = name.endswith("add")
         result = {
             "arm": name,
-            "environment": {"pid": pid},
+            "environment": {"pid": pid, "pid_namespace": f"pid:[{pid}]"},
             "implementation_commit": "abc",
             "real_model": True,
             "baseline_neurons": 100,
@@ -1304,6 +1304,9 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
     )]
     structural.validate_merged_arms(arms)
     for arm_evidence in arms:
+        arm_evidence["environment"]["pid"] = 1
+    structural.validate_merged_arms(arms)
+    for arm_evidence in arms:
         arm_evidence["before_strict"] = [False] * 12
         arm_evidence["after_strict"] = [False] * 12
         arm_evidence["promoted"] = False
@@ -1339,7 +1342,9 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
     )]
     mutations = (
         (lambda values: values.reverse(), "fixed order"),
-        (lambda values: values[1]["environment"].update(pid=1), "separate process"),
+        (lambda values: values[1].update(
+            environment=values[0]["environment"].copy()
+        ), "separate process"),
         (lambda values: values[1].update(implementation_commit="def"), "implementation commit"),
         (lambda values: values[1].update(parent_checkpoint_sha256="other"), "parent checkpoint"),
         (lambda values: values[0].update(

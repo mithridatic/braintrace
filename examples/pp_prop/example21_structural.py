@@ -1693,10 +1693,15 @@ def execute_one_arm(arm, before_strict, operation, evaluate, *, updates=0,
 def write_artifact(path, evidence):
     """Write canonical measured evidence and return its SHA-256 digest."""
 
+    try:
+        pid_namespace = os.readlink("/proc/self/ns/pid")
+    except OSError:
+        pid_namespace = None
     document = {
         "environment": {
             "python": sys.version.split()[0], "platform": platform.platform(),
-            "pid": os.getpid(), "seeds": [21, 22, 23],
+            "pid": os.getpid(), "pid_namespace": pid_namespace,
+            "seeds": [21, 22, 23],
         },
         **evidence,
     }
@@ -1737,8 +1742,15 @@ def validate_merged_arms(arms):
     )
     if tuple(arm.get("arm") for arm in arms) != expected_names:
         raise ValueError("merge requires the four structural arms in fixed order")
-    pids = [arm.get("environment", {}).get("pid") for arm in arms]
-    if None in pids or len(set(pids)) != len(pids):
+    process_identities = [
+        (
+            arm.get("environment", {}).get("pid_namespace"),
+            arm.get("environment", {}).get("pid"),
+        )
+        for arm in arms
+    ]
+    if (any(pid is None for _namespace, pid in process_identities)
+            or len(set(process_identities)) != len(process_identities)):
         raise ValueError("each structural arm must use one separate process")
     commits = {arm.get("implementation_commit") for arm in arms}
     parents = {arm.get("parent_checkpoint_sha256") for arm in arms}
