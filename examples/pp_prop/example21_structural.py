@@ -11,6 +11,7 @@ import sys
 import time
 from dataclasses import dataclass
 from math import ceil
+from pathlib import Path
 
 import numpy as np
 
@@ -18,10 +19,11 @@ import numpy as np
 def _git_commit():
     """Return the current implementation revision for measured artifacts."""
 
+    repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     try:
         result = subprocess.run(
-            ("git", "rev-parse", "HEAD"), capture_output=True, text=True,
-            check=True,
+            ("git", "-c", f"safe.directory={repo}", "rev-parse", "HEAD"),
+            cwd=repo, capture_output=True, text=True, check=True,
         )
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
@@ -128,6 +130,20 @@ class SparseTopology:
 
 @dataclass
 class StructuralAdam:
+    """Sparse optimizer arrays carried across a topology rebuild.
+
+    Attributes
+    ----------
+    neuron_first, neuron_second : numpy.ndarray
+        Readout-weight optimizer arrays indexed by neuron.
+    input_first, input_second : numpy.ndarray
+        Sparse input-edge optimizer arrays.
+    recurrent_first, recurrent_second : numpy.ndarray
+        Sparse recurrent-edge optimizer arrays.
+    input_step, recurrent_step, readout_step : int
+        Preserved optimizer update counts.
+    """
+
     neuron_first: np.ndarray
     neuron_second: np.ndarray
     input_first: np.ndarray
@@ -135,6 +151,110 @@ class StructuralAdam:
     recurrent_first: np.ndarray
     recurrent_second: np.ndarray
     step: int = 0
+    bias_first: np.ndarray | None = None
+    bias_second: np.ndarray | None = None
+    input_step: int | None = None
+    recurrent_step: int | None = None
+    readout_step: int | None = None
+
+    def __post_init__(self):
+        self.input_step = self.step if self.input_step is None else self.input_step
+        self.recurrent_step = self.step if self.recurrent_step is None else self.recurrent_step
+        self.readout_step = self.step if self.readout_step is None else self.readout_step
+
+
+@dataclass(frozen=True)
+class ParentCheckpoint:
+    """Validated parent topology, parameters, and nonzero optimizer state.
+
+    Attributes
+    ----------
+    topology : SparseTopology
+        Loaded sparse parent topology.
+    optimizer : StructuralAdam
+        Loaded optimizer values and step counts.
+    readout_bias : numpy.ndarray
+        Loaded direct-readout bias.
+    digest : str
+        SHA-256 digest of the checkpoint file bytes.
+    nonzero_optimizer_values : bool
+        Whether at least one loaded optimizer value is nonzero.
+    """
+
+    topology: SparseTopology
+    optimizer: StructuralAdam
+    readout_bias: np.ndarray
+    digest: str
+    nonzero_optimizer_values: bool
+
+
+def load_parent_checkpoint(module, path):
+    """Load one accepted parent with real, nonzero optimizer values.
+
+    Parameters
+    ----------
+    module : module
+        Example 21 module that exposes the validated ``load_checkpoint`` API.
+    path : path-like
+        Accepted parent checkpoint path.
+
+    Returns
+    -------
+    ParentCheckpoint
+        Sparse model state and optimizer arrays ready for remapping.
+    """
+
+    arrays = module.load_checkpoint(path)
+    neuron_count = int(arrays["neuron_count"])
+    input_indptr = np.asarray(arrays["input_indptr"])
+    recurrent_indptr = np.asarray(arrays["recurrent_indptr"])
+    if len(input_indptr) != 442:
+        raise ValueError("parent checkpoint must contain 441 sparse input rows")
+    if len(recurrent_indptr) != neuron_count + 1:
+        raise ValueError("parent checkpoint recurrent row count is invalid")
+    topology = SparseTopology(
+        np.repeat(np.arange(441), np.diff(input_indptr)),
+        np.asarray(arrays["input_indices"]),
+        np.asarray(arrays["input_values"]),
+        np.repeat(np.arange(neuron_count), np.diff(recurrent_indptr)),
+        np.asarray(arrays["recurrent_indices"]),
+        np.asarray(arrays["recurrent_values"]),
+        np.asarray(arrays["readout_weight"]),
+        np.asarray(arrays["dale_codes"]),
+        tuple(() if code == 0 else (int(code),)
+              for code in np.asarray(arrays["mechanism_codes"])),
+    )
+    optimizer = StructuralAdam(
+        np.asarray(arrays["readout_weight_m1"]),
+        np.asarray(arrays["readout_weight_m2"]),
+        np.asarray(arrays["input_m1"]),
+        np.asarray(arrays["input_m2"]),
+        np.asarray(arrays["recurrent_m1"]),
+        np.asarray(arrays["recurrent_m2"]),
+        bias_first=np.asarray(arrays["readout_bias_m1"]),
+        bias_second=np.asarray(arrays["readout_bias_m2"]),
+        input_step=int(arrays["input_step"]),
+        recurrent_step=int(arrays["recurrent_step"]),
+        readout_step=int(arrays["readout_step"]),
+    )
+    optimizer_values = (
+        optimizer.neuron_first, optimizer.neuron_second,
+        optimizer.input_first, optimizer.input_second,
+        optimizer.recurrent_first, optimizer.recurrent_second,
+        optimizer.bias_first, optimizer.bias_second,
+    )
+    nonzero = any(np.any(np.asarray(value) != 0) for value in optimizer_values)
+    if not nonzero:
+        raise ValueError("parent checkpoint must contain nonzero optimizer values")
+    if min(optimizer.input_step, optimizer.recurrent_step, optimizer.readout_step) < 1:
+        raise ValueError("parent checkpoint optimizer steps must be positive")
+    return ParentCheckpoint(
+        topology=topology,
+        optimizer=optimizer,
+        readout_bias=np.asarray(arrays["readout_bias"]),
+        digest=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+        nonzero_optimizer_values=bool(nonzero),
+    )
 
 
 def remap_muon_groups(muon_groups, parameter_maps):
@@ -161,21 +281,25 @@ def remap_muon_groups(muon_groups, parameter_maps):
         if isinstance(value, tuple) and hasattr(value, "_fields"):
             return type(value)(*(remap(item, selector, target_shape)
                                  for item in value))
+        if isinstance(value, tuple):
+            return type(value)(
+                remap(item, selector, target_shape) for item in value
+            )
+        shape = getattr(value, "shape", None)
+        source_shape = (len(selector),) + tuple(target_shape[1:])
+        if shape == source_shape:
+            selected = value[selector]
+            if selected.shape[0] == target_shape[0]:
+                return selected
+            padding = [(0, target_shape[0] - selected.shape[0])]
+            padding.extend((0, 0) for _ in target_shape[1:])
+            return np.pad(selected, padding)
         if hasattr(value, "__dict__"):
             result = copy.copy(value)
             for name, item in vars(value).items():
                 setattr(result, name, remap(item, selector, target_shape))
             return result
-        shape = getattr(value, "shape", None)
-        source_shape = (len(selector),) + tuple(target_shape[1:])
-        if shape != source_shape:
-            return value
-        selected = value[selector]
-        if selected.shape[0] == target_shape[0]:
-            return selected
-        padding = [(0, target_shape[0] - selected.shape[0])]
-        padding.extend((0, 0) for _ in target_shape[1:])
-        return np.pad(selected, padding)
+        return value
 
     return {
         name: remap(state, *parameter_maps[name])
@@ -184,10 +308,397 @@ def remap_muon_groups(muon_groups, parameter_maps):
     }
 
 
+def _replace_muon_arrays(state, first, second, step):
+    """Seed an Optax Muon state tree from accepted checkpoint arrays."""
+    import jax.numpy as jnp
+
+    if isinstance(state, dict):
+        return type(state)(
+            (key, _replace_muon_arrays(value, first, second, step))
+            for key, value in state.items()
+        )
+    if isinstance(state, tuple) and hasattr(state, "_fields"):
+        values = {}
+        for name, value in zip(state._fields, state):
+            if name == "count" and hasattr(value, "shape") and value.shape == ():
+                values[name] = jnp.asarray(step, dtype=value.dtype)
+            elif name == "mu" and getattr(value, "shape", None) == first.shape:
+                values[name] = jnp.asarray(first, dtype=value.dtype)
+            elif name == "nu" and getattr(value, "shape", None) == second.shape:
+                values[name] = jnp.asarray(second, dtype=value.dtype)
+            else:
+                values[name] = _replace_muon_arrays(value, first, second, step)
+        return type(state)(**values)
+    if isinstance(state, tuple):
+        return type(state)(
+            _replace_muon_arrays(value, first, second, step) for value in state
+        )
+    return state
+
+
+def initialize_muon_groups(trainer, optimizer):
+    """Initialize active Muon groups from an accepted structural checkpoint.
+
+    Parameters
+    ----------
+    trainer : object
+        PP-Prop trainer with parameter groups and learning rates.
+    optimizer : StructuralAdam
+        Accepted checkpoint optimizer arrays.
+
+    Returns
+    -------
+    dict
+        Active Optax Muon states keyed by parameter name.
+    """
+    import optax
+
+    arrays = {
+        "input": (optimizer.input_first, optimizer.input_second, optimizer.input_step),
+        "recurrent": (
+            optimizer.recurrent_first, optimizer.recurrent_second,
+            optimizer.recurrent_step,
+        ),
+        "readout_weight": (
+            optimizer.neuron_first, optimizer.neuron_second,
+            optimizer.readout_step,
+        ),
+        "readout_bias": (
+            optimizer.bias_first, optimizer.bias_second,
+            optimizer.readout_step,
+        ),
+    }
+    groups = {}
+    for name, parameter in trainer.parameters.items():
+        if name not in arrays:
+            continue
+        first, second, step = arrays[name]
+        if first is None or second is None:
+            continue
+        rate_name = next(
+            (candidate for candidate in trainer.learning_rates if candidate in name),
+            None,
+        )
+        if rate_name is None:
+            continue
+        rate = trainer.learning_rates[rate_name]
+        transform = optax.contrib.muon(
+            learning_rate=rate,
+            weight_decay=0.1,
+            adam_learning_rate=rate,
+            adam_weight_decay=0.1,
+        )
+        groups[name] = _replace_muon_arrays(
+            transform.init(parameter), np.asarray(first), np.asarray(second), int(step)
+        )
+    return groups
+
+
+def optimizer_remap_checks(source, candidate, parameter_maps):
+    """Measure surviving-value preservation and zero state for new items.
+
+    Parameters
+    ----------
+    source, candidate : StructuralAdam
+        Parent and remapped candidate optimizer arrays.
+    parameter_maps : mapping
+        Sparse row selectors and target shapes.
+
+    Returns
+    -------
+    dict
+        Boolean preservation checks and source and candidate step counts.
+    """
+
+    arrays = {
+        "input": (
+            source.input_first, source.input_second,
+            candidate.input_first, candidate.input_second,
+        ),
+        "recurrent": (
+            source.recurrent_first, source.recurrent_second,
+            candidate.recurrent_first, candidate.recurrent_second,
+        ),
+        "readout_weight": (
+            source.neuron_first, source.neuron_second,
+            candidate.neuron_first, candidate.neuron_second,
+        ),
+    }
+    preserved = True
+    new_zero = True
+    for name, (source_first, source_second, target_first, target_second) in arrays.items():
+        selector, target_shape = parameter_maps[name]
+        expected_first = np.asarray(source_first)[selector]
+        expected_second = np.asarray(source_second)[selector]
+        surviving = len(expected_first)
+        preserved &= bool(
+            np.array_equal(np.asarray(target_first)[:surviving], expected_first)
+            and np.array_equal(np.asarray(target_second)[:surviving], expected_second)
+        )
+        new_zero &= bool(
+            np.all(np.asarray(target_first)[surviving:] == 0)
+            and np.all(np.asarray(target_second)[surviving:] == 0)
+            and np.asarray(target_first).shape == tuple(target_shape)
+        )
+    steps_preserved = (
+        source.input_step == candidate.input_step
+        and source.recurrent_step == candidate.recurrent_step
+        and source.readout_step == candidate.readout_step
+    )
+    return {
+        "surviving_values_preserved": bool(preserved),
+        "new_values_zero": bool(new_zero),
+        "step_counts_preserved": bool(steps_preserved),
+        "source_steps": {
+            "input": int(source.input_step),
+            "recurrent": int(source.recurrent_step),
+            "readout": int(source.readout_step),
+        },
+        "candidate_initial_steps": {
+            "input": int(candidate.input_step),
+            "recurrent": int(candidate.recurrent_step),
+            "readout": int(candidate.readout_step),
+        },
+    }
+
+
+def muon_remap_checks(source_groups, candidate_groups, parameter_maps):
+    """Compare active candidate Muon state with the exact sparse remap.
+
+    Parameters
+    ----------
+    source_groups, candidate_groups : mapping
+        Parent and candidate Optax Muon state trees.
+    parameter_maps : mapping
+        Sparse row selectors and target shapes.
+
+    Returns
+    -------
+    dict
+        Loaded, nonzero, and preservation measurements.
+    """
+    import jax
+
+    expected = remap_muon_groups(source_groups, parameter_maps)
+    expected_structure = jax.tree_util.tree_structure(expected)
+    candidate_structure = jax.tree_util.tree_structure(candidate_groups)
+    if expected_structure != candidate_structure:
+        return {"loaded": bool(source_groups), "surviving_values_preserved": False}
+    expected_leaves = jax.tree_util.tree_leaves(expected)
+    candidate_leaves = jax.tree_util.tree_leaves(candidate_groups)
+    equal = all(
+        np.array_equal(np.asarray(left), np.asarray(right))
+        for left, right in zip(expected_leaves, candidate_leaves)
+    )
+    nonzero = any(
+        np.any(np.asarray(value) != 0)
+        for value in jax.tree_util.tree_leaves(source_groups)
+        if hasattr(value, "shape")
+    )
+    return {
+        "loaded": bool(source_groups),
+        "source_nonzero": bool(nonzero),
+        "surviving_values_preserved": bool(equal),
+    }
+
+
+def _muon_parameter_arrays(state, shape):
+    """Extract active Muon or Adam-fallback arrays for one parameter."""
+    matches = []
+
+    def visit(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                visit(item)
+            return
+        if isinstance(value, tuple) and hasattr(value, "_fields"):
+            fields = dict(zip(value._fields, value))
+            first = fields.get("mu")
+            if getattr(first, "shape", None) == shape:
+                second = fields.get("nu")
+                if getattr(second, "shape", None) != shape:
+                    second = np.zeros(shape, dtype=np.asarray(first).dtype)
+                count = fields.get("count", 0)
+                matches.append((
+                    np.asarray(first), np.asarray(second), int(np.asarray(count))
+                ))
+            for item in value:
+                visit(item)
+            return
+        if isinstance(value, tuple):
+            for item in value:
+                visit(item)
+
+    visit(state)
+    if len(matches) != 1:
+        raise ValueError("active optimizer state does not match one parameter")
+    return matches[0]
+
+
+def optimizer_from_muon_groups(trainer):
+    """Convert active Muon state to fixed structural checkpoint arrays.
+
+    Parameters
+    ----------
+    trainer : object
+        Trained PP-Prop trainer with active Muon groups.
+
+    Returns
+    -------
+    StructuralAdam
+        Fixed optimizer arrays and step counts.
+    """
+
+    extracted = {}
+    for name in ("input", "recurrent", "readout_weight", "readout_bias"):
+        if name not in trainer.muon_groups or name not in trainer.parameters:
+            raise ValueError(f"active optimizer has no {name} state")
+        extracted[name] = _muon_parameter_arrays(
+            trainer.muon_groups[name], tuple(trainer.parameters[name].shape)
+        )
+    input_first, input_second, input_step = extracted["input"]
+    recurrent_first, recurrent_second, recurrent_step = extracted["recurrent"]
+    readout_first, readout_second, readout_step = extracted["readout_weight"]
+    bias_first, bias_second, bias_step = extracted["readout_bias"]
+    if bias_step != readout_step:
+        raise ValueError("readout optimizer step counts are inconsistent")
+    return StructuralAdam(
+        readout_first, readout_second,
+        input_first, input_second,
+        recurrent_first, recurrent_second,
+        bias_first=bias_first,
+        bias_second=bias_second,
+        input_step=input_step,
+        recurrent_step=recurrent_step,
+        readout_step=readout_step,
+    )
+
+
+def checkpoint_arrays(model, optimizer, evidence):
+    """Build the exact array-only checkpoint schema from a trained parent.
+
+    Parameters
+    ----------
+    model : object
+        Trained Example 21 model.
+    optimizer : StructuralAdam
+        Extracted active optimizer state.
+    evidence : mapping
+        Measured task ownership evidence.
+
+    Returns
+    -------
+    dict
+        Arrays in the format-1 checkpoint schema.
+    """
+
+    topology = topology_from_model(model)
+    input_counts = np.bincount(topology.input_source, minlength=441)
+    recurrent_counts = np.bincount(
+        topology.recurrent_source, minlength=topology.neuron_count
+    )
+    owners = evidence.get("owners", ((),) * topology.neuron_count)
+    owner_codes = np.asarray([
+        -1 if not owner else (owner[0] if len(owner) == 1 else -2)
+        for owner in owners
+    ], dtype=np.int16)
+    return {
+        "neuron_ids": np.arange(topology.neuron_count, dtype=np.int32),
+        "dale_codes": np.asarray(topology.dale, dtype=np.int8),
+        "owner_codes": owner_codes,
+        "mechanism_codes": np.zeros(topology.neuron_count, dtype=np.uint8),
+        "neuron_count": np.asarray(topology.neuron_count, dtype=np.int32),
+        "integration_substeps": np.asarray(1, dtype=np.int32),
+        "input_indptr": np.concatenate((
+            np.zeros(1, dtype=np.int32), np.cumsum(input_counts, dtype=np.int32)
+        )),
+        "input_indices": np.asarray(topology.input_target, dtype=np.int32),
+        "input_values": np.asarray(topology.input_value, dtype=np.float32),
+        "input_m1": np.asarray(optimizer.input_first, dtype=np.float32),
+        "input_m2": np.asarray(optimizer.input_second, dtype=np.float32),
+        "recurrent_indptr": np.concatenate((
+            np.zeros(1, dtype=np.int32),
+            np.cumsum(recurrent_counts, dtype=np.int32),
+        )),
+        "recurrent_indices": np.asarray(topology.recurrent_target, dtype=np.int32),
+        "recurrent_values": np.asarray(topology.recurrent_value, dtype=np.float32),
+        "recurrent_m1": np.asarray(optimizer.recurrent_first, dtype=np.float32),
+        "recurrent_m2": np.asarray(optimizer.recurrent_second, dtype=np.float32),
+        "readout_weight": np.asarray(model.readout_weight.value, dtype=np.float32),
+        "readout_bias": np.asarray(model.readout_bias.value, dtype=np.float32),
+        "readout_weight_m1": np.asarray(optimizer.neuron_first, dtype=np.float32),
+        "readout_weight_m2": np.asarray(optimizer.neuron_second, dtype=np.float32),
+        "readout_bias_m1": np.asarray(optimizer.bias_first, dtype=np.float32),
+        "readout_bias_m2": np.asarray(optimizer.bias_second, dtype=np.float32),
+        "input_step": np.asarray(optimizer.input_step, dtype=np.int64),
+        "recurrent_step": np.asarray(optimizer.recurrent_step, dtype=np.int64),
+        "readout_step": np.asarray(optimizer.readout_step, dtype=np.int64),
+    }
+
+
+def write_parent_checkpoint(module, path, data_root):
+    """Train and write one real accepted parent optimizer checkpoint.
+
+    Parameters
+    ----------
+    module : module
+        Example 21 implementation module.
+    path : path-like
+        Destination for the array-only checkpoint.
+    data_root : path-like
+        Root of the direct ARC training data.
+
+    Returns
+    -------
+    dict
+        Parent training, strict-screen, optimizer, and digest evidence.
+    """
+    import brainstate
+
+    model = module.BrainCellArcModel()
+    learner = module.compile_pp_prop_model(model)
+    evidence = _fixed_task_evidence(module, model, learner, data_root)
+    before = tuple(evidence["strict"])
+    update = _real_pp_prop_update(module, model, learner, evidence)
+    run_addition_updates(brainstate.transform, update, updates=64)
+    after = _fixed_strict_screen(module, model, learner, data_root)
+    if any(old and not new for old, new in zip(before, after)):
+        raise ValueError("parent training caused a strict regression")
+    optimizer = optimizer_from_muon_groups(update.trainer)
+    arrays = checkpoint_arrays(model, optimizer, evidence)
+    module.write_checkpoint(path, arrays)
+    with open(path, "rb") as stream:
+        digest = hashlib.sha256(stream.read()).hexdigest()
+    return {
+        "arm": "parent",
+        "implementation_commit": _git_commit(),
+        "checkpoint_sha256": digest,
+        "updates": 64,
+        "before_strict": list(before),
+        "after_strict": list(after),
+        "optimizer_nonzero": any(
+            np.any(arrays[name] != 0)
+            for name in (
+                "input_m1", "input_m2", "recurrent_m1", "recurrent_m2",
+                "readout_weight_m1", "readout_weight_m2",
+                "readout_bias_m1", "readout_bias_m2",
+            )
+        ),
+        "optimizer_steps": {
+            "input": int(arrays["input_step"]),
+            "recurrent": int(arrays["recurrent_step"]),
+            "readout": int(arrays["readout_step"]),
+        },
+    }
+
+
 def structural_muon_parameter_maps(source, candidate, arm, alive=None):
     """Return row selectors for Muon state during a structural rebuild."""
     if arm == "neuron-prune":
-        alive = np.asarray(alive, dtype=bool)
+        alive = (
+            np.ones(source.neuron_count, dtype=bool)
+            if alive is None else np.asarray(alive, dtype=bool)
+        )
         input_selector = alive[source.input_target]
         recurrent_selector = alive[source.recurrent_source] & alive[source.recurrent_target]
         neuron_selector = alive
@@ -214,7 +725,10 @@ def structural_muon_parameter_maps(source, candidate, arm, alive=None):
         "input": (input_selector, (len(candidate.input_value),)),
         "recurrent": (recurrent_selector, (len(candidate.recurrent_value),)),
         "readout_weight": (neuron_selector, candidate.readout.shape),
-        "readout_bias": (neuron_selector, (candidate.neuron_count,)),
+        "readout_bias": (
+            np.arange(candidate.readout.shape[1]),
+            (candidate.readout.shape[1],),
+        ),
     }
 
 
@@ -299,7 +813,9 @@ def resident_tile_pairs(tile_size):
     return tile_size * tile_size
 
 
-def structural_evidence(topology, readout_effect, spikes, gradient_mass):
+def structural_evidence(
+    topology, readout_effect, spikes, gradient_mass, input_gradient_mass=None
+):
     """Compute task-specific neuron and recurrent-edge evidence.
 
     Parameters
@@ -313,6 +829,9 @@ def structural_evidence(topology, readout_effect, spikes, gradient_mass):
     gradient_mass : array-like
         Absolute pre-clip recurrent gradient mass with shape
         ``(tasks, recurrent_edges)``.
+    input_gradient_mass : array-like, optional
+        Absolute pre-clip input gradient mass with shape
+        ``(tasks, input_edges)``.
 
     Returns
     -------
@@ -329,6 +848,11 @@ def structural_evidence(topology, readout_effect, spikes, gradient_mass):
         raise ValueError("readout effect and spikes must be task-by-neuron arrays")
     if gradient_mass.shape != (tasks, len(topology.recurrent_value)):
         raise ValueError("gradient mass must be task-by-edge")
+    if input_gradient_mass is None:
+        input_gradient_mass = np.zeros((tasks, len(topology.input_value)))
+    input_gradient_mass = np.asarray(input_gradient_mass, dtype=float)
+    if input_gradient_mass.shape != (tasks, len(topology.input_value)):
+        raise ValueError("input gradient mass must be task-by-edge")
     source = topology.recurrent_source
     transmission = np.zeros(expected, dtype=float)
     for task in range(tasks):
@@ -338,12 +862,24 @@ def structural_evidence(topology, readout_effect, spikes, gradient_mass):
             minlength=topology.neuron_count,
         )
     incident = np.zeros(expected, dtype=float)
+    target_incident = np.zeros(expected, dtype=float)
     for task in range(tasks):
+        recurrent_source_mass = np.bincount(
+            topology.recurrent_source, weights=gradient_mass[task],
+            minlength=topology.neuron_count,
+        )
+        target_incident[task] = np.bincount(
+            topology.recurrent_target, weights=gradient_mass[task],
+            minlength=topology.neuron_count,
+        )
+        input_incident = np.bincount(
+            topology.input_target, weights=input_gradient_mass[task],
+            minlength=topology.neuron_count,
+        )
         incident[task] = (
-            np.bincount(topology.recurrent_source, weights=gradient_mass[task],
-                        minlength=topology.neuron_count)
-            + np.bincount(topology.recurrent_target, weights=gradient_mass[task],
-                          minlength=topology.neuron_count)
+            input_incident
+            + recurrent_source_mass
+            + target_incident[task]
         )
     channels = np.stack((
         normalize_task_rows(readout_effect),
@@ -355,12 +891,17 @@ def structural_evidence(topology, readout_effect, spikes, gradient_mass):
     edge_transmission = np.abs(topology.recurrent_value)[None, :] * np.abs(
         spikes[:, topology.recurrent_source]
     )
-    edge_scores = 0.5 * normalize_task_rows(edge_transmission).mean(axis=0)
-    edge_scores += 0.5 * normalize_task_rows(gradient_mass).mean(axis=0)
+    per_task_edge = 0.5 * normalize_task_rows(edge_transmission)
+    per_task_edge += 0.5 * normalize_task_rows(gradient_mass)
+    edge_scores = per_task_edge.max(axis=0)
     return {
         "neuron_scores": neuron_scores,
         "connection_scores": edge_scores,
         "owners": task_owners(per_task_neuron),
+        "neuron_task_scores": per_task_neuron,
+        "connection_task_scores": per_task_edge,
+        "source_mean_spikes": np.abs(spikes),
+        "target_incident_gradient": incident,
     }
 
 
@@ -398,6 +939,11 @@ def compact(topology, alive, adam):
         adam.recurrent_first[recurrent_keep],
         adam.recurrent_second[recurrent_keep],
         adam.step,
+        bias_first=None if adam.bias_first is None else adam.bias_first.copy(),
+        bias_second=None if adam.bias_second is None else adam.bias_second.copy(),
+        input_step=adam.input_step,
+        recurrent_step=adam.recurrent_step,
+        readout_step=adam.readout_step,
     )
     return compacted, mapped, True
 
@@ -434,16 +980,23 @@ def add_twin_neurons(topology, scores, required=None):
     required = ceil(0.05 * topology.neuron_count) if required is None else required
     if required < 1 or required > topology.neuron_count:
         raise ValueError("valid donor budget is insufficient")
-    donors = tuple(stable_rank(scores, descending=True)[:required])
-    if any(
-        np.any(
-            ((topology.recurrent_source == left) & (topology.recurrent_target == right))
-            | ((topology.recurrent_source == right) & (topology.recurrent_target == left))
-        )
-        for position, left in enumerate(donors)
-        for right in donors[position + 1:]
-    ):
+    connected = set(zip(
+        topology.recurrent_source.tolist(), topology.recurrent_target.tolist()
+    ))
+    donors = []
+    for candidate in stable_rank(scores, descending=True):
+        if scores[candidate] <= 0:
+            break
+        if all(
+            (candidate, donor) not in connected and (donor, candidate) not in connected
+            for donor in donors
+        ):
+            donors.append(int(candidate))
+        if len(donors) == required:
+            break
+    if len(donors) != required:
         raise ValueError("selected donors are connected")
+    donors = tuple(donors)
     offset = topology.neuron_count
     input_source = list(topology.input_source)
     input_target = list(topology.input_target)
@@ -491,32 +1044,112 @@ def grow_adam_for_twins(adam, topology, grown):
         extend(adam.input_second, len(grown.input_value)),
         extend(adam.recurrent_first, len(grown.recurrent_value)),
         extend(adam.recurrent_second, len(grown.recurrent_value)), adam.step,
+        bias_first=None if adam.bias_first is None else adam.bias_first.copy(),
+        bias_second=None if adam.bias_second is None else adam.bias_second.copy(),
+        input_step=adam.input_step,
+        recurrent_step=adam.recurrent_step,
+        readout_step=adam.readout_step,
     )
 
 
-def select_connection_additions(neuron_count, existing, source_evidence,
-                                target_evidence, required, tile_size=256):
-    if tile_size > 256:
+def select_connection_additions(
+    neuron_count,
+    existing,
+    source_evidence,
+    target_evidence,
+    required,
+    tile_size=256,
+    *,
+    return_statistics=False,
+):
+    """Select globally ranked absent pairs with a proven next-tile stop.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Active neuron count.
+    existing : set of tuple
+        Existing directed source-target pairs.
+    source_evidence, target_evidence : array-like
+        Nonnegative per-neuron evidence.
+    required : int
+        Exact number of absent pairs to select.
+    tile_size : int, optional
+        Source and target tile width, at most 256.
+    return_statistics : bool, optional
+        Return measured tile scan statistics with the selected pairs.
+
+    Returns
+    -------
+    tuple or tuple of tuple and dict
+        Selected pairs, optionally with bounded scan statistics.
+    """
+
+    if tile_size < 1 or tile_size > 256:
         raise ValueError("tile size exceeds the 65,536-pair resident bound")
+    if required < 1:
+        raise ValueError("connection addition count must be positive")
+    source_evidence = np.asarray(source_evidence, dtype=float)
+    target_evidence = np.asarray(target_evidence, dtype=float)
+    expected = (neuron_count,)
+    if source_evidence.shape != expected or target_evidence.shape != expected:
+        raise ValueError("connection evidence must have one value per neuron")
+    if (not np.all(np.isfinite(source_evidence))
+            or not np.all(np.isfinite(target_evidence))
+            or np.any(source_evidence < 0)
+            or np.any(target_evidence < 0)):
+        raise ValueError("connection evidence must be finite and nonnegative")
     heap = []
-    source_order = np.argsort(-np.asarray(source_evidence), kind="stable")
-    target_order = np.argsort(-np.asarray(target_evidence), kind="stable")
+    source_order = np.argsort(-source_evidence, kind="stable")
+    target_order = np.argsort(-target_evidence, kind="stable")
+    tiles = []
     for source_start in range(0, neuron_count, tile_size):
-        sources = source_order[source_start:source_start + tile_size]
         for target_start in range(0, neuron_count, tile_size):
-            targets = target_order[target_start:target_start + tile_size]
-            for source in sources:
-                for target in targets:
-                    pair = (int(source), int(target))
-                    if source == target or pair in existing:
-                        continue
-                    score = float(source_evidence[source] * target_evidence[target])
-                    item = (score, -int(source), -int(target), pair)
-                    if len(heap) < required:
-                        heapq.heappush(heap, item)
-                    elif item > heap[0]:
-                        heapq.heapreplace(heap, item)
-    return tuple(item[3] for item in sorted(heap, key=lambda item: (-item[0], item[3])))
+            upper_bound = float(
+                source_evidence[source_order[source_start]]
+                * target_evidence[target_order[target_start]]
+            )
+            tiles.append((upper_bound, source_start, target_start))
+    tiles.sort(key=lambda item: (-item[0], item[1], item[2]))
+    scanned = 0
+    stopped = False
+    next_upper_bound = None
+    max_resident = 0
+    for upper_bound, source_start, target_start in tiles:
+        if len(heap) == required and upper_bound < heap[0][0]:
+            stopped = True
+            next_upper_bound = upper_bound
+            break
+        sources = source_order[source_start:source_start + tile_size]
+        targets = target_order[target_start:target_start + tile_size]
+        scanned += 1
+        max_resident = max(max_resident, len(sources) * len(targets))
+        for source in sources:
+            for target in targets:
+                pair = (int(source), int(target))
+                if source == target or pair in existing:
+                    continue
+                score = float(source_evidence[source] * target_evidence[target])
+                item = (score, -int(source), -int(target), pair)
+                if len(heap) < required:
+                    heapq.heappush(heap, item)
+                elif item > heap[0]:
+                    heapq.heapreplace(heap, item)
+    if len(heap) != required:
+        raise ValueError("valid connection addition budget is insufficient")
+    selected = tuple(
+        item[3] for item in sorted(heap, key=lambda item: (-item[0], item[3]))
+    )
+    if not return_statistics:
+        return selected
+    return selected, {
+        "tiles_scanned": scanned,
+        "tiles_total": len(tiles),
+        "stopped_by_bound": stopped,
+        "next_tile_upper_bound": next_upper_bound,
+        "worst_selected_score": float(heap[0][0]),
+        "max_resident_pairs": max_resident,
+    }
 
 
 def add_recurrent_connections(topology, pairs, *, typed=False):
@@ -543,6 +1176,11 @@ def grow_adam_for_connections(adam, added_count):
         adam.neuron_first.copy(), adam.neuron_second.copy(), adam.input_first.copy(),
         adam.input_second.copy(), np.pad(adam.recurrent_first, (0, added_count)),
         np.pad(adam.recurrent_second, (0, added_count)), adam.step,
+        bias_first=None if adam.bias_first is None else adam.bias_first.copy(),
+        bias_second=None if adam.bias_second is None else adam.bias_second.copy(),
+        input_step=adam.input_step,
+        recurrent_step=adam.recurrent_step,
+        readout_step=adam.readout_step,
     )
 
 
@@ -560,6 +1198,58 @@ def preclip_gradient_mass(learner, events, step_fn, task_index, task_count, **kw
         rows[task_index] = values
         mass[key] = rows
     return mass, losses
+
+
+def wrong_output_readout_evidence(
+    request_voltages, readout_weight, readout_bias, target
+):
+    """Return neuron readout mass for supervised groups predicted incorrectly.
+
+    Parameters
+    ----------
+    request_voltages : array-like
+        Voltage vectors for the shape request and 30 row requests.
+    readout_weight : array-like
+        Direct voltage-readout weights with shape ``(neurons, 360)``.
+    readout_bias : array-like
+        Direct readout bias with shape ``(360,)``.
+    target : array-like
+        Integer target grid for the measured query.
+
+    Returns
+    -------
+    numpy.ndarray
+        Nonnegative wrong-output evidence for each neuron.
+    """
+
+    voltages = np.asarray(request_voltages, dtype=float)
+    weights = np.asarray(readout_weight, dtype=float)
+    bias = np.asarray(readout_bias, dtype=float)
+    target = np.asarray(target)
+    if voltages.ndim != 2 or voltages.shape[0] != 31:
+        raise ValueError("readout evidence requires 31 request voltage vectors")
+    if weights.shape != (voltages.shape[1], 360) or bias.shape != (360,):
+        raise ValueError("readout evidence has incompatible parameter shapes")
+    features = np.tanh((voltages + 65.0) / 20.0)
+    logits = features @ weights + bias
+    evidence = np.zeros(voltages.shape[1], dtype=float)
+
+    def add_group(request_index, start, stop, expected):
+        if int(np.argmax(logits[request_index, start:stop])) == int(expected):
+            return
+        evidence[:] += (
+            np.abs(features[request_index])
+            * np.sum(np.abs(weights[:, start:stop]), axis=1)
+        )
+
+    height, width = target.shape
+    add_group(0, 0, 30, height - 1)
+    add_group(0, 30, 60, width - 1)
+    for row in range(height):
+        for column in range(width):
+            start = 60 + column * 10
+            add_group(row + 1, start, start + 10, int(target[row, column]))
+    return evidence
 
 
 def collect_model_evidence(
@@ -612,64 +1302,179 @@ def run_addition_updates(transform, update, *, updates=64):
     return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
 
 
-def _fixed_task_evidence(module, model, learner, data_root):
-    """Collect fixed-task predictions, spikes, readout, and PP-Prop mass."""
-    if data_root is None:
-        raise ValueError("real Example 21 measurement requires --data-root")
-    import brainstate
+def _fixed_strict_screen(module, model, learner, data_root, *, transform=None):
+    """Evaluate all fixed tasks with one transformed forward screen."""
     import jax.numpy as jnp
 
-    task = module.load_task(data_root, module.TRAINING_TASK_IDS[0], "practice")
-    events, advances = module.encode_episode(task, 0)
-    model.reset_episode(learner)
-    step_fn = lambda event: jnp.sum(
-        learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-    )
-    mass, losses = preclip_gradient_mass(
-        learner, events, step_fn, 0, 1, mask=advances, reduction="sum"
-    )
-    model.reset_episode(learner)
-    voltages = module.run_event_sequence(model, events, advances)
-    spikes = np.asarray(voltages) > 0.0
-    readout = np.abs(np.asarray(model.readout_weight.value))[None, :, :].mean(axis=2)
-    recurrent_name = next(
-        (key for key in mass if key.endswith("recurrent_weight")), None
-    )
-    if recurrent_name is None:
-        raise ValueError("pre-clip mass has no recurrent weight")
-    gradient_mass = task_gradient_mass(mass, recurrent_name, 1)
-    topology = topology_from_model(model)
-    evidence = structural_evidence(
-        topology, readout, spikes[None, :, :].mean(axis=1), gradient_mass
-    )
-    strict = []
-    for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS:
+    if transform is None:
+        import brainstate
+        transform = brainstate.transform
+    screen_events = []
+    screen_advances = []
+    screen_records = []
+    task_ids = module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS
+    for task_id in task_ids:
         task = module.load_task(data_root, task_id, "practice")
-        predictions = []
-        targets = []
         for query_index, target in enumerate(task.targets):
             if target is None:
                 continue
             encoded, mask = module.encode_episode(task, query_index)
-            model.reset_episode(learner)
-            module.run_event_sequence(model, encoded, mask)
-            predictions.append(module.decode_prediction(np.asarray(model.readout())))
-            targets.append(target)
-        strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
+            screen_events.append(encoded)
+            screen_advances.append(mask)
+            screen_records.append((task_id, target))
+
+    def evaluate_episode(events, advances):
+        model.reset_episode(learner)
+        voltages = module.run_event_sequence(model, events, advances)
+        features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+        return features @ model.readout_weight.value + model.readout_bias.value
+
+    screen_logits = transform.for_loop(
+        evaluate_episode, np.stack(screen_events), np.stack(screen_advances)
+    )
+    predictions_by_task = {task_id: [] for task_id in task_ids}
+    targets_by_task = {task_id: [] for task_id in task_ids}
+    for logits, (task_id, target) in zip(np.asarray(screen_logits), screen_records):
+        predictions_by_task[task_id].append(module.decode_prediction(logits))
+        targets_by_task[task_id].append(target)
+    return tuple(
+        bool(module.strict_task_pass_at_1(
+            predictions_by_task[task_id], targets_by_task[task_id]
+        ))
+        for task_id in task_ids
+    )
+
+
+def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
+    """Collect all training-task evidence and fixed-screen strict results."""
+    if data_root is None:
+        raise ValueError("real Example 21 measurement requires --data-root")
+    import jax.numpy as jnp
+
+    if transform is None:
+        import brainstate
+        transform = brainstate.transform
+    training_events = []
+    training_advances = []
+    training_targets = []
+    for task_id in module.TRAINING_TASK_IDS:
+        task = module.load_task(data_root, task_id, "practice")
+        query_index = next(
+            (index for index, target in enumerate(task.targets) if target is not None),
+            None,
+        )
+        if query_index is None:
+            raise ValueError(f"training task {task_id} has no supervised query")
+        events, advances = module.encode_episode(task, query_index)
+        training_events.append(events)
+        training_advances.append(advances)
+        training_targets.append(task.targets[query_index])
+    training_events = np.stack(training_events)
+    training_advances = np.stack(training_advances)
+    target_colors = np.zeros((len(training_targets), 30, 30), dtype=np.int32)
+    target_valid = np.zeros((len(training_targets), 30, 30), dtype=bool)
+    target_heights = np.zeros(len(training_targets), dtype=np.int32)
+    target_widths = np.zeros(len(training_targets), dtype=np.int32)
+    for index, target in enumerate(training_targets):
+        height, width = target.shape
+        target_colors[index, :height, :width] = target
+        target_valid[index, :height, :width] = True
+        target_heights[index] = height - 1
+        target_widths[index] = width - 1
+
+    def measure_task(events, advances):
+        model.reset_episode(learner)
+        step_fn = lambda event: jnp.sum(
+            learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+        )
+        gradients, losses = learner.etrace_grad(
+            events, step_fn=step_fn, return_value=True,
+            mask=advances, reduction="sum",
+        )
+
+        def gradient_named(name):
+            return next((
+                value for path, value in gradients.items()
+                if name in tuple(map(
+                    str, path if isinstance(path, tuple) else (path,)
+                ))
+            ), None)
+
+        input_gradient = gradient_named("input_weight")
+        recurrent_gradient = gradient_named("recurrent_weight")
+        if input_gradient is None or recurrent_gradient is None:
+            raise ValueError("pre-clip mass must contain input and recurrent weights")
+        model.reset_episode(learner)
+        voltages = module.run_event_sequence(model, events, advances)
+        return (
+            jnp.abs(input_gradient), jnp.abs(recurrent_gradient),
+            jnp.sum(losses), voltages,
+        )
+
+    input_mass, gradient_mass, losses, voltages = transform.for_loop(
+        measure_task, training_events, training_advances
+    )
+    input_mass = np.asarray(input_mass)
+    gradient_mass = np.asarray(gradient_mass)
+    voltages = np.asarray(voltages)
+    spikes = np.mean(voltages > 0.0, axis=1)
+    readout_weight = np.asarray(model.readout_weight.value)
+    readout_bias = np.asarray(model.readout_bias.value)
+    request_voltages = voltages[:, -31:, :]
+    readout = np.mean(
+        np.abs(np.tanh((request_voltages + 65.0) / 20.0)), axis=1
+    ) * np.sum(np.abs(readout_weight), axis=1)[None, :]
+    wrong_readout = np.stack([
+        wrong_output_readout_evidence(
+            request_voltages[index], readout_weight, readout_bias, target
+        )
+        for index, target in enumerate(training_targets)
+    ])
+    topology = topology_from_model(model)
+    evidence = structural_evidence(
+        topology, readout, spikes, gradient_mass, input_mass
+    )
+    target_scores_by_task = normalize_task_rows(
+        evidence["target_incident_gradient"] + wrong_readout
+    )
+    source_scores_by_task = normalize_task_rows(spikes)
+
+    strict = _fixed_strict_screen(
+        module, model, learner, data_root, transform=transform
+    )
     evidence.update({
         "preclip_gradient_mass": np.asarray(gradient_mass).tolist(),
+        "input_preclip_gradient_mass": np.asarray(input_mass).tolist(),
         "preclip_loss": np.asarray(losses).tolist(),
-        "task_spike_evidence": np.asarray(spikes, dtype=float).mean(axis=0).tolist(),
+        "task_spike_evidence": np.asarray(spikes, dtype=float).tolist(),
         "task_readout_evidence": np.asarray(readout).tolist(),
-        "strict": strict,
-        "events": events,
-        "advances": advances,
+        "wrong_output_readout_evidence": wrong_readout.tolist(),
+        "connection_source_scores_by_task": source_scores_by_task.tolist(),
+        "connection_target_scores_by_task": target_scores_by_task.tolist(),
+        "training_task_ids": list(module.TRAINING_TASK_IDS),
+        "strict": list(strict),
+        "training_events": training_events,
+        "training_advances": training_advances,
+        "training_target_colors": target_colors,
+        "training_target_valid": target_valid,
+        "training_target_heights": target_heights,
+        "training_target_widths": target_widths,
+        "events": training_events[0],
+        "advances": training_advances[0],
     })
     return evidence
 
 
-def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=None):
+def _real_mask_compaction_identity(
+    module, topology, adam, data_root, *, alive=None, transform=None
+):
     """Measure fixed-task identity between masked and compact real models."""
+    import jax.numpy as jnp
+
+    if transform is None:
+        import brainstate
+        transform = brainstate.transform
+
     if data_root is None:
         raise ValueError("real Example 21 measurement requires --data-root")
     if alive is None:
@@ -695,10 +1500,25 @@ def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=N
         strict = []
         task_predictions = {task_id: [] for task_id in module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS}
         task_targets = {task_id: [] for task_id in task_predictions}
-        for task_id, events, advances, target in episodes:
+
+        def evaluate_episode(events, advances):
             candidate_model.reset_episode(candidate_learner)
-            module.run_event_sequence(candidate_model, events, advances)
-            prediction = module.decode_prediction(np.asarray(candidate_model.readout()))
+            voltages = module.run_event_sequence(candidate_model, events, advances)
+            features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+            return (
+                features @ candidate_model.readout_weight.value
+                + candidate_model.readout_bias.value
+            )
+
+        logits = transform.for_loop(
+            evaluate_episode,
+            np.stack([episode[1] for episode in episodes]),
+            np.stack([episode[2] for episode in episodes]),
+        )
+        for output, (task_id, _events, _advances, target) in zip(
+            np.asarray(logits), episodes
+        ):
+            prediction = module.decode_prediction(output)
             task_predictions[task_id].append(prediction)
             task_targets[task_id].append(target)
             prediction_bytes.append(np.asarray(prediction).tobytes())
@@ -727,10 +1547,22 @@ def _real_pp_prop_update(
     parameter_maps=None,
 ):
     """Return one compiled PP-Prop candidate update for Example 21."""
+    import jax
     import jax.numpy as jnp
 
-    events = jnp.asarray(evidence["events"])
-    advances = jnp.asarray(evidence["advances"])
+    events = jnp.asarray(evidence.get("training_events", evidence["events"]))
+    advances = jnp.asarray(evidence.get("training_advances", evidence["advances"]))
+    if events.ndim == 2:
+        events = events[None, ...]
+        advances = advances[None, ...]
+    direct_target_keys = (
+        "training_target_colors", "training_target_valid",
+        "training_target_heights", "training_target_widths",
+    )
+    direct_targets = (
+        tuple(jnp.asarray(evidence[key]) for key in direct_target_keys)
+        if all(key in evidence for key in direct_target_keys) else None
+    )
     trainer = module.PPPropEpisodeTrainer(
         learner,
         {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
@@ -739,28 +1571,81 @@ def _real_pp_prop_update(
         trainer.muon_groups = remap_muon_groups(
             muon_groups, parameter_maps or {}
         )
+    elif (adam is not None and hasattr(trainer, "parameters")
+          and hasattr(trainer, "learning_rates")):
+        trainer.muon_groups = initialize_muon_groups(trainer, adam)
 
     if adam is not None:
-        for name, first, second in (
-            ("readout", adam.neuron_first, adam.neuron_second),
-            ("input", adam.input_first, adam.input_second),
-            ("recurrent", adam.recurrent_first, adam.recurrent_second),
+        for name, first, second, step in (
+            ("readout", adam.neuron_first, adam.neuron_second, adam.readout_step),
+            ("readout_weight", adam.neuron_first, adam.neuron_second, adam.readout_step),
+            ("readout_bias", adam.bias_first, adam.bias_second, adam.readout_step),
+            ("input", adam.input_first, adam.input_second, adam.input_step),
+            ("recurrent", adam.recurrent_first, adam.recurrent_second, adam.recurrent_step),
         ):
             state = getattr(trainer, "adam_groups", {}).get(name)
-            if state is not None:
+            if state is not None and first is not None and second is not None:
                 state.first = jnp.asarray(first)
                 state.second = jnp.asarray(second)
-                state.step = adam.step
+                state.step = step
 
-    def update(_=None):
+    def update(index=0):
+        task_index = jnp.asarray(index, dtype=jnp.int32) % events.shape[0]
+        task_events = events[task_index]
+        task_advances = advances[task_index]
         model.reset_episode(learner)
-        return trainer.update_episode(
-            events,
-            step_fn=lambda event: jnp.sum(
+        direct_grad_fn = None
+        if (direct_targets is not None
+                and "readout_weight" in getattr(trainer, "parameters", {})
+                and "readout_bias" in getattr(trainer, "parameters", {})):
+            colors, valid, heights, widths = direct_targets
+
+            def direct_grad_fn(**_kwargs):
+                model.reset_episode(learner)
+                voltages = module.run_event_sequence(
+                    model, task_events, task_advances
+                )
+                features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+
+                def objective(weight, bias):
+                    logits = features @ weight + bias
+                    shape_loss = (
+                        -jax.nn.log_softmax(logits[0, :30])[heights[task_index]]
+                        -jax.nn.log_softmax(logits[0, 30:60])[widths[task_index]]
+                    )
+                    row_logits = logits[1:, 60:].reshape((30, 30, 10))
+                    row_log_prob = jax.nn.log_softmax(row_logits, axis=-1)
+                    selected = jnp.take_along_axis(
+                        row_log_prob,
+                        colors[task_index, :, :, None],
+                        axis=-1,
+                    )[..., 0]
+                    mask = valid[task_index]
+                    row_loss = -jnp.sum(jnp.where(mask, selected, 0.0)) / jnp.maximum(
+                        jnp.sum(mask), 1
+                    )
+                    return shape_loss + row_loss
+
+                weight_gradient, bias_gradient = jax.grad(
+                    objective, argnums=(0, 1)
+                )(
+                    trainer.parameters["readout_weight"],
+                    trainer.parameters["readout_bias"],
+                )
+                return {
+                    ("readout_weight",): weight_gradient,
+                    ("readout_bias",): bias_gradient,
+                }
+
+        arguments = {
+            "step_fn": lambda event: jnp.sum(
                 learner.etrace_evolve(event[None, :], return_outputs=True)[0]
             ),
-            loss_mask=advances,
-        )
+            "loss_mask": task_advances,
+        }
+        if direct_grad_fn is not None:
+            arguments["direct_grad_fn"] = direct_grad_fn
+        return trainer.update_episode(task_events, **arguments)
 
     update.trainer = trainer
     return update
@@ -831,6 +1716,94 @@ def promote_arm(before, after, elapsed_seconds, arm, updates):
     gained = any(not old and new for old, new in zip(before, after))
     regressed = any(old and not new for old, new in zip(before, after))
     return gained and not regressed
+
+
+def validate_merged_arms(arms):
+    """Reject a merged artifact unless every real arm satisfies Gate 5.
+
+    Parameters
+    ----------
+    arms : sequence of mapping
+        Four measured structural arm artifacts in fixed order.
+
+    Raises
+    ------
+    ValueError
+        If an arm violates a structural, optimizer, strict, or runtime gate.
+    """
+
+    expected_names = (
+        "neuron-prune", "connection-prune", "neuron-add", "connection-add"
+    )
+    if tuple(arm.get("arm") for arm in arms) != expected_names:
+        raise ValueError("merge requires the four structural arms in fixed order")
+    pids = [arm.get("environment", {}).get("pid") for arm in arms]
+    if None in pids or len(set(pids)) != len(pids):
+        raise ValueError("each structural arm must use one separate process")
+    commits = {arm.get("implementation_commit") for arm in arms}
+    parents = {arm.get("parent_checkpoint_sha256") for arm in arms}
+    if None in commits or len(commits) != 1:
+        raise ValueError("all arms must identify one implementation commit")
+    if None in parents or len(parents) != 1:
+        raise ValueError("all arms must load one accepted parent checkpoint")
+    for arm in arms:
+        name = arm["arm"]
+        before = arm.get("before_strict", [])
+        after = arm.get("after_strict", [])
+        gained = any(not old and new for old, new in zip(before, after))
+        regressed = any(old and not new for old, new in zip(before, after))
+        if not arm.get("promoted") or not gained:
+            raise ValueError(f"{name} is not promoted by a strict Boolean gain")
+        if regressed or not arm.get("strict_regression_rejected"):
+            raise ValueError(f"{name} has a strict regression")
+        if not arm.get("within_300_seconds"):
+            raise ValueError(f"{name} exceeds the 300-second limit")
+        if arm.get("dense_neuron_pair_array") is not False:
+            raise ValueError(f"{name} does not prove sparse pair storage")
+        if len(arm.get("training_evidence_task_ids", [])) != 8:
+            raise ValueError(f"{name} does not contain eight training evidence rows")
+        if not arm.get("parent_optimizer_nonzero"):
+            raise ValueError(f"{name} did not load nonzero parent optimizer state")
+        remap = arm.get("optimizer_remap", {})
+        if not all(remap.get(key) for key in (
+            "surviving_values_preserved", "new_values_zero", "step_counts_preserved"
+        )):
+            raise ValueError(f"{name} does not preserve optimizer state")
+        if not arm.get("adam_remapped") or not arm.get("muon_remapped"):
+            raise ValueError(f"{name} does not preserve active optimizer state")
+        addition = name.endswith("add")
+        if arm.get("updates") != (64 if addition else 0):
+            raise ValueError(f"{name} has an invalid update count")
+        baseline_count = (
+            arm["baseline_neurons"] if name.startswith("neuron")
+            else arm["baseline_recurrent_items"]
+        )
+        if arm.get("mutated_item_count") != mutation_count(baseline_count):
+            raise ValueError(f"{name} has an invalid mutation count")
+    compaction = arms[0].get("mask_compaction", {})
+    if not (compaction.get("prediction_bytes_identical")
+            and compaction.get("strict_identical")):
+        raise ValueError("neuron pruning does not prove compaction identity")
+    connection_selection = arms[3].get("connection_selection", {})
+    if (not connection_selection.get("stopped_by_bound")
+            or connection_selection.get("max_resident_pairs", 65_537) > 65_536):
+        raise ValueError("connection addition does not prove the bounded tile bound")
+
+
+def _coverage_summary():
+    """Read measured line-plus-branch coverage from the current data file."""
+    import coverage
+
+    measured = coverage.Coverage(config_file=False)
+    measured.load()
+    has_branches = measured.get_data().has_arcs()
+    percent = float(measured.report(
+        show_missing=False,
+        include=["examples/pp_prop/example21_structural.py"],
+    ))
+    if not has_branches or percent <= 90.0:
+        raise ValueError("focused line-plus-branch coverage must exceed 90 percent")
+    return {"line_and_branch_percent": percent, "branch_data": True}
 
 
 def run_integrated_arm(
@@ -945,7 +1918,9 @@ def run_integrated_arm(
     return result
 
 
-def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
+def measure_real_arm(
+    arm, *, data_root=None, parent_checkpoint=None, clock=time.perf_counter
+):
     """Measure one bounded arm against the real Example 21 model topology.
 
     Parameters
@@ -955,6 +1930,8 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         ``connection-add``.
     clock : callable, optional
         Monotonic clock used by the measurement.
+    parent_checkpoint : path-like, optional
+        Validated accepted parent checkpoint. Real evidence requires this path.
 
     Returns
     -------
@@ -964,7 +1941,16 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
         raise ValueError("exactly one recognized arm is required")
     module = _load_example21_model()
-    model = module.BrainCellArcModel()
+    parent = (
+        load_parent_checkpoint(module, parent_checkpoint)
+        if parent_checkpoint is not None else None
+    )
+    model = (
+        module.BrainCellArcModel(parent.topology)
+        if parent is not None else module.BrainCellArcModel()
+    )
+    if parent is not None and hasattr(model, "readout_bias"):
+        model.readout_bias.value = parent.readout_bias
     learner = (
         module.compile_pp_prop_model(model)
         if hasattr(module, "compile_pp_prop_model") else None
@@ -973,24 +1959,44 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     evidence = _fixed_task_evidence(module, model, learner, data_root)
     baseline = tuple(evidence["strict"])
     scores = np.asarray(evidence["neuron_scores"])
-    required = mutation_count(topology.neuron_count)
-    donors = []
-    connected = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
-    for node in stable_rank(scores, descending=True):
-        if all((node, donor) not in connected and (donor, node) not in connected for donor in donors):
-            donors.append(int(node))
-        if len(donors) == required:
-            break
-    scores[:] = 0.0
-    scores[donors] = np.arange(required, 0, -1)
     edge_scores = np.asarray(evidence["connection_scores"])
-    adam = StructuralAdam(
-        np.zeros_like(topology.readout), np.zeros_like(topology.readout),
-        np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
-        np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+    if parent is None:
+        adam = StructuralAdam(
+            np.zeros_like(topology.readout), np.zeros_like(topology.readout),
+            np.zeros_like(topology.input_value), np.zeros_like(topology.input_value),
+            np.zeros_like(topology.recurrent_value), np.zeros_like(topology.recurrent_value),
+            bias_first=np.zeros_like(np.asarray(model.readout_bias.value))
+            if hasattr(model, "readout_bias") else None,
+            bias_second=np.zeros_like(np.asarray(model.readout_bias.value))
+            if hasattr(model, "readout_bias") else None,
+        )
+    else:
+        adam = parent.optimizer
+    training_strict = baseline[:len(module.TRAINING_TASK_IDS)]
+    first_failing_task = next(
+        (index for index, value in enumerate(training_strict) if not value), None
+    )
+    if arm.endswith("add") and first_failing_task is None:
+        raise ValueError("addition requires one failing fixed training task")
+    neuron_task_scores = np.asarray(
+        evidence.get("neuron_task_scores", scores[None, :])
+    )
+    source_scores_by_task = np.asarray(
+        evidence.get("connection_source_scores_by_task", neuron_task_scores)
+    )
+    target_scores_by_task = np.asarray(
+        evidence.get("connection_target_scores_by_task", neuron_task_scores)
     )
     started = clock()
     pruning_alive = None
+    selection_statistics = {
+        "tiles_scanned": 0,
+        "tiles_total": 0,
+        "stopped_by_bound": False,
+        "next_tile_upper_bound": None,
+        "worst_selected_score": None,
+        "max_resident_pairs": 0,
+    }
     if arm == "neuron-prune":
         validation = baseline[-len(module.VALIDATION_TASK_IDS):]
         if any(validation):
@@ -1011,6 +2017,11 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
                 adam.neuron_first, adam.neuron_second, adam.input_first,
                 adam.input_second, adam.recurrent_first[keep],
                 adam.recurrent_second[keep], adam.step,
+                bias_first=adam.bias_first,
+                bias_second=adam.bias_second,
+                input_step=adam.input_step,
+                recurrent_step=adam.recurrent_step,
+                readout_step=adam.readout_step,
             )
             count = int(np.sum(~keep))
         else:
@@ -1020,16 +2031,21 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         reset = True
         updates = 0
     elif arm == "neuron-add":
-        candidate, donors = add_twin_neurons(topology, scores)
+        candidate, donors = add_twin_neurons(
+            topology, neuron_task_scores[first_failing_task]
+        )
         candidate_adam = grow_adam_for_twins(adam, topology, candidate)
         reset = True
         count = len(donors)
         updates = 64
     else:
-        pairs = select_connection_additions(
+        pairs, selection_statistics = select_connection_additions(
             topology.neuron_count,
             set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist())),
-            scores, scores, mutation_count(len(topology.recurrent_value)),
+            source_scores_by_task[first_failing_task],
+            target_scores_by_task[first_failing_task],
+            mutation_count(len(topology.recurrent_value)),
+            return_statistics=True,
         )
         candidate = add_recurrent_connections(topology, pairs)
         candidate_adam = grow_adam_for_connections(adam, len(pairs))
@@ -1039,42 +2055,64 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     candidate_model, candidate_learner = _rebuild_real_candidate(
         module, candidate, learner
     )
+    if parent is not None and hasattr(candidate_model, "readout_bias"):
+        candidate_model.readout_bias.value = parent.readout_bias
     if hasattr(candidate_model, "reset_episode"):
         candidate_model.reset_episode(candidate_learner)
-    if updates:
-        import brainstate
+    parameter_maps = structural_muon_parameter_maps(
+        topology, candidate, arm, pruning_alive
+    )
+    optimizer_remap = optimizer_remap_checks(
+        adam, candidate_adam, parameter_maps
+    )
+    update = None
+    muon_remap = {
+        "loaded": False,
+        "source_nonzero": False,
+        "surviving_values_preserved": False,
+    }
+    if count or updates:
         source_update = _real_pp_prop_update(
             module, model, learner, evidence, adam
         )
         source_trainer = getattr(source_update, "trainer", None)
-        parameter_maps = structural_muon_parameter_maps(
-            topology, candidate, arm, pruning_alive
-        )
-        muon_groups = getattr(source_trainer, "muon_groups", None)
-        if muon_groups is None:
-            update = _real_pp_prop_update(
-                module, candidate_model, candidate_learner, evidence, candidate_adam
-            )
-        else:
-            update = _real_pp_prop_update(
+        muon_groups = getattr(source_trainer, "muon_groups", {})
+        update = (
+            _real_pp_prop_update(
                 module, candidate_model, candidate_learner, evidence, candidate_adam,
                 muon_groups=muon_groups, parameter_maps=parameter_maps,
             )
+            if muon_groups else _real_pp_prop_update(
+                module, candidate_model, candidate_learner, evidence, candidate_adam
+            )
+        )
+        candidate_groups = getattr(
+            getattr(update, "trainer", None), "muon_groups", {}
+        )
+        if muon_groups:
+            muon_remap = muon_remap_checks(
+                muon_groups, candidate_groups, parameter_maps
+            )
+    if updates:
+        import brainstate
         run_addition_updates(
             brainstate.transform,
             update,
             updates=updates,
         )
-    after = tuple(_fixed_task_evidence(
-        module, candidate_model, candidate_learner, data_root
-    )["strict"])
+    after = (
+        _fixed_strict_screen(module, candidate_model, candidate_learner, data_root)
+        if data_root is not None else tuple(_fixed_task_evidence(
+            module, candidate_model, candidate_learner, data_root
+        )["strict"])
+    )
     elapsed = clock() - started
     validation = baseline[-len(module.VALIDATION_TASK_IDS):]
     mask_compaction = (
         _real_mask_compaction_identity(
             module, topology, adam, data_root, alive=pruning_alive
         )
-        if data_root is not None else {
+        if data_root is not None and arm == "neuron-prune" and pruning_alive is not None else {
             "prediction_bytes_identical": False,
             "strict_identical": False,
             "not_measured": True,
@@ -1082,6 +2120,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
     )
     return {
         "arm": arm,
+        "implementation_commit": _git_commit(),
         "real_model": True,
         "model": type(model).__name__,
         "baseline_neurons": topology.neuron_count,
@@ -1098,10 +2137,30 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "strict_regression_rejected": not any(
             old and not new for old, new in zip(baseline, after)
         ),
-        "max_resident_tile_pairs": resident_tile_pairs(256),
+        "first_failing_training_task": (
+            module.TRAINING_TASK_IDS[first_failing_task]
+            if first_failing_task is not None else None
+        ),
+        "training_evidence_task_ids": evidence.get("training_task_ids", []),
+        "max_resident_tile_pairs": selection_statistics["max_resident_pairs"],
+        "connection_selection": selection_statistics,
         "dense_neuron_pair_array": False,
-        "adam_remapped": True,
-        "muon_remapped": bool(updates),
+        "parent_checkpoint_sha256": parent.digest if parent is not None else None,
+        "parent_optimizer_nonzero": (
+            parent.nonzero_optimizer_values if parent is not None else False
+        ),
+        "optimizer_remap": optimizer_remap,
+        "adam_remapped": bool(
+            optimizer_remap["surviving_values_preserved"]
+            and optimizer_remap["new_values_zero"]
+            and optimizer_remap["step_counts_preserved"]
+        ),
+        "muon_remap": muon_remap,
+        "muon_remapped": bool(
+            muon_remap["loaded"]
+            and muon_remap["source_nonzero"]
+            and muon_remap["surviving_values_preserved"]
+        ),
         "eligibility_reset": bool(reset),
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),
@@ -1119,26 +2178,37 @@ def main(argv=None):
     """Measure one real Example 21 structural arm and write JSON evidence."""
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("arm", choices=("baseline", "neuron-prune", "connection-prune",
+    parser.add_argument("arm", choices=("baseline", "parent", "neuron-prune", "connection-prune",
                                          "neuron-add", "connection-add", "merge"))
     parser.add_argument("--output", required=True)
     parser.add_argument("--data-root", default=os.environ.get("EXAMPLE21_DATA_ROOT"))
+    parser.add_argument("--parent-checkpoint")
+    parser.add_argument("--checkpoint-output")
+    parser.add_argument("--focused-passed", type=int)
     args = parser.parse_args(argv)
     if args.arm == "merge":
         names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
         arms = [json.loads(open(f".gate5-{name}.json", encoding="utf-8").read()) for name in names]
+        validate_merged_arms(arms)
+        if args.focused_passed is None or args.focused_passed < 1:
+            parser.error("merge requires --focused-passed from the focused pytest run")
+        coverage_summary = _coverage_summary()
         evidence = {
-            "command": "python examples/pp_prop/example21_structural.py <arm> --output <artifact.json>",
+            "command": "python examples/pp_prop/example21_structural.py <arm> --data-root <arc-root> --parent-checkpoint <accepted.npz> --output .gate5-<arm>.json",
             "starting_commit": "d77d50e58b6d978d541bcdf2a46f7201d1dc0d8b",
-            "implementation_commit": _git_commit(),
-            "focused_tests": {"passed": 28, "failed": 0, "coverage_percent": 91},
-            "baseline": json.loads(open("docs/evidence/gate5/example21-structural-arm.json", encoding="utf-8").read())["baseline"],
+            "implementation_commit": arms[0]["implementation_commit"],
+            "artifact_build_commit": _git_commit(),
+            "focused_tests": {
+                "passed": args.focused_passed,
+                "failed": 0,
+                **coverage_summary,
+            },
+            "baseline": json.loads(open(".gate5-baseline.json", encoding="utf-8").read())["baseline"],
             "arms": arms,
             "arm_controls": {
                 "addition_updates": 64, "candidate_arms_per_process": 1,
                 "dense_neuron_pair_array": False, "max_resident_tile_pairs": 65536,
-                "pruning_promoted": False,
-                "pruning_validation_strict": [False] * 4,
+                "all_arms_promoted": True,
                 "strict_regression_rejected": True,
                 "within_300_seconds": all(arm["within_300_seconds"] for arm in arms),
             },
@@ -1161,8 +2231,21 @@ def main(argv=None):
                               "pruning_validation_strict": [False] * len(module.VALIDATION_TASK_IDS),
                               "strict_regression_rejected": True},
         }
+    elif args.arm == "parent":
+        if args.data_root is None or args.checkpoint_output is None:
+            parser.error("parent requires --data-root and --checkpoint-output")
+        module = _load_example21_model()
+        evidence = write_parent_checkpoint(
+            module, args.checkpoint_output, args.data_root
+        )
     else:
-        evidence = measure_real_arm(args.arm, data_root=args.data_root)
+        if args.parent_checkpoint is None:
+            parser.error("a real structural arm requires --parent-checkpoint")
+        evidence = measure_real_arm(
+            args.arm,
+            data_root=args.data_root,
+            parent_checkpoint=args.parent_checkpoint,
+        )
     digest = write_artifact(args.output, evidence)
     print(json.dumps({"artifact": os.path.abspath(args.output), "sha256": digest}, sort_keys=True))
 

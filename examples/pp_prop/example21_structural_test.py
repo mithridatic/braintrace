@@ -1,6 +1,9 @@
+import copy
 import hashlib
 import importlib.util
 import json
+import subprocess
+import sys
 from types import SimpleNamespace
 from pathlib import Path
 from typing import ClassVar
@@ -14,6 +17,15 @@ _SPEC = importlib.util.spec_from_file_location(
 assert _SPEC is not None and _SPEC.loader is not None
 structural = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(structural)
+
+
+class _EagerTransform:
+    @staticmethod
+    def for_loop(function, *values):
+        outputs = [function(*items) for items in zip(*values)]
+        if isinstance(outputs[0], tuple):
+            return tuple(np.stack(items) for items in zip(*outputs))
+        return np.stack(outputs)
 
 
 def test_evidence_scores_owners_ranking_and_twins_are_direct_and_stable():
@@ -153,6 +165,10 @@ def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
     class Model:
         def __init__(self, candidate):
             self.candidate = candidate
+            self.readout_weight = SimpleNamespace(value=candidate.readout)
+            self.readout_bias = SimpleNamespace(
+                value=np.zeros(candidate.readout.shape[1])
+            )
 
         def reset_episode(self, learner):
             pass
@@ -165,7 +181,9 @@ def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
         TRAINING_TASK_IDS=("train",), VALIDATION_TASK_IDS=("valid",),
         load_task=lambda *_args: task,
         encode_episode=lambda *_args: (np.zeros((1, 1)), np.ones(1, dtype=bool)),
-        run_event_sequence=lambda *_args: None,
+        run_event_sequence=lambda model, *_args: np.zeros(
+            (31, model.candidate.neuron_count)
+        ),
         decode_prediction=lambda value: np.asarray([value.sum()], dtype=np.uint8),
         strict_task_pass_at_1=lambda predictions, targets: True,
     )
@@ -174,7 +192,7 @@ def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
         lambda _module, candidate, _learner: (Model(candidate), object()),
     )
     result = structural._real_mask_compaction_identity(
-        module, topology, adam, "data"
+        module, topology, adam, "data", transform=_EagerTransform
     )
     assert result["prediction_bytes_identical"]
     assert result["strict_identical"]
@@ -626,11 +644,12 @@ def test_real_mask_compaction_identity_reuses_pruning_episode_snapshot(monkeypat
             return np.asarray(value)
 
         def run_event_sequence(self, model, events, advances):
-            return None
+            return np.zeros((31, 2))
 
     class Model:
         def __init__(self):
             self.readout_weight = SimpleNamespace(value=np.ones((2, 1)))
+            self.readout_bias = SimpleNamespace(value=np.zeros(1))
 
         def reset_episode(self, learner):
             pass
@@ -650,7 +669,7 @@ def test_real_mask_compaction_identity_reuses_pruning_episode_snapshot(monkeypat
         module, topology, structural.StructuralAdam(
             np.zeros((2, 1)), np.zeros((2, 1)), np.zeros(2), np.zeros(2),
             np.zeros(1), np.zeros(1),
-        ), "data", alive=np.array([True, False]),
+        ), "data", alive=np.array([True, False]), transform=_EagerTransform,
     )
     assert episodes == [("train", 0), ("valid", 0)]
 
@@ -689,6 +708,7 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
 def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatch):
     class Model:
         readout_weight = SimpleNamespace(value=np.ones((2, 360)))
+        readout_bias = SimpleNamespace(value=np.zeros(360))
 
         def reset_episode(self, learner):
             pass
@@ -701,19 +721,21 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
         TRAINING_TASK_IDS=("train",),
         VALIDATION_TASK_IDS=("valid",),
         load_task=lambda *args: task,
-        encode_episode=lambda *args: (np.ones((1, 441)), np.ones(1, dtype=bool)),
-        run_event_sequence=lambda *args: np.zeros((1, 2)),
+        encode_episode=lambda *args: (np.ones((31, 441)), np.ones(31, dtype=bool)),
+        run_event_sequence=lambda *args: np.zeros((31, 2)),
         decode_prediction=lambda value: (
             np.zeros((1, 1), dtype=np.uint8)
-            if np.asarray(value).shape == (360,)
+            if np.asarray(value).shape == (31, 360)
             else (_ for _ in ()).throw(AssertionError("decoded neuron voltage"))
         ),
         strict_task_pass_at_1=lambda predictions, targets: True,
     )
-    monkeypatch.setattr(
-        structural,
-        "preclip_gradient_mass",
-        lambda *args, **kwargs: ({"model/recurrent_weight": np.ones((1, 2))}, 0.0),
+    learner = SimpleNamespace(
+        etrace_grad=lambda *args, **kwargs: ({
+            ("model", "input_weight"): np.ones(2),
+            ("model", "recurrent_weight"): np.ones(2),
+        }, 0.0),
+        etrace_evolve=lambda event, return_outputs: (event,),
     )
     monkeypatch.setattr(
         structural,
@@ -723,9 +745,15 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
     monkeypatch.setattr(
         structural,
         "structural_evidence",
-        lambda *args: {"neuron_scores": np.ones(2), "connection_scores": np.ones(2)},
+        lambda *args: {
+            "neuron_scores": np.ones(2),
+            "connection_scores": np.ones(2),
+            "target_incident_gradient": np.zeros((1, 2)),
+        },
     )
-    evidence = structural._fixed_task_evidence(module, Model(), object(), "data")
+    evidence = structural._fixed_task_evidence(
+        module, Model(), learner, "data", transform=_EagerTransform
+    )
     assert evidence["strict"] == [True, True]
 
 
@@ -812,6 +840,7 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
     )
     monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: lambda _: None)
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
+    monkeypatch.setattr(structural, "_fixed_strict_screen", lambda *args, **kwargs: (True,))
     monkeypatch.setattr(
         structural,
         "_real_mask_compaction_identity",
@@ -826,4 +855,557 @@ def test_real_arm_evaluates_rebuilt_candidate_model_after_mutation(monkeypatch):
     result = structural.measure_real_arm("neuron-add", data_root="data")
     assert result["candidate_neurons"] == 3
     assert result["after_strict"] == [True]
-    assert result["mask_compaction"]["prediction_bytes_identical"] is True
+    assert result["mask_compaction"]["not_measured"] is True
+
+
+def test_neuron_evidence_includes_input_and_recurrent_incident_gradient_mass():
+    topology = structural.SparseTopology(
+        input_source=np.array([0, 1]), input_target=np.array([0, 1]),
+        input_value=np.ones(2), recurrent_source=np.array([0]),
+        recurrent_target=np.array([1]), recurrent_value=np.ones(1),
+        readout=np.zeros((2, 1)), dale=np.zeros(2), mechanisms=((), ()),
+    )
+    evidence = structural.structural_evidence(
+        topology,
+        readout_effect=np.zeros((1, 2)),
+        spikes=np.zeros((1, 2)),
+        gradient_mass=np.array([[2.0]]),
+        input_gradient_mass=np.array([[3.0, 5.0]]),
+    )
+    np.testing.assert_allclose(
+        evidence["neuron_task_scores"], [[5.0 / 21.0, 1.0 / 3.0]]
+    )
+    np.testing.assert_array_equal(evidence["target_incident_gradient"], [[5.0, 7.0]])
+
+
+def test_wrong_output_readout_evidence_uses_only_incorrect_supervised_groups():
+    voltages = np.full((31, 2), -65.0)
+    voltages[0] = [-45.0, -65.0]
+    weights = np.zeros((2, 360))
+    weights[0, :30] = 2.0
+    weights[0, 30:60] = 3.0
+    bias = np.zeros(360)
+    bias[1] = 4.0
+    bias[30] = 4.0
+    target = np.zeros((1, 1), dtype=np.uint8)
+    result = structural.wrong_output_readout_evidence(
+        voltages, weights, bias, target
+    )
+    assert result[0] == pytest.approx(60.0 * np.tanh(1.0))
+    assert result[1] == 0.0
+
+
+def test_connection_selector_stops_at_strict_next_tile_bound():
+    selected, statistics = structural.select_connection_additions(
+        600,
+        existing=set(),
+        source_evidence=np.arange(600.0, 0.0, -1.0),
+        target_evidence=np.arange(600.0, 0.0, -1.0),
+        required=1,
+        return_statistics=True,
+    )
+    assert selected == ((0, 1),)
+    assert statistics["tiles_scanned"] == 1
+    assert statistics["tiles_total"] == 9
+    assert statistics["stopped_by_bound"]
+    assert statistics["max_resident_pairs"] == 65_536
+    assert statistics["next_tile_upper_bound"] < statistics["worst_selected_score"]
+
+    tied, tied_statistics = structural.select_connection_additions(
+        4, set(), np.ones(4), np.ones(4), 1, tile_size=2,
+        return_statistics=True,
+    )
+    assert tied == ((0, 1),)
+    assert tied_statistics["tiles_scanned"] == 4
+    assert not tied_statistics["stopped_by_bound"]
+
+
+def test_fixed_task_evidence_measures_all_eight_training_tasks(monkeypatch):
+    training_ids = tuple(f"train-{index}" for index in range(8))
+    task_index = {task_id: index for index, task_id in enumerate(training_ids)}
+
+    class Model:
+        input_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([0, 1]))
+        recurrent_csr = SimpleNamespace(indptr=np.array([0, 1, 2]), indices=np.array([1, 0]))
+        input_weight = SimpleNamespace(value=np.ones(2))
+        recurrent_weight = SimpleNamespace(value=np.ones(2))
+        readout_weight = SimpleNamespace(value=np.ones((2, 360)))
+        readout_bias = SimpleNamespace(value=np.zeros(360))
+
+        def reset_episode(self, learner):
+            pass
+
+        def readout(self):
+            return np.zeros(360)
+
+    class Learner:
+        def __init__(self):
+            self.calls = []
+
+        def etrace_grad(self, events, **kwargs):
+            index = int(np.asarray(events)[0, 0])
+            self.calls.append(index)
+            return {
+                ("model", "input_weight"): np.full(2, index + 1.0),
+                ("model", "recurrent_weight"): np.full(2, index + 2.0),
+            }, np.asarray(index, dtype=float)
+
+        def etrace_evolve(self, event, return_outputs):
+            return (event,)
+
+    def load_task(_root, task_id, _role):
+        return SimpleNamespace(
+            task_id=task_id,
+            targets=(np.zeros((1, 1), dtype=np.uint8),),
+        )
+
+    def encode_episode(task, _query_index):
+        index = task_index.get(task.task_id, 0)
+        events = np.zeros((31, 441), dtype=float)
+        events[0, 0] = index
+        return events, np.ones(31, dtype=bool)
+
+    module = SimpleNamespace(
+        TRAINING_TASK_IDS=training_ids,
+        VALIDATION_TASK_IDS=("valid",),
+        load_task=load_task,
+        encode_episode=encode_episode,
+        run_event_sequence=lambda *_args: np.full((31, 2), -45.0),
+        decode_prediction=lambda _value: np.zeros((1, 1), dtype=np.uint8),
+        strict_task_pass_at_1=lambda _predictions, _targets: False,
+    )
+    learner = Learner()
+    evidence = structural._fixed_task_evidence(
+        module, Model(), learner, "data", transform=_EagerTransform
+    )
+    assert evidence["training_task_ids"] == list(training_ids)
+    assert learner.calls == list(range(8))
+    assert np.asarray(evidence["task_spike_evidence"]).shape == (8, 2)
+    assert np.asarray(evidence["preclip_gradient_mass"]).shape == (8, 2)
+    assert np.asarray(evidence["input_preclip_gradient_mass"]).shape == (8, 2)
+    assert np.asarray(evidence["training_events"]).shape == (8, 31, 441)
+
+
+def test_parent_checkpoint_loads_nonzero_optimizer_state_and_distinct_steps(tmp_path):
+    arrays = {
+        "neuron_ids": np.arange(2, dtype=np.int32),
+        "dale_codes": np.zeros(2, dtype=np.int8),
+        "owner_codes": np.full(2, -1, dtype=np.int16),
+        "mechanism_codes": np.zeros(2, dtype=np.uint8),
+        "neuron_count": np.asarray(2, dtype=np.int32),
+        "integration_substeps": np.asarray(1, dtype=np.int32),
+        "input_indptr": np.concatenate((np.array([0, 1]), np.ones(440))).astype(np.int32),
+        "input_indices": np.array([0], dtype=np.int32),
+        "input_values": np.array([1.0], dtype=np.float32),
+        "input_m1": np.array([2.0], dtype=np.float32),
+        "input_m2": np.array([3.0], dtype=np.float32),
+        "recurrent_indptr": np.array([0, 1, 1], dtype=np.int32),
+        "recurrent_indices": np.array([1], dtype=np.int32),
+        "recurrent_values": np.array([4.0], dtype=np.float32),
+        "recurrent_m1": np.array([5.0], dtype=np.float32),
+        "recurrent_m2": np.array([6.0], dtype=np.float32),
+        "readout_weight": np.ones((2, 360), dtype=np.float32),
+        "readout_bias": np.ones(360, dtype=np.float32),
+        "readout_weight_m1": np.full((2, 360), 7.0, dtype=np.float32),
+        "readout_weight_m2": np.full((2, 360), 8.0, dtype=np.float32),
+        "readout_bias_m1": np.full(360, 9.0, dtype=np.float32),
+        "readout_bias_m2": np.full(360, 10.0, dtype=np.float32),
+        "input_step": np.asarray(11, dtype=np.int64),
+        "recurrent_step": np.asarray(12, dtype=np.int64),
+        "readout_step": np.asarray(13, dtype=np.int64),
+    }
+    checkpoint_path = tmp_path / "parent.npz"
+    checkpoint_path.write_bytes(b"exact-parent-checkpoint")
+    module = SimpleNamespace(load_checkpoint=lambda path: arrays)
+    parent = structural.load_parent_checkpoint(module, checkpoint_path)
+    np.testing.assert_array_equal(parent.topology.input_source, [0])
+    np.testing.assert_array_equal(parent.topology.recurrent_source, [0])
+    assert parent.optimizer.input_step == 11
+    assert parent.optimizer.recurrent_step == 12
+    assert parent.optimizer.readout_step == 13
+    assert parent.nonzero_optimizer_values
+    assert parent.digest == hashlib.sha256(b"exact-parent-checkpoint").hexdigest()
+
+    zero_arrays = {**arrays, "input_m1": np.zeros(1, dtype=np.float32),
+                   "input_m2": np.zeros(1, dtype=np.float32),
+                   "recurrent_m1": np.zeros(1, dtype=np.float32),
+                   "recurrent_m2": np.zeros(1, dtype=np.float32),
+                   "readout_weight_m1": np.zeros((2, 360), dtype=np.float32),
+                   "readout_weight_m2": np.zeros((2, 360), dtype=np.float32),
+                   "readout_bias_m1": np.zeros(360, dtype=np.float32),
+                   "readout_bias_m2": np.zeros(360, dtype=np.float32)}
+    with pytest.raises(ValueError, match="nonzero optimizer"):
+        structural.load_parent_checkpoint(
+            SimpleNamespace(load_checkpoint=lambda path: zero_arrays), "zero.npz"
+        )
+
+
+def test_active_muon_state_is_loaded_from_parent_arrays_and_remapped():
+    import jax
+    import jax.numpy as jnp
+
+    trainer = SimpleNamespace(
+        parameters={
+            "input": jnp.ones(2),
+            "recurrent": jnp.ones(3),
+            "readout_weight": jnp.ones((2, 4)),
+            "readout_bias": jnp.ones(4),
+        },
+        learning_rates={"input": 0.1, "recurrent": 0.1, "readout": 0.1},
+    )
+    optimizer = structural.StructuralAdam(
+        np.full((2, 4), 7.0), np.full((2, 4), 8.0),
+        np.full(2, 2.0), np.full(2, 3.0),
+        np.full(3, 4.0), np.full(3, 5.0),
+        bias_first=np.full(4, 9.0), bias_second=np.full(4, 10.0),
+        input_step=11, recurrent_step=12, readout_step=13,
+    )
+    groups = structural.initialize_muon_groups(trainer, optimizer)
+    assert set(groups) == set(trainer.parameters)
+    leaves = [np.asarray(value) for value in jax.tree_util.tree_leaves(groups)]
+    assert any(np.any(value == 2.0) for value in leaves)
+    assert any(np.any(value == 7.0) for value in leaves)
+    mapped = structural.remap_muon_groups(
+        groups,
+        {
+            "input": (np.arange(2), (3,)),
+            "recurrent": (np.arange(3), (4,)),
+            "readout_weight": (np.array([True, False]), (1, 4)),
+            "readout_bias": (np.arange(4), (4,)),
+        },
+    )
+    checks = structural.muon_remap_checks(
+        groups,
+        mapped,
+        {
+            "input": (np.arange(2), (3,)),
+            "recurrent": (np.arange(3), (4,)),
+            "readout_weight": (np.array([True, False]), (1, 4)),
+            "readout_bias": (np.arange(4), (4,)),
+        },
+    )
+    assert checks == {
+        "loaded": True,
+        "source_nonzero": True,
+        "surviving_values_preserved": True,
+    }
+    input_shapes = [
+        getattr(value, "shape", None)
+        for value in jax.tree_util.tree_leaves(mapped["input"])
+    ]
+    assert input_shapes.count((3,)) >= 3
+    trainer.muon_groups = groups
+    restored = structural.optimizer_from_muon_groups(trainer)
+    np.testing.assert_array_equal(restored.input_first, np.full(2, 2.0))
+    np.testing.assert_array_equal(restored.neuron_first, np.full((2, 4), 7.0))
+    assert restored.input_step == 11
+    assert restored.recurrent_step == 12
+    assert restored.readout_step == 13
+
+
+def test_real_update_adds_target_dependent_direct_readout_gradients():
+    import jax.numpy as jnp
+
+    class Model:
+        input_weight = SimpleNamespace(value=jnp.ones(1))
+        recurrent_weight = SimpleNamespace(value=jnp.ones(1))
+        readout_weight = SimpleNamespace(value=jnp.zeros((2, 360)))
+        readout_bias = SimpleNamespace(value=jnp.zeros(360))
+
+        def reset_episode(self, learner):
+            pass
+
+    class Learner:
+        model4compile = Model()
+
+        def etrace_evolve(self, event, return_outputs):
+            return (jnp.zeros((1, 2)),)
+
+    class Trainer:
+        def __init__(self, learner, parameters):
+            self.parameters = {
+                **parameters,
+                "readout_weight": learner.model4compile.readout_weight.value,
+                "readout_bias": learner.model4compile.readout_bias.value,
+            }
+            self.gradients = None
+
+        def update_episode(self, events, **kwargs):
+            self.gradients = kwargs["direct_grad_fn"]()
+            return 0.0, 0.0
+
+    module = SimpleNamespace(
+        PPPropEpisodeTrainer=Trainer,
+        run_event_sequence=lambda model, events, mask: jnp.full((31, 2), -45.0),
+    )
+    evidence = {
+        "training_events": np.zeros((1, 31, 441)),
+        "training_advances": np.ones((1, 31), dtype=bool),
+        "events": np.zeros((31, 441)),
+        "advances": np.ones(31, dtype=bool),
+        "training_target_colors": np.zeros((1, 30, 30), dtype=np.int32),
+        "training_target_valid": np.pad(
+            np.ones((1, 1, 1), dtype=bool), ((0, 0), (0, 29), (0, 29))
+        ),
+        "training_target_heights": np.zeros(1, dtype=np.int32),
+        "training_target_widths": np.zeros(1, dtype=np.int32),
+    }
+    update = structural._real_pp_prop_update(
+        module, Learner.model4compile, Learner(), evidence
+    )
+    update(0)
+    assert np.any(np.asarray(update.trainer.gradients[("readout_weight",)]) != 0)
+    assert np.any(np.asarray(update.trainer.gradients[("readout_bias",)]) != 0)
+
+
+def test_checkpoint_arrays_preserve_sparse_topology_and_optimizer_values():
+    class Model:
+        input_csr = SimpleNamespace(
+            indptr=np.concatenate((np.array([0, 1, 2]), np.full(439, 2))),
+            indices=np.array([0, 1]),
+        )
+        recurrent_csr = SimpleNamespace(
+            indptr=np.array([0, 1, 2]), indices=np.array([1, 0])
+        )
+        input_weight = SimpleNamespace(value=np.array([1.0, 2.0], dtype=np.float32))
+        recurrent_weight = SimpleNamespace(value=np.array([3.0, 4.0], dtype=np.float32))
+        readout_weight = SimpleNamespace(value=np.ones((2, 360), dtype=np.float32))
+        readout_bias = SimpleNamespace(value=np.ones(360, dtype=np.float32))
+
+    optimizer = structural.StructuralAdam(
+        np.full((2, 360), 1.0), np.full((2, 360), 2.0),
+        np.full(2, 3.0), np.full(2, 4.0),
+        np.full(2, 5.0), np.full(2, 6.0),
+        bias_first=np.full(360, 7.0), bias_second=np.full(360, 8.0),
+        input_step=9, recurrent_step=10, readout_step=11,
+    )
+    arrays = structural.checkpoint_arrays(
+        Model(), optimizer, {"owners": ((), (0, 1))}
+    )
+    assert arrays["input_indptr"].shape == (442,)
+    np.testing.assert_array_equal(arrays["input_indices"], [0, 1])
+    np.testing.assert_array_equal(arrays["recurrent_indices"], [1, 0])
+    np.testing.assert_array_equal(arrays["owner_codes"], [-1, -2])
+    assert int(arrays["input_step"]) == 9
+    assert int(arrays["recurrent_step"]) == 10
+    assert int(arrays["readout_step"]) == 11
+
+
+def test_parent_writer_uses_real_update_state_and_writes_digest(
+    monkeypatch, tmp_path
+):
+    model = SimpleNamespace()
+    learner = SimpleNamespace()
+    trainer = SimpleNamespace()
+    update = lambda index: index
+    update.trainer = trainer
+    module = SimpleNamespace(
+        BrainCellArcModel=lambda: model,
+        compile_pp_prop_model=lambda value: learner,
+        write_checkpoint=lambda path, arrays: Path(path).write_bytes(b"checkpoint"),
+    )
+    optimizer = structural.StructuralAdam(
+        np.ones((1, 1)), np.ones((1, 1)), np.ones(1), np.ones(1),
+        np.ones(1), np.ones(1), bias_first=np.ones(1), bias_second=np.ones(1),
+        input_step=64, recurrent_step=64, readout_step=64,
+    )
+    arrays = {
+        "input_m1": np.ones(1), "input_m2": np.ones(1),
+        "recurrent_m1": np.ones(1), "recurrent_m2": np.ones(1),
+        "readout_weight_m1": np.ones(1), "readout_weight_m2": np.ones(1),
+        "readout_bias_m1": np.ones(1), "readout_bias_m2": np.ones(1),
+        "input_step": np.asarray(64), "recurrent_step": np.asarray(64),
+        "readout_step": np.asarray(64),
+    }
+    monkeypatch.setattr(
+        structural, "_fixed_task_evidence",
+        lambda *args: {"strict": [False, True]},
+    )
+    monkeypatch.setattr(structural, "_real_pp_prop_update", lambda *args: update)
+    monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        structural, "_fixed_strict_screen", lambda *args: (True, True)
+    )
+    monkeypatch.setattr(
+        structural, "optimizer_from_muon_groups", lambda value: optimizer
+    )
+    monkeypatch.setattr(
+        structural, "checkpoint_arrays", lambda *args: arrays
+    )
+    monkeypatch.setattr(structural, "_git_commit", lambda: "commit")
+    target = tmp_path / "parent.npz"
+    result = structural.write_parent_checkpoint(module, target, "data")
+    assert result["updates"] == 64
+    assert result["optimizer_nonzero"]
+    assert result["optimizer_steps"] == {
+        "input": 64, "recurrent": 64, "readout": 64
+    }
+    assert result["checkpoint_sha256"] == hashlib.sha256(b"checkpoint").hexdigest()
+
+    monkeypatch.setattr(
+        structural, "_fixed_strict_screen", lambda *args: (False, False)
+    )
+    with pytest.raises(ValueError, match="strict regression"):
+        structural.write_parent_checkpoint(module, target, "data")
+
+
+def test_merge_validation_rejects_unpromoted_or_unbounded_arm():
+    task_ids = [f"task-{index}" for index in range(8)]
+
+    def arm(name, pid):
+        neuron_arm = name.startswith("neuron")
+        addition = name.endswith("add")
+        result = {
+            "arm": name,
+            "environment": {"pid": pid},
+            "implementation_commit": "abc",
+            "real_model": True,
+            "baseline_neurons": 100,
+            "candidate_neurons": 105 if name == "neuron-add" else (95 if name == "neuron-prune" else 100),
+            "baseline_recurrent_items": 100,
+            "candidate_recurrent_items": 105 if name == "connection-add" else (95 if name == "connection-prune" else 100),
+            "mutated_item_count": 5,
+            "updates": 64 if addition else 0,
+            "before_strict": [False, True],
+            "after_strict": [True, True],
+            "promoted": True,
+            "strict_regression_rejected": True,
+            "within_300_seconds": True,
+            "dense_neuron_pair_array": False,
+            "parent_checkpoint_sha256": "parent",
+            "parent_optimizer_nonzero": True,
+            "training_evidence_task_ids": task_ids,
+            "adam_remapped": True,
+            "muon_remapped": True,
+            "optimizer_remap": {
+                "surviving_values_preserved": True,
+                "new_values_zero": True,
+                "step_counts_preserved": True,
+            },
+            "mask_compaction": {
+                "prediction_bytes_identical": True,
+                "strict_identical": True,
+            } if name == "neuron-prune" else {"not_measured": True},
+            "connection_selection": {
+                "stopped_by_bound": True,
+                "max_resident_pairs": 65_536,
+            } if name == "connection-add" else {
+                "stopped_by_bound": False,
+                "max_resident_pairs": 0,
+            },
+        }
+        assert neuron_arm or name.startswith("connection")
+        return result
+
+    arms = [arm(name, index) for index, name in enumerate(
+        ("neuron-prune", "connection-prune", "neuron-add", "connection-add"), 1
+    )]
+    structural.validate_merged_arms(arms)
+    arms[2]["promoted"] = False
+    with pytest.raises(ValueError, match="promoted"):
+        structural.validate_merged_arms(arms)
+    arms[2]["promoted"] = True
+    arms[3]["connection_selection"]["stopped_by_bound"] = False
+    with pytest.raises(ValueError, match="tile bound"):
+        structural.validate_merged_arms(arms)
+
+    arms = [arm(name, index) for index, name in enumerate(
+        ("neuron-prune", "connection-prune", "neuron-add", "connection-add"), 1
+    )]
+    mutations = (
+        (lambda values: values.reverse(), "fixed order"),
+        (lambda values: values[1]["environment"].update(pid=1), "separate process"),
+        (lambda values: values[1].update(implementation_commit="def"), "implementation commit"),
+        (lambda values: values[1].update(parent_checkpoint_sha256="other"), "parent checkpoint"),
+        (lambda values: values[0].update(after_strict=[False, False]), "promoted"),
+        (lambda values: values[0].update(after_strict=[True, False]), "strict regression"),
+        (lambda values: values[0].update(within_300_seconds=False), "300-second"),
+        (lambda values: values[0].update(dense_neuron_pair_array=True), "sparse pair"),
+        (lambda values: values[0].update(training_evidence_task_ids=[]), "eight training"),
+        (lambda values: values[0].update(parent_optimizer_nonzero=False), "nonzero parent"),
+        (lambda values: values[0]["optimizer_remap"].update(new_values_zero=False), "optimizer state"),
+        (lambda values: values[0].update(muon_remapped=False), "active optimizer"),
+        (lambda values: values[2].update(updates=63), "update count"),
+        (lambda values: values[2].update(mutated_item_count=4), "mutation count"),
+        (lambda values: values[0]["mask_compaction"].update(strict_identical=False), "compaction identity"),
+    )
+    for mutate, message in mutations:
+        invalid = copy.deepcopy(arms)
+        mutate(invalid)
+        with pytest.raises(ValueError, match=message):
+            structural.validate_merged_arms(invalid)
+
+
+def test_coverage_summary_requires_branch_data_above_ninety(monkeypatch):
+    class Data:
+        def __init__(self, branches):
+            self.branches = branches
+
+        def has_arcs(self):
+            return self.branches
+
+    class Coverage:
+        branches = True
+        percent = 91.25
+
+        def __init__(self, config_file):
+            assert config_file is False
+
+        def load(self):
+            pass
+
+        def get_data(self):
+            return Data(self.branches)
+
+        def report(self, show_missing, include):
+            assert not show_missing
+            assert include == ["examples/pp_prop/example21_structural.py"]
+            return self.percent
+
+    monkeypatch.setitem(sys.modules, "coverage", SimpleNamespace(Coverage=Coverage))
+    assert structural._coverage_summary() == {
+        "line_and_branch_percent": 91.25,
+        "branch_data": True,
+    }
+    Coverage.branches = False
+    with pytest.raises(ValueError, match="line-plus-branch"):
+        structural._coverage_summary()
+
+
+def test_merge_cli_uses_measured_files_and_arm_cli_requires_parent(
+    monkeypatch, tmp_path
+):
+    monkeypatch.chdir(tmp_path)
+    names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
+    for name in names:
+        (tmp_path / f".gate5-{name}.json").write_text(json.dumps({
+            "arm": name,
+            "implementation_commit": "code-commit",
+            "within_300_seconds": True,
+        }))
+    (tmp_path / ".gate5-baseline.json").write_text(json.dumps({
+        "baseline": {"neurons": 2048}
+    }))
+    monkeypatch.setattr(structural, "validate_merged_arms", lambda arms: None)
+    monkeypatch.setattr(
+        structural, "_coverage_summary",
+        lambda: {"line_and_branch_percent": 91.5, "branch_data": True},
+    )
+    monkeypatch.setattr(structural, "_git_commit", lambda: "artifact-commit")
+    structural.main([
+        "merge", "--output", "merged.json", "--focused-passed", "37"
+    ])
+    merged = json.loads((tmp_path / "merged.json").read_text())
+    assert merged["implementation_commit"] == "code-commit"
+    assert merged["artifact_build_commit"] == "artifact-commit"
+    assert merged["focused_tests"]["line_and_branch_percent"] == 91.5
+    with pytest.raises(SystemExit):
+        structural.main(["neuron-add", "--output", "arm.json"])
+
+
+def test_git_commit_fails_closed_when_git_is_unavailable(monkeypatch):
+    monkeypatch.setattr(
+        structural.subprocess, "run",
+        lambda *args, **kwargs: (_ for _ in ()).throw(subprocess.CalledProcessError(1, "git")),
+    )
+    assert structural._git_commit() == "unknown"
