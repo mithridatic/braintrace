@@ -704,6 +704,15 @@ def test_compiled_screen_and_strict_decoder_cover_each_update_observation(monkey
         decoder_module, episodes, np.asarray([[1.0, 0.0], [0.0, 1.0]])
     )
     assert strict == (True, False)
+    assert structural._strict_vectors_from_logits(
+        decoder_module, episodes[:1], np.asarray([[1.0, 0.0]]),
+        default=(False, True),
+    ) == (True, True)
+    with pytest.raises(ValueError, match="fixed task count"):
+        structural._strict_vectors_from_logits(
+            decoder_module, episodes[:1], np.asarray([[1.0, 0.0]]),
+            default=(False,),
+        )
 
 
 def test_artifact_is_canonical_and_records_environment(tmp_path):
