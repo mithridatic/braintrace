@@ -323,7 +323,9 @@ def test_dale_runner_rejects_checkpoint_with_same_id_but_different_state() -> No
 
 def test_dale_runner_rejects_every_deferred_mechanism() -> None:
     parent = SimpleNamespace(parent_id="accepted-parent", updates=0)
-    for mechanism in ("nmda", "hcn", "calcium_dependent_adaptation", "electrical_junctions"):
+    for mechanism in (
+        "nmda", "hcn", "calcium_dependent_adaptation", "electrical_junctions", 1
+    ):
         with pytest.raises(ValueError, match="deferred biology"):
             run_dale_candidates(
                 parent,

@@ -247,6 +247,12 @@ def load_parent_checkpoint(module, path):
         raise ValueError("parent checkpoint must contain 441 sparse input rows")
     if len(recurrent_indptr) != neuron_count + 1:
         raise ValueError("parent checkpoint recurrent row count is invalid")
+    dale_codes = np.asarray(arrays["dale_codes"])
+    mechanism_codes = np.asarray(arrays["mechanism_codes"])
+    if np.any(dale_codes != 0):
+        raise ValueError("accepted Dale parent must be fully untyped")
+    if np.any(mechanism_codes != 0):
+        raise ValueError("accepted parent has enabled deferred mechanism codes")
     topology = SparseTopology(
         np.repeat(np.arange(441), np.diff(input_indptr)),
         np.asarray(arrays["input_indices"]),
@@ -255,9 +261,8 @@ def load_parent_checkpoint(module, path):
         np.asarray(arrays["recurrent_indices"]),
         np.asarray(arrays["recurrent_values"]),
         np.asarray(arrays["readout_weight"]),
-        np.asarray(arrays["dale_codes"]),
-        tuple(() if code == 0 else (int(code),)
-              for code in np.asarray(arrays["mechanism_codes"])),
+        dale_codes,
+        tuple(() for _ in mechanism_codes),
     )
     optimizer = StructuralAdam(
         np.asarray(arrays["readout_weight_m1"]),
@@ -843,6 +848,37 @@ def effective_topology_recurrent_values(topology):
     ))
 
 
+def causal_block_lesion_evidence(topology, task_spikes):
+    """Measure recurrent relay removed by blocking each source neuron.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Accepted parent topology.
+    task_spikes : array-like
+        Mean source-neuron spikes with shape ``(tasks, neurons)``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Per-task outgoing-current loss for each source neuron.
+    """
+    spikes = np.asarray(task_spikes, dtype=float)
+    if spikes.ndim != 2 or spikes.shape[1] != topology.neuron_count:
+        raise ValueError("task spikes must be a task-by-neuron array")
+    values = np.abs(effective_topology_recurrent_values(topology))
+    active = values[None, :] * np.abs(spikes[:, topology.recurrent_source])
+    baseline = np.zeros((spikes.shape[0], topology.neuron_count), dtype=float)
+    for task, task_active in enumerate(active):
+        baseline[task] = np.bincount(
+            topology.recurrent_source,
+            weights=task_active,
+            minlength=topology.neuron_count,
+        )
+    blocked = np.zeros_like(baseline)
+    return baseline - blocked
+
+
 def validate_topology_dale(topology):
     """Validate every typed recurrent outgoing edge in a topology."""
     return validate_effective_signs(
@@ -1355,6 +1391,8 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
         topology.recurrent_source,
         edge_gradient,
     )
+    task_spikes = np.asarray(evidence["task_spike_evidence"], dtype=float)
+    lesion_evidence = causal_block_lesion_evidence(topology, task_spikes)
     measurements = DaleMeasurements(
         parent.digest,
         topology.recurrent_source,
@@ -1362,7 +1400,7 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
         np.mean(np.asarray(evidence["task_spike_evidence"]), axis=0),
         gradient_mass,
         np.asarray([len(owner) for owner in evidence["owners"]], dtype=float),
-        np.mean(np.asarray(evidence["task_readout_evidence"]), axis=0),
+        np.mean(lesion_evidence, axis=0),
         topology.dale,
     )
     parent_state = _DaleParentState(
@@ -1430,6 +1468,7 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
             "inhibitory_scores": selection.inhibitory_scores.tolist(),
         },
         "measurement_parent_id": measurements.parent_id,
+        "lesion_evidence": lesion_evidence.tolist(),
         "arms": arms,
         "updates": 64,
         "deferred_biology": deferred_biology_defaults(),

@@ -281,15 +281,8 @@ def _validate_deferred_candidate(candidate) -> None:
     mechanisms = getattr(candidate, "mechanisms", None)
     if mechanisms is None:
         raise ValueError("Dale candidate must declare deferred mechanisms")
-    enabled = set()
-    for group in mechanisms:
-        enabled.update((group,) if isinstance(group, str) else group)
-    deferred = enabled.intersection(expected)
-    if deferred:
-        raise ValueError(
-            "Dale candidate enables deferred biology: "
-            + ", ".join(sorted(deferred))
-        )
+    if any(mechanisms):
+        raise ValueError("Dale candidate enables deferred biology mechanisms")
 
 
 def run_dale_arm(

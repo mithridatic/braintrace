@@ -51,6 +51,22 @@ def test_evidence_scores_owners_ranking_and_twins_are_direct_and_stable():
     assert twins == ((0, 1), (2,))
 
 
+def test_causal_block_lesion_evidence_measures_each_source_loss():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 0, 1]), np.array([1, 2, 2]),
+        np.asarray(structural.encode_dale_weights(
+            [0.5, 0.25, -0.75], [1, 1, -1]
+        )), np.ones((3, 1)), np.array([1, 1, -1], dtype=np.int8), ((),) * 3,
+    )
+    evidence = structural.causal_block_lesion_evidence(
+        topology, np.array([[2.0, 3.0, 0.0]])
+    )
+    np.testing.assert_allclose(evidence, [[1.5, 2.25, 0.0]])
+    with pytest.raises(ValueError, match="task-by-neuron"):
+        structural.causal_block_lesion_evidence(topology, np.ones(3))
+
+
 def test_connection_contribution_uses_csr_row_as_source():
     indptr = np.array([0, 2, 3])
     values = np.array([2.0, -1.0, 4.0])
@@ -849,10 +865,14 @@ def test_real_pp_prop_update_then_structural_addition_preserves_dale_signs():
 
         def update_episode(self, events, **kwargs):
             self.calls += 1
+            self.parameters["recurrent"][...] += 0.25
             return events.shape, kwargs["loss_mask"].shape
 
     model = SimpleNamespace(
-        input_weight=State([1.0]), recurrent_weight=State([1.0]),
+        input_weight=State([1.0]), recurrent_weight=State([
+            float(structural.inverse_softplus(np.asarray([0.25]))[0]),
+            float(structural.inverse_softplus(np.asarray([0.5]))[0]),
+        ]),
         reset_episode=lambda learner: None,
     )
     module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
@@ -860,20 +880,21 @@ def test_real_pp_prop_update_then_structural_addition_preserves_dale_signs():
         np.zeros((3, 1)), np.zeros((3, 1)), np.zeros(1), np.zeros(1),
         np.zeros(2), np.zeros(2),
     )
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]), model.recurrent_weight.value.copy(),
+        np.ones((3, 1)), np.array([1, -1, 0], dtype=np.int8), ((),) * 3,
+    )
+    before = model.recurrent_weight.value.copy()
     update = structural._real_pp_prop_update(
         module, model, SimpleNamespace(),
         {"events": np.zeros((1, 2)), "advances": np.ones(1)}, adam,
     )
     update()
     assert update.trainer.calls == 1
-
-    topology = structural.SparseTopology(
-        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
-        np.array([0, 1]), np.array([1, 2]),
-        np.asarray(structural.encode_dale_weights(
-            [0.25, -0.5], [1, -1]
-        )), np.ones((3, 1)), np.array([1, -1, 0], dtype=np.int8), ((),) * 3,
-    )
+    assert not np.array_equal(model.recurrent_weight.value, before)
+    topology.recurrent_value = model.recurrent_weight.value.copy()
+    assert structural.validate_topology_dale(topology)
     grown = structural.add_recurrent_connections(topology, ((0, 2), (1, 0)))
     effective = structural.effective_topology_recurrent_values(grown)
     np.testing.assert_allclose(effective[-2:], [1e-6, -1e-6], atol=1e-10)
@@ -1337,6 +1358,19 @@ def test_parent_checkpoint_loads_nonzero_optimizer_state_and_distinct_steps(tmp_
     assert parent.optimizer.readout_step == 13
     assert parent.nonzero_optimizer_values
     assert parent.digest == hashlib.sha256(b"exact-parent-checkpoint").hexdigest()
+
+    with pytest.raises(ValueError, match="fully untyped"):
+        structural.load_parent_checkpoint(
+            SimpleNamespace(load_checkpoint=lambda path: {
+                **arrays, "dale_codes": np.array([1, 0], dtype=np.int8)
+            }), checkpoint_path
+        )
+    with pytest.raises(ValueError, match="mechanism codes"):
+        structural.load_parent_checkpoint(
+            SimpleNamespace(load_checkpoint=lambda path: {
+                **arrays, "mechanism_codes": np.array([1, 0], dtype=np.uint8)
+            }), checkpoint_path
+        )
 
     zero_arrays = {**arrays, "input_m1": np.zeros(1, dtype=np.float32),
                    "input_m2": np.zeros(1, dtype=np.float32),
