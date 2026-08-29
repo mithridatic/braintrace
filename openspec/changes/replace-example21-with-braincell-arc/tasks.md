@@ -151,20 +151,20 @@
 
 ## 8. Dale stages and optional biology
 
-- [ ] 8.1 Implement separate five-percent excitatory and inhibitory selection
+- [x] 8.1 Implement separate five-percent excitatory and inhibitory selection
   from the same untyped parent; verify measured sign coherence, activity,
   pre-clip `etrace_grad` gradient mass, task ownership, lesion evidence, stable
   ties, and no random ratio.
-- [ ] 8.2 Implement the differentiable sparse `weight_fn` for typed neurons
+- [x] 8.2 Implement the differentiable sparse `weight_fn` for typed neurons
   by calling `braintrace.sparse_matmul` directly across training, addition,
   pruning, and compaction; verify the `1e-6` effective floor,
   inverse-softplus conversion, zero baseline types, exact candidate counts, no
   effective sign violation after one update and one structural operation, and
   raw signed behavior for untyped neurons.
-- [ ] 8.3 Add the Dale candidate runner and strict gate; verify separate parent
+- [x] 8.3 Add the Dale candidate runner and strict gate; verify separate parent
   checkpoints, fixed 64-update arms, false-to-true promotion with no regression,
   and no AMPA or GABAa mechanism in a type-assignment arm.
-- [ ] 8.4 Add only the guard and documentation for deferred biological
+- [x] 8.4 Add only the guard and documentation for deferred biological
   features; verify that default construction activates none. Do not implement
   an optional mechanism in this change. A later one-feature experiment must
   reject a slow or strict-flat arm.

@@ -15,6 +15,14 @@ from pathlib import Path
 
 import numpy as np
 
+from examples.pp_prop.dale_candidates import (
+    effective_dale_weights,
+    encode_dale_weights,
+    validate_effective_signs,
+)
+from examples.pp_prop.dale_candidates import (
+    run_dale_candidates as _run_dale_candidates,
+)
 
 BIOLOGICAL_CONNECTIONS_PER_NEURON = 1024
 
@@ -772,6 +780,7 @@ def prune_recurrent(topology, scores, validation_strict):
         topology.recurrent_target[keep], topology.recurrent_value[keep],
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
     )
+    validate_topology_dale(pruned)
     return pruned, keep
 
 
@@ -793,8 +802,53 @@ def topology_from_model(model):
     return SparseTopology(
         input_sources, input_targets, np.asarray(model.input_weight.value),
         recurrent_sources, recurrent_targets, np.asarray(model.recurrent_weight.value),
-        readout, np.zeros(count, dtype=np.int8), ((),) * count,
+        readout, np.asarray(getattr(model, "dale", np.zeros(count, dtype=np.int8))),
+        tuple(getattr(model, "mechanisms", ((),) * count)),
     )
+
+
+def topology_dale_edge_signs(topology):
+    """Return one Dale sign for each recurrent raw coordinate."""
+    return np.asarray(topology.dale, dtype=np.int8)[topology.recurrent_source]
+
+
+def effective_topology_recurrent_values(topology):
+    """Return recurrent values after applying source-neuron Dale signs."""
+    return np.asarray(effective_dale_weights(
+        topology.recurrent_value, topology_dale_edge_signs(topology)
+    ))
+
+
+def validate_topology_dale(topology):
+    """Validate every typed recurrent outgoing edge in a topology."""
+    return validate_effective_signs(
+        topology.recurrent_value, topology_dale_edge_signs(topology)
+    )
+
+
+def assign_dale_type(topology, neurons, sign):
+    """Assign a measured Dale sign and encode existing outgoing values."""
+    if sign not in (-1, 1):
+        raise ValueError("Dale sign must be -1 or 1")
+    neurons = np.asarray(neurons, dtype=int)
+    if neurons.ndim != 1 or len(np.unique(neurons)) != len(neurons):
+        raise ValueError("Dale neurons must be a unique one-dimensional selection")
+    if np.any(neurons < 0) or np.any(neurons >= topology.neuron_count):
+        raise ValueError("Dale neuron index is outside the topology")
+    if np.any(topology.dale[neurons] != 0):
+        raise ValueError("Dale assignment requires untyped neurons")
+    dale = topology.dale.copy()
+    dale[neurons] = sign
+    edge_signs = dale[topology.recurrent_source]
+    raw = np.asarray(encode_dale_weights(topology.recurrent_value, edge_signs))
+    candidate = SparseTopology(
+        topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
+        topology.recurrent_source.copy(), topology.recurrent_target.copy(), raw,
+        topology.readout.copy(), dale, tuple(topology.mechanisms),
+    )
+    if not validate_topology_dale(candidate):
+        raise ValueError("Dale assignment violates an effective outgoing sign")
+    return candidate
 
 
 def task_gradient_mass(mass_by_task, parameter_name, task_count):
@@ -890,11 +944,12 @@ def structural_evidence(
     if input_gradient_mass.shape != (tasks, len(topology.input_value)):
         raise ValueError("input gradient mass must be task-by-edge")
     source = topology.recurrent_source
+    recurrent_values = effective_topology_recurrent_values(topology)
     transmission = np.zeros(expected, dtype=float)
     for task in range(tasks):
         transmission[task] = np.bincount(
             source,
-            weights=np.abs(topology.recurrent_value) * np.abs(spikes[task, source]),
+            weights=np.abs(recurrent_values) * np.abs(spikes[task, source]),
             minlength=topology.neuron_count,
         )
     incident = np.zeros(expected, dtype=float)
@@ -924,7 +979,7 @@ def structural_evidence(
     ))
     per_task_neuron = channels.mean(axis=0)
     neuron_scores = per_task_neuron.max(axis=0)
-    edge_transmission = np.abs(topology.recurrent_value)[None, :] * np.abs(
+    edge_transmission = np.abs(recurrent_values)[None, :] * np.abs(
         spikes[:, topology.recurrent_source]
     )
     per_task_edge = 0.5 * normalize_task_rows(edge_transmission)
@@ -981,6 +1036,7 @@ def compact(topology, alive, adam):
         recurrent_step=adam.recurrent_step,
         readout_step=adam.readout_step,
     )
+    validate_topology_dale(compacted)
     return compacted, mapped, True
 
 
@@ -1078,11 +1134,13 @@ def add_twin_neurons(topology, scores, required=None):
         readout[donor] *= 0.5
         readout = np.vstack((readout, readout[donor]))
         dale.append(topology.dale[donor]); mechanisms.append(topology.mechanisms[donor])
-    return SparseTopology(
+    grown = SparseTopology(
         np.asarray(input_source), np.asarray(input_target), np.asarray(input_value),
         np.asarray(recurrent_source), np.asarray(recurrent_target), np.asarray(recurrent_value),
         readout, np.asarray(dale), tuple(mechanisms),
-    ), donors
+    )
+    validate_topology_dale(grown)
+    return grown, donors
 
 
 def grow_adam_for_twins(adam, topology, grown):
@@ -1207,25 +1265,52 @@ def select_connection_additions(
     }
 
 
-def add_recurrent_connections(topology, pairs, *, typed=False):
+def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None):
     """Append measured recurrent pairs with neutral initial effective weight."""
 
     pairs = tuple(pairs)
     existing = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
-    if len(set(pairs)) != len(pairs) or any(pair in existing for pair in pairs):
-        raise ValueError("connection additions must be distinct and absent")
+    if (
+        len(set(pairs)) != len(pairs)
+        or any(pair in existing for pair in pairs)
+        or any(source == target for source, target in pairs)
+    ):
+        raise ValueError("connection additions must be distinct, absent, and non-self")
     enforce_biological_connection_ceiling(
         topology.neuron_count,
         len(topology.input_value),
         len(topology.recurrent_value) + len(pairs),
     )
-    initial = np.log(np.expm1(1e-6)) if typed else 0.0
-    return SparseTopology(
+    sources = np.asarray([p[0] for p in pairs], dtype=int)
+    if source_dale is None:
+        source_dale = (
+            np.where(topology.dale[sources] == 0, 1, topology.dale[sources])
+            if typed else np.zeros(len(pairs), dtype=np.int8)
+        )
+    source_dale = np.asarray(source_dale, dtype=np.int8)
+    if source_dale.shape != (len(pairs),) or not np.all(np.isin(source_dale, (-1, 0, 1))):
+        raise ValueError("source Dale signs must match added connections")
+    initial = np.full(len(pairs), np.log(np.expm1(1e-6)))
+    initial = np.where(source_dale == 0, 0.0, initial)
+    grown = SparseTopology(
         topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
-        np.concatenate((topology.recurrent_source, np.asarray([p[0] for p in pairs], dtype=int))),
+        np.concatenate((topology.recurrent_source, sources)),
         np.concatenate((topology.recurrent_target, np.asarray([p[1] for p in pairs], dtype=int))),
-        np.concatenate((topology.recurrent_value, np.full(len(pairs), initial))),
+        np.concatenate((topology.recurrent_value, initial)),
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
+    )
+    validate_topology_dale(grown)
+    return grown
+
+
+def run_dale_candidate_arms(
+    parent, measurements, build_candidate, update, strict, *, transform=None,
+    clock=time.perf_counter,
+):
+    """Run measured excitatory and inhibitory arms from one parent checkpoint."""
+    return _run_dale_candidates(
+        parent, measurements, build_candidate, update, strict,
+        transform=transform, clock=clock,
     )
 
 
@@ -2072,8 +2157,8 @@ def run_integrated_arm(
         "model": type(model).__name__,
         "baseline_neurons": int(topology.neuron_count),
         "candidate_neurons": int(candidate.neuron_count),
-        "baseline_recurrent_items": int(len(topology.recurrent_value)),
-        "candidate_recurrent_items": int(len(candidate.recurrent_value)),
+        "baseline_recurrent_items": len(topology.recurrent_value),
+        "candidate_recurrent_items": len(candidate.recurrent_value),
         "adam_remapped": True,
         "eligibility_reset": bool(reset),
         "real_model": True,
@@ -2363,7 +2448,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.arm == "merge":
         names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
-        arms = [json.loads(open(f".gate5-{name}.json", encoding="utf-8").read()) for name in names]
+        arms = [
+            json.loads(Path(f".gate5-{name}.json").read_text(encoding="utf-8"))
+            for name in names
+        ]
         validate_merged_arms(arms)
         if args.focused_passed is None or args.focused_passed < 1:
             parser.error("merge requires --focused-passed from the focused pytest run")
@@ -2378,7 +2466,9 @@ def main(argv=None):
                 "failed": 0,
                 **coverage_summary,
             },
-            "baseline": json.loads(open(".gate5-baseline.json", encoding="utf-8").read())["baseline"],
+            "baseline": json.loads(
+                Path(".gate5-baseline.json").read_text(encoding="utf-8")
+            )["baseline"],
             "arms": arms,
             "arm_controls": {
                 "addition_updates": 64, "candidate_arms_per_process": 1,
