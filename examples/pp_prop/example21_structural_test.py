@@ -60,11 +60,51 @@ def test_causal_block_lesion_evidence_measures_each_source_loss():
         )), np.ones((3, 1)), np.array([1, 1, -1], dtype=np.int8), ((),) * 3,
     )
     evidence = structural.causal_block_lesion_evidence(
-        topology, np.array([[2.0, 3.0, 0.0]])
+        topology,
+        np.array([[2.0, 3.0, 0.0]]),
+        task_output=lambda source: np.array([
+            3.75 if source is None else
+            (2.25 if source == 0 else 1.5 if source == 1 else 3.75)
+        ]),
+        transform=_EagerTransform,
     )
-    np.testing.assert_allclose(evidence, [[1.5, 2.25, 0.0]])
+    np.testing.assert_allclose(evidence, [[2 / 3, 1.0, 0.0]])
     with pytest.raises(ValueError, match="task-by-neuron"):
-        structural.causal_block_lesion_evidence(topology, np.ones(3))
+        structural.causal_block_lesion_evidence(
+            topology, np.ones(3), task_output=lambda _source: np.zeros(1)
+        )
+
+
+def test_causal_block_lesion_validates_outputs_and_normalizes_vectors():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0]), np.array([1]), np.array([1.0]),
+        np.ones((2, 1)), np.zeros(2, dtype=np.int8), ((), ()),
+    )
+    with pytest.raises(TypeError, match="intervention"):
+        structural.causal_block_lesion_evidence(
+            topology, np.ones((1, 2)), task_output=object(), transform=_EagerTransform
+        )
+    with pytest.raises(ValueError, match="one row"):
+        structural.causal_block_lesion_evidence(
+            topology, np.ones((1, 2)),
+            task_output=lambda _source: np.zeros(2), transform=_EagerTransform,
+        )
+    with pytest.raises(ValueError, match="match"):
+        structural.causal_block_lesion_evidence(
+            topology, np.ones((1, 2)),
+            task_output=lambda source: np.zeros(1 if source is None else 2),
+            transform=_EagerTransform,
+        )
+
+    def output(source):
+        value = 0.0 if source is None else float(source + 1)
+        return np.array([[value, 2.0 * value]])
+
+    evidence = structural.causal_block_lesion_evidence(
+        topology, np.ones((1, 2)), task_output=output, transform=_EagerTransform
+    )
+    np.testing.assert_allclose(evidence, [[0.5, 1.0]])
 
 
 def test_connection_contribution_uses_csr_row_as_source():
@@ -526,21 +566,26 @@ def test_dale_arm_is_exposed_by_the_production_structural_route(monkeypatch):
     monkeypatch.setattr(
         structural,
         "_measure_real_dale",
-        lambda received_module, received_parent, data_root, clock: {
+        lambda received_module, received_parent, data_root, checkpoint_output, clock: {
             "module": received_module, "parent": received_parent,
-            "data_root": data_root, "clock": clock,
+            "data_root": data_root, "checkpoint_output": checkpoint_output,
+            "clock": clock,
         },
     )
     clock = lambda: 1.0
     result = structural.measure_real_arm(
-        "dale", data_root="arc", parent_checkpoint="accepted", clock=clock
+        "dale", data_root="arc", parent_checkpoint="accepted",
+        checkpoint_output="children.npz", clock=clock
     )
     assert result == {
         "module": module, "parent": parent, "data_root": "arc", "clock": clock,
+        "checkpoint_output": "children.npz",
     }
 
 
 def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monkeypatch):
+    import jax.numpy as jnp
+
     class State:
         def __init__(self, value):
             self.value = np.asarray(value)
@@ -568,6 +613,9 @@ def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monke
             self.mechanisms = ((),) * 3
             self.biology_options = structural.deferred_biology_defaults()
 
+        def reset_episode(self, _learner=None):
+            return None
+
     parent = structural.ParentCheckpoint(
         topology, structural.StructuralAdam(
             np.ones((3, 1)), np.ones((3, 1)), np.ones(1), np.ones(1),
@@ -578,6 +626,11 @@ def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monke
         "Module", (), {
             "BrainCellArcModel": Model,
             "compile_pp_prop_model": staticmethod(lambda model: object()),
+            "run_event_sequence": staticmethod(
+                lambda _model, events, _advances, block_source=None: jnp.ones(
+                    (events.shape[0], 3)
+                ) * (1.0 if block_source is None else 1.0 + block_source * 0.1),
+            ),
         },
     )
     monkeypatch.setattr(
@@ -587,6 +640,8 @@ def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monke
             "owners": ((), (0,), (1,)),
             "task_readout_evidence": [[1.0, 2.0, 3.0], [2.0, 1.0, 0.0]],
             "strict": (False,),
+            "training_events": np.zeros((2, 3, 441), dtype=np.float32),
+            "training_advances": np.ones((2, 3), dtype=bool),
         },
     )
     monkeypatch.setattr(
@@ -630,6 +685,62 @@ def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monke
     assert result["parent_checkpoint_unchanged"]
     assert all(arm["typed_signs_valid"] for arm in result["arms"])
     assert all(not any(result["deferred_biology"].values()) for _ in result["arms"])
+    monkeypatch.setattr(
+        structural, "_fixed_task_evidence",
+        lambda *_args: {
+            "preclip_gradient_mass": [[1.0, 2.0, 3.0], [2.0, 1.0, 0.0]],
+            "task_spike_evidence": [[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]],
+            "owners": ((), (0,), (1,)),
+            "task_readout_evidence": [[1.0, 2.0, 3.0], [2.0, 1.0, 0.0]],
+            "strict": (False,),
+        },
+    )
+    fallback = structural._measure_real_dale(module, parent, "arc")
+    assert fallback["lesion_evidence"]
+
+
+def test_promoted_dale_child_checkpoint_is_distinct_and_array_backed(
+    monkeypatch, tmp_path
+):
+    topology = structural.SparseTopology(
+        np.array([0]), np.array([0]), np.array([1.0]),
+        np.array([0]), np.array([1]),
+        np.asarray(structural.encode_dale_weights([0.25], [1])),
+        np.ones((2, 1)), np.array([1, 0], dtype=np.int8), ((), ()),
+    )
+    candidate = SimpleNamespace(
+        model=SimpleNamespace(), update=SimpleNamespace(trainer=object())
+    )
+    optimizer = structural.StructuralAdam(
+        np.ones((2, 1)), np.ones((2, 1)), np.ones(1), np.ones(1),
+        np.ones(1), np.ones(1), bias_first=np.ones(1), bias_second=np.ones(1),
+        input_step=1, recurrent_step=1, readout_step=1,
+    )
+    arrays = {"recurrent_values": np.array([0.25], dtype=np.float32)}
+    monkeypatch.setattr(structural, "topology_from_model", lambda _model: topology)
+    monkeypatch.setattr(
+        structural, "optimizer_from_muon_groups", lambda _trainer: optimizer
+    )
+    monkeypatch.setattr(
+        structural, "checkpoint_arrays", lambda *_args: arrays
+    )
+
+    def write_checkpoint(path, _arrays):
+        Path(path).write_bytes(b"child-checkpoint")
+
+    module = SimpleNamespace(
+        write_checkpoint=write_checkpoint,
+        load_checkpoint=lambda _path: arrays,
+    )
+    parent_path = tmp_path / "accepted.npz"
+    parent_path.write_bytes(b"parent")
+    child_path, digest = structural._write_dale_child_checkpoint(
+        module, candidate, {}, parent_path, 1
+    )
+    assert child_path == tmp_path / "accepted-dale-excitatory.npz"
+    assert child_path != parent_path
+    assert child_path.read_bytes() == b"child-checkpoint"
+    assert digest == hashlib.sha256(b"child-checkpoint").hexdigest()
 
 
 def test_default_example21_construction_keeps_deferred_biology_inactive():
@@ -853,53 +964,37 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
 
 
 def test_real_pp_prop_update_then_structural_addition_preserves_dale_signs():
-    class State:
-        def __init__(self, value):
-            self.value = np.asarray(value)
+    import jax.numpy as jnp
 
-    class Trainer:
-        def __init__(self, learner, parameters):
-            self.learner = learner
-            self.parameters = parameters
-            self.calls = 0
-
-        def update_episode(self, events, **kwargs):
-            self.calls += 1
-            self.parameters["recurrent"][...] += 0.25
-            return events.shape, kwargs["loss_mask"].shape
-
-    model = SimpleNamespace(
-        input_weight=State([1.0]), recurrent_weight=State([
-            float(structural.inverse_softplus(np.asarray([0.25]))[0]),
-            float(structural.inverse_softplus(np.asarray([0.5]))[0]),
-        ]),
-        reset_episode=lambda learner: None,
-    )
-    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
-    adam = structural.StructuralAdam(
-        np.zeros((3, 1)), np.zeros((3, 1)), np.zeros(1), np.zeros(1),
-        np.zeros(2), np.zeros(2),
-    )
+    module = structural._load_example21_model()
     topology = structural.SparseTopology(
-        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
-        np.array([0, 1]), np.array([1, 2]), model.recurrent_weight.value.copy(),
-        np.ones((3, 1)), np.array([1, -1, 0], dtype=np.int8), ((),) * 3,
+        np.array([0]), np.array([0]), np.array([1.0]),
+        np.array([0, 1]), np.array([1, 2]), np.asarray(structural.encode_dale_weights(
+            jnp.array([0.25, -0.5]), jnp.array([1, -1])
+        )),
+        np.ones((3, 360)), np.array([1, -1, 0], dtype=np.int8), ((),) * 3,
     )
-    before = model.recurrent_weight.value.copy()
+    model = module.BrainCellArcModel(topology)
+    learner = module.compile_pp_prop_model(model)
+    before = np.asarray(model.recurrent_weight.value)
+    evidence = {
+        "events": np.zeros((3, 441), dtype=np.float32),
+        "advances": np.ones(3, dtype=bool),
+    }
+    evidence["events"][0, 0] = 1.0
     update = structural._real_pp_prop_update(
-        module, model, SimpleNamespace(),
-        {"events": np.zeros((1, 2)), "advances": np.ones(1)}, adam,
+        module, model, learner, evidence,
     )
     update()
-    assert update.trainer.calls == 1
     assert not np.array_equal(model.recurrent_weight.value, before)
-    topology.recurrent_value = model.recurrent_weight.value.copy()
-    assert structural.validate_topology_dale(topology)
-    grown = structural.add_recurrent_connections(topology, ((0, 2), (1, 0)))
+    updated = structural.topology_from_model(model)
+    assert structural.validate_topology_dale(updated)
+    grown = structural.add_recurrent_connections(updated, ((0, 2), (1, 0)))
     effective = structural.effective_topology_recurrent_values(grown)
     np.testing.assert_allclose(effective[-2:], [1e-6, -1e-6], atol=1e-10)
     assert structural.validate_topology_dale(grown)
-    mapped = structural.grow_adam_for_connections(adam, 2)
+    optimizer = structural.optimizer_from_muon_groups(update.trainer)
+    mapped = structural.grow_adam_for_connections(optimizer, 2)
     np.testing.assert_array_equal(mapped.recurrent_first[-2:], [0.0, 0.0])
     np.testing.assert_array_equal(mapped.recurrent_second[-2:], [0.0, 0.0])
 

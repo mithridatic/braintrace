@@ -49,6 +49,13 @@ checkpoint digest; a matching identifier alone is insufficient. The runner
 SHALL reject a different checkpoint state or a partially typed parent before
 measurement or arm construction.
 
+The causal lesion SHALL execute the model with each source's outgoing
+recurrent coordinates blocked, compare the resulting task output with the
+unblocked output, and normalize each task row independently before ranking.
+The production command SHALL write each promoted arm as a distinct array-only
+child checkpoint, including its post-update model values and optimizer state.
+Rejected arms SHALL not replace the accepted parent checkpoint.
+
 Chemical and optional biological mechanisms are deferred. Construction
 defaults to no AMPA, GABAa, NMDA, HCN, calcium-dependent adaptation, electrical
 junctions, multiple compartments, morphology, neuromodulation, or persistent

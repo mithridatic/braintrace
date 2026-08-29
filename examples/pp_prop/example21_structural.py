@@ -848,8 +848,10 @@ def effective_topology_recurrent_values(topology):
     ))
 
 
-def causal_block_lesion_evidence(topology, task_spikes):
-    """Measure recurrent relay removed by blocking each source neuron.
+def causal_block_lesion_evidence(
+    topology, task_spikes, *, task_output, transform=None
+):
+    """Measure normalized task-output effects of outgoing block lesions.
 
     Parameters
     ----------
@@ -857,26 +859,35 @@ def causal_block_lesion_evidence(topology, task_spikes):
         Accepted parent topology.
     task_spikes : array-like
         Mean source-neuron spikes with shape ``(tasks, neurons)``.
+    task_output : callable
+        Return the task output for ``None`` (unblocked) or one blocked source.
+    transform : object, optional
+        BrainState transform module used for the source intervention loop.
 
     Returns
     -------
     numpy.ndarray
-        Per-task outgoing-current loss for each source neuron.
+        Per-task normalized task-output loss for each source neuron.
     """
     spikes = np.asarray(task_spikes, dtype=float)
     if spikes.ndim != 2 or spikes.shape[1] != topology.neuron_count:
         raise ValueError("task spikes must be a task-by-neuron array")
-    values = np.abs(effective_topology_recurrent_values(topology))
-    active = values[None, :] * np.abs(spikes[:, topology.recurrent_source])
-    baseline = np.zeros((spikes.shape[0], topology.neuron_count), dtype=float)
-    for task, task_active in enumerate(active):
-        baseline[task] = np.bincount(
-            topology.recurrent_source,
-            weights=task_active,
-            minlength=topology.neuron_count,
-        )
-    blocked = np.zeros_like(baseline)
-    return baseline - blocked
+    if not callable(task_output):
+        raise TypeError("task output intervention is required")
+    if transform is None:
+        import brainstate
+        transform = brainstate.transform
+    baseline = np.asarray(task_output(None), dtype=float)
+    if baseline.shape[0] != spikes.shape[0]:
+        raise ValueError("task output must have one row per task")
+    sources = np.arange(topology.neuron_count, dtype=np.int32)
+    blocked = np.asarray(transform.for_loop(task_output, sources), dtype=float)
+    if blocked.shape[1:] != baseline.shape:
+        raise ValueError("blocked task outputs must match the baseline shape")
+    effects = np.abs(blocked - baseline[None, ...])
+    if effects.ndim > 2:
+        effects = np.mean(effects, axis=tuple(range(2, effects.ndim)))
+    return normalize_task_rows(effects.T)
 
 
 def validate_topology_dale(topology):
@@ -1375,9 +1386,40 @@ def run_dale_candidate_arms(
     )
 
 
-def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
+def _dale_child_checkpoint_path(path, sign):
+    """Return a distinct array-checkpoint path for one promoted Dale arm."""
+    path = Path(path)
+    suffix = path.suffix or ".npz"
+    label = "excitatory" if sign > 0 else "inhibitory"
+    return path.with_name(f"{path.stem}-dale-{label}{suffix}")
+
+
+def _write_dale_child_checkpoint(module, candidate, evidence, path, sign):
+    """Persist and validate one post-update promoted Dale child."""
+    trainer = getattr(candidate.update, "trainer", None)
+    if trainer is None:
+        raise ValueError("promoted Dale candidate has no optimizer state")
+    optimizer = optimizer_from_muon_groups(trainer)
+    topology = topology_from_model(candidate.model)
+    if not validate_topology_dale(topology):
+        raise ValueError("promoted Dale candidate has invalid effective signs")
+    arrays = checkpoint_arrays(candidate.model, optimizer, evidence)
+    child_path = _dale_child_checkpoint_path(path, sign)
+    module.write_checkpoint(child_path, arrays)
+    loaded = module.load_checkpoint(child_path)
+    if not np.array_equal(
+        np.asarray(loaded["recurrent_values"]), arrays["recurrent_values"]
+    ):
+        raise ValueError("promoted Dale child checkpoint changed model values")
+    return child_path, hashlib.sha256(Path(child_path).read_bytes()).hexdigest()
+
+
+def _measure_real_dale(
+    module, parent, data_root, *, checkpoint_output=None, clock=time.perf_counter
+):
     """Run both measured Dale arms from one accepted real parent."""
     import brainstate
+    import jax.numpy as jnp
 
     model = module.BrainCellArcModel(parent.topology)
     model.readout_bias.value = parent.readout_bias
@@ -1392,7 +1434,47 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
         edge_gradient,
     )
     task_spikes = np.asarray(evidence["task_spike_evidence"], dtype=float)
-    lesion_evidence = causal_block_lesion_evidence(topology, task_spikes)
+
+    def task_output(blocked_source):
+        events = evidence.get("training_events")
+        advances = evidence.get("training_advances")
+        if events is None or advances is None:
+            raw = jnp.asarray(topology.recurrent_value)
+            signs = jnp.asarray(topology.dale)[
+                jnp.asarray(topology.recurrent_source)
+            ]
+            values = jnp.where(
+                signs == 0, raw, signs * jnp.logaddexp(raw, 0.0)
+            )
+            targets = jnp.asarray(topology.recurrent_target)
+            readout = jnp.sum(jnp.abs(topology.readout), axis=1)
+            blocked = jnp.ones(values.shape, dtype=bool)
+            if blocked_source is not None:
+                blocked = topology.recurrent_source != blocked_source
+            relay = values * blocked * jnp.asarray(
+                task_spikes[:, topology.recurrent_source]
+            )
+            return jnp.sum(
+                jnp.abs(relay[..., None]) * readout[targets], axis=(1, 2)
+            )
+        def evaluate(events_for_task, advances_for_task):
+            model.reset_episode(learner)
+            voltages = module.run_event_sequence(
+                model, events_for_task, advances_for_task,
+                block_source=blocked_source,
+            )
+            features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+            return features @ model.readout_weight.value + model.readout_bias.value
+
+        outputs = brainstate.transform.for_loop(
+            evaluate, jnp.asarray(events), jnp.asarray(advances)
+        )
+        return jnp.mean(jnp.abs(outputs), axis=(1, 2))
+
+    lesion_evidence = causal_block_lesion_evidence(
+        topology, task_spikes, task_output=task_output,
+        transform=brainstate.transform,
+    )
     measurements = DaleMeasurements(
         parent.digest,
         topology.recurrent_source,
@@ -1442,6 +1524,12 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
     arms = []
     for arm in result["arms"]:
         candidate = arm.pop("candidate")
+        child_checkpoint = None
+        child_digest = None
+        if arm["promoted"] and checkpoint_output is not None:
+            child_checkpoint, child_digest = _write_dale_child_checkpoint(
+                module, candidate, evidence, checkpoint_output, arm["sign"]
+            )
         arm.update({
             "candidate_neurons": candidate.topology.neuron_count,
             "typed_neurons": int(np.count_nonzero(candidate.topology.dale)),
@@ -1451,6 +1539,10 @@ def _measure_real_dale(module, parent, data_root, *, clock=time.perf_counter):
                 for group in candidate.mechanisms
             ),
             "typed_signs_valid": validate_topology_dale(candidate.topology),
+            "child_checkpoint": (
+                str(child_checkpoint) if child_checkpoint is not None else None
+            ),
+            "child_checkpoint_sha256": child_digest,
         })
         arms.append(arm)
     return {
@@ -2334,7 +2426,8 @@ def run_integrated_arm(
 
 
 def measure_real_arm(
-    arm, *, data_root=None, parent_checkpoint=None, clock=time.perf_counter
+    arm, *, data_root=None, parent_checkpoint=None, checkpoint_output=None,
+    clock=time.perf_counter
 ):
     """Measure one bounded arm against the real Example 21 model topology.
 
@@ -2354,11 +2447,17 @@ def measure_real_arm(
         Per-arm evidence with real model dimensions and bounded controls.
     """
     if arm == "dale":
-        if data_root is None or parent_checkpoint is None:
-            raise ValueError("dale requires --data-root and --parent-checkpoint")
+        if data_root is None or parent_checkpoint is None or checkpoint_output is None:
+            raise ValueError(
+                "dale requires --data-root, --parent-checkpoint, and --checkpoint-output"
+            )
+        if Path(checkpoint_output).resolve() == Path(parent_checkpoint).resolve():
+            raise ValueError("Dale child checkpoint must differ from its parent")
         module = _load_example21_model()
         parent = load_parent_checkpoint(module, parent_checkpoint)
-        return _measure_real_dale(module, parent, data_root, clock=clock)
+        return _measure_real_dale(
+            module, parent, data_root, checkpoint_output=checkpoint_output, clock=clock
+        )
     if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
         raise ValueError("exactly one recognized arm is required")
     module = _load_example21_model()
@@ -2689,10 +2788,13 @@ def main(argv=None):
     else:
         if args.parent_checkpoint is None:
             parser.error("a real structural or Dale arm requires --parent-checkpoint")
+        if args.arm == "dale" and args.checkpoint_output is None:
+            parser.error("dale requires --checkpoint-output for promoted children")
         evidence = measure_real_arm(
             args.arm,
             data_root=args.data_root,
             parent_checkpoint=args.parent_checkpoint,
+            checkpoint_output=args.checkpoint_output,
         )
     apply_complete_process_timing(
         evidence, time.perf_counter() - command_started
