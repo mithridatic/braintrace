@@ -2,19 +2,26 @@
 
 ## Disposition
 
-Implementation commit `eb69ceb477ee131c6209a2f818f954bbe67a4d3e`
+Implementation commit `67e440306d7f1e0329305e01b02302bc60860e90`
 completes OpenSpec tasks 7.1 through 7.6 under the board clarification that a
 strict false-to-true change is the promotion condition, not the candidate
 completion condition. The merged artifact is
 `docs/evidence/gate5/example21-structural-arm.json`, SHA-256
-`efecee9c9e634b38489befbf7bd5c101602c6202c6f11f5cd12ed2420f6db0d9`.
+`a17e196c44842da4117323b95c6e043a691ba4a9b4013ee7da391e764ba31b77`.
 
 The parent and every candidate have the direct strict vector 0/12. Both
 addition candidates completed and caused no strict regression, but neither is
 promoted. Both pruning arms are blocked by design because all four parent
 validation Booleans are false. Every non-promoted run left parent checkpoint
-`f5a7f40ec99784a1f7b76e1ab748e4110ad388c9e1eb344493b14d2eecf33e9d`
+`87bbf8bb901cce36dcb10a98e12007cc9c105660510c8fa8afd24058ecf5f27e`
 byte-identical.
+
+This rerun closes the Gate 5 review findings. Spike activity is the direct
+per-event `model.previous_spikes` state, never a voltage threshold. Both
+addition paths reject a candidate above the `1,024 * neuron_count` biological-
+connection ceiling before candidate construction or compilation. The merge
+gate validates each arm's finite complete-process time, not only its internal
+operation timer.
 
 ## Reproducible baseline
 
@@ -30,16 +37,16 @@ byte-identical.
   Linux/WSL2 x86-64, seeds 21, 22, and 23.
 - Parent: 64 optimizer steps for input, recurrent, and readout groups, with
   nonzero state. Regeneration from the implementation produced exact SHA-256
-  `f5a7f40e…` and 0/12 strict before and after.
+  `87bbf8bb…` and 0/12 strict before and after.
 
 ## Measured arms
 
 | Arm | Outcome | Change | Updates | Complete time | Peak RSS |
 | --- | --- | ---: | ---: | ---: | ---: |
-| neuron-prune | blocked by design | 0 | 0 | 27.675 s | 1,215,717,376 B |
-| connection-prune | blocked by design | 0 | 0 | 115.362 s | 1,212,698,624 B |
-| neuron-add | non-promoted | 103 neurons | 64 | 97.114 s | 1,457,164,288 B |
-| connection-add | non-promoted | 820 edges | 64 | 94.017 s | 1,394,212,864 B |
+| neuron-prune | blocked by design | 0 | 0 | 22.849 s | 1,314,627,584 B |
+| connection-prune | blocked by design | 0 | 0 | 137.568 s | 1,317,982,208 B |
+| neuron-add | non-promoted | 103 neurons | 64 | 90.104 s | 1,464,385,536 B |
+| connection-add | non-promoted | 820 edges | 64 | 93.716 s | 1,374,351,360 B |
 
 The addition arms preserve all surviving optimizer values and step counts,
 initialize new values to zero, and preserve the nonzero active Muon state. The
@@ -71,9 +78,11 @@ docker run --rm -e JAX_PLATFORMS=cpu -e XDG_CACHE_HOME=/work/.cache \
      examples/pp_prop/example21_structural.py'
 ```
 
-Result: 56 passed in 16.89 seconds; 90.8629% combined line-plus-branch
+Result: 59 passed in 15.77 seconds; 90.8322% combined line-plus-branch
 coverage. The merged-artifact command then passed its strict schema and sparse,
-time, optimizer, process-isolation, and promotion-consistency gates.
+complete-process time, optimizer, process-isolation, and promotion-consistency
+gates. Focused regressions separately prove that both growth paths enforce the
+biological-connection ceiling before allocating candidate arrays.
 
 ## Prioritized risk register
 
@@ -84,8 +93,8 @@ time, optimizer, process-isolation, and promotion-consistency gates.
    weight and bias are outside the ETP-compiled model. Direct target-dependent
    gradients cover this boundary, but it remains an integration risk.
 3. **Medium — memory headroom:** the largest measured peak process RSS is
-   1.457 GB on CPU. GPU and concurrent-run headroom are not established.
-4. **Medium — compilation variance:** connection-prune took 115.362 seconds
+   1.464 GB on CPU. GPU and concurrent-run headroom are not established.
+4. **Medium — compilation variance:** connection-prune took 137.568 seconds
    despite performing no mutation. It remains below 300 seconds but has less
    margin than the other arms.
 5. **Low — process namespace reuse:** sequential containers can reuse PIDs and
