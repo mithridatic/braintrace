@@ -1,0 +1,59 @@
+{
+  "issue": "BRA-9",
+  "implementation_commit": "9617a0a2c571cace2c82e20cf9ae549f220c64a7",
+  "model": "BrainCellArcModel",
+  "task": "Example 21 fixed ARC train/validation strict screen",
+  "arm": "neuron-add",
+  "parent_checkpoint_sha256": "f5a7f40ec99784a1f7b76e1ab748e4110ad388c9e1eb344493b14d2eecf33e9d",
+  "diagnostic_artifact_sha256": "065647708d58a9d79dc1a32ca1b43796e3a95b2db56a7622373acab8c01c5aa3",
+  "training_task_ids": [
+    "d631b094",
+    "dc433765",
+    "b782dc8a",
+    "d06dbe63",
+    "aedd82e4",
+    "0b148d64",
+    "b2862040",
+    "150deff5"
+  ],
+  "first_failing_training_task": "d631b094",
+  "learning_quality_metric": {
+    "name": "strict task pass at 1",
+    "before": [false, false, false, false, false, false, false, false, false, false, false, false],
+    "after": [false, false, false, false, false, false, false, false, false, false, false, false],
+    "strict_gain": false,
+    "strict_regression": false
+  },
+  "adaptation_speed_metric": {
+    "updates": 64,
+    "elapsed_seconds": 72.87579132299288,
+    "within_300_seconds": true
+  },
+  "structure": {
+    "baseline_neurons": 2048,
+    "candidate_neurons": 2151,
+    "candidate_recurrent_items": 18032,
+    "mutated_neurons": 103,
+    "dense_neuron_pair_array": false
+  },
+  "optimizer": {
+    "parent_nonzero": true,
+    "source_steps": {"input": 64, "recurrent": 64, "readout": 64},
+    "candidate_initial_steps": {"input": 64, "recurrent": 64, "readout": 64},
+    "surviving_values_preserved": true,
+    "new_values_zero": true,
+    "active_muon_loaded": true,
+    "active_muon_nonzero": true,
+    "active_muon_surviving_values_preserved": true
+  },
+  "runtime": {
+    "container_image": "braintrace-example21:b75b834",
+    "python": "3.14.0",
+    "jax_platform": "cpu",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "cgroup_memory_peak_bytes_upper_bound": 1024770048,
+    "seeds": [21, 22, 23]
+  },
+  "promotion": false,
+  "pruning_blocked_by_zero_validation_strict": true
+}
