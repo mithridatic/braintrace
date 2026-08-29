@@ -940,13 +940,40 @@ def collect_model_evidence(
     return result
 
 
-def run_addition_updates(transform, update, *, updates=64):
-    """Run exactly 64 addition updates through a BrainState loop primitive."""
+def first_strict_transition_update(before, history):
+    """Return the first measured false-to-true fixed-task transition."""
+    before = tuple(bool(value) for value in before)
+    for update, after in enumerate(history, 1):
+        after = tuple(bool(value) for value in after)
+        if any(not old and new for old, new in zip(before, after)):
+            return update
+    return None
+
+
+def run_addition_updates(transform, update, *, updates=64, observe=None):
+    """Run exactly 64 addition updates through a BrainState loop primitive.
+
+    Parameters
+    ----------
+    transform : module
+        BrainState transform module providing ``jit`` and ``for_loop``.
+    update : callable
+        One indexed PP-Prop update.
+    updates : int, optional
+        Required addition update count.
+    observe : callable, optional
+        Compiled post-update screen returning one fixed-task observation.
+    """
 
     if updates != 64:
         raise ValueError("addition arms require exactly 64 updates")
     indices = np.arange(updates, dtype=np.int32)
-    return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
+
+    def step(index):
+        update(index)
+        return observe(index) if observe is not None else None
+
+    return transform.jit(lambda xs: transform.for_loop(step, xs))(indices)
 
 
 def _run_episode(module, model, events, advances):
@@ -1251,6 +1278,46 @@ def _run_fixed_episode_batch(module, model, learner, episodes):
     return brainstate.transform.jit(
         lambda values: brainstate.transform.for_loop(run_episode, values)
     )(indices)
+
+
+def _compiled_fixed_task_screen(module, model, learner, episodes):
+    """Return decoded-screen logits after each compiled addition update."""
+    import brainstate
+    import jax.numpy as jnp
+
+    events = jnp.asarray([episode["events"] for episode in episodes])
+    advances = jnp.asarray([episode["advances"] for episode in episodes])
+    request_indices = jnp.asarray([
+        _request_indices(episode["events"]) for episode in episodes
+    ]) if hasattr(model, "readout_weight") and hasattr(
+        model, "readout_bias"
+    ) else None
+
+    def run_episode(index):
+        model.reset_episode(learner)
+        voltages, _ = _run_episode(
+            module, model, events[index], advances[index]
+        )
+        if request_indices is None:
+            return model.readout()
+        return _voltage_readout(model, voltages)[request_indices[index]]
+
+    return brainstate.transform.for_loop(
+        run_episode, np.arange(len(episodes), dtype=np.int32)
+    )
+
+
+def _strict_vectors_from_logits(module, episodes, logits):
+    """Decode one fixed-task strict vector for every measured screen."""
+    task_ids = list(module.TRAINING_TASK_IDS + module.VALIDATION_TASK_IDS)
+    predictions = {task_id: [] for task_id in task_ids}
+    targets = {task_id: [] for task_id in task_ids}
+    for episode, value in zip(episodes, np.asarray(logits)):
+        predictions[episode["task_id"]].append(module.decode_prediction(value))
+        targets[episode["task_id"]].append(episode["target"])
+    return tuple(bool(module.strict_task_pass_at_1(
+        predictions[task_id], targets[task_id]
+    )) for task_id in task_ids)
 
 
 def _fixed_task_episodes(module, data_root, jnp):
@@ -1996,12 +2063,23 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
                 learning_rates=STRUCTURAL_ADDITION_LEARNING_RATES,
             )
         update_task_ids = list(getattr(update, "task_ids", ()))
-        run_addition_updates(
+        screen_outputs = run_addition_updates(
             brainstate.transform,
             update,
             updates=updates,
+            observe=lambda _: _compiled_fixed_task_screen(
+                module, candidate_model, candidate_learner, evidence["episodes"]
+            ),
         )
-    if "episodes" in evidence:
+        strict_history = [
+            _strict_vectors_from_logits(module, evidence["episodes"], output)
+            for output in np.asarray(screen_outputs)
+        ] if screen_outputs is not None else []
+    else:
+        strict_history = []
+    if strict_history:
+        after = strict_history[-1]
+    elif "episodes" in evidence:
         after = tuple(_strict_task_screen(
             module, candidate_model, candidate_learner, evidence["episodes"]
         ))
@@ -2024,7 +2102,7 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         }
     )
     elapsed = clock() - started
-    gained = any(not old and new for old, new in zip(baseline, after))
+    first_transition = first_strict_transition_update(baseline, strict_history)
     return {
         "arm": arm,
         "real_model": True,
@@ -2067,7 +2145,8 @@ def measure_real_arm(arm, *, data_root=None, clock=time.perf_counter):
         "within_300_seconds": bool(elapsed <= 300),
         "elapsed_seconds": float(elapsed),
         "timing_scope": "model_construction_to_mask_compaction_identity",
-        "first_strict_transition_update": updates if gained else None,
+        "first_strict_transition_update": first_transition,
+        "strict_history": [list(values) for values in strict_history],
         "preclip_gradient_mass": evidence["preclip_gradient_mass"],
         "task_spike_evidence": evidence["task_spike_evidence"],
         "task_readout_evidence": evidence["task_readout_evidence"],
@@ -2192,10 +2271,13 @@ def main(argv=None):
                     for arm in pruning
                 ),
                 "pruning_promoted": any(arm.get("promoted", False) for arm in pruning),
-                "strict_gain_transition": any(
-                    any(not old and new for old, new in zip(
+                "strict_gain_transition": all(
+                    arm.get("promoted", False)
+                    and arm.get("first_strict_transition_update") is not None
+                    and any(not old and new for old, new in zip(
                         arm.get("before_strict", ()), arm.get("after_strict", ())
-                    )) for arm in additions
+                    ))
+                    for arm in additions
                 ),
                 "addition_candidate_rates": all(
                     arm.get("candidate_learning_rates") == {

@@ -642,6 +642,29 @@ def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
     assert not pruning["promoted"] and pruning["updates"] == 0
 
 
+def test_addition_driver_returns_each_screen_for_earliest_transition():
+    class Transform:
+        @staticmethod
+        def for_loop(function, values):
+            return np.asarray([function(value) for value in values])
+
+        @staticmethod
+        def jit(function):
+            return function
+
+    screens = structural.run_addition_updates(
+        Transform, lambda index: None,
+        observe=lambda index: np.array([int(index >= 2)], dtype=bool),
+    )
+    assert screens.shape == (64, 1)
+    assert structural.first_strict_transition_update(
+        (False,), screens
+    ) == 3
+    assert structural.first_strict_transition_update(
+        (False,), screens[:2]
+    ) is None
+
+
 def test_artifact_is_canonical_and_records_environment(tmp_path):
     target = tmp_path / "arm.json"
     digest = structural.write_artifact(target, {"arm": "neuron-prune"})
@@ -1960,3 +1983,50 @@ def test_measurement_and_merge_commands_reject_invalid_arm_and_emit_metadata(mon
     assert merged["focused_tests"]["coverage_percent"] == 92.0
     assert "coverage run --branch" in merged["focused_tests"]["command"]
     assert merged["arm_controls"]["max_resident_tile_pairs"] == 65_536
+
+
+def test_merge_requires_every_addition_arm_to_promote(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    baseline = {"neurons": 20, "recurrent_edges": 20}
+    (tmp_path / "docs/evidence/gate5").mkdir(parents=True)
+    (tmp_path / "docs/evidence/gate5/example21-structural-arm.json").write_text(
+        json.dumps({"baseline": baseline, "arms": []})
+    )
+    common = {
+        "fixed_task_ids": ["task"], "training_task_ids": ["task"],
+        "canonical_loss": "arc_contracts.request_loss",
+        "updates": 64, "addition_update_driver": "brainstate.transform.for_loop",
+        "addition_update_task_ids": ["task"], "candidate_learning_rates": {
+            "input": 0.01, "recurrent": 0.003, "readout": 0.03,
+        }, "optimizer_state_proof": {
+            "parent_nonzero": True, "survivors_preserved": True,
+            "new_items_zero": True,
+        }, "before_strict": [False], "after_strict": [True],
+        "strict_regression_rejected": True, "first_strict_transition_update": 2,
+        "promoted": True, "mask_compaction": {
+            "prediction_bytes_identical": True, "strict_identical": True,
+        }, "within_300_seconds": True,
+        "tile_selection": {"tile_stop_bound": True, "max_resident_tile_pairs": 65536},
+        "parent_state": "post_warmup", "parent_warmup_updates": 1,
+        "task_wrong_output_fields": [[False]], "task_readout_evidence": [[0]],
+        "wrong_output_readout_evidence": [[0]],
+    }
+    arms = []
+    for name, count in (
+        ("neuron-prune", 0), ("connection-prune", 0),
+        ("neuron-add", structural.mutation_count(20)),
+        ("connection-add", structural.mutation_count(20)),
+    ):
+        arm = dict(common)
+        arm.update({"arm": name, "mutated_item_count": count})
+        if name.endswith("-prune"):
+            arm.update({"updates": 0, "addition_update_driver": None,
+                        "addition_update_task_ids": [], "promoted": False,
+                        "pruning_validation_strict": [False]})
+        arms.append(arm)
+        (tmp_path / f".gate5-{name}.json").write_text(json.dumps(arm))
+    arms[-1]["promoted"] = False
+    (tmp_path / ".gate5-connection-add.json").write_text(json.dumps(arms[-1]))
+    target = tmp_path / "merged.json"
+    structural.main(["merge", "--output", str(target)])
+    assert not json.loads(target.read_text())["arm_controls"]["strict_gain_transition"]
