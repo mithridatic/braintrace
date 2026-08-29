@@ -45,14 +45,14 @@
   "candidate_neurons": 2048,
   "candidate_recurrent_items": 17204,
   "dense_neuron_pair_array": false,
-  "elapsed_seconds": 106.04176839299907,
+  "elapsed_seconds": 175.47996276699996,
   "eligibility_reset": true,
   "environment": {
     "backend": "cpu",
     "device": "cpu:0",
     "jax": "0.11.1",
-    "peak_rss_bytes": 5377122304,
-    "pid": 5,
+    "peak_rss_bytes": 5367664640,
+    "pid": 4,
     "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
     "python": "3.12.3",
     "seeds": [
