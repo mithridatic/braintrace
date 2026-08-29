@@ -4,8 +4,8 @@ import importlib.util
 import json
 import subprocess
 import sys
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import ClassVar
 
 import numpy as np
@@ -426,6 +426,44 @@ def test_connection_addition_rejects_connection_ceiling_before_concatenation(
     )
     with pytest.raises(ValueError, match="biological-connection ceiling"):
         structural.add_recurrent_connections(topology, ((0, 1),))
+
+
+def test_dale_assignment_and_structural_operations_preserve_effective_signs():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0, 1]), np.array([1, 2]), np.array([-2.0, -4.0]),
+        np.ones((3, 1)), np.zeros(3, dtype=np.int8), ((),) * 3,
+    )
+    typed = structural.assign_dale_type(topology, [0], 1)
+    np.testing.assert_array_equal(typed.dale, [1, 0, 0])
+    assert structural.effective_topology_recurrent_values(typed)[0] > 0
+    grown = structural.add_recurrent_connections(typed, ((0, 2),), typed=True)
+    assert structural.validate_topology_dale(grown)
+    assert structural.effective_topology_recurrent_values(grown)[-1] > 0
+    compacted, _, _ = structural.compact(
+        grown, np.array([True, False, True]), structural.StructuralAdam(
+            np.ones((3, 1)), np.ones((3, 1)), np.array([]), np.array([]),
+            np.ones(3), np.ones(3), 1,
+        )
+    )
+    assert compacted.dale.tolist() == [1, 0]
+    assert structural.validate_topology_dale(compacted)
+
+
+def test_inhibitory_addition_uses_source_label_and_zero_new_moments():
+    topology = structural.SparseTopology(
+        np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
+        np.array([0]), np.array([1]), np.array([2.0]), np.ones((3, 1)),
+        np.array([-1, 0, 0], dtype=np.int8), ((),) * 3,
+    )
+    grown = structural.add_recurrent_connections(topology, ((0, 2),), typed=True)
+    assert structural.effective_topology_recurrent_values(grown)[-1] < 0
+    adam = structural.StructuralAdam(
+        np.ones((2, 1)), np.ones((2, 1)), np.array([]), np.array([]),
+        np.ones(1), np.ones(1), 4,
+    )
+    mapped = structural.grow_adam_for_connections(adam, 1)
+    assert mapped.recurrent_first.tolist() == [1.0, 0.0]
 
 
 def test_preclip_mass_is_taken_directly_from_real_etrace_boundary():

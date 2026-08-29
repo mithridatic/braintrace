@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 import braincell
-import brainstate
-import braintrace
-import brainunit as u
-import braintools
 import brainevent
+import brainstate
+import braintools
+import brainunit as u
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 
+import braintrace
+from examples.pp_prop.dale_candidates import (
+    deferred_biology_defaults,
+    project_dale_raw_weights,
+    sparse_dale_matmul,
+    validate_deferred_biology,
+)
 
 N_INPUTS = 441
 N_NEURONS = 2048
@@ -216,8 +223,9 @@ def _csr_indptr(source, rows):
 class BrainCellArcModel(brainstate.nn.Module):
     """The 2,048-neuron sparse BrainCell baseline."""
 
-    def __init__(self, topology=None):
+    def __init__(self, topology=None, biology_options=None):
         super().__init__()
+        validate_deferred_biology(**(biology_options or {}))
         if topology is None:
             self.input_csr = input_topology()
             self.recurrent_csr = recurrent_topology()
@@ -225,8 +233,11 @@ class BrainCellArcModel(brainstate.nn.Module):
             recurrent_values = self.recurrent_csr.data
             neuron_count = N_NEURONS
             readout = _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
+            dale = jnp.zeros((neuron_count,), dtype=jnp.int8)
+            mechanisms = ((),) * neuron_count
         else:
             neuron_count = topology.neuron_count
+            recurrent_order = np.argsort(topology.recurrent_source, kind="stable")
             self.input_csr = brainevent.CSR(
                 jnp.asarray(topology.input_value),
                 jnp.asarray(topology.input_target, dtype=jnp.int32),
@@ -234,16 +245,21 @@ class BrainCellArcModel(brainstate.nn.Module):
                 shape=(N_INPUTS, neuron_count),
             )
             self.recurrent_csr = brainevent.CSR(
-                jnp.asarray(topology.recurrent_value),
-                jnp.asarray(topology.recurrent_target, dtype=jnp.int32),
+                jnp.asarray(topology.recurrent_value)[recurrent_order],
+                jnp.asarray(topology.recurrent_target, dtype=jnp.int32)[recurrent_order],
                 _csr_indptr(topology.recurrent_source, neuron_count),
                 shape=(neuron_count, neuron_count),
             )
             input_values = self.input_csr.data
             recurrent_values = self.recurrent_csr.data
             readout = jnp.asarray(topology.readout)
+            dale = jnp.asarray(getattr(topology, "dale", jnp.zeros((neuron_count,), dtype=jnp.int8)))
+            mechanisms = tuple(getattr(topology, "mechanisms", ((),) * neuron_count))
         self.input_weight = brainstate.ParamState(input_values)
         self.recurrent_weight = brainstate.ParamState(recurrent_values)
+        self.dale = dale
+        self.mechanisms = mechanisms
+        self.biology_options = deferred_biology_defaults()
         self.readout_weight = brainstate.ParamState(
             readout
         )
@@ -251,6 +267,9 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.previous_spikes = brainstate.HiddenState(jnp.zeros((neuron_count,), dtype=jnp.float32))
         self.cell = CompatibilityHodgkinHuxley(neuron_count)
         self.cell.init_state()
+        self.recurrent_type_signs = jnp.repeat(
+            self.dale, jnp.diff(self.recurrent_csr.indptr)
+        )
         self.reset_episode()
 
     def reset_episode(self, learner=None):
@@ -263,8 +282,11 @@ class BrainCellArcModel(brainstate.nn.Module):
 
     def _advance(self, event, dt_ms=0.1):
         input_drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
-        recurrent_drive = braintrace.sparse_matmul(
-            self.previous_spikes.value, self.recurrent_weight.value, sparse_mat=self.recurrent_csr
+        recurrent_drive = sparse_dale_matmul(
+            self.previous_spikes.value,
+            self.recurrent_weight.value,
+            self.recurrent_csr,
+            self.recurrent_type_signs,
         )
         current = bounded_population_current(input_drive, recurrent_drive)
         with brainstate.environ.context(dt=dt_ms * u.ms):
@@ -559,6 +581,15 @@ class PPPropEpisodeTrainer:
             if state is not None and name in self.parameters:
                 state.value = self.parameters[name]
 
+    def _project_dale_parameters(self):
+        """Project typed recurrent raw values to the declared effective floor."""
+        model = getattr(self.learner, "model4compile", None)
+        signs = getattr(model, "recurrent_type_signs", None)
+        if signs is not None and "recurrent" in self.parameters:
+            self.parameters["recurrent"] = project_dale_raw_weights(
+                self.parameters["recurrent"], signs
+            )
+
     def optimizer_is_finite(self):
         """Return whether parameters, moments, and step state are finite."""
 
@@ -599,12 +630,14 @@ class PPPropEpisodeTrainer:
             self.parameters, self.muon_groups = grouped_muon_update(
                 self.parameters, gradients, self.muon_groups, self.learning_rates
             )
+            self._project_dale_parameters()
             self._sync_compiled_parameters()
         else:
             rate = self.learning_rates.get("input", 0.001)
             self.parameters, self.adam = adam_update(
                 self.parameters, gradients, self.adam, rate
             )
+            self._project_dale_parameters()
         self.updates += 1
         return losses, norm
 
@@ -690,7 +723,6 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
 import importlib.util
 import sys
 from pathlib import Path
-
 
 _ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
     "example21_arc_contracts", Path(__file__).with_name("arc_contracts.py")
