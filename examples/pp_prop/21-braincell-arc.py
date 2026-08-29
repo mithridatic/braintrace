@@ -15,6 +15,7 @@ import optax
 import braintrace
 from examples.pp_prop.dale_candidates import (
     deferred_biology_defaults,
+    make_dale_weight_fn,
     project_dale_raw_weights,
     sparse_dale_matmul,
     validate_deferred_biology,
@@ -267,6 +268,9 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.previous_spikes = brainstate.HiddenState(jnp.zeros((neuron_count,), dtype=jnp.float32))
         self.cell = CompatibilityHodgkinHuxley(neuron_count)
         self.cell.init_state()
+        self.recurrent_sources = jnp.repeat(
+            jnp.arange(neuron_count), jnp.diff(self.recurrent_csr.indptr)
+        )
         self.recurrent_type_signs = jnp.repeat(
             self.dale, jnp.diff(self.recurrent_csr.indptr)
         )
@@ -280,14 +284,31 @@ class BrainCellArcModel(brainstate.nn.Module):
         if learner is not None and hasattr(learner, "reset_state"):
             learner.reset_state()
 
-    def _advance(self, event, dt_ms=0.1):
+    def _advance(self, event, dt_ms=0.1, blocked_source=None):
         input_drive = braintrace.sparse_matmul(event, self.input_weight.value, sparse_mat=self.input_csr)
-        recurrent_drive = sparse_dale_matmul(
-            self.previous_spikes.value,
-            self.recurrent_weight.value,
-            self.recurrent_csr,
-            self.recurrent_type_signs,
-        )
+        if blocked_source is None:
+            recurrent_drive = sparse_dale_matmul(
+                self.previous_spikes.value,
+                self.recurrent_weight.value,
+                self.recurrent_csr,
+                self.recurrent_type_signs,
+            )
+        else:
+            dale_weight_fn = make_dale_weight_fn(self.recurrent_type_signs)
+
+            def recurrent_weight_fn(raw):
+                return jnp.where(
+                    self.recurrent_sources == blocked_source,
+                    0.0,
+                    dale_weight_fn(raw),
+                )
+
+            recurrent_drive = braintrace.sparse_matmul(
+                self.previous_spikes.value,
+                self.recurrent_weight.value,
+                sparse_mat=self.recurrent_csr,
+                weight_fn=recurrent_weight_fn,
+            )
         current = bounded_population_current(input_drive, recurrent_drive)
         with brainstate.environ.context(dt=dt_ms * u.ms):
             self.cell.update(current)
@@ -301,11 +322,11 @@ class BrainCellArcModel(brainstate.nn.Module):
 
         return self._advance(event)
 
-    def step(self, event, advance=True):
+    def step(self, event, advance=True, blocked_source=None):
         """Run one event, preserving all state for a false advance."""
 
         return brainstate.transform.cond(
-            advance, lambda: self._advance(event),
+            advance, lambda: self._advance(event, blocked_source=blocked_source),
             lambda: jnp.zeros_like(self.previous_spikes.value),
         )
 
@@ -342,7 +363,9 @@ def integration_substep_events(event, substeps):
     )
 
 
-def run_event_sequence(model, events, advances=None, *, return_spikes=False):
+def run_event_sequence(
+    model, events, advances=None, *, return_spikes=False, block_source=None
+):
     """Run a compiled event sequence and return direct biological state.
 
     Parameters
@@ -356,6 +379,8 @@ def run_event_sequence(model, events, advances=None, *, return_spikes=False):
     return_spikes : bool, optional
         Return the direct ``model.previous_spikes`` value after each advancing
         event in addition to voltage.
+    block_source : int, optional
+        Block all recurrent coordinates emitted by one source neuron.
 
     Returns
     -------
@@ -377,11 +402,15 @@ def run_event_sequence(model, events, advances=None, *, return_spikes=False):
     def drive(xs, mask):
         if not return_spikes:
             return brainstate.transform.for_loop(
-                lambda event, advance: model.step(event, advance), xs, mask
+                lambda event, advance: model.step(
+                    event, advance, blocked_source=block_source
+                ), xs, mask
             )
 
         def step_with_spikes(event, advance):
-            voltage = model.step(event, advance)
+            voltage = model.step(
+                event, advance, blocked_source=block_source
+            )
             spikes = jnp.where(
                 advance,
                 model.previous_spikes.value,
