@@ -38,6 +38,10 @@ report, and set `deadline_exceeded` when elapsed time reaches 180 seconds. A
 proof with `deadline_exceeded` set SHALL report `passed: false`, even when all
 other observations pass.
 
+The release workflow SHALL accept compiled gradient mappings that contain both
+string parameter names and tuple ETP paths. Gradient norm calculation and
+clipping SHALL preserve those keys without relying on cross-type key ordering.
+
 The proof training objective SHALL remain outside the inference event vectors.
 Each counted episode SHALL carry fixed-size target supervision metadata with a
 request kind and a one-row validity mask. The compiled learner step SHALL

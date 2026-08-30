@@ -33,6 +33,19 @@ def test_braincell_pin_and_imports():
     assert fixture.braintrace.__name__ == "braintrace"
 
 
+def test_clip_gradient_accepts_mixed_direct_and_etp_keys():
+    gradient = {
+        "readout_weight": jnp.ones((2, 2)),
+        ("cell", "recurrent"): jnp.ones((2, 2)),
+    }
+
+    clipped, norm = fixture.clip_gradient(gradient)
+
+    assert float(norm) == pytest.approx(np.sqrt(8.0))
+    assert set(clipped) == set(gradient)
+    assert all(np.all(np.isfinite(value)) for value in clipped.values())
+
+
 def test_cli_help_is_a_real_command_path():
     result = subprocess.run(
         [sys.executable, str(_PATH), "--help"],
