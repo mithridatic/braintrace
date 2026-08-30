@@ -36,7 +36,7 @@ For one-off runs outside Compose there are wrappers that supply the same mount:
 ```
 
 ```bash
-.github/containers/braintrace-gpu/run-gpu-container.sh \
+bash .github/containers/braintrace-gpu/run-gpu-container.sh \
   --mount "$PWD:/work" -- python examples/pp_prop/18-structural-evolution.py
 ```
 

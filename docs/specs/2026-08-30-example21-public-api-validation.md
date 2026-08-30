@@ -11,6 +11,10 @@ User-facing validation errors must use sentence case and state the corrective
 value or action. A message that only reports the failed condition is not
 enough.
 
+Tracked shell wrappers used by validation tooling must be invoked through
+`bash` and remain non-executable in a review checkout. The Git tree and the
+materialized file must both preserve mode `0644`.
+
 ## Verification
 
 Co-located tests must inspect every public API in both modules. A public
