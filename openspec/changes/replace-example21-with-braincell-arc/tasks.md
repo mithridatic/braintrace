@@ -171,14 +171,14 @@
 
 ## 9. Plot and implementation-truth documents
 
-- [ ] 9.1 Implement the explicit two-dimensional Matplotlib topology plot;
+- [x] 9.1 Implement the explicit two-dimensional Matplotlib topology plot;
   verify checkpoint neuron and connection counts, owner and Dale groups, no
   ordinary-run plot, and identical prediction bytes before and after plotting.
-- [ ] 9.2 Write the causal explanation in
+- [x] 9.2 Write the causal explanation in
   `docs/specs/2026-08-24-example21-causal-explanation.md`; verify ASD-STE100
   Simplified Technical English, separate observations and inferences, and
   actual prediction and target data for each measured claim.
-- [ ] 9.3 Write the executed system model in
+- [x] 9.3 Write the executed system model in
   `docs/specs/2026-08-24-example21-system-model.md`; verify that it describes
   only code that runs and uses BrainCell, BrainState, BrainTrace, neuron,
   connection, layer, Dale-type, model-cell, prediction, and output-shape terms
