@@ -2560,64 +2560,64 @@ def validate_merged_arms(arms):
         after = arm.get("after_strict", [])
         if (len(before) != 12 or len(after) != 12
                 or not all(isinstance(value, bool) for value in before + after)):
-            raise ValueError(f"{name} does not contain two 12-task strict vectors")
+            raise ValueError(f"Validation failed for {name}: two 12-task strict vectors are required")
         gained = any(not old and new for old, new in zip(before, after))
         regressed = any(old and not new for old, new in zip(before, after))
         expected_promotion = bool(
             gained and not regressed
         )
         if regressed or not arm.get("strict_regression_rejected"):
-            raise ValueError(f"{name} has a strict regression")
+            raise ValueError(f"Validation failed for {name}: strict regression detected")
         complete_process_seconds = arm.get("complete_process_seconds")
         if (isinstance(complete_process_seconds, bool)
                 or not isinstance(complete_process_seconds, (int, float))
                 or not np.isfinite(complete_process_seconds)
                 or complete_process_seconds < 0.0
                 or complete_process_seconds > 300.0):
-            raise ValueError(f"{name} complete process exceeds the 300-second limit")
+            raise ValueError(f"Validation failed for {name}: complete process exceeds the 300-second limit")
         if not arm.get("within_300_seconds"):
-            raise ValueError(f"{name} exceeds the 300-second limit")
+            raise ValueError(f"Validation failed for {name}: process exceeds the 300-second limit")
         if bool(arm.get("promoted")) != expected_promotion:
-            raise ValueError(f"{name} has an inconsistent promotion record")
+            raise ValueError(f"Validation failed for {name}: promotion record is inconsistent")
         if arm.get("dense_neuron_pair_array") is not False:
-            raise ValueError(f"{name} does not prove sparse pair storage")
+            raise ValueError(f"Validation failed for {name}: sparse pair storage is not proven")
         if len(arm.get("training_evidence_task_ids", [])) != 8:
-            raise ValueError(f"{name} does not contain eight training evidence rows")
+            raise ValueError(f"Validation failed for {name}: eight training evidence rows are required")
         if not arm.get("parent_optimizer_nonzero"):
-            raise ValueError(f"{name} did not load nonzero parent optimizer state")
+            raise ValueError(f"Validation failed for {name}: nonzero parent optimizer state was not loaded")
         if (arm.get("parent_checkpoint_sha256_after")
                 != arm.get("parent_checkpoint_sha256")
                 or not arm.get("parent_checkpoint_unchanged")):
-            raise ValueError(f"{name} did not preserve the parent checkpoint")
+            raise ValueError(f"Validation failed for {name}: parent checkpoint was not preserved")
         remap = arm.get("optimizer_remap", {})
         if not all(remap.get(key) for key in (
             "surviving_values_preserved", "new_values_zero", "step_counts_preserved"
         )):
-            raise ValueError(f"{name} does not preserve optimizer state")
+            raise ValueError(f"Validation failed for {name}: optimizer state was not preserved")
         pruning_blocked = bool(
             name.endswith("prune") and arm.get("pruning_blocked")
         )
         if not arm.get("adam_remapped"):
-            raise ValueError(f"{name} does not preserve active optimizer state")
+            raise ValueError(f"Validation failed for {name}: active optimizer state was not preserved")
         if not pruning_blocked and not arm.get("muon_remapped"):
-            raise ValueError(f"{name} does not preserve active optimizer state")
+            raise ValueError(f"Validation failed for {name}: active optimizer state was not preserved")
         addition = name.endswith("add")
         if arm.get("updates") != (64 if addition else 0):
-            raise ValueError(f"{name} has an invalid update count")
+            raise ValueError(f"Validation failed for {name}: update count is invalid")
         baseline_count = (
             arm["baseline_neurons"] if name.startswith("neuron")
             else arm["baseline_recurrent_items"]
         )
         expected_mutations = 0 if pruning_blocked else mutation_count(baseline_count)
         if arm.get("mutated_item_count") != expected_mutations:
-            raise ValueError(f"{name} has an invalid mutation count")
+            raise ValueError(f"Validation failed for {name}: mutation count is invalid")
         if pruning_blocked:
             validation = arm.get("pruning_validation_strict", [])
             if (any(validation) or arm.get("promoted") or before != after
                     or arm.get("candidate_neurons") != arm.get("baseline_neurons")
                     or arm.get("candidate_recurrent_items")
                     != arm.get("baseline_recurrent_items")):
-                raise ValueError(f"{name} has an invalid blocked pruning record")
+                raise ValueError(f"Validation failed for {name}: blocked pruning record is invalid")
     compaction = arms[0].get("mask_compaction", {})
     if (not arms[0].get("pruning_blocked")
             and not (compaction.get("prediction_bytes_identical")
@@ -2804,7 +2804,7 @@ def measure_real_arm(
     if arm == "dale":
         if data_root is None or parent_checkpoint is None or checkpoint_output is None:
             raise ValueError(
-                "dale requires --data-root, --parent-checkpoint, and --checkpoint-output"
+                "Dale arm requires --data-root, --parent-checkpoint, and --checkpoint-output"
             )
         if Path(checkpoint_output).resolve() == Path(parent_checkpoint).resolve():
             raise ValueError("Dale child checkpoint must differ from its parent")
