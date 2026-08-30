@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+import time
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -44,6 +45,7 @@ TRACE_DECAY = 0.95
 GRADIENT_CLIP_NORM = 1.0
 PROOF_UPDATES = 8
 ORDINARY_UPDATES = 64
+PROOF_DEADLINE_SECONDS = 180.0
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
 TRAINING_TASK_IDS = (
     "d631b094", "dc433765", "b782dc8a", "d06dbe63",
@@ -1064,6 +1066,22 @@ def _real_workflow_report(data_root, *, proof):
         "training_after": after,
         "validation": validation,
     }
+
+
+def _apply_proof_deadline(report, started_at):
+    """Add the proof runtime gate to a completed workflow report."""
+
+    elapsed_seconds = time.monotonic() - started_at
+    deadline_exceeded = elapsed_seconds >= PROOF_DEADLINE_SECONDS
+    return {
+        **report,
+        "elapsed_seconds": elapsed_seconds,
+        "deadline_seconds": PROOF_DEADLINE_SECONDS,
+        "deadline_exceeded": deadline_exceeded,
+        "passed": bool(report.get("passed", False) and not deadline_exceeded),
+    }
+
+
 import importlib.util
 
 _ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
@@ -1455,6 +1473,7 @@ def _run_command(args):
         device = jax.devices(args.device)[0]
     except RuntimeError as error:
         raise ValueError(f"requested device {args.device!r} is unavailable") from error
+    started_at = time.monotonic() if args.command == "proof" else None
     with jax.default_device(device):
         if args.command == "proof":
             report = _real_workflow_report(args.arc_root, proof=True)
@@ -1462,6 +1481,8 @@ def _run_command(args):
             report = _real_workflow_report(args.arc_root, proof=False)
         else:
             report = _smoke_report()
+    if started_at is not None:
+        report = _apply_proof_deadline(report, started_at)
     _write_report(args.output_dir, report)
     print(json.dumps(report, sort_keys=True))
     return 0 if report["passed"] else 1

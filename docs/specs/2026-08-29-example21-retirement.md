@@ -32,6 +32,12 @@ target values as event inputs. Both modes SHALL accept `--arc-root`,
 `--device`, and `--output-dir` options, while refusing unsupported device
 values and proof or run schedule changes before model execution.
 
+The proof command SHALL measure its complete real-data execution with a
+monotonic clock, record `elapsed_seconds` and `deadline_seconds` in its JSON
+report, and set `deadline_exceeded` when elapsed time reaches 180 seconds. A
+proof with `deadline_exceeded` set SHALL report `passed: false`, even when all
+other observations pass.
+
 The proof training objective SHALL remain outside the inference event vectors.
 Each counted episode SHALL carry fixed-size target supervision metadata with a
 request kind and a one-row validity mask. The compiled learner step SHALL
@@ -59,5 +65,7 @@ gradient, including when a malformed request mask marks one as valid.
   manifest, synthetic-task, BPTT, copy, rule, candidate, forest, reranker,
   partial-score, average-score, or large-result execution path.
 - The public `braintrace` export surface is unchanged.
+- The complete focused Example 21 selection SHALL run with four pytest workers
+  and finish within 60 seconds while retaining meaningful coverage.
 - Focused Example 21 tests, repository scans, OpenSpec validation, and
   whitespace checks pass.

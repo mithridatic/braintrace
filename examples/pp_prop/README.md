@@ -121,6 +121,10 @@ use the fixed practice-task order. Run the ordinary 64-update schedule with:
 Both commands load raw practice tasks directly. Evaluation data is outside
 ordinary training, structure, and timing runs.
 
+The proof report includes its elapsed time and 180-second deadline. It reports
+failure when the deadline is reached, even when the other proof observations
+pass.
+
 #### Example 21 image run
 
 Build the image with raw ARC data mounted as the `arc_data` stage, then run the
@@ -202,4 +206,4 @@ See `docs/tutorials/pp_prop.ipynb` for the long-form narrative.
 
 ## Tests
 
-    pytest examples/pp_prop -v
+    pytest -n 4 examples/pp_prop -v
