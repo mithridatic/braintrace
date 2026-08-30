@@ -41,6 +41,41 @@ def _public_api_nodes(path):
     return nodes
 
 
+def _has_value_return(node):
+    class ReturnVisitor(ast.NodeVisitor):
+        def __init__(self):
+            self.found = False
+
+        def visit_Return(self, return_node):
+            self.found |= return_node.value is not None
+
+        def visit_FunctionDef(self, function_node):
+            return
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+        visit_ClassDef = visit_FunctionDef
+
+    visitor = ReturnVisitor()
+    for statement in node.body:
+        visitor.visit(statement)
+    return visitor.found
+
+
+def test_public_api_return_audit_finds_control_flow_returns_without_nested_callables():
+    conditional = ast.parse(
+        "def conditional(flag):\n"
+        "    if flag:\n"
+        "        return 1\n"
+    ).body[0]
+    nested = ast.parse(
+        "def outer():\n"
+        "    def inner():\n"
+        "        return 1\n"
+    ).body[0]
+    assert _has_value_return(conditional)
+    assert not _has_value_return(nested)
+
+
 @pytest.mark.parametrize(
     "path",
     (
@@ -92,10 +127,7 @@ def test_public_apis_have_numpy_contract_sections(path):
             for argument in arguments
             if "Parameters" in sections and argument not in parameter_names
         )
-        returns_value = any(
-            isinstance(statement, ast.Return) and statement.value is not None
-            for statement in node.body
-        )
+        returns_value = _has_value_return(node)
         yields_value = any(
             isinstance(statement, (ast.Yield, ast.YieldFrom))
             for statement in ast.walk(node)
