@@ -79,34 +79,22 @@ the learning rule; nothing else in the snippet changes.
 
 The official documentation is hosted on Read the Docs: [https://brainx.chaobrain.com/braintrace](https://brainx.chaobrain.com/braintrace)
 
-### Example 21 ARC protocol v2
+### Example 21 BrainCell ARC
 
-Example 21 evaluates one shared recurrent spiking model at 0, 30, and 60
-recurrent reasoning ticks. Every checkpoint uses the same fixed 30-row decoder
-sweep, and decoder rows cannot mutate physical state or associative memory.
-The default controls repeat the intact arm, remove context, shuffle
-demonstration bindings, hold recurrent state, lesion recurrent synapses, and
-apply the legacy slot ablation. Only the latest completed checkpoint supplies
-the factorized global top-two ARC candidates; exact grid matching remains the
-score, while shape and pixel measures are diagnostics.
+Example 21 uses one direct BrainCell Hodgkin-Huxley model with BrainTrace
+PP-Prop. It reads the named raw ARC practice files, keeps inference inputs
+independent of query targets, and reports direct integer-grid predictions with
+strict exact results.
 
-The submitted candidates come from `--primary-candidate-mode`. The default
-`model_only` submits the two grids the spiking model decoded. `rule_then_model`
-gives slot one to the cheapest demonstration-verified rule when one is admitted
-and keeps the model's best grid in slot two; the run then reports
-`rule_channel_enabled`, per-candidate provenance, and the model-only metrics
-next to the submitted ones. The highest score measured to date is 28 exact
-queries at pass@1, 29 at pass@2, 26 tasks at strict pass@1 and 27 at strict
-pass@2, over all 400 evaluation tasks. The command and the per-tree breakdown
-are in [the pp_prop example README](examples/pp_prop/README.md#highest-scoring-run).
+Run the CPU smoke check with:
 
-The source default is 4,096 neurons and 4,194,304 recurrent edges. A run with
-`--recurrent-edges 4096` is reduced-scale evidence and must report
-`actual_full_scale=false`. The implementation targets the public interface of
-arXiv 2608.09888; it does not claim access to private architecture, data,
-training details, paper-scale compute, or an exact internal reproduction. See
-the [evidence index](docs/evidence/example21.md) for schema and provenance
-semantics.
+```bash
+python examples/pp_prop/21-braincell-arc.py --smoke --device cpu
+```
+
+The GPU image stores raw ARC files at `/datasets/arc/raw` and uses the same
+entry point. See the [Example 21 instructions](examples/pp_prop/README.md) for
+the image command and bounded proof command.
 
 ## Citation
 

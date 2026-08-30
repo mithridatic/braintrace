@@ -92,99 +92,39 @@ passes. The report separates warmed full-probe timing from compilation and
 reports persistent parameter-plus-CSR storage for the masked and compact
 models.
 
-### In-context latent reasoning
+### Example 21 BrainCell ARC
 
-Example 21 uses the BrainCell ARC replacement. Raw ARC files are the only
-dataset input; no generated index or source manifest is required.
-with a source default of 4,194,304 recurrent edges. It ingests ordinary ARC
-demonstrations, freezes the query state, and evaluates 0, 30, and 60 recurrent
-reasoning ticks. Every effort receives the same 30-row decoder sweep; decoder
-rows preserve physical state and associative memory and never feed answer rows
-back into the model.
+Example 21 uses the direct BrainCell ARC path. It reads only the named raw ARC
+practice files, uses compiled BrainTrace PP-Prop event execution, and returns
+direct integer-grid predictions with strict exact results. No generated index or
+source manifest is needed.
 
-`latent_row_decode`, `learned_update`, and evaluation controls are the defaults.
-The controls include matched no-context and shuffled-binding arms, state hold,
-recurrent lesion, deterministic repeat, and the legacy slot ablation. Only the
-latest checkpoint supplies the exact factorized global top-two candidates.
-Exact ARC grid match is the endpoint; shape and pixel scores are diagnostics.
-
-Run the reduced CPU plumbing check with:
+Run the focused CPU smoke check with:
 
     python examples/pp_prop/21-braincell-arc.py --smoke --device cpu --output-dir var/example21-smoke
 
-The tracked image installs the source at `/opt/braintrace`; its default help
-command and all documented in-image source paths use that root. The
-preregistered reduced-edge evidence command is:
+The Example 21 image copies raw ARC files to `/datasets/arc/raw`, installs
+`braincell==0.1.0`, and uses `/opt/braintrace` as its source root. Its default
+command is:
 
-    python /opt/braintrace/examples/pp_prop/21-braincell-arc.py --smoke --device cpu
+    python /opt/braintrace/examples/pp_prop/21-braincell-arc.py --help
 
-That command is intentionally nonqualifying for `actual_full_scale`. Reports
-use schema 2, retain disabled checks as `not_run`, capture live source/config/
-image/resource provenance, and write an artifact checksum sidecar. Historical
-schema-1 bundles remain immutable replay evidence.
+Run the bounded proof command in the image with:
 
-#### Highest-scoring run
+    python /opt/braintrace/examples/pp_prop/21-braincell-arc.py proof --device gpu
 
-The submitted ARC score comes from two channels. `--primary-candidate-mode
-rule_then_model` puts the cheapest demonstration-verified rule in candidate slot
-one and keeps the model's own best grid in slot two; `model_only` is the default
-and submits only the two grids the spiking model decoded. A run reports which
-channel it used (`submission_policy.rule_channel_enabled`, per-candidate
-`provenance`) and always retains the model-only metrics alongside the submitted
-ones, so the network's own score stays readable.
+The proof is mechanism evidence, not a claim of ARC skill. Routine commands
+use the fixed practice-task order. Evaluation data is outside ordinary
+training, structure, and timing runs.
 
-The highest score measured to date, 2026-08-22 on one RTX 3080 Ti Laptop, over
-all 400 ARC-AGI-1 evaluation tasks and 419 queries at the submission checkpoint,
-comes from the command below. It needs the GPU image, which carries the indexed
-ARC-AGI-1 sources at `/datasets/arc`. Mount the checkout at `/work` and put it
-first on `PYTHONPATH`, or the image's baked `/opt/braintrace` copy shadows it.
-In Git Bash prefix the whole command with `MSYS_NO_PATHCONV=1`, or `-w /work` is
-rewritten into a Windows path and docker refuses to start.
+#### Example 21 image run
+
+Build the image with raw ARC data mounted as the `arc_data` stage, then run the
+same BrainCell entry point:
 
     docker run --rm --gpus all \
-      -v "$(pwd):/work" -v braintrace-example21-jax-cache:/cache/jax \
-      -w /work -e PYTHONPATH=/work -e JAX_COMPILATION_CACHE_DIR=/cache/jax \
-      -e XLA_PYTHON_CLIENT_MEM_FRACTION=0.80 \
-      braintrace-example21:b75b834 \
-      python /work/examples/pp_prop/21-braincell-arc.py \
-        --output-dir /work/var/example21-rtm \
-        --device gpu --seed 31337 --neurons 4096 --latent-steps 60 \
-        --training-updates 260 --training-chunk-size 5 --training-batch-size 32 \
-        --copy-residual-gain 2.0 --row-head-carrier-scale 0.0 \
-        --primary-candidate-mode rule_then_model \
-        --output-dir /work/var/example21-rtm
-
-| tree | q@1 | q@2 | task@1 | task@2 | model-only | wall |
-| --- | ---: | ---: | ---: | ---: | --- | ---: |
-| `feat/ex21-shape-decode` (pre-v2 base) | **28** | **29** | **26** | **27** | 1 / 2 / 0 / 1 | 523 s |
-| `main` (protocol v2), `--no-evaluation-controls` | 27 | 27 | 26 | 26 | 0 / 0 / 0 / 0 | 525 s |
-| `main` (protocol v2), controls on | 27 | 27 | 26 | 26 | 0 / 0 / 0 / 0 | 720 s |
-
-The rule channel admitted a rule on 27 of 419 queries and was exact on all 27 in
-every one of those runs; no admitted rule was wrong, so the channel never cost a
-candidate slot. The difference between the rows is the model channel: protocol
-v2 regresses `row_refinement` at full scale (pixel 0.016 against 0.548), so on
-`main` the model contributes nothing and only the pre-v2 tree reaches 28/29.
-Reproducing the top row needs that tree; the command is otherwise identical.
-
-Controls are on by default. `--no-evaluation-controls` is the faster run above
-and fails `required_controls_executed` by construction. With controls on, `main`
-also fails `associative_diagnostics_complete`, `repeat_intact_deterministic`,
-and `slot_ablation_pre_intervention_matched`; those predate the rule channel and
-reproduce on `example21-full-muon-cr2g` and `example21-full-default-u390`.
-
-Both channels read only the demonstrations the ARC protocol supplies at test
-time. A rule is admitted only when it reproduces every demonstration pair
-exactly, and each evaluation arm is fitted on the demonstrations that arm
-actually has, so `no_context` admits nothing and `shuffled_demonstrations` is
-fitted on the deranged pairs. See
-`docs/specs/2026-08-22-example21-rule-then-model-submission.md`.
-
-The example targets the public interface described by arXiv 2608.09888. The
-paper does not disclose enough private architecture, data, training details,
-or compute accounting to claim an exact internal reproduction or paper-scale
-cost equivalence. See `docs/evidence/example21.md` and
-`docs/specs/2026-08-21-example21-protocol-v2-remediation.md`.
+      braintrace-example21:latest \
+      python /opt/braintrace/examples/pp_prop/21-braincell-arc.py --help
 
 ### Configurable benchmark
 
