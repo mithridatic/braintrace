@@ -403,6 +403,158 @@ def test_real_model_snapshot_and_task_mass_helpers_are_sparse():
         )
 
 
+def test_plot_topology_uses_checkpoint_counts_and_labels_without_mutation(tmp_path):
+    input_indptr = np.zeros(442, dtype=np.int32)
+    input_indptr[-1] = 3
+    recurrent_indptr = np.array([0, 2, 3, 3], dtype=np.int32)
+    arrays = {
+        "neuron_count": np.asarray(3, dtype=np.int32),
+        "input_indptr": input_indptr,
+        "input_indices": np.array([0, 1, 2], dtype=np.int32),
+        "input_values": np.ones(3, dtype=np.float32),
+        "recurrent_indptr": recurrent_indptr,
+        "recurrent_indices": np.array([1, 2, 0], dtype=np.int32),
+        "recurrent_values": np.ones(3, dtype=np.float32),
+        "readout_weight": np.arange(6, dtype=np.float32).reshape(3, 2),
+        "dale_codes": np.array([0, 1, -1], dtype=np.int8),
+        "owner_codes": np.array([-1, 0, -2], dtype=np.int16),
+        "neuron_ids": np.array([2, 0, 1], dtype=np.int32),
+    }
+    module = SimpleNamespace(load_checkpoint=lambda _path: arrays)
+    topology = structural.topology_from_checkpoint(module, "accepted.npz")
+    prediction_before = np.argmax(topology.readout, axis=1).tobytes()
+    output = tmp_path / "topology.png"
+    result = structural.plot_topology(topology, output)
+    assert output.exists() and output.stat().st_size > 0
+    assert result["neuron_count"] == 3
+    assert result["input_connection_count"] == 3
+    assert result["recurrent_connection_count"] == 3
+    assert result["recurrent_plot_edge_count"] == 3
+    assert result["dale_groups"] == [-1, 0, 1]
+    assert result["owner_groups"] == [-2, -1, 0]
+    assert np.argmax(topology.readout, axis=1).tobytes() == prediction_before
+
+
+def test_plot_command_is_explicit_and_ordinary_baseline_does_not_plot(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(structural, "plot_topology", lambda *_args, **_kwargs: calls.append(1))
+
+    class Value:
+        def __init__(self, value):
+            self.value = np.asarray(value)
+
+    class Csr:
+        def __init__(self, indices, indptr):
+            self.indices = np.asarray(indices)
+            self.indptr = np.asarray(indptr)
+
+    class Model:
+        input_csr = Csr([0], [0, 1])
+        recurrent_csr = Csr([0], [0, 1])
+        input_weight = Value([1.0])
+        recurrent_weight = Value([1.0])
+        readout_weight = Value([[1.0]])
+
+    monkeypatch.setattr(
+        structural, "_load_example21_model",
+        lambda: SimpleNamespace(
+            BrainCellArcModel=lambda: Model(), VALIDATION_TASK_IDS=("valid",)
+        ),
+    )
+    output = tmp_path / "baseline.json"
+    structural.main(["baseline", "--output", str(output)])
+    assert calls == []
+    monkeypatch.setattr(
+        structural, "topology_from_checkpoint", lambda *_args: object()
+    )
+    structural.main([
+        "plot", "--checkpoint", "accepted.npz", "--output", str(tmp_path / "plot.png")
+    ])
+    assert calls == [1]
+
+
+def test_plot_topology_rejects_invalid_checkpoint_and_topology_shapes(tmp_path):
+    def checkpoint(input_rows, recurrent_rows):
+        return {
+            "neuron_count": np.asarray(1, dtype=np.int32),
+            "input_indptr": np.zeros(input_rows, dtype=np.int32),
+            "recurrent_indptr": np.zeros(recurrent_rows, dtype=np.int32),
+        }
+
+    with pytest.raises(ValueError, match="441 rows"):
+        structural.topology_from_checkpoint(
+            SimpleNamespace(load_checkpoint=lambda _path: checkpoint(2, 2)), "bad"
+        )
+    with pytest.raises(ValueError, match="invalid rows"):
+        structural.topology_from_checkpoint(
+            SimpleNamespace(load_checkpoint=lambda _path: checkpoint(442, 3)), "bad"
+        )
+    with pytest.raises(ValueError, match="counts must match"):
+        structural.plot_topology(structural.SparseTopology(
+            np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+            np.array([0], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+            np.ones((1, 1)), np.zeros(1, dtype=np.int8), ((),),
+        ), tmp_path / "bad.png")
+    with pytest.raises(ValueError, match="Dale labels"):
+        structural.plot_topology(SimpleNamespace(
+            neuron_count=2,
+            recurrent_source=np.array([], dtype=np.int32),
+            recurrent_target=np.array([], dtype=np.int32),
+            input_value=np.array([], dtype=np.float32),
+            recurrent_value=np.array([], dtype=np.float32),
+            dale=np.zeros(1, dtype=np.int8),
+        ), tmp_path / "bad.png")
+    with pytest.raises(ValueError, match="one neuron"):
+        structural.plot_topology(structural.SparseTopology(
+            np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+            np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+            np.ones((0, 1)), np.zeros(0, dtype=np.int8), (),
+        ), tmp_path / "bad.png")
+    topology = structural.SparseTopology(
+        np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+        np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+        np.ones((1, 1)), np.zeros(1, dtype=np.int8), ((),),
+        owner_codes=np.zeros(2, dtype=np.int16),
+    )
+    with pytest.raises(ValueError, match="identifiers"):
+        structural.plot_topology(
+            topology.__class__(
+                topology.input_source, topology.input_target, topology.input_value,
+                topology.recurrent_source, topology.recurrent_target,
+                topology.recurrent_value, topology.readout, topology.dale,
+                topology.mechanisms, topology.owner_codes, np.zeros(2, dtype=np.int32),
+            ), tmp_path / "bad.png"
+        )
+    with pytest.raises(ValueError, match="owner labels"):
+        structural.plot_topology(topology, tmp_path / "bad.png")
+
+
+def test_plot_topology_defaults_missing_labels_and_identifiers(tmp_path):
+    topology = structural.SparseTopology(
+        np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+        np.array([], dtype=np.int32), np.array([], dtype=np.int32), np.array([], dtype=np.float32),
+        np.ones((1, 1)), np.zeros(1, dtype=np.int8), ((),),
+    )
+    result = structural.plot_topology(topology, tmp_path / "default.png")
+    assert result["owner_groups"] == [-1]
+
+
+def test_truth_documents_separate_observations_and_implementation_boundary():
+    root = Path(__file__).parents[2] / "docs" / "specs"
+    causal = (root / "2026-08-24-example21-causal-explanation.md").read_text()
+    system = (root / "2026-08-24-example21-system-model.md").read_text()
+    assert "## Observations" in causal
+    assert "## Inferences" in causal
+    assert "no claim of real ARC accuracy" in causal
+    for term in (
+        "BrainCell", "BrainState", "BrainTrace", "neuron", "connection",
+        "layer", "Dale-type", "model-cell", "prediction", "output-shape",
+    ):
+        assert term in system
+    assert "## Implementation boundary" in system
+    assert "MiniLSTM" not in system
+
+
 def test_twin_addition_is_connected_splits_values_and_zeros_new_moments():
     topology = structural.SparseTopology(
         input_source=np.array([0]), input_target=np.array([0]), input_value=np.array([2.0]),

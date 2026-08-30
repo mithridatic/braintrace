@@ -2,43 +2,82 @@
 
 ## Scope
 
-This document reports the executed direct-system evidence available in the
-workspace. It does not report the planned BrainCell replacement as executed.
+This document describes the direct behavior that the current Example 21
+replacement code can execute. It separates observations from inferences. It
+does not describe a planned experiment as a completed result.
 
-The acceptance measure is strict task pass-at-1. A task passes only when every
-test query has the exact height, width, and cell values in the first model
-prediction.
+## Acceptance rule
+
+The strict result is the required measure. A task passes only when every query
+has the exact predicted height, width, and integer color cells. Partial cell
+scores, shape scores, averages, and target-fed decoder checks are not strict
+model results.
 
 ## Observations
 
-- The fixed evaluation manifest contains 400 tasks and 419 test queries.
-- The latest recorded direct artifact is
-  `var/ex21-online-v48-query-routing-v1/result.json`.
-- The artifact reports 12/120 synthetic holdout tasks, 0/53 real in-library
-  queries grouped into 51 tasks, and 0/85 real fold-zero queries grouped into
-  80 tasks. The fixed evaluation manifest was not run.
-- The direct model uses two 128-unit MiniLSTM memories. It joins their states
-  and their elementwise product into 384 values. It uses 12 color experts and
-  16 routing programs.
-- The output path produced one exact synthetic upscale result. It produced no
-  strict real development task.
-- A target-fed decoder check produced 400/400 strict tasks. This check used
-  target-derived logits. It is a scorer check, not model performance.
+- `load_task` reads one named raw ARC JSON file from a declared training or
+  evaluation directory. It validates rectangular grids, dimensions from 1
+  through 30, and colors from 0 through 9.
+- `encode_episode` returns a fixed Boolean array with shape `(705, 441)` and a
+  Boolean advance mask with 705 values. The query target is not in this event
+  array.
+- `BrainCellArcModel` creates one recurrent layer with 2,048 model-cell
+  instances. Its sparse input topology has 14,112 connections. Its sparse
+  recurrent topology has 16,384 directed connections. Its direct readout has
+  360 values per readout state.
+- Each model-cell is a `braincell.SingleCompartment` Hodgkin-Huxley cell with
+  sodium, potassium, and leak channels. The default model has no Dale type and
+  no deferred chemical mechanism.
+- `_advance` uses `braintrace.sparse_matmul` for input and recurrent drives.
+  It sends bounded current density to the model-cell population for one
+  `0.1 ms` interval.
+- `run_event_sequence` uses `brainstate.transform.for_loop` inside
+  `brainstate.transform.jit`. A false advance value returns a zero voltage
+  sentinel and does not advance the biological state.
+- The PP-Prop compiler path uses `braintrace.compile` with `vjp_method` set to
+  `single-step` and trace decay `0.95`. The episode trainer clips the combined
+  gradient to norm `1.0` and applies one grouped optimizer update.
+- The strict decoder selects height and width from 30-value groups and color
+  from ten-value groups. It returns an integer grid and performs no repair or
+  candidate selection.
+- The structural plot reads checkpoint topology and labels. It reports the
+  neuron count, input-connection count, recurrent-connection count, Dale
+  groups, and task-owner groups. It does not read target grids or prediction
+  arrays.
+
+## Direct test evidence
+
+The co-located tests in
+`examples/pp_prop/21-braincell-arc_test.py` exercise model-cell values,
+current units, finite local derivatives, sparse relation discovery, false
+event freezing, reset behavior, direct readout gradients, and fixed update
+schedules. The tests in
+`examples/pp_prop/example21_structural_test.py` exercise sparse topology
+counts, checkpoint labels, plot counts, plot groups, and prediction-byte
+stability during plotting.
+
+These tests are compatibility and mechanism checks. They do not provide a
+real-data strict task count unless a direct ARC data root and an executed
+training run supply that count.
 
 ## Inferences
 
-The observations support a limited inference. The direct path can preserve
-some task information and can produce exact answers for some synthetic tasks.
-The main measured break is between task state and reliable exact-grid output.
-This does not prove that every failed task was recognized correctly. It also
-does not prove that PP-Prop equals BPTT.
+The direct code path can represent ARC input as fixed-width events and can
+carry state through sparse BrainCell updates. The tests support this limited
+inference because they inspect the event contract, sparse relations, finite
+cell state, and transformed event execution.
 
-The 400/400 target-fed result shows that the decoder and strict scorer can
-represent the target grids. It does not show that the executed model produces
-the required logits.
+The false-event checks support the inference that padding is intended to be
+state-neutral. They do not prove a real ARC prediction improvement.
+
+The direct readout gradient checks support the inference that height, width,
+and color readout parameters can receive a finite local gradient. They do not
+prove that a full temporal PP-Prop run matches BPTT or solves a real ARC task.
 
 ## Boundary
 
-No executed BrainCell checkpoint, topology plot, or BrainCell prediction is
-present in this worktree. Therefore this document makes no BrainCell neuron,
-connection, Dale-type, or causal-success claim.
+The current repository evidence does not contain an executed real-data
+BrainCell checkpoint with a strict task result. Therefore this document makes
+no claim of real ARC accuracy, causal task success, Dale-stage success, or
+prediction improvement. Such a claim requires a direct executed run and its
+recorded prediction and target grids.

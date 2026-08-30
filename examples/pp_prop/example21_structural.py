@@ -175,6 +175,8 @@ class SparseTopology:
     readout: np.ndarray
     dale: np.ndarray
     mechanisms: tuple
+    owner_codes: np.ndarray | None = None
+    neuron_ids: np.ndarray | None = None
 
     @property
     def neuron_count(self):
@@ -872,6 +874,137 @@ def topology_from_model(model):
         readout, np.asarray(getattr(model, "dale", np.zeros(count, dtype=np.int8))),
         tuple(getattr(model, "mechanisms", ((),) * count)),
     )
+
+
+def topology_from_checkpoint(module, path):
+    """Load the sparse topology and labels needed by the plot command.
+
+    Parameters
+    ----------
+    module : module
+        Example 21 module exposing ``load_checkpoint``.
+    path : path-like
+        Format-1 checkpoint path.
+
+    Returns
+    -------
+    SparseTopology
+        Checkpoint topology without model or biological runtime state.
+    """
+    arrays = module.load_checkpoint(path)
+    neuron_count = int(arrays["neuron_count"])
+    input_indptr = np.asarray(arrays["input_indptr"], dtype=np.int32)
+    recurrent_indptr = np.asarray(arrays["recurrent_indptr"], dtype=np.int32)
+    if input_indptr.shape != (442,):
+        raise ValueError("checkpoint input topology must have 441 rows")
+    if recurrent_indptr.shape != (neuron_count + 1,):
+        raise ValueError("checkpoint recurrent topology has invalid rows")
+    return SparseTopology(
+        np.repeat(np.arange(441, dtype=np.int32), np.diff(input_indptr)),
+        np.asarray(arrays["input_indices"], dtype=np.int32),
+        np.asarray(arrays["input_values"], dtype=np.float32),
+        np.repeat(np.arange(neuron_count, dtype=np.int32), np.diff(recurrent_indptr)),
+        np.asarray(arrays["recurrent_indices"], dtype=np.int32),
+        np.asarray(arrays["recurrent_values"], dtype=np.float32),
+        np.asarray(arrays["readout_weight"], dtype=np.float32),
+        np.asarray(arrays["dale_codes"], dtype=np.int8),
+        tuple(() for _ in range(neuron_count)),
+        np.asarray(arrays["owner_codes"], dtype=np.int16),
+        np.asarray(arrays["neuron_ids"], dtype=np.int32),
+    )
+
+
+def plot_topology(topology, output_path, *, title="Example 21 topology"):
+    """Write a deterministic two-dimensional sparse topology plot.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology and labels from an executed checkpoint.
+    output_path : path-like
+        PNG path for the rendered image.
+    title : str, optional
+        Figure title.
+
+    Returns
+    -------
+    dict
+        Counts and represented Dale and task-owner groups.
+    """
+    import matplotlib
+    matplotlib.use("Agg", force=True)
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+
+    neuron_count = topology.neuron_count
+    if topology.recurrent_source.shape != topology.recurrent_target.shape:
+        raise ValueError("recurrent source and target counts must match")
+    if topology.dale.shape != (neuron_count,):
+        raise ValueError("Dale labels must match neuron count")
+    if neuron_count < 1:
+        raise ValueError("topology must contain one neuron")
+    neuron_ids = (
+        np.arange(neuron_count, dtype=np.int32)
+        if topology.neuron_ids is None else np.asarray(topology.neuron_ids, dtype=np.int32)
+    )
+    if neuron_ids.shape != (neuron_count,):
+        raise ValueError("neuron identifiers must match neuron count")
+    order = np.argsort(neuron_ids, kind="stable")
+    ranks = np.empty(neuron_count, dtype=np.int32)
+    ranks[order] = np.arange(neuron_count, dtype=np.int32)
+    angles = 2.0 * np.pi * ranks / neuron_count
+    positions = np.column_stack((np.cos(angles), np.sin(angles)))
+    edges = positions[np.column_stack((
+        topology.recurrent_source, topology.recurrent_target
+    ))]
+    dale_codes = np.asarray(topology.dale, dtype=np.int8)
+    owner_codes = np.full(neuron_count, -1, dtype=np.int16)
+    if topology.owner_codes is not None:
+        owner_codes = np.asarray(topology.owner_codes, dtype=np.int16)
+    if owner_codes.shape != (neuron_count,):
+        raise ValueError("owner labels must match neuron count")
+
+    dale_names = {-1: "inhibitory", 0: "untyped", 1: "excitatory"}
+    owner_names = {-2: "shared", -1: "unowned"}
+    dale_groups = tuple(int(code) for code in np.unique(dale_codes))
+    owner_groups = tuple(int(code) for code in np.unique(owner_codes))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 7), constrained_layout=True)
+    panels = (
+        (axes[0], dale_codes, dale_names, "Dale type"),
+        (axes[1], owner_codes, owner_names, "Task owner"),
+    )
+    colors = ("#4c78a8", "#9e9e9e", "#e45756", "#72b7b2", "#f2cf5b")
+    for axis, codes, names, label in panels:
+        axis.add_collection(LineCollection(edges, colors="#999999", linewidths=0.15,
+                                            alpha=0.18))
+        for index, code in enumerate(np.unique(codes)):
+            group = codes == code
+            group_name = names.get(int(code), f"task-{int(code)}")
+            axis.scatter(positions[group, 0], positions[group, 1], s=8,
+                         color=colors[index % len(colors)], label=group_name,
+                         rasterized=True)
+        axis.set_title(label)
+        axis.set_aspect("equal")
+        axis.set_axis_off()
+        axis.legend(loc="upper right", fontsize=8, frameon=False)
+    axes[0].set_title(f"{title}\nDale type")
+    fig.suptitle(
+        f"neurons={neuron_count}  input connections={len(topology.input_value)}  "
+        f"recurrent connections={len(topology.recurrent_value)}"
+    )
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output, dpi=150, format="png")
+    plt.close(fig)
+    return {
+        "output": str(output),
+        "neuron_count": int(neuron_count),
+        "input_connection_count": len(topology.input_value),
+        "recurrent_connection_count": len(topology.recurrent_value),
+        "recurrent_plot_edge_count": len(edges),
+        "dale_groups": list(dale_groups),
+        "owner_groups": list(owner_groups),
+    }
 
 
 def topology_dale_edge_signs(topology):
@@ -2745,13 +2878,23 @@ def main(argv=None):
     command_started = time.perf_counter()
     parser = argparse.ArgumentParser()
     parser.add_argument("arm", choices=("baseline", "parent", "dale", "neuron-prune", "connection-prune",
-                                         "neuron-add", "connection-add", "merge"))
+                                         "neuron-add", "connection-add", "plot", "merge"))
     parser.add_argument("--output", required=True)
     parser.add_argument("--data-root", default=os.environ.get("EXAMPLE21_DATA_ROOT"))
     parser.add_argument("--parent-checkpoint")
+    parser.add_argument("--checkpoint")
     parser.add_argument("--checkpoint-output")
     parser.add_argument("--focused-passed", type=int)
     args = parser.parse_args(argv)
+    if args.arm == "plot":
+        checkpoint = args.checkpoint or args.parent_checkpoint
+        if checkpoint is None:
+            parser.error("plot requires --checkpoint")
+        module = _load_example21_model()
+        topology = topology_from_checkpoint(module, checkpoint)
+        evidence = plot_topology(topology, args.output)
+        print(json.dumps(evidence, sort_keys=True))
+        return
     if args.arm == "merge":
         names = ("neuron-prune", "connection-prune", "neuron-add", "connection-add")
         arms = [
