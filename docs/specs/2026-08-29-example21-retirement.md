@@ -13,6 +13,14 @@ The old entry points, latent-workspace modules and tests, diagnostic scripts,
 and ARC index builder are retired. Historical Git, OpenSpec, and evidence
 records MAY mention them, but active commands and imports SHALL NOT.
 
+The active entry point SHALL expose a real command line interface. `--help`
+SHALL print usage and exit without running a fixture. `--smoke` SHALL run the
+bounded BrainCell compatibility checks and report a successful smoke result.
+The `proof` subcommand SHALL run the bounded eight-update proof schedule and
+report its result. Both modes SHALL accept the documented `--device` and
+`--output-dir` options, while refusing unsupported device values and proof
+schedule changes before model execution.
+
 ## Verification
 
 - README commands resolve to `21-braincell-arc.py`.
