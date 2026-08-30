@@ -1,4 +1,5 @@
 import copy
+import ast
 import hashlib
 import importlib.util
 import json
@@ -21,6 +22,60 @@ _SPEC = importlib.util.spec_from_file_location(
 assert _SPEC is not None and _SPEC.loader is not None
 structural = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(structural)
+
+
+def _public_api_nodes(path):
+    tree = ast.parse(Path(path).read_text(encoding="utf-8"))
+    nodes = []
+
+    def visit(body, prefix=""):
+        for node in body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if not node.name.startswith("_"):
+                    nodes.append((prefix + node.name, node))
+                if isinstance(node, ast.ClassDef):
+                    visit(node.body, prefix + node.name + ".")
+
+    visit(tree.body)
+    return nodes
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        Path(__file__).with_name("21-braincell-arc.py"),
+        Path(__file__).with_name("example21_structural.py"),
+    ),
+)
+def test_public_apis_have_numpy_contract_sections(path):
+    required_sections = {"Parameters", "Returns", "Yields", "Attributes", "Raises"}
+    missing = []
+    for name, node in _public_api_nodes(path):
+        doc = ast.get_docstring(node, clean=False) or ""
+        sections = {line.strip() for line in doc.splitlines() if line.strip() in required_sections}
+        if not sections:
+            missing.append(name)
+    assert not missing
+
+
+def test_rejected_validation_messages_include_corrective_actions():
+    with pytest.raises(ValueError, match="pass at least one strict result"):
+        structural.pruning_mask(np.ones(20), (False,))
+    source = Path(__file__).with_name("example21_structural.py").read_text()
+    tree = ast.parse(source)
+    required_fragments = {
+        "Validation failed for",
+        "does not prove compaction identity",
+        "does not prove the bounded tile bound",
+    }
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call):
+            continue
+        if not node.exc.args or not isinstance(node.exc.args[0], (ast.Constant, ast.JoinedStr)):
+            continue
+        message = ast.get_source_segment(source, node.exc.args[0]) or ""
+        if any(fragment in message for fragment in required_fragments):
+            assert ";" in message
 
 
 class _EagerTransform:
