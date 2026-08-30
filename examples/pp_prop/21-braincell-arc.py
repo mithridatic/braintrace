@@ -61,7 +61,13 @@ def _normal(shape, seed, scale):
 
 
 def input_topology():
-    """Build the deterministic feature-to-neuron CSR topology."""
+    """Build the deterministic feature-to-neuron CSR topology.
+
+    Returns
+    -------
+    brainevent.CSR
+        Input-to-neuron sparse relation with 441 rows and 32 entries per row.
+    """
 
     targets = jnp.asarray(
         [(131 * feature + 61 * k) % N_NEURONS
@@ -78,7 +84,13 @@ def input_topology():
 
 
 def recurrent_topology():
-    """Build the deterministic source-row recurrent CSR topology."""
+    """Build the deterministic source-row recurrent CSR topology.
+
+    Returns
+    -------
+    brainevent.CSR
+        Recurrent sparse relation with eight non-self entries per source.
+    """
 
     offsets = jnp.asarray([1, 2, 4, 8, 16, 32, 64, 128], dtype=jnp.int32)
     sources = jnp.arange(N_NEURONS, dtype=jnp.int32)[:, None]
@@ -93,7 +105,18 @@ def recurrent_topology():
 
 
 def bounded_population_current(input_drive, recurrent_drive):
-    """Return bounded BrainCell current density from dimensionless drives."""
+    """Return bounded BrainCell current density from dimensionless drives.
+
+    Parameters
+    ----------
+    input_drive, recurrent_drive : array-like
+        Dimensionless input and recurrent population drives.
+
+    Returns
+    -------
+    brainunit.Quantity
+        Current density in milliamperes per square centimetre.
+    """
 
     return (
         0.02 * jnp.tanh(input_drive) + 0.01 * jnp.tanh(recurrent_drive)
@@ -101,7 +124,20 @@ def bounded_population_current(input_drive, recurrent_drive):
 
 
 def clip_gradient(gradient, max_norm=GRADIENT_CLIP_NORM):
-    """Clip a pytree gradient by its global Euclidean norm."""
+    """Clip a pytree gradient by its global Euclidean norm.
+
+    Parameters
+    ----------
+    gradient : pytree
+        Gradient leaves to scale.
+    max_norm : float, optional
+        Maximum global Euclidean norm.
+
+    Returns
+    -------
+    tuple
+        Clipped gradient and the unscaled global norm.
+    """
 
     if isinstance(gradient, dict):
         leaves = [
@@ -122,7 +158,20 @@ def clip_gradient(gradient, max_norm=GRADIENT_CLIP_NORM):
 
 
 def accumulate_masked_loss(losses, valid_rows):
-    """Sum only losses belonging to valid shape or row requests."""
+    """Sum only losses belonging to valid shape or row requests.
+
+    Parameters
+    ----------
+    losses : array-like
+        Per-request loss values.
+    valid_rows : array-like
+        Zero-one mask selecting counted requests.
+
+    Returns
+    -------
+    jax.Array
+        Scalar masked loss sum.
+    """
 
     values = jnp.asarray(losses)
     mask = jnp.asarray(valid_rows, dtype=values.dtype)
@@ -186,7 +235,15 @@ def _direct_readout_gradients(
 
 
 class AdamState:
-    """Adam first and second moments for one episode schedule."""
+    """Adam first and second moments for one episode schedule.
+
+    Parameters
+    ----------
+    first, second : pytree
+        First and second moment values.
+    step : int, optional
+        Number of updates already applied.
+    """
 
     def __init__(self, first, second, step=0):
         self.first = first
@@ -195,7 +252,22 @@ class AdamState:
 
 
 def adam_update(parameters, gradient, state, learning_rate, beta1=0.9, beta2=0.999, eps=1e-8):
-    """Apply one bias-corrected Adam update and return new state."""
+    """Apply one bias-corrected Adam update and return new state.
+
+    Parameters
+    ----------
+    parameters, gradient : pytree
+        Parameter values and matching gradients.
+    state : AdamState
+        Existing moments and step count.
+    learning_rate, beta1, beta2, eps : float
+        Optimizer rate and numerical constants.
+
+    Returns
+    -------
+    tuple
+        Updated parameters and Adam state.
+    """
 
     first = jax.tree_util.tree_map(
         lambda m, g: beta1 * m + (1.0 - beta1) * g, state.first, gradient
@@ -214,7 +286,20 @@ def adam_update(parameters, gradient, state, learning_rate, beta1=0.9, beta2=0.9
 
 
 def grouped_adam_update(parameters, gradients, states=None, learning_rates=None):
-    """Apply the declared input, recurrent, and readout Adam rates."""
+    """Apply the declared input, recurrent, and readout Adam rates.
+
+    Parameters
+    ----------
+    parameters, gradients : mapping
+        Named parameter values and matching gradients.
+    states, learning_rates : mapping, optional
+        Existing states and per-group rates.
+
+    Returns
+    -------
+    tuple
+        Updated parameters and named Adam states.
+    """
 
     learning_rates = learning_rates or LEARNING_RATES
     states = states or {
@@ -243,7 +328,20 @@ def grouped_adam_update(parameters, gradients, states=None, learning_rates=None)
 
 
 def grouped_muon_update(parameters, gradients, states=None, learning_rates=None):
-    """Apply Muon with AdamW fallback at the declared group rates."""
+    """Apply Muon with AdamW fallback at the declared group rates.
+
+    Parameters
+    ----------
+    parameters, gradients : mapping
+        Named parameter values and matching gradients.
+    states, learning_rates : mapping, optional
+        Existing optimizer states and per-group rates.
+
+    Returns
+    -------
+    tuple
+        Updated parameters and named Muon states.
+    """
 
     learning_rates = learning_rates or LEARNING_RATES
     states = states or {}
@@ -273,22 +371,65 @@ def grouped_muon_update(parameters, gradients, states=None, learning_rates=None)
 
 
 def update_schedule(steps, proof=False):
-    """Return the fixed update count for proof or ordinary training."""
+    """Return the fixed update count for proof or ordinary training.
+
+    Parameters
+    ----------
+    steps : int
+        Requested update count.
+    proof : bool, optional
+        Select the eight-update proof schedule when true.
+
+    Returns
+    -------
+    tuple of int
+        Consecutive update indices.
+
+    Raises
+    ------
+    ValueError
+        If ``steps`` does not equal the selected schedule length.
+    """
 
     expected = PROOF_UPDATES if proof else ORDINARY_UPDATES
     if steps != expected:
-        raise ValueError(f"expected exactly {expected} updates, got {steps}")
+        raise ValueError(
+            f"Expected exactly {expected} updates, got {steps}; "
+            f"pass steps={expected}."
+        )
     return tuple(range(expected))
 
 
 def select_integration_substeps(check):
-    """Select one event step or the matched two-half-step fallback."""
+    """Select one event step or the matched two-half-step fallback.
+
+    Parameters
+    ----------
+    check : mapping
+        Integration check containing ``default_selected``.
+
+    Returns
+    -------
+    int
+        Selected substep count, either one or two.
+    """
 
     return 1 if check["default_selected"] else 2
 
 
 def compile_pp_prop_model(model):
-    """Compile state-changing sparse parameters with PP-Prop single-step."""
+    """Compile state-changing sparse parameters with PP-Prop single-step.
+
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose sparse parameters influence hidden state.
+
+    Returns
+    -------
+    object
+        PP-Prop learner compiled for one event step.
+    """
 
     return braintrace.compile(
         model,
@@ -306,7 +447,15 @@ def _csr_indptr(source, rows):
 
 
 class BrainCellArcModel(brainstate.nn.Module):
-    """The 2,048-neuron sparse BrainCell baseline."""
+    """The 2,048-neuron sparse BrainCell baseline.
+
+    Parameters
+    ----------
+    topology : SparseTopology, optional
+        Sparse topology used to rebuild the model.
+    biology_options : mapping, optional
+        Deferred biology options validated during construction.
+    """
 
     def __init__(self, topology=None, biology_options=None):
         super().__init__()
@@ -361,7 +510,13 @@ class BrainCellArcModel(brainstate.nn.Module):
         self.reset_episode()
 
     def reset_episode(self, learner=None):
-        """Reset biological and eligibility state while retaining parameters."""
+        """Reset biological and eligibility state while retaining parameters.
+
+        Parameters
+        ----------
+        learner : object, optional
+            Learner whose eligibility state is reset with the model.
+        """
 
         self.cell.reset_state()
         self.previous_spikes.value = jnp.zeros((self.cell.V.value.shape[0],), dtype=jnp.float32)
@@ -402,12 +557,38 @@ class BrainCellArcModel(brainstate.nn.Module):
         return self.cell.V.value.to_decimal(u.mV)
 
     def update(self, event):
-        """Advance one event for the BrainTrace compiler."""
+        """Advance one event for the BrainTrace compiler.
+
+        Parameters
+        ----------
+        event : array-like
+            Encoded event with 441 input features.
+
+        Returns
+        -------
+        jax.Array
+            Membrane voltage after the event.
+        """
 
         return self._advance(event)
 
     def step(self, event, advance=True, blocked_source=None):
-        """Run one event, preserving all state for a false advance."""
+        """Run one event, preserving all state for a false advance.
+
+        Parameters
+        ----------
+        event : array-like
+            Encoded event with 441 input features.
+        advance : bool, optional
+            Whether biological and eligibility state advances.
+        blocked_source : int, optional
+            Source neuron whose recurrent edges are blocked.
+
+        Returns
+        -------
+        jax.Array
+            Membrane voltage, or exact zeros for a non-advancing event.
+        """
 
         return brainstate.transform.cond(
             advance, lambda: self._advance(event, blocked_source=blocked_source),
@@ -415,7 +596,22 @@ class BrainCellArcModel(brainstate.nn.Module):
         )
 
     def interval(self, event, advance=True, *, substeps=1):
-        """Advance one biological interval with one or two compiled substeps."""
+        """Advance one biological interval with one or two compiled substeps.
+
+        Parameters
+        ----------
+        event : array-like
+            Encoded event for the interval.
+        advance : bool, optional
+            Whether the interval changes biological state.
+        substeps : int, optional
+            Positive number of matched integration substeps.
+
+        Returns
+        -------
+        jax.Array
+            Membrane voltage after the interval.
+        """
 
         substep_events = integration_substep_events(event, substeps)
 
@@ -430,7 +626,13 @@ class BrainCellArcModel(brainstate.nn.Module):
         )
 
     def readout(self):
-        """Return direct voltage readout logits."""
+        """Return direct voltage readout logits.
+
+        Returns
+        -------
+        jax.Array
+            360 direct readout logits.
+        """
 
         return (
             self.readout_features() @ self.readout_weight.value
@@ -438,16 +640,40 @@ class BrainCellArcModel(brainstate.nn.Module):
         )
 
     def readout_features(self):
-        """Return normalized membrane-voltage features for the readout."""
+        """Return normalized membrane-voltage features for the readout.
+
+        Returns
+        -------
+        jax.Array
+            One normalized feature for each neuron.
+        """
 
         return jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
 
 
 def integration_substep_events(event, substeps):
-    """Return one external event followed by zero half-step events."""
+    """Return one external event followed by zero half-step events.
+
+    Parameters
+    ----------
+    event : array-like
+        One encoded input event.
+    substeps : int
+        Positive number of compiled integration substeps.
+
+    Returns
+    -------
+    jax.Array
+        Event array with the requested leading substep dimension.
+
+    Raises
+    ------
+    ValueError
+        If ``substeps`` is less than one; pass a positive integer.
+    """
 
     if substeps < 1:
-        raise ValueError("substeps must be positive")
+        raise ValueError("Substeps must be positive; pass a positive integer.")
     event = jnp.asarray(event)
     return jnp.concatenate(
         (event[None, :], jnp.zeros((substeps - 1,) + event.shape, dtype=event.dtype))
@@ -486,9 +712,15 @@ def run_event_sequence(
         advances = jnp.ones((events.shape[0],), dtype=bool)
     advances = jnp.asarray(advances, dtype=bool)
     if events.ndim != 2 or events.shape[1] != N_INPUTS:
-        raise ValueError(f"events must have shape (time, {N_INPUTS})")
+        raise ValueError(
+            f"Events must have shape (time, {N_INPUTS}); "
+            f"pass a two-dimensional array with {N_INPUTS} features."
+        )
     if advances.shape != (events.shape[0],):
-        raise ValueError("advances must have one boolean per event")
+        raise ValueError(
+            "Advances must have one boolean per event; "
+            "pass a mask with the same length as events."
+        )
 
     def drive(xs, mask):
         if not return_spikes:
@@ -515,7 +747,22 @@ def run_event_sequence(
 
 
 def run_pp_prop_sequence(learner, events, advances=None):
-    """Evolve a PP-Prop learner only on advancing events."""
+    """Evolve a PP-Prop learner only on advancing events.
+
+    Parameters
+    ----------
+    learner : object
+        PP-Prop learner with an ``etrace_evolve`` method.
+    events : array-like
+        Event vectors with shape ``(time, 441)``.
+    advances : array-like, optional
+        Boolean mask selecting events that update state.
+
+    Returns
+    -------
+    jax.Array
+        Learner outputs for each event.
+    """
 
     events = jnp.asarray(events, dtype=jnp.float32)
     if advances is None:
@@ -538,7 +785,18 @@ def run_pp_prop_sequence(learner, events, advances=None):
 
 
 def matched_integration_check(events):
-    """Compare the default interval with two compiled half-steps."""
+    """Compare the default interval with two compiled half-steps.
+
+    Parameters
+    ----------
+    events : array-like
+        Event sequence used by both integration paths.
+
+    Returns
+    -------
+    dict
+        Finite, voltage, spike, prediction, and selected-substep checks.
+    """
 
     events = jnp.asarray(events, dtype=jnp.float32)
     one_step = BrainCellArcModel()
@@ -587,7 +845,18 @@ def matched_integration_check(events):
 
 
 def decoder_boundary_intervention(model):
-    """Return direct predictions before and after a state-only intervention."""
+    """Return direct predictions before and after a state-only intervention.
+
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose membrane voltage is changed for the intervention.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Readout logits before and after the voltage intervention.
+    """
 
     before = model.readout()
     model.cell.V.value = model.cell.V.value + 1.0 * u.mV
@@ -596,7 +865,17 @@ def decoder_boundary_intervention(model):
 
 
 class PPPropEpisodeTrainer:
-    """Accumulate one PP-Prop episode and apply one clipped Muon update."""
+    """Accumulate one PP-Prop episode and apply one clipped Muon update.
+
+    Parameters
+    ----------
+    learner : object
+        Compiled PP-Prop learner and model.
+    parameters : mapping
+        Trainable parameter values keyed by optimizer group.
+    learning_rates : mapping, optional
+        Learning rate for each parameter group.
+    """
 
     def __init__(self, learner, parameters, learning_rates=None):
         self.learner = learner
@@ -634,41 +913,98 @@ class PPPropEpisodeTrainer:
 
     @property
     def parameters(self):
-        """Return optimizer-managed parameter values."""
+        """Return the optimizer-managed parameter values.
+
+        Returns
+        -------
+        mapping
+            Parameter names mapped to their current array values.
+        """
 
         return self._parameters_state.value
 
     @parameters.setter
     def parameters(self, value):
+        """Replace the optimizer-managed parameter values.
+
+        Parameters
+        ----------
+        value : mapping
+            Parameter names mapped to replacement array values.
+        """
+
         self._parameters_state.value = value
 
     @property
     def muon_groups(self):
-        """Return optimizer state carried by BrainState transforms."""
+        """Return optimizer state carried by BrainState transforms.
+
+        Returns
+        -------
+        mapping
+            Parameter names mapped to Muon optimizer state.
+        """
 
         return self._muon_groups_state.value
 
     @muon_groups.setter
     def muon_groups(self, value):
+        """Replace the BrainState transform optimizer state.
+
+        Parameters
+        ----------
+        value : mapping
+            Parameter names mapped to replacement optimizer state.
+        """
+
         self._muon_groups_state.value = value
 
     @property
     def updates(self):
-        """Return the transformed optimizer update count."""
+        """Return the transformed optimizer update count.
+
+        Returns
+        -------
+        int
+            Number of completed episode updates.
+        """
 
         return self._updates_state.value
 
     @updates.setter
     def updates(self, value):
+        """Set the transformed optimizer update count.
+
+        Parameters
+        ----------
+        value : int
+            Replacement number of completed episode updates.
+        """
+
         self._updates_state.value = value
 
     def reset_episode(self, model=None):
-        """Reset model and eligibility state before the next query episode."""
+        """Reset model and eligibility state before the next query episode.
+
+        Parameters
+        ----------
+        model : BrainCellArcModel, optional
+            Model to reset; defaults to the learner's compiled model.
+
+        Raises
+        ------
+        ValueError
+            If no compiled model exists; provide ``model`` or compile the
+            learner first.
+        """
 
         if model is None:
             model = getattr(self.learner, "model4compile", None)
         if model is None:
-            raise ValueError("episode reset requires the compiled model")
+            raise ValueError(
+                "Episode reset requires the compiled model; "
+                "provide model or compile the learner first."
+            )
         model.reset_episode(self.learner)
 
     def _group_gradients(self, gradients):
@@ -715,7 +1051,13 @@ class PPPropEpisodeTrainer:
             )
 
     def optimizer_is_finite(self):
-        """Return whether parameters, moments, and step state are finite."""
+        """Return whether parameters, moments, and step state are finite.
+
+        Returns
+        -------
+        bool
+            True when every optimizer and parameter leaf is finite.
+        """
 
         if self.adam_groups is None:
             moments = (self.adam.first, self.adam.second)
@@ -739,15 +1081,46 @@ class PPPropEpisodeTrainer:
         target_valid_mask=None,
         advance_mask=None,
     ):
-        """Apply one update from one masked PP-Prop query episode."""
+        """Apply one update from one masked PP-Prop query episode.
+
+        Parameters
+        ----------
+        events : array-like
+            Event sequence for one query episode.
+        step_fn, direct_grad_fn : callable
+            Forward and optional direct-gradient functions.
+        valid_rows, loss_mask, request_kind : array-like, optional
+            Request masks and request classes; provide at most one row mask.
+        target_shape, target_rows, target_valid_mask : array-like, optional
+            Supervised shape and row targets with their valid-row mask.
+        advance_mask : array-like, optional
+            Boolean event mask for advancing state.
+
+        Returns
+        -------
+        dict
+            Updated parameter gradients and episode loss evidence.
+
+        Raises
+        ------
+        ValueError
+            If both row-mask arguments are supplied or the advance mask has
+            the wrong length; provide one valid mask with one value per event.
+        """
 
         if loss_mask is not None and valid_rows is not None:
-            raise ValueError("provide only one episode loss mask")
+            raise ValueError(
+                "Provide only one episode loss mask; "
+                "choose valid_rows or loss_mask."
+            )
         mask = loss_mask if loss_mask is not None else valid_rows
         if advance_mask is not None:
             advance_mask = jnp.asarray(advance_mask, dtype=bool)
             if advance_mask.shape != (events.shape[0],):
-                raise ValueError("advance_mask must have one boolean per event")
+                raise ValueError(
+                    "Advance_mask must have one boolean per event; "
+                    "pass a mask with the same length as events."
+                )
             if mask is None:
                 mask = jnp.ones((events.shape[0],), dtype=jnp.float32)
             mask = mask * advance_mask
@@ -804,7 +1177,25 @@ class PPPropEpisodeTrainer:
         return losses, norm
 
     def evaluate_forward(self, forward_fn, *args, **kwargs):
-        """Evaluate an episode without changing parameters or learner state."""
+        """Evaluate an episode without changing parameters or learner state.
+
+        Parameters
+        ----------
+        forward_fn : callable
+            Forward function to evaluate.
+        *args, **kwargs : object
+            Arguments passed to ``forward_fn``.
+
+        Returns
+        -------
+        object
+            Forward-function result after state-preservation checks.
+
+        Raises
+        ------
+        RuntimeError
+            If validation changes trainable or biological state.
+        """
 
         before = jax.tree_util.tree_map(jnp.array, self.parameters)
         state_values = self._non_parameter_state_values()
@@ -813,13 +1204,19 @@ class PPPropEpisodeTrainer:
         if not bool(jax.tree_util.tree_all(
             jax.tree_util.tree_map(jnp.array_equal, before, after)
         )):
-            raise RuntimeError("forward validation changed trainable parameters")
+            raise RuntimeError(
+                "Forward validation changed trainable parameters; "
+                "use a state-preserving forward function."
+            )
         current_states = self._non_parameter_state_values()
         if len(state_values) != len(current_states) or any(
             not bool(jnp.array_equal(initial, current))
             for initial, current in zip(state_values, current_states)
         ):
-            raise RuntimeError("forward validation changed biological or eligibility state")
+            raise RuntimeError(
+                "Forward validation changed biological or eligibility state; "
+                "use a state-preserving forward function."
+            )
         return result
 
     def _non_parameter_state_values(self):
@@ -848,27 +1245,54 @@ class PPPropEpisodeTrainer:
 
 
 def run_fixed_schedule(trainer, episodes, *, proof=False):
-    """Run the exact proof or ordinary number of ordered episodes."""
+    """Run the exact proof or ordinary number of ordered episodes.
+
+    Parameters
+    ----------
+    trainer : PPPropEpisodeTrainer
+        Trainer that owns model and optimizer state.
+    episodes : sequence of mapping
+        Ordered episode payloads with task identifiers.
+    proof : bool, optional
+        Select the eight-update proof schedule when true.
+
+    Returns
+    -------
+    tuple
+        Per-episode update evidence.
+    """
 
     update_schedule(len(episodes), proof=proof)
     task_ids = [episode.get("task_id") for episode in episodes]
     if any(task_id is None for task_id in task_ids):
-        raise ValueError("every counted episode must declare task_id")
+        raise ValueError(
+            "Every counted episode must declare task_id; "
+            "add task_id to each episode."
+        )
     if proof:
         if any(task_id != "d631b094" for task_id in task_ids):
-            raise ValueError("proof schedule accepts only d631b094")
+            raise ValueError(
+                "Proof schedule accepts only d631b094; "
+                "use that task for every proof episode."
+            )
     else:
         expected = tuple(
             TRAINING_TASK_IDS[index % len(TRAINING_TASK_IDS)]
             for index in range(len(episodes))
         )
         if tuple(task_ids) != expected:
-            raise ValueError("ordinary schedule task order is not fixed")
+            raise ValueError(
+                "Ordinary schedule task order is not fixed; "
+                "use TRAINING_TASK_IDS order."
+            )
     if any(
         episode.get("validation", False) or task_id in VALIDATION_TASK_IDS
         for episode, task_id in zip(episodes, task_ids)
     ):
-        raise ValueError("validation episodes are forward-only")
+        raise ValueError(
+            "Validation episodes are forward-only; "
+            "remove validation episodes from the update schedule."
+        )
     static_payload = {
         key: episodes[0][key]
         for key in ("step_fn", "direct_grad_fn")
@@ -901,7 +1325,10 @@ def _supervised_episodes(data_root, task_ids):
             None,
         )
         if query_index is None:
-            raise ValueError(f"task {task_id} has no supervised query")
+            raise ValueError(
+                f"Task {task_id} has no supervised query; "
+                "select a task with a target query."
+            )
         events, advances = encode_episode(task, query_index)
         target = np.asarray(task.targets[query_index], dtype=np.int32)
         request_mask = np.zeros((events.shape[0],), dtype=bool)
@@ -968,7 +1395,10 @@ def _real_workflow_report(data_root, *, proof):
     """Execute a real-data BrainCell PP-Prop proof or ordinary run."""
 
     if data_root is None:
-        raise ValueError("real-data proof and run require --arc-root")
+        raise ValueError(
+            "Real-data proof and run require --arc-root; "
+            "pass the directory containing the ARC task files."
+        )
     task_ids = ("d631b094",) if proof else TRAINING_TASK_IDS
     validation_task_ids = ("46f33fce",) if proof else VALIDATION_TASK_IDS
     training_episodes = _supervised_episodes(data_root, task_ids)
@@ -1126,7 +1556,13 @@ SPIKE_DRIVE = 20.0
 
 
 class CompatibilityHodgkinHuxley(braincell.SingleCompartment):
-    """Construct the four-cell BrainCell 0.1.0 Hodgkin–Huxley fixture."""
+    """Construct the four-cell BrainCell 0.1.0 Hodgkin–Huxley fixture.
+
+    Parameters
+    ----------
+    size : int, optional
+        Number of compatible cells to construct.
+    """
 
     def __init__(self, size: int = N_CELLS):
         super().__init__(
@@ -1169,7 +1605,13 @@ class CompatibilityHodgkinHuxley(braincell.SingleCompartment):
 
 
 def input_csr() -> brainevent.CSR:
-    """Return the declared one-feature by four-cell CSR relation."""
+    """Return the declared one-feature by four-cell CSR relation.
+
+    Returns
+    -------
+    brainevent.CSR
+        One input row with four target cells.
+    """
 
     return brainevent.CSR(
         jnp.asarray([0.1, 0.0, 0.0, 0.0], dtype=jnp.float32),
@@ -1180,7 +1622,13 @@ def input_csr() -> brainevent.CSR:
 
 
 def recurrent_csr() -> brainevent.CSR:
-    """Return the four-cell recurrent CSR relation."""
+    """Return the four-cell recurrent CSR relation.
+
+    Returns
+    -------
+    brainevent.CSR
+        Four-cell recurrent relation used by the fixture.
+    """
 
     return brainevent.CSR(
         jnp.ones((N_CELLS,), dtype=jnp.float32),
@@ -1191,7 +1639,18 @@ def recurrent_csr() -> brainevent.CSR:
 
 
 def bounded_current_density(input_drive, recurrent_drive=0.0):
-    """Convert bounded dimensionless drives to current density."""
+    """Convert bounded dimensionless drives to current density.
+
+    Parameters
+    ----------
+    input_drive, recurrent_drive : array-like
+        Dimensionless population drives.
+
+    Returns
+    -------
+    brainunit.Quantity
+        Current density in milliamperes per square centimetre.
+    """
 
     return (
         0.02 * jnp.tanh(input_drive / 20.0) * u.mA / u.cm**2
@@ -1200,7 +1659,13 @@ def bounded_current_density(input_drive, recurrent_drive=0.0):
 
 
 class PPPropRelationFixture(brainstate.nn.Module):
-    """Expose input and recurrent sparse weights to the PP-Prop compiler."""
+    """Expose input and recurrent sparse weights to the PP-Prop compiler.
+
+    Parameters
+    ----------
+    input_weight : float, optional
+        Initial first input weight.
+    """
 
     def __init__(self, input_weight=0.1):
         super().__init__()
@@ -1216,6 +1681,19 @@ class PPPropRelationFixture(brainstate.nn.Module):
         self._recurrent_csr = recurrent_csr()
 
     def update(self, x):
+        """Advance the relation fixture by one input event.
+
+        Parameters
+        ----------
+        x : array-like
+            Input event with one value for each fixture feature.
+
+        Returns
+        -------
+        brainunit.Quantity
+            Updated membrane voltage in millivolts.
+        """
+
         hidden = braintrace.sparse_matmul(
             x,
             self.input_weight.value,
@@ -1234,7 +1712,13 @@ class PPPropRelationFixture(brainstate.nn.Module):
 
 
 def pp_prop_relation_fixture():
-    """Compile and return the two sparse hidden-state relations."""
+    """Compile and return the two sparse hidden-state relations.
+
+    Returns
+    -------
+    object
+        Compiled PP-Prop relation fixture.
+    """
 
     model = PPPropRelationFixture()
     learner = braintrace.compile(
@@ -1285,7 +1769,20 @@ def _csr_input_drive(input_weight):
 
 
 def advance_one_step(cell: CompatibilityHodgkinHuxley, current):
-    """Advance a fixture cell by one compiled 0.1 ms interval."""
+    """Advance a fixture cell by one compiled 0.1 ms interval.
+
+    Parameters
+    ----------
+    cell : CompatibilityHodgkinHuxley
+        Cell fixture to advance.
+    current : brainunit.Quantity
+        Current density applied for the interval.
+
+    Returns
+    -------
+    tuple
+        Membrane voltage and spike values after the interval.
+    """
 
     with brainstate.environ.context(dt=0.1 * u.ms):
         cell.update(current)
@@ -1293,7 +1790,18 @@ def advance_one_step(cell: CompatibilityHodgkinHuxley, current):
 
 
 def compiled_one_step(cell: CompatibilityHodgkinHuxley):
-    """Return a JIT-compiled one-step driver for a fixture cell."""
+    """Return a JIT-compiled one-step driver for a fixture cell.
+
+    Parameters
+    ----------
+    cell : CompatibilityHodgkinHuxley
+        Cell fixture used by the driver.
+
+    Returns
+    -------
+    callable
+        JIT-compiled one-step driver.
+    """
 
     return brainstate.transform.jit(advance_one_step, static_argnums=0)(
         cell, bounded_current_density(0.0)
@@ -1301,7 +1809,13 @@ def compiled_one_step(cell: CompatibilityHodgkinHuxley):
 
 
 def finite_difference_fixture() -> dict[str, float]:
-    """Compare one PP-Prop BrainCell step with a central difference."""
+    """Compare one PP-Prop BrainCell step with a central difference.
+
+    Returns
+    -------
+    dict
+        Direct derivative, centered derivative, tolerance, and pass status.
+    """
 
     weight = jnp.asarray(0.1, dtype=jnp.float32)
     epsilon = FINITE_DIFFERENCE_EPSILON
@@ -1365,7 +1879,13 @@ def _braincell_objective(input_weight):
 
 
 def spike_path_fixture() -> dict[str, bool]:
-    """Check deterministic threshold crossing and finite surrogate activity."""
+    """Check deterministic threshold crossing and finite surrogate activity.
+
+    Returns
+    -------
+    dict
+        Threshold, spike, and finite-gradient evidence.
+    """
 
     cell = CompatibilityHodgkinHuxley()
     cell.init_state()
@@ -1390,7 +1910,13 @@ def spike_path_fixture() -> dict[str, bool]:
 
 
 def direct_readout_gradient_fixture() -> dict[str, bool]:
-    """Check finite direct gradients for all 360 voltage-readout values."""
+    """Check finite direct gradients for all 360 voltage-readout values.
+
+    Returns
+    -------
+    dict
+        Gradient shape, finiteness, and nonzero checks.
+    """
 
     features = jnp.asarray([[0.1, -0.2, 0.3, -0.4]])
     weight = jnp.ones((N_CELLS, N_READOUT)) * 0.1
@@ -1477,14 +2003,20 @@ def _write_report(output_dir, report):
 
 def _run_command(args):
     if args.command is not None and args.smoke:
-        raise ValueError("choose one of proof, run, or --smoke")
+        raise ValueError(
+            "Choose one of proof, run, or --smoke; "
+            "pass exactly one execution mode."
+        )
     if args.command is None and not args.smoke:
         _parser().print_help()
         return 0
     try:
         device = jax.devices(args.device)[0]
     except RuntimeError as error:
-        raise ValueError(f"requested device {args.device!r} is unavailable") from error
+        raise ValueError(
+            f"Requested device {args.device!r} is unavailable; "
+            "select an available device."
+        ) from error
     started_at = time.monotonic() if args.command == "proof" else None
     with jax.default_device(device):
         if args.command == "proof":

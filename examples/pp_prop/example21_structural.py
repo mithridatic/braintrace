@@ -53,13 +53,28 @@ def _load_example21_model():
     path = os.path.join(os.path.dirname(__file__), "21-braincell-arc.py")
     spec = importlib.util.spec_from_file_location("example21_braincell_arc", path)
     if spec is None or spec.loader is None:
-        raise RuntimeError("cannot load Example 21 model")
+        raise RuntimeError(
+            "Cannot load Example 21 model; check the model path and module."
+        )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
 def normalize_task_rows(values):
+    """Normalize each task row by its largest absolute value.
+
+    Parameters
+    ----------
+    values : array-like
+        Two-dimensional task-by-item values.
+
+    Returns
+    -------
+    numpy.ndarray
+        Row-normalized values. Zero rows remain zero.
+    """
+
     values = np.asarray(values, dtype=float)
     scale = np.max(np.abs(values), axis=1, keepdims=True)
     return np.divide(values, scale, out=np.zeros_like(values), where=scale != 0)
@@ -87,13 +102,25 @@ def dale_task_evidence(task_activity, recurrent_source, gradient_mass):
     source = np.asarray(recurrent_source, dtype=int)
     gradients = np.asarray(gradient_mass, dtype=float)
     if activity.ndim != 2 or gradients.ndim != 2:
-        raise ValueError("Dale evidence must be task-by-item arrays")
+        raise ValueError(
+            "Dale evidence must be task-by-item arrays; "
+            "pass two-dimensional activity and gradient arrays."
+        )
     if activity.shape[0] != gradients.shape[0]:
-        raise ValueError("Dale evidence must have the same task count")
+        raise ValueError(
+            "Dale evidence must have the same task count; "
+            "pass matching task rows."
+        )
     if source.ndim != 1 or source.size != gradients.shape[1]:
-        raise ValueError("recurrent source labels must match gradient edges")
+        raise ValueError(
+            "Recurrent source labels must match gradient edges; "
+            "pass one source label per edge."
+        )
     if np.any(source < 0):
-        raise ValueError("recurrent source labels must be nonnegative")
+        raise ValueError(
+            "Recurrent source labels must be nonnegative; "
+            "pass valid neuron indices."
+        )
     source_mass = np.zeros((activity.shape[0], activity.shape[1]), dtype=float)
     for task, row in enumerate(gradients):
         np.add.at(source_mass[task], source, np.abs(row))
@@ -104,11 +131,43 @@ def dale_task_evidence(task_activity, recurrent_source, gradient_mass):
 
 
 def neuron_contribution(readout, transmission, gradient_mass):
+    """Score each neuron from normalized readout and activity evidence.
+
+    Parameters
+    ----------
+    readout, transmission, gradient_mass : array-like
+        Task-by-neuron evidence arrays.
+
+    Returns
+    -------
+    numpy.ndarray
+        Maximum mean contribution for each neuron.
+    """
+
     rows = tuple(normalize_task_rows(value) for value in (readout, transmission, gradient_mass))
     return np.mean(rows, axis=0).max(axis=0)
 
 
 def connection_contribution(indptr, values, spikes, gradients):
+    """Score recurrent connections from transmission and gradient mass.
+
+    Parameters
+    ----------
+    indptr : array-like
+        CSR row boundaries for recurrent connections.
+    values : array-like
+        Recurrent connection weights.
+    spikes : array-like
+        Task-by-neuron spike values.
+    gradients : array-like
+        Task-by-connection gradient values.
+
+    Returns
+    -------
+    numpy.ndarray
+        Mean normalized contribution for each connection.
+    """
+
     indptr = np.asarray(indptr)
     values = np.asarray(values, dtype=float)
     spikes = np.asarray(spikes, dtype=float)
@@ -128,14 +187,38 @@ def connection_contribution(indptr, values, spikes, gradients):
 
 
 def mutation_count(active_count):
-    """Return the exact five-percent ceiling mutation budget."""
+    """Return the exact five-percent ceiling mutation budget.
+
+    Parameters
+    ----------
+    active_count : int
+        Number of active neurons or connections.
+
+    Returns
+    -------
+    int
+        Ceiling of five percent of ``active_count``.
+    """
 
     if active_count < 1:
-        raise ValueError("active count must be positive")
+        raise ValueError("Active count must be positive; pass at least one item.")
     return ceil(0.05 * active_count)
 
 
 def task_owners(scores):
+    """Return the task indices that own each positive score column.
+
+    Parameters
+    ----------
+    scores : array-like
+        Task-by-item evidence scores.
+
+    Returns
+    -------
+    tuple of tuple of int
+        Stable groups of tied maximum-scoring task indices.
+    """
+
     scores = np.asarray(scores, dtype=float)
     owners = []
     for column in scores.T:
@@ -145,12 +228,46 @@ def task_owners(scores):
 
 
 def stable_rank(scores, *, descending=False):
+    """Return a stable index ranking for one-dimensional scores.
+
+    Parameters
+    ----------
+    scores : array-like
+        Values to rank.
+    descending : bool, optional
+        Sort from largest to smallest when true.
+
+    Returns
+    -------
+    tuple of int
+        Score indices, with original index order breaking ties.
+    """
+
     scores = np.asarray(scores)
     return tuple(np.lexsort((np.arange(len(scores)), -scores if descending else scores)))
 
 
 def structural_twins(neuron_count, *, input_sources, recurrent_incoming,
                      recurrent_outgoing, dale_labels, mechanisms):
+    """Group neurons with identical structural and biological descriptors.
+
+    Parameters
+    ----------
+    neuron_count : int
+        Number of neurons to inspect.
+    input_sources, recurrent_incoming, recurrent_outgoing : sequence
+        Per-neuron connection descriptors.
+    dale_labels : sequence
+        Per-neuron Dale labels.
+    mechanisms : sequence
+        Per-neuron deferred mechanism descriptors.
+
+    Returns
+    -------
+    tuple of tuple of int
+        Groups of structurally equivalent neuron indices.
+    """
+
     groups = []
     keys = {}
     for index in range(neuron_count):
@@ -167,6 +284,24 @@ def structural_twins(neuron_count, *, input_sources, recurrent_incoming,
 
 @dataclass
 class SparseTopology:
+    """Sparse model topology and its per-neuron biological labels.
+
+    Parameters
+    ----------
+    input_source, input_target, input_value : numpy.ndarray
+        Sparse input-edge source, target, and value arrays.
+    recurrent_source, recurrent_target, recurrent_value : numpy.ndarray
+        Sparse recurrent-edge source, target, and value arrays.
+    readout : numpy.ndarray or None
+        Neuron-to-readout weights.
+    dale : numpy.ndarray
+        Per-neuron Dale labels.
+    mechanisms : tuple
+        Per-neuron deferred mechanism descriptors.
+    owner_codes, neuron_ids : numpy.ndarray or None, optional
+        Optional task-owner and stable-neuron identifiers.
+    """
+
     input_source: np.ndarray
     input_target: np.ndarray
     input_value: np.ndarray
@@ -181,6 +316,14 @@ class SparseTopology:
 
     @property
     def neuron_count(self):
+        """Return the number of neurons represented by the topology.
+
+        Returns
+        -------
+        int
+            Number of Dale labels and neurons.
+        """
+
         return len(self.dale)
 
 
@@ -285,15 +428,27 @@ def load_parent_checkpoint(module, path):
     input_indptr = np.asarray(arrays["input_indptr"])
     recurrent_indptr = np.asarray(arrays["recurrent_indptr"])
     if len(input_indptr) != 442:
-        raise ValueError("parent checkpoint must contain 441 sparse input rows")
+        raise ValueError(
+            "Parent checkpoint must contain 441 sparse input rows; "
+            "provide an input indptr array with shape (442,)."
+        )
     if len(recurrent_indptr) != neuron_count + 1:
-        raise ValueError("parent checkpoint recurrent row count is invalid")
+        raise ValueError(
+            "Parent checkpoint recurrent row count is invalid; "
+            "provide neuron_count + 1 recurrent row boundaries."
+        )
     dale_codes = np.asarray(arrays["dale_codes"])
     mechanism_codes = np.asarray(arrays["mechanism_codes"])
     if np.any(dale_codes != 0):
-        raise ValueError("accepted Dale parent must be fully untyped")
+        raise ValueError(
+            "Accepted Dale parent must be fully untyped; "
+            "use a parent with zero Dale labels."
+        )
     if np.any(mechanism_codes != 0):
-        raise ValueError("accepted parent has enabled deferred mechanism codes")
+        raise ValueError(
+            "Accepted parent has enabled deferred mechanism codes; "
+            "disable all deferred mechanisms in the parent checkpoint."
+        )
     topology = SparseTopology(
         np.repeat(np.arange(441), np.diff(input_indptr)),
         np.asarray(arrays["input_indices"]),
@@ -326,9 +481,15 @@ def load_parent_checkpoint(module, path):
     )
     nonzero = any(np.any(np.asarray(value) != 0) for value in optimizer_values)
     if not nonzero:
-        raise ValueError("parent checkpoint must contain nonzero optimizer values")
+        raise ValueError(
+            "Parent checkpoint must contain nonzero optimizer values; "
+            "provide a checkpoint after at least one optimizer update."
+        )
     if min(optimizer.input_step, optimizer.recurrent_step, optimizer.readout_step) < 1:
-        raise ValueError("parent checkpoint optimizer steps must be positive")
+        raise ValueError(
+            "Parent checkpoint optimizer steps must be positive; "
+            "provide step counts of at least one."
+        )
     return ParentCheckpoint(
         topology=topology,
         optimizer=optimizer,
@@ -612,7 +773,10 @@ def _muon_parameter_arrays(state, shape):
 
     visit(state)
     if len(matches) != 1:
-        raise ValueError("active optimizer state does not match one parameter")
+        raise ValueError(
+            "Active optimizer state does not match one parameter; "
+            "provide exactly one matching parameter state."
+        )
     return matches[0]
 
 
@@ -633,7 +797,10 @@ def optimizer_from_muon_groups(trainer):
     extracted = {}
     for name in ("input", "recurrent", "readout_weight", "readout_bias"):
         if name not in trainer.muon_groups or name not in trainer.parameters:
-            raise ValueError(f"active optimizer has no {name} state")
+            raise ValueError(
+                f"Active optimizer has no {name} state; "
+                "initialize the matching parameter optimizer state."
+            )
         extracted[name] = _muon_parameter_arrays(
             trainer.muon_groups[name], tuple(trainer.parameters[name].shape)
         )
@@ -642,7 +809,10 @@ def optimizer_from_muon_groups(trainer):
     readout_first, readout_second, readout_step = extracted["readout_weight"]
     bias_first, bias_second, bias_step = extracted["readout_bias"]
     if bias_step != readout_step:
-        raise ValueError("readout optimizer step counts are inconsistent")
+        raise ValueError(
+            "Readout optimizer step counts are inconsistent; "
+            "restore equal bias and readout step counts."
+        )
     return StructuralAdam(
         readout_first, readout_second,
         input_first, input_second,
@@ -744,7 +914,10 @@ def write_parent_checkpoint(module, path, data_root):
     run_addition_updates(brainstate.transform, update, updates=64)
     after = _fixed_strict_screen(module, model, learner, data_root)
     if any(old and not new for old, new in zip(before, after)):
-        raise ValueError("parent training caused a strict regression")
+        raise ValueError(
+            "Parent training caused a strict regression; "
+            "use a candidate with no true-to-false strict changes."
+        )
     optimizer = optimizer_from_muon_groups(update.trainer)
     arrays = checkpoint_arrays(model, optimizer, evidence)
     module.write_checkpoint(path, arrays)
@@ -774,7 +947,22 @@ def write_parent_checkpoint(module, path, data_root):
 
 
 def structural_muon_parameter_maps(source, candidate, arm, alive=None):
-    """Return row selectors for Muon state during a structural rebuild."""
+    """Return row selectors for Muon state during a structural rebuild.
+
+    Parameters
+    ----------
+    source, candidate : SparseTopology
+        Parent and rebuilt topologies.
+    arm : str
+        Structural arm name.
+    alive : array-like, optional
+        Neuron mask for a neuron-pruning arm.
+
+    Returns
+    -------
+    dict
+        Parameter names mapped to source selectors and target shapes.
+    """
     if arm == "neuron-prune":
         alive = (
             np.ones(source.neuron_count, dtype=bool)
@@ -814,8 +1002,25 @@ def structural_muon_parameter_maps(source, candidate, arm, alive=None):
 
 
 def pruning_mask(scores, validation_strict):
+    """Return a strict-gated mask that removes the lowest five percent.
+
+    Parameters
+    ----------
+    scores : array-like
+        One score per candidate item.
+    validation_strict : iterable of bool
+        Strict validation results that must contain one passing value.
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean mask with the selected items set to false.
+    """
+
     if not any(validation_strict):
-        raise ValueError("validation strict gate is closed")
+        raise ValueError(
+            "Validation strict gate is closed; pass at least one strict result."
+        )
     scores = np.asarray(scores)
     count = mutation_count(len(scores))
     mask = np.ones(len(scores), dtype=bool)
@@ -824,24 +1029,63 @@ def pruning_mask(scores, validation_strict):
 
 
 def prune_neurons(topology, scores, validation_strict):
-    """Return a five-percent neuron mask selected by stable evidence ranking."""
+    """Return a five-percent neuron mask selected by stable evidence ranking.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology whose neurons are candidates.
+    scores : array-like
+        One measured score per neuron.
+    validation_strict : iterable of bool
+        Strict results that must contain a passing value.
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean mask with selected neurons set to false.
+    """
 
     if not any(validation_strict):
-        raise ValueError("validation strict gate is closed")
+        raise ValueError(
+            "Validation strict gate is closed; pass at least one strict result."
+        )
     scores = np.asarray(scores, dtype=float)
     if scores.shape != (topology.neuron_count,):
-        raise ValueError("one score is required per neuron")
+        raise ValueError(
+            "One score is required per neuron; pass one score for each neuron."
+        )
     return pruning_mask(scores, validation_strict)
 
 
 def prune_recurrent(topology, scores, validation_strict):
-    """Remove the exact lowest-scoring recurrent-edge budget."""
+    """Remove the exact lowest-scoring recurrent-edge budget.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology whose recurrent edges are candidates.
+    scores : array-like
+        One measured score per recurrent edge.
+    validation_strict : iterable of bool
+        Strict results that must contain a passing value.
+
+    Returns
+    -------
+    tuple
+        Pruned topology and the retained-edge mask.
+    """
 
     if not any(validation_strict):
-        raise ValueError("validation strict gate is closed")
+        raise ValueError(
+            "Validation strict gate is closed; pass at least one strict result."
+        )
     scores = np.asarray(scores, dtype=float)
     if scores.shape != topology.recurrent_value.shape:
-        raise ValueError("one score is required per recurrent edge")
+        raise ValueError(
+            "One score is required per recurrent edge; "
+            "pass one score for each edge."
+        )
     keep = np.ones(len(scores), dtype=bool)
     keep[np.argsort(scores, kind="stable")[:mutation_count(len(scores))]] = False
     pruned = SparseTopology(
@@ -855,7 +1099,18 @@ def prune_recurrent(topology, scores, validation_strict):
 
 
 def topology_from_model(model):
-    """Snapshot the sparse topology and readout from a real Example 21 model."""
+    """Snapshot the sparse topology and readout from a real Example 21 model.
+
+    Parameters
+    ----------
+    model : object
+        Executed model exposing sparse relations and readout parameters.
+
+    Returns
+    -------
+    SparseTopology
+        Numpy snapshot of the model topology and labels.
+    """
 
     input_csr = model.input_csr
     recurrent_csr = model.recurrent_csr
@@ -897,9 +1152,15 @@ def topology_from_checkpoint(module, path):
     input_indptr = np.asarray(arrays["input_indptr"], dtype=np.int32)
     recurrent_indptr = np.asarray(arrays["recurrent_indptr"], dtype=np.int32)
     if input_indptr.shape != (442,):
-        raise ValueError("checkpoint input topology must have 441 rows")
+        raise ValueError(
+            "Checkpoint input topology must have 441 rows; "
+            "provide input indptr with shape (442,)."
+        )
     if recurrent_indptr.shape != (neuron_count + 1,):
-        raise ValueError("checkpoint recurrent topology has invalid rows")
+        raise ValueError(
+            "Checkpoint recurrent topology has invalid rows; "
+            "provide recurrent indptr with shape (neuron_count + 1,)."
+        )
     return SparseTopology(
         np.repeat(np.arange(441, dtype=np.int32), np.diff(input_indptr)),
         np.asarray(arrays["input_indices"], dtype=np.int32),
@@ -939,17 +1200,25 @@ def plot_topology(topology, output_path, *, title="Example 21 topology"):
 
     neuron_count = topology.neuron_count
     if topology.recurrent_source.shape != topology.recurrent_target.shape:
-        raise ValueError("recurrent source and target counts must match")
+        raise ValueError(
+            "Recurrent source and target counts must match; "
+            "pass arrays with equal lengths."
+        )
     if topology.dale.shape != (neuron_count,):
-        raise ValueError("Dale labels must match neuron count")
+        raise ValueError(
+            "Dale labels must match neuron count; pass one label per neuron."
+        )
     if neuron_count < 1:
-        raise ValueError("topology must contain one neuron")
+        raise ValueError("Topology must contain one neuron; pass a non-empty topology.")
     neuron_ids = (
         np.arange(neuron_count, dtype=np.int32)
         if topology.neuron_ids is None else np.asarray(topology.neuron_ids, dtype=np.int32)
     )
     if neuron_ids.shape != (neuron_count,):
-        raise ValueError("neuron identifiers must match neuron count")
+        raise ValueError(
+            "Neuron identifiers must match neuron count; "
+            "pass one identifier per neuron."
+        )
     order = np.argsort(neuron_ids, kind="stable")
     ranks = np.empty(neuron_count, dtype=np.int32)
     ranks[order] = np.arange(neuron_count, dtype=np.int32)
@@ -963,7 +1232,9 @@ def plot_topology(topology, output_path, *, title="Example 21 topology"):
     if topology.owner_codes is not None:
         owner_codes = np.asarray(topology.owner_codes, dtype=np.int16)
     if owner_codes.shape != (neuron_count,):
-        raise ValueError("owner labels must match neuron count")
+        raise ValueError(
+            "Owner labels must match neuron count; pass one label per neuron."
+        )
 
     dale_names = {-1: "inhibitory", 0: "untyped", 1: "excitatory"}
     owner_names = {-2: "shared", -1: "unowned"}
@@ -1009,12 +1280,34 @@ def plot_topology(topology, output_path, *, title="Example 21 topology"):
 
 
 def topology_dale_edge_signs(topology):
-    """Return one Dale sign for each recurrent raw coordinate."""
+    """Return one Dale sign for each recurrent raw coordinate.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology containing per-neuron Dale labels.
+
+    Returns
+    -------
+    numpy.ndarray
+        Source-neuron sign for each recurrent edge.
+    """
     return np.asarray(topology.dale, dtype=np.int8)[topology.recurrent_source]
 
 
 def effective_topology_recurrent_values(topology):
-    """Return recurrent values after applying source-neuron Dale signs."""
+    """Return recurrent values after applying source-neuron Dale signs.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology containing raw recurrent values and labels.
+
+    Returns
+    -------
+    numpy.ndarray
+        Effective signed recurrent edge values.
+    """
     return np.asarray(effective_dale_weights(
         topology.recurrent_value, topology_dale_edge_signs(topology)
     ))
@@ -1043,19 +1336,31 @@ def causal_block_lesion_evidence(
     """
     spikes = np.asarray(task_spikes, dtype=float)
     if spikes.ndim != 2 or spikes.shape[1] != topology.neuron_count:
-        raise ValueError("task spikes must be a task-by-neuron array")
+        raise ValueError(
+            "Task spikes must be a task-by-neuron array; "
+            "pass a two-dimensional array with one column per neuron."
+        )
     if not callable(task_output):
-        raise TypeError("task output intervention is required")
+        raise TypeError(
+            "Task output intervention is required; "
+            "provide a callable task_output."
+        )
     if transform is None:
         import brainstate
         transform = brainstate.transform
     baseline = np.asarray(task_output(None), dtype=float)
     if baseline.shape[0] != spikes.shape[0]:
-        raise ValueError("task output must have one row per task")
+        raise ValueError(
+            "Task output must have one row per task; "
+            "return one output row for each input task."
+        )
     sources = np.arange(topology.neuron_count, dtype=np.int32)
     blocked = np.asarray(transform.for_loop(task_output, sources), dtype=float)
     if blocked.shape[1:] != baseline.shape:
-        raise ValueError("blocked task outputs must match the baseline shape")
+        raise ValueError(
+            "Blocked task outputs must match the baseline shape; "
+            "return arrays with the same shape as the baseline output."
+        )
     effects = np.abs(blocked - baseline[None, ...])
     if effects.ndim > 2:
         effects = np.mean(effects, axis=tuple(range(2, effects.ndim)))
@@ -1063,23 +1368,56 @@ def causal_block_lesion_evidence(
 
 
 def validate_topology_dale(topology):
-    """Validate every typed recurrent outgoing edge in a topology."""
+    """Validate every typed recurrent outgoing edge in a topology.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology to validate.
+
+    Returns
+    -------
+    bool
+        True when all effective typed edges obey their source signs.
+    """
     return validate_effective_signs(
         topology.recurrent_value, topology_dale_edge_signs(topology)
     )
 
 
 def assign_dale_type(topology, neurons, sign):
-    """Assign a measured Dale sign and encode existing outgoing values."""
+    """Assign a measured Dale sign and encode existing outgoing values.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Untyped source topology.
+    neurons : array-like
+        Unique neuron indices to label.
+    sign : int
+        Dale sign, either ``-1`` or ``1``.
+
+    Returns
+    -------
+    SparseTopology
+        Candidate topology with signed raw recurrent values.
+    """
     if sign not in (-1, 1):
-        raise ValueError("Dale sign must be -1 or 1")
+        raise ValueError("Dale sign must be -1 or 1; pass sign=-1 or sign=1.")
     neurons = np.asarray(neurons, dtype=int)
     if neurons.ndim != 1 or len(np.unique(neurons)) != len(neurons):
-        raise ValueError("Dale neurons must be a unique one-dimensional selection")
+        raise ValueError(
+            "Dale neurons must be a unique one-dimensional selection; "
+            "pass distinct one-dimensional indices."
+        )
     if np.any(neurons < 0) or np.any(neurons >= topology.neuron_count):
-        raise ValueError("Dale neuron index is outside the topology")
+        raise ValueError(
+            "Dale neuron index is outside the topology; pass valid neuron indices."
+        )
     if np.any(topology.dale[neurons] != 0):
-        raise ValueError("Dale assignment requires untyped neurons")
+        raise ValueError(
+            "Dale assignment requires untyped neurons; select neurons with label 0."
+        )
     dale = topology.dale.copy()
     dale[neurons] = sign
     edge_signs = dale[topology.recurrent_source]
@@ -1090,26 +1428,58 @@ def assign_dale_type(topology, neurons, sign):
         topology.readout.copy(), dale, tuple(topology.mechanisms),
     )
     if not validate_topology_dale(candidate):
-        raise ValueError("Dale assignment violates an effective outgoing sign")
+        raise ValueError(
+            "Dale assignment violates an effective outgoing sign; "
+            "choose a sign-compatible assignment."
+        )
     return candidate
 
 
 def task_gradient_mass(mass_by_task, parameter_name, task_count):
-    """Normalize pre-clip gradient mass to one task-by-item array."""
+    """Normalize pre-clip gradient mass to one task-by-item array.
+
+    Parameters
+    ----------
+    mass_by_task : mapping
+        Named gradient mass arrays.
+    parameter_name : str
+        Parameter key to select.
+    task_count : int
+        Required number of task rows.
+
+    Returns
+    -------
+    numpy.ndarray
+        Absolute gradient mass with shape ``(task_count, items)``.
+    """
 
     values = np.asarray(mass_by_task.get(parameter_name, 0.0), dtype=float)
     if values.ndim == 0:
         return np.zeros((task_count, 0), dtype=float)
     if values.shape[0] != task_count:
-        raise ValueError("gradient mass has an unexpected task dimension")
+        raise ValueError(
+            "Gradient mass has an unexpected task dimension; "
+            "pass one row for each task."
+        )
     return np.abs(values).reshape((task_count, -1))
 
 
 def resident_tile_pairs(tile_size):
-    """Return the candidate-pair capacity of one connection-selection tile."""
+    """Return the candidate-pair capacity of one connection-selection tile.
+
+    Parameters
+    ----------
+    tile_size : int
+        Tile side length from one through 256.
+
+    Returns
+    -------
+    int
+        Number of candidate pairs in the tile.
+    """
 
     if tile_size < 1 or tile_size > 256:
-        raise ValueError("tile size must be between one and 256")
+        raise ValueError("Tile size must be between one and 256; pass 1 <= tile_size <= 256.")
     return tile_size * tile_size
 
 
@@ -1139,10 +1509,16 @@ def enforce_biological_connection_ceiling(
 
     counts = (int(neuron_count), int(input_count), int(recurrent_count))
     if any(value < 0 for value in counts) or counts[0] < 1:
-        raise ValueError("biological connection counts must be nonnegative")
+        raise ValueError(
+            "Biological connection counts must be nonnegative; "
+            "pass zero or a positive count for each category."
+        )
     total = counts[1] + counts[2]
     if total > BIOLOGICAL_CONNECTIONS_PER_NEURON * counts[0]:
-        raise ValueError("candidate exceeds the biological-connection ceiling")
+        raise ValueError(
+            "Candidate exceeds the biological-connection ceiling; "
+            "reduce the candidate to at most 1,024 connections per neuron."
+        )
     return total
 
 
@@ -1178,14 +1554,23 @@ def structural_evidence(
     tasks = readout_effect.shape[0]
     expected = (tasks, topology.neuron_count)
     if readout_effect.shape != expected or spikes.shape != expected:
-        raise ValueError("readout effect and spikes must be task-by-neuron arrays")
+        raise ValueError(
+            "Readout effect and spikes must be task-by-neuron arrays; "
+            "pass two-dimensional arrays with one column per neuron."
+        )
     if gradient_mass.shape != (tasks, len(topology.recurrent_value)):
-        raise ValueError("gradient mass must be task-by-edge")
+        raise ValueError(
+            "Gradient mass must be task-by-edge; "
+            "pass one gradient row for each task."
+        )
     if input_gradient_mass is None:
         input_gradient_mass = np.zeros((tasks, len(topology.input_value)))
     input_gradient_mass = np.asarray(input_gradient_mass, dtype=float)
     if input_gradient_mass.shape != (tasks, len(topology.input_value)):
-        raise ValueError("input gradient mass must be task-by-edge")
+        raise ValueError(
+            "Input gradient mass must be task-by-edge; "
+            "pass one gradient row for each task."
+        )
     source = topology.recurrent_source
     recurrent_values = effective_topology_recurrent_values(topology)
     transmission = np.zeros(expected, dtype=float)
@@ -1247,6 +1632,23 @@ def _remap_edges(source, target, values, alive):
 
 
 def compact(topology, alive, adam):
+    """Physically remove inactive neurons and remap sparse optimizer state.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Topology to compact.
+    alive : array-like of bool
+        Per-neuron retention mask.
+    adam : StructuralAdam
+        Optimizer arrays aligned with the source topology.
+
+    Returns
+    -------
+    tuple
+        Compacted topology, remapped optimizer state, and a true-change flag.
+    """
+
     alive = np.asarray(alive, dtype=bool)
     input_keep = alive[topology.input_target]
     recurrent_source, recurrent_target, recurrent_value = _remap_edges(
@@ -1284,7 +1686,20 @@ def compact(topology, alive, adam):
 
 
 def mask_topology(topology, alive):
-    """Return the un-compacted topology with removed paths set to exact zero."""
+    """Return the un-compacted topology with removed paths set to exact zero.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Source topology.
+    alive : array-like
+        Boolean neuron mask.
+
+    Returns
+    -------
+    SparseTopology
+        Same-size topology with removed values masked to zero.
+    """
 
     alive = np.asarray(alive, dtype=bool)
     masked = SparseTopology(
@@ -1301,7 +1716,20 @@ def mask_topology(topology, alive):
 
 
 def prediction_bytes_identical(masked, compacted, predict_masked, predict_compacted):
-    """Compare decoded prediction bytes for mask and physical compaction."""
+    """Compare decoded prediction bytes for mask and physical compaction.
+
+    Parameters
+    ----------
+    masked, compacted : SparseTopology
+        Masked and physically compacted topologies.
+    predict_masked, predict_compacted : callable
+        Prediction functions for the two topologies.
+
+    Returns
+    -------
+    bool
+        True when the prediction byte strings are identical.
+    """
 
     return np.asarray(predict_masked(masked)).tobytes() == np.asarray(
         predict_compacted(compacted)
@@ -1309,12 +1737,31 @@ def prediction_bytes_identical(masked, compacted, predict_masked, predict_compac
 
 
 def add_twin_neurons(topology, scores, required=None):
+    """Add bounded structural twins for the highest-scoring donors.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Source topology.
+    scores : array-like
+        Per-neuron or task-by-neuron donor evidence.
+    required : int, optional
+        Number of donor neurons to duplicate.
+
+    Returns
+    -------
+    tuple
+        Grown topology and the selected donor indices.
+    """
+
     scores = np.asarray(scores, dtype=float)
     if scores.ndim == 2:
         scores = np.max(scores, axis=0)
     required = ceil(0.05 * topology.neuron_count) if required is None else required
     if required < 1 or required > topology.neuron_count:
-        raise ValueError("valid donor budget is insufficient")
+        raise ValueError(
+            "Valid donor budget is insufficient; reduce the donor count or add valid donors."
+        )
     connected = set(zip(
         topology.recurrent_source.tolist(), topology.recurrent_target.tolist()
     ))
@@ -1330,7 +1777,9 @@ def add_twin_neurons(topology, scores, required=None):
         if len(donors) == required:
             break
     if len(donors) != required:
-        raise ValueError("selected donors are connected")
+        raise ValueError(
+            "Selected donors are connected; select unconnected donor neurons."
+        )
     donors = tuple(donors)
     input_degree = np.bincount(
         topology.input_target, minlength=topology.neuron_count
@@ -1387,7 +1836,20 @@ def add_twin_neurons(topology, scores, required=None):
 
 
 def grow_adam_for_twins(adam, topology, grown):
-    """Preserve existing moments and zero every newly created item."""
+    """Preserve existing moments and zero every newly created item.
+
+    Parameters
+    ----------
+    adam : StructuralAdam
+        Source optimizer arrays.
+    topology, grown : SparseTopology
+        Source and expanded topologies.
+
+    Returns
+    -------
+    StructuralAdam
+        Expanded optimizer arrays with zero new moments.
+    """
 
     def extend(values, length):
         padding = [(0, length - len(values))] + [(0, 0)] * (values.ndim - 1)
@@ -1442,19 +1904,31 @@ def select_connection_additions(
     """
 
     if tile_size < 1 or tile_size > 256:
-        raise ValueError("tile size exceeds the 65,536-pair resident bound")
+        raise ValueError(
+            "Tile size exceeds the 65,536-pair resident bound; "
+            "pass tile_size no greater than 256."
+        )
     if required < 1:
-        raise ValueError("connection addition count must be positive")
+        raise ValueError(
+            "Connection addition count must be positive; "
+            "pass required >= 1."
+        )
     source_evidence = np.asarray(source_evidence, dtype=float)
     target_evidence = np.asarray(target_evidence, dtype=float)
     expected = (neuron_count,)
     if source_evidence.shape != expected or target_evidence.shape != expected:
-        raise ValueError("connection evidence must have one value per neuron")
+        raise ValueError(
+            "Connection evidence must have one value per neuron; "
+            "pass an array with length neuron_count."
+        )
     if (not np.all(np.isfinite(source_evidence))
             or not np.all(np.isfinite(target_evidence))
             or np.any(source_evidence < 0)
             or np.any(target_evidence < 0)):
-        raise ValueError("connection evidence must be finite and nonnegative")
+        raise ValueError(
+            "Connection evidence must be finite and nonnegative; "
+            "pass finite values at least zero."
+        )
     heap = []
     source_order = np.argsort(-source_evidence, kind="stable")
     target_order = np.argsort(-target_evidence, kind="stable")
@@ -1492,7 +1966,10 @@ def select_connection_additions(
                 elif item > heap[0]:
                     heapq.heapreplace(heap, item)
     if len(heap) != required:
-        raise ValueError("valid connection addition budget is insufficient")
+        raise ValueError(
+            "Valid connection addition budget is insufficient; "
+            "reduce required or provide more valid missing pairs."
+        )
     selected = tuple(
         item[3] for item in sorted(heap, key=lambda item: (-item[0], item[3]))
     )
@@ -1509,7 +1986,24 @@ def select_connection_additions(
 
 
 def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None):
-    """Append measured recurrent pairs with neutral initial effective weight."""
+    """Append measured recurrent pairs with neutral initial effective weight.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Source topology.
+    pairs : sequence of tuple
+        Non-self, absent ``(source, target)`` pairs.
+    typed : bool, optional
+        Encode new values for typed source neurons.
+    source_dale : array-like, optional
+        Expected sign for each new source.
+
+    Returns
+    -------
+    SparseTopology
+        Topology containing the appended connections.
+    """
 
     pairs = tuple(pairs)
     existing = set(zip(topology.recurrent_source.tolist(), topology.recurrent_target.tolist()))
@@ -1518,7 +2012,10 @@ def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None)
         or any(pair in existing for pair in pairs)
         or any(source == target for source, target in pairs)
     ):
-        raise ValueError("connection additions must be distinct, absent, and non-self")
+        raise ValueError(
+            "Connection additions must be distinct, absent, and non-self; "
+            "pass unique missing source-target pairs."
+        )
     enforce_biological_connection_ceiling(
         topology.neuron_count,
         len(topology.input_value),
@@ -1530,7 +2027,10 @@ def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None)
         requested_dale = np.asarray(source_dale, dtype=np.int8)
         if (requested_dale.shape != derived_dale.shape
                 or not np.array_equal(requested_dale, derived_dale)):
-            raise ValueError("source Dale signs must match topology source Dale labels")
+            raise ValueError(
+                "Source Dale signs must match topology source Dale labels; "
+                "pass the labels from topology."
+            )
     initial = np.full(
         len(pairs), float(inverse_softplus(np.asarray(1e-6, dtype=np.float32)))
     )
@@ -1550,7 +2050,26 @@ def run_dale_candidate_arms(
     parent, measurements, build_candidate, update, strict, *, transform=None,
     clock=time.perf_counter,
 ):
-    """Run measured excitatory and inhibitory arms from one parent checkpoint."""
+    """Run measured excitatory and inhibitory arms from one parent checkpoint.
+
+    Parameters
+    ----------
+    parent : object
+        Parent checkpoint state.
+    measurements : DaleMeasurements
+        Measured candidate evidence.
+    build_candidate, update, strict : callable
+        Candidate builder, update function, and strict evaluator.
+    transform : object, optional
+        BrainState transform module.
+    clock : callable, optional
+        Monotonic timing function.
+
+    Returns
+    -------
+    object
+        Dale arm results from the shared parent.
+    """
     checkpoint = pickle.dumps(parent, protocol=pickle.HIGHEST_PROTOCOL)
     return _run_dale_candidates(
         parent, measurements, build_candidate, update, strict,
@@ -1570,11 +2089,17 @@ def _write_dale_child_checkpoint(module, candidate, evidence, path, sign):
     """Persist and validate one post-update promoted Dale child."""
     trainer = getattr(candidate.update, "trainer", None)
     if trainer is None:
-        raise ValueError("promoted Dale candidate has no optimizer state")
+        raise ValueError(
+            "Promoted Dale candidate has no optimizer state; "
+            "provide a candidate with initialized optimizer state."
+        )
     optimizer = optimizer_from_muon_groups(trainer)
     topology = topology_from_model(candidate.model)
     if not validate_topology_dale(topology):
-        raise ValueError("promoted Dale candidate has invalid effective signs")
+        raise ValueError(
+            "Promoted Dale candidate has invalid effective signs; "
+            "assign Dale labels that match every effective outgoing sign."
+        )
     arrays = checkpoint_arrays(candidate.model, optimizer, evidence)
     child_path = _dale_child_checkpoint_path(path, sign)
     module.write_checkpoint(child_path, arrays)
@@ -1582,7 +2107,10 @@ def _write_dale_child_checkpoint(module, candidate, evidence, path, sign):
     if not np.array_equal(
         np.asarray(loaded["recurrent_values"]), arrays["recurrent_values"]
     ):
-        raise ValueError("promoted Dale child checkpoint changed model values")
+        raise ValueError(
+            "Promoted Dale child checkpoint changed model values; "
+            "write the child from the unchanged promoted candidate."
+        )
     return child_path, hashlib.sha256(Path(child_path).read_bytes()).hexdigest()
 
 
@@ -1742,7 +2270,20 @@ def _measure_real_dale(
 
 
 def grow_adam_for_connections(adam, added_count):
-    """Append zero Adam moments for new recurrent edges."""
+    """Append zero Adam moments for new recurrent edges.
+
+    Parameters
+    ----------
+    adam : StructuralAdam
+        Source optimizer arrays.
+    added_count : int
+        Number of new recurrent edges.
+
+    Returns
+    -------
+    StructuralAdam
+        Optimizer with zero moments for each added edge.
+    """
 
     return StructuralAdam(
         adam.neuron_first.copy(), adam.neuron_second.copy(), adam.input_first.copy(),
@@ -1757,7 +2298,26 @@ def grow_adam_for_connections(adam, added_count):
 
 
 def preclip_gradient_mass(learner, events, step_fn, task_index, task_count, **kwargs):
-    """Call the real PP-Prop boundary and return per-item pre-clip mass."""
+    """Call the real PP-Prop boundary and return per-item pre-clip mass.
+
+    Parameters
+    ----------
+    learner : object
+        PP-Prop learner exposing ``etrace_grad``.
+    events : array-like
+        Encoded event sequence.
+    step_fn : callable
+        One-event loss function.
+    task_index, task_count : int
+        Destination task row and total task count.
+    **kwargs : mapping
+        Additional gradient-call arguments.
+
+    Returns
+    -------
+    tuple
+        Named per-task gradient mass and learner losses.
+    """
 
     gradients, losses = learner.etrace_grad(
         events, step_fn=step_fn, return_value=True, **kwargs
@@ -1799,9 +2359,15 @@ def wrong_output_readout_evidence(
     bias = np.asarray(readout_bias, dtype=float)
     target = np.asarray(target)
     if voltages.ndim != 2 or voltages.shape[0] != 31:
-        raise ValueError("readout evidence requires 31 request voltage vectors")
+        raise ValueError(
+            "Readout evidence requires 31 request voltage vectors; "
+            "pass one vector for each of the 31 fixed requests."
+        )
     if weights.shape != (voltages.shape[1], 360) or bias.shape != (360,):
-        raise ValueError("readout evidence has incompatible parameter shapes")
+        raise ValueError(
+            "Readout evidence has incompatible parameter shapes; "
+            "pass weights shaped (neurons, 360) and bias shaped (360,)."
+        )
     features = np.tanh((voltages + 65.0) / 20.0)
     logits = features @ weights + bias
     evidence = np.zeros(voltages.shape[1], dtype=float)
@@ -1836,7 +2402,28 @@ def collect_model_evidence(
     task_count=None,
     **kwargs,
 ):
-    """Collect structural scores at the real model and pre-clip boundary."""
+    """Collect structural scores at the real model and pre-clip boundary.
+
+    Parameters
+    ----------
+    model, learner : object
+        Example 21 model and compiled learner.
+    events : sequence
+        Encoded events for the measured task.
+    step_fn : callable
+        One compiled model step.
+    readout_effect, spikes_by_task : array-like
+        Task-by-neuron evidence arrays.
+    task_index, task_count : int, optional
+        Task index and total task count used for gradient evidence.
+    kwargs : mapping, optional
+        Additional arguments passed to the gradient measurement.
+
+    Returns
+    -------
+    dict
+        Measured neuron, connection, ownership, and gradient evidence.
+    """
     readout_effect = np.asarray(readout_effect, dtype=float)
     spikes_by_task = np.asarray(spikes_by_task, dtype=float)
     if task_count is None:
@@ -1848,11 +2435,17 @@ def collect_model_evidence(
         (key for key in mass if key.endswith("recurrent_weight")), None
     )
     if recurrent_name is None:
-        raise ValueError("pre-clip mass has no recurrent weight")
+        raise ValueError(
+            "Pre-clip mass has no recurrent weight; "
+            "include the recurrent weight in the measured gradients."
+        )
     topology = topology_from_model(model)
     gradient_mass = task_gradient_mass(mass, recurrent_name, task_count)
     if spikes_by_task.shape != (task_count, topology.neuron_count):
-        raise ValueError("spikes must be task-by-neuron")
+        raise ValueError(
+            "Spikes must be task-by-neuron; "
+            "pass one spike row for each task."
+        )
     result = structural_evidence(
         topology, readout_effect, spikes_by_task, gradient_mass
     )
@@ -1866,10 +2459,27 @@ def collect_model_evidence(
 
 
 def run_addition_updates(transform, update, *, updates=64):
-    """Run exactly 64 addition updates through a BrainState loop primitive."""
+    """Run exactly 64 addition updates through a BrainState loop primitive.
+
+    Parameters
+    ----------
+    transform : object
+        BrainState transform namespace.
+    update : callable
+        One addition update function.
+    updates : int, optional
+        Required count; must be 64.
+
+    Returns
+    -------
+    object
+        Stacked update outputs.
+    """
 
     if updates != 64:
-        raise ValueError("addition arms require exactly 64 updates")
+        raise ValueError(
+            "Addition arms require exactly 64 updates; pass updates=64."
+        )
     indices = np.arange(updates, dtype=np.int32)
     return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
 
@@ -1920,7 +2530,10 @@ def _fixed_strict_screen(module, model, learner, data_root, *, transform=None):
 def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
     """Collect all training-task evidence and fixed-screen strict results."""
     if data_root is None:
-        raise ValueError("real Example 21 measurement requires --data-root")
+        raise ValueError(
+            "Real Example 21 measurement requires --data-root; "
+            "pass the directory containing the ARC task files."
+        )
     import jax.numpy as jnp
 
     if transform is None:
@@ -1936,7 +2549,10 @@ def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
             None,
         )
         if query_index is None:
-            raise ValueError(f"training task {task_id} has no supervised query")
+            raise ValueError(
+                f"Training task {task_id} has no supervised query; "
+                "provide one target query for the training task."
+            )
         events, advances = module.encode_episode(task, query_index)
         training_events.append(events)
         training_advances.append(advances)
@@ -1975,7 +2591,10 @@ def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
         input_gradient = gradient_named("input_weight")
         recurrent_gradient = gradient_named("recurrent_weight")
         if input_gradient is None or recurrent_gradient is None:
-            raise ValueError("pre-clip mass must contain input and recurrent weights")
+            raise ValueError(
+                "Pre-clip mass must contain input and recurrent weights; "
+                "include both parameter groups in the measured gradients."
+            )
         model.reset_episode(learner)
         voltages, spikes = module.run_event_sequence(
             model, events, advances, return_spikes=True
@@ -2050,7 +2669,10 @@ def _real_mask_compaction_identity(
         transform = brainstate.transform
 
     if data_root is None:
-        raise ValueError("real Example 21 measurement requires --data-root")
+        raise ValueError(
+            "Real Example 21 measurement requires --data-root; "
+            "pass the directory containing the ARC task files."
+        )
     if alive is None:
         alive = np.ones(topology.neuron_count, dtype=bool)
         alive[:mutation_count(topology.neuron_count)] = False
@@ -2239,16 +2861,40 @@ def _rebuild_real_candidate(module, candidate, fallback_learner):
 
 def execute_one_arm(arm, before_strict, operation, evaluate, *, updates=0,
                     transform=None, update=None, clock=time.perf_counter):
-    """Execute one isolated structural candidate and return direct evidence."""
+    """Execute one isolated structural candidate and return direct evidence.
+
+    Parameters
+    ----------
+    arm : str
+        Recognized structural arm name.
+    before_strict : sequence of bool
+        Baseline strict vector.
+    operation, evaluate : callable
+        Candidate operation and strict evaluator.
+    updates : int, optional
+        Number of addition updates.
+    transform, update, clock : object or callable, optional
+        Loop transform, update function, and monotonic clock.
+
+    Returns
+    -------
+    dict
+        Candidate counts, strict vectors, timing, and promotion result.
+    """
 
     allowed = {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}
     if arm not in allowed:
-        raise ValueError("exactly one recognized arm is required")
+        raise ValueError(
+            "Exactly one recognized arm is required; pass one supported arm name."
+        )
     started = clock()
     candidate, count = operation()
     if arm.endswith("add"):
         if transform is None or update is None:
-            raise ValueError("addition arms require a compiled update driver")
+            raise ValueError(
+                "Addition arms require a compiled update driver; "
+                "pass both transform and update."
+            )
         run_addition_updates(transform, update, updates=updates)
     after_strict = tuple(bool(value) for value in evaluate(candidate))
     elapsed = clock() - started
@@ -2265,7 +2911,20 @@ def execute_one_arm(arm, before_strict, operation, evaluate, *, updates=0,
 
 
 def write_artifact(path, evidence):
-    """Write canonical measured evidence and return its SHA-256 digest."""
+    """Write canonical measured evidence and return its SHA-256 digest.
+
+    Parameters
+    ----------
+    path : path-like
+        Destination JSON artifact path.
+    evidence : mapping
+        Measured evidence to serialize.
+
+    Returns
+    -------
+    str
+        Lowercase SHA-256 digest of the written bytes.
+    """
 
     try:
         pid_namespace = os.readlink("/proc/self/ns/pid")
@@ -2287,8 +2946,30 @@ def write_artifact(path, evidence):
 
 
 def promote_arm(before, after, elapsed_seconds, arm, updates):
+    """Approve an arm that gains strict checks without regression.
+
+    Parameters
+    ----------
+    before, after : sequence of bool
+        Strict validation vectors before and after the arm.
+    elapsed_seconds : float
+        Complete arm wall time.
+    arm : str
+        Arm name.
+    updates : int
+        Number of training updates used by the arm.
+
+    Returns
+    -------
+    bool
+        True when the arm is within its budget and improves validation.
+    """
+
     if arm == "addition" and updates != 64:
-        raise ValueError("addition arms require exactly 64 updates")
+        raise ValueError(
+            "Addition arms require exactly 64 updates; "
+            "pass updates=64."
+        )
     if elapsed_seconds > 300:
         return False
     before = tuple(before)
@@ -2316,7 +2997,10 @@ def apply_complete_process_timing(evidence, elapsed_seconds):
 
     elapsed_seconds = float(elapsed_seconds)
     if not np.isfinite(elapsed_seconds) or elapsed_seconds < 0.0:
-        raise ValueError("complete process time must be finite and nonnegative")
+        raise ValueError(
+            "Complete process time must be finite and nonnegative; "
+            "pass a finite value at least zero."
+        )
     evidence["complete_process_seconds"] = elapsed_seconds
     arm = evidence.get("arm")
     if arm in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
@@ -2349,7 +3033,10 @@ def validate_merged_arms(arms):
         "neuron-prune", "connection-prune", "neuron-add", "connection-add"
     )
     if tuple(arm.get("arm") for arm in arms) != expected_names:
-        raise ValueError("merge requires the four structural arms in fixed order")
+        raise ValueError(
+            "Merge requires the four structural arms in fixed order; "
+            "provide neuron-prune, connection-prune, neuron-add, and connection-add."
+        )
     process_identities = [
         (
             arm.get("environment", {}).get("pid_namespace"),
@@ -2361,86 +3048,146 @@ def validate_merged_arms(arms):
     if (any(pid is None or started is None
             for _namespace, pid, started in process_identities)
             or len(set(process_identities)) != len(process_identities)):
-        raise ValueError("each structural arm must use one separate process")
+        raise ValueError(
+            "Each structural arm must use one separate process; "
+            "provide a unique process identity for every arm."
+        )
     commits = {arm.get("implementation_commit") for arm in arms}
     parents = {arm.get("parent_checkpoint_sha256") for arm in arms}
     if None in commits or len(commits) != 1:
-        raise ValueError("all arms must identify one implementation commit")
+        raise ValueError(
+            "All arms must identify one implementation commit; "
+            "use the same commit value for every arm."
+        )
     if None in parents or len(parents) != 1:
-        raise ValueError("all arms must load one accepted parent checkpoint")
+        raise ValueError(
+            "All arms must load one accepted parent checkpoint; "
+            "use the same accepted checkpoint for every arm."
+        )
     for arm in arms:
         name = arm["arm"]
         before = arm.get("before_strict", [])
         after = arm.get("after_strict", [])
         if (len(before) != 12 or len(after) != 12
                 or not all(isinstance(value, bool) for value in before + after)):
-            raise ValueError(f"{name} does not contain two 12-task strict vectors")
+            raise ValueError(
+                f"Validation failed for {name}: two 12-task strict vectors are required; "
+                "provide both vectors."
+            )
         gained = any(not old and new for old, new in zip(before, after))
         regressed = any(old and not new for old, new in zip(before, after))
         expected_promotion = bool(
             gained and not regressed
         )
         if regressed or not arm.get("strict_regression_rejected"):
-            raise ValueError(f"{name} has a strict regression")
+            raise ValueError(
+                f"Validation failed for {name}: strict regression detected; "
+                "remove the regression before promotion."
+            )
         complete_process_seconds = arm.get("complete_process_seconds")
         if (isinstance(complete_process_seconds, bool)
                 or not isinstance(complete_process_seconds, (int, float))
                 or not np.isfinite(complete_process_seconds)
                 or complete_process_seconds < 0.0
                 or complete_process_seconds > 300.0):
-            raise ValueError(f"{name} complete process exceeds the 300-second limit")
+            raise ValueError(
+                f"Validation failed for {name}: complete process exceeds the 300-second limit; "
+                "reduce the process time below 300 seconds."
+            )
         if not arm.get("within_300_seconds"):
-            raise ValueError(f"{name} exceeds the 300-second limit")
+            raise ValueError(
+                f"Validation failed for {name}: process exceeds the 300-second limit; "
+                "reduce the process time below 300 seconds."
+            )
         if bool(arm.get("promoted")) != expected_promotion:
-            raise ValueError(f"{name} has an inconsistent promotion record")
+            raise ValueError(
+                f"Validation failed for {name}: promotion record is inconsistent; "
+                "correct the promotion record."
+            )
         if arm.get("dense_neuron_pair_array") is not False:
-            raise ValueError(f"{name} does not prove sparse pair storage")
+            raise ValueError(
+                f"Validation failed for {name}: sparse pair storage is not proven; "
+                "provide sparse-storage evidence."
+            )
         if len(arm.get("training_evidence_task_ids", [])) != 8:
-            raise ValueError(f"{name} does not contain eight training evidence rows")
+            raise ValueError(
+                f"Validation failed for {name}: eight training evidence rows are required; "
+                "provide eight training rows."
+            )
         if not arm.get("parent_optimizer_nonzero"):
-            raise ValueError(f"{name} did not load nonzero parent optimizer state")
+            raise ValueError(
+                f"Validation failed for {name}: nonzero parent optimizer state was not loaded; "
+                "load a parent with nonzero optimizer state."
+            )
         if (arm.get("parent_checkpoint_sha256_after")
                 != arm.get("parent_checkpoint_sha256")
                 or not arm.get("parent_checkpoint_unchanged")):
-            raise ValueError(f"{name} did not preserve the parent checkpoint")
+            raise ValueError(
+                f"Validation failed for {name}: parent checkpoint was not preserved; "
+                "preserve the accepted parent checkpoint."
+            )
         remap = arm.get("optimizer_remap", {})
         if not all(remap.get(key) for key in (
             "surviving_values_preserved", "new_values_zero", "step_counts_preserved"
         )):
-            raise ValueError(f"{name} does not preserve optimizer state")
+            raise ValueError(
+                f"Validation failed for {name}: optimizer state was not preserved; "
+                "preserve the accepted optimizer state."
+            )
         pruning_blocked = bool(
             name.endswith("prune") and arm.get("pruning_blocked")
         )
         if not arm.get("adam_remapped"):
-            raise ValueError(f"{name} does not preserve active optimizer state")
+            raise ValueError(
+                f"Validation failed for {name}: active optimizer state was not preserved; "
+                "preserve the active optimizer state."
+            )
         if not pruning_blocked and not arm.get("muon_remapped"):
-            raise ValueError(f"{name} does not preserve active optimizer state")
+            raise ValueError(
+                f"Validation failed for {name}: active optimizer state was not preserved; "
+                "preserve the active optimizer state."
+            )
         addition = name.endswith("add")
         if arm.get("updates") != (64 if addition else 0):
-            raise ValueError(f"{name} has an invalid update count")
+            raise ValueError(
+                f"Validation failed for {name}: update count is invalid; "
+                "record the declared update count."
+            )
         baseline_count = (
             arm["baseline_neurons"] if name.startswith("neuron")
             else arm["baseline_recurrent_items"]
         )
         expected_mutations = 0 if pruning_blocked else mutation_count(baseline_count)
         if arm.get("mutated_item_count") != expected_mutations:
-            raise ValueError(f"{name} has an invalid mutation count")
+            raise ValueError(
+                f"Validation failed for {name}: mutation count is invalid; "
+                "record the declared mutation count."
+            )
         if pruning_blocked:
             validation = arm.get("pruning_validation_strict", [])
             if (any(validation) or arm.get("promoted") or before != after
                     or arm.get("candidate_neurons") != arm.get("baseline_neurons")
                     or arm.get("candidate_recurrent_items")
                     != arm.get("baseline_recurrent_items")):
-                raise ValueError(f"{name} has an invalid blocked pruning record")
+                raise ValueError(
+                    f"Validation failed for {name}: blocked pruning record is invalid; "
+                    "record the blocked pruning result."
+                )
     compaction = arms[0].get("mask_compaction", {})
     if (not arms[0].get("pruning_blocked")
             and not (compaction.get("prediction_bytes_identical")
                      and compaction.get("strict_identical"))):
-        raise ValueError("neuron pruning does not prove compaction identity")
+        raise ValueError(
+            "Neuron pruning does not prove compaction identity; "
+            "provide matching masked and compacted predictions."
+        )
     connection_selection = arms[3].get("connection_selection", {})
     if (not connection_selection.get("stopped_by_bound")
             or connection_selection.get("max_resident_pairs", 65_537) > 65_536):
-        raise ValueError("connection addition does not prove the bounded tile bound")
+        raise ValueError(
+            "Connection addition does not prove the bounded tile bound; "
+            "provide bounded tile evidence."
+        )
 
 
 def _coverage_summary():
@@ -2455,7 +3202,10 @@ def _coverage_summary():
         include=["examples/pp_prop/example21_structural.py"],
     ))
     if not has_branches or percent <= 90.0:
-        raise ValueError("focused line-plus-branch coverage must exceed 90 percent")
+        raise ValueError(
+            "Focused line-plus-branch coverage must exceed 90 percent; "
+            "increase meaningful test coverage above 90 percent."
+        )
     return {"line_and_branch_percent": percent, "branch_data": True}
 
 
@@ -2515,6 +3265,8 @@ def run_integrated_arm(
         Baseline strict vector. It is measured when omitted.
     evidence : dict, optional
         Pre-clip and task evidence to include in the result.
+    clock : callable, optional
+        Monotonic clock used for the complete arm measurement.
 
     Returns
     -------
@@ -2570,7 +3322,10 @@ def run_integrated_arm(
         reset = True
         count = len(pairs)
     else:
-        raise ValueError("exactly one recognized arm is required")
+        raise ValueError(
+            "Exactly one recognized arm is required; "
+            "pass one supported structural arm name."
+        )
     candidate_model, candidate_learner = rebuild(candidate, candidate_adam)
     if hasattr(candidate_model, "reset_episode"):
         candidate_model.reset_episode(candidate_learner)
@@ -2605,10 +3360,14 @@ def measure_real_arm(
     arm : str
         One of ``neuron-prune``, ``connection-prune``, ``neuron-add``, or
         ``connection-add``.
+    data_root : path-like, optional
+        Root containing the fixed ARC task files.
     clock : callable, optional
         Monotonic clock used by the measurement.
     parent_checkpoint : path-like, optional
         Validated accepted parent checkpoint. Real evidence requires this path.
+    checkpoint_output : path-like, optional
+        Destination for a promoted Dale child checkpoint.
 
     Returns
     -------
@@ -2618,17 +3377,24 @@ def measure_real_arm(
     if arm == "dale":
         if data_root is None or parent_checkpoint is None or checkpoint_output is None:
             raise ValueError(
-                "dale requires --data-root, --parent-checkpoint, and --checkpoint-output"
+                "Dale arm requires --data-root, --parent-checkpoint, and --checkpoint-output; "
+                "pass all three paths."
             )
         if Path(checkpoint_output).resolve() == Path(parent_checkpoint).resolve():
-            raise ValueError("Dale child checkpoint must differ from its parent")
+            raise ValueError(
+                "Dale child checkpoint must differ from its parent; "
+                "pass a distinct checkpoint output path."
+            )
         module = _load_example21_model()
         parent = load_parent_checkpoint(module, parent_checkpoint)
         return _measure_real_dale(
             module, parent, data_root, checkpoint_output=checkpoint_output, clock=clock
         )
     if arm not in {"neuron-prune", "connection-prune", "neuron-add", "connection-add"}:
-        raise ValueError("exactly one recognized arm is required")
+        raise ValueError(
+            "Exactly one recognized arm is required; "
+            "pass one supported structural arm name."
+        )
     module = _load_example21_model()
     parent = (
         load_parent_checkpoint(module, parent_checkpoint)
@@ -2667,7 +3433,10 @@ def measure_real_arm(
         (index for index, value in enumerate(training_strict) if not value), None
     )
     if arm.endswith("add") and first_failing_task is None:
-        raise ValueError("addition requires one failing fixed training task")
+        raise ValueError(
+            "Addition requires one failing fixed training task; "
+            "provide exactly one false baseline strict result."
+        )
     neuron_task_scores = np.asarray(
         evidence.get("neuron_task_scores", scores[None, :])
     )
@@ -2874,7 +3643,18 @@ def measure_real_arm(
 
 
 def main(argv=None):
-    """Measure one real Example 21 structural arm and write JSON evidence."""
+    """Measure one real Example 21 structural arm and write JSON evidence.
+
+    Parameters
+    ----------
+    argv : sequence of str, optional
+        Command-line arguments; defaults to ``sys.argv``.
+
+    Returns
+    -------
+    None
+        Writes the selected evidence artifact and prints its summary.
+    """
     import argparse
     command_started = time.perf_counter()
     parser = argparse.ArgumentParser()
@@ -2890,7 +3670,9 @@ def main(argv=None):
     if args.arm == "plot":
         checkpoint = args.checkpoint or args.parent_checkpoint
         if checkpoint is None:
-            parser.error("plot requires --checkpoint")
+            parser.error(
+                "Plot requires --checkpoint; pass the accepted checkpoint path."
+            )
         module = _load_example21_model()
         topology = topology_from_checkpoint(module, checkpoint)
         evidence = plot_topology(topology, args.output)
@@ -2904,7 +3686,10 @@ def main(argv=None):
         ]
         validate_merged_arms(arms)
         if args.focused_passed is None or args.focused_passed < 1:
-            parser.error("merge requires --focused-passed from the focused pytest run")
+            parser.error(
+                "Merge requires --focused-passed from the focused pytest run; "
+                "pass the number of focused tests that passed."
+            )
         coverage_summary = _coverage_summary()
         evidence = {
             "command": "python examples/pp_prop/example21_structural.py <arm> --data-root <arc-root> --parent-checkpoint <accepted.npz> --output .gate5-<arm>.json",
@@ -2959,16 +3744,25 @@ def main(argv=None):
         }
     elif args.arm == "parent":
         if args.data_root is None or args.checkpoint_output is None:
-            parser.error("parent requires --data-root and --checkpoint-output")
+            parser.error(
+                "Parent requires --data-root and --checkpoint-output; "
+                "pass both paths."
+            )
         module = _load_example21_model()
         evidence = write_parent_checkpoint(
             module, args.checkpoint_output, args.data_root
         )
     else:
         if args.parent_checkpoint is None:
-            parser.error("a real structural or Dale arm requires --parent-checkpoint")
+            parser.error(
+                "A real structural or Dale arm requires --parent-checkpoint; "
+                "pass the accepted parent checkpoint path."
+            )
         if args.arm == "dale" and args.checkpoint_output is None:
-            parser.error("dale requires --checkpoint-output for promoted children")
+            parser.error(
+                "Dale requires --checkpoint-output for promoted children; "
+                "pass a distinct child checkpoint path."
+            )
         evidence = measure_real_arm(
             args.arm,
             data_root=args.data_root,

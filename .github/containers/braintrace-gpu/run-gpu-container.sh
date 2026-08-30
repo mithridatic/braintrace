@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Launch a braintrace-gpu container with the shared XLA compilation cache mounted.
 #
 # The image sets JAX_COMPILATION_CACHE_DIR=/cache/jax, but that path is
@@ -9,7 +8,7 @@
 # containers.
 #
 # Usage:
-#   ./run-gpu-container.sh [--cache-dir DIR] [--image IMAGE] [--mount HOST:CONTAINER]... -- CMD...
+#   bash run-gpu-container.sh [--cache-dir DIR] [--image IMAGE] [--mount HOST:CONTAINER]... -- CMD...
 set -euo pipefail
 
 cache_dir="${BRAINTRACE_JAX_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/braintrace/jax-cache}"
@@ -31,7 +30,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $# -eq 0 ]]; then
-  echo "error: no command supplied" >&2
+  echo "Error: No command supplied; provide a command after --." >&2
   exit 2
 fi
 
