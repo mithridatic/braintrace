@@ -114,8 +114,12 @@ Run the bounded proof command in the image with:
     python /opt/braintrace/examples/pp_prop/21-braincell-arc.py proof --device gpu
 
 The proof is mechanism evidence, not a claim of ARC skill. Routine commands
-use the fixed practice-task order. Evaluation data is outside ordinary
-training, structure, and timing runs.
+use the fixed practice-task order. Run the ordinary 64-update schedule with:
+
+    python examples/pp_prop/21-braincell-arc.py run --device cpu --arc-root /datasets/arc/raw --output-dir var/example21-run
+
+Both commands load raw practice tasks directly. Evaluation data is outside
+ordinary training, structure, and timing runs.
 
 #### Example 21 image run
 

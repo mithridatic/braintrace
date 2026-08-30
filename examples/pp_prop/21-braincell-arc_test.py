@@ -50,13 +50,117 @@ def test_cli_smoke_writes_report(tmp_path):
     assert '"mode": "smoke"' in report.read_text(encoding="utf-8")
 
 
-def test_cli_proof_runs_the_eight_update_path(monkeypatch, tmp_path):
-    monkeypatch.setattr(fixture, "_smoke_report", lambda: {"passed": True})
-    result = fixture.main(["proof", "--device", "cpu", "--output-dir", str(tmp_path)])
+def test_cli_proof_dispatches_real_workflow(monkeypatch, tmp_path):
+    calls = []
+
+    def report(root, *, proof):
+        calls.append((root, proof))
+        return {"mode": "proof", "passed": True, "updates": 8}
+
+    monkeypatch.setattr(fixture, "_real_workflow_report", report)
+    result = fixture.main([
+        "proof", "--device", "cpu", "--arc-root", str(tmp_path),
+        "--output-dir", str(tmp_path),
+    ])
     assert result == 0
+    assert calls == [(tmp_path, True)]
     report = tmp_path / "example21-proof.json"
     assert report.exists()
     assert '"updates": 8' in report.read_text(encoding="utf-8")
+
+
+def test_cli_run_dispatches_fixed_real_workflow(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        fixture,
+        "_real_workflow_report",
+        lambda root, *, proof: calls.append((root, proof)) or {
+            "mode": "run", "passed": True, "updates": 64,
+        },
+    )
+    assert fixture.main(["run", "--arc-root", str(tmp_path)]) == 0
+    assert calls == [(tmp_path, False)]
+
+
+def test_proof_source_has_no_synthetic_schedule_probe():
+    source = _PATH.read_text(encoding="utf-8")
+    assert "_ScheduleProbe" not in source
+    for name in ("load_task", "BrainCellArcModel", "PPPropEpisodeTrainer", "run_fixed_schedule"):
+        assert name in source
+
+
+def test_real_proof_requires_data_model_updates_and_observed_changes(monkeypatch, tmp_path):
+    calls = []
+    episode = {
+        "task_id": "d631b094",
+        "events": jnp.zeros((705, fixture.N_INPUTS)),
+        "loss_mask": jnp.ones((705,), dtype=bool),
+        "target": [[0]],
+        "query_index": 0,
+    }
+    validation = {**episode, "task_id": "46f33fce"}
+
+    def load_episodes(root, task_ids):
+        calls.append((root, tuple(task_ids)))
+        return [validation] if task_ids == ("46f33fce",) else [episode]
+
+    class State:
+        def __init__(self, value):
+            self.value = value
+
+    class Model:
+        input_weight = State(jnp.zeros((1,)))
+        recurrent_weight = State(jnp.zeros((1,)))
+
+    model = Model()
+
+    class Trainer:
+        def __init__(self):
+            self.parameters = {"input": jnp.zeros((1,)), "recurrent": jnp.zeros((1,))}
+            self.updates = 0
+
+        def optimizer_is_finite(self):
+            return True
+
+    trainer = Trainer()
+    screen_count = {"value": 0}
+
+    def screen(_model, _learner, episodes):
+        screen_count["value"] += 1
+        value = 0 if screen_count["value"] != 2 else 1
+        return [{
+            "task_id": episodes[0]["task_id"],
+            "query_index": 0,
+            "prediction": [[value]],
+            "target": [[0]],
+            "exact": value == 0,
+        }]
+
+    def schedule(_trainer, episodes, *, proof):
+        assert proof is True
+        assert len(episodes) == fixture.PROOF_UPDATES
+        assert all(item["task_id"] == "d631b094" for item in episodes)
+        assert all("step_fn" in item for item in episodes)
+        model.recurrent_weight.value = jnp.ones((1,))
+        _trainer.updates = fixture.PROOF_UPDATES
+
+    monkeypatch.setattr(fixture, "_supervised_episodes", load_episodes)
+    monkeypatch.setattr(fixture, "BrainCellArcModel", lambda: model)
+    monkeypatch.setattr(fixture, "compile_pp_prop_model", lambda _model: object())
+    monkeypatch.setattr(fixture, "PPPropEpisodeTrainer", lambda *_args: trainer)
+    monkeypatch.setattr(fixture, "_screen_predictions", screen)
+    monkeypatch.setattr(fixture, "run_fixed_schedule", schedule)
+
+    report = fixture._real_workflow_report(tmp_path, proof=True)
+
+    assert report["passed"]
+    assert report["recurrent_weight_changed"]
+    assert report["prediction_changed"]
+    assert report["validation_parameter_state_unchanged"]
+    assert calls == [
+        (tmp_path, ("d631b094",)),
+        (tmp_path, ("46f33fce",)),
+    ]
 
 
 def test_cli_rejects_combined_modes():

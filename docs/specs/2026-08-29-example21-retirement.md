@@ -16,10 +16,21 @@ records MAY mention them, but active commands and imports SHALL NOT.
 The active entry point SHALL expose a real command line interface. `--help`
 SHALL print usage and exit without running a fixture. `--smoke` SHALL run the
 bounded BrainCell compatibility checks and report a successful smoke result.
-The `proof` subcommand SHALL run the bounded eight-update proof schedule and
-report its result. Both modes SHALL accept the documented `--device` and
-`--output-dir` options, while refusing unsupported device values and proof
-schedule changes before model execution.
+The `proof` subcommand SHALL load the raw practice task `d631b094`, encode its
+supervised query, construct `BrainCellArcModel` and `PPPropEpisodeTrainer`, and
+apply exactly eight real PP-Prop updates through `run_fixed_schedule`. It SHALL
+also run a forward-only validation episode for `46f33fce` after training, and
+report finite optimizer state, changed recurrent weights, changed direct
+prediction, and validation parameter isolation. A proof SHALL fail when the
+raw task files are unavailable, when a synthetic schedule or probe replaces
+the model/trainer, or when any required observation is false.
+
+The `run` subcommand SHALL load the eight declared practice training tasks and
+apply exactly 64 real PP-Prop updates in the fixed order. It SHALL report the
+direct strict result for the training and validation tasks without reading
+target values as event inputs. Both modes SHALL accept `--arc-root`,
+`--device`, and `--output-dir` options, while refusing unsupported device
+values and proof or run schedule changes before model execution.
 
 ## Verification
 
