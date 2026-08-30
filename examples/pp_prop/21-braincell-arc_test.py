@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
+import json
 from pathlib import Path
+import subprocess
+import sys
+import time
+from types import SimpleNamespace
 
 import braincell
 import brainstate
 import brainunit as u
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 
@@ -24,6 +31,334 @@ def test_braincell_pin_and_imports():
     assert braincell.__version__ == "0.1.0"
     assert fixture.brainstate.__name__ == "brainstate"
     assert fixture.braintrace.__name__ == "braintrace"
+
+
+def test_clip_gradient_accepts_mixed_direct_and_etp_keys():
+    gradient = {
+        "readout_weight": jnp.ones((2, 2)),
+        ("cell", "recurrent"): jnp.ones((2, 2)),
+    }
+
+    clipped, norm = fixture.clip_gradient(gradient)
+
+    assert float(norm) == pytest.approx(np.sqrt(8.0))
+    assert set(clipped) == set(gradient)
+    assert all(np.all(np.isfinite(value)) for value in clipped.values())
+
+
+def test_cli_help_is_a_real_command_path():
+    result = subprocess.run(
+        [sys.executable, str(_PATH), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "usage:" in result.stdout
+    assert "--smoke" in result.stdout
+    assert "proof" in result.stdout
+    assert "finite_difference" not in result.stdout
+
+
+def test_cli_smoke_writes_report(tmp_path):
+    result = fixture.main(["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)])
+    assert result == 0
+    report = tmp_path / "example21-smoke.json"
+    assert report.exists()
+    assert '"mode": "smoke"' in report.read_text(encoding="utf-8")
+
+
+def test_cli_proof_dispatches_real_workflow(monkeypatch, tmp_path):
+    calls = []
+
+    def report(root, *, proof):
+        calls.append((root, proof))
+        return {"mode": "proof", "passed": True, "updates": 8}
+
+    monkeypatch.setattr(fixture, "_real_workflow_report", report)
+    result = fixture.main([
+        "proof", "--device", "cpu", "--arc-root", str(tmp_path),
+        "--output-dir", str(tmp_path),
+    ])
+    assert result == 0
+    assert calls == [(tmp_path, True)]
+    report = tmp_path / "example21-proof.json"
+    assert report.exists()
+    assert '"updates": 8' in report.read_text(encoding="utf-8")
+
+
+def test_cli_proof_rejects_elapsed_deadline(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        fixture,
+        "_real_workflow_report",
+        lambda _root, *, proof: {"mode": "proof", "passed": True},
+    )
+    ticks = iter((10.0, 190.0))
+    monkeypatch.setattr(time, "monotonic", lambda: next(ticks))
+
+    result = fixture.main([
+        "proof", "--device", "cpu", "--arc-root", str(tmp_path),
+        "--output-dir", str(tmp_path),
+    ])
+
+    assert result == 1
+    report = json.loads((tmp_path / "example21-proof.json").read_text())
+    assert report["elapsed_seconds"] == pytest.approx(180.0)
+    assert report["deadline_seconds"] == fixture.PROOF_DEADLINE_SECONDS
+    assert report["deadline_exceeded"]
+    assert not report["passed"]
+
+
+def test_cli_run_dispatches_fixed_real_workflow(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        fixture,
+        "_real_workflow_report",
+        lambda root, *, proof: calls.append((root, proof)) or {
+            "mode": "run", "passed": True, "updates": 64,
+        },
+    )
+    assert fixture.main(["run", "--arc-root", str(tmp_path)]) == 0
+    assert calls == [(tmp_path, False)]
+
+
+def test_proof_source_has_no_synthetic_schedule_probe():
+    source = _PATH.read_text(encoding="utf-8")
+    assert "_ScheduleProbe" not in source
+    for name in ("load_task", "BrainCellArcModel", "PPPropEpisodeTrainer", "run_fixed_schedule"):
+        assert name in source
+
+
+def test_supervised_request_loss_changes_when_target_changes():
+    logits = jnp.zeros((fixture.N_READOUT,)).at[0].set(4.0)
+    target_shape = jnp.asarray([0, 0], dtype=jnp.int32)
+    target_rows = jnp.zeros((30,), dtype=jnp.int32)
+    valid_mask = jnp.zeros((30,), dtype=jnp.float32).at[0].set(1.0)
+
+    first = fixture._supervised_request_loss(
+        logits, target_shape, target_rows, valid_mask, jnp.asarray(1)
+    )
+    changed = fixture._supervised_request_loss(
+        logits, jnp.asarray([1, 0], dtype=jnp.int32), target_rows,
+        valid_mask, jnp.asarray(1)
+    )
+    assert float(first) != pytest.approx(float(changed))
+    assert fixture._supervised_request_loss(
+        logits, target_shape, target_rows, valid_mask, jnp.asarray(0)
+    ) == 0.0
+    row_logits = jnp.zeros((fixture.N_READOUT,)).at[60].set(4.0)
+    row_first = fixture._supervised_request_loss(
+        row_logits, target_shape, target_rows, valid_mask, jnp.asarray(2)
+    )
+    row_changed = fixture._supervised_request_loss(
+        row_logits, target_shape, target_rows.at[0].set(1), valid_mask, jnp.asarray(2)
+    )
+    assert float(row_first) != pytest.approx(float(row_changed))
+
+
+def test_supervised_episodes_separate_request_targets_from_event_inputs(monkeypatch):
+    target = np.asarray([[2, 3], [4, 5]], dtype=np.uint8)
+    task = SimpleNamespace(targets=[None, target])
+
+    monkeypatch.setattr(fixture, "load_task", lambda *_args: task)
+    monkeypatch.setattr(
+        fixture,
+        "encode_episode",
+        lambda _task, query_index: (
+            np.zeros((705, fixture.N_INPUTS), dtype=bool),
+            np.ones((705,), dtype=bool),
+        ),
+    )
+    episode = fixture._supervised_episodes("root", ("task",))[0]
+
+    assert int(jnp.sum(episode["loss_mask"])) == 31
+    assert int(episode["request_kind"][674]) == 1
+    assert jnp.all(episode["request_kind"][675:] == 2)
+    assert jnp.array_equal(episode["target_shape"][0], jnp.asarray([1, 1]))
+    assert jnp.array_equal(episode["target_rows"][675][:2], jnp.asarray([2, 3]))
+    assert jnp.array_equal(episode["target_rows"][676][:2], jnp.asarray([4, 5]))
+    assert jnp.array_equal(
+        episode["target_valid_mask"][675],
+        jnp.asarray([1, 1] + [0] * 28, dtype=jnp.float32),
+    )
+    assert jnp.all(episode["advance_mask"])
+
+
+def test_supervised_episodes_reject_an_unsupervised_task(monkeypatch):
+    monkeypatch.setattr(
+        fixture, "load_task", lambda *_args: SimpleNamespace(targets=[None])
+    )
+    with pytest.raises(ValueError, match="no supervised query"):
+        fixture._supervised_episodes("root", ("task",))
+
+
+def test_screen_predictions_uses_advance_mask_and_direct_decoder(monkeypatch):
+    class State:
+        value = jnp.zeros((1, fixture.N_READOUT))
+
+    class Model:
+        readout_weight = State()
+        readout_bias = State()
+        readout_bias.value = jnp.zeros((fixture.N_READOUT,))
+
+        def reset_episode(self, _learner):
+            pass
+
+    monkeypatch.setattr(
+        fixture,
+        "run_event_sequence",
+        lambda _model, events, advances: jnp.zeros((31, 1)),
+    )
+    records = fixture._screen_predictions(
+        Model(), object(), [{
+            "task_id": "task",
+            "query_index": 0,
+            "events": jnp.zeros((705, fixture.N_INPUTS)),
+            "loss_mask": jnp.ones((705,), dtype=bool),
+            "target": np.zeros((1, 1), dtype=np.uint8),
+        }],
+    )
+    assert records[0]["prediction"] == [[0]]
+    assert records[0]["exact"]
+
+
+def test_direct_readout_gradient_changes_when_target_changes():
+    features = jnp.ones((1, 4), dtype=jnp.float32)
+    weight = jnp.zeros((4, fixture.N_READOUT), dtype=jnp.float32)
+    bias = jnp.arange(fixture.N_READOUT, dtype=jnp.float32) / 10.0
+    common = {
+        "features": features,
+        "target_rows": jnp.zeros((1, 30), dtype=jnp.int32),
+        "target_valid_mask": jnp.zeros((1, 30), dtype=jnp.float32),
+        "request_kind": jnp.ones((1,), dtype=jnp.int32),
+        "request_mask": jnp.ones((1,), dtype=bool),
+        "readout_weight": weight,
+        "readout_bias": bias,
+    }
+    first = fixture._direct_readout_gradients(
+        target_shape=jnp.asarray([[0, 0]], dtype=jnp.int32), **common
+    )
+    changed = fixture._direct_readout_gradients(
+        target_shape=jnp.asarray([[1, 0]], dtype=jnp.int32), **common
+    )
+    assert not jnp.array_equal(first["readout_bias"], changed["readout_bias"])
+
+
+def test_real_proof_requires_data_model_updates_and_observed_changes(monkeypatch, tmp_path):
+    calls = []
+    episode = {
+        "task_id": "d631b094",
+        "events": jnp.zeros((705, fixture.N_INPUTS)),
+        "loss_mask": jnp.ones((705,), dtype=bool),
+        "request_kind": jnp.zeros((705,), dtype=jnp.int32),
+        "target_shape": jnp.zeros((705, 2), dtype=jnp.int32),
+        "target_rows": jnp.zeros((705, 30), dtype=jnp.int32),
+        "target_valid_mask": jnp.zeros((705, 30), dtype=jnp.float32),
+        "target": [[0]],
+        "query_index": 0,
+    }
+    validation = {**episode, "task_id": "46f33fce"}
+
+    def load_episodes(root, task_ids):
+        calls.append((root, tuple(task_ids)))
+        return [validation] if task_ids == ("46f33fce",) else [episode]
+
+    class State:
+        def __init__(self, value):
+            self.value = value
+
+    class Model:
+        input_weight = State(jnp.zeros((1,)))
+        recurrent_weight = State(jnp.zeros((1,)))
+        readout_weight = State(jnp.zeros((1, fixture.N_READOUT)))
+        readout_bias = State(jnp.zeros((fixture.N_READOUT,)))
+
+        def readout_features(self):
+            return jnp.ones((1,))
+
+    model = Model()
+
+    class Trainer:
+        def __init__(self):
+            self.parameters = {"input": jnp.zeros((1,)), "recurrent": jnp.zeros((1,))}
+            self.updates = 0
+
+        def optimizer_is_finite(self):
+            return True
+
+    trainer = Trainer()
+    screen_count = {"value": 0}
+
+    def screen(_model, _learner, episodes):
+        screen_count["value"] += 1
+        value = 0 if screen_count["value"] != 2 else 1
+        return [{
+            "task_id": episodes[0]["task_id"],
+            "query_index": 0,
+            "prediction": [[value]],
+            "target": [[0]],
+            "exact": value == 0,
+        }]
+
+    def schedule(_trainer, episodes, *, proof):
+        assert proof is True
+        assert len(episodes) == fixture.PROOF_UPDATES
+        assert all(item["task_id"] == "d631b094" for item in episodes)
+        assert all("step_fn" in item for item in episodes)
+        assert all("direct_grad_fn" in item for item in episodes)
+        assert all("request_kind" in item for item in episodes)
+        _, features = episodes[0]["step_fn"](
+            jnp.zeros((fixture.N_INPUTS,)),
+            jnp.asarray(True),
+            jnp.asarray(1),
+            jnp.asarray([0, 0]),
+            jnp.zeros((30,), dtype=jnp.int32),
+            jnp.zeros((30,), dtype=jnp.float32),
+        )
+        episodes[0]["direct_grad_fn"](
+            aux=features[None, :],
+            request_kind=jnp.ones((1,), dtype=jnp.int32),
+            target_shape=jnp.zeros((1, 2), dtype=jnp.int32),
+            target_rows=jnp.zeros((1, 30), dtype=jnp.int32),
+            target_valid_mask=jnp.zeros((1, 30), dtype=jnp.float32),
+            mask=jnp.ones((1,), dtype=bool),
+        )
+        model.recurrent_weight.value = jnp.ones((1,))
+        _trainer.updates = fixture.PROOF_UPDATES
+
+    monkeypatch.setattr(fixture, "_supervised_episodes", load_episodes)
+    monkeypatch.setattr(fixture, "BrainCellArcModel", lambda: model)
+    monkeypatch.setattr(fixture, "compile_pp_prop_model", lambda _model: (lambda _event: None))
+    monkeypatch.setattr(fixture, "PPPropEpisodeTrainer", lambda *_args: trainer)
+    monkeypatch.setattr(fixture, "_screen_predictions", screen)
+    monkeypatch.setattr(fixture, "run_fixed_schedule", schedule)
+
+    report = fixture._real_workflow_report(tmp_path, proof=True)
+
+    assert report["passed"]
+    assert report["recurrent_weight_changed"]
+    assert report["prediction_changed"]
+    assert report["validation_parameter_state_unchanged"]
+    assert calls == [
+        (tmp_path, ("d631b094",)),
+        (tmp_path, ("46f33fce",)),
+    ]
+
+
+def test_cli_rejects_combined_modes():
+    with pytest.raises(SystemExit) as error:
+        fixture.main(["proof", "--smoke"])
+    assert error.value.code == 2
+
+
+def test_cli_rejects_unavailable_device(monkeypatch):
+    def unavailable(_name):
+        raise RuntimeError("missing device")
+
+    monkeypatch.setattr(fixture.jax, "devices", unavailable)
+    with pytest.raises(SystemExit) as error:
+        fixture.main(["--smoke", "--device", "gpu"])
+    assert error.value.code == 2
 
 
 def test_hodgkin_huxley_constructor_values_and_reset_state():
@@ -336,6 +671,26 @@ def test_trainer_passes_request_mask_into_gradient_objective():
     assert trainer.optimizer_is_finite()
 
 
+def test_trainer_masks_false_advances_from_loss_and_gradient():
+    class Learner:
+        def etrace_grad(self, events, advances, *, step_fn, mask, **kwargs):
+            self.advances = advances
+            self.mask = mask
+            return {"input": jnp.ones((1,))}, jnp.ones((events.shape[0],))
+
+    learner = Learner()
+    trainer = fixture.PPPropEpisodeTrainer(learner, {"input": jnp.zeros((1,))})
+    trainer.update_episode(
+        jnp.zeros((2, 1)),
+        lambda event, advance: jnp.asarray(1.0),
+        loss_mask=jnp.ones((2,), dtype=bool),
+        advance_mask=jnp.asarray([True, False]),
+    )
+
+    assert jnp.array_equal(learner.advances, jnp.asarray([True, False]))
+    assert jnp.array_equal(learner.mask, jnp.asarray([1.0, 0.0]))
+
+
 def test_trainer_updates_direct_readout_parameters_and_shared_schedule():
     class Learner:
         def etrace_grad(self, events, *, step_fn, mask, **kwargs):
@@ -375,6 +730,9 @@ def test_schedule_rejects_validation_and_wrong_ordinary_task_order():
 
 def test_valid_schedule_does_not_forward_schedule_metadata():
     class Trainer:
+        def reset_episode(self):
+            pass
+
         def update_episode(self, **kwargs):
             return kwargs["events"]
 
@@ -386,6 +744,86 @@ def test_valid_schedule_does_not_forward_schedule_metadata():
     } for index in range(fixture.ORDINARY_UPDATES)]
     result = fixture.run_fixed_schedule(trainer, episodes)
     assert jnp.array_equal(result[-1], jnp.asarray([fixture.ORDINARY_UPDATES - 1]))
+
+
+def test_real_schedule_passes_advance_mask_resets_and_freezes_padding(monkeypatch):
+    target = np.asarray([[1]], dtype=np.uint8)
+    task = SimpleNamespace(targets=[target])
+    monkeypatch.setattr(fixture, "load_task", lambda *_args: task)
+    monkeypatch.setattr(
+        fixture,
+        "encode_episode",
+        lambda *_args: (
+            np.zeros((705, fixture.N_INPUTS), dtype=bool),
+            np.asarray([True, False] + [True] * 703),
+        ),
+    )
+    episode = fixture._supervised_episodes("root", ("d631b094",))[0]
+    accepted = set(inspect.signature(fixture.PPPropEpisodeTrainer.update_episode).parameters)
+    payload = {
+        key for key in episode
+        if key not in {"task_id", "target", "query_index"}
+    }
+    assert payload <= accepted
+
+    class Trainer:
+        def __init__(self):
+            self.reset_count = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
+            self.update_count = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
+            self.false_count = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
+            self.loss_total = brainstate.State(jnp.asarray(0.0))
+
+        def reset_episode(self):
+            self.reset_count.value += 1
+
+        def update_episode(
+            self,
+            events,
+            step_fn,
+            advance_mask,
+            loss_mask,
+            request_kind,
+            target_shape,
+            target_rows,
+            target_valid_mask,
+        ):
+            del loss_mask
+            self.update_count.value += 1
+            self.false_count.value += jnp.sum(~advance_mask)
+            losses = brainstate.transform.for_loop(
+                lambda event, advance, kind, shape, rows, valid: step_fn(
+                    event, advance, kind, shape, rows, valid
+                ),
+                events,
+                advance_mask,
+                request_kind,
+                target_shape,
+                target_rows,
+                target_valid_mask,
+            )
+            self.loss_total.value += jnp.sum(losses)
+            return losses
+
+    trainer = Trainer()
+    true_calls = brainstate.State(jnp.asarray(0, dtype=jnp.int32))
+
+    def step_fn(event, advance, *_args):
+        del event
+
+        def advancing():
+            true_calls.value += 1
+            return jnp.asarray(1.0)
+
+        return brainstate.transform.cond(advance, advancing, lambda: jnp.asarray(0.0))
+
+    episodes = [{**episode, "step_fn": step_fn}] * fixture.PROOF_UPDATES
+    fixture.run_fixed_schedule(trainer, episodes, proof=True)
+
+    assert int(trainer.reset_count.value) == fixture.PROOF_UPDATES
+    assert int(trainer.update_count.value) == fixture.PROOF_UPDATES
+    assert int(trainer.false_count.value) == fixture.PROOF_UPDATES
+    assert int(true_calls.value) == 704 * fixture.PROOF_UPDATES
+    assert float(trainer.loss_total.value) == pytest.approx(704 * fixture.PROOF_UPDATES)
 
 
 def test_matched_check_reports_selected_fallback_and_forward_validation_isolated():

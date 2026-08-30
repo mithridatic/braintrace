@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
+import json
+from pathlib import Path
+import sys
+import time
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import braincell
 import brainevent
 import brainstate
@@ -13,6 +22,12 @@ import numpy as np
 import optax
 
 import braintrace
+from examples.pp_prop.arc_contracts import (
+    decode_prediction,
+    encode_episode,
+    load_task,
+    query_exact,
+)
 from examples.pp_prop.dale_candidates import (
     deferred_biology_defaults,
     make_dale_weight_fn,
@@ -30,6 +45,7 @@ TRACE_DECAY = 0.95
 GRADIENT_CLIP_NORM = 1.0
 PROOF_UPDATES = 8
 ORDINARY_UPDATES = 64
+PROOF_DEADLINE_SECONDS = 180.0
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
 TRAINING_TASK_IDS = (
     "d631b094", "dc433765", "b782dc8a", "d06dbe63",
@@ -87,9 +103,21 @@ def bounded_population_current(input_drive, recurrent_drive):
 def clip_gradient(gradient, max_norm=GRADIENT_CLIP_NORM):
     """Clip a pytree gradient by its global Euclidean norm."""
 
-    leaves = jax.tree_util.tree_leaves(gradient)
+    if isinstance(gradient, dict):
+        leaves = [
+            leaf
+            for value in gradient.values()
+            for leaf in jax.tree_util.tree_leaves(value)
+        ]
+    else:
+        leaves = jax.tree_util.tree_leaves(gradient)
     norm = jnp.sqrt(sum(jnp.sum(jnp.square(leaf)) for leaf in leaves))
     scale = jnp.minimum(1.0, max_norm / jnp.maximum(norm, jnp.finfo(jnp.float32).tiny))
+    if isinstance(gradient, dict):
+        return {
+            key: jax.tree_util.tree_map(lambda leaf: leaf * scale, value)
+            for key, value in gradient.items()
+        }, norm
     return jax.tree_util.tree_map(lambda leaf: leaf * scale, gradient), norm
 
 
@@ -99,6 +127,62 @@ def accumulate_masked_loss(losses, valid_rows):
     values = jnp.asarray(losses)
     mask = jnp.asarray(valid_rows, dtype=values.dtype)
     return jnp.sum(values * mask)
+
+
+def _supervised_request_loss(
+    logits, target_shape, target_rows, target_valid_mask, request_kind
+):
+    """Return the scalar loss for one shape or row request."""
+
+    logits = jnp.asarray(logits, dtype=jnp.float32)
+    target_shape = jnp.asarray(target_shape, dtype=jnp.int32)
+    target_rows = jnp.asarray(target_rows, dtype=jnp.int32)
+    target_valid_mask = jnp.asarray(target_valid_mask, dtype=jnp.float32)
+    shape_logits = jnp.stack((logits[:30], logits[30:60]))
+    shape_loss = jnp.sum(
+        jax.nn.logsumexp(shape_logits, axis=-1)
+        - jnp.take_along_axis(shape_logits, target_shape[:, None], axis=1).squeeze(1)
+    )
+    row_logits = logits[60:].reshape((30, 10))
+    row_loss = jnp.sum(
+        (jax.nn.logsumexp(row_logits, axis=-1)
+         - jnp.take_along_axis(row_logits, target_rows[:, None], axis=1).squeeze(1))
+        * target_valid_mask
+    ) / jnp.maximum(jnp.sum(target_valid_mask), 1.0)
+    return jnp.where(
+        request_kind == 1,
+        shape_loss,
+        jnp.where(request_kind == 2, row_loss, jnp.asarray(0.0)),
+    )
+
+
+def _direct_readout_gradients(
+    features,
+    target_shape,
+    target_rows,
+    target_valid_mask,
+    request_kind,
+    request_mask,
+    readout_weight,
+    readout_bias,
+):
+    """Differentiate the request-only supervised readout objective."""
+
+    def objective(weight, bias):
+        logits = features @ weight + bias
+        losses = jax.vmap(_supervised_request_loss)(
+            logits,
+            target_shape,
+            target_rows,
+            target_valid_mask,
+            request_kind,
+        )
+        return jnp.sum(losses * jnp.asarray(request_mask, dtype=losses.dtype))
+
+    weight_grad, bias_grad = jax.grad(objective, argnums=(0, 1))(
+        readout_weight, readout_bias
+    )
+    return {"readout_weight": weight_grad, "readout_bias": bias_grad}
 
 
 class AdamState:
@@ -348,8 +432,15 @@ class BrainCellArcModel(brainstate.nn.Module):
     def readout(self):
         """Return direct voltage readout logits."""
 
-        feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
-        return feature @ self.readout_weight.value + self.readout_bias.value
+        return (
+            self.readout_features() @ self.readout_weight.value
+            + self.readout_bias.value
+        )
+
+    def readout_features(self):
+        """Return normalized membrane-voltage features for the readout."""
+
+        return jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
 
 
 def integration_substep_events(event, substeps):
@@ -571,9 +662,13 @@ class PPPropEpisodeTrainer:
     def updates(self, value):
         self._updates_state.value = value
 
-    def reset_episode(self, model):
+    def reset_episode(self, model=None):
         """Reset model and eligibility state before the next query episode."""
 
+        if model is None:
+            model = getattr(self.learner, "model4compile", None)
+        if model is None:
+            raise ValueError("episode reset requires the compiled model")
         model.reset_episode(self.learner)
 
     def _group_gradients(self, gradients):
@@ -632,24 +727,62 @@ class PPPropEpisodeTrainer:
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
     def update_episode(
-        self, events, step_fn, valid_rows=None, loss_mask=None, direct_grad_fn=None
+        self,
+        events,
+        step_fn,
+        valid_rows=None,
+        loss_mask=None,
+        direct_grad_fn=None,
+        request_kind=None,
+        target_shape=None,
+        target_rows=None,
+        target_valid_mask=None,
+        advance_mask=None,
     ):
         """Apply one update from one masked PP-Prop query episode."""
 
         if loss_mask is not None and valid_rows is not None:
             raise ValueError("provide only one episode loss mask")
         mask = loss_mask if loss_mask is not None else valid_rows
-        gradients, losses = self.learner.etrace_grad(
-            events,
+        if advance_mask is not None:
+            advance_mask = jnp.asarray(advance_mask, dtype=bool)
+            if advance_mask.shape != (events.shape[0],):
+                raise ValueError("advance_mask must have one boolean per event")
+            if mask is None:
+                mask = jnp.ones((events.shape[0],), dtype=jnp.float32)
+            mask = mask * advance_mask
+        sequences = [events]
+        if advance_mask is not None:
+            sequences.append(advance_mask)
+        if request_kind is not None:
+            sequences.extend((request_kind, target_shape, target_rows, target_valid_mask))
+        result = self.learner.etrace_grad(
+            *sequences,
             step_fn=step_fn,
             mask=mask,
             reduction="sum",
             loss_output="masked",
+            has_aux=direct_grad_fn is not None,
             return_value=True,
         )
+        if direct_grad_fn is None:
+            gradients, losses = result
+            aux = None
+        elif len(result) == 3:
+            gradients, losses, aux = result
+        else:
+            gradients, losses = result
+            aux = None
         if direct_grad_fn is not None:
             direct_gradients = direct_grad_fn(
-                events=events, step_fn=step_fn, mask=mask
+                events=events,
+                step_fn=step_fn,
+                mask=mask,
+                aux=aux,
+                request_kind=request_kind,
+                target_shape=target_shape,
+                target_rows=target_rows,
+                target_valid_mask=target_valid_mask,
             )
             gradients = {**gradients, **direct_gradients}
         losses = jnp.sum(losses)
@@ -736,22 +869,232 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
         for episode, task_id in zip(episodes, task_ids)
     ):
         raise ValueError("validation episodes are forward-only")
+    static_payload = {
+        key: episodes[0][key]
+        for key in ("step_fn", "direct_grad_fn")
+        if key in episodes[0]
+    }
     payloads = [{
             key: value for key, value in episode.items()
-            if key not in {"task_id", "validation"}
+            if key not in {"task_id", "validation", "target", "query_index", "step_fn", "direct_grad_fn"}
     } for episode in episodes]
     stacked = jax.tree_util.tree_map(
         lambda *values: jnp.stack(values), *payloads
     )
 
     def update(episode):
-        payload = episode
+        trainer.reset_episode()
+        payload = {**episode, **static_payload}
         return trainer.update_episode(**payload)
 
     return brainstate.transform.for_loop(update, stacked)
+
+
+def _supervised_episodes(data_root, task_ids):
+    """Load one supervised direct ARC episode for each declared task."""
+
+    episodes = []
+    for task_id in task_ids:
+        task = load_task(data_root, task_id, "practice")
+        query_index = next(
+            (index for index, target in enumerate(task.targets) if target is not None),
+            None,
+        )
+        if query_index is None:
+            raise ValueError(f"task {task_id} has no supervised query")
+        events, advances = encode_episode(task, query_index)
+        target = np.asarray(task.targets[query_index], dtype=np.int32)
+        request_mask = np.zeros((events.shape[0],), dtype=bool)
+        request_mask[-31:] = True
+        request_kind = np.zeros((events.shape[0],), dtype=np.int32)
+        request_kind[-31] = 1
+        request_kind[-30:] = 2
+        target_shape = np.broadcast_to(
+            np.asarray(target.shape, dtype=np.int32) - 1,
+            (events.shape[0], 2),
+        ).copy()
+        padded_rows = np.zeros((30, 30), dtype=np.int32)
+        padded_rows[:target.shape[0], :target.shape[1]] = target
+        target_rows = np.zeros((events.shape[0], 30), dtype=np.int32)
+        target_rows[-30:] = padded_rows
+        target_valid_mask = np.zeros((events.shape[0], 30), dtype=np.float32)
+        request_start = events.shape[0] - 30
+        target_valid_mask[request_start:request_start + target.shape[0], :target.shape[1]] = 1.0
+        episodes.append({
+            "task_id": task_id,
+            "events": jnp.asarray(events, dtype=jnp.float32),
+            "advance_mask": jnp.asarray(advances, dtype=bool),
+            "loss_mask": jnp.asarray(request_mask, dtype=bool),
+            "request_kind": jnp.asarray(request_kind, dtype=jnp.int32),
+            "target_shape": jnp.asarray(target_shape, dtype=jnp.int32),
+            "target_rows": jnp.asarray(target_rows, dtype=jnp.int32),
+            "target_valid_mask": jnp.asarray(target_valid_mask, dtype=jnp.float32),
+            "target": target,
+            "query_index": query_index,
+        })
+    return episodes
+
+
+def _screen_predictions(model, learner, episodes):
+    """Run direct request decoding for loaded ARC episodes."""
+
+    event_values = jnp.stack([episode["events"] for episode in episodes])
+    advance_values = jnp.stack([
+        episode.get("advance_mask", episode["loss_mask"]) for episode in episodes
+    ])
+
+    def evaluate(events, advances):
+        model.reset_episode(learner)
+        voltages = run_event_sequence(model, events, advances)
+        features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+        return features @ model.readout_weight.value + model.readout_bias.value
+
+    logits = brainstate.transform.for_loop(evaluate, event_values, advance_values)
+    records = []
+    for episode, output in zip(episodes, np.asarray(logits)):
+        prediction = decode_prediction(np.asarray(output))
+        target = episode["target"]
+        records.append({
+            "task_id": episode["task_id"],
+            "query_index": episode["query_index"],
+            "prediction": prediction.tolist(),
+            "target": np.asarray(target).tolist(),
+            "exact": query_exact(prediction, target),
+        })
+    return records
+
+
+def _real_workflow_report(data_root, *, proof):
+    """Execute a real-data BrainCell PP-Prop proof or ordinary run."""
+
+    if data_root is None:
+        raise ValueError("real-data proof and run require --arc-root")
+    task_ids = ("d631b094",) if proof else TRAINING_TASK_IDS
+    validation_task_ids = ("46f33fce",) if proof else VALIDATION_TASK_IDS
+    training_episodes = _supervised_episodes(data_root, task_ids)
+    validation_episodes = _supervised_episodes(data_root, validation_task_ids)
+    model = BrainCellArcModel()
+    learner = compile_pp_prop_model(model)
+    trainer = PPPropEpisodeTrainer(
+        learner,
+        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+    )
+    if proof:
+        scheduled = [training_episodes[0]] * PROOF_UPDATES
+    else:
+        scheduled = [training_episodes[index % len(training_episodes)] for index in range(ORDINARY_UPDATES)]
+    def step_fn(
+        event, advance, request_kind, target_shape, target_rows, target_valid_mask
+    ):
+        def advancing():
+            learner(event)
+            features = model.readout_features()
+            logits = features @ model.readout_weight.value + model.readout_bias.value
+            loss = _supervised_request_loss(
+                logits, target_shape, target_rows, target_valid_mask, request_kind
+            )
+            return loss, features
+
+        return brainstate.transform.cond(
+            advance,
+            advancing,
+            lambda: (
+                jnp.asarray(0.0),
+                jnp.zeros((model.readout_weight.value.shape[0],), dtype=jnp.float32),
+            ),
+        )
+
+    def direct_grad_fn(
+        *,
+        aux,
+        request_kind,
+        target_shape,
+        target_rows,
+        target_valid_mask,
+        mask,
+        **_,
+    ):
+        return _direct_readout_gradients(
+            aux,
+            target_shape,
+            target_rows,
+            target_valid_mask,
+            request_kind,
+            mask,
+            model.readout_weight.value,
+            model.readout_bias.value,
+        )
+
+    scheduled = [{
+        **episode,
+        "step_fn": step_fn,
+        "direct_grad_fn": direct_grad_fn,
+    } for episode in scheduled]
+
+    screened_training = training_episodes[:1] if proof else training_episodes
+    before = _screen_predictions(model, learner, screened_training)
+    recurrent_before = np.asarray(model.recurrent_weight.value).copy()
+    run_fixed_schedule(trainer, scheduled, proof=proof)
+    recurrent_after = np.asarray(model.recurrent_weight.value)
+    after = _screen_predictions(model, learner, screened_training)
+
+    parameter_snapshot = jax.tree_util.tree_map(jnp.array, trainer.parameters)
+    validation = _screen_predictions(model, learner, validation_episodes)
+    validation_isolated = bool(jax.tree_util.tree_all(jax.tree_util.tree_map(
+        jnp.array_equal, parameter_snapshot, trainer.parameters
+    )))
+    prediction_changed = any(
+        not np.array_equal(old["prediction"], new["prediction"])
+        for old, new in zip(before, after)
+    )
+    recurrent_changed = not np.array_equal(recurrent_before, recurrent_after)
+    optimizer_finite = trainer.optimizer_is_finite()
+    training_strict_count = sum(record["exact"] for record in after)
+    validation_strict_count = sum(record["exact"] for record in validation)
+    passed = bool(
+        trainer.updates == (PROOF_UPDATES if proof else ORDINARY_UPDATES)
+        and optimizer_finite
+        and recurrent_changed
+        and prediction_changed
+        and validation_isolated
+    ) if proof else bool(
+        trainer.updates == ORDINARY_UPDATES
+        and optimizer_finite
+        and validation_isolated
+    )
+    return {
+        "mode": "proof" if proof else "run",
+        "passed": passed,
+        "training_task_ids": list(task_ids),
+        "validation_task_ids": list(validation_task_ids),
+        "updates": int(trainer.updates),
+        "optimizer_finite": optimizer_finite,
+        "recurrent_weight_changed": recurrent_changed,
+        "prediction_changed": prediction_changed,
+        "validation_parameter_state_unchanged": validation_isolated,
+        "training_strict_pass_at_1_count": int(training_strict_count),
+        "validation_strict_pass_at_1_count": int(validation_strict_count),
+        "training_before": before,
+        "training_after": after,
+        "validation": validation,
+    }
+
+
+def _apply_proof_deadline(report, started_at):
+    """Add the proof runtime gate to a completed workflow report."""
+
+    elapsed_seconds = time.monotonic() - started_at
+    deadline_exceeded = elapsed_seconds >= PROOF_DEADLINE_SECONDS
+    return {
+        **report,
+        "elapsed_seconds": elapsed_seconds,
+        "deadline_seconds": PROOF_DEADLINE_SECONDS,
+        "deadline_exceeded": deadline_exceeded,
+        "passed": bool(report.get("passed", False) and not deadline_exceeded),
+    }
+
+
 import importlib.util
-import sys
-from pathlib import Path
 
 _ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
     "example21_arc_contracts", Path(__file__).with_name("arc_contracts.py")
@@ -1069,12 +1412,115 @@ def direct_readout_gradient_fixture() -> dict[str, bool]:
     }
 
 
-def main() -> None:
-    """Run the local compatibility checks."""
+def _parser():
+    parser = argparse.ArgumentParser(
+        description="Run the BrainCell Example 21 compatibility checks."
+    )
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=("proof", "run"),
+        help="run the real-data proof or fixed ordinary schedule",
+    )
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="run the bounded CPU/GPU compatibility smoke checks",
+    )
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "gpu"),
+        default="cpu",
+        help="device for model execution (default: cpu)",
+    )
+    parser.add_argument(
+        "--arc-root",
+        type=Path,
+        default=Path("/datasets/arc/raw"),
+        help="raw ARC root for proof and run (default: /datasets/arc/raw)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="write the JSON report into this directory",
+    )
+    return parser
 
-    print(finite_difference_fixture())
-    print(spike_path_fixture())
+
+def _smoke_report():
+    finite_difference = finite_difference_fixture()
+    spike_path = spike_path_fixture()
+    readout = direct_readout_gradient_fixture()
+    passed = (
+        finite_difference["absolute_error"] <= finite_difference["tolerance"]
+        and all(spike_path.values())
+        and all(readout.values())
+    )
+    return {
+        "mode": "smoke",
+        "passed": bool(passed),
+        "finite_difference": finite_difference,
+        "spike_path": spike_path,
+        "direct_readout": readout,
+    }
+
+
+def _write_report(output_dir, report):
+    if output_dir is None:
+        return
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / f"example21-{report['mode']}.json").write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _run_command(args):
+    if args.command is not None and args.smoke:
+        raise ValueError("choose one of proof, run, or --smoke")
+    if args.command is None and not args.smoke:
+        _parser().print_help()
+        return 0
+    try:
+        device = jax.devices(args.device)[0]
+    except RuntimeError as error:
+        raise ValueError(f"requested device {args.device!r} is unavailable") from error
+    started_at = time.monotonic() if args.command == "proof" else None
+    with jax.default_device(device):
+        if args.command == "proof":
+            report = _real_workflow_report(args.arc_root, proof=True)
+        elif args.command == "run":
+            report = _real_workflow_report(args.arc_root, proof=False)
+        else:
+            report = _smoke_report()
+    if started_at is not None:
+        report = _apply_proof_deadline(report, started_at)
+    _write_report(args.output_dir, report)
+    print(json.dumps(report, sort_keys=True))
+    return 0 if report["passed"] else 1
+
+
+def main(argv=None) -> int:
+    """Run the BrainCell Example 21 command line interface.
+
+    Parameters
+    ----------
+    argv : sequence of str, optional
+        Arguments to parse. ``None`` reads the process command line.
+
+    Returns
+    -------
+    int
+        Zero when the selected check passes.
+    """
+
+    args = _parser().parse_args(argv)
+    try:
+        return _run_command(args)
+    except ValueError as error:
+        _parser().error(str(error))
+        return 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
