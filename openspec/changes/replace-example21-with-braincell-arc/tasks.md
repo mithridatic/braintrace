@@ -203,14 +203,14 @@
 
 ## 11. Final validation
 
-- [ ] 11.1 Run the focused Example 21 tests, coverage gate, three-minute proof,
+- [x] 11.1 Run the focused Example 21 tests, coverage gate, three-minute proof,
   warmed decoder gate, and one five-minute ordinary run; verify each literal
   limit and report the direct strict count before any diagnostic observation.
-- [ ] 11.2 Run `openspec validate replace-example21-with-braincell-arc --type
+- [x] 11.2 Run `openspec validate replace-example21-with-braincell-arc --type
   change --strict --no-interactive`, `openspec validate --all --strict
   --no-interactive`, and `git diff --check`; verify that all commands pass on the
   worktree branch.
-- [ ] 11.3 Review every new public callable and user-facing message; verify
+- [x] 11.3 Review every new public callable and user-facing message; verify
   NumPy-style docstrings, ASD-STE100 Simplified Technical English, sentence-case
   concise errors with corrective actions, descriptive names, no unnecessary
   code comments, no unrelated worktree changes, one active Example 21
