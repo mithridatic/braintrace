@@ -184,7 +184,7 @@ def test_pruning_masks_exact_ceiling_and_validation_guard():
     scores = np.arange(21.0)
     mask = structural.pruning_mask(scores, validation_strict=(True, False))
     assert np.flatnonzero(~mask).tolist() == [0, 1]
-    with pytest.raises(ValueError, match="validation"):
+    with pytest.raises(ValueError, match="(?i)validation"):
         structural.pruning_mask(scores, validation_strict=(False, False))
     with pytest.raises(ValueError, match="positive"):
         structural.mutation_count(0)
@@ -196,9 +196,9 @@ def test_neuron_pruning_is_fail_closed_and_requires_one_score_per_neuron():
         np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=float),
         np.ones((21, 1)), np.zeros(21), ((),) * 21,
     )
-    with pytest.raises(ValueError, match="validation"):
+    with pytest.raises(ValueError, match="(?i)validation"):
         structural.prune_neurons(topology, np.arange(21.0), (False, False))
-    with pytest.raises(ValueError, match="one score"):
+    with pytest.raises(ValueError, match="(?i)one score"):
         structural.prune_neurons(topology, np.arange(20.0), (True, False))
     mask = structural.prune_neurons(topology, np.arange(21.0), (True, False))
     assert np.flatnonzero(~mask).tolist() == [0, 1]
@@ -347,11 +347,11 @@ def test_recurrent_pruning_uses_exact_ceiling_and_preserves_other_arrays():
     assert len(pruned.recurrent_value) == 19
     np.testing.assert_array_equal(pruned.input_value, topology.input_value)
     assert structural.prune_neurons(topology, [3.0, 2.0, 1.0], (True,)).tolist() == [True, True, False]
-    with pytest.raises(ValueError, match="validation"):
+    with pytest.raises(ValueError, match="(?i)validation"):
         structural.prune_neurons(topology, [1.0, 2.0, 3.0], (False,))
     with pytest.raises(ValueError, match="per neuron"):
         structural.prune_neurons(topology, [1.0], (True,))
-    with pytest.raises(ValueError, match="validation"):
+    with pytest.raises(ValueError, match="(?i)validation"):
         structural.prune_recurrent(topology, np.arange(21.0), (False,))
     with pytest.raises(ValueError, match="per recurrent"):
         structural.prune_recurrent(topology, np.arange(2.0), (True,))
@@ -547,7 +547,7 @@ def test_plot_topology_rejects_invalid_checkpoint_and_topology_shapes(tmp_path):
                 topology.mechanisms, topology.owner_codes, np.zeros(2, dtype=np.int32),
             ), tmp_path / "bad.png"
         )
-    with pytest.raises(ValueError, match="owner labels"):
+    with pytest.raises(ValueError, match="(?i)owner labels"):
         structural.plot_topology(topology, tmp_path / "bad.png")
 
 

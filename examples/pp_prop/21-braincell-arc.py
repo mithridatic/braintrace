@@ -277,7 +277,7 @@ def update_schedule(steps, proof=False):
 
     expected = PROOF_UPDATES if proof else ORDINARY_UPDATES
     if steps != expected:
-        raise ValueError(f"expected exactly {expected} updates, got {steps}")
+        raise ValueError(f"Expected exactly {expected} updates, got {steps}")
     return tuple(range(expected))
 
 
@@ -447,7 +447,7 @@ def integration_substep_events(event, substeps):
     """Return one external event followed by zero half-step events."""
 
     if substeps < 1:
-        raise ValueError("substeps must be positive")
+        raise ValueError("Substeps must be positive")
     event = jnp.asarray(event)
     return jnp.concatenate(
         (event[None, :], jnp.zeros((substeps - 1,) + event.shape, dtype=event.dtype))
@@ -486,9 +486,9 @@ def run_event_sequence(
         advances = jnp.ones((events.shape[0],), dtype=bool)
     advances = jnp.asarray(advances, dtype=bool)
     if events.ndim != 2 or events.shape[1] != N_INPUTS:
-        raise ValueError(f"events must have shape (time, {N_INPUTS})")
+        raise ValueError(f"Events must have shape (time, {N_INPUTS})")
     if advances.shape != (events.shape[0],):
-        raise ValueError("advances must have one boolean per event")
+        raise ValueError("Advances must have one boolean per event")
 
     def drive(xs, mask):
         if not return_spikes:
@@ -634,32 +634,74 @@ class PPPropEpisodeTrainer:
 
     @property
     def parameters(self):
-        """Return optimizer-managed parameter values."""
+        """Return the optimizer-managed parameter values.
+
+        Returns
+        -------
+        mapping
+            Parameter names mapped to their current array values.
+        """
 
         return self._parameters_state.value
 
     @parameters.setter
     def parameters(self, value):
+        """Replace the optimizer-managed parameter values.
+
+        Parameters
+        ----------
+        value : mapping
+            Parameter names mapped to replacement array values.
+        """
+
         self._parameters_state.value = value
 
     @property
     def muon_groups(self):
-        """Return optimizer state carried by BrainState transforms."""
+        """Return optimizer state carried by BrainState transforms.
+
+        Returns
+        -------
+        mapping
+            Parameter names mapped to Muon optimizer state.
+        """
 
         return self._muon_groups_state.value
 
     @muon_groups.setter
     def muon_groups(self, value):
+        """Replace the BrainState transform optimizer state.
+
+        Parameters
+        ----------
+        value : mapping
+            Parameter names mapped to replacement optimizer state.
+        """
+
         self._muon_groups_state.value = value
 
     @property
     def updates(self):
-        """Return the transformed optimizer update count."""
+        """Return the transformed optimizer update count.
+
+        Returns
+        -------
+        int
+            Number of completed episode updates.
+        """
 
         return self._updates_state.value
 
     @updates.setter
     def updates(self, value):
+        """Set the transformed optimizer update count.
+
+        Parameters
+        ----------
+        value : int
+            Replacement number of completed episode updates.
+        """
+
         self._updates_state.value = value
 
     def reset_episode(self, model=None):
@@ -668,7 +710,7 @@ class PPPropEpisodeTrainer:
         if model is None:
             model = getattr(self.learner, "model4compile", None)
         if model is None:
-            raise ValueError("episode reset requires the compiled model")
+            raise ValueError("Episode reset requires the compiled model")
         model.reset_episode(self.learner)
 
     def _group_gradients(self, gradients):
@@ -742,12 +784,12 @@ class PPPropEpisodeTrainer:
         """Apply one update from one masked PP-Prop query episode."""
 
         if loss_mask is not None and valid_rows is not None:
-            raise ValueError("provide only one episode loss mask")
+            raise ValueError("Provide only one episode loss mask")
         mask = loss_mask if loss_mask is not None else valid_rows
         if advance_mask is not None:
             advance_mask = jnp.asarray(advance_mask, dtype=bool)
             if advance_mask.shape != (events.shape[0],):
-                raise ValueError("advance_mask must have one boolean per event")
+                raise ValueError("Advance_mask must have one boolean per event")
             if mask is None:
                 mask = jnp.ones((events.shape[0],), dtype=jnp.float32)
             mask = mask * advance_mask
@@ -813,13 +855,13 @@ class PPPropEpisodeTrainer:
         if not bool(jax.tree_util.tree_all(
             jax.tree_util.tree_map(jnp.array_equal, before, after)
         )):
-            raise RuntimeError("forward validation changed trainable parameters")
+            raise RuntimeError("Forward validation changed trainable parameters")
         current_states = self._non_parameter_state_values()
         if len(state_values) != len(current_states) or any(
             not bool(jnp.array_equal(initial, current))
             for initial, current in zip(state_values, current_states)
         ):
-            raise RuntimeError("forward validation changed biological or eligibility state")
+            raise RuntimeError("Forward validation changed biological or eligibility state")
         return result
 
     def _non_parameter_state_values(self):
@@ -853,22 +895,22 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
     update_schedule(len(episodes), proof=proof)
     task_ids = [episode.get("task_id") for episode in episodes]
     if any(task_id is None for task_id in task_ids):
-        raise ValueError("every counted episode must declare task_id")
+        raise ValueError("Every counted episode must declare task_id")
     if proof:
         if any(task_id != "d631b094" for task_id in task_ids):
-            raise ValueError("proof schedule accepts only d631b094")
+            raise ValueError("Proof schedule accepts only d631b094")
     else:
         expected = tuple(
             TRAINING_TASK_IDS[index % len(TRAINING_TASK_IDS)]
             for index in range(len(episodes))
         )
         if tuple(task_ids) != expected:
-            raise ValueError("ordinary schedule task order is not fixed")
+            raise ValueError("Ordinary schedule task order is not fixed")
     if any(
         episode.get("validation", False) or task_id in VALIDATION_TASK_IDS
         for episode, task_id in zip(episodes, task_ids)
     ):
-        raise ValueError("validation episodes are forward-only")
+        raise ValueError("Validation episodes are forward-only")
     static_payload = {
         key: episodes[0][key]
         for key in ("step_fn", "direct_grad_fn")
@@ -901,7 +943,7 @@ def _supervised_episodes(data_root, task_ids):
             None,
         )
         if query_index is None:
-            raise ValueError(f"task {task_id} has no supervised query")
+            raise ValueError(f"Task {task_id} has no supervised query")
         events, advances = encode_episode(task, query_index)
         target = np.asarray(task.targets[query_index], dtype=np.int32)
         request_mask = np.zeros((events.shape[0],), dtype=bool)
@@ -968,7 +1010,7 @@ def _real_workflow_report(data_root, *, proof):
     """Execute a real-data BrainCell PP-Prop proof or ordinary run."""
 
     if data_root is None:
-        raise ValueError("real-data proof and run require --arc-root")
+        raise ValueError("Real-data proof and run require --arc-root")
     task_ids = ("d631b094",) if proof else TRAINING_TASK_IDS
     validation_task_ids = ("46f33fce",) if proof else VALIDATION_TASK_IDS
     training_episodes = _supervised_episodes(data_root, task_ids)
@@ -1216,6 +1258,19 @@ class PPPropRelationFixture(brainstate.nn.Module):
         self._recurrent_csr = recurrent_csr()
 
     def update(self, x):
+        """Advance the relation fixture by one input event.
+
+        Parameters
+        ----------
+        x : array-like
+            Input event with one value for each fixture feature.
+
+        Returns
+        -------
+        brainunit.Quantity
+            Updated membrane voltage in millivolts.
+        """
+
         hidden = braintrace.sparse_matmul(
             x,
             self.input_weight.value,
@@ -1477,14 +1532,14 @@ def _write_report(output_dir, report):
 
 def _run_command(args):
     if args.command is not None and args.smoke:
-        raise ValueError("choose one of proof, run, or --smoke")
+        raise ValueError("Choose one of proof, run, or --smoke")
     if args.command is None and not args.smoke:
         _parser().print_help()
         return 0
     try:
         device = jax.devices(args.device)[0]
     except RuntimeError as error:
-        raise ValueError(f"requested device {args.device!r} is unavailable") from error
+        raise ValueError(f"Requested device {args.device!r} is unavailable") from error
     started_at = time.monotonic() if args.command == "proof" else None
     with jax.default_device(device):
         if args.command == "proof":
