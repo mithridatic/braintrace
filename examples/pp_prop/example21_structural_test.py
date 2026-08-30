@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import pickle
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -52,30 +53,106 @@ def test_public_apis_have_numpy_contract_sections(path):
     missing = []
     for name, node in _public_api_nodes(path):
         doc = ast.get_docstring(node, clean=False) or ""
-        sections = {line.strip() for line in doc.splitlines() if line.strip() in required_sections}
-        if not sections:
-            missing.append(name)
+        lines = [line.strip() for line in doc.splitlines()]
+        sections = {line for line in lines if line in required_sections}
+        if not doc.strip():
+            missing.append(f"{name}: summary")
+            continue
+        if isinstance(node, ast.ClassDef):
+            if not sections & {"Parameters", "Attributes"}:
+                missing.append(f"{name}: Parameters or Attributes")
+            continue
+        arguments = [
+            argument.arg
+            for argument in (
+                *node.args.posonlyargs,
+                *node.args.args,
+                *node.args.kwonlyargs,
+            )
+            if argument.arg not in {"self", "cls"}
+        ]
+        if node.args.vararg:
+            arguments.append(node.args.vararg.arg)
+        if node.args.kwarg:
+            arguments.append(node.args.kwarg.arg)
+        parameter_names = set()
+        section = None
+        for line in lines:
+            if line in required_sections:
+                section = line
+            elif section == "Parameters" and ":" in line:
+                parameter_names.update(
+                    name.strip().lstrip("*")
+                    for name in line.split(":", 1)[0].split(",")
+                )
+        if arguments and "Parameters" not in sections:
+            missing.append(f"{name}: Parameters")
+        missing.extend(
+            f"{name}: parameter {argument}"
+            for argument in arguments
+            if "Parameters" in sections and argument not in parameter_names
+        )
+        returns_value = any(
+            isinstance(statement, ast.Return) and statement.value is not None
+            for statement in node.body
+        )
+        yields_value = any(
+            isinstance(statement, (ast.Yield, ast.YieldFrom))
+            for statement in ast.walk(node)
+        )
+        if returns_value and "Returns" not in sections:
+            missing.append(f"{name}: Returns")
+        if yields_value and "Yields" not in sections:
+            missing.append(f"{name}: Yields")
     assert not missing
 
 
 def test_rejected_validation_messages_include_corrective_actions():
     with pytest.raises(ValueError, match="pass at least one strict result"):
         structural.pruning_mask(np.ones(20), (False,))
-    source = Path(__file__).with_name("example21_structural.py").read_text()
-    tree = ast.parse(source)
-    required_fragments = {
-        "Validation failed for",
-        "does not prove compaction identity",
-        "does not prove the bounded tile bound",
-    }
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call):
-            continue
-        if not node.exc.args or not isinstance(node.exc.args[0], (ast.Constant, ast.JoinedStr)):
-            continue
-        message = ast.get_source_segment(source, node.exc.args[0]) or ""
-        if any(fragment in message for fragment in required_fragments):
-            assert ";" in message
+    for path in (
+        Path(__file__).with_name("21-braincell-arc.py"),
+        Path(__file__).with_name("example21_structural.py"),
+    ):
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        message_nodes = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
+                if isinstance(node.exc.func, ast.Name) and node.exc.func.id in {
+                    "AssertionError",
+                    "IndexError",
+                    "KeyError",
+                    "RuntimeError",
+                    "TypeError",
+                    "ValueError",
+                }:
+                    message_nodes.append((node, node.exc.args[:1]))
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr == "error":
+                    message_nodes.append((node, node.args[:1]))
+        action_words = re.compile(
+            r"\b(pass|provide|use|select|reduce|add|disable|restore|include|return|"
+            r"choose|increase|assign|initialize|write|set|ensure|remove|declare|"
+            r"load|supply|run|check|make|match|pick|keep|preserve|record|correct)\b",
+            re.IGNORECASE,
+        )
+        for node, arguments in message_nodes:
+            if not arguments or not isinstance(arguments[0], (ast.Constant, ast.JoinedStr)):
+                continue
+            expression = arguments[0]
+            if isinstance(expression, ast.Constant):
+                text = expression.value
+            else:
+                text = "".join(
+                    value.value if isinstance(value, ast.Constant) else "value"
+                    for value in expression.values
+                )
+            assert text and text[0].isupper(), f"{path}:{node.lineno}: {text}"
+            assert ";" in text, f"{path}:{node.lineno}: {text}"
+            assert action_words.search(text.split(";", 1)[1]), (
+                f"{path}:{node.lineno}: {text}"
+            )
 
 
 class _EagerTransform:

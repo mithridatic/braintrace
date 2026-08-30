@@ -13,6 +13,14 @@ enough.
 
 ## Verification
 
-Co-located tests must inspect every public API in both modules and reject
-summary-only docstrings. They must also exercise representative validation
-errors and reject messages without corrective guidance.
+Co-located tests must inspect every public API in both modules. A public
+callable with arguments must declare every argument under `Parameters`. A
+value-returning callable must declare `Returns`; a generator must declare
+`Yields`; a public class must declare constructor `Parameters` or public
+`Attributes`. The audit must reject summary-only docstrings.
+
+The audit must inspect every literal or formatted message passed to a raised
+user-facing exception. Each message must start with an uppercase letter,
+contain one sentence-case failure statement, and name a corrective value or
+action after a semicolon. Representative validation errors must also be
+exercised at runtime.
