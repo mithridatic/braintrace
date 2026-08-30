@@ -5,6 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import braincell
 import brainevent
@@ -644,9 +648,13 @@ class PPPropEpisodeTrainer:
     def updates(self, value):
         self._updates_state.value = value
 
-    def reset_episode(self, model):
+    def reset_episode(self, model=None):
         """Reset model and eligibility state before the next query episode."""
 
+        if model is None:
+            model = getattr(self.learner, "model4compile", None)
+        if model is None:
+            raise ValueError("episode reset requires the compiled model")
         model.reset_episode(self.learner)
 
     def _group_gradients(self, gradients):
@@ -715,13 +723,23 @@ class PPPropEpisodeTrainer:
         target_shape=None,
         target_rows=None,
         target_valid_mask=None,
+        advance_mask=None,
     ):
         """Apply one update from one masked PP-Prop query episode."""
 
         if loss_mask is not None and valid_rows is not None:
             raise ValueError("provide only one episode loss mask")
         mask = loss_mask if loss_mask is not None else valid_rows
+        if advance_mask is not None:
+            advance_mask = jnp.asarray(advance_mask, dtype=bool)
+            if advance_mask.shape != (events.shape[0],):
+                raise ValueError("advance_mask must have one boolean per event")
+            if mask is None:
+                mask = jnp.ones((events.shape[0],), dtype=jnp.float32)
+            mask = mask * advance_mask
         sequences = [events]
+        if advance_mask is not None:
+            sequences.append(advance_mask)
         if request_kind is not None:
             sequences.extend((request_kind, target_shape, target_rows, target_valid_mask))
         result = self.learner.etrace_grad(
@@ -851,6 +869,7 @@ def run_fixed_schedule(trainer, episodes, *, proof=False):
     )
 
     def update(episode):
+        trainer.reset_episode()
         payload = {**episode, **static_payload}
         return trainer.update_episode(**payload)
 
@@ -950,14 +969,26 @@ def _real_workflow_report(data_root, *, proof):
         scheduled = [training_episodes[0]] * PROOF_UPDATES
     else:
         scheduled = [training_episodes[index % len(training_episodes)] for index in range(ORDINARY_UPDATES)]
-    def step_fn(event, request_kind, target_shape, target_rows, target_valid_mask):
-        learner(event)
-        features = model.readout_features()
-        logits = features @ model.readout_weight.value + model.readout_bias.value
-        loss = _supervised_request_loss(
-            logits, target_shape, target_rows, target_valid_mask, request_kind
+    def step_fn(
+        event, advance, request_kind, target_shape, target_rows, target_valid_mask
+    ):
+        def advancing():
+            learner(event)
+            features = model.readout_features()
+            logits = features @ model.readout_weight.value + model.readout_bias.value
+            loss = _supervised_request_loss(
+                logits, target_shape, target_rows, target_valid_mask, request_kind
+            )
+            return loss, features
+
+        return brainstate.transform.cond(
+            advance,
+            advancing,
+            lambda: (
+                jnp.asarray(0.0),
+                jnp.zeros((model.readout_weight.value.shape[0],), dtype=jnp.float32),
+            ),
         )
-        return loss, features
 
     def direct_grad_fn(
         *,
@@ -1034,8 +1065,6 @@ def _real_workflow_report(data_root, *, proof):
         "validation": validation,
     }
 import importlib.util
-import sys
-from pathlib import Path
 
 _ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
     "example21_arc_contracts", Path(__file__).with_name("arc_contracts.py")
