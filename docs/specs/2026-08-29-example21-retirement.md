@@ -42,6 +42,14 @@ SHALL be computed from the same target-aware objective and included in every
 counted update. Mutating a held-out target SHALL change the supervised loss or
 its direct readout gradient when the corresponding logits differ.
 
+Each counted training episode SHALL also carry its Boolean `advance_mask` into
+the trainer call. The trainer SHALL reset biological and eligibility state once
+before each counted episode, while retaining trainable parameters and optimizer
+state. The compiled step SHALL receive the Boolean advance value and SHALL use
+the false branch to return zero loss and zero readout features without calling
+the learner. False-advance positions SHALL contribute neither loss nor
+gradient, including when a malformed request mask marks one as valid.
+
 ## Verification
 
 - README commands resolve to `21-braincell-arc.py`.
