@@ -103,9 +103,21 @@ def bounded_population_current(input_drive, recurrent_drive):
 def clip_gradient(gradient, max_norm=GRADIENT_CLIP_NORM):
     """Clip a pytree gradient by its global Euclidean norm."""
 
-    leaves = jax.tree_util.tree_leaves(gradient)
+    if isinstance(gradient, dict):
+        leaves = [
+            leaf
+            for value in gradient.values()
+            for leaf in jax.tree_util.tree_leaves(value)
+        ]
+    else:
+        leaves = jax.tree_util.tree_leaves(gradient)
     norm = jnp.sqrt(sum(jnp.sum(jnp.square(leaf)) for leaf in leaves))
     scale = jnp.minimum(1.0, max_norm / jnp.maximum(norm, jnp.finfo(jnp.float32).tiny))
+    if isinstance(gradient, dict):
+        return {
+            key: jax.tree_util.tree_map(lambda leaf: leaf * scale, value)
+            for key, value in gradient.items()
+        }, norm
     return jax.tree_util.tree_map(lambda leaf: leaf * scale, gradient), norm
 
 
