@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import subprocess
+import sys
 
 import braincell
 import brainstate
@@ -24,6 +26,53 @@ def test_braincell_pin_and_imports():
     assert braincell.__version__ == "0.1.0"
     assert fixture.brainstate.__name__ == "brainstate"
     assert fixture.braintrace.__name__ == "braintrace"
+
+
+def test_cli_help_is_a_real_command_path():
+    result = subprocess.run(
+        [sys.executable, str(_PATH), "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "usage:" in result.stdout
+    assert "--smoke" in result.stdout
+    assert "proof" in result.stdout
+    assert "finite_difference" not in result.stdout
+
+
+def test_cli_smoke_writes_report(tmp_path):
+    result = fixture.main(["--smoke", "--device", "cpu", "--output-dir", str(tmp_path)])
+    assert result == 0
+    report = tmp_path / "example21-smoke.json"
+    assert report.exists()
+    assert '"mode": "smoke"' in report.read_text(encoding="utf-8")
+
+
+def test_cli_proof_runs_the_eight_update_path(monkeypatch, tmp_path):
+    monkeypatch.setattr(fixture, "_smoke_report", lambda: {"passed": True})
+    result = fixture.main(["proof", "--device", "cpu", "--output-dir", str(tmp_path)])
+    assert result == 0
+    report = tmp_path / "example21-proof.json"
+    assert report.exists()
+    assert '"updates": 8' in report.read_text(encoding="utf-8")
+
+
+def test_cli_rejects_combined_modes():
+    with pytest.raises(SystemExit) as error:
+        fixture.main(["proof", "--smoke"])
+    assert error.value.code == 2
+
+
+def test_cli_rejects_unavailable_device(monkeypatch):
+    def unavailable(_name):
+        raise RuntimeError("missing device")
+
+    monkeypatch.setattr(fixture.jax, "devices", unavailable)
+    with pytest.raises(SystemExit) as error:
+        fixture.main(["--smoke", "--device", "gpu"])
+    assert error.value.code == 2
 
 
 def test_hodgkin_huxley_constructor_values_and_reset_state():

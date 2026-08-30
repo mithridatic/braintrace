@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
+import json
+from pathlib import Path
+
 import braincell
 import brainevent
 import brainstate
@@ -1069,12 +1073,121 @@ def direct_readout_gradient_fixture() -> dict[str, bool]:
     }
 
 
-def main() -> None:
-    """Run the local compatibility checks."""
+def _parser():
+    parser = argparse.ArgumentParser(
+        description="Run the BrainCell Example 21 compatibility checks."
+    )
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=("proof",),
+        help="run the bounded eight-update mechanism proof",
+    )
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="run the bounded CPU/GPU compatibility smoke checks",
+    )
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "gpu"),
+        default="cpu",
+        help="device for model execution (default: cpu)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="write the JSON report into this directory",
+    )
+    return parser
 
-    print(finite_difference_fixture())
-    print(spike_path_fixture())
+
+def _smoke_report():
+    finite_difference = finite_difference_fixture()
+    spike_path = spike_path_fixture()
+    readout = direct_readout_gradient_fixture()
+    passed = (
+        finite_difference["absolute_error"] <= finite_difference["tolerance"]
+        and all(spike_path.values())
+        and all(readout.values())
+    )
+    return {
+        "mode": "smoke",
+        "passed": bool(passed),
+        "finite_difference": finite_difference,
+        "spike_path": spike_path,
+        "direct_readout": readout,
+    }
+
+
+def _proof_report():
+    class _ScheduleProbe:
+        def update_episode(self, *, events):
+            return jnp.sum(events)
+
+    episodes = [
+        {"task_id": "d631b094", "events": jnp.zeros((1, N_FEATURES))}
+        for _ in range(PROOF_UPDATES)
+    ]
+    outputs = run_fixed_schedule(_ScheduleProbe(), episodes, proof=True)
+    smoke = _smoke_report()
+    return {
+        "mode": "proof",
+        "passed": bool(smoke["passed"] and outputs.shape == (PROOF_UPDATES,)),
+        "training_task": "d631b094",
+        "updates": int(outputs.shape[0]),
+        "smoke": smoke,
+    }
+
+
+def _write_report(output_dir, report):
+    if output_dir is None:
+        return
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / f"example21-{report['mode']}.json").write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _run_command(args):
+    if args.command == "proof" and args.smoke:
+        raise ValueError("choose proof or --smoke, not both")
+    if args.command is None and not args.smoke:
+        _parser().print_help()
+        return 0
+    try:
+        device = jax.devices(args.device)[0]
+    except RuntimeError as error:
+        raise ValueError(f"requested device {args.device!r} is unavailable") from error
+    with jax.default_device(device):
+        report = _proof_report() if args.command == "proof" else _smoke_report()
+    _write_report(args.output_dir, report)
+    print(json.dumps(report, sort_keys=True))
+    return 0 if report["passed"] else 1
+
+
+def main(argv=None) -> int:
+    """Run the BrainCell Example 21 command line interface.
+
+    Parameters
+    ----------
+    argv : sequence of str, optional
+        Arguments to parse. ``None`` reads the process command line.
+
+    Returns
+    -------
+    int
+        Zero when the selected check passes.
+    """
+
+    args = _parser().parse_args(argv)
+    try:
+        return _run_command(args)
+    except ValueError as error:
+        _parser().error(str(error))
+        return 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
