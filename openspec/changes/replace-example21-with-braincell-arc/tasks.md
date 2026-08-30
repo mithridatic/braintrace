@@ -186,17 +186,17 @@
 
 ## 10. Retire the obsolete path
 
-- [ ] 10.1 Replace the active Example 21 README and image command with the
+- [x] 10.1 Replace the active Example 21 README and image command with the
   BrainCell command; verify that the documented proof and run commands resolve
   to `21-braincell-arc.py` and the image retains the named raw ARC files.
-- [ ] 10.2 Remove the old Example 21 entry point, `latent_workspace*` production
+- [x] 10.2 Remove the old Example 21 entry point, `latent_workspace*` production
   and test modules, specifically including `21-arc-agi-latent-reasoning.py`,
   `21-latent-reasoning-in-context.py`, its sibling test, and
   `docs/diagnostics/example21_*.py`; remove the ARC index builder and test,
   generated index command, obsolete Docker arguments and labels, and index or
   source-manifest environment values; verify that no active command or import
   references a removed module.
-- [ ] 10.3 Run import and reference scans after removal; verify no change to the
+- [x] 10.3 Run import and reference scans after removal; verify no change to the
   public `braintrace` API and no synthetic, BPTT, copy, rule, candidate, forest,
   reranker, partial-score, average-score, or large-result path in the new
   executable.
