@@ -12,6 +12,7 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
+from examples.pp_prop.arc_contracts import decode_prediction
 from examples.pp_prop.dale_candidates import DaleMeasurements, measure_dale_candidates
 
 _SPEC = importlib.util.spec_from_file_location(
@@ -422,7 +423,12 @@ def test_plot_topology_uses_checkpoint_counts_and_labels_without_mutation(tmp_pa
     }
     module = SimpleNamespace(load_checkpoint=lambda _path: arrays)
     topology = structural.topology_from_checkpoint(module, "accepted.npz")
-    prediction_before = np.argmax(topology.readout, axis=1).tobytes()
+    request_logits = np.zeros((31, 360), dtype=np.float32)
+    request_logits[0, 1] = 1.0
+    request_logits[0, 32] = 1.0
+    request_logits[1:, 60:] = np.arange(30, dtype=np.float32)[None, :, None]
+    prediction_before = decode_prediction(request_logits).tobytes()
+    logits_before = request_logits.tobytes()
     output = tmp_path / "topology.png"
     result = structural.plot_topology(topology, output)
     assert output.exists() and output.stat().st_size > 0
@@ -432,7 +438,23 @@ def test_plot_topology_uses_checkpoint_counts_and_labels_without_mutation(tmp_pa
     assert result["recurrent_plot_edge_count"] == 3
     assert result["dale_groups"] == [-1, 0, 1]
     assert result["owner_groups"] == [-2, -1, 0]
-    assert np.argmax(topology.readout, axis=1).tobytes() == prediction_before
+    assert topology.readout is None
+    assert request_logits.tobytes() == logits_before
+    assert decode_prediction(request_logits).tobytes() == prediction_before
+
+
+def test_structural_file_entry_point_imports_before_parsing():
+    root = Path(__file__).parents[2]
+    script = root / "examples" / "pp_prop" / "example21_structural.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--help"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "usage:" in result.stdout
 
 
 def test_plot_command_is_explicit_and_ordinary_baseline_does_not_plot(monkeypatch, tmp_path):
