@@ -111,6 +111,62 @@ def accumulate_masked_loss(losses, valid_rows):
     return jnp.sum(values * mask)
 
 
+def _supervised_request_loss(
+    logits, target_shape, target_rows, target_valid_mask, request_kind
+):
+    """Return the scalar loss for one shape or row request."""
+
+    logits = jnp.asarray(logits, dtype=jnp.float32)
+    target_shape = jnp.asarray(target_shape, dtype=jnp.int32)
+    target_rows = jnp.asarray(target_rows, dtype=jnp.int32)
+    target_valid_mask = jnp.asarray(target_valid_mask, dtype=jnp.float32)
+    shape_logits = jnp.stack((logits[:30], logits[30:60]))
+    shape_loss = jnp.sum(
+        jax.nn.logsumexp(shape_logits, axis=-1)
+        - jnp.take_along_axis(shape_logits, target_shape[:, None], axis=1).squeeze(1)
+    )
+    row_logits = logits[60:].reshape((30, 10))
+    row_loss = jnp.sum(
+        (jax.nn.logsumexp(row_logits, axis=-1)
+         - jnp.take_along_axis(row_logits, target_rows[:, None], axis=1).squeeze(1))
+        * target_valid_mask
+    ) / jnp.maximum(jnp.sum(target_valid_mask), 1.0)
+    return jnp.where(
+        request_kind == 1,
+        shape_loss,
+        jnp.where(request_kind == 2, row_loss, jnp.asarray(0.0)),
+    )
+
+
+def _direct_readout_gradients(
+    features,
+    target_shape,
+    target_rows,
+    target_valid_mask,
+    request_kind,
+    request_mask,
+    readout_weight,
+    readout_bias,
+):
+    """Differentiate the request-only supervised readout objective."""
+
+    def objective(weight, bias):
+        logits = features @ weight + bias
+        losses = jax.vmap(_supervised_request_loss)(
+            logits,
+            target_shape,
+            target_rows,
+            target_valid_mask,
+            request_kind,
+        )
+        return jnp.sum(losses * jnp.asarray(request_mask, dtype=losses.dtype))
+
+    weight_grad, bias_grad = jax.grad(objective, argnums=(0, 1))(
+        readout_weight, readout_bias
+    )
+    return {"readout_weight": weight_grad, "readout_bias": bias_grad}
+
+
 class AdamState:
     """Adam first and second moments for one episode schedule."""
 
@@ -358,8 +414,15 @@ class BrainCellArcModel(brainstate.nn.Module):
     def readout(self):
         """Return direct voltage readout logits."""
 
-        feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
-        return feature @ self.readout_weight.value + self.readout_bias.value
+        return (
+            self.readout_features() @ self.readout_weight.value
+            + self.readout_bias.value
+        )
+
+    def readout_features(self):
+        """Return normalized membrane-voltage features for the readout."""
+
+        return jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
 
 
 def integration_substep_events(event, substeps):
@@ -642,24 +705,52 @@ class PPPropEpisodeTrainer:
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
     def update_episode(
-        self, events, step_fn, valid_rows=None, loss_mask=None, direct_grad_fn=None
+        self,
+        events,
+        step_fn,
+        valid_rows=None,
+        loss_mask=None,
+        direct_grad_fn=None,
+        request_kind=None,
+        target_shape=None,
+        target_rows=None,
+        target_valid_mask=None,
     ):
         """Apply one update from one masked PP-Prop query episode."""
 
         if loss_mask is not None and valid_rows is not None:
             raise ValueError("provide only one episode loss mask")
         mask = loss_mask if loss_mask is not None else valid_rows
-        gradients, losses = self.learner.etrace_grad(
-            events,
+        sequences = [events]
+        if request_kind is not None:
+            sequences.extend((request_kind, target_shape, target_rows, target_valid_mask))
+        result = self.learner.etrace_grad(
+            *sequences,
             step_fn=step_fn,
             mask=mask,
             reduction="sum",
             loss_output="masked",
+            has_aux=direct_grad_fn is not None,
             return_value=True,
         )
+        if direct_grad_fn is None:
+            gradients, losses = result
+            aux = None
+        elif len(result) == 3:
+            gradients, losses, aux = result
+        else:
+            gradients, losses = result
+            aux = None
         if direct_grad_fn is not None:
             direct_gradients = direct_grad_fn(
-                events=events, step_fn=step_fn, mask=mask
+                events=events,
+                step_fn=step_fn,
+                mask=mask,
+                aux=aux,
+                request_kind=request_kind,
+                target_shape=target_shape,
+                target_rows=target_rows,
+                target_valid_mask=target_valid_mask,
             )
             gradients = {**gradients, **direct_gradients}
         losses = jnp.sum(losses)
@@ -779,11 +870,33 @@ def _supervised_episodes(data_root, task_ids):
         if query_index is None:
             raise ValueError(f"task {task_id} has no supervised query")
         events, advances = encode_episode(task, query_index)
+        target = np.asarray(task.targets[query_index], dtype=np.int32)
+        request_mask = np.zeros((events.shape[0],), dtype=bool)
+        request_mask[-31:] = True
+        request_kind = np.zeros((events.shape[0],), dtype=np.int32)
+        request_kind[-31] = 1
+        request_kind[-30:] = 2
+        target_shape = np.broadcast_to(
+            np.asarray(target.shape, dtype=np.int32) - 1,
+            (events.shape[0], 2),
+        ).copy()
+        padded_rows = np.zeros((30, 30), dtype=np.int32)
+        padded_rows[:target.shape[0], :target.shape[1]] = target
+        target_rows = np.zeros((events.shape[0], 30), dtype=np.int32)
+        target_rows[-30:] = padded_rows
+        target_valid_mask = np.zeros((events.shape[0], 30), dtype=np.float32)
+        request_start = events.shape[0] - 30
+        target_valid_mask[request_start:request_start + target.shape[0], :target.shape[1]] = 1.0
         episodes.append({
             "task_id": task_id,
             "events": jnp.asarray(events, dtype=jnp.float32),
-            "loss_mask": jnp.asarray(advances, dtype=bool),
-            "target": task.targets[query_index],
+            "advance_mask": jnp.asarray(advances, dtype=bool),
+            "loss_mask": jnp.asarray(request_mask, dtype=bool),
+            "request_kind": jnp.asarray(request_kind, dtype=jnp.int32),
+            "target_shape": jnp.asarray(target_shape, dtype=jnp.int32),
+            "target_rows": jnp.asarray(target_rows, dtype=jnp.int32),
+            "target_valid_mask": jnp.asarray(target_valid_mask, dtype=jnp.float32),
+            "target": target,
             "query_index": query_index,
         })
     return episodes
@@ -793,7 +906,9 @@ def _screen_predictions(model, learner, episodes):
     """Run direct request decoding for loaded ARC episodes."""
 
     event_values = jnp.stack([episode["events"] for episode in episodes])
-    advance_values = jnp.stack([episode["loss_mask"] for episode in episodes])
+    advance_values = jnp.stack([
+        episode.get("advance_mask", episode["loss_mask"]) for episode in episodes
+    ])
 
     def evaluate(events, advances):
         model.reset_episode(learner)
@@ -835,10 +950,41 @@ def _real_workflow_report(data_root, *, proof):
         scheduled = [training_episodes[0]] * PROOF_UPDATES
     else:
         scheduled = [training_episodes[index % len(training_episodes)] for index in range(ORDINARY_UPDATES)]
-    step_fn = lambda event: jnp.sum(
-        learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-    )
-    scheduled = [{**episode, "step_fn": step_fn} for episode in scheduled]
+    def step_fn(event, request_kind, target_shape, target_rows, target_valid_mask):
+        learner(event)
+        features = model.readout_features()
+        logits = features @ model.readout_weight.value + model.readout_bias.value
+        loss = _supervised_request_loss(
+            logits, target_shape, target_rows, target_valid_mask, request_kind
+        )
+        return loss, features
+
+    def direct_grad_fn(
+        *,
+        aux,
+        request_kind,
+        target_shape,
+        target_rows,
+        target_valid_mask,
+        mask,
+        **_,
+    ):
+        return _direct_readout_gradients(
+            aux,
+            target_shape,
+            target_rows,
+            target_valid_mask,
+            request_kind,
+            mask,
+            model.readout_weight.value,
+            model.readout_bias.value,
+        )
+
+    scheduled = [{
+        **episode,
+        "step_fn": step_fn,
+        "direct_grad_fn": direct_grad_fn,
+    } for episode in scheduled]
 
     screened_training = training_episodes[:1] if proof else training_episodes
     before = _screen_predictions(model, learner, screened_training)

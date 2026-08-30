@@ -32,6 +32,16 @@ target values as event inputs. Both modes SHALL accept `--arc-root`,
 `--device`, and `--output-dir` options, while refusing unsupported device
 values and proof or run schedule changes before model execution.
 
+The proof training objective SHALL remain outside the inference event vectors.
+Each counted episode SHALL carry fixed-size target supervision metadata with a
+request kind and a one-row validity mask. The compiled learner step SHALL
+produce a scalar shape loss at the shape request and a scalar row loss at each
+valid row request. The proof SHALL pass only the 31 shape and row request
+positions to that objective. Direct gradients for the readout weights and bias
+SHALL be computed from the same target-aware objective and included in every
+counted update. Mutating a held-out target SHALL change the supervised loss or
+its direct readout gradient when the corresponding logits differ.
+
 ## Verification
 
 - README commands resolve to `21-braincell-arc.py`.
