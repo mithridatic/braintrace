@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import json
 from pathlib import Path
 import subprocess
 import sys
+import time
 from types import SimpleNamespace
 
 import braincell
@@ -70,6 +72,28 @@ def test_cli_proof_dispatches_real_workflow(monkeypatch, tmp_path):
     report = tmp_path / "example21-proof.json"
     assert report.exists()
     assert '"updates": 8' in report.read_text(encoding="utf-8")
+
+
+def test_cli_proof_rejects_elapsed_deadline(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        fixture,
+        "_real_workflow_report",
+        lambda _root, *, proof: {"mode": "proof", "passed": True},
+    )
+    ticks = iter((10.0, 190.0))
+    monkeypatch.setattr(time, "monotonic", lambda: next(ticks))
+
+    result = fixture.main([
+        "proof", "--device", "cpu", "--arc-root", str(tmp_path),
+        "--output-dir", str(tmp_path),
+    ])
+
+    assert result == 1
+    report = json.loads((tmp_path / "example21-proof.json").read_text())
+    assert report["elapsed_seconds"] == pytest.approx(180.0)
+    assert report["deadline_seconds"] == fixture.PROOF_DEADLINE_SECONDS
+    assert report["deadline_exceeded"]
+    assert not report["passed"]
 
 
 def test_cli_run_dispatches_fixed_real_workflow(monkeypatch, tmp_path):
