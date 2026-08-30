@@ -19,8 +19,10 @@ value-returning callable must declare `Returns`; a generator must declare
 `Yields`; a public class must declare constructor `Parameters` or public
 `Attributes`. The audit must reject summary-only docstrings.
 
-The audit must inspect every literal or formatted message passed to a raised
-user-facing exception. Each message must start with an uppercase letter,
-contain one sentence-case failure statement, and name a corrective value or
-action after a semicolon. Representative validation errors must also be
-exercised at runtime.
+The audit must inspect every return statement in each public callable,
+including returns nested in conditionals and other control-flow blocks, while
+not treating returns in nested callable definitions as returns of the outer
+callable. Every literal or formatted message passed to a raised user-facing
+exception must start with an uppercase letter, contain one sentence-case
+failure statement, and name a corrective value or action after a semicolon.
+Representative validation errors must also be exercised at runtime.
