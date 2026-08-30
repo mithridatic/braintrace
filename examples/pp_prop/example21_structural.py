@@ -16,6 +16,10 @@ from pathlib import Path
 
 import numpy as np
 
+_REPO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if _REPO_PATH not in sys.path:
+    sys.path.insert(0, _REPO_PATH)
+
 from examples.pp_prop.dale_candidates import (
     DaleMeasurements,
     deferred_biology_defaults,
@@ -46,9 +50,6 @@ def _git_commit():
 
 
 def _load_example21_model():
-    repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-    if repo not in sys.path:
-        sys.path.insert(0, repo)
     path = os.path.join(os.path.dirname(__file__), "21-braincell-arc.py")
     spec = importlib.util.spec_from_file_location("example21_braincell_arc", path)
     if spec is None or spec.loader is None:
@@ -172,7 +173,7 @@ class SparseTopology:
     recurrent_source: np.ndarray
     recurrent_target: np.ndarray
     recurrent_value: np.ndarray
-    readout: np.ndarray
+    readout: np.ndarray | None
     dale: np.ndarray
     mechanisms: tuple
     owner_codes: np.ndarray | None = None
@@ -906,7 +907,7 @@ def topology_from_checkpoint(module, path):
         np.repeat(np.arange(neuron_count, dtype=np.int32), np.diff(recurrent_indptr)),
         np.asarray(arrays["recurrent_indices"], dtype=np.int32),
         np.asarray(arrays["recurrent_values"], dtype=np.float32),
-        np.asarray(arrays["readout_weight"], dtype=np.float32),
+        None,
         np.asarray(arrays["dale_codes"], dtype=np.int8),
         tuple(() for _ in range(neuron_count)),
         np.asarray(arrays["owner_codes"], dtype=np.int16),

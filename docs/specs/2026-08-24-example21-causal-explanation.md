@@ -40,10 +40,10 @@ model results.
 - The strict decoder selects height and width from 30-value groups and color
   from ten-value groups. It returns an integer grid and performs no repair or
   candidate selection.
-- The structural plot reads checkpoint topology and labels. It reports the
-  neuron count, input-connection count, recurrent-connection count, Dale
-  groups, and task-owner groups. It does not read target grids or prediction
-  arrays.
+- The structural plot topology object uses checkpoint topology and labels
+  only. It does not use readout weights, bias values, target grids, or
+  prediction inputs. It reports the neuron count, input-connection count,
+  recurrent-connection count, Dale groups, and task-owner groups.
 
 ## Direct test evidence
 
