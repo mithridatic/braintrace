@@ -19,8 +19,9 @@ before publication and cleanup, and stop if automation becomes active.
 
 The remote was fetched and pruned before creating this reconciliation branch.
 The refreshed canonical base is `b3c4569791dea1aecbb31c7c205aebd359373f6a`
-(`origin/main`). The six topic heads present in the planning inventory had
-already been deleted remotely. No new divergent remote head appeared.
+(`origin/main`). The six topic heads from the planning inventory remain for
+exact-SHA deletion only after archive verification. No new divergent remote
+head appeared.
 
 ## Inventory
 
@@ -29,7 +30,8 @@ The refreshed local inventory contains:
 - 91 local branches;
 - 83 registered worktrees;
 - 30 dirty worktrees;
-- one remote topic head, `main` (plus the `origin/HEAD` symbolic ref).
+- seven remote heads: `main` and the six inventoried topic heads (plus the
+  `origin/HEAD` symbolic ref).
 
 The recovery manifest records each dirty entry's original two-character Git
 status, path, size, and SHA-256. It also records excluded transient files and
@@ -179,28 +181,34 @@ a fresh temporary repository before deleting any worktree or ref.
 
 ## Final evidence
 
-Recovery and performance qualification completed as recorded above. Local gate
-results on Python 3.14.6 were:
+Recovery and performance qualification completed as recorded above. The first
+publication at `94084913bb11b9053a37b8ba530ebdca845ebd3f` passed all four
+JAX matrix jobs and the examples job. Its `typecheck_and_build` job failed on
+the three baseline diagnostics named in the amendment, before its build steps
+could run.
+
+The scoped remediation was then qualified locally on Python 3.14.6:
 
 - Package suite: 3,163 passed, zero deselected, 286 warnings, and 95 percent
-  total coverage in 356.23 seconds.
+  total coverage in 299.82 seconds.
 - Examples suite: 576 passed, five skipped, zero deselected, and one failed in
-  137.05 seconds. The failure was
+  119.73 seconds. The failure was
   `test_merge_cli_uses_measured_files_and_arm_cli_requires_parent`, where the
   local Windows process-RSS probe returned `None`. The same node failed
   identically when rerun alone on untouched `origin/main`, so this is a
   confirmed baseline failure and not a reconciliation regression.
 - Repository conventions: three passed.
-- Mypy: three baseline errors in `_quant/_turboquant.py`, `nn/_situ.py`, and
-  `nn/_gated.py`. Untouched `origin/main` produced the same three diagnostics.
+- Focused remediation tests: all 23 tests in the three affected sibling test
+  modules passed.
+- Mypy: no issues in 73 source files.
 - Build: wheel and sdist succeeded. Both archives contain
   `braintrace/py.typed`.
 - `git diff --check`: passed.
 
-Thus the local result satisfies the no-new-failure and coverage requirements,
-but it is not represented as fully green: the examples and mypy commands retain
-their pre-existing failures. Publication CI must still pass every required job
-before archive cleanup can begin.
+Thus the remediation removes the only CI failure without changing the
+previously qualified Windows examples baseline. Publication CI must still pass
+every required job at the new reconciliation tip before archive cleanup can
+begin.
 
-Pending publication CI, archive verification, and exact-SHA cleanup. This
-section will be updated with literal hashes and final topology before closeout.
+Pending post-remediation publication CI, archive verification, and exact-SHA
+cleanup. Final CI and topology evidence will be recorded during closeout.
