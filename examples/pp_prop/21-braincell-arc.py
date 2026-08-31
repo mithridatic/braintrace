@@ -65,6 +65,7 @@ TRACE_DECAY = 0.95
 GRADIENT_CLIP_NORM = 1.0
 PROOF_UPDATES = 8
 ORDINARY_UPDATES = 128
+DEFAULT_SCREEN_TASKS = 64
 PROOF_DEADLINE_SECONDS = 180.0
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
 TRAINING_TASK_IDS = (
@@ -2006,6 +2007,24 @@ def _parser():
         default=ORDINARY_UPDATES,
         help="PP-Prop updates per non-proof block (default: 128)",
     )
+    parser.add_argument(
+        "--topology-operations-per-round",
+        type=int,
+        default=None,
+        help=(
+            "structural operations per evolution round, chained off each "
+            "accepted state (default: one pass of the operation cycle)"
+        ),
+    )
+    parser.add_argument(
+        "--screen-tasks",
+        type=int,
+        default=DEFAULT_SCREEN_TASKS,
+        help=(
+            "training tasks screened between structural operations; "
+            "0 scores every operation on the complete corpus (default: 64)"
+        ),
+    )
     return parser
 
 
@@ -2038,7 +2057,14 @@ def _write_report(output_dir, report):
 
 
 def _evolve_workflow_report(
-    arc_root, output_dir, *, rounds=8, patience=2, updates=ORDINARY_UPDATES
+    arc_root,
+    output_dir,
+    *,
+    rounds=8,
+    patience=2,
+    updates=ORDINARY_UPDATES,
+    operations_per_round=None,
+    screen_tasks=DEFAULT_SCREEN_TASKS,
 ):
     """Run or resume iterative ARC evolution and summarize its terminal state."""
 
@@ -2049,7 +2075,13 @@ def _evolve_workflow_report(
         run_evolution,
     )
 
-    config = PipelineConfig(rounds=rounds, patience=patience, updates=updates)
+    config = PipelineConfig(
+        rounds=rounds,
+        patience=patience,
+        updates=updates,
+        operations_per_round=operations_per_round,
+        screen_tasks=screen_tasks,
+    )
     state = run_evolution(
         Example21ArcAdapter(arc_root),
         output_dir,
@@ -2104,6 +2136,8 @@ def _run_command(args):
                 rounds=args.rounds,
                 patience=args.patience,
                 updates=args.updates,
+                operations_per_round=args.topology_operations_per_round,
+                screen_tasks=args.screen_tasks,
             )
         else:
             report = _smoke_report()
