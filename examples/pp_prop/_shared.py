@@ -225,7 +225,7 @@ class GIFCell(brainstate.nn.Module):
         repo_examples = pathlib.Path(__file__).resolve().parent.parent
         if str(repo_examples) not in sys.path:
             sys.path.insert(0, str(repo_examples))
-        from snn_models import GIF  # type: ignore
+        from snn_models import GIF
         import braintrace
         self.neu = GIF(
             n_rec,

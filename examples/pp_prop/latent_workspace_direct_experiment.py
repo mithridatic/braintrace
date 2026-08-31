@@ -56,22 +56,22 @@ try:
         load_dataset_source,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
-    from latent_workspace_direct_curriculum import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_direct_curriculum import (
         SyntheticCurriculumConfig,
         generate_synthetic_curriculum,
     )
-    from latent_workspace_direct_generation import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_direct_generation import (
         DirectPredictionLogits,
         decode_first_candidate,
         first_prediction_bytes,
         strict_task_pass_at_1,
     )
-    from latent_workspace_direct_model import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_direct_model import (
         MAX_GRID_SIZE,
         DirectARCGRU,
         DirectModelConfig,
     )
-    from latent_workspace_direct_training import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_direct_training import (
         DirectBPTTTrainer,
         DirectEpisode,
         DirectTrainingChunk,
@@ -82,7 +82,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
         save_direct_checkpoint,
         stack_direct_episodes,
     )
-    from latent_workspace_task import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_task import (
         ArcTask,
         AugmentationConfig,
         DatasetSource,

@@ -256,11 +256,11 @@ class ETraceNet(brainstate.nn.Module):
             # Extract all Neuron models
             neurons = self.nodes().subset(brainpy.state.Neuron).unique().values()
             # Evaluate the membrane potential
-            for l in neurons:
+            for neuron in neurons:
                 loss += jnp.square(
                     jnp.mean(
-                        jax.nn.relu(l.V.value - mem_high) ** 2 +
-                        jax.nn.relu(mem_low - l.V.value) ** 2
+                        jax.nn.relu(neuron.V.value - mem_high) ** 2 +
+                        jax.nn.relu(mem_low - neuron.V.value) ** 2
                     )
                 )
             loss = loss * factor
@@ -273,8 +273,8 @@ class ETraceNet(brainstate.nn.Module):
             # Extract all Neuron models
             neurons = self.nodes().subset(brainpy.state.Neuron).unique().values()
             # Evaluate the spiking dynamics
-            for l in neurons:
-                loss += (jnp.mean(l.get_spike()) - target_fr / 1e3 * brainstate.environ.get_dt()) ** 2
+            for neuron in neurons:
+                loss += (jnp.mean(neuron.get_spike()) - target_fr / 1e3 * brainstate.environ.get_dt()) ** 2
             loss = loss * factor
         return loss
 
@@ -578,7 +578,7 @@ def main(
     if method == 'expsm_diag':
         setting.etrace_decay = 0.9
     losses = network_training(setting, n_batches=n_batches)
-    return {"losses": [float(l) for l in losses]}
+    return {"losses": [float(loss) for loss in losses]}
 
 
 if __name__ == '__main__':

@@ -27,7 +27,6 @@ from examples.pp_prop.latent_workspace_online_model import (
 )
 from examples.pp_prop.latent_workspace_query_routing_model import (
     BASE_INPUT_WIDTH,
-    MATCH_FEATURE_COUNT,
     QueryRoutingConfig,
     QueryRoutingGatedMemoryRNN,
     SOURCE_COUNT,

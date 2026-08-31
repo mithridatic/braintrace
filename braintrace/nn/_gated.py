@@ -17,7 +17,7 @@ import braintools
 import jax
 
 from braintrace._op.gated import gated_projection
-from braintrace._typing import ArrayLike
+from braintrace._typing import ArrayLike, _init_module
 
 _ZERO_INIT = braintools.init.ZeroInit()
 _XAVIER_NORMAL_INIT = braintools.init.XavierNormal()
@@ -81,7 +81,7 @@ class GatedProjection(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # pyright: ignore[reportCallIssue]
+        _init_module(super().__init__, name)
         for dimension, dimension_name in (
             (value_size, "value_size"),
             (gate_size, "gate_size"),

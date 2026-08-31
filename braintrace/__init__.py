@@ -157,17 +157,17 @@ if TYPE_CHECKING:
     # below. Re-import them here so static type checkers / IDEs can still resolve
     # ``braintrace.MatMulOp`` etc.
     from ._legacy import (
-        ConvOp,
-        ElemWiseOp,
-        ElemWiseParam,
-        ETraceOp,
-        ETraceParam,
-        FakeElemWiseParam,
-        FakeETraceParam,
-        LoraOp,
-        MatMulOp,
-        NonTempParam,
-        SpMatMulOp,
+        ConvOp as ConvOp,
+        ElemWiseOp as ElemWiseOp,
+        ElemWiseParam as ElemWiseParam,
+        ETraceOp as ETraceOp,
+        ETraceParam as ETraceParam,
+        FakeElemWiseParam as FakeElemWiseParam,
+        FakeETraceParam as FakeETraceParam,
+        LoraOp as LoraOp,
+        MatMulOp as MatMulOp,
+        NonTempParam as NonTempParam,
+        SpMatMulOp as SpMatMulOp,
     )
 
 __all__ = [

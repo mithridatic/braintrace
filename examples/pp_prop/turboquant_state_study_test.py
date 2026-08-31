@@ -3,7 +3,6 @@
 import msgspec_json
 
 import brainstate
-import jax
 import jax.numpy as jnp
 import pytest
 

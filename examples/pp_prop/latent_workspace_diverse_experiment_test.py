@@ -7,7 +7,6 @@ import json
 from types import SimpleNamespace
 
 import jax
-import numpy as np
 import pytest
 
 from examples.pp_prop.latent_workspace_task import ArcGrid, ArcPair, ArcTask

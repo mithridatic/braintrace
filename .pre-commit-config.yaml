@@ -29,7 +29,10 @@ repos:
     # Only include python files
     files: \.py$
 
-- repo: https://github.com/pycqa/flake8
-  rev: '6.1.0'
+- repo: local
   hooks:
-  - id: flake8
+  - id: ruff
+    name: ruff
+    entry: ruff check
+    language: system
+    types: [python]

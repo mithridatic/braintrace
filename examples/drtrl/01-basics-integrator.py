@@ -11,14 +11,12 @@ import sys
 
 import brainstate
 import braintools
-import jax
-import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class RNN(brainstate.nn.Module):
@@ -76,9 +74,9 @@ def _train_bptt(n_epochs, num_step, num_batch, num_hidden, lr):
 
     @brainstate.transform.jit
     def f_train(inputs, targets):
-        grads, l = brainstate.transform.grad(f_loss, weights, return_value=True)(inputs, targets)
+        grads, loss = brainstate.transform.grad(f_loss, weights, return_value=True)(inputs, targets)
         opt.update(grads)
-        return l
+        return loss
 
     losses = []
     for _ in range(n_epochs):
@@ -95,9 +93,11 @@ def main(*, n_epochs: int = 50, batch_size: int = 64, plot: bool = True) -> dict
     if plot:
         plt.plot(online_losses, label='D_RTRL')
         plt.plot(bptt_losses, label='BPTT')
-        plt.xlabel('epoch');
+        plt.xlabel('epoch')
+
         plt.ylabel('MSE')
-        plt.legend();
+        plt.legend()
+
         plt.title('01 · Basics — integrator')
         plt.show()
     return {"losses": online_losses, "bptt_losses": bptt_losses}

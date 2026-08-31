@@ -115,7 +115,6 @@ from __future__ import annotations
 from typing import Any, Callable, Dict
 
 import brainunit as u
-import jax
 import jax.numpy as jnp
 
 from braintrace._typing import ArrayLike

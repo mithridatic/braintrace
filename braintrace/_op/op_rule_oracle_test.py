@@ -22,7 +22,6 @@ from collections import namedtuple
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pytest
 
 import braintrace
 from braintrace._op import (
@@ -69,7 +68,8 @@ def test_conv_xy_to_dw_matches_vjp_with_bias():
     conv_params = dict(has_bias=True, strides=(1,), padding='SAME', dimension_numbers=None)
     y = _etp_conv_impl(x, kernel, bias, **conv_params)
     hidden = jnp.ones_like(y)
-    impl = lambda w: _etp_conv_impl(x, w['weight'], w['bias'], **conv_params)
+    def impl(w):
+        return _etp_conv_impl(x, w['weight'], w['bias'], **conv_params)
     weights = {'weight': kernel, 'bias': bias}
     # The kernel gradient must match jax.vjp exactly.
     assert_xy_to_dw_matches_vjp(

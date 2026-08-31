@@ -266,7 +266,8 @@ def test_compile_vmap_builds_forwards_and_grads():
     assert bool(jnp.all(jnp.isfinite(out)))
 
     weights = model.states(brainstate.ParamState)
-    def loss(inp): return jnp.mean(learner(inp) ** 2)
+    def loss(inp):
+        return jnp.mean(learner(inp) ** 2)
     grads = brainstate.transform.grad(loss, weights)(xb)
     leaves = jax.tree.leaves(grads)
     assert all(bool(jnp.all(jnp.isfinite(g))) for g in leaves)

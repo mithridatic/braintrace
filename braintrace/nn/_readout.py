@@ -17,14 +17,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import brainstate
 import braintools
 import brainunit as u
 
 from braintrace._op import matmul
-from braintrace._typing import Size, ArrayLike, as_size_tuple
+from braintrace._typing import Size, ArrayLike, as_size_tuple, _init_module
 from braintrace.nn._linear import _fold_leading_axes
 
 __all__ = [
@@ -106,12 +106,12 @@ class LeakyRateReadout(brainstate.nn.Module):
         self,
         in_size: Size,
         out_size: Size,
-        tau: ArrayLike = 5. * u.ms,  # type: ignore[assignment]  # brainunit types `float * Unit` as `Unit | Quantity`
+        tau: ArrayLike = cast(ArrayLike, 5. * u.ms),
         w_init: Callable = braintools.init.KaimingNormal(),
         r_init: Callable = braintools.init.ZeroInit(),
         name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]  # brainstate hides Module.__init__ from type checkers
+        _init_module(super().__init__, name)
 
         # Parameters
         self.in_size = as_size_tuple(in_size)

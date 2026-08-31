@@ -22,7 +22,7 @@ import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Sequence, cast
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -1722,14 +1722,17 @@ def _evaluate_model(
         evaluate(jnp.asarray(data.validation_no_context))
     )
     raw: dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {
-        "intact": tuple(  # type: ignore[dict-item]
-            np.asarray(value) for value in intact_values
+        "intact": cast(
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+            tuple(np.asarray(value) for value in intact_values),
         ),
-        "shuffled": tuple(  # type: ignore[dict-item]
-            np.asarray(value) for value in shuffled_values
+        "shuffled": cast(
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+            tuple(np.asarray(value) for value in shuffled_values),
         ),
-        "no_context": tuple(  # type: ignore[dict-item]
-            np.asarray(value) for value in no_context_values
+        "no_context": cast(
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+            tuple(np.asarray(value) for value in no_context_values),
         ),
     }
     elapsed = time.perf_counter() - start

@@ -814,17 +814,18 @@ def matmul(
         >>> print(y2.shape)
         (16, 4)
     """
-    if x.ndim > 2:  # type: ignore[union-attr]
+    x_array: Any = x
+    if x_array.ndim > 2:
         raise ValueError(
             f'matmul() supports x.ndim of 1 (unbatched `(in_features,)`) or 2 '
-            f'(batched `(batch, in_features)`); got x.ndim={x.ndim} '  # type: ignore[union-attr]
-            f'(shape={x.shape}). Every ETP trace rule for etp_mm_p / etp_mv_p '  # type: ignore[union-attr]
+            f'(batched `(batch, in_features)`); got x.ndim={x_array.ndim} '
+            f'(shape={x_array.shape}). Every ETP trace rule for etp_mm_p / etp_mv_p '
             f'assumes one of those two layouts, so higher-rank inputs (e.g. '
             f'`(batch, time, in_features)`) are not supported -- reshape/vmap '
             f'over the extra axes before calling matmul(), or use '
             f'braintrace.einsum for genuine tensor contractions.'
         )
-    p = etp_mm_p if x.ndim >= 2 else etp_mv_p  # type: ignore[union-attr]  # x is an array here; ArrayLike also admits scalars without .ndim
+    p = etp_mm_p if x_array.ndim >= 2 else etp_mv_p
     x_v, x_u = u.split_mantissa_unit(x)
     weight_v, weight_u = u.split_mantissa_unit(weight)
     unit = x_u * weight_u

@@ -26,7 +26,7 @@ try:
         canonical_task_fingerprint,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct-script import fallback.
-    from latent_workspace_task import (  # pyright: ignore[reportImplicitRelativeImport]
+    from latent_workspace_task import (
         ArcGrid,
         ArcPair,
         ArcTask,

@@ -326,7 +326,8 @@ class TestRegisterEtpRulesBulk:
 
     def test_register_partial_skips_none(self):
         p = register_primitive(_fresh_name('partial'), lambda x: x)
-        rule = lambda hidden_dim, trace, **params: None
+        def rule(hidden_dim, trace, **params):
+            return None
         # Only dt_to_t is supplied — the other three must remain absent.
         p.register_etp_rules(dt_to_t=rule)
         assert ETP_RULES_DT_TO_T[p] is rule
@@ -338,8 +339,10 @@ class TestRegisterEtpRulesBulk:
         """Re-registering must replace the previous rule, not silently keep
         the old one."""
         p = register_primitive(_fresh_name('overwrite'), lambda x: x)
-        rule_a = lambda *a, **k: 'a'
-        rule_b = lambda *a, **k: 'b'
+        def rule_a(*a, **k):
+            return 'a'
+        def rule_b(*a, **k):
+            return 'b'
         p.register_dt_to_t(rule_a)
         assert ETP_RULES_DT_TO_T[p] is rule_a
         p.register_dt_to_t(rule_b)
@@ -397,7 +400,8 @@ class TestVmapIdentityPreservation:
     def test_promoted_params_pass_through_weight_fn(self):
         x = jnp.asarray(brainstate.random.randn(4, 3))
         w = jnp.asarray(brainstate.random.randn(3, 5))
-        wfn = lambda ww: ww ** 2
+        def wfn(ww):
+            return ww ** 2
         fn = jax.vmap(lambda xi: braintrace.matmul(xi, w, weight_fn=wfn))
         jaxpr = jax.make_jaxpr(fn)(x)
         mm_eqns = [e for e in jaxpr.jaxpr.eqns if e.primitive.name == 'etp_mm']

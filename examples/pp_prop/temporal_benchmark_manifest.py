@@ -6,6 +6,7 @@ import hashlib
 import msgspec_json
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import cast
 
 from temporal_benchmark_config import SplitSizes
 from temporal_benchmark_data import balanced_trial_specs, trial_commitment
@@ -98,7 +99,7 @@ def validate_manifest(document: dict[str, object]) -> None:
         local.extend(evaluation)
         if any(isinstance(seed, bool) or not isinstance(seed, int) for seed in local):
             raise ValueError("All derived seeds must be integers. Set All derived seeds to integers.")
-        per_bundle_seeds.extend(local)  # type: ignore[arg-type]
+        per_bundle_seeds.extend(cast(list[int], local))
     if len(per_bundle_seeds) != len(set(per_bundle_seeds)):
         raise ValueError("Order and encoding seed domains must not collide. Ensure Order and encoding seed domains does not collide.")
 

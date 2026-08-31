@@ -786,7 +786,7 @@ def _validate_arc_runner_configuration(
         raise ValueError("ARC task-local adaptation requires Adam weight_decay=0. Provide the required value for ARC task-local adaptation.")
     if len(getattr(optimizer, "param_groups", ())) > 1:
         raise ValueError("ARC task-local adaptation does not support Adam groups. Fix the input condition named in the error, then rerun the operation.")
-    if getattr(optimizer, "_schedulers", ()):  # noqa: SLF001
+    if getattr(optimizer, "_schedulers", ()):
         raise ValueError("ARC task-local adaptation does not support schedulers. Fix the input condition named in the error, then rerun the operation.")
     for name in ("opt_state", "step_count", "_current_lr"):
         if not hasattr(optimizer, name):
@@ -875,7 +875,7 @@ def compile_arc_task_local_adaptation_runner(
     )
     optimizer_base_state = _copy_tree(optimizer.opt_state.value)
     optimizer_base_step = jnp.array(optimizer.step_count.value, copy=True)
-    optimizer_base_lr = jnp.array(optimizer._current_lr.value, copy=True)  # noqa: SLF001
+    optimizer_base_lr = jnp.array(optimizer._current_lr.value, copy=True)
     zero_latent_events = jnp.zeros(
         (latent_steps, 1, row_config.input_width), dtype=jnp.float32
     )
@@ -893,7 +893,7 @@ def compile_arc_task_local_adaptation_runner(
     def restore_optimizer() -> None:
         optimizer.opt_state.value = _copy_tree(optimizer_base_state)
         optimizer.step_count.value = jnp.array(optimizer_base_step, copy=True)
-        optimizer._current_lr.value = jnp.array(  # noqa: SLF001
+        optimizer._current_lr.value = jnp.array(
             optimizer_base_lr, copy=True
         )
 
@@ -970,7 +970,7 @@ def compile_arc_task_local_adaptation_runner(
                 )
                 previous_optimizer_lr = jnp.array(
                     optimizer._current_lr.value,
-                    copy=True,  # noqa: SLF001
+                    copy=True,
                 )
 
                 def step_loss(event: jax.Array, advance: jax.Array) -> jax.Array:
@@ -1038,9 +1038,9 @@ def compile_arc_task_local_adaptation_runner(
                     optimizer.step_count.value,
                     previous_optimizer_step,
                 )
-                optimizer._current_lr.value = jnp.where(  # noqa: SLF001
+                optimizer._current_lr.value = jnp.where(
                     apply_update,
-                    optimizer._current_lr.value,  # noqa: SLF001
+                    optimizer._current_lr.value,
                     previous_optimizer_lr,
                 )
                 return jnp.where(apply_update, objective, 0.0), apply_update

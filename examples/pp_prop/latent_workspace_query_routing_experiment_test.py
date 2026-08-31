@@ -137,7 +137,8 @@ def _match_at(model, row, height, width):
 def test_match_features_cover_representative_geometry() -> None:
     model = _model()
     matches = _match_at(model, row=2, height=4, width=3)
-    source = lambda r, c: r * 30 + c
+    def source(r, c):
+        return r * 30 + c
 
     assert matches[0, 1, source(2, 1), 0] == 1.0  # identity
     shift_index = 1 + (1 + 3) * 7 + (-1 + 3)

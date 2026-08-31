@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class RNN(brainstate.nn.Module):
@@ -102,7 +102,8 @@ def main(*, n_epochs: int = 5, batch_size: int = 16, plot: bool = True) -> dict:
     if plot:
         plt.bar(['fast_solve=True', 'fast_solve=False'], [fast_time * 1000, slow_time * 1000])
         plt.ylabel('ms / epoch')
-        plt.title(f'11 · fast_solve runtime (max-grad-diff {max_diff:.1e})');
+        plt.title(f'11 · fast_solve runtime (max-grad-diff {max_diff:.1e})')
+
         plt.show()
 
     return {

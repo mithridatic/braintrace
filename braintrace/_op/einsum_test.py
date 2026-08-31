@@ -226,7 +226,8 @@ class TestEinsumEtpRules:
         x = brainstate.random.randn(5, 3)
         w = {'weight': brainstate.random.randn(3, 4)}
         hd = brainstate.random.randn(5, 4)
-        fn = lambda ww: jnp.tanh(ww)
+        def fn(ww):
+            return jnp.tanh(ww)
         assert_xy_to_dw_matches_vjp(
             rule=ETP_RULES_XY_TO_DW[etp_einsum_p],
             impl=lambda wd: jnp.einsum('bk,kn->bn', x, fn(wd['weight'])),
@@ -285,7 +286,8 @@ def _per_head_rnn_factory(H=2, E=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = lambda seed: brainstate.random.RandomState(seed).value
+                def k(seed):
+                    return brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
                     0.1 * brainstate.random.normal(size=(H, E, E), key=k(seed)))
                 self.win = brainstate.ParamState(
@@ -338,7 +340,8 @@ class TestEinsumOracle:
                 class Net(brainstate.nn.Module):
                     def __init__(self):
                         super().__init__()
-                        k = lambda seed: brainstate.random.RandomState(seed).value
+                        def k(seed):
+                            return brainstate.random.RandomState(seed).value
                         self.w = brainstate.ParamState(
                             0.1 * brainstate.random.normal(size=(n_rec, n_rec), key=k(seed)))
                         self.win = brainstate.ParamState(
@@ -387,7 +390,8 @@ def _shared_axis_rnn_factory(T2=2, N=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = lambda seed: brainstate.random.RandomState(seed).value
+                def k(seed):
+                    return brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
                     0.1 * brainstate.random.normal(size=(N, N), key=k(seed)))
                 self.win = brainstate.ParamState(
@@ -435,7 +439,8 @@ class TestSharedAxisOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = lambda seed: brainstate.random.RandomState(seed).value
+                    def k(seed):
+                        return brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
                         0.1 * brainstate.random.normal(size=(N, N), key=k(0)))
                     self.win = brainstate.ParamState(
@@ -473,7 +478,8 @@ class TestSharedAxisOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = lambda seed: brainstate.random.RandomState(seed).value
+                    def k(seed):
+                        return brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
                         0.1 * brainstate.random.normal(size=(N, N), key=k(0)))
                     self.win = brainstate.ParamState(

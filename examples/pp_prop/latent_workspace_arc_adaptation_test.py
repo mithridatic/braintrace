@@ -321,7 +321,7 @@ def test_arc_bank_rejects_invalid_static_contracts(
 
 def test_arc_bank_rejects_non_row_configuration() -> None:
     with pytest.raises(TypeError, match="RowEventConfig"):
-        build_arc_target_free_task_bank((_task(),), object())  # type: ignore[arg-type]
+        build_arc_target_free_task_bank((_task(),), object())
 
 
 def test_task_id_and_official_outputs_are_not_bank_inputs() -> None:

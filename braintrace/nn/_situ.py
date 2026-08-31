@@ -13,7 +13,7 @@ import brainstate
 import braintools
 
 from braintrace._op.memory import situ_glu
-from braintrace._typing import ArrayLike
+from braintrace._typing import ArrayLike, _init_module
 
 _ZERO_INIT = braintools.init.ZeroInit()
 _XAVIER_NORMAL_INIT = braintools.init.XavierNormal()
@@ -66,7 +66,7 @@ class SiTUGLU(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # pyright: ignore[reportCallIssue]
+        _init_module(super().__init__, name)
         for size, size_name in (
             (input_size, "input_size"),
             (hidden_size, "hidden_size"),

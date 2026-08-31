@@ -26,6 +26,7 @@ Coverage:
 
 
 
+import inspect
 import warnings
 
 import brainstate
@@ -69,6 +70,9 @@ class TestParamsForward:
         p = ElemWiseParam(jnp.ones((3,)), op=ElemWiseOp(lambda w: w + 1))
         y = p.execute()
         np.testing.assert_allclose(y, 2.0)
+
+    def test_elemwise_param_keeps_its_execute_signature(self):
+        assert tuple(inspect.signature(ElemWiseParam.execute).parameters) == ('self',)
 
     def test_nontemp_param_execute(self):
         p = NonTempParam({'weight': jnp.ones((4, 4))}, op=MatMulOp())

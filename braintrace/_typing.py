@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Sequence, Union, FrozenSet, List, Tuple, Any, TypeAlias
+from typing import Callable, Dict, Sequence, Union, FrozenSet, List, Tuple, Any, TypeAlias, cast
 
 import brainstate
 import jax
@@ -39,6 +39,10 @@ Axis: TypeAlias = int
 # Elementwise, shape-preserving transform applied to a weight/bias/kernel
 # inside an ETP op (``weight_fn`` / ``bias_fn`` / ``kernel_fn`` / ``a_fn`` / ``b_fn``).
 WeightFn: TypeAlias = Callable[[ArrayLike], ArrayLike]
+
+
+def _init_module(initializer: Callable[..., None], name: str | None) -> None:
+    cast(Callable[..., None], initializer)(name=name)
 
 
 def as_size_tuple(size: Size) -> Tuple[int, ...]:

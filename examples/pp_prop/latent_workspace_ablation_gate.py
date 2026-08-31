@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from numbers import Real
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 import brainstate
 import braintools
@@ -2511,7 +2511,10 @@ def _evaluate_arm(
     ] = {}
     for name, events in event_streams.items():
         values = jax.block_until_ready(evaluate_stream(jnp.asarray(events)))
-        raw[name] = tuple(np.asarray(value) for value in values)  # type: ignore[assignment]
+        raw[name] = cast(
+            tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+            tuple(np.asarray(value) for value in values),
+        )
     finite = all(
         bool(np.isfinite(value).all())
         for values in raw.values()
@@ -3186,7 +3189,7 @@ def _gate_c2_integer_list_array(
 
     if not isinstance(value, list) or len(value) != length:
         return None
-    if not all(type(item) is int for item in value) and not all(
+    if not all(item_type is int for item_type in map(type, value)) and not all(
         _strict_integer(item) for item in value
     ):
         return None
@@ -3205,7 +3208,7 @@ def _gate_c2_real_list_array(
 
     if not isinstance(value, list) or len(value) != length:
         return None
-    if not all(type(item) is float for item in value) and not all(
+    if not all(item_type is float for item_type in map(type, value)) and not all(
         isinstance(item, Real)
         and not isinstance(item, (bool, np.bool_))
         for item in value

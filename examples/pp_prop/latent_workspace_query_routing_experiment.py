@@ -52,7 +52,6 @@ from examples.pp_prop.latent_workspace_online_training import (
     save_online_checkpoint,
 )
 from examples.pp_prop.latent_workspace_query_routing_model import (
-    ARCHITECTURE_VERSION,
     QueryRoutingConfig,
     QueryRoutingGatedMemoryRNN,
     extend_events_query_grid,

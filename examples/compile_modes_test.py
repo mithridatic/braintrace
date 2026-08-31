@@ -25,7 +25,7 @@ for p in (EXAMPLES_DIR, EXAMPLES_DIR / "pp_prop"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-import _shared as pp  # noqa: E402  (examples/pp_prop/_shared.py)
+import _shared as pp
 
 B, T, N_IN, N_REC = 4, 6, 3, 8
 
@@ -81,7 +81,7 @@ def test_snn_cell_compiles_and_runs_in_both_modes(cell_name, vmap):
 def test_gif_neuron_init_state_accepts_batch_size():
     """Regression: the custom GIF neuron's init_state must accept batch_size
     (the non-vmap compile path calls init_all_states(model, batch_size=B))."""
-    from snn_models import GIF  # type: ignore
+    from snn_models import GIF
 
     with brainstate.environ.context(dt=1.0 * u.ms):
         neu = GIF(N_REC)

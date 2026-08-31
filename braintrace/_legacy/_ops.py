@@ -278,14 +278,20 @@ class ElemWiseOp(ETraceOp):
         super().__init__(is_diagonal=True)
         self._raw_fn = fn
 
-    def __call__(self, weights: Any) -> Any:  # type: ignore[override]
-        return self.xw_to_y(None, weights)
-
     def xw_to_y(self, inputs: Any, weights: Any) -> Any:
         return _new_element_wise(weights, weight_fn=self._raw_fn)
 
     def raw_xw_to_y(self, inputs: Any, weights: Any) -> Any:
         return self._raw_fn(weights)
+
+
+def _elemwise_call(self: ElemWiseOp, weights: Any) -> Any:
+    return self.xw_to_y(None, weights)
+
+
+_elemwise_call.__name__ = '__call__'
+_elemwise_call.__qualname__ = 'ElemWiseOp.__call__'
+setattr(ElemWiseOp, '__call__', _elemwise_call)
 
 
 # ---------------------------------------------------------------------------

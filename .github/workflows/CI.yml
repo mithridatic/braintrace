@@ -151,6 +151,12 @@ jobs:
       - name: Type check with mypy
         run: |
           python -m mypy braintrace
+      - name: Type check with basedpyright
+        run: |
+          basedpyright
+      - name: Lint with Ruff
+        run: |
+          ruff check .
       - name: Build wheel and sdist
         run: |
           python -m build

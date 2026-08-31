@@ -122,7 +122,7 @@ def test_protocol_arm_rejects_malformed_inputs(
             query_stop=query_stop,
             decoder_rows=decoder_rows,
             efforts=efforts,
-            control=control,  # type: ignore[arg-type]
+            control=control,
         )
 
 
@@ -135,7 +135,7 @@ def test_arm_stream_validates_boundaries_and_metadata() -> None:
         ({"bad": 1, "total_steps": 2}, None, "mapping"),
     ):
         with pytest.raises((TypeError, ValueError), match=message):
-            ArmStream(events, gates, boundaries, metadata)  # type: ignore[arg-type]
+            ArmStream(events, gates, boundaries, metadata)
 
 
 def test_batched_protocol_rejects_invalid_boundaries_and_controls() -> None:
@@ -149,7 +149,7 @@ def test_batched_protocol_rejects_invalid_boundaries_and_controls() -> None:
         build_batched_protocol_v2_arm(events, advance, np.array([0, 4]))
     with pytest.raises(ValueError, match="protocol-v2 control"):
         build_batched_protocol_v2_arm(
-            events, advance, np.array([2, 2]), control="invalid"  # type: ignore[arg-type]
+            events, advance, np.array([2, 2]), control="invalid"
         )
 
 

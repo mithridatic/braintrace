@@ -2,7 +2,6 @@
 
 import importlib.util
 import pathlib
-import subprocess
 import sys
 from types import SimpleNamespace
 

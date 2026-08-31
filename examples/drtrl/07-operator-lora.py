@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class LoRACell(brainstate.nn.RNNCell):
@@ -71,7 +71,8 @@ def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict
     num_step, n_hidden = 40, 32
     model = Net(1, n_hidden)
     weights = model.states(brainstate.ParamState)
-    opt = braintools.optim.Adam(5e-3);
+    opt = braintools.optim.Adam(5e-3)
+
     opt.register_trainable_weights(weights)
 
     @brainstate.transform.jit
@@ -98,10 +99,13 @@ def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict
         losses.append(float(f_train(x, y)))
 
     if plot:
-        plt.plot(losses);
-        plt.xlabel('epoch');
+        plt.plot(losses)
+
+        plt.xlabel('epoch')
+
         plt.ylabel('MSE')
-        plt.title('07 · LoRA adapter on frozen base — sine');
+        plt.title('07 · LoRA adapter on frozen base — sine')
+
         plt.show()
     return {"losses": losses}
 

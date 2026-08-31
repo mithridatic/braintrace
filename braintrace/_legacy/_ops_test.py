@@ -25,6 +25,7 @@ Coverage:
 
 
 
+import inspect
 import warnings
 
 import jax
@@ -84,6 +85,13 @@ class TestOpsForward:
         w = jnp.ones((5,))
         y = op(w)
         np.testing.assert_allclose(y, 3.0)
+
+    def test_elemwise_op_keeps_its_call_signature(self):
+        op = ElemWiseOp(fn=lambda w: w * 3)
+        w = jnp.ones((5,))
+
+        assert tuple(inspect.signature(ElemWiseOp.__call__).parameters) == ('self', 'weights')
+        np.testing.assert_allclose(op(weights=w), 3.0)
 
     def test_lora_op(self):
         op = LoraOp(alpha=2.0)

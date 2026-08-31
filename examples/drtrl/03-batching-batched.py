@@ -11,14 +11,13 @@ import sys
 
 import brainstate
 import braintools
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
 import braintrace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import _shared  # noqa: E402
+import _shared
 
 
 class RNN(brainstate.nn.Module):
@@ -60,10 +59,13 @@ def main(*, n_epochs: int = 30, batch_size: int = 64, plot: bool = True) -> dict
         losses.append(float(f_train(x, y)))
 
     if plot:
-        plt.plot(losses);
-        plt.xlabel('epoch');
+        plt.plot(losses)
+
+        plt.xlabel('epoch')
+
         plt.ylabel('MSE')
-        plt.title('03 · Batching via brainstate.mixin.Batching');
+        plt.title('03 · Batching via brainstate.mixin.Batching')
+
         plt.show()
     return {"losses": losses}
 

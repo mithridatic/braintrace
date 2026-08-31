@@ -19,7 +19,7 @@ from braintrace._op.attention import (
     _attention_residual_weights,
     attention_residual,
 )
-from braintrace._typing import ArrayLike
+from braintrace._typing import ArrayLike, _init_module
 
 _ZERO_QUERY_INIT = braintools.init.ZeroInit()
 
@@ -75,7 +75,7 @@ class AttentionResidual(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # type: ignore[call-arg]
+        _init_module(super().__init__, name)
         if isinstance(hidden_size, bool) or not isinstance(hidden_size, int):
             raise TypeError("hidden_size must be a positive integer. Set hidden_size to a positive integer.")
         if isinstance(query_count, bool) or not isinstance(query_count, int):

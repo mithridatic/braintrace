@@ -61,7 +61,8 @@ def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict
         model, 'D_RTRL', jnp.zeros((batch_size, 28, 1)), batch_size=batch_size,
     )
     weights = model.states(brainstate.ParamState)
-    opt = braintools.optim.Adam(3e-3);
+    opt = braintools.optim.Adam(3e-3)
+
     opt.register_trainable_weights(weights)
 
     @brainstate.transform.jit
@@ -87,10 +88,13 @@ def main(*, n_epochs: int = 30, batch_size: int = 16, plot: bool = True) -> dict
         losses.append(float(f_train(x, y)))
 
     if plot:
-        plt.plot(losses);
-        plt.xlabel('epoch');
+        plt.plot(losses)
+
+        plt.xlabel('epoch')
+
         plt.ylabel('cross-entropy')
-        plt.title('08 · Conv1d + MiniGRU');
+        plt.title('08 · Conv1d + MiniGRU')
+
         plt.show()
     return {"losses": losses}
 

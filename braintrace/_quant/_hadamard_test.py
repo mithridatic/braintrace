@@ -1,7 +1,6 @@
 # Copyright 2026 BrainX Ecosystem Limited. Licensed under the Apache License, 2.0.
 
 import brainstate
-import jax
 import jax.numpy as jnp
 import pytest
 

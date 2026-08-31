@@ -193,7 +193,8 @@ class TestGmmEtpRules:
         x = brainstate.random.randn(self.B, self.G, self.K)
         hd = brainstate.random.randn(self.B, self.G, self.N)
         weights = {'weight': brainstate.random.randn(self.G, self.K, self.N)}
-        fn = lambda ww: jnp.tanh(ww)
+        def fn(ww):
+            return jnp.tanh(ww)
         assert_xy_to_dw_matches_vjp(
             rule=ETP_RULES_XY_TO_DW[etp_gmm_p],
             impl=lambda wd: jnp.einsum('bgk,gkn->bgn', x, fn(wd['weight'])),
@@ -368,7 +369,8 @@ def _grouped_tanh_rnn_factory(G=2, K=3, n_in=3, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = lambda seed: brainstate.random.RandomState(seed).value
+                def k(seed):
+                    return brainstate.random.RandomState(seed).value
                 self.w = brainstate.ParamState(
                     0.1 * brainstate.random.normal(size=(G, K, K), key=k(seed)))
                 self.win = brainstate.ParamState(
@@ -411,7 +413,8 @@ class TestGroupedOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = lambda seed: brainstate.random.RandomState(seed).value
+                    def k(seed):
+                        return brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
                         0.1 * brainstate.random.normal(size=(G, K, K), key=k(0)))
                     self.b = brainstate.ParamState(
@@ -444,7 +447,8 @@ class TestGroupedOracle:
             class Net(brainstate.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    k = lambda seed: brainstate.random.RandomState(seed).value
+                    def k(seed):
+                        return brainstate.random.RandomState(seed).value
                     self.w = brainstate.ParamState(
                         0.1 * brainstate.random.normal(size=(G, K, K), key=k(0)))
                     self.win = brainstate.ParamState(

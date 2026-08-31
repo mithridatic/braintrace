@@ -40,11 +40,13 @@ from typing import Any, Dict, Sequence, Tuple
 from brainstate._compatible_import import Primitive, Var, JaxprEqn, Jaxpr, ClosedJaxpr, Literal, wrap_init
 
 try:
-    from jax.extend.core import new_jaxpr_eqn
+    from jax.extend.core import new_jaxpr_eqn as _new_jaxpr_eqn
 except ImportError:  # Older JAX exposes it on jax.core only
     # jax.core dropped ``new_jaxpr_eqn`` in JAX 0.11; this fallback only runs on
     # older JAX, so silence mypy's static attr-defined/no-redef complaints.
-    from jax.core import new_jaxpr_eqn  # type: ignore[attr-defined, no-redef]
+    _new_jaxpr_eqn = getattr(jax.core, 'new_jaxpr_eqn')
+
+new_jaxpr_eqn = _new_jaxpr_eqn
 
 try:
     from jax._src.ad_util import stop_gradient_p

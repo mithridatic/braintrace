@@ -440,18 +440,20 @@ def grouped_matmul(
             f'out_features); got ndim={getattr(weight, "ndim", None)}. Set grouped_matmul weight to a value with shape (groups, in_features, '
             f'out_features); got ndim={getattr(weight, "ndim", None)}.'
         )
-    if x.ndim not in (2, 3):  # type: ignore[union-attr]
+    x_array: Any = x
+    weight_array: Any = weight
+    if x_array.ndim not in (2, 3):
         raise ValueError(
             'grouped_matmul() supports x.ndim of 2 (groups, in_features) or 3 '
             '(batch, groups, in_features); fold extra leading axes into the '
-            f'batch axis first. Got x.ndim={x.ndim}. Fix the input condition named in the error, then rerun the operation.'  # type: ignore[union-attr]
+            f'batch axis first. Got x.ndim={x_array.ndim}. Fix the input condition named in the error, then rerun the operation.'
         )
-    if x.shape[-2:] != weight.shape[:2]:  # type: ignore[union-attr]  # rank checks above exclude scalar ArrayLike items
+    if x_array.shape[-2:] != weight_array.shape[:2]:
         raise ValueError(
-            f'x trailing axes {x.shape[-2:]} must equal weight leading axes '  # type: ignore[union-attr]
-            f'{weight.shape[:2]} (groups, in_features).'  # type: ignore[union-attr]
+            f'x trailing axes {x_array.shape[-2:]} must equal weight leading axes '
+            f'{weight_array.shape[:2]} (groups, in_features).'
         )
-    p = etp_gmm_p if x.ndim == 3 else etp_gmv_p  # type: ignore[union-attr]
+    p = etp_gmm_p if x_array.ndim == 3 else etp_gmv_p
     x_v, x_u = u.split_mantissa_unit(x)
     weight_v, weight_u = u.split_mantissa_unit(weight)
     unit = x_u * weight_u

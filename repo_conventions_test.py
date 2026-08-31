@@ -10,14 +10,24 @@ GENERATIVE_JAX_RANDOM = re.compile(
     r"jax\.random\.(?:PRNGKey|bernoulli|bits|categorical|choice|fold_in|"
     r"normal|permutation|randint|split|truncated_normal|uniform)\b"
 )
+INLINE_SUPPRESSION = re.compile(
+    r"#\s*(?:noqa\b|type:\s*ignore\b|pyright:\s*ignore\b|ruff:\s*noqa\b|"
+    r"mypy:\s*ignore-errors\b|flake8:\s*noqa\b|pylint:\s*(?:disable|skip-file)\b)"
+)
 
 
 def source_files() -> list[pathlib.Path]:
-    return [
+    nested = [
         path
-        for base in (ROOT / "braintrace", ROOT / "examples")
+        for base in (
+            ROOT / ".github",
+            ROOT / "braintrace",
+            ROOT / "docs",
+            ROOT / "examples",
+        )
         for path in base.rglob("*.py")
     ]
+    return [*ROOT.glob("*.py"), *nested]
 
 
 def test_tests_are_colocated_with_suffix_names() -> None:
@@ -42,6 +52,16 @@ def test_generation_uses_brainstate_random() -> None:
         path.relative_to(ROOT)
         for path in source_files()
         if GENERATIVE_JAX_RANDOM.search(path.read_text(encoding="utf-8"))
+    )
+
+    assert violations == []
+
+
+def test_python_files_have_no_inline_lint_suppressions() -> None:
+    violations = sorted(
+        path.relative_to(ROOT)
+        for path in source_files()
+        if INLINE_SUPPRESSION.search(path.read_text(encoding="utf-8"))
     )
 
     assert violations == []

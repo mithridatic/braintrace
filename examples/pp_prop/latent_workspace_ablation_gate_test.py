@@ -702,7 +702,9 @@ def _assert_parameter_values_equal(
 
 
 def _assert_dataclass_arrays_equal(left: Any, right: Any) -> None:
-    assert type(left) is type(right)
+    left_type = type(left)
+    right_type = type(right)
+    assert left_type is right_type
     assert dataclasses.is_dataclass(left)
     for field in dataclasses.fields(left):
         left_value = getattr(left, field.name)
@@ -7339,8 +7341,12 @@ def test_gate_c2_controls_audit_records_all_direct_forbidden_boundaries(
     class FakeTrainer:
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             del args, kwargs
-            self.train = lambda *args, **kwargs: None
-            self.train_chunk = lambda *args, **kwargs: None
+
+        def train(self, *args: Any, **kwargs: Any) -> None:
+            del args, kwargs
+
+        def train_chunk(self, *args: Any, **kwargs: Any) -> None:
+            del args, kwargs
 
     monkeypatch.setattr(gate_c, "GateCTrainer", FakeTrainer)
     monkeypatch.setattr(gate_a, "_PPPropTrainer", FakeTrainer)
@@ -8741,7 +8747,8 @@ def test_gate_c2_host_boundaries_are_exact_independent_and_replayable() -> None:
 
     assert isinstance(boundaries, tuple)
     assert len(boundaries) == 8
-    assert all(type(boundary) is type(h0_snapshot) for boundary in boundaries)
+    snapshot_type = type(h0_snapshot)
+    assert all(boundary_type is snapshot_type for boundary_type in map(type, boundaries))
     h0_entry_paths = tuple(path for path, _ in h0_snapshot.entries)
     assert all(
         tuple(path for path, _ in boundary.entries) == h0_entry_paths
@@ -11273,7 +11280,10 @@ def test_gate_c2_controls_runner_rejects_schedule_active_audit_and_source_end(
         "_mechanism_oracle",
         lambda *args, **kwargs: {"complete": True},
     )
-    kwargs["source_end_reporter"] = lambda: None
+    def source_end_reporter() -> None:
+        return None
+
+    kwargs["source_end_reporter"] = source_end_reporter
     with pytest.raises(TypeError, match="mapping"):
         gate_c.run_gate_c2_controls(config, **kwargs)
     assert gate_c._ACTIVE_GATE_C2_CONTROLS_AUDIT is None

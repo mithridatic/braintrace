@@ -157,13 +157,19 @@ class ElemWiseParam(ETraceParam):
             op = ElemWiseOp(op)
         super().__init__(weight, op=op, grad=ETraceGrad.full, name=name)
 
-    def execute(self) -> Any:  # type: ignore[override]
-        return self.op(self.value)
+def _execute_elemwise(self: ElemWiseParam) -> Any:
+    return self.op.xw_to_y(None, self.value)
+
+
+_execute_elemwise.__name__ = 'execute'
+_execute_elemwise.__qualname__ = 'ElemWiseParam.execute'
+setattr(ElemWiseParam, 'execute', _execute_elemwise)
 
 
 # ---------------------------------------------------------------------------
 # NonTempParam
 # ---------------------------------------------------------------------------
+
 
 class NonTempParam(brainstate.ParamState):
     r"""Legacy parameter with spatial gradient only and no eligibility trace.

@@ -50,7 +50,8 @@ def test_sequence_is_preserved_in_order():
 
 
 def test_result_is_a_plain_tuple_not_a_list_or_array():
-    assert type(as_size_tuple([2, 3])) is tuple
+    result_type = type(as_size_tuple([2, 3]))
+    assert result_type is tuple
 
 
 @pytest.mark.parametrize(
@@ -81,7 +82,7 @@ def test_every_arm_of_the_declared_size_union_is_accepted(size):
     """
     result = as_size_tuple(size)
     assert isinstance(result, tuple)
-    assert all(type(s) is int for s in result)
+    assert all(element_type is int for element_type in map(type, result))
 
 
 # ===========================================================================
@@ -97,7 +98,8 @@ def test_numpy_scalars_are_downcast_to_builtin_int():
     """
     result = as_size_tuple(np.int32(7))
     assert result == (7,)
-    assert type(result[0]) is int
+    result_type = type(result[0])
+    assert result_type is int
     assert not isinstance(result[0], np.integer)
 
 
@@ -112,7 +114,8 @@ def test_bool_is_accepted_as_an_int_subclass():
     Pinned as a fact, not endorsed: nothing rejects it, and it normalises to 1.
     """
     assert as_size_tuple(True) == (1,)
-    assert type(as_size_tuple(True)[0]) is int
+    result_type = type(as_size_tuple(True)[0])
+    assert result_type is int
 
 
 # ===========================================================================

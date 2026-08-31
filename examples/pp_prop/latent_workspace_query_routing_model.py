@@ -21,7 +21,6 @@ from dataclasses import dataclass
 from numbers import Integral, Real
 
 import brainstate
-import jax
 import jax.numpy as jnp
 import numpy as np
 

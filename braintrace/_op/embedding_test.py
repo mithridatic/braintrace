@@ -167,7 +167,8 @@ class TestEmbEtpRules:
         idx = jnp.array([1, 3], dtype=jnp.int32)
         hd = brainstate.random.randn(2, self.D)
         weights = {'weight': brainstate.random.randn(self.V, self.D)}
-        fn = lambda w: jnp.tanh(w)
+        def fn(w):
+            return jnp.tanh(w)
         assert_xy_to_dw_matches_vjp(
             rule=ETP_RULES_XY_TO_DW[etp_emb_p],
             impl=lambda wd: jnp.take(fn(wd['weight']), idx, axis=0),
@@ -253,7 +254,8 @@ class TestPPXRepr:
         xf = brainstate.random.randn(2, 5)
         hd = brainstate.random.randn(2, 4)
         weights = {'weight': brainstate.random.randn(5, 4)}
-        fn = lambda w: jnp.tanh(w)
+        def fn(w):
+            return jnp.tanh(w)
         assert_xy_to_dw_matches_vjp(
             rule=ETP_RULES_XY_TO_DW[etp_emb_p],
             impl=lambda wd: xf @ fn(wd['weight']),
@@ -323,7 +325,8 @@ def _tanh_embedding_rnn_factory(V=5, D=4, seed=0):
         class Net(brainstate.nn.Module):
             def __init__(self):
                 super().__init__()
-                k = lambda seed: brainstate.random.RandomState(seed).value
+                def k(seed):
+                    return brainstate.random.RandomState(seed).value
                 self.table = brainstate.ParamState(
                     0.1 * brainstate.random.normal(size=(V, D), key=k(seed)))
                 self.w = brainstate.ParamState(
