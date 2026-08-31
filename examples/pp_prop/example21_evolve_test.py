@@ -3380,8 +3380,8 @@ def test_operation_budget_chains_distinct_operations_off_each_accepted_state(
 def test_unset_operation_budget_reproduces_the_single_pass_lifecycle(
     tmp_path: Path,
 ) -> None:
-    def stages(config: PipelineConfig) -> list[str]:
-        directory = tmp_path / f"ops-{config.operations_per_round}"
+    def records(config: PipelineConfig, name: str) -> list[dict]:
+        directory = tmp_path / name
         run_evolution(
             _Adapter(),
             directory,
@@ -3389,18 +3389,46 @@ def test_unset_operation_budget_reproduces_the_single_pass_lifecycle(
             history_plotter=_history_plotter,
         )
         return [
-            json.loads(line)["stage"]
+            json.loads(line)
             for line in (directory / "progress.jsonl").read_text().splitlines()
         ]
 
-    default = stages(PipelineConfig(rounds=1))
-    explicit = stages(PipelineConfig(rounds=1, operations_per_round=4))
-    assert default == explicit
-    assert [stage for stage in default if stage in OPERATION_STAGES] == [
+    historical = records(PipelineConfig(rounds=1, screen_tasks=0), "unscreened")
+    assert [record["stage"] for record in historical] == [
+        "train",
         "edge",
         "neuron",
         "edge-revisit",
         "dale",
+        "round-end",
+        "terminal",
+    ]
+    assert all(record["score_scope"] == "full" for record in historical)
+    assert all(record["operation_index"] == 0 for record in historical[:2])
+    assert [record["stage_id"] for record in historical[:3]] == [
+        "r000-train",
+        "r000-op00-edge",
+        "r000-op01-neuron",
+    ]
+
+    screened = records(PipelineConfig(rounds=1), "screened")
+    assert [record["stage"] for record in screened] == [
+        "train",
+        "round-screen",
+        "edge",
+        "neuron",
+        "edge-revisit",
+        "dale",
+        "round-score",
+        "round-end",
+        "terminal",
+    ]
+    assert [
+        record["stage_id"] for record in screened if record["stage"] in OPERATION_STAGES
+    ] == [
+        record["stage_id"]
+        for record in historical
+        if record["stage"] in OPERATION_STAGES
     ]
 
 
