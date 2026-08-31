@@ -7,7 +7,6 @@ import brainevent
 import jax.numpy as jnp
 import numpy as np
 import pytest
-
 from examples.pp_prop.dale_candidates import (
     DaleMeasurements,
     deferred_biology_defaults,
@@ -218,7 +217,7 @@ def test_dale_runner_isolates_both_arms_and_requires_exact_gate() -> None:
         return candidate.updates
 
     def strict(value):
-        return (value.updates == 64,)
+        return (value.updates == 128,)
 
     result = run_dale_candidates(
         parent, measurements, build, update, strict,
@@ -226,17 +225,17 @@ def test_dale_runner_isolates_both_arms_and_requires_exact_gate() -> None:
     )
     assert result["candidate_count"] == 1
     assert [arm["sign"] for arm in result["arms"]] == [1, -1]
-    assert all(arm["updates"] == 64 and arm["promoted"] for arm in result["arms"])
+    assert all(arm["updates"] == 128 and arm["promoted"] for arm in result["arms"])
     assert all(item[0] is not parent for item in built)
     assert built[0][0] is not built[1][0]
     assert result["parent_checkpoint_unchanged"]
-    assert strict_dale_gate((False, True), (True, True), updates=64)
-    assert not strict_dale_gate((True,), (False,), updates=64)
-    with pytest.raises(ValueError, match="64"):
+    assert strict_dale_gate((False, True), (True, True), updates=128)
+    assert not strict_dale_gate((True,), (False,), updates=128)
+    with pytest.raises(ValueError, match="128"):
         strict_dale_gate((False,), (True,), updates=8)
     with pytest.raises(ValueError, match="equal length"):
-        strict_dale_gate((False,), (False, True), updates=64)
-    assert not strict_dale_gate((False,), (True,), updates=64, elapsed_seconds=301.0)
+        strict_dale_gate((False,), (False, True), updates=128)
+    assert not strict_dale_gate((False,), (True,), updates=128, elapsed_seconds=301.0)
 
 
 def test_dale_runner_rejects_invalid_arm_and_parent() -> None:
@@ -255,7 +254,7 @@ def test_dale_runner_rejects_alias_and_checkpoint_mutation() -> None:
     kwargs = {
         "measurements": _measurements(),
         "update": lambda candidate, _index: setattr(candidate, "updates", candidate.updates + 1),
-        "strict": lambda value: (value.updates == 64,),
+        "strict": lambda value: (value.updates == 128,),
         "transform": _EagerTransform,
     }
     with pytest.raises(ValueError, match="alias"):
@@ -296,7 +295,7 @@ def test_dale_runner_rejects_deferred_chemistry_in_an_arm() -> None:
                 updates=0,
             ),
             lambda candidate, _index: setattr(candidate, "updates", candidate.updates + 1),
-            lambda value: (value.updates == 64,),
+            lambda value: (value.updates == 128,),
             transform=_EagerTransform,
     )
 

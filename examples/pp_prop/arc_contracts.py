@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import tempfile
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -17,7 +18,8 @@ EVENTS = 705
 EVENT_WIDTH = 441
 MAX_RESULT_BYTES = 256 * 1024
 MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
-MAX_BIOLOGICAL_CONNECTIONS = 30_496
+CORPUS_TASK_COUNT = 400
+BIOLOGICAL_CONNECTIONS_PER_NEURON = 1_024
 TRAINING_ORDER = ("d631b094", "dc433765", "b782dc8a", "d06dbe63", "aedd82e4", "0b148d64", "b2862040", "150deff5")
 VALIDATION_ORDER = ("46f33fce", "3428a4f5", "d8c310e9", "09629e4f")
 PROOF_ORDER = ("d631b094", "46f33fce")
@@ -64,15 +66,110 @@ class ARCTask:
         object.__setattr__(self, "targets", targets)
 
 
-def load_task(root: str | os.PathLike[str], task_id: str, role: str = "practice", *, allow_evaluation: bool = False) -> ARCTask:
-    """Load one declared raw ARC task directly from its role directory."""
+def _valid_task_id(task_id: str) -> bool:
+    return (
+        len(task_id) == 8
+        and task_id == task_id.lower()
+        and all(character in "0123456789abcdef" for character in task_id)
+    )
+
+
+@dataclass(frozen=True)
+class ARCCorpusSource:
+    """One immutable source declaration in an ARC corpus manifest.
+
+    Parameters
+    ----------
+    task_id : str
+        Eight-character lowercase hexadecimal ARC task identifier.
+    source_path : str
+        POSIX-style path relative to the declared ARC root.
+    source_sha256 : str
+        Lowercase SHA-256 digest of the source JSON bytes.
+    """
+
+    task_id: str
+    source_path: str
+    source_sha256: str
+
+    def __post_init__(self) -> None:
+        if not _valid_task_id(self.task_id):
+            raise ValueError("ARC task IDs must be eight lowercase hexadecimal characters")
+        if (
+            len(self.source_sha256) != 64
+            or self.source_sha256 != self.source_sha256.lower()
+            or any(character not in "0123456789abcdef" for character in self.source_sha256)
+        ):
+            raise ValueError("ARC source SHA-256 must be 64 lowercase hexadecimal characters")
+        path = Path(self.source_path)
+        if path.is_absolute() or ".." in path.parts:
+            raise ValueError("ARC source paths must stay relative to the declared root")
+
+
+@dataclass(frozen=True)
+class ARCCorpusManifest:
+    """Immutable declaration of one complete 400-task ARC corpus.
+
+    Parameters
+    ----------
+    root : str
+        Resolved ARC corpus root used to create this manifest.
+    role : {"practice", "evaluation"}
+        Corpus role. ``practice`` maps to the raw ``training`` directory.
+    sources : tuple of ARCCorpusSource
+        Exactly 400 source declarations in stable task and path order.
+    """
+
+    root: str
+    role: str
+    sources: tuple[ARCCorpusSource, ...]
+
+    def __post_init__(self) -> None:
+        if self.role not in ("practice", "evaluation"):
+            raise ValueError("manifest role must be practice or evaluation")
+        if len(self.sources) != CORPUS_TASK_COUNT:
+            raise ValueError("ARC corpus manifest must declare exactly 400 tasks")
+        task_ids = tuple(source.task_id for source in self.sources)
+        source_paths = tuple(source.source_path for source in self.sources)
+        if task_ids != tuple(sorted(task_ids)) or len(set(task_ids)) != len(task_ids):
+            raise ValueError("ARC corpus manifest task IDs must be unique and sorted")
+        if source_paths != tuple(sorted(source_paths)):
+            raise ValueError("ARC corpus manifest source paths must be sorted")
+        directory = "training" if self.role == "practice" else "evaluation"
+        expected_paths = tuple(
+            f"data/{directory}/{task_id}.json" for task_id in task_ids
+        )
+        if source_paths != expected_paths:
+            raise ValueError("ARC corpus manifest paths do not match its role and task IDs")
+
+    @property
+    def task_ids(self) -> tuple[str, ...]:
+        """Return the stable task order declared by the manifest.
+
+        Returns
+        -------
+        tuple of str
+            Exactly 400 sorted ARC task identifiers.
+        """
+
+        return tuple(source.task_id for source in self.sources)
+
+
+def _validate_role_access(role: str, allow_evaluation: bool) -> None:
     if role not in ("practice", "evaluation"):
         raise ValueError("role must be practice or evaluation")
     if role == "evaluation" and not allow_evaluation:
         raise ValueError("evaluation data is not allowed in ordinary runs; pass allow_evaluation=True")
-    if task_id not in TRAINING_ORDER + VALIDATION_ORDER + PROOF_ORDER:
-        raise ValueError(f"task {task_id} is not a declared direct ARC task")
-    path = Path(root) / "data" / ("training" if role == "practice" else "evaluation") / f"{task_id}.json"
+
+
+def _source_sha256(path: Path) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise ValueError(f"ARC source cannot be read from {path}") from exc
+
+
+def _load_task_path(path: Path, task_id: str, role: str) -> ARCTask:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -87,6 +184,126 @@ def load_task(root: str | os.PathLike[str], task_id: str, role: str = "practice"
     queries = tuple(_copy_grid(item["input"], task_id, "query input") for item in tests)
     targets = tuple(_copy_grid(item["output"], task_id, "query target") if "output" in item else None for item in tests)
     return ARCTask(task_id, demonstrations, queries, targets, role)
+
+
+def load_corpus_manifest(
+    root: str | os.PathLike[str],
+    role: str = "practice",
+    *,
+    allow_evaluation: bool = False,
+) -> ARCCorpusManifest:
+    """Declare one complete, reproducibly ordered ARC corpus.
+
+    Parameters
+    ----------
+    root : path-like
+        Raw ARC root containing ``data/training`` and ``data/evaluation``.
+    role : {"practice", "evaluation"}, optional
+        Corpus role. ``practice`` reads only ``data/training``.
+    allow_evaluation : bool, optional
+        Explicitly permit evaluation source access. Ordinary callers must leave
+        this false.
+
+    Returns
+    -------
+    ARCCorpusManifest
+        Exactly 400 sorted task declarations with source paths and SHA-256s.
+
+    Raises
+    ------
+    ValueError
+        If access is not permitted or the corpus is missing, malformed, or does
+        not contain exactly 400 direct JSON task files.
+    """
+
+    _validate_role_access(role, allow_evaluation)
+    try:
+        resolved_root = Path(root).resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"ARC corpus root cannot be read from {root}") from exc
+    directory_name = "training" if role == "practice" else "evaluation"
+    directory = resolved_root / "data" / directory_name
+    if not directory.is_dir():
+        raise ValueError(f"ARC corpus directory cannot be read from {directory}")
+    paths = sorted(directory.glob("*.json"), key=lambda path: path.name)
+    if len(paths) != CORPUS_TASK_COUNT:
+        raise ValueError(
+            f"ARC {directory_name} corpus must contain exactly 400 JSON tasks; "
+            f"found {len(paths)}"
+        )
+    sources: list[ARCCorpusSource] = []
+    for path in paths:
+        task_id = path.stem
+        if not _valid_task_id(task_id):
+            raise ValueError("ARC task IDs must be eight lowercase hexadecimal characters")
+        try:
+            if path.is_symlink() or path.resolve(strict=True).parent != directory:
+                raise ValueError("ARC source paths must stay inside their corpus directory")
+        except OSError as exc:
+            raise ValueError(f"ARC source cannot be read from {path}") from exc
+        _ = _load_task_path(path, task_id, role)
+        sources.append(ARCCorpusSource(
+            task_id=task_id,
+            source_path=path.relative_to(resolved_root).as_posix(),
+            source_sha256=_source_sha256(path),
+        ))
+    return ARCCorpusManifest(str(resolved_root), role, tuple(sources))
+
+
+def load_task(
+    root: str | os.PathLike[str],
+    task_id: str,
+    role: str = "practice",
+    *,
+    allow_evaluation: bool = False,
+    manifest: ARCCorpusManifest | None = None,
+) -> ARCTask:
+    """Load one declared raw ARC task directly from its role directory.
+
+    Parameters
+    ----------
+    root : path-like
+        Raw ARC root.
+    task_id : str
+        Task identifier declared by the fixed compatibility set or ``manifest``.
+    role : {"practice", "evaluation"}, optional
+        Source role. ``practice`` maps to ``data/training``.
+    allow_evaluation : bool, optional
+        Explicitly permit evaluation source access.
+    manifest : ARCCorpusManifest, optional
+        Complete corpus capability that permits any one of its 400 task IDs.
+        When omitted, the legacy fixed Example 21 task set remains authoritative.
+
+    Returns
+    -------
+    ARCTask
+        Validated immutable ARC task.
+    """
+
+    _validate_role_access(role, allow_evaluation)
+    resolved_root = Path(root).resolve()
+    directory = "training" if role == "practice" else "evaluation"
+    if manifest is None:
+        if task_id not in TRAINING_ORDER + VALIDATION_ORDER + PROOF_ORDER:
+            raise ValueError(f"task {task_id} is not a declared direct ARC task")
+        path = resolved_root / "data" / directory / f"{task_id}.json"
+    else:
+        if not isinstance(manifest, ARCCorpusManifest):
+            raise TypeError("manifest must be an ARCCorpusManifest")
+        if resolved_root != Path(manifest.root):
+            raise ValueError("ARC corpus manifest belongs to a different ARC root")
+        if manifest.role != role:
+            raise ValueError("ARC corpus manifest role does not match the requested task role")
+        source = next(
+            (source for source in manifest.sources if source.task_id == task_id),
+            None,
+        )
+        if source is None:
+            raise ValueError(f"task {task_id} is not declared by the ARC corpus manifest")
+        path = resolved_root / source.source_path
+        if _source_sha256(path) != source.source_sha256:
+            raise ValueError(f"task {task_id} source digest does not match its ARC manifest")
+    return _load_task_path(path, task_id, role)
 
 
 def _one_hot(index: int | None, size: int) -> np.ndarray:
@@ -243,23 +460,23 @@ def write_result(path: str | os.PathLike[str], records: Sequence[Mapping[str, ob
     """Validate and atomically write the bounded result schema."""
     tasks = []
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
-        raise ValueError("records must be a sequence")
+        raise TypeError("records must be a sequence")
     for record in records:
         if set(record) != {"task_id", "queries", "strict_pass_at_1"}:
             raise ValueError("task result fields must be task_id, queries, and strict_pass_at_1")
         if not isinstance(record["task_id"], str) or not isinstance(record["strict_pass_at_1"], (bool, np.bool_)):
-            raise ValueError("task_id must be text and strict_pass_at_1 must be Boolean")
+            raise TypeError("task_id must be text and strict_pass_at_1 must be Boolean")
         queries = []
         predictions, targets = [], []
         if not isinstance(record["queries"], Sequence) or isinstance(record["queries"], (str, bytes)):
-            raise ValueError("queries must be a sequence")
+            raise TypeError("queries must be a sequence")
         for query in record["queries"]:
             if set(query) != {"query_index", "prediction", "target", "exact"}:
                 raise ValueError("query result fields must be query_index, prediction, target, and exact")
             if isinstance(query["query_index"], (bool, np.bool_)) or not isinstance(query["query_index"], (int, np.integer)) or query["query_index"] < 0:
                 raise ValueError("query_index must be a nonnegative integer")
             if not isinstance(query["exact"], (bool, np.bool_)):
-                raise ValueError("exact must be Boolean")
+                raise TypeError("exact must be Boolean")
             prediction, target = np.asarray(query["prediction"]), np.asarray(query["target"])
             if not _is_result_grid(prediction) or not _is_result_grid(target):
                 raise ValueError("prediction and target must be integer color grids from 0 through 9")
@@ -357,13 +574,14 @@ def _validate_checkpoint_arrays(arrays: Mapping[str, np.ndarray], format: int) -
             raise ValueError(f"checkpoint {prefix} CSR structure is invalid")
         if np.any(indices < 0) or np.any(indices >= endpoint_limit):
             raise ValueError(f"checkpoint {prefix} CSR endpoint is invalid")
-        if len(indices) > MAX_BIOLOGICAL_CONNECTIONS:
-            raise ValueError("checkpoint exceeds the biological connection limit")
         for suffix in ("indices", "values", "m1", "m2"):
             if arrays[f"{prefix}_{suffix}"].shape != indices.shape:
                 raise ValueError(f"checkpoint {prefix} arrays have inconsistent lengths")
-    if len(arrays["input_indices"]) + len(arrays["recurrent_indices"]) > MAX_BIOLOGICAL_CONNECTIONS:
-        raise ValueError("checkpoint exceeds the biological connection limit")
+    connection_count = len(arrays["input_indices"]) + len(arrays["recurrent_indices"])
+    if connection_count > BIOLOGICAL_CONNECTIONS_PER_NEURON * n:
+        raise ValueError(
+            "checkpoint exceeds the biological limit of 1,024 connections per neuron"
+        )
     for name in ("input_step", "recurrent_step", "readout_step"):
         if arrays[name].shape != () or int(arrays[name]) < 0:
             raise ValueError(f"checkpoint {name} must be a nonnegative scalar")

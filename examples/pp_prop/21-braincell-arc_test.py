@@ -5,10 +5,10 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import json
-from pathlib import Path
 import subprocess
 import sys
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import braincell
@@ -18,7 +18,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-
 
 _PATH = Path(__file__).with_name("21-braincell-arc.py")
 _SPEC = importlib.util.spec_from_file_location("braincell_arc", _PATH)
@@ -115,11 +114,40 @@ def test_cli_run_dispatches_fixed_real_workflow(monkeypatch, tmp_path):
         fixture,
         "_real_workflow_report",
         lambda root, *, proof: calls.append((root, proof)) or {
-            "mode": "run", "passed": True, "updates": 64,
+            "mode": "run", "passed": True, "updates": 128,
         },
     )
     assert fixture.main(["run", "--arc-root", str(tmp_path)]) == 0
     assert calls == [(tmp_path, False)]
+
+
+def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        fixture,
+        "_evolve_workflow_report",
+        lambda root, output, **options: calls.append((root, output, options)) or {
+            "mode": "evolve", "passed": True, "closed": True,
+        },
+    )
+
+    assert fixture.main([
+        "evolve", "--device", "cpu", "--arc-root", str(tmp_path),
+        "--output-dir", str(tmp_path / "run"),
+    ]) == 0
+    assert calls == [(
+        tmp_path,
+        tmp_path / "run",
+        {"rounds": 8, "patience": 2, "updates": 128},
+    )]
+    report = json.loads((tmp_path / "run" / "example21-evolve.json").read_text())
+    assert report["closed"]
+
+
+def test_cli_evolve_requires_output_directory(tmp_path):
+    with pytest.raises(SystemExit) as error:
+        fixture.main(["evolve", "--arc-root", str(tmp_path)])
+    assert error.value.code == 2
 
 
 def test_proof_source_has_no_synthetic_schedule_probe():
@@ -154,6 +182,26 @@ def test_supervised_request_loss_changes_when_target_changes():
         row_logits, target_shape, target_rows.at[0].set(1), valid_mask, jnp.asarray(2)
     )
     assert float(row_first) != pytest.approx(float(row_changed))
+
+
+def test_supervised_requests_sum_to_shape_plus_mean_valid_cell_loss():
+    logits = jnp.zeros((31, fixture.N_READOUT), dtype=jnp.float32)
+    target_shape = jnp.broadcast_to(jnp.asarray([1, 2]), (31, 2))
+    target_rows = jnp.zeros((31, 30), dtype=jnp.int32)
+    target_valid = jnp.zeros((31, 30), dtype=jnp.float32)
+    target_valid = target_valid.at[1:3, :3].set(1.0)
+    request_kind = jnp.concatenate((
+        jnp.asarray([1], dtype=jnp.int32),
+        jnp.full((30,), 2, dtype=jnp.int32),
+    ))
+
+    losses = jax.vmap(fixture._supervised_request_loss)(
+        logits, target_shape, target_rows, target_valid, request_kind
+    )
+
+    assert float(jnp.sum(losses)) == pytest.approx(
+        2.0 * np.log(30.0) + np.log(10.0), rel=1e-6
+    )
 
 
 def test_supervised_episodes_separate_request_targets_from_event_inputs(monkeypatch):
@@ -551,7 +599,8 @@ def test_two_half_step_fallback_does_not_replay_event():
 
 def test_trainer_schedule_keeps_episode_update_count_contract():
     assert fixture.update_schedule(fixture.PROOF_UPDATES, proof=True)[-1] == 7
-    assert fixture.update_schedule(fixture.ORDINARY_UPDATES)[-1] == 63
+    assert fixture.ORDINARY_UPDATES == 128
+    assert fixture.update_schedule(fixture.ORDINARY_UPDATES)[-1] == 127
 
 
 def test_episode_loss_clip_adam_and_fixed_schedules():
@@ -563,7 +612,7 @@ def test_episode_loss_clip_adam_and_fixed_schedules():
     assert next_state.step == 1
     assert jnp.all(jnp.isfinite(updated["x"]))
     assert fixture.update_schedule(8, proof=True) == tuple(range(8))
-    assert fixture.update_schedule(64) == tuple(range(64))
+    assert fixture.update_schedule(128) == tuple(range(128))
     with pytest.raises(ValueError):
         fixture.update_schedule(9, proof=True)
 
@@ -631,6 +680,32 @@ def test_event_sequence_uses_candidate_neuron_count_for_false_events():
         model, jnp.zeros((1, fixture.N_INPUTS)), [False]
     )
     assert outputs.shape == (1, 3)
+
+
+def test_model_rebuild_canonicalizes_sparse_rows_and_preserves_neuron_labels():
+    topology = type("Topology", (), {
+        "neuron_count": 2,
+        "input_source": np.asarray([1, 0], dtype=np.int32),
+        "input_target": np.asarray([0, 1], dtype=np.int32),
+        "input_value": np.asarray([2.0, 1.0], dtype=np.float32),
+        "recurrent_source": np.asarray([1, 0], dtype=np.int32),
+        "recurrent_target": np.asarray([0, 1], dtype=np.int32),
+        "recurrent_value": np.asarray([4.0, 3.0], dtype=np.float32),
+        "readout": np.zeros((2, fixture.N_READOUT), dtype=np.float32),
+        "dale": np.zeros(2, dtype=np.int8),
+        "mechanisms": ((), ()),
+        "owner_codes": np.asarray([7, 8], dtype=np.int16),
+        "neuron_ids": np.asarray([41, 55], dtype=np.int32),
+    })()
+
+    model = fixture.BrainCellArcModel(topology)
+
+    np.testing.assert_array_equal(model.input_csr.indices, [1, 0])
+    np.testing.assert_array_equal(model.input_weight.value, [1.0, 2.0])
+    np.testing.assert_array_equal(model.recurrent_csr.indices, [1, 0])
+    np.testing.assert_array_equal(model.recurrent_weight.value, [3.0, 4.0])
+    np.testing.assert_array_equal(model.owner_codes, [7, 8])
+    np.testing.assert_array_equal(model.neuron_ids, [41, 55])
 
 
 def test_pp_prop_sequence_preserves_eligibility_across_interspersed_padding():
@@ -723,7 +798,7 @@ def test_schedule_rejects_validation_and_wrong_ordinary_task_order():
     proof = [{"task_id": "d631b094", "validation": True}] * 8
     with pytest.raises(ValueError, match="forward-only"):
         fixture.run_fixed_schedule(Trainer(), proof, proof=True)
-    wrong = [{"task_id": "dc433765"}] * 64
+    wrong = [{"task_id": "dc433765"}] * fixture.ORDINARY_UPDATES
     with pytest.raises(ValueError, match="task order"):
         fixture.run_fixed_schedule(Trainer(), wrong)
 

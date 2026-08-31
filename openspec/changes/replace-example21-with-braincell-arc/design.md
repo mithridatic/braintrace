@@ -5,6 +5,13 @@ in `specs/pp-prop-braincell-arc/spec.md`. The approved background and measured
 facts are in
 `docs/specs/2026-08-24-example21-architecture-recommendations.md`.
 
+The later approved iterative lifecycle is specified in
+`docs/specs/2026-08-31-example21-iterative-pipeline.md`. For the `evolve`
+command, its full-corpus, Muon, selection, durability, and automatic-artifact
+decisions supersede the original bounded `proof` and `run` decisions below.
+Muon and 128 updates also supersede the old Adam and 64-update defaults for
+legacy `run`. Other original decisions remain binding for `proof` and `run`.
+
 The replacement must join four systems: raw ARC task files, BrainCell
 Hodgkin-Huxley dynamics, BrainTrace PP-Prop, and exact ARC decoding. BrainTrace
 PP-Prop is an approximate online learning rule. A one-step local derivative can
@@ -463,6 +470,40 @@ The first plot path uses Matplotlib in two dimensions because it has lower setup
 cost than a three-dimensional renderer. It reads an accepted compact checkpoint
 and groups nodes by task owner and Dale label. Plotting is explicit and cannot
 run during normal training.
+
+### 14. Add one resumable full-corpus evolution command
+
+The `evolve` command owns an eight-round train and structural-search lifecycle.
+It reads a digest-bound manifest of all 400 sorted training tasks and every
+target-bearing query. It keeps all 400 evaluation tasks unopened until one
+terminal forward-only score. Every ordinary training block and structural arm
+uses 128 PP-Prop episode updates. Rank-two parameters use Optax Muon. Muon's
+AdamW fallback handles non-matrix parameters.
+
+Each stage compares an immutable parent with two siblings that use the same
+query schedule. Direct exact task count is the primary optimization measure.
+At equal exact count, a sibling can continue when it preserves solved tasks and
+reduces the unresolved-task shape-and-cell loss by the protected threshold.
+Equal capability prefers fewer persistent bytes, then fewer neurons and
+recurrent edges. After training mastery, only resource-reducing pruning can
+continue.
+
+The stage order is parent training, edge add/prune, neuron twin/prune, optional
+edge revisit, and measured excitatory/inhibitory Dale assignment. Python owns
+the bounded shape-changing stage coordination. BrainState `jit` and
+`for_loop` own repeated model execution and full-corpus scoring.
+
+Format-1 NPZ files remain model-and-optimizer array checkpoints. Digest-bound
+`run-state.json`, `pending-transition.json`, and `progress.jsonl` own the stage
+cursor and ancestry. This split avoids changing the compatible NPZ schema.
+The command automatically refreshes the accepted topology and score-history
+PNGs. Example 21 can use focused helper modules with sibling suffix-style tests,
+but `21-braincell-arc.py` remains the only executable entry point.
+
+Structural ranking uses observed neural activity, effective sparse
+transmission, task ownership, and active Muon moment magnitude. These values
+are optimization evidence. They are not called pre-clip gradients or causal
+lesion measurements.
 
 ## Risks / Trade-offs
 

@@ -9,9 +9,8 @@ from dataclasses import dataclass
 
 import jax.numpy as jnp
 import numpy as np
-from jax.errors import TracerBoolConversionError
-
 from braintrace import sparse_matmul
+from jax.errors import TracerBoolConversionError
 
 _FLOOR = 1e-6
 
@@ -250,8 +249,8 @@ def validate_deferred_biology(**options: bool) -> None:
 
 def strict_dale_gate(before, after, *, updates: int, elapsed_seconds: float | None = None) -> bool:
     """Return whether one measured Dale arm gains strict results without regression."""
-    if updates != 64:
-        raise ValueError("Dale arms require exactly 64 updates")
+    if updates != 128:
+        raise ValueError("Dale arms require exactly 128 updates")
     if elapsed_seconds is not None and (
         not np.isfinite(elapsed_seconds) or elapsed_seconds > 300.0
     ):
@@ -295,14 +294,14 @@ def run_dale_arm(
     *,
     before_strict=None,
     transform=None,
-    updates: int = 64,
+    updates: int = 128,
     clock=time.perf_counter,
 ) -> dict:
-    """Build and measure one isolated 64-update Dale candidate arm."""
+    """Build and measure one isolated 128-update Dale candidate arm."""
     if sign not in (-1, 1):
         raise ValueError("Dale sign must be -1 or 1")
-    if updates != 64:
-        raise ValueError("Dale arms require exactly 64 updates")
+    if updates != 128:
+        raise ValueError("Dale arms require exactly 128 updates")
     if transform is None:
         import brainstate
         transform = brainstate.transform
@@ -350,7 +349,7 @@ def run_dale_candidates(
     *,
     checkpoint: bytes | None = None,
     transform=None,
-    updates: int = 64,
+    updates: int = 128,
     clock=time.perf_counter,
 ) -> dict:
     """Run isolated excitatory and inhibitory arms from one parent checkpoint.
