@@ -3556,12 +3556,13 @@ def _validate_progress_transition(
             ) from error
         if disposition != "accepted":
             raise ProgressConflictError("Progress rescore disposition is invalid.")
-        if store is not None:
+        source = attempts[0].candidate
+        if store is not None and source is not None:
             _verify_progress_checkpoint_lineage(
                 store,
                 stage_id=stage_id,
                 parent=expected_parent,
-                source=attempts[0].candidate,
+                source=source,
                 accepted=after.accepted,
             )
     elif stage in MODEL_STAGES:

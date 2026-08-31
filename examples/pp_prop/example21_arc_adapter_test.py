@@ -1904,15 +1904,16 @@ def test_rescore_changes_only_the_score_scope_of_its_accepted_state(
         del runtime
         scopes.append(tuple(options["task_ids"] or ()))
         Path(options["path"]).write_bytes(b"rescored-checkpoint")
+        scored_ids = tuple(options["task_ids"]) or ("a", "b", "c")
         return replace(
             parent,
             candidate_id=options["candidate_id"],
             checkpoint_path=str(options["path"]),
             checkpoint_sha256=hashlib.sha256(b"rescored-checkpoint").hexdigest(),
             score=example21_evolve.ScoreSnapshot(
-                task_ids=tuple(options["task_ids"]) or ("a", "b", "c"),
-                task_exact=(False,) * len(tuple(options["task_ids"]) or ("a", "b", "c")),
-                task_loss=(1.0,) * len(tuple(options["task_ids"]) or ("a", "b", "c")),
+                task_ids=scored_ids,
+                task_exact=(False,) * len(scored_ids),
+                task_loss=(1.0,) * len(scored_ids),
             ),
         )
 
