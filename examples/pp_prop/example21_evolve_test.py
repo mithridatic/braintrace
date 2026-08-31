@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import io
 import json
 import math
 from dataclasses import replace
@@ -629,6 +630,662 @@ class _Adapter:
 
 def _history_plotter(_records, output_path: Path) -> None:
     output_path.write_bytes(b"history")
+
+
+class _RecordingReporter:
+    def __init__(self) -> None:
+        self.events: list[dict[str, object]] = []
+        self.closed = False
+
+    def emit(self, event) -> None:
+        self.events.append(event.to_dict())
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class _CaptureStream(io.StringIO):
+    def __init__(self, *, tty: bool) -> None:
+        super().__init__()
+        self.tty = tty
+        self.flush_count = 0
+
+    def isatty(self) -> bool:
+        return self.tty
+
+    def flush(self) -> None:
+        self.flush_count += 1
+        super().flush()
+
+
+def test_progress_events_cover_full_round_in_exact_order_and_fields(
+    tmp_path: Path,
+) -> None:
+    reporter = _RecordingReporter()
+
+    state = run_evolution(
+        _Adapter(),
+        tmp_path,
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+        progress_reporter=reporter,
+    )
+
+    assert state.closed and reporter.closed
+    assert [
+        (event["event"], event.get("stage"), event.get("arm"))
+        for event in reporter.events
+    ] == [
+        ("candidate-start", "train", "training"),
+        ("candidate-result", "train", "training"),
+        ("selection", "train", None),
+        ("candidate-start", "edge", "add"),
+        ("candidate-result", "edge", "add"),
+        ("candidate-start", "edge", "prune"),
+        ("candidate-result", "edge", "prune"),
+        ("selection", "edge", None),
+        ("candidate-start", "neuron", "add"),
+        ("candidate-result", "neuron", "add"),
+        ("candidate-start", "neuron", "prune"),
+        ("candidate-result", "neuron", "prune"),
+        ("selection", "neuron", None),
+        ("candidate-start", "edge-revisit", "add"),
+        ("candidate-result", "edge-revisit", "add"),
+        ("candidate-start", "edge-revisit", "prune"),
+        ("candidate-result", "edge-revisit", "prune"),
+        ("selection", "edge-revisit", None),
+        ("candidate-start", "dale", "excitatory"),
+        ("candidate-result", "dale", "excitatory"),
+        ("candidate-start", "dale", "inhibitory"),
+        ("candidate-result", "dale", "inhibitory"),
+        ("selection", "dale", None),
+        ("round-end", "round-end", None),
+        ("terminal-start", "terminal", None),
+        ("terminal-result", "terminal", None),
+    ]
+    assert reporter.events[0] == {
+        "event": "candidate-start",
+        "round": 1,
+        "rounds": 1,
+        "stage": "train",
+        "stage_id": "r000-train",
+        "arm": "training",
+        "updates": 128,
+    }
+    edge_add = next(
+        event
+        for event in reporter.events
+        if event.get("event") == "candidate-result"
+        and event.get("stage") == "edge"
+        and event.get("arm") == "add"
+    )
+    assert edge_add == {
+        "event": "candidate-result",
+        "round": 1,
+        "rounds": 1,
+        "stage": "edge",
+        "stage_id": "r000-edge",
+        "arm": "add",
+        "status": "completed",
+        "score_exact": 1,
+        "score_total": 400,
+        "loss": 9.0,
+        "neurons": 100,
+        "recurrent_edges": 200,
+        "executed_updates": 128,
+    }
+    edge_selection = next(
+        event
+        for event in reporter.events
+        if event.get("event") == "selection" and event.get("stage") == "edge"
+    )
+    assert edge_selection == {
+        "event": "selection",
+        "round": 1,
+        "rounds": 1,
+        "stage": "edge",
+        "stage_id": "r000-edge",
+        "selected_arm": "add",
+        "parent_retained": False,
+        "best_exact": 1,
+        "best_total": 400,
+        "loss": 9.0,
+        "neurons": 100,
+        "recurrent_edges": 200,
+        "checkpoint_sha256": hashlib.sha256(b"edge-add").hexdigest(),
+        "next_stage": "neuron",
+    }
+    dale_results = [
+        event
+        for event in reporter.events
+        if event.get("event") == "candidate-result"
+        and event.get("stage") == "dale"
+    ]
+    assert [event["arm"] for event in dale_results] == [
+        "excitatory",
+        "inhibitory",
+    ]
+    dale_selection = next(
+        event
+        for event in reporter.events
+        if event.get("event") == "selection" and event.get("stage") == "dale"
+    )
+    assert dale_selection["selected_arm"] == "excitatory"
+    assert dale_selection["best_exact"] == 4
+    assert reporter.events[-3]["terminal_reason"] == "round-budget"
+    assert reporter.events[-2]["checkpoint_sha256"] == state.accepted.checkpoint_sha256
+    assert reporter.events[-1] == {
+        "event": "terminal-result",
+        "round": 1,
+        "rounds": 1,
+        "stage": "terminal",
+        "stage_id": "terminal-evaluation",
+        "status": "completed",
+        "score_exact": 4,
+        "score_total": 400,
+        "loss": 10.0,
+        "checkpoint_sha256": state.accepted.checkpoint_sha256,
+        "terminal_reason": "round-budget",
+    }
+
+
+def test_progress_reports_retained_parent_blocked_failed_and_stable_stop(
+    tmp_path: Path,
+) -> None:
+    class StableAdapter(_Adapter):
+        def train_parent(self, parent, schedule, context):
+            return _candidate(
+                f"unchanged-{context.round_index}",
+                exact_count=parent.score.exact_count,
+                loss=parent.score.unresolved_loss,
+                topology_changed=False,
+            )
+
+        def run_candidate(self, parent, arm, schedule, context):
+            if arm in {"add", "excitatory"}:
+                return CandidateAttempt.blocked(arm, "topology cap")
+            return CandidateAttempt.failed(
+                arm, "trainer stopped", executed_updates=64
+            )
+
+    reporter = _RecordingReporter()
+    state = run_evolution(
+        StableAdapter(),
+        tmp_path,
+        config=PipelineConfig(rounds=3, patience=2),
+        history_plotter=_history_plotter,
+        progress_reporter=reporter,
+    )
+
+    assert state.terminal_reason == "stable"
+    results = [
+        event for event in reporter.events if event["event"] == "candidate-result"
+    ]
+    blocked = next(event for event in results if event["status"] == "blocked")
+    failed = next(event for event in results if event["status"] == "failed")
+    assert blocked["reason"] == "topology cap"
+    assert blocked["executed_updates"] == 0
+    assert failed["reason"] == "trainer stopped"
+    assert failed["executed_updates"] == 64
+    selections = [
+        event for event in reporter.events if event["event"] == "selection"
+    ]
+    assert selections
+    assert all(event["selected_arm"] == "parent" for event in selections)
+    assert all(event["parent_retained"] for event in selections)
+    assert not any(event.get("stage") == "edge-revisit" for event in reporter.events)
+    assert reporter.events[-2]["event"] == "terminal-start"
+    assert reporter.events[-1]["terminal_reason"] == "stable"
+
+
+def test_progress_reports_early_mastery_and_both_compression_stages(
+    tmp_path: Path,
+) -> None:
+    class MasteryAdapter(_Adapter):
+        def initialize(self, config, output_dir):
+            return _candidate("almost", exact_count=399, topology_changed=False)
+
+        def train_parent(self, parent, schedule, context):
+            return self._stage_candidate(
+                _candidate("mastered", exact_count=400, topology_changed=False),
+                context,
+            )
+
+        def run_candidate(self, parent, arm, schedule, context):
+            return CandidateAttempt.completed(
+                arm,
+                self._stage_candidate(
+                    _candidate(
+                        context.stage,
+                        exact_count=400,
+                        persistent_bytes=parent.resources.persistent_bytes - 100,
+                        neurons=parent.resources.neurons - 1,
+                        edges=parent.resources.recurrent_edges - 1,
+                    ),
+                    context,
+                ),
+            )
+
+    reporter = _RecordingReporter()
+    state = run_evolution(
+        MasteryAdapter(),
+        tmp_path,
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+        progress_reporter=reporter,
+    )
+
+    assert state.terminal_reason == "mastery"
+    assert [
+        event["stage"]
+        for event in reporter.events
+        if event["event"] == "selection"
+    ] == ["train", "compression-edge", "compression-neuron"]
+    assert reporter.events[-1]["terminal_reason"] == "mastery"
+
+
+def test_resume_reports_restored_cursor_without_replaying_history(
+    tmp_path: Path,
+) -> None:
+    interrupted_reporter = _RecordingReporter()
+    with pytest.raises(KeyboardInterrupt, match="edge"):
+        run_evolution(
+            _Adapter(interrupt_at="edge"),
+            tmp_path,
+            config=PipelineConfig(rounds=1),
+            history_plotter=_history_plotter,
+            progress_reporter=interrupted_reporter,
+        )
+    assert interrupted_reporter.closed
+
+    resumed_reporter = _RecordingReporter()
+    state = run_evolution(
+        _Adapter(),
+        tmp_path,
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+        progress_reporter=resumed_reporter,
+    )
+
+    assert state.closed and resumed_reporter.closed
+    assert resumed_reporter.events[0] == {
+        "event": "resume",
+        "round": 1,
+        "rounds": 1,
+        "next_stage": "edge",
+        "score_exact": 0,
+        "score_total": 400,
+        "loss": 9.99,
+        "neurons": 100,
+        "recurrent_edges": 200,
+        "checkpoint_path": str(tmp_path / "checkpoints" / "r000-train.npz"),
+        "checkpoint_sha256": hashlib.sha256(b"trained-0").hexdigest(),
+    }
+    assert not any(
+        event.get("stage") == "train" for event in resumed_reporter.events[1:]
+    )
+    assert resumed_reporter.events[1]["event"] == "candidate-start"
+    assert resumed_reporter.events[1]["stage"] == "edge"
+
+
+def test_reporter_does_not_change_calls_schedules_scores_or_checkpoint_state(
+    tmp_path: Path,
+) -> None:
+    silent_adapter = _Adapter()
+    reported_adapter = _Adapter()
+    silent = run_evolution(
+        silent_adapter,
+        tmp_path / "silent",
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+    )
+    reporter = _RecordingReporter()
+    reported = run_evolution(
+        reported_adapter,
+        tmp_path / "reported",
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+        progress_reporter=reporter,
+    )
+
+    def semantic_calls(calls):
+        normalized = []
+        for call in calls:
+            if call[0] == "train-parent":
+                normalized.append(call[:5] + call[6:])
+            elif call[0] == "candidate":
+                normalized.append(call[:7])
+            else:
+                normalized.append(call)
+        return normalized
+
+    assert semantic_calls(silent_adapter.calls) == semantic_calls(
+        reported_adapter.calls
+    )
+    assert silent.cursor == reported.cursor == 5 * DEFAULT_UPDATES
+    assert silent.accepted.candidate_id == reported.accepted.candidate_id
+    assert silent.accepted.score == reported.accepted.score
+    assert silent.accepted.topology_sha256 == reported.accepted.topology_sha256
+    assert silent.accepted.parameters_sha256 == reported.accepted.parameters_sha256
+    assert silent.accepted.optimizer_sha256 == reported.accepted.optimizer_sha256
+    assert silent.accepted.checkpoint_sha256 == reported.accepted.checkpoint_sha256
+    assert silent.evaluation_digest == reported.evaluation_digest
+    silent_checkpoints = {
+        path.name: path.read_bytes()
+        for path in (tmp_path / "silent" / "checkpoints").glob("*.npz")
+    }
+    reported_checkpoints = {
+        path.name: path.read_bytes()
+        for path in (tmp_path / "reported" / "checkpoints").glob("*.npz")
+    }
+    assert silent_checkpoints == reported_checkpoints
+
+
+def test_console_reporter_uses_plain_flushed_lines_when_redirected() -> None:
+    stream = _CaptureStream(tty=False)
+    reporter = evolve.ConsoleProgressReporter(
+        stream=stream, clock=lambda: 0.0, refresh_interval=60.0
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "candidate-start",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "edge",
+                "stage_id": "r000-edge",
+                "arm": "add",
+                "updates": 128,
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "candidate-result",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "edge",
+                "stage_id": "r000-edge",
+                "arm": "add",
+                "status": "completed",
+                "score_exact": 3,
+                "score_total": 400,
+                "loss": 0.8412,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "executed_updates": 128,
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "selection",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "edge",
+                "stage_id": "r000-edge",
+                "selected_arm": "add",
+                "parent_retained": False,
+                "best_exact": 3,
+                "best_total": 400,
+                "loss": 0.8412,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "checkpoint_sha256": "a" * 64,
+                "next_stage": "neuron",
+            },
+        )
+    )
+    reporter.close()
+
+    assert stream.getvalue().splitlines() == [
+        "[00:00] Round 1/8 edge:add started",
+        "[00:00] Round 1/8 edge:add completed | score 3/400 | loss 0.8412 | neurons 2048 | recurrent edges 17203 | updates 128",
+        "[00:00] Round 1/8 edge selected add | best 3/400 | neurons 2048 | recurrent edges 17203",
+    ]
+    assert "\r" not in stream.getvalue()
+    assert stream.flush_count >= 3
+
+
+def test_console_reporter_animates_tty_and_clears_before_permanent_result() -> None:
+    stream = _CaptureStream(tty=True)
+    reporter = evolve.ConsoleProgressReporter(
+        stream=stream, clock=lambda: 0.0, refresh_interval=60.0
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "candidate-start",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "edge",
+                "stage_id": "r000-edge",
+                "arm": "add",
+                "updates": 128,
+            },
+        )
+    )
+    assert stream.getvalue().startswith(
+        "\rExample 21 ARC | Round 1/8 | edge:add | running 00:00"
+    )
+    assert "started\n" not in stream.getvalue()
+    reporter.emit(
+        evolve.ProgressEvent(
+            "candidate-result",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "edge",
+                "stage_id": "r000-edge",
+                "arm": "add",
+                "status": "blocked",
+                "reason": "edge cap\nreached",
+                "executed_updates": 0,
+            },
+        )
+    )
+    reporter.close()
+
+    output = stream.getvalue()
+    assert "\r" in output
+    assert "[00:00] Round 1/8 edge:add blocked | reason edge cap reached | updates 0\n" in output
+    assert stream.flush_count >= 3
+
+
+def test_progress_event_and_console_inputs_fail_closed() -> None:
+    with pytest.raises(ValueError, match="nonempty"):
+        evolve.ProgressEvent("", {})
+    with pytest.raises(TypeError, match="mapping"):
+        evolve.ProgressEvent("event", [])
+    for fields in ({"": 1}, {"event": 1}, {1: "value"}):
+        with pytest.raises(ValueError, match="field names"):
+            evolve.ProgressEvent("event", fields)
+
+    source = {"round": 1}
+    event = evolve.ProgressEvent("event", source)
+    source["round"] = 2
+    assert event.to_dict() == {"event": "event", "round": 1}
+    with pytest.raises(TypeError):
+        event.fields["round"] = 3
+
+    for interval in (0.0, -1.0, math.nan):
+        with pytest.raises(ValueError, match="positive and finite"):
+            evolve.ConsoleProgressReporter(refresh_interval=interval)
+
+    stream = _CaptureStream(tty=False)
+    reporter = evolve.ConsoleProgressReporter(stream=stream, clock=lambda: 0.0)
+    with pytest.raises(TypeError, match="ProgressEvent"):
+        reporter.emit("not-an-event")
+    with pytest.raises(ValueError, match="Unknown"):
+        reporter.emit(evolve.ProgressEvent("unknown", {}))
+    reporter.close()
+    reporter.close()
+    reporter.emit(evolve.ProgressEvent("unknown", {}))
+
+
+def test_console_reporter_formats_resume_round_and_terminal_events() -> None:
+    stream = _CaptureStream(tty=False)
+    reporter = evolve.ConsoleProgressReporter(stream=stream, clock=lambda: 3_661.0)
+    reporter._started_at = 0.0
+    common = {"round": 2, "rounds": 8}
+    reporter.emit(
+        evolve.ProgressEvent(
+            "resume",
+            {
+                **common,
+                "next_stage": "dale",
+                "score_exact": 7,
+                "score_total": 400,
+                "loss": 0.5,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "checkpoint_path": "checkpoints/round two.npz",
+                "checkpoint_sha256": "a" * 64,
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "round-end",
+            {
+                **common,
+                "stage": "round-end",
+                "stage_id": "r001-round-end",
+                "best_exact": 7,
+                "best_total": 400,
+                "loss": 0.5,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "next_stage": "train",
+                "stable_rounds": 0,
+                "terminal_reason": None,
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "round-end",
+            {
+                **common,
+                "stage": "round-end",
+                "stage_id": "r001-round-end",
+                "best_exact": 7,
+                "best_total": 400,
+                "loss": 0.5,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "next_stage": "terminal-evaluation",
+                "stable_rounds": 2,
+                "terminal_reason": "stable",
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "terminal-start",
+            {
+                **common,
+                "stage": "terminal",
+                "stage_id": "terminal-evaluation",
+                "score_exact": 7,
+                "score_total": 400,
+                "loss": 0.5,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "checkpoint_sha256": "a" * 64,
+                "terminal_reason": "stable",
+            },
+        )
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "terminal-result",
+            {
+                **common,
+                "stage": "terminal",
+                "stage_id": "terminal-evaluation",
+                "status": "completed",
+                "score_exact": 5,
+                "score_total": 400,
+                "loss": 0.75,
+                "checkpoint_sha256": "a" * 64,
+                "terminal_reason": "stable",
+            },
+        )
+    )
+    reporter.close()
+
+    lines = stream.getvalue().splitlines()
+    assert lines[0].startswith("[1:01:01] Restored Round 2/8 | next dale")
+    assert lines[1].endswith("| next train")
+    assert lines[2].endswith("| next terminal-evaluation | reason stable")
+    assert lines[3] == "[1:01:01] Round 2/8 terminal evaluation started"
+    assert lines[4].startswith(
+        "[1:01:01] Terminal evaluation completed | score 5/400 | loss 0.7500"
+    )
+
+
+def test_console_reporter_animates_terminal_evaluation_in_a_tty() -> None:
+    stream = _CaptureStream(tty=True)
+    reporter = evolve.ConsoleProgressReporter(
+        stream=stream, clock=lambda: 0.0, refresh_interval=60.0
+    )
+    reporter.emit(
+        evolve.ProgressEvent(
+            "terminal-start",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "terminal",
+                "stage_id": "terminal-evaluation",
+                "score_exact": 3,
+                "score_total": 400,
+                "loss": 0.5,
+                "neurons": 2_048,
+                "recurrent_edges": 17_203,
+                "checkpoint_sha256": "a" * 64,
+                "terminal_reason": "round-budget",
+            },
+        )
+    )
+    reporter.close()
+
+    assert "| terminal evaluation | running 00:00" in stream.getvalue()
+
+
+def test_console_reporter_treats_stream_without_isatty_as_redirected() -> None:
+    class StreamWithoutIsatty:
+        def __init__(self) -> None:
+            self.parts: list[str] = []
+            self.flush_count = 0
+
+        def write(self, value: str) -> None:
+            self.parts.append(value)
+
+        def flush(self) -> None:
+            self.flush_count += 1
+
+    stream = StreamWithoutIsatty()
+    reporter = evolve.ConsoleProgressReporter(stream=stream, clock=lambda: 0.0)
+    reporter.emit(
+        evolve.ProgressEvent(
+            "candidate-start",
+            {
+                "round": 1,
+                "rounds": 8,
+                "stage": "train",
+                "stage_id": "r000-train",
+                "arm": "training",
+                "updates": 128,
+            },
+        )
+    )
+    reporter.close()
+
+    assert "started\n" in "".join(stream.parts)
+    assert stream.flush_count >= 2
 
 
 def _pending_fixture() -> tuple[RunState, RunState, dict[str, object]]:
