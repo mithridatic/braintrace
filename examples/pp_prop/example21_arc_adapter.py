@@ -1441,11 +1441,13 @@ class Example21ArcAdapter:
     def rescore(self, parent: Any, context: Any) -> Any:
         """Re-score one accepted state under the stage's score scope.
 
-        The topology, parameters, and optimizer state are reloaded unchanged
-        from the accepted checkpoint; only the recorded score and its derived
-        task ownership differ.  A scope change therefore never advances the
-        model, and the coordinator verifies that the three model digests are
-        preserved before the result can become a parent.
+        The graph, parameters, and optimizer state are reloaded unchanged from
+        the accepted checkpoint; only the recorded score and the task
+        ownership it derives differ.  Ownership is serialized alongside the
+        graph, so the topology digest moves even though the wiring does not;
+        the coordinator therefore verifies the parameter and optimizer
+        digests, the neuron and edge counts, and the absence of a topology
+        change before the result can become a parent.
 
         Parameters
         ----------

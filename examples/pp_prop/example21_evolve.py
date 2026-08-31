@@ -1601,8 +1601,10 @@ class EvolutionAdapter(Protocol):
     ) -> CandidateAttempt:
         """Re-score one accepted state under a new score scope.
 
-        The model, its parameters, and its optimizer state must not change.
-        Only the recorded score and its derived task ownership may differ.
+        The parameters, optimizer state, and graph size must not change, and
+        the result is never a topology change.  Only the recorded score and
+        the task ownership it derives may differ, so the topology digest can
+        move: ownership is serialized alongside the graph.
 
         Parameters
         ----------
@@ -3966,9 +3968,11 @@ def _verify_rescore_evidence(
     if selected.score.task_ids != _rescore_scope_ids(state, stage):
         raise ValueError("rescore scope")
     if (
-        selected.topology_sha256 != parent.topology_sha256
-        or selected.parameters_sha256 != parent.parameters_sha256
+        selected.parameters_sha256 != parent.parameters_sha256
         or selected.optimizer_sha256 != parent.optimizer_sha256
+        or selected.resources.neurons != parent.resources.neurons
+        or selected.resources.recurrent_edges != parent.resources.recurrent_edges
+        or selected.topology_changed
     ):
         raise ValueError("rescore mutated the model")
     if not selected.score.finite:

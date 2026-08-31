@@ -539,6 +539,8 @@ class _Adapter:
                     parent,
                     candidate_id=f"{context.stage_id}-rescore",
                     score=_rescored(parent.score, context.score_task_ids),
+                    topology_sha256=_identity("topology", f"{context.stage_id}-owners"),
+                    topology_changed=False,
                 ),
                 context,
                 scope=False,
@@ -1752,7 +1754,7 @@ def test_selected_edge_child_is_next_neuron_parent_with_topology_parameters_and_
     assert (tmp_path / "run-state.json").is_file()
     assert (tmp_path / "progress.jsonl").is_file()
     assert (tmp_path / "topology.png").read_bytes() == _identity(
-        "topology", "dale-excitatory"
+        "topology", "r000-round-score-owners"
     ).encode()
     assert (tmp_path / "score-history.png").read_bytes() == b"history"
     assert (tmp_path / "evaluation.json").is_file()
@@ -1998,7 +2000,8 @@ def test_interrupted_run_resumes_without_evaluation_or_repeating_durable_stage(
     )
     assert saved.next_stage == "edge"
     assert saved.accepted.candidate_id == "r000-round-screen-rescore"
-    assert saved.accepted.topology_sha256 == _identity("topology", "trained-0")
+    assert saved.accepted.parameters_sha256 == _identity("parameters", "trained-0")
+    assert saved.accepted.optimizer_sha256 == _identity("muon", "trained-0")
     assert saved.accepted.score.task_ids == _manifest().task_ids[:64]
 
     resumed = _Adapter()
@@ -2521,10 +2524,10 @@ def test_parent_training_regression_retains_durable_parent_then_discards_temp(
     state = RunState.from_dict(
         json.loads((tmp_path / "run-state.json").read_text(encoding="utf-8"))
     )
-    assert state.accepted.topology_sha256 == _identity("topology", "protected-parent")
     assert state.accepted.parameters_sha256 == _identity(
         "parameters", "protected-parent"
     )
+    assert state.accepted.optimizer_sha256 == _identity("muon", "protected-parent")
     assert state.next_stage == "edge"
     assert ("discard", "training", "completed") in adapter.calls
 
@@ -3544,3 +3547,42 @@ def test_resume_recovers_mid_round_at_an_operation_boundary(tmp_path: Path) -> N
             config=PipelineConfig(rounds=1, operations_per_round=7),
             history_plotter=_history_plotter,
         )
+
+
+def test_rescore_evidence_admits_an_ownership_refresh_but_not_a_model_change() -> None:
+    config = PipelineConfig(rounds=1, screen_tasks=0)
+    manifest = _manifest()
+    parent = _candidate("accepted", topology_changed=False)
+    state = RunState.initial(config, manifest, parent)
+
+    def verify(selected: CandidateSnapshot) -> None:
+        evolve._verify_rescore_evidence(
+            state,
+            stage="round-score",
+            parent=parent,
+            selected=selected,
+            attempts=(CandidateAttempt.completed(
+                "rescore", selected, executed_updates=0
+            ),),
+            dispositions={"rescore": "accepted"},
+            selected_attempt="rescore",
+        )
+
+    # Task ownership is serialized with the graph, so a scope transition
+    # legitimately moves the topology digest without touching the wiring.
+    verify(replace(parent, topology_sha256="a" * 64))
+
+    for mutated in (
+        replace(parent, parameters_sha256="b" * 64),
+        replace(parent, optimizer_sha256="c" * 64),
+        replace(parent, resources=replace(parent.resources, neurons=99)),
+        replace(parent, resources=replace(parent.resources, recurrent_edges=199)),
+        replace(parent, topology_changed=True),
+    ):
+        with pytest.raises(ValueError, match="rescore mutated the model"):
+            verify(mutated)
+
+    with pytest.raises(ValueError, match="rescore scope"):
+        verify(replace(parent, score=_rescored(parent.score, manifest.task_ids[:64])))
+    with pytest.raises(ValueError, match="rescore is non-finite"):
+        verify(replace(parent, score=_score(0, finite=False)))
