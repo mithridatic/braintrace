@@ -162,6 +162,12 @@ Two scopes exist and are recorded per progress record:
   round-boundary re-score, every compression operation, and terminal evaluation
   are always full.
 
+A scope transition reloads its accepted checkpoint and re-scores it. It must
+preserve the parameters, the optimizer state, and the neuron and recurrent-edge
+counts, and it is never a topology change. It does refresh task ownership,
+which is serialized alongside the graph, so a scope transition legitimately
+rewrites its checkpoint and its topology digest.
+
 Consequences that the implementation must honour:
 
 - Mastery is a property of the full corpus only. A screen score that reaches

@@ -1910,6 +1910,7 @@ def test_rescore_changes_only_the_score_scope_of_its_accepted_state(
             candidate_id=options["candidate_id"],
             checkpoint_path=str(options["path"]),
             checkpoint_sha256=hashlib.sha256(b"rescored-checkpoint").hexdigest(),
+            topology_sha256="4" * 64,
             score=example21_evolve.ScoreSnapshot(
                 task_ids=scored_ids,
                 task_exact=(False,) * len(scored_ids),
@@ -1938,9 +1939,11 @@ def test_rescore_changes_only_the_score_scope_of_its_accepted_state(
     assert attempt.executed_updates == 0
     assert attempt.candidate.candidate_id == "r000-round-screen-rescore"
     assert attempt.candidate.score.task_ids == ("a",)
-    assert attempt.candidate.topology_sha256 == parent.topology_sha256
     assert attempt.candidate.parameters_sha256 == parent.parameters_sha256
     assert attempt.candidate.optimizer_sha256 == parent.optimizer_sha256
+    assert attempt.candidate.resources == parent.resources
+    assert not attempt.candidate.topology_changed
+    assert attempt.candidate.topology_sha256 != parent.topology_sha256
     assert parent_path.read_bytes() == b"accepted-checkpoint"
 
 
