@@ -118,6 +118,37 @@ aggregation error are recorded in
 The two affected tests passed individually and together. The complete sibling
 suite passed with 83 tests in 46.62 seconds.
 
+## CI typecheck remediation amendment
+
+The first post-publication CI run passed the four JAX matrix jobs and the
+examples job. Its `typecheck_and_build` job stopped at the same three mypy
+diagnostics reproduced on untouched `origin/main`:
+
+- `braintrace/_quant/_turboquant.py:139`: the annotated return type of
+  `RandomState.split_key(2)` includes the scalar-return overload, so mypy does
+  not permit two-value unpacking without narrowing;
+- `braintrace/nn/_situ.py:69`: BrainState hides `Module.__init__` from type
+  checkers even though the runtime constructor accepts `name`;
+- `braintrace/nn/_gated.py:84`: the same hidden-constructor diagnostic.
+
+This amendment authorizes one narrowly scoped follow-up that corrects only
+those three diagnostics while preserving runtime behavior. It may add
+co-located regression tests that verify the affected constructors and random
+key split still behave as before. It may also update this specification and
+the reconciliation evidence with the resulting gate and CI status.
+
+The follow-up must not import any archived lint-branch change, alter mypy or CI
+configuration, add a type-check suppression, upgrade tooling, perform a
+formatting or lint sweep, or make an unrelated refactor. It must not alter a
+public API, model behavior, data schema, dependency, lint gate, or Paperclip
+configuration. If any diagnostic cannot be resolved within those constraints,
+stop and request a new decision instead of broadening the change.
+
+Acceptance requires the three diagnostics to be absent with no new mypy
+diagnostic, the focused sibling tests to pass, every local gate below to be
+rerun, and every required publication CI job to pass. Archive creation and
+cleanup remain blocked until that fully green CI result exists.
+
 ## Local acceptance gates
 
 Run all configured local gates without deselection:
