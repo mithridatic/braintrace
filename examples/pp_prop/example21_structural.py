@@ -547,10 +547,15 @@ def grow_adam_for_connections(adam, added_count):
 
 
 def preclip_gradient_mass(learner, events, step_fn, task_index, task_count, **kwargs):
-    """Call the real PP-Prop boundary and return per-item pre-clip mass."""
+    """Call the real PP-Prop boundary and return per-item pre-clip mass.
 
+    ``events`` may be one event array or a ``(events, targets)`` tuple that is
+    passed to ``etrace_grad`` as its lockstep sequences.
+    """
+
+    sequences = events if isinstance(events, tuple) else (events,)
     gradients, losses = learner.etrace_grad(
-        events, step_fn=step_fn, return_value=True, **kwargs
+        *sequences, step_fn=step_fn, return_value=True, **kwargs
     )
     mass = {}
     for path, gradient in gradients.items():
@@ -620,13 +625,13 @@ def _fixed_task_evidence(module, model, learner, data_root):
     import jax.numpy as jnp
 
     task = module.load_task(data_root, module.TRAINING_TASK_IDS[0], "practice")
-    events, advances = module.encode_episode(task, 0)
+    episode = module.training_episode(task, 0)
+    events, advances = episode["events"], episode["advances"]
     model.reset_episode(learner)
-    step_fn = lambda event: jnp.sum(
-        learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-    )
     mass, losses = preclip_gradient_mass(
-        learner, events, step_fn, 0, 1, mask=advances, reduction="sum"
+        learner, (events, episode["targets"]), module.arc_step_loss(learner, model),
+        0, 1, mask=episode["loss_mask"], reduction="sum",
+        weights=module.trainable_weights(learner, model),
     )
     model.reset_episode(learner)
     voltages = module.run_event_sequence(model, events, advances)
@@ -652,8 +657,7 @@ def _fixed_task_evidence(module, model, learner, data_root):
                 continue
             encoded, mask = module.encode_episode(task, query_index)
             model.reset_episode(learner)
-            module.run_event_sequence(model, encoded, mask)
-            predictions.append(module.decode_prediction(np.asarray(model.readout())))
+            predictions.append(module.predict_episode(model, encoded, mask))
             targets.append(target)
         strict.append(bool(module.strict_task_pass_at_1(predictions, targets)))
     evidence.update({
@@ -664,6 +668,8 @@ def _fixed_task_evidence(module, model, learner, data_root):
         "strict": strict,
         "events": events,
         "advances": advances,
+        "targets": episode["targets"],
+        "loss_mask": episode["loss_mask"],
     })
     return evidence
 
@@ -697,8 +703,7 @@ def _real_mask_compaction_identity(module, topology, adam, data_root, *, alive=N
         task_targets = {task_id: [] for task_id in task_predictions}
         for task_id, events, advances, target in episodes:
             candidate_model.reset_episode(candidate_learner)
-            module.run_event_sequence(candidate_model, events, advances)
-            prediction = module.decode_prediction(np.asarray(candidate_model.readout()))
+            prediction = module.predict_episode(candidate_model, events, advances)
             task_predictions[task_id].append(prediction)
             task_targets[task_id].append(target)
             prediction_bytes.append(np.asarray(prediction).tobytes())
@@ -730,10 +735,13 @@ def _real_pp_prop_update(
     import jax.numpy as jnp
 
     events = jnp.asarray(evidence["events"])
-    advances = jnp.asarray(evidence["advances"])
+    targets = jnp.asarray(evidence["targets"])
+    loss_mask = jnp.asarray(evidence["loss_mask"])
+    step_fn = module.arc_step_loss(learner, model)
     trainer = module.PPPropEpisodeTrainer(
         learner,
         {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+        weights=module.trainable_weights(learner, model),
     )
     if muon_groups is not None:
         trainer.muon_groups = remap_muon_groups(
@@ -755,11 +763,7 @@ def _real_pp_prop_update(
     def update(_=None):
         model.reset_episode(learner)
         return trainer.update_episode(
-            events,
-            step_fn=lambda event: jnp.sum(
-                learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-            ),
-            loss_mask=advances,
+            events, step_fn=step_fn, loss_mask=loss_mask, targets=targets,
         )
 
     update.trainer = trainer

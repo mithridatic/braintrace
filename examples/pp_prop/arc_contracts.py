@@ -18,6 +18,11 @@ EVENT_WIDTH = 441
 MAX_RESULT_BYTES = 256 * 1024
 MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
 MAX_BIOLOGICAL_CONNECTIONS = 30_496
+SHAPE_REQUEST_EVENT = 1 + 64 * MAX_DEMONSTRATIONS + 32 + 1
+ROW_REQUEST_EVENTS = tuple(range(SHAPE_REQUEST_EVENT + 1, SHAPE_REQUEST_EVENT + 1 + MAX_GRID))
+REQUEST_EVENT_INDICES = (SHAPE_REQUEST_EVENT, *ROW_REQUEST_EVENTS)
+TARGET_WIDTH = 3 + MAX_GRID
+LOSS_KIND_NONE, LOSS_KIND_SHAPE, LOSS_KIND_ROW = 0, 1, 2
 TRAINING_ORDER = ("d631b094", "dc433765", "b782dc8a", "d06dbe63", "aedd82e4", "0b148d64", "b2862040", "150deff5")
 VALIDATION_ORDER = ("46f33fce", "3428a4f5", "d8c310e9", "09629e4f")
 PROOF_ORDER = ("d631b094", "46f33fce")
@@ -135,6 +140,65 @@ def encode_episode(task: ARCTask, query_index: int = 0) -> tuple[np.ndarray, np.
     if encoded.shape != (EVENTS, EVENT_WIDTH):
         raise AssertionError("internal ARC event schedule has the wrong shape")
     return encoded, np.any(encoded, axis=1)
+
+
+def encode_targets(task: ARCTask, query_index: int = 0) -> np.ndarray:
+    """Encode the per-event training targets that feed only the step loss.
+
+    Parameters
+    ----------
+    task : ARCTask
+        Task whose query target is encoded.
+    query_index : int, optional
+        Query whose target is encoded.
+
+    Returns
+    -------
+    numpy.ndarray
+        ``int32`` array with shape ``(705, 33)``. Column 0 is the loss kind
+        (``0`` none, ``1`` shape request, ``2`` valid row request), column 1 is
+        ``height - 1``, column 2 is ``width - 1``, and columns 3 to 32 hold the
+        target colours of the requested row, zero padded. Kind 1 is set only at
+        the shape request event and kind 2 only at row requests below the
+        target height, so the loss mask ``targets[:, 0] > 0`` selects exactly
+        ``1 + height`` events.
+
+    Raises
+    ------
+    IndexError
+        If ``query_index`` is out of range.
+    ValueError
+        If the selected query has no target.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import numpy as np
+        >>> from arc_contracts import ARCTask, encode_targets, SHAPE_REQUEST_EVENT
+        >>> grid = np.array([[1, 2]], dtype=np.uint8)
+        >>> task = ARCTask("t", ((grid, grid),), (grid,), (grid,), "practice")
+        >>> targets = encode_targets(task)
+        >>> targets.shape
+        (705, 33)
+        >>> int(targets[SHAPE_REQUEST_EVENT, 0]), int((targets[:, 0] > 0).sum())
+        (1, 2)
+    """
+    if not 0 <= query_index < len(task.queries):
+        raise IndexError("query_index is out of range")
+    target = task.targets[query_index]
+    if target is None:
+        raise ValueError("training requires a query target")
+    height, width = target.shape
+    targets = np.zeros((EVENTS, TARGET_WIDTH), dtype=np.int32)
+    targets[REQUEST_EVENT_INDICES, 1] = height - 1
+    targets[REQUEST_EVENT_INDICES, 2] = width - 1
+    targets[SHAPE_REQUEST_EVENT, 0] = LOSS_KIND_SHAPE
+    for row in range(height):
+        index = ROW_REQUEST_EVENTS[row]
+        targets[index, 0] = LOSS_KIND_ROW
+        targets[index, 3:3 + width] = target[row]
+    return targets
 
 
 def _read_grid(events: np.ndarray, start: int, role: int, slot: int) -> tuple[np.ndarray, int]:

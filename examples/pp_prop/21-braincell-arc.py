@@ -10,6 +10,7 @@ import braintools
 import brainevent
 import jax
 import jax.numpy as jnp
+import numpy as np
 import optax
 
 
@@ -305,8 +306,105 @@ class BrainCellArcModel(brainstate.nn.Module):
     def readout(self):
         """Return direct voltage readout logits."""
 
-        feature = jnp.tanh((self.cell.V.value.to_decimal(u.mV) + 65.0) / 20.0)
-        return feature @ self.readout_weight.value + self.readout_bias.value
+        return readout_logits(self, self.cell.V.value.to_decimal(u.mV))
+
+
+def readout_logits(model, voltage):
+    """Apply the model's live readout parameters to one or more voltage vectors."""
+
+    feature = jnp.tanh((jnp.asarray(voltage) + 65.0) / 20.0)
+    return feature @ model.readout_weight.value + model.readout_bias.value
+
+
+def request_readouts(model, voltages):
+    """Return the ``(31, 360)`` logits at the shape and 30 row request states."""
+
+    voltages = jnp.asarray(voltages)
+    if voltages.shape[0] != EVENTS:
+        raise ValueError(f"rollout must contain {EVENTS} events")
+    return readout_logits(model, voltages[jnp.asarray(REQUEST_EVENT_INDICES)])
+
+
+def predict_episode(model, events, advances=None):
+    """Run one episode and decode the grid from its 31 request readouts."""
+
+    voltages = run_event_sequence(model, events, advances)
+    return decode_prediction(np.asarray(request_readouts(model, voltages)))
+
+
+def request_step_loss(logits, target):
+    """Return the strict-aligned loss of one step (JAX twin of ``request_loss``).
+
+    Parameters
+    ----------
+    logits : jax.Array
+        The 360 readout logits at this event.
+    target : jax.Array
+        One ``encode_targets`` row: loss kind, ``height - 1``, ``width - 1``,
+        and 30 row colours.
+
+    Returns
+    -------
+    jax.Array
+        Scalar loss. Shape requests return height plus width cross-entropy;
+        row requests return the mean cross-entropy over the ``width`` valid
+        cells; every other event returns exactly ``0.0``.
+    """
+
+    logits = jnp.asarray(logits, dtype=jnp.float32)
+    target = jnp.asarray(target, dtype=jnp.int32)
+    kind, height, width, colors = target[0], target[1], target[2], target[3:]
+    height_logits, width_logits = logits[:30], logits[30:60]
+    shape_loss = (
+        jax.nn.logsumexp(height_logits) - height_logits[height]
+        + jax.nn.logsumexp(width_logits) - width_logits[width]
+    )
+    rows = logits[60:].reshape(MAX_GRID, 10)
+    cell_loss = jax.nn.logsumexp(rows, axis=1) - rows[jnp.arange(MAX_GRID), colors]
+    valid = (jnp.arange(MAX_GRID) <= width).astype(jnp.float32)
+    row_loss = jnp.sum(cell_loss * valid) / jnp.maximum(jnp.sum(valid), 1.0)
+    return jnp.where(
+        kind == LOSS_KIND_SHAPE, shape_loss,
+        jnp.where(kind == LOSS_KIND_ROW, row_loss, 0.0),
+    )
+
+
+def request_loss_mask(targets):
+    """Return the ``(705,)`` loss weights selecting shape and valid row requests."""
+
+    return (jnp.asarray(targets)[:, 0] > 0).astype(jnp.float32)
+
+
+def arc_step_loss(learner, model):
+    """Return the PP-Prop ``step_fn(event, target)`` for the ARC request loss."""
+
+    def step_fn(event, target):
+        voltage = learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+        return request_step_loss(readout_logits(model, voltage), target)
+
+    return step_fn
+
+
+def trainable_weights(learner, model):
+    """Return compiled temporal parameters plus the direct readout parameters."""
+
+    weights = dict(learner.param_states)
+    weights[("readout_weight",)] = model.readout_weight
+    weights[("readout_bias",)] = model.readout_bias
+    return weights
+
+
+def training_episode(task, query_index=0):
+    """Encode one query as ``events``, ``advances``, ``targets``, ``loss_mask``."""
+
+    events, advances = encode_episode(task, query_index)
+    targets = encode_targets(task, query_index)
+    return {
+        "events": jnp.asarray(events, dtype=jnp.float32),
+        "advances": jnp.asarray(advances, dtype=bool),
+        "targets": jnp.asarray(targets, dtype=jnp.int32),
+        "loss_mask": request_loss_mask(targets),
+    }
 
 
 def integration_substep_events(event, substeps):
@@ -439,8 +537,9 @@ def decoder_boundary_intervention(model):
 class PPPropEpisodeTrainer:
     """Accumulate one PP-Prop episode and apply one clipped Muon update."""
 
-    def __init__(self, learner, parameters, learning_rates=None):
+    def __init__(self, learner, parameters, learning_rates=None, weights=None):
         self.learner = learner
+        self.weights = weights
         self.parameters = dict(parameters)
         model = getattr(learner, "model4compile", None)
         for name in ("readout_weight", "readout_bias"):
@@ -509,20 +608,29 @@ class PPPropEpisodeTrainer:
         return bool(all(jnp.all(jnp.isfinite(leaf)) for leaf in leaves))
 
     def update_episode(
-        self, events, step_fn, valid_rows=None, loss_mask=None, direct_grad_fn=None
+        self, events, step_fn, valid_rows=None, loss_mask=None, direct_grad_fn=None,
+        targets=None,
     ):
-        """Apply one update from one masked PP-Prop query episode."""
+        """Apply one update from one masked PP-Prop query episode.
+
+        ``targets`` is passed as the second ``etrace_grad`` sequence so that
+        ``step_fn(event, target)`` receives the strict-aligned target of every
+        step; it never enters a model event.
+        """
 
         if loss_mask is not None and valid_rows is not None:
             raise ValueError("provide only one episode loss mask")
         mask = loss_mask if loss_mask is not None else valid_rows
+        sequences = (events,) if targets is None else (events, targets)
+        options = {} if self.weights is None else {"weights": self.weights}
         gradients, losses = self.learner.etrace_grad(
-            events,
+            *sequences,
             step_fn=step_fn,
             mask=mask,
             reduction="sum",
             loss_output="masked",
             return_value=True,
+            **options,
         )
         if direct_grad_fn is not None:
             direct_gradients = direct_grad_fn(
@@ -639,6 +747,14 @@ _ARC_CONTRACTS_SPEC.loader.exec_module(_ARC_CONTRACTS)
 ARCTask = _ARC_CONTRACTS.ARCTask
 load_task = _ARC_CONTRACTS.load_task
 encode_episode = _ARC_CONTRACTS.encode_episode
+encode_targets = _ARC_CONTRACTS.encode_targets
+EVENTS = _ARC_CONTRACTS.EVENTS
+MAX_GRID = _ARC_CONTRACTS.MAX_GRID
+REQUEST_EVENT_INDICES = _ARC_CONTRACTS.REQUEST_EVENT_INDICES
+SHAPE_REQUEST_EVENT = _ARC_CONTRACTS.SHAPE_REQUEST_EVENT
+ROW_REQUEST_EVENTS = _ARC_CONTRACTS.ROW_REQUEST_EVENTS
+LOSS_KIND_SHAPE = _ARC_CONTRACTS.LOSS_KIND_SHAPE
+LOSS_KIND_ROW = _ARC_CONTRACTS.LOSS_KIND_ROW
 decode_episode = _ARC_CONTRACTS.decode_episode
 request_loss = _ARC_CONTRACTS.request_loss
 decode_prediction = _ARC_CONTRACTS.decode_prediction

@@ -193,6 +193,9 @@ def validate_temporary_proof(
     loss_components: Mapping[str, float] | None = None,
     recurrent_weight_movement: float | None = None,
     decoded_predictions: Mapping[str, Any] | None = None,
+    direct_accuracy: Mapping[str, Any] | None = None,
+    training_losses: Sequence[float] | None = None,
+    readout_weight_movement: float | None = None,
 ) -> dict[str, object]:
     """Validate the bounded proof's data isolation and direct behavior.
 
@@ -251,6 +254,9 @@ def validate_temporary_proof(
         "loss_components": dict(loss_components or {}),
         "recurrent_weight_movement": recurrent_weight_movement,
         "decoded_predictions": dict(decoded_predictions),
+        "direct_accuracy": dict(direct_accuracy or {}),
+        "training_losses": list(training_losses or []),
+        "readout_weight_movement": readout_weight_movement,
     }
 
 
@@ -389,11 +395,20 @@ def _normalize_data_root(root: str | Path) -> Path:
 
 def _request_readouts(module: Any, model: Any, voltages: Any) -> np.ndarray:  # pragma: no cover
     """Return the 31 shape/row request logits from a 705-event rollout."""
-    values = np.asarray(voltages)
-    if values.shape[0] != 705:
-        raise ValueError("rollout must contain 705 events")
-    features = np.tanh((values[[673, *range(675, 705)]] + 65.0) / 20.0)
-    return features @ np.asarray(model.readout_weight.value) + np.asarray(model.readout_bias.value)
+    return np.asarray(module.request_readouts(model, voltages))
+
+
+def direct_accuracy(prediction: Any, target: Any) -> dict[str, object]:
+    """Measure how close one decoded grid is to its target.
+
+    Returns ``shape_correct`` (both dimensions match), ``cells_correct`` (equal
+    cells, zero when the shape is wrong), and ``cell_count`` (target cells).
+    Strict pass equals ``shape_correct and cells_correct == cell_count``.
+    """
+    prediction, target = np.asarray(prediction), np.asarray(target)
+    shape_correct = prediction.shape == target.shape
+    cells = int(np.sum(prediction == target)) if shape_correct else 0
+    return {"shape_correct": bool(shape_correct), "cells_correct": cells, "cell_count": int(target.size)}
 
 
 def run_gate4(root: str | Path, output: str | Path) -> dict[str, object]:
@@ -452,7 +467,9 @@ def _child_main(arguments: argparse.Namespace) -> None:  # pragma: no cover
     data_root = _normalize_data_root(arguments.data_root)
     task = module.load_task(data_root, "d631b094", "practice")
     validation_task = module.load_task(data_root, "46f33fce", "practice")
-    events, advances = module.encode_episode(task, 0)
+    episode = module.training_episode(task, 0)
+    events, advances = episode["events"], episode["advances"]
+    targets, loss_mask = episode["targets"], episode["loss_mask"]
     validation_episodes = [
         module.encode_episode(validation_task, index)
         for index in range(len(validation_task.queries))
@@ -465,17 +482,21 @@ def _child_main(arguments: argparse.Namespace) -> None:  # pragma: no cover
             lambda event, advance: model.step(event, advance), xs, mask
         )
     )
-    prediction = _child_prediction(module, model, events, advances)
-    initial_logits_array = np.asarray(model.readout())
-    initial_logits = initial_logits_array.tobytes()
+    model.reset_episode(learner)
+    initial_logits_array = _episode_logits(module, model, learner, events, advances)
+    prediction = np.asarray(module.decode_prediction(initial_logits_array)).tobytes()
+    step_fn = module.arc_step_loss(learner, model)
+    weights = module.trainable_weights(learner, model)
 
     def call():
         model.reset_episode(learner)
         return learner.etrace_grad(
             events,
-            step_fn=lambda event: jnp.sum(learner.etrace_evolve(event[None, :], return_outputs=True)[0]),
-            mask=advances,
+            targets,
+            step_fn=step_fn,
+            mask=loss_mask,
             reduction="sum",
+            weights=weights,
         )
 
     import jax.numpy as jnp
@@ -513,7 +534,7 @@ def _child_main(arguments: argparse.Namespace) -> None:  # pragma: no cover
             validation_readouts,
         )
         decoder["request_readout_count"] = 31
-        decoder["request_readout_indices"] = [673, *range(675, 705)]
+        decoder["request_readout_indices"] = list(module.REQUEST_EVENT_INDICES)
     else:
         decoder = {"calls_per_request": 0, "limit_ms": 100.0, "requests": []}
     validation_state_before = _state_bytes(model)
@@ -522,16 +543,16 @@ def _child_main(arguments: argparse.Namespace) -> None:  # pragma: no cover
     trainer = module.PPPropEpisodeTrainer(
         learner,
         {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+        weights=weights,
     )
     recurrent_before = np.asarray(trainer.parameters["recurrent"]).copy()
+    readout_before = np.asarray(trainer.parameters["readout_weight"]).copy()
     def update(_):
         model.reset_episode(learner)
         return trainer.update_episode(
-            events,
-            step_fn=lambda event: jnp.sum(learner.etrace_evolve(event[None, :], return_outputs=True)[0]),
-            loss_mask=advances,
+            events, step_fn=step_fn, loss_mask=loss_mask, targets=targets,
         )
-    brainstate.transform.for_loop(update, jnp.arange(8))
+    training_losses, _ = brainstate.transform.for_loop(update, jnp.arange(8))
     pre_logits = initial_logits_array
     target = np.asarray(next(target for target in task.targets if target is not None))
     pre_prediction = module.decode_prediction(pre_logits)
@@ -540,6 +561,12 @@ def _child_main(arguments: argparse.Namespace) -> None:  # pragma: no cover
     post_prediction = module.decode_prediction(post_logits)
     loss_components = {"pre": pre_loss, "post": _loss_components(module, post_logits, target)}
     proof = {
+        "training_losses": [float(value) for value in np.asarray(training_losses)],
+        "readout_weight_movement": float(np.linalg.norm(np.asarray(model.readout_weight.value) - readout_before)),
+        "direct_accuracy": {
+            "pre": direct_accuracy(pre_prediction, target),
+            "post": direct_accuracy(post_prediction, target),
+        },
         "training_task": "d631b094",
         "validation_task": "46f33fce",
         "update_tasks": ["d631b094"] * 8,
@@ -594,7 +621,7 @@ def _decoder_call(
             result = runner(encoded[0], encoded[1])
             if hasattr(result, "block_until_ready"):
                 result.block_until_ready()
-            return np.asarray(module.decode_prediction(np.asarray(model.readout()))).tobytes()
+            return np.asarray(module.decode_prediction(_request_readouts(module, model, result))).tobytes()
         return _child_prediction(module, model, encoded[0], encoded[1])
     finally:
         _restore_state(model, snapshot)
@@ -602,8 +629,7 @@ def _decoder_call(
 
 def _child_prediction(module: Any, model: Any, events: Any, advances: Any) -> bytes:  # pragma: no cover
     """Run one encoded episode and return canonical prediction bytes."""
-    module.run_event_sequence(model, events, advances)
-    return np.asarray(module.decode_prediction(np.asarray(model.readout()))).tobytes()
+    return np.asarray(module.predict_episode(model, events, advances)).tobytes()
 
 
 def _state_bytes(model: Any) -> bytes:  # pragma: no cover
@@ -637,22 +663,21 @@ def _restore_state(model: Any, state: tuple[Any, ...]) -> None:  # pragma: no co
 
 
 def _episode_logits(module: Any, model: Any, learner: Any, events: Any, advances: Any) -> np.ndarray:  # pragma: no cover
-    """Return direct logits for one reset episode."""
+    """Return the ``(31, 360)`` request logits for one reset episode."""
     model.reset_episode(learner)
-    module.run_event_sequence(model, events, advances)
-    return np.asarray(model.readout())
+    voltages = module.run_event_sequence(model, events, advances)
+    return np.asarray(module.request_readouts(model, voltages))
 
 
 def _loss_components(module: Any, logits: np.ndarray, target: np.ndarray) -> dict[str, float]:  # pragma: no cover
-    """Measure direct shape and valid-row loss components."""
-    shape = module.request_loss(logits[:60], np.asarray(target.shape), request="shape")
-    row_logits = logits[60:].reshape(30, 10)
+    """Measure shape and valid-row loss components from the 31 request logits."""
+    shape = module.request_loss(logits[0, :60], np.asarray(target.shape) - 1, request="shape")
     rows = 0.0
-    for row in target:
+    for index, row in enumerate(target):
         labels = np.zeros(30, dtype=np.int64)
         labels[: len(row)] = row
         mask = np.arange(30) < len(row)
-        rows += module.request_loss(row_logits, labels, request="row", valid_mask=mask)
+        rows += module.request_loss(logits[1 + index, 60:].reshape(30, 10), labels, request="row", valid_mask=mask)
     return {"shape": float(shape), "rows": float(rows)}
 
 

@@ -165,8 +165,7 @@ def test_real_mask_compaction_identity_screens_fixed_tasks(monkeypatch):
         TRAINING_TASK_IDS=("train",), VALIDATION_TASK_IDS=("valid",),
         load_task=lambda *_args: task,
         encode_episode=lambda *_args: (np.zeros((1, 1)), np.ones(1, dtype=bool)),
-        run_event_sequence=lambda *_args: None,
-        decode_prediction=lambda value: np.asarray([value.sum()], dtype=np.uint8),
+        predict_episode=lambda model, *_args: np.asarray([model.readout().sum()], dtype=np.uint8),
         strict_task_pass_at_1=lambda predictions, targets: True,
     )
     monkeypatch.setattr(
@@ -197,21 +196,30 @@ def test_real_pp_prop_update_builds_episode_driver():
             self.reset = learner
 
     class Trainer:
-        def __init__(self, learner, parameters):
+        def __init__(self, learner, parameters, weights=None):
             self.learner = learner
             self.parameters = parameters
+            self.weights = weights
 
-        def update_episode(self, events, step_fn, loss_mask):
-            return events.shape, loss_mask.shape, step_fn(events[0])
+        def update_episode(self, events, step_fn, loss_mask, targets):
+            return events.shape, loss_mask.shape, step_fn(events[0], targets[0])
 
-    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    module = SimpleNamespace(
+        PPPropEpisodeTrainer=Trainer,
+        arc_step_loss=lambda learner, model: (
+            lambda event, target: jnp.sum(learner.etrace_evolve(event, True)[0]) + target[0]
+        ),
+        trainable_weights=lambda learner, model: {"w": 1},
+    )
     update = structural._real_pp_prop_update(
-        module, Model(), Learner(), {"events": [[1.0]], "advances": [True]}
+        module, Model(), Learner(),
+        {"events": [[1.0]], "advances": [True], "targets": [[0]], "loss_mask": [1.0]},
     )
     shape, mask_shape, value = update(0)
     assert shape == (1, 1)
     assert mask_shape == (1,)
     assert value.shape == ()
+    assert update.trainer.weights == {"w": 1}
 
 
 def test_recurrent_pruning_uses_exact_ceiling_and_preserves_other_arrays():
@@ -526,6 +534,21 @@ def test_integrated_arm_rebuilds_model_remaps_adam_and_resets_eligibility():
     assert not result["promoted"]
 
 
+def _training_module(trainer):
+    return SimpleNamespace(
+        PPPropEpisodeTrainer=trainer,
+        arc_step_loss=lambda learner, model: (lambda event, target: 0.0),
+        trainable_weights=lambda learner, model: {},
+    )
+
+
+def _training_evidence():
+    return {
+        "events": np.zeros((1, 2)), "advances": np.ones(1),
+        "targets": np.zeros((1, 33), dtype=np.int32), "loss_mask": np.ones(1),
+    }
+
+
 def test_real_pp_prop_update_seeds_remapped_adam_state():
     class State:
         def __init__(self, value):
@@ -545,14 +568,13 @@ def test_real_pp_prop_update_seeds_remapped_adam_state():
     model = SimpleNamespace(input_weight=State([1, 1]), recurrent_weight=State([1, 1, 1]))
     model.reset_episode = lambda learner: None
     learner = SimpleNamespace()
-    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    module = _training_module(Trainer)
     adam = structural.StructuralAdam(
         np.array([1.0]), np.array([2.0]), np.array([2.0, 3.0]), np.array([4.0, 5.0]),
         np.array([6.0, 7.0, 8.0]), np.array([9.0, 10.0, 11.0]), step=4,
     )
     update = structural._real_pp_prop_update(
-        module, model, learner,
-        {"events": np.zeros((1, 2)), "advances": np.ones(1)}, adam,
+        module, model, learner, _training_evidence(), adam,
     )
     update()
     trainer = update.trainer
@@ -593,11 +615,10 @@ def test_real_update_hands_remapped_muon_groups_to_trainer():
         input_weight=State([1, 1]), recurrent_weight=State([1, 1, 1])
     )
     model.reset_episode = lambda learner: None
-    module = SimpleNamespace(PPPropEpisodeTrainer=Trainer)
+    module = _training_module(Trainer)
     state = SimpleNamespace(mu=np.arange(6, dtype=float).reshape(3, 2))
     update = structural._real_pp_prop_update(
-        module, model, SimpleNamespace(),
-        {"events": np.zeros((1, 2)), "advances": np.ones(1)},
+        module, model, SimpleNamespace(), _training_evidence(),
         muon_groups={"readout_weight": state},
         parameter_maps={"readout_weight": (np.array([True, False, True]), (2, 2))},
     )
@@ -622,11 +643,8 @@ def test_real_mask_compaction_identity_reuses_pruning_episode_snapshot(monkeypat
         def strict_task_pass_at_1(self, predictions, targets):
             return True
 
-        def decode_prediction(self, value):
-            return np.asarray(value)
-
-        def run_event_sequence(self, model, events, advances):
-            return None
+        def predict_episode(self, model, events, advances):
+            return np.asarray(model.readout())
 
     class Model:
         def __init__(self):
@@ -686,35 +704,37 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
     structural.main(["baseline", "--output", str(tmp_path / "baseline.json")])
 
 
-def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatch):
+def test_fixed_task_evidence_trains_on_targets_and_decodes_request_readouts(monkeypatch):
     class Model:
         readout_weight = SimpleNamespace(value=np.ones((2, 360)))
 
         def reset_episode(self, learner):
             pass
 
-        def readout(self):
-            return np.zeros(360)
-
     task = SimpleNamespace(targets=(np.zeros((1, 1), dtype=np.uint8),))
+    episode = {
+        "events": np.ones((1, 441)), "advances": np.ones(1, dtype=bool),
+        "targets": np.ones((1, 33), dtype=np.int32), "loss_mask": np.ones(1),
+    }
+    seen = {}
     module = SimpleNamespace(
         TRAINING_TASK_IDS=("train",),
         VALIDATION_TASK_IDS=("valid",),
         load_task=lambda *args: task,
-        encode_episode=lambda *args: (np.ones((1, 441)), np.ones(1, dtype=bool)),
+        training_episode=lambda *args: episode,
+        encode_episode=lambda *args: (episode["events"], episode["advances"]),
         run_event_sequence=lambda *args: np.zeros((1, 2)),
-        decode_prediction=lambda value: (
-            np.zeros((1, 1), dtype=np.uint8)
-            if np.asarray(value).shape == (360,)
-            else (_ for _ in ()).throw(AssertionError("decoded neuron voltage"))
-        ),
+        predict_episode=lambda *args: np.zeros((1, 1), dtype=np.uint8),
+        arc_step_loss=lambda learner, model: "arc-loss",
+        trainable_weights=lambda learner, model: "weights",
         strict_task_pass_at_1=lambda predictions, targets: True,
     )
-    monkeypatch.setattr(
-        structural,
-        "preclip_gradient_mass",
-        lambda *args, **kwargs: ({"model/recurrent_weight": np.ones((1, 2))}, 0.0),
-    )
+
+    def fake_mass(learner, sequences, step_fn, *args, **kwargs):
+        seen.update(sequences=sequences, step_fn=step_fn, **kwargs)
+        return {"model/recurrent_weight": np.ones((1, 2))}, 0.0
+
+    monkeypatch.setattr(structural, "preclip_gradient_mass", fake_mass)
     monkeypatch.setattr(
         structural,
         "topology_from_model",
@@ -727,6 +747,10 @@ def test_fixed_task_evidence_decodes_model_readout_not_neuron_voltage(monkeypatc
     )
     evidence = structural._fixed_task_evidence(module, Model(), object(), "data")
     assert evidence["strict"] == [True, True]
+    assert seen["step_fn"] == "arc-loss" and seen["weights"] == "weights"
+    assert seen["sequences"][1] is episode["targets"]
+    assert seen["mask"] is episode["loss_mask"]
+    assert evidence["targets"] is episode["targets"]
 
 
 def test_real_model_uses_canonical_validation_task_ids():

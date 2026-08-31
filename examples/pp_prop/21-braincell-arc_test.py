@@ -485,3 +485,123 @@ def test_compacted_model_reset_uses_candidate_neuron_count():
     candidate = fixture.BrainCellArcModel(compacted)
     candidate.reset_episode()
     assert candidate.previous_spikes.value.shape == (compacted.neuron_count,)
+
+
+def _tiny_task(height=2, width=3):
+    import numpy as np
+
+    grid = (np.arange(height * width).reshape(height, width) % 10).astype(np.uint8)
+    return fixture.ARCTask("tiny", ((grid, grid),), (grid,), (grid,), "practice")
+
+
+def test_request_step_loss_matches_numpy_request_loss():
+    import numpy as np
+
+    logits = np.asarray(brainstate.random.normal(size=(360,)), dtype=np.float64)
+    height, width = 4, 6
+    shape_target = np.zeros(33, dtype=np.int32)
+    shape_target[:3] = (fixture.LOSS_KIND_SHAPE, height - 1, width - 1)
+    expected_shape = fixture.request_loss(
+        logits[:60], np.asarray([height - 1, width - 1]), request="shape"
+    )
+    assert float(fixture.request_step_loss(logits, shape_target)) == pytest.approx(expected_shape, rel=1e-5)
+
+    colors = np.asarray(brainstate.random.randint(0, 10, size=(width,)))
+    row_target = np.zeros(33, dtype=np.int32)
+    row_target[:3] = (fixture.LOSS_KIND_ROW, height - 1, width - 1)
+    row_target[3:3 + width] = colors
+    labels = np.zeros(30, dtype=np.int64)
+    labels[:width] = colors
+    expected_row = fixture.request_loss(
+        logits[60:].reshape(30, 10), labels, request="row", valid_mask=np.arange(30) < width
+    )
+    assert float(fixture.request_step_loss(logits, row_target)) == pytest.approx(expected_row, rel=1e-5)
+
+    assert float(fixture.request_step_loss(logits, np.zeros(33, dtype=np.int32))) == 0.0
+
+
+def test_encode_targets_marks_only_request_events_and_never_enters_events():
+    import numpy as np
+
+    task = _tiny_task(height=2, width=3)
+    events, advances = fixture.encode_episode(task, 0)
+    episode = fixture.training_episode(task, 0)
+    targets = np.asarray(episode["targets"])
+    assert targets.shape == (fixture.EVENTS, 33)
+    assert int(np.argmax(events[fixture.SHAPE_REQUEST_EVENT, :7])) == 5
+    assert targets[fixture.SHAPE_REQUEST_EVENT, 0] == fixture.LOSS_KIND_SHAPE
+    assert list(targets[fixture.ROW_REQUEST_EVENTS[0]:fixture.ROW_REQUEST_EVENTS[0] + 2, 0]) == [2, 2]
+    assert int(np.sum(targets[:, 0] > 0)) == 1 + 2
+    assert float(jnp.sum(episode["loss_mask"])) == 3.0
+    assert np.array_equal(targets[fixture.ROW_REQUEST_EVENTS[1], 3:6], task.targets[0][1])
+    assert np.array_equal(np.asarray(episode["events"]), events.astype(np.float32))
+    assert np.array_equal(np.asarray(episode["advances"]), advances)
+    missing = fixture.ARCTask("none", task.demonstrations, task.queries, (None,), "practice")
+    with pytest.raises(ValueError, match="target"):
+        fixture.encode_targets(missing, 0)
+
+
+def test_arc_step_loss_trains_temporal_and_readout_parameters():
+    import numpy as np
+
+    model = fixture.BrainCellArcModel()
+    learner = fixture.compile_pp_prop_model(model)
+    events = jnp.zeros((3, fixture.N_INPUTS), dtype=jnp.float32).at[1:, 0].set(1.0)
+    targets = np.zeros((3, 33), dtype=np.int32)
+    targets[1, :3] = (fixture.LOSS_KIND_SHAPE, 0, 4)
+    targets[2, :3] = (fixture.LOSS_KIND_ROW, 0, 4)
+    targets[2, 3:8] = 4
+    targets = jnp.asarray(targets)
+    mask = fixture.request_loss_mask(targets)
+    weights = fixture.trainable_weights(learner, model)
+    assert {("readout_weight",), ("readout_bias",)}.issubset(weights)
+
+    model.reset_episode(learner)
+    gradients, losses = learner.etrace_grad(
+        events, targets, step_fn=fixture.arc_step_loss(learner, model),
+        mask=mask, reduction="sum", loss_output="masked", return_value=True, weights=weights,
+    )
+    assert float(losses[0]) == 0.0 and float(losses[1]) > 0.0 and float(losses[2]) > 0.0
+    assert all(bool(jnp.all(jnp.isfinite(value))) for value in gradients.values())
+    assert float(jnp.max(jnp.abs(gradients[("readout_weight",)]))) > 0.0
+    assert float(jnp.max(jnp.abs(gradients[("readout_bias",)]))) > 0.0
+
+    trainer = fixture.PPPropEpisodeTrainer(
+        learner,
+        {"input": model.input_weight.value, "recurrent": model.recurrent_weight.value},
+        weights=weights,
+    )
+    readout_before = np.asarray(model.readout_weight.value).copy()
+    step_fn = fixture.arc_step_loss(learner, model)
+    model.reset_episode(learner)
+    first_loss, norm = trainer.update_episode(events, step_fn, loss_mask=mask, targets=targets)
+    assert trainer.updates == 1 and float(norm) > 0.0
+    assert trainer.optimizer_is_finite()
+    assert not np.array_equal(np.asarray(model.readout_weight.value), readout_before)
+    assert jnp.array_equal(model.readout_weight.value, trainer.parameters["readout_weight"])
+
+    def update(_):
+        model.reset_episode(learner)
+        return trainer.update_episode(events, step_fn, loss_mask=mask, targets=targets)
+
+    history, _ = brainstate.transform.for_loop(update, jnp.arange(5))
+    assert history.shape == (5,)
+    assert float(history[-1]) < float(first_loss)
+
+
+def test_predict_episode_decodes_from_the_31_request_states():
+    import numpy as np
+
+    task = _tiny_task(height=2, width=3)
+    events, advances = fixture.encode_episode(task, 0)
+    model = fixture.BrainCellArcModel()
+    voltages = fixture.run_event_sequence(model, events, advances)
+    logits = fixture.request_readouts(model, voltages)
+    assert logits.shape == (31, fixture.N_READOUT)
+    expected = fixture.readout_logits(model, voltages[jnp.asarray(fixture.REQUEST_EVENT_INDICES)])
+    assert jnp.allclose(logits, expected)
+    model = fixture.BrainCellArcModel()
+    prediction = fixture.predict_episode(model, events, advances)
+    assert np.array_equal(prediction, fixture.decode_prediction(np.asarray(logits)))
+    with pytest.raises(ValueError, match="events"):
+        fixture.request_readouts(model, voltages[:10])
