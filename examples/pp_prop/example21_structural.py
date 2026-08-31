@@ -20,7 +20,7 @@ _REPO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if _REPO_PATH not in sys.path:
     sys.path.insert(0, _REPO_PATH)
 
-from examples.pp_prop.dale_candidates import (
+from examples.pp_prop.dale_candidates import (  # noqa: E402
     DaleMeasurements,
     deferred_biology_defaults,
     effective_dale_weights,
@@ -28,11 +28,12 @@ from examples.pp_prop.dale_candidates import (
     inverse_softplus,
     validate_effective_signs,
 )
-from examples.pp_prop.dale_candidates import (
+from examples.pp_prop.dale_candidates import (  # noqa: E402
     run_dale_candidates as _run_dale_candidates,
 )
 
 BIOLOGICAL_CONNECTIONS_PER_NEURON = 1024
+ORDINARY_UPDATES = 128
 
 
 def _git_commit():
@@ -362,6 +363,93 @@ class StructuralAdam:
         self.readout_step = self.step if self.readout_step is None else self.readout_step
 
 
+def canonicalize_topology_and_optimizer(topology, optimizer=None):
+    """Sort sparse coordinates and apply identical optimizer permutations.
+
+    Parameters
+    ----------
+    topology : SparseTopology
+        Sparse topology whose input and recurrent rows may be out of order.
+    optimizer : StructuralAdam, optional
+        Optimizer arrays aligned positionally with the sparse edge arrays.
+
+    Returns
+    -------
+    tuple
+        Canonical topology and the equally permuted optimizer, or ``None`` when
+        no optimizer was supplied.
+    """
+
+    input_source = np.asarray(topology.input_source)
+    input_target = np.asarray(topology.input_target)
+    input_value = np.asarray(topology.input_value)
+    recurrent_source = np.asarray(topology.recurrent_source)
+    recurrent_target = np.asarray(topology.recurrent_target)
+    recurrent_value = np.asarray(topology.recurrent_value)
+    if not (
+        input_source.shape == input_target.shape == input_value.shape
+        and recurrent_source.shape == recurrent_target.shape == recurrent_value.shape
+    ):
+        raise ValueError(
+            "Sparse coordinates and values must have equal lengths; "
+            "provide aligned source, target, and value arrays."
+        )
+    input_order = np.lexsort((input_target, input_source))
+    recurrent_order = np.lexsort((recurrent_target, recurrent_source))
+
+    def optional_copy(value):
+        return None if value is None else np.asarray(value).copy()
+
+    canonical = SparseTopology(
+        input_source[input_order], input_target[input_order], input_value[input_order],
+        recurrent_source[recurrent_order], recurrent_target[recurrent_order],
+        recurrent_value[recurrent_order], optional_copy(topology.readout),
+        np.asarray(topology.dale).copy(), tuple(topology.mechanisms),
+        optional_copy(getattr(topology, "owner_codes", None)),
+        optional_copy(getattr(topology, "neuron_ids", None)),
+    )
+    for name, value in (
+        ("owner codes", canonical.owner_codes),
+        ("neuron identifiers", canonical.neuron_ids),
+    ):
+        if value is not None and value.shape != (canonical.neuron_count,):
+            raise ValueError(
+                f"Topology {name} must match neuron count; "
+                f"pass one value per neuron."
+            )
+    if canonical.neuron_ids is not None and len(np.unique(canonical.neuron_ids)) != canonical.neuron_count:
+        raise ValueError(
+            "Topology neuron identifiers must be unique; pass stable distinct IDs."
+        )
+    if optimizer is None:
+        return canonical, None
+    if (
+        len(optimizer.input_first) != len(input_order)
+        or len(optimizer.input_second) != len(input_order)
+        or len(optimizer.recurrent_first) != len(recurrent_order)
+        or len(optimizer.recurrent_second) != len(recurrent_order)
+    ):
+        raise ValueError(
+            "Optimizer edge arrays must match sparse topology lengths; "
+            "provide aligned optimizer values before canonicalization."
+        )
+    mapped = StructuralAdam(
+        neuron_first=np.asarray(optimizer.neuron_first).copy(),
+        neuron_second=np.asarray(optimizer.neuron_second).copy(),
+        input_first=np.asarray(optimizer.input_first)[input_order],
+        input_second=np.asarray(optimizer.input_second)[input_order],
+        recurrent_first=np.asarray(optimizer.recurrent_first)[recurrent_order],
+        recurrent_second=np.asarray(optimizer.recurrent_second)[recurrent_order],
+        step=optimizer.step,
+        bias_first=optional_copy(optimizer.bias_first),
+        bias_second=optional_copy(optimizer.bias_second),
+        input_step=optimizer.input_step,
+        recurrent_step=optimizer.recurrent_step,
+        readout_step=optimizer.readout_step,
+    )
+    return canonical, mapped
+
+
 @dataclass(frozen=True)
 class ParentCheckpoint:
     """Validated parent topology, parameters, and nonzero optimizer state.
@@ -439,10 +527,10 @@ def load_parent_checkpoint(module, path):
         )
     dale_codes = np.asarray(arrays["dale_codes"])
     mechanism_codes = np.asarray(arrays["mechanism_codes"])
-    if np.any(dale_codes != 0):
+    if np.any(~np.isin(dale_codes, (-1, 0, 1))):
         raise ValueError(
-            "Accepted Dale parent must be fully untyped; "
-            "use a parent with zero Dale labels."
+            "Parent checkpoint Dale codes must be -1, 0, or 1; "
+            "use valid inhibitory, untyped, or excitatory labels."
         )
     if np.any(mechanism_codes != 0):
         raise ValueError(
@@ -459,6 +547,8 @@ def load_parent_checkpoint(module, path):
         np.asarray(arrays["readout_weight"]),
         dale_codes,
         tuple(() for _ in mechanism_codes),
+        np.asarray(arrays["owner_codes"]),
+        np.asarray(arrays["neuron_ids"]),
     )
     optimizer = StructuralAdam(
         np.asarray(arrays["readout_weight_m1"]),
@@ -489,6 +579,12 @@ def load_parent_checkpoint(module, path):
         raise ValueError(
             "Parent checkpoint optimizer steps must be positive; "
             "provide step counts of at least one."
+        )
+    topology, optimizer = canonicalize_topology_and_optimizer(topology, optimizer)
+    if not validate_topology_dale(topology):
+        raise ValueError(
+            "Parent checkpoint Dale labels violate effective recurrent signs; "
+            "use sign-compatible recurrent values."
         )
     return ParentCheckpoint(
         topology=topology,
@@ -844,17 +940,26 @@ def checkpoint_arrays(model, optimizer, evidence):
     """
 
     topology = topology_from_model(model)
+    topology, optimizer = canonicalize_topology_and_optimizer(topology, optimizer)
     input_counts = np.bincount(topology.input_source, minlength=441)
     recurrent_counts = np.bincount(
         topology.recurrent_source, minlength=topology.neuron_count
     )
-    owners = evidence.get("owners", ((),) * topology.neuron_count)
-    owner_codes = np.asarray([
-        -1 if not owner else (owner[0] if len(owner) == 1 else -2)
-        for owner in owners
-    ], dtype=np.int16)
+    if topology.owner_codes is None:
+        owners = evidence.get("owners", ((),) * topology.neuron_count)
+        owner_codes = np.asarray([
+            -1 if not owner else (owner[0] if len(owner) == 1 else -2)
+            for owner in owners
+        ], dtype=np.int16)
+    else:
+        owner_codes = np.asarray(topology.owner_codes, dtype=np.int16)
+    neuron_ids = (
+        np.arange(topology.neuron_count, dtype=np.int32)
+        if topology.neuron_ids is None
+        else np.asarray(topology.neuron_ids, dtype=np.int32)
+    )
     return {
-        "neuron_ids": np.arange(topology.neuron_count, dtype=np.int32),
+        "neuron_ids": neuron_ids,
         "dale_codes": np.asarray(topology.dale, dtype=np.int8),
         "owner_codes": owner_codes,
         "mechanism_codes": np.zeros(topology.neuron_count, dtype=np.uint8),
@@ -875,7 +980,7 @@ def checkpoint_arrays(model, optimizer, evidence):
         "recurrent_values": np.asarray(topology.recurrent_value, dtype=np.float32),
         "recurrent_m1": np.asarray(optimizer.recurrent_first, dtype=np.float32),
         "recurrent_m2": np.asarray(optimizer.recurrent_second, dtype=np.float32),
-        "readout_weight": np.asarray(model.readout_weight.value, dtype=np.float32),
+        "readout_weight": np.asarray(topology.readout, dtype=np.float32),
         "readout_bias": np.asarray(model.readout_bias.value, dtype=np.float32),
         "readout_weight_m1": np.asarray(optimizer.neuron_first, dtype=np.float32),
         "readout_weight_m2": np.asarray(optimizer.neuron_second, dtype=np.float32),
@@ -911,7 +1016,7 @@ def write_parent_checkpoint(module, path, data_root):
     evidence = _fixed_task_evidence(module, model, learner, data_root)
     before = tuple(evidence["strict"])
     update = _real_pp_prop_update(module, model, learner, evidence)
-    run_addition_updates(brainstate.transform, update, updates=64)
+    run_addition_updates(brainstate.transform, update, updates=ORDINARY_UPDATES)
     after = _fixed_strict_screen(module, model, learner, data_root)
     if any(old and not new for old, new in zip(before, after)):
         raise ValueError(
@@ -927,7 +1032,7 @@ def write_parent_checkpoint(module, path, data_root):
         "arm": "parent",
         "implementation_commit": _git_commit(),
         "checkpoint_sha256": digest,
-        "updates": 64,
+        "updates": ORDINARY_UPDATES,
         "before_strict": list(before),
         "after_strict": list(after),
         "optimizer_nonzero": any(
@@ -1093,6 +1198,10 @@ def prune_recurrent(topology, scores, validation_strict):
         topology.input_value.copy(), topology.recurrent_source[keep],
         topology.recurrent_target[keep], topology.recurrent_value[keep],
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
+        None if getattr(topology, "owner_codes", None) is None
+        else topology.owner_codes.copy(),
+        None if getattr(topology, "neuron_ids", None) is None
+        else topology.neuron_ids.copy(),
     )
     validate_topology_dale(pruned)
     return pruned, keep
@@ -1129,6 +1238,8 @@ def topology_from_model(model):
         recurrent_sources, recurrent_targets, np.asarray(model.recurrent_weight.value),
         readout, np.asarray(getattr(model, "dale", np.zeros(count, dtype=np.int8))),
         tuple(getattr(model, "mechanisms", ((),) * count)),
+        None if getattr(model, "owner_codes", None) is None else np.asarray(model.owner_codes),
+        None if getattr(model, "neuron_ids", None) is None else np.asarray(model.neuron_ids),
     )
 
 
@@ -1426,6 +1537,10 @@ def assign_dale_type(topology, neurons, sign):
         topology.input_source.copy(), topology.input_target.copy(), topology.input_value.copy(),
         topology.recurrent_source.copy(), topology.recurrent_target.copy(), raw,
         topology.readout.copy(), dale, tuple(topology.mechanisms),
+        None if getattr(topology, "owner_codes", None) is None
+        else topology.owner_codes.copy(),
+        None if getattr(topology, "neuron_ids", None) is None
+        else topology.neuron_ids.copy(),
     )
     if not validate_topology_dale(candidate):
         raise ValueError(
@@ -1668,6 +1783,10 @@ def compact(topology, alive, adam):
         topology.readout[alive],
         topology.dale[alive],
         tuple(mechanism for mechanism, keep in zip(topology.mechanisms, alive) if keep),
+        None if getattr(topology, "owner_codes", None) is None
+        else topology.owner_codes[alive],
+        None if getattr(topology, "neuron_ids", None) is None
+        else topology.neuron_ids[alive],
     )
     mapped = StructuralAdam(
         adam.neuron_first[alive], adam.neuron_second[alive],
@@ -1681,6 +1800,7 @@ def compact(topology, alive, adam):
         recurrent_step=adam.recurrent_step,
         readout_step=adam.readout_step,
     )
+    compacted, mapped = canonicalize_topology_and_optimizer(compacted, mapped)
     validate_topology_dale(compacted)
     return compacted, mapped, True
 
@@ -1711,6 +1831,10 @@ def mask_topology(topology, alive):
         ),
         topology.readout * alive[:, None], topology.dale.copy(),
         tuple(topology.mechanisms),
+        None if getattr(topology, "owner_codes", None) is None
+        else topology.owner_codes.copy(),
+        None if getattr(topology, "neuron_ids", None) is None
+        else topology.neuron_ids.copy(),
     )
     return masked
 
@@ -1810,26 +1934,49 @@ def add_twin_neurons(topology, scores, required=None):
     readout = topology.readout.copy()
     dale = list(topology.dale)
     mechanisms = list(topology.mechanisms)
+    owner_codes = (
+        None if getattr(topology, "owner_codes", None) is None
+        else list(topology.owner_codes)
+    )
+    neuron_ids = (
+        list(np.arange(topology.neuron_count, dtype=np.int32))
+        if getattr(topology, "neuron_ids", None) is None
+        else list(topology.neuron_ids)
+    )
+    next_neuron_id = max(neuron_ids, default=-1) + 1
     for donor in donors:
         twin = offset + len(dale) - topology.neuron_count
         for source, target, value in zip(topology.input_source, topology.input_target, topology.input_value):
             if target == donor:
-                input_source.append(source); input_target.append(twin); input_value.append(value)
+                input_source.append(source)
+                input_target.append(twin)
+                input_value.append(value)
         incoming = [(s, t, v) for s, t, v in zip(topology.recurrent_source, topology.recurrent_target, topology.recurrent_value) if t == donor]
         outgoing = [(s, t, v) for s, t, v in zip(topology.recurrent_source, topology.recurrent_target, topology.recurrent_value) if s == donor]
         for source, target, value in incoming:
-            recurrent_source.append(source); recurrent_target.append(twin); recurrent_value.append(value)
+            recurrent_source.append(source)
+            recurrent_target.append(twin)
+            recurrent_value.append(value)
         for source, target, value in outgoing:
             index = next(i for i, (s, t) in enumerate(zip(recurrent_source, recurrent_target)) if s == source and t == target)
             recurrent_value[index] *= 0.5
-            recurrent_source.append(twin); recurrent_target.append(target); recurrent_value.append(value * 0.5)
+            recurrent_source.append(twin)
+            recurrent_target.append(target)
+            recurrent_value.append(value * 0.5)
         readout[donor] *= 0.5
         readout = np.vstack((readout, readout[donor]))
-        dale.append(topology.dale[donor]); mechanisms.append(topology.mechanisms[donor])
+        dale.append(topology.dale[donor])
+        mechanisms.append(topology.mechanisms[donor])
+        if owner_codes is not None:
+            owner_codes.append(topology.owner_codes[donor])
+        neuron_ids.append(next_neuron_id)
+        next_neuron_id += 1
     grown = SparseTopology(
         np.asarray(input_source), np.asarray(input_target), np.asarray(input_value),
         np.asarray(recurrent_source), np.asarray(recurrent_target), np.asarray(recurrent_value),
         readout, np.asarray(dale), tuple(mechanisms),
+        None if owner_codes is None else np.asarray(owner_codes, dtype=np.int16),
+        np.asarray(neuron_ids, dtype=np.int32),
     )
     validate_topology_dale(grown)
     return grown, donors
@@ -2041,6 +2188,10 @@ def add_recurrent_connections(topology, pairs, *, typed=False, source_dale=None)
         np.concatenate((topology.recurrent_target, np.asarray([p[1] for p in pairs], dtype=int))),
         np.concatenate((topology.recurrent_value, initial)),
         topology.readout.copy(), topology.dale.copy(), tuple(topology.mechanisms),
+        None if getattr(topology, "owner_codes", None) is None
+        else topology.owner_codes.copy(),
+        None if getattr(topology, "neuron_ids", None) is None
+        else topology.neuron_ids.copy(),
     )
     validate_topology_dale(grown)
     return grown
@@ -2259,7 +2410,7 @@ def _measure_real_dale(
         "measurement_parent_id": measurements.parent_id,
         "lesion_evidence": lesion_evidence.tolist(),
         "arms": arms,
-        "updates": 64,
+        "updates": ORDINARY_UPDATES,
         "deferred_biology": deferred_biology_defaults(),
         "strict_regression_rejected": all(
             not any(old and not new for old, new in zip(
@@ -2458,8 +2609,8 @@ def collect_model_evidence(
     return result
 
 
-def run_addition_updates(transform, update, *, updates=64):
-    """Run exactly 64 addition updates through a BrainState loop primitive.
+def run_addition_updates(transform, update, *, updates=ORDINARY_UPDATES):
+    """Run exactly 128 addition updates through a BrainState loop primitive.
 
     Parameters
     ----------
@@ -2468,7 +2619,7 @@ def run_addition_updates(transform, update, *, updates=64):
     update : callable
         One addition update function.
     updates : int, optional
-        Required count; must be 64.
+        Required count; must be 128.
 
     Returns
     -------
@@ -2476,9 +2627,9 @@ def run_addition_updates(transform, update, *, updates=64):
         Stacked update outputs.
     """
 
-    if updates != 64:
+    if updates != ORDINARY_UPDATES:
         raise ValueError(
-            "Addition arms require exactly 64 updates; pass updates=64."
+            "Addition arms require exactly 128 updates; pass updates=128."
         )
     indices = np.arange(updates, dtype=np.int32)
     return transform.jit(lambda xs: transform.for_loop(update, xs))(indices)
@@ -2572,9 +2723,11 @@ def _fixed_task_evidence(module, model, learner, data_root, *, transform=None):
 
     def measure_task(events, advances):
         model.reset_episode(learner)
-        step_fn = lambda event: jnp.sum(
-            learner.etrace_evolve(event[None, :], return_outputs=True)[0]
-        )
+        def step_fn(event):
+            return jnp.sum(
+                learner.etrace_evolve(event[None, :], return_outputs=True)[0]
+            )
+
         gradients, losses = learner.etrace_grad(
             events, step_fn=step_fn, return_value=True,
             mask=advances, reduction="sum",
@@ -2965,10 +3118,10 @@ def promote_arm(before, after, elapsed_seconds, arm, updates):
         True when the arm is within its budget and improves validation.
     """
 
-    if arm == "addition" and updates != 64:
+    if arm == "addition" and updates != ORDINARY_UPDATES:
         raise ValueError(
-            "Addition arms require exactly 64 updates; "
-            "pass updates=64."
+            "Addition arms require exactly 128 updates; "
+            "pass updates=128."
         )
     if elapsed_seconds > 300:
         return False
@@ -3148,7 +3301,7 @@ def validate_merged_arms(arms):
                 "preserve the active optimizer state."
             )
         addition = name.endswith("add")
-        if arm.get("updates") != (64 if addition else 0):
+        if arm.get("updates") != (ORDINARY_UPDATES if addition else 0):
             raise ValueError(
                 f"Validation failed for {name}: update count is invalid; "
                 "record the declared update count."
@@ -3209,17 +3362,31 @@ def _coverage_summary():
     return {"line_and_branch_percent": percent, "branch_data": True}
 
 
-def _peak_process_resident_memory_bytes(status_path=Path("/proc/self/status")):
-    """Read the Linux process high-water resident set in bytes."""
+def _peak_process_resident_memory_bytes(
+    status_path=Path("/proc/self/status"), *, process=None
+):
+    """Read the process high-water resident set in bytes across platforms."""
 
     try:
         lines = Path(status_path).read_text(encoding="utf-8").splitlines()
     except OSError:
-        return None
+        lines = ()
     for line in lines:
         if line.startswith("VmHWM:"):
             return int(line.split()[1]) * 1024
-    return None
+    if process is None and Path(status_path) == Path("/proc/self/status"):
+        try:
+            import psutil
+            process = psutil.Process()
+        except (ImportError, OSError):
+            return None
+    if process is None:
+        return None
+    try:
+        memory = process.memory_info()
+    except (AttributeError, OSError):
+        return None
+    return int(getattr(memory, "peak_wset", memory.rss))
 
 
 def _process_start_ticks(stat_path=Path("/proc/self/stat")):
@@ -3332,7 +3499,7 @@ def run_integrated_arm(
     result = execute_one_arm(
         arm, before_strict, lambda: (candidate_model, count),
         lambda value: evaluate(value, candidate_learner),
-        updates=64 if arm.endswith("add") else 0,
+        updates=ORDINARY_UPDATES if arm.endswith("add") else 0,
         transform=transform, update=update, clock=clock,
     )
     result.update({
@@ -3496,7 +3663,7 @@ def measure_real_arm(
         candidate_adam = grow_adam_for_twins(adam, topology, candidate)
         reset = True
         count = len(donors)
-        updates = 64
+        updates = ORDINARY_UPDATES
     else:
         pairs, selection_statistics = select_connection_additions(
             topology.neuron_count,
@@ -3510,7 +3677,7 @@ def measure_real_arm(
         candidate_adam = grow_adam_for_connections(adam, len(pairs))
         reset = True
         count = len(pairs)
-        updates = 64
+        updates = ORDINARY_UPDATES
     candidate_model, candidate_learner = _rebuild_real_candidate(
         module, candidate, learner
     )
@@ -3706,7 +3873,7 @@ def main(argv=None):
             )["baseline"],
             "arms": arms,
             "arm_controls": {
-                "addition_updates": 64, "candidate_arms_per_process": 1,
+                "addition_updates": ORDINARY_UPDATES, "candidate_arms_per_process": 1,
                 "dense_neuron_pair_array": False, "max_resident_tile_pairs": 65536,
                 "promotion_requires_strict_gain": True,
                 "promoted_arms": [
@@ -3734,7 +3901,7 @@ def main(argv=None):
                           "recurrent_edges": len(topology.recurrent_value),
                           "input_edges": len(topology.input_value),
                           "readout_values": int(topology.readout.size)},
-            "arm_controls": {"addition_updates": 64,
+            "arm_controls": {"addition_updates": ORDINARY_UPDATES,
                               "candidate_arms_per_process": 1,
                               "dense_neuron_pair_array": False,
                               "max_resident_tile_pairs": resident_tile_pairs(256),

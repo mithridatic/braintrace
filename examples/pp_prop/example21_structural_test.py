@@ -1,5 +1,5 @@
-import copy
 import ast
+import copy
 import hashlib
 import importlib.util
 import json
@@ -13,7 +13,6 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
-
 from examples.pp_prop.arc_contracts import decode_prediction
 from examples.pp_prop.dale_candidates import DaleMeasurements, measure_dale_candidates
 
@@ -160,9 +159,12 @@ def test_rejected_validation_messages_include_corrective_actions():
                     "ValueError",
                 }:
                     message_nodes.append((node, node.exc.args[:1]))
-            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-                if node.func.attr == "error":
-                    message_nodes.append((node, node.args[:1]))
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "error"
+            ):
+                message_nodes.append((node, node.args[:1]))
         action_words = re.compile(
             r"\b(pass|provide|use|select|reduce|add|disable|restore|include|return|"
             r"choose|increase|assign|initialize|write|set|ensure|remove|declare|"
@@ -390,6 +392,88 @@ def test_compaction_remaps_sparse_edges_and_optimizer_rows():
     np.testing.assert_array_equal(mapped.neuron_first, adam.neuron_first[[0, 2]])
     np.testing.assert_array_equal(mapped.recurrent_first, [60.0])
     assert mapped.step == 7 and reset
+
+
+def test_canonicalization_sorts_sparse_rows_with_optimizer_values():
+    topology = structural.SparseTopology(
+        input_source=np.array([1, 0, 1]),
+        input_target=np.array([2, 1, 0]),
+        input_value=np.array([10.0, 20.0, 30.0]),
+        recurrent_source=np.array([2, 0, 1, 0]),
+        recurrent_target=np.array([1, 2, 0, 1]),
+        recurrent_value=np.array([40.0, 50.0, 60.0, 70.0]),
+        readout=np.arange(6.0).reshape(3, 2),
+        dale=np.array([0, 1, -1], dtype=np.int8),
+        mechanisms=((), (), ()),
+        owner_codes=np.array([4, 5, 6], dtype=np.int16),
+        neuron_ids=np.array([10, 20, 30], dtype=np.int32),
+    )
+    optimizer = structural.StructuralAdam(
+        neuron_first=np.arange(6.0).reshape(3, 2),
+        neuron_second=np.arange(6.0, 12.0).reshape(3, 2),
+        input_first=np.array([100.0, 200.0, 300.0]),
+        input_second=np.array([101.0, 201.0, 301.0]),
+        recurrent_first=np.array([400.0, 500.0, 600.0, 700.0]),
+        recurrent_second=np.array([401.0, 501.0, 601.0, 701.0]),
+        input_step=11,
+        recurrent_step=12,
+        readout_step=13,
+    )
+
+    canonical, mapped = structural.canonicalize_topology_and_optimizer(
+        topology, optimizer
+    )
+
+    assert list(zip(canonical.input_source, canonical.input_target)) == [
+        (0, 1), (1, 0), (1, 2)
+    ]
+    assert list(zip(canonical.recurrent_source, canonical.recurrent_target)) == [
+        (0, 1), (0, 2), (1, 0), (2, 1)
+    ]
+    np.testing.assert_array_equal(canonical.input_value, [20.0, 30.0, 10.0])
+    np.testing.assert_array_equal(mapped.input_first, [200.0, 300.0, 100.0])
+    np.testing.assert_array_equal(canonical.recurrent_value, [70.0, 50.0, 60.0, 40.0])
+    np.testing.assert_array_equal(mapped.recurrent_first, [700.0, 500.0, 600.0, 400.0])
+    np.testing.assert_array_equal(canonical.owner_codes, topology.owner_codes)
+    np.testing.assert_array_equal(canonical.neuron_ids, topology.neuron_ids)
+    assert (mapped.input_step, mapped.recurrent_step, mapped.readout_step) == (
+        11, 12, 13
+    )
+
+
+def test_structural_mutations_preserve_stable_ids_and_task_owners():
+    topology = structural.SparseTopology(
+        input_source=np.array([0]), input_target=np.array([0]),
+        input_value=np.array([2.0]), recurrent_source=np.array([0, 1]),
+        recurrent_target=np.array([1, 2]), recurrent_value=np.array([4.0, 5.0]),
+        readout=np.ones((3, 1)), dale=np.zeros(3, dtype=np.int8),
+        mechanisms=((), (), ()), owner_codes=np.array([4, 5, 6], dtype=np.int16),
+        neuron_ids=np.array([10, 20, 30], dtype=np.int32),
+    )
+    adam = structural.StructuralAdam(
+        np.ones((3, 1)), np.ones((3, 1)), np.ones(1), np.ones(1),
+        np.ones(2), np.ones(2), 3,
+    )
+
+    pruned, _ = structural.prune_recurrent(topology, [1.0, 2.0], (True,))
+    masked = structural.mask_topology(topology, np.array([True, False, True]))
+    typed = structural.assign_dale_type(topology, [0], 1)
+    connected = structural.add_recurrent_connections(topology, ((2, 0),))
+    compacted, _, _ = structural.compact(
+        topology, np.array([True, False, True]), adam
+    )
+    twins, donors = structural.add_twin_neurons(
+        topology, [3.0, 2.0, 1.0], required=1
+    )
+
+    for candidate in (pruned, masked, typed, connected):
+        np.testing.assert_array_equal(candidate.owner_codes, [4, 5, 6])
+        np.testing.assert_array_equal(candidate.neuron_ids, [10, 20, 30])
+    np.testing.assert_array_equal(compacted.owner_codes, [4, 6])
+    np.testing.assert_array_equal(compacted.neuron_ids, [10, 30])
+    assert donors == (0,)
+    np.testing.assert_array_equal(twins.owner_codes, [4, 5, 6, 4])
+    np.testing.assert_array_equal(twins.neuron_ids, [10, 20, 30, 31])
 
 
 def test_neuron_mask_and_compaction_have_prediction_byte_identity():
@@ -953,7 +1037,9 @@ def test_dale_arm_is_exposed_by_the_production_structural_route(monkeypatch):
             "clock": clock,
         },
     )
-    clock = lambda: 1.0
+    def clock():
+        return 1.0
+
     result = structural.measure_real_arm(
         "dale", data_root="arc", parent_checkpoint="accepted",
         checkpoint_output="children.npz", clock=clock
@@ -1049,11 +1135,11 @@ def test_real_dale_measurement_builds_checkpoint_arms_and_records_evidence(monke
         return {
             "selection": selection,
             "arms": [{
-                "candidate": candidate, "sign": 1, "updates": 64,
+                "candidate": candidate, "sign": 1, "updates": 128,
                 "before_strict": [False], "after_strict": [True],
                 "promoted": True,
             }, {
-                "candidate": candidate, "sign": -1, "updates": 64,
+                "candidate": candidate, "sign": -1, "updates": 128,
                 "before_strict": [False], "after_strict": [True],
                 "promoted": True,
             }],
@@ -1181,7 +1267,7 @@ def test_collect_model_evidence_keeps_preclip_mass_and_task_scores():
         )
 
 
-def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
+def test_addition_driver_and_one_arm_execution_use_compiled_128_updates():
     class Transform:
         calls: ClassVar[list] = []
 
@@ -1200,21 +1286,21 @@ def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
     ticks = []
     evidence = structural.execute_one_arm(
         "connection-add", (False, True), lambda: (object(), 2),
-        lambda candidate: (True, True), updates=64, transform=Transform,
+        lambda candidate: (True, True), updates=128, transform=Transform,
         update=lambda index: ticks.append(int(index)) or index,
         clock=iter((10.0, 12.5)).__next__,
     )
-    assert ticks == list(range(64))
-    assert Transform.calls == [("jit", 64), ("for_loop", 64)]
+    assert ticks == list(range(128))
+    assert Transform.calls == [("jit", 128), ("for_loop", 128)]
     assert evidence["promoted"] and evidence["mutated_item_count"] == 2
     assert evidence["elapsed_seconds"] == 2.5
-    with pytest.raises(ValueError, match="64"):
+    with pytest.raises(ValueError, match="128"):
         structural.run_addition_updates(Transform, lambda value: value, updates=63)
     with pytest.raises(ValueError, match="recognized"):
         structural.execute_one_arm("two-arms", (), lambda: (None, 0), lambda _: ())
     with pytest.raises(ValueError, match="compiled"):
         structural.execute_one_arm(
-            "neuron-add", (False,), lambda: (None, 1), lambda _: (True,), updates=64
+            "neuron-add", (False,), lambda: (None, 1), lambda _: (True,), updates=128
         )
     pruning = structural.execute_one_arm(
         "neuron-prune", (True,), lambda: (None, 1), lambda _: (True,),
@@ -1226,7 +1312,7 @@ def test_addition_driver_and_one_arm_execution_use_compiled_64_updates():
 def test_complete_process_timing_controls_bounded_result_and_promotion():
     evidence = {
         "arm": "neuron-add",
-        "updates": 64,
+        "updates": 128,
         "before_strict": [False, True],
         "after_strict": [True, True],
         "within_300_seconds": True,
@@ -1248,11 +1334,11 @@ def test_artifact_is_canonical_and_records_environment(tmp_path):
 
 
 def test_arm_gate_requires_gain_no_regression_limits_and_fixed_updates():
-    assert structural.promote_arm((False, True), (True, True), 299.0, "addition", 64)
-    assert not structural.promote_arm((False, True), (True, False), 1.0, "addition", 64)
-    assert not structural.promote_arm((False,), (True,), 301.0, "addition", 64)
+    assert structural.promote_arm((False, True), (True, True), 299.0, "addition", 128)
+    assert not structural.promote_arm((False, True), (True, False), 1.0, "addition", 128)
+    assert not structural.promote_arm((False,), (True,), 301.0, "addition", 128)
     assert not structural.promote_arm((True,), (True,), 1.0, "pruning", 0)
-    with pytest.raises(ValueError, match="64"):
+    with pytest.raises(ValueError, match="128"):
         structural.promote_arm((False,), (True,), 1.0, "addition", 63)
 
 
@@ -1499,7 +1585,7 @@ def test_real_arm_runner_covers_all_bounded_paths(monkeypatch, tmp_path):
     monkeypatch.setattr(structural, "run_addition_updates", lambda *args, **kwargs: None)
     for arm in ("neuron-prune", "connection-prune", "neuron-add", "connection-add"):
         result = structural.measure_real_arm(arm)
-        assert result["real_model"] and result["updates"] == (64 if arm.endswith("add") else 0)
+        assert result["real_model"] and result["updates"] == (128 if arm.endswith("add") else 0)
     structural.main(["baseline", "--output", str(tmp_path / "baseline.json")])
 
 
@@ -1834,11 +1920,20 @@ def test_parent_checkpoint_loads_nonzero_optimizer_state_and_distinct_steps(tmp_
     assert parent.optimizer.readout_step == 13
     assert parent.nonzero_optimizer_values
     assert parent.digest == hashlib.sha256(b"exact-parent-checkpoint").hexdigest()
+    np.testing.assert_array_equal(parent.topology.owner_codes, [-1, -1])
+    np.testing.assert_array_equal(parent.topology.neuron_ids, [0, 1])
 
-    with pytest.raises(ValueError, match="fully untyped"):
+    typed_parent = structural.load_parent_checkpoint(
+        SimpleNamespace(load_checkpoint=lambda path: {
+            **arrays, "dale_codes": np.array([1, 0], dtype=np.int8)
+        }), checkpoint_path
+    )
+    np.testing.assert_array_equal(typed_parent.topology.dale, [1, 0])
+    assert structural.validate_topology_dale(typed_parent.topology)
+    with pytest.raises(ValueError, match="Dale codes"):
         structural.load_parent_checkpoint(
             SimpleNamespace(load_checkpoint=lambda path: {
-                **arrays, "dale_codes": np.array([1, 0], dtype=np.int8)
+                **arrays, "dale_codes": np.array([2, 0], dtype=np.int8)
             }), checkpoint_path
         )
     with pytest.raises(ValueError, match="mechanism codes"):
@@ -1993,6 +2088,8 @@ def test_checkpoint_arrays_preserve_sparse_topology_and_optimizer_values():
         recurrent_weight = SimpleNamespace(value=np.array([3.0, 4.0], dtype=np.float32))
         readout_weight = SimpleNamespace(value=np.ones((2, 360), dtype=np.float32))
         readout_bias = SimpleNamespace(value=np.ones(360, dtype=np.float32))
+        owner_codes = np.array([7, 8], dtype=np.int16)
+        neuron_ids = np.array([41, 55], dtype=np.int32)
 
     optimizer = structural.StructuralAdam(
         np.full((2, 360), 1.0), np.full((2, 360), 2.0),
@@ -2007,7 +2104,8 @@ def test_checkpoint_arrays_preserve_sparse_topology_and_optimizer_values():
     assert arrays["input_indptr"].shape == (442,)
     np.testing.assert_array_equal(arrays["input_indices"], [0, 1])
     np.testing.assert_array_equal(arrays["recurrent_indices"], [1, 0])
-    np.testing.assert_array_equal(arrays["owner_codes"], [-1, -2])
+    np.testing.assert_array_equal(arrays["owner_codes"], [7, 8])
+    np.testing.assert_array_equal(arrays["neuron_ids"], [41, 55])
     assert int(arrays["input_step"]) == 9
     assert int(arrays["recurrent_step"]) == 10
     assert int(arrays["readout_step"]) == 11
@@ -2019,7 +2117,9 @@ def test_parent_writer_uses_real_update_state_and_writes_digest(
     model = SimpleNamespace()
     learner = SimpleNamespace()
     trainer = SimpleNamespace()
-    update = lambda index: index
+    def update(index):
+        return index
+
     update.trainer = trainer
     module = SimpleNamespace(
         BrainCellArcModel=lambda: model,
@@ -2029,15 +2129,15 @@ def test_parent_writer_uses_real_update_state_and_writes_digest(
     optimizer = structural.StructuralAdam(
         np.ones((1, 1)), np.ones((1, 1)), np.ones(1), np.ones(1),
         np.ones(1), np.ones(1), bias_first=np.ones(1), bias_second=np.ones(1),
-        input_step=64, recurrent_step=64, readout_step=64,
+        input_step=128, recurrent_step=128, readout_step=128,
     )
     arrays = {
         "input_m1": np.ones(1), "input_m2": np.ones(1),
         "recurrent_m1": np.ones(1), "recurrent_m2": np.ones(1),
         "readout_weight_m1": np.ones(1), "readout_weight_m2": np.ones(1),
         "readout_bias_m1": np.ones(1), "readout_bias_m2": np.ones(1),
-        "input_step": np.asarray(64), "recurrent_step": np.asarray(64),
-        "readout_step": np.asarray(64),
+        "input_step": np.asarray(128), "recurrent_step": np.asarray(128),
+        "readout_step": np.asarray(128),
     }
     monkeypatch.setattr(
         structural, "_fixed_task_evidence",
@@ -2057,10 +2157,10 @@ def test_parent_writer_uses_real_update_state_and_writes_digest(
     monkeypatch.setattr(structural, "_git_commit", lambda: "commit")
     target = tmp_path / "parent.npz"
     result = structural.write_parent_checkpoint(module, target, "data")
-    assert result["updates"] == 64
+    assert result["updates"] == 128
     assert result["optimizer_nonzero"]
     assert result["optimizer_steps"] == {
-        "input": 64, "recurrent": 64, "readout": 64
+        "input": 128, "recurrent": 128, "readout": 128
     }
     assert result["checkpoint_sha256"] == hashlib.sha256(b"checkpoint").hexdigest()
 
@@ -2091,7 +2191,7 @@ def test_merge_validation_accepts_honest_nonpromotion_and_rejects_invalid_eviden
             "baseline_recurrent_items": 100,
             "candidate_recurrent_items": 105 if name == "connection-add" else (95 if name == "connection-prune" else 100),
             "mutated_item_count": 5,
-            "updates": 64 if addition else 0,
+            "updates": 128 if addition else 0,
             "before_strict": [False] + [True] * 11,
             "after_strict": [True] * 12,
             "promoted": True,
@@ -2239,6 +2339,15 @@ def test_peak_process_resident_memory_reads_linux_high_water_mark(tmp_path):
     status.write_text("Name:\tpython\n")
     assert structural._peak_process_resident_memory_bytes(status) is None
     assert structural._peak_process_resident_memory_bytes(tmp_path / "missing") is None
+
+
+def test_peak_process_resident_memory_uses_process_fallback(tmp_path):
+    process = SimpleNamespace(
+        memory_info=lambda: SimpleNamespace(peak_wset=9_876_543, rss=1_234_567)
+    )
+    assert structural._peak_process_resident_memory_bytes(
+        tmp_path / "missing", process=process
+    ) == 9_876_543
 
     stat = tmp_path / "stat"
     fields = ["R"] + ["0"] * 18 + ["9876"]

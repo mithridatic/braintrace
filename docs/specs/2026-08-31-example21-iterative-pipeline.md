@@ -14,8 +14,11 @@ enough to carry it forward.
 The mastery target is direct exact pass@1 on all 400 ARC training tasks. This is
 an optimization target, not a guarantee that a bounded run will attain it. The
 400 ARC evaluation tasks are held out from training, ranking, promotion, early
-stopping, and configuration choices. They are scored exactly once when a run
-ends. Training mastery must not be reported as held-out ARC mastery.
+stopping, and configuration choices. They produce one logical terminal result
+when a run ends. A process death after scoring but before result bytes become
+durable may replay the same deterministic score under its immutable intent;
+once the result is durable, resume never scores it again. Training mastery must
+not be reported as held-out ARC mastery.
 
 The pipeline compares two trained mutation siblings with their immutable
 stage parent. It deliberately has no matched, unchanged, equally trained
@@ -36,7 +39,8 @@ The command owns the complete lifecycle: corpus loading, training, scoring,
 structural stages, checkpoint handoff, progress reporting, plotting, terminal
 evaluation, and interruption recovery. Reusing an output directory containing
 a compatible unfinished run resumes it automatically. A configuration mismatch
-or a closed run fails closed instead of silently starting another lineage.
+fails closed. A closed directory may only verify or finish its own terminal
+artifacts and return the same state; it never starts or tunes another lineage.
 
 Defaults are:
 
@@ -101,8 +105,10 @@ Each round executes this order:
 5. From the carried state, compare measured excitatory and inhibitory Dale
    assignments over the selected 5% of neurons. Train both siblings, enforce
    their signs, and carry the best improving state.
-6. Persist the round result, refresh progress artifacts, and continue until
-   training mastery, two stable rounds, or the eight-round budget.
+6. Persist the round result and refresh progress artifacts. Before mastery,
+   continue until two stable rounds or the eight-round budget. At mastery,
+   alternate protected edge and neuron pruning toward a fixed point until two
+   stable compression rounds or the round budget, then close.
 
 The existing deterministic 5% structural selection and sparse mutation
 contracts remain authoritative. A stage may retain its parent when neither
@@ -132,7 +138,9 @@ Once all 400 training tasks are exact, the objective switches to
 compression-first edge and neuron pruning. Compression may remove structure
 only while preserving 400/400 direct exactness. It retains a state only when
 persistent bytes decrease, with neuron and edge counts as the remaining
-tie-breakers.
+tie-breakers. Each accepted compression round returns to edge pruning because
+neuron removal changes the edge search space. Compression ends after two full
+rounds retain their parent, or when the round budget is exhausted.
 
 A no-progress round is one whose final state does not improve exact count,
 protected unresolved-task loss, or mastery-preserving resource usage relative
@@ -146,7 +154,9 @@ Muon state, stable neuron IDs, task-owner codes, Dale labels, round and stage
 cursor, and checkpoint ancestry. A selected add, prune, or Dale child is saved
 before it can become a downstream parent. A rejected child cannot mutate the
 parent and its temporary files are removed after the comparison is durably
-recorded.
+recorded. Each accepted lineage sidecar binds the immediate parent and the
+resolved source checkpoint path plus SHA-256. Replay verifies that exact source
+evidence before it may clean a staged file.
 
 Topology rebuilding must:
 
@@ -166,8 +176,9 @@ Topology rebuilding must:
 Checkpoint validation must use the authoritative dynamic and configured limits
 rather than the baseline-only 30,496-connection assumption. Existing format-1
 checkpoints remain readable. A rewritten selected checkpoint uses the current
-format and must round-trip topology, parameters, optimizer state, stable IDs,
-owners, signs, cursor, and ancestry exactly.
+format. The checkpoint and its digest-bound run-state, pending-transition, and
+progress sidecars must round-trip topology, parameters, optimizer state,
+stable IDs, owners, signs, cursor, and ancestry exactly.
 
 ## Execution and resource bounds
 
@@ -197,22 +208,26 @@ The output directory contains:
 - `run-state.json`, the current configuration, cursor, lineage, and closed/open
   state.
 - Versioned accepted checkpoints addressed by round and stage.
+- `checkpoints/<stage-id>.lineage.json`, the verified immediate ancestry for
+  each accepted checkpoint.
 - `progress.jsonl`, an append-only record of every completed sibling comparison
   and round boundary.
 - `topology.png`, the latest accepted graph.
 - `score-history.png`, the accepted score and resource history.
-- One terminal evaluation result after the run is closed.
+- `evaluation-intent.json` while terminal scoring is in flight, and one
+  terminal evaluation result after the run is closed.
 
 State JSON, accepted checkpoints, and plots are written through sibling
 temporary files and atomic replacement. A progress record is flushed durably
 before `run-state.json` advances past that stage. Every record has a stable
 stage ID so resume can reconcile an interrupted write without repeating an
-accepted mutation or terminal evaluation.
+accepted mutation or a terminal evaluation whose result is already durable.
 
 Progress records include the stage and round; parent and child checkpoint
-digests; disposition of both siblings; exact count and solved task IDs;
-shape-and-cell loss; update count; neuron and recurrent-edge counts; persistent
-and checkpoint bytes; elapsed time; peak host RAM; and available device-memory
+digests; raw and final disposition of both siblings; exact count and solved
+task IDs; shape-and-cell loss; scheduled cursor advance; per-arm and total
+executed update counts; neuron and recurrent-edge counts; persistent and
+checkpoint bytes; elapsed time; peak host RAM; and available device-memory
 evidence. They must distinguish an accepted mutation, retained parent, blocked
 candidate, failed candidate, and terminal state.
 
@@ -249,8 +264,9 @@ Co-located suffix-style tests cover:
   connection-cap, neuron-cap, checkpoint-cap, non-finite, malformed-corpus, and
   all-solved cases.
 - Atomic interruption and resume at each durable boundary, config-drift
-  rejection, idempotent reconciliation, closed-run behavior, exactly one
-  terminal evaluation, complete progress records, and automatic plots.
+  rejection, idempotent reconciliation, closed-run finalization, one logical
+  terminal result with no post-durability rescore, complete progress records,
+  and automatic plots.
 - Static and runtime protection against repeated bare Python model loops.
 
 All new or changed public APIs use NumPy-style docstrings. Changed Example 21

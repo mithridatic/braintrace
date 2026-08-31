@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -15,18 +15,24 @@ import braincell
 import brainevent
 import brainstate
 import braintools
+import braintrace
 import brainunit as u
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-
-import braintrace
 from examples.pp_prop.arc_contracts import (
+    ARCTask,
+    decode_episode,
     decode_prediction,
     encode_episode,
+    load_checkpoint,
     load_task,
     query_exact,
+    request_loss,
+    strict_task_pass_at_1,
+    write_checkpoint,
+    write_result,
 )
 from examples.pp_prop.dale_candidates import (
     deferred_biology_defaults,
@@ -34,6 +40,20 @@ from examples.pp_prop.dale_candidates import (
     project_dale_raw_weights,
     sparse_dale_matmul,
     validate_deferred_biology,
+)
+
+__all__ = (
+    "ARCTask",
+    "decode_episode",
+    "decode_prediction",
+    "encode_episode",
+    "load_checkpoint",
+    "load_task",
+    "query_exact",
+    "request_loss",
+    "strict_task_pass_at_1",
+    "write_checkpoint",
+    "write_result",
 )
 
 N_INPUTS = 441
@@ -44,7 +64,7 @@ RECURRENT_FANOUT = 8
 TRACE_DECAY = 0.95
 GRADIENT_CLIP_NORM = 1.0
 PROOF_UPDATES = 8
-ORDINARY_UPDATES = 64
+ORDINARY_UPDATES = 128
 PROOF_DEADLINE_SECONDS = 180.0
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
 TRAINING_TASK_IDS = (
@@ -193,11 +213,12 @@ def _supervised_request_loss(
         - jnp.take_along_axis(shape_logits, target_shape[:, None], axis=1).squeeze(1)
     )
     row_logits = logits[60:].reshape((30, 10))
+    valid_cell_count = (target_shape[0] + 1) * (target_shape[1] + 1)
     row_loss = jnp.sum(
         (jax.nn.logsumexp(row_logits, axis=-1)
          - jnp.take_along_axis(row_logits, target_rows[:, None], axis=1).squeeze(1))
         * target_valid_mask
-    ) / jnp.maximum(jnp.sum(target_valid_mask), 1.0)
+    ) / jnp.maximum(valid_cell_count, 1)
     return jnp.where(
         request_kind == 1,
         shape_loss,
@@ -469,19 +490,30 @@ class BrainCellArcModel(brainstate.nn.Module):
             readout = _normal((N_NEURONS, N_READOUT), 23, 1.0 / jnp.sqrt(float(N_NEURONS)))
             dale = jnp.zeros((neuron_count,), dtype=jnp.int8)
             mechanisms = ((),) * neuron_count
+            owner_codes = None
+            neuron_ids = np.arange(neuron_count, dtype=np.int32)
         else:
             neuron_count = topology.neuron_count
-            recurrent_order = np.argsort(topology.recurrent_source, kind="stable")
+            input_order = np.lexsort((
+                np.asarray(topology.input_target),
+                np.asarray(topology.input_source),
+            ))
+            recurrent_order = np.lexsort((
+                np.asarray(topology.recurrent_target),
+                np.asarray(topology.recurrent_source),
+            ))
             self.input_csr = brainevent.CSR(
-                jnp.asarray(topology.input_value),
-                jnp.asarray(topology.input_target, dtype=jnp.int32),
-                _csr_indptr(topology.input_source, N_INPUTS),
+                jnp.asarray(topology.input_value)[input_order],
+                jnp.asarray(topology.input_target, dtype=jnp.int32)[input_order],
+                _csr_indptr(np.asarray(topology.input_source)[input_order], N_INPUTS),
                 shape=(N_INPUTS, neuron_count),
             )
             self.recurrent_csr = brainevent.CSR(
                 jnp.asarray(topology.recurrent_value)[recurrent_order],
                 jnp.asarray(topology.recurrent_target, dtype=jnp.int32)[recurrent_order],
-                _csr_indptr(topology.recurrent_source, neuron_count),
+                _csr_indptr(
+                    np.asarray(topology.recurrent_source)[recurrent_order], neuron_count
+                ),
                 shape=(neuron_count, neuron_count),
             )
             input_values = self.input_csr.data
@@ -489,10 +521,18 @@ class BrainCellArcModel(brainstate.nn.Module):
             readout = jnp.asarray(topology.readout)
             dale = jnp.asarray(getattr(topology, "dale", jnp.zeros((neuron_count,), dtype=jnp.int8)))
             mechanisms = tuple(getattr(topology, "mechanisms", ((),) * neuron_count))
+            owner_codes = getattr(topology, "owner_codes", None)
+            neuron_ids = getattr(topology, "neuron_ids", None)
+            if neuron_ids is None:
+                neuron_ids = np.arange(neuron_count, dtype=np.int32)
         self.input_weight = brainstate.ParamState(input_values)
         self.recurrent_weight = brainstate.ParamState(recurrent_values)
         self.dale = dale
         self.mechanisms = mechanisms
+        self.owner_codes = (
+            None if owner_codes is None else np.asarray(owner_codes, dtype=np.int16)
+        )
+        self.neuron_ids = np.asarray(neuron_ids, dtype=np.int32)
         self.biology_options = deferred_biology_defaults()
         self.readout_weight = brainstate.ParamState(
             readout
@@ -1524,28 +1564,6 @@ def _apply_proof_deadline(report, started_at):
     }
 
 
-import importlib.util
-
-_ARC_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
-    "example21_arc_contracts", Path(__file__).with_name("arc_contracts.py")
-)
-assert _ARC_CONTRACTS_SPEC is not None and _ARC_CONTRACTS_SPEC.loader is not None
-_ARC_CONTRACTS = importlib.util.module_from_spec(_ARC_CONTRACTS_SPEC)
-sys.modules[_ARC_CONTRACTS_SPEC.name] = _ARC_CONTRACTS
-_ARC_CONTRACTS_SPEC.loader.exec_module(_ARC_CONTRACTS)
-ARCTask = _ARC_CONTRACTS.ARCTask
-load_task = _ARC_CONTRACTS.load_task
-encode_episode = _ARC_CONTRACTS.encode_episode
-decode_episode = _ARC_CONTRACTS.decode_episode
-request_loss = _ARC_CONTRACTS.request_loss
-decode_prediction = _ARC_CONTRACTS.decode_prediction
-query_exact = _ARC_CONTRACTS.query_exact
-strict_task_pass_at_1 = _ARC_CONTRACTS.strict_task_pass_at_1
-write_result = _ARC_CONTRACTS.write_result
-write_checkpoint = _ARC_CONTRACTS.write_checkpoint
-load_checkpoint = _ARC_CONTRACTS.load_checkpoint
-
-
 N_FEATURES = 1
 N_CELLS = 4
 N_READOUT = 360
@@ -1945,8 +1963,8 @@ def _parser():
     parser.add_argument(
         "command",
         nargs="?",
-        choices=("proof", "run"),
-        help="run the real-data proof or fixed ordinary schedule",
+        choices=("proof", "run", "evolve"),
+        help="run the proof, fixed schedule, or resumable ARC evolution",
     )
     parser.add_argument(
         "--smoke",
@@ -1963,12 +1981,30 @@ def _parser():
         "--arc-root",
         type=Path,
         default=Path("/datasets/arc/raw"),
-        help="raw ARC root for proof and run (default: /datasets/arc/raw)",
+        help="raw ARC root for proof, run, and evolve (default: /datasets/arc/raw)",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        help="write the JSON report into this directory",
+        help="write reports or resumable evolution artifacts into this directory",
+    )
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=8,
+        help="maximum resumable evolution rounds (default: 8)",
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=2,
+        help="stable evolution rounds before stopping (default: 2)",
+    )
+    parser.add_argument(
+        "--updates",
+        type=int,
+        default=ORDINARY_UPDATES,
+        help="PP-Prop updates per non-proof block (default: 128)",
     )
     return parser
 
@@ -2001,15 +2037,46 @@ def _write_report(output_dir, report):
     )
 
 
+def _evolve_workflow_report(
+    arc_root, output_dir, *, rounds=8, patience=2, updates=ORDINARY_UPDATES
+):
+    """Run or resume iterative ARC evolution and summarize its terminal state."""
+
+    from examples.pp_prop.example21_arc_adapter import Example21ArcAdapter
+    from examples.pp_prop.example21_evolve import PipelineConfig, run_evolution
+
+    config = PipelineConfig(rounds=rounds, patience=patience, updates=updates)
+    state = run_evolution(
+        Example21ArcAdapter(arc_root), output_dir, config=config
+    )
+    return {
+        "mode": "evolve",
+        "passed": bool(state.closed and state.evaluation_completed),
+        "closed": bool(state.closed),
+        "terminal_reason": state.terminal_reason,
+        "round_index": int(state.round_index),
+        "training_exact_tasks": int(state.accepted.score.exact_count),
+        "training_task_count": len(state.accepted.score.task_ids),
+        "checkpoint": state.accepted.checkpoint_path,
+        "checkpoint_sha256": state.accepted.checkpoint_sha256,
+        "evaluation_digest": state.evaluation_digest,
+    }
+
+
 def _run_command(args):
     if args.command is not None and args.smoke:
         raise ValueError(
-            "Choose one of proof, run, or --smoke; "
+            "Choose one of proof, run, evolve, or --smoke; "
             "pass exactly one execution mode."
         )
     if args.command is None and not args.smoke:
         _parser().print_help()
         return 0
+    if args.command == "evolve" and args.output_dir is None:
+        raise ValueError(
+            "Evolution requires --output-dir for checkpoints and progress; "
+            "pass a durable run directory."
+        )
     try:
         device = jax.devices(args.device)[0]
     except RuntimeError as error:
@@ -2023,6 +2090,14 @@ def _run_command(args):
             report = _real_workflow_report(args.arc_root, proof=True)
         elif args.command == "run":
             report = _real_workflow_report(args.arc_root, proof=False)
+        elif args.command == "evolve":
+            report = _evolve_workflow_report(
+                args.arc_root,
+                args.output_dir,
+                rounds=args.rounds,
+                patience=args.patience,
+                updates=args.updates,
+            )
         else:
             report = _smoke_report()
     if started_at is not None:

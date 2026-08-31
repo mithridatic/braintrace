@@ -1,10 +1,10 @@
-import json
+import hashlib
 import importlib.util
+import json
 import sys
 
 import numpy as np
 import pytest
-
 
 SPEC = importlib.util.spec_from_file_location("arc_contracts", __file__.replace("_test.py", ".py"))
 arc = importlib.util.module_from_spec(SPEC)
@@ -16,6 +16,61 @@ def task(target=True):
     source = np.asarray([[0, 1], [2, 3]], dtype=np.uint8)
     answer = np.asarray([[4, 5]], dtype=np.uint8) if target else np.asarray([[6]], dtype=np.uint8)
     return arc.ARCTask("d631b094", ((source, np.asarray([[4, 5]], dtype=np.uint8)),), (source.copy(),), (answer,), "practice")
+
+
+def _write_corpus(root, directory, count=400):
+    path = root / "data" / directory
+    path.mkdir(parents=True)
+    payload = json.dumps({
+        "train": [{"input": [[0]], "output": [[1]]}],
+        "test": [{"input": [[2]], "output": [[3]]}],
+    })
+    for index in reversed(range(count)):
+        (path / f"{index:08x}.json").write_text(payload, encoding="utf-8")
+    return path
+
+
+def _checkpoint_arrays(neuron_count, input_connections):
+    input_counts = np.zeros(arc.EVENT_WIDTH, dtype=np.int32)
+    input_counts[0] = input_connections
+    return {
+        "neuron_ids": np.arange(neuron_count, dtype=np.int32),
+        "dale_codes": np.zeros(neuron_count, dtype=np.int8),
+        "owner_codes": np.full(neuron_count, -1, dtype=np.int16),
+        "mechanism_codes": np.zeros(neuron_count, dtype=np.uint8),
+        "neuron_count": np.asarray(neuron_count, dtype=np.int32),
+        "integration_substeps": np.asarray(1, dtype=np.int32),
+        "input_indptr": np.concatenate((
+            np.zeros(1, dtype=np.int32), np.cumsum(input_counts, dtype=np.int32),
+        )),
+        "input_indices": np.zeros(input_connections, dtype=np.int32),
+        "input_values": np.zeros(input_connections, dtype=np.float32),
+        "input_m1": np.zeros(input_connections, dtype=np.float32),
+        "input_m2": np.zeros(input_connections, dtype=np.float32),
+        "recurrent_indptr": np.zeros(neuron_count + 1, dtype=np.int32),
+        "recurrent_indices": np.zeros(0, dtype=np.int32),
+        "recurrent_values": np.zeros(0, dtype=np.float32),
+        "recurrent_m1": np.zeros(0, dtype=np.float32),
+        "recurrent_m2": np.zeros(0, dtype=np.float32),
+        "readout_weight": np.zeros((neuron_count, 360), dtype=np.float32),
+        "readout_bias": np.zeros(360, dtype=np.float32),
+        "readout_weight_m1": np.zeros((neuron_count, 360), dtype=np.float32),
+        "readout_weight_m2": np.zeros((neuron_count, 360), dtype=np.float32),
+        "readout_bias_m1": np.zeros(360, dtype=np.float32),
+        "readout_bias_m2": np.zeros(360, dtype=np.float32),
+        "input_step": np.asarray(0, dtype=np.int64),
+        "recurrent_step": np.asarray(0, dtype=np.int64),
+        "readout_step": np.asarray(0, dtype=np.int64),
+    }
+
+
+def _manifest_sources():
+    return tuple(
+        arc.ARCCorpusSource(
+            f"{index:08x}", f"data/training/{index:08x}.json", "0" * 64,
+        )
+        for index in range(400)
+    )
 
 
 def test_event_round_trip_and_target_isolation():
@@ -80,6 +135,123 @@ def test_loader_rejects_bad_roles_paths_demo_counts_and_empty_tests(tmp_path):
         arc.load_task(tmp_path, "d631b094")
     with pytest.raises(ValueError, match="rectangular"):
         arc.ARCTask("x", ((([[1], [2, 3]]), [[1]]),), ([[1]],), (None,), "practice")
+
+
+def test_manifest_declares_exactly_400_sorted_training_sources(tmp_path):
+    directory = _write_corpus(tmp_path, "training")
+    evaluation = tmp_path / "data" / "evaluation"
+    evaluation.mkdir()
+    (evaluation / "must-not-be-read.json").write_text("not JSON", encoding="utf-8")
+    manifest = arc.load_corpus_manifest(tmp_path)
+
+    assert manifest.role == "practice"
+    assert len(manifest.sources) == 400
+    assert manifest.task_ids == tuple(sorted(manifest.task_ids))
+    assert manifest.task_ids[0] == "00000000"
+    assert manifest.task_ids[-1] == "0000018f"
+    for source in manifest.sources:
+        path = tmp_path / source.source_path
+        assert source.source_sha256 == hashlib.sha256(path.read_bytes()).hexdigest()
+
+    task_id = manifest.task_ids[-1]
+    with pytest.raises(ValueError, match="declared direct ARC task"):
+        arc.load_task(tmp_path, task_id)
+    loaded = arc.load_task(tmp_path, task_id, manifest=manifest)
+    assert loaded.task_id == task_id
+    assert loaded.role == "practice"
+
+    (directory / f"{task_id}.json").write_text(
+        json.dumps({"train": [], "test": [{"input": [[4]], "output": [[5]]}]}),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="source digest"):
+        arc.load_task(tmp_path, task_id, manifest=manifest)
+
+
+def test_manifest_requires_exact_corpus_and_explicit_evaluation_access(tmp_path):
+    _write_corpus(tmp_path, "training", count=399)
+    with pytest.raises(ValueError, match="exactly 400"):
+        arc.load_corpus_manifest(tmp_path)
+
+    evaluation_root = tmp_path / "evaluation-root"
+    _write_corpus(evaluation_root, "evaluation")
+    with pytest.raises(ValueError, match="evaluation"):
+        arc.load_corpus_manifest(evaluation_root, role="evaluation")
+    manifest = arc.load_corpus_manifest(
+        evaluation_root, role="evaluation", allow_evaluation=True,
+    )
+    with pytest.raises(ValueError, match="evaluation"):
+        arc.load_task(
+            evaluation_root, manifest.task_ids[0], role="evaluation",
+            manifest=manifest,
+        )
+    loaded = arc.load_task(
+        evaluation_root, manifest.task_ids[0], role="evaluation",
+        manifest=manifest, allow_evaluation=True,
+    )
+    assert loaded.role == "evaluation"
+
+
+def test_manifest_rejects_invalid_source_names_and_wrong_root(tmp_path):
+    directory = _write_corpus(tmp_path, "training")
+    (directory / "0000018f.json").rename(directory / "INVALID.json")
+    with pytest.raises(ValueError, match="eight lowercase hexadecimal"):
+        arc.load_corpus_manifest(tmp_path)
+
+    other_root = tmp_path / "other"
+    _write_corpus(other_root, "training")
+    manifest = arc.load_corpus_manifest(other_root)
+    with pytest.raises(ValueError, match="different ARC root"):
+        arc.load_task(tmp_path, manifest.task_ids[0], manifest=manifest)
+    with pytest.raises(ValueError, match="role does not match"):
+        arc.load_task(
+            other_root, manifest.task_ids[0], role="evaluation",
+            allow_evaluation=True, manifest=manifest,
+        )
+    with pytest.raises(ValueError, match="not declared by"):
+        arc.load_task(other_root, "ffffffff", manifest=manifest)
+    with pytest.raises(TypeError, match="ARCCorpusManifest"):
+        arc.load_task(other_root, manifest.task_ids[0], manifest=object())
+    (other_root / manifest.sources[0].source_path).unlink()
+    with pytest.raises(ValueError, match="source cannot be read"):
+        arc.load_task(other_root, manifest.task_ids[0], manifest=manifest)
+
+
+def test_manifest_value_objects_reject_forged_declarations(tmp_path):
+    digest = "0" * 64
+    with pytest.raises(ValueError, match="task IDs"):
+        arc.ARCCorpusSource("INVALID", "data/training/INVALID.json", digest)
+    with pytest.raises(ValueError, match="SHA-256"):
+        arc.ARCCorpusSource("00000000", "data/training/00000000.json", "bad")
+    with pytest.raises(ValueError, match="relative"):
+        arc.ARCCorpusSource("00000000", "../00000000.json", digest)
+
+    sources = _manifest_sources()
+    with pytest.raises(ValueError, match="manifest role"):
+        arc.ARCCorpusManifest(str(tmp_path), "other", sources)
+    with pytest.raises(ValueError, match="exactly 400"):
+        arc.ARCCorpusManifest(str(tmp_path), "practice", sources[:-1])
+    with pytest.raises(ValueError, match="unique and sorted"):
+        arc.ARCCorpusManifest(
+            str(tmp_path), "practice", (sources[1], sources[0], *sources[2:]),
+        )
+    mismatched_paths = (
+        arc.ARCCorpusSource("00000000", sources[1].source_path, digest),
+        arc.ARCCorpusSource("00000001", sources[0].source_path, digest),
+        *sources[2:],
+    )
+    with pytest.raises(ValueError, match="source paths must be sorted"):
+        arc.ARCCorpusManifest(str(tmp_path), "practice", mismatched_paths)
+    with pytest.raises(ValueError, match="paths do not match"):
+        arc.ARCCorpusManifest(str(tmp_path), "evaluation", sources)
+
+
+def test_manifest_rejects_missing_root_and_role_directory(tmp_path):
+    with pytest.raises(ValueError, match="root cannot be read"):
+        arc.load_corpus_manifest(tmp_path / "missing")
+    tmp_path.mkdir(exist_ok=True)
+    with pytest.raises(ValueError, match="directory cannot be read"):
+        arc.load_corpus_manifest(tmp_path)
 
 
 def test_full_decoder_has_independent_cell_colors_and_result_recomputes_flags(tmp_path):
@@ -177,21 +349,21 @@ def test_result_and_checkpoint_are_bounded_and_round_trip(tmp_path):
 
 def test_result_schema_and_checkpoint_file_validation(tmp_path):
     result = tmp_path / "result.json"
-    with pytest.raises(ValueError, match="sequence"):
+    with pytest.raises(TypeError, match="sequence"):
         arc.write_result(result, "bad")
     record = {"task_id": "x", "queries": [], "strict_pass_at_1": False}
     with pytest.raises(ValueError, match="task result fields"):
         arc.write_result(result, [{**record, "extra": 1}])
-    with pytest.raises(ValueError, match="task_id"):
+    with pytest.raises(TypeError, match="task_id"):
         arc.write_result(result, [{**record, "task_id": 1}])
-    with pytest.raises(ValueError, match="queries"):
+    with pytest.raises(TypeError, match="queries"):
         arc.write_result(result, [{**record, "queries": "bad"}])
     query = {"query_index": 0, "prediction": [[1]], "target": [[1]], "exact": True}
     with pytest.raises(ValueError, match="query result fields"):
         arc.write_result(result, [{**record, "queries": [{**query, "extra": 1}]}])
     with pytest.raises(ValueError, match="nonnegative"):
         arc.write_result(result, [{**record, "queries": [{**query, "query_index": -1}]}])
-    with pytest.raises(ValueError, match="exact"):
+    with pytest.raises(TypeError, match="exact"):
         arc.write_result(result, [{**record, "queries": [{**query, "exact": 1}]}])
     malformed = tmp_path / "malformed.npz"
     np.savez(malformed, format=np.asarray([1]))
@@ -229,3 +401,14 @@ def test_checkpoint_enforces_input_destination_and_fixed_readout(tmp_path):
     arrays["readout_bias"] = np.zeros(359, dtype=np.float32)
     with pytest.raises(ValueError, match="readout parameters"):
         arc.write_checkpoint(tmp_path / "bad-readout.npz", arrays)
+
+
+def test_checkpoint_uses_dynamic_per_neuron_connection_limit(tmp_path):
+    above_legacy_limit = _checkpoint_arrays(31, 30_497)
+    path = tmp_path / "dynamic-limit.npz"
+    arc.write_checkpoint(path, above_legacy_limit)
+    assert len(arc.load_checkpoint(path)["input_indices"]) == 30_497
+
+    above_dynamic_limit = _checkpoint_arrays(2, 2_049)
+    with pytest.raises(ValueError, match="1,024 connections per neuron"):
+        arc.write_checkpoint(tmp_path / "above-dynamic-limit.npz", above_dynamic_limit)

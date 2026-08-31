@@ -162,7 +162,7 @@
   effective sign violation after one update and one structural operation, and
   raw signed behavior for untyped neurons.
 - [x] 8.3 Add the Dale candidate runner and strict gate; verify separate parent
-  checkpoints, fixed 64-update arms, false-to-true promotion with no regression,
+  checkpoints, fixed ordinary-update arms, false-to-true promotion with no regression,
   and no AMPA or GABAa mechanism in a type-assignment arm.
 - [x] 8.4 Add only the guard and documentation for deferred biological
   features; verify that default construction activates none. Do not implement
@@ -216,3 +216,23 @@
   code comments, no unrelated worktree changes, one active Example 21
   implementation with its co-located test, and demonstrated non-ARC use for
   every shared helper extracted from the Example 21 module.
+
+## 12. Iterative full-corpus evolution
+
+Sections 1 through 11 record the completed bounded `proof` and `run` baseline.
+This section supersedes their corpus, promotion, artifact, plotting, and
+module-layout constraints only for `evolve`. Muon and 128 updates also apply to
+legacy `run`.
+
+- [x] 12.1 Specify the complete 400-task training manifest, terminal-only
+  400-task evaluation boundary, Muon policy, 128-update blocks, protected
+  objective, stage order, resource limits, and sidecar-owned lineage.
+- [x] 12.2 Implement the resumable coordinator, pending-transition recovery,
+  deterministic sibling selection, accepted-checkpoint handoff, terminal
+  evaluation, progress history, and automatic PNG refresh.
+- [x] 12.3 Implement the real ARC and BrainCell adapter, compiled PP-Prop and
+  scoring loops, sparse edge/neuron/Dale mutations, optimizer continuation,
+  immutable-parent checks, and fail-closed corpus and resource validation.
+- [ ] 12.4 Qualify one complete default GPU round over the real 400-task ARC
+  corpus, including interruption recovery and literal terminal scores. This
+  remains open until the corpus is available in the qualification environment.

@@ -4,6 +4,12 @@ Defines a small, direct, and time-bounded ARC model that uses BrainCell
 Hodgkin-Huxley dynamics and BrainTrace PP-Prop without answer shortcuts or
 partial-score qualification.
 
+The requirements before "Iterative full-corpus evolution" define the bounded
+`proof` and legacy `run` modes. The later iterative requirements supersede
+their corpus size, promotion, result, plot, and module layout clauses only for
+the `evolve` command. Their Muon and 128-update requirements also apply to the
+legacy `run` command.
+
 ## ADDED Requirements
 
 ### Requirement: Real ARC task boundary
@@ -266,29 +272,30 @@ one nonzero direct-gradient value on the compatibility fixture.
 ### Requirement: Fixed bounded training schedule
 
 The ordinary training screen SHALL use batch size one, BrainTrace PP-Prop
-`single-step`, trace decay `0.95`, gradient clip norm `1.0`, and separate Adam
-optimizers. The input learning rate SHALL be `0.001`, the recurrent learning
-rate SHALL be `0.0003`, and the readout learning rate SHALL be `0.003`.
+`single-step`, trace decay `0.95`, gradient clip norm `1.0`, and separate Muon
+optimizer groups with AdamW fallback for non-matrix values. The input learning
+rate SHALL be `0.001`, the recurrent learning rate SHALL be `0.0003`, and the
+readout learning rate SHALL be `0.003`.
 
-The ordinary screen SHALL perform 64 ordered updates. It SHALL cycle through
+The ordinary screen SHALL perform 128 ordered updates. It SHALL cycle through
 the labeled query episodes of the eight fixed training tasks in declared task
 and query order. It SHALL not add updates automatically after a failed gate.
 Before each query episode, it SHALL reset voltage, channel gates, spikes, and
-PP-Prop eligibility state. It SHALL retain trainable parameters, Adam moments,
-and Adam step counts between training episodes. Evaluation SHALL not update any
-of these retained values.
+PP-Prop eligibility state. It SHALL retain trainable parameters, active Muon or
+AdamW-fallback state, and optimizer step counts between training episodes.
+Evaluation SHALL not update any of these retained values.
 
 #### Scenario: Episode reset does not erase learning
 
 - **WHEN** two consecutive training query episodes run
 - **THEN** the second episode starts from reset biological and eligibility
   state
-- **AND** it starts with the parameter and Adam state produced by the first
+- **AND** it starts with the parameter and optimizer state produced by the first
   episode
 
 #### Scenario: Failed gate does not expand training
 
-- **WHEN** the eight-update proof or 64-update ordinary screen fails an
+- **WHEN** the eight-update proof or 128-update ordinary screen fails an
   acceptance gate
 - **THEN** the runner stops without increasing its update count or changing its
   fixed task set
@@ -432,8 +439,8 @@ size at or below 32 MiB, and arrays only. Its loader SHALL use
 `allow_pickle=False`. It SHALL store original neuron identifiers, Dale codes,
 task-owner codes, active-mechanism codes, neuron count, integration substep
 count, input and recurrent CSR endpoints and raw `float32` values, readout
-weight and bias, Adam first and second moments for all trainable values, and
-three Adam step counts. The readout weight and bias SHALL share the readout
+weight and bias, optimizer first and second arrays for all trainable values,
+and three optimizer step counts. The readout weight and bias SHALL share the readout
 optimizer and step count.
 
 Dale codes SHALL use `-1` for inhibitory, `0` for untyped, and `1` for
@@ -544,7 +551,7 @@ the strict task count is zero.
 #### Scenario: Validation cannot train the proof model
 
 - **WHEN** the proof evaluates `46f33fce`
-- **THEN** parameters, Adam state, and PP-Prop eligibility are identical before
+- **THEN** parameters, optimizer state, and PP-Prop eligibility are identical before
   and after that validation evaluation
 
 ### Requirement: Observed structural stages
@@ -751,3 +758,148 @@ remain. The public `braintrace` package API SHALL not change.
   task
 - **THEN** it produces direct predictions and strict results without any
   parameter, optimizer, topology, owner, or Dale-type change
+
+### Requirement: Iterative full-corpus evolution boundary
+
+The `evolve` command SHALL load a digest-bound manifest of exactly 400 sorted
+ARC training tasks and every query. Every query SHALL have a target. A missing
+target, changed source digest, changed task order, or changed query order SHALL
+stop the run. The 400 ARC evaluation tasks SHALL remain unopened during
+training, ranking, promotion, stopping, retry, and resume reconciliation. The
+terminal accepted checkpoint SHALL receive exactly one forward-only evaluation
+after success, stability, or round-budget exhaustion.
+
+#### Scenario: Full training corpus drives evolution
+
+- **WHEN** a new evolution run starts
+- **THEN** its manifest contains all 400 sorted training task identifiers,
+  source digests, and target-bearing queries
+- **AND** no evaluation identifier, byte, label, prediction, or aggregate
+  enters an optimization decision
+
+#### Scenario: Terminal evaluation cannot become feedback
+
+- **WHEN** a run reaches a terminal condition
+- **THEN** it scores all 400 evaluation tasks once from the unchanged accepted
+  checkpoint
+- **AND** it closes the lineage before another command can use that result for
+  tuning
+
+### Requirement: Muon and canonical protected objective
+
+Every non-proof Example 21 block in `run` or `evolve` SHALL perform exactly 128
+PP-Prop episode updates. Rank-two parameters SHALL use Optax Muon with
+decoupled weight decay 0.1. Non-matrix parameters SHALL use Muon's AdamW
+fallback. Proof mode SHALL remain exactly eight updates.
+
+The training scorer SHALL report direct exact pass-at-1 for every task and a
+target-aware loss. One query loss SHALL equal height cross-entropy plus width
+cross-entropy plus the mean cross-entropy over all valid output cells. The
+complete episode SHALL therefore divide row contributions by the total valid
+grid-cell count, not by each row width.
+
+At one stage, a candidate SHALL be rejected if it is non-finite, exceeds a
+limit, or makes a previously exact task inexact. More exact tasks SHALL win.
+At equal exact count, a candidate MAY continue only when its unresolved-task
+loss decreases by at least `max(1e-6, 1e-4 * parent_loss)`. Equal capability
+SHALL prefer fewer persistent bytes, then fewer neurons and recurrent edges.
+
+#### Scenario: Smooth progress can continue
+
+- **WHEN** a sibling preserves all solved tasks and exact count but reduces the
+  unresolved-task loss by the protected threshold
+- **THEN** it can become the next stage parent without a new exact task
+
+#### Scenario: Training mastery changes the objective
+
+- **WHEN** all 400 training tasks are exact
+- **THEN** only pruning that preserves 400 exact tasks and reduces persistent
+  resources can continue
+
+### Requirement: Iterative structural lifecycle
+
+One round SHALL train the accepted parent, compare edge-add and edge-prune
+siblings, compare neuron-twin and neuron-prune siblings, revisit edges when the
+neuron topology changes, and compare measured excitatory and inhibitory Dale
+assignments. Each sibling pair SHALL start from one immutable parent and use
+the same ordered 128-query schedule. Every selected topology, parameter set,
+and active optimizer state SHALL become the downstream parent.
+
+Structural ranking MAY use neural activity, effective sparse transmission,
+task ownership, and active Muon moment magnitude. Reports SHALL call these
+optimization evidence. They SHALL NOT call optimizer moments pre-clip
+gradients or call the Dale proxy a causal lesion measurement.
+
+Repeated model steps and full-corpus forward scoring SHALL use BrainState
+compiled transforms. Python MAY coordinate the bounded stages whose sparse
+shapes differ. It SHALL NOT dispatch repeated model steps with a bare `for` or
+`while` loop.
+
+#### Scenario: Accepted state crosses every stage boundary
+
+- **WHEN** an edge, neuron, edge-revisit, or Dale sibling wins
+- **THEN** its exact topology, parameters, active Muon state, stable neuron
+  identifiers, task-owner codes, and Dale labels are restored as the next
+  stage parent
+
+#### Scenario: Bounded run stabilizes
+
+- **WHEN** two consecutive rounds improve neither protected ARC progress nor
+  mastery-preserving resources, or eight rounds complete
+- **THEN** the run performs terminal evaluation and closes with the literal
+  reason
+
+### Requirement: Durable iterative artifacts and modular implementation
+
+Format-1 NPZ files SHALL retain the compatible model, sparse topology, label,
+and optimizer array schema. Digest-bound `run-state.json`,
+`pending-transition.json`, and append-only `progress.jsonl` SHALL own the
+cursor, immediate ancestry, stage identity, and reconciliation evidence. A
+resume SHALL verify the NPZ bytes and all sidecar provenance before executing
+another update. Accepted lineage evidence SHALL bind the immediate parent and
+the selected source checkpoint's resolved path and SHA-256. Resume SHALL match
+that evidence to durable progress before cleaning any staged source. An
+interrupted accepted transition SHALL complete without retraining its mutation.
+Terminal evaluation SHALL first persist an immutable
+intent. Once result bytes are durable, resume SHALL never score them again. A
+process death between scoring and result durability MAY replay the same
+deterministic evaluation under the same intent, but SHALL emit only one result
+and SHALL NOT expose partial evaluation evidence to training, selection,
+stopping, or retry decisions.
+
+The output directory SHALL contain versioned accepted checkpoints with
+immediate-ancestry sidecars, `run-state.json`, `progress.jsonl`, a durable
+terminal-evaluation intent while scoring is in flight, one terminal result
+after close, `topology.png`, and `score-history.png`.
+Progress SHALL separate scheduled cursor advance from per-arm and total
+executed update counts. The PNGs SHALL refresh automatically after every
+selected stage and at completion. The topology image SHALL describe the
+executed graph, stable neuron lineage, task owners, Dale groups, and recurrent
+edges. It SHALL NOT be described as anatomical or spatial brain imagery.
+
+Example 21 MAY place corpus contracts, structural logic, the real adapter, and
+the coordinator in focused modules with co-located suffix-style tests.
+`examples/pp_prop/21-braincell-arc.py` SHALL remain the only executable Example
+21 entry point.
+
+#### Scenario: Crash recovery preserves one transition
+
+- **WHEN** a process stops after journaling, checkpoint persistence, progress
+  append, or state replacement
+- **THEN** resume reconciles the same stage identity, retains byte-identical
+  accepted state, and removes only verified rejected temporary candidates
+
+#### Scenario: Closed recovery cannot start a new lineage
+
+- **WHEN** the command reopens a closed compatible output directory
+- **THEN** it verifies the accepted checkpoint and terminal result, refreshes
+  any missing terminal plots or report data, and returns the same closed state
+- **AND** it performs no model update, structural mutation, or held-out rescore
+
+#### Scenario: Progress is visible during the run
+
+- **WHEN** one selected stage completes
+- **THEN** its direct score, unresolved loss, topology size, persistent bytes,
+  dispositions, resource evidence, checkpoint ancestry, and elapsed time are
+  durable in progress history
+- **AND** the topology and score-history PNGs reflect the latest accepted state

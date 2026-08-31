@@ -94,10 +94,34 @@ models.
 
 ### Example 21 BrainCell ARC
 
-Example 21 uses the direct BrainCell ARC path. It reads only the named raw ARC
-practice files, uses compiled BrainTrace PP-Prop event execution, and returns
-direct integer-grid predictions with strict exact results. No generated index or
-source manifest is needed.
+Example 21 uses the direct BrainCell ARC path, compiled BrainTrace PP-Prop event
+execution, and direct integer-grid predictions. Run the complete iterative
+training and topology-evolution lifecycle with one command:
+
+    python examples/pp_prop/21-braincell-arc.py evolve --device gpu --arc-root /datasets/arc/raw --output-dir var/example21-evolve
+
+The default optimizer is Optax Muon for rank-two parameters, with its AdamW
+fallback for other parameters. Ordinary training and every structural candidate
+receive 128 PP-Prop episode updates; bounded proof mode remains fixed at eight.
+
+The evolution manifest contains all 400 sorted ARC training tasks and every
+query. Those tasks drive training, scoring, topology selection, and stopping.
+The 400 ARC evaluation tasks remain held out from every decision and produce
+one logical terminal result after optimization stops. If the process dies
+before result bytes are durable, the same deterministic evaluation intent can
+replay; a durable result is never rescored. Solving every training task is the
+optimization target, not a guarantee for a bounded run and not a claim of
+held-out mastery. After training mastery, edge and neuron pruning repeat to a
+protected resource fixed point or the configured run bound.
+
+The output directory stores versioned accepted checkpoints with lineage
+sidecars, `run-state.json`, append-only `progress.jsonl`, a durable terminal
+evaluation intent while scoring is in flight, and one result after close.
+Reusing a compatible unfinished output directory
+resumes its saved lineage automatically. The command refreshes `topology.png`
+and `score-history.png` after accepted stages and at completion. The topology
+image is a graph of neuron lineage, Dale groups, task ownership, and recurrent
+edges, not an anatomical brain image.
 
 Run the focused CPU smoke check with:
 
@@ -113,13 +137,14 @@ Run the bounded proof command in the image with:
 
     python /opt/braintrace/examples/pp_prop/21-braincell-arc.py proof --device gpu
 
-The proof is mechanism evidence, not a claim of ARC skill. Routine commands
-use the fixed practice-task order. Run the ordinary 64-update schedule with:
+The proof is mechanism evidence, not a claim of ARC skill. The legacy `run`
+command uses the fixed practice-task order. Run its ordinary 128-update schedule
+with:
 
     python examples/pp_prop/21-braincell-arc.py run --device cpu --arc-root /datasets/arc/raw --output-dir var/example21-run
 
-Both commands load raw practice tasks directly. Evaluation data is outside
-ordinary training, structure, and timing runs.
+The smoke, proof, and legacy run commands load raw practice tasks directly.
+Evaluation data is outside their training, structure, and timing runs.
 
 The proof report includes its elapsed time and 180-second deadline. It reports
 failure when the deadline is reached, even when the other proof observations
