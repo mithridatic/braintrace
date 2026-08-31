@@ -1,3 +1,69 @@
+## Execution map
+
+This file is the execution authority for the change. Paperclip issues must
+reference these task identifiers. They must not copy this checklist into a
+second queue.
+
+### Active
+
+- [ ] **E21-01 — Workspace repair.** Dependencies: none. Assigned specialist:
+  Rainbow, Release Manager. Success: the isolated execution policy reports
+  `git_worktree`, base `origin/main`, and a non-primary checkout. The current
+  checkout is non-primary, but `origin/main` does not resolve. Do not dispatch
+  implementation until this gate passes.
+
+### Upcoming
+
+- [ ] **E21-02 — Baseline implementation.** Dependencies: E21-01. Assigned
+  specialist: one BrainCell and BrainTrace implementation agent. Scope: tasks
+  1.1–6.4. Success: all temporary-proof, finite-difference, strict-score,
+  coverage, decoder, and runtime gates in sections 1–6 pass. Keep one owner
+  because this work changes `21-braincell-arc.py` and its sibling test together.
+- [ ] **E21-03 — Structural stages.** Dependencies: E21-02. Assigned
+  specialist: the E21-02 implementation agent. Scope: tasks 7.1–7.6. Success:
+  exact five-percent pruning and addition arms use observed evidence, preserve
+  strict results, physically compact accepted topology, and finish within the
+  declared run limit.
+- [ ] **E21-04 — Dale stages.** Dependencies: E21-03. Assigned specialist: the
+  E21-02 implementation agent. Scope: tasks 8.1–8.4. Success: separate measured
+  excitatory and inhibitory candidates keep effective signs valid; deferred
+  biology remains disabled.
+- [ ] **E21-05 — Evidence and retirement.** Dependencies: E21-02; E21-03 and
+  E21-04 for claims about accepted structural or Dale stages. Assigned
+  specialist: the E21-02 implementation agent. Scope: tasks 9.1–10.3. Success:
+  implementation-truth documents describe only executed behavior, the optional
+  plot is non-mutating, and only the new Example 21 executable remains active.
+- [ ] **E21-06 — Independent review.** Dependencies: E21-05. Assigned
+  specialist: Revy, independent Reviewer. Success: requirements traceability,
+  frozen-interface compliance, focused coverage above 90 percent, runtime
+  limits, and OpenSpec validation pass. Rejected work returns to the E21-02
+  implementation agent. The engineering issue must set `maxReviewRounds` to
+  50.
+- [ ] **E21-07 — Release approval and integration.** Dependencies: E21-06.
+  Assigned specialist: Rainbow, Release Manager. Scope: tasks 11.1–11.3 and
+  release integration. Success: all final gates pass on the reviewed revision;
+  Rainbow approves and finalizes the release. No other role may merge or mark
+  the release complete.
+
+### Requirements audit
+
+The 42 implementation tasks cover all 19 requirements and 59 scenarios in
+`specs/pp-prop-braincell-arc/spec.md`. No requirement gap needs a new task.
+The main delivery risk is ownership overlap: sections 1–10 converge on one
+executable and one sibling test module, so they are one serial implementation
+lane. Dependency packaging may proceed in a separate worktree only after
+E21-01, because its files do not overlap the core module. Documentation can
+start only after executed evidence exists. Ideas found during implementation
+belong in the backlog and do not expand this frozen change.
+
+Architecture-review disposition: the algorithm-axes roadmap records open P5
+independent-review debt. Severity is medium and value is high, but it concerns
+the separate out-of-tree benchmark suite and does not block this Example 21
+change. Keep it in the standard Paperclip backlog after the control plane is
+available; do not add it to this execution map. The missing `origin/main`
+dispatch base is a critical operational finding and is sequenced first as
+E21-01 because every implementation issue depends on it.
+
 ## 1. Runtime and compatibility
 
 - [ ] 1.1 Add `braincell==0.1.0` to the Example 21 image, development
