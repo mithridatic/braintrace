@@ -8,9 +8,10 @@ import braintrace
 
 
 def test_situ_glu_module_shapes_parameters_and_public_export() -> None:
-    layer = braintrace.nn.SiTUGLU(2, 4, 3)
+    layer = braintrace.nn.SiTUGLU(2, 4, 3, name="situ")
     output = layer(jnp.ones((5, 2)))
 
+    assert layer.name == "situ"
     assert output.shape == (5, 3)
     assert layer.gate_weight.value.shape == (2, 4)
     assert layer.gate_bias.value.shape == (4,)

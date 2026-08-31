@@ -19,7 +19,7 @@ References
 from __future__ import annotations
 
 import math
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import brainstate
 import jax
@@ -136,7 +136,10 @@ def build_spec(
     stage_one = bits - 1 if use_qjl else bits
     if not 1 <= stage_one <= 4:
         raise ValueError(f'Stage-one width {stage_one} is outside 1..4 bits. Set the named field to a value in the stated range, then rerun the operation.')
-    polar_key, qjl_key = brainstate.random.RandomState(key).split_key(2)
+    polar_key, qjl_key = cast(
+        tuple[jax.Array, jax.Array],
+        brainstate.random.RandomState(key).split_key(2),
+    )
     return TurboQuantSpec(
         bits=bits,
         block=block,
