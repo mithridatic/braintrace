@@ -28,7 +28,9 @@ try:
     from examples.pp_prop.latent_workspace_cell_features import (
         MAX_GRID_SIZE,
         PAD_COLOR,
-        cell_features,
+    )
+    from examples.pp_prop.latent_workspace_cell_threshold_codes import (
+        binary_cell_features,
     )
     from examples.pp_prop.latent_workspace_demonstration_forest import (
         DemonstrationForestConfig,
@@ -36,11 +38,8 @@ try:
         fit_demonstration_forest,
     )
 except ImportError:
-    from latent_workspace_cell_features import (
-        MAX_GRID_SIZE,
-        PAD_COLOR,
-        cell_features,
-    )
+    from latent_workspace_cell_features import MAX_GRID_SIZE, PAD_COLOR
+    from latent_workspace_cell_threshold_codes import binary_cell_features
     from latent_workspace_demonstration_forest import (
         DemonstrationForestConfig,
         demonstration_forest_probabilities,
@@ -183,8 +182,8 @@ def _batch_window(
     grids, heights, widths, targets, query_grid, query_height, query_width,
     key, config,
 ):
-    demonstration_features = cell_features(grids, heights, widths)
-    query_features = cell_features(
+    demonstration_features = binary_cell_features(grids, heights, widths)
+    query_features = binary_cell_features(
         query_grid[None], query_height[None], query_width[None]
     )[0]
     forest = fit_demonstration_forest(

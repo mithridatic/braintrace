@@ -35,6 +35,7 @@ COLOR_COUNT = 10
 OUTSIDE_CLASS = COLOR_COUNT
 CLASS_COUNT = COLOR_COUNT + 1
 _EPSILON = 1e-9
+_TIE_TOLERANCE = 1e-6
 
 
 def _positive_integer(value: object, name: str) -> int:
@@ -127,7 +128,27 @@ def _split_scores(
     return jnp.where(usable, score, -jnp.inf)
 
 
+def _break_ties(scores: jax.Array, rank: jax.Array) -> jax.Array:
+    """Return the split feature, choosing among equal scores by ``rank``.
+
+    Over the wholly binary map a node's best score is reached by five features
+    on average and by as many as fourteen, because a threshold code and the
+    scalar it was cut from induce the same partition.  Taking the lowest index
+    hands almost every one of those nodes to the ``5x5`` patch block, which
+    occupies the first 275 columns; the reference learner permutes its features
+    before scanning and so spreads the same ties across the whole map.  This
+    reproduces that behaviour: a feature within a relative ``1e-6`` of the best
+    score is eligible, and the eligible feature with the highest ``rank`` wins.
+    """
+
+    best = jnp.max(scores, axis=-1, keepdims=True)
+    tolerance = _TIE_TOLERANCE * jnp.maximum(jnp.abs(best), 1.0)
+    floor = jnp.where(jnp.isfinite(best), best - tolerance, -jnp.inf)
+    return jnp.argmax(jnp.where(scores >= floor, rank, -jnp.inf), axis=-1)
+
+
 def _fit_tree(
+    key: jax.Array,
     binary: jax.Array,
     labels: jax.Array,
     offered: jax.Array,
@@ -140,19 +161,22 @@ def _fit_tree(
     one_hot = jax.nn.one_hot(labels, classes)
     penalty = jnp.where(offered, 0.0, -jnp.inf)
 
-    def level(node: jax.Array, _):
+    def level(node: jax.Array, level_key: jax.Array):
         counts = jax.ops.segment_sum(
             one_hot, node, num_segments=nodes, indices_are_sorted=False
         )
         positive = jax.ops.segment_sum(
             binary, node * classes + labels, num_segments=nodes * classes
         ).reshape(nodes, classes, -1)
-        chosen = jnp.argmax(_split_scores(positive, counts) + penalty, axis=-1)
+        rank = jax.random.uniform(level_key, (binary.shape[-1],))
+        chosen = _break_ties(_split_scores(positive, counts) + penalty, rank)
         bit = jnp.take_along_axis(binary, chosen[node][:, None], axis=1)[:, 0]
         return node * 2 + bit.astype(jnp.int32), (chosen, counts)
 
     final, (splits, level_counts) = brainstate.transform.scan(
-        level, jnp.zeros(binary.shape[0], jnp.int32), jnp.arange(config.depth)
+        level,
+        jnp.zeros(binary.shape[0], jnp.int32),
+        jax.random.split(key, config.depth),
     )
     leaves = jax.ops.segment_sum(one_hot, final, num_segments=nodes)
     return splits, jnp.concatenate([level_counts, leaves[None]], axis=0)
@@ -203,9 +227,10 @@ def fit_demonstration_forest(
     keep = max(1, int(round(config.feature_fraction * width)))
 
     def tree(tree_key):
-        rank = jax.random.uniform(tree_key, (width,))
+        subset_key, growth_key = jax.random.split(tree_key)
+        rank = jax.random.uniform(subset_key, (width,))
         offered = rank <= jnp.sort(rank)[keep - 1]
-        return _fit_tree(binary, labels, offered, config)
+        return _fit_tree(growth_key, binary, labels, offered, config)
 
     keys = jax.random.split(key, config.tree_count)
     return brainstate.transform.scan(lambda _, k: (None, tree(k)), None, keys)[1]
