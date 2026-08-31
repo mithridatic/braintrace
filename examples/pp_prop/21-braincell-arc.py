@@ -2043,11 +2043,18 @@ def _evolve_workflow_report(
     """Run or resume iterative ARC evolution and summarize its terminal state."""
 
     from examples.pp_prop.example21_arc_adapter import Example21ArcAdapter
-    from examples.pp_prop.example21_evolve import PipelineConfig, run_evolution
+    from examples.pp_prop.example21_evolve import (
+        ConsoleProgressReporter,
+        PipelineConfig,
+        run_evolution,
+    )
 
     config = PipelineConfig(rounds=rounds, patience=patience, updates=updates)
     state = run_evolution(
-        Example21ArcAdapter(arc_root), output_dir, config=config
+        Example21ArcAdapter(arc_root),
+        output_dir,
+        config=config,
+        progress_reporter=ConsoleProgressReporter(),
     )
     return {
         "mode": "evolve",

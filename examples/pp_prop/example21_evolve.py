@@ -12,12 +12,15 @@ import hashlib
 import json
 import math
 import os
+import sys
 import tempfile
+import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Protocol, TypedDict
+from types import MappingProxyType
+from typing import Any, Protocol, TextIO, TypedDict
 
 DEFAULT_OPTIMIZER = "muon"
 DEFAULT_UPDATES = 128
@@ -65,6 +68,277 @@ STAGE_ARMS: Mapping[str, tuple[str, ...]] = {
     "compression-edge": ("prune",),
     "compression-neuron": ("prune",),
 }
+
+
+@dataclass(frozen=True)
+class ProgressEvent:
+    """One immutable operator-facing lifecycle event.
+
+    Parameters
+    ----------
+    event : str
+        Stable event name such as ``candidate-start`` or ``selection``.
+    fields : mapping
+        Event-specific scalar evidence. The mapping is copied and made
+        read-only during construction.
+    """
+
+    event: str
+    fields: Mapping[str, object]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.event, str) or not self.event:
+            raise ValueError("Progress event name must be a nonempty string.")
+        if not isinstance(self.fields, Mapping):
+            raise TypeError("Progress event fields must be a mapping.")
+        copied: dict[str, object] = {}
+        for name, value in self.fields.items():
+            if not isinstance(name, str) or not name or name == "event":
+                raise ValueError(
+                    "Progress event field names must be nonempty and cannot be 'event'."
+                )
+            copied[name] = value
+        object.__setattr__(self, "fields", MappingProxyType(copied))
+
+    def to_dict(self) -> dict[str, object]:
+        """Return one mutable serialization for tests or other reporters.
+
+        Returns
+        -------
+        dict
+            Event name followed by its event-specific fields.
+        """
+
+        return {"event": self.event, **self.fields}
+
+
+class ProgressReporter(Protocol):
+    """Consume optional evolution progress without affecting model policy.
+
+    Attributes
+    ----------
+    emit : callable
+        Consume one immutable progress event.
+    close : callable
+        Stop any reporter-owned background activity and flush output.
+    """
+
+    def emit(self, event: ProgressEvent) -> None:
+        """Consume one lifecycle event."""
+
+    def close(self) -> None:
+        """Release reporter resources and flush pending output."""
+
+
+class _NullProgressReporter:
+    def emit(self, event: ProgressEvent) -> None:
+        del event
+
+    def close(self) -> None:
+        return None
+
+
+class ConsoleProgressReporter:
+    """Render GEPA-style Example 21 progress to one terminal stream.
+
+    Parameters
+    ----------
+    stream : text stream, optional
+        Destination for progress. ``None`` resolves stderr at construction.
+    clock : callable, optional
+        Monotonic clock used for elapsed display time.
+    refresh_interval : float, optional
+        Seconds between TTY live-line refreshes.
+    """
+
+    def __init__(
+        self,
+        stream: TextIO | None = None,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+        refresh_interval: float = 1.0,
+    ) -> None:
+        if refresh_interval <= 0.0 or not math.isfinite(refresh_interval):
+            raise ValueError("Progress refresh interval must be positive and finite.")
+        self._stream = sys.stderr if stream is None else stream
+        self._clock = clock
+        self._refresh_interval = float(refresh_interval)
+        self._started_at = float(clock())
+        try:
+            self._is_tty = bool(self._stream.isatty())
+        except (AttributeError, OSError):
+            self._is_tty = False
+        self._write_lock = threading.Lock()
+        self._live_stop: threading.Event | None = None
+        self._live_thread: threading.Thread | None = None
+        self._live_width = 0
+        self._closed = False
+
+    def emit(self, event: ProgressEvent) -> None:
+        """Render and immediately flush one progress event.
+
+        Parameters
+        ----------
+        event : ProgressEvent
+            Immutable lifecycle event from ``run_evolution``.
+        """
+
+        if self._closed:
+            return
+        if not isinstance(event, ProgressEvent):
+            raise TypeError("Console progress requires a ProgressEvent instance.")
+        if event.event in {"candidate-start", "terminal-start"}:
+            self._stop_live(clear=True)
+            if self._is_tty:
+                self._start_live(event)
+            else:
+                self._write_line(self._permanent_line(event))
+            return
+        self._stop_live(clear=True)
+        self._write_line(self._permanent_line(event))
+
+    def close(self) -> None:
+        """Stop live animation and flush the configured stream."""
+
+        if self._closed:
+            return
+        self._stop_live(clear=True)
+        with self._write_lock:
+            self._stream.flush()
+        self._closed = True
+
+    def _elapsed_text(self) -> str:
+        seconds = max(0, int(float(self._clock()) - self._started_at))
+        minutes, second = divmod(seconds, 60)
+        hours, minute = divmod(minutes, 60)
+        if hours:
+            return f"{hours:d}:{minute:02d}:{second:02d}"
+        return f"{minutes:02d}:{second:02d}"
+
+    def _write_line(self, line: str) -> None:
+        with self._write_lock:
+            self._stream.write(line + "\n")
+            self._stream.flush()
+
+    def _render_live(self, event: ProgressEvent) -> None:
+        fields = event.fields
+        if event.event == "candidate-start":
+            activity = f"{fields['stage']}:{fields['arm']}"
+        else:
+            activity = "terminal evaluation"
+        line = (
+            f"Example 21 ARC | Round {fields['round']}/{fields['rounds']} | "
+            f"{activity} | running {self._elapsed_text()}"
+        )
+        with self._write_lock:
+            self._stream.write("\r" + line)
+            self._stream.flush()
+            self._live_width = max(self._live_width, len(line))
+
+    def _start_live(self, event: ProgressEvent) -> None:
+        stop = threading.Event()
+        self._live_stop = stop
+        self._render_live(event)
+
+        def refresh() -> None:
+            while not stop.wait(self._refresh_interval):
+                self._render_live(event)
+
+        thread = threading.Thread(
+            target=refresh,
+            name="example21-progress",
+            daemon=True,
+        )
+        self._live_thread = thread
+        thread.start()
+
+    def _stop_live(self, *, clear: bool) -> None:
+        stop = self._live_stop
+        thread = self._live_thread
+        self._live_stop = None
+        self._live_thread = None
+        if stop is not None:
+            stop.set()
+        if thread is not None and thread is not threading.current_thread():
+            thread.join()
+        if clear and self._live_width:
+            with self._write_lock:
+                self._stream.write("\r" + (" " * self._live_width) + "\r")
+                self._stream.flush()
+            self._live_width = 0
+
+    @staticmethod
+    def _one_line(value: object) -> str:
+        return " ".join(str(value).split())
+
+    def _permanent_line(self, event: ProgressEvent) -> str:
+        fields = event.fields
+        elapsed = f"[{self._elapsed_text()}]"
+        if event.event == "candidate-start":
+            return (
+                f"{elapsed} Round {fields['round']}/{fields['rounds']} "
+                f"{fields['stage']}:{fields['arm']} started"
+            )
+        if event.event == "candidate-result":
+            prefix = (
+                f"{elapsed} Round {fields['round']}/{fields['rounds']} "
+                f"{fields['stage']}:{fields['arm']} {fields['status']}"
+            )
+            if fields["status"] == "completed":
+                return (
+                    f"{prefix} | score {fields['score_exact']}/{fields['score_total']}"
+                    f" | loss {float(fields['loss']):.4f}"
+                    f" | neurons {fields['neurons']}"
+                    f" | recurrent edges {fields['recurrent_edges']}"
+                    f" | updates {fields['executed_updates']}"
+                )
+            return (
+                f"{prefix} | reason {self._one_line(fields['reason'])}"
+                f" | updates {fields['executed_updates']}"
+            )
+        if event.event == "selection":
+            return (
+                f"{elapsed} Round {fields['round']}/{fields['rounds']} "
+                f"{fields['stage']} selected {fields['selected_arm']}"
+                f" | best {fields['best_exact']}/{fields['best_total']}"
+                f" | neurons {fields['neurons']}"
+                f" | recurrent edges {fields['recurrent_edges']}"
+            )
+        if event.event == "round-end":
+            line = (
+                f"{elapsed} Round {fields['round']}/{fields['rounds']} completed"
+                f" | best {fields['best_exact']}/{fields['best_total']}"
+                f" | neurons {fields['neurons']}"
+                f" | recurrent edges {fields['recurrent_edges']}"
+                f" | next {fields['next_stage']}"
+            )
+            if fields.get("terminal_reason") is not None:
+                line += f" | reason {fields['terminal_reason']}"
+            return line
+        if event.event == "resume":
+            return (
+                f"{elapsed} Restored Round {fields['round']}/{fields['rounds']}"
+                f" | next {fields['next_stage']}"
+                f" | accepted {fields['score_exact']}/{fields['score_total']}"
+                f" | neurons {fields['neurons']}"
+                f" | recurrent edges {fields['recurrent_edges']}"
+                f" | checkpoint {self._one_line(fields['checkpoint_path'])}"
+                f" | sha256 {fields['checkpoint_sha256']}"
+            )
+        if event.event == "terminal-start":
+            return (
+                f"{elapsed} Round {fields['round']}/{fields['rounds']} "
+                "terminal evaluation started"
+            )
+        if event.event == "terminal-result":
+            return (
+                f"{elapsed} Terminal evaluation {fields['status']}"
+                f" | score {fields['score_exact']}/{fields['score_total']}"
+                f" | loss {float(fields['loss']):.4f}"
+                f" | checkpoint {fields['checkpoint_sha256']}"
+                f" | reason {fields['terminal_reason']}"
+            )
+        raise ValueError(f"Unknown Example 21 progress event {event.event!r}.")
 
 
 class _PendingTransitionParts(TypedDict):
@@ -2119,6 +2393,179 @@ def plot_score_history(
     return {"accepted_stage_count": len(accepted), "output": str(output)}
 
 
+def _round_progress_fields(state: RunState) -> dict[str, object]:
+    return {
+        "round": state.round_index + 1,
+        "rounds": state.config.rounds,
+    }
+
+
+def _accepted_progress_fields(candidate: CandidateSnapshot) -> dict[str, object]:
+    return {
+        "score_exact": candidate.score.exact_count,
+        "score_total": len(candidate.score.task_ids),
+        "loss": candidate.score.unresolved_loss,
+        "neurons": candidate.resources.neurons,
+        "recurrent_edges": candidate.resources.recurrent_edges,
+    }
+
+
+def _emit_resume(reporter: ProgressReporter, state: RunState) -> None:
+    reporter.emit(
+        ProgressEvent(
+            "resume",
+            {
+                **_round_progress_fields(state),
+                "next_stage": state.next_stage,
+                **_accepted_progress_fields(state.accepted),
+                "checkpoint_path": state.accepted.checkpoint_path,
+                "checkpoint_sha256": state.accepted.checkpoint_sha256,
+            },
+        )
+    )
+
+
+def _emit_candidate_start(
+    reporter: ProgressReporter,
+    state: RunState,
+    context: StageContext,
+    arm: str,
+) -> None:
+    reporter.emit(
+        ProgressEvent(
+            "candidate-start",
+            {
+                **_round_progress_fields(state),
+                "stage": context.stage,
+                "stage_id": context.stage_id,
+                "arm": arm,
+                "updates": state.config.updates,
+            },
+        )
+    )
+
+
+def _emit_candidate_result(
+    reporter: ProgressReporter,
+    state: RunState,
+    context: StageContext,
+    attempt: CandidateAttempt,
+) -> None:
+    fields: dict[str, object] = {
+        **_round_progress_fields(state),
+        "stage": context.stage,
+        "stage_id": context.stage_id,
+        "arm": attempt.name,
+        "status": attempt.status,
+    }
+    if attempt.candidate is None:
+        fields.update(
+            {
+                "reason": attempt.reason,
+                "executed_updates": attempt.executed_updates,
+            }
+        )
+    else:
+        fields.update(_accepted_progress_fields(attempt.candidate))
+        fields["executed_updates"] = attempt.executed_updates
+    reporter.emit(ProgressEvent("candidate-result", fields))
+
+
+def _emit_selection(
+    reporter: ProgressReporter,
+    before: RunState,
+    context: StageContext,
+    selection: SelectionResult,
+    successor: RunState,
+) -> None:
+    selected = successor.accepted
+    reporter.emit(
+        ProgressEvent(
+            "selection",
+            {
+                **_round_progress_fields(before),
+                "stage": context.stage,
+                "stage_id": context.stage_id,
+                "selected_arm": selection.selected_attempt or "parent",
+                "parent_retained": selection.parent_retained,
+                "best_exact": selected.score.exact_count,
+                "best_total": len(selected.score.task_ids),
+                "loss": selected.score.unresolved_loss,
+                "neurons": selected.resources.neurons,
+                "recurrent_edges": selected.resources.recurrent_edges,
+                "checkpoint_sha256": selected.checkpoint_sha256,
+                "next_stage": successor.next_stage,
+            },
+        )
+    )
+
+
+def _emit_round_end(
+    reporter: ProgressReporter,
+    before: RunState,
+    successor: RunState,
+    stage_id: str,
+) -> None:
+    selected = successor.accepted
+    reporter.emit(
+        ProgressEvent(
+            "round-end",
+            {
+                **_round_progress_fields(before),
+                "stage": "round-end",
+                "stage_id": stage_id,
+                "best_exact": selected.score.exact_count,
+                "best_total": len(selected.score.task_ids),
+                "loss": selected.score.unresolved_loss,
+                "neurons": selected.resources.neurons,
+                "recurrent_edges": selected.resources.recurrent_edges,
+                "next_stage": successor.next_stage,
+                "stable_rounds": successor.stable_rounds,
+                "terminal_reason": successor.terminal_reason,
+            },
+        )
+    )
+
+
+def _emit_terminal_start(reporter: ProgressReporter, state: RunState) -> None:
+    reporter.emit(
+        ProgressEvent(
+            "terminal-start",
+            {
+                **_round_progress_fields(state),
+                "stage": "terminal",
+                "stage_id": "terminal-evaluation",
+                **_accepted_progress_fields(state.accepted),
+                "checkpoint_sha256": state.accepted.checkpoint_sha256,
+                "terminal_reason": state.terminal_reason,
+            },
+        )
+    )
+
+
+def _emit_terminal_result(
+    reporter: ProgressReporter,
+    state: RunState,
+    result: Mapping[str, Any],
+) -> None:
+    reporter.emit(
+        ProgressEvent(
+            "terminal-result",
+            {
+                **_round_progress_fields(state),
+                "stage": "terminal",
+                "stage_id": "terminal-evaluation",
+                "status": "completed",
+                "score_exact": int(result["strict_task_pass_at_1_count"]),
+                "score_total": int(result["task_count"]),
+                "loss": float(result["mean_unresolved_task_loss"]),
+                "checkpoint_sha256": state.accepted.checkpoint_sha256,
+                "terminal_reason": state.terminal_reason,
+            },
+        )
+    )
+
+
 def run_evolution(
     adapter: EvolutionAdapter,
     output_dir: str | os.PathLike[str],
@@ -2127,6 +2574,7 @@ def run_evolution(
     history_plotter: Callable[
         [Sequence[Mapping[str, Any]], Path], object
     ] = plot_score_history,
+    progress_reporter: ProgressReporter | None = None,
 ) -> RunState:
     """Run or resume the complete adapter-driven evolution lifecycle.
 
@@ -2140,6 +2588,8 @@ def run_evolution(
         Lineage configuration; defaults to Muon, 128 updates, and eight rounds.
     history_plotter : callable, optional
         Atomic history renderer.  Injection supports isolated coordinator tests.
+    progress_reporter : ProgressReporter, optional
+        Operator-facing event consumer. Omission keeps library execution silent.
 
     Returns
     -------
@@ -2147,7 +2597,30 @@ def run_evolution(
         Closed terminal state after one held-out evaluation.
     """
 
-    config = config or PipelineConfig()
+    resolved_config = config or PipelineConfig()
+    reporter: ProgressReporter = progress_reporter or _NullProgressReporter()
+    try:
+        return _run_evolution(
+            adapter,
+            output_dir,
+            config=resolved_config,
+            history_plotter=history_plotter,
+            progress_reporter=reporter,
+        )
+    finally:
+        reporter.close()
+
+
+def _run_evolution(
+    adapter: EvolutionAdapter,
+    output_dir: str | os.PathLike[str],
+    *,
+    config: PipelineConfig,
+    history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
+) -> RunState:
+    """Run the coordinator with one resolved configuration and reporter."""
+
     store = PipelineStore(output_dir)
     manifest = adapter.training_manifest()
     manifest.validate()
@@ -2161,6 +2634,7 @@ def run_evolution(
             restored = adapter.restore(state.accepted)
             _verify_restored(state.accepted, restored)
             state = replace(state, accepted=restored)
+            _emit_resume(progress_reporter, state)
             _reconcile_closed_evaluation_intent(store, state)
             _refresh_artifacts(adapter, store, state.accepted, history_plotter)
             return state
@@ -2168,6 +2642,7 @@ def run_evolution(
         _verify_restored(state.accepted, restored)
         state = replace(state, accepted=restored)
         state = _recover_pending_transition(adapter, store, state)
+        _emit_resume(progress_reporter, state)
     else:
         initial = adapter.initialize(config, store.output_dir)
         _require_candidate(initial, config, manifest.task_ids)
@@ -2185,7 +2660,13 @@ def run_evolution(
 
     while not state.closed:
         if state.next_stage == "train":
-            state = _run_parent_training(adapter, store, state, history_plotter)
+            state = _run_parent_training(
+                adapter,
+                store,
+                state,
+                history_plotter,
+                progress_reporter,
+            )
         elif state.next_stage == "edge":
             state = _run_sibling_stage(
                 adapter,
@@ -2195,6 +2676,7 @@ def run_evolution(
                 ("add", "prune"),
                 next_stage="neuron",
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "neuron":
             state = _run_sibling_stage(
@@ -2206,6 +2688,7 @@ def run_evolution(
                 next_stage="dale",
                 revisit_on_topology_change=True,
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "edge-revisit":
             state = _run_sibling_stage(
@@ -2216,6 +2699,7 @@ def run_evolution(
                 ("add", "prune"),
                 next_stage="dale",
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "dale":
             state = _run_sibling_stage(
@@ -2226,6 +2710,7 @@ def run_evolution(
                 ("excitatory", "inhibitory"),
                 next_stage="round-end",
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "compression-edge":
             state = _run_sibling_stage(
@@ -2237,6 +2722,7 @@ def run_evolution(
                 next_stage="compression-neuron",
                 compression=True,
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "compression-neuron":
             state = _run_sibling_stage(
@@ -2248,11 +2734,24 @@ def run_evolution(
                 next_stage="round-end",
                 compression=True,
                 history_plotter=history_plotter,
+                progress_reporter=progress_reporter,
             )
         elif state.next_stage == "round-end":
-            state = _finish_round(adapter, store, state, history_plotter)
+            state = _finish_round(
+                adapter,
+                store,
+                state,
+                history_plotter,
+                progress_reporter,
+            )
         elif state.next_stage == "terminal-evaluation":
-            state = _terminal_evaluation(adapter, store, state, history_plotter)
+            state = _terminal_evaluation(
+                adapter,
+                store,
+                state,
+                history_plotter,
+                progress_reporter,
+            )
         else:
             raise ResumeMismatchError(
                 f"Unknown next stage {state.next_stage!r}; repair run-state.json."
@@ -2265,6 +2764,7 @@ def _run_parent_training(
     store: PipelineStore,
     state: RunState,
     history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
 ) -> RunState:
     started = time.perf_counter()
     stage_id = f"r{state.round_index:03d}-train"
@@ -2274,8 +2774,10 @@ def _run_parent_training(
     context = StageContext(
         state.round_index, "train", stage_id, store.output_dir, state.config
     )
+    _emit_candidate_start(progress_reporter, state, context, "training")
     trained = adapter.train_parent(state.accepted, schedule, context)
     attempt = CandidateAttempt.completed("training", trained)
+    _emit_candidate_result(progress_reporter, state, context, attempt)
     selection = select_candidate(state.accepted, (attempt,), config=state.config)
     selected = selection.selected
     next_stage = "compression-edge" if selected.score.all_exact else "edge"
@@ -2300,6 +2802,7 @@ def _run_parent_training(
     store.write_pending(pending)
     successor = _complete_pending_transition(adapter, store, state, pending)
     _refresh_artifacts(adapter, store, successor.accepted, history_plotter)
+    _emit_selection(progress_reporter, state, context, selection, successor)
     return successor
 
 
@@ -2312,6 +2815,7 @@ def _run_sibling_stage(
     *,
     next_stage: str,
     history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
     revisit_on_topology_change: bool = False,
     compression: bool = False,
 ) -> RunState:
@@ -2324,9 +2828,13 @@ def _run_sibling_stage(
         state.round_index, stage, stage_id, store.output_dir, state.config
     )
     parent = state.accepted
-    attempts = tuple(
-        adapter.run_candidate(parent, arm, schedule, context) for arm in arms
-    )
+    attempt_values: list[CandidateAttempt] = []
+    for arm in arms:
+        _emit_candidate_start(progress_reporter, state, context, arm)
+        attempt = adapter.run_candidate(parent, arm, schedule, context)
+        _emit_candidate_result(progress_reporter, state, context, attempt)
+        attempt_values.append(attempt)
+    attempts = tuple(attempt_values)
     if tuple(attempt.name for attempt in attempts) != tuple(arms):
         raise ValueError(
             "Adapter candidate names must match requested arms; preserve stage ordering."
@@ -2365,6 +2873,7 @@ def _run_sibling_stage(
     store.write_pending(pending)
     successor = _complete_pending_transition(adapter, store, state, pending)
     _refresh_artifacts(adapter, store, successor.accepted, history_plotter)
+    _emit_selection(progress_reporter, state, context, selection, successor)
     return successor
 
 
@@ -3132,6 +3641,7 @@ def _finish_round(
     store: PipelineStore,
     state: RunState,
     history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
 ) -> RunState:
     started = time.perf_counter()
     stage_id = f"r{state.round_index:03d}-round-end"
@@ -3148,6 +3658,7 @@ def _finish_round(
     )
     store.commit(record, successor)
     _refresh_artifacts(adapter, store, state.accepted, history_plotter)
+    _emit_round_end(progress_reporter, state, successor, stage_id)
     return successor
 
 
@@ -3156,6 +3667,7 @@ def _terminal_evaluation(
     store: PipelineStore,
     state: RunState,
     history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
 ) -> RunState:
     """Durably score and close one terminal checkpoint.
 
@@ -3167,6 +3679,7 @@ def _terminal_evaluation(
     """
 
     started = time.perf_counter()
+    _emit_terminal_start(progress_reporter, state)
     manifest = adapter.evaluation_manifest()
     manifest.validate()
     if manifest.role != "evaluation":
@@ -3225,6 +3738,8 @@ def _terminal_evaluation(
     store.commit(record, successor)
     _unlink_and_sync(store.evaluation_intent_path)
     _refresh_artifacts(adapter, store, state.accepted, history_plotter)
+    result_document = _json_object(document["result"], "evaluation result")
+    _emit_terminal_result(progress_reporter, successor, result_document)
     return successor
 
 

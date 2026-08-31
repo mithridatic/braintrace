@@ -144,6 +144,66 @@ def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
     assert report["closed"]
 
 
+def test_cli_evolve_keeps_stdout_json_and_flushes_progress_to_stderr(
+    monkeypatch, tmp_path, capsys
+):
+    from examples.pp_prop import example21_evolve
+
+    def fake_run(_adapter, output_dir, *, config, progress_reporter):
+        assert output_dir == tmp_path / "run"
+        assert config == example21_evolve.PipelineConfig()
+        progress_reporter.emit(
+            example21_evolve.ProgressEvent(
+                "candidate-start",
+                {
+                    "round": 1,
+                    "rounds": 8,
+                    "stage": "train",
+                    "stage_id": "r000-train",
+                    "arm": "training",
+                    "updates": 128,
+                },
+            )
+        )
+        progress_reporter.close()
+        score = SimpleNamespace(exact_count=3, task_ids=tuple(range(400)))
+        accepted = SimpleNamespace(
+            score=score,
+            checkpoint_path="checkpoints/r000-train.npz",
+            checkpoint_sha256="a" * 64,
+        )
+        return SimpleNamespace(
+            closed=True,
+            evaluation_completed=True,
+            terminal_reason="round-budget",
+            round_index=0,
+            accepted=accepted,
+            evaluation_digest="b" * 64,
+        )
+
+    monkeypatch.setattr(example21_evolve, "run_evolution", fake_run)
+
+    assert fixture.main(
+        [
+            "evolve",
+            "--device",
+            "cpu",
+            "--arc-root",
+            str(tmp_path),
+            "--output-dir",
+            str(tmp_path / "run"),
+        ]
+    ) == 0
+
+    captured = capsys.readouterr()
+    document = json.loads(captured.out)
+    assert captured.out.count("\n") == 1
+    assert document["mode"] == "evolve"
+    assert document["training_exact_tasks"] == 3
+    assert "Round 1/8 train:training started" in captured.err
+    assert "\r" not in captured.err
+
+
 def test_cli_evolve_requires_output_directory(tmp_path):
     with pytest.raises(SystemExit) as error:
         fixture.main(["evolve", "--arc-root", str(tmp_path)])
