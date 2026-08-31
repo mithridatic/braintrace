@@ -142,7 +142,7 @@ def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
             "rounds": 8,
             "patience": 2,
             "updates": 128,
-            "operations_per_round": None,
+            "operations_per_stage": 1,
             "screen_tasks": 64,
         },
     )]
@@ -151,14 +151,14 @@ def test_cli_evolve_dispatches_one_resumable_pipeline(monkeypatch, tmp_path):
     assert fixture.main([
         "evolve", "--device", "cpu", "--arc-root", str(tmp_path),
         "--output-dir", str(tmp_path / "run"),
-        "--topology-operations-per-round", "8",
+        "--topology-operations-per-stage", "2",
         "--screen-tasks", "32",
     ]) == 0
     assert calls[0][2] == {
         "rounds": 8,
         "patience": 2,
         "updates": 128,
-        "operations_per_round": 8,
+        "operations_per_stage": 2,
         "screen_tasks": 32,
     }
     report = json.loads((tmp_path / "run" / "example21-evolve.json").read_text())

@@ -3269,8 +3269,8 @@ def test_screen_subset_is_deterministic_and_requires_a_proper_subset() -> None:
         PipelineConfig(screen_tasks=401)
     with pytest.raises(ValueError, match="screen tasks"):
         PipelineConfig(screen_tasks=-1)
-    with pytest.raises(ValueError, match="operations per round"):
-        PipelineConfig(operations_per_round=0)
+    with pytest.raises(ValueError, match="operations per stage"):
+        PipelineConfig(operations_per_stage=0)
 
 
 def test_run_state_admits_the_screen_scope_only_for_the_carried_state() -> None:
@@ -3324,12 +3324,17 @@ def test_operation_budget_chains_distinct_operations_off_each_accepted_state(
         def run_candidate(self, parent, arm, schedule, context):
             self.calls.append(("candidate", context.stage, arm, context.stage_id))
             better = arm in {"add", "excitatory"}
+            # Model the five percent structural budget so a second operation
+            # of the same kind is visibly compounded on the first.
+            step = math.ceil(0.05 * parent.resources.recurrent_edges)
+            edges = parent.resources.recurrent_edges + (step if better else -step)
             return CandidateAttempt.completed(
                 arm,
                 self._stage_candidate(
                     _candidate(
                         f"{context.stage_id}-{arm}",
                         loss=parent.score.unresolved_loss - (1.0 if better else -1.0),
+                        edges=edges,
                     ),
                     context,
                 ),
@@ -3339,7 +3344,7 @@ def test_operation_budget_chains_distinct_operations_off_each_accepted_state(
     state = run_evolution(
         adapter,
         tmp_path,
-        config=PipelineConfig(rounds=1, operations_per_round=6),
+        config=PipelineConfig(rounds=1, operations_per_stage=2),
         history_plotter=_history_plotter,
     )
 
@@ -3351,26 +3356,42 @@ def test_operation_budget_chains_distinct_operations_off_each_accepted_state(
     operations = [record for record in records if record["stage"] in OPERATION_STAGES]
     assert [record["stage"] for record in operations] == [
         "edge",
-        "neuron",
-        "edge-revisit",
-        "dale",
         "edge",
         "neuron",
+        "neuron",
+        "edge-revisit",
+        "edge-revisit",
+        "dale",
+        "dale",
     ]
     assert [record["stage_id"] for record in operations] == [
         "r000-op00-edge",
-        "r000-op01-neuron",
-        "r000-op02-edge-revisit",
-        "r000-op03-dale",
-        "r000-op04-edge",
-        "r000-op05-neuron",
+        "r000-op01-edge",
+        "r000-op02-neuron",
+        "r000-op03-neuron",
+        "r000-op04-edge-revisit",
+        "r000-op05-edge-revisit",
+        "r000-op06-dale",
+        "r000-op07-dale",
     ]
     assert len({record["stage_id"] for record in records}) == len(records)
-    assert [record["operation_index"] for record in operations] == [0, 1, 2, 3, 4, 5]
+    assert [record["operation_index"] for record in operations] == list(range(8))
+    assert [record["stage_repeat_index"] for record in operations] == [
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+    ]
     assert all(record["score_scope"] == "screen" for record in operations)
     assert all(record["cursor_advance"] == 128 for record in operations)
     for parent, child in zip(operations, operations[1:]):
         assert child["parent_checkpoint_sha256"] == parent["child_checkpoint_sha256"]
+    edges = [record["recurrent_edges"] for record in operations[:2]]
+    assert edges == [210, 221], "a second edge operation must compound the first"
     assert [record["stage"] for record in records[-3:]] == [
         "round-score",
         "round-end",
@@ -3396,7 +3417,9 @@ def test_unset_operation_budget_reproduces_the_single_pass_lifecycle(
             for line in (directory / "progress.jsonl").read_text().splitlines()
         ]
 
-    historical = records(PipelineConfig(rounds=1, screen_tasks=0), "unscreened")
+    historical = records(
+        PipelineConfig(rounds=1, screen_tasks=0, operations_per_stage=1), "unscreened"
+    )
     assert [record["stage"] for record in historical] == [
         "train",
         "edge",
@@ -3500,21 +3523,22 @@ def test_resume_recovers_mid_round_at_an_operation_boundary(tmp_path: Path) -> N
         run_evolution(
             interrupted,
             tmp_path,
-            config=PipelineConfig(rounds=1, operations_per_round=6),
+            config=PipelineConfig(rounds=1, operations_per_stage=2),
             history_plotter=_history_plotter,
         )
     saved = RunState.from_dict(
         json.loads((tmp_path / "run-state.json").read_text(encoding="utf-8"))
     )
     assert saved.next_stage == "dale"
-    assert saved.operation_index == 3
+    assert saved.operation_index == 6
+    assert saved.stage_repeats == 0
     assert saved.accepted.score.task_ids == _manifest().task_ids[:64]
 
     resumed = _Adapter()
     state = run_evolution(
         resumed,
         tmp_path,
-        config=PipelineConfig(rounds=1, operations_per_round=6),
+        config=PipelineConfig(rounds=1, operations_per_stage=2),
         history_plotter=_history_plotter,
     )
     assert state.closed
@@ -3525,26 +3549,26 @@ def test_resume_recovers_mid_round_at_an_operation_boundary(tmp_path: Path) -> N
     assert len(replayed) == len(set(replayed))
     assert [stage_id for stage_id in replayed if "-op" in stage_id] == [
         "r000-op00-edge",
-        "r000-op01-neuron",
-        "r000-op02-edge-revisit",
-        "r000-op03-dale",
-        "r000-op04-edge",
-        "r000-op05-neuron",
+        "r000-op01-edge",
+        "r000-op02-neuron",
+        "r000-op03-neuron",
+        "r000-op04-edge-revisit",
+        "r000-op05-edge-revisit",
+        "r000-op06-dale",
+        "r000-op07-dale",
     ]
     assert [call[1] for call in resumed.calls if call[0] == "candidate"] == [
         "dale",
         "dale",
-        "edge",
-        "edge",
-        "neuron",
-        "neuron",
+        "dale",
+        "dale",
     ]
 
     with pytest.raises(ResumeMismatchError, match="Resume configuration"):
         run_evolution(
             _Adapter(),
             tmp_path,
-            config=PipelineConfig(rounds=1, operations_per_round=7),
+            config=PipelineConfig(rounds=1, operations_per_stage=3),
             history_plotter=_history_plotter,
         )
 
