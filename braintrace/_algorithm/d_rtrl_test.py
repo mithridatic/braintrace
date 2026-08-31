@@ -1088,8 +1088,7 @@ class TestCoupledTraceBoundedness:
         xs = brainstate.random.randn(150, 3)
         algo.compile_graph(xs[0])
         algo.init_etrace_state()
-        for t in range(xs.shape[0]):
-            algo.update(xs[t])
+        brainstate.transform.for_loop(algo.update, xs)
 
         leaves = self._etrace_leaves(algo)
         assert len(leaves) >= 1
@@ -1121,8 +1120,7 @@ class TestCoupledTraceBoundedness:
         groups = algo.graph_executor.graph.hidden_groups
         assert any(not g.is_diagonal_recurrence for g in groups)
 
-        for t in range(xs.shape[0]):
-            algo.update(xs[t])
+        brainstate.transform.for_loop(algo.update, xs)
 
         leaves = self._etrace_leaves(algo)
         assert len(leaves) >= 1

@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-08-31T03:28:09.3815431Z",
+  "python": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\.venv\\Scripts\\python.exe",
+  "baseline": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-bra36-baseline",
+  "candidate": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-2026-08-30-main",
+  "compilationCacheDisabled": true,
+  "nodes": [
+    "braintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded",
+    "braintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded"
+  ],
+  "records": [
+    {
+      "variant": "baseline",
+      "phase": "warmup",
+      "ordinal": 0,
+      "seconds": 22.132733,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-bra36-baseline\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 19.88s"
+    },
+    {
+      "variant": "candidate",
+      "phase": "warmup",
+      "ordinal": 0,
+      "seconds": 8.674751,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-2026-08-30-main\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 6.66s"
+    },
+    {
+      "variant": "baseline",
+      "phase": "measured",
+      "ordinal": 1,
+      "seconds": 14.647738,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-bra36-baseline\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 12.49s"
+    },
+    {
+      "variant": "candidate",
+      "phase": "measured",
+      "ordinal": 1,
+      "seconds": 7.523232,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-2026-08-30-main\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 5.48s"
+    },
+    {
+      "variant": "baseline",
+      "phase": "measured",
+      "ordinal": 2,
+      "seconds": 16.06678,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-bra36-baseline\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 13.88s"
+    },
+    {
+      "variant": "candidate",
+      "phase": "measured",
+      "ordinal": 2,
+      "seconds": 7.860104,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-2026-08-30-main\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 5.75s"
+    },
+    {
+      "variant": "baseline",
+      "phase": "measured",
+      "ordinal": 3,
+      "seconds": 15.70198,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-bra36-baseline\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 13.52s"
+    },
+    {
+      "variant": "candidate",
+      "phase": "measured",
+      "ordinal": 3,
+      "seconds": 7.879359,
+      "exitCode": 0,
+      "output": "..                                                                       [100%]\n============================== warnings summary ===============================\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_per_step_trace_is_bounded\nbraintrace/_algorithm/d_rtrl_test.py::TestCoupledTraceBoundedness::test_gru_with_recurrence_trace_is_bounded\n  C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\reconcile-2026-08-30-main\\braintrace\\_compiler\\hid_param_op.py:1084: UserWarning: ETP primitive etp_mv (weight=('Wr', 'weight')) reaches a hidden state only through another trainable ETP primitive (etp_mv). Per the non-parametric-tail invariant this weight is excluded from ETP; learn it by BPTT or rewire the architecture so its output flows directly into a hidden state.\n    _emit_no_relation_diag(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in 5.77s"
+    }
+  ],
+  "baselineSeconds": [
+    14.647738,
+    15.70198,
+    16.06678
+  ],
+  "candidateSeconds": [
+    7.523232,
+    7.860104,
+    7.879359
+  ],
+  "baselineMedianSeconds": 15.70198,
+  "candidateMedianSeconds": 7.860104,
+  "medianImprovementFraction": 0.4994195636473872,
+  "rangesDoNotOverlap": true,
+  "allPassed": true,
+  "accepted": true,
+  "analysisCorrection": "Initial PowerShell aggregation captured progress strings as records. This corrected summary retains only the eight pytest result objects; every recorded process exited 0."
+}
