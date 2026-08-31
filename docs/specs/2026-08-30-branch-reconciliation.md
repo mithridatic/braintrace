@@ -105,6 +105,19 @@ ranges do not overlap. If it fails, archive the branch without a code change.
 After qualification, run both affected tests individually and together, then
 the complete sibling `d_rtrl_test.py`.
 
+The gate passed on the intended Python 3.14.6 virtualenv with JAX 0.11.0 and
+BrainState 0.5.3. All eight warm-up and measured pytest processes passed. The
+three measured baseline runs were 14.647738, 15.701980, and 16.066780 seconds.
+The candidate runs were 7.523232, 7.860104, and 7.879359 seconds. Candidate
+median wall time improved by 49.94 percent, and the ranges did not overlap.
+
+The raw process outputs and the correction of an initial PowerShell summary
+aggregation error are recorded in
+`docs/evidence/reconciliation/bra36-performance.json` (SHA-256
+`c0aad49d654f1fa933e42c2493cba3cf21f653a0e8e3ddaa7473a341630ee190`).
+The two affected tests passed individually and together. The complete sibling
+suite passed with 83 tests in 46.62 seconds.
+
 ## Local acceptance gates
 
 Run all configured local gates without deselection:
