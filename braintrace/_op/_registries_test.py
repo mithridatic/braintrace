@@ -217,10 +217,12 @@ class TestFastPathRulesChunkField:
 
     def test_registered_bundles_expose_chunk(self):
         # Importing the op modules runs primitive registration
-        import braintrace._op.dense
-        import braintrace._op.elemwise
+        import braintrace._op.dense as dense_module
+        import braintrace._op.elemwise as elemwise_module
         from braintrace._op._registries import ETP_FAST_PATH_RULES
 
+        assert dense_module is not None
+        assert elemwise_module is not None
         assert len(ETP_FAST_PATH_RULES) > 0
         for fp in ETP_FAST_PATH_RULES.values():
             assert hasattr(fp, 'chunk')

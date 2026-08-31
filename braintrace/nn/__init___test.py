@@ -212,6 +212,8 @@ def test_from_import_of_an_unknown_name_raises_import_error():
     with pytest.raises(ImportError):
         from braintrace.nn import ThisNameDoesNotExist
 
+        assert ThisNameDoesNotExist is not None
+
 
 @pytest.mark.parametrize(
     'name',

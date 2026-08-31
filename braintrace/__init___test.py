@@ -278,6 +278,8 @@ def test_from_import_warns():
     with pytest.warns(DeprecationWarning):
         from braintrace import MatMulOp
 
+        assert MatMulOp is not None
+
 
 def test_unknown_attribute_raises_attribute_error():
     with pytest.raises(AttributeError):

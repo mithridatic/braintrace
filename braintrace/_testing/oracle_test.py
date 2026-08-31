@@ -31,11 +31,14 @@ import braintrace
 from braintrace._testing.oracle import (
     assert_direction_aligned,
     assert_param_gradients_close,
+    assert_unbiased_estimator,
     bptt_param_gradients,
     chunked_online_param_gradients,
     finite_difference_param_gradients,
+    fixed_gradient_directions,
     online_param_gradients,
     online_param_gradients_singlestep_naive,
+    project_gradient,
 )
 from braintrace._testing.oracle_models import ModelSpec, tanh_rnn
 
@@ -836,12 +839,6 @@ def test_assert_param_gradients_close_supports_nested_unit_trees():
 # a *biased* one, which a decay bound like `deviation <= 4/sqrt(N)` cannot do: a
 # fixed 10% bias satisfies that at every N a test can afford. So the helpers are
 # tested here against estimators whose bias is known by construction.
-
-from braintrace._testing.oracle import (
-    assert_unbiased_estimator,
-    fixed_gradient_directions,
-    project_gradient,
-)
 
 _REF_TREE = {
     ('a',): {'weight': jnp.asarray([[1.0, -2.0], [0.5, 3.0]]), 'bias': jnp.asarray([1.0, -1.0])},
