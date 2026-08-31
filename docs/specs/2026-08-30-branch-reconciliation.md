@@ -148,6 +148,28 @@ a fresh temporary repository before deleting any worktree or ref.
 
 ## Final evidence
 
-Pending recovery, performance qualification, local gates, publication CI,
-archive verification, and exact-SHA cleanup. This section will be updated with
-literal results and hashes before final closeout.
+Recovery and performance qualification completed as recorded above. Local gate
+results on Python 3.14.6 were:
+
+- Package suite: 3,163 passed, zero deselected, 286 warnings, and 95 percent
+  total coverage in 356.23 seconds.
+- Examples suite: 576 passed, five skipped, zero deselected, and one failed in
+  137.05 seconds. The failure was
+  `test_merge_cli_uses_measured_files_and_arm_cli_requires_parent`, where the
+  local Windows process-RSS probe returned `None`. The same node failed
+  identically when rerun alone on untouched `origin/main`, so this is a
+  confirmed baseline failure and not a reconciliation regression.
+- Repository conventions: three passed.
+- Mypy: three baseline errors in `_quant/_turboquant.py`, `nn/_situ.py`, and
+  `nn/_gated.py`. Untouched `origin/main` produced the same three diagnostics.
+- Build: wheel and sdist succeeded. Both archives contain
+  `braintrace/py.typed`.
+- `git diff --check`: passed.
+
+Thus the local result satisfies the no-new-failure and coverage requirements,
+but it is not represented as fully green: the examples and mypy commands retain
+their pre-existing failures. Publication CI must still pass every required job
+before archive cleanup can begin.
+
+Pending publication CI, archive verification, and exact-SHA cleanup. This
+section will be updated with literal hashes and final topology before closeout.
