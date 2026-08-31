@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 import brainstate
 import braintools
@@ -66,7 +67,7 @@ class SiTUGLU(brainstate.nn.Module):
         param_type: type = brainstate.ParamState,
         name: str | None = None,
     ) -> None:
-        super().__init__(name=name)  # pyright: ignore[reportCallIssue]
+        cast(Callable[..., None], super().__init__)(name=name)
         for size, size_name in (
             (input_size, "input_size"),
             (hidden_size, "hidden_size"),
