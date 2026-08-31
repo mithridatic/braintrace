@@ -37,6 +37,10 @@ from examples.pp_prop.example21_evolve import (
     build_update_schedule,
     plot_score_history,
     run_evolution,
+    OPERATION_STAGES,
+    RESCORE_STAGES,
+    STATE_SCHEMA_VERSION,
+    screen_task_ids,
     select_candidate,
 )
 
@@ -48,6 +52,28 @@ def _manifest(role: str = "training") -> CorpusManifest:
         task_ids=task_ids,
         source_digests=tuple(f"{index:064x}" for index in range(400)),
         query_order=tuple((task_id, 0) for task_id in task_ids),
+    )
+
+
+def _scoped(candidate: CandidateSnapshot, task_ids) -> CandidateSnapshot:
+    """Restrict a candidate's score to a leading screen subset."""
+
+    if not task_ids:
+        return candidate
+    return replace(candidate, score=_rescored(candidate.score, task_ids))
+
+
+def _rescored(score: ScoreSnapshot, task_ids) -> ScoreSnapshot:
+    """Return the same exactness and loss expressed over one task order."""
+
+    ids = tuple(task_ids) or _manifest().task_ids
+    exact = score.exact_count
+    loss = score.unresolved_loss or 1.0
+    return ScoreSnapshot(
+        task_ids=ids,
+        task_exact=tuple(index < exact for index in range(len(ids))),
+        task_loss=tuple(loss for _ in ids),
+        finite=score.finite,
     )
 
 
@@ -489,7 +515,9 @@ class _Adapter:
         self.calls.append(("restore", candidate.candidate_id))
         return candidate
 
-    def _stage_candidate(self, candidate, context):
+    def _stage_candidate(self, candidate, context, *, scope=True):
+        if scope:
+            candidate = _scoped(candidate, getattr(context, "score_task_ids", ()))
         path = context.output_dir / ".candidates" / f"{candidate.candidate_id}.npz"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(candidate.candidate_id.encode())
@@ -500,6 +528,22 @@ class _Adapter:
             resources=replace(
                 candidate.resources, checkpoint_bytes=path.stat().st_size
             ),
+        )
+
+    def rescore(self, parent, context):
+        self.calls.append(("rescore", parent.candidate_id, context.stage))
+        return CandidateAttempt.completed(
+            "rescore",
+            self._stage_candidate(
+                replace(
+                    parent,
+                    candidate_id=f"{context.stage_id}-rescore",
+                    score=_rescored(parent.score, context.score_task_ids),
+                ),
+                context,
+                scope=False,
+            ),
+            executed_updates=0,
         )
 
     def train_parent(
@@ -679,6 +723,9 @@ def test_progress_events_cover_full_round_in_exact_order_and_fields(
         ("candidate-start", "train", "training"),
         ("candidate-result", "train", "training"),
         ("selection", "train", None),
+        ("candidate-start", "round-screen", "rescore"),
+        ("candidate-result", "round-screen", "rescore"),
+        ("selection", "round-screen", None),
         ("candidate-start", "edge", "add"),
         ("candidate-result", "edge", "add"),
         ("candidate-start", "edge", "prune"),
@@ -699,6 +746,9 @@ def test_progress_events_cover_full_round_in_exact_order_and_fields(
         ("candidate-start", "dale", "inhibitory"),
         ("candidate-result", "dale", "inhibitory"),
         ("selection", "dale", None),
+        ("candidate-start", "round-score", "rescore"),
+        ("candidate-result", "round-score", "rescore"),
+        ("selection", "round-score", None),
         ("round-end", "round-end", None),
         ("terminal-start", "terminal", None),
         ("terminal-result", "terminal", None),
@@ -724,11 +774,11 @@ def test_progress_events_cover_full_round_in_exact_order_and_fields(
         "round": 1,
         "rounds": 1,
         "stage": "edge",
-        "stage_id": "r000-edge",
+        "stage_id": "r000-op00-edge",
         "arm": "add",
         "status": "completed",
         "score_exact": 1,
-        "score_total": 400,
+        "score_total": 64,
         "loss": 9.0,
         "neurons": 100,
         "recurrent_edges": 200,
@@ -744,11 +794,11 @@ def test_progress_events_cover_full_round_in_exact_order_and_fields(
         "round": 1,
         "rounds": 1,
         "stage": "edge",
-        "stage_id": "r000-edge",
+        "stage_id": "r000-op00-edge",
         "selected_arm": "add",
         "parent_retained": False,
         "best_exact": 1,
-        "best_total": 400,
+        "best_total": 64,
         "loss": 9.0,
         "neurons": 100,
         "recurrent_edges": 200,
@@ -828,7 +878,9 @@ def test_progress_reports_retained_parent_blocked_failed_and_stable_stop(
     assert failed["reason"] == "trainer stopped"
     assert failed["executed_updates"] == 64
     selections = [
-        event for event in reporter.events if event["event"] == "selection"
+        event
+        for event in reporter.events
+        if event["event"] == "selection" and event["stage"] not in RESCORE_STAGES
     ]
     assert selections
     assert all(event["selected_arm"] == "parent" for event in selections)
@@ -879,7 +931,7 @@ def test_progress_reports_early_mastery_and_both_compression_stages(
     assert [
         event["stage"]
         for event in reporter.events
-        if event["event"] == "selection"
+        if event["event"] == "selection" and event["stage"] not in RESCORE_STAGES
     ] == ["train", "compression-edge", "compression-neuron"]
     assert reporter.events[-1]["terminal_reason"] == "mastery"
 
@@ -914,12 +966,14 @@ def test_resume_reports_restored_cursor_without_replaying_history(
         "rounds": 1,
         "next_stage": "edge",
         "score_exact": 0,
-        "score_total": 400,
+        "score_total": 64,
         "loss": 9.99,
         "neurons": 100,
         "recurrent_edges": 200,
-        "checkpoint_path": str(tmp_path / "checkpoints" / "r000-train.npz"),
-        "checkpoint_sha256": hashlib.sha256(b"trained-0").hexdigest(),
+        "checkpoint_path": str(tmp_path / "checkpoints" / "r000-round-screen.npz"),
+        "checkpoint_sha256": hashlib.sha256(
+            b"r000-round-screen-rescore"
+        ).hexdigest(),
     }
     assert not any(
         event.get("stage") == "train" for event in resumed_reporter.events[1:]
@@ -1298,7 +1352,7 @@ def _pending_fixture() -> tuple[RunState, RunState, dict[str, object]]:
         before,
         sequence=1,
         cursor=128,
-        next_stage="edge",
+        next_stage="round-screen",
         accepted=selected,
     )
     document = evolve._pending_transition_document(
@@ -1583,7 +1637,7 @@ def test_structural_mastery_switches_immediately_to_compression(
     state = run_evolution(
         adapter,
         tmp_path,
-        config=PipelineConfig(rounds=1),
+        config=PipelineConfig(rounds=1, screen_tasks=0),
         history_plotter=_history_plotter,
     )
     assert state.closed and state.terminal_reason == "mastery"
@@ -1745,6 +1799,7 @@ def test_progress_reports_executed_updates_per_arm_and_cursor_separately(
         before,
         sequence=2,
         cursor=2 * DEFAULT_UPDATES,
+        operation_index=1,
         next_stage="neuron",
         accepted=selected,
     )
@@ -1755,7 +1810,7 @@ def test_progress_reports_executed_updates_per_arm_and_cursor_separately(
     record = PipelineStore(tmp_path).progress_record(
         before,
         after,
-        stage_id="r000-edge",
+        stage_id="r000-op00-edge",
         stage="edge",
         parent=parent,
         selected=selected,
@@ -1793,6 +1848,7 @@ def test_progress_replay_rejects_corrupt_sibling_and_update_evidence(
         before,
         sequence=2,
         cursor=2 * DEFAULT_UPDATES,
+        operation_index=1,
         next_stage="neuron",
         accepted=selected,
     )
@@ -1803,7 +1859,7 @@ def test_progress_replay_rejects_corrupt_sibling_and_update_evidence(
     record = PipelineStore(tmp_path).progress_record(
         before,
         after,
-        stage_id="r000-edge",
+        stage_id="r000-op00-edge",
         stage="edge",
         parent=parent,
         selected=selected,
@@ -1941,7 +1997,9 @@ def test_interrupted_run_resumes_without_evaluation_or_repeating_durable_stage(
         json.loads((tmp_path / "run-state.json").read_text(encoding="utf-8"))
     )
     assert saved.next_stage == "edge"
-    assert saved.accepted.candidate_id == "trained-0"
+    assert saved.accepted.candidate_id == "r000-round-screen-rescore"
+    assert saved.accepted.topology_sha256 == _identity("topology", "trained-0")
+    assert saved.accepted.score.task_ids == _manifest().task_ids[:64]
 
     resumed = _Adapter()
     state = run_evolution(
@@ -1951,8 +2009,9 @@ def test_interrupted_run_resumes_without_evaluation_or_repeating_durable_stage(
         history_plotter=_history_plotter,
     )
     assert state.closed
-    assert ("restore", "trained-0") in resumed.calls
+    assert ("restore", "r000-round-screen-rescore") in resumed.calls
     assert not any(call[0] == "train-parent" for call in resumed.calls)
+    assert not any(call[0] == "rescore" and call[2] == "round-screen" for call in resumed.calls)
     assert resumed.evaluation_calls == 1
 
 
@@ -2014,6 +2073,13 @@ def test_fresh_resume_attests_pending_ancestry_before_first_persist(
             candidate = super().train_parent(parent, schedule, context)
             self.parents[candidate.checkpoint_sha256] = parent.checkpoint_sha256
             return candidate
+
+        def rescore(self, parent, context):
+            attempt = super().rescore(parent, context)
+            self.parents[attempt.candidate.checkpoint_sha256] = (
+                parent.checkpoint_sha256
+            )
+            return attempt
 
         def attest_pending(self, candidate, *, parent_checkpoint_sha256, stage_id):
             path = Path(candidate.checkpoint_path)
@@ -2455,7 +2521,10 @@ def test_parent_training_regression_retains_durable_parent_then_discards_temp(
     state = RunState.from_dict(
         json.loads((tmp_path / "run-state.json").read_text(encoding="utf-8"))
     )
-    assert state.accepted.candidate_id == "protected-parent"
+    assert state.accepted.topology_sha256 == _identity("topology", "protected-parent")
+    assert state.accepted.parameters_sha256 == _identity(
+        "parameters", "protected-parent"
+    )
     assert state.next_stage == "edge"
     assert ("discard", "training", "completed") in adapter.calls
 
@@ -2664,7 +2733,7 @@ def test_resume_reuses_matching_terminal_artifact_without_second_evaluation(
     (tmp_path / "evaluation.json").write_text(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": STATE_SCHEMA_VERSION,
                 "checkpoint_sha256": state.accepted.checkpoint_sha256,
                 "evaluation_manifest_sha256": evaluation_manifest.digest,
                 "result": _terminal_result(),
@@ -2727,7 +2796,7 @@ def test_resume_rejects_incomplete_terminal_evaluation_artifact(
     (tmp_path / "evaluation.json").write_text(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": STATE_SCHEMA_VERSION,
                 "checkpoint_sha256": state.accepted.checkpoint_sha256,
                 "evaluation_manifest_sha256": evaluation_manifest.digest,
                 "result": {"task_count": 400},
@@ -2756,7 +2825,7 @@ def test_terminal_evaluation_document_rejects_schema_lineage_and_score_drift() -
     )
     manifest = _manifest("evaluation")
     document = {
-        "schema_version": 1,
+        "schema_version": STATE_SCHEMA_VERSION,
         "checkpoint_sha256": state.accepted.checkpoint_sha256,
         "evaluation_manifest_sha256": manifest.digest,
         "result": _terminal_result(),
@@ -2807,7 +2876,7 @@ def test_store_reconciles_durable_progress_before_stale_state(tmp_path: Path) ->
         state,
         sequence=1,
         cursor=128,
-        next_stage="edge",
+        next_stage="round-screen",
         accepted=trained,
     )
     record = store.progress_record(
@@ -2851,7 +2920,7 @@ def test_store_rejects_state_that_conflicts_with_its_progress_record(
         initial,
         sequence=1,
         cursor=128,
-        next_stage="edge",
+        next_stage="round-screen",
         accepted=trained,
     )
     record = store.progress_record(
@@ -2891,7 +2960,7 @@ def test_resume_rejects_initial_and_progress_lifecycle_jumps(
         initial,
         sequence=1,
         cursor=128,
-        next_stage="edge",
+        next_stage="round-screen",
         accepted=_candidate("trained", exact_count=1),
     )
     record = progress_jump.progress_record(
@@ -2933,7 +3002,7 @@ def test_resume_rejects_progress_scalar_evidence_drift(
         initial,
         sequence=1,
         cursor=128,
-        next_stage="edge",
+        next_stage="round-screen",
         accepted=_candidate("trained", exact_count=1),
     )
     store = PipelineStore(tmp_path)
@@ -3118,13 +3187,14 @@ def test_history_plot_contains_exact_loss_topology_and_bytes(tmp_path: Path) -> 
         state,
         sequence=2,
         cursor=256,
+        operation_index=1,
         next_stage="neuron",
         accepted=_candidate("next", exact_count=3, loss=4.0),
     )
     record = store.progress_record(
         state,
         next_state,
-        stage_id="r000-edge",
+        stage_id="r000-op00-edge",
         stage="edge",
         parent=state.accepted,
         selected=next_state.accepted,
@@ -3182,3 +3252,267 @@ def test_history_includes_baseline_and_skips_nonchanging_transitions(
 
     assert output.is_file()
     assert evidence["accepted_stage_count"] == 2
+
+
+def test_screen_subset_is_deterministic_and_requires_a_proper_subset() -> None:
+    manifest = _manifest()
+
+    screened = screen_task_ids(manifest, PipelineConfig(screen_tasks=64))
+    assert screened == manifest.task_ids[:64]
+    assert screened == screen_task_ids(manifest, PipelineConfig(screen_tasks=64))
+    assert screen_task_ids(manifest, PipelineConfig(screen_tasks=0)) == ()
+    assert screen_task_ids(manifest, PipelineConfig(screen_tasks=400)) == ()
+    with pytest.raises(ValueError, match="screen tasks"):
+        PipelineConfig(screen_tasks=401)
+    with pytest.raises(ValueError, match="screen tasks"):
+        PipelineConfig(screen_tasks=-1)
+    with pytest.raises(ValueError, match="operations per round"):
+        PipelineConfig(operations_per_round=0)
+
+
+def test_run_state_admits_the_screen_scope_only_for_the_carried_state() -> None:
+    config = PipelineConfig(rounds=1)
+    manifest = _manifest()
+    screened = replace(
+        _candidate("screened"),
+        score=_rescored(_score(0), screen_task_ids(manifest, config)),
+    )
+    initial = RunState.initial(config, manifest, _candidate("initial"))
+
+    carried = replace(initial, sequence=1, cursor=128, accepted=screened)
+    assert carried.accepted.score.task_ids == manifest.task_ids[:64]
+
+    with pytest.raises(ValueError, match="inconsistent with its training lineage"):
+        replace(initial, sequence=1, cursor=128, round_entry=screened)
+    partial = replace(
+        _candidate("partial"),
+        score=_rescored(_score(0), manifest.task_ids[10:40]),
+    )
+    with pytest.raises(ValueError, match="inconsistent with its training lineage"):
+        replace(initial, sequence=1, cursor=128, accepted=partial)
+
+
+def test_screened_candidate_cannot_be_compared_with_a_full_scored_parent() -> None:
+    manifest = _manifest()
+    screen = screen_task_ids(manifest, PipelineConfig())
+    parent = _candidate("full-parent", exact_count=0, loss=10.0)
+    screened_child = replace(
+        _candidate("screened-child"),
+        score=_rescored(_score(0, 1.0), screen),
+    )
+
+    mismatch = select_candidate(
+        parent, (CandidateAttempt.completed("add", screened_child),)
+    )
+    assert mismatch.dispositions == {"add": "rejected-score-mismatch"}
+    assert mismatch.parent_retained
+
+    screened_parent = replace(parent, score=_rescored(parent.score, screen))
+    agreed = select_candidate(
+        screened_parent, (CandidateAttempt.completed("add", screened_child),)
+    )
+    assert agreed.selected_attempt == "add"
+
+
+def test_operation_budget_chains_distinct_operations_off_each_accepted_state(
+    tmp_path: Path,
+) -> None:
+    class ImprovingAdapter(_Adapter):
+        def run_candidate(self, parent, arm, schedule, context):
+            self.calls.append(("candidate", context.stage, arm, context.stage_id))
+            better = arm in {"add", "excitatory"}
+            return CandidateAttempt.completed(
+                arm,
+                self._stage_candidate(
+                    _candidate(
+                        f"{context.stage_id}-{arm}",
+                        loss=parent.score.unresolved_loss - (1.0 if better else -1.0),
+                    ),
+                    context,
+                ),
+            )
+
+    adapter = ImprovingAdapter()
+    state = run_evolution(
+        adapter,
+        tmp_path,
+        config=PipelineConfig(rounds=1, operations_per_round=6),
+        history_plotter=_history_plotter,
+    )
+
+    assert state.closed
+    records = [
+        json.loads(line)
+        for line in (tmp_path / "progress.jsonl").read_text().splitlines()
+    ]
+    operations = [record for record in records if record["stage"] in OPERATION_STAGES]
+    assert [record["stage"] for record in operations] == [
+        "edge",
+        "neuron",
+        "edge-revisit",
+        "dale",
+        "edge",
+        "neuron",
+    ]
+    assert [record["stage_id"] for record in operations] == [
+        "r000-op00-edge",
+        "r000-op01-neuron",
+        "r000-op02-edge-revisit",
+        "r000-op03-dale",
+        "r000-op04-edge",
+        "r000-op05-neuron",
+    ]
+    assert len({record["stage_id"] for record in records}) == len(records)
+    assert [record["operation_index"] for record in operations] == [0, 1, 2, 3, 4, 5]
+    assert all(record["score_scope"] == "screen" for record in operations)
+    assert all(record["cursor_advance"] == 128 for record in operations)
+    for parent, child in zip(operations, operations[1:]):
+        assert child["parent_checkpoint_sha256"] == parent["child_checkpoint_sha256"]
+    assert [record["stage"] for record in records[-3:]] == [
+        "round-score",
+        "round-end",
+        "terminal",
+    ]
+    assert records[-3]["score_scope"] == "full"
+    assert records[-3]["cursor_advance"] == 0
+
+
+def test_unset_operation_budget_reproduces_the_single_pass_lifecycle(
+    tmp_path: Path,
+) -> None:
+    def stages(config: PipelineConfig) -> list[str]:
+        directory = tmp_path / f"ops-{config.operations_per_round}"
+        run_evolution(
+            _Adapter(),
+            directory,
+            config=config,
+            history_plotter=_history_plotter,
+        )
+        return [
+            json.loads(line)["stage"]
+            for line in (directory / "progress.jsonl").read_text().splitlines()
+        ]
+
+    default = stages(PipelineConfig(rounds=1))
+    explicit = stages(PipelineConfig(rounds=1, operations_per_round=4))
+    assert default == explicit
+    assert [stage for stage in default if stage in OPERATION_STAGES] == [
+        "edge",
+        "neuron",
+        "edge-revisit",
+        "dale",
+    ]
+
+
+def test_complete_screen_exactness_never_reaches_compression(tmp_path: Path) -> None:
+    class ScreenMasteryAdapter(_Adapter):
+        def run_candidate(self, parent, arm, schedule, context):
+            self.calls.append(("candidate", context.stage, arm))
+            assert not context.stage.startswith("compression-")
+            return CandidateAttempt.completed(
+                arm,
+                self._stage_candidate(
+                    _candidate(f"{context.stage_id}-{arm}", exact_count=64, loss=0.0),
+                    context,
+                ),
+            )
+
+    adapter = ScreenMasteryAdapter()
+    state = run_evolution(
+        adapter,
+        tmp_path,
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+    )
+
+    records = [
+        json.loads(line)
+        for line in (tmp_path / "progress.jsonl").read_text().splitlines()
+    ]
+    screened = [record for record in records if record["stage"] in OPERATION_STAGES]
+    assert screened and all(record["score_scope"] == "screen" for record in screened)
+    assert all(record["exact_task_count"] == 64 for record in screened)
+    assert not any(record["stage"].startswith("compression-") for record in records)
+    assert state.terminal_reason == "round-budget"
+    assert state.accepted.score.task_ids == _manifest().task_ids
+    assert state.accepted.score.exact_count == 64
+
+
+def test_round_score_restores_the_full_scope_before_the_round_comparison(
+    tmp_path: Path,
+) -> None:
+    adapter = _Adapter()
+    state = run_evolution(
+        adapter,
+        tmp_path,
+        config=PipelineConfig(rounds=1),
+        history_plotter=_history_plotter,
+    )
+
+    rescores = [call for call in adapter.calls if call[0] == "rescore"]
+    assert [call[2] for call in rescores] == ["round-screen", "round-score"]
+    assert state.round_entry.score.task_ids == _manifest().task_ids
+    assert state.accepted.score.task_ids == _manifest().task_ids
+    records = [
+        json.loads(line)
+        for line in (tmp_path / "progress.jsonl").read_text().splitlines()
+    ]
+    round_score = next(record for record in records if record["stage"] == "round-score")
+    assert round_score["score_scope"] == "full"
+    assert round_score["disposition"] == "accepted"
+    assert round_score["updates"] == 0
+
+
+def test_resume_recovers_mid_round_at_an_operation_boundary(tmp_path: Path) -> None:
+    interrupted = _Adapter(interrupt_at="dale")
+    with pytest.raises(KeyboardInterrupt):
+        run_evolution(
+            interrupted,
+            tmp_path,
+            config=PipelineConfig(rounds=1, operations_per_round=6),
+            history_plotter=_history_plotter,
+        )
+    saved = RunState.from_dict(
+        json.loads((tmp_path / "run-state.json").read_text(encoding="utf-8"))
+    )
+    assert saved.next_stage == "dale"
+    assert saved.operation_index == 3
+    assert saved.accepted.score.task_ids == _manifest().task_ids[:64]
+
+    resumed = _Adapter()
+    state = run_evolution(
+        resumed,
+        tmp_path,
+        config=PipelineConfig(rounds=1, operations_per_round=6),
+        history_plotter=_history_plotter,
+    )
+    assert state.closed
+    replayed = [
+        json.loads(line)["stage_id"]
+        for line in (tmp_path / "progress.jsonl").read_text().splitlines()
+    ]
+    assert len(replayed) == len(set(replayed))
+    assert [stage_id for stage_id in replayed if "-op" in stage_id] == [
+        "r000-op00-edge",
+        "r000-op01-neuron",
+        "r000-op02-edge-revisit",
+        "r000-op03-dale",
+        "r000-op04-edge",
+        "r000-op05-neuron",
+    ]
+    assert [call[1] for call in resumed.calls if call[0] == "candidate"] == [
+        "dale",
+        "dale",
+        "edge",
+        "edge",
+        "neuron",
+        "neuron",
+    ]
+
+    with pytest.raises(ResumeMismatchError, match="Resume configuration"):
+        run_evolution(
+            _Adapter(),
+            tmp_path,
+            config=PipelineConfig(rounds=1, operations_per_round=7),
+            history_plotter=_history_plotter,
+        )

@@ -51,6 +51,13 @@ Defaults are:
   neuron, edge-revisit, and Dale candidate. Proof mode remains exactly eight
   updates.
 - Eight resumable rounds.
+- One structural pass per round by default. `--topology-operations-per-round`
+  sets an explicit per-round structural operation budget; when it is unset the
+  round performs exactly one pass of the operation cycle, which is the
+  historical lifecycle.
+- A `64`-task screen subset for intra-round structural comparisons.
+  `--screen-tasks 0` disables screening and scores every operation on the
+  complete training corpus.
 - Early stability after two consecutive rounds without an improvement under
   the selection order below.
 - At most 4,096 neurons, 65,536 recurrent edges, the existing dynamic
@@ -89,32 +96,89 @@ evaluation result into tuning feedback.
 
 ## Round and stage lifecycle
 
+A round begins with ordinary training and then performs a bounded number of
+structural *operations*. Every operation is one immutable-parent sibling
+comparison; the state it selects is the parent of the next operation, so
+structural change accumulates within a round rather than across a single pass.
+
 Each round executes this order:
 
 1. Continue PP-Prop for 128 updates from the accepted checkpoint and score the
-   resulting parent on all 400 training tasks.
-2. Build an edge-add sibling from the highest-ranked recurrent-edge candidates
-   and an edge-prune sibling from the lowest-ranked 5% of recurrent edges.
-   Train each for the same 128-query schedule, compare them with the stage
-   parent, and carry the best improving state.
-3. From that carried state, build a neuron-add sibling by twinning the
-   highest-ranked 5% of neurons and a neuron-prune sibling from the
-   lowest-ranked 5%. Train, compare, and carry the best improving state.
-4. If the neuron topology changed, revisit recurrent edges with another
-   matched add/prune sibling comparison and carry the best improving state.
-5. From the carried state, compare measured excitatory and inhibitory Dale
-   assignments over the selected 5% of neurons. Train both siblings, enforce
-   their signs, and carry the best improving state.
-6. Persist the round result and refresh progress artifacts. Before mastery,
+   resulting parent.
+2. Run structural operations until the round's operation budget is exhausted.
+   The operation kind follows a cycle: an edge operation builds an edge-add
+   sibling from the highest-ranked recurrent-edge candidates and an edge-prune
+   sibling from the lowest-ranked 5% of recurrent edges; a neuron operation
+   twins the highest-ranked 5% of neurons against pruning the lowest-ranked 5%;
+   a neuron operation that changed the topology is followed by an edge-revisit
+   operation; a Dale operation compares measured excitatory and inhibitory
+   assignments over the selected 5% of neurons. After a Dale operation the cycle
+   wraps to another edge operation. Each operation trains both siblings on the
+   same schedule, compares them with their immutable parent, and carries the
+   best improving state.
+3. When the budget is exhausted, re-score the carried state on the complete
+   training corpus and refresh its task ownership.
+4. Persist the round result and refresh progress artifacts. Before mastery,
    continue until two stable rounds or the eight-round budget. At mastery,
    alternate protected edge and neuron pruning toward a fixed point until two
    stable compression rounds or the round budget, then close.
 
+When `--topology-operations-per-round` is unset, the budget is one pass of the
+cycle — edge, neuron, optional edge-revisit, Dale — and step 3 is unnecessary
+because every operation already scored the complete corpus. An explicit budget
+may stop mid-cycle; the operation count, not the cycle position, ends the round.
+
+Each operation consumes exactly one 128-query schedule, so the corpus cursor
+advances by 128 per operation and a round consumes 128 queries per operation
+plus 128 for its ordinary training block.
+
 The existing deterministic 5% structural selection and sparse mutation
-contracts remain authoritative. A stage may retain its parent when neither
+contracts remain authoritative. An operation may retain its parent when neither
 sibling improves. A candidate may be carried without an additional exact task
 when it meets the protected loss-improvement rule. Thus the topology can follow
 useful gradient-ranked changes instead of waiting for a discrete pass@1 jump.
+
+## Screen scoring
+
+Scoring the complete 400-task corpus for both siblings of every operation makes
+the cost of a round proportional to the operation budget. Intra-round operations
+therefore compare on a *screen subset* while the round boundary retains full
+corpus authority.
+
+The screen subset is the first `--screen-tasks` identifiers of the sorted
+training manifest. It is a pure function of the manifest digest and the
+configuration, fixed for the whole lineage, so every comparison a run performs
+is over the same tasks. Rotating the subset is forbidden: a candidate scored on
+one subset and a parent scored on another are not comparable, and the existing
+selection rule rejects such a pair as a score mismatch rather than accepting a
+meaningless improvement.
+
+Two scopes exist and are recorded per progress record:
+
+- **screen** — the parent and both siblings of one structural operation are
+  scored over the screen subset. Selection, protection of already-exact tasks,
+  and the minimum loss-improvement rule apply unchanged, over that subset.
+- **full** — the complete training corpus. Ordinary round training, the
+  round-boundary re-score, every compression operation, and terminal evaluation
+  are always full.
+
+Consequences that the implementation must honour:
+
+- Mastery is a property of the full corpus only. A screen score that reaches
+  complete exactness over its subset must not enter compression, must not end a
+  round as mastery, and must not close a run.
+- Round stability, patience, and the no-progress rule compare the round-entry
+  state with the round-result state. Both are full scores; a screen score may
+  never become a round-entry state.
+- Structural ranking evidence and task ownership derived from a screen score
+  cover only the screen subset. The gradient component of the ranking is taken
+  from optimizer moments and is unaffected. The round-boundary re-score
+  recomputes ownership over the complete corpus before the round result becomes
+  a round-entry state, so no subset-derived ownership reaches a round
+  comparison, the topology image, or the terminal lineage.
+- Screening is an optimization decision aid. It does not weaken the claim
+  boundary: reported training mastery and held-out results remain full-corpus
+  measurements.
 
 ## Selection and compression
 
@@ -223,8 +287,8 @@ before `run-state.json` advances past that stage. Every record has a stable
 stage ID so resume can reconcile an interrupted write without repeating an
 accepted mutation or a terminal evaluation whose result is already durable.
 
-Progress records include the stage and round; parent and child checkpoint
-digests; raw and final disposition of both siblings; exact count and solved
+Progress records include the stage, round, operation index, and score scope;
+parent and child checkpoint digests; raw and final disposition of both siblings; exact count and solved
 task IDs; shape-and-cell loss; scheduled cursor advance; per-arm and total
 executed update counts; neuron and recurrent-edge counts; persistent and
 checkpoint bytes; elapsed time; peak host RAM; and available device-memory
@@ -257,6 +321,15 @@ Co-located suffix-style tests cover:
 - Equal sibling schedules, deterministic randomness, parent immutability,
   downstream edge-to-neuron-to-edge-revisit-to-Dale handoff, and rejected-child
   cleanup.
+- Operation budgets: an unset budget reproduces the historical single-pass
+  lifecycle transition for transition; an explicit budget produces exactly that
+  many structural operations per round, with distinct canonical stage
+  identities, chained parents, and a 128-query cursor advance per operation.
+- Screen scoring: a deterministic subset fixed by manifest and configuration;
+  screened parents and siblings comparable only with each other; complete screen
+  exactness refused as mastery; a screen score refused as a round-entry state;
+  and a round-boundary re-score that restores full-corpus score and ownership
+  before the round comparison.
 - Growth checkpoint round trips, canonical CSR and optimizer alignment,
   surviving and new optimizer state, stable IDs, owner refresh, partially typed
   continuation, and Dale enforcement.

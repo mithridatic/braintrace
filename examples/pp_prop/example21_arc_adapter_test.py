@@ -45,6 +45,7 @@ def test_public_api_has_numpy_style_docstrings():
         "Example21ArcAdapter.persist",
         "Example21ArcAdapter.attest_pending",
         "Example21ArcAdapter.discard",
+        "Example21ArcAdapter.rescore",
         "Example21ArcAdapter.train_parent",
         "Example21ArcAdapter.run_candidate",
         "Example21ArcAdapter.render_topology",
@@ -690,7 +691,7 @@ def test_runtime_checkpoint_writer_refreshes_owners_and_caches_evidence(
         structural_module=structural,
         model_module=_Module,
     )
-    monkeypatch.setattr(subject, "_score_runtime", lambda *values: scored)
+    monkeypatch.setattr(subject, "_score_runtime", lambda *values, **options: scored)
     monkeypatch.setattr(
         subject,
         "_topology_optimizer_from_arrays",
@@ -1141,7 +1142,7 @@ def test_parent_training_and_evidence_cache_preserve_score_identity(
     assert subject.train_parent(parent, object(), context) is result
 
     scored = SimpleNamespace(score=SimpleNamespace(task_ids=("task",)))
-    monkeypatch.setattr(subject, "_score_runtime", lambda *values: scored)
+    monkeypatch.setattr(subject, "_score_runtime", lambda *values, **options: scored)
     assert subject._parent_evidence(parent, runtime) is scored
     assert subject._parent_evidence(parent, runtime) is scored
 
@@ -1149,7 +1150,9 @@ def test_parent_training_and_evidence_cache_preserve_score_identity(
     monkeypatch.setattr(
         other,
         "_score_runtime",
-        lambda *values: SimpleNamespace(score=SimpleNamespace(task_ids=("other",))),
+        lambda *values, **options: SimpleNamespace(
+            score=SimpleNamespace(task_ids=("other",))
+        ),
     )
     with pytest.raises(ValueError, match="does not match"):
         other._parent_evidence(parent, runtime)
@@ -1643,6 +1646,18 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
     assert np.array_equal(result.owner_codes[:2], np.asarray([0, 1]))
     assert np.array_equal(trainer.parameters["sentinel"], np.asarray([1.0]))
 
+    screened = subject._score_runtime(runtime, "training", task_ids=("a",))
+
+    assert screened.score.task_ids == ("a",)
+    assert screened.score.task_exact == result.score.task_exact[:1]
+    assert screened.score.task_loss == result.score.task_loss[:1]
+    assert screened.owner_codes.shape == result.owner_codes.shape
+    assert np.array_equal(trainer.parameters["sentinel"], np.asarray([1.0]))
+    with pytest.raises(ValueError, match="manifest-ordered members"):
+        subject._score_runtime(runtime, "training", task_ids=("b", "a"))
+    with pytest.raises(ValueError, match="manifest-ordered members"):
+        subject._score_runtime(runtime, "training", task_ids=("z",))
+
 
 def test_update_block_runs_one_compiled_128_query_schedule(tmp_path, monkeypatch):
     import brainstate
@@ -1840,7 +1855,7 @@ def test_terminal_evaluation_requires_manifest_and_preserves_checkpoint(
     monkeypatch.setattr(subject, "evaluation_manifest", lambda: expected)
     monkeypatch.setattr(subject, "restore", lambda value: value)
     monkeypatch.setattr(subject, "_runtime_from_checkpoint", lambda value: runtime)
-    monkeypatch.setattr(subject, "_score_runtime", lambda *args: scored)
+    monkeypatch.setattr(subject, "_score_runtime", lambda *args, **options: scored)
 
     with pytest.raises(ValueError, match="manifest differs"):
         subject.evaluate_terminal(candidate, SimpleNamespace(digest="other"))
@@ -1857,11 +1872,135 @@ def test_terminal_evaluation_requires_manifest_and_preserves_checkpoint(
     }
     assert path.read_bytes() == b"accepted"
 
-    def mutate_and_fail(*args):
-        del args
+    def mutate_and_fail(*args, **options):
+        del args, options
         path.write_bytes(b"changed")
         raise ValueError("scoring failed")
 
     monkeypatch.setattr(subject, "_score_runtime", mutate_and_fail)
     with pytest.raises(RuntimeError, match="changed the accepted checkpoint"):
         subject.evaluate_terminal(candidate, expected)
+
+
+def test_rescore_changes_only_the_score_scope_of_its_accepted_state(
+    tmp_path, monkeypatch
+):
+    from examples.pp_prop import example21_evolve
+
+    subject = adapter.Example21ArcAdapter(
+        tmp_path, contracts_module=_Contracts(tmp_path)
+    )
+    parent_path = tmp_path / "accepted.npz"
+    parent_path.write_bytes(b"accepted-checkpoint")
+    parent = _snapshot(
+        example21_evolve,
+        candidate_id="accepted",
+        path=parent_path,
+        task_ids=("a", "b", "c"),
+    )
+    scopes: list[tuple[str, ...] | None] = []
+
+    def fake_write_runtime(runtime, **options):
+        del runtime
+        scopes.append(tuple(options["task_ids"] or ()))
+        Path(options["path"]).write_bytes(b"rescored-checkpoint")
+        return replace(
+            parent,
+            candidate_id=options["candidate_id"],
+            checkpoint_path=str(options["path"]),
+            checkpoint_sha256=hashlib.sha256(b"rescored-checkpoint").hexdigest(),
+            score=example21_evolve.ScoreSnapshot(
+                task_ids=tuple(options["task_ids"]) or ("a", "b", "c"),
+                task_exact=(False,) * len(tuple(options["task_ids"]) or ("a", "b", "c")),
+                task_loss=(1.0,) * len(tuple(options["task_ids"]) or ("a", "b", "c")),
+            ),
+        )
+
+    monkeypatch.setattr(subject, "restore", lambda candidate: candidate)
+    monkeypatch.setattr(subject, "_runtime_from_checkpoint", lambda path: object())
+    monkeypatch.setattr(subject, "_write_runtime", fake_write_runtime)
+    monkeypatch.setattr(subject, "_record_lineage", lambda candidate, parent_sha: None)
+
+    context = example21_evolve.StageContext(
+        0,
+        "round-screen",
+        "r000-round-screen",
+        tmp_path,
+        example21_evolve.PipelineConfig(),
+        score_task_ids=("a",),
+    )
+    attempt = subject.rescore(parent, context)
+
+    assert scopes == [("a",)]
+    assert attempt.name == "rescore"
+    assert attempt.status == "completed"
+    assert attempt.executed_updates == 0
+    assert attempt.candidate.candidate_id == "r000-round-screen-rescore"
+    assert attempt.candidate.score.task_ids == ("a",)
+    assert attempt.candidate.topology_sha256 == parent.topology_sha256
+    assert attempt.candidate.parameters_sha256 == parent.parameters_sha256
+    assert attempt.candidate.optimizer_sha256 == parent.optimizer_sha256
+    assert parent_path.read_bytes() == b"accepted-checkpoint"
+
+
+def test_rescore_isolates_a_failed_scope_transition(tmp_path, monkeypatch):
+    from examples.pp_prop import example21_evolve
+
+    subject = adapter.Example21ArcAdapter(
+        tmp_path, contracts_module=_Contracts(tmp_path)
+    )
+    parent_path = tmp_path / "accepted.npz"
+    parent_path.write_bytes(b"accepted-checkpoint")
+    parent = _snapshot(
+        example21_evolve,
+        candidate_id="accepted",
+        path=parent_path,
+        task_ids=("a", "b", "c"),
+    )
+
+    def failing_write_runtime(runtime, **options):
+        del runtime
+        Path(options["path"]).write_bytes(b"partial")
+        raise ValueError("scoring failed")
+
+    monkeypatch.setattr(subject, "restore", lambda candidate: candidate)
+    monkeypatch.setattr(subject, "_runtime_from_checkpoint", lambda path: object())
+    monkeypatch.setattr(subject, "_write_runtime", failing_write_runtime)
+
+    context = example21_evolve.StageContext(
+        0,
+        "round-score",
+        "r000-round-score",
+        tmp_path,
+        example21_evolve.PipelineConfig(),
+    )
+    attempt = subject.rescore(parent, context)
+
+    assert attempt.status == "failed"
+    assert "scoring failed" in attempt.reason
+    assert attempt.candidate is None
+    assert not (tmp_path / ".candidates" / "r000-round-score-rescore.npz").exists()
+    assert parent_path.read_bytes() == b"accepted-checkpoint"
+
+
+def _snapshot(example21_evolve, *, candidate_id, path, task_ids):
+    return example21_evolve.CandidateSnapshot(
+        candidate_id=candidate_id,
+        checkpoint_path=str(path),
+        checkpoint_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        topology_sha256="1" * 64,
+        parameters_sha256="2" * 64,
+        optimizer_sha256="3" * 64,
+        score=example21_evolve.ScoreSnapshot(
+            task_ids=task_ids,
+            task_exact=(False,) * len(task_ids),
+            task_loss=(1.0,) * len(task_ids),
+        ),
+        resources=example21_evolve.ResourceUsage(
+            persistent_bytes=1_000,
+            checkpoint_bytes=500,
+            neurons=10,
+            recurrent_edges=20,
+        ),
+        topology_changed=False,
+    )

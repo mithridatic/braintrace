@@ -773,9 +773,10 @@ class Example21ArcAdapter:
         candidate_id: str,
         path: Path,
         topology_changed: bool,
+        task_ids: Sequence[str] | None = None,
     ) -> Any:
         structural = self._structural()
-        scored = self._score_runtime(runtime, role)
+        scored = self._score_runtime(runtime, role, task_ids=task_ids)
         runtime.model.owner_codes = np.asarray(scored.owner_codes, dtype=np.int16)
         optimizer = structural.optimizer_from_muon_groups(runtime.trainer)
         arrays = structural.checkpoint_arrays(
@@ -1051,7 +1052,13 @@ class Example21ArcAdapter:
             self._evidence_by_checkpoint.pop(candidate.checkpoint_sha256, None)
             self._parent_by_checkpoint.pop(candidate.checkpoint_sha256, None)
 
-    def _score_runtime(self, runtime: _Runtime, role: str) -> _ScoredRuntime:
+    def _score_runtime(
+        self,
+        runtime: _Runtime,
+        role: str,
+        *,
+        task_ids: Sequence[str] | None = None,
+    ) -> _ScoredRuntime:
         import brainstate
         import jax
         import jax.numpy as jnp
@@ -1059,7 +1066,13 @@ class Example21ArcAdapter:
         module = self._model()
         structural = self._structural()
         manifest = self._manifest(role)
-        queries = self._encoded_queries(role)
+        scored_ids = self._scored_task_ids(manifest, task_ids)
+        selected = frozenset(scored_ids)
+        queries = tuple(
+            record
+            for record in self._encoded_queries(role)
+            if record.task_id in selected
+        )
         event_values = jnp.asarray(
             np.stack([record.events for record in queries]), dtype=jnp.float32
         )
@@ -1104,14 +1117,10 @@ class Example21ArcAdapter:
             )
         logits_array = np.asarray(logits)
         activity_array = np.asarray(activities, dtype=np.float64)
-        exact_by_task: dict[str, list[bool]] = {
-            task_id: [] for task_id in manifest.task_ids
-        }
-        loss_by_task: dict[str, list[float]] = {
-            task_id: [] for task_id in manifest.task_ids
-        }
+        exact_by_task: dict[str, list[bool]] = {task_id: [] for task_id in scored_ids}
+        loss_by_task: dict[str, list[float]] = {task_id: [] for task_id in scored_ids}
         activity_by_task: dict[str, list[np.ndarray]] = {
-            task_id: [] for task_id in manifest.task_ids
+            task_id: [] for task_id in scored_ids
         }
         for record, output, activity in zip(
             queries, logits_array, activity_array, strict=True
@@ -1124,10 +1133,10 @@ class Example21ArcAdapter:
             activity_by_task[record.task_id].append(activity)
         task_exact = tuple(
             bool(exact_by_task[task_id]) and all(exact_by_task[task_id])
-            for task_id in manifest.task_ids
+            for task_id in scored_ids
         )
         task_loss = tuple(
-            float(np.mean(loss_by_task[task_id])) for task_id in manifest.task_ids
+            float(np.mean(loss_by_task[task_id])) for task_id in scored_ids
         )
         optimizer = structural.optimizer_from_muon_groups(runtime.trainer)
         finite = bool(
@@ -1137,7 +1146,7 @@ class Example21ArcAdapter:
             and all(math.isfinite(value) for value in task_loss)
         )
         score = self._evolve().ScoreSnapshot(
-            task_ids=manifest.task_ids,
+            task_ids=scored_ids,
             task_exact=task_exact,
             task_loss=task_loss,
             finite=finite,
@@ -1150,7 +1159,7 @@ class Example21ArcAdapter:
             [
                 np.mean(np.stack(activity_by_task[task_id]), axis=0)
                 * (1.0 + _normalise(readout_mass))
-                for task_id in manifest.task_ids
+                for task_id in scored_ids
             ]
         )
         task_neuron = np.stack([_normalise(row) for row in task_neuron])
@@ -1201,6 +1210,37 @@ class Example21ArcAdapter:
             np.asarray(target_score, dtype=np.float64),
             np.asarray(edge_score, dtype=np.float64),
         )
+
+    @staticmethod
+    def _scored_task_ids(
+        manifest: Any, task_ids: Sequence[str] | None
+    ) -> tuple[str, ...]:
+        """Return the manifest-ordered task subset one score must cover.
+
+        Parameters
+        ----------
+        manifest : CorpusManifest
+            Corpus whose order and membership are authoritative.
+        task_ids : sequence of str or None
+            Requested subset.  ``None`` or empty means the complete corpus.
+
+        Returns
+        -------
+        tuple of str
+            Requested identifiers in manifest order.
+        """
+
+        if not task_ids:
+            return tuple(manifest.task_ids)
+        requested = tuple(task_ids)
+        if requested != tuple(
+            task_id for task_id in manifest.task_ids if task_id in frozenset(requested)
+        ):
+            raise ValueError(
+                "Scored task subset must be manifest-ordered members; pass the "
+                "screen subset in corpus order."
+            )
+        return requested
 
     @staticmethod
     def _episode_payload(record: SupervisedQuery) -> dict[str, np.ndarray]:
@@ -1398,10 +1438,79 @@ class Example21ArcAdapter:
         self._record_lineage(candidate, parent.checkpoint_sha256)
         return candidate
 
+    def rescore(self, parent: Any, context: Any) -> Any:
+        """Re-score one accepted state under the stage's score scope.
+
+        The topology, parameters, and optimizer state are reloaded unchanged
+        from the accepted checkpoint; only the recorded score and its derived
+        task ownership differ.  A scope change therefore never advances the
+        model, and the coordinator verifies that the three model digests are
+        preserved before the result can become a parent.
+
+        Parameters
+        ----------
+        parent : CandidateSnapshot
+            Accepted state whose score scope is changing.
+        context : StageContext
+            Stage identity whose ``score_task_ids`` names the target scope.
+
+        Returns
+        -------
+        CandidateAttempt
+            Completed ``rescore`` arm, or a failed arm carrying the error.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> attempt = adapter.rescore(accepted, context)
+            >>> attempt.name
+            'rescore'
+        """
+
+        evolve = self._evolve()
+        restored = self.restore(parent)
+        parent_path = Path(restored.checkpoint_path)
+        parent_bytes = parent_path.read_bytes()
+        candidate_path: Path | None = None
+        try:
+            runtime = self._runtime_from_checkpoint(parent_path)
+            candidate_id = f"{context.stage_id}-rescore"
+            candidate_path = self._candidate_path(context.output_dir, candidate_id)
+            candidate = self._write_runtime(
+                runtime,
+                role="training",
+                candidate_id=candidate_id,
+                path=candidate_path,
+                topology_changed=False,
+                task_ids=getattr(context, "score_task_ids", ()),
+            )
+            self._record_lineage(candidate, parent.checkpoint_sha256)
+            return evolve.CandidateAttempt.completed(
+                "rescore", candidate, executed_updates=0
+            )
+        except Exception as error:  # noqa: BLE001 - isolate one failed rescore
+            if candidate_path is not None:
+                candidate_path.unlink(missing_ok=True)
+                self._provenance_path(candidate_path).unlink(missing_ok=True)
+                self._temporary_paths.discard(candidate_path.resolve())
+            return evolve.CandidateAttempt.failed(
+                "rescore",
+                f"{type(error).__name__}: {error}",
+                executed_updates=0,
+            )
+        finally:
+            if parent_path.read_bytes() != parent_bytes:
+                raise RuntimeError(
+                    "Rescoring changed its immutable accepted checkpoint."
+                )
+
     def _parent_evidence(self, parent: Any, runtime: _Runtime) -> _ScoredRuntime:
         evidence = self._evidence_by_checkpoint.get(parent.checkpoint_sha256)
         if evidence is None:
-            evidence = self._score_runtime(runtime, "training")
+            evidence = self._score_runtime(
+                runtime, "training", task_ids=parent.score.task_ids
+            )
             if evidence.score.task_ids != parent.score.task_ids:
                 raise ValueError(
                     "Parent direct score does not match the training manifest; reject it."
@@ -1771,6 +1880,7 @@ class Example21ArcAdapter:
                 candidate_id=candidate_id,
                 path=candidate_path,
                 topology_changed=True,
+                task_ids=getattr(context, "score_task_ids", ()),
             )
             self._record_lineage(candidate, parent.checkpoint_sha256)
             return evolve.CandidateAttempt.completed(

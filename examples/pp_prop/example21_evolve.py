@@ -33,7 +33,8 @@ DEFAULT_MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
 LOSS_ABSOLUTE_IMPROVEMENT = 1e-6
 LOSS_RELATIVE_IMPROVEMENT = 1e-4
 EXPECTED_ARC_TASKS = 400
-STATE_SCHEMA_VERSION = 1
+DEFAULT_SCREEN_TASKS = 64
+STATE_SCHEMA_VERSION = 2
 OPEN_STAGES = frozenset(
     {
         "train",
@@ -43,6 +44,8 @@ OPEN_STAGES = frozenset(
         "dale",
         "compression-edge",
         "compression-neuron",
+        "round-screen",
+        "round-score",
         "round-end",
         "terminal-evaluation",
     }
@@ -59,6 +62,9 @@ MODEL_STAGES = frozenset(
         "compression-neuron",
     }
 )
+OPERATION_STAGES = frozenset({"edge", "neuron", "edge-revisit", "dale"})
+RESCORE_STAGES: Mapping[str, str] = {"round-screen": "screen", "round-score": "full"}
+RESCORE_ARM = "rescore"
 STAGE_ARMS: Mapping[str, tuple[str, ...]] = {
     "train": ("training",),
     "edge": ("add", "prune"),
@@ -67,6 +73,8 @@ STAGE_ARMS: Mapping[str, tuple[str, ...]] = {
     "dale": ("excitatory", "inhibitory"),
     "compression-edge": ("prune",),
     "compression-neuron": ("prune",),
+    "round-screen": (RESCORE_ARM,),
+    "round-score": (RESCORE_ARM,),
 }
 
 
@@ -411,6 +419,12 @@ class PipelineConfig:
         Configured topology caps checked before promotion.
     max_checkpoint_bytes : int, optional
         Maximum serialized checkpoint size.
+    operations_per_round : int or None, optional
+        Structural operations executed per round.  ``None`` performs exactly
+        one pass of the operation cycle, the historical lifecycle.
+    screen_tasks : int, optional
+        Training tasks in the intra-round screen subset.  ``0`` scores every
+        operation on the complete training corpus.
     """
 
     optimizer: str = DEFAULT_OPTIMIZER
@@ -420,6 +434,8 @@ class PipelineConfig:
     max_neurons: int = DEFAULT_MAX_NEURONS
     max_recurrent_edges: int = DEFAULT_MAX_RECURRENT_EDGES
     max_checkpoint_bytes: int = DEFAULT_MAX_CHECKPOINT_BYTES
+    operations_per_round: int | None = None
+    screen_tasks: int = DEFAULT_SCREEN_TASKS
 
     def __post_init__(self) -> None:
         numeric = {
@@ -433,11 +449,27 @@ class PipelineConfig:
         invalid_types = [
             name for name, value in numeric.items() if type(value) is not int
         ]
+        if type(self.screen_tasks) is not int:
+            invalid_types.append("screen_tasks")
+        if self.operations_per_round is not None and (
+            type(self.operations_per_round) is not int
+        ):
+            invalid_types.append("operations_per_round")
         if invalid_types:
             raise TypeError(
                 "Evolution numeric configuration must use JSON integers; correct "
                 + ", ".join(invalid_types)
                 + "."
+            )
+        if self.operations_per_round is not None and self.operations_per_round < 1:
+            raise ValueError(
+                "Evolution operations per round must be positive; pass at least one "
+                "operation or omit the budget."
+            )
+        if not 0 <= self.screen_tasks <= EXPECTED_ARC_TASKS:
+            raise ValueError(
+                "Evolution screen tasks must fall between zero and "
+                f"{EXPECTED_ARC_TASKS}; correct screen_tasks."
             )
         if self.optimizer != DEFAULT_OPTIMIZER:
             raise ValueError(
@@ -493,6 +525,8 @@ class PipelineConfig:
             "max_neurons": self.max_neurons,
             "max_recurrent_edges": self.max_recurrent_edges,
             "max_checkpoint_bytes": self.max_checkpoint_bytes,
+            "operations_per_round": self.operations_per_round,
+            "screen_tasks": self.screen_tasks,
         }
         return record
 
@@ -524,6 +558,12 @@ class PipelineConfig:
             max_checkpoint_bytes=_json_integer(
                 document["max_checkpoint_bytes"], "max_checkpoint_bytes"
             ),
+            operations_per_round=_json_optional_integer(
+                document.get("operations_per_round"), "operations_per_round"
+            ),
+            screen_tasks=_json_integer(
+                document.get("screen_tasks", DEFAULT_SCREEN_TASKS), "screen_tasks"
+            ),
         )
 
     @property
@@ -537,6 +577,51 @@ class PipelineConfig:
         """
 
         return _json_digest(self.to_dict())
+
+    @property
+    def screens(self) -> bool:
+        """Return whether intra-round operations use the screen subset.
+
+        Returns
+        -------
+        bool
+            True when a nonzero screen subset gates structural operations.
+        """
+
+        return self.screen_tasks > 0
+
+
+def screen_task_ids(
+    manifest: CorpusManifest, config: PipelineConfig
+) -> tuple[str, ...]:
+    """Return the deterministic screen subset for one lineage.
+
+    Parameters
+    ----------
+    manifest : CorpusManifest
+        Sorted, digest-bound training corpus.
+    config : PipelineConfig
+        Lineage configuration supplying the screen size.
+
+    Returns
+    -------
+    tuple of str
+        Leading manifest identifiers.  Empty when screening is disabled or the
+        requested size would not be a proper subset of the corpus, so a screen
+        that cannot save any work never costs a scope transition.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> ids = screen_task_ids(manifest, PipelineConfig(screen_tasks=2))
+        >>> len(ids)
+        2
+    """
+
+    if not config.screens or config.screen_tasks >= len(manifest.task_ids):
+        return ()
+    return tuple(manifest.task_ids[: config.screen_tasks])
 
 
 @dataclass(frozen=True)
@@ -1154,8 +1239,9 @@ class CandidateAttempt:
     reason : str or None
         Corrective or failure detail for non-completed arms.
     executed_updates : int, optional
-        Literal update-block work: 128 for completed, zero for blocked, and
-        zero through 128 for a partially failed arm.
+        Literal update-block work: 128 for a completed training arm, zero for a
+        completed ``rescore`` arm, zero for blocked, and zero through 128 for a
+        partially failed arm.
     """
 
     name: str
@@ -1189,8 +1275,13 @@ class CandidateAttempt:
             raise ValueError(
                 "Candidate executed updates must be an integer from 0 to 128."
             )
-        if self.status == "completed" and self.executed_updates != DEFAULT_UPDATES:
-            raise ValueError("Completed candidates must execute exactly 128 updates.")
+        if self.status == "completed" and self.executed_updates != (
+            0 if self.name == RESCORE_ARM else DEFAULT_UPDATES
+        ):
+            raise ValueError(
+                "Completed candidates must execute exactly 128 updates, and a "
+                "rescore arm must execute none."
+            )
         if self.status == "blocked" and self.executed_updates != 0:
             raise ValueError("Blocked candidates must execute zero updates.")
 
@@ -1420,6 +1511,10 @@ class StageContext:
         Run artifact directory.
     config : PipelineConfig
         Immutable lineage configuration.
+    operation_index : int, optional
+        Zero-based structural operation within the round.
+    score_task_ids : tuple of str, optional
+        Screen subset for this stage.  Empty means the complete corpus.
     """
 
     round_index: int
@@ -1427,6 +1522,20 @@ class StageContext:
     stage_id: str
     output_dir: Path
     config: PipelineConfig
+    operation_index: int = 0
+    score_task_ids: tuple[str, ...] = ()
+
+    @property
+    def screens(self) -> bool:
+        """Return whether this stage scores the screen subset.
+
+        Returns
+        -------
+        bool
+            True when a nonempty screen subset gates this stage.
+        """
+
+        return bool(self.score_task_ids)
 
 
 class EvolutionAdapter(Protocol):
@@ -1485,6 +1594,28 @@ class EvolutionAdapter(Protocol):
         -------
         CandidateSnapshot
             Restored state with unchanged identities.
+        """
+
+    def rescore(
+        self, parent: CandidateSnapshot, context: StageContext
+    ) -> CandidateAttempt:
+        """Re-score one accepted state under a new score scope.
+
+        The model, its parameters, and its optimizer state must not change.
+        Only the recorded score and its derived task ownership may differ.
+
+        Parameters
+        ----------
+        parent : CandidateSnapshot
+            Accepted state whose score scope is being changed.
+        context : StageContext
+            Stage context whose ``score_task_ids`` names the target scope;
+            empty means the complete training corpus.
+
+        Returns
+        -------
+        CandidateAttempt
+            Completed ``rescore`` arm carrying the newly scored state.
         """
 
     def train_parent(
@@ -1637,6 +1768,8 @@ class RunState:
         Immutable lineage provenance.
     sequence, cursor, round_index : int
         Durable transition, update-query, and round positions.
+    operation_index : int
+        Structural operations completed in the current round.
     next_stage : str
         Phase that has not yet executed.
     accepted, round_entry : CandidateSnapshot
@@ -1659,6 +1792,7 @@ class RunState:
     next_stage: str
     accepted: CandidateSnapshot
     round_entry: CandidateSnapshot
+    operation_index: int = 0
     stable_rounds: int = 0
     closed: bool = False
     terminal_reason: str | None = None
@@ -1671,12 +1805,15 @@ class RunState:
             raise ValueError(
                 "Run state requires a training manifest; evaluation is terminal-only."
             )
+        budget = self.config.operations_per_round
         if (
             self.sequence < 0
             or self.cursor < 0
             or self.cursor % self.config.updates
             or self.round_index < 0
             or self.round_index >= self.config.rounds
+            or self.operation_index < 0
+            or (budget is not None and self.operation_index > budget)
             or self.stable_rounds < 0
             or self.stable_rounds > self.config.patience
         ):
@@ -1684,8 +1821,9 @@ class RunState:
                 "Run lifecycle counters are inconsistent; recover run-state.json."
             )
         task_ids = self.training_manifest.task_ids
+        screen_ids = screen_task_ids(self.training_manifest, self.config)
         if (
-            self.accepted.score.task_ids != task_ids
+            self.accepted.score.task_ids not in (task_ids, screen_ids)
             or self.round_entry.score.task_ids != task_ids
             or not self.accepted.score.finite
             or not self.round_entry.score.finite
@@ -1726,6 +1864,7 @@ class RunState:
         if self.sequence == 0 and (
             self.cursor != 0
             or self.round_index != 0
+            or self.operation_index != 0
             or self.next_stage != "train"
             or self.accepted != self.round_entry
             or self.stable_rounds != 0
@@ -1797,6 +1936,7 @@ class RunState:
             "sequence": self.sequence,
             "cursor": self.cursor,
             "round_index": self.round_index,
+            "operation_index": self.operation_index,
             "next_stage": self.next_stage,
             "accepted": self.accepted.to_dict(),
             "round_entry": self.round_entry.to_dict(),
@@ -1836,6 +1976,9 @@ class RunState:
             sequence=_json_integer(document["sequence"], "sequence"),
             cursor=_json_integer(document["cursor"], "cursor"),
             round_index=_json_integer(document["round_index"], "round_index"),
+            operation_index=_json_integer(
+                document["operation_index"], "operation_index"
+            ),
             next_stage=_json_string(document["next_stage"], "next_stage"),
             accepted=CandidateSnapshot.from_dict(document["accepted"]),
             round_entry=CandidateSnapshot.from_dict(document["round_entry"]),
@@ -1890,6 +2033,9 @@ class RunState:
             sequence=_json_integer(document["sequence"], "sequence"),
             cursor=_json_integer(document["cursor"], "cursor"),
             round_index=_json_integer(document["round_index"], "round_index"),
+            operation_index=_json_integer(
+                document["operation_index"], "operation_index"
+            ),
             next_stage=_json_string(document["next_stage"], "next_stage"),
             accepted=CandidateSnapshot.from_dict(document["accepted"]),
             round_entry=CandidateSnapshot.from_dict(document["round_entry"]),
@@ -2269,6 +2415,12 @@ class PipelineStore:
             "stage_id": stage_id,
             "stage": stage,
             "round": before.round_index,
+            "operation_index": before.operation_index,
+            "score_scope": (
+                "full"
+                if selected.score.task_ids == before.training_manifest.task_ids
+                else "screen"
+            ),
             "sequence_before": before.sequence,
             "sequence_after": after.sequence,
             "parent_checkpoint_sha256": parent.checkpoint_sha256,
@@ -2667,72 +2819,20 @@ def _run_evolution(
                 history_plotter,
                 progress_reporter,
             )
-        elif state.next_stage == "edge":
-            state = _run_sibling_stage(
+        elif state.next_stage in RESCORE_STAGES:
+            state = _run_rescore_stage(
                 adapter,
                 store,
                 state,
-                "edge",
-                ("add", "prune"),
-                next_stage="neuron",
                 history_plotter=history_plotter,
                 progress_reporter=progress_reporter,
             )
-        elif state.next_stage == "neuron":
+        elif state.next_stage in MODEL_STAGES:
             state = _run_sibling_stage(
                 adapter,
                 store,
                 state,
-                "neuron",
-                ("add", "prune"),
-                next_stage="dale",
-                revisit_on_topology_change=True,
-                history_plotter=history_plotter,
-                progress_reporter=progress_reporter,
-            )
-        elif state.next_stage == "edge-revisit":
-            state = _run_sibling_stage(
-                adapter,
-                store,
-                state,
-                "edge-revisit",
-                ("add", "prune"),
-                next_stage="dale",
-                history_plotter=history_plotter,
-                progress_reporter=progress_reporter,
-            )
-        elif state.next_stage == "dale":
-            state = _run_sibling_stage(
-                adapter,
-                store,
-                state,
-                "dale",
-                ("excitatory", "inhibitory"),
-                next_stage="round-end",
-                history_plotter=history_plotter,
-                progress_reporter=progress_reporter,
-            )
-        elif state.next_stage == "compression-edge":
-            state = _run_sibling_stage(
-                adapter,
-                store,
-                state,
-                "compression-edge",
-                ("prune",),
-                next_stage="compression-neuron",
-                compression=True,
-                history_plotter=history_plotter,
-                progress_reporter=progress_reporter,
-            )
-        elif state.next_stage == "compression-neuron":
-            state = _run_sibling_stage(
-                adapter,
-                store,
-                state,
-                "compression-neuron",
-                ("prune",),
-                next_stage="round-end",
-                compression=True,
+                state.next_stage,
                 history_plotter=history_plotter,
                 progress_reporter=progress_reporter,
             )
@@ -2759,6 +2859,45 @@ def _run_evolution(
     return state
 
 
+def _stage_identity(state: RunState, stage: str) -> str:
+    """Return the canonical durable identity of one stage.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position entering the stage.
+    stage : str
+        Logical phase name.
+
+    Returns
+    -------
+    str
+        Round-scoped identity, carrying the operation index for structural
+        operations so a repeated operation kind stays uniquely addressable.
+    """
+
+    if stage in OPERATION_STAGES:
+        return f"r{state.round_index:03d}-op{state.operation_index:02d}-{stage}"
+    return f"r{state.round_index:03d}-{stage}"
+
+
+def _stage_context(
+    state: RunState, stage: str, stage_id: str, output_dir: Path
+) -> StageContext:
+    screened = state.config.screens and stage in OPERATION_STAGES
+    return StageContext(
+        state.round_index,
+        stage,
+        stage_id,
+        output_dir,
+        state.config,
+        operation_index=state.operation_index,
+        score_task_ids=(
+            screen_task_ids(state.training_manifest, state.config) if screened else ()
+        ),
+    )
+
+
 def _run_parent_training(
     adapter: EvolutionAdapter,
     store: PipelineStore,
@@ -2767,26 +2906,22 @@ def _run_parent_training(
     progress_reporter: ProgressReporter,
 ) -> RunState:
     started = time.perf_counter()
-    stage_id = f"r{state.round_index:03d}-train"
+    stage_id = _stage_identity(state, "train")
     schedule = build_update_schedule(
         state.training_manifest, state.cursor, state.config.updates
     )
-    context = StageContext(
-        state.round_index, "train", stage_id, store.output_dir, state.config
-    )
+    context = _stage_context(state, "train", stage_id, store.output_dir)
     _emit_candidate_start(progress_reporter, state, context, "training")
     trained = adapter.train_parent(state.accepted, schedule, context)
     attempt = CandidateAttempt.completed("training", trained)
     _emit_candidate_result(progress_reporter, state, context, attempt)
     selection = select_candidate(state.accepted, (attempt,), config=state.config)
     selected = selection.selected
-    next_stage = "compression-edge" if selected.score.all_exact else "edge"
-    successor = replace(
+    successor = _expected_model_successor(
         state,
-        sequence=state.sequence + 1,
-        cursor=schedule.cursor_end,
-        next_stage=next_stage,
-        accepted=selected,
+        selected,
+        stage="train",
+        accepted_child=not selection.parent_retained,
     )
     pending = _pending_transition_document(
         state,
@@ -2811,22 +2946,18 @@ def _run_sibling_stage(
     store: PipelineStore,
     state: RunState,
     stage: str,
-    arms: Sequence[str],
     *,
-    next_stage: str,
     history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
     progress_reporter: ProgressReporter,
-    revisit_on_topology_change: bool = False,
-    compression: bool = False,
 ) -> RunState:
     started = time.perf_counter()
-    stage_id = f"r{state.round_index:03d}-{stage}"
+    arms = STAGE_ARMS[stage]
+    compression = stage.startswith("compression-")
+    stage_id = _stage_identity(state, stage)
     schedule = build_update_schedule(
         state.training_manifest, state.cursor, state.config.updates
     )
-    context = StageContext(
-        state.round_index, stage, stage_id, store.output_dir, state.config
-    )
+    context = _stage_context(state, stage, stage_id, store.output_dir)
     parent = state.accepted
     attempt_values: list[CandidateAttempt] = []
     for arm in arms:
@@ -2843,21 +2974,11 @@ def _run_sibling_stage(
         parent, attempts, config=state.config, compression=compression
     )
     selected = selection.selected
-    following = next_stage
-    if (
-        revisit_on_topology_change
-        and not selection.parent_retained
-        and selected.topology_changed
-    ):
-        following = "edge-revisit"
-    if not compression and selected.score.all_exact:
-        following = "compression-edge"
-    successor = replace(
+    successor = _expected_model_successor(
         state,
-        sequence=state.sequence + 1,
-        cursor=schedule.cursor_end,
-        next_stage=following,
-        accepted=selected,
+        selected,
+        stage=stage,
+        accepted_child=not selection.parent_retained,
     )
     pending = _pending_transition_document(
         state,
@@ -2874,6 +2995,71 @@ def _run_sibling_stage(
     successor = _complete_pending_transition(adapter, store, state, pending)
     _refresh_artifacts(adapter, store, successor.accepted, history_plotter)
     _emit_selection(progress_reporter, state, context, selection, successor)
+    return successor
+
+
+def _run_rescore_stage(
+    adapter: EvolutionAdapter,
+    store: PipelineStore,
+    state: RunState,
+    *,
+    history_plotter: Callable[[Sequence[Mapping[str, Any]], Path], object],
+    progress_reporter: ProgressReporter,
+) -> RunState:
+    started = time.perf_counter()
+    stage = state.next_stage
+    stage_id = _stage_identity(state, stage)
+    context = StageContext(
+        state.round_index,
+        stage,
+        stage_id,
+        store.output_dir,
+        state.config,
+        operation_index=state.operation_index,
+        score_task_ids=_rescore_scope_ids(state, stage),
+    )
+    parent = state.accepted
+    _emit_candidate_start(progress_reporter, state, context, RESCORE_ARM)
+    attempt = adapter.rescore(parent, context)
+    _emit_candidate_result(progress_reporter, state, context, attempt)
+    if attempt.status != "completed" or attempt.candidate is None:
+        raise PipelineError(
+            f"Rescoring the accepted state failed at {stage_id}; "
+            "retain the last durable checkpoint."
+        )
+    rescored = attempt.candidate
+    dispositions = {RESCORE_ARM: "accepted"}
+    _verify_rescore_evidence(
+        state,
+        stage=stage,
+        parent=parent,
+        selected=rescored,
+        attempts=(attempt,),
+        dispositions=dispositions,
+        selected_attempt=RESCORE_ARM,
+    )
+    successor = _expected_rescore_successor(state, rescored)
+    pending = _pending_transition_document(
+        state,
+        successor,
+        stage_id=stage_id,
+        stage=stage,
+        parent=parent,
+        selected=rescored,
+        attempts=(attempt,),
+        dispositions=dispositions,
+        elapsed_seconds=time.perf_counter() - started,
+    )
+    store.write_pending(pending)
+    successor = _complete_pending_transition(adapter, store, state, pending)
+    _refresh_artifacts(adapter, store, successor.accepted, history_plotter)
+    _emit_selection(
+        progress_reporter,
+        state,
+        context,
+        SelectionResult(rescored, RESCORE_ARM, dispositions),
+        successor,
+    )
     return successor
 
 
@@ -2915,6 +3101,131 @@ def _pending_transition_document(
     }
 
 
+def _lineage_screens(state: RunState) -> bool:
+    """Return whether this lineage screens its structural operations.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying manifest and configuration.
+
+    Returns
+    -------
+    bool
+        True when a proper screen subset exists for the training corpus.
+    """
+
+    return bool(screen_task_ids(state.training_manifest, state.config))
+
+
+def _is_full_score(state: RunState, candidate: CandidateSnapshot) -> bool:
+    """Return whether one candidate carries a complete-corpus score.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying the training manifest.
+    candidate : CandidateSnapshot
+        Snapshot whose score scope is in question.
+
+    Returns
+    -------
+    bool
+        True when the score covers every training task in manifest order.
+    """
+
+    return candidate.score.task_ids == state.training_manifest.task_ids
+
+
+def _reached_mastery(state: RunState, candidate: CandidateSnapshot) -> bool:
+    """Return whether one candidate proves complete training mastery.
+
+    A screen subset can be entirely exact without the corpus being mastered, so
+    mastery requires the complete-corpus scope as well as complete exactness.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying the training manifest.
+    candidate : CandidateSnapshot
+        Snapshot whose exactness is in question.
+
+    Returns
+    -------
+    bool
+        True only for complete exactness over the complete corpus.
+    """
+
+    return _is_full_score(state, candidate) and candidate.score.all_exact
+
+
+def _next_operation_stage(stage: str, *, revisit: bool) -> str:
+    """Return the operation kind that follows one operation in the cycle.
+
+    Parameters
+    ----------
+    stage : str
+        Structural operation kind that has just completed.
+    revisit : bool
+        Whether a neuron operation accepted a topology change.
+
+    Returns
+    -------
+    str
+        Next operation kind, wrapping from Dale back to edge.
+    """
+
+    if stage == "edge":
+        return "neuron"
+    if stage == "neuron":
+        return "edge-revisit" if revisit else "dale"
+    if stage == "edge-revisit":
+        return "dale"
+    return "edge"
+
+
+def _operations_exhausted(before: RunState, stage: str) -> bool:
+    """Return whether one round has spent its structural operation budget.
+
+    Parameters
+    ----------
+    before : RunState
+        Lifecycle position entering the completed operation.
+    stage : str
+        Structural operation kind that has just completed.
+
+    Returns
+    -------
+    bool
+        True when no further operation may run in this round.
+    """
+
+    budget = before.config.operations_per_round
+    if budget is None:
+        return stage == "dale"
+    return before.operation_index + 1 >= budget
+
+
+def _round_closing_stage(before: RunState, selected: CandidateSnapshot) -> str:
+    """Return the stage that closes a round's structural phase.
+
+    Parameters
+    ----------
+    before : RunState
+        Lifecycle position entering the completed operation.
+    selected : CandidateSnapshot
+        State carried out of the last operation.
+
+    Returns
+    -------
+    str
+        ``round-score`` when the carried score must be restored to the
+        complete corpus, otherwise ``round-end``.
+    """
+
+    return "round-end" if _is_full_score(before, selected) else "round-score"
+
+
 def _expected_model_successor(
     before: RunState,
     selected: CandidateSnapshot,
@@ -2924,21 +3235,18 @@ def _expected_model_successor(
 ) -> RunState:
     if stage not in MODEL_STAGES or before.next_stage != stage:
         raise ValueError("Model transition stage differs from the current lifecycle.")
+    operation_index = before.operation_index
     if stage == "train":
-        following = "compression-edge" if selected.score.all_exact else "edge"
-    elif stage == "edge":
-        following = "compression-edge" if selected.score.all_exact else "neuron"
-    elif stage == "neuron":
-        if selected.score.all_exact:
-            following = "compression-edge"
-        elif accepted_child and selected.topology_changed:
-            following = "edge-revisit"
-        else:
-            following = "dale"
-    elif stage == "edge-revisit":
-        following = "compression-edge" if selected.score.all_exact else "dale"
-    elif stage == "dale":
-        following = "compression-edge" if selected.score.all_exact else "round-end"
+        following = (
+            "compression-edge"
+            if _reached_mastery(before, selected)
+            else ("round-screen" if _lineage_screens(before) else "edge")
+        )
+        operation_index = 0
+    elif stage in OPERATION_STAGES:
+        following, operation_index = _operation_successor_stage(
+            before, selected, stage=stage, accepted_child=accepted_child
+        )
     elif stage == "compression-edge":
         following = "compression-neuron"
     else:
@@ -2947,8 +3255,61 @@ def _expected_model_successor(
         before,
         sequence=before.sequence + 1,
         cursor=before.cursor + before.config.updates,
+        operation_index=operation_index,
         next_stage=following,
         accepted=selected,
+    )
+
+
+def _operation_successor_stage(
+    before: RunState,
+    selected: CandidateSnapshot,
+    *,
+    stage: str,
+    accepted_child: bool,
+) -> tuple[str, int]:
+    if _reached_mastery(before, selected):
+        return "compression-edge", 0
+    if _operations_exhausted(before, stage):
+        return _round_closing_stage(before, selected), before.operation_index + 1
+    revisit = stage == "neuron" and accepted_child and selected.topology_changed
+    return _next_operation_stage(stage, revisit=revisit), before.operation_index + 1
+
+
+def _expected_rescore_successor(
+    before: RunState,
+    rescored: CandidateSnapshot,
+) -> RunState:
+    """Return the successor of one score-scope transition.
+
+    Parameters
+    ----------
+    before : RunState
+        Lifecycle position entering the rescore stage.
+    rescored : CandidateSnapshot
+        Accepted state carrying its new score scope.
+
+    Returns
+    -------
+    RunState
+        Successor with the rescored state and no cursor advance.
+    """
+
+    stage = before.next_stage
+    if stage not in RESCORE_STAGES:
+        raise ValueError("Rescore transition stage differs from the current lifecycle.")
+    if stage == "round-screen":
+        following = "edge"
+        operation_index = 0
+    else:
+        following = "round-end"
+        operation_index = before.operation_index
+    return replace(
+        before,
+        sequence=before.sequence + 1,
+        operation_index=operation_index,
+        next_stage=following,
+        accepted=rescored,
     )
 
 
@@ -2962,7 +3323,7 @@ def _expected_round_successor(state: RunState) -> RunState:
     stable_rounds = state.stable_rounds + int(comparison.parent_retained)
     if not comparison.parent_retained:
         stable_rounds = 0
-    mastery = state.accepted.score.all_exact
+    mastery = _reached_mastery(state, state.accepted)
     round_budget_reached = state.round_index + 1 >= state.config.rounds
     reason = None
     if mastery and (stable_rounds >= state.config.patience or round_budget_reached):
@@ -2980,6 +3341,7 @@ def _expected_round_successor(state: RunState) -> RunState:
         state,
         sequence=state.sequence + 1,
         round_index=state.round_index + (reason is None),
+        operation_index=0,
         next_stage=following,
         round_entry=state.accepted,
         stable_rounds=stable_rounds,
@@ -3008,7 +3370,7 @@ def _validate_progress_transition(
             raise ProgressConflictError(
                 "Progress stage differs from the current lifecycle stage."
             )
-        if stage_id != f"r{before.round_index:03d}-{stage}":
+        if stage_id != _stage_identity(before, stage):
             raise ProgressConflictError("Progress stage identity is not canonical.")
         expected = _expected_model_successor(
             before,
@@ -3016,6 +3378,11 @@ def _validate_progress_transition(
             stage=stage,
             accepted_child=disposition == "accepted",
         )
+        expected_parent = before.accepted
+    elif before.next_stage in RESCORE_STAGES:
+        if stage != before.next_stage or stage_id != _stage_identity(before, stage):
+            raise ProgressConflictError("Rescore progress identity is invalid.")
+        expected = _expected_rescore_successor(before, after.accepted)
         expected_parent = before.accepted
     elif before.next_stage == "round-end":
         if stage != "round-end" or stage_id != (f"r{before.round_index:03d}-round-end"):
@@ -3058,6 +3425,18 @@ def _validate_progress_transition(
         raise ProgressConflictError("Progress sequence evidence is inconsistent.")
     if _json_integer(document["round"], "progress.round") != before.round_index:
         raise ProgressConflictError("Progress round evidence is inconsistent.")
+    if (
+        _json_integer(document["operation_index"], "progress.operation_index")
+        != before.operation_index
+    ):
+        raise ProgressConflictError("Progress operation evidence is inconsistent.")
+    expected_scope = (
+        "full"
+        if after.accepted.score.task_ids == before.training_manifest.task_ids
+        else "screen"
+    )
+    if _json_string(document["score_scope"], "progress.score_scope") != expected_scope:
+        raise ProgressConflictError("Progress score scope is inconsistent.")
     if (
         CandidateSnapshot.from_dict(
             _json_object(document["state_before"], "progress.state_before")["accepted"]
@@ -3159,7 +3538,33 @@ def _validate_progress_transition(
         raise ProgressConflictError(
             "Progress executed-update evidence is inconsistent."
         )
-    if stage in MODEL_STAGES:
+    if stage in RESCORE_STAGES:
+        try:
+            _verify_rescore_evidence(
+                before,
+                stage=stage,
+                parent=expected_parent,
+                selected=after.accepted,
+                attempts=attempts,
+                dispositions=dispositions,
+                selected_attempt=RESCORE_ARM,
+                carried=True,
+            )
+        except ValueError as error:
+            raise ProgressConflictError(
+                "Progress rescore evidence is inconsistent."
+            ) from error
+        if disposition != "accepted":
+            raise ProgressConflictError("Progress rescore disposition is invalid.")
+        if store is not None:
+            _verify_progress_checkpoint_lineage(
+                store,
+                stage_id=stage_id,
+                parent=expected_parent,
+                source=attempts[0].candidate,
+                accepted=after.accepted,
+            )
+    elif stage in MODEL_STAGES:
         try:
             selection = select_candidate(
                 expected_parent,
@@ -3490,6 +3895,85 @@ def _recovered_candidate_path(
     return path
 
 
+def _allowed_score_scopes(state: RunState) -> tuple[tuple[str, ...], ...]:
+    """Return the score task orders a lineage may carry.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying manifest and configuration.
+
+    Returns
+    -------
+    tuple of tuple of str
+        Complete-corpus order, plus the screen subset when screening is on.
+    """
+
+    full = state.training_manifest.task_ids
+    screen = screen_task_ids(state.training_manifest, state.config)
+    return (full,) if not screen else (full, screen)
+
+
+def _rescore_scope_ids(state: RunState, stage: str) -> tuple[str, ...]:
+    """Return the score task order one rescore stage must produce.
+
+    Parameters
+    ----------
+    state : RunState
+        Lifecycle position supplying manifest and configuration.
+    stage : str
+        Rescore stage name.
+
+    Returns
+    -------
+    tuple of str
+        Screen subset for ``round-screen``, complete corpus for ``round-score``.
+    """
+
+    if RESCORE_STAGES[stage] == "screen":
+        return screen_task_ids(state.training_manifest, state.config)
+    return state.training_manifest.task_ids
+
+
+def _verify_rescore_evidence(
+    state: RunState,
+    *,
+    stage: str,
+    parent: CandidateSnapshot,
+    selected: CandidateSnapshot,
+    attempts: Sequence[CandidateAttempt],
+    dispositions: Mapping[str, str],
+    selected_attempt: str | None,
+    carried: bool = False,
+) -> None:
+    if (
+        len(attempts) != 1
+        or attempts[0].status != "completed"
+        or attempts[0].candidate is None
+        or selected_attempt != RESCORE_ARM
+        or dict(dispositions) != {RESCORE_ARM: "accepted"}
+    ):
+        raise ValueError("rescore evidence")
+    source = attempts[0].candidate
+    matches = (
+        _carried_state_identity(source) == _carried_state_identity(selected)
+        if carried
+        else source == selected
+    )
+    if not matches:
+        raise ValueError("rescore evidence")
+    if selected.score.task_ids != _rescore_scope_ids(state, stage):
+        raise ValueError("rescore scope")
+    if (
+        selected.topology_sha256 != parent.topology_sha256
+        or selected.parameters_sha256 != parent.parameters_sha256
+        or selected.optimizer_sha256 != parent.optimizer_sha256
+    ):
+        raise ValueError("rescore mutated the model")
+    if not selected.score.finite:
+        raise ValueError("rescore is non-finite")
+
+
 def _pending_transition_parts(
     state: RunState,
     document: Mapping[str, Any],
@@ -3543,26 +4027,39 @@ def _pending_transition_parts(
             attempts
         ):
             raise ValueError("attempts")
+        rescoring = stage in RESCORE_STAGES
         if (
-            stage not in MODEL_STAGES
+            (stage not in MODEL_STAGES and not rescoring)
             or tuple(attempt.name for attempt in attempts) != STAGE_ARMS[stage]
         ):
             raise ValueError("attempt arms")
-        selection = select_candidate(
-            parent,
-            attempts,
-            config=state.config,
-            compression=stage.startswith("compression-"),
-        )
-        if (
-            dict(selection.dispositions) != dispositions
-            or selection.selected_attempt != selected_attempt
-            or selection.selected != selected
-        ):
-            raise ValueError("selection")
-        if parent.score.task_ids != state.training_manifest.task_ids:
+        if rescoring:
+            _verify_rescore_evidence(
+                state,
+                stage=stage,
+                parent=parent,
+                selected=selected,
+                attempts=attempts,
+                dispositions=dispositions,
+                selected_attempt=selected_attempt,
+            )
+        else:
+            selection = select_candidate(
+                parent,
+                attempts,
+                config=state.config,
+                compression=stage.startswith("compression-"),
+            )
+            if (
+                dict(selection.dispositions) != dispositions
+                or selection.selected_attempt != selected_attempt
+                or selection.selected != selected
+            ):
+                raise ValueError("selection")
+        allowed_scopes = _allowed_score_scopes(state)
+        if parent.score.task_ids not in allowed_scopes:
             raise ValueError("score lineage")
-        if selected.score.task_ids != state.training_manifest.task_ids:
+        if selected.score.task_ids not in allowed_scopes:
             raise ValueError("score lineage")
         journal_before = state.advance_from(pending["state_before"])
         if journal_before.sequence != sequence_before:
@@ -3574,13 +4071,17 @@ def _pending_transition_parts(
         if parent != journal_before.accepted:
             raise ValueError("parent")
         journal_successor = journal_before.advance_from(pending["state_after"])
-        expected_successor = _expected_model_successor(
-            journal_before,
-            selected,
-            stage=stage,
-            accepted_child=selected_attempt is not None,
+        expected_successor = (
+            _expected_rescore_successor(journal_before, selected)
+            if rescoring
+            else _expected_model_successor(
+                journal_before,
+                selected,
+                stage=stage,
+                accepted_child=selected_attempt is not None,
+            )
         )
-        if stage_id != f"r{journal_before.round_index:03d}-{stage}":
+        if stage_id != _stage_identity(journal_before, stage):
             raise ValueError("stage identity")
         if journal_successor != expected_successor:
             raise ValueError("successor transition")
