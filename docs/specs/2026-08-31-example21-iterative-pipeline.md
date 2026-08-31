@@ -175,7 +175,10 @@ Consequences that the implementation must honour:
   from optimizer moments and is unaffected. The round-boundary re-score
   recomputes ownership over the complete corpus before the round result becomes
   a round-entry state, so no subset-derived ownership reaches a round
-  comparison, the topology image, or the terminal lineage.
+  comparison or the terminal lineage. Artifacts refreshed mid-round are
+  screen-scoped: the topology image drawn after a screened operation carries
+  screen-relative ownership and names the number of tasks it scored, and the
+  round-boundary refresh restores the complete-corpus view.
 - Screening is an optimization decision aid. It does not weaken the claim
   boundary: reported training mastery and held-out results remain full-corpus
   measurements.

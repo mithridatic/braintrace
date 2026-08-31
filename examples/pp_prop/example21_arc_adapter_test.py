@@ -1797,7 +1797,7 @@ def test_render_topology_uses_identity_verified_checkpoint(tmp_path, monkeypatch
     calls = {}
     verified = SimpleNamespace(
         checkpoint_path=str(tmp_path / "verified.npz"),
-        score=SimpleNamespace(exact_count=17),
+        score=SimpleNamespace(exact_count=17, task_ids=tuple(range(64))),
     )
     topology = object()
     model = object()
@@ -1829,7 +1829,7 @@ def test_render_topology_uses_identity_verified_checkpoint(tmp_path, monkeypatch
     assert calls["plot"] == (
         topology,
         output,
-        "Example 21 accepted BrainCell topology (17/400 training tasks)",
+        "Example 21 accepted BrainCell topology (17/64 scored training tasks)",
     )
 
 

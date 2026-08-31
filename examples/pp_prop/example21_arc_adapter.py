@@ -1934,7 +1934,8 @@ class Example21ArcAdapter:
             output_path,
             title=(
                 "Example 21 accepted BrainCell topology "
-                f"({restored.score.exact_count}/400 training tasks)"
+                f"({restored.score.exact_count}/{len(restored.score.task_ids)} "
+                "scored training tasks)"
             ),
         )
 
