@@ -51,10 +51,9 @@ Defaults are:
   neuron, edge-revisit, and Dale candidate. Proof mode remains exactly eight
   updates.
 - Eight resumable rounds.
-- One structural pass per round by default. `--topology-operations-per-round`
-  sets an explicit per-round structural operation budget; when it is unset the
-  round performs exactly one pass of the operation cycle, which is the
-  historical lifecycle.
+- One structural operation per kind by default.
+  `--topology-operations-per-stage` sets how many consecutive operations of
+  each kind a round performs; `1` is the historical lifecycle.
 - A `64`-task screen subset for intra-round structural comparisons.
   `--screen-tasks 0` disables screening and scores every operation on the
   complete training corpus.
@@ -105,17 +104,18 @@ Each round executes this order:
 
 1. Continue PP-Prop for 128 updates from the accepted checkpoint and score the
    resulting parent.
-2. Run structural operations until the round's operation budget is exhausted.
-   The operation kind follows a cycle: an edge operation builds an edge-add
-   sibling from the highest-ranked recurrent-edge candidates and an edge-prune
-   sibling from the lowest-ranked 5% of recurrent edges; a neuron operation
-   twins the highest-ranked 5% of neurons against pruning the lowest-ranked 5%;
-   a neuron operation that changed the topology is followed by an edge-revisit
-   operation; a Dale operation compares measured excitatory and inhibitory
-   assignments over the selected 5% of neurons. After a Dale operation the cycle
-   wraps to another edge operation. Each operation trains both siblings on the
-   same schedule, compares them with their immutable parent, and carries the
-   best improving state.
+2. Run the structural operation kinds in order: edge, neuron, an edge revisit
+   when the neuron group changed the topology, then Dale. Each kind runs a
+   consecutive group of `--topology-operations-per-stage` operations before the
+   next kind begins. An edge operation builds an edge-add sibling from the
+   highest-ranked recurrent-edge candidates and an edge-prune sibling from the
+   lowest-ranked 5% of recurrent edges; a neuron operation twins the
+   highest-ranked 5% of neurons against pruning the lowest-ranked 5%; a Dale
+   operation compares measured excitatory and inhibitory assignments over the
+   selected 5% of neurons. Each operation trains both siblings on the same
+   schedule, compares them with their immutable parent, and carries the best
+   improving state, so the second operation of a group proposes against the
+   state the first one selected and its 5% budget compounds on that state.
 3. When the budget is exhausted, re-score the carried state on the complete
    training corpus and refresh its task ownership.
 4. Persist the round result and refresh progress artifacts. Before mastery,
@@ -123,10 +123,15 @@ Each round executes this order:
    alternate protected edge and neuron pruning toward a fixed point until two
    stable compression rounds or the round budget, then close.
 
-When `--topology-operations-per-round` is unset, the budget is one pass of the
-cycle — edge, neuron, optional edge-revisit, Dale — and step 3 is unnecessary
-because every operation already scored the complete corpus. An explicit budget
-may stop mid-cycle; the operation count, not the cycle position, ends the round.
+At `--topology-operations-per-stage 1` a round performs one operation per kind,
+the historical lifecycle. A group never stops part-way: the round's structural
+work ends when the Dale group completes, so a round performs the group size
+times three or four operations depending on whether the edge revisit runs.
+
+The edge revisit is a property of the neuron group as a whole. It runs when any
+operation in that group accepted a topology change, not only when the last one
+did, because a group whose first operation grew the network and whose second
+retained its parent has still changed the edge search space.
 
 Each operation consumes exactly one 128-query schedule, so the corpus cursor
 advances by 128 per operation and a round consumes 128 queries per operation
@@ -330,10 +335,11 @@ Co-located suffix-style tests cover:
 - Equal sibling schedules, deterministic randomness, parent immutability,
   downstream edge-to-neuron-to-edge-revisit-to-Dale handoff, and rejected-child
   cleanup.
-- Operation budgets: an unset budget reproduces the historical single-pass
-  lifecycle transition for transition; an explicit budget produces exactly that
-  many structural operations per round, with distinct canonical stage
-  identities, chained parents, and a 128-query cursor advance per operation.
+- Operation groups: a group size of one reproduces the historical lifecycle
+  transition for transition; a larger group runs that many consecutive
+  operations of each kind in order, with distinct canonical stage identities,
+  chained parents, a compounded structural budget within a group, and a
+  128-query cursor advance per operation.
 - Screen scoring: a deterministic subset fixed by manifest and configuration;
   screened parents and siblings comparable only with each other; complete screen
   exactness refused as mastery; a screen score refused as a round-entry state;

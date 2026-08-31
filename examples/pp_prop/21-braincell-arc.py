@@ -2008,12 +2008,12 @@ def _parser():
         help="PP-Prop updates per non-proof block (default: 128)",
     )
     parser.add_argument(
-        "--topology-operations-per-round",
+        "--topology-operations-per-stage",
         type=int,
-        default=None,
+        default=1,
         help=(
-            "structural operations per evolution round, chained off each "
-            "accepted state (default: one pass of the operation cycle)"
+            "consecutive structural operations of each kind, every one "
+            "chained off the previously accepted state (default: 1)"
         ),
     )
     parser.add_argument(
@@ -2063,7 +2063,7 @@ def _evolve_workflow_report(
     rounds=8,
     patience=2,
     updates=ORDINARY_UPDATES,
-    operations_per_round=None,
+    operations_per_stage=1,
     screen_tasks=DEFAULT_SCREEN_TASKS,
 ):
     """Run or resume iterative ARC evolution and summarize its terminal state."""
@@ -2079,7 +2079,7 @@ def _evolve_workflow_report(
         rounds=rounds,
         patience=patience,
         updates=updates,
-        operations_per_round=operations_per_round,
+        operations_per_stage=operations_per_stage,
         screen_tasks=screen_tasks,
     )
     state = run_evolution(
@@ -2136,7 +2136,7 @@ def _run_command(args):
                 rounds=args.rounds,
                 patience=args.patience,
                 updates=args.updates,
-                operations_per_round=args.topology_operations_per_round,
+                operations_per_stage=args.topology_operations_per_stage,
                 screen_tasks=args.screen_tasks,
             )
         else:

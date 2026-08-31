@@ -419,9 +419,10 @@ class PipelineConfig:
         Configured topology caps checked before promotion.
     max_checkpoint_bytes : int, optional
         Maximum serialized checkpoint size.
-    operations_per_round : int or None, optional
-        Structural operations executed per round.  ``None`` performs exactly
-        one pass of the operation cycle, the historical lifecycle.
+    operations_per_stage : int, optional
+        Consecutive structural operations of each kind, every one proposed
+        from the state its predecessor selected.  ``1`` performs exactly one
+        operation per kind, the historical lifecycle.
     screen_tasks : int, optional
         Training tasks in the intra-round screen subset.  ``0`` scores every
         operation on the complete training corpus.
@@ -434,7 +435,7 @@ class PipelineConfig:
     max_neurons: int = DEFAULT_MAX_NEURONS
     max_recurrent_edges: int = DEFAULT_MAX_RECURRENT_EDGES
     max_checkpoint_bytes: int = DEFAULT_MAX_CHECKPOINT_BYTES
-    operations_per_round: int | None = None
+    operations_per_stage: int = 1
     screen_tasks: int = DEFAULT_SCREEN_TASKS
 
     def __post_init__(self) -> None:
@@ -451,20 +452,18 @@ class PipelineConfig:
         ]
         if type(self.screen_tasks) is not int:
             invalid_types.append("screen_tasks")
-        if self.operations_per_round is not None and (
-            type(self.operations_per_round) is not int
-        ):
-            invalid_types.append("operations_per_round")
+        if type(self.operations_per_stage) is not int:
+            invalid_types.append("operations_per_stage")
         if invalid_types:
             raise TypeError(
                 "Evolution numeric configuration must use JSON integers; correct "
                 + ", ".join(invalid_types)
                 + "."
             )
-        if self.operations_per_round is not None and self.operations_per_round < 1:
+        if self.operations_per_stage < 1:
             raise ValueError(
-                "Evolution operations per round must be positive; pass at least one "
-                "operation or omit the budget."
+                "Evolution operations per stage must be positive; pass at least one "
+                "operation per kind."
             )
         if not 0 <= self.screen_tasks <= EXPECTED_ARC_TASKS:
             raise ValueError(
@@ -525,7 +524,7 @@ class PipelineConfig:
             "max_neurons": self.max_neurons,
             "max_recurrent_edges": self.max_recurrent_edges,
             "max_checkpoint_bytes": self.max_checkpoint_bytes,
-            "operations_per_round": self.operations_per_round,
+            "operations_per_stage": self.operations_per_stage,
             "screen_tasks": self.screen_tasks,
         }
         return record
@@ -558,8 +557,8 @@ class PipelineConfig:
             max_checkpoint_bytes=_json_integer(
                 document["max_checkpoint_bytes"], "max_checkpoint_bytes"
             ),
-            operations_per_round=_json_optional_integer(
-                document.get("operations_per_round"), "operations_per_round"
+            operations_per_stage=_json_integer(
+                document.get("operations_per_stage", 1), "operations_per_stage"
             ),
             screen_tasks=_json_integer(
                 document.get("screen_tasks", DEFAULT_SCREEN_TASKS), "screen_tasks"
@@ -1772,6 +1771,10 @@ class RunState:
         Durable transition, update-query, and round positions.
     operation_index : int
         Structural operations completed in the current round.
+    stage_repeats : int
+        Operations completed in the group of the current operation kind.
+    stage_topology_changed : bool
+        Whether the current group has accepted a topology change.
     next_stage : str
         Phase that has not yet executed.
     accepted, round_entry : CandidateSnapshot
@@ -1795,6 +1798,8 @@ class RunState:
     accepted: CandidateSnapshot
     round_entry: CandidateSnapshot
     operation_index: int = 0
+    stage_repeats: int = 0
+    stage_topology_changed: bool = False
     stable_rounds: int = 0
     closed: bool = False
     terminal_reason: str | None = None
@@ -1807,7 +1812,6 @@ class RunState:
             raise ValueError(
                 "Run state requires a training manifest; evaluation is terminal-only."
             )
-        budget = self.config.operations_per_round
         if (
             self.sequence < 0
             or self.cursor < 0
@@ -1815,7 +1819,8 @@ class RunState:
             or self.round_index < 0
             or self.round_index >= self.config.rounds
             or self.operation_index < 0
-            or (budget is not None and self.operation_index > budget)
+            or self.stage_repeats < 0
+            or self.stage_repeats >= self.config.operations_per_stage
             or self.stable_rounds < 0
             or self.stable_rounds > self.config.patience
         ):
@@ -1867,6 +1872,8 @@ class RunState:
             self.cursor != 0
             or self.round_index != 0
             or self.operation_index != 0
+            or self.stage_repeats != 0
+            or self.stage_topology_changed
             or self.next_stage != "train"
             or self.accepted != self.round_entry
             or self.stable_rounds != 0
@@ -1939,6 +1946,8 @@ class RunState:
             "cursor": self.cursor,
             "round_index": self.round_index,
             "operation_index": self.operation_index,
+            "stage_repeats": self.stage_repeats,
+            "stage_topology_changed": self.stage_topology_changed,
             "next_stage": self.next_stage,
             "accepted": self.accepted.to_dict(),
             "round_entry": self.round_entry.to_dict(),
@@ -1980,6 +1989,10 @@ class RunState:
             round_index=_json_integer(document["round_index"], "round_index"),
             operation_index=_json_integer(
                 document["operation_index"], "operation_index"
+            ),
+            stage_repeats=_json_integer(document["stage_repeats"], "stage_repeats"),
+            stage_topology_changed=_json_boolean(
+                document["stage_topology_changed"], "stage_topology_changed"
             ),
             next_stage=_json_string(document["next_stage"], "next_stage"),
             accepted=CandidateSnapshot.from_dict(document["accepted"]),
@@ -2037,6 +2050,10 @@ class RunState:
             round_index=_json_integer(document["round_index"], "round_index"),
             operation_index=_json_integer(
                 document["operation_index"], "operation_index"
+            ),
+            stage_repeats=_json_integer(document["stage_repeats"], "stage_repeats"),
+            stage_topology_changed=_json_boolean(
+                document["stage_topology_changed"], "stage_topology_changed"
             ),
             next_stage=_json_string(document["next_stage"], "next_stage"),
             accepted=CandidateSnapshot.from_dict(document["accepted"]),
@@ -2418,6 +2435,7 @@ class PipelineStore:
             "stage": stage,
             "round": before.round_index,
             "operation_index": before.operation_index,
+            "stage_repeat_index": before.stage_repeats,
             "score_scope": (
                 "full"
                 if selected.score.task_ids == before.training_manifest.task_ids
@@ -3161,20 +3179,21 @@ def _reached_mastery(state: RunState, candidate: CandidateSnapshot) -> bool:
     return _is_full_score(state, candidate) and candidate.score.all_exact
 
 
-def _next_operation_stage(stage: str, *, revisit: bool) -> str:
-    """Return the operation kind that follows one operation in the cycle.
+def _next_operation_kind(stage: str, *, revisit: bool) -> str | None:
+    """Return the operation kind whose group follows one completed group.
 
     Parameters
     ----------
     stage : str
-        Structural operation kind that has just completed.
+        Structural operation kind whose group has just completed.
     revisit : bool
-        Whether a neuron operation accepted a topology change.
+        Whether the neuron group accepted a topology change.
 
     Returns
     -------
-    str
-        Next operation kind, wrapping from Dale back to edge.
+    str or None
+        Next operation kind, or ``None`` when the round's structural work
+        is complete.
     """
 
     if stage == "edge":
@@ -3183,29 +3202,7 @@ def _next_operation_stage(stage: str, *, revisit: bool) -> str:
         return "edge-revisit" if revisit else "dale"
     if stage == "edge-revisit":
         return "dale"
-    return "edge"
-
-
-def _operations_exhausted(before: RunState, stage: str) -> bool:
-    """Return whether one round has spent its structural operation budget.
-
-    Parameters
-    ----------
-    before : RunState
-        Lifecycle position entering the completed operation.
-    stage : str
-        Structural operation kind that has just completed.
-
-    Returns
-    -------
-    bool
-        True when no further operation may run in this round.
-    """
-
-    budget = before.config.operations_per_round
-    if budget is None:
-        return stage == "dale"
-    return before.operation_index + 1 >= budget
+    return None
 
 
 def _round_closing_stage(before: RunState, selected: CandidateSnapshot) -> str:
@@ -3238,15 +3235,22 @@ def _expected_model_successor(
     if stage not in MODEL_STAGES or before.next_stage != stage:
         raise ValueError("Model transition stage differs from the current lifecycle.")
     operation_index = before.operation_index
+    stage_repeats = before.stage_repeats
+    stage_topology_changed = before.stage_topology_changed
     if stage == "train":
         following = (
             "compression-edge"
             if _reached_mastery(before, selected)
             else ("round-screen" if _lineage_screens(before) else "edge")
         )
-        operation_index = 0
+        operation_index, stage_repeats, stage_topology_changed = 0, 0, False
     elif stage in OPERATION_STAGES:
-        following, operation_index = _operation_successor_stage(
+        (
+            following,
+            operation_index,
+            stage_repeats,
+            stage_topology_changed,
+        ) = _operation_successor_stage(
             before, selected, stage=stage, accepted_child=accepted_child
         )
     elif stage == "compression-edge":
@@ -3258,6 +3262,8 @@ def _expected_model_successor(
         sequence=before.sequence + 1,
         cursor=before.cursor + before.config.updates,
         operation_index=operation_index,
+        stage_repeats=stage_repeats,
+        stage_topology_changed=stage_topology_changed,
         next_stage=following,
         accepted=selected,
     )
@@ -3269,13 +3275,34 @@ def _operation_successor_stage(
     *,
     stage: str,
     accepted_child: bool,
-) -> tuple[str, int]:
+) -> tuple[str, int, int, bool]:
+    """Return the successor position after one structural operation.
+
+    Each operation kind runs a consecutive group of
+    ``config.operations_per_stage`` operations, every one of them proposed
+    from the state its predecessor selected, before the next kind begins.
+
+    Returns
+    -------
+    tuple
+        Following stage, round operation index, completed repeats of the
+        current kind, and whether the current group changed the topology.
+    """
+
+    operation_index = before.operation_index + 1
+    changed = before.stage_topology_changed or (
+        accepted_child and selected.topology_changed
+    )
     if _reached_mastery(before, selected):
-        return "compression-edge", 0
-    if _operations_exhausted(before, stage):
-        return _round_closing_stage(before, selected), before.operation_index + 1
-    revisit = stage == "neuron" and accepted_child and selected.topology_changed
-    return _next_operation_stage(stage, revisit=revisit), before.operation_index + 1
+        return "compression-edge", 0, 0, False
+    repeats = before.stage_repeats + 1
+    if repeats < before.config.operations_per_stage:
+        return stage, operation_index, repeats, changed
+    revisit = stage == "neuron" and changed
+    following = _next_operation_kind(stage, revisit=revisit)
+    if following is None:
+        return _round_closing_stage(before, selected), operation_index, 0, False
+    return following, operation_index, 0, False
 
 
 def _expected_rescore_successor(
@@ -3310,6 +3337,8 @@ def _expected_rescore_successor(
         before,
         sequence=before.sequence + 1,
         operation_index=operation_index,
+        stage_repeats=0,
+        stage_topology_changed=False,
         next_stage=following,
         accepted=rescored,
     )
@@ -3344,6 +3373,8 @@ def _expected_round_successor(state: RunState) -> RunState:
         sequence=state.sequence + 1,
         round_index=state.round_index + (reason is None),
         operation_index=0,
+        stage_repeats=0,
+        stage_topology_changed=False,
         next_stage=following,
         round_entry=state.accepted,
         stable_rounds=stable_rounds,
@@ -3430,6 +3461,10 @@ def _validate_progress_transition(
     if (
         _json_integer(document["operation_index"], "progress.operation_index")
         != before.operation_index
+        or _json_integer(
+            document["stage_repeat_index"], "progress.stage_repeat_index"
+        )
+        != before.stage_repeats
     ):
         raise ProgressConflictError("Progress operation evidence is inconsistent.")
     expected_scope = (
