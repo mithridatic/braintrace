@@ -60,6 +60,41 @@ blob once and record all duplicates and exact source-tree copies in the
 manifest. Fingerprint every dirty worktree again after rescue. Retry once if it
 changed; if it changes twice, leave that worktree intact and stop cleanup.
 
+Recovery completed with 4,381 entries across all 30 dirty worktrees. Of these,
+228 meaningful entries were committed on 23 recovery branches. The remaining
+4,153 entries were hashed and excluded as transient files or exact repository
+copies. All 30 post-rescue content fingerprints matched their originals, and
+every recovery commit has its original worktree HEAD as its parent.
+
+The complete per-path record is
+`docs/evidence/reconciliation/recovery-manifest.json` (SHA-256
+`ff0960b50725a18fa27a6a28b6197e239b89f85b34b5ce34837cc24bada00ae2`).
+The recovery refs are:
+
+- `e6f0fe84921e8f18dac3e9340fc7cc126e6f0e74` (`paperclip-bra-105-lint-code`)
+- `d16b68801e48f90630f7cd442fa9c57e3e011b86` (`paperclip-bra-106-speed-up-code-and-tests`)
+- `4fddd42d5f80e6a2ce83993136120c2c33646b0d` (`paperclip-bra-107-update-tasks-and-notify-agent-s`)
+- `1c5f3f0f9b2e90433c5660b151ecb8f54e70cc43` (`paperclip-bra-116-lint-code`)
+- `55d8fb4e74273dbdccd8edac596b05f7f77f4620` (`paperclip-bra-117-speed-up-code-and-tests`)
+- `df24e07d4b36bb4f3fc156b64fe2d256dc900b63` (`paperclip-bra-118-update-tasks-and-notify-agent-s`)
+- `bc3a39878789cf842b76497f8f11897001eb23a4` (`paperclip-bra-124-lint-code`)
+- `d0b531c41e6cce38a39822b42c49282104c53331` (`paperclip-bra-125-speed-up-code-and-tests`)
+- `623d0f26d347b37a944a9c5c73b88dd30895e6ec` (`paperclip-bra-126-update-tasks-and-notify-agent-s`)
+- `bad3e0059737eaf414b587822eb8ff290db3888b` (`paperclip-bra-132-lint-code`)
+- `1b5b24b9b2df6a00f0029f0575ec42bf17ac5fec` (`paperclip-bra-133-update-tasks-and-notify-agent-s`)
+- `ca5900400795935de30632a3a68f6d086c832adb` (`paperclip-bra-35-lint-code`)
+- `882ca14817cc2a7313540d91d6caa4af6b01d515` (`paperclip-bra-72-lint-code`)
+- `685a193ea7769dfd76dd0b36c5568ae15cba15cf` (`paperclip-bra-73-speed-up-code-and-tests`)
+- `d512fbce1186651fd4fd7c337373ea51a3787076` (`paperclip-bra-74-update-tasks-and-notify-agent-s`)
+- `f3ef87ae55bd5e379d9aed0b2d53bd0e5fbb6592` (`paperclip-bra-85-lint-code`)
+- `f15fa78b036b78132a607fc9c9ca30881ada3dfd` (`paperclip-bra-86-speed-up-code-and-tests`)
+- `387f8e477e54d0dc8a2af386c9175c294701464d` (`paperclip-bra-87-update-tasks-and-notify-agent-s`)
+- `0cee79472050d4bd0839f87e9890903171d0953a` (`paperclip-bra-89-autonomy-stewardship`)
+- `e856dbdfed49576c5194a36b704920447a5d013c` (`paperclip-bra-96-lint-code`)
+- `8284e15ff289e01734fcd7775314bfb5f9a880bd` (`paperclip-bra-97-speed-up-code-and-tests`)
+- `51e50e9016a2e81e087946d1bc7ffcd5aedbfe99` (`ex21-cumulative-48`)
+- `e3cd153e0cecfaad7dfa38457e03ef93cd4e4878` (`fix-example21-arc-step-loss`)
+
 ## Performance gate
 
 Run one warm-up and then three alternating fresh-process baseline and candidate
