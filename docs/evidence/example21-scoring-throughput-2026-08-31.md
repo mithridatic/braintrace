@@ -137,9 +137,60 @@ The final checkpoint hash was re-read from disk and matched `run-state.json`.
 The evaluation digest is
 `c1c443edc90f1cc23c9f3e1078eaa92475ac88fb64e52a64526536c4981d1f94`.
 
+## Two-round interruption and resume follow-up
+
+A second canary used the same GPU, image, worktree source, update count,
+operation count, and 64-task screen with `rounds=2` and `patience=2`. The first
+process completed round one in 8 minutes 53 seconds at `1/400`, persisted the
+round boundary, and immediately entered round-two training. Only the named
+canary container was then stopped.
+
+Before restart, `run-state.json` and the checkpoint bytes independently showed:
+
+- `closed=false`, `round_index=1`, `next_stage=train`, and sequence `8`;
+- cursor `640` and no evaluation result;
+- accepted and round-entry checkpoint
+  `49cb3cbae0af96f18c2b8b6cac5d9d3ec174216d8e7d93c2596ff923a020eca6`;
+- an on-disk checkpoint hash equal to that accepted SHA-256; and
+- no partial candidate checkpoint files.
+
+The identical command restarted with this permanent line:
+
+`Restored Round 2/2 | next train | accepted 1/400 | neurons 2151 | recurrent edges 19073 | sha256 49cb3cba...`
+
+It did not replay round one. The resumed process completed round two and
+terminal evaluation in 7 minutes 53 seconds. Its final durable state is:
+
+| field | value |
+|---|---|
+| closed / next stage | `true` / `closed` |
+| round / terminal reason | `1` / `round-budget` |
+| progress sequence / records | `16` / `16` unique records |
+| cursor | `1152` |
+| completed siblings | `20` |
+| total candidate updates | `2048` |
+| invalid training update counts | `0` |
+| nonzero rescore update counts | `0` |
+| training score | `2/400` |
+| terminal evaluation | `0/400` |
+| neurons / recurrent edges | `2151` / `19073` |
+| final checkpoint | `c9830495e8da8aa7e7858269cda65929effba098a6e51ba8f37640491743cb5e` |
+| evaluation digest | `b43d8bfd5481c9735df3887ea4b9eb318d6cd84c0c6350945ade740a2a0d9bae` |
+
+Every non-rescore sibling executed exactly 128 updates. Every rescore and the
+terminal evaluation executed zero updates. The final checkpoint SHA-256 was
+re-read from disk and matched the accepted state. The round-one checkpoint is
+the parent of `r001-train`; round-two train, screen, and round-score lineage
+records form the complete continuation through the final checkpoint.
+
+After the follow-up, the adapter module passed all 58 tests in 12.05 seconds;
+Ruff check and format check passed; the production adapter had zero
+Basedpyright errors; and `git diff --check` passed. The unrelated Synapse
+container remained healthy throughout both invocations.
+
 ## Qualification boundary
 
-This evidence qualifies the scoring optimization and its one-round Example 21
-integration on the stated GPU, checkpoint, and corpus. It does not qualify a
-multi-round capability improvement, change the accepted training policy, or
-claim that the branch is integrated into `main`.
+This evidence qualifies the scoring optimization, one-round integration, and
+an interrupted two-round resume lifecycle on the stated GPU, checkpoint, and
+corpus. It does not claim improved ARC capability or change the accepted
+training policy. Integration into `main` is recorded separately by Git history.
