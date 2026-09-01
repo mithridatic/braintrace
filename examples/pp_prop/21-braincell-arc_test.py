@@ -660,6 +660,77 @@ def test_padding_does_not_change_a_valid_sequence_result():
     )
 
 
+def test_scoring_sequence_matches_full_history_with_masked_prefix():
+    topology = type(
+        "Topology",
+        (),
+        {
+            "neuron_count": 3,
+            "input_source": np.asarray([0, 1, 2], dtype=np.int32),
+            "input_target": np.asarray([0, 1, 2], dtype=np.int32),
+            "input_value": np.asarray([0.3, -0.2, 0.1], dtype=np.float32),
+            "recurrent_source": np.asarray([], dtype=np.int32),
+            "recurrent_target": np.asarray([], dtype=np.int32),
+            "recurrent_value": np.asarray([], dtype=np.float32),
+            "readout": np.arange(3 * fixture.N_READOUT, dtype=np.float32).reshape(
+                3, fixture.N_READOUT
+            )
+            / 10_000.0,
+        },
+    )()
+    events = np.zeros((34, fixture.N_INPUTS), dtype=np.float32)
+    events[:, :3] = np.asarray([0.5, 0.25, 0.75], dtype=np.float32)
+    advances = np.asarray([True, False, True] + [True] * 31)
+    reference = fixture.BrainCellArcModel(topology)
+    candidate = fixture.BrainCellArcModel(topology)
+
+    voltages, spikes = fixture.run_event_sequence(
+        reference, events, advances, return_spikes=True
+    )
+    expected_logits = (
+        jnp.tanh((voltages[-31:] + 65.0) / 20.0) @ reference.readout_weight.value
+        + reference.readout_bias.value
+    )
+    expected_activity = jnp.sum(jnp.abs(spikes), axis=0) / 705.0
+
+    logits, activity = fixture._score_event_sequence(
+        candidate, events, advances, jnp.asarray(705, dtype=jnp.int32)
+    )
+
+    np.testing.assert_allclose(logits, expected_logits, rtol=0.0, atol=1e-6)
+    np.testing.assert_array_equal(activity, expected_activity)
+    np.testing.assert_allclose(
+        candidate.cell.V.value.to_decimal(u.mV),
+        reference.cell.V.value.to_decimal(u.mV),
+        rtol=0.0,
+        atol=0.0,
+    )
+
+
+def test_scoring_sequence_rejects_malformed_events_and_mask():
+    with pytest.raises(ValueError, match="Events must have shape"):
+        fixture._score_event_sequence(
+            object(),
+            np.zeros((31, fixture.N_INPUTS + 1), dtype=np.float32),
+            np.ones(31, dtype=bool),
+            31,
+        )
+    with pytest.raises(ValueError, match="at least 31 events"):
+        fixture._score_event_sequence(
+            object(),
+            np.zeros((30, fixture.N_INPUTS), dtype=np.float32),
+            np.ones(30, dtype=bool),
+            30,
+        )
+    with pytest.raises(ValueError, match="one boolean per event"):
+        fixture._score_event_sequence(
+            object(),
+            np.zeros((31, fixture.N_INPUTS), dtype=np.float32),
+            np.ones(30, dtype=bool),
+            31,
+        )
+
+
 def test_matched_integration_and_decoder_boundary_are_explicit():
     events = jnp.zeros((1, fixture.N_INPUTS), dtype=jnp.float32)
     check = fixture.matched_integration_check(events)

@@ -67,6 +67,7 @@ PROOF_UPDATES = 8
 ORDINARY_UPDATES = 128
 DEFAULT_SCREEN_TASKS = 64
 PROOF_DEADLINE_SECONDS = 180.0
+_REQUEST_EVENT_COUNT = 31
 LEARNING_RATES = {"input": 0.001, "recurrent": 0.0003, "readout": 0.003}
 TRAINING_TASK_IDS = (
     "d631b094", "dc433765", "b782dc8a", "d06dbe63",
@@ -785,6 +786,67 @@ def run_event_sequence(
         return brainstate.transform.for_loop(step_with_spikes, xs, mask)
 
     return brainstate.transform.jit(drive)(events, advances)
+
+
+def _score_event_sequence(model, events, advances, original_event_count):
+    """Score one event sequence without retaining its full spike history.
+
+    Parameters
+    ----------
+    model : BrainCellArcModel
+        Model whose biological state is advanced.
+    events : array-like
+        Right-aligned event vectors with shape ``(time, 441)``.
+    advances : array-like
+        Boolean event mask with a true final 31-event request tail.
+    original_event_count : array-like
+        Pre-compaction event count used to normalize spike activity.
+
+    Returns
+    -------
+    tuple of jax.Array
+        Final 31 direct-readout logits and normalized per-neuron activity.
+    """
+
+    events = jnp.asarray(events, dtype=jnp.float32)
+    advances = jnp.asarray(advances, dtype=bool)
+    if events.ndim != 2 or events.shape[1] != N_INPUTS:
+        raise ValueError(
+            f"Events must have shape (time, {N_INPUTS}); "
+            f"pass a two-dimensional array with {N_INPUTS} features."
+        )
+    if events.shape[0] < _REQUEST_EVENT_COUNT:
+        raise ValueError(
+            f"Scoring needs at least {_REQUEST_EVENT_COUNT} events; "
+            "preserve the direct request tail."
+        )
+    if advances.shape != (events.shape[0],):
+        raise ValueError(
+            "Advances must have one boolean per event; "
+            "pass a mask with the same length as events."
+        )
+
+    activity = jnp.zeros_like(model.previous_spikes.value)
+
+    def score_step(sequence_activity, values):
+        event, advance = values
+        voltage = model.step(event, advance)
+        spikes = jnp.where(
+            advance,
+            model.previous_spikes.value,
+            jnp.zeros_like(model.previous_spikes.value),
+        )
+        return sequence_activity + jnp.abs(spikes), voltage
+
+    activity, voltages = brainstate.transform.scan(
+        score_step,
+        activity,
+        (events, advances),
+    )
+    features = jnp.tanh((voltages[-_REQUEST_EVENT_COUNT:] + 65.0) / 20.0)
+    logits = features @ model.readout_weight.value + model.readout_bias.value
+    normalized = activity / jnp.asarray(original_event_count, dtype=activity.dtype)
+    return logits, normalized
 
 
 def run_pp_prop_sequence(learner, events, advances=None):

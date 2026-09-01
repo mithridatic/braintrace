@@ -57,7 +57,8 @@ _OPTIMIZER_ARRAYS = (
 )
 _EXPECTED_UPDATES = 128
 _REQUEST_EVENT_COUNT = 31
-_SCORING_BUCKET_LENGTHS = (320, 705)
+_SCORING_BUCKET_LENGTHS = (193, 257, 321, 449, 705)
+_SCREEN_SCORING_BUCKET_LENGTHS = (320, 705)
 _STRUCTURAL_EVIDENCE_DECIMALS = 6
 
 
@@ -1218,6 +1219,7 @@ class Example21ArcAdapter:
         structural = self._structural()
         manifest = self._manifest(role)
         scored_ids = self._scored_task_ids(manifest, task_ids)
+        full_corpus = len(scored_ids) == len(manifest.task_ids)
         selected = frozenset(scored_ids)
         queries = tuple(
             record
@@ -1227,7 +1229,12 @@ class Example21ArcAdapter:
         payload_key = (role, scored_ids)
         buckets = self._scoring_payloads.get(payload_key)
         if buckets is None:
-            buckets = _prepare_scoring_buckets(queries, _SCORING_BUCKET_LENGTHS)
+            bucket_lengths = (
+                _SCORING_BUCKET_LENGTHS
+                if full_corpus
+                else _SCREEN_SCORING_BUCKET_LENGTHS
+            )
+            buckets = _prepare_scoring_buckets(queries, bucket_lengths)
             self._scoring_payloads[payload_key] = buckets
         before_parameters = jax.tree_util.tree_map(
             jnp.array, runtime.trainer.parameters
@@ -1243,13 +1250,20 @@ class Example21ArcAdapter:
                 original_event_count: Any,
             ) -> tuple[Any, Any]:
                 runtime.model.reset_episode(runtime.learner)
+                if full_corpus:
+                    return module._score_event_sequence(
+                        runtime.model,
+                        events,
+                        advances,
+                        original_event_count,
+                    )
                 voltages, spikes = module.run_event_sequence(
                     runtime.model,
                     events,
                     advances,
                     return_spikes=True,
                 )
-                features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+                features = jnp.tanh((voltages[-_REQUEST_EVENT_COUNT:] + 65.0) / 20.0)
                 logits = (
                     features @ runtime.model.readout_weight.value
                     + runtime.model.readout_bias.value
@@ -1278,15 +1292,33 @@ class Example21ArcAdapter:
                 np.asarray(activities, dtype=np.float64),
             )
 
-        if len(buckets) != 2:
-            raise RuntimeError(
-                "Production scoring requires the two declared bucket lengths."
+        if len(buckets) == 2:
+            lower_result = execute_bucket(buckets[0])
+            upper_result = execute_bucket(buckets[1])
+            results = tuple(
+                result for result in (lower_result, upper_result) if result is not None
             )
-        lower_result = execute_bucket(buckets[0])
-        upper_result = execute_bucket(buckets[1])
-        results = tuple(
-            result for result in (lower_result, upper_result) if result is not None
-        )
+        elif len(buckets) == 5:
+            first_result = execute_bucket(buckets[0])
+            second_result = execute_bucket(buckets[1])
+            third_result = execute_bucket(buckets[2])
+            fourth_result = execute_bucket(buckets[3])
+            fifth_result = execute_bucket(buckets[4])
+            results = tuple(
+                result
+                for result in (
+                    first_result,
+                    second_result,
+                    third_result,
+                    fourth_result,
+                    fifth_result,
+                )
+                if result is not None
+            )
+        else:
+            raise RuntimeError(
+                "Production scoring requires the two or five declared bucket lengths."
+            )
         logits_array, activity_array = _restore_scored_query_order(
             results, query_count=len(queries)
         )

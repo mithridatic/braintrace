@@ -503,19 +503,24 @@ def test_scoring_buckets_reject_malformed_masks_requests_and_lengths():
 
 
 def test_scoring_buckets_cover_production_boundaries_and_full_length():
-    at_lower = _scoring_query("lower", 320, np.ones(320, dtype=bool))
-    above_lower = _scoring_query("above", 321, np.ones(321, dtype=bool))
-    at_upper = _scoring_query("upper", 705, np.ones(705, dtype=bool))
-
-    lower, upper = adapter._prepare_scoring_buckets(
-        (at_lower, above_lower, at_upper), adapter._SCORING_BUCKET_LENGTHS
+    assert adapter._SCORING_BUCKET_LENGTHS == (193, 257, 321, 449, 705)
+    queries = tuple(
+        _scoring_query(str(length), length, np.ones(length, dtype=bool))
+        for length in (193, 194, 258, 322, 450, 705)
     )
 
-    assert np.array_equal(lower.query_indices, np.asarray([0]))
-    assert np.array_equal(upper.query_indices, np.asarray([1, 2]))
-    assert np.all(lower.advances)
-    assert np.all(upper.advances[1])
-    assert np.array_equal(upper.events[1], at_upper.events)
+    first, second, third, fourth, fifth = adapter._prepare_scoring_buckets(
+        queries, adapter._SCORING_BUCKET_LENGTHS
+    )
+
+    assert np.array_equal(first.query_indices, np.asarray([0]))
+    assert np.array_equal(second.query_indices, np.asarray([1]))
+    assert np.array_equal(third.query_indices, np.asarray([2]))
+    assert np.array_equal(fourth.query_indices, np.asarray([3]))
+    assert np.array_equal(fifth.query_indices, np.asarray([4, 5]))
+    assert np.all(first.advances)
+    assert np.all(fifth.advances[1])
+    assert np.array_equal(fifth.events[1], queries[-1].events)
 
 
 def test_scored_bucket_results_restore_manifest_query_order():
@@ -1783,8 +1788,23 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
         input_first=np.zeros(1, dtype=np.float32),
         recurrent_first=np.zeros(1, dtype=np.float32),
     )
+    scan_bucket_lengths_seen = []
+    full_history_bucket_lengths_seen = []
+
+    def score_event_sequence(_model, events, advances, original_event_count):
+        scan_bucket_lengths_seen.append(len(events))
+        index = int(np.max(np.asarray(events)[:, 0]))
+        color = (2, 2, 7)[index]
+        features = np.full((31, 360), -0.5, dtype=np.float32)
+        features[0, 0] = 0.5
+        features[0, 30] = 0.5
+        features[1, 60 + color] = 0.5
+        activity = np.zeros(neuron_count, dtype=np.float32)
+        activity[index] = np.count_nonzero(advances) / int(original_event_count)
+        return jnp.asarray(features), jnp.asarray(activity)
 
     def run_event_sequence(_model, events, advances, *, return_spikes):
+        full_history_bucket_lengths_seen.append(len(events))
         index = int(np.max(np.asarray(events)[:, 0]))
         color = (2, 2, 7)[index]
         features = np.full((31, 360), -0.5, dtype=np.float32)
@@ -1809,6 +1829,7 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
         )
 
     fake_module = SimpleNamespace(
+        _score_event_sequence=score_event_sequence,
         run_event_sequence=run_event_sequence,
         decode_prediction=_decode,
     )
@@ -1849,9 +1870,16 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
 
     assert screened.score.task_ids == ("a",)
     assert screened.score.task_exact == result.score.task_exact[:1]
-    assert screened.score.task_loss == result.score.task_loss[:1]
+    np.testing.assert_allclose(
+        screened.score.task_loss,
+        result.score.task_loss[:1],
+        rtol=0.0,
+        atol=1e-6,
+    )
     assert screened.owner_codes.shape == result.owner_codes.shape
     assert np.array_equal(trainer.parameters["sentinel"], np.asarray([1.0]))
+    assert scan_bucket_lengths_seen == [193, 193, 193]
+    assert full_history_bucket_lengths_seen == [320, 320]
     with pytest.raises(ValueError, match="manifest-ordered members"):
         subject._score_runtime(runtime, "training", task_ids=("b", "a"))
     with pytest.raises(ValueError, match="manifest-ordered members"):
