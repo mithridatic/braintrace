@@ -297,6 +297,50 @@ def test_owner_codes_distinguish_unique_shared_and_inactive_neurons():
     )
 
 
+def test_structural_evidence_quantization_is_deterministic_and_validated():
+    values = np.asarray(
+        [
+            [0.12345644, 0.25000000],
+            [0.12345646, 0.25000002],
+        ],
+        dtype=np.float64,
+    )
+
+    quantized = adapter._quantize_structural_evidence(values)
+
+    assert np.array_equal(
+        quantized,
+        np.asarray(
+            [
+                [0.123456, 0.25],
+                [0.123456, 0.25],
+            ]
+        ),
+    )
+    assert np.array_equal(adapter.owner_codes(quantized), np.asarray([-2, -2]))
+    with pytest.raises(ValueError, match="nonempty task-by-neuron"):
+        adapter._quantize_structural_evidence(np.zeros((0, 2)))
+    with pytest.raises(ValueError, match="finite and nonnegative"):
+        adapter._quantize_structural_evidence(np.asarray([[np.nan]]))
+
+
+def test_spike_activity_uses_original_event_count_not_bucket_length():
+    import jax.numpy as jnp
+
+    spikes = jnp.asarray(
+        [
+            [1.0, 0.0],
+            [-1.0, 2.0],
+            [0.0, 0.0],
+            [0.0, -2.0],
+        ]
+    )
+
+    activity = adapter._normalised_spike_activity(spikes, 8)
+
+    assert np.allclose(activity, np.asarray([0.25, 0.5]))
+
+
 def test_checkpoint_identities_partition_topology_parameters_and_muon_state():
     arrays = _minimal_checkpoint_arrays()
     first = adapter.checkpoint_identities(arrays)
@@ -350,6 +394,160 @@ def test_encoded_query_bank_is_immutable_complete_and_cached(tmp_path):
     assert not first[0].advances.flags.writeable
     assert not first[0].target.flags.writeable
     assert subject.training_manifest() is subject.training_manifest()
+
+
+def _scoring_query(task_id, event_count, advances, *, width=3, marker=0):
+    events = np.arange(event_count * width, dtype=np.float32).reshape(
+        event_count, width
+    )
+    events[:, 0] += marker * 10_000
+    return adapter.SupervisedQuery(
+        task_id,
+        0,
+        events,
+        np.asarray(advances, dtype=bool),
+        np.asarray([[marker % 10]], dtype=np.int32),
+    )
+
+
+def test_scoring_buckets_compact_right_align_and_preserve_query_identity():
+    short_advances = np.zeros(40, dtype=bool)
+    short_advances[-31:] = True
+    long_advances = np.zeros(50, dtype=bool)
+    long_advances[[0, 2]] = True
+    long_advances[-31:] = True
+    long = _scoring_query("long", 50, long_advances, marker=2)
+    short = _scoring_query("short", 40, short_advances, marker=1)
+
+    lower, upper = adapter._prepare_scoring_buckets((long, short), (32, 64))
+
+    assert lower.length == 32
+    assert np.array_equal(lower.query_indices, np.asarray([1], dtype=np.int32))
+    assert lower.events.shape == (1, 32, 3)
+    assert not np.any(lower.advances[0, :1])
+    assert np.all(lower.advances[0, 1:])
+    assert np.array_equal(lower.events[0, -31:], short.events[-31:])
+    assert np.array_equal(lower.original_event_counts, np.asarray([40]))
+
+    assert upper.length == 64
+    assert np.array_equal(upper.query_indices, np.asarray([0], dtype=np.int32))
+    assert upper.events.shape == (1, 64, 3)
+    assert not np.any(upper.advances[0, :31])
+    assert np.all(upper.advances[0, 31:])
+    assert np.array_equal(upper.events[0, 31:], long.events[long.advances])
+    assert np.array_equal(upper.original_event_counts, np.asarray([50]))
+    assert all(
+        not value.flags.writeable
+        for bucket in (lower, upper)
+        for value in (
+            bucket.query_indices,
+            bucket.events,
+            bucket.advances,
+            bucket.original_event_counts,
+        )
+    )
+
+
+def test_scoring_buckets_reject_malformed_masks_requests_and_lengths():
+    valid_advances = np.ones(31, dtype=bool)
+    valid = _scoring_query("valid", 31, valid_advances)
+
+    with pytest.raises(ValueError, match="at least one query"):
+        adapter._prepare_scoring_buckets((), (32,))
+    with pytest.raises(ValueError, match="strictly increasing"):
+        adapter._prepare_scoring_buckets((valid,), (64, 32))
+    with pytest.raises(ValueError, match="two-dimensional"):
+        adapter._prepare_scoring_buckets(
+            (
+                adapter.SupervisedQuery(
+                    "flat",
+                    0,
+                    np.zeros(31, dtype=np.float32),
+                    valid_advances,
+                    np.asarray([[0]], dtype=np.int32),
+                ),
+            ),
+            (32,),
+        )
+    with pytest.raises(ValueError, match="one Boolean per event"):
+        adapter._prepare_scoring_buckets(
+            (_scoring_query("mask", 31, np.ones(30, dtype=bool)),), (32,)
+        )
+
+    too_few = np.zeros(40, dtype=bool)
+    too_few[-30:] = True
+    with pytest.raises(ValueError, match="at least 31 advancing"):
+        adapter._prepare_scoring_buckets((_scoring_query("few", 40, too_few),), (64,))
+
+    broken_tail = np.zeros(40, dtype=bool)
+    broken_tail[-31:] = True
+    broken_tail[-1] = False
+    broken_tail[0] = True
+    with pytest.raises(ValueError, match="final 31 events must advance"):
+        adapter._prepare_scoring_buckets(
+            (_scoring_query("tail", 40, broken_tail),), (64,)
+        )
+
+    with pytest.raises(ValueError, match="exceeding the largest bucket"):
+        adapter._prepare_scoring_buckets(
+            (_scoring_query("large", 65, np.ones(65, dtype=bool)),), (32, 64)
+        )
+    with pytest.raises(ValueError, match="feature width"):
+        adapter._prepare_scoring_buckets(
+            (
+                valid,
+                _scoring_query("wide", 31, valid_advances, width=4),
+            ),
+            (32,),
+        )
+
+
+def test_scoring_buckets_cover_production_boundaries_and_full_length():
+    at_lower = _scoring_query("lower", 320, np.ones(320, dtype=bool))
+    above_lower = _scoring_query("above", 321, np.ones(321, dtype=bool))
+    at_upper = _scoring_query("upper", 705, np.ones(705, dtype=bool))
+
+    lower, upper = adapter._prepare_scoring_buckets(
+        (at_lower, above_lower, at_upper), adapter._SCORING_BUCKET_LENGTHS
+    )
+
+    assert np.array_equal(lower.query_indices, np.asarray([0]))
+    assert np.array_equal(upper.query_indices, np.asarray([1, 2]))
+    assert np.all(lower.advances)
+    assert np.all(upper.advances[1])
+    assert np.array_equal(upper.events[1], at_upper.events)
+
+
+def test_scored_bucket_results_restore_manifest_query_order():
+    first = adapter._ScoredBucket(
+        query_indices=np.asarray([1], dtype=np.int32),
+        logits=np.full((1, 31, 2), 11.0, dtype=np.float32),
+        activities=np.full((1, 3), 1.0, dtype=np.float32),
+    )
+    second = adapter._ScoredBucket(
+        query_indices=np.asarray([0, 2], dtype=np.int32),
+        logits=np.asarray(
+            [
+                np.full((31, 2), 10.0, dtype=np.float32),
+                np.full((31, 2), 12.0, dtype=np.float32),
+            ]
+        ),
+        activities=np.asarray(
+            [
+                np.full(3, 0.0, dtype=np.float32),
+                np.full(3, 2.0, dtype=np.float32),
+            ]
+        ),
+    )
+
+    logits, activities = adapter._restore_scored_query_order(
+        (first, second), query_count=3
+    )
+
+    assert np.array_equal(logits[:, 0, 0], np.asarray([10.0, 11.0, 12.0]))
+    assert np.array_equal(activities[:, 0], np.asarray([0.0, 1.0, 2.0]))
+    with pytest.raises(RuntimeError, match="exactly once"):
+        adapter._restore_scored_query_order((first,), query_count=3)
 
 
 def test_candidate_arm_names_fail_closed_before_model_work(tmp_path):
@@ -1541,13 +1739,15 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
 
     neuron_count = 360
     records = []
-    for index, (task_id, color) in enumerate((("a", 2), ("b", 7))):
+    for index, (task_id, query_index, color) in enumerate(
+        (("a", 0, 2), ("a", 1, 2), ("b", 0, 7))
+    ):
         events = np.zeros((32, 441), dtype=np.float32)
         events[0, 0] = index
         records.append(
             adapter.SupervisedQuery(
                 task_id,
-                0,
+                query_index,
                 events,
                 np.ones(32, dtype=bool),
                 np.asarray([[color]], dtype=np.int32),
@@ -1585,17 +1785,16 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
     )
 
     def run_event_sequence(_model, events, advances, *, return_spikes):
-        del advances
-        index = int(np.asarray(events)[0, 0])
-        color = (2, 7)[index]
+        index = int(np.max(np.asarray(events)[:, 0]))
+        color = (2, 2, 7)[index]
         features = np.full((31, 360), -0.5, dtype=np.float32)
         features[0, 0] = 0.5
         features[0, 30] = 0.5
         features[1, 60 + color] = 0.5
         voltage = np.arctanh(features) * 20.0 - 65.0
-        voltage = np.vstack((np.zeros((1, neuron_count)), voltage))
-        spikes = np.zeros((32, neuron_count), dtype=np.float32)
-        spikes[:, index] = 1.0
+        voltage = np.vstack((np.zeros((len(events) - 31, neuron_count)), voltage))
+        spikes = np.zeros((len(events), neuron_count), dtype=np.float32)
+        spikes[np.asarray(advances), index] = 1.0
         assert return_spikes
         return jnp.asarray(voltage), jnp.asarray(spikes)
 
@@ -1643,7 +1842,7 @@ def test_compiled_direct_scorer_aggregates_queries_by_task_without_updates(
     assert result.score.finite
     assert result.score.task_ids == ("a", "b")
     assert all(loss > 0 for loss in result.score.task_loss)
-    assert np.array_equal(result.owner_codes[:2], np.asarray([0, 1]))
+    assert np.array_equal(result.owner_codes[:3], np.asarray([0, 0, 1]))
     assert np.array_equal(trainer.parameters["sentinel"], np.asarray([1.0]))
 
     screened = subject._score_runtime(runtime, "training", task_ids=("a",))

@@ -17,6 +17,7 @@ import os
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, cast
 
@@ -55,6 +56,9 @@ _OPTIMIZER_ARRAYS = (
     "readout_step",
 )
 _EXPECTED_UPDATES = 128
+_REQUEST_EVENT_COUNT = 31
+_SCORING_BUCKET_LENGTHS = (320, 705)
+_STRUCTURAL_EVIDENCE_DECIMALS = 6
 
 
 @dataclass(frozen=True)
@@ -98,6 +102,22 @@ class SupervisedQuery:
     target: np.ndarray
 
 
+@dataclass(frozen=True)
+class _ScoringBucket:
+    length: int
+    query_indices: NDArray[np.int32]
+    events: NDArray[np.float32]
+    advances: NDArray[np.bool_]
+    original_event_counts: NDArray[np.int32]
+
+
+@dataclass(frozen=True)
+class _ScoredBucket:
+    query_indices: NDArray[np.int32]
+    logits: np.ndarray
+    activities: np.ndarray
+
+
 @dataclass
 class _Runtime:
     model: Any
@@ -117,6 +137,113 @@ class _ScoredRuntime:
     source_scores: np.ndarray
     target_scores: np.ndarray
     edge_scores: np.ndarray
+
+
+def _read_only(value: np.ndarray) -> np.ndarray:
+    value.setflags(write=False)
+    return value
+
+
+def _prepare_scoring_buckets(
+    queries: Sequence[SupervisedQuery],
+    bucket_lengths: Sequence[int],
+) -> tuple[_ScoringBucket, ...]:
+    lengths = tuple(bucket_lengths)
+    if (
+        not lengths
+        or any(
+            type(length) is not int or length < _REQUEST_EVENT_COUNT
+            for length in lengths
+        )
+        or any(right <= left for left, right in pairwise(lengths))
+    ):
+        raise ValueError(
+            "Scoring bucket lengths must be strictly increasing integers of at least 31."
+        )
+    if not queries:
+        raise ValueError("Scoring requires at least one query; provide a scored task.")
+
+    grouped: dict[int, list[tuple[int, np.ndarray, int]]] = {
+        length: [] for length in lengths
+    }
+    feature_width: int | None = None
+    for query_index, query in enumerate(queries):
+        events = np.asarray(query.events)
+        advances = np.asarray(query.advances, dtype=bool)
+        if events.ndim != 2 or events.shape[0] < 1:
+            raise ValueError(
+                "Scoring query events must be a nonempty two-dimensional array."
+            )
+        if advances.shape != (events.shape[0],):
+            raise ValueError("Scoring query advances must have one Boolean per event.")
+        if feature_width is None:
+            feature_width = int(events.shape[1])
+        elif events.shape[1] != feature_width:
+            raise ValueError(
+                "Scoring queries must have one common event feature width."
+            )
+        advancing_count = int(np.count_nonzero(advances))
+        if advancing_count < _REQUEST_EVENT_COUNT:
+            raise ValueError(
+                "Scoring query needs at least 31 advancing events; "
+                "correct the encoded episode."
+            )
+        if events.shape[0] < _REQUEST_EVENT_COUNT or not np.all(
+            advances[-_REQUEST_EVENT_COUNT:]
+        ):
+            raise ValueError(
+                "Scoring query final 31 events must advance; "
+                "preserve the direct request tail."
+            )
+        bucket_length = next(
+            (length for length in lengths if advancing_count <= length), None
+        )
+        if bucket_length is None:
+            raise ValueError(
+                f"Scoring query has {advancing_count} advancing events, "
+                f"exceeding the largest bucket {lengths[-1]}."
+            )
+        compact = np.ascontiguousarray(events[advances], dtype=np.float32)
+        grouped[bucket_length].append((query_index, compact, int(events.shape[0])))
+
+    assert feature_width is not None
+    buckets = []
+    for length in lengths:
+        entries = grouped[length]
+        event_values = np.zeros((len(entries), length, feature_width), dtype=np.float32)
+        advance_values = np.zeros((len(entries), length), dtype=bool)
+        query_indices = np.empty(len(entries), dtype=np.int32)
+        original_event_counts = np.empty(len(entries), dtype=np.int32)
+        for bucket_index, (query_index, compact, original_count) in enumerate(entries):
+            start = length - len(compact)
+            event_values[bucket_index, start:] = compact
+            advance_values[bucket_index, start:] = True
+            query_indices[bucket_index] = query_index
+            original_event_counts[bucket_index] = original_count
+        buckets.append(
+            _ScoringBucket(
+                length,
+                cast(NDArray[np.int32], _read_only(query_indices)),
+                cast(NDArray[np.float32], _read_only(event_values)),
+                cast(NDArray[np.bool_], _read_only(advance_values)),
+                cast(NDArray[np.int32], _read_only(original_event_counts)),
+            )
+        )
+    return tuple(buckets)
+
+
+def _restore_scored_query_order(
+    results: Sequence[_ScoredBucket], *, query_count: int
+) -> tuple[np.ndarray, np.ndarray]:
+    if query_count < 1 or not results:
+        raise RuntimeError("Scored buckets must contain every query exactly once.")
+    query_indices = np.concatenate([result.query_indices for result in results])
+    logits = np.concatenate([result.logits for result in results])
+    activities = np.concatenate([result.activities for result in results])
+    order = np.argsort(query_indices, kind="stable")
+    if not np.array_equal(query_indices[order], np.arange(query_count, dtype=np.int32)):
+        raise RuntimeError("Scored buckets must contain every query exactly once.")
+    return logits[order], activities[order]
 
 
 def _is_sha256(value: object) -> bool:
@@ -277,6 +404,27 @@ def _normalise(values: np.ndarray) -> NDArray[np.float64]:
     return np.zeros_like(result) if scale == 0.0 else result / scale
 
 
+def _quantize_structural_evidence(
+    task_neuron_scores: np.ndarray,
+) -> NDArray[np.float64]:
+    scores = np.asarray(task_neuron_scores, dtype=np.float64)
+    if scores.ndim != 2 or scores.shape[0] < 1 or scores.shape[1] < 1:
+        raise ValueError(
+            "Structural evidence requires a nonempty task-by-neuron array."
+        )
+    if not np.all(np.isfinite(scores)) or np.any(scores < 0):
+        raise ValueError("Structural evidence must be finite and nonnegative.")
+    return np.round(scores, decimals=_STRUCTURAL_EVIDENCE_DECIMALS)
+
+
+def _normalised_spike_activity(spikes: Any, original_event_count: Any) -> Any:
+    import jax.numpy as jnp
+
+    return jnp.sum(jnp.abs(spikes), axis=0) / jnp.asarray(
+        original_event_count, dtype=spikes.dtype
+    )
+
+
 class Example21ArcAdapter:
     """Bridge the real Example 21 BrainCell implementation to its coordinator.
 
@@ -305,6 +453,9 @@ class Example21ArcAdapter:
         self._manifests: dict[str, Any] = {}
         self._tasks: dict[str, dict[str, Any]] = {}
         self._queries: dict[str, tuple[SupervisedQuery, ...]] = {}
+        self._scoring_payloads: dict[
+            tuple[str, tuple[str, ...]], tuple[_ScoringBucket, ...]
+        ] = {}
         self._evidence_by_checkpoint: dict[str, _ScoredRuntime] = {}
         self._parent_by_checkpoint: dict[str, str | None] = {}
         self._temporary_paths: set[Path] = set()
@@ -1073,37 +1224,72 @@ class Example21ArcAdapter:
             for record in self._encoded_queries(role)
             if record.task_id in selected
         )
-        event_values = jnp.asarray(
-            np.stack([record.events for record in queries]), dtype=jnp.float32
-        )
-        advance_values = jnp.asarray(
-            np.stack([record.advances for record in queries]), dtype=bool
-        )
+        payload_key = (role, scored_ids)
+        buckets = self._scoring_payloads.get(payload_key)
+        if buckets is None:
+            buckets = _prepare_scoring_buckets(queries, _SCORING_BUCKET_LENGTHS)
+            self._scoring_payloads[payload_key] = buckets
         before_parameters = jax.tree_util.tree_map(
             jnp.array, runtime.trainer.parameters
         )
 
-        def evaluate(events: Any, advances: Any) -> tuple[Any, Any]:
-            runtime.model.reset_episode(runtime.learner)
-            voltages, spikes = module.run_event_sequence(
-                runtime.model,
-                events,
-                advances,
-                return_spikes=True,
-            )
-            features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
-            logits = (
-                features @ runtime.model.readout_weight.value
-                + runtime.model.readout_bias.value
-            )
-            return logits, jnp.mean(jnp.abs(spikes), axis=0)
+        def execute_bucket(bucket: _ScoringBucket) -> _ScoredBucket | None:
+            if len(bucket.query_indices) == 0:
+                return None
 
-        score_all = brainstate.transform.jit(
-            lambda events, advances: brainstate.transform.for_loop(
-                evaluate, events, advances
+            def evaluate(
+                events: Any,
+                advances: Any,
+                original_event_count: Any,
+            ) -> tuple[Any, Any]:
+                runtime.model.reset_episode(runtime.learner)
+                voltages, spikes = module.run_event_sequence(
+                    runtime.model,
+                    events,
+                    advances,
+                    return_spikes=True,
+                )
+                features = jnp.tanh((voltages[-31:] + 65.0) / 20.0)
+                logits = (
+                    features @ runtime.model.readout_weight.value
+                    + runtime.model.readout_bias.value
+                )
+                activity = _normalised_spike_activity(spikes, original_event_count)
+                return logits, activity
+
+            score_all = cast(
+                Callable[..., tuple[Any, Any]],
+                brainstate.transform.jit(
+                    lambda events, advances, original_event_counts: (
+                        brainstate.transform.for_loop(
+                            evaluate, events, advances, original_event_counts
+                        )
+                    )
+                ),
             )
+            logits, activities = score_all(
+                jnp.asarray(bucket.events, dtype=jnp.float32),
+                jnp.asarray(bucket.advances, dtype=bool),
+                jnp.asarray(bucket.original_event_counts, dtype=jnp.int32),
+            )
+            return _ScoredBucket(
+                bucket.query_indices,
+                np.asarray(logits),
+                np.asarray(activities, dtype=np.float64),
+            )
+
+        if len(buckets) != 2:
+            raise RuntimeError(
+                "Production scoring requires the two declared bucket lengths."
+            )
+        lower_result = execute_bucket(buckets[0])
+        upper_result = execute_bucket(buckets[1])
+        results = tuple(
+            result for result in (lower_result, upper_result) if result is not None
         )
-        logits, activities = score_all(event_values, advance_values)
+        logits_array, activity_array = _restore_scored_query_order(
+            results, query_count=len(queries)
+        )
         after_parameters = jax.tree_util.tree_map(jnp.array, runtime.trainer.parameters)
         if not bool(
             jax.tree_util.tree_all(
@@ -1115,8 +1301,6 @@ class Example21ArcAdapter:
             raise RuntimeError(
                 "Direct ARC scoring changed trainable parameters; reject this score."
             )
-        logits_array = np.asarray(logits)
-        activity_array = np.asarray(activities, dtype=np.float64)
         exact_by_task: dict[str, list[bool]] = {task_id: [] for task_id in scored_ids}
         loss_by_task: dict[str, list[float]] = {task_id: [] for task_id in scored_ids}
         activity_by_task: dict[str, list[np.ndarray]] = {
@@ -1163,6 +1347,7 @@ class Example21ArcAdapter:
             ]
         )
         task_neuron = np.stack([_normalise(row) for row in task_neuron])
+        task_neuron = _quantize_structural_evidence(task_neuron)
         owners = structural.task_owners(task_neuron)
         codes = owner_codes(task_neuron)
 
