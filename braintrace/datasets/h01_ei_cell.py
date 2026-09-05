@@ -95,6 +95,8 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
         Measured identity, borrowed profile, and inferred electrical mapping.
     """
     profile = get_ei_profile(polarity, mode=mode)
+    if solver == "h01_staggered_scan":
+        from . import h01_dhs_scan  # Register only on explicit selection.
     if not isinstance(region_basis, str) or not region_basis.strip():
         raise ValueError("Provide the basis for the inferred electrical region map.")
     if (not np.isfinite([current_na, delay_ms, duration_ms, max_cv_length_um]).all()

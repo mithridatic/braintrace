@@ -1,0 +1,22 @@
+{
+  "started_utc": "2026-09-05T21:16:06.260913+00:00",
+  "commit_baseline": "81333a45ee5a9c1f8feb3034d5d25c7781f9b408",
+  "purpose": "Full measured-pair trace comparison; only the solver loop implementation changes. No human physiology qualification.",
+  "command": ".cache/validation/Scripts/python.exe -m examples.h01_ei_circuit --connectivity measured --control ei --i-current-na 1 --duration-ms 8 --solver h01_staggered_scan --output .cache/h01/measured-ie-scan",
+  "source_sha256": {
+    "braintrace/datasets/h01_dhs_scan.py": "8b710ef30767d563d1dab7a2c834028c98a042a0824eaf1275ce0d5babb8931c",
+    "braintrace/datasets/h01_ei_cell.py": "595a74625e1e453d18a2f78f6256e2c2d8d04e12d4cd3302259ee082a01e345f",
+    "braintrace/datasets/h01_ei_circuit.py": "57771e9d40caadf70d175eff9fcc2a1c7bebc750ab5050260074db0683c5e0d6",
+    "examples/h01_ei_circuit.py": "71e5d0b762e39fde14be28506c7cc725bc8840f6a35d461ef7316923c19320fb",
+    ".cache/h01/measured-ie-index-fixed.npz": "a2609429bd7a4c741392e07cbb6d279737dddff1636d909ec56f9f77a9e24d6b"
+  },
+  "prechecks": {
+    "tests_passed": 17,
+    "kernel_line_coverage_percent": 94,
+    "active_fixture_trace_rtol": 1e-10,
+    "active_fixture_trace_atol_mv": 1e-09,
+    "dense_kernel_rtol": 2e-14,
+    "dense_kernel_atol": 2e-14
+  },
+  "limits": "No full-H01 equivalence or speed result yet. Uses private BrainCell assembly helpers; version changes require revalidation."
+}

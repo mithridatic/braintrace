@@ -32,3 +32,18 @@ Do not convert physical arrays to NumPy during numerical updates.
 
 Only numerical equivalence permits use in the measured circuit. Faster tracing
 alone does not qualify the solver or the biological model.
+
+## Available implementation and qualification
+
+`braintrace.datasets.h01_dhs_scan` registers `h01_staggered_scan` when selected
+by the cell builder. The circuit example accepts `--solver h01_staggered_scan`.
+The default remains `staggered`. The adapter uses private BrainCell assembly
+helpers; recheck it after a dependency change. It caches only static level
+indices, tied to the current runtime source object.
+
+The 17 kernel, active-cell, and circuit comparison tests pass. The 35 existing
+cell and circuit tests also pass. See
+[validation](../evidence/h01-dhs-scan-validation.json). The full measured-pair
+comparison is running; it must preserve the saved baseline traces before this
+solver can be used for physiological intervention tests. Padded levels can
+increase arithmetic and memory, so no full-run speed gain is claimed yet.

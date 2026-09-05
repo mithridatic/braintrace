@@ -548,6 +548,22 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Real-cell firing,
 propagation to the axon contact, and full numerical qualification remain open.
 
+In the measured pair, the recorded I contact voltage stays below -80 mV under
+the stated 1 nA soma pulse. It emits no event. The initially empty synapse
+therefore receives no event, and its conductance stays zero. This locates the
+missing delivery before the synapse response. It does not identify why the
+presynaptic cell fails to emit an event. The recorded I soma reaches only
+-29.53 mV; no claim is made about unrecorded compartments.
+[Direct response](evidence/h01-measured-ie-first-response-audit.json).
+
+The electrical map assigns the measured I contact to the dendrite fallback.
+That region has Ih but no fast sodium channel. Most of the soma-to-contact
+path also uses this fallback. This map is an inference from sparse labels.
+Its role in the missing output event is unresolved: the soma response is
+also insufficient to separate spike initiation from propagation failure.
+[Region map](evidence/h01-measured-ie-region-audit.json),
+[source path](evidence/h01-measured-i-contact-path-audit.json).
+
 ```mermaid
 flowchart LR
     A[I voltage at the source axon contact] --> B[Modeled output event]

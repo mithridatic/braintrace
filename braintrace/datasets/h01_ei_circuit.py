@@ -12,7 +12,7 @@ from .h01_measured_contact import measured_ie_contact
 
 def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
                         currents_na=None, control="ei", connectivity="measured", excitatory_weight_us=.01,
-                        inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10.):
+                        inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10., solver="staggered"):
     """Build the measured I-to-E contact or explicit illustrative wiring.
 
     Parameters
@@ -36,6 +36,9 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         Nonnegative transmission delay. Network rounds up to a whole step.
     max_cv_length_um : float, optional
         Maximum spatial compartment length.
+    solver : str, optional
+        BrainCell integrator. The default is staggered. h01_staggered_scan
+        selects the experimental compiled DHS loops.
 
     Returns
     -------
@@ -72,7 +75,7 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
             raise ValueError(f"{role} requires the source {source_tag} tag.")
         cell, record = make_h01_ei_cell(imported, annotations, polarity=role,
             regions=regions[role], region_basis=region_basis[role],
-            current_na=currents[role], max_cv_length_um=max_cv_length_um, pop_size=(1,))
+            current_na=currents[role], max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         soma = imported.anatomy().soma_location()
         incoming = "inh" if role == "E" else "exc"
         reversal, tau = (-80., 5.) if role == "E" else (0., 2.)

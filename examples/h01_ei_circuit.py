@@ -31,6 +31,7 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--duration-ms", type=float, default=10.)
     parser.add_argument("--max-cv-um", type=float, default=10.)
+    parser.add_argument("--solver", choices=("staggered", "h01_staggered_scan"), default="staggered")
     parser.add_argument("--e-current-na", type=float, default=1.)
     parser.add_argument("--i-current-na", type=float)
     args = parser.parse_args()
@@ -41,7 +42,7 @@ def main():
         parts = {r: label_partition(c) for r, c in components.items()}
         network, evidence = make_h01_ei_circuit(components, annotations,
             regions={r: p[0] for r, p in parts.items()}, region_basis={r: p[1] for r, p in parts.items()},
-            control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um,
+            control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um, solver=args.solver,
             currents_na={"E": args.e_current_na, "I": (args.i_current_na if args.i_current_na is not None
                 else (1. if args.connectivity == "measured" else 0.))})
         print("Circuit constructed:", args.control, flush=True)
