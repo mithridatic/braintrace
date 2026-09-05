@@ -16,9 +16,11 @@ def annotations(tags=("L2", "pyramidal")):
     return SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=tags))
 
 
-def test_source_bound_transfer_runs_with_explicit_assumptions(imported):
+@pytest.mark.parametrize("aligned", [False, True])
+def test_source_bound_transfer_runs_with_explicit_assumptions(imported, aligned):
     with brainstate.environ.context(precision=64):
-        cell, evidence = make_active_cell(imported, annotations(), active_radius_um=2., current_na=0.)
+        cell, evidence = make_active_cell(imported, annotations(), active_radius_um=2., current_na=0.,
+                                          align_active_boundaries=aligned)
         result = cell.run(dt=.005*u.ms, duration=.05*u.ms)
     assert np.isfinite(result.traces["voltage"].to_decimal(u.mV)).all()
     assert evidence["inferred_active_region"]["anchor_source_id"] == 30
@@ -27,6 +29,7 @@ def test_source_bound_transfer_runs_with_explicit_assumptions(imported):
     assert evidence["measured_anatomy"] == imported.provenance
     assert evidence["parameters"]["channel_voltage_shift_mv"] == -10.
     assert evidence["numerics"]["solver"] == "staggered"
+    assert evidence["numerics"]["align_active_boundaries"] == aligned
 
 
 @pytest.mark.parametrize("tags", [("L2", "interneuron"), ("L5", "pyramidal"), ()])
@@ -41,6 +44,35 @@ def test_reject_invalid_parameters(kwargs):
     args = {"active_radius_um": 2., "current_na": 0., **kwargs}
     with pytest.raises(ValueError, match="parameters"):
         make_active_cell(None, None, **args)
+
+
+@pytest.mark.parametrize("kwargs", [{"pulse_count": 0}, {"pulse_count": 1.5},
+    {"pulse_count": True}, {"period_ms": 0.}, {"pulse_count": 2, "period_ms": 3.},
+    {"pulse_count": 2, "period_ms": 2.}])
+def test_reject_invalid_pulse_trains(kwargs):
+    with pytest.raises(ValueError, match="Pulse count"):
+        make_active_cell(None, None, active_radius_um=2., current_na=0., **kwargs)
+
+
+def test_repeated_current_has_separate_onsets_and_stops(imported):
+    with brainstate.environ.context(precision=64):
+        cell, evidence = make_active_cell(imported, annotations(), active_radius_um=2.,
+            current_na=.001, sodium_ms_cm2=0., potassium_ms_cm2=0.,
+            delay_ms=.5, duration_ms=.2, pulse_count=3, period_ms=1.)
+        result = cell.run(dt=.005*u.ms, duration=4.*u.ms)
+    voltage = np.asarray(result.traces["voltage"].to_decimal(u.mV)).ravel()
+    times = (np.arange(len(voltage))+1)*.005
+    slope = np.gradient(voltage, .005)
+    # Passive cells must depolarize during each pulse and relax between them.
+    on = ((times > .55) & (times < .65) | (times > 1.55) & (times < 1.65)
+          | (times > 2.55) & (times < 2.65))
+    off = ((times > .9) & (times < 1.4) | (times > 1.9) & (times < 2.4)
+           | (times > 2.9) & (times < 3.9))
+    assert np.all(slope[on] > 0.)
+    assert np.all(slope[off] < 0.)
+    np.testing.assert_allclose(voltage[times < .45], -70., atol=1e-8)
+    assert evidence["parameters"]["pulse_count"] == 3
+    assert evidence["parameters"]["period_ms"] == 1.
 
 
 def test_cli_records_source_and_finite_trace(imported, tmp_path, monkeypatch, capsys):

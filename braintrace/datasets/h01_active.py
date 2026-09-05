@@ -13,11 +13,13 @@ from braincell.mech import Channel, Ion, StateProbe
 from . import h01_channels
 from .h01 import H01Archive
 from .h01_annotations import H01Annotations
+from .h01_discretization import BoundaryAlignedCV
 
 
 def make_active_cell(imported, annotations, *, active_radius_um, current_na,
                      sodium_ms_cm2=9.601446023, potassium_ms_cm2=4.884943554,
-                     max_cv_length_um=10., delay_ms=2., duration_ms=3., solver="staggered"):
+                     max_cv_length_um=10., delay_ms=2., duration_ms=3., solver="staggered",
+                     align_active_boundaries=False, pulse_count=1, period_ms=25.):
     """Transfer human pyramidal kinetics to an explicitly inferred soma region.
 
     Parameters
@@ -38,6 +40,13 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
         Current pulse onset and duration in milliseconds.
     solver : str, optional
         BrainCell solver identifier, explicitly recorded in provenance.
+    align_active_boundaries : bool, optional
+        Insert active-region endpoints into the spatial mesh. Default false
+        preserves the initial experimental configuration for comparisons.
+    pulse_count : int, optional
+        Number of rectangular pulses; defaults to a single pulse.
+    period_ms : float, optional
+        Onset-to-onset spacing for multiple pulses, greater than pulse width.
 
     Returns
     -------
@@ -53,10 +62,14 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
     conductances, fitted H01 physiology, or reproduction of an entire neuron.
     """
     values = (active_radius_um, current_na, sodium_ms_cm2, potassium_ms_cm2,
-              max_cv_length_um, delay_ms, duration_ms)
+              max_cv_length_um, delay_ms, duration_ms, period_ms)
     if (not np.isfinite(values).all() or min(active_radius_um, max_cv_length_um, duration_ms) <= 0
             or min(sodium_ms_cm2, potassium_ms_cm2, delay_ms) < 0):
         raise ValueError("Invalid finite/positive active model parameters.")
+    if (isinstance(pulse_count, (bool, np.bool_)) or not isinstance(pulse_count, (int, np.integer))
+            or pulse_count < 1 or period_ms <= 0
+            or (pulse_count > 1 and period_ms <= duration_ms)):
+        raise ValueError("Pulse count must be a positive integer and repeated pulses must not overlap.")
     metadata = annotations.metadata(imported.neuron_id)
     if "pyramidal" not in metadata.tags or not {"L2", "L3"}.intersection(metadata.tags):
         raise ValueError("This channel transfer requires source L2/L3 pyramidal tags.")
@@ -65,7 +78,10 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
     rows = imported.source_rows[imported.source_rows[:, 1] == 3]
     anchor = int(sorted(rows, key=lambda row: (-row[5], row[0]))[0][0])
     active = anatomy.cable_neighborhood(anchor, radius_um=active_radius_um)
-    cell = braincell.Cell(imported.morphology, cv_policy=braincell.MaxCVLen(max_cv_length_um*u.um),
+    policy = braincell.MaxCVLen(max_cv_length_um*u.um)
+    if align_active_boundaries:
+        policy = BoundaryAlignedCV(policy, active)
+    cell = braincell.Cell(imported.morphology, cv_policy=policy,
                           V_init=-70.0*u.mV, solver=solver)
     cell.paint(AllRegion(), braincell.CableProperty(membrane_capacitance=1*u.uF/u.cm**2,
                 axial_resistivity=200*u.ohm*u.cm, resting_potential=-70*u.mV))
@@ -75,8 +91,12 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
     cell.paint(active, Channel("H01Na_Wilbers2023", g_max=sodium_ms_cm2*u.mS/u.cm**2))
     cell.paint(active, Channel("H01K_Wilbers2023", g_max=potassium_ms_cm2*u.mS/u.cm**2))
     cell.place(soma, StateProbe(field="v", name="voltage"))
-    cell.place(soma, braincell.CurrentClamp(delay=delay_ms*u.ms, durations=duration_ms*u.ms,
-                                          amplitudes=current_na*u.nA))
+    durations = np.full(2*pulse_count-1, duration_ms)
+    amplitudes = np.full(2*pulse_count-1, current_na)
+    durations[1::2] = period_ms-duration_ms
+    amplitudes[1::2] = 0.
+    cell.place(soma, braincell.CurrentClamp(delay=delay_ms*u.ms, durations=durations*u.ms,
+                                          amplitudes=amplitudes*u.nA))
     evidence = {"measured_anatomy": imported.provenance, "source_tags": metadata.tags,
                 "borrowed_dynamics": "Wilbers2023; Dataverse L5J0SD v3.0 Current_clamp/mod",
                 "inferred_active_region": {"policy": active.policy, "anchor_source_id": anchor,
@@ -85,8 +105,10 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
                                "capacitance_uf_cm2": 1., "axial_resistivity_ohm_cm": 200.,
                                "leak_ms_cm2": .1, "leak_mv": -70., "ena_mv": 68., "ek_mv": -86.,
                                "temperature_c": 34., "channel_voltage_shift_mv": -10.,
-                               "current_na": current_na, "delay_ms": delay_ms, "duration_ms": duration_ms},
-                "numerics": {"solver": solver, "max_cv_length_um": max_cv_length_um},
+                               "current_na": current_na, "delay_ms": delay_ms, "duration_ms": duration_ms,
+                               "pulse_count": int(pulse_count), "period_ms": period_ms},
+                "numerics": {"solver": solver, "max_cv_length_um": max_cv_length_um,
+                             "align_active_boundaries": align_active_boundaries},
                 "qualification": "experimental transfer; biological calibration and AIS model pending"}
     return cell, evidence
 
@@ -114,10 +136,13 @@ def main(argv=None):
     parser.add_argument("--sodium-ms-cm2", type=float, default=9.601446023)
     parser.add_argument("--potassium-ms-cm2", type=float, default=4.884943554)
     parser.add_argument("--max-cv-length-um", type=float, default=10.)
+    parser.add_argument("--align-active-boundaries", action="store_true")
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--duration-ms", type=float, default=20.)
     parser.add_argument("--pulse-ms", type=float, default=3.)
     parser.add_argument("--delay-ms", type=float, default=2.)
+    parser.add_argument("--pulse-count", type=int, default=1)
+    parser.add_argument("--period-ms", type=float, default=25.)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if not np.isfinite([args.dt_ms, args.duration_ms]).all() or min(args.dt_ms, args.duration_ms) <= 0:
@@ -127,7 +152,9 @@ def main(argv=None):
         cell, evidence = make_active_cell(imported, H01Annotations(args.annotations),
             active_radius_um=args.active_radius_um, current_na=args.current_na,
             sodium_ms_cm2=args.sodium_ms_cm2, potassium_ms_cm2=args.potassium_ms_cm2,
-            max_cv_length_um=args.max_cv_length_um, delay_ms=args.delay_ms, duration_ms=args.pulse_ms)
+            max_cv_length_um=args.max_cv_length_um, delay_ms=args.delay_ms, duration_ms=args.pulse_ms,
+            align_active_boundaries=args.align_active_boundaries,
+            pulse_count=args.pulse_count, period_ms=args.period_ms)
         result = cell.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms)
         v = np.asarray(result.traces["voltage"].to_decimal(u.mV))
     if not np.isfinite(v).all():

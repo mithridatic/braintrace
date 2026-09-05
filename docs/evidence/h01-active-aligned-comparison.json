@@ -1,0 +1,11 @@
+{
+  "configuration": "aligned active boundaries; gNa25 gK10; radius10um; 0.5nA pulse2-5ms; dt0.0025ms",
+  "coarse_cv_um": 2.5,
+  "fine_cv_um": 1.25,
+  "max_waveform_difference_mv": 0.04585784201580356,
+  "rms_waveform_difference_mv": 0.0036475266349131107,
+  "peak_time_difference_ms": 0.0,
+  "peak_voltage_difference_mv": 0.0023807983575068192,
+  "final_voltage_difference_mv": 0.00010011289566591586,
+  "qualification": "pairwise numerical comparison; does not establish biological validity or final mesh acceptance"
+}

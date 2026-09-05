@@ -137,3 +137,77 @@ Sources:
 - https://doi.org/10.1126/sciadv.ade3300
 - https://modeldb.science/267587
 - https://doi.org/10.1093/cercor/bhac348
+
+## Next numerical investigation
+
+The current uniform MaxCVLen policy can place an active/passive boundary
+inside a CV. Investigate explicitly splitting at the inferred active-region
+boundaries, retaining the same geometry and conductance densities. Tests must
+establish that the policy preserves [0,1] coverage without gaps/overlap and
+inserts every requested boundary. Record this as a distinct discretization
+policy; do not combine old unaligned and new aligned refinement results as
+though they came from the same configuration. Compare against finer aligned
+grids before selecting one for physiological calibration.
+
+The first aligned implementation reproduced a degenerate interval caused by
+a source cut at 0.9999999999999998 beside 1.0. A regression test now covers
+near-coincident cuts, which are merged using the installed BrainCell 1e-9
+normalized-coordinate tolerance. Aligned 2.5 um / .0025 ms gives peak 40.699
+mV (4171 CVs). This is a distinct mesh from the original unaligned runs.
+
+The inhibitory raw current trace independently confirms a 270--1270 ms pulse
+at .19/.23/.27 nA and zero holding current. With height 0 mV / prominence
+40 mV detection, those traces contain 12/31/43 spikes. Initial ISIs are
+7.60/6.36/6.24 ms; final ISIs 98.76/40.72/26.68 ms. A constant-rate generic
+fast-spiking model would not reproduce these recordings. Data are in
+.cache/human-pv/{active,passive}.pkl, read with a restricted numerical-array
+unpickler and exported to numeric NPZ caches. No foreign executable or pickle
+code was executed. Source optimization "std" values are objective weights,
+not measured population uncertainty; do not describe them as biological SDs.
+
+## Repeated stimulation and aligned mesh qualification
+
+The aligned 2.5 versus 1.25 um comparison at dt .0025 ms gives maximum
+waveform difference .04586 mV, RMS .00365 mV, identical sampled peak times,
+and peak difference .00238 mV. This supports using aligned 2.5 um for the
+next calibration experiments; temporal refinement is still being checked.
+AIS-labelled samples are 12.54--40.39 um along cable from soma anchor 1345;
+the current 10 um active region excludes them. Sparse AIS point labels do
+not yet define a complete active axon compartment.
+
+Add an explicit finite rectangular pulse train to the active-cell builder:
+positive integer pulse count, positive finite period greater than pulse width,
+and the existing finite current/onset/width checks. Default one pulse retains
+existing behavior. Record pulse count and period with all evidence. Use one
+piecewise CurrentClamp and Cell.run's compiled loop, not Python simulation
+steps. Test one/multiple pulses, invalid/overlapping protocols, and actual
+recorded response. Wilbers source run_cell uses 3 ms pulses every 25 ms;
+start with five pulses, then evaluate adaptation against the released human
+measurements. This protocol support alone is not biological qualification.
+
+## Direct behavior and causal explanation
+
+The user requires a nested causal explanation, with defined measurement datums.
+Maintain it in [h01-causal-model.md](../h01-causal-model.md).
+Use short, direct sentences and defined terms under ASD-STE100 guidance.
+Keep dated experiments and numerical tables in the evidence folder.
+Revise the explanation itself when observations contradict it.
+
+Use raw voltage, applied current, and individual spike times as primary evidence.
+Add gate, channel-current, and axial-current observations to test the inner levels.
+Population feature distributions do not replace a measured target waveform.
+The H01 transfer does not yet match Wilbers' holding-current condition.
+Raw pyramidal target traces and factor uncertainties remain missing.
+Do not report a complete RSS uncertainty budget without them and covariance checks.
+
+Available paired voltage traces give response-change RSS values, with source
+hashes and checked configuration differences. These rank only the tested
+interventions. Numerical effects remain separate from physical-factor effects.
+The analysis scripts and direct trace figure are under docs/evidence.
+
+The five-pulse configuration (Na25/K20, aligned2.5um, dt.0025ms) produces five
+spikes at 3.6525,28.6475,53.6475,78.6475,103.645ms. Peaks fall from39.460 to38.011mV.
+Na27/K20 gives first peak41.020mV in a separate single-pulse run.
+Neither result establishes human physiological validity.
+Current dataset tests: 108 passed, 99.86% coverage. New production modules have
+100% statement coverage. Circuit and inhibitory implementation remain pending.

@@ -295,6 +295,18 @@ the default 10 um maximum CV length is not spatially converged for the current
 experimental transfer. Use ``--max-cv-length-um`` and ``--dt-ms`` for refinement;
 do not treat a visible spike as validation.
 
+Use ``--align-active-boundaries`` to split the mesh at active-region endpoints.
+Keep this policy fixed during spatial refinement.
+Use ``--pulse-count 5 --period-ms 25 --duration-ms 130`` for five pulses.
+The default pulse width is 3 ms. Each pulse uses the specified current.
+Repeated spikes alone do not establish agreement with human recordings.
+
+The :download:`causal model <../h01-causal-model.md>` defines measurement
+datums and the nested path from channel gates to circuit behavior.
+It includes a causal diagram and separates measured data from model assumptions.
+The :download:`direct trace figure <../evidence/h01-causal-traces.svg>` shows
+the observed simulation response to conductance changes.
+
 Library callers can use ``braintrace.datasets.h01_active.make_active_cell``
 or build the separate 10 by 10 um reference cylinder with
 ``braintrace.datasets.h01_reference.make_reference_cell``. The latter has
