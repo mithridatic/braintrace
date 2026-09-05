@@ -1,0 +1,239 @@
+{
+  "scope": "Connected max CV 10-to-5 um waveform gate and measured E5 paired edge comparison at dt 0.00125 ms.",
+  "source_sha256": {
+    "disconnected": "8d0359194ef28965b657814723797b9a92a415c6143252db53b1a6b532c7a944",
+    "connected": "1e8835faaff77562fd85d2d205104eba52e0d3ecbce6d8c08f81b9b89ad3e164",
+    "connected_cv10": "2e504d351ff769de7724f6adf92370f00d0444d917cbf5ef1b4328ea6d11de48"
+  },
+  "limits": {
+    "rise_ms": 0.1,
+    "peak_mv": 0.1,
+    "width_ms": 0.01
+  },
+  "connected_waveforms": {
+    "E_voltage": {
+      "cv10": [
+        {
+          "rise_ms": 9.472589131120417,
+          "peak_mv": 50.33804773525635,
+          "width_ms": 1.2126968662852455
+        },
+        {
+          "rise_ms": 14.73124678852664,
+          "peak_mv": 42.606827867542,
+          "width_ms": 1.0398518285136173
+        }
+      ],
+      "cv5": [
+        {
+          "rise_ms": 9.472981571863448,
+          "peak_mv": 50.35645199052672,
+          "width_ms": 1.2125238095515876
+        },
+        {
+          "rise_ms": 14.732104103755155,
+          "peak_mv": 42.6277550367832,
+          "width_ms": 1.039651140449731
+        }
+      ],
+      "count_equal": true,
+      "cv5_minus_cv10": [
+        {
+          "rise_ms": 0.0003924407430311305,
+          "peak_mv": 0.018404255270368708,
+          "width_ms": -0.00017305673365797247
+        },
+        {
+          "rise_ms": 0.0008573152285151764,
+          "peak_mv": 0.02092716924119742,
+          "width_ms": -0.00020068806388628957
+        }
+      ],
+      "within_limits": true
+    },
+    "I_voltage": {
+      "cv10": [
+        {
+          "rise_ms": 4.719492450597875,
+          "peak_mv": 34.235392830950836,
+          "width_ms": 0.765862973193113
+        }
+      ],
+      "cv5": [
+        {
+          "rise_ms": 4.72066059281535,
+          "peak_mv": 34.24675968441114,
+          "width_ms": 0.7658373595340047
+        }
+      ],
+      "count_equal": true,
+      "cv5_minus_cv10": [
+        {
+          "rise_ms": 0.0011681422174749656,
+          "peak_mv": 0.011366853460302195,
+          "width_ms": -2.5613659108358888e-05
+        }
+      ],
+      "within_limits": true
+    },
+    "I_output_voltage": {
+      "cv10": [
+        {
+          "rise_ms": 8.287845173554118,
+          "peak_mv": 28.15239711922203,
+          "width_ms": 0.6282797689104864
+        }
+      ],
+      "cv5": [
+        {
+          "rise_ms": 8.289019382731635,
+          "peak_mv": 28.152683879020934,
+          "width_ms": 0.6282712394580301
+        }
+      ],
+      "count_equal": true,
+      "cv5_minus_cv10": [
+        {
+          "rise_ms": 0.0011742091775168717,
+          "peak_mv": 0.00028675979890380177,
+          "width_ms": -8.529452456329523e-06
+        }
+      ],
+      "within_limits": true
+    }
+  },
+  "all_connected_waveform_limits_pass": true,
+  "paired_physical_metadata_equal_except_edge_and_observed_events": true,
+  "spatial_metadata_equal_except_mesh_cv_ids_and_observed_events": true,
+  "measured_contact_metadata_exact_across_mesh": true,
+  "output_sites": {
+    "E": {
+      "connected": {
+        "source_point": [
+          5438,
+          0.27272727272732095
+        ],
+        "output_cv_id": 6583,
+        "output_midpoint": [
+          5438,
+          0.3409090909091248
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "connected_cv10": {
+        "source_point": [
+          5438,
+          0.27272727272732095
+        ],
+        "output_cv_id": 6107,
+        "output_midpoint": [
+          5438,
+          0.3409090909091248
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      }
+    },
+    "I": {
+      "connected": {
+        "source_point": [
+          974,
+          0.57544612126
+        ],
+        "output_cv_id": 4690,
+        "output_midpoint": [
+          974,
+          0.5549094088595619
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      },
+      "connected_cv10": {
+        "source_point": [
+          974,
+          0.57544612126
+        ],
+        "output_cv_id": 4430,
+        "output_midpoint": [
+          974,
+          0.5549094088595619
+        ],
+        "policy": "nearest membrane CV midpoint on source branch; one output site"
+      }
+    }
+  },
+  "all_arrays_finite": true,
+  "I_paired_arrays_exact": true,
+  "pre_delivery_E_exact": {
+    "E_voltage": true,
+    "E_output_voltage": true,
+    "E_incoming_voltage": true
+  },
+  "disconnected_conductance_zero": true,
+  "delivery_ms": 8.83,
+  "I_events_ms": [
+    8.33
+  ],
+  "E_event_times_ms": {
+    "disconnected": [
+      9.506250000000001,
+      14.7825
+    ],
+    "connected": [
+      9.506250000000001,
+      14.783750000000001
+    ],
+    "connected_cv10": [
+      9.506250000000001,
+      14.783750000000001
+    ]
+  },
+  "E_disconnected_excursions": [
+    {
+      "rise_ms": 9.472981708160676,
+      "peak_mv": 50.35644216047337,
+      "width_ms": 1.2125158444573003
+    },
+    {
+      "rise_ms": 14.73096085162666,
+      "peak_mv": 42.62941107387861,
+      "width_ms": 1.0397183844823576
+    }
+  ],
+  "E_connected_excursions": [
+    {
+      "rise_ms": 9.472981571863448,
+      "peak_mv": 50.35645199052672,
+      "width_ms": 1.2125238095515876
+    },
+    {
+      "rise_ms": 14.732104103755155,
+      "peak_mv": 42.6277550367832,
+      "width_ms": 1.039651140449731
+    }
+  ],
+  "E_connected_minus_disconnected": [
+    {
+      "rise_ms": -1.3629722772634523e-07,
+      "peak_mv": 9.830053350867729e-06,
+      "width_ms": 7.965094287243346e-06
+    },
+    {
+      "rise_ms": 0.001143252128494865,
+      "peak_mv": -0.0016560370954081804,
+      "width_ms": -6.724403262658996e-05
+    }
+  ],
+  "edge_effect_cv5_minus_cv10": [
+    {
+      "rise_ms": 1.2345715560968529e-09,
+      "peak_mv": -9.855300220351637e-08,
+      "width_ms": -1.639554092491835e-08
+    },
+    {
+      "rise_ms": 6.609175379423959e-06,
+      "peak_mv": -4.035618133713115e-05,
+      "width_ms": 1.2902337651610196e-06
+    }
+  ],
+  "first_inward_positive_current_na": 0.06493981463888643,
+  "qualification": "Both controls pass declared waveform limits across max CV 10 and 5 um at dt 0.00125 ms. Small second E onset delay persists; no E spike removed. This diagnostic condition has bounded numerical evidence, not human qualification or default-profile promotion."
+}

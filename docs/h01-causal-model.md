@@ -616,10 +616,16 @@ in the second emitted event. The second interpolated onset delay is 0.001124,
 0.001140, and 0.001137 ms across the three steps. Thus, the edge causes a local
 response and a small onset delay in these discrete runs. It does not remove
 an E spike. Both controls pass the declared waveform limits between the two
-finer steps. Spatial and human-response qualification remain open.
+finer steps. At the finer step, halving maximum compartment length also
+preserves the waveform checks and second onset delay: 0.001137 versus
+0.001143 ms. I stays identical between edge controls, and E matches before
+delivery. The contact coordinates and detector midpoints remain unchanged.
+This gives bounded numerical support for the delay in this diagnostic
+condition. It does not establish spike removal or human-response accuracy.
 [Active E edge comparison](evidence/h01-measured-E5-overlap-paired-audit.json),
 [paired half-step comparison](evidence/h01-measured-E5-overlap-paired-halfdt-audit.json).
 [Paired finer-step comparison](evidence/h01-measured-E5-overlap-paired-quarterdt-audit.json).
+[Paired spatial comparison](evidence/h01-measured-E5-overlap-paired-cv5-audit.json).
 
 ![Direct E soma and receptor responses](evidence/h01-measured-E5-overlap-traces.png)
 
