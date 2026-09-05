@@ -1,0 +1,65 @@
+{
+  "source_file_id": 318665,
+  "sha256": "c7a6f3f26fa78dadfdb9835916cc3a91303833c50dcffec318c8754a61e64972",
+  "selection": "species H, frequency 40 Hz",
+  "n_rows": 36,
+  "first_AP_features": {
+    "upstroke_ 1 (mV/ms)": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        309.7864140592177,
+        378.1895103071972,
+        446.2284445241469
+      ]
+    },
+    "downstroke_ 1 (mV/ms)": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        -106.84269877153395,
+        -76.07215575073627,
+        -66.27345682395921
+      ]
+    },
+    "HWs_ 1": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        0.7104999999999961,
+        0.8840000000000146,
+        1.0444999999999993
+      ]
+    },
+    "thresh_ 1": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        -49.04687309265137,
+        -44.68674087524414,
+        -38.80428695678711
+      ]
+    },
+    "amplitude_ 1": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        82.89366722106934,
+        92.05622482299805,
+        96.42745208740234
+      ]
+    },
+    "ahp_ 1": {
+      "n": 36,
+      "quantiles_10_50_90": [
+        -65.58957717304364,
+        -61.81133188800624,
+        -50.00054920772335
+      ]
+    }
+  },
+  "derived_peak_mv": {
+    "definition": "per-row threshold + threshold-relative amplitude",
+    "quantiles_10_50_90": [
+      40.6444091796875,
+      46.18614959716797,
+      52.44234657287598
+    ]
+  },
+  "warning": "Raw amplitude column is threshold-relative, not peak voltage. Quantiles are descriptive; not a pre-established validation gate."
+}

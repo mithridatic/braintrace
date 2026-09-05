@@ -259,11 +259,47 @@ is not an accuracy certificate; compare against a control and qualify numerical
 accuracy for your experiment. Library helpers respect the caller's precision
 environment and do not change it globally.
 
+The active-model investigation subsequently reproduced an integer initialization
+issue: ``V_init=-65 * u.mV`` created an integer state. The helper now uses
+``-65.0 * u.mV``. Repeating the annotated 64-bit zero-input control after this
+fix gave maximum rest error 7.86e-11 mV over 1 ms at dt=0.025 ms. The earlier
+records above remain historical evidence; the corrected result is in
+``docs/evidence/h01-active-rest-float64.json``. This check does not establish
+long-duration or active-model numerical accuracy.
+
 Annotation data come from ``proofread_104/segment_properties/info`` and
 ``proofread_104/synapse_locations.csv`` in the official release bucket.
 Downloads validate pinned SHA-256 values after transport decompression and
 stage each asset before replacement. Corrupt caches raise. Source verification
 status is recorded separately from proofread morphology status.
+
+Experimental active transfer (qualification pending)
+---------------------------------------------------
+
+The active-model work adds Wilbers 2023 human sodium and mixed potassium
+kinetics. These are borrowed human population models, not measurements of
+the H01 donor cells. The default conductances are source-script starting
+values; they are not a completed physiological fit.
+
+.. code-block:: shell
+
+   python -m braintrace.datasets.h01_active --archive ./data/h01/104_proofread_neurons_swc.zip --annotations ./data/h01 --active-radius-um 10 --current-na 0.5 --output ./active-run.json
+
+The required radius explicitly chooses a neighborhood along the cable from
+the largest-radius soma-labelled sample. This is an inferred active region,
+not a verified soma or AIS boundary. The rest of the morphology is passive.
+The command runs in 64-bit precision, uses compiled ``Cell.run``, and saves
+source identity, assumptions, electrical parameters and the voltage trace.
+Numerical and biological qualification are still in progress. In particular,
+the default 10 um maximum CV length is not spatially converged for the current
+experimental transfer. Use ``--max-cv-length-um`` and ``--dt-ms`` for refinement;
+do not treat a visible spike as validation.
+
+Library callers can use ``braintrace.datasets.h01_active.make_active_cell``
+or build the separate 10 by 10 um reference cylinder with
+``braintrace.datasets.h01_reference.make_reference_cell``. The latter has
+an independent numerical oracle test; it is not H01 anatomy. Neither entry
+point implements an inhibitory neuron or a connected circuit yet.
 
 Provenance and license
 ---------------------

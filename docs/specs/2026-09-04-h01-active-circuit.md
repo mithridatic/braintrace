@@ -1,0 +1,139 @@
+# Active H01 cells and a small E/I circuit
+
+Status: implementation and qualification pending. User authorized the staged
+single-cell then circuit approach. Work remains on feat/h01-braincell.
+
+## Objective
+
+Build and validate an active H01 human cortical neuron model, then use
+validated excitatory and inhibitory cell models in a small spiking circuit.
+Constrain behavior with published human electrophysiology. Use H01 connectivity
+only where source identity mapping is reliable; explicitly identify inferred
+wiring, borrowed dynamics, and measured geometry separately.
+
+## Approach
+
+1. Pin and inspect Wilbers 2023 released channel mechanisms and experimental
+   targets (Dataverse doi:10.34894/L5J0SD). Reproduce channel rate curves and
+   reference single-compartment responses before transfer to H01.
+2. Investigate the passive H01 equilibrium error with a reproducing test;
+   validate electrical discretization and soma/AIS placement rather than
+   treating sparse annotation samples as complete compartment boundaries.
+3. Implement an explicit active H01 configuration. Preserve the source
+   morphology and record every inferred electrical region and parameter.
+   Demonstrate threshold, waveform, repeated firing and numerical convergence.
+4. Select a published inhibitory model with an explicit species/type and
+   electrophysiological validation basis. Do not relabel pyramidal kinetics
+   as an inhibitory model merely by changing output sign.
+5. Audit H01 partner-ID/connectivity availability. Build a small E/I circuit
+   using supported links or explicitly illustrative wiring. Demonstrate
+   synaptic causality with disconnected, excitatory and inhibitory controls.
+
+## Required evidence
+
+- Source URLs, versions, file hashes, units, temperature, voltage-reference
+  conventions, conductance interpretation and any corrected source behavior.
+- Channel edge cases: removable singularities, extreme voltages, gate bounds,
+  initialization and temperature scaling; cross-check against independent
+  reference equations or simulator outputs.
+- Single-cell rest, threshold current, AP amplitude/width, firing response and
+  adaptation/recovery where supported by the selected data. Numerical agreement
+  alone is not biological validation. Separate reference-model reproduction
+  from H01 transfer and held-out electrophysiological validation.
+- Time-step and spatial refinement, finite outputs and explicit equilibrium
+  tolerance. Record actual results and failures; do not loosen gates silently.
+- Circuit excitation/inhibition and delay behavior with isolated-cell and
+  removed-connection controls. No unsupported reconstruction claim.
+- Co-located meaningful tests exceeding 90% coverage for changed production
+  modules, reusable installed-package entry points and a documented runnable
+  demonstration. Compiled brainstate loops for repeated simulation.
+
+## Boundaries
+
+H01 does not provide electrophysiology from the imported neurons. A successful
+transfer is human-constrained dynamics on measured anatomy, not validation of
+the exact donor cell. Do not imply whole-brain, learning-rule, or Example 21
+qualification. A new solver is warranted only by a demonstrated limitation.
+No merge/publication is implied by this goal.
+
+## Progress and qualification ledger
+
+The goal is NOT complete. Current evidence establishes a source-specific channel
+port and an experimental H01 spike, not validated human circuit behavior.
+
+- Implemented human sodium and mixed potassium gates from pinned Dataverse
+  files 318563/318566. Preserved temperature, conductance and voltage conventions.
+  Corrected removable-singularity evaluation without changing ordinary-voltage
+  algebra. Regression tests cover float32 gradient overflow and the analytic limit.
+- Corrected the new channels' initialization: inherited HH initialization used
+  zero gates, unlike the source equilibrium initialization. Reproducing tests
+  initially failed; corrected reference cell now repolarizes after stimulation.
+- Reproduced integer initial voltage in the existing H01 helper. Changed
+  -65 to -65.0 mV; the same annotated zero-input real H01 run now has maximum
+  rest error 7.86e-11 mV (64 bit, 1 ms, dt .025 ms). Historical drift evidence
+  is retained, with the correction explained in the usage guide.
+- Independent scalar SciPy DOP853 reference, without importing production rate
+  functions: at dt .00125 ms BrainCell maximum waveform error .194 mV, RMS .0209
+  mV and final error below .002 mV. Waveform error at .005 ms was .792 mV.
+  This is numerical reproduction, not an experimental validation result.
+- H01 810151953.0 soma labels span 119.872 x 143.744 x 145.662 um; the strict
+  AIS region is empty. Added explicitly inferred geodesic neighborhoods rather
+  than equating all these sparse labels to a complete active soma/AIS region.
+- First H01 transfer: inferred 10 um active neighborhood, remaining cable passive,
+  max CV length 10 um, 3151 CVs, dt .005 ms, 20 ms. Default borrowed densities
+  produce a subthreshold response at .2 nA and +28.15 mV at .5 nA (3 ms pulse).
+  Removing sodium at .5 nA limits voltage to -23.50 mV. This is functional
+  spike/channel-causality evidence, not physiological qualification.
+- Exploratory H01 densities 25/10 mS/cm2 give peak 46.57 mV, threshold -42.15 mV,
+  source-defined rise/fall rates 535.5/-61.6 mV/ms and halfwidth .755 ms.
+  These do not yet match all human targets. Do not select parameters on peak alone.
+- Feature convention correction: the source fitting routine uses average
+  30-70% rise/fall rates and a 40 mV/ms threshold. Earlier exploratory maximum
+  derivative comparisons are not the same metric. Using the source extractor,
+  the reference compartment gives peak 51.85, threshold -43.64, rise/fall
+  399.5/-84.2 and approximate threshold-relative halfwidth .8675 ms.
+- Human target medians in source AP1comparison.csv: peak 46.186 mV, threshold
+  -44.687 mV, rise/fall 378.190/-76.072 mV/ms, halfwidth .884 ms. Match pulse
+  protocol and feature conventions before using these as calibration gates.
+
+## Remaining work
+
+1. Complete H01 time/spatial refinement, settled-rest and repeated-firing checks.
+   Establish explicit physiological acceptance intervals and calibration/held-out
+  protocols; address AIS placement and active region sensitivity.
+   Initial refinement evidence: halving dt from .005 to .0025 ms changes the
+   exploratory 25/10 density peak from 46.569 to 46.643 mV. Halving maximum
+   CV length from 10 to 5 um changes it to 43.770 mV (3233 CVs). Spatial
+   convergence is not established; further refinement is required before
+   calibrating against human waveform features. Current dataset suite:
+   97 passed, 99.86% coverage; these tests are not the full biological gate.
+   The 2.5 um / .0025 ms run has 4087 CVs and peak 42.555 mV; convergence
+   remains pending. An installed wheel successfully ran the reference cylinder
+   from an isolated Python process outside the source import path. The new
+   active-transfer CLI records source assumptions and full traces. These
+   package checks do not qualify the inhibitory or circuit components.
+   At 1.25 um / .0025 ms (6019 CVs), peak is 41.707 mV, source-defined
+   rise/fall rates 430.76/-42.82 mV/ms, threshold -40.711 mV. The falling
+   phase remains too slow relative to the human reference distribution;
+   peak matching alone is insufficient. Next refinement must hold dt fixed.
+   Raw data_fig1.xlsx was downloaded as file 318665. Descriptive 40 Hz human
+   first-AP distributions are saved in h01-human-40hz-targets.json (36 rows,
+   not asserted to be 36 independent neurons). Raw amplitude is relative
+   to threshold; per-row amplitude+threshold reproduces the published CSV
+   median peak 46.18614959716797 mV. These quantiles are descriptive, not
+   retrospectively selected acceptance gates.
+2. Select and reproduce an inhibitory model. Candidate: human putative-PV model
+   in ModelDB 267587, commit 82cdd91bc93942ba19315371330a2412e064baf5. Its
+   paper uses Allen neuron 528687520 recordings. The source has detailed NaTg,
+   Nap, K_P, K_T, Kv3_1, Im, SK, Ca_HVA/LVA and Ih currents; it is NOT yet ported
+   or validated here. Source repository GPL-3.0; no source code incorporated.
+3. Audit reliable H01 connection-ID mapping, implement the small circuit and
+   verify isolated/disconnected/excitatory/inhibitory controls and delays.
+4. Complete package/demo documentation, installed-wheel validation and worktree
+   closeout. No learning or Example 21 changes are authorized by this milestone.
+
+Sources:
+- https://doi.org/10.34894/L5J0SD (API accessible; pinned manifest in evidence)
+- https://doi.org/10.1126/sciadv.ade3300
+- https://modeldb.science/267587
+- https://doi.org/10.1093/cercor/bhac348

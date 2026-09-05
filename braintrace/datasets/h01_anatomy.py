@@ -219,6 +219,57 @@ class H01Anatomy:
         row = sorted(soma, key=lambda r: (-r[5], r[0]))[0]
         return self.location(int(row[0]))
 
+    def cable_neighborhood(self, node_id, *, radius_um):
+        """Select a geodesic cable neighborhood as an explicit model assumption.
+
+        Parameters
+        ----------
+        node_id : int
+            Original source sample at the center of the neighborhood.
+        radius_um : float
+            Positive distance along the cable, in micrometers.
+
+        Returns
+        -------
+        RegionExpr
+            Geometry-bound intervals. This is not an anatomical classification;
+            it may include unclassified or differently labelled samples.
+
+        Notes
+        -----
+        Distance follows the connected source tree, not straight-line spatial
+        proximity. Branches close in space do not become connected by selection.
+        """
+        if not np.isfinite(radius_um) or radius_um <= 0:
+            raise ValueError("radius_um must be positive and finite.")
+        rows = self.imported.source_rows
+        ids = {int(row[0]): i for i, row in enumerate(rows)}
+        anchor = ids[node_id]
+        adjacency = [[] for _ in rows]
+        lengths = np.sqrt(self._length2)
+        for (a, b), length in zip(self._endpoints, lengths):
+            adjacency[a].append((b, length))
+            adjacency[b].append((a, length))
+        distance = np.full(len(rows), np.inf)
+        distance[anchor] = 0.
+        stack = [anchor]
+        while stack:
+            a = stack.pop()
+            for b, length in adjacency[a]:
+                if np.isinf(distance[b]):
+                    distance[b] = distance[a] + length
+                    stack.append(b)
+        intervals = []
+        for (a, b), length, branch, (lo, hi) in zip(self._endpoints, lengths, self._branches, self._fractions):
+            if distance[a] < distance[b]:
+                left, right = 0., np.clip((radius_um-distance[a])/length, 0., 1.)
+            else:
+                left, right = 1-np.clip((radius_um-distance[b])/length, 0., 1.), 1.
+            if right > left:
+                intervals.append((int(branch), float(lo+left*(hi-lo)), float(lo+right*(hi-lo))))
+        return _Region(self._signature, tuple(intervals),
+                       f"inferred_geodesic_neighborhood:node={node_id},radius_um={radius_um}")
+
     def region(self, label, *, policy="strict"):
         """Select cable intervals using an explicit annotation boundary policy.
 

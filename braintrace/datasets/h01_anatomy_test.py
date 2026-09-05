@@ -49,6 +49,20 @@ def test_source_identity_and_soma_not_root(imported):
         anatomy.locations("somaa")
 
 
+def test_geodesic_neighborhood_follows_branches_and_cuts_edges(imported):
+    anatomy = imported.anatomy()
+    assert _region_length(imported, anatomy.cable_neighborhood(30, radius_um=1.)) == pytest.approx(2.)
+    assert _region_length(imported, anatomy.cable_neighborhood(30, radius_um=4.8)) == pytest.approx(11.2)
+    region = anatomy.cable_neighborhood(30, radius_um=100.)
+    assert _region_length(imported, region) == pytest.approx(16.)
+    assert "inferred_geodesic" in region.policy
+    with pytest.raises(KeyError):
+        anatomy.cable_neighborhood(999, radius_um=1.)
+    for invalid in (0., -1., np.nan, np.inf):
+        with pytest.raises(ValueError, match="positive and finite"):
+            anatomy.cable_neighborhood(30, radius_um=invalid)
+
+
 def test_region_policies_preserve_unknown_and_geometry(imported):
     anatomy = imported.anatomy()
     assert _region_length(imported, anatomy.region("soma")) == pytest.approx(3.2)

@@ -44,7 +44,7 @@ def make_passive_cell(imported, *, current_na=0.001, duration_ms=1.0, cv_policy=
 
     if not np.isfinite(current_na) or not np.isfinite(duration_ms) or duration_ms <= 0:
         raise ValueError("Current must be finite and duration must be positive and finite.")
-    cell = braincell.Cell(imported.morphology, cv_policy=cv_policy, V_init=-65 * u.mV)
+    cell = braincell.Cell(imported.morphology, cv_policy=cv_policy, V_init=-65.0 * u.mV)
     cell.paint(AllRegion(), braincell.CableProperty(
         resting_potential=-65 * u.mV,
         membrane_capacitance=1.0 * u.uF / u.cm**2,

@@ -11,6 +11,13 @@ from . import h01_demo, h01
 from .h01_test import _archive
 
 
+def test_passive_initial_voltage_is_floating_point(tmp_path, monkeypatch):
+    path, _ = _archive(tmp_path, monkeypatch)
+    cell = h01_demo.make_passive_cell(h01.H01Archive(path).load(12, component=0))
+    cell.init_state()
+    assert np.issubdtype(cell.V.value.dtype, np.floating)
+
+
 @pytest.mark.parametrize("download", [False, True])
 def test_cli_runs_and_writes_reproducible_evidence(tmp_path, monkeypatch, capsys, download):
     path, _ = _archive(tmp_path, monkeypatch)
