@@ -63,11 +63,25 @@ The [real H01 pulse run](evidence/h01-ei-defaults-response.json) completed
 produced subthreshold responses; neither cell crossed 0 mV. This demonstrates
 execution of the selected profiles, not spiking or E/I circuit behavior.
 
-The connected diagnostic circuit is available through
-`h01_ei_circuit.make_h01_ei_circuit` and `examples.h01_ei_circuit`. It uses
-explicit illustrative contacts, not measured H01 partner pairs. A matched
-projection-removal control verifies real H01 E-to-I delivery. The I cell does
-not fire under that input, so inhibitory feedback remains unverified.
+The circuit builder `h01_ei_circuit.make_h01_ei_circuit` and the example
+`examples.h01_ei_circuit` now default to measured I-to-E annotation `8105899`.
+They use component 0 of interneuron `5584343344` and pyramidal cell `4157825456`.
+Both endpoint identities were checked in C3 and proofread segmentation volumes.
+The contact maps to their connected cable components. The circuit contains
+only this directed contact. Its conductance, delay, and receptor kinetics are
+borrowed assumptions. The selected channel profiles above remain unchanged.
+
+The presynaptic output is the membrane CV nearest the measured axon endpoint.
+The receptor is placed at the projected postsynaptic endpoint. Source hashes
+and placement checks reject unrelated components or changed contact geometry.
+The default stimulus drives both somas with 1 nA from 2 to 5 ms. This is a model
+input, not an H01 recording. Actual spiking and inhibitory delivery validation
+remain open. See the [contact evidence](evidence/h01-ie-measured-contact.json).
+
+Use `--control disconnected` with the same settings for the edge-removal
+control. `e_only` has no edge in this measured pair. No reciprocal E-to-I
+connection is asserted. The previous two-cell reciprocal diagnostic is
+available with `--connectivity illustrative`; it uses its original cell pair.
 
 Remaining gates include full spike-response transfer, human waveform checks,
 qualified H01 I spikes, and circuit robustness. Selected first-burst and H01

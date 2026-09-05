@@ -12,7 +12,7 @@ from .h01_ei_circuit import make_h01_ei_circuit
 
 def arguments(imported):
     soma = imported.anatomy().cable_neighborhood(30, radius_um=2.)
-    return dict(components={"E": imported, "I": replace(imported, neuron_id="13")},
+    return dict(connectivity="illustrative", components={"E": imported, "I": replace(imported, neuron_id="13")},
         annotations=SimpleNamespace(metadata=lambda nid: SimpleNamespace(tags=("pyramidal",) if nid == "12" else ("interneuron",))),
         regions={r: {"soma": soma, "axon": AllRegion()-soma} for r in ("E", "I")},
         region_basis={r: "Synthetic fixture partition, not a measured circuit." for r in ("E", "I")})
@@ -70,11 +70,18 @@ def test_e_event_drives_i_conductance_and_voltage_after_delay(imported):
     assert not isolated["g"].any()
 
 
-def test_i_event_changes_e_voltage_with_reversal_driving_force(imported):
+@pytest.mark.parametrize("connectivity", ["illustrative", "measured"])
+def test_i_event_changes_e_voltage_with_reversal_driving_force(imported, monkeypatch, connectivity):
     traces = {}
+    args = arguments(imported)
+    args["connectivity"] = connectivity
+    if connectivity == "measured":
+        from . import h01_ei_circuit as module
+        location = imported.anatomy().location(30)
+        monkeypatch.setattr(module, "measured_ie_contact", lambda _: (location, location, {"annotation_id": "fixture"}))
     with brainstate.environ.context(precision=64):
         for control in ("disconnected", "i_only"):
-            network, _ = make_h01_ei_circuit(**arguments(imported), control=control,
+            network, _ = make_h01_ei_circuit(**args, control=control,
                 currents_na={"E": 1., "I": 1.}, inhibitory_weight_us=.0001, delay_ms=.1)
             result = network.run(dt=.001*u.ms, duration=4.*u.ms, spike_recording="population")
             traces[control] = {"v": np.asarray(result.traces["E"]["voltage"].to_decimal(u.mV)).ravel(),
@@ -90,3 +97,29 @@ def test_i_event_changes_e_voltage_with_reversal_driving_force(imported):
     assert isolated["v"][first] > -80., "This suppression test requires voltage above I reversal."
     assert connected["v"][first+1] < isolated["v"][first+1]
     assert not isolated["g"].any()
+
+
+def test_measured_default_rejects_unrelated_components(imported):
+    args = arguments(imported)
+    del args['connectivity']
+    with pytest.raises(ValueError, match='pinned'):
+        make_h01_ei_circuit(**args)
+
+
+@pytest.mark.parametrize('control,count', [('ei', 1), ('i_only', 1), ('e_only', 0), ('disconnected', 0)])
+def test_measured_topology_has_only_source_supported_direction(imported, monkeypatch, control, count):
+    from . import h01_ei_circuit as module
+    args = arguments(imported)
+    args['connectivity'] = 'measured'
+    location = imported.anatomy().location(30)
+    monkeypatch.setattr(module, 'measured_ie_contact', lambda _: (location, location, {'annotation_id': 'fixture'}))
+    with brainstate.environ.context(precision=64):
+        network, evidence = make_h01_ei_circuit(**args, control=control)
+        assert len(network.projections) == count
+        assert evidence['inferred_contacts'] == []
+        assert len(evidence['measured_contacts']) == 1
+        contact = evidence['measured_contacts'][0]
+        assert (contact['pre'], contact['post']) == ('I', 'E')
+        assert contact['enabled'] == bool(count)
+        result = network.run(dt=.001*u.ms, duration=.003*u.ms)
+        assert np.isfinite(result.traces['E']['voltage'].to_decimal(u.mV)).all()

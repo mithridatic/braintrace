@@ -31,6 +31,15 @@ The interneuron label does not identify a PV subtype. The assigned electrical
 regions and PV dynamics remain model assumptions. Neither a cell tag nor a
 synapse position supplies a missing partner identity.
 
+The circuit topology sets which cell can supply synaptic current to another
+cell. A wrong partner assignment changes that causal path, even when the
+channel equations are correct. Proofread-cell IDs and C3 segment IDs are
+different identity systems. A measured edge needs a checked mapping from
+each synapse endpoint to its cell. The proofreading archive supplies base
+segment membership; the synapse export supplies endpoint base IDs. Spatial
+checks must also resolve cut or ambiguous segments. These records establish
+anatomical support. They do not measure synaptic conductance or delay.
+
 A direct observation retains location, time, input, and response.
 A firing rate or spike count cannot explain a voltage trajectory.
 Equal counts can conceal different spike times. Equal peaks can conceal different
@@ -480,9 +489,9 @@ flowchart TD
 | A9 | Slower somatic calcium removal | Later intervals lengthen; first peak and minimum unchanged; first interval still too short | [layer-2 removal split](evidence/h01-l2-calcium-removal-result.md) |
 | FAM | Search Dissection over five families, cap 24 | Stage 0: coarse mesh changes five phase measurements by more than one fifth of the smallest contrast; rejected as a search setting | [campaign spec](specs/2026-09-05-h01-l2-family-campaign.md), [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json), [manifest](evidence/h01-l2-campaign-manifest.json) |
 
-## Y5. Synaptic delivery in the H01 pair
+## Y5. Synaptic delivery in the illustrative H01 pair
 
-**Behavior.** In the tested H01 pair, an E output event is followed by a
+**Behavior.** In the prior illustrative pair (`810151953`, `678539249`), an E output event is followed by a
 delayed conductance increase and a voltage rise in I, and I does not fire. With
 the I model using the source closing-time restoration, an I event is followed
 by an earlier fall and a later spike in E.
@@ -529,6 +538,24 @@ flowchart TD
 | E1 | Remove only the E-to-I projection | Conductance and voltage rise removed; no I event either way | [E delivery audit](evidence/h01-ei-circuit-e-delivery-audit.json) |
 | I1 | Remove only the I-to-E projection | E fires earlier without inhibition; delay persists at both steps | [I delivery audit](evidence/h01-i-restored-circuit-delivery-audit.json) |
 | F1 | Both contacts, both cells driven | Delayed E event delays excitation at I; I fires before E input arrives | [four-control audit](evidence/h01-i-restored-four-control-audit.json) |
+
+The measured default uses a different pair: I `5584343344` to E `4157825456`.
+Its source endpoint identities and cable placements are checked. Those checks
+establish the anatomical path, not its physiological response. The delivery
+results above must not be transferred to this pair without a direct test.
+The synthetic wiring fixture confirms the same implementation rule: with E
+above the inhibitory reversal potential, a delivered conductance lowers E
+voltage; removing only the edge removes that effect. Real-cell firing,
+propagation to the axon contact, and full numerical qualification remain open.
+
+```mermaid
+flowchart LR
+    A[I voltage at the source axon contact] --> B[Modeled output event]
+    B --> C[Borrowed transmission delay]
+    C --> D[Conductance at the source E contact]
+    D --> E[Current set by conductance and reversal potential]
+    E --> F[E voltage response: direct validation open]
+```
 
 ## Measurement function qualification
 

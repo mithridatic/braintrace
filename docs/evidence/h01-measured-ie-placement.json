@@ -1,0 +1,48 @@
+[
+  {
+    "cell": "5584343344",
+    "component": 0,
+    "source_sha256": "53de2bec08c12096f742ecc01fca1293f24f3a09637558f9bf86ac4edb6a4f92",
+    "endpoint_um": [
+      2096.504,
+      1686.584,
+      142.395
+    ],
+    "projection_status": "projected",
+    "distance_um": 0.1556592538234353,
+    "location": "LocsetMask(points=((974, 0.5754461212601991),), display_names=('h01_974_0.575446121',))",
+    "soma_present": 46,
+    "labels": {
+      "astrocyte": 40,
+      "axon": 3597,
+      "axon_initial_segment": 36,
+      "dendrite": 3488,
+      "myelinated_axon": 296,
+      "soma": 46,
+      "unclassified": 30754
+    }
+  },
+  {
+    "cell": "4157825456",
+    "component": 0,
+    "source_sha256": "d49c452524cf7c35ded56a1ef55ebf205e00573ea11b2a9204060362777d40ce",
+    "endpoint_um": [
+      2096.432,
+      1686.528,
+      142.395
+    ],
+    "projection_status": "projected",
+    "distance_um": 0.13310219168119006,
+    "location": "LocsetMask(points=((2805, 0.9324765948060457),), display_names=('h01_2805_0.932476595',))",
+    "soma_present": 101,
+    "labels": {
+      "astrocyte": 9,
+      "axon": 1662,
+      "axon_initial_segment": 80,
+      "dendrite": 7082,
+      "myelinated_axon": 254,
+      "soma": 101,
+      "unclassified": 37181
+    }
+  }
+]

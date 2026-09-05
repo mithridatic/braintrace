@@ -1,0 +1,8539 @@
+{
+  "scope": "Candidate IDs only. Matching C3 and proofread IDs was used to query candidates, not to establish identity. Endpoint labels are from the proofread volume. Missing chunks are background zero.",
+  "records": [
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "138257826",
+      "pre_voxel": [
+        353936.0,
+        185861.0,
+        944.0
+      ],
+      "post_voxel": [
+        353933.0,
+        185873.0,
+        937.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "63501553",
+      "pre_voxel": [
+        353517.0,
+        185811.0,
+        1567.0
+      ],
+      "post_voxel": [
+        353509.0,
+        185798.0,
+        1567.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "59725215",
+      "pre_voxel": [
+        354094.0,
+        184562.0,
+        174.0
+      ],
+      "post_voxel": [
+        354082.0,
+        184561.0,
+        174.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "108929188",
+      "pre_voxel": [
+        353577.0,
+        185960.0,
+        1448.0
+      ],
+      "post_voxel": [
+        353587.0,
+        185954.0,
+        1448.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "19473899",
+      "pre_voxel": [
+        354135.0,
+        185324.0,
+        474.0
+      ],
+      "post_voxel": [
+        354124.0,
+        185328.0,
+        474.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5061320552",
+      "annotation_id": "49653220",
+      "pre_voxel": [
+        354155.0,
+        185061.0,
+        358.0
+      ],
+      "post_voxel": [
+        354157.0,
+        185074.0,
+        358.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5061320552",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3470629528",
+      "annotation_id": "63120462",
+      "pre_voxel": [
+        205828.0,
+        168426.0,
+        69.0
+      ],
+      "post_voxel": [
+        205856.0,
+        168412.0,
+        68.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3470629528",
+      "annotation_id": "147126954",
+      "pre_voxel": [
+        212152.0,
+        164687.0,
+        994.0
+      ],
+      "post_voxel": [
+        212145.0,
+        164696.0,
+        994.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3470629528",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2252715458",
+      "annotation_id": "102920372",
+      "pre_voxel": [
+        380973.0,
+        122017.0,
+        1146.0
+      ],
+      "post_voxel": [
+        380970.0,
+        122006.0,
+        1146.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2252715458",
+      "annotation_id": "111184985",
+      "pre_voxel": [
+        380890.0,
+        122152.0,
+        1205.0
+      ],
+      "post_voxel": [
+        380886.0,
+        122160.0,
+        1205.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2252715458",
+      "annotation_id": "114265816",
+      "pre_voxel": [
+        380868.0,
+        122175.0,
+        1404.0
+      ],
+      "post_voxel": [
+        380875.0,
+        122163.0,
+        1404.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2252715458",
+      "annotation_id": "14301965",
+      "pre_voxel": [
+        378318.0,
+        132197.0,
+        1029.0
+      ],
+      "post_voxel": [
+        378310.0,
+        132204.0,
+        1029.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4188575291",
+      "annotation_id": "69191972",
+      "pre_voxel": [
+        336232.0,
+        181127.0,
+        1376.0
+      ],
+      "post_voxel": [
+        336246.0,
+        181125.0,
+        1376.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4188575291",
+      "annotation_id": "35534752",
+      "pre_voxel": [
+        336012.0,
+        181043.0,
+        1381.0
+      ],
+      "post_voxel": [
+        336017.0,
+        181037.0,
+        1381.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4188575291",
+      "annotation_id": "136626928",
+      "pre_voxel": [
+        333692.0,
+        183464.0,
+        1444.0
+      ],
+      "post_voxel": [
+        333688.0,
+        183451.0,
+        1444.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4188575291",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4188575291",
+      "annotation_id": "24875726",
+      "pre_voxel": [
+        410488.0,
+        111294.0,
+        3788.0
+      ],
+      "post_voxel": [
+        410478.0,
+        111278.0,
+        3788.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4188575291",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "35293813",
+      "pre_voxel": [
+        419452.0,
+        212928.0,
+        494.0
+      ],
+      "post_voxel": [
+        419460.0,
+        212933.0,
+        494.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "5805562981"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "29974484",
+      "pre_voxel": [
+        414804.0,
+        214499.0,
+        806.0
+      ],
+      "post_voxel": [
+        414815.0,
+        214499.0,
+        806.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "83095983",
+      "pre_voxel": [
+        410073.0,
+        210466.0,
+        251.0
+      ],
+      "post_voxel": [
+        410056.0,
+        210474.0,
+        249.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "148856671",
+      "pre_voxel": [
+        417416.0,
+        213781.0,
+        800.0
+      ],
+      "post_voxel": [
+        417401.0,
+        213793.0,
+        800.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "17229367",
+      "pre_voxel": [
+        421691.0,
+        211258.0,
+        369.0
+      ],
+      "post_voxel": [
+        421682.0,
+        211251.0,
+        369.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "128890741",
+      "pre_voxel": [
+        407723.0,
+        205965.0,
+        596.0
+      ],
+      "post_voxel": [
+        407711.0,
+        205961.0,
+        596.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "8041538",
+      "pre_voxel": [
+        409254.0,
+        207194.0,
+        193.0
+      ],
+      "post_voxel": [
+        409250.0,
+        207185.0,
+        192.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "21635804",
+      "pre_voxel": [
+        405443.0,
+        199374.0,
+        1229.0
+      ],
+      "post_voxel": [
+        405446.0,
+        199386.0,
+        1229.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "74734879",
+      "pre_voxel": [
+        410575.0,
+        211895.0,
+        195.0
+      ],
+      "post_voxel": [
+        410572.0,
+        211907.0,
+        195.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "1892458",
+      "pre_voxel": [
+        404500.0,
+        197183.0,
+        1392.0
+      ],
+      "post_voxel": [
+        404493.0,
+        197187.0,
+        1392.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "39236689",
+      "pre_voxel": [
+        405580.0,
+        200145.0,
+        1343.0
+      ],
+      "post_voxel": [
+        405570.0,
+        200151.0,
+        1343.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "130458982",
+      "pre_voxel": [
+        407654.0,
+        205034.0,
+        832.0
+      ],
+      "post_voxel": [
+        407654.0,
+        205023.0,
+        832.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "131308461",
+      "pre_voxel": [
+        406506.0,
+        201318.0,
+        1230.0
+      ],
+      "post_voxel": [
+        406513.0,
+        201308.0,
+        1230.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "14263256",
+      "pre_voxel": [
+        419386.0,
+        212900.0,
+        499.0
+      ],
+      "post_voxel": [
+        419375.0,
+        212896.0,
+        499.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "125195115",
+      "pre_voxel": [
+        414227.0,
+        214761.0,
+        901.0
+      ],
+      "post_voxel": [
+        414225.0,
+        214756.0,
+        901.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "84245604",
+      "pre_voxel": [
+        422024.0,
+        210592.0,
+        280.0
+      ],
+      "post_voxel": [
+        422026.0,
+        210582.0,
+        280.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "133346279",
+      "pre_voxel": [
+        421172.0,
+        211708.0,
+        396.0
+      ],
+      "post_voxel": [
+        421170.0,
+        211720.0,
+        396.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "55134322",
+      "pre_voxel": [
+        411097.0,
+        212860.0,
+        145.0
+      ],
+      "post_voxel": [
+        411094.0,
+        212847.0,
+        145.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "30849497",
+      "pre_voxel": [
+        414980.0,
+        214547.0,
+        878.0
+      ],
+      "post_voxel": [
+        414976.0,
+        214558.0,
+        878.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "51433083",
+      "pre_voxel": [
+        406506.0,
+        201475.0,
+        1193.0
+      ],
+      "post_voxel": [
+        406511.0,
+        201492.0,
+        1193.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "72613541",
+      "pre_voxel": [
+        417797.0,
+        213453.0,
+        754.0
+      ],
+      "post_voxel": [
+        417791.0,
+        213443.0,
+        754.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5805562981",
+      "annotation_id": "73155551",
+      "pre_voxel": [
+        406541.0,
+        201455.0,
+        1222.0
+      ],
+      "post_voxel": [
+        406525.0,
+        201453.0,
+        1222.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5805562981",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1830470325",
+      "annotation_id": "3638174",
+      "pre_voxel": [
+        379128.0,
+        87369.0,
+        421.0
+      ],
+      "post_voxel": [
+        379122.0,
+        87367.0,
+        421.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "810151953",
+      "annotation_id": "33706481",
+      "pre_voxel": [
+        340613.0,
+        60717.0,
+        431.0
+      ],
+      "post_voxel": [
+        340624.0,
+        60722.0,
+        431.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1874244336",
+      "annotation_id": "106164728",
+      "pre_voxel": [
+        369145.0,
+        110620.0,
+        1311.0
+      ],
+      "post_voxel": [
+        369158.0,
+        110609.0,
+        1306.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1874244336",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1874244336",
+      "annotation_id": "10776816",
+      "pre_voxel": [
+        363249.0,
+        120146.0,
+        640.0
+      ],
+      "post_voxel": [
+        363260.0,
+        120147.0,
+        640.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1874244336",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1874244336",
+      "annotation_id": "49299582",
+      "pre_voxel": [
+        368230.0,
+        110108.0,
+        1251.0
+      ],
+      "post_voxel": [
+        368219.0,
+        110109.0,
+        1251.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1874244336",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4467761196",
+      "annotation_id": "15258264",
+      "pre_voxel": [
+        451975.0,
+        166425.0,
+        457.0
+      ],
+      "post_voxel": [
+        451977.0,
+        166437.0,
+        457.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4467761196",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "3654171",
+      "pre_voxel": [
+        254547.0,
+        160797.0,
+        940.0
+      ],
+      "post_voxel": [
+        254540.0,
+        160805.0,
+        940.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "35802117",
+      "pre_voxel": [
+        252086.0,
+        160849.0,
+        236.0
+      ],
+      "post_voxel": [
+        252081.0,
+        160860.0,
+        236.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "58305890",
+      "pre_voxel": [
+        251303.0,
+        170132.0,
+        543.0
+      ],
+      "post_voxel": [
+        251317.0,
+        170125.0,
+        543.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "80649184",
+      "pre_voxel": [
+        254343.0,
+        161014.0,
+        892.0
+      ],
+      "post_voxel": [
+        254332.0,
+        161016.0,
+        892.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "29842220",
+      "pre_voxel": [
+        251631.0,
+        160718.0,
+        229.0
+      ],
+      "post_voxel": [
+        251623.0,
+        160712.0,
+        229.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "15811285",
+      "pre_voxel": [
+        250136.0,
+        174300.0,
+        473.0
+      ],
+      "post_voxel": [
+        250144.0,
+        174308.0,
+        473.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "76489979",
+      "pre_voxel": [
+        249203.0,
+        161852.0,
+        1517.0
+      ],
+      "post_voxel": [
+        249207.0,
+        161842.0,
+        1517.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4010150634",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "118720248",
+      "pre_voxel": [
+        252832.0,
+        162958.0,
+        1455.0
+      ],
+      "post_voxel": [
+        252839.0,
+        162966.0,
+        1454.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "104815054",
+      "pre_voxel": [
+        251312.0,
+        160832.0,
+        156.0
+      ],
+      "post_voxel": [
+        251314.0,
+        160820.0,
+        156.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "132840654",
+      "pre_voxel": [
+        259894.0,
+        156812.0,
+        1469.0
+      ],
+      "post_voxel": [
+        259880.0,
+        156815.0,
+        1469.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "47264265",
+      "pre_voxel": [
+        257710.0,
+        157554.0,
+        1251.0
+      ],
+      "post_voxel": [
+        257696.0,
+        157558.0,
+        1251.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "87085185",
+      "pre_voxel": [
+        295122.0,
+        111449.0,
+        2926.0
+      ],
+      "post_voxel": [
+        295129.0,
+        111463.0,
+        2927.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "40891235",
+      "pre_voxel": [
+        252436.0,
+        164764.0,
+        832.0
+      ],
+      "post_voxel": [
+        252437.0,
+        164752.0,
+        833.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4010150634",
+      "annotation_id": "33015469",
+      "pre_voxel": [
+        256640.0,
+        159175.0,
+        1131.0
+      ],
+      "post_voxel": [
+        256650.0,
+        159171.0,
+        1131.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4932057570",
+      "annotation_id": "25925818",
+      "pre_voxel": [
+        405383.0,
+        182726.0,
+        443.0
+      ],
+      "post_voxel": [
+        405372.0,
+        182728.0,
+        443.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4932057570",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4932057570",
+      "annotation_id": "77284862",
+      "pre_voxel": [
+        405334.0,
+        181415.0,
+        348.0
+      ],
+      "post_voxel": [
+        405334.0,
+        181428.0,
+        348.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4932057570",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4932057570",
+      "annotation_id": "75921143",
+      "pre_voxel": [
+        405985.0,
+        180741.0,
+        212.0
+      ],
+      "post_voxel": [
+        405993.0,
+        180746.0,
+        212.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4932057570",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4932057570",
+      "annotation_id": "131663764",
+      "pre_voxel": [
+        405527.0,
+        183023.0,
+        370.0
+      ],
+      "post_voxel": [
+        405535.0,
+        183031.0,
+        370.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4932057570",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4932057570",
+      "annotation_id": "21228451",
+      "pre_voxel": [
+        405775.0,
+        182169.0,
+        484.0
+      ],
+      "post_voxel": [
+        405785.0,
+        182166.0,
+        484.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3751392341",
+      "annotation_id": "27143428",
+      "pre_voxel": [
+        367226.0,
+        140250.0,
+        765.0
+      ],
+      "post_voxel": [
+        367231.0,
+        140261.0,
+        765.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3751392341",
+      "annotation_id": "147490117",
+      "pre_voxel": [
+        366015.0,
+        140518.0,
+        1173.0
+      ],
+      "post_voxel": [
+        366024.0,
+        140524.0,
+        1173.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3751392341",
+      "annotation_id": "16274241",
+      "pre_voxel": [
+        366118.0,
+        140206.0,
+        964.0
+      ],
+      "post_voxel": [
+        366110.0,
+        140214.0,
+        964.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3751392341",
+      "annotation_id": "28775754",
+      "pre_voxel": [
+        365999.0,
+        140243.0,
+        954.0
+      ],
+      "post_voxel": [
+        365987.0,
+        140243.0,
+        954.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3751392341",
+      "annotation_id": "49429584",
+      "pre_voxel": [
+        367128.0,
+        140009.0,
+        719.0
+      ],
+      "post_voxel": [
+        367140.0,
+        140007.0,
+        719.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "116600646",
+      "pre_voxel": [
+        240093.0,
+        189166.0,
+        175.0
+      ],
+      "post_voxel": [
+        240098.0,
+        189174.0,
+        175.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "76666882",
+      "pre_voxel": [
+        242054.0,
+        189503.0,
+        833.0
+      ],
+      "post_voxel": [
+        242055.0,
+        189490.0,
+        833.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "135260547",
+      "pre_voxel": [
+        240583.0,
+        188310.0,
+        301.0
+      ],
+      "post_voxel": [
+        240574.0,
+        188304.0,
+        300.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "38301096",
+      "pre_voxel": [
+        240316.0,
+        188686.0,
+        126.0
+      ],
+      "post_voxel": [
+        240327.0,
+        188685.0,
+        126.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "130660251",
+      "pre_voxel": [
+        240765.0,
+        188062.0,
+        406.0
+      ],
+      "post_voxel": [
+        240776.0,
+        188068.0,
+        406.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5173982155",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5173982155",
+      "annotation_id": "99761001",
+      "pre_voxel": [
+        242500.0,
+        190332.0,
+        1189.0
+      ],
+      "post_voxel": [
+        242490.0,
+        190334.0,
+        1189.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5173982155",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2325998949",
+      "annotation_id": "108514148",
+      "pre_voxel": [
+        398616.0,
+        101220.0,
+        875.0
+      ],
+      "post_voxel": [
+        398624.0,
+        101228.0,
+        875.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3812058320",
+      "annotation_id": "83914916",
+      "pre_voxel": [
+        411105.0,
+        168091.0,
+        130.0
+      ],
+      "post_voxel": [
+        411111.0,
+        168100.0,
+        129.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3812058320",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3812058320",
+      "annotation_id": "133814501",
+      "pre_voxel": [
+        416195.0,
+        166968.0,
+        361.0
+      ],
+      "post_voxel": [
+        416207.0,
+        166973.0,
+        360.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3812058320",
+      "annotation_id": "55308126",
+      "pre_voxel": [
+        416316.0,
+        175246.0,
+        222.0
+      ],
+      "post_voxel": [
+        416306.0,
+        175249.0,
+        222.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "35431112",
+      "pre_voxel": [
+        337565.0,
+        208569.0,
+        1075.0
+      ],
+      "post_voxel": [
+        337575.0,
+        208563.0,
+        1075.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "105743808",
+      "pre_voxel": [
+        337763.0,
+        216252.0,
+        82.0
+      ],
+      "post_voxel": [
+        337774.0,
+        216255.0,
+        82.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "95575091",
+      "pre_voxel": [
+        342762.0,
+        215048.0,
+        1029.0
+      ],
+      "post_voxel": [
+        342753.0,
+        215043.0,
+        1029.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "95615116",
+      "pre_voxel": [
+        339517.0,
+        212330.0,
+        1046.0
+      ],
+      "post_voxel": [
+        339505.0,
+        212332.0,
+        1046.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "147542280",
+      "pre_voxel": [
+        338041.0,
+        211091.0,
+        687.0
+      ],
+      "post_voxel": [
+        338055.0,
+        211090.0,
+        687.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "113541747",
+      "pre_voxel": [
+        338412.0,
+        211298.0,
+        776.0
+      ],
+      "post_voxel": [
+        338423.0,
+        211296.0,
+        776.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "22282101",
+      "pre_voxel": [
+        324234.0,
+        218955.0,
+        1274.0
+      ],
+      "post_voxel": [
+        324249.0,
+        218924.0,
+        1274.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5352961465",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "75871491",
+      "pre_voxel": [
+        345576.0,
+        218993.0,
+        958.0
+      ],
+      "post_voxel": [
+        345573.0,
+        219004.0,
+        958.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "39936377",
+      "pre_voxel": [
+        337861.0,
+        216117.0,
+        129.0
+      ],
+      "post_voxel": [
+        337874.0,
+        216119.0,
+        130.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "36966680",
+      "pre_voxel": [
+        323822.0,
+        212395.0,
+        273.0
+      ],
+      "post_voxel": [
+        323823.0,
+        212416.0,
+        273.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "37221071",
+      "pre_voxel": [
+        331688.0,
+        215957.0,
+        376.0
+      ],
+      "post_voxel": [
+        331675.0,
+        215957.0,
+        377.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5352961465",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "45575728",
+      "pre_voxel": [
+        342244.0,
+        214814.0,
+        1002.0
+      ],
+      "post_voxel": [
+        342252.0,
+        214824.0,
+        1002.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "104197389",
+      "pre_voxel": [
+        338007.0,
+        215430.0,
+        226.0
+      ],
+      "post_voxel": [
+        338018.0,
+        215435.0,
+        226.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "47333737",
+      "pre_voxel": [
+        337399.0,
+        210575.0,
+        1025.0
+      ],
+      "post_voxel": [
+        337387.0,
+        210573.0,
+        1025.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "18727886",
+      "pre_voxel": [
+        337739.0,
+        210806.0,
+        886.0
+      ],
+      "post_voxel": [
+        337743.0,
+        210801.0,
+        885.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5352961465",
+      "annotation_id": "20718017",
+      "pre_voxel": [
+        337621.0,
+        213776.0,
+        545.0
+      ],
+      "post_voxel": [
+        337620.0,
+        213776.0,
+        546.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "4582961",
+      "pre_voxel": [
+        400634.0,
+        200047.0,
+        1384.0
+      ],
+      "post_voxel": [
+        400647.0,
+        200047.0,
+        1384.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "4961476",
+      "pre_voxel": [
+        420071.0,
+        193682.0,
+        1809.0
+      ],
+      "post_voxel": [
+        420057.0,
+        193682.0,
+        1809.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "63582574",
+      "pre_voxel": [
+        407482.0,
+        201988.0,
+        1033.0
+      ],
+      "post_voxel": [
+        407477.0,
+        201998.0,
+        1033.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "64633833",
+      "pre_voxel": [
+        406921.0,
+        202689.0,
+        745.0
+      ],
+      "post_voxel": [
+        406925.0,
+        202702.0,
+        745.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "115172345",
+      "pre_voxel": [
+        399434.0,
+        199208.0,
+        539.0
+      ],
+      "post_voxel": [
+        399441.0,
+        199207.0,
+        537.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "109525361",
+      "pre_voxel": [
+        407516.0,
+        201428.0,
+        943.0
+      ],
+      "post_voxel": [
+        407510.0,
+        201437.0,
+        943.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "46552396",
+      "pre_voxel": [
+        407546.0,
+        201381.0,
+        947.0
+      ],
+      "post_voxel": [
+        407559.0,
+        201382.0,
+        947.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "47526355",
+      "pre_voxel": [
+        407124.0,
+        194704.0,
+        877.0
+      ],
+      "post_voxel": [
+        407127.0,
+        194693.0,
+        876.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "124412528",
+      "pre_voxel": [
+        407540.0,
+        201486.0,
+        1038.0
+      ],
+      "post_voxel": [
+        407530.0,
+        201478.0,
+        1037.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "127169429",
+      "pre_voxel": [
+        399671.0,
+        199438.0,
+        816.0
+      ],
+      "post_voxel": [
+        399659.0,
+        199433.0,
+        816.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "134107518",
+      "pre_voxel": [
+        407359.0,
+        194964.0,
+        746.0
+      ],
+      "post_voxel": [
+        407361.0,
+        194953.0,
+        745.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5136107765",
+      "annotation_id": "30533186",
+      "pre_voxel": [
+        399616.0,
+        199340.0,
+        724.0
+      ],
+      "post_voxel": [
+        399601.0,
+        199335.0,
+        724.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5136107765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4365276903",
+      "annotation_id": "83960179",
+      "pre_voxel": [
+        409454.0,
+        181918.0,
+        1429.0
+      ],
+      "post_voxel": [
+        409460.0,
+        181927.0,
+        1429.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4365276903",
+      "annotation_id": "17673742",
+      "pre_voxel": [
+        409005.0,
+        183178.0,
+        1156.0
+      ],
+      "post_voxel": [
+        409011.0,
+        183187.0,
+        1156.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4365276903",
+      "annotation_id": "30579731",
+      "pre_voxel": [
+        408258.0,
+        183351.0,
+        1001.0
+      ],
+      "post_voxel": [
+        408266.0,
+        183359.0,
+        1000.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1072605926",
+      "annotation_id": "85340721",
+      "pre_voxel": [
+        351223.0,
+        67269.0,
+        1050.0
+      ],
+      "post_voxel": [
+        351214.0,
+        67267.0,
+        1050.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "139135028",
+      "pre_voxel": [
+        327845.0,
+        68374.0,
+        820.0
+      ],
+      "post_voxel": [
+        327848.0,
+        68385.0,
+        820.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "35059891",
+      "pre_voxel": [
+        324620.0,
+        72172.0,
+        902.0
+      ],
+      "post_voxel": [
+        324614.0,
+        72166.0,
+        902.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "106368681",
+      "pre_voxel": [
+        324483.0,
+        68017.0,
+        375.0
+      ],
+      "post_voxel": [
+        324494.0,
+        68026.0,
+        376.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "140313087",
+      "pre_voxel": [
+        328990.0,
+        74878.0,
+        1120.0
+      ],
+      "post_voxel": [
+        329006.0,
+        74878.0,
+        1121.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "10965354",
+      "pre_voxel": [
+        322555.0,
+        73051.0,
+        211.0
+      ],
+      "post_voxel": [
+        322551.0,
+        73039.0,
+        211.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "13429346",
+      "pre_voxel": [
+        330189.0,
+        75674.0,
+        1136.0
+      ],
+      "post_voxel": [
+        330186.0,
+        75670.0,
+        1136.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "102259144",
+      "pre_voxel": [
+        325255.0,
+        72592.0,
+        1100.0
+      ],
+      "post_voxel": [
+        325246.0,
+        72599.0,
+        1100.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "129740438",
+      "pre_voxel": [
+        322227.0,
+        64373.0,
+        990.0
+      ],
+      "post_voxel": [
+        322217.0,
+        64372.0,
+        990.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "111059307",
+      "pre_voxel": [
+        322502.0,
+        64391.0,
+        895.0
+      ],
+      "post_voxel": [
+        322513.0,
+        64388.0,
+        894.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "112443992",
+      "pre_voxel": [
+        328774.0,
+        75455.0,
+        1027.0
+      ],
+      "post_voxel": [
+        328776.0,
+        75465.0,
+        1027.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "97971445",
+      "pre_voxel": [
+        327696.0,
+        69045.0,
+        905.0
+      ],
+      "post_voxel": [
+        327707.0,
+        69040.0,
+        906.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "80458718",
+      "pre_voxel": [
+        321583.0,
+        69279.0,
+        1066.0
+      ],
+      "post_voxel": [
+        321593.0,
+        69284.0,
+        1066.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "6666264",
+      "pre_voxel": [
+        321344.0,
+        68114.0,
+        1349.0
+      ],
+      "post_voxel": [
+        321334.0,
+        68120.0,
+        1349.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "114291467",
+      "pre_voxel": [
+        325330.0,
+        69499.0,
+        906.0
+      ],
+      "post_voxel": [
+        325321.0,
+        69491.0,
+        907.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "48991473",
+      "pre_voxel": [
+        329028.0,
+        74292.0,
+        1089.0
+      ],
+      "post_voxel": [
+        329025.0,
+        74282.0,
+        1090.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "12980383",
+      "pre_voxel": [
+        330459.0,
+        75837.0,
+        911.0
+      ],
+      "post_voxel": [
+        330468.0,
+        75834.0,
+        911.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "43945521",
+      "pre_voxel": [
+        325227.0,
+        68397.0,
+        772.0
+      ],
+      "post_voxel": [
+        325235.0,
+        68401.0,
+        772.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "44851433",
+      "pre_voxel": [
+        326269.0,
+        66703.0,
+        909.0
+      ],
+      "post_voxel": [
+        326278.0,
+        66711.0,
+        909.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "92610233",
+      "pre_voxel": [
+        328897.0,
+        75000.0,
+        1157.0
+      ],
+      "post_voxel": [
+        328910.0,
+        75000.0,
+        1157.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "93306413",
+      "pre_voxel": [
+        325680.0,
+        73152.0,
+        980.0
+      ],
+      "post_voxel": [
+        325669.0,
+        73156.0,
+        980.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "93888754",
+      "pre_voxel": [
+        325429.0,
+        73335.0,
+        1243.0
+      ],
+      "post_voxel": [
+        325422.0,
+        73342.0,
+        1244.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "69781798",
+      "pre_voxel": [
+        325100.0,
+        70700.0,
+        906.0
+      ],
+      "post_voxel": [
+        325092.0,
+        70695.0,
+        906.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "69850139",
+      "pre_voxel": [
+        323258.0,
+        71091.0,
+        429.0
+      ],
+      "post_voxel": [
+        323277.0,
+        71086.0,
+        430.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "118228885",
+      "pre_voxel": [
+        327721.0,
+        74396.0,
+        1215.0
+      ],
+      "post_voxel": [
+        327731.0,
+        74389.0,
+        1215.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "51821909",
+      "pre_voxel": [
+        328435.0,
+        74877.0,
+        1122.0
+      ],
+      "post_voxel": [
+        328416.0,
+        74892.0,
+        1120.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "38465445",
+      "pre_voxel": [
+        325368.0,
+        67881.0,
+        966.0
+      ],
+      "post_voxel": [
+        325369.0,
+        67892.0,
+        965.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "68098824",
+      "pre_voxel": [
+        330070.0,
+        75481.0,
+        1115.0
+      ],
+      "post_voxel": [
+        330053.0,
+        75504.0,
+        1115.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "68176294",
+      "pre_voxel": [
+        324730.0,
+        68686.0,
+        641.0
+      ],
+      "post_voxel": [
+        324720.0,
+        68692.0,
+        641.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "5539944",
+      "pre_voxel": [
+        320395.0,
+        63329.0,
+        1074.0
+      ],
+      "post_voxel": [
+        320388.0,
+        63337.0,
+        1073.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "117429545",
+      "pre_voxel": [
+        328398.0,
+        74846.0,
+        1098.0
+      ],
+      "post_voxel": [
+        328402.0,
+        74838.0,
+        1098.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "117613988",
+      "pre_voxel": [
+        322883.0,
+        70889.0,
+        420.0
+      ],
+      "post_voxel": [
+        322877.0,
+        70879.0,
+        421.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "122680011",
+      "pre_voxel": [
+        322540.0,
+        72839.0,
+        236.0
+      ],
+      "post_voxel": [
+        322547.0,
+        72831.0,
+        236.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "122682171",
+      "pre_voxel": [
+        321633.0,
+        63033.0,
+        1005.0
+      ],
+      "post_voxel": [
+        321626.0,
+        63025.0,
+        1005.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "13914729",
+      "pre_voxel": [
+        328052.0,
+        68382.0,
+        859.0
+      ],
+      "post_voxel": [
+        328057.0,
+        68394.0,
+        858.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "127419208",
+      "pre_voxel": [
+        326889.0,
+        73626.0,
+        1435.0
+      ],
+      "post_voxel": [
+        326887.0,
+        73642.0,
+        1436.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "144264164",
+      "pre_voxel": [
+        330369.0,
+        68528.0,
+        1445.0
+      ],
+      "post_voxel": [
+        330359.0,
+        68525.0,
+        1445.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "54918815",
+      "pre_voxel": [
+        329599.0,
+        68521.0,
+        1332.0
+      ],
+      "post_voxel": [
+        329596.0,
+        68511.0,
+        1332.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "134100999",
+      "pre_voxel": [
+        326915.0,
+        68944.0,
+        743.0
+      ],
+      "post_voxel": [
+        326907.0,
+        68938.0,
+        743.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "30524011",
+      "pre_voxel": [
+        328939.0,
+        68360.0,
+        1232.0
+      ],
+      "post_voxel": [
+        328929.0,
+        68356.0,
+        1232.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "51526460",
+      "pre_voxel": [
+        330321.0,
+        68612.0,
+        1490.0
+      ],
+      "post_voxel": [
+        330311.0,
+        68619.0,
+        1489.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "955432427",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "72186528",
+      "pre_voxel": [
+        321493.0,
+        68455.0,
+        1282.0
+      ],
+      "post_voxel": [
+        321505.0,
+        68452.0,
+        1282.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "955432427",
+      "annotation_id": "72326392",
+      "pre_voxel": [
+        325282.0,
+        68285.0,
+        850.0
+      ],
+      "post_voxel": [
+        325275.0,
+        68292.0,
+        850.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "27334022",
+      "pre_voxel": [
+        325488.0,
+        182220.0,
+        595.0
+      ],
+      "post_voxel": [
+        325497.0,
+        182228.0,
+        595.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "95760058",
+      "pre_voxel": [
+        325912.0,
+        181671.0,
+        595.0
+      ],
+      "post_voxel": [
+        325921.0,
+        181685.0,
+        595.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "96635561",
+      "pre_voxel": [
+        333774.0,
+        179977.0,
+        249.0
+      ],
+      "post_voxel": [
+        333768.0,
+        179988.0,
+        249.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "148445566",
+      "pre_voxel": [
+        331779.0,
+        180754.0,
+        85.0
+      ],
+      "post_voxel": [
+        331777.0,
+        180767.0,
+        85.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "17741851",
+      "pre_voxel": [
+        330886.0,
+        179862.0,
+        418.0
+      ],
+      "post_voxel": [
+        330896.0,
+        179861.0,
+        418.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "117786261",
+      "pre_voxel": [
+        334075.0,
+        177066.0,
+        1023.0
+      ],
+      "post_voxel": [
+        334084.0,
+        177068.0,
+        1022.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "87317311",
+      "pre_voxel": [
+        329307.0,
+        180105.0,
+        1515.0
+      ],
+      "post_voxel": [
+        329306.0,
+        180095.0,
+        1515.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4711641825",
+      "annotation_id": "73716768",
+      "pre_voxel": [
+        330794.0,
+        179706.0,
+        455.0
+      ],
+      "post_voxel": [
+        330795.0,
+        179720.0,
+        454.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4711641825",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5319188363",
+      "annotation_id": "124977760",
+      "pre_voxel": [
+        218695.0,
+        214176.0,
+        808.0
+      ],
+      "post_voxel": [
+        218709.0,
+        214183.0,
+        807.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5319188363",
+      "post_proofread_label": "5319188363"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "70356258",
+      "pre_voxel": [
+        324491.0,
+        103092.0,
+        1431.0
+      ],
+      "post_voxel": [
+        324495.0,
+        103079.0,
+        1431.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "105148314",
+      "pre_voxel": [
+        324470.0,
+        104654.0,
+        1360.0
+      ],
+      "post_voxel": [
+        324479.0,
+        104649.0,
+        1360.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "106956970",
+      "pre_voxel": [
+        343199.0,
+        103155.0,
+        910.0
+      ],
+      "post_voxel": [
+        343196.0,
+        103163.0,
+        910.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "24757041",
+      "pre_voxel": [
+        328332.0,
+        107877.0,
+        913.0
+      ],
+      "post_voxel": [
+        328341.0,
+        107886.0,
+        911.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "16316045",
+      "pre_voxel": [
+        329259.0,
+        110381.0,
+        216.0
+      ],
+      "post_voxel": [
+        329292.0,
+        110393.0,
+        218.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "16763812",
+      "pre_voxel": [
+        327328.0,
+        107618.0,
+        918.0
+      ],
+      "post_voxel": [
+        327330.0,
+        107621.0,
+        919.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "11847830",
+      "pre_voxel": [
+        328893.0,
+        117063.0,
+        121.0
+      ],
+      "post_voxel": [
+        328906.0,
+        117061.0,
+        121.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "63306570",
+      "pre_voxel": [
+        324856.0,
+        105348.0,
+        1185.0
+      ],
+      "post_voxel": [
+        324858.0,
+        105338.0,
+        1184.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "102576945",
+      "pre_voxel": [
+        335926.0,
+        110675.0,
+        719.0
+      ],
+      "post_voxel": [
+        335936.0,
+        110658.0,
+        719.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "98826333",
+      "pre_voxel": [
+        343781.0,
+        103328.0,
+        1281.0
+      ],
+      "post_voxel": [
+        343791.0,
+        103334.0,
+        1281.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "89764436",
+      "pre_voxel": [
+        329451.0,
+        110981.0,
+        326.0
+      ],
+      "post_voxel": [
+        329440.0,
+        110983.0,
+        326.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "69895143",
+      "pre_voxel": [
+        329471.0,
+        110566.0,
+        196.0
+      ],
+      "post_voxel": [
+        329464.0,
+        110576.0,
+        196.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "118136600",
+      "pre_voxel": [
+        329741.0,
+        111050.0,
+        150.0
+      ],
+      "post_voxel": [
+        329750.0,
+        111046.0,
+        151.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "119657374",
+      "pre_voxel": [
+        329231.0,
+        110537.0,
+        356.0
+      ],
+      "post_voxel": [
+        329235.0,
+        110548.0,
+        356.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "796483",
+      "pre_voxel": [
+        328358.0,
+        108821.0,
+        621.0
+      ],
+      "post_voxel": [
+        328347.0,
+        108819.0,
+        621.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "61248013",
+      "pre_voxel": [
+        324842.0,
+        105386.0,
+        1214.0
+      ],
+      "post_voxel": [
+        324840.0,
+        105397.0,
+        1215.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "143667846",
+      "pre_voxel": [
+        325805.0,
+        105872.0,
+        1160.0
+      ],
+      "post_voxel": [
+        325794.0,
+        105868.0,
+        1161.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "145814642",
+      "pre_voxel": [
+        327339.0,
+        108069.0,
+        893.0
+      ],
+      "post_voxel": [
+        327330.0,
+        108075.0,
+        893.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "121357988",
+      "pre_voxel": [
+        323959.0,
+        104025.0,
+        1414.0
+      ],
+      "post_voxel": [
+        323954.0,
+        104015.0,
+        1414.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2047644309",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "19395863",
+      "pre_voxel": [
+        344883.0,
+        103843.0,
+        1203.0
+      ],
+      "post_voxel": [
+        344892.0,
+        103837.0,
+        1203.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "21194865",
+      "pre_voxel": [
+        329354.0,
+        117008.0,
+        216.0
+      ],
+      "post_voxel": [
+        329363.0,
+        117001.0,
+        215.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "142848451",
+      "pre_voxel": [
+        343783.0,
+        103309.0,
+        1280.0
+      ],
+      "post_voxel": [
+        343807.0,
+        103286.0,
+        1279.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2047644309",
+      "annotation_id": "73435519",
+      "pre_voxel": [
+        339663.0,
+        108467.0,
+        1361.0
+      ],
+      "post_voxel": [
+        339674.0,
+        108464.0,
+        1362.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4535129012",
+      "annotation_id": "9482192",
+      "pre_voxel": [
+        295912.0,
+        181860.0,
+        550.0
+      ],
+      "post_voxel": [
+        295902.0,
+        181865.0,
+        549.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4535129012",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4535129012",
+      "annotation_id": "31426432",
+      "pre_voxel": [
+        299519.0,
+        179154.0,
+        641.0
+      ],
+      "post_voxel": [
+        299526.0,
+        179166.0,
+        640.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4535129012",
+      "annotation_id": "29506916",
+      "pre_voxel": [
+        298997.0,
+        177899.0,
+        595.0
+      ],
+      "post_voxel": [
+        298976.0,
+        177902.0,
+        595.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4535129012",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4535129012",
+      "annotation_id": "46983211",
+      "pre_voxel": [
+        299235.0,
+        179221.0,
+        625.0
+      ],
+      "post_voxel": [
+        299220.0,
+        179222.0,
+        625.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "6126390733",
+      "annotation_id": "47445264",
+      "pre_voxel": [
+        426032.0,
+        215622.0,
+        578.0
+      ],
+      "post_voxel": [
+        426043.0,
+        215627.0,
+        578.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "6126390733",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2903686765",
+      "annotation_id": "16742179",
+      "pre_voxel": [
+        245969.0,
+        149404.0,
+        1164.0
+      ],
+      "post_voxel": [
+        245971.0,
+        149416.0,
+        1164.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2903686765",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "70736068",
+      "pre_voxel": [
+        330460.0,
+        60097.0,
+        331.0
+      ],
+      "post_voxel": [
+        330449.0,
+        60092.0,
+        331.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "139502172",
+      "pre_voxel": [
+        329460.0,
+        60849.0,
+        453.0
+      ],
+      "post_voxel": [
+        329459.0,
+        60837.0,
+        452.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "35758113",
+      "pre_voxel": [
+        324820.0,
+        64720.0,
+        725.0
+      ],
+      "post_voxel": [
+        324820.0,
+        64732.0,
+        725.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "58699532",
+      "pre_voxel": [
+        316280.0,
+        71304.0,
+        1225.0
+      ],
+      "post_voxel": [
+        316283.0,
+        71301.0,
+        1225.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "33749599",
+      "pre_voxel": [
+        318264.0,
+        66813.0,
+        962.0
+      ],
+      "post_voxel": [
+        318261.0,
+        66803.0,
+        963.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "10892892",
+      "pre_voxel": [
+        330839.0,
+        60313.0,
+        435.0
+      ],
+      "post_voxel": [
+        330851.0,
+        60315.0,
+        435.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "111299466",
+      "pre_voxel": [
+        324585.0,
+        63983.0,
+        744.0
+      ],
+      "post_voxel": [
+        324594.0,
+        63989.0,
+        744.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "111512977",
+      "pre_voxel": [
+        313384.0,
+        61429.0,
+        595.0
+      ],
+      "post_voxel": [
+        313378.0,
+        61422.0,
+        595.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "97742733",
+      "pre_voxel": [
+        326933.0,
+        62319.0,
+        516.0
+      ],
+      "post_voxel": [
+        326941.0,
+        62326.0,
+        516.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "80553208",
+      "pre_voxel": [
+        330040.0,
+        61202.0,
+        340.0
+      ],
+      "post_voxel": [
+        330024.0,
+        61193.0,
+        341.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "17410000",
+      "pre_voxel": [
+        315749.0,
+        69364.0,
+        1041.0
+      ],
+      "post_voxel": [
+        315757.0,
+        69339.0,
+        1041.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "18235536",
+      "pre_voxel": [
+        327220.0,
+        61756.0,
+        398.0
+      ],
+      "post_voxel": [
+        327221.0,
+        61746.0,
+        398.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "93923078",
+      "pre_voxel": [
+        324150.0,
+        64057.0,
+        742.0
+      ],
+      "post_voxel": [
+        324163.0,
+        64072.0,
+        747.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "75942308",
+      "pre_voxel": [
+        318345.0,
+        70732.0,
+        1501.0
+      ],
+      "post_voxel": [
+        318355.0,
+        70729.0,
+        1501.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "782288",
+      "pre_voxel": [
+        316941.0,
+        68833.0,
+        1382.0
+      ],
+      "post_voxel": [
+        316960.0,
+        68843.0,
+        1382.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "915429",
+      "pre_voxel": [
+        332118.0,
+        60531.0,
+        169.0
+      ],
+      "post_voxel": [
+        332113.0,
+        60542.0,
+        169.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "1630158",
+      "pre_voxel": [
+        315675.0,
+        69744.0,
+        1006.0
+      ],
+      "post_voxel": [
+        315685.0,
+        69754.0,
+        1008.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "101724634",
+      "pre_voxel": [
+        325803.0,
+        63257.0,
+        581.0
+      ],
+      "post_voxel": [
+        325807.0,
+        63267.0,
+        581.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "39670578",
+      "pre_voxel": [
+        306339.0,
+        71672.0,
+        510.0
+      ],
+      "post_voxel": [
+        306341.0,
+        71660.0,
+        510.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "117772651",
+      "pre_voxel": [
+        316408.0,
+        69984.0,
+        1271.0
+      ],
+      "post_voxel": [
+        316400.0,
+        69974.0,
+        1271.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "95371110",
+      "pre_voxel": [
+        322124.0,
+        64817.0,
+        926.0
+      ],
+      "post_voxel": [
+        322115.0,
+        64809.0,
+        926.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "126798799",
+      "pre_voxel": [
+        317088.0,
+        68679.0,
+        1400.0
+      ],
+      "post_voxel": [
+        317079.0,
+        68683.0,
+        1400.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "144677642",
+      "pre_voxel": [
+        323124.0,
+        63936.0,
+        864.0
+      ],
+      "post_voxel": [
+        323116.0,
+        63929.0,
+        864.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "71110855",
+      "pre_voxel": [
+        308337.0,
+        73013.0,
+        1033.0
+      ],
+      "post_voxel": [
+        308332.0,
+        73022.0,
+        1033.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "40798214",
+      "pre_voxel": [
+        324072.0,
+        63872.0,
+        784.0
+      ],
+      "post_voxel": [
+        324066.0,
+        63867.0,
+        784.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "55948048",
+      "pre_voxel": [
+        327538.0,
+        62428.0,
+        538.0
+      ],
+      "post_voxel": [
+        327547.0,
+        62436.0,
+        538.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "18399871",
+      "pre_voxel": [
+        324558.0,
+        64413.0,
+        740.0
+      ],
+      "post_voxel": [
+        324546.0,
+        64422.0,
+        737.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "546925828",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "546925828",
+      "annotation_id": "100395195",
+      "pre_voxel": [
+        306115.0,
+        71525.0,
+        517.0
+      ],
+      "post_voxel": [
+        306113.0,
+        71537.0,
+        517.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "3384400",
+      "pre_voxel": [
+        296589.0,
+        107877.0,
+        1081.0
+      ],
+      "post_voxel": [
+        296593.0,
+        107886.0,
+        1081.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "57290887",
+      "pre_voxel": [
+        306920.0,
+        93277.0,
+        1081.0
+      ],
+      "post_voxel": [
+        306910.0,
+        93273.0,
+        1081.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "58073062",
+      "pre_voxel": [
+        309572.0,
+        95018.0,
+        1183.0
+      ],
+      "post_voxel": [
+        309579.0,
+        95009.0,
+        1182.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "26106470",
+      "pre_voxel": [
+        285312.0,
+        104325.0,
+        279.0
+      ],
+      "post_voxel": [
+        285303.0,
+        104318.0,
+        279.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "27702417",
+      "pre_voxel": [
+        312412.0,
+        93752.0,
+        757.0
+      ],
+      "post_voxel": [
+        312415.0,
+        93740.0,
+        757.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "27803891",
+      "pre_voxel": [
+        292490.0,
+        97795.0,
+        1064.0
+      ],
+      "post_voxel": [
+        292478.0,
+        97791.0,
+        1064.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "34096374",
+      "pre_voxel": [
+        308239.0,
+        97385.0,
+        872.0
+      ],
+      "post_voxel": [
+        308223.0,
+        97392.0,
+        873.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "106440013",
+      "pre_voxel": [
+        296853.0,
+        95988.0,
+        920.0
+      ],
+      "post_voxel": [
+        296861.0,
+        95996.0,
+        920.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "106769902",
+      "pre_voxel": [
+        309210.0,
+        95820.0,
+        1075.0
+      ],
+      "post_voxel": [
+        309203.0,
+        95811.0,
+        1075.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "148548379",
+      "pre_voxel": [
+        308439.0,
+        97103.0,
+        903.0
+      ],
+      "post_voxel": [
+        308428.0,
+        97100.0,
+        903.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "5420081",
+      "pre_voxel": [
+        312744.0,
+        93667.0,
+        763.0
+      ],
+      "post_voxel": [
+        312733.0,
+        93661.0,
+        763.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "136683761",
+      "pre_voxel": [
+        285319.0,
+        96839.0,
+        1213.0
+      ],
+      "post_voxel": [
+        285327.0,
+        96847.0,
+        1213.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "123595403",
+      "pre_voxel": [
+        289156.0,
+        101137.0,
+        1429.0
+      ],
+      "post_voxel": [
+        289161.0,
+        101147.0,
+        1429.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "79474102",
+      "pre_voxel": [
+        295425.0,
+        97581.0,
+        854.0
+      ],
+      "post_voxel": [
+        295417.0,
+        97573.0,
+        854.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "111504239",
+      "pre_voxel": [
+        297693.0,
+        108349.0,
+        79.0
+      ],
+      "post_voxel": [
+        297694.0,
+        108338.0,
+        79.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "97340279",
+      "pre_voxel": [
+        308327.0,
+        93062.0,
+        570.0
+      ],
+      "post_voxel": [
+        308337.0,
+        93076.0,
+        570.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "56451578",
+      "pre_voxel": [
+        295384.0,
+        107188.0,
+        1525.0
+      ],
+      "post_voxel": [
+        295390.0,
+        107175.0,
+        1527.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "129002181",
+      "pre_voxel": [
+        296975.0,
+        96056.0,
+        905.0
+      ],
+      "post_voxel": [
+        296966.0,
+        96050.0,
+        906.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "29563794",
+      "pre_voxel": [
+        308238.0,
+        97320.0,
+        874.0
+      ],
+      "post_voxel": [
+        308226.0,
+        97315.0,
+        874.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "29618427",
+      "pre_voxel": [
+        293282.0,
+        96344.0,
+        1154.0
+      ],
+      "post_voxel": [
+        293292.0,
+        96347.0,
+        1154.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "6313801",
+      "pre_voxel": [
+        309673.0,
+        94664.0,
+        1177.0
+      ],
+      "post_voxel": [
+        309685.0,
+        94668.0,
+        1177.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "113580130",
+      "pre_voxel": [
+        310410.0,
+        84889.0,
+        1052.0
+      ],
+      "post_voxel": [
+        310409.0,
+        84891.0,
+        1051.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "18056427",
+      "pre_voxel": [
+        296455.0,
+        107955.0,
+        1078.0
+      ],
+      "post_voxel": [
+        296464.0,
+        107964.0,
+        1078.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "8961463",
+      "pre_voxel": [
+        308546.0,
+        92880.0,
+        549.0
+      ],
+      "post_voxel": [
+        308556.0,
+        92888.0,
+        548.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "90088910",
+      "pre_voxel": [
+        285217.0,
+        104743.0,
+        232.0
+      ],
+      "post_voxel": [
+        285204.0,
+        104741.0,
+        232.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "90274902",
+      "pre_voxel": [
+        288489.0,
+        101578.0,
+        1344.0
+      ],
+      "post_voxel": [
+        288499.0,
+        101585.0,
+        1345.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "92394253",
+      "pre_voxel": [
+        313096.0,
+        93432.0,
+        808.0
+      ],
+      "post_voxel": [
+        313093.0,
+        93416.0,
+        807.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "94694708",
+      "pre_voxel": [
+        309467.0,
+        95353.0,
+        1120.0
+      ],
+      "post_voxel": [
+        309455.0,
+        95354.0,
+        1120.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "101633032",
+      "pre_voxel": [
+        302977.0,
+        106845.0,
+        531.0
+      ],
+      "post_voxel": [
+        302967.0,
+        106835.0,
+        531.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "108464239",
+      "pre_voxel": [
+        309230.0,
+        95561.0,
+        1111.0
+      ],
+      "post_voxel": [
+        309243.0,
+        95563.0,
+        1110.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "68079070",
+      "pre_voxel": [
+        295588.0,
+        97421.0,
+        850.0
+      ],
+      "post_voxel": [
+        295588.0,
+        97410.0,
+        850.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "3881675",
+      "pre_voxel": [
+        306056.0,
+        104050.0,
+        532.0
+      ],
+      "post_voxel": [
+        306044.0,
+        104049.0,
+        532.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "60101441",
+      "pre_voxel": [
+        294872.0,
+        98025.0,
+        866.0
+      ],
+      "post_voxel": [
+        294871.0,
+        98011.0,
+        866.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "130760162",
+      "pre_voxel": [
+        312230.0,
+        94004.0,
+        706.0
+      ],
+      "post_voxel": [
+        312224.0,
+        93994.0,
+        706.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "1900905433"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "14800661",
+      "pre_voxel": [
+        302589.0,
+        106992.0,
+        513.0
+      ],
+      "post_voxel": [
+        302600.0,
+        107003.0,
+        514.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "34489740",
+      "pre_voxel": [
+        303139.0,
+        106625.0,
+        556.0
+      ],
+      "post_voxel": [
+        303124.0,
+        106627.0,
+        555.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "42574826",
+      "pre_voxel": [
+        306754.0,
+        94831.0,
+        607.0
+      ],
+      "post_voxel": [
+        306767.0,
+        94833.0,
+        606.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "124196374",
+      "pre_voxel": [
+        307154.0,
+        92592.0,
+        1195.0
+      ],
+      "post_voxel": [
+        307143.0,
+        92581.0,
+        1195.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "144739087",
+      "pre_voxel": [
+        311907.0,
+        94352.0,
+        632.0
+      ],
+      "post_voxel": [
+        311906.0,
+        94344.0,
+        633.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "144766758",
+      "pre_voxel": [
+        288871.0,
+        101340.0,
+        1411.0
+      ],
+      "post_voxel": [
+        288867.0,
+        101352.0,
+        1411.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "58855054",
+      "pre_voxel": [
+        305959.0,
+        104344.0,
+        529.0
+      ],
+      "post_voxel": [
+        305948.0,
+        104339.0,
+        529.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "47994623",
+      "pre_voxel": [
+        296406.0,
+        96539.0,
+        872.0
+      ],
+      "post_voxel": [
+        296412.0,
+        96549.0,
+        872.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "85810649",
+      "pre_voxel": [
+        302360.0,
+        107331.0,
+        520.0
+      ],
+      "post_voxel": [
+        302366.0,
+        107323.0,
+        520.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "55945977",
+      "pre_voxel": [
+        309328.0,
+        85671.0,
+        1049.0
+      ],
+      "post_voxel": [
+        309321.0,
+        85660.0,
+        1049.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "110670710",
+      "pre_voxel": [
+        289522.0,
+        100941.0,
+        1484.0
+      ],
+      "post_voxel": [
+        289516.0,
+        100932.0,
+        1485.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "53370347",
+      "pre_voxel": [
+        292831.0,
+        97110.0,
+        1103.0
+      ],
+      "post_voxel": [
+        292843.0,
+        97121.0,
+        1103.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "19279734",
+      "pre_voxel": [
+        309488.0,
+        95182.0,
+        1145.0
+      ],
+      "post_voxel": [
+        309473.0,
+        95190.0,
+        1145.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "30500607",
+      "pre_voxel": [
+        289421.0,
+        100978.0,
+        1478.0
+      ],
+      "post_voxel": [
+        289421.0,
+        100967.0,
+        1478.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "50900197",
+      "pre_voxel": [
+        309523.0,
+        94990.0,
+        1205.0
+      ],
+      "post_voxel": [
+        309515.0,
+        94998.0,
+        1205.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "50922874",
+      "pre_voxel": [
+        284906.0,
+        105194.0,
+        193.0
+      ],
+      "post_voxel": [
+        284896.0,
+        105190.0,
+        193.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "51385043",
+      "pre_voxel": [
+        294674.0,
+        107582.0,
+        1428.0
+      ],
+      "post_voxel": [
+        294681.0,
+        107590.0,
+        1428.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "59450425",
+      "pre_voxel": [
+        295654.0,
+        106788.0,
+        1593.0
+      ],
+      "post_voxel": [
+        295653.0,
+        106774.0,
+        1592.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "142896530",
+      "pre_voxel": [
+        307632.0,
+        97927.0,
+        793.0
+      ],
+      "post_voxel": [
+        307645.0,
+        97933.0,
+        792.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1900905433",
+      "annotation_id": "142397423",
+      "pre_voxel": [
+        310688.0,
+        84679.0,
+        1095.0
+      ],
+      "post_voxel": [
+        310710.0,
+        84668.0,
+        1097.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "1900905433",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5013648003",
+      "annotation_id": "137999658",
+      "pre_voxel": [
+        237199.0,
+        190161.0,
+        1580.0
+      ],
+      "post_voxel": [
+        237195.0,
+        190160.0,
+        1579.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5013648003",
+      "post_proofread_label": "5013648003"
+    },
+    {
+      "query_c3_id": "5013648003",
+      "annotation_id": "113684905",
+      "pre_voxel": [
+        233414.0,
+        185165.0,
+        850.0
+      ],
+      "post_voxel": [
+        233408.0,
+        185176.0,
+        850.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5013648003",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5013648003",
+      "annotation_id": "94270851",
+      "pre_voxel": [
+        236334.0,
+        189061.0,
+        1687.0
+      ],
+      "post_voxel": [
+        236344.0,
+        189049.0,
+        1687.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5013648003",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5013648003",
+      "annotation_id": "58965433",
+      "pre_voxel": [
+        233494.0,
+        185282.0,
+        845.0
+      ],
+      "post_voxel": [
+        233499.0,
+        185273.0,
+        842.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5013648003",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3519995546",
+      "annotation_id": "65738359",
+      "pre_voxel": [
+        386675.0,
+        159433.0,
+        254.0
+      ],
+      "post_voxel": [
+        386684.0,
+        159439.0,
+        254.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3519995546",
+      "annotation_id": "54905624",
+      "pre_voxel": [
+        385315.0,
+        167112.0,
+        558.0
+      ],
+      "post_voxel": [
+        385326.0,
+        167107.0,
+        558.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "71007301",
+      "pre_voxel": [
+        201668.0,
+        193744.0,
+        1745.0
+      ],
+      "post_voxel": [
+        201659.0,
+        193737.0,
+        1745.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "10949883",
+      "pre_voxel": [
+        190468.0,
+        201761.0,
+        1996.0
+      ],
+      "post_voxel": [
+        190468.0,
+        201750.0,
+        1996.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "129460401",
+      "pre_voxel": [
+        191122.0,
+        201615.0,
+        1892.0
+      ],
+      "post_voxel": [
+        191126.0,
+        201656.0,
+        1887.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "114847573",
+      "pre_voxel": [
+        240991.0,
+        162568.0,
+        3192.0
+      ],
+      "post_voxel": [
+        240984.0,
+        162560.0,
+        3192.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "130262216",
+      "pre_voxel": [
+        197466.0,
+        197849.0,
+        228.0
+      ],
+      "post_voxel": [
+        197484.0,
+        197862.0,
+        226.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "130278124",
+      "pre_voxel": [
+        238959.0,
+        165486.0,
+        3050.0
+      ],
+      "post_voxel": [
+        238951.0,
+        165479.0,
+        3050.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5216806368",
+      "annotation_id": "42373807",
+      "pre_voxel": [
+        238910.0,
+        165391.0,
+        3078.0
+      ],
+      "post_voxel": [
+        238898.0,
+        165384.0,
+        3078.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5216806368",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "138822464",
+      "pre_voxel": [
+        320751.0,
+        158720.0,
+        685.0
+      ],
+      "post_voxel": [
+        320751.0,
+        158710.0,
+        685.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "26363355",
+      "pre_voxel": [
+        311089.0,
+        167939.0,
+        2950.0
+      ],
+      "post_voxel": [
+        311096.0,
+        167947.0,
+        2950.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "31381516",
+      "pre_voxel": [
+        310383.0,
+        169046.0,
+        876.0
+      ],
+      "post_voxel": [
+        310368.0,
+        169049.0,
+        876.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "114180557",
+      "pre_voxel": [
+        312272.0,
+        166949.0,
+        2897.0
+      ],
+      "post_voxel": [
+        312269.0,
+        166937.0,
+        2897.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "76197681",
+      "pre_voxel": [
+        313159.0,
+        169427.0,
+        603.0
+      ],
+      "post_voxel": [
+        313169.0,
+        169429.0,
+        602.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "108553132",
+      "pre_voxel": [
+        310133.0,
+        171411.0,
+        636.0
+      ],
+      "post_voxel": [
+        310133.0,
+        171416.0,
+        636.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "88087665",
+      "pre_voxel": [
+        308118.0,
+        169256.0,
+        3128.0
+      ],
+      "post_voxel": [
+        308107.0,
+        169255.0,
+        3128.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "131483930",
+      "pre_voxel": [
+        318599.0,
+        165475.0,
+        804.0
+      ],
+      "post_voxel": [
+        318585.0,
+        165482.0,
+        804.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "132317360",
+      "pre_voxel": [
+        309557.0,
+        169069.0,
+        2983.0
+      ],
+      "post_voxel": [
+        309557.0,
+        169059.0,
+        2983.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "15647903",
+      "pre_voxel": [
+        311802.0,
+        167268.0,
+        2951.0
+      ],
+      "post_voxel": [
+        311800.0,
+        167256.0,
+        2950.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3329117097",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "41738146",
+      "pre_voxel": [
+        314954.0,
+        165246.0,
+        754.0
+      ],
+      "post_voxel": [
+        314965.0,
+        165250.0,
+        754.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "124728904",
+      "pre_voxel": [
+        307901.0,
+        169835.0,
+        2988.0
+      ],
+      "post_voxel": [
+        307892.0,
+        169827.0,
+        2988.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3329117097",
+      "annotation_id": "144243519",
+      "pre_voxel": [
+        320480.0,
+        158736.0,
+        666.0
+      ],
+      "post_voxel": [
+        320475.0,
+        158726.0,
+        667.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5832764277",
+      "annotation_id": "64899874",
+      "pre_voxel": [
+        340404.0,
+        231040.0,
+        1393.0
+      ],
+      "post_voxel": [
+        340396.0,
+        231053.0,
+        1393.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5832764277",
+      "annotation_id": "13780047",
+      "pre_voxel": [
+        336527.0,
+        243684.0,
+        283.0
+      ],
+      "post_voxel": [
+        336467.0,
+        243702.0,
+        289.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "3486059",
+      "pre_voxel": [
+        321692.0,
+        178112.0,
+        1635.0
+      ],
+      "post_voxel": [
+        321681.0,
+        178115.0,
+        1635.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "70263029",
+      "pre_voxel": [
+        307141.0,
+        186099.0,
+        619.0
+      ],
+      "post_voxel": [
+        307144.0,
+        186081.0,
+        622.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "137493122",
+      "pre_voxel": [
+        292044.0,
+        193188.0,
+        1351.0
+      ],
+      "post_voxel": [
+        292039.0,
+        193177.0,
+        1351.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "138212113",
+      "pre_voxel": [
+        337293.0,
+        166145.0,
+        1428.0
+      ],
+      "post_voxel": [
+        337295.0,
+        166133.0,
+        1428.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "57505675",
+      "pre_voxel": [
+        330432.0,
+        171129.0,
+        1418.0
+      ],
+      "post_voxel": [
+        330441.0,
+        171135.0,
+        1418.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "57708810",
+      "pre_voxel": [
+        297199.0,
+        192401.0,
+        1241.0
+      ],
+      "post_voxel": [
+        297201.0,
+        192413.0,
+        1242.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "26815468",
+      "pre_voxel": [
+        298035.0,
+        190706.0,
+        1366.0
+      ],
+      "post_voxel": [
+        298047.0,
+        190702.0,
+        1366.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "88432522",
+      "pre_voxel": [
+        297551.0,
+        190335.0,
+        1486.0
+      ],
+      "post_voxel": [
+        297557.0,
+        190345.0,
+        1486.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "29949469",
+      "pre_voxel": [
+        339937.0,
+        168017.0,
+        536.0
+      ],
+      "post_voxel": [
+        339946.0,
+        168012.0,
+        537.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "96548277",
+      "pre_voxel": [
+        317665.0,
+        178494.0,
+        968.0
+      ],
+      "post_voxel": [
+        317654.0,
+        178488.0,
+        968.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "100643081",
+      "pre_voxel": [
+        333105.0,
+        168424.0,
+        1361.0
+      ],
+      "post_voxel": [
+        333096.0,
+        168433.0,
+        1361.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "9757032",
+      "pre_voxel": [
+        315057.0,
+        180932.0,
+        670.0
+      ],
+      "post_voxel": [
+        315055.0,
+        180923.0,
+        670.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "148168672",
+      "pre_voxel": [
+        331799.0,
+        169845.0,
+        1486.0
+      ],
+      "post_voxel": [
+        331798.0,
+        169838.0,
+        1485.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "83433666",
+      "pre_voxel": [
+        339020.0,
+        167326.0,
+        673.0
+      ],
+      "post_voxel": [
+        339029.0,
+        167321.0,
+        673.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "37991598",
+      "pre_voxel": [
+        321571.0,
+        177646.0,
+        1270.0
+      ],
+      "post_voxel": [
+        321575.0,
+        177653.0,
+        1269.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "120941085",
+      "pre_voxel": [
+        295096.0,
+        191151.0,
+        1224.0
+      ],
+      "post_voxel": [
+        295096.0,
+        191139.0,
+        1224.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "90642431",
+      "pre_voxel": [
+        325109.0,
+        174476.0,
+        1246.0
+      ],
+      "post_voxel": [
+        325110.0,
+        174489.0,
+        1246.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "90662016",
+      "pre_voxel": [
+        322387.0,
+        176672.0,
+        1511.0
+      ],
+      "post_voxel": [
+        322370.0,
+        176674.0,
+        1512.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "16298018",
+      "pre_voxel": [
+        314109.0,
+        181562.0,
+        720.0
+      ],
+      "post_voxel": [
+        314120.0,
+        181563.0,
+        720.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "137172428",
+      "pre_voxel": [
+        324631.0,
+        175136.0,
+        1195.0
+      ],
+      "post_voxel": [
+        324633.0,
+        175146.0,
+        1195.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "137235360",
+      "pre_voxel": [
+        298420.0,
+        199587.0,
+        460.0
+      ],
+      "post_voxel": [
+        298409.0,
+        199585.0,
+        459.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "62541787",
+      "pre_voxel": [
+        318646.0,
+        178979.0,
+        1053.0
+      ],
+      "post_voxel": [
+        318656.0,
+        178978.0,
+        1054.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "62909719",
+      "pre_voxel": [
+        337556.0,
+        166452.0,
+        1238.0
+      ],
+      "post_voxel": [
+        337544.0,
+        166450.0,
+        1238.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "63900379",
+      "pre_voxel": [
+        337291.0,
+        166199.0,
+        1447.0
+      ],
+      "post_voxel": [
+        337302.0,
+        166201.0,
+        1446.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "64234623",
+      "pre_voxel": [
+        311360.0,
+        182656.0,
+        581.0
+      ],
+      "post_voxel": [
+        311348.0,
+        182661.0,
+        581.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "64287494",
+      "pre_voxel": [
+        312024.0,
+        185353.0,
+        1369.0
+      ],
+      "post_voxel": [
+        312019.0,
+        185356.0,
+        1370.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "101823981",
+      "pre_voxel": [
+        310836.0,
+        183303.0,
+        630.0
+      ],
+      "post_voxel": [
+        310843.0,
+        183312.0,
+        630.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "123321093",
+      "pre_voxel": [
+        299244.0,
+        198201.0,
+        780.0
+      ],
+      "post_voxel": [
+        299243.0,
+        198189.0,
+        780.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "78474963",
+      "pre_voxel": [
+        309712.0,
+        183879.0,
+        635.0
+      ],
+      "post_voxel": [
+        309722.0,
+        183875.0,
+        635.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "79549496",
+      "pre_voxel": [
+        322194.0,
+        176962.0,
+        1141.0
+      ],
+      "post_voxel": [
+        322193.0,
+        176950.0,
+        1141.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "111081325",
+      "pre_voxel": [
+        309426.0,
+        184347.0,
+        649.0
+      ],
+      "post_voxel": [
+        309420.0,
+        184351.0,
+        648.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "4522237537"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "111125018",
+      "pre_voxel": [
+        330193.0,
+        171113.0,
+        1435.0
+      ],
+      "post_voxel": [
+        330192.0,
+        171106.0,
+        1434.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "98003618",
+      "pre_voxel": [
+        305403.0,
+        188109.0,
+        669.0
+      ],
+      "post_voxel": [
+        305392.0,
+        188112.0,
+        669.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "87815253",
+      "pre_voxel": [
+        302541.0,
+        188576.0,
+        1460.0
+      ],
+      "post_voxel": [
+        302538.0,
+        188565.0,
+        1460.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "97378286",
+      "pre_voxel": [
+        311501.0,
+        182545.0,
+        589.0
+      ],
+      "post_voxel": [
+        311509.0,
+        182554.0,
+        589.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "7668921",
+      "pre_voxel": [
+        310945.0,
+        185325.0,
+        1055.0
+      ],
+      "post_voxel": [
+        310948.0,
+        185337.0,
+        1055.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "113271828",
+      "pre_voxel": [
+        299497.0,
+        189846.0,
+        1679.0
+      ],
+      "post_voxel": [
+        299503.0,
+        189853.0,
+        1679.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "90209705",
+      "pre_voxel": [
+        299580.0,
+        200447.0,
+        290.0
+      ],
+      "post_voxel": [
+        299591.0,
+        200450.0,
+        290.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "103466125",
+      "pre_voxel": [
+        295846.0,
+        194728.0,
+        1411.0
+      ],
+      "post_voxel": [
+        295863.0,
+        194727.0,
+        1411.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "43799050",
+      "pre_voxel": [
+        335455.0,
+        166755.0,
+        1461.0
+      ],
+      "post_voxel": [
+        335447.0,
+        166755.0,
+        1460.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "91975700",
+      "pre_voxel": [
+        313303.0,
+        181533.0,
+        601.0
+      ],
+      "post_voxel": [
+        313312.0,
+        181544.0,
+        601.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "92508689",
+      "pre_voxel": [
+        318265.0,
+        179350.0,
+        1114.0
+      ],
+      "post_voxel": [
+        318267.0,
+        179362.0,
+        1114.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "94730999",
+      "pre_voxel": [
+        292560.0,
+        193066.0,
+        1135.0
+      ],
+      "post_voxel": [
+        292563.0,
+        193055.0,
+        1136.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "21671633",
+      "pre_voxel": [
+        299275.0,
+        199695.0,
+        227.0
+      ],
+      "post_voxel": [
+        299285.0,
+        199691.0,
+        228.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "21992812",
+      "pre_voxel": [
+        317327.0,
+        179101.0,
+        889.0
+      ],
+      "post_voxel": [
+        317337.0,
+        179103.0,
+        888.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "54258285",
+      "pre_voxel": [
+        309888.0,
+        184228.0,
+        722.0
+      ],
+      "post_voxel": [
+        309897.0,
+        184221.0,
+        722.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "549339",
+      "pre_voxel": [
+        297258.0,
+        189972.0,
+        1523.0
+      ],
+      "post_voxel": [
+        297264.0,
+        189981.0,
+        1523.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "1211874",
+      "pre_voxel": [
+        313404.0,
+        181423.0,
+        569.0
+      ],
+      "post_voxel": [
+        313401.0,
+        181416.0,
+        569.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "1557917",
+      "pre_voxel": [
+        306489.0,
+        187747.0,
+        719.0
+      ],
+      "post_voxel": [
+        306496.0,
+        187751.0,
+        718.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "108384502",
+      "pre_voxel": [
+        327143.0,
+        173540.0,
+        1333.0
+      ],
+      "post_voxel": [
+        327139.0,
+        173529.0,
+        1333.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "12500052",
+      "pre_voxel": [
+        299235.0,
+        198790.0,
+        727.0
+      ],
+      "post_voxel": [
+        299237.0,
+        198779.0,
+        727.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "57015979",
+      "pre_voxel": [
+        317442.0,
+        179232.0,
+        959.0
+      ],
+      "post_voxel": [
+        317450.0,
+        179239.0,
+        959.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "61489269",
+      "pre_voxel": [
+        310941.0,
+        183422.0,
+        563.0
+      ],
+      "post_voxel": [
+        310932.0,
+        183427.0,
+        563.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "36962301",
+      "pre_voxel": [
+        316410.0,
+        179957.0,
+        783.0
+      ],
+      "post_voxel": [
+        316409.0,
+        179975.0,
+        783.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "104573386",
+      "pre_voxel": [
+        312460.0,
+        182626.0,
+        549.0
+      ],
+      "post_voxel": [
+        312493.0,
+        182628.0,
+        547.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "121788172",
+      "pre_voxel": [
+        316746.0,
+        179477.0,
+        839.0
+      ],
+      "post_voxel": [
+        316744.0,
+        179491.0,
+        839.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "122144057",
+      "pre_voxel": [
+        301496.0,
+        188797.0,
+        1505.0
+      ],
+      "post_voxel": [
+        301498.0,
+        188786.0,
+        1505.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "103621647",
+      "pre_voxel": [
+        298633.0,
+        199538.0,
+        455.0
+      ],
+      "post_voxel": [
+        298623.0,
+        199537.0,
+        456.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "125872198",
+      "pre_voxel": [
+        297878.0,
+        190450.0,
+        1481.0
+      ],
+      "post_voxel": [
+        297867.0,
+        190451.0,
+        1481.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "28277439",
+      "pre_voxel": [
+        297577.0,
+        192271.0,
+        1304.0
+      ],
+      "post_voxel": [
+        297585.0,
+        192262.0,
+        1304.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "42328434",
+      "pre_voxel": [
+        310856.0,
+        184603.0,
+        1008.0
+      ],
+      "post_voxel": [
+        310860.0,
+        184613.0,
+        1008.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "42713451",
+      "pre_voxel": [
+        328727.0,
+        172439.0,
+        1435.0
+      ],
+      "post_voxel": [
+        328717.0,
+        172437.0,
+        1435.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "124266806",
+      "pre_voxel": [
+        335099.0,
+        166424.0,
+        1482.0
+      ],
+      "post_voxel": [
+        335089.0,
+        166413.0,
+        1482.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "126480156",
+      "pre_voxel": [
+        336371.0,
+        166495.0,
+        1499.0
+      ],
+      "post_voxel": [
+        336371.0,
+        166506.0,
+        1499.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "128008994",
+      "pre_voxel": [
+        313186.0,
+        181480.0,
+        695.0
+      ],
+      "post_voxel": [
+        313190.0,
+        181489.0,
+        695.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "144613134",
+      "pre_voxel": [
+        311193.0,
+        185019.0,
+        1096.0
+      ],
+      "post_voxel": [
+        311182.0,
+        185015.0,
+        1096.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "84473644",
+      "pre_voxel": [
+        296764.0,
+        193639.0,
+        1161.0
+      ],
+      "post_voxel": [
+        296768.0,
+        193649.0,
+        1161.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "59083472",
+      "pre_voxel": [
+        292750.0,
+        192879.0,
+        1156.0
+      ],
+      "post_voxel": [
+        292745.0,
+        192890.0,
+        1156.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "59135870",
+      "pre_voxel": [
+        334947.0,
+        167348.0,
+        1439.0
+      ],
+      "post_voxel": [
+        334956.0,
+        167341.0,
+        1439.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "133342383",
+      "pre_voxel": [
+        294386.0,
+        192755.0,
+        1162.0
+      ],
+      "post_voxel": [
+        294389.0,
+        192766.0,
+        1162.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "101033771",
+      "pre_voxel": [
+        309300.0,
+        184339.0,
+        784.0
+      ],
+      "post_voxel": [
+        309292.0,
+        184332.0,
+        785.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "55683487",
+      "pre_voxel": [
+        303654.0,
+        188689.0,
+        1175.0
+      ],
+      "post_voxel": [
+        303664.0,
+        188683.0,
+        1175.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "110643375",
+      "pre_voxel": [
+        330694.0,
+        170726.0,
+        1470.0
+      ],
+      "post_voxel": [
+        330697.0,
+        170733.0,
+        1470.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "52650279",
+      "pre_voxel": [
+        320163.0,
+        177987.0,
+        1287.0
+      ],
+      "post_voxel": [
+        320165.0,
+        178000.0,
+        1287.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "21223544",
+      "pre_voxel": [
+        299211.0,
+        199458.0,
+        482.0
+      ],
+      "post_voxel": [
+        299217.0,
+        199449.0,
+        482.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "21228949",
+      "pre_voxel": [
+        333946.0,
+        167885.0,
+        1508.0
+      ],
+      "post_voxel": [
+        333949.0,
+        167872.0,
+        1508.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "21512802",
+      "pre_voxel": [
+        314200.0,
+        181275.0,
+        642.0
+      ],
+      "post_voxel": [
+        314192.0,
+        181266.0,
+        642.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "30704681",
+      "pre_voxel": [
+        308404.0,
+        185007.0,
+        551.0
+      ],
+      "post_voxel": [
+        308394.0,
+        185011.0,
+        551.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "49218472",
+      "pre_voxel": [
+        303025.0,
+        188498.0,
+        1462.0
+      ],
+      "post_voxel": [
+        303020.0,
+        188505.0,
+        1463.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "51458275",
+      "pre_voxel": [
+        311959.0,
+        182592.0,
+        692.0
+      ],
+      "post_voxel": [
+        311964.0,
+        182603.0,
+        692.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4522237537",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4522237537",
+      "annotation_id": "73113613",
+      "pre_voxel": [
+        307799.0,
+        185880.0,
+        689.0
+      ],
+      "post_voxel": [
+        307788.0,
+        185877.0,
+        689.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3139317430",
+      "annotation_id": "11587892",
+      "pre_voxel": [
+        294171.0,
+        164267.0,
+        519.0
+      ],
+      "post_voxel": [
+        294151.0,
+        164275.0,
+        521.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3139317430",
+      "annotation_id": "78450006",
+      "pre_voxel": [
+        294898.0,
+        163861.0,
+        623.0
+      ],
+      "post_voxel": [
+        294896.0,
+        163865.0,
+        625.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3139317430",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3139317430",
+      "annotation_id": "117971907",
+      "pre_voxel": [
+        294728.0,
+        163885.0,
+        593.0
+      ],
+      "post_voxel": [
+        294712.0,
+        163902.0,
+        593.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3139317430",
+      "post_proofread_label": "3139317430"
+    },
+    {
+      "query_c3_id": "3139317430",
+      "annotation_id": "6034593",
+      "pre_voxel": [
+        294840.0,
+        164021.0,
+        525.0
+      ],
+      "post_voxel": [
+        294855.0,
+        164014.0,
+        525.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3139317430",
+      "annotation_id": "141341084",
+      "pre_voxel": [
+        294740.0,
+        163487.0,
+        584.0
+      ],
+      "post_voxel": [
+        294743.0,
+        163475.0,
+        584.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "3139317430",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3093748739",
+      "annotation_id": "11287898",
+      "pre_voxel": [
+        272500.0,
+        161817.0,
+        112.0
+      ],
+      "post_voxel": [
+        272488.0,
+        161816.0,
+        112.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3093748739",
+      "annotation_id": "89429982",
+      "pre_voxel": [
+        283529.0,
+        162073.0,
+        166.0
+      ],
+      "post_voxel": [
+        283542.0,
+        162074.0,
+        166.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "3093748739",
+      "annotation_id": "42626872",
+      "pre_voxel": [
+        283093.0,
+        161037.0,
+        117.0
+      ],
+      "post_voxel": [
+        283081.0,
+        161038.0,
+        117.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5584343344",
+      "annotation_id": "79308680",
+      "pre_voxel": [
+        323952.0,
+        202217.0,
+        269.0
+      ],
+      "post_voxel": [
+        323944.0,
+        202226.0,
+        269.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5584343344",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5584343344",
+      "annotation_id": "52069383",
+      "pre_voxel": [
+        323257.0,
+        200823.0,
+        480.0
+      ],
+      "post_voxel": [
+        323269.0,
+        200822.0,
+        480.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5584343344",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5584343344",
+      "annotation_id": "108059392",
+      "pre_voxel": [
+        323374.0,
+        201366.0,
+        407.0
+      ],
+      "post_voxel": [
+        323370.0,
+        201357.0,
+        407.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5584343344",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "70850512",
+      "pre_voxel": [
+        209723.0,
+        230542.0,
+        643.0
+      ],
+      "post_voxel": [
+        209667.0,
+        230545.0,
+        640.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "10430566",
+      "pre_voxel": [
+        246694.0,
+        219511.0,
+        228.0
+      ],
+      "post_voxel": [
+        246683.0,
+        219514.0,
+        228.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "83644123",
+      "pre_voxel": [
+        218374.0,
+        225210.0,
+        1290.0
+      ],
+      "post_voxel": [
+        218369.0,
+        225217.0,
+        1290.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "146412365",
+      "pre_voxel": [
+        202783.0,
+        215065.0,
+        665.0
+      ],
+      "post_voxel": [
+        202794.0,
+        215066.0,
+        666.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5654281423",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "137178243",
+      "pre_voxel": [
+        221222.0,
+        226849.0,
+        686.0
+      ],
+      "post_voxel": [
+        221233.0,
+        226846.0,
+        686.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "111644704",
+      "pre_voxel": [
+        221574.0,
+        227040.0,
+        404.0
+      ],
+      "post_voxel": [
+        221564.0,
+        227035.0,
+        404.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "114566465",
+      "pre_voxel": [
+        216243.0,
+        229894.0,
+        152.0
+      ],
+      "post_voxel": [
+        216233.0,
+        229891.0,
+        152.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "51943548",
+      "pre_voxel": [
+        221596.0,
+        227061.0,
+        416.0
+      ],
+      "post_voxel": [
+        221597.0,
+        227049.0,
+        416.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "104639740",
+      "pre_voxel": [
+        203179.0,
+        231395.0,
+        1094.0
+      ],
+      "post_voxel": [
+        203188.0,
+        231393.0,
+        1093.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5654281423",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5654281423",
+      "annotation_id": "127369309",
+      "pre_voxel": [
+        248898.0,
+        218434.0,
+        389.0
+      ],
+      "post_voxel": [
+        248903.0,
+        218425.0,
+        390.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "70401342",
+      "pre_voxel": [
+        371498.0,
+        188608.0,
+        171.0
+      ],
+      "post_voxel": [
+        371499.0,
+        188597.0,
+        171.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "13515792",
+      "pre_voxel": [
+        370439.0,
+        189177.0,
+        668.0
+      ],
+      "post_voxel": [
+        370448.0,
+        189182.0,
+        667.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "4507927",
+      "pre_voxel": [
+        372762.0,
+        187869.0,
+        330.0
+      ],
+      "post_voxel": [
+        372772.0,
+        187863.0,
+        330.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "129864410",
+      "pre_voxel": [
+        372907.0,
+        187890.0,
+        282.0
+      ],
+      "post_voxel": [
+        372899.0,
+        187884.0,
+        282.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "45094889",
+      "pre_voxel": [
+        369739.0,
+        188799.0,
+        762.0
+      ],
+      "post_voxel": [
+        369744.0,
+        188808.0,
+        762.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "4582188328"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "93931695",
+      "pre_voxel": [
+        368905.0,
+        188539.0,
+        751.0
+      ],
+      "post_voxel": [
+        368901.0,
+        188549.0,
+        751.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "38792386",
+      "pre_voxel": [
+        370703.0,
+        188526.0,
+        356.0
+      ],
+      "post_voxel": [
+        370701.0,
+        188514.0,
+        355.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "24179470",
+      "pre_voxel": [
+        372434.0,
+        188312.0,
+        127.0
+      ],
+      "post_voxel": [
+        372426.0,
+        188320.0,
+        127.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "127925047",
+      "pre_voxel": [
+        372405.0,
+        188912.0,
+        397.0
+      ],
+      "post_voxel": [
+        372395.0,
+        188910.0,
+        397.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "49422971",
+      "pre_voxel": [
+        374109.0,
+        188257.0,
+        191.0
+      ],
+      "post_voxel": [
+        374112.0,
+        188247.0,
+        190.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4582188328",
+      "annotation_id": "49973833",
+      "pre_voxel": [
+        371895.0,
+        188742.0,
+        262.0
+      ],
+      "post_voxel": [
+        371884.0,
+        188738.0,
+        262.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4582188328",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "82711606",
+      "pre_voxel": [
+        432843.0,
+        207273.0,
+        592.0
+      ],
+      "post_voxel": [
+        432839.0,
+        207285.0,
+        592.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "74278670",
+      "pre_voxel": [
+        423432.0,
+        211229.0,
+        728.0
+      ],
+      "post_voxel": [
+        423428.0,
+        211216.0,
+        728.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "5355296383",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "8595070",
+      "pre_voxel": [
+        433342.0,
+        208055.0,
+        464.0
+      ],
+      "post_voxel": [
+        433333.0,
+        208061.0,
+        464.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "114443684",
+      "pre_voxel": [
+        433358.0,
+        208146.0,
+        475.0
+      ],
+      "post_voxel": [
+        433347.0,
+        208149.0,
+        475.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "76140216",
+      "pre_voxel": [
+        433985.0,
+        207981.0,
+        576.0
+      ],
+      "post_voxel": [
+        433995.0,
+        207994.0,
+        575.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "28530190",
+      "pre_voxel": [
+        435043.0,
+        208738.0,
+        163.0
+      ],
+      "post_voxel": [
+        435042.0,
+        208750.0,
+        163.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "5355296383",
+      "annotation_id": "23350416",
+      "pre_voxel": [
+        431226.0,
+        206208.0,
+        1010.0
+      ],
+      "post_voxel": [
+        431230.0,
+        206219.0,
+        1010.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "83833299",
+      "pre_voxel": [
+        355158.0,
+        201152.0,
+        1374.0
+      ],
+      "post_voxel": [
+        355149.0,
+        201159.0,
+        1374.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "57472667",
+      "pre_voxel": [
+        358855.0,
+        207686.0,
+        893.0
+      ],
+      "post_voxel": [
+        358846.0,
+        207677.0,
+        893.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "25500349",
+      "pre_voxel": [
+        360077.0,
+        207363.0,
+        1196.0
+      ],
+      "post_voxel": [
+        360074.0,
+        207352.0,
+        1196.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "88674712",
+      "pre_voxel": [
+        350956.0,
+        198749.0,
+        325.0
+      ],
+      "post_voxel": [
+        350962.0,
+        198760.0,
+        325.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "95574843",
+      "pre_voxel": [
+        349509.0,
+        193454.0,
+        261.0
+      ],
+      "post_voxel": [
+        349520.0,
+        193456.0,
+        261.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "96432071",
+      "pre_voxel": [
+        422333.0,
+        170415.0,
+        3720.0
+      ],
+      "post_voxel": [
+        422325.0,
+        170420.0,
+        3720.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "42845828",
+      "pre_voxel": [
+        355093.0,
+        200325.0,
+        1493.0
+      ],
+      "post_voxel": [
+        355090.0,
+        200337.0,
+        1493.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "116697832",
+      "pre_voxel": [
+        358178.0,
+        211493.0,
+        730.0
+      ],
+      "post_voxel": [
+        358170.0,
+        211503.0,
+        730.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "90745330",
+      "pre_voxel": [
+        360470.0,
+        203849.0,
+        783.0
+      ],
+      "post_voxel": [
+        360465.0,
+        203838.0,
+        783.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "77243805",
+      "pre_voxel": [
+        361115.0,
+        205025.0,
+        1097.0
+      ],
+      "post_voxel": [
+        361122.0,
+        205014.0,
+        1097.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "63161392",
+      "pre_voxel": [
+        358308.0,
+        203180.0,
+        1112.0
+      ],
+      "post_voxel": [
+        358312.0,
+        203188.0,
+        1112.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "103159600",
+      "pre_voxel": [
+        363074.0,
+        205031.0,
+        1019.0
+      ],
+      "post_voxel": [
+        363066.0,
+        205039.0,
+        1019.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "111916523",
+      "pre_voxel": [
+        365637.0,
+        203749.0,
+        1051.0
+      ],
+      "post_voxel": [
+        365638.0,
+        203736.0,
+        1051.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "98582059",
+      "pre_voxel": [
+        423147.0,
+        170643.0,
+        3720.0
+      ],
+      "post_voxel": [
+        423157.0,
+        170643.0,
+        3719.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "143280485",
+      "pre_voxel": [
+        363132.0,
+        204926.0,
+        985.0
+      ],
+      "post_voxel": [
+        363129.0,
+        204916.0,
+        985.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "113253165",
+      "pre_voxel": [
+        363217.0,
+        205216.0,
+        135.0
+      ],
+      "post_voxel": [
+        363215.0,
+        205226.0,
+        135.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "113687354",
+      "pre_voxel": [
+        362321.0,
+        207474.0,
+        1363.0
+      ],
+      "post_voxel": [
+        362320.0,
+        207464.0,
+        1363.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "114862700",
+      "pre_voxel": [
+        358834.0,
+        208692.0,
+        897.0
+      ],
+      "post_voxel": [
+        358847.0,
+        208688.0,
+        896.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "22315209",
+      "pre_voxel": [
+        360613.0,
+        203874.0,
+        775.0
+      ],
+      "post_voxel": [
+        360618.0,
+        203848.0,
+        778.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "135273829",
+      "pre_voxel": [
+        361795.0,
+        207477.0,
+        1330.0
+      ],
+      "post_voxel": [
+        361805.0,
+        207472.0,
+        1330.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "141252676",
+      "pre_voxel": [
+        354866.0,
+        215635.0,
+        800.0
+      ],
+      "post_voxel": [
+        354870.0,
+        215626.0,
+        800.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "12277158",
+      "pre_voxel": [
+        360979.0,
+        203741.0,
+        847.0
+      ],
+      "post_voxel": [
+        360983.0,
+        203729.0,
+        847.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "24665036",
+      "pre_voxel": [
+        358259.0,
+        206979.0,
+        1123.0
+      ],
+      "post_voxel": [
+        358257.0,
+        206966.0,
+        1123.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "130209038",
+      "pre_voxel": [
+        361387.0,
+        205250.0,
+        455.0
+      ],
+      "post_voxel": [
+        361398.0,
+        205260.0,
+        455.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "34700847",
+      "pre_voxel": [
+        422957.0,
+        170538.0,
+        3718.0
+      ],
+      "post_voxel": [
+        422953.0,
+        170526.0,
+        3717.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "94996134",
+      "pre_voxel": [
+        358126.0,
+        207301.0,
+        996.0
+      ],
+      "post_voxel": [
+        358145.0,
+        207290.0,
+        996.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "124237613",
+      "pre_voxel": [
+        345318.0,
+        222993.0,
+        1213.0
+      ],
+      "post_voxel": [
+        345307.0,
+        222988.0,
+        1213.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "84781112",
+      "pre_voxel": [
+        345240.0,
+        222151.0,
+        1312.0
+      ],
+      "post_voxel": [
+        345243.0,
+        222142.0,
+        1313.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "48041948",
+      "pre_voxel": [
+        358080.0,
+        214137.0,
+        640.0
+      ],
+      "post_voxel": [
+        358088.0,
+        214135.0,
+        640.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "86828703",
+      "pre_voxel": [
+        349265.0,
+        194475.0,
+        230.0
+      ],
+      "post_voxel": [
+        349258.0,
+        194480.0,
+        230.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "133655296",
+      "pre_voxel": [
+        343683.0,
+        220621.0,
+        1315.0
+      ],
+      "post_voxel": [
+        343675.0,
+        220628.0,
+        1315.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "53653572",
+      "pre_voxel": [
+        355711.0,
+        205307.0,
+        733.0
+      ],
+      "post_voxel": [
+        355707.0,
+        205302.0,
+        733.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "71605469",
+      "pre_voxel": [
+        361374.0,
+        205158.0,
+        415.0
+      ],
+      "post_voxel": [
+        361384.0,
+        205137.0,
+        415.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "72653421",
+      "pre_voxel": [
+        360982.0,
+        204133.0,
+        801.0
+      ],
+      "post_voxel": [
+        360994.0,
+        204135.0,
+        801.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4873639924",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "4873639924",
+      "annotation_id": "72680560",
+      "pre_voxel": [
+        361040.0,
+        205074.0,
+        1114.0
+      ],
+      "post_voxel": [
+        361043.0,
+        205093.0,
+        1114.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2451406889",
+      "annotation_id": "100980778",
+      "pre_voxel": [
+        220716.0,
+        116863.0,
+        504.0
+      ],
+      "post_voxel": [
+        220726.0,
+        116854.0,
+        505.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "2451406889",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "70920808",
+      "pre_voxel": [
+        338288.0,
+        115386.0,
+        1445.0
+      ],
+      "post_voxel": [
+        338284.0,
+        115375.0,
+        1445.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "134819043",
+      "pre_voxel": [
+        347265.0,
+        79101.0,
+        849.0
+      ],
+      "post_voxel": [
+        347253.0,
+        79099.0,
+        849.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "96094865",
+      "pre_voxel": [
+        331614.0,
+        126948.0,
+        475.0
+      ],
+      "post_voxel": [
+        331624.0,
+        126953.0,
+        475.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "10121714",
+      "pre_voxel": [
+        331426.0,
+        128093.0,
+        587.0
+      ],
+      "post_voxel": [
+        331434.0,
+        128104.0,
+        587.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "78048833",
+      "pre_voxel": [
+        334551.0,
+        114457.0,
+        1216.0
+      ],
+      "post_voxel": [
+        334559.0,
+        114456.0,
+        1215.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "63379363",
+      "pre_voxel": [
+        338892.0,
+        117248.0,
+        1477.0
+      ],
+      "post_voxel": [
+        338902.0,
+        117246.0,
+        1477.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "129529195",
+      "pre_voxel": [
+        331759.0,
+        124930.0,
+        382.0
+      ],
+      "post_voxel": [
+        331740.0,
+        124925.0,
+        385.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "66760355",
+      "pre_voxel": [
+        333313.0,
+        114297.0,
+        1249.0
+      ],
+      "post_voxel": [
+        333318.0,
+        114308.0,
+        1249.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "29379287",
+      "pre_voxel": [
+        348890.0,
+        91491.0,
+        794.0
+      ],
+      "post_voxel": [
+        348888.0,
+        91503.0,
+        794.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "89815959",
+      "pre_voxel": [
+        344937.0,
+        93450.0,
+        863.0
+      ],
+      "post_voxel": [
+        344947.0,
+        93446.0,
+        862.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "810970127"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "45351387",
+      "pre_voxel": [
+        332472.0,
+        118291.0,
+        633.0
+      ],
+      "post_voxel": [
+        332484.0,
+        118291.0,
+        633.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "117909002",
+      "pre_voxel": [
+        351996.0,
+        91320.0,
+        1078.0
+      ],
+      "post_voxel": [
+        352000.0,
+        91310.0,
+        1079.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "61554304",
+      "pre_voxel": [
+        346462.0,
+        87040.0,
+        83.0
+      ],
+      "post_voxel": [
+        346470.0,
+        87039.0,
+        84.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "23678389",
+      "pre_voxel": [
+        333685.0,
+        113737.0,
+        1172.0
+      ],
+      "post_voxel": [
+        333694.0,
+        113735.0,
+        1172.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "13834226",
+      "pre_voxel": [
+        334279.0,
+        112988.0,
+        1080.0
+      ],
+      "post_voxel": [
+        334288.0,
+        112989.0,
+        1080.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "46412945",
+      "pre_voxel": [
+        334414.0,
+        112676.0,
+        877.0
+      ],
+      "post_voxel": [
+        334402.0,
+        112675.0,
+        877.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "110051587",
+      "pre_voxel": [
+        328969.0,
+        133906.0,
+        929.0
+      ],
+      "post_voxel": [
+        328967.0,
+        133903.0,
+        930.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "126931912",
+      "pre_voxel": [
+        345972.0,
+        87735.0,
+        189.0
+      ],
+      "post_voxel": [
+        345970.0,
+        87739.0,
+        188.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "144688418",
+      "pre_voxel": [
+        329947.0,
+        129958.0,
+        612.0
+      ],
+      "post_voxel": [
+        329935.0,
+        129955.0,
+        612.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "85661761",
+      "pre_voxel": [
+        336707.0,
+        113966.0,
+        1468.0
+      ],
+      "post_voxel": [
+        336703.0,
+        113977.0,
+        1468.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "133449131",
+      "pre_voxel": [
+        332522.0,
+        111741.0,
+        447.0
+      ],
+      "post_voxel": [
+        332529.0,
+        111733.0,
+        448.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "61996686",
+      "pre_voxel": [
+        333498.0,
+        115552.0,
+        1322.0
+      ],
+      "post_voxel": [
+        333488.0,
+        115550.0,
+        1322.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1684504313",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "20451367",
+      "pre_voxel": [
+        344501.0,
+        94665.0,
+        1187.0
+      ],
+      "post_voxel": [
+        344501.0,
+        94676.0,
+        1187.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "50445936",
+      "pre_voxel": [
+        332304.0,
+        116450.0,
+        725.0
+      ],
+      "post_voxel": [
+        332304.0,
+        116441.0,
+        725.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1684504313",
+      "annotation_id": "142442638",
+      "pre_voxel": [
+        333147.0,
+        115230.0,
+        861.0
+      ],
+      "post_voxel": [
+        333158.0,
+        115237.0,
+        861.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "26959143",
+      "pre_voxel": [
+        399647.0,
+        118115.0,
+        414.0
+      ],
+      "post_voxel": [
+        399637.0,
+        118110.0,
+        414.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2820958695",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "102492941",
+      "pre_voxel": [
+        399131.0,
+        117965.0,
+        428.0
+      ],
+      "post_voxel": [
+        399126.0,
+        117969.0,
+        430.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "114031295",
+      "pre_voxel": [
+        397250.0,
+        117471.0,
+        512.0
+      ],
+      "post_voxel": [
+        397241.0,
+        117476.0,
+        512.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2820958695",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "15879267",
+      "pre_voxel": [
+        398552.0,
+        117469.0,
+        253.0
+      ],
+      "post_voxel": [
+        398561.0,
+        117460.0,
+        253.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "108244908",
+      "pre_voxel": [
+        398495.0,
+        117758.0,
+        244.0
+      ],
+      "post_voxel": [
+        398492.0,
+        117758.0,
+        246.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "122123648",
+      "pre_voxel": [
+        396521.0,
+        116960.0,
+        728.0
+      ],
+      "post_voxel": [
+        396530.0,
+        116967.0,
+        728.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "49327444",
+      "pre_voxel": [
+        393607.0,
+        115226.0,
+        1011.0
+      ],
+      "post_voxel": [
+        393618.0,
+        115230.0,
+        1011.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2820958695",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2820958695",
+      "annotation_id": "100137086",
+      "pre_voxel": [
+        394013.0,
+        115273.0,
+        1143.0
+      ],
+      "post_voxel": [
+        394007.0,
+        115286.0,
+        1143.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2820958695",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "2103991145",
+      "annotation_id": "103833888",
+      "pre_voxel": [
+        253790.0,
+        125822.0,
+        813.0
+      ],
+      "post_voxel": [
+        253791.0,
+        125834.0,
+        813.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "2103991145",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1787105373",
+      "annotation_id": "146165477",
+      "pre_voxel": [
+        379253.0,
+        95527.0,
+        797.0
+      ],
+      "post_voxel": [
+        379241.0,
+        95529.0,
+        797.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1787105373",
+      "annotation_id": "63820184",
+      "pre_voxel": [
+        378305.0,
+        94743.0,
+        639.0
+      ],
+      "post_voxel": [
+        378316.0,
+        94742.0,
+        639.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1787105373",
+      "annotation_id": "103281428",
+      "pre_voxel": [
+        380232.0,
+        96089.0,
+        818.0
+      ],
+      "post_voxel": [
+        380256.0,
+        96104.0,
+        820.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1787105373",
+      "annotation_id": "100740748",
+      "pre_voxel": [
+        382606.0,
+        97953.0,
+        895.0
+      ],
+      "post_voxel": [
+        382595.0,
+        97950.0,
+        895.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1787105373",
+      "annotation_id": "50080423",
+      "pre_voxel": [
+        380756.0,
+        96609.0,
+        823.0
+      ],
+      "post_voxel": [
+        380760.0,
+        96622.0,
+        823.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "69302057",
+      "pre_voxel": [
+        331317.0,
+        100800.0,
+        919.0
+      ],
+      "post_voxel": [
+        331327.0,
+        100804.0,
+        919.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "13591599",
+      "pre_voxel": [
+        332356.0,
+        99107.0,
+        1218.0
+      ],
+      "post_voxel": [
+        332358.0,
+        99097.0,
+        1218.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "8249120",
+      "pre_voxel": [
+        334961.0,
+        123287.0,
+        288.0
+      ],
+      "post_voxel": [
+        334953.0,
+        123280.0,
+        289.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1930502394",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "77089216",
+      "pre_voxel": [
+        331714.0,
+        99635.0,
+        1018.0
+      ],
+      "post_voxel": [
+        331710.0,
+        99650.0,
+        1015.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "14689853",
+      "pre_voxel": [
+        331058.0,
+        100893.0,
+        456.0
+      ],
+      "post_voxel": [
+        331049.0,
+        100884.0,
+        456.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "73063622",
+      "pre_voxel": [
+        331291.0,
+        100724.0,
+        920.0
+      ],
+      "post_voxel": [
+        331298.0,
+        100715.0,
+        920.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "0",
+      "post_proofread_label": "0"
+    },
+    {
+      "query_c3_id": "1930502394",
+      "annotation_id": "73472711",
+      "pre_voxel": [
+        335947.0,
+        122861.0,
+        346.0
+      ],
+      "post_voxel": [
+        335942.0,
+        122873.0,
+        346.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "1930502394",
+      "post_proofread_label": "0"
+    }
+  ]
+}

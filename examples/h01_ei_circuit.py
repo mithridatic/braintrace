@@ -1,6 +1,6 @@
-"""Run the explicitly inferred two-cell H01 circuit and save direct traces.
+"""Run the measured I-to-E two-cell H01 circuit and save direct traces.
 
-python -m examples.h01_ei_circuit --control e_only --output .cache/h01/circuit-e
+python -m examples.h01_ei_circuit --control ei --output .cache/h01/circuit-e
 Run disconnected and ei with identical numerical and input settings for controls.
 """
 import argparse
@@ -27,20 +27,23 @@ def main():
     parser.add_argument("--cache", type=Path, default=Path(".cache/h01"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--control", choices=("ei", "e_only", "i_only", "disconnected"), default="ei")
+    parser.add_argument("--connectivity", choices=("measured", "illustrative"), default="measured")
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--duration-ms", type=float, default=10.)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--e-current-na", type=float, default=1.)
-    parser.add_argument("--i-current-na", type=float, default=0.)
+    parser.add_argument("--i-current-na", type=float)
     args = parser.parse_args()
     archive, annotations = H01Archive(args.cache/"proofread104.zip"), H01Annotations(args.cache)
     with brainstate.environ.context(precision=64):
-        components = {r: archive.load(nid, component=0) for r, nid in (("E", "810151953"), ("I", "678539249"))}
+        identities = (("E", "4157825456"), ("I", "5584343344")) if args.connectivity == "measured" else (("E", "810151953"), ("I", "678539249"))
+        components = {r: archive.load(nid, component=0) for r, nid in identities}
         parts = {r: label_partition(c) for r, c in components.items()}
         network, evidence = make_h01_ei_circuit(components, annotations,
             regions={r: p[0] for r, p in parts.items()}, region_basis={r: p[1] for r, p in parts.items()},
-            control=args.control, max_cv_length_um=args.max_cv_um,
-            currents_na={"E": args.e_current_na, "I": args.i_current_na})
+            control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um,
+            currents_na={"E": args.e_current_na, "I": (args.i_current_na if args.i_current_na is not None
+                else (1. if args.connectivity == "measured" else 0.))})
         print("Circuit constructed:", args.control, flush=True)
         result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
         arrays = {"time_ms": np.asarray(result.time.to_decimal(u.ms))+args.dt_ms}

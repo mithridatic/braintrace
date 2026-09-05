@@ -1,0 +1,48 @@
+{
+  "proofread": {
+    "url": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104",
+    "resolution_nm": [
+      8,
+      8,
+      33
+    ],
+    "sites": {
+      "pre": {
+        "center_label": "5584343344",
+        "neighborhood_counts": {
+          "5584343344": 27
+        }
+      },
+      "post": {
+        "center_label": "4157825456",
+        "neighborhood_counts": {
+          "4157825456": 23,
+          "0": 4
+        }
+      }
+    }
+  },
+  "c3": {
+    "url": "https://storage.googleapis.com/h01-release/data/20210601/c3",
+    "resolution_nm": [
+      8,
+      8,
+      33
+    ],
+    "sites": {
+      "pre": {
+        "center_label": "85384868035",
+        "neighborhood_counts": {
+          "85384868035": 27
+        }
+      },
+      "post": {
+        "center_label": "40781762246",
+        "neighborhood_counts": {
+          "40781762246": 23,
+          "0": 4
+        }
+      }
+    }
+  }
+}

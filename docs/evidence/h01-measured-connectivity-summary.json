@@ -1,0 +1,121 @@
+{
+  "proofread_cells": 104,
+  "spatially_resolved_cells": 79,
+  "identity_criterion": "At least three distinct nonzero sample voxels, one label, present in released morphology IDs.",
+  "export_records_scanned": 8991719,
+  "both_endpoints_in_base_membership": 39,
+  "different_proofread_records": 0,
+  "qualified_circuit_contacts": 0,
+  "full_export_scanned": false,
+  "circuit_defaults_changed": true,
+  "artifacts": [
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000000-audit.json",
+      "sha256": "6912e5ad0333dd7293d9b31e36f75b6844a0b1322664c14367d72fab594a19f3"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000001-audit.json",
+      "sha256": "4230af66e3ac277262891aca1360a6508b14df588e9c1b75ca897be9de1fd16e"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000002-audit.json",
+      "sha256": "4f36e9aafff5ea45122632e97d1b2f3a5f6d41f12bbce5370da41c9a50e2b5be"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000003-audit.json",
+      "sha256": "c1cf29f8a361be5408ce963cfea84ce46bbb6f039d19b9399b939f28cd3e8ef4"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000004-audit.json",
+      "sha256": "d6fd305a8f53f2b3fa10db479c4aae890a69647d4bfa7c64e23730a222208612"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000005-audit.json",
+      "sha256": "da9f8c4292f057d5956108b9ec769c14bd1290bdb3d1589545e6853ae988e657"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000006-audit.json",
+      "sha256": "6c38949e4c4a864ee0d2ee1155444c1b3209f56b0c496d23295ee51208747e37"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000007-audit.json",
+      "sha256": "81753a034a338302dc6a664ccb99a05fa2f62ee39e5f71837bab0c66e4724826"
+    },
+    {
+      "path": "docs/evidence/h01-connectivity-export000000000008-audit.json",
+      "sha256": "463caa99ad6350b58e91572f0d49278498847229070d414737eb9a34656c1472"
+    },
+    {
+      "path": "docs/evidence/h01-axon-index-endpoint-audit.json",
+      "sha256": "d6dc9b226d7f1688eb2bbcc3866764304313ef3748e33801edd8cffe9b067c8a"
+    }
+  ],
+  "limits": [
+    "Partial search does not establish absent connections.",
+    "Shared cell label at both ends does not establish a valid autapse.",
+    "Source morphology proofreading does not imply manual synapse review.",
+    "Channel, conductance, and delay validation remain separate."
+  ],
+  "indexed_candidates_checked": 2699,
+  "distinct_cell_endpoint_candidates": [
+    {
+      "query_c3_id": "4958471777",
+      "annotation_id": "124698307",
+      "pre_voxel": [
+        325789.0,
+        181779.0,
+        1167.0
+      ],
+      "post_voxel": [
+        325767.0,
+        181740.0,
+        1181.0
+      ],
+      "type": 2,
+      "pre_proofread_label": "4188575291",
+      "post_proofread_label": "3955003482"
+    },
+    {
+      "query_c3_id": "85384868035",
+      "annotation_id": "8105899",
+      "pre_voxel": [
+        262063.0,
+        210823.0,
+        4315.0
+      ],
+      "post_voxel": [
+        262054.0,
+        210816.0,
+        4315.0
+      ],
+      "type": 1,
+      "pre_proofread_label": "5584343344",
+      "post_proofread_label": "4157825456"
+    }
+  ],
+  "candidate_anatomical_roles": {
+    "8105899": "interneuron to pyramidal",
+    "124698307": "pyramidal to pyramidal"
+  },
+  "qualification_pending": [
+    "Circuit construction with measured placements",
+    "Matched event-delivery controls",
+    "Human physiology and full numerical qualification"
+  ],
+  "anatomically_supported_ie_contacts": 1,
+  "circuit_default": "Measured annotation 8105899, I 5584343344.0 to E 4157825456.0",
+  "software_validation": {
+    "tests_passed": 24,
+    "elapsed_seconds": 87.22,
+    "scope": "Contact identity and geometry rejection; circuit topology; synthetic event delivery and matched edge-removal controls.",
+    "real_h01_simulation": "Running; no physiological pass asserted.",
+    "coverage": {
+      "statements": 90,
+      "missed": 1,
+      "modules": [
+        "h01_ei_circuit.py",
+        "h01_measured_contact.py"
+      ]
+    }
+  }
+}
