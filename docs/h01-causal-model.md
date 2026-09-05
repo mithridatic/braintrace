@@ -598,6 +598,13 @@ This is a diagnostic channel law, not a human-qualified replacement.
 [Closing-time response](evidence/h01-measured-ie-source-closing-response-audit.json),
 [complete contact arrival](evidence/h01-measured-i-source-closing20-audit.json).
 
+Direct CV traces show the excursion reaching successive locations along
+the modeled soma-to-contact path. Each curve below is a local voltage,
+not a spatial average. The dashed line marks the earlier observation limit.
+[Locations and samples](evidence/h01-measured-i-propagation-audit.json).
+
+![Recorded voltages along the H01 I path](evidence/h01-measured-i-propagation.png)
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.

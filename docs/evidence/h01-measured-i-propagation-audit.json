@@ -1,0 +1,108 @@
+{
+  "scope": "Direct recorded voltages; no spatial averaging. Interior traces use the nearest CV midpoint on the source sample branch. Source-sample distances label the selection, not exact CV-center path distances.",
+  "source_sha256": "f2977d490309063ea451d866cad2e1e1e7dfdeb1b21b02be15cbd7a7a9361297",
+  "stations": [
+    {
+      "requested_path_distance_um": 100.0,
+      "source_sample": 9914,
+      "source_sample_path_distance_um": 100.08228637266622,
+      "source_location": [
+        1274,
+        0.8350900855092745
+      ],
+      "recorded_cv": {
+        "id": 5119,
+        "branch_id": 1274,
+        "prox": 0.7803313149802908,
+        "dist": 0.9206720825393216
+      }
+    },
+    {
+      "requested_path_distance_um": 200.0,
+      "source_sample": 7249,
+      "source_sample_path_distance_um": 200.00031532404455,
+      "source_location": [
+        738,
+        0.8374558164377962
+      ],
+      "recorded_cv": {
+        "id": 3635,
+        "branch_id": 738,
+        "prox": 0.8204569042455173,
+        "dist": 0.8477950034599836
+      }
+    },
+    {
+      "requested_path_distance_um": 300.0,
+      "source_sample": 8384,
+      "source_sample_path_distance_um": 300.1159673491353,
+      "source_location": [
+        901,
+        0.9833285904970874
+      ],
+      "recorded_cv": {
+        "id": 4170,
+        "branch_id": 901,
+        "prox": 0.8354787236514185,
+        "dist": 1.0
+      }
+    },
+    {
+      "requested_path_distance_um": 400.0,
+      "source_sample": 8731,
+      "source_sample_path_distance_um": 399.98668513040457,
+      "source_location": [
+        960,
+        0.9592482483063406
+      ],
+      "recorded_cv": {
+        "id": 4371,
+        "branch_id": 960,
+        "prox": 0.9058529553654313,
+        "dist": 0.9796241241531702
+      }
+    }
+  ],
+  "observations": [
+    {
+      "label": "Soma",
+      "peak_mv": 34.06822818681818,
+      "peak_time_ms": 4.885,
+      "first_positive_sample_ms": 4.765
+    },
+    {
+      "label": "100.1 um (CV 5119)",
+      "peak_mv": 24.547179691303022,
+      "peak_time_ms": 5.275,
+      "first_positive_sample_ms": 5.145
+    },
+    {
+      "label": "200.0 um (CV 3635)",
+      "peak_mv": 25.16334506425847,
+      "peak_time_ms": 6.025,
+      "first_positive_sample_ms": 5.915
+    },
+    {
+      "label": "300.1 um (CV 4170)",
+      "peak_mv": 30.322976200346297,
+      "peak_time_ms": 7.06,
+      "first_positive_sample_ms": 6.975
+    },
+    {
+      "label": "400.0 um (CV 4371)",
+      "peak_mv": 23.165800814480626,
+      "peak_time_ms": 8.095,
+      "first_positive_sample_ms": 7.98
+    },
+    {
+      "label": "Contact (CV 4430)",
+      "peak_mv": 28.251463732529277,
+      "peak_time_ms": 8.465000000000002,
+      "first_positive_sample_ms": 8.355
+    }
+  ],
+  "csv_sha256": "34a95276eb4247be7758be69984fc21ce138a2e4aeb3bff70cd96ff9dc1e6793",
+  "physical_conditions": "Only I NaTg closing factor restored from 0.15 to 1; 1 nA soma pulse 2-5 ms. Other channels and electrical map unchanged.",
+  "limits": "Ordered positive excursions support travel along the modeled path. This is not a conduction-velocity measurement or human validation.",
+  "figure_sha256": "7c986b59b8f2871fe9da9b49770c6cbc77d3e03caf1e6a3f321b2d73dfc56d14"
+}
