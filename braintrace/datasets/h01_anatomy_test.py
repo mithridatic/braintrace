@@ -153,3 +153,33 @@ def test_selections_accept_braincell_clone_but_reject_changed_geometry(imported)
         region.evaluate(clone)
     with pytest.raises(ValueError, match="different morphology"):
         location.evaluate(clone)
+
+
+def test_signature_and_source_mapping_do_not_rebuild_branch_indices(imported, monkeypatch):
+    from .h01_anatomy import _geometry_signature
+    # Preserve the original serialization, including edge endpoint indices.
+    import hashlib
+    digest = hashlib.sha256()
+    for view in imported.morphology.branches:
+        b = view.branch
+        digest.update(str((view.index, b.type, b.n_segments)).encode())
+        for array in (b.lengths, b.radii_proximal, b.radii_distal, b.points_proximal, b.points_distal):
+            digest.update(b'None' if array is None else np.asarray(array.to_decimal(u.um), dtype='<f8').tobytes())
+    for edge in imported.morphology.edges:
+        digest.update(str((edge.parent.index, edge.child.index, edge.parent_x, edge.child_x)).encode())
+    expected = digest.hexdigest()
+    prior = imported.anatomy()
+    locations = {int(r[0]): prior.location(int(r[0])).evaluate(imported.morphology).points
+                 for r in imported.source_rows}
+    calls = []
+    owner = type(imported.morphology)
+    original = owner._branch_index
+    def counted(self, *args, **kwargs):
+        calls.append(1)
+        return original(self, *args, **kwargs)
+    monkeypatch.setattr(owner, '_branch_index', counted)
+    assert _geometry_signature(imported.morphology) == expected
+    after = imported.anatomy()
+    for node, points in locations.items():
+        assert after.location(node).evaluate(imported.morphology).points == points
+    assert not calls, 'Anatomy traversal repeatedly reconstructs the complete branch index map.'

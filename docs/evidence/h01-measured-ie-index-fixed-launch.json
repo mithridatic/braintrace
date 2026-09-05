@@ -1,0 +1,20 @@
+{
+  "command": "python -m examples.h01_ei_circuit --connectivity measured --control ei --i-current-na 1 --duration-ms 8 --output .cache/h01/measured-ie-index-fixed",
+  "session_id": 30960,
+  "baseline_session_id": 48137,
+  "baseline_commit": "e7369ab",
+  "files": {
+    "braintrace/datasets/h01_anatomy.py": "a67ab777cd58759638b652d384e39cd9c4229659de16acd98e8dbaf8064d07aa",
+    "braintrace/datasets/h01_ei_circuit.py": "ed88b0abb7652696e9548a23198e0cb4d0657aac57463507d13a468991118b10",
+    "braintrace/datasets/h01_measured_contact.py": "e8000fd84c94441c05863081baf0e5ed189de4fb809be92e86530b70a109bec6",
+    "examples/h01_ei_circuit.py": "dec430a2149519bcc85957f9a7bf399bd4c7a0a3f40d35f51662385d14387d51"
+  },
+  "physical_change": "None intended. Source fingerprints and measured cable locations are equal on both real components.",
+  "numerical_settings": {
+    "dt_ms": 0.005,
+    "duration_ms": 8.0,
+    "E_current_na": 1.0,
+    "I_current_na": 1.0
+  },
+  "status": "Running; no voltage or event qualification yet."
+}

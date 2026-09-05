@@ -25,9 +25,11 @@ def _geometry_signature(morphology):
     if not isinstance(morphology, Morphology):
         return None
     digest = hashlib.sha256()
-    for view in morphology.branches:
+    branches = morphology.branches
+    indices = {id(view): index for index, view in enumerate(branches)}
+    for index, view in enumerate(branches):
         b = view.branch
-        digest.update(str((view.index, b.type, b.n_segments)).encode())
+        digest.update(str((index, b.type, b.n_segments)).encode())
         for array in (b.lengths, b.radii_proximal, b.radii_distal, b.points_proximal, b.points_distal):
             if array is None:
                 digest.update(b"None")
@@ -35,7 +37,7 @@ def _geometry_signature(morphology):
                 values = np.asarray(array.to_decimal(u.um), dtype="<f8")
                 digest.update(values.tobytes())
     for edge in morphology.edges:
-        digest.update(str((edge.parent.index, edge.child.index, edge.parent_x, edge.child_x)).encode())
+        digest.update(str((indices[id(edge.parent)], indices[id(edge.child)], edge.parent_x, edge.child_x)).encode())
     return digest.hexdigest()
 
 
@@ -114,7 +116,7 @@ class H01Anatomy:
         starts, ends, branch_ids, fractions, endpoints = [], [], [], [], []
         expected_edges = {frozenset((int(r[0]), int(r[6]))) for r in rows if r[6] != -1}
         actual_edges = []
-        for view in self.morphology.branches:
+        for branch_index, view in enumerate(self.morphology.branches):
             branch = view.branch
             lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
             if lengths.sum() <= 0:
@@ -128,11 +130,11 @@ class H01Anatomy:
                 except KeyError as exc:
                     raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
                 actual_edges.append(frozenset((int(rows[a, 0]), int(rows[b, 0]))))
-                self._nodes.setdefault(int(rows[a, 0]), (view.index, float(bounds[j])))
-                self._nodes.setdefault(int(rows[b, 0]), (view.index, float(bounds[j + 1])))
+                self._nodes.setdefault(int(rows[a, 0]), (branch_index, float(bounds[j])))
+                self._nodes.setdefault(int(rows[b, 0]), (branch_index, float(bounds[j + 1])))
                 starts.append(p)
                 ends.append(q)
-                branch_ids.append(view.index)
+                branch_ids.append(branch_index)
                 fractions.append((bounds[j], bounds[j + 1]))
                 endpoints.append((a, b))
         if len(actual_edges) != len(expected_edges) or set(actual_edges) != expected_edges:
