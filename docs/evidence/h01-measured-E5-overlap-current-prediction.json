@@ -1,0 +1,11 @@
+{
+  "scope": "Prediction from disconnected E5 trace before connected result exists. Same diagnostic I source restoration and measured contact.",
+  "source_sha256": "841c2657d3ea490ea08c240588faac09ffd6ec2c24148a5a720c2163ec41016e",
+  "expected_delivery_ms": 8.855,
+  "disconnected_local_voltage_at_delivery_mv": -83.62426975826423,
+  "borrowed_reversal_mv": -80.0,
+  "prediction": "The first delivered current is inward (depolarizing) if the connected receptor voltage remains below -80 mV. Verify its sign from connected local voltage and conductance.",
+  "disconnected_local_voltage_at_second_E_event_mv": -67.91212396014551,
+  "first_sample_disconnected_local_voltage_crosses_minus80_up_ms": 10.590000000000002,
+  "limits": "The disconnected later voltage does not establish the connected current direction. No prediction of spike count or onset sign is asserted from local current alone."
+}

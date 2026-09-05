@@ -598,6 +598,24 @@ unverified. The source inhibitory label does not by itself establish the
 sign of each local voltage change.
 [Measured edge-removal comparison](evidence/h01-measured-delivery20-paired-audit.json).
 
+The absence of E spikes under that short input does not establish that E
+cannot spike. With the edge absent, a 5 nA pulse from 8 to 18 ms produces two
+complete E excursions with positive peaks. The E channel profile is unchanged.
+I's first 20 ms remain exactly equal to the earlier disconnected record.
+Thus, E spiking in this condition does not require the I-to-E edge. Amplitude,
+onset, and duration changed together, so this result does not identify which
+input feature is necessary. Human-response and numerical qualification remain
+open. [Direct E response](evidence/h01-measured-E5-overlap-disconnected-audit.json).
+
+With that E input fixed, enabling only the measured edge changes local E
+voltage after delivery. I stays exactly unchanged, and E matches before
+delivery. The first local current is inward, as predicted from the receptor
+voltage below -80 mV. Both E spikes remain, with unchanged sampled event
+times. A small interpolated shift in the second onset is unresolved until
+time-step refinement. Thus, the edge causes a local response in this condition;
+it has not been shown to suppress E firing.
+[Active E edge comparison](evidence/h01-measured-E5-overlap-paired-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.

@@ -1,0 +1,95 @@
+{
+  "scope": "Measured I-to-E edge enabled versus absent, E 5 nA 8-18 ms, diagnostic I source closing restoration, dt 0.005 ms, duration 25 ms.",
+  "source_sha256": {
+    "disconnected": "841c2657d3ea490ea08c240588faac09ffd6ec2c24148a5a720c2163ec41016e",
+    "ei": "065893b2866537be6ce22994cef3ee57660f1cc369fffadb7d8619ec42760ba2"
+  },
+  "physical_metadata_equal_except_edge": true,
+  "all_saved_arrays_finite": true,
+  "time_arrays_exact": true,
+  "I_all_arrays_exact": true,
+  "disconnected_E_conductance_zero": true,
+  "I_event_ms": [
+    8.355
+  ],
+  "delivery_ms": 8.855,
+  "E_events_exact": true,
+  "E_event_times_ms": [
+    9.510000000000002,
+    14.790000000000001
+  ],
+  "E_disconnected_excursions": [
+    {
+      "rise_ms": 9.473954888816117,
+      "fall_ms": 10.686745523111641,
+      "width_ms": 1.2127906342955246,
+      "peak_mv": 50.29961251912033,
+      "peak_ms": 9.64
+    },
+    {
+      "rise_ms": 14.735366264140099,
+      "fall_ms": 15.775776491685049,
+      "width_ms": 1.0404102275449496,
+      "peak_mv": 42.52257657766402,
+      "peak_ms": 14.950000000000001
+    }
+  ],
+  "E_connected_excursions": [
+    {
+      "rise_ms": 9.473954764513106,
+      "fall_ms": 10.68675318590985,
+      "width_ms": 1.2127984213967444,
+      "peak_mv": 50.299621698719044,
+      "peak_ms": 9.64
+    },
+    {
+      "rise_ms": 14.73649041147011,
+      "fall_ms": 15.77685669797743,
+      "width_ms": 1.0403662865073198,
+      "peak_mv": 42.51969511697,
+      "peak_ms": 14.950000000000001
+    }
+  ],
+  "E_connected_minus_disconnected": [
+    {
+      "rise_ms": -1.2430301055132986e-07,
+      "fall_ms": 7.662798209295829e-06,
+      "width_ms": 7.787101219847159e-06,
+      "peak_mv": 9.17959871316043e-06,
+      "peak_ms": 0.0
+    },
+    {
+      "rise_ms": 0.0011241473300103166,
+      "fall_ms": 0.0010802062923804812,
+      "width_ms": -4.394103762983548e-05,
+      "peak_mv": -0.002881460694020177,
+      "peak_ms": 0.0
+    }
+  ],
+  "voltage_responses": {
+    "E_voltage": {
+      "pre_delivery_exact": true,
+      "delivery_connected_mv": -59.0913165235349,
+      "delivery_difference_mv": 0.0,
+      "largest_absolute_difference_signed_mv": -0.5760798072159243,
+      "time_largest_difference_ms": 14.805000000000001
+    },
+    "E_output_voltage": {
+      "pre_delivery_exact": true,
+      "delivery_connected_mv": -59.0913165235349,
+      "delivery_difference_mv": 0.0,
+      "largest_absolute_difference_signed_mv": -0.5760798072159243,
+      "time_largest_difference_ms": 14.805000000000001
+    },
+    "E_incoming_voltage": {
+      "pre_delivery_exact": true,
+      "delivery_connected_mv": -82.75875121789225,
+      "delivery_difference_mv": 0.8655185403719798,
+      "largest_absolute_difference_signed_mv": -14.601204451095093,
+      "time_largest_difference_ms": 18.665
+    }
+  },
+  "first_local_inward_positive_current_na": 0.05511987691180588,
+  "initial_inward_current_prediction_supported": true,
+  "qualification": "Edge causes a direct local voltage response; no E spike removed. Sub-step interpolated onset shifts require numerical refinement before inhibition claims. Human and spatial qualification remain open."
+}
