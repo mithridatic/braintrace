@@ -140,6 +140,25 @@ Sodium inactivation and potassium current then limit the rise and support the fa
 Gate recovery between pulses affects the next spike.
 These causes link channel state to the full voltage trajectory.
 
+In the borrowed inhibitory model, calcium entry raises calcium concentration
+in a thin shell below the membrane. A fitted fraction represents buffering.
+Removal returns concentration toward its resting value.
+Calcium opens SK gates. SK carries potassium, not calcium.
+When voltage is above the potassium reversal potential, this current lowers voltage.
+The calcium removal time can therefore affect recovery between spikes.
+This is a model mechanism. Its effect on the human spike train still needs validation.
+The [channel transfer evidence](evidence/h01-pv-channel-transfer.md) supports
+the local calcium-to-SK link in an assembled compartment.
+
+```mermaid
+flowchart LR
+    A[Calcium current enters] --> B[Inside calcium rises]
+    B --> C[SK gates open]
+    C --> D[Potassium current leaves]
+    D --> E[Voltage falls toward potassium reversal]
+    B --> F[Buffering and removal limit calcium]
+```
+
 A longer or wider cable also changes the electrical load.
 For a uniform cylinder, membrane area is proportional to radius times length.
 Axial conductance is proportional to radius squared divided by length and resistivity.
@@ -215,6 +234,29 @@ The current causal priorities are:
 These priorities follow causal dependencies. They are not claimed RSS ranks.
 Keep physical-factor effects separate from numerical error.
 A stable solver can solve an incorrect physical model accurately.
+
+The electrical mesh is also a causal factor in the simulated response.
+It sets the spatial resolution of voltage, channel gates, and calcium state.
+Equal total membrane area does not ensure equal local voltage during a spike.
+Local voltage affects channel opening. This changes the next voltage response.
+The published inhibitory model changes spike count when its mesh is refined,
+even with a tight time-integration tolerance and unchanged physical parameters.
+Thus, a time-converged reference is not sufficient for transfer validation.
+Check spatial convergence before fitting channels to a numerical discrepancy.
+The [numerical intervention audit](evidence/h01-pv-numerical-audit.json) records
+direct response RSS on a common clock. These are numerical effects, not estimates
+of biological parameter uncertainty. The exact local cause of the mesh sensitivity
+still needs isolation with voltage, calcium, and gate traces.
+
+Regional refinement provides a more specific check.
+Both axon and dendrite resolution affect the spike train in this model.
+Soma-only refinement has a smaller measured effect for the tested change.
+The axon has active channels. Dendrites carry passive leak and Ih in this model.
+Thus, resolving active membrane and resolving its electrical load both matter.
+This supports checking both regions before fitting channel densities.
+It does not prove that one channel explains the response change.
+The regional effects are coupled. Do not add their RSS values as independent errors.
+See the [direct regional traces](evidence/h01-pv-mesh-interventions.svg).
 
 ## Rules for revising this explanation
 

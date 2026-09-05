@@ -1,0 +1,114 @@
+[
+  {
+    "mechanism": "Ca_HVA",
+    "original_sha256": "48a6ba64fc1650140403941b130ec8eb5ce221e9982956b2da81956d249e070d",
+    "instrumented_sha256": "878765b4d1ae03e9d86fbb4461a87eadc0196f17901e5aa7d7ab7a79cacb6764",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "Ca_LVA",
+    "original_sha256": "1ffc6be5cd95a0acf116f621be51675152672c2c8898bef06a752dab68fba683",
+    "instrumented_sha256": "19e3d9fe1e2520fad3db944d6ceede578d622eaf91ede9db77d4fa568a450c97",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "Ih",
+    "original_sha256": "c9847e478a6a45d5c8e7d7d0ecac4498679fb221a2622185d973002c1312c43e",
+    "instrumented_sha256": "c223b5e7fe68c2f63cfab83a5ec50e6b1015d92ed85a7ad371a1de4a6c75a43a",
+    "added_range_fields": [
+      "mInf",
+      "mTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "Im",
+    "original_sha256": "19b28d129d9575b89d8f0272f793d2e775ac2579697bc079fafacc58955feba6",
+    "instrumented_sha256": "530f8ef2df7ea6e04afb6a2a66aabc444127d648d47ece1c11ecfefc1344e0af",
+    "added_range_fields": [
+      "mInf",
+      "mTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "Kv3_1",
+    "original_sha256": "89611e80e59a3b92c58d84897ce2c725d59eeb168aed3827a80c935a3ff1c525",
+    "instrumented_sha256": "d951c8cc001d2d2cc344ee0bca1d113545c0dc3e11070fb15d4e43a620f0550f",
+    "added_range_fields": [
+      "mInf",
+      "mTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "K_P",
+    "original_sha256": "80091c19ba67bc0eeec989558387d8b96e409642f8ca97c6dc0143e905d4ebb2",
+    "instrumented_sha256": "aba2c625b6310d6d71c83521639ecd227b65c5d09434d4794311279a1bce7a7e",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "K_T",
+    "original_sha256": "2f3de2b4c09a2e93e5a4638fadabd6eafe37fecab8b8f5f01d37b33b168be0c9",
+    "instrumented_sha256": "101a608f875dd4e1bfaf056c187ce70a3a65c1abc0614b5bd3362387308bf665",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "Nap",
+    "original_sha256": "65e8e31b202143d69b741a70afdd34f6b5439b24243bf79e751bcb76fdef901e",
+    "instrumented_sha256": "d3bb2cc11c22cbc74024039951afb24ba8d40c1561a55d66feb5d5e4c9778073",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "NaTg",
+    "original_sha256": "24ad05639111953f27367df1b3ae6e7a7dd1d9055a79773fae325f37becf7de2",
+    "instrumented_sha256": "b34a64aa430268ee8fd3784daf03c06e091870479dd0c0b4b0167133224d7acb",
+    "added_range_fields": [
+      "mInf",
+      "mTau",
+      "hInf",
+      "hTau"
+    ],
+    "equations_changed": false
+  },
+  {
+    "mechanism": "SK",
+    "original_sha256": "c56e313729efec19040995b4ea9ffbb5eaba3d51c5468b9b6ab15934d18e4fd4",
+    "instrumented_sha256": "3eb41ec912ff8760606fecb20414f051f1856a47be12c3aeddeecd453212db29",
+    "added_range_fields": [
+      "zInf",
+      "zTau"
+    ],
+    "equations_changed": false
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "reference": "h01-pv-neuron-passive",
+  "transfer": "h01-pv-braincell-passive",
+  "comparison": "same physical clock; no voltage or spike-time alignment",
+  "windows": {
+    "initial": {
+      "start_ms": 0.0,
+      "stop_ms": 20.0,
+      "max_error_mv": 0.003467949287596639,
+      "rms_error_mv": 0.0027545588355302945,
+      "mean_signed_error_mv": 0.00264059712726931
+    },
+    "baseline": {
+      "start_ms": 200.0,
+      "stop_ms": 270.0,
+      "max_error_mv": 4.552163090920658e-10,
+      "rms_error_mv": 4.005148219434048e-10,
+      "mean_signed_error_mv": -3.9917242945973287e-10
+    },
+    "stimulus": {
+      "start_ms": 270.0,
+      "stop_ms": 1270.0,
+      "max_error_mv": 0.0018947381721403644,
+      "rms_error_mv": 0.0011813724240990976,
+      "mean_signed_error_mv": -0.0011802106668083463
+    },
+    "recovery": {
+      "start_ms": 1270.0,
+      "stop_ms": 1500.0,
+      "max_error_mv": 0.0011710261819501966,
+      "rms_error_mv": 0.00011089160084363828,
+      "mean_signed_error_mv": 3.993533119153532e-05
+    }
+  }
+}

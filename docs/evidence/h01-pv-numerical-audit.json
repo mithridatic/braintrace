@@ -1,0 +1,107 @@
+{
+  "window_ms": [
+    270.0,
+    1270.0
+  ],
+  "grid_step_ms": 0.005,
+  "sample_count": 200000,
+  "meaning": "RSS of direct voltage response changes for stated numerical interventions; not biological uncertainty",
+  "results": [
+    {
+      "factor": "braincell_time_step",
+      "intervention": "dt 0.005 to 0.0025 ms; maximum CV length 10 um unchanged",
+      "before": "h01-pv-braincell-019",
+      "after": "h01-pv-braincell-019-fine",
+      "response_change_rss_mv": 4312.528134242912,
+      "response_change_rms_mv": 9.643106063047489,
+      "response_change_max_mv": 124.42942995151805,
+      "spike_count_before": 12,
+      "spike_count_after": 12,
+      "max_paired_spike_time_change_ms": 2.207499999999982
+    },
+    {
+      "factor": "neuron_mesh_1_to_3",
+      "intervention": "each section nseg multiplied by 3; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-observed",
+      "after": "h01-pv-neuron-space3",
+      "response_change_rss_mv": 5316.254606521951,
+      "response_change_rms_mv": 11.88750668587948,
+      "response_change_max_mv": 117.87840600147483,
+      "spike_count_before": 13,
+      "spike_count_after": 12,
+      "max_paired_spike_time_change_ms": null
+    },
+    {
+      "factor": "neuron_mesh_3_to_9",
+      "intervention": "each section nseg multiplied by 3 again; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-space3",
+      "after": "h01-pv-neuron-space9",
+      "response_change_rss_mv": 4821.224639920572,
+      "response_change_rms_mv": 10.780586029659345,
+      "response_change_max_mv": 119.79405612978854,
+      "spike_count_before": 12,
+      "spike_count_after": 11,
+      "max_paired_spike_time_change_ms": null
+    },
+    {
+      "factor": "neuron_mesh_9_to_27",
+      "intervention": "each section nseg multiplied by 3 again; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-space9",
+      "after": "h01-pv-neuron-space27",
+      "response_change_rss_mv": 4606.552035851097,
+      "response_change_rms_mv": 10.300563494053101,
+      "response_change_max_mv": 123.85766635718784,
+      "spike_count_before": 11,
+      "spike_count_after": 11,
+      "max_paired_spike_time_change_ms": 8.529833937738431
+    },
+    {
+      "factor": "neuron_mesh_27_to_81",
+      "intervention": "each section nseg multiplied by 3 again; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-space27",
+      "after": "h01-pv-neuron-space81",
+      "response_change_rss_mv": 3427.109974518835,
+      "response_change_rms_mv": 7.663250869391685,
+      "response_change_max_mv": 110.35763701994851,
+      "spike_count_before": 11,
+      "spike_count_after": 11,
+      "max_paired_spike_time_change_ms": 1.0638705869248497
+    },
+    {
+      "factor": "neuron_soma_only",
+      "intervention": "soma nseg multiplied by 9 only; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-observed",
+      "after": "h01-pv-neuron-soma9",
+      "response_change_rss_mv": 889.3343235312827,
+      "response_change_rms_mv": 1.9886120021397389,
+      "response_change_max_mv": 86.79620359474728,
+      "spike_count_before": 13,
+      "spike_count_after": 13,
+      "max_paired_spike_time_change_ms": 0.1265846047008381
+    },
+    {
+      "factor": "neuron_axon_only",
+      "intervention": "axon nseg multiplied by 9 only; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-observed",
+      "after": "h01-pv-neuron-axon9",
+      "response_change_rss_mv": 5102.899544263272,
+      "response_change_rms_mv": 11.410430263325374,
+      "response_change_max_mv": 123.14463278038227,
+      "spike_count_before": 13,
+      "spike_count_after": 11,
+      "max_paired_spike_time_change_ms": null
+    },
+    {
+      "factor": "neuron_dendrites_only",
+      "intervention": "dendrite nseg multiplied by 9 only; CVode atol 1e-10 unchanged",
+      "before": "h01-pv-neuron-observed",
+      "after": "h01-pv-neuron-dendrites9",
+      "response_change_rss_mv": 5184.320793128175,
+      "response_change_rms_mv": 11.592493710600223,
+      "response_change_max_mv": 124.57437755946358,
+      "spike_count_before": 13,
+      "spike_count_after": 12,
+      "max_paired_spike_time_change_ms": null
+    }
+  ]
+}

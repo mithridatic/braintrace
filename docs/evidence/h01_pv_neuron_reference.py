@@ -24,8 +24,13 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
 parser.add_argument("--dt-ms", type=float, default=.025)
 parser.add_argument("--cvode-atol", type=float)
+parser.add_argument("--passive", action="store_true")
+parser.add_argument("--nseg-factor", type=int, default=1)
+parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
 parser.add_argument("--output", required=True)
 args = parser.parse_args()
+if args.nseg_factor < 1 or args.nseg_factor % 2 != 1:
+    parser.error("Segment factor must be a positive odd integer.")
 if not np.isfinite([args.current_na, args.dt_ms]).all() or args.dt_ms <= 0:
     parser.error("Current must be finite and time step must be positive.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
@@ -37,6 +42,18 @@ h.load_file("/work/source/NeuronTemplate.hoc")
 h.load_file("/work/source/biophys_HL5BN1.hoc")
 cell = h.NeuronTemplate("/work/source/HL5BN1.swc")
 h.biophys_HL5BN1(cell)
+for section in cell.all:
+    family = section.name().split(".", 1)[1].split("[", 1)[0]
+    selected = (args.refine_region == "all" or family == args.refine_region
+                or (args.refine_region == "dendrites" and family in ("dend", "apic")))
+    if selected:
+        section.nseg *= args.nseg_factor
+if args.passive:
+    # Static configuration only. Remove every density mechanism except leak.
+    for section in cell.all:
+        for mechanism in tuple(section.psection()["density_mechs"]):
+            if mechanism != "pas":
+                section.uninsert(mechanism)
 h.celsius = 34.
 h.dt = args.dt_ms
 h.steps_per_ms = 1./args.dt_ms
@@ -52,6 +69,8 @@ t = h.Vector().record(h._ref_t)
 v = h.Vector().record(cell.soma[0](.5)._ref_v)
 current = h.Vector().record(clamp._ref_i)
 axon_v = h.Vector().record(cell.axon[0](.5)._ref_v)
+calcium = h.Vector().record(cell.soma[0](.5)._ref_cai) if not args.passive else []
+sk = h.Vector().record(cell.soma[0](.5).SK._ref_z) if not args.passive else []
 geometry = [{"name": sec.name(), "length_um": sec.L, "diameter_um": sec.diam,
              "nseg": sec.nseg, "area_um2": sum(seg.area() for seg in sec),
              "ra_ohm_cm": sec.Ra, "cm_uf_cm2": sec.cm,
@@ -66,8 +85,12 @@ peaks = peaks[(times[peaks] >= 270.) & (times[peaks] < 1270.)]
 output = Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 np.savez_compressed(output.with_suffix(".npz"), time_ms=times, voltage_mv=voltage,
-                    current_na=applied, axon_voltage_mv=axon)
+                    current_na=applied, axon_voltage_mv=axon,
+                    calcium_mm=np.asarray(calcium), sk_gate=np.asarray(sk))
 report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+          "active_channels": not args.passive,
+          "nseg_factor": args.nseg_factor,
+          "refine_region": args.refine_region,
           "model": "ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms",
           "current_na": args.current_na, "dt_ms": args.dt_ms, "temperature_c": 34.,
           "integration": {"method": "CVode" if args.cvode_atol is not None else "fixed step",
