@@ -1,0 +1,76 @@
+{
+  "scope": "Measured E5 paired edge comparison at dt 0.0025 ms. Physical settings unchanged.",
+  "source_sha256": {
+    "disconnected": "c911d14a692211a953d3665c85acf480a389f9b603964973532f19c5527d99eb",
+    "ei": "3ba357be92ec84b213287c26e4f74f9bc695510f0054ed09af82f088d6843afc"
+  },
+  "physical_metadata_equal_except_edge": true,
+  "I_all_arrays_exact": true,
+  "all_arrays_finite": true,
+  "time_arrays_exact": true,
+  "pre_delivery_E_exact": {
+    "E_voltage": true,
+    "E_output_voltage": true,
+    "E_incoming_voltage": true
+  },
+  "disconnected_conductance_zero": true,
+  "I_events_ms": [
+    8.3375
+  ],
+  "delivery_ms": 8.8375,
+  "E_events_exact": true,
+  "E_events_ms": [
+    9.5075,
+    14.785
+  ],
+  "E_disconnected_excursions": [
+    {
+      "rise_ms": 9.473038264859543,
+      "peak_mv": 50.32568283149906,
+      "width_ms": 1.212720065882051
+    },
+    {
+      "rise_ms": 14.731845242367417,
+      "peak_mv": 42.57948288545511,
+      "width_ms": 1.0400877945054727
+    }
+  ],
+  "E_connected_excursions": [
+    {
+      "rise_ms": 9.473038133981827,
+      "peak_mv": 50.325692592553025,
+      "width_ms": 1.2127279805392064
+    },
+    {
+      "rise_ms": 14.732985642423536,
+      "peak_mv": 42.57764682322723,
+      "width_ms": 1.040018842943418
+    }
+  ],
+  "E_connected_minus_disconnected": [
+    {
+      "rise_ms": -1.3087771577602325e-07,
+      "peak_mv": 9.761053966883537e-06,
+      "width_ms": 7.914657155438931e-06
+    },
+    {
+      "rise_ms": 0.0011404000561192618,
+      "peak_mv": -0.001836062227880575,
+      "width_ms": -6.895156205466435e-05
+    }
+  ],
+  "edge_effect_fine_minus_coarse": [
+    {
+      "rise_ms": -6.574705224693389e-09,
+      "peak_mv": 5.814552537231066e-07,
+      "width_ms": 1.2755593559177214e-07
+    },
+    {
+      "rise_ms": 1.6252726108945126e-05,
+      "peak_mv": 0.001045398466139602,
+      "width_ms": -2.5010524424828873e-05
+    }
+  ],
+  "first_inward_positive_current_na": 0.06068869053738069,
+  "qualification": "Two E spikes persist with equal sampled event times in both controls. Interpolated edge effect is recorded across steps, but full numerical qualification fails the independent I soma peak check."
+}

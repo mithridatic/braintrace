@@ -611,10 +611,13 @@ With that E input fixed, enabling only the measured edge changes local E
 voltage after delivery. I stays exactly unchanged, and E matches before
 delivery. The first local current is inward, as predicted from the receptor
 voltage below -80 mV. Both E spikes remain, with unchanged sampled event
-times. A small interpolated shift in the second onset is unresolved until
-time-step refinement. Thus, the edge causes a local response in this condition;
-it has not been shown to suppress E firing.
-[Active E edge comparison](evidence/h01-measured-E5-overlap-paired-audit.json).
+times. Halving the step preserves a small delay in the second interpolated
+onset: 0.001124 ms and 0.001140 ms at the two steps. Thus, the edge causes a
+local response and a small onset delay in these discrete runs. It does not
+remove an E spike. The failed I waveform check below still prevents full
+numerical qualification.
+[Active E edge comparison](evidence/h01-measured-E5-overlap-paired-audit.json),
+[paired half-step comparison](evidence/h01-measured-E5-overlap-paired-halfdt-audit.json).
 
 ![Direct E soma and receptor responses](evidence/h01-measured-E5-overlap-traces.png)
 
