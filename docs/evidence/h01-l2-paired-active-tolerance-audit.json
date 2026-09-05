@@ -1,6 +1,6 @@
 {
   "scope": "Independent read-only audit of completed Stage B/C active sweep 50 outputs. Sweeps were produced by the existing campaign, not rerun for this audit.",
-  "limitation": "The tighter into-swap sweep 43 is absent. This is not complete Stage C qualification, not evidence of human acceptance, and does not promote a default.",
+  "limitation": "Active-only audit; the later forward subthreshold check is recorded separately in h01-l2-paired-subthreshold-tolerance-audit.json. The reverse active phase check fails two limits. No human acceptance or default promotion is implied.",
   "paired_swaps": {
     "into": {
       "counts": [

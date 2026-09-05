@@ -1,0 +1,81 @@
+{
+  "scope": "Forward paired-swap subthreshold tolerance check, recorded human sweep 43 (110 pA). Existing campaign outputs audited independently; no new simulation.",
+  "all_samples_within_limits": true,
+  "limits_basis": "Minimum-voltage numerical limit used as the predeclared subthreshold proxy; not a human acceptance allowance.",
+  "observations": {
+    "sub_1019_v": {
+      "baseline_residual_mv": 0.5109165125053892,
+      "tighter_residual_mv": 0.5109165116507342,
+      "change_mv": -8.546550134269637e-10,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_1021_v": {
+      "baseline_residual_mv": 0.8883949067162575,
+      "tighter_residual_mv": 0.8883949108678024,
+      "change_mv": 4.151544885644398e-09,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_1025_v": {
+      "baseline_residual_mv": 0.7790308687149263,
+      "tighter_residual_mv": 0.779030867924277,
+      "change_mv": -7.906493237896939e-10,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_1040_v": {
+      "baseline_residual_mv": 0.595075339607547,
+      "tighter_residual_mv": 0.5950754483771874,
+      "change_mv": 1.0876964040562598e-07,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_1120_v": {
+      "baseline_residual_mv": 0.3877522638531872,
+      "tighter_residual_mv": 0.38775251522103815,
+      "change_mv": 2.5136785097856773e-07,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_1520_v": {
+      "baseline_residual_mv": 1.6739589704340858,
+      "tighter_residual_mv": 1.673958956284352,
+      "change_mv": -1.414973382907192e-08,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_2019_v": {
+      "baseline_residual_mv": 1.6721797718668086,
+      "tighter_residual_mv": 1.6721797478316347,
+      "change_mv": -2.403517385118903e-08,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_2021_v": {
+      "baseline_residual_mv": 1.3548246731283626,
+      "tighter_residual_mv": 1.354824644291142,
+      "change_mv": -2.88372206114218e-08,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_2040_v": {
+      "baseline_residual_mv": 1.6492602606503084,
+      "tighter_residual_mv": 1.64926013391009,
+      "change_mv": -1.2674021832026483e-07,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    },
+    "sub_2120_v": {
+      "baseline_residual_mv": 1.2024976372811125,
+      "tighter_residual_mv": 1.2024973826679854,
+      "change_mv": -2.5461312702645955e-07,
+      "limit_mv": 0.0013294618671295666,
+      "within_limit": true
+    }
+  },
+  "files": {
+    "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz": "0229f355fe2e40dc284adc84dfd683ae382370e617589610030a6fbd4a2155ba",
+    "docs/evidence/h01-l2-campaign-fine/c-into-F3F5-atol11-sweep43.npz": "607d16e783d5771ed72fc31b8c85076d80ef9de28c80d054b29862591b959daa"
+  }
+}
