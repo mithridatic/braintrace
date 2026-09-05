@@ -1,0 +1,46 @@
+{
+  "scope": "Diagnostic peak-sampling check after the original I soma peak gate failed. No new simulation or acceptance rule.",
+  "records": [
+    {
+      "source": ".cache\\h01\\measured-E5-overlap-disconnected.npz",
+      "sha256": "841c2657d3ea490ea08c240588faac09ffd6ec2c24148a5a720c2163ec41016e",
+      "peak_sample_ms": 4.885,
+      "sample_peak_mv": 34.06822818681818,
+      "three_sample_times_ms": [
+        4.88,
+        4.885,
+        4.89
+      ],
+      "three_sample_voltages_mv": [
+        34.05125336906725,
+        34.06822818681818,
+        34.02393347332337
+      ],
+      "quadratic_vertex_offset_ms": -0.001114742319240752,
+      "vertex_inside_three_sample_window": true,
+      "quadratic_peak_mv": 34.06975091901532
+    },
+    {
+      "source": ".cache\\h01\\measured-E5-overlap-disconnected-halfdt.npz",
+      "sha256": "c911d14a692211a953d3665c85acf480a389f9b603964973532f19c5527d99eb",
+      "peak_sample_ms": 4.880000000000001,
+      "sample_peak_mv": 34.17939330729351,
+      "three_sample_times_ms": [
+        4.8775,
+        4.880000000000001,
+        4.8825
+      ],
+      "three_sample_voltages_mv": [
+        34.17027131820064,
+        34.17939330729351,
+        34.172528510139394
+      ],
+      "quadratic_vertex_offset_ms": 0.00017648887524352111,
+      "vertex_inside_three_sample_window": true,
+      "quadratic_peak_mv": 34.17943314422015
+    }
+  ],
+  "quadratic_fine_minus_coarse_mv": 0.1096822252048284,
+  "unchanged_peak_limit_mv": 0.1,
+  "interpretation": "Three-point quadratic peak estimation still exceeds the original limit. This approximation does not establish the continuous peak or a unique integration-error mechanism; retain the failed original sample-peak gate."
+}

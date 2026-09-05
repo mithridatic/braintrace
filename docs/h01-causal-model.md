@@ -616,6 +616,15 @@ time-step refinement. Thus, the edge causes a local response in this condition;
 it has not been shown to suppress E firing.
 [Active E edge comparison](evidence/h01-measured-E5-overlap-paired-audit.json).
 
+![Direct E soma and receptor responses](evidence/h01-measured-E5-overlap-traces.png)
+
+Time-step choice still affects the diagnostic I waveform beyond the declared
+limit. Halving the step changes its soma peak by 0.1112 mV, above the 0.1 mV
+limit. The E soma and I contact excursions pass their stated checks. This
+localizes the failed numerical observation to the I soma peak; it does not
+identify a unique channel or integration term as the cause of the error.
+[Time-step comparison](evidence/h01-measured-E5-overlap-disconnected-halfdt-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.

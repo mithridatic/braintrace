@@ -1,0 +1,128 @@
+{
+  "scope": "Disconnected E5 half-time-step comparison; unchanged profiles, mesh and inputs.",
+  "limits": {
+    "rise_ms": 0.1,
+    "peak_mv": 0.1,
+    "width_ms": 0.01
+  },
+  "source_sha256": {
+    ".cache\\h01\\measured-E5-overlap-disconnected.npz": "841c2657d3ea490ea08c240588faac09ffd6ec2c24148a5a720c2163ec41016e",
+    ".cache\\h01\\measured-E5-overlap-disconnected-halfdt.npz": "c911d14a692211a953d3665c85acf480a389f9b603964973532f19c5527d99eb"
+  },
+  "all_arrays_finite": true,
+  "observations": {
+    "E_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 9.473954888816117,
+          "peak_mv": 50.29961251912033,
+          "width_ms": 1.2127906342955246
+        },
+        {
+          "rise_ms": 14.735366264140099,
+          "peak_mv": 42.52257657766402,
+          "width_ms": 1.0404102275449496
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 9.473038264859543,
+          "peak_mv": 50.32568283149906,
+          "width_ms": 1.212720065882051
+        },
+        {
+          "rise_ms": 14.731845242367417,
+          "peak_mv": 42.57948288545511,
+          "width_ms": 1.0400877945054727
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.0009166239565736589,
+          "peak_mv": 0.026070312378728033,
+          "width_ms": -7.056841347363729e-05
+        },
+        {
+          "rise_ms": -0.003521021772682431,
+          "peak_mv": 0.056906307791088295,
+          "width_ms": -0.00032243303947687707
+        }
+      ],
+      "within_limits": true
+    },
+    "I_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 4.722360340083677,
+          "peak_mv": 34.06822818681818,
+          "width_ms": 0.766283316400421
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 4.720440910573929,
+          "peak_mv": 34.17939330729351,
+          "width_ms": 0.7659898554834887
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.001919429509747772,
+          "peak_mv": 0.11116512047532723,
+          "width_ms": -0.0002934609169322755
+        }
+      ],
+      "within_limits": false
+    },
+    "I_output_voltage": {
+      "coarse": [
+        {
+          "rise_ms": 8.311198946243502,
+          "peak_mv": 28.251463732529277,
+          "width_ms": 0.6279587387720831
+        }
+      ],
+      "fine": [
+        {
+          "rise_ms": 8.295581993963411,
+          "peak_mv": 28.185460280987346,
+          "width_ms": 0.6281678737596632
+        }
+      ],
+      "count_equal": true,
+      "fine_minus_coarse": [
+        {
+          "rise_ms": -0.015616952280090857,
+          "peak_mv": -0.06600345154193121,
+          "width_ms": 0.0002091349875801285
+        }
+      ],
+      "within_limits": true
+    }
+  },
+  "event_times_ms": [
+    {
+      "E": [
+        9.510000000000002,
+        14.790000000000001
+      ],
+      "I": [
+        8.355
+      ]
+    },
+    {
+      "E": [
+        9.5075,
+        14.785
+      ],
+      "I": [
+        8.3375
+      ]
+    }
+  ],
+  "all_waveform_limits_pass": false,
+  "metadata_equal_except_dt_and_observed_event_times": true,
+  "qualification": "Fails the unchanged 0.1 mV I soma peak limit; E soma and I contact excursion checks pass. No full numerical or human qualification."
+}

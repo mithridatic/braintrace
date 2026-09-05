@@ -51,3 +51,12 @@ contact events and delivery timing separately. Report the change in each
 edge-induced response at the finer step; an effect that changes sign or is
 not resolved from numerical change is not qualified. Passing these checks
 does not establish spatial convergence or a match to human recordings.
+
+The disconnected 0.005-to-0.0025 ms comparison fails the I soma peak limit:
+the change is 0.1112 mV. Preserve this failure. After the connected half-step
+run completes, run the disconnected control at 0.00125 ms. Change only the
+step size and compare it with 0.0025 ms under the same limits. Keep the full
+25 ms record so both E spikes and I contact propagation remain observable.
+If this pair passes, repeat the connected control at 0.00125 ms before any
+circuit qualification. If it fails, diagnose the direct error before further
+refinement. Do not alter channels, inputs, mesh, or acceptance limits to pass.

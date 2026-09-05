@@ -91,5 +91,10 @@
   },
   "first_local_inward_positive_current_na": 0.05511987691180588,
   "initial_inward_current_prediction_supported": true,
-  "qualification": "Edge causes a direct local voltage response; no E spike removed. Sub-step interpolated onset shifts require numerical refinement before inhibition claims. Human and spatial qualification remain open."
+  "qualification": "Edge causes a direct local voltage response; no E spike removed. Sub-step interpolated onset shifts require numerical refinement before inhibition claims. Human and spatial qualification remain open.",
+  "direct_trace_figure": {
+    "path": "docs/evidence/h01-measured-E5-overlap-traces.png",
+    "sha256": "201d0ce6b2575d354bb5108aae07d86f942e35d11f93e0a9101e85eb31f1e36e",
+    "scope": "Individual soma and receptor traces and connected-minus-disconnected differences, original 0.005 ms step. No aggregation."
+  }
 }
