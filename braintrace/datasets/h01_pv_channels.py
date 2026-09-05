@@ -54,6 +54,14 @@ class _PVChannel(HH):
                                rate_trap(v, -56., .015, self.h_slope), _Q)
         return rates
 
+    def _rate_for_gate(self, gate, voltage, ions):
+        calcium = ions[1].Ci.to_decimal(u.mM) if self.mechanism == "SK" else 1e-4
+        v = voltage.to_decimal(u.mV)
+        if self.mechanism == "NaTg" and gate == "h":
+            return _pair(rate_trap(-v, 56., .015, self.h_slope),
+                         rate_trap(v, -56., .015, self.h_slope), _Q)
+        return pv_rates(self.mechanism, v, calcium, gate=gate)
+
     def current(self, voltage, *ions):
         """Return inward-positive current density.
 
@@ -75,7 +83,7 @@ class _PVChannel(HH):
 
 def _rate_accessor(gate, component):
     def rate(self, voltage, *ions):
-        equilibrium, tau = self._rates(voltage, ions)[gate]
+        equilibrium, tau = self._rate_for_gate(gate, voltage, ions)
         if component == 0:
             return equilibrium
         opening, closing = self.phase_factors.get(gate, (1., 1.))

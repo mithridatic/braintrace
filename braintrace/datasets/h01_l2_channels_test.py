@@ -69,3 +69,14 @@ def test_kv3_equilibrium_retains_source_opening_branch(role):
         np.testing.assert_allclose(ch.f_m_tau(voltage, *ions), base_tau*(1. if role == "E" else .5))
         ch.compute_derivative(voltage, *ions)
         np.testing.assert_array_equal(ch.m.derivative.to_decimal(u.kHz), 0.)
+
+
+def test_targeted_l2_rates_match_full_dictionary():
+    with brainstate.environ.context(precision=64):
+        vs = np.linspace(-100., 40., 20)
+        for mech in list(L2_CHANNELS.keys()):
+            full = l2_rates(mech, vs)
+            for gate, (exp_inf, exp_tau) in full.items():
+                inf, tau = l2_rates(mech, vs, gate=gate)
+                np.testing.assert_array_equal(inf, exp_inf)
+                np.testing.assert_array_equal(tau, exp_tau)

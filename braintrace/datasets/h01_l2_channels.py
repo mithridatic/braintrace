@@ -14,7 +14,7 @@ from .h01_pv_rates import pv_rates, _pair, _Q
 from .h01_wilbers import rate_trap
 
 
-def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4):
+def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4, *, gate=None):
     """Return the pinned Allen gate laws before phase scaling.
 
     Parameters
@@ -25,39 +25,61 @@ def l2_rates(mechanism, voltage_mv, calcium_mm=1e-4):
         Membrane voltage in millivolts.
     calcium_mm : array_like, optional
         Inside calcium concentration in millimolar.
+    gate : str or None, optional
+        Specific gate identifier ('m', 'h', 'z') to compute only that gate.
 
     Returns
     -------
-    dict
+    dict or tuple
         Gate equilibrium and time constant in milliseconds.
     """
     v, ca = jnp.asarray(voltage_mv), jnp.asarray(calcium_mm)
     if mechanism == "NaTs":
+        if gate == "m":
+            return _pair(rate_trap(v, -40., .182, 6.), rate_trap(-v, 40., .124, 6.), 2.3**1.1)
+        if gate == "h":
+            return _pair(rate_trap(-v, 66., .015, 6.), rate_trap(v, -66., .015, 6.), 2.3**1.1)
         return {"m": _pair(rate_trap(v, -40., .182, 6.), rate_trap(-v, 40., .124, 6.), 2.3**1.1),
                 "h": _pair(rate_trap(-v, 66., .015, 6.), rate_trap(v, -66., .015, 6.), 2.3**1.1)}
     if mechanism == "Nap":
-        return {"h": pv_rates("Nap", v)["h"]}
+        res = pv_rates("Nap", v, gate="h")
+        return res if gate == "h" else {"h": res}
     if mechanism == "Ih":
-        return {"m": _pair(rate_trap(-v, 154.9, .00643, 11.9), .193*jnp.exp(v/33.1))}
+        res = _pair(rate_trap(-v, 154.9, .00643, 11.9), .193*jnp.exp(v/33.1))
+        return res if gate == "m" else {"m": res}
     if mechanism == "K_P":
+        if gate == "m":
+            tau = jnp.where(v < -50., 1.25+175.03*jnp.exp(.026*v), 1.25+13.*jnp.exp(-.026*v))/_Q
+            return (sigmoid((v+14.3)/14.6), tau)
+        if gate == "h":
+            return (sigmoid(-(v+54.)/11.), (360.+(1010.+24.*(v+55.))*jnp.exp(-((v+75.)/48.)**2))/_Q)
         tau = jnp.where(v < -50., 1.25+175.03*jnp.exp(.026*v), 1.25+13.*jnp.exp(-.026*v))/_Q
         return {"m": (sigmoid((v+14.3)/14.6), tau),
                 "h": (sigmoid(-(v+54.)/11.), (360.+(1010.+24.*(v+55.))*jnp.exp(-((v+75.)/48.)**2))/_Q)}
     if mechanism == "K_T":
+        if gate == "m":
+            return (sigmoid((v+47.)/29.), (.34+.92*jnp.exp(-((v+71.)/59.)**2))/_Q)
+        if gate == "h":
+            return (sigmoid(-(v+66.)/10.), (8.+49.*jnp.exp(-((v+73.)/23.)**2))/_Q)
         return {"m": (sigmoid((v+47.)/29.), (.34+.92*jnp.exp(-((v+71.)/59.)**2))/_Q),
                 "h": (sigmoid(-(v+66.)/10.), (8.+49.*jnp.exp(-((v+73.)/23.)**2))/_Q)}
     if mechanism == "SK":
         adjusted = jnp.where(ca < 1e-7, ca+1e-7, ca)
-        return {"z": (1./(1.+(.00043/adjusted)**4.8), jnp.ones_like(ca))}
+        res = (1./(1.+(.00043/adjusted)**4.8), jnp.ones_like(ca))
+        return res if gate == "z" else {"z": res}
     if mechanism not in ("Kv3_1", "Im", "Ca_HVA", "Ca_LVA"):
         raise ValueError(f"Unknown L2 mechanism: {mechanism!r}.")
-    return pv_rates(mechanism, v, ca)
+    return pv_rates(mechanism, v, ca, gate=gate)
 
 
 class _L2Channel(_PVChannel):
     def _rates(self, voltage, ions):
         ca = ions[1].Ci.to_decimal(u.mM) if self.mechanism == "SK" else 1e-4
         return l2_rates(self.mechanism, voltage.to_decimal(u.mV), ca)
+
+    def _rate_for_gate(self, gate, voltage, ions):
+        ca = ions[1].Ci.to_decimal(u.mM) if self.mechanism == "SK" else 1e-4
+        return l2_rates(self.mechanism, voltage.to_decimal(u.mV), ca, gate=gate)
 
     def conductance_factor(self, voltage, *ions):
         if self.mechanism == "Nap":
