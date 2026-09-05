@@ -628,6 +628,13 @@ localizes the failed numerical observation to the I soma peak; it does not
 identify a unique channel or integration term as the cause of the error.
 [Time-step comparison](evidence/h01-measured-E5-overlap-disconnected-halfdt-audit.json).
 
+Further step refinement reduces this I soma peak difference to 0.0560 mV.
+The 0.0025-to-0.00125 ms disconnected comparison passes all declared soma
+and contact excursion checks. This supports time-step error as a controllable
+source of the failed peak comparison. It does not identify a unique internal
+solver term, establish a continuous-time limit, or validate the human response.
+[Finer-step comparison](evidence/h01-measured-E5-overlap-disconnected-quarterdt-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.
