@@ -1,0 +1,13 @@
+{
+  "cell_count": 104,
+  "layer2_pyramidal_count": 30,
+  "files": {
+    "cell_properties.json": 13042,
+    "synapse_locations.csv": 18917333
+  },
+  "cell_810151953_tags": [
+    "L2",
+    "pyramidal",
+    "neuron"
+  ]
+}

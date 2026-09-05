@@ -106,6 +106,19 @@ class H01Component:
     report: object
     source_sha256: str
 
+    def anatomy(self):
+        """Build reusable anatomical locations and cable selections.
+
+        Returns
+        -------
+        H01Anatomy
+            Source-labelled selections for this morphology, with explicit
+            inference policies and distance-checked spatial projection.
+        """
+        from .h01_anatomy import H01Anatomy
+
+        return H01Anatomy(self)
+
     @property
     def provenance(self):
         """Return JSON-compatible source identity and conversion assumptions.

@@ -1,0 +1,133 @@
+{
+  "anatomy": {
+    "release": "20210601/proofread_104",
+    "url": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104/skeletons/104_proofread_neurons_swc.zip",
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "member": "546925828.1.swc",
+    "source_sha256": "a403714c37be663515d22a65bf5801abe84eeca70a98940729a5f436ebed0493",
+    "position_scale_um": [
+      0.032,
+      0.032,
+      0.033
+    ],
+    "radius_scale_um": 0.001,
+    "compartment_policy": "custom; original H01 codes retained in source_rows",
+    "electrical_properties": "not supplied by H01",
+    "attribution": "H01: Shapson-Coe et al., Science 384, eadk4858 (2024); Lichtman laboratory, Harvard University, and Connectomics at Google. Data: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).",
+    "annotation_verification": "source codes; per-sample manual review not supplied",
+    "label_counts": {
+      "astrocyte": 22,
+      "axon": 650,
+      "axon_initial_segment": 10,
+      "dendrite": 1398,
+      "myelinated_axon": 7,
+      "soma": 19,
+      "unclassified": 8660
+    },
+    "soma_selection": "largest-radius source sample labelled soma; ties use smallest source ID"
+  },
+  "metadata": {
+    "tags": [
+      "L2",
+      "pyramidal",
+      "neuron"
+    ],
+    "measurements": {
+      "NVx": 1190035401,
+      "NSO": 36,
+      "NSI": 524,
+      "NSIe": 278,
+      "NSIi": 246,
+      "NDe": 1267,
+      "NAx": 473,
+      "NSp": 503,
+      "NCi": 2,
+      "NAis": 11,
+      "NMy": 2,
+      "Sp": 0.28418079096045196
+    },
+    "descriptions": {
+      "tags": "",
+      "NVx": "Volume (8x8x33nm voxels)",
+      "NSO": "Number of outgoing synapses",
+      "NSI": "Number of incoming synapses",
+      "NSIe": "Number of incoming excitatory synapses",
+      "NSIi": "Number of incoming inhibitory synapses",
+      "NDe": "Number of dendrite skeleton nodes",
+      "NAx": "Number of axon skeleton nodes",
+      "NSp": "Number of dendritic spine skeleton nodes",
+      "NCi": "Number of cilium skeleton nodes",
+      "NAis": "Number of axon initial segment skeleton nodes",
+      "NMy": "Number of myelinated axon skeleton nodes",
+      "Sp": "Spinyness (ratio of spines to dendrite skeleton nodes)"
+    },
+    "provenance": {
+      "url": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104/segment_properties/info",
+      "sha256": "d8b9f54822460d4eb43fd7ca61897852a78c819bf229c8f27396c186f762716c",
+      "release": "20210601/proofread_104",
+      "attribution": "H01: Shapson-Coe et al., Science 384, eadk4858 (2024); Lichtman laboratory, Harvard University, and Connectomics at Google. Data: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).",
+      "verification": "released annotation; per-item manual review not supplied"
+    }
+  },
+  "synapses": {
+    "provenance": {
+      "url": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104/synapse_locations.csv",
+      "sha256": "640ccb12c75b930f96373c7273bbf9688aa111b97b425ee22d8ef6db19f496be",
+      "release": "20210601/proofread_104",
+      "attribution": "H01: Shapson-Coe et al., Science 384, eadk4858 (2024); Lichtman laboratory, Harvard University, and Connectomics at Google. Data: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).",
+      "verification": "released annotation; per-item manual review not supplied",
+      "position_scale_um": [
+        0.008,
+        0.008,
+        0.033
+      ],
+      "missing_fields": [
+        "synapse_id",
+        "partner_neuron_id",
+        "ei_type",
+        "conductance"
+      ]
+    },
+    "post_csv_rows": 550,
+    "projection_counts": {
+      "too_far": 178,
+      "projected": 372
+    },
+    "max_distance_um": 2.0,
+    "stimulated_source_row": 111691,
+    "stimulated_position_um": [
+      2440.112,
+      426.47200000000004,
+      12.375
+    ],
+    "projection_distance_um": 0.023442392734102462
+  },
+  "soma_location": [
+    [
+      407,
+      0.16802646024238527
+    ]
+  ],
+  "dendrite_intervals": 25,
+  "model": "passive demonstration; current clamp at a synapse coordinate, not a fitted receptor model",
+  "parameters": {
+    "current_na": 0.001,
+    "duration_ms": 1.0,
+    "background_leak_ms_cm2": 0.1,
+    "strict_dendrite_leak_ms_cm2": 0.2,
+    "region_policy": "strict",
+    "rest_mv": -65,
+    "capacitance_uf_cm2": 1,
+    "axial_resistivity_ohm_cm": 100
+  },
+  "simulation": {
+    "steps": 40,
+    "dt_ms": 0.025,
+    "compartments": 2163,
+    "precision_bits": 64,
+    "finite": true,
+    "voltage_min_mv": -65.00250569941294,
+    "voltage_max_mv": -64.99999991333507,
+    "voltage_final_mv": -65.00087688056799
+  }
+}

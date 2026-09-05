@@ -90,8 +90,8 @@ annotation codes, IDs, positions, radii and parents remain in the read-only
 ``imported.source_rows`` array. H01's analysis code documents codes 0 (axon),
 1 (dendrite), 2 (astrocyte), 3 (soma), 4 (cilium), 5 (axon initial segment),
 and 1000-series myelin annotations. They are predictions/annotations, not a
-uniformly manually verified cell-compartment classification. This adapter does
-not interpolate those sparse labels or turn them into region-specific channels.
+uniformly manually verified cell-compartment classification. The optional
+anatomy adapter below turns them into explicitly bounded selections.
 
 ``imported.normalized_swc`` contains the converted, renumbered SWC. Parent
 relationships and absolute physical coordinates are retained. BrainCell reads
@@ -118,10 +118,152 @@ The anatomical import and forward run do not establish PP-Prop eligibility
 trace correctness. Qualify that learning path against a finite-window oracle
 before making gradient or training claims. Example 21 is unchanged here.
 
-H01 synapse connectivity, synaptic strength, ion-channel kinetics, learning
+Synaptic partner connectivity, synaptic strength, ion-channel kinetics, learning
 rules and missing external inputs are not supplied by this morphology adapter.
 The output is a measured anatomical reference with caller-selected dynamics,
 not an emulation of a complete human cortical circuit.
+
+Use anatomical labels for stimulation, recording and channels
+------------------------------------------------------------
+
+.. code-block:: python
+
+   from braincell.mech import Channel
+   import brainunit as u
+
+   anatomy = imported.anatomy()
+   print(anatomy.label_counts)
+   soma = anatomy.soma_location()
+   dendrite = anatomy.region("dendrite")
+   cell = make_passive_cell(imported, recording_location=soma,
+                            stimulus_location=soma)
+   # Caller-chosen demonstration conductance; not supplied by H01.
+   cell.paint(dendrite, Channel("IL", g_max=.2 * u.mS / u.cm**2, E=-65 * u.mV))
+
+``soma_location()`` selects the largest-radius sample actually labelled soma
+(ties use the smallest original node ID). It raises if the selected component
+has no such sample. For example, ``546925828.0`` lacks soma annotations, while
+``546925828.1`` contains them. A source tree root is not a substitute for soma.
+
+``anatomy.location(original_node_id)`` selects a particular original SWC sample.
+``anatomy.locations("axon_initial_segment")`` selects all samples bearing that
+label; a known but absent label produces an empty selection. Unknown numeric
+codes survive as ``unknown_<code>``; typos in label names raise.
+
+Regions have two explicit policies:
+
+* ``strict`` (default): a cable segment is selected only when both endpoints
+  carry the requested label. It leaves mixed-label edges unselected.
+* ``sample_neighborhood``: each sample's label extends halfway along its
+  incident cable edges. This is an inferred spatial boundary. It does not
+  propagate a known label through unclassified samples or across branches.
+
+.. code-block:: python
+
+   inferred_dendrite = anatomy.region("dendrite", policy="sample_neighborhood")
+   print(inferred_dendrite.policy)
+
+The labels are sparse: in ``810151953.0``, 11422 of 14215 samples are
+unclassified. There are only 40 edges with dendrite labels at both endpoints.
+Sample counts are not percentages of cable length. Keep the selected policy
+in experiment provenance; neither policy establishes verified boundaries.
+BrainCell discretization determines how these continuous intervals resolve
+onto electrical compartments. Refine the discretization when boundaries matter.
+
+Selections check geometry and topology when evaluated. They accept BrainCell's
+internal morphology clone, but reject different or modified geometry. Rebuild
+``anatomy`` after changing a morphology. Coincident source coordinates are
+rejected by the anatomy adapter because source identity would be ambiguous;
+this restriction does not change the basic SWC loader.
+
+Load cell type, layer, and aggregate annotations
+----------------------------------------------
+
+.. code-block:: python
+
+   from braintrace.datasets.h01_annotations import fetch_h01_annotations, H01Annotations
+
+   annotations = fetch_h01_annotations("./data/h01")  # explicit ~19 MB download
+   # Offline reuse: annotations = H01Annotations("./data/h01")
+   layer2_pyramidal_ids = annotations.select("L2", "pyramidal")
+   metadata = annotations.metadata(imported.neuron_id)
+   print(metadata.tags)
+   print(dict(metadata.measurements))
+   print(dict(metadata.descriptions))
+
+The release's segment-property file directly maps all 104 imported cell IDs to
+tags, including cortical layer, pyramidal/interneuron classifications, and
+descriptive qualifiers. Preserve qualifiers such as ``possible-interneuron``.
+Tags are anatomical annotations, not transcriptomic or electrical cell types.
+``select`` requires all requested tags and rejects unknown tag names.
+
+Numeric properties retain their source names and descriptions, including
+volume in 8 x 8 x 33 nm voxels (``NVx``), incoming/outgoing counts (``NSI``,
+``NSO``), and incoming excitatory/inhibitory counts (``NSIe``, ``NSIi``).
+These describe the released cell, not just the component loaded into BrainCell.
+For ``810151953`` the source tags are ``L2, pyramidal, neuron`` and the
+incoming totals are 388 = 138 excitatory + 250 inhibitory.
+
+Use observed synapse positions
+-----------------------------
+
+.. code-block:: python
+
+   rows = annotations.synapses(imported.neuron_id, role="post")
+   projections = anatomy.project_synapses(rows, max_distance_um=2.0)
+   # Each result stays paired with its source row, including rejections.
+   accepted = [(row, p) for row, p in zip(rows, projections) if p.status == "projected"]
+   row, projection = accepted[0]  # Check for an empty result in your application.
+   print(row.source_row, projection.distance_um)
+   cell = make_passive_cell(imported, stimulus_location=projection.location,
+                            recording_location=anatomy.soma_location())
+
+The CSV contains 264090 rows. ``source_row`` identifies a line in the pinned
+file, not a biological synapse ID. ``role`` says whether the named cell is
+presynaptic or postsynaptic. ``center_um``, ``pre_um``, and ``post_um`` retain
+all supplied positions; ``position_um`` chooses that cell's endpoint. They
+use **8 x 8 x 33 nm** voxels, distinct from the skeleton's 32 x 32 x 33 nm grid.
+
+Projection checks cell identity first and uses nearest points on cable
+segments, not merely the nearest skeleton sample. Supply an explicit distance
+threshold. Every row produces ``projected``, ``too_far``, or ``ambiguous``, plus
+distance evidence. Rejected rows have no placement selection. Incident edges
+at one shared source node resolve to that node; equal-distance distinct sites
+remain ambiguous. Spatial proximity alone does not prove component membership.
+
+The CSV has **no individual E/I labels, partner neuron IDs, synapse IDs, or
+conductances**. Cell ``810151953`` has 810 post rows and 44 pre rows in this CSV,
+which differ from the segment property's 388 incoming and 4 outgoing counts.
+The adapter preserves this discrepancy. It does not deduplicate, assign
+receptors from aggregate counts, or claim the rows are individually proofread.
+``annotations.synapse_provenance`` records these limits and the source hash.
+
+Installed annotated demonstration
+----------------------------------
+
+.. code-block:: shell
+
+   python -m braintrace.datasets.h01_annotated_demo --archive ./data/h01/104_proofread_neurons_swc.zip --annotations ./data/h01 --max-distance-um 2 --output ./annotated-run.json
+
+This runs 40 compiled steps in 64-bit precision, records at the labelled soma, applies a current
+clamp at the closest accepted postsynaptic endpoint, and doubles the passive
+leak on strict dendrite intervals. It records the chosen CSV row, projection
+distance, all match/rejection counts, source metadata, and every electrical
+assumption. This tests source-guided input placement; the clamp is not a
+receptor model. For another experiment, use ``make_annotated_cell`` or compose
+the imported selections with your own channels and inputs. The CLI also accepts
+``--precision 32``. The full demo morphology showed about 0.05 mV drift in the
+32-bit stimulated run. A 64-bit zero-input control still drifted by up to
+0.00241 mV, failing a stricter 0.000001 mV equilibrium check. Thus finite output
+is not an accuracy certificate; compare against a control and qualify numerical
+accuracy for your experiment. Library helpers respect the caller's precision
+environment and do not change it globally.
+
+Annotation data come from ``proofread_104/segment_properties/info`` and
+``proofread_104/synapse_locations.csv`` in the official release bucket.
+Downloads validate pinned SHA-256 values after transport decompression and
+stage each asset before replacement. Corrupt caches raise. Source verification
+status is recorded separately from proofread morphology status.
 
 Provenance and license
 ---------------------

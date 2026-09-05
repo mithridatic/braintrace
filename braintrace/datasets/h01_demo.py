@@ -11,7 +11,8 @@ import numpy as np
 from .h01 import H01Archive, fetch_h01
 
 
-def make_passive_cell(imported, *, current_na=0.001, duration_ms=1.0, cv_policy=None):
+def make_passive_cell(imported, *, current_na=0.001, duration_ms=1.0, cv_policy=None,
+                      stimulus_location=None, recording_location=None):
     """Construct a configurable demonstration cell from an H01 component.
 
     Parameters
@@ -24,11 +25,14 @@ def make_passive_cell(imported, *, current_na=0.001, duration_ms=1.0, cv_policy=
         Clamp duration in milliseconds.
     cv_policy : braincell.CVPolicy or None, optional
         Caller-selected spatial discretization.
+    stimulus_location, recording_location : LocsetExpr or None, optional
+        Anatomical locations for current injection and voltage recording.
+        Each defaults to the source root when omitted.
 
     Returns
     -------
     braincell.Cell
-        Uninitialized cell with a root voltage probe named ``voltage``.
+        Uninitialized cell with a voltage probe named ``voltage``.
 
     Notes
     -----
@@ -47,8 +51,9 @@ def make_passive_cell(imported, *, current_na=0.001, duration_ms=1.0, cv_policy=
         axial_resistivity=100.0 * u.ohm * u.cm,
     ))
     cell.paint(AllRegion(), Channel("IL", g_max=.1 * u.mS / u.cm**2, E=-65 * u.mV))
-    cell.place(RootLocation(0.), StateProbe(field="v", name="voltage"))
-    cell.place(RootLocation(0.), braincell.CurrentClamp(
+    cell.place(recording_location if recording_location is not None else RootLocation(0.),
+               StateProbe(field="v", name="voltage"))
+    cell.place(stimulus_location if stimulus_location is not None else RootLocation(0.), braincell.CurrentClamp(
         delay=0 * u.ms, durations=duration_ms * u.ms, amplitudes=current_na * u.nA,
     ))
     return cell

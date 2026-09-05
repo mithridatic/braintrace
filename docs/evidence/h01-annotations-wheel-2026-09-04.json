@@ -1,0 +1,28 @@
+{
+  "installed_module": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\annotations-wheel-install\\braintrace\\datasets\\h01.py",
+  "wheel_modules": [
+    "braintrace/datasets/__init__.py",
+    "braintrace/datasets/_h01_swc.py",
+    "braintrace/datasets/h01.py",
+    "braintrace/datasets/h01_anatomy.py",
+    "braintrace/datasets/h01_annotated_demo.py",
+    "braintrace/datasets/h01_annotations.py",
+    "braintrace/datasets/h01_demo.py"
+  ],
+  "metadata_tags": [
+    "L2",
+    "pyramidal",
+    "neuron"
+  ],
+  "neuron_id": "546925828",
+  "component_id": 0,
+  "pre_rows": 66,
+  "accepted_pre_rows": 7,
+  "selected_source_row": 1024,
+  "projection_distance_um": 0.0535697448618145,
+  "compartments": 173,
+  "steps": 40,
+  "finite": true,
+  "precision_bits": 64,
+  "final_mv": -64.66136353307346
+}
