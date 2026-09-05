@@ -35,9 +35,11 @@ Every candidate runs both calibration inputs: sweep 50 with recorded bias and
 sweep 43. Sweep 53 stays closed. Cap: 24 new full-cell evaluations, at most
 two concurrent simulations.
 
-- Stage 0, coarse preservation (3 evaluations). S and one far corner (S with
-  F1 and F4 at C values) at nseg 3, CVode 1e-10; the corner also at nseg 9.
-  C already exists at both settings. Preserved means: every residual sign and
+- Stage 0, coarse preservation (6 evaluations). S, C, and one far corner (S
+  with F1 and F4 at C values), each at nseg 3 and at nseg 9, CVode 1e-10.
+  No existing S or C run has both sweeps with the recorded bias at one
+  setting, so all six are new; the C fine sweep 50 repeats the frozen run
+  and doubles as a repeatability check of the container build. Preserved means: every residual sign and
   every pairwise ordering among S, C, and the corner is unchanged between
   settings, and each coarse-to-fine change is below one fifth of the smallest
   contrast it must rank. If not preserved, Stages A and B run at fine settings
@@ -48,12 +50,12 @@ two concurrent simulations.
   numerical decision limit for each observation. Raw residuals are retained;
   normalized values guide only. If no single family reverses the S-to-C change
   on the ranked observations, swap the two largest together (spare budget).
-- Stage B, within the dominant family (at most 7 evaluations, coarse).
+- Stage B, within the dominant family (at most 6 evaluations, coarse).
   Half-splits of that family's members, chosen after Stage A.
 - Stage C, finalists (at most 2 evaluations, nseg 9, CVode 1e-10). Recheck the
   two best Stage B candidates at fine settings.
 
-Total at most 22 of 24; 2 spare for the interdependency swap.
+Total at most 24: 6 + 10 + 6 + 2. The interdependency swap, if needed, takes one Stage B slot.
 
 ## Predictions stated before running
 
@@ -71,8 +73,8 @@ Total at most 22 of 24; 2 spare for the interdependency swap.
 From recorded `integration_seconds` at stop 2100 ms: coarse (nseg 3, 1e-10)
 sweep 50 200-211 s and sweep 43 37-131 s, at most 5.7 min per candidate; fine
 (nseg 9, 1e-10) sweep 50 592-672 s and sweep 43 361-434 s, about 17 min per
-candidate. Serial container time: Stage 0 about 28 min, A about 57 min,
-B about 40 min, C about 34 min; about 2.7 h total, no run over 12 min.
+candidate. Serial container time: Stage 0 about 68 min, A about 57 min,
+B about 34 min, C about 34 min; about 3.2 h total, no single run over 12 min.
 Two-concurrent speedup is unmeasured; the runner records wall time per
 candidate and the first timed pair sets the figure.
 

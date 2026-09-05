@@ -23,7 +23,7 @@ holding everything else equal:
 Held equal in every cell: morphology, conductance tables, gate laws
 (kv3-phase-reference library), stimulus 270 ms/1000 ms/0.27 nA, initial
 voltage -80 mV, 34 C, reversals, Ra, cm, BrainCell dt 0.000625 ms and
-staggered solver, duration 330 ms, window 270-330 ms, no alignment.
+staggered solver, duration 330 ms, window 270-329.5 ms (the CVode trace records its last step before 330 ms; no event lies after 323.4 ms), no alignment.
 Temperature is held equal only; BrainCell has no temperature knob.
 
 ## Reversible isolation first
@@ -112,7 +112,7 @@ measured durations.
 ## Decision rule
 
 A cell passes when `compare_spike_transfer` passes (equal nonzero count and
-all three gates over 270-330 ms). The audit records signed rise errors at
+all three gates over 270-329.5 ms). The audit records signed rise errors at
 events 7 and 8 for every cell. The causal page names the Steep X only from
 the pattern above; a numerical Steep X does not identify a channel cause and
 does not validate the human waveform.

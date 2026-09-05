@@ -19,7 +19,7 @@ PREFIX = "h01-pv-transfer-isolation-"
 STEMS = {name: PREFIX+name.replace("_", "-") for name in
          ("neuron_cvode", "neuron_fixed", "neuron_fixed_halfdt",
           "braincell_maxcv", "braincell_matched", "braincell_matched_halfdt")}
-WINDOW_MS = (270., 330.)
+WINDOW_MS = (270., 329.5)  # CVode records its last step before 330 ms; no spike after 323.4 ms
 NEURON_HELD = ("source_commit", "neuron_version", "active_channels", "conductance_intervention",
                "nseg_factor", "unselected_nseg_factor", "refine_region", "current_na", "temperature_c",
                "bias_na", "axon_calcium_decay_ms", "axon_calcium_gamma", "sodium_h_tau_factor",

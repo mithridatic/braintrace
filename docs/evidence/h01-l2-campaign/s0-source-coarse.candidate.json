@@ -1,0 +1,5 @@
+{
+  "cvode_atol": 1e-10,
+  "nseg_factor": 3,
+  "stop_ms": 2100.0
+}
