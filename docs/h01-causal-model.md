@@ -258,6 +258,42 @@ It does not prove that one channel explains the response change.
 The regional effects are coupled. Do not add their RSS values as independent errors.
 See the [direct regional traces](evidence/h01-pv-mesh-interventions.svg).
 
+The observed resting voltage can differ between recordings from the same cell.
+The released human hyperpolarizing traces have different baseline voltages.
+A deterministic model with one resting state cannot reproduce every baseline
+without an additional state or input assumption.
+Keep this difference visible. Do not remove it with an unexplained voltage shift.
+In this reference model, the hyperpolarizing response is closer to the human
+trace than the spike response. This supports checking spike-generating currents
+after baseline and numerical errors have been bounded.
+It does not identify one incorrect channel parameter.
+See the [direct hyperpolarizing traces](evidence/h01-pv-hyperpolarization.svg)
+and the [individual human spike datums](evidence/h01-pv-human-datums.json).
+
+Initial voltage also sets the initial channel gates in the reference model.
+Some gates recover slowly. At -86.2 mV, the source Ih activation time constant
+is about 559 ms. Persistent-sodium inactivation takes about 1699 ms.
+Both exceed the 270 ms pre-stimulus interval.
+Thus, similar pre-stimulus voltages do not prove equal channel states.
+An initial-state difference can persist into the spike train.
+The [initial-state audit](evidence/h01-pv-initial-state-audit.json) records
+different Ih and persistent-sodium gate states at stimulus onset after a 1 mV
+initial-voltage change. The final spike shifts by about 12.9 ms in that check.
+This supports a role for slow-state history. It does not isolate each gate's contribution.
+Match the conditioning protocol before assigning the error to conductance density.
+
+Conductance changes can improve one observation and impair another.
+In the tested PV model, less transient sodium conductance lowers the spike peak
+but also delays onset and removes spikes. Less SK conductance changes the train
+with little change in peak voltage. This supports separate checks for spike
+generation, repolarization, and recovery.
+The [conductance audit](evidence/h01-pv-conductance-audit.json) records each
+controlled change and the residual to the human trace.
+Its largest response-change RSS belongs to the tested Kv3_1 reduction.
+This ranks those interventions only. It does not establish the largest biological
+uncertainty or a calibrated parameter set. A lower whole-trace RMS error can
+coexist with missing spikes. Inspect the event times and voltage trajectory as well.
+
 ## Rules for revising this explanation
 
 Attach each causal claim to a source or direct observation.

@@ -117,4 +117,20 @@ The factor-81 reference retains 11 spikes. Its last spike moves 1.06387 ms
 relative to factor 27. This is smaller than the previous 8.52983 ms change,
 but full waveform convergence has not been established.
 The high-resolution reference has 12717 segments.
-The BrainCell 5 um mesh run is still the pending transfer check.
+
+The completed BrainCell 5 um run at 0.0025 ms gives 11 spikes.
+The last spike is at 1170.5075 ms, versus 1183.7951 ms for NEURON factor 81.
+The [direct comparison](h01-pv-space5-transfer-comparison.json) retains the
+voltage, calcium, and SK residuals. Stimulus voltage RMS error is 10.3059 mV.
+The matching count does not remove the timing mismatch.
+The next BrainCell run uses maximum CV length 2.5 um at the same time step.
+
+The completed 2.5 um run retains 11 spikes. Its last spike is at 1180.8600 ms,
+2.9351 ms before the NEURON factor-81 reference. The first spike is at 302.6000 ms,
+versus 302.5915 ms in that reference. Late timing error remains larger than early error.
+The [direct trace comparison](h01-pv-space2p5-transfer-comparison.json) has
+stimulus RMS voltage error 9.84383 mV. Peak timing improvement does not establish
+full voltage-trace agreement. The next run halves dt to 0.00125 ms at the same mesh.
+
+The [installed API guide](../h01-pv.md) gives the runnable configuration and
+the separate installed-wheel check. Packaging is verified; physiology is not.

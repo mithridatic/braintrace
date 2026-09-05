@@ -10,6 +10,10 @@ grid = np.arange(270., 1270., .005)
 pairs = [
     ("braincell_time_step", "h01-pv-braincell-019", "h01-pv-braincell-019-fine",
      "dt 0.005 to 0.0025 ms; maximum CV length 10 um unchanged"),
+    ("braincell_mesh_10_to_5", "h01-pv-braincell-019-fine", "h01-pv-braincell-019-space5",
+     "maximum CV length 10 to 5 um; dt 0.0025 ms unchanged"),
+    ("braincell_mesh_5_to_2p5", "h01-pv-braincell-019-space5", "h01-pv-braincell-019-space2p5",
+     "maximum CV length 5 to 2.5 um; dt 0.0025 ms unchanged"),
     ("neuron_mesh_1_to_3", "h01-pv-neuron-observed", "h01-pv-neuron-space3",
      "each section nseg multiplied by 3; CVode atol 1e-10 unchanged"),
     ("neuron_mesh_3_to_9", "h01-pv-neuron-space3", "h01-pv-neuron-space9",

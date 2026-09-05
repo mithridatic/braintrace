@@ -1,0 +1,67 @@
+{
+  "reference": "h01-pv-neuron-space81",
+  "transfer": "h01-pv-braincell-019-space2p5",
+  "comparison": "same physical clock; no voltage or spike-time alignment",
+  "windows": {
+    "initial": {
+      "start_ms": 0.0,
+      "stop_ms": 20.0,
+      "max_error_mv": 0.0004697115459180168,
+      "rms_error_mv": 0.00032113490665948007,
+      "mean_signed_error_mv": 0.00030815875834324475,
+      "calcium_mm": {
+        "max_error": 1.7738707638187412e-13,
+        "rms_error": 1.008622134766058e-13
+      },
+      "sk_gate": {
+        "max_error": 2.0578021274822444e-11,
+        "rms_error": 1.6115827321537166e-11
+      }
+    },
+    "baseline": {
+      "start_ms": 200.0,
+      "stop_ms": 270.0,
+      "max_error_mv": 4.605221207043542e-06,
+      "rms_error_mv": 4.085470416902027e-06,
+      "mean_signed_error_mv": -4.080223392089164e-06,
+      "calcium_mm": {
+        "max_error": 1.0099844680207248e-13,
+        "rms_error": 7.87265433368746e-14
+      },
+      "sk_gate": {
+        "max_error": 6.0807076604843524e-12,
+        "rms_error": 4.897908854154454e-12
+      }
+    },
+    "stimulus": {
+      "start_ms": 270.0,
+      "stop_ms": 1270.0,
+      "max_error_mv": 124.63997263662287,
+      "rms_error_mv": 9.843825935464945,
+      "mean_signed_error_mv": 0.007406234574409417,
+      "calcium_mm": {
+        "max_error": 1.8235216669834842e-05,
+        "rms_error": 2.4121979150222356e-06
+      },
+      "sk_gate": {
+        "max_error": 0.012313444494717357,
+        "rms_error": 0.0017853448625382573
+      }
+    },
+    "recovery": {
+      "start_ms": 1270.0,
+      "stop_ms": 1500.0,
+      "max_error_mv": 0.08603285938934846,
+      "rms_error_mv": 0.01072080956876843,
+      "mean_signed_error_mv": 0.0012578838421998617,
+      "calcium_mm": {
+        "max_error": 8.361068574303378e-07,
+        "rms_error": 5.288910697115512e-07
+      },
+      "sk_gate": {
+        "max_error": 0.0002835803974632605,
+        "rms_error": 0.00012276010834943465
+      }
+    }
+  }
+}

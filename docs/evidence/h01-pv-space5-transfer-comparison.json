@@ -1,0 +1,67 @@
+{
+  "reference": "h01-pv-neuron-space81",
+  "transfer": "h01-pv-braincell-019-space5",
+  "comparison": "same physical clock; no voltage or spike-time alignment",
+  "windows": {
+    "initial": {
+      "start_ms": 0.0,
+      "stop_ms": 20.0,
+      "max_error_mv": 0.0004733753938097607,
+      "rms_error_mv": 0.00032362132994651603,
+      "mean_signed_error_mv": 0.0003107667344973169,
+      "calcium_mm": {
+        "max_error": 1.7975593615601054e-13,
+        "rms_error": 1.0243929337104914e-13
+      },
+      "sk_gate": {
+        "max_error": 2.059579373367426e-11,
+        "rms_error": 1.6168177629024196e-11
+      }
+    },
+    "baseline": {
+      "start_ms": 200.0,
+      "stop_ms": 270.0,
+      "max_error_mv": 7.5708777558247675e-06,
+      "rms_error_mv": 6.943961501263246e-06,
+      "mean_signed_error_mv": -6.93932369596238e-06,
+      "calcium_mm": {
+        "max_error": 9.438042253111234e-14,
+        "rms_error": 7.13287086673087e-14
+      },
+      "sk_gate": {
+        "max_error": 5.793175726458155e-12,
+        "rms_error": 4.574526482268802e-12
+      }
+    },
+    "stimulus": {
+      "start_ms": 270.0,
+      "stop_ms": 1270.0,
+      "max_error_mv": 124.61296862460144,
+      "rms_error_mv": 10.305910547008159,
+      "mean_signed_error_mv": 0.026593368951055178,
+      "calcium_mm": {
+        "max_error": 3.8450747816232156e-05,
+        "rms_error": 8.333840686053767e-06
+      },
+      "sk_gate": {
+        "max_error": 0.04602037563389226,
+        "rms_error": 0.006711977327546795
+      }
+    },
+    "recovery": {
+      "start_ms": 1270.0,
+      "stop_ms": 1500.0,
+      "max_error_mv": 0.4629954899876907,
+      "rms_error_mv": 0.05676423498722913,
+      "mean_signed_error_mv": 0.007651785930993704,
+      "calcium_mm": {
+        "max_error": 3.796696431674891e-06,
+        "rms_error": 2.4011125667695652e-06
+      },
+      "sk_gate": {
+        "max_error": 0.001246968582322516,
+        "rms_error": 0.0005416469000671762
+      }
+    }
+  }
+}
