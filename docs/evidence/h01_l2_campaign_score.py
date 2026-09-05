@@ -53,6 +53,14 @@ def active_residuals(time, voltage, human_events, recovery_datums):
 
 def subthreshold_residuals(time, voltage, samples):
     """Voltage residual at each requested sample time under the subthreshold input."""
+    time, voltage = np.asarray(time), np.asarray(voltage)
+    requested = np.asarray([s["requested_time_ms"] for s in samples], dtype=float)
+    if (time.ndim != 1 or voltage.shape != time.shape or time.size < 2
+            or not np.isfinite(time).all() or not np.isfinite(voltage).all()
+            or not np.all(np.diff(time) > 0) or not np.isfinite(requested).all()):
+        raise ValueError("Trace must be finite, ordered, and cover the requested samples.")
+    if np.any(requested < time[0]) or np.any(requested > time[-1]):
+        raise ValueError("Trace must cover every requested sample; extrapolation is forbidden.")
     return {f"sub_{s['requested_time_ms']:.0f}_v": float(np.interp(s["requested_time_ms"], time, voltage))-s["voltage_mv"]
             for s in samples}
 
@@ -94,21 +102,29 @@ def select_observations(source, candidate, limits, factor=5.):
 
 def normalized_rss(base, swapped, keys, limits):
     """Root sum of squares of residual changes divided by their numerical limits."""
-    terms = [((swapped[k]-base[k])/limit_for(k, limits)[0])**2 for k in keys
-             if np.isfinite([base.get(k, np.nan), swapped.get(k, np.nan)]).all()]
-    return float(np.sqrt(sum(terms))) if terms else float("nan")
+    missing = [k for k in keys if not np.isfinite([base.get(k, np.nan), swapped.get(k, np.nan)]).all()]
+    if missing or not keys:
+        raise ValueError(f"Incomplete RSS observations: {missing or ['no selected observations']}")
+    terms = [((swapped[k]-base[k])/limit_for(k, limits)[0])**2 for k in keys]
+    return float(np.sqrt(sum(terms)))
 
 
 def rank_families(vectors, families, keys, limits):
     """Per-family RSS in both swap directions and the sparsity decision."""
     rows = {}
     for family in families:
-        rows[family] = {"into_source": normalized_rss(vectors["source"], vectors[f"into-{family}"], keys, limits),
-                        "out_of_candidate": normalized_rss(vectors["candidate"], vectors[f"out-{family}"], keys, limits)}
-        rows[family]["combined"] = float(np.hypot(rows[family]["into_source"], rows[family]["out_of_candidate"]))
-    ordered = sorted(rows, key=lambda f: -rows[f]["combined"])
-    top, rest = rows[ordered[0]]["combined"], [rows[f]["combined"] for f in ordered[1:]]
-    steep = bool(top**2 > sum(r**2 for r in rest)) if np.isfinite(top) else False
+        try:
+            rows[family] = {"into_source": normalized_rss(vectors["source"], vectors[f"into-{family}"], keys, limits),
+                            "out_of_candidate": normalized_rss(vectors["candidate"], vectors[f"out-{family}"], keys, limits)}
+            rows[family]["combined"] = float(np.hypot(rows[family]["into_source"], rows[family]["out_of_candidate"]))
+        except ValueError as error:
+            rows[family] = {"into_source": None, "out_of_candidate": None, "combined": None,
+                            "incomplete_reason": str(error)}
+        rows[family]["event_counts"] = {name: vectors[name].get("event_count_model")
+                                       for name in ("source", "candidate", f"into-{family}", f"out-{family}")}
+    ordered = sorted(rows, key=lambda f: -rows[f]["combined"] if rows[f]["combined"] is not None else float("inf"))
+    complete = bool(ordered) and all(rows[f]["combined"] is not None for f in ordered)
+    steep = complete and rows[ordered[0]]["combined"]**2 > sum(rows[f]["combined"]**2 for f in ordered[1:])
     return {"families": rows, "order": ordered, "steep_x": ordered[0] if steep else None, "keys": keys}
 
 
@@ -137,8 +153,11 @@ def tree_markdown(ranking):
     lines = ["flowchart TD", "    Y4[Layer-2 candidate: wrong timing and recovery] --> FAM[Parameter family]"]
     for family in ranking["order"]:
         row = ranking["families"][family]
-        mark = "Steep X" if family == ranking["steep_x"] else "not dominant"
-        lines.append(f"    FAM --> {family}[{family}: RSS {row['combined']:.1f}; {mark}]")
+        if row["combined"] is None:
+            lines.append(f"    FAM --> {family}[{family}: incomplete observations]")
+        else:
+            mark = "Steep X" if family == ranking["steep_x"] else "not dominant"
+            lines.append(f"    FAM --> {family}[{family}: RSS {row['combined']:.1f}; {mark}]")
     return "\n".join(lines)
 
 
@@ -163,20 +182,25 @@ def main():
         "h01-l2-density130-tolerance-result.json", "h01-l2-density130-spatial-result.json",
         "h01-l2-density130-minima-numerical-review.json")))
     stage0 = manifest["stage0"]
-    coarse = {k: score_candidate(folder, v, datums) for k, v in stage0["coarse"].items()}
+    mesh = manifest.get("analysis_mesh", "coarse")
+    if mesh not in ("coarse", "fine"):
+        raise ValueError("analysis_mesh must be coarse or fine.")
     fine = {k: score_candidate(folder, v, datums) for k, v in stage0["fine"].items()}
     keys = select_observations(fine["source"], fine["candidate"], limits)
     if args.mode == "preservation":
+        coarse = {k: score_candidate(folder, v, datums) for k, v in stage0["coarse"].items()}
         report = preservation(coarse, fine, keys, limits)
         report["limits"] = limits
         (folder/"stage0-preservation.json").write_text(json.dumps(report, indent=2))
         print(json.dumps({"preserved": report["preserved"], "failures": report["failures"][:10], "keys": len(keys)}))
         return
-    vectors = dict(coarse)
+    vectors = dict(fine) if mesh == "fine" else {
+        k: score_candidate(folder, v, datums) for k, v in stage0["coarse"].items()}
     for candidate in manifest["candidates"]:
         if str(candidate["stage"]) == "A":
             vectors[candidate["name"].removeprefix("a-")] = score_candidate(folder, candidate["name"], datums)
     ranking = rank_families(vectors, manifest["families"], keys, limits)
+    ranking["analysis_mesh"] = mesh
     ranking["vectors"] = {k: {kk: (None if not np.isfinite(vv) else vv) for kk, vv in v.items()} for k, v in vectors.items()}
     (folder/"stage-a-ranking.json").write_text(json.dumps(ranking, indent=2))
     (folder/"stage-a-tree.mmd").write_text(tree_markdown(ranking))

@@ -31,18 +31,20 @@ Temperature is held equal only; BrainCell has no temperature knob.
 Halve dt once in each simulator at the matched mesh (NEURON fixed step
 0.0003125; BrainCell 0.0003125). Each simulator's own events must pass the
 existing gates against its half-step run (rise 0.1 ms, peak 0.1 mV, width
-0.01 ms, equal count). Otherwise the gates are not a valid decision limit
-and the split stops.
+0.01 ms, equal count). Otherwise time-step convergence is insufficient at these limits and the
+factorial attribution stops. Keep the limits unchanged.
 
 ## Predictions stated before running
 
 - Mesh is the Steep X: both matched-mesh cells pass; both MaxCVLen cells fail
   on rise crossing only.
 - Integration is the Steep X: both fixed-step cells pass; both CVode cells fail.
-- Both matched and still failing: the residual is the gate time level
-  (NEURON implicit Euler on V with gates at t+dt/2 versus BrainCell staggered
-  exponential Euler on gates with V frozen). That branch stays open and Y3
-  remains read through an unqualified transfer.
+- Both matched and still failing: matching counts and the nominal time step
+  is insufficient. Gate update timing is one hypothesis, not a proved cause.
+  Equal branch counts do not prove equal compartment placement, cable
+  coefficients, state initialization, or stimulus sampling. Isolate a
+  specific difference before assigning cause. Y3 remains read through an
+  unqualified transfer.
 - Only the matched-and-fixed cell passes: the two elements interact; neither
   alone is sufficient.
 
@@ -105,7 +107,7 @@ measured durations.
   replaces the literal; the report records the mechanism library hashes.
 - `docs/evidence/h01_pv_transfer_isolation.py`: asserts held-equal metadata,
   checks the matched mesh equals the NEURON counts, runs the two reversible
-  checks and the four cells through `compare_spike_transfer` over 270-330 ms,
+  checks and the four cells through `compare_spike_transfer` over 270-329.5 ms,
   and writes `h01-pv-transfer-isolation-audit.json` with input hashes and the
   literal decision.
 

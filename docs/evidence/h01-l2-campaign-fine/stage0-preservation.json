@@ -1,0 +1,35 @@
+{
+  "preserved": false,
+  "failures": [
+    [
+      "e1_rise_to_peak",
+      "change exceeds one fifth of the smallest contrast"
+    ],
+    [
+      "e2_rise_to_peak",
+      "change exceeds one fifth of the smallest contrast"
+    ],
+    [
+      "e3_rise_to_peak",
+      "change exceeds one fifth of the smallest contrast"
+    ],
+    [
+      "e3_peak_to_fall",
+      "change exceeds one fifth of the smallest contrast"
+    ],
+    [
+      "e4_rise_to_peak",
+      "change exceeds one fifth of the smallest contrast"
+    ]
+  ],
+  "selected_mesh": "fine",
+  "selected_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10
+  },
+  "coverage_verified": true,
+  "coverage_evidence": "control-assembly-audit.json",
+  "coverage_evidence_sha256": "832d5505faebd49106baa165aa8ab9b34ffa28fd1e002f5e85f7653cfed65d42",
+  "preservation_evidence": "docs\\evidence\\h01-l2-campaign\\stage0-active-preservation.json",
+  "qualification": "Coarse failure retained. Fine fallback only, not a physiological pass."
+}

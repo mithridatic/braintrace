@@ -2,7 +2,7 @@
 
 ## Behavior
 
-Under the recorded 43 pA input the layer-2 candidate shows excess
+Under the recorded 110 pA input (sweep 43) the layer-2 candidate shows excess
 depolarization and the wrong post-pulse return. Under the 250 pA input it
 fires the recorded five spikes with every interval too long, recovery minima
 too negative, rises too short, and returns too long. Eight single-parameter
@@ -104,3 +104,52 @@ exceeds five times its numerical decision limit. A family is the Steep X when
 its RSS exceeds the RSS of all other families combined in quadrature. Any
 finalist claim is conditional on the fine-setting recheck. No claim about the
 human cell's channel densities follows from a family ranking.
+
+## Required trace coverage
+
+Each requested subthreshold sample must lie within the saved time range.
+Reject incomplete, nonfinite or unordered traces before interpolation.
+The required final sample is 2120 ms; a 2100 ms trace cannot supply it.
+Do not extrapolate, reuse an endpoint, or drop this datum to issue a gate.
+Existing shorter runs require completion of this interval before scoring.
+
+### Coverage recovery and mesh decision
+
+The active-input preservation check fails five phase measurements. This is
+sufficient to reject the coarse mesh under the original rule, even without
+the missing subthreshold sample. Use the fine mesh for the family search;
+do not relax the rule or rerun coarse controls to force a pass.
+
+Use `h01-l2-campaign-coverage-recovery-manifest.json` after the original
+Stage 0 controller finishes. Replay only sweep 43 for the three fine Stage 0
+settings, through 2140 ms, with one simulation at a time. Save to the
+separate recovery directory. Retain every original trace and sweep 50.
+Verify requested-time coverage and shared-interval agreement before reuse.
+Three correction evaluations count against the original 24 cap. Omit
+optional Stage B: 6 initial controls + 3 corrections + 10 fine family
+evaluations + 2 finalists = 21, with 3 spare. No new campaign is authorized
+by this arithmetic alone.
+
+Evidence: `docs/evidence/h01-l2-campaign/stage0-active-preservation.json`.
+
+### Fine-mesh Stage A gate
+
+A missing or incomplete decision must not open Stage A. A failed coarse
+preservation decision can open the specified fine fallback only when the
+decision explicitly selects fine settings, corrected coverage is verified,
+and every Stage A candidate uses nseg factor 9 and CVode tolerance 1e-10.
+Keep the failed preservation result false. Do not relabel it as a pass.
+
+The ranking command must use `analysis_mesh` to select the control traces.
+Fine fallback must not read or score coarse controls. Record the selected
+mesh in the ranking output. The follow-on manifest counts all nine prior
+evaluations (six initial controls and three coverage corrections) toward
+the same cap; the coverage corrections are reserved while still running.
+
+### Missing observations in family ranking
+
+Use the same selected observations for every RSS comparison. A missing or
+nonfinite value makes that family comparison incomplete; do not sum a
+smaller subset. Retain the missing keys and all event counts. If any family
+is incomplete, report no dominant family from the RSS rule. Missing events
+remain a direct response, not a small error or evidence of weak influence.

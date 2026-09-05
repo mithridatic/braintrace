@@ -1,0 +1,29 @@
+{
+  "candidate": "s0-candidate-fine",
+  "original_stop_ms": 2100.0,
+  "recovery_stop_ms": 2140.0,
+  "prefix_before_original_stop": {
+    "samples": 490615,
+    "time_exact": true,
+    "voltage_exact": true,
+    "exclusion": "Original forced terminal stop sample excluded."
+  },
+  "subthreshold_residuals_mv": {
+    "sub_1019_v": 0.5109651428173123,
+    "sub_1021_v": 0.8884453169243045,
+    "sub_1025_v": 0.7791018221638666,
+    "sub_1040_v": 0.5954238356811317,
+    "sub_1120_v": 0.39384051644053386,
+    "sub_1520_v": 1.6807193650859489,
+    "sub_2019_v": 1.6789311083887952,
+    "sub_2021_v": 1.361468689151863,
+    "sub_2040_v": 1.6534326615794157,
+    "sub_2120_v": 1.2024088273547022
+  },
+  "voltage_at_2120_ms": -84.5475911726453,
+  "input_sha256": {
+    "docs\\evidence\\h01-l2-campaign\\s0-candidate-fine-sweep43.npz": "c054e1cf5c8e0111d0a5b349d9cd91a8c1b5dd907333661cf62d17bc950b6022",
+    "docs\\evidence\\h01-l2-campaign-coverage-recovery\\s0-candidate-fine-sweep43.npz": "1e29d37fa54bdc2f573361910f3692d59ff878ed433a586ed0abe46734437867"
+  },
+  "qualification": "Candidate coverage only. No physiological acceptance."
+}

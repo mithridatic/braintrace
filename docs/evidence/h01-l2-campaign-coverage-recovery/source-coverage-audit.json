@@ -1,0 +1,29 @@
+{
+  "source": "s0-source-fine",
+  "original_stop_ms": 2100.0,
+  "recovery_stop_ms": 2140.0,
+  "prefix_before_original_stop": {
+    "samples": 517638,
+    "time_exact": true,
+    "voltage_exact": true,
+    "exclusion": "Original terminal stop sample excluded because it is a forced integration endpoint."
+  },
+  "subthreshold_residuals_mv": {
+    "sub_1019_v": -0.015014331498548472,
+    "sub_1021_v": 0.3636503191293343,
+    "sub_1025_v": 0.27004967829230964,
+    "sub_1040_v": 0.2618582950689188,
+    "sub_1120_v": 1.7610608300375503,
+    "sub_1520_v": 4.1100151376182765,
+    "sub_2019_v": 4.105257239226802,
+    "sub_2021_v": 3.784946749187128,
+    "sub_2040_v": 3.976092095341812,
+    "sub_2120_v": 2.065018052320397
+  },
+  "voltage_at_2120_ms": -83.6849819476796,
+  "input_sha256": {
+    "docs\\evidence\\h01-l2-campaign\\s0-source-fine-sweep43.npz": "52dd59c2a717e268cffcc6cddf6b660e0d310cd4588ac26a48fd240ce01f45ca",
+    "docs\\evidence\\h01-l2-campaign-coverage-recovery\\s0-source-fine-sweep43.npz": "c19b9cc8c9641778499a88ce03d2d6a47d478bfccb3966da1bd08482df07f282"
+  },
+  "qualification": "Source replay only. Candidate and corner recovery remain pending; no physiological pass."
+}

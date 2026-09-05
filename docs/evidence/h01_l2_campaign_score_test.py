@@ -80,3 +80,68 @@ def test_limits_mark_proxies():
     assert score.limit_for("sub_1019_v", LIMITS) == (.0013, "proxy")
     assert score.limit_for("m1_delay", LIMITS) == (.0357, "proxy")
     assert score.limit_for("e1_rise_to_peak", LIMITS) == (.0004, "measured")
+
+
+@pytest.mark.parametrize("requested", [999., 2120.])
+def test_subthreshold_rejects_unrecorded_sample(requested):
+    with pytest.raises(ValueError, match="cover"):
+        score.subthreshold_residuals(np.array([1000., 2100.]), np.array([-80., -79.]),
+                                    [{"requested_time_ms": requested, "voltage_mv": -80.}])
+
+
+@pytest.mark.parametrize("times,voltage", [([], []), ([1.], [-80.]),
+    ([1., 1.], [-80., -80.]), ([2., 1.], [-80., -80.]),
+    ([1., np.nan], [-80., -80.]), ([1., 2.], [-80., np.nan]),
+    ([1., 2.], [-80.])])
+def test_subthreshold_rejects_invalid_trace(times, voltage):
+    with pytest.raises(ValueError, match="finite, ordered"):
+        score.subthreshold_residuals(times, voltage,
+                                    [{"requested_time_ms": 1., "voltage_mv": -80.}])
+
+
+def test_subthreshold_accepts_recorded_endpoints():
+    samples = [{"requested_time_ms": t, "voltage_mv": -80.} for t in (1., 2.)]
+    assert score.subthreshold_residuals([1., 2.], [-80., -79.], samples) == {
+        "sub_1_v": 0., "sub_2_v": 1.}
+
+
+def test_rank_command_uses_fine_controls_without_reading_coarse(tmp_path, monkeypatch):
+    import json
+    import sys
+    manifest = {"output_dir": "runs", "analysis_mesh": "fine", "families": [], "candidates": [],
+                "stage0": {"coarse": {"source": "bad-coarse"},
+                           "fine": {"source": "fine-source", "candidate": "fine-candidate"}}}
+    (tmp_path/"runs").mkdir()
+    path = tmp_path/"manifest.json"
+    path.write_text(json.dumps(manifest))
+    for name in ("h01-l2-density130-tolerance-result.json", "h01-l2-density130-spatial-result.json",
+                 "h01-l2-density130-minima-numerical-review.json"):
+        (tmp_path/name).write_text("{}")
+    monkeypatch.setattr(score, "FOLDER", tmp_path)
+    monkeypatch.setattr(score, "load_datums", lambda: {})
+    monkeypatch.setattr(score, "numerical_limits", lambda *a: LIMITS)
+    def scorer(folder, name, datums):
+        assert name.startswith("fine-")
+        return {"i1": 0. if name == "fine-source" else 10.}
+    monkeypatch.setattr(score, "score_candidate", scorer)
+    def rank(vectors, families, keys, limits):
+        assert vectors["source"]["i1"] == 0. and vectors["candidate"]["i1"] == 10.
+        return {"order": [], "steep_x": None}
+    monkeypatch.setattr(score, "rank_families", rank)
+    monkeypatch.setattr(score, "tree_markdown", lambda r: "")
+    monkeypatch.setattr(sys, "argv", ["score", "--manifest", str(path), "--mode", "rank"])
+    score.main()
+    assert json.loads((tmp_path/"runs/stage-a-ranking.json").read_text())["analysis_mesh"] == "fine"
+
+
+def test_missing_event_measurement_cannot_shrink_rss_or_establish_dominance():
+    with pytest.raises(ValueError, match="i2"):
+        score.normalized_rss({"i1": 0., "i2": 0.}, {"i1": 1., "i2": np.nan}, ["i1", "i2"], LIMITS)
+    vectors = {"source": {"i1": 0., "i2": 0.}, "candidate": {"i1": 10., "i2": 10.},
+               "into-F1": {"i1": 10., "i2": 10.}, "out-F1": {"i1": 0., "i2": 0.},
+               "into-F2": {"i1": 1., "i2": np.nan}, "out-F2": {"i1": 9., "i2": 9.}}
+    result = score.rank_families(vectors, ["F1", "F2"], ["i1", "i2"], LIMITS)
+    assert result["steep_x"] is None
+    assert result["families"]["F2"]["combined"] is None
+    assert "i2" in result["families"]["F2"]["incomplete_reason"]
+    assert "incomplete" in score.tree_markdown(result)

@@ -1,0 +1,367 @@
+{
+  "scope": "Partial source-only active-input mesh comparison. No candidate/corner contrasts or subthreshold fine response; not the Stage 0 preservation decision.",
+  "counts": {
+    "coarse": {
+      "event_count_model": 7,
+      "event_count_human": 5
+    },
+    "fine": {
+      "event_count_model": 7,
+      "event_count_human": 5
+    }
+  },
+  "observations": [
+    {
+      "observation": "e1_rise",
+      "coarse_residual": -2.286067262348979,
+      "fine_residual": -2.2800087113878362,
+      "coarse_minus_fine": -0.006058550961142828,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_fall",
+      "coarse_residual": -2.3075726808356194,
+      "fine_residual": -2.3015941355110954,
+      "coarse_minus_fine": -0.0059785453245240205,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_width",
+      "coarse_residual": -0.021505418486640338,
+      "fine_residual": -0.021585424123259145,
+      "coarse_minus_fine": 8.000563661880733e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_peak_t",
+      "coarse_residual": -2.4576932023494464,
+      "fine_residual": -2.451812177779857,
+      "coarse_minus_fine": -0.005881024569589499,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_peak_v",
+      "coarse_residual": 1.1883491371742423,
+      "fine_residual": 1.1769400510180006,
+      "coarse_minus_fine": 0.011409086156241699,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_rise_to_peak",
+      "coarse_residual": -0.17162594000046738,
+      "fine_residual": -0.1718034663920207,
+      "coarse_minus_fine": 0.00017752639155332872,
+      "same_sign": true
+    },
+    {
+      "observation": "e1_peak_to_fall",
+      "coarse_residual": 0.15012052151382704,
+      "fine_residual": 0.15021804226876156,
+      "coarse_minus_fine": -9.752075493452139e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_rise",
+      "coarse_residual": -8.877676894322121,
+      "fine_residual": -8.866433666956937,
+      "coarse_minus_fine": -0.011243227365184794,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_fall",
+      "coarse_residual": -9.103090094680738,
+      "fine_residual": -9.091926209335952,
+      "coarse_minus_fine": -0.01116388534478574,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_width",
+      "coarse_residual": -0.22541320035861645,
+      "fine_residual": -0.2254925423790155,
+      "coarse_minus_fine": 7.934202039905358e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_peak_t",
+      "coarse_residual": -9.077191339952606,
+      "fine_residual": -9.066041117680243,
+      "coarse_minus_fine": -0.011150222272362953,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_peak_v",
+      "coarse_residual": 1.5580678709353535,
+      "fine_residual": 1.5467753150520238,
+      "coarse_minus_fine": 0.011292555883329669,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_rise_to_peak",
+      "coarse_residual": -0.19951444563048426,
+      "fine_residual": -0.1996074507233061,
+      "coarse_minus_fine": 9.300509282184066e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e2_peak_to_fall",
+      "coarse_residual": -0.02589875472813219,
+      "fine_residual": -0.025885091655709402,
+      "coarse_minus_fine": -1.3663072422787081e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_rise",
+      "coarse_residual": -105.56065505601464,
+      "fine_residual": -105.56238981896763,
+      "coarse_minus_fine": 0.0017347629529922415,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_fall",
+      "coarse_residual": -105.63554613436509,
+      "fine_residual": -105.6373586318939,
+      "coarse_minus_fine": 0.0018124975288174028,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_width",
+      "coarse_residual": -0.07489107835044706,
+      "fine_residual": -0.07496881292627222,
+      "coarse_minus_fine": 7.77345758251613e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_peak_t",
+      "coarse_residual": -105.75525410902196,
+      "fine_residual": -105.75676961345471,
+      "coarse_minus_fine": 0.001515504432745729,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_peak_v",
+      "coarse_residual": 1.1165974730106498,
+      "fine_residual": 1.1056750485329232,
+      "coarse_minus_fine": 0.010922424477726622,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_rise_to_peak",
+      "coarse_residual": -0.19459905300732316,
+      "fine_residual": -0.19437979448707665,
+      "coarse_minus_fine": -0.0002192585202465125,
+      "same_sign": true
+    },
+    {
+      "observation": "e3_peak_to_fall",
+      "coarse_residual": 0.1197079746568761,
+      "fine_residual": 0.11941098156080443,
+      "coarse_minus_fine": 0.0002969930960716738,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_rise",
+      "coarse_residual": -202.8403079264258,
+      "fine_residual": -202.83746972102153,
+      "coarse_minus_fine": -0.0028382054042594973,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_fall",
+      "coarse_residual": -202.9118635809823,
+      "fine_residual": -202.90910267101685,
+      "coarse_minus_fine": -0.002760909965445535,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_width",
+      "coarse_residual": -0.07155565455650503,
+      "fine_residual": -0.071632949995319,
+      "coarse_minus_fine": 7.729543881396239e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_peak_t",
+      "coarse_residual": -203.028959562027,
+      "fine_residual": -203.02580011860414,
+      "coarse_minus_fine": -0.0031594434228736645,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_peak_v",
+      "coarse_residual": 1.2442299092262132,
+      "fine_residual": 1.233388742849023,
+      "coarse_minus_fine": 0.010841166377190348,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_rise_to_peak",
+      "coarse_residual": -0.188651635601218,
+      "fine_residual": -0.18833039758260384,
+      "coarse_minus_fine": -0.00032123801861416723,
+      "same_sign": true
+    },
+    {
+      "observation": "e4_peak_to_fall",
+      "coarse_residual": 0.11709598104471297,
+      "fine_residual": 0.11669744758728484,
+      "coarse_minus_fine": 0.0003985334574281296,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_rise",
+      "coarse_residual": -280.1557706143019,
+      "fine_residual": -280.14998524189446,
+      "coarse_minus_fine": -0.005785372407444811,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_fall",
+      "coarse_residual": -280.21981622758835,
+      "fine_residual": -280.21410849152335,
+      "coarse_minus_fine": -0.00570773606500552,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_width",
+      "coarse_residual": -0.06404561328645286,
+      "fine_residual": -0.06412324962889215,
+      "coarse_minus_fine": 7.763634243929118e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_peak_t",
+      "coarse_residual": -280.35162603239496,
+      "fine_residual": -280.3458036916195,
+      "coarse_minus_fine": -0.005822340775466728,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_peak_v",
+      "coarse_residual": 1.4501594051892823,
+      "fine_residual": 1.4392589806791491,
+      "coarse_minus_fine": 0.010900424510133178,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_rise_to_peak",
+      "coarse_residual": -0.1958554180930605,
+      "fine_residual": -0.1958184497250386,
+      "coarse_minus_fine": -3.696836802191683e-05,
+      "same_sign": true
+    },
+    {
+      "observation": "e5_peak_to_fall",
+      "coarse_residual": 0.13180980480660764,
+      "fine_residual": 0.13169520009614644,
+      "coarse_minus_fine": 0.00011460471046120801,
+      "same_sign": true
+    },
+    {
+      "observation": "i1",
+      "coarse_residual": -6.591609631973142,
+      "fine_residual": -6.5864249555691,
+      "coarse_minus_fine": -0.005184676404041966,
+      "same_sign": true
+    },
+    {
+      "observation": "i2",
+      "coarse_residual": -96.68297816169252,
+      "fine_residual": -96.6959561520107,
+      "coarse_minus_fine": 0.012977990318177035,
+      "same_sign": true
+    },
+    {
+      "observation": "i3",
+      "coarse_residual": -97.27965287041116,
+      "fine_residual": -97.2750799020539,
+      "coarse_minus_fine": -0.004572968357251739,
+      "same_sign": true
+    },
+    {
+      "observation": "i4",
+      "coarse_residual": -77.3154626878761,
+      "fine_residual": -77.31251552087292,
+      "coarse_minus_fine": -0.0029471670031853137,
+      "same_sign": true
+    },
+    {
+      "observation": "m1_v",
+      "coarse_residual": -1.5043836640819137,
+      "fine_residual": -1.5033679681700818,
+      "coarse_minus_fine": -0.0010156959118319264,
+      "same_sign": true
+    },
+    {
+      "observation": "m1_delay",
+      "coarse_residual": 1.276384044227143,
+      "fine_residual": 1.2770168984229713,
+      "coarse_minus_fine": -0.0006328541958282585,
+      "same_sign": true
+    },
+    {
+      "observation": "m2_v",
+      "coarse_residual": -4.404488346095505,
+      "fine_residual": -4.4035368876566565,
+      "coarse_minus_fine": -0.0009514584388483627,
+      "same_sign": true
+    },
+    {
+      "observation": "m2_delay",
+      "coarse_residual": 0.9728447774155029,
+      "fine_residual": 0.9726552395748058,
+      "coarse_minus_fine": 0.0001895378406970849,
+      "same_sign": true
+    },
+    {
+      "observation": "m3_v",
+      "coarse_residual": -1.300652513740431,
+      "fine_residual": -1.2998431225260703,
+      "coarse_minus_fine": -0.000809391214360744,
+      "same_sign": true
+    },
+    {
+      "observation": "m3_delay",
+      "coarse_residual": 1.332325609460213,
+      "fine_residual": 1.333853220748324,
+      "coarse_minus_fine": -0.0015276112881110748,
+      "same_sign": true
+    },
+    {
+      "observation": "m4_v",
+      "coarse_residual": -1.2621954131275572,
+      "fine_residual": -1.261389181216515,
+      "coarse_minus_fine": -0.0008062319110422322,
+      "same_sign": true
+    },
+    {
+      "observation": "m4_delay",
+      "coarse_residual": 1.27939723745817,
+      "fine_residual": 1.278054300290023,
+      "coarse_minus_fine": 0.0013429371681468183,
+      "same_sign": true
+    },
+    {
+      "observation": "m5_v",
+      "coarse_residual": -0.9619185751435992,
+      "fine_residual": -0.9611220720341862,
+      "coarse_minus_fine": -0.0007965031094130381,
+      "same_sign": true
+    },
+    {
+      "observation": "m5_delay",
+      "coarse_residual": 1.3419840146198112,
+      "fine_residual": 1.3424491481371206,
+      "coarse_minus_fine": -0.00046513351730936847,
+      "same_sign": true
+    }
+  ],
+  "input_sha256": {
+    "s0-source-coarse-sweep50.npz": "95d62cdaac39f5d6ad4fd38b2e59115b53d17c9ff57d2fda8b5e446289a6f63e",
+    "s0-source-fine-sweep50.npz": "aeeeabbb2b5f2bc5dfb154935c87de44b0554caa5871a2f91774ac482db2a339"
+  },
+  "event_correspondence": "Ordinal pairing of first five model events only; seven model versus five human events. No verified event correspondence or physiological pass.",
+  "human_event_count_gate": {
+    "coarse": false,
+    "fine": false
+  }
+}

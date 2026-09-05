@@ -70,3 +70,38 @@ def test_dry_run_writes_flag_file_without_executing(tmp_path):
     assert [r["sweep"] for r in rows] == ["50", "43"] and all(r["returncode"] is None for r in rows)
     written = json.loads((tmp_path/"docs/evidence/h01-l2-campaign/c0.candidate.json").read_text())
     assert written == {"kv3_closing_factor": .9, "nseg_factor": 3}
+
+
+def test_manifest_rejects_stop_before_last_required_sample():
+    manifest = _manifest()
+    manifest["candidates"][0]["settings"]["stop_ms"] = 2100.
+    with pytest.raises(ValueError, match="2120"):
+        campaign.check_manifest(manifest)
+    manifest["candidates"][0]["settings"]["stop_ms"] = 2120.
+    assert campaign.check_manifest(manifest) == ["c0", "c1"]
+
+
+def test_stage_a_fine_fallback_requires_coverage_and_matching_settings(tmp_path):
+    manifest = _manifest()
+    folder = tmp_path/"docs/evidence"/manifest["output_dir"]
+    folder.mkdir(parents=True)
+    gate = folder/"stage0-preservation.json"
+    gate.write_text("{}")
+    assert not campaign.stage_ready(tmp_path, manifest, "A")
+    record = {"preserved": False, "selected_mesh": "fine", "coverage_verified": True,
+              "selected_settings": {"nseg_factor": 9, "cvode_atol": 1e-10}}
+    gate.write_text(json.dumps(record))
+    assert not campaign.stage_ready(tmp_path, manifest, "A")
+    for c in manifest["candidates"]:
+        c["settings"].update(record["selected_settings"])
+    assert campaign.stage_ready(tmp_path, manifest, "A")
+    record["coverage_verified"] = False
+    gate.write_text(json.dumps(record))
+    assert not campaign.stage_ready(tmp_path, manifest, "A")
+
+
+def test_manifest_counts_prior_evaluations_against_cap():
+    manifest = _manifest()
+    manifest["prior_evaluations"] = 2
+    with pytest.raises(ValueError, match="cap"):
+        campaign.check_manifest(manifest)

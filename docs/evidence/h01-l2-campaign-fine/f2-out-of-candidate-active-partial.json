@@ -1,0 +1,83 @@
+{
+  "responses": {
+    "s0-candidate-fine": [
+      {
+        "rise_crossing_ms": 1078.7131279149305,
+        "fall_crossing_ms": 1079.6764773960467,
+        "time_above_threshold_ms": 0.9633494811162109,
+        "peak_sample_time_ms": 1078.8799284726106,
+        "peak_sample_voltage_mv": 35.959759064987914
+      },
+      {
+        "rise_crossing_ms": 1104.2407517858978,
+        "fall_crossing_ms": 1105.198507720385,
+        "time_above_threshold_ms": 0.9577559344870679,
+        "peak_sample_time_ms": 1104.4079825545505,
+        "peak_sample_voltage_mv": 35.50639183851313
+      },
+      {
+        "rise_crossing_ms": 1376.21083386494,
+        "fall_crossing_ms": 1377.1626987193033,
+        "time_above_threshold_ms": 0.9518648543632935,
+        "peak_sample_time_ms": 1376.3792053088491,
+        "peak_sample_voltage_mv": 34.983589729700185
+      },
+      {
+        "rise_crossing_ms": 1683.3935675096432,
+        "fall_crossing_ms": 1684.3447503888488,
+        "time_above_threshold_ms": 0.9511828792055894,
+        "peak_sample_time_ms": 1683.5618766492455,
+        "peak_sample_voltage_mv": 34.97104832774644
+      },
+      {
+        "rise_crossing_ms": 1977.300763126844,
+        "fall_crossing_ms": 1978.2515453860508,
+        "time_above_threshold_ms": 0.9507822592067896,
+        "peak_sample_time_ms": 1977.4692300865893,
+        "peak_sample_voltage_mv": 34.96062768562209
+      }
+    ],
+    "a-out-F2": [
+      {
+        "rise_crossing_ms": 1078.7131278955565,
+        "fall_crossing_ms": 1079.6737672378354,
+        "time_above_threshold_ms": 0.9606393422789097,
+        "peak_sample_time_ms": 1078.8799284332663,
+        "peak_sample_voltage_mv": 35.959759070910714
+      },
+      {
+        "rise_crossing_ms": 1112.9660897401263,
+        "fall_crossing_ms": 1113.920942184774,
+        "time_above_threshold_ms": 0.9548524446477131,
+        "peak_sample_time_ms": 1113.1334600223222,
+        "peak_sample_voltage_mv": 35.48518189633028
+      },
+      {
+        "rise_crossing_ms": 1358.1223855462545,
+        "fall_crossing_ms": 1359.0717312337192,
+        "time_above_threshold_ms": 0.9493456874647563,
+        "peak_sample_time_ms": 1358.2904937140568,
+        "peak_sample_voltage_mv": 34.98346792242878
+      },
+      {
+        "rise_crossing_ms": 1660.1076100163352,
+        "fall_crossing_ms": 1661.0562871384248,
+        "time_above_threshold_ms": 0.9486771220895207,
+        "peak_sample_time_ms": 1660.2761381583261,
+        "peak_sample_voltage_mv": 34.97169144689501
+      },
+      {
+        "rise_crossing_ms": 1949.147551520024,
+        "fall_crossing_ms": 1950.0958327943097,
+        "time_above_threshold_ms": 0.9482812742855913,
+        "peak_sample_time_ms": 1949.316145192856,
+        "peak_sample_voltage_mv": 34.96141169649723
+      }
+    ]
+  },
+  "input_sha256": {
+    "s0-candidate-fine-sweep50.npz": "92ec32f73519f57256c90acbea7d80e948cdf41e29897268cde55b03d644dcaf",
+    "a-out-F2-sweep50.npz": "7852335fd43a04d9160da3e176fceab28ff7d3e44f10bffc5a02fed41832eadf"
+  },
+  "qualification": "Reverse Kv3 intervention active input only. No family ranking or human waveform acceptance."
+}

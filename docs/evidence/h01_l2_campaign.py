@@ -23,10 +23,19 @@ def check_manifest(manifest):
     names = [c["name"] for c in manifest["candidates"]]
     if len(names) != len(set(names)):
         raise ValueError("Candidate names must be unique.")
-    if len(names) > manifest["cap"]:
-        raise ValueError(f"Manifest lists {len(names)} candidates; cap is {manifest['cap']}.")
+    prior = manifest.get("prior_evaluations", 0)
+    if isinstance(prior, bool) or not isinstance(prior, int) or prior < 0:
+        raise ValueError("prior_evaluations must be a nonnegative integer.")
+    if len(names) + prior > manifest["cap"]:
+        raise ValueError(f"Manifest lists {len(names)} candidates plus {prior} prior evaluations; cap is {manifest['cap']}.")
     if manifest["max_concurrent"] > 2:
         raise ValueError("At most two concurrent simulations are allowed.")
+    # These are the latest observations in the campaign's two fixed protocols.
+    required_end = max({"43": 2120., "50": 2020.}[str(s)] for s in manifest["sweeps"])
+    for candidate in manifest["candidates"]:
+        stop = candidate_values(candidate).get("stop_ms")
+        if stop is not None and not float(stop) >= required_end:
+            raise ValueError(f"{candidate['name']} must cover the final required sample at {required_end:g} ms.")
     return names
 
 
@@ -70,7 +79,7 @@ def needs_run(root, manifest, candidate):
 
 
 def stage_ready(root, manifest, stage):
-    """Stage A needs a preserved Stage 0 decision; Stage B needs the Stage A ranking."""
+    """Stage A needs preserved coarse settings or a verified fine fallback."""
     gate = STAGE_GATES.get(stage)
     if gate is None:
         return True
@@ -78,7 +87,17 @@ def stage_ready(root, manifest, stage):
     if not path.exists():
         return False
     record = json.loads(path.read_text())
-    return bool(record.get("preserved", True)) if stage == "A" else True
+    if stage != "A":
+        return True
+    if record.get("preserved") is True:
+        return True
+    required = {"nseg_factor": 9, "cvode_atol": 1e-10}
+    candidates = [c for c in manifest["candidates"] if str(c["stage"]) == "A"]
+    return (record.get("preserved") is False and record.get("selected_mesh") == "fine"
+            and record.get("coverage_verified") is True
+            and record.get("selected_settings") == required and bool(candidates)
+            and all(all(candidate_values(c).get(k) == v for k, v in required.items())
+                    for c in candidates))
 
 
 def run_candidate(root, manifest, candidate, dry_run):

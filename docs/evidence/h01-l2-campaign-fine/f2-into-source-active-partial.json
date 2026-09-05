@@ -1,0 +1,104 @@
+{
+  "responses": {
+    "s0-source-fine": [
+      {
+        "rise_crossing_ms": 1075.5315468446106,
+        "fall_crossing_ms": 1076.4458252156105,
+        "time_above_threshold_ms": 0.9142783709999094,
+        "peak_sample_time_ms": 1075.64818782222,
+        "peak_sample_voltage_mv": 37.20819225638986
+      },
+      {
+        "rise_crossing_ms": 1102.7968604520518,
+        "fall_crossing_ms": 1103.7060329699325,
+        "time_above_threshold_ms": 0.9091725178807337,
+        "peak_sample_time_ms": 1102.9139588823198,
+        "peak_sample_voltage_mv": 36.859277460819236
+      },
+      {
+        "rise_crossing_ms": 1226.504400305246,
+        "fall_crossing_ms": 1227.4042038658383,
+        "time_above_threshold_ms": 0.8998035605923178,
+        "peak_sample_time_ms": 1226.6232303865454,
+        "peak_sample_voltage_mv": 35.98067910164877
+      },
+      {
+        "rise_crossing_ms": 1436.6356021767094,
+        "fall_crossing_ms": 1437.5350908752814,
+        "time_above_threshold_ms": 0.8994886985719859,
+        "peak_sample_time_ms": 1436.7541998813958,
+        "peak_sample_voltage_mv": 36.014642140313775
+      },
+      {
+        "rise_crossing_ms": 1632.675639760002,
+        "fall_crossing_ms": 1633.5746011828767,
+        "time_above_threshold_ms": 0.8989614228746632,
+        "peak_sample_time_ms": 1632.7941963083806,
+        "peak_sample_voltage_mv": 36.00175960652792
+      },
+      {
+        "rise_crossing_ms": 1822.459551121432,
+        "fall_crossing_ms": 1823.3581426583016,
+        "time_above_threshold_ms": 0.8985915368696169,
+        "peak_sample_time_ms": 1822.5782860253591,
+        "peak_sample_voltage_mv": 35.991241651760184
+      },
+      {
+        "rise_crossing_ms": 2008.0861384795553,
+        "fall_crossing_ms": 2008.9844564779644,
+        "time_above_threshold_ms": 0.8983179984090839,
+        "peak_sample_time_ms": 2008.2047342130675,
+        "peak_sample_voltage_mv": 35.98201827888162
+      }
+    ],
+    "a-into-F2": [
+      {
+        "rise_crossing_ms": 1075.5315468730648,
+        "fall_crossing_ms": 1076.4483590167285,
+        "time_above_threshold_ms": 0.9168121436637193,
+        "peak_sample_time_ms": 1075.6481879317914,
+        "peak_sample_voltage_mv": 37.20819229158173
+      },
+      {
+        "rise_crossing_ms": 1096.8338126408455,
+        "fall_crossing_ms": 1097.746144200822,
+        "time_above_threshold_ms": 0.9123315599765647,
+        "peak_sample_time_ms": 1096.9508609278007,
+        "peak_sample_voltage_mv": 36.92029362243893
+      },
+      {
+        "rise_crossing_ms": 1240.463619609194,
+        "fall_crossing_ms": 1241.3657037977864,
+        "time_above_threshold_ms": 0.9020841885924256,
+        "peak_sample_time_ms": 1240.5823439040707,
+        "peak_sample_voltage_mv": 35.98079790146318
+      },
+      {
+        "rise_crossing_ms": 1453.6372454422064,
+        "fall_crossing_ms": 1454.5390025604208,
+        "time_above_threshold_ms": 0.9017571182143911,
+        "peak_sample_time_ms": 1453.7559892473644,
+        "peak_sample_voltage_mv": 36.01302343994585
+      },
+      {
+        "rise_crossing_ms": 1652.6061782123707,
+        "fall_crossing_ms": 1653.5073968959634,
+        "time_above_threshold_ms": 0.9012186835927878,
+        "peak_sample_time_ms": 1652.724732321739,
+        "peak_sample_voltage_mv": 35.99941374796104
+      },
+      {
+        "rise_crossing_ms": 1845.1560160863269,
+        "fall_crossing_ms": 1846.0568584516511,
+        "time_above_threshold_ms": 0.9008423653242517,
+        "peak_sample_time_ms": 1845.2748229233873,
+        "peak_sample_voltage_mv": 35.988280082732075
+      }
+    ]
+  },
+  "input_sha256": {
+    "s0-source-fine-sweep50.npz": "aeeeabbb2b5f2bc5dfb154935c87de44b0554caa5871a2f91774ac482db2a339",
+    "a-into-F2-sweep50.npz": "ba1737e5e6fe97bdb88c981bc0c02fbf200987f767fa397e16b0fe31cac85a96"
+  },
+  "qualification": "One direction of Kv3 family swap; active input only. Subthreshold and reciprocal response pending; no family ranking or physiological acceptance."
+}

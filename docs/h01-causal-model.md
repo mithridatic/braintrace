@@ -215,40 +215,55 @@ flowchart TD
 ## Y2. The transferred PV donor model does not retain its full response
 
 **Behavior.** The frozen inhibitory donor model in BrainCell reproduces the
-early spike peaks and widths of its source, but later spikes occur too early
-and the full event counts differ. This behavior concerns transfer on donor
-anatomy; it is separate from Y1.
+early spike peaks and widths of its source, but its later rise crossings drift
+from event 7 onward (1.2 ms at event 8 over 270-329.5 ms at 0.27 nA). This
+behavior concerns transfer on donor anatomy; it is separate from Y1.
 
-**Explanation.** Axon-only refinement is sufficient to repair the tested
-eight-event window. The non-axon intervals, time step and physical parameters
-stay fixed. Axon discretization therefore causes a material timing difference
-in this model. It sets where voltage and gate states are represented along
-the cable and coupled through axial current. The mediating gate or current
-has not been isolated. Full-response transfer remains unverified.
+**Explanation.** The drift is a spatial discretization difference, not a
+simulator difference. The earlier comparisons matched the two meshes only by
+mean segment length, so several dendritic branches held fewer BrainCell
+compartments than NEURON segments. Copying the NEURON per-branch counts into
+BrainCell is sufficient to remove the drift: with equal counts and the same
+fixed step, the two simulators agree at every one of the eight events to below
+1e-8 ms, and with equal counts against NEURON CVode the largest rise error is
+0.044 ms, inside the 0.1 ms gate. Changing the NEURON integration from CVode
+to a fixed step at the BrainCell dt moves no event by more than its gate, so
+the integration scheme and the gate time level are not measurable contributors
+at this dt.
 
-**Prediction confirmed.** The refined axon brings event 7 inside the fixed
-0.1 ms onset limit. All eight events also pass onset, peak and width limits.
+**Prediction confirmed.** Stated before running: if mesh is the dominant
+element, both matched-mesh cells pass and both MaxCVLen cells fail on rise
+only. That pattern occurred. Halving dt in each simulator at the matched mesh
+moved event 8 by 0.002 ms, so the gate is a valid decision limit.
 
-**Steep X.** Axon discretization is a supported factor for this window.
-Its paired voltage-change RSS is not a biological uncertainty or a ranking
-against differently sized interventions. Other transfer errors remain open.
+**Steep X.** The per-branch compartment count.
 
-**Action.** A short-window peak match is not an acceptance test for transfer.
-Halving the time step alone is not a repair.
+**Action.** Every BrainCell-versus-NEURON comparison must copy the NEURON
+per-branch counts (`--mesh-from`) rather than choose a maximum compartment
+length. The earlier drift evidence and the axon-only 0.25 um control were read
+through unequal meshes. This result qualifies the transfer for the first eight
+events at this input and dt only; it does not identify a channel cause, does
+not validate the human waveform, and does not cover the full 1270 ms train or
+other inputs.
 
 ```mermaid
 flowchart TD
-    Y2[Later spikes too early after transfer] --> W[Short-window agreement: not sufficient]
-    Y2 --> T[Halved time step: eliminated as sole repair]
-    Y2 --> A[Axon refinement: repairs eight-event window]
-    Y2 --> O[Implementation differences: open]
+    Y2[Later spikes drift after transfer] --> W[Short-window agreement: not sufficient]
+    Y2 --> T[Halved BrainCell step alone: eliminated]
+    Y2 --> I[Implementation differences]
+    I --> A[Mesh: per-branch counts unequal]
+    I --> B[Integration scheme: CVode vs fixed step]
+    A --> A1[Copy NEURON counts: sufficient, both cells pass]
+    B --> B1[Scheme swap: moves no event past its gate]
+    A --> A0[Axon-only 0.25 um control: consistent, uncontrolled]
 ```
 
 | Node | Split | Result | Evidence |
 | --- | --- | --- | --- |
 | W | Full-response comparison against the source | Early spikes agree; later events and counts differ | [full-response comparison](evidence/h01-pv-candidate-transfer-full.md) |
-| T | Halve the time step, physical parameters unchanged | First failed crossing remains outside the timing limit | [paired comparison](evidence/h01-pv-candidate-transfer-drift-halfdt-audit.json) |
-| A | Refine only the axon; other settings fixed | All eight events pass; full response remains open | [axon-only comparison](evidence/h01-i-axon025-transfer-audit.json) |
+| T | Halve the BrainCell time step, physical parameters unchanged | First failed crossing remains outside the timing limit | [paired comparison](evidence/h01-pv-candidate-transfer-drift-halfdt-audit.json) |
+| A0 | Refine only the BrainCell axon to 0.25 um | All gates pass 8/8; not a controlled swap | [axon-only control](evidence/h01-i-axon025-transfer-audit.json) |
+| A1, B1 | 2x2 half-split: mesh x integration, everything else held equal | Decision "mesh": matched cells pass, MaxCVLen cells fail on rise; scheme swap within gate | [isolation split](evidence/h01-pv-transfer-isolation.md), [audit](evidence/h01-pv-transfer-isolation-audit.json) |
 
 ## Y3. The PV candidate's spike train differs from the human recording
 
@@ -313,7 +328,9 @@ conductance increase also delays onset and narrows the spike; faster recovery
 alone and slower recovery alone both fail to restore high-input late firing;
 SK is not necessary for the second-spike delay after faster inactivation.
 Somatic SK observations alone cannot explain the onset effect. None of the
-tested candidates is a human waveform fit.
+tested candidates is a human waveform fit. Every Y3 result was obtained in
+NEURON; the Y2 split shows that a BrainCell reading of these results requires
+the copied per-branch mesh.
 
 ```mermaid
 flowchart TD
@@ -357,7 +374,7 @@ flowchart TD
 
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
-**Behavior.** Under the recorded 43 pA input the candidate does not fire and
+**Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
 its voltage shows excess depolarization and the wrong post-pulse return. Under
 the active input it fires the recorded five spikes, but every interval is too
 long, recovery minima are too negative, each rise from -20 mV to the peak is
@@ -374,14 +391,39 @@ time changes later intervals while leaving the first interval and minima nearly
 unchanged. Baseline and response deflection must be tracked separately, and
 location and amount of a conductance must remain separate factors.
 
+At the tested coarse mesh, the source gives seven spikes. Changing sodium
+opening and somatic density together gives six; the full candidate gives
+five. Those sodium changes alone are therefore insufficient for the
+candidate count under this input. The remaining candidate changes act as a
+group in this comparison. Their individual roles and interactions are not
+isolated by these three responses. The source's seven events and the
+sodium-only model's six events persist on both tested meshes. The sodium-only
+count error is therefore not removed by this refinement. Full preservation
+of the three-model comparison remains open.
+See the [complete event records](evidence/h01-l2-campaign/coarse-active-three-controls.json)
+and [sodium-only mesh comparison](evidence/h01-l2-campaign/corner-active-mesh-comparison.json).
+
 **Prediction confirmed.** The subthreshold error directions persist under
 tighter tolerance and spatial refinement, so they are model errors, not solver
 errors. The density candidate's peaks and phases persist within declared limits
 under both refinements. The predicted rising-phase effect of slower NaTs
 opening is observed.
 
+The candidate sodium-opening change is neither necessary nor sufficient
+for five spikes in the tested active input. Adding it alone to the source
+gives six spikes; removing it from the full candidate retains five. It does
+change individual spike times. Count and timing therefore impose distinct
+constraints; retaining the count does not show that the gate has no effect.
+See the [forward intervention](evidence/h01-l2-campaign-fine/f1-into-source-two-inputs.json)
+and [reverse intervention](evidence/h01-l2-campaign-fine/f1-out-of-candidate-active-partial.json).
+
 **Steep X.** Not separated. The eliminated levers are listed in the tree; the
-open levers are the gate laws and regional densities not yet split.
+open levers are the parameter families not yet split. The bounded family
+campaign is specified and its Stage 0 is complete: the coarse mesh (nseg 3)
+does not preserve decisions on five phase measurements, so the family search
+runs at the fine mesh. The [acceptance table](evidence/h01-l2-acceptance-table.md)
+fixes every required observation; no allowance is agreed, so the campaign
+issues no pass.
 
 **Action.** Omitted bias, a constant voltage offset, solver tolerance, mesh,
 somatic Ih density, Ih location, uniform leak, and passive reversal are not
@@ -415,11 +457,12 @@ flowchart TD
     A --> A7[Sodium recovery while availability rises: worsens intervals 2-3]
     A --> A8[Somatic sodium density 0.9: delays onset, worsens intervals]
     A --> A9[Slower somatic calcium removal: later intervals lengthen]
+    Y4 --> FAM[Parameter family search: Stage 0 done, coarse mesh rejected; Stage A pending]
 ```
 
 | Node | Split | Result | Evidence |
 | --- | --- | --- | --- |
-| B1 | Add the recorded negative bias | Delays first spike; extra events remain; initial offset nearly removed at 43 pA but adaptation and return still wrong | [bias split, active](evidence/h01-l2-recorded-bias-result.md), [bias split, subthreshold](evidence/h01-l2-sweep43-bias-result.md) |
+| B1 | Add the recorded negative bias | Delays first spike; extra events remain; initial offset nearly removed in sweep 43 (110 pA) but adaptation and return still wrong | [bias split, active](evidence/h01-l2-recorded-bias-result.md), [bias split, subthreshold](evidence/h01-l2-sweep43-bias-result.md) |
 | B2 | Subtract the starting voltage | Excess depolarization and wrong return remain | [subthreshold comparison](evidence/h01-l2-midpoint-sweep43-comparison.md) |
 | Q1 | Double somatic Ih density | Adaptation and below-baseline return not restored | [Ih split](evidence/h01-l2-sweep43-ih-result.md) |
 | Q2 | Move Ih to uniform soma and dendrite, same total | Shape not restored | [location split](evidence/h01-l2-ih-location-result.md) |
@@ -435,6 +478,7 @@ flowchart TD
 | A7 | Slow sodium recovery only while availability rises | First interval lengthens; next two interval errors worsen | [layer-2 sodium split](evidence/h01-l2-sodium-recovery-result.md) |
 | A8 | Somatic sodium density 0.9 | First spike delayed and lower; narrower; first three interval errors worsen | [density split](evidence/h01-l2-sodium-density090-result.md) |
 | A9 | Slower somatic calcium removal | Later intervals lengthen; first peak and minimum unchanged; first interval still too short | [layer-2 removal split](evidence/h01-l2-calcium-removal-result.md) |
+| FAM | Search Dissection over five families, cap 24 | Stage 0: coarse mesh changes five phase measurements by more than one fifth of the smallest contrast; rejected as a search setting | [campaign spec](specs/2026-09-05-h01-l2-family-campaign.md), [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json), [manifest](evidence/h01-l2-campaign-manifest.json) |
 
 ## Y5. Synaptic delivery in the H01 pair
 
@@ -519,6 +563,9 @@ leaves a residual without a failure of the discrete charge balance.
 | L2 Kv3 half candidate, post-spike voltages | Tighter tolerance | One-spike outcome persists; below 0.000000830 mV | [tolerance comparison](evidence/h01-l2-kv3-half-tolerance-result.md) |
 | L2 Kv3 ninety candidate, minima | Tighter tolerance | Spike limits pass; each minimum below 0.000001881 mV | [tolerance comparison](evidence/h01-l2-kv3-ninety-tolerance-result.md) |
 | L2 sodium-recovery candidate | Independent solver; successive spatial refinement | Direct events pass at this input | [layer-2 sodium split](evidence/h01-l2-sodium-recovery-result.md) |
+| PV transfer, matched mesh, events 1-8 | Halve dt in NEURON and in BrainCell | Event 8 moves 0.002 ms in each; all gates pass | [isolation split](evidence/h01-pv-transfer-isolation.md) |
+| PV transfer, matched mesh | NEURON CVode 1e-10 vs fixed dt 0.000625 | Largest rise change 0.044 ms; gates pass | [isolation audit](evidence/h01-pv-transfer-isolation-audit.json) |
+| L2 campaign controls | nseg 3 vs nseg 9 at CVode 1e-10, active input | Five phase changes exceed one fifth of the smallest source-candidate-corner contrast; coarse setting rejected | [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json) |
 
 The response-size ranking in the [factor evidence](evidence/h01-i-factor-response-rss.md)
 compares specified interventions on a fixed observation grid. It selects the
@@ -529,7 +576,8 @@ biological uncertainty.
 
 - Y1: which upstream axonal segment reduces the outflow in the axon-only case;
   whether the electrical region map is correct.
-- Y2: which implementation difference moves the later events after transfer.
+- Y2: transfer of the full 1270 ms train and the other inputs at the copied
+  mesh; whether equal counts also equal compartment placement on every branch.
 - Y3: the pathway from the shorter first spike to later spike times; the
   channel cause of the shallow, late minimum; the spike initiation site; a
   human recovery constant; the Kv3 candidate's spatial sensitivity; the

@@ -1,0 +1,108 @@
+{
+  "window_ms": [
+    1020.0,
+    2020.0
+  ],
+  "responses": {
+    "s0-source-fine": [
+      {
+        "rise_crossing_ms": 1075.5315468446106,
+        "fall_crossing_ms": 1076.4458252156105,
+        "time_above_threshold_ms": 0.9142783709999094,
+        "peak_sample_time_ms": 1075.64818782222,
+        "peak_sample_voltage_mv": 37.20819225638986
+      },
+      {
+        "rise_crossing_ms": 1102.7968604520518,
+        "fall_crossing_ms": 1103.7060329699325,
+        "time_above_threshold_ms": 0.9091725178807337,
+        "peak_sample_time_ms": 1102.9139588823198,
+        "peak_sample_voltage_mv": 36.859277460819236
+      },
+      {
+        "rise_crossing_ms": 1226.504400305246,
+        "fall_crossing_ms": 1227.4042038658383,
+        "time_above_threshold_ms": 0.8998035605923178,
+        "peak_sample_time_ms": 1226.6232303865454,
+        "peak_sample_voltage_mv": 35.98067910164877
+      },
+      {
+        "rise_crossing_ms": 1436.6356021767094,
+        "fall_crossing_ms": 1437.5350908752814,
+        "time_above_threshold_ms": 0.8994886985719859,
+        "peak_sample_time_ms": 1436.7541998813958,
+        "peak_sample_voltage_mv": 36.014642140313775
+      },
+      {
+        "rise_crossing_ms": 1632.675639760002,
+        "fall_crossing_ms": 1633.5746011828767,
+        "time_above_threshold_ms": 0.8989614228746632,
+        "peak_sample_time_ms": 1632.7941963083806,
+        "peak_sample_voltage_mv": 36.00175960652792
+      },
+      {
+        "rise_crossing_ms": 1822.459551121432,
+        "fall_crossing_ms": 1823.3581426583016,
+        "time_above_threshold_ms": 0.8985915368696169,
+        "peak_sample_time_ms": 1822.5782860253591,
+        "peak_sample_voltage_mv": 35.991241651760184
+      },
+      {
+        "rise_crossing_ms": 2008.0861384795553,
+        "fall_crossing_ms": 2008.9844564779644,
+        "time_above_threshold_ms": 0.8983179984090839,
+        "peak_sample_time_ms": 2008.2047342130675,
+        "peak_sample_voltage_mv": 35.98201827888162
+      }
+    ],
+    "a-into-F1": [
+      {
+        "rise_crossing_ms": 1076.6080666354208,
+        "fall_crossing_ms": 1077.530150661034,
+        "time_above_threshold_ms": 0.9220840256132306,
+        "peak_sample_time_ms": 1076.785804441549,
+        "peak_sample_voltage_mv": 30.26665373849778
+      },
+      {
+        "rise_crossing_ms": 1099.8790859779751,
+        "fall_crossing_ms": 1100.7972717776067,
+        "time_above_threshold_ms": 0.9181857996316012,
+        "peak_sample_time_ms": 1100.0577392797954,
+        "peak_sample_voltage_mv": 29.901348203343776
+      },
+      {
+        "rise_crossing_ms": 1233.0820647846797,
+        "fall_crossing_ms": 1233.9928923970976,
+        "time_above_threshold_ms": 0.9108276124179611,
+        "peak_sample_time_ms": 1233.2624796669386,
+        "peak_sample_voltage_mv": 28.774503241872488
+      },
+      {
+        "rise_crossing_ms": 1446.889936721522,
+        "fall_crossing_ms": 1447.8003576466601,
+        "time_above_threshold_ms": 0.910420925138169,
+        "peak_sample_time_ms": 1447.070614836695,
+        "peak_sample_voltage_mv": 28.825861596369826
+      },
+      {
+        "rise_crossing_ms": 1645.0536334227863,
+        "fall_crossing_ms": 1645.9635132658386,
+        "time_above_threshold_ms": 0.9098798430522947,
+        "peak_sample_time_ms": 1645.234288926845,
+        "peak_sample_voltage_mv": 28.807278281411676
+      },
+      {
+        "rise_crossing_ms": 1836.725864385382,
+        "fall_crossing_ms": 1837.6353703003879,
+        "time_above_threshold_ms": 0.909505915005866,
+        "peak_sample_time_ms": 1836.9062405833242,
+        "peak_sample_voltage_mv": 28.792471723582253
+      }
+    ]
+  },
+  "input_sha256": {
+    "s0-source-fine-sweep50.npz": "aeeeabbb2b5f2bc5dfb154935c87de44b0554caa5871a2f91774ac482db2a339",
+    "a-into-F1-sweep50.npz": "a73c5838834d0d10025b892b1766a9d2cfa42372804bf0e54b2d8b6c02daeb18"
+  },
+  "qualification": "One direction of F1 swap, active input only; reciprocal and subthreshold responses pending. No family dominance or human validity claim."
+}

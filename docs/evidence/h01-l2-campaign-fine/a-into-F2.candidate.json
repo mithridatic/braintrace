@@ -1,0 +1,6 @@
+{
+  "cvode_atol": 1e-10,
+  "kv3_closing_factor": 0.9,
+  "nseg_factor": 9,
+  "stop_ms": 2140.0
+}
