@@ -148,6 +148,35 @@ def preservation(coarse, fine, keys, limits, factor=5.):
     return {"preserved": not failures, "failures": failures, "keys": keys}
 
 
+GROUPS = {"event_count": ("event_count_model",), "intervals": ("i1", "i2", "i3", "i4"),
+          "minima": tuple(f"m{i}_v" for i in range(1, 6)), "phases": tuple(f"e{i}_{p}" for i in range(1, 6) for p in ("rise_to_peak", "peak_to_fall", "width")),
+          "peaks_and_onsets": tuple(f"e{i}_{p}" for i in range(1, 6) for p in ("rise", "fall", "peak_t", "peak_v")),
+          "subthreshold": tuple(f"sub_{t}_v" for t in (1019, 1021, 1025, 1040, 1120, 1520, 2019, 2021, 2040, 2120))}
+
+
+def group_ranking(vectors, families, keys, limits):
+    """Family RSS per observation group, so sparsity is judged per behavior, not pooled.
+
+    The event count group reports the signed count change per swap instead of an RSS.
+    """
+    report = {}
+    for group, members in GROUPS.items():
+        selected = [k for k in keys if k in members]
+        if group == "event_count":
+            count = lambda name: vectors.get(name, {}).get("event_count_model")
+            change = lambda a, b: None if count(a) is None or count(b) is None else count(a)-count(b)
+            rows = {f: {"into_source": change(f"into-{f}", "source"), "out_of_candidate": change(f"out-{f}", "candidate")} for f in families}
+            report[group] = {"families": rows, "source": count("source"), "candidate": count("candidate")}
+            continue
+        if not selected:
+            report[group] = {"families": {}, "keys": [], "order": [], "steep_x": None}
+            continue
+        ranked = rank_families(vectors, families, selected, limits)
+        report[group] = {"families": ranked.get("families", {}), "keys": selected,
+                         "order": ranked.get("order", []), "steep_x": ranked.get("steep_x")}
+    return report
+
+
 def tree_markdown(ranking):
     """Mermaid family tree for the causal page."""
     lines = ["flowchart TD", "    Y4[Layer-2 candidate: wrong timing and recovery] --> FAM[Parameter family]"]
@@ -201,6 +230,7 @@ def main():
             vectors[candidate["name"].removeprefix("a-")] = score_candidate(folder, candidate["name"], datums)
     ranking = rank_families(vectors, manifest["families"], keys, limits)
     ranking["analysis_mesh"] = mesh
+    ranking["groups"] = group_ranking(vectors, manifest["families"], keys, limits)
     ranking["vectors"] = {k: {kk: (None if not np.isfinite(vv) else vv) for kk, vv in v.items()} for k, v in vectors.items()}
     (folder/"stage-a-ranking.json").write_text(json.dumps(ranking, indent=2))
     (folder/"stage-a-tree.mmd").write_text(tree_markdown(ranking))

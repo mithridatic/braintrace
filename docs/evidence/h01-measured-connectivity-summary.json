@@ -98,8 +98,9 @@
     "124698307": "pyramidal to pyramidal"
   },
   "qualification_pending": [
-    "Circuit construction with measured placements",
-    "Matched event-delivery controls",
+    "Generate qualified E and I responses under stated inputs",
+    "Validate I soma-to-contact propagation",
+    "Matched event-delivery controls on actual H01 cells",
     "Human physiology and full numerical qualification"
   ],
   "anatomically_supported_ie_contacts": 1,
@@ -108,7 +109,7 @@
     "tests_passed": 24,
     "elapsed_seconds": 87.22,
     "scope": "Contact identity and geometry rejection; circuit topology; synthetic event delivery and matched edge-removal controls.",
-    "real_h01_simulation": "Running; no physiological pass asserted.",
+    "real_h01_simulation": "Completed at dt 0.005 ms for 8 ms, both soma pulses 1 nA from 2 to 5 ms. Finite traces; no recorded output events; synaptic conductance remained zero.",
     "coverage": {
       "statements": 90,
       "missed": 1,

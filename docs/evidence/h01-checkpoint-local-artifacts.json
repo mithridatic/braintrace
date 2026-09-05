@@ -1,7 +1,7 @@
 {
-  "created_utc": "2026-09-05T20:02:32.052720+00:00",
+  "created_utc": "2026-09-05T21:11:41.821116+00:00",
   "scope": "Local raw simulation artifacts excluded from Git; source, reports, and tests committed. This inventory is not an archive.",
-  "total_bytes": 7267588906,
+  "total_bytes": 7535734493,
   "files": [
     {
       "path": "docs/evidence/h01-e-candidate-transfer-first-two.npz",
@@ -192,134 +192,6 @@
       "bytes": 26845122
     },
     {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43-raw.npz",
-      "bytes": 5182980
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43.npz",
-      "bytes": 5856093
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43-raw.npz",
-      "bytes": 5489753
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43.npz",
-      "bytes": 6204533
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43-raw.npz",
-      "bytes": 5484186
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43.npz",
-      "bytes": 6198279
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43-raw.npz",
-      "bytes": 5483702
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43.npz",
-      "bytes": 6197703
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50-raw.npz",
-      "bytes": 10341000
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50.npz",
-      "bytes": 11664749
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43-raw.npz",
-      "bytes": 5484508
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43.npz",
-      "bytes": 6198953
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50-raw.npz",
-      "bytes": 10271132
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50.npz",
-      "bytes": 11586460
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43-raw.npz",
-      "bytes": 5491075
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43.npz",
-      "bytes": 6205128
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50-raw.npz",
-      "bytes": 10010027
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50.npz",
-      "bytes": 11286640
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43-raw.npz",
-      "bytes": 5180718
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43.npz",
-      "bytes": 5853774
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50-raw.npz",
-      "bytes": 9326947
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50.npz",
-      "bytes": 10509707
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43-raw.npz",
-      "bytes": 5181844
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43.npz",
-      "bytes": 5854740
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50-raw.npz",
-      "bytes": 9394986
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50.npz",
-      "bytes": 10588264
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep43.npz",
-      "bytes": 5856093
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep50.npz",
-      "bytes": 10320611
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep43.npz",
-      "bytes": 6204533
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep50.npz",
-      "bytes": 11327493
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep43.npz",
-      "bytes": 6198279
-    },
-    {
-      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep50.npz",
-      "bytes": 11496952
-    },
-    {
       "path": "docs/evidence/h01-l2-campaign/s0-candidate-coarse-sweep43-raw.npz",
       "bytes": 4253636
     },
@@ -413,6 +285,262 @@
     },
     {
       "path": "docs/evidence/h01-l2-campaign/s0-source-fine-sweep50.npz",
+      "bytes": 11496952
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43-raw.npz",
+      "bytes": 5182980
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43.npz",
+      "bytes": 5856093
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43-raw.npz",
+      "bytes": 5489753
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43.npz",
+      "bytes": 6204533
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43-raw.npz",
+      "bytes": 5484186
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43.npz",
+      "bytes": 6198279
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43-raw.npz",
+      "bytes": 5483702
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep43.npz",
+      "bytes": 6197703
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50-raw.npz",
+      "bytes": 10341000
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F1-sweep50.npz",
+      "bytes": 11664749
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43-raw.npz",
+      "bytes": 5484508
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep43.npz",
+      "bytes": 6198953
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50-raw.npz",
+      "bytes": 10271132
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F2-sweep50.npz",
+      "bytes": 11586460
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43-raw.npz",
+      "bytes": 5491075
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep43.npz",
+      "bytes": 6205128
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50-raw.npz",
+      "bytes": 10010027
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F3-sweep50.npz",
+      "bytes": 11286640
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep43-raw.npz",
+      "bytes": 5488840
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep43.npz",
+      "bytes": 6203590
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep50-raw.npz",
+      "bytes": 10230763
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F4-sweep50.npz",
+      "bytes": 11539491
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep43-raw.npz",
+      "bytes": 5170752
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep43.npz",
+      "bytes": 5843147
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep50-raw.npz",
+      "bytes": 9780772
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-into-F5-sweep50.npz",
+      "bytes": 11024873
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43-raw.npz",
+      "bytes": 5180718
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep43.npz",
+      "bytes": 5853774
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50-raw.npz",
+      "bytes": 9326947
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F1-sweep50.npz",
+      "bytes": 10509707
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43-raw.npz",
+      "bytes": 5181844
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep43.npz",
+      "bytes": 5854740
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50-raw.npz",
+      "bytes": 9394986
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F2-sweep50.npz",
+      "bytes": 10588264
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep43-raw.npz",
+      "bytes": 5172763
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep43.npz",
+      "bytes": 5845168
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep50-raw.npz",
+      "bytes": 9757316
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F3-sweep50.npz",
+      "bytes": 10996359
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep43-raw.npz",
+      "bytes": 5180823
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep43.npz",
+      "bytes": 5855434
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep50-raw.npz",
+      "bytes": 9405662
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F4-sweep50.npz",
+      "bytes": 10598410
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep43-raw.npz",
+      "bytes": 5497313
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep43.npz",
+      "bytes": 6212150
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep50-raw.npz",
+      "bytes": 9873435
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/a-out-F5-sweep50.npz",
+      "bytes": 11134441
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43-raw.npz",
+      "bytes": 5179559
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz",
+      "bytes": 5852761
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep50-raw.npz",
+      "bytes": 9386350
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz",
+      "bytes": 10579204
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep43-raw.npz",
+      "bytes": 5489322
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep43.npz",
+      "bytes": 6204106
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep50-raw.npz",
+      "bytes": 10265835
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/ab-out-F3F5-sweep50.npz",
+      "bytes": 11580684
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep43-raw.npz",
+      "bytes": 7309303
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep43.npz",
+      "bytes": 8302153
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep50-raw.npz",
+      "bytes": 12746083
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/c-out-F3F5-atol11-sweep50.npz",
+      "bytes": 14438725
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep43.npz",
+      "bytes": 5856093
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-candidate-fine-sweep50.npz",
+      "bytes": 10320611
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep43.npz",
+      "bytes": 6204533
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-corner-fine-sweep50.npz",
+      "bytes": 11327493
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep43.npz",
+      "bytes": 6198279
+    },
+    {
+      "path": "docs/evidence/h01-l2-campaign-fine/s0-source-fine-sweep50.npz",
       "bytes": 11496952
     },
     {

@@ -145,3 +145,16 @@ def test_missing_event_measurement_cannot_shrink_rss_or_establish_dominance():
     assert result["families"]["F2"]["combined"] is None
     assert "i2" in result["families"]["F2"]["incomplete_reason"]
     assert "incomplete" in score.tree_markdown(result)
+
+
+def test_group_ranking_judges_sparsity_per_observation_group():
+    keys = ["i1", "sub_1120_v"]
+    vectors = {"source": {"i1": 0., "sub_1120_v": 0., "event_count_model": 7},
+               "candidate": {"i1": 10., "sub_1120_v": 1., "event_count_model": 5},
+               "into-F3": {"i1": 9., "sub_1120_v": 0., "event_count_model": 6}, "out-F3": {"i1": 1., "sub_1120_v": 1., "event_count_model": 6},
+               "into-F5": {"i1": .1, "sub_1120_v": 1., "event_count_model": 7}, "out-F5": {"i1": 9.9, "sub_1120_v": 0., "event_count_model": 5}}
+    groups = score.group_ranking(vectors, ["F3", "F5"], keys, LIMITS)
+    assert groups["intervals"]["steep_x"] == "F3" and groups["subthreshold"]["steep_x"] == "F5"
+    assert groups["event_count"]["families"]["F3"] == {"into_source": -1, "out_of_candidate": 1}
+    assert groups["event_count"]["families"]["F5"] == {"into_source": 0, "out_of_candidate": 0}
+    assert groups["minima"]["order"] == [] and groups["minima"]["steep_x"] is None

@@ -1,0 +1,35 @@
+{
+  "stage_b": {
+    "evaluated": true,
+    "checks": {
+      "into_has_five_events": true,
+      "into_interval_2_and_4_positive": false,
+      "into_subthreshold_near_candidate": true,
+      "out_has_extra_events": true,
+      "out_late_intervals_negative": true,
+      "out_subthreshold_near_source": true
+    },
+    "holds": false,
+    "prediction": "Stated before running: no single family reverses the source-to-candidate change (pooled steep_x null; per group: F3 carries event count and intervals, F5 carries every subthreshold sample, F4 carries phases). Prediction: ab-into-F3F5 shows 5 events, positive interval-2 and interval-4 errors like the candidate, and subthreshold residual near 0.39 mV at 1120 ms; ab-out-F3F5 shows 6 or 7 events, large negative late-interval errors like the source, and subthreshold residual near 1.76 mV. If both hold, F3 and F5 jointly reverse the change and the causal page records an interdependency of two families acting on separate observation groups, not one Steep X."
+  },
+  "stage_c": {
+    "out": {
+      "max_change": 0.0004431023614870355,
+      "event_count_unchanged": true,
+      "within_limits": false,
+      "exceeding": {
+        "e3_rise_to_peak": {
+          "change": -0.0004431023614870355,
+          "limit": 0.00041626122720117564,
+          "claimed_contrast": 0.00014464928040069935
+        },
+        "e3_peak_to_fall": {
+          "change": 0.00044282545013629715,
+          "limit": 0.00041626122720117564,
+          "claimed_contrast": 0.001278420986409401
+        }
+      },
+      "max_change_over_claimed_contrast": 3.063287700150171
+    }
+  }
+}

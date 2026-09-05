@@ -50,12 +50,20 @@ two concurrent simulations.
   numerical decision limit for each observation. Raw residuals are retained;
   normalized values guide only. If no single family reverses the S-to-C change
   on the ranked observations, swap the two largest together (spare budget).
-- Stage B, within the dominant family (at most 6 evaluations, coarse).
-  Half-splits of that family's members, chosen after Stage A.
-- Stage C, finalists (at most 2 evaluations, nseg 9, CVode 1e-10). Recheck the
-  two best Stage B candidates at fine settings.
+- Stage B, paired swap (2 evaluations, fine). Stage A found no pooled Steep X
+  and, per observation group, F3 (calcium handling) carrying event count and
+  intervals, F5 (passive and Ih) carrying every subthreshold sample, and F4
+  (somatic sodium density) carrying the phases. Per the interdependency rule,
+  swap the two largest families together: F3+F5 into the source and F3+F5 out
+  of the candidate. The prediction is recorded in the fine manifest before
+  the runs (`stage_b_prediction`). The within-family half-splits are dropped.
+- Stage C, tolerance recheck (2 evaluations, nseg 9, CVode 1e-11). Rerun the
+  two Stage B runs at the tighter tolerance. Prediction recorded in the fine
+  manifest (`stage_c_prediction`): every ranked residual changes by less than
+  its numerical decision limit and the event counts are unchanged; otherwise
+  the Stage B contrast is within solver noise and no family claim is made.
 
-Total at most 24: 6 + 10 + 6 + 2. The interdependency swap, if needed, takes one Stage B slot.
+Total 23 of 24: 6 original controls + 3 coverage replays + 10 fine family evaluations + 2 paired swaps + 2 tolerance rechecks.
 
 ## Predictions stated before running
 
