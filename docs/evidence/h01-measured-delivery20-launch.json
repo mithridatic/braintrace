@@ -12,11 +12,16 @@
     ".cache/h01/measured-i-allcv-source-closing20.npz": "f2977d490309063ea451d866cad2e1e1e7dfdeb1b21b02be15cbd7a7a9361297"
   },
   "tests_passed": 29,
-  "status": "Connected session 88116 terminated with exit 1: MemoryError in numpy.linalg.solve during build_cv_axial_operator, called by Cell.init_state. Disconnected session 79776 remains live. Retry connected sequentially after disconnected completes; no physics changes.",
+  "status": "Disconnected session 79776 completed with exit 0 and matches I standalone trace exactly. Connected session 88116 failed initialization. Connected retry session 1581 is running alone.",
   "sessions": {
     "ei": 88116,
     "disconnected": 79776
   },
   "failure_observed_utc": "2026-09-05T22:02:10.559469+00:00",
-  "scheduling_correction": "Avoid overlapping full measured-pair initialization. Memory exhaustion is not a voltage-stability result."
+  "scheduling_correction": "Avoid overlapping full measured-pair initialization. Memory exhaustion is not a voltage-stability result.",
+  "connected_retry": {
+    "session_id": 1581,
+    "launched_utc": "2026-09-05T22:06:52.469324+00:00",
+    "physical_change": "None; same command and source as failed connected attempt. Scheduling changed to sequential."
+  }
 }
