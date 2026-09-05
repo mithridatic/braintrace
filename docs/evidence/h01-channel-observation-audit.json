@@ -1,0 +1,41 @@
+{
+  "source": "h01-active-observed-na27-k20.json",
+  "site": {
+    "branch": 281,
+    "normalized_position": 0.7241921242673408,
+    "site_policy": "nearest active CV midpoint on the soma source branch",
+    "voltage_unit": "mV",
+    "current_density_unit": "uA/cm2",
+    "gate_unit": "dimensionless",
+    "current_sign": "positive inward",
+    "sample_time": "end of step"
+  },
+  "max_sodium_identity_error_ua_cm2": 4.547473508864641e-13,
+  "max_potassium_identity_error_ua_cm2": 1.1368683772161603e-13,
+  "max_soma_voltage_change_from_observation_mv": 0.0,
+  "sodium_peak_inward_ua_cm2": 1149.0666644360085,
+  "potassium_peak_outward_ua_cm2": 273.0663686028125,
+  "gate_ranges": {
+    "human_k_h": [
+      0.8633608481900437,
+      0.8901720386455774
+    ],
+    "human_k_h2": [
+      0.8846885446654172,
+      0.8901664226207758
+    ],
+    "human_k_m": [
+      0.03867186712014797,
+      0.4198084457366623
+    ],
+    "human_na_h": [
+      0.015085073264996234,
+      0.8039253584169614
+    ],
+    "human_na_m": [
+      0.024102128408737888,
+      0.9991132228308884
+    ]
+  },
+  "qualification": "local channel observations and algebra; not full axial current balance or human physiological validation"
+}

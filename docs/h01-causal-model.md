@@ -61,6 +61,7 @@ Correct this protocol difference before claiming agreement with those recordings
 | [Human AP reference data](evidence/h01-human-40hz-targets.json) | First-spike feature distributions from the released 40 Hz rows. | A measured target voltage trace. These summaries cannot replace raw recordings. |
 | [Human putative-PV recordings](evidence/h01-pv-recording-audit.json) | Individual voltage traces and current steps for cell 528687520. | Proof of PV protein expression or physiology of every inhibitory cell. |
 | [PV model paper](https://doi.org/10.1093/cercor/bhac348) | A published inhibitory model constrained by human recordings. | Automatic validation of a new BrainCell implementation. |
+| [Direct PV model comparison](evidence/h01-pv-reference-assessment.md) | A reproduced NEURON response and its differences from human voltage recordings. | Acceptance of the model from spike counts alone. |
 | [Allen model source audit](evidence/h01-pv-allen-source-audit.json) | A second fitted model for cell 528687520, with source hashes. | Human origin for all channel kinetics. Some mechanisms use mouse measurements. |
 
 The downloaded pyramidal reference contains extracted features.
@@ -69,9 +70,13 @@ The inhibitory evidence contains sampled voltage traces.
 Use these direct observations when that model is ready for comparison.
 Do not calculate a trace error against a population median waveform that was never measured.
 
-The current H01 evidence saves soma voltage.
-It does not yet save each channel current or the axial current balance.
-Those inner-level observations remain required to test the complete causal path.
+The current H01 evidence saves soma voltage and local channel observations.
+The gate states, channel currents, and local voltage share one active compartment midpoint.
+The [channel observation audit](evidence/h01-channel-observation-audit.json)
+checks their algebra and confirms that the probes do not change soma voltage.
+The [local observation figure](evidence/h01-channel-observations.svg) shows the direct traces.
+The axial current balance is not yet recorded.
+That observation remains required to test the complete causal path.
 
 ## Nested causal structure: the matryoshka method
 

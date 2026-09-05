@@ -211,3 +211,55 @@ Na27/K20 gives first peak41.020mV in a separate single-pulse run.
 Neither result establishes human physiological validity.
 Current dataset tests: 108 passed, 99.86% coverage. New production modules have
 100% statement coverage. Circuit and inhibitory implementation remain pending.
+
+## Observe the channel mechanism directly
+
+Add optional gate and current probes to the active H01 builder and CLI.
+Name the sodium and potassium mechanisms explicitly.
+Use an active CV midpoint near the soma for these probes.
+Record its branch and normalized position, separate from the source soma node.
+This avoids comparing a representative-CV voltage with an interpolated point current.
+Require aligned boundaries for this observation mode.
+Record dimensionless gates, inward-positive current density in uA/cm2,
+and membrane voltage in mV, all at the same end-of-step time.
+Check current against conductance, gate state, and driving voltage at every sample.
+Check gate bounds and finite output. Retain the existing soma voltage probe.
+These observations test channel algebra and local dynamics, not full axial balance.
+
+## Independent inhibitory reference
+
+Reproduce the published putative-PV model in NEURON before its BrainCell transfer.
+Use the pinned ModelDB source and preserve the original mechanism equations.
+Use a separate Linux container because the current NEURON release has no Windows wheel.
+Pin NEURON 9.0.2 and record the environment.
+Keep downloaded source files in the cache, with hashes and source paths in evidence.
+Inspect the source morphology and axon replacement policy before claiming equivalence.
+The reference must produce direct voltage traces for the published current steps.
+This reference run does not itself qualify a BrainCell inhibitory implementation.
+
+The default NEURON fixed-step reference shows accumulated spike-time changes
+under refinement. Also compare NEURON's existing adaptive CVode solver at
+two explicit absolute tolerances. Keep the source equations and stimulus fixed.
+Record this numerical method separately from the published fixed-step setting.
+Do not tune channel parameters against unresolved numerical timing error.
+
+## Current direct-observation evidence
+
+H01 channel observations use branch 281 at normalized position 0.7241921243.
+Adding probes changes no soma-voltage samples in the paired real-cell run.
+Maximum local current-identity error is 4.55e-13 uA/cm2 for sodium and
+1.14e-13 uA/cm2 for potassium. All recorded gates remain within [0,1].
+The current dataset suite has 112 passing tests and 99.87% coverage.
+Two additional reference-report tests pass after reproducing and fixing
+the incorrect sample-weighted baseline mean for adaptive output.
+
+The original published PV circuit cell runs with its unchanged HOC template
+and all eleven compiled mechanisms. At the source dt .025 ms, it produces
+12/29/46 spikes for .19/.23/.27 nA, versus 12/31/43 in the recordings.
+Peaks near 43 mV exceed the recorded peaks near 17 mV. Full traces and
+unshifted residuals are saved. This reference is not physiologically qualified.
+Refinement to .003125 ms gives 13 spikes at .19 nA. Two tight CVode runs
+also give 13 spikes, with sampled peak times agreeing within .000292 ms.
+Keep these numerical settings separate from the published fixed-step result.
+The independent reference is ready to guide a faithful BrainCell transfer;
+that transfer, biological calibration, and the connected circuit remain open.

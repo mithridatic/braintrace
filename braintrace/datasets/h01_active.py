@@ -7,8 +7,8 @@ import brainstate
 import argparse
 import json
 from pathlib import Path
-from braincell.filter import AllRegion
-from braincell.mech import Channel, Ion, StateProbe
+from braincell.filter import AllRegion, AtLocation
+from braincell.mech import Channel, Ion, StateProbe, MechanismProbe, CurrentProbe
 
 from . import h01_channels
 from .h01 import H01Archive
@@ -19,7 +19,8 @@ from .h01_discretization import BoundaryAlignedCV
 def make_active_cell(imported, annotations, *, active_radius_um, current_na,
                      sodium_ms_cm2=9.601446023, potassium_ms_cm2=4.884943554,
                      max_cv_length_um=10., delay_ms=2., duration_ms=3., solver="staggered",
-                     align_active_boundaries=False, pulse_count=1, period_ms=25.):
+                     align_active_boundaries=False, pulse_count=1, period_ms=25.,
+                     observe_channels=False):
     """Transfer human pyramidal kinetics to an explicitly inferred soma region.
 
     Parameters
@@ -47,6 +48,9 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
         Number of rectangular pulses; defaults to a single pulse.
     period_ms : float, optional
         Onset-to-onset spacing for multiple pulses, greater than pulse width.
+    observe_channels : bool, optional
+        Observe gates and current densities at a named active CV midpoint.
+        Requires aligned active boundaries to identify that site exactly.
 
     Returns
     -------
@@ -70,6 +74,8 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
             or pulse_count < 1 or period_ms <= 0
             or (pulse_count > 1 and period_ms <= duration_ms)):
         raise ValueError("Pulse count must be a positive integer and repeated pulses must not overlap.")
+    if observe_channels and not align_active_boundaries:
+        raise ValueError("Channel observation requires aligned active boundaries.")
     metadata = annotations.metadata(imported.neuron_id)
     if "pyramidal" not in metadata.tags or not {"L2", "L3"}.intersection(metadata.tags):
         raise ValueError("This channel transfer requires source L2/L3 pyramidal tags.")
@@ -88,8 +94,8 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
     cell.paint(AllRegion(), Channel("IL", g_max=.1*u.mS/u.cm**2, E=-70*u.mV))
     cell.paint(active, Ion("SodiumFixed", E=68*u.mV))
     cell.paint(active, Ion("PotassiumFixed", E=-86*u.mV))
-    cell.paint(active, Channel("H01Na_Wilbers2023", g_max=sodium_ms_cm2*u.mS/u.cm**2))
-    cell.paint(active, Channel("H01K_Wilbers2023", g_max=potassium_ms_cm2*u.mS/u.cm**2))
+    cell.paint(active, Channel("H01Na_Wilbers2023", name="human_na", g_max=sodium_ms_cm2*u.mS/u.cm**2))
+    cell.paint(active, Channel("H01K_Wilbers2023", name="human_k", g_max=potassium_ms_cm2*u.mS/u.cm**2))
     cell.place(soma, StateProbe(field="v", name="voltage"))
     durations = np.full(2*pulse_count-1, duration_ms)
     amplitudes = np.full(2*pulse_count-1, current_na)
@@ -110,6 +116,22 @@ def make_active_cell(imported, annotations, *, active_radius_um, current_na,
                 "numerics": {"solver": solver, "max_cv_length_um": max_cv_length_um,
                              "align_active_boundaries": align_active_boundaries},
                 "qualification": "experimental transfer; biological calibration and AIS model pending"}
+    if observe_channels:
+        branch, x = soma.evaluate(imported.morphology).points[0]
+        bounds = policy.resolve_cv_bounds(imported.morphology)[branch]
+        candidates = [(lo+hi)/2 for lo, hi in bounds
+                      if any(b == branch and a <= (lo+hi)/2 <= z for b, a, z in active.intervals)]
+        midpoint = min(candidates, key=lambda p: abs(p-x))
+        site = AtLocation(branch, midpoint)
+        cell.place(site, StateProbe(field="v", name="channel_voltage"))
+        for mechanism, fields in (("human_na", ("m", "h")), ("human_k", ("m", "h", "h2"))):
+            for field in fields:
+                cell.place(site, MechanismProbe(mechanism=mechanism, field=field, name=f"{mechanism}_{field}"))
+            cell.place(site, CurrentProbe(mechanism=mechanism, name=f"{mechanism}_current"))
+        evidence["channel_observation"] = {"branch": branch, "normalized_position": midpoint,
+            "site_policy": "nearest active CV midpoint on the soma source branch",
+            "voltage_unit": "mV", "current_density_unit": "uA/cm2", "gate_unit": "dimensionless",
+            "current_sign": "positive inward", "sample_time": "end of step"}
     return cell, evidence
 
 
@@ -143,6 +165,7 @@ def main(argv=None):
     parser.add_argument("--delay-ms", type=float, default=2.)
     parser.add_argument("--pulse-count", type=int, default=1)
     parser.add_argument("--period-ms", type=float, default=25.)
+    parser.add_argument("--observe-channels", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if not np.isfinite([args.dt_ms, args.duration_ms]).all() or min(args.dt_ms, args.duration_ms) <= 0:
@@ -154,7 +177,8 @@ def main(argv=None):
             sodium_ms_cm2=args.sodium_ms_cm2, potassium_ms_cm2=args.potassium_ms_cm2,
             max_cv_length_um=args.max_cv_length_um, delay_ms=args.delay_ms, duration_ms=args.pulse_ms,
             align_active_boundaries=args.align_active_boundaries,
-            pulse_count=args.pulse_count, period_ms=args.period_ms)
+            pulse_count=args.pulse_count, period_ms=args.period_ms,
+            observe_channels=args.observe_channels)
         result = cell.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms)
         v = np.asarray(result.traces["voltage"].to_decimal(u.mV))
     if not np.isfinite(v).all():
@@ -164,6 +188,17 @@ def main(argv=None):
                           "min_mv": float(v.min()), "max_mv": float(v.max()),
                           "final_mv": float(v[-1]), "finite": True, "voltage_mv": v.tolist(),
                           "sample_time_convention": "end of step: (index+1)*dt"}
+    if args.observe_channels:
+        observed = {}
+        for name, trace in result.traces.items():
+            if name == "voltage":
+                continue
+            unit = u.mV if name == "channel_voltage" else u.uA/u.cm**2
+            values = np.asarray(trace.to_decimal(unit) if name.endswith("current") or name == "channel_voltage" else trace)
+            if not np.isfinite(values).all():
+                raise RuntimeError(f"Non-finite channel observation: {name}.")
+            observed[name] = values.tolist()
+        evidence["channel_traces"] = observed
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(evidence, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in evidence["result"].items() if k != "voltage_mv"}))

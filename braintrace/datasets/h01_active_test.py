@@ -75,17 +75,62 @@ def test_repeated_current_has_separate_onsets_and_stops(imported):
     assert evidence["parameters"]["period_ms"] == 1.
 
 
-def test_cli_records_source_and_finite_trace(imported, tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("observe", [False, True])
+def test_cli_records_source_and_finite_trace(imported, tmp_path, monkeypatch, capsys, observe):
     monkeypatch.setattr(h01_active, "H01Archive", lambda _: SimpleNamespace(load=lambda *a, **k: imported))
     monkeypatch.setattr(h01_active, "H01Annotations", lambda _: annotations())
     output = tmp_path / "run.json"
     report = h01_active.main(["--archive", "fixture", "--annotations", "fixture",
-        "--active-radius-um", "2", "--current-na", "0", "--duration-ms", ".05", "--output", str(output)])
+        "--active-radius-um", "2", "--current-na", "0", "--duration-ms", ".05", "--output", str(output)]
+        + (["--observe-channels", "--align-active-boundaries"] if observe else []))
     assert report["result"]["precision_bits"] == 64
     assert len(report["result"]["voltage_mv"]) == 10
     assert output.is_file()
     assert "pending" in report["qualification"]
     assert "finite" in capsys.readouterr().out
+    assert ("channel_traces" in report) == observe
+
+
+def test_channel_observation_requires_an_aligned_mesh():
+    with pytest.raises(ValueError, match="aligned"):
+        make_active_cell(None, None, active_radius_um=2., current_na=0., observe_channels=True)
+
+
+def test_observed_gates_and_currents_share_voltage_datum(imported):
+    with brainstate.environ.context(precision=64):
+        cell, evidence = make_active_cell(imported, annotations(), active_radius_um=2., current_na=.01,
+            sodium_ms_cm2=25., potassium_ms_cm2=20., observe_channels=True, align_active_boundaries=True)
+        result = cell.run(dt=.0025*u.ms, duration=10.*u.ms)
+        baseline, _ = make_active_cell(imported, annotations(), active_radius_um=2., current_na=.01,
+            sodium_ms_cm2=25., potassium_ms_cm2=20., align_active_boundaries=True)
+        control = baseline.run(dt=.0025*u.ms, duration=10.*u.ms)
+    traces = result.traces
+    np.testing.assert_allclose(traces["voltage"].to_decimal(u.mV),
+                               control.traces["voltage"].to_decimal(u.mV), atol=1e-10, rtol=1e-12)
+    voltage = np.asarray(traces["channel_voltage"].to_decimal(u.mV))
+    gates = {name: np.asarray(value) for name, value in traces.items() if name in
+             ("human_na_m", "human_na_h", "human_k_m", "human_k_h", "human_k_h2")}
+    assert all(np.isfinite(x).all() and (x >= 0).all() and (x <= 1).all() for x in gates.values())
+    sodium = 25.*2.3**.9*gates["human_na_m"]**3*gates["human_na_h"]*(68.-voltage)
+    potassium = 20.*gates["human_k_m"]**2*(.51*gates["human_k_h"]+.34*gates["human_k_h2"]+.15)*(-86.-voltage)
+    np.testing.assert_allclose(traces["human_na_current"].to_decimal(u.uA/u.cm**2), sodium, rtol=1e-10, atol=1e-10)
+    np.testing.assert_allclose(traces["human_k_current"].to_decimal(u.uA/u.cm**2), potassium, rtol=1e-10, atol=1e-10)
+    assert sodium.max() > 1.
+    assert potassium.min() < -1.
+    assert evidence["channel_observation"]["current_sign"] == "positive inward"
+
+
+def test_cli_rejects_nonfinite_channel_observation(imported, tmp_path, monkeypatch):
+    monkeypatch.setattr(h01_active, "H01Archive", lambda _: SimpleNamespace(load=lambda *a, **k: imported))
+    monkeypatch.setattr(h01_active, "H01Annotations", lambda _: annotations())
+    fake = SimpleNamespace(cvs=[1], run=lambda **k: SimpleNamespace(traces={
+        "voltage": np.array([-70.])*u.mV, "human_na_m": np.array([np.nan])}))
+    monkeypatch.setattr(h01_active, "make_active_cell", lambda *a, **k: (fake, {}))
+    with pytest.raises(RuntimeError, match="channel observation"):
+        h01_active.main(["--archive", "fixture", "--annotations", "fixture", "--active-radius-um", "2",
+            "--current-na", "0", "--observe-channels", "--align-active-boundaries",
+            "--output", str(tmp_path/"bad.json")])
+    assert not (tmp_path/"bad.json").exists()
 
 
 def test_cli_rejects_nonfinite_result(imported, tmp_path, monkeypatch):

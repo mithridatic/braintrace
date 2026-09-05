@@ -301,6 +301,12 @@ Use ``--pulse-count 5 --period-ms 25 --duration-ms 130`` for five pulses.
 The default pulse width is 3 ms. Each pulse uses the specified current.
 Repeated spikes alone do not establish agreement with human recordings.
 
+Add ``--observe-channels`` with ``--align-active-boundaries`` to save local
+gate states and sodium and potassium current densities.
+These probes share an active compartment midpoint near the soma.
+The output records that location separately from the original soma probe.
+Current density is in uA/cm2, with positive current into the cell.
+
 The :download:`causal model <../h01-causal-model.md>` defines measurement
 datums and the nested path from channel gates to circuit behavior.
 It includes a causal diagram and separates measured data from model assumptions.

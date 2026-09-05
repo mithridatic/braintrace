@@ -1,0 +1,86 @@
+[
+  {
+    "path": "L5Circuit/default_circuit/mod/CaDynamics.mod",
+    "sha256": "0d73101cf3b8266e335ca9178ca2f4bc4f83444a0d37d3ff217a844644da84ee",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\CaDynamics.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/CaDynamics.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Ca_HVA.mod",
+    "sha256": "48a6ba64fc1650140403941b130ec8eb5ce221e9982956b2da81956d249e070d",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Ca_HVA.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Ca_HVA.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Ca_LVA.mod",
+    "sha256": "1ffc6be5cd95a0acf116f621be51675152672c2c8898bef06a752dab68fba683",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Ca_LVA.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Ca_LVA.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Ih.mod",
+    "sha256": "c9847e478a6a45d5c8e7d7d0ecac4498679fb221a2622185d973002c1312c43e",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Ih.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Ih.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Im.mod",
+    "sha256": "19b28d129d9575b89d8f0272f793d2e775ac2579697bc079fafacc58955feba6",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Im.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Im.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/K_P.mod",
+    "sha256": "80091c19ba67bc0eeec989558387d8b96e409642f8ca97c6dc0143e905d4ebb2",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\K_P.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/K_P.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/K_T.mod",
+    "sha256": "2f3de2b4c09a2e93e5a4638fadabd6eafe37fecab8b8f5f01d37b33b168be0c9",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\K_T.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/K_T.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Kv3_1.mod",
+    "sha256": "89611e80e59a3b92c58d84897ce2c725d59eeb168aed3827a80c935a3ff1c525",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Kv3_1.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Kv3_1.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/NaTg.mod",
+    "sha256": "24ad05639111953f27367df1b3ae6e7a7dd1d9055a79773fae325f37becf7de2",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\NaTg.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/NaTg.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/Nap.mod",
+    "sha256": "65e8e31b202143d69b741a70afdd34f6b5439b24243bf79e751bcb76fdef901e",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\Nap.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/Nap.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/mod/SK.mod",
+    "sha256": "c56e313729efec19040995b4ea9ffbb5eaba3d51c5468b9b6ab15934d18e4fd4",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\mod\\SK.mod",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/mod/SK.mod"
+  },
+  {
+    "path": "L5Circuit/default_circuit/morphologies/HL5BN1.swc",
+    "sha256": "37b513f51649247f3f84e1623a8da8c6625b67b224c27defc78f12d68eb1ae25",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\source\\HL5BN1.swc",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/morphologies/HL5BN1.swc"
+  },
+  {
+    "path": "L5Circuit/default_circuit/models/biophys_HL5BN1.hoc",
+    "sha256": "6ba71ce16420b643dcaaa76577c943925577f1100b0c6a64761acd7d48306e03",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\source\\biophys_HL5BN1.hoc",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/models/biophys_HL5BN1.hoc"
+  },
+  {
+    "path": "L5Circuit/default_circuit/models/NeuronTemplate.hoc",
+    "sha256": "e4a044e727dc52103c88da6599df767f08d925323e799849599171f1a235fe21",
+    "cache_path": ".cache\\human-pv\\neuron-reference\\source\\NeuronTemplate.hoc",
+    "url": "https://raw.githubusercontent.com/ModelDBRepository/267587/82cdd91bc93942ba19315371330a2412e064baf5/L5Circuit/default_circuit/models/NeuronTemplate.hoc"
+  }
+]
