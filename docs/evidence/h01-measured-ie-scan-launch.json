@@ -18,5 +18,7 @@
     "dense_kernel_rtol": 2e-14,
     "dense_kernel_atol": 2e-14
   },
-  "limits": "No full-H01 equivalence or speed result yet. Uses private BrainCell assembly helpers; version changes require revalidation."
+  "limits": "No full-H01 equivalence or speed result yet. Uses private BrainCell assembly helpers; version changes require revalidation.",
+  "status": "Completed with exit 0. Every saved sample passes the predeclared equivalence limits. Physical metadata differs only in solver name.",
+  "result": "h01-measured-ie-scan-equivalence.json"
 }

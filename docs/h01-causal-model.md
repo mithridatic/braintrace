@@ -385,9 +385,10 @@ flowchart TD
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
 its voltage shows excess depolarization and the wrong post-pulse return. Under
-the active input it fires the recorded five spikes, but every interval is too
-long, recovery minima are too negative, each rise from -20 mV to the peak is
-too short, and four returns to -20 mV are too long.
+the active input it fires the recorded five spikes. The first interval is
+8.32 ms too short and the second is 51.57 ms too long. The fifth onset is
+64.48 ms late. Individual recovery minima and spike phases also differ from
+the human datum. Count agreement does not establish response agreement.
 
 **Explanation.** No sufficient condition has been established for the combined
 response. Supported conditional effects: sodium amount and opening speed have
@@ -400,17 +401,30 @@ time changes later intervals while leaving the first interval and minima nearly
 unchanged. Baseline and response deflection must be tracked separately, and
 location and amount of a conductance must remain separate factors.
 
-At the tested coarse mesh, the source gives seven spikes. Changing sodium
-opening and somatic density together gives six; the full candidate gives
-five. Those sodium changes alone are therefore insufficient for the
-candidate count under this input. The remaining candidate changes act as a
-group in this comparison. Their individual roles and interactions are not
-isolated by these three responses. The source's seven events and the
-sodium-only model's six events persist on both tested meshes. The sodium-only
-count error is therefore not removed by this refinement. Full preservation
-of the three-model comparison remains open.
-See the [complete event records](evidence/h01-l2-campaign/coarse-active-three-controls.json)
-and [sodium-only mesh comparison](evidence/h01-l2-campaign/corner-active-mesh-comparison.json).
+At the fine mesh, the source gives seven spikes, the sodium-only change gives
+six, and the full candidate gives five. Each candidate family added alone to
+the source gives six. Thus, none of these individual changes is sufficient
+for the five-spike response in that source context. Removing the calcium
+removal-time change from the full candidate restores a sixth spike. That
+change is necessary for the five-spike count in the tested full-candidate
+context. It is not sufficient on its own.
+
+The calcium and Ih/leak families added together to the source give five
+spikes. Removing both from the full candidate gives six. Their combined
+effect can therefore change the count without the candidate sodium or Kv3
+changes. It does not reproduce the full candidate response: the second
+interval error is -0.0696 ms, whereas the full candidate error is +51.57 ms.
+The prediction of a positive second-interval error is contradicted. These
+interventions establish conditional parameter effects; they do not identify
+an unmeasured calcium-to-current pathway or the human cell's parameters.
+See the [family and paired-swap results](evidence/h01-l2-campaign-result.md).
+
+The five-spike paired response and its individual active observations persist
+within the stated limits at tighter solver tolerance. The reverse change
+retains six spikes, but two third-spike phase changes exceed their numerical
+limits. That phase effect is not qualified. The tighter subthreshold check
+for the forward pair remains open.
+[Direct active comparison](evidence/h01-l2-paired-active-tolerance-audit.json).
 
 **Prediction confirmed.** The subthreshold error directions persist under
 tighter tolerance and spatial refinement, so they are model errors, not solver
@@ -426,13 +440,15 @@ constraints; retaining the count does not show that the gate has no effect.
 See the [forward intervention](evidence/h01-l2-campaign-fine/f1-into-source-two-inputs.json)
 and [reverse intervention](evidence/h01-l2-campaign-fine/f1-out-of-candidate-active-partial.json).
 
-**Steep X.** Not separated. The eliminated levers are listed in the tree; the
-open levers are the parameter families not yet split. The bounded family
-campaign is specified and its Stage 0 is complete: the coarse mesh (nseg 3)
-does not preserve decisions on five phase measurements, so the family search
-runs at the fine mesh. The [acceptance table](evidence/h01-l2-acceptance-table.md)
-fixes every required observation; no allowance is agreed, so the campaign
-issues no pass.
+**Largest measured sensitivities.** No family dominates the pooled normalized
+RSS. Calcium removal has the largest contribution for intervals and for
+peaks/onsets; Kv3 for spike phases; Ih/leak for the subthreshold samples.
+Minima have no single dominant family. These scores rank the tested changes,
+not their biological truth. Read each direct response before selecting an
+intervention. The coarse mesh fails the phase-preservation rule, so these
+comparisons use the fine mesh. The
+[acceptance table](evidence/h01-l2-acceptance-table.md) fixes every required
+observation; no human allowance is agreed, so no physiological pass is issued.
 
 **Action.** Omitted bias, a constant voltage offset, solver tolerance, mesh,
 somatic Ih density, Ih location, uniform leak, and passive reversal are not
@@ -466,7 +482,10 @@ flowchart TD
     A --> A7[Sodium recovery while availability rises: worsens intervals 2-3]
     A --> A8[Somatic sodium density 0.9: delays onset, worsens intervals]
     A --> A9[Slower somatic calcium removal: later intervals lengthen]
-    Y4 --> FAM[Parameter family search: Stage 0 done, coarse mesh rejected; Stage A pending]
+    Y4 --> FAM[Conditional effects: no single family controls the full response]
+    FAM --> FC[Calcium change needed for five spikes in full-candidate context]
+    FAM --> FP[Calcium plus Ih/leak gives five spikes in source context]
+    FP --> FT[Same count; different second interval]
 ```
 
 | Node | Split | Result | Evidence |
@@ -487,7 +506,7 @@ flowchart TD
 | A7 | Slow sodium recovery only while availability rises | First interval lengthens; next two interval errors worsen | [layer-2 sodium split](evidence/h01-l2-sodium-recovery-result.md) |
 | A8 | Somatic sodium density 0.9 | First spike delayed and lower; narrower; first three interval errors worsen | [density split](evidence/h01-l2-sodium-density090-result.md) |
 | A9 | Slower somatic calcium removal | Later intervals lengthen; first peak and minimum unchanged; first interval still too short | [layer-2 removal split](evidence/h01-l2-calcium-removal-result.md) |
-| FAM | Search Dissection over five families, cap 24 | Stage 0: coarse mesh changes five phase measurements by more than one fifth of the smallest contrast; rejected as a search setting | [campaign spec](specs/2026-09-05-h01-l2-family-campaign.md), [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json), [manifest](evidence/h01-l2-campaign-manifest.json) |
+| FAM | Forward and reverse family changes, then paired changes | No single pooled RSS dominant family; five-spike count does not determine the individual intervals | [campaign results](evidence/h01-l2-campaign-result.md), [active tolerance audit](evidence/h01-l2-paired-active-tolerance-audit.json) |
 
 ## Y5. Synaptic delivery in the illustrative H01 pair
 

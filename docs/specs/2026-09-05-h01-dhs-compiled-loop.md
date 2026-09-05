@@ -44,6 +44,11 @@ indices, tied to the current runtime source object.
 The 17 kernel, active-cell, and circuit comparison tests pass. The 35 existing
 cell and circuit tests also pass. See
 [validation](../evidence/h01-dhs-scan-validation.json). The full measured-pair
-comparison is running; it must preserve the saved baseline traces before this
-solver can be used for physiological intervention tests. Padded levels can
-increase arithmetic and memory, so no full-run speed gain is claimed yet.
+comparison also passes: the largest saved voltage difference is
+4.39e-11 mV; events and conductances are identical. Physical metadata is
+identical except for the solver name. See the
+[full comparison](../evidence/h01-measured-ie-scan-equivalence.json).
+This permits controlled physical interventions with the opt-in solver at the
+tested settings. It does not establish time-step convergence or human validity.
+Padded levels can increase arithmetic and memory. Native compilation was not
+separately timed in this run, so no exact compilation speedup is claimed.

@@ -1,5 +1,5 @@
 {
-  "qualification": "Kernel and synthetic active-cell equivalence only; full measured-H01 comparison running.",
+  "qualification": "Kernel, synthetic active-cell/circuit, and full measured-pair saved-trace equivalence pass. Numerical convergence and human physiology remain open.",
   "tests_passed": 17,
   "coverage": {
     "statements": 67,
@@ -47,5 +47,6 @@
     "braincell_version": "0.1.0",
     "staggered_module_sha256": "33babf429cf0b1cebddf57b5e39969cbcd8cba6d64cc267b09c1bba333421d08"
   },
-  "full_h01_session": 24680
+  "full_h01_session": 24680,
+  "full_h01_status": "Completed with exit 0; see h01-measured-ie-scan-equivalence.json."
 }

@@ -1,0 +1,17 @@
+{
+  "started_utc": "2026-09-05T21:25:50.281773+00:00",
+  "baseline_commit": "cafd45c7581fb3083dbaad66d382591976f862f5",
+  "purpose": "Change only I soma pulse amplitude from 1 to 2 nA. Separate recorded soma response, contact output event and delivery.",
+  "prerequisite": "h01-measured-ie-scan-equivalence.json passes all saved samples and metadata.",
+  "command": ".cache/validation/Scripts/python.exe -m examples.h01_ei_circuit --connectivity measured --control ei --i-current-na 2 --duration-ms 8 --solver h01_staggered_scan --output .cache/h01/measured-ie-i2na-scan",
+  "source_sha256": {
+    "braintrace/datasets/h01_dhs_scan.py": "8b710ef30767d563d1dab7a2c834028c98a042a0824eaf1275ce0d5babb8931c",
+    "braintrace/datasets/h01_ei_cell.py": "595a74625e1e453d18a2f78f6256e2c2d8d04e12d4cd3302259ee082a01e345f",
+    "braintrace/datasets/h01_ei_circuit.py": "57771e9d40caadf70d175eff9fcc2a1c7bebc750ab5050260074db0683c5e0d6",
+    "examples/h01_ei_circuit.py": "71e5d0b762e39fde14be28506c7cc725bc8840f6a35d461ef7316923c19320fb",
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
+  },
+  "default_promotion": false,
+  "status": "Launched; no response result yet.",
+  "session_id": 51585
+}
