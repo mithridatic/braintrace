@@ -25,9 +25,13 @@ called the full-map lookup. After the change, 21 anatomy, CV-boundary, and
 contact tests pass. Coverage is 239 of 240 statements across those three
 modules. Geometry rejection remains covered.
 
-The updated real-pair run advanced to BrainCell's CV mechanism construction.
-A subsequent stack sample was inside `_build_frusta`, through
-`build_cv_mechanisms` and the output-site mesh query. This establishes progress
-past the earlier adapter work. It does not establish completed construction,
-spiking, or inhibitory event delivery. The [launch record](h01-measured-ie-index-fixed-launch.json)
-states the unchanged physical settings and the two run handles.
+Both real-pair runs completed. All 1600 samples of every saved voltage,
+conductance, and event array are exactly equal. Sample times and all metadata
+are also equal. The compressed trace files have the same SHA256 hash.
+This establishes response preservation for the tested 8 ms input. Neither
+run emitted an event, so it does not qualify spiking or inhibitory delivery.
+The [full-response comparison](h01-anatomy-full-response-equivalence.json)
+retains the per-array checks and hashes. Native compilation took about
+345 seconds in each run; that shared-host result does not measure isolated
+anatomy construction cost. The [launch record](h01-measured-ie-index-fixed-launch.json)
+states the unchanged physical settings.

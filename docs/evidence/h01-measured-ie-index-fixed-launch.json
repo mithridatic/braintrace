@@ -16,5 +16,5 @@
     "E_current_na": 1.0,
     "I_current_na": 1.0
   },
-  "status": "Running; no voltage or event qualification yet."
+  "status": "Both runs completed with exit 0. All saved arrays and metadata exactly equal; no output events. See h01-anatomy-full-response-equivalence.json."
 }
