@@ -130,6 +130,53 @@ def test_incoming_voltage_selects_receptor_site_not_soma(imported, monkeypatch):
         assert float(np.asarray(cell.sample_probe("incoming_voltage").to_decimal(u.mV)).ravel()[0]) == cv
 
 
+@pytest.mark.parametrize("settings", [
+    {"pulse_delays_ms": {"E": 2.}},
+    {"pulse_durations_ms": {"E": 3., "X": 3.}},
+    {"pulse_delays_ms": {"E": -1., "I": 2.}},
+    {"pulse_delays_ms": {"E": np.nan, "I": 2.}},
+    {"pulse_durations_ms": {"E": 0., "I": 3.}},
+    {"pulse_durations_ms": {"E": -1., "I": 3.}},
+    {"pulse_durations_ms": {"E": 3., "I": np.inf}},
+])
+def test_invalid_pulse_timing_fails_before_network_construction(imported, monkeypatch, settings):
+    from . import h01_ei_circuit as module
+    def unexpected(*args, **kwargs):
+        pytest.fail("Invalid timing reached network construction")
+    monkeypatch.setattr(module.braincell, "Network", unexpected)
+    with pytest.raises(ValueError, match="pulse delays"):
+        make_h01_ei_circuit(**arguments(imported), **settings)
+
+
+def test_explicit_defaults_and_delayed_E_drive(imported):
+    results = {}
+    configs = {"default": {}, "explicit": {"pulse_delays_ms": {"E": 2., "I": 2.},
+        "pulse_durations_ms": {"E": 3., "I": 3.}}, "later": {"pulse_delays_ms": {"E": 3., "I": 2.},
+        "pulse_durations_ms": {"E": 1., "I": 3.}}, "short": {"pulse_durations_ms": {"E": .25, "I": 3.}}}
+    with brainstate.environ.context(precision=64):
+        for name, settings in configs.items():
+            network, evidence = make_h01_ei_circuit(**arguments(imported), control="disconnected",
+                solver="h01_staggered_scan", currents_na={"E": 1., "I": 0.}, **settings)
+            results[name] = network.run(dt=.001*u.ms, duration=2.5*u.ms)
+            assert evidence["cells"]["E"]["pulse_delay_ms"] == (3. if name == "later" else 2.)
+            assert evidence["cells"]["E"]["pulse_duration_ms"] == {"later": 1., "short": .25}.get(name, 3.)
+    for role in ("E", "I"):
+        for key in results["default"].traces[role]:
+            np.testing.assert_array_equal(u.get_mantissa(results["default"].traces[role][key]),
+                                          u.get_mantissa(results["explicit"].traces[role][key]))
+    first = results["default"].traces["E"]["voltage"].to_decimal(u.mV).ravel()
+    later = results["later"].traces["E"]["voltage"].to_decimal(u.mV).ravel()
+    np.testing.assert_array_equal(first[:2000], later[:2000])
+    assert np.max(np.abs(first[2000:]-later[2000:])) > 1e-3
+    np.testing.assert_array_equal(results["default"].traces["I"]["voltage"].to_decimal(u.mV),
+                                  results["later"].traces["I"]["voltage"].to_decimal(u.mV))
+    short = results["short"].traces["E"]["voltage"].to_decimal(u.mV).ravel()
+    np.testing.assert_array_equal(first[:2250], short[:2250])
+    assert np.max(np.abs(first[2250:]-short[2250:])) > 1e-3
+    np.testing.assert_array_equal(results["default"].traces["I"]["voltage"].to_decimal(u.mV),
+                                  results["short"].traces["I"]["voltage"].to_decimal(u.mV))
+
+
 @pytest.mark.parametrize('control,count', [('ei', 1), ('i_only', 1), ('e_only', 0), ('disconnected', 0)])
 def test_measured_topology_has_only_source_supported_direction(imported, monkeypatch, control, count):
     from . import h01_ei_circuit as module

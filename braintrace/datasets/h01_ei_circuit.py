@@ -12,7 +12,8 @@ from .h01_measured_contact import measured_ie_contact
 
 def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
                         currents_na=None, control="ei", connectivity="measured", excitatory_weight_us=.01,
-                        inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10., solver="staggered"):
+                        inhibitory_weight_us=.02, delay_ms=.5, max_cv_length_um=10., solver="staggered",
+                        pulse_delays_ms=None, pulse_durations_ms=None):
     """Build the measured I-to-E contact or explicit illustrative wiring.
 
     Parameters
@@ -24,7 +25,10 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
     regions, region_basis : dict
         Per-role electrical partitions and explanations for the cell builder.
     currents_na : dict, optional
-        Soma pulse amplitudes from 2 to 5 ms. Default E=1 nA; I=1 for measured or 0 for illustrative wiring.
+        Soma pulse amplitudes. Default E=1 nA; I=1 for measured or 0 for illustrative wiring.
+    pulse_delays_ms, pulse_durations_ms : dict, optional
+        Exactly E/I pulse start times and durations in milliseconds.
+        Default starts are 2 ms and durations are 3 ms for both cells.
     control : str, optional
         ei, e_only, i_only, or disconnected. Only projections change.
     connectivity : str, optional
@@ -53,6 +57,12 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         raise ValueError("E and I must use distinct source neuron identities.")
     if control not in ("ei", "e_only", "i_only", "disconnected"):
         raise ValueError("Unknown E/I projection control.")
+    starts = {"E": 2., "I": 2.} if pulse_delays_ms is None else dict(pulse_delays_ms)
+    durations = {"E": 3., "I": 3.} if pulse_durations_ms is None else dict(pulse_durations_ms)
+    if (set(starts) != {"E", "I"} or set(durations) != {"E", "I"}
+            or not np.isfinite(list(starts.values())+list(durations.values())).all()
+            or min(starts.values()) < 0 or min(durations.values()) <= 0):
+        raise ValueError("Supply finite E/I pulse delays >= 0 and durations > 0.")
     if connectivity not in ("measured", "illustrative"):
         raise ValueError("Unknown connectivity basis.")
     pre_site, post_site, measured = (measured_ie_contact(components)
@@ -75,7 +85,8 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
             raise ValueError(f"{role} requires the source {source_tag} tag.")
         cell, record = make_h01_ei_cell(imported, annotations, polarity=role,
             regions=regions[role], region_basis=region_basis[role],
-            current_na=currents[role], max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
+            current_na=currents[role], delay_ms=starts[role], duration_ms=durations[role],
+            max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         soma = imported.anatomy().soma_location()
         incoming = "inh" if role == "E" else "exc"
         reversal, tau = (-80., 5.) if role == "E" else (0., 2.)
@@ -90,6 +101,8 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         record["synaptic_connectivity"] = "See circuit measured_contacts and inferred_contacts."
         record["incoming_synapse"] = dict(name=incoming, reversal_mv=reversal, tau_ms=tau)
         record["current_na"] = currents[role]
+        record["pulse_delay_ms"] = starts[role]
+        record["pulse_duration_ms"] = durations[role]
         evidence["cells"][role] = record
         network.add_population(role, cell)
     for pre, post, synapse, weight, selected in (

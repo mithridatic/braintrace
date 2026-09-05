@@ -78,6 +78,14 @@ The default stimulus drives both somas with 1 nA from 2 to 5 ms. This is a model
 input, not an H01 recording. Actual spiking and inhibitory delivery validation
 remain open. See the [contact evidence](evidence/h01-ie-measured-contact.json).
 
+Set each pulse with `--e-delay-ms`, `--i-delay-ms`, `--e-pulse-ms`, and
+`--i-pulse-ms`. Delays must be nonnegative and durations must be positive.
+The factory accepts the equivalent `pulse_delays_ms` and `pulse_durations_ms`
+maps with E and I keys. Input timing is recorded per cell. The default delay
+and duration remain 2 and 3 ms. `incoming_voltage` records the local receptor
+voltage; use it with the conductance and reversal potential to determine the
+local synaptic current direction.
+
 Use `--control disconnected` with the same settings for the edge-removal
 control. `e_only` has no edge in this measured pair. No reciprocal E-to-I
 connection is asserted. The previous two-cell reciprocal diagnostic is

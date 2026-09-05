@@ -34,6 +34,10 @@ def main():
     parser.add_argument("--solver", choices=("staggered", "h01_staggered_scan"), default="staggered")
     parser.add_argument("--e-current-na", type=float, default=1.)
     parser.add_argument("--i-current-na", type=float)
+    parser.add_argument("--e-delay-ms", type=float, default=2.)
+    parser.add_argument("--i-delay-ms", type=float, default=2.)
+    parser.add_argument("--e-pulse-ms", type=float, default=3.)
+    parser.add_argument("--i-pulse-ms", type=float, default=3.)
     args = parser.parse_args()
     archive, annotations = H01Archive(args.cache/"proofread104.zip"), H01Annotations(args.cache)
     with brainstate.environ.context(precision=64):
@@ -43,6 +47,8 @@ def main():
         network, evidence = make_h01_ei_circuit(components, annotations,
             regions={r: p[0] for r, p in parts.items()}, region_basis={r: p[1] for r, p in parts.items()},
             control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um, solver=args.solver,
+            pulse_delays_ms={"E": args.e_delay_ms, "I": args.i_delay_ms},
+            pulse_durations_ms={"E": args.e_pulse_ms, "I": args.i_pulse_ms},
             currents_na={"E": args.e_current_na, "I": (args.i_current_na if args.i_current_na is not None
                 else (1. if args.connectivity == "measured" else 0.))})
         print("Circuit constructed:", args.control, flush=True)
