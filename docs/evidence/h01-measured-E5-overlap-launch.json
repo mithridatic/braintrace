@@ -7,6 +7,7 @@
     "examples/h01_ei_circuit.py": "d1d7739bb086984233da94a6c002e3975d4fb52f95300fe76a72f91ef0a62801",
     "docs/evidence/h01_i_source_closing_circuit.py": "eb91d5d1c1e9783a433433847fd71465b8637dbe025d0353c0d1ff3d360cf18d"
   },
-  "status": "Launching alone; E spiking not yet established.",
-  "session_id": 71966
+  "status": "Disconnected control completed successfully; E emitted two events with complete positive excursions.",
+  "session_id": 71966,
+  "exit_code": 0
 }
