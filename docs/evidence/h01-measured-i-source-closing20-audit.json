@@ -1,0 +1,55 @@
+{
+  "scope": "Restored I NaTg closing factor 1, original 1 nA stimulus, full CV recording through 20 ms.",
+  "first_8ms_circuit_equivalence": {
+    "voltage": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "output_voltage": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "synaptic_conductance": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    },
+    "events": {
+      "max_abs_difference": 0.0,
+      "exactly_equal": true
+    }
+  },
+  "cv_count": 14685,
+  "first_positive_recorded_sample": {
+    "time_ms": 4.765,
+    "voltage_mv": 0.03926767271454718,
+    "cv": {
+      "id": 6429,
+      "branch_id": 2140,
+      "prox": 0.0,
+      "dist": 0.0819023842731835
+    }
+  },
+  "soma": {
+    "peak_mv": 34.06822818681818,
+    "peak_ms": 4.885,
+    "final_mv": -84.76256212662554
+  },
+  "contact": {
+    "cv": {
+      "id": 4430,
+      "branch_id": 974,
+      "prox": 0.5406192406698475,
+      "dist": 0.5691995770492764
+    },
+    "peak_mv": 28.251463732529277,
+    "peak_ms": 8.465000000000002,
+    "final_mv": -85.12745914395938,
+    "events_ms": [
+      8.355
+    ]
+  },
+  "all_recorded_cv_samples_finite": true,
+  "output_trace_exactly_matches_cv_column": true,
+  "source_npz_sha256": "f2977d490309063ea451d866cad2e1e1e7dfdeb1b21b02be15cbd7a7a9361297",
+  "limitations": "Diagnostic channel law. This is not human validity or mesh/time convergence. No unobserved time interval is classified."
+}

@@ -83,6 +83,7 @@ def make_h01_ei_circuit(components, annotations, *, regions, region_basis,
         output_site = pre_site if measured and role == "I" else soma
         cell.place(receptor_site, Synapse("ExpSyn", name=incoming, e=reversal*u.mV, tau=tau*u.ms, weight=1.*u.uS))
         cell.place(receptor_site, MechanismProbe(mechanism=incoming, field="g", name="synaptic_conductance"))
+        cell.place(receptor_site, StateProbe(field="v", name="incoming_voltage"))
         site = restrict_spike_output(cell, output_site)
         cell.place(AtLocation(*site["output_midpoint"]), StateProbe(field="v", name="output_voltage"))
         record["output_site"] = site

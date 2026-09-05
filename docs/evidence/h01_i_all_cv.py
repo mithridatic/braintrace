@@ -96,7 +96,7 @@ def main():
         times, traces = _record(cell, dt_ms=args.dt_ms, duration_ms=args.duration_ms)
         arrays = {"time_ms": np.asarray(times.to_decimal(u.ms))}
         for key, value in traces.items():
-            unit = u.mV if key in ("all_voltage", "voltage", "output_voltage") else u.uS if key == "synaptic_conductance" else u.UNITLESS
+            unit = u.mV if key == "voltage" or key.endswith("_voltage") else u.uS if key == "synaptic_conductance" else u.UNITLESS
             arrays[key] = np.asarray(value.to_decimal(unit) if isinstance(value, u.Quantity) else value)
             if not np.isfinite(arrays[key]).all():
                 raise ValueError("Nonfinite recorded values: "+key)

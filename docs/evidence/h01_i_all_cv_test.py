@@ -60,7 +60,8 @@ def test_cli_exports_unit_scaled_arrays_and_cv_mapping(imported, monkeypatch, tm
         assert arrays["all_voltage"].shape == (20, 1, len(record["cv_columns"]))
         assert arrays["all_voltage"].max() < -50
         assert arrays["time_ms"][-1] == .02
-        assert set(arrays.files) == {"all_voltage", "voltage", "output_voltage", "synaptic_conductance", "events", "NaTg_m", "NaTg_h", "time_ms"}
+        assert set(arrays.files) == {"all_voltage", "voltage", "output_voltage", "incoming_voltage", "synaptic_conductance", "events", "NaTg_m", "NaTg_h", "time_ms"}
+        np.testing.assert_array_equal(arrays["incoming_voltage"], arrays["voltage"])
         assert ("diagnostic_override" in record["cells"]["I"]) == restore
 
 

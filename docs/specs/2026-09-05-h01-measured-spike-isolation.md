@@ -80,3 +80,24 @@ reach the measured contact. Preserve the full soma and contact traces, verify
 the unchanged pre-pulse response, and report contact emission separately.
 The source law was borrowed from a different human-cell model; restoring it
 does not establish H01 physiological accuracy. Do not promote the override.
+
+## Contact delivery after the longer observation
+
+The restored-closing all-CV run emits at the measured I contact at 8.355 ms.
+The contact peaks at +28.25 mV at 8.465 ms. Its first 8 ms exactly match the
+circuit record. The 8 ms window was insufficient to test arrival in this
+condition. No electrical-region change is justified by that truncated record.
+
+Keep the restored closing-time law and both 1 nA soma pulses. Run the measured
+pair for 20 ms with the I-to-E edge enabled and disabled. Add a voltage probe
+at the E receptor location, already used by the conductance probe. Verify on
+the fixture that this probe selects the intended local CV and does not alter
+the established soma traces. Retain that voltage in exported arrays.
+
+Require identical I traces and events in both controls. E conductance must
+stay zero without the edge and start only after the declared 0.5 ms delay
+with the edge. E voltage must match before delivery. Use the local E voltage
+relative to -80 mV to determine the initial current direction. Do not label
+the effect hyperpolarizing merely because the source cell is inhibitory.
+These controls test the measured contact with borrowed dynamics. The restored
+law is still diagnostic, and neither E nor I has human-response qualification.

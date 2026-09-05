@@ -106,6 +106,30 @@ def test_measured_default_rejects_unrelated_components(imported):
         make_h01_ei_circuit(**args)
 
 
+def test_incoming_voltage_selects_receptor_site_not_soma(imported, monkeypatch):
+    from . import h01_ei_circuit as module
+    from braincell._multi_compartment.probes import _representative_cv_id
+    from braincell.mech import StateProbe, MechanismProbe
+    args = arguments(imported)
+    args["connectivity"] = "measured"
+    soma, receptor = imported.anatomy().location(30), imported.anatomy().location(50)
+    monkeypatch.setattr(module, "measured_ie_contact", lambda _: (soma, receptor, {"annotation_id": "fixture"}))
+    with brainstate.environ.context(precision=64):
+        network, _ = make_h01_ei_circuit(**args)
+        cell = network.populations["E"].cell
+        cell.init_state()
+        points = {}
+        for layout in cell.runtime.layouts:
+            declaration = cell.runtime.get_layout_mechanism(layout.id)
+            if isinstance(declaration, (StateProbe, MechanismProbe)):
+                points[declaration.name] = int(layout.point_index[0])
+        assert points["incoming_voltage"] == points["synaptic_conductance"]
+        assert points["incoming_voltage"] != points["voltage"]
+        cv = _representative_cv_id(cell.runtime, point_id=points["incoming_voltage"])
+        cell.V.value = u.math.arange(cell.n_cv)[None, :]*u.mV
+        assert float(np.asarray(cell.sample_probe("incoming_voltage").to_decimal(u.mV)).ravel()[0]) == cv
+
+
 @pytest.mark.parametrize('control,count', [('ei', 1), ('i_only', 1), ('e_only', 0), ('disconnected', 0)])
 def test_measured_topology_has_only_source_supported_direction(imported, monkeypatch, control, count):
     from . import h01_ei_circuit as module

@@ -590,17 +590,19 @@ At the original 1 nA input, changing only the I sodium-inactivation closing
 time from its candidate factor of 0.15 to 1 produces a complete soma
 excursion through -20 mV, with peak +34.07 mV. The pre-pulse traces are
 exactly unchanged. Thus, the closing-time change controls the loss of this
-soma excursion in the tested model context. The restored soma response
-still produces no contact event through 8 ms, and E remains unchanged.
-The contact voltage is rising at 8 ms; delayed arrival remains unresolved.
+soma excursion in the tested model context. The measured contact emits at
+8.355 ms and peaks at +28.25 mV at 8.465 ms. The first 8 ms of the longer
+record match the earlier circuit exactly. Thus, the earlier absence of a
+contact event in this condition was caused by ending observation too soon.
 This is a diagnostic channel law, not a human-qualified replacement.
-[Closing-time response](evidence/h01-measured-ie-source-closing-response-audit.json).
+[Closing-time response](evidence/h01-measured-ie-source-closing-response-audit.json),
+[complete contact arrival](evidence/h01-measured-i-source-closing20-audit.json).
 
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.
-Its role in the missing output event is unresolved. A soma excursion alone
-does not establish propagation to the contact or exclude a delayed arrival.
+No change to this map was needed for the observed contact event with restored
+closing time. That arrival does not validate each inferred electrical region.
 [Region map](evidence/h01-measured-ie-region-audit.json),
 [source path](evidence/h01-measured-i-contact-path-audit.json).
 
@@ -612,7 +614,10 @@ classification. Keep source codes unchanged.
 
 ```mermaid
 flowchart LR
+    G[Diagnostic sodium closing-time restoration] --> P[Soma peak +34.07 mV]
+    P --> A
     A[I voltage at the source axon contact] --> B[Modeled output event]
+    B --> T[Observed contact event at 8.355 ms]
     B --> C[Borrowed transmission delay]
     C --> D[Conductance at the source E contact]
     D --> E[Current set by conductance and reversal potential]

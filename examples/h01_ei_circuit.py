@@ -49,7 +49,7 @@ def main():
         result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
         arrays = {"time_ms": np.asarray(result.time.to_decimal(u.ms))+args.dt_ms}
         for role in ("E", "I"):
-            for key, unit in (("voltage", u.mV), ("output_voltage", u.mV), ("synaptic_conductance", u.uS)):
+            for key, unit in (("voltage", u.mV), ("output_voltage", u.mV), ("incoming_voltage", u.mV), ("synaptic_conductance", u.uS)):
                 values = np.asarray(result.traces[role][key].to_decimal(unit)).ravel()
                 if not np.isfinite(values).all():
                     raise RuntimeError(role+" "+key+" contains nonfinite values.")

@@ -8,6 +8,6 @@
     ".cache/h01/measured-ie-source-closing-scan.npz": "b21e2097aa2a060226d16117c5862b2457f4f240a79781d3e8bf5aca73d76678"
   },
   "tests_passed": 9,
-  "status": "Launching; no delayed-arrival result yet.",
+  "status": "Completed with exit 0. First 8 ms exactly match circuit. Contact event at 8.355 ms and peak 28.2515 mV. See h01-measured-i-source-closing20-audit.json.",
   "session_id": 73172
 }
