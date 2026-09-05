@@ -60,3 +60,16 @@ def test_temperature_bounds_and_potassium_recovery():
             assert all((x > 0).all() for x in a[2:])
             np.testing.assert_allclose(a[:2], b[:2])
             np.testing.assert_allclose(np.asarray(a[2:]) / np.asarray(b[2:]), 2.3)
+
+
+def test_targeted_wilbers_rates_match_full_tuple():
+    with brainstate.environ.context(precision=64):
+        v = np.linspace(-100, 40, 50)
+        for fn in (sodium_rates, potassium_rates):
+            full = fn(v)
+            m_res = fn(v, gate="m")
+            h_res = fn(v, gate="h")
+            np.testing.assert_allclose(m_res[0], full[0])
+            np.testing.assert_allclose(m_res[1], full[2])
+            np.testing.assert_allclose(h_res[0], full[1])
+            np.testing.assert_allclose(h_res[1], full[3])

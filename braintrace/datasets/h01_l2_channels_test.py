@@ -80,3 +80,7 @@ def test_targeted_l2_rates_match_full_dictionary():
                 inf, tau = l2_rates(mech, vs, gate=gate)
                 np.testing.assert_array_equal(inf, exp_inf)
                 np.testing.assert_array_equal(tau, exp_tau)
+                inf_only = l2_rates(mech, vs, gate=gate, component=0)
+                tau_only = l2_rates(mech, vs, gate=gate, component=1)
+                np.testing.assert_array_equal(inf_only, exp_inf)
+                np.testing.assert_array_equal(tau_only, exp_tau)
