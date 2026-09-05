@@ -14,6 +14,6 @@
     "statements": 57,
     "missed": 1
   },
-  "status": "Launching; real-H01 equivalence and local initiation not established.",
+  "status": "Completed with exit 0. All circuit comparison traces exactly equal; no CV sampled above -29.4133 mV. See h01-measured-i-allcv-baseline-audit.json.",
   "session_id": 3161
 }

@@ -570,10 +570,13 @@ propagation to the axon contact, and full numerical qualification remain open.
 In the measured pair, the recorded I contact voltage stays below -80 mV under
 the stated 1 nA soma pulse. It emits no event. The initially empty synapse
 therefore receives no event, and its conductance stays zero. This locates the
-missing delivery before the synapse response. It does not identify why the
-presynaptic cell fails to emit an event. The recorded I soma reaches only
--29.53 mV; no claim is made about unrecorded compartments.
-[Direct response](evidence/h01-measured-ie-first-response-audit.json).
+missing delivery before the synapse response. The recorded I soma reaches
+only -29.53 mV. Every one of the 14,685 I compartments remains below
+-29.41 mV in the complete sampled 8 ms baseline. There is no hidden positive
+excursion elsewhere in that record. The full-compartment recorder preserves
+the circuit soma, contact, conductance, and event traces exactly.
+[Direct response](evidence/h01-measured-ie-first-response-audit.json),
+[all-compartment check](evidence/h01-measured-i-allcv-baseline-audit.json).
 
 More soma depolarization does not ensure an output event in this model.
 At 2 nA the I soma reaches -13.92 mV, but the contact-voltage change is at
@@ -600,6 +603,12 @@ Its role in the missing output event is unresolved. A soma excursion alone
 does not establish propagation to the contact or exclude a delayed arrival.
 [Region map](evidence/h01-measured-ie-region-audit.json),
 [source path](evidence/h01-measured-i-contact-path-audit.json).
+
+This path also includes six source samples decoded as dendrite and two as
+astrocyte by the importer. Filling it with axon parameters would cross these
+conflicting labels. Such a map is a model hypothesis, not a measured axon
+classification. Keep source codes unchanged.
+[Source-label audit](evidence/h01-measured-i-path-label-conflicts.json).
 
 ```mermaid
 flowchart LR
