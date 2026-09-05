@@ -42,7 +42,8 @@ def test_reject_invalid_time_before_initialization(dt,duration):
         recorder._record(None, dt_ms=dt, duration_ms=duration)
 
 
-def test_cli_exports_unit_scaled_arrays_and_cv_mapping(imported, monkeypatch, tmp_path):
+@pytest.mark.parametrize("restore", [False, True])
+def test_cli_exports_unit_scaled_arrays_and_cv_mapping(imported, monkeypatch, tmp_path, restore):
     from braintrace.datasets import h01, h01_annotations, h01_ei_circuit
     from examples import h01_ei_candidates
     monkeypatch.setattr(h01, "H01Archive", lambda _: SimpleNamespace(load=lambda *a, **k: imported))
@@ -52,7 +53,7 @@ def test_cli_exports_unit_scaled_arrays_and_cv_mapping(imported, monkeypatch, tm
         return make_h01_ei_circuit(**arguments(imported), control="i_only", solver="h01_staggered_scan")
     monkeypatch.setattr(h01_ei_circuit, "make_h01_ei_circuit", build)
     prefix = tmp_path/"direct"
-    monkeypatch.setattr("sys.argv", ["recorder", "--output", str(prefix), "--duration-ms", ".02", "--dt-ms", ".001"])
+    monkeypatch.setattr("sys.argv", ["recorder", "--output", str(prefix), "--duration-ms", ".02", "--dt-ms", ".001"] + (["--restore-closing"] if restore else []))
     recorder.main()
     with np.load(prefix.with_suffix(".npz")) as arrays:
         record = json.loads(prefix.with_suffix(".json").read_text())
@@ -60,3 +61,26 @@ def test_cli_exports_unit_scaled_arrays_and_cv_mapping(imported, monkeypatch, tm
         assert arrays["all_voltage"].max() < -50
         assert arrays["time_ms"][-1] == .02
         assert set(arrays.files) == {"all_voltage", "voltage", "output_voltage", "synaptic_conductance", "events", "NaTg_m", "NaTg_h", "time_ms"}
+        assert ("diagnostic_override" in record["cells"]["I"]) == restore
+
+
+def test_closing_override_leaves_opening_unchanged_and_restores_on_error():
+    from braintrace.datasets.h01_pv_channels import _CHANNELS
+    from braintrace.datasets.h01_pv_channels_test import _ions
+    cls = _CHANNELS["NaTg"]
+    original = cls.f_h_tau
+    with brainstate.environ.context(precision=64):
+        channel = cls(size=1, g_max=1.*u.mS/u.cm**2, h_close=.15, h_slope=5.)
+        voltage = u.math.asarray([-20.])*u.mV
+        ions = _ions("NaTg", 1e-4)
+        channel.init_state(voltage, *ions)
+        for gate_value, ratio in ((1., 1/.15), (0., 1.)):
+            channel.h.value = u.math.asarray([gate_value])
+            before = original(channel, voltage, *ions)
+            with recorder._source_closing(True):
+                np.testing.assert_allclose(channel.f_h_tau(voltage, *ions), before*ratio, rtol=1e-14)
+            assert cls.f_h_tau is original
+        with pytest.raises(RuntimeError):
+            with recorder._source_closing(True):
+                raise RuntimeError("test cleanup")
+        assert cls.f_h_tau is original

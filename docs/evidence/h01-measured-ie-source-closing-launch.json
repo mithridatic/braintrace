@@ -10,6 +10,6 @@
     "examples/h01_ei_circuit.py": "71e5d0b762e39fde14be28506c7cc725bc8840f6a35d461ef7316923c19320fb",
     ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
   },
-  "status": "Launching. No result yet.",
+  "status": "Completed with exit 0. Soma peak +34.068 mV; no contact output through 8 ms. See h01-measured-ie-source-closing-response-audit.json.",
   "session_id": 92425
 }

@@ -583,11 +583,21 @@ response does not cross the modeled event-delivery boundary. It does not
 by itself separate failed spike initiation from failed propagation.
 [Direct input split](evidence/h01-measured-ie-i2na-response-audit.json).
 
+At the original 1 nA input, changing only the I sodium-inactivation closing
+time from its candidate factor of 0.15 to 1 produces a complete soma
+excursion through -20 mV, with peak +34.07 mV. The pre-pulse traces are
+exactly unchanged. Thus, the closing-time change controls the loss of this
+soma excursion in the tested model context. The restored soma response
+still produces no contact event through 8 ms, and E remains unchanged.
+The contact voltage is rising at 8 ms; delayed arrival remains unresolved.
+This is a diagnostic channel law, not a human-qualified replacement.
+[Closing-time response](evidence/h01-measured-ie-source-closing-response-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.
-Its role in the missing output event is unresolved: the soma response is
-also insufficient to separate spike initiation from propagation failure.
+Its role in the missing output event is unresolved. A soma excursion alone
+does not establish propagation to the contact or exclude a delayed arrival.
 [Region map](evidence/h01-measured-ie-region-audit.json),
 [source path](evidence/h01-measured-i-contact-path-audit.json).
 

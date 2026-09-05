@@ -23,3 +23,16 @@ the all-CV traces to identify the first positive local excursion and its path.
 A positive excursion is an observation, not by itself a physiological spike.
 Preserve any diagnostic channel-law override explicitly and separately from
 the frozen profile. No default or electrical-map change belongs in this step.
+
+The closing-time intervention yields a complete soma excursion through
+-20 mV, with peak +34.07 mV, but no contact event by 8 ms. Contact voltage
+is still rising at 8 ms. Add an explicit `--restore-closing` flag for the same
+single-law override as the existing circuit diagnostic. Scope and restore the
+class override, including on error. Test unchanged opening-time behavior and
+restoration of the original law when the context exits.
+
+Record this condition through 20 ms. Require its first 8 ms of soma and
+contact voltage to match the completed circuit diagnostic within the existing
+1e-9 mV absolute / 1e-10 relative limits before interpreting the longer window.
+Do not call absent delivery at 8 ms a propagation failure while a delayed
+arrival remains untested. Compare the unchanged all-CV baseline separately.

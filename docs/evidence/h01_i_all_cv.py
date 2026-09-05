@@ -1,5 +1,6 @@
 """Record direct compartment voltages from the measured H01 I model."""
 import argparse
+from contextlib import contextmanager
 import json
 from pathlib import Path
 
@@ -7,6 +8,31 @@ import brainstate
 import brainunit as u
 import numpy as np
 from braincell.mech import MechanismProbe
+
+
+@contextmanager
+def _source_closing(enabled):
+    """Scope the same I NaTg law override used by the circuit diagnostic."""
+    if not enabled:
+        yield
+        return
+    from braintrace.datasets.h01_pv_channels import _CHANNELS
+    cls = _CHANNELS["NaTg"]
+    original = cls.f_h_tau
+
+    def restored(self, voltage, *ions):
+        value = original(self, voltage, *ions)
+        equilibrium = self._rates(voltage, ions)["h"][0]
+        if not hasattr(self, "h"):
+            return value
+        return u.math.where(equilibrium <= self.h.value,
+                            value/self.phase_factors["h"][1], value)
+
+    cls.f_h_tau = restored
+    try:
+        yield
+    finally:
+        cls.f_h_tau = original
 
 
 def _record(cell, *, dt_ms, duration_ms):
@@ -53,8 +79,9 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--duration-ms", type=float, default=8.)
+    parser.add_argument("--restore-closing", action="store_true")
     args = parser.parse_args()
-    with brainstate.environ.context(precision=64):
+    with brainstate.environ.context(precision=64), _source_closing(args.restore_closing):
         cache = Path(".cache/h01")
         archive = H01Archive(cache/"proofread104.zip")
         components = {r: archive.load(n, component=0) for r, n in (("E", "4157825456"), ("I", "5584343344"))}
@@ -78,6 +105,10 @@ def main():
             cv_columns=[dict(id=cv.id, branch_id=cv.branch_id, prox=cv.prox, dist=cv.dist) for cv in cell.cvs],
             array_axes="all_voltage: time, population, CV; CV order follows cv_columns.",
             qualification="Diagnostic baseline; compare original circuit traces before spatial interpretation.")
+        if args.restore_closing:
+            evidence["cells"]["I"]["diagnostic_override"] = dict(NaTg_h_closing_factor=1., candidate_value=.15,
+                scope="all I NaTg regions; all times; E unchanged")
+            evidence["qualification"] = "Diagnostic closing-time intervention; not a promoted or human-qualified model."
     args.output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.output.with_suffix(".npz"), **arrays)
     args.output.with_suffix(".json").write_text(json.dumps(evidence, indent=2)+"\n")
