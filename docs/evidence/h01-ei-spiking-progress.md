@@ -1,5 +1,42 @@
 # Frozen E/I spiking checks
 
+## Current measured circuit
+
+The default circuit uses measured H01 I-to-E contact `8105899`, from cell
+`5584343344` to cell `4157825456`. It has no asserted reciprocal E-to-I edge.
+Endpoint identity and cable placement are checked. Conductance, reversal,
+kinetics, and delay are borrowed parameters.
+
+The completed active diagnostic uses I sodium-inactivation closing factor 1
+instead of the frozen candidate's 0.15. E retains its candidate profile.
+I receives 1 nA from 2 to 5 ms; E receives 5 nA from 8 to 18 ms. This is an
+explicit model stimulus, not an H01 recording or a promoted human-cell fit.
+
+| Requirement | Direct evidence | Boundary |
+| --- | --- | --- |
+| I spike reaches measured contact | Positive contact excursion and one emitted event | Diagnostic I override |
+| Measured edge delivers to E | Conductance begins 0.5 ms after I emits; absent with edge removed | Borrowed synaptic dynamics |
+| E can spike | Two complete positive excursions in both controls | Fixed diagnostic input |
+| Edge changes E response | Second onset delayed about 0.00114 ms; no spike removed | Small delaying effect, not spike suppression |
+| Time-step check | Both controls pass each declared onset, peak and width limit between 0.0025 and 0.00125 ms | Tested 25 ms window and profiles |
+| Spatial check | Both controls pass at maximum compartment lengths 10 and 5 um, dt 0.00125 ms | Tested mesh pair; inferred region map remains unvalidated |
+| Human response | Frozen I count is 40 versus 43; physiological allowances are unresolved | No human-response pass |
+
+The controls have identical I traces and matching E traces before delivery.
+The initial local E current is inward because the receptor voltage is below
+the borrowed -80 mV reversal. The source inhibitory label does not determine
+the sign of every local voltage change.
+
+See the [time-step audit](h01-measured-E5-overlap-paired-quarterdt-audit.json),
+[spatial audit](h01-measured-E5-overlap-paired-cv5-audit.json), and
+[human-response gaps](h01-frozen-candidate-full-response.md).
+The [acceptance proposal](../specs/2026-09-05-h01-recorded-response-acceptance-proposal.md)
+is awaiting agreement. No new fitting campaign is running.
+
+The sections below retain earlier tests and their original conditions. The
+illustrative circuit described below is available only by explicit selection;
+it is not the current measured default.
+
 ## Donor I transfer
 
 The selected I profile reproduces five complete events from 270 to 300 ms on
@@ -49,10 +86,10 @@ as error. E/I builder tests also pass with population size (1,), which Network
 requires for each distinct morphology. The driver and direct-event audit have
 14 passing tests, including empty, missing, shifted, and clipped event cases.
 
-## Connected H01 circuit
+## Earlier illustrative H01 circuit
 
-The two-cell circuit is implemented with illustrative E-to-I and I-to-E
-contacts. Each cell retains its measured source identity. The circuit records
+The earlier two-cell circuit used illustrative E-to-I and I-to-E
+contacts. Each cell retained its measured source identity. That circuit records
 source-soma voltage, output-CV voltage, incoming conductance, and output events.
 Four controls retain the same cells and synapses and change only projections.
 
