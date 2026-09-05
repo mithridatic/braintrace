@@ -12,7 +12,7 @@
     ".cache/h01/measured-i-allcv-source-closing20.npz": "f2977d490309063ea451d866cad2e1e1e7dfdeb1b21b02be15cbd7a7a9361297"
   },
   "tests_passed": 29,
-  "status": "Disconnected session 79776 completed with exit 0 and matches I standalone trace exactly. Connected session 88116 failed initialization. Connected retry session 1581 is running alone.",
+  "status": "Connected retry session 1581 completed with exit 0. Paired event delivery verified; see h01-measured-delivery20-paired-audit.json. Parallel initialization failed; sequential execution succeeded with unchanged physical settings.",
   "sessions": {
     "ei": 88116,
     "disconnected": 79776

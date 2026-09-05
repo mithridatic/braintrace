@@ -390,76 +390,53 @@ the active input it fires the recorded five spikes. The first interval is
 64.48 ms late. Individual recovery minima and spike phases also differ from
 the human datum. Count agreement does not establish response agreement.
 
-**Explanation.** No sufficient condition has been established for the combined
-response. Supported conditional effects: sodium amount and opening speed have
-distinct effects, and together they restore all five peaks to within 0.40 mV
-while retaining part of the rising-phase improvement; Kv3 closing time
-determines whether recovery completes, since halving it leaves the first onset
-and peak nearly unchanged and removes the four later spikes, whereas reducing
-it by 10% retains five spikes and reduces every minimum error; calcium removal
-time changes later intervals while leaving the first interval and minima nearly
-unchanged. Baseline and response deflection must be tracked separately, and
-location and amount of a conductance must remain separate factors.
+**Explanation.** No single parameter family is sufficient for the combined
+response; two families act on separate observation groups. Calcium handling
+(F3, the somatic removal time) is necessary for the five-event count and sets
+the late intervals: removing it from the candidate restores a sixth event and
+the source's negative late-interval errors, and adding it to the source removes
+an extra event. The passive and Ih family (F5, distributed Ih with a shifted
+passive reversal) alone sets every subthreshold sample: without it the 1120 ms
+residual is 1.76 mV in every run, with it 0.39 mV. Added together to the source
+these two families are sufficient for a five-spike train whose interval errors
+are all within 10.5 ms and for the candidate's subthreshold residuals, but they
+leave the recovery minima at the source's values (first minimum 1.6 mV too
+negative, second 4.4 mV). The remaining families, sodium gate law (F1), Kv3
+gate law (F2), and somatic sodium density (F4), are what move the minima
+toward the human values, and the same three push intervals 2 and 4 late
+(+52 ms and +21 ms in the frozen candidate). Somatic sodium density carries the
+rising and falling phases. The frozen candidate is therefore a trade: minima
+bought with interval error.
 
-At the fine mesh, the source gives seven spikes, the sodium-only change gives
-six, and the full candidate gives five. Each candidate family added alone to
-the source gives six. Thus, none of these individual changes is sufficient
-for the five-spike response in that source context. Removing the calcium
-removal-time change from the full candidate restores a sixth spike. That
-change is necessary for the five-spike count in the tested full-candidate
-context. It is not sufficient on its own.
+**Prediction confirmed.** Stated before the paired swap: adding F3+F5 to the
+source gives five events and the candidate's subthreshold residual; removing
+them from the candidate gives extra events, negative late intervals, and the
+source's subthreshold residual. Five of six checks held. The miss was the
+prediction that intervals 2 and 4 would be positive like the candidate's; they
+are -0.07 ms and +10.5 ms, which locates the candidate's late intervals in
+F1/F2/F4 rather than in F3/F5. At CVode 1e-11 the added-pair run changes no
+ranked residual by more than its numerical limit; the removed-pair run changes
+two event-3 phase residuals by 0.00044 ms against a 0.00042 ms limit, so those
+two phase contrasts are within solver noise while every count, interval,
+minimum, and subthreshold contrast is unaffected.
 
-The calcium and Ih/leak families added together to the source give five
-spikes. Removing both from the full candidate gives six. Their combined
-effect can therefore change the count without the candidate sodium or Kv3
-changes. It does not reproduce the full candidate response: the second
-interval error is -0.0696 ms, whereas the full candidate error is +51.57 ms.
-The prediction of a positive second-interval error is contradicted. These
-interventions establish conditional parameter effects; they do not identify
-an unmeasured calcium-to-current pathway or the human cell's parameters.
-See the [family and paired-swap results](evidence/h01-l2-campaign-result.md).
-
-The five-spike paired response and its individual active observations persist
-within the stated limits at tighter solver tolerance. The reverse change
-retains six spikes, but two third-spike phase changes exceed their numerical
-limits. That phase effect is not qualified. The tighter subthreshold check
-for the forward pair remains open.
-[Direct active comparison](evidence/h01-l2-paired-active-tolerance-audit.json).
-
-**Prediction confirmed.** The subthreshold error directions persist under
-tighter tolerance and spatial refinement, so they are model errors, not solver
-errors. The density candidate's peaks and phases persist within declared limits
-under both refinements. The predicted rising-phase effect of slower NaTs
-opening is observed.
-
-The candidate sodium-opening change is neither necessary nor sufficient
-for five spikes in the tested active input. Adding it alone to the source
-gives six spikes; removing it from the full candidate retains five. It does
-change individual spike times. Count and timing therefore impose distinct
-constraints; retaining the count does not show that the gate has no effect.
-See the [forward intervention](evidence/h01-l2-campaign-fine/f1-into-source-two-inputs.json)
-and [reverse intervention](evidence/h01-l2-campaign-fine/f1-out-of-candidate-active-partial.json).
-
-**Largest measured sensitivities.** No family dominates the pooled normalized
-RSS. Calcium removal has the largest contribution for intervals and for
-peaks/onsets; Kv3 for spike phases; Ih/leak for the subthreshold samples.
-Minima have no single dominant family. These scores rank the tested changes,
-not their biological truth. Read each direct response before selecting an
-intervention. The coarse mesh fails the phase-preservation rule, so these
-comparisons use the fine mesh. The
-[acceptance table](evidence/h01-l2-acceptance-table.md) fixes every required
-observation; no human allowance is agreed, so no physiological pass is issued.
+**Steep X.** Per observation group, not pooled: intervals and event count, F3;
+subthreshold samples, F5; rising and falling phases, F4; recovery minima, none
+separated (F4, F1, F2 within a factor of 1.2 of each other). The pooled
+normalized RSS names no family, because the groups have different scales.
+Coarse mesh (nseg 3) was rejected as a search setting at Stage 0.
 
 **Action.** Omitted bias, a constant voltage offset, solver tolerance, mesh,
-somatic Ih density, Ih location, uniform leak, and passive reversal are not
-sufficient levers for this behavior; each was tested and each leaves the
-adaptation or the return wrong. A close late voltage, a correct event count,
-or accurate peaks does not establish the correct dynamic response. Recovery
-timing and later firing must be constrained together with the minima; a closer
-minimum does not ensure a closer next spike. Stop single-parameter tuning
-launches; a bounded simultaneous fit across all calibration inputs is the
-required next campaign (see the
-[validation reassessment](specs/2026-09-05-h01-validation-reassessment.md)).
+somatic Ih density alone, Ih location alone, uniform leak, and passive reversal
+alone are not sufficient levers; each was tested. The family search replaces
+single-parameter tuning: the next split is inside F1, F2, and F4, on the
+source-plus-F3-plus-F5 base, asking which member deepens the minima without
+lengthening intervals 2 and 4. A close late voltage, a correct event count, or
+accurate peaks does not establish the correct dynamic response. The
+[acceptance table](evidence/h01-l2-acceptance-table.md) fixes every required
+observation; no allowance is agreed, so no candidate passes. See the
+[campaign result](evidence/h01-l2-campaign-result.md) and the
+[validation reassessment](specs/2026-09-05-h01-validation-reassessment.md).
 
 ```mermaid
 flowchart TD
@@ -564,8 +541,8 @@ establish the anatomical path, not its physiological response. The delivery
 results above must not be transferred to this pair without a direct test.
 The synthetic wiring fixture confirms the same implementation rule: with E
 above the inhibitory reversal potential, a delivered conductance lowers E
-voltage; removing only the edge removes that effect. Real-cell firing,
-propagation to the axon contact, and full numerical qualification remain open.
+voltage; removing only the edge removes that effect. Qualification of the
+default profiles' firing and full numerical robustness remains open.
 
 In the measured pair, the recorded I contact voltage stays below -80 mV under
 the stated 1 nA soma pulse. It emits no event. The initially empty synapse
@@ -605,6 +582,22 @@ not a spatial average. The dashed line marks the earlier observation limit.
 
 ![Recorded voltages along the H01 I path](evidence/h01-measured-i-propagation.png)
 
+In the restored-closing condition, the measured edge delivers conductance to
+E at 8.855 ms, 0.5 ms after I emits. Removing only this edge removes the
+conductance and E voltage effect. I's full trace is exactly unchanged, and
+E's local and soma traces are exactly equal before delivery. This establishes
+the edge as the cause of the observed E response under the stated input.
+
+The initial local E response is depolarizing: local voltage is below the
+borrowed -80 mV reversal. The current pulls that compartment toward -80 mV;
+its direction reverses when local voltage crosses the reversal. Soma voltage
+alone would give the wrong initial direction because it differs from the
+receptor voltage. E emits no event in either control. Thus, delivery is
+demonstrated, but suppression of E firing and numerical robustness remain
+unverified. The source inhibitory label does not by itself establish the
+sign of each local voltage change.
+[Measured edge-removal comparison](evidence/h01-measured-delivery20-paired-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.
@@ -628,7 +621,7 @@ flowchart LR
     B --> C[Borrowed transmission delay]
     C --> D[Conductance at the source E contact]
     D --> E[Current set by conductance and reversal potential]
-    E --> F[E voltage response: direct validation open]
+    E --> F[Local E response observed; firing suppression open]
 ```
 
 ## Measurement function qualification
@@ -667,6 +660,7 @@ leaves a residual without a failure of the discrete charge balance.
 | PV transfer, matched mesh, events 1-8 | Halve dt in NEURON and in BrainCell | Event 8 moves 0.002 ms in each; all gates pass | [isolation split](evidence/h01-pv-transfer-isolation.md) |
 | PV transfer, matched mesh | NEURON CVode 1e-10 vs fixed dt 0.000625 | Largest rise change 0.044 ms; gates pass | [isolation audit](evidence/h01-pv-transfer-isolation-audit.json) |
 | L2 campaign controls | nseg 3 vs nseg 9 at CVode 1e-10, active input | Five phase changes exceed one fifth of the smallest source-candidate-corner contrast; coarse setting rejected | [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json) |
+| L2 paired-swap runs | CVode 1e-10 vs 1e-11 at nseg 9 | Added pair: every ranked residual within its limit (max 0.0002 ms); removed pair: two event-3 phase residuals at 0.00044 ms vs 0.00042 ms limit, counts and all other contrasts unchanged | [prediction check](evidence/h01-l2-campaign-fine/stage-b-prediction-check.json) |
 
 The response-size ranking in the [factor evidence](evidence/h01-i-factor-response-rss.md)
 compares specified interventions on a fixed observation grid. It selects the
@@ -683,10 +677,12 @@ biological uncertainty.
   channel cause of the shallow, late minimum; the spike initiation site; a
   human recovery constant; the Kv3 candidate's spatial sensitivity; the
   full-cell energy budget; the topology that reproduces the human waveform.
-- Y4: the channel source of the interval errors; the transition to the
-  sustained depolarized response between the two Kv3 closing changes; the
-  separate contributions of entry and removal, and of each current path,
-  after any coupled intervention; the human cell's densities.
+- Y4: which member of F1, F2, or F4 deepens the recovery minima without
+  lengthening intervals 2 and 4; the channel source of the remaining interval
+  errors; the transition to the sustained depolarized response between the
+  two Kv3 closing changes; the separate contributions of entry and removal
+  after any coupled intervention; the human cell's densities; every
+  physiological allowance.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
 
 ## Evidence index

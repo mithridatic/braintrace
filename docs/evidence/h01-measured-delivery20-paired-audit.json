@@ -1,0 +1,66 @@
+{
+  "scope": "Measured contact 8105899, diagnostic I closing restoration, both 1 nA pulses 2-5 ms; only the edge is enabled/disabled.",
+  "input_and_physical_metadata_equal_except_edge": true,
+  "I_all_saved_arrays_exactly_equal": true,
+  "all_connected_saved_arrays_finite": true,
+  "I_event_ms": 8.355,
+  "E_conductance_first_ms": 8.855,
+  "delay_steps": 100,
+  "delay_ms": 0.5,
+  "E_first_conductance_us": 0.019980009996667502,
+  "E_conductance_decay_max_error_us": 1.734723475976807e-17,
+  "pre_delivery": {
+    "E_voltage": {
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_output_voltage": {
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    },
+    "E_incoming_voltage": {
+      "exactly_equal": true,
+      "max_abs_difference": 0.0
+    }
+  },
+  "voltage_responses": {
+    "E_voltage": {
+      "disconnected_at_delivery_mv": -77.49383952107158,
+      "connected_at_delivery_mv": -77.49383952107158,
+      "difference_at_delivery_mv": 0.0,
+      "difference_one_step_later_mv": 0.0,
+      "largest_abs_difference_mv": -0.003354361129083827,
+      "time_largest_abs_difference_ms": 20.0,
+      "final_difference_mv": -0.003354361129083827
+    },
+    "E_output_voltage": {
+      "disconnected_at_delivery_mv": -77.49383952107158,
+      "connected_at_delivery_mv": -77.49383952107158,
+      "difference_at_delivery_mv": 0.0,
+      "difference_one_step_later_mv": 0.0,
+      "largest_abs_difference_mv": -0.003354361129083827,
+      "time_largest_abs_difference_ms": 20.0,
+      "final_difference_mv": -0.003354361129083827
+    },
+    "E_incoming_voltage": {
+      "disconnected_at_delivery_mv": -80.48233683226692,
+      "connected_at_delivery_mv": -80.36714907347773,
+      "difference_at_delivery_mv": 0.1151877587891903,
+      "difference_one_step_later_mv": 0.17247621210435682,
+      "largest_abs_difference_mv": 0.31211184042001605,
+      "time_largest_abs_difference_ms": 9.040000000000001,
+      "final_difference_mv": -0.17624019062030527
+    }
+  },
+  "inward_synaptic_current_at_first_saved_delivery_na": 0.007335642158352329,
+  "E_events_connected_ms": [],
+  "E_events_disconnected_ms": [],
+  "source_sha256": {
+    ".cache/h01/measured-delivery20-disconnected.npz": "1b0ba42cde294aab7147e0b782f0ebc354c8d4d6c08a5c42c3a3fe876444d07d",
+    ".cache/h01/measured-delivery20-ei.npz": "c6c938c17a447c8e199208dc21fe83b143a399ba0cea3cd5ab8bd3e3bae7931e"
+  },
+  "interpretation": "Edge removal abolishes conductance and the E voltage effect. The initial local effect is depolarizing because local E voltage is below the borrowed -80 mV reversal. This demonstrates event delivery, not suppression of E firing. E does not spike in either control.",
+  "qualification": "No human validity or timestep/mesh convergence is claimed. Connected retry completed sequentially after an initialization MemoryError in the parallel attempt.",
+  "first_saved_outward_current_ms": 9.790000000000001,
+  "local_E_voltage_final_mv": -80.02308258145493
+}

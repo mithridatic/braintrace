@@ -15,5 +15,5 @@
   "soma_E_at_expected_delivery_mv": -77.49383952107158,
   "borrowed_reversal_mv": -80.0,
   "source_sha256": "1b0ba42cde294aab7147e0b782f0ebc354c8d4d6c08a5c42c3a3fe876444d07d",
-  "status": "Connected counterpart failed initialization; sequential retry required. No paired delivery result yet."
+  "status": "Both controls completed. See h01-measured-delivery20-paired-audit.json for the edge-removal comparison."
 }

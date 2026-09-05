@@ -40,6 +40,13 @@ Ranked observations: 50 keys whose source-to-candidate contrast exceeds five num
 ## Stage C: tolerance recheck of the paired swap
 
 {
+  "into": {
+    "max_change": 0.00019573479471546307,
+    "event_count_unchanged": true,
+    "within_limits": true,
+    "exceeding": {},
+    "max_change_over_claimed_contrast": 0.3588056378467302
+  },
   "out": {
     "max_change": 0.0004431023614870355,
     "event_count_unchanged": true,
@@ -79,4 +86,5 @@ Ranked observations: 50 keys whose source-to-candidate contrast exceeds five num
 | out-F5 | 5 | -13.71 | -5.942 | -31.52 | -10.88 | 0.1344 | -2.937 | -0.1225 | 0.2979 | 1.771 | 2.067 |
 | ab-into-F3F5 | 5 | 3.262 | -0.06957 | -8.961 | 10.48 | -1.558 | -4.355 | -0.171 | 0.7706 | 0.3878 | 1.202 |
 | ab-out-F3F5 | 6 | -13.78 | -48.88 | -91.42 | -68.42 | 0.1345 | -2.935 | -0.1225 | 0.2979 | 1.771 | 2.067 |
+| c-into-F3F5-atol11 | 5 | 3.262 | -0.06956 | -8.961 | 10.48 | -1.558 | -4.355 | -0.1711 | 0.7705 | 0.3878 | 1.202 |
 | c-out-F3F5-atol11 | 6 | -13.78 | -48.88 | -91.42 | -68.42 | 0.1345 | -2.935 | -0.1225 | 0.2979 | 1.771 | 2.067 |
