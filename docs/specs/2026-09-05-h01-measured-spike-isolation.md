@@ -61,3 +61,22 @@ difference consistent with the local driving potential. Compare the trace
 before delivery as well as after delivery. Repeat at half dt before treating
 the effect as numerically robust. Distinguish the borrowed synaptic dynamics
 from measured contact anatomy. Human response qualification remains separate.
+
+## Sodium closing-time intervention
+
+The 2 nA split does not produce a positive recorded soma excursion or an
+output event. E remains exactly unchanged. Return to the 1 nA baseline and
+use the existing `h01_i_source_closing_circuit` diagnostic runner. Restore
+only the NaTg inactivation closing-time factor from 0.15 to 1 in I. Keep
+opening time, equilibrium slope, density, other channels, and the electrical
+map fixed. This is an intervention on a channel law, not a fitted candidate.
+
+The narrow claim is that the candidate closing-time change prevents a
+positive soma excursion under this fixed input. A positive excursion only
+after restoration supports that claim in this model context. An absent
+positive excursion contradicts this specific rescue prediction. Neither
+outcome alone proves where an action potential starts or why it fails to
+reach the measured contact. Preserve the full soma and contact traces, verify
+the unchanged pre-pulse response, and report contact emission separately.
+The source law was borrowed from a different human-cell model; restoring it
+does not establish H01 physiological accuracy. Do not promote the override.

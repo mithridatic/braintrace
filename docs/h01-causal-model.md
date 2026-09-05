@@ -575,6 +575,14 @@ presynaptic cell fails to emit an event. The recorded I soma reaches only
 -29.53 mV; no claim is made about unrecorded compartments.
 [Direct response](evidence/h01-measured-ie-first-response-audit.json).
 
+More soma depolarization does not ensure an output event in this model.
+At 2 nA the I soma reaches -13.92 mV, but the contact-voltage change is at
+most 0.0394 mV compared with 1 nA. The contact still emits no event.
+E voltage and conductance remain exactly unchanged. Thus, the larger soma
+response does not cross the modeled event-delivery boundary. It does not
+by itself separate failed spike initiation from failed propagation.
+[Direct input split](evidence/h01-measured-ie-i2na-response-audit.json).
+
 The electrical map assigns the measured I contact to the dendrite fallback.
 That region has Ih but no fast sodium channel. Most of the soma-to-contact
 path also uses this fallback. This map is an inference from sparse labels.

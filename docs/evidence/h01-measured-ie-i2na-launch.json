@@ -12,6 +12,6 @@
     ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
   },
   "default_promotion": false,
-  "status": "Launched; no response result yet.",
+  "status": "Completed with exit 0; no output events. See h01-measured-ie-i2na-response-audit.json.",
   "session_id": 51585
 }

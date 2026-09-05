@@ -1,0 +1,15 @@
+{
+  "started_utc": "2026-09-05T21:35:42.541002+00:00",
+  "baseline_commit": "392cb0a8a2b92ba8e1a42d4f1c73e708b3e59877",
+  "purpose": "Diagnostic I NaTg h closing factor 0.15 to 1 at original I=1 nA. No default change.",
+  "command": ".cache/validation/Scripts/python.exe -m docs.evidence.h01_i_source_closing_circuit --connectivity measured --control ei --i-current-na 1 --duration-ms 8 --solver h01_staggered_scan --output .cache/h01/measured-ie-source-closing-scan",
+  "source_sha256": {
+    "docs/evidence/h01_i_source_closing_circuit.py": "eb91d5d1c1e9783a433433847fd71465b8637dbe025d0353c0d1ff3d360cf18d",
+    "braintrace/datasets/h01_pv_channels.py": "3f7ed1ec0ebb2c118eb23fc5be587afe41606f7739cdf43988dadfb120d84443",
+    "braintrace/datasets/h01_dhs_scan.py": "8b710ef30767d563d1dab7a2c834028c98a042a0824eaf1275ce0d5babb8931c",
+    "examples/h01_ei_circuit.py": "71e5d0b762e39fde14be28506c7cc725bc8840f6a35d461ef7316923c19320fb",
+    ".cache/h01/measured-ie-scan.npz": "b9f587e14e7575fc7f0cd37cb51bf303c8ec8c10a38d88ae3b97042673e398cf"
+  },
+  "status": "Launching. No result yet.",
+  "session_id": 92425
+}
