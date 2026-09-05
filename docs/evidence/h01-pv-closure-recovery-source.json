@@ -1,0 +1,5 @@
+{
+  "parent_sha256": "694e3622731f9cd2e1aa3ae3ba65af1a5c2f36602fb9f45725eb1a76dc5470ee",
+  "modified_sha256": "fef2809e8f3edbeec5a1433e426925d5a9fe3ef82e8ebd2ee328d810a9a10dfe",
+  "change": "Override recovery time only when hInf > h; default -1 preserves original single-factor kinetics"
+}

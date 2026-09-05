@@ -132,5 +132,24 @@ The [direct trace comparison](h01-pv-space2p5-transfer-comparison.json) has
 stimulus RMS voltage error 9.84383 mV. Peak timing improvement does not establish
 full voltage-trace agreement. The next run halves dt to 0.00125 ms at the same mesh.
 
+The 0.00125 ms run retains 11 spikes. The last spike is at 1179.87375 ms,
+0.98625 ms earlier than at 0.0025 ms. The first peak changes by 0.04855 mV.
+Relative to NEURON factor 81, the last spike is 3.92136 ms early.
+Stimulus voltage RMS difference remains 10.0045 mV on the unchanged clock.
+Time and space errors do not necessarily have the same sign.
+The previously smaller cross-simulator difference was partly cancellation.
+Do not treat closeness at one mesh and step as proof of convergence.
+
+## Installed solver compatibility
+
+The installed `cn_rk4` method fails through this Cell runtime with missing
+`t` and `dt` arguments. An explicit-time wrapper reaches a second error:
+`Cell.pre_integral()` rejects the forwarded positional arguments.
+Both failures are retained in the solver probe reports.
+The installed ordinary `rk4` method completes one 0.0001 ms step on this cell.
+That establishes one-step compatibility only. Explicit cable stability and
+full-trace accuracy were not tested, so no alternative solver is promoted.
+The model continues to use the tested staggered integration path.
+
 The [installed API guide](../h01-pv.md) gives the runnable configuration and
 the separate installed-wheel check. Packaging is verified; physiology is not.

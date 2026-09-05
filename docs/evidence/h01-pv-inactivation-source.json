@@ -1,0 +1,6 @@
+{
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "source_sha256": "24ad05639111953f27367df1b3ae6e7a7dd1d9055a79773fae325f37becf7de2",
+  "modified_sha256": "694e3622731f9cd2e1aa3ae3ba65af1a5c2f36602fb9f45725eb1a76dc5470ee",
+  "change": "Add h_tau_factor, default 1; multiply only hTau; original cache unchanged"
+}

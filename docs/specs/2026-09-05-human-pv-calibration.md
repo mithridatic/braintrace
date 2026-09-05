@@ -49,6 +49,23 @@ Biological parameter bounds must have a source or an explicit inferred status.
 Acceptance tolerances and numerical error budgets remain to be established.
 This specification does not claim that the current model passes validation.
 
+## Acquisition provenance
+
+Compare released calibration traces with Allen NWB file 618112937.
+Check the pipeline version before converting stored values to SI units.
+Allen pipeline 1.0 stores SI values despite obsolete conversion attributes.
+Check all samples after the 750 ms crop and the -14 mV junction correction.
+Read each sweep's measured bias current separately from its stimulus waveform.
+Do not refit the reserved 0.23 nA trace during this provenance check.
+Keep raw NWB data in the cache. Save hashes and the comparison in evidence.
+
+First add the measured 0.031445374082395006 nA bias to the 0.19 nA
+reference. Apply it from model time zero through the whole simulation.
+Keep initial voltage, conductances, mesh factor 9, and CVode tolerance fixed.
+Record bias and step current separately. Check their sum.
+Compare with a zero-bias control from the same driver.
+This tests bias alone. It does not reproduce the full acquisition history.
+
 ## Bounded conductance sensitivity
 
 Spike peaks remain near 44 mV across completed spatial refinements, while
@@ -59,3 +76,30 @@ Use mesh factor 9 and CVode tolerance 1e-10 for these diagnostic interventions.
 Report direct voltage-change RSS, individual spike peaks, and spike times.
 This is a conditional sensitivity result, not uncertainty propagation or fitting.
 Do not promote a changed model until numerical and physiological checks pass.
+
+Next isolate somatic transient sodium from axonal transient sodium.
+The previous intervention changed both regions and removed spikes.
+Test soma-only conductance factors 0.25, 0.10, and 0.05, leaving axon unchanged.
+These densities remain within the source optimizer's somatic 0-0.5 S/cm2 bounds.
+The factors are diagnostic choices, not measured human parameter values.
+Record soma and axon voltage together. Check retained initiation, soma peaks,
+the full train, and calcium response before considering a fitted candidate.
+
+The first soma-only reductions removed both soma and axon spikes at 0.19 nA.
+Next test factors 0.75 and 0.90 under the same conditions. These bracket a
+smaller reduction. Check whether peak voltage changes before spike generation fails.
+Do not infer a measured sodium density from this diagnostic bracket.
+
+Test soma-only Kv3_1 factors 2 and 4 with sodium unchanged.
+The resulting densities are 0.857697 and 1.715394 S/cm2.
+Both lie within the source optimizer's 0-3 S/cm2 bounds.
+Use the zero-bias source reference, mesh factor 9, initial -80 mV,
+0.19 nA step, and CVode tolerance 1e-10.
+Check individual peaks, time above -20 mV, and the full train.
+These are diagnostic parameter choices. They are not measured densities.
+
+Observe somatic sodium gates, Kv3 activation, and each channel current during
+the unchanged source response. Keep NEURON outward-positive current signs.
+Check per-channel currents against the ion-current sums and confirm that
+adding probes leaves the voltage response unchanged. Use the observations
+to identify sustained inward current before selecting a kinetic intervention.

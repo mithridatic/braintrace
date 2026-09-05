@@ -1,308 +1,233 @@
-# H01 cell and circuit: causal model
+# H01 cell and circuit: causal explanation
 
-This document states how the model can produce the required response.
-It defines the reference points, physical causes, and limits of the evidence.
-It is a living explanation. Replace an incorrect claim when evidence changes.
-Keep run records and experiment instructions in [the evidence folder](evidence/).
+This document states physical relationships and supported causal conclusions.
+Each conclusion applies only within its stated boundary.
+Replace a conclusion when stronger evidence contradicts it.
+Experiment methods, settings, scores, and decisions belong in [evidence](evidence/).
+The language uses short sentences and defined terms. Formal ASD-STE100 review is pending.
 
-Use short sentences and defined technical terms, as required by ASD-STE100.
-This document has not had a formal controlled-language compliance audit.
+## What the observations represent
 
-## Required observable response
+H01 supplies reconstructed anatomy and annotations. It does not supply voltage
+recordings from the imported cells. Our active models combine anatomy and
+physiology from different cells. They do not reproduce the H01 donor's physiology.
 
-Observe membrane voltage at a named cell location over time.
-Record the applied current on the same time axis.
-Record each spike time and each response after a spike.
-For a circuit, also record the synaptic current in the receiving cell.
+The inhibitory reference is a human-fitted putative PV cell. Its channel laws
+include borrowed kinetics. Its direct spike waveform is not yet validated.
+The excitatory reference uses human pyramidal channel measurements. Its holding
+protocol and direct waveform validation remain incomplete.
 
-A peak voltage or mean firing rate cannot establish the required behavior.
-Two cells can have the same mean rate and different spike times.
-Two spikes can have the same peak and different rising or falling phases.
+A direct observation retains location, time, input, and response.
+A firing rate or spike count cannot explain a voltage trajectory.
+Equal counts can conceal different spike times. Equal peaks can conceal different
+rising and falling phases.
 
-Keep a biological recording separate from a simulation output.
-H01 supplies reconstructed anatomy. It does not supply voltage recordings
-from the imported cells. The present model combines anatomy and dynamics
-from different human cells. It is not a reproduction of the H01 donor cell.
+## Datum
 
-## Datum and reference conditions
-
-A datum is a fixed reference for a measurement.
-Do not change a datum to make a model agree with a target.
-
-| Quantity | Datum and required record |
+| Quantity | Reference |
 | --- | --- |
-| Voltage | Membrane voltage is inside minus outside, in mV. Record the source voltage correction. Do not shift each trace to its own minimum. |
-| Time | Use the stimulus clock. Record every pulse onset and end. BrainCell samples represent the end of each step: `(index + 1) * dt`. |
-| Location | Name the cell, source component, and source node. The present soma probe uses node 1345 of H01 cell 810151953, component 0. |
-| Position | Retain the source origin. Skeleton coordinates use 32, 32, and 33 nm per unit. Synapse coordinates use 8, 8, and 33 nm per unit. |
-| Radius | The source radius is in nm. Do not apply the position scale to it. |
-| Current | Positive applied current flows into the cell. Record nA for total current and mS/cm² for conductance density. |
-| Initial state | Record voltage and channel gate states. Initial voltage does not establish a stable resting state. |
-| Temperature | Record temperature with the channel rates. The present borrowed channel model uses 34 °C. |
-| Target identity | Retain the recording identifier, stimulus, sample interval, and source version. Keep each recording separate. |
+| Voltage | Inside minus outside. Retain the source junction correction. |
+| Time | The stimulus clock. Retain pulse onset, end, and sample convention. |
+| Position | The source cell, component, node, origin, and coordinate scale. |
+| Current | State the direction and whether the value is total current or current density. |
+| Initial state | Voltage, channel gates, calcium, temperature, and preceding input. |
+| Biological identity | Recording identifier, protocol, and source version. |
 
-Wilbers recorded pyramidal cells held at −70 mV, with 3 ms current pulses.
-The released model applies a −10 mV channel voltage shift.
-That shift reconciles its voltage-clamp and current-clamp conventions.
-It is not an extra correction to apply to all human recordings.
-See [Wilbers, methods and results](https://research-portal.uu.nl/ws/files/206755646/sciadv.ade3300.pdf)
-and the [pinned source files](evidence/h01-active-wilbers-sources.json).
+BrainCell outputs use the end of each step. Geometry and synapse exports use
+different coordinate scales. Radius has its own unit. These conversions define
+the observed system; they are not free fitting parameters.
 
-The present H01 simulation starts at −70 mV and then changes under active currents.
-It does not yet reproduce the experimental holding-current condition.
-Correct this protocol difference before claiming agreement with those recordings.
+The released PV calibration traces already include the junction correction.
+Applying it again changes the datum and invalidates the comparison.
+The acquisition bias current is separate from the test pulse. Omitting that
+current changes the input. Adding it to an already fitted model does not by
+itself repair its spike shape. The fitted leak may compensate for omitted bias;
+that last explanation remains unconfirmed.
 
-## Reference evidence
+## Charge flow explains voltage change
 
-| Reference | What it supports | What it does not support |
-| --- | --- | --- |
-| [H01 release](https://h01-release.storage.googleapis.com/landing.html) | Source geometry, cell annotations, and released synapse annotations. | Exact channel density, voltage response, or complete wiring of the imported circuit. |
-| [Wilbers data, version 3.0](https://doi.org/10.34894/L5J0SD) | Human pyramidal current measurements, channel equations, and AP measurements. | Physiology of the H01 donor cell. |
-| [Human AP reference data](evidence/h01-human-40hz-targets.json) | First-spike feature distributions from the released 40 Hz rows. | A measured target voltage trace. These summaries cannot replace raw recordings. |
-| [Human putative-PV recordings](evidence/h01-pv-recording-audit.json) | Individual voltage traces and current steps for cell 528687520. | Proof of PV protein expression or physiology of every inhibitory cell. |
-| [PV model paper](https://doi.org/10.1093/cercor/bhac348) | A published inhibitory model constrained by human recordings. | Automatic validation of a new BrainCell implementation. |
-| [Direct PV model comparison](evidence/h01-pv-reference-assessment.md) | A reproduced NEURON response and its differences from human voltage recordings. | Acceptance of the model from spike counts alone. |
-| [Allen model source audit](evidence/h01-pv-allen-source-audit.json) | A second fitted model for cell 528687520, with source hashes. | Human origin for all channel kinetics. Some mechanisms use mouse measurements. |
-
-The downloaded pyramidal reference contains extracted features.
-A raw pyramidal target trace is not yet available in our evidence set.
-The inhibitory evidence contains sampled voltage traces.
-Use these direct observations when that model is ready for comparison.
-Do not calculate a trace error against a population median waveform that was never measured.
-
-The current H01 evidence saves soma voltage and local channel observations.
-The gate states, channel currents, and local voltage share one active compartment midpoint.
-The [channel observation audit](evidence/h01-channel-observation-audit.json)
-checks their algebra and confirms that the probes do not change soma voltage.
-The [local observation figure](evidence/h01-channel-observations.svg) shows the direct traces.
-The axial current balance is not yet recorded.
-That observation remains required to test the complete causal path.
-
-## Nested causal structure: the matryoshka method
-
-Start with the required circuit response. Open one level at a time.
-Each inner level must explain an observable response at the next level.
-Agreement at an inner level does not establish agreement at an outer level.
-
-```mermaid
-flowchart LR
-    Input[Applied current or incoming spike]
-    subgraph Circuit[Outer level: circuit]
-        subgraph Cell[Cell: geometry and membrane]
-            subgraph Channel[Inner level: ion channels]
-                Gates[Voltage and temperature change gate states]
-                Flow[Open channels carry ion current]
-                Gates --> Flow
-            end
-            Charge[Net current changes membrane charge]
-            Voltage[Voltage changes at the probe]
-            Flow --> Charge --> Voltage
-            Voltage --> Gates
-            Cable[Current flows along the cable] --> Charge
-        end
-        Release[Spike triggers a synaptic conductance]
-        Receive[Receiving cell voltage changes]
-        Voltage --> Release --> Receive
-    end
-    Input --> Charge
-    Receive --> Output[Observed voltage and spike times]
-```
-
-This diagram shows a proposed causal path. It is not evidence that the
-current implementation contains every part of the path.
-
-| Level | Input and internal state | Direct output to inspect |
-| --- | --- | --- |
-| Circuit | Presynaptic spike, delay, conductance, reversal potential, receiving-cell state. | Synaptic current and receiving-cell voltage versus time. |
-| Whole cell | Applied current, channel currents, axial currents, and membrane charge. | Voltage at the soma and other named locations. |
-| Cable compartment | Radius, length, membrane area, axial resistivity, and neighboring voltages. | Current between compartments and local voltage. |
-| Channel | Voltage, temperature, and the fractions of open or inactive channels. | Gate state and ion current versus time. |
-| Numerical method | The same equations, initial state, time step, and spatial mesh. | The change in each observed trace when the numerical resolution changes. |
-
-## Physical explanation
-
-For one compartment, conservation of charge gives:
+For a compartment with constant total capacitance:
 
 \[
 C\frac{dV}{dt}=I_{applied}+I_{axial}+I_{synapse}+\sum_k I_k.
 \]
 
-Here, `C` is total capacitance. Each current is positive into the compartment.
-For an ion channel, `I_k = g_k * (E_k - V)`.
-`E_k` is its reversal potential. `g_k` includes area, density, and gate state.
-Thus, channel count alone does not determine current.
-The driving voltage and the open fraction also matter.
-See [BrainCell integration](https://brainx.chaobrain.com/braincell/concepts/integration.html).
+All currents in this equation are positive into the compartment.
+NEURON channel-current exports use the opposite sign. Convert signs explicitly.
+Net current changes stored membrane charge. That charge change changes voltage.
+Large opposing currents can produce a small voltage change.
+Voltage alone therefore cannot identify which current caused the response.
 
-Sodium current can raise voltage and open more sodium channels.
-This feedback can initiate a spike.
-Sodium inactivation and potassium current then limit the rise and support the fall.
-Gate recovery between pulses affects the next spike.
-These causes link channel state to the full voltage trajectory.
+For a channel branch:
 
-In the borrowed inhibitory model, calcium entry raises calcium concentration
-in a thin shell below the membrane. A fitted fraction represents buffering.
-Removal returns concentration toward its resting value.
-Calcium opens SK gates. SK carries potassium, not calcium.
-When voltage is above the potassium reversal potential, this current lowers voltage.
-The calcium removal time can therefore affect recovery between spikes.
-This is a model mechanism. Its effect on the human spike train still needs validation.
-The [channel transfer evidence](evidence/h01-pv-channel-transfer.md) supports
-the local calcium-to-SK link in an assembled compartment.
+\[
+I_k=g_k(E_k-V).
+\]
+
+Conductance includes membrane area, channel density, and gate state.
+The reversal potential represents the ion's electrochemical driving condition.
+A channel is not a resistor connected only to electrical ground.
+Ion gradients can supply electrical energy. Their maintenance is outside the
+present short-duration model when concentrations or reversal potentials are fixed.
+
+For constant capacitance, stored electrical energy is \(CV^2/2\).
+At an electrical boundary, voltage difference times signed current gives power.
+This product is useful only with the same boundary and sign convention.
+Channel dissipation uses the channel driving voltage, not membrane voltage alone:
+\(g_k(V-E_k)^2\) for a nonnegative ohmic conductance.
+A complete energy budget must also include the ion-gradient reservoirs.
+
+## The nested causal map
 
 ```mermaid
 flowchart LR
-    A[Calcium current enters] --> B[Inside calcium rises]
-    B --> C[SK gates open]
-    C --> D[Potassium current leaves]
-    D --> E[Voltage falls toward potassium reversal]
-    B --> F[Buffering and removal limit calcium]
+    Source[Applied current and ion gradients] --> Currents[Membrane current paths]
+    Gates[Channel gate states] --> Currents
+    Currents --> Charge[Membrane charge]
+    Charge --> Voltage[Local voltage]
+    Voltage --> Gates
+    Neighbour[Neighbouring compartment voltage] --> Axial[Axial current]
+    Axial --> Charge
+    Voltage --> Next[Next compartment and receiving cell]
 ```
 
-A longer or wider cable also changes the electrical load.
-For a uniform cylinder, membrane area is proportional to radius times length.
-Axial conductance is proportional to radius squared divided by length and resistivity.
-Thus, radius errors change both membrane load and current flow along the cable.
-A fitted conductance can hide a geometry error. It cannot prove that geometry is correct.
+Each boundary has an input and a response. The complete circuit path remains
+unvalidated. Agreement within one channel does not validate the whole cell.
+Agreement in one cell does not validate a connected circuit.
 
-The location of active channels also matters.
-An active region near the soma and an active axon can produce different initiation paths.
-Sparse AIS labels do not define a complete electrical region.
-The present inferred active region excludes the AIS-labelled samples.
-Its spike is evidence for that chosen model configuration only.
+| Boundary | Paired direct observations | Additional state needed |
+| --- | --- | --- |
+| Membrane | Voltage and signed current | Gates, calcium, capacitance |
+| Cable connection | Voltage difference and axial current | Geometry and axial resistivity |
+| Channel | Driving voltage and channel current | Conductance and gate state |
+| Calcium pool | Calcium entry and concentration change | Effective volume, buffering, removal |
+| Synapse | Synaptic current and receiving voltage | Conductance, reversal potential, delay |
 
-An excitatory synapse usually moves voltage toward a more positive reversal potential.
-An inhibitory conductance can oppose that change or reduce its size by shunting current.
-Its effect depends on the receiving voltage and reversal potential.
-An inhibitory connection need not produce a negative voltage deflection in every state.
-Observe its effect on the receiving trace and spike timing.
+A voltage-current pair characterizes a boundary. It does not uniquely determine
+all hidden states of a nonlinear neuron. Fixed-voltage observations separate
+channel response from voltage feedback. Current-driven observations retain that
+feedback. Both are needed to distinguish competing explanations.
 
-## Factor effects and RSS
+## Why the spike rises and falls
 
-RSS here means root-sum-square. Residual sum of squares is a different quantity.
-Use distinct calculations for target error, factor response, and uncertainty.
+Sodium activation permits inward current. Rising voltage can open more sodium
+channels, which supplies positive feedback during the rise.
+Inactivation reduces sodium availability. Outward potassium current supports
+repolarization, the return toward a lower voltage.
 
-For a measured target trace, define the residual at each sample:
+In the borrowed PV model, sodium activation remains high during the early fall.
+As voltage falls, sodium driving voltage grows. Inward sodium current can therefore
+increase while the inactivation gate closes. Kv3 current opposes that current.
+These opposing currents contribute to the trajectory, but do not alone explain
+the local voltage. Current also flows between connected compartments.
 
-\[
-r_j=V_{model}(t_j)-V_{recording}(t_j).
-\]
+At the observed soma peak, neighbouring soma membrane supplies axial current
+to the probe compartment. Its attached dendrites draw current away.
+The net axial outflow balances most of the applied and net ionic inflow.
+Little current remains to change stored charge, so the local voltage stops rising.
+This explains why the peak cannot be understood from sodium and potassium alone.
+The [local charge balance](evidence/h01-pv-charge-balance-audit.json) accounts
+for these separate paths. It does not establish which topology would reproduce
+the human waveform or close a whole-cell energy budget.
 
-Keep the residual trace. A scalar score can conceal a timing error.
-Do not align spike peaks when the required behavior includes spike timing.
+Faster sodium inactivation causes a shorter first spike in this model while
+preserving spike generation. This effect persists across the two checked meshes.
+Accelerating recovery alone does not reproduce that shortening under the same input.
+Thus, inactivation timing contributes causally to the excessive duration.
+It is not established as the only cause of the waveform error.
 
-For a controlled change to factor `x_i`, define its observed response change:
+The increased firing after faster inactivation also occurs when recovery speed
+is unchanged. Faster recovery alone therefore does not explain that increase.
+Recovery still affects individual spike times. Its role cannot be dismissed
+because the number of spikes stays the same.
 
-\[
-\Delta V_{ij}=V(t_j;x_i+\Delta x_i)-V(t_j;x_i),\qquad
-R_i=\sqrt{\sum_j(\Delta V_{ij})^2}.
-\]
+The pathway from the shorter spike to later spike times remains unresolved.
+Calcium entry and potassium activation are possible links, not established causes.
+SK current is not necessary for the observed second-spike delay after faster
+sodium inactivation. That delay persists when SK current is removed.
+This excludes SK as the sole explanation of that particular timing difference.
+It does not exclude SK from later adaptation or establish the alternative path.
+The [SK necessity evidence](evidence/h01-pv-sk-necessity-audit.json) applies to
+that defined event, not to every feature of the train.
+The diagnostic split of inactivation and recovery is not a measured human channel law.
 
-Use the same sample grid, stimulus, observation window, and unchanged factors.
-State the factor change beside `R_i`. A larger change can produce a larger score.
-This score ranks the tested interventions. It does not rank biological uncertainty.
-For different sample counts, also report `R_i / sqrt(N)`.
+## Why state and structure matter
 
-For an uncertainty budget, first obtain uncertainty `u_i` for each factor.
-Estimate sensitivity `S_ij = dV(t_j)/dx_i` near the operating point.
-For independent factors, the propagated uncertainty at each time is:
+Initial voltage does not uniquely specify channel availability.
+Slow gates retain prior input history after voltages become similar.
+Consequently, equal voltage at pulse onset does not ensure an equal response.
+A causal account must include conditioning and the relevant internal states.
 
-\[
-u_V(t_j)=\sqrt{\sum_i(S_{ij}u_i)^2}.
-\]
+Somatic active current contributes to excitation of the connected axon.
+Unchanged axonal sodium conductance does not guarantee axonal spike generation.
+The electrical load and the current supplied by connected membrane also matter.
+The present observations do not locate the exact site of spike initiation.
 
-For correlated factors, use `u_V² = S Σ Sᵀ`, with covariance matrix `Σ`.
-Do not add correlated contributions as if they were independent.
-Near a spike threshold, small changes can create or remove a spike.
-Check the nonlinear response before using a local sensitivity estimate.
+Membrane area grows with cylinder radius times length. Axial conductance grows
+with radius squared and falls with length and resistivity.
+Radius therefore changes both charge storage and coupling to adjacent membrane.
+A fitted channel density cannot establish that the underlying geometry is correct.
+Sparse AIS annotations do not define a complete electrical compartment.
 
-The [factor evidence](evidence/h01-causal-factor-effects.json) gives calculated
-response changes for the available paired traces.
-It records the largest observed effects and their limits.
-It does not give a complete uncertainty ranking.
-Parameter uncertainties and joint effects are not yet measured.
-See the [direct trace plots](evidence/h01-causal-traces.svg) and
-[factor interpretation](evidence/h01-causal-factor-effects.md) for the current observations.
+The spatial mesh determines how local voltage and channel state are represented.
+Those local states feed back into membrane currents. Equal total area does not
+ensure equal simulated voltage. Temporal accuracy alone cannot remove spatial error.
+Numerical robustness of one causal effect is not full convergence of the model.
 
-The current causal priorities are:
+## Calcium and delayed potassium current
 
-1. Establish a matched stimulus, voltage reference, and initial state.
-2. Resolve active-region placement and membrane load.
-3. Constrain sodium activation, potassium current, and recovery between spikes.
-4. Qualify synaptic conductance, delay, and receiving-cell response.
+Calcium entry raises concentration in the model's submembrane pool.
+Buffering and removal limit that rise. Calcium activates SK channels.
+SK carries potassium. Above the potassium reversal potential, SK current opposes
+an increase in voltage. This is a supported local model mechanism.
+Its responsibility for a particular later spike is not yet isolated.
 
-These priorities follow causal dependencies. They are not claimed RSS ranks.
-Keep physical-factor effects separate from numerical error.
-A stable solver can solve an incorrect physical model accurately.
+```mermaid
+flowchart LR
+    Ca[Calcium enters] --> Pool[Calcium concentration rises]
+    Pool --> SK[SK gates open]
+    SK --> K[Potassium current leaves]
+    K --> V[Voltage response changes]
+    Pool --> Removal[Buffering and removal]
+```
 
-The electrical mesh is also a causal factor in the simulated response.
-It sets the spatial resolution of voltage, channel gates, and calcium state.
-Equal total membrane area does not ensure equal local voltage during a spike.
-Local voltage affects channel opening. This changes the next voltage response.
-The published inhibitory model changes spike count when its mesh is refined,
-even with a tight time-integration tolerance and unchanged physical parameters.
-Thus, a time-converged reference is not sufficient for transfer validation.
-Check spatial convergence before fitting channels to a numerical discrepancy.
-The [numerical intervention audit](evidence/h01-pv-numerical-audit.json) records
-direct response RSS on a common clock. These are numerical effects, not estimates
-of biological parameter uncertainty. The exact local cause of the mesh sensitivity
-still needs isolation with voltage, calcium, and gate traces.
+## Connection effects depend on the receiving state
 
-Regional refinement provides a more specific check.
-Both axon and dendrite resolution affect the spike train in this model.
-Soma-only refinement has a smaller measured effect for the tested change.
-The axon has active channels. Dendrites carry passive leak and Ih in this model.
-Thus, resolving active membrane and resolving its electrical load both matter.
-This supports checking both regions before fitting channel densities.
-It does not prove that one channel explains the response change.
-The regional effects are coupled. Do not add their RSS values as independent errors.
-See the [direct regional traces](evidence/h01-pv-mesh-interventions.svg).
+A synaptic conductance moves voltage toward its reversal potential.
+It also changes the load seen by other current sources.
+An inhibitory conductance can suppress excitation without a negative voltage
+change. Its direct effect depends on receiving voltage and ongoing input.
+An anatomical connection alone does not specify conductance, delay, or its
+physiological effect. These circuit mechanisms still require validation here.
 
-The observed resting voltage can differ between recordings from the same cell.
-The released human hyperpolarizing traces have different baseline voltages.
-A deterministic model with one resting state cannot reproduce every baseline
-without an additional state or input assumption.
-Keep this difference visible. Do not remove it with an unexplained voltage shift.
-In this reference model, the hyperpolarizing response is closer to the human
-trace than the spike response. This supports checking spike-generating currents
-after baseline and numerical errors have been bounded.
-It does not identify one incorrect channel parameter.
-See the [direct hyperpolarizing traces](evidence/h01-pv-hyperpolarization.svg)
-and the [individual human spike datums](evidence/h01-pv-human-datums.json).
+## Limits of the energetic description
 
-Initial voltage also sets the initial channel gates in the reference model.
-Some gates recover slowly. At -86.2 mV, the source Ih activation time constant
-is about 559 ms. Persistent-sodium inactivation takes about 1699 ms.
-Both exceed the 270 ms pre-stimulus interval.
-Thus, similar pre-stimulus voltages do not prove equal channel states.
-An initial-state difference can persist into the spike train.
-The [initial-state audit](evidence/h01-pv-initial-state-audit.json) records
-different Ih and persistent-sodium gate states at stimulus onset after a 1 mV
-initial-voltage change. The final spike shifts by about 12.9 ms in that check.
-This supports a role for slow-state history. It does not isolate each gate's contribution.
-Match the conditioning protocol before assigning the error to conductance density.
+The source-load and conjugate-variable framework helps locate observation
+boundaries and split current paths. In this system, voltage and current form
+the electrical pair; chemical potential and molar flow describe ion transport.
+Membrane capacitance stores charge. Gate kinetics add internal state and delay.
+A delayed voltage-current response does not by itself prove physical inductance.
 
-Conductance changes can improve one observation and impair another.
-In the tested PV model, less transient sodium conductance lowers the spike peak
-but also delays onset and removes spikes. Less SK conductance changes the train
-with little change in peak voltage. This supports separate checks for spike
-generation, repolarization, and recovery.
-The [conductance audit](evidence/h01-pv-conductance-audit.json) records each
-controlled change and the residual to the human trace.
-Its largest response-change RSS belongs to the tested Kv3_1 reduction.
-This ranks those interventions only. It does not establish the largest biological
-uncertainty or a calibrated parameter set. A lower whole-trace RMS error can
-coexist with missing spikes. Inspect the event times and voltage trajectory as well.
+A fixed linear source-load equivalent can describe a passive subsystem or a
+specified local linearization. It cannot replace the full spiking dynamics.
+Do not infer a unique topology from one voltage-current trace when several
+hidden mechanisms can produce it.
 
-## Rules for revising this explanation
+## Evidence and interpretation
 
-Attach each causal claim to a source or direct observation.
-State whether the support is biological data, simulation data, or an inference.
-Use a controlled change to test the proposed cause.
-Check the full response at the next outer level.
-If the response contradicts the claim, revise the claim and its limits.
-If two causes fit the same trace, retain both explanations until evidence separates them.
+[Source and datum evidence](evidence/h01-pv-acquisition-audit.md),
+[human pyramidal sources](evidence/h01-active-wilbers-sources.json),
+[H01 anatomy](https://h01-release.storage.googleapis.com/landing.html),
+[channel-current evidence](evidence/h01-pv-spike-current-audit.json),
+[inactivation and recovery evidence](evidence/h01-pv-recovery-causal-test.md),
+[spatial robustness](evidence/h01-pv-inactivation-mesh-audit.json), and
+[numerical evidence](evidence/h01-pv-numerical-audit.json) support the boundaries above.
 
-Keep current explanations here. Keep dated runs, commands, and failed trials elsewhere.
-The [implementation specification](specs/2026-09-04-h01-active-circuit.md)
-tracks the remaining work. This document must not become its change log.
+RSS calculations rank specified interventions on a fixed observation grid.
+They do not prove mediation, identify a unique cause, or supply missing biological
+uncertainty. Detailed calculations remain in the evidence files.
+
+A yes/no decision applies to a specified causal claim and its tested conditions.
+Keep the continuous direct response that supports the decision.
+Distinguish a contradicted prediction, an invalid test, and an unresolved explanation.
+Only supported conclusions belong in this account. Unresolved links stay explicit.

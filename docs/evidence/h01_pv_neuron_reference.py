@@ -22,23 +22,33 @@ def _time_average(times, values, start, stop):
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
+parser.add_argument("--bias-na", type=float, default=0.)
+parser.add_argument("--observe-spike-currents", action="store_true")
+parser.add_argument("--observe-charge-balance", action="store_true")
+parser.add_argument("--sodium-h-tau-factor", type=float, default=1.)
+parser.add_argument("--sodium-h-recovery-factor", type=float)
 parser.add_argument("--dt-ms", type=float, default=.025)
 parser.add_argument("--initial-mv", type=float, default=-80.)
 parser.add_argument("--scale-conductance", choices=("NaTg", "Kv3_1", "SK"))
 parser.add_argument("--conductance-factor", type=float, default=1.)
+parser.add_argument("--conductance-region", choices=("all", "soma", "axon"), default="all")
 parser.add_argument("--cvode-atol", type=float)
 parser.add_argument("--passive", action="store_true")
 parser.add_argument("--nseg-factor", type=int, default=1)
 parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
 parser.add_argument("--output", required=True)
 args = parser.parse_args()
+if args.sodium_h_recovery_factor is not None and (not np.isfinite(args.sodium_h_recovery_factor) or args.sodium_h_recovery_factor <= 0):
+    parser.error("Sodium recovery time factor must be positive and finite.")
+if not np.isfinite(args.sodium_h_tau_factor) or args.sodium_h_tau_factor <= 0:
+    parser.error("Sodium h time factor must be positive and finite.")
 if not np.isfinite(args.conductance_factor) or args.conductance_factor < 0:
     parser.error("Conductance factor must be nonnegative and finite.")
 if args.scale_conductance is None and args.conductance_factor != 1.:
     parser.error("A non-unit conductance factor requires a named mechanism.")
 if args.nseg_factor < 1 or args.nseg_factor % 2 != 1:
     parser.error("Segment factor must be a positive odd integer.")
-if not np.isfinite([args.current_na, args.dt_ms, args.initial_mv]).all() or args.dt_ms <= 0:
+if not np.isfinite([args.current_na, args.bias_na, args.dt_ms, args.initial_mv]).all() or args.dt_ms <= 0:
     parser.error("Current must be finite and time step must be positive.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
     parser.error("CVode absolute tolerance must be positive and finite.")
@@ -49,9 +59,23 @@ h.load_file("/work/source/NeuronTemplate.hoc")
 h.load_file("/work/source/biophys_HL5BN1.hoc")
 cell = h.NeuronTemplate("/work/source/HL5BN1.swc")
 h.biophys_HL5BN1(cell)
+if args.sodium_h_recovery_factor is not None:
+    for section in cell.all:
+        if "NaTg" in section.psection()["density_mechs"]:
+            if not hasattr(section, "h_recovery_factor_NaTg"):
+                raise RuntimeError("This intervention requires the isolated recovery mechanisms.")
+            section.h_recovery_factor_NaTg = args.sodium_h_recovery_factor
+if args.sodium_h_tau_factor != 1.:
+    for section in cell.all:
+        if "NaTg" in section.psection()["density_mechs"]:
+            if not hasattr(section, "h_tau_factor_NaTg"):
+                raise RuntimeError("This intervention requires the isolated inactivation mechanisms.")
+            section.h_tau_factor_NaTg = args.sodium_h_tau_factor
 if args.scale_conductance is not None:
     for section in cell.all:
-        if args.scale_conductance in section.psection()["density_mechs"]:
+        family = section.name().split(".", 1)[1].split("[", 1)[0]
+        selected = args.conductance_region == "all" or family == args.conductance_region
+        if selected and args.scale_conductance in section.psection()["density_mechs"]:
             parameter = "gbar_"+args.scale_conductance
             setattr(section, parameter, getattr(section, parameter)*args.conductance_factor)
 for section in cell.all:
@@ -77,14 +101,61 @@ clamp = h.IClamp(cell.soma[0](.5))
 clamp.delay = 270.
 clamp.dur = 1000.
 clamp.amp = args.current_na
+bias = h.IClamp(cell.soma[0](.5))
+bias.delay = 0.
+bias.dur = 1501.
+bias.amp = args.bias_na
 t = h.Vector().record(h._ref_t)
 v = h.Vector().record(cell.soma[0](.5)._ref_v)
 current = h.Vector().record(clamp._ref_i)
+bias_current = h.Vector().record(bias._ref_i)
 axon_v = h.Vector().record(cell.axon[0](.5)._ref_v)
 calcium = h.Vector().record(cell.soma[0](.5)._ref_cai) if not args.passive else []
 sk = h.Vector().record(cell.soma[0](.5).SK._ref_z) if not args.passive else []
 ih = h.Vector().record(cell.soma[0](.5).Ih._ref_m) if not args.passive else []
 nap_h = h.Vector().record(cell.soma[0](.5).Nap._ref_h) if not args.passive else []
+spike_probes = {}
+balance_geometry = None
+if (args.observe_spike_currents or args.observe_charge_balance) and not args.passive:
+    soma = cell.soma[0](.5)
+    for mechanism, field in (("NaTg", "ina"), ("Nap", "ina"),
+                             ("K_P", "ik"), ("K_T", "ik"), ("Kv3_1", "ik"),
+                             ("Im", "ik"), ("SK", "ik"),
+                             ("Ca_HVA", "ica"), ("Ca_LVA", "ica")):
+        spike_probes[mechanism+"_current_ma_cm2"] = h.Vector().record(
+            getattr(getattr(soma, mechanism), "_ref_"+field))
+    for mechanism, field in (("NaTg", "m"), ("NaTg", "h"), ("Kv3_1", "m")):
+        spike_probes[mechanism+"_"+field] = h.Vector().record(
+            getattr(getattr(soma, mechanism), "_ref_"+field))
+    for field in ("ina", "ik", "ica"):
+        spike_probes[field+"_ma_cm2"] = h.Vector().record(getattr(soma, "_ref_"+field))
+if args.observe_charge_balance:
+    section = cell.soma[0]
+    soma = section(.5)
+    assert section.nseg >= 3 and section.nseg % 2 == 1
+    assert section.parentseg() is None
+    middle = section.nseg // 2
+    left = section((middle-.5)/section.nseg)
+    right = section((middle+1.5)/section.nseg)
+    neighbours = [(left, soma.ri()), (right, right.ri())]
+    for child in section.children():
+        parent = child.parentseg()
+        if int(parent.x*section.nseg) == middle:
+            assert child.orientation() == 0.
+            first = child(.5/child.nseg)
+            neighbours.append((first, first.ri()))
+    balance_geometry = {"area_um2": soma.area(), "cm_uf_cm2": soma.cm,
+                        "location": str(soma), "neighbours": []}
+    for index, (neighbour, resistance) in enumerate(neighbours):
+        assert 0 < resistance < 1e20
+        key = f"axial_neighbour_{index}_mv"
+        spike_probes[key] = h.Vector().record(neighbour._ref_v)
+        balance_geometry["neighbours"].append({"location": str(neighbour),
+                                               "resistance_mohm": resistance, "voltage_key": key})
+    spike_probes["capacitive_current_ma_cm2"] = h.Vector().record(soma._ref_i_cap)
+    spike_probes["leak_current_ma_cm2"] = h.Vector().record(soma.pas._ref_i)
+    if not args.passive:
+        spike_probes["Ih_current_ma_cm2"] = h.Vector().record(soma.Ih._ref_ihcn)
 geometry = [{"name": sec.name(), "length_um": sec.L, "diameter_um": sec.diam,
              "nseg": sec.nseg, "area_um2": sum(seg.area() for seg in sec),
              "ra_ohm_cm": sec.Ra, "cm_uf_cm2": sec.cm,
@@ -100,15 +171,25 @@ output = Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 np.savez_compressed(output.with_suffix(".npz"), time_ms=times, voltage_mv=voltage,
                     current_na=applied, axon_voltage_mv=axon,
+                    bias_current_na=np.asarray(bias_current),
+                    total_current_na=applied+np.asarray(bias_current),
+                    **{key: np.asarray(value) for key, value in spike_probes.items()},
                     calcium_mm=np.asarray(calcium), sk_gate=np.asarray(sk),
                     ih_gate=np.asarray(ih), nap_h_gate=np.asarray(nap_h))
 report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
           "active_channels": not args.passive,
-          "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor},
+          "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor,
+                                       "region": args.conductance_region},
           "nseg_factor": args.nseg_factor,
           "refine_region": args.refine_region,
           "model": "ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms",
           "current_na": args.current_na, "dt_ms": args.dt_ms, "temperature_c": 34.,
+          "bias_na": args.bias_na, "bias_on_ms": 0.,
+          "spike_current_probes": args.observe_spike_currents,
+          "charge_balance_geometry": balance_geometry,
+          "sodium_h_tau_factor": args.sodium_h_tau_factor,
+          "sodium_h_recovery_factor": args.sodium_h_recovery_factor,
+          "channel_current_convention": "NEURON outward positive, mA/cm2",
           "integration": {"method": "CVode" if args.cvode_atol is not None else "fixed step",
                           "cvode_atol": args.cvode_atol},
           "initial_voltage_mv": args.initial_mv, "stimulus_on_ms": 270., "stimulus_off_ms": 1270.,

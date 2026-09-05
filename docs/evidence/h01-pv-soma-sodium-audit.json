@@ -1,0 +1,139 @@
+{
+  "conditions": "0.19 nA; 270-1270 ms; initial -80 mV; mesh factor 9; CVode atol 1e-10",
+  "intervention": "soma NaTg only; axon unchanged",
+  "reference": "h01-pv-neuron-initial80-gates.npz",
+  "sample_count": 200000,
+  "sample_spacing_ms": 0.005,
+  "rss_definition": "root sum of squared voltage changes on the fixed grid; not uncertainty",
+  "qualification": "diagnostic interventions; no candidate validated",
+  "records": [
+    {
+      "trace": "h01-pv-neuron-soma-na-005.npz",
+      "factor": 0.05,
+      "somatic_spike_times_ms": [],
+      "somatic_spike_peaks_mv": [],
+      "voltage_mv": {
+        "minimum_mv": -86.90785716326859,
+        "maximum_mv": -71.99466042758266,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3969.560705314429,
+        "response_change_rms_mv": 8.876207577895075
+      },
+      "axon_voltage_mv": {
+        "minimum_mv": -86.86291901487594,
+        "maximum_mv": -72.52418312903453,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3242.9186983772365,
+        "response_change_rms_mv": 7.251386655076638
+      }
+    },
+    {
+      "trace": "h01-pv-neuron-soma-na-010.npz",
+      "factor": 0.1,
+      "somatic_spike_times_ms": [],
+      "somatic_spike_peaks_mv": [],
+      "voltage_mv": {
+        "minimum_mv": -86.906936047897,
+        "maximum_mv": -71.88955401760917,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3956.2639545409534,
+        "response_change_rms_mv": 8.84647513928571
+      },
+      "axon_voltage_mv": {
+        "minimum_mv": -86.86203452258101,
+        "maximum_mv": -72.42198099434205,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3236.8449798813263,
+        "response_change_rms_mv": 7.2378054076435845
+      }
+    },
+    {
+      "trace": "h01-pv-neuron-soma-na-025.npz",
+      "factor": 0.25,
+      "somatic_spike_times_ms": [],
+      "somatic_spike_peaks_mv": [],
+      "voltage_mv": {
+        "minimum_mv": -86.90416942732328,
+        "maximum_mv": -71.52564800795626,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3913.9360675491644,
+        "response_change_rms_mv": 8.751827106628141
+      },
+      "axon_voltage_mv": {
+        "minimum_mv": -86.85937790265005,
+        "maximum_mv": -72.06763127396427,
+        "upward_crossings_minus20_mv": 0,
+        "response_change_rss_mv": 3219.9274284682165,
+        "response_change_rms_mv": 7.199976612671024
+      }
+    },
+    {
+      "trace": "h01-pv-neuron-soma-na-075.npz",
+      "factor": 0.75,
+      "somatic_spike_times_ms": [
+        328.6887447167702,
+        384.6762199699957,
+        908.8811804539104
+      ],
+      "somatic_spike_peaks_mv": [
+        42.02635513582295,
+        41.91842053685169,
+        41.959833660357695
+      ],
+      "voltage_mv": {
+        "minimum_mv": -86.89491167127126,
+        "maximum_mv": 42.02635513582295,
+        "upward_crossings_minus20_mv": 3,
+        "response_change_rss_mv": 4232.398987608817,
+        "response_change_rms_mv": 9.463931844194605
+      },
+      "axon_voltage_mv": {
+        "minimum_mv": -86.85048824809834,
+        "maximum_mv": 29.42564379985724,
+        "upward_crossings_minus20_mv": 3,
+        "response_change_rss_mv": 3704.1991396509434,
+        "response_change_rms_mv": 8.282841078455748
+      }
+    },
+    {
+      "trace": "h01-pv-neuron-soma-na-090.npz",
+      "factor": 0.9,
+      "somatic_spike_times_ms": [
+        308.1197681618787,
+        318.8183727858119,
+        337.7717084535332,
+        431.2610281478915,
+        559.1747405712439,
+        708.5671261286784,
+        868.0470706804872,
+        1035.7236219460667,
+        1211.354403533513
+      ],
+      "somatic_spike_peaks_mv": [
+        43.49727800601552,
+        43.40379770101599,
+        43.29171278524158,
+        43.459934624860644,
+        43.46084339043479,
+        43.46320157385166,
+        43.46484086243193,
+        43.465827028274326,
+        43.466277162254165
+      ],
+      "voltage_mv": {
+        "minimum_mv": -86.89212356234567,
+        "maximum_mv": 43.49727800601552,
+        "upward_crossings_minus20_mv": 9,
+        "response_change_rss_mv": 5071.887237483297,
+        "response_change_rms_mv": 11.341084637226269
+      },
+      "axon_voltage_mv": {
+        "minimum_mv": -86.84781100249894,
+        "maximum_mv": 38.10931382797213,
+        "upward_crossings_minus20_mv": 9,
+        "response_change_rss_mv": 4379.417005639222,
+        "response_change_rms_mv": 9.79267412642788
+      }
+    }
+  ]
+}

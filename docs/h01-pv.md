@@ -46,7 +46,8 @@ This option supports a passive cable comparison; it is not an inhibitory model.
 The 5 micrometre setting above has produced a full response with 11 spikes.
 It is a tested configuration, not a claim of spatial convergence.
 The 2.5 micrometre mesh also gives 11 spikes. Its late spike timing still differs
-from NEURON; a finer time-step check is in progress.
+from NEURON. Halving the time step from 0.0025 to 0.00125 ms moves the last
+spike by about 0.99 ms. Full waveform convergence is not established.
 
 ## Installed-package evidence
 

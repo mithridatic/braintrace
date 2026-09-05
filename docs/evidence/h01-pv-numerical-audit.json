@@ -44,6 +44,18 @@
       "max_paired_spike_time_change_ms": 10.352500000000191
     },
     {
+      "factor": "braincell_time_step_at_2p5",
+      "intervention": "dt 0.0025 to 0.00125 ms; maximum CV length 2.5 um unchanged",
+      "before": "h01-pv-braincell-019-space2p5",
+      "after": "h01-pv-braincell-019-space2p5-fine",
+      "response_change_rss_mv": 3164.1476618560077,
+      "response_change_rms_mv": 7.075249262757053,
+      "response_change_max_mv": 107.10026073231899,
+      "spike_count_before": 11,
+      "spike_count_after": 11,
+      "max_paired_spike_time_change_ms": 0.9862500000001546
+    },
+    {
       "factor": "neuron_mesh_1_to_3",
       "intervention": "each section nseg multiplied by 3; CVode atol 1e-10 unchanged",
       "before": "h01-pv-neuron-observed",

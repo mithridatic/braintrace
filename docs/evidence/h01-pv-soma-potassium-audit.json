@@ -1,0 +1,244 @@
+{
+  "conditions": "0.19 nA; zero bias; initial -80 mV; mesh factor 9; CVode atol 1e-10",
+  "sample_count": 200000,
+  "window_ms": [
+    270.0,
+    1270.0
+  ],
+  "threshold_mv": -20.0,
+  "duration_definition": "time above threshold, not AP half-width",
+  "records": [
+    {
+      "trace": "h01-pv-neuron-bias-control",
+      "soma_kv3_factor": 1,
+      "events": [
+        {
+          "rise_crossing_ms": 302.506307807603,
+          "fall_crossing_ms": 303.2812011590414,
+          "time_above_threshold_ms": 0.7748933514384362,
+          "peak_sample_time_ms": 302.5888729571863,
+          "peak_sample_voltage_mv": 44.24820384374686
+        },
+        {
+          "rise_crossing_ms": 311.50613279909544,
+          "fall_crossing_ms": 312.27887433802005,
+          "time_above_threshold_ms": 0.7727415389246062,
+          "peak_sample_time_ms": 311.5886577000201,
+          "peak_sample_voltage_mv": 44.11550116195243
+        },
+        {
+          "rise_crossing_ms": 322.7463971347435,
+          "fall_crossing_ms": 323.51113493755247,
+          "time_above_threshold_ms": 0.764737802808952,
+          "peak_sample_time_ms": 322.82943295092457,
+          "peak_sample_voltage_mv": 43.94435566820599
+        },
+        {
+          "rise_crossing_ms": 387.25154049887914,
+          "fall_crossing_ms": 388.0168207444512,
+          "time_above_threshold_ms": 0.7652802455720575,
+          "peak_sample_time_ms": 387.3344148854581,
+          "peak_sample_voltage_mv": 44.207901647659654
+        },
+        {
+          "rise_crossing_ms": 470.04737873469696,
+          "fall_crossing_ms": 470.812780885302,
+          "time_above_threshold_ms": 0.7654021506050412,
+          "peak_sample_time_ms": 470.1303735044342,
+          "peak_sample_voltage_mv": 44.20566371392076
+        },
+        {
+          "rise_crossing_ms": 575.0201626317217,
+          "fall_crossing_ms": 575.7858115304981,
+          "time_above_threshold_ms": 0.7656488987763623,
+          "peak_sample_time_ms": 575.1030715564194,
+          "peak_sample_voltage_mv": 44.20747397530622
+        },
+        {
+          "rise_crossing_ms": 688.8669214147385,
+          "fall_crossing_ms": 689.6327932055393,
+          "time_above_threshold_ms": 0.7658717908008157,
+          "peak_sample_time_ms": 688.9497918700507,
+          "peak_sample_voltage_mv": 44.20986976428897
+        },
+        {
+          "rise_crossing_ms": 806.7358830276082,
+          "fall_crossing_ms": 807.5019281830996,
+          "time_above_threshold_ms": 0.7660451554913834,
+          "peak_sample_time_ms": 806.818733569956,
+          "peak_sample_voltage_mv": 44.212082616311385
+        },
+        {
+          "rise_crossing_ms": 927.1737436362725,
+          "fall_crossing_ms": 927.939917317971,
+          "time_above_threshold_ms": 0.766173681698433,
+          "peak_sample_time_ms": 927.2565132865865,
+          "peak_sample_voltage_mv": 44.21396769445233
+        },
+        {
+          "rise_crossing_ms": 1049.7011465329813,
+          "fall_crossing_ms": 1050.4674138270111,
+          "time_above_threshold_ms": 0.7662672940298307,
+          "peak_sample_time_ms": 1049.783952632969,
+          "peak_sample_voltage_mv": 44.215591956208925
+        },
+        {
+          "rise_crossing_ms": 1174.1187242312615,
+          "fall_crossing_ms": 1174.8850586909,
+          "time_above_threshold_ms": 0.7663344596385286,
+          "peak_sample_time_ms": 1174.2014027600496,
+          "peak_sample_voltage_mv": 44.216873102994825
+        }
+      ],
+      "spike_count": 11,
+      "response_change_rss_mv": 0.0,
+      "response_change_rms_mv": 0.0
+    },
+    {
+      "trace": "h01-pv-neuron-soma-kv3-2",
+      "soma_kv3_factor": 2,
+      "events": [
+        {
+          "rise_crossing_ms": 314.6241270216566,
+          "fall_crossing_ms": 315.27515053848884,
+          "time_above_threshold_ms": 0.6510235168322538,
+          "peak_sample_time_ms": 314.69975331623795,
+          "peak_sample_voltage_mv": 41.74743927153294
+        },
+        {
+          "rise_crossing_ms": 331.0665205556663,
+          "fall_crossing_ms": 331.71528330064143,
+          "time_above_threshold_ms": 0.6487627449751585,
+          "peak_sample_time_ms": 331.1422007226002,
+          "peak_sample_voltage_mv": 41.69751646291352
+        },
+        {
+          "rise_crossing_ms": 372.02394769503627,
+          "fall_crossing_ms": 372.67130116545775,
+          "time_above_threshold_ms": 0.6473534704214785,
+          "peak_sample_time_ms": 372.09969615292084,
+          "peak_sample_voltage_mv": 41.71224380393604
+        },
+        {
+          "rise_crossing_ms": 506.60893712829915,
+          "fall_crossing_ms": 507.2563133409312,
+          "time_above_threshold_ms": 0.6473762126320253,
+          "peak_sample_time_ms": 506.68458754203124,
+          "peak_sample_voltage_mv": 41.7192215792765
+        },
+        {
+          "rise_crossing_ms": 719.1863946291662,
+          "fall_crossing_ms": 719.8339629855185,
+          "time_above_threshold_ms": 0.6475683563522807,
+          "peak_sample_time_ms": 719.2620629041056,
+          "peak_sample_voltage_mv": 41.72201480787311
+        },
+        {
+          "rise_crossing_ms": 986.2162135766531,
+          "fall_crossing_ms": 986.8639368883095,
+          "time_above_threshold_ms": 0.6477233116563639,
+          "peak_sample_time_ms": 986.291950627978,
+          "peak_sample_voltage_mv": 41.722703123772845
+        }
+      ],
+      "spike_count": 6,
+      "response_change_rss_mv": 4572.52454181043,
+      "response_change_rms_mv": 10.2244757042742
+    },
+    {
+      "trace": "h01-pv-neuron-soma-kv3-4",
+      "soma_kv3_factor": 4,
+      "events": [],
+      "spike_count": 0,
+      "response_change_rss_mv": 3911.781881111424,
+      "response_change_rms_mv": 8.747010199317144
+    }
+  ],
+  "human_events": [
+    {
+      "rise_crossing_ms": 290.7976630434783,
+      "fall_crossing_ms": 291.0710576923077,
+      "time_above_threshold_ms": 0.27339464882942366,
+      "peak_sample_time_ms": 290.92,
+      "peak_sample_voltage_mv": 19.5625
+    },
+    {
+      "rise_crossing_ms": 298.4040826873385,
+      "fall_crossing_ms": 298.6811224489796,
+      "time_above_threshold_ms": 0.277039761641106,
+      "peak_sample_time_ms": 298.52,
+      "peak_sample_voltage_mv": 18.593753814697266
+    },
+    {
+      "rise_crossing_ms": 308.6050531914894,
+      "fall_crossing_ms": 308.88310000000007,
+      "time_above_threshold_ms": 0.2780468085106804,
+      "peak_sample_time_ms": 308.72,
+      "peak_sample_voltage_mv": 18.625
+    },
+    {
+      "rise_crossing_ms": 351.3649291784703,
+      "fall_crossing_ms": 351.6478391959799,
+      "time_above_threshold_ms": 0.2829100175096073,
+      "peak_sample_time_ms": 351.48,
+      "peak_sample_voltage_mv": 18.0
+    },
+    {
+      "rise_crossing_ms": 418.8974838709678,
+      "fall_crossing_ms": 419.1856684491979,
+      "time_above_threshold_ms": 0.2881845782301298,
+      "peak_sample_time_ms": 419.02000000000004,
+      "peak_sample_voltage_mv": 17.093751907348633
+    },
+    {
+      "rise_crossing_ms": 496.8398666666667,
+      "fall_crossing_ms": 497.1302673796792,
+      "time_above_threshold_ms": 0.29040071301250237,
+      "peak_sample_time_ms": 496.9600000000001,
+      "peak_sample_voltage_mv": 16.718751907348633
+    },
+    {
+      "rise_crossing_ms": 580.8000000000001,
+      "fall_crossing_ms": 581.0905376344086,
+      "time_above_threshold_ms": 0.2905376344085653,
+      "peak_sample_time_ms": 580.9200000000001,
+      "peak_sample_voltage_mv": 16.625
+    },
+    {
+      "rise_crossing_ms": 676.6873717948719,
+      "fall_crossing_ms": 676.9794535519126,
+      "time_above_threshold_ms": 0.29208175704070527,
+      "peak_sample_time_ms": 676.82,
+      "peak_sample_voltage_mv": 15.843751907348633
+    },
+    {
+      "rise_crossing_ms": 780.0788435374151,
+      "fall_crossing_ms": 780.3712568306012,
+      "time_above_threshold_ms": 0.2924132931860868,
+      "peak_sample_time_ms": 780.2000000000002,
+      "peak_sample_voltage_mv": 16.3125
+    },
+    {
+      "rise_crossing_ms": 977.0817931034484,
+      "fall_crossing_ms": 977.382033898305,
+      "time_above_threshold_ms": 0.300240794856677,
+      "peak_sample_time_ms": 977.2200000000001,
+      "peak_sample_voltage_mv": 14.218751907348633
+    },
+    {
+      "rise_crossing_ms": 1094.2552142857144,
+      "fall_crossing_ms": 1094.5527374301678,
+      "time_above_threshold_ms": 0.29752314445340744,
+      "peak_sample_time_ms": 1094.38,
+      "peak_sample_voltage_mv": 14.968751907348633
+    },
+    {
+      "rise_crossing_ms": 1193.0090344827588,
+      "fall_crossing_ms": 1193.3084090909092,
+      "time_above_threshold_ms": 0.2993746081504014,
+      "peak_sample_time_ms": 1193.14,
+      "peak_sample_voltage_mv": 14.781251907348633
+    }
+  ],
+  "qualification": "Conditional conductance intervention; no candidate qualified"
+}

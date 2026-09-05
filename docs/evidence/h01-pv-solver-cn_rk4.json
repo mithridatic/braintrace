@@ -1,0 +1,8 @@
+{
+  "solver": "cn_rk4",
+  "explicit_time_wrapper": false,
+  "purpose": "one-step API compatibility only; not stability or accuracy qualification",
+  "status": "failed",
+  "exception_type": "TypeError",
+  "message": "cn_rk4_step() missing 2 required positional arguments: 't' and 'dt'"
+}

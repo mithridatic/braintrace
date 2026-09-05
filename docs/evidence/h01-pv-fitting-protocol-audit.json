@@ -1,0 +1,102 @@
+{
+  "source_commit": "82cdd91bc93942ba19315371330a2412e064baf5",
+  "local_source_sha256": {
+    "1.txt": "1b4688282c35b26ece5cce4a096e9978f4e1329f4c96c9db78be674494ed6b3d",
+    "2.txt": "29b003726dfd9cf2be62d5f5fc4887bdc50de80747be2aaa54ee803d503179b9",
+    "Kv3_1-optimization.mod": "27dbfdcf169d7ce6549a2d2a8b3fc6bf8e6b61d1d6f268eba4031d26ad8c4233",
+    "source-tree.json": "71cb4fb2fccf4814b319b309d868e7c998999160e6c3d506f76735bdcc1ab0c7"
+  },
+  "mechanisms": [
+    {
+      "mechanism": "CaDynamics.mod",
+      "optimization_blob": "d66cdb6c2ffb160f26b1d904931b4802eddd7112",
+      "circuit_blob": "d66cdb6c2ffb160f26b1d904931b4802eddd7112",
+      "identical": true
+    },
+    {
+      "mechanism": "Ca_HVA.mod",
+      "optimization_blob": "fbf5547091059ed44fa288a786a9e70bb2d166c5",
+      "circuit_blob": "fbf5547091059ed44fa288a786a9e70bb2d166c5",
+      "identical": true
+    },
+    {
+      "mechanism": "Ca_LVA.mod",
+      "optimization_blob": "11d0b3f4f83cf6987f4b03b459d163fb6c78c92f",
+      "circuit_blob": "11d0b3f4f83cf6987f4b03b459d163fb6c78c92f",
+      "identical": true
+    },
+    {
+      "mechanism": "Ih.mod",
+      "optimization_blob": "0e0c822d330e723be5b447e6af2794d1eed8dc3a",
+      "circuit_blob": "0e0c822d330e723be5b447e6af2794d1eed8dc3a",
+      "identical": true
+    },
+    {
+      "mechanism": "Im.mod",
+      "optimization_blob": "14d8566cb527510d6d0868a0bd1a1d4647d7e78b",
+      "circuit_blob": "14d8566cb527510d6d0868a0bd1a1d4647d7e78b",
+      "identical": true
+    },
+    {
+      "mechanism": "K_P.mod",
+      "optimization_blob": "899a4240753292f76249d8cadf6867fe8d695fc2",
+      "circuit_blob": "899a4240753292f76249d8cadf6867fe8d695fc2",
+      "identical": true
+    },
+    {
+      "mechanism": "K_T.mod",
+      "optimization_blob": "a82db648c8ae362774a2940a48b3a033866704bc",
+      "circuit_blob": "a82db648c8ae362774a2940a48b3a033866704bc",
+      "identical": true
+    },
+    {
+      "mechanism": "Kv3_1.mod",
+      "optimization_blob": "7dc246753328caf529f4243ec2bfd012dab9801c",
+      "circuit_blob": "46f2741b7e1edf3f0041d9ea84cacc9305ba41a4",
+      "identical": false
+    },
+    {
+      "mechanism": "NaTg.mod",
+      "optimization_blob": "630515570fc17dd1352171c26adf2f84f679c8ce",
+      "circuit_blob": "630515570fc17dd1352171c26adf2f84f679c8ce",
+      "identical": true
+    },
+    {
+      "mechanism": "Nap.mod",
+      "optimization_blob": "245fce35e1c1cd70df6c8fe0230175dc69f06ad0",
+      "circuit_blob": "245fce35e1c1cd70df6c8fe0230175dc69f06ad0",
+      "identical": true
+    },
+    {
+      "mechanism": "SK.mod",
+      "optimization_blob": "78d2a993a28afd992e8abcae54567ae16b61fdb4",
+      "circuit_blob": "78d2a993a28afd992e8abcae54567ae16b61fdb4",
+      "identical": true
+    }
+  ],
+  "morphology_blob": "c3c7e1467d404e5372cc82515cd1a5139e23e033",
+  "morphology_identical": true,
+  "kv3_difference": "vshift is RANGE in optimizer, global in circuit; both use zero; no rate equation difference",
+  "optimizer_protocol": {
+    "temperature_c": 34,
+    "initial_mv": -81,
+    "step_start_ms": 270,
+    "step_end_ms": 1270,
+    "duration_ms": 2000,
+    "holding_pulse_defined": false,
+    "soma_location": 0.5,
+    "axon_section": 0,
+    "axon_location": 0.5,
+    "cvode_active": true
+  },
+  "objective_scales": {
+    "somatic_AP_height": 4,
+    "somatic_Spikecount": 0.05,
+    "interpretation": "objective normalization weights; not biological standard deviations"
+  },
+  "limits": [
+    "No original optimization rerun",
+    "Raw acquisition holding current, filtering and junction correction provenance not established by these optimizer files",
+    "Replacement axon runtime equivalence with the original BluePyOpt version not established"
+  ]
+}

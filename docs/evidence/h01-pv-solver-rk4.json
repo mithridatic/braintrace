@@ -1,0 +1,9 @@
+{
+  "solver": "rk4",
+  "explicit_time_wrapper": false,
+  "purpose": "one-step API compatibility only; not stability or accuracy qualification",
+  "status": "one step completed",
+  "voltage_mv": [
+    -80.00009643063349
+  ]
+}

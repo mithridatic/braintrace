@@ -1,0 +1,84 @@
+{
+  "specimen_id": 528687520,
+  "download_url": "https://api.brain-map.org/api/v2/well_known_file_download/618112937",
+  "nwb_sha256": "b6412208aaeee590bfe73cbbc3f3e3d4da0622252d0a7b09961d3dc3595f27a4",
+  "pipeline": [
+    "pipeline",
+    "IVSCC",
+    "version",
+    "1.0"
+  ],
+  "records": [
+    {
+      "sweep": 20,
+      "export": "passive-0.npz",
+      "export_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108",
+      "sample_count": 363499,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "maximum_reconstruction_error_mv": 4.231929779052734e-06,
+      "bias_current_pa": 25.626740313144936,
+      "stimulus_levels_pa": [
+        -110.0000021625469,
+        0.0,
+        50.0000006675716
+      ],
+      "sampling_rate_hz": 50000.0
+    },
+    {
+      "sweep": 23,
+      "export": "passive-1.npz",
+      "export_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0",
+      "sample_count": 363499,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "maximum_reconstruction_error_mv": 3.814697265625e-06,
+      "bias_current_pa": 28.783657748943092,
+      "stimulus_levels_pa": [
+        -50.0000006675716,
+        0.0,
+        50.0000006675716
+      ],
+      "sampling_rate_hz": 50000.0
+    },
+    {
+      "sweep": 35,
+      "export": "active-0.npz",
+      "export_sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182",
+      "sample_count": 363499,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "maximum_reconstruction_error_mv": 5.602836608886719e-06,
+      "bias_current_pa": 31.445374082395006,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0000006675716,
+        190.00000184288268
+      ],
+      "sampling_rate_hz": 50000.0
+    },
+    {
+      "sweep": 39,
+      "export": "active-2.npz",
+      "export_sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91",
+      "sample_count": 363499,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "maximum_reconstruction_error_mv": 5.602836608886719e-06,
+      "bias_current_pa": 31.445374082395006,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0000006675716,
+        269.99999458432455
+      ],
+      "sampling_rate_hz": 50000.0
+    }
+  ],
+  "reserved_trace": "0.23 nA not read by this audit",
+  "interpretation": "Released calibration voltages already include the -14 mV correction. Bias current is separate from stimulus levels.",
+  "qualification": "Acquisition provenance only; model behavior is not validated."
+}

@@ -14,6 +14,8 @@ pairs = [
      "maximum CV length 10 to 5 um; dt 0.0025 ms unchanged"),
     ("braincell_mesh_5_to_2p5", "h01-pv-braincell-019-space5", "h01-pv-braincell-019-space2p5",
      "maximum CV length 5 to 2.5 um; dt 0.0025 ms unchanged"),
+    ("braincell_time_step_at_2p5", "h01-pv-braincell-019-space2p5", "h01-pv-braincell-019-space2p5-fine",
+     "dt 0.0025 to 0.00125 ms; maximum CV length 2.5 um unchanged"),
     ("neuron_mesh_1_to_3", "h01-pv-neuron-observed", "h01-pv-neuron-space3",
      "each section nseg multiplied by 3; CVode atol 1e-10 unchanged"),
     ("neuron_mesh_3_to_9", "h01-pv-neuron-space3", "h01-pv-neuron-space9",
