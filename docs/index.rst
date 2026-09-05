@@ -186,6 +186,7 @@ differentiable ecosystem for full-scale brain simulation.
    tutorials/algorithm_tutorials.rst
    tutorials/foundations.rst
    tutorials/compiler_runtime.rst
+   tutorials/h01_braincell.rst
 
 
 .. toctree::

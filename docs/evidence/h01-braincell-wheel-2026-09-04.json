@@ -1,0 +1,43 @@
+{
+  "provenance": {
+    "release": "20210601/proofread_104",
+    "url": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104/skeletons/104_proofread_neurons_swc.zip",
+    "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+    "member": "546925828.0.swc",
+    "source_sha256": "b618969af7de0d92b5a55380aa950a5a13ff359c7acf3ed6a70a3ba1434cc80d",
+    "position_scale_um": [
+      0.032,
+      0.032,
+      0.033
+    ],
+    "radius_scale_um": 0.001,
+    "compartment_policy": "custom; original H01 codes retained in source_rows",
+    "electrical_properties": "not supplied by H01",
+    "attribution": "H01: Shapson-Coe et al., Science 384, eadk4858 (2024); Lichtman laboratory, Harvard University, and Connectomics at Google. Data: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)."
+  },
+  "braincell_version": "0.1.0",
+  "cell_components": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "source_points": 795,
+  "compartments": 173,
+  "import_diagnostics": "SWC report: 1 warning\n\nWarnings\n--------\n[WARNING] semantics.no_soma_samples\nSWC contains no soma samples.",
+  "model": "uniform passive cable; no human electrophysiology fit",
+  "duration_ms": 1.0,
+  "dt_ms": 0.025,
+  "current_na": 0.001,
+  "steps": 40,
+  "voltage_min_mv": -64.66345977783203,
+  "voltage_max_mv": -61.11081314086914,
+  "voltage_final_mv": -61.11081314086914,
+  "finite": true
+}
