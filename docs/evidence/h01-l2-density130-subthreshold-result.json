@@ -1,0 +1,135 @@
+{
+  "decision": "supported",
+  "checks": {
+    "no_complete_spike": true,
+    "late_voltage_below_early": true,
+    "return_below_baseline": true
+  },
+  "invalid_reasons": [],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "model_voltage_mv": -83.98903626166714,
+      "human_voltage_mv": -84.5,
+      "voltage_error_mv": 0.5109637383328618,
+      "model_change_from_1019_ms_mv": 0.0,
+      "human_change_from_1019_ms_mv": 0.0,
+      "change_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "model_voltage_mv": -81.3146572593874,
+      "human_voltage_mv": -82.09375762939453,
+      "voltage_error_mv": 0.7791003700071286,
+      "model_change_from_1019_ms_mv": 2.6743790022797356,
+      "human_change_from_1019_ms_mv": 2.4062423706054688,
+      "change_error_mv": 0.2681366316742668
+    },
+    {
+      "time_ms": 1030,
+      "model_voltage_mv": -79.92893079827242,
+      "human_voltage_mv": -80.6875,
+      "voltage_error_mv": 0.7585692017275818,
+      "model_change_from_1019_ms_mv": 4.06010546339472,
+      "human_change_from_1019_ms_mv": 3.8125,
+      "change_error_mv": 0.24760546339472
+    },
+    {
+      "time_ms": 1040,
+      "model_voltage_mv": -77.93582781030182,
+      "human_voltage_mv": -78.53125,
+      "voltage_error_mv": 0.5954221896981835,
+      "model_change_from_1019_ms_mv": 6.053208451365322,
+      "human_change_from_1019_ms_mv": 5.96875,
+      "change_error_mv": 0.08445845136532171
+    },
+    {
+      "time_ms": 1070,
+      "model_voltage_mv": -74.94058211561143,
+      "human_voltage_mv": -75.5625,
+      "voltage_error_mv": 0.6219178843885658,
+      "model_change_from_1019_ms_mv": 9.048454146055704,
+      "human_change_from_1019_ms_mv": 8.9375,
+      "change_error_mv": 0.11095414605570397
+    },
+    {
+      "time_ms": 1120,
+      "model_voltage_mv": -73.79366217568307,
+      "human_voltage_mv": -74.1875,
+      "voltage_error_mv": 0.3938378243169325,
+      "model_change_from_1019_ms_mv": 10.19537408598407,
+      "human_change_from_1019_ms_mv": 10.3125,
+      "change_error_mv": -0.11712591401592931
+    },
+    {
+      "time_ms": 1520,
+      "model_voltage_mv": -74.00678966428625,
+      "human_voltage_mv": -75.6875,
+      "voltage_error_mv": 1.680710335713755,
+      "model_change_from_1019_ms_mv": 9.982246597380893,
+      "human_change_from_1019_ms_mv": 8.8125,
+      "change_error_mv": 1.1697465973808931
+    },
+    {
+      "time_ms": 2019,
+      "model_voltage_mv": -74.00858806935071,
+      "human_voltage_mv": -75.6875,
+      "voltage_error_mv": 1.6789119306492921,
+      "model_change_from_1019_ms_mv": 9.98044819231643,
+      "human_change_from_1019_ms_mv": 8.8125,
+      "change_error_mv": 1.1679481923164303
+    },
+    {
+      "time_ms": 2025,
+      "model_voltage_mv": -76.69511670155737,
+      "human_voltage_mv": -78.125,
+      "voltage_error_mv": 1.4298832984426326,
+      "model_change_from_1019_ms_mv": 7.293919560109771,
+      "human_change_from_1019_ms_mv": 6.375,
+      "change_error_mv": 0.9189195601097708
+    },
+    {
+      "time_ms": 2030,
+      "model_voltage_mv": -78.1012143365351,
+      "human_voltage_mv": -79.65625,
+      "voltage_error_mv": 1.5550356634649063,
+      "model_change_from_1019_ms_mv": 5.8878219251320445,
+      "human_change_from_1019_ms_mv": 4.84375,
+      "change_error_mv": 1.0440719251320445
+    },
+    {
+      "time_ms": 2050,
+      "model_voltage_mv": -81.6111254117463,
+      "human_voltage_mv": -83.28125,
+      "voltage_error_mv": 1.6701245882536995,
+      "model_change_from_1019_ms_mv": 2.3779108499208377,
+      "human_change_from_1019_ms_mv": 1.21875,
+      "change_error_mv": 1.1591608499208377
+    },
+    {
+      "time_ms": 2099,
+      "model_voltage_mv": -84.3859809258785,
+      "human_voltage_mv": -85.8125,
+      "voltage_error_mv": 1.4265190741215008,
+      "model_change_from_1019_ms_mv": -0.396944664211361,
+      "human_change_from_1019_ms_mv": -1.3125,
+      "change_error_mv": 0.915555335788639
+    }
+  ],
+  "events": [],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "changed_metadata": [
+    "sweep",
+    "integration_seconds",
+    "samples",
+    "waveform_sha256"
+  ],
+  "qualification": "Subthreshold shape prediction only. No amplitude acceptance or candidate numerical qualification. Input is calibration, not reserved.",
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-density130-sweep43.json": "00445175ed170120a03d88ffac28316345d0eff81896f87cd3109e721396457e",
+    "docs\\evidence\\h01-l2-sodium-opening-density130-sweep43.npz": "58a5b9cfb1b76ffb3bb612bb94bf5cb240fe400df405b1ce370f586cca24e3cb",
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.json": "3570305f94a92379bb888af71126b0a6be3b3886e0b48133f4e522711c5ea25b",
+    "docs\\evidence\\h01-l2-sweep43-direct-targets.json": "ec67d59800b88a1bf6699294d3ecb8feb24962d8ed9e3b007f4ef82916409b92"
+  }
+}

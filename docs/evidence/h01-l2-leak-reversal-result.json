@@ -1,0 +1,141 @@
+{
+  "baseline_prediction": "supported",
+  "shape_prediction": "supported",
+  "checks": {
+    "late_voltage_below_1120_ms": true,
+    "postpulse_voltage_below_start": true,
+    "no_complete_pulse_spikes": true
+  },
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -83.98908853219066,
+      "absolute_error_mv": 0.5109114678093363,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.31473197759918,
+      "absolute_error_mv": 0.7790256517953509,
+      "model_change_from_1019_ms_mv": 2.6743565545914834,
+      "deflection_error_mv": 0.2681141839860146
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -79.9290577752879,
+      "absolute_error_mv": 0.7584422247120983,
+      "model_change_from_1019_ms_mv": 4.060030756902762,
+      "deflection_error_mv": 0.24753075690276205
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -77.93618057566272,
+      "absolute_error_mv": 0.5950694243372823,
+      "model_change_from_1019_ms_mv": 6.052907956527946,
+      "deflection_error_mv": 0.084157956527946
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -74.94280088657686,
+      "absolute_error_mv": 0.6196991134231382,
+      "model_change_from_1019_ms_mv": 9.046287645613802,
+      "deflection_error_mv": 0.10878764561380194
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -73.79975739100448,
+      "absolute_error_mv": 0.3877426089955236,
+      "model_change_from_1019_ms_mv": 10.189331141186187,
+      "deflection_error_mv": -0.12316885881381268
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -74.01357318706681,
+      "absolute_error_mv": 1.673926812933189,
+      "model_change_from_1019_ms_mv": 9.975515345123853,
+      "deflection_error_mv": 1.1630153451238527
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -74.01538906245042,
+      "absolute_error_mv": 1.6721109375495757,
+      "model_change_from_1019_ms_mv": 9.97369946974024,
+      "deflection_error_mv": 1.1611994697402395
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -76.70095068987203,
+      "absolute_error_mv": 1.4240493101279696,
+      "model_change_from_1019_ms_mv": 7.288137842318633,
+      "deflection_error_mv": 0.9131378423186334
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -78.10620117896606,
+      "absolute_error_mv": 1.5500488210339398,
+      "model_change_from_1019_ms_mv": 5.8828873532246035,
+      "deflection_error_mv": 1.0391373532246035
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -81.61365367210185,
+      "absolute_error_mv": 1.6675963278981527,
+      "model_change_from_1019_ms_mv": 2.3754348600888164,
+      "deflection_error_mv": 1.1566848600888164
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -84.3861319652863,
+      "absolute_error_mv": 1.426368034713704,
+      "model_change_from_1019_ms_mv": -0.3970434330956323,
+      "deflection_error_mv": 0.9154565669043677
+    }
+  ],
+  "control_baseline_error_mv": 3.192792829185109,
+  "baseline_shift_from_control_mv": -2.6818813613757726,
+  "maximum_pulse_voltage_mv": -73.76225195519062,
+  "metadata_differences": [
+    "applied_passive_parameters",
+    "integration_seconds",
+    "leak_reversal_shift_mv",
+    "samples"
+  ],
+  "passive_parameters_verified": true,
+  "legacy_control_passive_provenance": "Original pinned source fit; control metadata lacks applied passive field.",
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "integration_seconds": 373.101811747998,
+  "qualification": "Single intervention at tested settings only. Candidate numerical, spiking, reserved-input and physiological qualification remain open.",
+  "sources": {
+    "h01-l2-sweep43-ih75-epasminus4.json": "0afe39ccd219919efb3f4e186bc93b6cc7e8dc26767e82006004db3ae1333ebc",
+    "h01-l2-sweep43-ih75-epasminus4.npz": "00da470db1ccccf0000982cf60148b0f73a1fea9251d3d0480287f9a0174dbc0",
+    "h01-l2-sweep43-ih75-epasminus4-raw.npz": "4120c6ec3b5b821eeeb87afe11ef58983521a4e75b453afcbbc85c43545d8286",
+    "h01-l2-sweep43-distributed-ih75.json": "c459c3b502621e3e90f5e5117a0edc397efbb2a941477a803242d2223c3aec78",
+    "h01-l2-sweep43-distributed-ih75.npz": "8cc9d6e37ebf82f41ff173868849ac416d81bd9c1a1d4c4a94ecc9ce0deb91c4"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.010970713418828382,
+    "peak_sample_voltage_mv": 0.011364285422416742,
+    "time_above_threshold_ms": 7.982256693139789e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 0.0059089468559250236,
+      "peak_sample_voltage_mv": -0.011364285422416742,
+      "time_above_threshold_ms": -7.91969162037276e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 0.010970713418828382,
+      "peak_sample_voltage_mv": -0.011331898350029235,
+      "time_above_threshold_ms": -7.982256693139789e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": -0.002545587137774419,
+      "peak_sample_voltage_mv": -0.010908011653782523,
+      "time_above_threshold_ms": -7.781313706800574e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.0018353776779349573,
+      "peak_sample_voltage_mv": -0.010947858765675278,
+      "time_above_threshold_ms": -7.742666639387608e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.004651918789249976,
+      "peak_sample_voltage_mv": -0.010983197014780899,
+      "time_above_threshold_ms": -7.856485217416775e-05
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.007200892487844612,
+      "peak_sample_voltage_mv": -0.010941098831466434,
+      "time_above_threshold_ms": -7.721112046965573e-05
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.009592051268782598,
+      "peak_sample_voltage_mv": -0.010897191819147167,
+      "time_above_threshold_ms": -7.645900564057229e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-source-sweep50-space3": [],
+    "h01-l2-source-sweep50-space9": []
+  },
+  "qualification": "Spatial comparison at one source input; no physiological qualification.",
+  "baseline_parent_evidence": "setup replay for legacy metadata; not original-run parent recording",
+  "sections_using_replayed_parent": [],
+  "segment_counts": [
+    1239,
+    3717
+  ]
+}

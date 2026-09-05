@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {
+      "path": ".cache\\human-pyramidal-l2\\sweep-43.npz",
+      "sha256": "e3d9d79f6c2e5dc519c921feaef1a41eabdb77925c94511a2333efc7930399ed",
+      "label": "Human recording",
+      "baseline_sample_1019_ms_mv": -84.5
+    },
+    {
+      "path": "docs\\evidence\\h01-l2-midpoint-sweep43-bias-cvode.npz",
+      "sha256": "df5ce7106a4d86e25715bab50d9496200801f2f839b0c90528dc2ec28a44986d",
+      "label": "Midpoint control",
+      "baseline_sample_1019_ms_mv": -84.51503572410192
+    },
+    {
+      "path": "docs\\evidence\\h01-l2-sweep43-leak150.npz",
+      "sha256": "a3f9abe6453dfe546f5e5fcd6bd78b4eaabe05515f53f320aa91554663c5f5dd",
+      "label": "Leak x1.5",
+      "baseline_sample_1019_ms_mv": -84.34961828007177
+    },
+    {
+      "path": "docs\\evidence\\h01-l2-sweep43-distributed-ih75.npz",
+      "sha256": "8cc9d6e37ebf82f41ff173868849ac416d81bd9c1a1d4c4a94ecc9ce0deb91c4",
+      "label": "Distributed Ih x75",
+      "baseline_sample_1019_ms_mv": -81.30720717081489
+    }
+  ],
+  "display_grid_ms": 1,
+  "voltage_alignment": "Each lower-panel trace subtracts its own 1019 ms sample; no other alignment.",
+  "scope": "Visualization of completed observations, not a new experiment or fitted curve."
+}

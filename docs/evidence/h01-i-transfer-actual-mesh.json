@@ -1,0 +1,181 @@
+{
+  "construction_and_mesh_seconds": 0.812618299969472,
+  "total_cv_count": 1223,
+  "branches": [
+    {
+      "name": "soma_0",
+      "membrane_cv_count": 9,
+      "length_um": 21.049591064453125,
+      "max_cv_length_um": 2.338843451605904
+    },
+    {
+      "name": "dend_0",
+      "membrane_cv_count": 5,
+      "length_um": 11.488476864017759,
+      "max_cv_length_um": 2.2976953728035525
+    },
+    {
+      "name": "dend_9",
+      "membrane_cv_count": 1,
+      "length_um": 1.1583540200590605,
+      "max_cv_length_um": 1.1583540200590605
+    },
+    {
+      "name": "dend_12",
+      "membrane_cv_count": 27,
+      "length_um": 63.634402726882726,
+      "max_cv_length_um": 2.3568297306252894
+    },
+    {
+      "name": "dend_13",
+      "membrane_cv_count": 7,
+      "length_um": 13.279287020254198,
+      "max_cv_length_um": 1.8970410028934575
+    },
+    {
+      "name": "dend_16",
+      "membrane_cv_count": 5,
+      "length_um": 11.59645531399604,
+      "max_cv_length_um": 2.3192910627992087
+    },
+    {
+      "name": "dend_19",
+      "membrane_cv_count": 3,
+      "length_um": 6.114935701950961,
+      "max_cv_length_um": 2.0383119006503208
+    },
+    {
+      "name": "axon_0",
+      "membrane_cv_count": 13,
+      "length_um": 30.0,
+      "max_cv_length_um": 2.3076923076923093
+    },
+    {
+      "name": "dend_1",
+      "membrane_cv_count": 5,
+      "length_um": 9.919504855907121,
+      "max_cv_length_um": 1.9839009711814248
+    },
+    {
+      "name": "dend_4",
+      "membrane_cv_count": 3,
+      "length_um": 4.720480975154788,
+      "max_cv_length_um": 1.5734936583849295
+    },
+    {
+      "name": "dend_10",
+      "membrane_cv_count": 81,
+      "length_um": 201.66045550240753,
+      "max_cv_length_um": 2.489635253116153
+    },
+    {
+      "name": "dend_11",
+      "membrane_cv_count": 73,
+      "length_um": 180.00675296109318,
+      "max_cv_length_um": 2.465845930973889
+    },
+    {
+      "name": "dend_14",
+      "membrane_cv_count": 55,
+      "length_um": 135.4100970859479,
+      "max_cv_length_um": 2.462001765199054
+    },
+    {
+      "name": "dend_15",
+      "membrane_cv_count": 69,
+      "length_um": 171.03034472374767,
+      "max_cv_length_um": 2.478700648170267
+    },
+    {
+      "name": "dend_17",
+      "membrane_cv_count": 83,
+      "length_um": 205.14079525912902,
+      "max_cv_length_um": 2.471575846495538
+    },
+    {
+      "name": "dend_18",
+      "membrane_cv_count": 107,
+      "length_um": 265.19957729414205,
+      "max_cv_length_um": 2.4785007223751596
+    },
+    {
+      "name": "dend_20",
+      "membrane_cv_count": 67,
+      "length_um": 167.47539022557544,
+      "max_cv_length_um": 2.499632689933969
+    },
+    {
+      "name": "dend_23",
+      "membrane_cv_count": 3,
+      "length_um": 7.255967871908609,
+      "max_cv_length_um": 2.41865595730287
+    },
+    {
+      "name": "axon_1",
+      "membrane_cv_count": 13,
+      "length_um": 30.0,
+      "max_cv_length_um": 2.3076923076923093
+    },
+    {
+      "name": "dend_2",
+      "membrane_cv_count": 151,
+      "length_um": 376.44802000753515,
+      "max_cv_length_um": 2.493033245083027
+    },
+    {
+      "name": "dend_3",
+      "membrane_cv_count": 161,
+      "length_um": 398.7593010522228,
+      "max_cv_length_um": 2.476765845044867
+    },
+    {
+      "name": "dend_5",
+      "membrane_cv_count": 21,
+      "length_um": 51.61694856495185,
+      "max_cv_length_um": 2.4579499316643765
+    },
+    {
+      "name": "dend_6",
+      "membrane_cv_count": 5,
+      "length_um": 9.071634506056721,
+      "max_cv_length_um": 1.814326901211345
+    },
+    {
+      "name": "dend_21",
+      "membrane_cv_count": 23,
+      "length_um": 53.865651147473464,
+      "max_cv_length_um": 2.341984832498851
+    },
+    {
+      "name": "dend_22",
+      "membrane_cv_count": 13,
+      "length_um": 28.62323076852514,
+      "max_cv_length_um": 2.201786982194243
+    },
+    {
+      "name": "dend_24",
+      "membrane_cv_count": 81,
+      "length_um": 201.504723347626,
+      "max_cv_length_um": 2.4877126339213196
+    },
+    {
+      "name": "dend_25",
+      "membrane_cv_count": 55,
+      "length_um": 137.27751950841687,
+      "max_cv_length_um": 2.495954900153035
+    },
+    {
+      "name": "dend_7",
+      "membrane_cv_count": 71,
+      "length_um": 172.92058352477883,
+      "max_cv_length_um": 2.4355011764053516
+    },
+    {
+      "name": "dend_8",
+      "membrane_cv_count": 13,
+      "length_um": 31.917576279652774,
+      "max_cv_length_um": 2.4551981753579075
+    }
+  ],
+  "qualification": "Static construction timing only; excludes compilation, integration and output. Frozen candidate, max CV length 2.5 um."
+}

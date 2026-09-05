@@ -1,0 +1,48 @@
+{
+  "cases": [
+    {
+      "dt_ms": 0.005,
+      "I_event_ms": 3.25,
+      "delivery_ms": 3.75,
+      "E_connected_event_ms": 4.01,
+      "E_disconnected_event_ms": 3.975,
+      "E_delay_ms": 0.0349999999999997,
+      "checks": {
+        "I_trace_exact": true,
+        "I_events_exact": true,
+        "pre_delivery_E_voltage_exact": true,
+        "disconnected_conductance_zero": true,
+        "first_delivery_reduces_E_voltage": true,
+        "E_event_delayed": true,
+        "delay_matches_configured_steps": true
+      },
+      "sha256": {
+        "h01-i-restored-circuit-i-only": "dd485afd700cc0d7b77a7f6c0a24bf1929daacd3018a264b7369c07ab170f9a7",
+        "h01-i-restored-circuit-disconnected": "7ed1cff47b1f771aa83d925e026f6f2ff59878e5d92c290528d39f15595cccb3"
+      }
+    },
+    {
+      "dt_ms": 0.0025,
+      "I_event_ms": 3.245,
+      "delivery_ms": 3.745,
+      "E_connected_event_ms": 4.010000000000001,
+      "E_disconnected_event_ms": 3.9725,
+      "E_delay_ms": 0.03750000000000053,
+      "checks": {
+        "I_trace_exact": true,
+        "I_events_exact": true,
+        "pre_delivery_E_voltage_exact": true,
+        "disconnected_conductance_zero": true,
+        "first_delivery_reduces_E_voltage": true,
+        "E_event_delayed": true,
+        "delay_matches_configured_steps": true
+      },
+      "sha256": {
+        "h01-i-restored-circuit-i-only-halfdt": "57d63373a21ec11a38c474e67fb0aa9ad7c3757d9f4beec2b6645563a4cf8ffa",
+        "h01-i-restored-circuit-disconnected-halfdt": "00c736f409d87f913eda7ab154d470a3c8fc04be02c7588975381f957b834e1a"
+      }
+    }
+  ],
+  "delay_difference_ms": 0.002500000000000835,
+  "qualification": "Direct inhibitory delay persists at both tested time steps. Not full spatial convergence, reciprocal-circuit qualification, or human waveform validation."
+}

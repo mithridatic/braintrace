@@ -1,0 +1,50 @@
+{
+  "source": "Allen morphology 569309789",
+  "nodes": 10650,
+  "root_components": [
+    {
+      "root_id": 1,
+      "root_type": 1,
+      "nodes": 10241,
+      "types": {
+        "1": 1,
+        "2": 3371,
+        "3": 2624,
+        "4": 4245
+      }
+    },
+    {
+      "root_id": 10242,
+      "root_type": 2,
+      "nodes": 58,
+      "types": {
+        "2": 58
+      }
+    },
+    {
+      "root_id": 10300,
+      "root_type": 2,
+      "nodes": 171,
+      "types": {
+        "2": 171
+      }
+    },
+    {
+      "root_id": 10471,
+      "root_type": 2,
+      "nodes": 115,
+      "types": {
+        "2": 115
+      }
+    },
+    {
+      "root_id": 10586,
+      "root_type": 2,
+      "nodes": 65,
+      "types": {
+        "2": 65
+      }
+    }
+  ],
+  "qualification": "Raw SWC component audit. The source perisomatic helper deletes reconstructed axon sections; raw roots do not directly establish remaining NEURON disconnection."
+}

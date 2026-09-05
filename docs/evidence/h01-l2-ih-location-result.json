@@ -1,0 +1,136 @@
+{
+  "decision": "rejected",
+  "checks": {
+    "late_voltage_below_1120_ms": false,
+    "postpulse_voltage_below_start": false,
+    "no_complete_pulse_spikes": true
+  },
+  "invalid_reasons": [],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -84.52228759420173,
+      "absolute_error_mv": -0.02228759420172821,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.83037681938443,
+      "absolute_error_mv": 0.26338081001010494,
+      "model_change_from_1019_ms_mv": 2.691910774817302,
+      "deflection_error_mv": 0.28566840421183315
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -80.40374494735764,
+      "absolute_error_mv": 0.28375505264236267,
+      "model_change_from_1019_ms_mv": 4.118542646844091,
+      "deflection_error_mv": 0.3060426468440909
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -78.27393434003753,
+      "absolute_error_mv": 0.2573156599624724,
+      "model_change_from_1019_ms_mv": 6.248353254164201,
+      "deflection_error_mv": 0.2796032541642006
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -74.6323455706563,
+      "absolute_error_mv": 0.9301544293437018,
+      "model_change_from_1019_ms_mv": 9.88994202354543,
+      "deflection_error_mv": 0.9524420235454301
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -72.425140615924,
+      "absolute_error_mv": 1.7623593840760066,
+      "model_change_from_1019_ms_mv": 12.097146978277735,
+      "deflection_error_mv": 1.7846469782777348
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.57686174862367,
+      "absolute_error_mv": 4.110638251376329,
+      "model_change_from_1019_ms_mv": 12.945425845578058,
+      "deflection_error_mv": 4.1329258455780575
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.58187370822262,
+      "absolute_error_mv": 4.105626291777384,
+      "model_change_from_1019_ms_mv": 12.940413885979112,
+      "deflection_error_mv": 4.127913885979112
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -74.28251658242787,
+      "absolute_error_mv": 3.842483417572126,
+      "model_change_from_1019_ms_mv": 10.239771011773854,
+      "deflection_error_mv": 3.864771011773854
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -75.70948059805909,
+      "absolute_error_mv": 3.9467694019409123,
+      "model_change_from_1019_ms_mv": 8.81280699614264,
+      "deflection_error_mv": 3.9690569961426405
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -79.3951885453323,
+      "absolute_error_mv": 3.886061454667697,
+      "model_change_from_1019_ms_mv": 5.127099048869425,
+      "deflection_error_mv": 3.9083490488694252
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -83.08605954271265,
+      "absolute_error_mv": 2.726440457287353,
+      "model_change_from_1019_ms_mv": 1.4362280514890813,
+      "deflection_error_mv": 2.7487280514890813
+    }
+  ],
+  "model_events": [],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "conservation": {
+    "areas_um2": {
+      "soma": 592.0593838294642,
+      "dend": 5496.430398784291,
+      "apic": 9349.985570578809
+    },
+    "source_maximum_conductance_s": 2.0572568315071494e-10,
+    "distributed_maximum_conductance_s": 2.0572568315071496e-10,
+    "uniform_density_s_cm2": 1.332551812560768e-06
+  },
+  "actual_maximum_conductance_s": 2.0572568315071494e-10,
+  "conserved_within_1e_12_relative": true,
+  "integration_seconds": 375.0481741629774,
+  "qualification": "Conserved-total location sufficiency prediction only; candidate numerical and human physiological qualification incomplete."
+}

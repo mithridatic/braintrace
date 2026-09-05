@@ -1,0 +1,161 @@
+{
+  "qualification": "Retrospective sensitivity of individual recovery minima. No prospective extrema acceptance gate or human uncertainty is supplied.",
+  "definition": "Earliest sampled minimum strictly between the prior falling and next rising -20 mV crossings; differences are comparison minus mesh-9 atol-10 control.",
+  "records": {
+    "h01-l2-sodium-opening-double-density130": {
+      "minima": [
+        {
+          "ordinal": 1,
+          "time_ms": 1082.0557169333094,
+          "voltage_mv": -71.65684112129954,
+          "delay_after_fall_ms": 2.3819285178979044
+        },
+        {
+          "ordinal": 2,
+          "time_ms": 1116.423211895171,
+          "voltage_mv": -72.06024208288069,
+          "delay_after_fall_ms": 2.477030455801696
+        },
+        {
+          "ordinal": 3,
+          "time_ms": 1368.1734532580022,
+          "voltage_mv": -72.13284743774575,
+          "delay_after_fall_ms": 2.506563288536654
+        },
+        {
+          "ordinal": 4,
+          "time_ms": 1679.0052893877073,
+          "voltage_mv": -72.15358360354428,
+          "delay_after_fall_ms": 2.4830798065411273
+        }
+      ],
+      "trace_sha256": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d"
+    },
+    "h01-l2-sodium-opening-density130-atol11": {
+      "minima": [
+        {
+          "ordinal": 1,
+          "time_ms": 1082.0573392428585,
+          "voltage_mv": -71.65684377851032,
+          "delay_after_fall_ms": 2.383550929696412
+        },
+        {
+          "ordinal": 2,
+          "time_ms": 1116.4229164004971,
+          "voltage_mv": -72.06024192328123,
+          "delay_after_fall_ms": 2.476734250929212
+        },
+        {
+          "ordinal": 3,
+          "time_ms": 1368.174542475233,
+          "voltage_mv": -72.13284877463518,
+          "delay_after_fall_ms": 2.507649252085457
+        },
+        {
+          "ordinal": 4,
+          "time_ms": 1679.0055050631809,
+          "voltage_mv": -72.15358362618856,
+          "delay_after_fall_ms": 2.4833087827366853
+        }
+      ],
+      "trace_sha256": "2d9267ae34ecb3f6cee83dd113c5917b98a4e7530c309e0381339a4b4acc785e"
+    },
+    "h01-l2-sodium-opening-density130-space3": {
+      "minima": [
+        {
+          "ordinal": 1,
+          "time_ms": 1082.0488469386305,
+          "voltage_mv": -71.65817058316667,
+          "delay_after_fall_ms": 2.3821610799634527
+        },
+        {
+          "ordinal": 2,
+          "time_ms": 1116.4093313884593,
+          "voltage_mv": -72.06146478217428,
+          "delay_after_fall_ms": 2.4772049073681046
+        },
+        {
+          "ordinal": 3,
+          "time_ms": 1368.1581880536166,
+          "voltage_mv": -72.13397657108783,
+          "delay_after_fall_ms": 2.507187981268089
+        },
+        {
+          "ordinal": 4,
+          "time_ms": 1678.977960491221,
+          "voltage_mv": -72.15469933414053,
+          "delay_after_fall_ms": 2.4817353631171954
+        }
+      ],
+      "trace_sha256": "45abd129f49a6c4327767cdb69043789c5363f34e8e7be17dccd226a187f1704"
+    }
+  },
+  "comparisons": {
+    "h01-l2-sodium-opening-density130-atol11": {
+      "individual_differences": [
+        {
+          "ordinal": 1,
+          "time_ms": 0.0016223095490204287,
+          "voltage_mv": -2.6572107856281946e-06,
+          "delay_after_fall_ms": 0.0016224117985075281
+        },
+        {
+          "ordinal": 2,
+          "time_ms": -0.0002954946739919251,
+          "voltage_mv": 1.5959946608745668e-07,
+          "delay_after_fall_ms": -0.00029620487248394056
+        },
+        {
+          "ordinal": 3,
+          "time_ms": 0.0010892172308558656,
+          "voltage_mv": -1.336889425829213e-06,
+          "delay_after_fall_ms": 0.0010859635488031927
+        },
+        {
+          "ordinal": 4,
+          "time_ms": 0.0002156754735551658,
+          "voltage_mv": -2.2644286445938633e-08,
+          "delay_after_fall_ms": 0.0002289761955580616
+        }
+      ],
+      "max_absolute_differences": {
+        "time_ms": 0.0016223095490204287,
+        "voltage_mv": 2.6572107856281946e-06,
+        "delay_after_fall_ms": 0.0016224117985075281
+      }
+    },
+    "h01-l2-sodium-opening-density130-space3": {
+      "individual_differences": [
+        {
+          "ordinal": 1,
+          "time_ms": -0.006869994678936564,
+          "voltage_mv": -0.0013294618671295666,
+          "delay_after_fall_ms": 0.00023256206554833625
+        },
+        {
+          "ordinal": 2,
+          "time_ms": -0.013880506711757334,
+          "voltage_mv": -0.0012226992935921999,
+          "delay_after_fall_ms": 0.0001744515664086066
+        },
+        {
+          "ordinal": 3,
+          "time_ms": -0.015265204385514153,
+          "voltage_mv": -0.001129133342075761,
+          "delay_after_fall_ms": 0.0006246927314350614
+        },
+        {
+          "ordinal": 4,
+          "time_ms": -0.027328896486324084,
+          "voltage_mv": -0.0011157305962541386,
+          "delay_after_fall_ms": -0.001344443423931807
+        }
+      ],
+      "max_absolute_differences": {
+        "time_ms": 0.027328896486324084,
+        "voltage_mv": 0.0013294618671295666,
+        "delay_after_fall_ms": 0.001344443423931807
+      }
+    }
+  }
+}

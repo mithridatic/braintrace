@@ -1,0 +1,222 @@
+{
+  "records": [
+    {
+      "role": "E",
+      "command_current_na": 0.11,
+      "pulse_ms": [
+        1020.0,
+        2020.0
+      ],
+      "raw_file": ".cache/human-pyramidal-l2/sweep-43.npz",
+      "sha256": "e3d9d79f6c2e5dc519c921feaef1a41eabdb77925c94511a2333efc7930399ed",
+      "samples": [
+        {
+          "requested_time_ms": 1019.0,
+          "sample_time_ms": 1019.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -84.5
+        },
+        {
+          "requested_time_ms": 1021.0,
+          "sample_time_ms": 1021.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -83.78125
+        },
+        {
+          "requested_time_ms": 1025.0,
+          "sample_time_ms": 1025.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -82.09375762939453
+        },
+        {
+          "requested_time_ms": 1040.0,
+          "sample_time_ms": 1040.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -78.53125
+        },
+        {
+          "requested_time_ms": 1120.0,
+          "sample_time_ms": 1120.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -74.1875
+        },
+        {
+          "requested_time_ms": 1520.0,
+          "sample_time_ms": 1520.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -75.6875
+        },
+        {
+          "requested_time_ms": 2019.0,
+          "sample_time_ms": 2019.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -75.6875
+        },
+        {
+          "requested_time_ms": 2021.0,
+          "sample_time_ms": 2021.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -76.46875
+        },
+        {
+          "requested_time_ms": 2040.0,
+          "sample_time_ms": 2040.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -81.8125
+        },
+        {
+          "requested_time_ms": 2120.0,
+          "sample_time_ms": 2120.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -85.75
+        }
+      ]
+    },
+    {
+      "role": "I",
+      "command_current_na": -0.11,
+      "pulse_ms": [
+        270.0,
+        1270.0
+      ],
+      "raw_file": ".cache/human-pv/passive-0.npz",
+      "sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108",
+      "samples": [
+        {
+          "requested_time_ms": 269.0,
+          "sample_time_ms": 269.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -87.59375
+        },
+        {
+          "requested_time_ms": 271.0,
+          "sample_time_ms": 271.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -88.96875762939453
+        },
+        {
+          "requested_time_ms": 275.0,
+          "sample_time_ms": 275.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -91.93750762939453
+        },
+        {
+          "requested_time_ms": 290.0,
+          "sample_time_ms": 290.00000000000006,
+          "time_error_ms": 5.684341886080802e-14,
+          "voltage_mv": -95.5
+        },
+        {
+          "requested_time_ms": 370.0,
+          "sample_time_ms": 370.00000000000006,
+          "time_error_ms": 5.684341886080802e-14,
+          "voltage_mv": -96.15625762939453
+        },
+        {
+          "requested_time_ms": 770.0,
+          "sample_time_ms": 770.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -95.31250762939453
+        },
+        {
+          "requested_time_ms": 1269.0,
+          "sample_time_ms": 1269.0000000000002,
+          "time_error_ms": 2.2737367544323206e-13,
+          "voltage_mv": -94.90625762939453
+        },
+        {
+          "requested_time_ms": 1271.0,
+          "sample_time_ms": 1271.0000000000002,
+          "time_error_ms": 2.2737367544323206e-13,
+          "voltage_mv": -93.59375762939453
+        },
+        {
+          "requested_time_ms": 1290.0,
+          "sample_time_ms": 1290.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -87.6875
+        },
+        {
+          "requested_time_ms": 1370.0,
+          "sample_time_ms": 1370.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -86.50000762939453
+        }
+      ]
+    },
+    {
+      "role": "I",
+      "command_current_na": -0.05,
+      "pulse_ms": [
+        270.0,
+        1270.0
+      ],
+      "raw_file": ".cache/human-pv/passive-1.npz",
+      "sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0",
+      "samples": [
+        {
+          "requested_time_ms": 269.0,
+          "sample_time_ms": 269.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -87.96875
+        },
+        {
+          "requested_time_ms": 271.0,
+          "sample_time_ms": 271.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -88.59375
+        },
+        {
+          "requested_time_ms": 275.0,
+          "sample_time_ms": 275.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -90.0625
+        },
+        {
+          "requested_time_ms": 290.0,
+          "sample_time_ms": 290.00000000000006,
+          "time_error_ms": 5.684341886080802e-14,
+          "voltage_mv": -91.6875
+        },
+        {
+          "requested_time_ms": 370.0,
+          "sample_time_ms": 370.00000000000006,
+          "time_error_ms": 5.684341886080802e-14,
+          "voltage_mv": -92.0
+        },
+        {
+          "requested_time_ms": 770.0,
+          "sample_time_ms": 770.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -92.0
+        },
+        {
+          "requested_time_ms": 1269.0,
+          "sample_time_ms": 1269.0000000000002,
+          "time_error_ms": 2.2737367544323206e-13,
+          "voltage_mv": -91.78125
+        },
+        {
+          "requested_time_ms": 1271.0,
+          "sample_time_ms": 1271.0000000000002,
+          "time_error_ms": 2.2737367544323206e-13,
+          "voltage_mv": -91.15625
+        },
+        {
+          "requested_time_ms": 1290.0,
+          "sample_time_ms": 1290.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -88.15625762939453
+        },
+        {
+          "requested_time_ms": 1370.0,
+          "sample_time_ms": 1370.0,
+          "time_error_ms": 0.0,
+          "voltage_mv": -87.5
+        }
+      ]
+    }
+  ],
+  "reserved_traces_used": false,
+  "qualification": "Direct human subthreshold calibration samples; command amplitude is separate from acquisition bias. No biological tolerance or model validation inferred."
+}

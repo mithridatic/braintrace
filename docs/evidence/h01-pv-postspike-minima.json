@@ -1,0 +1,128 @@
+{
+  "records": [
+    {
+      "current_na": 0.19,
+      "human": [
+        {
+          "previous_peak_ms": 290.92,
+          "next_rise_ms": 298.4040826873385,
+          "minimum_sample_time_ms": 291.68000000000006,
+          "minimum_sample_voltage_mv": -78.84375,
+          "time_from_peak_ms": 0.7600000000000477,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 298.52,
+          "next_rise_ms": 308.6050531914894,
+          "minimum_sample_time_ms": 299.3,
+          "minimum_sample_voltage_mv": -78.71875,
+          "time_from_peak_ms": 0.7800000000000296,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 308.72,
+          "next_rise_ms": 351.3649291784703,
+          "minimum_sample_time_ms": 309.48,
+          "minimum_sample_voltage_mv": -78.90625762939453,
+          "time_from_peak_ms": 0.7599999999999909,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        }
+      ],
+      "model": [
+        {
+          "previous_peak_ms": 299.48375193458537,
+          "next_rise_ms": 308.232581049183,
+          "minimum_sample_time_ms": 301.78122804674337,
+          "minimum_sample_voltage_mv": -71.86296352698878,
+          "time_from_peak_ms": 2.2974761121579945,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 308.3283888198522,
+          "next_rise_ms": 316.7880861221675,
+          "minimum_sample_time_ms": 310.5872225689498,
+          "minimum_sample_voltage_mv": -71.59733835624722,
+          "time_from_peak_ms": 2.2588337490976187,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 316.88390759007217,
+          "next_rise_ms": 327.20175244322826,
+          "minimum_sample_time_ms": 319.18930649287825,
+          "minimum_sample_voltage_mv": -72.40833708499366,
+          "time_from_peak_ms": 2.3053989028060755,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        }
+      ]
+    },
+    {
+      "current_na": 0.27,
+      "human": [
+        {
+          "previous_peak_ms": 281.98,
+          "next_rise_ms": 288.09579831932774,
+          "minimum_sample_time_ms": 282.68000000000006,
+          "minimum_sample_voltage_mv": -78.90625762939453,
+          "time_from_peak_ms": 0.7000000000000455,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 288.22,
+          "next_rise_ms": 294.0438043478261,
+          "minimum_sample_time_ms": 288.96000000000004,
+          "minimum_sample_voltage_mv": -78.125,
+          "time_from_peak_ms": 0.7400000000000091,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 294.16,
+          "next_rise_ms": 300.92410810810816,
+          "minimum_sample_time_ms": 294.90000000000003,
+          "minimum_sample_voltage_mv": -78.03125,
+          "time_from_peak_ms": 0.7400000000000091,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        }
+      ],
+      "model": [
+        {
+          "previous_peak_ms": 281.44089702633806,
+          "next_rise_ms": 286.304641317672,
+          "minimum_sample_time_ms": 283.48619169795757,
+          "minimum_sample_voltage_mv": -68.11896525808373,
+          "time_from_peak_ms": 2.0452946716195015,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 286.4005664339472,
+          "next_rise_ms": 290.0132411330583,
+          "minimum_sample_time_ms": 288.328178699233,
+          "minimum_sample_voltage_mv": -63.764814472654805,
+          "time_from_peak_ms": 1.927612265285802,
+          "previous_peak_positive": true,
+          "next_peak_positive": true
+        },
+        {
+          "previous_peak_ms": 290.11223265316613,
+          "next_rise_ms": 292.2216097399485,
+          "minimum_sample_time_ms": 291.4984321534156,
+          "minimum_sample_voltage_mv": -53.07810086954181,
+          "time_from_peak_ms": 1.386199500249461,
+          "previous_peak_positive": true,
+          "next_peak_positive": false
+        }
+      ]
+    }
+  ],
+  "reserved_trace_used": false,
+  "limit": "Sampled interval minima, not threshold-relative AHP amplitude or causal channel identification"
+}

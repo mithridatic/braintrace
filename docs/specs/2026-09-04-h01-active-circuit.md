@@ -1,6 +1,11 @@
 # Active H01 cells and a small E/I circuit
 
-Status: implementation and qualification pending. User authorized the staged
+Current status: the core two-cell implementation exists; qualification is
+incomplete. See the [current implementation audit](../evidence/h01-implementation-status.md).
+The historical ledger below contains earlier pending items and is not the
+current implementation checklist.
+
+User authorized the staged
 single-cell then circuit approach. Work remains on feat/h01-braincell.
 
 ## Objective

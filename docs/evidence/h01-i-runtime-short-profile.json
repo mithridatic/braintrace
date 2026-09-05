@@ -1,0 +1,54 @@
+{
+  "profile_total_seconds": 21.165152299999967,
+  "selected_functions": [
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\_multi_compartment\\cell.py",
+      "line": 459,
+      "function": "init_state",
+      "calls": 1,
+      "self_seconds": 0.0018522,
+      "cumulative_seconds": 6.2870033
+    },
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\compiler.py",
+      "line": 425,
+      "function": "compile_or_get_cached",
+      "calls": 73,
+      "self_seconds": 0.0015643,
+      "cumulative_seconds": 4.3523104
+    },
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\compiler.py",
+      "line": 330,
+      "function": "backend_compile_and_load",
+      "calls": 73,
+      "self_seconds": 4.273473200000001,
+      "cumulative_seconds": 4.2735789
+    },
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\_base_ion.py",
+      "line": 327,
+      "function": "init_state",
+      "calls": 3,
+      "self_seconds": 9.730000000000001e-05,
+      "cumulative_seconds": 0.8779489
+    },
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\braintrace\\datasets\\h01_pv_channels.py",
+      "line": 33,
+      "function": "init_state",
+      "calls": 19,
+      "self_seconds": 0.00012040000000000001,
+      "cumulative_seconds": 0.7658094000000001
+    },
+    {
+      "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\braincell\\_compute\\runtime.py",
+      "line": 1825,
+      "function": "init_state",
+      "calls": 2,
+      "self_seconds": 2.68e-05,
+      "cumulative_seconds": 0.1487699
+    }
+  ],
+  "limits": "cProfile overhead included; nested cumulative times are not additive. One 1 ms resting run, 1600 steps. Not a full-run benchmark or kernel-level attribution."
+}

@@ -1,0 +1,154 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 2.3018281581244082e-05,
+    "peak_sample_voltage_mv": 4.2417094306301806e-05,
+    "time_above_threshold_ms": 1.0909479897236452e-06
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 2.903648237406742e-07,
+      "peak_sample_voltage_mv": -3.249708484531766e-06,
+      "time_above_threshold_ms": -3.9261431084014475e-07
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 1.0505134468985489e-06,
+      "peak_sample_voltage_mv": 4.2417094306301806e-05,
+      "time_above_threshold_ms": -3.4031495488306973e-07
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 4.344630042396602e-06,
+      "peak_sample_voltage_mv": -3.988107479813152e-07,
+      "time_above_threshold_ms": -1.0909479897236452e-06
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": -1.2919990467707976e-05,
+      "peak_sample_voltage_mv": 6.02074251077056e-06,
+      "time_above_threshold_ms": -3.80731535187806e-07
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": -2.3018281581244082e-05,
+      "peak_sample_voltage_mv": 2.1776285265673323e-05,
+      "time_above_threshold_ms": 2.679046247067163e-07
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-sodium-opening-double-density130": [],
+    "h01-l2-sodium-opening-density130-atol11": []
+  },
+  "qualification": "Tolerance comparison for sodium density 1.3, opening factor 2 only. No spatial or physiological qualification.",
+  "checks": [
+    {
+      "stem": "h01-l2-sodium-opening-double-density130",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-sodium-opening-density130-atol11",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "changed_metadata": [
+    "cvode_atol",
+    "samples",
+    "integration_seconds"
+  ],
+  "phases_ms": [
+    [
+      [
+        0.16677637376164967,
+        0.7938629568966462
+      ],
+      [
+        0.1677433287261465,
+        0.7870913025965365
+      ],
+      [
+        0.16814441707902006,
+        0.7811132633116813
+      ],
+      [
+        0.16825034814041828,
+        0.7803333937047228
+      ],
+      [
+        0.1681326037623876,
+        0.7800584484873525
+      ]
+    ],
+    [
+      [
+        0.16679549232503632,
+        0.7938434457189487
+      ],
+      [
+        0.1675859705080711,
+        0.787248320499657
+      ],
+      [
+        0.1685595873582315,
+        0.7806970020844801
+      ],
+      [
+        0.16830007287740045,
+        0.7802832882362054
+      ],
+      [
+        0.16820825239960868,
+        0.7799830677547561
+      ]
+    ]
+  ],
+  "phase_differences_ms": [
+    [
+      1.9118563386655296e-05,
+      -1.951117769749544e-05
+    ],
+    [
+      -0.0001573582180753874,
+      0.00015701790312050434
+    ],
+    [
+      0.000415170279211452,
+      -0.00041626122720117564
+    ],
+    [
+      4.9724736982170725e-05,
+      -5.010546851735853e-05
+    ],
+    [
+      7.564863722109294e-05,
+      -7.538073259638622e-05
+    ]
+  ],
+  "max_phase_difference_ms": 0.00041626122720117564,
+  "phase_limit_ms": 0.01,
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.json": "3570305f94a92379bb888af71126b0a6be3b3886e0b48133f4e522711c5ea25b",
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.npz": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d",
+    "docs\\evidence\\h01-l2-sodium-opening-density130-atol11.json": "1461033315e1b788a59ce6c67d919de886cb9ee41b1b40814b28daa636104163",
+    "docs\\evidence\\h01-l2-sodium-opening-density130-atol11.npz": "2d9267ae34ecb3f6cee83dd113c5917b98a4e7530c309e0381339a4b4acc785e",
+    "docs\\specs\\2026-09-05-human-l2-density130-validation.md": "fac09e0794f8356c89b25b0812f85b4f0b3c5afd5addb3259fcb26a9368c089d"
+  }
+}

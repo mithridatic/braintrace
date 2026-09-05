@@ -1,0 +1,99 @@
+{
+  "cases": [
+    {
+      "case": "discrete",
+      "samples": [
+        {
+          "sample": "own_peak",
+          "time_ms": 3.63,
+          "voltage_mv": -14.100263682145606,
+          "discrete_membrane_including_input_na": 0.9988562473476263,
+          "axial_inward_by_neighbor_na": [
+            -0.792096130183215,
+            -0.2067495666471053
+          ],
+          "capacitive_na": 1.0550515449732744e-05,
+          "residual_na": -1.8562928971732617e-12
+        },
+        {
+          "sample": "baseline_peak_time",
+          "time_ms": 3.63,
+          "voltage_mv": -14.100263682145606,
+          "discrete_membrane_including_input_na": 0.9988562473476263,
+          "axial_inward_by_neighbor_na": [
+            -0.792096130183215,
+            -0.2067495666471053
+          ],
+          "capacitive_na": 1.0550515449732744e-05,
+          "residual_na": -1.8562928971732617e-12
+        }
+      ],
+      "discrete_residual_max_na": 2.275667959567094e-11,
+      "sha256": "ac566f801cde104241870ee4d5399e70d444a0218a83e180567951e15c1d32cc"
+    },
+    {
+      "case": "soma",
+      "samples": [
+        {
+          "sample": "own_peak",
+          "time_ms": 3.345,
+          "voltage_mv": 41.340134065504245,
+          "discrete_membrane_including_input_na": 1.0644921057882335,
+          "axial_inward_by_neighbor_na": [
+            -0.8340172402319281,
+            -0.23034219208770135
+          ],
+          "capacitive_na": 0.00013267347225841473,
+          "residual_na": 3.654410107856165e-12
+        },
+        {
+          "sample": "baseline_peak_time",
+          "time_ms": 3.63,
+          "voltage_mv": 32.212982283611154,
+          "discrete_membrane_including_input_na": 1.0206493165116879,
+          "axial_inward_by_neighbor_na": [
+            -0.8890383744898691,
+            -0.13396307378098107
+          ],
+          "capacitive_na": -0.0023521317594172382,
+          "residual_na": -2.5490720645393594e-13
+        }
+      ],
+      "discrete_residual_max_na": 2.7569624914177554e-11,
+      "sha256": "84044675f2edb8b0365d269ba63befd5f46b6476bcf5fcf260ad556266f45336"
+    },
+    {
+      "case": "axon",
+      "samples": [
+        {
+          "sample": "own_peak",
+          "time_ms": 3.785,
+          "voltage_mv": 2.0010477985433024,
+          "discrete_membrane_including_input_na": 0.9632625578738176,
+          "axial_inward_by_neighbor_na": [
+            -0.7187138858697624,
+            -0.244543246642543
+          ],
+          "capacitive_na": 5.425361236754813e-06,
+          "residual_na": -2.7555735471196385e-13
+        },
+        {
+          "sample": "baseline_peak_time",
+          "time_ms": 3.63,
+          "voltage_mv": -0.31488846737670206,
+          "discrete_membrane_including_input_na": 0.9843115834722665,
+          "axial_inward_by_neighbor_na": [
+            -0.7192705836317349,
+            -0.2625114203689291
+          ],
+          "capacitive_na": 0.002529579471602724,
+          "residual_na": 1.1102230246251565e-16
+        }
+      ],
+      "discrete_residual_max_na": 2.275667959567094e-11,
+      "sha256": "f68a65a76d583e441e2fdd739c5a5a5008bfa21cad93c7038ec9ff53087854a0"
+    }
+  ],
+  "location": "CV 144, source soma midpoint, neighbors CV 143 and 145",
+  "qualification": "Paired local balance observations. Does not isolate the causal mediator or establish validity of nonphysical clamps."
+}

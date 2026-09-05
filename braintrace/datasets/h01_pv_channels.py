@@ -6,6 +6,8 @@ Import this module to register the ``H01PV_*`` mechanism names.
 """
 
 import brainstate
+import jax.numpy as jnp
+import numpy as np
 import braintools
 import brainunit as u
 from braincell._base import HHTypedNeuron
@@ -13,11 +15,18 @@ from braincell.channel._base import Gate, HH
 from braincell.ion import Calcium, Potassium, Sodium
 from braincell.mech import register_channel
 
-from .h01_pv_rates import pv_rates
+from .h01_pv_rates import pv_rates, _pair, _Q
+from .h01_wilbers import rate_trap
 
 
 class _PVChannel(HH):
-    def __init__(self, size, g_max, name=None):
+    def __init__(self, size, g_max, name=None, *, m_open=1., m_close=1.,
+                 h_open=1., h_close=1., h_slope=6.):
+        factors = (m_open, m_close, h_open, h_close, h_slope)
+        if any(not np.isfinite(f).all() or np.any(np.asarray(f) <= 0) for f in factors):
+            raise ValueError("Gate factors and slope must be positive and finite.")
+        self.phase_factors = {"m": (m_open, m_close), "h": (h_open, h_close)}
+        self.h_slope = h_slope
         super().__init__(size=size, name=name)
         self.g_max = braintools.init.param(g_max, self.varshape, allow_none=False)
 
@@ -38,7 +47,12 @@ class _PVChannel(HH):
 
     def _rates(self, voltage, ions):
         calcium = ions[1].Ci.to_decimal(u.mM) if self.mechanism == "SK" else 1e-4
-        return pv_rates(self.mechanism, voltage.to_decimal(u.mV), calcium)
+        v = voltage.to_decimal(u.mV)
+        rates = pv_rates(self.mechanism, v, calcium)
+        if self.mechanism == "NaTg":
+            rates["h"] = _pair(rate_trap(-v, 56., .015, self.h_slope),
+                               rate_trap(v, -56., .015, self.h_slope), _Q)
+        return rates
 
     def current(self, voltage, *ions):
         """Return inward-positive current density.
@@ -61,7 +75,15 @@ class _PVChannel(HH):
 
 def _rate_accessor(gate, component):
     def rate(self, voltage, *ions):
-        return self._rates(voltage, ions)[gate][component]
+        equilibrium, tau = self._rates(voltage, ions)[gate]
+        if component == 0:
+            return equilibrium
+        opening, closing = self.phase_factors.get(gate, (1., 1.))
+        state = getattr(self, gate, None)
+        value = equilibrium if state is None else state.value
+        if self.mechanism == "Kv3_1":
+            return tau*jnp.where(equilibrium < value, closing, opening)
+        return tau*jnp.where(equilibrium > value, opening, closing)
     return rate
 
 

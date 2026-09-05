@@ -1,0 +1,130 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    1,
+    1
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 2.926753950305283e-07,
+    "peak_sample_voltage_mv": 1.87742666213353e-06,
+    "time_above_threshold_ms": 3.8920211409276817e-07
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 2.926753950305283e-07,
+      "peak_sample_voltage_mv": 1.87742666213353e-06,
+      "time_above_threshold_ms": -3.8920211409276817e-07
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-kv3-closing-half": [],
+    "h01-l2-kv3-closing-half-atol11": []
+  },
+  "qualification": "Tolerance stability of the rejected half-time response only; no spatial qualification or unique sustaining mechanism.",
+  "checks": [
+    {
+      "stem": "h01-l2-kv3-closing-half",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-kv3-closing-half-atol11",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "changed_metadata": [
+    "samples",
+    "integration_seconds",
+    "cvode_atol"
+  ],
+  "phases_ms": [
+    [
+      [
+        0.16677636418626207,
+        0.821044786352104
+      ]
+    ],
+    [
+      [
+        0.16676189324039115,
+        0.8210588680958608
+      ]
+    ]
+  ],
+  "phase_differences_ms": [
+    [
+      -1.4470945870925789e-05,
+      1.408174375683302e-05
+    ]
+  ],
+  "max_phase_difference_ms": 1.4470945870925789e-05,
+  "phase_limit_ms": 0.01,
+  "sample_times_ms": [
+    1082,
+    1090,
+    1100,
+    1110,
+    1120,
+    1200,
+    1500,
+    2019,
+    2099
+  ],
+  "sample_voltages_mv": [
+    [
+      -25.627602534691885,
+      -27.445641458739402,
+      -28.307766268991323,
+      -28.449928058000218,
+      -28.495801411305376,
+      -28.626273785985738,
+      -28.841343553940654,
+      -28.967703604320562,
+      -29.444548052368397
+    ],
+    [
+      -25.627602790781076,
+      -27.445641478186182,
+      -28.307766268934486,
+      -28.449928054243188,
+      -28.495801406212273,
+      -28.626273800617565,
+      -28.84134438337066,
+      -28.96770438182336,
+      -29.444548661063337
+    ]
+  ],
+  "sample_differences_mv": [
+    -2.560891907421592e-07,
+    -1.9446780186171964e-08,
+    5.6836313433450414e-11,
+    3.757030242468318e-09,
+    5.093102828368501e-09,
+    -1.4631826417144111e-08,
+    -8.29430007343035e-07,
+    -7.775027981438143e-07,
+    -6.086949397854369e-07
+  ],
+  "max_sample_difference_mv": 8.29430007343035e-07,
+  "sample_limit_mv": 0.01,
+  "sha256": {
+    "docs\\evidence\\h01-l2-kv3-closing-half.json": "ae450f1b0c144f3d4e1ce55ad57aba0eb2fbf8e3c78526486bbad9f18da6b9f1",
+    "docs\\evidence\\h01-l2-kv3-closing-half.npz": "b9b0af08b2cc584a5c06695b6c9ab992ca95c83cb0da51df73b73afd0f4a64d8",
+    "docs\\evidence\\h01-l2-kv3-closing-half-atol11.json": "3d902876c5c234cf1f2bde44526576b7a7db77e328f9f87e5ebf747a919462b0",
+    "docs\\evidence\\h01-l2-kv3-closing-half-atol11.npz": "cf48aa5e56cdadddfbfb27ef87650d1da15a5a651fcba113258fc29ec405c99a",
+    "docs\\specs\\2026-09-05-human-l2-kv3-closing-mild.md": "73a4ef917dd9de8486140c076c557859f7f2fe99f7182afdf7b8de32ec30b252"
+  }
+}

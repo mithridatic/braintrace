@@ -1,0 +1,124 @@
+{
+  "reference_events": [
+    {
+      "rise_crossing_ms": 281.1978580641761,
+      "fall_crossing_ms": 281.41859078818624,
+      "time_above_threshold_ms": 0.22073272401013355,
+      "peak_sample_time_ms": 281.2826793694776,
+      "peak_sample_voltage_mv": 17.940096861622266
+    },
+    {
+      "rise_crossing_ms": 286.1878127551602,
+      "fall_crossing_ms": 286.4101035011233,
+      "time_above_threshold_ms": 0.22229074596305054,
+      "peak_sample_time_ms": 286.273233606174,
+      "peak_sample_voltage_mv": 17.692406953604358
+    },
+    {
+      "rise_crossing_ms": 290.4473581683367,
+      "fall_crossing_ms": 290.67102577050747,
+      "time_above_threshold_ms": 0.22366760217079218,
+      "peak_sample_time_ms": 290.5336038077331,
+      "peak_sample_voltage_mv": 17.046162573503032
+    },
+    {
+      "rise_crossing_ms": 294.57451683380134,
+      "fall_crossing_ms": 294.798926250358,
+      "time_above_threshold_ms": 0.22440941655668212,
+      "peak_sample_time_ms": 294.6612003428974,
+      "peak_sample_voltage_mv": 16.55904039902248
+    },
+    {
+      "rise_crossing_ms": 298.9381293042215,
+      "fall_crossing_ms": 299.1623961954917,
+      "time_above_threshold_ms": 0.22426689127019017,
+      "peak_sample_time_ms": 299.0246611025996,
+      "peak_sample_voltage_mv": 16.4717519494629
+    }
+  ],
+  "actual_events": [
+    {
+      "rise_crossing_ms": 281.19977342910454,
+      "fall_crossing_ms": 281.4212504516703,
+      "time_above_threshold_ms": 0.2214770225657503,
+      "peak_sample_time_ms": 281.285,
+      "peak_sample_voltage_mv": 17.82748761776268
+    },
+    {
+      "rise_crossing_ms": 286.1786401293761,
+      "fall_crossing_ms": 286.4016892253419,
+      "time_above_threshold_ms": 0.22304909596579137,
+      "peak_sample_time_ms": 286.265,
+      "peak_sample_voltage_mv": 17.57932608662036
+    },
+    {
+      "rise_crossing_ms": 290.42526175531606,
+      "fall_crossing_ms": 290.64972161483837,
+      "time_above_threshold_ms": 0.2244598595223124,
+      "peak_sample_time_ms": 290.5125,
+      "peak_sample_voltage_mv": 16.919754658166404
+    },
+    {
+      "rise_crossing_ms": 294.53535120627805,
+      "fall_crossing_ms": 294.76058188368495,
+      "time_above_threshold_ms": 0.2252306774068984,
+      "peak_sample_time_ms": 294.6225,
+      "peak_sample_voltage_mv": 16.423534294421206
+    },
+    {
+      "rise_crossing_ms": 298.8730747710749,
+      "fall_crossing_ms": 299.09816754272083,
+      "time_above_threshold_ms": 0.22509277164590458,
+      "peak_sample_time_ms": 298.96,
+      "peak_sample_voltage_mv": 16.336696297949732
+    }
+  ],
+  "signed_errors": [
+    {
+      "rise_crossing_ms": 0.0019153649284362473,
+      "peak_sample_voltage_mv": -0.11260924385958404,
+      "time_above_threshold_ms": 0.0007442985556167514
+    },
+    {
+      "rise_crossing_ms": -0.009172625784117372,
+      "peak_sample_voltage_mv": -0.11308086698399933,
+      "time_above_threshold_ms": 0.0007583500027408263
+    },
+    {
+      "rise_crossing_ms": -0.02209641302061982,
+      "peak_sample_voltage_mv": -0.1264079153366282,
+      "time_above_threshold_ms": 0.0007922573515202203
+    },
+    {
+      "rise_crossing_ms": -0.039165627523289004,
+      "peak_sample_voltage_mv": -0.13550610460127288,
+      "time_above_threshold_ms": 0.0008212608502162766
+    },
+    {
+      "rise_crossing_ms": -0.06505453314656506,
+      "peak_sample_voltage_mv": -0.13505565151316645,
+      "time_above_threshold_ms": 0.0008258803757144051
+    }
+  ],
+  "same_nonzero_event_count": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "gates": {
+    "rise_crossing_ms": true,
+    "peak_sample_voltage_mv": false,
+    "time_above_threshold_ms": true
+  },
+  "passed": false,
+  "window_ms": [
+    270.0,
+    300.0
+  ],
+  "qualification": "Numerical spike transfer only; human and circuit validation remain separate.",
+  "inputs": {
+    "h01-pv-regional-mesh-axon2187": "8f3da341bad9225ebc82a82da74df65ffa5c5d66214a442a8bee9a26dabe8ba0",
+    "h01-pv-candidate-transfer-burst": "fedc68a9dc0133e27ba26e3ddb3408297600addcc0e402fe348d45ce3ad41920"
+  }
+}

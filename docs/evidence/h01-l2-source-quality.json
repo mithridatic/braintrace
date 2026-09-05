@@ -1,0 +1,251 @@
+{
+  "specimen_id": 541563728,
+  "source_metadata_sha256": "ce4eb932cb07bbdb00b0655ff2ae4922e0e24c0e93e71bbed7f7ed41209bc0e5",
+  "source_model": "EphysSweep",
+  "source_query_specimen_id": 541563728,
+  "source_rows": 78,
+  "limits": {
+    "pre_noise_rms_mv": 0.07,
+    "post_noise_rms_mv": 0.07,
+    "slow_noise_rms_mv": 0.5,
+    "vm_delta_mv": 1.0,
+    "leak_pa": 100.0,
+    "bridge_balance_mohm": 20.0
+  },
+  "records": [
+    {
+      "sweep": 43,
+      "source_record_id": 541564837,
+      "values": {
+        "pre_noise_rms_mv": 0.0400177054107189,
+        "post_noise_rms_mv": 0.0329299904406071,
+        "slow_noise_rms_mv": 0.0561258122324944,
+        "vm_delta_mv": 0.0635528564453125,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 8.97435855865479
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": null,
+      "bridge_to_reported_input_resistance_ratio": 0.115333066381254,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -70.4508438110352,
+      "source_post_vm_mv": -70.5143966674805
+    },
+    {
+      "sweep": 50,
+      "source_record_id": 541564851,
+      "values": {
+        "pre_noise_rms_mv": 0.0493013300001621,
+        "post_noise_rms_mv": 0.03728137165308,
+        "slow_noise_rms_mv": 0.212499246001244,
+        "vm_delta_mv": 0.223670959472656,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 8.97435855865479
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 5,
+      "bridge_to_reported_input_resistance_ratio": 0.115333066381254,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -70.232292175293,
+      "source_post_vm_mv": -70.0086212158203
+    },
+    {
+      "sweep": 56,
+      "source_record_id": 541564863,
+      "values": {
+        "pre_noise_rms_mv": 0.0325512513518333,
+        "post_noise_rms_mv": 0.0339149869978428,
+        "slow_noise_rms_mv": 0.11237046867609,
+        "vm_delta_mv": 0.10693359375,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 1,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.7929077148438,
+      "source_post_vm_mv": -69.8998413085938
+    },
+    {
+      "sweep": 57,
+      "source_record_id": 541564865,
+      "values": {
+        "pre_noise_rms_mv": 0.0326111912727356,
+        "post_noise_rms_mv": 0.0351492092013359,
+        "slow_noise_rms_mv": 0.0593162067234516,
+        "vm_delta_mv": 0.0516281127929688,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": null,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.8948135375977,
+      "source_post_vm_mv": -69.9464416503906
+    },
+    {
+      "sweep": 58,
+      "source_record_id": 541564867,
+      "values": {
+        "pre_noise_rms_mv": 0.0360754169523716,
+        "post_noise_rms_mv": 0.0400440245866776,
+        "slow_noise_rms_mv": 0.0656367465853691,
+        "vm_delta_mv": 0.142890930175781,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": null,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.9072189331055,
+      "source_post_vm_mv": -70.0501098632812
+    },
+    {
+      "sweep": 59,
+      "source_record_id": 541564869,
+      "values": {
+        "pre_noise_rms_mv": 0.0300859790295362,
+        "post_noise_rms_mv": 0.0292134769260883,
+        "slow_noise_rms_mv": 0.0532255582511425,
+        "vm_delta_mv": 0.0107498168945312,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 1,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.966911315918,
+      "source_post_vm_mv": -69.9561614990234
+    },
+    {
+      "sweep": 60,
+      "source_record_id": 541564871,
+      "values": {
+        "pre_noise_rms_mv": 0.0361903235316277,
+        "post_noise_rms_mv": 0.0321822948753834,
+        "slow_noise_rms_mv": 0.0637454688549042,
+        "vm_delta_mv": 0.106239318847656,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 1,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.6975479125977,
+      "source_post_vm_mv": -69.59130859375
+    },
+    {
+      "sweep": 61,
+      "source_record_id": 541564873,
+      "values": {
+        "pre_noise_rms_mv": 0.0381737910211086,
+        "post_noise_rms_mv": 0.0334206111729145,
+        "slow_noise_rms_mv": 0.0715002045035362,
+        "vm_delta_mv": 0.344924926757812,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 1,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.6477584838867,
+      "source_post_vm_mv": -69.9926834106445
+    },
+    {
+      "sweep": 62,
+      "source_record_id": 541564875,
+      "values": {
+        "pre_noise_rms_mv": 0.0320180766284466,
+        "post_noise_rms_mv": 0.0383021757006645,
+        "slow_noise_rms_mv": 0.0628113299608231,
+        "vm_delta_mv": 0.0203018188476562,
+        "leak_pa": -3.71185898780823,
+        "bridge_balance_mohm": 9.21855926513672
+      },
+      "checks": {
+        "pre_noise_rms_mv": true,
+        "post_noise_rms_mv": true,
+        "slow_noise_rms_mv": true,
+        "vm_delta_mv": true,
+        "leak_pa": true,
+        "bridge_balance_mohm": true
+      },
+      "source_num_spikes": 1,
+      "bridge_to_reported_input_resistance_ratio": 0.11847138719905419,
+      "ratio_scope": "Proxy using published feature; break-in input resistance not independently verified.",
+      "source_pre_vm_mv": -69.769416809082,
+      "source_post_vm_mv": -69.7897186279297
+    }
+  ],
+  "reported_input_resistance_mohm": 77.8125375509262,
+  "all_selected_measured_checks_pass": true,
+  "unresolved": [
+    "original sweep approval status",
+    "manual bridge test-pulse review",
+    "break-in relative resistance criterion",
+    "electrode zeroing and final drift"
+  ],
+  "qualification": "Source-reported numeric quality checks only; not complete source QC or model physiological validation."
+}

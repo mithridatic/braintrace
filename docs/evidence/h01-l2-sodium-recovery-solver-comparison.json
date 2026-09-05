@@ -1,0 +1,60 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.08419650252017163,
+    "peak_sample_voltage_mv": 0.0026741627690256564,
+    "time_above_threshold_ms": 3.784918021665362e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.0015739302218662488,
+      "peak_sample_voltage_mv": -0.00265281035302678,
+      "time_above_threshold_ms": 3.784918021665362e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.002573292144916195,
+      "peak_sample_voltage_mv": -0.0026741627690256564,
+      "time_above_threshold_ms": 3.6278331208450254e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.057284162540781836,
+      "peak_sample_voltage_mv": -0.0025022692897351817,
+      "time_above_threshold_ms": 3.7095835295986035e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.06872892933165531,
+      "peak_sample_voltage_mv": -0.0026313206655075305,
+      "time_above_threshold_ms": 3.678165126075328e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.08419650252017163,
+      "peak_sample_voltage_mv": -0.002477189337170671,
+      "time_above_threshold_ms": 3.577020061129588e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-sodium-recovery-double": [],
+    "h01-l2-sodium-recovery-double-cvode": []
+  },
+  "qualification": "Solver agreement for sodium factor two and calcium factor 1.5 on mesh nine only; no human physiological qualification.",
+  "setup_invariants_passed": true,
+  "raw_index_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "integration_seconds": 189.49153451703023
+}

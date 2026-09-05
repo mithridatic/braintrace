@@ -1,0 +1,127 @@
+{
+  "decision": "invalid",
+  "checks": {
+    "late_voltage_below_1120_ms": false,
+    "postpulse_voltage_below_start": false,
+    "no_complete_pulse_spikes": true
+  },
+  "invalid_reasons": [
+    "recording, input, or endpoint failure"
+  ],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "corrected_voltage_mv": -84.5,
+      "change_from_1019_ms_mv": 0.0,
+      "model_voltage_mv": -84.51503572410192,
+      "absolute_error_mv": -0.015035724101920778,
+      "model_change_from_1019_ms_mv": 0.0,
+      "deflection_error_mv": 0.0
+    },
+    {
+      "time_ms": 1025,
+      "corrected_voltage_mv": -82.09375762939453,
+      "change_from_1019_ms_mv": 2.4062423706054688,
+      "model_voltage_mv": -81.82372988156233,
+      "absolute_error_mv": 0.2700277478322022,
+      "model_change_from_1019_ms_mv": 2.6913058425395917,
+      "deflection_error_mv": 0.28506347193412296
+    },
+    {
+      "time_ms": 1030,
+      "corrected_voltage_mv": -80.6875,
+      "change_from_1019_ms_mv": 3.8125,
+      "model_voltage_mv": -80.39778201667872,
+      "absolute_error_mv": 0.28971798332128174,
+      "model_change_from_1019_ms_mv": 4.1172537074232025,
+      "deflection_error_mv": 0.3047537074232025
+    },
+    {
+      "time_ms": 1040,
+      "corrected_voltage_mv": -78.53125,
+      "change_from_1019_ms_mv": 5.96875,
+      "model_voltage_mv": -78.26941569936355,
+      "absolute_error_mv": 0.2618343006364512,
+      "model_change_from_1019_ms_mv": 6.245620024738372,
+      "deflection_error_mv": 0.27687002473837197
+    },
+    {
+      "time_ms": 1070,
+      "corrected_voltage_mv": -75.5625,
+      "change_from_1019_ms_mv": 8.9375,
+      "model_voltage_mv": -74.63135156566368,
+      "absolute_error_mv": 0.9311484343363219,
+      "model_change_from_1019_ms_mv": 9.883684158438243,
+      "deflection_error_mv": 0.9461841584382427
+    },
+    {
+      "time_ms": 1120,
+      "corrected_voltage_mv": -74.1875,
+      "change_from_1019_ms_mv": 10.3125,
+      "model_voltage_mv": -72.42647552494613,
+      "absolute_error_mv": 1.7610244750538726,
+      "model_change_from_1019_ms_mv": 12.088560199155793,
+      "deflection_error_mv": 1.7760601991557934
+    },
+    {
+      "time_ms": 1520,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.57766142498063,
+      "absolute_error_mv": 4.109838575019367,
+      "model_change_from_1019_ms_mv": 12.937374299121288,
+      "deflection_error_mv": 4.124874299121288
+    },
+    {
+      "time_ms": 2019,
+      "corrected_voltage_mv": -75.6875,
+      "change_from_1019_ms_mv": 8.8125,
+      "model_voltage_mv": -71.5826671115987,
+      "absolute_error_mv": 4.104832888401305,
+      "model_change_from_1019_ms_mv": 12.932368612503225,
+      "deflection_error_mv": 4.119868612503225
+    },
+    {
+      "time_ms": 2025,
+      "corrected_voltage_mv": -78.125,
+      "change_from_1019_ms_mv": 6.375,
+      "model_voltage_mv": -74.28312977063713,
+      "absolute_error_mv": 3.8418702293628684,
+      "model_change_from_1019_ms_mv": 10.23190595346479,
+      "deflection_error_mv": 3.856905953464789
+    },
+    {
+      "time_ms": 2030,
+      "corrected_voltage_mv": -79.65625,
+      "change_from_1019_ms_mv": 4.84375,
+      "model_voltage_mv": -75.70987978812323,
+      "absolute_error_mv": 3.9463702118767685,
+      "model_change_from_1019_ms_mv": 8.80515593597869,
+      "deflection_error_mv": 3.9614059359786893
+    },
+    {
+      "time_ms": 2050,
+      "corrected_voltage_mv": -83.28125,
+      "change_from_1019_ms_mv": 1.21875,
+      "model_voltage_mv": -79.39447267354828,
+      "absolute_error_mv": 3.886777326451721,
+      "model_change_from_1019_ms_mv": 5.120563050553642,
+      "deflection_error_mv": 3.901813050553642
+    },
+    {
+      "time_ms": 2099,
+      "corrected_voltage_mv": -85.8125,
+      "change_from_1019_ms_mv": -1.3125,
+      "model_voltage_mv": -83.08229154233675,
+      "absolute_error_mv": 2.7302084576632524,
+      "model_change_from_1019_ms_mv": 1.4327441817651732,
+      "deflection_error_mv": 2.745244181765173
+    }
+  ],
+  "model_events": [],
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 2.0435644287886134e-09,
+  "added_bias_na": -0.003711858945210089,
+  "model_sampling": "Linear interpolation of adaptive voltage at predefined human sample times",
+  "qualification": "Bias sufficiency test for two necessary response directions; no full human waveform qualification."
+}

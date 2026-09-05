@@ -1,0 +1,21 @@
+{
+  "scope": "Reciprocal versus E-only, real H01 pair, 10 ms, default input and illustrative weights",
+  "all_traces_identical": {
+    "time_ms": true,
+    "E_voltage": true,
+    "E_output_voltage": true,
+    "E_synaptic_conductance": true,
+    "E_events": true,
+    "I_voltage": true,
+    "I_output_voltage": true,
+    "I_synaptic_conductance": true,
+    "I_events": true
+  },
+  "I_event_count": 0,
+  "feedback_conductance_zero": true,
+  "decision": "No inhibitory feedback occurred; inhibition remains unqualified.",
+  "inputs": {
+    "h01-ei-circuit-reciprocal": "90918cc8aac77d3448a956e490b9c4243d6b60438dce8db50271a3bc8b6e869e",
+    "h01-ei-circuit-e-only": "90918cc8aac77d3448a956e490b9c4243d6b60438dce8db50271a3bc8b6e869e"
+  }
+}

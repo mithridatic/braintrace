@@ -10,6 +10,9 @@ Do not treat a matching spike count as a completed validation.
 See the [transfer evidence](evidence/h01-pv-cell-transfer.md) and
 [human comparison](evidence/h01-pv-reference-assessment.md).
 
+The default now selects the [frozen I candidate](h01-ei-defaults.md).
+Use `mode="source"` to reproduce the published fit and the historical evidence below.
+
 ## Build and run
 
 The installed API is `braintrace.datasets.h01_pv_cell.make_pv_cell`.
@@ -27,7 +30,7 @@ from braintrace.datasets.h01_pv_cell import make_pv_cell
 
 geometry = json.loads(Path("h01-pv-geometry-reference.json").read_text())
 with brainstate.environ.context(precision=64):
-    cell = make_pv_cell(geometry, current_na=0.19, max_cv_length_um=5.0)
+    cell = make_pv_cell(geometry, current_na=0.19, max_cv_length_um=5.0, mode="source")
     result = cell.run(dt=0.0025*u.ms, duration=1500*u.ms)
     voltage_mv = result.traces["voltage"].to_decimal(u.mV)
     calcium_mm = result.traces["calcium"].to_decimal(u.mM)

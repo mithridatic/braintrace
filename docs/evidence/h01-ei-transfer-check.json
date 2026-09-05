@@ -1,0 +1,44 @@
+{
+  "cases": [
+    {
+      "role": "E",
+      "mode": "candidate",
+      "reference": "h01-l2-kv3-ninety-ca133",
+      "reference_sha256": "2a86e92301a9828f09f03d400e2fdfc851c24baf3b9c61149c297540bf3d1ce7",
+      "max_absolute_soma_error_mv": 0.00013764349436939938,
+      "limit_mv": 0.1,
+      "passed": true
+    },
+    {
+      "role": "E",
+      "mode": "source",
+      "reference": "h01-l2-source-cvode-endpoint",
+      "reference_sha256": "6b671ed04cfffb20d3370b860e7e7745ab1477077252b74fffc18ce03c2a8b89",
+      "max_absolute_soma_error_mv": 7.092106851303015e-05,
+      "limit_mv": 0.1,
+      "passed": true
+    },
+    {
+      "role": "I",
+      "mode": "candidate",
+      "reference": "h01-pv-regional-mesh-axon2187",
+      "reference_sha256": "8f3da341bad9225ebc82a82da74df65ffa5c5d66214a442a8bee9a26dabe8ba0",
+      "max_absolute_soma_error_mv": 0.00016593923020025159,
+      "limit_mv": 0.1,
+      "passed": true
+    },
+    {
+      "role": "I",
+      "mode": "source",
+      "reference": "h01-pv-neuron-019-cvode10",
+      "reference_sha256": "8e539ac56e85ade2b1f98c01dca618faa259ba48d6d44444654e3833c99061ac",
+      "max_absolute_soma_error_mv": 0.0005396665412149559,
+      "limit_mv": 0.1,
+      "passed": true
+    }
+  ],
+  "all_passed": true,
+  "duration_ms": 2.0,
+  "dt_ms": 0.001,
+  "qualification": "Initial response on donor geometry only; spike and human-response transfer unqualified."
+}

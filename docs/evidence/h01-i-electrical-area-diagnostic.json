@@ -1,0 +1,15 @@
+{
+  "neuron_id": "678539249",
+  "area_um2": {
+    "soma": 157.01973302366497,
+    "axon": 24.773880140532796,
+    "dend": 2405.8477313264652
+  },
+  "membrane_cv_count": {
+    "soma": 51,
+    "axon": 115,
+    "dend": 871
+  },
+  "electrical_basis": "Soma, axon, and AIS source samples extend halfway along adjoining edges. All remaining cable receives basal-dendrite parameters, including unclassified and astrocyte-labelled samples; this electrical assignment is inferred. No apical identity or myelin insulation is inferred. Source labels remain intact.",
+  "qualification": "Structural map diagnostic; these totals do not explain the response by themselves."
+}

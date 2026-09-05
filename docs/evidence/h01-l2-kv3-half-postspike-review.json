@@ -1,0 +1,105 @@
+{
+  "qualification": "Retrospective direct samples selected after observing loss of repeated spikes; not a prospective plateau or mediation test.",
+  "records": {
+    "h01-l2-kv3-closing-control": {
+      "trace_sha256": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d",
+      "samples": [
+        {
+          "time_ms": 1082,
+          "voltage_mv": -71.6524070914709,
+          "soma_cai_mm": 0.0001930393748426855
+        },
+        {
+          "time_ms": 1090,
+          "voltage_mv": -64.5960189598317,
+          "soma_cai_mm": 0.00021056626698183928
+        },
+        {
+          "time_ms": 1100,
+          "voltage_mv": -61.845401278068245,
+          "soma_cai_mm": 0.00021144551060175618
+        },
+        {
+          "time_ms": 1110,
+          "voltage_mv": -58.07653775413851,
+          "soma_cai_mm": 0.00021023336578383038
+        },
+        {
+          "time_ms": 1120,
+          "voltage_mv": -68.82834378275817,
+          "soma_cai_mm": 0.00029563248479716096
+        },
+        {
+          "time_ms": 1200,
+          "voltage_mv": -67.55042729082555,
+          "soma_cai_mm": 0.00027856284794897985
+        },
+        {
+          "time_ms": 1500,
+          "voltage_mv": -68.22715304686554,
+          "soma_cai_mm": 0.0002811156998449695
+        },
+        {
+          "time_ms": 2019,
+          "voltage_mv": -69.0627969264744,
+          "soma_cai_mm": 0.0002998639227444896
+        },
+        {
+          "time_ms": 2099,
+          "voltage_mv": -88.25095926159797,
+          "soma_cai_mm": 0.00027768720532624433
+        }
+      ]
+    },
+    "h01-l2-kv3-closing-half": {
+      "trace_sha256": "b9b0af08b2cc584a5c06695b6c9ab992ca95c83cb0da51df73b73afd0f4a64d8",
+      "samples": [
+        {
+          "time_ms": 1082,
+          "voltage_mv": -25.627602534691885,
+          "soma_cai_mm": 0.0002142019754481773
+        },
+        {
+          "time_ms": 1090,
+          "voltage_mv": -27.445641458739402,
+          "soma_cai_mm": 0.0004972910099227008
+        },
+        {
+          "time_ms": 1100,
+          "voltage_mv": -28.307766268991323,
+          "soma_cai_mm": 0.0007745800000441973
+        },
+        {
+          "time_ms": 1110,
+          "voltage_mv": -28.449928058000218,
+          "soma_cai_mm": 0.0010046265803020844
+        },
+        {
+          "time_ms": 1120,
+          "voltage_mv": -28.495801411305376,
+          "soma_cai_mm": 0.001213511314088511
+        },
+        {
+          "time_ms": 1200,
+          "voltage_mv": -28.626273785985738,
+          "soma_cai_mm": 0.0025141022356984376
+        },
+        {
+          "time_ms": 1500,
+          "voltage_mv": -28.841343553940654,
+          "soma_cai_mm": 0.004547174522153361
+        },
+        {
+          "time_ms": 2019,
+          "voltage_mv": -28.967703604320562,
+          "soma_cai_mm": 0.004699466972173103
+        },
+        {
+          "time_ms": 2099,
+          "voltage_mv": -29.444548052368397,
+          "soma_cai_mm": 0.004613955719841325
+        }
+      ]
+    }
+  }
+}

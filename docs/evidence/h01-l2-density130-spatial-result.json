@@ -1,0 +1,161 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.03569433132133781,
+    "peak_sample_voltage_mv": 0.010272915730951127,
+    "time_above_threshold_ms": 7.365914916590555e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 0.007175905122039694,
+      "peak_sample_voltage_mv": -0.010272915730951127,
+      "time_above_threshold_ms": -7.334837755479384e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 0.014128617427331847,
+      "peak_sample_voltage_mv": -0.010181253764002918,
+      "time_above_threshold_ms": -7.365914916590555e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.01595997101435387,
+      "peak_sample_voltage_mv": -0.009969499463224452,
+      "time_above_threshold_ms": -7.007389740465442e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.026055474256509115,
+      "peak_sample_voltage_mv": -0.009870738650079147,
+      "time_above_threshold_ms": -7.102119411683816e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.03569433132133781,
+      "peak_sample_voltage_mv": -0.009963346912137183,
+      "time_above_threshold_ms": -7.135073587960505e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-sodium-opening-density130-space3": [],
+    "h01-l2-sodium-opening-double-density130": []
+  },
+  "qualification": "Spatial sensitivity between mesh factors 3 and 9 for the frozen density candidate. No physiological acceptance.",
+  "checks": [
+    {
+      "stem": "h01-l2-sodium-opening-density130-space3",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-sodium-opening-double-density130",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "changed_metadata": [
+    "integration_seconds",
+    "sections",
+    "nseg_factor",
+    "samples"
+  ],
+  "schema_difference": "Coarse new driver records kv3_closing_factor=null; old fine run omits it. Identical original Kv3 source and library establish the unchanged law.",
+  "segment_counts": [
+    1239,
+    3717
+  ],
+  "maximum_section_area_difference_um2": 1.1368683772161603e-13,
+  "phases_ms": [
+    [
+      [
+        0.166879057809183,
+        0.7938336212266677
+      ],
+      [
+        0.16758641336809887,
+        0.78732187710375
+      ],
+      [
+        0.16820817805751176,
+        0.7811195762305942
+      ],
+      [
+        0.1685970149201239,
+        0.780057748119134
+      ],
+      [
+        0.16841560473426398,
+        0.7798467982513557
+      ]
+    ],
+    [
+      [
+        0.16677637376164967,
+        0.7938629568966462
+      ],
+      [
+        0.1677433287261465,
+        0.7870913025965365
+      ],
+      [
+        0.16814441707902006,
+        0.7811132633116813
+      ],
+      [
+        0.16825034814041828,
+        0.7803333937047228
+      ],
+      [
+        0.1681326037623876,
+        0.7800584484873525
+      ]
+    ]
+  ],
+  "phase_differences_ms": [
+    [
+      -0.00010268404753333016,
+      2.9335669978536316e-05
+    ],
+    [
+      0.0001569153580476268,
+      -0.00023057450721353234
+    ],
+    [
+      -6.376097849170037e-05,
+      -6.312918912954046e-06
+    ],
+    [
+      -0.00034666677970562887,
+      0.0002756455855887907
+    ],
+    [
+      -0.0002830009718763904,
+      0.00021165023599678534
+    ]
+  ],
+  "max_phase_difference_ms": 0.00034666677970562887,
+  "phase_limit_ms": 0.01,
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-density130-space3.json": "1a236c9971cd5cc2d850b81e5861957dcf972bc055c33f98c22036a59d24dc12",
+    "docs\\evidence\\h01-l2-sodium-opening-density130-space3.npz": "45abd129f49a6c4327767cdb69043789c5363f34e8e7be17dccd226a187f1704",
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.json": "3570305f94a92379bb888af71126b0a6be3b3886e0b48133f4e522711c5ea25b",
+    "docs\\evidence\\h01-l2-sodium-opening-double-density130.npz": "bf8b02f6c20691765f1f09700a658de0ae6f0968368529bb9eb71b1d1016773d",
+    "docs\\specs\\2026-09-05-human-l2-density130-spatial.md": "740453d3de2006729fa91b6a72da13ce8bf14f0be77ab1db9703c39591a9f373"
+  }
+}

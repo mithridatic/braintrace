@@ -1,0 +1,43 @@
+{
+  "source_files": {
+    ".cache\\human-pyramidal-l2\\source-model\\NaTs.mod": "d75ed63d6367fe27c6e5671704594a510e8d83b57db835f30fc36e2f24bef6cf",
+    ".cache\\human-pyramidal-l2\\sodium-recovery-source\\NaTs.mod": "187eb547c32f55f02a9756745d0021753cf82c3ce8ce3e06cb344cf368ff116d"
+  },
+  "source_current_law": "ina = gbar*m^3*h*(v-ena); outward positive",
+  "activation_law": "dm/dt = (mInf-m)/mTau",
+  "temperature_c": 34,
+  "activation_rate_evaluations": [
+    {
+      "voltage_mv": -84.0,
+      "m_inf": 0.0009580919885869629,
+      "m_tau_ms_at_34c": 0.07320232380452595
+    },
+    {
+      "voltage_mv": -60.0,
+      "m_inf": 0.049755031826334714,
+      "m_tau_ms_at_34c": 0.14781113689875372
+    },
+    {
+      "voltage_mv": -40.0,
+      "m_inf": 0.5947712418300654,
+      "m_tau_ms_at_34c": 0.21788468426113416
+    },
+    {
+      "voltage_mv": -20.0,
+      "m_inf": 0.9762713746321764,
+      "m_tau_ms_at_34c": 0.10346475448155858
+    },
+    {
+      "voltage_mv": 0.0,
+      "m_inf": 0.9991336819743326,
+      "m_tau_ms_at_34c": 0.05483256360069481
+    },
+    {
+      "voltage_mv": 20.0,
+      "m_inf": 0.9999690691364701,
+      "m_tau_ms_at_34c": 0.03663056280023587
+    }
+  ],
+  "interpretation": "At fixed voltage, h and reversal, density changes scale current. The activation time constant controls the approach of m to its equilibrium. Opening-only time scaling would be a separate inferred intervention and is not implemented or tested here.",
+  "limits": "Algebraic evaluation of pinned model equations, not measured human channel kinetics, a NEURON clamp, or a waveform causal test."
+}

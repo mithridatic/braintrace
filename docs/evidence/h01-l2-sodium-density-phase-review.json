@@ -1,0 +1,106 @@
+{
+  "source": "h01-l2-sodium-density090-result.json",
+  "source_sha256": "2a23b2d159f67292e3b6fc0fa5893b31f263cfe81506bdbc33783ad93cb2d58d",
+  "phase_order": [
+    "rise_to_sampled_peak",
+    "sampled_peak_to_minus20_fall"
+  ],
+  "observations": [
+    {
+      "ordinal": 1,
+      "control_phase_ms": [
+        0.11704289971407889,
+        0.7977805483026259
+      ],
+      "reduced_density_phase_ms": [
+        0.12100786534642793,
+        0.7745289579333985
+      ],
+      "human_phase_ms": [
+        0.2884444440014704,
+        0.6474193511216981
+      ],
+      "intervention_change_ms": [
+        0.003964965632349049,
+        -0.023251590369227415
+      ]
+    },
+    {
+      "ordinal": 2,
+      "control_phase_ms": [
+        0.11800995099679312,
+        0.7915646132214533
+      ],
+      "reduced_density_phase_ms": [
+        0.1214645644013217,
+        0.7693694770923685
+      ],
+      "human_phase_ms": [
+        0.31670588099132146,
+        0.8179591792684278
+      ],
+      "intervention_change_ms": [
+        0.0034546134045285726,
+        -0.022195136129084858
+      ]
+    },
+    {
+      "ordinal": 3,
+      "control_phase_ms": [
+        0.11895683154125436,
+        0.7795312827822727
+      ],
+      "reduced_density_phase_ms": [
+        0.12281516100438239,
+        0.7573776017459295
+      ],
+      "human_phase_ms": [
+        0.31320987578646964,
+        0.6615624977321204
+      ],
+      "intervention_change_ms": [
+        0.0038583294631280296,
+        -0.022153681036343187
+      ]
+    },
+    {
+      "ordinal": 4,
+      "control_phase_ms": [
+        0.11905249156802711,
+        0.7788452817578673
+      ],
+      "reduced_density_phase_ms": [
+        0.12289422487015145,
+        0.7567210232696198
+      ],
+      "human_phase_ms": [
+        0.306928102269012,
+        0.6641935462982929
+      ],
+      "intervention_change_ms": [
+        0.0038417333021243394,
+        -0.022124258488247506
+      ]
+    },
+    {
+      "ordinal": 5,
+      "control_phase_ms": [
+        0.11941038117356584,
+        0.7779993116548667
+      ],
+      "reduced_density_phase_ms": [
+        0.12302139508574328,
+        0.7560673922057504
+      ],
+      "human_phase_ms": [
+        0.3143749981036308,
+        0.6487096743999246
+      ],
+      "intervention_change_ms": [
+        0.003611013912177441,
+        -0.02193191944911632
+      ]
+    }
+  ],
+  "scope": "Retrospective phase analysis of earlier command-only calcium-factor-1.5, original-Ih and original-passive-reversal split. Not the current distributed-Ih candidate. No prospective phase hypothesis or candidate numerical qualification."
+}

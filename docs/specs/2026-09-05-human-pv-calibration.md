@@ -103,3 +103,51 @@ the unchanged source response. Keep NEURON outward-positive current signs.
 Check per-channel currents against the ion-current sums and confirm that
 adding probes leaves the voltage response unchanged. Use the observations
 to identify sustained inward current before selecting a kinetic intervention.
+
+## Waveform candidates from the causal result
+
+The closure-only factor 0.5 shortens the first spike on two spatial meshes.
+It still leaves the first peak too high and the duration too long.
+Test closure factors 0.25 and 0.10 with recovery factor 1, keeping other
+parameters at the source values. Use 0.19 nA and mesh factor 9 initially.
+These factors are inferred diagnostic candidates, not human-measured kinetics.
+Retain all events. Compare first peak and time above -20 mV with the recorded
+19.5625 mV and 0.27339465 ms. A candidate must improve both absolute errors
+and preserve a complete spike to justify further waveform calibration.
+This screening rule is not physiological validation. Check later events,
+the 0.27 nA calibration trace, numerical robustness, and the reserved 0.23 nA
+trace before accepting a final model. No parameter is promoted by this screen.
+
+Next test closure factor 0.18 at both calibration currents, 0.19 and 0.27 nA.
+This inferred factor lies between the completed 0.10 and 0.25 cases.
+Keep recovery factor 1 and all other parameters fixed. Retain each event.
+Check positive spike peaks, repeated spiking, event durations, and onset times.
+Do not accept a first-event error reduction as proof of a valid train.
+
+Test SK conductance factor 2 in soma and axon on closure factor 0.18.
+Keep recovery factor 1 and other parameters unchanged. Use both calibration
+currents. The doubled densities remain within the source optimizer's 0-1
+S/cm2 bounds. This is an inferred candidate, not a measured density.
+Prediction: later interspike intervals increase relative to the 0.18 candidate.
+Retain every interval and first-event shape. A lower count alone does not pass.
+Report any loss of spikes or remaining onset error. Do not infer that SK is
+the unique cause of adaptation from this conductance intervention.
+
+Split the doubled SK intervention into soma-only and axon-only changes at
+0.19 nA with closure factor 0.18. Compare with the existing unchanged and
+both-region cases. Retain absolute rising crossings and all interspike intervals.
+If only one regional intervention reproduces the first-crossing delay within
+0.1 ms of the both-region result, identify that region as sufficient for this
+delay under these conditions. Otherwise leave the regional attribution unresolved.
+This threshold is a diagnostic distinction, not a human tolerance. Do not add
+regional effects as independent errors or assume sufficiency proves uniqueness.
+
+Test axonal calcium removal time 1000 ms on the 0.18 closure-factor candidate,
+with original SK density. The source optimizer allows removal times 20-1000 ms.
+Hold initial calcium, calcium entry scaling, and all other parameters fixed.
+Use both calibration currents. Record axonal calcium, SK gate, and SK current.
+Prediction: slower removal increases retained axonal calcium and delays later
+crossings, with a smaller first-crossing shift than doubling axonal SK density.
+Evaluate that onset distinction at 0.19 nA against the existing regional split.
+If the initial delay is not smaller, reject this proposed separation at that input.
+Do not claim a full causal pathway from longer intervals alone.

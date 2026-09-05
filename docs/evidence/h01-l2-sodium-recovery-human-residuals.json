@@ -1,0 +1,90 @@
+[
+  {
+    "run": "control",
+    "intervals_ms": [
+      26.502157954116683,
+      158.8528031518183,
+      293.2036543997067,
+      274.9190171664029
+    ],
+    "interval_errors_ms": [
+      -7.349580608893575,
+      -61.550692853386636,
+      -14.202627373810628,
+      1.5664640622374009
+    ],
+    "event_residuals": [
+      {
+        "rise_crossing_ms": -4.534848517881073,
+        "peak_sample_voltage_mv": 1.237200134223194,
+        "time_above_threshold_ms": -0.02104034710646374
+      },
+      {
+        "rise_crossing_ms": -11.884429126774648,
+        "peak_sample_voltage_mv": 1.5957837454490331,
+        "time_above_threshold_ms": -0.22509049604150277
+      },
+      {
+        "rise_crossing_ms": -73.43512198016128,
+        "peak_sample_voltage_mv": 0.9868718737719391,
+        "time_above_threshold_ms": -0.07628425919506299
+      },
+      {
+        "rise_crossing_ms": -87.63774935397191,
+        "peak_sample_voltage_mv": 1.0916537606492014,
+        "time_above_threshold_ms": -0.0732238752414105
+      },
+      {
+        "rise_crossing_ms": -86.07128529173451,
+        "peak_sample_voltage_mv": 1.2988189772737968,
+        "time_above_threshold_ms": -0.06567497967512281
+      }
+    ],
+    "unmatched_model_events": [],
+    "unmatched_human_events": []
+  },
+  {
+    "run": "double",
+    "intervals_ms": [
+      26.735594451783072,
+      150.02646798121714,
+      291.1676560799906,
+      272.4345672426791
+    ],
+    "interval_errors_ms": [
+      -7.116144111227186,
+      -70.3770280239878,
+      -16.23862569352673,
+      -0.9179858614863861
+    ],
+    "event_residuals": [
+      {
+        "rise_crossing_ms": -4.534848517928822,
+        "peak_sample_voltage_mv": 1.2372001342464998,
+        "time_above_threshold_ms": -0.021040347106008994
+      },
+      {
+        "rise_crossing_ms": -11.650992629156008,
+        "peak_sample_voltage_mv": 1.6047522590009322,
+        "time_above_threshold_ms": -0.22499958385628815
+      },
+      {
+        "rise_crossing_ms": -82.02802065314381,
+        "peak_sample_voltage_mv": 0.9841569256614449,
+        "time_above_threshold_ms": -0.07628182135931638
+      },
+      {
+        "rise_crossing_ms": -98.26664634667054,
+        "peak_sample_voltage_mv": 1.0920345939660692,
+        "time_above_threshold_ms": -0.07320390647282693
+      },
+      {
+        "rise_crossing_ms": -99.18463220815693,
+        "peak_sample_voltage_mv": 1.2990954867208515,
+        "time_above_threshold_ms": -0.06566172889370137
+      }
+    ],
+    "unmatched_model_events": [],
+    "unmatched_human_events": []
+  }
+]

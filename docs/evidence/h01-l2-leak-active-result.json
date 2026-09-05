@@ -1,0 +1,107 @@
+{
+  "decision": "rejected",
+  "invalid_reasons": [],
+  "model_events": [
+    {
+      "rise_crossing_ms": 1206.9339646075307,
+      "fall_crossing_ms": 1207.82900499444,
+      "time_above_threshold_ms": 0.8950403869093861,
+      "peak_sample_time_ms": 1207.0537846495456,
+      "peak_sample_voltage_mv": 35.406562108111515
+    },
+    {
+      "rise_crossing_ms": 1584.9295265374342,
+      "fall_crossing_ms": 1585.8215609379108,
+      "time_above_threshold_ms": 0.8920344004766321,
+      "peak_sample_time_ms": 1585.0494433992146,
+      "peak_sample_voltage_mv": 35.26605559315396
+    }
+  ],
+  "human_events": [
+    {
+      "rise_crossing_ms": 1077.8115555559984,
+      "fall_crossing_ms": 1078.7474193511216,
+      "time_above_threshold_ms": 0.9358637951231685,
+      "peak_sample_time_ms": 1078.1,
+      "peak_sample_voltage_mv": 36.03125220537186
+    },
+    {
+      "rise_crossing_ms": 1111.6632941190087,
+      "fall_crossing_ms": 1112.7979591792684,
+      "time_above_threshold_ms": 1.1346650602597492,
+      "peak_sample_time_ms": 1111.98,
+      "peak_sample_voltage_mv": 35.31250214576721
+    },
+    {
+      "rise_crossing_ms": 1332.0667901242136,
+      "fall_crossing_ms": 1333.0415624977322,
+      "time_above_threshold_ms": 0.97477237351859,
+      "peak_sample_time_ms": 1332.38,
+      "peak_sample_voltage_mv": 34.875004053115845
+    },
+    {
+      "rise_crossing_ms": 1639.473071897731,
+      "fall_crossing_ms": 1640.4441935462983,
+      "time_above_threshold_ms": 0.9711216485673049,
+      "peak_sample_time_ms": 1639.78,
+      "peak_sample_voltage_mv": 34.78125339746475
+    },
+    {
+      "rise_crossing_ms": 1912.8256250018965,
+      "fall_crossing_ms": 1913.7887096744,
+      "time_above_threshold_ms": 0.9630846725035553,
+      "peak_sample_time_ms": 1913.14,
+      "peak_sample_voltage_mv": 34.56250062584877
+    }
+  ],
+  "event_counts": [
+    2,
+    5
+  ],
+  "matched_event_residuals": [
+    {
+      "rise_crossing_ms": 129.12240905153226,
+      "peak_sample_voltage_mv": -0.6246900972603413,
+      "time_above_threshold_ms": -0.040823408213782386
+    },
+    {
+      "rise_crossing_ms": 473.2662324184255,
+      "peak_sample_voltage_mv": -0.046446552613254255,
+      "time_above_threshold_ms": -0.24263065978311715
+    }
+  ],
+  "intervals_ms": [
+    377.9955619299035
+  ],
+  "matched_interval_errors_ms": [
+    344.14382336689323
+  ],
+  "unmatched_human_events": [
+    {
+      "rise_crossing_ms": 1332.0667901242136,
+      "fall_crossing_ms": 1333.0415624977322,
+      "time_above_threshold_ms": 0.97477237351859,
+      "peak_sample_time_ms": 1332.38,
+      "peak_sample_voltage_mv": 34.875004053115845
+    },
+    {
+      "rise_crossing_ms": 1639.473071897731,
+      "fall_crossing_ms": 1640.4441935462983,
+      "time_above_threshold_ms": 0.9711216485673049,
+      "peak_sample_time_ms": 1639.78,
+      "peak_sample_voltage_mv": 34.78125339746475
+    },
+    {
+      "rise_crossing_ms": 1912.8256250018965,
+      "fall_crossing_ms": 1913.7887096744,
+      "time_above_threshold_ms": 0.9630846725035553,
+      "peak_sample_time_ms": 1913.14,
+      "peak_sample_voltage_mv": 34.56250062584877
+    }
+  ],
+  "unmatched_model_events": [],
+  "pulse_max_voltage_mv": 35.406562108111515,
+  "raw_mapping_exact": true,
+  "input_plateau_error_na": 0.0,
+  "qualification": "Frozen-candidate necessary active-response check; count agreement alone does not validate the cell."
+}

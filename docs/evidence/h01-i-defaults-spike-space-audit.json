@@ -1,0 +1,42 @@
+{
+  "cases": [
+    {
+      "file": "h01-i-defaults-spike-probe-fine",
+      "max_cv_length_um": 10.0,
+      "dt_ms": 0.000625,
+      "peak_mv": -14.072178938946575,
+      "peak_time_ms": 3.625625,
+      "final_mv": -47.95430676003756,
+      "events": [
+        {
+          "rise_crossing_ms": 3.4115965562115034,
+          "fall_crossing_ms": 4.70800799656982,
+          "time_above_threshold_ms": 1.2964114403583165,
+          "peak_sample_time_ms": 3.625625,
+          "peak_sample_voltage_mv": -14.072178938946575
+        }
+      ],
+      "crossings_0mv_ms": []
+    },
+    {
+      "file": "h01-i-defaults-spike-probe-space",
+      "max_cv_length_um": 2.5,
+      "dt_ms": 0.000625,
+      "peak_mv": -14.060704361843166,
+      "peak_time_ms": 3.626875,
+      "final_mv": -47.986733972085894,
+      "events": [
+        {
+          "rise_crossing_ms": 3.4121259781175732,
+          "fall_crossing_ms": 4.707130395369929,
+          "time_above_threshold_ms": 1.2950044172523558,
+          "peak_sample_time_ms": 3.626875,
+          "peak_sample_voltage_mv": -14.060704361843166
+        }
+      ],
+      "crossings_0mv_ms": []
+    }
+  ],
+  "physical_change": "none; maximum CV length reduced 10 to 2.5 um",
+  "qualification": "Spatial diagnostic, not human validation."
+}

@@ -1,0 +1,9 @@
+{
+  "exact_array_matches": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "calcium_mm": true,
+    "sk_gate": true
+  },
+  "conclusion": "Waiting on existing array mantissas did not change output. The longest remaining formatting interval is on a scalar; this probe does not isolate its device wait."
+}

@@ -1,0 +1,73 @@
+{
+  "runs": [
+    {
+      "run": "short",
+      "total_seconds": 21.165152299999967,
+      "backend_compile_and_load": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\compiler.py",
+          "calls": 73,
+          "self_seconds": 4.273473200000001,
+          "cumulative_seconds": 4.2735789
+        }
+      ],
+      "scan": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\lax\\control_flow\\loops.py",
+          "calls": 1,
+          "self_seconds": 0.0002882,
+          "cumulative_seconds": 4.7094636
+        },
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\brainstate\\transform\\_loop_collect_return.py",
+          "calls": 1,
+          "self_seconds": 6.0100000000000004e-05,
+          "cumulative_seconds": 8.6291024
+        }
+      ],
+      "for_loop": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\brainstate\\transform\\_loop_collect_return.py",
+          "calls": 1,
+          "self_seconds": 0.005275500000000001,
+          "cumulative_seconds": 8.6343928
+        }
+      ]
+    },
+    {
+      "run": "ten-ms",
+      "total_seconds": 36.489659200000006,
+      "backend_compile_and_load": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\compiler.py",
+          "calls": 73,
+          "self_seconds": 6.109385100000001,
+          "cumulative_seconds": 6.1094917
+        }
+      ],
+      "scan": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\brainstate\\transform\\_loop_collect_return.py",
+          "calls": 1,
+          "self_seconds": 5.94e-05,
+          "cumulative_seconds": 12.053138
+        },
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\jax\\_src\\lax\\control_flow\\loops.py",
+          "calls": 1,
+          "self_seconds": 0.00039200000000000004,
+          "cumulative_seconds": 7.3562041
+        }
+      ],
+      "for_loop": [
+        {
+          "file": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.venv\\Lib\\site-packages\\brainstate\\transform\\_loop_collect_return.py",
+          "calls": 1,
+          "self_seconds": 0.0064174,
+          "cumulative_seconds": 12.0595724
+        }
+      ]
+    }
+  ],
+  "limits": "Separate profiled processes; cache and profiler effects uncontrolled. Resting traces only. Cumulative times overlap; no kernel attribution."
+}

@@ -1,0 +1,276 @@
+{
+  "records": [
+    {
+      "current_na": 0.19,
+      "human": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 291.0710576923077,
+          "time_from_peak_ms": 0.15105769230768828,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 291.13593406593407,
+          "time_from_peak_ms": 0.21593406593405007,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 291.1743225693655,
+          "time_from_peak_ms": 0.2543225693654563,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 291.22459998120115,
+          "time_from_peak_ms": 0.30459998120113596,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 291.2597619047619,
+          "time_from_peak_ms": 0.33976190476187185,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": 291.3076923076923,
+          "time_from_peak_ms": 0.3876923076923049,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": 291.39071428571435,
+          "time_from_peak_ms": 0.4707142857143367,
+          "crossing_count": 1
+        }
+      ],
+      "control": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 298.4730765786782,
+          "time_from_peak_ms": 0.17082163708437292,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 298.59866430551955,
+          "time_from_peak_ms": 0.2964093639257044,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 298.73164564303784,
+          "time_from_peak_ms": 0.4293907014439924,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 298.9631849458485,
+          "time_from_peak_ms": 0.6609300042546806,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 299.131242949806,
+          "time_from_peak_ms": 0.8289880082121499,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": 299.45645407977406,
+          "time_from_peak_ms": 1.1541991381802177,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": null,
+          "time_from_peak_ms": null,
+          "crossing_count": 0
+        }
+      ],
+      "half": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 298.5382535939052,
+          "time_from_peak_ms": 0.16994884041486102,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 298.6608161595975,
+          "time_from_peak_ms": 0.29251140610716675,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 298.7862569287872,
+          "time_from_peak_ms": 0.41795217529687534,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 298.9992901148535,
+          "time_from_peak_ms": 0.6309853613631731,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 299.14597645020126,
+          "time_from_peak_ms": 0.777671696710911,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": 299.39345098622044,
+          "time_from_peak_ms": 1.0251462327300942,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": null,
+          "time_from_peak_ms": null,
+          "crossing_count": 0
+        }
+      ]
+    },
+    {
+      "current_na": 0.27,
+      "human": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 282.13302325581395,
+          "time_from_peak_ms": 0.1530232558139346,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 282.1967368421053,
+          "time_from_peak_ms": 0.2167368421052629,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 282.2347169770762,
+          "time_from_peak_ms": 0.25471697707615704,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 282.28380952380957,
+          "time_from_peak_ms": 0.30380952380954795,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 282.3178571428571,
+          "time_from_peak_ms": 0.33785714285710355,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": 282.3645283018868,
+          "time_from_peak_ms": 0.3845283018868031,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": 282.4433333333333,
+          "time_from_peak_ms": 0.46333333333330984,
+          "crossing_count": 1
+        }
+      ],
+      "control": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 281.3995969243934,
+          "time_from_peak_ms": 0.171280610225665,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 281.5291323852277,
+          "time_from_peak_ms": 0.30081607105995545,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 281.67428572534993,
+          "time_from_peak_ms": 0.44596941118220457,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 281.9410380778049,
+          "time_from_peak_ms": 0.7127217636371483,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 282.16155648360905,
+          "time_from_peak_ms": 0.9332401694413193,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": null,
+          "time_from_peak_ms": null,
+          "crossing_count": 0
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": null,
+          "time_from_peak_ms": null,
+          "crossing_count": 0
+        }
+      ],
+      "half": [
+        {
+          "level_mv": -20.0,
+          "first_time_ms": 281.4023420027719,
+          "time_from_peak_ms": 0.17017550078094246,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -40.0,
+          "first_time_ms": 281.5265376710725,
+          "time_from_peak_ms": 0.2943711690815576,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -50.0,
+          "first_time_ms": 281.657271970116,
+          "time_from_peak_ms": 0.4251054681250821,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -60.0,
+          "first_time_ms": 281.8850322141304,
+          "time_from_peak_ms": 0.6528657121394303,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -65.0,
+          "first_time_ms": 282.0503749503434,
+          "time_from_peak_ms": 0.8182084483524363,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -70.0,
+          "first_time_ms": 282.37145029897613,
+          "time_from_peak_ms": 1.1392837969851826,
+          "crossing_count": 1
+        },
+        {
+          "level_mv": -75.0,
+          "first_time_ms": null,
+          "time_from_peak_ms": null,
+          "crossing_count": 0
+        }
+      ]
+    }
+  ],
+  "reserved_trace_used": false,
+  "limit": "Direct falling-phase timing; not a unique channel attribution"
+}

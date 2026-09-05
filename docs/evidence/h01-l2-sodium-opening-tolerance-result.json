@@ -1,0 +1,153 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    5,
+    5
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 1.2889524668935337e-05,
+    "peak_sample_voltage_mv": 8.35126289580046e-05,
+    "time_above_threshold_ms": 6.446673523896607e-07
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": 2.1494724933290854e-07,
+      "peak_sample_voltage_mv": -1.3308623618257798e-05,
+      "time_above_threshold_ms": -5.070482984592672e-07
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": 1.0256624136673054e-06,
+      "peak_sample_voltage_mv": 6.441479449392773e-06,
+      "time_above_threshold_ms": -6.446673523896607e-07
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 6.296050059972913e-06,
+      "peak_sample_voltage_mv": 2.0407439777159198e-05,
+      "time_above_threshold_ms": 2.8385557016008534e-08
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": -6.2267340581456665e-06,
+      "peak_sample_voltage_mv": 1.6644908598095753e-06,
+      "time_above_threshold_ms": -5.0304379328736104e-08
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": -1.2889524668935337e-05,
+      "peak_sample_voltage_mv": -8.35126289580046e-05,
+      "time_above_threshold_ms": -1.9200592760171276e-07
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-sodium-opening-double": [],
+    "h01-l2-sodium-opening-double-atol11": []
+  },
+  "qualification": "Temporal comparison only; no spatial or physiological qualification.",
+  "checks": [
+    {
+      "stem": "h01-l2-sodium-opening-double",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    },
+    {
+      "stem": "h01-l2-sodium-opening-double-atol11",
+      "raw_mapping_exact": true,
+      "input_plateau_error_na": 0.0,
+      "all_finite": true,
+      "endpoint_ms": 2100.0
+    }
+  ],
+  "changed_metadata": [
+    "cvode_atol",
+    "integration_seconds",
+    "samples"
+  ],
+  "phases_ms": [
+    [
+      [
+        0.17857685060630502,
+        0.7401137125650621
+      ],
+      [
+        0.17967773811710686,
+        0.734734458662615
+      ],
+      [
+        0.18100288479081428,
+        0.728726645374536
+      ],
+      [
+        0.18082119721793788,
+        0.7281338913128366
+      ],
+      [
+        0.18072688853430918,
+        0.7277776998241734
+      ]
+    ],
+    [
+      [
+        0.17848495745238324,
+        0.7402050986706854
+      ],
+      [
+        0.17947121121187593,
+        0.7349403409004935
+      ],
+      [
+        0.18058160297914583,
+        0.7291479555717615
+      ],
+      [
+        0.18077544485640828,
+        0.7281795933699868
+      ],
+      [
+        0.18113442755429787,
+        0.7273699687982571
+      ]
+    ]
+  ],
+  "phase_differences_ms": [
+    [
+      -9.189315392177377e-05,
+      9.13861056233145e-05
+    ],
+    [
+      -0.00020652690523093042,
+      0.00020588223787854076
+    ],
+    [
+      -0.00042128181166845025,
+      0.00042131019722546625
+    ],
+    [
+      -4.5752361529594054e-05,
+      4.570205715026532e-05
+    ],
+    [
+      0.0004075390199886897,
+      -0.0004077310259162914
+    ]
+  ],
+  "max_phase_difference_ms": 0.00042131019722546625,
+  "phase_limit_ms": 0.01,
+  "sha256": {
+    "docs\\evidence\\h01-l2-sodium-opening-double.json": "792ee36307d7100048ba3f6b7031d854424e2f2cd9e622b3697d8ba6c92af3f8",
+    "docs\\evidence\\h01-l2-sodium-opening-double.npz": "b2dea1edc3f65405911ed85f7e74bd06ce1cb16636307df941c387a45e5f3021",
+    "docs\\evidence\\h01-l2-sodium-opening-double-atol11.json": "d227666b002331353ebc9f48bc9301ec6996e4deb4772d0af1db079aadd88b87",
+    "docs\\evidence\\h01-l2-sodium-opening-double-atol11.npz": "5e493e63939bb8e595f504734b62a13f20ace4e0dcdcf8e94be4f807a2cba20f"
+  }
+}

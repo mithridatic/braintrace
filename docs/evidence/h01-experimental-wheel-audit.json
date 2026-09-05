@@ -1,0 +1,9 @@
+{
+  "installed_package": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-handoff-install\\braintrace\\__init__.py",
+  "profiles": {
+    "E": "h01-l2-kv3-ninety-ca133:candidate:v1",
+    "I": "h01-pv-regional-mesh-axon2187:candidate:v1"
+  },
+  "wheel_sha256": "df010ae2ee54486e88747d7c2564083254f661d4940bd02d23e47c72cbb3a972",
+  "qualification": "Isolated target installation and API imports passed using existing dependencies. Fresh dependency resolution and installed circuit execution not checked. Examples excluded from wheel."
+}

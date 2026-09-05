@@ -1,0 +1,135 @@
+{
+  "records": [
+    {
+      "spatial_factor": 9,
+      "events": [
+        {
+          "rise_crossing_ms": 281.34560058897966,
+          "fall_crossing_ms": 281.6145191800772,
+          "time_above_threshold_ms": 0.26891859109753113,
+          "peak_sample_time_ms": 281.44089702633806,
+          "peak_sample_voltage_mv": 19.132627173706776
+        },
+        {
+          "rise_crossing_ms": 286.304641317672,
+          "fall_crossing_ms": 286.5755037204332,
+          "time_above_threshold_ms": 0.2708624027611677,
+          "peak_sample_time_ms": 286.4005664339472,
+          "peak_sample_voltage_mv": 17.944727321931133
+        },
+        {
+          "rise_crossing_ms": 290.0132411330583,
+          "fall_crossing_ms": 290.2897281630251,
+          "time_above_threshold_ms": 0.27648702996680186,
+          "peak_sample_time_ms": 290.11223265316613,
+          "peak_sample_voltage_mv": 13.798100125554052
+        },
+        {
+          "rise_crossing_ms": 292.2216097399485,
+          "fall_crossing_ms": 292.48537887913307,
+          "time_above_threshold_ms": 0.2637691391845465,
+          "peak_sample_time_ms": 292.3255071015347,
+          "peak_sample_voltage_mv": -9.009752686587479
+        }
+      ],
+      "late_positive_events": [],
+      "late_sample_voltage_bounds_mv": [
+        -29.870584198542602,
+        -29.033319349455958
+      ]
+    },
+    {
+      "spatial_factor": 27,
+      "events": [
+        {
+          "rise_crossing_ms": 281.3460110447453,
+          "fall_crossing_ms": 281.6149034264678,
+          "time_above_threshold_ms": 0.2688923817224804,
+          "peak_sample_time_ms": 281.4411889711472,
+          "peak_sample_voltage_mv": 19.13116700027751
+        },
+        {
+          "rise_crossing_ms": 286.30798122362165,
+          "fall_crossing_ms": 286.5788032722977,
+          "time_above_threshold_ms": 0.2708220486760524,
+          "peak_sample_time_ms": 286.4038403979572,
+          "peak_sample_voltage_mv": 17.94465936334961
+        },
+        {
+          "rise_crossing_ms": 290.02121293837666,
+          "fall_crossing_ms": 290.29760290725756,
+          "time_above_threshold_ms": 0.27638996888089196,
+          "peak_sample_time_ms": 290.1198322431814,
+          "peak_sample_voltage_mv": 13.821083033174755
+        },
+        {
+          "rise_crossing_ms": 292.2492032905605,
+          "fall_crossing_ms": 292.5156179589641,
+          "time_above_threshold_ms": 0.2664146684036268,
+          "peak_sample_time_ms": 292.35387589857794,
+          "peak_sample_voltage_mv": -8.568735118495843
+        }
+      ],
+      "late_positive_events": [],
+      "late_sample_voltage_bounds_mv": [
+        -30.032657375898236,
+        -29.223520341210836
+      ]
+    }
+  ],
+  "reported_diameter_differences_um": {
+    "NeuronTemplate[0].soma[0]": 0.0,
+    "NeuronTemplate[0].dend[0]": -6.7593315355996e-07,
+    "NeuronTemplate[0].dend[1]": -9.95173084494816e-07,
+    "NeuronTemplate[0].dend[2]": -1.8647069298050045e-05,
+    "NeuronTemplate[0].dend[3]": 3.7016876999751425e-06,
+    "NeuronTemplate[0].dend[4]": 0.00035841016548243676,
+    "NeuronTemplate[0].dend[5]": 1.3473333335789484e-05,
+    "NeuronTemplate[0].dend[6]": 0.0,
+    "NeuronTemplate[0].dend[7]": 1.947389125428467e-05,
+    "NeuronTemplate[0].dend[8]": -7.633317204841505e-05,
+    "NeuronTemplate[0].dend[9]": 0.0,
+    "NeuronTemplate[0].dend[10]": -2.8976276014280877e-05,
+    "NeuronTemplate[0].dend[11]": -2.4964684234851653e-06,
+    "NeuronTemplate[0].dend[12]": 0.0,
+    "NeuronTemplate[0].dend[13]": 7.597537609038696e-07,
+    "NeuronTemplate[0].dend[14]": 9.331050573657684e-06,
+    "NeuronTemplate[0].dend[15]": 2.9314944347658134e-05,
+    "NeuronTemplate[0].dend[16]": -1.0815556418020122e-05,
+    "NeuronTemplate[0].dend[17]": -4.925750614503954e-06,
+    "NeuronTemplate[0].dend[18]": -2.851339464537972e-08,
+    "NeuronTemplate[0].dend[19]": 3.3306690738754696e-16,
+    "NeuronTemplate[0].dend[20]": -8.599520362473356e-07,
+    "NeuronTemplate[0].dend[21]": -9.611051651203795e-06,
+    "NeuronTemplate[0].dend[22]": 8.326672684688674e-17,
+    "NeuronTemplate[0].dend[23]": -6.244392732890347e-07,
+    "NeuronTemplate[0].dend[24]": 9.896656383290292e-09,
+    "NeuronTemplate[0].dend[25]": 1.1889902668371644e-05,
+    "NeuronTemplate[0].axon[0]": 0.0,
+    "NeuronTemplate[0].axon[1]": 0.0
+  },
+  "no_late_positive_spikes_on_both_meshes": true,
+  "paired_event_differences_fine_minus_coarse": [
+    {
+      "rise_crossing_ms": 0.000410455765631923,
+      "peak_sample_voltage_mv": -0.00146017342926541,
+      "time_above_threshold_ms": -2.620937505071197e-05
+    },
+    {
+      "rise_crossing_ms": 0.003339905949644617,
+      "peak_sample_voltage_mv": -6.795858152131018e-05,
+      "time_above_threshold_ms": -4.035408511526839e-05
+    },
+    {
+      "rise_crossing_ms": 0.007971805318391034,
+      "peak_sample_voltage_mv": 0.022982907620702875,
+      "time_above_threshold_ms": -9.70610859098997e-05
+    },
+    {
+      "rise_crossing_ms": 0.02759355061198221,
+      "peak_sample_voltage_mv": 0.4410175680916364,
+      "time_above_threshold_ms": 0.0026455292190803448
+    }
+  ],
+  "limit": "Two-mesh observation check, not full convergence or causal channel identification"
+}

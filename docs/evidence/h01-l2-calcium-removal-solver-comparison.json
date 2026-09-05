@@ -1,0 +1,54 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    4,
+    4
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.09317415433315546,
+    "peak_sample_voltage_mv": 0.002755975365971608,
+    "time_above_threshold_ms": 3.8315151641654666e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.0015743339774871856,
+      "peak_sample_voltage_mv": -0.0025583507198874145,
+      "time_above_threshold_ms": 3.8315151641654666e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.002575466608732313,
+      "peak_sample_voltage_mv": -0.002755975365971608,
+      "time_above_threshold_ms": 3.5949525226897094e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.07706492982356394,
+      "peak_sample_voltage_mv": -0.002476899802900334,
+      "time_above_threshold_ms": 3.581928649509791e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.09317415433315546,
+      "peak_sample_voltage_mv": -0.0024691355199806253,
+      "time_above_threshold_ms": 3.606952554946474e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-calcium-removal-double": [],
+    "h01-l2-calcium-removal-double-cvode": []
+  },
+  "qualification": "Solver agreement for the doubled-removal candidate on factor-nine mesh; no human physiological validation.",
+  "setup_invariants_passed": true,
+  "input_plateau_error_na": 0.0,
+  "raw_index_mapping_exact": true,
+  "integration_seconds": 193.04363750002813
+}

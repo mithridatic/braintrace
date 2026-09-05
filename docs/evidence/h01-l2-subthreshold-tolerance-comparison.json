@@ -1,0 +1,107 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "checks": {
+    "all_sample_differences_within_0_01_mv": true,
+    "no_spikes_both_runs": true,
+    "response_directions_unchanged": true
+  },
+  "samples": [
+    {
+      "time_ms": 1019,
+      "coarse_voltage_mv": -84.51503572410192,
+      "fine_voltage_mv": -84.51503572505612,
+      "fine_minus_coarse_mv": -9.542020507069537e-10
+    },
+    {
+      "time_ms": 1025,
+      "coarse_voltage_mv": -81.82372988156233,
+      "fine_voltage_mv": -81.82372988500653,
+      "fine_minus_coarse_mv": -3.4441995921952184e-09
+    },
+    {
+      "time_ms": 1030,
+      "coarse_voltage_mv": -80.39778201667872,
+      "fine_voltage_mv": -80.39778199234098,
+      "fine_minus_coarse_mv": 2.4337737158930395e-08
+    },
+    {
+      "time_ms": 1040,
+      "coarse_voltage_mv": -78.26941569936355,
+      "fine_voltage_mv": -78.26941562473142,
+      "fine_minus_coarse_mv": 7.463212625680171e-08
+    },
+    {
+      "time_ms": 1070,
+      "coarse_voltage_mv": -74.63135156566368,
+      "fine_voltage_mv": -74.63135140239804,
+      "fine_minus_coarse_mv": 1.6326563923030335e-07
+    },
+    {
+      "time_ms": 1120,
+      "coarse_voltage_mv": -72.42647552494613,
+      "fine_voltage_mv": -72.4264752937286,
+      "fine_minus_coarse_mv": 2.312175269025829e-07
+    },
+    {
+      "time_ms": 1520,
+      "coarse_voltage_mv": -71.57766142498063,
+      "fine_voltage_mv": -71.57766141235676,
+      "fine_minus_coarse_mv": 1.2623871725736535e-08
+    },
+    {
+      "time_ms": 2019,
+      "coarse_voltage_mv": -71.5826671115987,
+      "fine_voltage_mv": -71.58266716641079,
+      "fine_minus_coarse_mv": -5.481209086610761e-08
+    },
+    {
+      "time_ms": 2025,
+      "coarse_voltage_mv": -74.28312977063713,
+      "fine_voltage_mv": -74.28312981958607,
+      "fine_minus_coarse_mv": -4.894893379514542e-08
+    },
+    {
+      "time_ms": 2030,
+      "coarse_voltage_mv": -75.70987978812323,
+      "fine_voltage_mv": -75.70987986131965,
+      "fine_minus_coarse_mv": -7.319641781577957e-08
+    },
+    {
+      "time_ms": 2050,
+      "coarse_voltage_mv": -79.39447267354828,
+      "fine_voltage_mv": -79.39447281729727,
+      "fine_minus_coarse_mv": -1.437489913769241e-07
+    },
+    {
+      "time_ms": 2099,
+      "coarse_voltage_mv": -83.08229154233675,
+      "fine_voltage_mv": -83.08229177535358,
+      "fine_minus_coarse_mv": -2.330168342723482e-07
+    }
+  ],
+  "response_directions": [
+    {
+      "late_voltage_below_1120_ms": false,
+      "postpulse_voltage_below_start": false
+    },
+    {
+      "late_voltage_below_1120_ms": false,
+      "postpulse_voltage_below_start": false
+    }
+  ],
+  "event_counts": [
+    0,
+    0
+  ],
+  "raw_mapping_exact": [
+    true,
+    true
+  ],
+  "input_plateau_errors_na": [
+    0.0,
+    0.0
+  ],
+  "max_absolute_difference_mv": 2.330168342723482e-07,
+  "qualification": "Tolerance refinement at twelve direct subthreshold observations only; not human physiological or spatial qualification."
+}

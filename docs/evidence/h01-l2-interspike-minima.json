@@ -1,0 +1,84 @@
+{
+  "definition": "Lowest recorded voltage after each sampled peak and before the next upward -20 mV crossing; first three event pairs, no smoothing or alignment.",
+  "records": [
+    {
+      "name": "human",
+      "interspike_minima": [
+        {
+          "after_event": 1,
+          "minimum_sample_mv": -69.56250363588333,
+          "minimum_sample_time_ms": 1079.98,
+          "minimum_delay_after_peak_ms": 1.8800000000001091,
+          "next_rise_interval_ms": 33.85173856301026
+        },
+        {
+          "after_event": 2,
+          "minimum_sample_mv": -67.09375375509262,
+          "minimum_sample_time_ms": 1114.24,
+          "minimum_delay_after_peak_ms": 2.259999999999991,
+          "next_rise_interval_ms": 220.40349600520494
+        },
+        {
+          "after_event": 3,
+          "minimum_sample_mv": -70.21875450015068,
+          "minimum_sample_time_ms": 1334.36,
+          "minimum_delay_after_peak_ms": 1.9799999999997908,
+          "next_rise_interval_ms": 307.4062817735173
+        }
+      ]
+    },
+    {
+      "name": "source",
+      "interspike_minima": [
+        {
+          "after_event": 1,
+          "minimum_sample_mv": -71.07999458853004,
+          "minimum_sample_time_ms": 1076.4799999384602,
+          "minimum_delay_after_peak_ms": 3.145625000640848,
+          "next_rise_interval_ms": 26.311293406911318
+        },
+        {
+          "after_event": 2,
+          "minimum_sample_mv": -71.51892198762296,
+          "minimum_sample_time_ms": 1102.866874943836,
+          "minimum_delay_after_peak_ms": 3.221250000656255,
+          "next_rise_interval_ms": 117.18100928728722
+        },
+        {
+          "after_event": 3,
+          "minimum_sample_mv": -71.52785141856594,
+          "minimum_sample_time_ms": 1220.1387499677273,
+          "minimum_delay_after_peak_ms": 3.310625000674463,
+          "next_rise_interval_ms": 207.3854411281518
+        }
+      ]
+    },
+    {
+      "name": "recorded_bias",
+      "interspike_minima": [
+        {
+          "after_event": 1,
+          "minimum_sample_mv": -71.07600744087276,
+          "minimum_sample_time_ms": 1078.7412499389209,
+          "minimum_delay_after_peak_ms": 3.1518750006421214,
+          "next_rise_interval_ms": 27.211677016214935
+        },
+        {
+          "after_event": 2,
+          "minimum_sample_mv": -71.50678941593162,
+          "minimum_sample_time_ms": 1106.0293749444802,
+          "minimum_delay_after_peak_ms": 3.2281250006576556,
+          "next_rise_interval_ms": 123.77479920567657
+        },
+        {
+          "after_event": 3,
+          "minimum_sample_mv": -71.52680001012402,
+          "minimum_sample_time_ms": 1229.8862499697132,
+          "minimum_delay_after_peak_ms": 3.308750000674081,
+          "next_rise_interval_ms": 210.0728326905678
+        }
+      ]
+    }
+  ],
+  "qualification": "Direct diagnostic observations; minima are not assigned to a unique channel cause. Numerical uncertainty differs between human and model traces."
+}

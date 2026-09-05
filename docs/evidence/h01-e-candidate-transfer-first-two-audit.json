@@ -1,0 +1,67 @@
+{
+  "reference_events": [
+    {
+      "rise_crossing_ms": 1078.7131279149305,
+      "fall_crossing_ms": 1079.6764773960467,
+      "time_above_threshold_ms": 0.9633494811162109,
+      "peak_sample_time_ms": 1078.8799284726106,
+      "peak_sample_voltage_mv": 35.959759064987914
+    },
+    {
+      "rise_crossing_ms": 1104.2407517858978,
+      "fall_crossing_ms": 1105.198507720385,
+      "time_above_threshold_ms": 0.9577559344870679,
+      "peak_sample_time_ms": 1104.4079825545505,
+      "peak_sample_voltage_mv": 35.50639183851313
+    }
+  ],
+  "actual_events": [
+    {
+      "rise_crossing_ms": 1078.7163379991719,
+      "fall_crossing_ms": 1079.6796232881463,
+      "time_above_threshold_ms": 0.9632852889744754,
+      "peak_sample_time_ms": 1078.88375,
+      "peak_sample_voltage_mv": 35.962616090243635
+    },
+    {
+      "rise_crossing_ms": 1104.2468323363028,
+      "fall_crossing_ms": 1105.2045313537212,
+      "time_above_threshold_ms": 0.957699017418463,
+      "peak_sample_time_ms": 1104.415,
+      "peak_sample_voltage_mv": 35.509512867350374
+    }
+  ],
+  "signed_errors": [
+    {
+      "rise_crossing_ms": 0.003210084241345612,
+      "peak_sample_voltage_mv": 0.0028570252557216236,
+      "time_above_threshold_ms": -6.419214173547516e-05
+    },
+    {
+      "rise_crossing_ms": 0.006080550404931273,
+      "peak_sample_voltage_mv": 0.003121028837242079,
+      "time_above_threshold_ms": -5.691706860488921e-05
+    }
+  ],
+  "same_nonzero_event_count": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "gates": {
+    "rise_crossing_ms": true,
+    "peak_sample_voltage_mv": true,
+    "time_above_threshold_ms": true
+  },
+  "passed": true,
+  "window_ms": [
+    1020.0,
+    1120.0
+  ],
+  "qualification": "Numerical spike transfer only; human and circuit validation remain separate.",
+  "input_sha256": {
+    "h01-l2-kv3-ninety-ca133": "2a86e92301a9828f09f03d400e2fdfc851c24baf3b9c61149c297540bf3d1ce7",
+    "h01-e-candidate-transfer-first-two": "26282e5163c222455bfe9abdaba5385306353b472226885404ad008a85573490"
+  }
+}

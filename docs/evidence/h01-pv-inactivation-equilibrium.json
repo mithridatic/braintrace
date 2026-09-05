@@ -1,0 +1,144 @@
+{
+  "records": [
+    {
+      "voltage_mv": -80.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.9820137900379085,
+          "analytic_h_inf": 0.9820137900379085,
+          "absolute_error": 0.0,
+          "m_inf": 0.01361410123236546,
+          "source_equation_closing_tau_ms": 0.13602916442789412,
+          "stationary_current_ma_cm2": -0.00017421202831789065
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.9918374288468401,
+          "analytic_h_inf": 0.9918374288468401,
+          "absolute_error": 0.0,
+          "m_inf": 0.01361410123236546,
+          "source_equation_closing_tau_ms": 0.13880149461105196,
+          "stationary_current_ma_cm2": -0.0001759547696721646
+        }
+      ]
+    },
+    {
+      "voltage_mv": -70.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.9116003227929417,
+          "analytic_h_inf": 0.9116003227929417,
+          "absolute_error": 0.0,
+          "m_inf": 0.04023966374334056,
+          "source_equation_closing_tau_ms": 0.1991276093693928,
+          "stationary_current_ma_cm2": -0.00385477484911998
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.9426758241011313,
+          "analytic_h_inf": 0.9426758241011313,
+          "absolute_error": 0.0,
+          "m_inf": 0.04023966374334056,
+          "source_equation_closing_tau_ms": 0.2141615875826902,
+          "stationary_current_ma_cm2": -0.003986180090947448
+        }
+      ]
+    },
+    {
+      "voltage_mv": -65.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.8175744761936437,
+          "analytic_h_inf": 0.8175744761936437,
+          "absolute_error": 0.0,
+          "m_inf": 0.06809831325934679,
+          "source_equation_closing_tau_ms": 0.23899394046713912,
+          "stationary_current_ma_cm2": -0.016057742947537385
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.8581489350995123,
+          "analytic_h_inf": 0.8581489350995123,
+          "absolute_error": 0.0,
+          "m_inf": 0.06809831325934679,
+          "source_equation_closing_tau_ms": 0.2695286671002791,
+          "stationary_current_ma_cm2": -0.01685465411626563
+        }
+      ]
+    },
+    {
+      "voltage_mv": -56.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.4999958333346542,
+          "analytic_h_inf": 0.5,
+          "absolute_error": 4.16666534580612e-06,
+          "m_inf": 0.16571925088284978,
+          "source_equation_closing_tau_ms": 0.28221010941864544,
+          "stationary_current_ma_cm2": -0.13044919587965415
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.49999500000097463,
+          "analytic_h_inf": 0.5,
+          "absolute_error": 4.999999025367963e-06,
+          "m_inf": 0.16571925088284978,
+          "source_equation_closing_tau_ms": 0.3386521313023745,
+          "stationary_current_ma_cm2": -0.13044897846242554
+        }
+      ]
+    },
+    {
+      "voltage_mv": -40.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.06496916912866409,
+          "analytic_h_inf": 0.06496916912866407,
+          "absolute_error": 1.3877787807814457e-17,
+          "m_inf": 0.5402881924875765,
+          "source_equation_closing_tau_ms": 0.18415514757102594,
+          "stationary_current_ma_cm2": -0.49874266697957237
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.039165722796764356,
+          "analytic_h_inf": 0.039165722796764356,
+          "absolute_error": 0.0,
+          "m_inf": 0.5402881924875765,
+          "source_equation_closing_tau_ms": 0.19507813769008125,
+          "stationary_current_ma_cm2": -0.30065979454280495
+        }
+      ]
+    },
+    {
+      "voltage_mv": -30.0,
+      "comparison": [
+        {
+          "slope_mv": 6.0,
+          "h_inf": 0.01295372753069587,
+          "analytic_h_inf": 0.012953727530695871,
+          "absolute_error": 1.734723475976807e-18,
+          "m_inf": 0.7811898949795673,
+          "source_equation_closing_tau_ms": 0.1268763524727745,
+          "stationary_current_ma_cm2": -0.2671805668958724
+        },
+        {
+          "slope_mv": 5.0,
+          "h_inf": 0.005486298899450404,
+          "analytic_h_inf": 0.005486298899450404,
+          "absolute_error": 0.0,
+          "m_inf": 0.7811898949795673,
+          "source_equation_closing_tau_ms": 0.1288216298737896,
+          "stationary_current_ma_cm2": -0.11315912324401158
+        }
+      ]
+    }
+  ],
+  "directional_prediction_passed": true,
+  "limit": "Implemented fixed-voltage equilibrium check; slope also changes kinetics; no whole-cell or human validation"
+}

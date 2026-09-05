@@ -1,0 +1,107 @@
+{
+  "repository": "https://github.com/AllenInstitute/human_neuron_Ih",
+  "commit": "a5af6f349e1ef269f693aa923a3e698593edb0c7",
+  "files": [
+    {
+      "local_file": "README.md",
+      "repository_path": "README.md",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/README.md",
+      "sha256": "58000d04c092472aad265fc0394f3d0b1730d090c0d02ca002e8148f5a1c305f"
+    },
+    {
+      "local_file": "LICENSE.txt",
+      "repository_path": "LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/LICENSE.txt",
+      "sha256": "67ede0461dd6afc9aaae2f511cace5f9c97ff144c0284cf02224e7523ec03ec9"
+    },
+    {
+      "local_file": "config.json",
+      "repository_path": "docs/examples/simulator/bionet/1neuron_2:3_cortex_Ih+/config.json",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/docs/examples/simulator/bionet/1neuron_2%3A3_cortex_Ih%2B/config.json",
+      "sha256": "93eec807b7f043062d26ef2eaead70edf4a444dbdbfaef3a153355d534950aa1"
+    },
+    {
+      "local_file": "set_cell_params.py",
+      "repository_path": "docs/examples/simulator/bionet/1neuron_2:3_cortex_Ih+/set_cell_params.py",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/docs/examples/simulator/bionet/1neuron_2%3A3_cortex_Ih%2B/set_cell_params.py",
+      "sha256": "0d64c94de82008c50c582a70018d4147a1bb49a3328e387ae0715f3e5c5039ac"
+    },
+    {
+      "local_file": "Ih_shifted.mod",
+      "repository_path": "docs/examples/simulator/bionet/components/mechanisms/modfiles/Ih_shifted.mod",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/docs/examples/simulator/bionet/components/mechanisms/modfiles/Ih_shifted.mod",
+      "sha256": "43bffd80ba5038cced1c83000114b2e8e7a1e473905f8543e0c9fe9696750fb1"
+    },
+    {
+      "local_file": "uniform-fit.json",
+      "repository_path": "docs/examples/simulator/bionet/components/biophysical/electrophysiology/478230220.json",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/docs/examples/simulator/bionet/components/biophysical/electrophysiology/478230220.json",
+      "sha256": "fb440e79ab8f74ee8a25f4d7ebc4c69a4211e4a76ea75ad6858f2f8cede0b12c"
+    },
+    {
+      "local_file": "node-types.csv",
+      "repository_path": "docs/examples/simulator/bionet/1neuron_2:3_cortex_Ih+/network/v1_node_types.csv",
+      "url": "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/a5af6f349e1ef269f693aa923a3e698593edb0c7/docs/examples/simulator/bionet/1neuron_2%3A3_cortex_Ih%2B/network/v1_node_types.csv",
+      "sha256": "f622831d170959f4499528a6ed89198fb040cbc1055ad27c4cb505854a490de2"
+    }
+  ],
+  "published_model_specimen": 478230220,
+  "current_reference_specimen": 541563728,
+  "published_Ih_rows": [
+    {
+      "section": "soma",
+      "name": "gbar_Ih_mod",
+      "value": "0.000100314",
+      "mechanism": "Ih_mod"
+    },
+    {
+      "section": "apic",
+      "name": "gbar_Ih_mod",
+      "value": "0.000100549",
+      "mechanism": "Ih_mod"
+    },
+    {
+      "section": "dend",
+      "name": "gbar_Ih_mod",
+      "value": "0.000100185",
+      "mechanism": "Ih_mod"
+    }
+  ],
+  "rate_comparison": [
+    {
+      "voltage_mv": -84.0,
+      "current": {
+        "m_inf": 0.07188582965753657,
+        "tau_ms": 60.83887129232833
+      },
+      "published_modified": {
+        "m_inf": 0.23193412125727259,
+        "tau_ms": 50.34753550160285
+      }
+    },
+    {
+      "voltage_mv": -75.0,
+      "current": {
+        "m_inf": 0.030232164354085787,
+        "tau_ms": 48.435234598497516
+      },
+      "published_modified": {
+        "m_inf": 0.1120216683478683,
+        "tau_ms": 44.35024263648317
+      }
+    },
+    {
+      "voltage_mv": -65.0,
+      "current": {
+        "m_inf": 0.011059225128583107,
+        "tau_ms": 36.513807642834394
+      },
+      "published_modified": {
+        "m_inf": 0.04470060955307171,
+        "tau_ms": 35.27169580871153
+      }
+    }
+  ],
+  "scope": "Source-code equation evaluation, not human voltage-clamp measurements or a cell simulation",
+  "next_test_boundary": "Separate channel distribution from modified rates; do not copy regional passive fits or claim donor-specific parameters."
+}

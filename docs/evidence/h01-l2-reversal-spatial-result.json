@@ -1,0 +1,122 @@
+{
+  "decision": "supported",
+  "checks": {
+    "sample_difference_within_0_01_mv": true,
+    "all_shape_conditions_pass_both": true
+  },
+  "invalid_reasons": [],
+  "metadata_differences": [
+    "integration_seconds",
+    "nseg_factor",
+    "samples",
+    "sections"
+  ],
+  "segment_counts": [
+    1239,
+    3717
+  ],
+  "maximum_section_area_difference_um2": 1.1368683772161603e-13,
+  "geometry_rtol": 1e-10,
+  "geometry_atol": 1e-10,
+  "samples": [
+    {
+      "time_ms": 1019,
+      "coarse_voltage_mv": -83.98909883600494,
+      "fine_voltage_mv": -83.98908853219066,
+      "fine_minus_coarse_mv": 1.0303814278245227e-05
+    },
+    {
+      "time_ms": 1025,
+      "coarse_voltage_mv": -81.31444754499293,
+      "fine_voltage_mv": -81.31473197759918,
+      "fine_minus_coarse_mv": -0.0002844326062501068
+    },
+    {
+      "time_ms": 1030,
+      "coarse_voltage_mv": -79.92880355251962,
+      "fine_voltage_mv": -79.9290577752879,
+      "fine_minus_coarse_mv": -0.00025422276827669066
+    },
+    {
+      "time_ms": 1040,
+      "coarse_voltage_mv": -77.9359508998306,
+      "fine_voltage_mv": -77.93618057566272,
+      "fine_minus_coarse_mv": -0.0002296758321165271
+    },
+    {
+      "time_ms": 1070,
+      "coarse_voltage_mv": -74.942584964218,
+      "fine_voltage_mv": -74.94280088657686,
+      "fine_minus_coarse_mv": -0.0002159223588620307
+    },
+    {
+      "time_ms": 1120,
+      "coarse_voltage_mv": -73.7995317384599,
+      "fine_voltage_mv": -73.79975739100448,
+      "fine_minus_coarse_mv": -0.00022565254457163064
+    },
+    {
+      "time_ms": 1520,
+      "coarse_voltage_mv": -74.01334094222047,
+      "fine_voltage_mv": -74.01357318706681,
+      "fine_minus_coarse_mv": -0.00023224484634454257
+    },
+    {
+      "time_ms": 2019,
+      "coarse_voltage_mv": -74.01515701513682,
+      "fine_voltage_mv": -74.01538906245042,
+      "fine_minus_coarse_mv": -0.0002320473136023793
+    },
+    {
+      "time_ms": 2025,
+      "coarse_voltage_mv": -76.70101253915783,
+      "fine_voltage_mv": -76.70095068987203,
+      "fine_minus_coarse_mv": 6.18492857995534e-05
+    },
+    {
+      "time_ms": 2030,
+      "coarse_voltage_mv": -78.1062319928695,
+      "fine_voltage_mv": -78.10620117896606,
+      "fine_minus_coarse_mv": 3.081390343595558e-05
+    },
+    {
+      "time_ms": 2050,
+      "coarse_voltage_mv": -81.61364979415882,
+      "fine_voltage_mv": -81.61365367210185,
+      "fine_minus_coarse_mv": -3.877943029806374e-06
+    },
+    {
+      "time_ms": 2099,
+      "coarse_voltage_mv": -84.38613168287783,
+      "fine_voltage_mv": -84.3861319652863,
+      "fine_minus_coarse_mv": -2.824084646135816e-07
+    }
+  ],
+  "maximum_sample_difference_mv": 0.0002844326062501068,
+  "shape_conditions_by_run": [
+    [
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true
+    ]
+  ],
+  "input_plateau_errors_na": [
+    0.0,
+    0.0
+  ],
+  "raw_mapping_exact_both": true,
+  "qualification": "Selected subthreshold spatial comparison only. Spiking numerical and physiological validation remain open.",
+  "sources": {
+    "h01-l2-sweep43-ih75-epasminus4-space3.json": "f082aec48d624b55f25f228300efb15d8b638f1d89f3c6bed43f57faf0ef4325",
+    "h01-l2-sweep43-ih75-epasminus4-space3.npz": "d548b9ac0ccc9cfc9489e366b856fa620e163b0c5671ca463b7dab78e62a3274",
+    "h01-l2-sweep43-ih75-epasminus4-space3-raw.npz": "31126084c38fcaa404442708f5dcdbd30923553b5ea930af5f0bde2a671d43de",
+    "h01-l2-sweep43-ih75-epasminus4.json": "0afe39ccd219919efb3f4e186bc93b6cc7e8dc26767e82006004db3ae1333ebc",
+    "h01-l2-sweep43-ih75-epasminus4.npz": "00da470db1ccccf0000982cf60148b0f73a1fea9251d3d0480287f9a0174dbc0",
+    "h01-l2-sweep43-ih75-epasminus4-raw.npz": "4120c6ec3b5b821eeeb87afe11ef58983521a4e75b453afcbbc85c43545d8286"
+  }
+}

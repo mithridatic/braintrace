@@ -1,0 +1,339 @@
+{
+  "source_file_id": 318665,
+  "source_columns": {
+    "recording": "A",
+    "species": "B",
+    "frequency": "D",
+    "threshold": "IE",
+    "amplitude": "OE"
+  },
+  "command_first_peak_mv": 45.6240234375,
+  "human_40hz_rows": 36,
+  "candidates": [
+    {
+      "recording": "H20.29.179.11.91.01.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -44.622493743896484,
+      "amplitude_mv": 90.24651718139648,
+      "sum_mv": 45.6240234375,
+      "difference_from_command_first_peak_mv": 0.0
+    },
+    {
+      "recording": "H20.29.177.11.43.05.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -44.81490707397461,
+      "amplitude_mv": 90.42113494873047,
+      "sum_mv": 45.60622787475586,
+      "difference_from_command_first_peak_mv": -0.017795562744140625
+    },
+    {
+      "recording": "H20.29.183.11.91.03.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -48.866920471191406,
+      "amplitude_mv": 94.4236946105957,
+      "sum_mv": 45.5567741394043,
+      "difference_from_command_first_peak_mv": -0.06724929809570312
+    },
+    {
+      "recording": "H20.29.180.11.91.02.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -44.917510986328125,
+      "amplitude_mv": 90.60914993286133,
+      "sum_mv": 45.6916389465332,
+      "difference_from_command_first_peak_mv": 0.06761550903320312
+    },
+    {
+      "recording": "H20.29.173.11.42.03.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -46.23833084106445,
+      "amplitude_mv": 92.14520263671875,
+      "sum_mv": 45.9068717956543,
+      "difference_from_command_first_peak_mv": 0.2828483581542969
+    },
+    {
+      "recording": "H20.29.177.11.43.08.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -47.00807571411133,
+      "amplitude_mv": 93.13323593139648,
+      "sum_mv": 46.125160217285156,
+      "difference_from_command_first_peak_mv": 0.5011367797851562
+    },
+    {
+      "recording": "H20.29.182.11.91.05.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -44.611961364746094,
+      "amplitude_mv": 90.74470520019531,
+      "sum_mv": 46.13274383544922,
+      "difference_from_command_first_peak_mv": 0.5087203979492188
+    },
+    {
+      "recording": "H20.29.179.11.91.03.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -34.616859436035156,
+      "amplitude_mv": 79.65603637695312,
+      "sum_mv": 45.03917694091797,
+      "difference_from_command_first_peak_mv": -0.5848464965820312
+    },
+    {
+      "recording": "H20.29.183.11.91.01.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -46.45470428466797,
+      "amplitude_mv": 92.69425964355469,
+      "sum_mv": 46.23955535888672,
+      "difference_from_command_first_peak_mv": 0.6155319213867188
+    },
+    {
+      "recording": "H20.29.173.11.43.06.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -45.54737854003906,
+      "amplitude_mv": 89.83737182617188,
+      "sum_mv": 44.28999328613281,
+      "difference_from_command_first_peak_mv": -1.3340301513671875
+    },
+    {
+      "recording": "H20.29.183.11.91.05.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -45.137454986572266,
+      "amplitude_mv": 89.37443923950195,
+      "sum_mv": 44.23698425292969,
+      "difference_from_command_first_peak_mv": -1.3870391845703125
+    },
+    {
+      "recording": "H20.29.177.11.43.07.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -44.7509880065918,
+      "amplitude_mv": 92.0638313293457,
+      "sum_mv": 47.312843322753906,
+      "difference_from_command_first_peak_mv": 1.6888198852539062
+    },
+    {
+      "recording": "H20.29.173.11.21.01.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -45.158756256103516,
+      "amplitude_mv": 92.53426361083984,
+      "sum_mv": 47.37550735473633,
+      "difference_from_command_first_peak_mv": 1.7514839172363281
+    },
+    {
+      "recording": "H20.29.179.11.91.04.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -35.28828811645508,
+      "amplitude_mv": 79.15505599975586,
+      "sum_mv": 43.86676788330078,
+      "difference_from_command_first_peak_mv": -1.7572555541992188
+    },
+    {
+      "recording": "H20.29.180.11.92.05.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -50.85221862792969,
+      "amplitude_mv": 98.46349716186523,
+      "sum_mv": 47.61127853393555,
+      "difference_from_command_first_peak_mv": 1.9872550964355469
+    },
+    {
+      "recording": "H20.29.183.11.91.07.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -43.72767639160156,
+      "amplitude_mv": 91.62264251708984,
+      "sum_mv": 47.89496612548828,
+      "difference_from_command_first_peak_mv": 2.2709426879882812
+    },
+    {
+      "recording": "H20.29.177.11.43.06.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -47.60162353515625,
+      "amplitude_mv": 90.86080169677734,
+      "sum_mv": 43.259178161621094,
+      "difference_from_command_first_peak_mv": -2.3648452758789062
+    },
+    {
+      "recording": "H20.29.174.11.41.05.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -48.42704391479492,
+      "amplitude_mv": 96.5663948059082,
+      "sum_mv": 48.13935089111328,
+      "difference_from_command_first_peak_mv": 2.5153274536132812
+    },
+    {
+      "recording": "H20.29.179.11.91.05.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -35.025333404541016,
+      "amplitude_mv": 83.16621780395508,
+      "sum_mv": 48.14088439941406,
+      "difference_from_command_first_peak_mv": 2.5168609619140625
+    },
+    {
+      "recording": "H20.29.182.11.91.02.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -42.00775909423828,
+      "amplitude_mv": 90.20242691040039,
+      "sum_mv": 48.19466781616211,
+      "difference_from_command_first_peak_mv": 2.5706443786621094
+    },
+    {
+      "recording": "H20.29.174.11.92.01.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -43.903480529785156,
+      "amplitude_mv": 92.61297988891602,
+      "sum_mv": 48.70949935913086,
+      "difference_from_command_first_peak_mv": 3.0854759216308594
+    },
+    {
+      "recording": "H20.29.182.11.91.01.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -40.73306655883789,
+      "amplitude_mv": 82.97705078125,
+      "sum_mv": 42.24398422241211,
+      "difference_from_command_first_peak_mv": -3.3800392150878906
+    },
+    {
+      "recording": "H20.29.173.11.21.02.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -43.70328903198242,
+      "amplitude_mv": 92.74550247192383,
+      "sum_mv": 49.042213439941406,
+      "difference_from_command_first_peak_mv": 3.4181900024414062
+    },
+    {
+      "recording": "H20.29.174.11.91.02.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -42.37868881225586,
+      "amplitude_mv": 92.60457992553711,
+      "sum_mv": 50.22589111328125,
+      "difference_from_command_first_peak_mv": 4.60186767578125
+    },
+    {
+      "recording": "H20.29.183.11.91.04.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -42.143157958984375,
+      "amplitude_mv": 82.81028366088867,
+      "sum_mv": 40.6671257019043,
+      "difference_from_command_first_peak_mv": -4.956897735595703
+    },
+    {
+      "recording": "H20.29.173.11.43.07_pt2.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -43.32759475708008,
+      "amplitude_mv": 83.94928741455078,
+      "sum_mv": 40.6216926574707,
+      "difference_from_command_first_peak_mv": -5.002330780029297
+    },
+    {
+      "recording": "H20.29.183.11.91.06.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -47.59510040283203,
+      "amplitude_mv": 98.22651672363281,
+      "sum_mv": 50.63141632080078,
+      "difference_from_command_first_peak_mv": 5.007392883300781
+    },
+    {
+      "recording": "H20.29.183.11.91.10.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -49.22682571411133,
+      "amplitude_mv": 100.43315505981445,
+      "sum_mv": 51.206329345703125,
+      "difference_from_command_first_peak_mv": 5.582305908203125
+    },
+    {
+      "recording": "H20.29.174.11.41.02.nwb",
+      "area": "Temporal",
+      "frequency_hz": 40,
+      "threshold_mv": -53.296730041503906,
+      "amplitude_mv": 93.21749877929688,
+      "sum_mv": 39.92076873779297,
+      "difference_from_command_first_peak_mv": -5.703254699707031
+    },
+    {
+      "recording": "H20.29.182.11.91.04.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -43.36117935180664,
+      "amplitude_mv": 94.84286117553711,
+      "sum_mv": 51.48168182373047,
+      "difference_from_command_first_peak_mv": 5.857658386230469
+    },
+    {
+      "recording": "H20.29.180.11.91.03.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -51.78141403198242,
+      "amplitude_mv": 91.43059539794922,
+      "sum_mv": 39.6491813659668,
+      "difference_from_command_first_peak_mv": -5.974842071533203
+    },
+    {
+      "recording": "H20.29.181.11.91.02.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -42.885498046875,
+      "amplitude_mv": 96.28850936889648,
+      "sum_mv": 53.403011322021484,
+      "difference_from_command_first_peak_mv": 7.778987884521484
+    },
+    {
+      "recording": "H20.29.181.11.92.03.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -41.165496826171875,
+      "amplitude_mv": 95.2131233215332,
+      "sum_mv": 54.04762649536133,
+      "difference_from_command_first_peak_mv": 8.423603057861328
+    },
+    {
+      "recording": "H20.29.180.11.92.04.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -37.840660095214844,
+      "amplitude_mv": 92.04861831665039,
+      "sum_mv": 54.20795822143555,
+      "difference_from_command_first_peak_mv": 8.583934783935547
+    },
+    {
+      "recording": "H20.29.182.11.91.06.nwb",
+      "area": "Frontal",
+      "frequency_hz": 40,
+      "threshold_mv": -39.767913818359375,
+      "amplitude_mv": 94.18622970581055,
+      "sum_mv": 54.41831588745117,
+      "difference_from_command_first_peak_mv": 8.794292449951172
+    },
+    {
+      "recording": "H20.29.173.11.42.04.nwb",
+      "area": "Parietal",
+      "frequency_hz": 40,
+      "threshold_mv": -46.454017639160156,
+      "amplitude_mv": 82.01266098022461,
+      "sum_mv": 35.55864334106445,
+      "difference_from_command_first_peak_mv": -10.065380096435547
+    }
+  ],
+  "qualification": "Exploratory label search only. Threshold plus amplitude is a candidate peak estimate; feature definition, filtering, duplicate records, and waveform identity require verification. No identity accepted."
+}

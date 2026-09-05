@@ -1,0 +1,14 @@
+{
+  "observation": "40th complete excursion upward -20 mV crossing",
+  "preceding_onset_shifts_ms": [
+    1.0167656139872179,
+    0.11326284181382107
+  ],
+  "apparent_order": 1.9976754061776036,
+  "assumption": "Leading spatial error scales as squared axonal compartment length; other regions fixed",
+  "predicted_next_onset_shift_ms": 0.012584760201535674,
+  "predicted_factor2187_onset_ms": 1245.927473867055,
+  "prospective_prediction_absolute_error_limit_ms": 0.005,
+  "final_output_absent_when_prediction_written": true,
+  "qualification": "Conditional numerical prediction only. Actual run and unchanged 0.1 ms all-onset gate remain required."
+}

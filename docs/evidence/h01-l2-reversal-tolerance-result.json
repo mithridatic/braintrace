@@ -1,0 +1,115 @@
+{
+  "decision": "supported",
+  "checks": {
+    "all_sample_differences_within_0_01_mv": true,
+    "response_directions_unchanged": true,
+    "all_three_shape_conditions_pass_both": true
+  },
+  "invalid_reasons": [],
+  "metadata_differences": [
+    "cvode_atol",
+    "integration_seconds",
+    "samples"
+  ],
+  "samples": [
+    {
+      "time_ms": 1019,
+      "coarse_voltage_mv": -83.98908853219066,
+      "fine_voltage_mv": -83.98908853309776,
+      "fine_minus_coarse_mv": -9.070930673260591e-10
+    },
+    {
+      "time_ms": 1025,
+      "coarse_voltage_mv": -81.31473197759918,
+      "fine_voltage_mv": -81.3147319784371,
+      "fine_minus_coarse_mv": -8.379146265724557e-10
+    },
+    {
+      "time_ms": 1030,
+      "coarse_voltage_mv": -79.9290577752879,
+      "fine_voltage_mv": -79.92905773655751,
+      "fine_minus_coarse_mv": 3.873039133850398e-08
+    },
+    {
+      "time_ms": 1040,
+      "coarse_voltage_mv": -77.93618057566272,
+      "fine_voltage_mv": -77.93618046696915,
+      "fine_minus_coarse_mv": 1.086935697003355e-07
+    },
+    {
+      "time_ms": 1070,
+      "coarse_voltage_mv": -74.94280088657686,
+      "fine_voltage_mv": -74.9428006613487,
+      "fine_minus_coarse_mv": 2.25228163230895e-07
+    },
+    {
+      "time_ms": 1120,
+      "coarse_voltage_mv": -73.79975739100448,
+      "fine_voltage_mv": -73.79975713987439,
+      "fine_minus_coarse_mv": 2.511300891683277e-07
+    },
+    {
+      "time_ms": 1520,
+      "coarse_voltage_mv": -74.01357318706681,
+      "fine_voltage_mv": -74.01357320132327,
+      "fine_minus_coarse_mv": -1.4256457347983087e-08
+    },
+    {
+      "time_ms": 2019,
+      "coarse_voltage_mv": -74.01538906245042,
+      "fine_voltage_mv": -74.01538908700485,
+      "fine_minus_coarse_mv": -2.4554424271627795e-08
+    },
+    {
+      "time_ms": 2025,
+      "coarse_voltage_mv": -76.70095068987203,
+      "fine_voltage_mv": -76.70095071222694,
+      "fine_minus_coarse_mv": -2.2354910811372974e-08
+    },
+    {
+      "time_ms": 2030,
+      "coarse_voltage_mv": -78.10620117896606,
+      "fine_voltage_mv": -78.10620123815961,
+      "fine_minus_coarse_mv": -5.919355317018926e-08
+    },
+    {
+      "time_ms": 2050,
+      "coarse_voltage_mv": -81.61365367210185,
+      "fine_voltage_mv": -81.6136538461825,
+      "fine_minus_coarse_mv": -1.7408065389190597e-07
+    },
+    {
+      "time_ms": 2099,
+      "coarse_voltage_mv": -84.3861319652863,
+      "fine_voltage_mv": -84.38613224332643,
+      "fine_minus_coarse_mv": -2.780401331392568e-07
+    }
+  ],
+  "maximum_sample_difference_mv": 2.780401331392568e-07,
+  "shape_conditions_by_run": [
+    [
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true
+    ]
+  ],
+  "raw_mapping_exact_both": true,
+  "input_plateau_errors_na": [
+    0.0,
+    0.0
+  ],
+  "qualification": "Selected subthreshold samples and shape directions under tolerance refinement only. Spatial, active-input numerical, and human physiological validation remain open.",
+  "sources": {
+    "h01-l2-sweep43-ih75-epasminus4.json": "0afe39ccd219919efb3f4e186bc93b6cc7e8dc26767e82006004db3ae1333ebc",
+    "h01-l2-sweep43-ih75-epasminus4.npz": "00da470db1ccccf0000982cf60148b0f73a1fea9251d3d0480287f9a0174dbc0",
+    "h01-l2-sweep43-ih75-epasminus4-raw.npz": "4120c6ec3b5b821eeeb87afe11ef58983521a4e75b453afcbbc85c43545d8286",
+    "h01-l2-sweep43-ih75-epasminus4-atol11.json": "d6718a4141b2cf6ef13b8b0dd2b92f15a3a878e2f4123f5852c7a39c28db19e3",
+    "h01-l2-sweep43-ih75-epasminus4-atol11.npz": "62efd5f9cbd3ec5fd61d66fca88b48d601ad429d2a75624ee23c76ddb81acc5c",
+    "h01-l2-sweep43-ih75-epasminus4-atol11-raw.npz": "fd75385d78fceaa96818b227d00be38c23d1eb1a7576d2205aed3de531c7e148"
+  }
+}

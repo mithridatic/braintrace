@@ -1,0 +1,15 @@
+{
+  "full_stem": "h01-l2-source-sweep50",
+  "prefix_stem": "h01-l2-source-prefix2100",
+  "prefix_samples": 420001,
+  "full_samples": 1603997,
+  "dt_ms": 0.005,
+  "observed_endpoint_ms": 2100.000000034233,
+  "exact_array_equality": {
+    "time_ms": true,
+    "voltage_mv": true,
+    "applied_current_na": true
+  },
+  "decision": "supported",
+  "qualification": "Exact prefix equivalence at tested source setup. Does not predict uncomputed tail or qualify cell physiology."
+}

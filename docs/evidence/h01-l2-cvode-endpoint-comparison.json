@@ -1,0 +1,74 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.07988964235391904,
+    "peak_sample_voltage_mv": 0.0031979826156103286,
+    "time_above_threshold_ms": 4.035319943795912e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.0016067131409727153,
+      "peak_sample_voltage_mv": -0.0031835615936373074,
+      "time_above_threshold_ms": 4.035319943795912e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.0023561201962820633,
+      "peak_sample_voltage_mv": -0.0031979826156103286,
+      "time_above_threshold_ms": 3.881050588461221e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.03798739846479293,
+      "peak_sample_voltage_mv": -0.003163532748587272,
+      "time_above_threshold_ms": 3.878257552969444e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.045989451318973806,
+      "peak_sample_voltage_mv": -0.0031973581465933876,
+      "time_above_threshold_ms": 3.838021257251967e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.057222532160494666,
+      "peak_sample_voltage_mv": -0.0030851618457887753,
+      "time_above_threshold_ms": 3.889951062774344e-05
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.06848481215297397,
+      "peak_sample_voltage_mv": -0.0031820614915574197,
+      "time_above_threshold_ms": 3.840786234832194e-05
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.07988964235391904,
+      "peak_sample_voltage_mv": -0.003183687307760863,
+      "time_above_threshold_ms": 3.816443495452404e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-source-sweep50-dt000625": [],
+    "h01-l2-source-cvode-endpoint": []
+  },
+  "qualification": "Source-mesh solver agreement and complete adaptive output. No fine-mesh or intervention-specific solver qualification and no human physiological validation.",
+  "setup_invariants_passed": true,
+  "input_plateau_error_na": 0.0,
+  "input_transition_max_shift_ms": 1.547050487715751e-09,
+  "observed_endpoint_ms": 2100.0,
+  "raw_index_mapping_exact": true,
+  "integration_seconds": 27.082943847985007
+}

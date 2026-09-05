@@ -1,0 +1,68 @@
+{
+  "decision": "supported",
+  "invalid_reasons": [],
+  "counts": [
+    7,
+    7
+  ],
+  "equal_peak_signs": true,
+  "limits": {
+    "rise_crossing_ms": 0.1,
+    "peak_sample_voltage_mv": 0.1,
+    "time_above_threshold_ms": 0.01
+  },
+  "max_absolute_differences": {
+    "rise_crossing_ms": 0.08049165158672622,
+    "peak_sample_voltage_mv": 0.0031463138743106356,
+    "time_above_threshold_ms": 3.79053683445818e-05
+  },
+  "ordinal_differences_fine_minus_coarse": [
+    {
+      "ordinal": 1,
+      "rise_crossing_ms": -0.001609491167073429,
+      "peak_sample_voltage_mv": -0.003093825760331015,
+      "time_above_threshold_ms": 3.79053683445818e-05
+    },
+    {
+      "ordinal": 2,
+      "rise_crossing_ms": -0.0023494834024404554,
+      "peak_sample_voltage_mv": -0.0031360224081282695,
+      "time_above_threshold_ms": 3.612816317399847e-05
+    },
+    {
+      "ordinal": 3,
+      "rise_crossing_ms": 0.03831876721119443,
+      "peak_sample_voltage_mv": -0.002966210515722878,
+      "time_above_threshold_ms": 3.668728140837629e-05
+    },
+    {
+      "ordinal": 4,
+      "rise_crossing_ms": 0.046367878292358,
+      "peak_sample_voltage_mv": -0.0030953545901653,
+      "time_above_threshold_ms": 3.55814313479641e-05
+    },
+    {
+      "ordinal": 5,
+      "rise_crossing_ms": 0.05767490361381533,
+      "peak_sample_voltage_mv": -0.0031463138743106356,
+      "time_above_threshold_ms": 3.6581430094884126e-05
+    },
+    {
+      "ordinal": 6,
+      "rise_crossing_ms": 0.06901152694013035,
+      "peak_sample_voltage_mv": -0.0029923527377491155,
+      "time_above_threshold_ms": 3.656056856016221e-05
+    },
+    {
+      "ordinal": 7,
+      "rise_crossing_ms": 0.08049165158672622,
+      "peak_sample_voltage_mv": -0.002788021927557338,
+      "time_above_threshold_ms": 3.767362704820698e-05
+    }
+  ],
+  "unmatched_events": {
+    "h01-l2-source-sweep50-dt00125": [],
+    "h01-l2-source-sweep50-dt000625": []
+  },
+  "qualification": "Temporal comparison only; no spatial or physiological qualification."
+}

@@ -5,6 +5,7 @@ NEURON advances the entire simulation through continuerun, without Python steps.
 """
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -23,10 +24,17 @@ def _time_average(times, values, start, stop):
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--current-na", type=float, required=True)
 parser.add_argument("--bias-na", type=float, default=0.)
+parser.add_argument("--axon-calcium-decay-ms", type=float)
+parser.add_argument("--axon-calcium-gamma", type=float)
 parser.add_argument("--observe-spike-currents", action="store_true")
 parser.add_argument("--observe-charge-balance", action="store_true")
 parser.add_argument("--sodium-h-tau-factor", type=float, default=1.)
 parser.add_argument("--sodium-h-recovery-factor", type=float)
+parser.add_argument("--sodium-h-slope-mv", type=float)
+parser.add_argument("--somatic-calva-factor", type=float, default=1.)
+parser.add_argument("--somatic-kv3-factor", type=float, default=1.)
+parser.add_argument("--somatic-kv3-tau-factor", type=float, default=1.)
+parser.add_argument("--somatic-kv3-close-factor", type=float)
 parser.add_argument("--dt-ms", type=float, default=.025)
 parser.add_argument("--initial-mv", type=float, default=-80.)
 parser.add_argument("--scale-conductance", choices=("NaTg", "Kv3_1", "SK"))
@@ -35,9 +43,25 @@ parser.add_argument("--conductance-region", choices=("all", "soma", "axon"), def
 parser.add_argument("--cvode-atol", type=float)
 parser.add_argument("--passive", action="store_true")
 parser.add_argument("--nseg-factor", type=int, default=1)
+parser.add_argument("--unselected-nseg-factor", type=int, default=1)
 parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
+parser.add_argument("--duration-ms", type=float, default=1500.)
 parser.add_argument("--output", required=True)
 args = parser.parse_args()
+if args.axon_calcium_gamma is not None and (not np.isfinite(args.axon_calcium_gamma) or not 0 <= args.axon_calcium_gamma <= 1):
+    parser.error("Axonal calcium gamma must be finite and between zero and one.")
+if args.somatic_kv3_close_factor is not None and (not np.isfinite(args.somatic_kv3_close_factor) or args.somatic_kv3_close_factor <= 0):
+    parser.error("Somatic Kv3 closing factor must be positive and finite.")
+if not np.isfinite(args.somatic_kv3_tau_factor) or args.somatic_kv3_tau_factor <= 0:
+    parser.error("Somatic Kv3 time factor must be positive and finite.")
+if not np.isfinite(args.somatic_kv3_factor) or args.somatic_kv3_factor < 0:
+    parser.error("Somatic Kv3 factor must be nonnegative and finite.")
+if not np.isfinite(args.somatic_calva_factor) or args.somatic_calva_factor < 0:
+    parser.error("Somatic Ca_LVA factor must be nonnegative and finite.")
+if args.sodium_h_slope_mv is not None and (not np.isfinite(args.sodium_h_slope_mv) or args.sodium_h_slope_mv <= 0):
+    parser.error("Sodium inactivation slope must be positive and finite.")
+if args.axon_calcium_decay_ms is not None and (not np.isfinite(args.axon_calcium_decay_ms) or args.axon_calcium_decay_ms <= 0):
+    parser.error("Calcium removal time must be positive and finite.")
 if args.sodium_h_recovery_factor is not None and (not np.isfinite(args.sodium_h_recovery_factor) or args.sodium_h_recovery_factor <= 0):
     parser.error("Sodium recovery time factor must be positive and finite.")
 if not np.isfinite(args.sodium_h_tau_factor) or args.sodium_h_tau_factor <= 0:
@@ -48,8 +72,12 @@ if args.scale_conductance is None and args.conductance_factor != 1.:
     parser.error("A non-unit conductance factor requires a named mechanism.")
 if args.nseg_factor < 1 or args.nseg_factor % 2 != 1:
     parser.error("Segment factor must be a positive odd integer.")
+if args.unselected_nseg_factor < 1 or args.unselected_nseg_factor % 2 != 1:
+    parser.error("Unselected segment factor must be a positive odd integer.")
 if not np.isfinite([args.current_na, args.bias_na, args.dt_ms, args.initial_mv]).all() or args.dt_ms <= 0:
     parser.error("Current must be finite and time step must be positive.")
+if not np.isfinite(args.duration_ms) or args.duration_ms <= 0:
+    parser.error("Duration must be positive and finite.")
 if args.cvode_atol is not None and (not np.isfinite(args.cvode_atol) or args.cvode_atol <= 0):
     parser.error("CVode absolute tolerance must be positive and finite.")
 
@@ -59,6 +87,32 @@ h.load_file("/work/source/NeuronTemplate.hoc")
 h.load_file("/work/source/biophys_HL5BN1.hoc")
 cell = h.NeuronTemplate("/work/source/HL5BN1.swc")
 h.biophys_HL5BN1(cell)
+if args.axon_calcium_gamma is not None:
+    for section in cell.axonal:
+        section.gamma_CaDynamics = args.axon_calcium_gamma
+if args.somatic_kv3_close_factor is not None:
+    for section in cell.somatic:
+        if not hasattr(section, "m_close_factor_Kv3_1"):
+            raise RuntimeError("Kv3 phase intervention requires the isolated phase mechanisms.")
+        section.m_close_factor_Kv3_1 = args.somatic_kv3_close_factor
+if args.somatic_kv3_tau_factor != 1.:
+    for section in cell.somatic:
+        if not hasattr(section, "m_tau_factor_Kv3_1"):
+            raise RuntimeError("Kv3 timing intervention requires the isolated kinetics mechanisms.")
+        section.m_tau_factor_Kv3_1 = args.somatic_kv3_tau_factor
+if args.somatic_kv3_factor != 1.:
+    for section in cell.somatic:
+        section.gbar_Kv3_1 *= args.somatic_kv3_factor
+if args.somatic_calva_factor != 1.:
+    for section in cell.somatic:
+        section.gbar_Ca_LVA *= args.somatic_calva_factor
+if args.sodium_h_slope_mv is not None:
+    for section in cell.all:
+        if "NaTg" in section.psection()["density_mechs"]:
+            section.slopeh_NaTg = args.sodium_h_slope_mv
+if args.axon_calcium_decay_ms is not None:
+    for section in cell.axonal:
+        section.decay_CaDynamics = args.axon_calcium_decay_ms
 if args.sodium_h_recovery_factor is not None:
     for section in cell.all:
         if "NaTg" in section.psection()["density_mechs"]:
@@ -84,6 +138,8 @@ for section in cell.all:
                 or (args.refine_region == "dendrites" and family in ("dend", "apic")))
     if selected:
         section.nseg *= args.nseg_factor
+    else:
+        section.nseg *= args.unselected_nseg_factor
 if args.passive:
     # Static configuration only. Remove every density mechanism except leak.
     for section in cell.all:
@@ -103,7 +159,7 @@ clamp.dur = 1000.
 clamp.amp = args.current_na
 bias = h.IClamp(cell.soma[0](.5))
 bias.delay = 0.
-bias.dur = 1501.
+bias.dur = args.duration_ms+1.
 bias.amp = args.bias_na
 t = h.Vector().record(h._ref_t)
 v = h.Vector().record(cell.soma[0](.5)._ref_v)
@@ -118,6 +174,10 @@ spike_probes = {}
 balance_geometry = None
 if (args.observe_spike_currents or args.observe_charge_balance) and not args.passive:
     soma = cell.soma[0](.5)
+    axon_segment = cell.axon[0](.5)
+    spike_probes["axon_calcium_mm"] = h.Vector().record(axon_segment._ref_cai)
+    spike_probes["axon_sk_gate"] = h.Vector().record(axon_segment.SK._ref_z)
+    spike_probes["axon_sk_current_ma_cm2"] = h.Vector().record(axon_segment.SK._ref_ik)
     for mechanism, field in (("NaTg", "ina"), ("Nap", "ina"),
                              ("K_P", "ik"), ("K_T", "ik"), ("Kv3_1", "ik"),
                              ("Im", "ik"), ("SK", "ik"),
@@ -162,7 +222,7 @@ geometry = [{"name": sec.name(), "length_um": sec.L, "diameter_um": sec.diam,
              "parent": None if sec.parentseg() is None else str(sec.parentseg())}
             for sec in cell.all]
 h.finitialize(args.initial_mv)
-h.continuerun(1500.)
+h.continuerun(args.duration_ms)
 times, voltage, applied, axon = map(np.asarray, (t, v, current, axon_v))
 assert np.isfinite(voltage).all() and np.isfinite(axon).all()
 peaks, _ = find_peaks(voltage, height=0., prominence=40.)
@@ -181,19 +241,29 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "conductance_intervention": {"mechanism": args.scale_conductance, "factor": args.conductance_factor,
                                        "region": args.conductance_region},
           "nseg_factor": args.nseg_factor,
+          "unselected_nseg_factor": args.unselected_nseg_factor,
           "refine_region": args.refine_region,
           "model": "ModelDB267587 released HL5BN1 circuit cell, original template and mechanisms",
           "current_na": args.current_na, "dt_ms": args.dt_ms, "temperature_c": 34.,
           "bias_na": args.bias_na, "bias_on_ms": 0.,
+          "axon_calcium_decay_ms": args.axon_calcium_decay_ms,
+          "axon_calcium_gamma": args.axon_calcium_gamma,
           "spike_current_probes": args.observe_spike_currents,
           "charge_balance_geometry": balance_geometry,
           "sodium_h_tau_factor": args.sodium_h_tau_factor,
           "sodium_h_recovery_factor": args.sodium_h_recovery_factor,
+          "sodium_h_slope_mv": args.sodium_h_slope_mv,
+          "somatic_calva_factor": args.somatic_calva_factor,
+          "somatic_kv3_factor": args.somatic_kv3_factor,
+          "somatic_kv3_tau_factor": args.somatic_kv3_tau_factor,
+          "somatic_kv3_close_factor": args.somatic_kv3_close_factor,
           "channel_current_convention": "NEURON outward positive, mA/cm2",
           "integration": {"method": "CVode" if args.cvode_atol is not None else "fixed step",
                           "cvode_atol": args.cvode_atol},
           "initial_voltage_mv": args.initial_mv, "stimulus_on_ms": 270., "stimulus_off_ms": 1270.,
-          "duration_ms": 1500., "synaptic_background": "none",
+          "duration_ms": args.duration_ms, "synaptic_background": "none",
+          "mechanism_library": {str(f): hashlib.sha256(f.read_bytes()).hexdigest()
+                                for f in sorted(Path.cwd().glob("mod/*.mod"))+sorted(Path.cwd().glob("x86_64/libnrnmech.so"))},
           "sample_convention": "NEURON recorded time, includes initial state at t=0",
           "spike_times_ms": times[peaks].tolist(), "spike_peaks_mv": voltage[peaks].tolist(),
           "baseline_mean_mv": _time_average(times, voltage, 200., 270.),

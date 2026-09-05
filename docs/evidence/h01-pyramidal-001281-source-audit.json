@@ -1,0 +1,254 @@
+{
+  "dataset": "001281",
+  "version": "0.251110.1752",
+  "asset_id": "e2368028-435a-495f-8f9b-b95d199103d9",
+  "path": "sub-131008/sub-131008_ses-1310081kg-1-1-4_icephys.nwb",
+  "sha256": "8ddb9afafff582b1805e21403379dea0d41a6bac7cce6668faff45df5fe3864b",
+  "sha256_verified": true,
+  "selection": "First asset in pinned archive listing; metadata identifies an adult human participant",
+  "age": "P62.0Y",
+  "recording_description": "Whole-cell patch-clamp, current-clamp, I-V protocol, Human cortex L2/3, pyramidalcell",
+  "paired_series": [
+    {
+      "sweep": 0,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.09060491621494293,
+        -0.06739131361246109
+      ],
+      "declared_voltage_range_v": [
+        -9.060491621494294e-14,
+        -6.739131361246109e-14
+      ],
+      "declared_current_range_a": [
+        -1.0000000000000002e-10,
+        0.0
+      ]
+    },
+    {
+      "sweep": 1,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.088824063539505,
+        -0.06439197808504105
+      ],
+      "declared_voltage_range_v": [
+        -8.8824063539505e-14,
+        -6.439197808504105e-14
+      ],
+      "declared_current_range_a": [
+        -8.000000000000001e-11,
+        0.0
+      ]
+    },
+    {
+      "sweep": 2,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.08454376459121704,
+        -0.06626656651496887
+      ],
+      "declared_voltage_range_v": [
+        -8.454376459121703e-14,
+        -6.626656651496887e-14
+      ],
+      "declared_current_range_a": [
+        -6.000000000000001e-11,
+        0.0
+      ]
+    },
+    {
+      "sweep": 3,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.08051340281963348,
+        -0.06720385700464249
+      ],
+      "declared_voltage_range_v": [
+        -8.051340281963348e-14,
+        -6.720385700464249e-14
+      ],
+      "declared_current_range_a": [
+        -4.000000000000001e-11,
+        0.0
+      ]
+    },
+    {
+      "sweep": 4,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.07595191895961761,
+        -0.0677037462592125
+      ],
+      "declared_voltage_range_v": [
+        -7.595191895961761e-14,
+        -6.77037462592125e-14
+      ],
+      "declared_current_range_a": [
+        -2.0000000000000005e-11,
+        0.0
+      ]
+    },
+    {
+      "sweep": 5,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.07123421132564545,
+        -0.06723509728908539
+      ],
+      "declared_voltage_range_v": [
+        -7.123421132564545e-14,
+        -6.723509728908539e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "sweep": 6,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.07176534831523895,
+        -0.062298692762851715
+      ],
+      "declared_voltage_range_v": [
+        -7.176534831523895e-14,
+        -6.229869276285171e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        1.9999999999999992e-11
+      ]
+    },
+    {
+      "sweep": 7,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.07270263880491257,
+        -0.055550187826156616
+      ],
+      "declared_voltage_range_v": [
+        -7.270263880491257e-14,
+        -5.555018782615661e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        4.000000000000001e-11
+      ]
+    },
+    {
+      "sweep": 8,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.07376490533351898,
+        -0.046770885586738586
+      ],
+      "declared_voltage_range_v": [
+        -7.376490533351898e-14,
+        -4.677088558673858e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        6e-11
+      ]
+    },
+    {
+      "sweep": 9,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.0747021958231926,
+        0.044583868235349655
+      ],
+      "declared_voltage_range_v": [
+        -7.47021958231926e-14,
+        4.4583868235349654e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        8e-11
+      ]
+    },
+    {
+      "sweep": 10,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.0746397078037262,
+        0.04492754116654396
+      ],
+      "declared_voltage_range_v": [
+        -7.46397078037262e-14,
+        4.492754116654396e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        1.0000000000000002e-10
+      ]
+    },
+    {
+      "sweep": 11,
+      "samples": 91500,
+      "rate_hz": 99999.99999999999,
+      "voltage_unit": "volts",
+      "voltage_conversion": 1e-12,
+      "voltage_offset": 0.0,
+      "stored_voltage_range": [
+        -0.0746397078037262,
+        0.04449013993144035
+      ],
+      "declared_voltage_range_v": [
+        -7.46397078037262e-14,
+        4.449013993144035e-14
+      ],
+      "declared_current_range_a": [
+        0.0,
+        1.2e-10
+      ]
+    }
+  ],
+  "qualification": "Not admitted to calibration: voltage conversion metadata yields near-zero physical volts despite plausible stored membrane-voltage values. Source conversion or independent datum verification required; no automatic unit repair applied. Independent of H01 and Wilbers."
+}
