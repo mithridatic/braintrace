@@ -381,6 +381,77 @@ flowchart TD
 | L5 | Steeper inactivation curve | Restores high-input late firing; first return still too slow and too shallow | [slope intervention](evidence/h01-pv-slope5.md) |
 | L6 | Refine axon, soma, or dendrites alone | Only axonal refinement reproduces the late-interval change | [regional mesh](evidence/h01-pv-regional-mesh.md) |
 
+### Y3 under the recorded input
+
+**Behavior.** Every Y3 result above used bias 0. The recordings carry a
+31.445 pA acquisition bias at both calibration inputs
+([input datum](evidence/h01-pv-input-datum.json)). With that bias applied from
+t = 0, the source fires 22 and 39 events (human 12 and 43) with a first peak
+24.8 mV too high, and the frozen candidate fires 26 and 59 with the peak within
+2 mV. Every passive sample sits 2.0 to 4.1 mV above the human sample in both
+models. The zero-bias residuals are retired; the bias is part of the input.
+
+**Explanation.** Within the candidate's five sub-systems, the count is an
+interdependency of three. Fast sodium inactivation (G1a, closing-time factor
+0.15) is necessary and sufficient for the human-like first spike: every cell
+with it has the peak within 4.4 mV and the duration within 0.05 ms; every cell
+without it has the peak 23 mV too high and the duration 0.47 ms too long. The
+same change raises every recovery minimum by about 6 mV and raises excitability
+so that, without the somatic density change (G4), the cell blocks at 0.27 nA.
+G4 is necessary, given G1a, to sustain firing at 0.27 nA. Axonal calcium
+handling (G3) is the brake on both counts: removing it gives 84 and 143 events;
+adding it to the source gives 5 and 8. The inactivation slope (G1b) has no
+measurable effect. Somatic Kv3 gating (G2) has the largest complete effect on the
+minima but does not reverse the shift that G1a introduces.
+
+Every one of the eight matrix cells has a high-to-low count ratio between 0.04
+and 2.3 against the human 3.6. No member of the partition moves the low-input
+count without the high-input count. The passive samples are unchanged by every
+swap. The threshold under the recorded bias is therefore set outside G1 to G4,
+by leak, leak reversal, or Ih; that family was not tested.
+
+**Prediction confirmed.** Stated before each stage: the source and candidate
+over-fire with bias; mesh refinement moves no early row; the G1a and G3 pair
+alone would not reproduce the count if a third player existed, and it did not
+(source plus G1a plus G3 blocks at 0.27 nA with 3 events); the three missing
+matrix cells fell where predicted (99/4, 7/11, 26/45). One prediction was
+refuted: G1b was predicted to carry the count and carries nothing.
+
+**Steep X.** None for the count. Sparsity holds per observation: G1a for the
+first-spike shape, G3 for the count level, G4 for high-input block.
+
+**Action.** The frozen I candidate fails the contract at 19 of 24 evaluations
+([result](evidence/h01-i-campaign-result.md)). The diagnostic H01 closing-time
+override is the G1a member seen from the other side: removing it restores the
+source's shape error. The next split, if approved, is a bounded passive-family
+dose on the cell with G1b, G2, and G4 on the source (24 and 43 events, minima
+within 2.1 mV) using the five reserved evaluations. The source's own count
+under the recorded input (22 versus 12) also asks whether the published fit
+applied this bias; that is a source-protocol question, not a model split.
+
+```mermaid
+flowchart TD
+    Y3b[PV train differs under the recorded input] --> IN[Input datum: bias omitted; retired]
+    Y3b --> M[Mesh x9 vs x27: early rows resolved; count rows not]
+    Y3b --> P[Partition G1a G1b G2 G3 G4]
+    P --> P1[G1a: shape and minima and excitability]
+    P --> P2[G1b: no effect; eliminated]
+    P --> P3[G2: minima, not reversing]
+    P --> P4[G3: count brake]
+    P --> P5[G4: sustains 0.27 nA with G1a]
+    P --> P6[Pair G1a+G3: blocks at 0.27; third player G4]
+    P --> P7[2^3 matrix: no cell reaches 12 with 43]
+    Y3b --> O[Outside the partition: passive threshold; open]
+```
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| IN | Candidate with recorded bias | 26 and 59 events; minima unchanged | [input datum](evidence/h01-pv-input-datum.json) |
+| M | Candidate at x9 and x27 with bias | Early rows within 0.05 ms and 0.2 mV; counts 26/59 vs 25/53 | [Stage 0](evidence/h01-i-campaign/stage0-decision.json) |
+| P1-P5 | Each sub-system into the source and out of the candidate | Count changes G1a +43/-36 and -21/-50; G3 -17/-31 and +58/+84; G4 0/-1 and -2/-55; G2 +2/+6 and -6/-18; G1b 0/0 and -2/-1 | [Stage A](evidence/h01-i-campaign/stage-a-decision.json) |
+| P6 | G1a with G3 into the source and out of the candidate | 17/3 and 24/43 | [Stage B](evidence/h01-i-campaign/stage-b-decision.json) |
+| P7 | Three missing cells of the matrix | 99/4, 7/11, 26/45 | [Stage C](evidence/h01-i-campaign/stage-c-decision.json), [matrix](evidence/h01-i-campaign/stage-c-matrix.json) |
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
@@ -484,6 +555,48 @@ flowchart TD
 | A8 | Somatic sodium density 0.9 | First spike delayed and lower; narrower; first three interval errors worsen | [density split](evidence/h01-l2-sodium-density090-result.md) |
 | A9 | Slower somatic calcium removal | Later intervals lengthen; first peak and minimum unchanged; first interval still too short | [layer-2 removal split](evidence/h01-l2-calcium-removal-result.md) |
 | FAM | Forward and reverse family changes, then paired changes | No single pooled RSS dominant family; five-spike count does not determine the individual intervals | [campaign results](evidence/h01-l2-campaign-result.md), [active tolerance audit](evidence/h01-l2-paired-active-tolerance-audit.json) |
+
+### Y4 under the approved contract: the F1, F2, F4 matrix
+
+**Behavior.** With calcium handling (F3) and the passive-Ih family (F5) on the
+source, the eight combinations of the sodium gate law (F1), the Kv3 gate law
+(F2), and the somatic sodium density (F4) all fire five events and all fail the
+contract ([matrix](evidence/h01-e-campaign2/stage-a-decision.json)).
+
+**Explanation.** The base (no F1, F2, F4) has interval 2 within 0.1 ms and the
+second recovery minimum 4.4 mV too negative. Each member that raises the minima
+lengthens interval 2: F1 by 12 ms for 2.1 mV, F2 by 27 ms for 1.9 mV, F4 lowers
+the minima further. No member, and no pair, raises the second minimum to within
+1 mV without pushing interval 2 past 1 ms; the two rows are coupled through the
+same channels in this model. The late subthreshold samples (1520 to 2120 ms)
+are 1.2 to 1.7 mV too positive in every cell to 0.01 mV: F1, F2, and F4 do not
+touch them, and F5 as defined fixes the onset region only. That row family
+therefore names a sub-system outside F1 to F5, the late return under
+hyperpolarising input, which is set by Ih kinetics or leak, not by the spike
+channels.
+
+**Prediction confirmed.** Stated before the six runs: F1 and F2 move the minima
+toward zero and F4 away; F2 carries most of interval 2; no cell passes minima
+and crossings together. All held. The dose split was not run: a dose of F1 or
+F2 cannot pass the subthreshold rows, so it cannot change the verdict.
+
+**Steep X.** None. F2 for interval 2, F1 for the minima per unit interval,
+F4 for the rising and falling phases (0.11 ms with, 0.17 ms without).
+
+**Action.** The E campaign fails at 6 of 24 evaluations
+([result](evidence/h01-e-campaign2-result.md)). The next split, if approved, is
+inside the passive-Ih family on the base cell: the Ih time constant and the
+leak conductance against the ten subthreshold samples under 0.11 nA, before any
+spike-channel dose. Eighteen evaluations remain in reserve.
+
+```mermaid
+flowchart TD
+    Y4b[Base S+F3+F5: intervals close, minima and late return wrong] --> F1n[F1: minima +2.1 mV for +12 ms]
+    Y4b --> F2n[F2: minima +1.9 mV for +27 ms]
+    Y4b --> F4n[F4: minima -2.6 mV; phases fixed]
+    Y4b --> PAIRS[Pairs and triple: coupled; none pass]
+    Y4b --> SUB[Late subthreshold: unchanged by all eight cells; outside F1-F5]
+```
 
 ## Y5. Synaptic delivery in the illustrative H01 pair
 

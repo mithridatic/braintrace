@@ -1,0 +1,91 @@
+{
+  "decision": "FAIL at 6 of 24 evaluations: no cell of the F1 x F2 x F4 matrix on the S+F3+F5 base passes any contract group; the late subthreshold samples (1520-2120 ms, +1.2 to +1.7 mV) are identical in all eight cells, so no dose of F1, F2, or F4 can pass. Stage B (dose split) was not run because it cannot change the verdict.",
+  "member_effects": {
+    "F1": {
+      "minima_improvement_mv": 0.8576332651848162,
+      "interval_worsening_ms": 11.614991309240793,
+      "ratio_mv_per_ms": 0.07383847670230198,
+      "pairs": [
+        [
+          "011",
+          "111"
+        ],
+        [
+          "000",
+          "100"
+        ],
+        [
+          "010",
+          "110"
+        ],
+        [
+          "001",
+          "101"
+        ]
+      ],
+      "dose_invariant": false
+    },
+    "F2": {
+      "minima_improvement_mv": 1.1302609175731941,
+      "interval_worsening_ms": 26.960504378678195,
+      "ratio_mv_per_ms": 0.04192284022946784,
+      "pairs": [
+        [
+          "101",
+          "111"
+        ],
+        [
+          "000",
+          "010"
+        ],
+        [
+          "100",
+          "110"
+        ],
+        [
+          "001",
+          "011"
+        ]
+      ],
+      "dose_invariant": false
+    },
+    "F4": {
+      "minima_improvement_mv": -1.030850770317155,
+      "interval_worsening_ms": 13.567050620683005,
+      "ratio_mv_per_ms": null,
+      "pairs": [
+        [
+          "110",
+          "111"
+        ],
+        [
+          "000",
+          "001"
+        ],
+        [
+          "100",
+          "101"
+        ],
+        [
+          "010",
+          "011"
+        ]
+      ],
+      "dose_invariant": false
+    }
+  },
+  "dose_member_by_rule": [
+    "F1",
+    "F2"
+  ],
+  "prediction_check": {
+    "F1 and F2 move minima toward zero, F4 away": "held (+2.1, +1.9, -2.6 mV)",
+    "F2 carries most of interval 2": "held (+27 ms of the candidate's +51.6)",
+    "cell 110 best minima with i2 near +30": "minima best (m2 -0.01) but i2 +49.9, not +30",
+    "cell 101 best i2 with minima near -3": "i2 +24.8, minima -2.1/-5.0: direction held, size not",
+    "no cell passes minima and crossings together": "held"
+  },
+  "coupling": "Every member that raises the second minimum lengthens interval 2 by at least 12 ms per 2 mV; the rows are coupled through the same channels in this model.",
+  "sub_system_named": "Late return under hyperpolarising input (Ih kinetics or leak) on the base cell, judged on the ten subthreshold samples under 0.11 nA; outside F1-F5 as defined.",
+  "reserve": 18
+}

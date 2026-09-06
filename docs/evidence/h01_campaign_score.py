@@ -207,13 +207,13 @@ def member_effects(cells, members, minima_key_filter, interval_key):
             keys = [k for k in with_member if minima_key_filter(k) and with_member[k]["residual"] is not None and base.get(k, {}).get("residual") is not None]
             if not keys or with_member.get(interval_key, {}).get("residual") is None or base.get(interval_key, {}).get("residual") is None:
                 continue
-            d_min.append(float(np.mean([with_member[k]["residual"]-base[k]["residual"] for k in keys])))
-            d_int.append(with_member[interval_key]["residual"]-base[interval_key]["residual"])
+            d_min.append(float(np.mean([abs(base[k]["residual"])-abs(with_member[k]["residual"]) for k in keys])))
+            d_int.append(abs(with_member[interval_key]["residual"])-abs(base[interval_key]["residual"]))
             pairs.append((without, code))
         mean_min = float(np.mean(d_min)) if d_min else None
         mean_int = float(np.mean(d_int)) if d_int else None
-        ratio = None if mean_min is None or not mean_int else abs(mean_min)/abs(mean_int)
-        out[member] = {"minima_change_mv": mean_min, "interval_change_ms": mean_int, "ratio_mv_per_ms": ratio,
+        ratio = None if mean_min is None or mean_min <= 0 or not mean_int else mean_min/abs(mean_int)
+        out[member] = {"minima_improvement_mv": mean_min, "interval_worsening_ms": mean_int, "ratio_mv_per_ms": ratio,
                        "pairs": pairs, "dose_invariant": None if len(d_min) < 2 else bool(np.std(np.array(d_min)/np.where(np.array(d_int) == 0, np.nan, np.array(d_int))) < .25*abs(ratio or 1.))}
     return out
 

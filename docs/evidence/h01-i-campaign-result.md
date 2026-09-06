@@ -4,7 +4,7 @@ Bounded Search Dissection of the inhibitory candidate against the recorded input
 
 Cap 24 evaluations; abort 900 s per run; inputs 019, 027, n011, n005.
 
-**Verdict.** No passing candidate recorded; the campaign is FAIL at its cap or still open
+**Verdict.** FAIL at 19 of 24 evaluations: no cell of the G1a x G3 x G4 matrix (G1b and G2 at candidate values) meets the count row at both calibration inputs; the closest are 001 (24/43) and 000 (26/45). The passive/threshold family is the sub-system outside G1-G4 named by the residual pattern.
 
 Container runs: 76, total 3951.3 s, longest 900.0 s, aborted: s0-candidate-axon2187 019, s0-candidate-axon2187 027.
 

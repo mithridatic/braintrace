@@ -36,7 +36,10 @@ def verdict(stages):
             return "PASS: " + ", ".join(record["passing_cells"])
         if str(record.get("decision", "")).startswith("PASS"):
             return record["decision"]
-    return "No passing candidate recorded; the campaign is FAIL at its cap or still open"
+    for _, record in reversed(stages):
+        if str(record.get("decision", "")).startswith("FAIL"):
+            return record["decision"]
+    return "No passing candidate recorded; the campaign is still open"
 
 
 def render(manifest, stages, timing, tree_text):
@@ -63,8 +66,8 @@ def render(manifest, stages, timing, tree_text):
                       for code, c in record["cells"].items()]
             lines.append("")
         if record.get("member_effects"):
-            lines += ["| Member | Minima change (mV) | Interval change (ms) | Ratio |", "| --- | ---: | ---: | ---: |"]
-            lines += [f"| {m} | {e['minima_change_mv']} | {e['interval_change_ms']} | {e['ratio_mv_per_ms']} |" for m, e in record["member_effects"].items()]
+            lines += ["| Member | Minima improvement (mV) | Interval worsening (ms) | Ratio |", "| --- | ---: | ---: | ---: |"]
+            lines += [f"| {m} | {e['minima_improvement_mv']} | {e['interval_worsening_ms']} | {e['ratio_mv_per_ms']} |" for m, e in record["member_effects"].items()]
             lines.append("")
     if tree_text:
         lines += ["## Search tree", "", "```mermaid", tree_text, "```", ""]

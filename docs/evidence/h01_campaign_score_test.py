@@ -18,9 +18,11 @@ def test_member_effects_average_over_pairs_and_report_the_ratio():
                 "s:i2_ms": {"residual": interval, "kind": "interval_ms", "verdict": "fail"}}
     cells = {"00": vec(-4., 0.), "10": vec(-2., 10.), "01": vec(-3., 0.), "11": vec(-1., 10.)}
     effects = member_effects(cells, ["A", "B"], lambda k: k.endswith("_voltage_mv"), "s:i2_ms")
-    assert effects["A"]["minima_change_mv"] == pytest.approx(2.) and effects["A"]["interval_change_ms"] == pytest.approx(10.)
+    assert effects["A"]["minima_improvement_mv"] == pytest.approx(2.) and effects["A"]["interval_worsening_ms"] == pytest.approx(10.)
     assert effects["A"]["ratio_mv_per_ms"] == pytest.approx(.2) and effects["A"]["pairs"] == [("00", "10"), ("01", "11")]
-    assert effects["B"]["interval_change_ms"] == pytest.approx(0.) and effects["B"]["ratio_mv_per_ms"] is None
+    assert effects["B"]["interval_worsening_ms"] == pytest.approx(0.) and effects["B"]["ratio_mv_per_ms"] is None
+    worse = {"00": vec(-4., 0.), "10": vec(-6., 10.)}
+    assert member_effects(worse, ["A"], lambda k: k.endswith("_voltage_mv"), "s:i2_ms")["A"]["ratio_mv_per_ms"] is None
 
 
 def test_control_names_alias_source_candidate_and_repeats_by_identity():
