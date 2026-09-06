@@ -1,0 +1,7 @@
+{
+  "solver": "CVode",
+  "cvode_atol": 1e-10,
+  "integration_seconds": 804.3471586540036,
+  "nonpositive_time_steps": 105000,
+  "qualification": "Raw recording before output validation; not a qualified trace."
+}

@@ -1,0 +1,104 @@
+{
+  "stage": "P",
+  "decision": "model as it stands FAILS the holdout on rise, peak, threshold, fall and count; trough passes; two prediction bands were wrong (rise, peak)",
+  "scores": {
+    "spikes": {
+      "human": 10,
+      "model": 6
+    },
+    "spike1_max_rise_v_s": {
+      "human": 347.66,
+      "model": 669.69,
+      "contrast": 322.04,
+      "limit": 5.74,
+      "pass": false
+    },
+    "spike1_peak_mv": {
+      "human": 35.34,
+      "model": 36.9,
+      "contrast": 1.56,
+      "limit": 0.55,
+      "pass": false
+    },
+    "spike1_threshold_mv": {
+      "human": -56.41,
+      "model": -52.29,
+      "contrast": 4.11,
+      "limit": 0.97,
+      "pass": false
+    },
+    "spike1_minimum_mv": {
+      "human": -69.56,
+      "model": -69.33,
+      "contrast": 0.24,
+      "limit": 1.01,
+      "pass": true
+    },
+    "spike1_max_fall_v_s": {
+      "human": -103.91,
+      "model": -95.92,
+      "contrast": 7.99,
+      "limit": 5.74,
+      "pass": false
+    },
+    "spike1_cycle_ms": {
+      "human": 38.02,
+      "model": 40.21,
+      "contrast": 2.19,
+      "limit": null,
+      "pass": null
+    },
+    "late_max_rise_v_s": {
+      "human": 287.5,
+      "model": 612.88,
+      "contrast": 325.38,
+      "limit": 5.74,
+      "pass": false
+    },
+    "late_peak_mv": {
+      "human": 32.69,
+      "model": 34.93,
+      "contrast": 2.25,
+      "limit": 0.55,
+      "pass": false
+    },
+    "late_threshold_mv": {
+      "human": -54.28,
+      "model": -51.76,
+      "contrast": 2.52,
+      "limit": 0.97,
+      "pass": false
+    },
+    "late_minimum_mv": {
+      "human": -69.91,
+      "model": -70.13,
+      "contrast": -0.22,
+      "limit": 1.01,
+      "pass": true
+    },
+    "late_max_fall_v_s": {
+      "human": -101.56,
+      "model": -95.2,
+      "contrast": 6.36,
+      "limit": 5.74,
+      "pass": false
+    },
+    "late_cycle_ms": {
+      "human": 120.76,
+      "model": 231.14,
+      "contrast": 110.38,
+      "limit": null,
+      "pass": null
+    }
+  },
+  "prediction_check": {
+    "spikes": "predicted 7-9, observed 6 (human 10): fail as predicted, band missed by 1",
+    "spike1_max_rise": "predicted 640 +/- 15, observed 670 (human 348): fail as predicted, band missed by 15 V/s",
+    "spike1_peak": "predicted 36 +/- 1 and PASS, observed 36.9 (human 35.3, limit 0.55): FAIL, prediction wrong",
+    "spike1_threshold": "predicted -52 +/- 0.5, observed -52.3 (human -56.4): fail as predicted",
+    "spike1_minimum": "predicted -70 +/- 1 PASS, observed -69.3 (human -69.6): PASS as predicted",
+    "spike1_max_fall": "predicted -96 +/- 3 fail, observed -95.9 (human -103.9): fail as predicted",
+    "late_cycles": "model 196-264 ms against human 110-124: the model fires half as often late at 310 pA; not predicted, not claimed"
+  },
+  "evaluations": "1 holdout run, 827 s; E search 4 of 8"
+}

@@ -248,8 +248,9 @@ Example 21, anything on `main`.
   was mis-stated and withdrawn before Stage X.
 - **Stage 4.** I holdout 0.23 nA: every claimed row passed as predicted; count,
   cycle 2 and late threshold failed as predicted; late fall failed unpredicted
-  ([record](../evidence/h01-prediction-i.md)). E holdout sweep 53: see
-  [record](../evidence/h01-prediction-e.md).
+  ([record](../evidence/h01-prediction-i.md)). E holdout sweep 53: the candidate fails rise, peak,
+  threshold, fall and count as predicted, passes the trough; two bands were wrong
+  ([record](../evidence/h01-prediction-e.md)).
 - **Planning mistakes recorded.** Stage R I prediction read the trough as a
   charge deficit (wrong by two orders); Stage X Kv3 removal predicted 1 mV and
   produced block; Stage D predicted the closing rate as the lever (it is the
