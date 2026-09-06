@@ -658,6 +658,19 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Qualification of the
 default profiles' firing and full numerical robustness remains open.
 
+### Y5 under the population edge list
+
+The C3 relationship-index scan of all 104 proofread cells returns 123
+candidate directed contacts on 31 pairs, of which 3 are endpoint-verified in
+the proofread volume; the I-to-E default 8105899 is one of them
+([edge list](evidence/h01-resolved-edge-list.json)). The only E-to-I
+candidate between the measured pair, 54906016, reads the I cell one slice from
+its postsynaptic voxel and background at its presynaptic voxel, so the
+reciprocal E-to-I projection is not measured. The E-to-I conclusions above
+remain statements about illustrative wiring. The circuit ships the measured
+I-to-E contact as default and the E-to-I contact only as an opt-in labelled
+inferred.
+
 In the measured pair, the recorded I contact voltage stays below -80 mV under
 the stated 1 nA soma pulse. It emits no event. The initially empty synapse
 therefore receives no event, and its conductance stays zero. This locates the

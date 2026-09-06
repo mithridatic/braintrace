@@ -62,6 +62,52 @@ See [the shard summary](h01-measured-connectivity-summary.json) and the
 [index audit script](h01_index_connectivity_audit.py). The annotation decoder
 follows the [Neuroglancer format](https://github.com/google/neuroglancer/blob/master/src/datasource/precomputed/annotations.md).
 
+## Population edge list (2026-09-06)
+
+The C3 relationship index was queried for all 104 proofread cells
+([script](h01_c3_edge_list.py), [result](h01-resolved-edge-list.json),
+[per-cell checkpoint](h01-resolved-edge-list.cells.json)). Up to 1,500 skeleton
+nodes per cell were sampled into C3 labels; every cell was identity-consistent
+in the proofread volume (one nonzero label at its samples, no C3 label shared
+by two cells). The scan took 950.5 s of wall time after a resume from the 93rd
+cell; the first attempt stalled on name resolution.
+
+| Quantity | Value |
+| --- | --- |
+| Cells scanned, identity-consistent | 104 of 104 |
+| C3 segment ids attributed to the 104 cells | 10,458 |
+| Candidate directed contacts between two different cells | 123 |
+| Directed cell pairs | 31 |
+| Cells with at least one candidate contact | 34 |
+| Contacts with both endpoints read as the expected cell at the annotation voxel | 3 |
+| Contacts with both endpoints within a 2-voxel box | 7 |
+| Cells joined by an exactly verified contact | 6 |
+
+Verified exactly: 8105899 (I `5584343344` to E `4157825456`, type 1),
+124698307 (`4188575291` to `3955003482`, type 2) and 65017731 (`3519995546` to
+`3680152874`, type 2). The reverse contact 95907584 (`3680152874` to
+`3519995546`, type 1) is within the box, so that pair is the only reciprocal
+pair with endpoint support.
+
+**E-to-I candidate 54906016** (`4157825456` to `5584343344`, type 2) is the
+only candidate in that direction. Its postsynaptic endpoint reads the I cell one
+slice away; its presynaptic endpoint reads background inside the 2-voxel box.
+It is not endpoint-verified. A 5-voxel re-verification of all 123 candidates
+was launched and stopped after six hours without completing its first batch of
+ten edges (network stall on the proofread volume), so the wider tolerance is
+untested. The reciprocal wiring in the circuit therefore stays illustrative and
+opt-in.
+
+**Caution on the largest pair.** 71 of the 123 candidates join
+`5654281423` and `4157825456` in both directions with mixed type codes, and
+none of them has an endpoint inside the box. Mixed type codes on one directed
+pair and zero endpoint support are consistent with a segmentation merge or a
+label collision rather than 71 synapses; these are counted as candidates only.
+
+This list is a lower bound: 1,500 samples per cell do not cover every C3
+segment of a cell, and absence of a candidate does not establish absence of a
+contact. It does not qualify any physiology.
+
 ## Remaining circuit checks
 
 For each candidate, verify the directed partner pair and place both endpoints

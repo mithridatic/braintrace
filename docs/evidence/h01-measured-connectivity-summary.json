@@ -118,5 +118,35 @@
         "h01_measured_contact.py"
       ]
     }
+  },
+  "population_edge_list": {
+    "date": "2026-09-06",
+    "artifact": "docs/evidence/h01-resolved-edge-list.json",
+    "cells_scanned": 104,
+    "cells_identity_consistent": 104,
+    "c3_ids": 10458,
+    "candidate_edges": 123,
+    "directed_pairs": 31,
+    "cells_with_candidates": 34,
+    "verified_edges": 3,
+    "edges_within_2_voxel_box": 7,
+    "cells_with_verified_edges": 6,
+    "e_to_i_candidate": {
+      "annotation_id": "54906016",
+      "pre_cell": "4157825456",
+      "post_cell": "5584343344",
+      "type": 2,
+      "endpoints_verified": false,
+      "post_nearest_offset": [
+        0,
+        0,
+        -1
+      ],
+      "pre_nearest_offset": null,
+      "verdict": "not endpoint-supported; reciprocal wiring stays illustrative"
+    },
+    "reverification_5_voxel": "launched, stalled on network for 6 h, stopped; untested",
+    "wall_seconds": 950.5,
+    "scope": "Lower bound on directed contacts among sampled proofread cells; absence is not established."
   }
 }

@@ -15,7 +15,7 @@ flowchart LR
     EA --> EM[E membrane: capacitance, leak, Ih, NaTs, Kv3, SK, Ca pools]
     SRC --> EM
     EM --> OUT[Observed: E soma and receptor voltages, I soma and contact voltages]
-    E2I[Candidate E-to-I contact 54906016: type 2, endpoints unverified] -.-> IM
+    E2I[Candidate E-to-I contact 54906016: type 2, post endpoint one slice off, pre endpoint background] -.-> IM
 ```
 
 | Boundary | Paired observation | Status | Evidence |
@@ -27,7 +27,7 @@ flowchart LR
 | Synapse | Conductance and receiving voltage | Anatomically measured contact; conductance, delay, and kinetics borrowed | [paired delivery](h01-measured-delivery20-paired-audit.json) |
 | E membrane channels | Channel current and driving voltage | Borrowed from Allen 626170538; F2 carries interval 2, F4 the phases, F3+F5 the count and onset region; the late return is outside F1-F5 | [E result](h01-e-campaign2-result.md) |
 | E cable | Voltage difference and axial current | Measured geometry; regions inferred | [spatial check](h01-measured-E5-overlap-paired-cv5-audit.json) |
-| Candidate E-to-I contact | Endpoint labels in the proofread volume | Found through the C3 relationship index; both endpoints read background at the annotation voxels; neighbourhood check pending | [edge list](h01-resolved-edge-list.json) |
+| Candidate E-to-I contact | Endpoint labels in the proofread volume | Found through the C3 relationship index; post endpoint reads I one slice away, pre endpoint reads background within 2 voxels; 5-voxel check stalled and untested; inferred | [edge list](h01-resolved-edge-list.json) |
 
 ## What the circuit's behaviour represents
 
