@@ -1,0 +1,90 @@
+{
+ "spikes": {
+  "human": 31,
+  "model": 26
+ },
+ "spike1_minimum_mv": {
+  "human": -78.91,
+  "model": -79.44,
+  "contrast": -0.53,
+  "limit": 1.24,
+  "pass": true
+ },
+ "spike1_max_fall_v_s": {
+  "human": -327.34,
+  "model": -345.0,
+  "contrast": -17.66,
+  "limit": 19.5,
+  "pass": true
+ },
+ "spike1_max_rise_v_s": {
+  "human": 603.91,
+  "model": 643.06,
+  "contrast": 39.16,
+  "limit": 245.0,
+  "pass": true
+ },
+ "spike1_peak_mv": {
+  "human": 18.94,
+  "model": 17.78,
+  "contrast": -1.15,
+  "limit": 2.07,
+  "pass": true
+ },
+ "spike1_threshold_mv": {
+  "human": -60.97,
+  "model": -60.88,
+  "contrast": 0.09,
+  "limit": 1.29,
+  "pass": true
+ },
+ "spike1_cycle_ms": {
+  "human": 16.1,
+  "model": 18.28,
+  "contrast": 2.18,
+  "limit": 12.8,
+  "pass": true
+ },
+ "late_minimum_mv": {
+  "human": -79.63,
+  "model": -80.39,
+  "contrast": -0.76,
+  "limit": 1.24,
+  "pass": true
+ },
+ "late_max_fall_v_s": {
+  "human": -293.75,
+  "model": -334.07,
+  "contrast": -40.32,
+  "limit": 19.5,
+  "pass": false
+ },
+ "late_max_rise_v_s": {
+  "human": 511.72,
+  "model": 620.76,
+  "contrast": 109.04,
+  "limit": 245.0,
+  "pass": true
+ },
+ "late_peak_mv": {
+  "human": 16.84,
+  "model": 17.02,
+  "contrast": 0.17,
+  "limit": 2.07,
+  "pass": true
+ },
+ "late_threshold_mv": {
+  "human": -55.22,
+  "model": -60.4,
+  "contrast": -5.18,
+  "limit": 1.29,
+  "pass": false
+ },
+ "late_cycle_ms": {
+  "human": 40.66,
+  "model": 43.55,
+  "contrast": 2.89,
+  "limit": 12.8,
+  "pass": true
+ }
+}

@@ -1,0 +1,20 @@
+{
+  "cell": "I",
+  "finalist": "e-kv3-close2",
+  "holdout": "0.23 nA, active-1.npz, never opened before this run",
+  "written_before_run": true,
+  "explanation_used": "Loop from fast sodium closing; trough from Kv3 activation carried past the spike (opening 0.5x, closing 1x source); axonal SK count brake; Ca_LVA halved.",
+  "predicted": {
+    "spikes": "24 to 28 (interpolating 14 at 0.19 and 37 at 0.27 nA; the human's 31 includes a burst the model lacks, so the count row is predicted to FAIL by 3 to 7)",
+    "minimum_mv_spike1": "-79.5 +/- 0.8",
+    "minimum_mv_late": "-80.4 +/- 0.5",
+    "max_fall_v_s": "-345 +/- 5",
+    "max_rise_v_s": "640 +/- 10",
+    "peak_mv": "17.7 +/- 0.3",
+    "threshold_mv_spike1": "-60.9 +/- 0.3",
+    "cycle2_ms": "22 to 27 (human predicted 6 to 8: FAIL)",
+    "late_cycle_ms": "45 to 55",
+    "threshold_late_mv": "-60.5 (human climbs to about -55: FAIL, accommodation absent)"
+  },
+  "pass_rule": "A row passes when the model lies within the Stage 1 combined limit of the human value (minimum 1.24 mV, slopes 19.5 V/s, peak 2.07 mV, threshold 1.29 mV; cycle rows model-limited 12.8 ms). The explanation is judged on the rows it claims: loop and trough. Count, burst and accommodation are predicted to fail and are not claimed."
+}
