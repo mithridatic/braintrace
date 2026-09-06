@@ -1,0 +1,45 @@
+{
+  "stage": "X",
+  "decision": "open D",
+  "arms": {
+    "x-kv3-soma": {
+      "spikes": {
+        "019": 2,
+        "027": 1
+      },
+      "minimum_mv": -23.3,
+      "reading": "depolarisation block: somatic Kv3 is necessary for repolarisation; the 0.04 nA trough reading understated its role because the falling-phase Kv3 charge (0.53 pC) is the whole repolarisation. Prediction (about 1 mV shallower, broader spike) FAILED in magnitude."
+    },
+    "x-calva-soma": {
+      "spikes": {
+        "019": 14,
+        "027": 42
+      },
+      "minimum_mv": {
+        "019": -74.7,
+        "027": -74.0
+      },
+      "delta_vs_candidate_mv": {
+        "019": -1.4,
+        "027": -2.1
+      },
+      "reading": "deeper by 1.4 to 2.1 mV, beyond the 1.24 mV limit; cycles unchanged. Prediction (-0.3 mV) right in direction, four times short in magnitude: Ca_LVA also supplies inward charge during the fall, not only at the trough."
+    },
+    "x-sk-axon": {
+      "spikes": {
+        "019": 57,
+        "027": 138
+      },
+      "minimum_mv": {
+        "019": -72.3,
+        "027": -70.7
+      },
+      "reading": "count brake removed: cycles collapse to 19 and 7 ms; early minimum 1 mV shallower, peak 2 mV lower. Identical to x-sk-all, so somatic SK carries nothing."
+    },
+    "x-sk-all": {
+      "same_as": "x-sk-axon"
+    }
+  },
+  "conclusion": "No single removal reaches -79 mV; removal can only reduce the outward current at the trough. Somatic Kv3 is necessary (block without it) and Ca_LVA opposes the trough depth by 1.4 to 2.1 mV. Axonal SK sets the late cycle length and count (temporal family) and not the trough. The Steep boundary for the trough remains the outward potassium current present at the trough, which is set by the Kv3 closing rate: Stage D swaps that rate between source and candidate.",
+  "steep_boundary": "somatic Kv3 current at the trough (closing rate); Ca_LVA a second, smaller inward lever"
+}

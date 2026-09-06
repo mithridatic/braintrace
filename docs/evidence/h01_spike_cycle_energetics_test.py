@@ -109,3 +109,8 @@ def test_currents_at_interpolates_every_boundary():
     time = np.array([0., 1., 2.])
     currents = {"a": np.array([0., 2., 4.]), "b": np.array([1., 1., 1.])}
     assert currents_at(time, currents, .5) == {"a": 1., "b": 1.}
+
+
+def test_a_spike_straddling_the_pulse_end_is_dropped():
+    time, voltage = _two_spikes()
+    assert len(landmarks(time, voltage, (10., 40.05))) == 1

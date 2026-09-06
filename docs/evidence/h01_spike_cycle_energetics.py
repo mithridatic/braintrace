@@ -62,6 +62,8 @@ def landmarks(time, voltage, pulse_ms):
     for index, event in enumerate(events):
         peak_ms = event["peak_sample_time_ms"]
         next_rise = events[index+1]["rise_crossing_ms"] if index+1 < len(events) else pulse_ms[1]
+        if next_rise <= event["fall_crossing_ms"]:
+            continue
         minimum_ms, minimum_mv = _minimum(time, voltage, event["fall_crossing_ms"], next_rise)
         threshold_ms, threshold_mv = _threshold(time, voltage, slope, peak_ms, previous_min)
         window = (time >= previous_min) & (time <= minimum_ms)
