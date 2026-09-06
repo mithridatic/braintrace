@@ -10,7 +10,7 @@ FIT = {"genome": [{"section": "soma", "mechanism": "NaTs", "name": "gbar_NaTs", 
 
 def test_parse_accepts_valid_and_rejects_invalid_text():
     assert parse_regional_density("NaTs:axon:1.3") == {"mechanism": "NaTs", "region": "axon", "factor": 1.3}
-    for bad in ("NaTs:axon", "NaTs:apex:1", "NaTs:soma:0", "NaTs:soma:nan", "NaTs:all:-1"):
+    for bad in ("NaTs:axon", "NaTs:apex:1", "NaTs:soma:nan", "NaTs:all:-1"):
         with pytest.raises(ValueError):
             parse_regional_density(bad)
 
@@ -26,5 +26,13 @@ def test_scaling_touches_only_selected_density_rows():
 def test_missing_row_or_invalid_factor_fails():
     with pytest.raises(ValueError, match="No SK density"):
         regional_density_fit(FIT, "SK", "soma", 1.1)
-    with pytest.raises(ValueError, match="positive and finite"):
-        regional_density_fit(FIT, "NaTs", "soma", 0.)
+    with pytest.raises(ValueError, match="non-negative and finite"):
+        regional_density_fit(FIT, "NaTs", "soma", -1.)
+
+
+def test_zero_factor_removes_the_boundary_reversibly():
+    from docs.evidence.h01_l2_regional_density import parse_regional_density, regional_density_fit
+    assert parse_regional_density("NaTs:soma:0")["factor"] == 0.
+    fit = {"genome": [{"section": "soma", "mechanism": "NaTs", "name": "gbar_NaTs", "value": .5}]}
+    removed = regional_density_fit(fit, "NaTs", "soma", 0.)
+    assert removed["genome"][0]["value"] == 0. and fit["genome"][0]["value"] == .5

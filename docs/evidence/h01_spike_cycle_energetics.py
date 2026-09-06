@@ -100,8 +100,27 @@ def pv_currents(data, geometry):
     area = geometry["area_um2"]
     currents = {"applied": np.asarray(data["total_current_na"], float)}
     for key in data:
-        if key.endswith("_current_ma_cm2") and not key.startswith(("ina", "ik", "ica")):
+        if key.endswith("_current_ma_cm2") and not key.startswith(("ina", "ik", "ica", "axon_")):
             currents[key.replace("_current_ma_cm2", "")] = density_to_na(data[key], area)
+    axial = np.zeros_like(currents["applied"])
+    for neighbour in geometry["neighbours"]:
+        axial += (np.asarray(data[neighbour["voltage_key"]], float)-np.asarray(data["voltage_mv"], float))/neighbour["resistance_mohm"]
+    currents["axial"] = axial
+    return currents
+
+
+def l2_currents(data, geometry):
+    """Inward-positive currents in nA from an L2 trace with ``--record-soma-currents``.
+
+    Soma density keys are ``soma_<MECH>_ma_cm2`` plus ``soma_icap_ma_cm2``; axial
+    current comes from the recorded neighbour voltages and ``charge_balance_geometry``.
+    """
+    area = geometry["area_um2"]
+    currents = {"applied": np.asarray(data["applied_current_na"], float)}
+    for key in data:
+        if key.startswith("soma_") and key.endswith("_ma_cm2"):
+            name = key[len("soma_"):-len("_ma_cm2")]
+            currents["capacitive" if name == "icap" else name] = density_to_na(data[key], area)
     axial = np.zeros_like(currents["applied"])
     for neighbour in geometry["neighbours"]:
         axial += (np.asarray(data[neighbour["voltage_key"]], float)-np.asarray(data["voltage_mv"], float))/neighbour["resistance_mohm"]
@@ -140,6 +159,12 @@ def subthreshold_landmarks(time, voltage, pulse_ms, window_ms=100.):
     plateau = (time >= pulse_ms[1]-window_ms) & (time < pulse_ms[1])
     after = (time >= pulse_ms[1]+window_ms) & (time < pulse_ms[1]+2.*window_ms)
     return {"plateau_mv": float(voltage[plateau].mean()), "return_mv": float(voltage[after].mean())}
+
+
+def currents_at(time, currents, at_ms):
+    """Every boundary's current in nA at one instant, by linear interpolation."""
+    time = np.asarray(time, float)
+    return {name: float(np.interp(at_ms, time, np.asarray(values, float))) for name, values in currents.items()}
 
 
 def early_late(rows, count=3):

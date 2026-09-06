@@ -1,0 +1,7 @@
+{
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "observe_charge_balance": true,
+  "observe_spike_currents": true,
+  "refine_region": "all"
+}

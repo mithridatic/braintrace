@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 from docs.evidence.h01_spike_cycle_energetics import (
-    charge_per_cycle, density_to_na, early_late, landmarks, phase_plane, pv_currents, slope_v_s,
-    subthreshold_landmarks)
+    charge_per_cycle, currents_at, density_to_na, early_late, l2_currents, landmarks, phase_plane,
+    pv_currents, slope_v_s, subthreshold_landmarks)
 
 
 def _two_spikes():
@@ -63,7 +63,8 @@ def test_pv_currents_and_charge_close_on_a_synthetic_balance():
     voltage = np.full_like(time, -70.)
     data = {"time_ms": time, "voltage_mv": voltage, "axial_neighbour_0_mv": voltage+5.,
             "total_current_na": np.full_like(time, .2), "NaTg_current_ma_cm2": np.full_like(time, .3),
-            "ina_ma_cm2": np.full_like(time, .3), "capacitive_current_ma_cm2": np.full_like(time, .4)}
+            "ina_ma_cm2": np.full_like(time, .3), "capacitive_current_ma_cm2": np.full_like(time, .4),
+            "axon_sk_current_ma_cm2": np.full_like(time, 9.)}
     currents = pv_currents(data, geometry)
     assert set(currents) == {"applied", "NaTg", "capacitive", "axial"}
     assert currents["axial"][0] == pytest.approx(.5)
@@ -89,3 +90,22 @@ def test_subthreshold_landmarks_average_the_plateau_and_the_return():
     values = subthreshold_landmarks(time, voltage, (100., 300.))
     assert values["plateau_mv"] == pytest.approx(-60.)
     assert values["return_mv"] == pytest.approx(-75.)
+
+
+def test_l2_currents_map_soma_keys_and_capacitance():
+    time = np.arange(0., 1., .1)
+    geometry = {"area_um2": 200., "neighbours": [{"voltage_key": "axial_neighbour_0_mv", "resistance_mohm": 5.}]}
+    data = {"time_ms": time, "voltage_mv": np.full_like(time, -60.), "axial_neighbour_0_mv": np.full_like(time, -70.),
+            "applied_current_na": np.full_like(time, .1), "soma_NaTs_ma_cm2": np.full_like(time, -.5),
+            "soma_icap_ma_cm2": np.full_like(time, .2), "soma_cai_mm": np.zeros_like(time)}
+    currents = l2_currents(data, geometry)
+    assert set(currents) == {"applied", "NaTs", "capacitive", "axial"}
+    assert currents["NaTs"][0] == pytest.approx(1.)
+    assert currents["capacitive"][0] == pytest.approx(-.4)
+    assert currents["axial"][0] == pytest.approx(-2.)
+
+
+def test_currents_at_interpolates_every_boundary():
+    time = np.array([0., 1., 2.])
+    currents = {"a": np.array([0., 2., 4.]), "b": np.array([1., 1., 1.])}
+    assert currents_at(time, currents, .5) == {"a": 1., "b": 1.}

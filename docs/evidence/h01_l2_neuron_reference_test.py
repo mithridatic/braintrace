@@ -26,7 +26,7 @@ import pytest
     ("--leak-factor", "0"), ("--leak-factor", "nan"),
     ("--leak-reversal-shift-mv", "nan"), ("--leak-reversal-shift-mv", "inf"),
     ("--regional-density", "NaTs:axon"), ("--regional-density", "NaTs:apex:1.1"),
-    ("--regional-density", "NaTs:axon:0"), ("--regional-density", "NaTs:all:nan"),
+    ("--regional-density", "NaTs:axon:-1"), ("--regional-density", "NaTs:all:nan"),
 ])
 def test_invalid_settings_stop_before_model_setup(monkeypatch, tmp_path, capsys, flag, value):
     """Invalid CLI values must fail before the absent cache is read."""

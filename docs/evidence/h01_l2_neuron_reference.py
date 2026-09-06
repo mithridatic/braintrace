@@ -18,7 +18,49 @@ from h01_l2_leak import leak_fit
 from h01_l2_ih_location import distribute_ih
 from h01_l2_leak_reversal import shift_leak_reversal
 from h01_l2_recording import right_limit_recording
-from h01_l2_regional_density import parse_regional_density, regional_density_fit
+from h01_l2_regional_density import REGIONS, parse_regional_density, regional_density_fit
+
+
+def parse_capacitance_factor(text):
+    """Parse ``REGION:FACTOR`` for a membrane capacitance scaling."""
+    parts = text.split(":")
+    if len(parts) != 2:
+        raise ValueError("Capacitance factor must be REGION:FACTOR.")
+    region, factor = parts[0], float(parts[1])
+    if region not in REGIONS+("all",):
+        raise ValueError("Region must be one of soma, axon, dend, apic, or all.")
+    if not np.isfinite(factor) or factor <= 0:
+        raise ValueError("Capacitance factor must be positive and finite.")
+    return {"region": region, "factor": factor}
+
+
+def axial_probes(section, vectors, units):
+    """Record every electrical neighbour of the soma midpoint for an offline axial balance.
+
+    Mirrors ``h01_pv_neuron_reference.py --observe-charge-balance``: neighbour
+    voltages plus the axial resistance to each, so that the axial current is
+    ``(V_neighbour - V_soma) / R`` in nA when R is in megohms.
+    """
+    assert section.nseg >= 3 and section.nseg % 2 == 1, "soma nseg must be odd and at least 3"
+    soma = section(.5)
+    middle = section.nseg // 2
+    left = section((middle-.5)/section.nseg)
+    right = section((middle+1.5)/section.nseg)
+    neighbours = [(left, soma.ri()), (right, right.ri())]
+    for child in section.children():
+        if int(child.parentseg().x*section.nseg) == middle:
+            first = child(.5/child.nseg) if child.orientation() == 0. else child(1.-.5/child.nseg)
+            neighbours.append((first, first.ri()))
+    geometry = {"area_um2": soma.area(), "cm_uf_cm2": soma.cm, "location": str(soma), "neighbours": []}
+    for index, (neighbour, resistance) in enumerate(neighbours):
+        assert 0 < resistance < 1e20
+        key = f"axial_neighbour_{index}_mv"
+        vectors[key] = h.Vector().record(neighbour._ref_v)
+        units[key] = "mV; electrical neighbour of soma(0.5)"
+        geometry["neighbours"].append({"location": str(neighbour), "resistance_mohm": resistance,
+                                       "voltage_key": key})
+    vectors["soma_pas_i_ma_cm2"] = vectors.get("soma_pas_ma_cm2", h.Vector().record(soma.pas._ref_i))
+    return geometry
 
 
 def main():
@@ -50,6 +92,8 @@ def main():
     parser.add_argument("--leak-reversal-shift-mv", type=float, default=0.)
     parser.add_argument("--regional-density", action="append", default=[],
                         help="MECHANISM:REGION:FACTOR, repeatable; REGION is soma, axon, dend, apic, or all")
+    parser.add_argument("--capacitance-factor", action="append", default=[],
+                        help="REGION:FACTOR, repeatable; scales membrane capacitance of soma, axon, dend, apic, or all")
     parser.add_argument("--candidate-json", type=Path,
                         help="JSON object of flag names to values used as defaults; explicit flags override")
     preliminary, _ = parser.parse_known_args()
@@ -66,6 +110,7 @@ def main():
     args = parser.parse_args()
     try:
         regional = [parse_regional_density(text) for text in args.regional_density]
+        capacitance = [parse_capacitance_factor(text) for text in args.capacitance_factor]
     except ValueError as error:
         parser.error(str(error))
     if args.kv3_closing_factor is not None and (not np.isfinite(args.kv3_closing_factor)
@@ -161,6 +206,11 @@ def main():
         assert selected, row["section"]
         for sec in selected:
             sec.cm = row["cm"]
+    for item in capacitance:
+        regions = REGIONS if item["region"] == "all" else (item["region"],)
+        for sec in sections:
+            if sec.name().split("[")[0] in regions:
+                sec.cm *= item["factor"]
     for row in fit["genome"]:
         selected = [sec for sec in sections if sec.name().split("[")[0] == row["section"]]
         assert selected, row["section"]
@@ -208,8 +258,10 @@ def main():
                "voltage_mv": h.Vector().record(h.soma[0](.5)._ref_v),
                "applied_current_na": h.Vector().record(stim._ref_i)}
     observation_units = {}
+    balance_geometry = None
     if args.record_soma_currents:
         soma = h.soma[0](.5)
+        balance_geometry = axial_probes(h.soma[0], vectors, observation_units)
         for mechanism, field in (("NaTs", "ina"), ("Nap", "ina"), ("K_P", "ik"),
                                  ("K_T", "ik"), ("Kv3_1", "ik"), ("Im", "ik"),
                                  ("SK", "ik"), ("Ca_HVA", "ica"), ("Ca_LVA", "ica"),
@@ -271,6 +323,8 @@ def main():
               "ih_distribution": ih_distribution,
               "leak_reversal_shift_mv": args.leak_reversal_shift_mv,
               "regional_density_interventions": regional,
+              "capacitance_factors": capacitance,
+              "charge_balance_geometry": balance_geometry,
               "candidate_json": candidate_record,
               "applied_passive_parameters": fit["passive"],
               "mechanism_source_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()

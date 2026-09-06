@@ -1,0 +1,90 @@
+{
+  "purpose": "Stage 3 Z-dissection of the inhibitory cell under the command-only input datum (Stage 0 forensics): per-boundary charge per spike cycle for source and candidate, then reversible removal of one boundary at a time. Specification: docs/specs/2026-09-06-h01-energetic-isolation-plan.md.",
+  "cap": 16,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-energetic",
+  "inputs": {
+    "019": ["--current-na", "0.19", "--duration-ms", "1500"],
+    "027": ["--current-na", "0.27", "--duration-ms", "1500"]
+  },
+  "input_datum": "h01-pv-input-datum.json (forensics_2026_09_06: command current only, bias 0)",
+  "holdout": "0.23 nA (active-1.npz) is not an input of any stage.",
+  "evaluation": "One parameter set at both spiking calibration inputs with every current probe on.",
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "refine_region": "all",
+    "observe_spike_currents": true,
+    "observe_charge_balance": true
+  },
+  "source_flags": {},
+  "candidate_flags": {
+    "sodium_h_tau_factor": 0.15,
+    "sodium_h_recovery_factor": 1.0,
+    "sodium_h_slope_mv": 5.0,
+    "somatic_kv3_tau_factor": 0.5,
+    "somatic_kv3_close_factor": 0.5,
+    "axon_calcium_decay_ms": 300.0,
+    "axon_calcium_gamma": 0.004,
+    "somatic_calva_factor": 0.5,
+    "scale_conductance": "NaTg",
+    "conductance_factor": 1.1,
+    "conductance_region": "soma"
+  },
+  "subsystems": {
+    "Kv3 soma": "somatic_kv3_factor 0",
+    "Ca_LVA soma": "somatic_calva_factor 0",
+    "SK axon": "scale_conductance SK, factor 0, region axon (the candidate's NaTg x1.1 soma is dropped in this arm)",
+    "SK all": "scale_conductance SK, factor 0, region all (same note)"
+  },
+  "stages": {
+    "R": {
+      "title": "Reference charge budgets, source and candidate, command-only input",
+      "prediction": "Source: 11 spikes at 0.19 nA and about 46 at 0.27 nA, first-spike loop as in h01-pv-neuron-space9 (peak +44 mV). Candidate: 15 and 43 spikes, loop on the human's, minimum -73 mV. Charge closure residual per cycle below 1e-4 pC. In the candidate the potassium plus axial charge in the falling phase is smaller than in the source by a fraction that matches the 5.5 mV shallower minimum through the soma capacitance.",
+      "rejection": "If the closure residual exceeds 1e-3 pC in any cycle, the budget is not trusted and the probes are re-checked before Stage X. If the candidate's falling-phase outward charge is not smaller than the source's, the minimum-depth mechanism is not a charge deficit and the prediction fails.",
+      "unchanged": "HL5BN1 donor geometry, kv3-phase-reference library, nseg x9, CVode 1e-10, 270-1270 ms pulse, bias 0.",
+      "decision_file": "stage-r-decision.json"
+    },
+    "X": {
+      "title": "Reversible removal of one boundary at a time on the candidate",
+      "gate": "stage-r-decision.json",
+      "prediction": "Removing somatic Kv3 deepens nothing and broadens the spike; removing somatic Ca_LVA changes the first cycle only; removing axonal SK lengthens no early cycle but shortens the late cycles and lifts the late minimum; the boundary whose removal moves the minimum by more than the Stage 1 limit (1.24 mV combined) is the Steep boundary.",
+      "rejection": "If no single removal moves the minimum beyond the limit, the minimum is set by the sodium boundary's closing charge (the G1a lever) and Stage D tests it by swap against the zero-bias source.",
+      "unchanged": "As Stage R; one boundary changed per arm.",
+      "decision_file": "stage-x-decision.json"
+    },
+    "D": {
+      "title": "Swap of the Steep boundary between the zero-bias source (high system for the loop return) and the candidate",
+      "gate": "stage-x-decision.json",
+      "prediction": "Restoring the source's value on the Steep boundary in the candidate moves the minimum toward -79 mV; the reverse swap moves the source's minimum toward -73 mV.",
+      "rejection": "No reversal under the single swap and the combined half-split: the partition is wrong; report FAIL.",
+      "unchanged": "As Stage R.",
+      "decision_file": "stage-d-decision.json"
+    }
+  },
+  "candidates": [
+    {"name": "r-source", "stage": "R", "flags": {},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
+    {"name": "r-candidate", "stage": "R",
+     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma"},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
+    {"name": "x-kv3-soma", "stage": "X",
+     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma", "somatic_kv3_factor": 0.0},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
+    {"name": "x-calva-soma", "stage": "X",
+     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.0, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma"},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
+    {"name": "x-sk-axon", "stage": "X",
+     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "SK", "conductance_factor": 0.0, "conductance_region": "axon"},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
+    {"name": "x-sk-all", "stage": "X",
+     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "SK", "conductance_factor": 0.0, "conductance_region": "all"},
+     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}}
+  ]
+}

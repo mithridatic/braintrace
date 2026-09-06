@@ -15,8 +15,8 @@ def parse_regional_density(text):
     mechanism, region, factor = parts[0], parts[1], float(parts[2])
     if region not in REGIONS+("all",):
         raise ValueError("Region must be one of soma, axon, dend, apic, or all.")
-    if not np.isfinite(factor) or factor <= 0:
-        raise ValueError("Density factor must be positive and finite.")
+    if not np.isfinite(factor) or factor < 0:
+        raise ValueError("Density factor must be non-negative and finite.")
     return {"mechanism": mechanism, "region": region, "factor": factor}
 
 
@@ -32,7 +32,7 @@ def regional_density_fit(source, mechanism, region, factor):
     region : str
         One of soma, axon, dend, apic, or all.
     factor : float
-        Positive finite multiplier.
+        Non-negative finite multiplier; zero removes the boundary reversibly.
 
     Returns
     -------
@@ -44,8 +44,8 @@ def regional_density_fit(source, mechanism, region, factor):
     ValueError
         If no row matches or a scaled value is not finite.
     """
-    if not np.isfinite(factor) or factor <= 0:
-        raise ValueError("Density factor must be positive and finite.")
+    if not np.isfinite(factor) or factor < 0:
+        raise ValueError("Density factor must be non-negative and finite.")
     regions = REGIONS if region == "all" else (region,)
     result = copy.deepcopy(source)
     rows = [r for r in result["genome"] if r["section"] in regions
