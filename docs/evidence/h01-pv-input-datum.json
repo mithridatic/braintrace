@@ -1,0 +1,75 @@
+{
+  "purpose": "Input datum for every I calibration input: command, recorded acquisition bias, and role. The bias is part of the input; a model run without it is not a comparison against this recording.",
+  "source": {
+    "nwb_sha256": "b6412208aaeee590bfe73cbbc3f3e3d4da0622252d0a7b09961d3dc3595f27a4",
+    "specimen_id": 528687520,
+    "audit": "h01-pv-acquisition-audit.json"
+  },
+  "inputs": [
+    {
+      "command_na": 0.19,
+      "sweep": 35,
+      "export": "active-0.npz",
+      "bias_na": 0.031445374082395006,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0000006675716,
+        190.00000184288268
+      ],
+      "role": "calibration",
+      "export_sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182"
+    },
+    {
+      "command_na": 0.27,
+      "sweep": 39,
+      "export": "active-2.npz",
+      "bias_na": 0.031445374082395006,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0000006675716,
+        269.99999458432455
+      ],
+      "role": "calibration",
+      "export_sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91"
+    },
+    {
+      "command_na": -0.11,
+      "sweep": 20,
+      "export": "passive-0.npz",
+      "bias_na": 0.025626740313144936,
+      "stimulus_levels_pa": [
+        -110.0000021625469,
+        0.0,
+        50.0000006675716
+      ],
+      "role": "subthreshold calibration",
+      "export_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108"
+    },
+    {
+      "command_na": -0.05,
+      "sweep": 23,
+      "export": "passive-1.npz",
+      "bias_na": 0.028783657748943092,
+      "stimulus_levels_pa": [
+        -50.0000006675716,
+        0.0,
+        50.0000006675716
+      ],
+      "role": "subthreshold calibration",
+      "export_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0"
+    },
+    {
+      "command_na": 0.23,
+      "sweep": null,
+      "export": "active-1.npz",
+      "bias_na": null,
+      "role": "reserved fitting holdout; sweep and bias not read by this datum"
+    }
+  ],
+  "decision": {
+    "prior_residuals": "Every I model residual before 2026-09-06 used bias 0 nA.",
+    "evidence": "Source model at 0.19 nA, nseg x9, CVode 1e-10: bias 0 gives 11 events and first onset +11.71 ms; measured bias gives 22 events and first onset -3.24 ms (h01-pv-neuron-bias-control / -bias-measured). Both changes exceed every decision limit and every allowance.",
+    "rule": "Zero-bias I residuals are retired as contract comparisons. Every I candidate evaluation applies the recorded bias of its input from t=0. The candidate's own bias-on response is the first Stage 0 evaluation of the I campaign."
+  },
+  "limit": "Bias applied from t=0 does not reproduce the acquisition history before the 750 ms crop; slow-state equilibration remains an assumption."
+}
