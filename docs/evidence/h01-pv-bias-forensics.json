@@ -1,0 +1,232 @@
+{
+  "human_held_baseline_mv": -86.94953578117551,
+  "calibration_baselines_mv": [
+    -87.02551559374041,
+    -86.8735559686106
+  ],
+  "repeat_sweeps": [
+    40,
+    41,
+    42
+  ],
+  "baseline_decision_limit_mv": 1.3284877670906086,
+  "input_resistance_mohm": 74.69097250022669,
+  "baseline_vs_bias_slope_mohm": 13.915989229997336,
+  "predicted_shift_if_current_mv": 2.3486855708475063,
+  "model_rest_mv": {
+    "bias_0": -87.01483369282518,
+    "bias_measured": -84.52752790474162
+  },
+  "model_rest_error_mv": {
+    "bias_0": -0.06529791164966525,
+    "bias_measured": 2.422007876433895
+  },
+  "model_input_resistance_mohm": 79.09925897418731,
+  "verdict": "held state: the fit absorbed the holding current; command current only",
+  "sweeps": [
+    {
+      "sweep": 20,
+      "name": "Long Square",
+      "bias_pa": 25.626740313144936,
+      "command_pa": -110.0,
+      "baseline_mv": -87.36701909969656,
+      "baseline_sd_mv": 0.24794344774942897,
+      "late_pulse_mv": -95.17499120831489
+    },
+    {
+      "sweep": 21,
+      "name": "Long Square",
+      "bias_pa": 25.626740313144936,
+      "command_pa": -90.0,
+      "baseline_mv": -87.29670171029106,
+      "baseline_sd_mv": 0.2994106680513311,
+      "late_pulse_mv": -93.5229850679636
+    },
+    {
+      "sweep": 22,
+      "name": "Long Square",
+      "bias_pa": 25.626740313144936,
+      "command_pa": -70.0,
+      "baseline_mv": -87.2035309202513,
+      "baseline_sd_mv": 0.2947062355966929,
+      "late_pulse_mv": -93.05545384287834
+    },
+    {
+      "sweep": 23,
+      "name": "Long Square",
+      "bias_pa": 28.783657748943092,
+      "command_pa": -50.0,
+      "baseline_mv": -87.76771645080679,
+      "baseline_sd_mv": 0.2260892035760937,
+      "late_pulse_mv": -91.6877354696393
+    },
+    {
+      "sweep": 26,
+      "name": "Long Square",
+      "bias_pa": 25.379139761971814,
+      "command_pa": 50.0,
+      "baseline_mv": -87.29828270327071,
+      "baseline_sd_mv": 0.24708886463517768
+    },
+    {
+      "sweep": 28,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 50.0,
+      "baseline_mv": -87.53556652215062,
+      "baseline_sd_mv": 0.1774066531231665,
+      "late_pulse_mv": -83.2498781338334
+    },
+    {
+      "sweep": 29,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 70.0,
+      "baseline_mv": -87.38814994738418,
+      "baseline_sd_mv": 0.14144688715812764,
+      "late_pulse_mv": -81.40670919716358
+    },
+    {
+      "sweep": 30,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 90.0,
+      "baseline_mv": -87.06870187241203,
+      "baseline_sd_mv": 0.2564416252995674,
+      "late_pulse_mv": -79.03005929291248
+    },
+    {
+      "sweep": 31,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 110.0,
+      "baseline_mv": -87.46571486488897,
+      "baseline_sd_mv": 0.17778718772642935,
+      "late_pulse_mv": -77.37960991710425
+    },
+    {
+      "sweep": 32,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 130.0,
+      "baseline_mv": -87.58397451195182,
+      "baseline_sd_mv": 0.16992342607420638,
+      "late_pulse_mv": -74.86944067776203
+    },
+    {
+      "sweep": 33,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 150.0,
+      "baseline_mv": -87.15426556720418,
+      "baseline_sd_mv": 0.23450671444126853,
+      "late_pulse_mv": -71.57600862979889
+    },
+    {
+      "sweep": 34,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 170.0,
+      "baseline_mv": -87.46018227630732,
+      "baseline_sd_mv": 0.15044467979492418,
+      "late_pulse_mv": -67.29746510908008
+    },
+    {
+      "sweep": 35,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 190.0,
+      "baseline_mv": -87.02551559374041,
+      "baseline_sd_mv": 0.30706294144631474,
+      "late_pulse_mv": -65.41603371647652
+    },
+    {
+      "sweep": 36,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 210.0,
+      "baseline_mv": -86.87815530324468,
+      "baseline_sd_mv": 0.2549547660941333,
+      "late_pulse_mv": -67.59065880952403
+    },
+    {
+      "sweep": 37,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 230.0,
+      "baseline_mv": -87.28350975592525,
+      "baseline_sd_mv": 0.16426498203410758,
+      "late_pulse_mv": -67.4758462842321
+    },
+    {
+      "sweep": 38,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 250.0,
+      "baseline_mv": -86.89095175889682,
+      "baseline_sd_mv": 0.13707323540645897,
+      "late_pulse_mv": -67.75382133628008
+    },
+    {
+      "sweep": 39,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 270.0,
+      "baseline_mv": -86.8735559686106,
+      "baseline_sd_mv": 0.20542832838128608,
+      "late_pulse_mv": -67.60854631462716
+    },
+    {
+      "sweep": 40,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 120.0,
+      "baseline_mv": -87.09000508882562,
+      "baseline_sd_mv": 0.1399134080566825,
+      "late_pulse_mv": -75.2824967764318
+    },
+    {
+      "sweep": 41,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 120.0,
+      "baseline_mv": -86.91970452848746,
+      "baseline_sd_mv": 0.18734827789378658,
+      "late_pulse_mv": -75.58119662031531
+    },
+    {
+      "sweep": 42,
+      "name": "Long Square",
+      "bias_pa": 31.445374082395006,
+      "command_pa": 120.0,
+      "baseline_mv": -86.35603394678661,
+      "baseline_sd_mv": 0.3030193593186219,
+      "late_pulse_mv": -75.16995916813612
+    },
+    {
+      "sweep": 43,
+      "name": "Long Square",
+      "bias_pa": 27.79325380952713,
+      "command_pa": 120.0,
+      "baseline_mv": -86.17041336334482,
+      "baseline_sd_mv": 0.2556463410239191,
+      "late_pulse_mv": -75.41680923253298
+    },
+    {
+      "sweep": 53,
+      "name": "Square - 0.5ms Subthreshold",
+      "bias_pa": -21.2937167898275,
+      "command_pa": -200.0,
+      "baseline_mv": -87.96870257431755,
+      "baseline_sd_mv": 0.190408142773771
+    },
+    {
+      "sweep": 54,
+      "name": "Square - 0.5ms Subthreshold",
+      "bias_pa": -21.2937167898275,
+      "command_pa": -200.0,
+      "baseline_mv": -87.75532464470182,
+      "baseline_sd_mv": 0.1949336596108111
+    }
+  ]
+}

@@ -17,7 +17,9 @@
         190.00000184288268
       ],
       "role": "calibration",
-      "export_sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182"
+      "export_sha256": "abf25bcfc8ec9e8b21f8c9599a1d0a7844d5dcba46a7269fc7ef6c0356244182",
+      "model_input_bias_na": 0.0,
+      "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
     },
     {
       "command_na": 0.27,
@@ -30,7 +32,9 @@
         269.99999458432455
       ],
       "role": "calibration",
-      "export_sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91"
+      "export_sha256": "faeac03e076c7aa344e4c32b66a400ddf46da6c8de8f19421b08db76324e3b91",
+      "model_input_bias_na": 0.0,
+      "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
     },
     {
       "command_na": -0.11,
@@ -43,7 +47,9 @@
         50.0000006675716
       ],
       "role": "subthreshold calibration",
-      "export_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108"
+      "export_sha256": "9fc9a8dfc24bdb7e1dc385d2625f3d6d5e235d80d771ea9ba0c88c0f18dc6108",
+      "model_input_bias_na": 0.0,
+      "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
     },
     {
       "command_na": -0.05,
@@ -56,7 +62,9 @@
         50.0000006675716
       ],
       "role": "subthreshold calibration",
-      "export_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0"
+      "export_sha256": "b774abaca3230f9b902527da083556ae69e3e9d44edeec5369fdad09648617f0",
+      "model_input_bias_na": 0.0,
+      "held_baseline_role": "the recorded bias is the holding current; the model rests at the held baseline without it"
     },
     {
       "command_na": 0.23,
@@ -74,5 +82,12 @@
     "consequence": "The count failure changes sign under the correct input. The candidate families were fitted against a zero-bias input. Stage 0 of the I campaign establishes the source-to-candidate contrast under the recorded input before any family is ranked.",
     "reassessment_question": "With the recorded bias the published source template also over-fires (22 vs 12 at 0.19 nA) with a +24.8 mV first peak. Whether the published fit applied this bias must be established from the source protocol before the model family is judged."
   },
-  "limit": "Bias applied from t=0 does not reproduce the acquisition history before the 750 ms crop; slow-state equilibration remains an assumption."
+  "limit": "Bias applied from t=0 does not reproduce the acquisition history before the 750 ms crop; slow-state equilibration remains an assumption.",
+  "forensics_2026_09_06": {
+    "question": "Is the recorded bias a membrane current the model must carry, or a holding current whose effect the published fit already absorbed?",
+    "evidence": "h01-pv-bias-forensics.json: human held baseline -86.95 mV (sweeps 35, 39; repeat limit 1.33 mV from sweeps 40-42); model at bias 0 rests at -87.02 mV (error -0.07 mV), model with the recorded 31.4 pA rests at -84.53 mV (error +2.42 mV, 1.8x the limit, equal to the predicted R_in x bias shift of 2.35 mV at 74.7 MOhm; model R_in 79.1 MOhm). Across all held sweeps the baseline moves only 13.9 MOhm per pA of holding current against 74.7 MOhm input resistance, so the holding current tracked the cell's state; the held baseline, not the current, is the datum.",
+    "verdict": "held state: the published fit absorbed the holding current; the model input is the command current only, with the resting state checked against the held baseline.",
+    "consequence": "The 2026-09-06 decision above is reversed. Bias-on residuals (source 22/39, candidate 26/59) are retired; zero-bias residuals return (source 11/43 vs human 12/43; candidate 15/43). The +2 to +4 mV passive offset in every I campaign cell was this double-counted bias. The reassessment question is answered: the published fit did not carry the bias as current.",
+    "limit": "The rest-voltage contrast is 1.8x its decision limit, a real but not unmistakable contrast on its own; the verdict rests on it together with the input-resistance agreement (human 74.7, model 79.1 MOhm) and the exact match of the zero-bias rest to the held baseline."
+  }
 }
