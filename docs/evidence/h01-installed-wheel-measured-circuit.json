@@ -1,0 +1,21 @@
+{
+  "wheel": "braintrace-0.2.5-py3-none-any.whl",
+  "wheel_sha256": "c1427c6d3cbf0f7679166f4d4bfcb0f1729e1dc3d45f8826d15ef635d9a76c33",
+  "installed_package": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01-measured-install\\braintrace\\__init__.py",
+  "command": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe -P -m examples.h01_ei_circuit --control ei --duration-ms 0.05 --output .cache/h01/wheel-measured-ei",
+  "returncode": 0,
+  "wall_seconds": 846.3,
+  "cells": {
+    "E": {},
+    "I": {}
+  },
+  "emitted_events_ms": {
+    "E": [],
+    "I": []
+  },
+  "control": "ei",
+  "connectivity": "measured",
+  "duration_ms": 0.05,
+  "dt_ms": 0.005,
+  "qualification": "Installed-wheel construction of the measured I-to-E pair and ten compiled steps under the frozen (non-override) profiles. Not a firing, delivery, or physiological result; the examples package and local caches come from the checkout."
+}
