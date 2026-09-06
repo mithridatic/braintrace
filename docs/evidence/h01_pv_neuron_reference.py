@@ -47,6 +47,19 @@ parser.add_argument("--unselected-nseg-factor", type=int, default=1)
 parser.add_argument("--refine-region", choices=("all", "soma", "axon", "dendrites"), default="all")
 parser.add_argument("--duration-ms", type=float, default=1500.)
 parser.add_argument("--output", required=True)
+parser.add_argument("--candidate-json", type=Path,
+                    help="JSON object of flag names to values used as defaults; explicit flags override")
+preliminary, _ = parser.parse_known_args()
+candidate_record = None
+if preliminary.candidate_json is not None:
+    candidate_values = json.loads(preliminary.candidate_json.read_text())
+    known = vars(parser.parse_args(["--current-na", "0", "--output", "x"]))
+    unknown = [k for k in candidate_values if k not in known] if isinstance(candidate_values, dict) else ["<not an object>"]
+    if unknown:
+        parser.error("Candidate JSON must map known flag names to values: " + ", ".join(unknown))
+    parser.set_defaults(**candidate_values)
+    candidate_record = {"file": preliminary.candidate_json.name, "values": candidate_values,
+                        "sha256": hashlib.sha256(preliminary.candidate_json.read_bytes()).hexdigest()}
 args = parser.parse_args()
 if args.axon_calcium_gamma is not None and (not np.isfinite(args.axon_calcium_gamma) or not 0 <= args.axon_calcium_gamma <= 1):
     parser.error("Axonal calcium gamma must be finite and between zero and one.")
@@ -260,6 +273,7 @@ report = {"neuron_version": neuron.__version__, "source_commit": "82cdd91bc93942
           "channel_current_convention": "NEURON outward positive, mA/cm2",
           "integration": {"method": "CVode" if args.cvode_atol is not None else "fixed step",
                           "cvode_atol": args.cvode_atol},
+          "candidate_json": candidate_record,
           "initial_voltage_mv": args.initial_mv, "stimulus_on_ms": 270., "stimulus_off_ms": 1270.,
           "duration_ms": args.duration_ms, "synaptic_background": "none",
           "mechanism_library": {str(f): hashlib.sha256(f.read_bytes()).hexdigest()

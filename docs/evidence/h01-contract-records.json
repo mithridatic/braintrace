@@ -1,44 +1,322 @@
 {
-  "purpose": "Every existing candidate and control record scored against the approved human contract. Read-only over saved traces.",
-  "numerical_pairs": [
-    {"name": "I 0.27 mesh x9/x27/x81", "input": "I 0.27", "caveat": "Candidate at CVode 1e-10; all-section refinement; proxy limit for every 0.27 nA I record",
-     "traces": ["h01-pv-calcium-response-004-300-027.npz", "h01-pv-calcium-response-004-300-027-space27.npz", "h01-pv-calcium-response-004-300-027-space81.npz"]},
-    {"name": "I 0.19 mesh S x9/x27/x81", "input": "I 0.19", "caveat": "Source model repeats; proxy limit for the 0.19 nA candidate, which has no mesh pair",
-     "traces": ["h01-pv-neuron-space9.npz", "h01-pv-neuron-space27.npz", "h01-pv-neuron-space81.npz"]},
-    {"name": "E 0.25 tolerance F3F5", "input": "E 0.25", "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-50 E record",
-     "traces": ["h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz", "h01-l2-campaign-fine/c-into-F3F5-atol11-sweep50.npz"]},
-    {"name": "E 0.11 tolerance F3F5", "input": "E 0.11", "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-43 E record",
-     "traces": ["h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz", "h01-l2-campaign-fine/c-into-F3F5-atol11-sweep43.npz"]}
-  ],
-  "records": [
-    {"cell": "I", "name": "candidate x9", "role": "candidate", "input": "I 0.19", "limits": "I 0.19 mesh S x9/x27/x81", "settings": "nseg x9, CVode 1e-10, bias 0", "trace": "h01-pv-calcium-response-004-300.npz"},
-    {"cell": "I", "name": "candidate x9", "role": "candidate", "input": "I 0.27", "limits": "I 0.27 mesh x9/x27/x81", "settings": "nseg x9, CVode 1e-10, bias 0", "trace": "h01-pv-calcium-response-004-300-027.npz"},
-    {"cell": "I", "name": "candidate axon x2187", "role": "candidate", "input": "I 0.27", "limits": "I 0.27 mesh x9/x27/x81", "settings": "axon nseg x2187, others x9, CVode 1e-10, bias 0 (frozen profile setting)", "trace": "h01-pv-regional-mesh-axon2187.npz"},
-    {"cell": "I", "name": "candidate axon x729", "role": "control", "input": "I 0.27", "limits": "I 0.27 mesh x9/x27/x81", "settings": "axon nseg x729, others x9, CVode 1e-10, bias 0", "trace": "h01-pv-regional-mesh-axon729.npz"},
-    {"cell": "I", "name": "candidate x27", "role": "control", "input": "I 0.27", "limits": "I 0.27 mesh x9/x27/x81", "settings": "nseg x27, CVode 1e-10, bias 0", "trace": "h01-pv-calcium-response-004-300-027-space27.npz"},
-    {"cell": "I", "name": "source x9", "role": "source", "input": "I 0.19", "limits": "I 0.19 mesh S x9/x27/x81", "settings": "nseg x9, CVode 1e-10, bias 0", "trace": "h01-pv-neuron-space9.npz"},
-    {"cell": "I", "name": "source x9 bias 31.4 pA", "role": "source", "input": "I 0.19", "limits": "I 0.19 mesh S x9/x27/x81", "settings": "nseg x9, CVode 1e-10, measured bias 0.0314 nA from t=0", "trace": "h01-pv-neuron-bias-measured.npz"},
-    {"cell": "I", "name": "source x9 bias control", "role": "source", "input": "I 0.19", "limits": "I 0.19 mesh S x9/x27/x81", "settings": "nseg x9, CVode 1e-10, bias 0 (paired control)", "trace": "h01-pv-neuron-bias-control.npz"},
-    {"cell": "I", "name": "source x9 passive", "role": "source", "input": "I -0.11", "settings": "nseg x9, -0.11 nA, bias 0", "trace": "h01-pv-neuron-hyper011.npz"},
-    {"cell": "I", "name": "source x9 passive", "role": "source", "input": "I -0.05", "settings": "nseg x9, -0.05 nA, bias 0", "trace": "h01-pv-neuron-hyper005.npz"},
-    {"cell": "E", "name": "source", "role": "source", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-fine/s0-source-fine-sweep50.npz"},
-    {"cell": "E", "name": "source", "role": "source", "input": "E 0.11", "limits": "E 0.11 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43.npz"},
-    {"cell": "E", "name": "candidate", "role": "candidate", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-fine/s0-candidate-fine-sweep50.npz"},
-    {"cell": "E", "name": "candidate", "role": "candidate", "input": "E 0.11", "limits": "E 0.11 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43.npz"},
-    {"cell": "E", "name": "corner F1F4", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-fine/s0-corner-fine-sweep50.npz"},
-    {"cell": "E", "name": "corner F1F4", "role": "control", "input": "E 0.11", "limits": "E 0.11 tolerance F3F5", "settings": "nseg x9, CVode 1e-10, recorded bias", "trace": "h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43.npz"},
-    {"cell": "E", "name": "into-F1", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F1", "trace": "h01-l2-campaign-fine/a-into-F1-sweep50.npz"},
-    {"cell": "E", "name": "into-F2", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F2", "trace": "h01-l2-campaign-fine/a-into-F2-sweep50.npz"},
-    {"cell": "E", "name": "into-F3", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F3", "trace": "h01-l2-campaign-fine/a-into-F3-sweep50.npz"},
-    {"cell": "E", "name": "into-F4", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F4", "trace": "h01-l2-campaign-fine/a-into-F4-sweep50.npz"},
-    {"cell": "E", "name": "into-F5", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F5", "trace": "h01-l2-campaign-fine/a-into-F5-sweep50.npz"},
-    {"cell": "E", "name": "out-F1", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F1", "trace": "h01-l2-campaign-fine/a-out-F1-sweep50.npz"},
-    {"cell": "E", "name": "out-F2", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F2", "trace": "h01-l2-campaign-fine/a-out-F2-sweep50.npz"},
-    {"cell": "E", "name": "out-F3", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F3", "trace": "h01-l2-campaign-fine/a-out-F3-sweep50.npz"},
-    {"cell": "E", "name": "out-F4", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F4", "trace": "h01-l2-campaign-fine/a-out-F4-sweep50.npz"},
-    {"cell": "E", "name": "out-F5", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F5", "trace": "h01-l2-campaign-fine/a-out-F5-sweep50.npz"},
-    {"cell": "E", "name": "into-F3F5 (matrix base 000)", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "S + F3 + F5", "trace": "h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz"},
-    {"cell": "E", "name": "into-F3F5 (matrix base 000)", "role": "control", "input": "E 0.11", "limits": "E 0.11 tolerance F3F5", "settings": "S + F3 + F5", "trace": "h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz"},
-    {"cell": "E", "name": "out-F3F5", "role": "control", "input": "E 0.25", "limits": "E 0.25 tolerance F3F5", "settings": "C - F3 - F5", "trace": "h01-l2-campaign-fine/ab-out-F3F5-sweep50.npz"}
-  ]
+ "purpose": "Every existing candidate and control record scored against the approved human contract. Read-only over saved traces.",
+ "numerical_pairs": [
+  {
+   "name": "I 0.27 mesh x9/x27/x81",
+   "input": "I 0.27",
+   "caveat": "Candidate at CVode 1e-10; all-section refinement; proxy limit for every 0.27 nA I record",
+   "traces": [
+    "h01-pv-calcium-response-004-300-027.npz",
+    "h01-pv-calcium-response-004-300-027-space27.npz",
+    "h01-pv-calcium-response-004-300-027-space81.npz"
+   ]
+  },
+  {
+   "name": "I 0.19 mesh S x9/x27/x81",
+   "input": "I 0.19",
+   "caveat": "Source model repeats; proxy limit for the 0.19 nA candidate, which has no mesh pair",
+   "traces": [
+    "h01-pv-neuron-space9.npz",
+    "h01-pv-neuron-space27.npz",
+    "h01-pv-neuron-space81.npz"
+   ]
+  },
+  {
+   "name": "E 0.25 tolerance F3F5",
+   "input": "E 0.25",
+   "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-50 E record",
+   "traces": [
+    "h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz",
+    "h01-l2-campaign-fine/c-into-F3F5-atol11-sweep50.npz"
+   ]
+  },
+  {
+   "name": "E 0.11 tolerance F3F5",
+   "input": "E 0.11",
+   "caveat": "ab-into-F3F5 at CVode 1e-10 vs 1e-11; proxy limit for every sweep-43 E record",
+   "traces": [
+    "h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz",
+    "h01-l2-campaign-fine/c-into-F3F5-atol11-sweep43.npz"
+   ]
+  }
+ ],
+ "records": [
+  {
+   "cell": "I",
+   "name": "candidate x9",
+   "role": "candidate",
+   "input": "I 0.19",
+   "limits": "I 0.19 mesh S x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, bias 0",
+   "trace": "h01-pv-calcium-response-004-300.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate x9",
+   "role": "candidate",
+   "input": "I 0.27",
+   "limits": "I 0.27 mesh x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, bias 0",
+   "trace": "h01-pv-calcium-response-004-300-027.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate axon x2187",
+   "role": "candidate",
+   "input": "I 0.27",
+   "limits": "I 0.27 mesh x9/x27/x81",
+   "settings": "axon nseg x2187, others x9, CVode 1e-10, bias 0 (frozen profile setting)",
+   "trace": "h01-pv-regional-mesh-axon2187.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate x9 bias 31.4 pA",
+   "role": "candidate",
+   "input": "I 0.19",
+   "limits": "I 0.19 mesh S x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, recorded bias 0.0314 nA from t=0 (Phase 0 step 3)",
+   "trace": "h01-i-campaign/s0-candidate-bias-019.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate x9 bias 31.4 pA",
+   "role": "candidate",
+   "input": "I 0.27",
+   "limits": "I 0.27 mesh x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, recorded bias 0.0314 nA from t=0 (Phase 0 step 3)",
+   "trace": "h01-i-campaign/s0-candidate-bias-027.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate axon x729",
+   "role": "control",
+   "input": "I 0.27",
+   "limits": "I 0.27 mesh x9/x27/x81",
+   "settings": "axon nseg x729, others x9, CVode 1e-10, bias 0",
+   "trace": "h01-pv-regional-mesh-axon729.npz"
+  },
+  {
+   "cell": "I",
+   "name": "candidate x27",
+   "role": "control",
+   "input": "I 0.27",
+   "limits": "I 0.27 mesh x9/x27/x81",
+   "settings": "nseg x27, CVode 1e-10, bias 0",
+   "trace": "h01-pv-calcium-response-004-300-027-space27.npz"
+  },
+  {
+   "cell": "I",
+   "name": "source x9",
+   "role": "source",
+   "input": "I 0.19",
+   "limits": "I 0.19 mesh S x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, bias 0",
+   "trace": "h01-pv-neuron-space9.npz"
+  },
+  {
+   "cell": "I",
+   "name": "source x9 bias 31.4 pA",
+   "role": "source",
+   "input": "I 0.19",
+   "limits": "I 0.19 mesh S x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, measured bias 0.0314 nA from t=0",
+   "trace": "h01-pv-neuron-bias-measured.npz"
+  },
+  {
+   "cell": "I",
+   "name": "source x9 bias control",
+   "role": "source",
+   "input": "I 0.19",
+   "limits": "I 0.19 mesh S x9/x27/x81",
+   "settings": "nseg x9, CVode 1e-10, bias 0 (paired control)",
+   "trace": "h01-pv-neuron-bias-control.npz"
+  },
+  {
+   "cell": "I",
+   "name": "source x9 passive",
+   "role": "source",
+   "input": "I -0.11",
+   "settings": "nseg x9, -0.11 nA, bias 0",
+   "trace": "h01-pv-neuron-hyper011.npz"
+  },
+  {
+   "cell": "I",
+   "name": "source x9 passive",
+   "role": "source",
+   "input": "I -0.05",
+   "settings": "nseg x9, -0.05 nA, bias 0",
+   "trace": "h01-pv-neuron-hyper005.npz"
+  },
+  {
+   "cell": "E",
+   "name": "source",
+   "role": "source",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-fine/s0-source-fine-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "source",
+   "role": "source",
+   "input": "E 0.11",
+   "limits": "E 0.11 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43.npz"
+  },
+  {
+   "cell": "E",
+   "name": "candidate",
+   "role": "candidate",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-fine/s0-candidate-fine-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "candidate",
+   "role": "candidate",
+   "input": "E 0.11",
+   "limits": "E 0.11 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43.npz"
+  },
+  {
+   "cell": "E",
+   "name": "corner F1F4",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-fine/s0-corner-fine-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "corner F1F4",
+   "role": "control",
+   "input": "E 0.11",
+   "limits": "E 0.11 tolerance F3F5",
+   "settings": "nseg x9, CVode 1e-10, recorded bias",
+   "trace": "h01-l2-campaign-coverage-recovery/s0-corner-fine-sweep43.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F1",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F1",
+   "trace": "h01-l2-campaign-fine/a-into-F1-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F2",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F2",
+   "trace": "h01-l2-campaign-fine/a-into-F2-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F3",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F3",
+   "trace": "h01-l2-campaign-fine/a-into-F3-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F4",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F4",
+   "trace": "h01-l2-campaign-fine/a-into-F4-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F5",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F5",
+   "trace": "h01-l2-campaign-fine/a-into-F5-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F1",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F1",
+   "trace": "h01-l2-campaign-fine/a-out-F1-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F2",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F2",
+   "trace": "h01-l2-campaign-fine/a-out-F2-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F3",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F3",
+   "trace": "h01-l2-campaign-fine/a-out-F3-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F4",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F4",
+   "trace": "h01-l2-campaign-fine/a-out-F4-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F5",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F5",
+   "trace": "h01-l2-campaign-fine/a-out-F5-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F3F5 (matrix base 000)",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "S + F3 + F5",
+   "trace": "h01-l2-campaign-fine/ab-into-F3F5-sweep50.npz"
+  },
+  {
+   "cell": "E",
+   "name": "into-F3F5 (matrix base 000)",
+   "role": "control",
+   "input": "E 0.11",
+   "limits": "E 0.11 tolerance F3F5",
+   "settings": "S + F3 + F5",
+   "trace": "h01-l2-campaign-fine/ab-into-F3F5-sweep43.npz"
+  },
+  {
+   "cell": "E",
+   "name": "out-F3F5",
+   "role": "control",
+   "input": "E 0.25",
+   "limits": "E 0.25 tolerance F3F5",
+   "settings": "C - F3 - F5",
+   "trace": "h01-l2-campaign-fine/ab-out-F3F5-sweep50.npz"
+  }
+ ]
 }

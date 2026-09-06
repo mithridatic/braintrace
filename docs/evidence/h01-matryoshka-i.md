@@ -14,9 +14,15 @@ No. Both I calibration recordings carry a 31.445 pA acquisition bias
 bias 0. On the source model at 0.19 nA the bias alone changes the event count
 from 11 to 22 and the first onset from +11.71 ms to -3.24 ms. That single input
 change exceeds every candidate-family effect recorded on the Y3 page. Decision:
-zero-bias I residuals are retired; the candidate must be re-run with the
-recorded bias before any family is ranked. The rows below are therefore a
-characterisation of the zero-bias model, kept as the pre-datum control.
+zero-bias I residuals are retired. The frozen candidate re-run with the recorded
+bias (records `h01-i-campaign/s0-candidate-bias-019` and `-027`, 21 s and 45 s)
+gives 26 events versus 12 at 0.19 nA and 59 versus 43 at 0.27 nA: the count
+failure reverses sign under the correct input, while the recovery minima stay
++5 to +8 mV and the first-spike peak and duration are unchanged. The candidate
+families were therefore fitted against the wrong input. The rows below are the
+zero-bias characterisation, kept as the pre-datum control; Stage 0 of the I
+campaign re-establishes the source-to-candidate contrast under the recorded
+input before any family is ranked.
 
 ## Cyclical: does the error repeat across inputs and events?
 
