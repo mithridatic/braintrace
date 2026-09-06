@@ -84,6 +84,14 @@
       "rejection": "Neither arm moves the minimum beyond 1.24 mV: the trough is not set by somatic Kv3 activation at all and the remaining outward boundaries (K_P, dendritic load) go to the user with the reserve.",
       "unchanged": "As Stage R; only somatic Kv3 closing changed.",
       "decision_file": "stage-e-decision.json"
+    },
+    "F": {
+      "title": "Rebound split on the deep-trough candidate: somatic Ca_LVA restored and doubled",
+      "gate": "stage-e-decision.json",
+      "prediction": "On e-kv3-close2, Ca_LVA restored to 1.0 (f-calva1) shortens cycles 2-3 at 0.27 nA from 16-17 toward 8-10 ms and lifts the trough by 1 to 1.5 mV (still inside 1.24 mV of the human at 0.27 nA); Ca_LVA doubled (f-calva2) shortens them further and lifts the trough 2 to 3 mV, leaving the limit. If neither arm shortens cycle 2 by more than 12.8 ms (model cycle limit), the rebound is not Ca_LVA and the burst goes to the user with 2 evaluations in reserve.",
+      "rejection": "Neither arm shortens cycle 2 beyond the 12.8 ms model limit: Ca_LVA is not the rebound drive.",
+      "unchanged": "As Stage R with somatic Kv3 close factor 2.0.",
+      "decision_file": "stage-f-decision.json"
     }
   },
   "candidates": [
@@ -297,6 +305,54 @@
         "axon_calcium_decay_ms": 300.0,
         "axon_calcium_gamma": 0.004,
         "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "f-calva1",
+      "stage": "F",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 1.0,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "f-calva2",
+      "stage": "F",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 2.0,
         "scale_conductance": "NaTg",
         "conductance_factor": 1.1,
         "conductance_region": "soma"
