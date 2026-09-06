@@ -1,0 +1,190 @@
+{
+  "purpose": "Second bounded excitatory campaign: the 2^3 matrix over F1, F2, F4 on the S+F3+F5 base, judged per group against the approved contract. Specification: docs/specs/2026-09-06-h01-progressive-search-plan.md.",
+  "cap": 24,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-campaign2",
+  "inputs": {
+    "sweep50": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "50",
+      "--include-recorded-bias"
+    ],
+    "sweep43": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "43",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 53 is not on disk and not an input of any stage.",
+  "evaluation": "One parameter set at both calibration sweeps.",
+  "existing_matrix_cells": {
+    "000": "h01-l2-campaign-fine/ab-into-F3F5",
+    "111": "h01-l2-campaign-fine/s0-candidate-fine (sweep 43 from h01-l2-campaign-coverage-recovery)"
+  },
+  "base_flags": {
+    "calcium_decay_factor": 1.33,
+    "distribute_ih": true,
+    "ih_density_factor": 75.0,
+    "leak_reversal_shift_mv": -4.0
+  },
+  "members": {
+    "F1": {
+      "sodium_opening_factor": 2.0,
+      "sodium_recovery_factor": 1.0
+    },
+    "F2": {
+      "kv3_closing_factor": 0.9
+    },
+    "F4": {
+      "sodium_density_factor": 1.3
+    }
+  },
+  "stages": {
+    "A": {
+      "title": "Remaining six cells of the F1 x F2 x F4 matrix on the F3+F5 base",
+      "prediction": "F1 and F2 move recovery minima toward zero (about +2.7 and +2.1 mV from the base), F4 away (-2.3 mV). F2 carries most of interval 2 (+27 of the candidate's +51.6 ms), F1 about +5 ms, F4 about +1.6 ms. Cell 110 has the best minima with interval 2 near +30 ms; cell 101 the best interval 2 with minima near -3 mV. No cell passes the 1 mV minima rows and the 1 ms crossing rows together. Any cell with an event count other than five is an exact failure and its supersets are skipped.",
+      "rejection": "A cell passes only if every event, crossing, phase, minimum, and subthreshold row is within its allowance at both sweeps. If no cell passes both groups, Stage B doses the member with the largest minimum-per-interval ratio.",
+      "unchanged": "Allen 541563728 geometry and mechanisms, recorded command and bias, nseg x9, CVode 1e-10, stop 2140 ms, library kv3-closing-source.",
+      "decision_file": "stage-a-decision.json"
+    },
+    "B": {
+      "title": "Dose split of the member with the best minimum-per-interval ratio",
+      "gate": "stage-a-decision.json",
+      "prediction": "Defined in stage-a-decision.json before the runs (predicted F1 at opening factors 1.5 and 3.0 on cell 100, then F2 closing 0.95 and 0.8).",
+      "rejection": "If the change in minimum per change in interval 2 is dose-invariant, no dose of F1, F2, or F4 passes both groups; a sub-system outside F1-F5 is required and the campaign reports FAIL.",
+      "unchanged": "As Stage A.",
+      "decision_file": "stage-b-decision.json"
+    },
+    "C": {
+      "title": "Finalist tolerance recheck at CVode 1e-11",
+      "gate": "stage-b-decision.json",
+      "prediction": "Every ranked row changes by less than its decision limit.",
+      "rejection": "A row that moves more than its limit returns to noise.",
+      "unchanged": "Finalist flags.",
+      "decision_file": "stage-c-decision.json"
+    }
+  },
+  "fail_rule": "No cell or dose meets every row at both sweeps by the cap: report FAIL and the sub-system outside F1-F5 that the residual pattern names.",
+  "budget_note": "Stage A: 6. Stage B: 4 = 10. Stage C: 2 = 12. 12 in reserve.",
+  "candidates": [
+    {
+      "name": "m100-F1",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0
+      }
+    },
+    {
+      "name": "m010-F2",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "kv3_closing_factor": 0.9
+      }
+    },
+    {
+      "name": "m001-F4",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 1.3
+      }
+    },
+    {
+      "name": "m110-F1F2",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "kv3_closing_factor": 0.9
+      }
+    },
+    {
+      "name": "m101-F1F4",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "sodium_density_factor": 1.3
+      }
+    },
+    {
+      "name": "m011-F2F4",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2140.0
+      },
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "leak_reversal_shift_mv": -4.0,
+        "kv3_closing_factor": 0.9,
+        "sodium_density_factor": 1.3
+      }
+    }
+  ],
+  "input_datums": {
+    "sweep50": "E 0.25",
+    "sweep43": "E 0.11"
+  },
+  "repeat_inputs_for_limits": [
+    "sweep50"
+  ]
+}

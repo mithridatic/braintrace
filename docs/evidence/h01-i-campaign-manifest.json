@@ -1,0 +1,408 @@
+{
+  "purpose": "Bounded Search Dissection of the inhibitory candidate against the recorded input (bias applied) on HL5BN1 donor geometry. Specification: docs/specs/2026-09-06-h01-progressive-search-plan.md.",
+  "cap": 24,
+  "prior_evaluations": 0,
+  "prior_evaluation_records": [
+    "h01-i-campaign/s0-candidate-bias-019",
+    "h01-i-campaign/s0-candidate-bias-027"
+  ],
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pv/kv3-phase-reference",
+  "library": ".",
+  "driver": "h01_pv_neuron_reference.py",
+  "output_dir": "h01-i-campaign",
+  "inputs": {
+    "019": [
+      "--current-na",
+      "0.19",
+      "--bias-na",
+      "0.031445374082395006",
+      "--duration-ms",
+      "1500"
+    ],
+    "027": [
+      "--current-na",
+      "0.27",
+      "--bias-na",
+      "0.031445374082395006",
+      "--duration-ms",
+      "1500"
+    ],
+    "n011": [
+      "--current-na",
+      "-0.11",
+      "--bias-na",
+      "0.025626740313144936",
+      "--duration-ms",
+      "1500"
+    ],
+    "n005": [
+      "--current-na",
+      "-0.05",
+      "--bias-na",
+      "0.028783657748943092",
+      "--duration-ms",
+      "1500"
+    ]
+  },
+  "input_datum": "h01-pv-input-datum.json",
+  "holdout": "0.23 nA (active-1.npz) is not an input of any stage.",
+  "evaluation": "One parameter set at all four calibration inputs.",
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "refine_region": "all"
+  },
+  "source_flags": {},
+  "candidate_flags": {
+    "sodium_h_tau_factor": 0.15,
+    "sodium_h_recovery_factor": 1.0,
+    "sodium_h_slope_mv": 5.0,
+    "somatic_kv3_tau_factor": 0.5,
+    "somatic_kv3_close_factor": 0.5,
+    "axon_calcium_decay_ms": 300.0,
+    "axon_calcium_gamma": 0.004,
+    "somatic_calva_factor": 0.5,
+    "scale_conductance": "NaTg",
+    "conductance_factor": 1.1,
+    "conductance_region": "soma"
+  },
+  "subsystems": {
+    "G1a": {
+      "members": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0
+      },
+      "predicted_group": "first-spike duration and peak"
+    },
+    "G1b": {
+      "members": {
+        "sodium_h_slope_mv": 5.0
+      },
+      "predicted_group": "event count and late intervals"
+    },
+    "G2": {
+      "members": {
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5
+      },
+      "predicted_group": "return and recovery minima"
+    },
+    "G3": {
+      "members": {
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004
+      },
+      "predicted_group": "intervals 3-7; first onset unchanged"
+    },
+    "G4": {
+      "members": {
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "predicted_group": "first onset and first minimum"
+    }
+  },
+  "stages": {
+    "0": {
+      "title": "Controls and decision limits under the recorded input",
+      "prediction": "Source with bias over-fires at 0.19 nA (22 events, as in h01-pv-neuron-bias-measured) and has a first peak more than 20 mV too high; candidate with bias over-fires more (26 and 59 events). Minima: source within 3 mV, candidate +5 to +8 mV. Mesh x9 to x27 moves no interval 1-7, no minimum, and no first-event row by more than 0.05 ms or 0.05 mV; late crossings and the 0.27 nA count move.",
+      "rejection": "If the source-to-candidate contrast on the count, minima, or first-spike rows is below five decision limits, that row is excluded from Stage A ranking. If every count and interval row is excluded at x9, Stage A runs at axon x2187 with the cost measured here.",
+      "unchanged": "Geometry, initial voltage -80 mV, temperature 34 C, stimulus window 270-1270 ms, bias from t=0, mechanism library kv3-phase-reference.",
+      "decision_file": "stage0-decision.json"
+    },
+    "A": {
+      "title": "Search Dissection: each sub-system into the source and out of the candidate",
+      "gate": "stage0-decision.json",
+      "prediction": "G1a carries the first-spike peak and duration (candidate peak within 2 mV, source +24 mV). G1b carries the count increase (out-G1b lowers both counts toward the source's). G2 and G4 share the +5 mV minima shift; neither alone reverses it. G3 carries intervals 3-7 at 0.27 nA. No single sub-system reverses the source-to-candidate change on every ranked row.",
+      "rejection": "A sub-system is the Steep X of a group when its Dixon-normalised RSS over that group exceeds the others combined in quadrature, in both swap directions. If no group is reversed by any single swap, the two largest go to Stage B together.",
+      "unchanged": "Everything in Stage 0 plus nseg x9 and CVode 1e-10 unless Stage 0 selected x2187.",
+      "decision_file": "stage-a-decision.json"
+    },
+    "B": {
+      "title": "Combined half-split of the two largest sub-systems",
+      "gate": "stage-a-decision.json",
+      "prediction": "Defined in stage-a-decision.json before the two runs.",
+      "rejection": "If the pair does not reverse the change, the partition is wrong; stop and reassess.",
+      "unchanged": "As Stage A.",
+      "decision_file": "stage-b-decision.json"
+    },
+    "C": {
+      "title": "Within-family split of the minima-group winner",
+      "gate": "stage-b-decision.json",
+      "prediction": "Defined in stage-b-decision.json before the runs.",
+      "rejection": "Same direction from both members means the phase is not the lever.",
+      "unchanged": "As Stage A.",
+      "decision_file": "stage-c-decision.json"
+    },
+    "D": {
+      "title": "Finalist confirmation at axon x2187 and CVode 1e-11",
+      "gate": "stage-c-decision.json",
+      "prediction": "No ranked row moves by more than its decision limit.",
+      "rejection": "A row that moves more than its limit returns to noise and is removed from the claim.",
+      "unchanged": "Finalist flags.",
+      "decision_file": "stage-d-decision.json"
+    }
+  },
+  "fail_rule": "No candidate meets the count row at every calibration input and every target row by the cap: report FAIL with the reassessment question in h01-pv-input-datum.json.",
+  "budget_note": "Stage 0: 4 evaluations (source, candidate, candidate x27, candidate axon x2187). Stage A: 10 = 14. Stages B, C, D are appended after their gates record a decision: 2 + 2 + 2 = 20; 4 in reserve.",
+  "candidates": [
+    {
+      "name": "s0-source",
+      "stage": "0",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {}
+    },
+    {
+      "name": "s0-candidate",
+      "stage": "0",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "s0-candidate-x27",
+      "stage": "0",
+      "settings": {
+        "nseg_factor": 27,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "s0-candidate-axon2187",
+      "stage": "0",
+      "settings": {
+        "nseg_factor": 2187,
+        "unselected_nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "axon"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-into-G1a",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0
+      }
+    },
+    {
+      "name": "a-into-G1b",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_slope_mv": 5.0
+      }
+    },
+    {
+      "name": "a-into-G2",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5
+      }
+    },
+    {
+      "name": "a-into-G3",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004
+      }
+    },
+    {
+      "name": "a-into-G4",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-out-G1a",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-out-G1b",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-out-G2",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-out-G3",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      }
+    },
+    {
+      "name": "a-out-G4",
+      "stage": "A",
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all"
+      },
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004
+      }
+    }
+  ],
+  "input_datums": {
+    "019": "I 0.19",
+    "027": "I 0.27",
+    "n011": "I -0.11",
+    "n005": "I -0.05"
+  },
+  "repeat_inputs_for_limits": [
+    "019",
+    "027"
+  ],
+  "prior_evaluation_records_note": "Phase 0 records s0-candidate-bias-019/-027 are replicated by the Stage 0 candidate s0-candidate at the same flags; the replicate is a container repeatability check and the pair counts as one evaluation."
+}

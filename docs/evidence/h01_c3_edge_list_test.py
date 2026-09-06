@@ -5,7 +5,17 @@ import zipfile
 
 import pytest
 
-from docs.evidence.h01_c3_edge_list import archive_cells, assemble_edges, parse_swc, sample, to_c3_voxels
+from docs.evidence.h01_c3_edge_list import (archive_cells, assemble_edges, nearest_label, neighbourhood, parse_swc,
+                                            sample, to_c3_voxels)
+
+
+def test_neighbourhood_is_nearest_first_and_nearest_label_reports_offset():
+    box = neighbourhood((10, 10, 5))
+    assert box[0] == (10, 10, 5) and len(box) == 5*5*3
+    labels = {p: 0 for p in box}
+    labels[(11, 10, 5)] = 7
+    assert nearest_label(labels, (10, 10, 5), "7") == [1, 0, 0]
+    assert nearest_label(labels, (10, 10, 5), "8") is None
 
 
 def test_parse_swc_reads_positions_and_skips_comments():

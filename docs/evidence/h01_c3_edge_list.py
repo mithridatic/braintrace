@@ -95,6 +95,24 @@ def assemble_edges(pre_index, post_index):
     return edges
 
 
+def neighbourhood(voxel, radius_xy=2, radius_z=1):
+    """Voxels within a small box around ``voxel``, nearest first."""
+    out = []
+    for dz in range(-radius_z, radius_z+1):
+        for dy in range(-radius_xy, radius_xy+1):
+            for dx in range(-radius_xy, radius_xy+1):
+                out.append((voxel[0]+dx, voxel[1]+dy, voxel[2]+dz))
+    return sorted(out, key=lambda p: sum((a-b)**2 for a, b in zip(p, voxel)))
+
+
+def nearest_label(labels, voxel, expected):
+    """Offset (voxels) of the nearest sampled voxel carrying ``expected``, or None."""
+    for point in neighbourhood(voxel):
+        if str(int(labels[point])) == expected:
+            return [point[i]-voxel[i] for i in range(3)]
+    return None
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, default=Path(".cache/h01"))
@@ -160,11 +178,14 @@ def main(argv=None):
         record = records[annotation]
         pre_v = tuple(int(v) for v in record["pre_voxel"])
         post_v = tuple(int(v) for v in record["post_voxel"])
-        labels = proofread.scattered_points([pre_v, post_v])
+        labels = proofread.scattered_points(neighbourhood(pre_v)+neighbourhood(post_v))
+        pre_offset, post_offset = nearest_label(labels, pre_v, pre), nearest_label(labels, post_v, post)
         verified.append({"annotation_id": annotation, "pre_cell": pre, "post_cell": post, "type": record["type"],
                          "pre_voxel": list(pre_v), "post_voxel": list(post_v),
                          "pre_proofread_label": str(int(labels[pre_v])), "post_proofread_label": str(int(labels[post_v])),
-                         "endpoints_verified": str(int(labels[pre_v])) == pre and str(int(labels[post_v])) == post})
+                         "pre_nearest_offset": pre_offset, "post_nearest_offset": post_offset,
+                         "endpoints_verified": pre_offset == [0, 0, 0] and post_offset == [0, 0, 0],
+                         "endpoints_within_box": pre_offset is not None and post_offset is not None})
     cells_with_edges = sorted({e["pre_cell"] for e in verified if e["endpoints_verified"]}
                               | {e["post_cell"] for e in verified if e["endpoints_verified"]})
     report = {"scope": "Lower bound on directed contacts among sampled proofread cells; absence is not established.",
@@ -174,6 +195,7 @@ def main(argv=None):
               "edges": verified, "cells_with_verified_edges": cells_with_edges,
               "counts": {"cells": len(per_cell), "c3_ids": len(label_to_cell), "edges": len(verified),
                          "verified_edges": sum(e["endpoints_verified"] for e in verified),
+                         "edges_within_box": sum(e["endpoints_within_box"] for e in verified),
                          "cells_with_verified_edges": len(cells_with_edges)},
               "wall_seconds": round(time.time()-started, 1)}
     args.output.write_text(json.dumps(report, indent=2)+"\n")
