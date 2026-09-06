@@ -665,6 +665,49 @@ flowchart TD
     Y4b --> SUB[Late subthreshold: unchanged by all eight cells; outside F1-F5]
 ```
 
+### Y4 under the energetic search (2026-09-06, supersedes the mechanism statements above)
+
+Restated as conditions and mechanism from the Stage 3 charge budgets
+([result](evidence/h01-e-energetic-result.md), closure 1e-14 pC). Under the
+Isolation limits the one unmistakable row is the maximum rise rate (human 351
+V/s, candidate 641, source 1019: 48 to 115 units); threshold (+3 mV), peak,
+minimum and fall are real or parked, and the "late subthreshold return" is
+inside two human repeat limits ([isolation](evidence/h01-isolation-decision.md)).
+
+**Explanation.** The soma's dV/dt equals the sodium current it receives minus
+the axial, potassium and leak currents, over its capacitance. At the fastest
+rise 85 to 90 percent of the 2.5 to 3.1 nA of somatic sodium leaves axially,
+so the rate is load-limited: doubling the dendritic capacitance lowers it from
+641 to 480 V/s (predicted 496), but the same sodium must reach +36 mV and the
+peak falls 6 mV with the trough 8 mV shallower; halving the sodium collapses the
+spike. The human's shoulder (100 to 250 V/s near −45 mV before the main rise)
+is the mark of a spike arriving from an initiation site through the axial path,
+with the somatic sodium activating later from −56 mV to carry the peak. That
+condition cannot hold in Allen 626170538: the genome places every active
+conductance in the soma and leaves the axon stub, dendrites and apical tree
+passive. The Steep X is outside the model family.
+
+```mermaid
+flowchart LR
+    SITE[Initiation outside the soma] --> AX[Axial current into the soma: shoulder 100 to 250 V/s]
+    AX --> NA[Somatic sodium activates from -56 mV]
+    NA --> PEAK[Peak +36 mV at 351 V/s]
+    SOMA[Somatic initiation, passive axon] -.-> FAST[641 to 1019 V/s, threshold -52 mV]
+```
+
+**Prediction.** Load arm confirmed on the rise rate, failed on the peak (Stage
+X); initiation arms could not run (no axonal sodium row, Stage Y). Holdout
+sweep 53 prediction: [record](evidence/h01-prediction-e.md).
+
+**Action.** The family change (an initiation site in the axon) is the user's
+decision; two evaluations of about 15 minutes each would test it.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| R | Charge per boundary at the fastest rise | Sodium 2.5 to 3.1 nA, axial 2.2 to 2.6 nA, capacitive 0.4 to 0.7 nA | [budgets](evidence/h01-e-energetic-stage-r-budgets.md) |
+| X | Sodium halved; dendritic capacitance doubled | Collapse; rise 480 V/s with peak −6 mV and trough +8 mV | [budgets](evidence/h01-e-energetic-stage-x-budgets.md) |
+| Y | Axonal sodium tripled | No sodium row in the axon: perisomatic fit | [decision](evidence/h01-e-energetic/stage-y-decision.json) |
+
 ## Y5. Synaptic delivery in the illustrative H01 pair
 
 **Behavior.** In the prior illustrative pair (`810151953`, `678539249`), an E output event is followed by a
@@ -919,11 +962,12 @@ biological uncertainty.
   double-counted bias), the loop (sodium inflow ending within the upstroke) and
   the trough (Kv3 activation carried past the spike, its tail below −73 mV),
   each predicted on the closed 0.23 nA holdout.
-- Y4: the late subthreshold return (1520 to 2120 ms) under 0.11 nA, set
-  outside F1 to F5; whether any Ih or leak member decouples the second
-  minimum from interval 2; the human cell's densities. Closed by the matrix:
-  no F1, F2, F4 combination passes; F2 carries interval 2; F4 carries the
-  phases.
+- Y4: the initiation site. The human's two-stage upstroke (shoulder, 351 V/s,
+  threshold −56 mV) needs a spike that arrives at the soma from outside it;
+  the fit is perisomatic. Family change is the user's decision. Closed on
+  2026-09-06: the late subthreshold return is inside two human repeat limits;
+  the rise rate is load-limited but the load cannot be the lever (peak and
+  trough move with it).
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.
