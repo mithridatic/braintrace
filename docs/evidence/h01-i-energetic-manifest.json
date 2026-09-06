@@ -76,6 +76,14 @@
       "rejection": "If neither arm moves the minimum by more than 1.24 mV (Stage 1 combined limit), the Kv3 closing rate is not the lever for the trough and the remaining outward boundary (K_P or SK at the soma) is named for the reserve. If the candidate arm reaches within 1.24 mV of -79 mV the row passes and the explanation is sufficient.",
       "unchanged": "As Stage R.",
       "decision_file": "stage-d-decision.json"
+    },
+    "E": {
+      "title": "Interdependency split within the Kv3 boundary: fast opening, slow closing, sodium closing fixed",
+      "gate": "stage-d-decision.json",
+      "prediction": "With the sodium closing fixed by the loop, the potassium boundary must activate within the short spike and stay open into the trough: opening tau halved (tau factor 0.5) with closing slowed (close factor 2 and 4, i.e. closing tau 1x and 2x the source's). Predicted trough Kv3 0.07 and 0.12 nA, minimum about -76.5 and -79 mV at 0.19 nA (117 MOhm trough slope from the Ca_LVA arm); the maximum fall rate slows and may leave the human limit (-336 +/- 20 V/s) in the close-4 arm. If the trough reaches -79 within 1.24 mV while the fall stays inside its limit, the explanation is sufficient; if the fall breaks first, the human's repolarising conductance is not a single Kv3 kinetics and the row returns to the user.",
+      "rejection": "Neither arm moves the minimum beyond 1.24 mV: the trough is not set by somatic Kv3 activation at all and the remaining outward boundaries (K_P, dendritic load) go to the user with the reserve.",
+      "unchanged": "As Stage R; only somatic Kv3 closing changed.",
+      "decision_file": "stage-e-decision.json"
     }
   },
   "candidates": [
@@ -252,6 +260,54 @@
         "observe_charge_balance": true
       },
       "arm": "candidate Kv3 closing put into the source (G2 in); prediction: source minimum rises toward -73 mV, peak unchanged"
+    },
+    {
+      "name": "e-kv3-close2",
+      "stage": "E",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 2.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "e-kv3-close4",
+      "stage": "E",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 4.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
     }
   ]
 }
