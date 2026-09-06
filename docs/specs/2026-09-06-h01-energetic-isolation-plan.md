@@ -246,11 +246,15 @@ Example 21, anything on `main`.
   outside the family. Structural FAIL returned to the user
   ([result](../evidence/h01-e-energetic-result.md)). The Stage R rejection clause
   was mis-stated and withdrawn before Stage X.
-- **Stage 4.** I holdout 0.23 nA: every claimed row passed as predicted; count,
-  cycle 2 and late threshold failed as predicted; late fall failed unpredicted
-  ([record](../evidence/h01-prediction-i.md)). E holdout sweep 53: the candidate fails rise, peak,
-  threshold, fall and count as predicted, passes the trough; two bands were wrong
-  ([record](../evidence/h01-prediction-e.md)).
+- **Stage 4.** I holdout 0.23 nA: every claimed row inside its repeatability
+  limit; 9 of 11 bands held (both cycle-length bands were 1 to 2 ms high);
+  count and late threshold failed as predicted; late fall failed unpredicted.
+  Against the approved contract the holdout FAILS (count, first peak by 0.15
+  mV) ([record](../evidence/h01-prediction-i.md)). The result pages first
+  reported "every value inside its band", which was wrong and is corrected. E holdout sweep 53: the candidate fails rise, peak,
+  threshold, fall and count as predicted, passes the trough; three of seven
+  bands were wrong (count, rise, peak); contract FAIL on count and both peaks
+  ([record](../evidence/h01-prediction-e.md)). Both holdouts are now spent.
 - **Planning mistakes recorded.** Stage R I prediction read the trough as a
   charge deficit (wrong by two orders); Stage X Kv3 removal predicted 1 mV and
   produced block; Stage D predicted the closing rate as the lever (it is the

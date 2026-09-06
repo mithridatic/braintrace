@@ -492,12 +492,16 @@ flowchart LR
     SK[Axonal SK accumulates] --> LATE[Cycles 25 to 120 ms]
 ```
 
-**Prediction confirmed.** Written before the 0.23 nA holdout was opened: trough
-−79.5 ± 0.8 (observed −79.4, human −78.9), fall −345 ± 5 (−345, human −327),
-peak 17.7 ± 0.3 (17.8, human 18.9), threshold −60.9 ± 0.3 (−60.9, human −61.0),
-late trough −80.4 ± 0.5 (−80.4, human −79.6). Predicted failures: count 24 to 28
-(26, human 31), cycle 2 above 20 ms (20.7, human 6.3), late threshold −60.5
-(−60.4, human −55.2). Unpredicted failure: late fall −334 against −294.
+**Prediction, partly confirmed.** Written before the 0.23 nA holdout was opened:
+trough −79.5 ± 0.8 (observed −79.4, human −78.9), fall −345 ± 5 (−345, human
+−327), peak 17.7 ± 0.3 (17.8, human 18.9), threshold −60.9 ± 0.3 (−60.9, human
+−61.0), late trough −80.4 ± 0.5 (−80.4, human −79.6). Predicted failures: count
+24 to 28 (26, human 31), late threshold −60.5 (−60.4, human −55.2). Bands
+missed: cycle 2 predicted 22 to 27 ms (observed 20.7), late cycle 45 to 55
+(43.6). Unpredicted failure: late fall −334 against −294. These passes are at
+the repeatability limits (peak 2.07 mV); against the approved contract (exact
+count, 1 mV) the holdout fails on count and on the first peak by 0.15 mV, so
+the finalist is not an accepted cell ([record](evidence/h01-prediction-i.md)).
 
 **Steep X.** Elemental family (Matryoshka, [decision](evidence/h01-matryoshka2-decision.md)):
 the loop, then the trough. Both are now inside the human repeat limits at three

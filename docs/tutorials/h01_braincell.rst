@@ -347,8 +347,10 @@ record under ``docs/evidence``.
      - Borrowed (HL5BN1 for I, Allen 626170538 for E)
      - Under the command-only input (the recorded bias is a holding current the
        fit absorbed, ``h01-pv-bias-forensics.md``) the I finalist reproduces
-       the spike loop and the trough at three inputs and predicted the closed
-       holdout (``h01-i-energetic-result.md``, ``h01-prediction-i.md``); its
+       the spike loop and the trough at three inputs within the repeatability
+       limits and predicted 9 of 11 rows on the 0.23 nA holdout, which still
+       fails the approved acceptance contract on count and first peak
+       (``h01-i-energetic-result.md``, ``h01-prediction-i.md``); its
        early burst and accommodation are unexplained. The E cell's rise rate is
        two to three times the human's and load-limited
        (``h01-e-energetic-stage-r-budgets.md``); no E row passes. H01 has no

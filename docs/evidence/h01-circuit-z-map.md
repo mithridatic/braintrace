@@ -36,10 +36,13 @@ flowchart LR
   delay, under a diagnostic I channel law. This is demonstrated.
 - Human-constrained single-cell behaviour: partly demonstrated for the I cell.
   Under the command-only input the finalist (somatic Kv3 close factor 2.0 on
-  the candidate) reproduces the spike loop and the trough at three inputs,
-  predicted on the closed 0.23 nA holdout; the early burst, the count and the
-  accommodation along the train remain unexplained. The E cell's rise rate is
-  load-limited and under a two-arm split; no E row passes yet.
+  the candidate) reproduces the spike loop and the trough at three inputs
+  within the repeatability limits and predicted 9 of 11 rows on the 0.23 nA
+  holdout, which nevertheless fails the approved contract (count 26 vs 31,
+  first peak 1.15 mV); the early burst, the count and the accommodation along
+  the train remain unexplained. The E cell is a perisomatic fit whose rise is
+  load-limited (structural FAIL); sweep 53 fails the contract on count and
+  peaks. Both holdouts are spent.
 - A reconstructed H01 microcircuit: not claimed. One directed contact is
   anatomically supported; the reciprocal candidate is unverified; the other
   102 cells have no qualified partner mapping yet.
