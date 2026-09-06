@@ -1,0 +1,1105 @@
+{
+ "cell": "E",
+ "human_limits": {
+  "latency_ms": 82.52580000000015,
+  "minimum_mv": 1.010628417134285,
+  "return_mv": 0.8648427735641598,
+  "peak_mv": 0.5512538552284241,
+  "threshold_mv": 0.9646887704730034,
+  "max_rise_v_s": 5.742130684671516,
+  "max_fall_v_s": 5.7421820238285255,
+  "plateau_mv": 0.591743435561657
+ },
+ "human_repeat_sets": {
+  "long square 200 pA": {
+   "repeats": 5,
+   "factor": 1.47,
+   "limits": {
+    "latency_ms": 82.52580000000015,
+    "minimum_mv": 1.010628417134285,
+    "return_mv": 0.8648427735641598,
+    "peak_mv": 0.5512538552284241,
+    "threshold_mv": 0.9646887704730034,
+    "max_rise_v_s": 5.742130684671516,
+    "max_fall_v_s": 5.7421820238285255,
+    "plateau_mv": 0.591743435561657
+   }
+  }
+ },
+ "model_limits": {
+  "cycle_ms": 0.015354907879934673,
+  "minimum_mv": 0.002597324012649693,
+  "return_mv": 0.033219178838346866,
+  "peak_mv": 0.018596569900968446,
+  "threshold_mv": 0.04188701486639651,
+  "max_rise_v_s": 1.7094625631897407,
+  "max_fall_v_s": 0.00026763832366668796,
+  "plateau_mv": 0.06552828190596628
+ },
+ "model_repeat_sets": {
+  "candidate sweep 50, atol 1e-10, 1e-11, nseg x3": {
+   "repeats": 3,
+   "factor": 1.81,
+   "limits": {
+    "cycle_ms": 0.015354907879934673,
+    "minimum_mv": 0.002597324012649693,
+    "return_mv": 0.033219178838346866,
+    "peak_mv": 0.018596569900968446,
+    "threshold_mv": 0.04188701486639651,
+    "max_rise_v_s": 1.7094625631897407,
+    "max_fall_v_s": 0.00026763832366668796,
+    "plateau_mv": 0.06552828190596628
+   }
+  }
+ },
+ "inputs": {
+  "sweep 50": {
+   "human_spikes": 5,
+   "models": {
+    "source": {
+     "trace": "h01-l2-campaign-fine/s0-source-fine-sweep50",
+     "model_spikes": 7,
+     "rows": [
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "threshold_mv",
+       "human": -55.843753308057785,
+       "model": -52.39187271285789,
+       "contrast": 3.4518805951998957,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 3.5748640909400176,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "peak_mv",
+       "human": 36.03125220537186,
+       "model": 37.20819225638986,
+       "contrast": 1.1769400510180006,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 2.133809860882871,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_rise_v_s",
+       "human": 350.7812623849064,
+       "model": 1018.9077456464647,
+       "contrast": 668.1264832615583,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 111.51820718272988,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_fall_v_s",
+       "human": -104.68750260779842,
+       "model": -97.04124512149792,
+       "contrast": 7.646257486300499,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.33159440893116,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "minimum_mv",
+       "human": -69.56250363588333,
+       "model": -71.06587160405341,
+       "contrast": -1.5033679681700818,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 1.487552673044459,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "cycle_ms",
+       "human": 59.98000000000002,
+       "model": 58.80520472064313,
+       "contrast": -1.1747952793568857,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 76.50943193818,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "threshold_mv",
+       "human": -54.62500223517418,
+       "model": -52.28267716809854,
+       "contrast": 2.3423250670756417,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.4257773525658344,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "peak_mv",
+       "human": 35.31250214576721,
+       "model": 36.859277460819236,
+       "contrast": 1.5467753150520238,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 2.804326708886669,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_rise_v_s",
+       "human": 314.84378268970875,
+       "model": 1002.0077406557257,
+       "contrast": 687.1639579660169,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 114.69578673018911,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_fall_v_s",
+       "human": -85.93751117544286,
+       "model": -97.00888441575808,
+       "contrast": -11.07137324031521,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.9280777206898274,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "minimum_mv",
+       "human": -67.09375375509262,
+       "model": -71.49729064274928,
+       "contrast": -4.4035368876566565,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 4.35721207766378,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "cycle_ms",
+       "human": 34.25999999999999,
+       "model": 27.34140940125144,
+       "contrast": -6.918590598748551,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 450.57845041125614,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "threshold_mv",
+       "human": -54.437500923871994,
+       "model": -52.06080333661852,
+       "contrast": 2.3766975872534744,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.4613744958360027,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "peak_mv",
+       "human": 34.875004053115845,
+       "model": 35.98067910164877,
+       "contrast": 1.1056750485329232,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 2.004605348803458,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_rise_v_s",
+       "human": 314.06249618004233,
+       "model": 960.6966500453327,
+       "contrast": 646.6341538652904,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 107.93088337129792,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_fall_v_s",
+       "human": -101.5625428409308,
+       "model": -96.76223405943165,
+       "contrast": 4.8003087814991545,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 0.8359729378771035,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "minimum_mv",
+       "human": -70.21875450015068,
+       "model": -71.51859762267675,
+       "contrast": -1.2998431225260703,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 1.286168890378645,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "cycle_ms",
+       "human": 220.1199999999999,
+       "model": 123.79046948539894,
+       "contrast": -96.32953051460095,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 6273.53360032081,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "threshold_mv",
+       "human": -54.06250202655792,
+       "model": -52.03984547595631,
+       "contrast": 2.02265655060161,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.0947196960129992,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "peak_mv",
+       "human": 34.78125339746475,
+       "model": 35.991241651760184,
+       "contrast": 1.2099882542954319,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 2.193726746179492,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "max_rise_v_s",
+       "human": 311.7187647151802,
+       "model": 961.2187773190335,
+       "contrast": 649.5000126038533,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 108.4092290686625,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "max_fall_v_s",
+       "human": -103.90626266608149,
+       "model": -96.84851857877675,
+       "contrast": 7.057744087304741,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.2291049030404835,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "minimum_mv",
+       "human": -70.28125369548798,
+       "model": -71.56175546690334,
+       "contrast": -1.2805017714153593,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 1.2670310085332241,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "cycle_ms",
+       "human": 307.4200000000001,
+       "model": 189.77185647826332,
+       "contrast": -117.64814352173676,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 7661.9244115085685,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "threshold_mv",
+       "human": -54.3125025331974,
+       "model": -52.05143628185695,
+       "contrast": 2.261066251340452,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.341623450241406,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "peak_mv",
+       "human": 34.56250062584877,
+       "model": 35.98201827888162,
+       "contrast": 1.4195176530328482,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 2.5736066702113405,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "max_rise_v_s",
+       "human": 307.8125184387527,
+       "model": 960.7960726320962,
+       "contrast": 652.9835541933435,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 108.9906733347392,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "max_fall_v_s",
+       "human": -104.68750260779842,
+       "model": -96.8583170932543,
+       "contrast": 7.829185514544122,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.3634512931758291,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "minimum_mv",
+       "human": -70.59375339746475,
+       "model": -71.56518884763372,
+       "contrast": -0.9714354501689684,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 0.9612160370477649,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "cycle_ms",
+       "human": 273.28,
+       "model": 185.6199744142839,
+       "contrast": -87.66002558571608,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 5708.925528642705,
+       "tier": "search"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -87.12136279046535,
+       "model": -86.81444771827358,
+       "contrast": 0.30691507219177083,
+       "limit": 0.8654805236565654,
+       "limit_source": "human and model",
+       "ratio": 0.3546181153737423,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "threshold_mv": {
+        "search": 0,
+        "real": 5,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "peak_mv": {
+        "search": 0,
+        "real": 5,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "max_rise_v_s": {
+        "search": 5,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "max_fall_v_s": {
+        "search": 0,
+        "real": 4,
+        "parked": 1,
+        "unlimited": 0
+       },
+       "minimum_mv": {
+        "search": 0,
+        "real": 4,
+        "parked": 1,
+        "unlimited": 0
+       },
+       "cycle_ms": {
+        "search": 5,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "cycle_ms",
+       "max_rise_v_s"
+      ],
+      "parked_landmarks": [
+       "max_fall_v_s",
+       "minimum_mv",
+       "peak_mv",
+       "return_mv",
+       "threshold_mv"
+      ]
+     }
+    },
+    "candidate": {
+     "trace": "h01-l2-campaign-fine/s0-candidate-fine-sweep50",
+     "model_spikes": 5,
+     "rows": [
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "threshold_mv",
+       "human": -55.843753308057785,
+       "model": -52.04359519588846,
+       "contrast": 3.8001581121693278,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 3.935550028578505,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "peak_mv",
+       "human": 36.03125220537186,
+       "model": 35.959759064987914,
+       "contrast": -0.07149314038394294,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 0.12961812949163345,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_rise_v_s",
+       "human": 350.7812623849064,
+       "model": 641.0031253825505,
+       "contrast": 290.22186299764405,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 48.441459300841466,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "max_fall_v_s",
+       "human": -104.68750260779842,
+       "model": -95.60892725885151,
+       "contrast": 9.078575348946913,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.5810323151394416,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "minimum_mv",
+       "human": -69.56250363588333,
+       "model": -69.50381872421184,
+       "contrast": 0.05868491167149159,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 0.058067551705630764,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 1,
+       "key": "cycle_ms",
+       "human": 59.98000000000002,
+       "model": 61.95485293855154,
+       "contrast": 1.9748529385515212,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 128.61379267095435,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "threshold_mv",
+       "human": -54.62500223517418,
+       "model": -51.91880701189701,
+       "contrast": 2.70619522327717,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.802611463507685,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "peak_mv",
+       "human": 35.31250214576721,
+       "model": 35.50639183851313,
+       "contrast": 0.19388969274591972,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 0.351524903878444,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_rise_v_s",
+       "human": 314.84378268970875,
+       "model": 628.1796485686882,
+       "contrast": 313.33586587897946,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 52.29945958479951,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "max_fall_v_s",
+       "human": -85.93751117544286,
+       "model": -95.4488926390186,
+       "contrast": -9.51138146357573,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.656405424588545,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "minimum_mv",
+       "human": -67.09375375509262,
+       "model": -69.95671439433379,
+       "contrast": -2.862960639241166,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 2.8328425521185876,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 2,
+       "key": "cycle_ms",
+       "human": 34.25999999999999,
+       "model": 25.620724700108667,
+       "contrast": -8.639275299891324,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 562.6393442047846,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "threshold_mv",
+       "human": -54.437500923871994,
+       "model": -51.776089858899674,
+       "contrast": 2.66141106497232,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.756231736587348,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "peak_mv",
+       "human": 34.875004053115845,
+       "model": 34.983589729700185,
+       "contrast": 0.10858567658434026,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 0.1968674506793208,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_rise_v_s",
+       "human": 314.06249618004233,
+       "model": 613.7233262299073,
+       "contrast": 299.660830049865,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 50.01693446863011,
+       "tier": "search"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "max_fall_v_s",
+       "human": -101.5625428409308,
+       "model": -95.23930320530417,
+       "contrast": 6.323239635626635,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.1011910807631187,
+       "tier": "real"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "minimum_mv",
+       "human": -70.21875450015068,
+       "model": -70.0614272287856,
+       "contrast": 0.15732727136507663,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 0.15567220269218462,
+       "tier": "parked"
+      },
+      {
+       "phase": "early",
+       "spike": 3,
+       "key": "cycle_ms",
+       "human": 220.1199999999999,
+       "model": 271.989871305683,
+       "contrast": 51.86987130568309,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 3378.064636484408,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "threshold_mv",
+       "human": -54.06250202655792,
+       "model": -51.78358445416033,
+       "contrast": 2.278917572397596,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.360110777616451,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "peak_mv",
+       "human": 34.78125339746475,
+       "model": 34.97104832774644,
+       "contrast": 0.18979493028168548,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 0.34410103847714457,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "max_rise_v_s",
+       "human": 311.7187647151802,
+       "model": 613.4114473325917,
+       "contrast": 301.6926826174115,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 50.35607467825971,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "max_fall_v_s",
+       "human": -103.90626266608149,
+       "model": -95.26572973416205,
+       "contrast": 8.640532931919438,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.5047473045400022,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "minimum_mv",
+       "human": -70.28125369548798,
+       "model": -70.09749837450552,
+       "contrast": 0.18375532098245628,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 0.18182223161659833,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 4,
+       "key": "cycle_ms",
+       "human": 307.4200000000001,
+       "model": 307.1571290743984,
+       "contrast": -0.2628709256016464,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 17.11966803429398,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "threshold_mv",
+       "human": -54.3125025331974,
+       "model": -51.772089277782705,
+       "contrast": 2.5404132554146983,
+       "limit": 0.9655977143154041,
+       "limit_source": "human and model",
+       "ratio": 2.6309230207900995,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "peak_mv",
+       "human": 34.56250062584877,
+       "model": 34.96062768562209,
+       "contrast": 0.39812705977332286,
+       "limit": 0.5515674440322614,
+       "limit_source": "human and model",
+       "ratio": 0.7218102955148966,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "max_rise_v_s",
+       "human": 307.8125184387527,
+       "model": 613.1540804439228,
+       "contrast": 305.3415620051701,
+       "limit": 5.991187449478894,
+       "limit_source": "human and model",
+       "ratio": 50.96511577712834,
+       "tier": "search"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "max_fall_v_s",
+       "human": -104.68750260779842,
+       "model": -95.2786261537176,
+       "contrast": 9.408876454080826,
+       "limit": 5.742182030065726,
+       "limit_source": "human and model",
+       "ratio": 1.638554195045804,
+       "tier": "real"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "minimum_mv",
+       "human": -70.59375339746475,
+       "model": -70.11453653918744,
+       "contrast": 0.47921685827731153,
+       "limit": 1.0106317547016703,
+       "limit_source": "human and model",
+       "ratio": 0.47417554024786424,
+       "tier": "parked"
+      },
+      {
+       "phase": "late",
+       "spike": 5,
+       "key": "cycle_ms",
+       "human": 273.28,
+       "model": 293.89287920546394,
+       "contrast": 20.61287920546397,
+       "limit": 0.015354907879934673,
+       "limit_source": "model",
+       "ratio": 1342.429363083334,
+       "tier": "search"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -87.12136279046535,
+       "model": -87.69321231617133,
+       "contrast": -0.5718495257059715,
+       "limit": 0.8654805236565654,
+       "limit_source": "human and model",
+       "ratio": 0.6607306693511329,
+       "tier": "parked"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "threshold_mv": {
+        "search": 0,
+        "real": 5,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "peak_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 5,
+        "unlimited": 0
+       },
+       "max_rise_v_s": {
+        "search": 5,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "max_fall_v_s": {
+        "search": 0,
+        "real": 5,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "minimum_mv": {
+        "search": 0,
+        "real": 1,
+        "parked": 4,
+        "unlimited": 0
+       },
+       "cycle_ms": {
+        "search": 5,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 0,
+        "parked": 1,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "cycle_ms",
+       "max_rise_v_s"
+      ],
+      "parked_landmarks": [
+       "max_fall_v_s",
+       "minimum_mv",
+       "peak_mv",
+       "return_mv",
+       "threshold_mv"
+      ]
+     }
+    }
+   }
+  },
+  "sweep 43": {
+   "human_spikes": 0,
+   "models": {
+    "source": {
+     "trace": "h01-l2-campaign-coverage-recovery/s0-source-fine-sweep43",
+     "model_spikes": 0,
+     "rows": [
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "plateau_mv",
+       "human": -75.6628125,
+       "model": -71.58208459599045,
+       "contrast": 4.080727904009549,
+       "limit": 0.595360604390197,
+       "limit_source": "human and model",
+       "ratio": 6.854212176482971,
+       "tier": "search"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -85.37415952682495,
+       "model": -82.0442393099616,
+       "contrast": 3.329920216863357,
+       "limit": 0.8654805236565654,
+       "limit_source": "human and model",
+       "ratio": 3.8474814000375073,
+       "tier": "real"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "plateau_mv": {
+        "search": 1,
+        "real": 0,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 1,
+        "parked": 0,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [
+       "plateau_mv"
+      ],
+      "parked_landmarks": [
+       "return_mv"
+      ]
+     }
+    },
+    "candidate": {
+     "trace": "h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43",
+     "model_spikes": 0,
+     "rows": [
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "plateau_mv",
+       "human": -75.6628125,
+       "model": -74.0085089341437,
+       "contrast": 1.6543035658562957,
+       "limit": 0.595360604390197,
+       "limit_source": "human and model",
+       "ratio": 2.778658100078237,
+       "tier": "real"
+      },
+      {
+       "phase": "subthreshold",
+       "spike": 0,
+       "key": "return_mv",
+       "human": -85.37415952682495,
+       "model": -83.75682454784294,
+       "contrast": 1.617334978982015,
+       "limit": 0.8654805236565654,
+       "limit_source": "human and model",
+       "ratio": 1.8687133156375868,
+       "tier": "real"
+      }
+     ],
+     "summary": {
+      "per_landmark": {
+       "plateau_mv": {
+        "search": 0,
+        "real": 1,
+        "parked": 0,
+        "unlimited": 0
+       },
+       "return_mv": {
+        "search": 0,
+        "real": 1,
+        "parked": 0,
+        "unlimited": 0
+       }
+      },
+      "search_landmarks": [],
+      "parked_landmarks": [
+       "plateau_mv",
+       "return_mv"
+      ]
+     }
+    }
+   }
+  }
+ },
+ "summary": {
+  "per_landmark": {
+   "threshold_mv": {
+    "search": 0,
+    "real": 10,
+    "parked": 0,
+    "unlimited": 0
+   },
+   "peak_mv": {
+    "search": 0,
+    "real": 5,
+    "parked": 5,
+    "unlimited": 0
+   },
+   "max_rise_v_s": {
+    "search": 10,
+    "real": 0,
+    "parked": 0,
+    "unlimited": 0
+   },
+   "max_fall_v_s": {
+    "search": 0,
+    "real": 9,
+    "parked": 1,
+    "unlimited": 0
+   },
+   "minimum_mv": {
+    "search": 0,
+    "real": 5,
+    "parked": 5,
+    "unlimited": 0
+   },
+   "cycle_ms": {
+    "search": 10,
+    "real": 0,
+    "parked": 0,
+    "unlimited": 0
+   },
+   "return_mv": {
+    "search": 0,
+    "real": 2,
+    "parked": 2,
+    "unlimited": 0
+   },
+   "plateau_mv": {
+    "search": 1,
+    "real": 1,
+    "parked": 0,
+    "unlimited": 0
+   }
+  },
+  "search_landmarks": [
+   "cycle_ms",
+   "max_rise_v_s",
+   "plateau_mv"
+  ],
+  "parked_landmarks": [
+   "max_fall_v_s",
+   "minimum_mv",
+   "peak_mv",
+   "return_mv",
+   "threshold_mv"
+  ]
+ },
+ "tree": "flowchart TD\n    R[E: human-model contrast] --> IN[Inputs: recording and datum]\n    R --> FN[Function: model]\n    R --> ID[Interdependency]\n    FN --> cycle_ms[cycle_ms: search]\n    FN --> max_rise_v_s[max_rise_v_s: search]\n    FN --> plateau_mv[plateau_mv: search]\n    FN -.-> max_fall_v_s[max_fall_v_s: parked, inside repeatability]\n    FN -.-> minimum_mv[minimum_mv: parked, inside repeatability]\n    FN -.-> peak_mv[peak_mv: parked, inside repeatability]\n    FN -.-> return_mv[return_mv: parked, inside repeatability]\n    FN -.-> threshold_mv[threshold_mv: parked, inside repeatability]"
+}
