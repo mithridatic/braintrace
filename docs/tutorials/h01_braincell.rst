@@ -319,6 +319,56 @@ or build the separate 10 by 10 um reference cylinder with
 an independent numerical oracle test; it is not H01 anatomy. Neither entry
 point implements an inhibitory neuron or a connected circuit yet.
 
+The measured E/I pair: what its behaviour represents
+---------------------------------------------------
+
+``python -m examples.h01_ei_circuit --control ei --output .cache/h01/circuit-ei``
+runs the two-cell circuit on measured anatomy: I ``5584343344`` to E
+``4157825456`` through the released contact ``8105899``. Run
+``--control disconnected`` with the same settings for the paired control.
+Read the result with the following table in hand; every row is backed by a
+record under ``docs/evidence``.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Element
+     - Status
+     - Meaning of the output
+   * - Cell geometry and the contact endpoints
+     - Measured (H01 release, checksum pinned)
+     - Positions and cable lengths are the donor's; the contact is one released
+       detection, not a manually verified synapse.
+   * - Electrical regions
+     - Inferred from sparse labels
+     - The soma-to-contact path carries dendrite parameters; the map is a model
+       hypothesis.
+   * - Channel laws and densities
+     - Borrowed (HL5BN1 for I, Allen 626170538 for E)
+     - Neither cell meets the approved human contract on its own donor
+       geometry (``h01-i-campaign-result.md``, ``h01-e-campaign2-result.md``);
+       H01 has no recording to compare against.
+   * - I output event
+     - Diagnostic only
+     - The I cell emits a contact event only with the sodium closing-time
+       factor restored from 0.15 to 1.0 (``--restore-closing`` in the
+       all-CV recorder). That factor is also the member that gives the
+       donor model its human-like spike shape, so the default profile and
+       the override cannot both be right.
+   * - Synaptic conductance, delay, reversal
+     - Borrowed settings
+     - Delivery, its local sign, and a bounded onset delay are demonstrated;
+       strength and kinetics are assumptions.
+   * - Reciprocal E-to-I wiring
+     - Candidate contact ``54906016`` unverified
+     - Not in the default circuit; ``--connectivity illustrative`` uses a
+       different, explicitly illustrative pair.
+
+The one-page energetic map ``docs/evidence/h01-circuit-z-map.md`` places these
+elements on the source-to-load path and names the parasitic elements the
+campaigns did not partition. Training against this circuit is out of scope
+until a cell passes the contract.
+
 Provenance and license
 ---------------------
 
