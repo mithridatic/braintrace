@@ -20,8 +20,8 @@ flowchart LR
 
 | Boundary | Paired observation | Status | Evidence |
 | --- | --- | --- | --- |
-| Applied current and bias | Soma current and voltage | Recorded bias is part of the input; omitting it changed the I event count from 11 to 22 on the source | [input datum](h01-pv-input-datum.json) |
-| I membrane channels | Channel current and driving voltage | Borrowed from HL5BN1; fast inactivation (G1a) sets the first-spike shape and raises the minima 6 mV; axonal SK (G3) brakes the count; the threshold family is untested | [I result](h01-i-campaign-result.md) |
+| Applied current | Soma current and voltage | Command current only: the recorded 31.4 pA is a holding current the published fit absorbed (model rests at the held baseline within 0.07 mV at bias 0, 2.4 mV above it with the bias) | [forensics](h01-pv-bias-forensics.md) |
+| I membrane channels | Channel current and driving voltage, charge per boundary per cycle (closure 1e-15 pC) | Borrowed from HL5BN1. Loop: sodium inflow ends within the upstroke (0.18 vs 3.5 pC through the fall). Trough: Kv3 activation carried past the short spike, its tail below -73 mV discharging soma and coupled dendrites through 0.16 nA of axial return; Ca_LVA opposes it 1 mV per unit. Count: axonal SK accumulates. Not explained: post-trough drive, accommodation | [I result](h01-i-energetic-result.md) |
 | I cable and region map | Voltage difference and axial current | Measured geometry; electrical regions inferred from sparse labels; the contact path is dendrite fallback | [region map](h01-measured-ie-region-audit.json) |
 | I output site | Contact voltage and emitted event | Measured endpoint; an event is emitted only with the diagnostic closing-time override (the G1a member restored to 1.0) | [contact arrival](h01-measured-i-source-closing20-audit.json) |
 | Synapse | Conductance and receiving voltage | Anatomically measured contact; conductance, delay, and kinetics borrowed | [paired delivery](h01-measured-delivery20-paired-audit.json) |
@@ -34,9 +34,12 @@ flowchart LR
 - Delivery of an inhibitory conductance from a measured I axon endpoint to a
   measured E receptor site, with the predicted local sign and a bounded onset
   delay, under a diagnostic I channel law. This is demonstrated.
-- Human-constrained single-cell behaviour: not demonstrated. Under the recorded
-  input neither frozen cell meets the approved contract, and each campaign
-  closed with a named untested family (I threshold; E late return).
+- Human-constrained single-cell behaviour: partly demonstrated for the I cell.
+  Under the command-only input the finalist (somatic Kv3 close factor 2.0 on
+  the candidate) reproduces the spike loop and the trough at three inputs,
+  predicted on the closed 0.23 nA holdout; the early burst, the count and the
+  accommodation along the train remain unexplained. The E cell's rise rate is
+  load-limited and under a two-arm split; no E row passes yet.
 - A reconstructed H01 microcircuit: not claimed. One directed contact is
   anatomically supported; the reciprocal candidate is unverified; the other
   102 cells have no qualified partner mapping yet.

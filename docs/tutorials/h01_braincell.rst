@@ -345,16 +345,23 @@ record under ``docs/evidence``.
        hypothesis.
    * - Channel laws and densities
      - Borrowed (HL5BN1 for I, Allen 626170538 for E)
-     - Neither cell meets the approved human contract on its own donor
-       geometry (``h01-i-campaign-result.md``, ``h01-e-campaign2-result.md``);
-       H01 has no recording to compare against.
+     - Under the command-only input (the recorded bias is a holding current the
+       fit absorbed, ``h01-pv-bias-forensics.md``) the I finalist reproduces
+       the spike loop and the trough at three inputs and predicted the closed
+       holdout (``h01-i-energetic-result.md``, ``h01-prediction-i.md``); its
+       early burst and accommodation are unexplained. The E cell's rise rate is
+       two to three times the human's and load-limited
+       (``h01-e-energetic-stage-r-budgets.md``); no E row passes. H01 has no
+       recording to compare against.
    * - I output event
      - Diagnostic only
      - The I cell emits a contact event only with the sodium closing-time
        factor restored from 0.15 to 1.0 (``--restore-closing`` in the
-       all-CV recorder). That factor is also the member that gives the
-       donor model its human-like spike shape, so the default profile and
-       the override cannot both be right.
+       all-CV recorder). That factor is the sodium closing that gives the
+       donor model its human-like loop (sodium inflow must end within the
+       upstroke), so the default profile and the override cannot both be
+       right; the H01 delivery question is about the initiation site, not the
+       channel law.
    * - Synaptic conductance, delay, reversal
      - Borrowed settings
      - Delivery, its local sign, and a bounded onset delay are demonstrated;
