@@ -1,7 +1,9 @@
 # Recorded human response acceptance proposal
 
-Status: proposed. No new physiological pass or fitting run is authorized by
-this file. The goal remains a human-constrained active model and measured
+Status: approved by the user on 2026-09-05: exact event counts, 1 ms timing,
+1 mV voltage, and 0.05 ms spike-phase errors, as specified below.
+Approval establishes the acceptance contract; it does not establish a
+physiological pass or authorize a new fitting campaign. The goal remains a human-constrained active model and measured
 H01 circuit, with source anatomy and borrowed physiology kept distinct.
 
 ## Meaning of a pass
@@ -11,10 +13,10 @@ within the engineering limits below. It does not establish population-wide
 human accuracy. H01 has no matching measured voltage trace. Transfer to H01
 therefore remains a model prediction constrained by other human cells.
 
-These round limits are proposed engineering requirements. They are not
+These round limits are approved engineering requirements. They are not
 estimated biological standard deviations, optimizer weights, or numerical
 solver tolerances. They were not selected to make the current candidate pass.
-User agreement is required before applying them as the acceptance contract.
+User agreement has been recorded above; apply them as the acceptance contract.
 
 ## Direct response requirements
 
@@ -25,7 +27,7 @@ Use the pinned raw records and conventions in
 Do not shift or align traces. Check every event separately. No pooled score
 can override a failed event or a failed input.
 
-| Measurement | Proposed allowed absolute error |
+| Measurement | Approved allowed absolute error |
 | --- | ---: |
 | Complete event count in the full stimulus window | Exact; no missing or extra events |
 | Each rising and falling -20 mV crossing time | 1 ms |
@@ -65,10 +67,10 @@ separate from the donor candidate until the complete donor gate supports it.
 The frozen I model fails the already established 0.27 nA count requirement:
 40 events versus 43. Its first recovery minimum differs by 7.006 mV. The frozen
 E model has the right count, but its fifth onset differs by about 64.48 ms.
-Thus, neither frozen candidate passes this proposal. These examples do not
+Thus, neither frozen candidate passes this contract. These examples do not
 replace a full row-by-row assessment.
 
-After agreement, apply the contract to all existing candidate records before
+With agreement recorded, apply the contract to all existing candidate records before
 proposing any new bounded fitting campaign. Report all failed observations and
 unavailable input mappings. Do not resume an unbounded sequence of parameter
 tweaks. Keep the existing source and frozen candidates as controls.
