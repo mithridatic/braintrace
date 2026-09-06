@@ -260,3 +260,29 @@ Not touched: `braintrace/datasets/h01_ei_profiles.py`,
   wall time; each phase opens only when its gate files exist.
 - Final deliverable check: `examples/h01_ei_circuit.py` runs from an installed
   wheel; its evidence page states, per element, measured / borrowed / inferred.
+
+## Outcome (2026-09-06)
+
+- Phase 0 complete: [scorecard](../evidence/h01-contract-scorecard.md),
+  [I input datum](../evidence/h01-pv-input-datum.json) (recorded 31.4 pA bias
+  applied; zero-bias residuals retired), Matryoshka tables, Youden plots,
+  C3 edge list (see `h01-resolved-edge-list.json`).
+- Phase 1 I campaign: FAIL at 19 of 24
+  ([result](../evidence/h01-i-campaign-result.md)). The count is a G1a, G3, G4
+  interdependency; G1b has no effect; every matrix cell has a count ratio
+  below 2.3 against the human 3.6 and leaves the passive samples 2 to 4 mV too
+  depolarised. Named next family: threshold (leak, leak reversal, Ih). Five
+  evaluations in reserve; the axon x2187 mesh is unaffordable under the abort.
+- Phase 1 E campaign: FAIL at 6 of 24
+  ([result](../evidence/h01-e-campaign2-result.md)). Minima and interval 2 are
+  coupled through F1, F2, F4; the late subthreshold samples fail identically in
+  all eight cells. Named next family: late return (Ih kinetics, leak). Dose
+  split not run because it cannot change the verdict. Eighteen in reserve.
+- Phase 2 not entered for either cell (no PASS).
+- Phase 3 delivered without a pass: [energetic map](../evidence/h01-circuit-z-map.md),
+  tutorial section, circuit example test, installed-wheel measured-circuit
+  audit, status table, causal model Y3 and Y4 sections and unresolved list.
+- Decisions returned to the user: approve or decline the two passive-family
+  splits within the reserves; establish whether the published HL5BN1 fit
+  applied the acquisition bias; the diagnostic H01 override is the G1a member
+  and cannot be promoted or removed without the same trade.
