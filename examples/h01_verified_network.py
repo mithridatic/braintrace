@@ -34,6 +34,7 @@ def main():
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--current-na", type=float, default=0., help="Same assumed soma pulse for each incident cell.")
+    parser.add_argument("--solver", default="h01_staggered_scan", choices=["h01_staggered_scan", "staggered"])
     args = parser.parse_args()
     if not np.isfinite([args.duration_ms, args.dt_ms, args.current_na]).all() or args.duration_ms < 0 or args.dt_ms <= 0:
         parser.error("duration must be nonnegative, dt positive, and all inputs finite")
@@ -64,7 +65,7 @@ def main():
         started = time.perf_counter()
         network, evidence = make_h01_network(topology, H01Archive(args.cache/"proofread104.zip"),
             H01Annotations(args.cache), disconnected=args.disconnected, max_cv_length_um=args.max_cv_um,
-            currents_na={identity: args.current_na for identity in ids},
+            currents_na={identity: args.current_na for identity in ids}, solver=args.solver,
             progress=lambda message: print(f"[{time.perf_counter()-started:.1f}s] {message}", flush=True))
         print("Built", len(evidence["cells"]), "cells and", len(network.projections), "projections", flush=True)
         evidence["execution"] = "constructed; not simulated"

@@ -38,7 +38,8 @@ def _location(imported, site, limit):
 
 def make_h01_network(topology, archive, annotations, *, disconnected=False,
                      excitatory_weight_us=.01, inhibitory_weight_us=.02,
-                     delay_ms=.5, max_cv_length_um=10., currents_na=None, progress=None):
+                     delay_ms=.5, max_cv_length_um=10., currents_na=None, progress=None,
+                     solver="h01_staggered_scan"):
     """Construct the cells incident on verified and placed H01 synapses.
 
     Parameters
@@ -64,6 +65,8 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
     progress : callable, optional
         Receives a message before each construction stage. It does not alter
         the model or numerical settings.
+    solver : str, optional
+        BrainCell integrator. Default is ``"h01_staggered_scan"``.
 
     Returns
     -------
@@ -138,7 +141,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
             polarity="E" if nodes[identity]["dale_sign"] == 1 else "I",
             regions=_regions(imported[identity]), region_basis=basis,
             current_na=currents.get(identity, 0.), delay_ms=2., duration_ms=3.,
-            max_cv_length_um=max_cv_length_um, pop_size=(1,))
+            max_cv_length_um=max_cv_length_um, pop_size=(1,), solver=solver)
         cells[identity], records[identity] = cell, record
     edge_records = []
     for edge in contacts:
@@ -159,8 +162,14 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
         emit(f"Discretizing cell {identity} and selecting its output site")
         site = AtLocation(*source_sites[identity]) if identity in source_sites else imported[identity].anatomy().soma_location()
         record = records[identity]
+        points = site.evaluate(cell.morpho).points
+        branch_id, x = points[0]
+        bounds = cell.cv_policy.resolve_cv_bounds(cell.morpho)[branch_id]
+        midpoints = [(lo + hi) / 2.0 for lo, hi in bounds]
+        best_idx = min(range(len(midpoints)), key=lambda i: (abs(midpoints[i] - x), i))
+        output_midpoint = (branch_id, midpoints[best_idx])
+        cell.place(AtLocation(*output_midpoint), StateProbe(field="v", name="output_voltage"))
         record["output_site"] = restrict_spike_output(cell, site)
-        cell.place(AtLocation(*record["output_site"]["output_midpoint"]), StateProbe(field="v", name="output_voltage"))
         record["input_na"] = currents.get(identity, 0.)
         network.add_population("cell_"+identity, cell)
         record["n_compartments"] = cell.n_cv

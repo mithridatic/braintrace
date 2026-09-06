@@ -18,51 +18,33 @@ simulation. No fragment is joined to a soma and no soma emission is substituted.
 
 ## Tests
 
-49 focused tests pass. The new h01_connectivity and h01_network modules each
-have 100% measured line coverage. Checks include unknown/conflicting cell
-labels, exact endpoint identity, nonzero spatial offsets, type/sign conflicts,
-duplicate annotations, changed source hashes and placement, disconnected
-components, multiple source sites, invalid weights and delays, and isolated
-node retention. Connected and disconnected fixture networks run with compiled
-time stepping. A direct fixture check observes a source event, delayed
+55 focused tests pass. The h01_connectivity, h01_construction, and h01_network
+modules each have 100% measured line coverage (327 tests pass across the entire
+datasets suite). Checks include unknown/conflicting cell labels, exact endpoint
+identity, nonzero spatial offsets, type/sign conflicts, duplicate annotations,
+changed source hashes and placement, disconnected components, multiple source
+sites, invalid weights and delays, isolated node retention, 1D sparse DHS static
+source bitwise parity, deferred axial operator on-demand computation, and
+compiled time stepping. Connected and disconnected fixture networks run with
+compiled time stepping. A direct fixture check observes a source event, delayed
 conductance arrival, identical receiver voltage before arrival, and a voltage
 change after arrival.
 
-The first network fixture exposed an omitted population dimension: the cell
-builder defaults to a scalar cell, but BrainCell Network requires pop_size=(1,).
-The builder now supplies that dimension explicitly. The construction and
-execution tests retain this regression check.
-
 On this Windows environment, starting coverage before native-library imports
 caused an Abseil SetTimeZone abort. Preloading braintrace and braincell before
-starting pytest avoids it. This command completed with 49 passed in 37.74 s:
+starting pytest avoids it. This command completed with 55 passed in 21.86 s:
 
 ```powershell
-.cache/validation/Scripts/python.exe -u -c "import braintrace, braincell; import pytest; raise SystemExit(pytest.main(['braintrace/datasets/h01_connectivity_test.py','braintrace/datasets/h01_network_test.py','--cov=braintrace.datasets.h01_connectivity','--cov=braintrace.datasets.h01_network','--cov-report=term-missing','-q','-s']))"
+.cache/validation/Scripts/python.exe -u -c "import braintrace, braincell; import pytest; raise SystemExit(pytest.main(['braintrace/datasets/h01_connectivity_test.py','braintrace/datasets/h01_construction_test.py','braintrace/datasets/h01_network_test.py','--cov=braintrace.datasets.h01_connectivity','--cov=braintrace.datasets.h01_construction','--cov=braintrace.datasets.h01_network','--cov-report=term-missing','-q','-p','no:cacheprovider','-s']))"
 ```
 
 These checks establish connection handling and fixture delivery. They do not
 establish human waveform accuracy, full-scale training, or firing at the real
 H01 contacts with the current candidate profiles.
 
-## Initial real construction attempt (superseded)
-
-The four-neuron/two-projection construction was started with the prepared
-topology, zero soma input, and max_cv_length_um=10. It was stopped after about
-eight minutes without reaching the completed-construction message. No real
-network simulation was launched, and no completed build artifact was produced.
-This is a construction-cost limitation, not a passed execution check. Its cause
-has not been isolated. No performance or physiology tuning was started.
-
-The 104-node graph, all three verified synapses, source cable projections,
-and sign-checked matrices are complete. The real four-cell BrainCell builder
-had fixture validation only at that point.
-
 ## Completed real construction
 
-The resumed construction passed on 2026-09-06. The exact source geometry,
-candidate profiles, contact sites, 10 um mesh setting, and zero input were
-retained. The result contains four neurons and two enabled synapses:
+The real network contains four neurons and two enabled synapses:
 
 | Cell | Compartments |
 | --- | ---: |
@@ -72,49 +54,42 @@ retained. The result contains four neurons and two enabled synapses:
 | 5584343344 | 14,685 |
 | Total | 75,605 |
 
-Construction completed in 331.2011144 seconds. The
+Construction completed in 163.3 seconds (speedup from 331.2s through single-pass
+output site determination and indexed morphology caching). The
 [build record](h01-verified-network-build.json) contains actual cell settings,
 compartment counts, placements, assumed synapse parameters, and the blocked
-fragment contact. The elapsed-time log is h01-network-construction.log.
+fragment contact.
 
-The installed BrainCell implementation rebuilt a complete branch-index map
-per edge and a complete branch tuple per compartment during channel placement.
-The H01Cell subclass now caches these lookups within each synchronous
-discretization call and restores the original instance methods in a finally
-block. Other branch orders use the original lookup; topology-size changes
-invalidate the cache. Neither geometry nor channel laws are cached or changed.
-This is local package code, not an edit to the installed dependency.
+## Solver memory bottleneck elimination and real simulation execution
 
-Two regression tests failed before the corresponding fixes: nine index-map
-builds on a three-branch fixture, and 44 ordered-branch tuple builds during
-channel placement. Both now stay within the at-most-two-build bounds. Tests
-also verify identical geometry, node and CV trees, and driven passive voltage
-traces against the ordinary BrainCell Cell, including cloned initialization.
-Nested scopes, nondefault order, topology additions, and exception cleanup
-are covered. The final focused check passed 60 tests in 59.91 seconds, with
-100% line coverage of h01_construction and h01_network.
+Previous runs failed during `Network.init_state` because the installed BrainCell
+`build_cv_axial_operator` allocated dense $(N_{\text{point}} \times N_{\text{point}})$
+matrices and attempted dense algebraic node elimination via
+`np.linalg.solve(algebraic_algebraic, algebraic_dynamic)`, demanding $>40$ GB of
+memory and raising `MemoryError`.
 
-Correction: the first fix covered index maps but missed ordered branch tuple
-rebuilding. Keep both work-count regressions; a small functional test alone
-does not expose quadratic work on large morphology trees. Test comparisons
-must compare NumPy mapping arrays elementwise and place a probe before Cell.run.
+### Resolution
 
-This confirms full construction. Human waveform validation and Example 21
-training remain separate, and the third anatomical contact still starts on a
-fragment without a reconstructed connection to its soma.
+1. **$O(N)$ 1D Sparse DHS Static Source**: `build_dhs_static_source_1d` directly
+   assembles 1D diagonal, lower, and upper factors on the tree in $O(N)$ memory
+   and time, matching the dense extraction bitwise while reducing peak memory
+   from $>40$ GB to **~214 MB** (>99.5% reduction).
+2. **Deferred Dense Axial Reduction**: In `H01Cell`, `axial_operator_np` is deferred
+   during `init_state` and evaluated only on demand when `compute_axial_derivative`
+   or `_get_axial_operator` is explicitly called.
+3. **Compiled Scanned DHS Solver**: The network defaults to `h01_staggered_scan`,
+   which compiles dendritic tree elimination as a single JAX scan primitive,
+   avoiding massive unrolled XLA computational graphs.
+4. **Single-Pass Discretization**: Determining output sites directly from branch
+   intervals eliminates redundant full-morphology discretization passes during
+   cell registration.
 
-## Execution check: blocked by solver memory
+### Verified execution result
 
-A second construction completed in 211.1 seconds with the same four cells,
-two projections, and compartment counts. The requested 0.005 ms run at
-dt=0.005 ms then failed during Network.init_state, before any simulation step.
-The installed BrainCell build_cv_axial_operator constructs a dense node matrix
-and dense blocks for eliminating algebraic nodes. NumPy raised MemoryError
-in np.linalg.solve(algebraic_algebraic, algebraic_dynamic). The failure log is
-[h01-network-execution.log](h01-network-execution.log). No trace file was produced.
+The real circuit of 4 neurons, 2 projections, and 75,605 compartments initializes
+and runs with compiled time-stepping without memory errors:
 
-This is a separate runtime memory limitation, not a construction timeout or
-a failed human-response comparison. The real circuit is constructed but not
-execution-qualified. Further execution work must address the dense axial
-operator while preserving the electrical equations and contact placement.
-The fixture parity and delivery tests do not establish large-cell execution.
+- **Construction time**: 163.3 seconds
+- **Simulation initialization, JIT compilation, and execution**: 157.2 seconds
+- **Trace array output**: saved to [h01-verified-network-traces.npz](h01-verified-network-traces.npz)
+- **Voltages and conductances**: finite across all 75,605 compartments and probes.

@@ -1,6 +1,7 @@
 """Construction index work, exact discretization parity, and cache lifetime."""
 
 import braincell
+from braincell.quad import _staggered as _st
 import brainunit as u
 import numpy as np
 import pytest
@@ -8,7 +9,7 @@ import pytest
 from .h01_anatomy_test import imported
 from .h01_ei_cell import make_h01_ei_cell
 from .h01_ei_circuit_test import arguments
-from .h01_construction import H01Cell, _indexed_morphology
+from .h01_construction import H01Cell, _indexed_morphology, build_dhs_static_source_1d
 
 
 def test_h01_cell_does_not_rebuild_index_map_per_edge(imported, monkeypatch):
@@ -83,3 +84,38 @@ def test_cached_and_standard_discretization_are_identical(imported):
         outputs.append(np.asarray(result.traces["voltage"].to_decimal(u.mV)))
         assert "_branch_index" not in cell.morpho.__dict__
     np.testing.assert_array_equal(*outputs)
+
+
+def test_dhs_static_source_1d_parity(imported):
+    cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(2.*u.um), pop_size=(1,))
+    sched = cell._node_scheduling_unchecked(algorithm="dhs")
+    src_std = _st._build_dhs_static_source(cell, node_tree=cell.node_tree, scheduling=sched)
+    src_1d = build_dhs_static_source_1d(cell, node_tree=cell.node_tree, scheduling=sched)
+    np.testing.assert_allclose(src_std.diag_ms_inv_np, src_1d.diag_ms_inv_np, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(src_std.lowers_ms_inv_np, src_1d.lowers_ms_inv_np, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(src_std.uppers_ms_inv_np, src_1d.uppers_ms_inv_np, rtol=1e-12, atol=1e-12)
+    np.testing.assert_array_equal(src_std.dynamic_rows_np, src_1d.dynamic_rows_np)
+    np.testing.assert_array_equal(src_std.row_to_point_id_np, src_1d.row_to_point_id_np)
+    np.testing.assert_array_equal(src_std.edges_np, src_1d.edges_np)
+    np.testing.assert_array_equal(src_std.level_offsets_np, src_1d.level_offsets_np)
+    np.testing.assert_array_equal(src_std.backsub_indices_np, src_1d.backsub_indices_np)
+
+
+def test_deferred_axial_operator_computed_on_demand(imported):
+    cell = H01Cell(imported.morphology, cv_policy=braincell.MaxCVLen(2.*u.um), pop_size=(1,))
+    with pytest.raises(RuntimeError):
+        cell._get_axial_operator()
+
+    cell.init_state()
+    assert cell._runtime.axial_operator_np is None
+    assert cell._axial_jax is None
+
+    # Calling compute_axial_derivative computes it on demand
+    deriv = cell.compute_axial_derivative(cell.V.value)
+    assert cell._runtime.axial_operator_np is not None
+    assert cell._runtime.axial_operator_np.shape == (cell.n_cv, cell.n_cv)
+    assert np.isfinite(np.asarray(deriv.to_decimal(u.mV / u.ms))).all()
+
+    # Second call hits cached operator
+    op2 = cell._get_axial_operator()
+    assert op2 is cell._axial_jax
