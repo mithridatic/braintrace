@@ -74,7 +74,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--sweep", type=int, choices=(43, 50), default=50)
+    parser.add_argument("--sweep", type=int, choices=(43, 50, 53), default=50)
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--include-recorded-bias", action="store_true")
     parser.add_argument("--nseg-factor", type=int, default=1)
