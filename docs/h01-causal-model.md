@@ -452,6 +452,72 @@ flowchart TD
 | P6 | G1a with G3 into the source and out of the candidate | 17/3 and 24/43 | [Stage B](evidence/h01-i-campaign/stage-b-decision.json) |
 | P7 | Three missing cells of the matrix | 99/4, 7/11, 26/45 | [Stage C](evidence/h01-i-campaign/stage-c-decision.json), [matrix](evidence/h01-i-campaign/stage-c-matrix.json) |
 
+### Y3 under the energetic search (2026-09-06, supersedes the mechanism statements above)
+
+The subsections above name sub-systems as causes. Under the book's rule that a
+causal explanation states necessary and sufficient conditions and the mechanism,
+not a structural label, Y3 is restated from the Stage 3 charge budgets
+([result](evidence/h01-i-energetic-result.md), budgets closing to 1e-15 pC).
+
+**Input datum.** The recorded 31.4 pA is a holding current the published fit
+absorbed: the model at zero bias rests within 0.07 mV of the human held baseline
+and with the bias 2.4 mV above it ([forensics](evidence/h01-pv-bias-forensics.md)).
+Every statement below is under the command-only input; every bias-on residual
+above is retired, including the "+2 to +4 mV passive family".
+
+**Behavior.** Short spike (peak +19 mV, fall −336 V/s, threshold −60.5 mV),
+trough −79 mV, early burst of 6 to 10 ms cycles, then 25 to 120 ms cycles with
+the threshold climbing to −52 mV.
+
+**Explanation.** The loop requires that sodium inflow end within the upstroke:
+0.18 pC of sodium through the fall against 3.5 pC in the published fit, so that
+0.5 pC rather than 3.8 pC of potassium repolarises the soma and the net current
+reverses at +18 mV rather than +44 mV. The trough requires somatic Kv3 (block
+without it) and is set by the potassium activation carried past the end of the
+short spike: its tail below −73 mV carries the soma, and through the 0.16 nA
+axial path the coupled dendrites, to −80 mV before the passive return balances.
+The trough is not a local balance (0.036 nA of Kv3 at the trough at −73 and at
+−80 mV) and not a total-charge effect (0.53 to 0.62 pC through the fall); opening
+and closing rates are one interdependent lever, and somatic Ca_LVA opposes the
+depth by about 1 mV per unit of density. The count and late cycles require
+axonal SK accumulating cycle to cycle (57 and 138 spikes without it).
+
+```mermaid
+flowchart LR
+    NA[Sodium inflow ends within the upstroke] --> LOOP[Peak +18 mV, fall -340 V/s]
+    LOOP --> KACT[Kv3 activation reached in the short spike]
+    KACT --> TAIL[Kv3 tail below -73 mV]
+    TAIL --> AX[Axial return 0.16 nA discharges the coupled dendrites]
+    AX --> TROUGH[Trough -80 mV]
+    SK[Axonal SK accumulates] --> LATE[Cycles 25 to 120 ms]
+```
+
+**Prediction confirmed.** Written before the 0.23 nA holdout was opened: trough
+−79.5 ± 0.8 (observed −79.4, human −78.9), fall −345 ± 5 (−345, human −327),
+peak 17.7 ± 0.3 (17.8, human 18.9), threshold −60.9 ± 0.3 (−60.9, human −61.0),
+late trough −80.4 ± 0.5 (−80.4, human −79.6). Predicted failures: count 24 to 28
+(26, human 31), cycle 2 above 20 ms (20.7, human 6.3), late threshold −60.5
+(−60.4, human −55.2). Unpredicted failure: late fall −334 against −294.
+
+**Steep X.** Elemental family (Matryoshka, [decision](evidence/h01-matryoshka2-decision.md)):
+the loop, then the trough. Both are now inside the human repeat limits at three
+inputs.
+
+**Action.** The pair of unexplained rows, the post-trough drive (early burst)
+and the accommodation along the train, is returned to the user with one
+evaluation in reserve. Neither is somatic Ca_LVA (Stage F). They lie in the
+cyclical and temporal families and point at a slow state the model lacks.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| R | Charge per boundary per cycle, source and candidate | Sodium through the fall 3.5 vs 0.18 pC; Kv3 3.8 vs 0.53 pC; closure 1e-15 pC | [budgets](evidence/h01-i-energetic-stage-r-budgets.md) |
+| X | One boundary removed at a time | Kv3 necessary (block); Ca_LVA opposes trough 1.4 to 2.1 mV; SK is the count brake | [budgets](evidence/h01-i-energetic-stage-x-budgets.md) |
+| D | Kv3 closing swapped both ways | No reversal (1.4 to 1.8 and 1.0 mV) | [budgets](evidence/h01-i-energetic-stage-d-budgets.md) |
+| E | Opening 0.5× with closing 1× and 2× | Trough −80.1/−79.0 and −81.7/−80.7 mV; loop unchanged; burst lost | [budgets](evidence/h01-i-energetic-stage-e-budgets.md) |
+| F | Ca_LVA 1.0 and 2.0 on the deep arm | Trough +1 and +3 mV; cycle 2 shortens 1 to 8 ms (limit 12.8): not the drive | [budgets](evidence/h01-i-energetic-stage-f-budgets.md) |
+| P | Holdout 0.23 nA | Claimed rows pass; predicted failures occur | [prediction](evidence/h01-prediction-i.md) |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
@@ -845,12 +911,14 @@ biological uncertainty.
   whether the electrical region map is correct.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
-- Y3: under the recorded input, the threshold family (leak, leak reversal,
-  Ih) that sets the low-input count; whether the published fit applied the
-  acquisition bias; the spike initiation site; the full-cell energy budget.
-  Closed by the recorded-input campaign: G1b has no effect; the count is a
-  G1a, G3, G4 interdependency; G1a sets the first-spike shape and the +6 mV
-  minima together.
+- Y3: the post-trough inward drive that refires the human within 6 to 10 ms
+  of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
+  train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
+  evaluation in reserve. Closed on 2026-09-06 by the energetic search: the
+  bias question (held state, command-only input; the "passive family" was the
+  double-counted bias), the loop (sodium inflow ending within the upstroke) and
+  the trough (Kv3 activation carried past the spike, its tail below −73 mV),
+  each predicted on the closed 0.23 nA holdout.
 - Y4: the late subthreshold return (1520 to 2120 ms) under 0.11 nA, set
   outside F1 to F5; whether any Ih or leak member decouples the second
   minimum from interval 2; the human cell's densities. Closed by the matrix:
