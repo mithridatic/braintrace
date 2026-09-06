@@ -10,8 +10,18 @@
   "driver": "h01_pv_neuron_reference.py",
   "output_dir": "h01-i-energetic",
   "inputs": {
-    "019": ["--current-na", "0.19", "--duration-ms", "1500"],
-    "027": ["--current-na", "0.27", "--duration-ms", "1500"]
+    "019": [
+      "--current-na",
+      "0.19",
+      "--duration-ms",
+      "1500"
+    ],
+    "027": [
+      "--current-na",
+      "0.27",
+      "--duration-ms",
+      "1500"
+    ]
   },
   "input_datum": "h01-pv-input-datum.json (forensics_2026_09_06: command current only, bias 0)",
   "holdout": "0.23 nA (active-1.npz) is not an input of any stage.",
@@ -62,29 +72,186 @@
     "D": {
       "title": "Swap of the Steep boundary between the zero-bias source (high system for the loop return) and the candidate",
       "gate": "stage-x-decision.json",
-      "prediction": "Restoring the source's value on the Steep boundary in the candidate moves the minimum toward -79 mV; the reverse swap moves the source's minimum toward -73 mV.",
-      "rejection": "No reversal under the single swap and the combined half-split: the partition is wrong; report FAIL.",
+      "prediction": "Restoring the source's somatic Kv3 closing in the candidate moves the trough Kv3 current from 0.04 toward 0.2 nA and the minimum from -73.3 toward -77 mV (26 MOhm trough load); the reverse swap raises the source's minimum from -77.4 toward -73 mV. Both arms leave peak and rise inside the human limits of their own model.",
+      "rejection": "If neither arm moves the minimum by more than 1.24 mV (Stage 1 combined limit), the Kv3 closing rate is not the lever for the trough and the remaining outward boundary (K_P or SK at the soma) is named for the reserve. If the candidate arm reaches within 1.24 mV of -79 mV the row passes and the explanation is sufficient.",
       "unchanged": "As Stage R.",
       "decision_file": "stage-d-decision.json"
     }
   },
   "candidates": [
-    {"name": "r-source", "stage": "R", "flags": {},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
-    {"name": "r-candidate", "stage": "R",
-     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma"},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
-    {"name": "x-kv3-soma", "stage": "X",
-     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma", "somatic_kv3_factor": 0.0},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
-    {"name": "x-calva-soma", "stage": "X",
-     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.0, "scale_conductance": "NaTg", "conductance_factor": 1.1, "conductance_region": "soma"},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
-    {"name": "x-sk-axon", "stage": "X",
-     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "SK", "conductance_factor": 0.0, "conductance_region": "axon"},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}},
-    {"name": "x-sk-all", "stage": "X",
-     "flags": {"sodium_h_tau_factor": 0.15, "sodium_h_recovery_factor": 1.0, "sodium_h_slope_mv": 5.0, "somatic_kv3_tau_factor": 0.5, "somatic_kv3_close_factor": 0.5, "axon_calcium_decay_ms": 300.0, "axon_calcium_gamma": 0.004, "somatic_calva_factor": 0.5, "scale_conductance": "SK", "conductance_factor": 0.0, "conductance_region": "all"},
-     "settings": {"nseg_factor": 9, "cvode_atol": 1e-10, "refine_region": "all", "observe_spike_currents": true, "observe_charge_balance": true}}
+    {
+      "name": "r-source",
+      "stage": "R",
+      "flags": {},
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "r-candidate",
+      "stage": "R",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "x-kv3-soma",
+      "stage": "X",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma",
+        "somatic_kv3_factor": 0.0
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "x-calva-soma",
+      "stage": "X",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.0,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "x-sk-axon",
+      "stage": "X",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "SK",
+        "conductance_factor": 0.0,
+        "conductance_region": "axon"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "x-sk-all",
+      "stage": "X",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "SK",
+        "conductance_factor": 0.0,
+        "conductance_region": "all"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      }
+    },
+    {
+      "name": "d-kv3-into-candidate",
+      "stage": "D",
+      "flags": {
+        "sodium_h_tau_factor": 0.15,
+        "sodium_h_recovery_factor": 1.0,
+        "sodium_h_slope_mv": 5.0,
+        "somatic_kv3_tau_factor": 1.0,
+        "somatic_kv3_close_factor": 1.0,
+        "axon_calcium_decay_ms": 300.0,
+        "axon_calcium_gamma": 0.004,
+        "somatic_calva_factor": 0.5,
+        "scale_conductance": "NaTg",
+        "conductance_factor": 1.1,
+        "conductance_region": "soma"
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "arm": "source Kv3 closing restored in the candidate (G2 out); prediction: minimum toward -77 mV, loop otherwise unchanged"
+    },
+    {
+      "name": "d-kv3-into-source",
+      "stage": "D",
+      "flags": {
+        "somatic_kv3_tau_factor": 0.5,
+        "somatic_kv3_close_factor": 0.5
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "refine_region": "all",
+        "observe_spike_currents": true,
+        "observe_charge_balance": true
+      },
+      "arm": "candidate Kv3 closing put into the source (G2 in); prediction: source minimum rises toward -73 mV, peak unchanged"
+    }
   ]
 }
