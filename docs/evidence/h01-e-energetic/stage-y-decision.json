@@ -1,0 +1,22 @@
+{
+  "stage": "Y",
+  "decision": "closed by inspection before any run: the model family has no initiation site outside the soma; the E rise-rate row is structural and is returned to the user",
+  "runs": "both arms exited in 1 s (rc 1): the fit has no NaTs row in the axon; no evaluation was charged",
+  "fit_genome": {
+    "soma": "Im, Ih, NaTs 2.934, Nap, K_P, K_T, SK, Kv3_1 0.369, Ca_HVA, Ca_LVA, CaDynamics, pas",
+    "axon": "g_pas only",
+    "dend": "g_pas only",
+    "apic": "g_pas only",
+    "cm": {
+      "soma": 1.0,
+      "axon": 1.0,
+      "dend": 2.303,
+      "apic": 2.303
+    }
+  },
+  "reading": "Allen 626170538 is a perisomatic fit: all active conductances are somatic and the 60 um axon stub, dendrites and apical tree are passive (dendritic capacitance already spine-scaled to 2.3 uF/cm2, so the load arm ran at 4.6). The soma therefore initiates its own spike by construction. The human upstroke's shoulder (100 to 250 V/s near -45 mV before a 351 V/s main rise to +36 mV) is what a soma shows when the spike arrives from an initiation site through the axial path; a somatic-initiation model must reach the same peak with its own sodium and does so two to three times faster. Stage X showed the two in-family levers (somatic sodium, passive load) each break another row (peak, trough) when they move the rise rate. The Steep X for the E cell lies outside the model family.",
+  "mechanism": "dV/dt at the soma equals (I_Na,soma - I_axial - I_K - I_leak + I_applied) / C_soma. With no active axon, I_Na,soma must supply both the rise and the peak; in the human the axial term is a source during the shoulder (current from the initiation site), and the somatic sodium activates from a higher voltage with a smaller share of the rise. The rate is bounded by the axial resistance and the soma's load, not by the somatic sodium density.",
+  "returned_question": "Whether to change the E model family by giving the axon an initiation site (insert transient sodium in the stub, or replace the stub with an initial-segment geometry). This is a family change under the fail rule, so it is the user's decision; a first test costs two evaluations (axonal NaTs at 1x and 3x the somatic density, somatic sodium reduced to hold the peak) at about 15 minutes each.",
+  "evaluations_used": 4,
+  "cap": 8
+}

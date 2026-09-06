@@ -1,0 +1,16 @@
+{
+  "cell": "E",
+  "finalist": "r-candidate (no E row passed; the prediction tests the model as it stands, not a sufficient explanation)",
+  "holdout": "sweep 53, 310 pA, 10 human spikes per metadata; exported once by h01_l2_sweep_export.py for this run",
+  "written_before_run": true,
+  "predicted": {
+    "spikes": "7 to 9 (human 10: likely FAIL; the candidate under-fires by 1 to 2 at 250 pA relative to the human's late cycles)",
+    "spike1_max_rise_v_s": "640 +/- 15 (human about 350 to 380: FAIL, the structural row)",
+    "spike1_peak_mv": "36 +/- 1 (human about 36: PASS)",
+    "spike1_threshold_mv": "-52 +/- 0.5 (human about -56: FAIL)",
+    "spike1_minimum_mv": "-70 +/- 1 (human about -69 to -70: PASS)",
+    "spike1_max_fall_v_s": "-96 +/- 3 (human about -105: borderline at the 5.7 V/s limit, predicted FAIL by 3 to 9 V/s)",
+    "late_threshold_mv": "-51.8 (human climbs about 1.5 mV along the train: borderline)"
+  },
+  "pass_rule": "Stage 1 combined limits (rise and fall 5.7 V/s, peak 0.55 mV, threshold 0.97 mV, minimum 1.01 mV); count exact."
+}
