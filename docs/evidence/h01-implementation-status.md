@@ -12,8 +12,9 @@ complete. This audit separates missing capability from failed qualification.
 | Direct E/I causal checks | Real H01 four-control audit records excitation and delayed E firing | Diagnostic I override is not a validated default |
 | Compiled simulation | Cell.run uses brainstate.transform.for_loop | Runtime bottleneck has not been profiled |
 | Source provenance | Reports separate anatomy, borrowed profiles and inferred contacts | Complete validation input/bias mapping |
-| Human acceptance | Individual event, recovery and subthreshold datums exist | Physiological allowances and combined acceptance remain incomplete |
-| Measured connectivity | No qualified partner mapping for the selected proofread cells | Current two-cell contacts are illustrative |
+| Human acceptance | Contract approved 2026-09-05; every record scored row by row ([scorecard](h01-contract-scorecard.md)); I and E bounded campaigns closed FAIL ([I](h01-i-campaign-result.md), [E](h01-e-campaign2-result.md)) | User decision on the named next families: I threshold (leak, reversal, Ih) under the recorded bias; E late subthreshold return |
+| I input datum | Recorded 31.4 pA bias applied; zero-bias residuals retired ([datum](h01-pv-input-datum.json)) | Whether the published HL5BN1 fit applied this bias |
+| Measured connectivity | One verified I-to-E contact; C3 relationship-index edge list over the 104 cells in progress ([pilot](h01-resolved-edge-list-pilot.json)) | Endpoint verification of the candidate E-to-I contact 54906016; per-cell partner counts |
 | All 104 cells in a circuit | Current runnable circuit constructs one E and one I cell | Population-wide construction and qualification are not demonstrated |
 
 The focused profile, cell, circuit and spike-output suite passed 40 tests in

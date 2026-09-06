@@ -565,8 +565,9 @@ contract ([matrix](evidence/h01-e-campaign2/stage-a-decision.json)).
 
 **Explanation.** The base (no F1, F2, F4) has interval 2 within 0.1 ms and the
 second recovery minimum 4.4 mV too negative. Each member that raises the minima
-lengthens interval 2: F1 by 12 ms for 2.1 mV, F2 by 27 ms for 1.9 mV, F4 lowers
-the minima further. No member, and no pair, raises the second minimum to within
+lengthens interval 2: F1 raises them 2.1 mV (0.9 mV net reduction of the
+absolute error) for 12 ms, F2 raises them 1.9 mV (1.1 mV net) for 27 ms, F4
+lowers the minima further. No member, and no pair, raises the second minimum to within
 1 mV without pushing interval 2 past 1 ms; the two rows are coupled through the
 same channels in this model. The late subthreshold samples (1520 to 2120 ms)
 are 1.2 to 1.7 mV too positive in every cell to 0.01 mV: F1, F2, and F4 do not
@@ -831,17 +832,20 @@ biological uncertainty.
   whether the electrical region map is correct.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
-- Y3: the pathway from the shorter first spike to later spike times; the
-  channel cause of the shallow, late minimum; the spike initiation site; a
-  human recovery constant; the Kv3 candidate's spatial sensitivity; the
-  full-cell energy budget; the topology that reproduces the human waveform.
-- Y4: which member of F1, F2, or F4 deepens the recovery minima without
-  lengthening intervals 2 and 4; the channel source of the remaining interval
-  errors; the transition to the sustained depolarized response between the
-  two Kv3 closing changes; the separate contributions of entry and removal
-  after any coupled intervention; the human cell's densities; every
-  physiological allowance.
+- Y3: under the recorded input, the threshold family (leak, leak reversal,
+  Ih) that sets the low-input count; whether the published fit applied the
+  acquisition bias; the spike initiation site; the full-cell energy budget.
+  Closed by the recorded-input campaign: G1b has no effect; the count is a
+  G1a, G3, G4 interdependency; G1a sets the first-spike shape and the +6 mV
+  minima together.
+- Y4: the late subthreshold return (1520 to 2120 ms) under 0.11 nA, set
+  outside F1 to F5; whether any Ih or leak member decouples the second
+  minimum from interval 2; the human cell's densities. Closed by the matrix:
+  no F1, F2, F4 combination passes; F2 carries interval 2; F4 carries the
+  phases.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
+  The measured E-to-I candidate contact (annotation 54906016, excitatory type)
+  found by the C3 edge list awaits endpoint verification.
 
 ## Evidence index
 
