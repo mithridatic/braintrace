@@ -8,6 +8,7 @@ from braincell.mech import Channel, Ion, StateProbe
 from . import h01_l2_channels, h01_pv_calcium
 from .h01_ei_profiles import get_ei_profile, channel_controls
 from .h01_discretization import BoundaryAlignedCV
+from .h01_construction import H01Cell
 
 
 def _validate_regions(morphology, regions, polarity):
@@ -112,7 +113,7 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis,
     policy = braincell.MaxCVLen(max_cv_length_um*u.um)
     for region in regions.values():
         policy = BoundaryAlignedCV(policy, region)
-    cell = braincell.Cell(imported.morphology, cv_policy=policy,
+    cell = H01Cell(imported.morphology, cv_policy=policy,
                           V_init=profile.initial_mv*u.mV, solver=solver, pop_size=pop_size)
     _paint_profile(cell, profile, regions)
     cell.place(soma, StateProbe(field="v", name="voltage"))

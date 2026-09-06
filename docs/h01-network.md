@@ -15,9 +15,12 @@ Thus the topology has six incident neurons and 98 neurons without an accepted
 edge. The subset with supported simulation placements has four neurons and two synapses,
 in two separate pairs. No cable joins the separate source fragment to its soma.
 The importer does not invent that missing cable or replace it with a soma event.
-The real four-neuron construction check was stopped after about eight minutes
-without completing. Its full construction and runtime are not verified. Small
-fixture construction and delivery pass; see the [validation record](evidence/h01-verified-network-validation.md).
+The real four-neuron construction now passes: four cells, two projections,
+and 75,605 compartments in 331.20 seconds. Two repeated morphology-table builds
+caused the earlier delay; scoped lookup caches remove that redundant work.
+The construction record is [saved here](evidence/h01-verified-network-build.json).
+Full real-circuit simulation is a separate check. See the
+[validation record](evidence/h01-verified-network-validation.md).
 
 ```mermaid
 flowchart LR
@@ -47,6 +50,8 @@ It returns the BrainCell network and its actual construction evidence. The
 network populations use names `cell_<source ID>`. The builder checks source
 hashes, locations, cell types, and synapse direction again before construction.
 Cells with no constructible contacts remain in the exported node inventory.
+The runner prints elapsed time at each construction stage and saves the
+construction record before starting any requested simulation.
 
 ## Files and signs
 
@@ -72,8 +77,17 @@ existing diagnostic circuit settings, not measured properties of the contacts.
 The builder uses the existing frozen E/I candidates and the existing inferred
 electrical region policy. It does not apply the earlier sodium override or
 promote the newer potassium finalist. Human waveform validation still fails.
+H01 cells use a BrainCell subclass that caches integer indices and ordered
+branch views only during discretization. The instance lookup methods are
+restored after each build. No installed BrainCell code is changed.
 The current event engine permits only one output site per source cell; it
 rejects multiple distinct source sites rather than broadcasting the wrong
 terminal event. The present two simulated contacts do not require that feature.
 
 Example 21/pp-prop training integration is not implemented by this change.
+
+The real one-step execution check failed before stepping. BrainCell ran out
+of memory while building its dense axial operator during initialization.
+Construction passes; real simulation remains blocked. See the
+[failure log](evidence/h01-network-execution.log) and
+[validation record](evidence/h01-verified-network-validation.md).

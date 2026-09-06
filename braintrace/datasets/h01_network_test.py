@@ -32,14 +32,18 @@ def arguments(imported, annotations):
 
 @pytest.mark.parametrize("disconnected", [False, True])
 def test_construct_and_run_with_source_signed_receptors(arguments, disconnected):
+    messages = []
     with brainstate.environ.context(precision=64):
-        network, evidence = make_h01_network(**arguments, disconnected=disconnected)
+        network, evidence = make_h01_network(**arguments, disconnected=disconnected, progress=messages.append)
         assert len(network.projections) == (0 if disconnected else 2)
         assert evidence["simulated_cell_ids"] == ["12", "13", "14"]
         e, i = evidence["contacts"]
         assert (e["reversal_mv"], i["reversal_mv"]) == (0., -80.)
         assert e["signed_weight_us"] > 0 and i["signed_weight_us"] < 0
         assert e["weight_us"] > 0 and i["weight_us"] > 0
+        assert messages[0].startswith("Loading cell")
+        assert messages[-1].startswith("Construction complete: 3 cells")
+        assert all(record["n_compartments"] > 0 for record in evidence["cells"].values())
         result = network.run(dt=.001*u.ms, duration=.003*u.ms)
         for traces in result.traces.values():
             assert np.isfinite(traces["voltage"].to_decimal(u.mV)).all()

@@ -1,0 +1,23 @@
+{'nodes': 104, 'excitatory': 79, 'inhibitory': 25, 'verified_contacts': 3, 'construction_ready': 2}
+[0.1s] Loading cell 4188575291, component 0
+[9.9s] Checking pre cable location for contact 124698307
+[13.8s] Loading cell 3955003482, component 0
+[37.2s] Checking post cable location for contact 124698307
+[47.2s] Loading cell 5584343344, component 0
+[54.1s] Checking pre cable location for contact 8105899
+[55.8s] Loading cell 4157825456, component 0
+[63.2s] Checking post cable location for contact 8105899
+[66.5s] Building electrical cell 3955003482
+[121.2s] Building electrical cell 4157825456
+[137.5s] Building electrical cell 4188575291
+[155.4s] Building electrical cell 5584343344
+[169.0s] Discretizing cell 3955003482 and selecting its output site
+[263.2s] Registered cell 3955003482: 33965 compartments
+[263.2s] Discretizing cell 4157825456 and selecting its output site
+[292.4s] Registered cell 4157825456: 12966 compartments
+[292.4s] Discretizing cell 4188575291 and selecting its output site
+[314.3s] Registered cell 4188575291: 13989 compartments
+[314.3s] Discretizing cell 5584343344 and selecting its output site
+[331.2s] Registered cell 5584343344: 14685 compartments
+[331.2s] Construction complete: 4 cells, 2 projections
+Built 4 cells and 2 projections

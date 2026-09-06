@@ -38,7 +38,7 @@ def _location(imported, site, limit):
 
 def make_h01_network(topology, archive, annotations, *, disconnected=False,
                      excitatory_weight_us=.01, inhibitory_weight_us=.02,
-                     delay_ms=.5, max_cv_length_um=10., currents_na=None):
+                     delay_ms=.5, max_cv_length_um=10., currents_na=None, progress=None):
     """Construct the cells incident on verified and placed H01 synapses.
 
     Parameters
@@ -61,6 +61,9 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
     currents_na : dict, optional
         Soma pulse amplitudes keyed by source cell ID; unspecified cells get
         zero input. Pulses start at 2 ms and last 3 ms.
+    progress : callable, optional
+        Receives a message before each construction stage. It does not alter
+        the model or numerical settings.
 
     Returns
     -------
@@ -77,6 +80,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
     Conductance weights remain nonnegative even for inhibitory contacts.
     """
     values = [excitatory_weight_us, inhibitory_weight_us, delay_ms, max_cv_length_um]
+    emit = progress if progress is not None else lambda message: None
     if not np.isfinite(values).all() or min(values[:3]) < 0 or max_cv_length_um <= 0:
         raise ValueError("Invalid conductance, delay, or compartment length.")
     if topology["archive_sha256"] != ARCHIVE_SHA256:
@@ -112,9 +116,11 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
                     or not np.allclose(site["position_um"], np.asarray(edge[side+"_voxel"])*[.008,.008,.033], rtol=0., atol=1e-9)):
                 raise ValueError("Contact endpoint evidence changed.")
             if identity not in imported:
+                emit(f"Loading cell {identity}, component {site['component']}")
                 imported[identity] = archive.load(identity, component=site["component"])
             if imported[identity].component_id != site["component"]:
                 raise ValueError("Cannot join disconnected components of a cell.")
+            emit(f"Checking {side} cable location for contact {annotation}")
             locations[annotation, side] = _location(imported[identity], site, topology["max_distance_um"])
             if side == "pre":
                 point = site["cable_location"]
@@ -127,6 +133,7 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
              "remaining cable gets dendrite properties. Myelin is not modeled. "
              "This is the existing inferred electrical partition, not measured channel placement.")
     for identity in identities:
+        emit(f"Building electrical cell {identity}")
         cell, record = make_h01_ei_cell(imported[identity], annotations,
             polarity="E" if nodes[identity]["dale_sign"] == 1 else "I",
             regions=_regions(imported[identity]), region_basis=basis,
@@ -149,18 +156,22 @@ def make_h01_network(topology, archive, annotations, *, disconnected=False,
             signed_weight_us=edge["dale_sign"]*weight, reversal_mv=reversal, tau_ms=tau,
             delay_ms=delay_ms, enabled=not disconnected))
     for identity, cell in cells.items():
+        emit(f"Discretizing cell {identity} and selecting its output site")
         site = AtLocation(*source_sites[identity]) if identity in source_sites else imported[identity].anatomy().soma_location()
         record = records[identity]
         record["output_site"] = restrict_spike_output(cell, site)
         cell.place(AtLocation(*record["output_site"]["output_midpoint"]), StateProbe(field="v", name="output_voltage"))
         record["input_na"] = currents.get(identity, 0.)
         network.add_population("cell_"+identity, cell)
+        record["n_compartments"] = cell.n_cv
+        emit(f"Registered cell {identity}: {cell.n_cv} compartments")
     if not disconnected:
         for edge in edge_records:
             name = "syn_"+edge["annotation_id"]
             network.add_edges(name=name, pre="cell_"+edge["pre_cell"], post="cell_"+edge["post_cell"], method=pairs([(0, 0)]))
             network.add_projection(name=name, edges=name, synapse=name,
                                    weight=edge["weight_us"]*u.uS, delay=delay_ms*u.ms)
+    emit(f"Construction complete: {len(cells)} cells, {len(network.projections)} projections")
     return network, dict(nodes=deepcopy(topology["nodes"]), simulated_cell_ids=identities,
         cells=records, contacts=edge_records, blocked_contacts=blocked, disconnected=disconnected,
         qualification="Verified anatomical subset with assumed synapse dynamics and unqualified candidate cells.",

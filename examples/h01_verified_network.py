@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 import brainstate
@@ -60,12 +61,20 @@ def main():
         if not args.build and args.duration_ms == 0:
             return
         ids = {e[s+"_cell"] for e in topology["contacts"] if e["construction_ready"] for s in ("pre", "post")}
+        started = time.perf_counter()
         network, evidence = make_h01_network(topology, H01Archive(args.cache/"proofread104.zip"),
             H01Annotations(args.cache), disconnected=args.disconnected, max_cv_length_um=args.max_cv_um,
-            currents_na={identity: args.current_na for identity in ids})
+            currents_na={identity: args.current_na for identity in ids},
+            progress=lambda message: print(f"[{time.perf_counter()-started:.1f}s] {message}", flush=True))
         print("Built", len(evidence["cells"]), "cells and", len(network.projections), "projections", flush=True)
         evidence["execution"] = "constructed; not simulated"
+        evidence["construction_seconds"] = time.perf_counter()-started
+        evidence["compartments_by_cell"] = {identity: record["n_compartments"] for identity, record in evidence["cells"].items()}
+        build_path = args.output.parent/(args.output.name+"-build.json")
+        build_path.write_text(json.dumps(evidence, indent=2)+"\n")
         if args.duration_ms:
+            print(f"[{time.perf_counter()-started:.1f}s] Initializing and running {args.duration_ms} ms", flush=True)
+            run_started = time.perf_counter()
             result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
             arrays = {"time_ms": np.asarray(result.time.to_decimal(u.ms))+args.dt_ms}
             for population, traces in result.traces.items():
@@ -77,8 +86,10 @@ def main():
                 arrays[population+"_events"] = np.asarray(result.spikes[population])
             np.savez_compressed(args.output.parent/(args.output.name+"-traces.npz"), **arrays)
             evidence.update(execution="finite compiled smoke run", dt_ms=args.dt_ms, duration_ms=args.duration_ms,
+                            initialization_and_run_seconds=time.perf_counter()-run_started,
                             sample_convention="end of step; Network start times plus dt")
-        (args.output.parent/(args.output.name+"-build.json")).write_text(json.dumps(evidence, indent=2)+"\n")
+            print(f"[{time.perf_counter()-started:.1f}s] Finite simulation traces saved", flush=True)
+        build_path.write_text(json.dumps(evidence, indent=2)+"\n")
 
 
 if __name__ == "__main__":
