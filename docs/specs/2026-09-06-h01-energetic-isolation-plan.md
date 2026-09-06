@@ -219,3 +219,44 @@ Example 21, anything on `main`.
   next manifest opens; run wall times recorded per run; probed E runs under 2100 s.
 - Final check: the Stage 4 prediction was written before the holdout run, and the
   causal page states conditions and mechanism with no sub-system name as a cause.
+
+## Outcome (2026-09-06)
+
+- **Stage 0.** The 31.4 pA bias is a holding current the published fit absorbed
+  (model rest −87.02 vs human −86.95 mV at bias 0; +2.42 mV with it, equal to
+  R_in × bias at 74.7 MΩ). Input datum: command current only. Every bias-on
+  residual and the earlier "passive family" retired ([forensics](../evidence/h01-pv-bias-forensics.md)).
+- **Stage 1.** Both contrasts live in the function. Human repeat limits from
+  PV sweeps 15–19 and 40–43, L2 sweeps 56–62; model limits from mesh and
+  tolerance repeats. I search rows: minimum, late threshold, late cycle
+  (mesh-limited); E search row: maximum rise rate (48 to 115 units). The E late
+  return is inside two human limits ([decision](../evidence/h01-isolation-decision.md)).
+- **Stage 2.** Elemental family named for every cell and model; I candidate
+  temporal equal ([decision](../evidence/h01-matryoshka2-decision.md)).
+- **Stage 3, I (15 of 16 evaluations).** Budgets close to 1e-15 pC. Loop: sodium
+  inflow ending within the upstroke. Trough: Kv3 activation carried past the
+  short spike, its tail below −73 mV; finalist somatic Kv3 close factor 2.0 on
+  the candidate gives −80.1/−79.0 mV against −78.8/−78.9 with the loop
+  unchanged. Kv3 necessary (block); Ca_LVA opposes the trough 1 mV per unit and
+  is not the burst drive; axonal SK is the count brake. Unexplained: post-trough
+  burst, accommodation ([result](../evidence/h01-i-energetic-result.md)).
+- **Stage 3, E (4 of 8 plus holdout).** Rise rate is load-limited (85 to 90
+  percent of somatic sodium leaves axially) but the soma's sodium sets the peak;
+  the fit is perisomatic, so the initiation site the human's shoulder implies is
+  outside the family. Structural FAIL returned to the user
+  ([result](../evidence/h01-e-energetic-result.md)). The Stage R rejection clause
+  was mis-stated and withdrawn before Stage X.
+- **Stage 4.** I holdout 0.23 nA: every claimed row passed as predicted; count,
+  cycle 2 and late threshold failed as predicted; late fall failed unpredicted
+  ([record](../evidence/h01-prediction-i.md)). E holdout sweep 53: see
+  [record](../evidence/h01-prediction-e.md).
+- **Planning mistakes recorded.** Stage R I prediction read the trough as a
+  charge deficit (wrong by two orders); Stage X Kv3 removal predicted 1 mV and
+  produced block; Stage D predicted the closing rate as the lever (it is the
+  activation carried past the spike); Stage E predicted the fall row would
+  break (it did not); E Stage R clause inverted. Each was corrected in the next
+  stage's registration, per the fail-fast rule.
+
+Decisions returned: I post-trough drive and accommodation (one evaluation in
+reserve, likely outside somatic boundaries); E model family (initiation site in
+the axon); promotion of the I finalist to BrainCell defaults (its own spec).
