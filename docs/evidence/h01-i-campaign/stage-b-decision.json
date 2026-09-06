@@ -1,0 +1,54 @@
+{
+  "decision": "pair G1a+G3 does not reproduce the count: b-into-G1aG3 blocks at 0.27 nA (3 events) and under-fires at 0.19 nA (17); b-out-G1aG3 gives 24/43. Rejection rule met; third player G4 (somatic NaTg x1.1 with Ca_LVA x0.5) is required at 0.27 nA. Stage C completes the 2^3 matrix over G1a, G3, G4 on the candidate's G1b+G2 background.",
+  "prediction_check": {
+    "b-into within 6 events of the candidate at 0.19": "REFUTED: 17 vs 26",
+    "b-into does not block at 0.27": "REFUTED: 3 events",
+    "b-out within 6 events of the source at 0.19": "held: 24 vs 22",
+    "b-out more than 20 events at 0.27": "held: 43, equal to the human count"
+  },
+  "counts": {
+    "s0-source": {
+      "019": 22,
+      "027": 39
+    },
+    "s0-candidate": {
+      "019": 26,
+      "027": 59
+    },
+    "b-into-G1aG3": {
+      "019": 17,
+      "027": 3
+    },
+    "b-out-G1aG3": {
+      "019": 24,
+      "027": 43
+    },
+    "a-into-G2": {
+      "019": 24,
+      "027": 45
+    },
+    "a-out-G2": {
+      "019": 20,
+      "027": 41
+    },
+    "a-into-G4": {
+      "019": 22,
+      "027": 38
+    },
+    "a-out-G4": {
+      "019": 24,
+      "027": 4
+    }
+  },
+  "best_cells_so_far": {
+    "a-out-G2 (G1a+G1b+G3+G4)": "20/41 events; first peak +0.8/+1.3 mV; duration -0.01 ms; early intervals at 0.27 within 1 ms; minima +3.6 to +4.7 mV",
+    "b-out-G1aG3 (G1b+G2+G4)": "24/43 events; minima within 2.1 mV; first peak +23.7 mV and duration +0.47 ms (the source's shape error)"
+  },
+  "gain_finding": "Every cell has a 0.27/0.19 count ratio between 1.8 and 2.3 against the human 3.6; no combination reaches 12 at 0.19 nA while keeping 43 at 0.27 nA. Together with the +2 to +4 mV passive offset, this names the passive/threshold family (leak, reversal, Ih) as the sub-system outside G1-G4.",
+  "stage_c": {
+    "matrix": "2^3 over G1a, G3, G4 with G1b and G2 at candidate values; existing cells 111 (candidate), 011 (a-out-G1a), 101 (a-out-G3), 110 (a-out-G4), 001 (b-out-G1aG3); new 100, 010, 000",
+    "prediction": "c-m100 (G1a only): more than 40 events at 0.19 and fewer than 10 at 0.27 (as into-G1a); c-m010 (G3 only): fewer than 10 at both inputs (as into-G3); c-m000 (G1b+G2 background): near 24/45 (as into-G2). No cell reaches 12 at 0.19 nA with 43 at 0.27 nA.",
+    "rejection": "If any cell reaches 12 +/- 2 at 0.19 with 43 +/- 4 at 0.27, that cell becomes the finalist and the gain finding is withdrawn.",
+    "unchanged": "nseg x9, CVode 1e-10, recorded bias, four inputs"
+  }
+}

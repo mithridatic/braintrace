@@ -141,8 +141,19 @@ def stage_a(manifest, folder, datums):
     pooled = rank(vectors, manifest["subsystems"], keys, limits)
     counts = {alias: {k: v["model"] for k, v in vec.items() if v["kind"] == "count"} for alias, vec in vectors.items()}
     steep = {g: r["steep_x"] for g, r in groups.items() if r.get("steep_x")}
-    largest = [n for n in pooled["order"] if pooled["subsystems"][n]["combined"] is not None][:2]
+    count_changes = {}
+    for name in manifest["subsystems"]:
+        count_changes[name] = {k: {"into_source": counts[f"a-into-{name}"][k]-counts["source"][k],
+                                   "out_of_candidate": counts[f"a-out-{name}"][k]-counts["candidate"][k]}
+                               for k in counts["source"]}
+    magnitude = {n: sum(abs(v["into_source"])+abs(v["out_of_candidate"]) for v in c.values()) for n, c in count_changes.items()}
+    count_limits = {k: decision["limits"]["limits"].get(k, 0.) for k in counts["source"]}
+    count_movers = sorted((n for n in magnitude if any(abs(v["into_source"]) > count_limits[k] or abs(v["out_of_candidate"]) > count_limits[k]
+                                                       for k, v in count_changes[n].items())), key=lambda n: -magnitude[n])
+    largest = count_movers[:2] if count_movers else [n for n in pooled["order"] if pooled["subsystems"][n]["combined"] is not None][:2]
     report = {"groups": groups, "pooled": pooled, "event_counts": counts, "steep_x_by_group": steep,
+              "count_changes": count_changes, "count_movers_by_magnitude": count_movers,
+              "pairing_rule": "When any sub-system moves an event count beyond its decision limit, the two largest count movers form the Stage B pair; RSS rankings are incomplete where events vanish.",
               "residuals": {alias: residuals(v) for alias, v in vectors.items()},
               "two_largest": largest,
               "decision": ("steep X by group: "+json.dumps(steep) if steep else "no group reversed by a single swap")

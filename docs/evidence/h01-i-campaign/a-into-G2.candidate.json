@@ -1,0 +1,7 @@
+{
+  "cvode_atol": 1e-10,
+  "nseg_factor": 9,
+  "refine_region": "all",
+  "somatic_kv3_close_factor": 0.5,
+  "somatic_kv3_tau_factor": 0.5
+}

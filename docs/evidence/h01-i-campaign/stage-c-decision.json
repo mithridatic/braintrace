@@ -1,0 +1,272 @@
+{
+  "decision": "FAIL at 19 of 24 evaluations: no cell of the G1a x G3 x G4 matrix (G1b and G2 at candidate values) meets the count row at both calibration inputs; the closest are 001 (24/43) and 000 (26/45). The passive/threshold family is the sub-system outside G1-G4 named by the residual pattern.",
+  "prediction_check": {
+    "c-m100 more than 40 at 0.19 and fewer than 10 at 0.27": "held: 99/4",
+    "c-m010 fewer than 10 at both": "held at 0.19 (7); 11 at 0.27, one above the stated bound",
+    "c-m000 near 24/45": "held: 26/45",
+    "no cell reaches 12 with 43": "held"
+  },
+  "matrix": {
+    "111": {
+      "name": "s0-candidate",
+      "counts": {
+        "019": 26,
+        "027": 59
+      },
+      "ratio": 2.27,
+      "e1_peak_width": {
+        "019": [
+          -1.8,
+          -0.05
+        ],
+        "027": [
+          -1.4,
+          -0.05
+        ]
+      },
+      "mean_minima": {
+        "019": 5.75,
+        "027": 6.67
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "011": {
+      "name": "a-out-G1a",
+      "counts": {
+        "019": 5,
+        "027": 9
+      },
+      "ratio": 1.8,
+      "e1_peak_width": {
+        "019": [
+          23.6,
+          0.47
+        ],
+        "027": [
+          23.9,
+          0.48
+        ]
+      },
+      "mean_minima": {
+        "019": -0.02,
+        "027": 0.26
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "101": {
+      "name": "a-out-G3",
+      "counts": {
+        "019": 84,
+        "027": 143
+      },
+      "ratio": 1.7,
+      "e1_peak_width": {
+        "019": [
+          -1.8,
+          -0.05
+        ],
+        "027": [
+          -1.4,
+          -0.05
+        ]
+      },
+      "mean_minima": {
+        "019": 5.86,
+        "027": 6.79
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "110": {
+      "name": "a-out-G4",
+      "counts": {
+        "019": 24,
+        "027": 4
+      },
+      "ratio": 0.17,
+      "e1_peak_width": {
+        "019": [
+          -4.4,
+          -0.05
+        ],
+        "027": [
+          -4.0,
+          -0.04
+        ]
+      },
+      "mean_minima": {
+        "019": 9.88,
+        "027": 20.59
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "001": {
+      "name": "b-out-G1aG3",
+      "counts": {
+        "019": 24,
+        "027": 43
+      },
+      "ratio": 1.79,
+      "e1_peak_width": {
+        "019": [
+          23.6,
+          0.47
+        ],
+        "027": [
+          23.9,
+          0.48
+        ]
+      },
+      "mean_minima": {
+        "019": 0.01,
+        "027": 0.17
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "100": {
+      "name": "c-m100",
+      "counts": {
+        "019": 99,
+        "027": 4
+      },
+      "ratio": 0.04,
+      "e1_peak_width": {
+        "019": [
+          -4.4,
+          -0.05
+        ],
+        "027": [
+          -4.0,
+          -0.04
+        ]
+      },
+      "mean_minima": {
+        "019": 11.37,
+        "027": 20.71
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "010": {
+      "name": "c-m010",
+      "counts": {
+        "019": 7,
+        "027": 11
+      },
+      "ratio": 1.57,
+      "e1_peak_width": {
+        "019": [
+          22.9,
+          0.46
+        ],
+        "027": [
+          23.2,
+          0.47
+        ]
+      },
+      "mean_minima": {
+        "019": 2.13,
+        "027": 3.18
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    },
+    "000": {
+      "name": "c-m000",
+      "counts": {
+        "019": 26,
+        "027": 45
+      },
+      "ratio": 1.73,
+      "e1_peak_width": {
+        "019": [
+          22.9,
+          0.46
+        ],
+        "027": [
+          23.2,
+          0.47
+        ]
+      },
+      "mean_minima": {
+        "019": 2.19,
+        "027": 1.39
+      },
+      "groups": {
+        "count": "fail",
+        "onsets": "fail",
+        "peaks": "fail",
+        "phases": "fail",
+        "intervals": "fail",
+        "minima": "fail",
+        "subthreshold": "fail"
+      }
+    }
+  },
+  "causal_structure": {
+    "G1a sodium inactivation (h_close 0.15)": "Necessary and sufficient, within this partition, for the human-like first spike: every cell with G1a has peak within 4.4 mV and duration within 0.05 ms; every cell without it has peak +23 mV and duration +0.47 ms. The same change raises every recovery minimum by about +6 mV (cells with G1a: +5.8 to +11.4 mV; without: -0.02 to +2.2 mV) and raises excitability so that, without G4, the cell blocks at 0.27 nA (100: 4 events; 110: 4 events).",
+    "G4 somatic NaTg x1.1 with Ca_LVA x0.5": "Necessary, given G1a, to sustain firing at 0.27 nA (110 vs 111: 4 vs 59; 100 vs 101: 4 vs 143). Alone it changes counts by at most 2 events.",
+    "G3 axonal calcium decay 300 ms with gamma 0.004": "The brake on both counts: removing it from the candidate gives 84/143; adding it to the source gives 5/8. Its dose sets the count level but not the count ratio.",
+    "G1b h_slope 5": "No measurable effect under the recorded input (counts unchanged, RSS smallest in every group).",
+    "G2 somatic Kv3 gating x0.5": "Largest complete RSS on the minima among the cells that keep every event; does not reverse the +6 mV shift that G1a introduces."
+  },
+  "gain_finding": "Every one of the eight cells has a 0.27/0.19 count ratio between 0.04 and 2.3 against the human 3.6, and every cell leaves the four passive samples +2.0 to +4.1 mV above the human values. A threshold set by leak, leak reversal, or Ih under the recorded bias is the only family in the model that moves the low-input count without the high-input count; it is outside G1-G4 and was not tested.",
+  "reassessment_for_the_user": [
+    "Approve or decline a bounded passive-family split on the 001 cell (G1b+G2+G4 on the source: 24/43 events, minima within 2.1 mV, shape wrong) and on 000, with 5 evaluations in reserve: leak conductance and leak reversal doses chosen to bring the -0.11 nA and -0.05 nA samples within 1 mV, then read the 0.19 nA count.",
+    "Establish from the ModelDB 267587 fitting protocol whether the published HL5BN1 fit applied the 31.4 pA bias; if it did not, the source itself was fitted against a different input and the model family question stands.",
+    "The diagnostic H01 closing-time override (h_close 0.15 -> 1.0) is the G1a member: removing it removes the human-like spike shape here, so the H01 override and the donor shape error are the same lever seen from two sides."
+  ]
+}
