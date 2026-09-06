@@ -15,14 +15,28 @@ from braintrace.datasets.h01_ei_circuit import make_h01_ei_circuit
 from examples.h01_ei_candidates import label_partition
 
 
-def main():
-    """Run a compiled diagnostic circuit with explicit provenance.
+MEASURED_IDENTITIES = (("E", "4157825456"), ("I", "5584343344"))
+ILLUSTRATIVE_IDENTITIES = (("E", "810151953"), ("I", "678539249"))
 
-    Returns
-    -------
-    None
-        Save per-cell voltages, conductances, output events, and provenance.
-    """
+
+def identities_for(connectivity):
+    """Cell identities for the measured pair or the explicitly illustrative pair."""
+    if connectivity == "measured":
+        return MEASURED_IDENTITIES
+    if connectivity == "illustrative":
+        return ILLUSTRATIVE_IDENTITIES
+    raise ValueError("connectivity must be measured or illustrative")
+
+
+def default_i_current_na(connectivity, requested):
+    """Explicit I drive, else 1 nA for the measured pair and 0 nA for the illustrative pair."""
+    if requested is not None:
+        return requested
+    return 1. if connectivity == "measured" else 0.
+
+
+def build_parser():
+    """Command-line interface of the circuit runner."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, default=Path(".cache/h01"))
     parser.add_argument("--output", type=Path, required=True)
@@ -38,10 +52,21 @@ def main():
     parser.add_argument("--i-delay-ms", type=float, default=2.)
     parser.add_argument("--e-pulse-ms", type=float, default=3.)
     parser.add_argument("--i-pulse-ms", type=float, default=3.)
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv=None):
+    """Run a compiled diagnostic circuit with explicit provenance.
+
+    Returns
+    -------
+    None
+        Save per-cell voltages, conductances, output events, and provenance.
+    """
+    args = build_parser().parse_args(argv)
     archive, annotations = H01Archive(args.cache/"proofread104.zip"), H01Annotations(args.cache)
     with brainstate.environ.context(precision=64):
-        identities = (("E", "4157825456"), ("I", "5584343344")) if args.connectivity == "measured" else (("E", "810151953"), ("I", "678539249"))
+        identities = identities_for(args.connectivity)
         components = {r: archive.load(nid, component=0) for r, nid in identities}
         parts = {r: label_partition(c) for r, c in components.items()}
         network, evidence = make_h01_ei_circuit(components, annotations,
@@ -49,8 +74,7 @@ def main():
             control=args.control, connectivity=args.connectivity, max_cv_length_um=args.max_cv_um, solver=args.solver,
             pulse_delays_ms={"E": args.e_delay_ms, "I": args.i_delay_ms},
             pulse_durations_ms={"E": args.e_pulse_ms, "I": args.i_pulse_ms},
-            currents_na={"E": args.e_current_na, "I": (args.i_current_na if args.i_current_na is not None
-                else (1. if args.connectivity == "measured" else 0.))})
+            currents_na={"E": args.e_current_na, "I": default_i_current_na(args.connectivity, args.i_current_na)})
         print("Circuit constructed:", args.control, flush=True)
         result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
         arrays = {"time_ms": np.asarray(result.time.to_decimal(u.ms))+args.dt_ms}
