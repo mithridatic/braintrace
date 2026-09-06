@@ -40,21 +40,25 @@ class _WilbersBase(HH):
         return self.rate_function(voltage.to_decimal(u.mV) + self.voltage_shift_mv,
                                   temperature_c=self.temperature_c)
 
+    def _rate_for_gate(self, gate, voltage):
+        return self.rate_function(voltage.to_decimal(u.mV) + self.voltage_shift_mv,
+                                  temperature_c=self.temperature_c, gate=gate)
+
     def f_m_inf(self, voltage, ion):
         """Return activation steady state for voltage and ion information."""
-        return self._rates(voltage)[0]
+        return self._rate_for_gate("m", voltage)[0]
 
     def f_h_inf(self, voltage, ion):
         """Return inactivation steady state for voltage and ion information."""
-        return self._rates(voltage)[1]
+        return self._rate_for_gate("h", voltage)[0]
 
     def f_m_tau(self, voltage, ion):
         """Return activation time constant in milliseconds."""
-        return self._rates(voltage)[2]
+        return self._rate_for_gate("m", voltage)[1]
 
     def f_h_tau(self, voltage, ion):
         """Return fast inactivation time constant in milliseconds."""
-        return self._rates(voltage)[3]
+        return self._rate_for_gate("h", voltage)[1]
 
 
 @register_channel("H01Na_Wilbers2023")
