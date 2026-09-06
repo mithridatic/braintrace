@@ -94,10 +94,18 @@ def test_dry_run_writes_flag_file_and_records_no_return_code(tmp_path):
 def test_abort_is_recorded_when_the_container_exceeds_the_limit(tmp_path, monkeypatch):
     import subprocess
 
+    killed = []
+
     def slow(command, **kwargs):
+        if command[:2] == ["docker", "kill"]:
+            killed.append(command[2])
+            return None
         raise subprocess.TimeoutExpired(command, kwargs["timeout"])
     monkeypatch.setattr(campaign.subprocess, "run", slow)
     manifest = _manifest()
     manifest["abort_seconds"] = 1
     rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=False)
     assert all(r["aborted"] and r["returncode"] is None for r in rows)
+    assert killed == ["h01-i-campaign-c0-019", "h01-i-campaign-c0-027"]
+    command = campaign.docker_command(tmp_path, manifest, manifest["candidates"][0], "019")
+    assert command[command.index("--name")+1] == "h01-i-campaign-c0-019"

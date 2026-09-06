@@ -59,10 +59,16 @@ def docker_command(root, manifest, candidate, input_name):
     evidence = (root/"docs/evidence").resolve().as_posix()
     cache = (root/manifest["cache_dir"]).resolve().as_posix()
     out = "/evidence/"+manifest["output_dir"]+"/"+candidate["name"]
-    return ["docker", "run", "--rm", "-v", f"{cache}:/work", "-v", f"{evidence}:/evidence",
+    return ["docker", "run", "--rm", "--name", container_name(manifest, candidate, input_name),
+            "-v", f"{cache}:/work", "-v", f"{evidence}:/evidence",
             "-w", "/work/"+manifest["library"], manifest["image"], "python",
             "/evidence/"+manifest["driver"], "--candidate-json", out+".candidate.json",
             *manifest["inputs"][input_name], "--output", f"{out}-{input_name}"]
+
+
+def container_name(manifest, candidate, input_name):
+    """Deterministic container name so an aborted run can be killed, not only abandoned."""
+    return f"{manifest['output_dir']}-{candidate['name']}-{input_name}".replace(".", "-")
 
 
 def needs_run(root, manifest, candidate):
@@ -105,6 +111,12 @@ def run_candidate(root, manifest, candidate, dry_run):
                                       text=True, timeout=manifest["abort_seconds"]).returncode
             except subprocess.TimeoutExpired:
                 aborted = True
+                subprocess.run(["docker", "kill", container_name(manifest, candidate, input_name)],
+                               capture_output=True, text=True, check=False)
+                for suffix in (".json", ".npz"):
+                    stale = folder/f"{candidate['name']}-{input_name}{suffix}"
+                    if stale.exists():
+                        stale.unlink()
         rows.append({"name": candidate["name"], "input": input_name, "seconds": time.perf_counter()-start,
                      "returncode": code, "aborted": aborted, "command": command})
     return rows

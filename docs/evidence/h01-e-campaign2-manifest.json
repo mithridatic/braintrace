@@ -186,5 +186,16 @@
   },
   "repeat_inputs_for_limits": [
     "sweep50"
-  ]
+  ],
+  "existing_matrix_cells_traces": {
+    "000": {
+      "sweep50": "h01-l2-campaign-fine/ab-into-F3F5-sweep50",
+      "sweep43": "h01-l2-campaign-fine/ab-into-F3F5-sweep43"
+    },
+    "111": {
+      "sweep50": "h01-l2-campaign-fine/s0-candidate-fine-sweep50",
+      "sweep43": "h01-l2-campaign-coverage-recovery/s0-candidate-fine-sweep43"
+    }
+  },
+  "dose_interval_key": "sweep50:i2_ms"
 }

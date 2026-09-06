@@ -2,7 +2,25 @@
 
 import pytest
 
-from docs.evidence.h01_campaign_score import control_names, normalized_rss, rank, select_rows, tree
+from docs.evidence.h01_campaign_score import (cell_verdicts, control_names, member_effects, normalized_rss, rank,
+                                              select_rows, tree)
+
+
+def test_cell_verdicts_pass_only_when_every_row_of_the_group_passes():
+    vector = {"a": {"kind": "minimum_voltage_mv", "verdict": "pass"}, "b": {"kind": "minimum_voltage_mv", "verdict": "fail"},
+              "c": {"kind": "interval_ms", "verdict": "pass"}, "d": {"kind": "count", "verdict": "unavailable"}}
+    assert cell_verdicts(vector) == {"minima": "fail", "intervals": "pass", "count": "unavailable"}
+
+
+def test_member_effects_average_over_pairs_and_report_the_ratio():
+    def vec(minimum, interval):
+        return {"s:m1_voltage_mv": {"residual": minimum, "kind": "minimum_voltage_mv", "verdict": "fail"},
+                "s:i2_ms": {"residual": interval, "kind": "interval_ms", "verdict": "fail"}}
+    cells = {"00": vec(-4., 0.), "10": vec(-2., 10.), "01": vec(-3., 0.), "11": vec(-1., 10.)}
+    effects = member_effects(cells, ["A", "B"], lambda k: k.endswith("_voltage_mv"), "s:i2_ms")
+    assert effects["A"]["minima_change_mv"] == pytest.approx(2.) and effects["A"]["interval_change_ms"] == pytest.approx(10.)
+    assert effects["A"]["ratio_mv_per_ms"] == pytest.approx(.2) and effects["A"]["pairs"] == [("00", "10"), ("01", "11")]
+    assert effects["B"]["interval_change_ms"] == pytest.approx(0.) and effects["B"]["ratio_mv_per_ms"] is None
 
 
 def test_control_names_alias_source_candidate_and_repeats_by_identity():

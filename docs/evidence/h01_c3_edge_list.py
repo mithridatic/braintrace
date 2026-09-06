@@ -95,6 +95,24 @@ def assemble_edges(pre_index, post_index):
     return edges
 
 
+def checkpoint_key(limit, archive_path):
+    return {"limit": limit, "archive": Path(archive_path).name}
+
+
+def load_checkpoint(path, limit, archive_path):
+    """Per-cell records saved by an earlier run with the same limit and archive, else empty."""
+    if not Path(path).exists():
+        return {}
+    record = json.loads(Path(path).read_text())
+    if record.get("key") != checkpoint_key(limit, archive_path):
+        return {}
+    return record["cells"]
+
+
+def save_checkpoint(path, per_cell, limit, archive_path):
+    Path(path).write_text(json.dumps({"key": checkpoint_key(limit, archive_path), "cells": per_cell}))
+
+
 def neighbourhood(voxel, radius_xy=2, radius_z=1):
     """Voxels within a small box around ``voxel``, nearest first."""
     out = []
@@ -132,10 +150,16 @@ def main(argv=None):
     selected = {k: v for k, v in cells.items() if not args.cells or k in args.cells}
     c3 = CloudVolume("precomputed://"+C3_VOLUME, mip=0, progress=False, fill_missing=True, cache=False)
     proofread = CloudVolume("precomputed://"+VOLUME, mip=0, progress=False, fill_missing=True, cache=False)
-    per_cell = {}
+    checkpoint = args.output.with_suffix(".cells.json")
+    per_cell = load_checkpoint(checkpoint, args.limit, archive_path)
     label_to_cell = collections.defaultdict(set)
+    for cell, entry in per_cell.items():
+        for i in entry["c3_ids"]:
+            label_to_cell[int(i)].add(cell)
     with zipfile.ZipFile(archive_path) as archive:
         for index, (cell, files) in enumerate(sorted(selected.items())):
+            if cell in per_cell:
+                continue
             t0 = time.time()
             points = []
             for name in files:
@@ -152,6 +176,7 @@ def main(argv=None):
                               "seconds": round(time.time()-t0, 1)}
             for i in c3_ids:
                 label_to_cell[i].add(cell)
+            save_checkpoint(checkpoint, per_cell, args.limit, archive_path)
             print("cell", index+1, cell, len(c3_ids), "c3 ids", per_cell[cell]["seconds"], "s", flush=True)
     shared = {str(k): sorted(v) for k, v in label_to_cell.items() if len(v) > 1}
     info = json.loads((args.cache/"c3-annotation-info.json").read_text())

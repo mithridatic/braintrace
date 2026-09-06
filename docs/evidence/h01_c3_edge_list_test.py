@@ -9,6 +9,16 @@ from docs.evidence.h01_c3_edge_list import (archive_cells, assemble_edges, neare
                                             sample, to_c3_voxels)
 
 
+def test_checkpoint_round_trip_and_key_mismatch(tmp_path):
+    from docs.evidence.h01_c3_edge_list import load_checkpoint, save_checkpoint
+    path = tmp_path/"x.cells.json"
+    assert load_checkpoint(path, 10, "a.zip") == {}
+    save_checkpoint(path, {"1": {"c3_ids": ["5"]}}, 10, "a.zip")
+    assert load_checkpoint(path, 10, "a.zip") == {"1": {"c3_ids": ["5"]}}
+    assert load_checkpoint(path, 11, "a.zip") == {}
+    assert load_checkpoint(path, 10, "b.zip") == {}
+
+
 def test_neighbourhood_is_nearest_first_and_nearest_label_reports_offset():
     box = neighbourhood((10, 10, 5))
     assert box[0] == (10, 10, 5) and len(box) == 5*5*3

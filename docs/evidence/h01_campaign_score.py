@@ -152,6 +152,95 @@ def stage_a(manifest, folder, datums):
     return report
 
 
+def cell_verdicts(vector):
+    """Per-group verdict for one matrix cell: pass only when every row of the group passes."""
+    out = {}
+    for group, kinds in GROUPS.items():
+        rows = [v for v in vector.values() if v["kind"] in kinds]
+        if not rows:
+            continue
+        verdicts = {r["verdict"] for r in rows}
+        out[group] = "pass" if verdicts == {"pass"} else ("unavailable" if "unavailable" in verdicts and "fail" not in verdicts else "fail")
+    return out
+
+
+def member_effects(cells, members, minima_key_filter, interval_key):
+    """Average change of the recovery minima and of one interval when a member is added.
+
+    Parameters
+    ----------
+    cells : dict
+        Matrix code (e.g. ``"101"``) -> residual vector.
+    members : list of str
+        Member names in code order.
+    minima_key_filter : callable
+        Selects the minima voltage keys of a vector.
+    interval_key : str
+        The interval row used for the ratio, e.g. ``"sweep50:i2_ms"``.
+
+    Returns
+    -------
+    dict
+        Per member: mean minima change, interval change, their ratio, and the pairs used.
+    """
+    out = {}
+    for index, member in enumerate(members):
+        pairs, d_min, d_int = [], [], []
+        for code, with_member in cells.items():
+            if code[index] != "1":
+                continue
+            without = code[:index]+"0"+code[index+1:]
+            if without not in cells:
+                continue
+            base = cells[without]
+            keys = [k for k in with_member if minima_key_filter(k) and with_member[k]["residual"] is not None and base.get(k, {}).get("residual") is not None]
+            if not keys or with_member.get(interval_key, {}).get("residual") is None or base.get(interval_key, {}).get("residual") is None:
+                continue
+            d_min.append(float(np.mean([with_member[k]["residual"]-base[k]["residual"] for k in keys])))
+            d_int.append(with_member[interval_key]["residual"]-base[interval_key]["residual"])
+            pairs.append((without, code))
+        mean_min = float(np.mean(d_min)) if d_min else None
+        mean_int = float(np.mean(d_int)) if d_int else None
+        ratio = None if mean_min is None or not mean_int else abs(mean_min)/abs(mean_int)
+        out[member] = {"minima_change_mv": mean_min, "interval_change_ms": mean_int, "ratio_mv_per_ms": ratio,
+                       "pairs": pairs, "dose_invariant": None if len(d_min) < 2 else bool(np.std(np.array(d_min)/np.where(np.array(d_int) == 0, np.nan, np.array(d_int))) < .25*abs(ratio or 1.))}
+    return out
+
+
+def stage_matrix(manifest, folder, datums):
+    members = list(manifest["members"])
+    cells = {}
+    for code, stem in manifest["existing_matrix_cells_traces"].items():
+        cells[code] = {}
+        for input_name, datum_key in manifest["input_datums"].items():
+            trace = FOLDER/f"{stem[input_name]}.npz"
+            for row in score_trace(trace, datums[datum_key]):
+                cells[code][f"{input_name}:{row['key']}"] = dict(row, input=input_name)
+    for candidate in manifest["candidates"]:
+        if str(candidate["stage"]) == "A":
+            code = candidate["name"].split("-")[0].lstrip("m")
+            try:
+                cells[code] = candidate_vector(folder, manifest, candidate["name"], datums)
+            except FileNotFoundError:
+                continue
+    verdicts = {code: cell_verdicts(v) for code, v in cells.items()}
+    counts = {code: {k: v["model"] for k, v in vec.items() if v["kind"] == "count"} for code, vec in cells.items()}
+    passing = [code for code, groups in verdicts.items() if all(x == "pass" for x in groups.values())]
+    interval_key = manifest.get("dose_interval_key", "sweep50:i2_ms")
+    effects = member_effects(cells, members, lambda k: k.endswith("_voltage_mv") and ":m" in k, interval_key)
+    ranked = sorted((m for m in effects if effects[m]["ratio_mv_per_ms"] is not None), key=lambda m: -effects[m]["ratio_mv_per_ms"])
+    summary = {code: {"count": counts[code], "groups": verdicts[code],
+                      "i2": cells[code].get(interval_key, {}).get("residual"),
+                      "minima": [round(v["residual"], 3) for k, v in cells[code].items() if k.endswith("_voltage_mv") and ":m" in k and v["residual"] is not None]}
+               for code in sorted(cells)}
+    decision = ("PASS: "+", ".join(passing)) if passing else (
+        "no cell passes every group; dose member "+ranked[0]+" (largest minima change per interval change)" if ranked else "no member effect could be computed")
+    report = {"cells": summary, "member_effects": effects, "dose_member_order": ranked, "passing_cells": passing,
+              "residuals": {code: residuals(v) for code, v in cells.items()}, "decision": decision}
+    (folder/"stage-a-decision.json").write_text(json.dumps(report, indent=2))
+    return {"decision": decision, "event_counts": counts, "verdicts": verdicts}
+
+
 def tree(groups):
     lines = ["flowchart TD", "    Y[Candidate differs from human] --> G[Observation group]"]
     for group, ranking in groups.items():
@@ -170,12 +259,13 @@ def tree(groups):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--stage", choices=("0", "A"), required=True)
+    parser.add_argument("--stage", choices=("0", "A", "matrix"), required=True)
     args = parser.parse_args(argv)
     manifest = json.loads(args.manifest.read_text())
     folder = FOLDER/manifest["output_dir"]
     datums = load_datums()
-    report = stage0(manifest, folder, datums) if args.stage == "0" else stage_a(manifest, folder, datums)
+    runner = {"0": stage0, "A": stage_a, "matrix": stage_matrix}[args.stage]
+    report = runner(manifest, folder, datums)
     print(json.dumps({"decision": report["decision"], "event_counts": report["event_counts"]}, indent=1))
 
 
