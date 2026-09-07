@@ -102,3 +102,56 @@ def test_donor_polarity_mismatch_or_unknown_key_fails(imported, donor, polarity)
     with pytest.raises(ValueError):
         make_h01_ei_cell(imported, None, polarity=polarity, donor=donor, regions={"soma": AllRegion()},
                          region_basis="test")
+
+
+from dataclasses import replace
+import braincell
+from .h01_ei_cell import _paint_profile
+from .h01_ei_profiles import get_ei_profile
+
+
+def _paint_spy(monkeypatch):
+    painted, original = [], braincell.Cell.paint
+
+    def spy(self, region, *mechanisms):
+        painted.append((region, tuple((getattr(m, "class_name", type(m).__name__), getattr(m, "name", None))
+                                      for m in mechanisms)))
+        return original(self, region, *mechanisms)
+    monkeypatch.setattr(braincell.Cell, "paint", spy)
+    return painted
+
+
+def _mechanisms(painted, region):
+    return [m for r, ms in painted if r is region for m in ms]
+
+
+def test_b3_axon_with_channels_but_no_calcium_carries_sodium_and_potassium_ions(imported, monkeypatch):
+    regions = partition(imported)
+    annotations = SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=("L2", "pyramidal")))
+    painted = _paint_spy(monkeypatch)
+    with brainstate.environ.context(precision=64):
+        cell, evidence = make_h01_ei_cell(imported, annotations, polarity="E", mode="b3", regions=regions,
+                                          region_basis="B3 axon ion test.", pop_size=(1,))
+        result = cell.run(dt=.001*u.ms, duration=.02*u.ms)
+    assert np.isfinite(result.traces["voltage"].to_decimal(u.mV)).all()
+    assert evidence["borrowed_dynamics"]["mode"] == "b3"
+    axon = _mechanisms(painted, regions["axon"])
+    for mechanism in (("SodiumFixed", "sodium"), ("PotassiumFixed", "potassium"), ("H01L2_NaTs", "pv_NaTs")):
+        assert mechanism in axon
+    assert ("H01PV_Calcium", "calcium") not in axon
+    assert ("H01PV_Calcium", "calcium") in _mechanisms(painted, regions["soma"])
+
+
+@pytest.mark.parametrize("mode", ["candidate", "source"])
+def test_candidate_and_source_axon_rows_without_channels_get_no_ions(imported, monkeypatch, mode):
+    regions = partition(imported)
+    painted = _paint_spy(monkeypatch)
+    make_h01_ei_cell(imported, SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=())), polarity="E",
+                     mode=mode, regions=regions, region_basis="Unchanged paint list.")
+    assert {m[0] for m in _mechanisms(painted, regions["axon"])} == {"CableProperty", "IL"}
+
+
+def test_calcium_mechanism_without_a_calcium_tuple_is_rejected():
+    profile = replace(get_ei_profile("E"), regions=(("soma", 1., 4e-4, (("SK", 1e-3),), None),))
+    with pytest.raises(ValueError, match="calcium"):
+        _paint_profile(SimpleNamespace(paint=lambda *a, **k: None), profile, {"soma": AllRegion()})

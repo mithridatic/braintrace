@@ -54,8 +54,8 @@ def main(argv=None):
     parser.add_argument("--stop-ms", type=float, default=2100.)
     parser.add_argument("--max-cv-um", type=float, default=10.)
     parser.add_argument("--mesh-from", type=Path, help="L2 NEURON report JSON whose per-section nseg becomes the mesh")
-    parser.add_argument("--profile-key", choices=("candidate", "source"), default="candidate",
-                        help="placeholder until the registered B3 key exists")
+    parser.add_argument("--profile-key", "--mode", dest="profile_key", choices=("candidate", "source", "b3"),
+                        default="candidate", help="registry mode; b3 = the frozen B3 experimental profile")
     parser.add_argument("--include-recorded-bias", action="store_true", default=True)
     parser.add_argument("--command-only", dest="include_recorded_bias", action="store_false")
     parser.add_argument("--output", type=Path, required=True)

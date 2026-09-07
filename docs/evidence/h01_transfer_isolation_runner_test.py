@@ -144,9 +144,24 @@ def test_score_manifest_marks_absent_traces_untested_and_scores_present_ones(tmp
     assert report["gate_valid"] and report["decision"] == "implementation_difference_at_event_7"
 
 
-def test_main_prints_commands_and_refuses_to_score_an_unaligned_profile(capsys):
+def test_main_prints_commands_and_refuses_to_score_an_unaligned_profile(capsys, tmp_path):
     runner.main(["--manifest", str(FOLDER/"h01-transfer-i-manifest.json"), "--print-commands"])
     lines = capsys.readouterr().out.strip().splitlines()
     assert len(lines) == len(MANIFEST["order"]) and lines[0].startswith("r-braincell-matched-027:")
+    unaligned = tmp_path/"candidate-manifest.json"
+    unaligned.write_text(json.dumps({**MANIFEST, "braincell_profile_key": "candidate"}))
     with pytest.raises(SystemExit, match="not the NEURON finalist"):
-        runner.main(["--manifest", str(FOLDER/"h01-transfer-i-manifest.json"), "--score"])
+        runner.main(["--manifest", str(unaligned), "--score"])
+
+
+def test_manifest_names_the_finalist_mode_and_it_is_aligned(capsys):
+    assert MANIFEST["braincell_profile_key"] == "finalist" and MANIFEST["polarity"] == "I"
+    meta = json.loads((FOLDER/MANIFEST["mesh_source"]).read_text())
+    report = runner.profile_alignment(meta, get_ei_profile("I", mode="finalist"), channel_controls)
+    assert report["aligned"] and report["mismatches"] == []
+    arms = {arm["name"]: arm for arm in MANIFEST["arms"]}
+    a1 = runner.arm_command(ROOT, MANIFEST, arms["a1-matched-027"])
+    assert a1[a1.index("--mode")+1] == "finalist"
+    runner.main(["--manifest", str(FOLDER/"h01-transfer-i-manifest.json"), "--check-alignment"])
+    printed = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert printed["profile_alignment"]["aligned"] is True

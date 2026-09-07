@@ -11,7 +11,7 @@ from .h01_pv_morphology import make_pv_morphology
 REFERENCE = json.loads((Path(__file__).resolve().parents[2]/"docs/evidence/h01-l2-geometry-reference.json").read_text())
 
 
-@pytest.mark.parametrize("mode", ["source", "candidate"])
+@pytest.mark.parametrize("mode", ["source", "candidate", "b3"])
 def test_donor_cell_runs_with_finite_calcium(mode):
     with brainstate.environ.context(precision=64):
         result = make_l2_cell(REFERENCE, mode=mode).run(dt=.001*u.ms, duration=.05*u.ms)

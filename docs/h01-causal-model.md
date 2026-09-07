@@ -299,6 +299,13 @@ reference carries 2.0. The scorer refuses to score until the registry re-key
 registers a finalist I profile, so no full-train verdict can be read through the
 present profile.
 
+2026-09-07 (no observation): the registry now carries the non-default I mode `finalist`
+(somatic Kv3 closing 2.0, everything else the candidate) and the E mode `b3`
+([spec](specs/2026-09-07-h01-experimental-profile-modes.md)); the manifest names
+`finalist`, `--check-alignment` reports no mismatch against `e-kv3-close2-027.json`, so the
+held-equal alignment is checkable and scoring is no longer refused. Every arm is still
+untested.
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1087,8 +1094,8 @@ biological uncertainty.
   whether the electrical region map is correct.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
-  SP2 prediction registered 2026-09-07 (see the Y2 entry); untested until the
-  finalist I profile is registered.
+  SP2 prediction registered 2026-09-07 (see the Y2 entry); the finalist I profile is
+  registered and alignment checks, the arms are untested.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
   train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
