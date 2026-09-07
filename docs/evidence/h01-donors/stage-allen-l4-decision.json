@@ -1,0 +1,33 @@
+{
+  "stage": "allen-l4",
+  "donor_key": "l4-pyramidal-allen-527952884",
+  "specification": "docs/specs/2026-09-07-h01-donor-allen-l4-import.md",
+  "acquisition": "h01-l4-acquisition.json",
+  "manifest": "h01-l4-reproduction-manifest.json",
+  "decision": "registered: acquisition, verification, registry and driver readiness complete; NEURON reproduction untested (not run: the machine is shared by measured runs; no simulation in the import task)",
+  "reproduction_status": "untested",
+  "verifications": {
+    "mechanism_set_equals_the_imported_626170538_set": "pass: genome references exactly CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, K_P, K_T, Kv3_1, NaTs, Nap, SK (soma only); the eleven bundle .mod files are byte-identical (sha256) to .cache/human-pyramidal-l2/source-model; Kd, Kv2like, NaTa, NaV, Im_v2 ship in the bundle unused and are not compiled",
+    "fit_sweeps_69_72_protocol": "pass: Square - 2s Suprathreshold, 100 pA, 1020-3020 ms, 50 kHz; leak_pa -16.73/-19.63/-19.63/-17.30 pA, bridge 9.16 Mohm; NWB bias_current equals leak_pa within 0.01 pA; -20 mV crossing counts 20/17/19/20 equal Allen num_spikes",
+    "per_sweep_bias_and_bridge_from_ephys_sweeps": "pass: 76-sweep table joined (bias, leak_pa, bridge, num_spikes); Long Square 40-43 bias 0, sweep 39 +2.33 pA, 2-s squares -16.7 to -19.6 pA",
+    "fit_json_equals_bundle": "pass: well-known file 626185209 and the bundle's fit_parameters.json share sha256 1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a",
+    "nwb_fetched": "pass: HTTP 200, Content-Length 17,976,764, sha256 e321fe93fb63c6af9118ff72df30756bf2e5599fecc54ab8f6f58c51d14fff5a, aibs_specimen_id 527952884, H16.06.008.01.31.06, IVSCC 1.0",
+    "model_zip_fetched": "pass: HTTP 200, Content-Disposition neuronal_model_626170709.zip, 143,426 bytes, sha256 a623a0aa761b2fce5411ac978f59ee04eebf2495d948c6f1131f7415d490d0fc",
+    "parameter_generator_cross_check": "pass: h01_l4_parameters.region_tuples applied to the cached L2 fit 541563728_fit.json equals the committed E_SOURCE",
+    "actual_image_help_check": "pass: docker run --rm -v <worktree>/docs/evidence:/evidence -v <worktree>/.cache/human-pyramidal-l4:/work -w /work/neuron-reference braintrace-h01-neuron:9.0.2 python /evidence/h01_l2_neuron_reference.py --help exits 0 and lists --donor-json (2026-09-07)",
+    "manifest_check": "pass: h01_campaign.check_manifest accepts the manifest (cap 4, 2 candidates x 2 inputs); docker_command renders the ready commands below"
+  },
+  "population_match": {"before": 37, "after": 55, "cells_taken": "18 L4 pyramids without modifiers (matched) and 4 sparsely-spiny L4 pyramids (modifier)"},
+  "registered_prediction": "counts 20 (sweep 69, 100 pA, 2 s) and 12 (sweep 39, 90 pA, 1 s) reproduced exactly; first spike within the dt-pair limit of 32.18 and 33.88 ms after onset",
+  "registered_rejection": "count differs by more than 1 at either input, or the dt pair disagrees on the count",
+  "usable_tier": "not scored (no model trace); plan: h01_usable_tier.py cell L4-PYR with repeat_inputs {\"100 pA\": (69, 70, 71, 72)} (code change with the run)",
+  "population_label": "type-matched, usable verdicts: not yet scored (reproduction untested)",
+  "braincell_transfer": "not blocked by mechanisms (H01L2_* carry the eleven); waits for the SP2 matched-mesh gate on its own recordings",
+  "ready_commands": [
+    "cd <worktree>; $env:MSYS_NO_PATHCONV='1'; docker run --rm -v \"$PWD\\.cache\\human-pyramidal-l4\\neuron-reference:/work\" -w /work braintrace-h01-neuron:9.0.2 nrnivmodl .",
+    "Start-Process -FilePath <python> -ArgumentList 'docs/evidence/h01_campaign.py','--manifest','docs/evidence/h01-l4-reproduction-manifest.json','--stage','1' -RedirectStandardOutput docs/evidence/h01-l4-reproduction/campaign.log -RedirectStandardError docs/evidence/h01-l4-reproduction/campaign.err -NoNewWindow",
+    "docker run --rm --name h01-l4-reproduction-source-69 -v <worktree>/.cache/human-pyramidal-l4:/work -v <worktree>/docs/evidence:/evidence -w /work/neuron-reference braintrace-h01-neuron:9.0.2 python /evidence/h01_l2_neuron_reference.py --candidate-json /evidence/h01-l4-reproduction/source.candidate.json --cache /work --donor-json /work/neuron-reference/donor.json --sweep 69 --stop-ms 3520 --output /evidence/h01-l4-reproduction/source-69  (what the runner issues; source-39 with --sweep 39 --stop-ms 2520; source-dt-half with dt_ms 0.0025 in its candidate file)"
+  ],
+  "wall_clock_seconds": null,
+  "note": "A run that has not happened is untested, never negative. No duration is quoted. The donor cap of two (HL5MN1, Allen 527952884) is reached."
+}

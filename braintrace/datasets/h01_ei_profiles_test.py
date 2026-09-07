@@ -119,6 +119,29 @@ def test_sst_donor_profile_is_the_published_fit_in_both_modes(mode):
             assert channel_controls(p, family, mechanism) == {}
 
 
+L4_KEY = "l4-pyramidal-allen-527952884"
+
+
+@pytest.mark.parametrize("mode", ["candidate", "source"])
+def test_l4_donor_profile_is_the_published_allen_fit_in_both_modes(mode):
+    p = get_donor_profile(L4_KEY, mode=mode)
+    assert p.name == "h01-l4-allen-527952884:"+mode+":v1" and p.polarity == "E"
+    assert (p.initial_mv, p.reversal_mv, p.axial_ohm_cm) == (-80.81838607788086, -80.81838607788086, 14.9970627156)
+    assert p.regions is parameters.L4_ALLEN_527952884_SOURCE
+    assert (p.channel_prefix, p.sodium_reversal_mv, p.potassium_reversal_mv) == ("H01L2", 53., -107.)
+    assert p.metadata_sha256 == "1aa0e2c59174c726f868422c7b152d95c727d0d962e92a6eb0356f7dfdb80c5a"
+    acquisition = Path(__file__).resolve().parents[2]/"docs/evidence/h01-l4-acquisition.json"
+    report = json.loads(acquisition.read_text())
+    assert report["files"]["527952884_fit.json"]["sha256"] == p.metadata_sha256
+    assert report["bundle_files"]["fit_parameters.json"]["sha256"] == p.metadata_sha256
+    assert report["fit"]["conditions"]["v_init"] == p.initial_mv and report["fit"]["passive"]["ra"] == p.axial_ohm_cm
+    for family in ("soma", "axon", "dend", "apic"):
+        for mechanism in ("NaTs", "Kv3_1", "Ih"):
+            assert channel_controls(p, family, mechanism) == {}
+    with pytest.raises(ValueError):
+        get_donor_profile(L4_KEY, mode="b3")
+
+
 def test_pv_candidate_controls_are_unchanged_by_the_third_donor():
     candidate = get_ei_profile("I")
     assert channel_controls(candidate, "soma", "NaTg") == {"h_close": .15, "h_open": 1., "h_slope": 5.}
