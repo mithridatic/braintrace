@@ -898,6 +898,38 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Qualification of the
 default profiles' firing and full numerical robustness remains open.
 
+### Y5 registered prediction for SP5 (2026-09-07, no observation yet)
+
+No run has been made; this block records what was predicted so that a miss can later be
+scored against it. Spec: [functional inhibition](specs/2026-09-07-h01-functional-inhibition.md);
+manifest `docs/evidence/h01-ie-inhibition-manifest.json` (cap 6 + 2, `prior_evaluations 0`).
+Stage 1 uses the current unpromoted profiles through the closing-restored I wrapper.
+
+**What is fixed before the runs.** E drive 0.6 nA constant from 0 ms, a stimulus choice
+derived from the W4 0.4 nA hold (tau_m 27.6 ms, R_in 78 MOhm from the two charging points;
+threshold -57 mV reached at 24 ms at 0.6 nA against 54 ms at 0.4 nA); registered alternate
+0.8 nA as the single permitted drive change. I: 1 nA, 3 ms pulses, one per control cycle,
+aimed at the cycle midpoint through the measured 6.78 ms pulse-to-spike latency. Decision
+limit: per-cycle range between arm 2 and its dt-halving partner x 2.95, floored at one step.
+
+**Registered predictions.**
+
+| Arm | Prediction | Rejection |
+| --- | --- | --- |
+| 1 disconnected | >= 3 E spikes in 300 ms, first between 20 and 60 ms; one I spike per pulse | < 3 E spikes: one drive change to 0.8 nA, then stop |
+| 2 literature receptor at the measured site `[2805, 0.93]` | soma IPSP magnitude < 0.05 mV; no E spike or cycle beyond the halving limit; site response 0.5 to 2 mV | soma >= 0.05 mV or any spike or cycle beyond the limit |
+| 3 the same receptor at the E soma (inferred perisomatic hypothesis) | soma IPSP magnitude >= 0.3 mV (27.6 pA x 102 MOhm = 2.82 mV steady bound; x 4.18/27.6 for a fast current on this membrane = 0.43 mV; x 15/20 for the interspike driving force = 0.32 mV) and at least one E spike delayed beyond the limit | soma < 0.05 mV: placement is rejected as the explanation of the W4 deficit |
+| 4 arm 2 at dt 0.0025 | same E spike count as arm 2; per-cycle ranges below 0.1 ms | count differs: numerically unresolved |
+
+**Gate.** Functional inhibition = one E spike shifted or one cycle lengthened beyond the limit,
+or an E spike count change. Both human tiers are not applicable (no human recording of this
+pair) and the decision JSON says so.
+
+**Status.** Y5 stays open on the measured pair; the W4 voltage response (0.008 mV at the soma,
+depolarising, no E spikes in either control) is the only direct observation so far. The
+placement question (whether the PV contact belongs perisomatically) remains the user's decision;
+SP5 measures both placements.
+
 ### Y4 under the usable-tier campaign (2026-09-07, supersedes the energetic-search statement)
 
 The energetic search closed Y4 as a structural FAIL: a perisomatic fit cannot make
