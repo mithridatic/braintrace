@@ -274,6 +274,38 @@ flowchart TD
 | A0 | Refine only the BrainCell axon to 0.25 um | All gates pass 8/8; not a controlled swap | [axon-only control](evidence/h01-i-axon025-transfer-audit.json) |
 | A1, B1 | 2x2 half-split: mesh x integration, everything else held equal | Decision "mesh": matched cells pass, MaxCVLen cells fail on rise; scheme swap within gate | [isolation split](evidence/h01-pv-transfer-isolation.md), [audit](evidence/h01-pv-transfer-isolation-audit.json) |
 
+### Y2 registered prediction for SP2 (2026-09-07, no new observation)
+
+Specification: [SP2 transfer isolation](specs/2026-09-07-h01-transfer-isolation.md);
+manifest `evidence/h01-transfer-i-manifest.json`. No run has been made; this entry
+registers the prediction before the first arm is launched.
+
+**Prediction.** With the NEURON x9 per-branch counts copied (`--mesh-from`), the
+BrainCell candidate passes every event of the full 270-1270 ms train at 0.19 and
+0.27 nA against the CVode finalist reference and against NEURON fixed step at the
+BrainCell dt: equal counts and every rise error within 0.1 ms (expected largest
+0.044 ms, the eight-event value). The MaxCVLen 2.5 um control fails on rise from
+event 7 as before. The 0.23 nA spent holdout behaves as the other two inputs.
+
+**Rejection.** Any A1 event beyond its gate while the dt-halving pair at the same
+mesh and dt is under half the gate on every event. If A1 fails at event k while the
+NEURON fixed-step arm passes, the difference is an implementation difference at
+event k and the next split is a channel-by-channel state comparison at that event;
+if both fail, the time level is open and Y2 is reassessed rather than closed.
+
+**Precondition found while preparing the arms.** The BrainCell I candidate profile
+carries the pre-finalist somatic Kv3 closing factor 0.5; the finalist NEURON
+reference carries 2.0. The scorer refuses to score until the registry re-key
+registers a finalist I profile, so no full-train verdict can be read through the
+present profile.
+
+2026-09-07 (no observation): the registry now carries the non-default I mode `finalist`
+(somatic Kv3 closing 2.0, everything else the candidate) and the E mode `b3`
+([spec](specs/2026-09-07-h01-experimental-profile-modes.md)); the manifest names
+`finalist`, `--check-alignment` reports no mismatch against `e-kv3-close2-027.json`, so the
+held-equal alignment is checkable and scoring is no longer refused. Every arm is still
+untested.
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1013,6 +1045,30 @@ flowchart LR
     E --> F[Local E response observed; firing suppression open]
 ```
 
+#### Y5 edge list, 2026-09-07: merge check on the 71-candidate pair and scan coverage (SP7)
+
+Observed ([merge check](evidence/h01-pair-merge-check.json)): the pair `4157825456` /
+`5654281423` carries 71 of the 123 candidates (57 in one direction, 14 in the other; type
+codes 2 and 1 in both directions). No C3 label is shared by the two cells in the released
+1,500-sample list or in the 26-cell 3,000-sample checkpoint (neither cell is among the 26).
+At the annotation voxels, 70 of 71 rows read background for both endpoints in the proofread
+volume and one row reads the pre cell at its pre voxel with background at the post voxel; no
+row reads one nonzero label at both ends and no row reads the expected cells at both ends;
+none is within the 2-voxel box. Verdict: suspected merge **undetermined**. The saved data
+excludes a direct two-cell C3 merge at the sampled labels and excludes an ordinary verified
+contact; it cannot tell a C3 label merged with a third object from a mis-placed annotation,
+because both leave background at the endpoints. This leaves Y5 open on that pair; the 71
+stay candidates only, and the decisive observation (the C3 label at each of the 142 endpoint
+voxels against each cell's sampled `c3_ids`) is registered as the next online step.
+
+Coverage ([coverage](evidence/h01-export-scan-coverage.json),
+[listing](evidence/h01-c3-export-listing.json)): the C3 synapse export holds 166 shards
+(32.86 GB); 9 are local and scanned (8,991,719 records), so `full_export_scanned` is false
+as "9 of 166 shards scanned", a measured denominator that was previously unknown. The
+3,000-sample rescan stands at 26 of 104 cells; a one-cell dry run under the watchdog
+([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
+kill. Absence of a contact is not established by either scan.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
@@ -1101,6 +1157,8 @@ biological uncertainty.
   whether the electrical region map is correct.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
+  SP2 prediction registered 2026-09-07 (see the Y2 entry); the finalist I profile is
+  registered and alignment checks, the arms are untested.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
   train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one

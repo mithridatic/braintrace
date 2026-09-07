@@ -11,6 +11,9 @@ from .h01_ei_profiles import get_donor_profile, channel_controls
 from .h01_discretization import BoundaryAlignedCV
 from .h01_construction import H01Cell
 
+_ION_FREE_MECHANISMS = frozenset({"Ih"})
+_CALCIUM_MECHANISMS = frozenset({"SK", "Ca_HVA", "Ca_LVA"})
+
 
 def _validate_regions(morphology, regions, polarity):
     if not regions or set(regions)-{"soma", "axon", "dend", "apic"}:
@@ -50,9 +53,15 @@ def _paint_profile(cell, profile, regions, *, active=True):
                                    E=profile.reversal_mv*u.mV))
         if not active:
             continue
-        if calcium is not None:  # Ions painted only with calcium; SP2 owns widening this condition.
+        mechanisms = {mechanism for mechanism, _ in channels}
+        if calcium is None and mechanisms & _CALCIUM_MECHANISMS:
+            raise ValueError(f"Region {family!r} lists a calcium mechanism without a calcium tuple.")
+        if calcium is not None or mechanisms-_ION_FREE_MECHANISMS:
+            # Ih is the one registered mechanism whose root type needs no ion; every other channel
+            # needs the fixed sodium/potassium ions (SP2: the B3 axon row carries NaTs, no calcium).
             cell.paint(region, Ion("SodiumFixed", name="sodium", E=profile.sodium_reversal_mv*u.mV))
             cell.paint(region, Ion("PotassiumFixed", name="potassium", E=profile.potassium_reversal_mv*u.mV))
+        if calcium is not None:
             cell.paint(region, Ion("H01PV_Calcium", name="calcium", decay=calcium[0]*u.ms, gamma=calcium[1]))
         for mechanism, density in channels:
             cell.paint(region, Channel(prefix+"_"+mechanism, name="pv_"+mechanism,
@@ -82,7 +91,8 @@ def make_h01_ei_cell(imported, annotations, *, polarity, regions, region_basis, 
         Donor key from ``h01_cell_types.DONORS``; its polarity must equal
         ``polarity``. Default: the polarity's default donor.
     mode : str, optional
-        Candidate defaults or explicit source reproduction.
+        Candidate defaults, explicit source reproduction, or an experimental
+        mode the donor registers (``finalist`` for I, ``b3`` for E).
     current_na, delay_ms, duration_ms : float, optional
         Somatic current pulse in nA and milliseconds.
     max_cv_length_um : float, optional
