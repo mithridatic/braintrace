@@ -28,8 +28,20 @@ def summarize(rows):
                                             if r["modifiers"] else "") for r in rows if r["match"] != "matched"})}
 
 
+def donor_notes(evidence=EVIDENCE):
+    """Physiology label per donor from the stage decision JSONs under ``h01-donors/`` (absent file: none)."""
+    notes = {}
+    for path in sorted((evidence/"h01-donors").glob("stage-*-decision.json")):
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if record.get("donor_key") in DONORS:
+            notes[record["donor_key"]] = {"status": record.get("reproduction_status", "untested"),
+                                          "label": record.get("population_label", ""),
+                                          "decision": f"h01-donors/{path.name}"}
+    return notes
+
+
 def render(report):
-    """Markdown page: the donors, the counts, and the 104-row table."""
+    """Markdown page: the donors, their physiology notes, the counts, and the 104-row table."""
     s = report["summary"]
     lines = ["# H01 population: cell types and donor match", "",
              f"{s['cells']} cells from the released tags; **{s['matched']} have a donor matched in layer and class**",
@@ -38,6 +50,14 @@ def render(report):
              "| --- | --- | --- | --- | --- | --- |"]
     lines += [f"| {k} | {d['polarity']} | {d['profile']} | {d['source']} | {d['layer']} | {d['cell_class']} |"
               for k, d in DONORS.items()]
+    notes = report.get("donor_notes") or {}
+    if notes:
+        lines += ["", "## Donor physiology notes", "",
+                  "Reproduction of each imported donor's published fit in this project's NEURON container, and the",
+                  "usable-tier verdicts on its own recordings. A donor without a note (the two original donors) is",
+                  "scored on its own pages. A pass is not required to enter the population; the verdicts are labels.", "",
+                  "| Donor key | Reproduction | Label | Decision |", "| --- | --- | --- | --- |"]
+        lines += [f"| {k} | {n['status']} | {n['label']} | [{n['decision']}]({n['decision']}) |" for k, n in notes.items()]
     lines += ["", "## Match states", "", "| Match | Cells |", "| --- | --- |"]
     lines += [f"| {k} | {v} |" for k, v in s["by_match"].items()]
     lines += ["", "## Types", "", "| Layer | Class | Modifiers | Cells |", "| --- | --- | --- | --- |"]
@@ -57,7 +77,7 @@ def main(argv=None):
     network = json.loads(args.network.read_text(encoding="utf-8"))
     rows = type_rows(network["nodes"])
     report = {"source": args.network.name, "archive_sha256": network.get("archive_sha256"),
-              "summary": summarize(rows), "rows": rows}
+              "summary": summarize(rows), "donor_notes": donor_notes(), "rows": rows}
     args.output.with_suffix(".json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     args.output.with_suffix(".md").write_text(render(report), encoding="utf-8")
     print(json.dumps(report["summary"]["by_match"]))

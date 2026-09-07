@@ -95,6 +95,15 @@ def stage_ready(root, manifest, stage):
     return bool(json.loads(path.read_text()).get("decision"))
 
 
+def persist_stderr(folder, candidate, input_name, text):
+    """Keep the container's stderr beside the report so a crash is diagnosable after the fact."""
+    if text is None:
+        return
+    if isinstance(text, bytes):
+        text = text.decode(errors="replace")
+    (folder/f"{candidate['name']}-{input_name}.stderr.txt").write_text(text, encoding="utf-8")
+
+
 def run_candidate(root, manifest, candidate, dry_run):
     """Write the flag file, run each input in turn under the abort limit, and return timings."""
     folder = root/"docs/evidence"/manifest["output_dir"]
@@ -107,10 +116,13 @@ def run_candidate(root, manifest, candidate, dry_run):
         code, aborted = None, False
         if not dry_run:
             try:
-                code = subprocess.run(command, env={**os.environ, "MSYS_NO_PATHCONV": "1"}, capture_output=True,
-                                      text=True, timeout=manifest["abort_seconds"]).returncode
-            except subprocess.TimeoutExpired:
+                completed = subprocess.run(command, env={**os.environ, "MSYS_NO_PATHCONV": "1"}, capture_output=True,
+                                           text=True, timeout=manifest["abort_seconds"])
+                code = completed.returncode
+                persist_stderr(folder, candidate, input_name, completed.stderr)
+            except subprocess.TimeoutExpired as expired:
                 aborted = True
+                persist_stderr(folder, candidate, input_name, expired.stderr)
                 subprocess.run(["docker", "kill", container_name(manifest, candidate, input_name)],
                                capture_output=True, text=True, check=False)
                 for suffix in (".json", ".npz"):

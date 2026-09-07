@@ -109,3 +109,21 @@ def test_abort_is_recorded_when_the_container_exceeds_the_limit(tmp_path, monkey
     assert killed == ["h01-i-campaign-c0-019", "h01-i-campaign-c0-027"]
     command = campaign.docker_command(tmp_path, manifest, manifest["candidates"][0], "019")
     assert command[command.index("--name")+1] == "h01-i-campaign-c0-019"
+
+
+def test_container_stderr_is_persisted_beside_the_report(tmp_path, monkeypatch):
+    import subprocess
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 139, stdout="", stderr="Segmentation fault" + chr(10))
+    monkeypatch.setattr(campaign.subprocess, "run", fake_run)
+    manifest = _manifest()
+    rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=False)
+    assert [r["returncode"] for r in rows] == [139, 139]
+    folder = tmp_path/"docs/evidence/h01-i-campaign"
+    assert (folder/"c0-019.stderr.txt").read_text(encoding="utf-8") == "Segmentation fault" + chr(10)
+    assert (folder/"c0-027.stderr.txt").exists()
+    campaign.persist_stderr(folder, {"name": "c0"}, "z", None)
+    assert not (folder/"c0-z.stderr.txt").exists()
+    campaign.persist_stderr(folder, {"name": "c0"}, "z", b"bytes")
+    assert (folder/"c0-z.stderr.txt").read_text(encoding="utf-8") == "bytes"

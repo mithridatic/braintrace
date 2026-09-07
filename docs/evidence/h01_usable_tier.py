@@ -71,6 +71,18 @@ CELLS = {
         "model": "HL5MN1 published fit {candidate}, unmodified (docs/specs/2026-09-07-h01-donor-hl5mn1-import.md)",
         "output": "h01-sst-reproduction/{candidate}-usable",
     },
+    "L4-PYR": {
+        "pulse_ms": (1020., 3020.),
+        "input_pulse_ms": {"90 pA": (1020., 2020.)},
+        "inputs": {
+            "100 pA": (".cache/human-pyramidal-l4/neuron-reference/sweep-69.npz", "h01-l4-reproduction/{candidate}-69"),
+            "90 pA": (".cache/human-pyramidal-l4/neuron-reference/sweep-39.npz", "h01-l4-reproduction/{candidate}-39"),
+        },
+        "repeats": (".cache/human-pyramidal-l4/527952752_ephys.nwb", (69, 70, 71, 72), (1020., 3020.)),
+        "repeat_inputs": {"100 pA": (69, 70, 71, 72)},
+        "model": "Allen 527952884 perisomatic fit 626170709 {candidate}, unmodified (docs/specs/2026-09-07-h01-donor-allen-l4-import.md)",
+        "output": "h01-l4-reproduction/{candidate}-usable",
+    },
 }
 
 
@@ -204,9 +216,10 @@ def score_cell(cell, spec, root=ROOT):
     repeats = human_repeats(root, spec)
     tables, rows, counts = {}, [], {}
     for label, (human_path, model_name) in spec["inputs"].items():
-        human = cycle_table(*human_trace(root/human_path), spec["pulse_ms"], label)
-        model = cycle_table(*model_trace(EVIDENCE, model_name), spec["pulse_ms"], label)
-        views = qc_view(human, spec["pulse_ms"]), qc_view(model, spec["pulse_ms"])
+        pulse = spec.get("input_pulse_ms", {}).get(label, spec["pulse_ms"])
+        human = cycle_table(*human_trace(root/human_path), pulse, label)
+        model = cycle_table(*model_trace(EVIDENCE, model_name), pulse, label)
+        views = qc_view(human, pulse), qc_view(model, pulse)
         tables[label] = {"human": human, "model": model}
         counts[label] = {"human": views[0]["count"], "model": views[1]["count"]}
         rows.extend(compare(label, views[0], views[1], usable_limits(views[0], repeats)))
