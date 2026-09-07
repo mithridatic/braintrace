@@ -148,5 +148,22 @@
     "reverification_5_voxel": "launched, stalled on network for 6 h, stopped; untested",
     "wall_seconds": 950.5,
     "scope": "Lower bound on directed contacts among sampled proofread cells; absence is not established."
+  },
+  "five_voxel_recheck_2026_09_07": {
+    "edges_rechecked": 8,
+    "seconds_per_edge": "17 to 19",
+    "e_to_i_54906016": "not verified: pre endpoint background within the box, post one slice off",
+    "within_one_voxel": [
+      "95907584",
+      "108171241",
+      "124698307",
+      "65017731",
+      "8105899"
+    ],
+    "within_two_voxels": [
+      "125872198",
+      "95566965"
+    ],
+    "record": "h01-endpoint-recheck-5voxel.json"
   }
 }

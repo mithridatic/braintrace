@@ -115,3 +115,18 @@ on the correct connected morphology components. Retain the source synapse ID
 and placement errors. Resolve segment cuts before accepting affected contacts.
 Then run matched edge-removal controls. Conductance, delay, and channel values
 remain borrowed parameters; anatomical contact evidence does not validate them.
+
+## 5-voxel endpoint re-check (2026-09-07)
+
+Rerun one edge at a time with a 300 s budget per edge (`h01_endpoint_recheck.py`,
+box 5 voxels in x and y, 2 in z); all 8 edges completed in 17 to 19 s each, so the
+six-hour stall of 2026-09-06 was the batch, not the volume. Result
+(`h01-endpoint-recheck-5voxel.json`): the E-to-I candidate 54906016 is **not
+verified at 5 voxels either**: its presynaptic endpoint reads background throughout
+the box and its postsynaptic endpoint reads the I cell one slice away. The
+reciprocal wiring therefore stays illustrative as a tested negative, not an
+untested one. The reciprocal pair 95907584 has both endpoints within one voxel
+(pre exact, post offset 1 in x); 108171241, 125872198 and 95566965 are within 1 to 2
+voxels; the three exact contacts are unchanged. Offsets of one voxel or one slice
+are candidates for a relaxed acceptance rule, which is a decision for the network
+builder, not this record.
