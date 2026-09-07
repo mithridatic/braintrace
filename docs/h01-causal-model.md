@@ -299,12 +299,48 @@ reference carries 2.0. The scorer refuses to score until the registry re-key
 registers a finalist I profile, so no full-train verdict can be read through the
 present profile.
 
+### Y2 observation, SP2 step 1 (2026-09-07)
+
+Halving pair run at the copied mesh, 0.27 nA, 330 ms, finalist profile (aligned):
+dt 0.005 ms 115.6 s wall (0.35 s per simulated ms), dt 0.0025 ms 246.0 s (0.745 s per
+simulated ms). Over 270-329.5 ms both traces hold 3 events. Rise and width are inside
+the halved gate (max |rise| 0.0088 ms, |width| 0.0015 ms); the peak sample differs by
+0.21-0.23 mV at every event, over the 0.05 mV half-gate, so the literal verdict is
+`time_level_open` for the peak-sample metric only. Against the NEURON CVode finalist
+(`e-kv3-close2-027`, full gate) the dt 0.005 trace has equal count, rise errors
++0.0085/-0.0151/-0.0176 ms and width +0.003 ms (in gate), peak -0.45 mV (out); at dt
+0.0025 the peak error is -0.22 mV, halving with dt. Reading: the timing gates are valid at
+dt 0.005; the peak-sample gate converges first-order in dt and is not a valid decision
+limit at either step with end-of-step sampling. Derived (not measured) full 1500 ms cost:
+~525 s at dt 0.005, ~1,118 s at 0.0025. No full-train arm was run; Y2 remains open.
+Evidence: `evidence/h01-i-transfer/step1-decision.json`,
+[step 1 page](evidence/h01-i-transfer-step1.md).
+
 2026-09-07 (no observation): the registry now carries the non-default I mode `finalist`
 (somatic Kv3 closing 2.0, everything else the candidate) and the E mode `b3`
 ([spec](specs/2026-09-07-h01-experimental-profile-modes.md)); the manifest names
 `finalist`, `--check-alignment` reports no mismatch against `e-kv3-close2-027.json`, so the
 held-equal alignment is checkable and scoring is no longer refused. Every arm is still
 untested.
+
+### Y2 observation, SP2 step 1b (2026-09-07, offline re-score, no run)
+
+Registered before re-scoring (spec amendment): the peak-sample difference is a sampling
+convention; the parabolic vertex through the three samples around each maximum, applied to
+both traces, brings the halving pair under 0.05 mV and the dt 0.005 trace under 0.1 mV of
+the CVode finalist at every event. Observation: it does not. Interpolation moves the peaks by
+at most 0.018 mV; the halving difference stays +0.213/+0.211/+0.211 mV and the reference
+difference -0.435/-0.434/-0.432 mV (dt 0.0025: -0.221/-0.223/-0.221 mV). Timing gates are
+unchanged and valid. Both legs failed, so under the registered rejection SP2 stops as
+`time_level_open`; no full-train arm was launched (seven arms untested). Reading: the
+BrainCell peak amplitude at the copied mesh converges first order in dt (17.505 -> 17.718 mV
+at event 1, NEURON 17.940 mV); the derived first-order Richardson limit is within 0.012 mV of
+CVode at every event, so the peak difference is the integration order at this step, not the
+mesh and not the sampling. Y2 stays open; the full train is unscored at every input.
+Evidence: `evidence/h01-i-transfer/step1b-decision.json`,
+[result page](evidence/h01-i-transfer-result.md), runner output
+`evidence/h01-i-transfer/sp2-i-decision.json` (decision `untested` for the full-train arms,
+`gate_valid` false, `peak_method` interpolated).
 
 ## Y3. The PV candidate's spike train differs from the human recording
 
@@ -591,6 +627,28 @@ and the drive's boundary is still unidentified.
 | A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
 
 
+### Y3 reserve evaluation (2026-09-07, SP4 stage 1; leaves the post-trough drive row open)
+
+**Observed.** The single reserve evaluation, candidate `g-natg-axon15` (finalist flags
+plus axonal NaTg x1.5, somatic x1.1 retained; sha256 f4a2aa6c...), was launched once at
+22:38:45 UTC under the registered conditions (command-only input, 0.19 and 0.27 nA, x9
+mesh, CVode 1e-10, 1500 ms, image 9.0.2, kv3-phase-reference library). Both containers
+exited 139 (SIGSEGV) after 10.9 s and 8.3 s without a trace
+([decision](evidence/h01-i-reserve/stage-1-decision.json),
+[result](evidence/h01-i-reserve-result.md)). Container stderr was not retained by the
+runner. A toy-section check in the image shows the two NEURON calls the new scale loop
+makes (`psection`, `gbar_NaTg` setattr) succeed in isolation.
+
+**Reading.** No band was held or missed; the rejection clause could not be applied. The
+post-trough drive row stays **open** exactly as the stage-0 audit left it: narrowed to
+drive on the axon-first pathway, with axonal NaTg density untested as its carrier. Cap 1
+is spent by the launch; whether a crashed run counts is returned to the user.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| A | Axonal NaTg x1.5 as the post-trough drive, both inputs | no trace (rc 139 at 10.9 s and 8.3 s); untested | [decision](evidence/h01-i-reserve/stage-1-decision.json) |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
@@ -840,6 +898,38 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Qualification of the
 default profiles' firing and full numerical robustness remains open.
 
+### Y5 registered prediction for SP5 (2026-09-07, no observation yet)
+
+No run has been made; this block records what was predicted so that a miss can later be
+scored against it. Spec: [functional inhibition](specs/2026-09-07-h01-functional-inhibition.md);
+manifest `docs/evidence/h01-ie-inhibition-manifest.json` (cap 6 + 2, `prior_evaluations 0`).
+Stage 1 uses the current unpromoted profiles through the closing-restored I wrapper.
+
+**What is fixed before the runs.** E drive 0.6 nA constant from 0 ms, a stimulus choice
+derived from the W4 0.4 nA hold (tau_m 27.6 ms, R_in 78 MOhm from the two charging points;
+threshold -57 mV reached at 24 ms at 0.6 nA against 54 ms at 0.4 nA); registered alternate
+0.8 nA as the single permitted drive change. I: 1 nA, 3 ms pulses, one per control cycle,
+aimed at the cycle midpoint through the measured 6.78 ms pulse-to-spike latency. Decision
+limit: per-cycle range between arm 2 and its dt-halving partner x 2.95, floored at one step.
+
+**Registered predictions.**
+
+| Arm | Prediction | Rejection |
+| --- | --- | --- |
+| 1 disconnected | >= 3 E spikes in 300 ms, first between 20 and 60 ms; one I spike per pulse | < 3 E spikes: one drive change to 0.8 nA, then stop |
+| 2 literature receptor at the measured site `[2805, 0.93]` | soma IPSP magnitude < 0.05 mV; no E spike or cycle beyond the halving limit; site response 0.5 to 2 mV | soma >= 0.05 mV or any spike or cycle beyond the limit |
+| 3 the same receptor at the E soma (inferred perisomatic hypothesis) | soma IPSP magnitude >= 0.3 mV (27.6 pA x 102 MOhm = 2.82 mV steady bound; x 4.18/27.6 for a fast current on this membrane = 0.43 mV; x 15/20 for the interspike driving force = 0.32 mV) and at least one E spike delayed beyond the limit | soma < 0.05 mV: placement is rejected as the explanation of the W4 deficit |
+| 4 arm 2 at dt 0.0025 | same E spike count as arm 2; per-cycle ranges below 0.1 ms | count differs: numerically unresolved |
+
+**Gate.** Functional inhibition = one E spike shifted or one cycle lengthened beyond the limit,
+or an E spike count change. Both human tiers are not applicable (no human recording of this
+pair) and the decision JSON says so.
+
+**Status.** Y5 stays open on the measured pair; the W4 voltage response (0.008 mV at the soma,
+depolarising, no E spikes in either control) is the only direct observation so far. The
+placement question (whether the PV contact belongs perisomatically) remains the user's decision;
+SP5 measures both placements.
+
 ### Y4 under the usable-tier campaign (2026-09-07, supersedes the energetic-search statement)
 
 The energetic search closed Y4 as a structural FAIL: a perisomatic fit cannot make
@@ -1069,6 +1159,29 @@ as "9 of 166 shards scanned", a measured denominator that was previously unknown
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
+#### Y5 population, 2026-09-07: builder and the 12-cell construction check (SP8)
+
+Builder ([spec](specs/2026-09-07-h01-population-builder.md)): `make_h01_network` gains
+`include_isolated` (isolated cells from their soma-bearing largest component, soma output,
+no projections, fragments never joined), `control in {ei, e_only, i_only, disconnected}` with
+enabled and removed edges recorded, and `cells` with the order "incident cells, then isolated
+cells by ascending largest-component nodes". 36 unit tests, 100 % line coverage on
+`h01_network.py`.
+
+Observed ([12-cell build](evidence/h01-population-build-12.json),
+[page](evidence/h01-population-build-12.md); construction only, under load): the build
+**failed** at 332.6 s after 4 incident and 3 isolated cells were built, on isolated cell
+`2451406889`: a soma region interval on branch 162 evaluated to `(0.990, 1.0000000000000002)`
+and the region validator rejected the 2e-16 overshoot. Construction seconds, compartment count
+and peak RSS at 12 cells are therefore **untested** (649 MB at the failure point is a
+pre-discretization reading). Cause: rounding in interval evaluation meeting a strict bound;
+fixed by snapping ends within 1e-9 of the branch bounds, no physiology change. The SP1
+proportional projections (12 cells ~275 s / ~1.5 GB; 40 cells ~540 s / ~3.0 GB; 104 cells
+~2,800 s / ~15 GB) stay derived and unvalidated; the next SP8 step repeats the 12-cell
+construction check before 40 is approved. Isolated-cell construction itself is now observed on
+three cells of 1,540-3,499 nodes (1.5-2.2 s each), so the population path is exercised but
+not yet sized.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
@@ -1202,7 +1315,10 @@ biological uncertainty.
 - Y2: transfer of the full 1270 ms train and the other inputs at the copied
   mesh; whether equal counts also equal compartment placement on every branch.
   SP2 prediction registered 2026-09-07 (see the Y2 entry); the finalist I profile is
-  registered and alignment checks, the arms are untested.
+  registered and alignment checks. SP2 stopped 2026-09-07 as `time_level_open`: the peak
+  gate is not reachable at dt 0.005 or 0.0025 (first-order peak convergence, limit within
+  0.012 mV of CVode), timing gates valid; seven full-train arms untested pending a decision
+  on the peak gate, the fallback step, or the integration order.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
   train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one

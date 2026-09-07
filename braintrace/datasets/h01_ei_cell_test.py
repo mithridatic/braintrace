@@ -155,3 +155,16 @@ def test_calcium_mechanism_without_a_calcium_tuple_is_rejected():
     profile = replace(get_ei_profile("E"), regions=(("soma", 1., 4e-4, (("SK", 1e-3),), None),))
     with pytest.raises(ValueError, match="calcium"):
         _paint_profile(SimpleNamespace(paint=lambda *a, **k: None), profile, {"soma": AllRegion()})
+
+
+def test_rounded_interval_ends_snap_to_branch_bounds(imported):
+    regions = partition(imported)
+    rows = tuple((b, -1e-12 if lo == 0. else lo, 1.+2e-16 if hi == 1. else hi)
+                 for b, lo, hi in regions["axon"].evaluate(imported.morphology).intervals)
+    assert any(hi > 1. for _, _, hi in rows)  # The 12-cell build failure: 2451406889 branch 162 soma hi 1+2e-16.
+    regions["axon"] = _Region(_geometry_signature(imported.morphology), rows, "test")
+    intervals = _validate_regions(imported.morphology, regions, "I")
+    assert all(0. <= lo < hi <= 1. for _, lo, hi in intervals["axon"])
+    regions["axon"] = _Region(_geometry_signature(imported.morphology), tuple((b, lo, hi+1e-6) for b, lo, hi in rows), "test")
+    with pytest.raises(ValueError):
+        _validate_regions(imported.morphology, regions, "I")

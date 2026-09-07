@@ -1,0 +1,272 @@
+{
+  "spec": "docs/specs/2026-09-07-h01-transfer-isolation.md",
+  "prediction": "A1 passes every event at 0.19 and 0.27 nA against the CVode reference with max |rise error| <= 0.044 ms and equal counts; A0 fails on rise from event 7 as before; the 0.23 control behaves as 0.19/0.27.",
+  "rejection": "Any A1 event beyond its gate while the halving pair at the same mesh and dt is under half the gate on every event.",
+  "gate_valid": false,
+  "a1_passed": {
+    "a1-matched-019": false,
+    "a1-matched-027": false
+  },
+  "b1_passed": {
+    "b1-fixed-019": false,
+    "b1-fixed-027": false
+  },
+  "a0_passed": {
+    "a0-maxcv-027": false
+  },
+  "first_failed_event": {
+    "a1-matched-019": null,
+    "a1-matched-027": null
+  },
+  "decision": "untested",
+  "qualification": "Numerical transfer only on donor anatomy; identifies no channel cause and no human waveform validity.",
+  "scores": {
+    "r-braincell-matched-027": {
+      "passed": false,
+      "same_nonzero_event_count": true,
+      "reference_count": 3,
+      "actual_count": 3,
+      "first_failed_event": 1,
+      "max_abs_rise_error_ms": 0.017563471728635704,
+      "window_ms": [
+        270.0,
+        329.5
+      ],
+      "gate": {
+        "rise_crossing_ms": 0.1,
+        "peak_interpolated_voltage_mv": 0.1,
+        "time_above_threshold_ms": 0.01
+      },
+      "peak_method": "interpolated",
+      "events": [
+        {
+          "event": 1,
+          "reference_rise_ms": 281.19787171154786,
+          "actual_rise_ms": 281.20633711045025,
+          "errors": {
+            "rise_crossing_ms": 0.008465398902387733,
+            "peak_sample_voltage_mv": -0.45366066070014455,
+            "peak_interpolated_voltage_mv": -0.4348728656768799,
+            "time_above_threshold_ms": 0.0029424157181097144
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 2,
+          "reference_rise_ms": 297.55827708161945,
+          "actual_rise_ms": 297.5431376681573,
+          "errors": {
+            "rise_crossing_ms": -0.015139413462122775,
+            "peak_sample_voltage_mv": -0.43363744970297446,
+            "peak_interpolated_voltage_mv": -0.43427056074142456,
+            "time_above_threshold_ms": 0.0029577400994185155
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 3,
+          "reference_rise_ms": 314.5947576060975,
+          "actual_rise_ms": 314.5771941343689,
+          "errors": {
+            "rise_crossing_ms": -0.017563471728635704,
+            "peak_sample_voltage_mv": -0.43170021048125307,
+            "peak_interpolated_voltage_mv": -0.4322826862335205,
+            "time_above_threshold_ms": 0.0029571218721571313
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        }
+      ]
+    },
+    "r-braincell-matched-027-halfdt": {
+      "passed": false,
+      "same_nonzero_event_count": true,
+      "reference_count": 3,
+      "actual_count": 3,
+      "first_failed_event": 1,
+      "max_abs_rise_error_ms": 0.008749476518460142,
+      "window_ms": [
+        270.0,
+        329.5
+      ],
+      "gate": {
+        "rise_crossing_ms": 0.1,
+        "peak_interpolated_voltage_mv": 0.1,
+        "time_above_threshold_ms": 0.01
+      },
+      "peak_method": "interpolated",
+      "events": [
+        {
+          "event": 1,
+          "reference_rise_ms": 281.19787171154786,
+          "actual_rise_ms": 281.20204773648356,
+          "errors": {
+            "rise_crossing_ms": 0.004176024935702571,
+            "peak_sample_voltage_mv": -0.22312536724071208,
+            "peak_interpolated_voltage_mv": -0.22144949436187744,
+            "time_above_threshold_ms": 0.001482927522204136
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 2,
+          "reference_rise_ms": 297.55827708161945,
+          "actual_rise_ms": 297.55072684363967,
+          "errors": {
+            "rise_crossing_ms": -0.007550237979785379,
+            "peak_sample_voltage_mv": -0.22293274440554356,
+            "peak_interpolated_voltage_mv": -0.2231529951095581,
+            "time_above_threshold_ms": 0.0014823971972077743
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 3,
+          "reference_rise_ms": 314.5947576060975,
+          "actual_rise_ms": 314.58600812957906,
+          "errors": {
+            "rise_crossing_ms": -0.008749476518460142,
+            "peak_sample_voltage_mv": -0.2204403195316864,
+            "peak_interpolated_voltage_mv": -0.22135913372039795,
+            "time_above_threshold_ms": 0.0014840746733852939
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        }
+      ]
+    },
+    "r-neuron-fixed-027-halfdt": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "a0-maxcv-027": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "a1-matched-027": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "a1-matched-019": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "a1-matched-023": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "b1-fixed-027": {
+      "status": "untested",
+      "reason": "trace absent"
+    },
+    "b1-fixed-019": {
+      "status": "untested",
+      "reason": "trace absent"
+    }
+  },
+  "halving": {
+    "braincell_halving": {
+      "passed": false,
+      "same_nonzero_event_count": true,
+      "reference_count": 3,
+      "actual_count": 3,
+      "first_failed_event": 1,
+      "max_abs_rise_error_ms": 0.008813995210175563,
+      "window_ms": [
+        270.0,
+        329.5
+      ],
+      "gate": {
+        "rise_crossing_ms": 0.05,
+        "peak_interpolated_voltage_mv": 0.05,
+        "time_above_threshold_ms": 0.005
+      },
+      "peak_method": "interpolated",
+      "events": [
+        {
+          "event": 1,
+          "reference_rise_ms": 281.20633711045025,
+          "actual_rise_ms": 281.20204773648356,
+          "errors": {
+            "rise_crossing_ms": -0.004289373966685162,
+            "peak_sample_voltage_mv": 0.23053529345943247,
+            "peak_interpolated_voltage_mv": 0.21342337131500244,
+            "time_above_threshold_ms": -0.0014594881959055783
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 2,
+          "reference_rise_ms": 297.5431376681573,
+          "actual_rise_ms": 297.55072684363967,
+          "errors": {
+            "rise_crossing_ms": 0.007589175482337396,
+            "peak_sample_voltage_mv": 0.2107047052974309,
+            "peak_interpolated_voltage_mv": 0.21111756563186646,
+            "time_above_threshold_ms": -0.0014753429022107412
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 3,
+          "reference_rise_ms": 314.5771941343689,
+          "actual_rise_ms": 314.58600812957906,
+          "errors": {
+            "rise_crossing_ms": 0.008813995210175563,
+            "peak_sample_voltage_mv": 0.21125989094956665,
+            "peak_interpolated_voltage_mv": 0.21092355251312256,
+            "time_above_threshold_ms": -0.0014730471987718374
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_interpolated_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        }
+      ]
+    },
+    "neuron_halving": {
+      "status": "untested",
+      "passed": false
+    }
+  },
+  "inputs_sha256": {
+    "r-braincell-matched-027": "168ab9d36ee468556478de6aa719da0ff4160e950cf41b11318b596cc234f496",
+    "r-braincell-matched-027-halfdt": "7b4fdc4b5fe0f2e36a89335365f82fbafedba94bbdcd0554c361fe1c7c37739d"
+  },
+  "peak_method": "interpolated",
+  "reference_root": "..\\h01-braincell",
+  "reference_sha256": {
+    "027": "85a9b734b909fc4a719eb36e40112774d9bbb5e05c2896fb7fc265e386e097cb"
+  }
+}

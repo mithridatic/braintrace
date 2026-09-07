@@ -1,0 +1,269 @@
+{
+  "spec": "docs/specs/2026-09-07-h01-transfer-isolation.md",
+  "step": "SP2 step 1: BrainCell halving pair at the copied mesh, dt 0.005 / 0.0025 ms, 0.27 nA, 330 ms",
+  "date": "2026-09-07",
+  "profile_key": "finalist",
+  "profile_alignment": "aligned (runner --check-alignment)",
+  "interpreter": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+  "pythonpath": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-transfer",
+  "mesh_from": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-transfer\\docs\\evidence\\h01-i-energetic\\e-kv3-close2-027.json",
+  "mesh_from_sha256": "9ca3b3df00d1bc37f70511f7e5ffe39a2f57a5c490d3e628ea522001ab474ca6",
+  "runs": {
+    "r-braincell-matched-027": {
+      "status": "measured",
+      "dt_ms": 0.005,
+      "duration_ms": 330.0,
+      "wall_clock_s": 115.6,
+      "s_per_simulated_ms": 0.35,
+      "exit_code": 0,
+      "killed_at_watchdog": false,
+      "peak_working_set_bytes": 6418432,
+      "note": "wall clock includes interpreter start and XLA compile"
+    },
+    "r-braincell-matched-027-halfdt": {
+      "status": "measured",
+      "dt_ms": 0.0025,
+      "duration_ms": 330.0,
+      "wall_clock_s": 246.0,
+      "s_per_simulated_ms": 0.745,
+      "exit_code": 0,
+      "killed_at_watchdog": false,
+      "peak_working_set_bytes": 6418432,
+      "note": "wall clock includes interpreter start and XLA compile"
+    }
+  },
+  "halving_pair": {
+    "arms": [
+      "r-braincell-matched-027",
+      "r-braincell-matched-027-halfdt"
+    ],
+    "window_ms": [
+      270.0,
+      329.5
+    ],
+    "gate": {
+      "rise_crossing_ms": 0.05,
+      "peak_sample_voltage_mv": 0.05,
+      "time_above_threshold_ms": 0.005
+    },
+    "verdict": "time_level_open",
+    "passed": false,
+    "same_nonzero_event_count": true,
+    "reference_count": 3,
+    "actual_count": 3,
+    "first_failed_event": 1,
+    "max_abs_rise_error_ms": 0.008813995210175563,
+    "events": [
+      {
+        "event": 1,
+        "reference_rise_ms": 281.20633711045025,
+        "actual_rise_ms": 281.20204773648356,
+        "errors": {
+          "rise_crossing_ms": -0.004289373966685162,
+          "peak_sample_voltage_mv": 0.23053529345943247,
+          "time_above_threshold_ms": -0.0014594881959055783
+        },
+        "in_gate": {
+          "rise_crossing_ms": true,
+          "peak_sample_voltage_mv": false,
+          "time_above_threshold_ms": true
+        }
+      },
+      {
+        "event": 2,
+        "reference_rise_ms": 297.5431376681573,
+        "actual_rise_ms": 297.55072684363967,
+        "errors": {
+          "rise_crossing_ms": 0.007589175482337396,
+          "peak_sample_voltage_mv": 0.2107047052974309,
+          "time_above_threshold_ms": -0.0014753429022107412
+        },
+        "in_gate": {
+          "rise_crossing_ms": true,
+          "peak_sample_voltage_mv": false,
+          "time_above_threshold_ms": true
+        }
+      },
+      {
+        "event": 3,
+        "reference_rise_ms": 314.5771941343689,
+        "actual_rise_ms": 314.58600812957906,
+        "errors": {
+          "rise_crossing_ms": 0.008813995210175563,
+          "peak_sample_voltage_mv": 0.21125989094956665,
+          "time_above_threshold_ms": -0.0014730471987718374
+        },
+        "in_gate": {
+          "rise_crossing_ms": true,
+          "peak_sample_voltage_mv": false,
+          "time_above_threshold_ms": true
+        }
+      }
+    ]
+  },
+  "vs_neuron_finalist": {
+    "reference": "e-kv3-close2-027",
+    "reference_path": "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\docs\\evidence\\h01-i-energetic\\e-kv3-close2-027.npz",
+    "reference_sha256": "85a9b734b909fc4a719eb36e40112774d9bbb5e05c2896fb7fc265e386e097cb",
+    "reference_integration": "CVode atol 1e-10, nseg factor 9",
+    "window_ms": [
+      270.0,
+      329.5
+    ],
+    "gate": {
+      "rise_crossing_ms": 0.1,
+      "peak_sample_voltage_mv": 0.1,
+      "time_above_threshold_ms": 0.01
+    },
+    "dt_0.005": {
+      "passed": false,
+      "same_nonzero_event_count": true,
+      "reference_count": 3,
+      "actual_count": 3,
+      "first_failed_event": 1,
+      "max_abs_rise_error_ms": 0.017563471728635704,
+      "window_ms": [
+        270.0,
+        329.5
+      ],
+      "gate": {
+        "rise_crossing_ms": 0.1,
+        "peak_sample_voltage_mv": 0.1,
+        "time_above_threshold_ms": 0.01
+      },
+      "events": [
+        {
+          "event": 1,
+          "reference_rise_ms": 281.19787171154786,
+          "actual_rise_ms": 281.20633711045025,
+          "errors": {
+            "rise_crossing_ms": 0.008465398902387733,
+            "peak_sample_voltage_mv": -0.45366066070014455,
+            "time_above_threshold_ms": 0.0029424157181097144
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 2,
+          "reference_rise_ms": 297.55827708161945,
+          "actual_rise_ms": 297.5431376681573,
+          "errors": {
+            "rise_crossing_ms": -0.015139413462122775,
+            "peak_sample_voltage_mv": -0.43363744970297446,
+            "time_above_threshold_ms": 0.0029577400994185155
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 3,
+          "reference_rise_ms": 314.5947576060975,
+          "actual_rise_ms": 314.5771941343689,
+          "errors": {
+            "rise_crossing_ms": -0.017563471728635704,
+            "peak_sample_voltage_mv": -0.43170021048125307,
+            "time_above_threshold_ms": 0.0029571218721571313
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        }
+      ]
+    },
+    "dt_0.0025_supplementary": {
+      "passed": false,
+      "same_nonzero_event_count": true,
+      "reference_count": 3,
+      "actual_count": 3,
+      "first_failed_event": 1,
+      "max_abs_rise_error_ms": 0.008749476518460142,
+      "window_ms": [
+        270.0,
+        329.5
+      ],
+      "gate": {
+        "rise_crossing_ms": 0.1,
+        "peak_sample_voltage_mv": 0.1,
+        "time_above_threshold_ms": 0.01
+      },
+      "events": [
+        {
+          "event": 1,
+          "reference_rise_ms": 281.19787171154786,
+          "actual_rise_ms": 281.20204773648356,
+          "errors": {
+            "rise_crossing_ms": 0.004176024935702571,
+            "peak_sample_voltage_mv": -0.22312536724071208,
+            "time_above_threshold_ms": 0.001482927522204136
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 2,
+          "reference_rise_ms": 297.55827708161945,
+          "actual_rise_ms": 297.55072684363967,
+          "errors": {
+            "rise_crossing_ms": -0.007550237979785379,
+            "peak_sample_voltage_mv": -0.22293274440554356,
+            "time_above_threshold_ms": 0.0014823971972077743
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        },
+        {
+          "event": 3,
+          "reference_rise_ms": 314.5947576060975,
+          "actual_rise_ms": 314.58600812957906,
+          "errors": {
+            "rise_crossing_ms": -0.008749476518460142,
+            "peak_sample_voltage_mv": -0.2204403195316864,
+            "time_above_threshold_ms": 0.0014840746733852939
+          },
+          "in_gate": {
+            "rise_crossing_ms": true,
+            "peak_sample_voltage_mv": false,
+            "time_above_threshold_ms": true
+          }
+        }
+      ]
+    }
+  },
+  "derived_full_train_cost": {
+    "label": "derived",
+    "basis": "linear scaling of the measured 330 ms wall clock (includes fixed compile cost, so an upper bound)",
+    "full_1500ms_dt0.005_s": 525.0,
+    "full_1500ms_dt0.0025_s": 1118.0,
+    "over_15_min_dt0.005": false,
+    "over_15_min_dt0.0025": true
+  },
+  "inputs_sha256": {
+    "r-braincell-matched-027": "168ab9d36ee468556478de6aa719da0ff4160e950cf41b11318b596cc234f496",
+    "r-braincell-matched-027-halfdt": "7b4fdc4b5fe0f2e36a89335365f82fbafedba94bbdcd0554c361fe1c7c37739d"
+  },
+  "untested": [
+    "r-neuron-fixed-027-halfdt",
+    "a0-maxcv-027",
+    "a1-matched-027",
+    "a1-matched-019",
+    "a1-matched-023",
+    "b1-fixed-027",
+    "b1-fixed-019"
+  ],
+  "qualification": "Numerical transfer only on donor anatomy; identifies no channel cause and no human waveform validity."
+}
