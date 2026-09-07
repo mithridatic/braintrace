@@ -608,6 +608,28 @@ and the drive's boundary is still unidentified.
 | A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
 
 
+### Y3 reserve evaluation (2026-09-07, SP4 stage 1; leaves the post-trough drive row open)
+
+**Observed.** The single reserve evaluation, candidate `g-natg-axon15` (finalist flags
+plus axonal NaTg x1.5, somatic x1.1 retained; sha256 f4a2aa6c...), was launched once at
+22:38:45 UTC under the registered conditions (command-only input, 0.19 and 0.27 nA, x9
+mesh, CVode 1e-10, 1500 ms, image 9.0.2, kv3-phase-reference library). Both containers
+exited 139 (SIGSEGV) after 10.9 s and 8.3 s without a trace
+([decision](evidence/h01-i-reserve/stage-1-decision.json),
+[result](evidence/h01-i-reserve-result.md)). Container stderr was not retained by the
+runner. A toy-section check in the image shows the two NEURON calls the new scale loop
+makes (`psection`, `gbar_NaTg` setattr) succeed in isolation.
+
+**Reading.** No band was held or missed; the rejection clause could not be applied. The
+post-trough drive row stays **open** exactly as the stage-0 audit left it: narrowed to
+drive on the axon-first pathway, with axonal NaTg density untested as its carrier. Cap 1
+is spent by the launch; whether a crashed run counts is returned to the user.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| A | Axonal NaTg x1.5 as the post-trough drive, both inputs | no trace (rc 139 at 10.9 s and 8.3 s); untested | [decision](evidence/h01-i-reserve/stage-1-decision.json) |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
