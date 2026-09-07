@@ -149,3 +149,23 @@ def test_dry_run_writes_no_stderr_log(tmp_path):
     rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=True)
     assert rows[0]["stderr_tail"] == [] and rows[0]["stderr_log"] is None
     assert not list((tmp_path/"docs/evidence/h01-i-campaign").glob("*.stderr.log"))
+
+
+def test_container_stderr_is_persisted_for_every_input(tmp_path, monkeypatch):
+    """SP6d expectation ported: every input's stderr lands beside its report; bytes and None decode."""
+    import subprocess
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 139, stdout="", stderr="Segmentation fault" + chr(10))
+    monkeypatch.setattr(campaign.subprocess, "run", fake_run)
+    manifest = _manifest()
+    rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=False)
+    assert [r["returncode"] for r in rows] == [139, 139]
+    folder = tmp_path/"docs/evidence/h01-i-campaign"
+    assert (folder/"c0-019.stderr.log").read_text(encoding="utf-8").startswith("Segmentation fault" + chr(10))
+    assert (folder/"c0-027.stderr.log").exists()
+    assert rows[1]["stderr_tail"] == ["Segmentation fault"]
+    assert campaign.persist_container_output(folder, "c0-z", None, None) == []
+    assert (folder/"c0-z.stderr.log").exists()
+    assert campaign.persist_container_output(folder, "c0-y", b"out", b"bytes") == ["bytes"]
+    assert (folder/"c0-y.stderr.log").read_text(encoding="utf-8").startswith("bytes")

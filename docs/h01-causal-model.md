@@ -1285,6 +1285,70 @@ mechanisms, and the transfer waits only for the SP2 matched-mesh gate on its own
 stays **open** with two donors imported and type-matched and neither reproduced in this
 project's solver. The donor cap of two is reached.
 
+### Y6 first donor, HL5MN1, reproduction run (SP6d, 2026-09-07; 4 runs, cap 4, all rc 0)
+
+Observation (`evidence/h01-sst-reproduction.json`, decision
+`evidence/h01-donors/stage-hl5mn1-decision.json`, runner wall clocks 7.3 / 14.2 / 11.9 / 26.0 s,
+total 59.4 s, every container stderr empty):
+
+- 100 pA (sweep 44): model 16 spikes at dt 0.025 and at dt 0.0125 ms; Allen 14, repeat band 12-14.
+  Count off by 2: **rejected**, repeat row missed. First -20 mV crossing 26.97 ms after onset
+  (pair 26.92 ms, limit 0.134 ms) against 24.16 ms: missed.
+- 150 pA (sweep 35): model 30 at both steps; Allen 34. Off by 4: **rejected**. First crossing
+  16.04 ms (pair 16.00, limit 0.113 ms) against 13.0 ms: missed.
+- Every trace finite; dt pair agrees on both counts, so the time level is closed for the count.
+- Usable tier on the donor's own recordings (`evidence/h01-sst-reproduction/source-usable.md`, the
+  dt-half run gives the same verdict multiset): 100 pA rate fail (16.0 vs 13.4 Hz, limit 2.0),
+  adaptation pass, width 14/14 fail (model 0.57 ms vs human 0.38-0.44 ms), AHP 11 fail / 3 pass
+  (model troughs -74 to -75 mV, human -71 to -74 mV), count pass under the repeat limit 2.94, first
+  spike (peak convention) fail; 150 pA rate pass, adaptation pass, width 30/30 fail, AHP 28 fail / 2 pass.
+
+Conditions: `biophys_HL5MN1.hoc` unmodified, `NeuronTemplate.hoc` with `delete_axon(3,1.75,1,1)`,
+eleven mod files compiled in `braintrace-h01-neuron:9.0.2`, 34 C, initial -81.5 mV (the hoc
+`e_pas`), command-only step 270-1270 ms (held 43.28 / 52.72 pA not injected), 1500 ms, nseg factor 1,
+fixed step.
+
+Closes: the prediction "the published HL5MN1 fit reproduces its Allen counts under these
+conditions" is rejected on both inputs; the numerical time level for the count is closed by the
+agreeing pair. Narrows: the model is too fast at 100 pA and too slow at 150 pA with a wide spike
+(0.57 vs 0.4 ms) and a later first spike at both inputs, so a single gain scaling cannot carry
+both counts. Open: which unchanged condition carries the difference (initial state from `e_pas`
+versus a held -77 mV, the held bias, the template axon, the kinetic shifts the published fit
+assumed in its own build) is a new registration; the donor enters the population type-matched
+with the printed labels, not as a reproduced physiology.
+
+### Y6 second donor, Allen 527952884, reproduction run (SP6d, 2026-09-07; 4 runs, cap 4, all rc 0)
+
+Observation (`evidence/h01-l4-reproduction.json`, decision
+`evidence/h01-donors/stage-allen-l4-decision.json`, runner wall clocks 38.2 / 30.9 / 69.9 / 55.5 s,
+total 194.4 s, every container stderr empty):
+
+- Sweep 69 (100 pA, 2 s, the fit sweep): model 19 spikes at dt 0.005 and 0.0025 ms; Allen 20,
+  repeat band 17-20. Prediction (exact) missed within one, rejection not met, repeat row **held**.
+  First -20 mV crossing 33.74 ms after onset (pair 33.74, limit 0.0047 ms) against 32.18 ms: missed
+  by 1.56 ms, far outside any numerical spread.
+- Sweep 39 (90 pA, 1 s, not a fit sweep): model 8 at both steps; Allen 12. Off by 4: **rejected**.
+  First crossing 39.60 ms (pair 39.60, limit 0.0044 ms) against 33.88 ms: missed by 5.7 ms.
+- Every trace finite and ending at the requested stop (3520 / 2520 ms); dt pair agrees on both counts.
+- Usable tier (`evidence/h01-l4-reproduction/source-usable.md`, dt-half identical multiset): 100 pA
+  rate pass (9.2 vs 10.4 Hz, limit 1.55), adaptation fail (1.38 vs 2.02), width 19/19 fail (model
+  0.97 ms vs human 0.67-0.80 ms), AHP 19 unresolvable (human repeat spread 1.06 mV over half the 2 mV
+  limit), count pass, first spike pass under the repeat limit 6.2 ms; 90 pA rate fail (7.7 vs 12.6 Hz),
+  adaptation fail (1.22 vs 2.50), width 8/8 fail, AHP 8 unresolvable.
+
+Conditions: `527952884_fit.json` unmodified (sha256 `1aa0e2c5...`), eleven genome mod files compiled
+in the container, 34 C, `v_init` -80.818 mV, recorded command waveform played from 0 ms with the held
+bias (-16.73 / +2.33 pA) not injected, two 30 um x 1 um axon sections, nseg factor 1, fixed step.
+
+Closes: the exact-count prediction is rejected at the unfitted input and missed by one at the fit
+input; the numerics are closed for both counts and to 0.002 ms for the first spike. Narrows: the fit
+sweep lands inside the human repeat band while the lower input loses a third of its spikes and its
+first spike arrives 5.7 ms late, so the difference is an input-response (rheobase-side gain) effect,
+not a timing or count offset that holds across inputs; adaptation is too flat at both inputs. Open:
+whether the held bias, the initial state or the axon replacement carries the low-input miss is a new
+registration; BrainCell transfer still waits on the SP2 matched-mesh gate. The donor enters the
+population type-matched with the printed labels.
+
 ## Measurement function qualification
 
 The simulation is the measurement function. Its numerical error must be small
@@ -1355,9 +1419,11 @@ biological uncertainty.
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
-- Y6: the HL5MN1 reproduction (registered, untested) and the kinetic-shift parameters the
-  `H01PV_*` channels need before the donor can be transferred to BrainCell; the Allen 527952884
-  L4 reproduction (registered, untested; manifest `h01-l4-reproduction-manifest.json`).
+- Y6: both imported donors were run once (SP6d, 2026-09-07) and their published fits do not
+  reproduce their own Allen counts under this project's conditions (HL5MN1 16/30 for 14/34;
+  Allen 527952884 19/8 for 20/12); which unchanged condition carries each difference is
+  unsplit, and the kinetic-shift parameters the `H01PV_*` channels need for the HL5MN1
+  BrainCell transfer remain unimplemented.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.
