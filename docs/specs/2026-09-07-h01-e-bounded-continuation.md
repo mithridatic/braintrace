@@ -39,3 +39,28 @@ usable row except rate passes is unsupported. Its 250 pA claims refer to an
 earlier profile. The population page also calls a stopped scan running.
 Avoid repeating these errors by deriving summaries from per-input row verdicts
 and identifying the exact candidate flags used for each result.
+
+## Driver release-path repair
+
+The first P2 launch returned argparse exit 2 before integration: the exporter
+supports a registered sweep55 release, but the driver still permits only
+43/50/53. The waveform has been exported after prediction registration; the
+failed launch is not a model evaluation and is retained in the campaign log.
+
+Repair only the driver input guard: include 55 in supported choices and apply
+h01_l2_sweep_export.sealed_reason after CLI/candidate defaults resolve, before
+source files are read. The driver must still reject 55 without its prediction,
+including when supplied through candidate JSON; unknown sweeps stay rejected.
+Use sibling driver tests to reproduce registered-55 rejection before the fix,
+then test sealed CLI/default paths and old input acceptance. No numerical model,
+parameter, input array, or solver changes. Retry the same frozen P2 prediction.
+
+Prevention: future holdout release checks must test exporter and simulator
+entry points together before opening the source waveform.
+
+The seal reuse initially exposed a container dependency boundary: h5py is installed
+on the export host but absent from the NEURON image. A regression test reproduced
+that import failure; h5py now imports only inside export_sweep. Driver --help was
+verified in the actual pinned image before the successful P2 retry. Both failed
+launches exited before integration and remain in the campaign log. Future driver
+changes must include this lightweight actual-image startup check.

@@ -21,7 +21,7 @@ import pytest
     ("--sodium-opening-factor", "0"), ("--sodium-opening-factor", "nan"),
     ("--sodium-opening-factor", "-1"), ("--sodium-opening-factor", "inf"),
     ("--sodium-density-factor", "0"), ("--sodium-density-factor", "nan"),
-    ("--sweep", "54"), ("--sweep", "55"), ("--sweep", "0"),
+    ("--sweep", "54"), ("--sweep", "0"),
     ("--ih-density-factor", "0"), ("--ih-density-factor", "nan"),
     ("--leak-factor", "0"), ("--leak-factor", "nan"),
     ("--leak-reversal-shift-mv", "nan"), ("--leak-reversal-shift-mv", "inf"),
@@ -66,3 +66,60 @@ def test_candidate_json_sets_defaults_and_rejects_unknown_names(monkeypatch, tmp
     with pytest.raises(SystemExit) as error:
         runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
     assert error.value.code == 2 and "not_a_flag" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("sweep", [43, 50, 53, 54, 55])
+@pytest.mark.parametrize("registered", [False, True])
+@pytest.mark.parametrize("from_candidate", [False, True])
+def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
+                                       sweep, registered, from_candidate):
+    """Registered inputs reach source loading; sealed 55 stops before it."""
+    import json
+
+    folder = Path(__file__).parent
+    monkeypatch.syspath_prepend(str(folder))
+    import h01_l2_sweep_export as exporter
+
+    monkeypatch.setattr(exporter, "EVIDENCE", tmp_path)
+    if registered:
+        (tmp_path / "h01-prediction-e2.json").write_text("{}")
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+    argv = ["reference", "--cache", str(tmp_path / "absent"),
+            "--output", str(tmp_path / "out")]
+    if from_candidate:
+        candidate = tmp_path / "candidate.json"
+        candidate.write_text(json.dumps({"sweep": sweep}))
+        argv += ["--candidate-json", str(candidate)]
+    else:
+        argv += ["--sweep", str(sweep)]
+    monkeypatch.setattr(sys, "argv", argv)
+    if sweep == 54:
+        with pytest.raises(SystemExit) as error:
+            runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
+        assert error.value.code == 2
+    elif sweep == 55 and not registered:
+        with pytest.raises(SystemExit) as error:
+            runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
+        assert error.value.code == 2
+        assert "sealed until h01-prediction-e2.json" in capsys.readouterr().err
+    else:
+        with pytest.raises(FileNotFoundError, match="541563728_fit.json"):
+            runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
+
+
+def test_driver_help_does_not_require_nwb_export_dependency(monkeypatch, capsys):
+    """The simulation image reads NPZ and need not install h5py for the seal."""
+    folder = Path(__file__).parent
+    monkeypatch.syspath_prepend(str(folder))
+    monkeypatch.delitem(sys.modules, "h01_l2_sweep_export", raising=False)
+    monkeypatch.setitem(sys.modules, "h5py", None)
+    fake_neuron = types.ModuleType("neuron")
+    fake_neuron.h = object()
+    monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
+    monkeypatch.setattr(sys, "argv", ["reference", "--help"])
+    with pytest.raises(SystemExit) as error:
+        runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
+    assert error.value.code == 0
+    assert "55" in capsys.readouterr().out

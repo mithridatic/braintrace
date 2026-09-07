@@ -10,7 +10,6 @@ import argparse
 import json
 from pathlib import Path
 
-import h5py
 import numpy as np
 
 JUNCTION_MV = -14.
@@ -28,6 +27,8 @@ def sealed_reason(sweep, evidence=None):
 
 def export_sweep(cache, sweep):
     """Arrays of one sweep in the driver's waveform format."""
+    import h5py
+
     index = {row["sweep"]: row for row in json.loads((cache/"long-square-index.json").read_text())}
     entry = index[f"Sweep_{sweep}"]
     with h5py.File(cache/"recording.nwb", "r") as nwb:
