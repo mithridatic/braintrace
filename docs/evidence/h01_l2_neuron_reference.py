@@ -20,7 +20,7 @@ from h01_l2_leak_reversal import shift_leak_reversal
 from h01_l2_recording import right_limit_recording
 from h01_l2_regional_density import REGIONS, parse_regional_density, regional_density_fit
 from h01_l2_insert_density import insert_density_fit, parse_insert_density
-from h01_l2_sweep_export import sealed_reason
+from h01_l2_sweep_export import DRIVER_SWEEPS, sealed_reason
 
 
 def parse_capacitance_factor(text):
@@ -76,7 +76,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--sweep", type=int, choices=(43, 50, 53, 55), default=50)
+    parser.add_argument("--sweep", type=int, choices=DRIVER_SWEEPS, default=50)
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--include-recorded-bias", action="store_true")
     parser.add_argument("--nseg-factor", type=int, default=1)
@@ -113,7 +113,7 @@ def main():
         candidate_record = {"file": preliminary.candidate_json.name, "values": candidate_values,
                             "sha256": hashlib.sha256(preliminary.candidate_json.read_bytes()).hexdigest()}
     args = parser.parse_args()
-    if args.sweep not in (43, 50, 53, 55):
+    if args.sweep not in DRIVER_SWEEPS:
         parser.error("Unsupported sweep in candidate settings.")
     reason = sealed_reason(args.sweep)
     if reason:
