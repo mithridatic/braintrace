@@ -98,3 +98,9 @@ I_SOURCE = (('soma',
  ('dend', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None),
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
 
+
+# Density tables by donor key (see h01_cell_types.DONORS) and mode.
+DONOR_REGIONS = {
+    "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE},
+    "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE},
+}
