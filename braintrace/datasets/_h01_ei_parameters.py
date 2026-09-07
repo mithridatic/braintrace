@@ -99,8 +99,42 @@ I_SOURCE = (('soma',
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
 
 
+# HL5MN1 (Yao 2022 HL23SST) published fit, parsed from biophys_HL5MN1.hoc by
+# docs/evidence/h01_sst_parameters.py; no candidate exists, so both modes are the source.
+SST_L3_HL5MN1_SOURCE = (('soma',
+  1.0,
+  2.32e-05,
+  (('NaTg', 0.127),
+   ('K_P', 0.0111),
+   ('K_T', 0.0),
+   ('Kv3_1', 0.871),
+   ('Im', 0.000158),
+   ('SK', 0.0),
+   ('Ca_HVA', 0.00355),
+   ('Ca_LVA', 0.00314),
+   ('Ih', 4.31e-05)),
+  (465.0, 0.0005)),
+ ('axon',
+  1.0,
+  2.32e-05,
+  (('NaTg', 0.343),
+   ('Nap', 0.000444),
+   ('K_P', 0.0295),
+   ('K_T', 0.023),
+   ('Kv3_1', 0.984),
+   ('Im', 0.000317),
+   ('SK', 0.00113),
+   ('Ca_HVA', 0.00145),
+   ('Ca_LVA', 0.0627),
+   ('Ih', 1e-05)),
+  (469.0, 0.0005)),
+ ('dend', 1.0, 2.32e-05, (('Ih', 9.49e-05),), None),
+ ('apic', 1.0, 2.32e-05, (('Ih', 1e-05),), None))
+
+
 # Density tables by donor key (see h01_cell_types.DONORS) and mode.
 DONOR_REGIONS = {
     "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE},
     "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE},
+    "l3-sst-interneuron-hl5mn1": {"candidate": SST_L3_HL5MN1_SOURCE, "source": SST_L3_HL5MN1_SOURCE},
 }

@@ -23,8 +23,11 @@ def test_donor_match_names_each_mismatch():
     assert module.donor_match(module.cell_type(["L2", "excitatory/spiny-with-atypical-tree", "neuron"]))["match"] == "class"
     assert module.donor_match(module.cell_type(["L4", "pyramidal", "sparsely-spiny", "neuron"]))["match"] == "layer, modifier"
     plain = module.donor_match(module.cell_type(["L5", "interneuron", "neuron"]))
-    assert plain["match"] == "matched" and "parvalbumin donor is assumed" in plain["note"]
-    assert module.donor_match(module.cell_type(["L3", "interneuron", "neuron"]))["donor"] == "h01-pv-regional-mesh-axon2187"
+    assert plain["match"] == "matched" and "parvalbumin basket donor is assumed" in plain["note"]
+    sst = module.donor_match(module.cell_type(["L3", "interneuron", "neuron"]))
+    assert sst["donor"] == "h01-sst-l3-hl5mn1" and sst["match"] == "matched"
+    assert "putative SST" in sst["note"] and "parvalbumin" not in sst["note"]
+    assert module.donor_match(module.cell_type(["L2", "interneuron", "neuron"]))["donor"] == "h01-pv-regional-mesh-axon2187"
 
 
 def test_type_rows_keep_cell_ids_and_lists():
@@ -35,10 +38,11 @@ def test_type_rows_keep_cell_ids_and_lists():
 
 
 E_KEY, I_KEY = "l2-pyramidal-allen-541563728", "l5-pv-basket-hl5bn1"
+SST_KEY = "l3-sst-interneuron-hl5mn1"
 
 
 def test_registry_keys_and_polarity_view():
-    assert set(module.DONORS) == {E_KEY, I_KEY}
+    assert set(module.DONORS) == {E_KEY, I_KEY, SST_KEY}
     assert module.DEFAULT_DONOR_KEYS == {"E": E_KEY, "I": I_KEY}
     assert module.DONORS_BY_POLARITY == {"E": module.DONORS[E_KEY], "I": module.DONORS[I_KEY]}
     e, i = module.DONORS[E_KEY], module.DONORS[I_KEY]
@@ -67,7 +71,7 @@ def test_donor_for_precedence_with_extended_registry(monkeypatch):
     assert module.donor_for(module.cell_type(["L4", "pyramidal", "bipolar", "neuron"])) == "l4-pyramidal-x"
     assert module.donor_for(module.cell_type(["L4", "pyramidal", "neuron"])) == "l4-pyramidal-x"
     assert module.donor_for(module.cell_type(["L2", "excitatory/spiny-with-atypical-tree", "neuron"])) == "l6-atypical-x"
-    assert module.donor_for(module.cell_type(["L3", "interneuron", "neuron"])) == I_KEY
+    assert module.donor_for(module.cell_type(["L3", "interneuron", "neuron"])) == SST_KEY
     assert module.donor_for(module.cell_type(["L3", "interneuron", "bipolar", "neuron"])) == "l3-bipolar-int-x"
     assert module.donor_for(module.cell_type(["L5", "pyramidal", "neuron"])) == E_KEY
     assert module.DEFAULT_DONOR_KEYS == {"E": E_KEY, "I": I_KEY}
@@ -87,3 +91,19 @@ def test_donor_match_reports_donor_key_with_unchanged_shape():
     assert row["donor_key"] == E_KEY and row["donor"] == "h01-l2-kv3-ninety-ca133" and row["match"] == "layer"
     rows = module.type_rows([{"cell_id": "9", "tags": ["L5", "interneuron", "neuron"]}])
     assert rows[0]["donor_key"] == I_KEY
+
+
+def test_sst_donor_resolves_l3_interneurons_only():
+    """The HL5MN1 record takes L3 interneurons without modifiers; every other interneuron stays on HL5BN1."""
+    sst = module.DONORS[SST_KEY]
+    assert (sst["layer"], sst["cell_class"], sst["modifiers"], sst["polarity"]) == ("L3", "interneuron", (), "I")
+    assert (sst["channel_prefix"], sst["sodium_reversal_mv"], sst["potassium_reversal_mv"]) == ("H01PV", 50., -85.)
+    assert sst["subtype"] == "unknown (putative SST)"
+    assert module.donor_for(module.cell_type(["L3", "interneuron", "neuron"])) == SST_KEY
+    # Rule 2 of the precedence: a (layer, class) donor without modifiers takes the modified L3 type too.
+    assert module.donor_for(module.cell_type(["L3", "interneuron", "bipolar", "neuron"])) == SST_KEY
+    assert module.donor_match(module.cell_type(["L3", "interneuron", "bipolar", "neuron"]))["match"] == "modifier"
+    for layer in ("L1", "L2", "L4", "L5", "L6"):
+        assert module.donor_for(module.cell_type([layer, "interneuron", "neuron"])) == I_KEY
+    assert module.donor_for_tags(("L3", "interneuron", "neuron"), "I") == SST_KEY
+    assert module.DEFAULT_DONOR_KEYS["I"] == I_KEY and module.DONORS_BY_POLARITY["I"] is module.DONORS[I_KEY]

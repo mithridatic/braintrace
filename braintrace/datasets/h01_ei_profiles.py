@@ -54,7 +54,14 @@ _PHYSIOLOGY = {
         source="ModelDB 267587 HL5BN1; commit 82cdd91bc93942ba19315371330a2412e064baf5",
         initial_mv=-80., axial_ohm_cm=100.,
         reversal_mv={"candidate": -96.97510324827309, "source": -96.97510324827309}),
+    "l3-sst-interneuron-hl5mn1": dict(
+        digest="a9ce264f2733104ceb457d519678f447cb277db2dda7cedf0a0cc38fb6ffb0f4",
+        source="ModelDB 267587 HL5MN1 (= Yao 2022 HL23SST); agmccrei/HumanL5Circuit_AGM2022 commit dd472f19a0d1bfbbba59677cfd82c6e9f8a80590; Allen specimen 571700636",
+        initial_mv=-81.5, axial_ohm_cm=100.,
+        reversal_mv={"candidate": -81.5, "source": -81.5}),
 }
+# Donors whose candidate mode carries phase controls in ``channel_controls``; others get none.
+_CONTROLLED = {"h01-l2-kv3-ninety-ca133": "E", "h01-pv-regional-mesh-axon2187": "I"}
 _LIMITATIONS = ("Borrowed donor and mechanisms; not measured H01 physiology.",
                 "Candidate selection is not physiological qualification.",
                 "E onset and rising-phase errors remain; I early intervals remain too short.")
@@ -130,11 +137,13 @@ def channel_controls(profile, family, mechanism):
     Returns
     -------
     dict
-        Constructor keywords. Empty for unchanged source mechanisms.
+        Constructor keywords. Empty for source mechanisms and for donors
+        without a candidate (the HL5MN1 import).
     """
-    if profile.mode == "source":
+    family_of_controls = _CONTROLLED.get(profile.name.split(":")[0])
+    if profile.mode == "source" or family_of_controls is None:
         return {}
-    if profile.polarity == "E":
+    if family_of_controls == "E":
         if mechanism == "NaTs":
             return {"m_open": 2.}
         if mechanism == "Kv3_1":

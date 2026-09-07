@@ -99,3 +99,29 @@ def test_donor_profile_by_key_matches_polarity_alias():
 def test_unknown_donor_key_or_mode_fails(key, mode):
     with pytest.raises(ValueError):
         get_donor_profile(key, mode=mode)
+
+
+SST_KEY = "l3-sst-interneuron-hl5mn1"
+
+
+@pytest.mark.parametrize("mode", ["candidate", "source"])
+def test_sst_donor_profile_is_the_published_fit_in_both_modes(mode):
+    p = get_donor_profile(SST_KEY, mode=mode)
+    assert p.name == "h01-sst-l3-hl5mn1:"+mode+":v1" and p.polarity == "I"
+    assert (p.initial_mv, p.reversal_mv, p.axial_ohm_cm) == (-81.5, -81.5, 100.)
+    assert p.regions is parameters.SST_L3_HL5MN1_SOURCE
+    assert (p.channel_prefix, p.sodium_reversal_mv, p.potassium_reversal_mv) == ("H01PV", 50., -85.)
+    assert p.metadata_sha256 == "a9ce264f2733104ceb457d519678f447cb277db2dda7cedf0a0cc38fb6ffb0f4"
+    acquisition = Path(__file__).resolve().parents[2]/"docs/evidence/h01-sst-acquisition.json"
+    assert json.loads(acquisition.read_text())["files"]["biophys_HL5MN1.hoc"]["sha256"] == p.metadata_sha256
+    for family in ("soma", "axon", "dend", "apic"):
+        for mechanism in ("NaTg", "Kv3_1", "Ih"):
+            assert channel_controls(p, family, mechanism) == {}
+
+
+def test_pv_candidate_controls_are_unchanged_by_the_third_donor():
+    candidate = get_ei_profile("I")
+    assert channel_controls(candidate, "soma", "NaTg") == {"h_close": .15, "h_open": 1., "h_slope": 5.}
+    assert channel_controls(candidate, "soma", "Kv3_1") == {"m_open": .5, "m_close": .5}
+    assert channel_controls(get_ei_profile("E"), "soma", "NaTs") == {"m_open": 2.}
+    assert channel_controls(get_ei_profile("E"), "soma", "Kv3_1") == {"m_close": .9}

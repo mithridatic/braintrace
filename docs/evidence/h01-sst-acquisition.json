@@ -1,0 +1,664 @@
+{
+  "donor": "HL5MN1 (= Yao 2022 HL23SST); Allen specimen 571700636, MTG layer 3, aspiny; subtype unknown (putative SST)",
+  "licence": "GPL-3.0 (agmccrei/HumanL5Circuit_AGM2022 LICENSE)",
+  "repository_commits": {
+    "agmccrei/HumanL5Circuit_AGM2022": "dd472f19a0d1bfbbba59677cfd82c6e9f8a80590",
+    "KantYao/Human-L2-3-Cortical-Microcircuit": "4b970fb5881929d192691e68a2a146c2e97766f6"
+  },
+  "files": {
+    "biophys_HL5MN1.hoc": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/models/biophys_HL5MN1.hoc",
+      "sha256": "a9ce264f2733104ceb457d519678f447cb277db2dda7cedf0a0cc38fb6ffb0f4",
+      "bytes": 2776
+    },
+    "NeuronTemplate.hoc": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/models/NeuronTemplate.hoc",
+      "sha256": "e4a044e727dc52103c88da6599df767f08d925323e799849599171f1a235fe21",
+      "bytes": 6264
+    },
+    "HL5MN1.swc": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/morphologies/HL5MN1.swc",
+      "sha256": "05da7070491406046b2e02e965d28715561c0cb21bccb3a76089ca5004d51892",
+      "bytes": 1275898
+    },
+    "LICENSE": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/LICENSE",
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "bytes": 35149
+    },
+    "biophys_HL23SST.hoc": {
+      "url": "https://raw.githubusercontent.com/KantYao/Human-L2-3-Cortical-Microcircuit/4b970fb5881929d192691e68a2a146c2e97766f6/L23Net/models/biophys_HL23SST.hoc",
+      "sha256": "d4cfe6c06577b3d2f479873f9b14eed8ae2b64fe9174f9560ef9781974817852",
+      "bytes": 2777
+    },
+    "571700636_fit.json": {
+      "url": "https://api.brain-map.org/api/v2/well_known_file_download/626185239",
+      "sha256": "a98eddd5f3f2c014002beb5f2f9ec5a0b3f92b1a04868196beab34aac561839d",
+      "bytes": 2691
+    },
+    "571700399_ephys.nwb": {
+      "url": "http://api.brain-map.org/api/v2/well_known_file_download/618228061",
+      "sha256": "218aa144e2e3b63dbcb3fe57072572a7e305a89a57b69ddb36618a4ed9d5c45b",
+      "bytes": 16422444
+    },
+    "mod/CaDynamics.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/CaDynamics.mod",
+      "sha256": "0d73101cf3b8266e335ca9178ca2f4bc4f83444a0d37d3ff217a844644da84ee",
+      "bytes": 705
+    },
+    "mod/Ca_HVA.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Ca_HVA.mod",
+      "sha256": "48a6ba64fc1650140403941b130ec8eb5ce221e9982956b2da81956d249e070d",
+      "bytes": 992
+    },
+    "mod/Ca_LVA.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Ca_LVA.mod",
+      "sha256": "1ffc6be5cd95a0acf116f621be51675152672c2c8898bef06a752dab68fba683",
+      "bytes": 1048
+    },
+    "mod/Ih.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Ih.mod",
+      "sha256": "c9847e478a6a45d5c8e7d7d0ecac4498679fb221a2622185d973002c1312c43e",
+      "bytes": 1035
+    },
+    "mod/Im.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Im.mod",
+      "sha256": "19b28d129d9575b89d8f0272f793d2e775ac2579697bc079fafacc58955feba6",
+      "bytes": 839
+    },
+    "mod/K_P.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/K_P.mod",
+      "sha256": "80091c19ba67bc0eeec989558387d8b96e409642f8ca97c6dc0143e905d4ebb2",
+      "bytes": 1184
+    },
+    "mod/K_T.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/K_T.mod",
+      "sha256": "2f3de2b4c09a2e93e5a4638fadabd6eafe37fecab8b8f5f01d37b33b168be0c9",
+      "bytes": 1072
+    },
+    "mod/Kv3_1.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Kv3_1.mod",
+      "sha256": "89611e80e59a3b92c58d84897ce2c725d59eeb168aed3827a80c935a3ff1c525",
+      "bytes": 743
+    },
+    "mod/NaTg.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/NaTg.mod",
+      "sha256": "24ad05639111953f27367df1b3ae6e7a7dd1d9055a79773fae325f37becf7de2",
+      "bytes": 1264
+    },
+    "mod/Nap.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/Nap.mod",
+      "sha256": "65e8e31b202143d69b741a70afdd34f6b5439b24243bf79e751bcb76fdef901e",
+      "bytes": 1376
+    },
+    "mod/SK.mod": {
+      "url": "https://raw.githubusercontent.com/agmccrei/HumanL5Circuit_AGM2022/dd472f19a0d1bfbbba59677cfd82c6e9f8a80590/L5Circuit/default_circuit/mod/SK.mod",
+      "sha256": "c56e313729efec19040995b4ea9ffbb5eaba3d51c5468b9b6ab15934d18e4fd4",
+      "bytes": 923
+    }
+  },
+  "verification_1_hoc_identity": {
+    "identical_parameters": true,
+    "differing_lines": [
+      [
+        "proc biophys_HL5MN1(){",
+        "proc biophys_HL23SST(){"
+      ]
+    ]
+  },
+  "verification_2_nwb": {
+    "http": "200, Content-Disposition 571700399_ephys.nwb",
+    "pipeline": [
+      "pipeline",
+      "IVSCC",
+      "version",
+      "1.0"
+    ],
+    "specimen_id": 571700636,
+    "specimen_name": "H17.06.006.11.09.05",
+    "sweeps": [
+      {
+        "sweep": 4,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": -9.940232664762405
+      },
+      {
+        "sweep": 5,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": -0.3774771565202145
+      },
+      {
+        "sweep": 6,
+        "stimulus": "Ramp",
+        "amplitude_pa": 800.000010681146,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1701000,
+        "bias_current_pa": 7.234979542553033
+      },
+      {
+        "sweep": 7,
+        "stimulus": "Short Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 14.029570040430261
+      },
+      {
+        "sweep": 8,
+        "stimulus": "Short Square",
+        "amplitude_pa": 200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 14.029570040430261
+      },
+      {
+        "sweep": 9,
+        "stimulus": "Short Square",
+        "amplitude_pa": 299.999997066536,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 16.608997163714
+      },
+      {
+        "sweep": 10,
+        "stimulus": "Short Square",
+        "amplitude_pa": 400.000005340573,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 16.608997163714
+      },
+      {
+        "sweep": 11,
+        "stimulus": "Short Square",
+        "amplitude_pa": 499.999985859034,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 18.936770554423
+      },
+      {
+        "sweep": 12,
+        "stimulus": "Short Square",
+        "amplitude_pa": 450.000009477591,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 21.075809500392673
+      },
+      {
+        "sweep": 13,
+        "stimulus": "Short Square",
+        "amplitude_pa": 469.999983376823,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 25.731361485981097
+      },
+      {
+        "sweep": 14,
+        "stimulus": "Short Square",
+        "amplitude_pa": 489.999985031631,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 27.80748721564752
+      },
+      {
+        "sweep": 15,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 27.80748721564752
+      },
+      {
+        "sweep": 16,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 30.32400025526627
+      },
+      {
+        "sweep": 17,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 32.966341462215
+      },
+      {
+        "sweep": 19,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 35.29411832237095
+      },
+      {
+        "sweep": 20,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 35.29411832237095
+      },
+      {
+        "sweep": 21,
+        "stimulus": "Short Square",
+        "amplitude_pa": 509.999986686438,
+        "sampling_rate_hz": 50000.0,
+        "samples": 101150,
+        "bias_current_pa": 37.6218951825269
+      },
+      {
+        "sweep": 23,
+        "stimulus": "Long Square",
+        "amplitude_pa": -90.0000005077395,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 41.145014478827235
+      },
+      {
+        "sweep": 24,
+        "stimulus": "Long Square",
+        "amplitude_pa": -69.9999988529321,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 41.145014478827235
+      },
+      {
+        "sweep": 25,
+        "stimulus": "Long Square",
+        "amplitude_pa": -50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 38.62849970448501
+      },
+      {
+        "sweep": 26,
+        "stimulus": "Long Square",
+        "amplitude_pa": -29.9999990127642,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 41.39666734404024
+      },
+      {
+        "sweep": 27,
+        "stimulus": "Long Square",
+        "amplitude_pa": -9.99999996004197,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 41.39666734404024
+      },
+      {
+        "sweep": 28,
+        "stimulus": "Long Square",
+        "amplitude_pa": 9.99999996004197,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 41.39666734404024
+      },
+      {
+        "sweep": 29,
+        "stimulus": "Long Square",
+        "amplitude_pa": 29.9999990127642,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 44.10192003256874
+      },
+      {
+        "sweep": 30,
+        "stimulus": "Long Square",
+        "amplitude_pa": 50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 46.366781941697965
+      },
+      {
+        "sweep": 31,
+        "stimulus": "Long Square",
+        "amplitude_pa": 69.9999988529321,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 46.366781941697965
+      },
+      {
+        "sweep": 32,
+        "stimulus": "Long Square",
+        "amplitude_pa": 90.0000005077395,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 46.366781941697965
+      },
+      {
+        "sweep": 33,
+        "stimulus": "Long Square",
+        "amplitude_pa": 110.000002162547,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 43.09530857171673
+      },
+      {
+        "sweep": 34,
+        "stimulus": "Long Square",
+        "amplitude_pa": 129.99999687846,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 47.373386463656075
+      },
+      {
+        "sweep": 35,
+        "stimulus": "Long Square",
+        "amplitude_pa": 149.999998533268,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 52.72098035913331
+      },
+      {
+        "sweep": 36,
+        "stimulus": "Long Square",
+        "amplitude_pa": 170.000000188075,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 48.82038523446042
+      },
+      {
+        "sweep": 37,
+        "stimulus": "Long Square",
+        "amplitude_pa": 190.000001842883,
+        "sampling_rate_hz": 50000.0,
+        "samples": 401000,
+        "bias_current_pa": 48.82038523446042
+      },
+      {
+        "sweep": 38,
+        "stimulus": "Long Square",
+        "amplitude_pa": 39.9999998401679,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 45.674745235979586
+      },
+      {
+        "sweep": 39,
+        "stimulus": "Long Square",
+        "amplitude_pa": 50.0000006675716,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 40,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 41,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 42,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 43,
+        "stimulus": "Long Square",
+        "amplitude_pa": 59.9999980255284,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 44,
+        "stimulus": "Long Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 45,
+        "stimulus": "Long Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 46,
+        "stimulus": "Long Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 47,
+        "stimulus": "Long Square",
+        "amplitude_pa": 100.000001335143,
+        "sampling_rate_hz": 50000.0,
+        "samples": 301000,
+        "bias_current_pa": 43.28404995534996
+      },
+      {
+        "sweep": 48,
+        "stimulus": "Noise 1",
+        "amplitude_pa": 139.125003184581,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": 37.4960687499204
+      },
+      {
+        "sweep": 49,
+        "stimulus": "Noise 2",
+        "amplitude_pa": 141.500006156647,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": 37.4960687499204
+      },
+      {
+        "sweep": 50,
+        "stimulus": "Noise 1",
+        "amplitude_pa": 139.125003184581,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": 33.910034502593334
+      },
+      {
+        "sweep": 51,
+        "stimulus": "Noise 2",
+        "amplitude_pa": 141.500006156647,
+        "sampling_rate_hz": 50000.0,
+        "samples": 1401000,
+        "bias_current_pa": 28.62535555814283
+      },
+      {
+        "sweep": 53,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 20.006291762131312
+      },
+      {
+        "sweep": 54,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 20.006291762131312
+      },
+      {
+        "sweep": 55,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 22.52280653647354
+      },
+      {
+        "sweep": 56,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 25.16514600869879
+      },
+      {
+        "sweep": 58,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 24.913494878209264
+      },
+      {
+        "sweep": 59,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 24.913494878209264
+      },
+      {
+        "sweep": 60,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 24.913494878209264
+      },
+      {
+        "sweep": 61,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 24.913494878209264
+      },
+      {
+        "sweep": 62,
+        "stimulus": "Square - 0.5ms Subthreshold",
+        "amplitude_pa": -200.000002670286,
+        "sampling_rate_hz": 50000.0,
+        "samples": 412000,
+        "bias_current_pa": 24.913494878209264
+      },
+      {
+        "sweep": 66,
+        "stimulus": "Test",
+        "amplitude_pa": 0.0,
+        "sampling_rate_hz": 50000.0,
+        "samples": 201000,
+        "bias_current_pa": null
+      }
+    ]
+  },
+  "verification_3_fit_source": {
+    "statement": "bioRxiv 10.1101/2021.02.17.431698 v5 (2021-11-22) Methods, Experimental Data: 'putative SST (Neuron ID: 571700636), PV (Neuron ID: 529807751) and VIP (Neuron ID: 525018757) interneurons available from the Allen Brain Atlas'; 'five hyperpolarizing and depolarizing current steps ... Three depolarizing supra-threshold current steps ... low, medium and high firing rates'",
+    "swc_header": "# source file(s): E:/BatchProcessing/578627812 - RdF/reconstructions-578627812/578627812/H17.06.006.11.09.05_578627812_p_DendriteAxon.swc",
+    "allen_perisomatic_fit_sweeps": [
+      32
+    ],
+    "allen_perisomatic_junction_mv": -14.0
+  },
+  "mechanism_set_identical_to_hl5bn1": "byte-identical .mod files and NeuronTemplate.hoc; kinetic parameters in the hoc differ (see spec)",
+  "exports": [
+    {
+      "sweep": 44,
+      "export": "active-0.npz",
+      "export_sha256": "ef686fe7ecb3620cb7ccae55ee85de0b1ba8929a4de4068deed734c4921361c4",
+      "stimulus": "Long Square",
+      "amplitude_pa": 100.000001335143,
+      "step_ms_recorded": [
+        1020.0,
+        2020.0
+      ],
+      "step_ms_exported": [
+        270.0,
+        1270.0
+      ],
+      "sample_count": 263500,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": 43.28404995534996,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0,
+        100.0
+      ],
+      "pre_step_mean_mv": -77.16483542046298,
+      "sampling_rate_hz": 50000.0
+    },
+    {
+      "sweep": 35,
+      "export": "active-1.npz",
+      "export_sha256": "132450eeff8a3eb3c7ad1e73dc7e65264471a5f12f8d1356a570a0f87df6a029",
+      "stimulus": "Long Square",
+      "amplitude_pa": 149.999998533268,
+      "step_ms_recorded": [
+        1020.0,
+        2020.0
+      ],
+      "step_ms_exported": [
+        270.0,
+        1270.0
+      ],
+      "sample_count": 363500,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": 52.72098035913331,
+      "stimulus_levels_pa": [
+        0.0,
+        50.0,
+        150.0
+      ],
+      "pre_step_mean_mv": -76.89203445607848,
+      "sampling_rate_hz": 50000.0
+    },
+    {
+      "sweep": 23,
+      "export": "passive-0.npz",
+      "export_sha256": "c2acab39e050c329659b200c823becf879296bc2bbd6e3409efe25a297338fbe",
+      "stimulus": "Long Square",
+      "amplitude_pa": -90.0000005077395,
+      "step_ms_recorded": [
+        1020.0,
+        2020.0
+      ],
+      "step_ms_exported": [
+        270.0,
+        1270.0
+      ],
+      "sample_count": 363500,
+      "crop_start_samples": 37500,
+      "crop_start_ms": 750.0,
+      "junction_correction_mv": -14.0,
+      "bias_current_pa": 41.145014478827235,
+      "stimulus_levels_pa": [
+        -90.0,
+        0.0,
+        50.0
+      ],
+      "pre_step_mean_mv": -77.79280962682377,
+      "sampling_rate_hz": 50000.0
+    }
+  ],
+  "interpretation": "Allen reports voltages uncorrected for the -14 mV liquid junction potential; the export applies it. Bias current is the holding current, separate from the stimulus levels.",
+  "qualification": "Acquisition provenance only; model behaviour is not validated."
+}

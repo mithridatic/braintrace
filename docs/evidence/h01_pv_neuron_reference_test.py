@@ -220,3 +220,48 @@ def test_report_records_the_regional_scales():
     text = SOURCE.read_text()
     assert '"regional_scales": regional_scales' in text
     assert '"conductance_intervention": {"mechanism": args.scale_conductance' in text
+
+
+def _cli_scope(monkeypatch, argv):
+    nodes = []
+    for node in ast.parse(SOURCE.read_text()).body:
+        if isinstance(node, ast.Expr) and ast.unparse(node).startswith("h.load_file"):
+            break
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            nodes.append(node)
+    monkeypatch.setattr("sys.argv", ["reference", "--current-na", ".1", "--output", "unused", *argv])
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "donor CLI"}
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), "donor_cli", "exec"), scope)
+    return scope
+
+
+def test_donor_flags_default_to_the_hl5bn1_files(monkeypatch):
+    """Today's behaviour is the default, so every retained candidate report is unchanged."""
+    scope = _cli_scope(monkeypatch, [])
+    assert (scope["args"].template, scope["args"].biophys, scope["args"].morphology) == (
+        "/work/source/NeuronTemplate.hoc", "/work/source/biophys_HL5BN1.hoc", "/work/source/HL5BN1.swc")
+    assert scope["biophys_procedure"] == "biophys_HL5BN1"
+
+
+def test_donor_flags_select_hl5mn1_and_derive_its_procedure(monkeypatch):
+    scope = _cli_scope(monkeypatch, ["--biophys", "/work/source/biophys_HL5MN1.hoc",
+                                     "--morphology", "/work/morphologies/HL5MN1.swc"])
+    assert scope["args"].morphology == "/work/morphologies/HL5MN1.swc"
+    assert scope["biophys_procedure"] == "biophys_HL5MN1"
+    assert scope["_biophys_procedure"]("C:/x/biophys_HL23SST.hoc") == "biophys_HL23SST"
+
+
+@pytest.mark.parametrize("name", ["HL5MN1.hoc", "biophys_HL5MN1.txt", "/work/source/template.hoc"])
+def test_misnamed_biophys_file_is_rejected_before_construction(monkeypatch, name):
+    with pytest.raises(SystemExit) as error:
+        _cli_scope(monkeypatch, ["--biophys", name])
+    assert error.value.code == 2
+
+
+def test_candidate_json_accepts_the_donor_flags(monkeypatch, tmp_path):
+    candidate = tmp_path/"source.candidate.json"
+    candidate.write_text(json.dumps({"biophys": "/work/source/biophys_HL5MN1.hoc",
+                                     "morphology": "/work/morphologies/HL5MN1.swc", "initial_mv": -81.5, "dt_ms": .025}))
+    scope = _cli_scope(monkeypatch, ["--candidate-json", str(candidate)])
+    assert scope["biophys_procedure"] == "biophys_HL5MN1" and scope["args"].initial_mv == -81.5
+    assert scope["candidate_record"]["file"] == "source.candidate.json"

@@ -3,10 +3,10 @@
  "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
  "summary": {
   "cells": 104,
-  "matched": 30,
+  "matched": 37,
   "by_match": {
-   "layer": 47,
-   "matched": 30,
+   "layer": 40,
+   "matched": 37,
    "layer, modifier": 13,
    "layer, class, modifier": 5,
    "modifier": 4,
@@ -185,7 +185,6 @@
    "L2 interneuron (sparsely-spiny)",
    "L2 pyramidal (bipolar)",
    "L2 pyramidal (sparsely-spiny)",
-   "L3 interneuron",
    "L3 pyramidal",
    "L4 interneuron",
    "L4 interneuron (lot-of-axon, web-like-interneuron)",
@@ -250,7 +249,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer, modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "751294744",
@@ -375,7 +374,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer, modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "1830470325",
@@ -407,10 +406,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "1930502394",
@@ -477,10 +476,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "2195261734",
@@ -524,7 +523,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "2451406889",
@@ -535,7 +534,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "2530864375",
@@ -546,7 +545,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "2820958695",
@@ -557,7 +556,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "2848552900",
@@ -590,7 +589,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "2903686765",
@@ -741,7 +740,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "3751392341",
@@ -752,7 +751,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "3761379470",
@@ -844,7 +843,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "4138580687",
@@ -900,10 +899,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "4365276903",
@@ -922,10 +921,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "4437316933",
@@ -947,7 +946,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "4476359994",
@@ -960,7 +959,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "4522237537",
@@ -1056,10 +1055,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "4830551047",
@@ -1070,7 +1069,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "4853956860",
@@ -1081,7 +1080,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "matched",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "4873639924",
@@ -1141,7 +1140,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer, modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "5061320552",
@@ -1149,10 +1148,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "5136107765",
@@ -1275,7 +1274,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "matched",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "5654281423",
@@ -1312,7 +1311,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer, modifier",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "5832764277",
@@ -1331,10 +1330,10 @@
    "cell_class": "interneuron",
    "modifiers": [],
    "polarity": "I",
-   "donor": "h01-pv-regional-mesh-axon2187",
-   "donor_key": "l5-pv-basket-hl5bn1",
-   "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "donor": "h01-sst-l3-hl5mn1",
+   "donor_key": "l3-sst-interneuron-hl5mn1",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the unknown (putative SST) donor is assumed"
   },
   {
    "cell_id": "6126390733",
@@ -1345,7 +1344,7 @@
    "donor": "h01-pv-regional-mesh-axon2187",
    "donor_key": "l5-pv-basket-hl5bn1",
    "match": "layer",
-   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+   "note": "interneuron subtype is not in the tags; the parvalbumin basket donor is assumed"
   },
   {
    "cell_id": "6833911543",
