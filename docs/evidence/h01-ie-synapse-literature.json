@@ -1,0 +1,50 @@
+{
+  "purpose": "Literature constraint for the I-to-E synapse of the H01 measured pair (contact 8105899): human neocortical fast-spiking (parvalbumin) basket cell onto a layer 2/3 pyramidal cell. Values were read from the cited pages on 2026-09-07 (W4 of docs/specs/2026-09-07-h01-usable-circuit-plan.md); none is from memory.",
+  "sources": [
+    {
+      "key": "szegedi2020",
+      "citation": "Szegedi V, Paizs M, Baka J, Barzo P, Molnar G, Tamas G, Lamsa K. Robust perisomatic GABAergic self-innervation inhibits basket cells in the human and mouse supragranular neocortex. eLife 2020;9:e51691.",
+      "doi": "10.7554/eLife.51691",
+      "values": {
+        "bc_to_pc_peak_conductance_ns": {"median": 3.10, "quartiles": [1.42, 3.94], "n_pairs": 20, "where": "Figure 2, figure supplement 1; Supplementary file 1"},
+        "autaptic_decay_tau_ms": {"mean": 4.18, "sem": 0.31, "n": 13, "where": "Figure 2a", "note": "basket-cell autapse, same GABA-A receptors; used as the decay estimate because the BC-PC decay is not tabulated in the main text"},
+        "autaptic_delay_to_ap_peak_ms": {"mean": 2.31, "sem": 0.16, "where": "Figure 2a"},
+        "conditions": {"temperature_c": [36, 37], "holding_mv": [-55, -43], "internal_chloride_mm": 8}
+      }
+    },
+    {
+      "key": "szegedi2017",
+      "citation": "Szegedi V, Molnar G, Paizs M, Csakvari E, Barzo P, Tamas G, Lamsa K. High-Precision Fast-Spiking Basket Cell Discharges during Complex Events in the Human Neocortex. eNeuro 2017;4(5):ENEURO.0260-17.2017.",
+      "doi": "10.1523/ENEURO.0260-17.2017",
+      "values": {
+        "fsbc_to_pc_ipsc_pa": {"mean": 27.6, "sem": 2.2, "n_pairs": 10, "holding_mv": -55, "where": "Figure 4 and the Results section on GABAergic synaptic currents"},
+        "ipsc_rise_slope_pa_per_ms": {"mean": 33.0, "sem": 1.9, "n_pairs": 10, "where": "Figure 4"},
+        "network_ipsc_latency_ms": {"median": 3.94, "iqr": [3.55, 5.20], "where": "Figure 4C"},
+        "conditions": {"temperature_c": [36, 37], "internal": "126 K-gluconate, 4 KCl, 4 ATP-Mg, 0.3 Na2-GTP, 10 HEPES, 10 phosphocreatine (mM)"}
+      }
+    },
+    {
+      "key": "molnar2008",
+      "citation": "Molnar G, Olah S, Komlosi G, Fule M, Szabadics J, Varga C, Barzo P, Tamas G. Complex Events Initiated by Individual Spikes in the Human Cerebral Cortex. PLoS Biology 2008;6(9):e222.",
+      "doi": "10.1371/journal.pbio.0060222",
+      "values": {
+        "pyramidal_input_resistance_mohm": {"mean": 102, "sd": 51, "where": "Results, intrinsic properties"},
+        "pyramidal_rest_mv": {"mean": -72, "sd": 3, "where": "Results"},
+        "fs_spike_latency_after_pc_spike_ms": {"mean": 3.34, "sd": 1.76, "where": "Results"},
+        "conditions": {"temperature_c": 36, "internal_chloride_mm": 4, "layer": "2/3", "n_patients": 58}
+      }
+    }
+  ],
+  "pinned_targets": {
+    "peak_conductance_ns": {"value": 3.10, "spread": [1.42, 3.94], "basis": "szegedi2020 median and quartiles, n 20"},
+    "decay_tau_ms": {"value": 4.18, "spread_sem": 0.31, "basis": "szegedi2020 autaptic decay; BC-PC decay not tabulated"},
+    "delay_ms": {"value": 2.31, "basis": "szegedi2020 autaptic delay to AP peak; the network median 3.94 ms (szegedi2017) includes disynaptic steps"},
+    "reversal_mv": {"value": -75, "basis": "Nernst at 36 C for 8 mM internal and about 130 mM external chloride; the recordings' physiological [Cl]i. The circuit's -80 mV is an assumption 5 mV more negative."},
+    "unitary_ipsp_at_soma_mv": {"predicted_from_targets": {"at_rest_-72_mv": 0.95, "at_-55_mv": 6.3},
+      "formula": "g * (V - E) * R_in with R_in 102 MOhm (molnar2008), a slow-synapse upper bound for a somatic contact", "measured_in_human": "not tabulated in the three sources as an IPSP in mV; the eNeuro IPSC of 27.6 pA at -55 mV with R_in 102 MOhm gives about 2.8 mV, consistent with the conductance median only if the effective driving force is about 9 mV, i.e. E near -64 mV in that recording configuration"}
+  },
+  "circuit_today": {
+    "inhibitory_weight_us": 0.02, "reversal_mv": -80, "tau_ms": 5, "delay_ms": 0.5,
+    "note": "20 nS is 6.5 times the human median conductance; the measured pair nevertheless moves the E soma by 0.003 mV, so the deficit is the placement and cable, not the conductance"
+  }
+}

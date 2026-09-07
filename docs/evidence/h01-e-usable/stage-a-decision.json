@@ -1,0 +1,100 @@
+{
+ "stage": "A",
+ "manifest": "h01-e-usable-manifest.json",
+ "evaluations_used": 2,
+ "cap": 8,
+ "runs": {
+  "a-axon-na": "593 s, rc 0",
+  "a-axon-na-soma065": "427 s, rc 0"
+ },
+ "scores": {
+  "a-axon-na": "h01-e-usable/a-axon-na-sweep50-initiation.json",
+  "a-axon-na-soma065": "h01-e-usable/a-axon-na-soma065-sweep50-initiation.json"
+ },
+ "observed": {
+  "axon_first": {
+   "a-axon-na": "axon crosses -20 mV 0.20 ms before the soma",
+   "a-axon-na-soma065": "0.23 ms before"
+  },
+  "threshold_mv": {
+   "human": -55.8,
+   "candidate": -52.0,
+   "a-axon-na": -57.1,
+   "a-axon-na-soma065": -57.3
+  },
+  "upstroke_slope_profile_v_s_at_-52_-50_-47.5_-45_-42_-35_mV": {
+   "human": [
+    110,
+    136,
+    153,
+    165,
+    179,
+    199
+   ],
+   "candidate": [
+    10,
+    18,
+    31,
+    48,
+    75,
+    162
+   ],
+   "a-axon-na": [
+    144,
+    158,
+    170,
+    177,
+    185,
+    220
+   ],
+   "a-axon-na-soma065": [
+    140,
+    152,
+    160,
+    165,
+    168,
+    181
+   ]
+  },
+  "max_rise_v_s": {
+   "human": 351,
+   "candidate": 641,
+   "a-axon-na": 830,
+   "a-axon-na-soma065": 532
+  },
+  "peak_mv": {
+   "human": 36.0,
+   "candidate": 36.0,
+   "a-axon-na": 42.1,
+   "a-axon-na-soma065": 33.3
+  },
+  "first_minimum_mv": {
+   "human": -69.6,
+   "candidate": -69.5,
+   "a-axon-na": -72.6,
+   "a-axon-na-soma065": -64.9
+  },
+  "spikes_and_cycles_ms": {
+   "human": "5; 60, 34, 220, 307, 273",
+   "a-axon-na": "4; 55, 29, 309, 316",
+   "a-axon-na-soma065": "4; 61, 3.9, 5.2, 3.6 then depolarisation block: soma -31 mV, axon -21 mV from 1100 ms to the pulse end"
+  }
+ },
+ "prediction_scored": {
+  "axon first in both arms": "held",
+  "somatic shoulder 100-300 V/s between -55 and -45 mV": "held as a slope plateau (158 to 177 V/s from -50 to -45 mV in a-axon-na, matching the human 136 to 165); the registered detector form (a local dV/dt maximum) did not fire in either arm, so the form was wrong and the plateau measure replaces it",
+  "threshold toward -56 mV": "held (-57.1, -57.3)",
+  "a-axon-na rise within 15 percent of 641": "failed (830)",
+  "a-axon-na peak within 2 mV of 36": "failed (42.1)",
+  "a-axon-na-soma065 rise below 550": "held (532)",
+  "a-axon-na-soma065 peak 28 to 36": "held (33.3)",
+  "a-axon-na-soma065 count 5 +/- 1": "held by number (4) and failed in kind: a burst then block",
+  "a-axon-na-soma065 trough within 1 mV of -69.5": "failed (-64.9, then block)"
+ },
+ "decision": "Initiation site established: with transient sodium in the 60 um stub the spike starts in the axon, the threshold moves to the human's, and the human's two-stage upstroke appears as a slope plateau at the human's slope. The structural FAIL of the energetic search is lifted; the family is now searchable. The main rise after -35 mV and the peak are set by the somatic sodium density: 1.3 overshoots (830 V/s, 42 mV) and keeps the train; 0.65 lands the upstroke (532 V/s, 33 mV) and blocks. One follow-up arm at 0.9 (Stage A2) is registered before Stage B; Stage B runs on the A2 survivor if it neither blocks nor exceeds 750 V/s, else on a-axon-na.",
+ "mistakes_recorded": [
+  "the shoulder was registered as a local dV/dt maximum; the human's shoulder is a plateau of dV/dt against V, which the a-axon-na arm reproduces; recorded against the prediction form, not the model",
+  "the a-axon-na-soma065 trough band assumed the train would continue; it did not"
+ ],
+ "returned_question": "none at this stage; Stage A2 registered"
+}
