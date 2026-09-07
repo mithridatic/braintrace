@@ -378,6 +378,18 @@ elements on the source-to-load path and names the parasitic elements the
 campaigns did not partition. Training against this circuit is out of scope
 until a cell passes the contract.
 
+Two further pages state the circuit in the terms a user feels. The usable tier
+(``docs/evidence/h01-usable-tier-i.md``, ``h01-usable-tier-e.md``) scores firing
+rate, adaptation, spike width and afterhyperpolarisation from a retained per-cycle
+table beside the 1 mV contract; neither cell passes it yet. The population status
+page (``docs/evidence/h01-population-status.md``) lists, layer by layer, what the
+104-cell network contains today: 30 cells with a type-matched donor, three verified
+contacts, assumed synaptic numbers with literature pins recorded, and a four-cell
+construction that has run one time step. The E cell gained an axonal initiation
+site on 2026-09-07 (``docs/evidence/h01-e-usable/stage-a-decision.json``), which
+moved its threshold and upstroke shape to the human's; its peak and count are
+under search.
+
 Provenance and license
 ---------------------
 
