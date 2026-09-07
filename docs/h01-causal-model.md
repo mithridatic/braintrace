@@ -771,6 +771,40 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Qualification of the
 default profiles' firing and full numerical robustness remains open.
 
+### Y4 under the usable-tier campaign (2026-09-07, supersedes the energetic-search statement)
+
+The energetic search closed Y4 as a structural FAIL: a perisomatic fit cannot make
+the human's two-stage upstroke. The usable-tier campaign
+([result](evidence/h01-e-usable-result.md)) changed the family and searched it in
+eight evaluations.
+
+**Explanation.** Threshold and upstroke shape require an initiation site outside the
+soma: with transient sodium in the axon stub the axon reaches threshold first and
+drives the soma through the axial path, which is the dV/dt plateau the human shows
+from −52 to −42 mV; the somatic sodium then carries the peak, and its density sets
+the main rise and peak (0.9 lands 659 V/s and 37.8 mV without block). The late rate
+and the count are set by the resistance the calcium displacement builds cycle to
+cycle (SK driven by the calcium pool): halving SK and speeding calcium removal act
+additively on the late cycles (246 → 134 ms at 310 pA) without moving threshold,
+peak, trough or width. The early cycles are set by the supply reaching threshold and
+were already right.
+
+```mermaid
+flowchart LR
+    AX[Axonal sodium: initiation site] --> THR[Threshold -57 mV, dV/dt plateau]
+    THR --> SOMA[Somatic sodium density: main rise and peak]
+    CA[Calcium displacement per cycle] --> SK[SK resistance grows cycle to cycle]
+    SK --> LATE[Late cycle 134 ms; count 9 of 10 at 310 pA]
+```
+
+**Predictions.** Every stage's bands were written first; misses recorded: the shoulder
+form (plateau, not a local maximum), the 0.65 arm's trough (block), the B0 count
+(initiation does not set it), the SK band by 9 ms, the leak arm's AHP clause.
+
+**Not explained.** The last 10 to 20 ms of late cycle, the rise excess over 351 V/s
+(dendritic load), the width (1.01 against 0.91 ms), the resting potential (−84 against
+−72). Sweep 55 was not opened; the cap closed first.
+
 ### Y5 under the population edge list
 
 The C3 relationship-index scan of all 104 proofread cells returns 123

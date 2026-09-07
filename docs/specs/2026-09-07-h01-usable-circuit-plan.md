@@ -242,3 +242,11 @@ Appended per workstream as it closes.
   the calcium-SK Modulate boundary is the lever and no single arm reaches the usable
   rate. Evaluation 8 registered as B2: both levers together (prediction: late cycles
   135 to 165 ms, count 8) (`h01-e-usable/stage-b-decision.json`).
+- **W3 Stage B2 (evaluation 8, 592 s).** SK half with calcium decay 1.0: 9 of 10 spikes,
+  late cycles 137 to 175 (mean 134), rate 8.39 Hz (band 7.5 to 8.5 held), adaptation
+  passes, threshold, peak, trough and width unchanged. Rate misses the usable limit by
+  0.1 Hz. Cap spent; the dose step and the sweep 55 prediction are returned as a
+  two-evaluation extension (`h01-e-usable-result.md`).
+- **Closed 2026-09-07.** All workstreams delivered except W6c (the 3,000-sample scan runs
+  detached and writes `h01-resolved-edge-list-3000.json` when done). Decisions returned:
+  E cap extension; E finalist promotion; I-to-E receptor placement; I reserve.

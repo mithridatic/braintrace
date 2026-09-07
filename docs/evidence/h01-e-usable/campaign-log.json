@@ -222,5 +222,37 @@
       "--output",
       "/evidence/h01-e-usable/b-leak-rev-sweep53"
     ]
+  },
+  {
+    "name": "b2-sk-half-ca-decay",
+    "input": "sweep53",
+    "seconds": 591.5038181000127,
+    "returncode": 0,
+    "aborted": false,
+    "command": [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "h01-e-usable-b2-sk-half-ca-decay-sweep53",
+      "-v",
+      "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/.cache/human-pyramidal-l2:/work",
+      "-v",
+      "C:/Users/J/Documents/Projects/connectome-agent/braintrace-source/.worktrees/h01-braincell/docs/evidence:/evidence",
+      "-w",
+      "/work/kv3-closing-source",
+      "braintrace-h01-neuron:9.0.2",
+      "python",
+      "/evidence/h01_l2_neuron_reference.py",
+      "--candidate-json",
+      "/evidence/h01-e-usable/b2-sk-half-ca-decay.candidate.json",
+      "--cache",
+      "/work",
+      "--sweep",
+      "53",
+      "--include-recorded-bias",
+      "--output",
+      "/evidence/h01-e-usable/b2-sk-half-ca-decay-sweep53"
+    ]
   }
 ]
