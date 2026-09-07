@@ -1,18 +1,26 @@
 {
-  "specimen_id": 541563728,
-  "source_nwb_sha256_local": "cc180b297d762cb82833eb044566e21f77708c562295f86827ff3ed9ebcf3e0f",
-  "calibration_sweeps": [
-    43,
-    50
-  ],
-  "reserved_sweep": 53,
-  "selection_rule": "lowest long-square command >= reported 200 pA rheobase + 100 pA; ties by sweep number",
-  "reserved_command_metadata_pa": 309.999997893939,
-  "reserved_bias_metadata_na": -0.003711858945210089,
-  "source_fit_listed_sweeps": [
-    51
-  ],
-  "role": "Reserved from subsequent local parameter fitting before direct response extraction.",
-  "release_condition": "Freeze candidate parameters and calibration decisions before extracting this response. Perform source-quality checks before interpreting validation.",
-  "limits": "Same cell and recording session, not independent donor validation; not claimed untouched by original source-model developers."
+ "specimen_id": 541563728,
+ "source_nwb_sha256_local": "cc180b297d762cb82833eb044566e21f77708c562295f86827ff3ed9ebcf3e0f",
+ "calibration_sweeps": [
+  43,
+  50
+ ],
+ "reserved_sweep": 53,
+ "selection_rule": "lowest long-square command >= reported 200 pA rheobase + 100 pA; ties by sweep number",
+ "reserved_command_metadata_pa": 309.999997893939,
+ "reserved_bias_metadata_na": -0.003711858945210089,
+ "source_fit_listed_sweeps": [
+  51
+ ],
+ "role": "Reserved from subsequent local parameter fitting before direct response extraction.",
+ "release_condition": "Freeze candidate parameters and calibration decisions before extracting this response. Perform source-quality checks before interpreting validation.",
+ "limits": "Same cell and recording session, not independent donor validation; not claimed untouched by original source-model developers.",
+ "reserved_sweep_status": "opened once 2026-09-06 for the energetic-search prediction; spent",
+ "second_reservation_2026_09_07": {
+  "reserved_sweep": 55,
+  "command_pa": 350.0,
+  "selection_rule": "highest long-square command not adjacent (20 pA) to any opened sweep and not listed in the source fit; 52 and 54 rejected as neighbours of 53, 51 as the source-fit sweep",
+  "count_status": "The Allen analysis spike counts of every sweep are on disk and were read by the sweep inventory of 2026-09-06; count is therefore NOT closed for this seal. Waveform, timing, peaks and the per-cycle table are closed.",
+  "release_condition": "h01-prediction-e2.json written before export; h01_l2_sweep_export refuses the export otherwise"
+ }
 }

@@ -14,6 +14,16 @@ import h5py
 import numpy as np
 
 JUNCTION_MV = -14.
+SEALED = {55: "h01-prediction-e2.json"}
+EVIDENCE = Path(__file__).resolve().parent
+
+
+def sealed_reason(sweep, evidence=None):
+    """Why a sealed sweep may not be exported yet, or None when it may."""
+    prediction = SEALED.get(sweep)
+    if prediction is None or ((evidence or EVIDENCE)/prediction).exists():
+        return None
+    return f"sweep {sweep} is sealed until {prediction} exists (prediction before opening)."
 
 
 def export_sweep(cache, sweep):
@@ -45,6 +55,9 @@ def main(argv=None):
     parser.add_argument("--sweep", type=int, required=True)
     parser.add_argument("--verify", action="store_true", help="compare with the existing export instead of writing")
     args = parser.parse_args(argv)
+    reason = sealed_reason(args.sweep)
+    if reason and not args.verify:
+        raise SystemExit(reason)
     arrays = export_sweep(args.cache, args.sweep)
     target = args.cache/f"sweep-{args.sweep}.npz"
     if args.verify:

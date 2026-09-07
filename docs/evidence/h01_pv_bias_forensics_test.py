@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from docs.evidence.h01_pv_bias_forensics import (
-    assemble, baseline_slope_mohm, input_resistance_mohm, model_rest_mv, render,
+    assemble, held_sweeps, baseline_slope_mohm, input_resistance_mohm, model_rest_mv, render,
     repeat_limit_mv, verdict)
 
 
@@ -60,3 +60,16 @@ def test_model_rest_averages_the_pre_pulse_window(tmp_path):
     path = tmp_path/"trace.npz"
     np.savez(path, time_ms=time, voltage_mv=voltage)
     assert model_rest_mv(path) == pytest.approx(-87.)
+
+
+def test_held_sweeps_skips_noise_sweeps_so_the_sealed_holdout_is_unread(tmp_path):
+    import h5py
+    with h5py.File(tmp_path/"cell.nwb", "w") as nwb:
+        for sweep, name in ((40, "Long Square"), (48, "Noise 1"), (44, "Noise 1")):
+            group = nwb.create_group(f"acquisition/timeseries/Sweep_{sweep}")
+            group.create_dataset("data", data=np.full(60000, -.073, dtype=np.float32))
+            group.create_dataset("aibs_stimulus_name", data=name.encode())
+            group.create_dataset("bias_current", data=3.1e-11)
+            nwb.create_dataset(f"stimulus/presentation/Sweep_{sweep}/data", data=np.full(60000, 1.2e-10))
+        records = held_sweeps(nwb)
+    assert [r["sweep"] for r in records] == [40]

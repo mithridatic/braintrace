@@ -18,3 +18,15 @@ is the same donor and session, not external biological validation.
 The [reservation record](../evidence/h01-l2-reserved-input.json) records
 the source hash and selection metadata. No reserved voltage response
 is extracted in this step.
+
+## Second reservation (2026-09-07)
+
+Sweep 53 was opened once on 2026-09-06 for the energetic-search prediction and
+is spent. Sweep 55 (350 pA) is now reserved under the same rules: it is the
+highest long-square command not within 20 pA of an opened sweep and not listed
+in the source fit (52 and 54 neighbour 53; 51 is the source-fit sweep). The
+Allen analysis spike count of every sweep is on disk and was read by the sweep
+inventory, so this reservation closes the waveform, timing, peaks and per-cycle
+rows, not the count. `h01_l2_sweep_export.py` refuses to export sweep 55 until
+`h01-prediction-e2.json` exists, and the driver rejects `--sweep 55` until the
+export exists.

@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 import pytest
 
-from docs.evidence.h01_l2_sweep_export import export_sweep, main, matches
+from docs.evidence.h01_l2_sweep_export import export_sweep, main, matches, sealed_reason
 
 
 @pytest.fixture
@@ -37,3 +37,16 @@ def test_main_writes_once_and_verifies(cache, capsys):
     main(["--cache", str(cache), "--sweep", "7", "--verify"])
     assert max(json.loads(capsys.readouterr().out.strip().splitlines()[-1]).values()) == 0.
     assert matches(export_sweep(cache, 7), cache/"sweep-7.npz")["time_ms"] == 0.
+
+
+def test_sealed_sweep_refuses_export_until_its_prediction_exists(cache, tmp_path, monkeypatch):
+    import docs.evidence.h01_l2_sweep_export as export
+    evidence = tmp_path/"evidence"
+    evidence.mkdir()
+    monkeypatch.setattr(export, "EVIDENCE", evidence)
+    assert sealed_reason(7) is None
+    assert "sealed until h01-prediction-e2.json" in sealed_reason(55)
+    with pytest.raises(SystemExit, match="sealed"):
+        main(["--cache", str(cache), "--sweep", "55"])
+    (evidence/"h01-prediction-e2.json").write_text("{}")
+    assert sealed_reason(55) is None

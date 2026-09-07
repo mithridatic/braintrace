@@ -21,7 +21,7 @@ import pytest
     ("--sodium-opening-factor", "0"), ("--sodium-opening-factor", "nan"),
     ("--sodium-opening-factor", "-1"), ("--sodium-opening-factor", "inf"),
     ("--sodium-density-factor", "0"), ("--sodium-density-factor", "nan"),
-    ("--sweep", "54"), ("--sweep", "0"),
+    ("--sweep", "54"), ("--sweep", "55"), ("--sweep", "0"),
     ("--ih-density-factor", "0"), ("--ih-density-factor", "nan"),
     ("--leak-factor", "0"), ("--leak-factor", "nan"),
     ("--leak-reversal-shift-mv", "nan"), ("--leak-reversal-shift-mv", "inf"),

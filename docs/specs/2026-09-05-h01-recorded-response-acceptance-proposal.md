@@ -50,6 +50,18 @@ shared I set must meet all released I calibration inputs. Preserve the I
 and the acceptance contract before evaluating either holdout. A failed holdout
 remains a failure; fitting it removes its holdout status.
 
+## Tiers (added 2026-09-07)
+
+The table above is the **validation-grade** tier; no row of it is relaxed. A
+second, **usable** tier reports what a network user feels, as a derived view over
+a retained per-cycle table (`docs/evidence/h01_usable_tier.py`; spec
+`2026-09-07-h01-usable-circuit-plan.md`): firing rate within 15 percent of the
+human rate at each released input, adaptation ratio within 25 percent, time above
+−20 mV within 20 percent per cycle, recovery minimum within 2 mV per cycle. A
+usable row whose human repeat or cyclical spread exceeds half its limit is
+`unresolvable`, never a pass. Both tiers are printed side by side; a usable pass
+is not a contract pass.
+
 ## Independent numerical and provenance gates
 
 Keep numerical tests separate. They must show that integration, mesh, source
