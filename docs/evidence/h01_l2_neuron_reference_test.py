@@ -68,12 +68,12 @@ def test_candidate_json_sets_defaults_and_rejects_unknown_names(monkeypatch, tmp
     assert error.value.code == 2 and "not_a_flag" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("sweep", [43, 50, 53, 54, 55])
+@pytest.mark.parametrize("sweep", [43, 50, 53, 54, 55, 56, 52])
 @pytest.mark.parametrize("registered", [False, True])
 @pytest.mark.parametrize("from_candidate", [False, True])
 def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
                                        sweep, registered, from_candidate):
-    """Registered inputs reach source loading; sealed 55 stops before it."""
+    """Calibration inputs reach source loading; sealed 54/55 stop before it; 52 is unknown."""
     import json
 
     folder = Path(__file__).parent
@@ -82,7 +82,8 @@ def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
 
     monkeypatch.setattr(exporter, "EVIDENCE", tmp_path)
     if registered:
-        (tmp_path / "h01-prediction-e2.json").write_text("{}")
+        for prediction in exporter.SEALED.values():
+            (tmp_path / prediction).write_text("{}")
     fake_neuron = types.ModuleType("neuron")
     fake_neuron.h = object()
     monkeypatch.setitem(sys.modules, "neuron", fake_neuron)
@@ -95,15 +96,15 @@ def test_driver_respects_holdout_release(monkeypatch, tmp_path, capsys,
     else:
         argv += ["--sweep", str(sweep)]
     monkeypatch.setattr(sys, "argv", argv)
-    if sweep == 54:
+    if sweep == 52:
         with pytest.raises(SystemExit) as error:
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
         assert error.value.code == 2
-    elif sweep == 55 and not registered:
+    elif sweep in exporter.SEALED and not registered:
         with pytest.raises(SystemExit) as error:
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
         assert error.value.code == 2
-        assert "sealed until h01-prediction-e2.json" in capsys.readouterr().err
+        assert f"sealed until {exporter.SEALED[sweep]}" in capsys.readouterr().err
     else:
         with pytest.raises(FileNotFoundError, match="541563728_fit.json"):
             runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
@@ -122,4 +123,5 @@ def test_driver_help_does_not_require_nwb_export_dependency(monkeypatch, capsys)
     with pytest.raises(SystemExit) as error:
         runpy.run_path(str(folder / "h01_l2_neuron_reference.py"), run_name="__main__")
     assert error.value.code == 0
-    assert "55" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "55" in out and "56" in out and "54" in out

@@ -1,0 +1,1627 @@
+{
+ "searches": [
+  {
+   "lead": "Allen Cell Types Database human specimens with biophysical models. RMA query (fetched, 43 rows): http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,specimen(donor(organism[name$eq'Homo Sapiens'])),neuronal_model_template[name$il'Biophysical*'],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type))),rma::options[num_rows$eq2000] ; layer/dendrite-type join via http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo Sapiens'],rma::options[num_rows$eq5000]. Result: ALL 43 human models are 'Biophysical - perisomatic' (template 329230710); there are ZERO human 'Biophysical - all active' models. Layer breakdown (excluding already-imported 541563728): L4 spiny 4, L5 spiny 5, L5 aspiny 1 (not a listed gap), L3 spiny 20, L3 aspiny 5, L2 sparsely-spiny 2, L2 spiny 3 (already covered class), L6 spiny 3, L1 none. Every model bundle is at http://api.brain-map.org/neuronal_model/download/{model_id} (zip with modfiles/*.mod, fit_parameters.json, reconstruction.swc, ephys_sweeps.json, manifest.json); 8 bundles were downloaded and opened here (626170709, 626170718, 626170679, 626170439, 626170670, 626170484, 538906694, 554338972): each has 16 .mod files, celsius=34.0, junction_potential=-14 and the fit sweep numbers. Every specimen has an NWBDownload well_known_file (HEAD-verified for 618205555 -> 527952752_ephys.nwb, 17.98 MB, HTTP 200). Protocol is in the Oct 2017 Electrophysiology whitepaper (https://community.brain-map.org/uploads/short-url/veJ9z4lwAJoxv4Rx23b7KpnUYEp.pdf): bath ~34 C; recordings stored UNCORRECTED for measured -14 mV liquid junction potential; a bias current is injected after break-in to hold initial RMP for the whole experiment (per-sweep values in ephys_sweeps.json / NWB); Long Square 1 s steps from -110 pA to rheobase+160 pA in 20 pA increments (some low-IR human cells -220 pA in 40 pA steps); 2 s suprathreshold squares at rheobase+40/+80 pA are the fit targets; 0.5 ms +/-200 pA pulses for capacitance. Perisomatic modelling whitepaper: https://community.brain-map.org/uploads/short-url/akP9tVfUe0X96gRnM0hFoztAZdo.pdf. Licence: Allen Institute Terms of Use (https://alleninstitute.org/terms-of-use/) - research/non-commercial use, citation required, no commercial redistribution. Priority picks: L4 pyramids 527952884/626170709 and 528015670/554338972 (fit on 4 sweeps each, MTG); L5 pyramids 527942865/626170718 and 569820026/626170475; L6 pyramids 528614014/626170679, 558211203/626170502, 548494556/626170511; L2/L3 interneurons (aspiny, subtype unknown) 571700636/626170439, 571709783/626170430, 529807751/626170661, 531520637/626170592, 488418027/543285979. Note limitations: perisomatic fits only (active conductances soma-only, passive dendrites); interneuron subtype (PV/SST/VIP) is NOT annotated for human cells; cortical layer is Allen 'structure__layer' from slice depth, region is temporal/frontal not the H01 region.",
+   "candidates": [
+    {
+     "name": "Allen human specimen 527952884 (H16.06.008.01.31.06) model 626170709",
+     "species": "Homo sapiens (neurosurgical resection, epilepsy); 24 yr female",
+     "layer": "L4, middle temporal gyrus (MTG), left hemisphere",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170709",
+     "mechanisms_available": "Zip downloaded and opened: 16 NEURON .mod (SK, Kd, NaTs, Im, Ca_HVA, K_T, Im_v2, CaDynamics, K_P, Ih, Nap, NaV, Ca_LVA, Kv3_1, Kv2like, NaTa) + fit_parameters.json + reconstruction.swc + ephys_sweeps.json (76 sweeps) + manifest.json. Fit JSON alone: http://api.brain-map.org/api/v2/well_known_file_download/626185209",
+     "licence": "Allen Institute Terms of Use (https://alleninstitute.org/terms-of-use/): research/non-commercial use with citation; no commercial redistribution without permission",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 527952752 (file 527952752_ephys.nwb, 17.98 MB, HEAD 200 verified)",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618205555",
+     "protocol_notes": "fit_parameters.json: celsius 34.0, junction_potential -14 mV (data stored uncorrected), v_init -80.8 mV, fit sweeps [69,70,71,72]; Long Square sweeps -110..+170 pA in 20 pA steps with per-sweep bias (leak_pa) and bridge balance in ephys_sweeps.json; bias current holds initial RMP per whitepaper. Ri 221 MOhm, Vrest -66.6 mV (uncorrected).",
+     "gap_matched": "L4 pyramidal (22 cells, largest gap)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170709",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618205555",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/527952884",
+      "https://community.brain-map.org/uploads/short-url/veJ9z4lwAJoxv4Rx23b7KpnUYEp.pdf",
+      "https://community.brain-map.org/uploads/short-url/akP9tVfUe0X96gRnM0hFoztAZdo.pdf"
+     ]
+    },
+    {
+     "name": "Allen human specimen 528015670 (H16.06.008.01.24.03) model 554338972",
+     "species": "Homo sapiens (neurosurgical, epilepsy); 24 yr female",
+     "layer": "L4, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/554338972",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + reconstruction.swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185210",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 528015599",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618204818",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [53,54,55,56]; Allen standard stimulus set; Ri 439 MOhm, Vrest -64.0 mV (uncorrected).",
+     "gap_matched": "L4 pyramidal (22)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/554338972",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618204818",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/528015670"
+     ]
+    },
+    {
+     "name": "Allen human specimen 508405843 (H16.06.004.01.13.02) model 538906694",
+     "species": "Homo sapiens (neurosurgical); 37 yr male",
+     "layer": "L4, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/538906694",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185199",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 508405841",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616978607",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [37] (single sweep - whitepaper minimum-tolerance rule applies); Ri 374 MOhm, Vrest -70.9 mV (uncorrected).",
+     "gap_matched": "L4 pyramidal (22)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/538906694",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616978607",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/508405843"
+     ]
+    },
+    {
+     "name": "Allen human specimen 569818704 (H17.03.002.11.04.01) model 626170484",
+     "species": "Homo sapiens (neurosurgical); 61 yr male",
+     "layer": "L4, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170484",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185234",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 569818691",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616987913",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [36]; Ri 128 MOhm, Vrest -68.2 mV (uncorrected).",
+     "gap_matched": "L4 pyramidal (22)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170484",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616987913",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/569818704"
+     ]
+    },
+    {
+     "name": "Allen human specimen 527942865 (H16.06.008.01.26.04) model 626170718",
+     "species": "Homo sapiens (neurosurgical, epilepsy); 24 yr female",
+     "layer": "L5, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170718",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185208",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 527942847",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616980497",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [39]; Ri 137 MOhm, Vrest -67.7 mV (uncorrected).",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170718",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616980497",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/527942865"
+     ]
+    },
+    {
+     "name": "Allen human specimen 569820026 (H17.03.002.11.04.02) model 626170475",
+     "species": "Homo sapiens (neurosurgical); 61 yr male",
+     "layer": "L5, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170475",
+     "mechanisms_available": "Standard Allen perisomatic bundle (16 .mod + fit json + swc + sweeps); listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185235",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 569820012",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618078045",
+     "protocol_notes": "Allen standard protocol (34 C, -14 mV JP uncorrected, bias-held RMP, Long Square 20 pA steps); Ri 234 MOhm, Vrest -71.8 mV.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170475",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618078045",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/569820026"
+     ]
+    },
+    {
+     "name": "Allen human specimen 529898751 (H16.06.010.01.01.10.02) model 626170619",
+     "species": "Homo sapiens (neurosurgical); 67 yr male",
+     "layer": "L5, inferior temporal gyrus (ITG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170619",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185219",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 529898650",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618109142",
+     "protocol_notes": "Allen standard protocol; Ri 148 MOhm, Vrest -70.8 mV.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170619",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618109142",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/529898751"
+     ]
+    },
+    {
+     "name": "Allen human specimen 537313158 (H16.03.006.01.05.05) model 626170565",
+     "species": "Homo sapiens (neurosurgical); 33 yr female",
+     "layer": "L5, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170565",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185225",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 537313138",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618099419",
+     "protocol_notes": "Allen standard protocol; Ri 83 MOhm, Vrest -59.7 mV (depolarised - check health).",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170565",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618099419",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/537313158"
+     ]
+    },
+    {
+     "name": "Allen human specimen 528042185 (H16.06.008.01.20.05) model 560692892",
+     "species": "Homo sapiens (neurosurgical); 24 yr female",
+     "layer": "L5, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/560692892",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185212",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 528042170",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618203530",
+     "protocol_notes": "Allen standard protocol; Ri 86 MOhm, Vrest -64.3 mV.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/560692892",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618203530",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/528042185"
+     ]
+    },
+    {
+     "name": "Allen human specimen 571700636 (H17.06.006.11.09.05) model 626170439",
+     "species": "Homo sapiens (neurosurgical); 35 yr male",
+     "layer": "L3, middle temporal gyrus (MTG)",
+     "cell_class": "interneuron (aspiny); PV/SST/VIP subtype NOT annotated",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170439",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185239",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 571700399",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618228061",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [32]; Ri 172 MOhm, Vrest -63.5 mV.",
+     "gap_matched": "L2/L3 interneuron (14; subtype unknown)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170439",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618228061",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/571700636"
+     ]
+    },
+    {
+     "name": "Allen human specimen 571709783 (H17.06.006.11.08.07) model 626170430",
+     "species": "Homo sapiens (neurosurgical); 35 yr male",
+     "layer": "L3, middle temporal gyrus (MTG)",
+     "cell_class": "interneuron (aspiny); subtype not annotated",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170430",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185240",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 571709765",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616988280",
+     "protocol_notes": "Allen standard protocol; Ri 148 MOhm, Vrest -75.9 mV.",
+     "gap_matched": "L2/L3 interneuron (14)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170430",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616988280",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/571709783"
+     ]
+    },
+    {
+     "name": "Allen human specimen 529807751 (H16.06.010.01.03.04.01) model 626170661",
+     "species": "Homo sapiens (neurosurgical); 67 yr male",
+     "layer": "L3, middle temporal gyrus (MTG)",
+     "cell_class": "interneuron (aspiny); subtype not annotated",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170661",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185215",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 529807625",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616980851",
+     "protocol_notes": "Allen standard protocol; Ri 95 MOhm, Vrest -69.5 mV.",
+     "gap_matched": "L2/L3 interneuron (14)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170661",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616980851",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/529807751"
+     ]
+    },
+    {
+     "name": "Allen human specimen 531520637 (H16.06.007.01.05.03) model 626170592",
+     "species": "Homo sapiens (neurosurgical); 26 yr male",
+     "layer": "L3, frontal lobe (FroL)",
+     "cell_class": "interneuron (aspiny); subtype not annotated",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170592",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185222",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 531520485",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616981120",
+     "protocol_notes": "Allen standard protocol; Ri 76 MOhm, Vrest -76.2 mV.",
+     "gap_matched": "L2/L3 interneuron (14)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170592",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616981120",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/531520637"
+     ]
+    },
+    {
+     "name": "Allen human specimen 488418027 (H15.06.017.03.03.01) model 543285979",
+     "species": "Homo sapiens (neurosurgical); 65 yr male",
+     "layer": "L3, middle temporal gyrus (MTG)",
+     "cell_class": "interneuron (aspiny); subtype not annotated",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/543285979",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185195",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 488418025",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616980549",
+     "protocol_notes": "Allen standard protocol (2015 case, digitised 200 kHz pre-2016); Ri 141 MOhm, Vrest -72.5 mV.",
+     "gap_matched": "L2/L3 interneuron (14)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/543285979",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616980549",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/488418027"
+     ]
+    },
+    {
+     "name": "Allen human specimen 571718621 (H17.06.006.11.08.08) model 626170421",
+     "species": "Homo sapiens (neurosurgical); 35 yr male",
+     "layer": "L2, middle temporal gyrus (MTG)",
+     "cell_class": "sparsely spiny (ambiguous: interneuron vs non-pyramidal excitatory)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170421",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185241",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 571718462",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618227442",
+     "protocol_notes": "Allen standard protocol; Ri 261 MOhm, Vrest -64.5 mV. Class uncertain - only include if the interneuron gap tolerates sparsely-spiny cells.",
+     "gap_matched": "L2/L3 interneuron (14) - tentative",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170421",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618227442",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/571718621"
+     ]
+    },
+    {
+     "name": "Allen human specimen 525018757 (H16.03.003.01.19.02) model 556384271",
+     "species": "Homo sapiens (neurosurgical); 25 yr male",
+     "layer": "L2, frontal lobe (FroL)",
+     "cell_class": "sparsely spiny (ambiguous)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/556384271",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185204",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 525018728",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618210488",
+     "protocol_notes": "Allen standard protocol; Ri 187 MOhm, Vrest -67.4 mV. Class uncertain.",
+     "gap_matched": "L2/L3 interneuron (14) - tentative",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/556384271",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618210488",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/525018757"
+     ]
+    },
+    {
+     "name": "Allen human specimen 528614014 (H16.06.009.01.01.04.02) model 626170679",
+     "species": "Homo sapiens (neurosurgical); 48 yr female",
+     "layer": "L6, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny), full reconstruction",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170679",
+     "mechanisms_available": "Zip downloaded and opened: 16 .mod files + fit_parameters.json + swc + ephys_sweeps.json + manifest.json. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185213",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 528613897",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618201894",
+     "protocol_notes": "celsius 34.0, junction_potential -14, fit sweeps [73,76]; Ri 152 MOhm, Vrest -60.6 mV (depolarised).",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170679",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618201894",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/528614014"
+     ]
+    },
+    {
+     "name": "Allen human specimen 558211203 (H16.03.011.11.16.03) model 626170502",
+     "species": "Homo sapiens (neurosurgical); 42 yr male",
+     "layer": "L6, middle temporal gyrus (MTG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170502",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185232",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 558211110",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618081647",
+     "protocol_notes": "Allen standard protocol; Ri 174 MOhm, Vrest -63.1 mV.",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170502",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618081647",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/558211203"
+     ]
+    },
+    {
+     "name": "Allen human specimen 548494556 (H16.06.012.11.06.06) model 626170511",
+     "species": "Homo sapiens (neurosurgical); 83 yr male",
+     "layer": "L6, middle frontal gyrus (MFG)",
+     "cell_class": "pyramidal (spiny)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/626170511",
+     "mechanisms_available": "Standard Allen perisomatic bundle; listed via API, zip not individually opened. Fit JSON: http://api.brain-map.org/api/v2/well_known_file_download/626185231",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB, ephys_result 548494452",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616987756",
+     "protocol_notes": "Allen standard protocol; Ri 114 MOhm, Vrest -69.0 mV.",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170511",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616987756",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/548494556"
+     ]
+    },
+    {
+     "name": "Allen human L3 pyramidal set (20 cells) - specimen/model pairs: 508279351/538907329, 508282493/626170801, 508378649/552636652, 508417989/538907315, 520454345/549384722, 520631294/560692910, 526725807/626170736, 527891102/626170727, 528038990/561405645, 529845713/626170646, 529878215/626170637, 529889679/626170628, 530062215/626170610, 531517732/626170601, 531526539/626170583, 537266147/626170574, 541540569/626170556, 541545716/626170547, 548425467/626170529, 548457754/626170520",
+     "species": "Homo sapiens (neurosurgical); ages 24-83, mixed sex",
+     "layer": "L3; MTG (14), FroL (2), MFG (2), ITG (1), temporal lobe (1)",
+     "cell_class": "pyramidal (spiny), full reconstructions",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic (template 329230710)",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/{model_id} (e.g. http://api.brain-map.org/neuronal_model/download/626170727)",
+     "mechanisms_available": "Standard Allen perisomatic bundle per model (16 .mod + fit_parameters.json + swc + ephys_sweeps.json + manifest.json); fit JSON ids 626185196-626185230 via /api/v2/well_known_file_download/{id}",
+     "licence": "Allen Institute Terms of Use: research/non-commercial, citation required",
+     "recordings_source": "Allen Cell Types NWB per specimen (NWBDownload well_known_file present for all 20 in the fetched API response)",
+     "recordings_url": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,specimen(donor(organism[name$eq'Homo Sapiens'])),neuronal_model_template[name$il'Biophysical*'],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type))),rma::options[num_rows$eq2000]",
+     "protocol_notes": "Allen standard protocol (34 C, -14 mV JP uncorrected, bias-held RMP, Long Square 20 pA steps, 2 s suprathreshold fit sweeps). Ri range 40-189 MOhm; Vrest -65 to -80.5 mV. Pick e.g. 527891102/626170727 (MTG, Ri 137, Vrest -67.4) or 508282493/626170801 (MTG, Ri 112, Vrest -73.3).",
+     "gap_matched": "L3 pyramidal (6)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/neuronal_model/download/626170727",
+      "http://api.brain-map.org/api/v2/well_known_file_download/618208378",
+      "https://celltypes.brain-map.org/experiment/electrophysiology/527891102",
+      "http://api.brain-map.org/neuronal_model/download/626170801",
+      "http://api.brain-map.org/api/v2/well_known_file_download/616979166"
+     ]
+    }
+   ],
+   "dead_ends": [
+    "No human 'Biophysical - all active' models exist in the Allen Cell Types Database (all 43 human biophysical models are perisomatic; RMA query above returned only template 329230710).",
+    "No human L1 interneuron with a biophysical model (structure__layer never equals 1 among human biophysical models); L1 gap (4) cannot be filled from Allen.",
+    "Interneuron subtype (PV/SST/VIP) is not annotated for human Allen cells (no Cre line; only dendrite_type aspiny/sparsely spiny), so L2/L3 interneuron candidates are subtype-unknown.",
+    "Allen human biophysical models exist for temporal (MTG/ITG) and frontal (FroL/MFG) cortex only; none from the H01 sample's region.",
+    "The Allen 'structure' field on NeuronalModel/specimen gives gyrus only; layer must be joined from ApiCellTypesSpecimenDetail.structure__layer (done).",
+    "Old whitepaper URLs (http://help.brain-map.org/download/attachments/8323525/CellTypes_Ephys_Overview.pdf and http://www.alleninstitute.org/uploads/short-url/*.pdf) are dead (redirect to community forum / 404); working mirrors are https://community.brain-map.org/uploads/short-url/veJ9z4lwAJoxv4Rx23b7KpnUYEp.pdf (ephys) and .../akP9tVfUe0X96gRnM0hFoztAZdo.pdf (perisomatic).",
+    "One L5 aspiny human model exists (specimen 528687520, model 626170670, MTG, zip opened: 16 mods, 34 C, JP -14, fit sweep [38]) but L5 interneuron is not a listed H01 gap, so not proposed.",
+    "Only one NWB file (618205555) was HEAD-verified for a 200 response; the other NWB links were taken from the API well_known_files listing and not individually fetched.",
+    "Three L2 spiny human models (508421103/549384713, 525133308/556384280, and imported 541563728) exist but L2 pyramidal is already covered, so excluded."
+   ]
+  },
+  {
+   "lead": "ModelDB 267587 / Guet-McCreight et al. 2023 human L5 microcircuit (and its sibling ModelDB 267595 / Yao et al. 2022 human L2/3 microcircuit) plus the Allen Cell Types human perisomatic-model cohort those circuits were built from. Key finding on the lead: the 267587 source tree (github.com/agmccrei/HumanL5Circuit_AGM2022, GPL-3.0) contains biophys_HL5PN1y.hoc / biophys_HL5PN1o.hoc (young/old L5 pyramidal), biophys_HL5MN1.hoc, biophys_HL5VN1.hoc, biophys_HL5BN1.hoc, a mod/ directory and HL5*.swc morphologies. There is NO HL5PN2 template. Per the Cerebral Cortex methods (academic.oup.com/cercor/article/33/8/4360/6706906) the L5 pyramidal models were fitted to POOLED Krembil (Toronto MTG) whole-cell recordings (younger n=60, older n=13) plus Allen human data (n=50/14), not to a single cell; the SST (HL5MN1) and VIP (HL5VN1) models were 'derived from previous human L2/3 neuron models' because no human L5 SST/VIP data existed - i.e. they are re-badged HL23SST/HL23VIP fitted to Allen L2/L3 specimens 571700636 (SST) and 525018757 (VIP). The Krembil recordings are downloadable as NWB from DANDI 000293 (CC0-1.0); Allen recordings are NWB via the Cell Types API. So the SP6b-eligible donors from this family are: HL5PN1 (L5 pyramidal, population fit against DANDI 000293), HL23PYR (L2/3 pyramidal, population fit), HL23SST/HL5MN1 and HL23PV (L3 interneurons, single Allen cells), HL23VIP/HL5VN1 (L2 interneuron, single Allen cell); and independently the Allen human perisomatic models cover the L4 (4 cells), L5 (6), L6 (3) and L3-interneuron (5 aspiny) gaps directly.",
+   "candidates": [
+    {
+     "name": "HL5PN1 (young/old) - human L5 pyramidal, Guet-McCreight et al. 2023 (ModelDB 267587)",
+     "species": "human (middle temporal gyrus, layer 5; morphology Allen specimen 562381210, alt 529863215)",
+     "layer": "L5",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 267587 / GitHub agmccrei/HumanL5Circuit_AGM2022 (L5Circuit/default_circuit/models/biophys_HL5PN1y.hoc, biophys_HL5PN1o.hoc; NeuronTemplate.hoc; mod/; morphologies/HL5PN1.swc); Zenodo 10.5281/zenodo.7016054",
+     "model_url": "https://github.com/agmccrei/HumanL5Circuit_AGM2022",
+     "mechanisms_available": "mod/: CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, K_P, K_T, Kv3_1, NaTg, Nap, SK, NMDA, ProbAMPANMDA, ProbUDFsyn, epsp, tonic (verified in GitHub tree)",
+     "licence": "GPL-3.0 (LICENSE file in repo; Zenodo lists 'Other (Open)')",
+     "recordings_source": "Krembil Brain Institute / Toronto Western Hospital whole-cell recordings (Moradi Chameh et al. 2021, Howard et al. 2022 GigaScience); pooled fit younger n=60, older n=13 L5 pyramidal cells, plus Allen human L5 data (n=50 younger, 14 older). Public copy: DANDI 000293 'UHN whole-cell patch-clamp excitability recordings from human cortical neurons' (NWB, 121 files, CC0-1.0); GigaDB 10.5524/102317",
+     "recordings_url": "https://dandiarchive.org/dandiset/000293",
+     "protocol_notes": "Krembil protocol (Chameh 2021 / Howard 2022): 32-34 C; LJP calculated -10.8 mV and NOT corrected; K-gluconate internal (135 mM); 600-1000 ms long-square steps, hyperpolarizing 0 to -400 pA in 50 pA increments, depolarizing 0-400 pA; 20 kHz digitisation; holding current not standardised/not stated. Caveat: population (feature-average) fit, so acceptance contract must be scored against the population feature distribution, not one cell; DANDI files are per-subject and the specific 60+13 cells are not enumerated in the paper text I could read.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/267587",
+      "https://github.com/agmccrei/HumanL5Circuit_AGM2022",
+      "https://api.github.com/repos/agmccrei/HumanL5Circuit_AGM2022/git/trees/HEAD?recursive=1",
+      "https://academic.oup.com/cercor/article/33/8/4360/6706906",
+      "https://dandiarchive.org/dandiset/000293",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC9664072/",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC8093195/",
+      "https://zenodo.org/records/7016054"
+     ]
+    },
+    {
+     "name": "HL23SST (= HL5MN1 in the L5 circuit) - human SST/Martinotti interneuron, Yao et al. 2022 (ModelDB 267595)",
+     "species": "human (Allen specimen 571700636, H17.06.006.11.09.05, middle temporal gyrus, layer 3, aspiny, donor 35 y)",
+     "layer": "L3 (Allen structure__layer 3; normalized depth 0.282)",
+     "cell_class": "interneuron, putative SST (aspiny)",
+     "model_source": "ModelDB 267595 / GitHub KantYao/Human-L2-3-Cortical-Microcircuit (L23Net/models/biophys_HL23SST.hoc, morphologies/HL23SST.swc, mod/); same biophysics re-used as biophys_HL5MN1.hoc in ModelDB 267587",
+     "model_url": "https://github.com/ModelDBRepository/267595",
+     "mechanisms_available": "mod/: CaDynamics, Ca_HVA, Ca_LVA, Gfluct, Ih, Im, K_P, K_T, Kv3_1, NMDA, NaTg, Nap, ProbAMPANMDA, ProbUDFsyn, SK, epsp, tonic (verified in GitHub tree)",
+     "licence": "No LICENSE file in 267595 repo (ModelDB default terms); the HL5MN1 copy in agmccrei/HumanL5Circuit_AGM2022 is GPL-3.0",
+     "recordings_source": "Allen Cell Types Database human specimen 571700636 (single-cell fit, ephys + morphology same cell); Allen perisomatic model 626170439 also exists for this cell",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/571700636",
+     "protocol_notes": "Allen protocol (Lee et al. 2021 eLife, same pipeline): 34 C; reported uncorrected for measured -14 mV LJP; bias current injected to hold initial resting Vm; Long Square 1 s steps from -110 pA to rheobase+160 pA in 20 pA increments, Short Square 3 ms, Ramp 25 pA/s; bridge balance <20 MOhm. NWB download: api.brain-map.org/api/v2/well_known_file_download/618228061; SWC: .../601947574; Allen perisomatic model zip: .../626185239. Fit via in-house genetic algorithm (Yao 2022 preprint methods).",
+     "gap_matched": "L2/L3 interneurons (14; SST)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/267595",
+      "https://api.github.com/repos/ModelDBRepository/267595/git/trees/HEAD?recursive=1",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full",
+      "https://academic.oup.com/cercor/article/33/8/4360/6706906",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]",
+      "https://elifesciences.org/articles/65482"
+     ]
+    },
+    {
+     "name": "HL23PV - human PV basket interneuron, Yao et al. 2022 (ModelDB 267595)",
+     "species": "human (Allen specimen 529807751, H16.06.010.01.03.04.01, middle temporal gyrus, layer 3, aspiny, donor 67 y)",
+     "layer": "L3",
+     "cell_class": "interneuron, putative PV (aspiny, fast-spiking)",
+     "model_source": "ModelDB 267595 / KantYao/Human-L2-3-Cortical-Microcircuit (L23Net/models/biophys_HL23PV.hoc, morphologies/HL23PV.swc, mod/)",
+     "model_url": "https://github.com/ModelDBRepository/267595",
+     "mechanisms_available": "same mod/ set as HL23SST (verified)",
+     "licence": "No LICENSE file in 267595 repo (ModelDB default terms)",
+     "recordings_source": "Allen Cell Types Database human specimen 529807751 (single-cell fit with BluePyOpt); Allen perisomatic model 626170661 also exists",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/529807751",
+     "protocol_notes": "Allen protocol as above (34 C, -14 mV LJP uncorrected, bias current holds Vrest, 1 s long squares 20 pA increments). NWB/SWC download links obtainable via api.brain-map.org Specimen query with ephys_result(well_known_files) - not individually fetched for this id.",
+     "gap_matched": "L2/L3 interneurons (14; PV)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://api.github.com/repos/ModelDBRepository/267595/git/trees/HEAD?recursive=1",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]"
+     ]
+    },
+    {
+     "name": "HL23VIP (= HL5VN1 in the L5 circuit) - human VIP interneuron, Yao et al. 2022 (ModelDB 267595)",
+     "species": "human (Allen specimen 525018757, H16.03.003.01.19.02, frontal lobe (FroL), layer 2, sparsely spiny, donor 25 y)",
+     "layer": "L2",
+     "cell_class": "interneuron, putative VIP (sparsely spiny)",
+     "model_source": "ModelDB 267595 (L23Net/models/biophys_HL23VIP.hoc, morphologies/HL23VIP.swc); re-used as biophys_HL5VN1.hoc in ModelDB 267587",
+     "model_url": "https://github.com/ModelDBRepository/267595",
+     "mechanisms_available": "same mod/ set as HL23SST (verified)",
+     "licence": "No LICENSE file in 267595 repo; HL5VN1 copy is GPL-3.0",
+     "recordings_source": "Allen Cell Types Database human specimen 525018757 (single-cell fit with BluePyOpt); Allen perisomatic model exists (m__biophys_perisomatic=1)",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/525018757",
+     "protocol_notes": "Allen protocol as above. Note region is frontal lobe, not temporal - H01 is temporal cortex, so region mismatch should be recorded.",
+     "gap_matched": "L2/L3 interneurons (14; VIP)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://api.github.com/repos/ModelDBRepository/267595/git/trees/HEAD?recursive=1",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]"
+     ]
+    },
+    {
+     "name": "HL23PYR - human L2/3 pyramidal, Yao et al. 2022 (ModelDB 267595)",
+     "species": "human (ephys: Krembil MTG L2/3 pyramidal, pooled n=28; morphology Allen specimen 531526539, frontal lobe, layer 3, spiny)",
+     "layer": "L2/3 (morphology L3)",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 267595 (L23Net/models/biophys_HL23PYR.hoc, morphologies/HL23PYR.swc, mod/)",
+     "model_url": "https://github.com/ModelDBRepository/267595",
+     "mechanisms_available": "same mod/ set (verified)",
+     "licence": "No LICENSE file in 267595 repo (ModelDB default terms)",
+     "recordings_source": "Krembil/Toronto L2/3 pyramidal whole-cell recordings (n=28, 8 subjects) - public copy DANDI 000293 (L2/3: 27-41 human cells, NWB, CC0)",
+     "recordings_url": "https://dandiarchive.org/dandiset/000293",
+     "protocol_notes": "Krembil protocol: 32-34 C, LJP -10.8 mV not corrected, 600-1000 ms steps, 50 pA increments to +/-400 pA. Population fit (in-house genetic algorithm), so score against L2/3 feature distributions. Fit-to-data statement comes from the bioRxiv v2 methods; Cell Reports final text not fetched (403).",
+     "gap_matched": "L3 pyramidal (6) (weak: L2/3 pooled, frontal morphology)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full",
+      "https://api.github.com/repos/ModelDBRepository/267595/git/trees/HEAD?recursive=1",
+      "https://dandiarchive.org/dandiset/000293"
+     ]
+    },
+    {
+     "name": "Allen human L4 spiny perisomatic models: 508405843 (model 626185199), 527952884, 528015670, 569818704",
+     "species": "human, middle temporal gyrus, layer 4 (Allen structure__layer 4, spiny); donors 37 y, 24 y, 24 y, 61 y",
+     "layer": "L4",
+     "cell_class": "pyramidal / spiny excitatory",
+     "model_source": "Allen Cell Types Database 'Biophysical - perisomatic' models (Gouwens et al. 2018 pipeline; NEURON hoc + json + modfiles in model zip). Verified download links: 508405843 model zip api.brain-map.org/api/v2/well_known_file_download/626185199; 527952884 model .../626185209",
+     "model_url": "http://celltypes.brain-map.org/experiment/electrophysiology/508405843",
+     "mechanisms_available": "Allen perisomatic mod set (NaTs, NaTa, Nap, K_P, K_T, Kv3_1, Kv2like, SK, Ca_HVA, Ca_LVA, Ih, Im, CaDynamics) shipped in model zip (standard Allen bundle; individual zip contents not fetched)",
+     "licence": "Allen Institute Terms of Use: research/non-commercial use, attribution required, no commercial redistribution without written permission",
+     "recordings_source": "Allen Cell Types Database (same cell). Verified NWB: 508405843 -> .../616978607; 527952884 -> .../618205555; SWC 538906641 and 563819084",
+     "recordings_url": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$eq508405843],rma::include,donor(organism,age),structure,cell_soma_locations,neuronal_models(well_known_files,neuronal_model_template),ephys_result(well_known_files),neuron_reconstructions(well_known_files)",
+     "protocol_notes": "Allen protocol: 34 C; -14 mV LJP uncorrected; bias current holds initial resting Vm; Long Square 1 s -110 pA to rheobase+160 pA in 20 pA steps; Short Square 3 ms; Ramp 25 pA/s; sweep metadata via AllenSDK ctc.get_ephys_sweeps(). 508405843 features: rheobase 49 pA, tau 32 ms, Vrest -70.9 mV, adaptation 0.071, f-I slope 0.279 Hz/pA. Perisomatic = active soma, passive dendrites. 528015670 and 569818704 rows come from the ApiCellTypesSpecimenDetail table (not individually fetched).",
+     "gap_matched": "L4 pyramidal (22, largest gap)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in571700636,569820026,558211203,527952884],rma::include,donor(organism,age),structure,cell_soma_locations,neuronal_models(well_known_files,neuronal_model_template),ephys_result(well_known_files),neuron_reconstructions(well_known_files)",
+      "https://alleninstitute.org/terms-of-use/",
+      "https://elifesciences.org/articles/65482",
+      "https://allensdk.readthedocs.io/en/latest/cell_types.html"
+     ]
+    },
+    {
+     "name": "Allen human L5 spiny perisomatic models: 569820026 (model 626185235), 537313158, 528042185, 527942865, 529898751 (ITG)",
+     "species": "human, MTG (529898751 is ITG), layer 5, spiny; donors 61, 33, 24, 24, 67 y",
+     "layer": "L5",
+     "cell_class": "pyramidal / spiny excitatory",
+     "model_source": "Allen Cell Types 'Biophysical - perisomatic'. Verified: 569820026 model zip .../626185235, NWB .../618078045, SWC .../596792559",
+     "model_url": "http://celltypes.brain-map.org/experiment/electrophysiology/569820026",
+     "mechanisms_available": "Allen perisomatic mod bundle in model zip",
+     "licence": "Allen Institute Terms of Use (non-commercial, attribution)",
+     "recordings_source": "Allen Cell Types Database NWB per specimen",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/569820026",
+     "protocol_notes": "Allen protocol as above. Note Allen human L5 recordings were also part of the HL5PN1 pooled fit (n=50/14).",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in571700636,569820026,558211203,527952884],rma::include,donor(organism,age),structure,cell_soma_locations,neuronal_models(well_known_files,neuronal_model_template),ephys_result(well_known_files),neuron_reconstructions(well_known_files)"
+     ]
+    },
+    {
+     "name": "Allen human L6 spiny perisomatic models: 558211203 (model 626185232), 528614014, 548494556 (MFG)",
+     "species": "human, MTG (548494556 is middle frontal gyrus), layer 6, spiny; donors 42, 48, 83 y",
+     "layer": "L6",
+     "cell_class": "pyramidal / spiny excitatory",
+     "model_source": "Allen Cell Types 'Biophysical - perisomatic'. Verified: 558211203 model zip .../626185232, NWB .../618081647, SWC .../570679769",
+     "model_url": "http://celltypes.brain-map.org/experiment/electrophysiology/558211203",
+     "mechanisms_available": "Allen perisomatic mod bundle in model zip",
+     "licence": "Allen Institute Terms of Use (non-commercial, attribution)",
+     "recordings_source": "Allen Cell Types Database NWB per specimen",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/558211203",
+     "protocol_notes": "Allen protocol as above.",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in571700636,569820026,558211203,527952884],rma::include,donor(organism,age),structure,cell_soma_locations,neuronal_models(well_known_files,neuronal_model_template),ephys_result(well_known_files),neuron_reconstructions(well_known_files)"
+     ]
+    },
+    {
+     "name": "Allen human L3 aspiny interneuron perisomatic models: 571709783, 488418027, 531520637 (FroL) (plus 571700636 and 529807751 already listed via HL23SST/HL23PV)",
+     "species": "human, MTG (531520637 frontal lobe), layer 3, aspiny; donors 35, 65, 26 y",
+     "layer": "L3",
+     "cell_class": "interneuron (aspiny; subtype not labelled by Allen)",
+     "model_source": "Allen Cell Types 'Biophysical - perisomatic' (models 626170430, 543285979, 626170592)",
+     "model_url": "http://celltypes.brain-map.org/experiment/electrophysiology/571709783",
+     "mechanisms_available": "Allen perisomatic mod bundle in model zip",
+     "licence": "Allen Institute Terms of Use (non-commercial, attribution)",
+     "recordings_source": "Allen Cell Types Database NWB per specimen",
+     "recordings_url": "http://celltypes.brain-map.org/experiment/electrophysiology/571709783",
+     "protocol_notes": "Allen protocol as above; rows taken from the ApiCellTypesSpecimenDetail table; individual download links not fetched for these three ids. Also 528687520 (L5 aspiny, the HL5BN1 source - already imported) and two L2 'sparsely spiny' cells 571718621 (MTG) and 525018757 (FroL).",
+     "gap_matched": "L2/L3 interneurons (14; subtype unknown)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]"
+     ]
+    },
+    {
+     "name": "Rich et al. 2021 human L5 pyramidal cell (ModelDB 266984; FKSkinnerLab/HumanL5NeuronModel)",
+     "species": "human, middle temporal gyrus, layer 5 (single neuron recorded and reconstructed at Krembil/Toronto Western)",
+     "layer": "L5",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 266984 / GitHub FKSkinnerLab/HumanL5NeuronModel (HumanCell/init_final.hoc, ModelSetup.hoc, L5_params_exponential.hoc, CurrentClampSetup.hoc; mod: CaDynamics_E2, Ca_HVA, Ca_LVAst, Ih (novel human h-current), Ih_Kole/Ih_me/Ih_original/Ih_shifted, Im, K_Pst, K_Tst, NaTa_t, NaTs2_t, Nap_Et2, SK_E2, SKv3_1, izap)",
+     "model_url": "https://modeldb.science/266984",
+     "mechanisms_available": "full mod list verified in GitHub tree (both repos)",
+     "licence": "No LICENSE file in either repo (ModelDB default terms); paper is OUP Cerebral Cortex",
+     "recordings_source": "Raw recordings of the modelled cell shipped in repo RawData/ as text (IClamp: time/voltage; VClamp: time/current; parameters in filenames), 'as required to be made public by eLife'; morphology included with model code. Not NWB/ABF.",
+     "recordings_url": "https://github.com/FKSkinnerLab/HumanL5NeuronModel/tree/master/RawData",
+     "protocol_notes": "32-34 C; LJP 10.8 mV calculated and CORRECTED wherever data are compared to model; 1000 ms steps, hyperpolarizing -50 to -400 pA (50 pA), depolarizing 50-400 pA; holding current not stated. Single-cell fit; the cell's own raw traces are in RawData so a per-cell acceptance contract is possible.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/266984",
+      "https://github.com/ModelDBRepository/266984",
+      "https://api.github.com/repos/FKSkinnerLab/HumanL5NeuronModel/git/trees/HEAD?recursive=1",
+      "https://raw.githubusercontent.com/FKSkinnerLab/HumanL5NeuronModel/master/RawData/README.md",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7906797/"
+     ]
+    }
+   ],
+   "dead_ends": [
+    "HL5PN2 does not exist in the ModelDB 267587 / agmccrei source tree; the two L5 pyramidal templates are HL5PN1y (young) and HL5PN1o (old) sharing one morphology HL5PN1.swc (verified via GitHub tree API).",
+    "HL5MN1 and HL5VN1 are NOT fitted to human L5 SST/VIP recordings: the Cerebral Cortex methods state they were 'derived from previous human L2/3 neuron models' (HL23SST -> Allen 571700636 L3 MTG; HL23VIP -> Allen 525018757 L2 frontal lobe). They count only as L2/L3 interneuron donors.",
+    "Allen Cell Types Database has NO 'Biophysical - all active' models for human cells: all 43 human biophysical models are perisomatic (API ApiCellTypesSpecimenDetail m__biophys_all_active = 0 for every human row). Layer counts: L2 4, L3 23, L4 4, L5 6, L6 3.",
+    "Yao et al. 2022 Cell Reports full text (cell.com) returned HTTP 403; data provenance was taken from the bioRxiv v2 preprint. Europe PMC lists no PMCID for that paper or for Guet-McCreight 2023.",
+    "bioRxiv v3 of Yao/Hay connectivity-derivation preprint and bioRxiv v5 / MPG mirror of Guet-McCreight 2023 returned 429/403; protocol details were taken from Chameh 2021 (PMC8093195) and Howard 2022 (PMC9664072) instead.",
+    "Allen electrophysiology whitepaper CellTypes_Ephys_Overview.pdf redirects to community.brain-map.org; protocol facts were taken from the Allen Cell Types documentation page (stimulus set) and Lee et al. 2021 eLife 65482 (34 C, -14 mV LJP uncorrected, bias current) instead.",
+    "GigaDB 10.5524/102317 page returned no content; DANDI 000293 (CC0, NWB) was verified directly instead. The specific Krembil cells pooled for HL5PN1/HL23PYR are not enumerated in the readable paper text, so per-cell acceptance contracts for those two models must be built from the population.",
+    "Eyal et al. 2018 (ModelDB 238347, six human L2/L3 pyramidal cells, VU Amsterdam recordings, 32-35 C) fails criterion (d): the paper only points to ModelDB for the models and no recording repository is given; no licence file located.",
+    "Kalmbach et al. 2018 (github.com/AllenInstitute/human_neuron_Ih, human L3 pyramidal, Allen Institute Software License non-commercial) fails (d): paper states the human recordings are not in the Allen Cell Types Database; LJP -13 mV uncorrected, 32-34 C, 250/500/750 pA 1 s steps. Specimen id 478230220 in the repo returned zero rows from the Allen Specimen API.",
+    "ModelDB 267595 (KantYao repo) has no LICENSE file; only ModelDB default terms apply.",
+    "PubMed page fetch blocked (cookie wall); used Europe PMC REST instead.",
+    "No human L1 interneuron biophysical model found in ModelDB 267587/267595, Allen human perisomatic cohort (no layer-1 rows), or Rich/Eyal/Kalmbach; L1 interneuron gap (4) has no candidate."
+   ]
+  },
+  {
+   "lead": "Published human L2/L3 pyramidal biophysical models (Eyal 2016/2018, Kalmbach 2018, Berg 2021, Beaulieu-Laroche 2018) checked for downloadable mechanisms, licence, and fitted-recording availability; extended to the Allen Cell Types human perisomatic model set and the Krembil/Hay human L2/3 and L5 single-cell fits because those are the only sources that reach the H01 L4/L5/L6/interneuron gaps.",
+   "candidates": [
+    {
+     "name": "Allen Cell Types human L4 spiny perisomatic models (4 cells: specimen 508405843 model 538906694; 527952884 model 626170709; 528015670 model 554338972; 569818704 model 626170484)",
+     "species": "human, middle temporal gyrus (epilepsy resections)",
+     "layer": "L4 (structure__layer=4 in ApiCellTypesSpecimenDetail)",
+     "cell_class": "spiny (pyramidal/excitatory; dendrite_type=spiny)",
+     "model_source": "Allen Cell Types Database, 'Biophysical - perisomatic' NeuronalModel (fit JSON per model; standard Allen perisomatic .mod set NaTs/Nap/Ih/CaHVA/CaLVA/SK/Im/Kv3_1/K_T/K_P, or NaV/Kd/Kv2like/Im_v2 for narrow-AP cells; modfiles+swc+NWB bundled by allensdk BiophysicalApi.cache_data)",
+     "model_url": "http://api.brain-map.org/api/v2/well_known_file_download/626185199 (fit JSON for model 538906694; others 626185209, 626185210, 626185234); browse https://celltypes.brain-map.org/experiment/electrophysiology/508405843",
+     "mechanisms_available": "yes - fit-parameter JSON downloadable (fetched, application/json), mechanisms are the Allen perisomatic .mod files shipped with the allensdk model download",
+     "licence": "Allen Institute Terms of Use: research/noncommercial use, redistribution and derivative works permitted with citation; commercial use requires written permission (terms@alleninstitute.org)",
+     "recordings_source": "Allen Cell Types NWB (ephys_result well_known_file), same cell the model was fit to",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/616978607 (NWB for 508405843; ephys_result 508405841); other specimens via api query model::Specimen,rma::include,ephys_result(well_known_files)",
+     "protocol_notes": "Allen Electrophysiology white paper v5 (Oct 2017): bath ACSF.III at 34 +/- 1 C; K-gluconate internal with 0.5% biocytin; -14 mV liquid junction potential measured and NOT corrected; bias current injected to hold initial resting potential (QC: 0 +/- 100 pA); Long Square 1 s steps in 20 pA increments to rheobase+160 pA (some low-IR human cells from -220 pA in 40 pA steps); 2 s suprathreshold squares at rheobase+40/+80 pA; 3 ms short square; ramp 25 pA/s; noise 1&2. Perisomatic models fit passive Cm/Ra/Rm to +/-500 pA 0.5 ms pulses then GA over 15-16 conductance params against long-square features; Q10 2.3.",
+     "gap_matched": "L4 pyramidal (largest gap, 22 cells)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq100]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[specimen_id$in508405843,527952884,528015670,569818704],neuronal_model_template[name$il'Biophysical*'],rma::include,well_known_files",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in508405843,569820026,558211203,571700636],rma::include,ephys_result(well_known_files),structure",
+      "https://alleninstitute.org/terms-of-use/",
+      "https://community.brain-map.org/t/documentation-cell-types-database/2845",
+      "https://allensdk.readthedocs.io/en/latest/biophysical_models.html"
+     ]
+    },
+    {
+     "name": "Allen Cell Types human L5 spiny perisomatic models (5 cells: 569820026 model 626170475; 537313158 model 626170565; 528042185 model 560692892; 527942865 model 626170718; 529898751 model 626170619 [ITG])",
+     "species": "human, middle temporal gyrus (529898751 inferior temporal gyrus), epilepsy",
+     "layer": "L5",
+     "cell_class": "spiny (pyramidal)",
+     "model_source": "Allen Cell Types Database 'Biophysical - perisomatic'",
+     "model_url": "http://api.brain-map.org/api/v2/well_known_file_download/626185235 (569820026), 626185225 (537313158), 626185212 (528042185), 626185208 (527942865), 626185219 (529898751)",
+     "mechanisms_available": "yes - fit JSON + Allen perisomatic .mod set via allensdk download",
+     "licence": "Allen Institute Terms of Use (noncommercial; commercial needs permission)",
+     "recordings_source": "Allen Cell Types NWB of the fitted cell",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618078045 (NWB for 569820026, ephys_result 569820012)",
+     "protocol_notes": "Same Allen human slice protocol as above: 34 C, -14 mV LJP uncorrected, bias current holds initial RMP, 1 s long squares 20 pA steps, 2 s rheobase+40/80 pA, ramp, short square, noise.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq100]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[specimen_id$in569820026,537313158,528042185,527942865,529898751],neuronal_model_template[name$il'Biophysical*'],rma::include,well_known_files",
+      "https://alleninstitute.org/terms-of-use/"
+     ]
+    },
+    {
+     "name": "Allen Cell Types human L6 spiny perisomatic models (3 cells: 558211203 model 626170502 [MTG, tumor]; 548494556 model 626170511 [MFG, tumor]; 528614014 model 626170679 [MTG, epilepsy])",
+     "species": "human, MTG / middle frontal gyrus",
+     "layer": "L6",
+     "cell_class": "spiny (pyramidal)",
+     "model_source": "Allen Cell Types Database 'Biophysical - perisomatic'",
+     "model_url": "http://api.brain-map.org/api/v2/well_known_file_download/626185232 (558211203), 626185231 (548494556), 626185213 (528614014)",
+     "mechanisms_available": "yes - fit JSON + Allen perisomatic .mod set",
+     "licence": "Allen Institute Terms of Use (noncommercial)",
+     "recordings_source": "Allen Cell Types NWB",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618081647 (NWB for 558211203, ephys_result 558211110)",
+     "protocol_notes": "Allen human slice protocol (34 C; -14 mV LJP uncorrected; bias current to initial RMP; 20 pA long-square increments).",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq100]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in508405843,569820026,558211203,571700636],rma::include,ephys_result(well_known_files),structure"
+     ]
+    },
+    {
+     "name": "Allen Cell Types human L3 spiny perisomatic models (MTG: 508279351/538907329, 508417989/538907315, 537266147/626170574, 541540569/626170556, 508282493/626170801, 528038990/561405645, 529878215/626170637, 530062215/626170610, 508378649/552636652, 529845713/626170646, 520631294/560692910, 527891102/626170727, 520454345/549384722; ITG 529889679/626170628; TemL 526725807/626170736; frontal 548457754/626170520, 548425467/626170529, 531517732/626170601, 531526539/626170583)",
+     "species": "human, mostly middle temporal gyrus; some MFG/FroL (tumor cases)",
+     "layer": "L3",
+     "cell_class": "spiny (pyramidal)",
+     "model_source": "Allen Cell Types Database 'Biophysical - perisomatic'",
+     "model_url": "https://celltypes.brain-map.org/ (specimen/model ids above); fit JSON via /api/v2/well_known_file_download/<id> from NeuronalModel well_known_files",
+     "mechanisms_available": "yes - fit JSON + Allen perisomatic .mod set",
+     "licence": "Allen Institute Terms of Use (noncommercial)",
+     "recordings_source": "Allen Cell Types NWB per specimen",
+     "recordings_url": "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$eq<specimen_id>],rma::include,ephys_result(well_known_files)",
+     "protocol_notes": "Allen human slice protocol (34 C; -14 mV LJP uncorrected; bias current; 20 pA steps). Same pipeline as the already-imported 541563728/626170538 L2 pyramid, so the existing import path applies directly.",
+     "gap_matched": "L3 pyramidal (6)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq100]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,neuronal_model_template[name$il'Biophysical*'],specimen(donor(organism[name$eq'Homo%20Sapiens'])),rma::include,specimen(structure,donor(organism),cell_soma_locations),neuronal_model_template,rma::options[num_rows$eq500]"
+     ]
+    },
+    {
+     "name": "Allen Cell Types human L2/L3 aspiny/sparsely-spiny perisomatic models (L3 aspiny MTG: 571700636/626170439, 571709783/626170430, 488418027/543285979, 529807751/626170661; L3 aspiny FroL: 531520637/626170592; L2 sparsely spiny: 571718621/626170421 [MTG], 525018757/556384271 [FroL])",
+     "species": "human, MTG (and frontal lobe)",
+     "layer": "L2 / L3",
+     "cell_class": "aspiny or sparsely spiny (interneuron; subtype not annotated by Allen, but Yao et al. 2022 treat 529807751 as PV-like, 571700636 as SST-like, 525018757 as VIP-like)",
+     "model_source": "Allen Cell Types Database 'Biophysical - perisomatic' (narrow-AP conductance set likely: NaV, Kd, Kv2like, Im_v2, Kv3_1, K_T, Ih, Ca, SK)",
+     "model_url": "http://api.brain-map.org/api/v2/well_known_file_download/626185239 (571700636), 626185240 (571709783), 626185195 (488418027), 626185215 (529807751), 626185241 (571718621), 626185204 (525018757)",
+     "mechanisms_available": "yes - fit JSON + Allen perisomatic .mod set",
+     "licence": "Allen Institute Terms of Use (noncommercial)",
+     "recordings_source": "Allen Cell Types NWB",
+     "recordings_url": "http://api.brain-map.org/api/v2/well_known_file_download/618228061 (NWB for 571700636, ephys_result 571700399)",
+     "protocol_notes": "Allen human slice protocol (34 C; -14 mV LJP uncorrected; bias current; 20 pA steps; 3 ms short square for AP width).",
+     "gap_matched": "L2/L3 interneurons (14; any subtype)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq100]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$in508405843,569820026,558211203,571700636],rma::include,ephys_result(well_known_files),structure",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full"
+     ]
+    },
+    {
+     "name": "Yao et al. 2022 human L2/3 microcircuit single-cell models HL23PV / HL23SST / HL23VIP (and HL23PYR) - ModelDB 267595 / Zenodo 5771000",
+     "species": "human, medial/middle temporal gyrus (Allen Brain Atlas recordings)",
+     "layer": "L2/3",
+     "cell_class": "PV, SST, VIP interneurons (plus pyramidal); morphology-detailed, active-dendrite hoc biophysics",
+     "model_source": "ModelDB 267595 (GitHub mirror ModelDBRepository/267595: models/biophys_HL23PV.hoc, biophys_HL23SST.hoc, biophys_HL23VIP.hoc, biophys_HL23PYR.hoc, NeuronTemplate.hoc, mod/, morphologies/); Zenodo 10.5281/zenodo.5771000 (L23Net.zip)",
+     "model_url": "https://modeldb.science/267595 ; https://zenodo.org/records/5771000",
+     "mechanisms_available": "yes - hoc biophysics files listed in repo, mod/ directory present (contents not enumerated)",
+     "licence": "Zenodo record: CC-BY-4.0; ModelDB/GitHub mirror has no LICENSE file",
+     "recordings_source": "Allen Cell Types Database human NWB: SST fit to specimen 571700636, PV to 529807751, VIP to 525018757 (bioRxiv v2 Methods); PYR morphology 531526539",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/571700636 ; .../529807751 ; .../525018757 (NWB via api well_known_file_download)",
+     "protocol_notes": "Fits used five hyperpolarizing and depolarizing current steps from the Allen recordings; underlying protocol is the Allen human slice protocol (34 C, -14 mV LJP uncorrected, bias current to initial RMP, 20 pA increments). Optimization: in-house GA (Pyr, SST) and BluePyOpt (PV, VIP).",
+     "gap_matched": "L2/L3 interneurons (PV/SST/VIP)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/267595",
+      "https://api.github.com/repos/ModelDBRepository/267595/contents/models",
+      "https://zenodo.org/records/5771000",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v2.full"
+     ]
+    },
+    {
+     "name": "Guet-McCreight et al. 2023 human L5 pyramidal models (younger/older HL5PN) - ModelDB 267587 'Single Cell Modelling/Optimizations/L5Pyr_young_NSG' etc. (same source tree as the already-imported HL5BN1, but a different cell)",
+     "species": "human, middle temporal gyrus",
+     "layer": "L5",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 267587 / GitHub agmccrei/HumanL5Circuit_AGM2022 (folders L5Pyr_young_NSG, L5Pyr_old_NSG, L5Pyr_young_AltMorph_Scinet, L5Pyr_old_AltMorph_Scinet, L5PV; each with init_active.py, modfiles/, morphology H16.06.013.11.18.02_696537235_m.swc, active.pkl 17 MB)",
+     "model_url": "https://modeldb.science/267587 ; https://github.com/agmccrei/HumanL5Circuit_AGM2022",
+     "mechanisms_available": "yes - modfiles/ directory and python optimization scripts present (verified listing); Hay-type mechanism set",
+     "licence": "GPL-3.0 (LICENSE file in repo, verified)",
+     "recordings_source": "Fitted to population features from Krembil Brain Institute (younger n=60, older n=13; Chameh et al. 2021 Nat Commun) and Allen Brain Institute (younger n=50, older n=14) L5 pyramidal recordings; morphologies Allen 562381210 (primary) and 529863215. Chameh 2021 raw recordings: 'Source data provided in Supplementary Materials'; Allen cells downloadable as NWB. active.pkl content not inspected.",
+     "recordings_url": "https://www.biorxiv.org/content/10.1101/748988v4.full (Chameh 2021 source data/code: https://github.com/stripathy/valiante_lab_abf_process) ; https://celltypes.brain-map.org/",
+     "protocol_notes": "Krembil: 32-34 C, LJP -10.8 mV NOT corrected, 600 ms steps 0 to -400 pA (50 pA) and 0-400 pA depolarizing, V-clamp -60 to -140 mV in -10 mV steps. Allen: 34 C, -14 mV uncorrected, bias current. Note the model is a population fit, not a single-cell fit, so a single-cell acceptance contract needs the specific ABI cells (not enumerated in repo README).",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://api.github.com/repos/ModelDBRepository/267587/contents/Single%20Cell%20Modelling/Optimizations",
+      "https://api.github.com/repos/ModelDBRepository/267587/contents/Single%20Cell%20Modelling/Optimizations/L5Pyr_young_NSG",
+      "https://raw.githubusercontent.com/ModelDBRepository/267587/master/LICENSE",
+      "https://www.biorxiv.org/content/10.1101/2021.11.03.467014v5.full",
+      "https://github.com/agmccrei/HumanL5Circuit_AGM2022"
+     ]
+    },
+    {
+     "name": "Rich et al. 2021 (Cerebral Cortex 31:845) human L5 pyramidal cell model - FKSkinnerLab/HumanL5NeuronModel",
+     "species": "human, middle temporal gyrus (Toronto Western Hospital anterior temporal lobectomy)",
+     "layer": "L5",
+     "cell_class": "pyramidal",
+     "model_source": "GitHub FKSkinnerLab/HumanL5NeuronModel/HumanCell: hoc (init_final.hoc, ModelSetup.hoc, DefineProcs.hoc, L5_params_exponential.hoc) + mod (Ih.mod new human h-current, Ih_Kole/Ih_shifted variants, NaTa_t, NaTs2_t, Nap_Et2, K_Pst, K_Tst, SKv3_1, SK_E2, Im, Ca_HVA, Ca_LVAst, CaDynamics_E2, izap)",
+     "model_url": "https://github.com/FKSkinnerLab/HumanL5NeuronModel",
+     "mechanisms_available": "yes - hoc and mod files verified in repo listing",
+     "licence": "NO LICENSE file in repository root (verified); README has no licence statement - must ask authors (Skinner lab) before redistribution",
+     "recordings_source": "RawData/ folder in the same repo: current-clamp 0088_IClamp_-400pA ... +300pA (50 pA steps) .dat two-column time/voltage; voltage-clamp 0091_VClamp_-90mV ... +50mV .dat; plus SecondaryPopulation/ directory",
+     "recordings_url": "https://github.com/FKSkinnerLab/HumanL5NeuronModel/tree/master/RawData",
+     "protocol_notes": "32-34 C; LJP 10.8 mV (paper states corrected in model comparisons; Chameh source data uncorrected); V-clamp holding -60 mV; synaptic blockers APV, CNQX, bicuculline, CGP-35348; no DC holding current stated for current clamp. Some traces held out for validation.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://api.github.com/repos/FKSkinnerLab/HumanL5NeuronModel/contents/",
+      "https://api.github.com/repos/FKSkinnerLab/HumanL5NeuronModel/contents/RawData",
+      "https://api.github.com/repos/FKSkinnerLab/HumanL5NeuronModel/contents/HumanCell",
+      "https://raw.githubusercontent.com/FKSkinnerLab/HumanL5NeuronModel/master/RawData/README.md",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7906797/"
+     ]
+    },
+    {
+     "name": "Eyal et al. 2016 (eLife) human L2/3 pyramidal cells with low Cm - ModelDB 195667",
+     "species": "human, temporal cortex (VU Amsterdam resections)",
+     "layer": "L2/3 (somata 675-1204 um below pia; mostly deep L2/L3)",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 195667 (GitHub ModelDBRepository/195667: ActiveModels/, PassiveModels/, mechanisms/ .mod, morphs/ six human reconstructions, Fig1/Fig3 python scripts)",
+     "model_url": "https://modeldb.science/195667 ; https://github.com/ModelDBRepository/195667",
+     "mechanisms_available": "yes - .mod in mechanisms/, .hoc model files, python drivers (verified listing)",
+     "licence": "README: 'All rights reserved to Guy Eyal (Hebrew University)' - restrictive, no OSI licence",
+     "recordings_source": "Experimental averaged voltage traces included in repo: Fig1/Voltage_traces_1AB (m050/m100/m200/p050/p100/p200 pA _average_e86.dat) and Fig1/Voltage_traces_1CD; raw sweeps not deposited",
+     "recordings_url": "https://github.com/ModelDBRepository/195667/tree/master/Fig1/Voltage_traces_1AB",
+     "protocol_notes": "32-35 C; membrane potential corrected for calculated 16 mV liquid junction potential; short 2 ms subthreshold pulses of varying amplitude/polarity for passive fits plus long steps; holding current not stated in excerpt.",
+     "gap_matched": "L3 pyramidal (6) - loose match: cells are L2/L3, layer not assigned per cell",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://github.com/ModelDBRepository/195667",
+      "https://api.github.com/repos/ModelDBRepository/195667/contents/Fig1/Voltage_traces_1AB",
+      "https://elifesciences.org/articles/16553"
+     ]
+    },
+    {
+     "name": "Eyal et al. 2018 (Front Cell Neurosci) comprehensive HL2/L3 pyramidal models (6 cells) - ModelDB 238347",
+     "species": "human, temporal cortex",
+     "layer": "L2/3 (675-1204 um below pia)",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 238347, EyalEtAl2018.zip (133 MB) with ActiveMechanisms/, Morphs/, Figure1/3/4/6/8 folders; NEURON+Python",
+     "model_url": "https://modeldb.science/238347 ; https://senselab.med.yale.edu/modeldb/data/238347/EyalEtAl2018.zip",
+     "mechanisms_available": "reported (zip not opened; GitHub mirror only holds readme.html; senselab download endpoint refused connection during check)",
+     "licence": "not stated on ModelDB page or GitHub mirror; article is CC-BY but that does not cover the code",
+     "recordings_source": "not confirmed public; paper says models available on ModelDB, experimental sweeps not stated as deposited",
+     "recordings_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6034553/",
+     "protocol_notes": "32-35 C; 1 s depolarizing steps adjusted to ~10 Hz firing plus f-I steps; junction potential and holding current not given in the extracted methods.",
+     "gap_matched": "L3 pyramidal (6) - loose (L2/L3)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://modeldb.science/238347",
+      "https://github.com/ModelDBRepository/238347",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC6034553/"
+     ]
+    },
+    {
+     "name": "Kalmbach et al. 2018 (Neuron) deep-L3 human pyramidal h-channel model - AllenInstitute/human_neuron_Ih",
+     "species": "human, temporal cortex",
+     "layer": "deep L3",
+     "cell_class": "pyramidal (one biocytin-reconstructed cell)",
+     "model_source": "GitHub AllenInstitute/human_neuron_Ih (early bmtk snapshot; bionet example '1neuron_2:3_cortex_Ih+' with config.json, node/edge csv/h5; mod/hoc/swc not located in tree listing)",
+     "model_url": "https://github.com/AllenInstitute/human_neuron_Ih",
+     "mechanisms_available": "unclear - repo is a bmtk fork; the specific fit parameters/morphology for the human cell were not found in the file tree fetched",
+     "licence": "Allen Institute Software License (2-clause BSD + no commercial redistribution) - LICENSE.txt verified",
+     "recordings_source": "paper deposits transcriptomic data only; electrophysiology of the modeled cell not stated as deposited (Allen specimen id not given)",
+     "recordings_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6447369/",
+     "protocol_notes": "32-34 C; theoretical LJP -13 mV not corrected; steps -150 to +50 pA in 20/50 pA increments for IR; 50-750 pA for APs; bias current not detailed.",
+     "gap_matched": "L3 pyramidal (6)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://github.com/AllenInstitute/human_neuron_Ih",
+      "https://raw.githubusercontent.com/AllenInstitute/human_neuron_Ih/master/LICENSE.txt",
+      "https://api.github.com/repos/AllenInstitute/human_neuron_Ih/git/trees/master?recursive=1",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC6447369/"
+     ]
+    },
+    {
+     "name": "Gidon et al. 2020 (Science) human L2/3 dendritic AP model - ModelDB 260178",
+     "species": "human, cortex (epilepsy resections, Berlin)",
+     "layer": "L2/3",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 260178 (GitHub ModelDBRepository/260178: mosinit.hoc, _mod/, _classlib/, FigS12/)",
+     "model_url": "https://modeldb.science/260178",
+     "mechanisms_available": "yes - hoc + _mod verified in listing (code reproduces Fig S12 only)",
+     "licence": "not stated",
+     "recordings_source": "none included; no public recordings located",
+     "recordings_url": "https://github.com/ModelDBRepository/260178",
+     "protocol_notes": "not extracted (Science paywalled); model only covers supplementary figure - low value for an acceptance contract",
+     "gap_matched": "L3 pyramidal (weak)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://github.com/ModelDBRepository/260178"
+     ]
+    }
+   ],
+   "dead_ends": [
+    "Beaulieu-Laroche et al. 2018 Cell (human L5 dendrites): model is a ball-and-stick 'stretched'/'scaled' NEURON 7.5 toy, not deposited; no data-availability statement, resources 'from Lead Contact' (PMC6197488). Protocol 34-36 C, LJP not corrected.",
+    "Beaulieu-Laroche et al. 2021 Nature (Allometric rules): 'All data ... presented in the paper; additional information upon reasonable request' - no code or recordings repository found.",
+    "Kalmbach et al. 2021 Neuron (human L5 ET/IT, PMC8570452): no compartmental models; patch-seq data on Allen portal (human-l5-et-it) and dbGaP; physiology 'shared by lead contact upon request'.",
+    "Berg et al. 2021 Nature (Allen human supragranular): no biophysical models; NWB via celltypes.brain-map.org only; Nature page blocked (idp redirect); protocol from PMC8494638: 32-34 C, -14 mV LJP uncorrected, bias current to initial RMP.",
+    "Nandi et al. 2022 Cell Reports all-active models: mouse V1 only; no human all-active models. Allen API confirms all 43 human biophysical models are perisomatic (m__biophys_all_active = 0 for every human cell).",
+    "L1 interneuron gap: no published human L1 interneuron biophysical fit found. Recordings exist (DANDI 000630 'Human L1 patch-seq electrophysiology', 210 cells, CC-BY-4.0, Chartrand 2023; DANDI 000636 'Human interneuron patch-seq electrophysiology', 616 cells L2-6, CC-BY-4.0, Lee 2023) but there are no fitted models, so criterion (c) fails.",
+    "Lee et al. 2023 Science (human GABAergic patch-seq) PMC12229143 returned a reCAPTCHA page; Science.org not fetched; no models reported anywhere found.",
+    "Eyal 2018 zip file listing: senselab.med.yale.edu download/file-view endpoint refused connection (ECONNREFUSED); ModelDB ?tab=2 returned 404; recordings-inclusion could not be verified.",
+    "Rich et al. 2021 HumanL5NeuronModel: no LICENSE file anywhere in repo root or README - redistribution status unknown until authors are asked.",
+    "Kalmbach 2018 human_neuron_Ih: repo is a bmtk fork; the actual human cell fit json/swc/mod for the deep-L3 model were not found in the recursive tree listing; docs/examples subfolder fetches returned 403.",
+    "ModelDB 267595 (Yao 2022) and 267587 (Guet-McCreight 2023) ModelDB pages do not display file lists or licence; Guet-McCreight README does not map HL5PN1/HL5PN2/HL5MN1/HL5VN1 to specific Allen specimen ids; Optimizations/README.md does not exist (404).",
+    "Allen electrophysiology and perisomatic white papers are only available as PDFs behind community.brain-map.org short-url redirects (fetched via S3 redirect and text-extracted locally); the help.brain-map.org attachment URL now redirects to the community site.",
+    "Cell.com full texts (Kalmbach 2018, Beaulieu-Laroche 2018, Yao 2022) return 403; used PMC and bioRxiv mirrors instead. Yao 2022 has no PMC copy; bioRxiv v5 returned 429, v2 used."
+   ]
+  },
+  {
+   "lead": "Human LAYER 4 pyramidal/spiny-stellate biophysical fits. Plain answer: no bespoke, paper-level (BluePyOpt/ModelDB-style) human L4 model exists \u2014 ModelDB's 'Neocortex layer 4 pyramidal cell' list (27 entries) is entirely mouse VISp / in-vitro network models, and no Kalmbach/Berg/BBP/Segev human L4 fit could be found. BUT the Allen Cell Types Database does hold four human MTG layer-4 spiny cells with published perisomatic biophysical models (10 somatic conductances: NaTs, Nap, K_P, K_T, Kv3_1, SK, Im, Ih, Ca_HVA, Ca_LVA + CaDynamics; fit JSON + modfiles + the fitting NWB + SWC all downloadable from the same API used for the already-imported specimen 541563728), which is exactly the family the existing L2 donor came from. Those four are the only substantiated human L4 candidates. The same Allen query yields perisomatic-model donors for every other H01 gap except L1 interneuron (43 human perisomatic models total: L2 4, L3 25, L4 4, L5 6, L6 3; 6 aspiny/2 sparsely-spiny interneurons, none in L1). Protocol for all Allen human cells verified from the October-2017 electrophysiology whitepaper: bath 34 +/- 1 C, data reported UNCORRECTED for a measured -14 mV liquid junction potential (the fit JSON applies junction_potential -14), a bias current is injected to hold the initial resting potential (QC: bias 0 +/- 100 pA), Long Square 1 s steps from -110 pA to rheobase+160 pA in 20 pA increments (-220 pA / 40 pA steps for low-Rin human cells), 2 s suprathreshold squares at rheobase+40/+80 pA used for the perisomatic fits, licence = Allen Institute Terms of Use (non-commercial redistribution without permission; citation required). Non-Allen human models found: Rich et al 2021 human L5 PC (ModelDB 266984 / FKSkinnerLab GitHub, .dat I-clamp traces included, NO licence file), Guet-McCreight 2023 L5 circuit (ModelDB 267587, GPL-3.0; its L5 PN fits are population-feature fits on an Allen morphology, not single-cell fits), Eyal 2018 six HL2/L3 PCs (ModelDB 238347, no licence, recordings not public). No human L1 interneuron model exists anywhere I could find.",
+   "candidates": [
+    {
+     "name": "Allen human MTG L4 spiny: specimen 508405843 (H16.06.004.01.13.02), perisomatic model 538906694",
+     "species": "human (middle temporal gyrus, layer 4; neurosurgical)",
+     "layer": "L4",
+     "cell_class": "spiny (excitatory) neuron, normalized soma depth 0.44; pyramidal vs spiny-stellate not stated by Allen (dendrite_type = spiny; full SWC reconstruction available)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic template (id 329230710)",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185199 (fit JSON); package via http://api.brain-map.org/neuronal_model/download/538906694",
+     "mechanisms_available": "Yes \u2014 fit JSON verified: soma NaTs 0.822, Kv3_1 0.170, Ca_LVA 0.0074, SK 0.00114, K_T 0.000986, K_P 0.000361, Ca_HVA 0.00041, Ih 0.000108, Nap 1.4e-5, Im 9e-8 S/cm2, CaDynamics (gamma 0.00107, decay 541 ms); passive Ra 29.6, cm soma 1.0 / dend 1.36, e_pas -83.78 mV. modfiles ship in the AllenSDK model package (same mechanism set as imported model 626170538).",
+     "licence": "Allen Institute Terms of Use (non-commercial redistribution without written permission; citation policy applies) \u2014 https://alleninstitute.org/terms-of-use/",
+     "recordings_source": "Allen Cell Types Database NWB for the same specimen (the fit was made from sweep 37 of this file)",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/616978607",
+     "protocol_notes": "Whitepaper (Oct 2017 v.5) verified: bath 34 +/- 1 C recorded per sweep; data uncorrected for measured -14 mV LJP (fit JSON junction_potential -14); bias current injected to hold initial RMP (sweep QC bias 0 +/- 100 pA, bridge <20 MOhm & <20% Rin for human); Long Square 1 s steps -110 pA (or -220 pA/40 pA for low-Rin human) to rheobase+160 pA in 20 pA steps; 2 s suprathreshold squares rheobase+40/+80 pA used for the perisomatic fit; internal 126 K-gluconate/10 HEPES/0.3 EGTA/4 KCl/0.3 GTP/10 phosphocreatine/4 Mg-ATP/0.5% biocytin. Rin 374 MOhm (ef__ri). Fit v_init -83.78 mV.",
+     "gap_matched": "L4 pyramidal (22 cells)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]",
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[id$in538906694,554338972,626170484,626170718,626170502,626170439],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type)),structure)",
+      "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185199",
+      "https://cdck-file-uploads-canada1.s3.dualstack.ca-central-1.amazonaws.com/flex027/uploads/brainobservatory/original/2X/d/daed9acdc3e1fdbf11c5c01ca8ee970daad83c49.pdf",
+      "https://allensdk.readthedocs.io/en/latest/biophysical_models.html",
+      "https://alleninstitute.org/terms-of-use/"
+     ]
+    },
+    {
+     "name": "Allen human MTG L4 spiny: specimen 527952884 (H16.06.008.01.31.06), perisomatic model 626170709",
+     "species": "human (middle temporal gyrus, layer 4)",
+     "layer": "L4",
+     "cell_class": "spiny excitatory, normalized depth 0.58, Rin 221 MOhm",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185209 (fit JSON); package via http://api.brain-map.org/neuronal_model/download/626170709",
+     "mechanisms_available": "Yes \u2014 fit JSON verified: soma Im, Ih, NaTs 2.054, Nap, K_P, K_T, SK 0.484, Kv3_1 0.449, Ca_HVA, Ca_LVA 0.0096, CaDynamics; Ra 15.0, cm soma 1.0 / dend 1.583, e_pas -80.82; celsius 34; junction_potential -14; sweeps 69-72.",
+     "licence": "Allen Institute Terms of Use (see above)",
+     "recordings_source": "Allen Cell Types NWB (same specimen; fit sweeps 69,70,71,72)",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/618205555",
+     "protocol_notes": "Same Allen human protocol as above (34 C, -14 mV LJP uncorrected in data, bias hold, Long Square 20/40 pA steps). SWC 563819084.",
+     "gap_matched": "L4 pyramidal (22 cells)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[id$eq626170709],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type)),neuron_reconstructions(well_known_files))",
+      "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185209"
+     ]
+    },
+    {
+     "name": "Allen human MTG L4 spiny: specimen 528015670 (H16.06.008.01.24.03), perisomatic model 554338972",
+     "species": "human (middle temporal gyrus, layer 4)",
+     "layer": "L4",
+     "cell_class": "spiny excitatory, normalized depth 0.58, Rin 439 MOhm (also has GLIF model 529894511)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185210 (fit JSON); package via http://api.brain-map.org/neuronal_model/download/554338972",
+     "mechanisms_available": "Yes \u2014 same 10-conductance perisomatic template; fit JSON link verified to exist (contents not opened)",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB (same specimen)",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/618204818",
+     "protocol_notes": "Same Allen human protocol. Fit sweeps to be read from the JSON.",
+     "gap_matched": "L4 pyramidal (22 cells)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[id$in538906694,554338972,626170484,626170718,626170502,626170439],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type)),structure)"
+     ]
+    },
+    {
+     "name": "Allen human MTG L4 spiny: specimen 569818704 (H17.03.002.11.04.01), perisomatic model 626170484",
+     "species": "human (middle temporal gyrus, layer 4)",
+     "layer": "L4",
+     "cell_class": "spiny excitatory, normalized depth 0.47, Rin 128 MOhm",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185234 (fit JSON); package via http://api.brain-map.org/neuronal_model/download/626170484",
+     "mechanisms_available": "Yes \u2014 same perisomatic template; fit JSON link verified to exist",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB (same specimen)",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/616987913",
+     "protocol_notes": "Same Allen human protocol.",
+     "gap_matched": "L4 pyramidal (22 cells)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[id$in538906694,554338972,626170484,626170718,626170502,626170439],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type)),structure)"
+     ]
+    },
+    {
+     "name": "Allen human MTG L5 spiny: specimen 527942865 (H16.06.008.01.26.04), perisomatic model 626170718 (plus 537313158/626170565, 528042185/560692892, 569820026/626170475, ITG 529898751/626170619)",
+     "species": "human (MTG layer 5; one ITG)",
+     "layer": "L5",
+     "cell_class": "spiny excitatory (pyramidal), normalized depth 0.53-0.69",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185208 (fit JSON for 626170718); package via http://api.brain-map.org/neuronal_model/download/626170718",
+     "mechanisms_available": "Yes \u2014 perisomatic template, modfiles in package",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/616980497",
+     "protocol_notes": "Same Allen human protocol.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[neuronal_model_template_id$eq329230710],specimen(donor(organism[name$eq'Homo%20Sapiens'])),rma::include,specimen(structure,cell_soma_locations),rma::options[num_rows$eq200]"
+     ]
+    },
+    {
+     "name": "Allen human L6 spiny: specimen 558211203 (H16.03.011.11.16.03, MTG) perisomatic model 626170502; also 528614014/626170679 (MTG), 548494556/626170511 (MFG)",
+     "species": "human (MTG / middle frontal gyrus, layer 6)",
+     "layer": "L6",
+     "cell_class": "spiny excitatory, normalized depth 0.75-0.87",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185232 (fit JSON for 626170502)",
+     "mechanisms_available": "Yes \u2014 perisomatic template",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/618081647",
+     "protocol_notes": "Same Allen human protocol.",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[id$in538906694,554338972,626170484,626170718,626170502,626170439],rma::include,well_known_files(well_known_file_type),specimen(ephys_result(well_known_files(well_known_file_type)),structure)"
+     ]
+    },
+    {
+     "name": "Allen human L3 aspiny interneurons: 571700636 (H17.06.006.11.09.05) model 626170439; 571709783/626170430; 488418027/543285979; 529807751/626170661 (all MTG); 531520637/626170592 (FroL); L2 sparsely spiny 571718621/626170421",
+     "species": "human (MTG / frontal lobe, layers 2-3)",
+     "layer": "L2/L3",
+     "cell_class": "aspiny or sparsely spiny (GABAergic interneuron; PV/SST/VIP subtype NOT annotated by Allen \u2014 H01 gap accepts any)",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/626185239 (fit JSON for 626170439)",
+     "mechanisms_available": "Yes \u2014 perisomatic template",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB",
+     "recordings_url": "https://celltypes.brain-map.org/api/v2/well_known_file_download/618228061",
+     "protocol_notes": "Same Allen human protocol; interneurons targeted as smaller/round somata in later experiments (whitepaper).",
+     "gap_matched": "L2/L3 interneurons (14)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[donor__species$eq'Homo%20Sapiens'][m__biophys$gt0],rma::options[num_rows$eq500]"
+     ]
+    },
+    {
+     "name": "Allen human L3 spiny pyramidal perisomatic models (25 cells, e.g. 520631294/560692910, 508279351/538907329, 537266147/626170574, 541540569/626170556; MTG, MFG, FroL, ITG, TemL)",
+     "species": "human (mostly MTG, layer 3)",
+     "layer": "L3",
+     "cell_class": "spiny pyramidal",
+     "model_source": "Allen Cell Types Database, Biophysical - perisomatic",
+     "model_url": "http://api.brain-map.org/neuronal_model/download/560692910 (example)",
+     "mechanisms_available": "Yes \u2014 perisomatic template",
+     "licence": "Allen Institute Terms of Use",
+     "recordings_source": "Allen Cell Types NWB per specimen",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/520631294",
+     "protocol_notes": "Same Allen human protocol.",
+     "gap_matched": "L3 pyramidal (6)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "http://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,[neuronal_model_template_id$eq329230710],specimen(donor(organism[name$eq'Homo%20Sapiens'])),rma::include,specimen(structure,cell_soma_locations),rma::options[num_rows$eq200]"
+     ]
+    },
+    {
+     "name": "Rich et al 2021 human L5 pyramidal cell (Cerebral Cortex 31:845) \u2014 ModelDB 266984 / FKSkinnerLab/HumanL5NeuronModel",
+     "species": "human (middle temporal gyrus, layer 5; Toronto Western Hospital epilepsy resection)",
+     "layer": "L5",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 266984; GitHub FKSkinnerLab/HumanL5NeuronModel",
+     "model_url": "https://github.com/FKSkinnerLab/HumanL5NeuronModel",
+     "mechanisms_available": "Yes \u2014 repo tree verified: CaDynamics_E2, Ca_HVA, Ca_LVAst, Ih (+Ih_Kole/Ih_me/Ih_original/Ih_shifted variants), Im, K_Pst, K_Tst, NaTa_t, NaTs2_t, Nap_Et2, SK_E2, SKv3_1, izap .mod; hoc: init_final, ModelSetup, L5_params_exponential, CurrentClampSetup",
+     "licence": "NONE stated (GitHub license field null; ModelDB page gives no licence) \u2014 must ask authors",
+     "recordings_source": "RawData/ in the same repo: 0088_IClamp_-400..+300pA .dat traces (time, voltage) and 0091_VClamp .dat from the modelled cell; raw ABF/NWB not deposited",
+     "recordings_url": "https://github.com/FKSkinnerLab/HumanL5NeuronModel/tree/master/RawData",
+     "protocol_notes": "Paper: 32-34 C; 10.8 mV junction potential corrected when comparing data to model only; hyperpolarizing -50 to -400 pA and depolarizing 50-400 pA in 50 pA steps; holding current not stated. Same-cell morphology + ephys.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/266984",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7906797/",
+      "https://api.github.com/repos/FKSkinnerLab/HumanL5NeuronModel"
+     ]
+    },
+    {
+     "name": "Guet-McCreight et al 2023 human L5 circuit (ModelDB 267587 / agmccrei/HumanL5Circuit_AGM2022): L5Pyr_young / L5Pyr_old population-fitted models + L5PV",
+     "species": "human (MTG layer 5)",
+     "layer": "L5",
+     "cell_class": "pyramidal (young/old) and PV basket (already imported as HL5BN1)",
+     "model_source": "ModelDB 267587 (GPL-3.0), Zenodo 10.5281/zenodo.7016054",
+     "model_url": "https://github.com/ModelDBRepository/267587",
+     "mechanisms_available": "Yes (BluePyOpt init_*mechanisms.py + hoc outputs); L5Pyr fits use Allen morphology H16.06.013.11.18.02 (specimen 696537235), L5PV uses Allen morphology H16.06.009.01.01.18.03 (specimen 528687520)",
+     "licence": "GPL-3.0 (verified via GitHub license field and LICENSE file)",
+     "recordings_source": "NOT single-cell: fitted to population eFEL features from Krembil (younger n=60, older n=13) and Allen (n=50/14) human L5 PCs; the Krembil raw recordings are public as DANDI 000293 (CC0, Howard et al 2022 GigaScience; 58 L5 cells) but no per-cell mapping to the model is given",
+     "recordings_url": "https://dandiarchive.org/dandiset/000293",
+     "protocol_notes": "Krembil: 32-34 C, 600-1000 ms steps, -400 to +300 pA; junction potential and holding current not stated in what I could read. Fails criterion (d) strictly (population fit) \u2014 usable only as a population-contract donor.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/showmodel?model=267587",
+      "https://academic.oup.com/cercor/article/33/8/4360/6702386",
+      "https://raw.githubusercontent.com/ModelDBRepository/267587/master/Single%20Cell%20Modelling/Optimizations/L5Pyr_young_AltMorph_Scinet/README.md",
+      "https://dandiarchive.org/dandiset/000293"
+     ]
+    },
+    {
+     "name": "Eyal et al 2018 six human L2/L3 pyramidal models (ModelDB 238347) \u2014 closest human L3 non-Allen fit",
+     "species": "human (temporal cortex, layers 2-3; VUmc Amsterdam resections)",
+     "layer": "L2/L3",
+     "cell_class": "pyramidal (e.g. cell 0603_cell03)",
+     "model_source": "ModelDB 238347 (133 MB zip: ActiveMechanisms/, Morphs/, Figure folders)",
+     "model_url": "https://modeldb.science/showmodel?model=238347",
+     "mechanisms_available": "Yes per ModelDB/paper (9 ion-channel conductances at soma/axon, Na, Kv3.1, persistent K, Ca + CaDynamics) \u2014 I could not list the .mod names (GitHub tree fetch blocked)",
+     "licence": "NONE stated (GitHub license null; ModelDB page silent)",
+     "recordings_source": "Not public \u2014 paper gives no data-availability statement for the VUmc recordings",
+     "recordings_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6034553/",
+     "protocol_notes": "32-35 C, step currents giving ~10 Hz, 100-250 kHz sampling, 14-15 kHz filter; junction potential/holding not stated. Fails criterion (d).",
+     "gap_matched": "L3 pyramidal (6) \u2014 partial (L2/L3, recordings unavailable)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://modeldb.science/showmodel?model=238347",
+      "https://github.com/ModelDBRepository/238347",
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC6034553/"
+     ]
+    }
+   ],
+   "dead_ends": [
+    "No bespoke human L4 pyramidal/spiny-stellate model: ModelDB list 184128 'Neocortex layer 4 pyramidal cell' (27 entries) is all mouse VISp Allen models or rodent network models; 'human layer 4 model' searches return only Golgi/EM anatomy papers.",
+    "Allen human all-active models: zero \u2014 m__biophys_all_active = 0 for all 43 human specimens with models; only perisomatic (active soma, passive dendrites) fits exist.",
+    "Allen human L1 interneuron: no biophysical model for any human L1 cell (e.g. specimen 596887423, MTG L1 sparsely spiny, m__biophys=0); DANDI 000636 (Lee et al 2023 human interneuron patch-seq, CC-BY-4.0, 616 cells) has recordings but no models -> L1 interneuron gap remains open.",
+    "Kalmbach 2021 Neuron human L5 (Zenodo 5338363, CC-BY-4.0) is feature tables + R code only, no raw traces and no biophysical model; Kalmbach 2018 h-channel paper (LJP -13 mV, not corrected) built no deposited model.",
+    "Deitcher 2017 ModelDB 236429 (human L2/L3, 60 morphologies) \u2014 morpho-electrotonic analysis, not a per-cell active fit with obtainable recordings.",
+    "Gidon 2020 ModelDB 260178 (human L2/3 dCaAP) is a Fig S12 demonstration model (_mod, _classlib), not a fit to a specific recorded cell; no data.",
+    "Eyal 2016 ModelDB 195667 human L2/3 low-Cm models: passive fits; recordings not public.",
+    "Howard et al 2022 / DANDI 000293 (Krembil human, 118 cells: L2/3 41, L3c 19, L5 58) contains NO layer 4 cells; Rich 2021 recordings are only partly public (.dat traces in repo).",
+    "Blue Brain / OBI human cortex e-models: no Zenodo/GitHub release with human L4 e-models found.",
+    "GitHub API rate-limited (403) for ModelDBRepository/238347 tree; gh tree listing returned empty, so Eyal 2018 .mod names are unverified.",
+    "Original Allen ephys whitepaper URL (help.brain-map.org) now redirects; the community-forum S3 copy (Oct 2017 v.5) was used instead."
+   ]
+  },
+  {
+   "lead": "Published human cortical INTERNEURON biophysical models (PV, SST, VIP, L1) fitted to human recordings other than HL5BN1 \u2014 Yao et al. 2022 human L2/3 microcircuit (ModelDB 267595), Allen human perisomatic models, other human basket/Martinotti fits; mechanisms, licence, recordings availability.",
+   "candidates": [
+    {
+     "name": "HL23PV \u2014 Yao et al. 2022 human L2/3 PV basket model (fit to Allen specimen 529807751)",
+     "species": "Human (Allen Cell Types; middle temporal gyrus, epilepsy resection, 67 yr male)",
+     "layer": "L3 (Allen structure__layer = 3; normalized depth 0.242)",
+     "cell_class": "PV / fast-spiking interneuron, aspiny (Allen tag), used as PV in the L2/3 circuit",
+     "model_source": "ModelDB 267595 (GitHub mirror ModelDBRepository/267595): models/biophys_HL23PV.hoc + models/NeuronTemplate.hoc; mod/ = CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, K_P, K_T, Kv3_1, NaTg, Nap, SK (+ synapse/noise mods). Same code released on Zenodo 10.5281/zenodo.5771000 (L23Net.zip).",
+     "model_url": "https://modeldb.science/267595",
+     "mechanisms_available": "Yes \u2014 hoc biophysics and 17 .mod files listed via GitHub API (verified). Fit method: BluePyOpt genetic optimisation on five hyperpolarising/depolarising steps (passive + firing in one stage for PV/VIP), per bioRxiv v5 Methods.",
+     "licence": "ModelDB/GitHub repo has NO LICENSE file (verified). Zenodo record 5771000 of the same code is CC-BY-4.0 (verified). bioRxiv preprint text is CC-BY-NC-ND 4.0.",
+     "recordings_source": "Allen Cell Types Database, specimen 529807751 (H16.06.010.01.03.04.01), NWB well-known file /external/mousecelltypes/prod807/Ephys_Roi_Result_529807625/529807625_ephys.nwb; sweeps include Long Square (-110 to ~290 pA), Short Square, Ramp, Noise 1/2, Square 2s suprathreshold, 0.5 ms subthreshold.",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/529807751",
+     "protocol_notes": "Allen ephys whitepaper (Oct 2017 v.5): bath ACSF.III at 34 \u00b1 1 \u00b0C; data reported UNCORRECTED for the measured -14 mV liquid junction potential; a bias current is injected to hold the cell at its initial resting potential (sweep QC: bias 0 \u00b1 100 pA); Long Square = 1 s steps from -110 pA to rheobase +160 pA in 20 pA increments (some low-IR human cells from -220 pA in 40 pA steps); Short Square 3 ms; Ramp 25 pA/s; sampled 200 kHz (<2016) / 50 kHz. Per-sweep metadata for this cell (API): leak_pa 47.6\u201368.8 pA, bridge balance 9.3\u20139.6 M\u03a9, pre_vm -69.0 to -69.9 mV. Yao fit used Allen features; interneuron variance taken from rodent literature because only one human cell per type.",
+     "gap_matched": "L2/L3 interneurons (14; subtype unknown \u2192 PV)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://modeldb.science/267595",
+      "https://api.github.com/repos/ModelDBRepository/267595/contents/models",
+      "https://api.github.com/repos/ModelDBRepository/267595/contents/mod",
+      "https://zenodo.org/records/5771000",
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v5.full.pdf",
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in571700636,525018757,531526539,529807751]",
+      "https://api.brain-map.org/api/v2/data/query.json?criteria=model::Specimen,rma::criteria,[id$eq529807751],rma::include,ephys_result(well_known_files(well_known_file_type)),ephys_sweeps",
+      "https://community.brain-map.org/t/documentation-cell-types-database/2845"
+     ]
+    },
+    {
+     "name": "HL23SST \u2014 Yao et al. 2022 human L2/3 SST (Martinotti-like) model (fit to Allen specimen 571700636)",
+     "species": "Human (Allen Cell Types; middle temporal gyrus, epilepsy, 35 yr male)",
+     "layer": "L3 (Allen structure__layer = 3; normalized depth 0.282)",
+     "cell_class": "putative SST interneuron, aspiny (Allen tag); Yao label 'putative SST'",
+     "model_source": "ModelDB 267595: models/biophys_HL23SST.hoc (+ NeuronTemplate.hoc, mod/). Fitted in two steps (Ih + passive on hyperpolarising steps, then Na/K/Ca on depolarising steps) with in-house GA code (Hay et al. 2011 lineage).",
+     "model_url": "https://github.com/ModelDBRepository/267595/tree/master/models",
+     "mechanisms_available": "Yes \u2014 same 17 .mod set as above (verified via GitHub API).",
+     "licence": "No LICENSE in ModelDB/GitHub; Zenodo copy CC-BY-4.0.",
+     "recordings_source": "Allen Cell Types specimen 571700636 (H17.06.006.11.09.05); NWB downloadable from the cell page / API (well_known_files). Allen also publishes its own perisomatic fit of this cell: model 626170439.",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/571700636",
+     "protocol_notes": "Same Allen protocol as above (34 \u00b0C, -14 mV LJP uncorrected, bias current to hold rest, Long Square -110 \u2192 rheobase+160 pA / 20 pA). Allen feature summary: Vrest -63.5 mV, rheobase (long square) 50 pA.",
+     "gap_matched": "L2/L3 interneurons (14; \u2192 SST)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v5.full.pdf",
+      "https://api.github.com/repos/ModelDBRepository/267595/contents/models",
+      "https://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,specimen[id$in571700636,525018757,529807751,571718621],rma::include,neuronal_model_template",
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in571700636,525018757,531526539,529807751]"
+     ]
+    },
+    {
+     "name": "HL23VIP \u2014 Yao et al. 2022 human L2/3 VIP model (fit to Allen specimen 525018757)",
+     "species": "Human (Allen Cell Types; frontal lobe, epilepsy, 25 yr male)",
+     "layer": "L2 (Allen structure__layer = 2; normalized depth 0.066)",
+     "cell_class": "putative VIP interneuron, sparsely spiny (Allen tag)",
+     "model_source": "ModelDB 267595: models/biophys_HL23VIP.hoc (+ NeuronTemplate.hoc, mod/); BluePyOpt single-stage fit.",
+     "model_url": "https://github.com/ModelDBRepository/267595/tree/master/models",
+     "mechanisms_available": "Yes \u2014 same .mod set (verified).",
+     "licence": "No LICENSE in ModelDB/GitHub; Zenodo copy CC-BY-4.0.",
+     "recordings_source": "Allen Cell Types specimen 525018757 (H16.03.003.01.19.02); NWB via cell page/API. Allen's own perisomatic fit of this cell: model 556384271.",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/525018757",
+     "protocol_notes": "Allen protocol as above. Allen feature summary: Vrest -67.4 mV, rheobase 70 pA. Note region is frontal lobe, not temporal; layer 2 \u2014 check whether the H01 L2/L3 interneuron gap accepts a frontal donor.",
+     "gap_matched": "L2/L3 interneurons (14; \u2192 VIP)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v5.full.pdf",
+      "https://api.github.com/repos/ModelDBRepository/267595/contents/models",
+      "https://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::criteria,specimen[id$in571700636,525018757,529807751,571718621],rma::include,neuronal_model_template"
+     ]
+    },
+    {
+     "name": "Allen human aspiny/sparsely-spiny perisomatic models, L2/L3 (626170661, 626170439, 556384271, 543285979, 626170430, 626170592, 626170421)",
+     "species": "Human (Allen Cell Types; MTG except 531520637/525018757 = frontal lobe)",
+     "layer": "L3: 529807751 (626170661), 571700636 (626170439), 488418027 (543285979), 571709783 (626170430), 531520637 FroL (626170592). L2: 571718621 sparsely spiny (626170421), 525018757 FroL sparsely spiny (556384271).",
+     "cell_class": "aspiny (putative interneuron, subtype not labelled) or sparsely spiny; Allen does not assign PV/SST/VIP to human cells",
+     "model_source": "Allen Cell Types 'Biophysical - perisomatic' models (NEURON 7.4, Hay-2011 lineage mechanisms; narrow-AP cells use Markov NaV, Kd, Kv2like, Im_v2; wide-AP cells NaTs/Nap/K_P/Im). Download zip contains fit_parameters.json, model_metadata.json, ephys_sweeps.json, reconstruction.swc, README (verified for 626170661); .mod files ship in the Allen SDK archive/modfiles per SDK docs. 43 human perisomatic models total in the API.",
+     "model_url": "https://celltypes.brain-map.org/neuronal_model/download/626170661",
+     "mechanisms_available": "Yes \u2014 fit_parameters.json + Allen SDK modfiles (CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, Im_v2, K_P, K_T, Kd, Kv2like, Kv3_1, NaTs, NaV, Nap, SK). Fitting: DEAP genetic algorithm, 12 features (rate, AP peak, fast/slow trough, AP width, Vrest, latency, first ISI, CV ISI, adaptation index, mean ISI) on 1\u20132 s steps; passive Cm/Ra from \u00b1500 pA 0.5 ms pulses.",
+     "licence": "Allen Institute Terms of Use: research/non-commercial use with citation; commercial redistribution requires written permission (terms@alleninstitute.org). Allen SDK code licence file not fetched (404 on raw LICENSE path).",
+     "recordings_source": "Same Allen Cell Types NWB per specimen (well_known_files on ephys_result), all Core-1 stimulus sets; the perisomatic archive also carries ephys_sweeps.json listing the sweeps used.",
+     "recordings_url": "https://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::include,specimen(donor(organism),structure,cell_soma_locations,specimen_tags),neuronal_model_template,rma::criteria,specimen(donor(organism[name$eq'Homo%20Sapiens'])),neuronal_model_template[name$il'*Biophysical*'],rma::options[num_rows$eq200]",
+     "protocol_notes": "Allen whitepaper: 34 \u00b1 1 \u00b0C; -14 mV LJP measured but data left uncorrected (perisomatic fitting adds -14 mV before feature extraction, then subtracts for comparison); bias current holds the initial resting potential; Long Square -110 pA \u2192 rheobase+160 pA in 20 pA steps; 2 s suprathreshold squares at rheobase +40/+80 pA used for fitting; simulation temperature = recording temperature, ENa +53 mV, EK -107 mV. Whitepaper caveat: perisomatic fast-spiking aspiny models under-reproduce steep F-I slopes and hyperpolarising rectification.",
+     "gap_matched": "L2/L3 interneurons (14; subtype unknown, any)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://api.brain-map.org/api/v2/data/query.json?criteria=model::NeuronalModel,rma::include,specimen(structure,cell_soma_locations,specimen_tags,donor(age)),neuronal_model_template,rma::criteria,specimen(donor(organism[name$eq'Homo%20Sapiens'])),neuronal_model_template[name$il'*Biophysical*'],rma::options[num_rows$eq200]",
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in529807751,488418027,571709783,531520637,571718621]",
+      "https://celltypes.brain-map.org/neuronal_model/download/626170661",
+      "https://community.brain-map.org/uploads/short-url/akP9tVfUe0X96gRnM0hFoztAZdo.pdf",
+      "https://community.brain-map.org/uploads/short-url/veJ9z4lwAJoxv4Rx23b7KpnUYEp.pdf",
+      "https://alleninstitute.org/terms-of-use/",
+      "https://allensdk.readthedocs.io/en/latest/biophysical_models.html"
+     ]
+    },
+    {
+     "name": "Hunt / Wilbers et al. 2023 human L2/3 fast-spiking interneuron BluePyOpt model (Sci Adv adf0708)",
+     "species": "Human (neurosurgical temporal and frontal cortex, VU Amsterdam) plus mouse V1 comparison",
+     "layer": "L2/3 (human FSIN; morphology files named HumanFS_L3_*, HumanIN_L23_*)",
+     "cell_class": "fast-spiking (PV-type) interneuron",
+     "model_source": "DataverseNL doi:10.34894/TONOHA (190 files, 7 GB): model code FS_model.py, FS_evaluator.py, FScfg.py, features.json, mechanisms.json, custom_objects.py, generate_swc.py, checkpoint.pkl, mod files k_human.mod and Ih.mod (BluePyOpt/NEURON, 13 free params, 500 generations, artificial morphologies parameterised from 5 measured dendritic metrics).",
+     "model_url": "https://dataverse.nl/citation?persistentId=doi:10.34894/TONOHA",
+     "mechanisms_available": "Partly \u2014 k_human.mod and Ih.mod plus mechanisms.json are in the deposit; sodium mechanism presumably a standard BluePyOpt/Allen mod (not seen in listing). Morphology is synthetic per cell class, not a reconstruction of one recorded cell.",
+     "licence": "CC0-1.0 (DataverseNL, verified)",
+     "recordings_source": "Same deposit: 47 .nwb, 14 .abf, 13 .mat human/mouse recordings (e.g. Figure6/Data_human/*.mat), 52 .swc reconstructions; also partly drawn from celltypes.brain-map.org.",
+     "recordings_url": "https://dataverse.nl/api/datasets/:persistentId/versions/:latest/files?persistentId=doi:10.34894/TONOHA",
+     "protocol_notes": "bioRxiv v2 Methods: whole-cell at 34 \u00b0C (nucleated patches 25 \u00b0C); liquid junction potential corrected in analysis; resting holding currents human -199 \u00b1 178 pA vs mouse -145 \u00b1 159 pA; 1 s DC steps for spiking profiles. Caveat: model is a class-level fit (artificial morphology) \u2014 the human acceptance contract would be against the pooled human FS recordings, not a single cell.",
+     "gap_matched": "L2/L3 interneurons (14; \u2192 PV/FS)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://www.biorxiv.org/content/10.1101/2022.11.29.518193v2.full",
+      "https://dataverse.nl/citation?persistentId=doi:10.34894/TONOHA",
+      "https://dataverse.nl/api/datasets/:persistentId/versions/:latest/files?persistentId=doi:10.34894/TONOHA",
+      "https://www.science.org/doi/10.1126/sciadv.adf0708"
+     ]
+    },
+    {
+     "name": "HL23PYR \u2014 Yao et al. 2022 human L2/3 pyramidal model (Allen morphology 531526539; ephys from 28 Krembil MTG L2/3 pyramids)",
+     "species": "Human (morphology: Allen frontal-lobe tumour case 26 yr male; ephys: Krembil/UHN MTG L2/3 pyramidal neurons, 8 subjects)",
+     "layer": "L3 morphology (Allen layer 3, depth 0.224); L2/3 ephys population",
+     "cell_class": "pyramidal",
+     "model_source": "ModelDB 267595 models/biophys_HL23PYR.hoc (+ NeuronTemplate.hoc, mod/); two-step GA fit (Ih/passive then Na/K/Ca) to population mean \u00b1 SD of 28 neurons.",
+     "model_url": "https://github.com/ModelDBRepository/267595/tree/master/models",
+     "mechanisms_available": "Yes (same mod/ set).",
+     "licence": "No LICENSE in repo; Zenodo 5771000 CC-BY-4.0.",
+     "recordings_source": "Population-level: Chameh et al. (Krembil) human L2/3 pyramidal recordings, released as DANDI 000293 'UHN whole-cell patch-clamp excitability recordings from human cortical neurons' (Howard et al. 2022 GigaScience; 201 subjects, NWB, CC0-1.0; L2/3: 41 cells, L3c: 19, L5: 58). Mapping of the 28 fitted cells to DANDI files is not published \u2014 contract must be population-level.",
+     "recordings_url": "https://dandiarchive.org/dandiset/000293",
+     "protocol_notes": "Howard 2022: 32\u201334 \u00b0C, cells held at resting potential, 600\u20131000 ms hyper/depolarising steps, access resistance <25 M\u03a9, no bridge-balance correction stated; junction potential not corrected in the dataset paper. Allen morphology cell 531526539 has its own Allen perisomatic model 626170583.",
+     "gap_matched": "L3 pyramidal (6)",
+     "confidence": "reported-in-paper",
+     "evidence_urls": [
+      "https://www.biorxiv.org/content/10.1101/2021.02.17.431698v5.full.pdf",
+      "https://dandiarchive.org/dandiset/000293",
+      "https://academic.oup.com/gigascience/article/doi/10.1093/gigascience/giac108/6827564"
+     ]
+    },
+    {
+     "name": "Allen human spiny perisomatic models in L4 (626170709 \u2192 527952884; 554338972 \u2192 528015670)",
+     "species": "Human (MTG, epilepsy, 24 yr)",
+     "layer": "L4 (Allen structure__layer = 4; depth 0.577 / 0.576)",
+     "cell_class": "spiny (pyramidal/excitatory), apical truncated",
+     "model_source": "Allen Cell Types Biophysical - perisomatic (see aspiny entry for format and fitting).",
+     "model_url": "https://celltypes.brain-map.org/neuronal_model/download/626170709",
+     "mechanisms_available": "Yes \u2014 fit_parameters.json + Allen SDK modfiles.",
+     "licence": "Allen Institute Terms of Use (non-commercial, citation).",
+     "recordings_source": "Allen NWB per specimen (well_known_files).",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/527952884",
+     "protocol_notes": "Allen whitepaper protocol as above.",
+     "gap_matched": "L4 pyramidal (22; largest gap)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in528614014,548494556,527942865,537313158,528015670,527952884,529898751,528042185,527979816,527891102,539848159,527876879,529899099,528038990,508417989,526725807,530062215,520454345,558146597,558211203]"
+     ]
+    },
+    {
+     "name": "Allen human spiny perisomatic models in L5 (626170718 \u2192 527942865; 626170565 \u2192 537313158; 560692892 \u2192 528042185; 626170619 \u2192 529898751 ITG)",
+     "species": "Human (MTG; 529898751 inferior temporal gyrus; epilepsy)",
+     "layer": "L5 (Allen structure__layer = 5; depths 0.694, 0.648, 0.534, 0.527)",
+     "cell_class": "spiny pyramidal, apical truncated",
+     "model_source": "Allen Cell Types Biophysical - perisomatic.",
+     "model_url": "https://celltypes.brain-map.org/neuronal_model/download/626170718",
+     "mechanisms_available": "Yes \u2014 fit_parameters.json + Allen SDK modfiles.",
+     "licence": "Allen Institute Terms of Use (non-commercial, citation).",
+     "recordings_source": "Allen NWB per specimen.",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/527942865",
+     "protocol_notes": "Allen whitepaper protocol as above.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in528614014,548494556,527942865,537313158,528015670,527952884,529898751,528042185,527979816,527891102,539848159,527876879,529899099,528038990,508417989,526725807,530062215,520454345,558146597,558211203]"
+     ]
+    },
+    {
+     "name": "Allen human spiny perisomatic models in L6 (626170679 \u2192 528614014 MTG; 626170502 \u2192 558211203 MTG; 626170511 \u2192 548494556 MFG)",
+     "species": "Human (MTG epilepsy 48 yr; MTG tumour 42 yr; middle frontal gyrus tumour 83 yr)",
+     "layer": "L6 (Allen structure__layer = 6; depths 0.869, 0.751, 0.784)",
+     "cell_class": "spiny pyramidal, apical truncated",
+     "model_source": "Allen Cell Types Biophysical - perisomatic.",
+     "model_url": "https://celltypes.brain-map.org/neuronal_model/download/626170679",
+     "mechanisms_available": "Yes \u2014 fit_parameters.json + Allen SDK modfiles.",
+     "licence": "Allen Institute Terms of Use (non-commercial, citation).",
+     "recordings_source": "Allen NWB per specimen.",
+     "recordings_url": "https://celltypes.brain-map.org/experiment/electrophysiology/528614014",
+     "protocol_notes": "Allen whitepaper protocol as above.",
+     "gap_matched": "L6 pyramidal (2)",
+     "confidence": "verified-online",
+     "evidence_urls": [
+      "https://celltypes.brain-map.org/api/v2/data/query.json?criteria=model::ApiCellTypesSpecimenDetail,rma::criteria,[specimen__id$in528614014,548494556,527942865,537313158,528015670,527952884,529898751,528042185,527979816,527891102,539848159,527876879,529899099,528038990,508417989,526725807,530062215,520454345,558146597,558211203]"
+     ]
+    },
+    {
+     "name": "HL5PN1/HL5PN2 (and HL5MN1 SST, HL5VN1 VIP) \u2014 Guet-McCreight et al. 2023 human L5 family (siblings of the imported HL5BN1)",
+     "species": "Human (Krembil/UHN L5; pyramidal fits to younger and older subjects)",
+     "layer": "L5",
+     "cell_class": "HL5PN1/PN2 pyramidal; HL5MN1 SST; HL5VN1 VIP",
+     "model_source": "ModelDB 267587 (GitHub ModelDBRepository/267587: L5Circuit/, Single Cell Modelling/, README.md, LICENSE 35 KB).",
+     "model_url": "https://modeldb.science/267587",
+     "mechanisms_available": "Yes (same tree already imported for HL5BN1).",
+     "licence": "LICENSE file present (35 KB; not read \u2014 size consistent with GPL-3).",
+     "recordings_source": "Pyramidal fits to Chameh et al. 2021 human L5 recordings \u2192 DANDI 000293 (CC0). Interneuron (MN/VN) provenance not stated on ModelDB page; not verified.",
+     "recordings_url": "https://dandiarchive.org/dandiset/000293",
+     "protocol_notes": "Howard 2022 protocol (32\u201334 \u00b0C, held at rest, 600\u20131000 ms steps). Only the L5 pyramidal members address an open gap (L5 pyramidal, 7); MN1/VN1 are L5 and do not match the L2/L3 interneuron gap.",
+     "gap_matched": "L5 pyramidal (7)",
+     "confidence": "unverified",
+     "evidence_urls": [
+      "https://modeldb.science/267587",
+      "https://api.github.com/repos/ModelDBRepository/267587/contents",
+      "https://dandiarchive.org/dandiset/000293"
+     ]
+    }
+   ],
+   "dead_ends": [
+    "L1 interneuron gap (4): NO published human L1 biophysical fit found. Chartrand et al. 2023 (Science adf0805) and Boldog et al. 2018 rosehip (Nat Neurosci) are morpho-electric/transcriptomic only; Allen's 43 human perisomatic models contain no layer-1 cell (shallowest aspiny/sparsely-spiny cells are L2). Recordings do exist: DANDI 000636 'Human interneuron patch-seq electrophysiology' (109 subjects, 706 NWB, CC-BY-4.0) \u2014 usable for a contract but no donor model.",
+    "Bakos et al. 2025 PLoS Biol e3003549 (human pvalb AIS model tuned to one human cell 'h7', L2/3): Data Availability = 'all relevant data within the paper and SI'; no ModelDB/GitHub/Zenodo deposit found; temperature and LJP not stated in fetched text.",
+    "Szegedi et al. 2023 PLoS Biol e3002001 (human L2/3 FS HCN, 36\u201337 \u00b0C, LJP NOT corrected): only a three-compartment model with parameters in S2 Table; no deposited code; raw data in SI only.",
+    "Szegedi et al. 2026 Front Synaptic Neurosci 1741452: review, no model.",
+    "Eyal et al. 2016 (ModelDB 195667) and 2018 (ModelDB 238347) human L2/3 pyramidal models: repos contain models/morphs/figure data but no raw recordings; the source recordings (human temporal cortex, VU Amsterdam) are not on a public portal \u2014 fails criterion (d).",
+    "Allen 'Biophysical - all active' human models: none exist (all 43 human biophysical models are perisomatic).",
+    "Howard et al. 2022 / DANDI 000293: recordings only (CC0), no fitted models; useful only as a contract source for Krembil-derived models.",
+    "Yao 2022 Cell Reports full text (cell.com, sciencedirect) and Nature Comm Biol 2024 (Guet-McCreight) returned 403/login; provenance was instead read from the bioRxiv v5 PDF (which lists Allen IDs 571700636 SST, 529807751 PV, 525018757 VIP, 531526539 Pyr morphology).",
+    "PMC pages for Hunt 2023 (PMC10569701) hit a reCAPTCHA; used bioRxiv v2 full text + DataverseNL listing instead.",
+    "KantYao/Human-L2-3-Cortical-Microcircuit GitHub README does not state data provenance or licence; ModelDB 267595 has no LICENSE file \u2014 the only explicit licence is the Zenodo copy (CC-BY-4.0).",
+    "No human SST Martinotti or VIP fit other than Yao 2022 HL23SST/HL23VIP (and the L5 HL5MN1/HL5VN1 siblings) was found in ModelDB, Zenodo, or the Allen API."
+   ]
+  }
+ ],
+ "judged": {
+  "ranked": [
+   {
+    "name": "HL5MN1 / HL23SST \u2014 human L3 SST-like interneuron (ModelDB 267587 copy of Yao 2022 HL23SST; Allen specimen 571700636, MTG L3, aspiny)",
+    "gap_matched": "L2/L3 interneurons (14; SST)",
+    "criteria_met": [
+     "(a) human, middle temporal gyrus, layer 3 (Allen structure__layer 3, depth 0.282) \u2014 verified via Allen API by three independent leads",
+     "(b) L3 aspiny interneuron; H01 gap accepts any subtype",
+     "(c) biophys_HL5MN1.hoc + NeuronTemplate.hoc + mod/ in agmccrei/HumanL5Circuit_AGM2022 (GPL-3.0 LICENSE verified); identical mechanism library (CaDynamics, Ca_HVA, Ca_LVA, Ih, Im, K_P, K_T, Kv3_1, NaTg, Nap, SK) and template as the imported HL5BN1 \u2014 cheapest possible import",
+     "(d) single-cell fit; recordings NWB http://api.brain-map.org/api/v2/well_known_file_download/618228061 (ephys_result 571700399); Allen also ships its own perisomatic fit 626170439 with ephys_sweeps.json as a cross-check",
+     "(e) Allen whitepaper protocol readable: 34 C, -14 mV LJP uncorrected, bias current holds initial RMP (per-sweep leak_pa in sweeps table), Long Square 1 s -110 pA -> rheobase+160 pA in 20 pA steps, Short Square 3 ms, Ramp 25 pA/s; Vrest -63.5 mV, rheobase 50 pA, Ri 172 MOhm"
+    ],
+    "criteria_failed": [
+     "Subtype 'SST' is Yao et al.'s putative label, not an Allen annotation (no Cre line for human cells) \u2014 score as 'L3 interneuron, subtype unknown'",
+     "Fit-to-571700636 statement comes from the bioRxiv methods, not from any file in the repo"
+    ],
+    "score": 0.92,
+    "verification_needed": "Before import: (1) diff biophys_HL5MN1.hoc against ModelDB 267595 biophys_HL23SST.hoc to confirm they are the same parameters (Cerebral Cortex says 'derived from', not 'identical'); (2) GET NWB 618228061 and confirm HTTP 200 + sweep table (only 618205555 was HEAD-verified across the leads); (3) confirm in the bioRxiv v5 PDF text that 571700636 is the SST fit source; (4) record that the H01 gap is scored subtype-unknown."
+   },
+   {
+    "name": "Allen human specimen 527952884 (H16.06.008.01.31.06), perisomatic model 626170709 \u2014 L4 spiny, MTG",
+    "gap_matched": "L4 pyramidal (22, largest gap)",
+    "criteria_met": [
+     "(a) human, middle temporal gyrus, layer 4 (structure__layer 4, depth 0.58), 24 y female, epilepsy resection",
+     "(b) L4 spiny excitatory with full reconstruction (pyramidal vs spiny-stellate not distinguished by Allen)",
+     "(c) model zip http://api.brain-map.org/neuronal_model/download/626170709 downloaded and opened by one lead: 16 .mod, fit_parameters.json (soma NaTs 2.054, Kv3_1 0.449, SK 0.484, Ca_LVA 0.0096, ...), reconstruction.swc, ephys_sweeps.json (76 sweeps), manifest.json; licence = Allen Institute Terms of Use (non-commercial, citation) \u2014 same template 329230710 as the already-imported 541563728/626170538, so the existing Allen import path applies",
+     "(d) NWB http://api.brain-map.org/api/v2/well_known_file_download/618205555 (527952752_ephys.nwb, 17.98 MB) HEAD-verified HTTP 200; fit sweeps [69,70,71,72] enumerated in fit_parameters.json \u2014 the only L4 candidate with a multi-sweep fit",
+     "(e) celsius 34.0, junction_potential -14 (data uncorrected), v_init -80.8 mV, per-sweep bias (leak_pa) and bridge balance in ephys_sweeps.json; Ri 221 MOhm, Vrest -66.6 mV"
+    ],
+    "criteria_failed": [
+     "Perisomatic fit only (active soma, passive dendrites) \u2014 no human all-active models exist",
+     "Allen licence is non-commercial; region is MTG, not the H01 sample's region"
+    ],
+    "score": 0.9,
+    "verification_needed": "Confirm the modfiles in the opened zip match the imported 626170538 mechanism set (NaTs/Nap/K_P/K_T/Kv3_1/SK/Im/Ih/Ca_HVA/Ca_LVA/CaDynamics) so the existing Allen import path is reusable without new mechanisms; confirm sweeps 69-72 are the 2 s rheobase+40/+80 pA squares."
+   },
+   {
+    "name": "HL23PV \u2014 human L3 PV/fast-spiking interneuron (ModelDB 267595; Allen specimen 529807751, MTG L3, aspiny)",
+    "gap_matched": "L2/L3 interneurons (14; PV)",
+    "criteria_met": [
+     "(a) human MTG layer 3, 67 y male",
+     "(b) L3 aspiny fast-spiking interneuron",
+     "(c) biophys_HL23PV.hoc + same mod/ set as HL5BN1 (verified via GitHub tree); Zenodo 5771000 copy CC-BY-4.0",
+     "(d) single-cell BluePyOpt fit; Allen NWB via ephys_result 529807625 (well_known_file 616980851); per-sweep leak_pa 47.6-68.8 pA and bridge 9.3-9.6 MOhm already read from the API",
+     "(e) Allen protocol as above; Vrest -69.5 mV, Ri 95 MOhm"
+    ],
+    "criteria_failed": [
+     "ModelDB 267595 / GitHub mirror has NO LICENSE file \u2014 licence only stated on the Zenodo copy (CC-BY-4.0); unlike HL5MN1 there is no GPL-3.0 copy in the 267587 tree",
+     "Redundant with the already-imported HL5BN1 (human PV basket) \u2014 closes the same subtype"
+    ],
+    "score": 0.8,
+    "verification_needed": "Confirm Zenodo 5771000 L23Net.zip contains the identical biophys_HL23PV.hoc so the CC-BY-4.0 licence can be relied on; GET NWB 616980851."
+   },
+   {
+    "name": "Allen human L4 spiny models 528015670/554338972, 508405843/538906694, 569818704/626170484",
+    "gap_matched": "L4 pyramidal (22)",
+    "criteria_met": [
+     "(a) human MTG layer 4",
+     "(b) spiny excitatory",
+     "(c) perisomatic zips opened (16 .mod + fit JSON + swc + sweeps) \u2014 Allen Terms of Use",
+     "(d) NWB links listed on ephys_result (618204818, 616978607, 616987913)",
+     "(e) celsius 34, junction_potential -14; fit sweeps [53-56], [37], [36]"
+    ],
+    "criteria_failed": [
+     "508405843 and 569818704 were fitted on a single sweep each (weaker acceptance target than 527952884's four)",
+     "NWB links not individually HEAD-verified"
+    ],
+    "score": 0.78,
+    "verification_needed": "HEAD/GET each NWB link; 528015670 (4 fit sweeps, Ri 439 MOhm) is the natural second L4 cell if a population-of-L4 contract is wanted."
+   },
+   {
+    "name": "Allen human L5 spiny perisomatic models: 527942865/626170718 (zip opened), 569820026/626170475, 529898751/626170619 (ITG), 537313158/626170565, 528042185/560692892",
+    "gap_matched": "L5 pyramidal (7)",
+    "criteria_met": [
+     "(a) human MTG (one ITG) layer 5",
+     "(b) spiny pyramidal",
+     "(c) perisomatic bundle, Allen Terms of Use",
+     "(d) NWB per specimen (616980497, 618078045, 618109142, 618099419, 618203530)",
+     "(e) Allen protocol; 626170718 fit sweep [39], celsius 34, JP -14"
+    ],
+    "criteria_failed": [
+     "Perisomatic only; 537313158 Vrest -59.7 mV and 528042185 Ri 86 MOhm look unhealthy",
+     "Smaller gap than L4/interneurons"
+    ],
+    "score": 0.72,
+    "verification_needed": "If an L5 donor is wanted later, prefer 527942865 (zip opened, Vrest -67.7 mV) or 569820026; GET the NWB."
+   },
+   {
+    "name": "Allen human L6 spiny perisomatic models: 528614014/626170679 (zip opened, fit sweeps [73,76]), 558211203/626170502, 548494556/626170511 (MFG)",
+    "gap_matched": "L6 pyramidal (2)",
+    "criteria_met": [
+     "(a) human MTG / MFG layer 6",
+     "(b) spiny pyramidal",
+     "(c) perisomatic bundle, Allen Terms of Use",
+     "(d) NWB per specimen (618201894, 618081647, 616987756)",
+     "(e) Allen protocol; celsius 34, JP -14"
+    ],
+    "criteria_failed": [
+     "Smallest gap (2 cells); 528614014 Vrest -60.6 mV depolarised; 548494556 is frontal cortex, 83 y"
+    ],
+    "score": 0.65,
+    "verification_needed": "558211203 (MTG, Vrest -63.1, Ri 174) is the cleanest if ever imported; GET NWB 618081647."
+   },
+   {
+    "name": "Allen human L3 aspiny perisomatic models 571709783/626170430, 488418027/543285979, 531520637/626170592 (FroL); L2 sparsely-spiny 571718621/626170421",
+    "gap_matched": "L2/L3 interneurons (14; subtype unknown)",
+    "criteria_met": [
+     "(a) human MTG/FroL layers 2-3",
+     "(b) aspiny (interneuron) \u2014 subtype unknown, matching the gap's own uncertainty",
+     "(c) perisomatic bundle, Allen Terms of Use",
+     "(d) NWB per specimen listed",
+     "(e) Allen protocol"
+    ],
+    "criteria_failed": [
+     "Perisomatic template under-reproduces steep F-I and rectification in fast-spiking cells (Allen whitepaper caveat) \u2014 weaker than the Yao active-dendrite fits for the same cells",
+     "571718621 class is ambiguous (sparsely spiny); 531520637 is frontal"
+    ],
+    "score": 0.62,
+    "verification_needed": "Only needed as additional interneuron population members after HL5MN1; 571709783 (MTG, Vrest -75.9) first."
+   },
+   {
+    "name": "Allen human L3 spiny perisomatic models (20 cells, e.g. 527891102/626170727, 508282493/626170801, MTG)",
+    "gap_matched": "L3 pyramidal (6)",
+    "criteria_met": [
+     "(a) human, mostly MTG layer 3",
+     "(b) spiny pyramidal",
+     "(c) perisomatic bundle, Allen Terms of Use",
+     "(d) NWB for all 20 present in API listing",
+     "(e) Allen protocol"
+    ],
+    "criteria_failed": [
+     "Layer distinction from the already-imported L2 pyramid (541563728) is only Allen depth-based; modest gap"
+    ],
+    "score": 0.6,
+    "verification_needed": "None beyond the standard Allen GET checks; low priority."
+   },
+   {
+    "name": "HL23VIP / HL5VN1 \u2014 human L2 VIP-like interneuron (Allen specimen 525018757, frontal lobe, sparsely spiny)",
+    "gap_matched": "L2/L3 interneurons (14; VIP)",
+    "criteria_met": [
+     "(a) human, layer 2",
+     "(b) L2 interneuron (sparsely spiny, putative VIP)",
+     "(c) hoc + mod in 267595 (no licence) and as biophys_HL5VN1.hoc in 267587 (GPL-3.0)",
+     "(d) single-cell fit; Allen NWB 618210488 listed",
+     "(e) Allen protocol; Vrest -67.4, rheobase 70 pA"
+    ],
+    "criteria_failed": [
+     "Region is frontal lobe, not temporal \u2014 H01 is temporal cortex",
+     "Dendrite type 'sparsely spiny' makes the interneuron class itself uncertain"
+    ],
+    "score": 0.55,
+    "verification_needed": "Region mismatch must be recorded if ever used; confirm HL5VN1.hoc == HL23VIP.hoc."
+   },
+   {
+    "name": "HL5PN1 young/old \u2014 human L5 pyramidal, Guet-McCreight 2023 (ModelDB 267587, GPL-3.0)",
+    "gap_matched": "L5 pyramidal (7)",
+    "criteria_met": [
+     "(a) human MTG layer 5",
+     "(b) L5 pyramidal",
+     "(c) biophys_HL5PN1y/o.hoc + mod/ in the HL5BN1 tree, GPL-3.0 \u2014 shares mechanism library and template",
+     "(e) Krembil protocol readable: 32-34 C, LJP -10.8 mV not corrected, 600-1000 ms steps in 50 pA increments to +/-400 pA"
+    ],
+    "criteria_failed": [
+     "(d) POPULATION-feature fit (Krembil n=60/13 + Allen n=50/14); DANDI 000293 (CC0, NWB) is obtainable but the pooled cells are not enumerated, so only a population contract is possible, not a per-cell acceptance contract",
+     "Holding current not standardised/not stated in the Krembil protocol",
+     "HL5PN2 does not exist (dead end); one lead's 'HL5PN1/HL5PN2' entry is unverified"
+    ],
+    "score": 0.5,
+    "verification_needed": "Would need a population-level acceptance contract built from DANDI 000293 L5 files (58 cells) \u2014 flag as a different contract type before import."
+   },
+   {
+    "name": "Rich et al. 2021 human L5 pyramidal (ModelDB 266984 / FKSkinnerLab/HumanL5NeuronModel)",
+    "gap_matched": "L5 pyramidal (7)",
+    "criteria_met": [
+     "(a) human MTG layer 5, single recorded and reconstructed cell",
+     "(b) L5 pyramidal",
+     "(d, partial) the cell's own I-clamp traces -400..+300 pA (50 pA) in RawData/ as two-column .dat \u2014 per-cell contract possible",
+     "(e) 32-34 C; LJP 10.8 mV corrected in model comparisons; step amplitudes given"
+    ],
+    "criteria_failed": [
+     "(c) NO licence anywhere in either repo (GitHub license null) \u2014 redistribution status unknown until the Skinner lab is asked",
+     "(d) traces are .dat, not NWB/ABF; holding current not stated",
+     "Different mechanism library (Hay-2011 E2 set + novel Ih) \u2014 a new import path"
+    ],
+    "score": 0.45,
+    "verification_needed": "Ask authors for a licence; confirm which RawData traces were fit vs held out."
+   },
+   {
+    "name": "Hunt / Wilbers et al. 2023 human L2/3 fast-spiking BluePyOpt model (DataverseNL doi:10.34894/TONOHA, CC0)",
+    "gap_matched": "L2/L3 interneurons (14; PV/FS)",
+    "criteria_met": [
+     "(a) human temporal/frontal cortex L2/3 FS interneurons",
+     "(c, partial) k_human.mod, Ih.mod, mechanisms.json, checkpoint.pkl in deposit, CC0 licence",
+     "(d) 47 NWB + 14 ABF + .mat recordings in the same deposit",
+     "(e) 34 C, LJP corrected, holding currents reported (human -199 +/- 178 pA)"
+    ],
+    "criteria_failed": [
+     "Synthetic (parameterised) morphology and class-level fit, not a fit to one recorded cell",
+     "Sodium mechanism not seen in the listing \u2014 mechanism set incomplete as verified",
+     "Redundant with the imported HL5BN1 PV subtype"
+    ],
+    "score": 0.4,
+    "verification_needed": "Enumerate the full mod set in the deposit and confirm which NWB files were fit before considering."
+   },
+   {
+    "name": "HL23PYR \u2014 human L2/3 pyramidal, Yao 2022 (ModelDB 267595)",
+    "gap_matched": "L3 pyramidal (6)",
+    "criteria_met": [
+     "(a) human; ephys Krembil MTG L2/3",
+     "(c) hoc + mod present; Zenodo copy CC-BY-4.0",
+     "(e) Krembil protocol readable"
+    ],
+    "criteria_failed": [
+     "(d) population fit to 28 cells not mapped to DANDI 000293 files",
+     "Morphology is a frontal-lobe cell (531526539); layer is L2/3 pooled"
+    ],
+    "score": 0.35,
+    "verification_needed": "Population contract only; low priority given 20 single-cell Allen L3 pyramids exist."
+   },
+   {
+    "name": "Eyal et al. 2016/2018 human L2/3 pyramidal models (ModelDB 195667, 238347)",
+    "gap_matched": "L3 pyramidal (6)",
+    "criteria_met": [
+     "(a) human temporal cortex L2/3",
+     "(c, partial) mechanisms on ModelDB"
+    ],
+    "criteria_failed": [
+     "(d) recordings not on any public portal (only averaged traces for 2016); FAILS mandatory criterion",
+     "(c) 2016 'All rights reserved'; 2018 no licence",
+     "(e) holding current / LJP incomplete"
+    ],
+    "score": 0.15,
+    "verification_needed": "Not importable; exclude."
+   },
+   {
+    "name": "Kalmbach 2018 (AllenInstitute/human_neuron_Ih) and Gidon 2020 (ModelDB 260178) human L2/3 pyramidal models",
+    "gap_matched": "L3 pyramidal (6)",
+    "criteria_met": [
+     "(a) human temporal cortex"
+    ],
+    "criteria_failed": [
+     "(d) recordings not deposited (Kalmbach: explicitly not in Allen Cell Types DB; Gidon: none) \u2014 FAILS mandatory criterion",
+     "(c) Kalmbach fit files not located in the bmtk fork; Gidon licence unstated, Fig S12 demo only"
+    ],
+    "score": 0.1,
+    "verification_needed": "Not importable; exclude."
+   }
+  ],
+  "imports": [
+   "HL5MN1 (= HL23SST) from ModelDB 267587 / agmccrei/HumanL5Circuit_AGM2022 (GPL-3.0) \u2014 human MTG L3 aspiny interneuron, Allen specimen 571700636, NWB well_known_file 618228061; closes L2/L3 interneurons (14) at zero mechanism-library cost (same mod/ and NeuronTemplate.hoc as HL5BN1)",
+   "Allen human specimen 527952884, perisomatic model 626170709 (http://api.brain-map.org/neuronal_model/download/626170709) \u2014 MTG L4 spiny, NWB 618205555 (HEAD 200), fit sweeps 69-72; closes L4 pyramidal (22, largest gap) via the same Allen template/import path as the existing 541563728/626170538 donor"
+  ],
+  "no_human_donor_types": [
+   "L1 interneuron (4): no published human L1 biophysical fit exists anywhere searched (ModelDB 267587/267595, all 43 Allen human perisomatic models are L2-L6, Rich/Eyal/Kalmbach/Chartrand/Boldog). Recordings exist without models (DANDI 000630 human L1 patch-seq, 210 cells, CC-BY-4.0; DANDI 000636 human interneuron patch-seq, CC-BY-4.0) \u2014 a contract could be built, but criterion (c) has no donor.",
+   "L2/L3 interneuron with an annotated PV/SST/VIP subtype from temporal cortex: Allen does not annotate subtype for human cells; the only subtype labels are Yao et al.'s putative ones, and the VIP-like cell is frontal cortex. Any interneuron import must be scored subtype-unknown.",
+   "Any human cell with an all-active (active-dendrite) Allen-style fit: none exist; the only active-dendrite human fits are the Yao/Guet-McCreight hoc models."
+  ],
+  "notes": "Judged from the five leads' evidence only; no new fetches. Cross-lead conflicts resolved: (1) HL5PN2 does not exist in the 267587 tree \u2014 the lead listing 'HL5PN1/HL5PN2' is unverified and superseded; (2) one lead marked HL5MN1/HL5VN1 as 'L5, not matching the L2/L3 gap' \u2014 three other leads verified via the Cerebral Cortex methods and Allen API that they are re-badged HL23SST/HL23VIP fitted to Allen L3 (571700636, MTG) and L2 (525018757, frontal) cells, so HL5MN1 legitimately closes the L2/L3 interneuron gap; (3) two leads named 508405843 as the headline L4 cell, but 527952884 is preferred: four fit sweeps vs one, zip opened, NWB HEAD-verified. Ordering of imports follows the brief: HL5MN1 first because it shares HL5BN1's mechanism library and template (no new mod compile), the Allen L4 second because it reuses the existing Allen import path and closes the largest gap. All Krembil-derived fits (HL5PN1, HL23PYR) are population fits \u2014 criterion (d) only holds at the population level via DANDI 000293, which requires a different contract type; deferred. Rich 2021 is the only single-cell non-Allen L5 fit but has no licence. Licence caveats to record: Allen Terms of Use are non-commercial; ModelDB 267595 has no LICENSE file (only the Zenodo 5771000 copy is CC-BY-4.0), which is why the GPL-3.0 267587 copy of the SST model is the one to import. Only NWB 618205555 was actually HEAD-verified by any lead; every other NWB link was read from API listings and must be fetched before import."
+ }
+}

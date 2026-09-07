@@ -1,0 +1,68 @@
+{
+  "scope": "Lower bound on directed contacts among sampled proofread cells; absence is not established.",
+  "archive": "proofread104.zip",
+  "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+  "c3_volume": "https://storage.googleapis.com/h01-release/data/20210601/c3",
+  "proofread_volume": "https://storage.googleapis.com/h01-release/data/20210601/proofread_104",
+  "annotations": "https://storage.googleapis.com/h01-release/data/20210729/c3/synapses/precomputed",
+  "sample_limit_per_cell": 3000,
+  "cells": {
+    "2530864375": {
+      "components": 4,
+      "nodes": 1803,
+      "sampled": 1803,
+      "c3_ids": [
+        "2530864375",
+        "2530864514",
+        "2545436141",
+        "2545436201",
+        "2545494576",
+        "2924127712",
+        "20392457775",
+        "28908535733",
+        "28908535776",
+        "28908536102",
+        "28908536107",
+        "28908536387",
+        "28908536499",
+        "28908536516",
+        "28923092674",
+        "29025065935",
+        "29025066058",
+        "29025066262",
+        "29025066640",
+        "29097910547",
+        "29097910780",
+        "29112467864",
+        "29112497259",
+        "29112497262",
+        "29112497263",
+        "29112497264",
+        "29112497344",
+        "29112497643",
+        "29112497708",
+        "29112497772",
+        "37919676082",
+        "37934172316",
+        "46755892121"
+      ],
+      "proofread_labels_at_samples": {
+        "2530864375": 1803
+      },
+      "identity_consistent": true,
+      "seconds": 64.4
+    }
+  },
+  "c3_ids_shared_by_cells": {},
+  "edges": [],
+  "cells_with_verified_edges": [],
+  "counts": {
+    "cells": 1,
+    "c3_ids": 33,
+    "edges": 0,
+    "verified_edges": 0,
+    "edges_within_box": 0,
+    "cells_with_verified_edges": 0
+  },
+  "wall_seconds": 67.7
+}

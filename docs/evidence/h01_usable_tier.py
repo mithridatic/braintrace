@@ -23,7 +23,7 @@ RATE_FRACTION = .15
 ADAPTATION_FRACTION = .25
 WIDTH_FRACTION = .2
 AHP_MV = 2.
-CONTRACT = {"ahp_mv": 1., "width_ms": .05}
+CONTRACT = {"ahp_mv": 1., "width_ms": .05, "count": 0}
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE = Path(__file__).resolve().parent
 
@@ -47,6 +47,30 @@ CELLS = {
         "repeats": (".cache/human-pyramidal-l2/recording.nwb", (56, 59, 60, 61, 62), (1020., 2020.)),
         "model": "kv3-ninety-ca133 candidate (energetic search, no E explanation passed)",
     },
+    "E-gain": {
+        "pulse_ms": (1020., 2020.),
+        "inputs": {
+            "110 pA": (".cache/human-pyramidal-l2/sweep-43.npz", "h01-e-gain/{candidate}-sweep43"),
+            "200 pA": (".cache/human-pyramidal-l2/sweep-56.npz", "h01-e-gain/{candidate}-sweep56"),
+            "250 pA": (".cache/human-pyramidal-l2/sweep-50.npz", "h01-e-gain/{candidate}-sweep50"),
+            "310 pA": (".cache/human-pyramidal-l2/sweep-53.npz", "h01-e-gain/{candidate}-sweep53"),
+        },
+        "repeats": (".cache/human-pyramidal-l2/recording.nwb", (56, 59, 60, 61, 62), (1020., 2020.)),
+        "repeat_inputs": {"200 pA": (56, 59, 60, 61, 62)},
+        "model": "SP3 gain-split candidate {candidate} (docs/specs/2026-09-07-h01-e-gain-split.md)",
+        "output": "h01-e-gain/{candidate}-usable",
+    },
+    "SST-L3": {
+        "pulse_ms": (270., 1270.),
+        "inputs": {
+            "100 pA": (".cache/human-sst-l3/active-0.npz", "h01-sst-reproduction/{candidate}-100"),
+            "150 pA": (".cache/human-sst-l3/active-1.npz", "h01-sst-reproduction/{candidate}-150"),
+        },
+        "repeats": (".cache/human-sst-l3/571700399_ephys.nwb", (44, 45, 46, 47), (1020., 2020.)),
+        "repeat_inputs": {"100 pA": (44, 45, 46, 47)},
+        "model": "HL5MN1 published fit {candidate}, unmodified (docs/specs/2026-09-07-h01-donor-hl5mn1-import.md)",
+        "output": "h01-sst-reproduction/{candidate}-usable",
+    },
 }
 
 
@@ -57,7 +81,7 @@ def cycle_table(time, voltage, pulse_ms, label):
               for e in spike_datums(time, voltage, DETECTION_MV)}
     return [{"input": label, "cycle": r["spike"], "cycle_ms": r["cycle_ms"], "ahp_mv": r["minimum_mv"],
              "width_ms": widths[round(r["peak_ms"], 6)], "peak_mv": r["peak_mv"],
-             "threshold_mv": r["threshold_mv"]}
+             "threshold_mv": r["threshold_mv"], "peak_ms": r["peak_ms"]}
             for r in landmarks(time, voltage, pulse_ms)]
 
 
@@ -69,7 +93,8 @@ def qc_view(table, pulse_ms):
     ratio = full[-1]/full[0] if len(full) >= 2 else None
     return {"count": len(table), "count_rate_hz": 1000.*len(table)/(pulse_ms[1]-pulse_ms[0]),
             "rate_hz": rate, "adaptation_ratio": ratio, "width_ms": [r["width_ms"] for r in table],
-            "ahp_mv": [r["ahp_mv"] for r in table]}
+            "ahp_mv": [r["ahp_mv"] for r in table],
+            "first_spike_ms": table[0]["peak_ms"]-pulse_ms[0] if table else None}
 
 
 def repeat_spread(values):
@@ -87,7 +112,7 @@ def cyclical_spread(values):
 
 def usable_limits(human_view, repeats):
     """Pre-registered limits with their spread and basis, per usable row."""
-    limits = {"rate_hz": {"limit": RATE_FRACTION*human_view["rate_hz"], "spread": None,
+    limits = {"rate_hz": {"limit": RATE_FRACTION*human_view["rate_hz"] or None, "spread": None,
                           "basis": "15 percent of the human rate; no human repeats at this input"},
               "adaptation_ratio": {"limit": None if human_view["adaptation_ratio"] is None else
                                    ADAPTATION_FRACTION*human_view["adaptation_ratio"], "spread": None,
@@ -139,15 +164,39 @@ def compare(label, human_view, model_view, limits):
     return rows
 
 
-def human_repeats(root, spec):
-    """First-cycle width and AHP from every human repeat sweep."""
-    path, sweeps, window = spec["repeats"]
+def repeat_rows(label, human_view, model_view, repeats):
+    """Rows whose decision limit is the human repeat range times the Dixon factor.
+
+    Used for an input recorded several times at the same command (E 200 pA, sweeps
+    56/59/60/61/62): the count and the first-spike latency. A zero range makes the
+    count row exact.
+    """
+    rows = []
+    for key, values in (("count", [r.get("repeat_count") for r in repeats]),
+                        ("first_spike_ms", [r.get("first_spike_ms") for r in repeats])):
+        limit = repeat_spread(values)
+        rows.append({"input": label, "row": key, "cycle": None, "human": human_view[key],
+                     "model": model_view[key], "limit": limit, "spread": None,
+                     "basis": f"human repeat range x DLF over {len(values)} repeats at this command",
+                     "verdict": verdict(human_view[key], model_view[key], limit, None),
+                     "contract": contract_verdict(key, human_view[key], model_view[key])})
+    return rows
+
+
+def repeat_tables(root, path, sweeps, window):
+    """First-cycle row plus count and first-spike latency of every human repeat sweep."""
     vectors = []
     for sweep in sweeps:
         time, voltage = nwb_sweep(root/path, sweep)
         table = cycle_table(time, voltage, window, f"repeat {sweep}")
-        vectors.append(table[0] if table else {})
+        vectors.append({**table[0], "repeat_count": len(table),
+                        "first_spike_ms": table[0]["peak_ms"]-window[0]} if table else {})
     return vectors
+
+
+def human_repeats(root, spec):
+    """First-cycle width and AHP from every human repeat sweep."""
+    return repeat_tables(root, *spec["repeats"])
 
 
 def score_cell(cell, spec, root=ROOT):
@@ -161,8 +210,34 @@ def score_cell(cell, spec, root=ROOT):
         tables[label] = {"human": human, "model": model}
         counts[label] = {"human": views[0]["count"], "model": views[1]["count"]}
         rows.extend(compare(label, views[0], views[1], usable_limits(views[0], repeats)))
+        if label in spec.get("repeat_inputs", {}):
+            path, _, window = spec["repeats"]
+            rows.extend(repeat_rows(label, views[0], views[1],
+                                    repeat_tables(root, path, spec["repeat_inputs"][label], window)))
     return {"cell": cell, "model": spec["model"], "counts": counts, "repeats": repeats,
             "rows": rows, "tables": tables}
+
+
+def parse_input(text):
+    """``LABEL=HUMAN_NPZ@MODEL_STEM``: one input override for the scorer."""
+    label, _, rest = text.partition("=")
+    human, sep, model = rest.partition("@")
+    if not label or not sep or not human or not model:
+        raise ValueError("Input override must be LABEL=HUMAN_NPZ@MODEL_STEM.")
+    return label, (human, model)
+
+
+def resolve_spec(spec, candidate=None, inputs=()):
+    """The cell spec with ``{candidate}`` filled and any input overrides applied."""
+    fill = {"candidate": candidate or "candidate"}
+    resolved = dict(spec, model=spec["model"].format(**fill),
+                    inputs={label: (human, model.format(**fill))
+                            for label, (human, model) in spec["inputs"].items()})
+    if "output" in spec:
+        resolved["output"] = spec["output"].format(**fill)
+    if inputs:
+        resolved["inputs"] = dict(parse_input(text) for text in inputs)
+    return resolved
 
 
 def _fmt(value):
@@ -196,9 +271,20 @@ def render(report):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cell", choices=tuple(CELLS), required=True)
+    parser.add_argument("--candidate", help="fills {candidate} in the cell's model stems, e.g. g0-b3")
+    parser.add_argument("--inputs", action="append", default=[], metavar="LABEL=HUMAN_NPZ@MODEL_STEM",
+                        help="replace the cell's inputs; HUMAN_NPZ is relative to --root, MODEL_STEM to docs/evidence")
+    parser.add_argument("--root", type=Path, default=ROOT,
+                        help="root holding .cache (a sibling worktree's root is allowed)")
+    parser.add_argument("--output", help="output stem inside docs/evidence")
     args = parser.parse_args(argv)
-    report = score_cell(args.cell, CELLS[args.cell])
-    stem = EVIDENCE/f"h01-usable-tier-{args.cell.lower()}"
+    try:
+        spec = resolve_spec(CELLS[args.cell], args.candidate, args.inputs)
+    except ValueError as error:
+        parser.error(str(error))
+    report = score_cell(args.cell, spec, root=args.root)
+    stem = EVIDENCE/(args.output or spec.get("output") or f"h01-usable-tier-{args.cell.lower()}")
+    stem.parent.mkdir(parents=True, exist_ok=True)
     stem.with_suffix(".json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     stem.with_suffix(".md").write_text(render(report), encoding="utf-8")
     print(stem.with_suffix(".md"))
