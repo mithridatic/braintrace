@@ -15,10 +15,21 @@ _ION_FREE_MECHANISMS = frozenset({"Ih"})
 _CALCIUM_MECHANISMS = frozenset({"SK", "Ca_HVA", "Ca_LVA"})
 
 
+def _snap_interval(row):
+    """Snap interval ends within 1e-9 of 0 or 1 onto the branch bounds (rounding only)."""
+    branch, lo, hi = row
+    if isinstance(lo, (int, float, np.floating)) and np.isfinite(lo) and abs(lo) <= 1e-9:
+        lo = 0.
+    if isinstance(hi, (int, float, np.floating)) and np.isfinite(hi) and abs(hi-1.) <= 1e-9:
+        hi = 1.
+    return branch, lo, hi
+
+
 def _validate_regions(morphology, regions, polarity):
     if not regions or set(regions)-{"soma", "axon", "dend", "apic"}:
         raise ValueError("Use explicit soma, axon, dend, or apic electrical regions.")
-    intervals = {name: tuple(region.evaluate(morphology).intervals) for name, region in regions.items()}
+    intervals = {name: tuple(_snap_interval(row) for row in region.evaluate(morphology).intervals)
+                 for name, region in regions.items()}
     required = ("soma", "axon") if polarity == "I" else ("soma",)
     if any(not intervals.get(name) for name in required):
         raise ValueError("Profile requires nonempty "+" and ".join(required)+" regions.")
