@@ -19,6 +19,7 @@ from h01_l2_ih_location import distribute_ih
 from h01_l2_leak_reversal import shift_leak_reversal
 from h01_l2_recording import right_limit_recording
 from h01_l2_regional_density import REGIONS, parse_regional_density, regional_density_fit
+from h01_l2_insert_density import insert_density_fit, parse_insert_density
 
 
 def parse_capacitance_factor(text):
@@ -94,6 +95,9 @@ def main():
                         help="MECHANISM:REGION:FACTOR, repeatable; REGION is soma, axon, dend, apic, or all")
     parser.add_argument("--capacitance-factor", action="append", default=[],
                         help="REGION:FACTOR, repeatable; scales membrane capacitance of soma, axon, dend, apic, or all")
+    parser.add_argument("--insert-density", action="append", default=[],
+                        help="MECHANISM:REGION:VALUE, repeatable; adds a mechanism at an absolute density (S/cm2) "
+                             "to a region that has none, with the soma's reversal potentials")
     parser.add_argument("--candidate-json", type=Path,
                         help="JSON object of flag names to values used as defaults; explicit flags override")
     preliminary, _ = parser.parse_known_args()
@@ -111,6 +115,7 @@ def main():
     try:
         regional = [parse_regional_density(text) for text in args.regional_density]
         capacitance = [parse_capacitance_factor(text) for text in args.capacitance_factor]
+        inserted = [parse_insert_density(text) for text in args.insert_density]
     except ValueError as error:
         parser.error(str(error))
     if args.kv3_closing_factor is not None and (not np.isfinite(args.kv3_closing_factor)
@@ -151,6 +156,8 @@ def main():
     fit = ih_density_fit(fit, args.ih_density_factor)
     fit = leak_fit(fit, args.leak_factor)
     fit = shift_leak_reversal(fit, args.leak_reversal_shift_mv)
+    for item in inserted:
+        fit = insert_density_fit(fit, item["mechanism"], item["region"], item["value"])
     for item in regional:
         fit = regional_density_fit(fit, item["mechanism"], item["region"], item["factor"])
     source_decay = next(row["value"] for row in source_fit["genome"]
@@ -258,6 +265,8 @@ def main():
                "voltage_mv": h.Vector().record(h.soma[0](.5)._ref_v),
                "applied_current_na": h.Vector().record(stim._ref_i)}
     observation_units = {}
+    vectors["axon_voltage_mv"] = h.Vector().record(h.axon[1](.5)._ref_v)
+    observation_units["axon_voltage_mv"] = "mV; axon[1](0.5), distal half of the 60 um stub"
     balance_geometry = None
     if args.record_soma_currents:
         soma = h.soma[0](.5)
@@ -323,6 +332,7 @@ def main():
               "ih_distribution": ih_distribution,
               "leak_reversal_shift_mv": args.leak_reversal_shift_mv,
               "regional_density_interventions": regional,
+              "insert_density_interventions": inserted,
               "capacitance_factors": capacitance,
               "charge_balance_geometry": balance_geometry,
               "candidate_json": candidate_record,

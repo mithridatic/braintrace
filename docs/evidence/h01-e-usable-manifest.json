@@ -1,0 +1,104 @@
+{
+  "purpose": "E cell under the usable tier: give the axon an initiation site (Stage A), then move the count and gain one boundary at a time (Stage B). Specification: docs/specs/2026-09-07-h01-usable-circuit-plan.md; levers from docs/evidence/h01-z-map-e.md.",
+  "cap": 8,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 1500,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l2",
+  "library": "kv3-closing-source",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-e-usable",
+  "inputs": {
+    "sweep50": [
+      "--cache",
+      "/work",
+      "--sweep",
+      "50",
+      "--include-recorded-bias"
+    ]
+  },
+  "holdout": "Sweep 55 is sealed (h01-l2-reserved-input.json) and is not an input of any stage; sweep 53 is open (spent) and may be used as a second input for a finalist.",
+  "evaluation": "One parameter set at sweep 50 without current probes; the axon voltage probe is always recorded.",
+  "common_settings": {
+    "nseg_factor": 9,
+    "cvode_atol": 1e-10,
+    "stop_ms": 2100.0,
+    "record_soma_currents": false
+  },
+  "candidate_flags": {
+    "calcium_decay_factor": 1.33,
+    "distribute_ih": true,
+    "ih_density_factor": 75.0,
+    "kv3_closing_factor": 0.9,
+    "leak_reversal_shift_mv": -4.0,
+    "sodium_density_factor": 1.3,
+    "sodium_opening_factor": 2.0,
+    "sodium_recovery_factor": 1.0
+  },
+  "stages": {
+    "A": {
+      "title": "Initiation site: transient sodium inserted in the axon stub",
+      "prediction": "Axon (axon[1](0.5)) crosses -20 mV before the soma in both arms. Somatic shoulder: a local dV/dt maximum of 100 to 300 V/s between -55 and -45 mV before the main rise. Threshold moves from -52 toward -56 mV. a-axon-na (soma sodium 1.3): main rise within 15 percent of 641 V/s, peak within 2 mV of 36; a-axon-na-soma065: main rise below 550 V/s, peak 28 to 36 mV, threshold near -55, count 5 +/- 1 at sweep 50, trough within 1 mV of -69.5.",
+      "rejection": "No shoulder and no axon-first crossing in either arm: the 60 um stub at 1 um diameter cannot host initiation; the initial-segment geometry is returned as a family change beyond this cap. A shoulder without an axon-first crossing is recorded as a partial result and Stage B proceeds on the candidate.",
+      "unchanged": "Allen 541563728 geometry and mechanisms, recorded command and bias, nseg x9, CVode 1e-10, stop 2100 ms, library kv3-closing-source; the axon reversal potentials are the soma's (53, -107).",
+      "decision_file": "stage-a-decision.json"
+    },
+    "B": {
+      "title": "Count and gain, one boundary per arm, on the Stage A survivor or the candidate",
+      "gate": "stage-a-decision.json",
+      "prediction": "b-sk-half: late cycles shorten by a third or more, count 6 to 7 at sweep 50 (human 5, usable rate limit 15 percent: the rate row may fail high), AHP unchanged within 1 mV. b-ca-decay (1.0 against 1.33): cycles shorten 10 to 20 percent, count 5 to 6. b-leak-rev (-2 against -4): threshold reached sooner, count +1, AHP 1 mV shallower. Any arm that changes width by more than 0.2 ms or AHP by more than 2 mV is a regression.",
+      "rejection": "No arm moves the mean cycle by more than the human cyclical spread (the retained table's range times 1.47): the count is not set by the Modulate boundary or the supply reaching threshold; report and stop.",
+      "unchanged": "As Stage A; the Stage A survivor's flags are copied into each arm before it runs (recorded in the candidate file).",
+      "decision_file": "stage-b-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "a-axon-na",
+      "stage": "A",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 1.3,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    },
+    {
+      "name": "a-axon-na-soma065",
+      "stage": "A",
+      "flags": {
+        "calcium_decay_factor": 1.33,
+        "distribute_ih": true,
+        "ih_density_factor": 75.0,
+        "kv3_closing_factor": 0.9,
+        "leak_reversal_shift_mv": -4.0,
+        "sodium_density_factor": 0.65,
+        "sodium_opening_factor": 2.0,
+        "sodium_recovery_factor": 1.0,
+        "insert_density": [
+          "NaTs:axon:3.814"
+        ]
+      },
+      "settings": {
+        "nseg_factor": 9,
+        "cvode_atol": 1e-10,
+        "stop_ms": 2100.0,
+        "record_soma_currents": false
+      }
+    }
+  ]
+}
