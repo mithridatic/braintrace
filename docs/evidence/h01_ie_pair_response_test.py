@@ -59,3 +59,7 @@ def test_run_condition_invokes_the_wrapper(monkeypatch, tmp_path):
     monkeypatch.setattr(pair.subprocess, "run", lambda command, **kw: calls.append(command))
     stem = pair.run_condition("x", ["-m", "mod"], cache=tmp_path, python="py")
     assert stem == tmp_path/"pair-x" and calls[0][:3] == ["py", "-m", "mod"] and calls[0][-1] == str(stem)
+
+
+def test_hold_tag_has_no_dot():
+    assert pair.hold_tag(.4) == "hold400pa" and "." not in pair.hold_tag(.25)

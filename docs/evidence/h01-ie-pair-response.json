@@ -1,0 +1,47 @@
+{
+ "hold_na": 0.4,
+ "conditions": {
+  "literature": {
+   "soma": {
+    "i_spike_ms": 14.780000000000001,
+    "amplitude_mv": 0.007727350243740716,
+    "peak_ms": 23.755,
+    "latency_to_10pct_ms": 2.379999999999999,
+    "decay_to_37pct_ms": 8.975000000000005,
+    "pre_spike_max_abs_difference_mv": 0.0
+   },
+   "receptor_site": {
+    "i_spike_ms": 14.780000000000001,
+    "amplitude_mv": 0.8601285251045709,
+    "peak_ms": 16.265,
+    "latency_to_10pct_ms": 0.5,
+    "decay_to_37pct_ms": 4.364999999999998,
+    "pre_spike_max_abs_difference_mv": 0.0
+   },
+   "e_events_connected_ms": [],
+   "e_events_disconnected_ms": [],
+   "e_hold_mv_before_i_spike": -70.92940138056686
+  },
+  "assumed": {
+   "soma": {
+    "i_spike_ms": 14.780000000000001,
+    "amplitude_mv": -0.37666252631907327,
+    "peak_ms": 40.0,
+    "latency_to_10pct_ms": 7.264999999999997,
+    "decay_to_37pct_ms": null,
+    "pre_spike_max_abs_difference_mv": 0.0
+   },
+   "receptor_site": {
+    "i_spike_ms": 14.780000000000001,
+    "amplitude_mv": -5.154594853634251,
+    "peak_ms": 26.794999999999998,
+    "latency_to_10pct_ms": 0.5,
+    "decay_to_37pct_ms": null,
+    "pre_spike_max_abs_difference_mv": 0.0
+   },
+   "e_events_connected_ms": [],
+   "e_events_disconnected_ms": [],
+   "e_hold_mv_before_i_spike": -70.92940138056686
+  }
+ }
+}

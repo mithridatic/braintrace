@@ -26,6 +26,11 @@ LITERATURE = {"inhibitory_weight_us": .0031, "inhibitory_reversal_mv": -75., "in
 ASSUMED = {"inhibitory_weight_us": .02, "inhibitory_reversal_mv": -80., "inhibitory_tau_ms": 5.}
 
 
+def hold_tag(hold_na):
+    """Output-stem tag without a dot (the circuit example treats a dot as a suffix)."""
+    return f"hold{int(round(hold_na*1000))}pa"
+
+
 def condition_args(control, hold_na, synapse, duration_ms=40.):
     """Wrapper arguments for one condition: E held by a constant current for the run."""
     args = list(WRAPPER)+["--control", control, "--e-current-na", str(hold_na), "--e-delay-ms", "0",
@@ -105,12 +110,12 @@ def main(argv=None):
         for name in args.conditions:
             synapse = ASSUMED if name == "assumed" else LITERATURE
             control = "disconnected" if name == "disconnected" else "ei"
-            run_condition(f"{name}-hold{args.hold_na:g}", condition_args(control, args.hold_na, synapse))
+            run_condition(f"{name}-{hold_tag(args.hold_na)}", condition_args(control, args.hold_na, synapse))
         return
-    disconnected = np.load(CACHE/f"pair-disconnected-hold{args.hold_na:g}.npz")
+    disconnected = np.load(CACHE/f"pair-disconnected-{hold_tag(args.hold_na)}.npz")
     report = {"hold_na": args.hold_na, "conditions": {}}
     for name in [c for c in args.conditions if c != "disconnected"]:
-        connected = np.load(CACHE/f"pair-{name}-hold{args.hold_na:g}.npz")
+        connected = np.load(CACHE/f"pair-{name}-{hold_tag(args.hold_na)}.npz")
         report["conditions"][name] = score_pair(connected, disconnected)
     (EVIDENCE/"h01-ie-pair-response.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     (EVIDENCE/"h01-ie-pair-response.md").write_text(render(report), encoding="utf-8")

@@ -226,3 +226,11 @@ Appended per workstream as it closes.
   cycles match (38, 16 against 38, 12 ms); the late train runs at half the human's rate
   (242 to 253 against 110 to 124 ms). Threshold, peak, trough held. Stage B runs its
   three arms at 310 pA on the survivor (`h01-e-usable-b-manifest.json`).
+- **W4 (three pair runs, 170 s each).** Prediction held: with the literature receptor
+  (3.1 nS, -75 mV, 4.18 ms) one I spike moves the receptor site +0.86 mV and the soma
+  +0.008 mV (attenuation 110, band 10 to 100: above the band); latency and decay are the
+  receptor's own. The response is depolarising because the site sits 7 mV below the
+  soma and below the reversal. The assumed 20 nS at -80 mV is a shunt that pins the
+  site while the held cell drifts (-5 mV at the site, -0.38 at the soma by 40 ms). The
+  deficit is the placement, not the conductance; returned to the user
+  (`h01-ie-pair-result.md`).
