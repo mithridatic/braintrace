@@ -34,6 +34,20 @@ def _biophys_procedure(path):
     return stem[:-len(".hoc")]
 
 
+def _existing_sections(cell, name):
+    """Live sections of a template section array such as ``cell.myelin``.
+
+    The template's ``init`` deletes every declared section and recreates only some of
+    them (HL5BN1 takes ``delete_axon_BPO`` and keeps no myelin). Reading a deleted
+    section from Python raises a hoc error that is not converted and aborts the
+    process (exit 139), so each index is checked with ``section_exists`` first.
+    """
+    sections = []
+    while h.section_exists(name, len(sections), cell):
+        sections.append(getattr(cell, name)[len(sections)])
+    return sections
+
+
 SCALE_MECHANISMS = ("NaTg", "Kv3_1", "SK")
 SCALE_REGIONS = ("soma", "axon", "dend", "apic", "all")
 
@@ -293,7 +307,7 @@ geometry = [{"name": sec.name(), "length_um": sec.L, "diameter_um": sec.diam,
              "nseg": sec.nseg, "area_um2": sum(seg.area() for seg in sec),
              "ra_ohm_cm": sec.Ra, "cm_uf_cm2": sec.cm,
              "parent": None if sec.parentseg() is None else str(sec.parentseg())}
-            for sec in list(cell.all)+[m for m in cell.myelin if m.parentseg() is not None]]
+            for sec in list(cell.all)+[m for m in _existing_sections(cell, "myelin") if m.parentseg() is not None]]
 h.finitialize(args.initial_mv)
 h.continuerun(args.duration_ms)
 times, voltage, applied, axon = map(np.asarray, (t, v, current, axon_v))

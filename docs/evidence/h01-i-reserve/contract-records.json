@@ -1,0 +1,45 @@
+{
+  "purpose": "SP4 reserve evaluation only: the two g-natg-axon15 traces under the I limit pairs of h01-contract-records.json",
+  "numerical_pairs": [
+    {
+      "name": "I 0.27 mesh x9/x27/x81",
+      "input": "I 0.27",
+      "caveat": "Candidate at CVode 1e-10; all-section refinement; proxy limit for every 0.27 nA I record",
+      "traces": [
+        "h01-pv-calcium-response-004-300-027.npz",
+        "h01-pv-calcium-response-004-300-027-space27.npz",
+        "h01-pv-calcium-response-004-300-027-space81.npz"
+      ]
+    },
+    {
+      "name": "I 0.19 mesh S x9/x27/x81",
+      "input": "I 0.19",
+      "caveat": "Source model repeats; proxy limit for the 0.19 nA candidate, which has no mesh pair",
+      "traces": [
+        "h01-pv-neuron-space9.npz",
+        "h01-pv-neuron-space27.npz",
+        "h01-pv-neuron-space81.npz"
+      ]
+    }
+  ],
+  "records": [
+    {
+      "cell": "I",
+      "name": "g-natg-axon15 (SP4 reserve)",
+      "role": "candidate",
+      "input": "I 0.19",
+      "limits": "I 0.19 mesh S x9/x27/x81",
+      "settings": "finalist flags + scale NaTg:axon:1.5, nseg x9, CVode 1e-10, bias 0",
+      "trace": "h01-i-reserve/g-natg-axon15-019.npz"
+    },
+    {
+      "cell": "I",
+      "name": "g-natg-axon15 (SP4 reserve)",
+      "role": "candidate",
+      "input": "I 0.27",
+      "limits": "I 0.27 mesh x9/x27/x81",
+      "settings": "finalist flags + scale NaTg:axon:1.5, nseg x9, CVode 1e-10, bias 0",
+      "trace": "h01-i-reserve/g-natg-axon15-027.npz"
+    }
+  ]
+}

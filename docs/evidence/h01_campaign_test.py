@@ -109,3 +109,43 @@ def test_abort_is_recorded_when_the_container_exceeds_the_limit(tmp_path, monkey
     assert killed == ["h01-i-campaign-c0-019", "h01-i-campaign-c0-027"]
     command = campaign.docker_command(tmp_path, manifest, manifest["candidates"][0], "019")
     assert command[command.index("--name")+1] == "h01-i-campaign-c0-019"
+
+
+def test_failing_container_stderr_is_persisted_and_summarised(tmp_path, monkeypatch):
+    """A container that dies (rc 139) leaves its stderr on disk and its tail in the log row."""
+    import subprocess
+
+    def crash(command, **kwargs):
+        lines = "\n".join(f"line {i}" for i in range(30))
+        return subprocess.CompletedProcess(command, 139, stdout="partial stdout\nlast stdout", stderr=lines+"\n")
+    monkeypatch.setattr(campaign.subprocess, "run", crash)
+    manifest = _manifest()
+    rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=False)
+    assert [r["returncode"] for r in rows] == [139, 139]
+    assert rows[0]["stderr_tail"] == [f"line {i}" for i in range(10, 30)]
+    log = tmp_path/"docs/evidence/h01-i-campaign/c0-019.stderr.log"
+    text = log.read_text()
+    assert "line 0" in text and "line 29" in text and "last stdout" in text
+    assert rows[0]["stderr_log"] == "h01-i-campaign/c0-019.stderr.log"
+
+
+def test_aborted_container_keeps_the_partial_stderr(tmp_path, monkeypatch):
+    import subprocess
+
+    def slow(command, **kwargs):
+        if command[:2] == ["docker", "kill"]:
+            return None
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"], output="out", stderr="stuck here\n")
+    monkeypatch.setattr(campaign.subprocess, "run", slow)
+    manifest = _manifest()
+    manifest["abort_seconds"] = 1
+    rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=False)
+    assert rows[0]["aborted"] and rows[0]["stderr_tail"] == ["stuck here"]
+    assert "stuck here" in (tmp_path/"docs/evidence/h01-i-campaign/c0-019.stderr.log").read_text()
+
+
+def test_dry_run_writes_no_stderr_log(tmp_path):
+    manifest = _manifest()
+    rows = campaign.run_candidate(tmp_path, manifest, manifest["candidates"][0], dry_run=True)
+    assert rows[0]["stderr_tail"] == [] and rows[0]["stderr_log"] is None
+    assert not list((tmp_path/"docs/evidence/h01-i-campaign").glob("*.stderr.log"))
