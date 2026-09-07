@@ -24,6 +24,11 @@ def _label(code):
 def _geometry_signature(morphology):
     if not isinstance(morphology, Morphology):
         return None
+    cached = getattr(morphology, "_h01_geom_sig", None)
+    if cached is not None:
+        cached_sig, n_b, n_e = cached
+        if len(morphology.branches) == n_b and len(morphology.edges) == n_e:
+            return cached_sig
     digest = hashlib.sha256()
     branches = morphology.branches
     indices = {id(view): index for index, view in enumerate(branches)}
@@ -34,11 +39,20 @@ def _geometry_signature(morphology):
             if array is None:
                 digest.update(b"None")
             else:
-                values = np.asarray(array.to_decimal(u.um), dtype="<f8")
+                if (isinstance(array, u.Quantity) and array.unit == u.um
+                        and isinstance(array.mantissa, np.ndarray) and array.mantissa.dtype == np.float64):
+                    values = array.mantissa
+                else:
+                    values = np.asarray(array.to_decimal(u.um), dtype="<f8")
                 digest.update(values.tobytes())
     for edge in morphology.edges:
         digest.update(str((indices[id(edge.parent)], indices[id(edge.child)], edge.parent_x, edge.child_x)).encode())
-    return digest.hexdigest()
+    sig = digest.hexdigest()
+    try:
+        morphology._h01_geom_sig = (sig, len(branches), len(morphology.edges))
+    except (AttributeError, TypeError):
+        pass
+    return sig
 
 
 @dataclass(frozen=True)
@@ -107,7 +121,8 @@ class H01Anatomy:
         self._signature = _geometry_signature(self.morphology)
         rows = imported.source_rows
         xyz = rows[:, 2:5] * POSITION_UM
-        keys = [tuple(np.round(p, 6)) for p in xyz]
+        xyz_round = np.round(xyz, 6)
+        keys = [tuple(p) for p in xyz_round]
         if len(set(keys)) != len(keys):
             raise ValueError("Coincident source points make annotation identity ambiguous.")
         lookup = dict(zip(keys, range(len(rows))))
@@ -116,24 +131,53 @@ class H01Anatomy:
         starts, ends, branch_ids, fractions, endpoints = [], [], [], [], []
         expected_edges = {frozenset((int(r[0]), int(r[6]))) for r in rows if r[6] != -1}
         actual_edges = []
+        row_nodes = rows[:, 0].astype(int)
         for branch_index, view in enumerate(self.morphology.branches):
             branch = view.branch
-            lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
-            if lengths.sum() <= 0:
+            if (isinstance(branch.lengths, u.Quantity) and branch.lengths.unit == u.um
+                    and isinstance(branch.lengths.mantissa, np.ndarray) and branch.lengths.mantissa.dtype == np.float64):
+                lengths = branch.lengths.mantissa
+            else:
+                lengths = np.asarray(branch.lengths.to_decimal(u.um), dtype=float)
+            l_sum = lengths.sum()
+            if l_sum <= 0:
                 raise ValueError("Annotation mapping requires positive cable length.")
-            bounds = np.r_[0., np.cumsum(lengths)] / lengths.sum()
-            proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
-            distal = np.asarray(branch.points_distal.to_decimal(u.um))
-            for j, (p, q) in enumerate(zip(proximal, distal)):
+            bounds = np.empty(len(lengths) + 1, dtype=float)
+            bounds[0] = 0.0
+            bounds[1:] = np.cumsum(lengths) / l_sum
+
+            if (isinstance(branch.points_proximal, u.Quantity) and branch.points_proximal.unit == u.um
+                    and isinstance(branch.points_proximal.mantissa, np.ndarray)):
+                proximal = branch.points_proximal.mantissa
+            else:
+                proximal = np.asarray(branch.points_proximal.to_decimal(u.um))
+
+            if (isinstance(branch.points_distal, u.Quantity) and branch.points_distal.unit == u.um
+                    and isinstance(branch.points_distal.mantissa, np.ndarray)):
+                distal = branch.points_distal.mantissa
+            else:
+                distal = np.asarray(branch.points_distal.to_decimal(u.um))
+
+            p_rnd = np.round(proximal, 6)
+            q_rnd = np.round(distal, 6)
+            p_keys = [tuple(v) for v in p_rnd]
+            q_keys = [tuple(v) for v in q_rnd]
+
+            for j in range(len(proximal)):
                 try:
-                    a, b = (lookup[tuple(np.round(v, 6))] for v in (p, q))
+                    a = lookup[p_keys[j]]
+                    b = lookup[q_keys[j]]
                 except KeyError as exc:
                     raise ValueError("Morphology endpoints do not match H01 source samples.") from exc
-                actual_edges.append(frozenset((int(rows[a, 0]), int(rows[b, 0]))))
-                self._nodes.setdefault(int(rows[a, 0]), (branch_index, float(bounds[j])))
-                self._nodes.setdefault(int(rows[b, 0]), (branch_index, float(bounds[j + 1])))
-                starts.append(p)
-                ends.append(q)
+                ra = row_nodes[a]
+                rb = row_nodes[b]
+                actual_edges.append(frozenset((ra, rb)))
+                if ra not in self._nodes:
+                    self._nodes[ra] = (branch_index, float(bounds[j]))
+                if rb not in self._nodes:
+                    self._nodes[rb] = (branch_index, float(bounds[j + 1]))
+                starts.append(proximal[j])
+                ends.append(distal[j])
                 branch_ids.append(branch_index)
                 fractions.append((bounds[j], bounds[j + 1]))
                 endpoints.append((a, b))
