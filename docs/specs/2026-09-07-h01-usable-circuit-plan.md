@@ -250,3 +250,6 @@ Appended per workstream as it closes.
 - **Closed 2026-09-07.** All workstreams delivered except W6c (the 3,000-sample scan runs
   detached and writes `h01-resolved-edge-list-3000.json` when done). Decisions returned:
   E cap extension; E finalist promotion; I-to-E receptor placement; I reserve.
+- **W6c (closed untested).** The 3,000-sample rescan completed 26 of 104 cells (98 to 110 s
+  each) and stalled for 17 minutes without a progress line; killed under the fail-fast
+  rule, checkpoint kept, resumable. `full_export_scanned` stays false.

@@ -130,3 +130,13 @@ untested one. The reciprocal pair 95907584 has both endpoints within one voxel
 voxels; the three exact contacts are unchanged. Offsets of one voxel or one slice
 are candidates for a relaxed acceptance rule, which is a decision for the network
 builder, not this record.
+
+## 3,000-sample rescan (2026-09-07): stopped, untested
+
+`h01_c3_edge_list.py --limit 3000` ran detached with per-cell checkpoints and completed
+26 of 104 cells at 98 to 110 s each, then produced no progress line for 17 minutes
+(a network stall on the volume, the same signature as the 2026-09-06 batch) and was
+killed under the fail-fast rule. The checkpoint `h01-resolved-edge-list-3000.cells.json`
+holds the 26 finished cells and the run resumes from it with the same limit; a 6,000-sample
+attempt earlier the same day ran at 176 s per cell and was stopped after one cell as
+over budget. `full_export_scanned` stays false; the released 1,500-sample list stands.
