@@ -226,3 +226,8 @@ docs/_static/js/brainx-footer.js
 /docs/s41467-026-68453-w.pdf
 /.agents/
 /.worktrees/
+
+# H01 raw simulation traces (JSON evidence is versioned; NPZ stays local)
+docs/evidence/**/*.npz
+docs/evidence/*.pid
+docs/evidence/*.err
