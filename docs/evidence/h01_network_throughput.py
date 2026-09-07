@@ -344,7 +344,7 @@ def run_once(args):
     if record["status"] == "running":
         record["status"] = "completed" if child.returncode == 0 and record["initialization_and_run_seconds"] is not None else "failed"
     (run_dir/"run.json").write_text(json.dumps(record, indent=2)+"\n")
-    print(json.dumps({k: record[k] for k in ("label", "status", "wall_seconds", "construction_seconds",
+    print(json.dumps({k: record.get(k) for k in ("label", "status", "wall_seconds", "construction_seconds",
                                               "initialization_and_run_seconds", "peak_rss_mb")}), flush=True)
     return record
 
