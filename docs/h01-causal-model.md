@@ -299,6 +299,23 @@ reference carries 2.0. The scorer refuses to score until the registry re-key
 registers a finalist I profile, so no full-train verdict can be read through the
 present profile.
 
+### Y2 observation, SP2 step 1 (2026-09-07)
+
+Halving pair run at the copied mesh, 0.27 nA, 330 ms, finalist profile (aligned):
+dt 0.005 ms 115.6 s wall (0.35 s per simulated ms), dt 0.0025 ms 246.0 s (0.745 s per
+simulated ms). Over 270-329.5 ms both traces hold 3 events. Rise and width are inside
+the halved gate (max |rise| 0.0088 ms, |width| 0.0015 ms); the peak sample differs by
+0.21-0.23 mV at every event, over the 0.05 mV half-gate, so the literal verdict is
+`time_level_open` for the peak-sample metric only. Against the NEURON CVode finalist
+(`e-kv3-close2-027`, full gate) the dt 0.005 trace has equal count, rise errors
++0.0085/-0.0151/-0.0176 ms and width +0.003 ms (in gate), peak -0.45 mV (out); at dt
+0.0025 the peak error is -0.22 mV, halving with dt. Reading: the timing gates are valid at
+dt 0.005; the peak-sample gate converges first-order in dt and is not a valid decision
+limit at either step with end-of-step sampling. Derived (not measured) full 1500 ms cost:
+~525 s at dt 0.005, ~1,118 s at 0.0025. No full-train arm was run; Y2 remains open.
+Evidence: `evidence/h01-i-transfer/step1-decision.json`,
+[step 1 page](evidence/h01-i-transfer-step1.md).
+
 2026-09-07 (no observation): the registry now carries the non-default I mode `finalist`
 (somatic Kv3 closing 2.0, everything else the candidate) and the E mode `b3`
 ([spec](specs/2026-09-07-h01-experimental-profile-modes.md)); the manifest names
