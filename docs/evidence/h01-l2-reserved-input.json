@@ -25,5 +25,25 @@
   "status": "opened after prediction commit 306459e and B3 calibration decision; now spent",
   "waveform_sha256": "44bea6529b6128eae49c246116e97dbe2c36e3e3b4459d28380d10ac4985f47f",
   "candidate_sha256": "e4825c83bdc7980a469b5501b2a54c68e680f1cb52a2055d36bcf4fc7b70e564"
+ },
+ "calibration_sweeps_2026_09_07": {
+  "sweeps": [
+   43,
+   50,
+   53,
+   55,
+   56
+  ],
+  "note": "50, 53 and 55 are spent former calibration/holdout inputs. 56 (200 pA) is calibration, never a holdout: its repeats 56/59/60/61/62 already feed the usable-tier AHP spread (h01_usable_tier.py CELLS['E']['repeats']), and its Allen count metadata (1 spike in each of 56/59/60/61/62) is visible in sweep-metadata.json. It gives the E rate row its only repeat-based decision limit (repeat range x DLF 1.47).",
+  "exported_2026_09_07": "sweep-56.npz into .cache/human-pyramidal-l2 (data only, gitignored)"
+ },
+ "third_reservation_2026_09_07": {
+  "reserved_sweep": 54,
+  "command_pa": 330.0,
+  "selection_rule": "highest-amplitude long-square sweep never exported or scored (SP3 spec section 2). Remaining unopened active sweeps 48/49/52/54 are all within 20 pA of an opened sweep (43/50/53/55) or of the 200 pA repeat family, so the 2026-09-07 non-adjacency rule cannot be met by any remaining sweep and is relaxed; 51 excluded as the source-fit sweep.",
+  "count_status": "The Allen analysis spike count of sweep 54 (12 spikes) is in sweep-metadata.json and was visible when this seal was written; count is therefore NOT closed. Waveform, timing, peaks, widths and the per-cycle table are closed: recording.nwb was not opened for this sweep beyond metadata, and no sweep-54.npz exists.",
+  "release_condition": "h01-prediction-e3.json written and committed before export; h01_l2_sweep_export.SEALED[54] makes the exporter and h01_l2_neuron_reference refuse sweep 54 until it exists (joint test h01_l2_holdout_release_test.py).",
+  "status": "sealed; unopened",
+  "spec": "docs/specs/2026-09-07-h01-e-gain-split.md"
  }
 }

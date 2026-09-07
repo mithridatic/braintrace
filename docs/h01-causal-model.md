@@ -805,6 +805,39 @@ form (plateau, not a local maximum), the 0.65 arm's trough (block), the B0 count
 (dendritic load), the width (1.01 against 0.91 ms), the resting potential (−84 against
 −72). Sweep 55 was not opened; the cap closed first.
 
+### Y4 registered predictions for the gain split (SP3, registered 2026-09-07, no observation yet)
+
+No run has been made; this block records what was predicted so that a miss can later be
+scored against the prediction. Spec: [gain split](specs/2026-09-07-h01-e-gain-split.md);
+manifest `docs/evidence/h01-e-gain-manifest.json` (cap 4, `prior_evaluations 0`).
+
+**Matryoshka reading (from retained tables, no run).** The frozen B3 profile's counts
+5/8, 10/10, 13/12 (human/model at 250/310/350 pA) give a human f-I slope of 0.083
+spikes/pA between 250 and 310 pA against a model slope of 0.033 (0.075 vs 0.050 between
+310 and 350; 0.087 vs 0.039 Hz/pA in mean-full-cycle rate). Late cycles are uniform within
+each input (model 184-157 ms at 250 pA, 121-116 ms at 310 pA), so the error is a gain error
+repeating across cycles, not an adaptation error; SK doses translate the curve and cannot
+rotate it. Rest -84 vs literature -72 mV is parked because the donor's own pre-pulse
+samples match the model within 1 mV. Controlling property named: a current present
+between spikes at low input and absent at high input, distributed Ih or the linear leak.
+
+**Registered predictions.**
+
+| Stage | Arm | Prediction | Rejection |
+| --- | --- | --- | --- |
+| 0 | `g0-b3` (B3 at sweeps 43, 50, 53, 56) | sweep-43 onset and late-return rows within 1 mV; sweep-56 count 1 (five human repeats, range 0, exact) and first-spike latency within the repeat limit; 250/310 reproduce 8 and 10 spikes | sweep 43 fails 1 mV: B3's Stage B levers broke F5; G arms judged on the change of the 43 rows |
+| G | `g1-ih-half` (`ih_density_factor 37.5`) | 250 pA count 5-7, late cycles >= 200 ms; 310 pA count 9-10, rate within 1.5 Hz; baseline -1 to -3 mV; sweep-43 return moves <= 1 mV; 200 pA count 1 | 310 count < 9, or 250 count still >= 8 |
+| G | `g2-leak-150` (`leak_factor 1.5`, reversal unchanged) | both counts fall, 250 pA proportionally more (250 <= 6, 310 >= 8); 200 pA count 0-1 | 250 and 310 fall by the same spike count (pure shift) |
+| G3 | reserve dose of the better arm (dose written into `stage-g-decision.json` first) | 250 count 5 +/- 1, 310 rate within 1.5 Hz, sweep 43 within 1 mV, 200 count 1 | as the chosen arm |
+
+**Status.** Y4 stays open. Sweep 54 (330 pA) is sealed as the new E holdout
+(`h01-prediction-e3.json` must exist before export; its Allen count metadata, 12 spikes, was
+visible). PASS at cap promotes nothing without the SP2 transfer gate; FAIL at cap names the
+reassessment (gain set outside the passive family: human slow Na inactivation or Kv7/M
+kinetics absent from the Allen genome, or a second human L2/3 donor with a recorded f-I
+curve). The observation entry replaces this block when `stage-g0-decision.json` and
+`stage-g-decision.json` land, in the same commit.
+
 ### Y5 under the population edge list
 
 The C3 relationship-index scan of all 104 proofread cells returns 123
