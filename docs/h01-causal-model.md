@@ -1069,6 +1069,29 @@ as "9 of 166 shards scanned", a measured denominator that was previously unknown
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
+#### Y5 population, 2026-09-07: builder and the 12-cell construction check (SP8)
+
+Builder ([spec](specs/2026-09-07-h01-population-builder.md)): `make_h01_network` gains
+`include_isolated` (isolated cells from their soma-bearing largest component, soma output,
+no projections, fragments never joined), `control in {ei, e_only, i_only, disconnected}` with
+enabled and removed edges recorded, and `cells` with the order "incident cells, then isolated
+cells by ascending largest-component nodes". 36 unit tests, 100 % line coverage on
+`h01_network.py`.
+
+Observed ([12-cell build](evidence/h01-population-build-12.json),
+[page](evidence/h01-population-build-12.md); construction only, under load): the build
+**failed** at 332.6 s after 4 incident and 3 isolated cells were built, on isolated cell
+`2451406889`: a soma region interval on branch 162 evaluated to `(0.990, 1.0000000000000002)`
+and the region validator rejected the 2e-16 overshoot. Construction seconds, compartment count
+and peak RSS at 12 cells are therefore **untested** (649 MB at the failure point is a
+pre-discretization reading). Cause: rounding in interval evaluation meeting a strict bound;
+fixed by snapping ends within 1e-9 of the branch bounds, no physiology change. The SP1
+proportional projections (12 cells ~275 s / ~1.5 GB; 40 cells ~540 s / ~3.0 GB; 104 cells
+~2,800 s / ~15 GB) stay derived and unvalidated; the next SP8 step repeats the 12-cell
+construction check before 40 is approved. Isolated-cell construction itself is now observed on
+three cells of 1,540-3,499 nodes (1.5-2.2 s each), so the population path is exercised but
+not yet sized.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and

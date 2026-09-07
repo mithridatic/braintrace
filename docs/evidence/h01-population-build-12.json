@@ -1,0 +1,132 @@
+{
+ "stage": "12 cells (SP8 stage 2 of 4 -> 12 -> 40 -> 104)",
+ "measurement": "construction only (--build, no run); measured under load (other jobs running on the machine)",
+ "started_at": "2026-09-07T15:40:28",
+ "command": [
+  "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\validation\\Scripts\\python.exe",
+  "-u",
+  "-m",
+  "examples.h01_verified_network",
+  "--topology",
+  "docs/evidence/h01-verified-network.json",
+  "--cache",
+  "C:\\Users\\J\\Documents\\Projects\\connectome-agent\\braintrace-source\\.worktrees\\h01-braincell\\.cache\\h01",
+  "--build",
+  "--include-isolated",
+  "--cells",
+  "12",
+  "--control",
+  "ei",
+  "--solver",
+  "h01_staggered_scan",
+  "--output",
+  "C:\\Users\\J\\AppData\\Local\\Temp\\claude\\C--Users-J-Documents-Projects-connectome-agent-braintrace-source\\59762c69-587a-4ed2-83cc-b548416f9360\\scratchpad\\build12\\network"
+ ],
+ "limit_seconds": 900.0,
+ "status": "failed",
+ "returncode": 1,
+ "wall_seconds": 332.6,
+ "peak_rss_mb": 648.8,
+ "construction_seconds": null,
+ "n_compartments": null,
+ "compartments_by_cell": null,
+ "reason": "12-cell construction did not complete: ValueError('Invalid electrical region interval.') from h01_ei_cell._validate_regions while building isolated cell 2451406889 (8th of 12 in cell_order) at 324.2 s; the network and build JSON were never written, so compartments are unrecorded (untested, not measured).",
+ "root_cause": "Floating-point rounding: on branch 162 of 2451406889 component 0 the soma region evaluates to (0.9902931374228255, 1.0000000000000002); the validator demanded hi <= 1 exactly while its own coverage check already tolerates 1e-9. Diagnosed by a read-only region evaluation of that component after the failure; fixed in the same commit by snapping endpoints within 1e-9 of 0/1 (no physiology change). Not re-run: this task allows one construction check.",
+ "cell_order_prefix": [
+  "3955003482",
+  "4157825456",
+  "4188575291",
+  "5584343344",
+  "2530864375",
+  "3178243558",
+  "3751392341",
+  "2451406889",
+  "678539249",
+  "4420044370",
+  "4260528559",
+  "2820958695"
+ ],
+ "incident_cells": [
+  "3955003482",
+  "4157825456",
+  "4188575291",
+  "5584343344"
+ ],
+ "isolated_cells_loaded": {
+  "678539249": "isolated, largest component 0 of 4480 nodes, fraction 0.774",
+  "2451406889": "isolated, largest component 0 of 3750 nodes, fraction 0.970",
+  "2530864375": "isolated, largest component 0 of 1540 nodes, fraction 0.854",
+  "2820958695": "isolated, largest component 0 of 4864 nodes, fraction 0.488",
+  "3178243558": "isolated, largest component 0 of 2748 nodes, fraction 0.371",
+  "3751392341": "isolated, largest component 0 of 3499 nodes, fraction 0.990",
+  "4260528559": "isolated, largest component 0 of 4790 nodes, fraction 0.560",
+  "4420044370": "isolated, largest component 0 of 4624 nodes, fraction 0.999"
+ },
+ "cells_built_before_failure": [
+  "3955003482",
+  "4157825456",
+  "4188575291",
+  "5584343344",
+  "2530864375",
+  "3178243558",
+  "3751392341"
+ ],
+ "stage_timestamps_s": {
+  "Loading cell 4188575291, component 0": 0.1,
+  "Loading cell 3955003482, component 0": 12.9,
+  "Loading cell 5584343344, component 0": 62.0,
+  "Loading cell 4157825456, component 0": 73.1,
+  "Loading cell 678539249, component 0 (isolated, largest component 0 of 4480 nodes, fraction 0.774)": 92.7,
+  "Loading cell 2451406889, component 0 (isolated, largest component 0 of 3750 nodes, fraction 0.970)": 93.7,
+  "Loading cell 2530864375, component 0 (isolated, largest component 0 of 1540 nodes, fraction 0.854)": 94.5,
+  "Loading cell 2820958695, component 0 (isolated, largest component 0 of 4864 nodes, fraction 0.488)": 94.9,
+  "Loading cell 3178243558, component 0 (isolated, largest component 0 of 2748 nodes, fraction 0.371)": 95.9,
+  "Loading cell 3751392341, component 0 (isolated, largest component 0 of 3499 nodes, fraction 0.990)": 96.6,
+  "Loading cell 4260528559, component 0 (isolated, largest component 0 of 4790 nodes, fraction 0.560)": 97.4,
+  "Loading cell 4420044370, component 0 (isolated, largest component 0 of 4624 nodes, fraction 0.999)": 98.4,
+  "Building electrical cell 3955003482": 100.0,
+  "Building electrical cell 4157825456": 207.4,
+  "Building electrical cell 4188575291": 247.4,
+  "Building electrical cell 5584343344": 287.4,
+  "Building electrical cell 2530864375": 318.3,
+  "Building electrical cell 3178243558": 319.8,
+  "Building electrical cell 3751392341": 322.0,
+  "Building electrical cell 2451406889": 324.2
+ },
+ "comparison_sp1": {
+  "cells": 4,
+  "construction_seconds_range": [
+   239.3,
+   280.2
+  ],
+  "peak_rss_mb": 1350,
+  "n_compartments": 75605,
+  "largest_component_nodes": 245769,
+  "machine": "alone"
+ },
+ "largest_component_nodes_12": 276064,
+ "projection": {
+  "basis": "SP1 proportional rule (construction time and RSS proportional to compartments; compartments proportional to largest-component skeleton nodes). Derived, not measured; the 12-cell measurement that was to validate it is untested.",
+  "12_cells": {
+   "nodes_ratio": 1.123,
+   "construction_s": 275.0,
+   "peak_rss_gb": 1.52
+  },
+  "40_cells": {
+   "nodes": 537152,
+   "nodes_ratio": 2.186,
+   "construction_s": 536.0,
+   "init_compile_s": 536.0,
+   "peak_rss_gb": 2.95
+  },
+  "104_cells": {
+   "nodes": 2804549,
+   "nodes_ratio": 11.41,
+   "construction_s": 2796.0,
+   "init_compile_s": 2800.0,
+   "peak_rss_gb": 15.4
+  }
+ },
+ "observed_partial": "The 4 incident cells finished building (make_h01_ei_cell) by 318.3 s under load versus 239-280 s for the whole 4-cell construction alone in SP1; 3 isolated cells (1,540-3,499 nodes each) built in 1.5-2.2 s each. RSS 649 MB at failure had not yet reached the discretization/registration stage that dominated the 1.35 GB SP1 peak, so it is not comparable to SP1 peak RSS.",
+ "log": "scratchpad build12/build.log (not committed)"
+}
