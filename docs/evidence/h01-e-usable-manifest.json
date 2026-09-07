@@ -46,10 +46,10 @@
     },
     "B": {
       "title": "Count and gain, one boundary per arm, on the Stage A survivor or the candidate",
-      "gate": "stage-a2-decision.json",
+      "gate": "stage-b0-decision.json",
       "prediction": "b-sk-half: late cycles shorten by a third or more, count 6 to 7 at sweep 50 (human 5, usable rate limit 15 percent: the rate row may fail high), AHP unchanged within 1 mV. b-ca-decay (1.0 against 1.33): cycles shorten 10 to 20 percent, count 5 to 6. b-leak-rev (-2 against -4): threshold reached sooner, count +1, AHP 1 mV shallower. Any arm that changes width by more than 0.2 ms or AHP by more than 2 mV is a regression.",
       "rejection": "No arm moves the mean cycle by more than the human cyclical spread (the retained table's range times 1.47): the count is not set by the Modulate boundary or the supply reaching threshold; report and stop.",
-      "unchanged": "As Stage A; the Stage A survivor's flags are copied into each arm before it runs (recorded in the candidate file).",
+      "unchanged": "As Stage A; every arm carries the Stage A survivor's flags (somatic sodium 0.9, axonal NaTs 3.814) with one boundary changed. Stage B0 (separate manifest h01-e-usable-b0-manifest.json) ran the survivor at sweep 53 first.",
       "decision_file": "stage-b-decision.json"
     },
     "A2": {

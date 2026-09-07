@@ -214,3 +214,10 @@ Appended per workstream as it closes.
   pair's deficit is the electrotonic distance of the receptor site, not the
   conductance. Rejection: a somatic IPSP above 0.5 mV with the literature
   conductance.
+- **W3 Stage A2 (661 s).** Somatic sodium 0.9 with axonal NaTs 3.814: every registered
+  band held except the -52 mV profile point (142 against 110 V/s, band 30). Five spikes
+  (human 5), cycles 59, 27, 292, 312, 299 ms (human 60, 34, 220, 307, 273), threshold
+  -57.2, peak 37.8, rise 659, trough -70.4, no block. Usable tier at 250 pA: rate and
+  width pass, AHP within 1.7 mV (unresolvable at 2 mV), adaptation fails (10.9 against
+  8.0). Stage B0 (separate manifest, evaluation 4 of 8) runs the survivor at 310 pA
+  before any lever moves; prediction 8 to 10 spikes, late cycles 120 to 200 ms.
