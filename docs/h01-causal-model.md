@@ -943,6 +943,30 @@ flowchart LR
     E --> F[Local E response observed; firing suppression open]
 ```
 
+#### Y5 edge list, 2026-09-07: merge check on the 71-candidate pair and scan coverage (SP7)
+
+Observed ([merge check](evidence/h01-pair-merge-check.json)): the pair `4157825456` /
+`5654281423` carries 71 of the 123 candidates (57 in one direction, 14 in the other; type
+codes 2 and 1 in both directions). No C3 label is shared by the two cells in the released
+1,500-sample list or in the 26-cell 3,000-sample checkpoint (neither cell is among the 26).
+At the annotation voxels, 70 of 71 rows read background for both endpoints in the proofread
+volume and one row reads the pre cell at its pre voxel with background at the post voxel; no
+row reads one nonzero label at both ends and no row reads the expected cells at both ends;
+none is within the 2-voxel box. Verdict: suspected merge **undetermined**. The saved data
+excludes a direct two-cell C3 merge at the sampled labels and excludes an ordinary verified
+contact; it cannot tell a C3 label merged with a third object from a mis-placed annotation,
+because both leave background at the endpoints. This leaves Y5 open on that pair; the 71
+stay candidates only, and the decisive observation (the C3 label at each of the 142 endpoint
+voxels against each cell's sampled `c3_ids`) is registered as the next online step.
+
+Coverage ([coverage](evidence/h01-export-scan-coverage.json),
+[listing](evidence/h01-c3-export-listing.json)): the C3 synapse export holds 166 shards
+(32.86 GB); 9 are local and scanned (8,991,719 records), so `full_export_scanned` is false
+as "9 of 166 shards scanned", a measured denominator that was previously unknown. The
+3,000-sample rescan stands at 26 of 104 cells; a one-cell dry run under the watchdog
+([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
+kill. Absence of a contact is not established by either scan.
+
 ## Measurement function qualification
 
 The simulation is the measurement function. Its numerical error must be small

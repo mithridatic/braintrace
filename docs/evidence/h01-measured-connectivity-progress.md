@@ -140,3 +140,36 @@ killed under the fail-fast rule. The checkpoint `h01-resolved-edge-list-3000.cel
 holds the 26 finished cells and the run resumes from it with the same limit; a 6,000-sample
 attempt earlier the same day ran at 176 s per cell and was stopped after one cell as
 over budget. `full_export_scanned` stays false; the released 1,500-sample list stands.
+
+## SP7 connectivity completion tooling (2026-09-07)
+
+Spec: [connectivity completion](../specs/2026-09-07-h01-connectivity-completion.md).
+
+- **Watchdog (SP7a).** [`h01_c3_scan_watchdog.py`](h01_c3_scan_watchdog.py) resumes
+  `h01_c3_edge_list.py --limit 3000` from `h01-resolved-edge-list-3000.cells.json` (26 of 104
+  cells, key `{"limit": 3000, "archive": "proofread104.zip"}`), kills the child after 600 s
+  without a `cell` line, relaunches at most 3 times, and records every launch with wall clocks.
+  Launcher [`h01_c3_scan_watchdog.ps1`](h01_c3_scan_watchdog.ps1) (Start-Process, detached).
+  One-cell dry run through the launcher on `2530864375` (fresh output name, so the 3,000
+  checkpoint is untouched): 70.0 s wall, exit 0, no kill, 33 C3 ids, 0 edges
+  ([record](h01-c3-scan-dry-run-3000.watchdog.json)). The full resume (78 cells at 61-114 s
+  each in the checkpoint, derived 1.3-2.5 h) has NOT been run; it needs approval.
+- **Export coverage (SP7b).** The export prefix holds **166 shards, 32.86 GB**
+  ([listing](h01-c3-export-listing.json)); 9 are local and all nine were already audited, so
+  `full_export_scanned` is false as **"9 of 166 shards scanned"**
+  ([coverage](h01-export-scan-coverage.json), now the source of the summary's flag). Measured:
+  the audit's record pass over one local shard takes 33.0-47.9 s (nine repeats, mean 38.4 s,
+  repeat range 14.9 s); one shard download 197.6 MB in 5.45 s (36.3 MB/s, single
+  measurement). Derived for the 157 remaining shards: 6,029 s read + 857 s download = about
+  1.9 h, over the 15-minute rule, so not run.
+- **Merge check (SP7c).** [`h01_pair_merge_check.py`](h01_pair_merge_check.py) on the pair
+  `4157825456` / `5654281423` (71 candidates): no C3 label shared in the edge list or the
+  3,000 checkpoint; 70 of 71 rows read background at both endpoints, 1 reads the pre cell
+  only; 0 rows with one label at both ends; 0 within the box. **Verdict: suspected merge
+  undetermined** ([json](h01-pair-merge-check.json), [table](h01-pair-merge-check.md)). The
+  decisive online step is reading the C3 label at the 142 endpoint voxels against each cell's
+  sampled `c3_ids`.
+- **Recheck (SP7d).** Not triggered: no new endpoint-verified edge exists until the rescan runs.
+
+Coverage state: 26 of 104 cells at 3,000 samples; 9 of 166 export shards. Absence of a
+contact is not established.
