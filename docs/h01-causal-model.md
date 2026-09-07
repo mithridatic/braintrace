@@ -1069,6 +1069,45 @@ as "9 of 166 shards scanned", a measured denominator that was previously unknown
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
+## Y6. Per-type donors
+
+Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
+class match the cell's released tags is "type-matched", any other is "borrowed". Before SP6, 30
+of 104 cells were type-matched (L2 pyramids on Allen 541563728, L5 interneurons on HL5BN1).
+
+### Y6 first donor, HL5MN1 (SP6c, 2026-09-07; acquisition and registry only, no run)
+
+Observed (acquisition facts, `evidence/h01-sst-acquisition.json`; decision
+`evidence/h01-donors/stage-hl5mn1-decision.json`):
+
+- The ModelDB 267587 file `biophys_HL5MN1.hoc` (GPL-3.0, commit dd472f19) and the ModelDB 267595
+  file `biophys_HL23SST.hoc` (commit 4b970fb5) differ only in the procedure name; every density,
+  kinetic shift and passive value is identical. The "derived from" of the Cerebral Cortex methods
+  is a rename.
+- The recordings behind the fit are Allen specimen 571700636 (`H17.06.006.11.09.05`, MTG layer 3,
+  aspiny, 35 y male): NWB 618228061 fetched (sha256 `218aa144...`), IVSCC 1.0, 50 kHz, Long
+  Square 1020-2020 ms; Yao et al. 2022 (bioRxiv v5) names the cell "putative SST (Neuron ID:
+  571700636)"; the SWC header names the same specimen. Subtype stays unknown for H01 tags.
+- The eleven `.mod` files and `NeuronTemplate.hoc` are byte-identical to the HL5BN1 import; the
+  template gives `HL5MN1` a different axon (`delete_axon(3,1.75,1,1)`: 20 + 30 um tapered
+  initial segment plus a 1000 um leakless myelin of cm 0.02).
+- Human targets read from the NWB at a -20 mV crossing: 14 spikes at 100 pA (sweep 44; repeats
+  45-47 give 14, 13, 12), 34 at 150 pA (sweep 35); first spikes 24.16 and 13.0 ms after onset;
+  pre-step voltage -77 mV with 43-53 pA held.
+
+Registry consequence (`h01_cell_types.DONORS["l3-sst-interneuron-hl5mn1"]`): the seven L3
+interneurons without modifiers resolve to it; the type-matched count is 37 of 104
+(`evidence/h01-population-types.md`). L1, L2, L4 interneurons and the modified L5 interneurons stay
+on HL5BN1, labelled.
+
+Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+(manifest `evidence/h01-sst-reproduction-manifest.json`, prediction: counts 14 and 34 exactly;
+rejection: a count off by more than 1) is untested because the machine was reserved for SP1
+when this section was written. Y6 is therefore **open**: the donor is imported and type-matched,
+its physiology is not yet reproduced in this project's solver, and its BrainCell transfer is
+blocked by a known mechanism difference (HL5MN1 soma NaTg `vshiftm 13, vshifth 15, slopem 7` and
+default Ih shifts versus the HL5BN1 values hardcoded in `h01_pv_rates`).
+
 ## Measurement function qualification
 
 The simulation is the measurement function. Its numerical error must be small
@@ -1134,6 +1173,8 @@ biological uncertainty.
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
+- Y6: the HL5MN1 reproduction (registered, untested) and the kinetic-shift parameters the
+  `H01PV_*` channels need before the donor can be transferred to BrainCell.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.

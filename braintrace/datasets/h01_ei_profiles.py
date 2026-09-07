@@ -56,7 +56,15 @@ _PHYSIOLOGY = {
         initial_mv=-80., axial_ohm_cm=100.,
         reversal_mv={"candidate": -96.97510324827309, "source": -96.97510324827309,
                      "finalist": -96.97510324827309}),
+    "l3-sst-interneuron-hl5mn1": dict(
+        digest="a9ce264f2733104ceb457d519678f447cb277db2dda7cedf0a0cc38fb6ffb0f4",
+        source="ModelDB 267587 HL5MN1 (= Yao 2022 HL23SST); agmccrei/HumanL5Circuit_AGM2022 commit dd472f19a0d1bfbbba59677cfd82c6e9f8a80590; Allen specimen 571700636",
+        initial_mv=-81.5, axial_ohm_cm=100.,
+        reversal_mv={"candidate": -81.5, "source": -81.5}),
 }
+# Donors whose candidate and experimental modes carry phase controls in ``channel_controls``
+# (looked up by polarity and mode below); donors without a candidate get none.
+_CONTROLLED = {"h01-l2-kv3-ninety-ca133": "E", "h01-pv-regional-mesh-axon2187": "I"}
 _LIMITATIONS = ("Borrowed donor and mechanisms; not measured H01 physiology.",
                 "Candidate selection is not physiological qualification.",
                 "E onset and rising-phase errors remain; I early intervals remain too short.")
@@ -167,8 +175,9 @@ def channel_controls(profile, family, mechanism):
     -------
     dict
         Constructor keywords (``m_open``, ``m_close``, ``h_open``, ``h_close``,
-        ``h_slope``). Empty for unchanged source mechanisms and for every
-        mechanism the mode does not control in that family.
+        ``h_slope``). Empty for unchanged source mechanisms, for every
+        mechanism the mode does not control in that family, and for donors
+        without a candidate (the HL5MN1 import), whatever their polarity.
 
     Examples
     --------
@@ -181,6 +190,8 @@ def channel_controls(profile, family, mechanism):
         >>> channel_controls(get_ei_profile("E", mode="b3"), "axon", "NaTs")
         {}
     """
+    if profile.name.split(":")[0] not in _CONTROLLED:
+        return {}
     table = _CONTROLS.get((profile.polarity, profile.mode), {})
     controls = table.get((mechanism, family), table.get((mechanism, None), {}))
     return dict(controls)

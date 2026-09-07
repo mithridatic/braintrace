@@ -1,0 +1,19 @@
+{
+  "donor_key": "l3-sst-interneuron-hl5mn1",
+  "status": "untested",
+  "reason": "runs gated on .worktrees/h01-network/docs/evidence/h01-network-throughput.json, absent at 2026-09-07",
+  "decision_json": "h01-donors/stage-hl5mn1-decision.json",
+  "manifest": "h01-sst-reproduction-manifest.json",
+  "acquisition": "h01-sst-acquisition.json",
+  "registered_targets": {
+    "100 pA": {"sweep": 44, "human_count": 14, "repeat_counts": [14, 14, 13, 12], "first_spike_ms_after_onset": 24.16},
+    "150 pA": {"sweep": 35, "human_count": 34, "first_spike_ms_after_onset": 13.0}
+  },
+  "prediction": "counts reproduced exactly at both inputs; first spike within the dt-pair limit",
+  "rejection": "count differs by more than 1 at either input",
+  "model_results": null,
+  "usable_tier": null,
+  "contract": null,
+  "wall_clock_seconds": null,
+  "driver_help_check": "braintrace-h01-neuron:9.0.2 python /evidence/h01_pv_neuron_reference.py --help lists --template, --biophys, --morphology (no model built)"
+}
