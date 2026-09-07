@@ -144,3 +144,14 @@ identically zero while the `ei` run's are not; `init_state_seconds` and
 `compile_and_run_seconds` are recorded. SP1's a = 245 s (init + compile at 4 cells) scales to
 ~275 s at 12 cells by the same rule; a 12-cell point is "inside 2x the SP1 linear prediction"
 when construction, init + compile, and RSS each fall within [0.5x, 2x] of these derived values.
+
+### Addendum 2026-09-07, 16:26 (after the construction check, before the run-phase retry)
+
+The build-only check completed at 883.3 s construction under load (within the 900 s abort). The
+first 1 ms `ei` run was killed by the same 900 s construction abort with 3 of 12 cells left to
+discretize (the run's construction pace was ~55 s behind the build-only pace under varying
+load); it is recorded as untested, not negative. For the two run-phase attempts that follow the
+construction abort is set, before launch, to 1,350 s (1.5x the measured 883 s point); the 600 s
+silence kill and a 2,700 s total wall cap stay. Predictions for the run phase are unchanged
+(finite traces; disconnected conductance probes zero; init + compile + 200 steps ~276 s scaled
+from SP1, expected higher under load; RSS ~1.5 GB, reject over 6 GB).
