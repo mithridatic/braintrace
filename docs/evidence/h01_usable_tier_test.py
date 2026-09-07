@@ -269,3 +269,32 @@ def test_sst_cell_spec_scores_the_published_fit_at_two_recorded_inputs():
     assert spec["repeat_inputs"] == {"100 pA": (44, 45, 46, 47)} and spec["repeats"][1] == (44, 45, 46, 47)
     assert spec["pulse_ms"] == (270., 1270.) and spec["output"] == "h01-sst-reproduction/source-usable"
     assert "source" in spec["model"] and "{candidate}" not in spec["model"]
+
+
+def test_l4_pyr_cell_spec_uses_the_donor_recordings_and_a_shorter_90_pa_pulse():
+    spec = tier.resolve_spec(tier.CELLS["L4-PYR"], "source")
+    assert spec["pulse_ms"] == (1020., 3020.)
+    assert spec["input_pulse_ms"] == {"90 pA": (1020., 2020.)}
+    assert spec["inputs"]["100 pA"] == (".cache/human-pyramidal-l4/neuron-reference/sweep-69.npz",
+                                        "h01-l4-reproduction/source-69")
+    assert spec["inputs"]["90 pA"][1] == "h01-l4-reproduction/source-39"
+    assert spec["repeats"][1] == (69, 70, 71, 72) and spec["repeat_inputs"] == {"100 pA": (69, 70, 71, 72)}
+    assert spec["output"] == "h01-l4-reproduction/source-usable"
+    sst = tier.resolve_spec(tier.CELLS["SST-L3"], "source-dt-half")
+    assert sst["inputs"]["150 pA"][1] == "h01-sst-reproduction/source-dt-half-150"
+    assert sst["repeat_inputs"] == {"100 pA": (44, 45, 46, 47)}
+
+
+def test_score_cell_applies_the_per_input_pulse_window(tmp_path, monkeypatch):
+    monkeypatch.setattr(tier, "EVIDENCE", tmp_path)
+    monkeypatch.setattr(tier, "human_repeats", lambda root, spec: [{}])
+    time, voltage = synthetic([50., 70., 100.])
+    for label in ("a", "b"):
+        np.savez(tmp_path/f"{label}-human.npz", time_ms=time, corrected_voltage_mv=voltage)
+        np.savez(tmp_path/f"{label}-model.npz", time_ms=time, voltage_mv=voltage)
+    spec = {"model": "fixture", "pulse_ms": (40., 200.), "input_pulse_ms": {"b": (40., 90.)},
+            "inputs": {label: (f"{label}-human.npz", f"{label}-model") for label in ("a", "b")}}
+    report = tier.score_cell("L4-PYR", spec, root=tmp_path)
+    assert report["counts"] == {"a": {"human": 3, "model": 3}, "b": {"human": 2, "model": 2}}
+    rates = {r["input"]: r["human"] for r in report["rows"] if r["row"] == "rate_hz"}
+    assert rates["a"] == pytest.approx(1000./25.) and rates["b"] == pytest.approx(1000./20.)

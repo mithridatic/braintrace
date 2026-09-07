@@ -76,7 +76,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--sweep", type=int, choices=DRIVER_SWEEPS, default=50)
+    parser.add_argument("--sweep", type=int, default=50,
+                        help=f"L2 recording sweep, one of {DRIVER_SWEEPS}; with --donor-json one of the donor's sweeps")
     parser.add_argument("--dt-ms", type=float, default=.005)
     parser.add_argument("--include-recorded-bias", action="store_true")
     parser.add_argument("--nseg-factor", type=int, default=1)
@@ -101,6 +102,9 @@ def main():
                              "to a region that has none, with the soma's reversal potentials")
     parser.add_argument("--candidate-json", type=Path,
                         help="JSON object of flag names to values used as defaults; explicit flags override")
+    parser.add_argument("--donor-json", type=Path,
+                        help="donor.json of another Allen perisomatic fit (fit, fit_sha256, morphology, sweeps, ids); "
+                             "its files and sweep-<n>.npz are read from its own directory; default: the L2 donor")
     preliminary, _ = parser.parse_known_args()
     candidate_record = None
     if preliminary.candidate_json is not None:
@@ -113,11 +117,19 @@ def main():
         candidate_record = {"file": preliminary.candidate_json.name, "values": candidate_values,
                             "sha256": hashlib.sha256(preliminary.candidate_json.read_bytes()).hexdigest()}
     args = parser.parse_args()
-    if args.sweep not in DRIVER_SWEEPS:
-        parser.error("Unsupported sweep in candidate settings.")
-    reason = sealed_reason(args.sweep)
-    if reason:
-        parser.error(reason)
+    donor = None
+    if args.donor_json is not None:
+        if not args.donor_json.is_file():
+            parser.error(f"Donor file {args.donor_json} does not exist.")
+        donor = json.loads(args.donor_json.read_text())
+        if args.sweep not in donor["sweeps"]:
+            parser.error(f"Sweep {args.sweep} is not among the donor's registered sweeps {donor['sweeps']}.")
+    else:
+        if args.sweep not in DRIVER_SWEEPS:
+            parser.error("Unsupported sweep in candidate settings.")
+        reason = sealed_reason(args.sweep)
+        if reason:
+            parser.error(reason)
     try:
         regional = [parse_regional_density(text) for text in args.regional_density]
         capacitance = [parse_capacitance_factor(text) for text in args.capacitance_factor]
@@ -153,9 +165,20 @@ def main():
         section_segments(30., args.nseg_factor)
     except ValueError as error:
         parser.error(str(error))
-    fit_path = args.cache / "541563728_fit.json"
-    assert hashlib.sha256(fit_path.read_bytes()).hexdigest() == (
-        "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3")
+    if donor is None:
+        fit_path = args.cache / "541563728_fit.json"
+        fit_expected = "2ceca2317ccbd586adde4b1e72507ad4bdf2fc10fc26ad4b281484324dd5f0c3"
+        morphology_path = args.cache / "source-model/morphology.swc"
+        waveform_dir = args.cache
+        model_id, specimen_id = 626170538, 541563728
+    else:
+        fit_path = args.donor_json.parent / donor["fit"]
+        fit_expected = donor["fit_sha256"]
+        morphology_path = args.donor_json.parent / donor["morphology"]
+        waveform_dir = args.donor_json.parent
+        model_id, specimen_id = donor["model_id"], donor["specimen_id"]
+    if hashlib.sha256(fit_path.read_bytes()).hexdigest() != fit_expected:
+        parser.error(f"Fit file {fit_path.name} does not carry the registered sha256 {fit_expected}.")
     source_fit = json.loads(fit_path.read_text())
     fit = calcium_removal_fit(source_fit, args.calcium_decay_factor)
     fit = sodium_density_fit(fit, args.sodium_density_factor)
@@ -168,7 +191,7 @@ def main():
         fit = regional_density_fit(fit, item["mechanism"], item["region"], item["factor"])
     source_decay = next(row["value"] for row in source_fit["genome"]
                         if row["section"] == "soma" and row["name"] == "decay_CaDynamics")
-    waveform_path = args.cache / f"sweep-{args.sweep}.npz"
+    waveform_path = waveform_dir / f"sweep-{args.sweep}.npz"
     source = np.load(waveform_path)
     time = source["time_ms"]
     command = source["command_current_na"]
@@ -185,7 +208,7 @@ def main():
     h.load_file("stdrun.hoc")
     h.load_file("import3d.hoc")
     swc = h.Import3d_SWC_read()
-    swc.input(str(args.cache / "source-model/morphology.swc"))
+    swc.input(str(morphology_path))
     importer = h.Import3d_GUI(swc, 0)
     h("objref this")
     importer.instantiate(h.this)
@@ -316,7 +339,11 @@ def main():
     assert np.all(np.diff(arrays["time_ms"]) > 0)
     assert abs(arrays["time_ms"][-1] - stop_ms) <= (args.dt_ms if args.cvode_atol is None else 1e-8)
     np.savez_compressed(args.output.with_suffix(".npz"), **arrays)
-    report = {"model_id": 626170538, "specimen_id": 541563728, "sweep": args.sweep,
+    donor_record = None if donor is None else {
+        "donor_key": donor.get("donor_key"), "file": str(args.donor_json), "fit": fit_path.name,
+        "morphology": morphology_path.name,
+        "morphology_sha256": hashlib.sha256(morphology_path.read_bytes()).hexdigest()}
+    report = {"model_id": model_id, "specimen_id": specimen_id, "donor": donor_record, "sweep": args.sweep,
               "waveform_sha256": hashlib.sha256(waveform_path.read_bytes()).hexdigest(),
               "soma_observation_units": observation_units,
               "neuron_version": neuron.__version__, "dt_ms": args.dt_ms if args.cvode_atol is None else None,

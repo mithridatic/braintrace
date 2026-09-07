@@ -1,0 +1,41 @@
+{
+  "purpose": "SP6c/SP6d: NEURON reproduction of the published Allen perisomatic fit 626170709 (human specimen 527952884, MTG layer 4 pyramidal) at two recorded inputs of its own recording session, with a dt-halving pair for the decision limits. Specification: docs/specs/2026-09-07-h01-donor-allen-l4-import.md. Registered before any run; not started in the import task (the machine is shared by measured runs); stage 1 opens only when the user approves a window.",
+  "cap": 4,
+  "prior_evaluations": 0,
+  "max_concurrent": 2,
+  "abort_seconds": 900,
+  "image": "braintrace-h01-neuron:9.0.2",
+  "cache_dir": ".cache/human-pyramidal-l4",
+  "library": "neuron-reference",
+  "driver": "h01_l2_neuron_reference.py",
+  "output_dir": "h01-l4-reproduction",
+  "compile_first": "docker run --rm -v <worktree>/.cache/human-pyramidal-l4/neuron-reference:/work -w /work braintrace-h01-neuron:9.0.2 nrnivmodl .  (the eleven genome mod files, byte-identical to the L2 import; compiled once, x86_64/ stays in the cache)",
+  "inputs": {
+    "69": ["--cache", "/work", "--donor-json", "/work/neuron-reference/donor.json", "--sweep", "69", "--stop-ms", "3520"],
+    "39": ["--cache", "/work", "--donor-json", "/work/neuron-reference/donor.json", "--sweep", "39", "--stop-ms", "2520"]
+  },
+  "input_datum": "h01-l4-acquisition.json exports: sweep 69 (fit sweep, Square - 2s Suprathreshold, 100 pA, step 1020-3020 ms, bias -16.73 pA held, not injected: command-only input as in the L2 and PV findings) and sweep 39 (Long Square, 90 pA, step 1020-2020 ms, bias +2.33 pA held). Human -20 mV crossing counts 20 and 12 (= Allen num_spikes); sweep-69 repeats 69-72 give 20, 17, 19, 20; first crossings 32.18 ms and 33.88 ms after onset.",
+  "stages": {
+    "1": {
+      "title": "Published fit, unmodified, fixed step 0.005 ms (the L2 source-reproduction step), and its dt-halving repeat",
+      "prediction": "Counts equal the Allen sweeps exactly: 20 at sweep 69 (100 pA, 2 s) and 12 at sweep 39 (90 pA, 1 s); first-spike latency within the dt-pair limit (|dt 0.005 - dt 0.0025| x 2.95) of 32.18 ms and 33.88 ms after step onset; every trace finite and time-ordered; the observed endpoint equals the requested stop.",
+      "rejection": "A count differing from the Allen sweep by more than 1 at either input (17-20 is the human repeat band at 100 pA, so a model count outside it also fails the repeat row), or a dt pair whose count differs (numerics not converged: report 'time level open', no verdict).",
+      "unchanged": "The eleven mod files, every value of 527952884_fit.json (sha256 1aa0e2c5...), 34 C, initial -80.81838607788086 mV (v_init), the recorded command waveform played from 0 ms, bias 0, two 30 um x 1 um axon sections replacing the reconstructed axon, nseg factor 1, no CVode, no candidate flag.",
+      "decision_file": "../h01-donors/stage-allen-l4-decision.json"
+    }
+  },
+  "candidates": [
+    {
+      "name": "source",
+      "stage": "1",
+      "flags": {},
+      "settings": {"dt_ms": 0.005}
+    },
+    {
+      "name": "source-dt-half",
+      "stage": "1",
+      "flags": {},
+      "settings": {"dt_ms": 0.0025}
+    }
+  ]
+}

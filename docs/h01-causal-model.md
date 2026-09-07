@@ -627,6 +627,47 @@ and the drive's boundary is still unidentified.
 | A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
 
 
+### Y3 reserve evaluation (2026-09-07, SP4 stage 1; closes axonal NaTg density as the post-trough drive)
+
+**Invalid first launch (22:38:45 UTC).** Both containers of candidate `g-natg-axon15`
+exited 139 after 10.9 s and 8.3 s without a trace and with stderr discarded. Reproduced at
+20 ms and split one variable at a time
+([crash-isolation.json](evidence/h01-i-reserve/crash-isolation.json)): the control without
+`--scale`, the identity scale and a somatic scale crashed identically; the driver at
+ac5ed12 (which already has `--scale`) ran; the driver at c2ce97a (the SP6c donor import)
+crashed; `python -X faulthandler` named `for m in cell.myelin`. Cause: HL5BN1's template
+deletes the declared `myelin[1]` in `init` and only the HL23PN1/HL23MN1/HL5MN1 branch
+recreates it, so `cell.myelin` referenced a deleted section and the new geometry line
+raised an unconverted hoc error (abort, exit 139) before `h.finitialize`. Fixed by a
+`section_exists` guard with a sibling test; the runner now persists container stderr. The
+crash tested nothing about the candidate, so it did not spend the reserve.
+
+**Observed (valid launch 22:51:42 UTC, 36 s and 75 s, rc 0).** Finalist flags plus axonal
+NaTg x1.5, somatic x1.1 retained (sha256 f4a2aa6c...), command-only input, 0.19 and
+0.27 nA, x9 mesh, CVode 1e-10, 1500 ms, image 9.0.2, kv3-phase-reference library
+([decision](evidence/h01-i-reserve/stage-1-decision.json),
+[result](evidence/h01-i-reserve-result.md)). Cycle 2 at 0.27 nA: 16.50 ms (finalist 16.37;
+band <= 12); count 34 (finalist 37; band 40 to 43). Cycle 2 at 0.19 nA: 35.07 ms (finalist
+34.76; band <= 22); count 14 (band 15 to 17). Cycle-1 width 0.220 ms, peaks 18.3 and
+18.4 mV, troughs of cycles 1-3 within 0.1 mV of the finalist's at both inputs: all ten of
+those bands held. Axon-first initiation holds, and the axon lead grew from 0.03-0.05 ms to
+0.33 ms (0.19 nA) and 0.22 ms (0.27 nA). Usable tier fails at both inputs (adaptation, later
+widths, rate at 0.27 nA); the 1 mV contract fails on count at both.
+
+**Reading.** FAIL at cap by the pre-registered rejection clause: cycle 2 at 0.27 nA moved
+-0.13 ms against a 12.8 ms decision limit, with no loop break. Raising axonal sodium
+density advanced the axon but did not refire the soma sooner, so the post-trough drive is
+not carried by axonal NaTg density on this geometry. With the stage-0 audit (somatic h
+0.98 at trough + 6 ms) both sodium boundaries are excluded; the row stays **open** with one
+family left, a slow state the model lacks. Cap 1 is spent; no second evaluation, no
+parameter change. The I cell stays experimental, borrowed, labelled.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| A | Axonal NaTg x1.5 as the post-trough drive, both inputs | FAIL: cycle 2 unchanged (-0.13 ms at 0.27 nA), count 37 -> 34; width, peak, troughs held; axon lead 0.22-0.33 ms | [decision](evidence/h01-i-reserve/stage-1-decision.json) |
+| A0 | First launch rc 139 | invalid: driver myelin geometry line on a deleted section; not a model result | [isolation](evidence/h01-i-reserve/crash-isolation.json) |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
@@ -876,6 +917,40 @@ above the inhibitory reversal potential, a delivered conductance lowers E
 voltage; removing only the edge removes that effect. Qualification of the
 default profiles' firing and full numerical robustness remains open.
 
+### Y5 registered prediction for SP5 (2026-09-07, no observation yet)
+
+No run has been made; this block records what was predicted so that a miss can later be
+scored against it. Spec: [functional inhibition](specs/2026-09-07-h01-functional-inhibition.md);
+manifest `docs/evidence/h01-ie-inhibition-manifest.json` (cap 6 + 2, `prior_evaluations 0`).
+Stage 1 uses the current unpromoted profiles through the closing-restored I wrapper.
+
+**What is fixed before the runs.** E drive 0.6 nA constant from 0 ms, a stimulus choice
+derived from the W4 0.4 nA hold (tau_m 27.6 ms, R_in 78 MOhm from the two charging points;
+threshold -57 mV reached at 24 ms at 0.6 nA against 54 ms at 0.4 nA); registered alternate
+0.8 nA as the single permitted drive change. I: 1 nA, 3 ms pulses, one per control cycle,
+aimed at the cycle midpoint through the measured 6.78 ms pulse-to-spike latency. Decision
+limit: per-cycle range between arm 2 and its dt-halving partner x 2.95, floored at one step.
+
+**Registered predictions.**
+
+| Arm | Prediction | Rejection |
+| --- | --- | --- |
+| 1 disconnected | >= 3 E spikes in 300 ms, first between 20 and 60 ms; one I spike per pulse | < 3 E spikes: one drive change to 0.8 nA, then stop |
+| 2 literature receptor at the measured site `[2805, 0.93]` | soma IPSP magnitude < 0.05 mV; no E spike or cycle beyond the halving limit; site response 0.5 to 2 mV | soma >= 0.05 mV or any spike or cycle beyond the limit |
+| 3 the same receptor at the E soma (inferred perisomatic hypothesis) | soma IPSP magnitude >= 0.3 mV (27.6 pA x 102 MOhm = 2.82 mV steady bound; x 4.18/27.6 for a fast current on this membrane = 0.43 mV; x 15/20 for the interspike driving force = 0.32 mV) and at least one E spike delayed beyond the limit | soma < 0.05 mV: placement is rejected as the explanation of the W4 deficit |
+| 4 arm 2 at dt 0.0025 | same E spike count as arm 2; per-cycle ranges below 0.1 ms | count differs: numerically unresolved |
+
+**Gate.** Functional inhibition = one E spike shifted or one cycle lengthened beyond the limit,
+or an E spike count change. Both human tiers are not applicable (no human recording of this
+pair) and the decision JSON says so.
+
+**Status.** Y5 stays open on the measured pair; the W4 voltage response (0.008 mV at the soma,
+depolarising, no E spikes in either control) is the only direct observation so far. The
+placement question (whether the PV contact belongs perisomatically) remains the user's decision;
+SP5 measures both placements.
+
+**SP5 benchmark, 2026-09-07 (observation: none; run untested).** The registered 100 ms disconnected benchmark at 0.6 nA was launched detached and killed at the 900 s abort with no trace written (`Circuit constructed` at about 190 s, nothing after; CPU at 100 percent under about 12 other H01 jobs). Whether E fires at 0.6 nA in this circuit is therefore still unobserved, the drive rule was not evaluated and the drive was not changed; the 300 ms arms are at least 45.7 min each under load (derived floor from 9.13 s per simulated ms), above the 15 min approval threshold. Run 1 of 6 spent. Record: `docs/evidence/h01-ie-inhibition/benchmark.json`; page `evidence/h01-ie-inhibition-benchmark.md`.
+
 ### Y4 under the usable-tier campaign (2026-09-07, supersedes the energetic-search statement)
 
 The energetic search closed Y4 as a structural FAIL: a perisomatic fit cannot make
@@ -1105,6 +1180,29 @@ as "9 of 166 shards scanned", a measured denominator that was previously unknown
 ([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
 kill. Absence of a contact is not established by either scan.
 
+#### Y5 population, 2026-09-07: builder and the 12-cell construction check (SP8)
+
+Builder ([spec](specs/2026-09-07-h01-population-builder.md)): `make_h01_network` gains
+`include_isolated` (isolated cells from their soma-bearing largest component, soma output,
+no projections, fragments never joined), `control in {ei, e_only, i_only, disconnected}` with
+enabled and removed edges recorded, and `cells` with the order "incident cells, then isolated
+cells by ascending largest-component nodes". 36 unit tests, 100 % line coverage on
+`h01_network.py`.
+
+Observed ([12-cell build](evidence/h01-population-build-12.json),
+[page](evidence/h01-population-build-12.md); construction only, under load): the build
+**failed** at 332.6 s after 4 incident and 3 isolated cells were built, on isolated cell
+`2451406889`: a soma region interval on branch 162 evaluated to `(0.990, 1.0000000000000002)`
+and the region validator rejected the 2e-16 overshoot. Construction seconds, compartment count
+and peak RSS at 12 cells are therefore **untested** (649 MB at the failure point is a
+pre-discretization reading). Cause: rounding in interval evaluation meeting a strict bound;
+fixed by snapping ends within 1e-9 of the branch bounds, no physiology change. The SP1
+proportional projections (12 cells ~275 s / ~1.5 GB; 40 cells ~540 s / ~3.0 GB; 104 cells
+~2,800 s / ~15 GB) stay derived and unvalidated; the next SP8 step repeats the 12-cell
+construction check before 40 is approved. Isolated-cell construction itself is now observed on
+three cells of 1,540-3,499 nodes (1.5-2.2 s each), so the population path is exercised but
+not yet sized.
+
 ## Y6. Per-type donors
 
 Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
@@ -1143,6 +1241,113 @@ when this section was written. Y6 is therefore **open**: the donor is imported a
 its physiology is not yet reproduced in this project's solver, and its BrainCell transfer is
 blocked by a known mechanism difference (HL5MN1 soma NaTg `vshiftm 13, vshifth 15, slopem 7` and
 default Ih shifts versus the HL5BN1 values hardcoded in `h01_pv_rates`).
+
+### Y6 second donor, Allen 527952884 / model 626170709 (SP6c, 2026-09-07; acquisition and registry only, no run)
+
+Observed (acquisition facts, `evidence/h01-l4-acquisition.json`; decision
+`evidence/h01-donors/stage-allen-l4-decision.json`):
+
+- The Allen perisomatic bundle 626170709 (zip sha256 `a623a0aa...`, 143,426 bytes) fits human
+  specimen 527952884 (`H16.06.008.01.31.06`, MTG layer 4, spiny, apical truncated, 24 y female,
+  epilepsy resection) with the same template (329230710) as the imported L2 donor 626170538. The
+  genome references exactly the eleven mechanisms of that import (Im, Ih, NaTs, Nap, K_P, K_T, SK,
+  Kv3_1, Ca_HVA, Ca_LVA, CaDynamics), all somatic; the eleven `.mod` files are byte-identical to
+  `.cache/human-pyramidal-l2/source-model/`. The five other bundle files (Kd, Kv2like, NaTa, NaV,
+  Im_v2) are unused. The fit JSON by its own well-known file (626185209) equals the bundle's
+  `fit_parameters.json` (sha256 `1aa0e2c5...`).
+- The recordings behind the fit are NWB 618205555 (`527952752_ephys.nwb`, 17,976,764 bytes,
+  sha256 `e321fe93...`), IVSCC 1.0, 50 kHz. The fit sweeps 69-72 are four repeats of the
+  `Square - 2s Suprathreshold` protocol at 100 pA (1020-3020 ms) with holding currents -16.7 to
+  -19.6 pA and bridge balance 9.16 Mohm; the -20 mV crossing counts read from the NWB equal
+  Allen's `num_spikes` (20, 17, 19, 20). The `Long Square` family runs -110 to 170 pA in 20 pA
+  steps at 1020-2020 ms; sweep 39 (90 pA) gives 12 spikes, first at 33.88 ms after onset.
+- Exported for the driver: sweep 69 (100 pA, 20 spikes, first 32.18 ms), sweep 39 (90 pA), sweep
+  66 (60 pA 2-s square, 1 spike; repeats 66-68 give 1, 2, 1); pre-step corrected voltage -80.4 to
+  -81.0 mV against the fit's `v_init` -80.82 mV.
+- The parameter generator that builds the registry constant from `fit_parameters.json`
+  reproduces the committed `E_SOURCE` when applied to the L2 donor's `541563728_fit.json`, so
+  the two Allen donors enter through one verified path.
+
+Registry consequence (`h01_cell_types.DONORS["l4-pyramidal-allen-527952884"]`, channel family
+`H01L2`): the eighteen L4 pyramids without modifiers resolve to it (matched) and the four
+`sparsely-spiny` L4 pyramids by the layer-and-class rule (match `modifier`); the type-matched
+count is 55 of 104 (`evidence/h01-population-types.md`). L2 pyramids stay on 541563728; L3, L5,
+L6 and WM pyramids and every `excitatory/spiny-with-atypical-tree` cell stay on the polarity
+default, labelled.
+
+Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+(manifest `evidence/h01-l4-reproduction-manifest.json`, dt 0.005 ms with a 0.0025 ms partner;
+prediction: counts 20 at sweep 69 and 12 at sweep 39 exactly, first spikes within the dt-pair
+limit of 32.18 and 33.88 ms; rejection: a count off by more than 1) is untested because the
+machine was shared by measured runs when this section was written. Unlike HL5MN1, no mechanism
+difference blocks the BrainCell transfer of this donor: `H01L2_*` already carry its eleven
+mechanisms, and the transfer waits only for the SP2 matched-mesh gate on its own recordings. Y6
+stays **open** with two donors imported and type-matched and neither reproduced in this
+project's solver. The donor cap of two is reached.
+
+### Y6 first donor, HL5MN1, reproduction run (SP6d, 2026-09-07; 4 runs, cap 4, all rc 0)
+
+Observation (`evidence/h01-sst-reproduction.json`, decision
+`evidence/h01-donors/stage-hl5mn1-decision.json`, runner wall clocks 7.3 / 14.2 / 11.9 / 26.0 s,
+total 59.4 s, every container stderr empty):
+
+- 100 pA (sweep 44): model 16 spikes at dt 0.025 and at dt 0.0125 ms; Allen 14, repeat band 12-14.
+  Count off by 2: **rejected**, repeat row missed. First -20 mV crossing 26.97 ms after onset
+  (pair 26.92 ms, limit 0.134 ms) against 24.16 ms: missed.
+- 150 pA (sweep 35): model 30 at both steps; Allen 34. Off by 4: **rejected**. First crossing
+  16.04 ms (pair 16.00, limit 0.113 ms) against 13.0 ms: missed.
+- Every trace finite; dt pair agrees on both counts, so the time level is closed for the count.
+- Usable tier on the donor's own recordings (`evidence/h01-sst-reproduction/source-usable.md`, the
+  dt-half run gives the same verdict multiset): 100 pA rate fail (16.0 vs 13.4 Hz, limit 2.0),
+  adaptation pass, width 14/14 fail (model 0.57 ms vs human 0.38-0.44 ms), AHP 11 fail / 3 pass
+  (model troughs -74 to -75 mV, human -71 to -74 mV), count pass under the repeat limit 2.94, first
+  spike (peak convention) fail; 150 pA rate pass, adaptation pass, width 30/30 fail, AHP 28 fail / 2 pass.
+
+Conditions: `biophys_HL5MN1.hoc` unmodified, `NeuronTemplate.hoc` with `delete_axon(3,1.75,1,1)`,
+eleven mod files compiled in `braintrace-h01-neuron:9.0.2`, 34 C, initial -81.5 mV (the hoc
+`e_pas`), command-only step 270-1270 ms (held 43.28 / 52.72 pA not injected), 1500 ms, nseg factor 1,
+fixed step.
+
+Closes: the prediction "the published HL5MN1 fit reproduces its Allen counts under these
+conditions" is rejected on both inputs; the numerical time level for the count is closed by the
+agreeing pair. Narrows: the model is too fast at 100 pA and too slow at 150 pA with a wide spike
+(0.57 vs 0.4 ms) and a later first spike at both inputs, so a single gain scaling cannot carry
+both counts. Open: which unchanged condition carries the difference (initial state from `e_pas`
+versus a held -77 mV, the held bias, the template axon, the kinetic shifts the published fit
+assumed in its own build) is a new registration; the donor enters the population type-matched
+with the printed labels, not as a reproduced physiology.
+
+### Y6 second donor, Allen 527952884, reproduction run (SP6d, 2026-09-07; 4 runs, cap 4, all rc 0)
+
+Observation (`evidence/h01-l4-reproduction.json`, decision
+`evidence/h01-donors/stage-allen-l4-decision.json`, runner wall clocks 38.2 / 30.9 / 69.9 / 55.5 s,
+total 194.4 s, every container stderr empty):
+
+- Sweep 69 (100 pA, 2 s, the fit sweep): model 19 spikes at dt 0.005 and 0.0025 ms; Allen 20,
+  repeat band 17-20. Prediction (exact) missed within one, rejection not met, repeat row **held**.
+  First -20 mV crossing 33.74 ms after onset (pair 33.74, limit 0.0047 ms) against 32.18 ms: missed
+  by 1.56 ms, far outside any numerical spread.
+- Sweep 39 (90 pA, 1 s, not a fit sweep): model 8 at both steps; Allen 12. Off by 4: **rejected**.
+  First crossing 39.60 ms (pair 39.60, limit 0.0044 ms) against 33.88 ms: missed by 5.7 ms.
+- Every trace finite and ending at the requested stop (3520 / 2520 ms); dt pair agrees on both counts.
+- Usable tier (`evidence/h01-l4-reproduction/source-usable.md`, dt-half identical multiset): 100 pA
+  rate pass (9.2 vs 10.4 Hz, limit 1.55), adaptation fail (1.38 vs 2.02), width 19/19 fail (model
+  0.97 ms vs human 0.67-0.80 ms), AHP 19 unresolvable (human repeat spread 1.06 mV over half the 2 mV
+  limit), count pass, first spike pass under the repeat limit 6.2 ms; 90 pA rate fail (7.7 vs 12.6 Hz),
+  adaptation fail (1.22 vs 2.50), width 8/8 fail, AHP 8 unresolvable.
+
+Conditions: `527952884_fit.json` unmodified (sha256 `1aa0e2c5...`), eleven genome mod files compiled
+in the container, 34 C, `v_init` -80.818 mV, recorded command waveform played from 0 ms with the held
+bias (-16.73 / +2.33 pA) not injected, two 30 um x 1 um axon sections, nseg factor 1, fixed step.
+
+Closes: the exact-count prediction is rejected at the unfitted input and missed by one at the fit
+input; the numerics are closed for both counts and to 0.002 ms for the first spike. Narrows: the fit
+sweep lands inside the human repeat band while the lower input loses a third of its spikes and its
+first spike arrives 5.7 ms late, so the difference is an input-response (rheobase-side gain) effect,
+not a timing or count offset that holds across inputs; adaptation is too flat at both inputs. Open:
+whether the held bias, the initial state or the axon replacement carries the low-input miss is a new
+registration; BrainCell transfer still waits on the SP2 matched-mesh gate. The donor enters the
+population type-matched with the printed labels.
 
 ## Measurement function qualification
 
@@ -1200,9 +1405,10 @@ biological uncertainty.
   0.012 mV of CVode), timing gates valid; seven full-train arms untested pending a decision
   on the peak gate, the fallback step, or the integration order.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
-  of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
-  train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
-  evaluation in reserve. Closed on 2026-09-06 by the energetic search: the
+  of a −79 mV trough (not somatic Ca_LVA, not somatic sodium availability, not
+  axonal NaTg density: the reserve evaluation of 2026-09-07 failed at cap), and the
+  accommodation along the train (threshold −61 to −55 mV, late fall slowing to
+  −294 V/s); the reserve is spent. Closed on 2026-09-06 by the energetic search: the
   bias question (held state, command-only input; the "passive family" was the
   double-counted bias), the loop (sodium inflow ending within the upstroke) and
   the trough (Kv3 activation carried past the spike, its tail below −73 mV),
@@ -1213,8 +1419,11 @@ biological uncertainty.
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
-- Y6: the HL5MN1 reproduction (registered, untested) and the kinetic-shift parameters the
-  `H01PV_*` channels need before the donor can be transferred to BrainCell.
+- Y6: both imported donors were run once (SP6d, 2026-09-07) and their published fits do not
+  reproduce their own Allen counts under this project's conditions (HL5MN1 16/30 for 14/34;
+  Allen 527952884 19/8 for 20/12); which unchanged condition carries each difference is
+  unsplit, and the kinetic-shift parameters the `H01PV_*` channels need for the HL5MN1
+  BrainCell transfer remain unimplemented.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.

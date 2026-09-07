@@ -55,6 +55,10 @@ def build_parser():
     parser.add_argument("--inhibitory-weight-us", type=float, default=.02)
     parser.add_argument("--inhibitory-reversal-mv", type=float, default=-80.)
     parser.add_argument("--inhibitory-tau-ms", type=float, default=5.)
+    parser.add_argument("--receptor-site", choices=("measured", "soma"), default="measured",
+                        help="soma is an explicit perisomatic hypothesis, labelled inferred in the output JSON")
+    parser.add_argument("--i-pulse-onsets-ms", type=float, nargs="+",
+                        help="I pulse-train onsets; each pulse uses --i-current-na and --i-pulse-ms")
     return parser
 
 
@@ -78,7 +82,8 @@ def main(argv=None):
             pulse_delays_ms={"E": args.e_delay_ms, "I": args.i_delay_ms},
             pulse_durations_ms={"E": args.e_pulse_ms, "I": args.i_pulse_ms},
             inhibitory_weight_us=args.inhibitory_weight_us, inhibitory_reversal_mv=args.inhibitory_reversal_mv,
-            inhibitory_tau_ms=args.inhibitory_tau_ms,
+            inhibitory_tau_ms=args.inhibitory_tau_ms, receptor_site=args.receptor_site,
+            i_pulse_onsets_ms=args.i_pulse_onsets_ms,
             currents_na={"E": args.e_current_na, "I": default_i_current_na(args.connectivity, args.i_current_na)})
         print("Circuit constructed:", args.control, flush=True)
         result = network.run(dt=args.dt_ms*u.ms, duration=args.duration_ms*u.ms, spike_recording="population")
