@@ -1,0 +1,28 @@
+{
+  "stage": "hl5mn1",
+  "donor_key": "l3-sst-interneuron-hl5mn1",
+  "specification": "docs/specs/2026-09-07-h01-donor-hl5mn1-import.md",
+  "acquisition": "h01-sst-acquisition.json",
+  "manifest": "h01-sst-reproduction-manifest.json",
+  "decision": "registered: acquisition and registry complete; NEURON reproduction untested (not run: .worktrees/h01-network/docs/evidence/h01-network-throughput.json absent, machine reserved for SP1)",
+  "reproduction_status": "untested",
+  "verifications": {
+    "hoc_identity_with_modeldb_267595": "pass: biophys_HL5MN1.hoc and biophys_HL23SST.hoc differ only in the procedure name",
+    "nwb_fetched_and_sweep_table_read": "pass: HTTP 200, 16,422,444 bytes, sha256 218aa144e2e3b63dbcb3fe57072572a7e305a89a57b69ddb36618a4ed9d5c45b, specimen 571700636, IVSCC 1.0, 50 kHz, Long Square 1020-2020 ms",
+    "fit_source_in_yao_2022_methods": "pass: bioRxiv 10.1101/2021.02.17.431698 v5 names 'putative SST (Neuron ID: 571700636)'; SWC header names H17.06.006.11.09.05"
+  },
+  "population_match": {"before": 30, "after": 37, "cells_taken": "7 L3 interneurons without modifiers"},
+  "registered_prediction": "counts 14 (sweep 44, 100 pA) and 34 (sweep 35, 150 pA) reproduced exactly; first spike within the dt-pair limit of 24.16 and 13.0 ms",
+  "registered_rejection": "count differs by more than 1 at either input",
+  "usable_tier": "not scored (no model trace); h01_usable_tier.py --cell SST-L3 --candidate source is ready",
+  "population_label": "type-matched, usable verdicts: not yet scored (reproduction untested)",
+  "braincell_transfer": "blocked: H01PV_* hardcode HL5BN1 NaTg shifts (0/10/9) and fitted Ih shifts; HL5MN1 soma uses vshiftm 13, vshifth 15, slopem 7 and default Ih shifts",
+  "ready_commands": [
+    "cd <worktree>; $env:MSYS_NO_PATHCONV='1'; docker run --rm -v \"$PWD\\.cache\\human-sst-l3\\neuron-reference:/work\" -w /work braintrace-h01-neuron:9.0.2 nrnivmodl mod",
+    "Start-Process -FilePath <python> -ArgumentList 'docs/evidence/h01_campaign.py','--manifest','docs/evidence/h01-sst-reproduction-manifest.json','--stage','1' -RedirectStandardOutput docs/evidence/h01-sst-reproduction/campaign.log -RedirectStandardError docs/evidence/h01-sst-reproduction/campaign.err -NoNewWindow",
+    "<python> docs/evidence/h01_usable_tier.py --cell SST-L3 --candidate source",
+    "<python> docs/evidence/h01_usable_tier.py --cell SST-L3 --candidate source-dt-half --output h01-sst-reproduction/source-dt-half-usable"
+  ],
+  "wall_clock_seconds": null,
+  "note": "A run that has not happened is untested, never negative. No duration is quoted."
+}

@@ -1,0 +1,12 @@
+{
+ "shard": "export000000000003",
+ "bytes": 197572341,
+ "counts": {
+  "records": 999391,
+  "both_in_archive": 3
+ },
+ "wall_seconds": 47.9,
+ "records_per_second": 20864.1,
+ "measured": true,
+ "measured_at": "2026-09-07T14:44:48-0700"
+}

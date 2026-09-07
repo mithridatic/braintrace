@@ -1,0 +1,54 @@
+{
+ "shards_listed": 166,
+ "shards_scanned": 9,
+ "shards_audited_but_unlisted": [],
+ "records_scanned": 8991719,
+ "bytes_scanned": 1777601427,
+ "bytes_listed": 32859876087,
+ "bytes_remaining": 31082274660,
+ "statement": "9 of 166 shards scanned",
+ "full_export_scanned": false,
+ "scope": "Partial scan; absence of a contact is never established.",
+ "benchmark": {
+  "shards": [
+   "export000000000000",
+   "export000000000001",
+   "export000000000002",
+   "export000000000003",
+   "export000000000004",
+   "export000000000005",
+   "export000000000006",
+   "export000000000007",
+   "export000000000008"
+  ],
+  "wall_seconds": [
+   36.7,
+   41.9,
+   46.3,
+   47.9,
+   37.0,
+   35.1,
+   33.0,
+   33.6,
+   33.7
+  ],
+  "measured": true,
+  "mean_seconds": 38.4,
+  "min_seconds": 33.0,
+  "max_seconds": 47.9,
+  "repeat_range_seconds": 14.9
+ },
+ "estimate_for_remaining": {
+  "label": "derived",
+  "remaining_shards": 157,
+  "read_seconds": 6028.8,
+  "download_seconds": 857.2,
+  "total_seconds": 6886.0,
+  "download_rate": {
+   "bytes_per_second": 36260468.0,
+   "source": "curl of export000000000009 (197,625,536 bytes in 5.45 s) on 2026-09-07T14:43-07:00, single measurement",
+   "measured": true
+  }
+ },
+ "listing": "docs\\evidence\\h01-c3-export-listing.json"
+}

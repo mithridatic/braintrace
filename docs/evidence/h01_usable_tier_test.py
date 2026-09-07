@@ -260,3 +260,12 @@ def test_main_accepts_candidate_root_inputs_and_output(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as error:
         tier.main(["--cell", "E", "--inputs", "broken"])
     assert error.value.code == 2
+
+
+def test_sst_cell_spec_scores_the_published_fit_at_two_recorded_inputs():
+    spec = tier.resolve_spec(tier.CELLS["SST-L3"], "source")
+    assert set(spec["inputs"]) == {"100 pA", "150 pA"}
+    assert spec["inputs"]["100 pA"] == (".cache/human-sst-l3/active-0.npz", "h01-sst-reproduction/source-100")
+    assert spec["repeat_inputs"] == {"100 pA": (44, 45, 46, 47)} and spec["repeats"][1] == (44, 45, 46, 47)
+    assert spec["pulse_ms"] == (270., 1270.) and spec["output"] == "h01-sst-reproduction/source-usable"
+    assert "source" in spec["model"] and "{candidate}" not in spec["model"]

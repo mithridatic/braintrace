@@ -1,6 +1,6 @@
 # H01 population: cell types and donor match
 
-104 cells from the released tags; **30 have a donor matched in layer and class**
+104 cells from the released tags; **37 have a donor matched in layer and class**
 (prediction: fewer than 40). Every interneuron's subtype is unknown in the tags; the parvalbumin
 donor is assumed for all of them.
 
@@ -10,13 +10,14 @@ donor is assumed for all of them.
 | --- | --- | --- | --- | --- | --- |
 | l2-pyramidal-allen-541563728 | E | h01-l2-kv3-ninety-ca133 | Allen specimen 541563728, model 626170538 (layer 2 pyramidal) | L2 | pyramidal |
 | l5-pv-basket-hl5bn1 | I | h01-pv-regional-mesh-axon2187 | ModelDB 267587 HL5BN1 (human layer 5 basket neuron; layer read from the model name) | L5 | interneuron |
+| l3-sst-interneuron-hl5mn1 | I | h01-sst-l3-hl5mn1 | ModelDB 267587 HL5MN1 = Yao 2022 HL23SST (Allen human specimen 571700636, MTG layer 3, aspiny) | L3 | interneuron |
 
 ## Match states
 
 | Match | Cells |
 | --- | --- |
-| layer | 47 |
-| matched | 30 |
+| layer | 40 |
+| matched | 37 |
 | layer, modifier | 13 |
 | layer, class, modifier | 5 |
 | modifier | 4 |
@@ -76,13 +77,13 @@ donor is assumed for all of them.
 | 1787105373 | L1 | interneuron | web-like-interneuron | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer, modifier |
 | 1830470325 | L2 | pyramidal | bipolar | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | modifier |
 | 1874244336 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
-| 1900905433 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 1900905433 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 1930502394 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 2001418787 | L4 | pyramidal | sparsely-spiny | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, modifier |
 | 2047644309 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 2074305737 | L4 | pyramidal | sparsely-spiny | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, modifier |
 | 2103991145 | L3 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
-| 2104047922 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 2104047922 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 2195261734 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 2252715458 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 2306214824 | L4 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
@@ -119,9 +120,9 @@ donor is assumed for all of them.
 | 4157825456 | L5 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
 | 4188575291 | L3 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
 | 4197933517 | L5 | excitatory/spiny-with-atypical-tree | bipolar | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, class, modifier |
-| 4260528559 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 4260528559 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 4365276903 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
-| 4420044370 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 4420044370 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 4437316933 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 4467761196 | L1 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
 | 4476359994 | L5 | interneuron | sparsely-spiny | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | modifier |
@@ -133,7 +134,7 @@ donor is assumed for all of them.
 | 4641147055 | L2 | excitatory/spiny-with-atypical-tree |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | class |
 | 4668874666 | L4 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
 | 4711567524 | L3 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
-| 4711641825 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 4711641825 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 4830551047 | L2 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
 | 4853956860 | L5 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | matched |
 | 4873639924 | L3 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
@@ -141,7 +142,7 @@ donor is assumed for all of them.
 | 5013648003 | L5 | excitatory/spiny-with-atypical-tree |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, class |
 | 5015035926 | L5 | pyramidal | bipolar | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, modifier |
 | 5060444657 | L4 | interneuron | lot-of-axon, web-like-interneuron | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer, modifier |
-| 5061320552 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 5061320552 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 5136107765 | L2 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | matched |
 | 5173982155 | L5 | excitatory/spiny-with-atypical-tree |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, class |
 | 5175880292 | L4 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
@@ -157,7 +158,7 @@ donor is assumed for all of them.
 | 5687162964 | L4 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
 | 5805562981 | L2 | interneuron | sparsely-spiny | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer, modifier |
 | 5832764277 | L4 | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |
-| 5965472721 | L3 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
+| 5965472721 | L3 | interneuron |  | I | l3-sst-interneuron-hl5mn1 | h01-sst-l3-hl5mn1 | matched |
 | 6126390733 | L2 | interneuron |  | I | l5-pv-basket-hl5bn1 | h01-pv-regional-mesh-axon2187 | layer |
 | 6833911543 | L5 | excitatory/spiny-with-atypical-tree | bipolar | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer, class, modifier |
 | 7052969349 | WM | pyramidal |  | E | l2-pyramidal-allen-541563728 | h01-l2-kv3-ninety-ca133 | layer |

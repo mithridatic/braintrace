@@ -1045,6 +1045,69 @@ flowchart LR
     E --> F[Local E response observed; firing suppression open]
 ```
 
+#### Y5 edge list, 2026-09-07: merge check on the 71-candidate pair and scan coverage (SP7)
+
+Observed ([merge check](evidence/h01-pair-merge-check.json)): the pair `4157825456` /
+`5654281423` carries 71 of the 123 candidates (57 in one direction, 14 in the other; type
+codes 2 and 1 in both directions). No C3 label is shared by the two cells in the released
+1,500-sample list or in the 26-cell 3,000-sample checkpoint (neither cell is among the 26).
+At the annotation voxels, 70 of 71 rows read background for both endpoints in the proofread
+volume and one row reads the pre cell at its pre voxel with background at the post voxel; no
+row reads one nonzero label at both ends and no row reads the expected cells at both ends;
+none is within the 2-voxel box. Verdict: suspected merge **undetermined**. The saved data
+excludes a direct two-cell C3 merge at the sampled labels and excludes an ordinary verified
+contact; it cannot tell a C3 label merged with a third object from a mis-placed annotation,
+because both leave background at the endpoints. This leaves Y5 open on that pair; the 71
+stay candidates only, and the decisive observation (the C3 label at each of the 142 endpoint
+voxels against each cell's sampled `c3_ids`) is registered as the next online step.
+
+Coverage ([coverage](evidence/h01-export-scan-coverage.json),
+[listing](evidence/h01-c3-export-listing.json)): the C3 synapse export holds 166 shards
+(32.86 GB); 9 are local and scanned (8,991,719 records), so `full_export_scanned` is false
+as "9 of 166 shards scanned", a measured denominator that was previously unknown. The
+3,000-sample rescan stands at 26 of 104 cells; a one-cell dry run under the watchdog
+([record](evidence/h01-c3-scan-dry-run-3000.watchdog.json)) completed in 70.0 s with no
+kill. Absence of a contact is not established by either scan.
+
+## Y6. Per-type donors
+
+Population cells are simulated with a human-fitted donor's physiology; a donor whose layer and
+class match the cell's released tags is "type-matched", any other is "borrowed". Before SP6, 30
+of 104 cells were type-matched (L2 pyramids on Allen 541563728, L5 interneurons on HL5BN1).
+
+### Y6 first donor, HL5MN1 (SP6c, 2026-09-07; acquisition and registry only, no run)
+
+Observed (acquisition facts, `evidence/h01-sst-acquisition.json`; decision
+`evidence/h01-donors/stage-hl5mn1-decision.json`):
+
+- The ModelDB 267587 file `biophys_HL5MN1.hoc` (GPL-3.0, commit dd472f19) and the ModelDB 267595
+  file `biophys_HL23SST.hoc` (commit 4b970fb5) differ only in the procedure name; every density,
+  kinetic shift and passive value is identical. The "derived from" of the Cerebral Cortex methods
+  is a rename.
+- The recordings behind the fit are Allen specimen 571700636 (`H17.06.006.11.09.05`, MTG layer 3,
+  aspiny, 35 y male): NWB 618228061 fetched (sha256 `218aa144...`), IVSCC 1.0, 50 kHz, Long
+  Square 1020-2020 ms; Yao et al. 2022 (bioRxiv v5) names the cell "putative SST (Neuron ID:
+  571700636)"; the SWC header names the same specimen. Subtype stays unknown for H01 tags.
+- The eleven `.mod` files and `NeuronTemplate.hoc` are byte-identical to the HL5BN1 import; the
+  template gives `HL5MN1` a different axon (`delete_axon(3,1.75,1,1)`: 20 + 30 um tapered
+  initial segment plus a 1000 um leakless myelin of cm 0.02).
+- Human targets read from the NWB at a -20 mV crossing: 14 spikes at 100 pA (sweep 44; repeats
+  45-47 give 14, 13, 12), 34 at 150 pA (sweep 35); first spikes 24.16 and 13.0 ms after onset;
+  pre-step voltage -77 mV with 43-53 pA held.
+
+Registry consequence (`h01_cell_types.DONORS["l3-sst-interneuron-hl5mn1"]`): the seven L3
+interneurons without modifiers resolve to it; the type-matched count is 37 of 104
+(`evidence/h01-population-types.md`). L1, L2, L4 interneurons and the modified L5 interneurons stay
+on HL5BN1, labelled.
+
+Not observed: any simulated response. The NEURON reproduction at the two registered inputs
+(manifest `evidence/h01-sst-reproduction-manifest.json`, prediction: counts 14 and 34 exactly;
+rejection: a count off by more than 1) is untested because the machine was reserved for SP1
+when this section was written. Y6 is therefore **open**: the donor is imported and type-matched,
+its physiology is not yet reproduced in this project's solver, and its BrainCell transfer is
+blocked by a known mechanism difference (HL5MN1 soma NaTg `vshiftm 13, vshifth 15, slopem 7` and
+default Ih shifts versus the HL5BN1 values hardcoded in `h01_pv_rates`).
+
 ## Measurement function qualification
 
 The simulation is the measurement function. Its numerical error must be small
@@ -1082,6 +1145,7 @@ leaves a residual without a failure of the discrete charge balance.
 | PV transfer, matched mesh | NEURON CVode 1e-10 vs fixed dt 0.000625 | Largest rise change 0.044 ms; gates pass | [isolation audit](evidence/h01-pv-transfer-isolation-audit.json) |
 | L2 campaign controls | nseg 3 vs nseg 9 at CVode 1e-10, active input | Five phase changes exceed one fifth of the smallest source-candidate-corner contrast; coarse setting rejected | [Stage 0 preservation](evidence/h01-l2-campaign/stage0-active-preservation.json) |
 | L2 paired-swap runs | CVode 1e-10 vs 1e-11 at nseg 9 | Added pair: every ranked residual within its limit (max 0.0002 ms); removed pair: two event-3 phase residuals at 0.00044 ms vs 0.00042 ms limit, counts and all other contrasts unchanged | [prediction check](evidence/h01-l2-campaign-fine/stage-b-prediction-check.json) |
+| Verified 4-cell network, solver cost (SP1) | dt 0.005 ms; 0.05, 1, 1 (repeat), 10 ms as detached idle-machine jobs | Init + run fits a + b*steps with a = 245.4 s, b = 0.0576 s/step, 200*b = 11.5 s per simulated ms; two-repeat decision limit on b 0.971 s/step (184.5 s at 1 ms), max residual 44.5 s: the four points are linear within the limit and b is below its own limit (resolved only through the 10 ms point). Construction 243.6-280.2 s; peak RSS 1,330-1,350 MB. The 0.05 ms point (270.0 s) sits within the 157 s anchor + limit; the run-to-run spread, not the step count, dominates under 1 ms. The `staggered` control at 1 ms was killed after 600 s of silence (untested) at 8,100 MB peak RSS. Numerical limit only; leaves every Y-section open | [throughput](evidence/h01-network-throughput.json), [page](evidence/h01-network-throughput.md) |
 
 The response-size ranking in the [factor evidence](evidence/h01-i-factor-response-rss.md)
 compares specified interventions on a fixed observation grid. It selects the
@@ -1110,6 +1174,8 @@ biological uncertainty.
   2026-09-06: the late subthreshold return is inside two human repeat limits;
   the rise rate is load-limited but the load cannot be the lever (peak and
   trough move with it).
+- Y6: the HL5MN1 reproduction (registered, untested) and the kinetic-shift parameters the
+  `H01PV_*` channels need before the donor can be transferred to BrainCell.
 - Y5: numerical robustness, reciprocal behavior, and qualified cell models.
   The measured E-to-I candidate contact (annotation 54906016, excitatory type)
   found by the C3 edge list awaits endpoint verification.
