@@ -340,7 +340,7 @@ def run_once(args):
     record["wall_seconds"] = time.monotonic()-started
     record["finished_at"] = datetime.now().isoformat(timespec="seconds")
     record["exit_code"] = child.returncode
-    record.update({k: v for k, v in parse_build_record(run_dir/"network-build.json").items() if v is not None})
+    record.update({k: v for k, v in parse_build_record(run_dir/"network-build.json").items() if v is not None or k not in record})
     if record["status"] == "running":
         record["status"] = "completed" if child.returncode == 0 and record["initialization_and_run_seconds"] is not None else "failed"
     (run_dir/"run.json").write_text(json.dumps(record, indent=2)+"\n")
