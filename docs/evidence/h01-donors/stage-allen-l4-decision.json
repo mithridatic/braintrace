@@ -186,6 +186,7 @@
     "measured_by": "h01_campaign.py campaign-log.json (perf_counter around docker run)"
   },
   "container_stderr": {
+    "note": "Recorded under the SP6d runner, which wrote <candidate>-<input>.stderr.txt. After the feat/h01-braincell merge the runner writes <stem>.stderr.log and records stderr_tail/stderr_log in campaign-log rows; these historical files are kept as named and nothing is lost (all four were empty).",
     "source-39.stderr.txt": "empty",
     "source-69.stderr.txt": "empty",
     "source-dt-half-39.stderr.txt": "empty",

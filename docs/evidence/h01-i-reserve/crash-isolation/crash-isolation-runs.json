@@ -1,0 +1,139 @@
+{
+  "A-candidate": {
+    "candidate": {
+      "axon_calcium_decay_ms": 300.0,
+      "axon_calcium_gamma": 0.004,
+      "conductance_factor": 1.1,
+      "conductance_region": "soma",
+      "cvode_atol": 1e-10,
+      "nseg_factor": 9,
+      "observe_charge_balance": true,
+      "observe_spike_currents": true,
+      "refine_region": "all",
+      "scale": [
+        "NaTg:axon:1.5"
+      ],
+      "scale_conductance": "NaTg",
+      "sodium_h_recovery_factor": 1.0,
+      "sodium_h_slope_mv": 5.0,
+      "sodium_h_tau_factor": 0.15,
+      "somatic_calva_factor": 0.5,
+      "somatic_kv3_close_factor": 2.0,
+      "somatic_kv3_tau_factor": 0.5
+    },
+    "duration_ms": 20.0,
+    "seconds": 8.1,
+    "returncode": 139,
+    "outputs_written": false,
+    "stderr_tail": [
+      "NEURON: section in the object was deleted",
+      " near line 0",
+      " }",
+      "  ^",
+      "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+      "  what():  hoc_execerror: section in the object was deleted"
+    ]
+  },
+  "B-finalist-no-scale": {
+    "candidate": {
+      "axon_calcium_decay_ms": 300.0,
+      "axon_calcium_gamma": 0.004,
+      "conductance_factor": 1.1,
+      "conductance_region": "soma",
+      "cvode_atol": 1e-10,
+      "nseg_factor": 9,
+      "observe_charge_balance": true,
+      "observe_spike_currents": true,
+      "refine_region": "all",
+      "scale_conductance": "NaTg",
+      "sodium_h_recovery_factor": 1.0,
+      "sodium_h_slope_mv": 5.0,
+      "sodium_h_tau_factor": 0.15,
+      "somatic_calva_factor": 0.5,
+      "somatic_kv3_close_factor": 2.0,
+      "somatic_kv3_tau_factor": 0.5
+    },
+    "duration_ms": 20.0,
+    "seconds": 7.75,
+    "returncode": 139,
+    "outputs_written": false,
+    "stderr_tail": [
+      "NEURON: section in the object was deleted",
+      " near line 0",
+      " }",
+      "  ^",
+      "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+      "  what():  hoc_execerror: section in the object was deleted"
+    ]
+  },
+  "C-scale-axon-1.0": {
+    "candidate": {
+      "axon_calcium_decay_ms": 300.0,
+      "axon_calcium_gamma": 0.004,
+      "conductance_factor": 1.1,
+      "conductance_region": "soma",
+      "cvode_atol": 1e-10,
+      "nseg_factor": 9,
+      "observe_charge_balance": true,
+      "observe_spike_currents": true,
+      "refine_region": "all",
+      "scale_conductance": "NaTg",
+      "sodium_h_recovery_factor": 1.0,
+      "sodium_h_slope_mv": 5.0,
+      "sodium_h_tau_factor": 0.15,
+      "somatic_calva_factor": 0.5,
+      "somatic_kv3_close_factor": 2.0,
+      "somatic_kv3_tau_factor": 0.5,
+      "scale": [
+        "NaTg:axon:1.0"
+      ]
+    },
+    "duration_ms": 20.0,
+    "seconds": 7.01,
+    "returncode": 139,
+    "outputs_written": false,
+    "stderr_tail": [
+      "NEURON: section in the object was deleted",
+      " near line 0",
+      " }",
+      "  ^",
+      "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+      "  what():  hoc_execerror: section in the object was deleted"
+    ]
+  },
+  "D-scale-soma-1.5": {
+    "candidate": {
+      "axon_calcium_decay_ms": 300.0,
+      "axon_calcium_gamma": 0.004,
+      "conductance_factor": 1.1,
+      "conductance_region": "soma",
+      "cvode_atol": 1e-10,
+      "nseg_factor": 9,
+      "observe_charge_balance": true,
+      "observe_spike_currents": true,
+      "refine_region": "all",
+      "scale_conductance": "NaTg",
+      "sodium_h_recovery_factor": 1.0,
+      "sodium_h_slope_mv": 5.0,
+      "sodium_h_tau_factor": 0.15,
+      "somatic_calva_factor": 0.5,
+      "somatic_kv3_close_factor": 2.0,
+      "somatic_kv3_tau_factor": 0.5,
+      "scale": [
+        "NaTg:soma:1.5"
+      ]
+    },
+    "duration_ms": 20.0,
+    "seconds": 7.38,
+    "returncode": 139,
+    "outputs_written": false,
+    "stderr_tail": [
+      "NEURON: section in the object was deleted",
+      " near line 0",
+      " }",
+      "  ^",
+      "terminate called after throwing an instance of 'neuron::oc::runtime_error'",
+      "  what():  hoc_execerror: section in the object was deleted"
+    ]
+  }
+}

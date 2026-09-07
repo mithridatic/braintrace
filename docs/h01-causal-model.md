@@ -627,26 +627,45 @@ and the drive's boundary is still unidentified.
 | A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
 
 
-### Y3 reserve evaluation (2026-09-07, SP4 stage 1; leaves the post-trough drive row open)
+### Y3 reserve evaluation (2026-09-07, SP4 stage 1; closes axonal NaTg density as the post-trough drive)
 
-**Observed.** The single reserve evaluation, candidate `g-natg-axon15` (finalist flags
-plus axonal NaTg x1.5, somatic x1.1 retained; sha256 f4a2aa6c...), was launched once at
-22:38:45 UTC under the registered conditions (command-only input, 0.19 and 0.27 nA, x9
-mesh, CVode 1e-10, 1500 ms, image 9.0.2, kv3-phase-reference library). Both containers
-exited 139 (SIGSEGV) after 10.9 s and 8.3 s without a trace
+**Invalid first launch (22:38:45 UTC).** Both containers of candidate `g-natg-axon15`
+exited 139 after 10.9 s and 8.3 s without a trace and with stderr discarded. Reproduced at
+20 ms and split one variable at a time
+([crash-isolation.json](evidence/h01-i-reserve/crash-isolation.json)): the control without
+`--scale`, the identity scale and a somatic scale crashed identically; the driver at
+ac5ed12 (which already has `--scale`) ran; the driver at c2ce97a (the SP6c donor import)
+crashed; `python -X faulthandler` named `for m in cell.myelin`. Cause: HL5BN1's template
+deletes the declared `myelin[1]` in `init` and only the HL23PN1/HL23MN1/HL5MN1 branch
+recreates it, so `cell.myelin` referenced a deleted section and the new geometry line
+raised an unconverted hoc error (abort, exit 139) before `h.finitialize`. Fixed by a
+`section_exists` guard with a sibling test; the runner now persists container stderr. The
+crash tested nothing about the candidate, so it did not spend the reserve.
+
+**Observed (valid launch 22:51:42 UTC, 36 s and 75 s, rc 0).** Finalist flags plus axonal
+NaTg x1.5, somatic x1.1 retained (sha256 f4a2aa6c...), command-only input, 0.19 and
+0.27 nA, x9 mesh, CVode 1e-10, 1500 ms, image 9.0.2, kv3-phase-reference library
 ([decision](evidence/h01-i-reserve/stage-1-decision.json),
-[result](evidence/h01-i-reserve-result.md)). Container stderr was not retained by the
-runner. A toy-section check in the image shows the two NEURON calls the new scale loop
-makes (`psection`, `gbar_NaTg` setattr) succeed in isolation.
+[result](evidence/h01-i-reserve-result.md)). Cycle 2 at 0.27 nA: 16.50 ms (finalist 16.37;
+band <= 12); count 34 (finalist 37; band 40 to 43). Cycle 2 at 0.19 nA: 35.07 ms (finalist
+34.76; band <= 22); count 14 (band 15 to 17). Cycle-1 width 0.220 ms, peaks 18.3 and
+18.4 mV, troughs of cycles 1-3 within 0.1 mV of the finalist's at both inputs: all ten of
+those bands held. Axon-first initiation holds, and the axon lead grew from 0.03-0.05 ms to
+0.33 ms (0.19 nA) and 0.22 ms (0.27 nA). Usable tier fails at both inputs (adaptation, later
+widths, rate at 0.27 nA); the 1 mV contract fails on count at both.
 
-**Reading.** No band was held or missed; the rejection clause could not be applied. The
-post-trough drive row stays **open** exactly as the stage-0 audit left it: narrowed to
-drive on the axon-first pathway, with axonal NaTg density untested as its carrier. Cap 1
-is spent by the launch; whether a crashed run counts is returned to the user.
+**Reading.** FAIL at cap by the pre-registered rejection clause: cycle 2 at 0.27 nA moved
+-0.13 ms against a 12.8 ms decision limit, with no loop break. Raising axonal sodium
+density advanced the axon but did not refire the soma sooner, so the post-trough drive is
+not carried by axonal NaTg density on this geometry. With the stage-0 audit (somatic h
+0.98 at trough + 6 ms) both sodium boundaries are excluded; the row stays **open** with one
+family left, a slow state the model lacks. Cap 1 is spent; no second evaluation, no
+parameter change. The I cell stays experimental, borrowed, labelled.
 
 | Node | Split | Result | Evidence |
 | --- | --- | --- | --- |
-| A | Axonal NaTg x1.5 as the post-trough drive, both inputs | no trace (rc 139 at 10.9 s and 8.3 s); untested | [decision](evidence/h01-i-reserve/stage-1-decision.json) |
+| A | Axonal NaTg x1.5 as the post-trough drive, both inputs | FAIL: cycle 2 unchanged (-0.13 ms at 0.27 nA), count 37 -> 34; width, peak, troughs held; axon lead 0.22-0.33 ms | [decision](evidence/h01-i-reserve/stage-1-decision.json) |
+| A0 | First launch rc 139 | invalid: driver myelin geometry line on a deleted section; not a model result | [isolation](evidence/h01-i-reserve/crash-isolation.json) |
 
 
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
@@ -1384,9 +1403,10 @@ biological uncertainty.
   0.012 mV of CVode), timing gates valid; seven full-train arms untested pending a decision
   on the peak gate, the fallback step, or the integration order.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
-  of a −79 mV trough (not somatic Ca_LVA), and the accommodation along the
-  train (threshold −61 to −55 mV, late fall slowing to −294 V/s); one
-  evaluation in reserve. Closed on 2026-09-06 by the energetic search: the
+  of a −79 mV trough (not somatic Ca_LVA, not somatic sodium availability, not
+  axonal NaTg density: the reserve evaluation of 2026-09-07 failed at cap), and the
+  accommodation along the train (threshold −61 to −55 mV, late fall slowing to
+  −294 V/s); the reserve is spent. Closed on 2026-09-06 by the energetic search: the
   bias question (held state, command-only input; the "passive family" was the
   double-counted bias), the loop (sodium inflow ending within the upstroke) and
   the trough (Kv3 activation carried past the spike, its tail below −73 mV),
