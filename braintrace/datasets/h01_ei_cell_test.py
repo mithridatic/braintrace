@@ -79,3 +79,26 @@ def test_reject_uncovered_branch_tail(imported):
     soma = imported.anatomy().cable_neighborhood(30, radius_um=2.)
     with pytest.raises(ValueError, match="gaps"):
         _validate_regions(imported.morphology, {"soma": soma}, "E")
+
+
+def test_donor_key_selects_profile_and_is_recorded(imported):
+    annotations = SimpleNamespace(metadata=lambda _: SimpleNamespace(tags=("L5", "interneuron")))
+    with brainstate.environ.context(precision=64):
+        cell, evidence = make_h01_ei_cell(imported, annotations, polarity="I", donor="l5-pv-basket-hl5bn1",
+            regions=partition(imported), region_basis="Donor key test.", pop_size=(1,))
+        result = cell.run(dt=.001*u.ms, duration=.02*u.ms)
+    assert np.isfinite(result.traces["voltage"].to_decimal(u.mV)).all()
+    assert evidence["donor"] == "l5-pv-basket-hl5bn1"
+    assert evidence["borrowed_dynamics"]["channel_prefix"] == "H01PV"
+    assert evidence["borrowed_dynamics"]["sodium_reversal_mv"] == 50.
+    _, default = make_h01_ei_cell(imported, annotations, polarity="E", regions={"soma": AllRegion()},
+                                  region_basis="Default donor test.")
+    assert default["donor"] == "l2-pyramidal-allen-541563728"
+    assert default["borrowed_dynamics"]["name"] == "h01-l2-kv3-ninety-ca133:candidate:v1"
+
+
+@pytest.mark.parametrize("donor,polarity", [("l5-pv-basket-hl5bn1", "E"), ("no-such-donor", "E")])
+def test_donor_polarity_mismatch_or_unknown_key_fails(imported, donor, polarity):
+    with pytest.raises(ValueError):
+        make_h01_ei_cell(imported, None, polarity=polarity, donor=donor, regions={"soma": AllRegion()},
+                         region_basis="test")
