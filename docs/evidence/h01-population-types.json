@@ -1,0 +1,1295 @@
+{
+ "source": "h01-verified-network.json",
+ "archive_sha256": "3e0534df357ef2e92f6e0199962133cc9bc9733eb3a1fd6d1d315208ad63db47",
+ "summary": {
+  "cells": 104,
+  "matched": 30,
+  "by_match": {
+   "layer": 47,
+   "matched": 30,
+   "layer, modifier": 13,
+   "layer, class, modifier": 5,
+   "modifier": 4,
+   "layer, class": 4,
+   "class": 1
+  },
+  "by_type": [
+   {
+    "layer": "L2",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 28
+   },
+   {
+    "layer": "L4",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 18
+   },
+   {
+    "layer": "L3",
+    "cell_class": "interneuron",
+    "modifiers": "",
+    "count": 7
+   },
+   {
+    "layer": "L3",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 6
+   },
+   {
+    "layer": "L2",
+    "cell_class": "interneuron",
+    "modifiers": "",
+    "count": 5
+   },
+   {
+    "layer": "L4",
+    "cell_class": "pyramidal",
+    "modifiers": "sparsely-spiny",
+    "count": 4
+   },
+   {
+    "layer": "L1",
+    "cell_class": "interneuron",
+    "modifiers": "",
+    "count": 3
+   },
+   {
+    "layer": "L5",
+    "cell_class": "pyramidal",
+    "modifiers": "bipolar",
+    "count": 3
+   },
+   {
+    "layer": "L5",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 3
+   },
+   {
+    "layer": "L5",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "bipolar",
+    "count": 3
+   },
+   {
+    "layer": "L2",
+    "cell_class": "interneuron",
+    "modifiers": "sparsely-spiny",
+    "count": 2
+   },
+   {
+    "layer": "L4",
+    "cell_class": "interneuron",
+    "modifiers": "",
+    "count": 2
+   },
+   {
+    "layer": "L5",
+    "cell_class": "interneuron",
+    "modifiers": "sparsely-spiny",
+    "count": 2
+   },
+   {
+    "layer": "L5",
+    "cell_class": "interneuron",
+    "modifiers": "",
+    "count": 2
+   },
+   {
+    "layer": "L5",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "",
+    "count": 2
+   },
+   {
+    "layer": "L6",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "",
+    "count": 2
+   },
+   {
+    "layer": "WM",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 2
+   },
+   {
+    "layer": "L2",
+    "cell_class": "pyramidal",
+    "modifiers": "sparsely-spiny",
+    "count": 1
+   },
+   {
+    "layer": "L1",
+    "cell_class": "interneuron",
+    "modifiers": "web-like-interneuron",
+    "count": 1
+   },
+   {
+    "layer": "L2",
+    "cell_class": "pyramidal",
+    "modifiers": "bipolar",
+    "count": 1
+   },
+   {
+    "layer": "L5",
+    "cell_class": "pyramidal",
+    "modifiers": "sparsely-spiny",
+    "count": 1
+   },
+   {
+    "layer": "L2",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "",
+    "count": 1
+   },
+   {
+    "layer": "L4",
+    "cell_class": "interneuron",
+    "modifiers": "lot-of-axon, web-like-interneuron",
+    "count": 1
+   },
+   {
+    "layer": "L6",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "bipolar",
+    "count": 1
+   },
+   {
+    "layer": "L6",
+    "cell_class": "pyramidal",
+    "modifiers": "",
+    "count": 1
+   },
+   {
+    "layer": "L6",
+    "cell_class": "pyramidal",
+    "modifiers": "bipolar",
+    "count": 1
+   },
+   {
+    "layer": "WM",
+    "cell_class": "excitatory/spiny-with-atypical-tree",
+    "modifiers": "bipolar",
+    "count": 1
+   }
+  ],
+  "types_without_donor": [
+   "L1 interneuron",
+   "L1 interneuron (web-like-interneuron)",
+   "L2 excitatory/spiny-with-atypical-tree",
+   "L2 interneuron",
+   "L2 interneuron (sparsely-spiny)",
+   "L2 pyramidal (bipolar)",
+   "L2 pyramidal (sparsely-spiny)",
+   "L3 interneuron",
+   "L3 pyramidal",
+   "L4 interneuron",
+   "L4 interneuron (lot-of-axon, web-like-interneuron)",
+   "L4 pyramidal",
+   "L4 pyramidal (sparsely-spiny)",
+   "L5 excitatory/spiny-with-atypical-tree",
+   "L5 excitatory/spiny-with-atypical-tree (bipolar)",
+   "L5 interneuron (sparsely-spiny)",
+   "L5 pyramidal",
+   "L5 pyramidal (bipolar)",
+   "L5 pyramidal (sparsely-spiny)",
+   "L6 excitatory/spiny-with-atypical-tree",
+   "L6 excitatory/spiny-with-atypical-tree (bipolar)",
+   "L6 pyramidal",
+   "L6 pyramidal (bipolar)",
+   "WM excitatory/spiny-with-atypical-tree (bipolar)",
+   "WM pyramidal"
+  ]
+ },
+ "rows": [
+  {
+   "cell_id": "546925828",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "547114083",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "620880207",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "678539249",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer, modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "751294744",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "810151953",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "810970127",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "883843993",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "955432427",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1072605926",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1304599410",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1465400601",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1669770671",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "1684504313",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1787105373",
+   "layer": "L1",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "web-like-interneuron"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer, modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "1830470325",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "1874244336",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "1900905433",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "1930502394",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "2001418787",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "2047644309",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "2074305737",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "2103991145",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "2104047922",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2195261734",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "2252715458",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "2306214824",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "2325998949",
+   "layer": "L1",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2451406889",
+   "layer": "L4",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2530864375",
+   "layer": "L1",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2820958695",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2848552900",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "2888180252",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "2889815798",
+   "layer": "L4",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "2903686765",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "3093748739",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3111823553",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "3139317430",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3178243558",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "3329117097",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3383650350",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3432315514",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "3470629528",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "3503540481",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3519995546",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "3571083397",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "3680152874",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "3751392341",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "3761379470",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3812058320",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "3836078296",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3954491075",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "3955003482",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4010150634",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "4039221194",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4125702786",
+   "layer": "L5",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4138580687",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "4157825456",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4188575291",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4197933517",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "4260528559",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4365276903",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "4420044370",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4437316933",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "4467761196",
+   "layer": "L1",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4476359994",
+   "layer": "L5",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4522237537",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4535129012",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4554213569",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "4582188328",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4607885827",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4641147055",
+   "layer": "L2",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "class",
+   "note": ""
+  },
+  {
+   "cell_id": "4668874666",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4711567524",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4711641825",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4830551047",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4853956860",
+   "layer": "L5",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "4873639924",
+   "layer": "L3",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "4932057570",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "5013648003",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class",
+   "note": ""
+  },
+  {
+   "cell_id": "5015035926",
+   "layer": "L5",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "5060444657",
+   "layer": "L4",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "lot-of-axon",
+    "web-like-interneuron"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer, modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "5061320552",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "5136107765",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "5173982155",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class",
+   "note": ""
+  },
+  {
+   "cell_id": "5175880292",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5215113731",
+   "layer": "L6",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class",
+   "note": ""
+  },
+  {
+   "cell_id": "5216806368",
+   "layer": "L6",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "5319188363",
+   "layer": "L6",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5352961465",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5355296383",
+   "layer": "L2",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "matched",
+   "note": ""
+  },
+  {
+   "cell_id": "5439194879",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5536146025",
+   "layer": "L6",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class",
+   "note": ""
+  },
+  {
+   "cell_id": "5584343344",
+   "layer": "L5",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "matched",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "5654281423",
+   "layer": "L6",
+   "cell_class": "pyramidal",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "5687162964",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5805562981",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [
+    "sparsely-spiny"
+   ],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer, modifier",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "5832764277",
+   "layer": "L4",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "5965472721",
+   "layer": "L3",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "6126390733",
+   "layer": "L2",
+   "cell_class": "interneuron",
+   "modifiers": [],
+   "polarity": "I",
+   "donor": "h01-pv-regional-mesh-axon2187",
+   "match": "layer",
+   "note": "interneuron subtype is not in the tags; the parvalbumin donor is assumed"
+  },
+  {
+   "cell_id": "6833911543",
+   "layer": "L5",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "7052969349",
+   "layer": "WM",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  },
+  {
+   "cell_id": "7196644737",
+   "layer": "WM",
+   "cell_class": "excitatory/spiny-with-atypical-tree",
+   "modifiers": [
+    "bipolar"
+   ],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer, class, modifier",
+   "note": ""
+  },
+  {
+   "cell_id": "7893125555",
+   "layer": "WM",
+   "cell_class": "pyramidal",
+   "modifiers": [],
+   "polarity": "E",
+   "donor": "h01-l2-kv3-ninety-ca133",
+   "match": "layer",
+   "note": ""
+  }
+ ]
+}

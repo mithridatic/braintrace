@@ -168,3 +168,12 @@ Appended per workstream as it closes.
   the I rate verdicts were wrong at 0.19 and 0.23 (predicted fail at 0.23 only),
   the I width was predicted to pass and failed, the E 250 pA rate was predicted to
   fail and passed. Pages `h01-usable-tier-{i,e}.md`.
+- **W6a.** 30 of 104 cells match their donor in layer and class (prediction: fewer than
+  40, held): 28 L2 pyramids and 2 plain L5 interneurons. 47 differ in layer only, 13
+  in layer and a morphology modifier, 9 in class. Every interneuron's subtype is
+  unknown; the PV donor is assumed (`h01-population-types.md`).
+- **W6b.** 3,327 components; every cell has a soma-bearing component and in every
+  cell the largest component carries a soma, but 73 cells have more than one
+  soma-bearing component (a segmentation artefact or a merge) and the largest holds a
+  median 77 percent of the nodes (minimum 25 percent). Five of six verified contact
+  endpoints sit on a soma-bearing component (`h01-population-components.md`).
