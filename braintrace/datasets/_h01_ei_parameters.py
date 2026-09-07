@@ -36,6 +36,26 @@ E_SOURCE = (('soma',
  ('dend', 2.3031548608821226, 3.626643561453563e-05, (), None),
  ('apic', 2.3031548608821226, 4.119170292066434e-05, (), None))
 
+# Experimental E mode "b3": verbatim copy of docs/evidence/h01-e-b3-experimental-profile.py
+# (generated from b3-sk035-ca-decay-sweep53.json, sha256 52f85ac9...92e1). Not promoted.
+E_B3_EXPERIMENTAL = (('soma',
+  1.0,
+  0.0004214870638616726,
+  (('Im', 0.0003009224287506406),
+   ('Ih', 9.994138594205759e-05),
+   ('NaTs', 2.6406641498523276),
+   ('Nap', 0.00027834876277937903),
+   ('K_P', 0.0002294964697530516),
+   ('K_T', 1.1414657313560486e-08),
+   ('SK', 0.001049516063519434),
+   ('Kv3_1', 0.3687667632247488),
+   ('Ca_HVA', 0.0009983602924910323),
+   ('Ca_LVA', 0.00824261450980065)),
+  (494.01955262344603, 0.0008762096311710155)),
+ ('axon', 1.0, 0.00028089935810004884, (('NaTs', 3.814),), None),
+ ('dend', 2.3031548608821226, 3.626643561453563e-05, (('Ih', 9.994138594205759e-05),), None),
+ ('apic', 2.3031548608821226, 4.119170292066434e-05, (('Ih', 9.994138594205759e-05),), None))
+
 I_CANDIDATE = (('soma',
   2.0,
   0.00022279797042703468,
@@ -66,6 +86,10 @@ I_CANDIDATE = (('soma',
   (300.0, 0.004)),
  ('dend', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None),
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
+
+# Experimental I mode "finalist" (energetic finalist e-kv3-close2): the same densities as the
+# candidate; the finalist differs by the somatic Kv3 closing factor only (see channel_controls).
+I_FINALIST = I_CANDIDATE
 
 I_SOURCE = (('soma',
   2.0,
@@ -99,8 +123,9 @@ I_SOURCE = (('soma',
  ('apic', 2.0, 0.00022279797042703468, (('Ih', 7.50253747155162e-05),), None))
 
 
-# Density tables by donor key (see h01_cell_types.DONORS) and mode.
+# Density tables by donor key (see h01_cell_types.DONORS) and mode. The keys of the inner
+# mapping are the valid modes of the donor; "candidate" is the default, the rest are opt-in.
 DONOR_REGIONS = {
-    "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE},
-    "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE},
+    "l2-pyramidal-allen-541563728": {"candidate": E_CANDIDATE, "source": E_SOURCE, "b3": E_B3_EXPERIMENTAL},
+    "l5-pv-basket-hl5bn1": {"candidate": I_CANDIDATE, "source": I_SOURCE, "finalist": I_FINALIST},
 }

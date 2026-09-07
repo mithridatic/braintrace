@@ -102,3 +102,15 @@ def test_incomplete_report_and_invalid_window_stop_before_the_model(tmp_path):
     with pytest.raises(SystemExit) as error:
         driver.main(["--cache", str(tmp_path), "--dt-ms", "0", "--output", str(tmp_path/"x")])
     assert error.value.code == 2
+
+
+@pytest.mark.parametrize("flag", ["--profile-key", "--mode"])
+def test_b3_mode_reaches_the_builder_and_the_report(tmp_path, monkeypatch, flag):
+    calls = {}
+    _spy(monkeypatch, calls)
+    out = tmp_path/"trace"
+    driver.main(["--cache", str(_cache(tmp_path)), "--sweep", "53", "--dt-ms", "1", flag, "b3", "--output", str(out)])
+    report = json.loads(out.with_suffix(".json").read_text())
+    assert calls["mode"] == "b3" and report["profile_key"] == "b3" and report["profile"]["mode"] == "b3"
+    assert report["profile"]["regions"][1][3] == [["NaTs", 3.814]]
+    assert report["initial_voltage_mv"] == -83.97993469238281

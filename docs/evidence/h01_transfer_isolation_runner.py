@@ -211,10 +211,12 @@ def main(argv=None):
     if args.check_alignment or args.score:
         from braintrace.datasets.h01_ei_profiles import channel_controls, get_ei_profile
         meta = json.loads((root/"docs/evidence"/manifest["mesh_source"]).read_text())
-        alignment = profile_alignment(meta, get_ei_profile("I", mode=manifest["braincell_profile_key"]), channel_controls)
+        profile = get_ei_profile(manifest["polarity"], mode=manifest["braincell_profile_key"])
+        alignment = profile_alignment(meta, profile, channel_controls)
         print(json.dumps({"profile_alignment": alignment}))
         if args.score and manifest.get("profile_alignment_required") and not alignment["aligned"]:
-            raise SystemExit("BrainCell profile is not the NEURON finalist; scoring refused until the registry re-key lands.")
+            raise SystemExit("BrainCell profile is not the NEURON finalist; scoring refused "
+                             "(set braincell_profile_key to the aligned registry mode).")
     if args.score:
         report = decision_report(manifest, score_manifest(root, manifest))
         out = root/"docs/evidence"/manifest["output_dir"]/"sp2-i-decision.json"
