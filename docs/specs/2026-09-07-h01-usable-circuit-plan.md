@@ -234,3 +234,11 @@ Appended per workstream as it closes.
   site while the held cell drifts (-5 mV at the site, -0.38 at the soma by 40 ms). The
   deficit is the placement, not the conductance; returned to the user
   (`h01-ie-pair-result.md`).
+- **W3 Stage B (evaluations 5 to 7, 593 to 687 s).** At 310 pA on the survivor: SK
+  halved gives 7 spikes and late cycles 169 ms (from 246; the third cycle 57 reproduces
+  the human's 61); calcium decay 1.0 gives 7 and 188; leak reversal -2 gives 6 and 228
+  with the first cycle shortened as predicted but the AHP unchanged (that clause
+  failed). Threshold, peak, trough and width unchanged in every arm. Rejection not met;
+  the calcium-SK Modulate boundary is the lever and no single arm reaches the usable
+  rate. Evaluation 8 registered as B2: both levers together (prediction: late cycles
+  135 to 165 ms, count 8) (`h01-e-usable/stage-b-decision.json`).
