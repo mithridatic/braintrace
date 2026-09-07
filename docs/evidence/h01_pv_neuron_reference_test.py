@@ -1,6 +1,8 @@
 """Check report mathematics without requiring NEURON on the Windows host."""
 
 import ast
+import hashlib
+import json
 import argparse
 from pathlib import Path
 
@@ -42,7 +44,7 @@ def test_channel_parameter_cli_boundary(monkeypatch, value, option):
     if value is not None:
         argv += [option, value]
     monkeypatch.setattr("sys.argv", argv)
-    scope = {"np": np, "argparse": argparse, "__doc__": "CLI validation"}
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "CLI validation"}
     code = compile(ast.Module(body=nodes, type_ignores=[]), "reference_cli", "exec")
     invalid = (value in ("-1", "nan", "inf")
                or (value == "0" and option in ("--sodium-h-slope-mv", "--somatic-kv3-tau-factor", "--somatic-kv3-close-factor"))
@@ -95,7 +97,7 @@ def test_unselected_factor_cli_boundary(monkeypatch, value):
     if value is not None:
         argv += ["--unselected-nseg-factor", value]
     monkeypatch.setattr("sys.argv", argv)
-    scope = {"np": np, "argparse": argparse, "__doc__": "CLI test"}
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "CLI test"}
     code = compile(ast.Module(body=nodes, type_ignores=[]), "mesh_cli", "exec")
     if value in ("0", "-1", "2", "2.5"):
         with pytest.raises(SystemExit) as error:
@@ -119,7 +121,7 @@ def test_duration_cli_boundary(monkeypatch, value):
     if value is not None:
         argv += ["--duration-ms", value]
     monkeypatch.setattr("sys.argv", argv)
-    scope = {"np": np, "argparse": argparse, "__doc__": "CLI test"}
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "CLI test"}
     code = compile(ast.Module(body=nodes, type_ignores=[]), "duration_cli", "exec")
     if value in ("0", "nan", "-5"):
         with pytest.raises(SystemExit) as error:
@@ -138,3 +140,83 @@ def test_simulation_and_bias_follow_the_requested_duration():
     assert '"duration_ms": args.duration_ms' in text
     assert "continuerun(1500" not in text and '"duration_ms": 1500' not in text
     assert '"mechanism_library"' in text
+
+
+def _cli_scope(monkeypatch, argv):
+    """Execute the driver's CLI section (everything before the first h.load_file) with ``argv``."""
+    nodes = []
+    for node in ast.parse(SOURCE.read_text()).body:
+        if isinstance(node, ast.Expr) and ast.unparse(node).startswith("h.load_file"):
+            break
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            nodes.append(node)
+    monkeypatch.setattr("sys.argv", ["reference", "--current-na", ".27", "--output", "unused", *argv])
+    scope = {"np": np, "argparse": argparse, "Path": Path, "hashlib": hashlib, "json": json, "__doc__": "scale CLI test"}
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), "scale_cli", "exec"), scope)
+    return scope
+
+
+def test_scale_is_repeatable_and_parsed_like_the_l2_regional_density(monkeypatch):
+    scope = _cli_scope(monkeypatch, ["--scale", "NaTg:axon:1.5", "--scale", "SK:all:0"])
+    assert scope["regional_scales"] == [{"mechanism": "NaTg", "region": "axon", "factor": 1.5},
+                                        {"mechanism": "SK", "region": "all", "factor": 0.}]
+    assert scope["args"].scale == ["NaTg:axon:1.5", "SK:all:0"]
+
+
+def test_scale_defaults_leave_the_single_slot_untouched(monkeypatch):
+    scope = _cli_scope(monkeypatch, ["--scale-conductance", "NaTg", "--conductance-factor", "1.1", "--conductance-region", "soma"])
+    assert scope["regional_scales"] == [] and scope["args"].scale == []
+    args = scope["args"]
+    assert (args.scale_conductance, args.conductance_factor, args.conductance_region) == ("NaTg", 1.1, "soma")
+
+
+@pytest.mark.parametrize("text", ["NaTg:axon", "Nap:axon:1", "NaTg:apex:1", "NaTg:soma:nan", "NaTg:all:-1", "NaTg:soma:inf"])
+def test_scale_rejects_malformed_text_before_construction(monkeypatch, text):
+    with pytest.raises(SystemExit) as error:
+        _cli_scope(monkeypatch, ["--scale", text])
+    assert error.value.code == 2
+
+
+def test_candidate_json_scale_list_is_a_known_flag_and_cli_appends(monkeypatch, tmp_path):
+    candidate = tmp_path/"arm.candidate.json"
+    candidate.write_text(json.dumps({"scale": ["NaTg:axon:1.5"], "scale_conductance": "NaTg", "conductance_factor": 1.1,
+                                     "conductance_region": "soma"}))
+    scope = _cli_scope(monkeypatch, ["--candidate-json", str(candidate), "--scale", "Kv3_1:soma:2"])
+    assert [s["mechanism"] for s in scope["regional_scales"]] == ["NaTg", "Kv3_1"]
+    assert scope["args"].conductance_factor == 1.1
+    assert scope["candidate_record"]["values"]["scale"] == ["NaTg:axon:1.5"]
+
+
+def test_regional_scale_applies_after_the_single_slot_and_raises_on_no_match():
+    """Execute the driver's real scaling loops on stand-in sections."""
+    tree = ast.parse(SOURCE.read_text())
+    loops = [n for n in tree.body if isinstance(n, (ast.If, ast.For))
+             and ("args.scale_conductance is not None" in ast.unparse(n).splitlines()[0]
+                  or ast.unparse(n).startswith("for scale in regional_scales"))]
+    assert len(loops) == 2
+
+    class Section:
+        def __init__(self, family, mechs, gbar):
+            self._name, self._mechs, self.gbar_NaTg = f"Cell[0].{family}[0]", mechs, gbar
+
+        def name(self):
+            return self._name
+
+        def psection(self):
+            return {"density_mechs": self._mechs}
+
+    sections = [Section("soma", {"NaTg": {}}, 2.), Section("axon", {"NaTg": {}}, 4.), Section("dend", {}, 8.)]
+    scope = {"cell": SimpleNamespace(all=sections),
+             "args": SimpleNamespace(scale_conductance="NaTg", conductance_factor=1.1, conductance_region="soma"),
+             "regional_scales": [{"mechanism": "NaTg", "region": "axon", "factor": 1.5}]}
+    exec(compile(ast.Module(body=loops, type_ignores=[]), "scaling", "exec"), scope)
+    assert [s.gbar_NaTg for s in sections] == pytest.approx([2.2, 6., 8.])
+    scope["regional_scales"] = [{"mechanism": "NaTg", "region": "dend", "factor": 1.5}]
+    with pytest.raises(RuntimeError, match="matched no section"):
+        exec(compile(ast.Module(body=loops, type_ignores=[]), "scaling", "exec"), scope)
+
+
+def test_report_records_the_regional_scales():
+    text = SOURCE.read_text()
+    assert '"regional_scales": regional_scales' in text
+    assert '"conductance_intervention": {"mechanism": args.scale_conductance' in text

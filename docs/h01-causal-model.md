@@ -522,6 +522,43 @@ cyclical and temporal families and point at a slow state the model lacks.
 | P | Holdout 0.23 nA | Claimed rows pass; predicted failures occur | [prediction](evidence/h01-prediction-i.md) |
 
 
+### Y3 trough audit (2026-09-07, SP4 stage 0; narrows the open post-trough row, does not close it)
+
+**Observed.** On the retained finalist traces (`e-kv3-close2`, command-only input,
+x9 mesh, CVode 1e-10; [audit JSON](evidence/h01-i-trough-audit.json),
+[decision](evidence/h01-i-reserve/stage-0-decision.json)) the somatic NaTg
+inactivation gate has recovered by the time the human refires: soma h at the
+trough is 0.88 to 0.90 (0.19 nA) and 0.82 to 0.85 (0.27 nA); at trough + 6 ms it
+is 0.986 to 0.988 and 0.976 to 0.982 (medians 0.988 and 0.983, both above the
+pre-registered 0.7); at trough + 10 ms 0.977 to 0.982 and 0.944 to 0.969. Somatic
+Kv3 m has fallen to 0.001 by trough + 6 ms. The soma sits at -77 to -75 mV
+(0.19 nA) and -74.3 to -70 mV (0.27 nA) 6 to 10 ms after the trough, 15 to 20 mV
+below the -60.5 mV threshold, and the recorded axon midpoint is 0.7 to 1.5 mV
+*below* the soma throughout the trough and its recovery (e.g. -80.5 against -79.0
+at the 0.27 nA cycle-1 trough). The axial current into the soma from its
+neighbours is outward at every trough sample: -0.16 nA (0.19 nA) and -0.23 to
+-0.26 nA (0.27 nA). The source (published fit) at the same cycles has soma h 0.49
+to 0.62 at the trough and 0.86 to 0.95 at trough + 6 ms, refiring within 5.8 ms
+at 0.27 nA; its axon also sits 3 to 8 mV below its soma.
+
+**Reading.** Sodium availability at the soma is not what limits the finalist's
+refiring: the gate is 98 % available within 6 ms, above the level at which the
+source refires. What is absent after the trough is an inward drive: no compartment
+adjacent to the soma is depolarised relative to it, and the axon probe is more
+hyperpolarised than the soma. Y3's open post-trough row is therefore narrowed
+from "drive or recovery/availability" to drive on the existing axon-first
+initiation pathway; the reserve evaluation registered in
+`evidence/h01-i-reserve-manifest.json` (axonal NaTg x1.5 with the somatic x1.1
+retained, cap 1, not yet run) tests whether axonal sodium density supplies it.
+Nothing here closes the row: the audit is a reading of state, not an intervention,
+and the drive's boundary is still unidentified.
+
+| Node | Split | Result | Evidence |
+| --- | --- | --- | --- |
+| A | Soma NaTg h at trough, +6, +10 ms, finalist vs source, both inputs | 0.98 at +6 ms in the finalist (rule: >= 0.7); source 0.86 to 0.95 | [audit](evidence/h01-i-trough-audit.md) |
+| A | Axial current into the soma and axon-soma difference after the trough | Outward -0.16 / -0.23 nA; axon 0.7 to 1.5 mV below the soma | same |
+
+
 ## Y4. The layer-2 excitatory candidate fires with wrong timing and recovery
 
 **Behavior.** Under the recorded 110 pA input (sweep 43) the candidate does not fire and
