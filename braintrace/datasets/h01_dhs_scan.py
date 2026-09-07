@@ -97,7 +97,7 @@ def _staggered_scan_step(target, *args):
     if hasattr(target, "cache_ion_total_currents"):
         target.cache_ion_total_currents(target.V.value)
     _voltage_step(target, t, dt, *args)
-    point_v = target._cv_to_point(target.V.value)
+    point_v = target._cv_to_point_unchecked(target.V.value) if hasattr(target, "_cv_to_point_unchecked") else target._cv_to_point(target.V.value)
     if target.ion_channel_update_order == "family":
         target._integrate_runtime_synapse_dynamics(point_v)
         target._update_ion_channel_families(point_v)

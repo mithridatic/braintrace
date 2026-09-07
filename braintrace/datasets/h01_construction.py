@@ -10,6 +10,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from braincell._base import IonChannel
+from braincell._compute import runtime as _runtime_module
 from braincell._compute.runtime import (
     CellRuntimeState,
     _is_root_level_runtime_node,
@@ -21,6 +22,72 @@ from braincell._multi_compartment.cell import AxialOperatorCache
 from braincell.quad import _staggered as _st
 from braincell.quad._staggered import build_cv_axial_operator
 from braincell.quad.protocol import DiffEqState
+
+
+_cached_baseline_ions = {}
+
+
+def _fast_instantiate_runtime_ion_instance(
+    *, instance_name, runtime_cls, layouts, declarations, state_buffers, n_point, pop_size=()
+):
+    supported_params = _runtime_module._supported_ion_runtime_params(runtime_cls)
+    full_size = pop_size + (n_point,)
+    if runtime_cls not in _cached_baseline_ions:
+        _cached_baseline_ions[runtime_cls] = runtime_cls(size=1)
+    baseline_ion = _cached_baseline_ions[runtime_cls]
+    full_param_values = {}
+    for param_name in supported_params:
+        baseline_value = _runtime_module._normalize_ion_runtime_param_value(
+            runtime_cls,
+            param_name,
+            getattr(baseline_ion, _runtime_module._ion_runtime_attr_name(runtime_cls, param_name)),
+        )
+        full_param_values[param_name] = _runtime_module._ion_param_broadcast(baseline_value, shape=full_size)
+    for layout, declaration in zip(layouts, declarations):
+        point_index = layout.point_index
+        for param_name in declaration.params.keys():
+            buffer = state_buffers[(layout.id, param_name)]
+            full_param_values[param_name] = _runtime_module._ion_param_scatter(
+                runtime_cls=runtime_cls,
+                param_name=param_name,
+                target=full_param_values[param_name],
+                buffer=buffer,
+                point_index=point_index,
+            )
+    runtime_ion_instance = runtime_cls(size=full_size, name=instance_name, **full_param_values)
+    _runtime_module._restore_shaped_species_initializers(runtime_ion_instance, full_param_values)
+    return runtime_ion_instance
+
+
+def _fast_attach_runtime_ion_geometry(*, ions, cvs, point_ids, n_point):
+    if not ions or len(cvs) == 0:
+        return
+    attrs = ("length", "area", "diam_mid", "diam_arc_mean", "radius_prox", "radius_dist")
+    point_geom = {}
+    for attr in attrs:
+        first_val = getattr(cvs[0], attr)
+        unit = first_val.unit if isinstance(first_val, u.Quantity) else u.UNITLESS
+        if unit != u.UNITLESS:
+            floats = np.asarray([float(getattr(cv, attr).to_decimal(unit)) for cv in cvs], dtype=np.float64)
+            point_floats = np.zeros(n_point, dtype=np.float64)
+            point_floats[point_ids] = floats
+            point_geom[attr] = u.Quantity(point_floats, unit)
+        else:
+            floats = np.asarray([float(getattr(cv, attr)) for cv in cvs], dtype=np.float64)
+            point_floats = np.zeros(n_point, dtype=np.float64)
+            point_floats[point_ids] = floats
+            point_geom[attr] = point_floats
+
+    for ion in ions.values():
+        pop_size = tuple(getattr(ion, "varshape", ())[:-1])
+        point_shape = pop_size + (n_point,)
+        for attr in attrs:
+            val = bridge.broadcast_to_shape(point_geom[attr], point_shape, name=f"ion.{attr}")
+            setattr(ion, attr, val)
+
+
+_runtime_module._instantiate_runtime_ion_instance = _fast_instantiate_runtime_ion_instance
+bridge.attach_runtime_ion_geometry = _fast_attach_runtime_ion_geometry
 
 
 @contextmanager
@@ -85,21 +152,37 @@ def build_dhs_static_source_1d(target, *, node_tree, scheduling) -> _st.DHSStati
     point_id_to_row = np.asarray(scheduling.point_id_to_row, dtype=np.int32)
     cv_row_by_cv = point_id_to_row[node_tree.cv_to_mid_node_id]
     dynamic_rows = np.asarray([int(cv_row_by_cv[cv_id]) for cv_id in range(len(target.cvs))], dtype=np.int32)
-    row_capacitance = _st._row_capacitance_scale(target, dynamic_rows=dynamic_rows, n_point=n_point)
-    row_capacitance_uF = np.asarray(
-        [_st._scalar_decimal(value, u.uF) for value in row_capacitance],
-        dtype=np.float64,
-    )
+
+    cv_r_prox = np.asarray([float(np.asarray(cv.r_axial_prox.to_decimal(u.ohm), dtype=float)) for cv in target.cvs], dtype=np.float64)
+    cv_r_dist = np.asarray([float(np.asarray(cv.r_axial_dist.to_decimal(u.ohm), dtype=float)) for cv in target.cvs], dtype=np.float64)
+    cv_cap = np.asarray([float(np.asarray((cv.area * cv.cm).to_decimal(u.uF), dtype=float)) for cv in target.cvs], dtype=np.float64)
+    cv_branches = np.asarray([int(cv.branch_id) for cv in target.cvs], dtype=np.int32)
+
+    row_capacitance_uF = np.ones(n_point, dtype=np.float64)
+    row_capacitance_uF[dynamic_rows] = cv_cap
+
     diag_ms_inv = np.zeros(n_point, dtype=np.float64)
     lowers_ms_inv = np.zeros(n_point, dtype=np.float64)
     uppers_ms_inv = np.zeros(n_point, dtype=np.float64)
 
     for edge in node_tree.edges:
-        parent_row = int(point_id_to_row[edge.parent_node_id])
-        child_row = int(point_id_to_row[edge.child_node_id])
-        conductance = _st._edge_conductance(edge=edge, cvs=target.cvs)
-        parent_coeff = _st._scalar_decimal(conductance / row_capacitance[parent_row], u.ms ** -1)
-        child_coeff = _st._scalar_decimal(conductance / row_capacitance[child_row], u.ms ** -1)
+        parent_row = point_id_to_row[edge.parent_node_id]
+        child_row = point_id_to_row[edge.child_node_id]
+        roles = edge.roles
+        if len(roles) == 1:
+            role = roles[0]
+            r = cv_r_prox[role.cv_id] if role.half == "prox" else cv_r_dist[role.cv_id]
+            conductance = 1.0 / r
+        else:
+            b_set = {cv_branches[r.cv_id] for r in roles}
+            res_list = [cv_r_prox[r.cv_id] if r.half == "prox" else cv_r_dist[r.cv_id] for r in roles]
+            if len(b_set) == 1:
+                conductance = 1.0 / sum(res_list)
+            else:
+                conductance = sum(1.0 / r for r in res_list)
+
+        parent_coeff = (conductance / row_capacitance_uF[parent_row]) * 1e3
+        child_coeff = (conductance / row_capacitance_uF[child_row]) * 1e3
         diag_ms_inv[parent_row] += parent_coeff
         diag_ms_inv[child_row] += child_coeff
         lowers_ms_inv[child_row] -= child_coeff

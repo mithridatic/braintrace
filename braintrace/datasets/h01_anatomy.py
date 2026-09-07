@@ -336,14 +336,25 @@ class H01Anatomy:
         self._check_label(label)
         if policy not in ("strict", "sample_neighborhood"):
             raise ValueError("policy must be strict or sample_neighborhood.")
+        left = self._labels[self._endpoints[:, 0]] == label
+        right = self._labels[self._endpoints[:, 1]] == label
+        both = left & right
         intervals = []
-        for branch, (lo, hi), (a, b) in zip(self._branches, self._fractions, self._endpoints):
-            left, right = self._labels[a] == label, self._labels[b] == label
-            if left and right:
-                intervals.append((int(branch), float(lo), float(hi)))
-            elif policy == "sample_neighborhood" and (left or right):
-                mid = (lo + hi) / 2
-                intervals.append((int(branch), float(lo if left else mid), float(mid if left else hi)))
+        if policy == "strict":
+            idx = np.flatnonzero(both)
+            for i in idx:
+                intervals.append((int(self._branches[i]), float(self._fractions[i, 0]), float(self._fractions[i, 1])))
+        else:
+            idx = np.flatnonzero(left | right)
+            for i in idx:
+                b = int(self._branches[i])
+                lo, hi = float(self._fractions[i, 0]), float(self._fractions[i, 1])
+                if both[i]:
+                    intervals.append((b, lo, hi))
+                elif left[i]:
+                    intervals.append((b, lo, (lo + hi) / 2))
+                else:
+                    intervals.append((b, (lo + hi) / 2, hi))
         return _Region(self._signature, tuple(intervals), policy)
 
     def project(self, positions_um, *, max_distance_um):
@@ -376,12 +387,13 @@ class H01Anatomy:
         result = []
         for point in positions:
             t = np.clip(np.sum((point - self._starts) * self._vectors, axis=1) / self._length2, 0., 1.)
-            distances = np.linalg.norm(self._starts + t[:, None] * self._vectors - point, axis=1)
-            best = int(np.argmin(distances))
-            distance = float(distances[best])
+            diff = self._starts + t[:, None] * self._vectors - point
+            dist2 = np.sum(diff**2, axis=1)
+            best = int(np.argmin(dist2))
+            distance = float(np.sqrt(dist2[best]))
             location, status = None, "too_far"
             if distance <= max_distance_um:
-                candidates = np.flatnonzero(np.abs(distances - distance) <= 1e-9)
+                candidates = np.flatnonzero(np.abs(np.sqrt(dist2) - distance) <= 1e-9)
                 sites = set()
                 for candidate in candidates:
                     fraction = t[candidate]
