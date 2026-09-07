@@ -214,3 +214,43 @@ is read on the interpolated metric with the timing gates unchanged; both peak me
 reported. The 0.23 nA arm is a spent-holdout control, scored and never used to choose.
 The BrainCell full-train cost is derived (about 525 s per run at dt 0.005, an upper bound
 from the 330 ms wall clock); NEURON fixed-step full-train cost is unmeasured.
+
+## Amendment 2026-09-07 (after step 1b, user decision, before any further code or run): peak row at 0.5 mV, Richardson column
+
+Step 1b located the peak deficit in the integrator's first-order convergence in dt (the peak
+climbs 0.21 mV per halving and its first-order Richardson limit is within 0.012 mV of CVode
+at every event), not in the mesh and not in the sampling. The usable tier does not score the
+peak, and the human contract tolerates 1 mV on it. The user therefore decided:
+
+**Gate for the full-train arms (A0, A1, B1, window 270-1270 ms).** Count equal; rise crossing
+0.1 ms; time above -20 mV 0.01 ms (both unchanged); peak row: dt-0.005 interpolated peak error
+under **0.5 mV** (half the human contract's 1 mV), read with `--peak-method interpolated`. The
+manifest `gate` peak limit becomes 0.5; the halving-pair validity keeps the spec's "half the
+gate" rule on the same amended gate (0.05 ms / 0.25 mV / 0.005 ms). Under this rule the
+existing step-1 BrainCell pair (interpolated peak difference 0.213 mV) is inside the half
+gate, so the BrainCell time level is valid for the amended gate; the NEURON pair
+(`b1-fixed-027` vs `r-neuron-fixed-027-halfdt`) is still to be run.
+
+**Derived column.** Beside both peak metrics every row carries the first-order Richardson
+extrapolation of the actual peak, `2 x peak(dt 0.0025) - peak(dt 0.005)`, and its error
+against the reference, for every event where a dt-0.0025 partner trace of the same arm exists
+(manifest `richardson_pairs`; the partners are 330 ms, so the column is filled for the events
+inside 270-329.5 ms and null elsewhere). It is reported, never gated.
+
+**Registered prediction.** A1 (`a1-matched-027`, `a1-matched-019`) passes count, both timing
+gates and the 0.5 mV peak row at every event over 270-1270 ms against the CVode finalist.
+A0 (`a0-maxcv-027`, MaxCVLen 2.5 um) fails at least one late-event rise crossing. B1
+(`b1-fixed-027`, `b1-fixed-019`, NEURON fixed step at dt 0.005) matches the CVode finalist
+inside the timing gate at every event. `a1-matched-023` is scored as a spent-holdout control
+and is never used to decide.
+
+**Rejection and decision literals.** Unchanged from the decision-rule table: `mesh` when A1 and
+B1 pass everywhere and the halving pairs are inside the half gate;
+`implementation_difference_at_event_k` when A1 fails at event k while B1 passes; `integration`
+when B1 fails; `time_level_open` when a halving pair is over the half gate. A killed run is
+untested and is reported as such.
+
+**Runs.** One at a time, detached, 600 s watchdog for BrainCell (derived, unmeasured cost
+about 525 s per full train; never quoted as measured) and the 900 s abort for NEURON; wall
+clocks recorded per arm. Order: `a1-matched-027`, `a1-matched-019`, `a1-matched-023`,
+`a0-maxcv-027`, `b1-fixed-027`, `b1-fixed-019`, `r-neuron-fixed-027-halfdt`.
