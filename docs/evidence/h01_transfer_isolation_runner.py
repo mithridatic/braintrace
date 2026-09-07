@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
-from docs.evidence.h01_ei_spike_transfer import compare_spike_transfer
+from docs.evidence.h01_ei_spike_transfer import PEAK_KEYS, compare_spike_transfer
 
 ARM_FIELDS = ("name", "simulator", "mesh", "current_na", "dt_ms", "duration_ms", "reference", "window")
 CONTROL_MAP = (("somatic_kv3_close_factor", "Kv3_1", "m_close"), ("somatic_kv3_tau_factor", "Kv3_1", "m_open"),
@@ -120,9 +120,16 @@ def first_failed_event(rows):
     return next((row["event"] for row in rows if not all(row["in_gate"].values())), None)
 
 
-def score_pair(reference, actual, window, gate):
-    """Compare two traces over a window under a gate and report per-event rows."""
-    result = compare_spike_transfer(reference, actual, start_ms=window[0], stop_ms=window[1])
+def gate_for(gate, peak_method):
+    """Manifest gate re-keyed so its peak limit names the peak metric that is gated."""
+    return {(PEAK_KEYS[peak_method] if key in PEAK_KEYS.values() else key): limit for key, limit in gate.items()}
+
+
+def score_pair(reference, actual, window, gate, peak_method="sample"):
+    """Compare two traces over a window under a gate and report per-event rows (both peaks in every row)."""
+    gate = gate_for(gate, peak_method)
+    result = compare_spike_transfer(reference, actual, start_ms=window[0], stop_ms=window[1],
+                                    peak_method=peak_method)
     rows = event_rows(result, gate)
     same_count = result["same_nonzero_event_count"]
     passed = same_count and all(all(row["in_gate"].values()) for row in rows)
@@ -130,7 +137,7 @@ def score_pair(reference, actual, window, gate):
             "reference_count": len(result["reference_events"]), "actual_count": len(result["actual_events"]),
             "first_failed_event": None if same_count and passed else first_failed_event(rows) or "count",
             "max_abs_rise_error_ms": max((abs(r["errors"]["rise_crossing_ms"]) for r in rows), default=None),
-            "window_ms": list(window), "gate": gate, "events": rows}
+            "window_ms": list(window), "gate": gate, "peak_method": peak_method, "events": rows}
 
 
 def decide(a1_passed, b1_passed, gate_valid, first_failures):
@@ -154,9 +161,16 @@ def load_trace(path):
         return {"time_ms": np.asarray(data["time_ms"]), "voltage_mv": np.asarray(data["voltage_mv"])}
 
 
-def score_manifest(root, manifest, load=load_trace):
-    """Score every arm present on disk against its reference and the halving pairs; missing arms stay untested."""
+def score_manifest(root, manifest, load=load_trace, peak_method="sample", reference_root=None):
+    """Score every arm present on disk against its reference and the halving pairs; missing arms stay untested.
+
+    ``reference_root`` names the tree holding the reference ``.npz`` traces when they are not
+    in ``root`` (they are tracked on another branch); the hash of every reference used is recorded.
+    """
     evidence = root/"docs/evidence"
+    reference_root = Path(reference_root) if reference_root is not None else root
+    reference_dir = reference_root/"docs/evidence"/manifest["reference_dir"]
+    reference_hashes = {}
     gate, half_gate = manifest["gate"], {k: v*manifest["halving_fraction"] for k, v in manifest["gate"].items()}
     arms = {arm["name"]: arm for arm in manifest["arms"]}
     scores, hashes = {}, {}
@@ -165,18 +179,22 @@ def score_manifest(root, manifest, load=load_trace):
         if not actual_path.exists():
             scores[name] = {"status": "untested", "reason": "trace absent"}
             continue
-        reference_path = evidence/manifest["reference_dir"]/(manifest["references"][arm["reference"]]+".npz")
+        reference_path = reference_dir/(manifest["references"][arm["reference"]]+".npz")
         hashes[name] = hashlib.sha256(actual_path.read_bytes()).hexdigest()
-        scores[name] = score_pair(load(reference_path), load(actual_path), manifest["windows_ms"][arm["window"]], gate)
+        reference_hashes.setdefault(arm["reference"], hashlib.sha256(reference_path.read_bytes()).hexdigest())
+        scores[name] = score_pair(load(reference_path), load(actual_path), manifest["windows_ms"][arm["window"]],
+                                  gate, peak_method)
     halving = {}
     for label in ("braincell_halving", "neuron_halving"):
         full, half = manifest["decision_arms"][label]
         paths = [evidence/manifest["output_dir"]/(n+".npz") for n in (full, half)]
         if all(p.exists() for p in paths):
-            halving[label] = score_pair(load(paths[0]), load(paths[1]), manifest["windows_ms"]["halving"], half_gate)
+            halving[label] = score_pair(load(paths[0]), load(paths[1]), manifest["windows_ms"]["halving"], half_gate,
+                                        peak_method)
         else:
             halving[label] = {"status": "untested", "passed": False}
-    return {"scores": scores, "halving": halving, "inputs_sha256": hashes}
+    return {"scores": scores, "halving": halving, "inputs_sha256": hashes, "peak_method": peak_method,
+            "reference_root": str(reference_root), "reference_sha256": reference_hashes}
 
 
 def decision_report(manifest, scored):
@@ -200,6 +218,9 @@ def main(argv=None):
     parser.add_argument("--print-commands", action="store_true")
     parser.add_argument("--check-alignment", action="store_true")
     parser.add_argument("--score", action="store_true")
+    parser.add_argument("--peak-method", choices=tuple(PEAK_KEYS), default="sample",
+                        help="peak metric that enters the gate; both peaks are reported either way")
+    parser.add_argument("--reference-root", type=Path, help="tree holding the reference .npz traces")
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[2]
     manifest = json.loads(args.manifest.read_text())
@@ -218,10 +239,11 @@ def main(argv=None):
             raise SystemExit("BrainCell profile is not the NEURON finalist; scoring refused "
                              "(set braincell_profile_key to the aligned registry mode).")
     if args.score:
-        report = decision_report(manifest, score_manifest(root, manifest))
+        report = decision_report(manifest, score_manifest(root, manifest, peak_method=args.peak_method,
+                                                          reference_root=args.reference_root))
         out = root/"docs/evidence"/manifest["output_dir"]/"sp2-i-decision.json"
         out.write_text(json.dumps(report, indent=2)+"\n")
-        print(json.dumps({"decision": report["decision"], "gate_valid": report["gate_valid"],
+        print(json.dumps({"decision": report["decision"], "gate_valid": report["gate_valid"], "peak_method": args.peak_method,
                           "a1_passed": report["a1_passed"], "b1_passed": report["b1_passed"]}))
 
 
