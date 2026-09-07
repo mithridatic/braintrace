@@ -201,3 +201,67 @@ def test_inhibitory_receptor_parameters_are_recorded(imported):
         _, evidence = make_h01_ei_circuit(**arguments(imported), inhibitory_reversal_mv=-75., inhibitory_tau_ms=4.18)
     assert evidence["cells"]["E"]["incoming_synapse"] == {"name": "inh", "reversal_mv": -75., "tau_ms": 4.18}
     assert evidence["cells"]["I"]["incoming_synapse"]["tau_ms"] == 2.
+
+
+def _measured(imported, monkeypatch, receptor_index=50):
+    from . import h01_ei_circuit as module
+    args = arguments(imported)
+    args["connectivity"] = "measured"
+    soma, receptor = imported.anatomy().location(30), imported.anatomy().location(receptor_index)
+    monkeypatch.setattr(module, "measured_ie_contact",
+                        lambda _: (soma, receptor, {"annotation_id": "fixture", "post_location": [receptor_index, .5]}))
+    return args
+
+
+def _probe_points(cell):
+    from braincell.mech import StateProbe, MechanismProbe
+    cell.init_state()
+    points = {}
+    for layout in cell.runtime.layouts:
+        declaration = cell.runtime.get_layout_mechanism(layout.id)
+        if isinstance(declaration, (StateProbe, MechanismProbe)):
+            points[declaration.name] = int(layout.point_index[0])
+    return points
+
+
+def test_receptor_site_soma_moves_the_receptor_and_is_labelled_inferred(imported, monkeypatch):
+    with brainstate.environ.context(precision=64):
+        network, evidence = make_h01_ei_circuit(**_measured(imported, monkeypatch), receptor_site="soma")
+        points = _probe_points(network.populations["E"].cell)
+    assert points["incoming_voltage"] == points["synaptic_conductance"] == points["voltage"]
+    placement = evidence["measured_contacts"][0]["receptor_placement"]
+    assert placement["site"] == "soma" and placement["status"] == "inferred"
+    assert "perisomatic" in placement["basis"]
+    assert evidence["cells"]["E"]["receptor_placement"] == placement
+
+
+def test_receptor_site_measured_is_the_default_and_labelled_measured(imported, monkeypatch):
+    with brainstate.environ.context(precision=64):
+        _, evidence = make_h01_ei_circuit(**_measured(imported, monkeypatch))
+    placement = evidence["measured_contacts"][0]["receptor_placement"]
+    assert placement == {"site": "measured", "status": "measured", "basis": "Annotation 8105899 postsynaptic endpoint."}
+    with pytest.raises(ValueError, match="receptor_site"):
+        make_h01_ei_circuit(**_measured(imported, monkeypatch), receptor_site="dendrite")
+
+
+def test_i_pulse_train_replaces_the_single_pulse_and_leaves_e_unchanged(imported, monkeypatch):
+    traces = {}
+    with brainstate.environ.context(precision=64):
+        for name, onsets in (("single", None), ("train", [.5, 2.])):
+            network, evidence = make_h01_ei_circuit(**_measured(imported, monkeypatch), control="disconnected",
+                currents_na={"E": .2, "I": 1.}, pulse_durations_ms={"E": 3., "I": .5}, i_pulse_onsets_ms=onsets)
+            result = network.run(dt=.01*u.ms, duration=3.*u.ms)
+            traces[name] = {r: np.asarray(result.traces[r]["voltage"].to_decimal(u.mV)).ravel() for r in ("E", "I")}
+            assert evidence["cells"]["I"]["pulse_train_onsets_ms"] == ([] if onsets is None else onsets)
+            assert evidence["cells"]["I"]["current_na"] == 1.
+    np.testing.assert_array_equal(traces["single"]["E"], traces["train"]["E"])
+    single, train = traces["single"]["I"], traces["train"]["I"]
+    assert train[60] > single[60], "first train pulse (0.5-1 ms) depolarises before the single 2 ms pulse"
+    assert not np.array_equal(single, train)
+
+
+@pytest.mark.parametrize("onsets", [[], [-1., 2.], [2., 2.2], [np.nan], [[1.], [2.]]])
+def test_invalid_i_pulse_trains_fail(imported, monkeypatch, onsets):
+    with pytest.raises(ValueError, match="onsets"):
+        make_h01_ei_circuit(**_measured(imported, monkeypatch), pulse_durations_ms={"E": 3., "I": .5},
+                            i_pulse_onsets_ms=onsets)
