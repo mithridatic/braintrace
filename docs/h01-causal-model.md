@@ -342,6 +342,48 @@ Evidence: `evidence/h01-i-transfer/step1b-decision.json`,
 `evidence/h01-i-transfer/sp2-i-decision.json` (decision `untested` for the full-train arms,
 `gate_valid` false, `peak_method` interpolated).
 
+### Y2 observation, SP2 full-train arms under the amended gate (2026-09-07)
+
+Amendment registered first (spec, same date): full-train peak row = dt-0.005 interpolated peak error
+under 0.5 mV, timing gates and count unchanged, halving pairs under half the same gate, first-order
+Richardson peak as a derived column. Prediction registered: A1 passes at 0.27 and 0.19 nA, A0 fails a
+late rise, B1 (NEURON fixed step dt 0.005) matches CVode inside the timing gate.
+
+**Conditions.** Copied x9 mesh (`--mesh-from e-kv3-close2-027.json`), finalist profile (aligned), 34 C,
+-80 mV, 0.27 / 0.19 nA, 270-1270 ms; references the CVode atol 1e-10 finalist traces on the sibling
+branch (hashes in the JSON); PV driver with the deleted-section fix merged from `feat/h01-braincell`
+before the NEURON arms. Host shared with other containers (listed per arm).
+
+**Observation.** (i) `a1-matched-027` (BrainCell, 1500 ms, dt 0.005) was killed at the 600 s watchdog
+with no trace on two launches: the first was a launcher mislaunch (MaxCVLen 2.5 um instead of the copied
+mesh, 601.5 s), the corrected relaunch ran 602.0 s. The derived 525 s cost was wrong on this host.
+`a1-matched-019`, `a1-matched-023`, `a0-maxcv-027` were not launched (same mesh, dt and duration; the
+mislaunch already showed the MaxCVLen configuration over the watchdog). (ii) NEURON fixed step
+`b1-fixed-027` (232.4 s) holds 36 events against the CVode finalist's 37 and fails the 0.1 ms rise gate
+from event 6, the rise error growing monotonically to 7.42 ms at event 36; `b1-fixed-019` (152.8 s)
+holds 14 = 14 events and fails from event 3, reaching 14.76 ms at event 14. Width stays at +0.003 ms
+and the interpolated peak at -0.41 to -0.46 mV (inside 0.5 mV) at every event of both. (iii)
+`r-neuron-fixed-027-halfdt` (121.8 s): the NEURON halving pair is inside the half gate at every event
+with the same differences as the BrainCell pair (rise -0.0043/+0.0076/+0.0088 ms, interpolated peak
++0.213/+0.211/+0.211 mV); both pairs valid, so `gate_valid` is true. (iv) Supplementary: BrainCell
+dt 0.005 at the copied mesh scored against NEURON fixed step dt 0.005 over 270-329.5 ms: rise
+1.2e-9 ms, interpolated peak 5.4e-6 mV, width 1.9e-11 ms. The two simulators are the same integrator
+result at this mesh and step. Richardson column (derived): BrainCell -0.008/-0.012/-0.011 mV,
+NEURON fixed -0.008/-0.012/-0.011 mV against CVode.
+
+**Reading.** The B1 leg of the prediction failed: a fixed step of 0.005 ms at the x9 mesh is not the
+CVode train beyond the first few events, with a drift that accumulates per interval (about 0.2 ms per
+event at 0.27 nA) rather than a mesh placement error. Because BrainCell equals NEURON fixed step to
+1e-9 ms where both exist, the earlier "BrainCell drifts from the NEURON reference" reading of the
+full train is, at this mesh, a statement about the fixed step versus CVode, not about the simulator.
+The decision literal from `decide()` is `untested` (no A1 trace); the row the B1 outcome selects in
+the decision table is `integration` (time level, not mesh). Y2 **narrows**: the mesh branch is not
+re-opened, the implementation-difference branch is excluded over the window where both simulators
+can be compared, and what remains open is the time level of the reference comparison (a CVode
+reference against a fixed step at 0.005 ms, or a fixed-step reference at a smaller dt) and the
+unrun full BrainCell train. Y2 does not close. JSON: `evidence/h01-i-transfer/sp2-i-decision.json`;
+page: [result](evidence/h01-i-transfer-result.md).
+
 ## Y3. The PV candidate's spike train differs from the human recording
 
 **Behavior.** Against the human recording, the candidate's first spike lasts
@@ -1397,13 +1439,13 @@ biological uncertainty.
 
 - Y1: which upstream axonal segment reduces the outflow in the axon-only case;
   whether the electrical region map is correct.
-- Y2: transfer of the full 1270 ms train and the other inputs at the copied
-  mesh; whether equal counts also equal compartment placement on every branch.
-  SP2 prediction registered 2026-09-07 (see the Y2 entry); the finalist I profile is
-  registered and alignment checks. SP2 stopped 2026-09-07 as `time_level_open`: the peak
-  gate is not reachable at dt 0.005 or 0.0025 (first-order peak convergence, limit within
-  0.012 mV of CVode), timing gates valid; seven full-train arms untested pending a decision
-  on the peak gate, the fallback step, or the integration order.
+- Y2: transfer of the full 1270 ms train at the copied mesh. Narrowed 2026-09-07 (amended
+  gate): BrainCell equals NEURON fixed step at dt 0.005 and the copied mesh to 1e-9 ms over
+  270-329.5 ms, both halving pairs valid; NEURON fixed step at dt 0.005 fails the CVode finalist
+  on rise from event 6 (0.27 nA) and event 3 (0.19 nA), so the reference time level, not the
+  mesh or the simulator, is what stands between the full train and a verdict. The BrainCell full
+  train was killed at the 600 s watchdog (no trace); a scored A1 arm needs a reference and step
+  that agree and a measured, approved run length. Literal `untested`.
 - Y3: the post-trough inward drive that refires the human within 6 to 10 ms
   of a −79 mV trough (not somatic Ca_LVA, not somatic sodium availability, not
   axonal NaTg density: the reserve evaluation of 2026-09-07 failed at cap), and the

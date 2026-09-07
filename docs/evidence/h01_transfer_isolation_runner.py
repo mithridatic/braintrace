@@ -125,6 +125,37 @@ def gate_for(gate, peak_method):
     return {(PEAK_KEYS[peak_method] if key in PEAK_KEYS.values() else key): limit for key, limit in gate.items()}
 
 
+def richardson_peaks(reference, full, half, window, peak_method="sample"):
+    """Per-event first-order Richardson peak, ``2 x peak(dt/2) - peak(dt)``, and its error vs the reference.
+
+    Derived column, never gated. Empty when the two actual traces do not hold the same
+    number of events over the window.
+    """
+    key = PEAK_KEYS[peak_method]
+    at_full = compare_spike_transfer(reference, full, start_ms=window[0], stop_ms=window[1], peak_method=peak_method)
+    at_half = compare_spike_transfer(reference, half, start_ms=window[0], stop_ms=window[1], peak_method=peak_method)
+    if len(at_full["actual_events"]) != len(at_half["actual_events"]):
+        return []
+    rows = []
+    for index, (ref, coarse, fine) in enumerate(zip(at_full["reference_events"], at_full["actual_events"],
+                                                    at_half["actual_events"]), start=1):
+        extrapolated = 2.*fine[key]-coarse[key]
+        rows.append({"event": index, "peak_dt_mv": coarse[key], "peak_half_dt_mv": fine[key],
+                     "peak_richardson_mv": extrapolated, "peak_richardson_error_mv": extrapolated-ref[key]})
+    return rows
+
+
+def attach_richardson(score, richardson):
+    """Fill the derived Richardson columns on the events that have a partner value; null elsewhere."""
+    by_event = {row["event"]: row for row in richardson}
+    for row in score["events"]:
+        partner = by_event.get(row["event"])
+        row["peak_richardson_mv"] = None if partner is None else partner["peak_richardson_mv"]
+        row["peak_richardson_error_mv"] = None if partner is None else partner["peak_richardson_error_mv"]
+    score["richardson_events"] = len(richardson)
+    return score
+
+
 def score_pair(reference, actual, window, gate, peak_method="sample"):
     """Compare two traces over a window under a gate and report per-event rows (both peaks in every row)."""
     gate = gate_for(gate, peak_method)
@@ -166,6 +197,7 @@ def score_manifest(root, manifest, load=load_trace, peak_method="sample", refere
 
     ``reference_root`` names the tree holding the reference ``.npz`` traces when they are not
     in ``root`` (they are tracked on another branch); the hash of every reference used is recorded.
+    Arms named in ``richardson_pairs`` get the derived Richardson peak column from their dt/2 partner.
     """
     evidence = root/"docs/evidence"
     reference_root = Path(reference_root) if reference_root is not None else root
@@ -184,6 +216,13 @@ def score_manifest(root, manifest, load=load_trace, peak_method="sample", refere
         reference_hashes.setdefault(arm["reference"], hashlib.sha256(reference_path.read_bytes()).hexdigest())
         scores[name] = score_pair(load(reference_path), load(actual_path), manifest["windows_ms"][arm["window"]],
                                   gate, peak_method)
+    for name, partner in manifest.get("richardson_pairs", {}).items():
+        paths = [evidence/manifest["output_dir"]/(n+".npz") for n in (name, partner)]
+        if scores[name].get("status") == "untested" or not paths[1].exists():
+            continue
+        reference_path = reference_dir/(manifest["references"][arms[name]["reference"]]+".npz")
+        attach_richardson(scores[name], richardson_peaks(load(reference_path), load(paths[0]), load(paths[1]),
+                                                         manifest["windows_ms"][arms[partner]["window"]], peak_method))
     halving = {}
     for label in ("braincell_halving", "neuron_halving"):
         full, half = manifest["decision_arms"][label]
@@ -206,6 +245,7 @@ def decision_report(manifest, scored):
     gate_valid = all(row.get("passed", False) for row in scored["halving"].values())
     failures = {n: scored["scores"][n].get("first_failed_event") for n in groups["a1"]}
     return {"spec": manifest["spec"], "prediction": manifest["prediction"], "rejection": manifest["rejection"],
+            "gate": manifest["gate"], "gate_amendment": manifest.get("gate_amendment"),
             "gate_valid": gate_valid, "a1_passed": a1, "b1_passed": b1,
             "a0_passed": passed(groups["a0"]), "first_failed_event": failures,
             "decision": decide(a1, b1, gate_valid, failures) if tested else "untested",
