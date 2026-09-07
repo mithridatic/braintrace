@@ -872,6 +872,8 @@ depolarising, no E spikes in either control) is the only direct observation so f
 placement question (whether the PV contact belongs perisomatically) remains the user's decision;
 SP5 measures both placements.
 
+**SP5 benchmark, 2026-09-07 (observation: none; run untested).** The registered 100 ms disconnected benchmark at 0.6 nA was launched detached and killed at the 900 s abort with no trace written (`Circuit constructed` at about 190 s, nothing after; CPU at 100 percent under about 12 other H01 jobs). Whether E fires at 0.6 nA in this circuit is therefore still unobserved, the drive rule was not evaluated and the drive was not changed; the 300 ms arms are at least 45.7 min each under load (derived floor from 9.13 s per simulated ms), above the 15 min approval threshold. Run 1 of 6 spent. Record: `docs/evidence/h01-ie-inhibition/benchmark.json`; page `evidence/h01-ie-inhibition-benchmark.md`.
+
 ### Y4 under the usable-tier campaign (2026-09-07, supersedes the energetic-search statement)
 
 The energetic search closed Y4 as a structural FAIL: a perisomatic fit cannot make
